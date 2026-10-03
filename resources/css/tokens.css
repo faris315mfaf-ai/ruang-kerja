@@ -1,0 +1,84 @@
+/* RuangKerja design tokens — ganti nilai --brand-* dengan hex resmi SPKD */
+:root {
+  --brand-50: #ECFBF8;
+  --brand-100: #CFF5EE;
+  --brand-300: #5FD6C4;
+  --brand-400: #2FC0B0;
+  --brand-500: #14A3A0;
+  --brand-600: #0A7C85;
+  --brand-700: #075F69;
+  --accent-blue: #2F7BEA;
+  --accent-green: #1FAE6B;
+  --brand-gradient: linear-gradient(135deg, #14A3A0, #2F7BEA);
+
+  --bg: #F6F8F9;
+  --surface: #FFFFFF;
+  --surface-2: #F1F4F6;
+  --border: #E2E8EB;
+  --border-strong: #CBD5DA;
+  --text: #0F1A1F;
+  --text-muted: #5A6A72;
+  --text-subtle: #8A979E;
+
+  --primary: var(--brand-600);
+  --primary-hover: var(--brand-700);
+  --primary-fg: #FFFFFF;
+  --ring: rgb(20 163 160 / 0.4);
+
+  --success: #13804F;
+  --warning: #9A6200;
+  --danger: #C42B2B;
+  --info: #1F66D1;
+
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(15, 26, 31, 0.08);
+  --glass-blur: 16px;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-1: 0 1px 2px rgba(15, 26, 31, .06), 0 4px 12px rgba(15, 26, 31, .04);
+
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #0A0E11;
+  --surface: #10161A;
+  --surface-2: #151C21;
+  --border: #1F292F;
+  --border-strong: #2B373E;
+  --text: #E7EEF1;
+  --text-muted: #8C9CA4;
+  --text-subtle: #5F6E76;
+
+  --primary: var(--brand-400);
+  --primary-hover: var(--brand-300);
+  --primary-fg: #04201F;
+  --ring: rgb(47 192 176 / 0.45);
+
+  --success: #3CCB86;
+  --warning: #F2B13A;
+  --danger: #F06A6A;
+  --info: #5C9BFF;
+
+  --glass-bg: rgba(16, 22, 26, 0.66);
+  --glass-border: rgba(255, 255, 255, 0.07);
+  --shadow-1: inset 0 1px 0 rgba(255, 255, 255, .04);
+  color-scheme: dark;
+}
+
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+}

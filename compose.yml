@@ -1,0 +1,49 @@
+# Layanan pendukung untuk pengembangan lokal.
+# Aplikasi Laravel berjalan di Laravel Herd (Windows), BUKAN di container.
+# Jalankan: docker compose up -d   ·   Hentikan: docker compose stop
+name: ruangkerja
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-ruangkerja}
+      POSTGRES_USER: ${DB_USERNAME:-ruangkerja}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+      TZ: UTC
+    ports:
+      - "${DB_FORWARD_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-ruangkerja} -d ${DB_DATABASE:-ruangkerja}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_FORWARD_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "${MAIL_FORWARD_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+
+volumes:
+  pgdata:
+  redisdata:

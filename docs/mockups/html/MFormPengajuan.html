@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ajukan Pengajuan · Mockup RuangKerja</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F6F8F9}
+a{color:#0A7C85}a:hover{color:#075F69}
+</style>
+</head>
+<body>
+<div style="width: 390px; height: 1240px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; position: relative; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #0F1A1F; font-size: 14px; line-height: 20px; background-color: #F6F8F9; background-image: radial-gradient(800px 500px at 0% 0%, rgba(20,163,160,0.06), transparent 70%)">
+
+  <header style="flex: none; height: 56px; box-sizing: border-box; padding: 0 16px 0 4px; display: flex; align-items: center; gap: 4px">
+    <a href="MPengajuanSaya.html" aria-label="Tutup" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: #0F1A1F">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+    </a>
+    <h1 style="margin: 0; flex: 1; font-size: 17px; line-height: 24px; font-weight: 600">Ajukan pengajuan</h1>
+    <span style="font-size: 12px; color: #5A6A72; display: flex; align-items: center; gap: 6px"><span style="width: 6px; height: 6px; border-radius: 999px; background: #1FAE6B"></span>Draf 09.14</span>
+  </header>
+
+  <div role="group" aria-label="Jenis pengajuan" style="flex: none; display: flex; gap: 8px; overflow-x: auto; padding: 4px 16px 12px">
+    <button type="button" aria-pressed="true" style="flex: none; height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #0A7C85; background: #ECFBF8; color: #075F69; font: inherit; font-weight: 600; display: flex; align-items: center; gap: 6px; cursor: pointer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>Cuti</button>
+    <button type="button" aria-pressed="false" style="flex: none; height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #E2E8EB; background: #FFFFFF; color: #33434A; font: inherit; font-weight: 500; cursor: pointer">Izin</button>
+    <button type="button" aria-pressed="false" style="flex: none; height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #E2E8EB; background: #FFFFFF; color: #33434A; font: inherit; font-weight: 500; cursor: pointer">Sakit</button>
+    <button type="button" aria-pressed="false" style="flex: none; height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #E2E8EB; background: #FFFFFF; color: #33434A; font: inherit; font-weight: 500; cursor: pointer">Lembur</button>
+    <button type="button" aria-pressed="false" style="flex: none; height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #E2E8EB; background: #FFFFFF; color: #33434A; font: inherit; font-weight: 500; cursor: pointer">Koreksi</button>
+    <button type="button" aria-pressed="false" style="flex: none; height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #E2E8EB; background: #FFFFFF; color: #33434A; font: inherit; font-weight: 500; cursor: pointer">Dinas</button>
+  </div>
+
+  <main style="flex: 1; overflow: hidden; padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 20px">
+    <form aria-label="Formulir cuti" style="display: flex; flex-direction: column; gap: 20px; margin: 0">
+      <label style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-weight: 500">Jenis cuti</span>
+        <span style="position: relative; display: block">
+          <select style="width: 100%; height: 48px; box-sizing: border-box; padding: 0 40px 0 12px; border-radius: 8px; border: 1px solid #CBD5DA; background: #FFFFFF; color: #0F1A1F; font: inherit; font-size: 16px; appearance: none; -webkit-appearance: none">
+            <option selected>Cuti tahunan</option>
+            <option>Cuti besar</option>
+            <option>Cuti melahirkan</option>
+            <option>Cuti alasan penting</option>
+            <option>Cuti di luar tanggungan</option>
+          </select>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5A6A72" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px; top: 15px; pointer-events: none"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <span style="font-size: 12px; line-height: 16px; color: #5A6A72">Saldo cuti tahunan 12 hari</span>
+      </label>
+
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+        <label style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+          <span style="font-weight: 500">Tanggal mulai</span>
+          <span style="position: relative; display: block">
+            <input type="text" readonly value="12 Okt 2026" style="width: 100%; height: 48px; box-sizing: border-box; padding: 0 10px 0 36px; border-radius: 8px; border: 1px solid #CBD5DA; background: #FFFFFF; color: #0F1A1F; font: inherit; font-size: 16px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5A6A72" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 16px; pointer-events: none"><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg>
+          </span>
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+          <span style="font-weight: 500">Tanggal selesai</span>
+          <span style="position: relative; display: block">
+            <input type="text" readonly value="14 Okt 2026" style="width: 100%; height: 48px; box-sizing: border-box; padding: 0 10px 0 36px; border-radius: 8px; border: 1px solid #CBD5DA; background: #FFFFFF; color: #0F1A1F; font: inherit; font-size: 16px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5A6A72" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 16px; pointer-events: none"><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg>
+          </span>
+        </label>
+      </div>
+
+      <div style="min-height: 56px; box-sizing: border-box; padding: 10px 12px 10px 14px; border-radius: 8px; border: 1px solid #E2E8EB; background: #FFFFFF; display: flex; align-items: center; gap: 12px">
+        <span style="flex: 1; display: flex; flex-direction: column">
+          <span id="lbl-setengah" style="font-weight: 500">Setengah hari</span>
+          <span style="font-size: 12px; line-height: 16px; color: #5A6A72">Hanya untuk cuti satu hari</span>
+        </span>
+        <button type="button" role="switch" aria-checked="false" aria-labelledby="lbl-setengah" disabled style="flex: none; width: 52px; height: 44px; border: 0; padding: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: not-allowed; opacity: 0.55">
+          <span style="width: 44px; height: 26px; border-radius: 999px; background: #CBD5DA; position: relative; display: block"><span style="position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(15,26,31,.2)"></span></span>
+        </button>
+      </div>
+
+      <label style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-weight: 500">Alasan</span>
+        <textarea rows="3" style="height: 96px; box-sizing: border-box; padding: 12px; border-radius: 8px; border: 1px solid #0A7C85; box-shadow: 0 0 0 3px rgba(10,124,133,0.14); background: #FFFFFF; color: #0F1A1F; font: inherit; font-size: 16px; line-height: 24px; resize: none">Acara keluarga di luar kota.</textarea>
+        <span style="display: flex; justify-content: space-between; font-size: 12px; line-height: 16px; color: #5A6A72"><span>Terlihat oleh atasan langsung dan HR.</span><span style="font-variant-numeric: tabular-nums">28/500</span></span>
+      </label>
+
+      <label style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-weight: 500">Pengganti selama cuti</span>
+        <span style="position: relative; display: block">
+          <select style="width: 100%; height: 48px; box-sizing: border-box; padding: 0 40px 0 44px; border-radius: 8px; border: 1px solid #CBD5DA; background: #FFFFFF; color: #0F1A1F; font: inherit; font-size: 16px; appearance: none; -webkit-appearance: none">
+            <option selected>Rina Oktaviani</option>
+            <option>Putri Ramadhani</option>
+            <option>Tanpa pengganti</option>
+          </select>
+          <span aria-hidden="true" style="position: absolute; left: 12px; top: 13px; width: 22px; height: 22px; border-radius: 999px; background: #8A5A2A; color: #FFFFFF; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; pointer-events: none">RO</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5A6A72" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px; top: 15px; pointer-events: none"><path d="m6 9 6 6 6-6"></path></svg>
+        </span>
+        <span style="font-size: 12px; line-height: 16px; color: #5A6A72">Rina akan diberi tahu dan bisa menerima tugas yang dialihkan.</span>
+      </label>
+
+      <fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0">
+        <legend style="padding: 0; margin-bottom: 6px; font-weight: 500">Lampiran <span style="font-weight: 400; color: #5A6A72">(opsional)</span></legend>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+          <button type="button" style="height: 48px; border-radius: 8px; border: 1px dashed #CBD5DA; background: #FFFFFF; color: #0F1A1F; font: inherit; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+            Ambil foto
+          </button>
+          <button type="button" style="height: 48px; border-radius: 8px; border: 1px dashed #CBD5DA; background: #FFFFFF; color: #0F1A1F; font: inherit; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            Pilih file
+          </button>
+        </div>
+        <span style="font-size: 12px; line-height: 16px; color: #5A6A72">PDF, JPG, atau PNG · maks. 5 MB</span>
+      </fieldset>
+    </form>
+
+    <section aria-label="Ringkasan pengajuan" style="background: #FFFFFF; border: 1px solid #E2E8EB; border-radius: 12px; box-shadow: 0 1px 2px rgba(15,26,31,.06), 0 4px 12px rgba(15,26,31,.04); overflow: hidden">
+      <div style="padding: 14px 16px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+          <h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #5A6A72; text-transform: none">Ringkasan</h2>
+          <span style="font-size: 12px; color: #5A6A72">Sen–Rab, 12–14 Okt 2026</span>
+        </div>
+        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums">
+          <span style="display: flex; flex-direction: column">
+            <span style="font-size: 24px; line-height: 30px; font-weight: 600">3 <span style="font-size: 14px; font-weight: 500">hari kerja</span></span>
+            <span style="font-size: 12px; line-height: 16px; color: #5A6A72">tanpa libur nasional</span>
+          </span>
+          <span style="display: flex; flex-direction: column; align-items: flex-end">
+            <span style="font-size: 12px; line-height: 16px; color: #5A6A72">Saldo cuti tahunan</span>
+            <span style="font-size: 16px; line-height: 24px; font-weight: 600"><span style="color: #5A6A72; font-weight: 500">12</span> <span style="color: #5A6A72">→</span> 9 hari</span>
+          </span>
+        </div>
+        <div role="img" aria-label="Hak 14 hari: 2 terpakai, 3 untuk pengajuan ini, 9 tersisa" style="display: flex; flex-direction: column; gap: 6px">
+          <div style="height: 8px; border-radius: 999px; background: #EEF2F4; display: flex; overflow: hidden; gap: 2px">
+            <div style="width: 14.3%; background: #8A979E"></div>
+            <div style="width: 21.4%; background: #0A7C85"></div>
+            <div style="flex: 1; background: #CFF5EE"></div>
+          </div>
+          <div style="display: flex; gap: 12px; font-size: 12px; line-height: 16px; color: #5A6A72">
+            <span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 2px; background: #8A979E"></span>Terpakai 2</span>
+            <span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 2px; background: #0A7C85"></span>Pengajuan ini 3</span>
+            <span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 2px; background: #CFF5EE; border: 1px solid #9FE3D7; box-sizing: border-box"></span>Sisa 9</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; background: #FBF3E2; color: #6B4500; font-size: 13px; line-height: 18px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9A6200" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 1px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+          <span><span style="font-weight: 600">Nadia Putri juga cuti 13 Okt.</span> Atasan Anda akan melihat info ini saat memutuskan.</span>
+        </div>
+      </div>
+      <div style="padding: 12px 16px 14px; border-top: 1px solid #EEF2F4; display: flex; flex-direction: column; gap: 10px">
+        <h3 style="margin: 0; font-size: 12px; line-height: 16px; font-weight: 500; color: #5A6A72">Alur persetujuan</h3>
+        <ol style="list-style: none; margin: 0; padding: 0; display: flex; align-items: center; gap: 8px">
+          <li style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px">
+            <span style="flex: none; width: 28px; height: 28px; border-radius: 999px; background: #0A6C78; color: #FFFFFF; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">DP</span>
+            <span style="min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 500; white-space: nowrap">Dimas Pratama</span><span style="font-size: 12px; line-height: 16px; color: #5A6A72">1 · atasan langsung</span></span>
+          </li>
+          <li aria-hidden="true" style="flex: none; color: #8A979E; display: flex">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+          </li>
+          <li style="flex: none; display: flex; align-items: center; gap: 8px">
+            <span style="flex: none; width: 28px; height: 28px; border-radius: 999px; background: #8A4A3A; color: #FFFFFF; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">HR</span>
+            <span style="display: flex; flex-direction: column"><span style="font-weight: 500">HR</span><span style="font-size: 12px; line-height: 16px; color: #5A6A72">2 · Divisi SDM</span></span>
+          </li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px 20px; display: flex; gap: 8px; background: rgba(255,255,255,0.72); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid rgba(15,26,31,0.08)">
+    <button type="button" style="flex: 1; height: 48px; border-radius: 10px; border: 1px solid #CBD5DA; background: #FFFFFF; color: #0F1A1F; font: inherit; font-size: 15px; font-weight: 500; cursor: pointer">Simpan draf</button>
+    <button type="button" style="flex: 1.4; height: 48px; border-radius: 10px; border: 0; background: #0A7C85; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer">Kirim pengajuan</button>
+  </div>
+</div>
+</body>
+</html>

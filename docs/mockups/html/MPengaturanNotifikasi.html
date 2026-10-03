@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pengaturan Notifikasi (Ponsel) · Mockup RuangKerja</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F6F8F9}
+a{color:#0A7C85}a:hover{color:#075F69}
+</style>
+</head>
+<body>
+<div style="width: 390px; height: 1480px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; position: relative; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; line-height: 20px; color: #0F1A1F; background-color: #F6F8F9; background-image: radial-gradient(800px 500px at 0% 0%, rgba(20,163,160,0.06), transparent 70%)">
+
+  <header style="flex: none; height: 56px; box-sizing: border-box; display: flex; align-items: center; gap: 4px; padding: 0 16px 0 4px; background: rgba(255,255,255,0.72); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(15,26,31,0.08)">
+    <a href="MMenu.html" aria-label="Kembali" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: #0F1A1F">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
+    </a>
+    <h1 style="margin: 0; flex: 1; font-size: 17px; line-height: 24px; font-weight: 600">Notifikasi</h1>
+    <span role="status" style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #5A6A72">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#13804F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+      Tersimpan otomatis
+    </span>
+  </header>
+
+  <main style="flex: 1; min-height: 0; overflow: hidden; padding: 12px 16px 24px; display: flex; flex-direction: column; gap: 20px">
+    <p style="margin: 0; font-size: 13px; line-height: 18px; color: #5A6A72">Pilih kejadian yang ingin Anda ketahui, dan lewat kanal apa. Ketuk kejadian untuk mengatur kanalnya.</p>
+
+    <section aria-labelledby="h-tugas" style="display: flex; flex-direction: column; gap: 6px">
+      <h2 id="h-tugas" style="margin: 0; padding: 0 4px; font-size: 12px; line-height: 16px; font-weight: 500; color: #5A6A72">Tugas</h2>
+      <ul style="list-style: none; margin: 0; padding: 0; background: #FFFFFF; border: 1px solid #E2E8EB; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(15,26,31,.06), 0 4px 12px rgba(15,26,31,.04)">
+        <li>
+          <button type="button" aria-expanded="false" style="width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border: 0; background: transparent; color: #0F1A1F; font: inherit; text-align: left; cursor: pointer">
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 500">Ditugaskan ke saya</span><span style="font-size: 13px; line-height: 18px; color: #5A6A72">In-app, Email</span></span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A979E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
+        </li>
+        <li style="border-top: 1px solid #EEF2F4">
+          <button type="button" aria-expanded="false" style="width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border: 0; background: transparent; color: #0F1A1F; font: inherit; text-align: left; cursor: pointer">
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 500">Disebut (@mention)</span><span style="font-size: 13px; line-height: 18px; color: #5A6A72">In-app, Email</span></span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A979E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
+        </li>
+        <li style="border-top: 1px solid #EEF2F4; background: #FBFCFC">
+          <button type="button" aria-expanded="true" aria-controls="acc-komentar" style="width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border: 0; background: transparent; color: #0F1A1F; font: inherit; text-align: left; cursor: pointer">
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span id="ev-komentar" style="font-weight: 600">Komentar di tugas yang saya amati</span><span style="font-size: 13px; line-height: 18px; color: #5A6A72">In-app</span></span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F1A1F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex: none; transform: rotate(180deg)"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
+          <div id="acc-komentar" role="group" aria-labelledby="ev-komentar" style="margin: 0 14px 14px; padding: 2px 4px 2px 12px; border-radius: 10px; background: #FFFFFF; border: 1px solid #E2E8EB">
+            <div style="min-height: 48px; display: flex; align-items: center; gap: 10px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5A6A72" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+              <span id="k-inapp" style="flex: 1">In-app</span>
+              <button type="button" role="switch" aria-checked="true" aria-labelledby="k-inapp" style="flex: none; width: 56px; height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer"><span style="width: 44px; height: 26px; box-sizing: border-box; padding: 2px; border-radius: 999px; background: #0A7C85; display: flex; justify-content: flex-end"><span style="width: 22px; height: 22px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(15,26,31,.25)"></span></span></button>
+            </div>
+            <div style="min-height: 48px; display: flex; align-items: center; gap: 10px; border-top: 1px solid #EEF2F4">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5A6A72" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+              <span id="k-email" style="flex: 1">Email</span>
+              <button type="button" role="switch" aria-checked="false" aria-labelledby="k-email" style="flex: none; width: 56px; height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer"><span style="width: 44px; height: 26px; box-sizing: border-box; padding: 2px; border-radius: 999px; background: #CBD5DA; display: flex; justify-content: flex-start"><span style="width: 22px; height: 22px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(15,26,31,.25)"></span></span></button>
+            </div>
+            <div style="min-height: 48px; display: flex; align-items: center; gap: 10px; border-top: 1px solid #EEF2F4">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A979E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
+              <span id="k-wa" style="flex: 1; display: flex; align-items: center; gap: 8px; color: #5A6A72">WhatsApp <span style="font-size: 12px; line-height: 18px; padding: 0 8px; border-radius: 999px; background: #EAF1FC; color: #1F66D1">Segera hadir</span></span>
+              <button type="button" role="switch" aria-checked="false" aria-labelledby="k-wa" disabled style="flex: none; width: 56px; height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: not-allowed"><span style="width: 44px; height: 26px; box-sizing: border-box; padding: 2px; border-radius: 999px; background: #E2E8EB; display: flex; justify-content: flex-start"><span style="width: 22px; height: 22px; border-radius: 999px; background: #F6F8F9; box-shadow: 0 1px 2px rgba(15,26,31,.12)"></span></span></button>
+            </div>
+          </div>
+        </li>
+        <li style="border-top: 1px solid #EEF2F4">
+          <button type="button" aria-expanded="false" style="width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border: 0; background: transparent; color: #0F1A1F; font: inherit; text-align: left; cursor: pointer">
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 500">Tenggat besok</span><span style="font-size: 13px; line-height: 18px; color: #5A6A72">In-app</span></span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A979E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
+        </li>
+        <li style="border-top: 1px solid #EEF2F4">
+          <button type="button" aria-expanded="false" style="width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border: 0; background: transparent; color: #0F1A1F; font: inherit; text-align: left; cursor: pointer">
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 500">Tenggat terlewat</span><span style="font-size: 13px; line-height: 18px; color: #5A6A72">In-app, Email</span></span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A979E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
+        </li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="h-pengajuan" style="display: flex; flex-direction: column; gap: 6px">
+      <h2 id="h-pengajuan" style="margin: 0; padding: 0 4px; font-size: 12px; line-height: 16px; font-weight: 500; color: #5A6A72">Pengajuan</h2>
+      <ul style="list-style: none; margin: 0; padding: 0; background: #FFFFFF; border: 1px solid #E2E8EB; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(15,26,31,.06), 0 4px 12px rgba(15,26,31,.04)">
+        <li>
+          <button type="button" aria-expanded="false" style="width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border: 0; background: transparent; color: #0F1A1F; font: inherit; text-align: left; cursor: pointer">
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 500">Pengajuan menunggu persetujuan saya</span><span style="font-size: 13px; line-height: 18px; color: #5A6A72">In-app, Email</span></span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A979E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
+        </li>
+        <li style="border-top: 1px solid #EEF2F4">
+          <button type="button" aria-expanded="false" style="width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border: 0; background: transparent; color: #0F1A1F; font: inherit; text-align: left; cursor: pointer">
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 500">Pengajuan saya diputus</span><span style="font-size: 13px; line-height: 18px; color: #5A6A72">In-app, Email</span></span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A979E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
+        </li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="h-absensi" style="display: flex; flex-direction: column; gap: 6px">
+      <h2 id="h-absensi" style="margin: 0; padding: 0 4px; font-size: 12px; line-height: 16px; font-weight: 500; color: #5A6A72">Absensi</h2>
+      <ul style="list-style: none; margin: 0; padding: 0; background: #FFFFFF; border: 1px solid #E2E8EB; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(15,26,31,.06), 0 4px 12px rgba(15,26,31,.04)">
+        <li>
+          <button type="button" aria-expanded="false" style="width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border: 0; background: transparent; color: #0F1A1F; font: inherit; text-align: left; cursor: pointer">
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 500">Pengingat lupa check-in</span><span style="font-size: 13px; line-height: 18px; color: #5A6A72">In-app · dikirim <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">08.15</span></span></span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A979E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
+        </li>
+        <li style="border-top: 1px solid #EEF2F4">
+          <button type="button" aria-expanded="false" style="width: 100%; min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border: 0; background: transparent; color: #0F1A1F; font: inherit; text-align: left; cursor: pointer">
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 500">Pengingat lupa check-out</span><span style="font-size: 13px; line-height: 18px; color: #5A6A72">In-app · dikirim <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">17.30</span></span></span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A979E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
+        </li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="h-ringkasan" style="background: #FFFFFF; border: 1px solid #E2E8EB; border-radius: 12px; box-shadow: 0 1px 2px rgba(15,26,31,.06), 0 4px 12px rgba(15,26,31,.04); padding: 6px 4px 14px 14px; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 8px 0">
+          <h2 id="h-ringkasan" style="margin: 0; font-size: 15px; line-height: 20px; font-weight: 600">Ringkasan harian</h2>
+          <span style="font-size: 13px; line-height: 18px; color: #5A6A72">Satu email setiap hari kerja, berisi yang perlu Anda tindak lanjuti.</span>
+        </span>
+        <button type="button" role="switch" aria-checked="true" aria-labelledby="h-ringkasan" style="flex: none; width: 56px; height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer"><span style="width: 44px; height: 26px; box-sizing: border-box; padding: 2px; border-radius: 999px; background: #0A7C85; display: flex; justify-content: flex-end"><span style="width: 22px; height: 22px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(15,26,31,.25)"></span></span></button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px 10px 0 0; border-top: 1px solid #EEF2F4; margin-top: 4px">
+        <label for="jam-kirim" style="flex: 1; font-weight: 500">Jam kirim</label>
+        <span style="display: flex; align-items: center; gap: 8px; height: 44px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid #CBD5DA; background: #FFFFFF">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5A6A72" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex: none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <input id="jam-kirim" type="text" inputmode="numeric" value="07.30" style="width: 56px; height: 40px; padding: 0; border: 0; background: transparent; color: #0F1A1F; font-family: 'JetBrains Mono', monospace; font-size: 16px; outline: none">
+          <span style="font-size: 13px; color: #5A6A72">WIB</span>
+        </span>
+      </div>
+      <a href="EmailRingkasan.html" style="align-self: flex-start; min-height: 44px; display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 13px; font-weight: 500; text-decoration: none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        Lihat contoh email hari ini
+      </a>
+    </section>
+
+    <section aria-labelledby="h-tenang" style="background: #FFFFFF; border: 1px solid #E2E8EB; border-radius: 12px; box-shadow: 0 1px 2px rgba(15,26,31,.06), 0 4px 12px rgba(15,26,31,.04); padding: 14px 4px 6px 14px; display: flex; flex-direction: column">
+      <h2 id="h-tenang" style="margin: 0 0 4px; font-size: 15px; line-height: 20px; font-weight: 600">Jam tenang</h2>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0 10px">
+        <span id="q-1" style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 500">Di luar jam kerja</span><span style="font-size: 13px; line-height: 18px; color: #5A6A72">Tahan notifikasi email <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">17.30–07.00</span> dan akhir pekan; in-app tetap tercatat.</span></span>
+        <button type="button" role="switch" aria-checked="true" aria-labelledby="q-1" style="flex: none; width: 56px; height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer"><span style="width: 44px; height: 26px; box-sizing: border-box; padding: 2px; border-radius: 999px; background: #0A7C85; display: flex; justify-content: flex-end"><span style="width: 22px; height: 22px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(15,26,31,.25)"></span></span></button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 10px 0 8px; border-top: 1px solid #EEF2F4">
+        <span id="q-2" style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 500">Saat saya cuti</span><span style="font-size: 13px; line-height: 18px; color: #5A6A72">Tahan semua notifikasi. Persetujuan diteruskan ke pengganti bila delegasi aktif.</span></span>
+        <button type="button" role="switch" aria-checked="false" aria-labelledby="q-2" style="flex: none; width: 56px; height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer"><span style="width: 44px; height: 26px; box-sizing: border-box; padding: 2px; border-radius: 999px; background: #CBD5DA; display: flex; justify-content: flex-start"><span style="width: 22px; height: 22px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(15,26,31,.25)"></span></span></button>
+      </div>
+    </section>
+
+    <p style="margin: 0; padding: 0 4px; font-size: 12px; line-height: 18px; color: #5A6A72">Email dikirim ke <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #33434A">dimas.pratama@[domain-perusahaan]</span>. Pengingat absensi mengikuti shift Anda (Reguler 08.00–17.00).</p>
+  </main>
+</div>
+</body>
+</html>

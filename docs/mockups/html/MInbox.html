@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inbox (Ponsel) · Mockup RuangKerja</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E11}
+a{color:#2FC0B0}a:hover{color:#5FD6C4}
+</style>
+</head>
+<body>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; position: relative; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; line-height: 20px; color: #E7EEF1; background-color: #0A0E11; background-image: radial-gradient(800px 500px at 0% 0%, rgba(20,163,160,0.08), transparent 70%), radial-gradient(700px 500px at 100% 100%, rgba(47,123,234,0.07), transparent 70%)">
+
+  <header style="flex: none; height: 56px; box-sizing: border-box; display: flex; align-items: center; gap: 4px; padding: 0 8px 0 16px">
+    <h1 style="margin: 0; flex: 1; font-size: 17px; line-height: 24px; font-weight: 600">Inbox</h1>
+    <button type="button" aria-label="Filter notifikasi" style="width: 44px; height: 44px; border-radius: 999px; border: 0; background: transparent; color: #C3CED3; display: flex; align-items: center; justify-content: center; cursor: pointer">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+    </button>
+    <button type="button" aria-label="Tandai semua dibaca" style="width: 44px; height: 44px; border-radius: 999px; border: 0; background: transparent; color: #C3CED3; display: flex; align-items: center; justify-content: center; cursor: pointer">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 7 17l-5-5"></path><path d="m22 10-7.5 7.5L13 16"></path></svg>
+    </button>
+  </header>
+
+  <div style="flex: none; padding: 0 16px 8px">
+    <div role="group" aria-label="Tampilan inbox" style="display: flex; padding: 2px; border-radius: 10px; background: #10161A; border: 1px solid #1F292F">
+      <button type="button" aria-pressed="true" style="flex: 1 1 auto; height: 36px; padding: 0 8px; border: 0; border-radius: 8px; background: #1F292F; color: #E7EEF1; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer">Semua</button>
+      <button type="button" aria-pressed="false" style="flex: 1 1 auto; height: 36px; padding: 0 8px; border: 0; border-radius: 8px; background: transparent; color: #8C9CA4; font: inherit; font-size: 13px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer">Belum dibaca <span style="font-size: 11px; line-height: 16px; padding: 0 6px; border-radius: 999px; background: rgba(47,192,176,0.12); color: #2FC0B0; font-variant-numeric: tabular-nums">4</span></button>
+      <button type="button" aria-pressed="false" style="flex: 1 1 auto; height: 36px; padding: 0 8px; border: 0; border-radius: 8px; background: transparent; color: #8C9CA4; font: inherit; font-size: 13px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer">Perlu tindakan <span style="font-size: 11px; line-height: 16px; padding: 0 6px; border-radius: 999px; background: rgba(242,177,58,0.12); color: #F2B13A; font-variant-numeric: tabular-nums">3</span></button>
+    </div>
+  </div>
+
+  <main style="flex: 1; min-height: 0; overflow: hidden">
+    <h2 style="margin: 0; padding: 10px 16px 4px; font-size: 12px; line-height: 16px; font-weight: 500; color: #8C9CA4">Hari ini</h2>
+    <ul style="list-style: none; margin: 0; padding: 0">
+      <li>
+        <a href="MTaskDetail.html" style="min-height: 56px; box-sizing: border-box; display: flex; align-items: flex-start; gap: 12px; padding: 10px 16px; color: #E7EEF1; text-decoration: none">
+          <span style="flex: none; width: 36px; height: 36px; border-radius: 999px; background: rgba(47,192,176,0.12); color: #2FC0B0; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"></path></svg></span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"><span style="font-weight: 600">Sari Wulandari</span> <span style="color: #C3CED3">menyebut Anda</span></span>
+            <span style="font-size: 13px; line-height: 18px; color: #8C9CA4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">PLQ-15</span> · "@Dimas Pratama mohon cek kutipan direksi di paragraf 2…"</span>
+          </span>
+          <span style="flex: none; width: 40px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; padding-top: 2px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 16px; color: #8C9CA4">09.02</span><span aria-label="Belum dibaca" style="width: 8px; height: 8px; border-radius: 999px; background: #2FC0B0"></span></span>
+        </a>
+      </li>
+      <li style="border-top: 1px solid #1A2328">
+        <a href="MPersetujuanDetail.html" style="min-height: 56px; box-sizing: border-box; display: flex; align-items: flex-start; gap: 12px; padding: 10px 16px; color: #E7EEF1; text-decoration: none">
+          <span style="flex: none; width: 36px; height: 36px; border-radius: 999px; background: rgba(92,155,255,0.12); color: #5C9BFF; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 7 17l-5-5"></path><path d="m22 10-7.5 7.5L13 16"></path></svg></span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"><span style="font-weight: 600">Maya Lestari</span> <span style="color: #C3CED3">mengajukan cuti</span></span>
+            <span style="font-size: 13px; line-height: 18px; color: #8C9CA4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">12–14 Okt · 3 hari kerja · langkah 1/2</span>
+            <span style="align-self: flex-start; margin-top: 2px; font-size: 11px; line-height: 18px; padding: 0 8px; border-radius: 999px; background: rgba(242,177,58,0.12); color: #F2B13A">Perlu tindakan</span>
+          </span>
+          <span style="flex: none; width: 40px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; padding-top: 2px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 16px; color: #8C9CA4">08.47</span><span aria-label="Belum dibaca" style="width: 8px; height: 8px; border-radius: 999px; background: #2FC0B0"></span></span>
+        </a>
+      </li>
+      <li style="border-top: 1px solid #1A2328">
+        <a href="MTaskDetail.html" style="min-height: 56px; box-sizing: border-box; display: flex; align-items: flex-start; gap: 12px; padding: 10px 16px; color: #E7EEF1; text-decoration: none">
+          <span style="flex: none; width: 36px; height: 36px; border-radius: 999px; background: rgba(240,106,106,0.12); color: #F06A6A; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" x2="12" y1="8" y2="12"></line><line x1="12" x2="12.01" y1="16" y2="16"></line></svg></span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"><span style="font-weight: 600; font-family: 'JetBrains Mono', monospace; font-size: 13px">OPS-127</span> <span style="color: #C3CED3">melewati tenggat</span></span>
+            <span style="font-size: 13px; line-height: 18px; color: #8C9CA4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap"><span style="color: #F06A6A">Lewat 1 hari kerja</span> · Verifikasi tagihan vendor logistik</span>
+            <span style="align-self: flex-start; margin-top: 2px; font-size: 11px; line-height: 18px; padding: 0 8px; border-radius: 999px; background: rgba(242,177,58,0.12); color: #F2B13A">Perlu tindakan</span>
+          </span>
+          <span style="flex: none; width: 40px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; padding-top: 2px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 16px; color: #8C9CA4">08.00</span><span aria-label="Belum dibaca" style="width: 8px; height: 8px; border-radius: 999px; background: #2FC0B0"></span></span>
+        </a>
+      </li>
+      <li style="border-top: 1px solid #1A2328; position: relative; overflow: hidden; background: #10161A">
+        <div style="position: absolute; top: 0; right: 0; bottom: 0; width: 144px; display: flex">
+          <button type="button" style="flex: 1; border: 0; background: #2C5DA8; color: #FFFFFF; font: inherit; font-size: 12px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+            Dibaca
+          </button>
+          <button type="button" style="flex: 1; border: 0; background: #2FC0B0; color: #04201F; font: inherit; font-size: 12px; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"></rect><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"></path><path d="M10 12h4"></path></svg>
+            Arsipkan
+          </button>
+        </div>
+        <a href="MTaskDetail.html" style="position: relative; min-height: 56px; box-sizing: border-box; display: flex; align-items: flex-start; gap: 12px; padding: 10px 16px; background: #10161A; color: #E7EEF1; text-decoration: none; transform: translateX(-144px); box-shadow: 6px 0 12px rgba(0,0,0,0.35)">
+          <span style="flex: none; width: 36px; height: 36px; border-radius: 999px; background: #1F292F; color: #C3CED3; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"><span style="font-weight: 600">Rizky Aditya</span> <span style="color: #C3CED3">mengomentari</span> <span style="font-weight: 600">PLQ-21</span></span>
+            <span style="font-size: 13px; line-height: 18px; color: #8C9CA4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">"Checklist 4/7. Form pendaftaran &amp; SEO menyusul Rabu."</span>
+          </span>
+          <span style="flex: none; width: 40px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; padding-top: 2px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 16px; color: #8C9CA4">07.58</span><span aria-label="Belum dibaca" style="width: 8px; height: 8px; border-radius: 999px; background: #2FC0B0"></span></span>
+        </a>
+      </li>
+      <li style="border-top: 1px solid #1A2328">
+        <a href="MTaskDetail.html" style="min-height: 56px; box-sizing: border-box; display: flex; align-items: flex-start; gap: 12px; padding: 10px 16px; color: #C3CED3; text-decoration: none">
+          <span style="flex: none; width: 36px; height: 36px; border-radius: 999px; background: #151C21; color: #8C9CA4; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"><span style="font-weight: 500">Putri Ramadhani</span> <span style="color: #8C9CA4">menugaskan</span> <span style="font-weight: 500">PLQ-27</span></span>
+            <span style="font-size: 13px; line-height: 18px; color: #8C9CA4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Desain banner &amp; spanduk peluncuran · ke tim Anda</span>
+          </span>
+          <span style="flex: none; width: 40px; display: flex; flex-direction: column; align-items: flex-end; padding-top: 2px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 16px; color: #8C9CA4">07.30</span></span>
+        </a>
+      </li>
+      <li style="border-top: 1px solid #1A2328">
+        <a href="MPersetujuanDetail.html" style="min-height: 56px; box-sizing: border-box; display: flex; align-items: flex-start; gap: 12px; padding: 10px 16px; color: #C3CED3; text-decoration: none">
+          <span style="flex: none; width: 36px; height: 36px; border-radius: 999px; background: #151C21; color: #8C9CA4; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 7 17l-5-5"></path><path d="m22 10-7.5 7.5L13 16"></path></svg></span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"><span style="font-weight: 500">Yoga Permana</span> <span style="color: #8C9CA4">mengajukan lembur</span></span>
+            <span style="font-size: 13px; line-height: 18px; color: #8C9CA4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">3 Okt · <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">17.00–20.30</span> · menunggu Anda</span>
+            <span style="align-self: flex-start; margin-top: 2px; font-size: 11px; line-height: 18px; padding: 0 8px; border-radius: 999px; background: rgba(242,177,58,0.12); color: #F2B13A">Perlu tindakan</span>
+          </span>
+          <span style="flex: none; width: 40px; display: flex; flex-direction: column; align-items: flex-end; padding-top: 2px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 16px; color: #8C9CA4">07.12</span></span>
+        </a>
+      </li>
+    </ul>
+
+    <h2 style="margin: 0; padding: 14px 16px 4px; font-size: 12px; line-height: 16px; font-weight: 500; color: #8C9CA4">Kemarin</h2>
+    <ul style="list-style: none; margin: 0; padding: 0">
+      <li>
+        <a href="MPengajuanSaya.html" style="min-height: 56px; box-sizing: border-box; display: flex; align-items: flex-start; gap: 12px; padding: 10px 16px; color: #C3CED3; text-decoration: none">
+          <span style="flex: none; width: 36px; height: 36px; border-radius: 999px; background: rgba(60,203,134,0.12); color: #3CCB86; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 7 17l-5-5"></path><path d="m22 10-7.5 7.5L13 16"></path></svg></span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"><span style="font-weight: 500">Hana Nuraini</span> <span style="color: #8C9CA4">menyetujui koreksi Anda</span></span>
+            <span style="font-size: 13px; line-height: 18px; color: #8C9CA4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">KOR-2026-10-0001</span> · check-out 1 Okt → 17.20</span>
+          </span>
+          <span style="flex: none; width: 40px; display: flex; flex-direction: column; align-items: flex-end; padding-top: 2px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 16px; color: #8C9CA4">16.20</span></span>
+        </a>
+      </li>
+      <li style="border-top: 1px solid #1A2328">
+        <a href="MTaskDetail.html" style="min-height: 56px; box-sizing: border-box; display: flex; align-items: flex-start; gap: 12px; padding: 10px 16px; color: #C3CED3; text-decoration: none">
+          <span style="flex: none; width: 36px; height: 36px; border-radius: 999px; background: #151C21; color: #8C9CA4; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"><span style="font-weight: 500">Nadia Putri</span> <span style="color: #8C9CA4">membalas di</span> <span style="font-weight: 500">GDG-48</span></span>
+            <span style="font-size: 13px; line-height: 18px; color: #8C9CA4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Laporan selisih stok rak C</span>
+          </span>
+          <span style="flex: none; width: 40px; display: flex; flex-direction: column; align-items: flex-end; padding-top: 2px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 16px; color: #8C9CA4">14.05</span></span>
+        </a>
+      </li>
+    </ul>
+    <p style="margin: 0; padding: 10px 16px; border-top: 1px solid #1A2328; font-size: 12px; line-height: 16px; color: #8C9CA4">Notifikasi disimpan 30 hari. <a href="MPengaturanNotifikasi.html" style="text-decoration: none">Atur notifikasi</a></p>
+  </main>
+
+  <nav aria-label="Navigasi bawah" style="flex: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 6px 8px 14px; border-top: 1px solid rgba(255,255,255,0.07); background: rgba(16,22,26,0.66); backdrop-filter: blur(16px)">
+    <a href="MBeranda.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; color: #8C9CA4; text-decoration: none; font-size: 11px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>Beranda</a>
+    <a href="Absensi.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; color: #8C9CA4; text-decoration: none; font-size: 11px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>Absen</a>
+    <a href="MTugasSaya.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; color: #8C9CA4; text-decoration: none; font-size: 11px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>Tugas</a>
+    <a href="MInbox.html" aria-current="page" aria-label="Inbox, 4 belum dibaca" style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; color: #2FC0B0; text-decoration: none; font-size: 11px; font-weight: 600">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg><span aria-hidden="true" style="position: absolute; top: 2px; left: calc(50% + 6px); min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 999px; background: #2FC0B0; color: #04201F; font-size: 10px; font-weight: 600; line-height: 16px; text-align: center">4</span>Inbox</a>
+    <a href="MMenu.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; color: #8C9CA4; text-decoration: none; font-size: 11px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="6" y2="6"></line><line x1="4" x2="20" y1="18" y2="18"></line></svg>Menu</a>
+  </nav>
+</div>
+</body>
+</html>
