@@ -20,7 +20,7 @@ final class StoreGoogleAccount
     public function handle(User $user, GoogleUser $googleUser): GoogleAccount
     {
         $email = strtolower((string) $googleUser->getEmail());
-        $this->ensureAllowedDomain($email, $googleUser);
+        $this->ensureAllowedDomain($user, $email, $googleUser);
 
         $account = GoogleAccount::query()->firstOrNew(['user_id' => $user->id]);
 
@@ -44,14 +44,16 @@ final class StoreGoogleAccount
     }
 
     /**
-     * Both the e-mail domain and Google's `hd` claim must match (PRD M1).
+     * Both the e-mail domain and Google's `hd` claim must match the company's
+     * Workspace domain (PRD M1). GOOGLE_ALLOWED_DOMAIN overrides
+     * companies.google_domain when set.
      */
-    private function ensureAllowedDomain(string $email, GoogleUser $googleUser): void
+    private function ensureAllowedDomain(User $user, string $email, GoogleUser $googleUser): void
     {
         $domain = strtolower(trim((string) config('google.oauth.allowed_domain', '')));
 
         if ($domain === '') {
-            return;
+            $domain = strtolower($user->company->google_domain);
         }
 
         $raw = $googleUser->getRaw();

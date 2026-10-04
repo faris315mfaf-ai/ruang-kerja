@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Google;
 
 use App\Domain\Google\GoogleFeatures;
-use App\Domain\Organization\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\GoogleAccount;
 use App\Models\User;
@@ -22,7 +21,7 @@ class GoogleSettingsController extends Controller
         Gate::authorize('connect', GoogleAccount::class);
 
         $account = GoogleAccount::query()->where('user_id', $user->id)->first();
-        $isAdmin = $user->hasRole(Role::SuperAdmin->value);
+        $isAdmin = $user->isSuperAdmin();
 
         return Inertia::render('settings/google', [
             'google' => [

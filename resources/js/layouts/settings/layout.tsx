@@ -8,6 +8,7 @@ import { cn, toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
+import { google as googleSettings } from '@/routes/settings';
 import type { NavItem } from '@/types';
 
 const sidebarNavItems: NavItem[] = [
@@ -24,6 +25,11 @@ const sidebarNavItems: NavItem[] = [
     {
         title: 'Tampilan',
         href: editAppearance(),
+        icon: null,
+    },
+    {
+        title: 'Akun Google',
+        href: googleSettings(),
         icon: null,
     },
 ];
