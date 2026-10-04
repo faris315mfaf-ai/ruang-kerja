@@ -152,3 +152,32 @@ Google OAuth **tidak menerima** redirect ke domain `.test`. Kecuali `localhost`,
 - [ ] `claude --chrome` → `/chrome` Enabled, `/status` memuat `.claude/settings.json`
 - [ ] `/cek-lokal` tanpa temuan kritis
 - [ ] `/sprint 0` selesai → https://ruangkerja.test menampilkan layout terang/gelap, desktop & mobile
+
+## 10. Catatan macOS
+
+Alur sama dengan Windows; bedanya:
+
+| Komponen | macOS |
+|---|---|
+| PHP 8.4 + nginx | **Laravel Herd for macOS**. Di dalam folder proyek: `herd link ruangkerja && herd secure ruangkerja` → https://ruangkerja.test |
+| Docker | **OrbStack** (ringan) atau Docker Desktop. Perintahnya tetap `docker compose up -d` |
+| Node 22 | lewat **nvm**: `nvm install 22 && nvm use 22` |
+| `.env` | `cp .env.example .env` (bukan `copy`). Skrip `scripts/*.ps1` khusus Windows, lewati saja |
+
+**Port bentrok.** Di Mac pengembang, port 5432/6379/1025/8025/8080 sudah dipakai aplikasi lain, jadi `.env` lokal memakai port pengganti (sisi Docker ikut lewat variabel `*_FORWARD_PORT` di `compose.yml`):
+
+```dotenv
+DB_PORT=5434
+DB_FORWARD_PORT=5434
+REDIS_PORT=6380
+REDIS_FORWARD_PORT=6380
+MAIL_PORT=1026
+MAIL_FORWARD_PORT=1026
+MAILPIT_UI_PORT=8026
+REVERB_PORT=8081
+REVERB_SERVER_PORT=8081
+```
+
+Dengan nilai ini Mailpit ada di http://localhost:8026 dan Reverb di ws://localhost:8081. Bila port default di Mac Anda kosong, nilai bawaan `.env.example` bisa dipakai apa adanya. Setelah mengubah port, jalankan `docker compose up -d` lagi dan `php artisan config:clear`.
+
+**Menjalankan aplikasi.** Horizon (butuh `pcntl`) dan `php artisan pail` **berjalan di macOS**, jadi `composer run dev` (server + horizon + reverb + vite) bisa dipakai. `composer run dev:win` (vite + reverb + queue:work + schedule:work) juga jalan di Mac bila ingin setara dengan Windows. Aplikasi tetap dibuka lewat https://ruangkerja.test (Herd).

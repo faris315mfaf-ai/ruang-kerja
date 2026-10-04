@@ -1,8 +1,9 @@
 export type User = {
-    id: number;
+    id: string;
     name: string;
     email: string;
-    avatar?: string;
+    avatar?: string | null;
+    theme: 'system' | 'light' | 'dark';
     email_verified_at: string | null;
     two_factor_enabled?: boolean;
     created_at: string;
@@ -11,7 +12,15 @@ export type User = {
 };
 
 export type Auth = {
-    user: User;
+    user: User | null;
+    roles: string[];
+};
+
+export type Branding = {
+    name: string;
+    companyName: string | null;
+    shortName: string;
+    logo: string | null;
 };
 
 export type Passkey = {

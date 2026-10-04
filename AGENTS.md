@@ -11,12 +11,12 @@ RuangKerja adalah aplikasi kantor **internal** (puluhan karyawan) untuk absensi,
 - `docs/ARCHITECTURE.md`: struktur folder, alur, otorisasi.
 - `docs/DESIGN.md` + `resources/css/tokens.css`: tampilan.
 - `docs/mockups/INDEX.md` + `docs/mockups/png/`: **mockup acuan setiap layar** (desktop & mobile). Lihat PNG-nya sebelum membangun layar.
-- `docs/SETUP-LOKAL.md`: lingkungan lokal Windows (Herd di https://ruangkerja.test, Docker untuk Postgres/Redis/Mailpit). Horizon & pail tidak dipakai di Windows.
+- `docs/SETUP-LOKAL.md`: lingkungan lokal Windows (Herd di https://ruangkerja.test, Docker untuk Postgres/Redis/Mailpit). Horizon & pail tidak dipakai di Windows; di macOS keduanya jalan (lihat §10 Catatan macOS).
 - `docs/PLATFORM.md`: **pemisahan tampilan desktop & mobile** (breakpoint, shell, matriks fitur). Setiap halaman wajib punya tata letak desktop DAN mobile.
 
 ## Stack (jangan diganti tanpa persetujuan)
 
-PHP 8.4 · Laravel 13 · PostgreSQL 17 · Redis · Inertia.js 2 · React 19 + TypeScript (strict) · Tailwind CSS 4 · shadcn/ui · Lucide · Laravel Reverb · Horizon · Pest · Larastan · Pint.
+PHP 8.4 · Laravel 13 · PostgreSQL 17 · Redis · Inertia.js 3 · React 19 + TypeScript (strict) · Tailwind CSS 4 · shadcn/ui · Lucide · Vite+ (oxlint + oxfmt, `vp check`) · Laravel Reverb · Horizon · Pest · Larastan · Pint.
 
 ## Aturan kode
 
@@ -50,7 +50,7 @@ PHP 8.4 · Laravel 13 · PostgreSQL 17 · Redis · Inertia.js 2 · React 19 + Ty
 
 1. Baca dokumen terkait sebelum mulai. Ringkas rencana singkat (file yang akan dibuat/diubah) lalu kerjakan.
 2. Kerjakan dalam langkah kecil. Setelah tiap langkah jalankan:
-   `composer test` · `composer lint` · `npm run typecheck` · `npm run lint`
+   `composer test` · `composer lint` · `npm run typecheck` · `npm run lint` · `npm test`
 3. Jangan menandai pekerjaan selesai jika ada test merah atau error tipe.
 4. Jangan menambah paket baru tanpa menjelaskan alasannya di ringkasan akhir.
 5. Akhiri setiap tugas dengan ringkasan: apa yang dibuat, cara mencoba manual, keputusan yang diambil, dan hal yang belum selesai.
@@ -60,11 +60,12 @@ PHP 8.4 · Laravel 13 · PostgreSQL 17 · Redis · Inertia.js 2 · React 19 + Ty
 
 ```bash
 composer run dev:win  # Windows + Herd: vite + reverb + queue:work + schedule:work
-composer run dev      # Linux/CI: server + horizon + reverb + vite
+composer run dev      # macOS/Linux/CI: server + horizon + reverb + vite (Horizon jalan di macOS & Linux)
 composer test         # pest --parallel
 composer lint         # pint --test && phpstan analyse
 npm run typecheck     # tsc --noEmit
-npm run lint          # eslint
+npm run lint          # vp check (oxlint + oxfmt)
+npm test              # vitest (vp test)
 ```
 
 ## Definition of Done

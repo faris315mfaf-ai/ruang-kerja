@@ -1,5 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import { ChevronsUpDown } from 'lucide-react';
+import { UserAvatar } from '@/components/shell/user-avatar';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -11,18 +12,18 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@/components/ui/sidebar';
-import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { primaryRoleLabel } from '@/lib/roles';
 
 export function NavUser() {
     const { auth } = usePage().props;
     const { state } = useSidebar();
-    const isMobile = useIsMobile();
 
     if (!auth.user) {
         return null;
     }
+
+    const roleLabel = primaryRoleLabel(auth.roles);
 
     return (
         <SidebarMenu>
@@ -31,23 +32,31 @@ export function NavUser() {
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                             size="lg"
-                            className="group text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent"
+                            tooltip={auth.user.name}
+                            className="group text-text data-[state=open]:bg-sidebar-accent"
                             data-test="sidebar-menu-button"
                         >
-                            <UserInfo user={auth.user} />
-                            <ChevronsUpDown className="ml-auto size-4" />
+                            <UserAvatar
+                                name={auth.user.name}
+                                src={auth.user.avatar}
+                            />
+                            <span className="grid flex-1 text-left leading-tight">
+                                <span className="truncate text-[13px] font-medium">
+                                    {auth.user.name}
+                                </span>
+                                {roleLabel && (
+                                    <span className="truncate text-[11px] text-text-muted">
+                                        {roleLabel}
+                                    </span>
+                                )}
+                            </span>
+                            <ChevronsUpDown className="ml-auto size-4 text-text-muted" />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
-                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                        className="glass w-(--radix-dropdown-menu-trigger-width) min-w-60 rounded-lg"
                         align="end"
-                        side={
-                            isMobile
-                                ? 'bottom'
-                                : state === 'collapsed'
-                                  ? 'left'
-                                  : 'bottom'
-                        }
+                        side={state === 'collapsed' ? 'right' : 'top'}
                     >
                         <UserMenuContent user={auth.user} />
                     </DropdownMenuContent>

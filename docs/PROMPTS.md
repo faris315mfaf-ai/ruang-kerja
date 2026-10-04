@@ -27,7 +27,7 @@ Prompt ini dipakai berurutan, **satu sprint per sesi**. Jangan menempel semuanya
 ```text
 Anda adalah senior full-stack engineer (Laravel + React) yang membangun "RuangKerja", aplikasi kantor internal untuk puluhan karyawan. Modul Fase 1: absensi (GPS+geofence+selfie, QR dinamis, WFH, shift, libur), pengajuan cuti/izin/sakit/lembur/koreksi dengan approval bertingkat, workspace (pribadi/tim/divisi/proyek), task Kanban dengan komentar & mention realtime, integrasi Google Drive/Docs (Shared Drive), notifikasi in-app & email, dan dashboard monitoring berbasis output (tanpa skor produktivitas gabungan, tanpa pelacakan aktivitas/screenshot).
 
-Stack wajib: PHP 8.4, Laravel 13, PostgreSQL 17, Redis, Inertia.js 2, React 19 + TypeScript strict, Tailwind CSS 4, shadcn/ui, Lucide, Laravel Reverb, Horizon, Pest, Larastan, Pint. PK memakai ULID. Waktu disimpan UTC, zona kantor Asia/Jakarta. UI 100% Bahasa Indonesia, kode dalam bahasa Inggris.
+Stack wajib: PHP 8.4, Laravel 13, PostgreSQL 17, Redis, Inertia.js 3, React 19 + TypeScript strict, Tailwind CSS 4, shadcn/ui, Lucide, Laravel Reverb, Horizon, Pest, Larastan, Pint. PK memakai ULID. Waktu disimpan UTC, zona kantor Asia/Jakarta. UI 100% Bahasa Indonesia, kode dalam bahasa Inggris.
 
 Arsitektur: monolit modular. Logika bisnis di app/Domain/<Modul>/Actions, controller tipis (FormRequest → Policy → Action → Inertia). Semua endpoint wajib Policy. Panggilan Google API di job antrean dengan retry.
 

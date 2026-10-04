@@ -41,6 +41,9 @@ return [
 
     'debug' => (bool) env('APP_DEBUG', false),
 
+    // Local-only one-click demo login (also requires APP_ENV=local).
+    'demo_login' => (bool) env('DEMO_LOGIN_ENABLED', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application URL
@@ -65,7 +68,21 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Office Timezone
+    |--------------------------------------------------------------------------
+    |
+    | Timestamps are stored in UTC (see "timezone" above). The office timezone
+    | is only used when displaying times and when deriving an attendance
+    | `work_date`. Keep it in sync with OFFICE_TIMEZONE in
+    | resources/js/lib/format.ts.
+    |
+    */
+
+    'office_timezone' => env('OFFICE_TIMEZONE', 'Asia/Jakarta'),
 
     /*
     |--------------------------------------------------------------------------

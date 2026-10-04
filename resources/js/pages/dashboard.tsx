@@ -1,27 +1,52 @@
-import { Head } from '@inertiajs/react';
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
+import { Head, Link } from '@inertiajs/react';
+import { LayoutGrid } from 'lucide-react';
+import { EmptyState } from '@/components/empty-state';
+import { Button } from '@/components/ui/button';
+import { useBreakpoint } from '@/hooks/use-breakpoint';
+import { formatDate } from '@/lib/format';
 import { dashboard } from '@/routes';
+import { edit } from '@/routes/profile';
+
+function DashboardEmptyState() {
+    return (
+        <EmptyState
+            icon={LayoutGrid}
+            title="Belum ada data untuk ditampilkan"
+            description="Ringkasan kehadiran, tugas, dan persetujuan akan muncul di sini setelah absensi dan workspace mulai dipakai."
+            action={
+                <Button asChild variant="outline" size="sm">
+                    <Link href={edit()} prefetch>
+                        Lengkapi profil
+                    </Link>
+                </Button>
+            }
+        />
+    );
+}
 
 export default function Dashboard() {
+    const breakpoint = useBreakpoint();
+
     return (
         <>
             <Head title="Dashboard" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
+            {breakpoint === 'mobile' ? (
+                <div className="space-y-4">
+                    <DashboardEmptyState />
                 </div>
-                <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
-                    <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
+            ) : (
+                <div className="space-y-6">
+                    <header>
+                        <h1 className="text-xl leading-7 font-semibold text-text">
+                            Dashboard
+                        </h1>
+                        <p className="text-sm text-text-muted">
+                            {formatDate(new Date())}
+                        </p>
+                    </header>
+                    <DashboardEmptyState />
                 </div>
-            </div>
+            )}
         </>
     );
 }
@@ -33,4 +58,5 @@ Dashboard.layout = {
             href: dashboard(),
         },
     ],
+    appBar: 'greeting',
 };
