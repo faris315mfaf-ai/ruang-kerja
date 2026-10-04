@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Database\Factories\CompanyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -27,7 +28,7 @@ use Illuminate\Support\Str;
 class Company extends Model
 {
     /** @use HasFactory<CompanyFactory> */
-    use HasFactory, HasUlids, SoftDeletes;
+    use Auditable, HasFactory, HasUlids, SoftDeletes;
 
     /** @var array<string, mixed> */
     protected $attributes = [

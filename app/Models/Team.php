@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -30,7 +31,7 @@ use Illuminate\Support\Carbon;
 class Team extends Model
 {
     /** @use HasFactory<TeamFactory> */
-    use HasFactory, HasUlids, SoftDeletes;
+    use Auditable, HasFactory, HasUlids, SoftDeletes;
 
     /**
      * @return Attribute<string|null, string|null>
