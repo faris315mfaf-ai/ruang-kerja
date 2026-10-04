@@ -36,3 +36,4 @@ Route::post('login/demo', [DemoLoginController::class, 'store'])
     ->name('login.demo');
 
 require __DIR__.'/settings.php';
+require __DIR__.'/google.php';
