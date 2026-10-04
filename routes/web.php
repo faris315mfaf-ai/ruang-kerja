@@ -35,4 +35,5 @@ Route::post('login/demo', [DemoLoginController::class, 'store'])
     ->middleware(['guest', 'throttle:10,1'])
     ->name('login.demo');
 
+require __DIR__.'/auth.php';
 require __DIR__.'/settings.php';

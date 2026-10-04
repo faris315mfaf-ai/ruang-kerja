@@ -3,43 +3,32 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\EnsureTwoFactorForSuperAdmin;
 use App\Http\Requests\Settings\PasswordUpdateRequest;
 use App\Http\Requests\Settings\TwoFactorAuthenticationRequest;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Fortify\Features;
 
+/**
+ * Password + TOTP for the emergency Super Admin sign-in. Everyone else signs
+ * in with Google and gets 403 (UserPolicy::manageCredentials).
+ */
 class SecurityController extends Controller
 {
-    /**
-     * Show the user's security settings page.
-     */
     public function edit(TwoFactorAuthenticationRequest $request, #[CurrentUser] User $user): Response
     {
+        Gate::authorize('manageCredentials', $user);
+
         $props = [
             'canManageTwoFactor' => Features::canManageTwoFactorAuthentication(),
-            'canManagePasskeys' => Features::canManagePasskeys(),
-            'passkeys' => Features::canManagePasskeys()
-                ? $user
-                    ->passkeys()
-                    ->select(['id', 'name', 'credential', 'created_at', 'last_used_at'])
-                    ->latest()
-                    ->get()
-                    ->map(fn ($passkey) => [
-                        'id' => $passkey->id,
-                        'name' => $passkey->name,
-                        'authenticator' => $passkey->authenticator,
-                        'created_at_diff' => $passkey->created_at?->diffForHumans(),
-                        'last_used_at_diff' => $passkey->last_used_at?->diffForHumans(),
-                    ])
-                    ->values()
-                    ->all()
-                : [],
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
+            'twoFactorRequired' => EnsureTwoFactorForSuperAdmin::mustSetUp($request, $user),
         ];
 
         if (Features::canManageTwoFactorAuthentication()) {
@@ -52,16 +41,15 @@ class SecurityController extends Controller
         return Inertia::render('settings/security', $props);
     }
 
-    /**
-     * Update the user's password.
-     */
     public function update(PasswordUpdateRequest $request, #[CurrentUser] User $user): RedirectResponse
     {
+        Gate::authorize('manageCredentials', $user);
+
         $user->update([
             'password' => $request->password,
         ]);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Password updated.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Kata sandi diperbarui.']);
 
         return back();
     }
