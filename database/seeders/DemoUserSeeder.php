@@ -3,7 +3,9 @@
 namespace Database\Seeders;
 
 use App\Domain\Organization\Demo\DemoAccounts;
+use App\Domain\Organization\Demo\DemoCompany;
 use App\Domain\Organization\Enums\Theme;
+use App\Domain\Organization\Enums\UserStatus;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -17,6 +19,8 @@ class DemoUserSeeder extends Seeder
         // Idempotent; ensures roles exist when this seeder runs on its own.
         $this->call(RoleSeeder::class, silent: true);
 
+        $company = DemoCompany::ensure();
+
         foreach (DemoAccounts::all() as $account) {
             // updateOrCreate by email; forceFill because email_verified_at is not fillable.
             $user = User::query()->firstOrNew(['email' => $account->email]);
@@ -26,6 +30,8 @@ class DemoUserSeeder extends Seeder
                 'password' => DemoAccounts::PASSWORD,
                 'email_verified_at' => $user->email_verified_at ?? now(),
                 'theme' => Theme::System,
+                'company_id' => $company->id,
+                'status' => UserStatus::Active,
             ])->save();
 
             $user->syncRoles([$account->role->value]);
