@@ -19,7 +19,10 @@ const announceSearch = () =>
 export function AppTopbar({ breadcrumbs, canToggleSidebar }: Props) {
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
-            if (event.key.toLowerCase() === 'k' && (event.metaKey || event.ctrlKey)) {
+            if (
+                event.key.toLowerCase() === 'k' &&
+                (event.metaKey || event.ctrlKey)
+            ) {
                 event.preventDefault();
                 announceSearch();
             }

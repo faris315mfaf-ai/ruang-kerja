@@ -24,10 +24,20 @@ export type AppNavItem = {
 /** Desktop sidebar: main navigation (docs/DESIGN.md §5). */
 export const mainNavItems: AppNavItem[] = [
     { title: 'Inbox', href: '/inbox', icon: Inbox, matchPrefix: true },
-    { title: 'Tugas saya', href: '/tugas', icon: CircleCheck, matchPrefix: true },
+    {
+        title: 'Tugas saya',
+        href: '/tugas',
+        icon: CircleCheck,
+        matchPrefix: true,
+    },
     { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
     { title: 'Absensi', href: '/absensi', icon: MapPin, matchPrefix: true },
-    { title: 'Pengajuan', href: '/pengajuan', icon: FileText, matchPrefix: true },
+    {
+        title: 'Pengajuan',
+        href: '/pengajuan',
+        icon: FileText,
+        matchPrefix: true,
+    },
     {
         title: 'Persetujuan',
         href: '/persetujuan',

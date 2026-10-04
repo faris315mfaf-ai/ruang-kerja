@@ -19,7 +19,7 @@ const ACTION_WIDTH = 80;
 
 const toneClass: Record<NonNullable<SwipeAction['tone']>, string> = {
     primary: 'bg-primary text-primary-foreground',
-    danger: 'bg-danger text-on-brand',
+    danger: 'bg-danger text-on-danger',
     neutral: 'bg-surface-2 text-text',
 };
 
@@ -55,7 +55,10 @@ export function SwipeableRow({ children, actions, className }: Props) {
             event.currentTarget.setPointerCapture(event.pointerId);
         }
 
-        const next = Math.min(0, Math.max(-maxOffset, start.current.offset + dx));
+        const next = Math.min(
+            0,
+            Math.max(-maxOffset, start.current.offset + dx),
+        );
         setOffset(next);
     };
 
@@ -69,7 +72,10 @@ export function SwipeableRow({ children, actions, className }: Props) {
 
     return (
         <div className={cn('relative overflow-hidden', className)}>
-            <div className="absolute inset-y-0 right-0 flex" aria-hidden={offset === 0}>
+            <div
+                className="absolute inset-y-0 right-0 flex"
+                aria-hidden={offset === 0}
+            >
                 {actions.map((action) => (
                     <button
                         key={action.label}

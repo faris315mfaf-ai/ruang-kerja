@@ -98,7 +98,7 @@ export function AppBar({
     return (
         <header
             className={cn(
-                'pt-safe sticky top-0 z-30 border-b transition-colors duration-180 ease-brand',
+                'sticky top-0 z-30 border-b pt-safe transition-colors duration-180 ease-brand',
                 scrolled ? 'glass border-x-0 border-t-0' : 'border-transparent',
             )}
         >

@@ -12,6 +12,8 @@ function Toaster({ ...props }: ToasterProps) {
             theme={appearance}
             className="toaster group"
             position="bottom-right"
+            containerAriaLabel="Notifikasi"
+            toastOptions={{ closeButtonAriaLabel: 'Tutup notifikasi' }}
             style={
                 {
                     '--normal-bg': 'var(--popover)',
