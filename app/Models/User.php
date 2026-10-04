@@ -7,6 +7,7 @@ use App\Domain\Organization\Enums\Role;
 use App\Domain\Organization\Enums\Theme;
 use App\Domain\Organization\Enums\UserStatus;
 use App\Domain\Organization\Enums\WorkMode;
+use App\Models\Concerns\Auditable;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -65,7 +66,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, HasUlids, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use Auditable, HasFactory, HasRoles, HasUlids, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     /** @var array<string, mixed> */
     protected $attributes = [
@@ -91,6 +92,16 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'joined_at' => 'date',
             'last_login_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Noise that is not master data (login bookkeeping, UI preference).
+     *
+     * @return list<string>
+     */
+    public function auditExclude(): array
+    {
+        return ['remember_token', 'last_login_at', 'theme', 'avatar_url'];
     }
 
     public function isActive(): bool
