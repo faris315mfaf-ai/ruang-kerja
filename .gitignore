@@ -1,7 +1,11 @@
 /.phpunit.cache
 /bootstrap/ssr
 /node_modules
+/resources/js/actions
+/resources/js/routes
+/resources/js/wayfinder
 /public/build
+/public/fonts-manifest.dev.json
 /public/hot
 /public/storage
 /storage/*.key
@@ -35,3 +39,6 @@ google-sa*.json
 /tests/Browser/screenshots
 /playwright-report
 /test-results
+
+# macOS
+.DS_Store
