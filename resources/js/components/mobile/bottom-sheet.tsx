@@ -55,7 +55,7 @@ export function BottomSheet({
                         {children}
                     </div>
                     {footer && (
-                        <div className="pb-safe border-t border-border px-4 pt-3">
+                        <div className="border-t border-border px-4 pt-3 pb-safe">
                             <div className="pb-3">{footer}</div>
                         </div>
                     )}

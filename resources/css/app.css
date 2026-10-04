@@ -80,6 +80,7 @@
     --color-glass: var(--glass-bg);
     --color-glass-border: var(--glass-border);
     --color-on-brand: var(--on-brand);
+    --color-on-danger: var(--on-danger);
 
     --shadow-card: var(--shadow-1);
     --ease-brand: var(--ease);
@@ -120,9 +121,16 @@
 
     /* Teks di atas gradien brand / avatar berwarna (sama di terang & gelap). */
     --on-brand: #ffffff;
+    /* Teks di atas --danger: putih di terang, gelap di mode gelap (kontras >= 4.5:1). */
+    --on-danger: #ffffff;
 
     --app-bar-height: 56px;
     --tab-bar-height: 64px;
+}
+
+/* Mode gelap: --danger lebih terang, jadi teks di atasnya harus gelap. */
+.dark {
+    --on-danger: #2a0a0a;
 }
 
 @layer base {

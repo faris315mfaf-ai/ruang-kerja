@@ -1,6 +1,7 @@
 import { usePasskeyRegister } from '@laravel/passkeys/react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
+import { passkeyErrorMessage } from '@/components/passkey-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,17 +30,18 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
             { pattern: /Windows/, name: 'Windows' },
         ].find(({ pattern }) => pattern.test(ua))?.name;
 
-        return [browser, os].filter(Boolean).join(' on ') || '';
+        return [browser, os].filter(Boolean).join(' di ') || '';
     });
 
     const [showForm, setShowForm] = useState(false);
-    const { register, isLoading, error, isSupported } = usePasskeyRegister({
-        onSuccess: () => {
-            setName('');
-            setShowForm(false);
-            onSuccess();
-        },
-    });
+    const { register, isLoading, error, errorInstance, isSupported } =
+        usePasskeyRegister({
+            onSuccess: () => {
+                setName('');
+                setShowForm(false);
+                onSuccess();
+            },
+        });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -59,7 +61,7 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
     if (!isSupported) {
         return (
             <div className="text-sm text-muted-foreground">
-                Passkeys are not supported in this browser.
+                Browser ini belum mendukung passkey.
             </div>
         );
     }
@@ -67,7 +69,7 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
     if (!showForm) {
         return (
             <Button variant="outline" onClick={() => setShowForm(true)}>
-                Add passkey
+                Tambah passkey
             </Button>
         );
     }
@@ -78,29 +80,29 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
             className="space-y-4 rounded-lg border border-border bg-muted/50 p-4"
         >
             <div className="grid gap-2">
-                <Label htmlFor="passkey-name">Passkey name</Label>
+                <Label htmlFor="passkey-name">Nama passkey</Label>
                 <Input
                     id="passkey-name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g., MacBook Pro, iPhone"
+                    placeholder="mis. MacBook Pro, iPhone"
                     className="mt-1 block w-full border-foreground/20"
                     autoFocus
                 />
                 <p className="text-xs text-muted-foreground">
-                    A name helps you identify this passkey later.
+                    Nama membantu Anda mengenali passkey ini nanti.
                 </p>
             </div>
 
-            {error && <InputError message={error} />}
+            <InputError message={passkeyErrorMessage(error, errorInstance)} />
 
             <div className="flex gap-2">
                 <Button type="submit" disabled={isLoading || !name.trim()}>
-                    {isLoading ? 'Registering...' : 'Register passkey'}
+                    {isLoading ? 'Mendaftarkan…' : 'Daftarkan passkey'}
                 </Button>
                 <Button type="button" variant="ghost" onClick={handleCancel}>
-                    Cancel
+                    Batal
                 </Button>
             </div>
         </form>

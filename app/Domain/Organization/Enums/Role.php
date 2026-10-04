@@ -23,4 +23,60 @@ enum Role: string
             self::Anggota => 'Anggota',
         };
     }
+
+    /**
+     * Permission matrix (single source of truth, synced by RoleSeeder and
+     * documented in docs/sprints/sprint-1/CORE.md).
+     *
+     * @return list<Permission>
+     */
+    public function permissions(): array
+    {
+        return match ($this) {
+            self::SuperAdmin => [
+                Permission::EmployeesView,
+                Permission::EmployeesManage,
+                Permission::OrganizationManage,
+                Permission::SettingsManage,
+                Permission::AuditView,
+                Permission::AttendanceViewAll,
+                Permission::AttendanceManage,
+                Permission::AttendanceExport,
+                Permission::RequestsViewAll,
+                Permission::RequestsManageFlows,
+                Permission::WorkspacesManage,
+                Permission::DashboardViewCompany,
+                Permission::PortfolioView,
+            ],
+            self::Direksi => [
+                Permission::EmployeesView,
+                Permission::AttendanceViewAll,
+                Permission::RequestsViewAll,
+                Permission::WorkspacesViewAll,
+                Permission::DashboardViewCompany,
+                Permission::PortfolioView,
+            ],
+            self::Hr => [
+                Permission::EmployeesView,
+                Permission::EmployeesManage,
+                Permission::OrganizationManage,
+                Permission::AttendanceViewAll,
+                Permission::AttendanceManage,
+                Permission::AttendanceViewSelfie,
+                Permission::AttendanceExport,
+                Permission::RequestsViewAll,
+                Permission::RequestsManageFlows,
+                Permission::DashboardViewCompany,
+            ],
+            self::KepalaDivisi, self::Anggota => [],
+        };
+    }
+
+    /**
+     * @return list<array{value: string, label: string}>
+     */
+    public static function options(): array
+    {
+        return array_map(fn (self $case): array => ['value' => $case->value, 'label' => $case->label()], self::cases());
+    }
 }

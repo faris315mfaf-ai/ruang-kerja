@@ -21,7 +21,7 @@ it('seeds one demo user per role in the testing environment, idempotently', func
     $this->seed(DatabaseSeeder::class);
     $this->seed(DatabaseSeeder::class);
 
-    expect(User::query()->count())->toBe(5)
+    expect(User::query()->count())->toBe(22)
         ->and(RoleModel::query()->count())->toBe(5);
 
     foreach (DemoAccounts::all() as $account) {
