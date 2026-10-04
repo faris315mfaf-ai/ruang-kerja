@@ -11,7 +11,8 @@ use App\Models\WorkspaceMember;
  * Reconciles the synced members of a division/team workspace with the
  * organization: adds missing people (is_synced = true), removes synced rows of
  * people who left, never touches manually added members, and keeps role
- * changes made by admins (only an `owner` target is enforced).
+ * changes made by admins (only ownership is enforced: the owner row follows
+ * workspaces.owner_id and a former owner falls back to the synced role).
  */
 final class MemberSynchronizer
 {
@@ -50,8 +51,11 @@ final class MemberSynchronizer
                 continue;
             }
 
-            if ($role === WorkspaceRole::Owner && $row->role !== WorkspaceRole::Owner) {
-                $this->setRole($workspace, $userId, WorkspaceRole::Owner);
+            // Ownership follows workspaces.owner_id (e.g. a new Kepala Divisi).
+            $ownerChange = ($role === WorkspaceRole::Owner) !== ($row->role === WorkspaceRole::Owner);
+
+            if ($ownerChange) {
+                $this->setRole($workspace, $userId, $role);
                 $changed = true;
             }
         }

@@ -10,6 +10,7 @@ use App\Domain\Workspaces\Services\MemberSynchronizer;
 use App\Models\Division;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -91,7 +92,8 @@ final class SyncDivisionMembers
         return User::query()
             ->active()
             ->where('company_id', $division->company_id)
-            ->role(Role::SuperAdmin->value)
+            // whereHas instead of ->role(): never throws when roles are not seeded.
+            ->whereHas('roles', fn (Builder $role) => $role->where('name', Role::SuperAdmin->value))
             ->orderBy('id')
             ->first();
     }

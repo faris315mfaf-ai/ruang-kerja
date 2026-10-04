@@ -125,12 +125,11 @@ class Workspace extends Model
             return $this->membership->role;
         }
 
-        $role = WorkspaceMember::query()
+        return WorkspaceMember::query()
             ->where('workspace_id', $this->id)
             ->where('user_id', $user->id)
-            ->value('role');
-
-        return is_string($role) ? WorkspaceRole::from($role) : null;
+            ->first(['role'])
+            ?->role;
     }
 
     /**
