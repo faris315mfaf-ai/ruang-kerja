@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="id">
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
+        <meta name="color-scheme" content="light dark" />
+        <meta name="robots" content="noindex" />
+        <meta
+            name="theme-color"
+            content="#0A7C85"
+            media="(prefers-color-scheme: light)"
+        />
+        <meta
+            name="theme-color"
+            content="#0A0E11"
+            media="(prefers-color-scheme: dark)"
+        />
+        <title>Offline · RuangKerja</title>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <style>
+            /* Mirrors resources/css/tokens.css; this page must work without the app bundle. */
+            :root {
+                --bg: #f6f8f9;
+                --surface: #ffffff;
+                --border: #e2e8eb;
+                --text: #0f1a1f;
+                --text-muted: #5a6a72;
+                --primary: #0a7c85;
+                --primary-fg: #ffffff;
+            }
+
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --bg: #0a0e11;
+                    --surface: #10161a;
+                    --border: #1f292f;
+                    --text: #e7eef1;
+                    --text-muted: #8c9ca4;
+                    --primary: #2fc0b0;
+                    --primary-fg: #04201f;
+                }
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                height: 100%;
+                margin: 0;
+            }
+
+            body {
+                display: grid;
+                place-items: center;
+                padding: max(24px, env(safe-area-inset-top)) 16px
+                    max(24px, env(safe-area-inset-bottom));
+                background: var(--bg);
+                color: var(--text);
+                font-family:
+                    'Plus Jakarta Sans',
+                    system-ui,
+                    -apple-system,
+                    'Segoe UI',
+                    Roboto,
+                    sans-serif;
+                font-size: 16px;
+                line-height: 1.5;
+                -webkit-font-smoothing: antialiased;
+            }
+
+            main {
+                width: 100%;
+                max-width: 360px;
+                padding: 32px 24px;
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                background: var(--surface);
+                text-align: center;
+            }
+
+            img {
+                display: block;
+                width: 56px;
+                height: 56px;
+                margin: 0 auto 20px;
+            }
+
+            h1 {
+                margin: 0 0 8px;
+                font-size: 20px;
+                font-weight: 600;
+            }
+
+            p {
+                margin: 0 0 24px;
+                color: var(--text-muted);
+            }
+
+            button {
+                min-height: 44px;
+                padding: 0 20px;
+                border: 0;
+                border-radius: 8px;
+                background: var(--primary);
+                color: var(--primary-fg);
+                font: inherit;
+                font-weight: 600;
+                cursor: pointer;
+            }
+
+            button:focus-visible {
+                outline: 2px solid var(--primary);
+                outline-offset: 3px;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <img src="/icons/icon-192.png" alt="" width="56" height="56" />
+            <h1>Anda sedang offline</h1>
+            <p>
+                Check-in butuh koneksi. Periksa jaringan Anda, lalu coba lagi.
+            </p>
+            <button type="button" onclick="location.reload()">Coba lagi</button>
+        </main>
+        <script>
+            // Reload automatically once the connection is back.
+            window.addEventListener('online', () => location.reload());
+        </script>
+    </body>
+</html>
