@@ -32,7 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Local demo login (APP_ENV=local + DEMO_LOGIN_ENABLED=true; otherwise 404).
 Route::post('login/demo', [DemoLoginController::class, 'store'])
-    ->middleware(['guest', 'throttle:10,1'])
+    ->middleware(['guest', 'throttle:login'])
     ->name('login.demo');
 
 require __DIR__.'/settings.php';

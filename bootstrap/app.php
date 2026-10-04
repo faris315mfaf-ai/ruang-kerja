@@ -1,13 +1,16 @@
 <?php
 
+use App\Http\Controllers\HealthController;
 use App\Http\Middleware\EnsureActiveEmployee;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,8 +18,15 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
+        then: function (): void {
+            // Outside the `web` group: no session or cookies for uptime monitors.
+            Route::get('health', HealthController::class)->name('health');
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Global: covers every response (pages, /up, /health, errors, dashboards).
+        $middleware->append(SecurityHeaders::class);
+
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->web(append: [
