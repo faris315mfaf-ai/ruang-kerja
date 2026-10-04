@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Notifications\Services\InboxQuery;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -51,6 +52,8 @@ class HandleInertiaRequests extends Middleware
                 'roles' => $user?->getRoleNames()->values()->all() ?? [],
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            // Bell / sidebar / tab badge. Closure: skipped on partial reloads that don't ask for it.
+            'inbox' => fn (): ?array => $user ? ['unread' => app(InboxQuery::class)->unreadCount($user)] : null,
         ];
     }
 }
