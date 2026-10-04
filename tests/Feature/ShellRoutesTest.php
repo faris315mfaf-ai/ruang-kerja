@@ -31,7 +31,6 @@ it('renders the shell pages for a signed-in employee', function (string $uri, st
     ['/dashboard', 'dashboard'],
     ['/menu', 'menu'],
     ['/inbox', 'placeholder'],
-    ['/admin/karyawan', 'placeholder'],
 ]);
 
 it('shares branding and the global roles of the signed-in user', function () {

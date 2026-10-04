@@ -20,7 +20,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'pengajuan' => ['requests.index', 'Pengajuan'],
         'persetujuan' => ['approvals.index', 'Persetujuan'],
         'workspace' => ['workspaces.index', 'Workspace'],
-        'admin/karyawan' => ['admin.employees.index', 'Karyawan'],
         'pengaturan/notifikasi' => ['settings.notifications', 'Pengaturan notifikasi'],
         'privasi' => ['privacy.index', 'Privasi & data saya'],
     ];
@@ -36,3 +35,4 @@ Route::post('login/demo', [DemoLoginController::class, 'store'])
     ->name('login.demo');
 
 require __DIR__.'/settings.php';
+require __DIR__.'/admin-employees.php';
