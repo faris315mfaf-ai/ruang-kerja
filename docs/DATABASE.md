@@ -38,9 +38,11 @@
 |---|---|---|
 | id | ulid PK | |
 | name | varchar(150) | |
-| google_domain | varchar(150) | domain Workspace yang diizinkan login, mis. `perusahaan.co.id` |
+| google_domain | varchar(150) unique | domain Workspace yang diizinkan login, mis. `perusahaan.co.id` (disimpan huruf kecil) |
 | timezone | varchar(50) | default `Asia/Jakarta` |
-| settings | jsonb | jam ringkasan harian, retensi selfie (bulan), dll. |
+| settings | jsonb | jam ringkasan harian, retensi selfie (bulan), dll. Default `{}` |
+
+`companies`, `divisions`, `teams`, `positions` memakai `deleted_at` (soft delete).
 
 ### divisions
 | Kolom | Tipe | Keterangan |
@@ -49,12 +51,12 @@
 | company_id | FK companies | |
 | parent_id | FK divisions null | untuk sub-divisi bila perlu |
 | name | varchar(120) | |
-| code | varchar(10) unique per company | dipakai prefix task, mis. `KEU` |
+| code | varchar(10) unique per company | dipakai prefix task, mis. `KEU`. Huruf besar (mutator + CHECK `code = upper(code)`); unik termasuk baris terhapus (kode tidak dipakai ulang) |
 | head_user_id | FK users null | Kepala Divisi |
 | is_board | bool | `true` untuk unit **Direksi** |
 
 ### teams
-`id`, `division_id` FK, `name`, `lead_user_id` FK users null.
+`id`, `division_id` FK, `name`, `code` varchar(10) null (label singkat di bagan, mis. `GDG`; huruf besar), `lead_user_id` FK users null (Ketua Tim).
 
 ### positions
 `id`, `company_id`, `name` (mis. "Staf Keuangan"), `level` smallint (1 = Direksi … 5 = Staf).
@@ -80,10 +82,12 @@
 | theme | varchar | `system` · `light` · `dark` |
 | last_login_at | timestamptz null | |
 
-Indeks: `(company_id, status)`, `(division_id)`, `(manager_id)`.
+Indeks: `(company_id, status)`, `(division_id)`, `(manager_id)`, `(team_id)`, `(position_id)`.
+
+Implementasi (Sprint 1): kolom organisasi ditambahkan lewat migrasi `2026_10_05_000500_add_organization_columns_to_users_table` (bukan menulis ulang migrasi Sprint 0). `password` nullable. `two_factor_recovery_codes` & `two_factor_confirmed_at` (Fortify) dan `email_verified_at`, `remember_token` tetap ada. `work_mode` default `office`, `status` default `active`, `joined_at` nullable. FK `division_id`/`team_id`/`position_id`/`manager_id` = `nullOnDelete`.
 
 ### employee_profiles
-`user_id` PK/FK, `employee_number` unique, `nik` (encrypted), `phone` (untuk WA), `birth_date`, `address`, `emergency_contact` jsonb. Dipisah agar data pribadi tidak ikut ter-load di setiap query `users`.
+`user_id` PK/FK (cascade), `employee_number` varchar(30) unique null, `nik` text null (encrypted, disembunyikan dari serialisasi), `phone` (untuk WA), `birth_date`, `address`, `emergency_contact` jsonb (`{name, relation, phone}`). Dipisah agar data pribadi tidak ikut ter-load di setiap query `users`.
 
 ### Peran global (spatie/laravel-permission)
 Peran awal: `super_admin`, `direksi`, `hr`, `kepala_divisi`, `anggota`. Satu user boleh punya beberapa peran.
@@ -96,9 +100,11 @@ Peran awal: `super_admin`, `direksi`, `hr`, `kepala_divisi`, `anggota`. Satu use
 | action | varchar(80) | mis. `attendance.corrected`, `request.approved`, `selfie.viewed` |
 | auditable_type / auditable_id | morph | objek |
 | old_values / new_values | jsonb null | |
-| ip_address | inet | |
-| user_agent | varchar | |
-| created_at | timestamptz | append-only, tanpa update |
+| ip_address | inet null | null untuk perubahan dari console/queue |
+| user_agent | varchar(512) null | |
+| created_at | timestamptz | append-only, tanpa update (model menolak update) |
+
+Indeks: `(auditable_type, auditable_id)`, `(action)`, `(created_at)`, `(user_id, created_at)`. `auditable_type` berisi nama kelas model (tanpa morph map).
 
 ---
 
