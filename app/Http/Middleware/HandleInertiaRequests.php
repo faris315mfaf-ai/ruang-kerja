@@ -2,9 +2,13 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Resources\Attendance\MyAttendance;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Middleware;
+use Inertia\OnceProp;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -63,6 +67,25 @@ class HandleInertiaRequests extends Middleware
                 'roles' => $user?->getRoleNames()->values()->all() ?? [],
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+        ];
+    }
+
+    /**
+     * Props resolved once and remembered by the client across navigations.
+     *
+     * @return array<string, callable|OnceProp>
+     */
+    public function shareOnce(Request $request): array
+    {
+        $user = $request->user();
+
+        return [
+            ...parent::shareOnce($request),
+            // Sidebar check-in widget + topbar button (Sprint 2). Refreshed every
+            // 5 minutes, and by the Absensi page right after a check-in/out.
+            'attendanceStatus' => Inertia::once(
+                fn (): ?array => $user instanceof User ? app(MyAttendance::class)->status($user, CarbonImmutable::now()) : null,
+            )->until(300),
         ];
     }
 }

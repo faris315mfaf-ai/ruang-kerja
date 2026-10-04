@@ -16,7 +16,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     $upcoming = [
         'inbox' => ['inbox', 'Inbox'],
         'tugas' => ['tasks.mine', 'Tugas saya'],
-        'absensi' => ['attendance.index', 'Absensi'],
         'pengajuan' => ['requests.index', 'Pengajuan'],
         'persetujuan' => ['approvals.index', 'Persetujuan'],
         'workspace' => ['workspaces.index', 'Workspace'],
@@ -36,3 +35,4 @@ Route::post('login/demo', [DemoLoginController::class, 'store'])
     ->name('login.demo');
 
 require __DIR__.'/settings.php';
+require __DIR__.'/attendance.php';
