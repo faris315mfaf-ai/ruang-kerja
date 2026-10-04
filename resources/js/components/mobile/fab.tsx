@@ -13,7 +13,7 @@ export function Fab({ label, className, children, ...props }: Props) {
             type="button"
             aria-label={label}
             className={cn(
-                'fixed right-4 z-30 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-card transition-transform duration-120 ease-brand active:scale-95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none',
+                'fixed right-4 z-30 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-card transition-transform duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none active:scale-95',
                 'bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom)+16px)]',
                 className,
             )}

@@ -19,7 +19,7 @@ export function TabBar() {
     return (
         <nav
             aria-label="Navigasi utama"
-            className="glass pb-safe fixed inset-x-0 bottom-0 z-40 border-x-0 border-b-0"
+            className="glass fixed inset-x-0 bottom-0 z-40 border-x-0 border-b-0 pb-safe"
         >
             <ul className="mx-auto grid h-(--tab-bar-height) max-w-xl grid-cols-5">
                 {tabNavItems.map((item) => {

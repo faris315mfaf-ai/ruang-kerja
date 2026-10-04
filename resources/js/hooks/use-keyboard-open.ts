@@ -4,7 +4,8 @@ import { useSyncExternalStore } from 'react';
 const KEYBOARD_THRESHOLD = 150;
 
 function subscribe(callback: () => void): () => void {
-    const viewport = typeof window === 'undefined' ? null : window.visualViewport;
+    const viewport =
+        typeof window === 'undefined' ? null : window.visualViewport;
 
     viewport?.addEventListener('resize', callback);
 

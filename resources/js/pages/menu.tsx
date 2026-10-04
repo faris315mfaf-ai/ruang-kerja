@@ -148,7 +148,11 @@ export default function Menu() {
 
                 <Section title="Pekerjaan">
                     <Group>
-                        <Row icon={LayoutGrid} label="Dashboard" href="/dashboard" />
+                        <Row
+                            icon={LayoutGrid}
+                            label="Dashboard"
+                            href="/dashboard"
+                        />
                         <Row
                             icon={CheckCheck}
                             label="Persetujuan"

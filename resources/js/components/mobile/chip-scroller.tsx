@@ -27,7 +27,7 @@ export function ChipScroller<T extends string>({
             role="radiogroup"
             aria-label={label}
             className={cn(
-                '-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+                '-mx-4 flex snap-x [scrollbar-width:none] gap-2 overflow-x-auto px-4 pb-1 [&::-webkit-scrollbar]:hidden',
                 className,
             )}
         >
@@ -50,7 +50,7 @@ export function ChipScroller<T extends string>({
                     >
                         {chip.label}
                         {chip.count !== undefined && (
-                            <span className="tnum text-xs opacity-80">
+                            <span className="text-xs tnum opacity-80">
                                 {chip.count}
                             </span>
                         )}

@@ -10,7 +10,11 @@ type Props = AppBarProps & {
 };
 
 /** Mobile shell (< 768px): app bar 56px + glass bottom tabs (docs/PLATFORM.md §2). */
-export default function MobileLayout({ children, bottomBar, ...appBar }: Props) {
+export default function MobileLayout({
+    children,
+    bottomBar,
+    ...appBar
+}: Props) {
     return (
         <div className="flex min-h-svh flex-col">
             <AppBar {...appBar} />
