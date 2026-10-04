@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -36,18 +37,29 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        $user = $user instanceof User ? $user : null;
+
+        // Small PK lookups; gives the shell the user's place in the organization.
+        $user?->loadMissing(['company:id,name', 'division:id,name,code', 'position:id,name,level']);
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'branding' => [
                 'name' => config('branding.name', config('app.name')),
-                'companyName' => config('branding.company_name'),
+                'companyName' => $user !== null ? $user->company->name : config('branding.company_name'),
                 'shortName' => config('branding.short_name', 'RK'),
                 'logo' => config('branding.logo'),
             ],
             'auth' => [
-                'user' => $user,
+                'user' => $user === null ? null : [
+                    // Attributes only: relations loaded elsewhere (roles, permissions) never leak.
+                    ...$user->attributesToArray(),
+                    'avatar' => $user->avatar_url,
+                    'company' => $user->company->only(['id', 'name']),
+                    'division' => $user->division?->only(['id', 'name', 'code']),
+                    'position' => $user->position?->only(['id', 'name', 'level']),
+                ],
                 'roles' => $user?->getRoleNames()->values()->all() ?? [],
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
