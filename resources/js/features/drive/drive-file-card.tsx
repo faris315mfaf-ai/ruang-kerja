@@ -1,5 +1,4 @@
 import { ExternalLink, X } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { DriveFileIcon } from './drive-file-icon';
@@ -36,7 +35,7 @@ export function DriveFileCard({
     return (
         <div
             className={cn(
-                'group relative flex min-h-14 items-center gap-3 rounded-lg border border-border bg-surface p-3 shadow-card transition-colors duration-150 ease-brand focus-within:ring-[3px] focus-within:ring-ring/50 hover:border-border-strong',
+                'group relative flex min-h-14 w-full min-w-0 items-center gap-3 rounded-lg border border-border bg-surface p-3 shadow-card transition-colors duration-150 ease-brand focus-within:ring-[3px] focus-within:ring-ring/50 hover:border-border-strong',
                 selected && 'border-primary bg-primary/5',
                 file.deleted && 'opacity-70',
                 className,
@@ -64,14 +63,15 @@ export function DriveFileCard({
                         <span className="sr-only"> (buka di tab baru)</span>
                     </a>
                 )}
-                <p className="truncate text-xs text-text-muted">{meta}</p>
+                <p className="truncate text-xs text-text-muted">
+                    {file.deleted && (
+                        <span className="text-warning">
+                            Dihapus dari Drive ·{' '}
+                        </span>
+                    )}
+                    {meta}
+                </p>
             </div>
-
-            {file.deleted && (
-                <Badge variant="outline" className="relative z-10 shrink-0">
-                    Dihapus dari Drive
-                </Badge>
-            )}
 
             {onPreview && !file.deleted && (
                 <Button
