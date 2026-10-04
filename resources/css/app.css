@@ -10,6 +10,7 @@
 
 /* Sumber kebenaran warna, radius, font, glass. Lihat docs/DESIGN.md. */
 @import './tokens.css';
+@import './palette.css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
