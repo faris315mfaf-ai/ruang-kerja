@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+    Building2,
     CheckCheck,
     CircleCheck,
     FileText,
@@ -8,6 +9,8 @@ import {
     LayoutGrid,
     MapPin,
     Menu,
+    Network,
+    ScrollText,
     Users,
 } from 'lucide-react';
 import type { RoleName } from '@/lib/roles';
@@ -19,6 +22,8 @@ export type AppNavItem = {
     icon: LucideIcon;
     /** Match nested routes too (e.g. /pengajuan/123). */
     matchPrefix?: boolean;
+    /** Hidden from the mobile Menu tab (docs/PLATFORM.md §3, "—" on mobile). */
+    desktopOnly?: boolean;
 };
 
 /** Desktop sidebar: main navigation (docs/DESIGN.md §5). */
@@ -42,6 +47,12 @@ export const mainNavItems: AppNavItem[] = [
         title: 'Persetujuan',
         href: '/persetujuan',
         icon: CheckCheck,
+        matchPrefix: true,
+    },
+    {
+        title: 'Struktur organisasi',
+        href: '/organisasi/struktur',
+        icon: Network,
         matchPrefix: true,
     },
 ];
@@ -72,6 +83,26 @@ export function adminNavItems(roles: readonly string[]): AppNavItem[] {
             href: '/admin/karyawan',
             icon: Users,
             matchPrefix: true,
+        });
+    }
+
+    if (hasAnyRole(roles, 'super_admin', 'hr')) {
+        items.push({
+            title: 'Organisasi',
+            href: '/admin/organisasi',
+            icon: Building2,
+            matchPrefix: true,
+            desktopOnly: true,
+        });
+    }
+
+    if (hasAnyRole(roles, 'super_admin')) {
+        items.push({
+            title: 'Audit log',
+            href: '/admin/audit',
+            icon: ScrollText,
+            matchPrefix: true,
+            desktopOnly: true,
         });
     }
 
