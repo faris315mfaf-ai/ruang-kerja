@@ -92,6 +92,28 @@ Implementasi (Sprint 1): kolom organisasi ditambahkan lewat migrasi `2026_10_05_
 ### Peran global (spatie/laravel-permission)
 Peran awal: `super_admin`, `direksi`, `hr`, `kepala_divisi`, `anggota`. Satu user boleh punya beberapa peran.
 
+Permission dasar (guard `web`; sumber kebenaran `App\Domain\Organization\Enums\Role::permissions()`, disinkronkan `RoleSeeder`). Cakupan data (diri sendiri / bawahan / divisi / semua) **bukan** permission, melainkan scope `visibleTo()` + Policy.
+
+| Permission | super_admin | direksi | hr | kepala_divisi | anggota |
+|---|:-:|:-:|:-:|:-:|:-:|
+| `employees.view` — lihat semua karyawan | ✓ | ✓ | ✓ | | |
+| `employees.manage` — tambah/ubah/nonaktifkan/impor karyawan, atur peran (kecuali Super Admin) | ✓ | | ✓ | | |
+| `organization.manage` — CRUD divisi, tim, jabatan | ✓ | | ✓ | | |
+| `settings.manage` — pengaturan sistem, perusahaan, integrasi Google | ✓ | | | | |
+| `audit.view` — halaman audit log | ✓ | | | | |
+| `attendance.view_all` — absensi semua karyawan | ✓ | ✓ | ✓ | | |
+| `attendance.manage` — koreksi absensi, shift, lokasi, hari libur | ✓ | | ✓ | | |
+| `attendance.view_selfie` — lihat selfie (atasan langsung diizinkan lewat Policy, bukan permission) | | | ✓ | | |
+| `attendance.export` — ekspor rekap | ✓ | | ✓ | | |
+| `requests.view_all` — semua pengajuan | ✓ | ✓ | ✓ | | |
+| `requests.manage_flows` — alur approval & jenis cuti | ✓ | | ✓ | | |
+| `workspaces.view_all` — lihat workspace non-pribadi | | ✓ | | | |
+| `workspaces.manage` — kelola workspace non-pribadi | ✓ | | | | |
+| `dashboard.view_company` — dashboard seluruh perusahaan | ✓ | ✓ | ✓ | | |
+| `portfolio.view` — portofolio proyek (M10) | ✓ | ✓ | | | |
+
+Tidak ada `Gate::before` untuk Super Admin: workspace pribadi & selfie tetap tertutup baginya.
+
 ### audit_logs
 | Kolom | Tipe | Keterangan |
 |---|---|---|
