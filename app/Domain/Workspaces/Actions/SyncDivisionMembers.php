@@ -2,6 +2,7 @@
 
 namespace App\Domain\Workspaces\Actions;
 
+use App\Domain\Organization\Enums\Role;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
 use App\Domain\Workspaces\Enums\WorkspaceType;
 use App\Domain\Workspaces\Enums\WorkspaceVisibility;
@@ -9,7 +10,6 @@ use App\Domain\Workspaces\Services\MemberSynchronizer;
 use App\Models\Division;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Domain\Organization\Enums\Role;
 use Illuminate\Support\Facades\DB;
 
 /**

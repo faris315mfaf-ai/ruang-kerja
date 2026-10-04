@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Workspaces\Queries\SidebarWorkspaces;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -63,6 +64,8 @@ class HandleInertiaRequests extends Middleware
                 'roles' => $user?->getRoleNames()->values()->all() ?? [],
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            // Sidebar "Workspace" section & mobile Menu grid (Sprint 5); lazy, skipped on partial reloads.
+            'workspaces' => fn (): array => $user === null ? [] : app(SidebarWorkspaces::class)->for($user),
         ];
     }
 }

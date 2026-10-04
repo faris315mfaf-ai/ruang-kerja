@@ -7,6 +7,7 @@ use App\Domain\Organization\Enums\Role;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
 use App\Domain\Workspaces\Enums\WorkspaceType;
 use App\Domain\Workspaces\Enums\WorkspaceVisibility;
+use Carbon\CarbonImmutable;
 use Database\Factories\WorkspaceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,9 +18,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder as QueryBuilder;
-use Carbon\CarbonImmutable;
 
 /**
  * Workspace: personal, team, division or project (docs/DATABASE.md §4).
@@ -90,6 +91,14 @@ class Workspace extends Model
             'last_update_at' => 'datetime',
             'completed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * URLs use the key: /w/OPS (see the explicit binding in routes/workspaces.php).
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'key';
     }
 
     public function isPersonal(): bool
@@ -209,7 +218,7 @@ class Workspace extends Model
      */
     public function scopeWithMembershipOf(Builder $query, User $user): void
     {
-        $query->with(['membership' => fn (HasOne $membership) => $membership->where('user_id', $user->id)]);
+        $query->with(['membership' => fn (Relation $membership) => $membership->where('user_id', $user->id)]);
     }
 
     /**

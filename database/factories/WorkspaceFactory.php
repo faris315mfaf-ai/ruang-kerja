@@ -29,7 +29,7 @@ class WorkspaceFactory extends Factory
         return [
             'company_id' => fn (): string => CompanyFactory::defaultId(),
             'type' => WorkspaceType::Project,
-            'name' => 'Proyek '.fake()->unique()->words(2, true),
+            'name' => 'Proyek '.ucfirst(fake()->unique()->word()).' '.fake()->numberBetween(1, 99),
             'key' => 'W'.strtoupper(fake()->unique()->lexify('???')),
             'visibility' => WorkspaceVisibility::Private,
             'color' => 'violet',

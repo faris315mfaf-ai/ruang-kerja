@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use App\Domain\Workspaces\Enums\WorkspaceRole;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
-use Carbon\CarbonImmutable;
 
 /**
  * workspace_members row (composite key workspace_id + user_id). Write it with

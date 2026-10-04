@@ -27,7 +27,7 @@ class TaskFactory extends Factory
         return [
             'workspace_id' => Workspace::factory(),
             'number' => fn (array $attributes): int => self::nextNumber((string) $attributes['workspace_id']),
-            'title' => ucfirst(fake()->words(4, true)),
+            'title' => rtrim(fake()->sentence(4), '.'),
             'status_id' => fn (array $attributes): string => self::defaultStatus((string) $attributes['workspace_id'])->id,
             'status_category' => fn (array $attributes): TaskStatusCategory => self::status((string) $attributes['status_id'])->category,
             'priority' => TaskPriority::None,
