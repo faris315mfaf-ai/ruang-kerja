@@ -56,8 +56,8 @@ final class PeopleSearchProvider implements SearchProvider
                 title: $user->name,
                 icon: 'user',
                 url: 'mailto:'.$user->email,
-                subtitle: $placement !== [] ? implode(' · ', $placement) : $user->email,
-                meta: $user->email,
+                subtitle: $user->email,
+                meta: $placement !== [] ? implode(' · ', $placement) : null,
                 avatar: $user->avatar_url,
                 external: true,
             );

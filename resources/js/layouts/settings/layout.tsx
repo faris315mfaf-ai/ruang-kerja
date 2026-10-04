@@ -22,6 +22,11 @@ const sidebarNavItems: NavItem[] = [
         icon: null,
     },
     {
+        title: 'Notifikasi',
+        href: '/pengaturan/notifikasi',
+        icon: null,
+    },
+    {
         title: 'Tampilan',
         href: editAppearance(),
         icon: null,

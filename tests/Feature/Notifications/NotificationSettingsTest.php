@@ -4,6 +4,7 @@ use App\Domain\Notifications\Actions\UpdateNotificationPreference;
 use App\Domain\Notifications\Actions\UpdateNotificationSettings;
 use App\Domain\Notifications\Enums\NotificationChannel;
 use App\Domain\Notifications\Enums\NotificationEvent;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\InboxNotification;
 use App\Models\NotificationPreference;
 use App\Models\NotificationSetting;
@@ -49,6 +50,7 @@ it('loads the digest preview as a deferred prop', function () {
     $this->actingAs($user)
         ->get('/pengaturan/notifikasi', [
             'X-Inertia' => 'true',
+            'X-Inertia-Version' => (string) app(HandleInertiaRequests::class)->version(request()),
             'X-Inertia-Partial-Component' => 'notifications/settings',
             'X-Inertia-Partial-Data' => 'digestPreview',
         ])
@@ -198,4 +200,25 @@ it('sends a test notification (rate limited)', function () {
     }
 
     $this->actingAs($user)->post('/pengaturan/notifikasi/uji')->assertTooManyRequests();
+});
+
+it('keeps separate rate limits for polling, search and test notifications', function () {
+    $user = User::factory()->create();
+
+    foreach (range(1, 8) as $ignored) {
+        $this->actingAs($user)->getJson('/inbox/feed')->assertOk();
+        $this->actingAs($user)->getJson('/cari/hasil?q=ab')->assertOk();
+    }
+
+    $this->actingAs($user)->post('/pengaturan/notifikasi/uji')->assertRedirect();
+});
+
+it('rate limits the polling feed', function () {
+    $user = User::factory()->create();
+
+    foreach (range(1, 10) as $ignored) {
+        $this->actingAs($user)->getJson('/inbox/feed')->assertOk();
+    }
+
+    $this->actingAs($user)->getJson('/inbox/feed')->assertTooManyRequests();
 });

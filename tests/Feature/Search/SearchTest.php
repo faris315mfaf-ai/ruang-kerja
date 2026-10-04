@@ -94,12 +94,12 @@ it('finds people by name or email with their placement (HR sees the whole compan
     expect(collect($people['items'])->pluck('title')->all())->toBe(['Rizky Aditya', 'Sari Wulandari'])
         ->and($people['label'])->toBe('Orang')
         ->and($people['items'][1])->toMatchArray([
-            'subtitle' => 'Staf Operasional · Operasional',
-            'meta' => 'sari@demo.test',
+            'subtitle' => 'sari@demo.test',
+            'meta' => 'Staf Operasional · Operasional',
             'url' => 'mailto:sari@demo.test',
             'icon' => 'user',
         ])
-        ->and($people['items'][0]['subtitle'])->toBe('rizky.wulan@demo.test')
+        ->and($people['items'][0]['meta'])->toBeNull()
         ->and(json_encode($people))->not->toContain('password');
 });
 
