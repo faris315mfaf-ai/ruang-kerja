@@ -10,4 +10,10 @@ parameters:
         - database/
         - routes/
 
-    level: 7
+    level: 8
+
+    # Berkas konfigurasi & migrasi yang diterbitkan paket pihak ketiga (bukan kode kita).
+    excludePaths:
+        - config/horizon.php
+        - config/pulse.php
+        - database/migrations/*_create_pulse_tables.php

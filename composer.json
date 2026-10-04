@@ -14,9 +14,14 @@
         "laravel/chisel": "^0.1.0",
         "laravel/fortify": "^1.37.2",
         "laravel/framework": "^13.17",
+        "laravel/horizon": "^5.50",
+        "laravel/pulse": "^1.8",
+        "laravel/reverb": "^1.12",
+        "laravel/socialite": "^5.31",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
-        "predis/predis": "^3.6"
+        "predis/predis": "^3.6",
+        "spatie/laravel-permission": "^8.3"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",
@@ -27,6 +32,8 @@
         "laravel/sail": "^1.53",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.9.3",
+        "pestphp/pest": "^4.7",
+        "pestphp/pest-plugin-laravel": "^4.1",
         "phpunit/phpunit": "^12.5.23"
     },
     "autoload": {
@@ -52,28 +59,30 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "@php artisan dev"
+            "npx concurrently -c blue,magenta,yellow,green --names=server,horizon,reverb,vite --kill-others \"php artisan serve\" \"php artisan horizon\" \"php artisan reverb:start\" \"npm run dev\""
+        ],
+        "dev:win": [
+            "Composer\\Config::disableProcessTimeout",
+            "npx concurrently -c green,yellow,magenta,cyan --names=vite,reverb,queue,schedule --kill-others \"npm run dev\" \"php artisan reverb:start\" \"php artisan queue:work --tries=3\" \"php artisan schedule:work\""
         ],
         "lint": [
-            "pint --parallel"
+            "pint --test",
+            "phpstan analyse --memory-limit=1G"
         ],
-        "lint:check": [
-            "pint --parallel --test"
+        "lint:fix": [
+            "pint --parallel"
         ],
         "ci:check": [
             "Composer\\Config::disableProcessTimeout",
-            "npm run check",
-            "npm run types:check",
+            "npm run lint",
+            "npm run typecheck",
+            "npm test",
+            "@lint",
             "@test"
-        ],
-        "types:check": [
-            "phpstan analyse"
         ],
         "test": [
             "@php artisan config:clear --ansi",
-            "@lint:check",
-            "@types:check",
-            "@php artisan test"
+            "pest --parallel"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
@@ -85,11 +94,6 @@
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
         ],
-        "post-create-project-cmd": [
-            "@php artisan key:generate --ansi",
-            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
-            "@php artisan migrate --graceful --ansi"
-        ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
         ]
@@ -98,8 +102,7 @@
         "laravel": {
             "dont-discover": [],
             "installer": {
-                "post-create-project": [
-                ]
+                "post-create-project": []
             }
         }
     },

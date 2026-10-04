@@ -64,6 +64,12 @@ export default defineConfig({
         singleAttributePerLine: false,
         htmlWhitespaceSensitivity: 'css',
         ignorePatterns: [
+            // Dokumen, mockup & konfigurasi kit proyek dijaga apa adanya.
+            '*.md',
+            '.claude/**',
+            'compose.yml',
+            'docs/**',
+            'resources/css/tokens.css',
             '.github/**',
             'composer.json',
             'resources/js/components/ui/*',
