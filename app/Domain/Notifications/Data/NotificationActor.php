@@ -17,9 +17,7 @@ final readonly class NotificationActor
 
     public static function fromUser(User $user): self
     {
-        $avatar = $user->getAttribute('avatar_url');
-
-        return new self($user->id, $user->name, is_string($avatar) ? $avatar : null);
+        return new self($user->id, $user->name, $user->avatar_url);
     }
 
     /**

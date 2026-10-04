@@ -15,6 +15,7 @@ final readonly class SearchResult
      * @param  string|null  $meta  right-aligned muted text
      * @param  string|null  $shortcut  keyboard hint ("C")
      * @param  string|null  $snippet  matched excerpt ("deskripsi: …landing page…")
+     * @param  string|null  $avatar  image URL shown instead of the icon (people)
      */
     public function __construct(
         public string $id,
@@ -27,6 +28,7 @@ final readonly class SearchResult
         public ?string $meta = null,
         public ?string $shortcut = null,
         public ?string $snippet = null,
+        public ?string $avatar = null,
         public bool $external = false,
     ) {}
 
@@ -46,6 +48,7 @@ final readonly class SearchResult
             'meta' => $this->meta,
             'shortcut' => $this->shortcut,
             'snippet' => $this->snippet,
+            'avatar' => $this->avatar,
             'external' => $this->external,
         ];
     }

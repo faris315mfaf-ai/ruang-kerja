@@ -40,7 +40,7 @@ final class DispatchDueDailyDigests
         $catchUp = config()->integer('notifications.digest.catch_up_minutes', 60);
         $queued = 0;
 
-        User::query()->orderBy('id')->chunkById(200, function (Collection $users) use ($local, $today, $catchUp, &$queued): void {
+        User::query()->active()->orderBy('id')->chunkById(200, function (Collection $users) use ($local, $today, $catchUp, &$queued): void {
             $settings = NotificationSetting::query()->whereIn('user_id', $users->modelKeys())->get()->keyBy('user_id');
 
             /** @var User $user */

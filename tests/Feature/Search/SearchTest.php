@@ -5,6 +5,9 @@ use App\Domain\Search\Contracts\SearchProvider;
 use App\Domain\Search\Data\SearchResult;
 use App\Domain\Search\Providers\ActionsSearchProvider;
 use App\Domain\Search\Providers\PeopleSearchProvider;
+use App\Models\Company;
+use App\Models\Division;
+use App\Models\Position;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Testing\TestResponse;
@@ -78,18 +81,58 @@ it('hides admin actions from roles that may not use them', function (Role $role,
     'anggota' => [Role::Anggota, false, false],
 ]);
 
-it('finds people by name or email, exposing only name and email', function () {
-    User::factory()->create(['name' => 'Sari Wulandari', 'email' => 'sari@demo.test']);
+it('finds people by name or email with their placement (HR sees the whole company)', function () {
+    $division = Division::factory()->create(['name' => 'Operasional']);
+    $position = Position::factory()->create(['name' => 'Staf Operasional']);
+    User::factory()->inDivision($division)->create(['name' => 'Sari Wulandari', 'email' => 'sari@demo.test', 'position_id' => $position->id]);
     User::factory()->create(['name' => 'Rizky Aditya', 'email' => 'rizky.wulan@demo.test']);
     User::factory()->create(['name' => 'Hana Pratiwi', 'email' => 'hana@demo.test']);
 
-    $response = $this->actingAs(searcher())->getJson('/cari/hasil?q=wulan')->assertOk();
+    $response = $this->actingAs(searcher(Role::Hr))->getJson('/cari/hasil?q=wulan')->assertOk();
     $people = collect($response->json('groups'))->firstWhere('key', 'people');
 
     expect(collect($people['items'])->pluck('title')->all())->toBe(['Rizky Aditya', 'Sari Wulandari'])
         ->and($people['label'])->toBe('Orang')
-        ->and($people['items'][0])->toMatchArray(['subtitle' => 'rizky.wulan@demo.test', 'url' => 'mailto:rizky.wulan@demo.test', 'icon' => 'user'])
+        ->and($people['items'][1])->toMatchArray([
+            'subtitle' => 'Staf Operasional · Operasional',
+            'meta' => 'sari@demo.test',
+            'url' => 'mailto:sari@demo.test',
+            'icon' => 'user',
+        ])
+        ->and($people['items'][0]['subtitle'])->toBe('rizky.wulan@demo.test')
         ->and(json_encode($people))->not->toContain('password');
+});
+
+it('limits people to User::visibleTo — members see themselves and direct reports only', function () {
+    $viewer = User::factory()->withRole(Role::Anggota)->create(['name' => 'Budi Kartika']);
+    User::factory()->managedBy($viewer)->create(['name' => 'Budi Bawahan']);
+    User::factory()->create(['name' => 'Budi Lain Divisi']);
+
+    $response = $this->actingAs($viewer)->getJson('/cari/hasil?q=budi')->assertOk();
+
+    expect(itemTitles($response, 'people'))->toBe(['Budi Bawahan', 'Budi Kartika']);
+});
+
+it('lets a division head find the members of the division they lead', function () {
+    $head = User::factory()->withRole(Role::KepalaDivisi)->create(['name' => 'Dimas Pratama']);
+    $division = Division::factory()->headedBy($head)->create();
+    User::factory()->inDivision($division)->create(['name' => 'Anggota Ops']);
+    User::factory()->create(['name' => 'Anggota Keuangan']);
+
+    $response = $this->actingAs($head)->getJson('/cari/hasil?q=anggota')->assertOk();
+
+    expect(itemTitles($response, 'people'))->toBe(['Anggota Ops']);
+});
+
+it('never shows inactive employees or other companies', function () {
+    User::factory()->inactive()->create(['name' => 'Teguh Santoso']);
+    User::factory()->resigned()->create(['name' => 'Tiara Santoso']);
+    User::factory()->forCompany(Company::factory()->create())->create(['name' => 'Tamu Santoso']);
+    User::factory()->create(['name' => 'Aktif Santoso']);
+
+    $response = $this->actingAs(searcher(Role::Hr))->getJson('/cari/hasil?q=santoso')->assertOk();
+
+    expect(itemTitles($response, 'people'))->toBe(['Aktif Santoso']);
 });
 
 it('needs at least two characters for people', function () {
@@ -111,7 +154,7 @@ it('treats LIKE wildcards literally', function () {
 it('limits one group when a filter chip is selected', function () {
     User::factory()->count(8)->create(['name' => 'Karyawan Contoh']);
 
-    $viewer = searcher();
+    $viewer = searcher(Role::Hr);
     $all = $this->actingAs($viewer)->getJson('/cari/hasil?q=contoh')->assertOk();
     $people = $this->actingAs($viewer)->getJson('/cari/hasil?q=contoh&group=people')->assertOk();
 

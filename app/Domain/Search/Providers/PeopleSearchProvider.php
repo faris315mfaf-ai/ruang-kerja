@@ -9,13 +9,10 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * "Orang": colleagues by name or email.
- *
- * Visibility: company directory — every employee may find colleagues (PRD:
- * internal app, contact info is not secret). When the Organization module
- * defines a `visibleTo` scope on User it is applied automatically, so the
- * directory narrows without touching this provider. Only name, email and
- * avatar are exposed.
+ * "Orang": active colleagues by name or email, limited to User::visibleTo($viewer)
+ * (company-scoped; everyone for employees.view, otherwise self + direct
+ * reports + led divisions — docs/sprints/sprint-1/CORE.md §3). Exposes only
+ * name, email, avatar, position and division.
  */
 final class PeopleSearchProvider implements SearchProvider
 {
@@ -38,41 +35,34 @@ final class PeopleSearchProvider implements SearchProvider
     {
         $pattern = LikePattern::contains($query);
 
-        $users = $this->visibleUsers($viewer)
+        $users = User::query()
+            ->visibleTo($viewer)
+            ->active()
             ->where(fn (Builder $q) => $q
-                ->where('name', 'ilike', $pattern)
-                ->orWhere('email', 'ilike', $pattern))
-            ->orderBy('name')
+                ->where('users.name', 'ilike', $pattern)
+                ->orWhere('users.email', 'ilike', $pattern))
+            ->with(['division:id,name', 'position:id,name'])
+            ->orderBy('users.name')
             ->limit($limit)
-            ->get(['id', 'name', 'email']);
+            ->get(['users.id', 'users.name', 'users.email', 'users.avatar_url', 'users.division_id', 'users.position_id']);
 
         $results = [];
 
         foreach ($users as $user) {
+            $placement = array_filter([$user->position?->name, $user->division?->name]);
+
             $results[] = new SearchResult(
                 id: 'user:'.$user->id,
                 title: $user->name,
                 icon: 'user',
                 url: 'mailto:'.$user->email,
-                subtitle: $user->email,
+                subtitle: $placement !== [] ? implode(' · ', $placement) : $user->email,
+                meta: $user->email,
+                avatar: $user->avatar_url,
                 external: true,
             );
         }
 
         return $results;
-    }
-
-    /**
-     * @return Builder<User>
-     */
-    private function visibleUsers(User $viewer): Builder
-    {
-        $query = User::query();
-
-        if ($query->getModel()->hasNamedScope('visibleTo')) {
-            $query->scopes(['visibleTo' => [$viewer]]);
-        }
-
-        return $query;
     }
 }
