@@ -153,7 +153,7 @@ it('rejects an email outside the company domain', function () {
 
     googleCallback()
         ->assertRedirect(route('login'))
-        ->assertSessionHasErrors('google')
+        ->assertSessionHasErrors(['google' => 'Gunakan email kantor, atau hubungi HR bila akun Anda belum didaftarkan.'])
         ->assertSessionHas('google_email', 'budi@gmail.com');
 
     $this->assertGuest();
@@ -173,7 +173,7 @@ it('rejects a personal Google account without the hd claim', function () {
     fakeGoogleUser(['hd' => null]);
 
     googleCallback()
-        ->assertSessionHasErrors(['google' => 'Akun ini bukan akun Google Workspace perusahaan. Gunakan email kantor Anda.']);
+        ->assertSessionHasErrors(['google' => 'Akun Google pribadi tidak bisa dipakai. Gunakan email kantor (Google Workspace).']);
 
     $this->assertGuest();
 });

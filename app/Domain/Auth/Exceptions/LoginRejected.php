@@ -31,7 +31,7 @@ final class LoginRejected extends RuntimeException
     {
         return new self(
             self::WRONG_DOMAIN,
-            'Gunakan akun Google kantor Anda. Akun di luar domain perusahaan tidak bisa masuk.',
+            'Gunakan email kantor, atau hubungi HR bila akun Anda belum didaftarkan.',
             $email,
         );
     }
@@ -40,7 +40,7 @@ final class LoginRejected extends RuntimeException
     {
         return new self(
             self::MISSING_HD,
-            'Akun ini bukan akun Google Workspace perusahaan. Gunakan email kantor Anda.',
+            'Akun Google pribadi tidak bisa dipakai. Gunakan email kantor (Google Workspace).',
             $email,
         );
     }
