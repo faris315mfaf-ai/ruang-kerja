@@ -72,9 +72,12 @@ final class WorkspaceDriveStatus
             }
         }
 
+        // A queued job may have stored the folder after this model was loaded.
+        $folderId = $workspace->drive_folder_id ?? Workspace::query()->whereKey($workspace->id)->value('drive_folder_id');
+
         $state = match (true) {
             ! GoogleFeatures::enabled() => 'disabled',
-            $workspace->drive_folder_id === null => $workspace->isPersonal() ? 'unused' : 'preparing',
+            $folderId === null => $workspace->isPersonal() ? 'unused' : 'preparing',
             $counts['errors'] > 0 => 'error',
             $counts['pending'] > 0 => 'pending',
             default => 'synced',

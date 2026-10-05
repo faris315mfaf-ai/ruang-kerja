@@ -94,7 +94,7 @@ final class DriveUploadSessions
      */
     public function locked(string $id, callable $callback): mixed
     {
-        return Cache::lock('google:upload-session-lock:'.$id, 60)->block(15, $callback);
+        return Cache::lock('google:browser-upload-lock:'.$id, 60)->block(15, $callback);
     }
 
     /**
@@ -189,6 +189,7 @@ final class DriveUploadSessions
 
     private function key(string $id): string
     {
-        return 'google:upload-session:'.$id;
+        // Distinct from ResumableUploader's Drive session URI key.
+        return 'google:browser-upload:'.$id;
     }
 }
