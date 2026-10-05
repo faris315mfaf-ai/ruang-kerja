@@ -9,6 +9,8 @@ import {
     findColumn,
     insertionIndex,
     moveInColumns,
+    removeFromColumns,
+    upsertInColumns,
 } from './lib/board';
 import type { Task, TaskStatus } from './types';
 
@@ -199,10 +201,33 @@ export function useTaskBoard(tasks: Task[], statuses: TaskStatus[]) {
         moveTaskRef.current = moveTask;
     }, [moveTask]);
 
+    /** A task from the server (broadcast, sheet edit, shortcut). */
+    const upsertTask = useCallback((task: Task) => {
+        setState((prev) => ({
+            byId: { ...prev.byId, [task.id]: task },
+            columns: upsertInColumns(prev.columns, prev.byId, task),
+        }));
+    }, []);
+
+    const removeTask = useCallback((taskId: string) => {
+        setState((prev) => {
+            if (!prev.byId[taskId]) {
+                return prev;
+            }
+
+            const byId = { ...prev.byId };
+            delete byId[taskId];
+
+            return { byId, columns: removeFromColumns(prev.columns, taskId) };
+        });
+    }, []);
+
     return {
         byId: state.byId,
         columns: state.columns,
         statusById,
         moveTask,
+        upsertTask,
+        removeTask,
     };
 }

@@ -8,6 +8,8 @@ import {
     findColumn,
     insertionIndex,
     moveInColumns,
+    removeFromColumns,
+    upsertInColumns,
 } from './board';
 
 const statuses: TaskStatus[] = [
@@ -128,5 +130,42 @@ describe('insertionIndex', () => {
         expect(insertionIndex(ids, 'missing', 'a')).toBe(0);
         expect(insertionIndex(ids, null, null)).toBe(0);
         expect(insertionIndex(ids, 'c', null)).toBe(4);
+    });
+});
+
+describe('upsertInColumns (realtime)', () => {
+    const byId = {
+        a: task('a', 'todo', 'G'),
+        b: task('b', 'todo', 'V'),
+        c: task('c', 'doing', 'V'),
+    };
+    const columns = { todo: ['a', 'b'], doing: ['c'], done: [] };
+
+    it('moves a task to its new column in rank order', () => {
+        expect(upsertInColumns(columns, byId, task('a', 'doing', 'Z'))).toEqual(
+            { todo: ['b'], doing: ['c', 'a'], done: [] },
+        );
+    });
+
+    it('inserts a new task and reorders within the same column', () => {
+        expect(
+            upsertInColumns(columns, byId, task('n', 'todo', 'A')).todo,
+        ).toEqual(['n', 'a', 'b']);
+        expect(
+            upsertInColumns(columns, byId, task('b', 'todo', '1')).todo,
+        ).toEqual(['b', 'a']);
+    });
+
+    it('drops tasks of unknown columns and removes deleted ones', () => {
+        expect(upsertInColumns(columns, byId, task('a', 'gone', 'A'))).toEqual({
+            todo: ['b'],
+            doing: ['c'],
+            done: [],
+        });
+        expect(removeFromColumns(columns, 'c')).toEqual({
+            todo: ['a', 'b'],
+            doing: [],
+            done: [],
+        });
     });
 });

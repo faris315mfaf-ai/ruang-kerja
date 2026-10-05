@@ -100,3 +100,20 @@ export type TaskViewMode = 'board' | 'list' | 'calendar';
 export type MyTaskRow = TaskRow & {
     done_status_id: string | null;
 };
+
+/** Saved view of a workspace (SavedViewResource). `filters.assignees` may contain "me". */
+export type SavedView = {
+    id: string;
+    name: string;
+    layout: TaskViewMode;
+    filters: {
+        assignees: string[];
+        priorities: Priority[];
+        labels: string[];
+        due: 'overdue' | 'today' | 'week' | 'none' | null;
+        q: string;
+    };
+    is_shared: boolean;
+    mine: boolean;
+    owner: string | null;
+};

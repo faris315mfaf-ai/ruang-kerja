@@ -1,0 +1,93 @@
+import type { RichDoc, TaskReferenceInfo } from '../editor/types';
+import type {
+    Label,
+    Person,
+    StatusCategory,
+    Task,
+    TaskStatus,
+    WorkspaceMember,
+    WorkspaceRef,
+} from '../types';
+
+export type ReactionGroup = {
+    emoji: string;
+    count: number;
+    user_ids: string[];
+    names: string[];
+};
+
+export type TaskComment = {
+    kind: 'comment';
+    id: string;
+    task_id: string;
+    author: Person;
+    body: RichDoc | null;
+    body_text: string | null;
+    created_at: string;
+    edited_at: string | null;
+    deleted: boolean;
+    reactions: ReactionGroup[];
+};
+
+export type TaskActivity = {
+    kind: 'activity';
+    id: string;
+    event: string;
+    properties: Record<string, unknown>;
+    causer: Person | null;
+    created_at: string;
+};
+
+export type TimelineItem = TaskComment | TaskActivity;
+
+export type ChecklistEntry = {
+    id: string;
+    title: string;
+    is_done: boolean;
+    position: string;
+    done_by: string | null;
+    done_at: string | null;
+};
+
+export type DetailTask = Task & {
+    description: RichDoc | null;
+    updated_at: string | null;
+    started_at: string | null;
+};
+
+/** GET /tugas/{id} (App\Domain\Tasks\Queries\TaskDetail). */
+export type TaskDetail = {
+    task: DetailTask;
+    url: string;
+    workspace: WorkspaceRef;
+    statuses: TaskStatus[];
+    labels: Label[];
+    members: WorkspaceMember[];
+    creator: Person | null;
+    assignees: Person[];
+    watchers: Person[];
+    watching: boolean;
+    parent: {
+        id: string;
+        key: string;
+        title: string;
+        status_category: StatusCategory;
+    } | null;
+    subtasks: Task[];
+    checklist: ChecklistEntry[];
+    timeline: TimelineItem[];
+    references: Record<string, TaskReferenceInfo>;
+    reactions: string[];
+    can: {
+        edit: boolean;
+        delete: boolean;
+        comment: boolean;
+        moderate: boolean;
+    };
+};
+
+/** Board context of an open sheet ("6 dari 18 · Sedang dikerjakan"). */
+export type SheetNavigation = {
+    ids: string[];
+    onNavigate: (taskId: string) => void;
+};

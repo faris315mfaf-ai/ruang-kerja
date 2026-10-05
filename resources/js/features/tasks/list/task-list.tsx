@@ -217,6 +217,7 @@ export function TaskList({
                                 <button
                                     key={row.id}
                                     type="button"
+                                    data-task-id={row.id}
                                     role="row"
                                     onClick={() => onOpen(row)}
                                     className="flex min-h-14 w-full items-center gap-3 border-b border-border px-4 py-2 text-left last:border-b-0 focus-visible:bg-surface-2 focus-visible:outline-none"
@@ -254,6 +255,7 @@ export function TaskList({
                                 <div
                                     key={row.id}
                                     role="row"
+                                    data-task-id={row.id}
                                     tabIndex={0}
                                     onClick={() => onOpen(row)}
                                     onKeyDown={(event) => {
