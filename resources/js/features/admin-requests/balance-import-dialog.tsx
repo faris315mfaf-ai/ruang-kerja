@@ -135,8 +135,8 @@ export function BalanceImportDialog({ open, onOpenChange, reference }: Props) {
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4 text-sm">
-                    <div className="rounded-lg border border-border bg-surface-2/60 p-3 text-[13px] text-text-muted">
+                <div className="space-y-4 text-[15px]">
+                    <div className="rounded-lg border border-border bg-surface-2/60 p-3 text-meta text-text-muted">
                         <p>
                             Kolom:{' '}
                             {reference.columns.map((column, index) => (
@@ -196,7 +196,7 @@ export function BalanceImportDialog({ open, onOpenChange, reference }: Props) {
                                 {file.name}
                             </span>
                         )}
-                        <span className="text-[13px] text-text-subtle">
+                        <span className="text-meta text-text-subtle">
                             Maks. {Math.round(reference.max_kilobytes / 1024)}{' '}
                             MB
                         </span>
@@ -226,30 +226,30 @@ export function BalanceImportDialog({ open, onOpenChange, reference }: Props) {
                                     ' · berkas terpotong (terlalu banyak baris)'}
                             </p>
                             <div className="max-h-80 overflow-auto rounded-lg border border-border">
-                                <table className="w-full text-[13px]">
-                                    <thead className="sticky top-0 bg-surface-2 text-left text-text-muted">
+                                <table className="w-full text-meta">
+                                    <thead className="sticky top-0 bg-background text-left text-text-muted">
                                         <tr>
                                             <th
                                                 scope="col"
-                                                className="px-3 py-2 font-normal"
+                                                className="px-3 py-2 font-bold"
                                             >
                                                 Baris
                                             </th>
                                             <th
                                                 scope="col"
-                                                className="px-3 py-2 font-normal"
+                                                className="px-3 py-2 font-bold"
                                             >
                                                 Karyawan
                                             </th>
                                             <th
                                                 scope="col"
-                                                className="px-3 py-2 font-normal"
+                                                className="px-3 py-2 font-bold"
                                             >
                                                 Perubahan
                                             </th>
                                             <th
                                                 scope="col"
-                                                className="px-3 py-2 text-right font-normal"
+                                                className="px-3 py-2 text-right font-bold"
                                             >
                                                 Sisa
                                             </th>

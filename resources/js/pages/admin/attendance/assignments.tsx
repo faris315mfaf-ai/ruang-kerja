@@ -1,8 +1,9 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { CalendarPlus, Search, Users, X } from 'lucide-react';
+import { CalendarPlus, Search, Settings2, Users, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DesktopOnlyNotice } from '@/components/desktop-only-notice';
 import { EmptyState } from '@/components/empty-state';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -29,7 +30,9 @@ import type {
     ShiftAssignmentsProps,
 } from '@/features/attendance/admin/types';
 import { workDateLabel } from '@/features/attendance/admin/types';
+import { AdminPageHeader } from '@/features/admin/page-header';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
+import { cn, focusRing } from '@/lib/utils';
 import { index as settingsIndex } from '@/routes/admin/attendance';
 import { destroy } from '@/routes/admin/attendance/assignments';
 
@@ -50,9 +53,12 @@ function RemoveButton({ id, label }: { id: string; label: string }) {
                 window.confirm(`Hapus ${label}?`) &&
                 router.delete(destroy.url(id), { preserveScroll: true })
             }
-            className="ml-1 rounded p-0.5 text-text-subtle hover:bg-surface-2 hover:text-danger"
+            className={cn(
+                'ml-1 inline-flex size-7 items-center justify-center rounded-sm text-text-subtle transition-colors duration-120 ease-brand hover:bg-danger-soft hover:text-danger',
+                focusRing,
+            )}
         >
-            <X className="size-3.5" aria-hidden />
+            <X className="size-4" aria-hidden />
         </button>
     );
 }
@@ -88,7 +94,7 @@ export default function ShiftAssignments({
     );
 
     if (breakpoint === null) {
-        return <Skeleton className="h-96 rounded-xl" />;
+        return <Skeleton className="h-96 rounded-panel" />;
     }
 
     if (breakpoint === 'mobile') {
@@ -119,43 +125,41 @@ export default function ShiftAssignments({
     return (
         <>
             <Head title="Penugasan shift" />
-            <div className="space-y-5">
-                <header className="flex flex-wrap items-end justify-between gap-3">
-                    <div>
-                        <h1 className="text-xl leading-7 font-semibold text-text">
-                            Penugasan shift
-                        </h1>
-                        <p className="text-sm text-text-muted">
-                            Pola mingguan per karyawan atau per divisi, plus
-                            jadwal khusus per tanggal.{' '}
-                            <Link
-                                href={settingsIndex()}
-                                className="text-primary hover:underline"
+            <div className="flex flex-col gap-6">
+                <AdminPageHeader
+                    overline="Admin · Absensi"
+                    title="Penugasan shift"
+                    description="Pola mingguan per karyawan atau per divisi, plus jadwal khusus per tanggal."
+                    actions={
+                        <>
+                            <Button variant="outline" asChild>
+                                <Link href={settingsIndex()} prefetch>
+                                    <Settings2 aria-hidden />
+                                    Kelola shift
+                                </Link>
+                            </Button>
+                            <Button
+                                disabled={shifts.length === 0}
+                                onClick={() => {
+                                    setPatternKey((key) => key + 1);
+                                    setPatternOpen(true);
+                                }}
                             >
-                                Kelola shift
-                            </Link>
-                        </p>
-                    </div>
-                    <Button
-                        disabled={shifts.length === 0}
-                        onClick={() => {
-                            setPatternKey((key) => key + 1);
-                            setPatternOpen(true);
-                        }}
-                    >
-                        <Users aria-hidden />
-                        Atur pola{' '}
-                        {selected.length > 0
-                            ? `(${selected.length})`
-                            : 'per divisi'}
-                    </Button>
-                </header>
+                                <Users aria-hidden />
+                                Atur pola{' '}
+                                {selected.length > 0
+                                    ? `(${selected.length})`
+                                    : 'per divisi'}
+                            </Button>
+                        </>
+                    }
+                />
 
-                <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
-                    <div className="flex flex-wrap items-center gap-2 border-b border-border p-3">
-                        <div className="relative w-64">
+                <div className="overflow-hidden rounded-panel border border-border bg-surface shadow-card">
+                    <div className="flex flex-wrap items-center gap-3 border-b border-divider px-6 py-5 md:px-7">
+                        <div role="search" className="relative w-72">
                             <Search
-                                className="absolute top-2 left-2.5 size-4 text-text-subtle"
+                                className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-text-muted"
                                 aria-hidden
                             />
                             <Input
@@ -163,12 +167,12 @@ export default function ShiftAssignments({
                                 onChange={(e) => setQuery(e.target.value)}
                                 placeholder="Cari karyawan"
                                 aria-label="Cari karyawan"
-                                className="h-8 pl-8"
+                                className="pl-11"
                             />
                         </div>
                         <Select value={division} onValueChange={setDivision}>
                             <SelectTrigger
-                                className="h-8 w-56"
+                                className="w-60"
                                 aria-label="Filter divisi"
                             >
                                 <SelectValue />
@@ -184,12 +188,12 @@ export default function ShiftAssignments({
                                 ))}
                             </SelectContent>
                         </Select>
-                        <span className="ml-auto text-[13px] text-text-muted">
+                        <span className="ml-auto text-meta text-text-muted tnum">
                             {visible.length} karyawan aktif
                         </span>
                     </div>
                     {visible.length === 0 ? (
-                        <div className="p-4">
+                        <div className="p-6">
                             <EmptyState
                                 icon={Users}
                                 title="Tidak ada karyawan"
@@ -199,27 +203,19 @@ export default function ShiftAssignments({
                     ) : (
                         <Table>
                             <TableHeader>
-                                <TableRow className="bg-surface-2 hover:bg-surface-2">
-                                    <TableHead className="w-10 pl-4">
+                                <TableRow>
+                                    <TableHead className="w-10 pl-6">
                                         <Checkbox
                                             checked={allSelected}
                                             onCheckedChange={toggleAll}
                                             aria-label="Pilih semua"
                                         />
                                     </TableHead>
-                                    <TableHead className="text-[13px] text-text-muted">
-                                        Karyawan
-                                    </TableHead>
-                                    <TableHead className="text-[13px] text-text-muted">
-                                        Mode
-                                    </TableHead>
-                                    <TableHead className="text-[13px] text-text-muted">
-                                        Pola mingguan
-                                    </TableHead>
-                                    <TableHead className="text-[13px] text-text-muted">
-                                        Jadwal khusus
-                                    </TableHead>
-                                    <TableHead className="w-12 pr-4">
+                                    <TableHead>Karyawan</TableHead>
+                                    <TableHead>Mode</TableHead>
+                                    <TableHead>Pola mingguan</TableHead>
+                                    <TableHead>Jadwal khusus</TableHead>
+                                    <TableHead className="w-12 pr-6">
                                         <span className="sr-only">Aksi</span>
                                     </TableHead>
                                 </TableRow>
@@ -234,7 +230,7 @@ export default function ShiftAssignments({
                                                 : undefined
                                         }
                                     >
-                                        <TableCell className="pl-4 align-top">
+                                        <TableCell className="pl-6 align-top">
                                             <Checkbox
                                                 checked={selected.includes(
                                                     employee.id,
@@ -246,35 +242,39 @@ export default function ShiftAssignments({
                                             />
                                         </TableCell>
                                         <TableCell className="align-top">
-                                            <p className="text-[13px] font-medium text-text">
+                                            <p className="text-[16px] font-semibold text-text">
                                                 {employee.name}
                                             </p>
-                                            <p className="text-xs text-text-muted">
+                                            <p className="text-meta text-text-muted">
                                                 {employee.divisionName ??
                                                     'Tanpa divisi'}
                                             </p>
                                         </TableCell>
-                                        <TableCell className="align-top text-[13px] text-text">
+                                        <TableCell className="align-top text-text">
                                             {employee.workModeLabel}
                                         </TableCell>
                                         <TableCell className="align-top whitespace-normal">
                                             {employee.patterns.length === 0 ? (
-                                                <span className="text-[13px] text-warning">
+                                                <Badge
+                                                    variant="status"
+                                                    tone="warning"
+                                                    dot
+                                                >
                                                     Belum terjadwal
-                                                </span>
+                                                </Badge>
                                             ) : (
                                                 <ul className="space-y-1">
                                                     {employee.patterns.map(
                                                         (pattern) => (
                                                             <li
                                                                 key={pattern.id}
-                                                                className="flex items-center text-[13px] text-text"
+                                                                className="flex items-center text-[15px] text-text"
                                                             >
                                                                 <span>
                                                                     {
                                                                         pattern.shiftName
                                                                     }{' '}
-                                                                    <span className="font-mono text-xs text-text-muted">
+                                                                    <span className="font-mono text-[14px] font-medium text-text-muted">
                                                                         {
                                                                             pattern.hours
                                                                         }
@@ -284,13 +284,13 @@ export default function ShiftAssignments({
                                                                         pattern.daysLabel
                                                                     }
                                                                     {pattern.workModeLabel && (
-                                                                        <span className="ml-1 rounded bg-info-soft px-1.5 text-xs text-info">
+                                                                        <span className="ml-1 inline-flex h-6 items-center rounded-sm bg-info-soft px-2 text-[13px] font-semibold text-info">
                                                                             {
                                                                                 pattern.workModeLabel
                                                                             }
                                                                         </span>
                                                                     )}
-                                                                    <span className="ml-1 text-xs text-text-muted">
+                                                                    <span className="ml-1 text-meta text-text-muted">
                                                                         {pattern.validFrom >
                                                                         today
                                                                             ? `mulai ${workDateLabel(pattern.validFrom)}`
@@ -319,7 +319,7 @@ export default function ShiftAssignments({
                                                     .map((item) => (
                                                         <li
                                                             key={item.id}
-                                                            className="flex items-center text-[13px] text-text"
+                                                            className="flex items-center text-[15px] text-text"
                                                         >
                                                             <span>
                                                                 {workDateLabel(
@@ -339,7 +339,7 @@ export default function ShiftAssignments({
                                                     ))}
                                                 {employee.overrides.length >
                                                     4 && (
-                                                    <li className="text-xs text-text-muted">
+                                                    <li className="text-meta text-text-muted">
                                                         +
                                                         {employee.overrides
                                                             .length - 4}{' '}
@@ -348,17 +348,16 @@ export default function ShiftAssignments({
                                                 )}
                                                 {employee.overrides.length ===
                                                     0 && (
-                                                    <li className="text-[13px] text-text-subtle">
+                                                    <li className="text-meta text-text-subtle">
                                                         –
                                                     </li>
                                                 )}
                                             </ul>
                                         </TableCell>
-                                        <TableCell className="pr-4 align-top">
+                                        <TableCell className="pr-6 align-top">
                                             <Button
                                                 variant="ghost"
-                                                size="icon"
-                                                className="size-8"
+                                                size="icon-sm"
                                                 aria-label={`Jadwal khusus ${employee.name}`}
                                                 onClick={() =>
                                                     setOverrideFor(employee)

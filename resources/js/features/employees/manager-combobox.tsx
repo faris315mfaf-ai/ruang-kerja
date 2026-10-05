@@ -2,6 +2,7 @@ import { Command } from 'cmdk';
 import { Check, ChevronDown, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { UserAvatar } from '@/components/shell/user-avatar';
+import { fieldClasses } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { ManagerOption } from './types';
 
@@ -56,7 +57,10 @@ export function ManagerCombobox({
                 aria-controls={listId}
                 aria-invalid={invalid || undefined}
                 onClick={() => setOpen((current) => !current)}
-                className="flex h-11 w-full items-center gap-2 rounded-md border border-input bg-background px-3 text-left text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive md:h-10 md:text-sm"
+                className={cn(
+                    fieldClasses,
+                    'flex h-11 items-center gap-2 text-left',
+                )}
             >
                 {selected ? (
                     <>
@@ -69,7 +73,7 @@ export function ManagerCombobox({
                             {selected.name}
                         </span>
                         {selected.position && (
-                            <span className="ml-auto truncate text-xs text-text-muted">
+                            <span className="ml-auto truncate text-meta text-text-muted">
                                 {selected.position}
                             </span>
                         )}
@@ -103,10 +107,10 @@ export function ManagerCombobox({
                     <Command.Input
                         autoFocus
                         placeholder="Cari nama atau jabatan…"
-                        className="h-10 w-full border-b border-border bg-transparent px-3 text-base text-text outline-none placeholder:text-text-subtle md:text-sm"
+                        className="h-11 w-full border-b border-divider bg-transparent px-3.5 text-[16px] text-text outline-none placeholder:text-text-subtle"
                     />
                     <Command.List className="max-h-64 overflow-y-auto p-1">
-                        <Command.Empty className="px-3 py-6 text-center text-sm text-text-muted">
+                        <Command.Empty className="px-3 py-6 text-center text-[15px] text-text-muted">
                             Tidak ada karyawan aktif yang cocok.
                         </Command.Empty>
                         {value !== null && (
@@ -116,7 +120,7 @@ export function ManagerCombobox({
                                     onChange(null);
                                     setOpen(false);
                                 }}
-                                className="flex h-9 cursor-pointer items-center gap-2 rounded-md px-2 text-sm text-text-muted data-[selected=true]:bg-surface-2"
+                                className="flex min-h-10 cursor-pointer items-center gap-2 rounded-[10px] px-2.5 text-[15px] text-text-muted data-[selected=true]:bg-surface-2"
                             >
                                 <X aria-hidden className="size-4" />
                                 Kosongkan atasan
@@ -132,7 +136,7 @@ export function ManagerCombobox({
                                         onChange(option.id);
                                         setOpen(false);
                                     }}
-                                    className="flex h-10 cursor-pointer items-center gap-2 rounded-md px-2 text-sm data-[selected=true]:bg-surface-2"
+                                    className="flex min-h-11 cursor-pointer items-center gap-2 rounded-[10px] px-2.5 text-[15px] data-[selected=true]:bg-surface-2"
                                 >
                                     <UserAvatar
                                         name={option.name}
@@ -142,7 +146,7 @@ export function ManagerCombobox({
                                     <span className="truncate text-text">
                                         {option.name}
                                     </span>
-                                    <span className="ml-auto truncate text-xs text-text-muted">
+                                    <span className="ml-auto truncate text-meta text-text-muted">
                                         {option.position}
                                     </span>
                                     {option.id === value && (

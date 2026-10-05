@@ -45,11 +45,12 @@ export function RequestActions({
 
     return (
         <div className={cn('space-y-2', mobile && 'flex gap-3 space-y-0')}>
-            <div className={cn('flex flex-wrap gap-2', mobile && 'contents')}>
+            <div className={cn('flex flex-wrap gap-3', mobile && 'contents')}>
                 {request.can.edit && (
                     <Button
                         asChild
-                        className={cn(mobile && 'h-12 flex-1 text-base')}
+                        size={mobile ? 'lg' : 'default'}
+                        className={cn(mobile && 'flex-1')}
                     >
                         <Link href={edit({ employeeRequest: request.id })}>
                             <Pencil aria-hidden />
@@ -63,9 +64,10 @@ export function RequestActions({
                     <Button
                         type="button"
                         variant="outline"
+                        size={mobile ? 'lg' : 'default'}
                         className={cn(
                             'text-danger hover:text-danger',
-                            mobile && 'h-12 flex-1 text-base',
+                            mobile && 'flex-1',
                         )}
                         onClick={() => setConfirming(true)}
                     >
@@ -75,7 +77,7 @@ export function RequestActions({
                 )}
             </div>
             {!mobile && request.can.cancel && (
-                <p className="text-[13px] text-text-muted">
+                <p className="text-meta text-text-muted">
                     Bisa dibatalkan selama belum diputus.
                 </p>
             )}

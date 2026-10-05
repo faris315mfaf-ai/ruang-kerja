@@ -38,15 +38,18 @@ function FilterSelect({
     children: ReactNode;
 }) {
     return (
-        <div className="grid gap-1">
-            <Label htmlFor={id} className="text-xs text-text-muted">
+        <div className="grid gap-1.5">
+            <Label
+                htmlFor={id}
+                className="text-meta font-semibold text-text-muted"
+            >
                 {label}
             </Label>
             <Select
                 value={value ?? ALL}
                 onValueChange={(next) => onChange(next === ALL ? null : next)}
             >
-                <SelectTrigger id={id} className="h-9 w-48">
+                <SelectTrigger id={id} className="w-52">
                     <SelectValue placeholder={placeholder} />
                 </SelectTrigger>
                 <SelectContent className="max-h-80">
@@ -113,10 +116,10 @@ export function AuditFilterBar({ filters, options, onChange }: Props) {
                 ))}
             </FilterSelect>
 
-            <div className="grid gap-1">
+            <div className="grid gap-1.5">
                 <Label
                     htmlFor="filter-from"
-                    className="text-xs text-text-muted"
+                    className="text-meta font-semibold text-text-muted"
                 >
                     Dari tanggal
                 </Label>
@@ -128,12 +131,15 @@ export function AuditFilterBar({ filters, options, onChange }: Props) {
                     onChange={(event) =>
                         set({ dari: event.target.value || null })
                     }
-                    className="h-9 w-40"
+                    className="w-44"
                 />
             </div>
 
-            <div className="grid gap-1">
-                <Label htmlFor="filter-to" className="text-xs text-text-muted">
+            <div className="grid gap-1.5">
+                <Label
+                    htmlFor="filter-to"
+                    className="text-meta font-semibold text-text-muted"
+                >
                     Sampai tanggal
                 </Label>
                 <Input
@@ -144,16 +150,14 @@ export function AuditFilterBar({ filters, options, onChange }: Props) {
                     onChange={(event) =>
                         set({ sampai: event.target.value || null })
                     }
-                    className="h-9 w-40"
+                    className="w-44"
                 />
             </div>
 
             {active && (
                 <Button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-9"
+                    variant="quiet"
                     onClick={() =>
                         onChange({
                             aktor: null,
