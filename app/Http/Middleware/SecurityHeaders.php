@@ -89,7 +89,7 @@ class SecurityHeaders
             $directives[$directive] = [...($directives[$directive] ?? []), ...$values];
         }
 
-        if ($reverb = $this->reverbOrigin()) {
+        foreach ($this->reverbOrigins() as $reverb) {
             $directives['connect-src'][] = $reverb;
         }
 
@@ -130,21 +130,27 @@ class SecurityHeaders
     }
 
     /**
-     * Browser-facing WebSocket origin of Reverb, e.g. wss://ruangkerja.test:8080.
+     * Browser-facing WebSocket origins of Reverb, e.g. wss://ruangkerja.test:8080.
+     *
+     * pusher-js always upgrades to wss on an HTTPS page, so a plain-ws Reverb
+     * (local development) is allowed under both schemes.
+     *
+     * @return list<string>
      */
-    private function reverbOrigin(): ?string
+    private function reverbOrigins(): array
     {
         $host = config('security.csp.reverb.host');
 
         if (! is_string($host) || $host === '') {
-            return null;
+            return [];
         }
 
         $secure = config('security.csp.reverb.scheme') === 'https';
         $port = (int) config('security.csp.reverb.port');
-        $defaultPort = $secure ? 443 : 80;
+        $origin = fn (bool $tls): string => ($tls ? 'wss' : 'ws').'://'.$host
+            .($port > 0 && $port !== ($tls ? 443 : 80) ? ':'.$port : '');
 
-        return ($secure ? 'wss' : 'ws').'://'.$host.($port > 0 && $port !== $defaultPort ? ':'.$port : '');
+        return $secure ? [$origin(true)] : [$origin(false), $origin(true)];
     }
 
     /**

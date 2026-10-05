@@ -82,6 +82,19 @@ it('allows the browser-facing Reverb WebSocket endpoint', function () {
     expect($csp['connect-src'])->toContain('ws://ruangkerja.example.com:8080');
 });
 
+it('also allows wss for a plain-ws Reverb, because pusher-js forces TLS on HTTPS pages', function () {
+    config([
+        'security.csp.reverb.host' => 'localhost',
+        'security.csp.reverb.port' => 8081,
+        'security.csp.reverb.scheme' => 'http',
+    ]);
+
+    $csp = cspDirectives((string) $this->get('/login')->headers->get('Content-Security-Policy'));
+
+    expect($csp['connect-src'])->toContain('ws://localhost:8081')
+        ->toContain('wss://localhost:8081');
+});
+
 it('adds HSTS and upgrade-insecure-requests only in production', function () {
     $response = $this->get('/login');
     $response->assertHeaderMissing('Strict-Transport-Security');

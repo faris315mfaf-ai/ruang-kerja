@@ -100,7 +100,7 @@ composer run dev:win        # Vite + Reverb + queue:work + schedule:work (dibuat
 | https://ruangkerja.test | Aplikasi (disajikan Herd) |
 | https://ruangkerja.test/login | Pilih akun demo: `admin@`, `direksi@`, `hr@`, `kadiv@`, `anggota@demo.test` · sandi `password` |
 | http://localhost:8025 | Mailpit (email keluar) |
-| ws://localhost:8080 | Reverb (realtime) |
+| wss://ruangkerja.test:8080 | Reverb (realtime, memakai sertifikat Herd) |
 | localhost:5432 / 6379 | Postgres / Redis (pakai TablePlus, DBeaver, dll.) |
 
 Catatan Windows: **Horizon tidak berjalan di Windows** (butuh ekstensi `pcntl`). Di lokal antrean diproses `php artisan queue:work`. Di server Linux tetap memakai Horizon. `php artisan pail` juga tidak tersedia di Windows. Pakai `storage/logs/laravel.log` atau Laravel Herd → Dumps/Logs.
@@ -178,6 +178,16 @@ REVERB_PORT=8081
 REVERB_SERVER_PORT=8081
 ```
 
-Dengan nilai ini Mailpit ada di http://localhost:8026 dan Reverb di ws://localhost:8081. Bila port default di Mac Anda kosong, nilai bawaan `.env.example` bisa dipakai apa adanya. Setelah mengubah port, jalankan `docker compose up -d` lagi dan `php artisan config:clear`.
+Dengan nilai ini Mailpit ada di http://localhost:8026 dan Reverb di wss://ruangkerja.test:8081. Bila port default di Mac Anda kosong, nilai bawaan `.env.example` bisa dipakai apa adanya. Setelah mengubah port, jalankan `docker compose up -d` lagi dan `php artisan config:clear`.
 
 **Menjalankan aplikasi.** Horizon (butuh `pcntl`) dan `php artisan pail` **berjalan di macOS**, jadi `composer run dev` (server + horizon + reverb + vite) bisa dipakai. `composer run dev:win` (vite + reverb + queue:work + schedule:work) juga jalan di Mac bila ingin setara dengan Windows. Aplikasi tetap dibuka lewat https://ruangkerja.test (Herd).
+
+### Reverb lewat HTTPS (Windows & macOS)
+
+Aplikasi disajikan di `https://ruangkerja.test`, dan browser selalu memaksa `wss://` dari halaman HTTPS. Karena itu Reverb lokal harus memakai TLS:
+
+- `.env`: `REVERB_HOST=ruangkerja.test` dan `REVERB_SCHEME=https` (nilai bawaan `.env.example`).
+- Pastikan situs sudah di-*secure* (`herd secure ruangkerja`). `php artisan reverb:start` lalu menampilkan "Starting secure server … (ruangkerja.test)" karena memakai sertifikat Herd otomatis.
+- Setelah mengubah nilai `REVERB_*`, jalankan `php artisan config:clear` dan build ulang aset (`npm run build`) atau restart `npm run dev`, karena nilai `VITE_REVERB_*` dibaca saat build.
+- Cek cepat tanpa browser: `curl --http1.1 -H "Connection: Upgrade" -H "Upgrade: websocket" -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" "https://ruangkerja.test:8081/app/<REVERB_APP_KEY>?protocol=7"` harus menjawab `101`.
+
