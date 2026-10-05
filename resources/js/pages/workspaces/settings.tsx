@@ -42,7 +42,10 @@ function MobileSettings({ members }: { members: MemberDetail[] }) {
 
     return (
         <div className="space-y-4">
-            <DesktopOnlyNotice description="Ubah nama, key, kolom status, label, dan anggota dari komputer. Daftar anggota bisa dilihat di sini." />
+            <DesktopOnlyNotice feature="Pengaturan nama, key, kolom status, label, dan anggota" />
+            <p className="text-sm text-text-muted">
+                Daftar anggota bisa dilihat di sini.
+            </p>
             <section className="space-y-2">
                 <h2 className="text-[15px] font-medium text-text">
                     Anggota · {members.length}

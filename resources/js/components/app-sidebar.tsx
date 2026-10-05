@@ -10,10 +10,12 @@ import {
     SidebarGroupLabel,
     SidebarHeader,
     SidebarMenu,
+    SidebarMenuBadge,
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { SidebarWorkspaces } from '@/features/workspaces/sidebar-workspaces';
+import { useUnreadCount } from '@/features/notifications/unread-store';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { AppNavItem } from '@/lib/navigation';
 import { adminNavItems, isActivePath, mainNavItems } from '@/lib/navigation';
@@ -21,6 +23,7 @@ import { cn } from '@/lib/utils';
 
 function NavList({ items }: { items: AppNavItem[] }) {
     const { currentUrl } = useCurrentUrl();
+    const unread = useUnreadCount();
 
     return (
         <SidebarMenu>
@@ -37,6 +40,12 @@ function NavList({ items }: { items: AppNavItem[] }) {
                             <span>{item.title}</span>
                         </Link>
                     </SidebarMenuButton>
+                    {item.href === '/inbox' && unread > 0 && (
+                        <SidebarMenuBadge className="text-primary tnum">
+                            {unread > 99 ? '99+' : unread}
+                            <span className="sr-only"> belum dibaca</span>
+                        </SidebarMenuBadge>
+                    )}
                 </SidebarMenuItem>
             ))}
         </SidebarMenu>

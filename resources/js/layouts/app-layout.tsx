@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { AppShellSkeleton } from '@/components/shell/app-shell-skeleton';
+import { NotificationListener } from '@/features/notifications/notification-listener';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import DesktopLayout from '@/layouts/app/desktop-layout';
 import MobileLayout from '@/layouts/app/mobile-layout';
@@ -14,6 +15,8 @@ export type AppLayoutProps = {
     back?: string;
     /** Mobile app bar style ('greeting' on the home screen). */
     appBar?: 'default' | 'greeting';
+    /** Mobile app bar actions replacing search + bell (self-contained element). */
+    appBarActions?: ReactNode;
 };
 
 /**
@@ -26,6 +29,7 @@ export default function AppLayout({
     title,
     back,
     appBar = 'default',
+    appBarActions,
 }: AppLayoutProps) {
     const breakpoint = useBreakpoint();
 
@@ -39,7 +43,9 @@ export default function AppLayout({
                 title={title ?? breadcrumbs.at(-1)?.title}
                 back={back}
                 variant={appBar}
+                actions={appBarActions}
             >
+                <NotificationListener />
                 {children}
             </MobileLayout>
         );
@@ -50,6 +56,7 @@ export default function AppLayout({
             breadcrumbs={breadcrumbs}
             isTablet={breakpoint === 'tablet'}
         >
+            <NotificationListener />
             {children}
         </DesktopLayout>
     );

@@ -117,7 +117,6 @@ return [
     'limiters' => [
         'login' => 'login',
         'two-factor' => 'two-factor',
-        'passkeys' => 'passkeys',
     ],
 
     /*
@@ -168,9 +167,8 @@ return [
             'confirmPassword' => true,
             // 'window' => 0
         ]),
-        Features::passkeys([
-            'confirmPassword' => true,
-        ]),
+        // Passkeys are disabled on purpose: a passkey sign-in would bypass the
+        // Super-Admin-only password + TOTP door (docs/sprints/sprint-1/LOGIN-SUMMARY.md).
     ],
 
 ];
