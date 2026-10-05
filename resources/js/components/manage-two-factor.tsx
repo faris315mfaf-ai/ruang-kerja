@@ -1,10 +1,11 @@
 import { Form } from '@inertiajs/react';
 import { ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import Heading from '@/components/heading';
 import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Panel } from '@/components/ui/panel';
 import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
 import { disable, enable } from '@/routes/two-factor';
 
@@ -45,21 +46,29 @@ export default function ManageTwoFactor(props: Props) {
     }
 
     return (
-        <div className="space-y-6">
-            <Heading
-                variant="small"
-                title="Autentikasi dua faktor"
-                description="Kelola pengaturan autentikasi dua faktor (2FA) Anda"
-            />
+        <Panel
+            title="Autentikasi dua faktor"
+            action={
+                twoFactorEnabled ? (
+                    <Badge variant="status" tone="success" dot>
+                        Aktif
+                    </Badge>
+                ) : (
+                    <Badge variant="status" tone="warning" dot>
+                        Belum aktif
+                    </Badge>
+                )
+            }
+        >
             {twoFactorEnabled ? (
-                <div className="flex flex-col items-start justify-start space-y-4">
-                    <p className="text-sm text-muted-foreground">
+                <div className="flex flex-col items-start gap-4">
+                    <p className="text-label font-normal text-text-muted">
                         Saat masuk, Anda akan diminta memasukkan PIN acak yang
                         aman. PIN ini bisa dilihat di aplikasi autentikator
                         (TOTP) di ponsel Anda.
                     </p>
 
-                    <div className="relative inline">
+                    <div>
                         <Form {...disable.form()}>
                             {({ processing }) => (
                                 <Button
@@ -80,8 +89,8 @@ export default function ManageTwoFactor(props: Props) {
                     />
                 </div>
             ) : (
-                <div className="flex flex-col items-start justify-start space-y-4">
-                    <p className="text-sm text-muted-foreground">
+                <div className="flex flex-col items-start gap-4">
+                    <p className="text-label font-normal text-text-muted">
                         Setelah autentikasi dua faktor aktif, Anda akan diminta
                         memasukkan PIN aman saat masuk. PIN ini bisa dilihat di
                         aplikasi autentikator (TOTP) di ponsel Anda.
@@ -120,6 +129,6 @@ export default function ManageTwoFactor(props: Props) {
                 fetchSetupData={fetchSetupData}
                 errors={errors}
             />
-        </div>
+        </Panel>
     );
 }

@@ -48,9 +48,11 @@ export function GoogleConnectionCard({
     };
 
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
             {google.fake && (
-                <Badge variant="outline">Mode Drive palsu (lokal)</Badge>
+                <Badge variant="label" tone="info">
+                    Mode Drive palsu (lokal)
+                </Badge>
             )}
 
             {!google.drive_enabled && (
@@ -65,11 +67,11 @@ export function GoogleConnectionCard({
                         {google.missing_settings.length > 0 && (
                             <p>
                                 Pengaturan yang belum diisi:{' '}
-                                <span className="font-mono text-xs">
+                                <span className="font-mono text-meta">
                                     {google.missing_settings.join(', ')}
                                 </span>
                                 . Jalankan{' '}
-                                <span className="font-mono text-xs">
+                                <span className="font-mono text-meta">
                                     php artisan ruangkerja:google-check
                                 </span>{' '}
                                 setelah mengisinya.
@@ -79,18 +81,44 @@ export function GoogleConnectionCard({
                 </Alert>
             )}
 
-            <div className="rounded-lg border border-border bg-surface p-4 shadow-card">
+            <section
+                aria-labelledby="google-connection-title"
+                className="flex flex-col gap-4 rounded-panel border border-border bg-surface p-6 shadow-card md:px-7"
+            >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h2
+                        id="google-connection-title"
+                        className="text-[20px] leading-7 font-bold md:text-[22px]"
+                    >
+                        Akun Google
+                    </h2>
+                    {account && !needsReconnect ? (
+                        <Badge variant="status" tone="success" dot>
+                            Terhubung
+                        </Badge>
+                    ) : needsReconnect ? (
+                        <Badge variant="status" tone="warning" dot>
+                            Perlu diperbarui
+                        </Badge>
+                    ) : (
+                        <Badge variant="status" tone="neutral" dot>
+                            Belum terhubung
+                        </Badge>
+                    )}
+                </div>
+
                 {account && !needsReconnect ? (
-                    <div className="flex flex-col gap-4 md:flex-row md:items-center">
-                        <CircleCheck
-                            aria-hidden
-                            className="size-5 shrink-0 text-success"
-                        />
-                        <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-text">
-                                Terhubung sebagai {account.email}
-                            </p>
-                            <p className="text-[13px] text-text-muted">
+                    <>
+                        <div className="flex items-start gap-3">
+                            <CircleCheck
+                                aria-hidden
+                                className="mt-0.5 size-5 shrink-0 text-success"
+                            />
+                            <p className="min-w-0 text-label font-normal text-text-muted">
+                                <span className="font-semibold break-all text-text">
+                                    Terhubung sebagai {account.email}
+                                </span>
+                                <br />
                                 {account.connected_at
                                     ? `Sejak ${formatDate(account.connected_at)} · `
                                     : ''}
@@ -102,7 +130,7 @@ export function GoogleConnectionCard({
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    className="h-11 md:h-9"
+                                    className="self-start"
                                     disabled={disconnecting}
                                 >
                                     Putuskan
@@ -113,34 +141,35 @@ export function GoogleConnectionCard({
                                 onConfirm={onDisconnect}
                             />
                         </Dialog>
-                    </div>
+                    </>
                 ) : (
-                    <div className="flex flex-col gap-4 md:flex-row md:items-center">
-                        {needsReconnect ? (
-                            <TriangleAlert
-                                aria-hidden
-                                className="size-5 shrink-0 text-warning"
-                            />
-                        ) : (
-                            <Unplug
-                                aria-hidden
-                                className="size-5 shrink-0 text-text-subtle"
-                            />
-                        )}
-                        <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-text">
-                                {needsReconnect
-                                    ? 'Sambungan Google perlu diperbarui'
-                                    : 'Akun Google belum terhubung'}
-                            </p>
-                            <p className="text-[13px] text-text-muted">
+                    <>
+                        <div className="flex items-start gap-3">
+                            {needsReconnect ? (
+                                <TriangleAlert
+                                    aria-hidden
+                                    className="mt-0.5 size-5 shrink-0 text-warning"
+                                />
+                            ) : (
+                                <Unplug
+                                    aria-hidden
+                                    className="mt-0.5 size-5 shrink-0 text-text-subtle"
+                                />
+                            )}
+                            <p className="min-w-0 text-label font-normal text-text-muted">
+                                <span className="font-semibold text-text">
+                                    {needsReconnect
+                                        ? 'Sambungan Google perlu diperbarui'
+                                        : 'Akun Google belum terhubung'}
+                                </span>
+                                <br />
                                 {google.connect_enabled
                                     ? 'Hubungkan akun Google kantor untuk melampirkan file dari Drive.'
                                     : 'Sambungan akun Google belum diaktifkan admin.'}
                             </p>
                         </div>
                         {google.connect_enabled && (
-                            <Button asChild className="h-11 md:h-9">
+                            <Button asChild className="self-start">
                                 <a href={href}>
                                     {needsReconnect
                                         ? 'Hubungkan ulang'
@@ -148,9 +177,9 @@ export function GoogleConnectionCard({
                                 </a>
                             </Button>
                         )}
-                    </div>
+                    </>
                 )}
-            </div>
+            </section>
         </div>
     );
 }
@@ -174,11 +203,7 @@ function DisconnectDialog({
             </DialogHeader>
             <DialogFooter>
                 <DialogClose asChild>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="h-11 md:h-9"
-                    >
+                    <Button type="button" variant="outline">
                         Batal
                     </Button>
                 </DialogClose>
@@ -186,7 +211,6 @@ function DisconnectDialog({
                     <Button
                         type="button"
                         variant="destructive"
-                        className="h-11 md:h-9"
                         onClick={onConfirm}
                     >
                         Putuskan

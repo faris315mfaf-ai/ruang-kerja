@@ -149,18 +149,6 @@ export type NotificationSettingsState = ReturnType<
     typeof useNotificationSettings
 >;
 
-/** "In-app, Email" summary for the mobile accordion. */
-export function enabledSummary(
-    row: MatrixRow,
-    labels: Record<ChannelKey, string>,
-): string {
-    const enabled = (Object.keys(row.channels) as ChannelKey[])
-        .filter((channel) => row.channels[channel].enabled)
-        .map((channel) => labels[channel]);
-
-    return enabled.length > 0 ? enabled.join(', ') : 'Nonaktif';
-}
-
 /** "07:30" → "07.30" (DESIGN.md §8). */
 export function displayTime(time: string): string {
     return time.replace(':', '.');

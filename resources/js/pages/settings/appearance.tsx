@@ -1,32 +1,36 @@
 import { Head } from '@inertiajs/react';
-import Heading from '@/components/heading';
-import { ThemeSegmented } from '@/components/shell/theme-segmented';
+import { Panel } from '@/components/ui/panel';
+import { ThemeChoice } from '@/features/settings/theme-picker';
 import { edit as editAppearance } from '@/routes/appearance';
+import { edit as editProfile } from '@/routes/profile';
 
+/** Settings › Tampilan (SPengaturan "Tampilan" card, MSPengaturan segmented). */
 export default function Appearance() {
     return (
         <>
             <Head title="Pengaturan tampilan" />
-
             <h1 className="sr-only">Pengaturan tampilan</h1>
 
-            <div className="space-y-6">
-                <Heading
-                    variant="small"
-                    title="Tampilan"
-                    description="Atur tampilan aplikasi untuk akun Anda"
-                />
-                <ThemeSegmented />
-            </div>
+            <Panel
+                title="Tampilan"
+                className="max-w-[640px]"
+                bodyClassName="gap-4"
+            >
+                <p className="text-label font-normal text-text-muted">
+                    Pilih tema terang, gelap, atau ikuti sistem. Disimpan ke
+                    akun Anda dan berlaku di semua perangkat.
+                </p>
+                <ThemeChoice />
+            </Panel>
         </>
     );
 }
 
 Appearance.layout = {
     breadcrumbs: [
-        {
-            title: 'Pengaturan tampilan',
-            href: editAppearance(),
-        },
+        { title: 'Pengaturan', href: editProfile() },
+        { title: 'Tampilan', href: editAppearance() },
     ],
+    title: 'Tampilan',
+    back: '/menu',
 };
