@@ -15,8 +15,8 @@ use App\Domain\Tasks\Services\DefaultTaskStatuses;
 use App\Domain\Workspaces\Actions\EnsurePersonalWorkspace;
 use App\Domain\Workspaces\Actions\SyncDivisionMembers;
 use App\Domain\Workspaces\Enums\WorkspaceType;
-use App\Domain\Workspaces\Events\WorkspaceCreated;
-use App\Domain\Workspaces\Events\WorkspaceMembersChanged;
+use App\Events\Workspaces\WorkspaceCreated;
+use App\Events\Workspaces\WorkspaceMembersChanged;
 use App\Models\Company;
 use App\Models\Division;
 use App\Models\Position;
@@ -115,7 +115,12 @@ class AnalyticsDemoSeeder extends Seeder
                 continue;
             }
 
-            $division = $divisions[$i % $divisions->count()];
+            $division = $divisions->get($i % $divisions->count());
+
+            if ($division === null) {
+                continue;
+            }
+
             $user = User::query()->forceCreate([
                 'company_id' => $company->id,
                 'name' => self::FIRST[$i % count(self::FIRST)].' '.self::LAST[intdiv($i, count(self::FIRST)) % count(self::LAST)],
