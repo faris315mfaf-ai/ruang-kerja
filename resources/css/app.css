@@ -10,6 +10,7 @@
 
 /* Sumber kebenaran warna, radius, font, glass. Lihat docs/DESIGN.md. */
 @import './tokens.css';
+@import './palette.css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -86,8 +87,13 @@
     --ease-brand: var(--ease);
 }
 
-/* Variabel shadcn/ui dipetakan ke token, terang & gelap ikut otomatis. */
-:root {
+/*
+ * Variabel shadcn/ui dipetakan ke token, terang & gelap ikut otomatis.
+ * Diulang pada .dark agar subtree bertema gelap (mis. layar kamera check-in)
+ * menghitung ulang nilainya.
+ */
+:root,
+.dark {
     --background: var(--bg);
     --foreground: var(--text);
     --card: var(--surface);

@@ -321,10 +321,28 @@ it('rate limits one browser session to 10 callbacks per minute', function () {
         ->assertRedirect(route('login'));
 });
 
+it('defaults TRUSTED_PROXIES to loopback and private ranges', function () {
+    $saved = [$_SERVER['TRUSTED_PROXIES'] ?? null, $_ENV['TRUSTED_PROXIES'] ?? null, getenv('TRUSTED_PROXIES')];
+    unset($_SERVER['TRUSTED_PROXIES'], $_ENV['TRUSTED_PROXIES']);
+    putenv('TRUSTED_PROXIES');
+
+    try {
+        $config = require config_path('trustedproxy.php');
+    } finally {
+        [$server, $env, $putenv] = $saved;
+        $server === null ?: $_SERVER['TRUSTED_PROXIES'] = $server;
+        $env === null ?: $_ENV['TRUSTED_PROXIES'] = $env;
+        $putenv === false ?: putenv("TRUSTED_PROXIES={$putenv}");
+    }
+
+    expect($config['proxies'])->toBe('127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7');
+});
+
 it('resolves the client IP behind a trusted proxy only', function () {
+    config(['trustedproxy.proxies' => '127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7']);
     Route::get('/_test/client-ip', fn (Request $request) => $request->ip());
 
-    // Default TRUSTED_PROXIES: private ranges (reverse proxy on the same network).
+    // A reverse proxy on the private network forwards the real client address.
     $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.5'])
         ->get('/_test/client-ip', ['X-Forwarded-For' => '198.51.100.7'])
         ->assertSee('198.51.100.7');

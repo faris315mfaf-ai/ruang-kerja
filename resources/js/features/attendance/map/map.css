@@ -1,0 +1,141 @@
+/*
+ * Leaflet styling with design tokens (docs/DESIGN.md §2). Leaflet writes its
+ * default colours as SVG attributes; these CSS properties override them.
+ */
+@import 'leaflet/dist/leaflet.css';
+
+.rk-map.leaflet-container {
+    background: var(--surface-2);
+    font-family: var(--font-sans);
+    font-size: 12px;
+}
+
+/* Dark mode: invert the OSM tiles so the map does not glare. */
+.dark .rk-map .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9)
+        saturate(0.6);
+}
+
+.rk-map .leaflet-control-attribution {
+    background: color-mix(in srgb, var(--surface) 80%, transparent);
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+.rk-map .leaflet-control-attribution a {
+    color: var(--text-muted);
+}
+
+.rk-map .leaflet-bar a {
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--border);
+}
+
+.rk-map .leaflet-bar a:hover {
+    background: var(--surface-2);
+}
+
+.rk-geofence {
+    stroke: var(--primary);
+    stroke-width: 1.5;
+    stroke-dasharray: 5 5;
+    fill: var(--primary);
+    fill-opacity: 0.12;
+}
+
+.rk-geofence--muted {
+    stroke: var(--text-subtle);
+    fill: var(--text-subtle);
+    fill-opacity: 0.06;
+}
+
+.rk-accuracy {
+    stroke: var(--info);
+    stroke-width: 1;
+    stroke-opacity: 0.5;
+    fill: var(--info);
+    fill-opacity: 0.12;
+}
+
+.rk-distance-line {
+    stroke: var(--danger);
+    stroke-width: 2;
+    stroke-dasharray: 6 6;
+    fill: none;
+}
+
+.rk-office-icon,
+.rk-user-icon,
+.rk-pin-icon {
+    background: transparent;
+    border: 0;
+}
+
+.rk-office-dot {
+    display: block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    background: var(--primary);
+    box-shadow: 0 0 0 2px var(--surface);
+}
+
+.rk-user-dot {
+    display: block;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: var(--info);
+    box-shadow:
+        0 0 0 3px var(--surface),
+        0 0 0 8px color-mix(in srgb, var(--info) 25%, transparent);
+}
+
+.rk-pin {
+    display: block;
+    width: 28px;
+    height: 28px;
+    border-radius: 50% 50% 50% 0;
+    background: var(--primary);
+    transform: rotate(-45deg);
+    box-shadow: 0 0 0 2px var(--surface);
+}
+
+.rk-pin::after {
+    content: '';
+    position: absolute;
+    top: 9px;
+    left: 9px;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--surface);
+}
+
+.rk-distance-label.leaflet-tooltip {
+    background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+    color: var(--danger);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 1px 6px;
+    box-shadow: none;
+}
+
+.rk-distance-label.leaflet-tooltip::before {
+    display: none;
+}
+
+.rk-location-label.leaflet-tooltip {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    color: var(--primary);
+    font-weight: 500;
+    font-size: 11px;
+}
+
+.rk-location-label.leaflet-tooltip::before {
+    display: none;
+}

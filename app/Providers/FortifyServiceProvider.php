@@ -12,7 +12,6 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -101,15 +100,8 @@ class FortifyServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->session()->get('login.id'));
         });
 
-        // Password login: 5/min per email+IP and 10/min per IP (ARCHITECTURE §5).
-        RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->string(Fortify::username())->value()).'|'.$request->ip());
-
-            return [
-                Limit::perMinute(5)->by($throttleKey),
-                Limit::perMinute(10)->by('ip|'.$request->ip()),
-            ];
-        });
+        // The `login` limiter (10/min per IP + 5/min per email+IP) lives in
+        // AppServiceProvider with the other named limiters (check-in, api).
 
         // Google callback only: 60/min per client IP (dozens of employees share the
         // office NAT at 08:00) and 10/min per browser session behind that IP.

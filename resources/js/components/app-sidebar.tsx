@@ -14,6 +14,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { SidebarWorkspaces } from '@/features/workspaces/sidebar-workspaces';
 import { useUnreadCount } from '@/features/notifications/unread-store';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { AppNavItem } from '@/lib/navigation';
@@ -51,35 +52,6 @@ function NavList({ items }: { items: AppNavItem[] }) {
     );
 }
 
-function PersonalWorkspaceLink() {
-    const { auth } = usePage().props;
-    const { currentUrl } = useCurrentUrl();
-    const initial = (auth.user?.name ?? '?').trim().charAt(0).toUpperCase();
-
-    return (
-        <SidebarMenu>
-            <SidebarMenuItem>
-                <SidebarMenuButton
-                    asChild
-                    isActive={currentUrl.startsWith('/workspace')}
-                    tooltip="Pribadi"
-                    className="h-8 text-[13px]"
-                >
-                    <Link href="/workspace" prefetch>
-                        <span
-                            aria-hidden
-                            className="flex size-4.5 shrink-0 items-center justify-center rounded-[4px] bg-surface-2 text-[10px] font-semibold text-text-muted ring-1 ring-border"
-                        >
-                            {initial}
-                        </span>
-                        <span>Pribadi</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-        </SidebarMenu>
-    );
-}
-
 export function AppSidebar({ className }: { className?: string }) {
     const { auth } = usePage().props;
     const adminItems = adminNavItems(auth.roles);
@@ -112,12 +84,7 @@ export function AppSidebar({ className }: { className?: string }) {
                     <NavList items={mainNavItems} />
                 </SidebarGroup>
 
-                <SidebarGroup className="py-1">
-                    <SidebarGroupLabel className="text-[11px] font-medium tracking-[.04em] text-text-muted uppercase">
-                        Workspace
-                    </SidebarGroupLabel>
-                    <PersonalWorkspaceLink />
-                </SidebarGroup>
+                <SidebarWorkspaces />
 
                 {adminItems.length > 0 && (
                     <SidebarGroup className="py-1">

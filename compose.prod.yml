@@ -1,0 +1,156 @@
+# RuangKerja — production stack (docs/ARCHITECTURE.md §6, README "Deploy").
+#
+# On the server (directory /opt/ruangkerja):
+#   cp .env.production.example .env   # fill in, chmod 600
+#   docker compose -f compose.prod.yml pull
+#   docker compose -f compose.prod.yml up -d
+#
+# Every ${VAR} below is read from ./.env (Compose interpolation). The same file
+# is mounted read-only into the PHP containers as /app/.env.
+name: ruangkerja
+
+x-app: &app
+  image: ${APP_IMAGE:?set APP_IMAGE in .env}:${APP_TAG:-latest}
+  restart: unless-stopped
+  volumes:
+    - ./.env:/app/.env:ro
+    - storage:/app/storage
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  logging: &logging
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?set APP_DOMAIN in .env}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in .env}
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+      reverb:
+        condition: service_started
+    logging: *logging
+
+  app:
+    <<: *app
+    # Image default: FrankenPHP serving HTTP on :8000 (not published; Caddy proxies to it).
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:8000/up"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  queue:
+    <<: *app
+    command: ["php", "artisan", "horizon"]
+    # Let running jobs finish on deploy (Horizon handles SIGTERM gracefully).
+    stop_grace_period: 90s
+    healthcheck:
+      test: ["CMD", "php", "artisan", "horizon:status"]
+      interval: 60s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+  scheduler:
+    <<: *app
+    command: ["php", "artisan", "schedule:work"]
+    healthcheck:
+      disable: true
+
+  reverb:
+    <<: *app
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    healthcheck:
+      disable: true
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:?set DB_DATABASE in .env}
+      POSTGRES_USER: ${DB_USERNAME:?set DB_USERNAME in .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      TZ: UTC
+    # Not published: reachable only from the containers on this network.
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    shm_size: 256mb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    logging: *logging
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}"]
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    logging: *logging
+
+  backup:
+    image: ${BACKUP_IMAGE:?set BACKUP_IMAGE in .env}:${APP_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Jakarta
+      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-0 2 * * *}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      BACKUP_LOCAL_KEEP_DAYS: ${BACKUP_LOCAL_KEEP_DAYS:-7}
+      BACKUP_HEARTBEAT_URL: ${BACKUP_HEARTBEAT_URL:-}
+      BACKUP_REMOTE: backup:${BACKUP_S3_BUCKET:?set BACKUP_S3_BUCKET in .env}/${BACKUP_S3_PREFIX:-postgres}
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGDATABASE: ${DB_DATABASE}
+      PGUSER: ${DB_USERNAME}
+      PGPASSWORD: ${DB_PASSWORD}
+      # rclone remote "backup" (S3-compatible, e.g. Biznet Gio NEO Object Storage).
+      RCLONE_CONFIG_BACKUP_TYPE: s3
+      RCLONE_CONFIG_BACKUP_PROVIDER: ${BACKUP_S3_PROVIDER:-Other}
+      RCLONE_CONFIG_BACKUP_ENDPOINT: ${BACKUP_S3_ENDPOINT:?set BACKUP_S3_ENDPOINT in .env}
+      RCLONE_CONFIG_BACKUP_REGION: ${BACKUP_S3_REGION:-us-east-1}
+      RCLONE_CONFIG_BACKUP_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID:?set BACKUP_S3_ACCESS_KEY_ID in .env}
+      RCLONE_CONFIG_BACKUP_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY:?set BACKUP_S3_SECRET_ACCESS_KEY in .env}
+      RCLONE_CONFIG_BACKUP_FORCE_PATH_STYLE: "true"
+      RCLONE_CONFIG_BACKUP_NO_CHECK_BUCKET: "true"
+    volumes:
+      - backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging: *logging
+
+volumes:
+  storage:
+  pgdata:
+  redisdata:
+  backups:
+  caddy_data:
+  caddy_config:

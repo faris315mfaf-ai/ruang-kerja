@@ -136,7 +136,7 @@ Indeks: `(auditable_type, auditable_id)`, `(action)`, `(created_at)`, `(user_id,
 ## 2. Absensi
 
 ### office_locations
-`id`, `company_id`, `name`, `address`, `latitude` numeric(10,7), `longitude` numeric(10,7), `radius_m` int (default 100), `is_active`.
+`id`, `company_id`, `name` varchar(120), `address` varchar(255) null, `latitude` numeric(10,7), `longitude` numeric(10,7), `radius_m` int (default 100), `is_active`, `deleted_at`. CHECK koordinat valid & `radius_m > 0`. Indeks `(company_id, is_active)`.
 
 ### shifts
 | Kolom | Tipe | Keterangan |
@@ -149,15 +149,20 @@ Indeks: `(auditable_type, auditable_id)`, `(action)`, `(created_at)`, `(user_id,
 | crosses_midnight | bool | |
 | late_tolerance_min | smallint | default 10 |
 | early_leave_tolerance_min | smallint | |
-| check_in_window_before_min | smallint | boleh check-in mulai X menit sebelum jam masuk |
+| check_in_window_before_min | smallint | boleh check-in mulai X menit sebelum jam masuk (default 120) |
+| office_location_id | FK office_locations null | **tambahan Sprint 2**: lokasi check-in shift ini (mis. shift gudang). Null = semua lokasi aktif perusahaan |
+
+`crosses_midnight` diturunkan otomatis dari jam (pulang ≤ masuk). Soft delete; shift yang masih dipakai penugasan aktif tidak bisa dihapus.
 
 ### shift_assignments
 `id`, `user_id`, `shift_id`, `weekdays` smallint[] (1=Senin…7=Minggu), `valid_from` date, `valid_until` date null, `override_date` date null (penugasan khusus satu tanggal, mengalahkan pola), `work_mode_override` varchar null.
 
-Resolusi jadwal: `override_date` → pola aktif pada tanggal tersebut → tidak terjadwal (libur).
+Resolusi jadwal (Sprint 2): `override_date` → hari libur perusahaan → pola aktif pada tanggal tersebut (bila beberapa, `valid_from` terbaru) → tidak terjadwal. Override mengalahkan hari libur.
+
+Implementasi: `weekdays` = `smallint[]` NOT NULL default `{}` (CHECK nilai 1–7), `shift_id` **nullable** hanya untuk override = libur khusus, CHECK `override_date IS NOT NULL OR (shift_id IS NOT NULL AND cardinality(weekdays) > 0)`, unik parsial `(user_id, override_date)`. Override menyimpan `valid_from = valid_until = override_date`. `work_mode_override` (`office`/`hybrid`/`wfh`/`field`) dipakai untuk hari WFH karyawan hybrid. Pola baru tanpa tanggal akhir mengakhiri pola lama yang hari-harinya tercakup (`valid_until` = sehari sebelumnya).
 
 ### holidays
-`id`, `company_id`, `date`, `name`, `type` (`national` · `collective_leave` · `company`). Unik `(company_id, date)`.
+`id`, `company_id`, `date`, `name` varchar(150), `type` (`national` · `collective_leave` · `company`). Unik `(company_id, date)`. Tanpa soft delete (tidak dirujuk FK).
 
 ### attendance_days — satu baris per karyawan per tanggal kerja
 | Kolom | Tipe | Keterangan |
@@ -179,6 +184,8 @@ Resolusi jadwal: `override_date` → pola aktif pada tanggal tersebut → tidak 
 | note | text null | |
 
 Indeks: `(work_date, status)`, `(user_id, work_date)` unique.
+
+Implementasi (Sprint 2): FK `check_in_log_id`/`check_out_log_id` ditambahkan oleh migrasi `attendance_logs` (referensi melingkar); `request_id` belum ber-FK (tabel `requests` dibuat Sprint 4). `late_minutes` dihitung dari **batas toleransi** (mulai + toleransi), `early_leave_minutes` dari akhir − toleransi, keduanya menit utuh. `work_minutes` dikurangi istirahat bila rentang kerja > 4 jam. Status: `late` > `wfh`/`present`; `early_leave` hanya menggantikan `present`/`wfh`. `attendance:close-day` menulis `absent`, `holiday` (hari pola yang jatuh pada libur) dan `needs_correction`.
 
 ### attendance_logs — setiap peristiwa check-in/out (immutable)
 | Kolom | Tipe | Keterangan |
@@ -205,11 +212,15 @@ Indeks: `(work_date, status)`, `(user_id, work_date)` unique.
 | corrected_by | FK users null | untuk `method = manual` |
 | note | text null | |
 
+Implementasi (Sprint 2): `accuracy_m` numeric(8,2), `distance_m` numeric(10,2) = jarak ke lokasi terdekat (juga untuk WFH), `office_location_id` hanya diisi bila di dalam radius. `qr_token_id` belum ber-FK (Sprint 3). `flags` jsonb default `[]`: `low_accuracy`, `clock_skew`, `new_device`, `new_ip`, `impossible_travel`, `dark_selfie`; `new_ip` saja tidak membuat `is_suspicious`. Baris immutable (model menolak update selain `reviewed_by/at` dan menolak delete). Indeks `(user_id, occurred_at)`, `attendance_day_id`, parsial `occurred_at WHERE is_suspicious AND reviewed_at IS NULL`.
+
 ### qr_tokens
 `id`, `office_location_id`, `token_hash`, `valid_from`, `valid_until` (≈30–45 detik), `kiosk_id`. Token di QR = `HMAC(secret, location_id|window)`. Tabel ini opsional bila validasi murni HMAC. Disimpan untuk audit.
 
 ### attendance_consents
 `id`, `user_id`, `type` (`location` · `selfie` · `face`), `version` (versi teks kebijakan), `granted_at`, `revoked_at` null. Check-in ditolak bila persetujuan versi terbaru belum diberikan.
+
+Implementasi (Sprint 2): versi dari `config('attendance.consent.version')` (`ATTENDANCE_CONSENT_VERSION`). Check-in GPS + selfie butuh `location` **dan** `selfie` versi terkini yang belum dicabut. Indeks `(user_id, type, version)`.
 
 ---
 
@@ -269,6 +280,7 @@ Lampiran pengajuan (surat dokter, dll.) memakai tabel `attachments` (morph ke `r
 | drive_folder_id | varchar null | ID folder di Shared Drive |
 | task_sequence | int | penghitung nomor task berikutnya (dikunci `SELECT … FOR UPDATE`) |
 | archived_at | timestamptz null | |
+| previous_keys | jsonb (default `[]`) | key lama setelah diganti; `/w/{key-lama}` dialihkan (301) ke key baru. Key harus `^[A-Z][A-Z0-9]{1,9}$` (CHECK) dan unik terhadap key aktif **dan** key lama di company |
 | **Kolom proyek** (hanya `type = project`) | | |
 | lead_user_id | FK users null | PIC proyek |
 | sponsor_user_id | FK users null | anggota Direksi |
@@ -291,7 +303,9 @@ Lampiran pengajuan (surat dokter, dll.) memakai tabel `attachments` (morph ke `r
 `workspace_id`, `date` (PK gabungan), `scope_count` int, `done_count` int, `scope_hours` numeric null, `done_hours` numeric null. Diisi job harian 23.55.
 
 ### workspace_members
-`workspace_id`, `user_id` (PK gabungan), `role` (`owner` · `admin` · `member` · `viewer`), `joined_at`, `is_synced` (true bila berasal dari sinkron divisi/tim).
+`workspace_id`, `user_id` (PK gabungan), `role` (`owner` · `admin` · `member` · `viewer`), `joined_at`, `is_synced` (true bila berasal dari sinkron divisi/tim). Tambahan Sprint 5: `favorited_at` timestamptz null (favorit di sidebar, urut waktu dibintangi). Pemilik workspace pribadi juga punya baris `owner` di sini (memudahkan daftar sidebar & validasi penanggung jawab); aturan "pribadi hanya pemilik" tetap ditegakkan Policy.
+
+Indeks unik parsial: `workspaces (owner_id) WHERE type = 'personal'` (satu workspace pribadi per user) dan `workspaces (division_id) WHERE type = 'division'` (satu per divisi). Warna (`workspaces.color`, `task_statuses.color`, `labels.color`) disimpan sebagai **nama palet** (`gray`, `slate`, `teal`, `blue`, `green`, `amber`, `orange`, `red`, `violet`, `pink`; `resources/css/palette.css`), bukan hex.
 
 ### task_statuses
 `id`, `workspace_id`, `name` ("Sedang dikerjakan"), `category` (`backlog` · `todo` · `in_progress` · `review` · `done` · `canceled`), `color`, `position` varchar (lexorank). Workspace baru mendapat 5 status default.
@@ -320,9 +334,11 @@ Lampiran pengajuan (surat dokter, dll.) memakai tabel `attachments` (morph ke `r
 | started_at | timestamptz null | pertama kali masuk `in_progress` |
 | completed_at | timestamptz null | masuk kategori `done` |
 | canceled_at | timestamptz null | |
-| search_vector | tsvector | indeks GIN (judul + teks deskripsi) |
+| search_vector | tsvector | kolom GENERATED STORED: `setweight(to_tsvector('simple', title),'A') || setweight(to_tsvector('simple', description_text),'B')`, indeks GIN. Konfigurasi `simple` karena PostgreSQL tidak punya stemmer Indonesia |
 
-Indeks: `(workspace_id, number)` unique, `(workspace_id, status_id, position)`, `(due_date) where status_category not in ('done','canceled')`, GIN `search_vector`.
+Indeks: `(workspace_id, number)` unique, `(workspace_id, status_id, position)`, `(workspace_id, status_category)`, `(due_date) where status_category not in ('done','canceled')`, GIN `search_vector`. CHECK `priority BETWEEN 0 AND 4`, `number > 0`.
+
+Kolom `position` (tasks, task_statuses, checklist_items) bertipe `varchar(100) COLLATE "C"` agar urutan lexorank = urutan byte (`App\Domain\Tasks\Services\Lexorank`, base-62, kolom diseimbangkan ulang bila kunci > 40 karakter). Lifecycle: `started_at` diisi saat pertama kali masuk kategori `in_progress` **atau `review`**; `completed_at` diisi saat masuk `done` dan dikosongkan saat keluar; `canceled_at` sama untuk `canceled`. Mengubah kategori sebuah kolom menyinkronkan semua tugas di kolom itu.
 
 ### Tabel pivot task
 - `task_assignees` (`task_id`, `user_id`, `assigned_at`, `assigned_by`)
@@ -340,7 +356,7 @@ Indeks: `(workspace_id, number)` unique, `(workspace_id, status_id, position)`, 
 `id`, `reactable_type`/`reactable_id`, `user_id`, `emoji`. Unik `(reactable, user_id, emoji)`.
 
 ### activities — feed & riwayat
-`id`, `workspace_id`, `subject_type`/`subject_id`, `causer_id`, `event` (`task.created`, `task.status_changed`, `task.assigned`, …), `properties` jsonb (`{"from": …, "to": …}`), `created_at`. Append-only.
+`id`, `workspace_id`, `subject_type`/`subject_id`, `causer_id`, `event` (`task.created`, `task.status_changed`, `task.assigned`, …), `properties` jsonb (`{"from": …, "to": …}`), `created_at`. Append-only. `subject_type` = FQCN (`App\Models\Task`, `App\Models\Workspace`; tanpa morph map, sama dengan audit_logs). Event Sprint 5: `task.created`, `task.status_changed`, `task.assigned`, `task.unassigned`, `task.due_date_changed`, `task.priority_changed`, `task.renamed`, `task.deleted`, `workspace.created|updated|archived|restored`, `workspace.member_added|member_removed|member_role_changed`. Properti tugas selalu memuat `key` & `title` agar feed tetap terbaca setelah tugas dihapus.
 
 ### saved_views
 `id`, `user_id`, `workspace_id` null (null = lintas workspace, mis. "Tugas saya"), `name`, `layout` (`board` · `list` · `calendar`), `filters` jsonb, `sort` jsonb, `is_shared`.

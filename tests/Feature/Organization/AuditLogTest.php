@@ -124,7 +124,8 @@ it('never stores passwords or two-factor secrets', function () {
 it('ignores login bookkeeping and theme changes', function () {
     $user = User::factory()->create();
 
-    $user->update(['last_login_at' => now(), 'remember_token' => 'abc', 'avatar_url' => 'https://example.test/a.png']);
+    // remember_token is not fillable (set by the guard), so forceFill like the framework does.
+    $user->forceFill(['last_login_at' => now(), 'remember_token' => 'abc', 'avatar_url' => 'https://example.test/a.png'])->save();
 
     expect(AuditLog::query()->where('action', 'user.updated')->exists())->toBeFalse();
 });

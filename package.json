@@ -1,5 +1,6 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
+    "name": "ruang-kerja",
     "private": true,
     "type": "module",
     "scripts": {
@@ -9,7 +10,9 @@
         "typecheck": "tsc --noEmit",
         "lint": "vp check",
         "lint:fix": "vp check --fix",
-        "test": "vp test run"
+        "test": "vp test run",
+        "test:e2e": "playwright test",
+        "test:e2e:baseline": "playwright test --update-snapshots=all"
     },
     "dependencies": {
         "@dnd-kit/core": "^6.3.1",
@@ -46,10 +49,12 @@
         "input-otp": "^1.4.2",
         "laravel-echo": "^2.5.0",
         "laravel-vite-plugin": "^3.0.0",
+        "leaflet": "^1.9.4",
         "lucide-react": "^0.475.0",
         "pusher-js": "^8.6.0",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
+        "react-leaflet": "^5.0.0",
         "sonner": "^2.0.0",
         "tailwind-merge": "^3.0.1",
         "tailwindcss": "^4.0.0",
@@ -59,8 +64,10 @@
     },
     "devDependencies": {
         "@laravel/vite-plugin-wayfinder": "^0.1.3",
+        "@playwright/test": "^1.63.0",
         "@rolldown/plugin-babel": "^0.2.3",
         "@testing-library/react": "^16.3.3",
+        "@types/leaflet": "^1.9.22",
         "@types/node": "^22.13.5",
         "babel-plugin-react-compiler": "^1.0.0",
         "jsdom": "^30.1.2",

@@ -5,11 +5,13 @@ use App\Providers\FortifyServiceProvider;
 use App\Providers\GoogleServiceProvider;
 use App\Providers\HorizonServiceProvider;
 use App\Providers\NotificationServiceProvider;
+use App\Providers\WorkspaceServiceProvider;
 
 return [
     AppServiceProvider::class,
     FortifyServiceProvider::class,
     GoogleServiceProvider::class,
     HorizonServiceProvider::class,
+    WorkspaceServiceProvider::class,
     NotificationServiceProvider::class,
 ];
