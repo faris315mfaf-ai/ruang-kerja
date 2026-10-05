@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { adminNavItems, attendanceNavItems, mainNavItems } from './navigation';
+import {
+    adminNavItems,
+    attendanceNavItems,
+    mainNavItems,
+    mainNavItemsFor,
+} from './navigation';
 
 const titles = (roles: string[]) =>
     adminNavItems(roles).map((item) => item.title);
@@ -66,5 +71,19 @@ describe('navigation', () => {
         expect(
             attendanceNavItems(['hr']).find((item) => item.desktopOnly)?.href,
         ).toBe('/absensi/rekap');
+    });
+
+    it('adds Portofolio after Dashboard for Direksi and Super Admin only', () => {
+        const hrefs = (roles: string[]) =>
+            mainNavItemsFor(roles).map((item) => item.href);
+
+        expect(hrefs(['direksi'])).toContain('/portofolio');
+        expect(hrefs(['super_admin']).indexOf('/portofolio')).toBe(
+            hrefs(['super_admin']).indexOf('/dashboard') + 1,
+        );
+        expect(hrefs(['kepala_divisi'])).not.toContain('/portofolio');
+        expect(hrefs(['anggota'])).toEqual(
+            mainNavItems.map((item) => item.href),
+        );
     });
 });

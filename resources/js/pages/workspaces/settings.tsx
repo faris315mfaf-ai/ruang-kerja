@@ -9,6 +9,8 @@ import type { WorkspaceDriveSettings } from '@/features/workspaces/settings/driv
 import { GeneralSection } from '@/features/workspaces/settings/general-section';
 import { LabelsSection } from '@/features/workspaces/settings/labels-section';
 import { MembersSection } from '@/features/workspaces/settings/members-section';
+import type { ProjectSettings } from '@/features/workspaces/settings/project-section';
+import { ProjectSection } from '@/features/workspaces/settings/project-section';
 import { StatusesSection } from '@/features/workspaces/settings/statuses-section';
 import { workspaceLayout } from '@/features/workspaces/tab-layout';
 import type {
@@ -31,10 +33,12 @@ type Props = WorkspacePageProps & {
     role_options: Option<WorkspaceRole>[];
     category_options: Option<StatusCategory>[];
     drive: WorkspaceDriveSettings;
+    project_settings: ProjectSettings | null;
 };
 
 const NAV = [
     ['umum', 'Umum'],
+    ['proyek', 'Proyek'],
     ['anggota', 'Anggota'],
     ['kolom-status', 'Kolom status'],
     ['label', 'Label'],
@@ -129,8 +133,10 @@ export default function WorkspaceSettings(props: Props) {
                             <ul className="sticky top-20 space-y-0.5">
                                 {NAV.filter(
                                     ([id]) =>
-                                        id !== 'anggota' ||
-                                        workspace.type !== 'personal',
+                                        (id !== 'anggota' ||
+                                            workspace.type !== 'personal') &&
+                                        (id !== 'proyek' ||
+                                            props.project_settings !== null),
                                 ).map(([id, label]) => (
                                     <li key={id}>
                                         <a
@@ -179,6 +185,14 @@ export default function WorkspaceSettings(props: Props) {
                                 workspace={workspace}
                                 editable={editable}
                             />
+                            {props.project_settings && (
+                                <ProjectSection
+                                    workspace={workspace}
+                                    settings={props.project_settings}
+                                    members={member_details}
+                                    editable={editable}
+                                />
+                            )}
                             {workspace.type !== 'personal' && (
                                 <MembersSection
                                     workspace={workspace}

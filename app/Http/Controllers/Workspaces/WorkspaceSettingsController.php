@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Workspaces;
 
 use App\Domain\Google\GoogleFeatures;
+use App\Domain\Projects\Queries\ProjectSettings;
 use App\Domain\Tasks\Enums\TaskStatusCategory;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
 use App\Domain\Workspaces\Queries\WorkspaceDriveListing;
@@ -27,7 +28,7 @@ use Inertia\Response;
  */
 class WorkspaceSettingsController extends Controller
 {
-    public function show(Workspace $workspace, #[CurrentUser] User $user, WorkspacePage $page, WorkspaceDriveStatus $driveStatus): Response
+    public function show(Workspace $workspace, #[CurrentUser] User $user, WorkspacePage $page, WorkspaceDriveStatus $driveStatus, ProjectSettings $projectSettings): Response
     {
         Gate::authorize('view', $workspace);
 
@@ -75,6 +76,8 @@ class WorkspaceSettingsController extends Controller
                 fn (WorkspaceRole $role): array => ['value' => $role->value, 'label' => $role->label()],
                 WorkspaceRole::assignable(),
             ),
+            // Sprint 9: Pengaturan › Proyek (null for other workspace types).
+            'project_settings' => fn (): ?array => $projectSettings->props($workspace),
             'category_options' => array_map(
                 fn (TaskStatusCategory $category): array => ['value' => $category->value, 'label' => $category->label()],
                 TaskStatusCategory::cases(),

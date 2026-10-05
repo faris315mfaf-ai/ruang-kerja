@@ -15,9 +15,12 @@ it('seeds the mockup workspaces idempotently', function () {
     $kadiv = User::query()->where('email', 'kadiv@demo.test')->firstOrFail();
     $keys = Workspace::query()->whereIn('type', ['division', 'team', 'project'])->orderBy('key')->pluck('key')->all();
 
-    expect($keys)->toBe(['DIR', 'GDG', 'KEU', 'OPS', 'PLQ', 'PMS', 'SDM'])
+    // ProjectSeeder (Sprint 9) adds the demo portfolio and 13 earlier PLQ tasks.
+    $portfolioOnly = ['ANG', 'AUD', 'IRK', 'KTR', 'MSG', 'RKR', 'SOPK'];
+
+    expect(array_values(array_diff($keys, $portfolioOnly)))->toBe(['DIR', 'GDG', 'KEU', 'OPS', 'PLQ', 'PMS', 'SDM'])
         ->and(Workspace::query()->where('type', 'personal')->count())->toBe(User::query()->count())
-        ->and(Task::query()->count())->toBe(36);
+        ->and(Task::query()->whereNotIn('workspace_id', Workspace::query()->whereIn('key', $portfolioOnly)->select('id'))->count())->toBe(36 + 13);
 
     $plq = Workspace::query()->where('key', 'PLQ')->firstOrFail();
     $divisions = $plq->members()->pluck('division_id')->filter()->unique();
@@ -35,9 +38,12 @@ it('seeds the mockup workspaces idempotently', function () {
         // Lead + 2 team members, plus the owner row (synced since review fix #5).
         ->and($gudang->memberships()->where('is_synced', true)->count())->toBe(4);
 
-    // The demo Kepala Divisi sees Pribadi, Divisi Operasional, Tim Gudang and the project in the sidebar.
+    // The demo Kepala Divisi sees Pribadi, Divisi Operasional, Tim Gudang and the projects in the sidebar.
     $this->actingAs($kadiv)->get('/dashboard')->assertInertia(fn ($page) => $page
-        ->where('workspaces', fn ($list) => collect($list)->pluck('name')->sort()->values()->all() === ['Divisi Operasional', 'Pribadi', 'Proyek Peluncuran Q4', 'Tim Gudang']));
+        ->where('workspaces', fn ($list) => array_values(array_intersect(
+            collect($list)->pluck('name')->sort()->values()->all(),
+            ['Divisi Operasional', 'Pribadi', 'Proyek Peluncuran Q4', 'Tim Gudang'],
+        )) === ['Divisi Operasional', 'Pribadi', 'Proyek Peluncuran Q4', 'Tim Gudang']));
 });
 
 it('renders every workspace screen on the full demo data (strict mode: no lazy loading)', function () {
@@ -46,8 +52,13 @@ it('renders every workspace screen on the full demo data (strict mode: no lazy l
     foreach (['kadiv@demo.test', 'anggota@demo.test', 'direksi@demo.test', 'admin@demo.test'] as $email) {
         $user = User::query()->where('email', $email)->firstOrFail();
 
-        foreach (['/w/PLQ', '/w/PLQ?view=list', '/w/PLQ?view=calendar', '/w/PLQ/aktivitas', '/w/PLQ/pengaturan', '/w/OPS', '/tugas', '/tugas?tab=watching', '/tugas?tab=created', '/workspace', '/dashboard'] as $uri) {
+        foreach (['/w/PLQ/ringkasan', '/w/PLQ', '/w/PLQ?view=list', '/w/PLQ?view=calendar', '/w/PLQ/aktivitas', '/w/PLQ/pengaturan', '/w/OPS', '/tugas', '/tugas?tab=watching', '/tugas?tab=created', '/workspace', '/dashboard'] as $uri) {
             $this->actingAs($user)->get($uri)->assertOk();
+        }
+
+        if ($email !== 'anggota@demo.test') {
+            $this->actingAs($user)->get('/portofolio')->assertOk();
+            $this->actingAs($user)->get('/portofolio?periode=semua&arsip=1')->assertOk();
         }
 
         $this->actingAs($user)->getJson('/tugas/opsi-form')->assertOk();
