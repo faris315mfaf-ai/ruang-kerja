@@ -91,6 +91,48 @@ class WorkspacePolicy
         return $this->gate($user, $workspace, $this->canEditTasks($user, $workspace));
     }
 
+    /**
+     * /portofolio: Direksi & Super Admin (portfolio.view) and Kepala Divisi
+     * (only projects of their divisions, see Workspace::scopePortfolioFor).
+     */
+    public function viewPortfolio(User $user): bool
+    {
+        return $user->hasPermission(Permission::PortfolioView) || $user->hasRole(Role::KepalaDivisi);
+    }
+
+    /**
+     * Project tracking writes (PRD M10): weekly update, milestones and risks.
+     * Only the PIC and workspace owners/admins (plus Super Admin).
+     */
+    public function manageProject(User $user, Workspace $workspace): Response
+    {
+        return $this->gate($user, $workspace, $this->canManageProject($user, $workspace));
+    }
+
+    /**
+     * Direksi actions on a project: "Minta update", "Beri arahan",
+     * "Tandai keputusan selesai" (portfolio.view: Direksi, Super Admin).
+     */
+    public function steerProject(User $user, Workspace $workspace): Response
+    {
+        $allowed = $workspace->isProject()
+            && ! $workspace->isArchived()
+            && $user->hasPermission(Permission::PortfolioView)
+            && $this->canView($user, $workspace);
+
+        return $this->gate($user, $workspace, $allowed);
+    }
+
+    public function canManageProject(User $user, Workspace $workspace): bool
+    {
+        if (! $workspace->isProject() || $workspace->isArchived() || ! $this->canView($user, $workspace)) {
+            return false;
+        }
+
+        return ($workspace->lead_user_id !== null && $workspace->lead_user_id === $user->id)
+            || $this->canManage($user, $workspace);
+    }
+
     public function canView(User $user, Workspace $workspace): bool
     {
         if ($workspace->company_id !== $user->company_id) {
@@ -152,7 +194,16 @@ class WorkspacePolicy
 
         $divisionIds = $user->ledDivisionIds();
 
-        return $divisionIds !== [] && WorkspaceMember::query()
+        if ($divisionIds === []) {
+            return false;
+        }
+
+        // Primary division of the project (Sprint 9) or a member from the division.
+        if ($workspace->division_id !== null && in_array($workspace->division_id, $divisionIds, true)) {
+            return true;
+        }
+
+        return WorkspaceMember::query()
             ->where('workspace_id', $workspace->id)
             ->whereHas('user', fn ($query) => $query->whereIn('division_id', $divisionIds))
             ->exists();

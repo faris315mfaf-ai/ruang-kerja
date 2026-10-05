@@ -1,6 +1,8 @@
 <?php
 
 use App\Domain\Attendance\Jobs\SendCheckInReminders;
+use App\Domain\Projects\Jobs\SendProjectUpdateReminders;
+use App\Domain\Projects\Jobs\TakeProjectProgressSnapshots;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -27,3 +29,6 @@ Schedule::job(new SendCheckInReminders)->everyFiveMinutes()->withoutOverlapping(
 // Sprint 8 — notifications (office timezone, see config/notifications.php).
 Schedule::command('notifications:send-daily-digests')->everyFiveMinutes()->withoutOverlapping();
 Schedule::command('notifications:prune')->dailyAt('02:15')->timezone((string) config('app.office_timezone'));
+// Sprint 9 — project tracking (office timezone): burn-up snapshot 23.55, PIC reminder Friday 15.00.
+Schedule::job(new TakeProjectProgressSnapshots)->dailyAt('23:55')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
+Schedule::job(new SendProjectUpdateReminders)->weeklyOn(5, '15:00')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();

@@ -21,6 +21,7 @@ enum NotificationEvent: string
     case RequestDecided = 'request.decided';
     case CheckInReminder = 'attendance.check_in_reminder';
     case CheckOutReminder = 'attendance.check_out_reminder';
+    case ProjectActivity = 'project.activity';
     case System = 'system';
     case DailyDigest = 'digest.daily';
 
@@ -36,6 +37,7 @@ enum NotificationEvent: string
             self::RequestDecided => 'Pengajuan saya diputus',
             self::CheckInReminder => 'Pengingat lupa check-in',
             self::CheckOutReminder => 'Pengingat lupa check-out',
+            self::ProjectActivity => 'Proyek: pengingat update, arahan & keputusan',
             self::System => 'Pengumuman & info sistem',
             self::DailyDigest => 'Ringkasan harian',
         };
@@ -44,7 +46,8 @@ enum NotificationEvent: string
     public function category(): NotificationCategory
     {
         return match ($this) {
-            self::TaskAssigned, self::Mention, self::TaskCommented, self::TaskDueSoon, self::TaskOverdue => NotificationCategory::Task,
+            self::TaskAssigned, self::Mention, self::TaskCommented, self::TaskDueSoon, self::TaskOverdue,
+            self::ProjectActivity => NotificationCategory::Task,
             self::RequestPending, self::RequestDecided => NotificationCategory::Request,
             self::CheckInReminder, self::CheckOutReminder => NotificationCategory::Attendance,
             self::System, self::DailyDigest => NotificationCategory::System,

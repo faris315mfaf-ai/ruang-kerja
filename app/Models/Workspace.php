@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Organization\Enums\Role;
+use App\Domain\Projects\Enums\ProjectHealth;
+use App\Domain\Projects\Enums\ProjectStatus;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
 use App\Domain\Workspaces\Enums\WorkspaceType;
 use App\Domain\Workspaces\Enums\WorkspaceVisibility;
@@ -36,7 +38,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  * @property string|null $color
  * @property WorkspaceVisibility $visibility
  * @property string $owner_id
- * @property string|null $division_id
+ * @property string|null $division_id Division workspace: the division; project: "divisi utama" (PRD M10).
  * @property string|null $team_id
  * @property string|null $drive_folder_id
  * @property int $task_sequence
@@ -45,8 +47,8 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  * @property string|null $sponsor_user_id
  * @property CarbonImmutable|null $start_date
  * @property CarbonImmutable|null $target_date
- * @property string|null $project_status
- * @property string|null $health
+ * @property ProjectStatus|null $project_status
+ * @property ProjectHealth|null $health
  * @property CarbonImmutable|null $last_update_at
  * @property CarbonImmutable|null $completed_at
  * @property CarbonImmutable|null $created_at
@@ -57,6 +59,8 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  * @property-read Division|null $division
  * @property-read Team|null $team
  * @property-read WorkspaceMember|null $membership
+ * @property-read User|null $lead
+ * @property-read User|null $sponsor
  */
 #[Fillable([
     'company_id', 'type', 'name', 'key', 'previous_keys', 'description', 'icon', 'color',
@@ -88,6 +92,8 @@ class Workspace extends Model
             'archived_at' => 'datetime',
             'start_date' => 'date',
             'target_date' => 'date',
+            'project_status' => ProjectStatus::class,
+            'health' => ProjectHealth::class,
             'last_update_at' => 'datetime',
             'completed_at' => 'datetime',
         ];
@@ -104,6 +110,11 @@ class Workspace extends Model
     public function isPersonal(): bool
     {
         return $this->type === WorkspaceType::Personal;
+    }
+
+    public function isProject(): bool
+    {
+        return $this->type === WorkspaceType::Project;
     }
 
     public function isArchived(): bool
@@ -181,18 +192,65 @@ class Workspace extends Model
                         if ($divisionIds !== []) {
                             $access->orWhere(function (Builder $project) use ($divisionIds): void {
                                 $project->where($this->qualifyColumn('type'), WorkspaceType::Project->value)
-                                    ->whereExists(function (QueryBuilder $member) use ($divisionIds): void {
-                                        $member->selectRaw('1')
-                                            ->from('workspace_members')
-                                            ->join('users', 'users.id', '=', 'workspace_members.user_id')
-                                            ->whereColumn('workspace_members.workspace_id', $this->qualifyColumn('id'))
-                                            ->whereIn('users.division_id', $divisionIds);
+                                    ->where(function (Builder $involved) use ($divisionIds): void {
+                                        // Primary division (Sprint 9) or a member from the division.
+                                        $involved->whereIn($this->qualifyColumn('division_id'), $divisionIds)
+                                            ->orWhereExists(function (QueryBuilder $member) use ($divisionIds): void {
+                                                $member->selectRaw('1')
+                                                    ->from('workspace_members')
+                                                    ->join('users', 'users.id', '=', 'workspace_members.user_id')
+                                                    ->whereColumn('workspace_members.workspace_id', $this->qualifyColumn('id'))
+                                                    ->whereIn('users.division_id', $divisionIds);
+                                            });
                                     });
                             });
                         }
                     });
                 });
             });
+    }
+
+    /**
+     * Projects on the portfolio of $viewer (PRD M10 "Akses"): Direksi and Super
+     * Admin (portfolio.view) see every project; a Kepala Divisi sees projects
+     * involving the divisions they lead (primary division or a member from it);
+     * everyone sees projects they are PIC, sponsor or member of. Unlike
+     * visibleTo(), `internal` visibility does not put a project on the portfolio.
+     *
+     * @param  Builder<Workspace>  $query
+     */
+    public function scopePortfolioFor(Builder $query, User $viewer): void
+    {
+        $query->where($this->qualifyColumn('company_id'), $viewer->company_id)
+            ->where($this->qualifyColumn('type'), WorkspaceType::Project->value);
+
+        if ($viewer->hasPermission(Permission::PortfolioView)) {
+            return;
+        }
+
+        $divisionIds = $viewer->hasRole(Role::KepalaDivisi) ? $viewer->ledDivisionIds() : [];
+
+        $query->where(function (Builder $scope) use ($viewer, $divisionIds): void {
+            $scope->where($this->qualifyColumn('lead_user_id'), $viewer->id)
+                ->orWhere($this->qualifyColumn('sponsor_user_id'), $viewer->id)
+                ->orWhereExists(function (QueryBuilder $member) use ($viewer): void {
+                    $member->selectRaw('1')
+                        ->from('workspace_members')
+                        ->whereColumn('workspace_members.workspace_id', $this->qualifyColumn('id'))
+                        ->where('workspace_members.user_id', $viewer->id);
+                });
+
+            if ($divisionIds !== []) {
+                $scope->orWhereIn($this->qualifyColumn('division_id'), $divisionIds)
+                    ->orWhereExists(function (QueryBuilder $member) use ($divisionIds): void {
+                        $member->selectRaw('1')
+                            ->from('workspace_members')
+                            ->join('users', 'users.id', '=', 'workspace_members.user_id')
+                            ->whereColumn('workspace_members.workspace_id', $this->qualifyColumn('id'))
+                            ->whereIn('users.division_id', $divisionIds);
+                    });
+            }
+        });
     }
 
     /**
@@ -330,5 +388,65 @@ class Workspace extends Model
     public function activities(): HasMany
     {
         return $this->hasMany(Activity::class);
+    }
+
+    /**
+     * Project PIC (penanggung jawab).
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function lead(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'lead_user_id');
+    }
+
+    /**
+     * Project sponsor (a Direksi member).
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function sponsor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'sponsor_user_id');
+    }
+
+    /**
+     * @return HasMany<Milestone, $this>
+     */
+    public function milestones(): HasMany
+    {
+        return $this->hasMany(Milestone::class)->orderBy('target_date')->orderBy('position');
+    }
+
+    /**
+     * @return HasMany<ProjectUpdate, $this>
+     */
+    public function projectUpdates(): HasMany
+    {
+        return $this->hasMany(ProjectUpdate::class);
+    }
+
+    /**
+     * @return HasMany<ProjectRisk, $this>
+     */
+    public function risks(): HasMany
+    {
+        return $this->hasMany(ProjectRisk::class);
+    }
+
+    /**
+     * @return HasMany<ProjectDirection, $this>
+     */
+    public function directions(): HasMany
+    {
+        return $this->hasMany(ProjectDirection::class);
+    }
+
+    /**
+     * @return HasMany<ProjectProgressSnapshot, $this>
+     */
+    public function progressSnapshots(): HasMany
+    {
+        return $this->hasMany(ProjectProgressSnapshot::class)->orderBy('date');
     }
 }
