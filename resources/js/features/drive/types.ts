@@ -79,3 +79,93 @@ export type GoogleSettingsData = {
     } | null;
     missing_settings: string[];
 };
+
+/** A task that attaches a Drive file ("Dipakai di tugas": PLQ-21). */
+export type DriveFileTaskRef = { key: string; title: string; url: string };
+
+/** Row of the File/Dokumen tabs (WorkspaceDriveListing::rows). */
+export type DriveFileRow = DriveFileData & {
+    parent_id: string | null;
+    /** Linked with Google Picker from outside the workspace folder. */
+    linked: boolean;
+    /** Cached children of a folder ("9 file"), null for files. */
+    children_count: number | null;
+    /** Who added it in RuangKerja, else the employee behind owner_email. */
+    owner_name: string | null;
+    used_in: DriveFileTaskRef[];
+};
+
+export type DriveAccessState =
+    | 'disabled'
+    | 'preparing'
+    | 'unused'
+    | 'error'
+    | 'pending'
+    | 'synced';
+
+/** WorkspaceDriveStatus::summary(). */
+export type DriveAccessSummary = {
+    state: DriveAccessState;
+    synced: number;
+    pending: number;
+    errors: number;
+    total: number;
+};
+
+/** Shared `drive` prop of the File and Dokumen tabs (WorkspaceDriveListing::drive). */
+export type WorkspaceDriveInfo = {
+    enabled: boolean;
+    fake: boolean;
+    picker_enabled: boolean;
+    missing_settings: string[];
+    folder_url: string | null;
+    folder_name: string;
+    shared_drive_name: string;
+    access: DriveAccessSummary;
+    can_contribute: boolean;
+    max_upload_bytes: number;
+    chunk_bytes: number;
+    syncing: boolean;
+};
+
+export type DriveAccessMemberStatus =
+    | 'synced'
+    | 'pending'
+    | 'error'
+    | 'inactive'
+    | 'disabled';
+
+/** Per-member "Akses Drive" (WorkspaceDriveStatus::members). */
+export type DriveAccessMember = {
+    status: DriveAccessMemberStatus;
+    label: string;
+    error: string | null;
+    synced_at: string | null;
+};
+
+export type UploadSessionState = 'receiving' | 'processing' | 'done' | 'failed';
+
+/** DriveUploadSession::publicData() + chunk size. */
+export type UploadSessionData = {
+    id: string;
+    filename: string;
+    size: number;
+    received: number;
+    state: UploadSessionState;
+    drive_file_id: string | null;
+    attachment_id: string | null;
+    message: string | null;
+    chunk_bytes: number;
+};
+
+/** GET /lampiran/{type}/{id} (AttachmentController::payload). */
+export type AttachmentsPayload = {
+    attachments: (AttachmentData & { can_remove: boolean })[];
+    can_edit: boolean;
+    drive: {
+        enabled: boolean;
+        picker_enabled: boolean;
+        max_upload_bytes: number;
+        chunk_bytes: number;
+    };
+};

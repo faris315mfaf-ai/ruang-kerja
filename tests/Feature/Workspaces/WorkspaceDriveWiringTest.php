@@ -4,6 +4,7 @@ use App\Domain\Google\Contracts\WorkspaceDriveAccess;
 use App\Domain\Google\Enums\DriveRole;
 use App\Domain\Google\Jobs\CreateDriveFolder;
 use App\Domain\Google\Jobs\SyncDrivePermissions;
+use App\Domain\Google\Services\DriveFolderContentsSync;
 use App\Domain\Google\Testing\FakeDriveClient;
 use App\Domain\Organization\Enums\Role;
 use App\Domain\Workspaces\Actions\AddWorkspaceMember;
@@ -18,6 +19,7 @@ use App\Domain\Workspaces\Services\WorkspacePolicyDriveAccess;
 use App\Models\User;
 use App\Models\Workspace;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 use Tests\Fixtures\Google\GoogleTesting;
 
@@ -178,4 +180,15 @@ it('derives Drive file access from WorkspacePolicy', function () {
     expect($access->canContribute($member, $workspace->id))->toBeFalse()
         ->and($access->canManage($this->owner, $workspace->id))->toBeFalse()
         ->and($access->canView($member, $workspace->id))->toBeTrue();
+});
+
+it('treats a folder synced moments ago as fresh even when the cache returns a string (Redis)', function () {
+    $sync = app(DriveFolderContentsSync::class);
+    Cache::put('google:folder-synced:'.sha1('folder-x'), (string) now()->getTimestamp());
+
+    expect($sync->isStale('folder-x'))->toBeFalse();
+
+    $this->travel(6)->minutes();
+
+    expect($sync->isStale('folder-x'))->toBeTrue();
 });

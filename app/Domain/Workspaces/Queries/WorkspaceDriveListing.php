@@ -196,6 +196,7 @@ final class WorkspaceDriveListing
             ->all();
         $inWorkspace = array_flip(array_values(array_filter([$root, ...$folders])));
         $childCounts = $this->childCounts($workspace, $list);
+        $owners = $this->ownerNames($list, $workspace);
         $rows = [];
 
         foreach ($list as $file) {
@@ -203,6 +204,8 @@ final class WorkspaceDriveListing
                 'parent_id' => $file->parent_google_id,
                 'linked' => $file->parent_google_id === null || ! isset($inWorkspace[$file->parent_google_id]),
                 'children_count' => $file->kind === DriveFileKind::Folder ? ($childCounts[$file->google_file_id] ?? 0) : null,
+                // "Pemilik": who added it in RuangKerja, else the employee behind owner_email.
+                'owner_name' => $file->addedBy->name ?? ($file->owner_email === null ? null : ($owners[strtolower($file->owner_email)] ?? null)),
                 'used_in' => $usedIn[$file->id] ?? [],
             ];
         }
@@ -245,6 +248,35 @@ final class WorkspaceDriveListing
         }
 
         return $used;
+    }
+
+    /**
+     * Employee names for the owner e-mails of the listed files (same company).
+     *
+     * @param  list<DriveFile>  $files
+     * @return array<string, string> lower-case e-mail => name
+     */
+    private function ownerNames(array $files, Workspace $workspace): array
+    {
+        $emails = [];
+
+        foreach ($files as $file) {
+            if ($file->owner_email !== null && $file->added_by === null) {
+                $emails[] = strtolower($file->owner_email);
+            }
+        }
+
+        if ($emails === []) {
+            return [];
+        }
+
+        $names = [];
+
+        foreach (User::query()->where('company_id', $workspace->company_id)->whereIn(DB::raw('lower(email)'), array_values(array_unique($emails)))->get(['email', 'name']) as $user) {
+            $names[strtolower($user->email)] = $user->name;
+        }
+
+        return $names;
     }
 
     /**
