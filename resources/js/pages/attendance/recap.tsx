@@ -703,6 +703,7 @@ function Card({
 }
 
 AttendanceRecap.layout = {
+    width: 'wide',
     breadcrumbs: [
         { title: 'Absensi', href: '/absensi' },
         { title: 'Rekap bulanan', href: '/absensi/rekap' },

@@ -520,4 +520,5 @@ WorkspaceTasks.layout = (props: Props) => ({
     title:
         props.workspace.type === 'personal' ? 'Pribadi' : props.workspace.name,
     back: '/menu',
+    width: 'wide',
 });

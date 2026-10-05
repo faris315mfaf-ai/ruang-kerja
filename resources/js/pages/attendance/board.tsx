@@ -415,6 +415,7 @@ function DivisionList({ divisions }: { divisions: BoardDivision[] }) {
 }
 
 AttendanceBoard.layout = {
+    width: 'wide',
     breadcrumbs: [
         { title: 'Absensi', href: '/absensi' },
         { title: 'Absensi hari ini', href: '/absensi/hari-ini' },

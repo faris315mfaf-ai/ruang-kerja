@@ -22,6 +22,7 @@ export default function EmployeesIndex(props: EmployeeIndexProps) {
 }
 
 EmployeesIndex.layout = {
+    width: 'wide',
     breadcrumbs: [
         { title: 'Admin', href: index() },
         { title: 'Karyawan', href: index() },

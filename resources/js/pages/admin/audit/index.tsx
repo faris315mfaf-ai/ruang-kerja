@@ -368,6 +368,7 @@ function PageLink({
 }
 
 AuditLogIndex.layout = {
+    width: 'wide',
     breadcrumbs: [
         { title: 'Admin', href: '/admin/audit' },
         { title: 'Audit log', href: '/admin/audit' },

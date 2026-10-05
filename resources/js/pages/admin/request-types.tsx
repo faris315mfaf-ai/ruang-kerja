@@ -231,6 +231,7 @@ export default function RequestTypes({
 }
 
 RequestTypes.layout = {
+    width: 'wide',
     breadcrumbs: [
         { title: 'Admin', href: index() },
         { title: 'Jenis pengajuan & alur persetujuan', href: index() },

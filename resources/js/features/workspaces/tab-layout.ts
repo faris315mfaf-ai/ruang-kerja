@@ -16,5 +16,7 @@ export function workspaceLayout(props: WorkspacePageProps, section?: string) {
             : breadcrumbs,
         title: name,
         back: '/menu',
+        // Workspace screens (board, lists) use the wide column (DBoard 1480px).
+        width: 'wide' as const,
     };
 }

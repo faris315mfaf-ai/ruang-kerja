@@ -14,7 +14,7 @@ const toggleVariants = cva(
           "border border-border-strong bg-surface hover:bg-surface-2",
       },
       size: {
-        default: "h-[38px] px-[18px] min-w-10",
+        default: "h-[38px] px-3.5 min-w-10",
         sm: "h-8 px-3 min-w-8",
         lg: "h-control px-5 min-w-11",
       },

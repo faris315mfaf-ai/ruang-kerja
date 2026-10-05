@@ -434,6 +434,7 @@ export default function OrganizationAdmin({
 }
 
 OrganizationAdmin.layout = {
+    width: 'wide',
     breadcrumbs: [
         { title: 'Admin', href: '/admin/organisasi' },
         { title: 'Organisasi', href: '/admin/organisasi' },

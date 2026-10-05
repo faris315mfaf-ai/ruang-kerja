@@ -241,7 +241,10 @@ export function useShellNavigation(): ShellNavigation {
             icon: LayoutGrid,
             motion: { name: 'dock-lift' },
             entries: workspaceEntries,
-            active: workspaceEntries.some((entry) => entry.active),
+            // A favourite tile already marks the open workspace.
+            active:
+                workspaceEntries.some((entry) => entry.active) &&
+                !favourites.some((tile) => tile.active),
             allHref: '/workspace',
         },
         admin,

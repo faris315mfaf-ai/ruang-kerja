@@ -21,6 +21,7 @@ export default function Approvals(props: ApprovalsProps) {
 }
 
 Approvals.layout = {
+    width: 'wide',
     breadcrumbs: [
         { title: 'Absensi', href: '/absensi' },
         { title: 'Persetujuan', href: index() },
