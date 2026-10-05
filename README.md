@@ -44,7 +44,7 @@ Aplikasi kantor internal: **absensi, workspace, ruang kolaborasi, serta tracking
 | Realtime | Laravel Reverb (WebSocket) + Laravel Echo |
 | Antrean & jadwal | Laravel Horizon (Redis), Scheduler |
 | Penyimpanan | S3-compatible (Biznet Gio NEO Object Storage) untuk selfie & lampiran privat. Google Drive untuk file kerja |
-| Paket kunci | laravel/socialite, spatie/laravel-permission, google/apiclient, maatwebsite/excel, barryvdh/laravel-dompdf, laravel/pulse |
+| Paket kunci | laravel/socialite, spatie/laravel-permission, klien Drive v3 tipis berbasis HTTP (bukan google/apiclient, lihat GOOGLE-API.md), maatwebsite/excel, barryvdh/laravel-dompdf, laravel/pulse |
 | Uji | Pest 4, Larastan level 8, Laravel Pint, ESLint + Prettier, Vitest |
 | Infra | Docker Compose di VPS Biznet Gio, Caddy (HTTPS otomatis) |
 | Fase 2 | Hocuspocus (Node) + Yjs untuk catatan realtime |
@@ -116,11 +116,11 @@ ATTENDANCE_SELFIE_RETENTION_MONTHS=12
 
 1. **Google Cloud Console** → buat proyek → aktifkan **Google Drive API**, **Google Picker API**, **Admin SDK API** (opsional), dan **Google Calendar API** (Fase 2).
 2. **OAuth consent screen** → tipe **Internal** (hanya akun di domain Anda).
-3. **OAuth Client ID** (Web) → redirect URI `https://<domain-app>/auth/google/callback`. Scope: `openid email profile` + `https://www.googleapis.com/auth/drive.file`.
+3. **OAuth Client ID** (Web) → redirect URI `https://<domain-app>/auth/google/callback` (login) **dan** `https://<domain-app>/google/connect/callback` (hubungkan Drive untuk Picker), JavaScript origin `https://<domain-app>`. Scope: `openid email profile` + `https://www.googleapis.com/auth/drive.file`. Buat juga **API key** untuk Google Picker → `GOOGLE_PICKER_API_KEY`.
 4. **Service Account** → buat kunci JSON → simpan sebagai secret (jangan di-commit).
 5. **Admin Console** → Security → API controls → **Domain-wide delegation** → tambahkan Client ID service account dengan scope `https://www.googleapis.com/auth/drive` (dan `calendar` di Fase 2).
 6. Buat **Shared Drive** "RuangKerja", tambahkan akun impersonasi sebagai *Manager*, salin ID-nya ke `GOOGLE_SHARED_DRIVE_ID`.
-7. Jalankan `php artisan ruangkerja:google-check` untuk menguji koneksi.
+7. Jalankan `php artisan ruangkerja:google-check --write` untuk menguji koneksi. Rincian: [`docs/sprints/sprint-7/GOOGLE-API.md`](docs/sprints/sprint-7/GOOGLE-API.md) §8.
 
 ## Perintah sehari-hari
 
