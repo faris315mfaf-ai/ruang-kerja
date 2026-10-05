@@ -8,15 +8,6 @@ Route::redirect('/', '/dashboard')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     // Mobile "Menu" tab (also reachable on desktop).
     Route::inertia('menu', 'menu')->name('menu');
-
-    // Shell entries whose modules arrive in later sprints. Each sprint replaces
-    // its entry with real routes.
-    // (Privasi & data saya arrived in Sprint 10: routes/privacy.php.)
-    $upcoming = [];
-
-    foreach ($upcoming as $uri => [$name, $title]) {
-        Route::inertia($uri, 'placeholder', ['title' => $title])->name($name);
-    }
 });
 
 // Local demo login (APP_ENV=local + DEMO_LOGIN_ENABLED=true; otherwise 404).
