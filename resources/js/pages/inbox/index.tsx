@@ -36,7 +36,11 @@ export default function InboxPage({
                 title={counts.unread > 0 ? `(${counts.unread}) Inbox` : 'Inbox'}
             />
             {breakpoint === 'mobile' ? (
-                <InboxMobile inbox={inbox} retentionDays={retentionDays} />
+                <InboxMobile
+                    inbox={inbox}
+                    kinds={kinds}
+                    retentionDays={retentionDays}
+                />
             ) : (
                 <InboxDesktop
                     inbox={inbox}

@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import { formatTime } from '@/lib/format';
-import { cn } from '@/lib/utils';
+import { ActionBadge, ContextText } from '@/features/notifications/inbox-parts';
 import { NotificationIcon } from '@/features/notifications/notification-icon';
 import { NotificationTitle } from '@/features/notifications/notification-title';
-import { ActionBadge, ContextText } from '@/features/notifications/inbox-parts';
+import { formatTime } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import type { InboxNotification } from '@/types/notifications';
 
 type Props = {
@@ -13,23 +13,49 @@ type Props = {
     onClick: () => void;
 };
 
-function Quote({ notification }: { notification: InboxNotification }) {
-    if (!notification.body) {
-        return null;
-    }
-
-    const quoted = notification.meta.quote === true;
-
-    return <>{quoted ? `“${notification.body}”` : notification.body}</>;
-}
-
 function joinParts(parts: (ReactNode | null)[]): ReactNode[] {
     return parts
         .filter((part): part is ReactNode => part !== null)
         .flatMap((part, index) => (index === 0 ? [part] : [' · ', part]));
 }
 
-/** One Inbox row: tinted icon, title, body/subject lines, time, unread dot. */
+/** "PLQ-15 · lewat 1 hari · “isi pesan”" (subject title when there is no body). */
+function summaryParts(notification: InboxNotification): (ReactNode | null)[] {
+    const { subject, body } = notification;
+    const quoted = notification.meta.quote === true;
+
+    return [
+        subject?.code ? (
+            <span key="code" className="font-mono font-semibold">
+                {subject.code}
+            </span>
+        ) : null,
+        notification.meta.context ? (
+            <ContextText key="context" notification={notification} />
+        ) : null,
+        body ? (quoted ? `“${body}”` : body) : (subject?.title ?? null),
+    ];
+}
+
+/** Gradient unread dot (DInbox / MInbox). */
+function UnreadDot({ className }: { className?: string }) {
+    return (
+        <span
+            className={cn(
+                'shrink-0 rounded-full bg-primary bg-grad-merek',
+                className,
+            )}
+        >
+            <span className="sr-only">Belum dibaca</span>
+        </span>
+    );
+}
+
+/**
+ * One Inbox row: 44px tinted tile, title (bold while unread), one summary
+ * line, time and the gradient unread dot. Desktop = DInbox list row
+ * (selected: teal inset ring), mobile = MInbox row (time in the meta line).
+ */
 export function InboxRow({
     notification,
     selected = false,
@@ -38,7 +64,15 @@ export function InboxRow({
 }: Props) {
     const unread = notification.read_at === null;
     const mobile = variant === 'mobile';
-    const subject = notification.subject;
+    const time = (
+        <time
+            key="time"
+            dateTime={notification.created_at ?? undefined}
+            className="tnum"
+        >
+            {formatTime(notification.created_at)}
+        </time>
+    );
 
     return (
         <button
@@ -47,109 +81,51 @@ export function InboxRow({
             aria-current={selected ? 'true' : undefined}
             data-notification-id={notification.id}
             className={cn(
-                'flex w-full items-start gap-3 text-left transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset',
+                'flex w-full items-start text-left text-text transition-colors duration-120 ease-brand focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset',
                 mobile
-                    ? 'min-h-14 px-4 py-3.5'
-                    : 'rounded-md border-l-2 px-3 py-3 hover:bg-surface-2',
+                    ? 'min-h-[76px] gap-3 bg-surface p-4 active:bg-surface-2'
+                    : 'gap-3.5 px-[22px] py-[18px]',
                 !mobile &&
                     (selected
-                        ? 'border-primary bg-surface-2'
-                        : 'border-transparent'),
+                        ? 'bg-link-soft/60 ring-2 ring-primary ring-inset'
+                        : 'hover:bg-surface-2/60'),
             )}
         >
             <NotificationIcon
                 icon={notification.icon}
                 tone={notification.tone}
-                className={mobile ? 'size-11 [&>svg]:size-5' : undefined}
             />
-            <span className="min-w-0 flex-1">
+            <span className="flex min-w-0 flex-1 flex-col gap-1">
                 <span
                     className={cn(
-                        'block',
-                        mobile
-                            ? 'line-clamp-1 text-[15px] leading-6'
-                            : 'line-clamp-2 text-[13px] leading-5',
+                        'line-clamp-2 leading-[23px]',
+                        mobile ? 'text-[17px]' : 'text-[16px]',
+                        unread ? 'font-bold' : 'font-medium',
                     )}
                 >
-                    <NotificationTitle
-                        notification={notification}
-                        className={unread ? 'text-text' : undefined}
-                    />
+                    <NotificationTitle notification={notification} />
                 </span>
-                {mobile ? (
-                    <span className="line-clamp-1 text-sm text-text-muted">
-                        {joinParts([
-                            subject?.code ? (
-                                <span key="code" className="font-mono">
-                                    {subject.code}
-                                </span>
-                            ) : null,
-                            notification.meta.context ? (
-                                <ContextText
-                                    key="context"
-                                    notification={notification}
-                                />
-                            ) : null,
-                            notification.body ? (
-                                <Quote key="body" notification={notification} />
-                            ) : (
-                                (subject?.title ?? null)
-                            ),
-                        ])}
-                    </span>
-                ) : (
-                    <>
-                        {notification.body && (
-                            <span className="mt-0.5 block truncate text-[13px] text-text-muted">
-                                <Quote notification={notification} />
-                            </span>
-                        )}
-                        {(subject?.code ||
-                            subject?.title ||
-                            notification.meta.context) && (
-                            <span className="mt-0.5 block truncate text-xs text-text-muted">
-                                {subject?.code && (
-                                    <span className="font-mono">
-                                        {subject.code}
-                                    </span>
-                                )}
-                                {subject?.code && subject.title && ' · '}
-                                {subject?.title}
-                                {notification.meta.context && (
-                                    <>
-                                        {(subject?.code || subject?.title) &&
-                                            ' · '}
-                                        <ContextText
-                                            notification={notification}
-                                        />
-                                    </>
-                                )}
-                            </span>
-                        )}
-                    </>
-                )}
+                <span className="truncate text-[15px] leading-[22px] text-text-muted">
+                    {joinParts(
+                        mobile
+                            ? [time, ...summaryParts(notification)]
+                            : summaryParts(notification),
+                    )}
+                </span>
                 {notification.action_required && (
-                    <span className="mt-1.5 block">
+                    <span className="pt-1">
                         <ActionBadge />
                     </span>
                 )}
             </span>
-            <span className="flex shrink-0 flex-col items-end gap-2 pt-0.5">
-                <time
-                    dateTime={notification.created_at ?? undefined}
-                    className={cn(
-                        'font-mono text-text-muted',
-                        mobile ? 'text-sm' : 'text-xs',
-                    )}
-                >
-                    {formatTime(notification.created_at)}
-                </time>
-                {unread && (
-                    <span className="size-2 rounded-full bg-primary">
-                        <span className="sr-only">Belum dibaca</span>
-                    </span>
-                )}
-            </span>
+            {mobile ? (
+                unread && <UnreadDot className="mt-1.5 size-[11px]" />
+            ) : (
+                <span className="flex shrink-0 flex-col items-end gap-2">
+                    <span className="text-meta text-text-muted">{time}</span>
+                    {unread && <UnreadDot className="size-2.5" />}
+                </span>
+            )}
         </button>
     );
 }
