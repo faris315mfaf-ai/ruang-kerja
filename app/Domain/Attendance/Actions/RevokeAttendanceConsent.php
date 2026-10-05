@@ -7,6 +7,7 @@ use App\Domain\Attendance\Notifications\ConsentRevokedNotification;
 use App\Domain\Organization\Enums\Role;
 use App\Domain\Organization\Services\AuditLogger;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 
@@ -37,7 +38,9 @@ final class RevokeAttendanceConsent
         });
 
         if ($revoked > 0) {
-            $hr = User::role(Role::Hr->value)
+            // whereHas (not the role() scope): no exception when the role is not seeded.
+            $hr = User::query()
+                ->whereHas('roles', fn (Builder $roles) => $roles->where('name', Role::Hr->value))
                 ->active()
                 ->where('company_id', $user->company_id)
                 ->whereKeyNot($user->id)
