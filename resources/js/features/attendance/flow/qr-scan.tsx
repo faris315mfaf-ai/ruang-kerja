@@ -99,7 +99,10 @@ export function QrScan({
                 />
                 <div
                     aria-hidden
-                    className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                    className={cn(
+                        'pointer-events-none absolute inset-0 flex items-center justify-center',
+                        failed && 'hidden',
+                    )}
                 >
                     <div className="aspect-square w-[62%] max-w-[280px] rounded-2xl border-2 border-dashed border-text/80" />
                 </div>
@@ -120,7 +123,9 @@ export function QrScan({
                         <p className="max-w-xs text-[15px] text-text">
                             {decoderError
                                 ? 'Pemindai QR gagal dimuat. Periksa koneksi lalu coba lagi.'
-                                : camera.error}
+                                : camera.state === 'denied'
+                                  ? 'Akses kamera ditolak. Izinkan kamera untuk situs ini agar bisa memindai QR, atau pakai GPS + selfie.'
+                                  : 'Kamera tidak bisa dibuka untuk memindai QR. Coba lagi atau pakai GPS + selfie.'}
                         </p>
                         <Button
                             type="button"

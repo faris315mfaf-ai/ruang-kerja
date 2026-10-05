@@ -10,7 +10,6 @@ import {
     MonthCalendar,
 } from '@/features/attendance/recap/month-calendar';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
-import { lateSummary } from '@/lib/recap';
 import { cn } from '@/lib/utils';
 import { history as historyRoute } from '@/routes/attendance';
 import historyRoutes from '@/routes/attendance/history';
@@ -128,27 +127,37 @@ export default function AttendanceHistory({ period, today, recap }: Props) {
         const cards = [
             {
                 label: 'Hadir',
-                value: String(Math.max(0, recap.presentDays - recap.lateCount)),
+                value: <>{Math.max(0, recap.presentDays - recap.lateCount)}</>,
                 dot: 'bg-success',
             },
             {
                 label: 'Terlambat',
-                value: lateSummary(recap.lateCount, recap.lateMinutes),
+                value:
+                    recap.lateCount === 0 ? (
+                        <>0</>
+                    ) : (
+                        <span className="text-warning">
+                            {recap.lateCount}
+                            <span className="text-[13px] font-medium">
+                                {' '}
+                                · {recap.lateMinutes}m
+                            </span>
+                        </span>
+                    ),
                 dot: null,
-                warn: recap.lateCount > 0,
             },
             {
                 label: 'Cuti',
-                value: String(
-                    recap.leaveDays + recap.permitDays + recap.businessTripDays,
+                value: (
+                    <>
+                        {recap.leaveDays +
+                            recap.permitDays +
+                            recap.businessTripDays}
+                    </>
                 ),
                 dot: 'bg-info',
             },
-            {
-                label: 'Sakit',
-                value: String(recap.sickDays),
-                dot: 'bg-primary',
-            },
+            { label: 'Sakit', value: <>{recap.sickDays}</>, dot: 'bg-primary' },
         ];
 
         return (
@@ -160,7 +169,7 @@ export default function AttendanceHistory({ period, today, recap }: Props) {
                         {cards.map((card) => (
                             <div
                                 key={card.label}
-                                className="rounded-xl border border-border bg-surface p-2.5 shadow-card"
+                                className="min-w-0 rounded-xl border border-border bg-surface px-2 py-2.5 shadow-card"
                             >
                                 <p className="flex items-center gap-1 truncate text-[13px] text-text-muted">
                                     {card.dot && (
@@ -174,12 +183,7 @@ export default function AttendanceHistory({ period, today, recap }: Props) {
                                     )}
                                     {card.label}
                                 </p>
-                                <p
-                                    className={cn(
-                                        'mt-0.5 text-[19px] font-semibold text-text tnum',
-                                        card.warn && 'text-warning',
-                                    )}
-                                >
+                                <p className="mt-0.5 text-[19px] font-semibold whitespace-nowrap text-text tnum">
                                     {card.value}
                                 </p>
                             </div>
