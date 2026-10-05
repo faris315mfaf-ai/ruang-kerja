@@ -100,6 +100,10 @@ class AppServiceProvider extends ServiceProvider
         // Task comments (post/edit): generous for humans, stops scripted floods of mention notifications.
         RateLimiter::for('comments', fn (Request $request): Limit => Limit::perMinute(30)
             ->by('comments|'.$this->userOrIpKey($request)));
+
+        // Opening chunked Drive upload sessions (each reserves disk space until finished).
+        RateLimiter::for('drive-uploads', fn (Request $request): Limit => Limit::perMinute(config()->integer('google.upload.starts_per_minute', 20))
+            ->by('drive-uploads|'.$this->userOrIpKey($request)));
     }
 
     /**
