@@ -1,7 +1,8 @@
 import { Link } from '@inertiajs/react';
-import { Bell, LogIn, Search } from 'lucide-react';
+import { Bell, Search } from 'lucide-react';
 import { useEffect } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { CheckInButton } from '@/components/shell/check-in-button';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useUnreadCount } from '@/features/notifications/unread-store';
@@ -74,12 +75,7 @@ export function AppTopbar({ breadcrumbs, canToggleSidebar }: Props) {
                 <Search />
             </Button>
 
-            <Button asChild size="sm" className="h-8">
-                <Link href="/absensi" prefetch>
-                    <LogIn />
-                    Check-in
-                </Link>
-            </Button>
+            <CheckInButton />
 
             <Button
                 asChild

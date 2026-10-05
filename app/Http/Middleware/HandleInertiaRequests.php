@@ -3,9 +3,13 @@
 namespace App\Http\Middleware;
 
 use App\Domain\Notifications\Services\InboxQuery;
+use App\Http\Resources\Attendance\MyAttendance;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Middleware;
+use Inertia\OnceProp;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -66,6 +70,25 @@ class HandleInertiaRequests extends Middleware
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             // Bell / sidebar / tab badge. Closure: skipped on partial reloads that don't ask for it.
             'inbox' => fn (): ?array => $user !== null ? ['unread' => app(InboxQuery::class)->unreadCount($user)] : null,
+        ];
+    }
+
+    /**
+     * Props resolved once and remembered by the client across navigations.
+     *
+     * @return array<string, callable|OnceProp>
+     */
+    public function shareOnce(Request $request): array
+    {
+        $user = $request->user();
+
+        return [
+            ...parent::shareOnce($request),
+            // Sidebar check-in widget + topbar button (Sprint 2). Refreshed every
+            // 5 minutes, and by the Absensi page right after a check-in/out.
+            'attendanceStatus' => Inertia::once(
+                fn (): ?array => $user instanceof User ? app(MyAttendance::class)->status($user, CarbonImmutable::now()) : null,
+            )->until(300),
         ];
     }
 }
