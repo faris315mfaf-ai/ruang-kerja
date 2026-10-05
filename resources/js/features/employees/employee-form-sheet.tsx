@@ -20,7 +20,7 @@ import type { RoleName } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 import { store, update } from '@/routes/admin/employees';
 import type { WorkMode } from '@/types/auth';
-import { NativeSelect } from './native-select';
+import { NativeSelect } from '@/features/admin/native-select';
 import { ManagerCombobox } from './manager-combobox';
 import type {
     DivisionOption,

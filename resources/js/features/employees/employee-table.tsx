@@ -30,7 +30,7 @@ import { formatNumber } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { show } from '@/routes/admin/employees';
 import { RoleBadges, StatusBadge, WorkModeBadge } from './employee-badges';
-import { NativeSelect } from './native-select';
+import { NativeSelect } from '@/features/admin/native-select';
 import type { EmployeeIndexProps, EmployeeRow } from './types';
 import { useEmployeeFilters } from './use-employee-filters';
 
