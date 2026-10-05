@@ -123,7 +123,7 @@ function Chip({
                     {task.title}
                 </span>
             </span>
-            <span className="mt-1 flex items-center gap-1.5 text-[13px]">
+            <span className="mt-1 flex items-center gap-1.5 text-[15px]">
                 <span
                     className={cn(
                         'font-mono font-semibold',
@@ -236,7 +236,7 @@ function MonthView({
                         <button
                             type="button"
                             onClick={onShowUndated}
-                            className="text-primary underline underline-offset-2"
+                            className="text-link underline underline-offset-2"
                         >
                             {undated} tugas tanpa tenggat
                         </button>
@@ -298,7 +298,7 @@ function MonthView({
                                     >
                                         {isToday ? (
                                             <>
-                                                <span className="flex size-6 items-center justify-center rounded-full bg-primary bg-grad-aksi text-[13px] font-bold text-on-brand">
+                                                <span className="flex size-6 items-center justify-center rounded-full bg-primary bg-grad-aksi text-[15px] font-bold text-on-brand">
                                                     {Number(day.slice(8))}
                                                 </span>
                                                 <span className="text-link">
@@ -601,7 +601,7 @@ function AgendaView({
                         <h3 className="flex items-center gap-2 text-[15px] font-bold text-text">
                             {formatShortDate(day)}
                             {day === today && (
-                                <span className="rounded-full bg-link-soft px-2.5 py-0.5 text-[13px] font-bold text-link">
+                                <span className="rounded-full bg-link-soft px-2.5 py-0.5 text-[15px] font-bold text-link">
                                     Hari ini
                                 </span>
                             )}
@@ -662,7 +662,7 @@ function AgendaView({
                                                 <UserAvatar
                                                     name={assignee.name}
                                                     src={assignee.avatar}
-                                                    className="size-[30px] text-[12px]"
+                                                    className="size-[30px] text-meta"
                                                 />
                                             )}
                                         </button>

@@ -69,7 +69,7 @@ export function QuickPropertyDialog({
                 </DialogDescription>
                 {open && (
                     <Command>
-                        <div className="px-3 pt-3 font-mono text-xs text-text-muted">
+                        <div className="px-3 pt-3 font-mono text-meta text-text-muted">
                             {task.key} · {TITLES[property]}
                         </div>
                         <CommandInput placeholder="Cari…" autoFocus />
@@ -143,7 +143,7 @@ export function QuickPropertyDialog({
                                             {option.label === 'Jum'
                                                 ? 'Jumat'
                                                 : option.label}
-                                            <span className="ml-auto text-xs text-text-muted">
+                                            <span className="ml-auto text-meta text-text-muted">
                                                 {option.hint}
                                             </span>
                                         </CommandItem>
@@ -163,7 +163,7 @@ export function QuickPropertyDialog({
                             )}
                         </CommandList>
                         {property === 'due' && (
-                            <label className="flex items-center gap-2 border-t border-border px-3 py-2 text-[13px] text-text-muted">
+                            <label className="flex items-center gap-2 border-t border-border px-3 py-2 text-[15px] text-text-muted">
                                 Tanggal lain
                                 <input
                                     type="date"
@@ -174,7 +174,7 @@ export function QuickPropertyDialog({
                                             close();
                                         }
                                     }}
-                                    className="h-8 flex-1 rounded-md border border-border bg-surface px-2 text-text"
+                                    className="h-8 flex-1 rounded-control border border-border bg-surface px-2 text-text"
                                 />
                             </label>
                         )}

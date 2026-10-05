@@ -126,7 +126,7 @@ export function SavedViewsMenu({
             <span className="min-w-0 flex-1 truncate">
                 {view.name}
                 {view.owner && (
-                    <span className="ml-1 text-xs text-text-muted">
+                    <span className="ml-1 text-meta text-text-muted">
                         · {view.owner.split(' ')[0]}
                     </span>
                 )}
@@ -175,14 +175,14 @@ export function SavedViewsMenu({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-64">
                     {savedViews.length === 0 && (
-                        <p className="px-2 py-2 text-[13px] text-text-muted">
+                        <p className="px-2 py-2 text-[15px] text-text-muted">
                             Belum ada tampilan tersimpan. Atur filter & tata
                             letak lalu simpan.
                         </p>
                     )}
                     {personal.length > 0 && (
                         <>
-                            <DropdownMenuLabel className="text-xs text-text-muted">
+                            <DropdownMenuLabel className="text-meta text-text-muted">
                                 Pribadi
                             </DropdownMenuLabel>
                             {personal.map(item)}
@@ -191,7 +191,7 @@ export function SavedViewsMenu({
                     {team.length > 0 && (
                         <>
                             {personal.length > 0 && <DropdownMenuSeparator />}
-                            <DropdownMenuLabel className="flex items-center gap-1.5 text-xs text-text-muted">
+                            <DropdownMenuLabel className="flex items-center gap-1.5 text-meta text-text-muted">
                                 <Users className="size-3.5" aria-hidden />
                                 Dibagikan ke workspace
                             </DropdownMenuLabel>
@@ -235,11 +235,11 @@ export function SavedViewsMenu({
                                 autoFocus
                             />
                             {error && (
-                                <p className="text-xs text-danger">{error}</p>
+                                <p className="text-meta text-danger">{error}</p>
                             )}
                         </div>
                         {canShare && (
-                            <label className="flex items-center gap-2 text-[13px] text-text">
+                            <label className="flex items-center gap-2 text-[15px] text-text">
                                 <Checkbox
                                     checked={shared}
                                     onCheckedChange={(value) =>

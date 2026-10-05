@@ -246,7 +246,6 @@ export function MobileBoard({
                                     peopleById,
                                 )}
                                 today={today}
-                                size="comfortable"
                             />
                         </button>
                         {canEdit && (

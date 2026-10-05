@@ -28,14 +28,14 @@ export function ShortcutHelpDialog({
                     {SHORTCUTS.map((shortcut) => (
                         <div
                             key={shortcut.label}
-                            className="flex items-center justify-between py-2 text-[13px]"
+                            className="flex items-center justify-between py-2 text-[15px]"
                         >
                             <dt className="text-text">{shortcut.label}</dt>
                             <dd className="flex gap-1">
                                 {shortcut.keys.map((k) => (
                                     <kbd
                                         key={k}
-                                        className="min-w-6 rounded border border-border bg-surface-2 px-1.5 py-0.5 text-center font-mono text-[11px] text-text-muted"
+                                        className="min-w-6 rounded border border-border bg-surface-2 px-1.5 py-0.5 text-center font-mono text-meta text-text-muted"
                                     >
                                         {k}
                                     </kbd>

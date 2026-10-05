@@ -107,7 +107,7 @@ export function CommentItem({
                         <UserAvatar
                             name={comment.author.name}
                             src={comment.author.avatar}
-                            className="size-7 text-[11px]"
+                            className="size-7 text-meta"
                         />
                     )}
                     <span className="truncate text-[15px] font-bold text-text">
@@ -193,7 +193,7 @@ export function CommentItem({
                             }
                         }}
                     >
-                        <div className="rounded-md border border-border-strong px-3 py-2 focus-within:ring-2 focus-within:ring-ring">
+                        <div className="rounded-control border border-border-strong px-3 py-2 focus-within:ring-[3px] focus-within:ring-ring">
                             <LazyRichTextEditor
                                 value={comment.body}
                                 workspaceKey={workspaceKey}

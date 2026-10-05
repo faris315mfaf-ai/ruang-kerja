@@ -154,7 +154,7 @@ export function TaskDetailBody({
             {header && <div className="min-w-0 lg:col-start-1">{header}</div>}
             <aside
                 aria-label="Properti tugas"
-                className="min-w-0 lg:sticky lg:top-[calc(var(--menu-bar-height)+24px)] lg:col-start-2 lg:row-span-2 lg:row-start-1"
+                className="order-last min-w-0 lg:sticky lg:top-[calc(var(--menu-bar-height)+24px)] lg:order-none lg:col-start-2 lg:row-span-2 lg:row-start-1"
             >
                 <PropertiesPanel state={state} today={today} />
             </aside>

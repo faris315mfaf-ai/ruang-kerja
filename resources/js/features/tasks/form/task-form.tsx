@@ -181,7 +181,7 @@ export function TaskForm({
                     maxLength={255}
                     aria-invalid={form.errors.title ? true : undefined}
                     className={cn(
-                        'w-full rounded-lg border border-border bg-surface font-medium text-text placeholder:font-normal placeholder:text-text-subtle focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                        'w-full rounded-lg border border-border bg-surface font-medium text-text placeholder:font-normal placeholder:text-text-subtle focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none',
                         touch
                             ? 'h-14 px-4 text-[17px]'
                             : 'h-11 px-3 text-[15px]',
@@ -233,7 +233,7 @@ export function TaskForm({
             {touch && (
                 <fieldset className="rounded-lg border border-border bg-surface p-3">
                     <legend className="sr-only">Tenggat</legend>
-                    <p className="mb-2 text-sm text-text-muted">Tenggat</p>
+                    <p className="mb-2 text-[15px] text-text-muted">Tenggat</p>
                     <div className="grid grid-cols-4 gap-2">
                         {quickDueOptions(today).map((option) => (
                             <button
@@ -246,19 +246,19 @@ export function TaskForm({
                                     form.setData('due_date', option.value)
                                 }
                                 className={cn(
-                                    'flex min-h-14 flex-col items-center justify-center rounded-md border text-[15px] leading-5 transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                                    'flex min-h-14 flex-col items-center justify-center rounded-control border text-[15px] leading-5 transition-colors duration-120 ease-brand focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none',
                                     form.data.due_date === option.value
                                         ? 'border-primary bg-link-soft text-text'
                                         : 'border-border bg-surface-2 text-text',
                                 )}
                             >
                                 {option.label}
-                                <span className="text-xs text-text-muted">
+                                <span className="text-meta text-text-muted">
                                     {option.hint}
                                 </span>
                             </button>
                         ))}
-                        <label className="relative flex min-h-14 cursor-pointer items-center justify-center gap-1 rounded-md border border-dashed border-border-strong text-[15px] text-text-muted focus-within:ring-2 focus-within:ring-ring">
+                        <label className="relative flex min-h-14 cursor-pointer items-center justify-center gap-1 rounded-control border border-dashed border-border-strong text-[15px] text-text-muted focus-within:ring-[3px] focus-within:ring-ring">
                             Pilih…
                             <input
                                 type="date"
@@ -280,7 +280,10 @@ export function TaskForm({
             )}
 
             <div className="space-y-1">
-                <label htmlFor="task-description" className="text-sm text-text">
+                <label
+                    htmlFor="task-description"
+                    className="text-[15px] text-text"
+                >
                     Deskripsi{' '}
                     <span className="text-text-muted">(opsional)</span>
                 </label>
@@ -292,7 +295,7 @@ export function TaskForm({
                     }
                     rows={touch ? 3 : 4}
                     placeholder="Tambahkan detail singkat"
-                    className="w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-text placeholder:text-text-subtle focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    className="w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-text placeholder:text-text-subtle focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                 />
                 <InputError message={form.errors.description_text} />
             </div>
@@ -366,7 +369,7 @@ export function TaskForm({
                     canDelete &&
                     !touch &&
                     (confirmDelete ? (
-                        <span className="flex items-center gap-2 text-sm text-text-muted">
+                        <span className="flex items-center gap-2 text-[15px] text-text-muted">
                             Hapus tugas ini?
                             <Button
                                 type="button"
@@ -403,7 +406,7 @@ export function TaskForm({
                         </Button>
                     ))}
                 {!editing && !touch && (
-                    <label className="flex items-center gap-2 text-sm text-text-muted">
+                    <label className="flex items-center gap-2 text-[15px] text-text-muted">
                         <input
                             type="checkbox"
                             checked={createAnother}
@@ -430,7 +433,7 @@ export function TaskForm({
                     )}
                 </Button>
                 {touch && !editing && (
-                    <p className="flex items-center justify-center gap-1.5 text-sm text-text-muted">
+                    <p className="flex items-center justify-center gap-1.5 text-[15px] text-text-muted">
                         <RefreshCw className="size-4" aria-hidden />
                         Tugas langsung muncul di board tim
                     </p>

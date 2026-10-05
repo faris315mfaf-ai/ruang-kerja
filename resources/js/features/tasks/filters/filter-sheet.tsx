@@ -43,7 +43,7 @@ function Toggle({
             aria-pressed={active}
             onClick={onClick}
             className={cn(
-                'flex min-h-11 items-center gap-2 rounded-full border px-3.5 text-sm transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                'flex min-h-11 items-center gap-2 rounded-full border px-3.5 text-[15px] transition-colors duration-120 ease-brand focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none',
                 active
                     ? 'border-primary bg-link-soft text-text'
                     : 'border-border bg-surface text-text-muted',
@@ -57,7 +57,7 @@ function Toggle({
 function Section({ title, children }: { title: string; children: ReactNode }) {
     return (
         <section className="space-y-2">
-            <h3 className="text-[13px] font-medium text-text-muted">{title}</h3>
+            <h3 className="text-[15px] font-medium text-text-muted">{title}</h3>
             <div className="flex flex-wrap gap-2">{children}</div>
         </section>
     );
@@ -98,7 +98,7 @@ export function FilterSheet({
         >
             <div className="space-y-5 pb-2">
                 <label className="block space-y-2">
-                    <span className="text-[13px] font-medium text-text-muted">
+                    <span className="text-[15px] font-medium text-text-muted">
                         Cari
                     </span>
                     <input
@@ -108,7 +108,7 @@ export function FilterSheet({
                             onChange({ ...filters, q: event.target.value })
                         }
                         placeholder="Judul, ID, atau deskripsi"
-                        className="h-12 w-full rounded-md border border-border bg-surface px-3 text-text placeholder:text-text-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        className="h-12 w-full rounded-control border border-border bg-surface px-3 text-text placeholder:text-text-subtle focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                     />
                 </label>
 

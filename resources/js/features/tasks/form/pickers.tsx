@@ -408,7 +408,7 @@ export function DuePicker({
                             <span className="size-4" />
                         )}
                         {option.label}
-                        <span className="ml-auto text-xs text-text-muted">
+                        <span className="ml-auto text-meta text-text-muted">
                             {option.hint}
                         </span>
                     </DropdownMenuItem>
@@ -422,7 +422,7 @@ export function DuePicker({
                         <span className="size-4" />
                     )}
                     Minggu depan
-                    <span className="ml-auto text-xs text-text-muted">
+                    <span className="ml-auto text-meta text-text-muted">
                         {formatShortDate(addDays(nextFriday(today), 3)).replace(
                             ',',
                             '',
@@ -434,7 +434,7 @@ export function DuePicker({
                     className="px-2 py-1.5"
                     onKeyDown={(event) => event.stopPropagation()}
                 >
-                    <label className="space-y-1 text-xs text-text-muted">
+                    <label className="space-y-1 text-meta text-text-muted">
                         <span>Tanggal lain</span>
                         <input
                             ref={input}
@@ -447,7 +447,7 @@ export function DuePicker({
                                         : event.target.value,
                                 )
                             }
-                            className="h-8 w-full rounded-md border border-border bg-surface px-2 text-[13px] text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            className="h-8 w-full rounded-control border border-border bg-surface px-2 text-[15px] text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                         />
                     </label>
                 </div>

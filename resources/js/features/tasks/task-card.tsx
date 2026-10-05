@@ -17,7 +17,6 @@ type Props = {
     action?: ReactNode;
     /** Small note next to the key, e.g. "sedang dipindahkan". */
     note?: string;
-    size?: 'default' | 'comfortable';
     className?: string;
 };
 
@@ -73,12 +72,10 @@ export const TaskCardContent = memo(function TaskCardContent({
     today,
     action,
     note,
-    size = 'default',
     className,
 }: Props) {
     const closed =
         task.status_category === 'done' || task.status_category === 'canceled';
-    const comfortable = size === 'comfortable';
     const hasFooter =
         labels.length > 0 ||
         task.due_date !== null ||
@@ -104,7 +101,6 @@ export const TaskCardContent = memo(function TaskCardContent({
                 className={cn(
                     'line-clamp-2 text-[17px] leading-6 font-semibold',
                     closed ? 'text-text-muted' : 'text-text',
-                    comfortable && 'text-title',
                 )}
             >
                 {task.title}

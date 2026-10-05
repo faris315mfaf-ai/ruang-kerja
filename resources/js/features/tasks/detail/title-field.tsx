@@ -61,7 +61,7 @@ export function TitleField({
                     type="button"
                     onClick={() => setEditing(true)}
                     aria-label={`Ubah judul: ${value}`}
-                    className="w-full text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    className="w-full text-left focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                 >
                     {value}
                 </button>
@@ -94,7 +94,7 @@ export function TitleField({
                 }
             }}
             className={cn(
-                '-mx-1.5 field-sizing-content w-[calc(100%+0.75rem)] resize-none rounded-md border border-transparent bg-transparent px-1 py-0.5 font-semibold text-text hover:border-border focus-visible:border-border-strong focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                '-mx-1.5 field-sizing-content w-[calc(100%+0.75rem)] resize-none rounded-control border border-transparent bg-transparent px-1 py-0.5 font-semibold text-text hover:border-border focus-visible:border-border-strong focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none',
                 className,
             )}
         />
