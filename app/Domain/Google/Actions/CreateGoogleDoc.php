@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * "Dokumen baru": creates a Docs/Sheets/Slides file in the workspace folder
+ * (or an authorized sub-folder)
  * (synchronous, 10 s) and optionally attaches it to a task or comment.
  * Authorize first (e.g. Gate::authorize('update', $task)).
  */
@@ -22,9 +23,9 @@ final class CreateGoogleDoc
         private readonly DriveFileRecorder $recorder,
     ) {}
 
-    public function handle(Model&HasDriveFolder $owner, GoogleDocType $type, string $name, User $user, ?Model $attachable = null): DriveFile
+    public function handle(Model&HasDriveFolder $owner, GoogleDocType $type, string $name, User $user, ?Model $attachable = null, ?string $folderId = null): DriveFile
     {
-        $file = $this->creator->create($owner, $type, $name, $user);
+        $file = $this->creator->create($owner, $type, $name, $user, $folderId);
 
         if ($attachable !== null) {
             $this->recorder->attach($file, $attachable, $user);

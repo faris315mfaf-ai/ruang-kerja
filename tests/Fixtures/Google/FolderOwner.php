@@ -4,6 +4,7 @@ namespace Tests\Fixtures\Google;
 
 use App\Domain\Google\Contracts\HasDriveFolder;
 use App\Domain\Google\Data\DriveMember;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Schema;
  * @property string $name
  * @property string|null $drive_folder_id
  * @property string|null $parent_folder_id
+ * @property string $workspace_id real workspaces row (drive_files.workspace_id is a foreign key)
  * @property list<array{email: string, role: string}> $members
  */
 class FolderOwner extends Model implements HasDriveFolder
@@ -47,6 +49,7 @@ class FolderOwner extends Model implements HasDriveFolder
             $table->string('name');
             $table->string('drive_folder_id')->nullable();
             $table->string('parent_folder_id')->nullable();
+            $table->ulid('workspace_id');
             $table->json('members')->default('[]');
         });
     }
@@ -60,6 +63,7 @@ class FolderOwner extends Model implements HasDriveFolder
 
         return self::query()->create([
             'name' => $name,
+            'workspace_id' => Workspace::factory()->create()->id,
             'members' => array_map(
                 fn (string $email, string $role): array => ['email' => $email, 'role' => $role],
                 array_keys($members),
@@ -117,7 +121,7 @@ class FolderOwner extends Model implements HasDriveFolder
 
     public function driveWorkspaceId(): string
     {
-        return $this->id;
+        return $this->workspace_id;
     }
 
     /**

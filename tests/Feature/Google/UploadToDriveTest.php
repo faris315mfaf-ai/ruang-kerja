@@ -78,7 +78,7 @@ it('uploads to the workspace folder, caches the file, attaches it and cleans up'
 
     expect($driveFile->name)->toBe('Wireframe v3.pdf')
         ->and($driveFile->size_bytes)->toBe(600 * 1024)
-        ->and($driveFile->workspace_id)->toBe($this->owner->id)
+        ->and($driveFile->workspace_id)->toBe($this->owner->workspace_id)
         ->and($driveFile->parent_google_id)->toBe($this->owner->fresh()->drive_folder_id)
         ->and($driveFile->added_by)->toBe($this->user->id)
         ->and($this->drive->uploadedContent($driveFile->google_file_id))->toBe($content)

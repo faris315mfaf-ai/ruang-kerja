@@ -37,3 +37,4 @@ require __DIR__.'/notifications.php';
 require __DIR__.'/google.php';
 require __DIR__.'/organization.php';
 require __DIR__.'/workspaces.php';
+require __DIR__.'/drive.php';

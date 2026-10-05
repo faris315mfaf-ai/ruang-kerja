@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Google\Access\DenyWorkspaceDriveAccess;
 use App\Domain\Google\Contracts\WorkspaceDriveAccess;
 use App\Domain\Organization\Enums\Role;
 use App\Models\Attachment;
@@ -42,7 +43,8 @@ describe('GoogleAccountPolicy', function () {
 });
 
 describe('DriveFilePolicy', function () {
-    it('denies every role until the Workspaces module grants access (fail-closed)', function (Role $role) {
+    it('denies every role with the fail-closed default access (DenyWorkspaceDriveAccess)', function (Role $role) {
+        app()->instance(WorkspaceDriveAccess::class, new DenyWorkspaceDriveAccess);
         $user = User::factory()->withRole($role)->create();
         $file = DriveFile::factory()->create(['added_by' => $user->id]);
         $gate = Gate::forUser($user);
