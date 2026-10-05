@@ -33,9 +33,10 @@ export function RequestSummary({
 
     if (!preview) {
         return (
-            <div className="space-y-3" aria-busy="true">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-8 w-40" />
+            <div className="flex flex-col gap-3" aria-busy="true">
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-6 w-2/3" />
                 <Skeleton className="h-24 w-full" />
             </div>
         );
@@ -53,82 +54,62 @@ export function RequestSummary({
     const marked = (preview.colleagues?.people ?? []).flatMap(
         (person) => person.dates,
     );
+    const when =
+        period === null
+            ? '—'
+            : period.minutes !== null
+              ? formatDateRange(period.start_at, period.start_at)
+              : formatLongDateRange(period.start_at, period.end_at);
+    const rows = mobile
+        ? [{ k: 'Durasi', v: headline }]
+        : [
+              { k: 'Jenis', v: type?.name ?? '—' },
+              { k: 'Tanggal', v: when },
+              { k: 'Durasi', v: headline },
+          ];
 
     return (
         <div
             className={cn(
-                'space-y-4',
+                'flex flex-col gap-4',
                 previewing && 'opacity-70 transition-opacity',
             )}
             aria-live="polite"
         >
-            <div
-                className={cn(mobile && 'flex items-end justify-between gap-3')}
-            >
-                <div>
-                    {!mobile && (
-                        <p className="text-[13px] text-text-muted">Ringkasan</p>
-                    )}
-                    <p
-                        className={cn(
-                            'font-semibold text-text',
-                            mobile ? 'text-[26px] leading-8' : 'mt-1 text-2xl',
-                        )}
+            <dl className="flex flex-col">
+                {rows.map((row) => (
+                    <div
+                        key={row.k}
+                        className="flex justify-between gap-3 border-b border-divider py-3 text-[16px] first:pt-0"
                     >
-                        {headline}
-                    </p>
-                    {period && (
-                        <p className="text-sm text-text-muted">
-                            {period.minutes !== null
-                                ? formatDateRange(
-                                      period.start_at,
-                                      period.start_at,
-                                  )
-                                : mobile
-                                  ? 'tanpa libur & akhir pekan'
-                                  : formatLongDateRange(
-                                        period.start_at,
-                                        period.end_at,
-                                    )}
-                        </p>
-                    )}
-                </div>
-                {mobile && preview.balance && type && (
-                    <div className="text-right">
-                        <p className="text-[13px] text-text-muted">
-                            Saldo {type.name.toLowerCase()}
-                        </p>
-                        <p className="text-lg text-text tnum">
-                            {formatDays(preview.balance.before)} →{' '}
-                            <strong>
-                                {formatDays(preview.balance.after)} hari
-                            </strong>
-                        </p>
+                        <dt className="text-text-muted">{row.k}</dt>
+                        <dd className="text-right font-bold text-text">
+                            {row.v}
+                        </dd>
                     </div>
-                )}
-            </div>
+                ))}
+            </dl>
 
             {preview.balance && type && (
-                <div>
-                    {!mobile && (
-                        <div className="mb-2 flex items-center justify-between text-sm">
-                            <span className="font-medium text-text">
-                                Saldo {type.name.toLowerCase()}
-                            </span>
-                            <span className="text-text-muted tnum">
-                                {formatDays(preview.balance.before)} →{' '}
-                                <strong className="text-text">
-                                    {formatDays(preview.balance.after)} hari
-                                </strong>
-                            </span>
-                        </div>
-                    )}
+                <div className="flex flex-col gap-2">
+                    <p className="flex justify-between gap-3 text-[15px] text-text-muted">
+                        <span>Saldo {type.name.toLowerCase()}</span>
+                        <span className="tnum">
+                            <b className="text-text">
+                                {formatDays(preview.balance.before)}
+                            </b>{' '}
+                            →{' '}
+                            <b className="text-primary">
+                                {formatDays(preview.balance.after)} hari
+                            </b>
+                        </span>
+                    </p>
                     <BalanceBar
                         summary={preview.balance.summary}
                         requested={period?.days ?? 0}
                     />
                     {!preview.balance.enough && (
-                        <p className="mt-2 text-[13px] text-danger">
+                        <p className="text-meta font-semibold text-danger">
                             Saldo tidak cukup untuk pengajuan ini.
                         </p>
                     )}
@@ -150,13 +131,13 @@ export function RequestSummary({
             {(preview.overlap || errors.length > 0 || previewFailed) && (
                 <div
                     role="alert"
-                    className="flex gap-2 rounded-lg border border-danger/30 bg-danger-soft px-3.5 py-3 text-[13px] text-danger"
+                    className="flex gap-2.5 rounded-lg bg-danger-soft px-4 py-3 text-[15px] leading-[22px] text-danger"
                 >
                     <CircleAlert
-                        className="mt-0.5 size-4 shrink-0"
+                        className="mt-0.5 size-5 shrink-0"
                         aria-hidden
                     />
-                    <div className="space-y-1">
+                    <div className="flex flex-col gap-1">
                         {preview.overlap && <p>{preview.overlap}</p>}
                         {errors.map((message) => (
                             <p key={message}>{message}</p>
@@ -173,13 +154,9 @@ export function RequestSummary({
                 viewerIsRequester
             />
 
-            <div
-                className={cn(
-                    mobile && '-mx-4 border-t border-border px-4 pt-4',
-                )}
-            >
-                <p className="mb-2 text-sm font-medium text-text">
-                    Alur persetujuan
+            <div className="flex flex-col gap-2.5">
+                <p className="text-[15px] font-bold text-text-muted">
+                    Akan disetujui oleh
                 </p>
                 <FlowChips steps={preview.flow} />
             </div>

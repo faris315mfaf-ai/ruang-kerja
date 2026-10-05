@@ -11,7 +11,6 @@ import type { DateInput } from '@/lib/format';
 import type {
     ApprovalStatus,
     LeaveTypeInfo,
-    RequestCategory,
     RequestItem,
     RequestStatus,
 } from '@/types/requests';
@@ -231,15 +230,16 @@ export function formatRequestDuration(
     return '—';
 }
 
-/** Tinted pill per category (token colors only). */
-export const categoryClass: Record<RequestCategory, string> = {
-    leave: 'bg-info-soft text-info',
-    permit: 'bg-accent-blue/10 text-info',
-    sick: 'bg-brand-500/10 text-primary',
-    overtime: 'bg-warning-soft text-warning',
-    correction: 'bg-surface-2 text-text-muted',
-    business_trip: 'bg-success-soft text-success',
-};
+/** "Cuti tahunan · 2 hari kerja"; just the type name when there is no duration (corrections). */
+export function formatRequestTitle(
+    item: Pick<RequestItem, 'type' | 'days' | 'minutes'>,
+): string {
+    const duration = formatRequestDuration(item);
+
+    return duration === '—'
+        ? item.type.name
+        : `${item.type.name} · ${duration}`;
+}
 
 export type Tone = 'warning' | 'success' | 'danger' | 'muted' | 'info';
 
@@ -259,14 +259,6 @@ export const approvalTone: Record<ApprovalStatus, Tone> = {
     rejected: 'danger',
     revision_requested: 'info',
     skipped: 'muted',
-};
-
-export const toneClass: Record<Tone, { pill: string; dot: string }> = {
-    warning: { pill: 'bg-warning-soft text-warning', dot: 'bg-warning' },
-    success: { pill: 'bg-success-soft text-success', dot: 'bg-success' },
-    danger: { pill: 'bg-danger-soft text-danger', dot: 'bg-danger' },
-    info: { pill: 'bg-info-soft text-info', dot: 'bg-info' },
-    muted: { pill: 'bg-surface-2 text-text-muted', dot: 'bg-text-subtle' },
 };
 
 /** "1 dari 2" step position, or null when not waiting. */

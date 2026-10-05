@@ -1,7 +1,6 @@
 import { History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/format';
-import { cn } from '@/lib/utils';
 import type { RequestFormState } from './use-request-form';
 
 /** "Draf dipulihkan dari perangkat ini" + Buang (device autosave of the form). */
@@ -21,11 +20,11 @@ export function DeviceDraftNotice({
     return (
         <div
             role="status"
-            className="flex items-center gap-2.5 rounded-lg border border-info/30 bg-info-soft px-4 py-2.5 text-sm text-text"
+            className="flex items-center gap-3 rounded-lg bg-info-soft px-4 py-2 text-[16px] text-text"
         >
-            <History className="size-4 shrink-0 text-info" aria-hidden />
+            <History className="size-5 shrink-0 text-info" aria-hidden />
             <p className="min-w-0 flex-1">
-                <strong className="font-semibold">
+                <strong className="font-bold">
                     Draf dipulihkan dari perangkat ini
                 </strong>
                 {draft.savedAt && (
@@ -37,9 +36,9 @@ export function DeviceDraftNotice({
             </p>
             <Button
                 type="button"
-                variant="ghost"
-                size="sm"
-                className={cn('shrink-0', mobile && 'h-11 px-4 text-base')}
+                variant="quiet"
+                size={mobile ? 'default' : 'sm'}
+                className="shrink-0"
                 onClick={state.discardDeviceDraft}
             >
                 Buang

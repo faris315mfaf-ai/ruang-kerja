@@ -1,7 +1,8 @@
 import { Camera, CircleAlert, Paperclip, Upload, X } from 'lucide-react';
 import { useRef } from 'react';
 import InputError from '@/components/input-error';
-import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input, fieldClasses } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,8 +20,7 @@ type Props = {
 };
 
 /** Native select styled like the inputs (keyboard + mobile friendly). */
-export const selectClass =
-    'h-9 w-full rounded-md border border-input bg-transparent px-3 text-base text-text shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm dark:bg-surface';
+export const selectClass = cn(fieldClasses, 'h-11 pr-9');
 
 /**
  * Rules of the chosen type under the selector: description, per-request maximum,
@@ -47,7 +47,7 @@ export function LeaveTypeHint({ type }: { type: FormLeaveType | undefined }) {
     }
 
     return (
-        <div className="space-y-1 text-[13px] text-text-muted">
+        <div className="space-y-1 text-meta text-text-muted">
             {type.is_provisional_default && <ProvisionalBadge />}
             {type.description && <p>{type.description}</p>}
             {rules.length > 0 && <p>{rules.join(' · ')}</p>}
@@ -60,7 +60,7 @@ export function ProvisionalBadge({ className }: { className?: string }) {
     return (
         <span
             className={cn(
-                'inline-flex w-fit shrink-0 items-center rounded-full bg-warning-soft px-2 py-0.5 text-xs font-normal whitespace-nowrap text-warning',
+                'inline-flex h-[26px] w-fit shrink-0 items-center rounded-full bg-warning-soft px-2.5 text-[14px] font-bold whitespace-nowrap text-warning',
                 className,
             )}
             title="Aturan bawaan sistem yang belum ditinjau HR; dapat berubah."
@@ -87,7 +87,7 @@ export function CategoryFields({
         changePermitMode,
     } = state;
     const { data, setData, errors } = form;
-    const control = cn(mobile && 'h-12 text-base');
+    const control = cn(mobile && 'h-12 text-[17px]');
     const error = (field: string) =>
         (errors as Record<string, string | undefined>)[field] ??
         state.preview?.errors?.[field];
@@ -122,7 +122,7 @@ export function CategoryFields({
                         ))}
                     </select>
                     {mobile && type?.balance && (
-                        <p className="text-[13px] text-text-muted">
+                        <p className="text-meta text-text-muted">
                             Saldo {type.name.toLowerCase()}{' '}
                             {formatNumber(type.balance.available)} hari
                         </p>
@@ -135,11 +135,11 @@ export function CategoryFields({
 
             {category === 'permit' && (
                 <div className="grid gap-2">
-                    <span className="text-sm font-medium">Durasi izin</span>
+                    <span className="text-label text-text">Durasi izin</span>
                     <div
                         role="radiogroup"
                         aria-label="Durasi izin"
-                        className="inline-flex w-fit rounded-md bg-surface-2 p-0.5"
+                        className="inline-flex w-fit gap-1 rounded-[14px] bg-surface-2 p-1"
                     >
                         {(['hours', 'days'] as const).map((mode) => (
                             <button
@@ -149,11 +149,11 @@ export function CategoryFields({
                                 aria-checked={permitMode === mode}
                                 onClick={() => changePermitMode(mode)}
                                 className={cn(
-                                    'h-9 rounded px-4 text-sm font-medium',
+                                    'h-[38px] rounded-[10px] px-[18px] text-[15px] font-semibold transition-[color,background-color,box-shadow] duration-120 ease-brand outline-none focus-visible:ring-[3px] focus-visible:ring-ring',
                                     mobile && 'h-11',
                                     permitMode === mode
-                                        ? 'bg-surface text-text shadow-card'
-                                        : 'text-text-muted',
+                                        ? 'bg-surface text-text shadow-segment'
+                                        : 'text-text-muted hover:text-text',
                                 )}
                             >
                                 {mode === 'hours' ? 'Per jam' : 'Per hari'}
@@ -204,7 +204,7 @@ export function CategoryFields({
                             }
                         />
                     </Field>
-                    <p className="text-[13px] text-text-muted md:col-span-3">
+                    <p className="text-meta text-text-muted md:col-span-3">
                         Isi salah satu atau keduanya.
                         {type?.max_backdate_days !== null &&
                         type?.max_backdate_days !== undefined
@@ -259,7 +259,7 @@ export function CategoryFields({
                         />
                     </Field>
                     {category === 'overtime' && (
-                        <p className="col-span-2 text-[13px] text-text-muted md:col-span-3">
+                        <p className="col-span-2 text-meta text-text-muted md:col-span-3">
                             Lewat tengah malam? Isi jam selesai lebih kecil,
                             mis. 22.00–01.00.
                         </p>
@@ -313,10 +313,10 @@ export function CategoryFields({
                         (mobile ? (
                             <div className="flex min-h-16 items-center justify-between gap-4 rounded-lg border border-border bg-surface px-4 py-3">
                                 <div>
-                                    <p className="text-[15px] font-medium text-text">
+                                    <p className="text-[17px] font-semibold text-text">
                                         Setengah hari
                                     </p>
-                                    <p className="text-[13px] text-text-muted">
+                                    <p className="text-meta text-text-muted">
                                         Hanya untuk pengajuan satu hari
                                     </p>
                                 </div>
@@ -329,17 +329,15 @@ export function CategoryFields({
                                 />
                             </div>
                         ) : (
-                            <label className="flex items-center gap-2 text-sm text-text">
-                                <input
-                                    type="checkbox"
-                                    className="size-4 accent-primary"
+                            <label className="flex min-h-11 items-center gap-3 text-[16px] text-text">
+                                <Checkbox
                                     checked={data.half_day}
-                                    onChange={(e) =>
-                                        setData('half_day', e.target.checked)
+                                    onCheckedChange={(value) =>
+                                        setData('half_day', value === true)
                                     }
                                 />
                                 Setengah hari{' '}
-                                <span className="text-[13px] text-text-muted">
+                                <span className="text-meta text-text-muted">
                                     · hanya untuk pengajuan satu hari
                                 </span>
                             </label>
@@ -373,7 +371,7 @@ export function CategoryFields({
                     id="reason"
                     rows={3}
                     maxLength={limits.reason}
-                    className={cn('min-h-20', mobile && 'min-h-28 text-base')}
+                    className={cn('min-h-24', mobile && 'min-h-28 text-[17px]')}
                     value={data.reason}
                     placeholder={
                         category === 'overtime'
@@ -382,7 +380,7 @@ export function CategoryFields({
                     }
                     onChange={(e) => setData('reason', e.target.value)}
                 />
-                <div className="flex justify-between text-[13px] text-text-muted">
+                <div className="flex justify-between text-meta text-text-muted">
                     <span>Terlihat oleh penyetuju dan HR.</span>
                     <span className="tnum">
                         {data.reason.length}/{limits.reason}
@@ -410,7 +408,7 @@ export function CategoryFields({
                         ))}
                     </select>
                     {substitute && (
-                        <p className="text-[13px] text-text-muted">
+                        <p className="text-meta text-text-muted">
                             {substitute.name.split(' ')[0]} akan diberi tahu
                             saat cuti disetujui dan bisa menerima tugas yang
                             dialihkan.
@@ -481,7 +479,7 @@ function AttachmentInput({
 
     return (
         <div className="grid gap-2">
-            <span className="text-sm font-medium text-text">
+            <span className="text-label text-text">
                 Lampiran{' '}
                 {required ? (
                     <span className="text-danger">(wajib)</span>
@@ -492,8 +490,8 @@ function AttachmentInput({
                 )}
             </span>
             {required && type?.requires_attachment_after_days !== null && (
-                <p className="flex items-center gap-1.5 text-[13px] text-warning">
-                    <CircleAlert className="size-3.5" aria-hidden />
+                <p className="flex items-center gap-1.5 text-meta text-warning">
+                    <CircleAlert className="size-4" aria-hidden />
                     {type?.requires_attachment_after_days === 0
                         ? 'Jenis ini wajib melampirkan berkas.'
                         : `Wajib surat bila lebih dari ${type?.requires_attachment_after_days} hari.`}
@@ -531,14 +529,14 @@ function AttachmentInput({
                         <button
                             type="button"
                             onClick={() => cameraInput.current?.click()}
-                            className="flex h-14 items-center justify-center gap-2 rounded-lg border border-dashed border-border-strong text-[15px] text-text"
+                            className="flex h-14 items-center justify-center gap-2 rounded-[14px] border-2 border-dashed border-border-strong bg-background text-[16px] font-semibold text-text-muted"
                         >
                             <Camera className="size-5" aria-hidden /> Ambil foto
                         </button>
                         <button
                             type="button"
                             onClick={() => fileInput.current?.click()}
-                            className="flex h-14 items-center justify-center gap-2 rounded-lg border border-dashed border-border-strong text-[15px] text-text"
+                            className="flex h-14 items-center justify-center gap-2 rounded-[14px] border-2 border-dashed border-border-strong bg-background text-[16px] font-semibold text-text-muted"
                         >
                             <Paperclip className="size-5" aria-hidden /> Pilih
                             file
@@ -551,30 +549,28 @@ function AttachmentInput({
                             e.preventDefault();
                             onFiles(e.dataTransfer.files);
                         }}
-                        className="flex items-center gap-3 rounded-lg border border-dashed border-border-strong px-4 py-4"
+                        className="flex items-center gap-3 rounded-[14px] border-2 border-dashed border-border-strong bg-background px-4 py-3"
                     >
-                        <span className="flex size-9 items-center justify-center rounded-md border border-border bg-surface">
+                        <span className="flex size-10 items-center justify-center rounded-control border border-border bg-surface">
                             <Upload
-                                className="size-4 text-text-muted"
+                                className="size-5 text-text-muted"
                                 aria-hidden
                             />
                         </span>
-                        <div className="text-sm">
+                        <div className="text-[16px] text-text-muted">
                             <button
                                 type="button"
                                 onClick={() => fileInput.current?.click()}
-                                className="font-medium text-primary hover:underline"
+                                className="font-semibold text-link hover:underline"
                             >
                                 Pilih file
                             </button>{' '}
                             atau seret ke sini
-                            <p className="text-[13px] text-text-muted">
-                                {hint}
-                            </p>
+                            <p className="text-meta text-text-muted">{hint}</p>
                         </div>
                     </div>
                 ))}
-            {mobile && <p className="text-[13px] text-text-muted">{hint}</p>}
+            {mobile && <p className="text-meta text-text-muted">{hint}</p>}
 
             {count > 0 && (
                 <ul className="space-y-1.5">
@@ -611,20 +607,20 @@ function FileRow({
     onRemove: () => void;
 }) {
     return (
-        <li className="flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-sm">
+        <li className="flex min-h-12 items-center gap-2.5 rounded-control border border-border bg-surface py-1 pr-1 pl-3.5 text-[15px]">
             <Paperclip
                 className="size-4 shrink-0 text-text-muted"
                 aria-hidden
             />
             <span className="min-w-0 flex-1 truncate">{name}</span>
-            <span className="shrink-0 text-xs text-text-muted tnum">
+            <span className="shrink-0 text-meta text-text-muted tnum">
                 {formatNumber(Math.round(size / 1024))} KB
             </span>
             <button
                 type="button"
                 onClick={onRemove}
                 aria-label={`Hapus ${name}`}
-                className="flex size-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-2"
+                className="flex size-10 items-center justify-center rounded-[10px] text-text-muted hover:bg-surface-2 focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
             >
                 <X className="size-4" aria-hidden />
             </button>
