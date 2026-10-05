@@ -11,6 +11,8 @@ use OpenSSLAsymmetricKey;
  */
 final class ServiceAccountCredentials
 {
+    public const string TOKEN_HOST = 'oauth2.googleapis.com';
+
     private function __construct(
         public readonly string $clientEmail,
         private readonly string $privateKey,
@@ -52,7 +54,25 @@ final class ServiceAccountCredentials
             ? $data['token_uri']
             : (string) config('google.service_account.token_uri');
 
+        // The signed assertion (a bearer credential for the whole Shared Drive)
+        // is only ever sent to Google's token endpoint over HTTPS.
+        if (! self::isGoogleTokenUri($tokenUri)) {
+            throw new GoogleNotConfigured(['GOOGLE_SERVICE_ACCOUNT_JSON']);
+        }
+
         return new self($data['client_email'], $data['private_key'], $tokenUri);
+    }
+
+    public static function isGoogleTokenUri(string $uri): bool
+    {
+        $parts = parse_url($uri);
+
+        return is_array($parts)
+            && ($parts['scheme'] ?? null) === 'https'
+            && strtolower($parts['host'] ?? '') === self::TOKEN_HOST
+            && ! isset($parts['user'])
+            && ! isset($parts['pass'])
+            && ! isset($parts['port']);
     }
 
     /**

@@ -108,3 +108,24 @@ it('rejects an invalid service account key', function (string $value) {
 it('does not expose the private key when dumped', function () {
     expect(print_r(ServiceAccountCredentials::fromConfig(), true))->not->toContain('PRIVATE KEY');
 });
+
+it('only accepts Google\'s token endpoint as token_uri', function (string $uri, bool $accepted) {
+    $json = json_decode(GoogleTesting::serviceAccountJson(), true);
+    $json['token_uri'] = $uri;
+    $build = fn () => ServiceAccountCredentials::fromString((string) json_encode($json));
+
+    if ($accepted) {
+        expect($build())->toBeInstanceOf(ServiceAccountCredentials::class);
+    } else {
+        expect($build)->toThrow(GoogleNotConfigured::class);
+    }
+})->with([
+    ['https://oauth2.googleapis.com/token', true],
+    ['https://OAUTH2.googleapis.com/token', true],
+    ['http://oauth2.googleapis.com/token', false],
+    ['https://evil.example/token', false],
+    ['https://oauth2.googleapis.com.evil.example/token', false],
+    ['https://oauth2.googleapis.com@evil.example/token', false],
+    ['https://user:pw@oauth2.googleapis.com/token', false],
+    ['https://oauth2.googleapis.com:8443/token', false],
+]);
