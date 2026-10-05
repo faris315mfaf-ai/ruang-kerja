@@ -7,14 +7,14 @@ import { InboxDetail } from '@/features/notifications/inbox-detail';
 import '@/features/tasks/register-inbox';
 import {
     emptyCopy,
-    InboxFilterMenu,
+    InboxFilterChips,
     InboxFooter,
     InboxListSkeleton,
-    InboxTabs,
 } from '@/features/notifications/inbox-parts';
 import { InboxRow } from '@/features/notifications/inbox-row';
 import type { InboxState } from '@/features/notifications/use-inbox';
 import { groupByDay } from '@/features/notifications/utils';
+import { cn } from '@/lib/utils';
 import type { InboxKind } from '@/types/notifications';
 
 type Props = {
@@ -31,7 +31,11 @@ function isTyping(target: EventTarget | null): boolean {
     );
 }
 
-/** Desktop & tablet Inbox: list (420px) + detail pane (mockup Inbox). */
+/**
+ * Desktop & tablet Inbox (DInbox): title + "Tandai semua dibaca", filter
+ * pills, then the list card next to the detail card (sticky, scrolls on its
+ * own when taller than the viewport).
+ */
 export function InboxDesktop({ inbox, kinds, retentionDays }: Props) {
     const { list, filters, counts } = inbox;
     const [selectedId, setSelectedId] = useState<string | null>(
@@ -115,65 +119,70 @@ export function InboxDesktop({ inbox, kinds, retentionDays }: Props) {
     });
 
     return (
-        <div className="-m-4 flex h-[calc(100svh-3.5rem)] min-h-0 lg:-m-6">
-            <section
-                aria-label="Daftar notifikasi"
-                className="flex w-[380px] shrink-0 flex-col border-r border-border xl:w-[420px]"
-            >
-                <div className="space-y-3 border-b border-border px-4 pt-4 pb-3">
-                    <div className="flex items-center gap-2">
-                        <h1 className="flex-1 text-xl leading-7 font-semibold text-text">
-                            {filters.archived ? 'Arsip' : 'Inbox'}
-                        </h1>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={inbox.markAllRead}
-                            disabled={counts.unread === 0}
-                        >
-                            <CheckCheck />
-                            Tandai semua dibaca
-                        </Button>
-                        <InboxFilterMenu
-                            filters={filters}
-                            kinds={kinds}
-                            onChange={inbox.setFilters}
-                        />
-                    </div>
-                    <InboxTabs
-                        value={filters.tab}
-                        counts={counts}
-                        onChange={(tab) => inbox.setFilters({ tab })}
-                    />
+        <div className="flex flex-col gap-[22px]">
+            <section className="flex flex-wrap items-end justify-between gap-4">
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-h1 text-text lg:text-display">
+                        {filters.archived ? 'Arsip' : 'Inbox'}
+                    </h1>
+                    <p className="text-body-lg text-text-muted">
+                        <span className="tnum">{counts.unread}</span> belum
+                        dibaca · <span className="tnum">{counts.action}</span>{' '}
+                        perlu tindakan
+                    </p>
                 </div>
+                <Button
+                    variant="outline"
+                    onClick={inbox.markAllRead}
+                    disabled={counts.unread === 0}
+                >
+                    <CheckCheck />
+                    Tandai semua dibaca
+                </Button>
+            </section>
 
-                <div
-                    className="min-h-0 flex-1 overflow-y-auto"
-                    id="inbox-scroll"
+            <InboxFilterChips
+                filters={filters}
+                counts={counts}
+                kinds={kinds}
+                onChange={inbox.setFilters}
+            />
+
+            <div className="grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+                <section
+                    aria-label="Daftar notifikasi"
+                    className="min-w-0 overflow-hidden rounded-panel border border-border bg-surface shadow-card"
                 >
                     {inbox.changingFilters ? (
                         <InboxListSkeleton />
                     ) : list.length === 0 ? (
-                        <EmptyState
-                            icon={Inbox}
-                            title={copy.title}
-                            description={copy.description}
-                            className="m-4 border-none"
-                        />
+                        <div className="p-5">
+                            <EmptyState
+                                icon={Inbox}
+                                size="sm"
+                                title={copy.title}
+                                description={copy.description}
+                            />
+                        </div>
                     ) : (
                         <InfiniteScroll
                             data="items"
                             onlyNext
                             preserveUrl
-                            className="px-2 pb-2"
                             loading={<InboxListSkeleton rows={2} />}
                         >
-                            {groups.map((group) => (
+                            {groups.map((group, index) => (
                                 <div key={group.label}>
-                                    <h2 className="px-3 pt-4 pb-1.5 text-[11px] font-medium tracking-[.04em] text-text-muted uppercase">
+                                    <h2
+                                        className={cn(
+                                            'bg-background px-[22px] pt-4 pb-2 text-[13px] font-bold tracking-[.06em] text-text-muted uppercase',
+                                            index > 0 &&
+                                                'border-t border-divider',
+                                        )}
+                                    >
                                         {group.label}
                                     </h2>
-                                    <ul className="space-y-0.5">
+                                    <ul className="divide-y divide-divider border-t border-divider">
                                         {group.items.map((item) => (
                                             <li key={item.id}>
                                                 <InboxRow
@@ -193,15 +202,17 @@ export function InboxDesktop({ inbox, kinds, retentionDays }: Props) {
                             ))}
                         </InfiniteScroll>
                     )}
-                </div>
+                    <div className="border-t border-divider px-[22px] py-4">
+                        <InboxFooter retentionDays={retentionDays} />
+                    </div>
+                </section>
 
-                <div className="border-t border-border px-4 py-3">
-                    <InboxFooter retentionDays={retentionDays} />
+                {/* Sticky; scrolls on its own when taller than the viewport. The
+                    padding (cancelled by the negative margin) keeps the
+                    panel shadow from being clipped by the scroll box. */}
+                <div className="min-w-0 md:sticky md:top-2 md:-m-4 md:max-h-[calc(100svh-16px)] md:overflow-y-auto md:p-4 lg:top-[calc(var(--menu-bar-height)+8px)] lg:max-h-[calc(100svh-var(--menu-bar-height)-var(--dock-space)+24px)]">
+                    <InboxDetail notification={selected} inbox={inbox} />
                 </div>
-            </section>
-
-            <div className="min-w-0 flex-1">
-                <InboxDetail notification={selected} inbox={inbox} />
             </div>
         </div>
     );

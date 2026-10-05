@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import { NotificationIcon } from '@/features/notifications/notification-icon';
 import { NotificationTitle } from '@/features/notifications/notification-title';
+import { cn, focusRing } from '@/lib/utils';
 import { open } from '@/routes/inbox';
 import type { InboxNotification } from '@/types/notifications';
 
@@ -11,7 +12,17 @@ type Props = {
     onDismiss: () => void;
 };
 
-/** Glass toast for an incoming notification (DESIGN.md §6: glass, bottom right). */
+/** Translucent pill button on the inverse toast (Komponen "Urungkan"). */
+const pill = cn(
+    'inline-flex h-9 items-center rounded-[10px] px-3 text-[15px] font-bold transition-colors duration-120 ease-brand',
+    focusRing,
+);
+
+/**
+ * Toast for an incoming realtime notification: the inverse chip of the
+ * design (Komponen toast: radius 18, `shadow-inverse`) with the tinted
+ * notification tile, title, one line of body and "Buka" / "Lihat Inbox".
+ */
 export function NotificationToast({ notification, onDismiss }: Props) {
     const openLabel =
         typeof notification.meta.open_label === 'string'
@@ -21,25 +32,29 @@ export function NotificationToast({ notification, onDismiss }: Props) {
     return (
         <div
             role="status"
-            className="glass flex w-[356px] max-w-[calc(100vw-32px)] items-start gap-3 rounded-lg p-3 shadow-card"
+            className="flex w-[380px] max-w-[calc(100vw-32px)] items-start gap-3.5 rounded-[18px] bg-inverse px-[18px] py-4 text-on-inverse shadow-inverse"
         >
             <NotificationIcon
                 icon={notification.icon}
                 tone={notification.tone}
+                size="sm"
             />
-            <div className="min-w-0 flex-1">
-                <p className="line-clamp-2 text-[13px] leading-5">
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <p className="line-clamp-2 text-[16px] leading-[22px] font-semibold">
                     <NotificationTitle notification={notification} />
                 </p>
                 {notification.body && (
-                    <p className="mt-0.5 line-clamp-2 text-xs text-text-muted">
+                    <p className="line-clamp-2 text-meta text-on-inverse/75">
                         {notification.body}
                     </p>
                 )}
-                <div className="mt-2 flex gap-2">
+                <div className="flex gap-2 pt-1.5">
                     <button
                         type="button"
-                        className="h-7 rounded-md bg-primary px-2.5 text-xs font-medium text-primary-foreground transition-colors duration-120 ease-brand hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        className={cn(
+                            pill,
+                            'bg-on-inverse/12 hover:bg-on-inverse/20',
+                        )}
                         onClick={() => {
                             onDismiss();
                             router.visit(open.url(notification.id));
@@ -49,7 +64,10 @@ export function NotificationToast({ notification, onDismiss }: Props) {
                     </button>
                     <button
                         type="button"
-                        className="h-7 rounded-md px-2.5 text-xs font-medium text-text-muted transition-colors duration-120 ease-brand hover:bg-surface-2 hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        className={cn(
+                            pill,
+                            'text-on-inverse/75 hover:bg-on-inverse/12 hover:text-on-inverse',
+                        )}
                         onClick={() => {
                             onDismiss();
                             router.visit('/inbox');
@@ -63,9 +81,12 @@ export function NotificationToast({ notification, onDismiss }: Props) {
                 type="button"
                 aria-label="Tutup notifikasi"
                 onClick={onDismiss}
-                className="-m-1 flex size-7 shrink-0 items-center justify-center rounded-md text-text-subtle transition-colors duration-120 ease-brand hover:bg-surface-2 hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className={cn(
+                    '-m-1.5 flex size-9 shrink-0 items-center justify-center rounded-[10px] text-on-inverse/60 transition-colors duration-120 ease-brand hover:bg-on-inverse/12 hover:text-on-inverse',
+                    focusRing,
+                )}
             >
-                <X className="size-4" aria-hidden />
+                <X className="size-[18px]" aria-hidden />
             </button>
         </div>
     );
