@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { selectClass } from '@/features/requests/form-fields';
+import { ProvisionalBadge, selectClass } from '@/features/requests/form-fields';
 import { store, update } from '@/routes/admin/leave-types';
 import type { RequestCategory } from '@/types/requests';
 import type { AdminFlow, AdminLeaveType, AdminOptions } from './types';
@@ -50,6 +50,9 @@ export function LeaveTypeDialog({
         max_backdate_days: type?.max_backdate_days ?? (null as number | null),
         min_service_months: type?.min_service_months ?? (null as number | null),
         allow_half_day: type?.allow_half_day ?? false,
+        counts_calendar_days: type?.counts_calendar_days ?? false,
+        max_days_per_request:
+            type?.max_days_per_request ?? (null as number | null),
         is_paid: type?.is_paid ?? true,
         is_active: type?.is_active ?? true,
         approval_flow_id: type?.approval_flow_id ?? '',
@@ -85,6 +88,13 @@ export function LeaveTypeDialog({
                         Kode dipakai sebagai awalan nomor, mis.
                         CUT-2026-10-0001.
                     </DialogDescription>
+                    {type?.is_provisional_default && (
+                        <p className="flex flex-wrap items-center gap-2 text-[13px] text-text-muted">
+                            <ProvisionalBadge />
+                            Aturan bawaan sistem. Tinjau lalu simpan untuk
+                            menetapkannya sebagai aturan perusahaan.
+                        </p>
+                    )}
                 </DialogHeader>
                 <form
                     id="leave-type-form"
@@ -247,6 +257,31 @@ export function LeaveTypeDialog({
                         />
                         <InputError message={errors.min_service_months} />
                     </div>
+                    {data.category !== 'overtime' &&
+                        data.category !== 'correction' && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="lt-max-days">
+                                    Maks. per pengajuan (hari)
+                                </Label>
+                                <Input
+                                    id="lt-max-days"
+                                    type="number"
+                                    min={0.5}
+                                    step={0.5}
+                                    placeholder="Kosong = tanpa batas"
+                                    value={data.max_days_per_request ?? ''}
+                                    onChange={(e) =>
+                                        setData(
+                                            'max_days_per_request',
+                                            numberOrNull(e.target.value),
+                                        )
+                                    }
+                                />
+                                <InputError
+                                    message={errors.max_days_per_request}
+                                />
+                            </div>
+                        )}
                     {data.category === 'correction' && (
                         <div className="grid gap-2">
                             <Label htmlFor="lt-backdate">
@@ -290,6 +325,17 @@ export function LeaveTypeDialog({
                                     checked={data.allow_half_day}
                                     onCheckedChange={(value) =>
                                         setData('allow_half_day', value)
+                                    }
+                                />
+                            </label>
+                        )}
+                        {data.category === 'leave' && (
+                            <label className="flex items-center justify-between gap-3 text-sm">
+                                Dihitung hari kalender (bukan hari kerja)
+                                <Switch
+                                    checked={data.counts_calendar_days}
+                                    onCheckedChange={(value) =>
+                                        setData('counts_calendar_days', value)
                                     }
                                 />
                             </label>

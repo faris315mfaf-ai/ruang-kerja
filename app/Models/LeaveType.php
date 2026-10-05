@@ -30,12 +30,15 @@ use Illuminate\Support\Carbon;
  * @property int|null $requires_attachment_after_days
  * @property bool $is_paid
  * @property bool $allow_half_day
+ * @property bool $counts_calendar_days duration in calendar days (Cuti melahirkan) instead of working days
+ * @property float|null $max_days_per_request
  * @property float|null $carry_over_max_days
  * @property int|null $max_backdate_days
  * @property int|null $min_service_months
  * @property string|null $approval_flow_id
  * @property bool $is_active
  * @property int $sort_order
+ * @property bool $is_provisional_default seeded default not yet reviewed by HR ("Bawaan sementara")
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
@@ -46,6 +49,7 @@ use Illuminate\Support\Carbon;
     'company_id', 'code', 'name', 'category', 'description', 'annual_quota_days',
     'requires_attachment_after_days', 'is_paid', 'allow_half_day', 'carry_over_max_days',
     'max_backdate_days', 'min_service_months', 'approval_flow_id', 'is_active', 'sort_order',
+    'counts_calendar_days', 'max_days_per_request', 'is_provisional_default',
 ])]
 class LeaveType extends Model
 {
@@ -56,6 +60,8 @@ class LeaveType extends Model
     protected $attributes = [
         'is_paid' => true,
         'allow_half_day' => false,
+        'counts_calendar_days' => false,
+        'is_provisional_default' => false,
         'is_active' => true,
         'sort_order' => 0,
     ];
@@ -74,6 +80,9 @@ class LeaveType extends Model
             'min_service_months' => 'integer',
             'is_paid' => 'boolean',
             'allow_half_day' => 'boolean',
+            'counts_calendar_days' => 'boolean',
+            'max_days_per_request' => 'float',
+            'is_provisional_default' => 'boolean',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
@@ -101,6 +110,18 @@ class LeaveType extends Model
     public function requiresAttachmentFor(float $days): bool
     {
         return $this->requires_attachment_after_days !== null && $days > $this->requires_attachment_after_days;
+    }
+
+    /**
+     * "hari kalender" / "hari kerja" (leave) / "hari".
+     */
+    public function dayUnit(): string
+    {
+        if ($this->counts_calendar_days) {
+            return 'hari kalender';
+        }
+
+        return $this->category === RequestCategory::Leave ? 'hari kerja' : 'hari';
     }
 
     /**

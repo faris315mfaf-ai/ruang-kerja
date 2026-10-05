@@ -55,7 +55,8 @@ final class SaveApprovalFlow
 
             if (is_string($typeId)) {
                 $type = LeaveType::query()->where('company_id', $actor->company_id)->findOrFail($typeId);
-                $type->update(['approval_flow_id' => $flow->id]);
+                // HR configured this type: it is no longer an unreviewed seeded default.
+                $type->update(['approval_flow_id' => $flow->id, 'is_provisional_default' => false]);
             }
 
             return $flow;

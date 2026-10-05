@@ -57,6 +57,10 @@ final class RequestPresenter
             'allow_half_day' => $type->allow_half_day,
             'max_backdate_days' => $type->max_backdate_days,
             'is_paid' => $type->is_paid,
+            'counts_calendar_days' => $type->counts_calendar_days,
+            'max_days_per_request' => $type->max_days_per_request,
+            'day_unit' => $type->dayUnit(),
+            'is_provisional_default' => $type->is_provisional_default,
         ];
     }
 

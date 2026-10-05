@@ -1,5 +1,5 @@
 import { CircleAlert } from 'lucide-react';
-import { formatDateRange, formatDays } from '@/lib/requests';
+import { dayUnit, formatDateRange, formatDays } from '@/lib/requests';
 import { cn } from '@/lib/utils';
 import type { BalanceCard } from '@/types/requests';
 
@@ -101,11 +101,23 @@ export function BalanceCardView({
                     <p className="mt-2 text-lg font-semibold text-text">
                         Tidak memotong cuti
                     </p>
+                    {card.type.max_days_per_request !== null && (
+                        <p className="mt-1 text-[13px] text-text-muted">
+                            Maks. {formatDays(card.type.max_days_per_request)}{' '}
+                            {dayUnit(card.type)} per pengajuan
+                        </p>
+                    )}
+                    {!card.type.is_paid && (
+                        <p className="mt-1 text-[13px] text-text-muted">
+                            Tidak dibayar
+                        </p>
+                    )}
                     {card.type.requires_attachment_after_days !== null && (
                         <p className="mt-1 flex items-center gap-1.5 text-[13px] text-warning">
                             <CircleAlert className="size-3.5" aria-hidden />
-                            Surat dokter wajib bila &gt;{' '}
-                            {card.type.requires_attachment_after_days} hari
+                            {card.type.requires_attachment_after_days === 0
+                                ? 'Lampiran wajib'
+                                : `${card.type.category === 'sick' ? 'Surat dokter' : 'Lampiran'} wajib bila > ${card.type.requires_attachment_after_days} hari`}
                         </p>
                     )}
                 </>

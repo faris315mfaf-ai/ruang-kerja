@@ -10,7 +10,8 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Admin HR: create or update a leave type (jenis pengajuan) and its quota rules.
- * Audited automatically (Auditable).
+ * Audited automatically (Auditable). Saving marks the type as reviewed: a seeded
+ * default loses its "Bawaan sementara" marker and the seeder never touches it again.
  */
 final class SaveLeaveType
 {
@@ -45,6 +46,12 @@ final class SaveLeaveType
             'is_active' => (bool) ($data['is_active'] ?? true),
             'approval_flow_id' => $flowId,
             'sort_order' => $data['sort_order'] ?? $type->sort_order,
+            // Calendar days / per-request maximum only make sense for whole-day leave.
+            'counts_calendar_days' => $category === RequestCategory::Leave && (bool) ($data['counts_calendar_days'] ?? false),
+            'max_days_per_request' => in_array($category, [RequestCategory::Leave, RequestCategory::Permit, RequestCategory::Sick, RequestCategory::BusinessTrip], true)
+                ? ($data['max_days_per_request'] ?? null)
+                : null,
+            'is_provisional_default' => false,
         ]);
         $type->save();
 
