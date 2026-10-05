@@ -21,11 +21,7 @@ export default function MyRequests(props: MyRequestsProps) {
 }
 
 MyRequests.layout = {
-    width: 'wide',
-    breadcrumbs: [
-        { title: 'Pengajuan', href: index() },
-        { title: 'Pengajuan saya', href: index() },
-    ],
+    breadcrumbs: [{ title: 'Pengajuan', href: index() }],
     title: 'Pengajuan saya',
     back: '/menu',
 };

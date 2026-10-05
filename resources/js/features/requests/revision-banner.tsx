@@ -10,14 +10,14 @@ export function RevisionBanner({ request }: { request: RequestDetail }) {
     return (
         <div
             role="note"
-            className="flex gap-2.5 rounded-lg border border-info/30 bg-info-soft px-4 py-3 text-sm text-text"
+            className="flex gap-3 rounded-lg bg-info-soft px-4 py-3.5 text-[16px] leading-6 text-text"
         >
             <CornerUpLeft
-                className="mt-0.5 size-4 shrink-0 text-info"
+                className="mt-0.5 size-5 shrink-0 text-info"
                 aria-hidden
             />
             <p>
-                <strong className="font-semibold">
+                <strong className="font-bold">
                     {request.decision_note.by ?? 'Penyetuju'} meminta revisi:
                 </strong>{' '}
                 “{request.decision_note.note}”. Ubah lalu kirim ulang.
