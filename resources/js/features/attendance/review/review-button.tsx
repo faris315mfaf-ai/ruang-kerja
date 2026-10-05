@@ -2,7 +2,6 @@ import { router } from '@inertiajs/react';
 import { Check } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import logRoutes from '@/routes/attendance/logs';
 
 /** "Tandai sudah ditinjau" (HR). Reloads only the given props afterwards. */
@@ -22,14 +21,10 @@ export function ReviewButton({
     return (
         <Button
             type="button"
-            variant={size === 'lg' ? 'secondary' : 'outline'}
+            variant={size === 'lg' ? 'tonal' : 'default'}
+            size={size === 'lg' ? 'lg' : 'sm'}
             disabled={busy}
-            className={cn(
-                size === 'lg'
-                    ? 'h-11 bg-link-soft text-[15px] text-primary hover:bg-primary/15'
-                    : 'h-8',
-                className,
-            )}
+            className={className}
             onClick={() =>
                 router.post(
                     logRoutes.review.url(logId),

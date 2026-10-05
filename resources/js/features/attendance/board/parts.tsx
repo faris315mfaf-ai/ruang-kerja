@@ -2,9 +2,13 @@ import { Link } from '@inertiajs/react';
 import { Clock, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { EmptyState } from '@/components/empty-state';
+import { ChipScroller } from '@/components/mobile/chip-scroller';
+import { UserAvatar } from '@/components/shell/user-avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { TONE_CLASSES } from '@/lib/attendance';
+import { KpiCard } from '@/components/ui/kpi-card';
+import { Panel } from '@/components/ui/panel';
 import { formatDate, formatTime } from '@/lib/format';
 import { BOARD_STATES } from '@/lib/recap';
 import { cn } from '@/lib/utils';
@@ -15,39 +19,39 @@ import type {
     MissingCheckOut,
     TodayBoardData,
 } from '@/types/attendance';
+import { FilterSelect } from '../filter-select';
 import type { CorrectionTarget } from '../review/correction-dialog';
 import type { LiveMode } from './use-live-board';
 
+/** "Langsung" / "Tiap 60 detik" status pill next to the title. */
 export function LivePill({ mode }: { mode: LiveMode }) {
     const live = mode === 'realtime';
 
     return (
-        <span
-            className={cn(
-                'inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium',
-                live
-                    ? 'bg-success-soft text-success'
-                    : 'bg-surface-2 text-text-muted',
-            )}
+        <Badge
+            variant="status"
+            tone={live ? 'success' : 'neutral'}
+            dot
+            className="h-[30px] gap-1.5 px-3"
             title={
                 live
                     ? 'Diperbarui otomatis saat ada check-in'
                     : 'Diperbarui tiap 60 detik'
             }
         >
-            <span
-                aria-hidden
-                className={cn(
-                    'size-1.5 rounded-full',
-                    live ? 'animate-pulse bg-success' : 'bg-text-subtle',
-                )}
-            />
             {live ? 'Langsung' : 'Tiap 60 detik'}
-        </span>
+        </Badge>
     );
 }
 
-/** The four numbers of the board (Terjadwal, Hadir, Cuti/izin/sakit, Belum). */
+function percent(part: number, total: number): number {
+    return total > 0 ? Math.round((part / total) * 100) : 0;
+}
+
+/**
+ * Summary row (DHR "Ringkasan"): highlighted "Hadir sekarang" with a bar,
+ * then Terjadwal, Cuti/izin/sakit and Belum check-in.
+ */
 export function StatCards({
     summary,
     compact = false,
@@ -61,115 +65,112 @@ export function StatCards({
     const leaves = summary.leaveBreakdown
         .map((item) => `${item.count} ${item.label.toLowerCase()}`)
         .join(' · ');
-
-    const cards = [
-        {
-            label: 'Terjadwal',
-            value: <span className="text-text">{summary.scheduled}</span>,
-            hint: shifts || 'Tidak ada jadwal',
-        },
-        {
-            label: 'Hadir',
-            value: (
-                <>
-                    <span className="text-success">{summary.present}</span>
-                    <span className="text-base font-normal text-text-muted">
-                        {' '}
-                        / {summary.scheduled}
-                    </span>
-                </>
-            ),
-            hint: (
-                <>
-                    termasuk{' '}
-                    <span className="text-warning">
-                        {summary.late} terlambat
-                    </span>
-                </>
-            ),
-        },
-        {
-            label: 'Cuti/izin/sakit',
-            value: <span className="text-info">{summary.onLeave}</span>,
-            hint: leaves || 'Tidak ada',
-        },
-        {
-            label: 'Belum check-in',
-            value: <span className="text-text">{summary.notCheckedIn}</span>,
-            hint: 'pengingat otomatis 15 menit setelah jam masuk',
-        },
-    ];
+    const share = percent(summary.present, summary.scheduled);
+    const tile = compact ? 'gap-0.5 px-3.5 py-3.5' : undefined;
 
     return (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-            {cards.map((card) => (
+        <section
+            aria-label="Ringkasan"
+            className={cn(
+                'grid gap-3',
+                compact ? 'grid-cols-3' : 'grid-cols-2 gap-5 xl:grid-cols-4',
+            )}
+        >
+            <KpiCard
+                tone="highlight"
+                label="Hadir sekarang"
+                value={summary.present}
+                suffix={`/ ${summary.scheduled}`}
+                note={`${share}% · termasuk ${summary.late} terlambat`}
+                className={cn(compact && 'col-span-3')}
+            >
                 <div
-                    key={card.label}
-                    className={cn(
-                        'rounded-xl border border-border bg-surface shadow-card',
-                        compact ? 'p-3.5' : 'p-4',
-                    )}
+                    role="progressbar"
+                    aria-label="Hadir dari yang terjadwal"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={share}
+                    className="h-2 overflow-hidden rounded-full bg-on-brand/25"
                 >
-                    <p className="text-[13px] text-text-muted">{card.label}</p>
-                    <p
-                        className={cn(
-                            'mt-1 font-semibold tnum',
-                            compact ? 'text-[26px]' : 'text-[28px]',
-                        )}
-                    >
-                        {card.value}
-                    </p>
-                    <p className="mt-1 truncate text-[13px] text-text-muted">
-                        {card.hint}
-                    </p>
+                    <div
+                        className="h-full rounded-full bg-on-brand"
+                        style={{ width: `${share}%` }}
+                    />
                 </div>
-            ))}
-        </div>
+            </KpiCard>
+            <KpiCard
+                label="Terjadwal"
+                value={summary.scheduled}
+                note={compact ? null : shifts || 'Tidak ada jadwal'}
+                className={tile}
+            />
+            <KpiCard
+                label={compact ? 'Cuti/izin' : 'Cuti/izin/sakit'}
+                value={summary.onLeave}
+                valueClassName="text-info"
+                note={compact ? null : leaves || 'Tidak ada'}
+                className={tile}
+            />
+            <KpiCard
+                label={compact ? 'Belum' : 'Belum check-in'}
+                value={summary.notCheckedIn}
+                valueClassName={summary.notCheckedIn > 0 ? 'text-warning' : ''}
+                note={
+                    compact
+                        ? null
+                        : 'Pengingat otomatis 15 menit setelah jam masuk'
+                }
+                className={tile}
+            />
+        </section>
     );
 }
 
 const SEGMENTS: {
-    key: keyof BoardDivision;
+    key: 'onTime' | 'late' | 'onLeave' | 'notCheckedIn';
     label: string;
     className: string;
 }[] = [
-    { key: 'onTime', label: 'Hadir tepat waktu', className: 'bg-success' },
-    { key: 'late', label: 'Terlambat', className: 'bg-warning' },
-    { key: 'onLeave', label: 'Cuti/izin/sakit', className: 'bg-info' },
-    {
-        key: 'notCheckedIn',
-        label: 'Belum check-in',
-        className: 'bg-border-strong',
-    },
+    { key: 'onTime', label: 'Hadir', className: 'bg-success' },
+    { key: 'late', label: 'Terlambat', className: 'bg-fill-warning' },
+    { key: 'onLeave', label: 'Cuti/izin', className: 'bg-accent-blue-strong' },
+    { key: 'notCheckedIn', label: 'Belum', className: 'bg-border-strong' },
 ];
 
-export function DistributionBar({ division }: { division: BoardDivision }) {
+/** Stacked 16px bar of one division (DHR "Kehadiran per divisi"). */
+export function DistributionBar({
+    division,
+    size = 'md',
+}: {
+    division: BoardDivision;
+    size?: 'sm' | 'md';
+}) {
     const total = SEGMENTS.reduce(
-        (sum, segment) => sum + Number(division[segment.key] ?? 0),
+        (sum, segment) => sum + division[segment.key],
         0,
     );
 
     return (
         <div
-            className="flex h-1.5 w-full overflow-hidden rounded-full bg-surface-2"
+            className={cn(
+                'flex w-full gap-0.5 overflow-hidden rounded-full bg-surface-2',
+                size === 'md' ? 'h-4' : 'h-2.5',
+            )}
             role="img"
             aria-label={SEGMENTS.map(
-                (segment) =>
-                    `${segment.label} ${String(division[segment.key])}`,
+                (segment) => `${segment.label} ${division[segment.key]}`,
             ).join(', ')}
         >
             {total > 0 &&
-                SEGMENTS.map((segment) => {
-                    const value = Number(division[segment.key] ?? 0);
-
-                    return value > 0 ? (
+                SEGMENTS.map((segment) =>
+                    division[segment.key] > 0 ? (
                         <span
                             key={segment.key}
                             className={segment.className}
-                            style={{ width: `${(value / total) * 100}%` }}
+                            style={{ flex: division[segment.key] }}
                         />
-                    ) : null;
-                })}
+                    ) : null,
+                )}
         </div>
     );
 }
@@ -178,7 +179,7 @@ export function SegmentLegend({ className }: { className?: string }) {
     return (
         <ul
             className={cn(
-                'flex flex-wrap gap-x-3 gap-y-1 text-xs text-text-muted',
+                'flex flex-wrap gap-x-3.5 gap-y-1 text-[14px] text-text-muted',
                 className,
             )}
         >
@@ -190,7 +191,7 @@ export function SegmentLegend({ className }: { className?: string }) {
                     <span
                         aria-hidden
                         className={cn(
-                            'size-2 rounded-[2px]',
+                            'size-2.5 rounded-full',
                             segment.className,
                         )}
                     />
@@ -201,31 +202,93 @@ export function SegmentLegend({ className }: { className?: string }) {
     );
 }
 
-export function divisionTotals(divisions: BoardDivision[]): BoardDivision {
-    return divisions.reduce<BoardDivision>(
-        (total, division) => ({
-            ...total,
-            scheduled: total.scheduled + division.scheduled,
-            onTime: total.onTime + division.onTime,
-            late: total.late + division.late,
-            onLeave: total.onLeave + division.onLeave,
-            notCheckedIn: total.notCheckedIn + division.notCheckedIn,
-        }),
-        {
-            id: null,
-            name: 'Total',
-            scheduled: 0,
-            onTime: 0,
-            late: 0,
-            onLeave: 0,
-            notCheckedIn: 0,
-        },
+/** "2 terlambat · 1 cuti/izin · 3 belum" under a division bar. */
+function divisionMeta(division: BoardDivision): string {
+    return (
+        [
+            division.late > 0 ? `${division.late} terlambat` : null,
+            division.onLeave > 0 ? `${division.onLeave} cuti/izin/sakit` : null,
+            division.notCheckedIn > 0
+                ? `${division.notCheckedIn} belum check-in`
+                : null,
+        ]
+            .filter(Boolean)
+            .join(' · ') || 'Semua hadir tepat waktu'
+    );
+}
+
+/** "Kehadiran per divisi": one stacked bar per division (DHR / PHRLive). */
+export function DivisionBars({
+    divisions,
+    compact = false,
+}: {
+    divisions: BoardDivision[];
+    compact?: boolean;
+}) {
+    return (
+        <Panel
+            title="Kehadiran per divisi"
+            action={!compact && <SegmentLegend />}
+            bodyClassName="gap-[18px] pt-2"
+        >
+            {compact && <SegmentLegend className="-mt-1" />}
+            {divisions.length === 0 ? (
+                <p className="text-[16px] text-text-muted">
+                    Tidak ada karyawan terjadwal hari ini.
+                </p>
+            ) : (
+                <ul className="flex flex-col gap-[18px]">
+                    {divisions.map((division) => (
+                        <li
+                            key={division.id ?? division.name}
+                            className={cn(
+                                'grid items-center gap-x-4 gap-y-1.5',
+                                compact
+                                    ? 'grid-cols-[1fr_auto]'
+                                    : 'grid-cols-[150px_1fr_70px]',
+                            )}
+                        >
+                            <span className="truncate text-[16px] font-semibold text-text">
+                                {division.name}
+                            </span>
+                            <span
+                                className={cn(
+                                    'min-w-0',
+                                    compact && 'order-last col-span-2',
+                                )}
+                            >
+                                <DistributionBar division={division} />
+                                <span className="mt-1 block truncate text-meta text-text-muted">
+                                    {divisionMeta(division)}
+                                </span>
+                            </span>
+                            <span className="self-start text-right text-[16px] font-bold text-text tnum">
+                                {division.onTime + division.late}/
+                                {division.scheduled}
+                            </span>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </Panel>
     );
 }
 
 type StateFilter = BoardPersonState | 'all';
 
-/** Per-person list with filters (division, state, name). */
+function stateLabel(person: BoardPerson): string {
+    const meta = BOARD_STATES[person.state];
+
+    if (person.state === 'late') {
+        return `Terlambat ${person.lateMinutes}m`;
+    }
+
+    return person.state === 'leave'
+        ? (person.statusLabel ?? meta.label)
+        : meta.label;
+}
+
+/** Per-person list with filters (division, state, name) — PHRLive / DHR. */
 export function PeopleList({
     people,
     divisions,
@@ -244,8 +307,9 @@ export function PeopleList({
     onCorrect: (target: CorrectionTarget) => void;
 }) {
     const [state, setState] = useState<StateFilter>('all');
-    const [division, setDivision] = useState<string>('all');
+    const [division, setDivision] = useState<string | null>(null);
     const [query, setQuery] = useState('');
+    const mobile = variant === 'mobile';
 
     const filtered = useMemo(() => {
         const needle = query.trim().toLowerCase();
@@ -253,16 +317,16 @@ export function PeopleList({
         return people.filter(
             (person) =>
                 (state === 'all' || person.state === state) &&
-                (division === 'all' || person.divisionId === division) &&
+                (division === null || person.divisionId === division) &&
                 (needle === '' || person.name.toLowerCase().includes(needle)),
         );
     }, [division, people, query, state]);
 
-    const chips: { value: StateFilter; label: string; count: number }[] = [
-        { value: 'all', label: 'Semua', count: people.length },
+    const chips = [
+        { value: 'all' as StateFilter, label: 'Semua', count: people.length },
         ...(['on_time', 'late', 'not_checked_in', 'leave'] as const).map(
             (value) => ({
-                value,
+                value: value as StateFilter,
                 label: BOARD_STATES[value].label,
                 count: people.filter((person) => person.state === value).length,
             }),
@@ -273,37 +337,30 @@ export function PeopleList({
         <section
             id="per-orang"
             aria-labelledby="people-title"
-            className="scroll-mt-20 rounded-xl border border-border bg-surface shadow-card"
+            className="flex min-w-0 scroll-mt-20 flex-col rounded-panel border border-border bg-surface pt-6 pb-2 shadow-card"
         >
-            <div className="space-y-3 border-b border-border px-4 py-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-col gap-3 px-5 pb-3 md:px-7">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <h2
                         id="people-title"
-                        className="text-[15px] font-semibold text-text"
+                        className="text-[20px] leading-7 font-bold md:text-[22px]"
                     >
                         Daftar per orang
                     </h2>
                     <div className="flex flex-wrap items-center gap-2">
-                        {variant === 'desktop' && divisions.length > 1 && (
-                            <select
-                                aria-label="Divisi"
+                        {!mobile && divisions.length > 1 && (
+                            <FilterSelect
+                                label="Divisi"
+                                allLabel="Semua divisi"
                                 value={division}
-                                onChange={(event) =>
-                                    setDivision(event.target.value)
-                                }
-                                className="h-9 rounded-md border border-border bg-surface px-2 text-sm text-text"
-                            >
-                                <option value="all">Semua divisi</option>
-                                {divisions.map((option) => (
-                                    <option key={option.id} value={option.id}>
-                                        {option.name}
-                                    </option>
-                                ))}
-                            </select>
+                                onChange={setDivision}
+                                options={divisions}
+                                size="sm"
+                            />
                         )}
                         <div className="relative">
                             <Search
-                                className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-text-subtle"
+                                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-subtle"
                                 aria-hidden
                             />
                             <Input
@@ -315,112 +372,84 @@ export function PeopleList({
                                     setQuery(event.target.value)
                                 }
                                 className={cn(
-                                    'h-9 pl-8',
-                                    variant === 'mobile'
-                                        ? 'w-40 text-base'
-                                        : 'w-52',
+                                    'pl-9',
+                                    mobile ? 'w-40' : 'h-9 w-56',
                                 )}
                             />
                         </div>
                     </div>
                 </div>
-                <div
-                    role="radiogroup"
-                    aria-label="Status"
-                    className="flex [scrollbar-width:none] gap-1.5 overflow-x-auto"
-                >
-                    {chips.map((chip) => (
-                        <button
-                            key={chip.value}
-                            type="button"
-                            role="radio"
-                            aria-checked={state === chip.value}
-                            onClick={() => setState(chip.value)}
-                            className={cn(
-                                'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                                variant === 'mobile' ? 'h-9' : 'h-7',
-                                state === chip.value
-                                    ? 'border-primary bg-primary text-primary-foreground'
-                                    : 'border-border bg-surface text-text-muted hover:text-text',
-                            )}
-                        >
-                            {chip.label}
-                            <span className="text-xs tnum opacity-80">
-                                {chip.count}
-                            </span>
-                        </button>
-                    ))}
-                </div>
+                <ChipScroller
+                    label="Status"
+                    chips={chips}
+                    value={state}
+                    onChange={setState}
+                    className={cn(!mobile && 'mx-0 px-0')}
+                />
             </div>
             {filtered.length === 0 ? (
-                <EmptyState
-                    icon={Search}
-                    title="Tidak ada yang cocok"
-                    description="Ubah filter atau kata kunci."
-                    className="m-4 border-none py-8"
-                />
+                <div className="px-5 pb-4 md:px-7">
+                    <EmptyState
+                        size="sm"
+                        icon={Search}
+                        title="Tidak ada yang cocok"
+                        description="Ubah filter atau kata kunci."
+                    />
+                </div>
             ) : (
-                <ul className="divide-y divide-border">
+                <ul className="divide-y divide-divider border-t border-divider">
                     {filtered.map((person) => {
-                        const meta = BOARD_STATES[person.state];
-                        const tone = TONE_CLASSES[meta.tone];
+                        const tone = BOARD_STATES[person.state].tone;
 
                         return (
                             <li
                                 key={person.id}
-                                className="flex min-h-14 items-center gap-3 px-4 py-2.5"
+                                className="flex min-h-16 items-center gap-3 px-4 py-2 md:gap-3.5 md:px-7"
                             >
-                                <span
-                                    aria-hidden
-                                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-on-brand"
-                                >
-                                    {person.initials}
-                                </span>
+                                <UserAvatar
+                                    name={person.name}
+                                    className="size-10 text-[14px]"
+                                />
                                 <div className="min-w-0 flex-1">
-                                    <p className="truncate text-[15px] text-text">
+                                    <p className="truncate text-[16px] leading-6 font-semibold text-text">
                                         {person.name}
                                     </p>
-                                    <p className="truncate text-[13px] text-text-muted">
+                                    <p className="truncate text-meta text-text-muted">
                                         {person.divisionName} ·{' '}
                                         {person.shiftName}
                                         {person.locationName
                                             ? ` · ${person.locationName}`
                                             : ''}
+                                        {mobile && person.checkInAt
+                                            ? ` · ${formatTime(person.checkInAt)}`
+                                            : ''}
                                     </p>
                                 </div>
-                                {person.checkInAt && (
-                                    <span className="font-mono text-sm text-text tnum">
+                                {!mobile && person.checkInAt && (
+                                    <span className="text-[16px] font-semibold text-text tnum">
                                         {formatTime(person.checkInAt)}
                                         {person.checkOutAt
                                             ? `–${formatTime(person.checkOutAt)}`
                                             : ''}
                                     </span>
                                 )}
-                                <span
+                                <Badge
+                                    variant="status"
+                                    tone={tone}
+                                    dot={!mobile}
                                     className={cn(
-                                        'inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium whitespace-nowrap',
-                                        tone.soft,
+                                        mobile
+                                            ? 'h-[26px] px-2.5 text-[13px] font-extrabold'
+                                            : 'h-[30px] gap-1.5 px-3',
                                     )}
                                 >
-                                    <span
-                                        aria-hidden
-                                        className={cn(
-                                            'size-1.5 rounded-full',
-                                            tone.solid,
-                                        )}
-                                    />
-                                    {person.state === 'late'
-                                        ? `Terlambat ${person.lateMinutes}m`
-                                        : person.state === 'leave'
-                                          ? (person.statusLabel ?? meta.label)
-                                          : meta.label}
-                                </span>
-                                {canCorrect && variant === 'desktop' && (
+                                    {stateLabel(person)}
+                                </Badge>
+                                {canCorrect && !mobile && (
                                     <Button
                                         type="button"
-                                        variant="ghost"
+                                        variant="quiet"
                                         size="sm"
-                                        className="h-8"
                                         disabled={
                                             person.state === 'leave' ||
                                             person.id === selfId
@@ -470,67 +499,58 @@ export function MissingCheckOutPanel({
     className?: string;
 }) {
     return (
-        <section
-            aria-labelledby="missing-title"
-            className={cn(
-                'rounded-xl border border-border bg-surface shadow-card',
-                className,
-            )}
-        >
-            <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-                <h2
-                    id="missing-title"
-                    className="flex items-center gap-2 text-[15px] font-semibold text-text"
-                >
+        <Panel
+            title={
+                <>
                     Lupa check-out kemarin
-                    <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-surface-2 px-2 text-xs font-semibold text-text-muted tnum">
+                    <Badge variant="secondary" className="h-7 tnum">
                         {items.length}
-                    </span>
-                </h2>
-                {items[0] && (
-                    <span className="text-[13px] text-text-muted">
+                    </Badge>
+                </>
+            }
+            action={
+                items[0] && (
+                    <span className="text-meta text-text-muted">
                         {formatDate(items[0].workDate)}
                     </span>
-                )}
-            </div>
+                )
+            }
+            flush
+            className={cn('pb-2', className)}
+        >
             {items.length === 0 ? (
-                <p className="flex items-center gap-2 px-4 py-6 text-sm text-text-muted">
-                    <Clock className="size-4" aria-hidden />
+                <p className="flex items-center gap-2 px-6 pb-3 text-[16px] text-text-muted md:px-7">
+                    <Clock className="size-5 shrink-0" aria-hidden />
                     Semua yang masuk kemarin sudah check-out.
                 </p>
             ) : (
-                <ul className="divide-y divide-border">
+                <ul className="divide-y divide-divider border-t border-divider">
                     {items.map((item) => (
                         <li
                             key={item.dayId}
-                            className="flex min-h-14 items-center gap-3 px-4 py-2.5"
+                            className="flex min-h-16 items-center gap-3.5 px-5 py-2 md:px-7"
                         >
-                            <span
-                                aria-hidden
-                                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-on-brand"
-                            >
-                                {item.initials}
-                            </span>
+                            <UserAvatar
+                                name={item.name}
+                                className="size-10 text-[14px]"
+                            />
                             <div className="min-w-0 flex-1">
-                                <p className="truncate text-[15px] text-text">
+                                <p className="truncate text-[16px] leading-6 font-semibold text-text">
                                     {item.name}
                                 </p>
-                                <p className="truncate text-[13px] text-text-muted">
+                                <p className="truncate text-meta text-text-muted">
                                     {[item.shiftName, item.locationName]
                                         .filter(Boolean)
                                         .join(' · ')}{' '}
-                                    · masuk{' '}
-                                    <span className="font-mono">
-                                        {formatTime(item.checkInAt)}
-                                    </span>{' '}
-                                    · keluar –
+                                    · masuk {formatTime(item.checkInAt)} ·
+                                    keluar –
                                 </p>
                             </div>
                             {canCorrect && item.userId !== selfId && (
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    className="h-9"
+                                    size="sm"
                                     onClick={() =>
                                         onCorrect({
                                             userId: item.userId,
@@ -546,7 +566,7 @@ export function MissingCheckOutPanel({
                     ))}
                 </ul>
             )}
-        </section>
+        </Panel>
     );
 }
 
