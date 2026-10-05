@@ -8,6 +8,7 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -79,6 +80,8 @@ class AppServiceProvider extends ServiceProvider
      * - `check-in`: attendance check-in/out routes. 6/min per user.
      * - `api`: JSON API (Phase 3, Sanctum). 120/min per user, or per IP for guests.
      * - `comments`: posting/editing task comments, 30/min per user.
+     * - `drive-uploads`: starting a chunked Drive upload, google.upload.starts_per_minute
+     *   per user; 429 body is Indonesian JSON (`code` drive_upload_throttled).
      */
     protected function configureRateLimiting(): void
     {
@@ -102,8 +105,13 @@ class AppServiceProvider extends ServiceProvider
             ->by('comments|'.$this->userOrIpKey($request)));
 
         // Opening chunked Drive upload sessions (each reserves disk space until finished).
+        // The upload client shows `message` as is: Indonesian instead of "Too Many Attempts.".
         RateLimiter::for('drive-uploads', fn (Request $request): Limit => Limit::perMinute(config()->integer('google.upload.starts_per_minute', 20))
-            ->by('drive-uploads|'.$this->userOrIpKey($request)));
+            ->by('drive-uploads|'.$this->userOrIpKey($request))
+            ->response(fn (Request $request, array $headers): JsonResponse => response()->json([
+                'message' => 'Terlalu banyak unggahan. Coba lagi sebentar lagi.',
+                'code' => 'drive_upload_throttled',
+            ], 429, $headers)));
     }
 
     /**
