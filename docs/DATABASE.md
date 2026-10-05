@@ -266,6 +266,7 @@ Lampiran pengajuan (surat dokter, dll.) memakai tabel `attachments` (morph ke `r
 | drive_folder_id | varchar null | ID folder di Shared Drive |
 | task_sequence | int | penghitung nomor task berikutnya (dikunci `SELECT … FOR UPDATE`) |
 | archived_at | timestamptz null | |
+| previous_keys | jsonb (default `[]`) | key lama setelah diganti; `/w/{key-lama}` dialihkan (301) ke key baru. Key harus `^[A-Z][A-Z0-9]{1,9}$` (CHECK) dan unik terhadap key aktif **dan** key lama di company |
 | **Kolom proyek** (hanya `type = project`) | | |
 | lead_user_id | FK users null | PIC proyek |
 | sponsor_user_id | FK users null | anggota Direksi |
@@ -288,7 +289,9 @@ Lampiran pengajuan (surat dokter, dll.) memakai tabel `attachments` (morph ke `r
 `workspace_id`, `date` (PK gabungan), `scope_count` int, `done_count` int, `scope_hours` numeric null, `done_hours` numeric null. Diisi job harian 23.55.
 
 ### workspace_members
-`workspace_id`, `user_id` (PK gabungan), `role` (`owner` · `admin` · `member` · `viewer`), `joined_at`, `is_synced` (true bila berasal dari sinkron divisi/tim).
+`workspace_id`, `user_id` (PK gabungan), `role` (`owner` · `admin` · `member` · `viewer`), `joined_at`, `is_synced` (true bila berasal dari sinkron divisi/tim). Tambahan Sprint 5: `favorited_at` timestamptz null (favorit di sidebar, urut waktu dibintangi). Pemilik workspace pribadi juga punya baris `owner` di sini (memudahkan daftar sidebar & validasi penanggung jawab); aturan "pribadi hanya pemilik" tetap ditegakkan Policy.
+
+Indeks unik parsial: `workspaces (owner_id) WHERE type = 'personal'` (satu workspace pribadi per user) dan `workspaces (division_id) WHERE type = 'division'` (satu per divisi). Warna (`workspaces.color`, `task_statuses.color`, `labels.color`) disimpan sebagai **nama palet** (`gray`, `slate`, `teal`, `blue`, `green`, `amber`, `orange`, `red`, `violet`, `pink`; `resources/css/palette.css`), bukan hex.
 
 ### task_statuses
 `id`, `workspace_id`, `name` ("Sedang dikerjakan"), `category` (`backlog` · `todo` · `in_progress` · `review` · `done` · `canceled`), `color`, `position` varchar (lexorank). Workspace baru mendapat 5 status default.
@@ -317,9 +320,11 @@ Lampiran pengajuan (surat dokter, dll.) memakai tabel `attachments` (morph ke `r
 | started_at | timestamptz null | pertama kali masuk `in_progress` |
 | completed_at | timestamptz null | masuk kategori `done` |
 | canceled_at | timestamptz null | |
-| search_vector | tsvector | indeks GIN (judul + teks deskripsi) |
+| search_vector | tsvector | kolom GENERATED STORED: `setweight(to_tsvector('simple', title),'A') || setweight(to_tsvector('simple', description_text),'B')`, indeks GIN. Konfigurasi `simple` karena PostgreSQL tidak punya stemmer Indonesia |
 
-Indeks: `(workspace_id, number)` unique, `(workspace_id, status_id, position)`, `(due_date) where status_category not in ('done','canceled')`, GIN `search_vector`.
+Indeks: `(workspace_id, number)` unique, `(workspace_id, status_id, position)`, `(workspace_id, status_category)`, `(due_date) where status_category not in ('done','canceled')`, GIN `search_vector`. CHECK `priority BETWEEN 0 AND 4`, `number > 0`.
+
+Kolom `position` (tasks, task_statuses, checklist_items) bertipe `varchar(100) COLLATE "C"` agar urutan lexorank = urutan byte (`App\Domain\Tasks\Services\Lexorank`, base-62, kolom diseimbangkan ulang bila kunci > 40 karakter). Lifecycle: `started_at` diisi saat pertama kali masuk kategori `in_progress` **atau `review`**; `completed_at` diisi saat masuk `done` dan dikosongkan saat keluar; `canceled_at` sama untuk `canceled`. Mengubah kategori sebuah kolom menyinkronkan semua tugas di kolom itu.
 
 ### Tabel pivot task
 - `task_assignees` (`task_id`, `user_id`, `assigned_at`, `assigned_by`)
@@ -337,7 +342,7 @@ Indeks: `(workspace_id, number)` unique, `(workspace_id, status_id, position)`, 
 `id`, `reactable_type`/`reactable_id`, `user_id`, `emoji`. Unik `(reactable, user_id, emoji)`.
 
 ### activities — feed & riwayat
-`id`, `workspace_id`, `subject_type`/`subject_id`, `causer_id`, `event` (`task.created`, `task.status_changed`, `task.assigned`, …), `properties` jsonb (`{"from": …, "to": …}`), `created_at`. Append-only.
+`id`, `workspace_id`, `subject_type`/`subject_id`, `causer_id`, `event` (`task.created`, `task.status_changed`, `task.assigned`, …), `properties` jsonb (`{"from": …, "to": …}`), `created_at`. Append-only. `subject_type` = FQCN (`App\Models\Task`, `App\Models\Workspace`; tanpa morph map, sama dengan audit_logs). Event Sprint 5: `task.created`, `task.status_changed`, `task.assigned`, `task.unassigned`, `task.due_date_changed`, `task.priority_changed`, `task.renamed`, `task.deleted`, `workspace.created|updated|archived|restored`, `workspace.member_added|member_removed|member_role_changed`. Properti tugas selalu memuat `key` & `title` agar feed tetap terbaca setelah tugas dihapus.
 
 ### saved_views
 `id`, `user_id`, `workspace_id` null (null = lintas workspace, mis. "Tugas saya"), `name`, `layout` (`board` · `list` · `calendar`), `filters` jsonb, `sort` jsonb, `is_shared`.
