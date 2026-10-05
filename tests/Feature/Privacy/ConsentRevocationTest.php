@@ -7,7 +7,6 @@ use App\Domain\Organization\Enums\Role;
 use App\Domain\Organization\Enums\UserStatus;
 use App\Models\Company;
 use App\Models\User;
-use Carbon\CarbonImmutable;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
