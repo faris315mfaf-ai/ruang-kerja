@@ -47,7 +47,7 @@ Semua nilai dari `docs/ruangkerja-design/README.md` + `screens/Main.dc.html`. Na
 | Info · cuti · izin | `#1A4CB0` / `#E6EEFE` | `#A9C2FF` / `#14223F` | `text-info` + `bg-info-soft` |
 | Netral · libur | `--text-muted` / `--surface-2` | | `text-text-muted` + `bg-surface-2` |
 
-Isian grafik & titik (bukan teks): `bg-fill-teal` (#14B8A6), `bg-fill-warning` (#E08A00), `bg-fill-danger`, `bg-fill-violet` (#6D4AE0), penanda rencana `bg-marker`. Badge angka notifikasi: `bg-badge text-on-badge` (merah, sama di dua tema). Chip inverse (label Dock, toast): `bg-inverse text-on-inverse`. Avatar inisial: `bg-avatar-{blue|teal|amber|neutral}` + `text-avatar-*-fg` (pilih lewat `avatarTone(name)`).
+Isian grafik & titik (bukan teks): `bg-fill-teal` (#14B8A6), `bg-fill-warning` (#E08A00), `bg-fill-danger`, `bg-fill-violet` (#6D4AE0), penanda rencana `bg-marker`. Badge angka notifikasi: `bg-badge text-on-badge` (merah, sama di dua tema). Chip inverse (label Dock, toast): `bg-inverse text-on-inverse`. Avatar inisial: `bg-avatar-{blue|teal|amber|neutral}` + `text-avatar-*-fg` (pilih lewat `avatarTone(name)`). Warna tetap di dua tema: `qr-ink`/`qr-paper` (QR kiosk) dan `preview-light`/`preview-dark` (contoh tema di Pengaturan › Tampilan).
 
 ### Gradien
 | Token | Nilai | Utilitas | Pakai |

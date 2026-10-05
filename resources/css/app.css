@@ -109,6 +109,8 @@
     --color-avatar-neutral-fg: var(--avatar-neutral-fg);
     --color-qr-ink: var(--qr-ink);
     --color-qr-paper: var(--qr-paper);
+    --color-preview-light: var(--preview-light);
+    --color-preview-dark: var(--preview-dark);
 
     /* Semantic radius: rounded-control (12) · card (20) · panel (24) · sheet (28). */
     --radius-control: var(--radius-md);

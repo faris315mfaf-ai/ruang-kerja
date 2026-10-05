@@ -126,6 +126,11 @@
   --qr-ink: #0B1A2B;
   --qr-paper: #FFFFFF;
 
+  /* Theme previews (Pengaturan › Tampilan): the page background of each
+     theme, fixed in both themes (SPengaturan "Terang" / "Gelap"). */
+  --preview-light: #F3F6FA;
+  --preview-dark: #070B14;
+
   /* Glass chrome (menu bar, rail, app bar) and stronger glass (popovers,
      Dock stacks, dialogs, sheets). */
   --glass-bg: rgb(255 255 255 / 0.72);

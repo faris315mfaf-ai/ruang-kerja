@@ -4,13 +4,12 @@ import { ThemeSegmented } from '@/components/shell/theme-segmented';
 import { cn, focusRing } from '@/lib/utils';
 
 /*
- * Theme previews. The dark swatch is a `.dark` subtree so it shows the night
- * background in both themes; the light one uses the fixed paper token (white
- * in both themes) for the same reason.
+ * Theme previews (SPengaturan): each theme's page background, from fixed
+ * tokens so the swatches look the same in both themes.
  */
 function Swatch({ value }: { value: Appearance }) {
-    const light = <span className="flex-1 bg-qr-paper" />;
-    const dark = <span className="dark flex-1 bg-background" />;
+    const light = <span className="flex-1 bg-preview-light" />;
+    const dark = <span className="flex-1 bg-preview-dark" />;
 
     return (
         <span

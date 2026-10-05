@@ -104,7 +104,7 @@ Aturan:
 
 ## 4. Daftar token & utilitas
 
-- Warna: `background surface surface-2 border border-strong divider text text-muted text-subtle primary primary-hover success(-soft) warning(-soft) danger(-soft) info(-soft) link(-soft) fill-teal fill-warning fill-danger fill-violet marker accent-blue(-strong) brand-50…900 tag-* on-brand on-danger on-active badge on-badge inverse on-inverse avatar-{blue,teal,amber,neutral}(-fg) glass glass-border qr-ink qr-paper` (+ alias shadcn: `card popover muted accent destructive input ring chart-1…5`).
+- Warna: `background surface surface-2 border border-strong divider text text-muted text-subtle primary primary-hover success(-soft) warning(-soft) danger(-soft) info(-soft) link(-soft) fill-teal fill-warning fill-danger fill-violet marker accent-blue(-strong) brand-50…900 tag-* on-brand on-danger on-active badge on-badge inverse on-inverse avatar-{blue,teal,amber,neutral}(-fg) glass glass-border qr-ink qr-paper preview-light preview-dark` (+ alias shadcn: `card popover muted accent destructive input ring chart-1…5`).
 - Gradien: `bg-grad-aksi bg-grad-merek(-x,-y) bg-grad-hangat bg-grad-indigo bg-grad-slate bg-grad-soft bg-grad-active bg-grad-highlight bg-page`.
 - Radius: `rounded-xs(6) sm(8) md/control(12) lg(16) xl/card(20) 2xl/panel(24) 3xl/sheet(28)`.
 - Bayangan: `shadow-card shadow-float shadow-glow shadow-button shadow-button-lg shadow-warm shadow-inverse shadow-segment shadow-knob`.
