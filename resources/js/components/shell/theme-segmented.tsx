@@ -13,7 +13,7 @@ type Props = {
     size?: 'sm' | 'md';
 };
 
-/** Segmented control Sistem / Terang / Gelap (mockup MMenu). */
+/** Segmented control Sistem / Terang / Gelap (Komponen "Pilihan & tab", MMenu). */
 export function ThemeSegmented({ className, size = 'md' }: Props) {
     const { appearance, updateAppearance } = useAppearance();
 
@@ -22,7 +22,7 @@ export function ThemeSegmented({ className, size = 'md' }: Props) {
             role="radiogroup"
             aria-label="Tampilan"
             className={cn(
-                'inline-flex rounded-md border border-border bg-surface-2 p-0.5',
+                'inline-flex gap-1 rounded-[14px] bg-surface-2 p-1',
                 className,
             )}
         >
@@ -37,12 +37,12 @@ export function ThemeSegmented({ className, size = 'md' }: Props) {
                         aria-checked={active}
                         onClick={() => updateAppearance(option.value)}
                         className={cn(
-                            'rounded-sm font-medium transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                            'rounded-[10px] font-semibold transition-[color,background-color,box-shadow] duration-120 ease-brand outline-none focus-visible:ring-[3px] focus-visible:ring-ring',
                             size === 'sm'
-                                ? 'h-7 px-2.5 text-xs'
-                                : 'h-9 px-2.5 text-sm',
+                                ? 'h-8 px-3 text-[14px]'
+                                : 'h-[38px] px-[18px] text-[15px]',
                             active
-                                ? 'bg-surface text-text shadow-card'
+                                ? 'bg-surface text-text shadow-segment'
                                 : 'text-text-muted hover:text-text',
                         )}
                     >

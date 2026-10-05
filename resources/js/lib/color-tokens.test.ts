@@ -20,4 +20,22 @@ describe('color tokens', () => {
 
         expect(offenders).toEqual([]);
     });
+
+    // AGENTS.md: colours only from tokens. Components never carry hex/rgb
+    // literals or Tailwind palette classes (bg-red-500, text-white …).
+    it('keeps components on design tokens (no hex, rgb or palette classes)', () => {
+        const palette =
+            /\b(?:bg|text|border|ring|from|via|to|fill|stroke|outline|divide|decoration|caret|accent|shadow)-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-\d{2,3}\b|\b(?:bg|text|border)-(?:white|black)\b/;
+        const literal = /#[0-9a-fA-F]{3,8}\b|\brgba?\(/;
+        const offenders = Object.entries(sources)
+            .filter(
+                ([path]) => path.endsWith('.tsx') && !path.includes('.test.'),
+            )
+            .filter(
+                ([, source]) => palette.test(source) || literal.test(source),
+            )
+            .map(([path]) => path);
+
+        expect(offenders).toEqual([]);
+    });
 });

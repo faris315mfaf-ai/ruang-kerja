@@ -76,12 +76,11 @@ class HandleInertiaRequests extends Middleware
                 ],
                 'roles' => $user?->getRoleNames()->values()->all() ?? [],
             ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            // Sidebar "Persetujuan" badge. Closure: one count query, skipped on partial reloads that don't ask for it.
+            // Dock/Rail "Persetujuan" badge. Closure: one count query, skipped on partial reloads that don't ask for it.
             'approvals' => fn (): ?array => $user !== null ? ['pending' => app(ApprovalQueue::class)->count($user)] : null,
-            // Sidebar "Workspace" section & mobile Menu grid (Sprint 5); lazy, skipped on partial reloads.
+            // Dock/Rail "Workspace" stack & mobile Menu grid (Sprint 5); lazy, skipped on partial reloads.
             'workspaces' => fn (): array => $user === null ? [] : app(SidebarWorkspaces::class)->for($user),
-            // Bell / sidebar / tab badge. Closure: skipped on partial reloads that don't ask for it.
+            // Bell / Dock / tab badge. Closure: skipped on partial reloads that don't ask for it.
             'inbox' => fn (): ?array => $user !== null ? ['unread' => app(InboxQuery::class)->unreadCount($user)] : null,
         ];
     }

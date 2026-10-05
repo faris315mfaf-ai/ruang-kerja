@@ -33,7 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Global: covers every response (pages, /up, /health, errors, dashboards).
         $middleware->append(SecurityHeaders::class);
 
-        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+        $middleware->encryptCookies(except: ['appearance']);
 
         // Rich-text documents (Tiptap JSON of comments and task descriptions): spaces
         // around mentions and marks are content — never trim the text nodes.
