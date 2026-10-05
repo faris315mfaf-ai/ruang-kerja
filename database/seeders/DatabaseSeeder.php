@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             $this->call(DemoUserSeeder::class);
             $this->call(OrganizationSeeder::class);
             $this->call(WorkspaceSeeder::class);
+            $this->call(TaskCollaborationSeeder::class);
             $this->call(NotificationDemoSeeder::class);
             $this->call(AttendanceSeeder::class);
         }
