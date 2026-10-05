@@ -92,7 +92,8 @@ function Row({ icon: Icon, label, href, trailing }: RowProps) {
 
 /** Mobile "Menu" tab: profile, workspace, work & settings (mockup MMenu). */
 export default function Menu() {
-    const { auth } = usePage().props;
+    const { auth, approvals } = usePage().props;
+    const pending = approvals?.pending ?? 0;
     const roleLabel = primaryRoleLabel(auth.roles);
     const initial = (auth.user?.name ?? '?').trim().charAt(0).toUpperCase();
 
@@ -157,6 +158,13 @@ export default function Menu() {
                             icon={CheckCheck}
                             label="Persetujuan"
                             href="/persetujuan"
+                            trailing={
+                                pending > 0 ? (
+                                    <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground tnum">
+                                        {pending}
+                                    </span>
+                                ) : undefined
+                            }
                         />
                         <Row
                             icon={FileText}

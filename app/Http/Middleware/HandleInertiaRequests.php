@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Requests\Services\ApprovalQueue;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -63,6 +64,8 @@ class HandleInertiaRequests extends Middleware
                 'roles' => $user?->getRoleNames()->values()->all() ?? [],
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            // Sidebar "Persetujuan" badge. Closure: one count query, skipped on partial reloads that don't ask for it.
+            'approvals' => fn (): ?array => $user !== null ? ['pending' => app(ApprovalQueue::class)->count($user)] : null,
         ];
     }
 }

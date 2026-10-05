@@ -10,6 +10,7 @@ import {
     SidebarGroupLabel,
     SidebarHeader,
     SidebarMenu,
+    SidebarMenuBadge,
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
@@ -20,6 +21,9 @@ import { cn } from '@/lib/utils';
 
 function NavList({ items }: { items: AppNavItem[] }) {
     const { currentUrl } = useCurrentUrl();
+    const { approvals } = usePage().props;
+    const badgeCount = (item: AppNavItem): number =>
+        item.badge === 'approvals' ? (approvals?.pending ?? 0) : 0;
 
     return (
         <SidebarMenu>
@@ -36,6 +40,14 @@ function NavList({ items }: { items: AppNavItem[] }) {
                             <span>{item.title}</span>
                         </Link>
                     </SidebarMenuButton>
+                    {badgeCount(item) > 0 && (
+                        <SidebarMenuBadge
+                            aria-label={`${badgeCount(item)} menunggu`}
+                            className="rounded-full bg-primary text-primary-foreground peer-data-[active=true]/menu-button:text-primary-foreground"
+                        >
+                            {badgeCount(item)}
+                        </SidebarMenuBadge>
+                    )}
                 </SidebarMenuItem>
             ))}
         </SidebarMenu>

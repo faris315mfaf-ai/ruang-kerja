@@ -13,6 +13,8 @@ declare module '@inertiajs/core' {
             branding: Branding;
             auth: Auth;
             sidebarOpen: boolean;
+            /** Sidebar "Persetujuan" badge (requests waiting for the signed-in user). */
+            approvals?: { pending: number } | null;
             [key: string]: unknown;
         };
     }

@@ -166,6 +166,18 @@ final class ApprovalFlowResolver
     public function preview(EmployeeRequest $request): array
     {
         ['flow' => $flow, 'steps' => $definitions] = $this->definitionFor($request->leaveType);
+
+        return $this->previewSteps($request, $definitions, $flow->skip_self_approval ?? true, $flow->allow_delegation ?? true);
+    }
+
+    /**
+     * Preview with explicit (possibly unsaved) step definitions — admin editor.
+     *
+     * @param  list<StepDefinition>  $definitions
+     * @return list<PlannedStep>
+     */
+    public function previewSteps(EmployeeRequest $request, array $definitions, bool $skipSelf, bool $allowDelegation): array
+    {
         $today = OfficeTime::todayString();
         $approved = [];
         $planned = [];
@@ -187,8 +199,8 @@ final class ApprovalFlowResolver
                 $definition->role,
                 $definition->userId,
                 $approved,
-                $flow->skip_self_approval ?? true,
-                $flow->allow_delegation ?? true,
+                $skipSelf,
+                $allowDelegation,
                 $today,
             );
 
