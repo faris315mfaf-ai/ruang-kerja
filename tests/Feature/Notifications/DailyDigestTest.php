@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Notifications\Actions\DispatchDueDailyDigests;
+use App\Domain\Notifications\Actions\UpdateNotificationSettings;
 use App\Domain\Notifications\Contracts\UserAvailability;
 use App\Domain\Notifications\Contracts\WorkdayCalendar;
 use App\Domain\Notifications\Digest\Contracts\DigestSection;
@@ -9,6 +10,7 @@ use App\Domain\Notifications\Digest\Data\DigestItem;
 use App\Domain\Notifications\Digest\Data\DigestSectionData;
 use App\Domain\Notifications\Digest\DigestBuilder;
 use App\Domain\Notifications\Digest\Sections\InboxActionSection;
+use App\Domain\Notifications\Jobs\SendDailyDigest;
 use App\Models\InboxNotification;
 use App\Models\NotificationPreference;
 use App\Models\NotificationSetting;
@@ -17,7 +19,9 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
     Mail::fake();
@@ -229,3 +233,53 @@ final class FakeDueTodaySection implements DigestSection
         );
     }
 }
+
+it('claims the day atomically so an overlapping run cannot queue a second digest', function () {
+    Queue::fake();
+    $user = userWithPendingAction('07:30');
+    atJakarta('2026-10-05 07:30');
+
+    // Another run (other server / overlapping process) claims the day right after
+    // this run has read the settings.
+    NotificationSetting::retrieved(function (NotificationSetting $setting) {
+        DB::table('notification_settings')->where('user_id', $setting->user_id)->update(['digest_last_run_on' => '2026-10-05']);
+    });
+
+    expect(runDigests())->toBe(0);
+    Queue::assertNotPushed(SendDailyDigest::class);
+});
+
+it('claims the day for people without a settings row too', function () {
+    Queue::fake();
+    $user = userWithPendingAction();
+    atJakarta('2026-10-05 07:30');
+
+    expect(runDigests())->toBe(1)
+        ->and(runDigests())->toBe(0)
+        ->and(NotificationSetting::query()->findOrFail($user->id)->digest_last_run_on?->toDateString())->toBe('2026-10-05');
+    Queue::assertPushed(SendDailyDigest::class, 1);
+});
+
+it('does not send a second digest the same day after the digest time changes', function () {
+    $user = userWithPendingAction('07:30');
+    atJakarta('2026-10-05 07:30');
+    expect(runDigests())->toBe(1);
+
+    app(UpdateNotificationSettings::class)->handle($user, ['digest_time' => '09:00']);
+    atJakarta('2026-10-05 09:00');
+
+    expect(runDigests())->toBe(0);
+    Mail::assertSent(DailyDigestMail::class, 1);
+});
+
+it('runs the digest and prune commands on one server without overlapping', function () {
+    $events = collect(app(Schedule::class)->events());
+
+    foreach (['notifications:send-daily-digests', 'notifications:prune'] as $command) {
+        $event = $events->first(fn (Event $event) => str_contains((string) $event->command, $command));
+
+        expect($event)->not->toBeNull()
+            ->and($event->onOneServer)->toBeTrue()
+            ->and($event->withoutOverlapping)->toBeTrue();
+    }
+});

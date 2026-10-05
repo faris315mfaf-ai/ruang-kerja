@@ -15,8 +15,10 @@ use Illuminate\Database\Eloquent\Collection;
 /**
  * Runs every 5 minutes (routes/console.php). For each user whose digest time
  * (office timezone) has passed today — within notifications.digest.catch_up_minutes
- * — and who has not had today's run yet, records the run and queues
- * SendDailyDigest. Idempotent: running again the same day does nothing.
+ * — and who has not had today's run yet, claims the day and queues
+ * SendDailyDigest. Idempotent: the day is claimed with a conditional UPDATE
+ * (`digest_last_run_on` < today), so overlapping runs (or several servers)
+ * queue one digest per user and day.
  */
 final class DispatchDueDailyDigests
 {
@@ -61,8 +63,9 @@ final class DispatchDueDailyDigests
                     continue;
                 }
 
-                $setting->digest_last_run_on = $local->startOfDay();
-                $setting->save();
+                if (! $this->claimDay($setting, $today)) {
+                    continue;
+                }
 
                 SendDailyDigest::dispatch($user, $today);
                 $queued++;
@@ -70,5 +73,25 @@ final class DispatchDueDailyDigests
         });
 
         return $queued;
+    }
+
+    /**
+     * Atomically records today's run; false when another run already did.
+     */
+    private function claimDay(NotificationSetting $setting, string $today): bool
+    {
+        if (! $setting->exists) {
+            // Defaults row for people who never opened the settings (concurrent-safe).
+            NotificationSetting::query()->insertOrIgnore([
+                ...$setting->getAttributes(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return NotificationSetting::query()
+            ->whereKey($setting->user_id)
+            ->where(fn ($query) => $query->whereNull('digest_last_run_on')->orWhere('digest_last_run_on', '<', $today))
+            ->update(['digest_last_run_on' => $today, 'updated_at' => now()]) === 1;
     }
 }

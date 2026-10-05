@@ -18,14 +18,9 @@ final class UpdateNotificationSettings
         $setting = NotificationSetting::for($user);
 
         if (isset($attributes['digest_time'])) {
-            $time = NotificationSetting::normalizeTime($attributes['digest_time']);
-
-            // A new time may legitimately trigger today's digest again.
-            if ($time !== $setting->digest_time) {
-                $setting->digest_last_run_on = null;
-            }
-
-            $setting->digest_time = $time;
+            // digest_last_run_on is kept: a new time applies from the next run,
+            // never a second digest on the same day.
+            $setting->digest_time = NotificationSetting::normalizeTime($attributes['digest_time']);
         }
 
         if (isset($attributes['quiet_hours'])) {
