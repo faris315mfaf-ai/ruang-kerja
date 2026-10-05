@@ -13,9 +13,9 @@ Branch `feat/sprint-1-karyawan` (di atas `feat/sprint-1-core`, sudah di-merge de
 | Action Create/Update/Deactivate/ReactivateEmployee, peran lewat `SyncUserRoles`, semua diaudit | ✓ | `user.created/updated` (trait), `user.roles_changed`, `user.deactivated`/`user.reactivated` (+ alasan), `employee_profile.updated` (hanya nama kolom), `employee.imported` (ringkasan). |
 | Nonaktif → logout | ✓ | Status `inactive`/`resigned` + alasan; `EnsureActiveEmployee` mengeluarkan user pada request berikutnya (diuji). Opsi memindahkan bawahan langsung ke atasan karyawan tsb. |
 | Impor CSV/XLSX: pratinjau, laporan galat per baris (nomor baris + pesan), dry-run lalu commit, idempoten per email, unduh templat, chunk + transaksi per batch | ✓ | Baca chunk 500 baris; tulis per batch 100 baris dalam satu transaksi; baris galat tidak ditulis. Lihat "Impor" di bawah. |
-| Mobile `MKaryawan`: cari + kartu + profil baca-saja; edit → "Fitur ini tersedia di desktop." | ✓ | Chip divisi dengan jumlah, "Muat lagi", bottom sheet profil. `components/desktop-only-notice.tsx` dibuat (`DesktopOnlyNotice({ feature? })`). |
+| Mobile `MKaryawan`: cari + kartu + profil baca-saja; edit → "Fitur ini tersedia di desktop." | ✓ | Chip divisi dengan jumlah, "Muat lagi", bottom sheet profil. Daftar mobile memakai banner ringkas sesuai mockup; halaman Impor di ponsel memakai `DesktopOnlyNotice` milik `main` (versi `main` dipertahankan saat merge). |
 | Halaman detail karyawan (profil, penempatan, bawahan langsung, audit terbaru untuk HR) | ✓ | `/admin/karyawan/{id}`; audit 15 baris terakhir hanya untuk `employees.manage`. |
-| Test | ✓ | 40 test baru (`tests/Feature/Admin/EmployeeManagementTest.php`, `EmployeeImportTest.php`, `tests/Feature/Organization/EmployeeActionsTest.php`). Seluruh suite: 556 lulus. |
+| Test | ✓ | 40 test baru (`tests/Feature/Admin/EmployeeManagementTest.php`, `EmployeeImportTest.php`, `tests/Feature/Organization/EmployeeActionsTest.php`). Seluruh suite setelah merge `main`: 822 lulus. |
 | Lint & typecheck | ✓ | `composer lint` (Pint + Larastan level 8), `npm run typecheck`, `npm run lint`, `npm test` hijau. |
 | UI terang/gelap, 1440 & 375 | ✓ | Dicek di browser (desktop gelap & terang, 375px tanpa scroll horizontal, input 16px). |
 

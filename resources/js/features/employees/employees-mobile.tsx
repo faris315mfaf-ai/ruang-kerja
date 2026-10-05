@@ -7,7 +7,6 @@ import {
     UserRoundSearch,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { DesktopOnlyNotice } from '@/components/desktop-only-notice';
 import { EmptyState } from '@/components/empty-state';
 import { BottomSheet } from '@/components/mobile/bottom-sheet';
 import { ChipScroller } from '@/components/mobile/chip-scroller';
@@ -91,7 +90,18 @@ export function EmployeesMobile({
             </p>
 
             {can.manage && (
-                <DesktopOnlyNotice feature="Tambah, impor, dan ubah peran karyawan lewat desktop. Di ponsel Anda bisa mencari dan melihat profil." />
+                <p
+                    role="note"
+                    className="flex items-start gap-3 rounded-lg border border-info/30 bg-info/10 px-4 py-3 text-sm text-text"
+                >
+                    <Monitor
+                        aria-hidden
+                        className="mt-0.5 size-5 shrink-0 text-info"
+                        strokeWidth={1.75}
+                    />
+                    Kelola, impor, dan ubah peran karyawan tersedia di desktop.
+                    Di ponsel Anda bisa mencari dan melihat profil.
+                </p>
             )}
 
             <div className="relative">

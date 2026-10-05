@@ -27,6 +27,12 @@ const appearanceItem: NavItem = {
     icon: null,
 };
 
+const notificationsItem: NavItem = {
+    title: 'Notifikasi',
+    href: '/pengaturan/notifikasi',
+    icon: null,
+};
+
 const googleItem: NavItem = {
     title: 'Akun Google',
     href: googleSettings(),
@@ -37,8 +43,14 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
     const { auth } = usePage().props;
     const sidebarNavItems = hasAnyRole(auth.roles, 'super_admin')
-        ? [profileItem, securityItem, appearanceItem, googleItem]
-        : [profileItem, appearanceItem, googleItem];
+        ? [
+              profileItem,
+              securityItem,
+              notificationsItem,
+              appearanceItem,
+              googleItem,
+          ]
+        : [profileItem, notificationsItem, appearanceItem, googleItem];
 
     return (
         <div className="px-4 py-6">

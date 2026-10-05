@@ -32,7 +32,7 @@ export default function EmployeeImport(props: EmployeeImportProps) {
             <Head title="Impor karyawan" />
             {breakpoint === 'mobile' ? (
                 <div className="space-y-4">
-                    <DesktopOnlyNotice feature="Impor karyawan dari CSV/XLSX hanya bisa dilakukan di desktop." />
+                    <DesktopOnlyNotice feature="Impor karyawan" />
                     <Button variant="outline" className="h-11 w-full" asChild>
                         <Link href={index()}>
                             <ArrowLeft />
