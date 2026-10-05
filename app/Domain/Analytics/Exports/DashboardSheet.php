@@ -2,16 +2,20 @@
 
 namespace App\Domain\Analytics\Exports;
 
+use App\Support\Excel\BindsValuesSafely;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithTitle;
 
 /**
  * One worksheet of the dashboard export.
  */
-final readonly class DashboardSheet implements FromArray, ShouldAutoSize, WithHeadings, WithTitle
+final readonly class DashboardSheet implements FromArray, ShouldAutoSize, WithCustomValueBinder, WithHeadings, WithTitle
 {
+    use BindsValuesSafely;
+
     /**
      * @param  list<string>  $headings
      * @param  array<int, array<int, mixed>>  $rows
