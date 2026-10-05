@@ -29,6 +29,10 @@ return Application::configure(basePath: dirname(__DIR__))
             | Request::HEADER_X_FORWARDED_PROTO
             | Request::HEADER_X_FORWARDED_AWS_ELB);
 
+        // Sessions remember the password hash: changing the password (SecurityController)
+        // signs out every other device on its next request.
+        $middleware->authenticateSessions();
+
         $middleware->web(append: [
             // Logs out inactive/resigned users on any web request (no-op for guests).
             EnsureActiveEmployee::class,

@@ -3,6 +3,9 @@
 use App\Domain\Organization\Enums\Role;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Auth\Events\OtherDeviceLogout;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -108,4 +111,36 @@ it('does not register passkey routes', function () {
     expect(Route::has('passkey.login'))->toBeFalse()
         ->and(Route::has('passkey.store'))->toBeFalse()
         ->and(Route::has('well-known.passkeys'))->toBeFalse();
+});
+
+it('signs out other devices when the password changes, keeping the current session', function () {
+    Event::fake([OtherDeviceLogout::class]);
+    $admin = User::factory()->withRole(Role::SuperAdmin)->create();
+    $oldHash = $admin->password;
+
+    $this->actingAs($admin)
+        ->withSession(['password_hash_web' => $oldHash, 'auth.password_confirmed_at' => time()])
+        ->from(route('security.edit'))
+        ->put(route('user-password.update'), [
+            'current_password' => 'password',
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ])
+        ->assertSessionHasNoErrors();
+
+    Event::assertDispatched(OtherDeviceLogout::class);
+    $this->assertAuthenticatedAs($admin);
+
+    // This device keeps working: its session hash was refreshed with the new password.
+    $this->get(route('security.edit'))->assertOk();
+    $this->assertAuthenticatedAs($admin);
+
+    // Another device still carries the old password hash in its session.
+    Auth::forgetGuards();
+    $this->actingAs(User::query()->findOrFail($admin->id))
+        ->withSession(['password_hash_web' => $oldHash, 'auth.password_confirmed_at' => time()])
+        ->get(route('security.edit'))
+        ->assertRedirect(route('login'));
+
+    $this->assertGuest();
 });
