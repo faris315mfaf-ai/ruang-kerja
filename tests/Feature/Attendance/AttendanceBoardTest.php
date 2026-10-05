@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Attendance\Actions\MarkLogReviewed;
 use App\Domain\Attendance\Enums\AttendanceStatus as S;
 use App\Domain\Attendance\Enums\LogFlag;
 use App\Domain\Attendance\Models\AttendanceDay;
@@ -167,4 +168,22 @@ test('night-shift workers still inside their check-out window are not listed as 
     // After 12.00 the night shift can no longer check out: now it is missing.
     $this->travelTo(F::at('2026-10-05 12:00'));
     expect($names())->toBe(['Sari Wulandari', 'Rudi Malam']);
+});
+
+test('two HR reviewing the same log at once keep the first review and write one audit row', function () {
+    $day = AttendanceDay::query()->where('user_id', $this->sari->id)->sole();
+    $log = AttendanceLog::factory()->forDay($day)->create(['is_suspicious' => true, 'flags' => [LogFlag::NewDevice]]);
+    $other = User::factory()->withRole(Role::Hr)->create();
+
+    // Both requests loaded the log before either saved.
+    $first = AttendanceLog::query()->findOrFail($log->id);
+    $second = AttendanceLog::query()->findOrFail($log->id);
+
+    app(MarkLogReviewed::class)->handle($this->hr, $first);
+    $this->travel(1)->minutes();
+    $result = app(MarkLogReviewed::class)->handle($other, $second);
+
+    expect($result->reviewed_by)->toBe($this->hr->id)
+        ->and($log->fresh()?->reviewed_by)->toBe($this->hr->id)
+        ->and(AuditLog::query()->where('action', 'attendance.log_reviewed')->count())->toBe(1);
 });
