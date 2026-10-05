@@ -5,6 +5,9 @@ namespace App\Domain\Tasks\Notifications;
 use App\Domain\Notifications\BaseNotification;
 use App\Domain\Notifications\Data\NotificationSubject;
 use App\Models\Task;
+use App\Models\User;
+use App\Models\Workspace;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Shared helpers of the task notifications (subject = the task, link = the
@@ -13,6 +16,24 @@ use App\Models\Task;
 abstract class TaskNotification extends BaseNotification
 {
     public function __construct(public readonly Task $task) {}
+
+    /**
+     * Dropped when the task was deleted or the recipient lost access to its
+     * workspace while the notification waited in the queue.
+     */
+    protected function stillVisibleTo(User $notifiable): bool
+    {
+        if ($this->task->trashed()) {
+            return false;
+        }
+
+        // Fresh, complete row (the relation may be a partial `id,key` load); archived
+        // workspaces stay readable, deleted ones are excluded by the soft-delete scope.
+        $workspace = Workspace::query()->find($this->task->workspace_id);
+
+        return $workspace !== null
+            && Gate::forUser($notifiable)->allows('view', $this->task->setRelation('workspace', $workspace));
+    }
 
     protected function key(): string
     {

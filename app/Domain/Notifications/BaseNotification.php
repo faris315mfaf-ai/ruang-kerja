@@ -30,12 +30,20 @@ use Illuminate\Notifications\Notification;
  *   quiet hours (email delayed, see withDelay()).
  * - In-app = InAppChannel (database) + broadcast on the user's private channel.
  * - Queued after the surrounding DB transaction commits.
+ * - Checked again right before each channel delivers (shouldSend()): a queued or
+ *   delayed (quiet hours) notification is dropped when the recipient was
+ *   deactivated or can no longer see the subject (stillVisibleTo()).
  *
  * See docs/sprints/sprint-8/HOW-TO-NOTIFY.md.
  */
 abstract class BaseNotification extends Notification implements ShouldQueueAfterCommit
 {
     use Queueable;
+
+    /**
+     * The subject was hard-deleted while queued → drop instead of failing.
+     */
+    public bool $deleteWhenMissingModels = true;
 
     abstract public function type(): NotificationType;
 
@@ -79,6 +87,29 @@ abstract class BaseNotification extends Notification implements ShouldQueueAfter
         }
 
         return $via;
+    }
+
+    /**
+     * Laravel asks this per channel when the (queued) notification is delivered,
+     * so access lost between dispatch and delivery is respected.
+     */
+    final public function shouldSend(object $notifiable, string $channel): bool
+    {
+        if (! $notifiable instanceof User) {
+            return true;
+        }
+
+        return $notifiable->isActive() && $this->stillVisibleTo($notifiable);
+    }
+
+    /**
+     * Whether the recipient may still see what this notification is about.
+     * Subclasses about a record (task, comment, project) override this with a
+     * trashed check + the record's `view` policy.
+     */
+    protected function stillVisibleTo(User $notifiable): bool
+    {
+        return true;
     }
 
     /**

@@ -9,6 +9,8 @@ use App\Domain\Notifications\Data\NotificationSubject;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Models\ProjectDirection;
 use App\Models\User;
+use App\Models\Workspace;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * "Beri arahan": a direction from Direksi to the PIC (and the update author).
@@ -16,6 +18,17 @@ use App\Models\User;
 final class ProjectDirectionNotification extends BaseNotification
 {
     public function __construct(public readonly ProjectDirection $direction) {}
+
+    /**
+     * Dropped when the project was deleted or the recipient lost access to it
+     * while the notification waited in the queue (fresh row, soft-delete scope).
+     */
+    protected function stillVisibleTo(User $notifiable): bool
+    {
+        $workspace = Workspace::query()->find($this->direction->workspace_id);
+
+        return $workspace !== null && Gate::forUser($notifiable)->allows('view', $workspace);
+    }
 
     public function type(): NotificationType
     {

@@ -9,6 +9,8 @@ use App\Domain\Notifications\Data\NotificationSubject;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Models\ProjectUpdate;
 use App\Models\User;
+use App\Models\Workspace;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Direksi marked the decision of an update as done ("Setujui").
@@ -19,6 +21,17 @@ final class ProjectDecisionResolvedNotification extends BaseNotification
         public readonly ProjectUpdate $update,
         public readonly User $resolver,
     ) {}
+
+    /**
+     * Dropped when the project was deleted or the recipient lost access to it
+     * while the notification waited in the queue (fresh row, soft-delete scope).
+     */
+    protected function stillVisibleTo(User $notifiable): bool
+    {
+        $workspace = Workspace::query()->find($this->update->workspace_id);
+
+        return $workspace !== null && Gate::forUser($notifiable)->allows('view', $workspace);
+    }
 
     public function type(): NotificationType
     {
