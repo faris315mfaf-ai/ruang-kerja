@@ -66,13 +66,13 @@ export function UploadProgressList({ items, onDismiss, className }: Props) {
                 return (
                     <div
                         key={item.key}
-                        className="glass rounded-lg border border-border p-3 shadow-card"
+                        className="glass rounded-card border border-glass-border p-3.5 shadow-float"
                     >
                         <div className="flex items-start gap-3">
                             <span
                                 aria-hidden
                                 className={cn(
-                                    'flex size-8 shrink-0 items-center justify-center rounded-md border border-border',
+                                    'flex size-10 shrink-0 items-center justify-center rounded-control bg-surface-2',
                                     item.phase === 'failed'
                                         ? 'text-danger'
                                         : item.phase === 'done'
@@ -98,7 +98,7 @@ export function UploadProgressList({ items, onDismiss, className }: Props) {
                                 </p>
                                 <p
                                     className={cn(
-                                        'truncate text-[12px] tnum',
+                                        'truncate text-meta tnum',
                                         item.phase === 'failed'
                                             ? 'text-danger'
                                             : 'text-text-muted',
@@ -115,7 +115,7 @@ export function UploadProgressList({ items, onDismiss, className }: Props) {
                                         : `Tutup ${item.name}`
                                 }
                                 onClick={() => onDismiss(item.key)}
-                                className="-m-1.5 flex size-11 shrink-0 items-center justify-center rounded-md text-text-muted hover:bg-surface-2 hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:size-8"
+                                className="-m-1.5 flex size-11 shrink-0 items-center justify-center rounded-control text-text-muted hover:bg-surface-2 hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none md:size-9"
                             >
                                 <X className="size-4" />
                             </button>

@@ -39,24 +39,26 @@ export function DriveFilePreview({ file, onClose, className }: Props) {
         <section
             aria-label={`Pratinjau ${file.name}`}
             className={cn(
-                'flex flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-card',
+                'flex flex-col overflow-hidden rounded-panel border border-border bg-surface shadow-card',
                 className,
             )}
         >
-            <header className="flex items-start gap-3 border-b border-border p-4">
+            <header className="flex items-start gap-3 border-b border-divider p-5">
                 <DriveFileIcon kind={file.kind} size="sm" />
                 <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-sm font-semibold text-text">
+                    <h3 className="truncate text-title font-bold text-text">
                         {file.name}
                     </h3>
-                    <p className="text-xs text-text-muted">{file.kind_label}</p>
+                    <p className="text-meta text-text-muted">
+                        {file.kind_label}
+                    </p>
                 </div>
                 {onClose && (
                     <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="-m-1 size-11 text-text-muted md:size-8"
+                        className="-m-1 text-text-muted"
                         aria-label="Tutup pratinjau"
                         onClick={onClose}
                     >
@@ -65,7 +67,7 @@ export function DriveFilePreview({ file, onClose, className }: Props) {
                 )}
             </header>
 
-            <div className="p-4">
+            <div className="p-5">
                 {file.deleted ? (
                     <EmptyState
                         icon={FileX}
@@ -73,7 +75,7 @@ export function DriveFilePreview({ file, onClose, className }: Props) {
                         description="Lampiran ini hanya menyimpan nama file terakhir."
                     />
                 ) : file.preview_url ? (
-                    <div className="relative aspect-[4/3] overflow-hidden rounded-md border border-border bg-surface-2">
+                    <div className="relative aspect-[4/3] overflow-hidden rounded-lg border border-border bg-surface-2">
                         {!loaded && (
                             <Skeleton className="absolute inset-0 rounded-none" />
                         )}
@@ -95,7 +97,7 @@ export function DriveFilePreview({ file, onClose, className }: Props) {
                 )}
             </div>
 
-            <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 px-4 pb-4 text-[13px]">
+            <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 px-5 pb-5 text-[15px]">
                 {owner && (
                     <>
                         <dt className="text-text-muted">Pemilik</dt>
@@ -122,7 +124,7 @@ export function DriveFilePreview({ file, onClose, className }: Props) {
 
             {!file.deleted && (
                 <footer className="flex gap-2 border-t border-border p-4">
-                    <Button asChild className="h-11 flex-1 md:h-9">
+                    <Button asChild className="flex-1">
                         <a
                             href={file.web_view_link}
                             target="_blank"

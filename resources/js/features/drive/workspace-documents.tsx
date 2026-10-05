@@ -19,9 +19,11 @@ import {
     DropdownMenuShortcut,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SegmentedTabs } from '@/components/ui/tabs';
 import { formatDateTime, formatRelative } from '@/lib/format';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { DriveAccessBadge } from './drive-access-badge';
 import { DriveFileIcon } from './drive-file-icon';
 import { DriveFilePreview } from './drive-file-preview';
@@ -101,7 +103,7 @@ export function WorkspaceDocuments({
 
     if (mobile) {
         return (
-            <div className="space-y-3 pb-20">
+            <div className="flex flex-col gap-3.5 pb-24">
                 <DriveAccessBadge access={drive.access} />
                 <ChipScroller
                     label="Jenis dokumen"
@@ -112,27 +114,30 @@ export function WorkspaceDocuments({
                 {loading ? (
                     <div className="space-y-2" aria-busy>
                         {[0, 1, 2].map((index) => (
-                            <Skeleton key={index} className="h-14 w-full" />
+                            <Skeleton
+                                key={index}
+                                className="h-[72px] w-full rounded-card"
+                            />
                         ))}
                     </div>
                 ) : rows.length === 0 ? (
                     empty
                 ) : (
-                    <ul className="-mx-4 divide-y divide-border border-y border-border">
+                    <ul className="divide-y divide-divider overflow-hidden rounded-card border border-border bg-surface">
                         {rows.map((file) => (
                             <li key={file.id}>
                                 <a
                                     href={file.web_view_link}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex min-h-16 items-center gap-3 px-4 py-2 active:bg-surface-2"
+                                    className="flex min-h-16 items-center gap-3 px-5 py-3.5 active:bg-surface-2"
                                 >
                                     <DriveFileIcon kind={file.kind} />
                                     <span className="min-w-0 flex-1">
-                                        <span className="block truncate text-[16px] text-text">
+                                        <span className="block truncate text-[17px] font-semibold text-text">
                                             {file.name}
                                         </span>
-                                        <span className="block truncate text-[13px] text-text-muted">
+                                        <span className="block truncate text-label font-normal text-text-muted">
                                             {file.modified_at
                                                 ? `Diubah ${formatRelative(file.modified_at)}`
                                                 : file.kind_label}{' '}
@@ -169,17 +174,17 @@ export function WorkspaceDocuments({
                                         setSheetOpen(false);
                                         onNewItem(option.type);
                                     }}
-                                    className="flex min-h-16 w-full items-center gap-4 rounded-lg px-1 py-2 text-left active:bg-surface-2"
+                                    className="flex min-h-[72px] w-full items-center gap-4 rounded-lg px-1 py-2 text-left active:bg-surface-2"
                                 >
                                     <DriveFileIcon
                                         kind={option.kind}
                                         size="lg"
                                     />
                                     <span>
-                                        <span className="block text-[17px] text-text">
+                                        <span className="block text-[17px] font-semibold text-text">
                                             {option.mobileLabel}
                                         </span>
-                                        <span className="block text-[14px] text-text-muted">
+                                        <span className="block text-meta text-text-muted">
                                             {option.description}
                                         </span>
                                     </span>
@@ -193,16 +198,12 @@ export function WorkspaceDocuments({
     }
 
     return (
-        <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-5">
+            <div className="flex flex-wrap items-center gap-3">
                 {drive.can_contribute && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button
-                                size="sm"
-                                className="h-8"
-                                disabled={!canAdd}
-                            >
+                            <Button disabled={!canAdd}>
                                 <Plus />
                                 Dokumen baru
                                 <ChevronDown />
@@ -220,10 +221,10 @@ export function WorkspaceDocuments({
                                         size="sm"
                                     />
                                     <span className="min-w-0 flex-1">
-                                        <span className="block text-[13px] font-medium text-text">
+                                        <span className="block text-label text-text">
                                             {option.label}
                                         </span>
-                                        <span className="block text-[12px] text-text-muted">
+                                        <span className="block text-meta text-text-muted">
                                             {option.description}
                                         </span>
                                     </span>
@@ -235,41 +236,26 @@ export function WorkspaceDocuments({
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )}
-                <div
-                    className="flex gap-1"
-                    role="group"
-                    aria-label="Jenis dokumen"
-                >
-                    {DOC_FILTERS.map((filter) => (
-                        <button
-                            key={filter.value}
-                            type="button"
-                            aria-pressed={kind === filter.value}
-                            onClick={() => setKind(filter.value)}
-                            className={cn(
-                                'h-8 rounded-md px-2.5 text-[13px] text-text-muted hover:bg-surface-2 hover:text-text',
-                                kind === filter.value &&
-                                    'bg-surface-2 font-medium text-text',
-                            )}
-                        >
-                            {filter.label}
-                        </button>
-                    ))}
-                </div>
+                <SegmentedTabs
+                    label="Jenis dokumen"
+                    value={kind}
+                    onValueChange={setKind}
+                    options={DOC_FILTERS}
+                />
                 <div className="ml-auto flex items-center gap-3">
                     <DriveAccessBadge access={drive.access} />
                     <label className="relative">
                         <span className="sr-only">Cari dokumen</span>
                         <Search
                             aria-hidden
-                            className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-text-subtle"
+                            className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-text-subtle"
                         />
-                        <input
+                        <Input
                             type="search"
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
                             placeholder={`Cari di ${documents.length} dokumen`}
-                            className="h-8 w-60 rounded-md border border-border bg-surface pr-3 pl-8 text-[13px] text-text placeholder:text-text-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            className="w-72 pl-10"
                         />
                     </label>
                 </div>
@@ -281,35 +267,35 @@ export function WorkspaceDocuments({
                     selected && 'xl:grid-cols-[minmax(0,1fr)_380px]',
                 )}
             >
-                <div className="overflow-hidden rounded-lg border border-border bg-surface">
+                <div className="overflow-hidden rounded-panel border border-border bg-surface shadow-card">
                     {loading ? (
-                        <div className="space-y-2 p-4" aria-busy>
+                        <div className="flex flex-col gap-3 p-5" aria-busy>
                             {[0, 1, 2].map((index) => (
-                                <Skeleton key={index} className="h-9 w-full" />
+                                <Skeleton key={index} className="h-12 w-full" />
                             ))}
                         </div>
                     ) : rows.length === 0 ? (
-                        <div className="p-4">{empty}</div>
+                        <div className="p-5">{empty}</div>
                     ) : (
-                        <table className="w-full table-fixed text-[13px]">
-                            <thead className="border-b border-border text-left text-[12px] text-text-muted">
+                        <table className="w-full table-fixed text-[15px]">
+                            <thead className="border-b border-border bg-background text-left text-meta text-text-muted">
                                 <tr>
                                     <th
                                         scope="col"
-                                        className="px-4 py-2.5 font-medium"
+                                        className="px-5 py-3 font-semibold"
                                     >
                                         Nama
                                     </th>
                                     <th
                                         scope="col"
-                                        className="hidden w-36 px-4 py-2.5 font-medium lg:table-cell"
+                                        className="hidden w-36 px-5 py-3 font-semibold lg:table-cell"
                                     >
                                         Jenis
                                     </th>
                                     <th
                                         scope="col"
                                         className={cn(
-                                            'w-44 px-4 py-2.5 font-medium',
+                                            'w-44 px-5 py-3 font-semibold',
                                             selected
                                                 ? 'hidden'
                                                 : 'hidden lg:table-cell',
@@ -319,14 +305,14 @@ export function WorkspaceDocuments({
                                     </th>
                                     <th
                                         scope="col"
-                                        className="w-32 px-4 py-2.5 font-medium"
+                                        className="w-32 px-5 py-3 font-semibold"
                                     >
                                         Diubah
                                     </th>
                                     <th
                                         scope="col"
                                         className={cn(
-                                            'w-48 px-4 py-2.5 font-medium',
+                                            'w-48 px-5 py-3 font-semibold',
                                             selected
                                                 ? 'hidden'
                                                 : 'hidden xl:table-cell',
@@ -334,25 +320,22 @@ export function WorkspaceDocuments({
                                     >
                                         Dipakai di tugas
                                     </th>
-                                    <th
-                                        scope="col"
-                                        className="w-10 px-2 py-2.5"
-                                    >
+                                    <th scope="col" className="w-14 px-2 py-3">
                                         <span className="sr-only">Buka</span>
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-border">
+                            <tbody className="divide-y divide-divider">
                                 {rows.map((file) => (
                                     <tr
                                         key={file.id}
                                         className={cn(
-                                            'hover:bg-surface-2',
+                                            'transition-colors duration-120 ease-brand hover:bg-background',
                                             file.id === selectedId &&
-                                                'bg-primary/5',
+                                                'bg-link-soft',
                                         )}
                                     >
-                                        <td className="max-w-0 px-4 py-2">
+                                        <td className="max-w-0 px-5 py-3.5">
                                             <span className="flex min-w-0 items-center gap-2.5">
                                                 <DriveFileIcon
                                                     kind={file.kind}
@@ -368,18 +351,21 @@ export function WorkspaceDocuments({
                                                                 : file.id,
                                                         )
                                                     }
-                                                    className="truncate text-left font-medium text-text hover:underline focus-visible:underline focus-visible:outline-none"
+                                                    className={cn(
+                                                        'truncate rounded-xs text-left text-[16px] font-semibold text-text hover:text-link',
+                                                        focusRing,
+                                                    )}
                                                 >
                                                     {file.name}
                                                 </button>
                                             </span>
                                         </td>
-                                        <td className="hidden px-4 py-2 text-text-muted lg:table-cell">
+                                        <td className="hidden px-5 py-3.5 text-text-muted lg:table-cell">
                                             {file.kind_label}
                                         </td>
                                         <td
                                             className={cn(
-                                                'truncate px-4 py-2 text-text',
+                                                'truncate px-5 py-3.5 text-text',
                                                 selected
                                                     ? 'hidden'
                                                     : 'hidden lg:table-cell',
@@ -388,7 +374,7 @@ export function WorkspaceDocuments({
                                             {who(file)}
                                         </td>
                                         <td
-                                            className="px-4 py-2 whitespace-nowrap text-text-muted"
+                                            className="px-5 py-3.5 whitespace-nowrap text-text-muted"
                                             title={
                                                 file.modified_at
                                                     ? formatDateTime(
@@ -405,7 +391,7 @@ export function WorkspaceDocuments({
                                         </td>
                                         <td
                                             className={cn(
-                                                'px-4 py-2',
+                                                'px-5 py-3.5',
                                                 selected
                                                     ? 'hidden'
                                                     : 'hidden xl:table-cell',
@@ -426,7 +412,10 @@ export function WorkspaceDocuments({
                                                                 title={
                                                                     task.title
                                                                 }
-                                                                className="rounded border border-border px-1.5 font-mono text-[11px] text-text-muted hover:text-text"
+                                                                className={cn(
+                                                                    'rounded-sm bg-surface-2 px-2 py-0.5 font-mono text-[13px] font-semibold text-text hover:text-link',
+                                                                    focusRing,
+                                                                )}
                                                             >
                                                                 {task.key}
                                                             </Link>
@@ -434,12 +423,12 @@ export function WorkspaceDocuments({
                                                 )}
                                             </span>
                                         </td>
-                                        <td className="px-2 py-2 text-right">
+                                        <td className="px-3 py-3.5 text-right">
                                             <Button
                                                 asChild
                                                 variant="ghost"
-                                                size="icon"
-                                                className="size-8 text-text-muted"
+                                                size="icon-sm"
+                                                className="text-text-muted"
                                             >
                                                 <a
                                                     href={file.web_view_link}

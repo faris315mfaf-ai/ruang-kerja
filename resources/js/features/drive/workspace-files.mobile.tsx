@@ -15,6 +15,7 @@ import { BottomSheet } from '@/components/mobile/bottom-sheet';
 import { ChipScroller } from '@/components/mobile/chip-scroller';
 import { Fab } from '@/components/mobile/fab';
 import { EmptyState } from '@/components/empty-state';
+import { buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatRelative } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -108,22 +109,22 @@ export function WorkspaceFilesMobile({
     };
 
     return (
-        <div className="space-y-3 pb-20">
-            <div className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3">
+        <div className="flex flex-col gap-3.5 pb-24">
+            <div className="flex items-center gap-3 rounded-card border border-border bg-surface p-3.5">
                 <span
                     aria-hidden
-                    className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border text-text-muted"
+                    className="flex size-11 shrink-0 items-center justify-center rounded-control bg-surface-2 text-text-muted"
                 >
                     <HardDrive className="size-5" />
                 </span>
                 <div className="min-w-0 flex-1 space-y-1">
-                    <p className="flex min-w-0 items-center gap-1 text-[14px] text-text-muted">
+                    <p className="flex min-w-0 items-center gap-1 text-meta text-text-muted">
                         <span className="shrink-0">Shared Drive</span>
                         <ChevronRight
                             aria-hidden
                             className="size-3.5 shrink-0"
                         />
-                        <span className="truncate font-medium text-text">
+                        <span className="truncate font-bold text-text">
                             {current?.name}
                         </span>
                     </p>
@@ -135,7 +136,7 @@ export function WorkspaceFilesMobile({
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label="Buka folder di Google Drive"
-                        className="flex size-11 shrink-0 items-center justify-center rounded-md text-text-muted hover:bg-surface-2"
+                        className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-text hover:bg-surface-2"
                     >
                         <ExternalLink className="size-5" />
                     </a>
@@ -145,7 +146,7 @@ export function WorkspaceFilesMobile({
             {parent && (
                 <Link
                     href={folderHref(parent.id)}
-                    className="flex h-11 items-center gap-1 text-[15px] font-medium text-primary"
+                    className="flex h-11 items-center gap-1 self-start text-[16px] font-semibold text-link"
                 >
                     <ChevronLeft className="size-5" aria-hidden />
                     {parent.name}
@@ -161,9 +162,12 @@ export function WorkspaceFilesMobile({
 
             {drive.access.state === 'preparing' ||
             (drive.syncing && files.length === 0) ? (
-                <div className="space-y-2" aria-busy>
+                <div className="flex flex-col gap-2" aria-busy>
                     {[0, 1, 2, 3].map((index) => (
-                        <Skeleton key={index} className="h-14 w-full" />
+                        <Skeleton
+                            key={index}
+                            className="h-[72px] w-full rounded-card"
+                        />
                     ))}
                 </div>
             ) : rows.length === 0 ? (
@@ -181,20 +185,20 @@ export function WorkspaceFilesMobile({
                     }
                 />
             ) : (
-                <ul className="-mx-4 divide-y divide-border border-y border-border">
+                <ul className="divide-y divide-divider overflow-hidden rounded-card border border-border bg-surface">
                     {rows.map((file) => {
                         const content = (
                             <>
                                 <DriveFileIcon kind={file.kind} />
                                 <span className="min-w-0 flex-1">
-                                    <span className="block truncate text-[16px] text-text">
+                                    <span className="block truncate text-[17px] font-semibold text-text">
                                         {file.name}
                                     </span>
-                                    <span className="block truncate text-[13px] text-text-muted">
+                                    <span className="block truncate text-label font-normal text-text-muted">
                                         {rowMeta(file)}
                                     </span>
                                 </span>
-                                <span className="shrink-0 text-[13px] text-text-muted tnum">
+                                <span className="shrink-0 text-meta text-text-muted tnum">
                                     {rowSide(file)}
                                 </span>
                             </>
@@ -205,7 +209,7 @@ export function WorkspaceFilesMobile({
                                 {file.kind === 'folder' ? (
                                     <Link
                                         href={folderHref(file.google_file_id)}
-                                        className="flex min-h-16 items-center gap-3 px-4 py-2 active:bg-surface-2"
+                                        className="flex min-h-[72px] items-center gap-3.5 px-4 py-2 active:bg-surface-2"
                                     >
                                         {content}
                                     </Link>
@@ -213,7 +217,7 @@ export function WorkspaceFilesMobile({
                                     <button
                                         type="button"
                                         onClick={() => setPreview(file)}
-                                        className="flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left active:bg-surface-2"
+                                        className="flex min-h-[72px] w-full items-center gap-3.5 px-4 py-2 text-left active:bg-surface-2"
                                     >
                                         {content}
                                     </button>
@@ -228,11 +232,14 @@ export function WorkspaceFilesMobile({
                 type="button"
                 onClick={onRefresh}
                 disabled={drive.syncing}
-                className="flex h-11 items-center gap-1.5 text-[13px] text-text-muted disabled:opacity-60"
+                className="flex h-11 items-center gap-1.5 self-start text-[15px] font-semibold text-link disabled:opacity-60"
             >
                 <RefreshCw
                     aria-hidden
-                    className={cn('size-4', drive.syncing && 'animate-spin')}
+                    className={cn(
+                        'size-4 motion-reduce:animate-none',
+                        drive.syncing && 'animate-spin',
+                    )}
                 />
                 {drive.syncing ? 'Menyegarkan…' : 'Muat ulang isi folder'}
             </button>
@@ -367,13 +374,16 @@ export function WorkspaceFilesMobile({
                     footer={
                         <a
                             href={picker.state.connectUrl}
-                            className="flex h-12 w-full items-center justify-center rounded-md bg-primary text-[16px] font-medium text-primary-foreground"
+                            className={buttonVariants({
+                                size: 'lg',
+                                className: 'w-full',
+                            })}
                         >
                             Hubungkan akun Google
                         </a>
                     }
                 >
-                    <p className="text-[15px] text-text-muted">
+                    <p className="text-label font-normal text-text-muted">
                         RuangKerja hanya dapat membuka file yang Anda pilih
                         sendiri di Google Picker.
                     </p>
@@ -387,7 +397,7 @@ function ActionIcon({ children }: { children: ReactNode }) {
     return (
         <span
             aria-hidden
-            className="flex size-11 items-center justify-center rounded-lg border border-primary/30 bg-link-soft text-primary [&_svg]:size-5"
+            className="flex size-12 items-center justify-center rounded-[14px] bg-link-soft text-link [&_svg]:size-6"
         >
             {children}
         </span>
@@ -413,8 +423,10 @@ function SheetAction({
         >
             {icon}
             <span className="min-w-0">
-                <span className="block text-[17px] text-text">{title}</span>
-                <span className="block text-[14px] text-text-muted">
+                <span className="block text-[17px] font-semibold text-text">
+                    {title}
+                </span>
+                <span className="block text-meta text-text-muted">
                     {description}
                 </span>
             </span>
