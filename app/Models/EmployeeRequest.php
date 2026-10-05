@@ -14,14 +14,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 
 /**
  * Pengajuan (cuti, izin, sakit, lembur, koreksi absensi, dinas luar), table `requests`.
  * Named EmployeeRequest to avoid clashing with Illuminate\Http\Request.
  *
+ * Files (doctor's letters, …) live in `attachments` (morph, source `storage`, private disk).
+ *
  * payload keys by category:
- * - all: `attachments` list<{path, filename, mime_type, size_bytes}>
  * - leave: `half_day` bool
  * - permit: `mode` 'hours'|'days'
  * - overtime: `date`, `start_time`, `end_time`
@@ -50,6 +52,7 @@ use Illuminate\Support\Carbon;
  * @property-read LeaveType $leaveType
  * @property-read User|null $substitute
  * @property-read Collection<int, RequestApproval> $approvals
+ * @property-read Collection<int, Attachment> $attachments
  */
 #[Fillable([
     'number', 'user_id', 'leave_type_id', 'start_at', 'end_at', 'days', 'minutes', 'reason',
@@ -86,17 +89,6 @@ class EmployeeRequest extends Model
             'submitted_at' => 'datetime',
             'decided_at' => 'datetime',
         ];
-    }
-
-    /**
-     * @return list<array{path: string, filename: string, mime_type: string, size_bytes: int}>
-     */
-    public function attachments(): array
-    {
-        $attachments = $this->payload['attachments'] ?? [];
-
-        /** @var list<array{path: string, filename: string, mime_type: string, size_bytes: int}> */
-        return is_array($attachments) ? array_values($attachments) : [];
     }
 
     /**
@@ -173,6 +165,16 @@ class EmployeeRequest extends Model
     public function substitute(): BelongsTo
     {
         return $this->belongsTo(User::class, 'substitute_id');
+    }
+
+    /**
+     * Files on the private disk (oldest first).
+     *
+     * @return MorphMany<Attachment, $this>
+     */
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable')->orderBy('created_at')->orderBy('id');
     }
 
     /**

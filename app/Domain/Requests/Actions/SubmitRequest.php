@@ -69,7 +69,7 @@ final class SubmitRequest
                 }
 
                 $previousStatus = $request->exists ? $request->status : null;
-                $removed = $this->writer->fill($request, $user, $input, $period);
+                $this->writer->fill($request, $user, $input, $period);
 
                 $request->forceFill([
                     'status' => RequestStatus::Pending,
@@ -81,7 +81,7 @@ final class SubmitRequest
                 $request->number ??= $this->numbers->next($input->leaveType, now());
                 $request->save();
 
-                $stored = $this->writer->storeNewAttachments($request, $input);
+                ['stored' => $stored, 'removed' => $removed] = $this->writer->syncAttachments($request, $user, $input);
                 $this->writer->assertAttachmentRule($request);
                 $this->ledger->reserve($request);
                 $step = $this->flows->start($request);

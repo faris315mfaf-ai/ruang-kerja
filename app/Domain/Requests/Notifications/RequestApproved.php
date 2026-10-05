@@ -2,7 +2,9 @@
 
 namespace App\Domain\Requests\Notifications;
 
+use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Requests\Support\RequestFormatter;
+use App\Models\EmployeeRequest;
 use App\Models\User;
 
 /**
@@ -10,9 +12,14 @@ use App\Models\User;
  */
 final class RequestApproved extends RequestNotification
 {
-    public function kind(): string
+    public function __construct(EmployeeRequest $request, public readonly ?User $decidedBy = null)
     {
-        return 'request.approved';
+        parent::__construct($request);
+    }
+
+    public function type(): NotificationType
+    {
+        return NotificationType::RequestApproved;
     }
 
     public function title(User $notifiable): string
@@ -32,5 +39,15 @@ final class RequestApproved extends RequestNotification
     public function url(User $notifiable): string
     {
         return $notifiable->id === $this->request->user_id ? '/pengajuan/'.$this->request->id : '/pengajuan';
+    }
+
+    protected function actor(): ?User
+    {
+        return $this->decidedBy;
+    }
+
+    protected function meta(User $notifiable): array
+    {
+        return ['context' => 'Disetujui', 'context_tone' => 'success'];
     }
 }

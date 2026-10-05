@@ -13,7 +13,7 @@ final readonly class RequestInput
 {
     /**
      * @param  list<UploadedFile>  $attachments  new files
-     * @param  list<int>  $removeAttachments  indexes of existing attachments to drop
+     * @param  list<string>  $removeAttachments  ids of existing attachments to drop
      */
     public function __construct(
         public LeaveType $leaveType,
@@ -46,9 +46,9 @@ final readonly class RequestInput
             fn (mixed $file): bool => $file instanceof UploadedFile,
         ));
 
-        $remove = array_values(array_map(
-            fn (mixed $index): int => is_numeric($index) ? (int) $index : -1,
+        $remove = array_values(array_filter(
             is_array($data['remove_attachments'] ?? null) ? $data['remove_attachments'] : [],
+            fn (mixed $id): bool => is_string($id) && $id !== '',
         ));
 
         return new self(

@@ -1,7 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { Bell, ChevronLeft, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { toast } from 'sonner';
+import { useUnreadCount } from '@/features/notifications/unread-store';
 import { useScrolled } from '@/hooks/use-scrolled';
 import { formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -44,18 +44,29 @@ const iconButton =
     'flex size-11 items-center justify-center rounded-full text-text transition-colors duration-120 ease-brand hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
 
 function DefaultActions() {
+    const unread = useUnreadCount();
+
     return (
         <>
-            <button
-                type="button"
-                className={iconButton}
-                aria-label="Cari"
-                onClick={() => toast.info('Pencarian segera tersedia.')}
-            >
+            <Link href="/cari" className={iconButton} aria-label="Cari">
                 <Search className="size-5.5" strokeWidth={1.75} />
-            </button>
-            <Link href="/inbox" className={iconButton} aria-label="Notifikasi">
+            </Link>
+            <Link
+                href="/inbox"
+                className={cn(iconButton, 'relative')}
+                aria-label={
+                    unread > 0
+                        ? `Notifikasi, ${unread} belum dibaca`
+                        : 'Notifikasi'
+                }
+            >
                 <Bell className="size-5.5" strokeWidth={1.75} />
+                {unread > 0 && (
+                    <span
+                        aria-hidden
+                        className="absolute top-2.5 right-2.5 size-2 rounded-full bg-primary ring-2 ring-background"
+                    />
+                )}
             </Link>
         </>
     );

@@ -135,7 +135,7 @@ export type TimelineStep = {
 };
 
 export type RequestAttachment = {
-    index: number;
+    id: string;
     filename: string;
     mime_type: string;
     size_bytes: number;

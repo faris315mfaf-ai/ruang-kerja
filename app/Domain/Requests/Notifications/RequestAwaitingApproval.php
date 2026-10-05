@@ -2,17 +2,18 @@
 
 namespace App\Domain\Requests\Notifications;
 
+use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Requests\Support\RequestFormatter;
 use App\Models\User;
 
 /**
- * To the approver(s) of the step that just became active.
+ * To the approver(s) of the step that just became active ("Perlu tindakan").
  */
 final class RequestAwaitingApproval extends RequestNotification
 {
-    public function kind(): string
+    public function type(): NotificationType
     {
-        return 'request.submitted';
+        return NotificationType::RequestSubmitted;
     }
 
     public function title(User $notifiable): string
@@ -28,5 +29,15 @@ final class RequestAwaitingApproval extends RequestNotification
     public function url(User $notifiable): string
     {
         return '/persetujuan/'.$this->request->id;
+    }
+
+    protected function actor(): User
+    {
+        return $this->request->user;
+    }
+
+    protected function meta(User $notifiable): array
+    {
+        return ['open_label' => 'Buka persetujuan'];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Domain\Requests\Notifications;
 
+use App\Domain\Notifications\Enums\NotificationType;
 use App\Models\EmployeeRequest;
 use App\Models\RequestApproval;
 use App\Models\User;
@@ -13,9 +14,9 @@ final class RequestRejected extends RequestNotification
         parent::__construct($request);
     }
 
-    public function kind(): string
+    public function type(): NotificationType
     {
-        return 'request.rejected';
+        return NotificationType::RequestRejected;
     }
 
     public function title(User $notifiable): string
@@ -25,11 +26,21 @@ final class RequestRejected extends RequestNotification
 
     public function body(User $notifiable): ?string
     {
-        return $this->step->note === null ? null : '"'.$this->step->note.'"';
+        return $this->step->note;
     }
 
     public function url(User $notifiable): string
     {
         return '/pengajuan/'.$this->request->id;
+    }
+
+    protected function actor(): ?User
+    {
+        return $this->step->approver;
+    }
+
+    protected function meta(User $notifiable): array
+    {
+        return ['quote' => true];
     }
 }

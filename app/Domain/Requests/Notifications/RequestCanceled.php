@@ -2,6 +2,7 @@
 
 namespace App\Domain\Requests\Notifications;
 
+use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Requests\Support\RequestFormatter;
 use App\Models\User;
 
@@ -10,9 +11,9 @@ use App\Models\User;
  */
 final class RequestCanceled extends RequestNotification
 {
-    public function kind(): string
+    public function type(): NotificationType
     {
-        return 'request.canceled';
+        return NotificationType::RequestCanceled;
     }
 
     public function title(User $notifiable): string
@@ -28,5 +29,10 @@ final class RequestCanceled extends RequestNotification
     public function url(User $notifiable): string
     {
         return '/persetujuan?tab=diputus';
+    }
+
+    protected function actor(): User
+    {
+        return $this->request->user;
     }
 }

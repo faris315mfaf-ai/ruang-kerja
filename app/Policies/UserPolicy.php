@@ -82,4 +82,13 @@ class UserPolicy
     {
         return $actor->is($target);
     }
+
+    /**
+     * Own password / two-factor settings (settings/security, Fortify 2FA routes).
+     * Only Super Admins have password sign-in; everyone else uses Google.
+     */
+    public function manageCredentials(User $actor, User $target): bool
+    {
+        return $actor->is($target) && $actor->isSuperAdmin();
+    }
 }

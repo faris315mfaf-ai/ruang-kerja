@@ -15,6 +15,8 @@ declare module '@inertiajs/core' {
             sidebarOpen: boolean;
             /** Sidebar "Persetujuan" badge (requests waiting for the signed-in user). */
             approvals?: { pending: number } | null;
+            /** Unread Inbox count (Sprint 8); null for guests. */
+            inbox: { unread: number } | null;
             [key: string]: unknown;
         };
     }

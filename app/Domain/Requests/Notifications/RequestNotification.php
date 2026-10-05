@@ -2,29 +2,20 @@
 
 namespace App\Domain\Requests\Notifications;
 
+use App\Domain\Notifications\BaseNotification;
+use App\Domain\Notifications\Data\NotificationActor;
+use App\Domain\Notifications\Data\NotificationPayload;
+use App\Domain\Notifications\Data\NotificationSubject;
 use App\Models\EmployeeRequest;
 use App\Models\User;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
-use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 
 /**
- * Base of request notifications: database + email, Indonesian, queued after commit.
- *
- * TODO(sprint-8): extend App\Domain\Notifications\BaseNotification once the
- * notification infrastructure is merged (preferences, quiet hours, Inbox payload).
+ * Base of request notifications on the Sprint 8 infrastructure (preferences,
+ * Inbox, broadcast, branded email, quiet hours, queued after commit).
  */
-abstract class RequestNotification extends Notification implements ShouldQueueAfterCommit
+abstract class RequestNotification extends BaseNotification
 {
-    use Queueable;
-
     public function __construct(public readonly EmployeeRequest $request) {}
-
-    /**
-     * Notification kind, e.g. `request.submitted`.
-     */
-    abstract public function kind(): string;
 
     abstract public function title(User $notifiable): string;
 
@@ -33,58 +24,29 @@ abstract class RequestNotification extends Notification implements ShouldQueueAf
     abstract public function url(User $notifiable): string;
 
     /**
-     * @return list<string>
+     * Who acted (requester or approver).
      */
-    public function via(object $notifiable): array
-    {
-        return ['database', 'mail'];
-    }
-
-    public function databaseType(object $notifiable): string
-    {
-        return $this->kind();
-    }
+    abstract protected function actor(): ?User;
 
     /**
      * @return array<string, mixed>
      */
-    public function toArray(object $notifiable): array
+    protected function meta(User $notifiable): array
     {
-        if (! $notifiable instanceof User) {
-            return [];
-        }
-
-        return [
-            'type' => $this->kind(),
-            'title' => $this->title($notifiable),
-            'body' => $this->body($notifiable),
-            'url' => $this->url($notifiable),
-            'subject' => [
-                'type' => 'request',
-                'id' => $this->request->id,
-                'code' => $this->request->number,
-                'title' => $this->request->leaveType->name,
-            ],
-        ];
+        return [];
     }
 
-    public function toMail(object $notifiable): MailMessage
+    public function payload(User $notifiable): NotificationPayload
     {
-        $user = $notifiable instanceof User ? $notifiable : null;
-        $title = $user !== null ? $this->title($user) : $this->request->leaveType->name;
-        $body = $user !== null ? $this->body($user) : null;
+        $actor = $this->actor();
 
-        $mail = (new MailMessage)
-            ->subject($title)
-            ->greeting('Halo'.($user !== null ? ', '.$user->name : '').'!')
-            ->line($title);
-
-        if ($body !== null && $body !== '') {
-            $mail->line($body);
-        }
-
-        return $mail
-            ->action('Buka di RuangKerja', url($user !== null ? $this->url($user) : '/pengajuan'))
-            ->salutation('Salam, RuangKerja');
+        return new NotificationPayload(
+            title: $this->title($notifiable),
+            body: $this->body($notifiable),
+            url: $this->url($notifiable),
+            actor: $actor === null ? null : NotificationActor::fromUser($actor),
+            subject: NotificationSubject::fromModel($this->request, $this->request->number, $this->request->leaveType->name),
+            meta: $this->meta($notifiable),
+        );
     }
 }

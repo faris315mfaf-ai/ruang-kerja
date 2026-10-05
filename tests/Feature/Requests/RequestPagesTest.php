@@ -135,15 +135,22 @@ it('uploads, serves and audits sick-leave attachments privately', function () {
         ->assertSessionHasNoErrors();
 
     $request = EmployeeRequest::query()->sole();
+    $attachment = $request->attachments()->sole();
 
-    $this->actingAs($s->manager)->get("/pengajuan/{$request->id}/lampiran/0")
+    expect($attachment->source->value)->toBe('storage')
+        ->and($attachment->uploaded_by)->toBe($s->employee->id);
+
+    $this->actingAs($s->manager)->get("/pengajuan/{$request->id}/lampiran/{$attachment->id}")
         ->assertOk()
         ->assertHeader('X-Content-Type-Options', 'nosniff');
     expect(AuditLog::query()->where('action', 'request.attachment_viewed')->count())->toBe(1);
 
     $stranger = User::factory()->create();
-    $this->actingAs($stranger)->get("/pengajuan/{$request->id}/lampiran/0")->assertForbidden();
-    $this->actingAs($s->employee)->get("/pengajuan/{$request->id}/lampiran/5")->assertNotFound();
+    $this->actingAs($stranger)->get("/pengajuan/{$request->id}/lampiran/{$attachment->id}")->assertForbidden();
+
+    // An attachment of another request is not reachable through this one.
+    $other = $s->submit($s->manager, $s->annual, ['start_date' => '2026-10-20', 'end_date' => '2026-10-20']);
+    $this->actingAs($s->employee)->get("/pengajuan/{$other->id}/lampiran/{$attachment->id}")->assertNotFound();
 
     $this->actingAs($s->employee)
         ->post('/pengajuan', [

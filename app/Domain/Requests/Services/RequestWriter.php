@@ -40,27 +40,15 @@ final class RequestWriter
     }
 
     /**
-     * Fills the (unsaved) row from the input. Returns the paths of existing
-     * attachments the user removed, to delete after the transaction commits.
-     *
-     * @return list<string>
+     * Fills the (unsaved) row from the input.
      */
-    public function fill(EmployeeRequest $request, User $user, RequestInput $input, RequestPeriod $period): array
+    public function fill(EmployeeRequest $request, User $user, RequestInput $input, RequestPeriod $period): void
     {
-        $kept = [];
-        $removed = [];
-
-        foreach ($request->exists ? $request->attachments() : [] as $index => $attachment) {
-            if (in_array($index, $input->removeAttachments, true)) {
-                $removed[] = $attachment['path'];
-            } else {
-                $kept[] = $attachment;
-            }
-        }
-
+        $existing = $request->exists ? $request->attachments()->count() : 0;
+        $removing = $request->exists ? $request->attachments()->whereKey($input->removeAttachments)->count() : 0;
         $max = config()->integer('requests.attachments.max_files', 5);
 
-        if (count($kept) + count($input->attachments) > $max) {
+        if ($existing - $removing + count($input->attachments) > $max) {
             throw ValidationException::withMessages(['attachments' => "Maksimal {$max} lampiran."]);
         }
 
@@ -81,30 +69,25 @@ final class RequestWriter
             'minutes' => $period->minutes,
             'reason' => $input->reason,
             'substitute_id' => $input->leaveType->category === RequestCategory::Leave ? $input->substituteId : null,
-            'payload' => [...$period->payload, 'attachments' => $kept],
+            'payload' => $period->payload,
         ]);
         $request->setRelation('user', $user);
         $request->setRelation('leaveType', $input->leaveType);
-
-        return $removed;
     }
 
     /**
-     * Stores the new files of the input on the saved request.
+     * After the row is saved: drops removed attachments and stores new files.
      *
-     * @return list<string> stored paths (to clean up if the transaction fails)
+     * @return array{stored: list<string>, removed: list<string>} file paths — delete
+     *                                                            `stored` if the transaction fails, `removed` after it commits
      */
-    public function storeNewAttachments(EmployeeRequest $request, RequestInput $input): array
+    public function syncAttachments(EmployeeRequest $request, User $user, RequestInput $input): array
     {
-        if ($input->attachments === []) {
-            return [];
-        }
+        $removed = $this->attachments->detach($request, $input->removeAttachments);
+        $stored = $input->attachments === [] ? [] : $this->attachments->store($request, $user, $input->attachments);
+        $request->unsetRelation('attachments');
 
-        $stored = $this->attachments->store($request, $input->attachments);
-        $request->payload = [...$request->payload, 'attachments' => [...$request->attachments(), ...$stored]];
-        $request->save();
-
-        return array_column($stored, 'path');
+        return ['stored' => $stored, 'removed' => $removed];
     }
 
     /**
@@ -119,7 +102,7 @@ final class RequestWriter
     {
         $type = $request->leaveType;
 
-        if ($type->requiresAttachmentFor((float) ($request->days ?? 0)) && $request->attachments() === []) {
+        if ($type->requiresAttachmentFor((float) ($request->days ?? 0)) && $request->attachments()->doesntExist()) {
             throw ValidationException::withMessages([
                 'attachments' => $type->requires_attachment_after_days === 0
                     ? "{$type->name} wajib melampirkan berkas."

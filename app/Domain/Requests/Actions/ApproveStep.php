@@ -65,7 +65,7 @@ final class ApproveStep
         [$request, $step, $next] = $result;
 
         if ($next === null) {
-            $this->notifier->approved($request);
+            $this->notifier->approved($request, $actor);
         } else {
             $this->notifier->stepApproved($request, $step, $next);
         }

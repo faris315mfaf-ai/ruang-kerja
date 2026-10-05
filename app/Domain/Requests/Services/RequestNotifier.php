@@ -2,6 +2,8 @@
 
 namespace App\Domain\Requests\Services;
 
+use App\Domain\Notifications\Actions\ResolveNotificationsForSubject;
+use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Requests\Enums\ApproverType;
 use App\Domain\Requests\Notifications\RequestApproved;
 use App\Domain\Requests\Notifications\RequestAwaitingApproval;
@@ -16,15 +18,22 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Notification;
 
 /**
- * Notifies approvers and requester at every step (PRD M2). Called after the
- * state change is committed.
+ * Notifies approvers and requester at every step (PRD M2) and keeps the Inbox
+ * "Perlu tindakan" list in sync (Sprint 8). Called after the state change.
  */
 final class RequestNotifier
 {
-    public function __construct(private readonly ApproverResolver $approvers) {}
+    public function __construct(
+        private readonly ApproverResolver $approvers,
+        private readonly ResolveNotificationsForSubject $resolve,
+    ) {}
 
+    /**
+     * A step became active (submit, resubmit, previous step approved, delegation).
+     */
     public function awaitingApproval(EmployeeRequest $request, RequestApproval $step): void
     {
+        $this->resolve->handle($request, NotificationType::RequestSubmitted, NotificationType::RequestRevisionRequested);
         Notification::send($this->approversOf($request, $step), new RequestAwaitingApproval($request));
     }
 
@@ -34,27 +43,32 @@ final class RequestNotifier
         $this->awaitingApproval($request, $next);
     }
 
-    public function approved(EmployeeRequest $request): void
+    public function approved(EmployeeRequest $request, ?User $decidedBy = null): void
     {
-        $request->user->notify(new RequestApproved($request));
+        $this->resolve->handle($request, NotificationType::RequestSubmitted);
+        $request->user->notify(new RequestApproved($request, $decidedBy));
 
         if ($request->substitute !== null && $request->substitute->isActive()) {
-            $request->substitute->notify(new RequestApproved($request));
+            $request->substitute->notify(new RequestApproved($request, $decidedBy));
         }
     }
 
     public function rejected(EmployeeRequest $request, RequestApproval $step): void
     {
+        $this->resolve->handle($request, NotificationType::RequestSubmitted);
         $request->user->notify(new RequestRejected($request, $step));
     }
 
     public function revisionRequested(EmployeeRequest $request, RequestApproval $step): void
     {
+        $this->resolve->handle($request, NotificationType::RequestSubmitted);
         $request->user->notify(new RequestRevisionRequested($request, $step));
     }
 
     public function canceled(EmployeeRequest $request, ?RequestApproval $waitingStep): void
     {
+        $this->resolve->handle($request, NotificationType::RequestSubmitted, NotificationType::RequestRevisionRequested);
+
         if ($waitingStep !== null) {
             Notification::send($this->approversOf($request, $waitingStep), new RequestCanceled($request));
         }

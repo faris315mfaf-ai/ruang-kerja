@@ -25,8 +25,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // POST (not PUT) so multipart attachments arrive without method spoofing issues.
         Route::post('{employeeRequest}', [RequestController::class, 'update'])->middleware('throttle:30,1')->name('update');
         Route::post('{employeeRequest}/batal', [RequestController::class, 'cancel'])->name('cancel');
-        Route::get('{employeeRequest}/lampiran/{index}', [RequestController::class, 'attachment'])
-            ->whereNumber('index')
+        Route::get('{employeeRequest}/lampiran/{attachment}', [RequestController::class, 'attachment'])
+            ->scopeBindings()
             ->name('attachment');
     });
 

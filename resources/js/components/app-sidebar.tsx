@@ -14,6 +14,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useUnreadCount } from '@/features/notifications/unread-store';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { AppNavItem } from '@/lib/navigation';
 import { adminNavItems, isActivePath, mainNavItems } from '@/lib/navigation';
@@ -21,6 +22,7 @@ import { cn } from '@/lib/utils';
 
 function NavList({ items }: { items: AppNavItem[] }) {
     const { currentUrl } = useCurrentUrl();
+    const unread = useUnreadCount();
     const { approvals } = usePage().props;
     const badgeCount = (item: AppNavItem): number =>
         item.badge === 'approvals' ? (approvals?.pending ?? 0) : 0;
@@ -40,12 +42,16 @@ function NavList({ items }: { items: AppNavItem[] }) {
                             <span>{item.title}</span>
                         </Link>
                     </SidebarMenuButton>
+                    {item.href === '/inbox' && unread > 0 && (
+                        <SidebarMenuBadge className="text-primary tnum">
+                            {unread > 99 ? '99+' : unread}
+                            <span className="sr-only"> belum dibaca</span>
+                        </SidebarMenuBadge>
+                    )}
                     {badgeCount(item) > 0 && (
-                        <SidebarMenuBadge
-                            aria-label={`${badgeCount(item)} menunggu`}
-                            className="rounded-full bg-primary text-primary-foreground peer-data-[active=true]/menu-button:text-primary-foreground"
-                        >
+                        <SidebarMenuBadge className="text-primary tnum">
                             {badgeCount(item)}
+                            <span className="sr-only"> menunggu keputusan</span>
                         </SidebarMenuBadge>
                     )}
                 </SidebarMenuItem>

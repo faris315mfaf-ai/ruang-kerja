@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Notifications\Services\InboxQuery;
 use App\Domain\Requests\Services\ApprovalQueue;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -66,6 +67,8 @@ class HandleInertiaRequests extends Middleware
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             // Sidebar "Persetujuan" badge. Closure: one count query, skipped on partial reloads that don't ask for it.
             'approvals' => fn (): ?array => $user !== null ? ['pending' => app(ApprovalQueue::class)->count($user)] : null,
+            // Bell / sidebar / tab badge. Closure: skipped on partial reloads that don't ask for it.
+            'inbox' => fn (): ?array => $user !== null ? ['unread' => app(InboxQuery::class)->unreadCount($user)] : null,
         ];
     }
 }

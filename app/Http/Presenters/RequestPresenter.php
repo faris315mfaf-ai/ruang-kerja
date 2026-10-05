@@ -8,6 +8,7 @@ use App\Domain\Requests\Enums\ApprovalStatus;
 use App\Domain\Requests\Enums\RequestStatus;
 use App\Domain\Requests\Services\BalanceLedger;
 use App\Domain\Requests\Services\ColleagueAbsences;
+use App\Models\Attachment;
 use App\Models\EmployeeRequest;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
@@ -112,7 +113,7 @@ final class RequestPresenter
      */
     public function detail(EmployeeRequest $request, User $viewer): array
     {
-        $request->loadMissing(['approvals.approver', 'approvals.delegatedFrom', 'substitute', 'user.position', 'user.division', 'leaveType']);
+        $request->loadMissing(['attachments', 'approvals.approver', 'approvals.delegatedFrom', 'substitute', 'user.position', 'user.division', 'leaveType']);
 
         $colleagues = $request->leaveType->category->isAbsence() && $request->status !== RequestStatus::Canceled
             ? $this->colleagues->around($request->user, $request->start_at, $request->end_at, $request->id)
@@ -122,13 +123,13 @@ final class RequestPresenter
             ...$this->item($request),
             'reason' => $request->reason,
             'substitute' => $request->substitute === null ? null : self::person($request->substitute),
-            'attachments' => array_map(fn (array $attachment, int $index): array => [
-                'index' => $index,
-                'filename' => $attachment['filename'],
-                'mime_type' => $attachment['mime_type'],
-                'size_bytes' => $attachment['size_bytes'],
-                'url' => route('requests.attachment', ['employeeRequest' => $request->id, 'index' => $index]),
-            ], $request->attachments(), array_keys($request->attachments())),
+            'attachments' => $request->attachments->map(fn (Attachment $attachment): array => [
+                'id' => $attachment->id,
+                'filename' => $attachment->filename,
+                'mime_type' => $attachment->mime_type,
+                'size_bytes' => $attachment->size_bytes ?? 0,
+                'url' => route('requests.attachment', ['employeeRequest' => $request->id, 'attachment' => $attachment->id]),
+            ])->values()->all(),
             'timeline' => $this->timeline($request),
             'balance' => $this->balanceImpact($request),
             'colleagues' => $colleagues === null || $colleagues['people'] === [] ? null : $colleagues,

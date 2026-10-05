@@ -117,7 +117,7 @@ export function RequestFields({
             ) : (
                 <ul className="space-y-1">
                     {request.attachments.map((file) => (
-                        <li key={file.index}>
+                        <li key={file.id}>
                             <a
                                 href={file.url}
                                 target="_blank"

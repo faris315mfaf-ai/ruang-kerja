@@ -14,6 +14,7 @@ use App\Domain\Requests\Support\OfficeTime;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\RequestPresenter;
 use App\Http\Requests\Requests\SaveEmployeeRequestRequest;
+use App\Models\Attachment;
 use App\Models\EmployeeRequest;
 use App\Models\LeaveType;
 use App\Models\User;
@@ -187,20 +188,20 @@ class RequestController extends Controller
     /**
      * Streams an attachment from the private disk (never a public URL). Audited.
      */
-    public function attachment(EmployeeRequest $employeeRequest, int $index, RequestAttachmentStore $store, AuditLogger $audit): StreamedResponse
+    public function attachment(EmployeeRequest $employeeRequest, Attachment $attachment, RequestAttachmentStore $store, AuditLogger $audit): StreamedResponse
     {
         Gate::authorize('viewAttachment', $employeeRequest);
 
-        $attachment = $employeeRequest->attachments()[$index] ?? abort(404);
+        $path = $attachment->storage_path;
 
-        if (! $store->disk()->exists($attachment['path'])) {
+        if ($path === null || ! $store->disk()->exists($path)) {
             abort(404);
         }
 
-        $audit->log('request.attachment_viewed', $employeeRequest, null, ['filename' => $attachment['filename']]);
+        $audit->log('request.attachment_viewed', $employeeRequest, null, ['attachment_id' => $attachment->id, 'filename' => $attachment->filename]);
 
-        return $store->disk()->response($attachment['path'], $attachment['filename'], [
-            'Content-Type' => $attachment['mime_type'],
+        return $store->disk()->response($path, $attachment->filename, [
+            'Content-Type' => $attachment->mime_type,
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => 'private, no-store',
         ]);

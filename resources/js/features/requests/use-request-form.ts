@@ -40,7 +40,7 @@ export type RequestFormData = {
     substitute_id: string;
     reason: string;
     attachments: File[];
-    remove_attachments: number[];
+    remove_attachments: string[];
 };
 
 type Options = {
@@ -272,7 +272,7 @@ export function useRequestForm({
     };
 
     const existingAttachments = (request?.attachments ?? []).filter(
-        (file) => !form.data.remove_attachments.includes(file.index),
+        (file) => !form.data.remove_attachments.includes(file.id),
     );
 
     return {
@@ -289,10 +289,10 @@ export function useRequestForm({
         previewFailed,
         submit,
         existingAttachments,
-        removeExisting: (index: number) =>
+        removeExisting: (id: string) =>
             form.setData('remove_attachments', [
                 ...form.data.remove_attachments,
-                index,
+                id,
             ]),
         addFiles: (files: FileList | File[]) =>
             form.setData('attachments', [

@@ -20,3 +20,6 @@ Schedule::command('requests:route-delegations')
     ->timezone(config()->string('app.office_timezone', 'Asia/Jakarta'))
     ->withoutOverlapping()
     ->onOneServer();
+// Sprint 8 — notifications (office timezone, see config/notifications.php).
+Schedule::command('notifications:send-daily-digests')->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('notifications:prune')->dailyAt('02:15')->timezone((string) config('app.office_timezone'));

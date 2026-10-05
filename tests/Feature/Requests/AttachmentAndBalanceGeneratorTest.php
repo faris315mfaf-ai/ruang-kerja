@@ -43,13 +43,13 @@ it('stores attachments on the private disk', function () {
         'attachments' => [UploadedFile::fake()->create('surat dokter.pdf', 120, 'application/pdf')],
     ]);
 
-    $attachment = $request->attachments()[0];
+    $attachment = $request->attachments()->sole();
 
-    expect($attachment['filename'])->toBe('surat dokter.pdf')
-        ->and($attachment['path'])->toStartWith('request-attachments/'.$request->id.'/')
-        ->and($attachment['size_bytes'])->toBe(120 * 1024);
+    expect($attachment->filename)->toBe('surat dokter.pdf')
+        ->and($attachment->storage_path)->toStartWith('request-attachments/'.$request->id.'/')
+        ->and($attachment->size_bytes)->toBe(120 * 1024);
 
-    Storage::disk('local')->assertExists($attachment['path']);
+    Storage::disk('local')->assertExists((string) $attachment->storage_path);
     expect(config('filesystems.disks.local.root'))->toBe(storage_path('app/private'));
 });
 

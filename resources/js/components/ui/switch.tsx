@@ -1,39 +1,54 @@
-import * as React from "react"
+import * as React from 'react';
+import { cn } from '@/lib/utils';
 
-import { cn } from "@/lib/utils"
+type Props = Omit<React.ComponentProps<'button'>, 'onChange' | 'value'> & {
+    checked: boolean;
+    onCheckedChange?: (checked: boolean) => void;
+    size?: 'sm' | 'md';
+};
 
-type SwitchProps = Omit<React.ComponentProps<"button">, "onChange"> & {
-  checked: boolean
-  onCheckedChange: (checked: boolean) => void
+/**
+ * Accessible toggle (role="switch") styled like shadcn's Switch, without an
+ * extra Radix dependency. `size="md"` gives a 44px touch target on mobile.
+ */
+function Switch({
+    checked,
+    onCheckedChange,
+    size = 'sm',
+    className,
+    disabled,
+    ...props
+}: Props) {
+    return (
+        <button
+            type="button"
+            role="switch"
+            aria-checked={checked}
+            data-state={checked ? 'checked' : 'unchecked'}
+            disabled={disabled}
+            onClick={() => onCheckedChange?.(!checked)}
+            className={cn(
+                'group relative inline-flex shrink-0 items-center rounded-full border border-transparent transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+                size === 'md' ? 'h-8 w-14' : 'h-5 w-9',
+                checked ? 'bg-primary' : 'bg-border-strong',
+                className,
+            )}
+            {...props}
+        >
+            <span
+                aria-hidden
+                className={cn(
+                    'pointer-events-none block rounded-full bg-on-brand shadow-card transition-transform duration-120 ease-brand',
+                    size === 'md' ? 'size-7' : 'size-4',
+                    checked
+                        ? size === 'md'
+                            ? 'translate-x-6'
+                            : 'translate-x-4'
+                        : 'translate-x-0.5',
+                )}
+            />
+        </button>
+    );
 }
 
-/** Accessible toggle (role="switch") without an extra Radix dependency. */
-function Switch({ checked, onCheckedChange, className, disabled, ...props }: SwitchProps) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      data-state={checked ? "checked" : "unchecked"}
-      data-slot="switch"
-      disabled={disabled}
-      onClick={() => onCheckedChange(!checked)}
-      className={cn(
-        "peer inline-flex h-6 w-10 shrink-0 items-center rounded-full border border-transparent transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50",
-        checked ? "bg-primary" : "bg-border-strong",
-        className
-      )}
-      {...props}
-    >
-      <span
-        aria-hidden
-        className={cn(
-          "pointer-events-none block size-5 rounded-full bg-background shadow-xs ring-0 transition-transform",
-          checked ? "translate-x-4" : "translate-x-0.5"
-        )}
-      />
-    </button>
-  )
-}
-
-export { Switch }
+export { Switch };

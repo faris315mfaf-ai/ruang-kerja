@@ -1,3 +1,4 @@
+import type { LucideIcon } from 'lucide-react';
 import type { PointerEvent, ReactNode } from 'react';
 import { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -5,7 +6,9 @@ import { cn } from '@/lib/utils';
 export type SwipeAction = {
     label: string;
     onAction: () => void;
-    tone?: 'primary' | 'danger' | 'neutral';
+    tone?: 'primary' | 'info' | 'danger' | 'neutral';
+    /** Optional icon above the label (mockup MInbox). */
+    icon?: LucideIcon;
 };
 
 type Props = {
@@ -19,6 +22,7 @@ const ACTION_WIDTH = 80;
 
 const toneClass: Record<NonNullable<SwipeAction['tone']>, string> = {
     primary: 'bg-primary text-primary-foreground',
+    info: 'bg-accent-blue text-on-brand',
     danger: 'bg-danger text-on-danger',
     neutral: 'bg-surface-2 text-text',
 };
@@ -91,6 +95,13 @@ export function SwipeableRow({ children, actions, className }: Props) {
                             action.onAction();
                         }}
                     >
+                        {action.icon && (
+                            <action.icon
+                                aria-hidden
+                                className="mx-auto mb-1 size-5"
+                                strokeWidth={1.75}
+                            />
+                        )}
                         {action.label}
                     </button>
                 ))}

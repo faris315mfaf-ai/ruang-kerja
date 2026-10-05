@@ -528,10 +528,10 @@ function AttachmentInput({
                 <ul className="space-y-1.5">
                     {existingAttachments.map((file) => (
                         <FileRow
-                            key={`e-${file.index}`}
+                            key={`e-${file.id}`}
                             name={file.filename}
                             size={file.size_bytes}
-                            onRemove={() => removeExisting(file.index)}
+                            onRemove={() => removeExisting(file.id)}
                         />
                     ))}
                     {form.data.attachments.map((file, index) => (

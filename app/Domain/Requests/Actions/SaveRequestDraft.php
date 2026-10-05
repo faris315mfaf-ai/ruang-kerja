@@ -37,10 +37,10 @@ final class SaveRequestDraft
                     throw ValidationException::withMessages(['status' => 'Pengajuan ini tidak bisa diubah lagi.']);
                 }
 
-                $removed = $this->writer->fill($request, $user, $input, $period);
+                $this->writer->fill($request, $user, $input, $period);
                 $request->status = $request->exists ? $request->status : RequestStatus::Draft;
                 $request->save();
-                $stored = $this->writer->storeNewAttachments($request, $input);
+                ['stored' => $stored, 'removed' => $removed] = $this->writer->syncAttachments($request, $user, $input);
 
                 return [$request, $removed];
             });

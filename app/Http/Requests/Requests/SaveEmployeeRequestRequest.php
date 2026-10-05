@@ -49,7 +49,7 @@ class SaveEmployeeRequestRequest extends FormRequest
             'attachments' => ['nullable', 'array', 'max:'.(int) ($attachments['max_files'] ?? 5)],
             'attachments.*' => ['file', 'mimes:'.implode(',', (array) ($attachments['mimes'] ?? ['pdf'])), 'max:'.(int) ($attachments['max_kilobytes'] ?? 5120)],
             'remove_attachments' => ['nullable', 'array'],
-            'remove_attachments.*' => ['integer', 'min:0'],
+            'remove_attachments.*' => ['string', 'ulid'],
         ];
     }
 
