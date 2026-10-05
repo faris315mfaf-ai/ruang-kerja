@@ -86,10 +86,3 @@ export const ROLE_LABELS: WorkspaceRoleLabel = {
     member: 'Member',
     viewer: 'Viewer',
 };
-
-export const TYPE_GROUP_LABELS = {
-    personal: 'Pribadi',
-    division: 'Divisi',
-    team: 'Tim',
-    project: 'Proyek',
-} as const;

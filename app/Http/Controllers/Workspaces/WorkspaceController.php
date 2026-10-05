@@ -48,6 +48,8 @@ class WorkspaceController extends Controller
                     ...(new WorkspaceResource($workspace))->resolve(),
                     'open_tasks_count' => (int) ($workspace->getAttribute('open_tasks_count') ?? 0),
                     'is_member' => $workspace->membership !== null,
+                    // Role pill on the card (SProyekSaya "PIC · Anggota · Pemilik").
+                    'my_role' => $workspace->membership?->role->value,
                 ])
                 ->values()
                 ->all(),

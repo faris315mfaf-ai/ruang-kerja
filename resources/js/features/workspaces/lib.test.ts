@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { groupByType, workspaceInitial, workspaceMeta } from './lib';
+import { workspaceInitial, workspaceMeta } from './lib';
 
 describe('workspaceInitial', () => {
     it('skips the type word like the mockups', () => {
@@ -12,22 +12,6 @@ describe('workspaceInitial', () => {
             'D',
         );
         expect(workspaceInitial('tim', 'team')).toBe('T');
-    });
-});
-
-describe('groupByType', () => {
-    it('orders groups Pribadi, Divisi, Tim, Proyek and drops empty ones', () => {
-        const groups = groupByType([
-            { id: 'p', type: 'project' as const },
-            { id: 'me', type: 'personal' as const },
-            { id: 'o', type: 'division' as const },
-        ]);
-
-        expect(groups.map((group) => group.type)).toEqual([
-            'personal',
-            'division',
-            'project',
-        ]);
     });
 });
 
