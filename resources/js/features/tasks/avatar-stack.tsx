@@ -10,7 +10,12 @@ type Props = {
 };
 
 /** Overlapping avatars with a "+N" bubble. */
-export function AvatarStack({ people, max = 3, size = 'sm', className }: Props) {
+export function AvatarStack({
+    people,
+    max = 3,
+    size = 'sm',
+    className,
+}: Props) {
     const shown = people.slice(0, max);
     const rest = people.length - shown.length;
     const dimension =

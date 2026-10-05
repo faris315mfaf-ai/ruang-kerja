@@ -44,9 +44,7 @@ describe('formatting', () => {
     it('formats short dates and ranges in Indonesian', () => {
         expect(formatShortDate('2026-10-08')).toBe('Kam, 8 Okt');
         expect(formatDayRange('2026-10-06', '2026-10-11')).toBe('6–11 Okt');
-        expect(formatDayRange('2026-09-28', '2026-10-04')).toBe(
-            '28 Sep–4 Okt',
-        );
+        expect(formatDayRange('2026-09-28', '2026-10-04')).toBe('28 Sep–4 Okt');
         expect(formatMonthYear(TODAY)).toBe('Oktober 2026');
     });
 

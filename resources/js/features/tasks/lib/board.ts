@@ -96,3 +96,31 @@ export function adjacentStatusId(
 
     return statuses[index + direction]?.id ?? null;
 }
+
+/**
+ * Index inside `ids` (a column without the moving card) for a drop between
+ * two visible neighbours; works when the column is filtered.
+ */
+export function insertionIndex(
+    ids: string[],
+    afterId: string | null,
+    beforeId: string | null,
+): number {
+    if (afterId !== null) {
+        const index = ids.indexOf(afterId);
+
+        if (index !== -1) {
+            return index + 1;
+        }
+    }
+
+    if (beforeId !== null) {
+        const index = ids.indexOf(beforeId);
+
+        if (index !== -1) {
+            return index;
+        }
+    }
+
+    return 0;
+}

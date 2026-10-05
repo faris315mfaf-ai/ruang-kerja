@@ -127,9 +127,7 @@ export const TaskCardContent = memo(function TaskCardContent({
                     {action}
                 </div>
             ) : (
-                <p className="text-[11px] text-text-subtle">
-                    Belum ditugaskan
-                </p>
+                <p className="text-[11px] text-text-subtle">Belum ditugaskan</p>
             )}
         </div>
     );

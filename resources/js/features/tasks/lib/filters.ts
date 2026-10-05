@@ -73,9 +73,7 @@ function matchesDue(
         case 'none':
             return task.due_date === null;
         case 'overdue':
-            return (
-                task.due_date !== null && task.due_date < today && !closed
-            );
+            return task.due_date !== null && task.due_date < today && !closed;
         case 'today':
             return task.due_date === today;
         case 'week':

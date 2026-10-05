@@ -6,11 +6,18 @@ import {
     buildColumns,
     compareRank,
     findColumn,
+    insertionIndex,
     moveInColumns,
 } from './board';
 
 const statuses: TaskStatus[] = [
-    { id: 'todo', name: 'Todo', category: 'todo', color: 'slate', position: 'G' },
+    {
+        id: 'todo',
+        name: 'Todo',
+        category: 'todo',
+        color: 'slate',
+        position: 'G',
+    },
     {
         id: 'doing',
         name: 'Sedang dikerjakan',
@@ -18,7 +25,13 @@ const statuses: TaskStatus[] = [
         color: 'amber',
         position: 'V',
     },
-    { id: 'done', name: 'Selesai', category: 'done', color: 'teal', position: 'k' },
+    {
+        id: 'done',
+        name: 'Selesai',
+        category: 'done',
+        color: 'teal',
+        position: 'k',
+    },
 ];
 
 function task(id: string, status: string, position: string, number = 1) {
@@ -103,5 +116,17 @@ describe('adjacentStatusId', () => {
         expect(adjacentStatusId(statuses, 'todo', -1)).toBeNull();
         expect(adjacentStatusId(statuses, 'done', 1)).toBeNull();
         expect(adjacentStatusId(statuses, 'missing', 1)).toBeNull();
+    });
+});
+
+describe('insertionIndex', () => {
+    it('maps visible neighbours to an index in the full column', () => {
+        const ids = ['a', 'hidden', 'b', 'c'];
+
+        expect(insertionIndex(ids, 'b', 'c')).toBe(3);
+        expect(insertionIndex(ids, null, 'b')).toBe(2);
+        expect(insertionIndex(ids, 'missing', 'a')).toBe(0);
+        expect(insertionIndex(ids, null, null)).toBe(0);
+        expect(insertionIndex(ids, 'c', null)).toBe(4);
     });
 });

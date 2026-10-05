@@ -27,7 +27,10 @@ type Props = {
  */
 export function PriorityIcon({ priority, labelled = true, className }: Props) {
     const a11y = labelled
-        ? { role: 'img', 'aria-label': `Prioritas: ${PRIORITY_LABELS[priority]}` }
+        ? {
+              role: 'img',
+              'aria-label': `Prioritas: ${PRIORITY_LABELS[priority]}`,
+          }
         : { 'aria-hidden': true };
 
     if (priority === 1) {

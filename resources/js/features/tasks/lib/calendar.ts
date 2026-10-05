@@ -25,7 +25,9 @@ export function monthGrid(date: string): string[][] {
     const weeks: string[][] = [];
 
     for (let day = first; day <= last; day = addDays(day, 7)) {
-        weeks.push(Array.from({ length: 7 }, (_, index) => addDays(day, index)));
+        weeks.push(
+            Array.from({ length: 7 }, (_, index) => addDays(day, index)),
+        );
     }
 
     return weeks;

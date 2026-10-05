@@ -103,7 +103,13 @@ describe('filterTasks', () => {
             ),
         ).toEqual(['b', 'c']);
         expect(
-            ids(filterTasks(tasks, { ...EMPTY_FILTERS, labels: ['keu'] }, TODAY)),
+            ids(
+                filterTasks(
+                    tasks,
+                    { ...EMPTY_FILTERS, labels: ['keu'] },
+                    TODAY,
+                ),
+            ),
         ).toEqual(['a']);
     });
 
@@ -119,7 +125,13 @@ describe('filterTasks', () => {
 
     it('searches key, title and description without diacritics', () => {
         expect(
-            ids(filterTasks(tasks, { ...EMPTY_FILTERS, q: 'presentasi' }, TODAY)),
+            ids(
+                filterTasks(
+                    tasks,
+                    { ...EMPTY_FILTERS, q: 'presentasi' },
+                    TODAY,
+                ),
+            ),
         ).toEqual(['c']);
         expect(
             ids(filterTasks(tasks, { ...EMPTY_FILTERS, q: 'ops-1' }, TODAY)),

@@ -1,18 +1,25 @@
 import type { WorkspaceType } from '@/features/tasks/types';
-import type { PaletteColor } from '@/lib/palette';
 import { palette } from '@/lib/palette';
 import { cn } from '@/lib/utils';
+import { workspaceInitial } from './lib';
 
 type Props = {
     name: string;
     type: WorkspaceType;
-    color: PaletteColor | null;
+    color: string | null;
+    /** Owner name for personal workspaces (initial of the person). */
+    ownerName?: string | null;
     className?: string;
 };
 
 /** Rounded square with the workspace initial (sidebar, headers, rows). */
-export function WorkspaceAvatar({ name, type, color, className }: Props) {
-    const initial = name.trim().charAt(0).toUpperCase() || '?';
+export function WorkspaceAvatar({
+    name,
+    type,
+    color,
+    ownerName,
+    className,
+}: Props) {
     const personal = type === 'personal';
 
     return (
@@ -26,7 +33,7 @@ export function WorkspaceAvatar({ name, type, color, className }: Props) {
                 className,
             )}
         >
-            {initial}
+            {workspaceInitial(name, type, ownerName)}
         </span>
     );
 }
