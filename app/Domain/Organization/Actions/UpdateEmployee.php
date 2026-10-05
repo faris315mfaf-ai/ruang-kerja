@@ -5,6 +5,7 @@ namespace App\Domain\Organization\Actions;
 use App\Domain\Organization\Data\EmployeeData;
 use App\Domain\Organization\Services\EmployeeProfileWriter;
 use App\Domain\Organization\Services\LeadershipReleaser;
+use App\Domain\Organization\Services\ManagerHierarchy;
 use App\Domain\Organization\Services\RoleChangeGuard;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,7 @@ final readonly class UpdateEmployee
         private RoleChangeGuard $roleGuard,
         private EmployeeProfileWriter $profiles,
         private LeadershipReleaser $leadership,
+        private ManagerHierarchy $hierarchy,
     ) {}
 
     public function handle(User $actor, User $employee, EmployeeData $data): User
@@ -29,6 +31,9 @@ final readonly class UpdateEmployee
         return DB::transaction(function () use ($actor, $employee, $data): User {
             $oldDivisionId = $employee->division_id;
             $oldTeamId = $employee->team_id;
+
+            // Re-checked under a company lock: validation alone races (A → B vs B → A).
+            $this->hierarchy->guardChange($employee, $employee->manager_id, $data->managerId);
 
             $employee->fill([
                 'name' => $data->name,

@@ -20,7 +20,9 @@ use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Validation\ValidationException;
 
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
@@ -209,5 +211,52 @@ describe('leadership clean-up', function () {
         expect($this->ops->refresh()->head_user_id)->toBe($this->head->id)
             ->and($this->gudang->refresh()->lead_user_id)->toBe($this->head->id)
             ->and(AuditLog::query()->whereIn('action', ['division.updated', 'team.updated'])->count())->toBe(0);
+    });
+});
+
+describe('manager cycles under concurrency', function () {
+    function managerData(User $user, ?string $managerId): EmployeeData
+    {
+        return new EmployeeData(
+            name: $user->name, email: $user->email, divisionId: null, teamId: null, positionId: null,
+            managerId: $managerId, workMode: WorkMode::Office, joinedAt: null, roles: [], nik: null,
+        );
+    }
+
+    it('rejects a reporting cycle inside UpdateEmployee even when validation was bypassed', function () {
+        $a = User::factory()->create();
+        $b = User::factory()->forCompany($a->company)->managedBy($a)->create();
+        $c = User::factory()->forCompany($a->company)->managedBy($b)->create();
+
+        expect(fn () => app(UpdateEmployee::class)->handle($this->hr, $a, managerData($a, $c->id)))
+            ->toThrow(ValidationException::class, 'Atasan ini akan membuat siklus atasan (bawahan tidak boleh menjadi atasan).');
+
+        expect(fn () => app(UpdateEmployee::class)->handle($this->hr, $a, managerData($a, $a->id)))
+            ->toThrow(ValidationException::class, 'Karyawan tidak bisa menjadi atasan dirinya sendiri.');
+
+        expect($a->refresh()->manager_id)->toBeNull();
+    });
+
+    it('serializes reporting-line changes per company with an advisory lock', function () {
+        $a = User::factory()->create();
+        $b = User::factory()->forCompany($a->company)->create();
+
+        DB::enableQueryLog();
+        app(UpdateEmployee::class)->handle($this->hr, $b, managerData($b, $a->id));
+
+        $locks = collect(DB::getQueryLog())->filter(fn (array $query) => str_contains($query['query'], 'pg_advisory_xact_lock'));
+
+        expect($locks)->toHaveCount(1)
+            ->and($b->refresh()->manager_id)->toBe($a->id);
+    });
+
+    it('keeps unrelated edits free of the lock', function () {
+        $a = User::factory()->create();
+        $b = User::factory()->forCompany($a->company)->managedBy($a)->create();
+
+        DB::enableQueryLog();
+        app(UpdateEmployee::class)->handle($this->hr, $b, managerData($b, $a->id));
+
+        expect(collect(DB::getQueryLog())->filter(fn (array $query) => str_contains($query['query'], 'pg_advisory_xact_lock')))->toHaveCount(0);
     });
 });
