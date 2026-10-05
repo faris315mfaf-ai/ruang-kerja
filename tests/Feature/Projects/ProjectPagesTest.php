@@ -1,7 +1,9 @@
 <?php
 
 use App\Domain\Organization\Enums\Role;
+use App\Domain\Projects\Data\PortfolioFilters;
 use App\Domain\Projects\Enums\ProjectHealth;
+use App\Domain\Projects\Queries\PortfolioDashboard;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
 use App\Models\Milestone;
 use App\Models\ProjectRisk;
@@ -113,4 +115,16 @@ it('builds the portfolio KPIs, decisions, attention list, roadmap and feed', fun
         ->where('kpis.active.count', 1));
 
     $this->actingAs($this->direksi)->get('/portofolio?arsip=1')->assertInertia(fn (Assert $page) => $page->has('projects', 1)->where('projects.0.key', $done->key));
+});
+
+it('keeps projects that start on the last day or end on the first day of the portfolio period', function () {
+    // Q4 2026 = 1 Oct – 31 Dec (office dates).
+    makeProject($this->owner, ['name' => 'Mulai akhir kuartal', 'start_date' => '2026-12-31', 'target_date' => '2027-03-31']);
+    makeProject($this->owner, ['name' => 'Selesai awal kuartal', 'start_date' => '2026-08-01', 'target_date' => '2026-10-01']);
+    makeProject($this->owner, ['name' => 'Mulai kuartal depan', 'start_date' => '2027-01-01', 'target_date' => '2027-03-31']);
+    makeProject($this->owner, ['name' => 'Selesai kuartal lalu', 'start_date' => '2026-07-01', 'target_date' => '2026-09-30']);
+
+    $names = collect(app(PortfolioDashboard::class)->build($this->direksi, new PortfolioFilters('kuartal'))['projects'])->pluck('name')->sort()->values()->all();
+
+    expect($names)->toBe(['Mulai akhir kuartal', 'Proyek Peluncuran Q4', 'Selesai awal kuartal']);
 });
