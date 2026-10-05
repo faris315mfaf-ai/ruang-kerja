@@ -58,7 +58,7 @@ export function OrgChartDesktop({ chart, footer, ...context }: Props) {
     }, [zoom]);
 
     return (
-        <div className="overflow-hidden rounded-xl border border-border bg-surface">
+        <div className="overflow-hidden rounded-panel border border-border bg-surface shadow-card">
             <div
                 ref={viewport}
                 className="overflow-auto bg-[radial-gradient(var(--border)_1px,transparent_1px)] [background-size:16px_16px] p-6"
@@ -132,7 +132,7 @@ export function OrgChartDesktop({ chart, footer, ...context }: Props) {
                             aria-label="Tanpa divisi"
                             className="mx-auto mt-10 w-[248px] rounded-lg border border-dashed border-border-strong bg-surface p-3"
                         >
-                            <h3 className="mb-2 text-xs font-medium text-text-muted">
+                            <h3 className="mb-2 text-meta font-semibold text-text-muted">
                                 Tanpa divisi · {chart.unassigned.length} orang
                             </h3>
                             <div className="space-y-2">
@@ -151,11 +151,13 @@ export function OrgChartDesktop({ chart, footer, ...context }: Props) {
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-2.5">
-                <div className="text-[13px] text-text-muted">{footer}</div>
+                <div className="text-label font-normal text-text-muted">
+                    {footer}
+                </div>
                 <div
                     role="group"
                     aria-label="Perbesar atau perkecil bagan"
-                    className="flex items-center gap-1 rounded-md border border-border bg-surface p-0.5"
+                    className="flex items-center gap-1 rounded-control border border-border bg-surface p-1"
                 >
                     <Button
                         type="button"
@@ -169,7 +171,7 @@ export function OrgChartDesktop({ chart, footer, ...context }: Props) {
                         <Minus />
                     </Button>
                     <span
-                        className="w-12 text-center text-[13px] text-text tabular-nums"
+                        className="w-12 text-center text-label font-normal text-text tabular-nums"
                         aria-live="polite"
                     >
                         {formatPercent(zoom * 100, 0)}
@@ -193,7 +195,7 @@ export function OrgChartDesktop({ chart, footer, ...context }: Props) {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="h-7 px-2 text-[13px]"
+                        className="h-7 px-2 text-label font-normal"
                         onClick={fit}
                     >
                         <Maximize />
@@ -226,12 +228,12 @@ function BoardCard({
     return (
         <section
             aria-label={board.name}
-            className="relative mx-auto w-fit max-w-[760px] min-w-[460px] overflow-hidden rounded-lg border border-border bg-surface shadow-card"
+            className="relative mx-auto w-fit max-w-[760px] min-w-[460px] overflow-hidden rounded-card border border-border bg-surface shadow-card"
         >
-            <header className="flex items-center justify-between gap-6 border-b border-border bg-surface-2 px-4 py-2.5">
-                <h2 className="text-sm font-semibold text-text">
+            <header className="flex items-center justify-between gap-6 border-b border-border bg-background px-4 py-3">
+                <h2 className="text-[16px] font-bold text-text">
                     {board.name}
-                    <span className="ml-2 text-xs font-normal text-text-muted">
+                    <span className="ml-2 text-meta font-normal text-text-muted">
                         {board.size} orang
                     </span>
                 </h2>
@@ -239,14 +241,14 @@ function BoardCard({
                     <button
                         type="button"
                         onClick={() => setShowAll((value) => !value)}
-                        className="rounded text-xs text-text-muted hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        className="rounded text-meta text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                     >
                         {showAll ? 'Ringkas' : `+${hidden} lainnya`}
                     </button>
                 )}
             </header>
             {visible.length > 0 ? (
-                <div className="grid auto-cols-fr grid-flow-col divide-x divide-border">
+                <div className="grid auto-cols-fr grid-flow-col divide-x divide-divider">
                     {visible.map((person) => (
                         <PersonRow
                             key={person.id}
@@ -257,7 +259,7 @@ function BoardCard({
                     ))}
                 </div>
             ) : (
-                <p className="px-4 py-3 text-xs text-text-muted">
+                <p className="px-4 py-3 text-meta text-text-muted">
                     Belum ada anggota Direksi.
                 </p>
             )}
@@ -328,7 +330,7 @@ function DivisionColumn({
                 items.push(
                     <div
                         key={person.id}
-                        className="rounded-lg border border-border bg-surface px-3 py-2 shadow-card"
+                        className="rounded-card border border-border bg-surface px-3.5 py-2.5 shadow-card"
                     >
                         <PersonRow
                             person={person}
@@ -366,7 +368,7 @@ function DivisionColumn({
                 )}
             >
                 <header className="flex items-start justify-between gap-2 px-3.5 pt-3">
-                    <h3 className="text-sm font-semibold text-text">
+                    <h3 className="text-[16px] font-bold text-text">
                         {division.name}
                     </h3>
                     <CodeBadge code={division.code} />
@@ -379,12 +381,12 @@ function DivisionColumn({
                             isYou={division.head.id === context.viewerId}
                         />
                     ) : (
-                        <p className="text-xs text-text-muted">
+                        <p className="text-meta text-text-muted">
                             Belum ada kepala divisi
                         </p>
                     )}
                 </div>
-                <footer className="flex items-center justify-between px-3.5 pb-3 text-xs text-text-muted">
+                <footer className="flex items-center justify-between px-3.5 pb-3 text-meta text-text-muted">
                     <span>{division.size} orang</span>
                     <span>{teamCountLabel(division.teams.length)}</span>
                 </footer>
@@ -404,7 +406,7 @@ function DivisionColumn({
                 <button
                     type="button"
                     onClick={() => setMembersOpen(false)}
-                    className="mt-2 ml-9 rounded text-xs text-text-muted hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    className="mt-2 ml-9 rounded text-meta text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                 >
                     Ringkas
                 </button>
@@ -430,19 +432,19 @@ function TeamCard({
     const everyone = [...(team.lead ? [team.lead] : []), ...team.members];
 
     return (
-        <div className="rounded-lg border border-border bg-surface p-3 shadow-card">
+        <div className="rounded-card border border-border bg-surface p-3.5 shadow-card">
             <div className="flex items-center gap-2">
                 <span
                     aria-hidden
-                    className="flex size-5 shrink-0 items-center justify-center rounded bg-info/15 text-[11px] font-semibold text-info"
+                    className="flex size-5 shrink-0 items-center justify-center rounded-xs bg-info-soft text-[12px] font-bold text-info"
                 >
                     {initial}
                 </span>
-                <h4 className="min-w-0 flex-1 truncate text-sm font-medium text-text">
+                <h4 className="min-w-0 flex-1 truncate text-[15px] font-semibold text-text">
                     {team.name}
                 </h4>
                 {team.code && (
-                    <span className="font-mono text-[11px] text-text-muted">
+                    <span className="font-mono text-[12px] text-text-muted">
                         {team.code}
                     </span>
                 )}
@@ -462,7 +464,7 @@ function TeamCard({
                 aria-expanded={open}
                 onClick={() => setMembersOpen((value) => !value)}
                 disabled={team.members.length === 0}
-                className="mt-2.5 flex w-full items-center gap-2 rounded text-left text-[13px] text-text-muted hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:hover:text-text-muted"
+                className="mt-2.5 flex w-full items-center gap-2 rounded text-left text-label font-normal text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none disabled:hover:text-text-muted"
             >
                 <AvatarStack people={everyone} total={team.size} />
                 <span className="flex-1">{team.size} orang</span>
@@ -514,7 +516,7 @@ function MembersSummary({
                 type="button"
                 aria-expanded={open}
                 onClick={onToggle}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] text-text-muted hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-label font-normal text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
             >
                 <AvatarStack people={members} />
                 <span className="flex-1 text-text">{label}</span>

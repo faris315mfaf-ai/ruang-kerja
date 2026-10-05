@@ -4,7 +4,7 @@ import { useDeferredValue, useMemo, useState } from 'react';
 import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { SegmentedTabs } from '@/components/ui/tabs';
 import { OrgChartDesktop } from '@/features/organization/chart/org-chart-desktop';
 import { OrgTreeList } from '@/features/organization/chart/org-tree-list';
 import type { OrgChart } from '@/features/organization/chart/types';
@@ -26,12 +26,12 @@ type View = 'chart' | 'list';
 function SourceNote({ can }: Pick<Props, 'can'>) {
     return (
         <span className="inline-flex flex-wrap items-center gap-1.5">
-            <RefreshCw className="size-3.5" aria-hidden />
+            <RefreshCw className="size-4" aria-hidden />
             Dibuat otomatis dari data divisi, tim, dan atasan langsung.
             {can.manageEmployees && (
                 <Link
                     href="/admin/karyawan"
-                    className="text-primary underline underline-offset-2 hover:text-primary-hover"
+                    className="font-semibold text-link hover:underline"
                 >
                     Ubah di Karyawan
                 </Link>
@@ -39,7 +39,7 @@ function SourceNote({ can }: Pick<Props, 'can'>) {
             {!can.manageEmployees && can.manageOrganization && (
                 <Link
                     href="/admin/organisasi"
-                    className="text-primary underline underline-offset-2 hover:text-primary-hover"
+                    className="font-semibold text-link hover:underline"
                 >
                     Kelola di Organisasi
                 </Link>
@@ -50,7 +50,7 @@ function SourceNote({ can }: Pick<Props, 'can'>) {
 
 function Legend() {
     return (
-        <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-text-muted">
+        <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 text-label font-normal text-text-muted">
             <li className="flex items-center gap-2">
                 <span
                     aria-hidden
@@ -66,7 +66,7 @@ function Legend() {
                 Anggota tanpa tim (ringkas)
             </li>
             <li className="flex items-center gap-2">
-                <span className="rounded-full bg-link-soft px-2 py-0.5 text-[11px] font-medium text-primary">
+                <span className="inline-flex h-6 items-center rounded-full bg-link-soft px-2.5 text-[12px] font-bold text-link">
                     Ketua
                 </span>
                 Ketua tim
@@ -104,10 +104,10 @@ export default function Structure({ chart, can }: Props) {
     const empty = isChartEmpty(chart);
 
     const searchBox = (
-        <div className="relative w-full md:w-60">
+        <div className="relative w-full md:w-72">
             <Search
                 aria-hidden
-                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-subtle"
+                className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-text-subtle"
             />
             <Input
                 type="search"
@@ -115,7 +115,7 @@ export default function Structure({ chart, can }: Props) {
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Cari orang"
                 aria-label="Cari orang atau unit"
-                className="h-11 pl-9 md:h-9"
+                className="pl-10 text-[17px] md:text-[16px]"
             />
         </div>
     );
@@ -127,7 +127,7 @@ export default function Structure({ chart, can }: Props) {
             description="Bagan muncul otomatis setelah divisi, tim, dan karyawan ditambahkan."
             action={
                 can.manageOrganization ? (
-                    <Button asChild variant="outline" size="sm">
+                    <Button asChild variant="outline">
                         <Link href="/admin/organisasi">Kelola divisi</Link>
                     </Button>
                 ) : undefined
@@ -142,7 +142,6 @@ export default function Structure({ chart, can }: Props) {
                 <Button
                     type="button"
                     variant="outline"
-                    size="sm"
                     onClick={() => setQuery('')}
                 >
                     Hapus pencarian
@@ -169,47 +168,36 @@ export default function Structure({ chart, can }: Props) {
             <Head title="Struktur organisasi" />
 
             {isMobile ? (
-                <div className="space-y-4">
-                    <p className="text-[13px] text-text-muted">{subtitle}</p>
+                <div className="flex flex-col gap-3.5">
+                    <p className="text-label font-normal text-text-muted">
+                        {subtitle}
+                    </p>
                     {!empty && searchBox}
                     {body}
                 </div>
             ) : (
-                <div className="space-y-5">
+                <div className="flex flex-col gap-6">
                     <header className="flex flex-wrap items-end justify-between gap-4">
-                        <div>
-                            <h1 className="text-xl leading-7 font-semibold text-text">
+                        <div className="flex flex-col gap-2">
+                            <h1 className="text-display">
                                 Struktur organisasi
                             </h1>
-                            <p className="text-sm text-text-muted">
+                            <p className="text-body-lg text-text-muted">
                                 {subtitle}
                             </p>
                         </div>
                         {!empty && (
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-3">
                                 {searchBox}
-                                <ToggleGroup
-                                    type="single"
-                                    variant="outline"
+                                <SegmentedTabs
+                                    label="Tampilan"
                                     value={view}
-                                    onValueChange={(value) =>
-                                        value && setView(value as View)
-                                    }
-                                    aria-label="Tampilan"
-                                >
-                                    <ToggleGroupItem
-                                        value="chart"
-                                        className="px-3"
-                                    >
-                                        Bagan
-                                    </ToggleGroupItem>
-                                    <ToggleGroupItem
-                                        value="list"
-                                        className="px-3"
-                                    >
-                                        Daftar
-                                    </ToggleGroupItem>
-                                </ToggleGroup>
+                                    onValueChange={setView}
+                                    options={[
+                                        { value: 'chart', label: 'Bagan' },
+                                        { value: 'list', label: 'Daftar' },
+                                    ]}
+                                />
                             </div>
                         )}
                     </header>
@@ -218,7 +206,7 @@ export default function Structure({ chart, can }: Props) {
 
                     {!empty && view === 'chart' && <Legend />}
                     {!empty && view === 'list' && (
-                        <p className="text-[13px] text-text-muted">
+                        <p className="text-label font-normal text-text-muted">
                             <SourceNote can={can} />
                         </p>
                     )}

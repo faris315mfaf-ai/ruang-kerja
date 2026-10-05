@@ -22,24 +22,27 @@ export function OrgTreeList({
     ...context
 }: Context & { chart: OrgChart }) {
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-3">
             {chart.board && (
                 <section
                     aria-label={chart.board.name}
-                    className="overflow-hidden rounded-lg border border-border bg-surface"
+                    className="overflow-hidden rounded-[22px] border border-border bg-surface"
                 >
-                    <h2 className="border-b border-border bg-surface-2 px-4 py-2.5 text-sm font-semibold text-text">
+                    <h2 className="border-b border-border bg-background px-4 py-3 text-[16px] font-bold text-text">
                         {chart.board.name}
-                        <span className="ml-2 text-xs font-normal text-text-muted">
+                        <span className="ml-2 text-meta font-normal text-text-muted">
                             {chart.board.size} orang
                         </span>
                     </h2>
-                    <ul className="divide-y divide-border">
+                    <ul className="divide-y divide-divider">
                         {[
                             ...(chart.board.head ? [chart.board.head] : []),
                             ...chart.board.members,
                         ].map((person) => (
-                            <li key={person.id} className="px-4 py-2.5">
+                            <li
+                                key={person.id}
+                                className="flex min-h-16 items-center px-3.5 py-2"
+                            >
                                 <PersonRow
                                     person={person}
                                     isYou={person.id === context.viewerId}
@@ -51,7 +54,7 @@ export function OrgTreeList({
             )}
 
             {chart.divisions.length > 0 && (
-                <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
+                <ul className="divide-y divide-divider overflow-hidden rounded-[22px] border border-border bg-surface">
                     {chart.divisions.map((division, index) => (
                         <DivisionItem
                             key={division.id}
@@ -66,14 +69,17 @@ export function OrgTreeList({
             {chart.unassigned.length > 0 && (
                 <section
                     aria-label="Tanpa divisi"
-                    className="rounded-lg border border-dashed border-border-strong bg-surface"
+                    className="rounded-[22px] border border-dashed border-border-strong bg-surface"
                 >
-                    <h2 className="px-4 pt-3 text-[13px] font-medium text-text-muted">
+                    <h2 className="px-4 pt-3 text-label text-text-muted">
                         Tanpa divisi · {chart.unassigned.length} orang
                     </h2>
-                    <ul className="divide-y divide-border">
+                    <ul className="divide-y divide-divider">
                         {chart.unassigned.map((person) => (
-                            <li key={person.id} className="px-4 py-2.5">
+                            <li
+                                key={person.id}
+                                className="flex min-h-16 items-center px-3.5 py-2"
+                            >
                                 <PersonRow
                                     person={person}
                                     isYou={person.id === context.viewerId}
@@ -106,7 +112,7 @@ function Disclosure({
                 type="button"
                 aria-expanded={open}
                 onClick={() => setOpen((value) => !value)}
-                className="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left transition-colors duration-120 ease-brand hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none"
+                className="flex min-h-16 w-full items-center gap-3 px-3.5 py-2 text-left transition-colors duration-120 ease-brand hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none"
             >
                 <ChevronRight
                     aria-hidden
@@ -152,18 +158,18 @@ function DivisionItem({
                         />
                         <span className="grid min-w-0 flex-1">
                             <span className="flex items-center gap-2">
-                                <span className="truncate text-[15px] font-medium text-text">
+                                <span className="truncate text-[15px] font-bold text-text">
                                     {division.name}
                                 </span>
                                 <CodeBadge code={division.code} />
                             </span>
-                            <span className="truncate text-[13px] text-text-muted">
+                            <span className="truncate text-label font-normal text-text-muted">
                                 {division.head
                                     ? division.head.name
                                     : 'Belum ada kepala divisi'}
                             </span>
                         </span>
-                        <span className="shrink-0 text-[13px] text-text-muted tabular-nums">
+                        <span className="shrink-0 text-label font-normal text-text-muted tabular-nums">
                             {division.size} orang
                         </span>
                     </>
@@ -190,7 +196,7 @@ function DivisionItem({
                     {division.members.length > 0 && (
                         <div>
                             {division.teams.length > 0 && (
-                                <h4 className="mb-2 text-xs font-medium text-text-muted">
+                                <h4 className="mb-2 text-meta font-semibold text-text-muted">
                                     Tanpa tim · {division.members.length} orang
                                 </h4>
                             )}
@@ -210,7 +216,7 @@ function DivisionItem({
                     )}
 
                     {division.children.length > 0 && (
-                        <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
+                        <ul className="divide-y divide-divider overflow-hidden rounded-[22px] border border-border bg-surface">
                             {division.children.map((child, index) => (
                                 <DivisionItem
                                     key={child.id}
@@ -227,7 +233,7 @@ function DivisionItem({
                         division.teams.length === 0 &&
                         division.members.length === 0 &&
                         division.children.length === 0 && (
-                            <p className="text-[13px] text-text-muted">
+                            <p className="text-label font-normal text-text-muted">
                                 Belum ada anggota.
                             </p>
                         )}
@@ -249,18 +255,18 @@ function TeamItem({
     return (
         <Disclosure
             defaultOpen={expandAll || contains}
-            className="overflow-hidden rounded-lg border border-border bg-surface [&>button]:min-h-12 [&>button]:px-3"
+            className="overflow-hidden rounded-card border border-border bg-surface [&>button]:min-h-14 [&>button]:px-3.5"
             summary={
                 <>
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-text">
+                    <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-text">
                         {team.name}
                         {team.code && (
-                            <span className="ml-2 font-mono text-[11px] font-normal text-text-muted">
+                            <span className="ml-2 font-mono text-[12px] font-normal text-text-muted">
                                 {team.code}
                             </span>
                         )}
                     </span>
-                    <span className="shrink-0 text-[13px] text-text-muted tabular-nums">
+                    <span className="shrink-0 text-label font-normal text-text-muted tabular-nums">
                         {team.size} orang
                     </span>
                 </>
@@ -285,7 +291,7 @@ function TeamItem({
                     </li>
                 ))}
                 {!team.lead && team.members.length === 0 && (
-                    <li className="text-[13px] text-text-muted">
+                    <li className="text-label font-normal text-text-muted">
                         Belum ada anggota.
                     </li>
                 )}

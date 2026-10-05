@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { normalizeText } from '@/features/tasks/lib/filters';
 import type { WorkspaceRole } from '@/features/tasks/types';
 import { MemberDriveStatus } from '@/features/drive/drive-access-badge';
-import { cn } from '@/lib/utils';
 import { destroy, store, update } from '@/routes/workspaces/members';
 import type {
     MemberCandidate,
