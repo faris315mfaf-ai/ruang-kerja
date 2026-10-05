@@ -98,9 +98,8 @@ export function KpiRow({
                     .filter(Boolean)
                     .join(' · ')}
                 className="flex-[1.3_1_260px]"
-            >
-                <HealthSplit health={health} className="mt-1" />
-            </MetricKpi>
+                bar={<HealthSplit health={health} />}
+            />
             <MetricKpi
                 label="Milestone 2 minggu ke depan"
                 definition={DEFINITIONS.upcoming}

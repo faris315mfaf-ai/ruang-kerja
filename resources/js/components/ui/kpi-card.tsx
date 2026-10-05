@@ -35,7 +35,9 @@ const DELTA_TONES = {
 /**
  * KPI card (Komponen / DBeranda "Ringkasan"): label 15–16 semibold, value in
  * `text-kpi` (40/48 desktop, 28 phone) with tabular numbers, delta pill and a
- * note. Optional children (sparkline, action) go at the bottom.
+ * note. `bar` (progress/split bar, DHR "Hadir sekarang", DPortofolio "Proyek
+ * aktif") sits between the value and the note; optional children
+ * (sparkline, action) go at the bottom.
  */
 export function KpiCard({
     label,
@@ -46,6 +48,7 @@ export function KpiCard({
     tone = 'plain',
     valueClassName,
     className,
+    bar,
     children,
 }: {
     label: ReactNode;
@@ -58,6 +61,8 @@ export function KpiCard({
     /** e.g. text-danger for an alarming value on a plain card. */
     valueClassName?: string;
     className?: string;
+    /** Bar between the value and the note (see {@link KpiBar}). */
+    bar?: ReactNode;
     children?: ReactNode;
 }) {
     const style = TONES[tone];
@@ -88,6 +93,7 @@ export function KpiCard({
                     </span>
                 )}
             </p>
+            {bar}
             {(delta || note) && (
                 <p
                     className={cn(
@@ -117,5 +123,48 @@ export function KpiCard({
             )}
             {children}
         </section>
+    );
+}
+
+/**
+ * 8px progress bar for a KPI card: white on the highlight/warm gradients
+ * (DHR "Hadir sekarang"), teal on a plain card.
+ */
+export function KpiBar({
+    value,
+    label,
+    onBrand = true,
+    className,
+}: {
+    /** 0–100. */
+    value: number;
+    /** Accessible name ("Hadir dari yang terjadwal"). */
+    label: string;
+    onBrand?: boolean;
+    className?: string;
+}) {
+    const clamped = Math.max(0, Math.min(100, value));
+
+    return (
+        <div
+            role="progressbar"
+            aria-label={label}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(clamped)}
+            className={cn(
+                'h-2 overflow-hidden rounded-full',
+                onBrand ? 'bg-on-brand/25' : 'bg-surface-2',
+                className,
+            )}
+        >
+            <div
+                className={cn(
+                    'h-full rounded-full',
+                    onBrand ? 'bg-on-brand' : 'bg-primary',
+                )}
+                style={{ width: `${clamped}%` }}
+            />
+        </div>
     );
 }

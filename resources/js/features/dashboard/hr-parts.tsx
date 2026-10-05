@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/empty-state';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { KpiBar } from '@/components/ui/kpi-card';
 import {
     CorrectionDialog,
     type CorrectionTarget,
@@ -57,17 +58,14 @@ export function HrTodayKpis({
                 note={`${rate}% dari yang terjadwal · termasuk ${counts.late} terlambat`}
                 className={compact ? 'col-span-2' : 'flex-[1.3_1_260px]'}
                 cardClassName={card}
-            >
-                <span
-                    aria-hidden
-                    className="mt-1 block h-2 overflow-hidden rounded-full bg-on-brand/25"
-                >
-                    <span
-                        className="block h-full rounded-full bg-on-brand"
-                        style={{ width: `${rate}%` }}
+                bar={
+                    <KpiBar
+                        value={rate}
+                        label="Hadir dari yang terjadwal"
+                        className={compact ? 'my-1' : undefined}
                     />
-                </span>
-            </MetricKpi>
+                }
+            />
             <MetricKpi
                 label="Terlambat"
                 definition="Sudah check-in hari ini setelah batas toleransi shift."

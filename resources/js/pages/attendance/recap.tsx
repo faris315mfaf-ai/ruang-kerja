@@ -24,7 +24,7 @@ import { DesktopOnlyNotice } from '@/components/desktop-only-notice';
 import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { KpiCard } from '@/components/ui/kpi-card';
+import { KpiBar, KpiCard } from '@/components/ui/kpi-card';
 import {
     Select,
     SelectContent,
@@ -652,21 +652,8 @@ function RecapKpis({
                 label="Rata-rata kehadiran"
                 value={rate === null ? '–' : `${rate}%`}
                 className={cn(compact && 'col-span-2')}
-            >
-                <div
-                    role="progressbar"
-                    aria-label="Rata-rata kehadiran"
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={rate ?? 0}
-                    className="h-2 overflow-hidden rounded-full bg-on-brand/25"
-                >
-                    <div
-                        className="h-full rounded-full bg-on-brand"
-                        style={{ width: `${rate ?? 0}%` }}
-                    />
-                </div>
-            </KpiCard>
+                bar={<KpiBar value={rate ?? 0} label="Rata-rata kehadiran" />}
+            />
             <KpiCard
                 label="Hari kerja"
                 value={summary.calendarWorkDays}
