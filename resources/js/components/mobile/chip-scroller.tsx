@@ -42,15 +42,15 @@ export function ChipScroller<T extends string>({
                         aria-checked={active}
                         onClick={() => onChange(chip.value)}
                         className={cn(
-                            'flex h-9 shrink-0 snap-start items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                            'flex h-[42px] shrink-0 snap-start items-center gap-1.5 rounded-full px-4 text-[16px] font-bold transition-colors duration-120 ease-brand outline-none focus-visible:ring-[3px] focus-visible:ring-ring',
                             active
-                                ? 'border-primary bg-primary text-primary-foreground'
-                                : 'border-border bg-surface text-text-muted',
+                                ? 'bg-primary bg-grad-aksi text-on-brand'
+                                : 'border border-border-strong bg-surface text-text',
                         )}
                     >
                         {chip.label}
                         {chip.count !== undefined && (
-                            <span className="text-xs tnum opacity-80">
+                            <span className="text-[14px] font-semibold tnum opacity-80">
                                 {chip.count}
                             </span>
                         )}

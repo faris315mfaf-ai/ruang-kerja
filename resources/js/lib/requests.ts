@@ -233,12 +233,12 @@ export function formatRequestDuration(
 
 /** Tinted pill per category (token colors only). */
 export const categoryClass: Record<RequestCategory, string> = {
-    leave: 'bg-info/10 text-info',
+    leave: 'bg-info-soft text-info',
     permit: 'bg-accent-blue/10 text-info',
     sick: 'bg-brand-500/10 text-primary',
-    overtime: 'bg-warning/10 text-warning',
+    overtime: 'bg-warning-soft text-warning',
     correction: 'bg-surface-2 text-text-muted',
-    business_trip: 'bg-success/10 text-success',
+    business_trip: 'bg-success-soft text-success',
 };
 
 export type Tone = 'warning' | 'success' | 'danger' | 'muted' | 'info';
@@ -262,10 +262,10 @@ export const approvalTone: Record<ApprovalStatus, Tone> = {
 };
 
 export const toneClass: Record<Tone, { pill: string; dot: string }> = {
-    warning: { pill: 'bg-warning/10 text-warning', dot: 'bg-warning' },
-    success: { pill: 'bg-success/10 text-success', dot: 'bg-success' },
-    danger: { pill: 'bg-danger/10 text-danger', dot: 'bg-danger' },
-    info: { pill: 'bg-info/10 text-info', dot: 'bg-info' },
+    warning: { pill: 'bg-warning-soft text-warning', dot: 'bg-warning' },
+    success: { pill: 'bg-success-soft text-success', dot: 'bg-success' },
+    danger: { pill: 'bg-danger-soft text-danger', dot: 'bg-danger' },
+    info: { pill: 'bg-info-soft text-info', dot: 'bg-info' },
     muted: { pill: 'bg-surface-2 text-text-muted', dot: 'bg-text-subtle' },
 };
 

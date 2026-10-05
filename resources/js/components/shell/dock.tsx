@@ -316,7 +316,7 @@ function DockStack({
                                     className={cn(
                                         'flex flex-col items-center gap-1.5 rounded-xl px-1 py-2.5 text-center text-xs leading-tight text-text',
                                         entry.active &&
-                                            'bg-primary/10 text-primary',
+                                            'bg-link-soft text-primary',
                                     )}
                                 >
                                     {entry.icon}

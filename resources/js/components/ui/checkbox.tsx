@@ -1,30 +1,35 @@
-import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
-import { CheckIcon } from "lucide-react"
-import * as React from "react"
+import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
+import { CheckIcon, MinusIcon } from 'lucide-react';
+import * as React from 'react';
 
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils';
 
+/** 24px, radius 7: empty = 2px strong border, checked = gradient aksi + white check. */
 function Checkbox({
-  className,
-  ...props
+    className,
+    ...props
 }: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
-  return (
-    <CheckboxPrimitive.Root
-      data-slot="checkbox"
-      className={cn(
-        "peer border-input data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground data-[state=checked]:border-primary focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive size-4 shrink-0 rounded-[4px] border shadow-xs transition-shadow outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
-        className
-      )}
-      {...props}
-    >
-      <CheckboxPrimitive.Indicator
-        data-slot="checkbox-indicator"
-        className="flex items-center justify-center text-current transition-none"
-      >
-        <CheckIcon className="size-3.5" />
-      </CheckboxPrimitive.Indicator>
-    </CheckboxPrimitive.Root>
-  )
+    return (
+        <CheckboxPrimitive.Root
+            data-slot="checkbox"
+            className={cn(
+                'peer size-6 shrink-0 rounded-[7px] border-2 border-border-strong bg-surface text-on-brand transition-[background-color,border-color,box-shadow] duration-120 ease-brand outline-none focus-visible:ring-[3px] focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger data-[state=checked]:border-0 data-[state=checked]:bg-primary data-[state=checked]:bg-grad-aksi data-[state=indeterminate]:border-0 data-[state=indeterminate]:bg-primary data-[state=indeterminate]:bg-grad-aksi',
+                className,
+            )}
+            {...props}
+        >
+            <CheckboxPrimitive.Indicator
+                data-slot="checkbox-indicator"
+                className="group flex items-center justify-center text-current transition-none"
+            >
+                {props.checked === 'indeterminate' ? (
+                    <MinusIcon className="size-4" strokeWidth={3} />
+                ) : (
+                    <CheckIcon className="size-4" strokeWidth={3} />
+                )}
+            </CheckboxPrimitive.Indicator>
+        </CheckboxPrimitive.Root>
+    );
 }
 
-export { Checkbox }
+export { Checkbox };

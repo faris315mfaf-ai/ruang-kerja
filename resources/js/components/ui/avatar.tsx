@@ -40,7 +40,7 @@ function AvatarFallback({
     <AvatarPrimitive.Fallback
       data-slot="avatar-fallback"
       className={cn(
-        "bg-muted flex size-full items-center justify-center rounded-full",
+        "bg-avatar-neutral text-avatar-neutral-fg flex size-full items-center justify-center rounded-full font-bold",
         className
       )}
       {...props}
@@ -49,3 +49,23 @@ function AvatarFallback({
 }
 
 export { Avatar, AvatarImage, AvatarFallback }
+
+/** Initials colours of the design (Komponen "Avatar"), picked per name. */
+const AVATAR_TONES = [
+  "bg-avatar-blue text-avatar-blue-fg",
+  "bg-avatar-teal text-avatar-teal-fg",
+  "bg-avatar-amber text-avatar-amber-fg",
+] as const
+
+/** Stable tone for a person: the same name always gets the same colour. */
+function avatarTone(name: string): string {
+  let hash = 0
+
+  for (const char of name) {
+    hash = (hash * 31 + char.charCodeAt(0)) >>> 0
+  }
+
+  return AVATAR_TONES[hash % AVATAR_TONES.length]
+}
+
+export { avatarTone }

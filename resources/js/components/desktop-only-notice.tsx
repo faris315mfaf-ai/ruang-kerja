@@ -21,7 +21,7 @@ export function DesktopOnlyNotice({ feature }: { feature?: string }) {
             role="status"
             className="flex flex-col items-center rounded-lg border border-border bg-surface px-6 py-10 text-center"
         >
-            <span className="mb-4 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <span className="mb-4 flex size-12 items-center justify-center rounded-full bg-link-soft text-primary">
                 <Monitor className="size-6" strokeWidth={1.75} aria-hidden />
             </span>
             <p className="text-[17px] font-semibold text-text">

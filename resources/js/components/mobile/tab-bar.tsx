@@ -50,7 +50,7 @@ export function TabBar() {
                         transform: `translateX(${Math.max(shown, 0) * 100}%)`,
                     }}
                 >
-                    <span className="block size-full rounded-full bg-primary/12 dark:bg-primary/16" />
+                    <span className="block size-full rounded-full bg-link-soft dark:bg-primary/16" />
                 </li>
                 {tabNavItems.map((item, index) => {
                     const active = index === current;

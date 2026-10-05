@@ -44,7 +44,7 @@ export const CALENDAR_TONES: Record<
 > = {
     ...TONE_CLASSES,
     brand: {
-        soft: 'bg-primary/12 text-primary',
+        soft: 'bg-link-soft text-primary',
         text: 'text-primary',
         solid: 'bg-primary',
     },

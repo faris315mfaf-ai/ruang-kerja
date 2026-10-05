@@ -26,23 +26,23 @@ export function BottomSheet({
     return (
         <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
             <DialogPrimitive.Portal>
-                <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-background/60 backdrop-blur-[2px] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
+                <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-background/60 backdrop-blur-[3px] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
                 <DialogPrimitive.Content
                     className={cn(
-                        'glass fixed inset-x-0 bottom-0 z-50 flex max-h-[90svh] flex-col rounded-t-xl border-b-0 duration-180 ease-brand data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom',
+                        'glass-strong fixed inset-x-0 bottom-0 z-50 flex max-h-[90svh] flex-col rounded-t-sheet border-b-0 shadow-float duration-180 ease-brand data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom',
                         className,
                     )}
                 >
                     <div
                         aria-hidden
-                        className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border-strong"
+                        className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-border-strong"
                     />
-                    <div className="px-4 pt-3 pb-2">
-                        <DialogPrimitive.Title className="text-[17px] font-semibold text-text">
+                    <div className="px-5 pt-3 pb-2">
+                        <DialogPrimitive.Title className="text-[20px] leading-[26px] font-bold text-text">
                             {title}
                         </DialogPrimitive.Title>
                         {description ? (
-                            <DialogPrimitive.Description className="mt-0.5 text-sm text-text-muted">
+                            <DialogPrimitive.Description className="mt-0.5 text-[15px] leading-[22px] text-text-muted">
                                 {description}
                             </DialogPrimitive.Description>
                         ) : (
@@ -51,11 +51,11 @@ export function BottomSheet({
                             </DialogPrimitive.Description>
                         )}
                     </div>
-                    <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+                    <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">
                         {children}
                     </div>
                     {footer && (
-                        <div className="border-t border-border px-4 pt-3 pb-safe">
+                        <div className="border-t border-border px-5 pt-3 pb-safe">
                             <div className="pb-3">{footer}</div>
                         </div>
                     )}

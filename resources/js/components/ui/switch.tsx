@@ -8,8 +8,9 @@ type Props = Omit<React.ComponentProps<'button'>, 'onChange' | 'value'> & {
 };
 
 /**
- * Accessible toggle (role="switch") styled like shadcn's Switch, without an
- * extra Radix dependency. `size="md"` gives a 44px touch target on mobile.
+ * Accessible toggle (role="switch"), Arus style (Komponen "Mode gelap"):
+ * `md` 52×32 with a 26px knob (default touch size), `sm` 40×24 for dense
+ * rows; on = gradient aksi, off = strong border colour.
  */
 function Switch({
     checked,
@@ -28,9 +29,9 @@ function Switch({
             disabled={disabled}
             onClick={() => onCheckedChange?.(!checked)}
             className={cn(
-                'group relative inline-flex shrink-0 items-center rounded-full border border-transparent transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
-                size === 'md' ? 'h-8 w-14' : 'h-5 w-9',
-                checked ? 'bg-primary' : 'bg-border-strong',
+                'group relative inline-flex shrink-0 items-center rounded-full p-[3px] transition-colors duration-180 ease-brand outline-none focus-visible:ring-[3px] focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+                size === 'md' ? 'h-8 w-13' : 'h-6 w-10',
+                checked ? 'bg-primary bg-grad-aksi' : 'bg-border-strong',
                 className,
             )}
             {...props}
@@ -38,13 +39,13 @@ function Switch({
             <span
                 aria-hidden
                 className={cn(
-                    'pointer-events-none block rounded-full bg-on-brand shadow-card transition-transform duration-120 ease-brand',
-                    size === 'md' ? 'size-7' : 'size-4',
+                    'pointer-events-none block rounded-full bg-on-brand shadow-knob transition-transform duration-180 ease-brand',
+                    size === 'md' ? 'size-[26px]' : 'size-[18px]',
                     checked
                         ? size === 'md'
-                            ? 'translate-x-6'
+                            ? 'translate-x-5'
                             : 'translate-x-4'
-                        : 'translate-x-0.5',
+                        : 'translate-x-0',
                 )}
             />
         </button>

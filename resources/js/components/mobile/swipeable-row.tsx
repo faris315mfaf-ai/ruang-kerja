@@ -22,7 +22,7 @@ const ACTION_WIDTH = 80;
 
 const toneClass: Record<NonNullable<SwipeAction['tone']>, string> = {
     primary: 'bg-primary text-primary-foreground',
-    info: 'bg-accent-blue text-on-brand',
+    info: 'bg-accent-blue-strong text-on-brand',
     danger: 'bg-danger text-on-danger',
     neutral: 'bg-surface-2 text-text',
 };

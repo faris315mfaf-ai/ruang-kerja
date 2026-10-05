@@ -18,11 +18,15 @@ function Toaster({ ...props }: ToasterProps) {
                 bottom: 'var(--toast-offset-bottom, 16px)',
             }}
             toastOptions={{ closeButtonAriaLabel: 'Tutup notifikasi' }}
+            // Inverse toast of the design (Komponen: dark chip on light, light
+            // chip at night); details in app.css "Toasts".
             style={
                 {
-                    '--normal-bg': 'var(--popover)',
-                    '--normal-text': 'var(--popover-foreground)',
-                    '--normal-border': 'var(--border)',
+                    '--normal-bg': 'var(--inverse)',
+                    '--normal-text': 'var(--on-inverse)',
+                    '--normal-border': 'transparent',
+                    '--border-radius': '18px',
+                    '--width': '380px',
                 } as React.CSSProperties
             }
             {...props}
