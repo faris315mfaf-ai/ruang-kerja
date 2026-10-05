@@ -95,3 +95,8 @@ export type WorkspaceTaskOptions = WorkspaceRef & {
 };
 
 export type TaskViewMode = 'board' | 'list' | 'calendar';
+
+/** Row of "Tugas saya" (TaskRowResource). */
+export type MyTaskRow = TaskRow & {
+    done_status_id: string | null;
+};

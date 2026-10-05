@@ -26,7 +26,7 @@ final class MyTasks
     {
         return $this->scoped($user, $tab)
             ->where(fn (Builder $query) => $query->open()->orWhere('completed_at', '>=', $weekStart))
-            ->with(['workspace', 'status', 'labels', 'assignees:id,name,avatar_url', 'parent:id,number'])
+            ->with(['workspace.statuses', 'status', 'labels', 'assignees:id,name,avatar_url', 'parent:id,number'])
             ->withCount([
                 'checklistItems',
                 'checklistItems as checklist_done_count' => fn (Builder $query) => $query->where('is_done', true),

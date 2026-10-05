@@ -2,8 +2,10 @@
 
 namespace App\Http\Resources;
 
+use App\Domain\Tasks\Enums\TaskStatusCategory;
 use App\Models\Label;
 use App\Models\Task;
+use App\Models\TaskStatus;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -30,6 +32,10 @@ class TaskRowResource extends TaskResource
             'status' => TaskStatusResource::make($task->status)->resolve($request),
             'labels' => $task->labels->map(fn (Label $label): array => LabelResource::make($label)->resolve($request))->values()->all(),
             'assignees' => $task->assignees->map(fn (User $user): array => PersonResource::from($user))->values()->all(),
+            // First "done" column of the workspace (quick "Selesai" action), when statuses are loaded.
+            'done_status_id' => $task->workspace->relationLoaded('statuses')
+                ? $task->workspace->statuses->first(fn (TaskStatus $status): bool => $status->category === TaskStatusCategory::Done)?->id
+                : null,
         ];
     }
 }
