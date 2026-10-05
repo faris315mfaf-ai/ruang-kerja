@@ -112,6 +112,8 @@ Ikon: **Lucide**, stroke 1.75, ukuran 16 (UI) / 20 (navigasi).
 - Durasi 120 ms (hover, toggle), 180 ms (popover, sheet), easing `cubic-bezier(.2,.8,.2,1)`.
 - Drag Kanban: kartu terangkat (scale 1.02, bayangan), placeholder garis putus-putus.
 - Hormati `prefers-reduced-motion`.
+- Ikon beranimasi / loop ambient: gerak halus berulang tanpa sambungan (frame awal = frame akhir), hanya `transform`/`opacity`, dan berhenti di frame diam saat `prefers-reduced-motion`. Pakai seperlunya — status hidup (sinkron, check-in berhasil, menunggu), bukan dekorasi.
+- Panduan kerja dengan agent (skill `animate`, `review-animations`, `motion-design`, `apple-hig`): lihat CLAUDE.md.
 
 ## 8. Bahasa & tulisan UI
 

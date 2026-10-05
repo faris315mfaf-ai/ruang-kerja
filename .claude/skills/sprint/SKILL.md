@@ -12,5 +12,5 @@ disable-model-invocation: true
 3. **Rencana.** Tulis rencana singkat: file yang dibuat/diubah, migrasi, policy, test, layar desktop & mobile yang terdampak, dan risiko. Tanyakan pengguna hanya bila ada konflik dengan `docs/`.
 4. **Bangun bertahap.** Buat branch `feat/sprint-$ARGUMENTS-<topik>`. Commit per langkah logis (Conventional Commits). Ikuti Definition of Done di `AGENTS.md`.
 5. **Verifikasi otomatis.** `composer test`, `composer lint`, `npm run typecheck`, `npm run lint`. Perbaiki sampai hijau.
-6. **Verifikasi tampilan.** Jalankan skill `cek-ui` untuk setiap layar yang disentuh sprint ini (desktop 1440 & mobile 390, terang & gelap).
+6. **Verifikasi tampilan.** Jalankan skill `cek-ui` untuk setiap layar yang disentuh sprint ini (desktop 1440 & mobile 390, terang & gelap); `cek-ui` sudah mencakup review `apple-hig` dan `review-animations`. Animasi baru dibangun dengan skill `animate` / `motion-design` sesuai batasan di CLAUDE.md.
 7. **Ringkasan akhir** (Bahasa Indonesia): apa yang selesai per acceptance criteria (centang), cara mencoba manual di `https://ruangkerja.test`, akun demo yang dipakai, keputusan yang diambil, dan sisa pekerjaan. Jangan `git push` tanpa izin.

@@ -14,4 +14,5 @@ Prasyarat: Claude Code dijalankan dengan Chrome (`claude --chrome` atau `/chrome
 4. **Mobile:** ubah ukuran jendela ke 390×844 (atau DevTools device mode). Ambil screenshot. Pastikan shell mobile (app bar + tab bawah) yang tampil, bukan sidebar.
 5. **Bandingkan** dengan mockup per area: tata letak & urutan seksi, tipografi (Plus Jakarta Sans, angka tabular), warna token, ikon status/prioritas, state kosong/loading, teks Bahasa Indonesia, target sentuh ≥ 44px dan input 16px di mobile. Data contoh boleh berbeda; struktur tidak.
 6. **Baca console** (filter `error|warning`) dan pastikan tidak ada galat.
-7. **Laporkan** tabel singkat: Area · Mockup · Sekarang · Tindakan. Perbaiki yang jelas salah (bukan selera), lalu ulangi langkah 3–4 sekali. Hal yang butuh keputusan desain: tanyakan pengguna.
+7. **Review HIG & gerak.** Jalankan skill `apple-hig` untuk layar ini (hierarki, navigasi, form, kontras, target sentuh, mode gelap) dan `review-animations` untuk animasi/transisi yang disentuh. Ambil temuan yang tidak bertentangan dengan mockup dan `docs/DESIGN.md`.
+8. **Laporkan** tabel singkat: Area · Mockup · Sekarang · Tindakan. Perbaiki yang jelas salah (bukan selera), lalu ulangi langkah 3–4 sekali. Hal yang butuh keputusan desain: tanyakan pengguna.

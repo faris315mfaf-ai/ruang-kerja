@@ -6,7 +6,7 @@ Aplikasi kantor internal: **absensi, pengajuan & persetujuan, workspace, kolabor
 
 ## Daftar isi
 
-1. [Dokumentasi](#dokumentasi) · 2. [Teknologi](#teknologi) · 3. [Pengembangan lokal](#pengembangan-lokal) · [Google Workspace](#menyiapkan-google-workspace) · 4. [Perintah sehari-hari](#perintah-sehari-hari) · 5. [Uji](#uji) · 6. [Deploy ke VPS (dari nol)](#deploy-ke-vps-biznet-gio-dari-nol) · 7. [Deploy berikutnya & rollback](#deploy-berikutnya--rollback) · 8. [Backup & pemulihan](#backup--pemulihan) · 9. [Observabilitas & keamanan](#observabilitas--keamanan) · [Privasi](#privasi-uu-pdp) · [Kinerja](#kinerja) · 10. [Troubleshooting](#troubleshooting)
+1. [Dokumentasi](#dokumentasi) · 2. [Teknologi](#teknologi) · 3. [Pengembangan lokal](#pengembangan-lokal) · [Google Workspace](#menyiapkan-google-workspace) · 4. [Perintah sehari-hari](#perintah-sehari-hari) · 5. [Uji](#uji) · 6. [Deploy ke VPS (dari nol)](#deploy-ke-vps-biznet-gio-dari-nol) · 7. [Deploy berikutnya & rollback](#deploy-berikutnya--rollback) · 8. [Backup & pemulihan](#backup--pemulihan) · 9. [Observabilitas & keamanan](#observabilitas--keamanan) · [Privasi](#privasi-uu-pdp) · [Kinerja](#kinerja) · 10. [Troubleshooting](#troubleshooting) · [Skill desain & animasi](#skill-claude-code-untuk-desain--animasi)
 
 ## Dokumentasi
 
@@ -248,6 +248,24 @@ Server baru dari nol: ikuti bagian 6 langkah 1–5 (tanpa membuat Super Admin), 
 | Server: `/health` 503 | Lihat `checks`: `database` → `logs postgres`; `redis` → `logs redis`, cek `REDIS_PASSWORD` |
 | Server: job tidak diproses | `exec queue php artisan horizon:status`, buka `/horizon`, `logs queue` |
 | Server: backup tidak jalan | `logs backup` (jadwal & rclone), uji manual `exec backup backup.sh` |
+
+## Skill Claude Code untuk desain & animasi
+
+Opsional, dipasang global per komputer (tidak di-commit ke repo). Aturan pemakaiannya di `CLAUDE.md`.
+
+```bash
+npx skills add LottieFiles/motion-design-skill -a claude-code -g
+npx skills add emilkowalski/skills -a claude-code -g   # pilih: animate, review-animations, improve-animations, find-animation-opportunities, animation-vocabulary, apple-design, mobile-native, break-ui
+```
+
+Skill Apple HIG dari `dickwu/apple-design-skill` memakai nama `apple-design` yang **bentrok** dengan skill milik emilkowalski, jadi pasang manual dengan nama `apple-hig`:
+
+```bash
+git clone --depth 1 https://github.com/dickwu/apple-design-skill.git ~/.claude/skills/apple-hig
+sed -i.bak '2s/^name: apple-design$/name: apple-hig/' ~/.claude/skills/apple-hig/SKILL.md && rm ~/.claude/skills/apple-hig/SKILL.md.bak
+```
+
+Di Windows (Git Bash) folder skill ada di `%USERPROFILE%\.claude\skills`. Buka sesi Claude Code baru setelah memasang.
 
 ## Kontribusi
 
