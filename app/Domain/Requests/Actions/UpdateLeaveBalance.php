@@ -30,7 +30,8 @@ final class UpdateLeaveBalance
                 ]);
             }
 
-            $locked->fill(['entitled_days' => $entitled, 'carried_over_days' => $carriedOver])->save();
+            // HR's carry-over is final: the yearly generator will not overwrite it.
+            $locked->fill(['entitled_days' => $entitled, 'carried_over_days' => $carriedOver, 'generated_at' => $locked->generated_at ?? now()])->save();
 
             $this->audit->log('leave_balance.updated', $locked, $before, [
                 'entitled_days' => $locked->entitled_days,

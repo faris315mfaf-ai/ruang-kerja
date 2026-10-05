@@ -12,16 +12,19 @@ use Illuminate\Support\Facades\DB;
 /**
  * Creates the yearly balances (leave types with an annual quota) for every
  * active employee, with carry-over from last year's unused days capped by
- * `carry_over_max_days`. Idempotent: existing balances are left untouched.
+ * `carry_over_max_days`. A balance created earlier on first use (generated_at
+ * null, e.g. a January leave submitted in December) gets its carry-over filled
+ * once ("completed"). Idempotent: settled balances are left untouched.
  */
 final class GenerateAnnualBalances
 {
     /**
-     * @return array{created: int, skipped: int}
+     * @return array{created: int, completed: int, skipped: int}
      */
     public function handle(int $year, ?Company $company = null): array
     {
         $created = 0;
+        $completed = 0;
         $skipped = 0;
 
         $types = LeaveType::query()
@@ -35,7 +38,7 @@ final class GenerateAnnualBalances
                 ->where('company_id', $type->company_id)
                 ->where('status', UserStatus::Active->value)
                 ->orderBy('id')
-                ->chunkById(200, function ($users) use ($type, $year, &$created, &$skipped): void {
+                ->chunkById(200, function ($users) use ($type, $year, &$created, &$completed, &$skipped): void {
                     foreach ($users as $user) {
                         /** @var User $user */
                         if (! $type->isEligible($user, now()->setDate($year, 1, 1))) {
@@ -44,23 +47,30 @@ final class GenerateAnnualBalances
                             continue;
                         }
 
-                        $wasCreated = DB::transaction(fn (): bool => $this->createFor($user, $type, $year));
-                        $wasCreated ? $created++ : $skipped++;
+                        match (DB::transaction(fn (): string => $this->createFor($user, $type, $year))) {
+                            'created' => $created++,
+                            'completed' => $completed++,
+                            default => $skipped++,
+                        };
                     }
                 });
         }
 
-        return ['created' => $created, 'skipped' => $skipped];
+        return ['created' => $created, 'completed' => $completed, 'skipped' => $skipped];
     }
 
-    private function createFor(User $user, LeaveType $type, int $year): bool
+    /**
+     * @return 'created'|'completed'|'skipped'
+     */
+    private function createFor(User $user, LeaveType $type, int $year): string
     {
-        $exists = LeaveBalance::query()
+        $balance = LeaveBalance::query()
             ->where(['user_id' => $user->id, 'leave_type_id' => $type->id, 'year' => $year])
-            ->exists();
+            ->lockForUpdate()
+            ->first();
 
-        if ($exists) {
-            return false;
+        if ($balance?->generated_at !== null) {
+            return 'skipped';
         }
 
         $previous = LeaveBalance::query()
@@ -73,14 +83,22 @@ final class GenerateAnnualBalances
             $carry = max(0.0, min($previous->available(), $type->carry_over_max_days));
         }
 
+        if ($balance !== null) {
+            // Created on first use: only the carry-over is still missing.
+            $balance->fill(['carried_over_days' => $carry, 'generated_at' => now()])->save();
+
+            return 'completed';
+        }
+
         LeaveBalance::query()->create([
             'user_id' => $user->id,
             'leave_type_id' => $type->id,
             'year' => $year,
             'entitled_days' => $type->annual_quota_days ?? 0,
             'carried_over_days' => $carry,
+            'generated_at' => now(),
         ]);
 
-        return true;
+        return 'created';
     }
 }

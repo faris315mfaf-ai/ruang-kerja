@@ -85,7 +85,7 @@ class LeaveBalanceController extends Controller
         $year = (int) $validated['year'];
 
         $result = $generate->handle($year, $user->company);
-        Inertia::flash('toast', ['type' => 'success', 'message' => "Saldo {$year}: {$result['created']} dibuat, {$result['skipped']} sudah ada/dilewati."]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Saldo {$year}: {$result['created']} dibuat, {$result['completed']} dilengkapi, {$result['skipped']} sudah ada/dilewati."]);
 
         return back();
     }

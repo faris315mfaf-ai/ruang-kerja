@@ -236,7 +236,7 @@ Tambahan Sprint 4: `description` null, `max_backdate_days` null (koreksi absensi
 
 ### leave_balances
 `id`, `user_id`, `leave_type_id`, `year`, `entitled_days` numeric(5,1), `carried_over_days`, `used_days`, `pending_days`. Unik `(user_id, leave_type_id, year)`. `pending_days` dipakai agar saldo tidak terpakai dua kali saat pengajuan sedang diproses.
-CHECK: semua kolom ≥ 0 dan `entitled + carried_over − used − pending ≥ 0` (saldo tidak pernah minus). Hanya jenis ber-`annual_quota_days`. Dibuat oleh `requests:generate-balances` (1 Januari) atau saat pertama dipakai.
+CHECK: semua kolom ≥ 0 dan `entitled + carried_over − used − pending ≥ 0` (saldo tidak pernah minus). Hanya jenis ber-`annual_quota_days`. Dibuat oleh `requests:generate-balances` (1 Januari) atau saat pertama dipakai. `generated_at` timestamptz null: kapan carry-over ditetapkan (oleh generator atau HR). Baris yang dibuat saat pertama dipakai (mis. cuti Januari diajukan Desember) tetap null sehingga generator mengisi carry-over-nya tepat sekali; ubahan HR menetapkan `generated_at` sehingga tidak ditimpa.
 
 ### requests — semua jenis pengajuan dalam satu tabel
 | Kolom | Tipe | Keterangan |
