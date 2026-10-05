@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Workspaces\Contracts\HasWorkspaceAttachments;
 use Carbon\CarbonImmutable;
 use Database\Factories\CommentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -13,11 +14,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use LogicException;
 
 /**
  * Rich-text comment (docs/DATABASE.md §4 comments). `body` is a sanitized
  * Tiptap document (App\Domain\Tasks\Services\RichText); `edited_at` marks
- * "(diedit)". Soft-deleted comments stay in the timeline as "Komentar dihapus".
+ * "(diedit)". Soft-deleted comments stay in the timeline as "Komentar dihapus"
+ * (their Drive attachments are hidden: the parent no longer resolves).
  *
  * @property string $id
  * @property string $commentable_type
@@ -33,7 +36,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read User $author
  */
 #[Fillable(['commentable_type', 'commentable_id', 'user_id', 'body', 'body_text', 'edited_at'])]
-class Comment extends Model
+class Comment extends Model implements HasWorkspaceAttachments
 {
     /** @use HasFactory<CommentFactory> */
     use HasFactory, HasUlids, SoftDeletes;
@@ -90,5 +93,26 @@ class Comment extends Model
     public function mentions(): MorphMany
     {
         return $this->morphMany(Mention::class, 'mentionable');
+    }
+
+    /**
+     * Drive attachments (Sprint 7): files go to the folder of the task's workspace.
+     *
+     * @return MorphMany<Attachment, $this>
+     */
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable')->oldest()->oldest('id');
+    }
+
+    public function attachmentWorkspace(): Workspace
+    {
+        $task = $this->commentable;
+
+        if (! $task instanceof Task) {
+            throw new LogicException("Comment [{$this->id}] does not belong to a task.");
+        }
+
+        return $task->attachmentWorkspace();
     }
 }

@@ -2,7 +2,9 @@
 
 namespace App\Domain\Google\Actions;
 
+use App\Domain\Google\Events\AttachmentRemoved;
 use App\Models\Attachment;
+use App\Models\User;
 
 /**
  * Detaches a file (soft delete). The Drive file itself is not deleted.
@@ -10,8 +12,10 @@ use App\Models\Attachment;
  */
 final class RemoveAttachment
 {
-    public function handle(Attachment $attachment): void
+    public function handle(Attachment $attachment, ?User $by = null): void
     {
-        $attachment->delete();
+        if ($attachment->delete() === true) {
+            AttachmentRemoved::dispatch($attachment, $by?->id);
+        }
     }
 }

@@ -26,6 +26,7 @@ function payload(
         can_edit: true,
         drive: {
             enabled: true,
+            fake: false,
             picker_enabled: false,
             max_upload_bytes: 100,
             chunk_bytes: 10,
@@ -131,6 +132,75 @@ describe('AttachmentsPanel', () => {
         expect(requestJson).toHaveBeenCalledWith('/lampiran/att-1', {
             method: 'DELETE',
         });
+    });
+
+    it('renders data passed by the parent without fetching and follows its updates', async () => {
+        const { rerender } = render(
+            <AttachmentsPanel
+                attachableType="task"
+                attachableId="01task"
+                initial={payload()}
+            />,
+        );
+
+        expect(screen.getByText('Notulen rapat')).toBeTruthy();
+        expect(screen.getByText('1')).toBeTruthy();
+        expect(
+            screen.getByRole('button', { name: /Lampirkan dari Drive/ }),
+        ).toBeTruthy();
+        expect(requestJson).not.toHaveBeenCalled();
+
+        rerender(
+            <AttachmentsPanel
+                attachableType="task"
+                attachableId="01task"
+                initial={payload({ attachments: [] })}
+            />,
+        );
+
+        expect(await screen.findByText('Belum ada lampiran.')).toBeTruthy();
+        expect(requestJson).not.toHaveBeenCalled();
+    });
+
+    it('offers Lampirkan + Kamera / Drive / File on phones', () => {
+        render(
+            <AttachmentsPanel
+                attachableType="task"
+                attachableId="01task"
+                initial={payload()}
+                variant="mobile"
+            />,
+        );
+
+        for (const name of ['Lampirkan', 'Kamera', 'Drive', 'File']) {
+            expect(screen.getByRole('button', { name })).toBeTruthy();
+        }
+    });
+
+    it('hides the controls when Drive is not configured', () => {
+        render(
+            <AttachmentsPanel
+                attachableType="comment"
+                attachableId="01comment"
+                initial={payload({
+                    attachments: [],
+                    drive: {
+                        enabled: false,
+                        fake: false,
+                        picker_enabled: false,
+                        max_upload_bytes: 100,
+                        chunk_bytes: 10,
+                    },
+                })}
+            />,
+        );
+
+        expect(
+            screen.getByText(
+                'Belum ada lampiran. Integrasi Google Drive belum diaktifkan.',
+            ),
+        ).toBeTruthy();
+        expect(screen.queryByRole('button', { name: /Unggah/ })).toBeNull();
     });
 
     it('shows an error with a retry', async () => {
