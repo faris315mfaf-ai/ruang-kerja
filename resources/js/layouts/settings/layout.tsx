@@ -9,6 +9,7 @@ import { cn, toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
+import { google as googleSettings } from '@/routes/settings';
 import type { NavItem } from '@/types';
 
 const profileItem: NavItem = { title: 'Profil', href: edit(), icon: null };
@@ -26,12 +27,18 @@ const appearanceItem: NavItem = {
     icon: null,
 };
 
+const googleItem: NavItem = {
+    title: 'Akun Google',
+    href: googleSettings(),
+    icon: null,
+};
+
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
     const { auth } = usePage().props;
     const sidebarNavItems = hasAnyRole(auth.roles, 'super_admin')
-        ? [profileItem, securityItem, appearanceItem]
-        : [profileItem, appearanceItem];
+        ? [profileItem, securityItem, appearanceItem, googleItem]
+        : [profileItem, appearanceItem, googleItem];
 
     return (
         <div className="px-4 py-6">
