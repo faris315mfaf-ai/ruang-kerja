@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { AvatarStack } from '@/features/tasks/avatar-stack';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { cn } from '@/lib/utils';
+import { summary } from '@/routes/projects';
 import {
     activity,
     documents,
@@ -21,9 +22,12 @@ type Props = WorkspacePageProps & {
     children: ReactNode;
     /** "Tugas baru" in the header (desktop); hidden when null. */
     onCreateTask?: (() => void) | null;
+    /** Replaces the default header (project summary, Sprint 9). */
+    header?: ReactNode;
 };
 
 const TABS: { tab: WorkspaceTab; label: string }[] = [
+    { tab: 'summary', label: 'Ringkasan' },
     { tab: 'tasks', label: 'Tugas' },
     { tab: 'documents', label: 'Dokumen' },
     { tab: 'files', label: 'File' },
@@ -41,6 +45,8 @@ function tabHref(tab: WorkspaceTab, key: string): string {
             return activity.url(key);
         case 'settings':
             return settings.url(key);
+        case 'summary':
+            return summary.url(key);
         default:
             return show.url(key);
     }
@@ -58,6 +64,7 @@ export function WorkspaceShell({
     tab,
     children,
     onCreateTask,
+    header,
 }: Props) {
     const breakpoint = useBreakpoint();
     const { auth } = usePage().props;
@@ -66,54 +73,61 @@ export function WorkspaceShell({
 
     return (
         <div className="space-y-4">
-            {mobile ? (
-                // The app bar already shows the name (mockup MBoard): only the meta line here.
-                <p className="-mt-2 flex items-center gap-2 text-[13px] text-text-muted">
-                    <WorkspaceAvatar
-                        name={workspace.name}
-                        type={workspace.type}
-                        color={workspace.color}
-                        ownerName={auth.user?.name}
-                    />
-                    <span className="truncate">{workspaceMeta(workspace)}</span>
-                </p>
-            ) : (
-                <header className="flex items-start gap-3">
-                    <WorkspaceAvatar
-                        name={workspace.name}
-                        type={workspace.type}
-                        color={workspace.color}
-                        ownerName={auth.user?.name}
-                        className="size-8 rounded-md text-sm"
-                    />
-                    <div className="min-w-0 flex-1">
-                        <h1 className="truncate text-xl leading-7 font-semibold text-text">
-                            {title}
-                        </h1>
-                        <p className="truncate text-[13px] text-text-muted">
+            {header ??
+                (mobile ? (
+                    // The app bar already shows the name (mockup MBoard): only the meta line here.
+                    <p className="-mt-2 flex items-center gap-2 text-[13px] text-text-muted">
+                        <WorkspaceAvatar
+                            name={workspace.name}
+                            type={workspace.type}
+                            color={workspace.color}
+                            ownerName={auth.user?.name}
+                        />
+                        <span className="truncate">
                             {workspaceMeta(workspace)}
-                        </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                        {workspace.type !== 'personal' && (
-                            <AvatarStack people={members} max={4} size="md" />
-                        )}
-                        {onCreateTask && (
-                            <Button
-                                size="sm"
-                                className="h-8"
-                                onClick={onCreateTask}
-                            >
-                                <Plus />
-                                Tugas baru
-                                <kbd className="rounded border border-primary-foreground/30 px-1 font-mono text-[10px]">
-                                    C
-                                </kbd>
-                            </Button>
-                        )}
-                    </div>
-                </header>
-            )}
+                        </span>
+                    </p>
+                ) : (
+                    <header className="flex items-start gap-3">
+                        <WorkspaceAvatar
+                            name={workspace.name}
+                            type={workspace.type}
+                            color={workspace.color}
+                            ownerName={auth.user?.name}
+                            className="size-8 rounded-md text-sm"
+                        />
+                        <div className="min-w-0 flex-1">
+                            <h1 className="truncate text-xl leading-7 font-semibold text-text">
+                                {title}
+                            </h1>
+                            <p className="truncate text-[13px] text-text-muted">
+                                {workspaceMeta(workspace)}
+                            </p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-3">
+                            {workspace.type !== 'personal' && (
+                                <AvatarStack
+                                    people={members}
+                                    max={4}
+                                    size="md"
+                                />
+                            )}
+                            {onCreateTask && (
+                                <Button
+                                    size="sm"
+                                    className="h-8"
+                                    onClick={onCreateTask}
+                                >
+                                    <Plus />
+                                    Tugas baru
+                                    <kbd className="rounded border border-primary-foreground/30 px-1 font-mono text-[10px]">
+                                        C
+                                    </kbd>
+                                </Button>
+                            )}
+                        </div>
+                    </header>
+                ))}
 
             {workspace.archived && (
                 <div
@@ -133,7 +147,10 @@ export function WorkspaceShell({
                         '-mx-4 [scrollbar-width:none] overflow-x-auto px-4 [&::-webkit-scrollbar]:hidden',
                 )}
             >
-                {TABS.map((item) => {
+                {TABS.filter(
+                    (item) =>
+                        item.tab !== 'summary' || workspace.type === 'project',
+                ).map((item) => {
                     const active = item.tab === tab;
 
                     return (

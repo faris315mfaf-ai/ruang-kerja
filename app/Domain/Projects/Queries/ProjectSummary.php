@@ -304,7 +304,8 @@ final class ProjectSummary
             ->whereNull('tasks.deleted_at')
             ->whereNotIn('tasks.status_category', TaskStatusCategory::closedValues())
             ->groupBy('task_assignees.user_id')
-            ->pluck(DB::raw('COUNT(*)'), 'task_assignees.user_id')
+            ->selectRaw('task_assignees.user_id AS user_id, COUNT(*) AS open_count')
+            ->pluck('open_count', 'user_id')
             ->all();
 
         $members = User::query()

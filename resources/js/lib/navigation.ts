@@ -5,6 +5,7 @@ import {
     CircleCheck,
     Clock,
     FileText,
+    FolderKanban,
     Home,
     Inbox,
     LayoutGrid,
@@ -62,6 +63,32 @@ export const mainNavItems: AppNavItem[] = [
         matchPrefix: true,
     },
 ];
+
+/** "Portofolio" (Dashboard Direksi, Sprint 9) for Direksi and Super Admin. */
+export const portfolioNavItem: AppNavItem = {
+    title: 'Portofolio',
+    href: '/portofolio',
+    icon: FolderKanban,
+};
+
+export function canSeePortfolio(roles: readonly string[]): boolean {
+    return hasAnyRole(roles, 'direksi', 'super_admin');
+}
+
+/** Main navigation for the signed-in roles: Portofolio right after Dashboard. */
+export function mainNavItemsFor(roles: readonly string[]): AppNavItem[] {
+    if (!canSeePortfolio(roles)) {
+        return mainNavItems;
+    }
+
+    const index = mainNavItems.findIndex((item) => item.href === '/dashboard');
+
+    return [
+        ...mainNavItems.slice(0, index + 1),
+        portfolioNavItem,
+        ...mainNavItems.slice(index + 1),
+    ];
+}
 
 /** Mobile bottom tab bar: exactly five items (docs/PLATFORM.md §2). */
 export const tabNavItems: AppNavItem[] = [

@@ -16,7 +16,11 @@ import type { ReactNode } from 'react';
 import { ThemeSegmented } from '@/components/shell/theme-segmented';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { MenuWorkspaceGrid } from '@/features/workspaces/menu-workspace-grid';
-import { adminNavItems } from '@/lib/navigation';
+import {
+    adminNavItems,
+    canSeePortfolio,
+    portfolioNavItem,
+} from '@/lib/navigation';
 import { primaryRoleLabel } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
@@ -139,6 +143,13 @@ export default function Menu() {
                             label="Dashboard"
                             href="/dashboard"
                         />
+                        {canSeePortfolio(auth.roles) && (
+                            <Row
+                                icon={portfolioNavItem.icon}
+                                label="Portofolio proyek"
+                                href={portfolioNavItem.href}
+                            />
+                        )}
                         <Row
                             icon={CheckCheck}
                             label="Persetujuan"

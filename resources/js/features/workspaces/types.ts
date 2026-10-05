@@ -37,6 +37,7 @@ export type WorkspacePageProps = {
 };
 
 export type WorkspaceTab =
+    | 'summary'
     | 'tasks'
     | 'documents'
     | 'files'

@@ -18,7 +18,7 @@ import { SidebarWorkspaces } from '@/features/workspaces/sidebar-workspaces';
 import { useUnreadCount } from '@/features/notifications/unread-store';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { AppNavItem } from '@/lib/navigation';
-import { adminNavItems, isActivePath, mainNavItems } from '@/lib/navigation';
+import { adminNavItems, isActivePath, mainNavItemsFor } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 
 function NavList({ items }: { items: AppNavItem[] }) {
@@ -90,7 +90,7 @@ export function AppSidebar({ className }: { className?: string }) {
 
             <SidebarContent className="gap-1">
                 <SidebarGroup className="py-1">
-                    <NavList items={mainNavItems} />
+                    <NavList items={mainNavItemsFor(auth.roles)} />
                 </SidebarGroup>
 
                 <SidebarWorkspaces />
