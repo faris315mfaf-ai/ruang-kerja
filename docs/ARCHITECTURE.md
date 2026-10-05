@@ -116,7 +116,7 @@ Uji wajib: setiap Policy punya test matriks peran × aksi.
 
 - Sesi cookie `HttpOnly`, `Secure`, `SameSite=Lax`. CSRF untuk semua POST.
 - Rate limit: login 10/menit/IP, check-in 6/menit/user, API umum 120/menit.
-- Header keamanan via Caddy: HSTS, CSP ketat (izinkan `apis.google.com`, `docs.google.com` untuk Picker & iframe), `Permissions-Policy` hanya `geolocation=(self), camera=(self)`.
+- Header keamanan dipasang **aplikasi** (`SecurityHeaders`, `config/security.php`) agar berlaku di balik proxy apa pun: HSTS (produksi), CSP ketat dengan nonce (izinkan domain Google untuk Picker, OAuth, pratinjau Drive, avatar), `Permissions-Policy` hanya `geolocation=(self), camera=(self)`. Caddy menambah header dasar hanya bila belum ada. Checklist: `docs/security/ASVS-L1.md`.
 - Selfie: disk privat, URL bertanda tangan 5 menit, job bulanan menghapus selfie lebih lama dari retensi.
 - Token Google: cast `encrypted`. `APP_KEY` dirotasi dengan `APP_PREVIOUS_KEYS`.
 - Persetujuan (UU PDP): layar persetujuan saat pertama kali check-in, versi kebijakan tercatat, karyawan dapat melihat data absensinya sendiri dan meminta ekspor.
@@ -127,13 +127,13 @@ Uji wajib: setiap Policy punya test matriks peran × aksi.
 | Layanan | Image | Catatan |
 |---|---|---|
 | `caddy` | caddy:2 | TLS otomatis, reverse proxy ke `app:8000` & `reverb:8080` (`/app`, `/apps`) |
-| `app` | image aplikasi (FrankenPHP/Octane atau PHP-FPM + Nginx) | `php artisan optimize` saat start |
+| `app` | image aplikasi (`Dockerfile`, FrankenPHP mode klasik, Debian) | `php artisan optimize` saat start (entrypoint), user non-root |
 | `queue` | image aplikasi | `php artisan horizon` |
 | `scheduler` | image aplikasi | `php artisan schedule:work` |
 | `reverb` | image aplikasi | `php artisan reverb:start --host=0.0.0.0 --port=8080` |
 | `postgres` | postgres:17 | volume persisten, tidak diekspos ke publik |
 | `redis` | redis:7 | `appendonly yes` |
-| `backup` | image kecil (pg_dump + rclone/aws-cli) | cron 02:00, unggah ke object storage, retensi 30 hari |
+| `backup` | `docker/backup/Dockerfile` (postgres:17-alpine + rclone + supercronic) | 02:00 WIB, unggah ke object storage, retensi 30 hari (`scripts/backup.sh`, `scripts/restore.sh`) |
 
 ### Ukuran VPS
 Puluhan pengguna: **4 vCPU / 8 GB RAM / 80–100 GB SSD** sudah lega. Pantau dengan Laravel Pulse. Skala vertikal bila CPU rata-rata > 60%.
@@ -142,10 +142,10 @@ Puluhan pengguna: **4 vCPU / 8 GB RAM / 80–100 GB SSD** sudah lega. Pantau den
 1. `lint` → Pint, Larastan, ESLint, `tsc --noEmit`
 2. `test` → Pest dengan service Postgres & Redis
 3. `build` → image Docker (multi-stage, aset Vite di-build), push ke GHCR
-4. `deploy` (branch `main`, manual approval) → SSH ke VPS → `docker compose pull && docker compose up -d` → `php artisan migrate --force` → `php artisan horizon:terminate`
+4. `deploy` (`.github/workflows/deploy.yml`, setelah CI hijau di `main`, approval environment `production`) → SSH ke VPS → `scripts/deploy-remote.sh`: `docker compose pull && up -d --wait` → `php artisan migrate --force` → `db:seed` (peran) → `php artisan horizon:terminate` → cek `/health`
 
 ### Runbook singkat
-- **Pulihkan DB:** unduh dump terbaru → `pg_restore --clean -d ruangkerja`. Uji bulanan di VPS staging.
+- **Pulihkan DB:** `docker compose -f compose.prod.yml exec backup restore.sh --latest --yes` (setelah menghentikan app/queue/scheduler/reverb). Uji bulanan: `restore.sh --latest --target ruangkerja_restore_test --create --compare ruangkerja --drop-after` (README §Backup).
 - **Reverb mati:** aplikasi tetap jalan (polling fallback 30 detik di board). Restart layanan `reverb`.
 - **Google API error 403 rate limit:** job otomatis retry. Cek kuota di Cloud Console.
 

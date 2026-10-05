@@ -9,8 +9,8 @@ Cabang `feat/sprint-10-ops`. Bagian A tidak bergantung pada modul domain (absens
 | 1 | Header keamanan + CSP (nonce) di level aplikasi, cookie sesi aman, rate limiter bernama | `app/Http/Middleware/SecurityHeaders.php`, `config/security.php`, `config/session.php`, `app/Providers/AppServiceProvider.php`, `app/Providers/FortifyServiceProvider.php`, `bootstrap/app.php`, `resources/views/app.blade.php`, `tests/Feature/Platform/{SecurityHeadersTest,RateLimiterTest,SessionCookieTest}.php` |
 | 2 | Model strict mode di non-produksi (`Model::shouldBeStrict`) + perbaiki kode yang rusak | `AppServiceProvider` |
 | 3 | Docker produksi: image FrankenPHP multi-stage, `compose.prod.yml`, Caddy edge, `.dockerignore`, `.env.production.example` | `Dockerfile`, `docker/app/*`, `docker/caddy/Caddyfile`, `compose.prod.yml` |
-| 4 | Kontainer backup (pg_dump 02.00 WIB → S3 via rclone, retensi 30 hari) + restore | `docker/backup/*`, `scripts/backup.sh`, `scripts/restore.sh`, `docs/RUNBOOK.md` |
-| 5 | GitHub Actions deploy (GHCR → approval `production` → SSH) + job `build` di CI | `.github/workflows/deploy.yml`, `.github/workflows/ci.yml` |
+| 4 | Kontainer backup (pg_dump 02.00 WIB → S3 via rclone, retensi 30 hari) + restore | `docker/backup/*`, `scripts/backup.sh`, `scripts/restore.sh`, README §Backup |
+| 5 | GitHub Actions deploy (GHCR → approval `production` → SSH) + job `build` di CI | `.github/workflows/deploy.yml`, `.github/workflows/ci.yml`, `scripts/deploy-remote.sh` |
 | 6 | Observabilitas: gate Horizon/Pulse = super_admin, Sentry opsional, `/health` JSON | `HorizonServiceProvider`, `AppServiceProvider`, `app/Support/Health/*`, `app/Http/Controllers/HealthController.php`, `config/sentry.php` |
 | 7 | Playwright visual smoke (375/834/1440 × terang/gelap) | `playwright.config.ts`, `tests/e2e/*` |
 | 8 | Checklist OWASP ASVS L1 | `docs/security/ASVS-L1.md` |
