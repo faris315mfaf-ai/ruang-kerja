@@ -1,262 +1,214 @@
 import { Link } from '@inertiajs/react';
-import { ShieldCheck } from 'lucide-react';
-import { formatDate, formatTime } from '@/lib/format';
+import { CalendarRange, ShieldCheck } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Panel, PanelLink } from '@/components/ui/panel';
+import { formatLongDate, formatTime } from '@/lib/format';
 import { formatShortDate } from '@/lib/requests';
-import { cn } from '@/lib/utils';
+import { ComparedNote } from './compared-note';
 import {
-    DistributionBar,
+    KpiSkeleton,
+    MetricKpi,
+    PageHeader,
+    PanelHint,
+    PanelSkeleton,
+} from './dashboard-ui';
+import { FilterBar } from './filter-bar';
+import {
     DistributionLegend,
+    DivisionRows,
     HrTodayKpis,
     MissingCheckOutList,
+    NotCheckedInList,
     ReviewList,
-    totalRow,
 } from './hr-parts';
 import type { HrProps } from './hr-types';
-import { FilterBar } from './filter-bar';
-import { ComparedNote } from './compared-note';
 import { compared, formatMetric } from './lib';
 import { LiveBadge } from './live-badge';
 import { MetricInfo } from './metric-info';
-import { Panel, PanelSkeleton } from './panel';
 import { RequestRows } from './request-rows';
-import { StatCard, StatCardSkeleton } from './stat-card';
 import { TrendChart } from './trend-chart';
 import { ViewPicker } from './view-picker';
 
-function CountBadge({
-    count,
-    tone = 'warning',
-}: {
-    count: number;
-    tone?: 'warning' | 'muted';
-}) {
-    return (
-        <span
-            className={cn(
-                'inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-medium tnum',
-                tone === 'warning' && count > 0
-                    ? 'bg-warning-soft text-warning'
-                    : 'bg-surface-2 text-text-muted',
-            )}
-        >
-            {count}
-        </span>
-    );
+/** "48 karyawan terjadwal hari ini di 6 divisi · 40 Reguler · 8 Pagi". */
+export function hrSubtitle(props: HrProps): string {
+    const { attendance } = props;
+    const shifts = attendance.shifts
+        .map((shift) => `${shift.count} ${shift.name}`)
+        .join(' · ');
+
+    return [
+        `${attendance.counts.scheduled} karyawan terjadwal hari ini di ${attendance.divisions.length} divisi`,
+        shifts || null,
+    ]
+        .filter(Boolean)
+        .join(' · ');
 }
 
-/** Dashboard HR, desktop & tablet (mockup DashboardHR). */
+/** Dashboard HR, desktop & tablet (design DHR). */
 export function HrDesktop({ live, ...props }: HrProps & { live: boolean }) {
     const { attendance, review, pending, missingCheckOut, recap, definitions } =
         props;
-    const total = totalRow(attendance.divisions);
     const previous = props.filters.period.previous_label;
 
     return (
-        <div className="space-y-5">
-            <header className="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                    <h1 className="flex items-center gap-3 text-2xl leading-8 font-semibold text-text">
-                        Absensi hari ini ·{' '}
-                        {props.scope.label === 'Semua divisi'
-                            ? 'seluruh perusahaan'
-                            : props.scope.label}
+        <div className="flex flex-col gap-6">
+            <PageHeader
+                overline={`${formatLongDate(props.today)} · ${formatTime(new Date())}`}
+                title="Dashboard HR"
+                subtitle={
+                    <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        {hrSubtitle(props)}
                         <LiveBadge live={live} />
-                    </h1>
-                    <p className="text-sm text-text-muted">
-                        {formatDate(new Date())} · {props.scope.member_count}{' '}
-                        karyawan aktif · diperbarui{' '}
-                        <span className="font-mono tnum">
-                            {formatTime(new Date())}
-                        </span>
-                    </p>
-                </div>
+                    </span>
+                }
+            >
+                <Button asChild variant="outline">
+                    <Link href="/absensi/rekap">
+                        <CalendarRange aria-hidden />
+                        Rekap absensi
+                    </Link>
+                </Button>
+            </PageHeader>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <ViewPicker views={props.views} />
                 <FilterBar
                     filters={props.filters}
                     exportUrl={props.exportUrl}
+                    className="ml-auto"
                 />
-            </header>
-            <ViewPicker views={props.views} />
+            </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <section aria-label="Ringkasan" className="flex flex-wrap gap-5">
                 <HrTodayKpis attendance={attendance} />
-            </div>
+            </section>
 
-            <div className="grid gap-4 xl:grid-cols-12">
-                <Panel
-                    id="per-division"
-                    title="Per divisi"
-                    aside={<DistributionLegend />}
-                    className="xl:col-span-7"
-                    flush
-                >
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm tnum">
-                            <thead className="bg-surface-2 text-[13px] text-text-muted">
-                                <tr>
-                                    <th
-                                        scope="col"
-                                        className="px-4 py-2 text-left font-normal"
-                                    >
-                                        Divisi
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-2 py-2 text-right font-normal"
-                                    >
-                                        Terjadwal
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="w-1/4 px-3 py-2 text-left font-normal"
-                                    >
-                                        Distribusi
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-2 py-2 text-right font-normal"
-                                    >
-                                        Hadir
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-2 py-2 text-right font-normal"
-                                    >
-                                        Terlambat
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-2 py-2 text-right font-normal"
-                                    >
-                                        Cuti/izin/sakit
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-4 py-2 text-right font-normal"
-                                    >
-                                        Belum
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
-                                {[...attendance.divisions, total].map((row) => (
-                                    <tr
-                                        key={row.id ?? row.name}
-                                        className={cn(
-                                            row === total &&
-                                                'bg-surface-2 font-semibold',
-                                        )}
-                                    >
-                                        <th
-                                            scope="row"
-                                            className="px-4 py-2.5 text-left font-normal text-text"
-                                        >
-                                            {row.name}
-                                        </th>
-                                        <td className="px-2 text-right">
-                                            {row.scheduled}
-                                        </td>
-                                        <td className="px-3">
-                                            <DistributionBar row={row} />
-                                        </td>
-                                        <td className="px-2 text-right">
-                                            {row.present}
-                                        </td>
-                                        <td
-                                            className={cn(
-                                                'px-2 text-right',
-                                                row.late > 0
-                                                    ? 'text-warning'
-                                                    : 'text-text-muted',
-                                            )}
-                                        >
-                                            {row.late}
-                                        </td>
-                                        <td className="px-2 text-right">
-                                            {row.away}
-                                        </td>
-                                        <td className="px-4 text-right">
-                                            {row.not_checked_in}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    <p className="px-4 pt-3 text-[13px] text-text-muted">
-                        Kolom Hadir sudah termasuk yang terlambat.
-                    </p>
-                </Panel>
-                <Panel
-                    id="review"
-                    title={
-                        <>
-                            Perlu ditinjau <CountBadge count={review.count} />
-                        </>
-                    }
-                    aside="absensi tidak biasa · 7 hari"
-                    className="xl:col-span-5"
-                    flush
-                >
-                    <ReviewList items={review.items} />
-                    <p className="flex items-center gap-1.5 px-4 pt-2 text-xs text-text-muted">
-                        <ShieldCheck className="size-3.5" aria-hidden />
-                        Lihat selfie: akses tercatat di audit log.
-                    </p>
-                </Panel>
-            </div>
+            <section className="flex flex-wrap items-start gap-5">
+                <div className="flex min-w-0 flex-[1.5_1_560px] flex-col gap-5">
+                    <Panel
+                        title={
+                            props.scope.label === 'Semua divisi'
+                                ? 'Kehadiran per divisi'
+                                : `Kehadiran · ${props.scope.label}`
+                        }
+                        action={<DistributionLegend />}
+                        bodyClassName="gap-2"
+                    >
+                        <DivisionRows rows={attendance.divisions} />
+                        <p className="text-meta text-text-muted">
+                            Angka hadir sudah termasuk yang terlambat.
+                        </p>
+                    </Panel>
 
-            <div className="grid gap-4 xl:grid-cols-2">
-                <Panel
-                    id="pending-hr"
-                    title={
-                        <>
-                            Pengajuan menunggu HR{' '}
-                            <CountBadge count={pending.count} tone="muted" />
-                        </>
-                    }
-                    aside={
-                        <Link
-                            href="/persetujuan"
-                            className="text-primary hover:underline"
-                        >
-                            Buka persetujuan →
-                        </Link>
-                    }
-                    flush
-                >
-                    <RequestRows
-                        items={pending.items}
-                        showUser
-                        hrefBase="/persetujuan"
-                        empty="Tidak ada pengajuan yang menunggu HR."
-                    />
-                </Panel>
-                <Panel
-                    id="missing-checkout"
-                    title={
-                        <>
-                            Lupa check-out kemarin{' '}
-                            <CountBadge
-                                count={missingCheckOut.count}
-                                tone="muted"
+                    <Panel
+                        title={
+                            <>
+                                Belum check-in
+                                <Badge
+                                    variant="status"
+                                    tone="warning"
+                                    className="h-7"
+                                >
+                                    {attendance.counts.not_checked_in}
+                                </Badge>
+                            </>
+                        }
+                        action={
+                            <PanelHint>
+                                pengingat otomatis 15 menit setelah jam masuk
+                            </PanelHint>
+                        }
+                        flush
+                        className="pb-2"
+                    >
+                        <NotCheckedInList people={attendance.people} />
+                    </Panel>
+
+                    <Panel
+                        title={
+                            <>
+                                Lupa check-out kemarin
+                                <Badge
+                                    variant="status"
+                                    tone="neutral"
+                                    className="h-7"
+                                >
+                                    {missingCheckOut.count}
+                                </Badge>
+                            </>
+                        }
+                        action={
+                            <PanelHint>
+                                {formatShortDate(missingCheckOut.date)}
+                            </PanelHint>
+                        }
+                        flush
+                        className="pb-2"
+                    >
+                        <MissingCheckOutList data={missingCheckOut} />
+                    </Panel>
+                </div>
+
+                <div className="flex min-w-0 flex-[1_1_360px] flex-col gap-5">
+                    <Panel
+                        title={
+                            <>
+                                Perlu ditinjau
+                                <Badge className="h-7 bg-grad-hangat px-2.5 text-[15px]">
+                                    {review.count}
+                                </Badge>
+                            </>
+                        }
+                        action={
+                            <PanelHint>absensi tidak biasa · 7 hari</PanelHint>
+                        }
+                        bodyClassName="gap-3.5"
+                    >
+                        <ReviewList items={review.items} />
+                        <p className="flex items-center gap-1.5 text-meta text-text-muted">
+                            <ShieldCheck
+                                aria-hidden
+                                className="size-4 shrink-0"
                             />
-                        </>
-                    }
-                    aside={formatShortDate(missingCheckOut.date)}
-                    flush
-                >
-                    <MissingCheckOutList data={missingCheckOut} />
-                </Panel>
-            </div>
+                            Melihat selfie selalu tercatat di audit log.
+                        </p>
+                    </Panel>
 
-            <section aria-labelledby="recap" className="space-y-3">
-                <h2 id="recap" className="text-[15px] font-semibold text-text">
+                    <Panel
+                        title={
+                            <>
+                                Pengajuan menunggu HR
+                                <Badge className="h-7 px-2.5 text-[15px]">
+                                    {pending.count}
+                                </Badge>
+                            </>
+                        }
+                        flush
+                        className="pb-3"
+                    >
+                        <RequestRows
+                            items={pending.items}
+                            showUser
+                            hrefBase="/persetujuan"
+                            empty="Tidak ada pengajuan yang menunggu HR."
+                        />
+                        <div className="border-t border-divider px-6 pt-3 md:px-7">
+                            <PanelLink href="/persetujuan">
+                                Buka antrean ({pending.count})
+                            </PanelLink>
+                        </div>
+                    </Panel>
+                </div>
+            </section>
+
+            <section aria-labelledby="recap" className="flex flex-col gap-4">
+                <h2 id="recap" className="text-h2">
                     Rekap {recap ? recap.compared.current.label : 'periode'}
                 </h2>
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
                     {recap ? (
                         <>
-                            <StatCard
+                            <MetricKpi
                                 label="Kedisiplinan hadir"
                                 definition={definitions.attendance_discipline}
                                 value={formatMetric(
@@ -268,9 +220,9 @@ export function HrDesktop({ live, ...props }: HrProps & { live: boolean }) {
                                     'percent',
                                     previous,
                                 )}
-                                caption={`${recap.kpis.attendance_discipline.numerator} dari ${recap.kpis.attendance_discipline.denominator} hari kerja`}
+                                note={`${recap.kpis.attendance_discipline.numerator} dari ${recap.kpis.attendance_discipline.denominator} hari kerja`}
                             />
-                            <StatCard
+                            <MetricKpi
                                 label="Rata-rata terlambat"
                                 definition={definitions.average_lateness}
                                 value={formatMetric(
@@ -283,19 +235,19 @@ export function HrDesktop({ live, ...props }: HrProps & { live: boolean }) {
                                     previous,
                                     'lower',
                                 )}
-                                caption={`${recap.kpis.average_lateness.denominator} hari terlambat`}
+                                note={`${recap.kpis.average_lateness.denominator} hari terlambat`}
                             />
-                            <StatCard
+                            <MetricKpi
                                 label="Hari alpha"
                                 definition="Hari berstatus Alpha (tidak check-in tanpa pengajuan) dalam periode."
                                 value={formatMetric(
                                     recap.kpis.absent_days.value,
                                     'count',
                                 )}
-                                valueTone={
+                                valueClassName={
                                     (recap.kpis.absent_days.value ?? 0) > 0
-                                        ? 'danger'
-                                        : 'default'
+                                        ? 'text-danger'
+                                        : undefined
                                 }
                                 delta={compared(
                                     recap.kpis.absent_days,
@@ -304,7 +256,7 @@ export function HrDesktop({ live, ...props }: HrProps & { live: boolean }) {
                                     'lower',
                                 )}
                             />
-                            <StatCard
+                            <MetricKpi
                                 label="Hari terlambat"
                                 definition="Hari berstatus Terlambat dalam periode."
                                 value={formatMetric(
@@ -321,17 +273,16 @@ export function HrDesktop({ live, ...props }: HrProps & { live: boolean }) {
                         </>
                     ) : (
                         Array.from({ length: 4 }, (_, index) => (
-                            <StatCardSkeleton key={index} />
+                            <KpiSkeleton key={index} />
                         ))
                     )}
                 </div>
                 {recap && <ComparedNote compared={recap.compared} />}
                 {recap ? (
                     <Panel
-                        id="discipline-trend"
                         title={
                             <>
-                                Tren kedisiplinan hadir · 8 minggu
+                                Tren kedisiplinan hadir
                                 <MetricInfo
                                     definition={
                                         definitions.attendance_discipline
@@ -339,18 +290,21 @@ export function HrDesktop({ live, ...props }: HrProps & { live: boolean }) {
                                 />
                             </>
                         }
-                        aside="% hari kerja tepat waktu"
+                        action={
+                            <PanelHint>
+                                % hari kerja tepat waktu · 8 minggu
+                            </PanelHint>
+                        }
                     >
                         <TrendChart
                             points={recap.trend}
                             description="Kedisiplinan hadir per minggu"
                             numeratorLabel="hari tepat waktu"
                             denominatorLabel="hari kerja"
-                            height={220}
                         />
                     </Panel>
                 ) : (
-                    <PanelSkeleton rows={5} />
+                    <PanelSkeleton title="Tren kedisiplinan hadir" rows={5} />
                 )}
             </section>
         </div>
