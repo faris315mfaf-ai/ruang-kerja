@@ -9,6 +9,7 @@ use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Notifications\MissingCheckOutNotification;
 use App\Domain\Attendance\Services\OpenDayLocator;
 use App\Domain\Attendance\Services\ScheduleResolver;
+use App\Domain\Requests\Services\ApprovedOvertime;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +32,10 @@ final class CloseAttendanceDay
      */
     private const array SYSTEM_STATUSES = [AttendanceStatus::Absent, AttendanceStatus::Holiday];
 
-    public function __construct(private readonly ScheduleResolver $schedules) {}
+    public function __construct(
+        private readonly ScheduleResolver $schedules,
+        private readonly ApprovedOvertime $overtime,
+    ) {}
 
     public function handle(CarbonImmutable $workDate, ?CarbonImmutable $now = null): CloseDayReport
     {
@@ -56,6 +60,15 @@ final class CloseAttendanceDay
             ->where('user_id', $user->id)
             ->whereDate('work_date', $date->toDateString())
             ->first();
+
+        // Overtime minutes come from approved overtime requests (Sprint 4).
+        if ($day !== null) {
+            $day->overtime_minutes = $this->overtime->minutesFor($user->id, $date->toDateString());
+
+            if ($day->isDirty('overtime_minutes')) {
+                $day->save();
+            }
+        }
 
         // Leave, permit, sick, business trip come from approved requests (Sprint 4).
         if ($day !== null && ($day->request_id !== null || $day->status->comesFromRequest())) {
@@ -93,7 +106,7 @@ final class CloseAttendanceDay
         }
 
         // Not scheduled (any more): drop a row this command wrote earlier.
-        if ($day !== null && in_array($day->status, self::SYSTEM_STATUSES, true)) {
+        if ($day !== null && in_array($day->status, self::SYSTEM_STATUSES, true) && $day->overtime_minutes === 0) {
             $day->delete();
             $report->removed++;
         }

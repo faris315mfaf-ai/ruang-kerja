@@ -75,9 +75,9 @@ it('titles placeholder pages in Indonesian', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->get('/persetujuan')
+        ->get('/privasi')
         ->assertInertia(fn (Assert $page) => $page
             ->component('placeholder')
-            ->where('title', 'Persetujuan'),
+            ->where('title', 'Privasi & data saya'),
         );
 });
