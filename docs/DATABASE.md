@@ -55,8 +55,11 @@
 | head_user_id | FK users null | Kepala Divisi |
 | is_board | bool | `true` untuk unit **Direksi** |
 
+Indeks unik parsial `divisions_one_board_per_company_unique (company_id) WHERE is_board AND deleted_at IS NULL`: paling banyak satu unit Direksi aktif per perusahaan.
+
 ### teams
 `id`, `division_id` FK, `name`, `code` varchar(10) null (label singkat di bagan, mis. `GDG`; huruf besar), `lead_user_id` FK users null (Ketua Tim).
+Indeks unik parsial `teams_division_code_unique (division_id, code) WHERE code IS NOT NULL AND deleted_at IS NULL`: kode tim unik per divisi (kode tim terhapus boleh dipakai ulang). Tim yang masih punya anggota aktif tidak boleh pindah divisi (aturan aplikasi, `SaveTeam`).
 
 ### positions
 `id`, `company_id`, `name` (mis. "Staf Keuangan"), `level` smallint (1 = Direksi … 5 = Staf).
