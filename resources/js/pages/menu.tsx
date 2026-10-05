@@ -8,7 +8,6 @@ import {
     FileText,
     LayoutGrid,
     LogOut,
-    Network,
     ShieldCheck,
     SunMoon,
 } from 'lucide-react';
@@ -20,6 +19,7 @@ import {
     adminNavItems,
     attendanceNavItems,
     canSeePortfolio,
+    organizationNavItems,
     portfolioNavItem,
 } from '@/lib/navigation';
 import { primaryRoleLabel } from '@/lib/roles';
@@ -173,12 +173,8 @@ export default function Menu() {
                             label="Riwayat absensi"
                             href="/absensi/riwayat"
                         />
-                        <Row
-                            icon={Network}
-                            label="Struktur organisasi"
-                            href="/organisasi/struktur"
-                        />
                         {[
+                            ...organizationNavItems(auth.roles),
                             ...attendanceNavItems(auth.roles),
                             ...adminNavItems(auth.roles),
                         ]
