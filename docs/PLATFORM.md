@@ -16,9 +16,9 @@
 
 | Elemen | Desktop (≥ 1024) | Tablet (768–1023) | Mobile (< 768) |
 |---|---|---|---|
-| Navigasi utama | Sidebar glass 240px (daftar menu + workspace) | Rail 56px (ikon + tooltip) | **Tab bawah 5 item**: Beranda · Absen · Tugas · Inbox · Menu |
+| Navigasi utama | **Dock ala macOS** mengambang di bawah (ikon membesar mengikuti kursor dengan spring, stack Workspace & Admin) | Dock yang sama tanpa magnifikasi | **Tab bawah 5 item**: Beranda · Absen · Tugas · Inbox · Menu |
 | Workspace & admin | Di sidebar | Di rail | Di tab **Menu** |
-| Topbar | Breadcrumb + cari ⌘K + lonceng | Sama | **App bar 56px**: judul + aksi (cari, lonceng) / tombol kembali di layar turunan |
+| Topbar | **Menu bar tipis 38px**: merek, breadcrumb, status absensi, check-in, cari ⌘K, lonceng, akun. Konten penuh layar, margin 10px | Sama | **App bar 56px**: judul + aksi (cari, lonceng) / tombol kembali di layar turunan |
 | Cari | Command palette (modal glass) | Sama | Layar cari penuh |
 | Panel detail | Panel samping kanan (TaskSheet 640px, detail pengajuan) | Panel samping atau layar penuh | **Layar penuh baru** atau **bottom sheet** |
 | Tabel | Tabel penuh (TanStack Table) | Tabel dengan kolom diciutkan | **Daftar kartu / baris 56px** |

@@ -1,49 +1,32 @@
-import { usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
-import { AppSidebar } from '@/components/app-sidebar';
-import { AppTopbar } from '@/components/shell/app-topbar';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { Dock } from '@/components/shell/dock';
+import { MenuBar } from '@/components/shell/menu-bar';
 import type { BreadcrumbItem } from '@/types';
 
 type Props = {
     children: ReactNode;
     breadcrumbs: BreadcrumbItem[];
-    /** 768–1023px: sidebar is always the 56px rail. */
+    /** 768–1023px (usually touch): the Dock does not magnify. */
     isTablet: boolean;
 };
 
 /**
- * Desktop & tablet shell: glass sidebar 240px (collapsible to a 56px rail,
- * remembered in the sidebar_state cookie) + glass topbar (docs/PLATFORM.md §2).
+ * Desktop & tablet shell, macOS style (docs/PLATFORM.md §2): a thin translucent
+ * menu bar on top, a floating Dock at the bottom, and the page using the whole
+ * screen in between with a 10px gutter. Content scrolls under both bars.
  */
 export default function DesktopLayout({
     children,
     breadcrumbs,
     isTablet,
 }: Props) {
-    const { sidebarOpen } = usePage().props;
-    const [userOpen, setUserOpen] = useState(sidebarOpen);
-
     return (
-        <SidebarProvider
-            open={isTablet ? false : userOpen}
-            onOpenChange={(open) => {
-                if (!isTablet) {
-                    setUserOpen(open);
-                }
-            }}
-        >
-            <AppSidebar />
-            <SidebarInset className="min-w-0 bg-transparent">
-                <AppTopbar
-                    breadcrumbs={breadcrumbs}
-                    canToggleSidebar={!isTablet}
-                />
-                <div className="mx-auto w-full max-w-[1440px] flex-1 p-4 lg:p-6">
-                    {children}
-                </div>
-            </SidebarInset>
-        </SidebarProvider>
+        <div className="min-h-svh">
+            <MenuBar breadcrumbs={breadcrumbs} />
+            <main className="min-w-0 px-(--screen-gutter) pt-[calc(var(--menu-bar-height)+var(--screen-gutter))] pb-[calc(var(--dock-space)+var(--screen-gutter))]">
+                {children}
+            </main>
+            <Dock magnify={!isTablet} />
+        </div>
     );
 }
