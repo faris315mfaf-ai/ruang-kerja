@@ -1,4 +1,5 @@
 import { AlertTriangle, FileText, Paperclip, ShieldOff } from 'lucide-react';
+import { EmptyState } from '@/components/empty-state';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import {
     colleagueSummary,
@@ -108,7 +109,7 @@ export function RequestFields({
     const hidden = request.health_details_hidden === true;
     const hiddenNotice = (
         <span className="inline-flex items-center gap-1.5 text-text-muted">
-            <ShieldOff className="size-3.5 shrink-0" aria-hidden />
+            <ShieldOff className="size-4 shrink-0" aria-hidden />
             {HEALTH_HIDDEN_NOTICE}
         </span>
     );
@@ -126,7 +127,7 @@ export function RequestFields({
                     <UserAvatar
                         name={request.substitute.name}
                         src={request.substitute.avatar}
-                        className="size-6"
+                        className="size-7"
                     />
                     {request.substitute.name}
                 </span>
@@ -150,9 +151,9 @@ export function RequestFields({
                             href={file.url}
                             target="_blank"
                             rel="noopener"
-                            className="inline-flex items-center gap-1.5 text-primary underline-offset-4 hover:underline"
+                            className="inline-flex min-h-8 items-center gap-1.5 font-semibold text-link underline-offset-4 hover:underline"
                         >
-                            <Paperclip className="size-3.5" aria-hidden />
+                            <Paperclip className="size-4" aria-hidden />
                             {file.filename}
                             <span className="text-text-muted">
                                 ·{' '}
@@ -171,13 +172,15 @@ export function RequestFields({
     return (
         <dl
             className={cn(
-                'grid grid-cols-[110px_1fr] gap-x-4 gap-y-2.5 text-sm',
+                'grid grid-cols-[112px_1fr] gap-x-4 gap-y-3 text-[16px] leading-6 md:grid-cols-[140px_1fr] md:gap-x-5',
                 className,
             )}
         >
             {rows.map((row) => (
                 <div key={row.label} className="contents">
-                    <dt className="text-text-muted">{row.label}</dt>
+                    <dt className="text-[15px] font-semibold text-text-muted">
+                        {row.label}
+                    </dt>
                     <dd className="min-w-0 break-words text-text">
                         {row.value}
                     </dd>
@@ -209,16 +212,16 @@ export function ColleagueWarning({
         <div
             role="note"
             className={cn(
-                'flex gap-2.5 rounded-lg border border-warning/30 bg-warning-soft px-3.5 py-3 text-[13px] leading-5 text-text',
+                'flex gap-3 rounded-lg bg-warning-soft px-4 py-3 text-[15px] leading-[22px] text-text',
                 className,
             )}
         >
             <AlertTriangle
-                className="mt-0.5 size-4 shrink-0 text-warning"
+                className="mt-0.5 size-5 shrink-0 text-warning"
                 aria-hidden
             />
             <p>
-                <strong className="font-semibold">{summary}.</strong>{' '}
+                <strong className="font-bold">{summary}.</strong>{' '}
                 {viewerIsRequester
                     ? 'Atasan Anda akan melihat info ini saat memutuskan.'
                     : colleagues.group
@@ -249,7 +252,7 @@ export function BalanceBar({
     return (
         <div className={className}>
             <div
-                className="flex h-2 overflow-hidden rounded-full bg-brand-100 dark:bg-surface-2"
+                className="flex h-2.5 overflow-hidden rounded-full bg-surface-2"
                 aria-hidden
             >
                 <span
@@ -257,18 +260,18 @@ export function BalanceBar({
                     style={{ width: pct(used) }}
                 />
                 <span
-                    className="h-full bg-warning/70"
+                    className="h-full bg-fill-warning"
                     style={{ width: pct(pending) }}
                 />
                 <span
-                    className="h-full bg-primary"
+                    className="h-full bg-grad-merek-x"
                     style={{ width: pct(requested) }}
                 />
             </div>
-            <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-text-muted">
+            <ul className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-meta text-text-muted">
                 <li className="inline-flex items-center gap-1.5">
                     <span
-                        className="size-2 rounded-sm bg-text-subtle"
+                        className="size-2.5 rounded-full bg-text-subtle"
                         aria-hidden
                     />
                     Terpakai {formatDays(used)}
@@ -276,7 +279,7 @@ export function BalanceBar({
                 {pending > 0 && (
                     <li className="inline-flex items-center gap-1.5">
                         <span
-                            className="size-2 rounded-sm bg-warning/70"
+                            className="size-2.5 rounded-full bg-fill-warning"
                             aria-hidden
                         />
                         Menunggu {formatDays(pending)}
@@ -284,14 +287,14 @@ export function BalanceBar({
                 )}
                 <li className="inline-flex items-center gap-1.5">
                     <span
-                        className="size-2 rounded-sm bg-primary"
+                        className="size-2.5 rounded-full bg-grad-merek-x"
                         aria-hidden
                     />
                     Pengajuan ini {formatDays(requested)}
                 </li>
                 <li className="inline-flex items-center gap-1.5">
                     <span
-                        className="size-2 rounded-sm bg-brand-100 ring-1 ring-border dark:bg-surface-2"
+                        className="size-2.5 rounded-full bg-surface-2 ring-1 ring-border"
                         aria-hidden
                     />
                     Sisa {formatDays(left)}
@@ -311,7 +314,7 @@ export function FlowChips({
 }) {
     if (steps.length === 0) {
         return (
-            <p className="text-sm text-text-muted">
+            <p className="text-[15px] text-text-muted">
                 Alur akan tampil setelah jenis dipilih.
             </p>
         );
@@ -332,13 +335,13 @@ export function FlowChips({
                     <span
                         title={step.note ?? undefined}
                         className={cn(
-                            'inline-flex h-9 items-center gap-2 rounded-full border px-2 pr-3 text-sm',
+                            'inline-flex min-h-10 items-center gap-2 rounded-full border px-2 pr-3.5 text-[15px] font-semibold',
                             step.status === 'skipped'
                                 ? 'border-dashed border-border text-text-muted'
                                 : 'border-border bg-surface text-text',
                         )}
                     >
-                        <span className="flex size-5 items-center justify-center rounded-full bg-surface-2 text-[11px] font-semibold text-text-muted">
+                        <span className="flex size-6 items-center justify-center rounded-full bg-surface-2 text-[13px] font-bold text-text-muted">
                             {step.step_order}
                         </span>
                         {step.approver ? (
@@ -346,7 +349,7 @@ export function FlowChips({
                                 <UserAvatar
                                     name={step.approver.name}
                                     src={step.approver.avatar}
-                                    className="size-5 text-[9px]"
+                                    className="size-6 text-[10px]"
                                 />
                                 <span
                                     className={cn(
@@ -356,7 +359,7 @@ export function FlowChips({
                                 >
                                     {step.approver.name}
                                 </span>
-                                <span className="text-text-muted">
+                                <span className="font-normal text-text-muted">
                                     ({step.label.toLowerCase()})
                                 </span>
                             </>
@@ -370,7 +373,7 @@ export function FlowChips({
                             </span>
                         )}
                         {step.status === 'skipped' && (
-                            <span className="text-xs text-text-muted">
+                            <span className="text-meta font-normal text-text-muted">
                                 dilewati
                             </span>
                         )}
@@ -381,18 +384,17 @@ export function FlowChips({
     );
 }
 
-export function EmptyDetail() {
+/** Right panel before a row is picked. */
+export function EmptyDetail({
+    description = 'Detail dan alur persetujuan tampil di sini.',
+}: {
+    description?: string;
+}) {
     return (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border-strong px-6 py-14 text-center">
-            <FileText
-                className="mb-3 size-8 text-text-subtle"
-                aria-hidden
-                strokeWidth={1.75}
-            />
-            <p className="text-sm font-semibold text-text">Pilih pengajuan</p>
-            <p className="mt-1 text-[13px] text-text-muted">
-                Detail dan alur persetujuan tampil di sini.
-            </p>
-        </div>
+        <EmptyState
+            icon={FileText}
+            title="Pilih pengajuan"
+            description={description}
+        />
     );
 }

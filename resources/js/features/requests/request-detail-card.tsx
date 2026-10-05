@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react';
 import { usePage } from '@inertiajs/react';
-import { formatRequestPeriod, stepProgress } from '@/lib/requests';
+import {
+    formatRequestPeriod,
+    formatRequestTitle,
+    formatShortDate,
+    stepProgress,
+} from '@/lib/requests';
 import { cn } from '@/lib/utils';
 import type { RequestDetail } from '@/types/requests';
 import { ApprovalTimeline } from './approval-timeline';
@@ -17,7 +22,10 @@ type Props = {
     className?: string;
 };
 
-/** Detail panel (desktop side panel, detail pages). */
+/**
+ * Detail panel (SPengajuan right card; detail pages): number, big title,
+ * period · submitted, status pill, fields, approval trail, grey action footer.
+ */
 export function RequestDetailCard({
     request,
     showRequester = false,
@@ -28,20 +36,48 @@ export function RequestDetailCard({
     const viewerId = usePage().props.auth.user?.id;
     const progress =
         request.status === 'pending' ? stepProgress(request) : null;
+    const meta = [
+        formatRequestPeriod(request),
+        request.submitted_at
+            ? `diajukan ${formatShortDate(request.submitted_at)}`
+            : 'belum dikirim',
+    ].join(' · ');
 
     return (
         <article
             className={cn(
-                'rounded-xl border border-border bg-surface p-5 shadow-card',
+                'min-w-0 overflow-hidden rounded-panel border border-border bg-surface shadow-float',
                 className,
             )}
             aria-label={`Detail ${request.number ?? 'draf'}`}
         >
-            <header className="mb-4">
-                <div className="flex items-center justify-between gap-2">
-                    <p className="font-mono text-xs text-text-muted">
-                        {request.number ?? 'DRAF'}
-                    </p>
+            <div className="flex flex-col gap-5 px-5 py-6 md:px-7 md:py-[26px]">
+                <header className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex min-w-0 flex-col gap-1.5">
+                        <p className="font-mono text-[14px] font-semibold text-text-muted">
+                            {request.number ?? 'DRAF'}
+                        </p>
+                        <h2 className="text-[24px] leading-8 font-extrabold tracking-[-0.015em] text-text md:text-[28px] md:leading-[34px]">
+                            {showRequester
+                                ? `${request.type.name} · ${request.user.name}`
+                                : formatRequestTitle(request)}
+                        </h2>
+                        {showRequester &&
+                            (request.user.position ||
+                                request.user.division) && (
+                                <p className="text-[16px] text-text-muted md:text-[17px]">
+                                    {[
+                                        request.user.position,
+                                        request.user.division,
+                                    ]
+                                        .filter(Boolean)
+                                        .join(' · ')}
+                                </p>
+                            )}
+                        <p className="text-[16px] text-text-muted md:text-[17px]">
+                            {meta}
+                        </p>
+                    </div>
                     <StatusBadge
                         status={request.status}
                         label={statusLabel ?? request.status_label}
@@ -52,41 +88,29 @@ export function RequestDetailCard({
                                   ? `langkah ${progress.replace(' dari ', '/')}`
                                   : null
                         }
+                        className="h-[34px] px-3.5"
                     />
-                </div>
-                <h2 className="mt-1 text-[17px] leading-6 font-semibold text-text">
-                    {request.type.name} ·{' '}
-                    {showRequester
-                        ? request.user.name
-                        : formatRequestPeriod(request).replace(/ \d{4}$/, '')}
-                </h2>
-                {showRequester &&
-                    (request.user.position || request.user.division) && (
-                        <p className="text-[13px] text-text-muted">
-                            {[request.user.position, request.user.division]
-                                .filter(Boolean)
-                                .join(' · ')}
-                        </p>
-                    )}
-            </header>
+                </header>
 
-            <RequestFields request={request} />
+                <RequestFields request={request} />
 
-            <ColleagueWarning
-                colleagues={request.colleagues}
-                viewerIsRequester={request.user.id === viewerId}
-                className="mt-4"
-            />
+                <ColleagueWarning
+                    colleagues={request.colleagues}
+                    viewerIsRequester={request.user.id === viewerId}
+                />
 
-            <section className="mt-5">
-                <h3 className="mb-3 text-sm font-semibold text-text">
-                    Alur persetujuan
-                </h3>
-                <ApprovalTimeline request={request} viewerId={viewerId} />
-            </section>
+                <section className="flex flex-col gap-2">
+                    <h3 className="text-[15px] font-bold text-text-muted">
+                        Jejak persetujuan
+                    </h3>
+                    <ApprovalTimeline request={request} viewerId={viewerId} />
+                </section>
+            </div>
 
             {footer && (
-                <div className="mt-5 border-t border-border pt-4">{footer}</div>
+                <div className="border-t border-border bg-background px-5 py-[18px] md:px-7">
+                    {footer}
+                </div>
             )}
         </article>
     );

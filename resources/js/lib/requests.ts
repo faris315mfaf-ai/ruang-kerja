@@ -231,6 +231,17 @@ export function formatRequestDuration(
     return '—';
 }
 
+/** "Cuti tahunan · 2 hari kerja"; just the type name when there is no duration (corrections). */
+export function formatRequestTitle(
+    item: Pick<RequestItem, 'type' | 'days' | 'minutes'>,
+): string {
+    const duration = formatRequestDuration(item);
+
+    return duration === '—'
+        ? item.type.name
+        : `${item.type.name} · ${duration}`;
+}
+
 /** Tinted pill per category (token colors only). */
 export const categoryClass: Record<RequestCategory, string> = {
     leave: 'bg-info-soft text-info',
