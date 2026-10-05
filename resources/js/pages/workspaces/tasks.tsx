@@ -19,6 +19,7 @@ import {
     usePolling,
 } from '@/features/tasks/realtime/connection';
 import { ConnectionIndicator } from '@/features/tasks/realtime/connection-indicator';
+import { createCardRefresher } from '@/features/tasks/realtime/task-card';
 import { useWorkspaceEvents } from '@/features/tasks/realtime/workspace-channel';
 import { toggleAssignee } from '@/features/tasks/shortcuts/keys';
 import { QuickPropertyDialog } from '@/features/tasks/shortcuts/quick-property-dialog';
@@ -163,11 +164,31 @@ function TasksView(props: Props) {
     const container = useRef<HTMLDivElement>(null);
     const connection = useConnectionMode();
 
-    // Realtime: other members' changes appear without a reload.
+    // Realtime: other members' changes appear without a reload. Events only
+    // carry ids, so the card is refetched (404 → it is gone for this viewer).
+    const upsertTaskRef = useRef(upsertTask);
+    const removeTaskRef = useRef(removeTask);
+    const [cards] = useState(() =>
+        createCardRefresher((taskId, result) => {
+            if (result.kind === 'found') {
+                upsertTaskRef.current(result.task);
+            } else if (result.kind === 'gone') {
+                removeTaskRef.current(taskId);
+            }
+        }),
+    );
+
+    useEffect(() => {
+        upsertTaskRef.current = upsertTask;
+        removeTaskRef.current = removeTask;
+    });
+
+    useEffect(() => () => cards.cancel(), [cards]);
+
     useWorkspaceEvents(workspace.id, {
-        'task.created': ({ task }) => upsertTask(task),
-        'task.updated': ({ task }) => upsertTask(task),
-        'task.moved': ({ task }) => upsertTask(task),
+        'task.created': ({ task }) => cards.schedule(task.id),
+        'task.updated': ({ task }) => cards.schedule(task.id),
+        'task.moved': ({ task }) => cards.schedule(task.id),
         'task.deleted': ({ task }) => removeTask(task.id),
     });
 

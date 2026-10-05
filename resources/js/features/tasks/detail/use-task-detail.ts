@@ -129,6 +129,11 @@ export function useTaskDetail(taskId: string | null, options: Options = {}) {
         }
     };
 
+    // Events carry ids only: refetch the (authorized) detail when it concerns
+    // this task; a 404 marks it gone (deleted or access lost).
+    const onComment = ({ task_id }: { task_id: string }) =>
+        task_id === taskId && refresh();
+
     useWorkspaceEvents(detail?.workspace.id, {
         'task.updated': ({ task }) => isThis(task) && refresh(),
         'task.moved': ({ task }) => isThis(task) && refresh(),
@@ -140,9 +145,9 @@ export function useTaskDetail(taskId: string | null, options: Options = {}) {
                 refresh();
             }
         },
-        'comment.posted': applyComment,
-        'comment.updated': applyComment,
-        'comment.deleted': applyComment,
+        'comment.posted': onComment,
+        'comment.updated': onComment,
+        'comment.deleted': onComment,
     });
 
     usePolling(mode === 'polling' && taskId !== null && !deleted, refresh);

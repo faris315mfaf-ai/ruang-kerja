@@ -2,8 +2,6 @@
 
 namespace App\Events\Tasks;
 
-use App\Domain\Tasks\Queries\BoardTasks;
-use App\Http\Resources\TaskResource;
 use App\Models\Task;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -16,6 +14,12 @@ use Illuminate\Queue\SerializesModels;
  * Base of the task events broadcast on the private channel `workspace.{id}`
  * (authorized in routes/channels.php with WorkspacePolicy::view). Sprint 6
  * subscribes to them in the board/list/sheet; dispatched after commit.
+ *
+ * Thin payload: channel authorization only happens when subscribing, so a
+ * member removed from a private workspace may keep receiving events until
+ * they reload. Events therefore carry ids and placement only (no title,
+ * description, assignees…); clients refetch the card through the authorized
+ * GET /tugas/{id}?view=card, which answers 404 once access is gone.
  */
 abstract class TaskBroadcastEvent implements ShouldBroadcast, ShouldDispatchAfterCommit
 {
@@ -45,9 +49,16 @@ abstract class TaskBroadcastEvent implements ShouldBroadcast, ShouldDispatchAfte
      */
     public function broadcastWith(): array
     {
-        // Fresh board shape (relations + checklist counts), as sent by PATCH /tugas/{id}/move.
-        $task = BoardTasks::query()->withTrashed()->find($this->task->id) ?? $this->task->loadMissing('workspace');
+        $task = Task::query()->withTrashed()->find($this->task->id) ?? $this->task;
 
-        return ['task' => (new TaskResource($task))->resolve()];
+        return ['task' => [
+            'id' => $task->id,
+            'workspace_id' => $task->workspace_id,
+            'parent_id' => $task->parent_id,
+            'status_id' => $task->status_id,
+            'status_category' => $task->status_category->value,
+            'position' => $task->position,
+            'updated_at' => $task->updated_at?->toIso8601String(),
+        ]];
     }
 }

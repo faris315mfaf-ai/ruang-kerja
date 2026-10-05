@@ -2,7 +2,6 @@
 
 namespace App\Events\Tasks;
 
-use App\Http\Resources\CommentResource;
 use App\Models\Comment;
 use App\Models\Task;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -14,8 +13,11 @@ use Illuminate\Queue\SerializesModels;
 
 /**
  * Comment events on the private channel `workspace.{id}` (same audience as
- * the task events: WorkspacePolicy::view). Dispatched after commit; the
- * payload is rebuilt fresh (deleted comments included) when broadcasting.
+ * the task events: WorkspacePolicy::view). Dispatched after commit.
+ *
+ * Thin payload (ids only, never the body): a member removed from the workspace
+ * may still be subscribed, so clients refetch the timeline through the
+ * authorized GET /tugas/{id} (see TaskBroadcastEvent).
  */
 abstract class CommentBroadcastEvent implements ShouldBroadcast, ShouldDispatchAfterCommit
 {
@@ -45,11 +47,9 @@ abstract class CommentBroadcastEvent implements ShouldBroadcast, ShouldDispatchA
      */
     public function broadcastWith(): array
     {
-        $comment = Comment::withTrashed()->with(['author', 'reactions.user'])->find($this->comment->id) ?? $this->comment;
-
         return [
             'task_id' => $this->task->id,
-            'comment' => (new CommentResource($comment))->resolve(),
+            'comment' => ['id' => $this->comment->id],
         ];
     }
 }
