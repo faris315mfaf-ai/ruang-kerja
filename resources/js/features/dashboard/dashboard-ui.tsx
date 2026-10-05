@@ -59,25 +59,31 @@ export function MetricKpi({
         return card;
     }
 
-    const linkClass = cn(
-        'block min-w-0 rounded-card transition-transform duration-120 ease-brand hover:-translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0',
-        focusRing,
-        className,
-    );
-
-    // In-page anchors ("#keputusan") are plain links, not Inertia visits.
-    if (href.startsWith('#')) {
-        return (
-            <a href={href} aria-label={linkLabel} className={linkClass}>
-                {card}
-            </a>
-        );
-    }
+    // The link is a transparent overlay next to the card, not its parent:
+    // the definition button stays a sibling control (no <button> inside <a>)
+    // and sits above the overlay. `linkLabel` must carry the value.
+    const overlay = cn('absolute inset-0 rounded-card', focusRing);
 
     return (
-        <Link href={href} prefetch aria-label={linkLabel} className={linkClass}>
+        <div
+            className={cn(
+                'relative min-w-0 rounded-card transition-transform duration-120 ease-brand hover:-translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0 [&_button]:relative [&_button]:z-10',
+                className,
+            )}
+        >
             {card}
-        </Link>
+            {/* In-page anchors ("#keputusan") are plain links, not Inertia visits. */}
+            {href.startsWith('#') ? (
+                <a href={href} aria-label={linkLabel} className={overlay} />
+            ) : (
+                <Link
+                    href={href}
+                    prefetch
+                    aria-label={linkLabel}
+                    className={overlay}
+                />
+            )}
+        </div>
     );
 }
 

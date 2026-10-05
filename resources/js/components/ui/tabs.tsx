@@ -70,10 +70,16 @@ export function SegmentedTabs<T extends string>({
     onValueChange,
     options,
     variant = 'soft',
+    semantics = 'tabs',
     className,
 }: {
     /** Accessible name of the tablist ("Periode"). */
     label: string;
+    /**
+     * `radio` for a single choice that does not switch a panel (check-in
+     * method): radiogroup/radio with aria-checked instead of tablist/tab.
+     */
+    semantics?: 'tabs' | 'radio';
     value: T;
     onValueChange: (value: T) => void;
     options: SegmentedOption<T>[];
@@ -98,7 +104,7 @@ export function SegmentedTabs<T extends string>({
 
     return (
         <div
-            role="tablist"
+            role={semantics === 'radio' ? 'radiogroup' : 'tablist'}
             aria-label={label}
             className={cn('inline-flex gap-1', TRACKS[variant], className)}
         >
@@ -113,9 +119,16 @@ export function SegmentedTabs<T extends string>({
                         }}
                         id={option.id}
                         type="button"
-                        role="tab"
-                        aria-selected={selected}
-                        aria-controls={option.controls}
+                        role={semantics === 'radio' ? 'radio' : 'tab'}
+                        aria-selected={
+                            semantics === 'radio' ? undefined : selected
+                        }
+                        aria-checked={
+                            semantics === 'radio' ? selected : undefined
+                        }
+                        aria-controls={
+                            semantics === 'radio' ? undefined : option.controls
+                        }
                         tabIndex={selected ? 0 : -1}
                         onClick={() => onValueChange(option.value)}
                         onKeyDown={onKeyDown}

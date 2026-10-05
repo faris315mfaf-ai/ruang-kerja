@@ -14,11 +14,12 @@ describe('nextTabIndex', () => {
     });
 });
 
-function Harness() {
+function Harness({ semantics }: { semantics?: 'tabs' | 'radio' }) {
     const [value, setValue] = useState<'a' | 'b'>('a');
 
     return (
         <SegmentedTabs
+            semantics={semantics}
             label="Tampilan"
             value={value}
             onValueChange={setValue}
@@ -48,5 +49,23 @@ describe('SegmentedTabs', () => {
         });
         expect(list.getAttribute('aria-selected')).toBe('true');
         expect(document.activeElement).toBe(list);
+    });
+});
+
+describe('SegmentedTabs radio semantics', () => {
+    afterEach(cleanup);
+
+    it('renders a radiogroup with aria-checked for a single choice', () => {
+        render(<Harness semantics="radio" />);
+
+        expect(screen.getByRole('radiogroup', { name: 'Tampilan' })).toBeTruthy();
+        expect(screen.queryByRole('tablist')).toBeNull();
+
+        const board = screen.getByRole('radio', { name: 'Board' });
+        expect(board.getAttribute('aria-checked')).toBe('false');
+        expect(board.hasAttribute('aria-selected')).toBe(false);
+
+        fireEvent.click(board);
+        expect(board.getAttribute('aria-checked')).toBe('true');
     });
 });

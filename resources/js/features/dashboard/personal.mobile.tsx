@@ -55,7 +55,11 @@ export function PersonalMobile(props: PersonalProps) {
             >
                 <MetricKpi
                     href="/pengajuan"
-                    linkLabel="Saldo cuti, buka pengajuan saya"
+                    linkLabel={
+                        live.leave_balance
+                            ? `Saldo cuti ${formatNumber(live.leave_balance.remaining)} hari, buka pengajuan saya`
+                            : 'Saldo cuti belum ada, buka pengajuan saya'
+                    }
                     label="Saldo cuti"
                     value={
                         live.leave_balance
@@ -87,7 +91,7 @@ export function PersonalMobile(props: PersonalProps) {
                         />
                         <MetricKpi
                             href="/tugas"
-                            linkLabel="Tugas terbuka, buka tugas saya"
+                            linkLabel={`${formatNumber(metrics.kpis.open_tasks.value)} tugas terbuka${metrics.kpis.open_tasks.overdue > 0 ? `, ${metrics.kpis.open_tasks.overdue} terlambat` : ''}, buka tugas saya`}
                             label="Tugas terbuka"
                             value={formatNumber(metrics.kpis.open_tasks.value)}
                             note={

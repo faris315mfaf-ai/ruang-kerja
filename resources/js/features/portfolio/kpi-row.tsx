@@ -81,6 +81,7 @@ export function KpiRow({
                 href="#keputusan"
                 linkLabel={`${decisions.length} butuh keputusan Anda, tinjau di bawah`}
                 label="Butuh keputusan Anda"
+                definition={DEFINITIONS.decisions}
                 value={decisions.length}
                 note={decisionNote(decisions)}
                 className="flex-[1.2_1_240px]"

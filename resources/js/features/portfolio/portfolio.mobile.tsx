@@ -81,7 +81,12 @@ export function PortfolioMobile({
             >
                 <MetricKpi
                     tone={decisions.length > 0 ? 'warm' : 'plain'}
-                    href="#keputusan"
+                    // Only a link while the panel below is rendered.
+                    href={
+                        decisions.length > 0 || attention.length > 0
+                            ? '#keputusan'
+                            : undefined
+                    }
                     linkLabel={`${decisions.length} butuh keputusan Anda`}
                     label="Butuh keputusan"
                     value={decisions.length}

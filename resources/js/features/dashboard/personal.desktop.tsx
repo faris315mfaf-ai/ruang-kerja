@@ -57,7 +57,11 @@ export function PersonalDesktop(props: PersonalProps) {
                 <MyAttendanceCard className="flex-[1.4_1_420px]" />
                 <MetricKpi
                     href="/pengajuan"
-                    linkLabel="Saldo cuti, buka pengajuan saya"
+                    linkLabel={
+                        live.leave_balance
+                            ? `Saldo cuti ${formatNumber(live.leave_balance.remaining)} hari, buka pengajuan saya`
+                            : 'Saldo cuti belum ada, buka pengajuan saya'
+                    }
                     label="Saldo cuti tahunan"
                     definition="Sisa cuti tahunan setelah cuti yang disetujui."
                     value={
@@ -76,7 +80,7 @@ export function PersonalDesktop(props: PersonalProps) {
                 {open ? (
                     <MetricKpi
                         href="/tugas"
-                        linkLabel="Tugas terbuka, buka tugas saya"
+                        linkLabel={`${formatNumber(open.value)} tugas terbuka${open.overdue > 0 ? `, ${open.overdue} terlambat` : ''}, buka tugas saya`}
                         label="Tugas terbuka"
                         definition="Tugas Anda yang belum Selesai atau Dibatalkan."
                         value={formatNumber(open.value)}

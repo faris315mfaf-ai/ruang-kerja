@@ -26,6 +26,7 @@ export function MethodSwitch({
     return (
         <SegmentedTabs
             label="Metode absensi"
+            semantics="radio"
             value={value}
             onValueChange={onChange}
             options={OPTIONS}
