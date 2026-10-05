@@ -15,16 +15,20 @@ class ChecklistItemPolicy
 
     public function view(User $user, ChecklistItem $item): Response
     {
-        return $this->tasks->view($user, $item->task);
+        $task = $item->task;
+
+        return $task === null ? Response::denyAsNotFound() : $this->tasks->view($user, $task);
     }
 
     public function update(User $user, ChecklistItem $item): Response
     {
-        return $this->tasks->update($user, $item->task);
+        $task = $item->task;
+
+        return $task === null ? Response::denyAsNotFound() : $this->tasks->update($user, $task);
     }
 
     public function delete(User $user, ChecklistItem $item): Response
     {
-        return $this->tasks->update($user, $item->task);
+        return $this->update($user, $item);
     }
 }

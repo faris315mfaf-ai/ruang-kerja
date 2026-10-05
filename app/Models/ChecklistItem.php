@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable|null $done_at
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
- * @property-read Task $task
+ * @property-read Task|null $task null once the task is soft-deleted
  */
 #[Fillable(['task_id', 'title', 'is_done', 'position', 'done_by', 'done_at'])]
 class ChecklistItem extends Model

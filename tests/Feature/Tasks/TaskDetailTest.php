@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -175,4 +176,13 @@ it('lets Direksi read the detail but not edit', function () {
 
     $this->actingAs($direksi)->getJson("/tugas/{$this->task->id}")->assertOk()->assertJsonPath('can.edit', false)->assertJsonPath('can.comment', true);
     $this->actingAs($direksi)->patchJson("/tugas/{$this->task->id}", ['title' => 'X'])->assertForbidden();
+});
+
+it('answers 404 (not 500) for checklist lines of a deleted task', function () {
+    $item = $this->actingAs($this->member)->postJson("/tugas/{$this->task->id}/checklist", ['title' => 'Hero section'])->json('item');
+    $this->task->delete();
+
+    $this->actingAs($this->member)->patchJson("/checklist/{$item['id']}", ['is_done' => true])->assertNotFound();
+    $this->actingAs($this->member)->deleteJson("/checklist/{$item['id']}")->assertNotFound();
+    expect(Gate::forUser($this->member)->inspect('view', ChecklistItem::query()->findOrFail($item['id']))->status())->toBe(404);
 });
