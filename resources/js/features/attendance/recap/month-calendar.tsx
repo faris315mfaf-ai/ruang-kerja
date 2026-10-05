@@ -19,6 +19,8 @@ type Props = {
     /** `cells`: 74px labelled tiles (SAbsensi); `dots`: 40px day tiles (MSRiwayat). */
     variant?: 'cells' | 'dots';
     today?: string;
+    /** Shorter 56px tiles for narrow side panels (recap detail). */
+    dense?: boolean;
     className?: string;
 };
 
@@ -82,6 +84,7 @@ export function MonthCalendar({
     onSelect,
     variant = 'cells',
     today,
+    dense = false,
     className,
 }: Props) {
     const weeks = calendarWeeks(days);
@@ -148,7 +151,10 @@ export function MonthCalendar({
                             ) : (
                                 <span
                                     className={cn(
-                                        'flex h-[74px] flex-col justify-between rounded-[14px] px-2.5 py-2 text-left',
+                                        'flex flex-col justify-between rounded-[14px] py-2 text-left',
+                                        dense
+                                            ? 'h-14 rounded-control px-1.5 py-1.5'
+                                            : 'h-[74px] px-2.5',
                                         colours,
                                         ring,
                                     )}
@@ -157,7 +163,14 @@ export function MonthCalendar({
                                         {Number(cell.date.slice(8))}
                                     </span>
                                     {label && (
-                                        <span className="truncate text-[13px] leading-4 font-bold tnum">
+                                        <span
+                                            className={cn(
+                                                'truncate leading-4 font-bold tnum',
+                                                dense
+                                                    ? 'text-[12px]'
+                                                    : 'text-[13px]',
+                                            )}
+                                        >
                                             {label}
                                         </span>
                                     )}

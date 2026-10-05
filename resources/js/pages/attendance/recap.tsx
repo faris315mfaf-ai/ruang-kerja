@@ -24,6 +24,16 @@ import { DesktopOnlyNotice } from '@/components/desktop-only-notice';
 import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { KpiCard } from '@/components/ui/kpi-card';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { UserAvatar } from '@/components/shell/user-avatar';
+import { FilterSelect } from '@/features/attendance/filter-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmployeeMonthPanel } from '@/features/attendance/recap/employee-month-panel';
 import { CorrectionDialog } from '@/features/attendance/review/correction-dialog';
@@ -36,7 +46,7 @@ import {
     officeMonth,
     recentMonths,
 } from '@/lib/recap';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { recap as recapRoute } from '@/routes/attendance';
 import recapRoutes from '@/routes/attendance/recap';
 import type {
@@ -180,14 +190,21 @@ export default function AttendanceRecap(props: Props) {
         });
 
     if (breakpoint === null) {
-        return <Skeleton className="h-96 rounded-xl" />;
+        return <Skeleton className="h-96 rounded-panel" />;
     }
 
     if (breakpoint === 'mobile') {
         return (
             <>
                 <Head title="Rekap absensi" />
-                <DesktopOnlyNotice feature="Rekap & ekspor bulanan" />
+                <div className="flex flex-col gap-4">
+                    <p className="text-overline text-link first-letter:uppercase">
+                        {props.period.label}
+                        {props.period.isRunning ? ' · berjalan' : ''}
+                    </p>
+                    <RecapKpis summary={props.report.summary} compact />
+                    <DesktopOnlyNotice feature="Rekap & ekspor bulanan" />
+                </div>
             </>
         );
     }
@@ -199,13 +216,16 @@ export default function AttendanceRecap(props: Props) {
     return (
         <>
             <Head title={`Rekap absensi · ${props.period.label}`} />
-            <div className="space-y-5">
-                <header className="flex flex-wrap items-end justify-between gap-3">
-                    <div>
-                        <h1 className="text-xl leading-7 font-semibold text-text">
-                            Rekap absensi · {props.period.label}
+            <div className="flex flex-col gap-6">
+                <header className="flex flex-wrap items-end justify-between gap-5">
+                    <div className="flex flex-col gap-2">
+                        <p className="text-overline text-link">
+                            Diperbarui {formatTime(props.generatedAt)}
+                        </p>
+                        <h1 className="text-display text-text first-letter:uppercase">
+                            Rekap {props.period.label}
                         </h1>
-                        <p className="text-sm text-text-muted">
+                        <p className="text-body-lg text-text-muted">
                             {Number(props.period.start.slice(8))}–
                             {Number(end.slice(8))}{' '}
                             {props.period.label.split(' ')[0].slice(0, 3)}{' '}
@@ -215,14 +235,14 @@ export default function AttendanceRecap(props: Props) {
                         </p>
                     </div>
                     {props.can.export && (
-                        <div className="flex gap-2">
-                            <Button asChild variant="outline" className="h-9">
+                        <div className="flex flex-wrap gap-3">
+                            <Button asChild variant="outline">
                                 <a href={exportUrl('pdf')} download>
                                     <Download aria-hidden />
                                     Ekspor PDF
                                 </a>
                             </Button>
-                            <Button asChild className="h-9">
+                            <Button asChild>
                                 <a href={exportUrl('xlsx')} download>
                                     <Download aria-hidden />
                                     Ekspor Excel
@@ -232,51 +252,37 @@ export default function AttendanceRecap(props: Props) {
                     )}
                 </header>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    <label className="flex items-center gap-2 text-sm text-text-muted">
-                        Bulan
-                        <select
-                            value={props.period.month}
-                            onChange={(event) =>
-                                visit({ bulan: event.target.value })
-                            }
-                            className="h-9 rounded-md border border-border bg-surface px-2 text-sm text-text"
-                        >
+                <div className="flex flex-wrap items-center gap-3">
+                    <Select
+                        value={props.period.month}
+                        onValueChange={(month) => visit({ bulan: month })}
+                    >
+                        <SelectTrigger aria-label="Bulan" className="min-w-44">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
                             {(months.includes(props.period.month)
                                 ? months
                                 : [props.period.month, ...months]
                             ).map((month) => (
-                                <option key={month} value={month}>
+                                <SelectItem key={month} value={month}>
                                     {monthLabel(month)}
-                                </option>
+                                </SelectItem>
                             ))}
-                        </select>
-                    </label>
+                        </SelectContent>
+                    </Select>
                     {props.divisions.length > 1 && (
-                        <label className="flex items-center gap-2 text-sm text-text-muted">
-                            Divisi
-                            <select
-                                value={props.filters.division_id ?? ''}
-                                onChange={(event) =>
-                                    visit({ divisi: event.target.value })
-                                }
-                                className="h-9 rounded-md border border-border bg-surface px-2 text-sm text-text"
-                            >
-                                <option value="">Semua divisi</option>
-                                {props.divisions.map((division) => (
-                                    <option
-                                        key={division.id}
-                                        value={division.id}
-                                    >
-                                        {division.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
+                        <FilterSelect
+                            label="Divisi"
+                            allLabel="Semua divisi"
+                            value={props.filters.division_id}
+                            onChange={(division) => visit({ divisi: division })}
+                            options={props.divisions}
+                        />
                     )}
                     <div className="relative">
                         <Search
-                            className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-text-subtle"
+                            className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-text-subtle"
                             aria-hidden
                         />
                         <Input
@@ -285,77 +291,36 @@ export default function AttendanceRecap(props: Props) {
                             placeholder="Cari nama karyawan"
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
-                            className="h-9 w-64 pl-8"
+                            className="w-72 pl-11"
                         />
                     </div>
-                    <span className="ml-auto text-[13px] text-text-muted">
-                        Diperbarui {formatTime(props.generatedAt)}
-                    </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-                    <Card
-                        label="Hari kerja"
-                        value={summary.calendarWorkDays}
-                        hint={`${summary.weekendDays} hari akhir pekan · ${summary.holidayDays === 0 ? 'tanpa libur nasional' : `${summary.holidayDays} hari libur`}`}
-                    />
-                    <Card
-                        label="Rata-rata kehadiran"
-                        value={
-                            summary.attendanceRate === null
-                                ? '–'
-                                : `${Math.round(summary.attendanceRate)}%`
-                        }
-                        extra={
-                            <div
-                                className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-2"
-                                aria-hidden
-                            >
-                                <div
-                                    className="h-full rounded-full bg-success"
-                                    style={{
-                                        width: `${summary.attendanceRate ?? 0}%`,
-                                    }}
-                                />
-                            </div>
-                        }
-                    />
-                    <Card
-                        label="Total terlambat"
-                        value={summary.lateCount}
-                        unit="kali"
-                        hint={`Lewat toleransi ${summary.lateToleranceMin} menit`}
-                        hintClass="text-warning"
-                    />
-                    <Card
-                        label="Total lembur"
-                        value={formatHours(summary.overtimeHours)}
-                        unit="jam"
-                        hint="Hanya lembur yang disetujui"
-                    />
-                </div>
+                <RecapKpis summary={summary} />
 
                 <div
                     className={cn(
-                        'grid items-start gap-4',
-                        props.detail && 'xl:grid-cols-[minmax(0,1fr)_400px]',
+                        'grid items-start gap-5',
+                        props.detail && 'xl:grid-cols-[minmax(0,1fr)_420px]',
                     )}
                 >
                     <section
                         aria-label="Rekap per karyawan"
-                        className="overflow-hidden rounded-xl border border-border bg-surface shadow-card"
+                        className="overflow-hidden rounded-panel border border-border bg-surface shadow-card"
                     >
                         {rows.length === 0 ? (
-                            <EmptyState
-                                icon={Users}
-                                title="Belum ada data absensi"
-                                description="Tidak ada karyawan terjadwal atau tercatat pada bulan dan filter ini."
-                                className="m-4 border-none"
-                            />
+                            <div className="p-6">
+                                <EmptyState
+                                    size="sm"
+                                    icon={Users}
+                                    title="Belum ada data absensi"
+                                    description="Tidak ada karyawan terjadwal atau tercatat pada bulan dan filter ini."
+                                />
+                            </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead className="border-b border-border bg-surface-2 text-[13px] text-text-muted">
+                                <table className="w-full text-[16px] tnum">
+                                    <thead className="border-b border-border bg-background text-[14px] text-text-muted">
                                         <tr>
                                             {table
                                                 .getHeaderGroups()[0]
@@ -377,19 +342,20 @@ export default function AttendanceRecap(props: Props) {
                                                                       : undefined
                                                             }
                                                             className={cn(
-                                                                'px-3 py-2.5 font-medium whitespace-nowrap',
+                                                                'h-12 px-3 font-bold whitespace-nowrap',
                                                                 header.index > 1
                                                                     ? 'text-right'
                                                                     : 'text-left',
                                                                 header.index ===
-                                                                    0 && 'pl-4',
+                                                                    0 && 'pl-7',
                                                             )}
                                                         >
                                                             <button
                                                                 type="button"
                                                                 onClick={header.column.getToggleSortingHandler()}
                                                                 className={cn(
-                                                                    'inline-flex items-center gap-1 hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                                                                    'inline-flex min-h-11 items-center gap-1 rounded-sm hover:text-text',
+                                                                    focusRing,
                                                                     header.index >
                                                                         1 &&
                                                                         'flex-row-reverse',
@@ -413,7 +379,7 @@ export default function AttendanceRecap(props: Props) {
                                                 })}
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-border">
+                                    <tbody className="divide-y divide-divider">
                                         {visible.map((row) => {
                                             const active =
                                                 row.userId ===
@@ -436,15 +402,18 @@ export default function AttendanceRecap(props: Props) {
                                                         )
                                                     }
                                                     className={cn(
-                                                        'cursor-pointer transition-colors duration-120 ease-brand hover:bg-surface-2',
+                                                        'h-[60px] cursor-pointer transition-colors duration-120 ease-brand hover:bg-surface-2/60',
                                                         active &&
-                                                            'bg-primary/5 shadow-[inset_3px_0_0_var(--primary)]',
+                                                            'bg-link-soft shadow-[inset_3px_0_0_var(--primary)] hover:bg-link-soft',
                                                     )}
                                                 >
-                                                    <td className="py-2.5 pr-3 pl-4">
+                                                    <td className="py-2 pr-3 pl-7">
                                                         <button
                                                             type="button"
-                                                            className="flex items-center gap-2.5 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                                            className={cn(
+                                                                'flex items-center gap-3 rounded-sm text-left',
+                                                                focusRing,
+                                                            )}
                                                             onClick={(
                                                                 event,
                                                             ) => {
@@ -461,18 +430,16 @@ export default function AttendanceRecap(props: Props) {
                                                                 );
                                                             }}
                                                         >
-                                                            <span
-                                                                aria-hidden
-                                                                className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[11px] font-semibold text-on-brand"
-                                                            >
-                                                                {row.initials}
-                                                            </span>
-                                                            <span className="font-medium whitespace-nowrap text-text">
+                                                            <UserAvatar
+                                                                name={row.name}
+                                                                className="size-9 text-[13px]"
+                                                            />
+                                                            <span className="font-semibold whitespace-nowrap text-text">
                                                                 {row.name}
                                                             </span>
                                                         </button>
                                                     </td>
-                                                    <td className="px-3 py-2.5 whitespace-nowrap text-text-muted">
+                                                    <td className="px-3 py-2 text-[15px] whitespace-nowrap text-text-muted">
                                                         {row.divisionName ??
                                                             '–'}
                                                     </td>
@@ -483,7 +450,7 @@ export default function AttendanceRecap(props: Props) {
                                                     />
                                                     <td
                                                         className={cn(
-                                                            'px-3 py-2.5 text-right whitespace-nowrap tnum',
+                                                            'px-3 py-2 text-right font-semibold whitespace-nowrap',
                                                             row.lateCount > 0
                                                                 ? 'text-warning'
                                                                 : 'text-text-muted',
@@ -493,9 +460,9 @@ export default function AttendanceRecap(props: Props) {
                                                             ? '0'
                                                             : `${row.lateCount} · ${row.lateMinutes}m`}
                                                     </td>
-                                                    <td className="px-3 py-2.5 text-right tnum">
+                                                    <td className="px-3 py-2 text-right">
                                                         {row.absentDays > 0 ? (
-                                                            <span className="inline-flex size-5 items-center justify-center rounded-full bg-danger-soft text-xs text-danger">
+                                                            <span className="inline-flex h-[26px] min-w-[26px] items-center justify-center rounded-full bg-danger-soft px-2 text-[14px] font-bold text-danger">
                                                                 {row.absentDays}
                                                             </span>
                                                         ) : (
@@ -516,7 +483,7 @@ export default function AttendanceRecap(props: Props) {
                                                             row.businessTripDays
                                                         }
                                                     />
-                                                    <td className="px-3 py-2.5 pr-4 text-right tnum">
+                                                    <td className="px-3 py-2 pr-7 text-right">
                                                         {formatHours(
                                                             row.overtimeHours,
                                                         )}
@@ -528,7 +495,7 @@ export default function AttendanceRecap(props: Props) {
                                 </table>
                             </div>
                         )}
-                        <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-2.5 text-[13px] text-text-muted">
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-divider px-7 py-3 text-meta text-text-muted">
                             <span>
                                 Menampilkan{' '}
                                 {rows.length === 0
@@ -547,8 +514,7 @@ export default function AttendanceRecap(props: Props) {
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        size="icon"
-                                        className="size-8"
+                                        size="icon-sm"
                                         disabled={current === 0}
                                         onClick={() => setPage(current - 1)}
                                         aria-label="Halaman sebelumnya"
@@ -561,8 +527,7 @@ export default function AttendanceRecap(props: Props) {
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        size="icon"
-                                        className="size-8"
+                                        size="icon-sm"
                                         disabled={current >= pages - 1}
                                         onClick={() => setPage(current + 1)}
                                         aria-label="Halaman berikutnya"
@@ -648,9 +613,9 @@ function Num({ value, strong = false }: { value: number; strong?: boolean }) {
     return (
         <td
             className={cn(
-                'px-3 py-2.5 text-right tnum',
+                'px-3 py-2 text-right',
                 strong
-                    ? 'font-medium text-text'
+                    ? 'font-bold text-text'
                     : value === 0
                       ? 'text-text-muted'
                       : 'text-text',
@@ -661,44 +626,75 @@ function Num({ value, strong = false }: { value: number; strong?: boolean }) {
     );
 }
 
-function Card({
-    label,
-    value,
-    unit,
-    hint,
-    hintClass,
-    extra,
+/** Month summary (MgAbsensi "Ringkasan"): highlighted attendance rate. */
+function RecapKpis({
+    summary,
+    compact = false,
 }: {
-    label: string;
-    value: string | number;
-    unit?: string;
-    hint?: string;
-    hintClass?: string;
-    extra?: React.ReactNode;
+    summary: RecapReportData['summary'];
+    compact?: boolean;
 }) {
+    const rate =
+        summary.attendanceRate === null
+            ? null
+            : Math.round(summary.attendanceRate);
+
     return (
-        <div className="rounded-xl border border-border bg-surface p-4 shadow-card">
-            <p className="text-[13px] text-text-muted">{label}</p>
-            <p className="mt-1 text-[28px] font-semibold text-text tnum">
-                {value}
-                {unit && (
-                    <span className="ml-1 text-base font-normal text-text-muted">
-                        {unit}
-                    </span>
-                )}
-            </p>
-            {extra}
-            {hint && (
-                <p
-                    className={cn(
-                        'mt-1 text-[13px] text-text-muted',
-                        hintClass,
-                    )}
-                >
-                    {hint}
-                </p>
+        <section
+            aria-label="Ringkasan"
+            className={cn(
+                'grid grid-cols-2 gap-3',
+                !compact && 'gap-5 xl:grid-cols-4',
             )}
-        </div>
+        >
+            <KpiCard
+                tone="highlight"
+                label="Rata-rata kehadiran"
+                value={rate === null ? '–' : `${rate}%`}
+                className={cn(compact && 'col-span-2')}
+            >
+                <div
+                    role="progressbar"
+                    aria-label="Rata-rata kehadiran"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={rate ?? 0}
+                    className="h-2 overflow-hidden rounded-full bg-on-brand/25"
+                >
+                    <div
+                        className="h-full rounded-full bg-on-brand"
+                        style={{ width: `${rate ?? 0}%` }}
+                    />
+                </div>
+            </KpiCard>
+            <KpiCard
+                label="Hari kerja"
+                value={summary.calendarWorkDays}
+                note={
+                    compact
+                        ? null
+                        : `${summary.weekendDays} hari akhir pekan · ${summary.holidayDays === 0 ? 'tanpa libur nasional' : `${summary.holidayDays} hari libur`}`
+                }
+            />
+            <KpiCard
+                label="Total terlambat"
+                value={summary.lateCount}
+                suffix="kali"
+                valueClassName={summary.lateCount > 0 ? 'text-warning' : ''}
+                note={
+                    compact
+                        ? null
+                        : `Lewat toleransi ${summary.lateToleranceMin} menit`
+                }
+            />
+            <KpiCard
+                label="Total lembur"
+                value={formatHours(summary.overtimeHours)}
+                suffix="jam"
+                note={compact ? null : 'Hanya lembur yang disetujui'}
+                className={cn(compact && 'col-span-2')}
+            />
+        </section>
     );
 }
 

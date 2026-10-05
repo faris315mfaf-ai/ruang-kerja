@@ -1,5 +1,7 @@
 import { FileText, ShieldCheck, X } from 'lucide-react';
 import { useState } from 'react';
+import { UserAvatar } from '@/components/shell/user-avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatHours, lateSummary } from '@/lib/recap';
 import { cn } from '@/lib/utils';
@@ -43,7 +45,7 @@ export function EmployeeMonthPanel({
             value: (
                 <>
                     {formatNumber(detail.presentDays)}
-                    <span className="text-sm font-normal text-text-muted">
+                    <span className="text-[15px] font-normal text-text-muted">
                         /{detail.workDays}
                     </span>
                 </>
@@ -59,18 +61,14 @@ export function EmployeeMonthPanel({
         },
         {
             label: 'Rata masuk',
-            value: (
-                <span className="font-mono">
-                    {detail.averageCheckIn ?? '–'}
-                </span>
-            ),
+            value: <span>{detail.averageCheckIn ?? '–'}</span>,
         },
         {
             label: 'Lembur',
             value: (
                 <>
                     {formatHours(detail.overtimeHours)}{' '}
-                    <span className="text-sm font-normal text-text-muted">
+                    <span className="text-[15px] font-normal text-text-muted">
                         jam
                     </span>
                 </>
@@ -82,22 +80,20 @@ export function EmployeeMonthPanel({
         <section
             aria-label={`Rekap ${detail.name}`}
             className={cn(
-                'space-y-4 rounded-xl border border-border bg-surface p-4 shadow-card',
+                'flex flex-col gap-5 rounded-panel border border-border bg-surface p-5 shadow-card md:p-6',
                 className,
             )}
         >
             <header className="flex items-start gap-3">
-                <span
-                    aria-hidden
-                    className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-on-brand"
-                >
-                    {detail.initials}
-                </span>
+                <UserAvatar
+                    name={detail.name}
+                    className="size-12 text-[16px]"
+                />
                 <div className="min-w-0 flex-1">
-                    <h2 className="truncate text-[17px] font-semibold text-text">
+                    <h2 className="truncate text-title font-bold text-text">
                         {detail.name} · {monthLabel.split(' ')[0]}
                     </h2>
-                    <p className="truncate text-[13px] text-text-muted">
+                    <p className="truncate text-[15px] text-text-muted">
                         {[
                             detail.positionName,
                             detail.shiftName
@@ -121,16 +117,16 @@ export function EmployeeMonthPanel({
                 )}
             </header>
 
-            <dl className="grid grid-cols-4 gap-2">
+            <dl className="grid grid-cols-2 gap-2">
                 {stats.map((stat) => (
                     <div
                         key={stat.label}
-                        className="rounded-lg bg-surface-2 px-2.5 py-2"
+                        className="rounded-lg bg-background px-3 py-2.5"
                     >
-                        <dt className="text-xs text-text-muted">
+                        <dt className="text-meta text-text-muted">
                             {stat.label}
                         </dt>
-                        <dd className="mt-0.5 text-[17px] font-semibold text-text tnum">
+                        <dd className="mt-0.5 text-[20px] leading-7 font-bold text-text tnum">
                             {stat.value}
                         </dd>
                     </div>
@@ -138,23 +134,24 @@ export function EmployeeMonthPanel({
             </dl>
 
             <MonthCalendar
+                dense
                 days={detail.days}
                 selected={selected}
                 onSelect={onSelectDay}
             />
             <CalendarLegend row={detail} />
 
-            <div className="space-y-2 border-t border-border pt-3">
+            <div className="flex flex-col gap-2.5 border-t border-divider pt-4">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-[15px] font-semibold text-text">
+                    <h3 className="text-title font-bold text-text">
                         Log mencurigakan
                     </h3>
-                    <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-surface-2 px-2 text-xs font-semibold text-text-muted tnum">
+                    <Badge variant="secondary" className="h-7 tnum">
                         {flagged.length}
-                    </span>
+                    </Badge>
                 </div>
                 {flagged.length === 0 ? (
-                    <p className="flex gap-2 rounded-lg bg-success-soft p-3 text-sm text-success">
+                    <p className="flex gap-2 rounded-lg bg-success-soft p-3.5 text-[15px] leading-[22px] text-success">
                         <ShieldCheck
                             className="mt-0.5 size-4 shrink-0"
                             aria-hidden
@@ -163,15 +160,15 @@ export function EmployeeMonthPanel({
                         baru, jam perangkat, lompatan lokasi, selfie gelap.
                     </p>
                 ) : (
-                    <ul className="space-y-2">
+                    <ul className="flex flex-col gap-2">
                         {flagged.slice(0, 4).map((log) => (
                             <li
                                 key={log.id}
-                                className="space-y-1.5 rounded-lg border border-border p-2.5 text-sm"
+                                className="flex flex-col gap-2 rounded-lg bg-background p-3.5 text-[15px]"
                             >
                                 <p className="text-text">
                                     {formatDate(log.occurredAt)} ·{' '}
-                                    <span className="font-mono">
+                                    <span className="font-semibold">
                                         {formatTime(log.occurredAt)}
                                     </span>{' '}
                                     <span className="text-text-muted">
@@ -180,21 +177,23 @@ export function EmployeeMonthPanel({
                                 </p>
                                 <p className="flex flex-wrap gap-1.5">
                                     {log.flags.map((flag) => (
-                                        <span
+                                        <Badge
                                             key={flag.value}
-                                            className="inline-flex h-5 items-center rounded-full bg-warning-soft px-2 text-xs text-warning"
+                                            variant="status"
+                                            tone="warning"
+                                            className="h-7 px-2.5 text-[14px]"
                                         >
                                             {flag.label}
-                                        </span>
+                                        </Badge>
                                     ))}
                                     {log.reviewedAt && (
-                                        <span className="text-xs text-success">
+                                        <span className="text-meta font-semibold text-success">
                                             Sudah ditinjau
                                         </span>
                                     )}
                                 </p>
                                 {(log.canViewSelfie || log.canReview) && (
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-wrap gap-2">
                                         {log.canViewSelfie && (
                                             <SelfieButton
                                                 logId={log.id}
@@ -216,19 +215,20 @@ export function EmployeeMonthPanel({
                 )}
             </div>
 
-            <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
-                <button
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-divider pt-4">
+                <Button
                     type="button"
+                    variant="quiet"
+                    size="sm"
                     onClick={() => setLogsOpen(true)}
-                    className="text-sm font-medium text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
                     Lihat {detail.logs.length} log absensi
-                </button>
+                </Button>
                 {onCorrect && (
                     <Button
                         type="button"
                         variant="outline"
-                        className="h-9"
+                        size="sm"
                         onClick={onCorrect}
                     >
                         <FileText aria-hidden />

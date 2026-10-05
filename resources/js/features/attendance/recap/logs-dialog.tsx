@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -36,21 +37,21 @@ export function LogsDialog({
                     </DialogDescription>
                 </DialogHeader>
                 {logs.length === 0 ? (
-                    <p className="py-6 text-center text-sm text-text-muted">
+                    <p className="py-6 text-center text-[16px] text-text-muted">
                         Belum ada log pada bulan ini.
                     </p>
                 ) : (
-                    <ul className="divide-y divide-border rounded-lg border border-border">
+                    <ul className="divide-y divide-divider overflow-hidden rounded-lg border border-border bg-surface">
                         {logs.map((log) => (
                             <li
                                 key={log.id}
-                                className="grid gap-1.5 px-3 py-2.5 text-sm"
+                                className="grid gap-2 px-4 py-3 text-[15px]"
                             >
                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                    <span className="font-medium text-text">
+                                    <span className="font-semibold text-text">
                                         {formatDate(log.occurredAt)}
                                     </span>
-                                    <span className="font-mono text-text tnum">
+                                    <span className="font-semibold text-text tnum">
                                         {formatTime(log.occurredAt)}
                                     </span>
                                     <span className="text-text-muted">
@@ -63,28 +64,30 @@ export function LogsDialog({
                                             : ''}
                                     </span>
                                     {log.flags.map((flag) => (
-                                        <span
+                                        <Badge
                                             key={flag.value}
-                                            className="inline-flex h-5 items-center rounded-full bg-warning-soft px-2 text-xs text-warning"
+                                            variant="status"
+                                            tone="warning"
+                                            className="h-7 px-2.5 text-[14px]"
                                         >
                                             {flag.label}
-                                        </span>
+                                        </Badge>
                                     ))}
                                     {log.reviewedAt && (
-                                        <span className="text-xs text-success">
+                                        <span className="text-meta font-semibold text-success">
                                             Sudah ditinjau
                                         </span>
                                     )}
                                 </div>
                                 {log.note && (
-                                    <p className="text-[13px] text-text-muted">
+                                    <p className="text-meta text-text-muted">
                                         {log.isCorrection
                                             ? `Alasan koreksi: ${log.note}`
                                             : log.note}
                                     </p>
                                 )}
                                 {(log.canViewSelfie || log.canReview) && (
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-wrap gap-2">
                                         {log.canViewSelfie && (
                                             <SelfieButton
                                                 logId={log.id}
@@ -107,7 +110,7 @@ export function LogsDialog({
                 <div className="flex justify-end">
                     <Button
                         type="button"
-                        variant="ghost"
+                        variant="quiet"
                         onClick={() => onOpenChange(false)}
                     >
                         Tutup
