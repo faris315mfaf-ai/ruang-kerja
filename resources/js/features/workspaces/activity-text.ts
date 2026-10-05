@@ -1,4 +1,5 @@
 import { PRIORITY_LABELS } from '@/components/priority-icon';
+import { HEALTH_LABELS } from '@/features/portfolio/lib';
 import type { Priority } from '@/features/tasks/types';
 import { formatDayMonth } from '@/features/tasks/lib/due-date';
 import type { ActivityItem } from './types';
@@ -66,6 +67,35 @@ export function describeActivity(
             return `mengeluarkan ${str(p.name)}`;
         case 'workspace.member_role_changed':
             return `mengubah peran ${str(p.name)} menjadi ${ROLE_LABELS[str(p.to) as keyof typeof ROLE_LABELS] ?? str(p.to)}`;
+        // Project tracking (Sprint 9).
+        case 'project.attributes_changed':
+            return 'mengubah atribut proyek';
+        case 'project.update_posted':
+            return `menulis update proyek (${HEALTH_LABELS[str(p.health) as keyof typeof HEALTH_LABELS] ?? str(p.health)})${p.decision_needed ? ' dan meminta keputusan Direksi' : ''}`;
+        case 'project.update_requested':
+            return `meminta update proyek dari ${str(p.recipient)}`;
+        case 'project.direction_given':
+            return `memberi arahan: “${str(p.body)}”`;
+        case 'project.decision_resolved':
+            return `menandai keputusan selesai: “${str(p.decision)}”`;
+        case 'milestone.created':
+            return `menambahkan milestone “${str(p.name)}”`;
+        case 'milestone.updated':
+            return `mengubah milestone “${str(p.name)}”`;
+        case 'milestone.completed':
+            return `menandai milestone “${str(p.name)}” selesai`;
+        case 'milestone.reopened':
+            return `membuka kembali milestone “${str(p.name)}”`;
+        case 'milestone.deleted':
+            return `menghapus milestone “${str(p.name)}”`;
+        case 'risk.created':
+            return `mencatat risiko “${str(p.title)}”`;
+        case 'risk.updated':
+            return `mengubah risiko “${str(p.title)}”`;
+        case 'risk.resolved':
+            return `menandai risiko “${str(p.title)}” teratasi`;
+        case 'risk.deleted':
+            return `menghapus risiko “${str(p.title)}”`;
         default:
             return item.event;
     }

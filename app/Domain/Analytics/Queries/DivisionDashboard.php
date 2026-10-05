@@ -15,8 +15,9 @@ use App\Domain\Analytics\MetricDefinitions\OverdueTasks;
 use App\Domain\Analytics\MetricDefinitions\Workload;
 use App\Domain\Analytics\Services\MetricCache;
 use App\Domain\Analytics\Services\TodayAttendance;
-use App\Domain\Analytics\Support\ProjectHealth;
 use App\Domain\Analytics\Support\TaskSummary;
+use App\Domain\Projects\Enums\ProjectHealth;
+use App\Domain\Projects\Enums\ProjectStatus;
 use App\Domain\Requests\Services\ApprovalQueue;
 use App\Domain\Workspaces\Enums\WorkspaceType;
 use App\Http\Presenters\RequestPresenter;
@@ -188,15 +189,15 @@ final class DivisionDashboard
             ->visibleTo($scope->viewer)
             ->notArchived()
             ->where('workspaces.type', WorkspaceType::Project->value)
-            ->where(fn (Builder $query) => $query->whereNull('workspaces.project_status')->orWhereIn('workspaces.project_status', ['planned', 'active', 'on_hold']))
+            ->where(fn (Builder $query) => $query->whereNull('workspaces.project_status')->orWhereIn('workspaces.project_status', [ProjectStatus::Planned->value, ProjectStatus::Active->value, ProjectStatus::OnHold->value]))
             ->whereExists(fn (QueryBuilder $member) => $member->selectRaw('1')
                 ->from('workspace_members')
                 ->whereColumn('workspace_members.workspace_id', 'workspaces.id')
                 ->whereIn('workspace_members.user_id', $scope->userIds))
             ->where(fn (Builder $query) => $query
-                ->whereIn('workspaces.health', ProjectHealth::AT_RISK)
+                ->whereIn('workspaces.health', [ProjectHealth::AtRisk->value, ProjectHealth::OffTrack->value])
                 ->orWhere(fn (Builder $stale) => $stale
-                    ->where('workspaces.project_status', 'active')
+                    ->where('workspaces.project_status', ProjectStatus::Active->value)
                     ->where(fn (Builder $update) => $update->whereNull('workspaces.last_update_at')->orWhere('workspaces.last_update_at', '<', $staleBefore->toIso8601String()))))
             ->orderByRaw("case workspaces.health when 'off_track' then 0 when 'at_risk' then 1 else 2 end")
             ->orderBy('workspaces.name')
@@ -212,10 +213,10 @@ final class DivisionDashboard
                 'key' => $workspace->key,
                 'name' => $workspace->name,
                 'url' => '/w/'.$workspace->key,
-                'health' => $workspace->health,
-                'health_label' => ProjectHealth::label($workspace->health),
+                'health' => $workspace->health?->value,
+                'health_label' => $workspace->health?->label(),
                 'last_update_at' => $workspace->last_update_at?->toIso8601String(),
-                'stale' => $workspace->project_status === 'active'
+                'stale' => $workspace->project_status === ProjectStatus::Active
                     && ($workspace->last_update_at === null || $workspace->last_update_at->lt($staleBefore)),
                 'target_date' => $workspace->target_date?->toDateString(),
                 'lead' => $workspace->lead_user_id !== null ? $leads->get($workspace->lead_user_id) : null,

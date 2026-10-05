@@ -22,7 +22,7 @@ import {
     adminNavItems,
     attendanceNavItems,
     isActivePath,
-    mainNavItems,
+    mainNavItemsFor,
 } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 
@@ -98,7 +98,7 @@ export function AppSidebar({ className }: { className?: string }) {
 
             <SidebarContent className="gap-1">
                 <SidebarGroup className="py-1">
-                    <NavList items={mainNavItems} />
+                    <NavList items={mainNavItemsFor(auth.roles)} />
                 </SidebarGroup>
 
                 <SidebarWorkspaces />
