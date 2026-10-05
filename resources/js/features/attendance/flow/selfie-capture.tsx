@@ -1,4 +1,5 @@
 import { AlertCircle, Camera, Loader2, QrCode, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useRef } from 'react';
 import { cn, focusRing } from '@/lib/utils';
 import type { CheckFlow } from '../use-check-flow';
@@ -75,14 +76,13 @@ export function SelfieCapture({
                         <p className="max-w-xs text-[15px] text-text">
                             {camera.error}
                         </p>
-                        <button
+                        <Button
                             type="button"
                             onClick={() => fileInput.current?.click()}
-                            className="inline-flex h-11 items-center gap-2 rounded-md bg-primary px-4 text-[15px] font-medium text-primary-foreground"
                         >
                             <Camera className="size-5" aria-hidden />
                             Ambil foto
-                        </button>
+                        </Button>
                     </div>
                 )}
                 <div className="glass-strong absolute inset-x-3 bottom-3 flex items-start gap-3 rounded-lg px-4 py-3 text-[15px] leading-6 text-text">

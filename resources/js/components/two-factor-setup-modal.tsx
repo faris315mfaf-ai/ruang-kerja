@@ -18,15 +18,14 @@ import {
     InputOTPSlot,
 } from '@/components/ui/input-otp';
 import { Spinner } from '@/components/ui/spinner';
-import { useAppearance } from '@/hooks/use-appearance';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import { confirm } from '@/routes/two-factor';
 
 function GridScanIcon() {
     return (
-        <div className="mb-3 rounded-full border border-border bg-card p-0.5 shadow-sm">
-            <div className="relative overflow-hidden rounded-full border border-border bg-muted p-2.5">
+        <div className="mb-3 rounded-full border border-border bg-surface p-0.5 shadow-card">
+            <div className="relative overflow-hidden rounded-full border border-border bg-surface-2 p-2.5">
                 <div className="absolute inset-0 grid grid-cols-5 opacity-50">
                     {Array.from({ length: 5 }, (_, i) => (
                         <div
@@ -43,7 +42,7 @@ function GridScanIcon() {
                         />
                     ))}
                 </div>
-                <ScanLine className="relative z-20 size-6 text-foreground" />
+                <ScanLine className="relative z-20 size-6 text-text" />
             </div>
         </div>
     );
@@ -62,7 +61,6 @@ function TwoFactorSetupStep({
     onNextStep: () => void;
     errors: string[];
 }) {
-    const { resolvedAppearance } = useAppearance();
     const [copiedText, copy] = useClipboard();
     const IconComponent = copiedText === manualSetupKey ? Check : Copy;
 
@@ -76,20 +74,13 @@ function TwoFactorSetupStep({
                         <div className="mx-auto aspect-square w-64 rounded-lg border border-border">
                             <div className="z-10 flex h-full w-full items-center justify-center p-5">
                                 {qrCodeSvg ? (
-                                    <div className="aspect-square w-full rounded-lg bg-surface p-2">
+                                    <div className="aspect-square w-full rounded-lg bg-qr-paper p-2">
                                         <div
                                             role="img"
                                             aria-label="Kode QR penyiapan autentikasi dua faktor"
                                             className="size-full [&_svg]:size-full"
                                             dangerouslySetInnerHTML={{
                                                 __html: qrCodeSvg,
-                                            }}
-                                            style={{
-                                                filter:
-                                                    resolvedAppearance ===
-                                                    'dark'
-                                                        ? 'invert(1) brightness(1.5)'
-                                                        : undefined,
                                             }}
                                         />
                                     </div>
@@ -108,15 +99,15 @@ function TwoFactorSetupStep({
 
                     <div className="relative flex w-full items-center justify-center">
                         <div className="absolute inset-0 top-1/2 h-px w-full bg-border" />
-                        <span className="relative bg-card px-2 py-1">
+                        <span className="relative bg-surface px-2 py-1 text-meta text-text-muted">
                             atau, masukkan kode secara manual
                         </span>
                     </div>
 
                     <div className="flex w-full space-x-2">
-                        <div className="flex w-full items-stretch overflow-hidden rounded-xl border border-border">
+                        <div className="flex h-control w-full items-stretch overflow-hidden rounded-control border border-border-strong">
                             {!manualSetupKey ? (
-                                <div className="flex h-full w-full items-center justify-center bg-muted p-3">
+                                <div className="flex h-full w-full items-center justify-center bg-surface-2 p-3">
                                     <Spinner />
                                 </div>
                             ) : (
@@ -126,15 +117,18 @@ function TwoFactorSetupStep({
                                         aria-label="Kunci penyiapan"
                                         readOnly
                                         value={manualSetupKey}
-                                        className="h-full w-full bg-background p-3 text-foreground outline-none"
+                                        className="h-full w-full bg-surface px-3.5 font-mono text-[15px] text-text outline-none"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => copy(manualSetupKey)}
                                         aria-label="Salin kunci penyiapan"
-                                        className="border-l border-border px-3 hover:bg-muted"
+                                        className="border-l border-border px-3.5 text-text-muted transition-colors duration-120 ease-brand hover:bg-surface-2 hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                                     >
-                                        <IconComponent className="w-4" />
+                                        <IconComponent
+                                            className="size-[18px]"
+                                            aria-hidden
+                                        />
                                     </button>
                                 </>
                             )}

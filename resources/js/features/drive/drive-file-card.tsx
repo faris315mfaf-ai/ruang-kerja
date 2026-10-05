@@ -63,7 +63,7 @@ export function DriveFileCard({
                         <span className="sr-only"> (buka di tab baru)</span>
                     </a>
                 )}
-                <p className="truncate text-xs text-text-muted">
+                <p className="truncate text-meta text-text-muted">
                     {file.deleted && (
                         <span className="text-warning">
                             Dihapus dari Drive ·{' '}

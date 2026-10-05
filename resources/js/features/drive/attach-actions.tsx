@@ -124,12 +124,9 @@ export function DriveConnectPrompt({
                 title="Hubungkan akun Google"
                 description={state.message}
                 footer={
-                    <a
-                        href={state.connectUrl}
-                        className="flex h-12 w-full items-center justify-center rounded-md bg-primary text-[16px] font-medium text-primary-foreground"
-                    >
-                        Hubungkan akun Google
-                    </a>
+                    <Button asChild size="lg" className="w-full">
+                        <a href={state.connectUrl}>Hubungkan akun Google</a>
+                    </Button>
                 }
             >
                 <p className="text-[15px] text-text-muted">{explanation}</p>
@@ -179,7 +176,7 @@ export function AttachMenuItems({ actions }: { actions: AttachActions }) {
                 Pilih dari Drive
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs font-normal text-text-muted">
+            <DropdownMenuLabel className="text-meta font-normal text-text-muted">
                 Dokumen baru
             </DropdownMenuLabel>
             {DOCUMENT_OPTIONS.map((option) => (

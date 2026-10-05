@@ -111,7 +111,7 @@ export default function TwoFactorRecoveryCodes({
                             <>
                                 <div
                                     ref={codesSectionRef}
-                                    className="grid gap-1 rounded-lg bg-muted p-4 font-mono text-sm"
+                                    className="grid gap-1 rounded-lg bg-surface-2 p-4 font-mono text-[15px] text-text"
                                     role="list"
                                     aria-label="Kode pemulihan"
                                 >
@@ -135,7 +135,7 @@ export default function TwoFactorRecoveryCodes({
                                                 (_, index) => (
                                                     <div
                                                         key={index}
-                                                        className="h-4 animate-pulse rounded bg-muted-foreground/20"
+                                                        className="h-4 animate-pulse rounded-xs bg-border"
                                                         aria-hidden="true"
                                                     />
                                                 ),
@@ -144,7 +144,7 @@ export default function TwoFactorRecoveryCodes({
                                     )}
                                 </div>
 
-                                <div className="text-xs text-muted-foreground select-none">
+                                <div className="text-meta text-text-muted select-none">
                                     <p id="regenerate-warning">
                                         Setiap kode pemulihan hanya bisa dipakai
                                         sekali untuk masuk ke akun Anda dan akan
