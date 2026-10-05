@@ -1,7 +1,11 @@
 <?php
 
+use App\Domain\Organization\Enums\Permission;
+use App\Domain\Organization\Enums\Role;
+use App\Domain\Requests\Enums\ApproverType;
 use App\Domain\Requests\Enums\RequestStatus;
 use App\Models\ApprovalDelegation;
+use App\Models\EmployeeRequest;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Database\Seeders\RoleSeeder;
@@ -123,4 +127,21 @@ it('manages delegations and reroutes waiting steps immediately', function () {
     $this->actingAs($s->employee)->delete("/persetujuan/delegasi/{$delegation->id}")->assertForbidden();
     $this->actingAs($s->manager)->delete("/persetujuan/delegasi/{$delegation->id}")->assertRedirect();
     expect(ApprovalDelegation::query()->count())->toBe(0);
+});
+
+it('bulk-approves role steps for approvers without requests.view_all (review #8)', function () {
+    $s = $this->s;
+    $s->useFlow($s->annual, [[ApproverType::Role, Role::KepalaDivisi]]);
+    // A Kepala Divisi of another division: holds the role, cannot see the request otherwise.
+    $otherHead = User::factory()->withRole(Role::KepalaDivisi)->create();
+    $request = $s->submit($s->employee, $s->annual, ['start_date' => '2026-10-12', 'end_date' => '2026-10-12']);
+
+    expect($otherHead->hasPermission(Permission::RequestsViewAll))->toBeFalse()
+        ->and(EmployeeRequest::query()->visibleTo($otherHead)->whereKey($request->id)->exists())->toBeFalse();
+
+    $this->actingAs($otherHead)
+        ->post('/persetujuan/massal', ['ids' => [$request->id]])
+        ->assertRedirect('/persetujuan');
+
+    expect($request->refresh()->status)->toBe(RequestStatus::Approved);
 });
