@@ -87,7 +87,6 @@ export function CorrectionDialog({ target, today, reload, onClose }: Props) {
                             onChange={(event) =>
                                 form.setData('work_date', event.target.value)
                             }
-                            className="text-base md:text-sm"
                             required
                         />
                         <InputError message={form.errors.work_date} />
@@ -102,7 +101,6 @@ export function CorrectionDialog({ target, today, reload, onClose }: Props) {
                                 onChange={(event) =>
                                     form.setData('check_in', event.target.value)
                                 }
-                                className="text-base md:text-sm"
                             />
                             <InputError message={form.errors.check_in} />
                         </div>
@@ -118,12 +116,11 @@ export function CorrectionDialog({ target, today, reload, onClose }: Props) {
                                         event.target.value,
                                     )
                                 }
-                                className="text-base md:text-sm"
                             />
                             <InputError message={form.errors.check_out} />
                         </div>
                     </div>
-                    <p className="text-[13px] text-text-muted">
+                    <p className="text-meta text-text-muted">
                         Kosongkan jam yang tidak diubah. Jam pulang yang lebih
                         awal dari jam masuk dihitung esok hari (shift malam).
                     </p>
@@ -137,7 +134,6 @@ export function CorrectionDialog({ target, today, reload, onClose }: Props) {
                             }
                             placeholder="Mis. lupa check-out, dikonfirmasi atasan"
                             maxLength={500}
-                            className="text-base md:text-sm"
                             required
                         />
                         <InputError message={form.errors.reason} />
@@ -145,7 +141,7 @@ export function CorrectionDialog({ target, today, reload, onClose }: Props) {
                     <InputError message={form.errors.user_id} />
                 </form>
                 <DialogFooter>
-                    <Button type="button" variant="ghost" onClick={onClose}>
+                    <Button type="button" variant="quiet" onClick={onClose}>
                         Batal
                     </Button>
                     <Button

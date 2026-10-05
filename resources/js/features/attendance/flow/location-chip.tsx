@@ -23,7 +23,7 @@ export function LocationChip({
             <>
                 <span className="truncate">{match.location.name}</span>
                 <span aria-hidden>·</span>
-                <span className="font-mono">
+                <span className="font-semibold tnum">
                     {formatDistance(match.distanceM)}
                 </span>
                 <span aria-hidden>·</span>
@@ -53,7 +53,7 @@ export function LocationChip({
         <div
             role="status"
             className={cn(
-                'glass inline-flex h-9 max-w-full items-center gap-2 rounded-full px-3.5 text-sm text-text',
+                'glass-strong inline-flex h-10 max-w-full items-center gap-2 rounded-full px-3.5 text-[15px] font-semibold text-text shadow-float',
                 className,
             )}
         >
