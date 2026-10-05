@@ -34,7 +34,13 @@ export function MetricKpi({
     const card = (
         <KpiCard
             {...props}
-            className={cn(href ? 'h-full' : className, cardClassName)}
+            className={cn(
+                // Long deltas ("−1,4 hari dari minggu lalu") wrap inside the
+                // pill on narrow cards instead of overflowing it.
+                '[&_p>span.rounded-full]:h-auto [&_p>span.rounded-full]:min-h-[26px] [&_p>span.rounded-full]:rounded-[13px] [&_p>span.rounded-full]:py-0.5',
+                href ? 'h-full' : className,
+                cardClassName,
+            )}
             label={
                 <span className="flex items-start justify-between gap-2">
                     {label}

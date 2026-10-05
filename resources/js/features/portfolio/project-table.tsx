@@ -30,10 +30,10 @@ export function ProjectTable({
 }) {
     return (
         <div className="overflow-x-auto">
-            <table className="w-full min-w-[1180px] text-left">
+            <table className="w-full min-w-[1150px] text-left">
                 <thead className="bg-background">
                     <tr>
-                        <th scope="col" className={cn(TH, 'pl-7')}>
+                        <th scope="col" className={cn(TH, 'w-[250px] pl-7')}>
                             Proyek
                         </th>
                         <th scope="col" className={TH}>
@@ -113,7 +113,7 @@ export function ProjectTable({
                                     </span>
                                 </td>
                                 <td className="w-52 px-4 py-3.5">
-                                    <p className="mb-2 text-[15px] text-text-muted tnum">
+                                    <p className="mb-2 text-[15px] whitespace-nowrap text-text-muted tnum">
                                         <b className="text-[18px] text-text">
                                             {percent(project.metrics.actual)}
                                         </b>{' '}
