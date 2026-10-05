@@ -6,6 +6,7 @@ import type {
     RequestCategory,
     RequestDetail,
 } from '@/types/requests';
+import { DeviceDraftNotice } from './device-draft-notice';
 import { CategoryFields } from './form-fields';
 import { RequestSummary } from './request-summary';
 import { RevisionBanner } from './revision-banner';
@@ -52,6 +53,7 @@ export function RequestFormMobile({
             )}
 
             {request && <RevisionBanner request={request} />}
+            <DeviceDraftNotice state={state} mobile />
 
             {request === null && (
                 <ChipScroller<RequestCategory>

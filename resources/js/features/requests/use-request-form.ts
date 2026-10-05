@@ -1,5 +1,5 @@
-import { useForm } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useForm, usePage } from '@inertiajs/react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { preview as previewRoute, store, update } from '@/routes/requests';
 import type {
     FormCategory,
@@ -8,6 +8,17 @@ import type {
     RequestDetail,
     RequestPreview,
 } from '@/types/requests';
+import {
+    clearDraft,
+    clearFormDrafts,
+    deviceStorage,
+    differsFrom,
+    draftKey,
+    loadDraft,
+    pickDraftFields,
+    saveDraft,
+} from './draft-storage';
+import type { StoredDraft, StoredDraftFields } from './draft-storage';
 
 export type RequestFormInitial = {
     category: RequestCategory;
@@ -52,6 +63,9 @@ type Options = {
 
 /** Hourly permit vs whole days. */
 export type PermitMode = 'days' | 'hours';
+
+/** Debounce of the device autosave (ms). */
+export const AUTOSAVE_DELAY = 500;
 
 function firstType(
     categories: FormCategory[],
@@ -101,6 +115,112 @@ export function useRequestForm({
         remove_attachments: [],
     });
 
+    // Device autosave (localStorage) of the unsent form, per user + category.
+    // `baseline` = the values the current category started with; only changes
+    // from it are stored, so merely opening or switching categories saves nothing.
+    const userId = usePage().props.auth.user?.id ?? null;
+    const requestId = request?.id ?? null;
+    const [restored, setRestored] = useState<StoredDraft | null>(null);
+    const baseline = useRef<StoredDraftFields>(pickDraftFields(form.data));
+    const { setData, reset, clearErrors } = form;
+
+    const keyFor = useCallback(
+        (value: RequestCategory) =>
+            userId === null ? null : draftKey(userId, value, requestId),
+        [userId, requestId],
+    );
+
+    const restoreDraft = useCallback(
+        (value: RequestCategory, current: RequestFormData) => {
+            const key = keyFor(value);
+            const draft = key === null ? null : loadDraft(deviceStorage(), key);
+
+            if (!draft || !differsFrom(draft.fields, current)) {
+                setRestored(null);
+
+                return;
+            }
+
+            const known =
+                categories
+                    .find((c) => c.value === value)
+                    ?.types.some((t) => t.id === draft.fields.leave_type_id) ??
+                false;
+
+            setPermitMode(draft.permitMode);
+            setData({
+                ...current,
+                ...draft.fields,
+                leave_type_id: known
+                    ? draft.fields.leave_type_id
+                    : current.leave_type_id,
+            });
+            setRestored(draft);
+        },
+        [categories, keyFor, setData],
+    );
+
+    // Restore once on open (the initial category); category switches restore in setCategory.
+    const initialData = useRef(form.data);
+    const initialCategory = useRef(category);
+    const restoredOnce = useRef(false);
+    useEffect(() => {
+        if (restoredOnce.current) {
+            return;
+        }
+
+        restoredOnce.current = true;
+        restoreDraft(initialCategory.current, initialData.current);
+    }, [restoreDraft]);
+
+    // Saved on the server as a new draft (same page, new request id): what is
+    // on screen now is the server state, not an unsent change.
+    const lastRequestId = useRef(requestId);
+    useEffect(() => {
+        if (lastRequestId.current !== requestId) {
+            lastRequestId.current = requestId;
+            baseline.current = pickDraftFields(form.data);
+        }
+    }, [requestId, form.data]);
+
+    // Debounced autosave of what the user typed (never attachments).
+    useEffect(() => {
+        const key = keyFor(category);
+
+        if (key === null) {
+            return;
+        }
+
+        const timer = window.setTimeout(() => {
+            if (differsFrom(pickDraftFields(form.data), baseline.current)) {
+                saveDraft(deviceStorage(), key, form.data, permitMode);
+            } else {
+                clearDraft(deviceStorage(), key);
+            }
+        }, AUTOSAVE_DELAY);
+
+        return () => window.clearTimeout(timer);
+    }, [form.data, category, permitMode, keyFor]);
+
+    /** Forget every device draft of this form (sent, saved on the server, discarded). */
+    const forgetDeviceDrafts = useCallback(() => {
+        if (userId !== null) {
+            clearFormDrafts(deviceStorage(), userId, requestId);
+        }
+
+        setRestored(null);
+    }, [userId, requestId]);
+
+    /** "Buang": drop the device copy and go back to the form's starting values. */
+    const discardDeviceDraft = () => {
+        forgetDeviceDrafts();
+        setCategoryState(initialCategory.current);
+        setPermitMode(initial.start_time ? 'hours' : 'days');
+        baseline.current = pickDraftFields(initialData.current);
+        reset();
+        clearErrors();
+    };
+
     const types = useMemo(
         () => categories.find((c) => c.value === category)?.types ?? [],
         [categories, category],
@@ -111,8 +231,8 @@ export function useRequestForm({
     const setCategory = (next: RequestCategory) => {
         setCategoryState(next);
         const nextType = firstType(categories, next);
-        form.setData((data) => ({
-            ...data,
+        const nextData: RequestFormData = {
+            ...form.data,
             leave_type_id: nextType?.id ?? '',
             half_day: false,
             start_time:
@@ -127,8 +247,13 @@ export function useRequestForm({
                     : next === 'permit' && permitMode === 'hours'
                       ? '15:00'
                       : '',
-        }));
-        form.clearErrors();
+        };
+        baseline.current = pickDraftFields(nextData);
+        setData(nextData);
+        clearErrors();
+
+        // A device draft of the other category is offered back too.
+        restoreDraft(next, nextData);
     };
 
     const changePermitMode = (mode: PermitMode) => {
@@ -268,7 +393,12 @@ export function useRequestForm({
         const url = request
             ? update.url({ employeeRequest: request.id })
             : store.url();
-        form.post(url, { forceFormData: true, preserveScroll: true });
+        form.post(url, {
+            forceFormData: true,
+            preserveScroll: true,
+            // Sent or saved on the server: the device copy is no longer needed.
+            onSuccess: () => forgetDeviceDrafts(),
+        });
     };
 
     const existingAttachments = (request?.attachments ?? []).filter(
@@ -288,6 +418,8 @@ export function useRequestForm({
         previewing,
         previewFailed,
         submit,
+        restoredDraft: restored,
+        discardDeviceDraft,
         existingAttachments,
         removeExisting: (id: string) =>
             form.setData('remove_attachments', [

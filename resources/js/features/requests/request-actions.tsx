@@ -1,4 +1,4 @@
-import { Link, router } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { Pencil, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { cancel, edit } from '@/routes/requests';
 import type { RequestDetail } from '@/types/requests';
 import { ConfirmDialog } from './confirm-dialog';
+import { clearFormDrafts, deviceStorage } from './draft-storage';
 
 /** Requester actions: edit (draft / revision) and cancel (before the decision). */
 export function RequestActions({
@@ -17,6 +18,7 @@ export function RequestActions({
 }) {
     const [confirming, setConfirming] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const userId = usePage().props.auth.user?.id ?? null;
 
     if (!request.can.cancel && !request.can.edit) {
         return null;
@@ -29,6 +31,10 @@ export function RequestActions({
             {
                 preserveScroll: true,
                 onStart: () => setProcessing(true),
+                // A canceled draft/revision leaves no device copy behind.
+                onSuccess: () =>
+                    userId !== null &&
+                    clearFormDrafts(deviceStorage(), userId, request.id),
                 onFinish: () => {
                     setProcessing(false);
                     setConfirming(false);
