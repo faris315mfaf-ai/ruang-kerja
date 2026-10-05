@@ -6,6 +6,7 @@ use App\Domain\Attendance\Enums\AttendanceStatus as S;
 use App\Domain\Attendance\Events\AttendanceRecorded;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\AttendanceLog;
+use App\Domain\Attendance\Models\Shift;
 use App\Domain\Attendance\Models\ShiftAssignment;
 use App\Domain\Organization\Enums\Role;
 use App\Models\AuditLog;
@@ -87,6 +88,29 @@ test('a correction creates the day when nothing was recorded, and an overnight c
     expect($day->work_date->toDateString())->toBe('2026-10-02')
         ->and($day->check_out_at?->equalTo(F::at('2026-10-03 06:05')))->toBeTrue()
         ->and($day->scheduled_start?->equalTo(F::at('2026-10-02 08:00')))->toBeTrue();
+});
+
+test('night shift: times before the check-in window opens belong to the morning after the work date', function () {
+    $night = F::employee(shift: Shift::factory()->night()->create());
+
+    // Shift 22.00–06.00 of Fri 2 Oct; the check-in window opens at 20.00, so 00.20 and 06.00 are on Sat 3 Oct.
+    correct($this->hr, ['user_id' => $night->id, 'work_date' => '2026-10-02', 'check_in' => '00:20', 'check_out' => '06:00', 'reason' => 'Mesin absensi mati'])
+        ->assertSessionHasNoErrors();
+
+    $day = AttendanceDay::query()->where('user_id', $night->id)->sole();
+    expect($day->work_date->toDateString())->toBe('2026-10-02')
+        ->and($day->check_in_at?->equalTo(F::at('2026-10-03 00:20')))->toBeTrue()
+        ->and($day->check_out_at?->equalTo(F::at('2026-10-03 06:00')))->toBeTrue()
+        ->and($day->late_minutes)->toBeGreaterThan(0)
+        ->and(AttendanceLog::query()->where('user_id', $night->id)->orderBy('occurred_at')->pluck('occurred_at')->map->toIso8601String()->all())
+        ->toBe([F::at('2026-10-03 00:20')->utc()->toIso8601String(), F::at('2026-10-03 06:00')->utc()->toIso8601String()]);
+
+    // A check-in inside the window stays on the work date.
+    correct($this->hr, ['user_id' => $night->id, 'work_date' => '2026-10-02', 'check_in' => '21:50', 'reason' => 'Jam masuk sebenarnya'])
+        ->assertSessionHasNoErrors();
+    expect($day->refresh()->check_in_at?->equalTo(F::at('2026-10-02 21:50')))->toBeTrue()
+        ->and($day->check_out_at?->equalTo(F::at('2026-10-03 06:00')))->toBeTrue()
+        ->and($day->late_minutes)->toBe(0);
 });
 
 test('a check-in alone on a past day still needs correction', function () {
