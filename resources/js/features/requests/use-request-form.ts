@@ -116,8 +116,9 @@ export function useRequestForm({
     });
 
     // Device autosave (localStorage) of the unsent form, per user + category.
-    // `baseline` = the values the current category started with; only changes
-    // from it are stored, so merely opening or switching categories saves nothing.
+    // `baseline` = the untouched starting values of the current category; only
+    // changes from it are stored, so merely opening or switching categories
+    // saves nothing.
     const userId = usePage().props.auth.user?.id ?? null;
     const requestId = request?.id ?? null;
     const [restored, setRestored] = useState<StoredDraft | null>(null);
@@ -248,7 +249,15 @@ export function useRequestForm({
                       ? '15:00'
                       : '',
         };
-        baseline.current = pickDraftFields(nextData);
+        // Untouched defaults of that category (text carried over from the
+        // previous category still counts as a change worth keeping).
+        baseline.current = pickDraftFields({
+            ...initialData.current,
+            leave_type_id: nextData.leave_type_id,
+            half_day: false,
+            start_time: nextData.start_time,
+            end_time: nextData.end_time,
+        });
         setData(nextData);
         clearErrors();
 

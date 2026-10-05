@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { selectClass } from '@/features/requests/form-fields';
+import { ProvisionalBadge, selectClass } from '@/features/requests/form-fields';
 import { FlowChips } from '@/features/requests/request-parts';
 import { formatDateTime } from '@/lib/format';
 import { formatHours } from '@/lib/requests';
@@ -209,8 +209,9 @@ export function FlowEditor({
     return (
         <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
             <header className="border-b border-border px-5 py-4">
-                <h2 className="text-[17px] font-semibold text-text">
+                <h2 className="flex flex-wrap items-center gap-2 pr-10 text-[17px] font-semibold text-text">
                     Alur persetujuan · {type.name}
+                    {type.is_provisional_default && <ProvisionalBadge />}
                 </h2>
                 <p className="text-[13px] text-text-muted">
                     {flow
