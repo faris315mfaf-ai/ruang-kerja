@@ -122,6 +122,9 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::define('viewPulse', fn (?User $user = null): bool => $user?->isSuperAdmin() ?? false);
 
+        // Admin › Dokumentasi (/admin/dokumentasi): repository docs, Super Admin only.
+        Gate::define('viewDocumentation', fn (User $user): bool => $user->isSuperAdmin() && $user->isActive());
+
         // Global search (/cari): active employees; providers filter by visibility.
         Gate::define('search', fn (User $user): bool => $user->isActive());
     }
