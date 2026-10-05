@@ -66,7 +66,8 @@ class AttendanceDayPolicy
     }
 
     /**
-     * Private channel `company.attendance` (live board of HR, Direksi, Super Admin).
+     * Private channel `company.{id}.attendance` (live board of HR, Direksi, Super Admin;
+     * the channel also requires the viewer's own company).
      */
     public function viewCompanyFeed(User $actor): bool
     {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 import type { DaySchedule } from '@/types/attendance';
 import {
+    attendanceChannelNames,
     checkInTiming,
     formatDuration,
     minutesBetween,
@@ -145,5 +146,28 @@ describe('shortDay and workModeLabel', () => {
         expect(shortDay('2026-09-28')).toBe('Sen 28');
         expect(shortDay('2026-10-02')).toBe('Jum 2');
         expect(workModeLabel('field')).toBe('Lapangan');
+    });
+});
+
+describe('attendanceChannelNames', () => {
+    it('uses the viewer company channel for company-wide viewers', () => {
+        expect(
+            attendanceChannelNames({ company: true, divisions: [] }, '01ABC'),
+        ).toEqual(['company.01ABC.attendance']);
+    });
+
+    it('never falls back to an unscoped company channel', () => {
+        expect(
+            attendanceChannelNames({ company: true, divisions: [] }, null),
+        ).toEqual([]);
+    });
+
+    it('lists one channel per led division otherwise', () => {
+        expect(
+            attendanceChannelNames(
+                { company: false, divisions: ['d1', 'd2'] },
+                '01ABC',
+            ),
+        ).toEqual(['division.d1.attendance', 'division.d2.attendance']);
     });
 });

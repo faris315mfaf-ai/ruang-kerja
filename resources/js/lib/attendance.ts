@@ -219,3 +219,19 @@ export function shortDay(date: string): string {
 
     return `${names[weekday]} ${day}`;
 }
+
+/**
+ * Private Echo channels (without `private-`) of the live attendance board
+ * (routes/channels.php): the viewer's own company feed for attendance.view_all,
+ * else one feed per led division. No company id → no company channel.
+ */
+export function attendanceChannelNames(
+    channels: { company: boolean; divisions: readonly string[] },
+    companyId: string | null | undefined,
+): string[] {
+    if (channels.company) {
+        return companyId ? [`company.${companyId}.attendance`] : [];
+    }
+
+    return channels.divisions.map((id) => `division.${id}.attendance`);
+}

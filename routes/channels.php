@@ -34,15 +34,10 @@ Broadcast::channel('task.{task}', function (User $user, Task $task): array|false
 });
 
 // Sprint 2 — live attendance boards (authorized by AttendanceDayPolicy).
-// `company.attendance` carries no company id (name kept for the clients and
-// AttendanceRecorded), so it is authorized by the viewer's company: only while
-// the installation has exactly one company, the viewer's own. With several
-// companies the live board falls back to polling instead of leaking another
-// company's check-ins (review fix 3-9 #30; per-company channel = follow-up).
-Broadcast::channel('company.attendance', function (User $user): bool {
-    $companies = Company::query()->limit(2)->pluck('id')->all();
-
-    return $companies === [$user->company_id]
+// One channel per company (review fix 3-9 B): only viewers of that company
+// with attendance.view_all may listen, so several companies never share a feed.
+Broadcast::channel('company.{company}.attendance', function (User $user, Company $company): bool {
+    return $user->company_id === $company->id
         && $user->can('viewCompanyFeed', AttendanceDay::class);
 });
 

@@ -46,7 +46,7 @@ it('summarizes company attendance today per division', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('dashboard/hr')
-            ->where('channels', ['company.attendance'])
+            ->where('channels', ["company.{$this->org['hr']->company_id}.attendance"])
             ->where('attendance.counts.scheduled', 5)
             ->where('attendance.counts.present', 2)
             ->where('attendance.counts.late', 1)

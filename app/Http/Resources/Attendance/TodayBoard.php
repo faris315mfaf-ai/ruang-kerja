@@ -235,7 +235,9 @@ final class TodayBoard
     }
 
     /**
-     * Echo channels the viewer may listen on (routes/channels.php).
+     * Echo channels the viewer may listen on (routes/channels.php): `company`
+     * means the viewer's own `company.{id}.attendance` (the client takes the id
+     * from the shared `auth.user.company`), else the led divisions.
      *
      * @return array{company: bool, divisions: list<string>}
      */

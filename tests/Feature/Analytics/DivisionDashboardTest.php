@@ -111,7 +111,7 @@ it('lets Direksi pick any division, defaulting to the whole company', function (
     $this->actingAs($org['direksi'])->get('/dashboard/divisi')
         ->assertInertia(fn (Assert $page) => $page
             ->where('scope.label', 'Semua divisi')
-            ->where('channels', ['company.attendance'])
+            ->where('channels', ["company.{$org['direksi']->company_id}.attendance"])
             ->has('filters.divisions', 2));
 
     $this->actingAs($org['direksi'])->get('/dashboard/divisi?divisi='.$org['keu']->id)
