@@ -27,12 +27,10 @@ export function Field({
 }) {
     return (
         <div className="grid gap-1.5">
-            <Label htmlFor={id} className="text-[13px] text-text">
-                {label}
-            </Label>
+            <Label htmlFor={id}>{label}</Label>
             {children}
             {hint && !error && (
-                <p className="text-xs text-text-muted">{hint}</p>
+                <p className="text-meta text-text-muted">{hint}</p>
             )}
             <InputError message={error} />
         </div>
@@ -70,7 +68,7 @@ export function SelectField({
         >
             <SelectTrigger
                 id={id}
-                className="h-10 w-full"
+                className="w-full"
                 aria-invalid={invalid || undefined}
             >
                 <SelectValue placeholder={placeholder} />
@@ -81,7 +79,7 @@ export function SelectField({
                     <SelectItem key={option.value} value={option.value}>
                         <span className="truncate">{option.label}</span>
                         {option.description && (
-                            <span className="truncate text-xs text-text-muted">
+                            <span className="truncate text-meta text-text-muted">
                                 {option.description}
                             </span>
                         )}

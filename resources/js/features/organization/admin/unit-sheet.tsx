@@ -50,8 +50,8 @@ export function UnitSheet({
                     className="flex h-full flex-col"
                     noValidate
                 >
-                    <SheetHeader className="border-b border-border px-5 py-4">
-                        <SheetTitle className="pr-6 text-base text-text">
+                    <SheetHeader className="border-b border-divider px-6 py-5">
+                        <SheetTitle className="pr-6 text-h3 text-text">
                             {title}
                             {subject && (
                                 <span className="font-normal text-text-muted">
@@ -60,16 +60,16 @@ export function UnitSheet({
                                 </span>
                             )}
                         </SheetTitle>
-                        <SheetDescription className="text-[13px] text-text-muted">
+                        <SheetDescription className="text-meta text-text-muted">
                             {description}
                         </SheetDescription>
                     </SheetHeader>
 
-                    <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
+                    <div className="flex-1 space-y-5 overflow-y-auto px-6 py-6">
                         {children}
                     </div>
 
-                    <div className="flex items-center gap-2 border-t border-border px-5 py-4">
+                    <div className="flex items-center gap-2 border-t border-divider px-6 py-4">
                         {onDelete && (
                             <Button
                                 type="button"
