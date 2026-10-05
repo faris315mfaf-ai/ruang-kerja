@@ -1,0 +1,27 @@
+# FrankenPHP inside the app container. Plain HTTP on :8000; TLS terminates at
+# the Caddy edge (docker/caddy/Caddyfile).
+{
+	frankenphp
+	auto_https off
+	admin off
+
+	servers {
+		# Requests arrive from the Caddy edge on the Docker network.
+		trusted_proxies static private_ranges
+	}
+}
+
+:8000 {
+	root * /app/public
+	encode zstd br gzip
+
+	# Vite assets have content hashes in their names.
+	@immutable path /build/assets/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+	# The service worker must be revalidated on every load.
+	@serviceworker path /sw.js
+	header @serviceworker Cache-Control "no-cache"
+
+	php_server
+}
