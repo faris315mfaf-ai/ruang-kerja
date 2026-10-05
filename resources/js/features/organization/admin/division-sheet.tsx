@@ -129,18 +129,18 @@ export function DivisionSheet({
                     />
                     <Label
                         htmlFor="division-board"
-                        className="grid gap-0.5 text-[13px] font-normal"
+                        className="grid gap-0.5 text-[15px] font-normal"
                     >
                         <span className="font-medium text-text">
                             Unit Direksi
                         </span>
-                        <span className="text-xs text-text-muted">
+                        <span className="text-meta text-text-muted">
                             Puncak bagan organisasi. Hanya boleh satu.
                         </span>
                     </Label>
                 </div>
                 {form.errors.is_board && (
-                    <p className="text-sm text-danger">
+                    <p className="text-[15px] text-danger">
                         {form.errors.is_board}
                     </p>
                 )}

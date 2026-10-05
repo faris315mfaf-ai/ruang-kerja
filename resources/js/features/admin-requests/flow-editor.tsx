@@ -2,11 +2,14 @@ import { router } from '@inertiajs/react';
 import { ArrowDown, ArrowUp, Eye, Plus, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import InputError from '@/components/input-error';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
-import { ProvisionalBadge, selectClass } from '@/features/requests/form-fields';
+import { NativeSelect } from '@/features/admin/native-select';
+import { ProvisionalBadge } from '@/features/requests/form-fields';
 import { FlowChips } from '@/features/requests/request-parts';
 import { formatDateTime } from '@/lib/format';
 import { formatHours } from '@/lib/requests';
@@ -207,13 +210,19 @@ export function FlowEditor({
     const conditional = steps.filter((step) => step.condition).length;
 
     return (
-        <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
-            <header className="border-b border-border px-5 py-4">
-                <h2 className="flex flex-wrap items-center gap-2 pr-10 text-[17px] font-semibold text-text">
+        <section
+            aria-labelledby="flow-editor-title"
+            className="flex min-w-0 flex-col rounded-panel border border-border bg-surface shadow-card"
+        >
+            <header className="flex flex-col gap-1 border-b border-divider px-6 pt-6 pb-5 md:px-7">
+                <h2
+                    id="flow-editor-title"
+                    className="flex flex-wrap items-center gap-2.5 pr-12 text-h3"
+                >
                     Alur persetujuan · {type.name}
                     {type.is_provisional_default && <ProvisionalBadge />}
                 </h2>
-                <p className="text-[13px] text-text-muted">
+                <p className="text-meta text-text-muted">
                     {flow
                         ? `${flow.name}${flow.updated_at ? ` · diubah ${formatDateTime(flow.updated_at)}` : ''}`
                         : 'Memakai alur default (Atasan langsung → HR)'}{' '}
@@ -221,22 +230,24 @@ export function FlowEditor({
                     {conditional > 0 ? `, ${conditional} bersyarat` : ''}
                 </p>
                 {sharedWith.length > 0 && (
-                    <p className="mt-1 text-[13px] text-warning">
+                    <p className="text-meta font-semibold text-warning">
                         Alur ini dipakai juga oleh:{' '}
                         {sharedWith.map((t) => t.name).join(', ')}.
                     </p>
                 )}
             </header>
 
-            <div className="grid gap-6 p-5 lg:grid-cols-[minmax(0,1fr)_280px]">
-                <section aria-label="Langkah">
-                    <h3 className="text-sm font-semibold text-text">Langkah</h3>
-                    <p className="mb-3 text-[13px] text-text-muted">
+            <div className="grid gap-7 px-6 py-6 md:px-7 xl:grid-cols-[minmax(0,1fr)_300px]">
+                <section aria-labelledby="flow-steps-title">
+                    <h3 id="flow-steps-title" className="text-title">
+                        Langkah
+                    </h3>
+                    <p className="mb-4 text-meta text-text-muted">
                         Diproses berurutan. Cukup satu orang yang memegang peran
                         untuk menyetujui.
                     </p>
 
-                    <ol className="space-y-3">
+                    <ol className="flex flex-col gap-3">
                         {steps.map((step, index) => {
                             const condition = parseCondition(step.condition);
                             const holders =
@@ -252,36 +263,45 @@ export function FlowEditor({
                             return (
                                 <li
                                     key={index}
-                                    className="rounded-lg border border-border p-3"
+                                    className="rounded-lg border border-border bg-surface p-4"
                                 >
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex flex-wrap items-center gap-3">
                                         <span
                                             className={cn(
-                                                'flex size-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+                                                'flex size-8 shrink-0 items-center justify-center rounded-full text-[15px] font-bold tnum',
                                                 condition
-                                                    ? 'border-2 border-primary text-primary'
-                                                    : 'bg-primary text-primary-foreground',
+                                                    ? 'border-2 border-dashed border-link text-link'
+                                                    : 'bg-link-soft text-link',
                                             )}
                                         >
                                             {index + 1}
                                         </span>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-sm font-medium text-text">
-                                                {stepShortLabel(step, options)}
-                                                {step.approver_type ===
-                                                    'role' && (
-                                                    <span className="font-normal text-text-muted">
-                                                        {' '}
-                                                        (peran)
-                                                    </span>
-                                                )}
+                                        <div className="min-w-[180px] flex-1">
+                                            <p className="flex flex-wrap items-center gap-2 text-[16px] font-semibold">
+                                                <span>
+                                                    {stepShortLabel(
+                                                        step,
+                                                        options,
+                                                    )}
+                                                    {step.approver_type ===
+                                                        'role' && (
+                                                        <span className="font-normal text-text-muted">
+                                                            {' '}
+                                                            (peran)
+                                                        </span>
+                                                    )}
+                                                </span>
                                                 {condition && (
-                                                    <span className="ml-2 rounded-full bg-warning-soft px-2 py-0.5 text-xs text-warning">
+                                                    <Badge
+                                                        variant="status"
+                                                        tone="warning"
+                                                        className="h-[26px] px-2.5 text-[13px]"
+                                                    >
                                                         Bersyarat
-                                                    </span>
+                                                    </Badge>
                                                 )}
                                             </p>
-                                            <p className="truncate text-[13px] text-text-muted">
+                                            <p className="truncate text-meta text-text-muted">
                                                 {step.approver_type ===
                                                     'direct_manager' &&
                                                     'Otomatis dari data karyawan'}
@@ -298,12 +318,10 @@ export function FlowEditor({
                                                         : `Dipegang ${holders.length} orang: ${holders.slice(0, 2).join(', ')}${holders.length > 2 ? '…' : ''}`)}
                                             </p>
                                         </div>
-                                        <select
+                                        <NativeSelect
+                                            size="sm"
                                             aria-label={`Penyetuju langkah ${index + 1}`}
-                                            className={cn(
-                                                selectClass,
-                                                'h-9 w-44',
-                                            )}
+                                            className="w-48"
                                             value={approverValue(step)}
                                             onChange={(event) => {
                                                 const value =
@@ -341,36 +359,34 @@ export function FlowEditor({
                                             <option value="user">
                                                 Orang tertentu
                                             </option>
-                                        </select>
-                                        <div className="flex">
-                                            <button
+                                        </NativeSelect>
+                                        <div className="flex gap-0.5">
+                                            <Button
                                                 type="button"
+                                                variant="ghost"
+                                                size="icon-sm"
                                                 aria-label="Naikkan"
                                                 disabled={index === 0}
                                                 onClick={() => move(index, -1)}
-                                                className="flex size-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-2 disabled:opacity-30"
                                             >
-                                                <ArrowUp
-                                                    className="size-4"
-                                                    aria-hidden
-                                                />
-                                            </button>
-                                            <button
+                                                <ArrowUp aria-hidden />
+                                            </Button>
+                                            <Button
                                                 type="button"
+                                                variant="ghost"
+                                                size="icon-sm"
                                                 aria-label="Turunkan"
                                                 disabled={
                                                     index === steps.length - 1
                                                 }
                                                 onClick={() => move(index, 1)}
-                                                className="flex size-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-2 disabled:opacity-30"
                                             >
-                                                <ArrowDown
-                                                    className="size-4"
-                                                    aria-hidden
-                                                />
-                                            </button>
-                                            <button
+                                                <ArrowDown aria-hidden />
+                                            </Button>
+                                            <Button
                                                 type="button"
+                                                variant="ghost"
+                                                size="icon-sm"
                                                 aria-label={`Hapus langkah ${index + 1}`}
                                                 disabled={steps.length === 1}
                                                 onClick={() =>
@@ -381,23 +397,17 @@ export function FlowEditor({
                                                         ),
                                                     )
                                                 }
-                                                className="flex size-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-2 disabled:opacity-30"
                                             >
-                                                <X
-                                                    className="size-4"
-                                                    aria-hidden
-                                                />
-                                            </button>
+                                                <X aria-hidden />
+                                            </Button>
                                         </div>
                                     </div>
 
                                     {step.approver_type === 'user' && (
-                                        <select
+                                        <NativeSelect
+                                            size="sm"
                                             aria-label="Karyawan penyetuju"
-                                            className={cn(
-                                                selectClass,
-                                                'mt-3 ml-10 w-[calc(100%-2.5rem)]',
-                                            )}
+                                            className="mt-3 ml-11"
                                             value={step.approver_user_id ?? ''}
                                             onChange={(event) =>
                                                 patch(index, {
@@ -414,22 +424,19 @@ export function FlowEditor({
                                                     {user.name}
                                                 </option>
                                             ))}
-                                        </select>
+                                        </NativeSelect>
                                     )}
 
                                     {condition ? (
-                                        <fieldset className="mt-3 ml-10 rounded-lg border border-dashed border-warning/60 bg-warning/5 p-3">
-                                            <legend className="px-1 text-xs font-semibold tracking-wide text-warning uppercase">
+                                        <fieldset className="mt-3 ml-11 rounded-control border border-dashed border-warning/60 bg-warning-soft/50 p-3">
+                                            <legend className="px-1 text-overline text-warning">
                                                 Kondisi
                                             </legend>
-                                            <div className="flex flex-wrap items-center gap-2 text-sm">
+                                            <div className="flex flex-wrap items-center gap-2 text-[15px]">
                                                 <span>Hanya jika</span>
-                                                <select
+                                                <NativeSelect
+                                                    size="sm"
                                                     aria-label="Metrik kondisi"
-                                                    className={cn(
-                                                        selectClass,
-                                                        'w-auto',
-                                                    )}
                                                     value={condition.metric}
                                                     onChange={(event) =>
                                                         patch(index, {
@@ -457,13 +464,11 @@ export function FlowEditor({
                                                             </option>
                                                         ),
                                                     )}
-                                                </select>
-                                                <select
+                                                </NativeSelect>
+                                                <NativeSelect
+                                                    size="sm"
                                                     aria-label="Operator"
-                                                    className={cn(
-                                                        selectClass,
-                                                        'w-16',
-                                                    )}
+                                                    className="w-20"
                                                     value={condition.operator}
                                                     onChange={(event) =>
                                                         patch(index, {
@@ -489,13 +494,13 @@ export function FlowEditor({
                                                     <option value="lte">
                                                         ≤
                                                     </option>
-                                                </select>
+                                                </NativeSelect>
                                                 <Input
                                                     aria-label="Nilai"
                                                     type="number"
                                                     min={0}
                                                     step={0.5}
-                                                    className="w-20"
+                                                    className="h-9 w-24 rounded-[10px] text-[15px]"
                                                     value={condition.value}
                                                     onChange={(event) =>
                                                         patch(index, {
@@ -519,9 +524,11 @@ export function FlowEditor({
                                                             condition.metric,
                                                     )?.unit ?? 'jam'}
                                                 </span>
-                                                <button
+                                                <Button
                                                     type="button"
-                                                    className="ml-auto text-[13px] text-text-muted hover:underline"
+                                                    variant="quiet"
+                                                    size="sm"
+                                                    className="ml-auto"
                                                     onClick={() =>
                                                         patch(index, {
                                                             condition: null,
@@ -529,16 +536,18 @@ export function FlowEditor({
                                                     }
                                                 >
                                                     Hapus kondisi
-                                                </button>
+                                                </Button>
                                             </div>
-                                            <p className="mt-2 text-[13px] text-warning">
+                                            <p className="mt-2 text-meta font-semibold text-warning">
                                                 Selain itu, langkah dilewati.
                                             </p>
                                         </fieldset>
                                     ) : (
-                                        <button
+                                        <Button
                                             type="button"
-                                            className="mt-2 ml-10 text-[13px] text-primary hover:underline"
+                                            variant="quiet"
+                                            size="sm"
+                                            className="mt-2 ml-9"
                                             onClick={() =>
                                                 patch(index, {
                                                     condition: buildCondition(
@@ -549,20 +558,21 @@ export function FlowEditor({
                                                 })
                                             }
                                         >
-                                            + Tambah kondisi
-                                        </button>
+                                            <Plus aria-hidden /> Tambah kondisi
+                                        </Button>
                                     )}
                                     <InputError
                                         message={stepError}
-                                        className="mt-2 ml-10"
+                                        className="mt-2 ml-11"
                                     />
                                 </li>
                             );
                         })}
                     </ol>
 
-                    <button
+                    <Button
                         type="button"
+                        variant="outline"
                         disabled={steps.length >= 8}
                         onClick={() =>
                             setSteps((current) => [
@@ -575,15 +585,18 @@ export function FlowEditor({
                                 },
                             ])
                         }
-                        className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border-strong text-sm text-text hover:bg-surface-2 disabled:opacity-50"
+                        className="mt-3 w-full border-dashed"
                     >
-                        <Plus className="size-4" aria-hidden /> Tambah langkah
-                    </button>
+                        <Plus aria-hidden /> Tambah langkah
+                    </Button>
                     <InputError message={errors.steps} className="mt-2" />
                 </section>
 
-                <section aria-label="Pengaturan" className="space-y-5">
-                    <h3 className="text-sm font-semibold text-text">
+                <section
+                    aria-labelledby="flow-settings-title"
+                    className="flex flex-col gap-5"
+                >
+                    <h3 id="flow-settings-title" className="text-title">
                         Pengaturan
                     </h3>
                     <div className="grid gap-2">
@@ -596,38 +609,21 @@ export function FlowEditor({
                         />
                         <InputError message={errors.name} />
                     </div>
-                    <div className="flex items-start justify-between gap-3">
-                        <div>
-                            <p className="text-sm text-text">
-                                Lewati langkah bila penyetuju = pemohon
-                            </p>
-                            <p className="text-[13px] text-text-muted">
-                                Mati: naik ke atasan pemohon. Mis. kepala divisi
-                                yang mengajukan lembur sendiri.
-                            </p>
-                        </div>
-                        <Switch
-                            aria-label="Lewati langkah bila penyetuju = pemohon"
+                    <div className="divide-y divide-divider rounded-lg border border-border">
+                        <SwitchRow
+                            title="Lewati langkah bila penyetuju = pemohon"
+                            note="Mati: naik ke atasan pemohon. Mis. kepala divisi yang mengajukan lembur sendiri."
                             checked={skipSelf}
                             onCheckedChange={setSkipSelf}
                         />
-                    </div>
-                    <div className="flex items-start justify-between gap-3">
-                        <div>
-                            <p className="text-sm text-text">
-                                Izinkan delegasi saat penyetuju cuti
-                            </p>
-                            <p className="text-[13px] text-text-muted">
-                                Diteruskan ke pengganti yang ditunjuk saat cuti.
-                            </p>
-                        </div>
-                        <Switch
-                            aria-label="Izinkan delegasi saat penyetuju cuti"
+                        <SwitchRow
+                            title="Izinkan delegasi saat penyetuju cuti"
+                            note="Diteruskan ke pengganti yang ditunjuk saat cuti."
                             checked={allowDelegation}
                             onCheckedChange={setAllowDelegation}
                         />
                     </div>
-                    <p className="text-[13px] text-text-muted">
+                    <p className="text-meta text-text-muted">
                         Lampiran wajib diatur lewat “Ubah jenis”.
                     </p>
                 </section>
@@ -635,14 +631,14 @@ export function FlowEditor({
 
             <section
                 aria-label="Pratinjau"
-                className="mx-5 mb-5 rounded-lg bg-surface-2/70 p-4"
+                className="mx-6 mb-6 flex flex-col gap-3 rounded-[18px] bg-background p-4 md:mx-7"
             >
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <p className="flex items-center gap-2 text-sm text-text">
-                        <Eye className="size-4 text-text-muted" aria-hidden />
-                        <strong className="font-semibold">Pratinjau</strong>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="flex flex-wrap items-center gap-2 text-[15px]">
+                        <Eye className="size-5 text-link" aria-hidden />
+                        <strong className="font-bold">Pratinjau</strong>
                         {preview && (
-                            <span>
+                            <span className="text-text-muted">
                                 {preview.sample.name}
                                 {type.category === 'overtime'
                                     ? `, total ${formatHours(preview.overtime_month_minutes)} bulan ini`
@@ -657,9 +653,9 @@ export function FlowEditor({
                             </span>
                         )}
                     </p>
-                    <select
+                    <NativeSelect
                         aria-label="Contoh karyawan"
-                        className={cn(selectClass, 'w-56 bg-surface')}
+                        className="w-64"
                         value={sampleId}
                         onChange={(event) => setSampleId(event.target.value)}
                     >
@@ -668,23 +664,25 @@ export function FlowEditor({
                                 Contoh: {user.name}
                             </option>
                         ))}
-                    </select>
+                    </NativeSelect>
                 </div>
                 {preview ? (
                     <FlowChips steps={preview.steps} />
                 ) : (
-                    <p className="text-[13px] text-text-muted">
-                        Memuat pratinjau…
-                    </p>
+                    <div aria-busy className="flex gap-2">
+                        <span className="sr-only">Memuat pratinjau…</span>
+                        <Skeleton className="h-9 w-40 rounded-full" />
+                        <Skeleton className="h-9 w-40 rounded-full" />
+                    </div>
                 )}
             </section>
 
-            <footer className="flex items-center justify-between gap-3 border-t border-border px-5 py-3">
-                <p className="text-[13px] text-text-muted">
+            <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-divider px-6 py-4 md:px-7">
+                <p className="max-w-[520px] text-meta text-text-muted">
                     Berlaku untuk pengajuan baru. Pengajuan yang sedang berjalan
                     tetap memakai alur lama.
                 </p>
-                <div className="flex shrink-0 gap-2">
+                <div className="flex shrink-0 gap-3">
                     <Button
                         type="button"
                         variant="outline"
@@ -698,6 +696,33 @@ export function FlowEditor({
                     </Button>
                 </div>
             </footer>
+        </section>
+    );
+}
+
+/** Setting row: title + note left, switch right (SPengaturan style). */
+function SwitchRow({
+    title,
+    note,
+    checked,
+    onCheckedChange,
+}: {
+    title: string;
+    note: string;
+    checked: boolean;
+    onCheckedChange: (checked: boolean) => void;
+}) {
+    return (
+        <div className="flex items-start justify-between gap-3 p-4">
+            <div className="flex flex-col gap-0.5">
+                <p className="text-[15px] font-semibold">{title}</p>
+                <p className="text-meta text-text-muted">{note}</p>
+            </div>
+            <Switch
+                aria-label={title}
+                checked={checked}
+                onCheckedChange={onCheckedChange}
+            />
         </div>
     );
 }

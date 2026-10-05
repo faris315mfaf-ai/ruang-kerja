@@ -32,9 +32,9 @@ export function DocArticle({ document }: { document: DocDetail }) {
     };
 
     return (
-        <article className="min-w-0 rounded-xl border border-border bg-surface p-4 shadow-card md:p-8">
-            <p className="mb-4 flex flex-wrap gap-x-2 border-b border-border pb-3 text-xs text-text-muted">
-                <span className="font-mono">{document.path}</span>
+        <article className="min-w-0 rounded-[22px] border border-border bg-surface p-5 shadow-card md:rounded-panel md:p-8">
+            <p className="mb-5 flex flex-wrap gap-x-2 border-b border-divider pb-4 text-meta text-text-muted">
+                <span className="font-mono font-semibold">{document.path}</span>
                 <span aria-hidden>·</span>
                 <span>Diperbarui {formatDateTime(document.updatedAt)}</span>
             </p>

@@ -12,6 +12,8 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 - Shell: menu bar kaca 64px, Dock dengan ubin putih & aktif bergradien, **Rail 96px untuk tablet** (768–1023px, menggantikan Dock tanpa magnifikasi), tab bar kapsul 70px dengan pil gradien, app bar ponsel berjudul besar. Konten desktop di kolom 1280px (1480px untuk board & tabel).
 - Warna non-CSS (manifest PWA, halaman offline, email, `config/branding.php`) mengikuti Arus.
 - Arus · akun & masuk: halaman masuk mengikuti DLogin/MLogin (panel merek gradien, tombol Google 56px, kartu demo, ponsel malam beraurora), halaman auth lain berupa kartu panel; Pengaturan (profil, notifikasi, tampilan, akun Google, privasi, keamanan) memakai kartu identitas gradien + TabNav sesuai SPengaturan/MSPengaturan; kebijakan privasi & kebijakan data absensi bergaya panel; tab Menu ponsel mengikuti MMenu; template email dengan pita gradien, kartu radius 24, tombol gradien.
+- Halaman Admin (organisasi, karyawan + profil + impor, absensi + penugasan + kiosk, jenis pengajuan & alur, saldo cuti, audit log, dokumentasi) bergaya Arus: header overline + judul display, `Panel`/tabel berkepala `bg-background`, `Badge` status/label, `TabNav`, `NativeSelect` 44px (`features/admin`).
+- **Pengajuan & Persetujuan** bergaya Arus (SPengajuan, SFormPengajuan, DPersetujuan, MS*/MPersetujuan): kartu saldo sorotan, daftar kartu + panel detail dengan jejak persetujuan, ubin jenis & kartu Ringkasan di formulir, antrean beravatar dengan filter jenis dan tombol Tolak/Setujui di kartu ponsel. Breadcrumb Persetujuan tidak lagi di bawah Absensi.
 
 ### Ditambahkan
 - `/dev/komponen` (lokal, Super Admin): contoh hidup semua komponen Arus. Panduan agent modul: `docs/design/ARUS-GUIDE.md`.

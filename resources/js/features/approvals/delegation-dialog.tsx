@@ -57,7 +57,8 @@ export function DelegationDialog({
             <Button
                 type="button"
                 variant="outline"
-                className={cn(mobile && 'h-11 w-full')}
+                size={mobile ? 'lg' : 'default'}
+                className={cn(mobile && 'w-full')}
                 onClick={() => setOpen(true)}
             >
                 <UserRoundCog aria-hidden />
@@ -80,13 +81,13 @@ export function DelegationDialog({
                             {delegations.items.map((item) => (
                                 <li
                                     key={item.id}
-                                    className="flex items-center gap-3 rounded-lg border border-border px-3 py-2 text-sm"
+                                    className="flex items-center gap-3 rounded-lg border border-border px-4 py-3 text-[15px]"
                                 >
                                     <div className="min-w-0 flex-1">
-                                        <p className="font-medium text-text">
+                                        <p className="font-semibold text-text">
                                             {item.delegate.name}
                                         </p>
-                                        <p className="text-[13px] text-text-muted">
+                                        <p className="text-meta text-text-muted">
                                             {formatDateRange(
                                                 item.starts_on,
                                                 item.ends_on,
@@ -100,7 +101,7 @@ export function DelegationDialog({
                                     <button
                                         type="button"
                                         aria-label={`Hentikan delegasi ke ${item.delegate.name}`}
-                                        className="flex size-9 items-center justify-center rounded-md text-text-muted hover:bg-surface-2"
+                                        className="flex size-11 items-center justify-center rounded-control text-text-muted hover:bg-surface-2 focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                                         onClick={() =>
                                             router.delete(
                                                 destroyDelegation.url({
@@ -122,7 +123,7 @@ export function DelegationDialog({
                             <Label htmlFor="delegate_id">Delegasikan ke</Label>
                             <select
                                 id="delegate_id"
-                                className={cn(selectClass, 'h-11 md:h-9')}
+                                className={selectClass}
                                 value={form.data.delegate_id}
                                 onChange={(e) =>
                                     form.setData('delegate_id', e.target.value)
@@ -143,7 +144,6 @@ export function DelegationDialog({
                                 <Input
                                     id="starts_on"
                                     type="date"
-                                    className="h-11 md:h-9"
                                     min={delegations.today}
                                     value={form.data.starts_on}
                                     onChange={(e) =>
@@ -160,7 +160,6 @@ export function DelegationDialog({
                                 <Input
                                     id="ends_on"
                                     type="date"
-                                    className="h-11 md:h-9"
                                     min={form.data.starts_on}
                                     value={form.data.ends_on}
                                     onChange={(e) =>
@@ -176,7 +175,6 @@ export function DelegationDialog({
                             </Label>
                             <Input
                                 id="delegation_reason"
-                                className="h-11 md:h-9"
                                 maxLength={255}
                                 placeholder="Mis. cuti tahunan"
                                 value={form.data.reason}
@@ -185,11 +183,7 @@ export function DelegationDialog({
                                 }
                             />
                         </div>
-                        <Button
-                            type="submit"
-                            className="h-11 md:h-9"
-                            disabled={form.processing}
-                        >
+                        <Button type="submit" disabled={form.processing}>
                             Simpan delegasi
                         </Button>
                     </form>
