@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { Archive } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toneText } from '@/features/notifications/notification-icon';
@@ -66,13 +67,37 @@ export function InboxFilterChips({
     scroll?: boolean;
 }) {
     const size = scroll ? 'lg' : 'md';
+    const row = useRef<HTMLDivElement>(null);
+
+    // Phone: keep the last pressed chip (e.g. a kind from the URL) in view.
+    useEffect(() => {
+        const container = row.current;
+
+        if (!scroll || !container) {
+            return;
+        }
+
+        const pressed = container.querySelectorAll<HTMLElement>(
+            '[aria-pressed="true"]',
+        );
+        const chip = pressed[pressed.length - 1];
+
+        if (
+            chip &&
+            chip.offsetLeft + chip.offsetWidth > container.clientWidth
+        ) {
+            container.scrollLeft =
+                chip.offsetLeft + chip.offsetWidth - container.clientWidth + 16;
+        }
+    }, [scroll, filters.tab, filters.kind, filters.archived]);
 
     return (
         <div
+            ref={row}
             className={cn(
                 'flex gap-2.5',
                 scroll
-                    ? '-mx-4 [scrollbar-width:none] overflow-x-auto px-4 pb-1 [&::-webkit-scrollbar]:hidden'
+                    ? 'relative -mx-4 [scrollbar-width:none] overflow-x-auto px-4 pb-1 [&::-webkit-scrollbar]:hidden'
                     : 'flex-wrap',
             )}
         >
