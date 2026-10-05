@@ -154,7 +154,7 @@ export function EmployeeMonthPanel({
                     </span>
                 </div>
                 {flagged.length === 0 ? (
-                    <p className="flex gap-2 rounded-lg bg-success/10 p-3 text-sm text-success">
+                    <p className="flex gap-2 rounded-lg bg-success-soft p-3 text-sm text-success">
                         <ShieldCheck
                             className="mt-0.5 size-4 shrink-0"
                             aria-hidden
@@ -182,7 +182,7 @@ export function EmployeeMonthPanel({
                                     {log.flags.map((flag) => (
                                         <span
                                             key={flag.value}
-                                            className="inline-flex h-5 items-center rounded-full bg-warning/12 px-2 text-xs text-warning"
+                                            className="inline-flex h-5 items-center rounded-full bg-warning-soft px-2 text-xs text-warning"
                                         >
                                             {flag.label}
                                         </span>

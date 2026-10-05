@@ -2,7 +2,7 @@
 
 @php
     /** @var \App\Domain\Notifications\Data\NotificationPayload $payload */
-    $c = ['text' => '#0F1A1F', 'muted' => '#5A6A72', 'border' => '#E2E8EB', 'surface2' => '#F6F8F9', 'primary' => '#0A7C85', 'danger' => '#C42B2B'];
+    $c = ['text' => '#0B1A2B', 'muted' => '#46576B', 'border' => '#DDE4EC', 'surface2' => '#F3F6FA', 'primary' => '#0B7F86', 'danger' => '#C42137'];
     $context = is_string($payload->meta['context'] ?? null) ? $payload->meta['context'] : null;
 @endphp
 
@@ -39,5 +39,5 @@
 @endsection
 
 @section('footer')
-    Anda menerima email ini karena notifikasi email untuk kejadian ini aktif. <a href="{{ $settingsUrl }}" style="color:#0A7C85;">Atur notifikasi</a>
+    Anda menerima email ini karena notifikasi email untuk kejadian ini aktif. <a href="{{ $settingsUrl }}" style="color:#0B7F86;">Atur notifikasi</a>
 @endsection

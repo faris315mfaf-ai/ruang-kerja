@@ -387,7 +387,7 @@ function ActionIcon({ children }: { children: ReactNode }) {
     return (
         <span
             aria-hidden
-            className="flex size-11 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 text-primary [&_svg]:size-5"
+            className="flex size-11 items-center justify-center rounded-lg border border-primary/30 bg-link-soft text-primary [&_svg]:size-5"
         >
             {children}
         </span>

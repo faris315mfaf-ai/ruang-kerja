@@ -71,7 +71,7 @@ function Option({
                 className={cn(
                     'flex size-11 shrink-0 items-center justify-center rounded-lg',
                     primary
-                        ? 'bg-primary/10 text-primary'
+                        ? 'bg-link-soft text-primary'
                         : 'bg-surface-2 text-text-muted',
                 )}
             >

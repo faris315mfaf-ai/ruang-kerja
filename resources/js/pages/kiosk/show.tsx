@@ -90,7 +90,7 @@ export default function KioskShow(props: Props) {
                                     className={cn(
                                         'flex size-9 shrink-0 items-center justify-center rounded-full border text-sm font-semibold',
                                         index === STEPS.length - 1
-                                            ? 'border-primary/40 bg-primary/10 text-primary'
+                                            ? 'border-primary/40 bg-link-soft text-primary'
                                             : 'border-border-strong text-text',
                                     )}
                                 >
@@ -126,7 +126,7 @@ export default function KioskShow(props: Props) {
                                 className={cn(
                                     'inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-sm font-medium',
                                     offline
-                                        ? 'bg-warning/15 text-warning'
+                                        ? 'bg-warning-soft text-warning'
                                         : 'bg-success/15 text-success',
                                 )}
                             >

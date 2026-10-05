@@ -60,7 +60,7 @@ export function ProvisionalBadge({ className }: { className?: string }) {
     return (
         <span
             className={cn(
-                'inline-flex w-fit shrink-0 items-center rounded-full bg-warning/10 px-2 py-0.5 text-xs font-normal whitespace-nowrap text-warning',
+                'inline-flex w-fit shrink-0 items-center rounded-full bg-warning-soft px-2 py-0.5 text-xs font-normal whitespace-nowrap text-warning',
                 className,
             )}
             title="Aturan bawaan sistem yang belum ditinjau HR; dapat berubah."

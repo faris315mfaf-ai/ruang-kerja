@@ -40,29 +40,6 @@ const MONTHS = [
 ];
 
 /**
- * Roving focus of the period tablist (WAI-ARIA tabs): ←/→ wrap around,
- * Home/End jump. Returns null for keys the tablist does not handle.
- */
-export function nextTabIndex(
-    current: number,
-    key: string,
-    count: number,
-): number | null {
-    switch (key) {
-        case 'ArrowRight':
-            return (current + 1) % count;
-        case 'ArrowLeft':
-            return (current - 1 + count) % count;
-        case 'Home':
-            return 0;
-        case 'End':
-            return count - 1;
-        default:
-            return null;
-    }
-}
-
-/**
  * Bar heights (px) of the planned-vs-done chart, scaled to the busiest
  * column. Non-zero values never shrink below a visible sliver; done never
  * outgrows planned.
@@ -380,25 +357,25 @@ export function attendanceSegments(
             key: 'on_time',
             label: 'Tepat waktu',
             value: counts.on_time,
-            fill: 'bg-arus-brand-x bg-arus-fill-teal',
+            fill: 'bg-grad-merek-x bg-fill-teal',
         },
         {
             key: 'late',
             label: 'Terlambat',
             value: counts.late,
-            fill: 'bg-arus-fill-warning',
+            fill: 'bg-fill-warning',
         },
         {
             key: 'away',
             label: 'Cuti / izin',
             value: counts.away,
-            fill: 'bg-arus-fill-violet',
+            fill: 'bg-fill-violet',
         },
         {
             key: 'not_checked_in',
             label: 'Belum check-in',
             value: counts.not_checked_in,
-            fill: 'bg-arus-border-strong',
+            fill: 'bg-border-strong',
         },
     ];
 
@@ -407,7 +384,7 @@ export function attendanceSegments(
             key: 'absent',
             label: 'Alpha',
             value: counts.absent,
-            fill: 'bg-arus-fill-danger',
+            fill: 'bg-fill-danger',
         });
     }
 
@@ -438,28 +415,28 @@ export function healthPill(health: ProjectHealth | null): {
 }
 
 export const TONE_PILL: Record<Tone, string> = {
-    success: 'bg-arus-success-bg text-arus-success',
-    warning: 'bg-arus-warning-bg text-arus-warning',
-    danger: 'bg-arus-danger-bg text-arus-danger',
-    neutral: 'bg-arus-surface-2 text-arus-text-2',
+    success: 'bg-success-soft text-success',
+    warning: 'bg-warning-soft text-warning',
+    danger: 'bg-danger-soft text-danger',
+    neutral: 'bg-surface-2 text-text-muted',
 };
 
 export const TONE_TEXT: Record<Tone, string> = {
-    success: 'text-arus-success',
-    warning: 'text-arus-warning',
-    danger: 'text-arus-danger',
-    neutral: 'text-arus-text-2',
+    success: 'text-success',
+    warning: 'text-warning',
+    danger: 'text-danger',
+    neutral: 'text-text-muted',
 };
 
 /** Progress bar fill per health (design: gradient / amber / red). */
 export function progressFill(health: ProjectHealth | null): string {
     switch (health) {
         case 'at_risk':
-            return 'bg-arus-fill-warning';
+            return 'bg-fill-warning';
         case 'off_track':
-            return 'bg-arus-fill-danger';
+            return 'bg-fill-danger';
         default:
-            return 'bg-arus-brand-x';
+            return 'bg-grad-merek-x';
     }
 }
 
@@ -468,16 +445,16 @@ export function projectGradient(color: string): string {
     switch (color) {
         case 'teal':
         case 'green':
-            return 'bg-arus-brand';
+            return 'bg-grad-merek';
         case 'violet':
-            return 'bg-arus-indigo';
+            return 'bg-grad-indigo';
         case 'orange':
         case 'amber':
         case 'red':
         case 'pink':
-            return 'bg-arus-warm';
+            return 'bg-grad-hangat';
         default:
-            return 'bg-arus-action';
+            return 'bg-grad-aksi';
     }
 }
 

@@ -6,9 +6,9 @@ import type { ProjectAtRisk } from '@/types/dashboard';
 import { PanelEmpty } from './panel';
 
 const HEALTH = {
-    off_track: 'bg-danger/10 text-danger',
-    at_risk: 'bg-warning/12 text-warning',
-    on_track: 'bg-success/10 text-success',
+    off_track: 'bg-danger-soft text-danger',
+    at_risk: 'bg-warning-soft text-warning',
+    on_track: 'bg-success-soft text-success',
 } as const;
 
 /**

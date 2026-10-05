@@ -209,7 +209,7 @@ export function ColleagueWarning({
         <div
             role="note"
             className={cn(
-                'flex gap-2.5 rounded-lg border border-warning/30 bg-warning/10 px-3.5 py-3 text-[13px] leading-5 text-text',
+                'flex gap-2.5 rounded-lg border border-warning/30 bg-warning-soft px-3.5 py-3 text-[13px] leading-5 text-text',
                 className,
             )}
         >

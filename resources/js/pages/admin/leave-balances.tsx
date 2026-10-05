@@ -412,7 +412,7 @@ export default function LeaveBalances({
                                                     )}
                                                     {row.prorated && (
                                                         <span
-                                                            className="ml-1.5 rounded-full bg-info/10 px-1.5 py-0.5 text-[11px] text-info"
+                                                            className="ml-1.5 rounded-full bg-info-soft px-1.5 py-0.5 text-[11px] text-info"
                                                             title={`Prorata: bergabung ${row.joined_at ?? ''}`}
                                                         >
                                                             prorata

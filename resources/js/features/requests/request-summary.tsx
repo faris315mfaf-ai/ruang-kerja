@@ -150,7 +150,7 @@ export function RequestSummary({
             {(preview.overlap || errors.length > 0 || previewFailed) && (
                 <div
                     role="alert"
-                    className="flex gap-2 rounded-lg border border-danger/30 bg-danger/10 px-3.5 py-3 text-[13px] text-danger"
+                    className="flex gap-2 rounded-lg border border-danger/30 bg-danger-soft px-3.5 py-3 text-[13px] text-danger"
                 >
                     <CircleAlert
                         className="mt-0.5 size-4 shrink-0"

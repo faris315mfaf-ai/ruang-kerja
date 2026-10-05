@@ -86,7 +86,7 @@ export function HrMobile({ live, ...props }: HrProps & { live: boolean }) {
                     href="/persetujuan"
                     className="flex min-h-16 items-center gap-3 px-4 py-3"
                 >
-                    <span className="flex size-10 items-center justify-center rounded-lg bg-info/10 text-info">
+                    <span className="flex size-10 items-center justify-center rounded-lg bg-info-soft text-info">
                         <CheckCheck className="size-5" aria-hidden />
                     </span>
                     <span className="min-w-0 flex-1">
@@ -108,7 +108,7 @@ export function HrMobile({ live, ...props }: HrProps & { live: boolean }) {
                     />
                 </Link>
                 <div className="flex min-h-16 items-center gap-3 border-t border-border px-4 py-3">
-                    <span className="flex size-10 items-center justify-center rounded-lg bg-warning/12 text-warning">
+                    <span className="flex size-10 items-center justify-center rounded-lg bg-warning-soft text-warning">
                         <Clock className="size-5" aria-hidden />
                     </span>
                     <span className="min-w-0 flex-1">
@@ -122,7 +122,7 @@ export function HrMobile({ live, ...props }: HrProps & { live: boolean }) {
                             · {formatShortDate(missingCheckOut.date)}
                         </span>
                     </span>
-                    <span className="rounded-full bg-warning/12 px-2 text-xs text-warning tnum">
+                    <span className="rounded-full bg-warning-soft px-2 text-xs text-warning tnum">
                         {missingCheckOut.count}
                     </span>
                 </div>

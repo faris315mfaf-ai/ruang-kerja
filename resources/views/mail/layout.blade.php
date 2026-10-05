@@ -5,25 +5,25 @@
      * are inlined here (the only place hex colors are allowed).
      */
     $c = [
-        'bg' => '#F1F4F6',
+        'bg' => '#EEF2F7',
         'surface' => '#FFFFFF',
-        'surface2' => '#F6F8F9',
-        'border' => '#E2E8EB',
-        'text' => '#0F1A1F',
-        'muted' => '#5A6A72',
-        'subtle' => '#8A979E',
-        'primary' => '#0A7C85',
-        'brand500' => '#14A3A0',
+        'surface2' => '#F3F6FA',
+        'border' => '#DDE4EC',
+        'text' => '#0B1A2B',
+        'muted' => '#46576B',
+        'subtle' => '#8495A8',
+        'primary' => '#0B7F86',
+        'brand500' => '#14B8A6',
         'blue' => '#2F7BEA',
-        'danger' => '#C42B2B',
-        'dangerBg' => '#FCEFEF',
+        'danger' => '#C42137',
+        'dangerBg' => '#FDE7EA',
         'dangerBorder' => '#F3C4C4',
-        'warning' => '#9A6200',
-        'warningBg' => '#FBF1DD',
-        'info' => '#1F66D1',
-        'infoBg' => '#E8F0FC',
-        'success' => '#13804F',
-        'successBg' => '#E3F4EB',
+        'warning' => '#9A5800',
+        'warningBg' => '#FFF1DC',
+        'info' => '#1A4CB0',
+        'infoBg' => '#E6EEFE',
+        'success' => '#0F7A55',
+        'successBg' => '#E3F6EE',
     ];
     $brandName = config('branding.name', config('app.name'));
     $companyName = config('branding.company_name');
@@ -45,7 +45,7 @@
         a { color: {{ $c['primary'] }}; }
     </style>
 </head>
-<body style="margin:0;padding:0;background:{{ $c['bg'] }};font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:{{ $c['text'] }};-webkit-font-smoothing:antialiased;">
+<body style="margin:0;padding:0;background:{{ $c['bg'] }};font-family:'Figtree',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:{{ $c['text'] }};-webkit-font-smoothing:antialiased;">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;">@yield('preview')</div>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{{ $c['bg'] }};">
         <tr>

@@ -1,7 +1,9 @@
 import { UserRoundCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { attendanceSegments, share } from './lib';
-import { ArusSkeleton, EmptyState, Panel, PanelLink } from './panel';
+import { Panel, PanelLink } from '@/components/ui/panel';
+import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/empty-state';
 import type { AttendanceToday } from './types';
 
 /** Divisions at or above this share present get the brand fill, else amber. */
@@ -38,6 +40,7 @@ export function AttendancePanel({
         >
             {counts.scheduled === 0 ? (
                 <EmptyState
+                    size="sm"
                     icon={UserRoundCheck}
                     title="Tidak ada karyawan terjadwal hari ini"
                 >
@@ -47,7 +50,7 @@ export function AttendancePanel({
                 <>
                     <div
                         aria-hidden
-                        className="flex h-[18px] gap-0.5 overflow-hidden rounded-[9px] bg-arus-surface-2"
+                        className="flex h-[18px] gap-0.5 overflow-hidden rounded-[9px] bg-surface-2"
                     >
                         {segments
                             .filter((segment) => segment.value > 0)
@@ -98,21 +101,21 @@ export function AttendancePanel({
                             return (
                                 <li
                                     key={division.id ?? 'none'}
-                                    className="grid min-h-arus-control grid-cols-[minmax(0,1fr)_minmax(64px,120px)_auto] items-center gap-3 border-t border-arus-surface-2"
+                                    className="grid min-h-control grid-cols-[minmax(0,1fr)_minmax(64px,120px)_auto] items-center gap-3 border-t border-divider"
                                 >
                                     <span className="truncate text-[15px] font-semibold">
                                         {division.name}
                                     </span>
                                     <span
                                         aria-hidden
-                                        className="relative block h-2 rounded-full bg-arus-surface-2"
+                                        className="relative block h-2 rounded-full bg-surface-2"
                                     >
                                         <span
                                             className={cn(
                                                 'absolute inset-y-0 left-0 rounded-full',
                                                 pct >= GOOD_SHARE
-                                                    ? 'bg-arus-brand-x'
-                                                    : 'bg-arus-fill-warning',
+                                                    ? 'bg-grad-merek-x'
+                                                    : 'bg-fill-warning',
                                             )}
                                             style={{ width: `${pct}%` }}
                                         />
@@ -138,14 +141,14 @@ export function AttendancePanelSkeleton({ className }: { className?: string }) {
             className={className}
             bodyClassName="gap-4"
         >
-            <ArusSkeleton className="h-[18px] w-full rounded-[9px]" />
+            <Skeleton className="h-[18px] w-full rounded-[9px]" />
             <div className="grid grid-cols-2 gap-3">
                 {[0, 1, 2, 3].map((key) => (
-                    <ArusSkeleton key={key} className="h-5" />
+                    <Skeleton key={key} className="h-5" />
                 ))}
             </div>
             {[0, 1, 2, 3].map((key) => (
-                <ArusSkeleton key={key} className="h-8" />
+                <Skeleton key={key} className="h-8" />
             ))}
         </Panel>
     );

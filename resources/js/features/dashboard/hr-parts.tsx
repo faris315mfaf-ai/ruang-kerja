@@ -222,7 +222,7 @@ export function ReviewList({ items }: { items: ReviewItem[] }) {
                                 {item.flags.map((flag) => (
                                     <span
                                         key={flag.key}
-                                        className="inline-flex h-6 items-center rounded-full bg-warning/12 px-2 text-xs font-medium text-warning"
+                                        className="inline-flex h-6 items-center rounded-full bg-warning-soft px-2 text-xs font-medium text-warning"
                                     >
                                         {flag.label}
                                         {flag.key === 'low_accuracy' &&

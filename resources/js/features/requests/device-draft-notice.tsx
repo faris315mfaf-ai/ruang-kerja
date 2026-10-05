@@ -21,7 +21,7 @@ export function DeviceDraftNotice({
     return (
         <div
             role="status"
-            className="flex items-center gap-2.5 rounded-lg border border-info/30 bg-info/10 px-4 py-2.5 text-sm text-text"
+            className="flex items-center gap-2.5 rounded-lg border border-info/30 bg-info-soft px-4 py-2.5 text-sm text-text"
         >
             <History className="size-4 shrink-0 text-info" aria-hidden />
             <p className="min-w-0 flex-1">

@@ -242,7 +242,7 @@ function Step({
     return (
         <div className="space-y-3 rounded-lg border border-border bg-surface p-4 shadow-card">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-text">
-                <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-xs text-primary tnum">
+                <span className="flex size-6 items-center justify-center rounded-full bg-link-soft text-xs text-primary tnum">
                     {number}
                 </span>
                 {title}
@@ -266,9 +266,9 @@ function Notice({
             role={tone === 'success' ? 'status' : 'alert'}
             className={cn(
                 'flex items-start gap-2 rounded-lg px-4 py-3 text-sm',
-                tone === 'warning' && 'bg-warning/10 text-warning',
-                tone === 'danger' && 'bg-danger/10 text-danger',
-                tone === 'success' && 'bg-success/10 text-success',
+                tone === 'warning' && 'bg-warning-soft text-warning',
+                tone === 'danger' && 'bg-danger-soft text-danger',
+                tone === 'success' && 'bg-success-soft text-success',
             )}
         >
             <Icon aria-hidden className="mt-0.5 size-4 shrink-0" />

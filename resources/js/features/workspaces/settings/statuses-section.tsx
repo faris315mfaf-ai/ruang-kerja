@@ -235,7 +235,7 @@ export function StatusesSection({
                 )
             }
         >
-            <p className="flex items-center gap-2 border-b border-border bg-info/10 px-4 py-2.5 text-[13px] text-text">
+            <p className="flex items-center gap-2 border-b border-border bg-info-soft px-4 py-2.5 text-[13px] text-text">
                 <Info className="size-4 shrink-0 text-info" aria-hidden />
                 Metrik dashboard memakai kategori, bukan nama kolom. Mis. kolom
                 “Menunggu persetujuan” berkategori Review dihitung sebagai

@@ -7,23 +7,25 @@ import {
     chartFoot,
     chartSummary,
 } from './lib';
-import { ArusSkeleton, EmptyState, Panel } from './panel';
+import { Panel } from '@/components/ui/panel';
+import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/empty-state';
 import type { PeriodBlock, PeriodKey } from './types';
 
 function Legend() {
     return (
-        <span className="flex gap-4 text-[15px] text-arus-text-2">
+        <span className="flex gap-4 text-[15px] text-text-muted">
             <span className="inline-flex items-center gap-1.5">
                 <span
                     aria-hidden
-                    className="size-3 rounded-[4px] border border-dashed border-arus-border-strong bg-arus-surface-2"
+                    className="size-3 rounded-[4px] border border-dashed border-border-strong bg-surface-2"
                 />
                 Rencana
             </span>
             <span className="inline-flex items-center gap-1.5">
                 <span
                     aria-hidden
-                    className="size-3 rounded-[4px] bg-arus-brand"
+                    className="size-3 rounded-[4px] bg-grad-merek"
                 />
                 Selesai
             </span>
@@ -62,7 +64,11 @@ export function WorkChart({
             bodyClassName="gap-4"
         >
             {empty ? (
-                <EmptyState icon={BarChart3} title="Belum ada tugas bertenggat">
+                <EmptyState
+                    size="sm"
+                    icon={BarChart3}
+                    title="Belum ada tugas bertenggat"
+                >
                     {foot}
                 </EmptyState>
             ) : (
@@ -70,7 +76,7 @@ export function WorkChart({
                     <div
                         aria-hidden
                         className={cn(
-                            'flex items-end border-b border-arus-border pt-2',
+                            'flex items-end border-b border-border pt-2',
                             compact
                                 ? 'h-[180px] gap-2.5'
                                 : 'h-[250px] gap-[18px]',
@@ -83,16 +89,16 @@ export function WorkChart({
                             >
                                 <span className="text-[15px] font-extrabold whitespace-nowrap">
                                     {column.done}
-                                    <span className="font-semibold text-arus-text-3">
+                                    <span className="font-semibold text-text-subtle">
                                         /{column.planned}
                                     </span>
                                 </span>
                                 <span
-                                    className="relative block w-full max-w-[72px] rounded-t-[12px] border border-b-0 border-dashed border-arus-border-strong bg-arus-surface-2"
+                                    className="relative block w-full max-w-[72px] rounded-t-[12px] border border-b-0 border-dashed border-border-strong bg-surface-2"
                                     style={{ height: heights[index].planned }}
                                 >
                                     <span
-                                        className="absolute inset-x-1.5 bottom-0 rounded-t-[9px] bg-arus-brand-y"
+                                        className="absolute inset-x-1.5 bottom-0 rounded-t-[9px] bg-grad-merek-y"
                                         style={{ height: heights[index].done }}
                                     />
                                 </span>
@@ -110,7 +116,7 @@ export function WorkChart({
                             <span
                                 key={column.key}
                                 title={column.full_label}
-                                className="min-w-0 flex-1 truncate text-center text-[14px] font-bold text-arus-text-2"
+                                className="min-w-0 flex-1 truncate text-center text-[14px] font-bold text-text-muted"
                             >
                                 {column.label}
                             </span>
@@ -143,7 +149,7 @@ export function WorkChart({
                             </tbody>
                         </table>
                     </div>
-                    <figcaption className="text-[15px] leading-[22px] text-arus-text-2">
+                    <figcaption className="text-[15px] leading-[22px] text-text-muted">
                         {foot}
                     </figcaption>
                 </figure>
@@ -168,21 +174,21 @@ export function WorkChartSkeleton({
         >
             <div
                 aria-hidden
-                className="flex h-[250px] items-end gap-[18px] border-b border-arus-border"
+                className="flex h-[250px] items-end gap-[18px] border-b border-border"
             >
                 {[70, 120, 90, 150, 60].map((height) => (
                     <div
                         key={height}
                         className="flex h-full flex-1 items-end justify-center"
                     >
-                        <ArusSkeleton
+                        <Skeleton
                             className="w-full max-w-[72px] rounded-b-none"
                             style={{ height }}
                         />
                     </div>
                 ))}
             </div>
-            <ArusSkeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-3/4" />
         </Panel>
     );
 }

@@ -35,7 +35,7 @@ function CountBadge({
             className={cn(
                 'inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-medium tnum',
                 tone === 'warning' && count > 0
-                    ? 'bg-warning/12 text-warning'
+                    ? 'bg-warning-soft text-warning'
                     : 'bg-surface-2 text-text-muted',
             )}
         >

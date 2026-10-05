@@ -553,7 +553,7 @@ function EmployeeForm({
                 </section>
 
                 {!isEdit && (
-                    <p className="flex gap-2 rounded-lg bg-info/10 px-3 py-2.5 text-[13px] text-info">
+                    <p className="flex gap-2 rounded-lg bg-info-soft px-3 py-2.5 text-[13px] text-info">
                         <Info aria-hidden className="mt-0.5 size-4 shrink-0" />
                         Karyawan masuk memakai akun Google kantornya; tidak ada
                         sandi yang perlu dibuat.
@@ -568,7 +568,7 @@ function EmployeeForm({
                         <Button
                             type="button"
                             variant="outline"
-                            className="border-danger/40 text-danger hover:bg-danger/10 hover:text-danger"
+                            className="border-danger/40 text-danger hover:bg-danger-soft hover:text-danger"
                             onClick={() => onDeactivate(editing)}
                         >
                             Nonaktifkan

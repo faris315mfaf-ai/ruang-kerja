@@ -111,7 +111,7 @@ export function KiosksSection({
             }
         >
             {error && (
-                <p className="border-b border-border bg-danger/10 px-4 py-2 text-sm text-danger">
+                <p className="border-b border-border bg-danger-soft px-4 py-2 text-sm text-danger">
                     {error}
                 </p>
             )}
@@ -179,8 +179,8 @@ export function KiosksSection({
                                             !kiosk.isActive
                                                 ? 'bg-surface-2 text-text-muted'
                                                 : kiosk.isPaired
-                                                  ? 'bg-success/10 text-success'
-                                                  : 'bg-warning/12 text-warning',
+                                                  ? 'bg-success-soft text-success'
+                                                  : 'bg-warning-soft text-warning',
                                         )}
                                     >
                                         <span

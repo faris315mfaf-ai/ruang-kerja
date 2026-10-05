@@ -78,7 +78,7 @@ export function LoginErrorCard({
     return (
         <div
             role="alert"
-            className="flex gap-3 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger"
+            className="flex gap-3 rounded-lg border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger"
             data-test="login-error"
         >
             <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />

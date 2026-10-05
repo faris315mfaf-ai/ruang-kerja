@@ -24,7 +24,7 @@ export function BalanceCardView({
             <div className="flex items-center justify-between gap-2">
                 <p className="text-[13px] text-text">{card.type.name}</p>
                 {card.kind === 'balance' && (
-                    <span className="rounded-full bg-info/10 px-2 py-0.5 text-xs text-info tnum">
+                    <span className="rounded-full bg-info-soft px-2 py-0.5 text-xs text-info tnum">
                         {card.year}
                     </span>
                 )}

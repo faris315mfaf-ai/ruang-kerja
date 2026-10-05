@@ -52,21 +52,25 @@ export const TONE_CLASSES: Record<
     { soft: string; text: string; solid: string }
 > = {
     success: {
-        soft: 'bg-success/10 text-success',
+        soft: 'bg-success-soft text-success',
         text: 'text-success',
         solid: 'bg-success',
     },
     warning: {
-        soft: 'bg-warning/12 text-warning',
+        soft: 'bg-warning-soft text-warning',
         text: 'text-warning',
         solid: 'bg-warning',
     },
     danger: {
-        soft: 'bg-danger/10 text-danger',
+        soft: 'bg-danger-soft text-danger',
         text: 'text-danger',
         solid: 'bg-danger',
     },
-    info: { soft: 'bg-info/10 text-info', text: 'text-info', solid: 'bg-info' },
+    info: {
+        soft: 'bg-info-soft text-info',
+        text: 'text-info',
+        solid: 'bg-info',
+    },
     neutral: {
         soft: 'bg-surface-2 text-text-muted',
         text: 'text-text-muted',

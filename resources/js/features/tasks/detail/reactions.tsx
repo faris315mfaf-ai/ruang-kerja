@@ -53,7 +53,7 @@ export function Reactions({
                         className={cn(
                             chip,
                             mine
-                                ? 'border-primary/50 bg-primary/10 text-primary'
+                                ? 'border-primary/50 bg-link-soft text-primary'
                                 : 'border-border text-text-muted hover:bg-surface-2',
                         )}
                     >

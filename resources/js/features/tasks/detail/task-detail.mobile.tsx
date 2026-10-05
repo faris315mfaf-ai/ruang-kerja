@@ -106,7 +106,7 @@ export function TaskDetailMobile({ state, today }: Props) {
                 <div
                     role="alertdialog"
                     aria-label="Hapus tugas"
-                    className="space-y-3 rounded-lg border border-danger/40 bg-danger/10 p-3 text-[15px]"
+                    className="space-y-3 rounded-lg border border-danger/40 bg-danger-soft p-3 text-[15px]"
                 >
                     <p className="text-text">Hapus {task.key}?</p>
                     <div className="flex gap-2">

@@ -248,7 +248,7 @@ export function TaskForm({
                                 className={cn(
                                     'flex min-h-14 flex-col items-center justify-center rounded-md border text-[15px] leading-5 transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
                                     form.data.due_date === option.value
-                                        ? 'border-primary bg-primary/10 text-text'
+                                        ? 'border-primary bg-link-soft text-text'
                                         : 'border-border bg-surface-2 text-text',
                                 )}
                             >

@@ -102,7 +102,7 @@ function Chip({
             className={cn(
                 'block w-full rounded-md border px-2 py-1.5 text-left transition-colors duration-120 ease-brand hover:border-border-strong focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
                 overdue
-                    ? 'border-danger/40 bg-danger/10'
+                    ? 'border-danger/40 bg-danger-soft'
                     : 'border-border bg-surface',
             )}
         >
@@ -563,7 +563,7 @@ function AgendaView({
                 <button
                     type="button"
                     onClick={() => onOpen(overdue[0])}
-                    className="flex min-h-12 w-full items-center gap-2 rounded-xl border border-danger/40 bg-danger/10 px-3 text-left text-[15px]"
+                    className="flex min-h-12 w-full items-center gap-2 rounded-xl border border-danger/40 bg-danger-soft px-3 text-left text-[15px]"
                 >
                     <AlertCircle
                         className="size-5 shrink-0 text-danger"
@@ -605,7 +605,7 @@ function AgendaView({
                         <h3 className="flex items-center gap-2 text-[15px] font-medium text-text">
                             {formatShortDate(day)}
                             {day === today && (
-                                <span className="rounded-full bg-primary/12 px-2 py-0.5 text-[13px] text-primary">
+                                <span className="rounded-full bg-link-soft px-2 py-0.5 text-[13px] text-primary">
                                     Hari ini
                                 </span>
                             )}

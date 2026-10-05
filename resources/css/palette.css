@@ -1,32 +1,33 @@
 /*
- * Palet warna label, kolom status & avatar workspace (Sprint 5).
- * Data menyimpan NAMA palet (mis. "teal"), komponen memakai utilitas
- * bg-tag-* / text-tag-*. Ganti nilai di sini, bukan di komponen.
+ * Named palette for labels, status columns and workspace avatars (Sprint 5),
+ * in Arus hues (ramps in docs/ruangkerja-design/screens/Main.dc.html).
+ * Data stores the palette NAME (e.g. "teal"); components use bg-tag-* /
+ * text-tag-* via lib/palette.ts. Change values here, never in components.
  */
 :root {
-    --tag-gray: #8a979e;
-    --tag-slate: #5a6a72;
-    --tag-teal: #14a3a0;
-    --tag-blue: #2f7bea;
-    --tag-green: #1fae6b;
-    --tag-amber: #c98a00;
-    --tag-orange: #e8590c;
-    --tag-red: #d93b3b;
-    --tag-violet: #7c5cd6;
-    --tag-pink: #d6457e;
+    --tag-gray: #8495a8;
+    --tag-slate: #46576b;
+    --tag-teal: #0b7f86;
+    --tag-blue: #1e5fd6;
+    --tag-green: #0f7a55;
+    --tag-amber: #b26b00;
+    --tag-orange: #c2410c;
+    --tag-red: #c42137;
+    --tag-violet: #6d4ae0;
+    --tag-pink: #be185d;
 }
 
 .dark {
-    --tag-gray: #8c9ca4;
-    --tag-slate: #c9d3d8;
-    --tag-teal: #2fc0b0;
-    --tag-blue: #5c9bff;
-    --tag-green: #3ccb86;
-    --tag-amber: #f2b13a;
-    --tag-orange: #ff8a4c;
-    --tag-red: #f06a6a;
-    --tag-violet: #a68bff;
-    --tag-pink: #f27baa;
+    --tag-gray: #7d8fa5;
+    --tag-slate: #a6b4c6;
+    --tag-teal: #2dbfb1;
+    --tag-blue: #7fa8ff;
+    --tag-green: #4ade9b;
+    --tag-amber: #f6b95c;
+    --tag-orange: #fb8b5a;
+    --tag-red: #ff7a8a;
+    --tag-violet: #a48bff;
+    --tag-pink: #f47bb0;
 }
 
 @theme inline {

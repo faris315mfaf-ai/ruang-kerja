@@ -133,8 +133,8 @@ export function MyRequestsMobile({
                                             className={cn(
                                                 'mt-3 flex gap-2 rounded-lg px-3 py-2 text-[13px]',
                                                 item.status === 'rejected'
-                                                    ? 'bg-danger/10 text-danger'
-                                                    : 'bg-info/10 text-info',
+                                                    ? 'bg-danger-soft text-danger'
+                                                    : 'bg-info-soft text-info',
                                             )}
                                         >
                                             <MessageSquare

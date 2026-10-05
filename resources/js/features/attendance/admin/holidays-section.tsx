@@ -164,7 +164,7 @@ export function HolidaysSection({
                         <span className="min-w-0 flex-1 truncate text-[13px] text-text">
                             {holiday.name}
                         </span>
-                        <span className="rounded-md bg-info/10 px-2 py-0.5 text-xs text-info">
+                        <span className="rounded-md bg-info-soft px-2 py-0.5 text-xs text-info">
                             {holiday.typeLabel}
                         </span>
                         <Button

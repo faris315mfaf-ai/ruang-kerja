@@ -18,21 +18,21 @@ export const HEALTH_TONES: Record<
     { pill: string; dot: string; bar: string; text: string; track: string }
 > = {
     on_track: {
-        pill: 'bg-success/12 text-success',
+        pill: 'bg-success-soft text-success',
         dot: 'bg-success',
         bar: 'bg-success',
         text: 'text-success',
         track: 'bg-success/15 border-success/60',
     },
     at_risk: {
-        pill: 'bg-warning/12 text-warning',
+        pill: 'bg-warning-soft text-warning',
         dot: 'bg-warning',
         bar: 'bg-warning',
         text: 'text-warning',
-        track: 'bg-warning/15 border-warning/60',
+        track: 'bg-warning-soft border-warning/60',
     },
     off_track: {
-        pill: 'bg-danger/12 text-danger',
+        pill: 'bg-danger-soft text-danger',
         dot: 'bg-danger',
         bar: 'bg-danger',
         text: 'text-danger',
@@ -61,8 +61,8 @@ export const RISK_LABELS: Record<RiskLevel, string> = {
 };
 
 export const RISK_TONES: Record<RiskLevel, string> = {
-    high: 'bg-danger/12 text-danger',
-    medium: 'bg-warning/12 text-warning',
+    high: 'bg-danger-soft text-danger',
+    medium: 'bg-warning-soft text-warning',
     low: 'bg-surface-2 text-text-muted',
 };
 

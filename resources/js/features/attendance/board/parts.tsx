@@ -26,7 +26,7 @@ export function LivePill({ mode }: { mode: LiveMode }) {
             className={cn(
                 'inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium',
                 live
-                    ? 'bg-success/10 text-success'
+                    ? 'bg-success-soft text-success'
                     : 'bg-surface-2 text-text-muted',
             )}
             title={

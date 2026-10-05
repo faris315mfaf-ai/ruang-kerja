@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { formatTime } from '@/lib/format';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { AttendancePanel, AttendancePanelSkeleton } from './attendance-panel';
 import type { KpiCard } from './lib';
 import {
@@ -12,7 +12,7 @@ import {
 } from './lib';
 import { AgendaPanel, NotesPanel } from './meetings-panels';
 import { MilestonesPanel, MilestonesPanelSkeleton } from './milestones-panel';
-import { ArusSkeleton, FOCUS_RING } from './panel';
+import { Skeleton } from '@/components/ui/skeleton';
 import { PANEL_ID, PeriodTabs, tabId } from './period-tabs';
 import { ProjectsList, ProjectsPanelSkeleton } from './projects-panel';
 import type { ManagementProps, PeriodBlock, PeriodKey } from './types';
@@ -56,7 +56,7 @@ function Hero({
     const progress = clampPercent(block.tasks.rate) ?? 0;
 
     return (
-        <div className="flex flex-col gap-3 rounded-arus-panel bg-arus-highlight p-[18px] text-arus-on-gradient shadow-arus-action">
+        <div className="flex flex-col gap-3 rounded-panel bg-grad-highlight p-[18px] text-on-brand shadow-glow">
             <span className="text-[15px] font-bold">
                 {shortDate(today)} · per {formatTime(generatedAt)} ·{' '}
                 {periodNote(period, block)}
@@ -81,10 +81,10 @@ function Hero({
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={progress}
-                className="relative block h-2 rounded-full bg-arus-on-gradient/30"
+                className="relative block h-2 rounded-full bg-on-brand/30"
             >
                 <span
-                    className="absolute inset-y-0 left-0 rounded-full bg-arus-on-gradient"
+                    className="absolute inset-y-0 left-0 rounded-full bg-on-brand"
                     style={{ width: `${progress}%` }}
                 />
             </span>
@@ -98,15 +98,15 @@ function Tile({ card, href }: { card: KpiCard; href?: string }) {
     const className = cn(
         'flex min-w-0 flex-col gap-0.5 rounded-[20px] p-3.5',
         warm
-            ? 'bg-arus-warm text-arus-on-gradient'
-            : 'border border-arus-border bg-arus-surface text-arus-text',
+            ? 'bg-grad-hangat text-on-brand'
+            : 'border border-border bg-surface text-text',
     );
     const content = (
         <>
             <span
                 className={cn(
                     'text-[15px] font-semibold',
-                    !warm && 'text-arus-text-2',
+                    !warm && 'text-text-muted',
                 )}
             >
                 {card.label}
@@ -114,7 +114,7 @@ function Tile({ card, href }: { card: KpiCard; href?: string }) {
             <span
                 className={cn(
                     'text-[28px] leading-[34px] font-extrabold',
-                    card.alert && !warm && 'text-arus-danger',
+                    card.alert && !warm && 'text-danger',
                 )}
             >
                 {card.value}
@@ -122,7 +122,7 @@ function Tile({ card, href }: { card: KpiCard; href?: string }) {
             <span
                 className={cn(
                     'text-[14px] leading-5',
-                    !warm && 'text-arus-text-2',
+                    !warm && 'text-text-muted',
                 )}
             >
                 {card.note}
@@ -131,7 +131,7 @@ function Tile({ card, href }: { card: KpiCard; href?: string }) {
     );
 
     return href ? (
-        <Link href={href} prefetch className={cn(className, FOCUS_RING)}>
+        <Link href={href} prefetch className={cn(className, focusRing)}>
             {content}
         </Link>
     ) : (
@@ -155,7 +155,7 @@ export function ManagementMobile({
     return (
         <div className="flex flex-col gap-3 px-4 pt-4 pb-8">
             <div className="flex flex-col gap-0.5">
-                <span className="text-[14px] font-extrabold tracking-[0.02em] text-arus-link uppercase">
+                <span className="text-[14px] font-extrabold tracking-[0.02em] text-link uppercase">
                     {props.company} · Manajemen
                 </span>
                 <h1 className="text-[26px] leading-8 font-extrabold tracking-[-0.02em]">
@@ -183,14 +183,14 @@ export function ManagementMobile({
                         generatedAt={summary.generated_at}
                     />
                 ) : (
-                    <ArusSkeleton className="h-[164px] rounded-arus-panel" />
+                    <Skeleton className="h-[164px] rounded-panel" />
                 )}
 
                 <div className="grid grid-cols-2 gap-2.5">
                     {block ? (
                         <Tile card={thirdCard(period, block)} />
                     ) : (
-                        <ArusSkeleton className="h-[112px] rounded-[20px]" />
+                        <Skeleton className="h-[112px] rounded-[20px]" />
                     )}
                     {portfolio ? (
                         <Tile
@@ -200,7 +200,7 @@ export function ManagementMobile({
                             }
                         />
                     ) : (
-                        <ArusSkeleton className="h-[112px] rounded-[20px]" />
+                        <Skeleton className="h-[112px] rounded-[20px]" />
                     )}
                 </div>
 

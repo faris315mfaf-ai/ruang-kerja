@@ -44,7 +44,7 @@ function Item({
                 className={cn(
                     'flex size-9 shrink-0 items-center justify-center rounded-lg',
                     accent
-                        ? 'bg-primary/10 text-primary'
+                        ? 'bg-link-soft text-primary'
                         : 'bg-surface-2 text-text-muted',
                 )}
             >
@@ -75,7 +75,7 @@ export function ConsentContent({
             <div className="flex-1 space-y-5 px-4 pb-6 md:px-0">
                 <span
                     aria-hidden
-                    className="flex size-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary"
+                    className="flex size-12 items-center justify-center rounded-xl border border-primary/20 bg-link-soft text-primary"
                 >
                     <ShieldCheck className="size-6" strokeWidth={1.75} />
                 </span>

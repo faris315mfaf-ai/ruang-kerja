@@ -2,15 +2,15 @@ import { Head } from '@inertiajs/react';
 import { useState } from 'react';
 import { ManagementDesktop } from '@/features/management/management.desktop';
 import { ManagementMobile } from '@/features/management/management.mobile';
-import { ArusSkeleton } from '@/features/management/panel';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { ManagementProps, PeriodKey } from '@/features/management/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { cn } from '@/lib/utils';
 
 /**
  * /manajemen — Dashboard Manajemen (design MgDashboard / MgDashboardMalam /
- * MgPDashboard) for Direksi, HR and Super Admin. Page-scoped "Arus" tokens
- * (`.theme-arus`, resources/css/arus.css) inside the regular app shell.
+ * MgPDashboard) for Direksi, HR and Super Admin, in the regular app shell.
+ * The page lays out its own 1280px column (layout width "full").
  */
 export default function ManagementDashboard(props: ManagementProps) {
     const breakpoint = useBreakpoint();
@@ -22,17 +22,15 @@ export default function ManagementDashboard(props: ManagementProps) {
             <Head title="Dashboard manajemen" />
             <div
                 className={cn(
-                    'theme-arus bg-arus-page',
-                    breakpoint === 'mobile'
-                        ? '-mx-4 -mt-2'
-                        : 'min-h-full overflow-hidden rounded-[28px] border border-arus-border',
+                    'text-base',
+                    breakpoint === 'mobile' && '-mx-4 -mt-2',
                 )}
             >
                 {breakpoint === null ? (
                     <div className="flex flex-col gap-4 p-8" aria-busy>
-                        <ArusSkeleton className="h-10 w-72" />
-                        <ArusSkeleton className="h-36 w-full" />
-                        <ArusSkeleton className="h-80 w-full" />
+                        <Skeleton className="h-10 w-72" />
+                        <Skeleton className="h-36 w-full" />
+                        <Skeleton className="h-80 w-full" />
                     </div>
                 ) : breakpoint === 'mobile' ? (
                     <ManagementMobile
@@ -58,4 +56,5 @@ ManagementDashboard.layout = {
         { title: 'Dashboard', href: '/manajemen' },
     ],
     title: 'Manajemen',
+    width: 'full',
 };

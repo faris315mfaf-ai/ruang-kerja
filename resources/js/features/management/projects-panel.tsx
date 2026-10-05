@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { FolderKanban } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import {
     clampPercent,
     healthPill,
@@ -11,13 +11,9 @@ import {
     TONE_PILL,
     TONE_TEXT,
 } from './lib';
-import {
-    ArusSkeleton,
-    EmptyState,
-    FOCUS_RING,
-    Panel,
-    PanelLink,
-} from './panel';
+import { Panel, PanelLink } from '@/components/ui/panel';
+import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/empty-state';
 import type { ManagementPortfolio, ProjectRow } from './types';
 
 const GRID =
@@ -34,10 +30,10 @@ function CodeBadge({
         <span
             aria-hidden
             className={cn(
-                'flex shrink-0 items-center justify-center font-extrabold text-arus-on-gradient',
+                'flex shrink-0 items-center justify-center font-extrabold text-on-brand',
                 small
                     ? 'size-[34px] rounded-[10px] text-[11px]'
-                    : 'size-10 rounded-arus-control text-[12px]',
+                    : 'size-10 rounded-control text-[12px]',
                 projectGradient(project.color),
             )}
         >
@@ -61,7 +57,7 @@ function ProgressBar({
         <span
             aria-hidden
             className={cn(
-                'relative block rounded-full bg-arus-surface-2',
+                'relative block rounded-full bg-surface-2',
                 thin ? 'h-1.5' : 'h-2.5',
             )}
         >
@@ -76,7 +72,7 @@ function ProgressBar({
             )}
             {!thin && planned !== null && (
                 <span
-                    className="absolute -top-1 h-[18px] w-[3px] -translate-x-1/2 rounded-[2px] bg-arus-marker"
+                    className="absolute -top-1 h-[18px] w-[3px] -translate-x-1/2 rounded-[2px] bg-marker"
                     style={{ left: `${planned}%` }}
                 />
             )}
@@ -102,7 +98,7 @@ function StatusPill({ project }: { project: ProjectRow }) {
 function MilestoneCell({ project }: { project: ProjectRow }) {
     if (!project.milestone) {
         return (
-            <span className="text-[15px] text-arus-text-2">
+            <span className="text-[15px] text-text-muted">
                 Belum ada milestone
             </span>
         );
@@ -118,7 +114,7 @@ function MilestoneCell({ project }: { project: ProjectRow }) {
             <span
                 className={cn(
                     'text-[14px] font-semibold',
-                    when.late ? 'text-arus-danger' : 'text-arus-text-2',
+                    when.late ? 'text-danger' : 'text-text-muted',
                 )}
             >
                 {when.text}
@@ -152,6 +148,7 @@ export function ProjectsPanel({
             {portfolio.projects.length === 0 ? (
                 <div className="px-6 pb-4 md:px-7">
                     <EmptyState
+                        size="sm"
                         icon={FolderKanban}
                         title="Belum ada proyek aktif"
                     >
@@ -165,7 +162,7 @@ export function ProjectsPanel({
                         aria-hidden
                         className={cn(
                             GRID,
-                            'bg-arus-bg px-6 py-2.5 text-[14px] font-bold text-arus-text-2 md:px-7',
+                            'bg-background px-6 py-2.5 text-[14px] font-bold text-text-muted md:px-7',
                         )}
                     >
                         <span>Proyek</span>
@@ -181,8 +178,8 @@ export function ProjectsPanel({
                                     prefetch
                                     className={cn(
                                         GRID,
-                                        'items-center border-t border-arus-surface-2 px-6 py-3.5 text-arus-text transition-colors duration-120 ease-brand hover:bg-arus-surface-2/60 md:px-7',
-                                        FOCUS_RING,
+                                        'items-center border-t border-divider px-6 py-3.5 text-text transition-colors duration-120 ease-brand hover:bg-surface-2/60 md:px-7',
+                                        focusRing,
                                         'focus-visible:ring-offset-0 focus-visible:ring-inset',
                                     )}
                                 >
@@ -195,7 +192,7 @@ export function ProjectsPanel({
                                                 </span>
                                                 {project.name}
                                             </span>
-                                            <span className="truncate text-[14px] text-arus-text-2">
+                                            <span className="truncate text-[14px] text-text-muted">
                                                 {projectOwner(project)}
                                             </span>
                                         </span>
@@ -208,7 +205,7 @@ export function ProjectsPanel({
                                             {project.actual === null
                                                 ? '–'
                                                 : `${clampPercent(project.actual)}%`}{' '}
-                                            <span className="font-semibold text-arus-text-2">
+                                            <span className="font-semibold text-text-muted">
                                                 · rencana{' '}
                                                 {project.planned === null
                                                     ? '–'
@@ -229,7 +226,7 @@ export function ProjectsPanel({
                         ))}
                     </ul>
                     {portfolio.total > portfolio.projects.length && (
-                        <p className="border-t border-arus-surface-2 px-6 pt-3 pb-2 text-[15px] text-arus-text-2 md:px-7">
+                        <p className="border-t border-divider px-6 pt-3 pb-2 text-[15px] text-text-muted md:px-7">
                             {portfolio.total - portfolio.projects.length} proyek
                             aktif lainnya
                             {canSeePortfolio
@@ -269,6 +266,7 @@ export function ProjectsList({
         >
             {portfolio.projects.length === 0 ? (
                 <EmptyState
+                    size="sm"
                     icon={FolderKanban}
                     title="Belum ada proyek aktif"
                 />
@@ -283,8 +281,8 @@ export function ProjectsList({
                                     href={project.url}
                                     prefetch
                                     className={cn(
-                                        'flex min-h-[60px] items-center gap-3 border-t border-arus-surface-2 py-2 text-arus-text',
-                                        FOCUS_RING,
+                                        'flex min-h-[60px] items-center gap-3 border-t border-divider py-2 text-text',
+                                        focusRing,
                                     )}
                                 >
                                     <CodeBadge project={project} small />
@@ -328,8 +326,8 @@ export function ProjectsPanelSkeleton({ className }: { className?: string }) {
         >
             {[0, 1, 2, 3, 4].map((key) => (
                 <div key={key} className="flex items-center gap-3">
-                    <ArusSkeleton className="size-10" />
-                    <ArusSkeleton className="h-10 flex-1" />
+                    <Skeleton className="size-10" />
+                    <Skeleton className="h-10 flex-1" />
                 </div>
             ))}
         </Panel>

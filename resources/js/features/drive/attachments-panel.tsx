@@ -274,7 +274,7 @@ export function AttachmentsPanel({
             <Button
                 type="button"
                 variant="outline"
-                className="ml-auto h-11 border-primary/40 bg-primary/10 text-[15px] text-primary hover:bg-primary/15 hover:text-primary"
+                className="ml-auto h-11 border-primary/40 bg-link-soft text-[15px] text-primary hover:bg-primary/15 hover:text-primary"
                 onClick={() => setSheetOpen(true)}
             >
                 <Paperclip />

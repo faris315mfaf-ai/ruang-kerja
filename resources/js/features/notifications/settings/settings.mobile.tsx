@@ -99,7 +99,7 @@ function EventRow({
                                 >
                                     {channel.label}
                                     {!channel.available && (
-                                        <span className="ml-2 rounded-sm bg-info/12 px-1.5 py-0.5 text-xs text-info">
+                                        <span className="ml-2 rounded-sm bg-info-soft px-1.5 py-0.5 text-xs text-info">
                                             Segera hadir
                                         </span>
                                     )}

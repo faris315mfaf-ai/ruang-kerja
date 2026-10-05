@@ -35,13 +35,13 @@ export function ManagementDesktop({
         <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-5 pt-8 pb-10 md:px-8 lg:px-10 lg:pt-10">
             <section className="flex flex-wrap items-end justify-between gap-5">
                 <div className="flex flex-col gap-2">
-                    <span className="inline-flex h-8 items-center self-start rounded-2xl border border-arus-border bg-arus-badge px-3 text-[14px] font-extrabold text-arus-link">
+                    <span className="inline-flex h-8 items-center self-start rounded-lg border border-border bg-surface/75 px-3 text-[14px] font-extrabold text-link">
                         {props.company} · Manajemen
                     </span>
                     <h1 className="text-[36px] leading-[44px] font-extrabold tracking-[-0.03em] lg:text-[44px] lg:leading-[52px]">
                         Ringkasan perusahaan
                     </h1>
-                    <p className="text-[18px] text-arus-text-2">
+                    <p className="text-[18px] text-text-muted">
                         {formatLongDate(props.today)} ·{' '}
                         {summary
                             ? `data per ${formatTime(summary.generated_at)}`

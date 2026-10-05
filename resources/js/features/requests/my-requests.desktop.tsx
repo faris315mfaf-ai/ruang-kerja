@@ -108,7 +108,7 @@ export function MyRequestsDesktop({
                                             className={cn(
                                                 'text-xs tnum',
                                                 item.value === 'menunggu' &&
-                                                    'rounded-full bg-warning/15 px-1.5 text-warning',
+                                                    'rounded-full bg-warning-soft px-1.5 text-warning',
                                             )}
                                         >
                                             {counts[item.value]}

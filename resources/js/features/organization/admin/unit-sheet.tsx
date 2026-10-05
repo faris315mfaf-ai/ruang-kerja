@@ -74,7 +74,7 @@ export function UnitSheet({
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="border-danger/40 text-danger hover:bg-danger/10 hover:text-danger"
+                                className="border-danger/40 text-danger hover:bg-danger-soft hover:text-danger"
                                 onClick={onDelete}
                             >
                                 Hapus

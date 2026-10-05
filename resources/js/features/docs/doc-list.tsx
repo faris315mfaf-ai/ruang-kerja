@@ -81,7 +81,7 @@ export function DocList({ documents, groups, currentSlug, variant }: Props) {
                                                         ? 'min-h-12 px-3 py-2 text-[15px] active:bg-surface-2'
                                                         : 'min-h-8 rounded-md px-2 py-1.5 text-sm hover:bg-surface-2',
                                                     active &&
-                                                        'bg-primary/10 font-medium text-primary hover:bg-primary/10',
+                                                        'bg-link-soft font-medium text-primary hover:bg-link-soft',
                                                 )}
                                             >
                                                 <FileText

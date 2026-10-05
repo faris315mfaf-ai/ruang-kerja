@@ -10,7 +10,7 @@ export function RevisionBanner({ request }: { request: RequestDetail }) {
     return (
         <div
             role="note"
-            className="flex gap-2.5 rounded-lg border border-info/30 bg-info/10 px-4 py-3 text-sm text-text"
+            className="flex gap-2.5 rounded-lg border border-info/30 bg-info-soft px-4 py-3 text-sm text-text"
         >
             <CornerUpLeft
                 className="mt-0.5 size-4 shrink-0 text-info"

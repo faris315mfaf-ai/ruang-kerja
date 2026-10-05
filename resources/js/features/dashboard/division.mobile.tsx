@@ -131,7 +131,7 @@ export function DivisionMobile({
                 href="/persetujuan"
                 className="flex min-h-16 items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3"
             >
-                <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <span className="flex size-10 items-center justify-center rounded-lg bg-link-soft text-primary">
                     <CheckCheck className="size-5" aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1">

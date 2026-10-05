@@ -93,7 +93,7 @@ export function NotificationSettingsDesktop({
                                                         />
                                                         {channel.label}
                                                         {!channel.available && (
-                                                            <span className="rounded-sm bg-warning/15 px-1.5 text-[11px] text-warning">
+                                                            <span className="rounded-sm bg-warning-soft px-1.5 text-[11px] text-warning">
                                                                 Segera hadir
                                                             </span>
                                                         )}

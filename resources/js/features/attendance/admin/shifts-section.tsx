@@ -199,7 +199,7 @@ function ShiftDialog({
                         </div>
                     </div>
                     {crosses && form.data.end_time !== form.data.start_time && (
-                        <p className="rounded-md bg-info/10 px-3 py-2 text-xs text-info">
+                        <p className="rounded-md bg-info-soft px-3 py-2 text-xs text-info">
                             Shift lintas tengah malam: dicatat pada tanggal
                             check-in.
                         </p>
@@ -371,7 +371,7 @@ export function ShiftsSection({ shifts, locations, shiftDefaults }: Props) {
                                         {shift.hours}
                                     </span>
                                     {shift.crossesMidnight && (
-                                        <span className="ml-2 rounded-md bg-info/10 px-2 py-0.5 text-xs text-info">
+                                        <span className="ml-2 rounded-md bg-info-soft px-2 py-0.5 text-xs text-info">
                                             lintas tengah malam
                                         </span>
                                     )}

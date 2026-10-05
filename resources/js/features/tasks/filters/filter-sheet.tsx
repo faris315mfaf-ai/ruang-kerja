@@ -45,7 +45,7 @@ function Toggle({
             className={cn(
                 'flex min-h-11 items-center gap-2 rounded-full border px-3.5 text-sm transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
                 active
-                    ? 'border-primary bg-primary/12 text-text'
+                    ? 'border-primary bg-link-soft text-text'
                     : 'border-border bg-surface text-text-muted',
             )}
         >

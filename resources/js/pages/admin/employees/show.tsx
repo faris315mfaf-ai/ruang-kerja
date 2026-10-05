@@ -78,7 +78,7 @@ export default function EmployeeShow({
                                 variant="outline"
                                 className={
                                     employee.status === 'active'
-                                        ? 'border-danger/40 text-danger hover:bg-danger/10 hover:text-danger'
+                                        ? 'border-danger/40 text-danger hover:bg-danger-soft hover:text-danger'
                                         : undefined
                                 }
                                 onClick={() =>

@@ -49,8 +49,8 @@ export function SummaryMobile({
                             className={cn(
                                 'rounded-md px-2 py-0.5 text-[13px]',
                                 metrics.variance < 0
-                                    ? 'bg-warning/12 text-warning'
-                                    : 'bg-success/12 text-success',
+                                    ? 'bg-warning-soft text-warning'
+                                    : 'bg-success-soft text-success',
                             )}
                         >
                             {pointsLabel(metrics.variance)} dari rencana

@@ -26,7 +26,7 @@ export function ReviewButton({
             disabled={busy}
             className={cn(
                 size === 'lg'
-                    ? 'h-11 bg-primary/10 text-[15px] text-primary hover:bg-primary/15'
+                    ? 'h-11 bg-link-soft text-[15px] text-primary hover:bg-primary/15'
                     : 'h-8',
                 className,
             )}

@@ -711,7 +711,7 @@ export function DecisionsPanel({
             id="keputusan"
             title="Butuh keputusan Anda"
             count={
-                <span className="rounded-full bg-primary/12 px-1.5 text-primary">
+                <span className="rounded-full bg-link-soft px-1.5 text-primary">
                     {decisions.length}
                 </span>
             }

@@ -35,7 +35,7 @@ export function ViewPicker({
                     className={cn(
                         'inline-flex h-9 shrink-0 items-center gap-1 rounded-full border px-3.5 text-sm transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-md:h-11',
                         view.active
-                            ? 'border-primary bg-primary/10 font-medium text-primary'
+                            ? 'border-primary bg-link-soft font-medium text-primary'
                             : 'border-border bg-surface text-text-muted hover:text-text',
                     )}
                 >

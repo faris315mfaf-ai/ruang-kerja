@@ -9,7 +9,6 @@ import {
     deltaPhrase,
     healthPill,
     milestoneWhen,
-    nextTabIndex,
     periodNote,
     projectGradient,
     shortDate,
@@ -161,15 +160,6 @@ describe('management chart', () => {
 });
 
 describe('management period tabs', () => {
-    it('moves focus with arrows, Home and End (wrapping)', () => {
-        expect(nextTabIndex(0, 'ArrowRight', 3)).toBe(1);
-        expect(nextTabIndex(2, 'ArrowRight', 3)).toBe(0);
-        expect(nextTabIndex(0, 'ArrowLeft', 3)).toBe(2);
-        expect(nextTabIndex(1, 'Home', 3)).toBe(0);
-        expect(nextTabIndex(1, 'End', 3)).toBe(2);
-        expect(nextTabIndex(1, 'Enter', 3)).toBeNull();
-    });
-
     it('describes what each tab covers', () => {
         expect(periodNote('harian')).toBe('hari ini');
         expect(periodNote('mingguan', week([], 0, 0))).toBe(
@@ -317,10 +307,10 @@ describe('management projects & attendance', () => {
     });
 
     it('picks a code-badge gradient from the workspace colour', () => {
-        expect(projectGradient('teal')).toBe('bg-arus-brand');
-        expect(projectGradient('violet')).toBe('bg-arus-indigo');
-        expect(projectGradient('orange')).toBe('bg-arus-warm');
-        expect(projectGradient('blue')).toBe('bg-arus-action');
+        expect(projectGradient('teal')).toBe('bg-grad-merek');
+        expect(projectGradient('violet')).toBe('bg-grad-indigo');
+        expect(projectGradient('orange')).toBe('bg-grad-hangat');
+        expect(projectGradient('blue')).toBe('bg-grad-aksi');
     });
 
     it('adds the Alpha segment only when someone has it', () => {

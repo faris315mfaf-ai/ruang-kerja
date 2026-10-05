@@ -164,7 +164,7 @@ export default function WorkspaceSettings(props: Props) {
                                     <li className="mt-2 border-t border-border pt-2">
                                         <a
                                             href="#zona-bahaya"
-                                            className="flex h-8 items-center rounded-md px-2.5 text-[13px] text-danger hover:bg-danger/10"
+                                            className="flex h-8 items-center rounded-md px-2.5 text-[13px] text-danger hover:bg-danger-soft"
                                         >
                                             Zona bahaya
                                         </a>

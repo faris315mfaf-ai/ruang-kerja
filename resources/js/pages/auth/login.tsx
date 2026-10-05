@@ -97,7 +97,7 @@ export default function Login({
                             )}
 
                             {status && (
-                                <p className="rounded-lg bg-success/10 px-4 py-3 text-sm font-medium text-success">
+                                <p className="rounded-lg bg-success-soft px-4 py-3 text-sm font-medium text-success">
                                     {status}
                                 </p>
                             )}

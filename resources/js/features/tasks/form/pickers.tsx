@@ -63,7 +63,7 @@ function Pill({
                     cn(
                         dashed && 'border-dashed text-text-muted',
                         tone === 'primary' &&
-                            'border-primary/50 bg-primary/10 text-primary',
+                            'border-primary/50 bg-link-soft text-primary',
                     ),
                 )}
             >

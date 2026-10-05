@@ -114,7 +114,7 @@ export function PortfolioMobile({
                             className={cn(
                                 'flex h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-[15px]',
                                 active
-                                    ? 'border-primary/50 bg-primary/12 text-text'
+                                    ? 'border-primary/50 bg-link-soft text-text'
                                     : 'border-border bg-surface text-text-muted',
                             )}
                         >

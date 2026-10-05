@@ -54,7 +54,7 @@ function ResultRow({
                 />
             )}
             {item.code && (
-                <span className="min-w-16 shrink-0 font-mono text-xs whitespace-nowrap text-text-muted">
+                <span className="min-w-16 shrink-0 font-mono text-[14px] font-semibold whitespace-nowrap text-text-muted">
                     {item.code}
                 </span>
             )}
@@ -63,13 +63,13 @@ function ResultRow({
                     <HighlightedText text={title} query={query} />
                 </span>
                 {item.snippet && (
-                    <span className="block truncate text-xs text-text-muted">
+                    <span className="block truncate text-[14px] text-text-muted">
                         <HighlightedText text={item.snippet} query={query} />
                     </span>
                 )}
             </span>
             {(item.meta ?? item.subtitle) && (
-                <span className="hidden max-w-56 shrink-0 truncate text-xs text-text-muted sm:block">
+                <span className="hidden max-w-56 shrink-0 truncate text-[14px] text-text-muted sm:block">
                     {item.meta ?? item.subtitle}
                 </span>
             )}
@@ -157,10 +157,10 @@ export function CommandPalette() {
             }
         >
             <DialogPrimitive.Portal>
-                <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
+                <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-background/60 backdrop-blur-[3px] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
                 <DialogPrimitive.Content
                     aria-describedby={undefined}
-                    className="glass fixed top-[14vh] left-1/2 z-50 w-[640px] max-w-[calc(100vw-32px)] -translate-x-1/2 overflow-hidden rounded-xl shadow-card duration-180 ease-brand data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-98 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-98"
+                    className="glass-strong fixed top-[14vh] left-1/2 z-50 w-[640px] max-w-[calc(100vw-32px)] -translate-x-1/2 overflow-hidden rounded-panel shadow-float duration-180 ease-brand data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-98 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-98"
                 >
                     <DialogPrimitive.Title className="sr-only">
                         Cari atau jalankan perintah
@@ -171,7 +171,6 @@ export function CommandPalette() {
                         value={selected}
                         onValueChange={setSelected}
                         onKeyDown={onKeyDown}
-                        className="bg-surface/70"
                     >
                         <div className="relative">
                             <CommandInput
@@ -188,13 +187,13 @@ export function CommandPalette() {
                         <CommandList>
                             {loading && total === 0 && <LoadingRows />}
                             {error && (
-                                <p className="py-10 text-center text-sm text-danger">
+                                <p className="py-10 text-center text-[16px] text-danger">
                                     Pencarian gagal. Periksa koneksi lalu coba
                                     lagi.
                                 </p>
                             )}
                             {!loading && !error && total === 0 && (
-                                <p className="py-10 text-center text-sm text-text-muted">
+                                <p className="py-10 text-center text-[16px] text-text-muted">
                                     {query.trim()
                                         ? `Tidak ada hasil untuk “${query.trim()}”.`
                                         : 'Ketik untuk mencari tugas, orang, workspace, atau dokumen.'}

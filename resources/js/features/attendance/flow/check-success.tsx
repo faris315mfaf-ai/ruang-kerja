@@ -78,7 +78,7 @@ export function CheckSuccess({ result, onDone }: Props) {
             <div className="flex flex-col items-center pt-2 text-center">
                 <span
                     aria-hidden
-                    className="flex size-[88px] items-center justify-center rounded-full bg-success/10"
+                    className="flex size-[88px] items-center justify-center rounded-full bg-success-soft"
                 >
                     <span className="flex size-12 items-center justify-center rounded-full bg-success text-on-brand">
                         <Check className="size-7" strokeWidth={2.5} />

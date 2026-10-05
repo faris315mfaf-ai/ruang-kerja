@@ -1,18 +1,19 @@
-@import '@fontsource/plus-jakarta-sans/400.css';
-@import '@fontsource/plus-jakarta-sans/500.css';
-@import '@fontsource/plus-jakarta-sans/600.css';
-@import '@fontsource/jetbrains-mono/400.css';
+/* Figtree (UI) + JetBrains Mono (IDs, codes), self-hosted: the CSP blocks Google Fonts. */
+@import '@fontsource/figtree/400.css';
+@import '@fontsource/figtree/500.css';
+@import '@fontsource/figtree/600.css';
+@import '@fontsource/figtree/700.css';
+@import '@fontsource/figtree/800.css';
 @import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/600.css';
 
 @import 'tailwindcss';
 
 @import 'tw-animate-css';
 
-/* Sumber kebenaran warna, radius, font, glass. Lihat docs/DESIGN.md. */
+/* Design system "Arus": colors, radius, type, glass. See docs/DESIGN.md. */
 @import './tokens.css';
 @import './palette.css';
-/* Token Arus: page-scoped (.theme-arus) for the Manajemen pages. */
-@import './arus.css';
 @import './rich-text.css';
 
 @source '../views';
@@ -21,9 +22,9 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * --font-sans, --font-mono, --radius-sm/md/lg didefinisikan di tokens.css dengan
- * nama yang sama seperti namespace tema Tailwind, jadi utilitas font-sans,
- * font-mono, rounded-sm/md/lg otomatis memakai nilai token.
+ * --font-sans, --font-mono and --radius-xs … --radius-3xl are defined in
+ * tokens.css with Tailwind's theme names, so font-sans, font-mono and
+ * rounded-sm … rounded-3xl use the Arus values directly.
  */
 @theme inline {
     /* shadcn/ui */
@@ -51,44 +52,124 @@
     --color-chart-3: var(--chart-3);
     --color-chart-4: var(--chart-4);
     --color-chart-5: var(--chart-5);
-    --color-sidebar: var(--sidebar);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-ring: var(--sidebar-ring);
 
-    /* Token RuangKerja */
+    /* Arus tokens */
     --color-brand-50: var(--brand-50);
     --color-brand-100: var(--brand-100);
+    --color-brand-200: var(--brand-200);
     --color-brand-300: var(--brand-300);
     --color-brand-400: var(--brand-400);
     --color-brand-500: var(--brand-500);
     --color-brand-600: var(--brand-600);
     --color-brand-700: var(--brand-700);
+    --color-brand-800: var(--brand-800);
+    --color-brand-900: var(--brand-900);
     --color-accent-blue: var(--accent-blue);
-    --color-accent-green: var(--accent-green);
+    --color-accent-blue-strong: var(--accent-blue-strong);
     --color-surface: var(--surface);
     --color-surface-2: var(--surface-2);
     --color-border-strong: var(--border-strong);
+    --color-divider: var(--divider);
     --color-text: var(--text);
     --color-text-muted: var(--text-muted);
     --color-text-subtle: var(--text-subtle);
     --color-primary-hover: var(--primary-hover);
     --color-success: var(--success);
+    --color-success-soft: var(--success-soft);
     --color-warning: var(--warning);
+    --color-warning-soft: var(--warning-soft);
     --color-danger: var(--danger);
+    --color-danger-soft: var(--danger-soft);
     --color-info: var(--info);
+    --color-info-soft: var(--info-soft);
+    --color-link: var(--link);
+    --color-link-soft: var(--link-soft);
+    --color-fill-teal: var(--fill-teal);
+    --color-fill-warning: var(--fill-warning);
+    --color-fill-danger: var(--fill-danger);
+    --color-fill-violet: var(--fill-violet);
+    --color-marker: var(--marker);
     --color-glass: var(--glass-bg);
     --color-glass-border: var(--glass-border);
+    --color-glow-hi: var(--glow-hi);
     --color-on-brand: var(--on-brand);
     --color-on-danger: var(--on-danger);
+    --color-on-active: var(--on-active);
+    --color-badge: var(--badge);
+    --color-on-badge: var(--on-badge);
+    --color-inverse: var(--inverse);
+    --color-on-inverse: var(--on-inverse);
+    --color-avatar-blue: var(--avatar-blue);
+    --color-avatar-blue-fg: var(--avatar-blue-fg);
+    --color-avatar-teal: var(--avatar-teal);
+    --color-avatar-teal-fg: var(--avatar-teal-fg);
+    --color-avatar-amber: var(--avatar-amber);
+    --color-avatar-amber-fg: var(--avatar-amber-fg);
+    --color-avatar-neutral: var(--avatar-neutral);
+    --color-avatar-neutral-fg: var(--avatar-neutral-fg);
     --color-qr-ink: var(--qr-ink);
     --color-qr-paper: var(--qr-paper);
 
+    /* Semantic radius: rounded-control (12) · card (20) · panel (24) · sheet (28). */
+    --radius-control: var(--radius-md);
+    --radius-card: var(--radius-xl);
+    --radius-panel: var(--radius-2xl);
+    --radius-sheet: var(--radius-3xl);
+
+    /* Elevation: shadow-card (e-1) · float (e-2) · glow · button · warm · inverse. */
     --shadow-card: var(--shadow-1);
+    --shadow-float: var(--shadow-2);
+    --shadow-glow: var(--elev-glow);
+    --shadow-button: var(--elev-button);
+    --shadow-button-lg: var(--elev-button-lg);
+    --shadow-warm: var(--elev-warm);
+    --shadow-inverse: var(--elev-inverse);
+    --shadow-knob: var(--elev-knob);
+    --shadow-segment: var(--elev-segment);
+
+    /* Control heights: h-control-sm 36 · h-control 44 · h-control-lg 52 · h-control-xl 56
+       (also min-h-*, size-*). */
+    --spacing-control-sm: 36px;
+    --spacing-control: 44px;
+    --spacing-control-lg: 52px;
+    --spacing-control-xl: 56px;
+
+    /* Type scale: text-display · h1 · h2 · h3 · title · body-lg · body · label ·
+       meta · kpi (desktop values, phones switch via tokens.css). */
+    --text-display: var(--type-display);
+    --text-display--line-height: var(--type-display-lh);
+    --text-display--font-weight: 800;
+    --text-display--letter-spacing: -0.03em;
+    --text-h1: var(--type-h1);
+    --text-h1--line-height: var(--type-h1-lh);
+    --text-h1--font-weight: 700;
+    --text-h1--letter-spacing: -0.02em;
+    --text-h2: var(--type-h2);
+    --text-h2--line-height: var(--type-h2-lh);
+    --text-h2--font-weight: 700;
+    --text-h2--letter-spacing: -0.015em;
+    --text-h3: var(--type-h3);
+    --text-h3--line-height: var(--type-h3-lh);
+    --text-h3--font-weight: 700;
+    --text-h3--letter-spacing: -0.01em;
+    --text-title: var(--type-title);
+    --text-title--line-height: var(--type-title-lh);
+    --text-title--font-weight: 600;
+    --text-body-lg: var(--type-body-lg);
+    --text-body-lg--line-height: var(--type-body-lg-lh);
+    --text-body: var(--type-body);
+    --text-body--line-height: var(--type-body-lh);
+    --text-label: var(--type-label);
+    --text-label--line-height: var(--type-label-lh);
+    --text-label--font-weight: 600;
+    --text-meta: var(--type-meta);
+    --text-meta--line-height: var(--type-meta-lh);
+    --text-meta--font-weight: 500;
+    --text-kpi: var(--type-kpi);
+    --text-kpi--line-height: var(--type-kpi-lh);
+    --text-kpi--font-weight: 700;
+    --text-kpi--letter-spacing: -0.02em;
+
     --ease-brand: var(--ease);
 }
 
@@ -115,46 +196,74 @@
     --destructive: var(--danger);
     --destructive-foreground: var(--danger);
     --input: var(--border-strong);
-    --chart-1: var(--brand-500);
+    --chart-1: var(--fill-teal);
     --chart-2: var(--accent-blue);
-    --chart-3: var(--warning);
+    --chart-3: var(--fill-warning);
     --chart-4: var(--success);
     --chart-5: var(--danger);
     --radius: var(--radius-md);
-    --sidebar: var(--surface);
-    --sidebar-foreground: var(--text);
-    --sidebar-primary: var(--primary);
-    --sidebar-primary-foreground: var(--primary-fg);
-    --sidebar-accent: var(--surface-2);
-    --sidebar-accent-foreground: var(--text);
-    --sidebar-border: var(--border);
-    --sidebar-ring: var(--ring);
 
-    /* Teks di atas gradien brand / avatar berwarna (sama di terang & gelap). */
-    --on-brand: #ffffff;
-    /* Teks di atas --danger: putih di terang, gelap di mode gelap (kontras >= 4.5:1). */
-    --on-danger: #ffffff;
-
+    /* Mobile app bar (title row) and the floating tab bar capsule
+       (TabBar.dc.html: 70px tall, 12px from the sides, 14px above the safe
+       area). --tab-bar-height is the space it reserves above the safe area
+       (lift + capsule + 8px breathing room), so anything offset by it
+       (content padding, FAB, sticky action bars, toasts) clears the capsule. */
     --app-bar-height: 56px;
-    /* Mobile "dock capsule": floating tab bar, lifted --screen-gutter above the
-       safe area. --tab-bar-height is the space it reserves above the safe area
-       (lift + capsule + 8px breathing room), so anything offset by it (content
-       padding, FAB, sticky action bars) clears the capsule. */
-    --tab-bar-capsule: 60px;
-    --tab-bar-height: calc(var(--tab-bar-capsule) + var(--screen-gutter) + 8px);
+    --tab-bar-capsule: 70px;
+    --tab-bar-inset: 12px;
+    --tab-bar-lift: 14px;
+    --tab-bar-height: calc(var(--tab-bar-capsule) + var(--tab-bar-lift) + 8px);
 
-    /* Desktop shell: macOS-style menu bar + Dock, content fills the screen. */
-    --menu-bar-height: 38px;
+    /* Desktop shell (MenuBar.dc.html + Dock.dc.html): 64px glass menu bar,
+       content column max 1280px with 40px padding, floating Dock. */
+    --menu-bar-height: 64px;
     --screen-gutter: 10px;
-    --dock-tile: 46px;
-    --dock-pad: 6px;
+    --page-max: 1280px;
+    --page-max-wide: 1480px;
+    --page-pad: 40px;
+    --dock-tile: 52px;
+    --dock-pad-top: 10px;
+    --dock-pad-bottom: 14px;
+    --dock-bottom: 20px;
     /* Space the Dock reserves at the bottom of the content. */
     --dock-space: calc(
-        var(--dock-tile) + 2 * var(--dock-pad) + var(--screen-gutter)
+        var(--dock-tile) + var(--dock-pad-top) + var(--dock-pad-bottom) +
+            var(--dock-bottom) + 16px
     );
-    /* Floating Dock: a deep, soft shadow sells it as a separate material layer. */
+    /* Tablet rail (Rail.dc.html). */
+    --rail-width: 96px;
+
+    /* Floating chrome (Dock, tab bar, stacks): ring + deep soft shadow + top
+       highlight sells it as a separate glass layer. */
+    --dock-bg: rgb(255 255 255 / 0.62);
+    --dock-border: rgb(255 255 255 / 0.8);
     --dock-shadow:
-        0 18px 50px -12px rgb(15 26 31 / 0.28), 0 2px 6px rgb(15 26 31 / 0.08);
+        0 0 0 1px rgb(11 26 43 / 0.08), 0 20px 48px rgb(11 26 43 / 0.18),
+        inset 0 1px 0 rgb(255 255 255 / 0.9);
+    --dock-tile-bg: #ffffff;
+    --dock-tile-shadow:
+        0 0 0 1px rgb(11 26 43 / 0.06), 0 2px 6px rgb(11 26 43 / 0.08);
+    --dock-divider: rgb(11 26 43 / 0.14);
+    --tab-bar-bg: rgb(255 255 255 / 0.72);
+    --tab-bar-border: rgb(255 255 255 / 0.85);
+    --tab-bar-shadow:
+        0 0 0 1px rgb(11 26 43 / 0.08), 0 14px 36px rgb(11 26 43 / 0.18);
+    --field-bg: rgb(238 242 247 / 0.9);
+}
+
+.dark {
+    --dock-bg: rgb(23 33 49 / 0.6);
+    --dock-border: rgb(255 255 255 / 0.1);
+    --dock-shadow:
+        0 0 0 1px rgb(0 0 0 / 0.5), 0 20px 48px rgb(0 0 0 / 0.55),
+        inset 0 1px 0 rgb(255 255 255 / 0.08);
+    --dock-tile-bg: rgb(255 255 255 / 0.08);
+    --dock-tile-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+    --dock-divider: rgb(255 255 255 / 0.16);
+    --tab-bar-bg: rgb(23 33 49 / 0.72);
+    --tab-bar-border: rgb(255 255 255 / 0.1);
+    --tab-bar-shadow: 0 0 0 1px rgb(0 0 0 / 0.5), 0 14px 36px rgb(0 0 0 / 0.5);
+    --field-bg: rgb(23 33 49 / 0.9);
 }
 
 /* Toasts clear the mobile tab bar capsule while it is on screen. */
@@ -162,13 +271,6 @@
     --toast-offset-bottom: calc(
         var(--tab-bar-height) + env(safe-area-inset-bottom)
     );
-}
-
-/* Mode gelap: --danger lebih terang, jadi teks di atasnya harus gelap. */
-.dark {
-    --dock-shadow:
-        0 18px 50px -12px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.35);
-    --on-danger: #2a0a0a;
 }
 
 @layer base {
@@ -180,35 +282,22 @@
         -webkit-tap-highlight-color: transparent;
     }
 
+    /* Page: --bg with the two corner glows (teal left, blue right), both themes. */
     body {
         @apply bg-background text-foreground;
-        font-size: 13px;
-        line-height: 20px;
-        font-feature-settings: 'cv11';
+        background-image: var(--page-glow);
+        background-repeat: no-repeat;
+        font-size: var(--type-body);
+        line-height: var(--type-body-lh);
+        font-variant-numeric: tabular-nums;
     }
 
-    /* Mode gelap: dua cahaya radial tipis (teal kiri atas, biru kanan bawah). */
-    .dark body {
-        background-image:
-            radial-gradient(
-                60rem 40rem at 0% 0%,
-                color-mix(in srgb, var(--brand-500) 8%, transparent),
-                transparent 70%
-            ),
-            radial-gradient(
-                50rem 36rem at 100% 100%,
-                color-mix(in srgb, var(--accent-blue) 6%, transparent),
-                transparent 70%
-            );
-        background-attachment: fixed;
-    }
-
-    /* Input di ponsel minimal 16px agar iOS tidak zoom otomatis. */
+    /* Input di ponsel 17px (Tipografi "Ponsel"): iOS tidak zoom otomatis. */
     @media (max-width: 767px) {
         input,
         select,
         textarea {
-            font-size: 16px !important;
+            font-size: 17px !important;
         }
     }
 }
@@ -223,6 +312,125 @@
 
 @utility pt-safe {
     padding-top: env(safe-area-inset-top);
+}
+
+/* Section label (Tipografi "overline"): 14/20 bold, tracked, uppercase. */
+@utility text-overline {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* Gradient fills (background-image, so a bg-* colour can sit underneath). */
+@utility bg-grad-aksi {
+    background-image: var(--grad-aksi);
+}
+
+@utility bg-grad-merek {
+    background-image: var(--grad-merek);
+}
+
+@utility bg-grad-merek-x {
+    background-image: var(--grad-merek-x);
+}
+
+@utility bg-grad-merek-y {
+    background-image: var(--grad-merek-y);
+}
+
+@utility bg-grad-hangat {
+    background-image: var(--grad-hangat);
+}
+
+@utility bg-grad-indigo {
+    background-image: var(--grad-indigo);
+}
+
+@utility bg-grad-slate {
+    background-image: var(--grad-slate);
+}
+
+@utility bg-grad-soft {
+    background-image: var(--grad-soft);
+}
+
+@utility bg-grad-active {
+    background-image: var(--grad-active);
+}
+
+/* Highlight KPI card: soft light in the corner over the action gradient. */
+@utility bg-grad-highlight {
+    background-image:
+        radial-gradient(
+            240px 160px at 100% 0%,
+            var(--glow-hi),
+            transparent 70%
+        ),
+        var(--grad-aksi);
+}
+
+/* Page background with the two corner glows (for full-bleed sections). */
+@utility bg-page {
+    background-color: var(--bg);
+    background-image: var(--page-glow);
+    background-repeat: no-repeat;
+}
+
+/*
+ * Toasts (sonner): inverse chip, 18px radius, 16px text, status icon in a
+ * readable tint, "Urungkan" as a translucent pill (Komponen toast).
+ */
+@layer components {
+    [data-sonner-toaster] [data-sonner-toast][data-styled='true'] {
+        gap: 14px;
+        padding: 16px 18px;
+        font-family: var(--font-sans);
+        font-size: 16px;
+        line-height: 22px;
+        box-shadow: var(--elev-inverse);
+    }
+
+    [data-sonner-toast][data-styled='true'] [data-title] {
+        font-weight: 500;
+    }
+
+    [data-sonner-toast][data-styled='true'] [data-description] {
+        color: color-mix(in srgb, var(--on-inverse) 75%, transparent);
+    }
+
+    [data-sonner-toast][data-type='success'] [data-icon] {
+        color: var(--inverse-success);
+    }
+
+    [data-sonner-toast][data-type='error'] [data-icon] {
+        color: var(--inverse-danger);
+    }
+
+    [data-sonner-toast][data-type='warning'] [data-icon] {
+        color: var(--inverse-warning);
+    }
+
+    [data-sonner-toast][data-type='info'] [data-icon] {
+        color: var(--inverse-info);
+    }
+
+    [data-sonner-toast][data-styled='true'] [data-button] {
+        height: 36px;
+        padding: 0 12px;
+        border-radius: 10px;
+        background: color-mix(in srgb, var(--on-inverse) 12%, transparent);
+        color: var(--on-inverse);
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    [data-sonner-toast][data-styled='true'] [data-close-button] {
+        background: var(--inverse);
+        color: var(--on-inverse);
+        border-color: color-mix(in srgb, var(--on-inverse) 20%, transparent);
+    }
 }
 
 /* Server-rendered Markdown (privacy policy, Sprint 10); token colors only. */
@@ -606,14 +814,5 @@
     .dock-tile:hover .dock-glyph,
     .dock-tile:focus-visible .dock-glyph {
         animation: none;
-    }
-}
-
-/* Frostier, solid chrome for people who reduce transparency (Apple HIG). */
-@media (prefers-reduced-transparency: reduce) {
-    .glass {
-        background: var(--surface);
-        -webkit-backdrop-filter: none;
-        backdrop-filter: none;
     }
 }

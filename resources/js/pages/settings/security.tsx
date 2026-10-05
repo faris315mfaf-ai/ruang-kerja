@@ -29,7 +29,7 @@ export default function Security(props: Props) {
             <h1 className="sr-only">Pengaturan keamanan</h1>
 
             {props.twoFactorRequired && (
-                <Alert className="border-warning/40 bg-warning/10 text-text">
+                <Alert className="border-warning/40 bg-warning-soft text-text">
                     <ShieldAlert className="text-warning" />
                     <AlertTitle>
                         Wajib aktifkan autentikasi dua faktor

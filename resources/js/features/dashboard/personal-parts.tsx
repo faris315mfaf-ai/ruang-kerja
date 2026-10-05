@@ -91,7 +91,7 @@ export function FocusList({
                                     className={cn(
                                         'shrink-0 rounded-md px-2 py-0.5 text-xs',
                                         task.days_late > 0
-                                            ? 'bg-danger/10'
+                                            ? 'bg-danger-soft'
                                             : 'bg-surface-2 text-text-muted',
                                     )}
                                 >

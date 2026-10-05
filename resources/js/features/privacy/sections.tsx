@@ -181,13 +181,13 @@ export function ConsentCard({ consent }: { consent: MyConsent }) {
     const status = consent.granted
         ? {
               icon: ShieldCheck,
-              tone: 'text-success bg-success/10',
+              tone: 'text-success bg-success-soft',
               title: 'Diberikan',
               text: `Untuk kebijakan versi ${consent.granted_version ?? consent.version}${consent.granted_at ? `, sejak ${formatDate(consent.granted_at)}` : ''}.`,
           }
         : {
               icon: ShieldOff,
-              tone: 'text-warning bg-warning/10',
+              tone: 'text-warning bg-warning-soft',
               title: consent.needs_renewal
                   ? 'Perlu persetujuan ulang'
                   : 'Belum diberikan / dicabut',

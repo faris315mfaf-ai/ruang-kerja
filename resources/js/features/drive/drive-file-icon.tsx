@@ -12,11 +12,11 @@ import { cn } from '@/lib/utils';
 import type { DriveFileKind } from './types';
 
 const KINDS: Record<DriveFileKind, { icon: LucideIcon; tone: string }> = {
-    doc: { icon: FileText, tone: 'bg-info/10 text-info' },
-    sheet: { icon: FileSpreadsheet, tone: 'bg-success/10 text-success' },
-    slide: { icon: Presentation, tone: 'bg-warning/10 text-warning' },
-    pdf: { icon: FileType, tone: 'bg-danger/10 text-danger' },
-    image: { icon: FileImage, tone: 'bg-primary/10 text-primary' },
+    doc: { icon: FileText, tone: 'bg-info-soft text-info' },
+    sheet: { icon: FileSpreadsheet, tone: 'bg-success-soft text-success' },
+    slide: { icon: Presentation, tone: 'bg-warning-soft text-warning' },
+    pdf: { icon: FileType, tone: 'bg-danger-soft text-danger' },
+    image: { icon: FileImage, tone: 'bg-link-soft text-primary' },
     folder: { icon: Folder, tone: 'bg-surface-2 text-text-muted' },
     other: { icon: File, tone: 'bg-surface-2 text-text-muted' },
 };

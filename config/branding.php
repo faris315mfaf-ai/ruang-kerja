@@ -26,10 +26,10 @@ return [
     'logo' => env('BRANDING_LOGO') ?: null,
 
     'colors' => [
-        'primary_light' => '#0A7C85',
-        'primary_dark' => '#2FC0B0',
+        'primary_light' => '#0B7F86',
+        'primary_dark' => '#2DBFB1',
         'gradient' => [
-            'from' => '#14A3A0',
+            'from' => '#14B8A6',
             'to' => '#2F7BEA',
         ],
     ],

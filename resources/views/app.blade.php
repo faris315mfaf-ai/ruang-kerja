@@ -22,12 +22,12 @@
 
         {{-- Page background before CSS loads. Keep in sync with --bg in resources/css/tokens.css. --}}
         <style>
-            html { background-color: #F6F8F9; }
-            html.dark { background-color: #0A0E11; }
+            html { background-color: #F3F6FA; }
+            html.dark { background-color: #070B14; }
         </style>
 
-        <meta name="theme-color" content="{{ config('branding.colors.primary_light', '#0A7C85') }}" media="(prefers-color-scheme: light)">
-        <meta name="theme-color" content="#0A0E11" media="(prefers-color-scheme: dark)">
+        <meta name="theme-color" content="{{ config('branding.colors.primary_light', '#0B7F86') }}" media="(prefers-color-scheme: light)">
+        <meta name="theme-color" content="#070B14" media="(prefers-color-scheme: dark)">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'RuangKerja') }}">

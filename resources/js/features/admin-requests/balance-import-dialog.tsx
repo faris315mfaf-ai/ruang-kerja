@@ -206,7 +206,7 @@ export function BalanceImportDialog({ open, onOpenChange, reference }: Props) {
                     {report && report.missing_columns.length > 0 && (
                         <p
                             role="alert"
-                            className="flex items-center gap-2 rounded-lg bg-danger/10 px-3 py-2 text-danger"
+                            className="flex items-center gap-2 rounded-lg bg-danger-soft px-3 py-2 text-danger"
                         >
                             <CircleAlert className="size-4" aria-hidden />
                             Kolom wajib tidak ada:{' '}

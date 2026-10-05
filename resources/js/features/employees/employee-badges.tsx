@@ -5,9 +5,9 @@ import { STATUS_LABELS, WORK_MODE_LABELS } from './labels';
 
 const WORK_MODE_TONES: Record<WorkMode, string> = {
     office: 'bg-surface-2 text-text-muted',
-    hybrid: 'bg-info/10 text-info',
-    wfh: 'bg-success/10 text-success',
-    field: 'bg-warning/10 text-warning',
+    hybrid: 'bg-info-soft text-info',
+    wfh: 'bg-success-soft text-success',
+    field: 'bg-warning-soft text-warning',
 };
 
 export function WorkModeBadge({

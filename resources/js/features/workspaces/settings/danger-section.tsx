@@ -35,7 +35,7 @@ export function DangerSection({ workspace }: { workspace: WorkspaceDetail }) {
                 ) : (
                     <Button
                         variant="outline"
-                        className="border-danger/50 text-danger hover:bg-danger/10 hover:text-danger"
+                        className="border-danger/50 text-danger hover:bg-danger-soft hover:text-danger"
                         onClick={() => {
                             if (window.confirm(`Arsipkan ${workspace.name}?`)) {
                                 router.post(

@@ -1,19 +1,19 @@
 import { cn } from '@/lib/utils';
 import type { KpiCard, KpiTone } from './lib';
-import { ArusSkeleton } from './panel';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const TONES: Record<KpiTone, { card: string; sub: string }> = {
     highlight: {
-        card: 'bg-arus-highlight text-arus-on-gradient shadow-arus-action',
-        sub: 'text-arus-on-gradient',
+        card: 'bg-grad-highlight text-on-brand shadow-glow',
+        sub: 'text-on-brand',
     },
     warm: {
-        card: 'bg-arus-warm text-arus-on-gradient shadow-arus-warm',
-        sub: 'text-arus-on-gradient',
+        card: 'bg-grad-hangat text-on-brand shadow-warm',
+        sub: 'text-on-brand',
     },
     plain: {
-        card: 'border border-arus-border bg-arus-surface text-arus-text shadow-arus-card',
-        sub: 'text-arus-text-2',
+        card: 'border border-border bg-surface text-text shadow-card',
+        sub: 'text-text-muted',
     },
 };
 
@@ -24,7 +24,7 @@ export function KpiCardView({ card }: { card: KpiCard }) {
     return (
         <div
             className={cn(
-                'flex min-w-0 flex-[1_1_230px] flex-col gap-2 rounded-arus-card p-6',
+                'flex min-w-0 flex-[1_1_230px] flex-col gap-2 rounded-[22px] p-6',
                 tone.card,
             )}
         >
@@ -46,13 +46,13 @@ export function KpiCardSkeleton({ tone }: { tone: KpiTone }) {
         <div
             aria-hidden
             className={cn(
-                'flex min-w-0 flex-[1_1_230px] flex-col gap-3 rounded-arus-card p-6',
+                'flex min-w-0 flex-[1_1_230px] flex-col gap-3 rounded-[22px] p-6',
                 TONES[tone].card,
             )}
         >
-            <ArusSkeleton className="h-5 w-28 opacity-60" />
-            <ArusSkeleton className="h-11 w-24 opacity-60" />
-            <ArusSkeleton className="h-4 w-40 opacity-60" />
+            <Skeleton className="h-5 w-28 opacity-60" />
+            <Skeleton className="h-11 w-24 opacity-60" />
+            <Skeleton className="h-4 w-40 opacity-60" />
         </div>
     );
 }

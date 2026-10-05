@@ -1,8 +1,10 @@
 import { Link } from '@inertiajs/react';
 import { Check, Flag } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { MILESTONE_STATE_LABEL, shortDate } from './lib';
-import { ArusSkeleton, EmptyState, FOCUS_RING, Panel } from './panel';
+import { Panel } from '@/components/ui/panel';
+import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/empty-state';
 import type { ManagementPortfolio, MilestoneItem } from './types';
 
 /** Items shown before "+N lainnya". */
@@ -13,13 +15,13 @@ function Dot({ item }: { item: MilestoneItem }) {
         <span
             aria-hidden
             className={cn(
-                'flex size-[22px] shrink-0 items-center justify-center rounded-full text-[13px] font-extrabold text-arus-on-gradient',
-                item.state === 'done' && 'bg-arus-action',
-                item.state === 'missed' && 'bg-arus-fill-danger',
+                'flex size-[22px] shrink-0 items-center justify-center rounded-full text-[13px] font-extrabold text-on-brand',
+                item.state === 'done' && 'bg-grad-aksi',
+                item.state === 'missed' && 'bg-fill-danger',
                 item.state === 'next' &&
-                    'border-4 border-arus-accent bg-arus-surface',
+                    'border-4 border-accent-blue-strong bg-surface',
                 item.state === 'todo' &&
-                    'border-2 border-arus-border-strong bg-arus-surface',
+                    'border-2 border-border-strong bg-surface',
             )}
         >
             {item.state === 'done' && (
@@ -47,7 +49,7 @@ export function MilestonesPanel({
         <Panel
             title={`Milestone ${milestones.month}`}
             action={
-                <span className="text-[15px] font-bold text-arus-text-2">
+                <span className="text-[15px] font-bold text-text-muted">
                     {milestones.done} / {milestones.total} selesai
                 </span>
             }
@@ -55,6 +57,7 @@ export function MilestonesPanel({
         >
             {items.length === 0 ? (
                 <EmptyState
+                    size="sm"
                     icon={Flag}
                     title={`Tidak ada milestone di bulan ${milestones.month}`}
                 >
@@ -79,8 +82,8 @@ export function MilestonesPanel({
                                             className={cn(
                                                 'mt-1 w-0.5 flex-1',
                                                 item.state === 'done'
-                                                    ? 'bg-arus-accent'
-                                                    : 'bg-arus-border',
+                                                    ? 'bg-accent-blue-strong'
+                                                    : 'bg-border',
                                             )}
                                         />
                                     )}
@@ -90,7 +93,7 @@ export function MilestonesPanel({
                                         className={cn(
                                             'text-[15px] font-bold',
                                             item.state === 'missed' &&
-                                                'text-arus-danger',
+                                                'text-danger',
                                         )}
                                     >
                                         {item.name}
@@ -100,15 +103,15 @@ export function MilestonesPanel({
                                             {MILESTONE_STATE_LABEL[item.state]}
                                         </span>
                                     </span>
-                                    <span className="text-[14px] text-arus-text-2">
+                                    <span className="text-[14px] text-text-muted">
                                         <Link
                                             href={item.project.url}
                                             prefetch
                                             title={item.project.name}
                                             aria-label={`${item.project.key}, ${item.project.name}`}
                                             className={cn(
-                                                'rounded font-mono text-[13px] font-bold text-arus-link hover:underline',
-                                                FOCUS_RING,
+                                                'rounded font-mono text-[13px] font-bold text-link hover:underline',
+                                                focusRing,
                                             )}
                                         >
                                             {item.project.key}
@@ -123,7 +126,7 @@ export function MilestonesPanel({
                         );
                     })}
                     {rest > 0 && (
-                        <li className="pl-9 text-[15px] text-arus-text-2">
+                        <li className="pl-9 text-[15px] text-text-muted">
                             +{rest} milestone lainnya
                             {canSeePortfolio && (
                                 <>
@@ -132,8 +135,8 @@ export function MilestonesPanel({
                                         href="/portofolio"
                                         prefetch
                                         className={cn(
-                                            'font-semibold text-arus-link',
-                                            FOCUS_RING,
+                                            'font-semibold text-link',
+                                            focusRing,
                                         )}
                                     >
                                         Portofolio
@@ -157,8 +160,8 @@ export function MilestonesPanelSkeleton({ className }: { className?: string }) {
         >
             {[0, 1, 2, 3, 4].map((key) => (
                 <div key={key} className="flex gap-3.5">
-                    <ArusSkeleton className="size-[22px] rounded-full" />
-                    <ArusSkeleton className="h-10 flex-1" />
+                    <Skeleton className="size-[22px] rounded-full" />
+                    <Skeleton className="h-10 flex-1" />
                 </div>
             ))}
         </Panel>

@@ -92,7 +92,7 @@ export function EmployeesMobile({
             {can.manage && (
                 <p
                     role="note"
-                    className="flex items-start gap-3 rounded-lg border border-info/30 bg-info/10 px-4 py-3 text-sm text-text"
+                    className="flex items-start gap-3 rounded-lg border border-info/30 bg-info-soft px-4 py-3 text-sm text-text"
                 >
                     <Monitor
                         aria-hidden

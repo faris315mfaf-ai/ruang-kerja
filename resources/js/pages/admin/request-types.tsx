@@ -122,7 +122,7 @@ export default function RequestTypes({
                                                 <span className="flex items-center gap-2 text-sm font-medium text-text">
                                                     {item.name}
                                                     {active && dirty && (
-                                                        <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-normal text-warning">
+                                                        <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs font-normal text-warning">
                                                             Belum disimpan
                                                         </span>
                                                     )}

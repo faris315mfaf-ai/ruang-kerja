@@ -284,7 +284,7 @@ export default function ShiftAssignments({
                                                                         pattern.daysLabel
                                                                     }
                                                                     {pattern.workModeLabel && (
-                                                                        <span className="ml-1 rounded bg-info/10 px-1.5 text-xs text-info">
+                                                                        <span className="ml-1 rounded bg-info-soft px-1.5 text-xs text-info">
                                                                             {
                                                                                 pattern.workModeLabel
                                                                             }

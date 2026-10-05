@@ -276,7 +276,7 @@ export function FlowEditor({
                                                     </span>
                                                 )}
                                                 {condition && (
-                                                    <span className="ml-2 rounded-full bg-warning/10 px-2 py-0.5 text-xs text-warning">
+                                                    <span className="ml-2 rounded-full bg-warning-soft px-2 py-0.5 text-xs text-warning">
                                                         Bersyarat
                                                     </span>
                                                 )}

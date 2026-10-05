@@ -495,7 +495,7 @@ export default function AttendanceRecap(props: Props) {
                                                     </td>
                                                     <td className="px-3 py-2.5 text-right tnum">
                                                         {row.absentDays > 0 ? (
-                                                            <span className="inline-flex size-5 items-center justify-center rounded-full bg-danger/10 text-xs text-danger">
+                                                            <span className="inline-flex size-5 items-center justify-center rounded-full bg-danger-soft text-xs text-danger">
                                                                 {row.absentDays}
                                                             </span>
                                                         ) : (

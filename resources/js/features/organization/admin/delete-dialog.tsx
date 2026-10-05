@@ -69,7 +69,7 @@ export function DeleteDialog({ target, onClose, errorKey }: Props) {
                 {error && (
                     <p
                         role="alert"
-                        className="flex gap-2 rounded-md bg-danger/10 px-3 py-2.5 text-sm text-danger"
+                        className="flex gap-2 rounded-md bg-danger-soft px-3 py-2.5 text-sm text-danger"
                     >
                         <AlertTriangle
                             className="mt-0.5 size-4 shrink-0"

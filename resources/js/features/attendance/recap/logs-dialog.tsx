@@ -65,7 +65,7 @@ export function LogsDialog({
                                     {log.flags.map((flag) => (
                                         <span
                                             key={flag.value}
-                                            className="inline-flex h-5 items-center rounded-full bg-warning/12 px-2 text-xs text-warning"
+                                            className="inline-flex h-5 items-center rounded-full bg-warning-soft px-2 text-xs text-warning"
                                         >
                                             {flag.label}
                                         </span>

@@ -247,7 +247,7 @@ export function CommentItem({
                     <div
                         role="alertdialog"
                         aria-label="Hapus komentar"
-                        className="mt-3 flex flex-wrap items-center gap-2 rounded-md bg-danger/10 px-3 py-2 text-[13px] text-danger"
+                        className="mt-3 flex flex-wrap items-center gap-2 rounded-md bg-danger-soft px-3 py-2 text-[13px] text-danger"
                     >
                         <span className="mr-auto">Hapus komentar ini?</span>
                         <Button

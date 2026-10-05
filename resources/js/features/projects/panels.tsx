@@ -365,7 +365,7 @@ function MilestoneStatusNote({
             <span className="inline-flex flex-wrap items-center gap-2 text-[13px] text-primary">
                 Selesai {weekdayDay(doneDay)}
                 {milestone.status === 'completed_late' && late > 0 && (
-                    <span className="rounded bg-warning/12 px-1.5 text-[12px] text-warning">
+                    <span className="rounded bg-warning-soft px-1.5 text-[12px] text-warning">
                         terlambat {late} hari
                     </span>
                 )}
@@ -375,7 +375,7 @@ function MilestoneStatusNote({
 
     if (milestone.status === 'missed') {
         return (
-            <span className="rounded bg-danger/12 px-1.5 text-[12px] text-danger">
+            <span className="rounded bg-danger-soft px-1.5 text-[12px] text-danger">
                 Terlewat · {Math.abs(daysBetween(today, milestone.target_date))}{' '}
                 hari
             </span>
@@ -387,7 +387,7 @@ function MilestoneStatusNote({
             className={cn(
                 'text-[13px]',
                 milestone.status === 'in_progress'
-                    ? 'rounded bg-warning/12 px-1.5 text-warning'
+                    ? 'rounded bg-warning-soft px-1.5 text-warning'
                     : 'text-text-muted',
             )}
         >

@@ -3,16 +3,16 @@
 @php
     /** @var \App\Domain\Notifications\Digest\Data\DailyDigest $digest */
     $c = [
-        'text' => '#0F1A1F', 'muted' => '#5A6A72', 'border' => '#E2E8EB', 'surface' => '#FFFFFF',
-        'primary' => '#0A7C85', 'danger' => '#C42B2B', 'dangerBg' => '#FCEFEF', 'dangerBorder' => '#F3C4C4',
+        'text' => '#0B1A2B', 'muted' => '#46576B', 'border' => '#DDE4EC', 'surface' => '#FFFFFF',
+        'primary' => '#0B7F86', 'danger' => '#C42137', 'dangerBg' => '#FDE7EA', 'dangerBorder' => '#F3C4C4',
     ];
     $badge = [
-        'neutral' => ['#F1F4F6', '#5A6A72'],
-        'info' => ['#E8F0FC', '#1F66D1'],
-        'warning' => ['#FBF1DD', '#9A6200'],
-        'danger' => ['#FCEFEF', '#C42B2B'],
-        'success' => ['#E3F4EB', '#13804F'],
-        'primary' => ['#E6F5F5', '#0A7C85'],
+        'neutral' => ['#EEF2F7', '#46576B'],
+        'info' => ['#E6EEFE', '#1A4CB0'],
+        'warning' => ['#FFF1DC', '#9A5800'],
+        'danger' => ['#FDE7EA', '#C42137'],
+        'success' => ['#E3F6EE', '#0F7A55'],
+        'primary' => ['#E8FBF8', '#0B7F86'],
     ];
     $avatarColors = ['#7A4E6A', '#5B6B2E', '#3E4C8A', '#0A6C70', '#8A5A2B', '#4B5563'];
     $initials = fn (string $name): string => \Illuminate\Support\Str::of($name)->explode(' ')->filter()->take(2)->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))->implode('');
@@ -22,7 +22,7 @@
 @section('title', 'Ringkasan harian · '.$dateLabel)
 @section('preview', $greeting.', '.$firstName.'. Ini ringkasan '.$dateLabel.'.')
 @section('preheader')
-    Ringkasan harian · {{ $dateLabel }} · <a href="{{ $browserUrl }}" style="color:#0A7C85;">Lihat di browser</a>
+    Ringkasan harian · {{ $dateLabel }} · <a href="{{ $browserUrl }}" style="color:#0B7F86;">Lihat di browser</a>
 @endsection
 
 @section('content')
@@ -92,9 +92,9 @@
             </td>
         </tr>
     </table>
-    <p style="margin:12px 0 0;text-align:center;font-size:12px;line-height:18px;color:{{ $c['muted'] }};">Item yang perlu tindakan bisa langsung diproses dari <a href="{{ $inboxUrl }}" style="color:#0A7C85;">Inbox</a>.</p>
+    <p style="margin:12px 0 0;text-align:center;font-size:12px;line-height:18px;color:{{ $c['muted'] }};">Item yang perlu tindakan bisa langsung diproses dari <a href="{{ $inboxUrl }}" style="color:#0B7F86;">Inbox</a>.</p>
 @endsection
 
 @section('footer')
-    Email ini dikirim pukul {{ $sendTimeLabel }} karena Anda mengaktifkan ringkasan harian. <a href="{{ $settingsUrl }}" style="color:#0A7C85;">Atur notifikasi</a>
+    Email ini dikirim pukul {{ $sendTimeLabel }} karena Anda mengaktifkan ringkasan harian. <a href="{{ $settingsUrl }}" style="color:#0B7F86;">Atur notifikasi</a>
 @endsection

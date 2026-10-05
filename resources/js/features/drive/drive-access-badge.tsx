@@ -3,9 +3,9 @@ import { cn } from '@/lib/utils';
 import type { DriveAccessMember, DriveAccessSummary } from './types';
 
 const TONES = {
-    success: 'bg-success/10 text-success',
-    warning: 'bg-warning/10 text-warning',
-    danger: 'bg-danger/10 text-danger',
+    success: 'bg-success-soft text-success',
+    warning: 'bg-warning-soft text-warning',
+    danger: 'bg-danger-soft text-danger',
     muted: 'bg-surface-2 text-text-muted',
 } as const;
 

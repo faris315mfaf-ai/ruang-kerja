@@ -73,7 +73,7 @@ export function InboxTabs({
                                 className={cn(
                                     'rounded-full px-1.5 text-[11px] leading-4 tnum',
                                     tab.count === 'action'
-                                        ? 'bg-warning/15 text-warning'
+                                        ? 'bg-warning-soft text-warning'
                                         : 'bg-primary/15 text-primary',
                                 )}
                             >
@@ -172,7 +172,7 @@ export function ContextText({
 
 export function ActionBadge() {
     return (
-        <span className="inline-flex h-5 items-center rounded-sm bg-warning/15 px-1.5 text-[11px] font-medium text-warning">
+        <span className="inline-flex h-5 items-center rounded-sm bg-warning-soft px-1.5 text-[11px] font-medium text-warning">
             Perlu tindakan
         </span>
     );
