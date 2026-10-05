@@ -124,3 +124,40 @@ export function insertionIndex(
 
     return 0;
 }
+
+/**
+ * Applies a task received from the server (broadcast or polling) to the
+ * board: removed from its old column, inserted into its column in rank
+ * order. Tasks of unknown columns are dropped from the board.
+ */
+export function upsertInColumns(
+    columns: BoardColumns,
+    byId: Record<string, Task>,
+    task: Task,
+): BoardColumns {
+    const next = removeFromColumns(columns, task.id);
+    const target = next[task.status_id];
+
+    if (!target) {
+        return next;
+    }
+
+    const lookup = { ...byId, [task.id]: task };
+    next[task.status_id] = [...target, task.id].sort((a, b) =>
+        lookup[a] && lookup[b] ? compareTasks(lookup[a], lookup[b]) : 0,
+    );
+
+    return next;
+}
+
+export function removeFromColumns(
+    columns: BoardColumns,
+    taskId: string,
+): BoardColumns {
+    return Object.fromEntries(
+        Object.entries(columns).map(([statusId, ids]) => [
+            statusId,
+            ids.includes(taskId) ? ids.filter((id) => id !== taskId) : ids,
+        ]),
+    );
+}

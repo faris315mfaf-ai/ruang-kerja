@@ -2,6 +2,8 @@
 
 use App\Domain\Notifications\Digest\Sections\InboxActionSection;
 use App\Domain\Requests\Digest\PendingApprovalsSection;
+use App\Domain\Tasks\Digest\TasksDueTodaySection;
+use App\Domain\Tasks\Digest\TasksOverdueSection;
 
 return [
 
@@ -97,6 +99,8 @@ return [
         'catch_up_minutes' => 60,
         'workdays' => [1, 2, 3, 4, 5],
         'sections' => [
+            TasksDueTodaySection::class,
+            TasksOverdueSection::class,
             PendingApprovalsSection::class,
             InboxActionSection::class,
         ],

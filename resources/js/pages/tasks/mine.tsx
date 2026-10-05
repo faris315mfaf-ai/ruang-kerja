@@ -296,6 +296,16 @@ function MyTasksView({ tab, counts, tasks, today }: Props) {
     const people: Person[] = unique(tasks.flatMap((row) => row.assignees));
     const labels: Label[] = unique(tasks.flatMap((row) => row.labels));
     const open = (row: MyTaskRow) => composer.openEdit(row, row.workspace.key);
+    const orderKey = ordered.map((row) => row.id).join(',');
+    const { registerList } = composer;
+
+    // Sheet J/K walk these rows; edits in the sheet refresh the list.
+    useEffect(() => {
+        registerList({
+            ids: orderKey === '' ? [] : orderKey.split(','),
+            onTaskChange: () => router.reload({ only: ['tasks'] }),
+        });
+    }, [registerList, orderKey]);
 
     // J/K moves the selection, Enter opens (desktop only, docs/DESIGN.md §1).
     useEffect(() => {

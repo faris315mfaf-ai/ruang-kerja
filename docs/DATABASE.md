@@ -392,17 +392,25 @@ Kolom `position` (tasks, task_statuses, checklist_items) bertipe `varchar(100) C
 ### comments
 `id`, `commentable_type`/`commentable_id` (morph: task, catatan F2), `user_id`, `body` jsonb, `body_text` text, `edited_at` null, soft delete.
 
+Implementasi (Sprint 6): `timestampsTz` + `softDeletesTz`, indeks `(commentable_type, commentable_id, created_at)`. `body` selalu lolos `App\Domain\Tasks\Services\RichText::sanitize` (whitelist node/mark, tautan http/https/mailto, label mention = nama asli). Komentar terhapus tetap di timeline sebagai "Komentar dihapus" (isi tidak dikirim); mention & reaksinya dihapus.
+
 ### mentions
 `id`, `mentionable_type`/`mentionable_id` (comment, task, message), `mentioned_user_id`, `created_by`. Diisi ulang setiap komentar disimpan (parse node mention dari JSON).
+
+Implementasi (Sprint 6): tambah `created_at`; unik `(mentionable_type, mentionable_id, mentioned_user_id)`. **Hanya** user aktif yang bisa melihat workspace (`WorkspacePolicy::canView`) yang mendapat baris & notifikasi; mention orang tanpa akses menjadi teks biasa. `task` = mention di deskripsi.
 
 ### reactions
 `id`, `reactable_type`/`reactable_id`, `user_id`, `emoji`. Unik `(reactable, user_id, emoji)`.
 
+Implementasi (Sprint 6): `emoji` varchar(16) dari daftar tetap `Reaction::EMOJI` (👍 🎉 ❤️ 😄 👀 🙏 ✅ 🚀), tambah `created_at`.
+
 ### activities — feed & riwayat
-`id`, `workspace_id`, `subject_type`/`subject_id`, `causer_id`, `event` (`task.created`, `task.status_changed`, `task.assigned`, …), `properties` jsonb (`{"from": …, "to": …}`), `created_at`. Append-only. `subject_type` = FQCN (`App\Models\Task`, `App\Models\Workspace`; tanpa morph map, sama dengan audit_logs). Event Sprint 5: `task.created`, `task.status_changed`, `task.assigned`, `task.unassigned`, `task.due_date_changed`, `task.priority_changed`, `task.renamed`, `task.deleted`, `workspace.created|updated|archived|restored`, `workspace.member_added|member_removed|member_role_changed`. Event Sprint 9: `project.attributes_changed`, `project.update_posted`, `project.update_requested`, `project.direction_given`, `project.decision_resolved`, `milestone.created|updated|completed|reopened|deleted`, `risk.created|updated|resolved|deleted`. Properti tugas selalu memuat `key` & `title` agar feed tetap terbaca setelah tugas dihapus.
+`id`, `workspace_id`, `subject_type`/`subject_id`, `causer_id`, `event` (`task.created`, `task.status_changed`, `task.assigned`, …), `properties` jsonb (`{"from": …, "to": …}`), `created_at`. Append-only. `subject_type` = FQCN (`App\Models\Task`, `App\Models\Workspace`; tanpa morph map, sama dengan audit_logs). Event Sprint 5: `task.created`, `task.status_changed`, `task.assigned`, `task.unassigned`, `task.due_date_changed`, `task.priority_changed`, `task.renamed`, `task.deleted`, `workspace.created|updated|archived|restored`, `workspace.member_added|member_removed|member_role_changed`. Event Sprint 9: `project.attributes_changed`, `project.update_posted`, `project.update_requested`, `project.direction_given`, `project.decision_resolved`, `milestone.created|updated|completed|reopened|deleted`, `risk.created|updated|resolved|deleted`. Sprint 6: `task.start_date_changed`, `task.estimate_changed`, `task.description_changed`, `task.checklist_completed` (`item`), `task.subtask_added` (pada induk, `subtask{id,key,title}`). Properti tugas selalu memuat `key` & `title` agar feed tetap terbaca setelah tugas dihapus.
 
 ### saved_views
 `id`, `user_id`, `workspace_id` null (null = lintas workspace, mis. "Tugas saya"), `name`, `layout` (`board` · `list` · `calendar`), `filters` jsonb, `sort` jsonb, `is_shared`.
+
+Implementasi (Sprint 6): `name` varchar(60), CHECK `layout`, `filters` default `{}` dengan bentuk `{assignees[], priorities[], labels[], due, q}` (sama dengan filter query string; `assignees` boleh berisi `me` = penonton), `sort` null, timestamps, indeks `(workspace_id, is_shared)` & `(user_id, workspace_id)`. Pribadi hanya pemilik; dibagikan terlihat oleh semua yang bisa melihat workspace; membagikan butuh hak ubah tugas.
 
 ---
 

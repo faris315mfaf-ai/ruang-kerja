@@ -38,6 +38,31 @@ class TaskPolicy
         return $this->workspaces->editTasks($user, $task->workspace);
     }
 
+    /**
+     * Comment and react: everyone who can see the workspace (Direksi may give
+     * direction on read-only workspaces), while the workspace is not archived.
+     */
+    public function comment(User $user, Task $task): Response
+    {
+        $workspace = $task->workspace;
+
+        if (! $this->workspaces->canView($user, $workspace)) {
+            return Response::denyAsNotFound();
+        }
+
+        return $workspace->isArchived()
+            ? Response::deny('Workspace diarsipkan: komentar tidak dapat ditambahkan.')
+            : Response::allow();
+    }
+
+    /**
+     * Follow / unfollow (task_watchers): everyone who can see the task.
+     */
+    public function watch(User $user, Task $task): Response
+    {
+        return $this->workspaces->view($user, $task->workspace);
+    }
+
     public function delete(User $user, Task $task): Response
     {
         $workspace = $task->workspace;

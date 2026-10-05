@@ -2,6 +2,8 @@
 
 namespace App\Domain\Tasks\Actions;
 
+use App\Domain\Notifications\Actions\ResolveNotificationsForSubject;
+use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Tasks\Enums\ActivityEvent;
 use App\Domain\Tasks\Services\TaskLifecycle;
 use App\Domain\Tasks\Services\TaskPositioner;
@@ -22,6 +24,7 @@ final class MoveTask
     public function __construct(
         private readonly TaskPositioner $positioner,
         private readonly RecordActivity $recordActivity,
+        private readonly ResolveNotificationsForSubject $resolveNotifications,
     ) {}
 
     public function handle(Task $task, User $actor, TaskStatus $status, ?string $afterId = null, ?string $beforeId = null): Task
@@ -49,6 +52,11 @@ final class MoveTask
                     'from' => ['id' => $from->id, 'name' => $from->name, 'category' => $from->category->value],
                     'to' => ['id' => $status->id, 'name' => $status->name, 'category' => $status->category->value],
                 ]);
+            }
+
+            // Closed: "melewati tenggat" no longer needs action.
+            if ($task->isClosed()) {
+                $this->resolveNotifications->handle($task, NotificationType::TaskOverdue);
             }
 
             return $task;

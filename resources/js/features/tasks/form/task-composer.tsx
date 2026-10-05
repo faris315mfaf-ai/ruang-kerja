@@ -1,4 +1,4 @@
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { BottomSheet } from '@/components/mobile/bottom-sheet';
@@ -11,21 +11,45 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
+import { TaskSheet } from '../detail/task-sheet';
 import type { Task, WorkspaceTaskOptions } from '../types';
 import type { TaskFormDefaults } from './task-form';
 import { TaskForm } from './task-form';
 import { useFormOptions } from './use-form-options';
 
-type ComposerState =
-    | { mode: 'create'; defaults?: TaskFormDefaults; workspaceKey?: string }
-    | { mode: 'edit'; task: Task; workspaceKey?: string };
+type ComposerState = {
+    mode: 'create';
+    defaults?: TaskFormDefaults;
+    workspaceKey?: string;
+};
 
 type ComposerApi = {
     openCreate: (defaults?: TaskFormDefaults) => void;
+    /**
+     * Opens the task detail: the TaskSheet on desktop/tablet, the
+     * full-screen page /w/{KEY}/tasks/{n} on mobile (Sprint 6).
+     */
     openEdit: (task: Task, workspaceKey?: string) => void;
+    /** Id of the task open in the sheet (board highlight / shortcuts). */
+    openTaskId: string | null;
+    /**
+     * The page's visible tasks in display order and a callback for changes
+     * made in the sheet (board/list keep in sync without a reload).
+     */
+    registerList: (list: TaskListContext) => void;
     /** False when the user cannot create tasks here (viewer, archived). */
     canCreate: boolean;
 };
+
+export type TaskListContext = {
+    ids: string[];
+    onTaskChange?: (task: Task) => void;
+};
+
+/** "PLQ-21" → "PLQ" (the key is `${workspace.key}-${number}`). */
+export function workspaceKeyOf(task: Pick<Task, 'key' | 'number'>): string {
+    return task.key.slice(0, task.key.length - String(task.number).length - 1);
+}
 
 const ComposerContext = createContext<ComposerApi | null>(null);
 
@@ -61,8 +85,10 @@ type Props = {
     workspace?: WorkspaceTaskOptions;
     today: string;
     canCreate: boolean;
-    /** Edit rights for opened tasks (defaults to canCreate). */
-    canEdit?: boolean;
+    /** Visible task ids in display order (sheet J/K and "6 dari 18"). */
+    navigationIds?: string[];
+    /** Keep the page's task list in sync with changes made in the sheet. */
+    onTaskChange?: (task: Task) => void;
 };
 
 /**
@@ -76,17 +102,17 @@ export function TaskComposerProvider({
     workspace,
     today,
     canCreate,
-    canEdit = canCreate,
+    navigationIds,
+    onTaskChange,
 }: Props) {
     const breakpoint = useBreakpoint();
     const { auth } = usePage().props;
     const [state, setState] = useState<ComposerState | null>(null);
-    const needsList =
-        state !== null &&
-        (workspace === undefined ||
-            state.mode === 'create' ||
-            (state.workspaceKey !== undefined &&
-                state.workspaceKey !== workspace.key));
+    const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+    const [listContext, setListContext] = useState<TaskListContext | null>(
+        null,
+    );
+    const needsList = state !== null;
     const { options: list, error } = useFormOptions(needsList);
 
     useEffect(() => {
@@ -117,9 +143,20 @@ export function TaskComposerProvider({
 
     const api: ComposerApi = {
         canCreate,
+        openTaskId,
+        registerList: setListContext,
         openCreate: (defaults) => setState({ mode: 'create', defaults }),
-        openEdit: (task, workspaceKey) =>
-            setState({ mode: 'edit', task, workspaceKey }),
+        openEdit: (task, workspaceKey) => {
+            if (breakpoint === 'mobile') {
+                router.visit(
+                    `/w/${workspaceKey ?? workspaceKeyOf(task)}/tasks/${task.number}`,
+                );
+
+                return;
+            }
+
+            setOpenTaskId(task.id);
+        },
     };
 
     const key = state?.workspaceKey ?? workspace?.key ?? list?.[0]?.key;
@@ -128,26 +165,22 @@ export function TaskComposerProvider({
             ? workspace
             : list?.find((item) => item.key === key);
     const close = () => setState(null);
-    const title =
-        state?.mode === 'edit' ? `Ubah ${state.task.key}` : 'Tugas baru';
+    const title = 'Tugas baru';
 
     const body =
         state === null ? null : options ? (
             <TaskForm
-                key={state.mode === 'edit' ? state.task.id : 'create'}
+                key="create"
                 variant={breakpoint === 'mobile' ? 'sheet' : 'dialog'}
                 options={options}
-                workspaces={
-                    state.mode === 'create' ? (list ?? [options]) : undefined
-                }
+                workspaces={list ?? [options]}
                 onWorkspaceChange={(workspaceKey) =>
                     setState({ ...state, workspaceKey })
                 }
-                task={state.mode === 'edit' ? state.task : undefined}
-                defaults={state.mode === 'create' ? state.defaults : undefined}
+                defaults={state.defaults}
                 today={today}
                 currentUserId={auth.user?.id}
-                canDelete={state.mode === 'edit' && canEdit}
+                canDelete={false}
                 onDone={close}
             />
         ) : error ? (
@@ -167,6 +200,16 @@ export function TaskComposerProvider({
     return (
         <ComposerContext.Provider value={api}>
             {children}
+            {breakpoint !== 'mobile' && (
+                <TaskSheet
+                    taskId={openTaskId}
+                    today={today}
+                    navigationIds={listContext?.ids ?? navigationIds}
+                    onNavigate={setOpenTaskId}
+                    onClose={() => setOpenTaskId(null)}
+                    onTaskChange={listContext?.onTaskChange ?? onTaskChange}
+                />
+            )}
             {breakpoint === 'mobile' ? (
                 <BottomSheet
                     open={state !== null}

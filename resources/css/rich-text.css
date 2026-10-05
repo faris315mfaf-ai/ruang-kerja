@@ -1,0 +1,184 @@
+/*
+ * Rich text (Tiptap documents) — task descriptions and comments.
+ * Shared by the editor (.ProseMirror.rich-text) and the read-only view.
+ * Colors only from tokens.
+ */
+@layer components {
+    .rich-text {
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+
+    .rich-text > * + * {
+        margin-top: 0.5rem;
+    }
+
+    .rich-text h3,
+    .rich-text h1 {
+        font-size: 18px;
+        font-weight: 600;
+        margin-top: 1rem;
+    }
+
+    .rich-text h4,
+    .rich-text h2 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-top: 0.875rem;
+    }
+
+    .rich-text h5,
+    .rich-text h3 {
+        font-size: 15px;
+        font-weight: 600;
+        margin-top: 0.75rem;
+    }
+
+    .rich-text ul,
+    .rich-text ol {
+        padding-left: 1.25rem;
+    }
+
+    .rich-text ul {
+        list-style: disc;
+    }
+
+    .rich-text ol {
+        list-style: decimal;
+    }
+
+    .rich-text li + li {
+        margin-top: 0.25rem;
+    }
+
+    .rich-text li > p {
+        margin: 0;
+    }
+
+    .rich-text ul[data-type='taskList'] {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .rich-text ul[data-type='taskList'] li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .rich-text ul[data-type='taskList'] li > label {
+        margin-top: 0.2rem;
+        flex-shrink: 0;
+    }
+
+    .rich-text ul[data-type='taskList'] li > div {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .rich-text ul[data-type='taskList'] li[data-checked='true'] > div {
+        color: var(--text-muted);
+        text-decoration: line-through;
+    }
+
+    .rich-text ul[data-type='taskList'] input[type='checkbox'] {
+        accent-color: var(--primary);
+        width: 15px;
+        height: 15px;
+    }
+
+    .rich-text .rt-check {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 15px;
+        height: 15px;
+        margin-top: 0.25rem;
+        flex-shrink: 0;
+        border: 1px solid var(--border-strong);
+        border-radius: 4px;
+        font-size: 10px;
+        line-height: 1;
+    }
+
+    .rich-text blockquote {
+        border-left: 3px solid var(--border-strong);
+        padding-left: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .rich-text code {
+        font-family: var(--font-mono);
+        font-size: 0.85em;
+        padding: 0.1rem 0.3rem;
+        border-radius: 4px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+    }
+
+    .rich-text pre {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        padding: 0.75rem;
+        border-radius: var(--radius-md);
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        overflow-x: auto;
+    }
+
+    .rich-text pre code {
+        padding: 0;
+        border: 0;
+        background: transparent;
+    }
+
+    .rich-text a {
+        color: var(--primary);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    .rich-text hr {
+        border: 0;
+        border-top: 1px solid var(--border);
+        margin: 1rem 0;
+    }
+
+    .rich-text .rt-mention {
+        display: inline;
+        padding: 0.05rem 0.3rem;
+        border-radius: 4px;
+        color: var(--primary);
+        background: color-mix(in srgb, var(--primary) 12%, transparent);
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .rich-text .rt-task-ref {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0 0.35rem;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+        color: var(--text);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        text-decoration: none;
+        vertical-align: 1px;
+    }
+
+    .rich-text .rt-task-ref:hover {
+        border-color: var(--border-strong);
+    }
+
+    /* Placeholder of an empty editor (Tiptap Placeholder extension). */
+    .rich-text p.is-editor-empty:first-child::before {
+        content: attr(data-placeholder);
+        float: left;
+        height: 0;
+        pointer-events: none;
+        color: var(--text-subtle);
+    }
+}

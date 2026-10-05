@@ -3,7 +3,7 @@
 namespace App\Domain\Tasks\Enums;
 
 /**
- * activities.event values written in Sprint 5 (append-only feed).
+ * activities.event values (append-only feed). Sprint 6 adds the detail edits.
  */
 enum ActivityEvent: string
 {
@@ -15,6 +15,11 @@ enum ActivityEvent: string
     case TaskPriorityChanged = 'task.priority_changed';
     case TaskRenamed = 'task.renamed';
     case TaskDeleted = 'task.deleted';
+    case TaskStartDateChanged = 'task.start_date_changed';
+    case TaskEstimateChanged = 'task.estimate_changed';
+    case TaskDescriptionChanged = 'task.description_changed';
+    case ChecklistItemCompleted = 'task.checklist_completed';
+    case SubtaskAdded = 'task.subtask_added';
     case WorkspaceCreated = 'workspace.created';
     case WorkspaceUpdated = 'workspace.updated';
     case WorkspaceArchived = 'workspace.archived';
