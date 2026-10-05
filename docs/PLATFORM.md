@@ -16,7 +16,7 @@
 
 | Elemen | Desktop (≥ 1024) | Tablet (768–1023) | Mobile (< 768) |
 |---|---|---|---|
-| Navigasi utama | **Dock ala macOS** mengambang di bawah (ikon membesar mengikuti kursor dengan spring, stack Workspace & Admin) | Dock yang sama tanpa magnifikasi | **Tab bawah 5 item**: Beranda · Absen · Tugas · Inbox · Menu |
+| Navigasi utama | **Dock ala macOS** mengambang di bawah (ikon membesar mengikuti kursor dengan spring, stack Organisasi, Workspace & Admin) | Dock yang sama tanpa magnifikasi | **Tab bawah 5 item** sebagai *dock kapsul* mengambang: Beranda · Absen · Tugas · Inbox · Menu |
 | Workspace & admin | Di sidebar | Di rail | Di tab **Menu** |
 | Topbar | **Menu bar tipis 38px**: merek, breadcrumb, status absensi, check-in, cari ⌘K, lonceng, akun. Konten penuh layar, margin 10px | Sama | **App bar 56px**: judul + aksi (cari, lonceng) / tombol kembali di layar turunan |
 | Cari | Command palette (modal glass) | Sama | Layar cari penuh |
@@ -67,6 +67,7 @@ Fitur ◐ dan — di mobile tetap punya rute. Rute itu menampilkan versi baca-sa
 - **Input `font-size: 16px`** (mencegah zoom otomatis iOS). Tinggi input 44–48 px.
 - Padding samping 16 px. Teks dasar 14 px, judul app bar 17 px.
 - Hormati *safe area* (`env(safe-area-inset-*)`) untuk tab bawah dan bilah aksi.
+- Tab bawah = **dock kapsul**: glass, `rounded-full`, jarak 10px dari tepi kiri/kanan, melayang 10px di atas safe area, lebar maks 420px di tengah, bayangan `--dock-shadow`. Tab aktif ditandai pil yang bergeser (transform 180ms `ease-brand`, instan dengan `prefers-reduced-motion`), ikon mengecil saat ditekan. Semua elemen yang menempel di atas tab bar (padding konten, FAB, bilah aksi, toast) memakai `--tab-bar-height` (= ruang yang dipakai kapsul di atas safe area), jangan angka tetap.
 - Keyboard: saat input fokus, bilah aksi bawah ikut naik (pakai `visualViewport`), tab bawah disembunyikan.
 - Glass hanya untuk app bar (saat menggulir), tab bawah, bottom sheet, toast.
 - Tidak ada interaksi yang hanya mengandalkan hover. Pintasan keyboard hanya desktop.

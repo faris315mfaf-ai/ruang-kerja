@@ -119,7 +119,7 @@ export function SummaryMobile({
             <OverduePanel props={props} compact />
 
             {hasBar && (
-                <div className="glass fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 flex gap-3 border-t border-border px-4 py-3">
+                <div className="glass fixed inset-x-0 bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom))] z-30 flex gap-3 border-t border-border px-4 py-3">
                     {can.steer ? (
                         <>
                             <Button

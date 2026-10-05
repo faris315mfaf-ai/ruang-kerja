@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+    activeTabIndex,
     adminNavItems,
     attendanceNavItems,
     mainNavItems,
@@ -220,5 +221,15 @@ describe('navigation', () => {
         expect(hrefs(['anggota'])).toEqual(
             mainNavItems.map((item) => item.href),
         );
+    });
+
+    it('finds the tab that owns the current page for the sliding pill', () => {
+        expect(activeTabIndex('/dashboard')).toBe(0);
+        expect(activeTabIndex('/absensi/riwayat')).toBe(1);
+        expect(activeTabIndex('/tugas')).toBe(2);
+        expect(activeTabIndex('/inbox')).toBe(3);
+        expect(activeTabIndex('/menu')).toBe(4);
+        expect(activeTabIndex('/persetujuan')).toBe(-1);
+        expect(activeTabIndex('/menu/lain')).toBe(-1);
     });
 });

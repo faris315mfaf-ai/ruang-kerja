@@ -146,6 +146,11 @@ export const tabNavItems: AppNavItem[] = [
     { title: 'Menu', href: '/menu', icon: Menu },
 ];
 
+/** Index of the tab owning the current URL, or -1 (e.g. /persetujuan). */
+export function activeTabIndex(currentPath: string): number {
+    return tabNavItems.findIndex((item) => isActivePath(item, currentPath));
+}
+
 /**
  * Team attendance (Sprint 3): live board for HR, Direksi, Super Admin and
  * Kepala Divisi; the monthly recap & export is desktop only.
