@@ -1,0 +1,43 @@
+<?php
+
+namespace App\Domain\Requests\Actions;
+
+use App\Domain\Organization\Services\AuditLogger;
+use App\Domain\Requests\Services\BalanceLedger;
+use App\Models\LeaveBalance;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+
+/**
+ * Admin HR: adjust an employee's entitlement / carry-over. Never below what is
+ * already used or reserved.
+ */
+final class UpdateLeaveBalance
+{
+    public function __construct(private readonly AuditLogger $audit) {}
+
+    public function handle(User $actor, LeaveBalance $balance, float $entitled, float $carriedOver): LeaveBalance
+    {
+        return DB::transaction(function () use ($actor, $balance, $entitled, $carriedOver): LeaveBalance {
+            $locked = LeaveBalance::query()->lockForUpdate()->findOrFail($balance->id);
+            $before = ['entitled_days' => $locked->entitled_days, 'carried_over_days' => $locked->carried_over_days];
+            $committed = $locked->used_days + $locked->pending_days;
+
+            if (round($entitled + $carriedOver, 1) < round($committed, 1)) {
+                throw ValidationException::withMessages([
+                    'entitled_days' => 'Jatah tidak boleh kurang dari yang sudah terpakai/diajukan ('.BalanceLedger::format($committed).' hari).',
+                ]);
+            }
+
+            $locked->fill(['entitled_days' => $entitled, 'carried_over_days' => $carriedOver])->save();
+
+            $this->audit->log('leave_balance.updated', $locked, $before, [
+                'entitled_days' => $locked->entitled_days,
+                'carried_over_days' => $locked->carried_over_days,
+            ], $actor);
+
+            return $locked;
+        });
+    }
+}
