@@ -415,7 +415,7 @@ function RowTable({ rows }: { rows: ImportRowResult[] }) {
 
     return (
         <div className="overflow-hidden rounded-panel border border-border bg-surface shadow-card">
-            <div className="max-h-[60vh] overflow-auto">
+            <div className="relative max-h-[60vh] overflow-auto">
                 <table className="w-full text-[15px]">
                     <thead className="sticky top-0 border-b border-border bg-background text-left text-[14px] text-text-muted">
                         <tr>

@@ -114,7 +114,7 @@ function DeactivateForm({
                             className={cn(
                                 'flex h-11 cursor-pointer items-center gap-2 rounded-md border px-3 text-[15px]',
                                 form.data.status === value
-                                    ? 'border-primary bg-primary/5 text-text'
+                                    ? 'border-link bg-link-soft text-text'
                                     : 'border-border text-text-muted',
                             )}
                         >

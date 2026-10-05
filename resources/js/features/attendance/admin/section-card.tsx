@@ -24,7 +24,7 @@ export function SectionCard({
             id={id}
             aria-labelledby={`${id}-title`}
             className={cn(
-                'scroll-mt-24 overflow-hidden rounded-panel border border-border bg-surface shadow-card',
+                'relative scroll-mt-24 overflow-hidden rounded-panel border border-border bg-surface shadow-card',
                 className,
             )}
         >

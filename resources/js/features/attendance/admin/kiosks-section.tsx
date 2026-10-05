@@ -124,129 +124,133 @@ export function KiosksSection({
                     className="m-6"
                 />
             ) : (
-                <table className="w-full text-[15px]">
-                    <thead className="border-b border-border bg-background text-[14px] text-text-muted">
-                        <tr>
-                            <th
-                                scope="col"
-                                className="h-11 py-2 pr-4 pl-6 text-left font-bold md:pl-7"
-                            >
-                                Kiosk
-                            </th>
-                            <th
-                                scope="col"
-                                className="h-11 px-4 py-2 text-left font-bold"
-                            >
-                                Lokasi
-                            </th>
-                            <th
-                                scope="col"
-                                className="h-11 px-4 py-2 text-left font-bold"
-                            >
-                                Status
-                            </th>
-                            <th
-                                scope="col"
-                                className="h-11 px-4 py-2 text-left font-bold"
-                            >
-                                Terakhir aktif
-                            </th>
-                            <th
-                                scope="col"
-                                className="h-11 py-2 pr-6 pl-4 text-right font-bold md:pr-7"
-                            >
-                                <span className="sr-only">Aksi</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-divider">
-                        {kiosks.map((kiosk) => (
-                            <tr key={kiosk.id}>
-                                <td className="py-3.5 pr-4 pl-6 md:pl-7">
-                                    <p className="font-semibold text-text">
-                                        {kiosk.name}
-                                    </p>
-                                    <p className="font-mono text-meta text-text-muted">
-                                        {kiosk.code}
-                                    </p>
-                                </td>
-                                <td className="px-4 py-3.5 text-text">
-                                    {kiosk.locationName}
-                                </td>
-                                <td className="px-4 py-3.5">
-                                    <Badge
-                                        variant="status"
-                                        dot
-                                        tone={
-                                            !kiosk.isActive
-                                                ? 'neutral'
-                                                : kiosk.isPaired
-                                                  ? 'success'
-                                                  : 'warning'
-                                        }
-                                    >
-                                        {!kiosk.isActive
-                                            ? 'Nonaktif'
-                                            : kiosk.isPaired
-                                              ? 'Terpasang'
-                                              : 'Belum dipasang'}
-                                    </Badge>
-                                    {kiosk.pendingActivationUntil && (
-                                        <p className="mt-1 text-meta text-text-muted">
-                                            Tautan &amp; kode berlaku s.d.{' '}
-                                            {formatDateTime(
-                                                kiosk.pendingActivationUntil,
-                                            )}
-                                        </p>
-                                    )}
-                                </td>
-                                <td className="px-4 py-3.5 text-text-muted">
-                                    {kiosk.lastSeenAt
-                                        ? formatRelative(kiosk.lastSeenAt)
-                                        : '–'}
-                                </td>
-                                <td className="py-3.5 pr-6 pl-4 md:pr-7">
-                                    <div className="flex justify-end gap-1">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            disabled={
-                                                !kiosk.isActive ||
-                                                busy === kiosk.id
-                                            }
-                                            onClick={() =>
-                                                void createLink(kiosk)
-                                            }
-                                        >
-                                            <Link2 aria-hidden />
-                                            Aktivasi perangkat
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon-sm"
-                                            onClick={() => setEditing(kiosk)}
-                                            aria-label={`Ubah ${kiosk.name}`}
-                                        >
-                                            <Pencil aria-hidden />
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon-sm"
-                                            className="text-danger"
-                                            onClick={() => remove(kiosk)}
-                                            aria-label={`Hapus ${kiosk.name}`}
-                                        >
-                                            <Trash2 aria-hidden />
-                                        </Button>
-                                    </div>
-                                </td>
+                <div className="relative overflow-x-auto">
+                    <table className="w-full min-w-[760px] text-[15px]">
+                        <thead className="border-b border-border bg-background text-[14px] text-text-muted">
+                            <tr>
+                                <th
+                                    scope="col"
+                                    className="h-11 py-2 pr-4 pl-6 text-left font-bold md:pl-7"
+                                >
+                                    Kiosk
+                                </th>
+                                <th
+                                    scope="col"
+                                    className="h-11 px-4 py-2 text-left font-bold"
+                                >
+                                    Lokasi
+                                </th>
+                                <th
+                                    scope="col"
+                                    className="h-11 px-4 py-2 text-left font-bold"
+                                >
+                                    Status
+                                </th>
+                                <th
+                                    scope="col"
+                                    className="h-11 px-4 py-2 text-left font-bold"
+                                >
+                                    Terakhir aktif
+                                </th>
+                                <th
+                                    scope="col"
+                                    className="h-11 py-2 pr-6 pl-4 text-right font-bold md:pr-7"
+                                >
+                                    <span className="sr-only">Aksi</span>
+                                </th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-divider">
+                            {kiosks.map((kiosk) => (
+                                <tr key={kiosk.id}>
+                                    <td className="py-3.5 pr-4 pl-6 md:pl-7">
+                                        <p className="font-semibold text-text">
+                                            {kiosk.name}
+                                        </p>
+                                        <p className="font-mono text-meta text-text-muted">
+                                            {kiosk.code}
+                                        </p>
+                                    </td>
+                                    <td className="px-4 py-3.5 text-text">
+                                        {kiosk.locationName}
+                                    </td>
+                                    <td className="px-4 py-3.5">
+                                        <Badge
+                                            variant="status"
+                                            dot
+                                            tone={
+                                                !kiosk.isActive
+                                                    ? 'neutral'
+                                                    : kiosk.isPaired
+                                                      ? 'success'
+                                                      : 'warning'
+                                            }
+                                        >
+                                            {!kiosk.isActive
+                                                ? 'Nonaktif'
+                                                : kiosk.isPaired
+                                                  ? 'Terpasang'
+                                                  : 'Belum dipasang'}
+                                        </Badge>
+                                        {kiosk.pendingActivationUntil && (
+                                            <p className="mt-1 text-meta text-text-muted">
+                                                Tautan &amp; kode berlaku s.d.{' '}
+                                                {formatDateTime(
+                                                    kiosk.pendingActivationUntil,
+                                                )}
+                                            </p>
+                                        )}
+                                    </td>
+                                    <td className="px-4 py-3.5 text-text-muted">
+                                        {kiosk.lastSeenAt
+                                            ? formatRelative(kiosk.lastSeenAt)
+                                            : '–'}
+                                    </td>
+                                    <td className="py-3.5 pr-6 pl-4 md:pr-7">
+                                        <div className="flex justify-end gap-1">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={
+                                                    !kiosk.isActive ||
+                                                    busy === kiosk.id
+                                                }
+                                                onClick={() =>
+                                                    void createLink(kiosk)
+                                                }
+                                            >
+                                                <Link2 aria-hidden />
+                                                Aktivasi perangkat
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon-sm"
+                                                onClick={() =>
+                                                    setEditing(kiosk)
+                                                }
+                                                aria-label={`Ubah ${kiosk.name}`}
+                                            >
+                                                <Pencil aria-hidden />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon-sm"
+                                                className="text-danger"
+                                                onClick={() => remove(kiosk)}
+                                                aria-label={`Hapus ${kiosk.name}`}
+                                            >
+                                                <Trash2 aria-hidden />
+                                            </Button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             )}
             <KioskDialog
                 key={

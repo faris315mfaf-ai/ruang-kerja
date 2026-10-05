@@ -44,29 +44,6 @@ export function AdminPageHeader({
     );
 }
 
-/**
- * Bordered table frame inside a panel or on its own (Komponen "Tabel"):
- * radius 16, header row on `bg-background`, divider rows.
- */
-export function TableFrame({
-    children,
-    className,
-}: {
-    children: ReactNode;
-    className?: string;
-}) {
-    return (
-        <div
-            className={cn(
-                'overflow-hidden rounded-lg border border-border bg-surface',
-                className,
-            )}
-        >
-            {children}
-        </div>
-    );
-}
-
 /** Toolbar above a table: search + filters left, count/actions right. */
 export function AdminToolbar({
     children,

@@ -214,7 +214,7 @@ export function EmployeeTable({
     });
 
     return (
-        <div className="flex flex-col gap-5">
+        <div className="flex min-w-0 flex-col gap-5">
             <div className="flex flex-wrap items-center gap-3">
                 <div role="search" className="relative w-full max-w-80">
                     <Search
@@ -332,7 +332,7 @@ export function EmployeeTable({
                     )}
                     aria-busy={loading}
                 >
-                    <div className="overflow-x-auto">
+                    <div className="relative overflow-x-auto">
                         <table className="w-full min-w-[960px] text-[15px] tnum">
                             <thead className="border-b border-border bg-background text-left text-[14px] font-bold text-text-muted">
                                 {table.getHeaderGroups().map((group) => (
