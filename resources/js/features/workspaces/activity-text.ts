@@ -50,6 +50,20 @@ export function describeActivity(
             return `mengubah prioritas ${key} menjadi ${PRIORITY_LABELS[Number(p.to) as Priority] ?? '–'}`;
         case 'task.renamed':
             return `mengganti judul ${key} menjadi “${str(p.to)}”`;
+        case 'task.start_date_changed':
+            return p.to
+                ? `mengubah tanggal mulai ${key} menjadi ${formatDayMonth(str(p.to))}`
+                : `menghapus tanggal mulai ${key}`;
+        case 'task.estimate_changed':
+            return typeof p.to === 'number'
+                ? `mengubah estimasi ${key} menjadi ${String(p.to).replace('.', ',')} jam`
+                : `menghapus estimasi ${key}`;
+        case 'task.description_changed':
+            return `memperbarui deskripsi ${key}`;
+        case 'task.checklist_completed':
+            return `menyelesaikan “${str(p.item)}” di ${key}`;
+        case 'task.subtask_added':
+            return `menambahkan sub-tugas ${nested(p.subtask, 'key')} ke ${key}`;
         case 'task.deleted':
             return `menghapus ${key} “${str(p.title)}”`;
         case 'workspace.created':
