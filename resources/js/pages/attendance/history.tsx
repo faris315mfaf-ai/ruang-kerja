@@ -10,6 +10,7 @@ import {
     MonthCalendar,
 } from '@/features/attendance/recap/month-calendar';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
+import { formatNumber } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { history as historyRoute } from '@/routes/attendance';
 import historyRoutes from '@/routes/attendance/history';
@@ -127,7 +128,13 @@ export default function AttendanceHistory({ period, today, recap }: Props) {
         const cards = [
             {
                 label: 'Hadir',
-                value: <>{Math.max(0, recap.presentDays - recap.lateCount)}</>,
+                value: (
+                    <>
+                        {formatNumber(
+                            Math.max(0, recap.presentDays - recap.lateCount),
+                        )}
+                    </>
+                ),
                 dot: 'bg-success',
             },
             {
@@ -150,9 +157,11 @@ export default function AttendanceHistory({ period, today, recap }: Props) {
                 label: 'Cuti',
                 value: (
                     <>
-                        {recap.leaveDays +
-                            recap.permitDays +
-                            recap.businessTripDays}
+                        {formatNumber(
+                            recap.leaveDays +
+                                recap.permitDays +
+                                recap.businessTripDays,
+                        )}
                     </>
                 ),
                 dot: 'bg-info',

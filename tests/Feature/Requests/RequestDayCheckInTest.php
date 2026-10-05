@@ -2,14 +2,17 @@
 
 use App\Domain\Attendance\Actions\CloseAttendanceDay;
 use App\Domain\Attendance\Actions\GiveAttendanceConsent;
+use App\Domain\Attendance\Data\RecapPeriod;
 use App\Domain\Attendance\Enums\AttendanceMethod;
 use App\Domain\Attendance\Enums\AttendanceStatus;
+use App\Domain\Attendance\Enums\PayrollColumn;
 use App\Domain\Attendance\Enums\RequestPortion;
 use App\Domain\Attendance\Events\AttendanceRecorded;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\AttendanceLog;
 use App\Domain\Attendance\Models\Shift;
 use App\Domain\Attendance\Models\ShiftAssignment;
+use App\Domain\Attendance\Services\MonthlyRecap;
 use App\Domain\Requests\Contracts\AttendanceEffects;
 use App\Http\Resources\Attendance\MyAttendance;
 use App\Models\EmployeeRequest;
@@ -141,4 +144,36 @@ it('links a half-day leave approved after the check-in without turning the day i
     expect($day->refresh()->request_id)->toBeNull()
         ->and($day->request_portion)->toBeNull()
         ->and($day->status)->toBe(AttendanceStatus::Present);
+});
+
+it('counts a half-day leave as half a leave day and half a present day in the monthly recap, whatever the order', function () {
+    $s = $this->s;
+
+    // Mon 12 Oct: approved first, then checked in at 12.55 (no lateness on a request day).
+    approvedRequest($s, $s->submit($s->employee, $s->annual, ['start_date' => '2026-10-12', 'end_date' => '2026-10-12', 'half_day' => true]));
+    $this->travelTo(F::at('2026-10-12 12:55'));
+    F::checkIn($s->employee)->assertCreated();
+
+    // Tue 13 Oct: checked in late first, approved afterwards.
+    $late = $s->submit($s->employee, $s->annual, ['start_date' => '2026-10-13', 'end_date' => '2026-10-13', 'half_day' => true]);
+    $this->travelTo(F::at('2026-10-13 12:50'));
+    F::checkIn($s->employee)->assertCreated();
+    approvedRequest($s, $late);
+    expect(employeeDay($s, '2026-10-13')->late_minutes)->toBeGreaterThan(0);
+
+    // Wed 14 Oct: half-day leave without a check-in.
+    approvedRequest($s, $s->submit($s->employee, $s->annual, ['start_date' => '2026-10-14', 'end_date' => '2026-10-14', 'half_day' => true]));
+
+    $this->travelTo(F::at('2026-10-14 20:00'));
+    $recap = app(MonthlyRecap::class)->employee($s->employee, RecapPeriod::forMonth('2026-10', now()));
+
+    expect($recap->leaveDays)->toBe(1.5)
+        ->and($recap->presentDays)->toBe(1.0)
+        ->and($recap->lateCount)->toBe(0)
+        ->and($recap->lateMinutes)->toBe(0)
+        // Days 12 and 13 are the same situation: identical numbers.
+        ->and($recap->workDays - $recap->expectedDays())->toBe(1.5)
+        // Exports keep the fraction, whole numbers stay integers.
+        ->and(PayrollColumn::LeaveDays->value($recap))->toBe(1.5)
+        ->and(PayrollColumn::PresentDays->value($recap))->toBe(1);
 });

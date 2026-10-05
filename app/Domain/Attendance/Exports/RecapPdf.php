@@ -52,11 +52,11 @@ final class RecapPdf
             'generatedAt' => OfficeClock::date(CarbonImmutable::now()).' '.OfficeClock::time(CarbonImmutable::now()),
             'stats' => [
                 'Hari kerja' => $recap->workDays,
-                'Hadir' => $recap->presentDays,
+                'Hadir' => self::days($recap->presentDays),
                 'Terlambat' => $recap->lateCount.' · '.$recap->lateMinutes.' m',
                 'Alpha' => $recap->absentDays,
-                'Cuti' => $recap->leaveDays,
-                'Izin' => $recap->permitDays,
+                'Cuti' => self::days($recap->leaveDays),
+                'Izin' => self::days($recap->permitDays),
                 'Sakit' => $recap->sickDays,
                 'Lembur' => number_format($recap->overtimeHours(), 1, ',', '.').' jam',
             ],
@@ -94,6 +94,14 @@ final class RecapPdf
             'location' => $day?->checkInLog?->officeLocation?->name,
             'note' => $day?->overtime_minutes ? 'Lembur '.number_format($day->overtime_minutes / 60, 1, ',', '.').' jam' : null,
         ];
+    }
+
+    /**
+     * "12" or "1,5" (half days).
+     */
+    private static function days(float $value): string
+    {
+        return str_replace('.', ',', (string) EmployeeRecap::days($value));
     }
 
     private static function periodLine(RecapPeriod $period): string

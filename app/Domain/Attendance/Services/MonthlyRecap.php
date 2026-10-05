@@ -7,6 +7,7 @@ use App\Domain\Attendance\Data\RecapDay;
 use App\Domain\Attendance\Data\RecapPeriod;
 use App\Domain\Attendance\Data\RecapReport;
 use App\Domain\Attendance\Enums\AttendanceStatus;
+use App\Domain\Attendance\Enums\RequestPortion;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\Holiday;
 use App\Domain\Attendance\Support\OfficeClock;
@@ -23,7 +24,8 @@ use Illuminate\Support\Collection;
  *   "perlu koreksi" days that have a check-in). Late days are included.
  * - Late: count and minutes of days with late_minutes > 0.
  * - Alpha, cuti, izin, sakit, dinas: attendance_days.status as written by
- *   closing the day and by approved requests (Sprint 4).
+ *   closing the day and by approved requests (Sprint 4). A half-day
+ *   leave/permit (request_portion = half_day) counts 0.5 (tallyHalfDay).
  * - Overtime: attendance_days.overtime_minutes (approved overtime, Sprint 4).
  *
  * Only dates up to today count in the running month, and only dates of
@@ -82,7 +84,7 @@ final class MonthlyRecap
 
         /** @var Collection<string, Collection<string, AttendanceDay>> $records */
         $records = AttendanceDay::query()
-            ->with(['shift', 'checkInLog.officeLocation', 'checkOutLog.officeLocation'])
+            ->with(['shift', 'checkInLog.officeLocation', 'checkOutLog.officeLocation', 'employeeRequest.leaveType'])
             ->whereIn('user_id', $users->pluck('id'))
             ->whereBetween('work_date', [$period->monthStart->toDateString(), $period->monthEnd->toDateString()])
             ->get()
@@ -153,6 +155,31 @@ final class MonthlyRecap
     }
 
     /**
+     * A day covered by a half-day leave/permit: 0.5 leave/permit days, plus
+     * 0.5 present days when the employee checked in for the other half. The
+     * same numbers whether the request was approved before the check-in (row
+     * status = leave/permit) or after it (row keeps present/late, linked via
+     * request_id). Lateness and early leave never count on such a day, as a
+     * check-in on a request day is never late (CheckIn).
+     */
+    private function tallyHalfDay(EmployeeRecap $recap, AttendanceDay $day): void
+    {
+        $absence = $day->status->comesFromRequest()
+            ? $day->status
+            : AttendanceStatus::tryFrom((string) $day->employeeRequest?->leaveType->category->attendanceStatus());
+
+        match ($absence) {
+            AttendanceStatus::Leave => $recap->leaveDays += 0.5,
+            AttendanceStatus::Permit => $recap->permitDays += 0.5,
+            default => null,
+        };
+
+        if ($day->check_in_at !== null) {
+            $recap->presentDays += 0.5;
+        }
+    }
+
+    /**
      * First and last office date of employment ("Y-m-d", null = open):
      * joined_at, and for inactive/resigned employees the office date of
      * deactivated_at (rows from before that column fall back to updated_at).
@@ -178,29 +205,33 @@ final class MonthlyRecap
     {
         $status = $day->status;
 
-        if ($status->isAttended() || ($status === AttendanceStatus::NeedsCorrection && $day->check_in_at !== null)) {
-            $recap->presentDays++;
-        }
+        if ($day->request_portion === RequestPortion::HalfDay) {
+            $this->tallyHalfDay($recap, $day);
+        } else {
+            if ($status->isAttended() || ($status === AttendanceStatus::NeedsCorrection && $day->check_in_at !== null)) {
+                $recap->presentDays++;
+            }
 
-        if ($day->late_minutes > 0) {
-            $recap->lateCount++;
-            $recap->lateMinutes += $day->late_minutes;
-        }
+            if ($day->late_minutes > 0) {
+                $recap->lateCount++;
+                $recap->lateMinutes += $day->late_minutes;
+            }
 
-        if ($day->early_leave_minutes > 0) {
-            $recap->earlyLeaveCount++;
-        }
+            if ($day->early_leave_minutes > 0) {
+                $recap->earlyLeaveCount++;
+            }
 
-        match ($status) {
-            AttendanceStatus::Absent => $recap->absentDays++,
-            AttendanceStatus::Leave => $recap->leaveDays++,
-            AttendanceStatus::Permit => $recap->permitDays++,
-            AttendanceStatus::Sick => $recap->sickDays++,
-            AttendanceStatus::BusinessTrip => $recap->businessTripDays++,
-            AttendanceStatus::Wfh => $recap->wfhDays++,
-            AttendanceStatus::NeedsCorrection => $recap->needsCorrectionDays++,
-            default => null,
-        };
+            match ($status) {
+                AttendanceStatus::Absent => $recap->absentDays++,
+                AttendanceStatus::Leave => $recap->leaveDays++,
+                AttendanceStatus::Permit => $recap->permitDays++,
+                AttendanceStatus::Sick => $recap->sickDays++,
+                AttendanceStatus::BusinessTrip => $recap->businessTripDays++,
+                AttendanceStatus::Wfh => $recap->wfhDays++,
+                AttendanceStatus::NeedsCorrection => $recap->needsCorrectionDays++,
+                default => null,
+            };
+        }
 
         $recap->overtimeMinutes += $day->overtime_minutes;
         $recap->workMinutes += $day->work_minutes;
