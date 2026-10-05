@@ -1,6 +1,7 @@
 import { router, useForm } from '@inertiajs/react';
 import {
     Check,
+    KeyRound,
     Link2,
     MonitorSmartphone,
     Pencil,
@@ -32,9 +33,22 @@ import { SectionCard } from './section-card';
 
 type Editing = AdminKiosk | 'new' | null;
 
+/** Response of the activation endpoint, shown to HR once. */
+type ActivationResponse = {
+    url: string;
+    /** Short single-use code typed on the device's /kiosk screen. */
+    code: string;
+    /** Absolute URL of the unpaired kiosk screen (/kiosk). */
+    pairUrl: string;
+    expiresAt: string;
+};
+
+type Activation = ActivationResponse & { kiosk: AdminKiosk };
+
 /**
  * Admin › Kiosk QR (Sprint 3): lobby devices that show the dynamic QR. A
- * device is paired with a single-use link; deactivating signs it out.
+ * device is paired with a single-use link or the short code issued with it
+ * (typed on the device's /kiosk screen); deactivating signs it out.
  */
 export function KiosksSection({
     kiosks,
@@ -44,11 +58,7 @@ export function KiosksSection({
     locations: AdminLocation[];
 }) {
     const [editing, setEditing] = useState<Editing>(null);
-    const [link, setLink] = useState<{
-        kiosk: AdminKiosk;
-        url: string;
-        expiresAt: string;
-    } | null>(null);
+    const [link, setLink] = useState<Activation | null>(null);
     const [busy, setBusy] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -57,14 +67,14 @@ export function KiosksSection({
         setError(null);
 
         try {
-            const data = await requestJson<{ url: string; expiresAt: string }>(
+            const data = await requestJson<ActivationResponse>(
                 kioskRoutes.activation.url(kiosk.id),
                 { method: 'POST' },
             );
             setLink({ kiosk, ...data });
             router.reload({ only: ['kiosks'] });
         } catch {
-            setError('Tautan aktivasi gagal dibuat. Coba lagi.');
+            setError('Tautan & kode aktivasi gagal dibuat. Coba lagi.');
         } finally {
             setBusy(null);
         }
@@ -109,7 +119,7 @@ export function KiosksSection({
                 <EmptyState
                     icon={MonitorSmartphone}
                     title="Belum ada kiosk"
-                    description="Tambahkan kiosk untuk lokasi yang ramai, lalu buka tautan aktivasinya di perangkat lobi."
+                    description="Tambahkan kiosk untuk lokasi yang ramai, lalu buka tautan aktivasinya (atau ketik kodenya) di perangkat lobi."
                     className="m-4"
                 />
             ) : (
@@ -192,7 +202,7 @@ export function KiosksSection({
                                     </span>
                                     {kiosk.pendingActivationUntil && (
                                         <p className="mt-1 text-xs text-text-muted">
-                                            Tautan berlaku s.d.{' '}
+                                            Tautan &amp; kode berlaku s.d.{' '}
                                             {formatDateTime(
                                                 kiosk.pendingActivationUntil,
                                             )}
@@ -219,7 +229,7 @@ export function KiosksSection({
                                             }
                                         >
                                             <Link2 aria-hidden />
-                                            Tautan aktivasi
+                                            Aktivasi perangkat
                                         </Button>
                                         <Button
                                             type="button"
@@ -403,56 +413,98 @@ function ActivationDialog({
     link,
     onClose,
 }: {
-    link: { kiosk: AdminKiosk; url: string; expiresAt: string } | null;
+    link: Activation | null;
     onClose: () => void;
 }) {
     const [, copy] = useClipboard();
-    const [copied, setCopied] = useState(false);
+    const [copied, setCopied] = useState<'url' | 'code' | null>(null);
+
+    const copyValue = (what: 'url' | 'code', value: string) =>
+        void copy(value).then((ok) => setCopied(ok ? what : null));
 
     return (
         <Dialog
             open={link !== null}
-            onOpenChange={(next) => !next && onClose()}
+            onOpenChange={(next) => {
+                if (!next) {
+                    setCopied(null);
+                    onClose();
+                }
+            }}
         >
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle>
-                        Tautan aktivasi · {link?.kiosk.name}
+                        Aktivasi perangkat · {link?.kiosk.name}
                     </DialogTitle>
                     <DialogDescription>
-                        Buka tautan ini di perangkat kiosk. Sekali pakai,
-                        berlaku sampai{' '}
-                        {link ? formatDateTime(link.expiresAt) : ''}. Tautan
-                        tidak ditampilkan lagi setelah dialog ditutup.
+                        Pilih salah satu: buka tautan di perangkat kiosk, atau
+                        buka {link?.pairUrl ?? '/kiosk'} di perangkat itu lalu
+                        ketik kodenya. Sekali pakai (tautan atau kode), berlaku
+                        sampai {link ? formatDateTime(link.expiresAt) : ''}.
+                        Keduanya tidak ditampilkan lagi setelah dialog ditutup.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="flex gap-2">
-                    <Input
-                        readOnly
-                        value={link?.url ?? ''}
-                        className="font-mono text-xs"
-                        onFocus={(event) => event.currentTarget.select()}
-                        aria-label="Tautan aktivasi"
-                    />
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() =>
-                            void copy(link?.url ?? '').then(setCopied)
-                        }
+                <div className="space-y-1.5">
+                    <p
+                        id="kiosk-activation-code-label"
+                        className="text-sm font-medium text-text"
                     >
-                        {copied ? (
-                            <Check className="text-success" aria-hidden />
-                        ) : (
-                            <Link2 aria-hidden />
-                        )}
-                        {copied ? 'Disalin' : 'Salin'}
-                    </Button>
+                        Kode aktivasi
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <output
+                            aria-labelledby="kiosk-activation-code-label"
+                            className="flex h-14 flex-1 items-center justify-center rounded-lg border border-border bg-surface-2 font-mono text-2xl font-semibold tracking-[0.2em] text-text select-all"
+                        >
+                            {link?.code}
+                        </output>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="h-14"
+                            onClick={() => copyValue('code', link?.code ?? '')}
+                        >
+                            {copied === 'code' ? (
+                                <Check className="text-success" aria-hidden />
+                            ) : (
+                                <KeyRound aria-hidden />
+                            )}
+                            {copied === 'code' ? 'Disalin' : 'Salin'}
+                        </Button>
+                    </div>
+                </div>
+                <div className="space-y-1.5">
+                    <Label htmlFor="kiosk-activation-url">
+                        Tautan aktivasi
+                    </Label>
+                    <div className="flex gap-2">
+                        <Input
+                            id="kiosk-activation-url"
+                            readOnly
+                            value={link?.url ?? ''}
+                            className="font-mono text-xs"
+                            onFocus={(event) => event.currentTarget.select()}
+                        />
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => copyValue('url', link?.url ?? '')}
+                        >
+                            {copied === 'url' ? (
+                                <Check className="text-success" aria-hidden />
+                            ) : (
+                                <Link2 aria-hidden />
+                            )}
+                            {copied === 'url' ? 'Disalin' : 'Salin'}
+                        </Button>
+                    </div>
                 </div>
                 <p className="text-[13px] text-text-muted">
-                    Browser yang membuka tautan akan dikunci ke layar kiosk dan
-                    keluar dari akun karyawan. Perangkat kiosk lama untuk kiosk
-                    ini berhenti berfungsi.
+                    Perangkat yang dipasangkan dikunci ke layar kiosk dan keluar
+                    dari akun karyawan. Perangkat kiosk lama untuk kiosk ini
+                    berhenti berfungsi. Memakai tautan membatalkan kode, dan
+                    sebaliknya.
                 </p>
             </DialogContent>
         </Dialog>

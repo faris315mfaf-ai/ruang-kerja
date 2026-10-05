@@ -237,7 +237,8 @@ Akun perangkat kiosk lobi (guard sesi `kiosk`, bukan baris `users`).
 | code | varchar(20) | huruf besar, tampil di kartu QR (mis. `KP-LOBI`); unik `(company_id, code)` |
 | is_active | bool | nonaktif = perangkat langsung keluar |
 | activation_token_hash | char(64) null unik | SHA-256 tautan aktivasi sekali pakai |
-| activation_expires_at | timestamptz null | 24 jam |
+| activation_code_hash | char(64) null unik | HMAC-SHA256 (kunci `APP_KEY`) kode aktivasi pendek 8 karakter yang diterbitkan bersama tautan; dikosongkan bersama `activation_token_hash` saat salah satunya dipakai atau kiosk dinonaktifkan (fitur dokumentasi, migrasi `2026_10_08_100000`) |
+| activation_expires_at | timestamptz null | 24 jam (berlaku untuk tautan dan kode) |
 | activated_at | timestamptz null | pemasangan terakhir; dibandingkan dengan penanda di sesi perangkat |
 | last_seen_at | timestamptz null | diperbarui tiap kode diambil |
 | remember_token | varchar(100) null | dirotasi tiap pemasangan/nonaktif |

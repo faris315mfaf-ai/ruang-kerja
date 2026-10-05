@@ -29,6 +29,7 @@ final class SaveKiosk
         if ($wasActive && ! $kiosk->is_active) {
             $kiosk->remember_token = Str::random(60);
             $kiosk->activation_token_hash = null;
+            $kiosk->activation_code_hash = null;
             $kiosk->activation_expires_at = null;
         }
 
