@@ -2,13 +2,14 @@ import { Head, Link, router } from '@inertiajs/react';
 import { BookOpen, ChevronDown, FileText, ListTree } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { EmptyState } from '@/components/empty-state';
+import { AdminPageHeader } from '@/features/admin/page-header';
 import { DocArticle } from '@/features/docs/doc-article';
 import { DocList } from '@/features/docs/doc-list';
 import { DocToc } from '@/features/docs/doc-toc';
 import type { DocDetail, DocGroup, DocListItem } from '@/features/docs/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { formatNumber } from '@/lib/format';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import docsRoutes from '@/routes/admin/docs';
 
 type Props = {
@@ -55,7 +56,7 @@ export default function DocsIndex({ documents, groups, document }: Props) {
             <>
                 <Head title={title} />
                 {document === null ? (
-                    <div className="space-y-4">
+                    <div className="flex flex-col gap-5">
                         <Intro count={documents.length} />
                         <DocList
                             documents={documents}
@@ -72,21 +73,21 @@ export default function DocsIndex({ documents, groups, document }: Props) {
                         )}
                     >
                         {document.toc.length > 0 && (
-                            <details className="group rounded-lg border border-border bg-surface">
-                                <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 text-[15px] font-medium text-text">
+                            <details className="group rounded-[22px] border border-border bg-surface">
+                                <summary className="flex min-h-13 cursor-pointer list-none items-center gap-2 px-4 text-[16px] font-semibold text-text">
                                     <ListTree
                                         aria-hidden
-                                        className="size-4 text-text-muted"
+                                        className="size-5 text-link"
                                     />
                                     Daftar isi
                                     <ChevronDown
                                         aria-hidden
-                                        className="ml-auto size-4 text-text-muted transition-transform duration-180 ease-brand group-open:rotate-180"
+                                        className="ml-auto size-5 text-text-muted transition-transform duration-180 ease-brand group-open:rotate-180 motion-reduce:transition-none"
                                     />
                                 </summary>
                                 <DocToc
                                     items={document.toc}
-                                    className="border-t border-border p-2 text-[15px]"
+                                    className="border-t border-divider p-2 text-[15px]"
                                 />
                             </details>
                         )}
@@ -129,7 +130,7 @@ export default function DocsIndex({ documents, groups, document }: Props) {
                         aria-label="Daftar isi"
                         className={cn('hidden min-w-0 xl:block', STICKY)}
                     >
-                        <p className="mb-1 px-2 text-xs font-medium tracking-wide text-text-subtle uppercase">
+                        <p className="mb-2 px-2 text-overline text-text-muted">
                             Daftar isi
                         </p>
                         <DocToc items={document.toc} />
@@ -142,16 +143,10 @@ export default function DocsIndex({ documents, groups, document }: Props) {
 
 function Intro({ count }: { count: number }) {
     return (
-        <header>
-            <h1 className="text-xl leading-7 font-semibold text-text">
-                Dokumentasi
-            </h1>
-            <p className="text-sm text-text-muted">
-                {formatNumber(count)} dokumen proyek: serah terima, hal kritis,
-                arsitektur, database, keamanan, dan ringkasan tiap sprint. Hanya
-                bisa dibaca; sumbernya file Markdown di repositori.
-            </p>
-        </header>
+        <AdminPageHeader
+            title="Dokumentasi"
+            description={`${formatNumber(count)} dokumen proyek: serah terima, hal kritis, arsitektur, database, keamanan, dan ringkasan tiap sprint. Hanya bisa dibaca; sumbernya file Markdown di repositori.`}
+        />
     );
 }
 
@@ -177,33 +172,38 @@ function Overview({
     const featured = documents.filter((doc) => doc.group === start?.key);
 
     return (
-        <div className="space-y-5">
+        <div className="flex flex-col gap-6">
             <Intro count={documents.length} />
             {featured.length > 0 && (
                 <section aria-labelledby="docs-start">
-                    <h2
-                        id="docs-start"
-                        className="mb-2 text-sm font-semibold text-text"
-                    >
+                    <h2 id="docs-start" className="mb-3 text-h3">
                         {start?.label}
                     </h2>
-                    <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    <ul className="grid gap-4 md:grid-cols-2">
                         {featured.map((doc) => (
                             <li key={doc.slug}>
                                 <Link
                                     href={docsRoutes.show.url(doc.slug)}
-                                    className="flex h-full items-start gap-3 rounded-lg border border-border bg-surface p-4 shadow-card transition-colors duration-150 ease-brand hover:border-border-strong"
+                                    prefetch
+                                    className={cn(
+                                        'flex h-full items-center gap-4 rounded-card border border-border bg-surface p-5 shadow-card transition-colors duration-120 ease-brand hover:border-border-strong',
+                                        focusRing,
+                                    )}
                                 >
-                                    <FileText
+                                    <span
                                         aria-hidden
-                                        className="mt-0.5 size-5 shrink-0 text-primary"
-                                        strokeWidth={1.75}
-                                    />
-                                    <span className="min-w-0">
-                                        <span className="block font-medium text-text">
+                                        className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-grad-soft text-link"
+                                    >
+                                        <FileText
+                                            className="size-5"
+                                            strokeWidth={2}
+                                        />
+                                    </span>
+                                    <span className="flex min-w-0 flex-col gap-0.5">
+                                        <span className="text-[17px] leading-6 font-semibold text-text">
                                             {doc.title}
                                         </span>
-                                        <span className="block truncate font-mono text-xs text-text-muted">
+                                        <span className="truncate font-mono text-[13px] font-medium text-text-muted">
                                             {doc.path}
                                         </span>
                                     </span>

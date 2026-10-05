@@ -2,7 +2,7 @@ import { Link } from '@inertiajs/react';
 import { ChevronRight, FileText, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import docsRoutes from '@/routes/admin/docs';
 import { filterDocs } from './filter';
 import type { DocGroup, DocListItem } from './types';
@@ -25,11 +25,17 @@ export function DocList({ documents, groups, currentSlug, variant }: Props) {
     const mobile = variant === 'mobile';
 
     return (
-        <div className="space-y-3">
+        <div
+            className={cn(
+                'flex flex-col gap-4',
+                !mobile &&
+                    'rounded-panel border border-border bg-surface p-4 shadow-card',
+            )}
+        >
             <div className="relative">
                 <Search
                     aria-hidden
-                    className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-subtle"
+                    className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-text-muted"
                 />
                 <Input
                     type="search"
@@ -37,28 +43,28 @@ export function DocList({ documents, groups, currentSlug, variant }: Props) {
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder="Cari dokumen…"
                     aria-label="Cari dokumen"
-                    className={cn(
-                        'bg-surface pl-9',
-                        mobile && 'h-11 text-base md:text-base',
-                    )}
+                    className={cn('pl-11', mobile && 'text-[17px]')}
                 />
             </div>
 
             {sections.length === 0 ? (
-                <p className="px-1 py-6 text-center text-sm text-text-muted">
+                <p className="px-1 py-6 text-center text-[15px] text-text-muted">
                     Tidak ada dokumen yang cocok dengan “{query.trim()}”.
                 </p>
             ) : (
-                <nav aria-label="Daftar dokumen" className="space-y-4">
+                <nav
+                    aria-label="Daftar dokumen"
+                    className="flex flex-col gap-4"
+                >
                     {sections.map(({ group, documents: items }) => (
                         <section key={group.key}>
-                            <h2 className="mb-1 px-2 text-xs font-medium tracking-wide text-text-subtle uppercase">
+                            <h2 className="mb-1.5 px-2 text-overline text-text-muted">
                                 {group.label}
                             </h2>
                             <ul
                                 className={cn(
                                     mobile &&
-                                        'divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface',
+                                        'divide-y divide-divider overflow-hidden rounded-[22px] border border-border bg-surface',
                                 )}
                             >
                                 {items.map((doc) => {
@@ -76,20 +82,23 @@ export function DocList({ documents, groups, currentSlug, variant }: Props) {
                                                 }
                                                 title={`${doc.title} · ${doc.path}`}
                                                 className={cn(
-                                                    'flex items-center gap-2 text-text transition-colors duration-150 ease-brand',
+                                                    'flex items-center gap-3 text-text transition-colors duration-120 ease-brand',
+                                                    focusRing,
+                                                    mobile &&
+                                                        'focus-visible:ring-inset',
                                                     mobile
-                                                        ? 'min-h-12 px-3 py-2 text-[15px] active:bg-surface-2'
-                                                        : 'min-h-8 rounded-md px-2 py-1.5 text-sm hover:bg-surface-2',
+                                                        ? 'min-h-14 px-4 py-2 text-[16px] font-semibold active:bg-surface-2'
+                                                        : 'min-h-10 rounded-control px-2.5 py-2 text-[15px] hover:bg-surface-2',
                                                     active &&
-                                                        'bg-link-soft font-medium text-primary hover:bg-link-soft',
+                                                        'bg-link-soft font-semibold text-link hover:bg-link-soft',
                                                 )}
                                             >
                                                 <FileText
                                                     aria-hidden
                                                     className={cn(
-                                                        'size-4 shrink-0',
+                                                        'size-[18px] shrink-0',
                                                         active
-                                                            ? 'text-primary'
+                                                            ? 'text-link'
                                                             : 'text-text-subtle',
                                                     )}
                                                 />
@@ -106,7 +115,7 @@ export function DocList({ documents, groups, currentSlug, variant }: Props) {
                                                 {mobile && (
                                                     <ChevronRight
                                                         aria-hidden
-                                                        className="size-4 shrink-0 text-text-subtle"
+                                                        className="size-[18px] shrink-0 text-text-subtle"
                                                     />
                                                 )}
                                             </Link>

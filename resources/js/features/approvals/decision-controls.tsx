@@ -30,7 +30,7 @@ export function DecisionNote({
                 id="decision-note"
                 rows={3}
                 maxLength={1000}
-                className={cn(mobile && 'min-h-28 text-base')}
+                className={cn('min-h-24', mobile && 'min-h-28 text-[17px]')}
                 placeholder="Wajib diisi bila menolak atau meminta revisi"
                 value={form.data.note}
                 onChange={(event) => {
@@ -38,7 +38,7 @@ export function DecisionNote({
                     form.clearErrors('note');
                 }}
             />
-            <p className="text-[13px] text-text-muted">
+            <p className="text-meta text-text-muted">
                 Terlihat oleh {requesterName.split(' ')[0]} dan HR.
             </p>
             <InputError message={form.errors.note} />
@@ -55,12 +55,57 @@ export function DecisionButtons({
 }) {
     const { form, decide } = decision;
 
+    if (mobile) {
+        return (
+            <div className="flex items-center gap-2.5">
+                <Button
+                    type="button"
+                    variant="quiet"
+                    size="lg"
+                    className="px-3"
+                    disabled={form.processing}
+                    onClick={() => decide('revise')}
+                >
+                    Revisi
+                </Button>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    className="flex-1 font-bold text-danger hover:text-danger"
+                    disabled={form.processing}
+                    onClick={() => decide('reject')}
+                >
+                    Tolak
+                </Button>
+                <Button
+                    type="button"
+                    size="lg"
+                    className="flex-[1.4]"
+                    disabled={form.processing}
+                    onClick={() => decide('approve')}
+                >
+                    Setujui
+                </Button>
+            </div>
+        );
+    }
+
     return (
-        <div className={cn('flex items-center gap-2', mobile && 'gap-3')}>
+        <div className="flex flex-wrap items-center gap-3">
             <Button
                 type="button"
-                variant={mobile ? 'ghost' : 'outline'}
-                className={cn(mobile && 'h-12 px-3 text-base')}
+                variant="outline"
+                className="h-12 px-5 font-bold text-danger hover:text-danger"
+                disabled={form.processing}
+                onClick={() => decide('reject')}
+            >
+                Tolak
+            </Button>
+            <Button
+                type="button"
+                variant="outline"
+                className="h-12 px-5"
                 disabled={form.processing}
                 onClick={() => decide('revise')}
             >
@@ -69,19 +114,7 @@ export function DecisionButtons({
             <span className="flex-1" />
             <Button
                 type="button"
-                variant="outline"
-                className={cn(
-                    'text-danger hover:text-danger',
-                    mobile && 'h-12 flex-1 text-base',
-                )}
-                disabled={form.processing}
-                onClick={() => decide('reject')}
-            >
-                Tolak
-            </Button>
-            <Button
-                type="button"
-                className={cn(mobile && 'h-12 flex-[1.3] text-base')}
+                className="h-12 px-7 text-[17px]"
                 disabled={form.processing}
                 onClick={() => decide('approve')}
             >

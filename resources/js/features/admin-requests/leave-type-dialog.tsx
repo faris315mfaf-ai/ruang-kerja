@@ -13,7 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { ProvisionalBadge, selectClass } from '@/features/requests/form-fields';
+import { NativeSelect } from '@/features/admin/native-select';
+import { ProvisionalBadge } from '@/features/requests/form-fields';
 import { store, update } from '@/routes/admin/leave-types';
 import type { RequestCategory } from '@/types/requests';
 import type { AdminFlow, AdminLeaveType, AdminOptions } from './types';
@@ -89,7 +90,7 @@ export function LeaveTypeDialog({
                         CUT-2026-10-0001.
                     </DialogDescription>
                     {type?.is_provisional_default && (
-                        <p className="flex flex-wrap items-center gap-2 text-[13px] text-text-muted">
+                        <p className="flex flex-wrap items-center gap-2 text-meta text-text-muted">
                             <ProvisionalBadge />
                             Aturan bawaan sistem. Tinjau lalu simpan untuk
                             menetapkannya sebagai aturan perusahaan.
@@ -126,9 +127,8 @@ export function LeaveTypeDialog({
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="lt-category">Kategori</Label>
-                        <select
+                        <NativeSelect
                             id="lt-category"
-                            className={selectClass}
                             value={data.category}
                             disabled={type !== null}
                             onChange={(e) =>
@@ -146,14 +146,13 @@ export function LeaveTypeDialog({
                                     {category.label}
                                 </option>
                             ))}
-                        </select>
+                        </NativeSelect>
                         <InputError message={errors.category} />
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="lt-flow">Alur persetujuan</Label>
-                        <select
+                        <NativeSelect
                             id="lt-flow"
-                            className={selectClass}
                             value={data.approval_flow_id}
                             onChange={(e) =>
                                 setData('approval_flow_id', e.target.value)
@@ -165,7 +164,7 @@ export function LeaveTypeDialog({
                                     {flow.name}
                                 </option>
                             ))}
-                        </select>
+                        </NativeSelect>
                     </div>
 
                     {data.category === 'leave' && (
@@ -316,10 +315,10 @@ export function LeaveTypeDialog({
                         />
                     </div>
 
-                    <div className="grid gap-3 sm:col-span-2">
+                    <div className="divide-y divide-divider rounded-lg border border-border sm:col-span-2">
                         {(data.category === 'leave' ||
                             data.category === 'permit') && (
-                            <label className="flex items-center justify-between gap-3 text-sm">
+                            <label className="flex min-h-13 items-center justify-between gap-3 px-4 py-2 text-[15px] font-semibold">
                                 Boleh setengah hari
                                 <Switch
                                     checked={data.allow_half_day}
@@ -330,7 +329,7 @@ export function LeaveTypeDialog({
                             </label>
                         )}
                         {data.category === 'leave' && (
-                            <label className="flex items-center justify-between gap-3 text-sm">
+                            <label className="flex min-h-13 items-center justify-between gap-3 px-4 py-2 text-[15px] font-semibold">
                                 Dihitung hari kalender (bukan hari kerja)
                                 <Switch
                                     checked={data.counts_calendar_days}
@@ -340,7 +339,7 @@ export function LeaveTypeDialog({
                                 />
                             </label>
                         )}
-                        <label className="flex items-center justify-between gap-3 text-sm">
+                        <label className="flex min-h-13 items-center justify-between gap-3 px-4 py-2 text-[15px] font-semibold">
                             Dibayar
                             <Switch
                                 checked={data.is_paid}
@@ -349,7 +348,7 @@ export function LeaveTypeDialog({
                                 }
                             />
                         </label>
-                        <label className="flex items-center justify-between gap-3 text-sm">
+                        <label className="flex min-h-13 items-center justify-between gap-3 px-4 py-2 text-[15px] font-semibold">
                             Aktif (tampil di form pengajuan)
                             <Switch
                                 checked={data.is_active}

@@ -47,18 +47,18 @@ export function MonthCalendar({
     ];
 
     return (
-        <div className={cn('rounded-lg border border-border p-3', className)}>
+        <div className={cn('rounded-lg border border-border p-4', className)}>
             <div className="mb-2 flex items-center justify-between">
-                <p className="text-sm font-semibold text-text">
+                <p className="text-[16px] font-bold text-text">
                     {formatMonthYear(year, m)}
                 </p>
-                <p className="text-xs text-text-muted">
+                <p className="text-meta text-text-muted">
                     Hari ini {weekdayShort(today)},{' '}
                     {formatShortDate(today).replace(/ \d{4}$/, '')}
                 </p>
             </div>
             <div
-                className="grid grid-cols-7 text-center text-[11px] text-text-muted"
+                className="grid grid-cols-7 text-center text-[13px] font-semibold text-text-muted"
                 aria-hidden
             >
                 {HEADERS.map((header) => (
@@ -67,7 +67,7 @@ export function MonthCalendar({
                     </span>
                 ))}
             </div>
-            <div className="grid grid-cols-7 gap-y-1 text-center text-[13px] tnum">
+            <div className="grid grid-cols-7 gap-y-1 text-center text-[15px] tnum">
                 {cells.map((day, index) => {
                     if (day === null) {
                         return <span key={`empty-${index}`} />;
@@ -88,22 +88,26 @@ export function MonthCalendar({
                                 isSelected ? `${day}, dipilih` : undefined
                             }
                             className={cn(
-                                'relative flex h-7 items-center justify-center',
+                                'relative flex h-9 items-center justify-center',
                                 weekend && !isSelected && 'text-text-subtle',
                                 isSelected &&
-                                    'bg-primary font-semibold text-primary-foreground',
-                                isSelected && !prevSelected && 'rounded-l-md',
-                                isSelected && !nextSelected && 'rounded-r-md',
+                                    'bg-primary font-bold text-primary-foreground',
+                                isSelected &&
+                                    !prevSelected &&
+                                    'rounded-l-[10px]',
+                                isSelected &&
+                                    !nextSelected &&
+                                    'rounded-r-[10px]',
                                 date === today &&
                                     !isSelected &&
-                                    'rounded-md ring-1 ring-text',
+                                    'rounded-[10px] ring-2 ring-primary',
                             )}
                         >
                             {day}
                             {markedSet.has(date) && (
                                 <span
                                     aria-hidden
-                                    className="absolute bottom-0.5 size-1 rounded-full bg-warning"
+                                    className="absolute bottom-1 size-1.5 rounded-full bg-fill-warning"
                                 />
                             )}
                         </span>

@@ -1,6 +1,7 @@
 import { Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { UserAvatar } from '@/components/shell/user-avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Table,
@@ -20,8 +21,8 @@ type RowActions<T> = {
     onRestore: (row: T) => void;
 };
 
-const HEAD = 'h-10 px-4 text-xs font-medium text-text-muted';
-const CELL = 'px-4 py-3';
+const HEAD = 'first:pl-6 last:pr-6';
+const CELL = 'py-3.5 first:pl-6 last:pr-6';
 
 function Person({
     person,
@@ -36,11 +37,7 @@ function Person({
 
     return (
         <span className="flex items-center gap-2">
-            <UserAvatar
-                name={person.name}
-                src={person.avatar}
-                className="size-6 text-[10px]"
-            />
+            <UserAvatar name={person.name} src={person.avatar} />
             <span className="truncate text-text">{person.name}</span>
         </span>
     );
@@ -48,9 +45,9 @@ function Person({
 
 function Code({ code }: { code: string | null }) {
     return code ? (
-        <span className="rounded border border-border px-1.5 py-0.5 font-mono text-xs text-text-muted">
+        <Badge variant="label" className="font-mono">
             {code}
-        </span>
+        </Badge>
     ) : (
         <span className="text-text-subtle">–</span>
     );
@@ -58,18 +55,13 @@ function Code({ code }: { code: string | null }) {
 
 function Status({ deletedAt }: { deletedAt: string | null }) {
     return deletedAt ? (
-        <span className="inline-flex items-center gap-1.5 text-text-muted">
-            <span
-                aria-hidden
-                className="size-1.5 rounded-full bg-text-subtle"
-            />
+        <Badge variant="status" tone="neutral" dot>
             Dihapus
-        </span>
+        </Badge>
     ) : (
-        <span className="inline-flex items-center gap-1.5 text-success">
-            <span aria-hidden className="size-1.5 rounded-full bg-success" />
+        <Badge variant="status" tone="success" dot>
             Aktif
-        </span>
+        </Badge>
     );
 }
 
@@ -84,7 +76,7 @@ function Actions<T extends { deletedAt: string | null }>({
         return (
             <Button
                 type="button"
-                variant="ghost"
+                variant="tonal"
                 size="sm"
                 onClick={(event) => {
                     event.stopPropagation();
@@ -102,8 +94,7 @@ function Actions<T extends { deletedAt: string | null }>({
             <Button
                 type="button"
                 variant="ghost"
-                size="icon"
-                className="size-8"
+                size="icon-sm"
                 aria-label={`Ubah ${label}`}
                 onClick={(event) => {
                     event.stopPropagation();
@@ -115,8 +106,8 @@ function Actions<T extends { deletedAt: string | null }>({
             <Button
                 type="button"
                 variant="ghost"
-                size="icon"
-                className="size-8 text-text-muted hover:text-danger"
+                size="icon-sm"
+                className="text-text-muted hover:text-danger"
                 aria-label={`Hapus ${label}`}
                 onClick={(event) => {
                     event.stopPropagation();
@@ -132,7 +123,7 @@ function Actions<T extends { deletedAt: string | null }>({
 function Shell({ head, children }: { head: ReactNode; children: ReactNode }) {
     return (
         <Table>
-            <TableHeader className="bg-surface-2">
+            <TableHeader>
                 <TableRow className="hover:bg-transparent">{head}</TableRow>
             </TableHeader>
             <TableBody>{children}</TableBody>
@@ -141,10 +132,7 @@ function Shell({ head, children }: { head: ReactNode; children: ReactNode }) {
 }
 
 function rowClass(deleted: boolean) {
-    return cn(
-        'border-border',
-        deleted ? 'text-text-muted' : 'cursor-pointer hover:bg-surface-2/60',
-    );
+    return cn(deleted ? 'text-text-muted' : 'cursor-pointer');
 }
 
 export function DivisionTable({
@@ -179,17 +167,21 @@ export function DivisionTable({
                 >
                     <TableCell className={CELL}>
                         <span className="flex items-center gap-2">
-                            <span className="font-medium text-text">
+                            <span className="font-semibold text-text">
                                 {row.name}
                             </span>
                             {row.isBoard && (
-                                <span className="rounded-full bg-link-soft px-2 py-0.5 text-[11px] font-medium text-primary">
+                                <Badge
+                                    variant="status"
+                                    tone="link"
+                                    className="h-6 px-2.5 text-[13px]"
+                                >
                                     Direksi
-                                </span>
+                                </Badge>
                             )}
                         </span>
                         {row.parentName && (
-                            <span className="block text-xs text-text-muted">
+                            <span className="block text-meta text-text-muted">
                                 Sub-divisi dari {row.parentName}
                             </span>
                         )}
@@ -200,10 +192,10 @@ export function DivisionTable({
                     <TableCell className={CELL}>
                         <Person person={row.head} empty="Belum ditentukan" />
                     </TableCell>
-                    <TableCell className={cn(CELL, 'text-right tabular-nums')}>
+                    <TableCell className={cn(CELL, 'text-right tnum')}>
                         {formatNumber(row.membersCount)}
                     </TableCell>
-                    <TableCell className={cn(CELL, 'text-right tabular-nums')}>
+                    <TableCell className={cn(CELL, 'text-right tnum')}>
                         {formatNumber(row.teamsCount)}
                     </TableCell>
                     <TableCell className={CELL}>
@@ -250,7 +242,7 @@ export function TeamTable({
                     className={rowClass(row.deletedAt !== null)}
                     onClick={() => !row.deletedAt && actions.onEdit(row)}
                 >
-                    <TableCell className={cn(CELL, 'font-medium text-text')}>
+                    <TableCell className={cn(CELL, 'font-semibold text-text')}>
                         {row.name}
                     </TableCell>
                     <TableCell className={CELL}>
@@ -258,14 +250,14 @@ export function TeamTable({
                     </TableCell>
                     <TableCell className={CELL}>
                         {row.divisionName}
-                        <span className="ml-1.5 font-mono text-xs text-text-muted">
+                        <span className="ml-1.5 font-mono text-meta text-text-muted">
                             {row.divisionCode}
                         </span>
                     </TableCell>
                     <TableCell className={CELL}>
                         <Person person={row.lead} empty="Belum ditentukan" />
                     </TableCell>
-                    <TableCell className={cn(CELL, 'text-right tabular-nums')}>
+                    <TableCell className={cn(CELL, 'text-right tnum')}>
                         {formatNumber(row.membersCount)}
                     </TableCell>
                     <TableCell className={CELL}>
@@ -306,16 +298,16 @@ export function PositionTable({
                     className={rowClass(row.deletedAt !== null)}
                     onClick={() => !row.deletedAt && actions.onEdit(row)}
                 >
-                    <TableCell className={cn(CELL, 'font-medium text-text')}>
+                    <TableCell className={cn(CELL, 'font-semibold text-text')}>
                         {row.name}
                     </TableCell>
                     <TableCell className={CELL}>
-                        <span className="tabular-nums">{row.level}</span>
+                        <span className="tnum">{row.level}</span>
                         <span className="ml-1.5 text-text-muted">
                             {row.levelLabel}
                         </span>
                     </TableCell>
-                    <TableCell className={cn(CELL, 'text-right tabular-nums')}>
+                    <TableCell className={cn(CELL, 'text-right tnum')}>
                         {formatNumber(row.usersCount)}
                     </TableCell>
                     <TableCell className={CELL}>

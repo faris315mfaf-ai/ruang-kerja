@@ -9,6 +9,7 @@ import {
     formatLongDateRange,
     formatRequestDuration,
     formatRequestPeriod,
+    formatRequestTitle,
     dayUnit,
     officeDay,
     stepProgress,
@@ -99,6 +100,21 @@ describe('durations', () => {
         expect(
             formatRequestDuration({ type: maternity, days: 90, minutes: null }),
         ).toBe('90 hari kalender');
+    });
+});
+
+describe('formatRequestTitle', () => {
+    it('joins type name and duration, name only without duration', () => {
+        expect(
+            formatRequestTitle({ type: type('leave'), days: 2, minutes: null }),
+        ).toBe('Cuti tahunan · 2 hari kerja');
+        expect(
+            formatRequestTitle({
+                type: type('correction'),
+                days: null,
+                minutes: null,
+            }),
+        ).toBe('Cuti tahunan');
     });
 });
 

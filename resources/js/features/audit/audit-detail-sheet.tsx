@@ -20,7 +20,7 @@ type Props = {
 
 function Meta({ label, children }: { label: string; children: ReactNode }) {
     return (
-        <div className="grid grid-cols-[120px_1fr] gap-3 py-2 text-sm">
+        <div className="grid grid-cols-[120px_1fr] gap-3 py-3 text-[15px]">
             <dt className="text-text-muted">{label}</dt>
             <dd className="min-w-0 break-words text-text">{children}</dd>
         </div>
@@ -37,16 +37,16 @@ export function AuditDetailSheet({ row, references, onClose }: Props) {
             <SheetContent className="w-full gap-0 overflow-y-auto bg-surface p-0 sm:max-w-[560px]">
                 {row && (
                     <>
-                        <SheetHeader className="border-b border-border px-5 py-4">
-                            <SheetTitle className="pr-6 text-base text-text">
+                        <SheetHeader className="border-b border-border px-6 py-5">
+                            <SheetTitle className="pr-6 text-h3 text-text">
                                 {actionLabel(row.action)}
                             </SheetTitle>
-                            <SheetDescription className="font-mono text-xs text-text-muted">
+                            <SheetDescription className="font-mono text-meta text-text-muted">
                                 {row.action}
                             </SheetDescription>
                         </SheetHeader>
 
-                        <dl className="divide-y divide-border px-5 py-2">
+                        <dl className="divide-y divide-divider px-6 py-2">
                             <Meta label="Waktu">
                                 {formatDateTime(row.createdAt)}
                                 <span className="ml-2 text-text-muted">
@@ -59,7 +59,6 @@ export function AuditDetailSheet({ row, references, onClose }: Props) {
                                         <UserAvatar
                                             name={row.actor.name}
                                             src={row.actor.avatar}
-                                            className="size-6 text-[10px]"
                                         />
                                         {row.actor.name}
                                     </span>
@@ -77,7 +76,7 @@ export function AuditDetailSheet({ row, references, onClose }: Props) {
                                         </span>
                                         {row.subject.name ?? row.subject.id}
                                         {row.subject.deleted && (
-                                            <span className="ml-2 rounded-full bg-surface-2 px-2 py-0.5 text-[11px] text-text-muted">
+                                            <span className="ml-2 inline-flex h-6 items-center rounded-full bg-surface-2 px-2 text-[13px] font-semibold text-text-muted">
                                                 sudah dihapus
                                             </span>
                                         )}
@@ -87,53 +86,53 @@ export function AuditDetailSheet({ row, references, onClose }: Props) {
                                 )}
                             </Meta>
                             <Meta label="Alamat IP">
-                                <span className="font-mono text-[13px]">
+                                <span className="font-mono text-meta">
                                     {row.ipAddress ?? '–'}
                                 </span>
                             </Meta>
                             <Meta label="Perangkat">
-                                <span className="text-[13px] text-text-muted">
+                                <span className="text-meta text-text-muted">
                                     {row.userAgent ?? '–'}
                                 </span>
                             </Meta>
                         </dl>
 
-                        <section className="px-5 pt-2 pb-6">
-                            <h3 className="mb-2 text-sm font-semibold text-text">
+                        <section className="px-6 pt-3 pb-6">
+                            <h3 className="mb-3 text-title text-text">
                                 Perubahan
                             </h3>
                             {rows.length === 0 ? (
-                                <p className="rounded-lg border border-dashed border-border-strong px-4 py-6 text-center text-[13px] text-text-muted">
+                                <p className="rounded-lg border border-dashed border-border-strong px-4 py-6 text-center text-meta text-text-muted">
                                     Tidak ada nilai yang dicatat untuk aksi ini.
                                 </p>
                             ) : (
                                 <div className="overflow-hidden rounded-lg border border-border">
-                                    <table className="w-full table-fixed text-[13px]">
-                                        <thead className="bg-surface-2 text-left text-xs text-text-muted">
+                                    <table className="w-full table-fixed text-meta">
+                                        <thead className="bg-background text-left text-meta text-text-muted">
                                             <tr>
-                                                <th className="w-[30%] px-3 py-2 font-medium">
+                                                <th className="w-[30%] px-3 py-2.5 font-bold">
                                                     Kolom
                                                 </th>
-                                                <th className="px-3 py-2 font-medium">
+                                                <th className="px-3 py-2.5 font-bold">
                                                     Sebelum
                                                 </th>
-                                                <th className="px-3 py-2 font-medium">
+                                                <th className="px-3 py-2.5 font-bold">
                                                     Sesudah
                                                 </th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-border">
+                                        <tbody className="divide-y divide-divider">
                                             {rows.map((diff) => (
                                                 <tr
                                                     key={diff.key}
                                                     className="align-top"
                                                 >
-                                                    <td className="px-3 py-2 text-text-muted">
+                                                    <td className="px-3 py-2.5 text-text-muted">
                                                         {diff.label}
                                                     </td>
                                                     <td
                                                         className={cn(
-                                                            'px-3 py-2 break-words',
+                                                            'px-3 py-2.5 break-words',
                                                             diff.changed &&
                                                                 row.oldValues
                                                                 ? 'bg-danger/5 text-danger'
@@ -148,7 +147,7 @@ export function AuditDetailSheet({ row, references, onClose }: Props) {
                                                     </td>
                                                     <td
                                                         className={cn(
-                                                            'px-3 py-2 break-words',
+                                                            'px-3 py-2.5 break-words',
                                                             diff.changed &&
                                                                 row.newValues
                                                                 ? 'bg-success/5 text-success'
@@ -168,7 +167,7 @@ export function AuditDetailSheet({ row, references, onClose }: Props) {
                                 </div>
                             )}
                             {changedOnly && rows.length > 0 && (
-                                <p className="mt-2 text-xs text-text-muted">
+                                <p className="mt-2 text-meta text-text-muted">
                                     Hanya kolom yang berubah yang dicatat. Nilai
                                     rahasia disamarkan (***).
                                 </p>
