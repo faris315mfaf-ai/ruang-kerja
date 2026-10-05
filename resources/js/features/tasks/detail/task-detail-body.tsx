@@ -1,4 +1,5 @@
 import { router } from '@inertiajs/react';
+import { AttachmentsPanel } from '@/features/drive/attachments-panel';
 import { cn } from '@/lib/utils';
 import type { Task } from '../types';
 import { ChecklistSection } from './checklist';
@@ -21,7 +22,7 @@ type Props = {
 
 /**
  * Desktop task detail (mockup TaskDetail): title, description, checklist,
- * sub-tasks, timeline + composer; properties in a right column on the
+ * sub-tasks, Drive attachments, timeline + composer; properties in a right column on the
  * full page, at the top inside the 640px sheet.
  */
 export function TaskDetailBody({ state, today, layout, onOpenTask }: Props) {
@@ -93,6 +94,14 @@ export function TaskDetailBody({ state, today, layout, onOpenTask }: Props) {
                 onCreate={(title) => void state.createSubtask(title)}
             />
 
+            <AttachmentsPanel
+                key={task.id}
+                attachableType="task"
+                attachableId={task.id}
+                initial={detail.attachments}
+                onChange={state.refresh}
+            />
+
             <div className="border-t border-border pt-6">
                 <TimelineSection state={state} />
             </div>
@@ -109,6 +118,8 @@ export function TaskDetailBody({ state, today, layout, onOpenTask }: Props) {
                             : null
                     }
                     onSubmit={state.postComment}
+                    drive={detail.attachments.drive}
+                    onAttachmentsChange={state.refresh}
                 />
             ) : (
                 <p className="text-[13px] text-text-muted">

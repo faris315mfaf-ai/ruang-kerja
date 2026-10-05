@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Gate;
 final class AttachmentList
 {
     /**
-     * @return array{attachments: list<array<string, mixed>>, can_edit: bool, drive: array{enabled: bool, picker_enabled: bool, max_upload_bytes: int, chunk_bytes: int}}
+     * @return array{attachments: list<array<string, mixed>>, can_edit: bool, drive: array{enabled: bool, fake: bool, picker_enabled: bool, max_upload_bytes: int, chunk_bytes: int}}
      */
     public function for(Model $attachable, User $viewer): array
     {
@@ -47,12 +47,14 @@ final class AttachmentList
     /**
      * Drive settings the attach controls need (also for the comment composer).
      *
-     * @return array{enabled: bool, picker_enabled: bool, max_upload_bytes: int, chunk_bytes: int}
+     * @return array{enabled: bool, fake: bool, picker_enabled: bool, max_upload_bytes: int, chunk_bytes: int}
      */
     public static function drive(): array
     {
         return [
             'enabled' => GoogleFeatures::enabled(),
+            // Fake Drive (local demo): "Dokumen baru" is not opened in a new tab.
+            'fake' => GoogleFeatures::fake(),
             'picker_enabled' => GoogleFeatures::pickerEnabled(),
             'max_upload_bytes' => GoogleFeatures::maxUploadBytes(),
             'chunk_bytes' => DriveUploadSessions::chunkBytes(),

@@ -68,7 +68,7 @@ describe('Task attachments', function () {
         $added = Activity::query()->where('event', ActivityEvent::AttachmentAdded->value)->sole();
         expect($added->subject_id)->toBe($this->task->id)
             ->and($added->causer_id)->toBe($this->member->id)
-            ->and($added->properties)->toEqual(['attachment_id' => $attachment->id, 'filename' => 'Brief landing page', 'kind' => 'doc']);
+            ->and($added->properties)->toEqual(['key' => 'PLQ-1', 'title' => 'Landing page produk baru', 'attachment_id' => $attachment->id, 'filename' => 'Brief landing page', 'kind' => 'doc']);
 
         Event::assertDispatched(TaskAttachmentAdded::class, function (TaskAttachmentAdded $event) use ($attachment): bool {
             return $event->broadcastOn()[0]->name === 'private-workspace.'.$this->workspace->id

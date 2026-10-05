@@ -3,6 +3,16 @@ import { useEffect, useRef } from 'react';
 import type { TaskComment } from '../detail/types';
 import type { Task } from '../types';
 
+/** App\Events\Tasks\TaskAttachmentBroadcastEvent::broadcastWith(). */
+export type AttachmentEventPayload = {
+    task_id: string;
+    attachable_type: 'task' | 'comment';
+    attachable_id: string;
+    attachment_id: string;
+    /** Task-level attachments after the change. */
+    attachments_count: number;
+};
+
 /** Payloads broadcast on `private-workspace.{id}` (App\Events\Tasks\*). */
 export type WorkspaceEvents = {
     'task.created': { task: Task };
@@ -12,6 +22,8 @@ export type WorkspaceEvents = {
     'comment.posted': { task_id: string; comment: TaskComment };
     'comment.updated': { task_id: string; comment: TaskComment };
     'comment.deleted': { task_id: string; comment: TaskComment };
+    'attachment.added': AttachmentEventPayload;
+    'attachment.removed': AttachmentEventPayload;
 };
 
 export type WorkspaceEventName = keyof WorkspaceEvents;
@@ -28,6 +40,8 @@ export const WORKSPACE_EVENTS: WorkspaceEventName[] = [
     'comment.posted',
     'comment.updated',
     'comment.deleted',
+    'attachment.added',
+    'attachment.removed',
 ];
 
 /** Subscribers per channel, so the board and an open sheet share one subscription. */

@@ -162,10 +162,14 @@ export type UploadSessionData = {
 export type AttachmentsPayload = {
     attachments: (AttachmentData & { can_remove: boolean })[];
     can_edit: boolean;
-    drive: {
-        enabled: boolean;
-        picker_enabled: boolean;
-        max_upload_bytes: number;
-        chunk_bytes: number;
-    };
+    drive: AttachmentsDriveInfo;
+};
+
+/** AttachmentList::drive(): what the attach controls need. */
+export type AttachmentsDriveInfo = {
+    enabled: boolean;
+    fake: boolean;
+    picker_enabled: boolean;
+    max_upload_bytes: number;
+    chunk_bytes: number;
 };

@@ -114,6 +114,7 @@ export function TimelineSection({ state, mobile = false }: Props) {
                                     onReact={(emoji) =>
                                         void state.react(item, emoji)
                                     }
+                                    onAttachmentsChange={state.refresh}
                                 />
                             )}
                         </li>

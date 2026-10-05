@@ -57,6 +57,8 @@ final class RecordTaskAttachmentChange
                 $userId === null ? null : User::query()->find($userId),
                 $added ? ActivityEvent::AttachmentAdded : ActivityEvent::AttachmentRemoved,
                 [
+                    'key' => $task->displayKey(),
+                    'title' => $task->title,
                     'attachment_id' => $attachment->id,
                     'filename' => $attachment->filename,
                     'kind' => $attachment->driveFile?->kind->value,

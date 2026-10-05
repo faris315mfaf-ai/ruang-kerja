@@ -22,6 +22,7 @@ const comment = (
     edited_at: null,
     deleted: false,
     reactions: [],
+    attachments: [],
     ...over,
 });
 
@@ -104,5 +105,20 @@ describe('describeTaskActivity', () => {
         expect(describeTaskActivity(activity('task.created', {}))).toBe(
             'membuat tugas ini',
         );
+    });
+
+    it('describes attachments added and removed', () => {
+        expect(
+            describeTaskActivity(
+                activity('task.attachment_added', {
+                    filename: 'Wireframe v2.pdf',
+                }),
+            ),
+        ).toBe('melampirkan Wireframe v2.pdf');
+        expect(
+            describeTaskActivity(
+                activity('task.attachment_removed', { filename: 'Brief' }),
+            ),
+        ).toBe('melepas lampiran Brief');
     });
 });
