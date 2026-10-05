@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Workspaces;
 
 use App\Domain\Workspaces\Enums\WorkspaceRole;
+use App\Http\Requests\Concerns\HidesInvisibleWorkspaces;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -13,10 +14,7 @@ use Illuminate\Validation\Rule;
  */
 class WorkspaceMemberRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
+    use HidesInvisibleWorkspaces;
 
     /**
      * @return array<string, ValidationRule|array<mixed>|string>

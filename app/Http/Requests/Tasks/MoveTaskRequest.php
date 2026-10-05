@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Tasks;
 
+use App\Http\Requests\Concerns\HidesInvisibleWorkspaces;
 use App\Models\Task;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -17,10 +18,7 @@ use Illuminate\Validation\Rule;
  */
 class MoveTaskRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
+    use HidesInvisibleWorkspaces;
 
     /**
      * @return array<string, ValidationRule|array<mixed>|string>

@@ -126,7 +126,8 @@ final class TodayBoard
     private static function state(?DaySchedule $schedule, ?AttendanceDay $day): string
     {
         return match (true) {
-            $day !== null && $day->status->comesFromRequest() => 'leave',
+            // A half-day leave or business trip with a check-in counts as present.
+            $day !== null && $day->status->comesFromRequest() && $day->check_in_at === null => 'leave',
             $day?->check_in_at !== null => $day->late_minutes > 0 ? 'late' : 'on_time',
             $schedule?->isWorkday() ?? false => 'not_checked_in',
             default => 'off',

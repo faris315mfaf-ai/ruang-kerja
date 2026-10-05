@@ -26,7 +26,7 @@ final class RequestDurationCalculator
     {
         return match ($input->leaveType->category) {
             RequestCategory::Overtime => $this->timeRange($input, true),
-            RequestCategory::Correction => $this->correction($input),
+            RequestCategory::Correction => $this->correction($user, $input),
             RequestCategory::Permit => $input->startTime !== null || $input->endTime !== null
                 ? $this->timeRange($input, false)
                 : $this->dayRange($user, $input),
@@ -130,7 +130,7 @@ final class RequestDurationCalculator
         return new RequestPeriod($startAt, $endAt, null, $minutes, $payload, []);
     }
 
-    private function correction(RequestInput $input): RequestPeriod
+    private function correction(User $user, RequestInput $input): RequestPeriod
     {
         $date = $this->date($input->date ?? $input->startDate, 'date', 'Tanggal wajib diisi.');
         $today = OfficeTime::today();
@@ -153,7 +153,16 @@ final class RequestDurationCalculator
         }
 
         if ($checkIn !== null && $checkOut !== null && $checkOut <= $checkIn) {
-            throw ValidationException::withMessages(['check_out' => 'Jam pulang harus setelah jam masuk.']);
+            // Night shift: check-out on the next morning (applied as date + 1 day).
+            if ($checkOut === $checkIn || ! $this->calendar->crossesMidnight($user, $date)) {
+                throw ValidationException::withMessages(['check_out' => 'Jam pulang harus setelah jam masuk (lintas tengah malam hanya untuk shift malam).']);
+            }
+
+            $span = OfficeTime::at($date->toDateString(), $checkIn)->diffInMinutes(OfficeTime::at($date->addDay()->toDateString(), $checkOut));
+
+            if ($span > self::MAX_MINUTES) {
+                throw ValidationException::withMessages(['check_out' => 'Jam kerja lintas tengah malam maksimal 16 jam.']);
+            }
         }
 
         return new RequestPeriod(

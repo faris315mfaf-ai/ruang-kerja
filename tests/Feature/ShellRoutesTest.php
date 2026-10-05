@@ -28,7 +28,7 @@ it('renders the shell pages for a signed-in employee', function (string $uri, st
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->component($component));
 })->with([
-    ['/dashboard', 'dashboard'],
+    ['/dashboard', 'dashboard/personal'],
     ['/menu', 'menu'],
 ]);
 

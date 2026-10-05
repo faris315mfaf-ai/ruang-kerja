@@ -23,12 +23,13 @@ use Illuminate\Support\Carbon;
  * @property float $carried_over_days
  * @property float $used_days
  * @property float $pending_days
+ * @property Carbon|null $generated_at carry-over settled by the yearly generator or HR
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read User $user
  * @property-read LeaveType $leaveType
  */
-#[Fillable(['user_id', 'leave_type_id', 'year', 'entitled_days', 'carried_over_days', 'used_days', 'pending_days'])]
+#[Fillable(['user_id', 'leave_type_id', 'year', 'entitled_days', 'carried_over_days', 'used_days', 'pending_days', 'generated_at'])]
 class LeaveBalance extends Model
 {
     /** @use HasFactory<LeaveBalanceFactory> */
@@ -53,6 +54,7 @@ class LeaveBalance extends Model
             'carried_over_days' => 'float',
             'used_days' => 'float',
             'pending_days' => 'float',
+            'generated_at' => 'datetime',
         ];
     }
 

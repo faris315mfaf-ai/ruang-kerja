@@ -78,6 +78,8 @@ export type AttendanceDayData = {
     earlyLeaveMinutes: number;
     workMinutes: number;
     isSuspicious: boolean;
+    /** Share of the date covered by an approved absence request. */
+    requestPortion: 'full' | 'half_day' | null;
     checkIn: AttendanceLogData | null;
     checkOut: AttendanceLogData | null;
 };

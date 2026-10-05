@@ -2,6 +2,8 @@
 
 use App\Domain\Attendance\Jobs\PurgeExpiredSelfiesJob;
 use App\Domain\Attendance\Jobs\SendCheckInReminders;
+use App\Domain\Projects\Jobs\SendProjectUpdateReminders;
+use App\Domain\Projects\Jobs\TakeProjectProgressSnapshots;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -39,3 +41,7 @@ Schedule::command('tasks:notify-deadlines')->dailyAt('07:00')->timezone((string)
 
 // Sprint 1 — uploaded employee import files contain NIK: never keep them past their session.
 Schedule::command('employee-imports:prune')->hourly()->withoutOverlapping();
+
+// Sprint 9 — project tracking (office timezone): burn-up snapshot 23.55, PIC reminder Friday 15.00.
+Schedule::job(new TakeProjectProgressSnapshots)->dailyAt('23:55')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
+Schedule::job(new SendProjectUpdateReminders)->weeklyOn(5, '15:00')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();

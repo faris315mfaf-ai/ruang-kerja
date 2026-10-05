@@ -29,6 +29,7 @@ return [
         'request.decided' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
         'attendance.check_in_reminder' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'attendance.check_out_reminder' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
+        'project.activity' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
         'system' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'digest.daily' => ['email' => true],
     ],

@@ -2,6 +2,7 @@
 
 use App\Domain\Organization\Enums\Role;
 use App\Domain\Requests\Actions\GenerateAnnualBalances;
+use App\Domain\Requests\Actions\UpdateLeaveBalance;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
 use App\Models\User;
@@ -109,4 +110,47 @@ it('runs the generator from the command and schedules it on 1 January', function
     expect($events)->toHaveCount(1)
         ->and($events->first()->expression)->toBe('5 0 1 1 *')
         ->and($events->first()->timezone)->toBe('Asia/Jakarta');
+});
+
+it('fills the carry-over of a next-year balance created early, exactly once (review #4)', function () {
+    $s = $this->s;
+    LeaveBalance::factory()->create([
+        'user_id' => $s->employee->id, 'leave_type_id' => $s->annual->id, 'year' => 2026,
+        'entitled_days' => 12, 'used_days' => 4,
+    ]);
+
+    // December: a January leave creates the 2027 balance on first use (no carry-over yet).
+    $this->travelTo(CarbonImmutable::parse('2026-12-10 09:00', 'Asia/Jakarta'));
+    $s->submit($s->employee, $s->annual, ['start_date' => '2027-01-04', 'end_date' => '2027-01-05']);
+    $early = LeaveBalance::query()->where(['user_id' => $s->employee->id, 'year' => 2027])->sole();
+    expect($early->carried_over_days)->toBe(0.0)->and($early->pending_days)->toBe(2.0)->and($early->generated_at)->toBeNull();
+
+    $this->travelTo(CarbonImmutable::parse('2027-01-01 00:05', 'Asia/Jakarta'));
+    $result = app(GenerateAnnualBalances::class)->handle(2027);
+
+    $early->refresh();
+    expect($result['completed'])->toBe(1)
+        ->and($early->carried_over_days)->toBe(5.0)   // 8 unused, capped at 5
+        ->and($early->pending_days)->toBe(2.0)
+        ->and($early->generated_at)->not->toBeNull()
+        ->and(LeaveBalance::query()->where(['user_id' => $s->employee->id, 'year' => 2027])->count())->toBe(1);
+
+    // Running again changes nothing.
+    $again = app(GenerateAnnualBalances::class)->handle(2027);
+    expect($again['created'] + $again['completed'])->toBe(0)
+        ->and($early->refresh()->carried_over_days)->toBe(5.0);
+});
+
+it('never overwrites a carry-over HR already set (review #4)', function () {
+    $s = $this->s;
+    LeaveBalance::factory()->create([
+        'user_id' => $s->employee->id, 'leave_type_id' => $s->annual->id, 'year' => 2026,
+        'entitled_days' => 12, 'used_days' => 4,
+    ]);
+    $next = LeaveBalance::factory()->create(['user_id' => $s->employee->id, 'leave_type_id' => $s->annual->id, 'year' => 2027, 'entitled_days' => 12]);
+
+    app(UpdateLeaveBalance::class)->handle($s->hr, $next, 12, 1);
+    app(GenerateAnnualBalances::class)->handle(2027);
+
+    expect($next->refresh()->carried_over_days)->toBe(1.0);
 });

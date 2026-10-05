@@ -5,6 +5,7 @@ namespace App\Http\Requests\Workspaces;
 use App\Domain\Tasks\Enums\PaletteColor;
 use App\Domain\Workspaces\Enums\WorkspaceVisibility;
 use App\Domain\Workspaces\Services\WorkspaceKeyGenerator;
+use App\Http\Requests\Concerns\HidesInvisibleWorkspaces;
 use App\Models\Workspace;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -16,10 +17,7 @@ use Illuminate\Validation\Rule;
  */
 class UpdateWorkspaceRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
+    use HidesInvisibleWorkspaces;
 
     protected function prepareForValidation(): void
     {

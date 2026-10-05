@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Tasks;
 
+use App\Http\Requests\Concerns\HidesInvisibleWorkspaces;
 use App\Models\Task;
 use App\Models\Workspace;
 use App\Rules\RichTextDocument;
@@ -11,15 +12,13 @@ use Illuminate\Validation\Rule;
 
 /**
  * Create (POST /w/{key}/tugas) or partially update (PATCH /tugas/{task}) a task.
- * Ids are validated against the task's workspace. Authorization in the
- * controller (WorkspacePolicy::editTasks / TaskPolicy::update).
+ * Ids are validated against the task's workspace. Non-viewers get 404 before
+ * validation (HidesInvisibleWorkspaces); the specific ability is checked in
+ * the controller (WorkspacePolicy::editTasks / TaskPolicy::update).
  */
 class TaskRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
+    use HidesInvisibleWorkspaces;
 
     public function workspace(): Workspace
     {

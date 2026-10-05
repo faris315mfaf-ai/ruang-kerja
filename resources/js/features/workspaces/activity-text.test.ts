@@ -56,6 +56,27 @@ describe('describeActivity', () => {
             ),
         ).toBe('mengubah peran Sari menjadi Admin');
     });
+
+    it('describes project tracking events', () => {
+        expect(
+            describeActivity(
+                item('project.update_posted', {
+                    health: 'at_risk',
+                    decision_needed: true,
+                }),
+            ),
+        ).toBe(
+            'menulis update proyek (Berisiko) dan meminta keputusan Direksi',
+        );
+        expect(
+            describeActivity(item('milestone.completed', { name: 'Go-live' })),
+        ).toBe('menandai milestone “Go-live” selesai');
+        expect(
+            describeActivity(
+                item('project.update_requested', { recipient: 'Putri' }),
+            ),
+        ).toBe('meminta update proyek dari Putri');
+    });
 });
 
 describe('describeActivity (Sprint 6 events)', () => {

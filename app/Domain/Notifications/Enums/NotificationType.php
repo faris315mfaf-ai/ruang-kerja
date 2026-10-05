@@ -27,6 +27,13 @@ enum NotificationType: string
     case CheckInReminder = 'attendance.check_in_reminder';
     case CheckOutReminder = 'attendance.check_out_reminder';
 
+    // Projects (Sprint 9, PRD M10)
+    case ProjectUpdateReminder = 'project.update_reminder';
+    case ProjectUpdateRequested = 'project.update_requested';
+    case ProjectDirection = 'project.direction';
+    case ProjectDecisionNeeded = 'project.decision_needed';
+    case ProjectDecisionResolved = 'project.decision_resolved';
+
     // System (Sprint 8)
     case SystemAnnouncement = 'system.announcement';
     case SystemTest = 'system.test';
@@ -46,6 +53,11 @@ enum NotificationType: string
             self::RequestCanceled => 'Pengajuan dibatalkan',
             self::CheckInReminder => 'Pengingat check-in',
             self::CheckOutReminder => 'Pengingat check-out',
+            self::ProjectUpdateReminder => 'Pengingat update proyek',
+            self::ProjectUpdateRequested => 'Diminta update proyek',
+            self::ProjectDirection => 'Arahan Direksi',
+            self::ProjectDecisionNeeded => 'Butuh keputusan',
+            self::ProjectDecisionResolved => 'Keputusan diberikan',
             self::SystemAnnouncement => 'Pengumuman',
             self::SystemTest => 'Notifikasi uji',
         };
@@ -66,6 +78,8 @@ enum NotificationType: string
             self::RequestApproved, self::RequestRejected, self::RequestRevisionRequested => NotificationEvent::RequestDecided,
             self::CheckInReminder => NotificationEvent::CheckInReminder,
             self::CheckOutReminder => NotificationEvent::CheckOutReminder,
+            self::ProjectUpdateReminder, self::ProjectUpdateRequested, self::ProjectDirection,
+            self::ProjectDecisionNeeded, self::ProjectDecisionResolved => NotificationEvent::ProjectActivity,
             self::SystemAnnouncement, self::SystemTest => NotificationEvent::System,
         };
     }
@@ -91,6 +105,11 @@ enum NotificationType: string
             self::RequestRejected, self::RequestCanceled => 'x',
             self::RequestRevisionRequested => 'rotate',
             self::CheckInReminder, self::CheckOutReminder => 'alarm',
+            self::ProjectUpdateReminder => 'alarm',
+            self::ProjectUpdateRequested => 'rotate',
+            self::ProjectDirection => 'message',
+            self::ProjectDecisionNeeded => 'alert',
+            self::ProjectDecisionResolved => 'check-check',
             self::SystemAnnouncement => 'megaphone',
             self::SystemTest => 'bell',
         };
@@ -105,8 +124,11 @@ enum NotificationType: string
             self::Mention, self::SystemTest => 'primary',
             self::RequestSubmitted, self::SystemAnnouncement => 'info',
             self::RequestApproved => 'success',
-            self::TaskDueSoon, self::RequestRevisionRequested, self::CheckInReminder, self::CheckOutReminder => 'warning',
+            self::TaskDueSoon, self::RequestRevisionRequested, self::CheckInReminder, self::CheckOutReminder,
+            self::ProjectUpdateReminder, self::ProjectUpdateRequested => 'warning',
             self::TaskOverdue, self::RequestRejected => 'danger',
+            self::ProjectDirection, self::ProjectDecisionNeeded => 'info',
+            self::ProjectDecisionResolved => 'success',
             self::TaskAssigned, self::TaskCommented, self::RequestCanceled => 'neutral',
         };
     }
@@ -118,7 +140,8 @@ enum NotificationType: string
     public function requiresAction(): bool
     {
         return match ($this) {
-            self::TaskOverdue, self::RequestSubmitted, self::RequestRevisionRequested => true,
+            self::TaskOverdue, self::RequestSubmitted, self::RequestRevisionRequested,
+            self::ProjectUpdateRequested, self::ProjectDecisionNeeded => true,
             default => false,
         };
     }

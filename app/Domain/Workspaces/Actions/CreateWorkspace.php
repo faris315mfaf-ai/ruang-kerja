@@ -63,7 +63,9 @@ final class CreateWorkspace
                 'team_id' => $input['team_id'] ?? null,
             ]);
 
-            $this->membership->put($workspace, $owner->id, WorkspaceRole::Owner);
+            // Division/team workspaces follow the organization: their owner row is
+            // synced, so a former owner leaves once they are no longer head/member.
+            $this->membership->put($workspace, $owner->id, WorkspaceRole::Owner, synced: in_array($workspace->type, [WorkspaceType::Division, WorkspaceType::Team], true));
             $this->statuses->ensure($workspace);
 
             if ($workspace->team_id !== null) {

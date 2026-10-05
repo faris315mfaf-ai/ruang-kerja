@@ -4,6 +4,7 @@ namespace App\Domain\Attendance\Events;
 
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\AttendanceLog;
+use App\Models\Division;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -13,8 +14,8 @@ use Illuminate\Queue\SerializesModels;
 
 /**
  * A check-in/out was recorded. Live attendance boards of HR/Direksi
- * (`company.attendance`) and of the employee's Kepala Divisi
- * (`division.{id}.attendance`) update from it. No location or selfie data.
+ * (`company.attendance`) and of the Kepala Divisi of the employee's division
+ * or of any parent division (`division.{id}.attendance`) update from it. No location or selfie data.
  */
 final class AttendanceRecorded implements ShouldBroadcast, ShouldDispatchAfterCommit
 {
@@ -33,8 +34,10 @@ final class AttendanceRecorded implements ShouldBroadcast, ShouldDispatchAfterCo
         $channels = [new PrivateChannel('company.attendance')];
         $divisionId = $this->day->user->division_id;
 
-        if ($divisionId !== null) {
-            $channels[] = new PrivateChannel("division.{$divisionId}.attendance");
+        // The employee's division and every parent division: a Kepala Divisi
+        // also leads the sub-divisions below theirs.
+        foreach ($divisionId === null ? [] : Division::withAncestorIds($divisionId) as $id) {
+            $channels[] = new PrivateChannel("division.{$id}.attendance");
         }
 
         return $channels;

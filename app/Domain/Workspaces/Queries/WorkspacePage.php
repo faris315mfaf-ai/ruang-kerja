@@ -62,10 +62,12 @@ final class WorkspacePage
      */
     public function members(Workspace $workspace): array
     {
-        return array_values(WorkspaceMember::query()
-            ->where('workspace_id', $workspace->id)
-            ->with('user:id,name,avatar_url')
-            ->get()
+        // Uses eager-loaded `memberships.user` when present (lists of workspaces).
+        $memberships = $workspace->relationLoaded('memberships')
+            ? $workspace->memberships
+            : WorkspaceMember::query()->where('workspace_id', $workspace->id)->with('user:id,name,avatar_url')->get();
+
+        return array_values($memberships
             ->sortBy(fn (WorkspaceMember $member): string => (5 - $member->role->rank()).mb_strtolower($member->user->name))
             ->map(fn (WorkspaceMember $member): array => [
                 'id' => $member->user_id,

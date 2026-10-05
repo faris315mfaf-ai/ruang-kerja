@@ -7,11 +7,15 @@ use App\Models\ApprovalDelegation;
 use App\Models\User;
 
 /**
- * Ends a delegation. Steps already routed to the delegate stay with them.
+ * Ends a delegation. Steps waiting on the delegate because of it go back to the
+ * delegator (or to whoever the delegator delegates to otherwise).
  */
 final class DeleteApprovalDelegation
 {
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(
+        private readonly AuditLogger $audit,
+        private readonly RouteToDelegates $route,
+    ) {}
 
     public function handle(User $actor, ApprovalDelegation $delegation): void
     {
@@ -22,5 +26,7 @@ final class DeleteApprovalDelegation
         ], null, $actor);
 
         $delegation->delete();
+
+        $this->route->handle($delegation);
     }
 }

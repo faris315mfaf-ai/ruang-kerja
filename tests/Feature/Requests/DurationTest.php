@@ -38,6 +38,11 @@ it('uses the bound working-day calendar', function () {
         {
             return ['2026-10-12'];
         }
+
+        public function crossesMidnight(User $user, CarbonImmutable $date): bool
+        {
+            return false;
+        }
     });
 
     $period = app(RequestDurationCalculator::class)->compute($this->s->employee, RequestScenario::input($this->s->annual, ['start_date' => '2026-10-12', 'end_date' => '2026-10-13']));

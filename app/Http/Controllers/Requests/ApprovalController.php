@@ -31,7 +31,7 @@ use Inertia\Response;
  */
 class ApprovalController extends Controller
 {
-    private const array RELATIONS = ['request.leaveType', 'request.user.position', 'request.user.division', 'request.approvals.approver'];
+    private const array RELATIONS = ['request.leaveType', 'request.user.position', 'request.user.division', 'request.user.team', 'request.approvals.approver'];
 
     public function __construct(
         private readonly ApprovalQueue $queue,
@@ -46,7 +46,7 @@ class ApprovalController extends Controller
         $tab = $http->query('tab') === 'diputus' ? 'diputus' : 'menunggu';
 
         $items = $tab === 'menunggu'
-            ? $this->waitingSteps($user)->map(fn (RequestApproval $step): array => $this->queueItem($step))
+            ? $this->queueItems($this->waitingSteps($user))
             : $this->queue->decidedBy($user)->with(self::RELATIONS)->limit(50)->get()->map(fn (RequestApproval $step): array => [
                 ...$this->presenter->item($step->request),
                 'my_decision' => [
@@ -162,19 +162,26 @@ class ApprovalController extends Controller
     }
 
     /**
-     * @return array<string, mixed>
+     * Queue cards with the "colleagues absent" warning, computed for all cards
+     * at once (fixed number of queries).
+     *
+     * @param  Collection<int, RequestApproval>  $steps
+     * @return Collection<int, non-empty-array<string, mixed>>
      */
-    private function queueItem(RequestApproval $step): array
+    private function queueItems(Collection $steps): Collection
     {
-        $request = $step->request;
-        $colleagues = $request->leaveType->category->isAbsence()
-            ? $this->colleagues->around($request->user, $request->start_at, $request->end_at, $request->id)
-            : null;
+        $absences = $steps->map(fn (RequestApproval $step): EmployeeRequest => $step->request)
+            ->filter(fn (EmployeeRequest $request): bool => $request->leaveType->category->isAbsence());
+        $colleagues = $this->colleagues->forRequests($absences);
 
-        return [
-            ...$this->presenter->item($request),
-            'colleagues' => $colleagues === null || $colleagues['people'] === [] ? null : $colleagues,
-        ];
+        return $steps->map(function (RequestApproval $step) use ($colleagues): array {
+            $found = $colleagues[$step->request->id] ?? null;
+
+            return [
+                ...$this->presenter->item($step->request),
+                'colleagues' => $found === null || $found['people'] === [] ? null : $found,
+            ];
+        });
     }
 
     private function scopeDescription(User $user): string

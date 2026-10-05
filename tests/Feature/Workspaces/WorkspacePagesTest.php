@@ -8,6 +8,7 @@ use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 
 require_once __DIR__.'/../../Support/workspace-helpers.php';
@@ -123,4 +124,31 @@ it('serves quick-create options only for workspaces the user can edit', function
 
     expect($keys)->toContain('PLQ')->not->toContain('KEU')
         ->and($keys->count())->toBe(2);
+});
+
+it('serves quick-create options with a fixed number of queries (review #13)', function () {
+    $queries = function (int $extra): array {
+        foreach (range(1, $extra) as $i) {
+            $workspace = Workspace::factory()->ownedBy($this->owner)->create();
+            addMember($workspace, $this->member, WorkspaceRole::Member);
+            addMember($workspace, User::factory()->create(), WorkspaceRole::Viewer);
+        }
+
+        $this->actingAs($this->member)->getJson('/tugas/opsi-form')->assertOk(); // warm caches
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $count = count($this->actingAs($this->member)->getJson('/tugas/opsi-form')->assertOk()->json('workspaces'));
+        DB::disableQueryLog();
+
+        return ['queries' => count(DB::getQueryLog()), 'workspaces' => $count];
+    };
+
+    $few = $queries(1);
+    $many = $queries(5);
+
+    expect($many['workspaces'])->toBeGreaterThan($few['workspaces'])
+        ->and($many['queries'])->toBe($few['queries']);
+
+    $members = collect($this->actingAs($this->member)->getJson('/tugas/opsi-form')->json('workspaces'))->firstWhere('key', 'PLQ')['members'];
+    expect(collect($members)->pluck('id'))->toContain($this->owner->id, $this->member->id);
 });

@@ -24,7 +24,7 @@ class GenerateLeaveBalancesCommand extends Command
         }
 
         $result = $generate->handle($year);
-        $this->info("Saldo {$year}: {$result['created']} dibuat, {$result['skipped']} dilewati.");
+        $this->info("Saldo {$year}: {$result['created']} dibuat, {$result['completed']} dilengkapi, {$result['skipped']} dilewati.");
 
         return self::SUCCESS;
     }
