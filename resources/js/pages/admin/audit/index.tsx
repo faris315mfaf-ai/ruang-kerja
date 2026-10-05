@@ -15,6 +15,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { AdminPageHeader } from '@/features/admin/page-header';
 import { AuditDetailSheet } from '@/features/audit/audit-detail-sheet';
 import { AuditFilterBar } from '@/features/audit/audit-filters';
 import { actionLabel, changeSummary } from '@/features/audit/labels';
@@ -36,8 +37,8 @@ type Props = {
 };
 
 const AUDIT_URL = '/admin/audit';
-const HEAD = 'h-10 px-4 text-xs font-medium text-text-muted';
-const CELL = 'px-4 py-3';
+const HEAD = 'first:pl-6 last:pr-6';
+const CELL = 'py-3.5 first:pl-6 last:pr-6';
 
 /** Query string for the filters, without empty values. */
 function query(filters: AuditFilters): Record<string, string> {
@@ -94,17 +95,11 @@ export default function AuditLogIndex({
         <>
             <Head title="Audit log" />
 
-            <div className="space-y-5">
-                <header>
-                    <h1 className="text-xl leading-7 font-semibold text-text">
-                        Audit log
-                    </h1>
-                    <p className="text-sm text-text-muted">
-                        {formatNumber(logs.total)} catatan · perubahan data
-                        master, peran, dan aksi sensitif. Hanya bisa dibaca,
-                        tidak bisa diubah.
-                    </p>
-                </header>
+            <div className="flex flex-col gap-6">
+                <AdminPageHeader
+                    title="Audit log"
+                    description={`${formatNumber(logs.total)} catatan · perubahan data master, peran, dan aksi sensitif. Hanya bisa dibaca, tidak bisa diubah.`}
+                />
 
                 <AuditFilterBar
                     filters={filters}
@@ -122,7 +117,7 @@ export default function AuditLogIndex({
                 <div
                     aria-busy={loading}
                     className={cn(
-                        'overflow-hidden rounded-lg border border-border bg-surface shadow-card transition-opacity duration-180 ease-brand',
+                        'overflow-hidden rounded-panel border border-border bg-surface shadow-card transition-opacity duration-180 ease-brand motion-reduce:transition-none',
                         loading && 'opacity-60',
                     )}
                 >
@@ -159,11 +154,11 @@ export default function AuditLogIndex({
                                     </Button>
                                 ) : undefined
                             }
-                            className="m-4 border-0"
+                            className="m-5 border-0"
                         />
                     ) : (
                         <Table>
-                            <TableHeader className="bg-surface-2">
+                            <TableHeader>
                                 <TableRow className="hover:bg-transparent">
                                     <TableHead className={HEAD}>
                                         Waktu
@@ -188,7 +183,7 @@ export default function AuditLogIndex({
                                 {logs.data.map((row) => (
                                     <TableRow
                                         key={row.id}
-                                        className="cursor-pointer border-border hover:bg-surface-2/60"
+                                        className="cursor-pointer"
                                         onClick={() => setSelected(row)}
                                     >
                                         <TableCell
@@ -197,7 +192,7 @@ export default function AuditLogIndex({
                                             <span className="block text-text">
                                                 {formatDate(row.createdAt)}
                                             </span>
-                                            <span className="text-xs text-text-muted">
+                                            <span className="text-meta text-text-muted">
                                                 {formatTime(row.createdAt)}
                                             </span>
                                         </TableCell>
@@ -207,7 +202,6 @@ export default function AuditLogIndex({
                                                     <UserAvatar
                                                         name={row.actor.name}
                                                         src={row.actor.avatar}
-                                                        className="size-6 text-[10px]"
                                                     />
                                                     <span className="text-text">
                                                         {row.actor.name}
@@ -220,10 +214,10 @@ export default function AuditLogIndex({
                                             )}
                                         </TableCell>
                                         <TableCell className={CELL}>
-                                            <span className="block text-text">
+                                            <span className="block font-semibold text-text">
                                                 {actionLabel(row.action)}
                                             </span>
-                                            <span className="font-mono text-[11px] text-text-muted">
+                                            <span className="font-mono text-[12px] font-semibold text-text-muted">
                                                 {row.action}
                                             </span>
                                         </TableCell>
@@ -232,7 +226,7 @@ export default function AuditLogIndex({
                                         >
                                             {row.subject ? (
                                                 <>
-                                                    <span className="block text-xs text-text-muted">
+                                                    <span className="block text-meta text-text-muted">
                                                         {row.subject.typeLabel}
                                                     </span>
                                                     <span
@@ -267,7 +261,7 @@ export default function AuditLogIndex({
                                         <TableCell
                                             className={cn(
                                                 CELL,
-                                                'font-mono text-xs text-text-muted',
+                                                'font-mono text-[13px] font-semibold text-text-muted',
                                             )}
                                         >
                                             {row.ipAddress ?? '–'}
@@ -276,8 +270,7 @@ export default function AuditLogIndex({
                                             <Button
                                                 type="button"
                                                 variant="ghost"
-                                                size="icon"
-                                                className="size-8"
+                                                size="icon-sm"
                                                 aria-label={`Lihat detail ${actionLabel(row.action)}`}
                                                 onClick={(event) => {
                                                     event.stopPropagation();
@@ -294,7 +287,7 @@ export default function AuditLogIndex({
                     )}
 
                     {logs.total > 0 && (
-                        <div className="flex items-center justify-between border-t border-border px-4 py-2.5 text-[13px] text-text-muted">
+                        <div className="flex items-center justify-between border-t border-divider px-6 py-3 text-meta text-text-muted">
                             <span className="tabular-nums">
                                 {formatNumber(logs.from ?? 0)}–
                                 {formatNumber(logs.to ?? 0)} dari{' '}
@@ -348,8 +341,7 @@ function PageLink({
             <Button
                 type="button"
                 variant="outline"
-                size="icon"
-                className="size-8"
+                size="icon-sm"
                 disabled
                 aria-label={label}
             >
@@ -359,7 +351,7 @@ function PageLink({
     }
 
     return (
-        <Button asChild variant="outline" size="icon" className="size-8">
+        <Button asChild variant="outline" size="icon-sm">
             <Link href={href} preserveScroll preserveState aria-label={label}>
                 {children}
             </Link>

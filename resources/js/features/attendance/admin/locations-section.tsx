@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import locationRoutes from '@/routes/admin/attendance/locations';
 import { LocationPickerMap } from '../map/lazy';
 import { SectionCard } from './section-card';
@@ -129,7 +129,7 @@ export function LocationsSection({ locations, geofence }: Props) {
                 </Button>
             }
         >
-            <div className="grid gap-4 p-4 xl:grid-cols-[230px_minmax(0,1fr)_340px]">
+            <div className="grid gap-5 p-6 md:px-7 xl:grid-cols-[240px_minmax(0,1fr)_340px]">
                 <div className="space-y-2">
                     <ul className="space-y-2" aria-label="Daftar lokasi">
                         {locations.map((location) => (
@@ -143,22 +143,23 @@ export function LocationsSection({ locations, geofence }: Props) {
                                             : undefined
                                     }
                                     className={cn(
-                                        'flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                                        'flex min-h-16 w-full items-start gap-3 rounded-lg border px-3.5 py-3 text-left transition-colors duration-120 ease-brand',
+                                        focusRing,
                                         selected === location.id
-                                            ? 'border-primary/40 bg-primary/8'
+                                            ? 'border-link bg-link-soft'
                                             : 'border-border hover:bg-surface-2',
                                     )}
                                 >
                                     <Building2
-                                        className="mt-0.5 size-4 shrink-0 text-text-muted"
+                                        className="mt-0.5 size-5 shrink-0 text-link"
                                         strokeWidth={1.75}
                                         aria-hidden
                                     />
                                     <span className="min-w-0 flex-1">
-                                        <span className="block truncate text-[13px] font-medium text-text">
+                                        <span className="block truncate text-[16px] font-semibold text-text">
                                             {location.name}
                                         </span>
-                                        <span className="block text-xs text-text-muted">
+                                        <span className="block text-meta text-text-muted">
                                             {location.radiusM} m ·{' '}
                                             {location.employeesCount} karyawan
                                         </span>
@@ -180,18 +181,18 @@ export function LocationsSection({ locations, geofence }: Props) {
                             </li>
                         ))}
                         {selected === NEW && (
-                            <li className="rounded-lg border border-dashed border-primary/50 px-3 py-2.5 text-[13px] text-primary">
+                            <li className="rounded-lg border border-dashed border-link px-3.5 py-3 text-[15px] font-semibold text-link">
                                 Lokasi baru
                             </li>
                         )}
                     </ul>
-                    <p className="rounded-lg bg-surface-2 p-3 text-xs leading-5 text-text-muted">
+                    <p className="rounded-[18px] bg-background p-4 text-meta text-text-muted">
                         Karyawan WFH dan Lapangan tetap check-in dengan GPS +
                         selfie, tanpa batas radius.
                     </p>
                 </div>
 
-                <div className="overflow-hidden rounded-lg border border-border">
+                <div className="overflow-hidden rounded-[18px] border border-border">
                     {validPoint ? (
                         <LocationPickerMap
                             latitude={latitude}
@@ -201,11 +202,11 @@ export function LocationsSection({ locations, geofence }: Props) {
                             className="h-[360px] w-full"
                         />
                     ) : (
-                        <div className="flex h-[360px] items-center justify-center bg-surface-2 text-sm text-text-muted">
+                        <div className="flex h-[360px] items-center justify-center bg-surface-2 text-[15px] text-text-muted">
                             Koordinat tidak valid
                         </div>
                     )}
-                    <p className="border-t border-border px-3 py-2 text-xs text-text-muted">
+                    <p className="border-t border-divider px-4 py-2.5 text-meta text-text-muted">
                         Seret pin atau klik peta untuk memindahkan titik pusat.
                     </p>
                 </div>
@@ -272,7 +273,7 @@ export function LocationsSection({ locations, geofence }: Props) {
                     <div className="space-y-1.5">
                         <div className="flex items-center justify-between">
                             <Label htmlFor="location-radius">Radius</Label>
-                            <span className="text-sm font-medium text-text tnum">
+                            <span className="text-[15px] font-bold text-text tnum">
                                 {form.data.radius_m} m
                             </span>
                         </div>
@@ -288,21 +289,21 @@ export function LocationsSection({ locations, geofence }: Props) {
                             }
                             className="w-full accent-primary"
                         />
-                        <div className="flex justify-between text-[11px] text-text-subtle">
+                        <div className="flex justify-between text-[13px] text-text-subtle">
                             <span>{geofence.minRadius} m</span>
                             <span>{geofence.maxRadius} m</span>
                         </div>
                         <InputError message={form.errors.radius_m} />
                     </div>
-                    <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
+                    <div className="flex items-center justify-between gap-3 border-t border-divider pt-4">
                         <div>
                             <p
-                                className="text-[13px] font-medium text-text"
+                                className="text-[15px] font-semibold text-text"
                                 id="location-active-label"
                             >
                                 Lokasi aktif
                             </p>
-                            <p className="text-xs text-text-muted">
+                            <p className="text-meta text-text-muted">
                                 Nonaktifkan untuk menutup check-in di sini.
                             </p>
                         </div>

@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDate, formatNumber } from '@/lib/format';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { index, show } from '@/routes/admin/employees';
 import { RoleBadges, StatusBadge, WorkModeBadge } from './employee-badges';
 import { STATUS_LABELS } from './labels';
@@ -79,9 +79,9 @@ export function EmployeesMobile({
     ];
 
     return (
-        <div className="space-y-4">
-            <p className="text-[13px] text-text-muted">
-                <span className="font-medium text-text tnum">
+        <div className="flex flex-col gap-4">
+            <p className="text-[15px] text-text-muted">
+                <span className="font-semibold text-text tnum">
                     {formatNumber(counts.active)}
                 </span>{' '}
                 aktif ·{' '}
@@ -92,7 +92,7 @@ export function EmployeesMobile({
             {can.manage && (
                 <p
                     role="note"
-                    className="flex items-start gap-3 rounded-lg border border-info/30 bg-info-soft px-4 py-3 text-sm text-text"
+                    className="flex items-start gap-3 rounded-[18px] bg-info-soft px-4 py-3 text-[15px] leading-[22px] text-text"
                 >
                     <Monitor
                         aria-hidden
@@ -107,7 +107,7 @@ export function EmployeesMobile({
             <div className="relative">
                 <Search
                     aria-hidden
-                    className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-text-subtle"
+                    className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-text-muted"
                 />
                 <Input
                     type="search"
@@ -115,7 +115,7 @@ export function EmployeesMobile({
                     onChange={(event) => changeSearch(event.target.value)}
                     placeholder="Cari nama, email, atau jabatan"
                     aria-label="Cari karyawan"
-                    className="h-11 pl-11 text-base"
+                    className="pl-11 text-[17px]"
                 />
             </div>
 
@@ -131,7 +131,10 @@ export function EmployeesMobile({
             {loading && items.length === 0 ? (
                 <div className="space-y-2" aria-busy>
                     {Array.from({ length: 5 }, (_, i) => (
-                        <Skeleton key={i} className="h-16 w-full" />
+                        <Skeleton
+                            key={i}
+                            className="h-[72px] w-full rounded-[18px]"
+                        />
                     ))}
                 </div>
             ) : items.length === 0 ? (
@@ -143,7 +146,7 @@ export function EmployeesMobile({
             ) : (
                 <ul
                     className={cn(
-                        '-mx-4 divide-y divide-border border-y border-border bg-surface transition-opacity',
+                        'divide-y divide-divider overflow-hidden rounded-[22px] border border-border bg-surface transition-opacity duration-180 ease-brand motion-reduce:transition-none',
                         loading && 'opacity-60',
                     )}
                     aria-busy={loading}
@@ -153,7 +156,11 @@ export function EmployeesMobile({
                             <button
                                 type="button"
                                 onClick={() => setSelected(employee)}
-                                className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left active:bg-surface-2"
+                                className={cn(
+                                    'flex min-h-[72px] w-full items-center gap-3 px-4 py-3 text-left active:bg-surface-2',
+                                    focusRing,
+                                    'focus-visible:ring-inset',
+                                )}
                             >
                                 <UserAvatar
                                     name={employee.name}
@@ -161,10 +168,10 @@ export function EmployeesMobile({
                                     className="size-10"
                                 />
                                 <span className="min-w-0 flex-1">
-                                    <span className="block truncate text-[15px] font-medium text-text">
+                                    <span className="block truncate text-[17px] leading-6 font-semibold text-text">
                                         {employee.name}
                                     </span>
-                                    <span className="block truncate text-[13px] text-text-muted">
+                                    <span className="block truncate text-[15px] leading-[22px] text-text-muted">
                                         {[
                                             employee.position?.name,
                                             employee.division?.name,
@@ -174,10 +181,13 @@ export function EmployeesMobile({
                                     </span>
                                 </span>
                                 <span className="flex shrink-0 flex-col items-end gap-1">
-                                    <WorkModeBadge mode={employee.work_mode} />
+                                    <WorkModeBadge
+                                        mode={employee.work_mode}
+                                        className="h-[26px] px-2.5 text-[13px]"
+                                    />
                                     <StatusBadge
                                         status={employee.status}
-                                        className="text-xs"
+                                        className="h-[26px] gap-1.5 px-2.5 text-[13px]"
                                     />
                                 </span>
                             </button>
@@ -189,7 +199,7 @@ export function EmployeesMobile({
             {meta.current_page < meta.last_page && items.length > 0 && (
                 <Button
                     variant="outline"
-                    className="h-11 w-full"
+                    className="w-full"
                     disabled={loadingMore}
                     onClick={loadMore}
                 >
@@ -242,13 +252,13 @@ function ProfileSheet({
                 employee && (
                     <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-3">
-                            <Button variant="outline" className="h-11" asChild>
+                            <Button variant="outline" size="lg" asChild>
                                 <a href={`mailto:${employee.email}`}>
                                     <Mail />
                                     Hubungi via email
                                 </a>
                             </Button>
-                            <Button className="h-11" asChild>
+                            <Button size="lg" asChild>
                                 <Link href={show(employee.id)}>
                                     <UserRound />
                                     Lihat profil
@@ -256,7 +266,7 @@ function ProfileSheet({
                             </Button>
                         </div>
                         {canManage && (
-                            <p className="flex items-center justify-center gap-1.5 text-xs text-text-muted">
+                            <p className="flex items-center justify-center gap-1.5 text-meta text-text-muted">
                                 <Monitor aria-hidden className="size-3.5" />
                                 Ubah data, divisi, atau peran lewat desktop.
                             </p>
@@ -271,13 +281,13 @@ function ProfileSheet({
                         <UserAvatar
                             name={employee.name}
                             src={employee.avatar_url}
-                            className="size-14 text-base"
+                            className="size-14 text-[18px]"
                         />
                         <StatusBadge status={employee.status} />
                     </div>
-                    <dl className="divide-y divide-border border-t border-border text-[15px]">
+                    <dl className="divide-y divide-divider border-t border-divider text-[16px]">
                         <ProfileRow label="Email">
-                            <span className="font-mono text-[13px] break-all">
+                            <span className="font-mono text-[14px] font-medium break-all">
                                 {employee.email}
                             </span>
                         </ProfileRow>
@@ -287,7 +297,7 @@ function ProfileSheet({
                                     <UserAvatar
                                         name={employee.manager.name}
                                         src={employee.manager.avatar_url}
-                                        className="size-6"
+                                        className="size-7"
                                     />
                                     {employee.manager.name}
                                 </span>

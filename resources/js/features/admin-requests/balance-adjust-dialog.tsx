@@ -101,7 +101,7 @@ export function BalanceAdjustDialog({
                                 form.setData('delta_days', e.target.value)
                             }
                         />
-                        <p className="text-[13px] text-text-muted tnum">
+                        <p className="text-meta text-text-muted tnum">
                             Sisa sekarang {formatDays(balance.available)} hari
                             {preview !== null &&
                                 ` → ${formatDays(preview)} hari`}
@@ -125,7 +125,7 @@ export function BalanceAdjustDialog({
                 </form>
 
                 <section aria-label="Riwayat penyesuaian" className="space-y-2">
-                    <h3 className="text-[13px] font-medium text-text-muted">
+                    <h3 className="text-overline text-text-muted">
                         Riwayat penyesuaian
                     </h3>
                     {!loaded ? (
@@ -134,15 +134,15 @@ export function BalanceAdjustDialog({
                             <Skeleton className="h-4 w-2/3" />
                         </div>
                     ) : loaded.items.length === 0 ? (
-                        <p className="text-[13px] text-text-subtle">
+                        <p className="text-meta text-text-subtle">
                             Belum ada penyesuaian.
                         </p>
                     ) : (
-                        <ul className="divide-y divide-border rounded-lg border border-border text-[13px]">
+                        <ul className="divide-y divide-divider rounded-lg border border-border text-meta">
                             {loaded.items.map((item) => (
                                 <li
                                     key={item.id}
-                                    className="flex items-start gap-3 px-3 py-2"
+                                    className="flex items-start gap-3 px-4 py-3"
                                 >
                                     <span
                                         className={cn(

@@ -12,6 +12,8 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 - Shell: menu bar kaca 64px, Dock dengan ubin putih & aktif bergradien, **Rail 96px untuk tablet** (768–1023px, menggantikan Dock tanpa magnifikasi), tab bar kapsul 70px dengan pil gradien, app bar ponsel berjudul besar. Konten desktop di kolom 1280px (1480px untuk board & tabel).
 - Warna non-CSS (manifest PWA, halaman offline, email, `config/branding.php`) mengikuti Arus.
 - **Inbox, Cari & command palette** sesuai DInbox / MInbox / MNotifCenter: pil saring (status · jenis · arsip) menggantikan tab + menu corong, kartu daftar dengan grup hari dan ubin ikon 44px, panel detail melekat, app bar ponsel memakai `appBarIconButton`, toast notifikasi realtime bergaya inverse; layar Cari ponsel memakai gaya daftar MInbox.
+- Halaman Admin (organisasi, karyawan + profil + impor, absensi + penugasan + kiosk, jenis pengajuan & alur, saldo cuti, audit log, dokumentasi) bergaya Arus: header overline + judul display, `Panel`/tabel berkepala `bg-background`, `Badge` status/label, `TabNav`, `NativeSelect` 44px (`features/admin`).
+- **Pengajuan & Persetujuan** bergaya Arus (SPengajuan, SFormPengajuan, DPersetujuan, MS*/MPersetujuan): kartu saldo sorotan, daftar kartu + panel detail dengan jejak persetujuan, ubin jenis & kartu Ringkasan di formulir, antrean beravatar dengan filter jenis dan tombol Tolak/Setujui di kartu ponsel. Breadcrumb Persetujuan tidak lagi di bawah Absensi.
 
 ### Ditambahkan
 - `/dev/komponen` (lokal, Super Admin): contoh hidup semua komponen Arus. Panduan agent modul: `docs/design/ARUS-GUIDE.md`.

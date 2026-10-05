@@ -1,15 +1,17 @@
+import type { BadgeTone } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { roleLabel } from '@/lib/roles';
-import { cn } from '@/lib/utils';
 import type { UserStatus, WorkMode } from '@/types/auth';
 import { STATUS_LABELS, WORK_MODE_LABELS } from './labels';
 
-const WORK_MODE_TONES: Record<WorkMode, string> = {
-    office: 'bg-surface-2 text-text-muted',
-    hybrid: 'bg-info-soft text-info',
-    wfh: 'bg-success-soft text-success',
-    field: 'bg-warning-soft text-warning',
+const WORK_MODE_TONES: Record<WorkMode, BadgeTone> = {
+    office: 'neutral',
+    hybrid: 'info',
+    wfh: 'success',
+    field: 'warning',
 };
 
+/** Komponen label chip ("Kantor", "WFH"). */
 export function WorkModeBadge({
     mode,
     className,
@@ -18,15 +20,13 @@ export function WorkModeBadge({
     className?: string;
 }) {
     return (
-        <span
-            className={cn(
-                'inline-flex h-5 items-center rounded-md px-2 text-xs font-medium whitespace-nowrap',
-                WORK_MODE_TONES[mode],
-                className,
-            )}
+        <Badge
+            variant="label"
+            tone={WORK_MODE_TONES[mode]}
+            className={className}
         >
             {WORK_MODE_LABELS[mode]}
-        </span>
+        </Badge>
     );
 }
 
@@ -39,22 +39,14 @@ export function StatusBadge({
     className?: string;
 }) {
     return (
-        <span
-            className={cn(
-                'inline-flex items-center gap-1.5 text-[13px] whitespace-nowrap',
-                status === 'active' ? 'text-success' : 'text-text-muted',
-                className,
-            )}
+        <Badge
+            variant="status"
+            tone={status === 'active' ? 'success' : 'neutral'}
+            dot
+            className={className}
         >
-            <span
-                aria-hidden
-                className={cn(
-                    'size-1.5 rounded-full',
-                    status === 'active' ? 'bg-success' : 'bg-text-subtle',
-                )}
-            />
             {STATUS_LABELS[status]}
-        </span>
+        </Badge>
     );
 }
 
@@ -73,8 +65,8 @@ export function RoleBadges({ roles }: { roles: readonly string[] }) {
     }
 
     return (
-        <span className="inline-flex h-5 items-center rounded-md border border-border px-2 text-xs whitespace-nowrap text-text-muted">
+        <Badge variant="outline">
             {sortRoles(roles).map(roleLabel).join(' · ')}
-        </span>
+        </Badge>
     );
 }

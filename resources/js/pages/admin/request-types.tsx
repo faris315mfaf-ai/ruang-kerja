@@ -1,7 +1,9 @@
 import { Head, router } from '@inertiajs/react';
-import { MoreHorizontal, Plus } from 'lucide-react';
+import { GitBranch, MoreHorizontal, Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { DesktopOnlyNotice } from '@/components/desktop-only-notice';
+import { EmptyState } from '@/components/empty-state';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -9,6 +11,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { AdminPageHeader } from '@/features/admin/page-header';
 import { FlowEditor } from '@/features/admin-requests/flow-editor';
 import { flowSummary } from '@/features/admin-requests/flow-summary';
 import { LeaveTypeDialog } from '@/features/admin-requests/leave-type-dialog';
@@ -20,7 +23,7 @@ import { ConfirmDialog } from '@/features/requests/confirm-dialog';
 import { ProvisionalBadge } from '@/features/requests/form-fields';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { formatDays } from '@/lib/requests';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { destroy as destroyType } from '@/routes/admin/leave-types';
 import { index } from '@/routes/admin/request-types';
 
@@ -44,7 +47,7 @@ export default function RequestTypes({
     if (breakpoint === 'mobile') {
         return (
             <>
-                <Head title="Jenis pengajuan & alur" />
+                <Head title="Jenis pengajuan & alur persetujuan" />
                 <DesktopOnlyNotice feature="Jenis pengajuan & alur persetujuan" />
             </>
         );
@@ -68,43 +71,42 @@ export default function RequestTypes({
 
     return (
         <>
-            <Head title="Jenis pengajuan & alur" />
-            <div className="mx-auto max-w-[1200px] space-y-6">
-                <header className="flex items-start justify-between gap-4">
-                    <div>
-                        <h1 className="text-xl leading-7 font-semibold text-text">
-                            Jenis pengajuan & alur persetujuan
-                        </h1>
-                        <p className="text-sm text-text-muted">
-                            Atur siapa yang menyetujui setiap jenis pengajuan,
-                            dan dalam urutan apa.
-                        </p>
-                    </div>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setDialog({ type: null })}
-                    >
-                        <Plus aria-hidden /> Jenis baru
-                    </Button>
-                </header>
+            <Head title="Jenis pengajuan & alur persetujuan" />
+            <div className="flex flex-col gap-6">
+                <AdminPageHeader
+                    overline="Admin · Pengajuan"
+                    title="Jenis pengajuan & alur persetujuan"
+                    description="Atur siapa yang menyetujui setiap jenis pengajuan, dan dalam urutan apa."
+                    actions={
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setDialog({ type: null })}
+                        >
+                            <Plus aria-hidden /> Jenis baru
+                        </Button>
+                    }
+                />
 
-                <div className="grid items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+                <div className="grid items-start gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
                     <nav
                         aria-label="Jenis pengajuan"
-                        className="overflow-hidden rounded-xl border border-border bg-surface shadow-card"
+                        className="overflow-hidden rounded-panel border border-border bg-surface pt-5 pb-2 shadow-card"
                     >
-                        <p className="flex justify-between border-b border-border bg-surface-2/60 px-4 py-2.5 text-[13px] text-text-muted">
-                            Jenis <span className="tnum">{types.length}</span>
+                        <p className="flex items-baseline justify-between px-5 pb-3 text-h3">
+                            Jenis
+                            <span className="text-meta font-semibold text-text-muted tnum">
+                                {types.length}
+                            </span>
                         </p>
-                        <ul>
+                        <ul className="border-t border-divider">
                             {types.map((item) => {
                                 const active = item.id === type?.id;
 
                                 return (
                                     <li
                                         key={item.id}
-                                        className="border-b border-border last:border-0"
+                                        className="border-b border-divider last:border-0"
                                     >
                                         <button
                                             type="button"
@@ -113,33 +115,43 @@ export default function RequestTypes({
                                             }
                                             onClick={() => choose(item.id)}
                                             className={cn(
-                                                'w-full px-4 py-3 text-left hover:bg-surface-2/60',
+                                                'flex min-h-[72px] w-full flex-col justify-center gap-0.5 px-5 py-3 text-left transition-colors duration-120 ease-brand hover:bg-background',
+                                                focusRing,
+                                                'focus-visible:ring-inset',
                                                 active &&
-                                                    'bg-brand-50/60 shadow-[inset_3px_0_0_var(--primary)] dark:bg-brand-500/10',
+                                                    'bg-link-soft shadow-[inset_3px_0_0_var(--primary)] hover:bg-link-soft',
                                             )}
                                         >
                                             <span className="flex items-center justify-between gap-2">
-                                                <span className="flex items-center gap-2 text-sm font-medium text-text">
+                                                <span className="flex min-w-0 flex-wrap items-center gap-2 text-[16px] font-semibold">
                                                     {item.name}
                                                     {active && dirty && (
-                                                        <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs font-normal text-warning">
+                                                        <Badge
+                                                            variant="status"
+                                                            tone="warning"
+                                                            className="h-6 px-2 text-[13px]"
+                                                        >
                                                             Belum disimpan
-                                                        </span>
+                                                        </Badge>
                                                     )}
                                                     {item.is_provisional_default && (
                                                         <ProvisionalBadge />
                                                     )}
                                                     {!item.is_active && (
-                                                        <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-normal text-text-muted">
+                                                        <Badge
+                                                            variant="status"
+                                                            tone="neutral"
+                                                            className="h-6 px-2 text-[13px]"
+                                                        >
                                                             Nonaktif
-                                                        </span>
+                                                        </Badge>
                                                     )}
                                                 </span>
-                                                <span className="font-mono text-xs text-text-muted">
+                                                <span className="font-mono text-[13px] font-semibold text-text-muted">
                                                     {item.code}
                                                 </span>
                                             </span>
-                                            <span className="mt-0.5 block truncate text-[13px] text-text-muted">
+                                            <span className="block truncate text-meta text-text-muted">
                                                 {item.annual_quota_days !== null
                                                     ? `${formatDays(item.annual_quota_days)} hari/tahun · `
                                                     : ''}
@@ -156,8 +168,8 @@ export default function RequestTypes({
                     </nav>
 
                     {type ? (
-                        <div className="relative">
-                            <div className="absolute top-3 right-3 z-10">
+                        <div className="relative min-w-0">
+                            <div className="absolute top-5 right-5 z-10">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button
@@ -194,9 +206,11 @@ export default function RequestTypes({
                             />
                         </div>
                     ) : (
-                        <p className="rounded-xl border border-dashed border-border-strong p-10 text-center text-sm text-text-muted">
-                            Belum ada jenis pengajuan. Buat jenis baru.
-                        </p>
+                        <EmptyState
+                            icon={GitBranch}
+                            title="Belum ada jenis pengajuan"
+                            description="Buat jenis baru untuk mengatur alur persetujuannya."
+                        />
                     )}
                 </div>
             </div>

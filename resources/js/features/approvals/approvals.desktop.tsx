@@ -1,12 +1,12 @@
-import { Link, router } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { CheckCheck } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { EmptyState } from '@/components/empty-state';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { TabNav } from '@/components/ui/tabs';
 import { CategoryBadge, TonePill } from '@/features/requests/badges';
-import { RequestDetailCard } from '@/features/requests/request-detail-card';
 import { EmptyDetail } from '@/features/requests/request-parts';
 import { formatRelative } from '@/lib/format';
 import {
@@ -15,34 +15,119 @@ import {
     formatRequestPeriod,
     stepProgress,
 } from '@/lib/requests';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { bulk, index } from '@/routes/approvals';
-import type { RequestDetail } from '@/types/requests';
+import type {
+    RequestCategory,
+    RequestDetail,
+    RequestItem,
+} from '@/types/requests';
+import { ApprovalDetailCard } from './approval-detail';
 import type { ApprovalTab, ApprovalsProps } from './approvals-types';
-import { DecisionButtons, DecisionNote } from './decision-controls';
 import { DelegationDialog } from './delegation-dialog';
 import { useDecision } from './use-decision';
 
 function DecisionPanel({ request }: { request: RequestDetail }) {
     const decision = useDecision(request.id);
 
+    return <ApprovalDetailCard request={request} decision={decision} />;
+}
+
+/** "Semua · 5", "Cuti · 2" … from the categories present on the page. */
+function categoryFilters(items: RequestItem[]) {
+    const seen = new Map<RequestCategory, { label: string; count: number }>();
+
+    for (const item of items) {
+        const current = seen.get(item.type.category);
+        seen.set(item.type.category, {
+            label: item.type.category_label,
+            count: (current?.count ?? 0) + 1,
+        });
+    }
+
+    return [...seen.entries()].map(([value, info]) => ({ value, ...info }));
+}
+
+function QueueCard({
+    item,
+    waiting,
+    active,
+    checked,
+    onCheck,
+    onSelect,
+}: {
+    item: RequestItem;
+    waiting: boolean;
+    active: boolean;
+    checked: boolean;
+    onCheck: (value: boolean) => void;
+    onSelect: () => void;
+}) {
+    const progress = stepProgress(item);
+
     return (
-        <RequestDetailCard
-            request={request}
-            showRequester
-            statusLabel={request.can.decide ? 'Menunggu Anda' : undefined}
-            footer={
-                request.can.decide ? (
-                    <div className="space-y-4">
-                        <DecisionNote
-                            decision={decision}
-                            requesterName={request.user.name}
+        <div
+            className={cn(
+                'flex items-center rounded-card border bg-surface transition-[border-color,box-shadow] duration-120 ease-brand',
+                active
+                    ? 'border-primary shadow-card ring-4 ring-ring/40'
+                    : 'border-border shadow-card hover:border-border-strong',
+            )}
+        >
+            {waiting && (
+                <span className="flex w-12 shrink-0 justify-center self-stretch pl-2">
+                    <span className="flex items-center">
+                        <Checkbox
+                            aria-label={`Pilih pengajuan ${item.user.name}`}
+                            checked={checked}
+                            onCheckedChange={(value) => onCheck(value === true)}
                         />
-                        <DecisionButtons decision={decision} />
-                    </div>
-                ) : undefined
-            }
-        />
+                    </span>
+                </span>
+            )}
+            <button
+                type="button"
+                onClick={onSelect}
+                aria-pressed={active}
+                className={cn(
+                    'flex min-w-0 flex-1 items-center gap-3.5 rounded-card p-[18px] text-left',
+                    waiting && 'pl-2',
+                    focusRing,
+                )}
+            >
+                <UserAvatar
+                    name={item.user.name}
+                    src={item.user.avatar}
+                    className="size-12 text-[16px]"
+                />
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="truncate text-[17px] leading-6 font-bold text-text">
+                        {item.user.name}
+                    </span>
+                    <span className="text-[15px] leading-[22px] text-text-muted">
+                        {formatRequestPeriod(item)}
+                        {formatRequestDuration(item) !== '—' &&
+                            ` · ${formatRequestDuration(item)}`}
+                    </span>
+                </span>
+                <span className="flex shrink-0 flex-col items-end gap-1.5">
+                    <CategoryBadge type={item.type} className="h-7 px-2.5" />
+                    {waiting ? (
+                        <span className="text-[14px] font-semibold text-text-muted">
+                            {progress ? `Langkah ${progress} · ` : ''}
+                            {formatRelative(item.submitted_at)}
+                        </span>
+                    ) : item.my_decision ? (
+                        <TonePill
+                            tone={approvalTone[item.my_decision.status]}
+                            className="h-7 px-2.5 text-[14px]"
+                        >
+                            {item.my_decision.status_label}
+                        </TonePill>
+                    ) : null}
+                </span>
+            </button>
+        </div>
     );
 }
 
@@ -56,8 +141,18 @@ export function ApprovalsDesktop({
 }: ApprovalsProps) {
     const [checked, setChecked] = useState<string[]>([]);
     const [processing, setProcessing] = useState(false);
+    const [category, setCategory] = useState<RequestCategory | 'semua'>(
+        'semua',
+    );
     const waiting = tab === 'menunggu';
-    const allChecked = items.length > 0 && checked.length === items.length;
+    const filters = useMemo(() => categoryFilters(items), [items]);
+    const visible =
+        category === 'semua'
+            ? items
+            : items.filter((item) => item.type.category === category);
+    const allChecked =
+        visible.length > 0 &&
+        visible.every((item) => checked.includes(item.id));
 
     const select = (id: string) =>
         router.get(
@@ -90,279 +185,172 @@ export function ApprovalsDesktop({
             value ? [...current, id] : current.filter((item) => item !== id),
         );
 
+    const pickCategory = (value: RequestCategory | 'semua') => {
+        setCategory(value);
+        setChecked((current) =>
+            current.filter((id) =>
+                items.some(
+                    (item) =>
+                        item.id === id &&
+                        (value === 'semua' || item.type.category === value),
+                ),
+            ),
+        );
+    };
+
     return (
-        <div className="mx-auto max-w-[1280px] space-y-6">
-            <header className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                    <h1 className="text-xl leading-7 font-semibold text-text">
-                        Persetujuan
-                    </h1>
-                    <p className="text-sm text-text-muted">{scope}</p>
+        <div className="flex flex-col gap-6">
+            <header className="flex flex-wrap items-end justify-between gap-4">
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-display text-text">Persetujuan</h1>
+                    <p className="text-body-lg text-text-muted">
+                        {counts.menunggu} menunggu Anda · {scope}
+                    </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-3">
                     <DelegationDialog delegations={delegations} />
-                    <nav
-                        aria-label="Tab persetujuan"
-                        className="inline-flex rounded-lg bg-surface-2 p-1"
-                    >
-                        {(['menunggu', 'diputus'] as ApprovalTab[]).map(
-                            (value) => (
-                                <Link
-                                    key={value}
-                                    href={index({
-                                        query:
-                                            value === 'menunggu'
-                                                ? {}
-                                                : { tab: value },
-                                    })}
-                                    aria-current={
-                                        tab === value ? 'page' : undefined
-                                    }
-                                    className={cn(
-                                        'inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-sm',
-                                        tab === value
-                                            ? 'bg-surface font-medium text-text shadow-card'
-                                            : 'text-text-muted hover:text-text',
-                                    )}
-                                >
-                                    {value === 'menunggu'
-                                        ? 'Menunggu'
-                                        : 'Sudah diputus'}
-                                    {value === 'menunggu' &&
-                                        counts.menunggu > 0 && (
-                                            <span className="text-xs tnum">
-                                                {counts.menunggu}
-                                            </span>
-                                        )}
-                                </Link>
-                            ),
-                        )}
-                    </nav>
+                    {waiting && checked.length > 0 && (
+                        <Button
+                            type="button"
+                            disabled={processing}
+                            onClick={approveChecked}
+                        >
+                            Setujui {checked.length} pengajuan
+                        </Button>
+                    )}
                 </div>
             </header>
 
-            <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_440px]">
-                {items.length === 0 ? (
-                    <EmptyState
-                        icon={CheckCheck}
-                        title={
-                            waiting
-                                ? 'Tidak ada yang menunggu keputusan Anda'
-                                : 'Belum ada keputusan'
-                        }
-                        description={
-                            waiting
-                                ? 'Pengajuan baru dari tim Anda akan muncul di sini.'
-                                : 'Pengajuan yang Anda setujui atau tolak tampil di sini.'
-                        }
-                    />
-                ) : (
-                    <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-surface shadow-card">
-                        {waiting && checked.length > 0 && (
-                            <div className="flex items-center justify-between gap-3 border-b border-border bg-brand-50/70 px-4 py-2.5 dark:bg-brand-500/10">
-                                <p className="text-sm font-medium text-text">
-                                    {checked.length} dipilih
-                                </p>
-                                <div className="flex gap-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setChecked([])}
-                                    >
-                                        Batal pilih
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        disabled={processing}
-                                        onClick={approveChecked}
-                                    >
-                                        Setujui {checked.length} pengajuan
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead className="text-left text-[13px] text-text-muted">
-                                    <tr className="border-b border-border">
-                                        {waiting && (
-                                            <th
-                                                scope="col"
-                                                className="w-10 px-4 py-2.5"
-                                            >
-                                                <Checkbox
-                                                    aria-label="Pilih semua"
-                                                    checked={allChecked}
-                                                    onCheckedChange={(value) =>
-                                                        setChecked(
-                                                            value === true
-                                                                ? items.map(
-                                                                      (item) =>
-                                                                          item.id,
-                                                                  )
-                                                                : [],
-                                                        )
-                                                    }
-                                                />
-                                            </th>
-                                        )}
-                                        <th
-                                            scope="col"
-                                            className="px-3 py-2.5 font-normal"
-                                        >
-                                            Pemohon
-                                        </th>
-                                        <th
-                                            scope="col"
-                                            className="px-3 py-2.5 font-normal"
-                                        >
-                                            Jenis
-                                        </th>
-                                        <th
-                                            scope="col"
-                                            className="px-3 py-2.5 font-normal"
-                                        >
-                                            Waktu
-                                        </th>
-                                        <th
-                                            scope="col"
-                                            className="px-3 py-2.5 font-normal"
-                                        >
-                                            Durasi
-                                        </th>
-                                        <th
-                                            scope="col"
-                                            className="px-3 py-2.5 font-normal"
-                                        >
-                                            {waiting ? 'Langkah' : 'Keputusan'}
-                                        </th>
-                                        <th
-                                            scope="col"
-                                            className="px-4 py-2.5 text-right font-normal"
-                                        >
-                                            {waiting ? 'Diajukan' : 'Diputus'}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {items.map((item) => {
-                                        const active = selected?.id === item.id;
-
-                                        return (
-                                            <tr
-                                                key={item.id}
-                                                onClick={() => select(item.id)}
-                                                className={cn(
-                                                    'cursor-pointer border-b border-border last:border-0 hover:bg-surface-2/60',
-                                                    active &&
-                                                        'bg-brand-50/60 shadow-[inset_3px_0_0_var(--primary)] dark:bg-brand-500/10',
-                                                )}
-                                            >
-                                                {waiting && (
-                                                    <td
-                                                        className="px-4 py-3"
-                                                        onClick={(event) =>
-                                                            event.stopPropagation()
-                                                        }
-                                                    >
-                                                        <Checkbox
-                                                            aria-label={`Pilih pengajuan ${item.user.name}`}
-                                                            checked={checked.includes(
-                                                                item.id,
-                                                            )}
-                                                            onCheckedChange={(
-                                                                value,
-                                                            ) =>
-                                                                toggle(
-                                                                    item.id,
-                                                                    value ===
-                                                                        true,
-                                                                )
-                                                            }
-                                                        />
-                                                    </td>
-                                                )}
-                                                <td className="px-3 py-3">
-                                                    <button
-                                                        type="button"
-                                                        onClick={(event) => {
-                                                            event.stopPropagation();
-                                                            select(item.id);
-                                                        }}
-                                                        className="flex items-center gap-2 text-left focus-visible:underline focus-visible:outline-none"
-                                                    >
-                                                        <UserAvatar
-                                                            name={
-                                                                item.user.name
-                                                            }
-                                                            src={
-                                                                item.user.avatar
-                                                            }
-                                                            className="size-7"
-                                                        />
-                                                        <span className="font-medium whitespace-nowrap text-text">
-                                                            {item.user.name}
-                                                        </span>
-                                                    </button>
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    <CategoryBadge
-                                                        type={item.type}
-                                                    />
-                                                </td>
-                                                <td className="px-3 py-3 whitespace-nowrap text-text">
-                                                    {formatRequestPeriod(item)}
-                                                </td>
-                                                <td className="px-3 py-3 whitespace-nowrap text-text tnum">
-                                                    {formatRequestDuration(
-                                                        item,
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-3 whitespace-nowrap text-text-muted">
-                                                    {waiting ? (
-                                                        stepProgress(item)
-                                                    ) : item.my_decision ? (
-                                                        <TonePill
-                                                            tone={
-                                                                approvalTone[
-                                                                    item
-                                                                        .my_decision
-                                                                        .status
-                                                                ]
-                                                            }
-                                                        >
-                                                            {
-                                                                item.my_decision
-                                                                    .status_label
-                                                            }
-                                                        </TonePill>
-                                                    ) : null}
-                                                </td>
-                                                <td className="px-4 py-3 text-right whitespace-nowrap text-text-muted">
-                                                    {formatRelative(
-                                                        waiting
-                                                            ? item.submitted_at
-                                                            : (item.my_decision
-                                                                  ?.decided_at ??
-                                                                  null),
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+            <TabNav
+                label="Tab persetujuan"
+                items={(['menunggu', 'diputus'] as ApprovalTab[]).map(
+                    (value) => ({
+                        href: index.url({
+                            query: value === 'menunggu' ? {} : { tab: value },
+                        }),
+                        label:
+                            value === 'menunggu' ? 'Menunggu' : 'Sudah diputus',
+                        active: tab === value,
+                        count:
+                            value === 'menunggu' && counts.menunggu > 0
+                                ? counts.menunggu
+                                : undefined,
+                    }),
                 )}
+            />
 
-                <div className="xl:sticky xl:top-20">
+            {filters.length > 1 && (
+                <div
+                    role="group"
+                    aria-label="Filter jenis"
+                    className="flex flex-wrap gap-2.5"
+                >
+                    {[
+                        {
+                            value: 'semua' as const,
+                            label: 'Semua',
+                            count: items.length,
+                        },
+                        ...filters,
+                    ].map((filter) => {
+                        const on = category === filter.value;
+
+                        return (
+                            <button
+                                key={filter.value}
+                                type="button"
+                                aria-pressed={on}
+                                onClick={() => pickCategory(filter.value)}
+                                className={cn(
+                                    'inline-flex h-10 items-center rounded-full border px-4 text-[15px] font-semibold transition-colors duration-120 ease-brand',
+                                    on
+                                        ? 'border-inverse bg-inverse text-on-inverse'
+                                        : 'border-border-strong bg-surface text-text hover:bg-surface-2',
+                                    focusRing,
+                                )}
+                            >
+                                {filter.label} · {filter.count}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
+            <div className="flex flex-wrap items-start gap-5">
+                <div className="flex min-w-0 flex-[1_1_420px] flex-col gap-3">
+                    {visible.length === 0 ? (
+                        <EmptyState
+                            icon={CheckCheck}
+                            title={
+                                waiting
+                                    ? 'Tidak ada yang menunggu keputusan Anda'
+                                    : 'Belum ada keputusan'
+                            }
+                            description={
+                                waiting
+                                    ? 'Pengajuan baru dari tim Anda akan muncul di sini.'
+                                    : 'Pengajuan yang Anda setujui atau tolak tampil di sini.'
+                            }
+                        />
+                    ) : (
+                        <>
+                            {waiting && (
+                                <div className="flex min-h-11 items-center justify-between gap-3 px-1">
+                                    <label className="flex items-center gap-3 text-[15px] font-semibold text-text">
+                                        <Checkbox
+                                            aria-label="Pilih semua"
+                                            checked={allChecked}
+                                            onCheckedChange={(value) =>
+                                                setChecked(
+                                                    value === true
+                                                        ? visible.map(
+                                                              (item) => item.id,
+                                                          )
+                                                        : [],
+                                                )
+                                            }
+                                        />
+                                        {checked.length > 0
+                                            ? `${checked.length} dipilih`
+                                            : 'Pilih semua'}
+                                    </label>
+                                    {checked.length > 0 && (
+                                        <Button
+                                            type="button"
+                                            variant="quiet"
+                                            size="sm"
+                                            onClick={() => setChecked([])}
+                                        >
+                                            Batal pilih
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
+                            <ul className="flex flex-col gap-3">
+                                {visible.map((item) => (
+                                    <li key={item.id}>
+                                        <QueueCard
+                                            item={item}
+                                            waiting={waiting}
+                                            active={selected?.id === item.id}
+                                            checked={checked.includes(item.id)}
+                                            onCheck={(value) =>
+                                                toggle(item.id, value)
+                                            }
+                                            onSelect={() => select(item.id)}
+                                        />
+                                    </li>
+                                ))}
+                            </ul>
+                        </>
+                    )}
+                </div>
+
+                <div className="min-w-0 flex-[1.3_1_520px] lg:sticky lg:top-[calc(var(--menu-bar-height)+20px)]">
                     {selected ? (
                         <DecisionPanel key={selected.id} request={selected} />
                     ) : (
-                        <EmptyDetail />
+                        <EmptyDetail description="Pilih pengajuan untuk melihat detail dan memutuskan." />
                     )}
                 </div>
             </div>

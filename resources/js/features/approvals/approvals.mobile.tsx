@@ -12,6 +12,7 @@ import { BottomSheet } from '@/components/mobile/bottom-sheet';
 import { SwipeableRow } from '@/components/mobile/swipeable-row';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { Button } from '@/components/ui/button';
+import { SegmentedTabs } from '@/components/ui/tabs';
 import { CategoryBadge, TonePill } from '@/features/requests/badges';
 import { formatRelative } from '@/lib/format';
 import {
@@ -21,7 +22,7 @@ import {
     formatRequestPeriod,
     stepProgress,
 } from '@/lib/requests';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { index, show } from '@/routes/approvals';
 import type { RequestItem } from '@/types/requests';
 import type { ApprovalTab, ApprovalsProps } from './approvals-types';
@@ -50,7 +51,8 @@ function RejectSheet({
                 <Button
                     type="button"
                     variant="destructive"
-                    className="h-12 w-full text-base"
+                    size="lg"
+                    className="w-full"
                     disabled={decision.form.processing}
                     onClick={() => decision.decide('reject', onClose)}
                 >
@@ -67,7 +69,7 @@ function RejectSheet({
     );
 }
 
-/** Avatar + summary of one request, shared by the link card and the selectable card. */
+/** Avatar, name, period · duration, category (MPersetujuan card header). */
 function QueueCardContent({
     item,
     waiting,
@@ -78,59 +80,42 @@ function QueueCardContent({
     const warning = item.colleagues
         ? colleagueSummary(item.colleagues.people)
         : null;
-    const detail =
-        item.type.category === 'correction'
-            ? formatRequestPeriod(item).split(' · ').slice(1).join(' · ')
-            : formatRequestDuration(item);
+    const duration = formatRequestDuration(item);
     const progress = stepProgress(item);
 
     return (
-        <>
-            <UserAvatar
-                name={item.user.name}
-                src={item.user.avatar}
-                className="size-11 text-sm"
-            />
-            <div className="min-w-0 flex-1">
-                <div className="flex items-baseline justify-between gap-2">
-                    <p className="truncate text-[16px] font-semibold text-text">
+        <span className="flex min-w-0 flex-1 flex-col gap-2">
+            <span className="flex items-center gap-3">
+                <UserAvatar
+                    name={item.user.name}
+                    src={item.user.avatar}
+                    className="size-[46px] text-[16px]"
+                />
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="truncate text-[17px] leading-6 font-bold text-text">
                         {item.user.name}
-                    </p>
-                    <span className="shrink-0 text-[13px] text-text-muted">
-                        {formatRelative(item.submitted_at)}
                     </span>
-                </div>
-                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <CategoryBadge type={item.type} />
-                    <span className="text-[15px] text-text">
-                        {item.type.category === 'correction'
-                            ? formatRequestPeriod(item).split(' · ')[0]
-                            : formatRequestPeriod(item)}
+                    <span className="text-[15px] leading-[22px] text-text-muted">
+                        {formatRequestPeriod(item)}
+                        {duration !== '—' ? ` · ${duration}` : ''}
                     </span>
-                </div>
-                <p className="mt-1 text-[13px] text-text-muted">
-                    {detail}
-                    {waiting && progress ? ` · langkah ${progress}` : ''}
-                </p>
-                {!waiting && item.my_decision && (
-                    <TonePill
-                        tone={approvalTone[item.my_decision.status]}
-                        className="mt-2"
-                    >
-                        {item.my_decision.status_label}
-                    </TonePill>
-                )}
-                {waiting && warning && (
-                    <p className="mt-1 flex items-center gap-1.5 text-[13px] text-warning">
-                        <AlertTriangle
-                            className="size-3.5 shrink-0"
-                            aria-hidden
-                        />
-                        <span className="truncate">{warning}</span>
-                    </p>
-                )}
-            </div>
-        </>
+                </span>
+            </span>
+            <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                <CategoryBadge type={item.type} className="h-7 px-2.5" />
+                <span className="text-meta text-text-muted">
+                    {waiting
+                        ? `Diajukan ${formatRelative(item.submitted_at)}${progress ? ` · langkah ${progress}` : ''}`
+                        : `Diputus ${formatRelative(item.my_decision?.decided_at ?? null)}`}
+                </span>
+            </span>
+            {waiting && warning && (
+                <span className="flex items-center gap-1.5 text-meta font-semibold text-warning">
+                    <AlertTriangle className="size-4 shrink-0" aria-hidden />
+                    <span className="truncate">{warning}</span>
+                </span>
+            )}
+        </span>
     );
 }
 
@@ -138,11 +123,11 @@ function QueueCard({ item, waiting }: { item: RequestItem; waiting: boolean }) {
     return (
         <Link
             href={show({ employeeRequest: item.id })}
-            className="flex gap-3 p-4"
+            className={cn('flex items-start gap-1 rounded-[22px]', focusRing)}
         >
             <QueueCardContent item={item} waiting={waiting} />
             <ChevronRight
-                className="mt-6 size-5 shrink-0 text-text-subtle"
+                className="mt-3.5 size-5 shrink-0 text-text-subtle"
                 aria-hidden
             />
         </Link>
@@ -170,9 +155,10 @@ function SelectableCard({
             aria-label={`${item.user.name}, ${item.type.name}, ${formatRequestPeriod(item)}`}
             onClick={onToggle}
             className={cn(
-                'flex w-full items-start gap-1 rounded-xl border bg-surface py-4 pr-4 pl-1 text-left shadow-card transition-[border-color,box-shadow] duration-120 ease-brand select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                'flex w-full items-start gap-1 rounded-[22px] border bg-surface py-4 pr-4 pl-1 text-left shadow-card transition-[border-color,box-shadow] duration-120 ease-brand select-none',
+                focusRing,
                 checked
-                    ? 'border-primary ring-1 ring-primary'
+                    ? 'border-primary ring-4 ring-ring/40'
                     : 'border-border',
             )}
         >
@@ -184,7 +170,7 @@ function SelectableCard({
                     className={cn(
                         'flex size-6 items-center justify-center rounded-full border-2 transition-colors duration-120 ease-brand',
                         checked
-                            ? 'border-primary bg-primary text-primary-foreground'
+                            ? 'border-0 bg-primary bg-grad-aksi text-on-brand'
                             : 'border-border-strong bg-surface',
                     )}
                 >
@@ -199,9 +185,7 @@ function SelectableCard({
                     />
                 </span>
             </span>
-            <span className="flex min-w-0 flex-1 gap-3">
-                <QueueCardContent item={item} waiting />
-            </span>
+            <QueueCardContent item={item} waiting />
         </button>
     );
 }
@@ -217,14 +201,16 @@ function SelectionBar({ selection }: { selection: ApprovalSelection }) {
             <Button
                 type="button"
                 variant="outline"
-                className="h-12 flex-1 text-base"
+                size="lg"
+                className="flex-1"
                 onClick={selection.cancel}
             >
                 Batal
             </Button>
             <Button
                 type="button"
-                className="h-12 flex-[2] text-base"
+                size="lg"
+                className="flex-[2]"
                 disabled={selection.count === 0 || selection.processing}
                 onClick={selection.approve}
             >
@@ -245,7 +231,7 @@ function SwipeCard({
 
     return (
         <SwipeableRow
-            className="rounded-xl border border-border shadow-card"
+            className="rounded-[22px] border border-border shadow-card"
             actions={[
                 {
                     label: 'Tolak',
@@ -259,14 +245,37 @@ function SwipeCard({
                 },
             ]}
         >
-            <QueueCard item={item} waiting />
+            <div className="flex flex-col gap-3 p-4">
+                <QueueCard item={item} waiting />
+                <div className="flex gap-2.5">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="h-12 flex-1 font-bold text-danger hover:text-danger"
+                        aria-label={`Tolak pengajuan ${item.user.name}`}
+                        onClick={() => onReject(item)}
+                    >
+                        Tolak
+                    </Button>
+                    <Button
+                        type="button"
+                        className="h-12 flex-[1.4]"
+                        aria-label={`Setujui pengajuan ${item.user.name}`}
+                        disabled={decision.form.processing}
+                        onClick={() => decision.decide('approve')}
+                    >
+                        Setujui
+                    </Button>
+                </div>
+            </div>
         </SwipeableRow>
     );
 }
 
 /**
- * MPersetujuan: tabs, swipe left for Tolak / Setujui, tap for the detail.
- * "Pilih" switches the waiting tab to selection mode for a bulk approve.
+ * MPersetujuan: tabs, swipe left (or the card buttons) for Tolak / Setujui,
+ * tap for the detail. "Pilih" switches the waiting tab to selection mode for
+ * a bulk approve.
  */
 export function ApprovalsMobile({
     tab,
@@ -281,78 +290,67 @@ export function ApprovalsMobile({
     const selecting = waiting && selection.active && items.length > 0;
 
     return (
-        <div className="space-y-4">
-            <div
-                role="tablist"
-                aria-label="Tab persetujuan"
-                className="grid grid-cols-2 rounded-xl bg-surface-2 p-1"
-            >
-                {(['menunggu', 'diputus'] as ApprovalTab[]).map((value) => (
-                    <button
-                        key={value}
-                        type="button"
-                        role="tab"
-                        aria-selected={tab === value}
-                        onClick={() => {
-                            selection.cancel();
-                            router.get(
-                                index.url({
-                                    query:
-                                        value === 'menunggu'
-                                            ? {}
-                                            : { tab: value },
-                                }),
-                                {},
-                                { replace: true },
-                            );
-                        }}
-                        className={cn(
-                            'flex h-11 items-center justify-center gap-2 rounded-lg text-[15px]',
-                            tab === value
-                                ? 'bg-surface font-semibold text-text shadow-card'
-                                : 'text-text-muted',
-                        )}
-                    >
-                        {value === 'menunggu' ? 'Menunggu' : 'Sudah diputus'}
-                        {value === 'menunggu' && counts.menunggu > 0 && (
-                            <span className="flex size-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground tnum">
-                                {counts.menunggu}
-                            </span>
-                        )}
-                    </button>
-                ))}
-            </div>
+        <div className="flex flex-col gap-4">
+            <SegmentedTabs<ApprovalTab>
+                label="Tab persetujuan"
+                value={tab}
+                onValueChange={(value) => {
+                    selection.cancel();
+                    router.get(
+                        index.url({
+                            query: value === 'menunggu' ? {} : { tab: value },
+                        }),
+                        {},
+                        { replace: true },
+                    );
+                }}
+                options={[
+                    {
+                        value: 'menunggu',
+                        label:
+                            counts.menunggu > 0
+                                ? `Menunggu · ${counts.menunggu}`
+                                : 'Menunggu',
+                    },
+                    { value: 'diputus', label: 'Sudah diputus' },
+                ]}
+                className="flex w-full [&>button]:h-11 [&>button]:flex-1 [&>button]:text-[16px] [&>button]:font-bold"
+            />
 
             {waiting && items.length > 0 && (
                 <div className="flex min-h-11 items-center justify-between gap-3">
                     {selecting ? (
                         <p
                             aria-live="polite"
-                            className="text-[15px] font-medium text-text tnum"
+                            className="px-1 text-[16px] font-semibold text-text tnum"
                         >
                             {selection.count > 0
                                 ? `${selection.count} dipilih`
                                 : 'Pilih pengajuan'}
                         </p>
                     ) : (
-                        <p className="flex items-center gap-1.5 text-[13px] text-text-muted">
-                            <ArrowLeft className="size-4" aria-hidden /> Geser
-                            kartu untuk memutuskan cepat
+                        <p className="flex items-center gap-1.5 px-1 text-[15px] leading-[22px] text-text-muted">
+                            <ArrowLeft
+                                className="size-4 shrink-0"
+                                aria-hidden
+                            />
+                            Geser kartu untuk memutuskan cepat
                         </p>
                     )}
-                    <button
+                    <Button
                         type="button"
+                        variant="outline"
+                        className="shrink-0 rounded-full px-4 font-bold"
                         onClick={
                             selecting ? selection.toggleAll : selection.start
                         }
-                        className="-mr-2 flex h-11 shrink-0 items-center rounded-full px-3 text-[15px] font-medium text-primary transition-[transform,opacity] duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-95 active:opacity-70"
                     >
                         {!selecting
                             ? 'Pilih'
                             : selection.allSelected
                               ? 'Batal pilih semua'
                               : 'Pilih semua'}
-                    </button>
+                    </Button>
                 </div>
             )}
 
@@ -367,7 +365,7 @@ export function ApprovalsMobile({
                     }
                 />
             ) : (
-                <ul className="space-y-3">
+                <ul className="flex flex-col gap-3">
                     {items.map((item) => (
                         <li key={item.id}>
                             {selecting ? (
@@ -382,8 +380,20 @@ export function ApprovalsMobile({
                                     onReject={setRejecting}
                                 />
                             ) : (
-                                <div className="rounded-xl border border-border bg-surface shadow-card">
+                                <div className="flex flex-col gap-3 rounded-[22px] border border-border bg-surface p-4 shadow-card">
                                     <QueueCard item={item} waiting={false} />
+                                    {item.my_decision && (
+                                        <TonePill
+                                            tone={
+                                                approvalTone[
+                                                    item.my_decision.status
+                                                ]
+                                            }
+                                            className="h-11 w-full rounded-[14px]"
+                                        >
+                                            {item.my_decision.status_label}
+                                        </TonePill>
+                                    )}
                                 </div>
                             )}
                         </li>
@@ -392,7 +402,7 @@ export function ApprovalsMobile({
             )}
 
             {waiting && items.length > 0 && (
-                <p className="text-center text-[13px] text-text-muted">
+                <p className="text-center text-meta text-text-muted">
                     {items.length} pengajuan
                     {oldest
                         ? ` · terlama menunggu ${formatRelative(oldest).replace(/ lalu$/, '')}`
