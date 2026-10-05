@@ -2,8 +2,9 @@ import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { fieldClasses } from '@/components/ui/input';
 import { HEALTH_TONES } from '@/features/portfolio/lib';
-import { fieldClass, ResponsiveSheet } from '@/features/portfolio/parts';
+import { ResponsiveSheet } from '@/features/portfolio/parts';
 import type {
     MilestoneDetail,
     Option,
@@ -37,20 +38,10 @@ function Footer({
 }) {
     return (
         <div className="flex w-full justify-end gap-2">
-            <Button
-                type="button"
-                variant="outline"
-                className="h-11 md:h-9"
-                onClick={onCancel}
-            >
+            <Button type="button" variant="outline" onClick={onCancel}>
                 Batal
             </Button>
-            <Button
-                type="button"
-                className="h-11 md:h-9"
-                disabled={disabled}
-                onClick={onSubmit}
-            >
+            <Button type="button" disabled={disabled} onClick={onSubmit}>
                 {label}
             </Button>
         </div>
@@ -69,8 +60,8 @@ function Field({
     children: React.ReactNode;
 }) {
     return (
-        <label className="block space-y-1.5">
-            <span className="text-[13px] font-medium text-text">
+        <label className="flex flex-col gap-2">
+            <span className="text-label text-text">
                 {label}
                 {hint && (
                     <span className="ml-1 font-normal text-text-muted">
@@ -134,8 +125,8 @@ export function ProjectUpdateDialog({
             }
         >
             <form onSubmit={submit} className="space-y-4">
-                <fieldset className="space-y-1.5">
-                    <legend className="text-[13px] font-medium text-text">
+                <fieldset className="flex flex-col gap-2">
+                    <legend className="mb-2 text-label text-text">
                         Status kesehatan
                     </legend>
                     <div className="grid grid-cols-3 gap-2">
@@ -143,13 +134,13 @@ export function ProjectUpdateDialog({
                             <label
                                 key={option.value}
                                 className={cn(
-                                    'flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-md border px-2 text-[13px]',
+                                    'flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-lg border px-2 text-[15px] font-extrabold transition-colors duration-120 ease-brand has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring md:text-[16px]',
                                     form.data.health === option.value
                                         ? cn(
-                                              'border-transparent',
+                                              'border-2 border-current',
                                               HEALTH_TONES[option.value].pill,
                                           )
-                                        : 'border-border text-text-muted',
+                                        : 'border-border text-text',
                                 )}
                             >
                                 <input
@@ -165,7 +156,7 @@ export function ProjectUpdateDialog({
                                 <span
                                     aria-hidden
                                     className={cn(
-                                        'size-2 rounded-full',
+                                        'size-3 rounded-full',
                                         HEALTH_TONES[option.value].dot,
                                     )}
                                 />
@@ -177,7 +168,7 @@ export function ProjectUpdateDialog({
                 </fieldset>
                 <Field label="Ringkasan" error={form.errors.summary}>
                     <textarea
-                        className={cn(fieldClass, 'min-h-24')}
+                        className={cn(fieldClasses, 'min-h-24 py-2.5')}
                         value={form.data.summary}
                         maxLength={2000}
                         placeholder="Apa yang selesai minggu ini dan apa berikutnya?"
@@ -192,7 +183,7 @@ export function ProjectUpdateDialog({
                     error={form.errors.blockers}
                 >
                     <textarea
-                        className={cn(fieldClass, 'min-h-16')}
+                        className={cn(fieldClasses, 'min-h-16 py-2.5')}
                         value={form.data.blockers}
                         maxLength={2000}
                         onChange={(event) =>
@@ -206,7 +197,7 @@ export function ProjectUpdateDialog({
                     error={form.errors.decision_needed}
                 >
                     <textarea
-                        className={cn(fieldClass, 'min-h-16')}
+                        className={cn(fieldClasses, 'min-h-16 py-2.5')}
                         value={form.data.decision_needed}
                         maxLength={1000}
                         placeholder="Mis. persetujuan tambahan anggaran vendor video."
@@ -286,7 +277,7 @@ export function MilestoneDialog({
                 <div className="grid gap-4 sm:grid-cols-[1fr_170px]">
                     <Field label="Nama" error={form.errors.name}>
                         <input
-                            className={fieldClass}
+                            className={cn(fieldClasses, 'h-11')}
                             value={form.data.name}
                             maxLength={160}
                             onChange={(event) =>
@@ -297,7 +288,7 @@ export function MilestoneDialog({
                     <Field label="Target" error={form.errors.target_date}>
                         <input
                             type="date"
-                            className={fieldClass}
+                            className={cn(fieldClasses, 'h-11')}
                             value={form.data.target_date}
                             onChange={(event) =>
                                 form.setData('target_date', event.target.value)
@@ -311,7 +302,7 @@ export function MilestoneDialog({
                     error={form.errors.description}
                 >
                     <textarea
-                        className={cn(fieldClass, 'min-h-16')}
+                        className={cn(fieldClasses, 'min-h-16 py-2.5')}
                         value={form.data.description}
                         maxLength={1000}
                         onChange={(event) =>
@@ -319,31 +310,31 @@ export function MilestoneDialog({
                         }
                     />
                 </Field>
-                <fieldset className="space-y-1.5">
-                    <legend className="text-[13px] font-medium text-text">
+                <fieldset className="flex flex-col gap-2">
+                    <legend className="mb-2 text-label text-text">
                         Tugas terkait{' '}
                         <span className="font-normal text-text-muted">
                             ({form.data.task_ids.length})
                         </span>
                     </legend>
-                    <ul className="max-h-52 divide-y divide-border overflow-y-auto rounded-md border border-border">
+                    <ul className="max-h-60 divide-y divide-divider overflow-y-auto rounded-lg border border-border">
                         {taskOptions.length === 0 && (
-                            <li className="px-3 py-2 text-[13px] text-text-muted">
+                            <li className="px-4 py-3 text-label font-normal text-text-muted">
                                 Belum ada tugas.
                             </li>
                         )}
                         {taskOptions.map((task) => (
                             <li key={task.id}>
-                                <label className="flex min-h-11 cursor-pointer items-center gap-2.5 px-3 text-[13px] md:min-h-9">
+                                <label className="flex min-h-12 cursor-pointer items-center gap-3 px-4 text-label font-normal">
                                     <input
                                         type="checkbox"
-                                        className="size-4 accent-primary"
+                                        className="size-5 shrink-0 accent-primary"
                                         checked={form.data.task_ids.includes(
                                             task.id,
                                         )}
                                         onChange={() => toggle(task.id)}
                                     />
-                                    <span className="font-mono text-[12px] text-text-muted">
+                                    <span className="font-mono text-[14px] font-semibold text-text-muted">
                                         {task.code}
                                     </span>
                                     <span className="truncate text-text">
@@ -414,7 +405,7 @@ export function RiskDialog({
             <form onSubmit={submit} className="space-y-4">
                 <Field label="Judul" error={form.errors.title}>
                     <input
-                        className={fieldClass}
+                        className={cn(fieldClasses, 'h-11')}
                         value={form.data.title}
                         maxLength={200}
                         onChange={(event) =>
@@ -425,7 +416,7 @@ export function RiskDialog({
                 <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="Level" error={form.errors.level}>
                         <select
-                            className={fieldClass}
+                            className={cn(fieldClasses, 'h-11')}
                             value={form.data.level}
                             onChange={(event) =>
                                 form.setData(
@@ -443,7 +434,7 @@ export function RiskDialog({
                     </Field>
                     <Field label="Pemilik" error={form.errors.owner_id}>
                         <select
-                            className={fieldClass}
+                            className={cn(fieldClasses, 'h-11')}
                             value={form.data.owner_id}
                             onChange={(event) =>
                                 form.setData('owner_id', event.target.value)
@@ -464,7 +455,7 @@ export function RiskDialog({
                     error={form.errors.task_id}
                 >
                     <select
-                        className={fieldClass}
+                        className={cn(fieldClasses, 'h-11')}
                         value={form.data.task_id}
                         onChange={(event) =>
                             form.setData('task_id', event.target.value)
@@ -479,10 +470,10 @@ export function RiskDialog({
                     </select>
                 </Field>
                 {risk && (
-                    <label className="flex min-h-11 items-center gap-2.5 text-[13px] text-text">
+                    <label className="flex min-h-12 items-center gap-3 text-label font-normal text-text">
                         <input
                             type="checkbox"
-                            className="size-4 accent-primary"
+                            className="size-5 shrink-0 accent-primary"
                             checked={form.data.status === 'resolved'}
                             onChange={(event) =>
                                 form.setData(

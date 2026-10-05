@@ -15,7 +15,7 @@ import { useBreakpoint } from '@/hooks/use-breakpoint';
 
 type Props = WorkspacePageProps & ProjectSummaryProps;
 
-/** Tab Ringkasan of a project workspace (mockups ProyekDetail / MProyekDetail). */
+/** Tab Ringkasan of a project workspace (DProyek · TfProyek · MProyek). */
 export default function ProjectSummaryPage(props: Props) {
     const breakpoint = useBreakpoint();
     const actions = useProjectSummary(props, props.members);
@@ -37,9 +37,9 @@ export default function ProjectSummaryPage(props: Props) {
                 }
             >
                 {breakpoint === null ? (
-                    <div className="space-y-4" aria-busy>
-                        <Skeleton className="h-28 w-full" />
-                        <Skeleton className="h-72 w-full" />
+                    <div className="flex flex-col gap-5" aria-busy>
+                        <Skeleton className="h-44 w-full rounded-panel" />
+                        <Skeleton className="h-96 w-full rounded-panel" />
                     </div>
                 ) : mobile ? (
                     <SummaryMobile props={props} actions={actions} />

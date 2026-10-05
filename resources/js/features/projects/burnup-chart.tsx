@@ -1,8 +1,11 @@
-import { useMemo } from 'react';
+import { ChartLine } from 'lucide-react';
+import { useId, useMemo } from 'react';
 import {
+    Area,
     CartesianGrid,
+    ComposedChart,
     Line,
-    LineChart,
+    ReferenceArea,
     ReferenceDot,
     ReferenceLine,
     ResponsiveContainer,
@@ -10,6 +13,7 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
+import { EmptyState } from '@/components/empty-state';
 import { daysBetween, parseDay, shortDay } from '@/features/portfolio/lib';
 import type { Burnup } from '@/features/portfolio/types';
 
@@ -20,6 +24,8 @@ export type BurnupRow = {
     scope: number | null;
     done: number | null;
     ideal: number | null;
+    /** Dotted projection from today's done at the recent weekly pace. */
+    projection: number | null;
 };
 
 /**
@@ -50,8 +56,23 @@ export function burnupRows(burnup: Burnup): BurnupRow[] {
             scope: point.scope,
             done: point.done,
             ideal: ideal(day),
+            projection: null,
         };
     });
+    const todayDay = daysBetween(start, today);
+    const doneNow = points[points.length - 1]?.done ?? null;
+    const pace = burnup.recent_pace;
+    const project = (day: number) =>
+        pace === null || doneNow === null || day < todayDay
+            ? null
+            : Math.round(
+                  Math.min(scopeNow, doneNow + (pace * (day - todayDay)) / 7) *
+                      10,
+              ) / 10;
+
+    if (rows.length > 0 && pace !== null) {
+        rows[rows.length - 1].projection = doneNow;
+    }
 
     if (target && daysBetween(today, target) > 0) {
         const last = daysBetween(start, today);
@@ -67,6 +88,7 @@ export function burnupRows(burnup: Burnup): BurnupRow[] {
                 scope: null,
                 done: null,
                 ideal: ideal(day),
+                projection: project(day),
             });
         }
 
@@ -76,6 +98,7 @@ export function burnupRows(burnup: Burnup): BurnupRow[] {
             scope: null,
             done: null,
             ideal: ideal(end),
+            projection: project(end),
         });
     }
 
@@ -83,19 +106,29 @@ export function burnupRows(burnup: Burnup): BurnupRow[] {
 }
 
 const COLORS = {
-    scope: 'var(--info)',
-    done: 'var(--primary)',
-    ideal: 'var(--text-muted)',
-    grid: 'var(--border)',
+    scope: 'var(--text-subtle)',
+    ideal: 'var(--marker)',
+    projection: 'var(--accent-blue-strong)',
+    grid: 'var(--divider)',
     axis: 'var(--text-muted)',
-    today: 'var(--text-subtle)',
+    today: 'var(--primary)',
+    future: 'var(--background)',
     danger: 'var(--danger)',
 };
 
-/** Burn-up (lingkup vs selesai vs ideal) from project_progress_snapshots. */
+const dayLabel = (start: string, day: number) =>
+    shortDay(
+        new Date(parseDay(start) + day * 86_400_000).toISOString().slice(0, 10),
+    );
+
+/**
+ * Burn-up (DProyek): lingkup (gray), selesai (gradient merek with a soft
+ * area), ideal (dashed), proyeksi (dotted blue) and the future shaded behind
+ * the "Hari ini" line; milestones as diamonds on the axis.
+ */
 export function BurnupChart({
     burnup,
-    height = 240,
+    height = 280,
     compact = false,
 }: {
     burnup: Burnup;
@@ -103,16 +136,19 @@ export function BurnupChart({
     compact?: boolean;
 }) {
     const rows = useMemo(() => burnupRows(burnup), [burnup]);
+    const id = useId().replace(/:/g, '');
 
     if (rows.length === 0 || !burnup.start_date) {
         return (
-            <p
-                className="flex items-center justify-center rounded-md bg-surface-2 text-[13px] text-text-muted"
-                style={{ height }}
+            <EmptyState
+                size="sm"
+                icon={ChartLine}
+                title="Grafik belum tersedia"
+                className="min-h-40"
             >
                 Grafik muncul setelah tanggal mulai proyek diisi dan snapshot
                 harian pertama tercatat.
-            </p>
+            </EmptyState>
         );
     }
 
@@ -121,42 +157,77 @@ export function BurnupChart({
     const todayRow = rows.find((row) => row.day === todayDay);
     const maxDay = rows[rows.length - 1].day;
     const ticks = compact ? [0, todayDay, maxDay] : rows.map((row) => row.day);
+    const tick = { fill: COLORS.axis, fontSize: compact ? 13 : 14 };
 
     return (
         <div
             role="img"
-            aria-label={`Grafik burn-up: lingkup ${todayRow?.scope ?? '–'} tugas, selesai ${todayRow?.done ?? '–'}, ideal ${todayRow?.ideal ?? '–'}.`}
+            aria-label={`Grafik burn-up: lingkup ${todayRow?.scope ?? '–'}, selesai ${todayRow?.done ?? '–'}, ideal ${todayRow?.ideal ?? '–'} per ${shortDay(burnup.today)}.`}
         >
             <ResponsiveContainer width="100%" height={height}>
-                <LineChart
+                <ComposedChart
                     data={rows}
                     margin={{
-                        top: 16,
-                        right: 16,
+                        top: 24,
+                        right: 12,
                         bottom: 0,
                         left: compact ? -24 : -12,
                     }}
                 >
+                    <defs>
+                        <linearGradient
+                            id={`${id}l`}
+                            x1="0"
+                            y1="0"
+                            x2="1"
+                            y2="0"
+                        >
+                            <stop offset="0" stopColor="var(--fill-teal)" />
+                            <stop offset="1" stopColor="var(--accent-blue)" />
+                        </linearGradient>
+                        <linearGradient
+                            id={`${id}f`}
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                        >
+                            <stop
+                                offset="0"
+                                stopColor="var(--accent-blue)"
+                                stopOpacity={0.22}
+                            />
+                            <stop
+                                offset="1"
+                                stopColor="var(--fill-teal)"
+                                stopOpacity={0}
+                            />
+                        </linearGradient>
+                    </defs>
                     <CartesianGrid stroke={COLORS.grid} vertical={false} />
+                    {todayDay < maxDay && (
+                        <ReferenceArea
+                            x1={todayDay}
+                            x2={maxDay}
+                            fill={COLORS.future}
+                            fillOpacity={1}
+                            ifOverflow="hidden"
+                        />
+                    )}
                     <XAxis
                         dataKey="day"
                         type="number"
                         domain={[0, maxDay]}
                         ticks={ticks}
-                        tickFormatter={(day: number) =>
-                            shortDay(
-                                new Date(parseDay(start) + day * 86_400_000)
-                                    .toISOString()
-                                    .slice(0, 10),
-                            )
-                        }
-                        tick={{ fill: COLORS.axis, fontSize: 11 }}
-                        axisLine={{ stroke: COLORS.grid }}
+                        tickFormatter={(day: number) => dayLabel(start, day)}
+                        tick={tick}
+                        axisLine={false}
                         tickLine={false}
+                        tickMargin={10}
                     />
                     <YAxis
                         allowDecimals={false}
-                        tick={{ fill: COLORS.axis, fontSize: 11 }}
+                        tick={tick}
                         axisLine={false}
                         tickLine={false}
                         width={40}
@@ -165,69 +236,91 @@ export function BurnupChart({
                         contentStyle={{
                             background: 'var(--surface)',
                             border: '1px solid var(--border)',
-                            borderRadius: 8,
-                            fontSize: 12,
+                            borderRadius: 12,
+                            fontSize: 14,
                             color: 'var(--text)',
                         }}
-                        labelFormatter={(day) =>
-                            shortDay(
-                                new Date(
-                                    parseDay(start) + Number(day) * 86_400_000,
-                                )
-                                    .toISOString()
-                                    .slice(0, 10),
-                            )
-                        }
+                        labelFormatter={(day) => dayLabel(start, Number(day))}
                         formatter={(value, name) => [
                             value,
                             {
                                 scope: 'Lingkup',
                                 done: 'Selesai',
                                 ideal: 'Ideal',
+                                projection: 'Proyeksi',
                             }[String(name)] ?? name,
                         ]}
                     />
                     <ReferenceLine
                         x={todayDay}
                         stroke={COLORS.today}
+                        strokeWidth={2}
                         label={
                             compact
                                 ? undefined
                                 : {
-                                      value: `Hari ini ${shortDay(burnup.today)}`,
-                                      position: 'top',
-                                      fill: COLORS.axis,
-                                      fontSize: 11,
+                                      value: 'Hari ini',
+                                      position: 'insideTopLeft',
+                                      fill: 'var(--link)',
+                                      fontSize: 14,
+                                      fontWeight: 700,
+                                      offset: 8,
                                   }
                         }
-                    />
-                    <Line
-                        type="monotone"
-                        dataKey="scope"
-                        stroke={COLORS.scope}
-                        strokeWidth={2}
-                        dot={false}
-                        connectNulls={false}
-                        isAnimationActive={false}
                     />
                     <Line
                         type="linear"
                         dataKey="ideal"
                         stroke={COLORS.ideal}
-                        strokeWidth={1.5}
-                        strokeDasharray="5 4"
+                        strokeWidth={2}
+                        strokeDasharray="7 6"
                         dot={false}
                         isAnimationActive={false}
                     />
                     <Line
                         type="monotone"
-                        dataKey="done"
-                        stroke={COLORS.done}
-                        strokeWidth={2}
-                        dot={{ r: 2.5, fill: COLORS.done }}
+                        dataKey="scope"
+                        stroke={COLORS.scope}
+                        strokeWidth={3}
+                        strokeLinejoin="round"
+                        dot={false}
                         connectNulls={false}
                         isAnimationActive={false}
                     />
+                    <Area
+                        type="monotone"
+                        dataKey="done"
+                        stroke={`url(#${id}l)`}
+                        strokeWidth={4}
+                        strokeLinecap="round"
+                        fill={`url(#${id}f)`}
+                        dot={false}
+                        activeDot={{ r: 5 }}
+                        connectNulls={false}
+                        isAnimationActive={false}
+                    />
+                    <Line
+                        type="linear"
+                        dataKey="projection"
+                        stroke={COLORS.projection}
+                        strokeWidth={2.5}
+                        strokeDasharray="2 6"
+                        strokeLinecap="round"
+                        dot={false}
+                        connectNulls
+                        isAnimationActive={false}
+                    />
+                    {todayRow?.done !== null &&
+                        todayRow?.done !== undefined && (
+                            <ReferenceDot
+                                x={todayDay}
+                                y={todayRow.done}
+                                r={7}
+                                fill="var(--surface)"
+                                stroke={COLORS.projection}
+                                strokeWidth={3}
+                            />
+                        )}
                     {!compact &&
                         burnup.milestones.map((milestone) => {
                             const day = daysBetween(
@@ -244,16 +337,17 @@ export function BurnupChart({
                                     key={milestone.id}
                                     x={day}
                                     y={0}
-                                    r={4}
+                                    r={5}
                                     shape={(props: {
                                         cx?: number;
                                         cy?: number;
                                     }) => (
                                         <rect
-                                            x={(props.cx ?? 0) - 4}
-                                            y={(props.cy ?? 0) - 4}
-                                            width={8}
-                                            height={8}
+                                            x={(props.cx ?? 0) - 5}
+                                            y={(props.cy ?? 0) - 5}
+                                            width={10}
+                                            height={10}
+                                            rx={2}
                                             transform={`rotate(45 ${props.cx ?? 0} ${props.cy ?? 0})`}
                                             fill={
                                                 milestone.status === 'missed'
@@ -261,14 +355,15 @@ export function BurnupChart({
                                                     : milestone.status.startsWith(
                                                             'completed',
                                                         )
-                                                      ? COLORS.ideal
+                                                      ? 'var(--success)'
                                                       : 'var(--surface)'
                                             }
                                             stroke={
                                                 milestone.status === 'missed'
                                                     ? COLORS.danger
-                                                    : 'var(--text)'
+                                                    : 'var(--border-strong)'
                                             }
+                                            strokeWidth={2}
                                         >
                                             <title>{`${milestone.name} · ${shortDay(milestone.target_date)}`}</title>
                                         </rect>
@@ -276,7 +371,7 @@ export function BurnupChart({
                                 />
                             );
                         })}
-                </LineChart>
+                </ComposedChart>
             </ResponsiveContainer>
         </div>
     );
