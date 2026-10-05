@@ -17,6 +17,9 @@ void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
         switch (true) {
+            // Full-screen split layout of its own (mockups Login / MLogin).
+            case name === 'auth/login':
+                return [];
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):
