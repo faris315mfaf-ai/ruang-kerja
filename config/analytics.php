@@ -18,11 +18,9 @@ return [
     'cache_store' => env('ANALYTICS_CACHE_STORE'),
 
     /*
-    | A project workspace counts as "at risk" when its PIC health is at_risk /
-    | off_track or its last project update is older than this many days
-    | (PRD M10 "Update kedaluwarsa").
+    | "Update kedaluwarsa" (PRD M10) is not configured here: the Division
+    | dashboard uses the project module rule (ProjectFlags::STALE_AFTER_DAYS).
     */
-    'stale_update_days' => 7,
 
     /* Longest custom period (days). */
     'max_custom_days' => 366,
