@@ -1,4 +1,4 @@
-import { AlertTriangle, FileText, Paperclip } from 'lucide-react';
+import { AlertTriangle, FileText, Paperclip, ShieldOff } from 'lucide-react';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import {
     colleagueSummary,
@@ -15,6 +15,10 @@ import type {
     PlannedStep,
     RequestDetail,
 } from '@/types/requests';
+
+/** Shown instead of reason/attachments of a sick request to a substitute approver. */
+export const HEALTH_HIDDEN_NOTICE =
+    'Detail kesehatan disembunyikan untuk penyetuju pengganti';
 
 function hhmm(value: string | null | undefined): string {
     return value ? value.slice(0, 5).replace(':', '.') : '–';
@@ -60,14 +64,17 @@ export function RequestFields({
             label: 'Tanggal',
             value: formatLongDateRange(request.start_at, request.end_at),
         });
+        const calendar = request.type.counts_calendar_days === true;
+
         rows.push({
-            label: category === 'leave' ? 'Hari kerja' : 'Durasi',
+            label: category === 'leave' && !calendar ? 'Hari kerja' : 'Durasi',
             value: (
                 <>
-                    {formatDays(request.days)} hari
+                    {formatDays(request.days)}{' '}
+                    {calendar ? 'hari kalender' : 'hari'}
                     {request.payload.half_day ? (
                         ' (setengah hari)'
-                    ) : (
+                    ) : calendar ? null : (
                         <span className="text-text-muted"> (tanpa libur)</span>
                     )}
                 </>
@@ -98,7 +105,18 @@ export function RequestFields({
         rows.push({ label: 'Tujuan', value: request.payload.destination });
     }
 
-    rows.push({ label: 'Alasan', value: request.reason || '–' });
+    const hidden = request.health_details_hidden === true;
+    const hiddenNotice = (
+        <span className="inline-flex items-center gap-1.5 text-text-muted">
+            <ShieldOff className="size-3.5 shrink-0" aria-hidden />
+            {HEALTH_HIDDEN_NOTICE}
+        </span>
+    );
+
+    rows.push({
+        label: 'Alasan',
+        value: hidden ? hiddenNotice : request.reason || '–',
+    });
 
     if (category === 'leave') {
         rows.push({
@@ -120,33 +138,34 @@ export function RequestFields({
 
     rows.push({
         label: 'Lampiran',
-        value:
-            request.attachments.length === 0 ? (
-                <span className="text-text-muted">Tidak ada</span>
-            ) : (
-                <ul className="space-y-1">
-                    {request.attachments.map((file) => (
-                        <li key={file.id}>
-                            <a
-                                href={file.url}
-                                target="_blank"
-                                rel="noopener"
-                                className="inline-flex items-center gap-1.5 text-primary underline-offset-4 hover:underline"
-                            >
-                                <Paperclip className="size-3.5" aria-hidden />
-                                {file.filename}
-                                <span className="text-text-muted">
-                                    ·{' '}
-                                    {formatNumber(
-                                        Math.round(file.size_bytes / 1024),
-                                    )}{' '}
-                                    KB
-                                </span>
-                            </a>
-                        </li>
-                    ))}
-                </ul>
-            ),
+        value: hidden ? (
+            hiddenNotice
+        ) : request.attachments.length === 0 ? (
+            <span className="text-text-muted">Tidak ada</span>
+        ) : (
+            <ul className="space-y-1">
+                {request.attachments.map((file) => (
+                    <li key={file.id}>
+                        <a
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener"
+                            className="inline-flex items-center gap-1.5 text-primary underline-offset-4 hover:underline"
+                        >
+                            <Paperclip className="size-3.5" aria-hidden />
+                            {file.filename}
+                            <span className="text-text-muted">
+                                ·{' '}
+                                {formatNumber(
+                                    Math.round(file.size_bytes / 1024),
+                                )}{' '}
+                                KB
+                            </span>
+                        </a>
+                    </li>
+                ))}
+            </ul>
+        ),
     });
 
     return (

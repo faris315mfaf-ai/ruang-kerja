@@ -20,6 +20,8 @@ class UpdateLeaveBalanceRequest extends FormRequest
         return [
             'entitled_days' => ['required', 'numeric', 'min:0', 'max:365', 'multiple_of:0.5'],
             'carried_over_days' => ['required', 'numeric', 'min:0', 'max:365', 'multiple_of:0.5'],
+            // Optional for backwards compatibility: missing = unchanged.
+            'opening_days' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:365', 'multiple_of:0.5'],
         ];
     }
 

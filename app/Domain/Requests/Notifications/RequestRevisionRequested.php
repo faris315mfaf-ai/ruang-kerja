@@ -32,6 +32,16 @@ final class RequestRevisionRequested extends RequestNotification
         return $this->step->note;
     }
 
+    public function neutralTitle(User $notifiable): string
+    {
+        return ($this->step->approver->name ?? 'Penyetuju').' meminta revisi pengajuan Anda';
+    }
+
+    protected function noteInApp(): bool
+    {
+        return true;
+    }
+
     public function url(User $notifiable): string
     {
         return '/pengajuan/'.$this->request->id.'/ubah';

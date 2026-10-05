@@ -1,5 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { Search, WalletCards } from 'lucide-react';
+import { Search, Upload, WalletCards } from 'lucide-react';
 import { useState } from 'react';
 import { DesktopOnlyNotice } from '@/components/desktop-only-notice';
 import { EmptyState } from '@/components/empty-state';
@@ -16,6 +16,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { BalanceAdjustDialog } from '@/features/admin-requests/balance-adjust-dialog';
+import type { BalanceHistory } from '@/features/admin-requests/balance-adjust-dialog';
+import { BalanceImportDialog } from '@/features/admin-requests/balance-import-dialog';
 import { selectClass } from '@/features/requests/form-fields';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { formatDays } from '@/lib/requests';
@@ -23,7 +26,14 @@ import { cn } from '@/lib/utils';
 import { generate, index, update } from '@/routes/admin/leave-balances';
 import type { BalanceSummary, LeaveTypeInfo, Person } from '@/types/requests';
 
-type Row = { user: Person; eligible: boolean; balance: BalanceSummary | null };
+type Row = {
+    user: Person;
+    eligible: boolean;
+    balance: BalanceSummary | null;
+    /** Joined during the year: entitlement prorated. */
+    prorated: boolean;
+    joined_at: string | null;
+};
 
 type Props = {
     types: LeaveTypeInfo[];
@@ -32,18 +42,32 @@ type Props = {
     years: number[];
     search: string;
     rows: Row[];
+    history?: BalanceHistory;
+    import: { columns: string[]; required: string[]; max_kilobytes: number };
+    proration: {
+        example_quota: number | null;
+        example_july: number | null;
+    };
 };
+
+type EditingRow = Row & { balance: BalanceSummary & { id: string } };
+
+const signed = (value: number) =>
+    value === 0
+        ? '0'
+        : `${value > 0 ? '+' : '−'}${formatDays(Math.abs(value))}`;
 
 function EditBalance({
     row,
     onClose,
 }: {
-    row: Row & { balance: BalanceSummary };
+    row: EditingRow;
     onClose: () => void;
 }) {
     const form = useForm({
         entitled_days: row.balance.entitled,
         carried_over_days: row.balance.carried_over,
+        opening_days: row.balance.opening,
     });
 
     return (
@@ -62,10 +86,10 @@ function EditBalance({
                     className="grid grid-cols-2 gap-4"
                     onSubmit={(event) => {
                         event.preventDefault();
-                        form.put(
-                            update.url({ leaveBalance: row.balance.id ?? '' }),
-                            { preserveScroll: true, onSuccess: onClose },
-                        );
+                        form.put(update.url({ leaveBalance: row.balance.id }), {
+                            preserveScroll: true,
+                            onSuccess: onClose,
+                        });
                     }}
                 >
                     <div className="grid gap-2">
@@ -102,6 +126,27 @@ function EditBalance({
                         />
                         <InputError message={form.errors.carried_over_days} />
                     </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="opening_days">Saldo awal (hari)</Label>
+                        <Input
+                            id="opening_days"
+                            type="number"
+                            min={0}
+                            step={0.5}
+                            value={form.data.opening_days}
+                            onChange={(e) =>
+                                form.setData(
+                                    'opening_days',
+                                    Number(e.target.value),
+                                )
+                            }
+                        />
+                        <InputError message={form.errors.opening_days} />
+                    </div>
+                    <p className="col-span-2 text-[13px] text-text-muted">
+                        Saldo awal = sisa yang dibawa dari sistem lama.
+                        Tambahan/potongan lain dicatat lewat Penyesuaian.
+                    </p>
                 </form>
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={onClose}>
@@ -127,11 +172,14 @@ export default function LeaveBalances({
     years,
     search,
     rows,
+    history,
+    import: importReference,
+    proration,
 }: Props) {
     const breakpoint = useBreakpoint();
-    const [editing, setEditing] = useState<
-        (Row & { balance: BalanceSummary }) | null
-    >(null);
+    const [editing, setEditing] = useState<EditingRow | null>(null);
+    const [adjusting, setAdjusting] = useState<EditingRow | null>(null);
+    const [importing, setImporting] = useState(false);
     const [query, setQuery] = useState(search);
     const missing = rows.filter(
         (row) => row.eligible && row.balance === null,
@@ -170,24 +218,45 @@ export default function LeaveBalances({
                             Saldo cuti
                         </h1>
                         <p className="text-sm text-text-muted">
-                            Jatah, bawaan, dan pemakaian cuti per karyawan.
-                            Saldo tahun baru dibuat otomatis tiap 1 Januari.
+                            Jatah, bawaan, saldo awal, penyesuaian, dan
+                            pemakaian cuti per karyawan. Saldo tahun baru dibuat
+                            otomatis tiap 1 Januari.
                         </p>
+                        {proration.example_quota !== null &&
+                            proration.example_july !== null && (
+                                <p className="mt-1 text-[13px] text-text-subtle">
+                                    Karyawan baru: jatah prorata sisa bulan
+                                    (bulan masuk dihitung bila tanggal 1–15),
+                                    dibulatkan ke bawah per 0,5 hari — mis.
+                                    masuk 1 Juli ={' '}
+                                    {formatDays(proration.example_july)} dari{' '}
+                                    {formatDays(proration.example_quota)} hari.
+                                </p>
+                            )}
                     </div>
                     {type && (
-                        <Button
-                            type="button"
-                            onClick={() =>
-                                router.post(
-                                    generate.url(),
-                                    { year },
-                                    { preserveScroll: true },
-                                )
-                            }
-                        >
-                            Buat saldo {year}
-                            {missing > 0 ? ` (${missing} belum ada)` : ''}
-                        </Button>
+                        <div className="flex flex-wrap gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setImporting(true)}
+                            >
+                                <Upload aria-hidden /> Impor saldo
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={() =>
+                                    router.post(
+                                        generate.url(),
+                                        { year },
+                                        { preserveScroll: true },
+                                    )
+                                }
+                            >
+                                Buat saldo {year}
+                                {missing > 0 ? ` (${missing} belum ada)` : ''}
+                            </Button>
+                        </div>
                     )}
                 </header>
 
@@ -278,6 +347,18 @@ export default function LeaveBalances({
                                         scope="col"
                                         className="px-3 py-2.5 text-right font-normal"
                                     >
+                                        Saldo awal
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        className="px-3 py-2.5 text-right font-normal"
+                                    >
+                                        Penyesuaian
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        className="px-3 py-2.5 text-right font-normal"
+                                    >
                                         Terpakai
                                     </th>
                                     <th
@@ -329,11 +410,29 @@ export default function LeaveBalances({
                                                     {formatDays(
                                                         row.balance.entitled,
                                                     )}
+                                                    {row.prorated && (
+                                                        <span
+                                                            className="ml-1.5 rounded-full bg-info/10 px-1.5 py-0.5 text-[11px] text-info"
+                                                            title={`Prorata: bergabung ${row.joined_at ?? ''}`}
+                                                        >
+                                                            prorata
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="px-3 py-2.5 text-right">
                                                     {formatDays(
                                                         row.balance
                                                             .carried_over,
+                                                    )}
+                                                </td>
+                                                <td className="px-3 py-2.5 text-right">
+                                                    {formatDays(
+                                                        row.balance.opening,
+                                                    )}
+                                                </td>
+                                                <td className="px-3 py-2.5 text-right">
+                                                    {signed(
+                                                        row.balance.adjustments,
                                                     )}
                                                 </td>
                                                 <td className="px-3 py-2.5 text-right">
@@ -351,26 +450,50 @@ export default function LeaveBalances({
                                                         row.balance.available,
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-2.5 text-right">
+                                                <td className="px-4 py-2.5 text-right whitespace-nowrap">
                                                     <Button
                                                         type="button"
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() =>
+                                                            row.balance?.id &&
                                                             setEditing({
                                                                 ...row,
-                                                                balance:
-                                                                    row.balance!,
+                                                                balance: {
+                                                                    ...row.balance,
+                                                                    id: row
+                                                                        .balance
+                                                                        .id,
+                                                                },
                                                             })
                                                         }
                                                     >
                                                         Ubah
                                                     </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            row.balance?.id &&
+                                                            setAdjusting({
+                                                                ...row,
+                                                                balance: {
+                                                                    ...row.balance,
+                                                                    id: row
+                                                                        .balance
+                                                                        .id,
+                                                                },
+                                                            })
+                                                        }
+                                                    >
+                                                        Sesuaikan
+                                                    </Button>
                                                 </td>
                                             </>
                                         ) : (
                                             <td
-                                                colSpan={6}
+                                                colSpan={8}
                                                 className="px-3 py-2.5 text-right text-text-muted"
                                             >
                                                 {row.eligible
@@ -388,6 +511,19 @@ export default function LeaveBalances({
             {editing && (
                 <EditBalance row={editing} onClose={() => setEditing(null)} />
             )}
+            {adjusting && (
+                <BalanceAdjustDialog
+                    user={adjusting.user}
+                    balance={adjusting.balance}
+                    history={history}
+                    onClose={() => setAdjusting(null)}
+                />
+            )}
+            <BalanceImportDialog
+                open={importing}
+                onOpenChange={setImporting}
+                reference={importReference}
+            />
         </>
     );
 }

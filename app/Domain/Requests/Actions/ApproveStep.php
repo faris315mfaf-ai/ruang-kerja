@@ -49,7 +49,9 @@ final class ApproveStep
             $this->audit->log('request.step_approved', $request, ['step' => $step->step_order, 'status' => ApprovalStatus::Waiting->value], [
                 'step' => $step->step_order,
                 'status' => ApprovalStatus::Approved->value,
-                'note' => $step->note,
+                // Privacy: ids + a flag only; the note itself lives on the step (in-app).
+                'step_id' => $step->id,
+                'has_note' => $step->note !== null && $step->note !== '',
             ], $actor);
 
             if ($next === null) {

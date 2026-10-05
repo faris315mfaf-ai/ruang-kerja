@@ -26,6 +26,11 @@ final class RequestAwaitingApproval extends RequestNotification
         return RequestFormatter::summary($this->request);
     }
 
+    public function neutralTitle(User $notifiable): string
+    {
+        return "Pengajuan {$this->request->user->name} menunggu persetujuan Anda";
+    }
+
     public function url(User $notifiable): string
     {
         return '/persetujuan/'.$this->request->id;

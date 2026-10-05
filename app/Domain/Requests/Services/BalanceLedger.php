@@ -20,8 +20,11 @@ use Illuminate\Validation\ValidationException;
  */
 final class BalanceLedger
 {
+    public function __construct(private readonly LeaveEntitlement $entitlement) {}
+
     /**
-     * Balance row of the request's year, created from the type quota when missing.
+     * Balance row of the request's year, created from the type quota (prorated
+     * for a mid-year joiner, see LeaveEntitlement) when missing.
      */
     public function balanceFor(User $user, LeaveType $type, int $year, bool $lock = false): ?LeaveBalance
     {
@@ -31,7 +34,7 @@ final class BalanceLedger
 
         LeaveBalance::query()->firstOrCreate(
             ['user_id' => $user->id, 'leave_type_id' => $type->id, 'year' => $year],
-            ['entitled_days' => $type->annual_quota_days ?? 0],
+            ['entitled_days' => $this->entitlement->forYear($user, $type, $year)],
         );
 
         return LeaveBalance::query()
@@ -56,7 +59,7 @@ final class BalanceLedger
                 'user_id' => $user->id,
                 'leave_type_id' => $type->id,
                 'year' => $year,
-                'entitled_days' => $type->annual_quota_days ?? 0,
+                'entitled_days' => $this->entitlement->forYear($user, $type, $year),
             ]);
     }
 

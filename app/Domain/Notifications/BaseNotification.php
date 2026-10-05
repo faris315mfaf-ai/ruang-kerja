@@ -29,6 +29,8 @@ use Illuminate\Notifications\Notification;
  *   locked channels, the WhatsApp feature flag, "hold while on leave" and
  *   quiet hours (email delayed, see withDelay()).
  * - In-app = InAppChannel (database) + broadcast on the user's private channel.
+ * - Email/WhatsApp render externalPayload() (defaults to payload()), so a module
+ *   can keep sensitive free text in-app only.
  * - Queued after the surrounding DB transaction commits.
  * - Checked again right before each channel delivers (shouldSend()): a queued or
  *   delayed (quiet hours) notification is dropped when the recipient was
@@ -51,6 +53,16 @@ abstract class BaseNotification extends Notification implements ShouldQueueAfter
      * Content shown in the Inbox, toast, email and WhatsApp.
      */
     abstract public function payload(User $notifiable): NotificationPayload;
+
+    /**
+     * Content for channels that leave the app (email, WhatsApp). Defaults to
+     * payload(); override to drop sensitive free text (notes, health details)
+     * that should only be read in-app behind authorization.
+     */
+    public function externalPayload(User $notifiable): NotificationPayload
+    {
+        return $this->payload($notifiable);
+    }
 
     /**
      * Whether this notification appears under "Perlu tindakan" until resolved.
@@ -176,7 +188,7 @@ abstract class BaseNotification extends Notification implements ShouldQueueAfter
     public function toMail(object $notifiable): MailMessage
     {
         $user = $notifiable instanceof User ? $notifiable : null;
-        $payload = $user ? $this->payload($user) : new NotificationPayload($this->type()->label());
+        $payload = $user ? $this->externalPayload($user) : new NotificationPayload($this->type()->label());
 
         return (new MailMessage)
             ->subject($payload->title)
@@ -193,7 +205,7 @@ abstract class BaseNotification extends Notification implements ShouldQueueAfter
     public function toWhatsApp(object $notifiable): WhatsAppMessage
     {
         $payload = $notifiable instanceof User
-            ? $this->payload($notifiable)
+            ? $this->externalPayload($notifiable)
             : new NotificationPayload($this->type()->label());
 
         $text = trim($payload->title."\n".($payload->body ?? ''));

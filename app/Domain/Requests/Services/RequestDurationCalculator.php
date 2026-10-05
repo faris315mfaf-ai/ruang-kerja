@@ -54,7 +54,8 @@ final class RequestDurationCalculator
 
         $workDates = $this->calendar->workingDates($user, $start, $end);
 
-        if ($workDates === []) {
+        // Calendar-day types (Cuti melahirkan) may start or end on a day off.
+        if ($workDates === [] && ! $type->counts_calendar_days) {
             throw ValidationException::withMessages(['start_date' => 'Rentang tanggal tidak berisi hari kerja.']);
         }
 
@@ -72,6 +73,17 @@ final class RequestDurationCalculator
             $halfDay = true;
         }
 
+        $days = $halfDay ? 0.5 : (float) ($type->counts_calendar_days ? $start->diffInDays($end) + 1 : count($workDates));
+
+        if ($type->max_days_per_request !== null && $days > $type->max_days_per_request) {
+            throw ValidationException::withMessages(['end_date' => sprintf(
+                'Maksimal %s %s per pengajuan untuk %s.',
+                BalanceLedger::format($type->max_days_per_request),
+                $type->dayUnit(),
+                mb_strtolower($type->name),
+            )]);
+        }
+
         $payload = match ($type->category) {
             RequestCategory::Leave => ['half_day' => $halfDay],
             RequestCategory::Permit => ['mode' => 'days', 'half_day' => $halfDay],
@@ -86,7 +98,7 @@ final class RequestDurationCalculator
         return new RequestPeriod(
             startAt: OfficeTime::startOfDay($start->toDateString()),
             endAt: OfficeTime::endOfDay($end->toDateString()),
-            days: $halfDay ? 0.5 : (float) count($workDates),
+            days: $days,
             minutes: null,
             payload: $payload,
             workDates: $workDates,

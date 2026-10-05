@@ -10,6 +10,7 @@ import {
 import type { DateInput } from '@/lib/format';
 import type {
     ApprovalStatus,
+    LeaveTypeInfo,
     RequestCategory,
     RequestItem,
     RequestStatus,
@@ -204,6 +205,17 @@ export function formatRequestPeriod(
     return formatDateRange(item.start_at, item.end_at);
 }
 
+/** Unit of a whole-day duration: "hari kalender", "hari kerja" (leave) or "hari". */
+export function dayUnit(
+    type: Pick<LeaveTypeInfo, 'category' | 'counts_calendar_days'>,
+): string {
+    if (type.counts_calendar_days) {
+        return 'hari kalender';
+    }
+
+    return type.category === 'leave' ? 'hari kerja' : 'hari';
+}
+
 /** "3 hari kerja", "1 hari", "2 jam", "—" (corrections). */
 export function formatRequestDuration(
     item: Pick<RequestItem, 'type' | 'days' | 'minutes'>,
@@ -213,7 +225,7 @@ export function formatRequestDuration(
     }
 
     if (item.days !== null) {
-        return `${formatDays(item.days)} ${item.type.category === 'leave' ? 'hari kerja' : 'hari'}`;
+        return `${formatDays(item.days)} ${dayUnit(item.type)}`;
     }
 
     return '—';

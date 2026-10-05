@@ -1,6 +1,7 @@
 import { CircleAlert } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+    dayUnit,
     formatDateRange,
     formatDays,
     formatHours,
@@ -46,7 +47,7 @@ export function RequestSummary({
             : period.minutes !== null
               ? formatHours(period.minutes)
               : period.days !== null
-                ? `${formatDays(period.days)} ${category === 'leave' ? 'hari kerja' : 'hari'}`
+                ? `${formatDays(period.days)} ${type ? dayUnit(type) : dayUnit({ category })}`
                 : 'Koreksi 1 hari';
 
     const marked = (preview.colleagues?.people ?? []).flatMap(

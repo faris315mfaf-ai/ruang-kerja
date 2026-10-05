@@ -20,7 +20,7 @@
 |---|---|
 | Organisasi & akses | `companies`, `divisions`, `teams`, `positions`, `users`, `employee_profiles`, `roles`*, `permissions`*, `model_has_roles`*, `audit_logs` |
 | Absensi | `office_locations`, `shifts`, `shift_assignments`, `holidays`, `attendance_days`, `attendance_logs`, `qr_tokens`, `kiosks`, `attendance_consents` |
-| Pengajuan | `leave_types`, `leave_balances`, `requests`, `request_sequences`, `request_approvals`, `approval_flows`, `approval_flow_steps`, `approval_delegations` |
+| Pengajuan | `leave_types`, `leave_balances`, `leave_balance_adjustments`, `requests`, `request_sequences`, `request_approvals`, `approval_flows`, `approval_flow_steps`, `approval_delegations` |
 | Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_directions`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
 | Google & file | `google_accounts`, `drive_files`, `attachments` |
 | Notifikasi | `notifications`*, `notification_preferences`, `notification_settings`, `notification_dispatch_logs` |
@@ -260,11 +260,16 @@ Implementasi (Sprint 2): versi dari `config('attendance.consent.version')` (`ATT
 ### leave_types
 `id`, `company_id`, `code`, `name`, `category` (`leave` · `permit` · `sick` · `overtime` · `correction` · `business_trip`), `annual_quota_days` numeric(5,1) null, `requires_attachment_after_days` smallint null (0 = selalu wajib), `is_paid`, `allow_half_day`, `carry_over_max_days` numeric(5,1) null, `approval_flow_id` FK null (null = alur "Default" perusahaan).
 Tambahan Sprint 4: `description` null, `max_backdate_days` null (koreksi absensi "maks. 7 hari lalu"), `min_service_months` null (cuti besar "Belum berhak"), `is_active`, `sort_order`, `deleted_at`.
-`code` = 2–10 huruf besar/angka (CHECK), **juga prefiks nomor** (`CUT`, `CBR`, `SKT`, `IZN`, `LBR`, `KOR`, `DNS`). Unik `(company_id, code)` termasuk yang terhapus.
+`code` = 2–10 huruf besar/angka (CHECK), **juga prefiks nomor** (`CUT`, `CBR`, `SKT`, `IZN`, `LBR`, `KOR`, `DNS`, `CML`, `CAP`, `CLT`). Unik `(company_id, code)` termasuk yang terhapus.
+Tambahan Fitur pengajuan (`docs/sprints/FITUR-PENGAJUAN.md`): `counts_calendar_days` bool default false (durasi dihitung hari kalender, mis. Cuti melahirkan; hari kerja tetap dipakai untuk efek absensi), `max_days_per_request` numeric(5,1) null (CHECK > 0; maks. per pengajuan, mis. 90 hari kalender melahirkan, 3 hari alasan penting), `is_provisional_default` bool default false (**"Bawaan sementara"**: jenis bawaan seeder yang belum ditinjau HR; otomatis false saat HR menyimpan jenis atau menetapkan alurnya; seeder tidak pernah menimpa jenis yang sudah ada). Cuti di luar tanggungan = `is_paid` false tanpa `annual_quota_days` (tidak memotong saldo).
 
 ### leave_balances
 `id`, `user_id`, `leave_type_id`, `year`, `entitled_days` numeric(5,1), `carried_over_days`, `used_days`, `pending_days`. Unik `(user_id, leave_type_id, year)`. `pending_days` dipakai agar saldo tidak terpakai dua kali saat pengajuan sedang diproses.
 CHECK: semua kolom ≥ 0 dan `entitled + carried_over − used − pending ≥ 0` (saldo tidak pernah minus). Hanya jenis ber-`annual_quota_days`. Dibuat oleh `requests:generate-balances` (1 Januari) atau saat pertama dipakai. `generated_at` timestamptz null: kapan carry-over ditetapkan (oleh generator atau HR). Baris yang dibuat saat pertama dipakai (mis. cuti Januari diajukan Desember) tetap null sehingga generator mengisi carry-over-nya tepat sekali; ubahan HR menetapkan `generated_at` sehingga tidak ditimpa.
+Tambahan Fitur pengajuan: `opening_days` numeric(5,1) default 0 (**saldo awal**, diisi HR/impor), `adjustment_days` numeric(5,1) default 0 (= Σ `leave_balance_adjustments.delta_days`, boleh minus; dijaga `AdjustLeaveBalance` dengan row lock). CHECK diperluas: `entitled, carried_over, opening, used, pending ≥ 0` dan **`entitled + carried_over + opening + adjustment − used − pending ≥ 0`**. `entitled_days` untuk karyawan yang bergabung di tahun berjalan = **prorata** (`LeaveEntitlement`: kuota × sisa bulan / 12, bulan masuk dihitung bila tanggal 1–15, dibulatkan ke bawah per 0,5 hari) — dipakai generator tahunan dan saat saldo dibuat pertama kali.
+
+### leave_balance_adjustments (tambahan Fitur pengajuan)
+`id` ulid, `balance_id` FK `leave_balances` (cascade), `delta_days` numeric(5,1) (CHECK ≠ 0; + menambah, − mengurangi), `reason` varchar(255) wajib, `actor_id` FK users null (nullOnDelete), `created_at` timestamptz. Hanya ditambah (tidak diubah/dihapus), setiap baris juga dicatat di `audit_logs` (`leave_balance.adjusted`). Impor CSV/XLSX Admin › Saldo cuti menulis lewat aksi yang sama.
 
 ### requests — semua jenis pengajuan dalam satu tabel
 | Kolom | Tipe | Keterangan |

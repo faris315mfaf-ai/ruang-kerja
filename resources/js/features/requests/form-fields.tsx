@@ -6,7 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { formatNumber } from '@/lib/format';
+import { dayUnit, formatDays } from '@/lib/requests';
 import { cn } from '@/lib/utils';
+import type { FormLeaveType } from '@/types/requests';
 import type { RequestFormState } from './use-request-form';
 
 type Props = {
@@ -19,6 +21,54 @@ type Props = {
 /** Native select styled like the inputs (keyboard + mobile friendly). */
 export const selectClass =
     'h-9 w-full rounded-md border border-input bg-transparent px-3 text-base text-text shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm dark:bg-surface';
+
+/**
+ * Rules of the chosen type under the selector: description, per-request maximum,
+ * unpaid, and the "Bawaan sementara" marker of seeded defaults HR has not reviewed.
+ */
+export function LeaveTypeHint({ type }: { type: FormLeaveType | undefined }) {
+    if (!type) {
+        return null;
+    }
+
+    const rules = [
+        type.max_days_per_request != null
+            ? `Maks. ${formatDays(type.max_days_per_request)} ${dayUnit(type)} per pengajuan`
+            : null,
+        type.is_paid ? null : 'Tidak dibayar, tidak memotong saldo cuti',
+    ].filter(Boolean);
+
+    if (
+        !type.description &&
+        rules.length === 0 &&
+        !type.is_provisional_default
+    ) {
+        return null;
+    }
+
+    return (
+        <div className="space-y-1 text-[13px] text-text-muted">
+            {type.is_provisional_default && <ProvisionalBadge />}
+            {type.description && <p>{type.description}</p>}
+            {rules.length > 0 && <p>{rules.join(' · ')}</p>}
+        </div>
+    );
+}
+
+/** Marker of a seeded default rule HR has not reviewed yet. */
+export function ProvisionalBadge({ className }: { className?: string }) {
+    return (
+        <span
+            className={cn(
+                'inline-flex w-fit shrink-0 items-center rounded-full bg-warning/10 px-2 py-0.5 text-xs font-normal whitespace-nowrap text-warning',
+                className,
+            )}
+            title="Aturan bawaan sistem yang belum ditinjau HR; dapat berubah."
+        >
+            Bawaan sementara
+        </span>
+    );
+}
 
 /** Category-specific inputs shared by the desktop and mobile forms. */
 export function CategoryFields({
@@ -80,6 +130,8 @@ export function CategoryFields({
                     <InputError message={errors.leave_type_id} />
                 </div>
             )}
+
+            <LeaveTypeHint type={type} />
 
             {category === 'permit' && (
                 <div className="grid gap-2">

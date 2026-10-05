@@ -17,6 +17,7 @@ import type {
     AdminRequestTypesProps,
 } from '@/features/admin-requests/types';
 import { ConfirmDialog } from '@/features/requests/confirm-dialog';
+import { ProvisionalBadge } from '@/features/requests/form-fields';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { formatDays } from '@/lib/requests';
 import { cn } from '@/lib/utils';
@@ -124,6 +125,9 @@ export default function RequestTypes({
                                                         <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-normal text-warning">
                                                             Belum disimpan
                                                         </span>
+                                                    )}
+                                                    {item.is_provisional_default && (
+                                                        <ProvisionalBadge />
                                                     )}
                                                     {!item.is_active && (
                                                         <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-normal text-text-muted">

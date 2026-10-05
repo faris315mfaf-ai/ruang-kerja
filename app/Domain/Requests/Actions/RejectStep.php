@@ -55,7 +55,9 @@ final class RejectStep
             $this->audit->log('request.rejected', $request, ['status' => RequestStatus::Pending->value], [
                 'status' => RequestStatus::Rejected->value,
                 'step' => $step->step_order,
-                'note' => $note,
+                // Privacy: ids + a flag only; the note itself lives on the step (in-app).
+                'step_id' => $step->id,
+                'has_note' => true,
             ], $actor);
 
             return [$request, $step];

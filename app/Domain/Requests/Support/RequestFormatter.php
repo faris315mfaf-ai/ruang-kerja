@@ -69,7 +69,7 @@ final class RequestFormatter
         }
 
         if ($request->days !== null) {
-            return BalanceLedger::format($request->days).($request->leaveType->category === RequestCategory::Leave ? ' hari kerja' : ' hari');
+            return BalanceLedger::format($request->days).' '.$request->leaveType->dayUnit();
         }
 
         return null;

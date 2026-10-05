@@ -9,6 +9,7 @@ import {
     formatLongDateRange,
     formatRequestDuration,
     formatRequestPeriod,
+    dayUnit,
     officeDay,
     stepProgress,
 } from './requests';
@@ -26,6 +27,10 @@ const type = (category: LeaveTypeInfo['category']): LeaveTypeInfo => ({
     allow_half_day: true,
     max_backdate_days: null,
     is_paid: true,
+    counts_calendar_days: false,
+    max_days_per_request: null,
+    day_unit: category === 'leave' ? 'hari kerja' : 'hari',
+    is_provisional_default: false,
 });
 
 describe('officeDay', () => {
@@ -83,6 +88,17 @@ describe('durations', () => {
                 minutes: null,
             }),
         ).toBe('—');
+    });
+
+    it('uses calendar days for calendar-day leave types (Cuti melahirkan)', () => {
+        const maternity = { ...type('leave'), counts_calendar_days: true };
+
+        expect(dayUnit(maternity)).toBe('hari kalender');
+        expect(dayUnit(type('leave'))).toBe('hari kerja');
+        expect(dayUnit(type('permit'))).toBe('hari');
+        expect(
+            formatRequestDuration({ type: maternity, days: 90, minutes: null }),
+        ).toBe('90 hari kalender');
     });
 });
 

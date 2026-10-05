@@ -36,6 +36,13 @@ final class RequestApproved extends RequestNotification
         return RequestFormatter::summary($this->request);
     }
 
+    public function neutralTitle(User $notifiable): string
+    {
+        return $notifiable->id === $this->request->user_id
+            ? 'Pengajuan Anda disetujui'
+            : "Anda menjadi pengganti {$this->request->user->name}";
+    }
+
     public function url(User $notifiable): string
     {
         return $notifiable->id === $this->request->user_id ? '/pengajuan/'.$this->request->id : '/pengajuan';

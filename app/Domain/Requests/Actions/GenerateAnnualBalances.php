@@ -3,6 +3,7 @@
 namespace App\Domain\Requests\Actions;
 
 use App\Domain\Organization\Enums\UserStatus;
+use App\Domain\Requests\Services\LeaveEntitlement;
 use App\Models\Company;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
@@ -15,9 +16,12 @@ use Illuminate\Support\Facades\DB;
  * `carry_over_max_days`. A balance created earlier on first use (generated_at
  * null, e.g. a January leave submitted in December) gets its carry-over filled
  * once ("completed"). Idempotent: settled balances are left untouched.
+ * Employees joining during $year get a prorated entitlement (LeaveEntitlement).
  */
 final class GenerateAnnualBalances
 {
+    public function __construct(private readonly LeaveEntitlement $entitlement) {}
+
     /**
      * @return array{created: int, completed: int, skipped: int}
      */
@@ -94,7 +98,7 @@ final class GenerateAnnualBalances
             'user_id' => $user->id,
             'leave_type_id' => $type->id,
             'year' => $year,
-            'entitled_days' => $type->annual_quota_days ?? 0,
+            'entitled_days' => $this->entitlement->forYear($user, $type, $year),
             'carried_over_days' => $carry,
             'generated_at' => now(),
         ]);

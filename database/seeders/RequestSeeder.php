@@ -44,6 +44,21 @@ class RequestSeeder extends Seeder
         'LBR' => ['Lembur', RequestCategory::Overtime, null, null, null, false, null, null, 'Lembur', 5],
         'KOR' => ['Koreksi absensi', RequestCategory::Correction, null, null, null, false, 7, null, ApprovalFlow::DEFAULT_NAME, 6],
         'DNS' => ['Dinas luar', RequestCategory::BusinessTrip, null, null, null, false, null, null, 'Dinas luar', 7],
+        // Fitur pengajuan: provisional defaults inspired by UU Ketenagakerjaan, to be reviewed by HR.
+        'CML' => ['Cuti melahirkan', RequestCategory::Leave, null, null, 0, false, null, null, ApprovalFlow::DEFAULT_NAME, 8],
+        'CAP' => ['Cuti alasan penting', RequestCategory::Leave, null, null, null, false, null, null, ApprovalFlow::DEFAULT_NAME, 9],
+        'CLT' => ['Cuti di luar tanggungan', RequestCategory::Leave, null, null, null, false, null, null, 'Cuti besar', 10],
+    ];
+
+    /**
+     * Extra rules of some defaults: code => [is_paid, counts_calendar_days, max_days_per_request, description].
+     *
+     * @var array<string, array{0: bool, 1: bool, 2: float|null, 3: string}>
+     */
+    private const array RULES = [
+        'CML' => [true, true, 90, 'Maks. 3 bulan (90 hari kalender), mis. 1,5 bulan sebelum dan 1,5 bulan sesudah melahirkan. Lampirkan surat dokter/bidan.'],
+        'CAP' => [true, false, 3, 'Per peristiwa, maks. 3 hari: menikah (3), menikahkan/khitan/baptis anak (2), istri melahirkan/keguguran (2), keluarga meninggal (2). Tidak memotong saldo.'],
+        'CLT' => [false, false, null, 'Tidak dibayar dan tidak memotong saldo cuti tahunan. Perlu persetujuan Direksi.'],
     ];
 
     public function run(): void
@@ -111,9 +126,17 @@ class RequestSeeder extends Seeder
         foreach (self::TYPES as $code => [$name, $category, $quota, $carry, $attachment, $halfDay, $backdate, $service, $flow, $sort]) {
             $type = LeaveType::withTrashed()->firstOrNew(['company_id' => $company->id, 'code' => $code]);
 
+            // Idempotent: an existing type (possibly edited by HR) is never overwritten.
             if (! $type->exists) {
+                [$paid, $calendar, $max, $description] = self::RULES[$code] ?? [true, false, null, null];
+
                 $type->fill([
                     'name' => $name,
+                    'description' => $description,
+                    'is_paid' => $paid,
+                    'counts_calendar_days' => $calendar,
+                    'max_days_per_request' => $max,
+                    'is_provisional_default' => true,
                     'category' => $category,
                     'annual_quota_days' => $quota,
                     'carry_over_max_days' => $carry,

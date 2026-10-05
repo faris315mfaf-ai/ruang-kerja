@@ -45,6 +45,8 @@ class SaveLeaveTypeRequest extends FormRequest
             'max_backdate_days' => ['nullable', 'integer', 'min:0', 'max:365'],
             'min_service_months' => ['nullable', 'integer', 'min:0', 'max:600'],
             'allow_half_day' => ['sometimes', 'boolean'],
+            'counts_calendar_days' => ['sometimes', 'boolean'],
+            'max_days_per_request' => ['nullable', 'numeric', 'min:0.5', 'max:366', 'multiple_of:0.5'],
             'is_paid' => ['sometimes', 'boolean'],
             'is_active' => ['sometimes', 'boolean'],
             'approval_flow_id' => ['nullable', 'string', 'ulid'],
@@ -65,6 +67,7 @@ class SaveLeaveTypeRequest extends FormRequest
             'category.required' => 'Pilih kategori.',
             '*.numeric' => 'Harus berupa angka.',
             '*.integer' => 'Harus berupa bilangan bulat.',
+            'max_days_per_request.min' => 'Minimal 0,5 hari.',
             '*.min' => 'Tidak boleh negatif.',
             '*.multiple_of' => 'Kelipatan 0,5 hari.',
         ];

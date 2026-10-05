@@ -17,7 +17,7 @@ it('seeds flows, leave types, balances and demo requests idempotently', function
     $this->seed(DatabaseSeeder::class);
     $this->seed(RequestSeeder::class);
 
-    expect(LeaveType::query()->orderBy('sort_order')->pluck('code')->all())->toBe(['CUT', 'CBR', 'SKT', 'IZN', 'LBR', 'KOR', 'DNS'])
+    expect(LeaveType::query()->orderBy('sort_order')->pluck('code')->all())->toBe(['CUT', 'CBR', 'SKT', 'IZN', 'LBR', 'KOR', 'DNS', 'CML', 'CAP', 'CLT'])
         ->and(LeaveType::query()->where('code', 'CUT')->value('annual_quota_days'))->toEqual(12)
         ->and(ApprovalFlow::query()->where('name', ApprovalFlow::DEFAULT_NAME)->sole()->steps)->toHaveCount(2)
         ->and(EmployeeRequest::query()->count())->toBe(10);
