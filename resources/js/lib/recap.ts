@@ -5,6 +5,7 @@ import type {
     RecapRow,
 } from '@/types/attendance';
 import { TONE_CLASSES } from './attendance';
+import { OFFICE_TIMEZONE } from './format';
 import type { StatusTone } from './attendance';
 
 /**
@@ -156,6 +157,23 @@ export function recentMonths(current: string, count = 12): string[] {
     return Array.from({ length: count }, (_, index) =>
         shiftMonth(current, -index),
     );
+}
+
+/** "2026-10" of an instant in the office timezone. */
+export function officeMonth(iso: string): string {
+    const date = new Date(iso);
+
+    if (Number.isNaN(date.getTime())) {
+        return '1970-01';
+    }
+
+    return new Intl.DateTimeFormat('en-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        timeZone: OFFICE_TIMEZONE,
+    })
+        .format(date)
+        .slice(0, 7);
 }
 
 const MONTHS = [

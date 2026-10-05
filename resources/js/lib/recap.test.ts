@@ -8,6 +8,7 @@ import {
     lateSummary,
     legend,
     monthLabel,
+    officeMonth,
     recentMonths,
     shiftMonth,
 } from './recap';
@@ -104,5 +105,7 @@ describe('months', () => {
             '2026-09',
             '2026-08',
         ]);
+        // 30 Sep 18.00 UTC is already 1 Oct in Jakarta.
+        expect(officeMonth('2026-09-30T18:00:00Z')).toBe('2026-10');
     });
 });

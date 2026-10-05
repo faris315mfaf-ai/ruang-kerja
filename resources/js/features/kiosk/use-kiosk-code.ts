@@ -82,7 +82,6 @@ export function useKioskCode(locationId: string, initial: KioskState) {
             }
         };
         // Runs once per page: later codes come from load() itself.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [locationId]);
 
     useEffect(() => {

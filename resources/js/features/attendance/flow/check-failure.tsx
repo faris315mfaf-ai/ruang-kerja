@@ -241,12 +241,12 @@ export function CheckFailure({
                         <Option
                             icon={Building2}
                             label="Ajukan dinas luar"
-                            href="/pengajuan"
+                            href="/pengajuan/baru?kategori=dinas"
                         />
                         <Option
                             icon={FileText}
                             label="Ajukan koreksi absensi"
-                            href="/pengajuan"
+                            href="/pengajuan/baru?kategori=koreksi"
                         />
                     </ul>
                 </section>
@@ -278,7 +278,7 @@ export function CheckFailure({
                             variant="outline"
                             className="h-12 text-base"
                         >
-                            <Link href="/pengajuan">
+                            <Link href="/pengajuan/baru?kategori=koreksi">
                                 Ajukan koreksi absensi
                             </Link>
                         </Button>
