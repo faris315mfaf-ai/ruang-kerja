@@ -32,8 +32,8 @@ type Size = 'default' | 'touch';
 
 export function pillClass(size: Size, extra?: string): string {
     return cn(
-        'inline-flex max-w-full items-center gap-2 rounded-md border border-border bg-surface text-text transition-colors duration-120 ease-brand hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60',
-        size === 'touch' ? 'h-11 px-3.5 text-[15px]' : 'h-8 px-2.5 text-[13px]',
+        'inline-flex max-w-full items-center gap-2 rounded-control border border-border bg-surface font-semibold text-text transition-colors duration-120 ease-brand hover:bg-surface-2 focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60 [&_svg]:shrink-0',
+        size === 'touch' ? 'h-11 px-3.5 text-[16px]' : 'h-9 px-3 text-[15px]',
         extra,
     );
 }
@@ -63,7 +63,7 @@ function Pill({
                     cn(
                         dashed && 'border-dashed text-text-muted',
                         tone === 'primary' &&
-                            'border-primary/50 bg-link-soft text-primary',
+                            'border-primary/50 bg-link-soft text-link',
                     ),
                 )}
             >

@@ -6,7 +6,8 @@ import {
     MoreHorizontal,
     Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { appBarIconButton } from '@/components/mobile/app-bar';
 import { BottomSheet } from '@/components/mobile/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,13 +19,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { AttachmentsPanel } from '@/features/drive/attachments-panel';
 import { useKeyboardInset, useKeyboardOpen } from '@/hooks/use-keyboard-open';
+import { cn, focusRing } from '@/lib/utils';
+import { DueBadge } from '../due-badge';
 import {
     AssigneePicker,
     DuePicker,
     LabelPicker,
     PriorityPicker,
-    StatusPicker,
 } from '../form/pickers';
+import { StatusPill } from '../status-pill';
 import { ChecklistSection } from './checklist';
 import { CommentComposer } from './comment-composer';
 import { DescriptionField } from './description-field';
@@ -41,10 +44,86 @@ type Props = {
 };
 
 /**
- * Mobile task detail (mockup MTaskDetail): full screen, property chips,
- * "Semua properti" sheet, checklist/sub-tasks with 44px targets, Drive
- * attachments (Lampirkan · Kamera · Drive · File), timeline,
- * and a comment box stuck to the bottom (above the tab bar, or the
+ * Status track of the phone detail (MSDetailTugas "Todo · Dikerjakan ·
+ * Review · Selesai"): one tap moves the task; the current status is the
+ * gradient pill. Scrolls sideways when a workspace has many statuses.
+ */
+function StatusTrack({
+    state,
+}: {
+    state: TaskDetailState & { detail: TaskDetail };
+}) {
+    const { detail } = state;
+    const statuses = detail.statuses.filter(
+        (status) =>
+            status.category !== 'canceled' ||
+            status.id === detail.task.status_id,
+    );
+    const activeRef = useRef<HTMLButtonElement>(null);
+    const activeId = detail.task.status_id;
+
+    // Long tracks scroll sideways: keep the current status in view.
+    useEffect(() => {
+        activeRef.current?.scrollIntoView?.({
+            block: 'nearest',
+            inline: 'center',
+        });
+    }, [activeId]);
+
+    return (
+        <div
+            role="radiogroup"
+            aria-label="Status"
+            className="-mx-4 flex [scrollbar-width:none] overflow-x-auto px-4 [&::-webkit-scrollbar]:hidden"
+        >
+            <div className="flex min-w-full gap-1 rounded-lg bg-surface-2 p-1">
+                {statuses.map((status) => {
+                    const active = status.id === detail.task.status_id;
+
+                    return (
+                        <button
+                            key={status.id}
+                            ref={active ? activeRef : undefined}
+                            type="button"
+                            role="radio"
+                            aria-checked={active}
+                            onClick={() => {
+                                if (!active) {
+                                    void state.update(
+                                        { status_id: status.id },
+                                        {
+                                            task: {
+                                                ...detail.task,
+                                                status_id: status.id,
+                                                status_category:
+                                                    status.category,
+                                            },
+                                        },
+                                    );
+                                }
+                            }}
+                            className={cn(
+                                'h-11 flex-1 shrink-0 rounded-control px-3 text-[15px] font-bold whitespace-nowrap transition-colors duration-120 ease-brand',
+                                focusRing,
+                                active
+                                    ? 'bg-primary bg-grad-aksi text-on-brand shadow-button'
+                                    : 'text-text-muted',
+                            )}
+                        >
+                            {status.name}
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+/**
+ * Mobile task detail (MSDetailTugas): key + due chips, 26px title, status
+ * track, property chips + "Semua properti" sheet, then cards for checklist,
+ * sub-tasks, Drive attachments (Lampirkan · Kamera · Drive · File) and the
+ * timeline; the comment box sticks to the bottom (above the tab bar, or the
  * keyboard while typing).
  */
 export function TaskDetailMobile({ state, today }: Props) {
@@ -56,13 +135,39 @@ export function TaskDetailMobile({ state, today }: Props) {
     const keyboardInset = useKeyboardInset();
 
     return (
-        <div className="space-y-6 pb-24">
+        <div className="flex flex-col gap-4 pb-24">
+            {(!can.edit || task.due_date) && (
+                <div className="flex min-h-9 items-center gap-2">
+                    {!can.edit && (
+                        <StatusPill
+                            name={
+                                detail.statuses.find(
+                                    (status) => status.id === task.status_id,
+                                )?.name ?? ''
+                            }
+                            category={task.status_category}
+                        />
+                    )}
+                    {task.due_date && (
+                        <span className="ml-auto inline-flex h-9 items-center rounded-full bg-surface-2 px-3">
+                            <DueBadge
+                                due={task.due_date}
+                                today={today}
+                                closed={
+                                    task.status_category === 'done' ||
+                                    task.status_category === 'canceled'
+                                }
+                            />
+                        </span>
+                    )}
+                </div>
+            )}
             <div className="flex items-start gap-2">
                 <TitleField
                     value={task.title}
                     editable={can.edit}
                     onSave={(title) => void state.update({ title })}
-                    className="text-2xl leading-tight"
+                    className="text-h1 font-extrabold tracking-[-0.02em]"
                     tapToEdit
                 />
                 <DropdownMenu>
@@ -70,7 +175,7 @@ export function TaskDetailMobile({ state, today }: Props) {
                         <button
                             type="button"
                             aria-label="Menu tugas"
-                            className="flex size-11 shrink-0 items-center justify-center rounded-full text-text hover:bg-surface-2"
+                            className={appBarIconButton}
                         >
                             <MoreHorizontal className="size-5" aria-hidden />
                         </button>
@@ -106,7 +211,7 @@ export function TaskDetailMobile({ state, today }: Props) {
                 <div
                     role="alertdialog"
                     aria-label="Hapus tugas"
-                    className="space-y-3 rounded-lg border border-danger/40 bg-danger-soft p-3 text-[15px]"
+                    className="space-y-3 rounded-card border border-danger/40 bg-danger-soft p-4 text-[16px]"
                 >
                     <p className="text-text">Hapus {task.key}?</p>
                     <div className="flex gap-2">
@@ -136,14 +241,10 @@ export function TaskDetailMobile({ state, today }: Props) {
                 </div>
             )}
 
+            {can.edit && <StatusTrack state={state} />}
+
             {can.edit ? (
                 <div className="flex flex-wrap gap-2">
-                    <StatusPicker
-                        size="touch"
-                        statuses={detail.statuses}
-                        value={task.status_id}
-                        onChange={(id) => void state.update({ status_id: id })}
-                    />
                     <PriorityPicker
                         size="touch"
                         value={task.priority}
@@ -175,7 +276,10 @@ export function TaskDetailMobile({ state, today }: Props) {
                     <button
                         type="button"
                         onClick={() => setAllProperties(true)}
-                        className="inline-flex h-11 items-center gap-1 px-2 text-[15px] font-medium text-primary"
+                        className={cn(
+                            'inline-flex h-11 items-center gap-1 rounded-control px-2 text-[16px] font-semibold text-link',
+                            focusRing,
+                        )}
                     >
                         Semua properti
                         <ChevronRight className="size-4" aria-hidden />
@@ -185,7 +289,10 @@ export function TaskDetailMobile({ state, today }: Props) {
                 <button
                     type="button"
                     onClick={() => setAllProperties(true)}
-                    className="inline-flex h-11 items-center gap-1 text-[15px] font-medium text-primary"
+                    className={cn(
+                        'inline-flex h-11 items-center gap-1 self-start rounded-control text-[16px] font-semibold text-link',
+                        focusRing,
+                    )}
                 >
                     Lihat properti
                     <ChevronRight className="size-4" aria-hidden />
@@ -198,7 +305,7 @@ export function TaskDetailMobile({ state, today }: Props) {
             >
                 <h2
                     id="mobile-description"
-                    className="text-[15px] text-text-muted"
+                    className="text-overline text-text-muted"
                 >
                     Deskripsi
                 </h2>
@@ -249,7 +356,9 @@ export function TaskDetailMobile({ state, today }: Props) {
                 onChange={state.refresh}
             />
 
-            <TimelineSection state={state} mobile />
+            <div className="rounded-panel border border-border bg-surface px-4 pt-3 pb-4 shadow-card">
+                <TimelineSection state={state} mobile />
+            </div>
 
             {can.comment && (
                 <div

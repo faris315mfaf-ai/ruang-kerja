@@ -201,7 +201,7 @@ export function RichTextView({
     }
 
     return (
-        <div className={cn('rich-text text-[15px] text-text', className)}>
+        <div className={cn('rich-text text-body text-text', className)}>
             {renderNode(doc, references, 'n')}
         </div>
     );

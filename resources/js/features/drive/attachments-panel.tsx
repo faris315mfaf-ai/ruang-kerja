@@ -211,7 +211,7 @@ export function AttachmentsPanel({
 
     if (editable && variant === 'desktop') {
         controls = (
-            <div className="ml-auto flex flex-wrap justify-end gap-1.5">
+            <div className="ml-auto flex flex-wrap justify-end gap-2">
                 <Button
                     type="button"
                     variant="outline"
@@ -256,10 +256,10 @@ export function AttachmentsPanel({
                             >
                                 <DriveFileIcon kind={option.kind} size="sm" />
                                 <span>
-                                    <span className="block text-[13px] font-medium">
+                                    <span className="block text-[15px] font-semibold">
                                         {option.label}
                                     </span>
-                                    <span className="block text-[12px] text-text-muted">
+                                    <span className="block text-meta text-text-muted">
                                         {option.description}
                                     </span>
                                 </span>
@@ -273,8 +273,8 @@ export function AttachmentsPanel({
         controls = (
             <Button
                 type="button"
-                variant="outline"
-                className="ml-auto h-11 border-primary/40 bg-link-soft text-[15px] text-primary hover:bg-primary/15 hover:text-primary"
+                variant="tonal"
+                className="ml-auto"
                 onClick={() => setSheetOpen(true)}
             >
                 <Paperclip />
@@ -309,7 +309,7 @@ export function AttachmentsPanel({
         body = (
             <p
                 role="alert"
-                className="flex items-center gap-2 text-[13px] text-danger"
+                className="flex items-center gap-2 text-[15px] text-danger"
             >
                 {error}
                 <button
@@ -331,7 +331,7 @@ export function AttachmentsPanel({
     } else if (data.attachments.length === 0) {
         body =
             variant === 'compact' ? null : (
-                <p className="rounded-lg border border-dashed border-border-strong px-3 py-4 text-center text-[13px] text-text-muted">
+                <p className="rounded-lg border border-dashed border-border-strong px-4 py-5 text-center text-[15px] text-text-muted">
                     {data.drive.enabled
                         ? 'Belum ada lampiran.'
                         : 'Belum ada lampiran. Integrasi Google Drive belum diaktifkan.'}
@@ -367,7 +367,7 @@ export function AttachmentsPanel({
                                 }
                             />
                         ) : (
-                            <p className="rounded-lg border border-border px-3 py-2 text-[13px] text-text-muted">
+                            <p className="rounded-lg border border-border px-4 py-3 text-[15px] text-text-muted">
                                 {attachment.filename}
                             </p>
                         )}
@@ -380,20 +380,24 @@ export function AttachmentsPanel({
     return (
         <section
             aria-label={title}
-            className={cn('@container space-y-2.5', className)}
+            className={cn(
+                '@container',
+                variant === 'compact'
+                    ? 'space-y-2'
+                    : 'space-y-3 rounded-panel border border-border bg-surface shadow-card',
+                mobile && 'px-4 pt-3 pb-4',
+                variant === 'desktop' && 'px-6 pt-5 pb-6',
+                className,
+            )}
         >
-            <header
-                className={cn(
-                    'flex flex-wrap items-center gap-2',
-                    mobile ? 'min-h-11' : 'min-h-9',
-                )}
-            >
+            <header className="flex min-h-11 flex-wrap items-center gap-2">
                 <h2
                     className={cn(
-                        'font-medium',
-                        mobile && 'text-[15px] text-text',
-                        variant === 'desktop' && 'text-[13px] text-text',
-                        variant === 'compact' && 'text-xs text-text-muted',
+                        variant === 'compact'
+                            ? 'text-meta font-semibold text-text-muted'
+                            : 'font-bold text-text',
+                        mobile && 'text-[17px]',
+                        variant === 'desktop' && 'text-[21px] leading-7',
                     )}
                 >
                     {title}
@@ -402,7 +406,9 @@ export function AttachmentsPanel({
                     <span
                         className={cn(
                             'text-text-muted tnum',
-                            mobile ? 'text-[15px]' : 'text-[13px]',
+                            variant === 'compact'
+                                ? 'text-meta'
+                                : 'text-[16px] font-bold',
                         )}
                     >
                         {count}

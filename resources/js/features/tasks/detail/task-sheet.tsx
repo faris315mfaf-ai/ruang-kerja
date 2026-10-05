@@ -131,7 +131,7 @@ export function TaskSheet({
                             )?.blur();
                         }
                     }}
-                    className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[640px] flex-col border-l border-border bg-background shadow-card data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=open]:animate-in data-[state=open]:slide-in-from-right"
+                    className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[640px] flex-col border-l border-border bg-background shadow-float data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=open]:animate-in data-[state=open]:slide-in-from-right"
                 >
                     <DialogPrimitive.Title className="sr-only">
                         {detail
@@ -143,7 +143,7 @@ export function TaskSheet({
                             <p className="font-medium text-text">
                                 Tugas tidak tersedia
                             </p>
-                            <p className="text-[13px] text-text-muted">
+                            <p className="text-[15px] text-text-muted">
                                 Tugas ini sudah dihapus atau Anda tidak lagi
                                 punya akses.
                             </p>
@@ -170,13 +170,13 @@ export function TaskSheet({
                         </>
                     ) : state.error ? (
                         <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-                            <p className="text-[13px] text-danger">
+                            <p className="text-[15px] text-danger">
                                 {state.error}
                             </p>
                             <button
                                 type="button"
                                 onClick={() => void state.reload()}
-                                className="h-9 rounded-md border border-border px-3 text-[13px] text-text hover:bg-surface-2"
+                                className="h-10 rounded-control border border-border-strong bg-surface px-4 text-[15px] font-semibold text-text hover:bg-surface-2"
                             >
                                 Coba lagi
                             </button>

@@ -25,24 +25,24 @@ export function ActivityRow({
             : null;
 
     return (
-        <div className="flex items-start gap-3 py-1 pl-1 text-[13px] text-text-muted">
+        <div className="flex items-start gap-3 py-1 pl-2 text-[15px] text-text-muted">
             {item.causer ? (
                 <UserAvatar
                     name={item.causer.name}
                     src={item.causer.avatar}
-                    className="mt-0.5 size-5 text-[8px]"
+                    className="size-6 text-[10px]"
                 />
             ) : (
-                <span className="size-5 shrink-0" />
+                <span className="size-6 shrink-0" />
             )}
             <p className="min-w-0 flex-1">
-                <span className="font-medium text-text">
+                <span className="font-semibold text-text">
                     {item.causer?.name ?? 'Sistem'}
                 </span>{' '}
                 {to && (
                     <StatusIcon
                         category={to}
-                        className="mr-1 inline size-3.5 align-[-2px]"
+                        className="mr-1 inline size-4 align-[-3px]"
                     />
                 )}
                 {describeTaskActivity(item, names)}

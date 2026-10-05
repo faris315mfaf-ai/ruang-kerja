@@ -21,7 +21,7 @@ export function PresenceBadge({
             role="status"
             aria-label={label}
             title={label}
-            className="inline-flex h-8 items-center gap-2 rounded-full border border-border bg-surface pr-3 pl-1 text-[13px] text-text"
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-border bg-surface pr-3.5 pl-1.5 text-[14px] font-semibold text-text"
         >
             <span className="relative">
                 <AvatarStack people={people} max={3} />

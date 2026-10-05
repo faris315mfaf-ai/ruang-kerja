@@ -36,24 +36,25 @@ export function SubtasksSection({
     }
 
     return (
-        <section aria-labelledby="task-subtasks">
-            <header
-                className={cn(
-                    'flex items-center gap-2',
-                    mobile ? 'min-h-11' : 'h-9',
-                )}
-            >
+        <section
+            aria-labelledby="task-subtasks"
+            className={cn(
+                'rounded-panel border border-border bg-surface shadow-card',
+                mobile ? 'px-4 pt-3 pb-2' : 'px-6 pt-5 pb-3',
+            )}
+        >
+            <header className="flex min-h-11 items-center gap-2">
                 <h2
                     id="task-subtasks"
                     className={cn(
-                        'font-medium text-text',
-                        mobile ? 'text-[15px]' : 'text-[13px]',
+                        'font-bold text-text',
+                        mobile ? 'text-[17px]' : 'text-[21px] leading-7',
                     )}
                 >
                     Sub-tugas
                 </h2>
                 {subtasks.length > 0 && (
-                    <span className="text-[13px] text-text-muted tnum">
+                    <span className="ml-auto text-[16px] font-bold text-link tnum">
                         {done}/{subtasks.length}
                     </span>
                 )}
@@ -63,17 +64,17 @@ export function SubtasksSection({
                         onClick={() => setAdding(true)}
                         aria-label="Tambah sub-tugas"
                         className={cn(
-                            'ml-auto flex items-center justify-center rounded-md text-text-muted hover:bg-surface-2 hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                            mobile ? 'size-11' : 'size-7',
+                            'flex size-11 items-center justify-center rounded-control text-text-muted hover:bg-surface-2 hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none',
+                            subtasks.length === 0 && 'ml-auto',
                         )}
                     >
-                        <Plus className="size-4" aria-hidden />
+                        <Plus className="size-5" aria-hidden />
                     </button>
                 )}
             </header>
 
             {subtasks.length > 0 && (
-                <ul className="overflow-hidden rounded-lg border border-border bg-surface">
+                <ul className="mt-1">
                     {subtasks.map((task) => {
                         const status = statuses.find(
                             (s) => s.id === task.status_id,
@@ -86,23 +87,26 @@ export function SubtasksSection({
                         return (
                             <li
                                 key={task.id}
-                                className="border-b border-border last:border-b-0"
+                                className="border-t border-divider"
                             >
                                 <button
                                     type="button"
                                     onClick={() => onOpen(task)}
                                     className={cn(
-                                        'flex w-full items-center gap-3 px-3 text-left hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none',
-                                        mobile ? 'min-h-14 py-2' : 'h-10',
+                                        'flex w-full items-center gap-3 rounded-control text-left hover:bg-surface-2/60 focus-visible:bg-surface-2 focus-visible:outline-none',
+                                        mobile
+                                            ? 'min-h-14 py-2'
+                                            : 'min-h-[60px] py-2',
                                     )}
                                 >
                                     <StatusIcon
                                         category={task.status_category}
                                         color={status?.color}
                                         label={status?.name}
+                                        className="size-5"
                                     />
                                     {!mobile && (
-                                        <span className="w-14 shrink-0 font-mono text-xs text-text-muted">
+                                        <span className="w-20 shrink-0 font-mono text-[14px] font-semibold text-text-muted">
                                             {task.key}
                                         </span>
                                     )}
@@ -110,9 +114,7 @@ export function SubtasksSection({
                                         <span
                                             className={cn(
                                                 'block truncate',
-                                                mobile
-                                                    ? 'text-[15px]'
-                                                    : 'text-[13px]',
+                                                'text-[17px] font-semibold',
                                                 closed
                                                     ? 'text-text-muted'
                                                     : 'text-text',
@@ -121,7 +123,7 @@ export function SubtasksSection({
                                             {task.title}
                                         </span>
                                         {mobile && (
-                                            <span className="block font-mono text-xs text-text-muted">
+                                            <span className="block font-mono text-[14px] text-text-muted">
                                                 {task.key}
                                                 {task.due_date &&
                                                     ` · ${formatDayMonth(task.due_date)}`}
@@ -135,7 +137,7 @@ export function SubtasksSection({
                                         />
                                     )}
                                     {!mobile && task.due_date && (
-                                        <span className="text-xs text-text-muted">
+                                        <span className="text-[15px] text-text-muted">
                                             {closed && task.completed_at
                                                 ? `Selesai ${formatDayMonth(task.completed_at.slice(0, 10))}`
                                                 : formatDayMonth(task.due_date)}
@@ -145,7 +147,7 @@ export function SubtasksSection({
                                         <UserAvatar
                                             name={assignee.name}
                                             src={assignee.avatar}
-                                            className="size-5 text-[9px]"
+                                            className="size-[30px] text-[12px]"
                                         />
                                     )}
                                 </button>
@@ -157,7 +159,7 @@ export function SubtasksSection({
 
             {editable && adding && (
                 <form
-                    className="mt-2 flex items-center gap-2"
+                    className="flex items-center gap-2 border-t border-divider pt-3 pb-2"
                     onSubmit={(event) => {
                         event.preventDefault();
                         const title = draft.trim();
@@ -184,8 +186,7 @@ export function SubtasksSection({
                         }}
                         onBlur={() => draft.trim() === '' && setAdding(false)}
                         className={cn(
-                            'min-w-0 flex-1 rounded-md border border-border bg-surface px-2 text-text placeholder:text-text-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                            mobile ? 'h-11' : 'h-8 text-[13px]',
+                            'h-11 min-w-0 flex-1 rounded-control border border-border-strong bg-surface px-3.5 text-[17px] text-text placeholder:text-text-subtle focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-ring/55 focus-visible:outline-none md:text-[16px]',
                         )}
                     />
                 </form>

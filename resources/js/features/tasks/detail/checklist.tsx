@@ -51,8 +51,8 @@ function ItemRow({
     return (
         <li
             className={cn(
-                'group flex items-center gap-3 px-3',
-                mobile ? 'min-h-12' : 'min-h-9',
+                'group flex items-center gap-3.5 border-t border-divider',
+                mobile ? 'min-h-[50px]' : 'min-h-[64px]',
             )}
         >
             <Checkbox
@@ -60,7 +60,6 @@ function ItemRow({
                 disabled={!editable}
                 onCheckedChange={(checked) => onToggle(checked === true)}
                 aria-label={item.title}
-                className={cn(mobile && 'size-6')}
             />
             {editing ? (
                 <input
@@ -82,7 +81,7 @@ function ItemRow({
                             setEditing(false);
                         }
                     }}
-                    className="h-8 min-w-0 flex-1 rounded-md border border-border-strong bg-surface px-2 text-text outline-none"
+                    className="h-10 min-w-0 flex-1 rounded-control border border-primary bg-surface px-3 text-[17px] text-text ring-4 ring-ring/55 outline-none"
                 />
             ) : (
                 <button
@@ -90,10 +89,9 @@ function ItemRow({
                     disabled={!editable}
                     onClick={() => setEditing(true)}
                     className={cn(
-                        'min-w-0 flex-1 py-1 text-left disabled:cursor-default',
-                        mobile ? 'text-[15px]' : 'text-[13px]',
+                        'min-w-0 flex-1 py-2 text-left text-[17px] disabled:cursor-default',
                         item.is_done
-                            ? 'text-text-muted line-through'
+                            ? 'text-text-muted line-through decoration-1'
                             : 'text-text',
                     )}
                 >
@@ -104,7 +102,7 @@ function ItemRow({
                 <UserAvatar
                     name={doneBy.name}
                     src={doneBy.avatar}
-                    className="size-5 text-[9px]"
+                    className="size-7 text-[11px]"
                 />
             )}
             {editable && (
@@ -113,11 +111,11 @@ function ItemRow({
                     onClick={onDelete}
                     aria-label={`Hapus ${item.title}`}
                     className={cn(
-                        'flex size-7 items-center justify-center rounded-md text-text-muted hover:bg-surface-2 hover:text-danger focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                        'flex size-11 items-center justify-center rounded-control text-text-muted hover:bg-surface-2 hover:text-danger focus-visible:opacity-100 focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none',
                         !mobile && 'opacity-0 group-hover:opacity-100',
                     )}
                 >
-                    <Trash2 className="size-3.5" aria-hidden />
+                    <Trash2 className="size-4" aria-hidden />
                 </button>
             )}
         </li>
@@ -159,79 +157,72 @@ export function ChecklistSection({
         <section
             aria-labelledby="task-checklist"
             className={cn(
-                !mobile && 'rounded-lg border border-border bg-surface',
+                'rounded-panel border border-border bg-surface shadow-card',
+                mobile ? 'px-4 pt-3 pb-2' : 'px-6 pt-5 pb-3',
             )}
         >
-            <header
-                className={cn(
-                    'flex items-center gap-3',
-                    mobile
-                        ? 'mb-1 min-h-11'
-                        : 'h-11 border-b border-border px-3',
-                )}
-            >
+            <header className="flex min-h-11 items-center gap-3">
                 <h2
                     id="task-checklist"
                     className={cn(
-                        'font-medium text-text',
-                        mobile ? 'text-[15px]' : 'text-[13px]',
+                        'font-bold text-text',
+                        mobile ? 'text-[17px]' : 'text-[21px] leading-7',
                     )}
                 >
                     Checklist
                 </h2>
-                {items.length > 0 && (
-                    <>
-                        <span className="text-[13px] text-text-muted tnum">
-                            {done}/{items.length}
-                        </span>
-                        <span
-                            className="h-1 w-40 max-w-[40%] overflow-hidden rounded-full bg-surface-2"
-                            role="progressbar"
-                            aria-valuenow={Math.round(percent)}
-                            aria-valuemin={0}
-                            aria-valuemax={100}
-                            aria-label="Progres checklist"
-                        >
-                            <span
-                                className="block h-full rounded-full bg-primary transition-[width] duration-200 ease-brand"
-                                style={{ width: `${percent}%` }}
-                            />
-                        </span>
-                    </>
-                )}
-                <span className="ml-auto flex items-center gap-1">
+                <span className="ml-auto flex items-center gap-2">
                     {!mobile && done > 0 && (
                         <button
                             type="button"
                             onClick={() => setHideDone(!hideDone)}
-                            className="text-[13px] text-text-muted hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            className="min-h-11 rounded-control px-2 text-[15px] font-medium text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                         >
                             {hideDone
                                 ? 'Tampilkan yang selesai'
                                 : 'Sembunyikan yang selesai'}
                         </button>
                     )}
+                    {items.length > 0 && (
+                        <span className="text-[16px] font-bold text-link tnum">
+                            {mobile
+                                ? `${done}/${items.length}`
+                                : `${done} dari ${items.length}`}
+                        </span>
+                    )}
                     {editable && (
                         <button
                             type="button"
                             onClick={() => setAdding(true)}
                             aria-label="Tambah item checklist"
-                            className={cn(
-                                'flex items-center justify-center rounded-md text-text-muted hover:bg-surface-2 hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                                mobile ? 'size-11' : 'size-7',
-                            )}
+                            className="flex size-11 items-center justify-center rounded-control text-text-muted hover:bg-surface-2 hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                         >
-                            <Plus className="size-4" aria-hidden />
+                            <Plus className="size-5" aria-hidden />
                         </button>
                     )}
                 </span>
             </header>
+            {items.length > 0 && !mobile && (
+                <span
+                    className="mt-2 mb-3 block h-2 overflow-hidden rounded-full bg-surface-2"
+                    role="progressbar"
+                    aria-valuenow={Math.round(percent)}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="Progres checklist"
+                >
+                    <span
+                        className="block h-full rounded-full bg-grad-merek-x transition-[width] duration-200 ease-brand"
+                        style={{ width: `${percent}%` }}
+                    />
+                </span>
+            )}
 
             {mobile && done > 0 && (
                 <button
                     type="button"
                     onClick={() => setHideDone(!hideDone)}
-                    className="flex min-h-11 w-full items-center gap-3 px-3 text-[15px] text-text-muted"
+                    className="flex min-h-11 w-full items-center gap-3 border-t border-divider text-[15px] text-text-muted"
                 >
                     <ChevronDown
                         className={cn(
@@ -243,13 +234,13 @@ export function ChecklistSection({
                     {hideDone
                         ? `${done} item selesai lainnya`
                         : 'Sembunyikan yang selesai'}
-                    <span className="ml-auto text-primary">
+                    <span className="ml-auto font-semibold text-link">
                         {hideDone ? 'Tampilkan' : ''}
                     </span>
                 </button>
             )}
 
-            <ul className={cn(!mobile && 'py-1')}>
+            <ul>
                 {visible.map((item) => (
                     <ItemRow
                         key={item.id}
@@ -266,10 +257,7 @@ export function ChecklistSection({
 
             {editable && (adding || items.length === 0) && (
                 <form
-                    className={cn(
-                        'flex items-center gap-2 px-3 pb-2',
-                        mobile && 'pt-1',
-                    )}
+                    className="flex items-center gap-2 border-t border-divider pt-3 pb-2"
                     onSubmit={(event) => {
                         event.preventDefault();
                         submit();
@@ -289,8 +277,7 @@ export function ChecklistSection({
                             }
                         }}
                         className={cn(
-                            'min-w-0 flex-1 rounded-md border border-border bg-surface px-2 text-text placeholder:text-text-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                            mobile ? 'h-11' : 'h-8 text-[13px]',
+                            'h-11 min-w-0 flex-1 rounded-control border border-border-strong bg-surface px-3.5 text-[17px] text-text placeholder:text-text-subtle focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-ring/55 focus-visible:outline-none md:text-[16px]',
                         )}
                     />
                 </form>
