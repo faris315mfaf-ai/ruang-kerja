@@ -89,7 +89,7 @@ function ImportDesktop({
     return (
         <div className="mx-auto flex max-w-[1120px] flex-col gap-6">
             <AdminPageHeader
-                overline="Admin · Karyawan"
+                overline="Organisasi · Karyawan"
                 title="Impor karyawan"
                 description="Periksa dulu (tanpa menulis data), lalu impor baris yang valid. Baris galat dilewati."
                 actions={

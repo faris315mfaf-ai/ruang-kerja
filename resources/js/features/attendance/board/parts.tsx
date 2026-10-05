@@ -371,7 +371,7 @@ export function PeopleList({
                     chips={chips}
                     value={state}
                     onChange={setState}
-                    className={cn(!mobile && 'mx-0 scroll-px-0 px-0')}
+                    className={cn(!mobile && 'mx-0 scroll-px-0 flex-wrap px-0')}
                 />
             </div>
             {filtered.length === 0 ? (

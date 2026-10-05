@@ -106,6 +106,7 @@ export function EmployeesDesktop(props: EmployeeIndexProps) {
     return (
         <div className="flex min-w-0 flex-col gap-6">
             <AdminPageHeader
+                overline="Organisasi"
                 title="Karyawan"
                 description={
                     <>

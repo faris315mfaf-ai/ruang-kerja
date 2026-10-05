@@ -48,7 +48,7 @@ export default function EmployeeShow({
                     />
                     <div className="flex min-w-0 flex-1 flex-col gap-1">
                         <span className="text-overline text-link">
-                            Admin · Karyawan
+                            Organisasi · Karyawan
                         </span>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                             <h1 className="text-h1">{employee.name}</h1>

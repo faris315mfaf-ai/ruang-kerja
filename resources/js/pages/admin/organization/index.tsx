@@ -145,7 +145,7 @@ export default function OrganizationAdmin({
     if (breakpoint === 'mobile') {
         return (
             <>
-                <Head title="Organisasi" />
+                <Head title="Kelola organisasi" />
                 <DesktopOnlyNotice feature="Kelola divisi, tim, dan jabatan" />
             </>
         );
@@ -239,11 +239,12 @@ export default function OrganizationAdmin({
 
     return (
         <>
-            <Head title="Organisasi" />
+            <Head title="Kelola organisasi" />
 
             <div className="flex flex-col gap-6">
                 <AdminPageHeader
-                    title="Organisasi"
+                    overline="Organisasi"
+                    title="Kelola organisasi"
                     description={
                         <>
                             {formatNumber(counts.divisions)} divisi ·{' '}
