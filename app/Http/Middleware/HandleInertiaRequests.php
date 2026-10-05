@@ -99,9 +99,12 @@ class HandleInertiaRequests extends Middleware
             ...parent::shareOnce($request),
             // Sidebar check-in widget + topbar button (Sprint 2). Refreshed every
             // 5 minutes, and by the Absensi page right after a check-in/out.
+            // Keyed by the signed-in user: the `null` remembered on the guest
+            // login page (or another account's status) is never reused after
+            // signing in, because the client only skips once-props by key.
             'attendanceStatus' => Inertia::once(
                 fn (): ?array => $user instanceof User ? app(MyAttendance::class)->status($user, CarbonImmutable::now()) : null,
-            )->until(300),
+            )->as('attendanceStatus:'.($user instanceof User ? $user->getAuthIdentifier() : 'guest'))->until(300),
         ];
     }
 }

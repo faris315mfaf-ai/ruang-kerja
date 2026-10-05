@@ -5,6 +5,7 @@ use App\Domain\Attendance\Events\AttendanceRecorded;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\Holiday;
 use App\Domain\Attendance\Models\OfficeLocation;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Resources\Attendance\MyAttendance;
 use App\Models\User;
 use Illuminate\Support\Facades\Event;
@@ -118,4 +119,30 @@ test('an employee without schedule or locations still sees the page', function (
     $this->actingAs($user)->get(route('attendance.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('today.schedule.isWorkday', false)->has('today.locations', 0));
+});
+
+test('the shell status once-prop is keyed by user, so the guest null is never reused after login', function () {
+    $user = F::employee();
+    $this->travelTo(F::at('2026-10-05 07:40'));
+
+    $this->get(route('login'))
+        ->assertInertia(fn (Assert $page) => $page->where('attendanceStatus', null));
+
+    $guestPage = $this->get(route('login'), ['X-Inertia' => 'true', 'X-Inertia-Version' => (string) app(HandleInertiaRequests::class)->version(request())])->json();
+    expect(array_keys($guestPage['onceProps']))->toContain('attendanceStatus:guest');
+
+    $headers = fn (string $loaded): array => [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => (string) app(HandleInertiaRequests::class)->version(request()),
+        'X-Inertia-Except-Once-Props' => $loaded,
+    ];
+
+    // After signing in, the client still remembers the guest key: the status is resolved.
+    $signedIn = $this->actingAs($user)->get(route('dashboard'), $headers('attendanceStatus:guest'))->json();
+    expect($signedIn['props']['attendanceStatus']['action'] ?? null)->toBe('check_in')
+        ->and(array_keys($signedIn['onceProps']))->toContain('attendanceStatus:'.$user->id);
+
+    // Once the client holds this user's status, it is not sent again.
+    $again = $this->actingAs($user)->get(route('dashboard'), $headers('attendanceStatus:'.$user->id))->json();
+    expect($again['props'])->not->toHaveKey('attendanceStatus');
 });

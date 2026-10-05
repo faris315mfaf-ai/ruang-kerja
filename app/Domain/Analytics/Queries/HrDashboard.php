@@ -113,6 +113,8 @@ final class HrDashboard
                     ->all(),
                 // Opening the signed URL is audited by AttendanceSelfieController.
                 'selfie_url' => Gate::forUser($viewer)->allows('viewSelfie', $log) ? $this->selfies->temporaryUrl($log) : null,
+                // "Tandai ditinjau" (Sprint 3 endpoint attendance.logs.review).
+                'can_review' => Gate::forUser($viewer)->allows('review', $log),
             ])->values()->all(),
         ];
     }
@@ -156,7 +158,7 @@ final class HrDashboard
      * @param  list<string>  $userIds
      * @return array{date: string, count: int, items: array<int, array<string, mixed>>}
      */
-    public function missingCheckOut(array $userIds, CarbonImmutable $now): array
+    public function missingCheckOut(User $viewer, array $userIds, CarbonImmutable $now): array
     {
         $yesterday = Period::officeDate($now)->subDay()->toDateString();
         $query = AttendanceDay::query()
@@ -166,7 +168,7 @@ final class HrDashboard
             ->whereNull('check_out_at');
 
         $days = (clone $query)
-            ->with(['user:id,name,avatar_url', 'shift:id,name'])
+            ->with(['user:id,name,avatar_url,company_id', 'shift:id,name'])
             ->orderBy('check_in_at')
             ->limit(6)
             ->get();
@@ -180,6 +182,8 @@ final class HrDashboard
                 'shift' => $day->shift?->name,
                 'check_in_at' => $day->check_in_at?->toIso8601String(),
                 'status' => $day->status->value,
+                // "Koreksi" (Sprint 3 endpoint attendance.corrections.store).
+                'can_correct' => Gate::forUser($viewer)->allows('correct', [AttendanceDay::class, $day->user]),
             ])->values()->all(),
         ];
     }

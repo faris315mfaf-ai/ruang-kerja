@@ -273,6 +273,8 @@ export type ReviewItem = {
     distance_m: number | null;
     flags: { key: string; label: string }[];
     selfie_url: string | null;
+    /** HR may mark it reviewed (attendance.logs.review). */
+    can_review: boolean;
 };
 
 export type MissingCheckOut = {
@@ -284,6 +286,8 @@ export type MissingCheckOut = {
         shift: string | null;
         check_in_at: string | null;
         status: AttendanceStatus;
+        /** HR may fill in the check-out (attendance.corrections.store). */
+        can_correct: boolean;
     }[];
 };
 

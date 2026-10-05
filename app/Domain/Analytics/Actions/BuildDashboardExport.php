@@ -135,7 +135,7 @@ final class BuildDashboardExport
         $today = $this->hr->today($context->people, $now);
         $review = $this->hr->review($context->viewer, $ids, $now);
         $pending = $this->hr->pendingHr($ids);
-        $missing = $this->hr->missingCheckOut($ids, $now);
+        $missing = $this->hr->missingCheckOut($context->viewer, $ids, $now);
         $counts = $today['counts'];
         $kpis = $recap['kpis'];
 

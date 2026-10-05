@@ -1,5 +1,12 @@
-import { Eye, MapPin } from 'lucide-react';
+import { Eye, MapPin, PencilLine } from 'lucide-react';
+import { useState } from 'react';
 import { UserAvatar } from '@/components/shell/user-avatar';
+import { Button } from '@/components/ui/button';
+import {
+    CorrectionDialog,
+    type CorrectionTarget,
+} from '@/features/attendance/review/correction-dialog';
+import { ReviewButton } from '@/features/attendance/review/review-button';
 import { formatRelative, formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type {
@@ -223,17 +230,29 @@ export function ReviewList({ items }: { items: ReviewItem[] }) {
                                             ` ${Math.round(item.accuracy_m)} m`}
                                     </span>
                                 ))}
-                                {item.selfie_url && (
-                                    <a
-                                        href={item.selfie_url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-[13px] text-text hover:bg-surface-2 max-md:h-11"
-                                    >
-                                        <Eye className="size-4" aria-hidden />
-                                        Lihat selfie
-                                    </a>
-                                )}
+                                <span className="ml-auto flex flex-wrap items-center gap-1.5">
+                                    {item.selfie_url && (
+                                        <a
+                                            href={item.selfie_url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-[13px] text-text hover:bg-surface-2 max-md:h-11"
+                                        >
+                                            <Eye
+                                                className="size-4"
+                                                aria-hidden
+                                            />
+                                            Lihat selfie
+                                        </a>
+                                    )}
+                                    {item.can_review && (
+                                        <ReviewButton
+                                            logId={item.id}
+                                            only={['review', 'attendance']}
+                                            className="h-9 max-md:h-11"
+                                        />
+                                    )}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -244,37 +263,76 @@ export function ReviewList({ items }: { items: ReviewItem[] }) {
 }
 
 /** "Lupa check-out kemarin". */
+/** Office time "HH:MM" of an ISO instant (prefills the correction form). */
+function officeHourMinute(iso: string | null): string | null {
+    return iso === null ? null : formatTime(iso).replace('.', ':');
+}
+
 export function MissingCheckOutList({ data }: { data: MissingCheckOut }) {
+    const [target, setTarget] = useState<CorrectionTarget | null>(null);
+
     if (data.items.length === 0) {
         return <PanelEmpty>Semua sudah check-out kemarin.</PanelEmpty>;
     }
 
     return (
-        <ul className="divide-y divide-border">
-            {data.items.map((item) => (
-                <li
-                    key={item.id}
-                    className="flex min-h-14 items-center gap-3 px-4 py-2"
-                >
-                    <UserAvatar
-                        name={item.user.name}
-                        src={item.user.avatar}
-                        className="size-8"
-                    />
-                    <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm text-text">
-                            {item.user.name}
+        <>
+            <ul className="divide-y divide-border">
+                {data.items.map((item) => (
+                    <li
+                        key={item.id}
+                        className="flex min-h-14 items-center gap-3 px-4 py-2"
+                    >
+                        <UserAvatar
+                            name={item.user.name}
+                            src={item.user.avatar}
+                            className="size-8"
+                        />
+                        <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm text-text">
+                                {item.user.name}
+                            </span>
+                            <span className="block text-[13px] text-text-muted">
+                                {item.shift ?? 'Tanpa shift'} · masuk{' '}
+                                <span className="font-mono tnum">
+                                    {formatTime(item.check_in_at)}
+                                </span>{' '}
+                                · keluar –
+                            </span>
                         </span>
-                        <span className="block text-[13px] text-text-muted">
-                            {item.shift ?? 'Tanpa shift'} · masuk{' '}
-                            <span className="font-mono tnum">
-                                {formatTime(item.check_in_at)}
-                            </span>{' '}
-                            · keluar –
-                        </span>
-                    </span>
-                </li>
-            ))}
-        </ul>
+                        {item.can_correct && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="h-9 max-md:h-11"
+                                aria-label={`Koreksi absensi ${item.user.name}`}
+                                onClick={() =>
+                                    setTarget({
+                                        userId: item.user.id,
+                                        name: item.user.name,
+                                        workDate: data.date,
+                                        checkIn: officeHourMinute(
+                                            item.check_in_at,
+                                        ),
+                                    })
+                                }
+                            >
+                                <PencilLine aria-hidden />
+                                Koreksi
+                            </Button>
+                        )}
+                    </li>
+                ))}
+            </ul>
+            {target !== null && (
+                <CorrectionDialog
+                    key={target.userId}
+                    target={target}
+                    today={data.date}
+                    reload={['missingCheckOut', 'attendance']}
+                    onClose={() => setTarget(null)}
+                />
+            )}
+        </>
     );
 }
