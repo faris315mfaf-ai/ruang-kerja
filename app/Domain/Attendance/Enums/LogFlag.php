@@ -14,6 +14,7 @@ enum LogFlag: string
     case NewIp = 'new_ip';
     case ImpossibleTravel = 'impossible_travel';
     case DarkSelfie = 'dark_selfie';
+    case QrLocationMismatch = 'qr_location_mismatch';
 
     public function label(): string
     {
@@ -24,6 +25,7 @@ enum LogFlag: string
             self::NewIp => 'Alamat IP baru',
             self::ImpossibleTravel => 'Perpindahan tidak wajar',
             self::DarkSelfie => 'Selfie gelap atau kosong',
+            self::QrLocationMismatch => 'GPS jauh dari kiosk QR',
         };
     }
 

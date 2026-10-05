@@ -27,6 +27,37 @@ class AttendanceDayPolicy
     }
 
     /**
+     * Team boards "Absensi hari ini" and "Rekap absensi": HR, Direksi, Super
+     * Admin (whole company) and anyone who leads a division or has direct
+     * reports (their scope via AttendanceDay::visibleTo()).
+     */
+    public function viewTeam(User $actor): bool
+    {
+        return $actor->hasPermission(Permission::AttendanceViewAll)
+            || $actor->ledDivisionIds() !== []
+            || User::query()->where('manager_id', $actor->id)->exists();
+    }
+
+    /**
+     * Excel/PDF payroll export of the monthly recap (HR, Super Admin).
+     */
+    public function export(User $actor): bool
+    {
+        return $actor->hasPermission(Permission::AttendanceExport);
+    }
+
+    /**
+     * Manual correction (method manual) by HR / Super Admin of the same
+     * company. Own attendance is corrected through a request, not here.
+     */
+    public function correct(User $actor, User $employee): bool
+    {
+        return $actor->hasPermission(Permission::AttendanceManage)
+            && $actor->company_id === $employee->company_id
+            && $actor->id !== $employee->id;
+    }
+
+    /**
      * Check in/out for oneself (inactive employees are logged out by middleware).
      */
     public function checkIn(User $actor): bool

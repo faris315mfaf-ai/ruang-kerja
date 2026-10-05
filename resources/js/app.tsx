@@ -20,6 +20,9 @@ void createInertiaApp({
             // Full-screen split layout of its own (mockups Login / MLogin).
             case name === 'auth/login':
                 return [];
+            // Lobby kiosk: full screen, no navigation (Sprint 3).
+            case name.startsWith('kiosk/'):
+                return [];
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):

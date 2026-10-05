@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Domain\Tasks\Enums\TaskPriority;
 use App\Domain\Tasks\Enums\TaskStatusCategory;
+use App\Domain\Workspaces\Contracts\HasWorkspaceAttachments;
 use Carbon\CarbonImmutable;
 use Database\Factories\TaskFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -54,7 +55,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'estimate_hours', 'created_by', 'started_at', 'completed_at', 'canceled_at',
 ])]
 #[Hidden(['search_vector'])]
-class Task extends Model
+class Task extends Model implements HasWorkspaceAttachments
 {
     /** @use HasFactory<TaskFactory> */
     use HasFactory, HasUlids, SoftDeletes;
@@ -220,5 +221,22 @@ class Task extends Model
     public function activities(): MorphMany
     {
         return $this->morphMany(Activity::class, 'subject');
+    }
+
+    /**
+     * Drive attachments (Sprint 7): files go to the workspace folder.
+     *
+     * @return MorphMany<Attachment, $this>
+     */
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable')->latest()->latest('id');
+    }
+
+    public function attachmentWorkspace(): Workspace
+    {
+        return $this->relationLoaded('workspace')
+            ? $this->workspace
+            : Workspace::query()->findOrFail($this->workspace_id);
     }
 }

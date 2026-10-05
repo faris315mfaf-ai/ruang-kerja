@@ -25,8 +25,9 @@ use RuntimeException;
 use Throwable;
 
 /**
- * Streams a temporary upload (stored by QueueDriveUpload) to the owner's
- * Drive folder with the resumable protocol, caches it in drive_files,
+ * Streams a temporary upload (stored by QueueDriveUpload or a chunked
+ * DriveUploadSession) to the owner's Drive folder — or `$folderId`, a
+ * sub-folder of it the caller already authorized — with the resumable protocol, caches it in drive_files,
  * optionally attaches it, then deletes the temporary file. A retried job
  * resumes the same Drive session. Fires DriveFileUploaded / DriveUploadFailed.
  */
@@ -50,6 +51,7 @@ final class UploadToDrive implements ShouldQueue
         public string $mimeType,
         public ?User $uploader = null,
         public ?Model $attachable = null,
+        public ?string $folderId = null,
     ) {}
 
     public function handle(
@@ -78,22 +80,24 @@ final class UploadToDrive implements ShouldQueue
                 SyncDrivePermissions::dispatch($this->owner);
             }
 
+            $targetId = $this->folderId ?? $folder->folderId;
+
             $item = $uploader->upload(
                 $this->uploadId,
-                $folder->folderId,
+                $targetId,
                 Storage::disk($this->disk)->path($this->path),
                 $this->filename,
                 $this->mimeType,
             );
 
-            $result = DB::transaction(function () use ($recorder, $item, $folder): array {
-                $file = $recorder->record($item, $this->owner->driveWorkspaceId(), $this->uploader, $folder->folderId);
+            $result = DB::transaction(function () use ($recorder, $item, $targetId): array {
+                $file = $recorder->record($item, $this->owner->driveWorkspaceId(), $this->uploader, $targetId);
                 $attachment = $this->attachable === null ? null : $recorder->attach($file, $this->attachable, $this->uploader);
 
                 return [$file, $attachment];
             });
 
-            $contents->markStale($folder->folderId);
+            $contents->markStale($targetId);
 
             return $result;
         });

@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Attendance;
 
 use App\Domain\Attendance\Models\Holiday;
+use App\Domain\Attendance\Models\Kiosk;
 use App\Domain\Attendance\Models\OfficeLocation;
 use App\Domain\Attendance\Models\Shift;
 use App\Domain\Attendance\Models\ShiftAssignment;
@@ -152,5 +153,33 @@ final class AttendanceSettingsData
     private function today(): CarbonImmutable
     {
         return ScheduleResolver::officeDate(CarbonImmutable::now());
+    }
+
+    /**
+     * Lobby kiosks (Sprint 3). The activation token itself is never sent.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function kiosks(User $viewer): array
+    {
+        return array_values(Kiosk::query()
+            ->visibleTo($viewer)
+            ->with('officeLocation')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Kiosk $kiosk): array => [
+                'id' => $kiosk->id,
+                'name' => $kiosk->name,
+                'code' => $kiosk->code,
+                'officeLocationId' => $kiosk->office_location_id,
+                'locationName' => $kiosk->officeLocation->name,
+                'isActive' => $kiosk->is_active,
+                'isPaired' => $kiosk->isPaired(),
+                'activatedAt' => AttendancePresenter::iso($kiosk->activated_at),
+                'lastSeenAt' => AttendancePresenter::iso($kiosk->last_seen_at),
+                'pendingActivationUntil' => $kiosk->hasPendingActivation() ? AttendancePresenter::iso($kiosk->activation_expires_at) : null,
+                'url' => route('kiosk.show', ['location' => $kiosk->office_location_id]),
+            ])
+            ->all());
     }
 }

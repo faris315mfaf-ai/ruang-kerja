@@ -263,6 +263,7 @@ function TasksView(props: Props) {
             workspace={workspace}
             members={members}
             can={can}
+            drive_counts={props.drive_counts}
             tab="tasks"
             onCreateTask={composer.canCreate ? () => create() : null}
         >

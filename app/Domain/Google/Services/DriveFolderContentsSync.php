@@ -52,7 +52,8 @@ final class DriveFolderContentsSync
         $syncedAt = Cache::get($this->key($folderId));
         $maxAge = (int) config('google.folders.stale_after_minutes', 5) * 60;
 
-        return ! is_int($syncedAt) || now()->getTimestamp() - $syncedAt > $maxAge;
+        // The Redis store may hand integers back as strings.
+        return ! is_numeric($syncedAt) || now()->getTimestamp() - (int) $syncedAt > $maxAge;
     }
 
     /**

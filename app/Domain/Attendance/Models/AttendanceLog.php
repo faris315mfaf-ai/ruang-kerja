@@ -23,7 +23,8 @@ use LogicException;
 
 /**
  * Immutable check-in/out event (docs/DATABASE.md §2). Only the HR review
- * columns may change after insert.
+ * columns may change after insert, and selfie_path may be cleared by the
+ * retention job.
  *
  * @property string $id
  * @property string $user_id
@@ -80,7 +81,13 @@ class AttendanceLog extends Model
     protected static function booted(): void
     {
         static::updating(function (self $log): void {
-            $changed = array_diff(array_keys($log->getDirty()), self::MUTABLE);
+            $dirty = $log->getDirty();
+            $changed = array_diff(array_keys($dirty), self::MUTABLE);
+
+            // Selfie retention (attendance:purge-selfies) may only clear the path.
+            if (array_key_exists('selfie_path', $dirty) && $dirty['selfie_path'] === null) {
+                $changed = array_diff($changed, ['selfie_path']);
+            }
 
             if ($changed !== []) {
                 throw new LogicException('Log absensi tidak dapat diubah: '.implode(', ', $changed).'.');

@@ -1,4 +1,4 @@
-import { Camera } from 'lucide-react';
+import { Camera, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CheckFlowMobile } from './check-flow.mobile';
 import { CheckInCard } from './check-in-card';
@@ -14,6 +14,7 @@ import { useAttendancePage } from './use-attendance-page';
 export function AttendanceMobile(props: AttendancePageProps) {
     const { today, consent, history } = props;
     const { now, flow, action } = useAttendancePage(props);
+    const MethodIcon = flow.method === 'qr' ? QrCode : Camera;
 
     return (
         <div className="space-y-4">
@@ -27,7 +28,7 @@ export function AttendanceMobile(props: AttendancePageProps) {
                 match={flow.match}
                 onRefresh={() => void flow.geo.request()}
             />
-            <MethodSwitch />
+            <MethodSwitch value={flow.method} onChange={flow.setMethod} />
             <div className="space-y-3">
                 <Button
                     type="button"
@@ -36,7 +37,7 @@ export function AttendanceMobile(props: AttendancePageProps) {
                     className="h-[52px] w-full rounded-xl text-[17px]"
                 >
                     {!action.disabled && (
-                        <Camera
+                        <MethodIcon
                             className="size-6"
                             strokeWidth={1.75}
                             aria-hidden

@@ -16,7 +16,7 @@ import type { ReactNode } from 'react';
 import { ThemeSegmented } from '@/components/shell/theme-segmented';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { MenuWorkspaceGrid } from '@/features/workspaces/menu-workspace-grid';
-import { adminNavItems } from '@/lib/navigation';
+import { adminNavItems, attendanceNavItems } from '@/lib/navigation';
 import { primaryRoleLabel } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
@@ -159,14 +159,17 @@ export default function Menu() {
                         <Row
                             icon={Calendar}
                             label="Riwayat absensi"
-                            href="/absensi"
+                            href="/absensi/riwayat"
                         />
                         <Row
                             icon={Network}
                             label="Struktur organisasi"
                             href="/organisasi/struktur"
                         />
-                        {adminNavItems(auth.roles)
+                        {[
+                            ...attendanceNavItems(auth.roles),
+                            ...adminNavItems(auth.roles),
+                        ]
                             .filter((item) => !item.desktopOnly)
                             .map((item) => (
                                 <Row

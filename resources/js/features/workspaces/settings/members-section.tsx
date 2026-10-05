@@ -5,6 +5,7 @@ import { UserAvatar } from '@/components/shell/user-avatar';
 import { Button } from '@/components/ui/button';
 import { normalizeText } from '@/features/tasks/lib/filters';
 import type { WorkspaceRole } from '@/features/tasks/types';
+import { MemberDriveStatus } from '@/features/drive/drive-access-badge';
 import { cn } from '@/lib/utils';
 import { destroy, store, update } from '@/routes/workspaces/members';
 import type {
@@ -83,7 +84,7 @@ export function MembersSection({
             description={
                 workspace.type === 'personal'
                     ? 'Workspace pribadi hanya bisa dibuka oleh Anda.'
-                    : `${members.length} anggota${divisions.size > 1 ? ` dari ${divisions.size} divisi` : ''}. Akses folder Drive akan mengikuti daftar ini.`
+                    : `${members.length} anggota${divisions.size > 1 ? ` dari ${divisions.size} divisi` : ''}. Akses folder Drive mengikuti daftar ini.`
             }
         >
             {editable && (
@@ -192,7 +193,7 @@ export function MembersSection({
                             scope="col"
                             className="hidden px-4 py-2 font-medium md:table-cell"
                         >
-                            Sumber
+                            Akses Drive
                         </th>
                         {editable && (
                             <th scope="col" className="w-10 px-2 py-2">
@@ -225,11 +226,33 @@ export function MembersSection({
                                                     </span>
                                                 )}
                                             </span>
-                                            {member.position && (
-                                                <span className="block truncate text-[12px] text-text-muted">
-                                                    {member.position}
-                                                </span>
-                                            )}
+                                            <span className="flex min-w-0 items-center gap-1 truncate text-[12px] text-text-muted">
+                                                {member.position && (
+                                                    <span className="truncate">
+                                                        {member.position}
+                                                    </span>
+                                                )}
+                                                {member.position && (
+                                                    <span aria-hidden>·</span>
+                                                )}
+                                                {member.is_synced ? (
+                                                    <span className="inline-flex shrink-0 items-center gap-0.5 text-success">
+                                                        <RefreshCw
+                                                            className="size-3"
+                                                            aria-hidden
+                                                        />
+                                                        Sinkron{' '}
+                                                        {workspace.type ===
+                                                        'team'
+                                                            ? 'tim'
+                                                            : 'divisi'}
+                                                    </span>
+                                                ) : (
+                                                    <span className="shrink-0">
+                                                        Diundang
+                                                    </span>
+                                                )}
+                                            </span>
                                         </span>
                                     </span>
                                 </td>
@@ -273,22 +296,7 @@ export function MembersSection({
                                     )}
                                 </td>
                                 <td className="hidden px-4 py-2.5 md:table-cell">
-                                    {member.is_synced ? (
-                                        <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[12px] text-success">
-                                            <RefreshCw
-                                                className="size-3"
-                                                aria-hidden
-                                            />
-                                            Sinkron{' '}
-                                            {workspace.type === 'team'
-                                                ? 'tim'
-                                                : 'divisi'}
-                                        </span>
-                                    ) : (
-                                        <span className="text-[12px] text-text-muted">
-                                            Diundang
-                                        </span>
-                                    )}
+                                    <MemberDriveStatus drive={member.drive} />
                                 </td>
                                 {editable && (
                                     <td className="px-2 py-2.5 text-right">

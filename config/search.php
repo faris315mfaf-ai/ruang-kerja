@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Search\Providers\ActionsSearchProvider;
+use App\Domain\Search\Providers\DocumentSearchProvider;
 use App\Domain\Search\Providers\PeopleSearchProvider;
 use App\Domain\Search\Providers\TaskSearchProvider;
 use App\Domain\Search\Providers\WorkspaceSearchProvider;
@@ -25,6 +26,7 @@ return [
         TaskSearchProvider::class,
         PeopleSearchProvider::class,
         WorkspaceSearchProvider::class,
+        DocumentSearchProvider::class,
     ],
 
     // Results per group when searching all groups ("Semua").

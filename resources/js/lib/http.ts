@@ -12,7 +12,7 @@ export class HttpRequestError extends Error {
     }
 }
 
-function xsrfToken(): string | null {
+export function xsrfToken(): string | null {
     if (typeof document === 'undefined') {
         return null;
     }

@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Workspaces;
 
+use App\Domain\Google\GoogleFeatures;
 use App\Domain\Tasks\Enums\TaskStatusCategory;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
+use App\Domain\Workspaces\Queries\WorkspaceDriveListing;
+use App\Domain\Workspaces\Queries\WorkspaceDriveStatus;
 use App\Domain\Workspaces\Queries\WorkspacePage;
 use App\Http\Controllers\Controller;
 use App\Models\Label;
@@ -24,7 +27,7 @@ use Inertia\Response;
  */
 class WorkspaceSettingsController extends Controller
 {
-    public function show(Workspace $workspace, #[CurrentUser] User $user, WorkspacePage $page): Response
+    public function show(Workspace $workspace, #[CurrentUser] User $user, WorkspacePage $page, WorkspaceDriveStatus $driveStatus): Response
     {
         Gate::authorize('view', $workspace);
 
@@ -32,7 +35,13 @@ class WorkspaceSettingsController extends Controller
 
         return Inertia::render('workspaces/settings', [
             ...$props,
-            'member_details' => fn (): array => $this->memberDetails($workspace),
+            'member_details' => fn (): array => $this->memberDetails($workspace, $driveStatus->members($workspace)),
+            'drive' => fn (): array => [
+                'enabled' => GoogleFeatures::enabled(),
+                'folder_url' => $workspace->drive_folder_id === null ? null : WorkspaceDriveListing::folderUrl($workspace->drive_folder_id),
+                'folder_name' => $workspace->driveFolderName(),
+                'access' => $driveStatus->summary($workspace),
+            ],
             'statuses' => fn (): array => TaskStatus::query()
                 ->where('workspace_id', $workspace->id)
                 ->withCount('tasks')
@@ -74,9 +83,10 @@ class WorkspaceSettingsController extends Controller
     }
 
     /**
+     * @param  array<string, array{status: string, label: string, error: string|null, synced_at: string|null}>  $drive
      * @return list<array<string, mixed>>
      */
-    private function memberDetails(Workspace $workspace): array
+    private function memberDetails(Workspace $workspace, array $drive): array
     {
         return array_values(WorkspaceMember::query()
             ->where('workspace_id', $workspace->id)
@@ -92,6 +102,7 @@ class WorkspaceSettingsController extends Controller
                 'division' => $member->user->division?->name,
                 'position' => $member->user->position?->name,
                 'joined_at' => $member->joined_at?->toIso8601String(),
+                'drive' => $drive[$member->user_id] ?? null,
             ])
             ->all());
     }

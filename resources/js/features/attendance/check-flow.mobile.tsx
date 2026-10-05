@@ -10,6 +10,7 @@ import type {
 import { CheckFailure } from './flow/check-failure';
 import { CheckSuccess } from './flow/check-success';
 import { ConsentContent } from './flow/consent-content';
+import { QrScan } from './flow/qr-scan';
 import { SelfieCapture } from './flow/selfie-capture';
 import { SelfieReview } from './flow/selfie-review';
 import type { CheckFlow } from './use-check-flow';
@@ -71,10 +72,14 @@ function Header({
  */
 export function CheckFlowMobile({ flow, today, consent, now }: Props) {
     const open = flow.step !== 'idle';
+    const scanning =
+        flow.method === 'qr' &&
+        (flow.step === 'scan' || flow.step === 'submitting');
     const camera =
-        flow.step === 'capture' ||
-        flow.step === 'review' ||
-        flow.step === 'submitting';
+        !scanning &&
+        (flow.step === 'capture' ||
+            flow.step === 'review' ||
+            flow.step === 'submitting');
     const verb = flow.type === 'in' ? 'check-in' : 'check-out';
     const shiftLine =
         today.schedule.isWorkday && today.schedule.start
@@ -91,7 +96,7 @@ export function CheckFlowMobile({ flow, today, consent, now }: Props) {
                     aria-describedby={undefined}
                     className={cn(
                         'fixed inset-0 z-50 flex flex-col overflow-y-auto bg-background text-text outline-none',
-                        camera && 'dark',
+                        (camera || scanning) && 'dark',
                     )}
                     onEscapeKeyDown={(event) => {
                         if (flow.step === 'submitting') {
@@ -149,6 +154,25 @@ export function CheckFlowMobile({ flow, today, consent, now }: Props) {
                         </>
                     )}
 
+                    {scanning && (
+                        <>
+                            <Header
+                                dark
+                                title={`Pindai QR ${verb}`}
+                                subtitle="Arahkan kamera ke layar kiosk"
+                                onBack={flow.close}
+                                trailing={
+                                    <span className="font-mono text-[15px] text-text tnum">
+                                        {formatTime(now)}
+                                    </span>
+                                }
+                            />
+                            <div className="flex min-h-0 flex-1 flex-col px-3 pb-2">
+                                <QrScan flow={flow} />
+                            </div>
+                        </>
+                    )}
+
                     {flow.step === 'success' && flow.result && (
                         <>
                             <DialogPrimitive.Title className="sr-only">
@@ -192,6 +216,7 @@ export function CheckFlowMobile({ flow, today, consent, now }: Props) {
                                             : flow.start(flow.type)
                                     }
                                     onClose={flow.close}
+                                    onScanQr={() => flow.start(flow.type, 'qr')}
                                 />
                             </div>
                         </>
