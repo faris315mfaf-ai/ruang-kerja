@@ -29,7 +29,13 @@ const TITLES: Partial<Record<CheckRejection['reason'], string>> = {
     validation: 'Data belum lengkap',
     consent_required: 'Persetujuan diperlukan',
     server: 'Terjadi kesalahan',
+    qr_invalid: 'Kode QR tidak dikenali',
+    qr_expired: 'Kode QR kedaluwarsa',
+    qr_wrong_location: 'Kode QR lokasi lain',
 };
+
+/** Rejections where scanning the kiosk again is the next step. */
+const RESCAN = ['qr_invalid', 'qr_expired', 'qr_wrong_location'];
 
 type OptionProps = {
     icon: LucideIcon;
@@ -121,6 +127,8 @@ type Props = {
     onRefreshLocation: () => void;
     onRetry: () => void;
     onClose: () => void;
+    /** Opens the QR scanner (kiosk check-in). */
+    onScanQr?: () => void;
 };
 
 /** Mockup CheckinGagal (outside the geofence) and other refusals. */
@@ -132,6 +140,7 @@ export function CheckFailure({
     onRefreshLocation,
     onRetry,
     onClose,
+    onScanQr,
 }: Props) {
     const outside = rejection.reason === 'outside_geofence';
     const accuracy =
@@ -226,8 +235,8 @@ export function CheckFailure({
                         <Option
                             icon={QrCode}
                             label="Pindai QR di kiosk"
-                            hint="Segera tersedia"
-                            disabled
+                            onClick={onScanQr}
+                            disabled={!onScanQr}
                         />
                         <Option
                             icon={Building2}
@@ -243,6 +252,16 @@ export function CheckFailure({
                 </section>
             ) : (
                 <div className="grid gap-2">
+                    {RESCAN.includes(rejection.reason) && onScanQr && (
+                        <Button
+                            type="button"
+                            onClick={onScanQr}
+                            className="h-12 text-base"
+                        >
+                            <QrCode aria-hidden />
+                            Pindai ulang
+                        </Button>
+                    )}
                     {retryable && (
                         <Button
                             type="button"
@@ -266,7 +285,11 @@ export function CheckFailure({
                     )}
                     <Button
                         type="button"
-                        variant={retryable ? 'ghost' : 'default'}
+                        variant={
+                            retryable || RESCAN.includes(rejection.reason)
+                                ? 'ghost'
+                                : 'default'
+                        }
                         onClick={onClose}
                         className="h-12 text-base"
                     >

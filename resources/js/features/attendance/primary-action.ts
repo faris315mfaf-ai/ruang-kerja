@@ -1,6 +1,6 @@
 import { checkInTiming } from '@/lib/attendance';
 import { formatTime } from '@/lib/format';
-import type { TodayAttendance } from '@/types/attendance';
+import type { CheckMethod, TodayAttendance } from '@/types/attendance';
 import type { CheckType } from './use-check-flow';
 
 export type PrimaryAction = {
@@ -13,7 +13,10 @@ export type PrimaryAction = {
 export function primaryAction(
     today: TodayAttendance,
     now: Date,
+    method: CheckMethod = 'gps',
 ): PrimaryAction {
+    const how = method === 'qr' ? 'Pindai QR' : 'Ambil selfie';
+
     switch (today.action) {
         case 'check_in': {
             const timing = checkInTiming(today.schedule, now);
@@ -27,14 +30,14 @@ export function primaryAction(
             }
 
             return {
-                label: 'Ambil selfie & check-in',
+                label: `${how} & check-in`,
                 type: 'in',
                 disabled: false,
             };
         }
         case 'check_out':
             return {
-                label: 'Ambil selfie & check-out',
+                label: `${how} & check-out`,
                 type: 'out',
                 disabled: false,
             };

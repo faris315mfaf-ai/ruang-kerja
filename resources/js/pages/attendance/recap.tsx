@@ -1,1 +1,3 @@
-export default function P() { return null; }
+export default function P() {
+    return null;
+}

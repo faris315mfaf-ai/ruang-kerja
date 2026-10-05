@@ -30,6 +30,10 @@
   --danger: #C42B2B;
   --info: #1F66D1;
 
+  /* Kiosk QR: always dark modules on light paper (scanners need contrast), in both themes. */
+  --qr-ink: #0F1A1F;
+  --qr-paper: #FFFFFF;
+
   --glass-bg: rgba(255, 255, 255, 0.72);
   --glass-border: rgba(15, 26, 31, 0.08);
   --glass-blur: 16px;
