@@ -1,5 +1,7 @@
 import { Head, usePage } from '@inertiajs/react';
 import { ChevronRight, MapPin, ShieldCheck } from 'lucide-react';
+import { UserAvatar } from '@/components/shell/user-avatar';
+import { Badge } from '@/components/ui/badge';
 import { useKioskCode } from '@/features/kiosk/use-kiosk-code';
 import { formatLongDate, formatTime } from '@/lib/format';
 import { remainingFraction, secondsLeft } from '@/lib/kiosk';
@@ -46,15 +48,15 @@ export default function KioskShow(props: Props) {
                     <div className="flex items-center gap-3">
                         <span
                             aria-hidden
-                            className="flex size-10 items-center justify-center rounded-lg bg-(image:--brand-gradient) text-sm font-semibold text-on-brand"
+                            className="flex size-13 items-center justify-center rounded-[16px] bg-grad-merek text-[17px] font-extrabold text-on-brand"
                         >
                             {branding.shortName}
                         </span>
                         <span className="grid leading-tight">
-                            <span className="text-base font-semibold">
+                            <span className="text-title font-bold">
                                 {props.companyName}
                             </span>
-                            <span className="text-xs text-text-muted">
+                            <span className="text-meta text-text-muted">
                                 {branding.name} · Kiosk absensi
                             </span>
                         </span>
@@ -62,36 +64,36 @@ export default function KioskShow(props: Props) {
 
                     <div>
                         <p
-                            className="font-mono text-[96px] leading-none font-medium tracking-tight tnum md:text-[128px]"
+                            className="text-[96px] leading-none font-extrabold tracking-[-0.04em] tnum md:text-[136px]"
                             aria-label={`Pukul ${formatTime(now)}`}
                         >
                             {formatTime(now)}
                         </p>
-                        <p className="mt-4 text-2xl text-text">
+                        <p className="mt-4 text-h2 font-semibold text-text first-letter:uppercase">
                             {formatLongDate(now)}
                         </p>
-                        <p className="mt-4 flex items-center gap-2 text-base text-text-muted">
+                        <p className="mt-4 flex items-center gap-2 text-body-lg text-text-muted">
                             <MapPin
-                                className="size-5 text-primary"
-                                strokeWidth={1.75}
+                                className="size-5 text-link"
+                                strokeWidth={1.9}
                                 aria-hidden
                             />
                             {props.location.name} · {props.kiosk.name}
                         </p>
                     </div>
 
-                    <ol className="space-y-3">
+                    <ol className="flex flex-col gap-3">
                         {STEPS.map((step, index) => (
                             <li
                                 key={index}
-                                className="flex items-center gap-4 text-base"
+                                className="flex items-center gap-4 text-body-lg"
                             >
                                 <span
                                     className={cn(
-                                        'flex size-9 shrink-0 items-center justify-center rounded-full border text-sm font-semibold',
+                                        'flex size-10 shrink-0 items-center justify-center rounded-full text-[16px] font-bold',
                                         index === STEPS.length - 1
-                                            ? 'border-primary/40 bg-link-soft text-primary'
-                                            : 'border-border-strong text-text',
+                                            ? 'bg-grad-aksi text-on-brand'
+                                            : 'border border-border-strong text-text',
                                     )}
                                 >
                                     {index + 1}
@@ -99,7 +101,7 @@ export default function KioskShow(props: Props) {
                                 <span>{step}</span>
                                 {index === STEPS.length - 1 && (
                                     <ChevronRight
-                                        className="size-5 text-primary"
+                                        className="size-5 text-link"
                                         aria-hidden
                                     />
                                 )}
@@ -113,32 +115,27 @@ export default function KioskShow(props: Props) {
                     aria-labelledby="kiosk-qr-title"
                     className="mx-auto w-full max-w-[420px]"
                 >
-                    <div className="rounded-3xl bg-qr-paper p-7 text-qr-ink shadow-card">
+                    <div className="rounded-sheet bg-qr-paper p-7 text-qr-ink shadow-float">
                         <div className="flex items-center justify-between gap-3">
-                            <h1
-                                id="kiosk-qr-title"
-                                className="text-lg font-semibold"
-                            >
+                            <h1 id="kiosk-qr-title" className="text-h3">
                                 Pindai untuk check-in
                             </h1>
-                            <span
+                            <Badge
                                 role="status"
-                                className={cn(
-                                    'inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-sm font-medium',
-                                    offline
-                                        ? 'bg-warning-soft text-warning'
-                                        : 'bg-success/15 text-success',
-                                )}
+                                variant="status"
+                                className="bg-qr-ink/8 text-qr-ink"
                             >
                                 <span
                                     aria-hidden
                                     className={cn(
-                                        'size-1.5 rounded-full',
-                                        offline ? 'bg-warning' : 'bg-success',
+                                        'size-2 rounded-full',
+                                        offline
+                                            ? 'bg-fill-warning'
+                                            : 'bg-fill-teal',
                                     )}
                                 />
                                 {offline ? 'Menyambung ulang…' : 'Aktif'}
-                            </span>
+                            </Badge>
                         </div>
 
                         <div className="relative mt-6">
@@ -154,22 +151,22 @@ export default function KioskShow(props: Props) {
                             />
                             <span
                                 aria-hidden
-                                className="absolute top-1/2 left-1/2 flex size-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-xl border-4 border-qr-paper bg-(image:--brand-gradient) text-base font-semibold text-on-brand"
+                                className="absolute top-1/2 left-1/2 flex size-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-lg border-4 border-qr-paper bg-grad-merek text-[16px] font-extrabold text-on-brand"
                             >
                                 {branding.shortName}
                             </span>
                         </div>
 
                         <div
-                            className="mt-6 h-1.5 overflow-hidden rounded-full bg-qr-ink/10"
+                            className="mt-6 h-2 overflow-hidden rounded-full bg-qr-ink/10"
                             aria-hidden
                         >
                             <div
-                                className="h-full rounded-full bg-primary transition-[width] duration-200 ease-linear"
+                                className="h-full rounded-full bg-grad-merek-x transition-[width] duration-200 ease-linear motion-reduce:transition-none"
                                 style={{ width: `${fraction * 100}%` }}
                             />
                         </div>
-                        <div className="mt-3 flex items-center justify-between text-sm">
+                        <div className="mt-3 flex items-center justify-between text-[16px]">
                             <span>
                                 Kode berganti dalam{' '}
                                 <strong className="font-semibold tnum">
@@ -177,12 +174,12 @@ export default function KioskShow(props: Props) {
                                 </strong>{' '}
                                 detik
                             </span>
-                            <span className="font-mono tracking-wide opacity-70">
+                            <span className="font-mono font-semibold tracking-wide opacity-70">
                                 {props.kiosk.code}
                             </span>
                         </div>
                     </div>
-                    <p className="mt-4 flex gap-2 text-sm text-text-muted">
+                    <p className="mt-4 flex gap-2 text-[15px] text-text-muted">
                         <ShieldCheck
                             className="mt-0.5 size-4 shrink-0"
                             aria-hidden
@@ -195,12 +192,12 @@ export default function KioskShow(props: Props) {
                 {/* Right: latest check-ins (first name + initial only) */}
                 <aside
                     aria-labelledby="kiosk-recent-title"
-                    className="w-full rounded-2xl border border-border bg-surface/80"
+                    className="w-full rounded-panel border border-border bg-surface shadow-card"
                 >
-                    <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                    <div className="flex items-center justify-between border-b border-divider px-5 py-4">
                         <h2
                             id="kiosk-recent-title"
-                            className="text-sm font-semibold"
+                            className="text-title font-bold"
                         >
                             Baru saja check-in
                         </h2>
@@ -210,39 +207,37 @@ export default function KioskShow(props: Props) {
                         />
                     </div>
                     {recent.length === 0 ? (
-                        <p className="px-4 py-6 text-sm text-text-muted">
+                        <p className="px-5 py-6 text-[15px] text-text-muted">
                             Belum ada check-in di lokasi ini hari ini.
                         </p>
                     ) : (
                         <ul
                             aria-live="polite"
-                            className="divide-y divide-border"
+                            className="divide-y divide-divider"
                         >
                             {recent.map((item, index) => (
                                 <li
                                     key={item.id}
                                     className={cn(
-                                        'flex items-center gap-3 px-4 py-3',
-                                        index === 0 && 'bg-surface-2',
+                                        'flex min-h-14 items-center gap-3 px-5 py-2.5',
+                                        index === 0 && 'bg-link-soft',
                                     )}
                                 >
-                                    <span
-                                        aria-hidden
-                                        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-on-brand"
-                                    >
-                                        {item.initials}
-                                    </span>
-                                    <span className="min-w-0 flex-1 truncate text-sm">
+                                    <UserAvatar
+                                        name={item.name}
+                                        className="size-9 text-[13px]"
+                                    />
+                                    <span className="min-w-0 flex-1 truncate text-[16px] font-semibold">
                                         {item.name}
                                     </span>
-                                    <span className="font-mono text-sm text-text-muted tnum">
+                                    <span className="text-[15px] font-semibold text-text-muted tnum">
                                         {formatTime(item.at)}
                                     </span>
                                 </li>
                             ))}
                         </ul>
                     )}
-                    <p className="border-t border-border px-4 py-3 text-xs text-text-muted">
+                    <p className="border-t border-divider px-5 py-3 text-meta text-text-muted">
                         Hanya nama depan dan inisial yang ditampilkan di layar
                         umum.
                     </p>

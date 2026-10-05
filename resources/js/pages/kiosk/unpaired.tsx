@@ -30,21 +30,21 @@ export default function KioskUnpaired() {
     return (
         <div className="dark flex min-h-dvh items-center justify-center bg-background p-6 text-text">
             <Head title="Kiosk belum terdaftar" />
-            <div className="w-full max-w-md space-y-8">
-                <div className="space-y-4 text-center">
+            <div className="flex w-full max-w-md flex-col gap-8">
+                <div className="flex flex-col items-center gap-4 text-center">
                     <span
                         aria-hidden
-                        className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-surface-2 text-text-muted"
+                        className="flex size-16 items-center justify-center rounded-xl bg-grad-soft text-link"
                     >
                         <MonitorSmartphone
                             className="size-7"
                             strokeWidth={1.75}
                         />
                     </span>
-                    <h1 className="text-2xl font-semibold">
+                    <h1 className="text-h2">
                         Perangkat ini belum terdaftar sebagai kiosk
                     </h1>
-                    <p className="text-base text-text-muted">
+                    <p className="text-body text-text-muted">
                         Minta HR membuat tautan aktivasi di {branding.name} ›
                         Admin › Lokasi &amp; shift › Kiosk QR, lalu buka tautan
                         itu di perangkat ini, atau ketik kode aktivasinya di
@@ -54,7 +54,7 @@ export default function KioskUnpaired() {
                 </div>
 
                 <form
-                    className="space-y-3 rounded-2xl border border-border bg-surface p-5 shadow-card"
+                    className="space-y-3 rounded-panel border border-border bg-surface p-6 shadow-card"
                     onSubmit={(event) => {
                         event.preventDefault();
                         submit();
@@ -62,7 +62,7 @@ export default function KioskUnpaired() {
                 >
                     <label
                         htmlFor="kiosk-activation-code"
-                        className="flex items-center gap-2 text-[15px] font-medium"
+                        className="flex items-center gap-2 text-label"
                     >
                         <KeyRound
                             className="size-4 text-text-muted"
@@ -89,11 +89,11 @@ export default function KioskUnpaired() {
                         maxLength={9}
                         aria-invalid={form.errors.code ? true : undefined}
                         aria-describedby="kiosk-activation-code-help kiosk-activation-code-error"
-                        className="h-16 w-full rounded-xl border border-border-strong bg-background px-4 text-center font-mono text-3xl font-semibold tracking-[0.2em] text-text uppercase outline-none placeholder:text-text-subtle focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/30 aria-invalid:border-danger"
+                        className="h-16 w-full rounded-lg border border-border-strong bg-surface px-4 text-center font-mono text-[30px] font-semibold tracking-[0.2em] text-text uppercase outline-none placeholder:text-text-subtle focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-ring/55 aria-invalid:border-danger"
                     />
                     <p
                         id="kiosk-activation-code-help"
-                        className="text-sm text-text-muted"
+                        className="text-[15px] text-text-muted"
                     >
                         8 karakter, sekali pakai, berlaku sama lamanya dengan
                         tautan aktivasi.
@@ -105,7 +105,8 @@ export default function KioskUnpaired() {
                     />
                     <Button
                         type="submit"
-                        className="h-12 w-full text-base"
+                        size="lg"
+                        className="w-full"
                         disabled={!complete || form.processing}
                     >
                         {form.processing
