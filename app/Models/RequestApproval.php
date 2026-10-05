@@ -63,6 +63,10 @@ class RequestApproval extends Model
      */
     public function stepLabel(): string
     {
+        if ($this->approver_type === ApproverType::User) {
+            $this->loadMissing('approver');
+        }
+
         return match ($this->approver_type) {
             ApproverType::Role => Role::tryFrom((string) $this->approver_role)?->label() ?? ApproverType::Role->label(),
             ApproverType::User => $this->approver->name ?? ApproverType::User->label(),

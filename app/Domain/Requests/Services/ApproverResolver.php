@@ -24,7 +24,7 @@ final class ApproverResolver
     public function person(ApproverType $type, ?string $userId, User $requester): ?User
     {
         $person = match ($type) {
-            ApproverType::DirectManager => $requester->manager,
+            ApproverType::DirectManager => $requester->manager_id === null ? null : User::query()->find($requester->manager_id),
             ApproverType::DivisionHead => $this->divisionHead($requester),
             ApproverType::User => $userId === null ? null : User::query()->find($userId),
             ApproverType::Role => null,
@@ -43,11 +43,11 @@ final class ApproverResolver
      */
     public function divisionHead(User $requester): ?User
     {
-        $division = $requester->division;
+        $division = $requester->division_id === null ? null : Division::query()->find($requester->division_id);
 
         for ($depth = 0; $division !== null && $depth < 20; $depth++) {
             if ($division->head_user_id !== null) {
-                return $division->head;
+                return User::query()->find($division->head_user_id);
             }
 
             $division = $division->parent_id === null ? null : Division::query()->find($division->parent_id);

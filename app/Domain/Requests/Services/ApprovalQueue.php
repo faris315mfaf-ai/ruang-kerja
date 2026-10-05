@@ -61,7 +61,7 @@ final class ApprovalQueue
 
     public function canDecide(User $actor, RequestApproval $step): bool
     {
-        $request = $step->request;
+        $request = $step->loadMissing('request.user')->request;
 
         if ($step->status !== ApprovalStatus::Waiting
             || $request->status !== RequestStatus::Pending

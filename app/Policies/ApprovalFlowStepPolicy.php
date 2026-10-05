@@ -14,16 +14,16 @@ class ApprovalFlowStepPolicy
 
     public function view(User $actor, ApprovalFlowStep $step): bool
     {
-        return $this->flows->view($actor, $step->flow);
+        return $this->flows->view($actor, $step->loadMissing('flow')->flow);
     }
 
     public function update(User $actor, ApprovalFlowStep $step): bool
     {
-        return $this->flows->update($actor, $step->flow);
+        return $this->flows->update($actor, $step->loadMissing('flow')->flow);
     }
 
     public function delete(User $actor, ApprovalFlowStep $step): bool
     {
-        return $this->flows->update($actor, $step->flow);
+        return $this->flows->update($actor, $step->loadMissing('flow')->flow);
     }
 }

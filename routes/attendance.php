@@ -13,7 +13,8 @@ use App\Http\Controllers\Attendance\CheckOutController;
 use Illuminate\Support\Facades\Route;
 
 // Sprint 2 — Absensi inti (docs/PROMPTS.md). Check-in/out: 6 attempts per minute per user.
-$throttle = 'throttle:'.config()->integer('attendance.rate_limit_per_minute').',1,attendance';
+// Named limiter defined in AppServiceProvider (6/min per user, ARCHITECTURE §5).
+$throttle = 'throttle:check-in';
 
 Route::middleware(['auth', 'verified'])->group(function () use ($throttle) {
     Route::get('absensi', [AttendanceController::class, 'index'])->name('attendance.index');

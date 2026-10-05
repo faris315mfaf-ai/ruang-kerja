@@ -70,7 +70,7 @@ class LeaveBalanceController extends Controller
         Gate::authorize('update', $leaveBalance);
 
         $update->handle($user, $leaveBalance, (float) $form->validated('entitled_days'), (float) $form->validated('carried_over_days'));
-        Inertia::flash('toast', ['type' => 'success', 'message' => "Saldo {$leaveBalance->user->name} disimpan."]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Saldo {$leaveBalance->loadMissing('user')->user->name} disimpan."]);
 
         return back();
     }

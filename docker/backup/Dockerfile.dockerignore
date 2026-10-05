@@ -1,0 +1,5 @@
+# Build context filter for docker/backup/Dockerfile (BuildKit).
+*
+!scripts/backup.sh
+!scripts/restore.sh
+!docker/backup/entrypoint.sh

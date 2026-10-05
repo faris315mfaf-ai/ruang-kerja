@@ -18,7 +18,7 @@ class RequestApprovalPolicy
 
     public function view(User $actor, RequestApproval $step): bool
     {
-        return $this->requests->view($actor, $step->request);
+        return $this->requests->view($actor, $step->loadMissing('request')->request);
     }
 
     public function decide(User $actor, RequestApproval $step): bool

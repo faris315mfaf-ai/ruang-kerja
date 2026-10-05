@@ -8,8 +8,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-        {{-- Apply the system dark preference before first paint to avoid a flash. --}}
-        <script>
+        {{-- Apply the system dark preference before first paint to avoid a flash. Nonce: CSP (SecurityHeaders). --}}
+        <script nonce="{{ Vite::cspNonce() }}">
             (function() {
                 const appearance = '{{ $appearance ?? "system" }}';
 

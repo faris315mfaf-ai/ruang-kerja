@@ -23,7 +23,7 @@ class LeaveBalancePolicy
             return true;
         }
 
-        return $balance->user->company_id === $actor->company_id
+        return $balance->loadMissing('user')->user->company_id === $actor->company_id
             && ($actor->hasPermission(Permission::RequestsManageFlows) || $actor->hasPermission(Permission::RequestsViewAll));
     }
 
@@ -37,7 +37,7 @@ class LeaveBalancePolicy
 
     public function update(User $actor, LeaveBalance $balance): bool
     {
-        return $balance->user->company_id === $actor->company_id && $actor->hasPermission(Permission::RequestsManageFlows);
+        return $balance->loadMissing('user')->user->company_id === $actor->company_id && $actor->hasPermission(Permission::RequestsManageFlows);
     }
 
     public function delete(User $actor, LeaveBalance $balance): bool

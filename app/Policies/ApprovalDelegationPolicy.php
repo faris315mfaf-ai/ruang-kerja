@@ -36,6 +36,6 @@ class ApprovalDelegationPolicy
     private function managesCompanyOf(User $actor, ApprovalDelegation $delegation): bool
     {
         return $actor->hasPermission(Permission::RequestsManageFlows)
-            && $delegation->delegator->company_id === $actor->company_id;
+            && $delegation->loadMissing('delegator')->delegator->company_id === $actor->company_id;
     }
 }

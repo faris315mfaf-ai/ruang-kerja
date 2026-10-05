@@ -126,6 +126,8 @@ final class BalanceLedger
 
     private function lockedBalance(EmployeeRequest $request): ?LeaveBalance
     {
+        $request->loadMissing(['user', 'leaveType']);
+
         return $this->balanceFor($request->user, $request->leaveType, self::yearOf($request), lock: true);
     }
 }

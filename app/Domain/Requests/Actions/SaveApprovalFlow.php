@@ -31,7 +31,7 @@ final class SaveApprovalFlow
 
         return DB::transaction(function () use ($actor, $data, $flow, $steps): ApprovalFlow {
             $flow ??= new ApprovalFlow(['company_id' => $actor->company_id]);
-            $before = $flow->exists ? $flow->steps->map(fn (ApprovalFlowStep $step): array => self::snapshot($step))->all() : null;
+            $before = $flow->exists ? $flow->loadMissing('steps')->steps->map(fn (ApprovalFlowStep $step): array => self::snapshot($step))->all() : null;
 
             $flow->fill([
                 'name' => $data['name'],

@@ -1,0 +1,44 @@
+# Edge proxy (compose.prod.yml service `caddy`): automatic HTTPS (Let's Encrypt),
+# HTTP/3, WebSocket proxy for Reverb, and baseline security headers.
+#
+# The app sends its own security headers (App\Http\Middleware\SecurityHeaders,
+# incl. the CSP with a per-request nonce). Here every header uses `?` = "set
+# only if the upstream did not", so the edge never duplicates or overrides the
+# app's CSP but still protects responses that bypass Laravel.
+{
+	email {$ACME_EMAIL}
+}
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	request_body {
+		# Drive uploads are limited to 100 MB per file.
+		max_size 110MB
+	}
+
+	header {
+		?Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		?X-Content-Type-Options "nosniff"
+		?X-Frame-Options "DENY"
+		?Referrer-Policy "strict-origin-when-cross-origin"
+		?Permissions-Policy "camera=(self), geolocation=(self), microphone=(), payment=(), usb=(), browsing-topics=()"
+		-Server
+		-X-Powered-By
+	}
+
+	# Reverb: WebSocket (/app/{key}) and HTTP API (/apps/{id}/...).
+	@reverb path /app /app/* /apps /apps/*
+	handle @reverb {
+		reverse_proxy reverb:8080
+	}
+
+	handle {
+		reverse_proxy app:8000
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

@@ -98,6 +98,8 @@ class EmployeeRequest extends Model
      */
     public function currentSteps(): Collection
     {
+        $this->loadMissing('approvals');
+
         return $this->approvals
             ->where('round', $this->round)
             ->sortBy('step_order')

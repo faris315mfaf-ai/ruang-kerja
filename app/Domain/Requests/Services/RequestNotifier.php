@@ -33,18 +33,21 @@ final class RequestNotifier
      */
     public function awaitingApproval(EmployeeRequest $request, RequestApproval $step): void
     {
+        self::prepare($request, $step);
         $this->resolve->handle($request, NotificationType::RequestSubmitted, NotificationType::RequestRevisionRequested);
         Notification::send($this->approversOf($request, $step), new RequestAwaitingApproval($request));
     }
 
     public function stepApproved(EmployeeRequest $request, RequestApproval $decided, RequestApproval $next): void
     {
+        self::prepare($request, $decided, $next);
         $request->user->notify(new RequestStepApproved($request, $decided, $next));
         $this->awaitingApproval($request, $next);
     }
 
     public function approved(EmployeeRequest $request, ?User $decidedBy = null): void
     {
+        self::prepare($request);
         $this->resolve->handle($request, NotificationType::RequestSubmitted);
         $request->user->notify(new RequestApproved($request, $decidedBy));
 
@@ -55,18 +58,21 @@ final class RequestNotifier
 
     public function rejected(EmployeeRequest $request, RequestApproval $step): void
     {
+        self::prepare($request, $step);
         $this->resolve->handle($request, NotificationType::RequestSubmitted);
         $request->user->notify(new RequestRejected($request, $step));
     }
 
     public function revisionRequested(EmployeeRequest $request, RequestApproval $step): void
     {
+        self::prepare($request, $step);
         $this->resolve->handle($request, NotificationType::RequestSubmitted);
         $request->user->notify(new RequestRevisionRequested($request, $step));
     }
 
     public function canceled(EmployeeRequest $request, ?RequestApproval $waitingStep): void
     {
+        self::prepare($request, ...array_filter([$waitingStep]));
         $this->resolve->handle($request, NotificationType::RequestSubmitted, NotificationType::RequestRevisionRequested);
 
         if ($waitingStep !== null) {
@@ -82,7 +88,7 @@ final class RequestNotifier
     public function approversOf(EmployeeRequest $request, RequestApproval $step): Collection
     {
         if ($step->approver_id !== null) {
-            $approver = $step->approver;
+            $approver = $step->loadMissing('approver')->approver;
 
             return collect($approver === null ? [] : [$approver]);
         }
@@ -92,5 +98,17 @@ final class RequestNotifier
         }
 
         return collect();
+    }
+
+    /**
+     * Eager-loads what the notifications render (no lazy loading in strict mode).
+     */
+    private static function prepare(EmployeeRequest $request, RequestApproval ...$steps): void
+    {
+        $request->loadMissing(['user', 'leaveType', 'substitute']);
+
+        foreach ($steps as $step) {
+            $step->loadMissing('approver');
+        }
     }
 }

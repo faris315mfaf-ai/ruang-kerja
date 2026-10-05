@@ -64,6 +64,7 @@ final class ApprovalFlowResolver
      */
     public function start(EmployeeRequest $request): RequestApproval
     {
+        $request->loadMissing(['user', 'leaveType']);
         ['flow' => $flow, 'steps' => $definitions] = $this->definitionFor($request->leaveType);
 
         foreach ($definitions as $index => $definition) {
@@ -115,6 +116,7 @@ final class ApprovalFlowResolver
      */
     public function advance(EmployeeRequest $request, ?ApprovalFlow $flow = null): ?RequestApproval
     {
+        $request->loadMissing(['user', 'leaveType']);
         $flow ??= $this->definitionFor($request->leaveType)['flow'];
         $steps = $request->currentSteps();
         $today = OfficeTime::todayString();

@@ -27,6 +27,8 @@ class EmployeeRequestPolicy
             return true;
         }
 
+        $request->loadMissing(['user', 'approvals']);
+
         if ($request->user->company_id !== $actor->company_id) {
             return false;
         }
@@ -71,7 +73,7 @@ class EmployeeRequestPolicy
             return false;
         }
 
-        $step->setRelation('request', $request);
+        $step->setRelation('request', $request->loadMissing('user'));
 
         return $this->queue->canDecide($actor, $step);
     }

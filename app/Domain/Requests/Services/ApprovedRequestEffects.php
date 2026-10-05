@@ -20,7 +20,7 @@ final class ApprovedRequestEffects
 
     public function apply(EmployeeRequest $request): void
     {
-        $category = $request->leaveType->category;
+        $category = $request->loadMissing(['user', 'leaveType'])->leaveType->category;
 
         match (true) {
             $category === RequestCategory::Overtime => $this->attendance->applyOvertime($request),

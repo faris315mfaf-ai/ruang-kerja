@@ -19,7 +19,7 @@ class ApprovalDelegationController extends Controller
     {
         Gate::authorize('create', ApprovalDelegation::class);
 
-        $delegation = $save->handle($user, $form->delegationData());
+        $delegation = $save->handle($user, $form->delegationData())->load('delegate');
         Inertia::flash('toast', ['type' => 'success', 'message' => "Persetujuan Anda didelegasikan ke {$delegation->delegate->name}."]);
 
         return back();
