@@ -46,13 +46,18 @@ final class RouteToDelegates
                 ->whereHas('request', fn (Builder $request) => $request
                     ->where('status', RequestStatus::Pending->value)
                     ->where('user_id', '!=', $delegation->delegate_id))
-                ->with(['request.user', 'request.leaveType'])
+                ->with(['request.user', 'request.leaveType', 'request.approvals'])
                 ->get();
 
             foreach ($steps as $step) {
                 $flow = $this->flows->definitionFor($step->request->leaveType)['flow'];
 
                 if ($flow !== null && ! $flow->allow_delegation) {
+                    continue;
+                }
+
+                // A delegate who already approved this round cannot take another step.
+                if (in_array($delegation->delegate_id, $step->request->approverIdsOfRound(), true)) {
                     continue;
                 }
 

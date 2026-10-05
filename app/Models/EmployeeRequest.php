@@ -106,6 +106,32 @@ class EmployeeRequest extends Model
             ->values();
     }
 
+    /**
+     * People who already approved a step of the current round — the deciding
+     * user and, for a delegated step, the delegator it was decided for. None of
+     * them may approve another step of the same round.
+     *
+     * @return list<string>
+     */
+    public function approverIdsOfRound(): array
+    {
+        $ids = [];
+
+        foreach ($this->currentSteps() as $step) {
+            if ($step->status !== ApprovalStatus::Approved) {
+                continue;
+            }
+
+            foreach ([$step->approver_id, $step->delegated_from_id] as $id) {
+                if ($id !== null && ! in_array($id, $ids, true)) {
+                    $ids[] = $id;
+                }
+            }
+        }
+
+        return $ids;
+    }
+
     public function waitingStep(): ?RequestApproval
     {
         return $this->currentSteps()->first(fn (RequestApproval $step): bool => $step->status === ApprovalStatus::Waiting);

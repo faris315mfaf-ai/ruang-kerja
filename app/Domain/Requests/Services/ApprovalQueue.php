@@ -8,6 +8,7 @@ use App\Domain\Requests\Enums\RequestStatus;
 use App\Models\RequestApproval;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
  * What a user has to decide: waiting steps routed to them personally (incl. as
@@ -34,6 +35,15 @@ final class ApprovalQueue
                         ->whereIn('approver_role', $roles));
                 }
             })
+            // Not when the actor already approved a step of this round.
+            ->whereNotExists(fn (QueryBuilder $done) => $done->selectRaw('1')
+                ->from('request_approvals as done')
+                ->whereColumn('done.request_id', 'request_approvals.request_id')
+                ->whereColumn('done.round', 'request_approvals.round')
+                ->where('done.status', ApprovalStatus::Approved->value)
+                ->where(fn (QueryBuilder $who) => $who
+                    ->where('done.approver_id', $actor->id)
+                    ->orWhere('done.delegated_from_id', $actor->id)))
             ->whereHas('request', fn (Builder $request) => $request
                 ->where('status', RequestStatus::Pending->value)
                 ->whereColumn('requests.round', 'request_approvals.round')
@@ -69,6 +79,11 @@ final class ApprovalQueue
             || $request->user_id === $actor->id
             || ! $actor->isActive()
             || $request->user->company_id !== $actor->company_id) {
+            return false;
+        }
+
+        // One person approves at most one step per round (incl. as delegate).
+        if (in_array($actor->id, $request->approverIdsOfRound(), true)) {
             return false;
         }
 
