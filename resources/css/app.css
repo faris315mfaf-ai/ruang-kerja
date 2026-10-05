@@ -437,7 +437,7 @@
 @media (prefers-reduced-transparency: reduce) {
     .glass {
         background: var(--surface);
-        backdrop-filter: none;
         -webkit-backdrop-filter: none;
+        backdrop-filter: none;
     }
 }

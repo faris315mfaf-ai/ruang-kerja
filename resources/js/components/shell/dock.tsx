@@ -344,7 +344,8 @@ function StackIcon({
                 palette(color).bg,
             )}
         >
-            <Icon className="size-[18px]" strokeWidth={1.9} />
+            {/* Explicit colour: menu items mute icons without a text-* class. */}
+            <Icon className="size-[18px] text-on-brand" strokeWidth={1.9} />
         </span>
     );
 }

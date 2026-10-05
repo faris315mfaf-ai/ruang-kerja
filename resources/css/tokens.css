@@ -79,8 +79,10 @@
 .glass {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  /* Prefixed first: with the standard property last, the CSS minifier keeps
+     both (the other order collapsed to -webkit- only, i.e. no blur in Chrome). */
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
 }
 
 @media (prefers-reduced-motion: reduce) {
