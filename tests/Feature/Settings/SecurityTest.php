@@ -144,3 +144,12 @@ it('signs out other devices when the password changes, keeping the current sessi
 
     $this->assertGuest();
 });
+
+it('does not treat a session that switches accounts as a changed password', function () {
+    $first = User::factory()->withRole(Role::Anggota)->create(['password' => 'kata-sandi-satu']);
+    $second = User::factory()->withRole(Role::Anggota)->create(['password' => 'kata-sandi-dua']);
+
+    $this->actingAs($first)->get('/dashboard')->assertOk();
+    $this->actingAs($second)->get('/dashboard')->assertOk();
+    $this->assertAuthenticatedAs($second);
+});

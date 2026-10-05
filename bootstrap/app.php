@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\HealthController;
+use App\Http\Middleware\AuthenticateSession;
 use App\Http\Middleware\EnsureActiveEmployee;
 use App\Http\Middleware\EnsureTwoFactorForSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
@@ -43,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Sessions remember the password hash: changing the password (SecurityController)
         // signs out every other device on its next request.
         $middleware->authenticateSessions();
+        $middleware->alias(['auth.session' => AuthenticateSession::class]);
 
         $middleware->web(append: [
             // Logs out inactive/resigned users on any web request (no-op for guests).
