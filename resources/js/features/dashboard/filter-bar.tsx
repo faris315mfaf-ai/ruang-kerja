@@ -23,7 +23,11 @@ type SegmentedProps<T extends string> = {
     className?: string;
 };
 
-/** Segmented control (radiogroup), mockup Main "Minggu ini · Bulan ini · Kuartal". */
+/**
+ * Period switch as a radiogroup with the Arus segmented look (Komponen
+ * "Pilihan & tab", glass track): it filters the whole page, so it is a
+ * choice, not a tab.
+ */
 export function Segmented<T extends string>({
     label,
     options,
@@ -36,7 +40,7 @@ export function Segmented<T extends string>({
             role="radiogroup"
             aria-label={label}
             className={cn(
-                'inline-flex rounded-lg border border-border bg-surface-2 p-0.5',
+                'inline-flex gap-1 rounded-[14px] border border-border bg-surface/70 p-1',
                 className,
             )}
         >
@@ -51,9 +55,9 @@ export function Segmented<T extends string>({
                         aria-checked={active}
                         onClick={() => onChange(option.value)}
                         className={cn(
-                            'h-9 flex-1 rounded-md px-3 text-sm whitespace-nowrap transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                            'h-[38px] flex-1 rounded-[10px] px-[18px] text-[15px] font-semibold whitespace-nowrap transition-[color,background-color,box-shadow] duration-120 ease-brand outline-none focus-visible:ring-[3px] focus-visible:ring-ring max-md:h-11',
                             active
-                                ? 'bg-surface font-medium text-text shadow-card'
+                                ? 'bg-surface text-text shadow-segment'
                                 : 'text-text-muted hover:text-text',
                         )}
                     >
@@ -134,9 +138,11 @@ export function FilterBar({
                         value={from}
                         max={to}
                         onChange={(event) => setFrom(event.target.value)}
-                        className="h-9 w-38"
+                        className="h-11 w-40"
                     />
-                    <span className="text-text-muted">–</span>
+                    <span aria-hidden className="text-text-muted">
+                        –
+                    </span>
                     <label className="sr-only" htmlFor="dashboard-to">
                         Sampai tanggal
                     </label>
@@ -146,9 +152,9 @@ export function FilterBar({
                         value={to}
                         min={from}
                         onChange={(event) => setTo(event.target.value)}
-                        className="h-9 w-38"
+                        className="h-11 w-40"
                     />
-                    <Button type="submit" size="sm" variant="outline">
+                    <Button type="submit" variant="outline">
                         Terapkan
                     </Button>
                 </form>
@@ -160,7 +166,7 @@ export function FilterBar({
                         apply({ divisi: value === ALL ? null : value })
                     }
                 >
-                    <SelectTrigger className="h-9 w-44" aria-label="Divisi">
+                    <SelectTrigger className="w-48" aria-label="Divisi">
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -180,7 +186,7 @@ export function FilterBar({
                         apply({ tim: value === ALL ? null : value })
                     }
                 >
-                    <SelectTrigger className="h-9 w-40" aria-label="Tim">
+                    <SelectTrigger className="w-44" aria-label="Tim">
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -193,7 +199,7 @@ export function FilterBar({
                     </SelectContent>
                 </Select>
             )}
-            <Button asChild variant="outline" size="sm" className="h-9">
+            <Button asChild variant="outline">
                 <a href={withQuery(exportUrl, query)} download>
                     <Download aria-hidden />
                     Ekspor

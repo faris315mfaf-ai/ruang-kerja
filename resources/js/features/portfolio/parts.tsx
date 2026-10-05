@@ -1,6 +1,8 @@
 import { TriangleAlert } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { UserAvatar } from '@/components/shell/user-avatar';
+import { Badge } from '@/components/ui/badge';
+import type { BadgeTone } from '@/components/ui/badge';
 import {
     Dialog,
     DialogContent,
@@ -9,6 +11,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { fieldClasses } from '@/components/ui/input';
 import { BottomSheet } from '@/components/mobile/bottom-sheet';
 import type { Person } from '@/features/tasks/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
@@ -16,7 +19,13 @@ import { cn } from '@/lib/utils';
 import { HEALTH_LABELS, HEALTH_TONES, percent } from './lib';
 import type { ProjectHealth } from './types';
 
-/** Health set by the PIC: "● Berisiko". */
+const HEALTH_BADGE: Record<ProjectHealth, BadgeTone> = {
+    on_track: 'success',
+    at_risk: 'warning',
+    off_track: 'danger',
+};
+
+/** Health set by the PIC (DPortofolio "● Berisiko"): Arus status pill. */
 export function HealthBadge({
     health,
     className,
@@ -26,37 +35,29 @@ export function HealthBadge({
 }) {
     if (health === null) {
         return (
-            <span
-                className={cn(
-                    'inline-flex h-6 items-center rounded-full bg-surface-2 px-2 text-[12px] text-text-muted',
-                    className,
-                )}
+            <Badge
+                variant="status"
+                tone="neutral"
+                className={cn('h-[30px] text-[14px]', className)}
             >
                 Belum ada update
-            </span>
+            </Badge>
         );
     }
 
-    const tone = HEALTH_TONES[health];
-
     return (
-        <span
-            className={cn(
-                'inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2 text-[12px] font-medium',
-                tone.pill,
-                className,
-            )}
+        <Badge
+            variant="status"
+            tone={HEALTH_BADGE[health]}
+            dot
+            className={cn('h-[30px]', className)}
         >
-            <span
-                aria-hidden
-                className={cn('size-1.5 rounded-full', tone.dot)}
-            />
             {HEALTH_LABELS[health]}
-        </span>
+        </Badge>
     );
 }
 
-/** System flag pill ("⚠ Milestone terlewat"), outlined in danger. */
+/** System flag ("⚠ Milestone terlewat"): red text with a warning icon. */
 export function FlagPill({
     children,
     className,
@@ -67,17 +68,20 @@ export function FlagPill({
     return (
         <span
             className={cn(
-                'inline-flex h-6 shrink-0 items-center gap-1 rounded-md border border-danger/50 px-1.5 text-[12px] text-danger',
+                'inline-flex shrink-0 items-center gap-1 text-[14px] leading-[19px] font-semibold text-danger',
                 className,
             )}
         >
-            <TriangleAlert aria-hidden className="size-3" />
+            <TriangleAlert aria-hidden className="size-3.5" />
             {children}
         </span>
     );
 }
 
-/** Actual progress bar with the planned marker (thin vertical line). */
+/**
+ * Actual progress bar with the planned marker (DPortofolio "garis hitam =
+ * rencana hari ini"): 10px track, fill in the health colour.
+ */
 export function ProgressMeter({
     actual,
     planned,
@@ -89,7 +93,7 @@ export function ProgressMeter({
     health?: ProjectHealth | null;
     className?: string;
 }) {
-    const tone = health ? HEALTH_TONES[health].bar : 'bg-primary';
+    const tone = health ? HEALTH_TONES[health].bar : 'bg-grad-merek-x';
 
     return (
         <div
@@ -99,7 +103,7 @@ export function ProgressMeter({
             aria-valuenow={actual === null ? undefined : Math.round(actual)}
             aria-label={`Progres ${percent(actual)}, rencana ${percent(planned)}`}
             className={cn(
-                'relative h-1.5 rounded-full bg-surface-2',
+                'relative h-2.5 rounded-full bg-surface-2',
                 className,
             )}
         >
@@ -110,7 +114,7 @@ export function ProgressMeter({
             {planned !== null && (
                 <span
                     aria-hidden
-                    className="absolute -top-1 h-3.5 w-0.5 -translate-x-1/2 rounded-full bg-text"
+                    className="absolute -top-1 h-[18px] w-[3px] -translate-x-1/2 rounded-[2px] bg-marker"
                     style={{ left: `${planned}%` }}
                 />
             )}
@@ -134,15 +138,12 @@ export function PersonChip({
 
     return (
         <span
-            className={cn(
-                'inline-flex min-w-0 items-center gap-1.5',
-                className,
-            )}
+            className={cn('inline-flex min-w-0 items-center gap-2', className)}
         >
             <UserAvatar
                 name={person.name}
                 src={person.avatar}
-                className="size-5 text-[9px]"
+                className="size-7 text-[12px]"
             />
             <span className="truncate">{person.name}</span>
             {suffix}
@@ -150,7 +151,10 @@ export function PersonChip({
     );
 }
 
-/** Bordered panel with a header row. */
+/**
+ * Bordered panel with a header row. Still used by features/projects (project
+ * summary); the portfolio page itself uses the Arus `Panel`.
+ */
 export function Panel({
     title,
     count,
@@ -240,5 +244,5 @@ export function ResponsiveSheet({
     );
 }
 
-export const fieldClass =
-    'w-full rounded-md border border-border bg-surface px-3 py-2 text-base text-text placeholder:text-text-subtle focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:text-[13px]';
+/** Arus field look for plain textareas/inputs (17px on phones). */
+export const fieldClass = cn(fieldClasses, 'py-2.5 max-md:text-[17px]');

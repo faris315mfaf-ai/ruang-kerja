@@ -7,7 +7,7 @@ import type { ComparedPeriods } from '@/types/dashboard';
  */
 export function ComparedNote({ compared }: { compared: ComparedPeriods }) {
     return (
-        <p className="text-[13px] text-text-muted">
+        <p className="text-meta text-text-muted">
             Dihitung {compared.current.label}; selisih dibandingkan dengan{' '}
             {compared.previous.label} (jumlah hari yang sama).
         </p>

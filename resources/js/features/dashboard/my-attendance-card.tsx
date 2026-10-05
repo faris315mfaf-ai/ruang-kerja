@@ -1,32 +1,110 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Clock, LogIn, LogOut } from 'lucide-react';
+import { LogIn, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { START_PARAM } from '@/features/attendance/use-attendance-page';
-import { TONE_CLASSES } from '@/lib/attendance';
 import { shellStatus } from '@/lib/check-in-status';
 import { formatTime, toDate } from '@/lib/format';
 import { formatDistance } from '@/lib/geo';
 import { cn } from '@/lib/utils';
+import type { AttendanceStatusSummary } from '@/types/attendance';
 import { MetricInfo } from './metric-info';
 
-/** Position (0–100) of `at` between `start` and `end`. */
-function position(start: Date, end: Date, at: Date): number {
-    const span = end.getTime() - start.getTime();
+/** "8 jam 12 menit" between check-in and check-out. */
+export function workedText(
+    from: string | null,
+    to: string | null,
+): string | null {
+    const start = toDate(from);
+    const end = toDate(to);
 
-    return span > 0
-        ? Math.min(
-              100,
-              Math.max(0, ((at.getTime() - start.getTime()) / span) * 100),
-          )
-        : 0;
+    if (!start || !end || end <= start) {
+        return null;
+    }
+
+    const minutes = Math.round((end.getTime() - start.getTime()) / 60000);
+    const hours = Math.floor(minutes / 60);
+    const rest = minutes % 60;
+
+    return hours > 0 ? `${hours} jam ${rest} menit` : `${rest} menit`;
+}
+
+function join(...parts: (string | null | false | undefined)[]): string {
+    return parts.filter(Boolean).join(' · ');
+}
+
+/** Chip, big line and caption of the hero (SBeranda / MSBeranda). */
+export function heroText(status: AttendanceStatusSummary): {
+    chip: string;
+    big: string;
+    sub: string;
+} {
+    const place = status.isRemote
+        ? 'WFH/lapangan'
+        : join(
+              status.locationName,
+              status.distanceM !== null &&
+                  `${formatDistance(status.distanceM)} dari titik lokasi`,
+          );
+
+    switch (status.action) {
+        case 'check_out':
+            return {
+                chip:
+                    status.status === 'late' && status.lateMinutes > 0
+                        ? `Sudah check-in · terlambat ${status.lateMinutes} menit`
+                        : 'Sudah check-in · tepat waktu',
+                big: `Masuk ${formatTime(status.checkInAt)}`,
+                sub: join(
+                    place,
+                    status.endLabel && `pulang terjadwal ${status.endLabel}`,
+                ),
+            };
+        case 'done':
+            return {
+                chip: 'Selesai hari ini',
+                big: `${formatTime(status.checkInAt)} – ${formatTime(status.checkOutAt)}`,
+                sub: join(
+                    workedText(status.checkInAt, status.checkOutAt),
+                    place,
+                ),
+            };
+        case 'unavailable':
+            return {
+                chip: 'Tercatat dari pengajuan',
+                big: status.statusLabel ?? 'Tidak masuk',
+                sub: 'Tidak perlu check-in hari ini',
+            };
+        case 'check_in':
+            return {
+                chip: status.isHoliday ? 'Hari libur' : 'Belum check-in',
+                big: status.startLabel
+                    ? `Jadwal ${status.startLabel}${status.endLabel ? `–${status.endLabel}` : ''}`
+                    : 'Tidak ada jadwal',
+                sub:
+                    join(
+                        status.shiftName && `Shift ${status.shiftName}`,
+                        status.locationName,
+                    ) ||
+                    (status.isHoliday
+                        ? 'Check-in tetap bisa dicatat'
+                        : 'Buka halaman absensi untuk check-in'),
+            };
+    }
 }
 
 /**
- * Desktop "Absensi hari ini" (mockup DashboardSaya): status line, location,
- * a day timeline (schedule start → now → end with the check-in marker) and
- * the next action. Data: shared `attendanceStatus` prop (Sprint 2).
+ * "Absensi hari ini" hero (SBeranda / MSBeranda): gradient aksi card with a
+ * status chip, the big check-in line and the next action as a white button.
+ * Data: the shared `attendanceStatus` prop (Sprint 2).
  */
-export function MyAttendanceCard({ className }: { className?: string }) {
+export function MyAttendanceCard({
+    className,
+    compact = false,
+}: {
+    className?: string;
+    /** Phone layout (MSBeranda): smaller type, button beside the text. */
+    compact?: boolean;
+}) {
     const { attendanceStatus: status } = usePage().props;
 
     if (!status) {
@@ -34,135 +112,88 @@ export function MyAttendanceCard({ className }: { className?: string }) {
     }
 
     const shell = shellStatus(status);
-    const start = toDate(status.start);
-    const end = toDate(status.end);
-    const checkIn = toDate(status.checkInAt);
-    const now = new Date();
+    const text = heroText(status);
     const late = status.status === 'late' && status.lateMinutes > 0;
+    const buttonClass = cn(
+        'border-0 bg-on-brand font-extrabold text-brand-700 hover:bg-on-brand/90',
+        compact && 'h-12 rounded-[14px] px-4 font-extrabold',
+    );
 
     return (
         <section
             aria-labelledby="my-attendance"
             className={cn(
-                'flex flex-col rounded-xl border border-border bg-surface p-4 shadow-card',
+                'flex items-center justify-between rounded-panel bg-primary bg-grad-highlight text-on-brand shadow-glow',
+                compact ? 'gap-3.5 p-[18px]' : 'flex-wrap gap-5 p-[26px]',
                 className,
             )}
         >
-            <div className="flex items-baseline justify-between gap-3">
-                <h2
-                    id="my-attendance"
-                    className="text-[15px] font-semibold text-text"
-                >
-                    Absensi hari ini
-                </h2>
-                {status.shiftName && (
-                    <span className="truncate text-[13px] text-text-muted">
-                        Shift {status.shiftName}
-                    </span>
-                )}
-            </div>
-            <p
+            <div
                 className={cn(
-                    'mt-2 flex items-center gap-1.5 text-[17px] font-semibold',
-                    TONE_CLASSES[shell.tone].text,
+                    'flex min-w-0 flex-col',
+                    compact ? 'gap-0.5' : 'gap-2',
                 )}
             >
-                <Clock className="size-4.5" aria-hidden />
-                {checkIn ? (
-                    <>
-                        Check-in{' '}
-                        <span className="font-mono tnum">
-                            {formatTime(checkIn)}
-                        </span>
-                        {late && ` · Terlambat ${status.lateMinutes} menit`}
-                    </>
-                ) : (
-                    shell.title
-                )}
-                {late && (
-                    <MetricInfo definition="Terlambat dihitung dari batas toleransi shift, bukan dari jam masuk." />
-                )}
-            </p>
-            <p className="mt-1 text-[13px] text-text-muted">
-                {[
-                    status.locationName,
-                    status.distanceM !== null
-                        ? `${formatDistance(status.distanceM)} dari titik lokasi`
-                        : null,
-                    status.isRemote ? 'WFH/lapangan' : null,
-                ]
-                    .filter(Boolean)
-                    .join(' · ') || shell.detail}
-            </p>
-            {start && end && (
-                <div className="mt-4">
-                    <div
-                        className="relative h-1.5 rounded-full bg-surface-2"
-                        aria-hidden
-                    >
-                        {checkIn && (
-                            <span
-                                className={cn(
-                                    'absolute inset-y-0 rounded-full',
-                                    late ? 'bg-warning/60' : 'bg-primary/60',
-                                )}
-                                style={{
-                                    left: 0,
-                                    width: `${position(start, end, checkIn)}%`,
-                                }}
-                            />
-                        )}
-                        {checkIn && (
-                            <span
-                                className="absolute inset-y-0 rounded-full bg-primary"
-                                style={{
-                                    left: `${position(start, end, checkIn)}%`,
-                                    width: `${Math.max(0, position(start, end, now) - position(start, end, checkIn))}%`,
-                                }}
-                            />
-                        )}
+                <h2 id="my-attendance" className="sr-only">
+                    Absensi hari ini
+                </h2>
+                <span
+                    className={cn(
+                        'inline-flex items-center gap-2 self-start font-bold',
+                        compact
+                            ? 'text-[14px] uppercase'
+                            : 'min-h-8 rounded-full bg-on-brand/18 px-3 text-[15px]',
+                    )}
+                >
+                    {!compact && (
                         <span
-                            className="absolute -top-1 h-3.5 w-0.5 rounded bg-text"
-                            style={{ left: `${position(start, end, now)}%` }}
+                            aria-hidden
+                            className="size-2 shrink-0 rounded-full bg-on-brand"
                         />
-                    </div>
-                    <div className="mt-1.5 flex justify-between font-mono text-xs text-text-muted tnum">
-                        <span>{formatTime(start)}</span>
-                        <span className="text-text">
-                            sekarang {formatTime(now)}
-                        </span>
-                        <span>{formatTime(end)}</span>
-                    </div>
-                </div>
-            )}
-            <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-3">
-                <span className="text-sm text-text-muted">
-                    {status.checkOutAt ? 'Check-out ' : 'Jadwal pulang '}
-                    <span className="font-mono text-text tnum">
-                        {status.checkOutAt
-                            ? formatTime(status.checkOutAt)
-                            : (status.endLabel ?? '–')}
-                    </span>
+                    )}
+                    {text.chip}
+                    {late && (
+                        <MetricInfo
+                            definition="Terlambat dihitung dari batas toleransi shift, bukan dari jam masuk."
+                            className="text-on-brand/80 hover:text-on-brand"
+                        />
+                    )}
                 </span>
-                {shell.button ? (
-                    <Button asChild size="sm" variant={shell.button.variant}>
-                        <Link href={`/absensi?${START_PARAM}=1`}>
-                            {shell.button.label === 'Check-in' ? (
-                                <LogIn aria-hidden />
-                            ) : (
-                                <LogOut aria-hidden />
-                            )}
-                            {shell.button.label}
-                        </Link>
-                    </Button>
-                ) : (
-                    <Button asChild size="sm" variant="outline">
-                        <Link href="/pengajuan/baru?kategori=correction">
-                            Ajukan koreksi
-                        </Link>
-                    </Button>
-                )}
+                <span
+                    className={cn(
+                        'font-extrabold tracking-[-0.03em] tnum',
+                        compact
+                            ? 'text-[30px] leading-9'
+                            : 'text-[44px] leading-[50px]',
+                    )}
+                >
+                    {text.big}
+                </span>
+                <span className={compact ? 'text-[15px]' : 'text-[16px]'}>
+                    {text.sub}
+                </span>
             </div>
+            <Button
+                asChild
+                variant="outline"
+                size={compact ? 'default' : 'lg'}
+                className={buttonClass}
+            >
+                {shell.button ? (
+                    <Link href={`/absensi?${START_PARAM}=1`}>
+                        {shell.button.label === 'Check-in' ? (
+                            <LogIn aria-hidden />
+                        ) : (
+                            <LogOut aria-hidden />
+                        )}
+                        {shell.button.label}
+                    </Link>
+                ) : (
+                    <Link href="/pengajuan/baru?kategori=correction">
+                        Ajukan koreksi
+                    </Link>
+                )}
+            </Button>
         </section>
     );
 }

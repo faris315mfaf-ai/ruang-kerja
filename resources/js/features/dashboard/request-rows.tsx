@@ -1,10 +1,35 @@
-import { Link } from '@inertiajs/react';
-import { StatusBadge } from '@/features/requests/badges';
-import { formatRequestPeriod } from '@/lib/requests';
+import { FileText } from 'lucide-react';
+import { EmptyState } from '@/components/empty-state';
+import { UserAvatar } from '@/components/shell/user-avatar';
+import { Badge } from '@/components/ui/badge';
+import type { BadgeTone } from '@/components/ui/badge';
+import { ListRow } from '@/components/ui/list-row';
+import { formatRequestPeriod, statusTone } from '@/lib/requests';
+import type { Tone } from '@/lib/requests';
 import type { RequestItem } from '@/types/requests';
-import { PanelEmpty } from './panel';
 
-/** "Pengajuan saya" / approval queue rows: type, number, period, status. */
+const BADGE_TONE: Record<Tone, BadgeTone> = {
+    warning: 'warning',
+    success: 'success',
+    danger: 'danger',
+    info: 'info',
+    muted: 'neutral',
+};
+
+function statusLabel(item: RequestItem): string {
+    if (item.status === 'pending' && item.waiting) {
+        return item.waiting.approver
+            ? `Menunggu ${item.waiting.approver.name.split(' ')[0]}`
+            : `Menunggu ${item.waiting.label}`;
+    }
+
+    return item.status_label;
+}
+
+/**
+ * "Pengajuan saya" / approval queue rows (SBeranda, DBeranda "Menunggu
+ * persetujuan"): type or requester, period, status pill (text + dot).
+ */
 export function RequestRows({
     items,
     showUser = false,
@@ -18,44 +43,52 @@ export function RequestRows({
     empty?: string;
 }) {
     if (items.length === 0) {
-        return <PanelEmpty>{empty}</PanelEmpty>;
+        return (
+            <div className="px-5 pb-2 md:px-7">
+                <EmptyState size="sm" icon={FileText} title={empty} />
+            </div>
+        );
     }
 
     return (
-        <ul className="divide-y divide-border">
+        <ul className="divide-y divide-divider border-t border-divider">
             {items.map((item) => (
                 <li key={item.id}>
-                    <Link
+                    <ListRow
                         href={`${hrefBase}/${item.id}`}
-                        className="flex min-h-14 items-center gap-3 px-4 py-2.5 transition-colors hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none"
-                    >
-                        <span className="min-w-0 flex-1">
-                            <span className="flex items-baseline gap-2 text-sm text-text">
-                                <span className="truncate font-medium">
-                                    {showUser ? item.user.name : item.type.name}
-                                </span>
-                                {item.number && !showUser && (
-                                    <span className="shrink-0 font-mono text-xs text-text-muted">
-                                        {item.number}
-                                    </span>
-                                )}
-                            </span>
-                            <span className="mt-0.5 block truncate text-[13px] text-text-muted">
-                                {showUser ? `${item.type.name} · ` : ''}
+                        leading={
+                            showUser ? (
+                                <UserAvatar
+                                    name={item.user.name}
+                                    src={item.user.avatar}
+                                    className="size-11 text-[15px]"
+                                />
+                            ) : undefined
+                        }
+                        title={showUser ? item.user.name : item.type.name}
+                        meta={
+                            <>
+                                {showUser
+                                    ? `${item.type.name} · `
+                                    : item.number && (
+                                          <span className="font-mono text-[14px] font-semibold">
+                                              {item.number} ·{' '}
+                                          </span>
+                                      )}
                                 {formatRequestPeriod(item)}
-                            </span>
-                        </span>
-                        <StatusBadge
-                            status={item.status}
-                            label={
-                                item.status === 'pending' && item.waiting
-                                    ? item.waiting.approver
-                                        ? `Menunggu ${item.waiting.approver.name.split(' ')[0]}`
-                                        : `Menunggu ${item.waiting.label}`
-                                    : item.status_label
-                            }
-                        />
-                    </Link>
+                            </>
+                        }
+                        trailing={
+                            <Badge
+                                variant="status"
+                                tone={BADGE_TONE[statusTone[item.status]]}
+                                dot
+                                className="h-[30px] text-[14px]"
+                            >
+                                {statusLabel(item)}
+                            </Badge>
+                        }
+                    />
                 </li>
             ))}
         </ul>

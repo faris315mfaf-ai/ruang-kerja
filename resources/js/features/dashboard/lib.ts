@@ -155,3 +155,24 @@ export function periodNoun(preset: string): string {
         }[preset] ?? 'periode ini'
     );
 }
+
+/** "Selamat pagi" … "Selamat malam" by the office clock. */
+export function greeting(now: Date = new Date()): string {
+    const hour = Number(
+        new Intl.DateTimeFormat('id-ID', {
+            hour: 'numeric',
+            hourCycle: 'h23',
+            timeZone: 'Asia/Jakarta',
+        }).format(now),
+    );
+
+    if (hour < 11) {
+        return 'Selamat pagi';
+    }
+
+    if (hour < 15) {
+        return 'Selamat siang';
+    }
+
+    return hour < 19 ? 'Selamat sore' : 'Selamat malam';
+}

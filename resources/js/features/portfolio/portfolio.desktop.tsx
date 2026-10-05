@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import { CircleCheck, Download, FolderKanban } from 'lucide-react';
 import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
+import { Panel } from '@/components/ui/panel';
 import {
     Select,
     SelectContent,
@@ -9,19 +10,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
+import { PageHeader, PanelHint } from '@/features/dashboard/dashboard-ui';
+import { Segmented } from '@/features/dashboard/filter-bar';
 import { summary } from '@/routes/projects';
+import { DecisionsPanel } from './decisions-panel';
+import { AttendanceWidget, FeedPanel, PortfolioFootnote } from './feed-panel';
+import { KpiRow } from './kpi-row';
 import { HEALTH_LABELS, weekdayDay } from './lib';
-import { Panel } from './parts';
-import {
-    AttendanceWidget,
-    DecisionsPanel,
-    FeedPanel,
-    KpiRow,
-    PortfolioFootnote,
-    ProjectTable,
-    RoadmapPanel,
-} from './sections';
+import { ProjectTable } from './project-table';
+import { RoadmapPanel } from './roadmap-panel';
 import type { PortfolioFilters, PortfolioProps, ProjectHealth } from './types';
 import type { PortfolioActions } from './use-portfolio';
 
@@ -33,7 +30,7 @@ const PERIODS: { value: PortfolioFilters['periode']; label: string }[] = [
 
 const ALL = 'semua';
 
-/** Dashboard Direksi = portofolio proyek (mockup DashboardDireksi). */
+/** Dashboard Direksi = portofolio proyek (design DPortofolio). */
 export function PortfolioDesktop({
     props,
     actions,
@@ -55,142 +52,124 @@ export function PortfolioDesktop({
     } = props;
 
     return (
-        <div className="space-y-5 print:space-y-3">
-            <header className="flex flex-wrap items-end justify-between gap-3">
-                <div>
-                    <h1 className="text-xl leading-7 font-semibold text-text">
-                        Portofolio proyek
-                    </h1>
-                    <p className="text-[13px] text-text-muted">
-                        {props.period_label} · per {weekdayDay(props.as_of)}{' '}
-                        {props.as_of.slice(0, 4)}
-                    </p>
+        <div className="flex flex-col gap-6 print:gap-3">
+            <PageHeader
+                overline={`${props.period_label} · per ${weekdayDay(props.as_of)} ${props.as_of.slice(0, 4)}`}
+                title="Portofolio proyek"
+                subtitle={`${kpis.active.count} proyek aktif · ${decisions.length} butuh keputusan Anda`}
+            >
+                <div className="flex flex-wrap items-center gap-3 print:hidden">
+                    <Segmented
+                        label="Periode"
+                        options={PERIODS}
+                        value={filters.periode}
+                        onChange={(value) =>
+                            actions.setFilter({ periode: value })
+                        }
+                    />
+                    <Button variant="outline" onClick={() => window.print()}>
+                        <Download aria-hidden />
+                        Ekspor PDF
+                    </Button>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 print:hidden">
-                    <div
-                        role="group"
-                        aria-label="Periode"
-                        className="flex rounded-md border border-border bg-surface p-0.5"
+            </PageHeader>
+
+            <div className="flex flex-wrap items-center gap-3 print:hidden">
+                <Select
+                    value={filters.divisi ?? ALL}
+                    onValueChange={(value) =>
+                        actions.setFilter({
+                            divisi: value === ALL ? null : value,
+                        })
+                    }
+                >
+                    <SelectTrigger
+                        className="w-auto min-w-48"
+                        aria-label="Divisi"
                     >
-                        {PERIODS.map((period) => (
-                            <button
-                                key={period.value}
-                                type="button"
-                                aria-pressed={filters.periode === period.value}
-                                onClick={() =>
-                                    actions.setFilter({ periode: period.value })
-                                }
-                                className={cn(
-                                    'h-8 rounded px-3 text-[13px] transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                                    filters.periode === period.value
-                                        ? 'bg-surface-2 font-medium text-text'
-                                        : 'text-text-muted hover:text-text',
-                                )}
-                            >
-                                {period.label}
-                            </button>
+                        <span className="text-text-muted">Divisi</span>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={ALL}>Semua</SelectItem>
+                        {props.division_options.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                            </SelectItem>
                         ))}
-                    </div>
-                    <Select
-                        value={filters.divisi ?? ALL}
-                        onValueChange={(value) =>
-                            actions.setFilter({
-                                divisi: value === ALL ? null : value,
-                            })
-                        }
+                    </SelectContent>
+                </Select>
+                <Select
+                    value={filters.status ?? ALL}
+                    onValueChange={(value) =>
+                        actions.setFilter({
+                            status:
+                                value === ALL ? null : (value as ProjectHealth),
+                        })
+                    }
+                >
+                    <SelectTrigger
+                        className="w-auto min-w-48"
+                        aria-label="Status"
                     >
-                        <SelectTrigger
-                            className="h-9 w-auto min-w-36 text-[13px]"
-                            aria-label="Divisi"
-                        >
-                            <span className="text-text-muted">Divisi</span>
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value={ALL}>Semua</SelectItem>
-                            {props.division_options.map((option) => (
-                                <SelectItem
-                                    key={option.value}
-                                    value={option.value}
-                                >
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <Select
-                        value={filters.status ?? ALL}
-                        onValueChange={(value) =>
-                            actions.setFilter({
-                                status:
-                                    value === ALL
-                                        ? null
-                                        : (value as ProjectHealth),
-                            })
-                        }
-                    >
-                        <SelectTrigger
-                            className="h-9 w-auto min-w-36 text-[13px]"
-                            aria-label="Status"
-                        >
-                            <span className="text-text-muted">Status</span>
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value={ALL}>Semua</SelectItem>
-                            {(
-                                Object.keys(HEALTH_LABELS) as ProjectHealth[]
-                            ).map((health) => (
+                        <span className="text-text-muted">Status</span>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={ALL}>Semua</SelectItem>
+                        {(Object.keys(HEALTH_LABELS) as ProjectHealth[]).map(
+                            (health) => (
                                 <SelectItem key={health} value={health}>
                                     {HEALTH_LABELS[health]}
                                 </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-9"
-                        onClick={() => window.print()}
-                    >
-                        <Download aria-hidden />
-                        Ekspor ringkasan (PDF)
-                    </Button>
-                </div>
-            </header>
+                            ),
+                        )}
+                    </SelectContent>
+                </Select>
+            </div>
 
             <KpiRow kpis={kpis} decisions={decisions} />
 
             <Panel
                 title={
-                    filters.arsip
-                        ? 'Proyek selesai & dibatalkan'
-                        : 'Proyek aktif'
+                    <>
+                        {filters.arsip
+                            ? 'Proyek selesai & dibatalkan'
+                            : 'Proyek aktif'}
+                        <span className="text-label font-normal text-text-muted tnum">
+                            {projects.length}
+                        </span>
+                    </>
                 }
-                count={projects.length}
-                aside={
-                    <span className="text-[12px] text-text-muted">
-                        Urut: status, lalu target
-                    </span>
+                action={
+                    <PanelHint>
+                        Urut: status, lalu target · garis hitam = rencana hari
+                        ini
+                    </PanelHint>
                 }
+                flush
+                className="pb-0"
             >
                 {projects.length === 0 ? (
-                    <EmptyState
-                        icon={FolderKanban}
-                        title={
-                            filters.arsip
-                                ? 'Belum ada proyek selesai'
-                                : 'Tidak ada proyek'
-                        }
-                        description="Ubah periode atau filter untuk melihat proyek lain."
-                    />
+                    <div className="px-6 pb-4 md:px-7">
+                        <EmptyState
+                            size="sm"
+                            icon={FolderKanban}
+                            title={
+                                filters.arsip
+                                    ? 'Belum ada proyek selesai'
+                                    : 'Tidak ada proyek'
+                            }
+                            description="Ubah periode atau filter untuk melihat proyek lain."
+                        />
+                    </div>
                 ) : (
                     <ProjectTable projects={projects} today={props.as_of} />
                 )}
-                <footer className="flex items-center justify-between gap-3 border-t border-border px-4 py-2.5 text-[13px] text-text-muted">
-                    <span className="flex items-center gap-1.5">
+                <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-divider px-6 py-2 text-label font-normal text-text-muted md:px-7">
+                    <span className="flex items-center gap-2">
                         <CircleCheck
-                            className="size-4 text-success"
+                            className="size-4 shrink-0 text-success"
                             aria-hidden
                         />
                         {completed.length > 0 ? (
@@ -204,7 +183,7 @@ export function PortfolioDesktop({
                                         {index > 0 ? ', ' : ''}
                                         <Link
                                             href={summary.url(project.key)}
-                                            className="hover:underline"
+                                            className="text-link hover:underline"
                                         >
                                             {project.name}
                                         </Link>
@@ -215,9 +194,10 @@ export function PortfolioDesktop({
                             'Belum ada proyek selesai baru-baru ini'
                         )}
                     </span>
-                    <button
+                    <Button
                         type="button"
-                        className="shrink-0 text-primary hover:underline print:hidden"
+                        variant="quiet"
+                        className="shrink-0 print:hidden"
                         onClick={() =>
                             actions.setFilter({ arsip: !filters.arsip })
                         }
@@ -225,24 +205,29 @@ export function PortfolioDesktop({
                         {filters.arsip
                             ? 'Kembali ke proyek aktif'
                             : 'Lihat arsip'}
-                    </button>
+                    </Button>
                 </footer>
             </Panel>
 
             <RoadmapPanel roadmap={roadmap} />
 
-            <div className="grid items-start gap-5 xl:grid-cols-2">
-                <div className="space-y-5">
-                    <DecisionsPanel
-                        decisions={decisions}
-                        attention={attention}
+            <section className="flex flex-wrap items-start gap-5">
+                <DecisionsPanel
+                    decisions={decisions}
+                    attention={attention}
+                    canSteer={can.steer}
+                    actions={actions}
+                    className="min-w-0 flex-[2_1_600px]"
+                />
+                <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-5">
+                    {attendance && <AttendanceWidget attendance={attendance} />}
+                    <FeedPanel
+                        feed={feed}
                         canSteer={can.steer}
                         actions={actions}
                     />
-                    {attendance && <AttendanceWidget attendance={attendance} />}
                 </div>
-                <FeedPanel feed={feed} canSteer={can.steer} actions={actions} />
-            </div>
+            </section>
 
             <PortfolioFootnote />
             {actions.dialogs}

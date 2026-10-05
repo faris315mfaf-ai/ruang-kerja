@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import type { PickerItem } from '@/types/dashboard';
 
 /**
- * Dashboard view picker for people with several roles (PRD M7): Saya ·
+ * Dashboard view picker (SBeranda header nav: glass segmented track of links) for people with several roles (PRD M7): Saya ·
  * Kepala Divisi · HR, plus Direksi → the portfolio page. Hidden when the
  * user has a single view.
  */
@@ -23,7 +23,7 @@ export function ViewPicker({
         <nav
             aria-label="Tampilan dashboard"
             className={cn(
-                '-mx-4 flex [scrollbar-width:none] gap-2 overflow-x-auto px-4 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden',
+                'flex max-w-full [scrollbar-width:none] gap-1 overflow-x-auto rounded-[14px] border border-border bg-surface/70 p-1 md:w-fit md:self-start [&::-webkit-scrollbar]:hidden',
                 className,
             )}
         >
@@ -33,10 +33,10 @@ export function ViewPicker({
                     href={view.href}
                     aria-current={view.active ? 'page' : undefined}
                     className={cn(
-                        'inline-flex h-9 shrink-0 items-center gap-1 rounded-full border px-3.5 text-sm transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-md:h-11',
+                        'inline-flex h-[38px] shrink-0 items-center gap-1 rounded-[10px] px-[18px] text-[15px] whitespace-nowrap transition-[color,background-color,box-shadow] duration-120 ease-brand outline-none focus-visible:ring-[3px] focus-visible:ring-ring max-md:h-11 max-md:flex-1 max-md:justify-center',
                         view.active
-                            ? 'border-primary bg-link-soft font-medium text-primary'
-                            : 'border-border bg-surface text-text-muted hover:text-text',
+                            ? 'bg-surface font-bold text-text shadow-segment'
+                            : 'font-semibold text-text-muted hover:text-text',
                     )}
                 >
                     {view.label}

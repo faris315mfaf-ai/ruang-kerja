@@ -1,17 +1,17 @@
 import { Link } from '@inertiajs/react';
-import { ChevronRight } from 'lucide-react';
-import { PriorityIcon } from '@/components/priority-icon';
-import { StatusIcon } from '@/components/status-icon';
-import type { Priority } from '@/features/tasks/types';
+import { CalendarCheck, CircleCheckBig, ClipboardList } from 'lucide-react';
+import { EmptyState } from '@/components/empty-state';
+import { STATUS_CATEGORY_LABELS, StatusIcon } from '@/components/status-icon';
+import { Badge } from '@/components/ui/badge';
+import type { BadgeTone } from '@/components/ui/badge';
 import { formatDue } from '@/features/tasks/lib/due-date';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import type {
     PersonalLive,
     PersonalMetrics,
     TaskSummary,
 } from '@/types/dashboard';
 import { busiestDay } from './lib';
-import { PanelEmpty } from './panel';
 
 const WEEKDAY_NAMES: Record<string, string> = {
     Sen: 'Senin',
@@ -23,21 +23,42 @@ const WEEKDAY_NAMES: Record<string, string> = {
     Min: 'Minggu',
 };
 
-function DueText({ task, today }: { task: TaskSummary; today: string }) {
+/** Due pill text + tone: "Lewat 2 hari" (danger), "Hari ini" (warning). */
+export function dueInfo(
+    task: TaskSummary,
+    today: string,
+    short = false,
+): { text: string; tone: BadgeTone } {
     if (task.days_late > 0) {
-        return (
-            <span className="text-danger">Terlambat {task.days_late} hari</span>
-        );
+        return {
+            text: `Lewat ${task.days_late} ${short ? 'hr' : 'hari'}`,
+            tone: 'danger',
+        };
     }
 
-    return task.due_date ? (
-        <span>Tenggat {formatDue(task.due_date, today)}</span>
-    ) : (
-        <span>Tanpa tenggat</span>
-    );
+    if (!task.due_date) {
+        return { text: 'Tanpa tenggat', tone: 'neutral' };
+    }
+
+    return {
+        text: formatDue(task.due_date, today),
+        tone: task.due_date === today ? 'warning' : 'neutral',
+    };
 }
 
-/** "Fokus hari ini": overdue first, then the nearest due dates. */
+const DUE_TEXT: Record<BadgeTone, string> = {
+    danger: 'text-danger',
+    warning: 'text-warning',
+    success: 'text-success',
+    info: 'text-info',
+    link: 'text-link',
+    neutral: 'text-text-muted',
+};
+
+/**
+ * "Fokus hari ini" (SBeranda / MSBeranda): overdue first, then the nearest
+ * due dates. Row = status icon, title, "KEY · workspace · status", due pill.
+ */
 export function FocusList({
     items,
     today,
@@ -48,148 +69,175 @@ export function FocusList({
     variant?: 'desktop' | 'mobile';
 }) {
     if (items.length === 0) {
-        return <PanelEmpty>Tidak ada tugas terbuka. Kerja bagus!</PanelEmpty>;
+        return (
+            <div className="px-5 pb-4 md:px-7">
+                <EmptyState
+                    size="sm"
+                    icon={CircleCheckBig}
+                    title="Tidak ada tugas terbuka"
+                >
+                    Kerja bagus! Tugas baru akan muncul di sini.
+                </EmptyState>
+            </div>
+        );
     }
 
+    const mobile = variant === 'mobile';
+
     return (
-        <ul className="divide-y divide-border">
-            {items.map((task) => (
-                <li key={task.id}>
-                    <Link
-                        href={task.url}
-                        className={cn(
-                            'flex items-center gap-3 px-4 transition-colors hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none',
-                            variant === 'mobile'
-                                ? 'min-h-16 py-2.5'
-                                : 'min-h-11 py-2',
-                        )}
+        <ul className={cn(!mobile && 'border-t border-divider')}>
+            {items.map((task, index) => {
+                const due = dueInfo(task, today, mobile);
+
+                return (
+                    <li
+                        key={task.id}
+                        className={cn(index > 0 && 'border-t border-divider')}
                     >
-                        {variant === 'desktop' && (
-                            <PriorityIcon
-                                priority={task.priority as Priority}
+                        <Link
+                            href={task.url}
+                            prefetch
+                            className={cn(
+                                'flex items-center transition-colors duration-120 ease-brand hover:bg-background',
+                                focusRing,
+                                'focus-visible:ring-inset',
+                                mobile
+                                    ? 'min-h-[70px] gap-3 px-4 py-2'
+                                    : 'min-h-[72px] gap-3.5 px-7 py-2',
+                            )}
+                        >
+                            <StatusIcon
+                                category={task.status_category}
+                                label={
+                                    STATUS_CATEGORY_LABELS[task.status_category]
+                                }
+                                className="size-5"
                             />
-                        )}
-                        <StatusIcon category={task.status_category} />
-                        {variant === 'desktop' ? (
-                            <>
-                                <span className="w-16 shrink-0 font-mono text-xs text-text-muted">
-                                    {task.key}
-                                </span>
-                                <span className="min-w-0 flex-1 truncate text-sm text-text">
+                            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                <span className="truncate text-[17px] leading-[22px] font-semibold text-text">
                                     {task.title}
                                 </span>
-                                <span className="hidden shrink-0 text-[13px] text-text-muted xl:inline">
-                                    {task.workspace}
-                                </span>
-                                {task.checklist && (
-                                    <span className="shrink-0 text-xs text-text-muted tnum">
-                                        {task.checklist.done}/
-                                        {task.checklist.total}
+                                <span className="truncate text-meta text-text-muted md:text-[15px]">
+                                    <span className="font-mono text-[14px] font-semibold">
+                                        {task.key}
                                     </span>
-                                )}
+                                    {!mobile && ` · ${task.workspace}`}
+                                    {' · '}
+                                    {
+                                        STATUS_CATEGORY_LABELS[
+                                            task.status_category
+                                        ]
+                                    }
+                                    {task.checklist &&
+                                        ` · ${task.checklist.done}/${task.checklist.total}`}
+                                </span>
+                            </span>
+                            {mobile ? (
                                 <span
                                     className={cn(
-                                        'shrink-0 rounded-md px-2 py-0.5 text-xs',
-                                        task.days_late > 0
-                                            ? 'bg-danger-soft'
-                                            : 'bg-surface-2 text-text-muted',
+                                        'shrink-0 text-[14px] font-bold whitespace-nowrap',
+                                        DUE_TEXT[due.tone],
                                     )}
                                 >
-                                    <DueText task={task} today={today} />
+                                    {due.text}
                                 </span>
-                            </>
-                        ) : (
-                            <>
-                                <span className="min-w-0 flex-1">
-                                    <span className="block truncate text-[15px] text-text">
-                                        {task.title}
-                                    </span>
-                                    <span className="mt-0.5 block truncate text-[13px] text-text-muted">
-                                        <span className="font-mono">
-                                            {task.key}
-                                        </span>
-                                        {' · '}
-                                        <DueText task={task} today={today} />
-                                        {task.checklist &&
-                                            ` · ${task.checklist.done}/${task.checklist.total}`}
-                                    </span>
-                                </span>
-                                <ChevronRight
-                                    className="size-4 shrink-0 text-text-subtle"
-                                    aria-hidden
-                                />
-                            </>
-                        )}
-                    </Link>
-                </li>
-            ))}
+                            ) : (
+                                <Badge
+                                    variant="status"
+                                    tone={due.tone}
+                                    className="h-[30px]"
+                                >
+                                    {due.text}
+                                </Badge>
+                            )}
+                        </Link>
+                    </li>
+                );
+            })}
         </ul>
     );
 }
 
-/** "Minggu ini": tasks due per weekday as small bars. */
+/**
+ * "Minggu ini" (SBeranda): one tile per day with the number of tasks due;
+ * today is the gradient tile.
+ */
 export function WeekStrip({ week }: { week: PersonalLive['week'] }) {
-    const max = Math.max(1, ...week.days.map((day) => day.count));
     const busiest = busiestDay(week.days);
 
+    if (week.total === 0) {
+        return (
+            <EmptyState
+                size="sm"
+                icon={CalendarCheck}
+                title="Tidak ada tenggat minggu ini"
+            />
+        );
+    }
+
     return (
-        <div>
-            <ol className="grid auto-cols-fr grid-flow-col gap-2">
+        <div className="flex flex-col gap-3">
+            <ol
+                className="grid gap-3"
+                style={{
+                    gridTemplateColumns: `repeat(${week.days.length}, minmax(0, 1fr))`,
+                }}
+            >
                 {week.days.map((day) => (
                     <li
                         key={day.date}
                         className={cn(
-                            'flex flex-col items-center rounded-lg px-1 py-2 text-center',
-                            day.is_today && 'border border-border bg-surface-2',
+                            'flex min-h-[132px] flex-col gap-2.5 rounded-[18px] p-3.5',
+                            day.is_today
+                                ? 'bg-primary bg-grad-active text-on-brand'
+                                : 'border border-divider bg-background text-text',
                         )}
                     >
-                        <span
-                            className={cn(
-                                'text-xs',
-                                day.is_today
-                                    ? 'font-medium text-text'
-                                    : 'text-text-muted',
-                            )}
-                        >
-                            {day.weekday}
+                        <span className="flex items-baseline justify-between gap-1">
+                            <span className="text-[15px] font-bold">
+                                <span className="sr-only">
+                                    {WEEKDAY_NAMES[day.weekday]}
+                                </span>
+                                <span aria-hidden>{day.weekday}</span>
+                            </span>
+                            <span className="text-[24px] leading-7 font-extrabold tnum">
+                                {day.day}
+                            </span>
                         </span>
-                        <span className="text-[11px] text-text-subtle tnum">
-                            {day.day}
-                        </span>
-                        <span
-                            className="mt-2 flex h-12 w-full items-end justify-center"
-                            aria-hidden
-                        >
+                        {day.count > 0 ? (
                             <span
                                 className={cn(
-                                    'w-2.5 rounded-t',
-                                    day.count === 0
-                                        ? 'h-0.5 bg-border-strong'
-                                        : day.is_today
-                                          ? 'bg-primary'
-                                          : 'bg-primary/50',
+                                    'rounded-[10px] px-2.5 py-2 text-[14px] leading-[19px] font-semibold',
+                                    day.is_today
+                                        ? 'bg-on-brand/18'
+                                        : 'bg-surface',
                                 )}
-                                style={
-                                    day.count > 0
-                                        ? {
-                                              height: `${(day.count / max) * 100}%`,
-                                          }
-                                        : undefined
-                                }
-                            />
-                        </span>
-                        <span className="mt-1.5 text-sm font-medium text-text tnum">
-                            <span className="sr-only">
-                                {WEEKDAY_NAMES[day.weekday]}:{' '}
+                            >
+                                {day.count} tugas
+                                <span className="sr-only"> bertenggat</span>
+                                {day.open < day.count && (
+                                    <span className="block font-medium opacity-80">
+                                        {day.count - day.open} selesai
+                                    </span>
+                                )}
                             </span>
-                            {day.count}
-                            <span className="sr-only"> tugas bertenggat</span>
-                        </span>
+                        ) : (
+                            <span
+                                className={cn(
+                                    'text-[14px]',
+                                    day.is_today
+                                        ? 'opacity-80'
+                                        : 'text-text-subtle',
+                                )}
+                            >
+                                Kosong
+                            </span>
+                        )}
                     </li>
                 ))}
             </ol>
             {busiest && busiest.count > 1 && (
-                <p className="mt-3 text-[13px] text-text-muted">
+                <p className="text-label font-normal text-text-muted">
                     {WEEKDAY_NAMES[busiest.weekday]} paling padat (
                     {busiest.count} tugas).
                 </p>
@@ -199,18 +247,25 @@ export function WeekStrip({ week }: { week: PersonalLive['week'] }) {
 }
 
 const DAY_TONE: Record<string, string> = {
-    present: 'bg-success/70',
-    wfh: 'bg-success/70',
-    early_leave: 'bg-success/40',
-    late: 'bg-warning',
-    absent: 'bg-danger',
-    needs_correction: 'bg-danger/50',
-    leave: 'bg-info/60',
-    permit: 'bg-info/60',
-    sick: 'bg-info/60',
-    business_trip: 'bg-info/60',
+    present: 'bg-success',
+    wfh: 'bg-success',
+    early_leave: 'bg-success/50',
+    late: 'bg-fill-warning',
+    absent: 'bg-fill-danger',
+    needs_correction: 'bg-fill-danger/50',
+    leave: 'bg-accent-blue',
+    permit: 'bg-accent-blue',
+    sick: 'bg-accent-blue',
+    business_trip: 'bg-accent-blue',
     holiday: 'bg-surface-2',
 };
+
+const LEGEND = [
+    { label: 'Hadir', tone: 'bg-success' },
+    { label: 'Terlambat', tone: 'bg-fill-warning' },
+    { label: 'Alpha', tone: 'bg-fill-danger' },
+    { label: 'Cuti/izin/sakit', tone: 'bg-accent-blue' },
+] as const;
 
 /** Attendance days of the period as squares + legend. */
 export function AttendanceStrip({
@@ -220,26 +275,32 @@ export function AttendanceStrip({
 }) {
     if (days.items.length === 0) {
         return (
-            <PanelEmpty>Belum ada catatan absensi pada periode ini.</PanelEmpty>
+            <EmptyState
+                size="sm"
+                icon={ClipboardList}
+                title="Belum ada catatan absensi"
+            >
+                Belum ada catatan absensi pada periode ini.
+            </EmptyState>
         );
     }
 
     return (
-        <div>
-            <p className="text-sm text-text tnum">
-                <span className="text-success">{days.counts.present}</span>{' '}
-                hadir · <span className="text-warning">{days.counts.late}</span>{' '}
-                terlambat · <span>{days.counts.absent}</span> alpha
+        <div className="flex flex-col gap-3">
+            <p className="text-body text-text tnum">
+                <b className="text-success">{days.counts.present}</b> hadir ·{' '}
+                <b className="text-warning">{days.counts.late}</b> terlambat ·{' '}
+                <b>{days.counts.absent}</b> alpha
                 {days.counts.away > 0 &&
                     ` · ${days.counts.away} cuti/izin/sakit`}
             </p>
-            <ol className="mt-3 flex flex-wrap gap-1">
+            <ol className="flex flex-wrap gap-1.5">
                 {days.items.map((day) => (
                     <li
                         key={day.date}
                         title={`${day.date}: ${day.label}${day.late_minutes > 0 ? ` ${day.late_minutes} menit` : ''}`}
                         className={cn(
-                            'size-5 rounded-[4px]',
+                            'size-6 rounded-xs',
                             DAY_TONE[day.status] ?? 'bg-surface-2',
                         )}
                     >
@@ -249,32 +310,19 @@ export function AttendanceStrip({
                     </li>
                 ))}
             </ol>
-            <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-muted">
-                <span className="inline-flex items-center gap-1.5">
+            <p className="flex flex-wrap gap-x-4 gap-y-1 text-meta text-text-muted">
+                {LEGEND.map((item) => (
                     <span
-                        className="size-2 rounded-sm bg-success/70"
-                        aria-hidden
-                    />
-                    Hadir
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                    <span
-                        className="size-2 rounded-sm bg-warning"
-                        aria-hidden
-                    />
-                    Terlambat
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                    <span className="size-2 rounded-sm bg-danger" aria-hidden />
-                    Alpha
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                    <span
-                        className="size-2 rounded-sm bg-info/60"
-                        aria-hidden
-                    />
-                    Cuti/izin/sakit
-                </span>
+                        key={item.label}
+                        className="inline-flex items-center gap-1.5"
+                    >
+                        <span
+                            aria-hidden
+                            className={cn('size-2.5 rounded-full', item.tone)}
+                        />
+                        {item.label}
+                    </span>
+                ))}
             </p>
         </div>
     );
