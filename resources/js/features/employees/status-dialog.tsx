@@ -11,6 +11,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { deactivate, reactivate } from '@/routes/admin/employees';
 
@@ -21,9 +22,6 @@ export type StatusTarget = {
     managerName?: string | null;
     directReports?: number;
 };
-
-const textareaClass =
-    'min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-base text-text shadow-xs outline-none placeholder:text-text-subtle focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive md:text-sm';
 
 /**
  * Deactivate (inactive / resigned + reason) or reactivate an employee.
@@ -103,7 +101,7 @@ function DeactivateForm({
             </DialogHeader>
 
             <fieldset className="space-y-2">
-                <legend className="mb-2 text-sm font-medium">Status</legend>
+                <legend className="mb-2 text-[15px] font-medium">Status</legend>
                 <div className="grid grid-cols-2 gap-2">
                     {(
                         [
@@ -114,7 +112,7 @@ function DeactivateForm({
                         <label
                             key={value}
                             className={cn(
-                                'flex h-11 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm',
+                                'flex h-11 cursor-pointer items-center gap-2 rounded-md border px-3 text-[15px]',
                                 form.data.status === value
                                     ? 'border-primary bg-primary/5 text-text'
                                     : 'border-border text-text-muted',
@@ -137,7 +135,7 @@ function DeactivateForm({
 
             <div className="space-y-2">
                 <Label htmlFor="deactivate-reason">Alasan</Label>
-                <textarea
+                <Textarea
                     id="deactivate-reason"
                     value={form.data.reason}
                     onChange={(event) =>
@@ -146,17 +144,17 @@ function DeactivateForm({
                     placeholder="Mis. kontrak berakhir 30 September"
                     maxLength={500}
                     required
-                    className={textareaClass}
+                    className="min-h-24"
                     aria-invalid={Boolean(form.errors.reason) || undefined}
                 />
-                <p className="text-xs text-text-muted">
+                <p className="text-meta text-text-muted">
                     Tercatat di audit log.
                 </p>
                 <InputError message={form.errors.reason} />
             </div>
 
             {reports !== 0 && (
-                <label className="flex items-start gap-2 text-sm">
+                <label className="flex items-start gap-2 text-[15px]">
                     <Checkbox
                         checked={form.data.reassign_reports}
                         onCheckedChange={(checked) =>
@@ -226,14 +224,14 @@ function ReactivateForm({
             </DialogHeader>
             <div className="space-y-2">
                 <Label htmlFor="reactivate-reason">Catatan (opsional)</Label>
-                <textarea
+                <Textarea
                     id="reactivate-reason"
                     value={form.data.reason}
                     onChange={(event) =>
                         form.setData('reason', event.target.value)
                     }
                     maxLength={500}
-                    className={textareaClass}
+                    className="min-h-24"
                 />
                 <InputError message={form.errors.reason} />
             </div>

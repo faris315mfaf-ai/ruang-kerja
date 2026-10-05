@@ -101,7 +101,7 @@ export function EmployeeFormSheet(props: Props) {
 
 function FormSkeleton() {
     return (
-        <div className="space-y-5 p-5" aria-busy>
+        <div className="space-y-5 p-6" aria-busy>
             <SheetTitle className="sr-only">Memuat data karyawan</SheetTitle>
             <SheetDescription className="sr-only">
                 Data karyawan sedang dimuat.
@@ -110,7 +110,7 @@ function FormSkeleton() {
             {Array.from({ length: 6 }, (_, index) => (
                 <div key={index} className="space-y-2">
                     <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-11 w-full" />
                 </div>
             ))}
         </div>
@@ -219,16 +219,16 @@ function EmployeeForm({
 
     return (
         <form onSubmit={submit} className="flex h-full min-h-0 flex-col">
-            <header className="flex items-center gap-3 border-b border-border px-5 py-4 pr-12">
+            <header className="flex items-center gap-3 border-b border-divider px-6 py-5 pr-14">
                 {isEdit && editing && (
                     <UserAvatar
                         name={editing.name}
                         src={editing.avatar_url}
-                        className="size-8"
+                        className="size-10"
                     />
                 )}
                 <div className="min-w-0">
-                    <SheetTitle className="truncate text-base">
+                    <SheetTitle className="truncate text-h3">
                         {isEdit && editing ? (
                             <>
                                 Ubah karyawan
@@ -248,7 +248,7 @@ function EmployeeForm({
                 </div>
             </header>
 
-            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
+            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-6">
                 <Field id="name" label="Nama lengkap" error={errors.name}>
                     <Input
                         id="name"
@@ -403,13 +403,13 @@ function EmployeeForm({
                         onValueChange={(value) =>
                             value && setData('work_mode', value as WorkMode)
                         }
-                        className="grid w-full grid-cols-4 rounded-lg bg-surface-2 p-1"
+                        className="grid w-full grid-cols-4 gap-1 rounded-[14px] bg-surface-2 p-1"
                     >
                         {options.workModes.map((mode) => (
                             <ToggleGroupItem
                                 key={mode.value}
                                 value={mode.value}
-                                className="h-9 rounded-md! text-[13px] text-text-muted data-[state=on]:bg-background data-[state=on]:text-text data-[state=on]:shadow-xs"
+                                className="h-[38px] rounded-[10px]! text-[15px] font-semibold text-text-muted data-[state=on]:bg-surface data-[state=on]:text-text data-[state=on]:shadow-segment"
                             >
                                 {mode.label}
                             </ToggleGroupItem>
@@ -435,9 +435,7 @@ function EmployeeForm({
                 </Field>
 
                 <fieldset className="space-y-2">
-                    <legend className="mb-2 text-sm leading-none font-medium">
-                        Peran
-                    </legend>
+                    <legend className="mb-2 text-label">Peran</legend>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                         {sortedRoles(options.roles).map((role) => {
                             const lockReason = roleLockReason(role.value, {
@@ -450,7 +448,7 @@ function EmployeeForm({
                                 <label
                                     key={role.value}
                                     className={cn(
-                                        'flex min-h-9 items-center gap-2 text-sm whitespace-nowrap has-[button:disabled]:opacity-60',
+                                        'flex min-h-11 items-center gap-2.5 text-[15px] whitespace-nowrap has-[button:disabled]:opacity-60',
                                         role.value === 'super_admin' &&
                                             'col-span-2',
                                     )}
@@ -469,7 +467,7 @@ function EmployeeForm({
                                     />
                                     {role.label}
                                     {role.value === 'super_admin' && (
-                                        <span className="text-xs text-text-subtle">
+                                        <span className="text-meta text-text-subtle">
                                             {lockReason ?? 'wajib 2FA'}
                                         </span>
                                     )}
@@ -478,7 +476,7 @@ function EmployeeForm({
                         })}
                     </div>
                     {(editingSelf || !canAssignPrivilegedRoles) && (
-                        <p className="text-xs text-text-subtle">
+                        <p className="text-meta text-text-subtle">
                             {editingSelf
                                 ? 'Peran Anda sendiri tidak bisa diubah.'
                                 : 'Peran Super Admin, Direksi, dan HR hanya bisa diatur oleh Super Admin.'}
@@ -489,8 +487,8 @@ function EmployeeForm({
                     ))}
                 </fieldset>
 
-                <section className="space-y-4 border-t border-border pt-5">
-                    <h3 className="text-[11px] font-medium tracking-[.04em] text-text-muted uppercase">
+                <section className="space-y-4 border-t border-divider pt-5">
+                    <h3 className="text-overline text-text-muted">
                         Data pribadi
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
@@ -553,7 +551,7 @@ function EmployeeForm({
                 </section>
 
                 {!isEdit && (
-                    <p className="flex gap-2 rounded-lg bg-info-soft px-3 py-2.5 text-[13px] text-info">
+                    <p className="flex gap-2.5 rounded-control bg-info-soft px-4 py-3 text-meta text-info">
                         <Info aria-hidden className="mt-0.5 size-4 shrink-0" />
                         Karyawan masuk memakai akun Google kantornya; tidak ada
                         sandi yang perlu dibuat.
@@ -561,7 +559,7 @@ function EmployeeForm({
                 )}
             </div>
 
-            <footer className="flex items-center gap-2 border-t border-border px-5 py-3">
+            <footer className="flex items-center gap-3 border-t border-divider px-6 py-4">
                 {isEdit &&
                     editing?.can.deactivate &&
                     (editing.status === 'active' ? (
@@ -582,7 +580,7 @@ function EmployeeForm({
                             Aktifkan kembali
                         </Button>
                     ))}
-                <div className="ml-auto flex gap-2">
+                <div className="ml-auto flex gap-3">
                     <Button type="button" variant="outline" onClick={onClose}>
                         Batal
                     </Button>
@@ -615,7 +613,7 @@ function Field({
             {error ? (
                 <InputError message={error} />
             ) : (
-                hint && <p className="text-xs text-text-muted">{hint}</p>
+                hint && <p className="text-meta text-text-muted">{hint}</p>
             )}
         </div>
     );

@@ -10,7 +10,9 @@ import {
 import { useState } from 'react';
 import { DesktopOnlyNotice } from '@/components/desktop-only-notice';
 import InputError from '@/components/input-error';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { AdminPageHeader } from '@/features/admin/page-header';
 import { Checkbox } from '@/components/ui/checkbox';
 import type {
     EmployeeImportProps,
@@ -31,9 +33,9 @@ export default function EmployeeImport(props: EmployeeImportProps) {
         <>
             <Head title="Impor karyawan" />
             {breakpoint === 'mobile' ? (
-                <div className="space-y-4">
+                <div className="flex flex-col gap-4">
                     <DesktopOnlyNotice feature="Impor karyawan" />
-                    <Button variant="outline" className="h-11 w-full" asChild>
+                    <Button variant="outline" className="w-full" asChild>
                         <Link href={index()}>
                             <ArrowLeft />
                             Kembali ke daftar karyawan
@@ -85,24 +87,20 @@ function ImportDesktop({
     const [committing, setCommitting] = useState(false);
 
     return (
-        <div className="mx-auto max-w-5xl space-y-5">
-            <header className="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                    <h1 className="text-xl leading-7 font-semibold text-text">
-                        Impor karyawan
-                    </h1>
-                    <p className="text-[13px] text-text-muted">
-                        Periksa dulu (tanpa menulis data), lalu impor baris yang
-                        valid. Baris galat dilewati.
-                    </p>
-                </div>
-                <Button variant="outline" asChild>
-                    <Link href={index()}>
-                        <ArrowLeft />
-                        Daftar karyawan
-                    </Link>
-                </Button>
-            </header>
+        <div className="mx-auto flex max-w-[1120px] flex-col gap-6">
+            <AdminPageHeader
+                overline="Admin · Karyawan"
+                title="Impor karyawan"
+                description="Periksa dulu (tanpa menulis data), lalu impor baris yang valid. Baris galat dilewati."
+                actions={
+                    <Button variant="outline" asChild>
+                        <Link href={index()}>
+                            <ArrowLeft />
+                            Daftar karyawan
+                        </Link>
+                    </Button>
+                }
+            />
 
             {expired && (
                 <Notice tone="warning">
@@ -117,7 +115,7 @@ function ImportDesktop({
                 <>
                     <section className="grid gap-5 lg:grid-cols-2">
                         <Step number={1} title="Unduh templat">
-                            <p className="text-[13px] text-text-muted">
+                            <p className="text-meta text-text-muted">
                                 Kolom wajib:{' '}
                                 <code className="font-mono">nama</code>,{' '}
                                 <code className="font-mono">email</code> (@
@@ -154,19 +152,19 @@ function ImportDesktop({
                             >
                                 <label
                                     htmlFor="import-file"
-                                    className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-border-strong px-4 py-4 text-sm hover:bg-surface-2/60"
+                                    className="flex min-h-[72px] cursor-pointer items-center gap-3 rounded-lg border border-dashed border-border-strong bg-surface-2/60 px-4 py-4 text-[15px] transition-colors duration-120 ease-brand hover:bg-surface-2 has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring"
                                 >
                                     <FileSpreadsheet
                                         aria-hidden
-                                        className="size-6 text-text-subtle"
+                                        className="size-7 text-link"
                                         strokeWidth={1.75}
                                     />
                                     <span className="min-w-0 flex-1">
-                                        <span className="block truncate text-text">
+                                        <span className="block truncate font-semibold text-text">
                                             {upload.data.file?.name ??
                                                 'Pilih berkas CSV atau XLSX'}
                                         </span>
-                                        <span className="block text-xs text-text-muted">
+                                        <span className="block text-meta text-text-muted">
                                             Maks.{' '}
                                             {formatNumber(
                                                 reference.maxKilobytes / 1024,
@@ -240,9 +238,9 @@ function Step({
     children: React.ReactNode;
 }) {
     return (
-        <div className="space-y-3 rounded-lg border border-border bg-surface p-4 shadow-card">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-text">
-                <span className="flex size-6 items-center justify-center rounded-full bg-link-soft text-xs text-primary tnum">
+        <div className="flex flex-col gap-4 rounded-panel border border-border bg-surface p-6 shadow-card">
+            <h2 className="flex items-center gap-3 text-h3">
+                <span className="flex size-8 items-center justify-center rounded-full bg-link-soft text-[15px] font-bold text-link tnum">
                     {number}
                 </span>
                 {title}
@@ -265,13 +263,13 @@ function Notice({
         <div
             role={tone === 'success' ? 'status' : 'alert'}
             className={cn(
-                'flex items-start gap-2 rounded-lg px-4 py-3 text-sm',
+                'flex items-start gap-3 rounded-[18px] px-4 py-3 text-[15px] leading-[22px] font-semibold',
                 tone === 'warning' && 'bg-warning-soft text-warning',
                 tone === 'danger' && 'bg-danger-soft text-danger',
                 tone === 'success' && 'bg-success-soft text-success',
             )}
         >
-            <Icon aria-hidden className="mt-0.5 size-4 shrink-0" />
+            <Icon aria-hidden className="mt-0.5 size-5 shrink-0" />
             <div>{children}</div>
         </div>
     );
@@ -294,19 +292,16 @@ function SummaryTiles({ report }: { report: ImportReport }) {
     ];
 
     return (
-        <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <dl className="grid grid-cols-2 gap-5 md:grid-cols-4">
             {tiles.map((tile) => (
                 <div
                     key={tile.label}
-                    className="rounded-lg border border-border bg-surface px-4 py-3"
+                    className="flex flex-col gap-2 rounded-card border border-border bg-surface px-6 py-[22px] shadow-card"
                 >
-                    <dt className="text-xs text-text-muted">{tile.label}</dt>
-                    <dd
-                        className={cn(
-                            'text-2xl font-semibold text-text tnum',
-                            tile.tone,
-                        )}
-                    >
+                    <dt className="text-[15px] leading-[22px] font-semibold text-text-muted">
+                        {tile.label}
+                    </dt>
+                    <dd className={cn('text-kpi text-text tnum', tile.tone)}>
                         {formatNumber(tile.value)}
                     </dd>
                 </div>
@@ -335,7 +330,7 @@ function PreviewPanel({
     return (
         <section className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-base font-semibold text-text">
+                <h2 className="text-h3">
                     Pratinjau{' '}
                     {fileName && (
                         <span className="font-normal text-text-muted">
@@ -359,7 +354,7 @@ function PreviewPanel({
             {report.rows.length > 0 && (
                 <>
                     <SummaryTiles report={report} />
-                    <label className="flex w-fit items-center gap-2 text-sm text-text-muted">
+                    <label className="flex w-fit items-center gap-2 text-[15px] text-text-muted">
                         <Checkbox
                             checked={errorsOnly}
                             onCheckedChange={(checked) =>
@@ -387,9 +382,7 @@ function ResultPanel({ result }: { result: ImportReport }) {
             </Notice>
             {skipped.length > 0 && (
                 <>
-                    <h2 className="text-base font-semibold text-text">
-                        Baris yang dilewati
-                    </h2>
+                    <h2 className="text-h3">Baris yang dilewati</h2>
                     <RowTable rows={skipped} />
                 </>
             )}
@@ -414,34 +407,34 @@ const ACTION_LABELS: Record<ImportRowResult['action'], string> = {
 function RowTable({ rows }: { rows: ImportRowResult[] }) {
     if (rows.length === 0) {
         return (
-            <p className="rounded-lg border border-border bg-surface px-4 py-6 text-center text-sm text-text-muted">
+            <p className="rounded-panel border border-dashed border-border-strong bg-surface-2/60 px-5 py-8 text-center text-[15px] text-text-muted">
                 Tidak ada baris galat.
             </p>
         );
     }
 
     return (
-        <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-card">
+        <div className="overflow-hidden rounded-panel border border-border bg-surface shadow-card">
             <div className="max-h-[60vh] overflow-auto">
-                <table className="w-full text-[13px]">
-                    <thead className="sticky top-0 bg-surface-2 text-left text-xs text-text-muted">
+                <table className="w-full text-[15px]">
+                    <thead className="sticky top-0 border-b border-border bg-background text-left text-[14px] text-text-muted">
                         <tr>
                             <th
                                 scope="col"
-                                className="h-9 w-16 px-4 font-medium"
+                                className="h-11 w-16 pr-4 pl-6 font-bold"
                             >
                                 Baris
                             </th>
-                            <th scope="col" className="px-4 font-medium">
+                            <th scope="col" className="px-4 font-bold">
                                 Nama
                             </th>
-                            <th scope="col" className="px-4 font-medium">
+                            <th scope="col" className="px-4 font-bold">
                                 Email
                             </th>
-                            <th scope="col" className="w-28 px-4 font-medium">
+                            <th scope="col" className="w-32 px-4 font-bold">
                                 Hasil
                             </th>
-                            <th scope="col" className="px-4 font-medium">
+                            <th scope="col" className="px-4 font-bold">
                                 Keterangan
                             </th>
                         </tr>
@@ -450,36 +443,34 @@ function RowTable({ rows }: { rows: ImportRowResult[] }) {
                         {rows.map((row) => (
                             <tr
                                 key={row.row}
-                                className="border-t border-border align-top"
+                                className="border-t border-divider align-top first:border-t-0"
                             >
-                                <td className="px-4 py-2.5 font-mono text-text-muted tnum">
+                                <td className="py-3 pr-4 pl-6 font-mono font-semibold text-text-muted tnum">
                                     {row.row}
                                 </td>
-                                <td className="px-4 py-2.5 text-text">
+                                <td className="px-4 py-3 text-text">
                                     {row.name ?? '—'}
                                 </td>
-                                <td className="px-4 py-2.5 break-all text-text-muted">
+                                <td className="px-4 py-3 break-all text-text-muted">
                                     {row.email ?? '—'}
                                 </td>
-                                <td className="px-4 py-2.5">
-                                    <span
-                                        className={cn(
-                                            'inline-flex items-center gap-1.5',
+                                <td className="px-4 py-3">
+                                    <Badge
+                                        variant="status"
+                                        dot
+                                        tone={
                                             row.action === 'error'
-                                                ? 'text-danger'
+                                                ? 'danger'
                                                 : row.action === 'create'
-                                                  ? 'text-success'
-                                                  : 'text-info',
-                                        )}
+                                                  ? 'success'
+                                                  : 'info'
+                                        }
+                                        className="h-7 px-2.5 text-[14px]"
                                     >
-                                        <span
-                                            aria-hidden
-                                            className="size-1.5 rounded-full bg-current"
-                                        />
                                         {ACTION_LABELS[row.action]}
-                                    </span>
+                                    </Badge>
                                 </td>
-                                <td className="px-4 py-2.5">
+                                <td className="px-4 py-3">
                                     {row.errors.length === 0 ? (
                                         <span className="text-text-subtle">
                                             —
@@ -507,21 +498,21 @@ function ColumnReference({
     reference: EmployeeImportProps['reference'];
 }) {
     return (
-        <details className="group rounded-lg border border-border bg-surface shadow-card">
-            <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-text">
+        <details className="group rounded-panel border border-border bg-surface shadow-card">
+            <summary className="flex min-h-14 cursor-pointer items-center px-6 text-[16px] font-semibold text-text">
                 Panduan kolom & nilai yang diterima
             </summary>
-            <div className="grid gap-5 border-t border-border p-4 lg:grid-cols-[2fr_1fr]">
-                <table className="w-full text-[13px]">
+            <div className="grid gap-6 border-t border-divider p-6 lg:grid-cols-[2fr_1fr]">
+                <table className="w-full text-meta">
                     <tbody>
                         {reference.columns.map((column) => (
                             <tr
                                 key={column}
-                                className="border-b border-border last:border-b-0"
+                                className="border-b border-divider last:border-b-0"
                             >
                                 <th
                                     scope="row"
-                                    className="w-44 py-2 pr-3 text-left align-top font-mono font-normal text-text"
+                                    className="w-48 py-2.5 pr-3 text-left align-top font-mono font-semibold text-text"
                                 >
                                     {column}
                                     {reference.required.includes(column) && (
@@ -530,16 +521,16 @@ function ColumnReference({
                                         </span>
                                     )}
                                 </th>
-                                <td className="py-2 text-text-muted">
+                                <td className="py-2.5 text-text-muted">
                                     {COLUMN_HELP[column] ?? ''}
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
-                <div className="space-y-4 text-[13px]">
+                <div className="space-y-4 text-meta">
                     <div>
-                        <h3 className="mb-1 font-medium text-text">Divisi</h3>
+                        <h3 className="mb-1 font-bold text-text">Divisi</h3>
                         <ul className="space-y-0.5 text-text-muted">
                             {reference.divisions.map((division) => (
                                 <li key={division.code}>
@@ -552,7 +543,7 @@ function ColumnReference({
                         </ul>
                     </div>
                     <div>
-                        <h3 className="mb-1 font-medium text-text">Peran</h3>
+                        <h3 className="mb-1 font-bold text-text">Peran</h3>
                         <p className="text-text-muted">
                             {reference.roles
                                 .map((role) => role.value)
@@ -560,7 +551,7 @@ function ColumnReference({
                         </p>
                     </div>
                     <div>
-                        <h3 className="mb-1 font-medium text-text">Jabatan</h3>
+                        <h3 className="mb-1 font-bold text-text">Jabatan</h3>
                         <p className="text-text-muted">
                             {reference.positions.join(', ') || '—'}
                         </p>

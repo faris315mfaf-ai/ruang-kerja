@@ -2,6 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { Plus, Upload } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { AdminPageHeader } from '@/features/admin/page-header';
 import { formatNumber } from '@/lib/format';
 import { importMethod } from '@/routes/admin/employees';
 import { EmployeeFormSheet } from './employee-form-sheet';
@@ -103,13 +104,11 @@ export function EmployeesDesktop(props: EmployeeIndexProps) {
     );
 
     return (
-        <div className="space-y-5">
-            <header className="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                    <h1 className="text-xl leading-7 font-semibold text-text">
-                        Karyawan
-                    </h1>
-                    <p className="text-[13px] text-text-muted">
+        <div className="flex flex-col gap-6">
+            <AdminPageHeader
+                title="Karyawan"
+                description={
+                    <>
                         <span className="tnum">
                             {formatNumber(props.counts.active)}
                         </span>{' '}
@@ -121,27 +120,29 @@ export function EmployeesDesktop(props: EmployeeIndexProps) {
                         {props.can.manage
                             ? ' · data ini menjadi sumber divisi, tim, atasan, dan alur persetujuan.'
                             : ' · tampilan baca saja.'}
-                    </p>
-                </div>
-                {props.can.manage && (
-                    <div className="flex gap-2">
-                        <Button variant="outline" asChild>
-                            <Link href={importMethod()}>
-                                <Upload />
-                                Impor CSV/XLSX
-                            </Link>
-                        </Button>
-                        <Button
-                            onClick={() => {
-                                setCreating(true);
-                            }}
-                        >
-                            <Plus />
-                            Tambah karyawan
-                        </Button>
-                    </div>
-                )}
-            </header>
+                    </>
+                }
+                actions={
+                    props.can.manage && (
+                        <>
+                            <Button variant="outline" asChild>
+                                <Link href={importMethod()}>
+                                    <Upload />
+                                    Impor CSV/XLSX
+                                </Link>
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setCreating(true);
+                                }}
+                            >
+                                <Plus />
+                                Tambah karyawan
+                            </Button>
+                        </>
+                    )
+                }
+            />
 
             <EmployeeTable
                 employees={props.employees}

@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { formatNumber } from '@/lib/format';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { show } from '@/routes/admin/employees';
 import { RoleBadges, StatusBadge, WorkModeBadge } from './employee-badges';
 import { NativeSelect } from '@/features/admin/native-select';
@@ -71,13 +71,16 @@ function SortHeader({
         <button
             type="button"
             onClick={() => onSort(key)}
-            className="-mx-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className={cn(
+                '-mx-1.5 inline-flex min-h-8 items-center gap-1.5 rounded-sm px-1.5 font-bold hover:text-text',
+                focusRing,
+            )}
             aria-label={`Urutkan menurut ${label.toLowerCase()}`}
         >
             {label}
             <Icon
                 aria-hidden
-                className={cn('size-3.5', !active && 'opacity-40')}
+                className={cn('size-4', !active && 'opacity-40')}
             />
         </button>
     );
@@ -128,12 +131,12 @@ export function EmployeeTable({
                         <div className="min-w-0">
                             <Link
                                 href={show(row.original.id)}
-                                className="block truncate font-medium text-text hover:underline"
+                                className="block truncate text-[16px] font-semibold text-text hover:underline"
                                 onClick={(event) => event.stopPropagation()}
                             >
                                 {row.original.name}
                             </Link>
-                            <div className="truncate text-xs text-text-muted">
+                            <div className="truncate text-meta text-text-muted">
                                 {row.original.email}
                             </div>
                         </div>
@@ -148,7 +151,7 @@ export function EmployeeTable({
                         <div>
                             <div>{row.original.division.name}</div>
                             {row.original.team && (
-                                <div className="text-xs text-text-muted">
+                                <div className="text-meta text-text-muted">
                                     {row.original.team.name}
                                 </div>
                             )}
@@ -211,12 +214,12 @@ export function EmployeeTable({
     });
 
     return (
-        <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-                <div className="relative w-full max-w-72">
+        <div className="flex flex-col gap-5">
+            <div className="flex flex-wrap items-center gap-3">
+                <div role="search" className="relative w-full max-w-80">
                     <Search
                         aria-hidden
-                        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-subtle"
+                        className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-text-muted"
                     />
                     <Input
                         type="search"
@@ -224,7 +227,7 @@ export function EmployeeTable({
                         onChange={(event) => changeSearch(event.target.value)}
                         placeholder="Cari nama, email, atau jabatan"
                         aria-label="Cari karyawan"
-                        className="pl-9"
+                        className="pl-11"
                     />
                 </div>
                 <NativeSelect
@@ -233,7 +236,7 @@ export function EmployeeTable({
                     onChange={(event) =>
                         apply({ division: event.target.value || null })
                     }
-                    className="w-40"
+                    className="w-44"
                 >
                     <option value="">Semua divisi</option>
                     {divisions.map((division) => (
@@ -253,7 +256,7 @@ export function EmployeeTable({
                                 null,
                         })
                     }
-                    className="w-40"
+                    className="w-44"
                 >
                     <option value="">Semua peran</option>
                     {options.roles.map((role) => (
@@ -272,7 +275,7 @@ export function EmployeeTable({
                                 null,
                         })
                     }
-                    className="w-44"
+                    className="w-48"
                 >
                     <option value="">Status: Semua</option>
                     {options.statuses.map((status) => (
@@ -281,7 +284,7 @@ export function EmployeeTable({
                         </option>
                     ))}
                 </NativeSelect>
-                <p className="ml-auto text-[13px] text-text-muted tnum">
+                <p className="ml-auto text-meta text-text-muted tnum">
                     {meta.total === 0
                         ? '0 karyawan'
                         : `${meta.from}–${meta.to} dari ${formatNumber(meta.total)}`}
@@ -324,21 +327,21 @@ export function EmployeeTable({
             ) : (
                 <div
                     className={cn(
-                        'overflow-hidden rounded-lg border border-border bg-surface shadow-card transition-opacity',
+                        'overflow-hidden rounded-panel border border-border bg-surface shadow-card transition-opacity duration-180 ease-brand motion-reduce:transition-none',
                         loading && 'opacity-60',
                     )}
                     aria-busy={loading}
                 >
                     <div className="overflow-x-auto">
-                        <table className="w-full min-w-[960px] text-[13px]">
-                            <thead className="bg-surface-2 text-left text-xs font-medium text-text-muted">
+                        <table className="w-full min-w-[960px] text-[15px] tnum">
+                            <thead className="border-b border-border bg-background text-left text-[14px] font-bold text-text-muted">
                                 {table.getHeaderGroups().map((group) => (
                                     <tr key={group.id}>
                                         {group.headers.map((header) => (
                                             <th
                                                 key={header.id}
                                                 scope="col"
-                                                className="h-10 px-4 font-medium whitespace-nowrap"
+                                                className="h-11 px-4 font-bold whitespace-nowrap first:pl-6 last:pr-6"
                                             >
                                                 <table.FlexRender
                                                     header={header}
@@ -360,19 +363,19 @@ export function EmployeeTable({
                                                 onEdit(employee)
                                             }
                                             className={cn(
-                                                'border-t border-border transition-colors',
+                                                'border-t border-divider transition-colors duration-120 ease-brand first:border-t-0',
                                                 employee.can.update &&
                                                     'cursor-pointer hover:bg-surface-2/60',
                                                 employee.status !== 'active' &&
                                                     'text-text-muted',
                                                 selectedId === employee.id &&
-                                                    'bg-primary/5 shadow-[inset_3px_0_0_var(--primary)]',
+                                                    'bg-link-soft shadow-[inset_3px_0_0_var(--primary)] hover:bg-link-soft',
                                             )}
                                         >
                                             {row.getAllCells().map((cell) => (
                                                 <td
                                                     key={cell.id}
-                                                    className="h-[52px] px-4 align-middle"
+                                                    className="h-[68px] px-4 align-middle first:pl-6 last:pr-6"
                                                 >
                                                     <table.FlexRender
                                                         cell={cell}
@@ -385,7 +388,7 @@ export function EmployeeTable({
                             </tbody>
                         </table>
                     </div>
-                    <div className="flex items-center justify-between gap-4 border-t border-border px-4 py-2.5 text-xs text-text-muted">
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-t border-divider px-6 py-3 text-meta text-text-muted">
                         <p>
                             Akun nonaktif tidak bisa masuk; riwayat absensi dan
                             tugasnya tetap tersimpan.
@@ -399,7 +402,8 @@ export function EmployeeTable({
                                         per_page: Number(event.target.value),
                                     })
                                 }
-                                className="w-24"
+                                size="sm"
+                                className="w-28"
                             >
                                 {[10, 25, 50].map((size) => (
                                     <option key={size} value={size}>
@@ -409,8 +413,7 @@ export function EmployeeTable({
                             </NativeSelect>
                             <Button
                                 variant="outline"
-                                size="icon"
-                                className="size-8"
+                                size="icon-sm"
                                 disabled={meta.current_page <= 1 || loading}
                                 onClick={() =>
                                     apply({ page: meta.current_page - 1 })
@@ -424,8 +427,7 @@ export function EmployeeTable({
                             </span>
                             <Button
                                 variant="outline"
-                                size="icon"
-                                className="size-8"
+                                size="icon-sm"
                                 disabled={
                                     meta.current_page >= meta.last_page ||
                                     loading
@@ -462,8 +464,7 @@ function RowActions({
                 <DropdownMenuTrigger asChild>
                     <Button
                         variant="ghost"
-                        size="icon"
-                        className="size-8"
+                        size="icon-sm"
                         aria-label={`Aksi untuk ${employee.name}`}
                     >
                         <MoreHorizontal />
