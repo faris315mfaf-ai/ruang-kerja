@@ -11,7 +11,7 @@ export function HighlightedText({
         <>
             {highlightMatches(text, query).map((segment, index) =>
                 segment.match ? (
-                    <strong key={index} className="font-semibold text-text">
+                    <strong key={index} className="font-bold text-link">
                         {segment.text}
                     </strong>
                 ) : (

@@ -1,9 +1,12 @@
 import { router } from '@inertiajs/react';
 import { ArrowUpRight, ChevronRight, Clock, Search, X } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type { Chip } from '@/components/mobile/chip-scroller';
 import { ChipScroller } from '@/components/mobile/chip-scroller';
+import { EmptyState } from '@/components/empty-state';
 import { UserAvatar } from '@/components/shell/user-avatar';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { HighlightedText } from '@/features/search/highlighted-text';
 import {
@@ -21,7 +24,7 @@ import type {
 } from '@/features/search/types';
 import { useSearch } from '@/features/search/use-search';
 import { useAppearance } from '@/hooks/use-appearance';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 
 type Props = {
     initialQuery: string;
@@ -46,37 +49,38 @@ function ResultItem({
     onOpen: () => void;
 }) {
     const Icon = searchIcon(item.icon);
-    const secondary = [item.code, item.subtitle, item.meta]
+    const secondaryRest = [item.subtitle, item.meta]
         .filter(Boolean)
         .join(' · ');
+    const secondary = Boolean(item.code || secondaryRest);
 
     return (
         <li>
             <button
                 type="button"
                 onClick={onOpen}
-                className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors duration-120 ease-brand hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none"
+                className="flex min-h-[72px] w-full items-center gap-3 bg-surface p-4 text-left text-text transition-colors duration-120 ease-brand hover:bg-surface-2/60 focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset active:bg-surface-2"
             >
                 {item.icon === 'user' ? (
                     <UserAvatar
                         name={item.title}
                         src={item.avatar}
-                        className="size-10 text-sm"
+                        className="size-11 text-[15px]"
                     />
                 ) : (
                     <span
                         aria-hidden
-                        className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-primary"
+                        className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-link-soft text-link"
                     >
-                        <Icon className="size-5" strokeWidth={1.75} />
+                        <Icon className="size-[22px]" strokeWidth={1.9} />
                     </span>
                 )}
-                <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] text-text">
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="truncate text-[17px] leading-[23px] font-semibold">
                         <HighlightedText text={title} query={query} />
                     </span>
                     {item.snippet && (
-                        <span className="block truncate text-[13px] text-text-muted">
+                        <span className="truncate text-[15px] leading-[22px] text-text-muted">
                             <HighlightedText
                                 text={item.snippet}
                                 query={query}
@@ -84,26 +88,57 @@ function ResultItem({
                         </span>
                     )}
                     {secondary && (
-                        <span className="block truncate text-[13px] text-text-muted">
-                            {secondary}
+                        <span className="truncate text-[15px] leading-[22px] text-text-muted">
+                            {item.code && (
+                                <span className="font-mono font-semibold">
+                                    {item.code}
+                                </span>
+                            )}
+                            {item.code && secondaryRest && ' · '}
+                            {secondaryRest}
                         </span>
                     )}
                 </span>
                 {item.external ? (
                     <ArrowUpRight
                         aria-hidden
-                        className="size-4.5 shrink-0 text-text-subtle"
+                        className="size-[18px] shrink-0 text-text-subtle"
+                        strokeWidth={2.4}
                     />
                 ) : (
                     item.url && (
                         <ChevronRight
                             aria-hidden
-                            className="size-4.5 shrink-0 text-text-subtle"
+                            className="size-[18px] shrink-0 text-text-subtle"
+                            strokeWidth={2.4}
                         />
                     )
                 )}
             </button>
         </li>
+    );
+}
+
+/** Section label + rounded list card (MInbox "HARI INI" + card). */
+function ListSection({
+    title,
+    action,
+    children,
+}: {
+    title: string;
+    action?: ReactNode;
+    children: ReactNode;
+}) {
+    return (
+        <section className="flex flex-col gap-3 pt-4">
+            <div className="flex min-h-11 items-end justify-between gap-3 px-1">
+                <h2 className="pb-1 text-overline text-text-muted">{title}</h2>
+                {action}
+            </div>
+            <ul className="divide-y divide-divider overflow-hidden rounded-[22px] border border-border bg-surface">
+                {children}
+            </ul>
+        </section>
     );
 }
 
@@ -169,13 +204,16 @@ export function SearchScreen({ initialQuery, groups: providers }: Props) {
 
     return (
         <div className="mx-auto flex w-full max-w-2xl flex-col">
-            <div className="sticky top-0 z-20 -mx-4 bg-background/95 px-4 pt-safe pb-2 backdrop-blur md:static md:mx-0 md:bg-transparent md:px-0">
-                <div className="flex items-center gap-3 pt-3">
-                    <label className="flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-border bg-surface px-3.5 transition-colors duration-120 ease-brand focus-within:border-primary focus-within:ring-3 focus-within:ring-ring">
+            <h1 className="hidden pb-4 text-h1 text-text md:block lg:text-display">
+                Cari
+            </h1>
+            <div className="sticky top-0 z-20 -mx-4 bg-background/95 px-4 pt-safe pb-2 backdrop-blur md:static md:mx-0 md:bg-transparent md:px-0 md:backdrop-blur-none">
+                <div className="flex items-center gap-2 pt-3 md:pt-0">
+                    <label className="flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-control border border-border-strong bg-surface px-3.5 transition-[border-color,box-shadow] duration-120 ease-brand focus-within:border-primary focus-within:ring-[3px] focus-within:ring-ring">
                         <Search
                             aria-hidden
-                            className="size-5 shrink-0 text-text-muted"
-                            strokeWidth={1.75}
+                            className="size-[22px] shrink-0 text-text-muted"
+                            strokeWidth={2}
                         />
                         <span className="sr-only">Cari</span>
                         <input
@@ -186,7 +224,7 @@ export function SearchScreen({ initialQuery, groups: providers }: Props) {
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
                             placeholder="Cari tugas, dokumen, orang, atau workspace"
-                            className="h-full min-w-0 flex-1 bg-transparent text-base text-text outline-none placeholder:text-text-subtle [&::-webkit-search-cancel-button]:hidden"
+                            className="h-full min-w-0 flex-1 bg-transparent text-[17px] text-text outline-none placeholder:text-text-subtle md:text-[16px] [&::-webkit-search-cancel-button]:hidden"
                         />
                         {query && (
                             <button
@@ -196,115 +234,119 @@ export function SearchScreen({ initialQuery, groups: providers }: Props) {
                                     setQuery('');
                                     input.current?.focus();
                                 }}
-                                className="-mr-1.5 flex size-8 items-center justify-center rounded-full bg-surface-2 text-text-muted"
+                                className={cn(
+                                    '-mr-2 flex size-11 items-center justify-center rounded-full text-text-muted',
+                                    focusRing,
+                                )}
                             >
-                                <X className="size-4" aria-hidden />
+                                <span className="flex size-7 items-center justify-center rounded-full bg-surface-2">
+                                    <X className="size-4" aria-hidden />
+                                </span>
                             </button>
                         )}
                     </label>
-                    <button
-                        type="button"
-                        onClick={cancel}
-                        className="min-h-11 text-[15px] font-medium text-primary focus-visible:underline focus-visible:outline-none"
-                    >
+                    <Button variant="quiet" onClick={cancel} className="px-3">
                         Batal
-                    </button>
+                    </Button>
                 </div>
                 <ChipScroller
                     label="Saring hasil"
                     chips={chips}
                     value={chip}
                     onChange={setChip}
-                    className="mt-3"
+                    className="mt-3 md:mx-0 md:px-0"
                 />
             </div>
 
-            <div className="-mx-4 pb-8 md:mx-0">
+            <div className="pb-8">
                 {loading && total === 0 && (
                     <div
-                        className="space-y-3 px-4 pt-4"
+                        className="mt-4 divide-y divide-divider overflow-hidden rounded-[22px] border border-border bg-surface"
                         aria-label="Memuat hasil"
                     >
                         {[0, 1, 2, 3].map((row) => (
-                            <Skeleton key={row} className="h-12 w-full" />
+                            <div key={row} className="flex gap-3 p-4">
+                                <Skeleton className="size-11 rounded-[14px]" />
+                                <div className="flex-1 space-y-2 pt-0.5">
+                                    <Skeleton className="h-4 w-2/3" />
+                                    <Skeleton className="h-3.5 w-1/3" />
+                                </div>
+                            </div>
                         ))}
                     </div>
                 )}
 
                 {error && (
-                    <p className="px-4 pt-8 text-center text-sm text-danger">
-                        Pencarian gagal. Periksa koneksi lalu coba lagi.
-                    </p>
+                    <EmptyState
+                        icon={Search}
+                        size="sm"
+                        title="Pencarian gagal"
+                        description="Periksa koneksi lalu coba lagi."
+                        className="mt-4"
+                    />
                 )}
 
                 {!loading && !error && term && total === 0 && (
-                    <p className="px-4 pt-8 text-center text-sm text-text-muted">
-                        Tidak ada hasil untuk “{term}”.
-                    </p>
+                    <EmptyState
+                        icon={Search}
+                        size="sm"
+                        title={`Tidak ada hasil untuk “${term}”.`}
+                        description="Coba kata kunci lain atau pilih jenis Semua."
+                        className="mt-4"
+                    />
                 )}
 
                 {groups.map((group) => (
-                    <section key={group.key} className="pt-4">
-                        <h2 className="px-4 pb-1 text-[13px] font-medium text-text-muted">
-                            {groupLabel(group)}
-                        </h2>
-                        <ul>
-                            {group.items.map((item) => (
-                                <ResultItem
-                                    key={item.id}
-                                    item={item}
-                                    query={term}
-                                    title={resultTitle(
-                                        item,
-                                        resolvedAppearance,
-                                    )}
-                                    onOpen={() => open(item)}
-                                />
-                            ))}
-                        </ul>
-                    </section>
+                    <ListSection key={group.key} title={groupLabel(group)}>
+                        {group.items.map((item) => (
+                            <ResultItem
+                                key={item.id}
+                                item={item}
+                                query={term}
+                                title={resultTitle(item, resolvedAppearance)}
+                                onOpen={() => open(item)}
+                            />
+                        ))}
+                    </ListSection>
                 ))}
 
                 {!term && recent.length > 0 && (
-                    <section className="mx-4 mt-4 border-t border-border pt-4">
-                        <div className="flex items-center justify-between pb-1">
-                            <h2 className="text-[13px] font-medium text-text-muted">
-                                Pencarian terakhir
-                            </h2>
-                            <button
-                                type="button"
+                    <ListSection
+                        title="Pencarian terakhir"
+                        action={
+                            <Button
+                                variant="quiet"
+                                size="sm"
                                 onClick={() => {
                                     clearRecentSearches();
                                     setRecent([]);
                                 }}
-                                className="min-h-11 px-1 text-[13px] text-text-muted hover:text-text"
                             >
                                 Hapus
-                            </button>
-                        </div>
-                        <ul>
-                            {recent.map((item) => (
-                                <li key={item}>
-                                    <button
-                                        type="button"
-                                        onClick={() => setQuery(item)}
-                                        className={cn(
-                                            'flex min-h-12 w-full items-center gap-4 text-left text-[15px] text-text',
-                                            /^[A-Z]+-\d+$/.test(item) &&
-                                                'font-mono',
-                                        )}
-                                    >
-                                        <Clock
-                                            aria-hidden
-                                            className="size-5 text-text-muted"
-                                            strokeWidth={1.75}
-                                        />
-                                        {item}
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
-                    </section>
+                            </Button>
+                        }
+                    >
+                        {recent.map((item) => (
+                            <li key={item}>
+                                <button
+                                    type="button"
+                                    onClick={() => setQuery(item)}
+                                    className={cn(
+                                        'flex min-h-14 w-full items-center gap-3 bg-surface px-4 text-left text-[17px] text-text transition-colors duration-120 ease-brand hover:bg-surface-2/60 focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset',
+                                        /^[A-Z]+-\d+$/.test(item) &&
+                                            'font-mono font-semibold',
+                                    )}
+                                >
+                                    <Clock
+                                        aria-hidden
+                                        className="size-5 text-text-muted"
+                                        strokeWidth={2}
+                                    />
+                                    {item}
+                                </button>
+                            </li>
+                        ))}
+                    </ListSection>
                 )}
             </div>
         </div>
