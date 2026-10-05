@@ -6,12 +6,16 @@ use App\Domain\Auth\Enums\LoginMethod;
 use App\Domain\Organization\Services\AuditLogger;
 use App\Models\User;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\SessionGuard;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Runs for every successful sign-in (Google, password/TOTP, demo, remember-me):
  * remembers the method in the session, stamps `last_login_at` and audits Super
- * Admin sign-ins.
+ * Admin sign-ins. The method comes from the controller/action declaration
+ * (LoginMethod::declareFor); a remember-me restore is always "remember" (strict)
+ * and an undeclared login counts as "password".
  */
 final class RecordLogin
 {
@@ -28,7 +32,10 @@ final class RecordLogin
             return;
         }
 
-        $method = LoginMethod::fromRoute($this->request->route()?->getName(), $event->remember);
+        $guard = Auth::guard($event->guard);
+        $viaRemember = $guard instanceof SessionGuard && $guard->viaRemember();
+
+        $method = LoginMethod::resolve(LoginMethod::declaredFor($this->request), $viaRemember);
 
         if ($this->request->hasSession()) {
             $session = $this->request->session();

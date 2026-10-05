@@ -289,3 +289,22 @@ it('is rate limited to 10 requests per minute per IP', function () {
 
     $this->get(route('auth.google.redirect'))->assertTooManyRequests();
 });
+
+it('records a remember-me restore on the Google callback as "remember", not "google"', function () {
+    $this->seed(RoleSeeder::class);
+    $admin = User::factory()->forCompany($this->company)->withRole(Role::SuperAdmin)->create([
+        'remember_token' => 'remember-token-123',
+    ]);
+    $recaller = $admin->getKey().'|remember-token-123|'.$admin->getAuthPassword();
+
+    // Expired session + valid remember-me cookie hitting the callback directly.
+    $this->withCookie(auth()->guard('web')->getRecallerName(), $recaller)
+        ->get(route('auth.google.callback', ['state' => 'x', 'code' => 'y']))
+        ->assertRedirect();
+
+    $this->assertAuthenticatedAs($admin);
+    expect(session(LoginMethod::SESSION_KEY))->toBe(LoginMethod::Remember->value);
+
+    // The TOTP requirement still applies to the restored session.
+    $this->get('/dashboard')->assertRedirect(route('security.edit'));
+});

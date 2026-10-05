@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Domain\Auth\Actions\AuthenticateGoogleUser;
 use App\Domain\Auth\Data\GoogleProfile;
+use App\Domain\Auth\Enums\LoginMethod;
 use App\Domain\Auth\Exceptions\LoginRejected;
 use App\Domain\Auth\Support\GoogleOAuth;
 use App\Http\Controllers\Controller;
@@ -78,6 +79,7 @@ class GoogleLoginController extends Controller
             return $this->fail($rejected->getMessage(), $rejected->email);
         }
 
+        LoginMethod::Google->declareFor($request);
         Auth::guard('web')->login($user);
 
         $request->session()->regenerate();
