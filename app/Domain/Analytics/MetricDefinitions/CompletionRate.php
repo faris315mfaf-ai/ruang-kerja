@@ -43,11 +43,15 @@ final class CompletionRate implements MetricDefinition
     }
 
     /**
-     * @param  non-empty-list<Period>  $periods
+     * @param  list<Period>  $periods
      * @return list<MetricValue> one value per period, same order
      */
     public function series(MetricScope $scope, array $periods): array
     {
+        if ($periods === []) {
+            return [];
+        }
+
         [$bucket, $bindings] = PeriodBuckets::caseExpression('tasks.due_date', $periods, dateColumn: true);
         [$from, $to] = PeriodBuckets::bounds($periods, dateColumn: true);
 

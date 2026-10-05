@@ -40,7 +40,12 @@ export const mainNavItems: AppNavItem[] = [
         icon: CircleCheck,
         matchPrefix: true,
     },
-    { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
+    {
+        title: 'Dashboard',
+        href: '/dashboard',
+        icon: LayoutGrid,
+        matchPrefix: true,
+    },
     { title: 'Absensi', href: '/absensi', icon: MapPin, matchPrefix: true },
     {
         title: 'Pengajuan',
@@ -65,7 +70,7 @@ export const mainNavItems: AppNavItem[] = [
 
 /** Mobile bottom tab bar: exactly five items (docs/PLATFORM.md §2). */
 export const tabNavItems: AppNavItem[] = [
-    { title: 'Beranda', href: '/dashboard', icon: Home },
+    { title: 'Beranda', href: '/dashboard', icon: Home, matchPrefix: true },
     { title: 'Absen', href: '/absensi', icon: MapPin, matchPrefix: true },
     { title: 'Tugas', href: '/tugas', icon: CircleCheck, matchPrefix: true },
     { title: 'Inbox', href: '/inbox', icon: Inbox, matchPrefix: true },

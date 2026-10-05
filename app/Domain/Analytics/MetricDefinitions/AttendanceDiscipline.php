@@ -63,11 +63,15 @@ final class AttendanceDiscipline implements MetricDefinition
     }
 
     /**
-     * @param  non-empty-list<Period>  $periods
+     * @param  list<Period>  $periods
      * @return list<MetricValue>
      */
     public function series(MetricScope $scope, array $periods): array
     {
+        if ($periods === []) {
+            return [];
+        }
+
         [$bucket, $bindings] = PeriodBuckets::caseExpression('work_date', $periods, dateColumn: true);
         [$from, $to] = PeriodBuckets::bounds($periods, dateColumn: true);
         $excused = array_map(fn (AttendanceStatus $status): string => $status->value, self::EXCUSED);

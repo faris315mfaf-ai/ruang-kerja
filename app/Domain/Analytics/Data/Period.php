@@ -101,6 +101,22 @@ final readonly class Period
         return new self($this->preset, $this->start, $this->start->gt($tomorrow) ? $this->start : $tomorrow);
     }
 
+    /**
+     * Current period to date and the same number of days at the start of the
+     * previous period ("+6 poin dari minggu lalu" compares Mon–Wed with last
+     * Mon–Wed), so running periods are compared fairly.
+     *
+     * @return array{0: self, 1: self}
+     */
+    public function comparable(CarbonInterface $now): array
+    {
+        $current = $this->toDate($now);
+        $previous = $this->previous();
+        $end = $previous->start->addDays($current->days());
+
+        return [$current, new self($this->preset, $previous->start, $end->gt($previous->end) ? $previous->end : $end)];
+    }
+
     public function isEmpty(): bool
     {
         return $this->end->lte($this->start);

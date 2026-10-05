@@ -43,11 +43,15 @@ final class OnTimeRate implements MetricDefinition
     }
 
     /**
-     * @param  non-empty-list<Period>  $periods
+     * @param  list<Period>  $periods
      * @return list<MetricValue>
      */
     public function series(MetricScope $scope, array $periods): array
     {
+        if ($periods === []) {
+            return [];
+        }
+
         [$bucket, $bindings] = PeriodBuckets::caseExpression('tasks.completed_at', $periods, dateColumn: false);
         [$from, $to] = PeriodBuckets::bounds($periods, dateColumn: false);
 

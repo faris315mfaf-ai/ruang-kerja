@@ -5,9 +5,12 @@ namespace Tests\Support;
 use App\Domain\Attendance\Enums\AttendanceStatus;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\Shift;
+use App\Domain\Organization\Enums\Role;
 use App\Domain\Tasks\Enums\TaskStatusCategory;
+use App\Models\Division;
 use App\Models\Task;
 use App\Models\TaskStatus;
+use App\Models\Team;
 use App\Models\User;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
@@ -80,6 +83,37 @@ final class AnalyticsFixtures
     public static function shift(): Shift
     {
         return Shift::query()->where('name', 'Reguler Uji')->first() ?? Shift::factory()->create(['name' => 'Reguler Uji']);
+    }
+
+    /**
+     * Two divisions with a Kepala Divisi each, members, a team, HR, Direksi and
+     * a plain member. Needs RoleSeeder.
+     *
+     * @return array{ops: Division, keu: Division, gudang: Team, kadiv: User, kadivKeu: User, rizky: User, sari: User, budi: User, hr: User, direksi: User, admin: User}
+     */
+    public static function org(): array
+    {
+        $kadiv = User::factory()->withRole(Role::KepalaDivisi)->create(['name' => 'Dimas Pratama']);
+        $kadivKeu = User::factory()->withRole(Role::KepalaDivisi)->create(['name' => 'Lestari Keu']);
+        $ops = Division::factory()->headedBy($kadiv)->create(['name' => 'Operasional', 'code' => 'OPS']);
+        $keu = Division::factory()->headedBy($kadivKeu)->create(['name' => 'Keuangan', 'code' => 'KEU']);
+        $kadiv->update(['division_id' => $ops->id]);
+        $kadivKeu->update(['division_id' => $keu->id]);
+        $gudang = Team::factory()->create(['division_id' => $ops->id, 'name' => 'Tim Gudang']);
+
+        return [
+            'ops' => $ops,
+            'keu' => $keu,
+            'gudang' => $gudang,
+            'kadiv' => $kadiv,
+            'kadivKeu' => $kadivKeu,
+            'rizky' => User::factory()->withRole(Role::Anggota)->inDivision($ops)->managedBy($kadiv)->create(['name' => 'Rizky Aditya']),
+            'sari' => User::factory()->withRole(Role::Anggota)->inDivision($ops, $gudang)->managedBy($kadiv)->create(['name' => 'Sari Wulandari']),
+            'budi' => User::factory()->withRole(Role::Anggota)->inDivision($keu)->managedBy($kadivKeu)->create(['name' => 'Budi Keu']),
+            'hr' => User::factory()->withRole(Role::Hr)->create(['name' => 'Hana HR']),
+            'direksi' => User::factory()->withRole(Role::Direksi)->create(['name' => 'Hendra Direksi']),
+            'admin' => User::factory()->withRole(Role::SuperAdmin)->create(['name' => 'Admin Sistem']),
+        ];
     }
 
     /** "2026-10-05 08:30" office time → UTC instant. */
