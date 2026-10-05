@@ -43,11 +43,14 @@ export function BrandMark({ className, withName = false, size = 'md' }: Props) {
                     <span className="truncate text-[17px] font-bold tracking-[-0.01em] text-text">
                         {branding.name}
                     </span>
-                    {branding.companyName && (
-                        <span className="truncate text-[14px] text-text-muted">
-                            {branding.companyName}
-                        </span>
-                    )}
+                    {/* Hidden while config/branding.php still has the
+                        "[Nama Perusahaan]" placeholder (guest pages). */}
+                    {branding.companyName &&
+                        !branding.companyName.startsWith('[') && (
+                            <span className="truncate text-meta text-text-muted">
+                                {branding.companyName}
+                            </span>
+                        )}
                 </span>
             )}
         </div>
