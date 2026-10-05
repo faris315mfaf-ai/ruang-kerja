@@ -85,7 +85,7 @@ function NumberField({
                     onChange={(e) => onChange(Number(e.target.value))}
                     className="tnum"
                 />
-                <span className="shrink-0 text-xs text-text-muted">
+                <span className="shrink-0 text-meta text-text-muted">
                     {suffix}
                 </span>
             </div>
@@ -199,7 +199,7 @@ function ShiftDialog({
                         </div>
                     </div>
                     {crosses && form.data.end_time !== form.data.start_time && (
-                        <p className="rounded-md bg-info-soft px-3 py-2 text-xs text-info">
+                        <p className="rounded-control bg-info-soft px-4 py-3 text-meta text-info">
                             Shift lintas tengah malam: dicatat pada tanggal
                             check-in.
                         </p>
@@ -326,7 +326,7 @@ export function ShiftsSection({ shifts, locations, shiftDefaults }: Props) {
             }
         >
             {shifts.length === 0 ? (
-                <div className="p-4">
+                <div className="p-6">
                     <EmptyState
                         icon={Users}
                         title="Belum ada shift"
@@ -336,26 +336,16 @@ export function ShiftsSection({ shifts, locations, shiftDefaults }: Props) {
             ) : (
                 <Table>
                     <TableHeader>
-                        <TableRow className="bg-surface-2 hover:bg-surface-2">
-                            <TableHead className="pl-4 text-[13px] text-text-muted">
-                                Nama
-                            </TableHead>
-                            <TableHead className="text-[13px] text-text-muted">
-                                Jam kerja
-                            </TableHead>
-                            <TableHead className="text-[13px] text-text-muted">
-                                Toleransi
-                            </TableHead>
-                            <TableHead className="text-[13px] text-text-muted">
-                                Hari
-                            </TableHead>
-                            <TableHead className="text-[13px] text-text-muted">
-                                Lokasi
-                            </TableHead>
-                            <TableHead className="text-right text-[13px] text-text-muted">
+                        <TableRow>
+                            <TableHead className="pl-6">Nama</TableHead>
+                            <TableHead>Jam kerja</TableHead>
+                            <TableHead>Toleransi</TableHead>
+                            <TableHead>Hari</TableHead>
+                            <TableHead>Lokasi</TableHead>
+                            <TableHead className="text-right">
                                 Karyawan
                             </TableHead>
-                            <TableHead className="w-12 pr-4">
+                            <TableHead className="w-12 pr-6">
                                 <span className="sr-only">Aksi</span>
                             </TableHead>
                         </TableRow>
@@ -363,38 +353,37 @@ export function ShiftsSection({ shifts, locations, shiftDefaults }: Props) {
                     <TableBody>
                         {shifts.map((shift) => (
                             <TableRow key={shift.id}>
-                                <TableCell className="pl-4 text-[13px] font-medium text-text">
+                                <TableCell className="pl-6 font-semibold text-text">
                                     {shift.name}
                                 </TableCell>
-                                <TableCell className="text-[13px]">
+                                <TableCell>
                                     <span className="font-mono text-text">
                                         {shift.hours}
                                     </span>
                                     {shift.crossesMidnight && (
-                                        <span className="ml-2 rounded-md bg-info-soft px-2 py-0.5 text-xs text-info">
+                                        <span className="ml-2 inline-flex h-6 items-center rounded-sm bg-info-soft px-2 text-[13px] font-semibold text-info">
                                             lintas tengah malam
                                         </span>
                                     )}
                                 </TableCell>
-                                <TableCell className="text-[13px] text-text">
+                                <TableCell className="text-text">
                                     {shift.lateToleranceMin} menit
                                 </TableCell>
-                                <TableCell className="text-[13px] text-text">
+                                <TableCell className="text-text">
                                     {shift.daysLabel ?? '–'}
                                 </TableCell>
-                                <TableCell className="text-[13px] text-text">
+                                <TableCell className="text-text">
                                     {shift.locationName ?? 'Semua lokasi'}
                                 </TableCell>
-                                <TableCell className="text-right text-[13px] text-text tnum">
+                                <TableCell className="text-right text-text tnum">
                                     {shift.employeesCount}
                                 </TableCell>
-                                <TableCell className="pr-4">
+                                <TableCell className="pr-6">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button
                                                 variant="ghost"
-                                                size="icon"
-                                                className="size-8"
+                                                size="icon-sm"
                                                 aria-label={`Aksi shift ${shift.name}`}
                                             >
                                                 <MoreHorizontal aria-hidden />
@@ -422,7 +411,7 @@ export function ShiftsSection({ shifts, locations, shiftDefaults }: Props) {
                     </TableBody>
                 </Table>
             )}
-            <p className="border-t border-border px-4 py-2.5 text-xs text-text-muted">
+            <p className="border-t border-divider px-6 py-3.5 text-meta text-text-muted md:px-7">
                 Shift lintas tengah malam dicatat pada tanggal check-in.
                 Karyawan tanpa penugasan tidak terjadwal.
             </p>

@@ -11,6 +11,7 @@ import {
 import { useState } from 'react';
 import { EmptyState } from '@/components/empty-state';
 import InputError from '@/components/input-error';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -26,7 +27,7 @@ import { Switch } from '@/components/ui/switch';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { formatDateTime, formatRelative } from '@/lib/format';
 import { requestJson } from '@/lib/http';
-import { cn } from '@/lib/utils';
+import { NativeSelect } from '@/features/admin/native-select';
 import kioskRoutes from '@/routes/admin/attendance/kiosks';
 import type { AdminKiosk, AdminLocation } from './types';
 import { SectionCard } from './section-card';
@@ -111,7 +112,7 @@ export function KiosksSection({
             }
         >
             {error && (
-                <p className="border-b border-border bg-danger-soft px-4 py-2 text-sm text-danger">
+                <p className="border-b border-divider bg-danger-soft px-6 py-3 text-[15px] font-semibold text-danger md:px-7">
                     {error}
                 </p>
             )}
@@ -120,88 +121,78 @@ export function KiosksSection({
                     icon={MonitorSmartphone}
                     title="Belum ada kiosk"
                     description="Tambahkan kiosk untuk lokasi yang ramai, lalu buka tautan aktivasinya (atau ketik kodenya) di perangkat lobi."
-                    className="m-4"
+                    className="m-6"
                 />
             ) : (
-                <table className="w-full text-sm">
-                    <thead className="bg-surface-2 text-[13px] text-text-muted">
+                <table className="w-full text-[15px]">
+                    <thead className="border-b border-border bg-background text-[14px] text-text-muted">
                         <tr>
                             <th
                                 scope="col"
-                                className="px-4 py-2 text-left font-medium"
+                                className="h-11 py-2 pr-4 pl-6 text-left font-bold md:pl-7"
                             >
                                 Kiosk
                             </th>
                             <th
                                 scope="col"
-                                className="px-3 py-2 text-left font-medium"
+                                className="h-11 px-4 py-2 text-left font-bold"
                             >
                                 Lokasi
                             </th>
                             <th
                                 scope="col"
-                                className="px-3 py-2 text-left font-medium"
+                                className="h-11 px-4 py-2 text-left font-bold"
                             >
                                 Status
                             </th>
                             <th
                                 scope="col"
-                                className="px-3 py-2 text-left font-medium"
+                                className="h-11 px-4 py-2 text-left font-bold"
                             >
                                 Terakhir aktif
                             </th>
                             <th
                                 scope="col"
-                                className="px-4 py-2 text-right font-medium"
+                                className="h-11 py-2 pr-6 pl-4 text-right font-bold md:pr-7"
                             >
                                 <span className="sr-only">Aksi</span>
                             </th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
+                    <tbody className="divide-y divide-divider">
                         {kiosks.map((kiosk) => (
                             <tr key={kiosk.id}>
-                                <td className="px-4 py-2.5">
-                                    <p className="font-medium text-text">
+                                <td className="py-3.5 pr-4 pl-6 md:pl-7">
+                                    <p className="font-semibold text-text">
                                         {kiosk.name}
                                     </p>
-                                    <p className="font-mono text-xs text-text-muted">
+                                    <p className="font-mono text-meta text-text-muted">
                                         {kiosk.code}
                                     </p>
                                 </td>
-                                <td className="px-3 py-2.5 text-text">
+                                <td className="px-4 py-3.5 text-text">
                                     {kiosk.locationName}
                                 </td>
-                                <td className="px-3 py-2.5">
-                                    <span
-                                        className={cn(
-                                            'inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium',
+                                <td className="px-4 py-3.5">
+                                    <Badge
+                                        variant="status"
+                                        dot
+                                        tone={
                                             !kiosk.isActive
-                                                ? 'bg-surface-2 text-text-muted'
+                                                ? 'neutral'
                                                 : kiosk.isPaired
-                                                  ? 'bg-success-soft text-success'
-                                                  : 'bg-warning-soft text-warning',
-                                        )}
+                                                  ? 'success'
+                                                  : 'warning'
+                                        }
                                     >
-                                        <span
-                                            aria-hidden
-                                            className={cn(
-                                                'size-1.5 rounded-full',
-                                                !kiosk.isActive
-                                                    ? 'bg-text-subtle'
-                                                    : kiosk.isPaired
-                                                      ? 'bg-success'
-                                                      : 'bg-warning',
-                                            )}
-                                        />
                                         {!kiosk.isActive
                                             ? 'Nonaktif'
                                             : kiosk.isPaired
                                               ? 'Terpasang'
                                               : 'Belum dipasang'}
-                                    </span>
+                                    </Badge>
                                     {kiosk.pendingActivationUntil && (
-                                        <p className="mt-1 text-xs text-text-muted">
+                                        <p className="mt-1 text-meta text-text-muted">
                                             Tautan &amp; kode berlaku s.d.{' '}
                                             {formatDateTime(
                                                 kiosk.pendingActivationUntil,
@@ -209,12 +200,12 @@ export function KiosksSection({
                                         </p>
                                     )}
                                 </td>
-                                <td className="px-3 py-2.5 text-text-muted">
+                                <td className="px-4 py-3.5 text-text-muted">
                                     {kiosk.lastSeenAt
                                         ? formatRelative(kiosk.lastSeenAt)
                                         : '–'}
                                 </td>
-                                <td className="px-4 py-2.5">
+                                <td className="py-3.5 pr-6 pl-4 md:pr-7">
                                     <div className="flex justify-end gap-1">
                                         <Button
                                             type="button"
@@ -234,8 +225,7 @@ export function KiosksSection({
                                         <Button
                                             type="button"
                                             variant="ghost"
-                                            size="icon"
-                                            className="size-8"
+                                            size="icon-sm"
                                             onClick={() => setEditing(kiosk)}
                                             aria-label={`Ubah ${kiosk.name}`}
                                         >
@@ -244,8 +234,8 @@ export function KiosksSection({
                                         <Button
                                             type="button"
                                             variant="ghost"
-                                            size="icon"
-                                            className="size-8 text-danger"
+                                            size="icon-sm"
+                                            className="text-danger"
                                             onClick={() => remove(kiosk)}
                                             aria-label={`Hapus ${kiosk.name}`}
                                         >
@@ -362,7 +352,7 @@ function KioskDialog({
                     </div>
                     <div className="grid gap-1.5">
                         <Label htmlFor="kiosk-location">Lokasi</Label>
-                        <select
+                        <NativeSelect
                             id="kiosk-location"
                             value={form.data.office_location_id}
                             onChange={(event) =>
@@ -371,7 +361,6 @@ function KioskDialog({
                                     event.target.value,
                                 )
                             }
-                            className="h-9 rounded-md border border-border bg-surface px-2 text-sm text-text"
                         >
                             {locations.map((location) => (
                                 <option key={location.id} value={location.id}>
@@ -379,10 +368,10 @@ function KioskDialog({
                                     {location.isActive ? '' : ' (nonaktif)'}
                                 </option>
                             ))}
-                        </select>
+                        </NativeSelect>
                         <InputError message={form.errors.office_location_id} />
                     </div>
-                    <label className="flex items-center justify-between gap-3 text-sm text-text">
+                    <label className="flex items-center justify-between gap-3 text-[15px] text-text">
                         Aktif
                         <Switch
                             checked={form.data.is_active}
@@ -448,14 +437,14 @@ function ActivationDialog({
                 <div className="space-y-1.5">
                     <p
                         id="kiosk-activation-code-label"
-                        className="text-sm font-medium text-text"
+                        className="text-[15px] font-medium text-text"
                     >
                         Kode aktivasi
                     </p>
                     <div className="flex items-center gap-2">
                         <output
                             aria-labelledby="kiosk-activation-code-label"
-                            className="flex h-14 flex-1 items-center justify-center rounded-lg border border-border bg-surface-2 font-mono text-2xl font-semibold tracking-[0.2em] text-text select-all"
+                            className="flex h-14 flex-1 items-center justify-center rounded-lg border border-border bg-surface-2 font-mono text-[26px] font-semibold tracking-[0.2em] text-text select-all"
                         >
                             {link?.code}
                         </output>
@@ -483,7 +472,7 @@ function ActivationDialog({
                             id="kiosk-activation-url"
                             readOnly
                             value={link?.url ?? ''}
-                            className="font-mono text-xs"
+                            className="font-mono text-meta"
                             onFocus={(event) => event.currentTarget.select()}
                         />
                         <Button
@@ -500,7 +489,7 @@ function ActivationDialog({
                         </Button>
                     </div>
                 </div>
-                <p className="text-[13px] text-text-muted">
+                <p className="text-meta text-text-muted">
                     Perangkat yang dipasangkan dikunci ke layar kiosk dan keluar
                     dari akun karyawan. Perangkat kiosk lama untuk kiosk ini
                     berhenti berfungsi. Memakai tautan membatalkan kode, dan
