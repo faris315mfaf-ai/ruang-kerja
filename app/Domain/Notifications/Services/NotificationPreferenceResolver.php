@@ -20,6 +20,30 @@ final class NotificationPreferenceResolver
     }
 
     /**
+     * isEnabled() for many users with one query (e.g. the digest dispatcher).
+     *
+     * @param  list<string>  $userIds
+     * @return array<string, bool> user id => enabled
+     */
+    public function enabledFor(array $userIds, NotificationEvent $event, NotificationChannel $channel): array
+    {
+        $overrides = NotificationPreference::query()
+            ->whereIn('user_id', $userIds)
+            ->where('event', $event->value)
+            ->where('channel', $channel->value)
+            ->pluck('enabled', 'user_id');
+        $key = $event->value.'|'.$channel->value;
+        $enabled = [];
+
+        foreach ($userIds as $userId) {
+            $override = $overrides->get($userId);
+            $enabled[$userId] = $this->resolve($event, $channel, is_bool($override) ? [$key => $override] : []);
+        }
+
+        return $enabled;
+    }
+
+    /**
      * @return list<NotificationChannel>
      */
     public function enabledChannels(User $user, NotificationEvent $event): array

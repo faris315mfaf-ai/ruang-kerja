@@ -33,13 +33,21 @@ final class TaskAudience
             return new Collection;
         }
 
+        // Memberships loaded once: members of a shared workspace see it without a
+        // per-user roleOf() query; only non-members go through the full policy.
+        $members = $workspace->isPersonal() ? [] : array_flip(WorkspaceMember::query()
+            ->where('workspace_id', $workspace->id)
+            ->whereIn('user_id', $userIds)
+            ->pluck('user_id')
+            ->all());
+
         return User::query()
             ->where('company_id', $workspace->company_id)
             ->active()
             ->whereIn('id', $userIds)
             ->with(['roles.permissions', 'permissions'])
             ->get()
-            ->filter(fn (User $user): bool => $this->policy->canView($user, $workspace))
+            ->filter(fn (User $user): bool => isset($members[$user->id]) || $this->policy->canView($user, $workspace))
             ->values();
     }
 

@@ -19,6 +19,7 @@ use App\Models\User;
 use App\Policies\TaskPolicy;
 use App\Policies\WorkspacePolicy;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Everything the task detail (TaskSheet, full-screen page, mobile
@@ -68,7 +69,9 @@ final class TaskDetail
             ->orderBy('number')
             ->get();
 
-        $references = $this->references($task, $viewer);
+        $comments = $this->recentComments($task);
+        $timeline = $this->timeline($task, $comments);
+        $references = $this->references($task, $viewer, $comments, $timeline);
 
         return [
             'task' => [
@@ -102,7 +105,7 @@ final class TaskDetail
                     'done_by' => $item->done_by,
                     'done_at' => $item->done_at?->toIso8601String(),
                 ])->values()->all(),
-            'timeline' => $this->timeline($task),
+            'timeline' => $timeline,
             'references' => $references,
             'reactions' => Reaction::EMOJI,
             'can' => [
@@ -129,9 +132,10 @@ final class TaskDetail
     /**
      * Activities and comments, oldest first.
      *
+     * @param  Collection<int, Comment>  $comments
      * @return list<array<string, mixed>>
      */
-    private function timeline(Task $task): array
+    private function timeline(Task $task, Collection $comments): array
     {
         $activities = Activity::query()
             ->where('subject_type', $task->getMorphClass())
@@ -149,17 +153,10 @@ final class TaskDetail
                 'created_at' => $activity->created_at->toIso8601String(),
             ]);
 
-        $comments = Comment::withTrashed()
-            ->where('commentable_type', $task->getMorphClass())
-            ->where('commentable_id', $task->id)
-            ->with(['author', 'reactions.user'])
-            ->latest('created_at')
-            ->limit(self::TIMELINE_LIMIT)
-            ->get()
-            ->map(fn (Comment $comment): array => (new CommentResource($comment))->resolve());
+        $resolved = $comments->map(fn (Comment $comment): array => (new CommentResource($comment))->resolve());
 
         /** @var list<array<string, mixed>> */
-        return $activities->concat($comments)
+        return $activities->concat($resolved)
             ->sortBy(fn (array $item): string => is_string($item['created_at'] ?? null) ? $item['created_at'].$item['id'] : '')
             ->slice(-self::TIMELINE_LIMIT)
             ->values()
@@ -167,23 +164,47 @@ final class TaskDetail
     }
 
     /**
-     * #KEY-n references inside the description and comments that the viewer
-     * may see (others render as plain text), keyed by task id.
+     * The latest comments (deleted ones included, shown as "dihapus"), loaded
+     * once for the timeline and the references.
      *
-     * @return array<string, array{key: string, title: string, status_category: string, url: string}>
+     * @return Collection<int, Comment>
      */
-    private function references(Task $task, User $viewer): array
+    private function recentComments(Task $task): Collection
     {
-        $parser = $this->parser;
-        $ids = $parser->taskIds($task->description);
-
-        Comment::query()
+        return Comment::withTrashed()
             ->where('commentable_type', $task->getMorphClass())
             ->where('commentable_id', $task->id)
-            ->get(['id', 'body'])
-            ->each(function (Comment $comment) use ($parser, &$ids): void {
-                $ids = [...$ids, ...$parser->taskIds($comment->body)];
-            });
+            ->with(['author', 'reactions.user'])
+            ->latest('created_at')
+            ->limit(self::TIMELINE_LIMIT)
+            ->get();
+    }
+
+    /**
+     * #KEY-n references inside the description and the comments shown in the
+     * timeline that the viewer may see (others render as plain text), keyed by
+     * task id. Comments outside the timeline or deleted are not parsed.
+     *
+     * @param  Collection<int, Comment>  $comments
+     * @param  list<array<string, mixed>>  $timeline
+     * @return array<string, array{key: string, title: string, status_category: string, url: string}>
+     */
+    private function references(Task $task, User $viewer, Collection $comments, array $timeline): array
+    {
+        $ids = $this->parser->taskIds($task->description);
+        $shown = [];
+
+        foreach ($timeline as $item) {
+            if (($item['kind'] ?? null) === 'comment' && is_string($item['id'] ?? null)) {
+                $shown[$item['id']] = true;
+            }
+        }
+
+        foreach ($comments as $comment) {
+            if (isset($shown[$comment->id]) && ! $comment->trashed()) {
+                $ids = [...$ids, ...$this->parser->taskIds($comment->body)];
+            }
+        }
 
         if ($ids === []) {
             return [];

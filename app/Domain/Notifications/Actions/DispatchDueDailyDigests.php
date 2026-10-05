@@ -43,11 +43,13 @@ final class DispatchDueDailyDigests
         $queued = 0;
 
         User::query()->active()->orderBy('id')->chunkById(200, function (Collection $users) use ($local, $today, $catchUp, &$queued): void {
+            // Preloaded per chunk: no per-user settings or preference queries.
             $settings = NotificationSetting::query()->whereIn('user_id', $users->modelKeys())->get()->keyBy('user_id');
+            $wantsDigest = $this->preferences->enabledFor(array_values($users->modelKeys()), NotificationEvent::DailyDigest, NotificationChannel::Email);
 
             /** @var User $user */
             foreach ($users as $user) {
-                $setting = $settings->get($user->id) ?? NotificationSetting::for($user);
+                $setting = $settings->get($user->id) ?? NotificationSetting::defaultsFor($user);
 
                 if ($setting->digest_last_run_on?->toDateString() === $today) {
                     continue;
@@ -59,7 +61,7 @@ final class DispatchDueDailyDigests
                     continue;
                 }
 
-                if (! $this->preferences->isEnabled($user, NotificationEvent::DailyDigest, NotificationChannel::Email)) {
+                if (! ($wantsDigest[$user->id] ?? false)) {
                     continue;
                 }
 

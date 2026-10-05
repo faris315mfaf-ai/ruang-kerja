@@ -46,10 +46,14 @@ class NotificationSetting extends Model
     {
         $setting = self::query()->find($user->id);
 
-        if ($setting instanceof self) {
-            return $setting;
-        }
+        return $setting instanceof self ? $setting : self::defaultsFor($user);
+    }
 
+    /**
+     * Unsaved instance with the defaults (no query; for preloaded batches).
+     */
+    public static function defaultsFor(User $user): self
+    {
         $default = new self;
         $default->forceFill([
             'user_id' => $user->id,
