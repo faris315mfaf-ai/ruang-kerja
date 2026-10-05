@@ -117,7 +117,10 @@ it('keeps inbox, search, settings and the menu free of N+1', function () {
         '/inbox' => ['hr', 33],
         '/inbox/feed' => ['anggota', 12],
         '/cari/hasil?q=la' => ['anggota', 22],
-        '/pengaturan/notifikasi' => ['anggota', 42],
+        // +3 when the seeded user happens to have a task due today: the digest
+        // preview's "Tenggat hari ini" section (list, workspaces, count) only
+        // queries when it has rows. Constant, not N+1.
+        '/pengaturan/notifikasi' => ['anggota', 45],
         '/menu' => ['anggota', 29],
     ]);
 });
