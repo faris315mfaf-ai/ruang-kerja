@@ -1,6 +1,6 @@
 # Sprint 2, 4, 5 — Perbaikan hasil code review
 
-Cabang `fix/sprint-2-4-5-review`. Satu commit per temuan (`fix(<area>): ...`). Setiap temuan diverifikasi dulu di kode, lalu diberi test regresi yang **gagal sebelum perbaikan** (dicek dengan menjalankan test baru terhadap kode lama via `git stash` kode aplikasi) dan hijau sesudahnya. Beberapa test tambahan sengaja ikut lulus di kode lama karena berfungsi sebagai pagar perilaku (disebut di bawah). `main` (termasuk Sprint 3 QR/rekap dan Sprint 7 Drive bagian B) sudah di-merge; seluruh pemeriksaan hijau setelah merge.
+Cabang `fix/sprint-2-4-5-review`. Satu commit per temuan (`fix(<area>): ...`). Setiap temuan diverifikasi dulu di kode, lalu diberi test regresi yang **gagal sebelum perbaikan** (dicek dengan menjalankan test baru terhadap kode lama via `git stash` kode aplikasi) dan hijau sesudahnya. Beberapa test tambahan sengaja ikut lulus di kode lama karena berfungsi sebagai pagar perilaku (disebut di bawah). `main` (termasuk Sprint 3 QR/rekap, Sprint 7 Drive bagian B, dan Sprint 9 dashboard) sudah di-merge; seluruh pemeriksaan hijau setelah merge.
 
 | # | Tingkat | Commit |
 |---|---|---|
@@ -157,8 +157,9 @@ Migrasi baru (semua bisa di-rollback, diuji `migrate:rollback` + `migrate`): `20
 
 - Koreksi manual HR (`CorrectAttendance`, Sprint 3) masih menolak semua tanggal ber-status pengajuan, termasuk setengah hari/dinas yang lupa check-out; koreksi tetap bisa lewat pengajuan koreksi karyawan.
 - Pengingat check-in (`SendCheckInReminders`) tetap tidak dikirim pada hari setengah cuti/dinas (sengaja tidak mengganggu).
+- Dashboard Sprint 9 (`PersonalDashboard`, `TodayAttendance`) masih menghitung hari ber-status pengajuan sebagai "tidak di tempat" walau sudah check-in (setengah hari/dinas); bisa disesuaikan dengan `AttendanceDay::blocksCheckIn()`/`request_portion` bila diinginkan.
 - Saluran broadcast `workspace.{id}` sekarang menjawab 404 (bukan 403) untuk non-viewer karena binder; tetap ditolak.
 
 ## Pemeriksaan
 
-Setelah merge `main` terakhir: **1502 Pest hijau** (`rk_test`), **224 Vitest hijau**, `composer lint` (Pint + Larastan level 8) hijau, `npm run typecheck` dan `npm run lint` hijau.
+Setelah merge `main` terakhir: **1570 Pest hijau** (`rk_test`), **229 Vitest hijau**, `composer lint` (Pint + Larastan level 8) hijau, `npm run typecheck` dan `npm run lint` hijau.
