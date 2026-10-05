@@ -32,7 +32,8 @@ it('seeds the mockup workspaces idempotently', function () {
 
     $gudang = Workspace::query()->where('key', 'GDG')->firstOrFail();
     expect($gudang->team_id)->not->toBeNull()
-        ->and($gudang->memberships()->where('is_synced', true)->count())->toBe(3);
+        // Lead + 2 team members, plus the owner row (synced since review fix #5).
+        ->and($gudang->memberships()->where('is_synced', true)->count())->toBe(4);
 
     // The demo Kepala Divisi sees Pribadi, Divisi Operasional, Tim Gudang and the project in the sidebar.
     $this->actingAs($kadiv)->get('/dashboard')->assertInertia(fn ($page) => $page
