@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Domain\Notifications\Services\InboxQuery;
+use App\Domain\Workspaces\Queries\SidebarWorkspaces;
 use App\Http\Resources\Attendance\MyAttendance;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -68,6 +69,8 @@ class HandleInertiaRequests extends Middleware
                 'roles' => $user?->getRoleNames()->values()->all() ?? [],
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            // Sidebar "Workspace" section & mobile Menu grid (Sprint 5); lazy, skipped on partial reloads.
+            'workspaces' => fn (): array => $user === null ? [] : app(SidebarWorkspaces::class)->for($user),
             // Bell / sidebar / tab badge. Closure: skipped on partial reloads that don't ask for it.
             'inbox' => fn (): ?array => $user !== null ? ['unread' => app(InboxQuery::class)->unreadCount($user)] : null,
         ];

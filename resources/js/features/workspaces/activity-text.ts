@@ -1,0 +1,72 @@
+import { PRIORITY_LABELS } from '@/components/priority-icon';
+import type { Priority } from '@/features/tasks/types';
+import { formatDayMonth } from '@/features/tasks/lib/due-date';
+import type { ActivityItem } from './types';
+import { ROLE_LABELS } from './types';
+
+function str(value: unknown): string {
+    return typeof value === 'string' ? value : '';
+}
+
+function count(value: unknown): number {
+    return Array.isArray(value) ? value.length : 0;
+}
+
+function nested(value: unknown, key: string): string {
+    return typeof value === 'object' && value !== null && key in value
+        ? str((value as Record<string, unknown>)[key])
+        : '';
+}
+
+/**
+ * Indonesian sentence (without the actor) for a feed entry, e.g.
+ * "memindahkan OPS-142 dari Todo ke Sedang dikerjakan".
+ */
+export function describeActivity(
+    item: ActivityItem,
+    names: Record<string, string> = {},
+): string {
+    const p = item.properties;
+    const key = str(p.key);
+    const people = (value: unknown) =>
+        Array.isArray(value)
+            ? value.map((id) => names[String(id)] ?? 'seseorang').join(', ')
+            : '';
+
+    switch (item.event) {
+        case 'task.created':
+            return `membuat ${key} “${str(p.title)}”`;
+        case 'task.status_changed':
+            return `memindahkan ${key} dari ${nested(p.from, 'name')} ke ${nested(p.to, 'name')}`;
+        case 'task.assigned':
+            return `menugaskan ${key} ke ${people(p.user_ids) || `${count(p.user_ids)} orang`}`;
+        case 'task.unassigned':
+            return `melepas ${people(p.user_ids) || `${count(p.user_ids)} orang`} dari ${key}`;
+        case 'task.due_date_changed':
+            return p.to
+                ? `mengubah tenggat ${key} menjadi ${formatDayMonth(str(p.to))}`
+                : `menghapus tenggat ${key}`;
+        case 'task.priority_changed':
+            return `mengubah prioritas ${key} menjadi ${PRIORITY_LABELS[Number(p.to) as Priority] ?? '–'}`;
+        case 'task.renamed':
+            return `mengganti judul ${key} menjadi “${str(p.to)}”`;
+        case 'task.deleted':
+            return `menghapus ${key} “${str(p.title)}”`;
+        case 'workspace.created':
+            return 'membuat workspace ini';
+        case 'workspace.updated':
+            return 'mengubah pengaturan workspace';
+        case 'workspace.archived':
+            return 'mengarsipkan workspace';
+        case 'workspace.restored':
+            return 'memulihkan workspace dari arsip';
+        case 'workspace.member_added':
+            return `menambahkan ${str(p.name)} sebagai ${ROLE_LABELS[str(p.role) as keyof typeof ROLE_LABELS] ?? str(p.role)}`;
+        case 'workspace.member_removed':
+            return `mengeluarkan ${str(p.name)}`;
+        case 'workspace.member_role_changed':
+            return `mengubah peran ${str(p.name)} menjadi ${ROLE_LABELS[str(p.to) as keyof typeof ROLE_LABELS] ?? str(p.to)}`;
+        default:
+            return item.event;
+    }
+}

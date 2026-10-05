@@ -3,7 +3,9 @@
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Models\Division;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Gate;
 
 /*
 | Private per-user channel for broadcast notifications (Laravel default name).
@@ -12,6 +14,11 @@ use Illuminate\Support\Facades\Broadcast;
 */
 Broadcast::channel('App.Models.User.{id}', function (User $user, string $id): bool {
     return $user->id === $id;
+});
+
+// Sprint 5/6: board events (TaskCreated/Updated/Moved/Deleted) for everyone who may see the workspace.
+Broadcast::channel('workspace.{workspace}', function (User $user, Workspace $workspace): bool {
+    return Gate::forUser($user)->allows('view', $workspace);
 });
 
 // Sprint 2 — live attendance boards (authorized by AttendanceDayPolicy).
