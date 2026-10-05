@@ -1,6 +1,6 @@
 # Sprint 4 — Ringkasan: Pengajuan & approval
 
-Cabang `feat/sprint-4-pengajuan`. Dibangun di atas Sprint 1 core, lalu `feat/sprint-8-notifikasi` dan `main` (Sprint 1 login/karyawan/struktur, Sprint 2 absensi, Sprint 7 Google, Sprint 8, Sprint 10A) di-merge. Rencana: `PLAN.md`.
+Cabang `feat/sprint-4-pengajuan`. Dibangun di atas Sprint 1 core, lalu `feat/sprint-8-notifikasi` dan `main` (Sprint 1 login/karyawan/struktur, Sprint 2 absensi, Sprint 5 workspace, Sprint 7 Google, Sprint 8, Sprint 10A) di-merge. Rencana: `PLAN.md`.
 
 ## Acceptance criteria (docs/PROMPTS.md Sprint 4)
 
@@ -24,7 +24,7 @@ Cabang `feat/sprint-4-pengajuan`. Dibangun di atas Sprint 1 core, lalu `feat/spr
 | pengajuan tumpang tindih ditolak | ✓ | `BalanceAndOverlapTest` "rejects overlapping requests" |
 | cuti yang disetujui membuat close-day tidak menandai alpha | ✓ | `AttendanceIntegrationTest` "approved leave prevents close-day alpha" (+ alpha yang sudah tertulis diganti saat cuti/sakit disetujui) |
 
-Test modul: **94 Pest** di `tests/Feature/Requests` (607 asersi) + Vitest `lib/requests.test.ts`, `features/admin-requests/flow-summary.test.ts`. Seluruh repo: **1146 Pest hijau**, **154 Vitest hijau**; `composer lint` (Pint + Larastan level 8), `npm run typecheck`, `npm run lint` hijau.
+Test modul: **94 Pest** di `tests/Feature/Requests` (607 asersi) + Vitest `lib/requests.test.ts`, `features/admin-requests/flow-summary.test.ts`. Seluruh repo (setelah merge `main` terakhir, termasuk Sprint 5): **1262 Pest hijau**, **191 Vitest hijau**; `composer lint` (Pint + Larastan level 8), `npm run typecheck`, `npm run lint` hijau.
 
 ## Cara uji manual (https://ruangkerja.test, sandi `password`)
 
