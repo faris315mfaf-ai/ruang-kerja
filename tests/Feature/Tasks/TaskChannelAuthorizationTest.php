@@ -33,6 +33,12 @@ beforeEach(function () {
     require base_path('routes/channels.php');
 });
 
+/** Denied: 403 from the channel callback, or 404 from the workspace route binding (invisible workspace). */
+function expectChannelDenied(TestResponse $response): void
+{
+    expect($response->status())->toBeIn([403, 404]);
+}
+
 function channelAuth(User $user, string $channel): TestResponse
 {
     return test()->actingAs($user)->postJson('/broadcasting/auth', [
@@ -46,14 +52,14 @@ it('authorizes the private workspace channel for people who can see the workspac
 
     channelAuth($this->member, $channel)->assertOk()->assertJsonStructure(['auth']);
     channelAuth(User::factory()->withRole(Role::Direksi)->create(), $channel)->assertOk();
-    channelAuth(User::factory()->create(), $channel)->assertForbidden();
+    expectChannelDenied(channelAuth(User::factory()->create(), $channel));
 });
 
 it('keeps personal workspace channels closed even to Super Admin', function () {
     $personal = Workspace::query()->where('type', 'personal')->where('owner_id', $this->owner->id)->firstOrFail();
 
     channelAuth($this->owner, 'private-workspace.'.$personal->id)->assertOk();
-    channelAuth(User::factory()->withRole(Role::SuperAdmin)->create(), 'private-workspace.'.$personal->id)->assertForbidden();
+    expectChannelDenied(channelAuth(User::factory()->withRole(Role::SuperAdmin)->create(), 'private-workspace.'.$personal->id));
 });
 
 it('authorizes the task presence channel with the viewer identity', function () {
@@ -63,7 +69,7 @@ it('authorizes the task presence channel with the viewer identity', function () 
     expect($data['user_id'])->toBe($this->member->id)
         ->and($data['user_info'])->toBe(['id' => $this->member->id, 'name' => $this->member->name, 'avatar' => null]);
 
-    channelAuth(User::factory()->create(), 'presence-task.'.$this->task->id)->assertForbidden();
+    expectChannelDenied(channelAuth(User::factory()->create(), 'presence-task.'.$this->task->id));
 });
 
 it('denies unknown tasks and workspaces', function () {
