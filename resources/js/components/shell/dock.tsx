@@ -293,6 +293,7 @@ export function Dock() {
     return (
         <nav
             aria-label="Navigasi utama"
+            data-dock
             className="pointer-events-none fixed inset-x-0 bottom-(--dock-bottom) z-40 flex justify-center px-3"
         >
             <ul

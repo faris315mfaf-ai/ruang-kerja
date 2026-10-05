@@ -273,7 +273,12 @@
     --field-bg: rgb(23 33 49 / 0.9);
 }
 
-/* Toasts clear the mobile tab bar capsule while it is on screen. */
+/* Toasts clear the floating chrome at the bottom: the desktop Dock (its
+   reserved --dock-space) and the mobile tab bar capsule. */
+:root:has(nav[data-dock]) {
+    --toast-offset-bottom: var(--dock-space);
+}
+
 :root:has(nav[data-tab-bar]) {
     --toast-offset-bottom: calc(
         var(--tab-bar-height) + env(safe-area-inset-bottom)
