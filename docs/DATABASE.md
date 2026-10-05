@@ -180,6 +180,7 @@ Implementasi: `weekdays` = `smallint[]` NOT NULL default `{}` (CHECK nilai 1–7
 | work_minutes | int | |
 | overtime_minutes | int | dari pengajuan lembur yang disetujui |
 | request_id | FK requests null | jika status berasal dari pengajuan |
+| request_portion | varchar(10) null | `full` · `half_day` (CHECK) — porsi tanggal yang ditutup pengajuan yang disetujui. Setengah hari dan dinas luar (`business_trip`) tetap boleh check-in: status & `request_id` dipertahankan, dinas boleh check-in di luar geofence dengan catatan |
 | is_suspicious | bool | ada log yang ditandai |
 | note | text null | |
 

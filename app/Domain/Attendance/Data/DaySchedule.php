@@ -24,7 +24,17 @@ final readonly class DaySchedule
         public WorkMode $workMode,
         public ?Holiday $holiday = null,
         public bool $isOverride = false,
+        public bool $onBusinessTrip = false,
     ) {}
+
+    /**
+     * The same schedule on an approved business trip (dinas luar): check-in and
+     * check-out are accepted outside every geofence, with a note.
+     */
+    public function asBusinessTrip(): self
+    {
+        return new self($this->workDate, $this->shift, $this->scheduledStart, $this->scheduledEnd, $this->workMode, $this->holiday, $this->isOverride, true);
+    }
 
     /**
      * Expected to work: a shift applies and the day is not a holiday (an explicit
@@ -86,6 +96,6 @@ final readonly class DaySchedule
      */
     public function allowsRemoteCheckIn(): bool
     {
-        return in_array($this->workMode, [WorkMode::Wfh, WorkMode::Field], true);
+        return $this->onBusinessTrip || in_array($this->workMode, [WorkMode::Wfh, WorkMode::Field], true);
     }
 }

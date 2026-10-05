@@ -65,6 +65,7 @@ final class AttendancePresenter
             'earlyLeaveMinutes' => $day->early_leave_minutes,
             'workMinutes' => $day->work_minutes,
             'isSuspicious' => $day->is_suspicious,
+            'requestPortion' => $day->request_portion?->value,
             'checkIn' => $day->checkInLog === null ? null : $this->log($day->checkInLog, $withSelfies),
             'checkOut' => $day->checkOutLog === null ? null : $this->log($day->checkOutLog, $withSelfies),
         ];
