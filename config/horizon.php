@@ -217,6 +217,9 @@ return [
             'connection' => 'redis',
             'queue' => ['realtime'],
             'balance' => 'simple',
+            // With the blocking pop (config/queue.php block_for) the worker waits on Redis
+            // itself; sleeping after an empty pop would delay the next broadcast by seconds.
+            'sleep' => 0,
             'maxProcesses' => 1,
             'maxTime' => 0,
             'maxJobs' => 0,
