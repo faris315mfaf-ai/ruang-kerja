@@ -21,7 +21,7 @@ type Props = {
     className?: string;
 };
 
-function Completion({
+export function CompletionText({
     completedAt,
     due,
 }: {
@@ -145,7 +145,7 @@ export const TaskCardContent = memo(function TaskCardContent({
                             </span>
                         )}
                         {closed && task.completed_at ? (
-                            <Completion
+                            <CompletionText
                                 completedAt={task.completed_at}
                                 due={task.due_date}
                             />
