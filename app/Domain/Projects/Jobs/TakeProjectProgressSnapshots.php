@@ -17,7 +17,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Daily 23.55 (office time): one burn-up point per open project for the
- * office date (scope = non-canceled tasks, done, and hours when estimated).
+ * office date of the dispatch (scope = non-canceled tasks, done, and hours
+ * when estimated).
  * Idempotent: re-running on the same date overwrites that day's row.
  */
 final class TakeProjectProgressSnapshots implements ShouldBeUnique, ShouldQueue
@@ -26,13 +27,21 @@ final class TakeProjectProgressSnapshots implements ShouldBeUnique, ShouldQueue
 
     public int $uniqueFor = 600;
 
-    public function __construct(public readonly ?string $date = null) {}
+    /** Office date (Y-m-d) of the snapshot, fixed when the job is dispatched. */
+    public readonly string $date;
+
+    /**
+     * Without a date the job snapshots the office date of its dispatch, so a
+     * busy queue running it after midnight still writes the right day.
+     */
+    public function __construct(?string $date = null)
+    {
+        $this->date = $date ?? ProjectClock::today()->toDateString();
+    }
 
     public function handle(ProjectMetrics $metrics): int
     {
-        $today = $this->date !== null
-            ? CarbonImmutable::parse($this->date, ProjectClock::timezone())->startOfDay()
-            : ProjectClock::today();
+        $today = CarbonImmutable::parse($this->date, ProjectClock::timezone())->startOfDay();
         $written = 0;
 
         Workspace::query()

@@ -43,5 +43,6 @@ Schedule::command('tasks:notify-deadlines')->dailyAt('07:00')->timezone((string)
 Schedule::command('employee-imports:prune')->hourly()->withoutOverlapping();
 
 // Sprint 9 — project tracking (office timezone): burn-up snapshot 23.55, PIC reminder Friday 15.00.
-Schedule::job(new TakeProjectProgressSnapshots)->dailyAt('23:55')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
+// Class name: the job (and its snapshot date) is built when the event fires, not when the schedule loads.
+Schedule::job(TakeProjectProgressSnapshots::class)->dailyAt('23:55')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
 Schedule::job(new SendProjectUpdateReminders)->weeklyOn(5, '15:00')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
