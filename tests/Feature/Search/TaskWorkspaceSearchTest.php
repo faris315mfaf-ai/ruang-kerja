@@ -8,6 +8,7 @@ use App\Domain\Workspaces\Enums\WorkspaceRole;
 use App\Models\User;
 use App\Models\Workspace;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Support\Facades\DB;
 
 require_once __DIR__.'/../../Support/workspace-helpers.php';
 
@@ -45,4 +46,38 @@ it('is wired into the search endpoint', function () {
         ->getJson('/cari/hasil?q=landing')
         ->assertOk()
         ->assertJsonPath('groups.0.key', 'tasks');
+});
+
+it('searches tasks through the full-text index with prefixes, web syntax, rank and a description excerpt', function () {
+    $provider = app(TaskSearchProvider::class);
+    app(CreateTask::class)->handle($this->project, $this->owner, [
+        'title' => 'Rapat vendor',
+        'description_text' => 'Siapkan bahan presentasi. Sebelum rapat, kirim laporan stok gudang ke tim keuangan agar angka cocok dengan catatan pembelian.',
+    ]);
+    app(CreateTask::class)->handle($this->project, $this->owner, ['title' => 'Laporan stok bulanan']);
+
+    DB::enableQueryLog();
+    $results = collect($provider->search($this->member, 'laporan stok', 10));
+    $sql = collect(DB::getQueryLog())->pluck('query')->implode("\n");
+
+    // Title (weight A) ranks above description (weight B); the description hit carries an excerpt.
+    expect($results->pluck('title')->all())->toBe(['Laporan stok bulanan', 'Rapat vendor'])
+        ->and($results[0]->snippet)->toBeNull()
+        ->and($results[1]->snippet)->toContain('laporan stok gudang')
+        ->and(mb_strlen((string) $results[1]->snippet))->toBeLessThan(160)
+        ->and($sql)->toContain('search_vector @@')
+        ->and($sql)->toContain('websearch_to_tsquery')
+        ->and($sql)->not->toContain('ilike');
+
+    expect(collect($provider->search($this->member, 'lapor', 10))->pluck('title')->all())->toContain('Laporan stok bulanan')
+        ->and(collect($provider->search($this->member, 'stok -bulanan', 10))->pluck('title')->all())->toBe(['Rapat vendor'])
+        ->and(collect($provider->search($this->member, '"page produk"', 10))->pluck('code')->all())->toBe(['PLQ-1'])
+        ->and($provider->search($this->member, '&|!:*()', 10))->toBe([]);
+});
+
+it('builds a safe prefix query', function () {
+    expect(TaskSearchProvider::prefixQuery('Lapor  ming!'))->toBe('lapor:* & ming:*')
+        ->and(TaskSearchProvider::prefixQuery("&|!:*()'"))->toBeNull()
+        ->and(TaskSearchProvider::prefixQuery('stok -bulanan'))->toBeNull()
+        ->and(TaskSearchProvider::prefixQuery('"page produk"'))->toBeNull();
 });
