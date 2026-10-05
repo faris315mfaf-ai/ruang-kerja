@@ -9,12 +9,14 @@ use App\Http\Requests\Search\SearchRequest;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Global search. Authorization: signed-in employees only (route middleware);
- * every SearchProvider filters by the viewer's visibility.
+ * Global search. Authorization: the `search` gate (active employees; also
+ * signed-in route middleware); every SearchProvider filters by the viewer's
+ * visibility.
  */
 class SearchController extends Controller
 {
@@ -23,6 +25,8 @@ class SearchController extends Controller
      */
     public function index(SearchRequest $request, SearchRegistry $registry): Response
     {
+        Gate::authorize('search');
+
         return Inertia::render('search/index', [
             'q' => $request->term(),
             'groups' => array_map(fn ($provider): array => [
@@ -34,6 +38,8 @@ class SearchController extends Controller
 
     public function results(SearchRequest $request, #[CurrentUser] User $user, RunSearch $search): JsonResponse
     {
+        Gate::authorize('search');
+
         return response()->json([
             'q' => $request->term(),
             'groups' => $search->handle($user, $request->term(), $request->group()),

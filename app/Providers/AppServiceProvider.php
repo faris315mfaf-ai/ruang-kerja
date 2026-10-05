@@ -113,6 +113,9 @@ class AppServiceProvider extends ServiceProvider
     protected function configureDashboards(): void
     {
         Gate::define('viewPulse', fn (?User $user = null): bool => $user?->isSuperAdmin() ?? false);
+
+        // Global search (/cari): active employees; providers filter by visibility.
+        Gate::define('search', fn (User $user): bool => $user->isActive());
     }
 
     private function userOrIpKey(Request $request): string
