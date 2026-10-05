@@ -21,6 +21,7 @@ enum NotificationType: string
     case RequestApproved = 'request.approved';
     case RequestRejected = 'request.rejected';
     case RequestRevisionRequested = 'request.revision_requested';
+    case RequestCanceled = 'request.canceled';
 
     // Attendance (Sprint 2)
     case CheckInReminder = 'attendance.check_in_reminder';
@@ -42,6 +43,7 @@ enum NotificationType: string
             self::RequestApproved => 'Pengajuan disetujui',
             self::RequestRejected => 'Pengajuan ditolak',
             self::RequestRevisionRequested => 'Perlu revisi',
+            self::RequestCanceled => 'Pengajuan dibatalkan',
             self::CheckInReminder => 'Pengingat check-in',
             self::CheckOutReminder => 'Pengingat check-out',
             self::SystemAnnouncement => 'Pengumuman',
@@ -60,7 +62,7 @@ enum NotificationType: string
             self::TaskCommented => NotificationEvent::TaskCommented,
             self::TaskDueSoon => NotificationEvent::TaskDueSoon,
             self::TaskOverdue => NotificationEvent::TaskOverdue,
-            self::RequestSubmitted => NotificationEvent::RequestPending,
+            self::RequestSubmitted, self::RequestCanceled => NotificationEvent::RequestPending,
             self::RequestApproved, self::RequestRejected, self::RequestRevisionRequested => NotificationEvent::RequestDecided,
             self::CheckInReminder => NotificationEvent::CheckInReminder,
             self::CheckOutReminder => NotificationEvent::CheckOutReminder,
@@ -86,7 +88,7 @@ enum NotificationType: string
             self::TaskOverdue => 'alert',
             self::RequestSubmitted => 'check-check',
             self::RequestApproved => 'check-check',
-            self::RequestRejected => 'x',
+            self::RequestRejected, self::RequestCanceled => 'x',
             self::RequestRevisionRequested => 'rotate',
             self::CheckInReminder, self::CheckOutReminder => 'alarm',
             self::SystemAnnouncement => 'megaphone',
@@ -105,7 +107,7 @@ enum NotificationType: string
             self::RequestApproved => 'success',
             self::TaskDueSoon, self::RequestRevisionRequested, self::CheckInReminder, self::CheckOutReminder => 'warning',
             self::TaskOverdue, self::RequestRejected => 'danger',
-            self::TaskAssigned, self::TaskCommented => 'neutral',
+            self::TaskAssigned, self::TaskCommented, self::RequestCanceled => 'neutral',
         };
     }
 

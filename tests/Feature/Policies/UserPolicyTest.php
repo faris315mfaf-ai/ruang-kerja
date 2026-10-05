@@ -115,3 +115,32 @@ it('lets only a Super Admin manage their own password and 2FA', function (Role $
     'kepala_divisi' => [Role::KepalaDivisi, false],
     'anggota' => [Role::Anggota, false],
 ]);
+
+it('applies the role assignment matrix', function (Role $actorRole, array $expected) {
+    $actor = User::factory()->withRole($actorRole)->create();
+    $target = User::factory()->withRole(Role::Anggota)->create();
+    $gate = Gate::forUser($actor);
+
+    $actual = [];
+
+    foreach (Role::cases() as $role) {
+        $actual[$role->value] = $gate->allows('assignRole', [$target, $role]);
+    }
+
+    expect($actual)->toBe($expected);
+})->with([
+    'super_admin grants everything' => [Role::SuperAdmin, ['super_admin' => true, 'direksi' => true, 'hr' => true, 'kepala_divisi' => true, 'anggota' => true]],
+    'hr grants kepala_divisi/anggota only' => [Role::Hr, ['super_admin' => false, 'direksi' => false, 'hr' => false, 'kepala_divisi' => true, 'anggota' => true]],
+    'direksi grants nothing' => [Role::Direksi, ['super_admin' => false, 'direksi' => false, 'hr' => false, 'kepala_divisi' => false, 'anggota' => false]],
+    'kepala_divisi grants nothing' => [Role::KepalaDivisi, ['super_admin' => false, 'direksi' => false, 'hr' => false, 'kepala_divisi' => false, 'anggota' => false]],
+    'anggota grants nothing' => [Role::Anggota, ['super_admin' => false, 'direksi' => false, 'hr' => false, 'kepala_divisi' => false, 'anggota' => false]],
+]);
+
+it('never lets anyone change their own roles', function (Role $actorRole) {
+    $actor = User::factory()->withRole($actorRole)->create();
+    $gate = Gate::forUser($actor);
+
+    foreach (Role::cases() as $role) {
+        expect($gate->allows('assignRole', [$actor, $role]))->toBeFalse();
+    }
+})->with([Role::SuperAdmin, Role::Hr]);

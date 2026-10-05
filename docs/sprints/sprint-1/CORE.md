@@ -76,7 +76,7 @@ Modul lain (absensi, pengajuan, dashboard) sebaiknya meniru pola ini: `whereIn('
 | | `update` | `employees.manage`, company sama, target Super Admin hanya oleh Super Admin |
 | | `deactivate` | seperti `update` + bukan diri sendiri |
 | | `delete` | selalu `false` (nonaktifkan, jangan hapus) |
-| | `assignRole` | `Gate::authorize('assignRole', [$target, Role::X])` — seperti `update`; peran `super_admin` hanya oleh Super Admin. Cek untuk **setiap** peran yang ditambah/dicabut. |
+| | `assignRole` | `Gate::authorize('assignRole', [$target, Role::X])` — seperti `update`, tetapi **tidak pernah untuk diri sendiri**; peran `super_admin`, `direksi`, `hr` hanya oleh Super Admin (HR boleh `kepala_divisi`/`anggota`). Cek untuk **setiap** peran yang ditambah/dicabut. |
 | | `updateTheme` | hanya diri sendiri (Sprint 0) |
 | `DivisionPolicy` / `TeamPolicy` / `PositionPolicy` | `viewAny`, `view` | semua karyawan company yang sama |
 | | `create`, `update`, `delete`, `restore` | `organization.manage` (HR, Super Admin) + company sama |

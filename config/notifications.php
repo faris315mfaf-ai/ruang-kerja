@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Notifications\Digest\Sections\InboxActionSection;
+use App\Domain\Requests\Digest\PendingApprovalsSection;
 use App\Domain\Tasks\Digest\TasksDueTodaySection;
 use App\Domain\Tasks\Digest\TasksOverdueSection;
 
@@ -99,6 +100,7 @@ return [
         'sections' => [
             TasksDueTodaySection::class,
             TasksOverdueSection::class,
+            PendingApprovalsSection::class,
             InboxActionSection::class,
         ],
     ],

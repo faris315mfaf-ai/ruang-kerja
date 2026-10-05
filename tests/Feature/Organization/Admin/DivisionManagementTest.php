@@ -257,3 +257,21 @@ it('forbids changing divisions of another company', function () {
     $this->actingAs($hr)->delete("/admin/organisasi/divisi/{$foreign->id}")->assertForbidden();
     $this->actingAs($hr)->post("/admin/organisasi/divisi/{$foreign->id}/pulihkan")->assertForbidden();
 });
+
+it('keeps an already-inactive head on unrelated edits but rejects switching to an inactive head', function () {
+    $hr = User::factory()->withRole(Role::Hr)->create();
+    $staleHead = User::factory()->forCompany($hr->company)->inactive()->create();
+    $division = Division::factory()->forCompany($hr->company)->create(['name' => 'Legal', 'code' => 'LGL', 'head_user_id' => $staleHead->id]);
+
+    $this->actingAs($hr)
+        ->put("/admin/organisasi/divisi/{$division->id}", ['name' => 'Legal & Kepatuhan', 'code' => 'LGL', 'head_user_id' => $staleHead->id])
+        ->assertSessionHasNoErrors();
+
+    expect($division->refresh()->name)->toBe('Legal & Kepatuhan');
+
+    $otherInactive = User::factory()->forCompany($hr->company)->inactive()->create();
+
+    $this->actingAs($hr)
+        ->put("/admin/organisasi/divisi/{$division->id}", ['name' => 'Legal', 'code' => 'LGL', 'head_user_id' => $otherInactive->id])
+        ->assertSessionHasErrors(['head_user_id' => 'Kepala divisi harus karyawan aktif di perusahaan ini.']);
+});

@@ -2,6 +2,7 @@
 
 use App\Domain\Organization\Enums\Role;
 use App\Domain\Organization\Enums\WorkMode;
+use App\Domain\Organization\Services\EmployeeImportStore;
 use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\Division;
@@ -10,6 +11,8 @@ use App\Models\Position;
 use App\Models\Team;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Console\Scheduling\Event;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -209,8 +212,26 @@ it('does not let HR import the super_admin role or change a super admin', functi
     $this->actingAs($this->hr)
         ->get(route('admin.employees.import', ['token' => $token]))
         ->assertInertia(fn (Assert $page) => $page
-            ->where('preview.rows.0.errors', ['Hanya Super Admin yang dapat memberikan atau mencabut peran Super Admin.'])
+            ->where('preview.rows.0.errors', ['Hanya Super Admin yang dapat memberikan atau mencabut peran Super Admin, Direksi, atau HR.'])
             ->where('preview.rows.1.errors.0', 'Hanya Super Admin yang dapat mengubah data Super Admin.')
+        );
+});
+
+it('does not let HR import direksi/hr roles or change their own roles', function () {
+    $token = previewImport(csvUpload(
+        'Calon Direksi,direksi.baru@kantor.test,,,,,,,direksi,,,',
+        'Calon HR,hr.baru@kantor.test,,,,,,,hr,,,',
+        'HR,hr@kantor.test,,,,,,,hr;kepala_divisi,,,',
+        'Calon Kadiv,kadiv.baru@kantor.test,,,,,,,kepala_divisi,,,',
+    ));
+
+    $this->actingAs($this->hr)
+        ->get(route('admin.employees.import', ['token' => $token]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('preview.rows.0.errors', ['Hanya Super Admin yang dapat memberikan atau mencabut peran Super Admin, Direksi, atau HR.'])
+            ->where('preview.rows.1.errors', ['Hanya Super Admin yang dapat memberikan atau mencabut peran Super Admin, Direksi, atau HR.'])
+            ->where('preview.rows.2.errors', ['Anda tidak dapat mengubah peran Anda sendiri.'])
+            ->where('preview.rows.3.errors', [])
         );
 });
 
@@ -276,4 +297,68 @@ it('keeps an import private to the uploader and forbids anggota', function () {
         ->assertForbidden();
     $this->actingAs($anggota)->post(route('admin.employees.import.commit', $token))->assertForbidden();
     $this->actingAs($anggota)->get(route('admin.employees.import.template', 'csv'))->assertForbidden();
+});
+
+describe('uploaded file retention (contains NIK)', function () {
+    it('deletes the previous uncommitted upload when the same user uploads again', function () {
+        $first = previewImport(csvUpload('Bayu,bayu@kantor.test,,,,,,,,,,3201010101010001'));
+        $firstFiles = Storage::disk('local')->allFiles(EmployeeImportStore::DIRECTORY);
+
+        $second = previewImport(csvUpload('Citra,citra@kantor.test,,,,,,,,,,3201010101010002'));
+
+        expect($firstFiles)->toHaveCount(1)
+            ->and(Storage::disk('local')->allFiles(EmployeeImportStore::DIRECTORY))->toHaveCount(1)
+            ->and(Storage::disk('local')->exists($firstFiles[0]))->toBeFalse()
+            ->and(app(EmployeeImportStore::class)->get($first, $this->hr))->toBeNull()
+            ->and(app(EmployeeImportStore::class)->get($second, $this->hr))->not->toBeNull();
+    });
+
+    it('does not extend the import session on update, so it never outlives its file', function () {
+        $token = previewImport(csvUpload('Bayu,bayu@kantor.test,,,,,,,,,,'));
+
+        $this->travel(50)->minutes();
+        app(EmployeeImportStore::class)->update($token, ['preview' => []]);
+        $this->travel(11)->minutes();
+
+        expect(app(EmployeeImportStore::class)->get($token, $this->hr))->toBeNull();
+    });
+
+    it('prunes upload files older than the TTL every hour', function () {
+        $disk = Storage::disk('local');
+        $disk->put(EmployeeImportStore::DIRECTORY.'/old.csv', 'nik');
+        $disk->put(EmployeeImportStore::DIRECTORY.'/fresh.csv', 'nik');
+        touch($disk->path(EmployeeImportStore::DIRECTORY.'/old.csv'), now()->subMinutes(EmployeeImportStore::TTL_MINUTES + 1)->getTimestamp());
+
+        $this->artisan('employee-imports:prune')->expectsOutput('1 berkas impor kedaluwarsa dihapus.')->assertSuccessful();
+
+        expect($disk->exists(EmployeeImportStore::DIRECTORY.'/old.csv'))->toBeFalse()
+            ->and($disk->exists(EmployeeImportStore::DIRECTORY.'/fresh.csv'))->toBeTrue();
+
+        $events = collect(app(Schedule::class)->events())
+            ->filter(fn (Event $event) => str_contains((string) $event->command, 'employee-imports:prune'));
+
+        expect($events)->toHaveCount(1)
+            ->and($events->first()->expression)->toBe('0 * * * *');
+    });
+});
+
+it('does not block rows whose unchanged manager became inactive', function () {
+    $boss = User::factory()->forCompany($this->company)->inactive()->create(['email' => 'bos.lama@kantor.test']);
+    User::factory()->forCompany($this->company)->managedBy($boss)->create(['email' => 'bayu@kantor.test']);
+    User::factory()->forCompany($this->company)->managedBy($boss)->create(['email' => 'dewi@kantor.test']);
+    User::factory()->forCompany($this->company)->create(['email' => 'citra@kantor.test']);
+
+    $token = previewImport(csvUpload(
+        'Bayu Baru,bayu@kantor.test,,,,,,,,,,',
+        'Dewi,dewi@kantor.test,,,,,bos.lama@kantor.test,,,,,',
+        'Citra,citra@kantor.test,,,,,bos.lama@kantor.test,,,,,',
+    ));
+
+    $this->actingAs($this->hr)
+        ->get(route('admin.employees.import', ['token' => $token]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('preview.rows.0.errors', [])
+            ->where('preview.rows.1.errors', [])
+            ->where('preview.rows.2.errors', ['Atasan bos.lama@kantor.test tidak aktif.'])
+        );
 });

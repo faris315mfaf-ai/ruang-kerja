@@ -9,10 +9,12 @@ import {
     Inbox,
     LayoutGrid,
     MapPin,
+    ListChecks,
     Menu,
     Network,
     ScrollText,
     Users,
+    WalletCards,
 } from 'lucide-react';
 import type { RoleName } from '@/lib/roles';
 import { hasAnyRole } from '@/lib/roles';
@@ -23,6 +25,8 @@ export type AppNavItem = {
     icon: LucideIcon;
     /** Match nested routes too (e.g. /pengajuan/123). */
     matchPrefix?: boolean;
+    /** Shared-prop counter shown as a badge. */
+    badge?: 'approvals';
     /** Hidden from the mobile Menu tab (docs/PLATFORM.md §3, "—" on mobile). */
     desktopOnly?: boolean;
 };
@@ -49,6 +53,7 @@ export const mainNavItems: AppNavItem[] = [
         href: '/persetujuan',
         icon: CheckCheck,
         matchPrefix: true,
+        badge: 'approvals',
     },
     {
         title: 'Struktur organisasi',
@@ -115,6 +120,25 @@ export function adminNavItems(roles: readonly string[]): AppNavItem[] {
             matchPrefix: true,
             desktopOnly: true,
         });
+    }
+
+    if (hasAnyRole(roles, 'super_admin', 'hr')) {
+        items.push(
+            {
+                title: 'Jenis pengajuan',
+                href: '/admin/pengajuan',
+                icon: ListChecks,
+                matchPrefix: true,
+                desktopOnly: true,
+            },
+            {
+                title: 'Saldo cuti',
+                href: '/admin/saldo-cuti',
+                icon: WalletCards,
+                matchPrefix: true,
+                desktopOnly: true,
+            },
+        );
     }
 
     return items;

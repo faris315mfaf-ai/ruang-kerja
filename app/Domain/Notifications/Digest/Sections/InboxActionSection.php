@@ -21,9 +21,9 @@ final class InboxActionSection implements DigestSection
 
     public function build(User $user, CarbonImmutable $date): ?DigestSectionData
     {
-        // Overdue tasks have their own section (Tasks\Digest\TasksOverdueSection).
+        // Kinds with their own section: overdue tasks (TasksOverdueSection), pending approvals (PendingApprovalsSection).
         $query = InboxNotification::query()->visibleTo($user)->needsAction()
-            ->where('type', '!=', NotificationType::TaskOverdue->value);
+            ->whereNotIn('type', [NotificationType::TaskOverdue->value, NotificationType::RequestSubmitted->value]);
         $count = (clone $query)->count();
 
         if ($count === 0) {
