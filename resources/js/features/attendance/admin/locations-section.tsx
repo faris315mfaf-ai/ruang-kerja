@@ -143,7 +143,7 @@ export function LocationsSection({ locations, geofence }: Props) {
                                             : undefined
                                     }
                                     className={cn(
-                                        'flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                                        'flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors duration-120 ease-brand outline-none focus-visible:ring-[3px] focus-visible:ring-ring',
                                         selected === location.id
                                             ? 'border-primary/40 bg-primary/8'
                                             : 'border-border hover:bg-surface-2',
@@ -155,10 +155,10 @@ export function LocationsSection({ locations, geofence }: Props) {
                                         aria-hidden
                                     />
                                     <span className="min-w-0 flex-1">
-                                        <span className="block truncate text-[13px] font-medium text-text">
+                                        <span className="block truncate text-meta font-medium text-text">
                                             {location.name}
                                         </span>
-                                        <span className="block text-xs text-text-muted">
+                                        <span className="block text-meta text-text-muted">
                                             {location.radiusM} m ·{' '}
                                             {location.employeesCount} karyawan
                                         </span>
@@ -180,12 +180,12 @@ export function LocationsSection({ locations, geofence }: Props) {
                             </li>
                         ))}
                         {selected === NEW && (
-                            <li className="rounded-lg border border-dashed border-primary/50 px-3 py-2.5 text-[13px] text-primary">
+                            <li className="rounded-lg border border-dashed border-primary/50 px-3 py-2.5 text-meta text-primary">
                                 Lokasi baru
                             </li>
                         )}
                     </ul>
-                    <p className="rounded-lg bg-surface-2 p-3 text-xs leading-5 text-text-muted">
+                    <p className="rounded-lg bg-surface-2 p-3 text-meta leading-5 text-text-muted">
                         Karyawan WFH dan Lapangan tetap check-in dengan GPS +
                         selfie, tanpa batas radius.
                     </p>
@@ -201,11 +201,11 @@ export function LocationsSection({ locations, geofence }: Props) {
                             className="h-[360px] w-full"
                         />
                     ) : (
-                        <div className="flex h-[360px] items-center justify-center bg-surface-2 text-sm text-text-muted">
+                        <div className="flex h-[360px] items-center justify-center bg-surface-2 text-[15px] text-text-muted">
                             Koordinat tidak valid
                         </div>
                     )}
-                    <p className="border-t border-border px-3 py-2 text-xs text-text-muted">
+                    <p className="border-t border-border px-3 py-2 text-meta text-text-muted">
                         Seret pin atau klik peta untuk memindahkan titik pusat.
                     </p>
                 </div>
@@ -272,7 +272,7 @@ export function LocationsSection({ locations, geofence }: Props) {
                     <div className="space-y-1.5">
                         <div className="flex items-center justify-between">
                             <Label htmlFor="location-radius">Radius</Label>
-                            <span className="text-sm font-medium text-text tnum">
+                            <span className="text-[15px] font-medium text-text tnum">
                                 {form.data.radius_m} m
                             </span>
                         </div>
@@ -288,7 +288,7 @@ export function LocationsSection({ locations, geofence }: Props) {
                             }
                             className="w-full accent-primary"
                         />
-                        <div className="flex justify-between text-[11px] text-text-subtle">
+                        <div className="flex justify-between text-[12px] text-text-subtle">
                             <span>{geofence.minRadius} m</span>
                             <span>{geofence.maxRadius} m</span>
                         </div>
@@ -297,12 +297,12 @@ export function LocationsSection({ locations, geofence }: Props) {
                     <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
                         <div>
                             <p
-                                className="text-[13px] font-medium text-text"
+                                className="text-meta font-medium text-text"
                                 id="location-active-label"
                             >
                                 Lokasi aktif
                             </p>
-                            <p className="text-xs text-text-muted">
+                            <p className="text-meta text-text-muted">
                                 Nonaktifkan untuk menutup check-in di sini.
                             </p>
                         </div>

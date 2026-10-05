@@ -111,7 +111,7 @@ export function KiosksSection({
             }
         >
             {error && (
-                <p className="border-b border-border bg-danger-soft px-4 py-2 text-sm text-danger">
+                <p className="border-b border-border bg-danger-soft px-4 py-2 text-[15px] text-danger">
                     {error}
                 </p>
             )}
@@ -123,8 +123,8 @@ export function KiosksSection({
                     className="m-4"
                 />
             ) : (
-                <table className="w-full text-sm">
-                    <thead className="bg-surface-2 text-[13px] text-text-muted">
+                <table className="w-full text-[15px]">
+                    <thead className="bg-background text-[14px] font-bold text-text-muted">
                         <tr>
                             <th
                                 scope="col"
@@ -165,7 +165,7 @@ export function KiosksSection({
                                     <p className="font-medium text-text">
                                         {kiosk.name}
                                     </p>
-                                    <p className="font-mono text-xs text-text-muted">
+                                    <p className="font-mono text-[14px] text-text-muted">
                                         {kiosk.code}
                                     </p>
                                 </td>
@@ -175,7 +175,7 @@ export function KiosksSection({
                                 <td className="px-3 py-2.5">
                                     <span
                                         className={cn(
-                                            'inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium',
+                                            'inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-meta font-medium',
                                             !kiosk.isActive
                                                 ? 'bg-surface-2 text-text-muted'
                                                 : kiosk.isPaired
@@ -201,7 +201,7 @@ export function KiosksSection({
                                               : 'Belum dipasang'}
                                     </span>
                                     {kiosk.pendingActivationUntil && (
-                                        <p className="mt-1 text-xs text-text-muted">
+                                        <p className="mt-1 text-meta text-text-muted">
                                             Tautan &amp; kode berlaku s.d.{' '}
                                             {formatDateTime(
                                                 kiosk.pendingActivationUntil,
@@ -371,7 +371,7 @@ function KioskDialog({
                                     event.target.value,
                                 )
                             }
-                            className="h-9 rounded-md border border-border bg-surface px-2 text-sm text-text"
+                            className="h-11 rounded-md border border-border-strong bg-surface px-3 text-[16px] text-text outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-ring/55"
                         >
                             {locations.map((location) => (
                                 <option key={location.id} value={location.id}>
@@ -382,7 +382,7 @@ function KioskDialog({
                         </select>
                         <InputError message={form.errors.office_location_id} />
                     </div>
-                    <label className="flex items-center justify-between gap-3 text-sm text-text">
+                    <label className="flex items-center justify-between gap-3 text-[15px] text-text">
                         Aktif
                         <Switch
                             checked={form.data.is_active}
@@ -448,7 +448,7 @@ function ActivationDialog({
                 <div className="space-y-1.5">
                     <p
                         id="kiosk-activation-code-label"
-                        className="text-sm font-medium text-text"
+                        className="text-[15px] font-medium text-text"
                     >
                         Kode aktivasi
                     </p>
@@ -483,7 +483,7 @@ function ActivationDialog({
                             id="kiosk-activation-url"
                             readOnly
                             value={link?.url ?? ''}
-                            className="font-mono text-xs"
+                            className="font-mono text-[14px]"
                             onFocus={(event) => event.currentTarget.select()}
                         />
                         <Button
@@ -500,7 +500,7 @@ function ActivationDialog({
                         </Button>
                     </div>
                 </div>
-                <p className="text-[13px] text-text-muted">
+                <p className="text-meta text-text-muted">
                     Perangkat yang dipasangkan dikunci ke layar kiosk dan keluar
                     dari akun karyawan. Perangkat kiosk lama untuk kiosk ini
                     berhenti berfungsi. Memakai tautan membatalkan kode, dan
