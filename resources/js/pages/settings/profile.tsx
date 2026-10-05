@@ -52,7 +52,7 @@ export default function Profile({ profile, canManageCredentials }: Props) {
     return (
         <>
             <Head title="Profil" />
-            <h1 className="sr-only">Profil</h1>
+            <h1 className="hidden md:sr-only md:block">Profil</h1>
 
             <div className="flex flex-wrap items-start gap-5">
                 <div className="flex min-w-0 flex-[1.4_1_560px] flex-col gap-5">

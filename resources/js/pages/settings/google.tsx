@@ -13,7 +13,7 @@ export default function GoogleSettings({ google }: Props) {
     return (
         <>
             <Head title="Akun Google" />
-            <h1 className="sr-only">Akun Google</h1>
+            <h1 className="hidden md:sr-only md:block">Akun Google</h1>
 
             <div className="max-w-[640px]">
                 <GoogleConnectionCard google={google} />

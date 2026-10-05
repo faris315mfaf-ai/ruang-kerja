@@ -27,7 +27,7 @@ export default function Security(props: Props) {
         <>
             <Head title="Pengaturan keamanan" />
 
-            <h1 className="sr-only">Pengaturan keamanan</h1>
+            <h1 className="hidden md:sr-only md:block">Pengaturan keamanan</h1>
 
             {props.twoFactorRequired && (
                 <div

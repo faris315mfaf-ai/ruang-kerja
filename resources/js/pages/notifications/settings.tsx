@@ -19,7 +19,9 @@ export default function NotificationSettingsPage(
     return (
         <>
             <Head title="Pengaturan notifikasi" />
-            <h1 className="sr-only">Pengaturan notifikasi</h1>
+            <h1 className="hidden md:sr-only md:block">
+                Pengaturan notifikasi
+            </h1>
             <SettingsLayout>
                 {breakpoint === 'mobile' ? (
                     <NotificationSettingsMobile

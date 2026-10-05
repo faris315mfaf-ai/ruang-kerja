@@ -9,7 +9,7 @@ export default function Appearance() {
     return (
         <>
             <Head title="Pengaturan tampilan" />
-            <h1 className="sr-only">Pengaturan tampilan</h1>
+            <h1 className="hidden md:sr-only md:block">Pengaturan tampilan</h1>
 
             <Panel
                 title="Tampilan"

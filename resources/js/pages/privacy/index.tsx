@@ -25,7 +25,9 @@ export default function PrivacyIndex(props: PrivacyPageProps) {
     return (
         <>
             <Head title="Privasi & data saya" />
-            <h1 className="sr-only">Privasi &amp; data saya</h1>
+            <h1 className="hidden md:sr-only md:block">
+                Privasi &amp; data saya
+            </h1>
 
             <SettingsLayout>
                 <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
