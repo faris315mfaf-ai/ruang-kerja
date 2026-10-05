@@ -14,8 +14,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Shell entries whose modules arrive in later sprints. Each sprint replaces
     // its entry with real routes.
     $upcoming = [
-        'tugas' => ['tasks.mine', 'Tugas saya'],
-        'workspace' => ['workspaces.index', 'Workspace'],
         'privasi' => ['privacy.index', 'Privasi & data saya'],
     ];
 
@@ -37,3 +35,4 @@ require __DIR__.'/admin-employees.php';
 require __DIR__.'/notifications.php';
 require __DIR__.'/google.php';
 require __DIR__.'/organization.php';
+require __DIR__.'/workspaces.php';

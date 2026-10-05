@@ -15,6 +15,7 @@ import {
 import type { ReactNode } from 'react';
 import { ThemeSegmented } from '@/components/shell/theme-segmented';
 import { UserAvatar } from '@/components/shell/user-avatar';
+import { MenuWorkspaceGrid } from '@/features/workspaces/menu-workspace-grid';
 import { adminNavItems } from '@/lib/navigation';
 import { primaryRoleLabel } from '@/lib/roles';
 import { cn } from '@/lib/utils';
@@ -96,7 +97,6 @@ export default function Menu() {
     const { auth, approvals } = usePage().props;
     const pending = approvals?.pending ?? 0;
     const roleLabel = primaryRoleLabel(auth.roles);
-    const initial = (auth.user?.name ?? '?').trim().charAt(0).toUpperCase();
 
     return (
         <>
@@ -129,23 +129,7 @@ export default function Menu() {
                 )}
 
                 <Section title="Workspace">
-                    <div className="grid grid-cols-2 gap-2.5">
-                        <Link
-                            href="/workspace"
-                            prefetch
-                            className="flex min-h-14 items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2.5 transition-colors duration-120 ease-brand hover:bg-surface-2"
-                        >
-                            <span
-                                aria-hidden
-                                className="flex size-8 shrink-0 items-center justify-center rounded-md bg-surface-2 text-sm font-semibold text-text-muted ring-1 ring-border"
-                            >
-                                {initial}
-                            </span>
-                            <span className="truncate text-[15px] text-text">
-                                Pribadi
-                            </span>
-                        </Link>
-                    </div>
+                    <MenuWorkspaceGrid />
                 </Section>
 
                 <Section title="Pekerjaan">
