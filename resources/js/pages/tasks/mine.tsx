@@ -359,6 +359,7 @@ function MyTasksView({ tab, counts, tasks, today }: Props) {
 
             <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-border">
                 <TabNav
+                    preserveScroll
                     label="Jenis tugas"
                     className="border-b-0"
                     items={TABS.map((item) => ({

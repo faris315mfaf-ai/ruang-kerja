@@ -154,6 +154,7 @@ export function MyRequestsDesktop({
             )}
 
             <TabNav
+                preserveScroll
                 label="Filter status"
                 items={FILTERS.map((item) => ({
                     href: index.url({

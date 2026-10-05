@@ -270,6 +270,7 @@ export default function OrganizationAdmin({
                 />
 
                 <TabNav
+                    preserveScroll
                     label="Data organisasi"
                     items={(Object.keys(TABS) as OrgTab[]).map((key) => ({
                         href: TABS[key].href(

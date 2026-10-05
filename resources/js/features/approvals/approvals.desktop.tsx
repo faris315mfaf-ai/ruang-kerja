@@ -118,12 +118,19 @@ function QueueCard({
                             {formatRelative(item.submitted_at)}
                         </span>
                     ) : item.my_decision ? (
-                        <TonePill
-                            tone={approvalTone[item.my_decision.status]}
-                            className="h-7 px-2.5 text-[14px]"
-                        >
-                            {item.my_decision.status_label}
-                        </TonePill>
+                        <span className="flex items-center gap-2">
+                            <span className="text-[14px] font-semibold text-text-muted">
+                                {formatRelative(
+                                    item.my_decision.decided_at ?? null,
+                                )}
+                            </span>
+                            <TonePill
+                                tone={approvalTone[item.my_decision.status]}
+                                className="h-7 px-2.5 text-[14px]"
+                            >
+                                {item.my_decision.status_label}
+                            </TonePill>
+                        </span>
                     ) : null}
                 </span>
             </button>
@@ -222,6 +229,7 @@ export function ApprovalsDesktop({
             </header>
 
             <TabNav
+                preserveScroll
                 label="Tab persetujuan"
                 items={(['menunggu', 'diputus'] as ApprovalTab[]).map(
                     (value) => ({
