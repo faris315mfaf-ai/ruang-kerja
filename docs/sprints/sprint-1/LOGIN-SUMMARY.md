@@ -55,7 +55,7 @@ Percobaan login peran lain tidak diaudit (hanya Super Admin, sesuai tugas). Kata
 4. **Login demo** melewati aturan Google & TOTP hanya selama `DemoAccounts::enabled()` (dicek per request). Bila flag dimatikan, sesi demo Super Admin ikut dipaksa setup 2FA.
 5. **Profil baca-saja**, termasuk **nama** (data master HR). Route `PATCH`/`DELETE settings/profile` dihapus (bukan dibatasi ke Super Admin): karyawan tidak pernah dihapus (`UserPolicy::delete` = false, nonaktifkan lewat HR). `ProfileUpdateRequest`, `ProfileDeleteRequest`, trait `ProfileValidationRules` (tak terpakai → Larastan menolak) dan komponen `delete-user` dihapus.
 6. **Keamanan hanya Super Admin**: ability baru `UserPolicy::manageCredentials` (diri sendiri + Super Admin). Middleware `RestrictCredentialRoutes` (grup `web`) memberi 403 untuk `security.edit`, `user-password.update`, `password.confirm*`, dan seluruh route 2FA Fortify bagi peran lain; controller juga memanggil `Gate::authorize`. Menu "Keamanan" di pengaturan hanya tampil untuk Super Admin; halaman Profil menautkannya untuk Super Admin.
-7. **Lupa kata sandi** tetap aktif (pemulihan Super Admin). Karyawan lain bisa meminta tautan reset, tetapi kata sandi itu tidak bisa dipakai login (aturan #8) — tidak berbahaya. Bisa dibatasi nanti bila perlu.
+7. **Lupa kata sandi** tetap aktif (pemulihan Super Admin). *(Diperbarui di REVIEW-FIXES #8)* Tautan hanya dikirim ke Super Admin aktif (job antrean `SendSuperAdminPasswordResetLink`); setiap permintaan mendapat pesan generik yang sama dan dibatasi 5/menit per IP, sehingga email terdaftar tidak terungkap.
 8. Halaman login dirender **tanpa** `AuthLayout` (`app.tsx`: `auth/login` → layout kosong) karena tata letaknya split penuh. Nama perusahaan diambil dari tabel `companies` (prop `companyName`), bukan `branding.companyName` yang untuk tamu masih placeholder.
 9. Domain logika baru di `app/Domain/Auth` (`Actions`, `Data`, `Enums`, `Exceptions`, `Support`); listener di `app/Listeners` (auto-discovery Laravel).
 10. Tombol berlabel "Masuk dengan Google" (teks mockup); subjudul menyebut domain Workspace (`@domain`). Ikon "G" netral (logo Google berwarna memerlukan hex).
@@ -108,4 +108,4 @@ Lingkungan: https://ruangkerja.test (setelah merge) atau `php artisan serve`.
 - `CORE.md` §13 (risiko email bisa diubah & login kata sandi belum dibatasi) **selesai** di slice ini.
 - Slice lain yang memakai `password.confirm` (`RequirePassword`) untuk non-Super Admin akan mendapat 403 — gunakan konfirmasi lain (mis. dialog) karena karyawan tidak punya kata sandi.
 - Test slice lain yang `actingAs(superAdmin)` tetap jalan (sesi tanpa metode tidak dipaksa TOTP).
-- Opsional nanti: batasi email reset kata sandi hanya untuk Super Admin; hapus paket npm `@laravel/passkeys`; pesan galat audit untuk penolakan Google Super Admin.
+- Opsional nanti: hapus paket npm `@laravel/passkeys`; pesan galat audit untuk penolakan Google Super Admin.

@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import { Info, Lock } from 'lucide-react';
 import { useMemo } from 'react';
 import InputError from '@/components/input-error';
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { roleLockReason } from '@/lib/roles';
 import type { RoleName } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 import { store, update } from '@/routes/admin/employees';
@@ -52,7 +53,7 @@ type Props = {
     formOptions: FormOptions | null;
     divisions: DivisionOption[];
     options: EnumOptions;
-    canAssignSuperAdmin: boolean;
+    canAssignPrivilegedRoles: boolean;
     companyDomain: string;
     onClose: () => void;
     onCreated: () => void;
@@ -137,7 +138,7 @@ function EmployeeForm({
     formOptions,
     divisions,
     options,
-    canAssignSuperAdmin,
+    canAssignPrivilegedRoles,
     companyDomain,
     onClose,
     onCreated,
@@ -148,6 +149,8 @@ function EmployeeForm({
     formOptions: FormOptions;
 }) {
     const isEdit = mode.type === 'edit' && editing !== null;
+    const { auth } = usePage().props;
+    const editingSelf = isEdit && editing.id === auth.user?.id;
 
     const form = useForm<FormData>({
         name: editing?.name ?? '',
@@ -437,9 +440,11 @@ function EmployeeForm({
                     </legend>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                         {sortedRoles(options.roles).map((role) => {
-                            const locked =
-                                role.value === 'super_admin' &&
-                                !canAssignSuperAdmin;
+                            const lockReason = roleLockReason(role.value, {
+                                canAssignPrivilegedRoles,
+                                editingSelf,
+                            });
+                            const locked = lockReason !== null;
 
                             return (
                                 <label
@@ -465,15 +470,20 @@ function EmployeeForm({
                                     {role.label}
                                     {role.value === 'super_admin' && (
                                         <span className="text-xs text-text-subtle">
-                                            {locked
-                                                ? 'hanya bisa diberikan oleh Super Admin'
-                                                : 'wajib 2FA'}
+                                            {lockReason ?? 'wajib 2FA'}
                                         </span>
                                     )}
                                 </label>
                             );
                         })}
                     </div>
+                    {(editingSelf || !canAssignPrivilegedRoles) && (
+                        <p className="text-xs text-text-subtle">
+                            {editingSelf
+                                ? 'Peran Anda sendiri tidak bisa diubah.'
+                                : 'Peran Super Admin, Direksi, dan HR hanya bisa diatur oleh Super Admin.'}
+                        </p>
+                    )}
                     {roleErrors.map((message) => (
                         <InputError key={message} message={message} />
                     ))}

@@ -142,21 +142,59 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * Per-instance memo of ledDivisionIds(), keyed by what it depends on locally.
+     *
+     * @var array{key: string, ids: list<string>}|null
+     */
+    private ?array $ledDivisionIdsMemo = null;
+
+    /**
      * Divisions this user leads: those where they are `head_user_id`, plus their own
      * division when they hold the kepala_divisi role — including sub-divisions.
+     *
+     * Memoized on this instance (visibility scopes call it repeatedly per request);
+     * recomputed when division_id or the kepala_divisi role changes, after refresh(),
+     * or via forgetLedDivisionIds() when headships change elsewhere.
      *
      * @return list<string>
      */
     public function ledDivisionIds(): array
     {
+        $leadsOwnDivision = $this->division_id !== null && $this->hasRole(Role::KepalaDivisi);
+        $key = ($this->id ?? '').'|'.($this->division_id ?? '').'|'.($leadsOwnDivision ? '1' : '0');
+
+        if ($this->ledDivisionIdsMemo !== null && $this->ledDivisionIdsMemo['key'] === $key) {
+            return $this->ledDivisionIdsMemo['ids'];
+        }
+
         /** @var list<string> $ids */
         $ids = Division::query()->where('head_user_id', $this->id)->pluck('id')->all();
 
-        if ($this->division_id !== null && $this->hasRole(Role::KepalaDivisi)) {
-            $ids[] = $this->division_id;
+        if ($leadsOwnDivision) {
+            $ids[] = (string) $this->division_id;
         }
 
-        return $ids === [] ? [] : Division::withDescendantIds($ids);
+        $ids = $ids === [] ? [] : Division::withDescendantIds($ids);
+        $this->ledDivisionIdsMemo = ['key' => $key, 'ids' => $ids];
+
+        return $ids;
+    }
+
+    public function forgetLedDivisionIds(): void
+    {
+        $this->ledDivisionIdsMemo = null;
+    }
+
+    /**
+     * Reload the model from the database (also drops the ledDivisionIds() memo).
+     *
+     * @return $this
+     */
+    public function refresh()
+    {
+        $this->forgetLedDivisionIds();
+
+        return parent::refresh();
     }
 
     /**

@@ -5,6 +5,7 @@ use App\Models\Company;
 use App\Models\Division;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
@@ -69,4 +70,36 @@ it('filters active users', function () {
     User::factory()->inactive()->create();
 
     expect(User::query()->active()->where('status', '!=', 'active')->exists())->toBeFalse();
+});
+
+it('memoizes the led division ids per user instance', function () {
+    $kadiv = User::query()->findOrFail($this->kadiv->id);
+    $expected = collect([$this->ops->id, $this->opsSub->id])->sort()->values()->all();
+
+    expect(collect($kadiv->ledDivisionIds())->sort()->values()->all())->toBe($expected);
+
+    DB::enableQueryLog();
+    $kadiv->ledDivisionIds();
+    visibleIds($kadiv);
+    visibleIds($kadiv);
+
+    $divisionQueries = collect(DB::getQueryLog())->filter(fn (array $query) => str_contains($query['query'], 'from "divisions"'));
+    expect($divisionQueries)->toHaveCount(0);
+});
+
+it('recomputes the led division ids when the division changes or after refresh', function () {
+    $kadiv = User::query()->findOrFail($this->kadiv->id);
+    $kadiv->ledDivisionIds();
+
+    // Moving the user changes the memo key.
+    $kadiv->division_id = $this->keu->id;
+    expect($kadiv->ledDivisionIds())->toContain($this->keu->id);
+
+    // Data changed elsewhere: refresh() (or forgetLedDivisionIds()) drops the memo.
+    $kadiv->refresh();
+    $this->ops->forceFill(['head_user_id' => null])->saveQuietly();
+    $kadiv->syncRoles([Role::Anggota->value]);
+    $kadiv->forgetLedDivisionIds();
+
+    expect($kadiv->ledDivisionIds())->toBe([]);
 });

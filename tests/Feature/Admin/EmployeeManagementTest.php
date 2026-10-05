@@ -64,7 +64,7 @@ describe('list', function () {
                 ->where('employees.data.1.name', 'Budi Keu')
                 ->where('counts', ['active' => 3, 'inactive' => 1])
                 ->where('can.manage', true)
-                ->where('can.assignSuperAdmin', false)
+                ->where('can.assignPrivilegedRoles', false)
                 ->has('formOptions.managers')
             );
 
@@ -284,6 +284,66 @@ describe('create & update', function () {
         expect($admin->refresh()->hasRole(Role::SuperAdmin))->toBeTrue();
     });
 
+    it('does not let HR grant or revoke direksi or hr', function (string $role) {
+        $this->actingAs($this->hr)
+            ->post(route('admin.employees.store'), employeePayload(['roles' => ['anggota', $role]]))
+            ->assertSessionHasErrors(['roles.1' => 'Hanya Super Admin yang dapat memberikan peran '.Role::from($role)->label().'.']);
+
+        expect(User::query()->where('email', 'bayu@kantor.test')->exists())->toBeFalse();
+
+        $bayu = User::factory()->forCompany($this->company)->withRole(Role::Anggota)->create(['email' => 'bayu@kantor.test']);
+
+        $this->actingAs($this->hr)
+            ->put(route('admin.employees.update', $bayu), employeePayload(['roles' => [$role]]))
+            ->assertSessionHasErrors('roles.0');
+
+        expect($bayu->refresh()->hasRole($role))->toBeFalse();
+
+        $holder = User::factory()->forCompany($this->company)->withRole(Role::from($role))->create(['email' => 'pemegang@kantor.test']);
+
+        // Keeping the role is fine; removing it is not.
+        $this->actingAs($this->hr)
+            ->put(route('admin.employees.update', $holder), employeePayload(['email' => 'pemegang@kantor.test', 'employee_number' => 'RK-0101', 'roles' => [$role, 'kepala_divisi']]))
+            ->assertSessionHasNoErrors();
+
+        $this->actingAs($this->hr)
+            ->put(route('admin.employees.update', $holder), employeePayload(['email' => 'pemegang@kantor.test', 'employee_number' => 'RK-0101', 'roles' => ['anggota']]))
+            ->assertSessionHasErrors(['roles' => 'Hanya Super Admin yang dapat mencabut peran '.Role::from($role)->label().'.']);
+
+        expect($holder->refresh()->hasRole($role))->toBeTrue();
+    })->with(['direksi', 'hr']);
+
+    it('lets HR grant kepala_divisi', function () {
+        $bayu = User::factory()->forCompany($this->company)->withRole(Role::Anggota)->create(['email' => 'bayu@kantor.test']);
+
+        $this->actingAs($this->hr)
+            ->put(route('admin.employees.update', $bayu), employeePayload(['roles' => ['kepala_divisi']]))
+            ->assertSessionHasNoErrors();
+
+        expect($bayu->refresh()->getRoleNames()->all())->toBe(['kepala_divisi']);
+    });
+
+    it('does not let anyone change their own roles', function () {
+        $this->actingAs($this->hr)
+            ->put(route('admin.employees.update', $this->hr), employeePayload(['email' => 'hr@kantor.test', 'roles' => ['hr', 'direksi']]))
+            ->assertSessionHasErrors(['roles' => 'Anda tidak dapat mengubah peran Anda sendiri.']);
+
+        expect($this->hr->refresh()->getRoleNames()->all())->toBe(['hr']);
+
+        // Saving the own record without touching roles still works.
+        $this->actingAs($this->hr)
+            ->put(route('admin.employees.update', $this->hr), employeePayload(['email' => 'hr@kantor.test', 'roles' => ['hr']]))
+            ->assertSessionHasNoErrors();
+
+        $admin = User::factory()->forCompany($this->company)->withRole(Role::SuperAdmin)->create(['email' => 'admin@kantor.test']);
+
+        $this->actingAs($admin)
+            ->put(route('admin.employees.update', $admin), employeePayload(['email' => 'admin@kantor.test', 'employee_number' => 'RK-0102', 'roles' => ['anggota']]))
+            ->assertSessionHasErrors(['roles' => 'Anda tidak dapat mengubah peran Anda sendiri.']);
+
+        expect($admin->refresh()->hasRole(Role::SuperAdmin))->toBeTrue();
+    });
+
     it('lets a super admin grant super_admin', function () {
         $admin = User::factory()->forCompany($this->company)->withRole(Role::SuperAdmin)->create();
 
@@ -292,6 +352,17 @@ describe('create & update', function () {
             ->assertSessionHasNoErrors();
 
         expect(User::query()->where('email', 'bayu@kantor.test')->firstOrFail()->hasRole(Role::SuperAdmin))->toBeTrue();
+    });
+
+    it('saves unrelated edits when the current manager is already inactive', function () {
+        $boss = User::factory()->forCompany($this->company)->inactive()->create(['email' => 'bos@kantor.test']);
+        $bayu = User::factory()->forCompany($this->company)->managedBy($boss)->create(['email' => 'bayu@kantor.test']);
+
+        $this->actingAs($this->hr)
+            ->put(route('admin.employees.update', $bayu), employeePayload(['name' => 'Bayu S.', 'manager_id' => $boss->id]))
+            ->assertSessionHasNoErrors();
+
+        expect($bayu->refresh()->name)->toBe('Bayu S.')->and($bayu->manager_id)->toBe($boss->id);
     });
 
     it('locks the email once the employee has signed in', function () {

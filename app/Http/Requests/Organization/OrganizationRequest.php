@@ -56,6 +56,18 @@ abstract class OrganizationRequest extends FormRequest
     }
 
     /**
+     * The active-employee rule, unless the submitted person is the one already stored.
+     *
+     * @return list<Exists>
+     */
+    protected function unlessUnchanged(?string $currentId, string $key): array
+    {
+        $submitted = $this->nullableId($key);
+
+        return $currentId !== null && $submitted === $currentId ? [] : [$this->activeEmployee()];
+    }
+
+    /**
      * Upper-cased, trimmed code; empty becomes null.
      */
     protected function normalizedCode(): ?string
