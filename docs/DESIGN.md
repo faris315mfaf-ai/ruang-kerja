@@ -85,9 +85,9 @@ Latar `--bg` mode gelap boleh diberi dua cahaya radial sangat tipis (teal kiri a
 └──────────┴──────────────────────────────────────────────┘
 ```
 
-**Shell desktop (keputusan pemilik, 6 Okt 2026):** menu bar glass 38px di atas, konten penuh layar dengan margin 10px, dan **Dock ala macOS** mengambang di bawah. Ikon Dock berbentuk squircle berwarna palet, membesar mengikuti kursor (spring critically damped, bisa diinterupsi), menampilkan label di atas, titik di bawah ikon aktif, dan badge jumlah. Workspace favorit tampil sebagai ikon; semua workspace dan menu Admin ada di *stack*. Saat disorot, glyph ikon bergerak dalam loop tanpa sambungan (berhenti dengan `prefers-reduced-motion`). Mockup lama dengan sidebar 240px tetap jadi acuan isi halaman, bukan shell.
+**Shell desktop (keputusan pemilik, 6 Okt 2026):** menu bar glass 38px di atas, konten penuh layar dengan margin 10px, dan **Dock ala macOS** mengambang di bawah. Ikon Dock berbentuk squircle berwarna palet, membesar mengikuti kursor (spring critically damped, bisa diinterupsi), menampilkan label di atas, titik di bawah ikon aktif, dan badge jumlah. Workspace favorit tampil sebagai ikon; semua workspace, menu Organisasi (struktur, kelola organisasi, karyawan) dan menu Admin ada di *stack* — setiap tujuan hanya ada di satu tempat; stack yang isinya satu tampil sebagai ikon biasa. Saat disorot, glyph ikon bergerak dalam loop tanpa sambungan (berhenti dengan `prefers-reduced-motion`). Mockup lama dengan sidebar 240px tetap jadi acuan isi halaman, bukan shell.
 
-**Ponsel (< 768px):** tidak ada sidebar. App bar 56px + tab bawah glass: Beranda · Absen · Tugas · Inbox · Menu (workspace & admin ada di tab Menu). Tombol check-in besar di halaman Absen. Aturan lengkap, matriks fitur, dan cara implementasi: **`docs/PLATFORM.md`**.
+**Ponsel (< 768px):** tidak ada sidebar. App bar 56px + tab bawah glass berbentuk *dock kapsul* mengambang (lihat PLATFORM.md §4): Beranda · Absen · Tugas · Inbox · Menu (workspace & admin ada di tab Menu). Tombol check-in besar di halaman Absen. Aturan lengkap, matriks fitur, dan cara implementasi: **`docs/PLATFORM.md`**.
 
 ## 6. Komponen utama
 
