@@ -60,6 +60,31 @@ return [
             'report' => false,
         ],
 
+        // Attendance selfies: private, never served directly. Read only through
+        // the signed, policy-checked route (docs/ARCHITECTURE.md §5). Local in
+        // dev; production sets ATTENDANCE_SELFIE_DRIVER=s3 (S3-compatible object
+        // storage, needs league/flysystem-aws-s3-v3 at deploy time).
+        'selfies' => env('ATTENDANCE_SELFIE_DRIVER', 'local') === 's3' ? [
+            'driver' => 's3',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('ATTENDANCE_SELFIE_BUCKET', env('AWS_BUCKET')),
+            'endpoint' => env('AWS_ENDPOINT'),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'root' => 'selfies',
+            'visibility' => 'private',
+            'throw' => true,
+            'report' => false,
+        ] : [
+            'driver' => 'local',
+            'root' => storage_path('app/private/selfies'),
+            'visibility' => 'private',
+            'serve' => false,
+            'throw' => true,
+            'report' => false,
+        ],
+
     ],
 
     /*

@@ -15,9 +15,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // its entry with real routes.
     $upcoming = [
         'tugas' => ['tasks.mine', 'Tugas saya'],
-        'absensi' => ['attendance.index', 'Absensi'],
         'workspace' => ['workspaces.index', 'Workspace'],
-        'admin/karyawan' => ['admin.employees.index', 'Karyawan'],
         'privasi' => ['privacy.index', 'Privasi & data saya'],
     ];
 
@@ -34,5 +32,8 @@ Route::post('login/demo', [DemoLoginController::class, 'store'])
 require __DIR__.'/auth.php';
 require __DIR__.'/settings.php';
 require __DIR__.'/requests.php';
+require __DIR__.'/attendance.php';
+require __DIR__.'/admin-employees.php';
 require __DIR__.'/notifications.php';
 require __DIR__.'/google.php';
+require __DIR__.'/organization.php';

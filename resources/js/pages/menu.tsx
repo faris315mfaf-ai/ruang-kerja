@@ -8,6 +8,7 @@ import {
     FileText,
     LayoutGrid,
     LogOut,
+    Network,
     ShieldCheck,
     SunMoon,
 } from 'lucide-react';
@@ -176,14 +177,21 @@ export default function Menu() {
                             label="Riwayat absensi"
                             href="/absensi"
                         />
-                        {adminNavItems(auth.roles).map((item) => (
-                            <Row
-                                key={item.href}
-                                icon={item.icon}
-                                label={item.title}
-                                href={item.href}
-                            />
-                        ))}
+                        <Row
+                            icon={Network}
+                            label="Struktur organisasi"
+                            href="/organisasi/struktur"
+                        />
+                        {adminNavItems(auth.roles)
+                            .filter((item) => !item.desktopOnly)
+                            .map((item) => (
+                                <Row
+                                    key={item.href}
+                                    icon={item.icon}
+                                    label={item.title}
+                                    href={item.href}
+                                />
+                            ))}
                     </Group>
                 </Section>
 

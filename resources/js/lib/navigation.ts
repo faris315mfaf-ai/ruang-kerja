@@ -1,7 +1,9 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+    Building2,
     CheckCheck,
     CircleCheck,
+    Clock,
     FileText,
     Home,
     Inbox,
@@ -9,6 +11,8 @@ import {
     MapPin,
     ListChecks,
     Menu,
+    Network,
+    ScrollText,
     Users,
     WalletCards,
 } from 'lucide-react';
@@ -23,6 +27,8 @@ export type AppNavItem = {
     matchPrefix?: boolean;
     /** Shared-prop counter shown as a badge. */
     badge?: 'approvals';
+    /** Hidden from the mobile Menu tab (docs/PLATFORM.md §3, "—" on mobile). */
+    desktopOnly?: boolean;
 };
 
 /** Desktop sidebar: main navigation (docs/DESIGN.md §5). */
@@ -48,6 +54,12 @@ export const mainNavItems: AppNavItem[] = [
         icon: CheckCheck,
         matchPrefix: true,
         badge: 'approvals',
+    },
+    {
+        title: 'Struktur organisasi',
+        href: '/organisasi/struktur',
+        icon: Network,
+        matchPrefix: true,
     },
 ];
 
@@ -81,18 +93,50 @@ export function adminNavItems(roles: readonly string[]): AppNavItem[] {
     }
 
     if (hasAnyRole(roles, 'super_admin', 'hr')) {
+        items.push({
+            title: 'Organisasi',
+            href: '/admin/organisasi',
+            icon: Building2,
+            matchPrefix: true,
+            desktopOnly: true,
+        });
+    }
+
+    if (hasAnyRole(roles, 'super_admin', 'hr')) {
+        items.push({
+            title: 'Lokasi & shift',
+            href: '/admin/absensi',
+            icon: Clock,
+            matchPrefix: true,
+            desktopOnly: true,
+        });
+    }
+
+    if (hasAnyRole(roles, 'super_admin')) {
+        items.push({
+            title: 'Audit log',
+            href: '/admin/audit',
+            icon: ScrollText,
+            matchPrefix: true,
+            desktopOnly: true,
+        });
+    }
+
+    if (hasAnyRole(roles, 'super_admin', 'hr')) {
         items.push(
             {
                 title: 'Jenis pengajuan',
                 href: '/admin/pengajuan',
                 icon: ListChecks,
                 matchPrefix: true,
+                desktopOnly: true,
             },
             {
                 title: 'Saldo cuti',
                 href: '/admin/saldo-cuti',
                 icon: WalletCards,
                 matchPrefix: true,
+                desktopOnly: true,
             },
         );
     }
