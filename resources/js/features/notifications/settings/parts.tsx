@@ -1,7 +1,8 @@
-import { Deferred, Link, usePage } from '@inertiajs/react';
+import { Deferred } from '@inertiajs/react';
 import { Clock, Eye, Mail } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useId } from 'react';
+import { Panel } from '@/components/ui/panel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import type { NotificationSettingsState } from '@/features/notifications/settings/use-notification-settings';
@@ -11,29 +12,9 @@ import type {
     NotificationSettingsProps,
 } from '@/features/notifications/settings/types';
 import { formatDate } from '@/lib/format';
-import { hasAnyRole } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 
 export const DIGEST_PREVIEW_URL = '/pengaturan/notifikasi/pratinjau-ringkasan';
-
-export function Card({
-    children,
-    className,
-}: {
-    children: ReactNode;
-    className?: string;
-}) {
-    return (
-        <section
-            className={cn(
-                'rounded-lg border border-border bg-surface shadow-card',
-                className,
-            )}
-        >
-            {children}
-        </section>
-    );
-}
 
 /** Label + description + switch row used by digest and quiet-hours cards. */
 export function SwitchRow({
@@ -41,13 +22,11 @@ export function SwitchRow({
     description,
     checked,
     onChange,
-    size,
 }: {
     title: string;
     description: ReactNode;
     checked: boolean;
     onChange: (checked: boolean) => void;
-    size?: 'sm' | 'md';
 }) {
     const id = useId();
 
@@ -56,19 +35,19 @@ export function SwitchRow({
             <div className="min-w-0 flex-1">
                 <p
                     id={`${id}-label`}
-                    className="text-sm font-medium text-text md:text-[13px]"
+                    className="text-body font-semibold text-text"
                 >
                     {title}
                 </p>
                 <p
                     id={`${id}-description`}
-                    className="mt-0.5 text-[13px] text-text-muted md:text-xs"
+                    className="mt-0.5 text-label font-normal text-text-muted"
                 >
                     {description}
                 </p>
             </div>
             <Switch
-                size={size}
+                size="md"
                 checked={checked}
                 onCheckedChange={onChange}
                 aria-labelledby={`${id}-label`}
@@ -93,8 +72,8 @@ function TimeField({
         <label
             htmlFor={id}
             className={cn(
-                'flex items-center gap-2 rounded-md border border-border-strong bg-surface px-3 focus-within:ring-2 focus-within:ring-ring',
-                large ? 'h-12' : 'h-9',
+                'flex h-11 items-center gap-2 rounded-control border border-border-strong bg-surface px-3.5 transition-[border-color,box-shadow] duration-120 ease-brand focus-within:border-primary focus-within:ring-4 focus-within:ring-ring/55',
+                large && 'h-12',
             )}
         >
             <Clock
@@ -117,17 +96,17 @@ function TimeField({
                     }
                 }}
                 className={cn(
-                    'w-[5.5rem] bg-transparent font-mono text-text outline-none [&::-webkit-calendar-picker-indicator]:hidden',
-                    large ? 'text-lg' : 'text-[13px]',
+                    'w-[7rem] bg-transparent font-mono font-semibold text-text tnum outline-none [&::-webkit-calendar-picker-indicator]:hidden',
+                    large ? 'text-[17px]' : 'text-[15px]',
                 )}
             />
-            <span className="text-xs text-text-muted">WIB</span>
+            <span className="text-meta text-text-muted">WIB</span>
         </label>
     );
 }
 
 const dotTone = (tone: string) =>
-    tone === 'danger' ? 'bg-danger' : 'bg-primary';
+    tone === 'danger' ? 'bg-fill-danger' : 'bg-fill-teal';
 
 function PreviewBody({
     preview,
@@ -141,8 +120,8 @@ function PreviewBody({
     }
 
     return (
-        <div className="space-y-2 p-3 text-xs leading-5">
-            <p className="text-[13px] font-semibold text-text">
+        <div className="flex flex-col gap-2 p-4 text-label font-normal">
+            <p className="text-body font-bold text-text">
                 Selamat pagi, {firstName}
             </p>
             {preview.sections.length === 0 ? (
@@ -151,13 +130,13 @@ function PreviewBody({
                     dikirim bila kosong.
                 </p>
             ) : (
-                <ul className="space-y-2">
+                <ul className="flex flex-col gap-2">
                     {preview.sections.map((section) => (
                         <li key={section.key} className="flex gap-2">
                             <span
                                 aria-hidden
                                 className={cn(
-                                    'mt-1.5 size-1.5 shrink-0 rounded-full',
+                                    'mt-2 size-2 shrink-0 rounded-full',
                                     dotTone(section.tone),
                                 )}
                             />
@@ -186,7 +165,7 @@ function PreviewBody({
                 href={DIGEST_PREVIEW_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-block text-primary underline"
+                className="inline-flex min-h-control items-center self-start font-semibold text-link hover:opacity-80"
             >
                 Buka versi email
             </a>
@@ -194,7 +173,7 @@ function PreviewBody({
     );
 }
 
-/** "Ringkasan harian" card: toggle, send time, today's preview (mockup PengaturanNotifikasi). */
+/** "Ringkasan harian" panel: toggle, send time, today's preview. */
 export function DigestCard({
     state,
     props,
@@ -210,23 +189,23 @@ export function DigestCard({
     const { settings } = state;
 
     return (
-        <Card className="p-4">
+        <Panel
+            title="Ringkasan harian"
+            action={
+                <span className="text-label font-normal text-text-muted tnum">
+                    {displayTime(settings.digest_time)} WIB
+                </span>
+            }
+            bodyClassName="gap-4"
+        >
             <SwitchRow
-                title="Ringkasan harian"
+                title="Kirim email ringkasan"
                 description="Satu email setiap hari kerja, berisi yang perlu Anda tindak lanjuti."
                 checked={settings.digest_enabled}
                 onChange={state.setDigestEnabled}
-                size={mobile ? 'md' : 'sm'}
             />
-            <div
-                className={cn(
-                    'mt-4 flex items-center justify-between gap-3',
-                    mobile && 'border-t border-border pt-4',
-                )}
-            >
-                <span className="text-sm text-text md:text-[13px]">
-                    Jam kirim
-                </span>
+            <div className="flex items-center justify-between gap-3 border-t border-divider pt-4">
+                <span className="text-body font-semibold">Jam kirim</span>
                 <TimeField
                     value={settings.digest_time}
                     onCommit={(digest_time) =>
@@ -236,7 +215,7 @@ export function DigestCard({
                 />
             </div>
             {!settings.digest_enabled && (
-                <p className="mt-2 text-xs text-text-muted">
+                <p className="-mt-2 text-meta font-normal text-text-muted">
                     Ringkasan nonaktif. Jam kirim tetap disimpan.
                 </p>
             )}
@@ -245,25 +224,25 @@ export function DigestCard({
                     href={DIGEST_PREVIEW_URL}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-4 flex min-h-11 items-center gap-2 text-[15px] font-medium text-primary"
+                    className="flex min-h-control items-center gap-2 self-start text-label font-semibold text-link"
                 >
-                    <Eye aria-hidden className="size-4.5" />
+                    <Eye aria-hidden className="size-5" />
                     Lihat contoh email hari ini
                 </a>
             ) : (
-                <div className="mt-4 overflow-hidden rounded-md border border-border bg-surface-2">
-                    <p className="flex items-center gap-2 border-b border-border px-3 py-2 text-xs text-text-muted">
-                        <Mail aria-hidden className="size-3.5" />
+                <div className="overflow-hidden rounded-lg border border-border bg-background">
+                    <p className="flex items-center gap-2 border-b border-border px-4 py-2.5 text-meta text-text-muted">
+                        <Mail aria-hidden className="size-4" />
                         Pratinjau · {formatDate(new Date())} ·{' '}
                         {displayTime(settings.digest_time)}
                     </p>
                     <Deferred
                         data="digestPreview"
                         fallback={
-                            <div className="space-y-2 p-3">
-                                <Skeleton className="h-4 w-1/2" />
-                                <Skeleton className="h-3 w-full" />
-                                <Skeleton className="h-3 w-3/4" />
+                            <div className="flex flex-col gap-2 p-4">
+                                <Skeleton className="h-5 w-1/2" />
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-3/4" />
                             </div>
                         }
                     >
@@ -274,52 +253,39 @@ export function DigestCard({
                     </Deferred>
                 </div>
             )}
-        </Card>
+        </Panel>
     );
 }
 
-/** "Jam tenang" card. */
+/** "Jam tenang" panel. */
 export function QuietHoursCard({
     state,
     props,
-    variant,
 }: {
     state: NotificationSettingsState;
     props: NotificationSettingsProps;
-    variant: 'desktop' | 'mobile';
 }) {
     const range = `${displayTime(props.quietWindow.start)}–${displayTime(props.quietWindow.end)}`;
-    const size = variant === 'mobile' ? 'md' : 'sm';
 
     return (
-        <Card className="divide-y divide-border px-4">
-            {variant === 'mobile' && (
-                <h2 className="pt-4 pb-1 text-[17px] font-semibold text-text">
-                    Jam tenang
-                </h2>
-            )}
-            <div className="py-4">
+        <Panel title="Jam tenang" bodyClassName="divide-y divide-divider">
+            <div className="pb-4">
                 <SwitchRow
-                    title={
-                        variant === 'mobile'
-                            ? 'Di luar jam kerja'
-                            : 'Jam tenang di luar jam kerja'
-                    }
+                    title="Di luar jam kerja"
                     description={
                         <>
                             Tahan notifikasi email{' '}
-                            <span className="font-mono">{range}</span> dan akhir
-                            pekan; in-app tetap tercatat.
+                            <span className="font-mono tnum">{range}</span> dan
+                            akhir pekan; in-app tetap tercatat.
                         </>
                     }
                     checked={state.settings.quiet_hours}
                     onChange={(quiet_hours) =>
                         state.updateSettings({ quiet_hours })
                     }
-                    size={size}
                 />
             </div>
-            <div className="py-4">
+            <div className="pt-4">
                 <SwitchRow
                     title="Saat saya cuti, tahan semua notifikasi"
                     description="Hanya dicatat di Inbox, tanpa email dan toast. Persetujuan diteruskan ke pengganti bila delegasi aktif."
@@ -327,10 +293,9 @@ export function QuietHoursCard({
                     onChange={(pause_while_on_leave) =>
                         state.updateSettings({ pause_while_on_leave })
                     }
-                    size={size}
                 />
             </div>
-        </Card>
+        </Panel>
     );
 }
 
@@ -342,59 +307,14 @@ export function EmailNote({
     className?: string;
 }) {
     return (
-        <p className={cn('text-xs leading-5 text-text-muted', className)}>
-            Email dikirim ke <span className="font-mono">{email}</span>.
+        <p
+            className={cn(
+                'text-label font-normal break-words text-text-muted',
+                className,
+            )}
+        >
+            Email dikirim ke <span className="font-semibold">{email}</span>.
             Pengingat absensi mengikuti jadwal shift Anda.
         </p>
-    );
-}
-
-/** Mirrors layouts/settings/layout.tsx (Keamanan only for the Super Admin emergency sign-in). */
-export function accountLinks(roles: readonly string[]) {
-    return [
-        { title: 'Profil', href: '/settings/profile' },
-        ...(hasAnyRole(roles, 'super_admin')
-            ? [{ title: 'Keamanan', href: '/settings/security' }]
-            : []),
-        { title: 'Notifikasi', href: '/pengaturan/notifikasi' },
-        { title: 'Tampilan', href: '/settings/appearance' },
-        { title: 'Akun Google', href: '/settings/google' },
-        { title: 'Privasi & data saya', href: '/privasi' },
-    ];
-}
-
-/** Left "Akun saya" navigation (desktop). */
-export function AccountNav() {
-    const { auth } = usePage().props;
-
-    return (
-        <nav aria-label="Akun saya" className="w-48 shrink-0">
-            <p className="px-2.5 pb-2 text-[11px] font-medium tracking-[.04em] text-text-muted uppercase">
-                Akun saya
-            </p>
-            <ul className="space-y-0.5">
-                {accountLinks(auth.roles).map((link) => {
-                    const active = link.href === '/pengaturan/notifikasi';
-
-                    return (
-                        <li key={link.href}>
-                            <Link
-                                href={link.href}
-                                prefetch
-                                aria-current={active ? 'page' : undefined}
-                                className={cn(
-                                    'flex h-8 items-center rounded-md px-2.5 text-[13px] transition-colors duration-120 ease-brand hover:bg-surface-2',
-                                    active
-                                        ? 'bg-surface-2 font-medium text-text'
-                                        : 'text-text-muted',
-                                )}
-                            >
-                                {link.title}
-                            </Link>
-                        </li>
-                    );
-                })}
-            </ul>
-        </nav>
     );
 }

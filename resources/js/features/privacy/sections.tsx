@@ -10,9 +10,10 @@ import {
     ShieldCheck,
     ShieldOff,
 } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { EmptyState } from '@/components/empty-state';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Collapsible,
@@ -27,6 +28,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Panel, PanelLink } from '@/components/ui/panel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge as AttendanceBadge } from '@/features/attendance/status-badge';
 import {
@@ -36,7 +38,7 @@ import {
 import { formatDate, formatDateTime, formatNumber } from '@/lib/format';
 import type { Tone } from '@/lib/requests';
 import { roleLabel } from '@/lib/roles';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import consentRoutes from '@/routes/attendance/consent';
 import { exportMethod, policy as policyRoute } from '@/routes/privacy';
 import type {
@@ -48,7 +50,10 @@ import type {
     MyRequestItem,
 } from './types';
 
-/** A titled card; `flush` lets lists run edge to edge. */
+/**
+ * A titled Arus panel (SPengaturan cards); `flush` lets lists run edge to
+ * edge. The description sits under the title, `aside` on the right.
+ */
 export function PrivacySection({
     title,
     description,
@@ -62,38 +67,38 @@ export function PrivacySection({
     children: ReactNode;
     flush?: boolean;
 }) {
-    const id = useId();
-
     return (
-        <section
-            aria-labelledby={id}
-            className="overflow-hidden rounded-xl border border-border bg-surface shadow-card"
+        <Panel
+            title={title}
+            action={aside}
+            flush={flush}
+            className={flush ? 'pb-2' : undefined}
         >
-            <header className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 px-4 pt-4 pb-3">
-                <div className="min-w-0">
-                    <h2 id={id} className="text-[15px] font-semibold text-text">
-                        {title}
-                    </h2>
-                    {description && (
-                        <p className="mt-0.5 text-[13px] text-text-muted">
-                            {description}
-                        </p>
+            {description && (
+                <p
+                    className={cn(
+                        '-mt-1 mb-4 text-label font-normal text-text-muted',
+                        flush && 'px-6 md:px-7',
                     )}
-                </div>
-                {aside && (
-                    <div className="text-[13px] text-text-muted">{aside}</div>
-                )}
-            </header>
-            <div className={flush ? 'pb-1' : 'px-4 pb-4'}>{children}</div>
-        </section>
+                >
+                    {description}
+                </p>
+            )}
+            {children}
+        </Panel>
     );
+}
+
+/** "Riwayat per bulan", "Semua pengajuan": teal link on the panel header. */
+function AsideLink({ href, children }: { href: string; children: ReactNode }) {
+    return <PanelLink href={href}>{children}</PanelLink>;
 }
 
 function ListSkeleton({ rows = 4 }: { rows?: number }) {
     return (
-        <div className="space-y-2 px-4 pb-3" aria-busy>
+        <div className="flex flex-col gap-2 px-6 pb-3 md:px-7" aria-busy>
             {Array.from({ length: rows }, (_, index) => (
-                <Skeleton key={index} className="h-11 rounded-md" />
+                <Skeleton key={index} className="h-12 rounded-control" />
             ))}
         </div>
     );
@@ -121,33 +126,36 @@ export function ExportCard() {
             title="Unduh data saya"
             description="Profil, persetujuan, seluruh absensi & log, pengajuan, dan keputusan persetujuan Anda."
         >
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-1">
                 {links.map(({ format, label, hint, icon: Icon }) => (
                     <a
                         key={format}
                         href={exportMethod.url(format)}
-                        className="flex min-h-12 items-center gap-3 rounded-lg border border-border px-3 py-2 text-left hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                        className={cn(
+                            'flex min-h-[60px] items-center gap-3 rounded-lg border border-border px-4 py-2 text-left transition-colors duration-120 ease-brand hover:bg-background',
+                            focusRing,
+                        )}
                     >
                         <Icon
                             className="size-5 shrink-0 text-primary"
                             aria-hidden
                         />
                         <span className="min-w-0 flex-1">
-                            <span className="block text-sm font-medium text-text">
+                            <span className="block text-body font-semibold text-text">
                                 {label}
                             </span>
-                            <span className="block text-xs text-text-muted">
+                            <span className="block text-meta text-text-muted">
                                 {hint}
                             </span>
                         </span>
                         <Download
-                            className="size-4 text-text-subtle"
+                            className="size-5 text-text-subtle"
                             aria-hidden
                         />
                     </a>
                 ))}
             </div>
-            <p className="mt-3 text-xs text-text-muted">
+            <p className="mt-3 text-meta text-text-muted">
                 NIK ditampilkan tersamar dan foto selfie tidak disertakan.
                 Setiap unduhan tercatat di log audit.
             </p>
@@ -181,16 +189,18 @@ export function ConsentCard({ consent }: { consent: MyConsent }) {
     const status = consent.granted
         ? {
               icon: ShieldCheck,
-              tone: 'text-success bg-success-soft',
-              title: 'Diberikan',
+              box: 'bg-success-soft',
+              tone: 'text-success',
+              title: 'Lokasi & selfie: disetujui',
               text: `Untuk kebijakan versi ${consent.granted_version ?? consent.version}${consent.granted_at ? `, sejak ${formatDate(consent.granted_at)}` : ''}.`,
           }
         : {
               icon: ShieldOff,
-              tone: 'text-warning bg-warning-soft',
+              box: 'bg-warning-soft',
+              tone: 'text-warning',
               title: consent.needs_renewal
-                  ? 'Perlu persetujuan ulang'
-                  : 'Belum diberikan / dicabut',
+                  ? 'Lokasi & selfie: perlu persetujuan ulang'
+                  : 'Lokasi & selfie: belum disetujui',
               text: consent.needs_renewal
                   ? `Kebijakan berubah ke versi ${consent.version}. Check-in GPS + selfie tidak bisa dilakukan sampai Anda menyetujui versi ini.`
                   : 'Check-in GPS + selfie tidak bisa dilakukan. Kiosk QR dan koreksi oleh HR tetap tersedia.',
@@ -202,64 +212,68 @@ export function ConsentCard({ consent }: { consent: MyConsent }) {
             title="Persetujuan lokasi & selfie"
             description="Dasar pemrosesan lokasi GPS dan foto selfie saat check-in/check-out (UU PDP)."
         >
-            <div className="flex items-start gap-3 rounded-lg bg-surface-2 p-3">
-                <span
-                    className={cn(
-                        'flex size-9 shrink-0 items-center justify-center rounded-full',
-                        status.tone,
-                    )}
-                >
-                    <StatusIcon className="size-5" aria-hidden />
-                </span>
-                <div className="min-w-0 text-sm">
-                    <p className="font-medium text-text">{status.title}</p>
-                    <p className="mt-0.5 text-[13px] text-text-muted">
+            <div
+                className={cn(
+                    'flex items-start gap-3 rounded-lg px-4 py-3.5',
+                    status.box,
+                )}
+            >
+                <StatusIcon
+                    className={cn('mt-0.5 size-5 shrink-0', status.tone)}
+                    aria-hidden
+                />
+                <div className="flex min-w-0 flex-col gap-1">
+                    <p className={cn('text-body font-bold', status.tone)}>
+                        {status.title}
+                    </p>
+                    <p className="text-label font-normal text-text">
                         {status.text}
                     </p>
                 </div>
             </div>
-            <p className="mt-3 text-[13px] text-text-muted">
+            <p className="mt-4 text-label font-normal text-text-muted">
                 Selfie dihapus otomatis setelah {consent.retention_months}{' '}
                 bulan.{' '}
                 <Link
                     href={policyRoute()}
-                    className="font-medium text-primary hover:underline"
+                    className="font-semibold text-link hover:opacity-80"
                 >
                     Baca kebijakan privasi v{consent.policy_version}
                 </Link>
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2.5">
                 {consent.granted ? (
                     <Button
                         type="button"
                         variant="outline"
-                        className="h-11 text-danger hover:text-danger md:h-9"
+                        className="text-danger"
                         onClick={() => setDialog('revoke')}
                     >
                         Cabut persetujuan
                     </Button>
                 ) : (
-                    <Button
-                        type="button"
-                        className="h-11 md:h-9"
-                        onClick={() => setDialog('grant')}
-                    >
+                    <Button type="button" onClick={() => setDialog('grant')}>
                         Berikan persetujuan
                     </Button>
                 )}
             </div>
 
             {consent.history.length > 0 && (
-                <Collapsible className="mt-3 border-t border-border pt-2">
-                    <CollapsibleTrigger className="group flex min-h-11 w-full items-center justify-between rounded-md text-left text-[13px] font-medium text-text-muted hover:text-text md:min-h-9">
+                <Collapsible className="mt-4 border-t border-divider pt-2">
+                    <CollapsibleTrigger
+                        className={cn(
+                            'group flex min-h-control w-full items-center justify-between rounded-control text-left text-label text-text-muted hover:text-text',
+                            focusRing,
+                        )}
+                    >
                         Riwayat persetujuan ({consent.history.length})
                         <ChevronDown
-                            className="size-4 transition-transform group-data-[state=open]:rotate-180"
+                            className="size-5 transition-transform duration-180 ease-brand group-data-[state=open]:rotate-180 motion-reduce:transition-none"
                             aria-hidden
                         />
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                        <ul className="divide-y divide-border text-[13px]">
+                        <ul className="divide-y divide-divider text-label font-normal">
                             {consent.history.map((record) => (
                                 <li
                                     key={record.id}
@@ -327,7 +341,7 @@ export function ConsentCard({ consent }: { consent: MyConsent }) {
 
 function Field({ label, value }: { label: string; value: ReactNode }) {
     return (
-        <div className="grid grid-cols-[8.5rem_minmax(0,1fr)] gap-x-3 py-2 text-sm">
+        <div className="grid grid-cols-[8.5rem_minmax(0,1fr)] gap-x-3 py-2.5 text-label font-normal">
             <dt className="text-text-muted">{label}</dt>
             <dd className="break-words text-text">
                 {value === null || value === '' ? (
@@ -347,7 +361,7 @@ export function ProfileCard({ profile }: { profile: MyProfile }) {
             title="Data profil"
             description="Data kepegawaian yang tersimpan. Hubungi HR bila ada yang keliru."
         >
-            <dl className="divide-y divide-border">
+            <dl className="divide-y divide-divider">
                 <Field label="Nama" value={profile.name} />
                 <Field label="Email" value={profile.email} />
                 <Field label="No. karyawan" value={profile.employee_number} />
@@ -428,20 +442,16 @@ export function AttendanceCard({
                     : 'Kehadiran harian, log check-in/out, dan selfie yang masih tersimpan.'
             }
             aside={
-                <Link
-                    href="/absensi/riwayat"
-                    className="font-medium text-primary hover:underline"
-                >
-                    Riwayat per bulan →
-                </Link>
+                <AsideLink href="/absensi/riwayat">Riwayat per bulan</AsideLink>
             }
             flush
         >
             {attendance === undefined ? (
                 <ListSkeleton rows={5} />
             ) : attendance.total_days === 0 ? (
-                <div className="px-4 pb-3">
+                <div className="px-6 pb-4 md:px-7">
                     <EmptyState
+                        size="sm"
                         icon={CalendarCheck}
                         title="Belum ada data absensi"
                         description="Data muncul di sini setelah check-in pertama Anda."
@@ -450,74 +460,61 @@ export function AttendanceCard({
             ) : (
                 <>
                     <ul
-                        className="flex flex-wrap gap-1.5 px-4 pb-3"
+                        className="flex flex-wrap gap-2 px-6 pb-4 md:px-7"
                         aria-label="Jumlah hari per status"
                     >
                         {Object.entries(attendance.counts).map(
                             ([status, count]) => (
-                                <li
-                                    key={status}
-                                    className="inline-flex h-7 items-center gap-1.5 rounded-full bg-surface-2 px-2.5 text-xs text-text-muted"
-                                >
-                                    {statusLabels[status] ?? status}
-                                    <span className="font-semibold text-text tnum">
-                                        {formatNumber(count ?? 0)}
-                                    </span>
+                                <li key={status}>
+                                    <Badge variant="label" tone="neutral">
+                                        {statusLabels[status] ?? status}
+                                        <span className="tnum">
+                                            {formatNumber(count ?? 0)}
+                                        </span>
+                                    </Badge>
                                 </li>
                             ),
                         )}
                     </ul>
 
                     {/* Wide screens: table. */}
-                    <div className="hidden overflow-x-auto xl:block">
-                        <table className="w-full text-sm">
+                    <div className="hidden overflow-x-auto 2xl:block">
+                        <table className="w-full text-body">
                             <caption className="sr-only">
                                 {attendance.days.length} hari absensi terakhir
                             </caption>
                             <thead>
-                                <tr className="border-y border-border bg-surface-2 text-left text-xs text-text-muted">
+                                <tr className="bg-background text-left text-meta font-bold text-text-muted">
                                     <th
                                         scope="col"
-                                        className="px-4 py-2 font-medium"
+                                        className="py-2.5 pr-3 pl-6 md:pl-7"
                                     >
                                         Tanggal
                                     </th>
-                                    <th
-                                        scope="col"
-                                        className="px-3 py-2 font-medium"
-                                    >
+                                    <th scope="col" className="px-3 py-2.5">
                                         Status
                                     </th>
-                                    <th
-                                        scope="col"
-                                        className="px-3 py-2 font-medium"
-                                    >
+                                    <th scope="col" className="px-3 py-2.5">
                                         Masuk
                                     </th>
-                                    <th
-                                        scope="col"
-                                        className="px-3 py-2 font-medium"
-                                    >
+                                    <th scope="col" className="px-3 py-2.5">
                                         Pulang
                                     </th>
-                                    <th
-                                        scope="col"
-                                        className="px-3 py-2 font-medium"
-                                    >
+                                    <th scope="col" className="px-3 py-2.5">
                                         Metode · lokasi
                                     </th>
                                     <th
                                         scope="col"
-                                        className="px-4 py-2 text-right font-medium"
+                                        className="py-2.5 pr-6 pl-3 text-right md:pr-7"
                                     >
                                         Kerja
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-border">
+                            <tbody className="divide-y divide-divider">
                                 {attendance.days.map((day) => (
                                     <tr key={day.date}>
-                                        <td className="px-4 py-2 whitespace-nowrap text-text">
+                                        <td className="h-14 py-2 pr-3 pl-6 whitespace-nowrap text-text md:pl-7">
                                             {formatDate(day.date)}
                                         </td>
                                         <td className="px-3 py-2">
@@ -537,7 +534,7 @@ export function AttendanceCard({
                                                 .filter(Boolean)
                                                 .join(' · ') || '–'}
                                         </td>
-                                        <td className="px-4 py-2 text-right text-text-muted tnum">
+                                        <td className="py-2 pr-6 pl-3 text-right text-text-muted tnum md:pr-7">
                                             {minutesLabel(day.work_minutes) ??
                                                 '–'}
                                         </td>
@@ -548,17 +545,17 @@ export function AttendanceCard({
                     </div>
 
                     {/* Phones, tablets and narrow desktop columns: list rows. */}
-                    <ul className="divide-y divide-border border-t border-border xl:hidden">
+                    <ul className="divide-y divide-divider border-t border-divider 2xl:hidden">
                         {attendance.days.map((day) => (
                             <li
                                 key={day.date}
-                                className="flex min-h-14 items-center gap-3 px-4 py-2"
+                                className="flex min-h-[60px] items-center gap-3 px-6 py-2 md:px-7"
                             >
                                 <span className="min-w-0 flex-1">
-                                    <span className="block text-[15px] text-text">
+                                    <span className="block text-body font-semibold text-text">
                                         {formatDate(day.date)}
                                     </span>
-                                    <span className="block text-[13px] text-text-muted">
+                                    <span className="block text-label font-normal text-text-muted">
                                         <span className="font-mono tnum">
                                             {day.check_in ?? '–'} –{' '}
                                             {day.check_out ?? '–'}
@@ -574,7 +571,7 @@ export function AttendanceCard({
                             </li>
                         ))}
                     </ul>
-                    <p className="px-4 pt-2 pb-2 text-xs text-text-muted">
+                    <p className="px-6 pt-3 pb-2 text-meta text-text-muted md:px-7">
                         Menampilkan {attendance.days.length} hari terakhir.
                         Unduhan berisi seluruh data, termasuk koordinat GPS dan
                         data teknis tiap log.
@@ -595,7 +592,11 @@ function RowLink({ href, children }: { href: string; children: ReactNode }) {
     return (
         <Link
             href={href}
-            className="flex min-h-14 items-center gap-3 px-4 py-2 hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none"
+            className={cn(
+                'flex min-h-[60px] items-center gap-3 px-6 py-2 transition-colors duration-120 ease-brand hover:bg-background md:px-7',
+                focusRing,
+                'focus-visible:ring-inset',
+            )}
         >
             {children}
         </Link>
@@ -616,41 +617,35 @@ export function RequestsCard({
                     ? `${formatNumber(requests.count)} pengajuan`
                     : 'Cuti, izin, sakit, lembur, koreksi, dan dinas yang Anda ajukan.'
             }
-            aside={
-                <Link
-                    href="/pengajuan"
-                    className="font-medium text-primary hover:underline"
-                >
-                    Semua pengajuan →
-                </Link>
-            }
+            aside={<AsideLink href="/pengajuan">Semua pengajuan</AsideLink>}
             flush
         >
             {requests === undefined ? (
                 <ListSkeleton />
             ) : requests.items.length === 0 ? (
-                <div className="px-4 pb-3">
+                <div className="px-6 pb-4 md:px-7">
                     <EmptyState
+                        size="sm"
                         icon={Inbox}
                         title="Belum ada pengajuan"
                         description="Pengajuan cuti, izin, atau lembur Anda akan tercatat di sini."
                     />
                 </div>
             ) : (
-                <ul className="divide-y divide-border border-t border-border">
+                <ul className="divide-y divide-divider border-t border-divider">
                     {requests.items.map((item) => (
                         <li key={item.id}>
                             <RowLink href={item.url}>
                                 <span className="min-w-0 flex-1">
-                                    <span className="block truncate text-sm text-text">
+                                    <span className="block truncate text-body font-semibold text-text">
                                         {item.number && (
-                                            <span className="mr-1.5 font-mono text-[13px] text-text-muted">
+                                            <span className="mr-1.5 font-mono text-label text-text-muted">
                                                 {item.number}
                                             </span>
                                         )}
                                         {item.type}
                                     </span>
-                                    <span className="block truncate text-[13px] text-text-muted">
+                                    <span className="block truncate text-label font-normal text-text-muted">
                                         {item.summary}
                                     </span>
                                 </span>
@@ -686,23 +681,24 @@ export function DecisionsCard({
             {decisions === undefined ? (
                 <ListSkeleton />
             ) : decisions.items.length === 0 ? (
-                <div className="px-4 pb-3">
+                <div className="px-6 pb-4 md:px-7">
                     <EmptyState
+                        size="sm"
                         icon={CheckCheck}
                         title="Belum ada keputusan"
                         description="Keputusan Anda atas pengajuan rekan kerja akan tercatat di sini."
                     />
                 </div>
             ) : (
-                <ul className="divide-y divide-border border-t border-border">
+                <ul className="divide-y divide-divider border-t border-divider">
                     {decisions.items.map((item) => (
                         <li key={item.id}>
                             <RowLink href={item.url}>
                                 <span className="min-w-0 flex-1">
-                                    <span className="block truncate text-sm text-text">
+                                    <span className="block truncate text-body font-semibold text-text">
                                         {item.requester} · {item.type}
                                     </span>
-                                    <span className="block truncate text-[13px] text-text-muted">
+                                    <span className="block truncate text-label font-normal text-text-muted">
                                         {item.number && (
                                             <span className="mr-1.5 font-mono">
                                                 {item.number}

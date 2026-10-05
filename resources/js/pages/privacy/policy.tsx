@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { BrandMark } from '@/components/shell/brand-mark';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/format';
+import { cn, focusRing } from '@/lib/utils';
 
 type Props = {
     version: string;
@@ -16,13 +17,16 @@ type Props = {
 /** Public frame for guests (linked from the login page). */
 function PublicFrame({ children }: { children: ReactNode }) {
     return (
-        <div className="min-h-svh bg-background px-4 py-6 md:py-10">
+        <div className="min-h-svh bg-page px-4 py-6 text-text md:py-10">
             <div className="mx-auto max-w-3xl">
                 <Link
                     href="/login"
-                    className="mb-4 inline-flex min-h-11 items-center gap-1.5 text-sm text-text-muted hover:text-text"
+                    className={cn(
+                        'mb-4 inline-flex min-h-control items-center gap-2 rounded-control text-label font-semibold text-link hover:opacity-80',
+                        focusRing,
+                    )}
                 >
-                    <ArrowLeft className="size-4" aria-hidden />
+                    <ArrowLeft className="size-5" aria-hidden />
                     Kembali ke halaman masuk
                 </Link>
                 {children}
@@ -44,13 +48,11 @@ export default function PrivacyPolicy({
     const content = (
         <>
             <Head title="Kebijakan privasi" />
-            <article className="mx-auto max-w-3xl rounded-xl border border-border bg-surface p-5 shadow-card md:p-8">
-                <header className="mb-6 space-y-1 border-b border-border pb-4">
+            <article className="mx-auto max-w-3xl rounded-panel border border-border bg-surface p-6 shadow-card md:p-8">
+                <header className="mb-6 flex flex-col gap-1.5 border-b border-divider pb-5">
                     {!signedIn && <BrandMark withName className="mb-4" />}
-                    <h1 className="text-xl leading-7 font-semibold text-text">
-                        Kebijakan privasi
-                    </h1>
-                    <p className="text-sm text-text-muted">
+                    <h1 className="text-h2">Kebijakan privasi</h1>
+                    <p className="text-label font-normal text-text-muted">
                         Versi {version} · berlaku sejak{' '}
                         {formatDate(effective_date)}
                     </p>
@@ -61,12 +63,12 @@ export default function PrivacyPolicy({
                     dangerouslySetInnerHTML={{ __html: html }}
                 />
                 {signedIn && (
-                    <p className="mt-6 border-t border-border pt-4 text-[13px] text-text-muted">
+                    <p className="mt-6 border-t border-divider pt-4 text-label font-normal text-text-muted">
                         Lihat dan unduh data Anda, atau atur persetujuan lokasi
                         &amp; selfie di{' '}
                         <Link
                             href="/privasi"
-                            className="font-medium text-primary hover:underline"
+                            className="font-semibold text-link hover:opacity-80"
                         >
                             Privasi &amp; data saya
                         </Link>
@@ -84,6 +86,7 @@ export default function PrivacyPolicy({
     return (
         <AppLayout
             breadcrumbs={[
+                { title: 'Pengaturan', href: '/settings/profile' },
                 { title: 'Privasi & data saya', href: '/privasi' },
                 { title: 'Kebijakan privasi', href: '/kebijakan-privasi' },
             ]}

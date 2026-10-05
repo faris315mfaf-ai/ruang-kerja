@@ -1,119 +1,76 @@
 import { usePage } from '@inertiajs/react';
-import { CircleCheck, LayoutGrid, MapPin } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 
-const FEATURES: { icon: LucideIcon; title: string; description: string }[] = [
-    {
-        icon: MapPin,
-        title: 'Absensi GPS, selfie, atau QR',
-        description:
-            'Check-in dari ponsel di lokasi kantor, lapangan, atau saat WFH.',
-    },
-    {
-        icon: CircleCheck,
-        title: 'Workspace & tugas tim',
-        description:
-            'Board, tenggat, komentar, dan dokumen untuk divisi, tim, dan proyek.',
-    },
-    {
-        icon: LayoutGrid,
-        title: 'Dashboard berbasis hasil kerja',
-        description:
-            'Pantau tugas selesai dan tenggat, bukan sekadar jam duduk.',
-    },
-];
+const FEATURES = [
+    'Check-in GPS & QR',
+    'Board tugas realtime',
+    'Portofolio proyek',
+] as const;
 
-/** Desktop left panel of the login page (mockup `Login`). */
+/**
+ * Two soft glows over the action gradient (DLogin left panel). Built from
+ * tokens with color-mix so the panel keeps the same look in both themes.
+ */
+const PANEL_BACKGROUND = [
+    'radial-gradient(600px 400px at 85% 15%, color-mix(in srgb, var(--accent-blue) 55%, transparent), transparent 70%)',
+    'radial-gradient(600px 500px at 10% 90%, color-mix(in srgb, var(--brand-400) 45%, transparent), transparent 70%)',
+    'var(--grad-aksi)',
+].join(', ');
+
+/** Desktop/tablet left panel of the login page (design DLogin). */
 export function LoginBrandPanel({ companyName }: { companyName: string }) {
     const { branding } = usePage().props;
 
     return (
-        <aside className="relative hidden h-svh flex-col justify-between overflow-hidden bg-linear-to-br from-brand-50 via-surface-2 to-accent-blue/10 p-16 lg:sticky lg:top-0 lg:flex dark:from-brand-700/25 dark:via-background dark:to-accent-blue/10">
+        <aside
+            className="flex min-h-[420px] flex-col justify-between gap-10 px-10 py-14 text-on-brand lg:sticky lg:top-0 lg:h-svh lg:px-16"
+            style={{ backgroundImage: PANEL_BACKGROUND }}
+        >
             {/* Guests get no company in `branding`; the name comes from the DB. */}
             <div className="flex items-center gap-3">
                 {branding.logo ? (
                     <img
                         src={branding.logo}
                         alt=""
-                        className="size-10 rounded-lg object-contain"
+                        className="size-11 rounded-[13px] bg-on-brand/20 object-contain"
                     />
                 ) : (
                     <span
                         aria-hidden
-                        className="flex size-10 items-center justify-center rounded-lg bg-(image:--brand-gradient) text-sm font-semibold text-on-brand shadow-card"
+                        className="flex size-11 items-center justify-center rounded-[13px] border border-on-brand/35 bg-on-brand/20 text-[17px] font-extrabold"
                     >
                         {branding.shortName}
                     </span>
                 )}
                 <span className="grid leading-tight">
-                    <span className="font-semibold text-text">
+                    <span className="text-[20px] font-bold">
                         {branding.name}
                     </span>
-                    <span className="text-xs text-text-muted">
+                    <span className="text-meta text-on-brand/85">
                         {companyName}
                     </span>
                 </span>
             </div>
 
-            <div className="max-w-xl space-y-8">
-                <div className="space-y-4">
-                    <h2 className="text-4xl leading-tight font-semibold tracking-tight text-text">
-                        Absensi, tugas, dan kolaborasi tim dalam satu tempat
-                    </h2>
-                    <p className="text-base text-text-muted">
-                        Aplikasi kerja internal untuk seluruh karyawan{' '}
-                        {companyName}.
-                    </p>
-                </div>
-
-                <ul className="space-y-5">
-                    {FEATURES.map(({ icon: Icon, title, description }) => (
-                        <li key={title} className="flex gap-4">
-                            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-primary shadow-card">
-                                <Icon className="size-5" aria-hidden />
-                            </span>
-                            <span className="space-y-0.5">
-                                <span className="block font-medium text-text">
-                                    {title}
-                                </span>
-                                <span className="block text-sm text-text-muted">
-                                    {description}
-                                </span>
-                            </span>
-                        </li>
-                    ))}
-                </ul>
-
-                {/* Decorative preview of the app; not interactive. */}
-                <div aria-hidden className="max-w-sm space-y-2.5 select-none">
-                    <div className="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-sm shadow-card">
-                        <span className="size-2 rounded-full bg-success" />
-                        <span className="font-medium text-text">
-                            Check-in berhasil
-                        </span>
-                        <span className="ml-auto text-xs text-text-muted">
-                            <span className="font-mono">07.41</span> · Kantor
-                            Pusat
-                        </span>
-                    </div>
-                    <div className="ml-6 flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-sm shadow-card">
-                        <span className="size-3 rounded-full border-2 border-warning" />
-                        <span className="font-mono text-xs text-text-muted">
-                            PLQ-21
-                        </span>
-                        <span className="truncate text-text">
-                            Landing page produk baru
-                        </span>
-                        <span className="ml-auto text-xs text-text-muted">
-                            4/7
-                        </span>
-                    </div>
-                </div>
+            <div className="flex max-w-[560px] flex-col gap-5">
+                <p className="text-[40px] leading-[48px] font-extrabold tracking-[-0.03em] xl:text-[52px] xl:leading-[60px]">
+                    Absen, kerja, dan pantau proyek dalam satu tempat.
+                </p>
+                <p className="text-[19px] leading-[30px]">
+                    Terhubung dengan Google Workspace kantor Anda. Data lokasi
+                    hanya direkam saat check-in dan check-out.
+                </p>
             </div>
 
-            <p className="text-xs text-text-muted">
-                Aplikasi internal {companyName} · hanya untuk karyawan terdaftar
-            </p>
+            <ul className="flex flex-wrap gap-3" aria-label="Fitur utama">
+                {FEATURES.map((feature) => (
+                    <li
+                        key={feature}
+                        className="inline-flex h-10 items-center rounded-full border border-on-brand/30 bg-on-brand/15 px-4 text-[16px] font-semibold"
+                    >
+                        {feature}
+                    </li>
+                ))}
+            </ul>
         </aside>
     );
 }

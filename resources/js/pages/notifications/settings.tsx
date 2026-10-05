@@ -5,8 +5,9 @@ import { SaveIndicator } from '@/features/notifications/settings/save-indicator'
 import type { NotificationSettingsProps } from '@/features/notifications/settings/types';
 import { useNotificationSettings } from '@/features/notifications/settings/use-notification-settings';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
+import SettingsLayout from '@/layouts/settings/layout';
 
-/** Pengaturan › Notifikasi (Sprint 8). */
+/** Pengaturan › Notifikasi (Sprint 8; design SPengaturan / MSPengaturan). */
 export default function NotificationSettingsPage(
     props: NotificationSettingsProps,
 ) {
@@ -18,19 +19,24 @@ export default function NotificationSettingsPage(
     return (
         <>
             <Head title="Pengaturan notifikasi" />
-            {breakpoint === 'mobile' ? (
-                <NotificationSettingsMobile
-                    props={props}
-                    state={state}
-                    firstName={firstName}
-                />
-            ) : (
-                <NotificationSettingsDesktop
-                    props={props}
-                    state={state}
-                    firstName={firstName}
-                />
-            )}
+            <h1 className="hidden md:sr-only md:block">
+                Pengaturan notifikasi
+            </h1>
+            <SettingsLayout>
+                {breakpoint === 'mobile' ? (
+                    <NotificationSettingsMobile
+                        props={props}
+                        state={state}
+                        firstName={firstName}
+                    />
+                ) : (
+                    <NotificationSettingsDesktop
+                        props={props}
+                        state={state}
+                        firstName={firstName}
+                    />
+                )}
+            </SettingsLayout>
         </>
     );
 }
@@ -40,6 +46,7 @@ NotificationSettingsPage.layout = {
         { title: 'Pengaturan', href: '/settings/profile' },
         { title: 'Notifikasi', href: '/pengaturan/notifikasi' },
     ],
+    title: 'Notifikasi',
     back: '/menu',
-    appBarActions: <SaveIndicator className="pr-2 text-xs" />,
+    appBarActions: <SaveIndicator className="pr-2" />,
 };

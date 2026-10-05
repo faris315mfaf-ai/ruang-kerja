@@ -1,6 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { cn, focusRing } from '@/lib/utils';
 
 type Props = {
     version: string;
@@ -9,9 +11,9 @@ type Props = {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
     return (
-        <section className="space-y-2">
-            <h2 className="text-base font-semibold text-text">{title}</h2>
-            <div className="space-y-2 text-[15px] leading-7 text-text-muted md:text-sm md:leading-6">
+        <section className="flex flex-col gap-2">
+            <h2 className="text-title font-bold text-text">{title}</h2>
+            <div className="flex flex-col gap-2 text-body text-text-muted">
                 {children}
             </div>
         </section>
@@ -19,8 +21,8 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 /**
- * Full attendance data policy (UU PDP No. 27/2022), linked from the consent
- * screen. The version comes from config/attendance.php.
+ * Full attendance data policy (UU PDP No. 27/2022; SPengaturan card style),
+ * linked from the consent screen. The version comes from config/attendance.php.
  */
 export default function AttendancePrivacyPolicy({
     version,
@@ -29,23 +31,28 @@ export default function AttendancePrivacyPolicy({
     return (
         <>
             <Head title="Kebijakan data absensi" />
-            <article className="mx-auto max-w-2xl space-y-6 rounded-xl border border-border bg-surface p-5 shadow-card md:p-8">
-                <header className="space-y-1">
+            <article className="mx-auto flex max-w-3xl flex-col gap-6 rounded-panel border border-border bg-surface p-6 shadow-card md:p-8">
+                <header className="flex flex-col gap-1.5 border-b border-divider pb-5">
                     <Link
                         href="/absensi"
-                        className="hidden items-center gap-1.5 text-sm text-text-muted hover:text-text md:inline-flex"
+                        className={cn(
+                            '-mt-2 hidden min-h-control items-center gap-2 self-start rounded-control text-label font-semibold text-link hover:opacity-80 md:inline-flex',
+                            focusRing,
+                        )}
                     >
-                        <ArrowLeft className="size-4" aria-hidden />
+                        <ArrowLeft className="size-5" aria-hidden />
                         Kembali ke absensi
                     </Link>
-                    <h1 className="text-xl leading-7 font-semibold text-text">
+                    <h1 className="text-h2">
                         Kebijakan data lokasi &amp; selfie absensi
                     </h1>
-                    <p className="text-sm text-text-muted">Versi {version}</p>
+                    <Badge variant="label" tone="neutral">
+                        Versi {version}
+                    </Badge>
                 </header>
 
                 <Section title="1. Data yang dikumpulkan">
-                    <ul className="list-disc space-y-1 pl-5">
+                    <ul className="flex list-disc flex-col gap-1.5 pl-5 marker:text-text-subtle">
                         <li>
                             Lokasi GPS (koordinat dan akurasi) hanya pada saat
                             Anda menekan check-in atau check-out. Aplikasi tidak
@@ -103,14 +110,14 @@ export default function AttendancePrivacyPolicy({
                 </Section>
 
                 <Section title="6. Hak Anda">
-                    <ul className="list-disc space-y-1 pl-5">
+                    <ul className="flex list-disc flex-col gap-1.5 pl-5 marker:text-text-subtle">
                         <li>
                             Melihat riwayat absensi Anda kapan saja di halaman
                             Absensi, dan mengunduh seluruh data Anda (Excel atau
                             PDF) di{' '}
                             <Link
                                 href="/privasi"
-                                className="font-medium text-primary hover:underline"
+                                className="font-semibold text-link hover:opacity-80"
                             >
                                 Privasi &amp; data saya
                             </Link>
@@ -127,12 +134,12 @@ export default function AttendancePrivacyPolicy({
                     </ul>
                 </Section>
 
-                <p className="border-t border-border pt-4 text-[13px] text-text-subtle">
+                <p className="border-t border-divider pt-5 text-label font-normal text-text-muted">
                     Kebijakan ini mengikuti UU No. 27 Tahun 2022 tentang
                     Pelindungan Data Pribadi dan merupakan bagian dari{' '}
                     <Link
                         href="/kebijakan-privasi"
-                        className="font-medium text-primary hover:underline"
+                        className="font-semibold text-link hover:opacity-80"
                     >
                         kebijakan privasi
                     </Link>

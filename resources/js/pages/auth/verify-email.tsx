@@ -1,8 +1,8 @@
 // Components
-import { Form, Head } from '@inertiajs/react';
-import TextLink from '@/components/text-link';
+import { Form, Head, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { AuthStatus, authLinkClass } from '@/features/auth/parts';
 import { logout } from '@/routes';
 import { send } from '@/routes/verification';
 
@@ -12,26 +12,31 @@ export default function VerifyEmail({ status }: { status?: string }) {
             <Head title="Verifikasi email" />
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-center text-sm font-medium text-success">
+                <AuthStatus>
                     Tautan verifikasi baru telah dikirim ke alamat email yang
                     terdaftar di akun Anda.
-                </div>
+                </AuthStatus>
             )}
 
-            <Form {...send.form()} className="space-y-6 text-center">
+            <Form {...send.form()} className="flex flex-col items-center gap-4">
                 {({ processing }) => (
                     <>
-                        <Button disabled={processing} variant="secondary">
+                        <Button
+                            size="lg"
+                            className="w-full"
+                            disabled={processing}
+                        >
                             {processing && <Spinner />}
                             Kirim ulang email verifikasi
                         </Button>
 
-                        <TextLink
+                        <Link
                             href={logout()}
-                            className="mx-auto block text-sm"
+                            as="button"
+                            className={authLinkClass}
                         >
                             Keluar
-                        </TextLink>
+                        </Link>
                     </>
                 )}
             </Form>

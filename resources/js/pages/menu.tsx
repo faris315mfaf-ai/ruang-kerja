@@ -5,16 +5,20 @@ import {
     Calendar,
     CheckCheck,
     ChevronRight,
+    CloudCog,
     FileText,
     LayoutGrid,
     LogOut,
+    Moon,
     ShieldCheck,
-    SunMoon,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { ThemeSegmented } from '@/components/shell/theme-segmented';
-import { UserAvatar } from '@/components/shell/user-avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ListRow } from '@/components/ui/list-row';
 import { MenuWorkspaceGrid } from '@/features/workspaces/menu-workspace-grid';
+import { useAppearance } from '@/hooks/use-appearance';
+import { useInitials } from '@/hooks/use-initials';
 import {
     adminNavItems,
     attendanceNavItems,
@@ -25,16 +29,23 @@ import {
     portfolioNavItem,
 } from '@/lib/navigation';
 import { primaryRoleLabel } from '@/lib/roles';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { logout } from '@/routes';
+import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
+import { google as googleSettings } from '@/routes/settings';
 
+const APPEARANCE_LABELS = {
+    system: 'Ikuti sistem',
+    light: 'Terang',
+    dark: 'Gelap',
+} as const;
+
+/** Overline heading + one card of rows (MMenu "Workspace", "Lainnya"). */
 function Section({ title, children }: { title: string; children: ReactNode }) {
     return (
-        <section className="space-y-2">
-            <h2 className="px-1 text-[13px] font-medium text-text-muted">
-                {title}
-            </h2>
+        <section className="flex flex-col gap-2.5">
+            <h2 className="px-1 pt-1 text-overline text-text-muted">{title}</h2>
             {children}
         </section>
     );
@@ -42,98 +53,114 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 function Group({ children }: { children: ReactNode }) {
     return (
-        <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface [&>li]:ml-0">
+        <div className="divide-y divide-divider overflow-hidden rounded-[22px] border border-border bg-surface">
             {children}
-        </ul>
+        </div>
     );
 }
 
-type RowProps = {
+/** Row with a 38px neutral icon tile and an optional value on the right. */
+function Row({
+    icon: Icon,
+    label,
+    href,
+    trailing,
+}: {
     icon: LucideIcon;
     label: string;
-    href?: string;
+    href: string;
     trailing?: ReactNode;
-};
-
-function Row({ icon: Icon, label, href, trailing }: RowProps) {
-    const content = (
-        <>
-            <Icon
-                className="size-5 shrink-0 text-text-muted"
-                strokeWidth={1.75}
-                aria-hidden
-            />
-            <span className="min-w-0 flex-1 truncate text-[15px] text-text">
-                {label}
-            </span>
-            {trailing}
-            {href && (
-                <ChevronRight
-                    className="size-4 shrink-0 text-text-subtle"
-                    aria-hidden
-                />
-            )}
-        </>
-    );
-
-    const className =
-        'flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left';
-
+}) {
     return (
-        <li>
-            {href ? (
-                <Link
-                    href={href}
-                    prefetch
-                    className={cn(
-                        className,
-                        'transition-colors duration-120 ease-brand hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none',
-                    )}
-                >
-                    {content}
-                </Link>
-            ) : (
-                <div className={className}>{content}</div>
-            )}
-        </li>
+        <ListRow
+            href={href}
+            className="min-h-[58px] px-4 md:px-4"
+            leading={
+                <span className="flex size-[38px] items-center justify-center rounded-[11px] bg-surface-2 text-text">
+                    <Icon className="size-5" strokeWidth={1.9} aria-hidden />
+                </span>
+            }
+            title={label}
+            trailing={
+                trailing && (
+                    <span className="flex items-center gap-2 text-label font-normal text-text-muted">
+                        {trailing}
+                        <ChevronRight
+                            aria-hidden
+                            className="size-[18px] text-text-subtle"
+                            strokeWidth={2.4}
+                        />
+                    </span>
+                )
+            }
+        />
     );
 }
 
-/** Mobile "Menu" tab: profile, workspace, work & settings (mockup MMenu). */
+/** Gradient identity card linking to the profile (MMenu header card). */
+function ProfileCard() {
+    const { auth } = usePage().props;
+    const getInitials = useInitials();
+    const user = auth.user;
+
+    if (!user) {
+        return null;
+    }
+
+    const subtitle =
+        [user.position?.name, user.division?.name]
+            .filter(Boolean)
+            .join(' · ') ||
+        primaryRoleLabel(auth.roles) ||
+        user.email;
+    const avatar =
+        'flex size-14 shrink-0 items-center justify-center rounded-full border-2 border-on-brand/50 bg-on-brand/20 text-[19px] font-extrabold';
+
+    return (
+        <Link
+            href={edit()}
+            prefetch
+            className={cn(
+                'flex items-center gap-3.5 rounded-panel bg-grad-highlight p-[18px] text-on-brand shadow-glow transition-opacity duration-120 ease-brand hover:opacity-95',
+                focusRing,
+            )}
+        >
+            {user.avatar ? (
+                <img
+                    src={user.avatar}
+                    alt=""
+                    className={cn(avatar, 'object-cover')}
+                />
+            ) : (
+                <span aria-hidden className={avatar}>
+                    {getInitials(user.name)}
+                </span>
+            )}
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="truncate text-[19px] leading-[26px] font-extrabold">
+                    {user.name}
+                </span>
+                <span className="truncate text-label font-normal">
+                    {subtitle}
+                </span>
+            </span>
+            <ChevronRight aria-hidden className="size-5" strokeWidth={2.4} />
+        </Link>
+    );
+}
+
+/** Mobile "Menu" tab: profile, workspaces, work & settings (design MMenu). */
 export default function Menu() {
     const { auth, approvals } = usePage().props;
+    const { appearance } = useAppearance();
     const pending = approvals?.pending ?? 0;
-    const roleLabel = primaryRoleLabel(auth.roles);
 
     return (
         <>
             <Head title="Menu" />
-            <div className="mx-auto max-w-xl space-y-6">
-                {auth.user && (
-                    <Link
-                        href={edit()}
-                        prefetch
-                        className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3.5 transition-colors duration-120 ease-brand hover:bg-surface-2"
-                    >
-                        <UserAvatar
-                            name={auth.user.name}
-                            src={auth.user.avatar}
-                            className="size-12 text-base"
-                        />
-                        <span className="grid min-w-0 flex-1">
-                            <span className="truncate text-[17px] font-semibold text-text">
-                                {auth.user.name}
-                            </span>
-                            <span className="truncate text-sm text-text-muted">
-                                {roleLabel ?? auth.user.email}
-                            </span>
-                        </span>
-                        <ChevronRight
-                            className="size-4 text-text-subtle"
-                            aria-hidden
-                        />
-                    </Link>
-                )}
+            <div className="mx-auto flex max-w-xl flex-col gap-4 pb-2">
+                <h1 className="hidden md:sr-only md:block">Menu</h1>
+                <ProfileCard />
 
                 <Section title="Workspace">
                     <MenuWorkspaceGrid />
@@ -166,9 +193,12 @@ export default function Menu() {
                             href="/persetujuan"
                             trailing={
                                 pending > 0 ? (
-                                    <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground tnum">
+                                    <Badge
+                                        variant="count"
+                                        aria-label={`${pending} menunggu`}
+                                    >
                                         {pending}
-                                    </span>
+                                    </Badge>
                                 ) : undefined
                             }
                         />
@@ -199,7 +229,7 @@ export default function Menu() {
                     </Group>
                 </Section>
 
-                <Section title="Pengaturan">
+                <Section title="Lainnya">
                     <Group>
                         <Row
                             icon={Bell}
@@ -207,29 +237,37 @@ export default function Menu() {
                             href="/pengaturan/notifikasi"
                         />
                         <Row
-                            icon={SunMoon}
+                            icon={Moon}
                             label="Tampilan"
-                            trailing={<ThemeSegmented />}
+                            href={editAppearance().url}
+                            trailing={APPEARANCE_LABELS[appearance]}
                         />
                         <Row
                             icon={ShieldCheck}
                             label="Privasi & data saya"
                             href="/privasi"
                         />
+                        <Row
+                            icon={CloudCog}
+                            label="Akun Google"
+                            href={googleSettings().url}
+                        />
                     </Group>
                 </Section>
 
-                <button
+                <Button
                     type="button"
+                    variant="outline"
+                    size="lg"
+                    className="mt-1 w-full text-danger"
                     onClick={() => {
                         router.flushAll();
                         router.post(logout());
                     }}
-                    className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface text-[15px] font-medium text-danger transition-colors duration-120 ease-brand hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
-                    <LogOut className="size-5" strokeWidth={1.75} aria-hidden />
+                    <LogOut aria-hidden />
                     Keluar
-                </button>
+                </Button>
             </div>
         </>
     );

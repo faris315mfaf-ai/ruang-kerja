@@ -3,6 +3,8 @@ import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { useMemo, useState } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { authLinkClass } from '@/features/auth/parts';
 import { Input } from '@/components/ui/input';
 import {
     InputOTP,
@@ -53,10 +55,10 @@ export default function TwoFactorChallenge() {
         <>
             <Head title="Autentikasi dua faktor" />
 
-            <div className="space-y-6">
+            <div>
                 <Form
                     {...store.form()}
-                    className="space-y-4"
+                    className="flex flex-col gap-5"
                     resetOnError
                     resetOnSuccess={!showRecoveryInput}
                 >
@@ -77,7 +79,7 @@ export default function TwoFactorChallenge() {
                                     />
                                 </>
                             ) : (
-                                <div className="flex flex-col items-center justify-center space-y-3 text-center">
+                                <div className="flex flex-col items-center justify-center gap-3 text-center">
                                     <div className="flex w-full items-center justify-center">
                                         <InputOTP
                                             name="code"
@@ -107,24 +109,26 @@ export default function TwoFactorChallenge() {
 
                             <Button
                                 type="submit"
+                                size="lg"
                                 className="w-full"
                                 disabled={processing}
                             >
+                                {processing && <Spinner />}
                                 Lanjutkan
                             </Button>
 
-                            <div className="text-center text-sm text-muted-foreground">
-                                <span>atau </span>
+                            <p className="text-center text-label font-normal text-text-muted">
+                                atau{' '}
                                 <button
                                     type="button"
-                                    className="cursor-pointer text-foreground underline decoration-border-strong underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-text-subtle"
+                                    className={authLinkClass}
                                     onClick={() =>
                                         toggleRecoveryMode(clearErrors)
                                     }
                                 >
                                     {authConfigContent.toggleText}
                                 </button>
-                            </div>
+                            </p>
                         </>
                     )}
                 </Form>

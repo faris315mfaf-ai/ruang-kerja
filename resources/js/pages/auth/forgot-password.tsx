@@ -1,11 +1,11 @@
 // Components
-import { Form, Head } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
+import { Form, Head, Link } from '@inertiajs/react';
 import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
+import { AuthStatus, authLinkClass } from '@/features/auth/parts';
 import { login } from '@/routes';
 import { email } from '@/routes/password';
 
@@ -14,17 +14,13 @@ export default function ForgotPassword({ status }: { status?: string }) {
         <>
             <Head title="Lupa kata sandi" />
 
-            {status && (
-                <div className="mb-4 text-center text-sm font-medium text-success">
-                    {status}
-                </div>
-            )}
+            {status && <AuthStatus>{status}</AuthStatus>}
 
-            <div className="space-y-6">
-                <Form {...email.form()}>
+            <div className="flex flex-col gap-5">
+                <Form {...email.form()} className="flex flex-col gap-6">
                     {({ processing, errors }) => (
                         <>
-                            <div className="grid gap-2">
+                            <div className="flex flex-col gap-2">
                                 <Label htmlFor="email">Email</Label>
                                 <Input
                                     id="email"
@@ -32,32 +28,34 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                     name="email"
                                     autoComplete="off"
                                     autoFocus
+                                    aria-invalid={
+                                        errors.email ? true : undefined
+                                    }
                                     placeholder="nama@perusahaan.co.id"
                                 />
 
                                 <InputError message={errors.email} />
                             </div>
 
-                            <div className="my-6 flex items-center justify-start">
-                                <Button
-                                    className="w-full"
-                                    disabled={processing}
-                                    data-test="email-password-reset-link-button"
-                                >
-                                    {processing && (
-                                        <LoaderCircle className="h-4 w-4 animate-spin" />
-                                    )}
-                                    Kirim tautan atur ulang kata sandi
-                                </Button>
-                            </div>
+                            <Button
+                                size="lg"
+                                className="w-full"
+                                disabled={processing}
+                                data-test="email-password-reset-link-button"
+                            >
+                                {processing && <Spinner />}
+                                Kirim tautan atur ulang
+                            </Button>
                         </>
                     )}
                 </Form>
 
-                <div className="space-x-1 text-center text-sm text-muted-foreground">
-                    <span>Atau, kembali ke</span>
-                    <TextLink href={login()}>halaman masuk</TextLink>
-                </div>
+                <p className="text-center text-label font-normal text-text-muted">
+                    Atau, kembali ke{' '}
+                    <Link href={login()} className={authLinkClass}>
+                        halaman masuk
+                    </Link>
+                </p>
             </div>
         </>
     );

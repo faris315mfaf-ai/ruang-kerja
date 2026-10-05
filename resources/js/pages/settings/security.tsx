@@ -2,12 +2,13 @@ import { Form, Head } from '@inertiajs/react';
 import { ShieldAlert } from 'lucide-react';
 import { useRef } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
-import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Panel } from '@/components/ui/panel';
+import { Spinner } from '@/components/ui/spinner';
+import { edit as editProfile } from '@/routes/profile';
 import { edit } from '@/routes/security';
 import type { Props as ManageTwoFactorProps } from '@/components/manage-two-factor';
 import ManageTwoFactor from '@/components/manage-two-factor';
@@ -26,20 +27,28 @@ export default function Security(props: Props) {
         <>
             <Head title="Pengaturan keamanan" />
 
-            <h1 className="sr-only">Pengaturan keamanan</h1>
+            <h1 className="hidden md:sr-only md:block">Pengaturan keamanan</h1>
 
             {props.twoFactorRequired && (
-                <Alert className="border-warning/40 bg-warning-soft text-text">
-                    <ShieldAlert className="text-warning" />
-                    <AlertTitle>
-                        Wajib aktifkan autentikasi dua faktor
-                    </AlertTitle>
-                    <AlertDescription className="text-text-muted">
-                        Login dengan email dan kata sandi hanya untuk Super
-                        Admin dan wajib memakai kode TOTP. Aktifkan 2FA di bawah
-                        untuk melanjutkan ke aplikasi.
-                    </AlertDescription>
-                </Alert>
+                <div
+                    role="alert"
+                    className="flex gap-3 rounded-lg bg-warning-soft px-4 py-3.5"
+                >
+                    <ShieldAlert
+                        aria-hidden
+                        className="mt-0.5 size-5 shrink-0 text-warning"
+                    />
+                    <div className="flex flex-col gap-0.5">
+                        <p className="text-body font-bold text-warning">
+                            Wajib aktifkan autentikasi dua faktor
+                        </p>
+                        <p className="text-label font-normal text-text">
+                            Login dengan email dan kata sandi hanya untuk Super
+                            Admin dan wajib memakai kode TOTP. Aktifkan 2FA di
+                            bawah untuk melanjutkan ke aplikasi.
+                        </p>
+                    </div>
+                </div>
             )}
 
             <ManageTwoFactor
@@ -48,12 +57,11 @@ export default function Security(props: Props) {
                 twoFactorEnabled={props.twoFactorEnabled}
             />
 
-            <div className="space-y-6">
-                <Heading
-                    variant="small"
-                    title="Ubah kata sandi"
-                    description="Gunakan kata sandi yang panjang dan acak agar akun Anda tetap aman"
-                />
+            <Panel title="Ubah kata sandi" bodyClassName="gap-5">
+                <p className="text-label font-normal text-text-muted">
+                    Gunakan kata sandi yang panjang dan acak agar akun Anda
+                    tetap aman.
+                </p>
 
                 <Form
                     {...SecurityController.update.form()}
@@ -75,11 +83,11 @@ export default function Security(props: Props) {
                             currentPasswordInput.current?.focus();
                         }
                     }}
-                    className="space-y-6"
+                    className="flex max-w-[480px] flex-col gap-5"
                 >
                     {({ errors, processing }) => (
                         <>
-                            <div className="grid gap-2">
+                            <div className="flex flex-col gap-2">
                                 <Label htmlFor="current_password">
                                     Kata sandi saat ini
                                 </Label>
@@ -88,7 +96,6 @@ export default function Security(props: Props) {
                                     id="current_password"
                                     ref={currentPasswordInput}
                                     name="current_password"
-                                    className="mt-1 block w-full"
                                     autoComplete="current-password"
                                     placeholder="Kata sandi saat ini"
                                 />
@@ -96,7 +103,7 @@ export default function Security(props: Props) {
                                 <InputError message={errors.current_password} />
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="flex flex-col gap-2">
                                 <Label htmlFor="password">
                                     Kata sandi baru
                                 </Label>
@@ -105,7 +112,6 @@ export default function Security(props: Props) {
                                     id="password"
                                     ref={passwordInput}
                                     name="password"
-                                    className="mt-1 block w-full"
                                     autoComplete="new-password"
                                     placeholder="Kata sandi baru"
                                     passwordrules={props.passwordRules}
@@ -114,7 +120,7 @@ export default function Security(props: Props) {
                                 <InputError message={errors.password} />
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="flex flex-col gap-2">
                                 <Label htmlFor="password_confirmation">
                                     Konfirmasi kata sandi
                                 </Label>
@@ -122,7 +128,6 @@ export default function Security(props: Props) {
                                 <PasswordInput
                                     id="password_confirmation"
                                     name="password_confirmation"
-                                    className="mt-1 block w-full"
                                     autoComplete="new-password"
                                     placeholder="Ulangi kata sandi baru"
                                     passwordrules={props.passwordRules}
@@ -133,27 +138,27 @@ export default function Security(props: Props) {
                                 />
                             </div>
 
-                            <div className="flex items-center gap-4">
-                                <Button
-                                    disabled={processing}
-                                    data-test="update-password-button"
-                                >
-                                    Simpan
-                                </Button>
-                            </div>
+                            <Button
+                                className="self-start"
+                                disabled={processing}
+                                data-test="update-password-button"
+                            >
+                                {processing && <Spinner />}
+                                Simpan kata sandi
+                            </Button>
                         </>
                     )}
                 </Form>
-            </div>
+            </Panel>
         </>
     );
 }
 
 Security.layout = {
     breadcrumbs: [
-        {
-            title: 'Pengaturan keamanan',
-            href: edit(),
-        },
+        { title: 'Pengaturan', href: editProfile() },
+        { title: 'Keamanan', href: edit() },
     ],
+    title: 'Keamanan',
+    back: '/settings/profile',
 };
