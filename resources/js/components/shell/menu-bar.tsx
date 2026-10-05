@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { Bell, Search } from 'lucide-react';
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { BrandMark } from '@/components/shell/brand-mark';
 import { CheckInButton } from '@/components/shell/check-in-button';
@@ -12,67 +12,50 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useUnreadCount } from '@/features/notifications/unread-store';
-import {
-    setCommandPaletteOpen,
-    toggleCommandPalette,
-    useCommandPaletteOpen,
-} from '@/features/search/command-palette-store';
+import { setCommandPaletteOpen } from '@/features/search/command-palette-store';
 import { TONE_CLASSES } from '@/lib/attendance';
 import { shellStatus } from '@/lib/check-in-status';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { index as attendanceIndex } from '@/routes/attendance';
 import type { BreadcrumbItem } from '@/types';
 
-// cmdk + the palette load on first use (⌘K or the search button), not with
-// every page (Sprint 10 performance).
-const CommandPalette = lazy(() =>
-    import('@/features/search/command-palette').then((module) => ({
-        default: module.CommandPalette,
-    })),
-);
+const subscribeNothing = () => () => {};
 
-/** Mounts the palette once it was opened the first time, then keeps it. */
-function LazyCommandPalette() {
-    const open = useCommandPaletteOpen();
-    const [used, setUsed] = useState(open);
-
-    if (open && !used) {
-        setUsed(true);
-    }
-
-    return used ? (
-        <Suspense fallback={null}>
-            <CommandPalette />
-        </Suspense>
-    ) : null;
+/** "⌘K" on Apple keyboards, "Ctrl K" elsewhere (MenuBar.dc.html). */
+function useShortcutLabel(): string {
+    return useSyncExternalStore(
+        subscribeNothing,
+        () => (/mac|iphone|ipad/i.test(navigator.platform) ? '⌘K' : 'Ctrl K'),
+        () => 'Ctrl K',
+    );
 }
 
-const itemClass =
-    'flex h-7 items-center gap-1.5 rounded-md px-2 text-[13px] text-text-muted transition-colors duration-120 ease-brand hover:bg-text/6 hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
-
-/** Today's attendance as a compact status item (dot · title · detail). */
-function AttendanceStatusItem() {
+/** Today's attendance as a status chip: tone dot with a ring + short text. */
+function AttendanceStatusChip() {
     const { attendanceStatus } = usePage().props;
     const status = shellStatus(attendanceStatus);
+    const tone = TONE_CLASSES[status.tone];
 
     return (
         <Link
             href={attendanceIndex()}
             prefetch
-            className={cn(itemClass, 'max-w-[320px] min-w-0 whitespace-nowrap')}
+            className={cn(
+                'flex h-10 max-w-[300px] min-w-0 shrink items-center gap-2 rounded-full px-3.5 text-[15px] font-semibold whitespace-nowrap transition-opacity duration-120 ease-brand hover:opacity-85',
+                tone.soft,
+                focusRing,
+            )}
             title={`${status.title} · ${status.detail}`}
         >
             <span
                 aria-hidden
                 className={cn(
-                    'size-2 shrink-0 rounded-full',
-                    TONE_CLASSES[status.tone].solid,
+                    'size-[9px] shrink-0 rounded-full ring-[3px] ring-current/18',
+                    tone.solid,
                 )}
             />
-            <span className="shrink-0 font-medium text-text">
-                {status.title}
-            </span>
-            <span className="hidden min-w-0 truncate xl:inline">
+            <span className="shrink-0">{status.title}</span>
+            <span className="hidden min-w-0 truncate font-medium opacity-85 xl:inline">
                 · {status.detail}
             </span>
         </Link>
@@ -80,112 +63,104 @@ function AttendanceStatusItem() {
 }
 
 /**
- * macOS-style menu bar: a thin translucent strip with the app identity and
- * wayfinding on the left and status items on the right (docs/PLATFORM.md §2).
- * Content scrolls underneath it.
+ * Desktop menu bar (MenuBar.dc.html): 64px glass strip with the brand,
+ * breadcrumbs, today's attendance chip + check-in pill, search (⌘K),
+ * notifications and the account menu. Content scrolls underneath it.
  */
 export function MenuBar({ breadcrumbs }: { breadcrumbs: BreadcrumbItem[] }) {
     const { auth } = usePage().props;
     const unread = useUnreadCount();
-
-    useEffect(() => {
-        const onKeyDown = (event: KeyboardEvent) => {
-            if (
-                event.key.toLowerCase() === 'k' &&
-                (event.metaKey || event.ctrlKey)
-            ) {
-                event.preventDefault();
-                toggleCommandPalette();
-            }
-        };
-
-        window.addEventListener('keydown', onKeyDown);
-
-        return () => window.removeEventListener('keydown', onKeyDown);
-    }, []);
+    const shortcut = useShortcutLabel();
 
     return (
-        <header className="glass fixed inset-x-0 top-0 z-40 flex h-(--menu-bar-height) items-center gap-2 border-x-0 border-t-0 px-(--screen-gutter)">
+        <header className="glass fixed inset-x-0 top-0 z-40 flex h-(--menu-bar-height) items-center gap-4 border-x-0 border-t-0 border-b-border px-7">
             <Link
                 href="/dashboard"
                 prefetch
-                className="flex shrink-0 items-center rounded-md pr-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                aria-label="Ke dashboard"
+                className={cn(
+                    'flex shrink-0 items-center gap-2.5 rounded-control',
+                    focusRing,
+                )}
+                aria-label="Ke beranda"
             >
-                <BrandMark className="[&>span:first-child]:size-6 [&>span:first-child]:rounded-[6px] [&>span:first-child]:text-[10px]" />
-                <span className="ml-2 text-[13px] font-semibold tracking-[-0.01em] text-text">
+                <BrandMark size="sm" />
+                <span className="text-[17px] font-bold tracking-[-0.01em] text-text">
                     RuangKerja
                 </span>
             </Link>
 
-            <span aria-hidden className="h-4 w-px bg-border-strong/70" />
+            <span aria-hidden className="h-[22px] w-px shrink-0 bg-border" />
 
-            <div className="min-w-0 flex-1 [&_ol]:text-[13px]">
+            <div className="min-w-0 flex-1 overflow-hidden [&_ol]:flex-nowrap [&_ol]:whitespace-nowrap">
                 <Breadcrumbs breadcrumbs={breadcrumbs} />
             </div>
 
-            <AttendanceStatusItem />
-            <div className="[&_a]:h-7 [&_a]:text-[12px]">
-                <CheckInButton />
-            </div>
+            <AttendanceStatusChip />
+            <CheckInButton />
 
             <button
                 type="button"
                 onClick={() => setCommandPaletteOpen(true)}
                 className={cn(
-                    itemClass,
-                    'border border-border bg-surface/60 pr-1.5',
+                    'flex h-10 w-[200px] shrink-0 items-center gap-2.5 rounded-control border border-border bg-(--field-bg) pr-3 pl-3.5 text-[15px] text-text-muted transition-colors duration-120 ease-brand hover:text-text max-xl:w-auto',
+                    focusRing,
                 )}
             >
-                <Search className="size-3.5" aria-hidden />
-                <span className="hidden lg:inline">Cari</span>
-                <kbd className="ml-1 rounded border border-border px-1 font-mono text-[10px] text-text-subtle">
-                    ⌘K
+                <Search className="size-[18px]" strokeWidth={2} aria-hidden />
+                <span className="flex-1 text-left max-xl:sr-only">
+                    Cari apa saja
+                </span>
+                <kbd className="rounded-[6px] border border-border px-1.5 py-0.5 font-mono text-[13px] font-semibold">
+                    {shortcut}
                 </kbd>
             </button>
 
             <Link
                 href="/inbox"
                 prefetch
-                className={cn(itemClass, 'relative px-1.5')}
+                className={cn(
+                    'relative flex size-11 shrink-0 items-center justify-center rounded-full text-text transition-colors duration-120 ease-brand hover:bg-surface-2',
+                    focusRing,
+                )}
                 aria-label={
                     unread > 0
-                        ? `Notifikasi, ${unread} belum dibaca`
-                        : 'Notifikasi'
+                        ? `Inbox, ${unread} belum dibaca`
+                        : 'Inbox, tidak ada notifikasi baru'
                 }
             >
-                <Bell className="size-4" aria-hidden />
+                <Bell className="size-[22px]" strokeWidth={1.9} aria-hidden />
                 {unread > 0 && (
                     <span
                         aria-hidden
-                        className="absolute top-1 right-1 size-1.5 rounded-full bg-primary ring-2 ring-background"
-                    />
+                        className="absolute top-1.5 right-[5px] flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-badge px-[5px] text-[12px] leading-[18px] font-bold text-on-badge tnum"
+                    >
+                        {unread > 99 ? '99+' : unread}
+                    </span>
                 )}
             </Link>
 
             {auth.user && (
                 <DropdownMenu>
                     <DropdownMenuTrigger
-                        className="rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                        aria-label="Menu akun"
+                        className={cn('shrink-0 rounded-full', focusRing)}
+                        aria-label={`Menu akun ${auth.user.name}`}
                     >
                         <UserAvatar
                             name={auth.user.name}
                             src={auth.user.avatar}
-                            className="size-6 text-[10px]"
+                            ring
+                            className="size-11 text-[15px]"
                         />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                         align="end"
-                        sideOffset={8}
-                        className="glass w-64 rounded-xl"
+                        sideOffset={10}
+                        className="w-72"
                     >
                         <UserMenuContent user={auth.user} />
                     </DropdownMenuContent>
                 </DropdownMenu>
             )}
-
-            <LazyCommandPalette />
         </header>
     );
 }

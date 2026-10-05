@@ -230,11 +230,11 @@ describe('navigation', () => {
             mainNavItemsFor(roles).map((item) => item.href);
 
         expect(hrefs(['direksi'])).toEqual([
-            '/inbox',
-            '/tugas',
             '/dashboard',
             '/portofolio',
             '/manajemen',
+            '/inbox',
+            '/tugas',
             '/absensi',
             '/pengajuan',
             '/persetujuan',

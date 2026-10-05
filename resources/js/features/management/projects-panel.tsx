@@ -1,3 +1,4 @@
+import { paletteGradient } from '@/lib/palette';
 import { Link } from '@inertiajs/react';
 import { FolderKanban } from 'lucide-react';
 import { cn, focusRing } from '@/lib/utils';
@@ -6,7 +7,6 @@ import {
     healthPill,
     milestoneWhen,
     progressFill,
-    projectGradient,
     projectOwner,
     TONE_PILL,
     TONE_TEXT,
@@ -34,7 +34,7 @@ function CodeBadge({
                 small
                     ? 'size-[34px] rounded-[10px] text-[11px]'
                     : 'size-10 rounded-control text-[12px]',
-                projectGradient(project.color),
+                paletteGradient(project.color),
             )}
         >
             {project.key}

@@ -116,3 +116,25 @@ export function isPaletteColor(value: unknown): value is PaletteColor {
 export function palette(color: string | null | undefined): PaletteClasses {
     return CLASSES[isPaletteColor(color) ? color : 'gray'];
 }
+
+/**
+ * Gradient tile for a palette colour (Dock workspace tiles, project code
+ * badges): teal/green → merek, violet → indigo, warm hues → hangat, the rest
+ * → aksi. Text on it is `text-on-brand`.
+ */
+export function paletteGradient(color: string | null | undefined): string {
+    switch (color) {
+        case 'teal':
+        case 'green':
+            return 'bg-grad-merek';
+        case 'violet':
+            return 'bg-grad-indigo';
+        case 'orange':
+        case 'amber':
+        case 'red':
+        case 'pink':
+            return 'bg-grad-hangat';
+        default:
+            return 'bg-grad-aksi';
+    }
+}

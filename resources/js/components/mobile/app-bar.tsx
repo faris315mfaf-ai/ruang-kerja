@@ -1,10 +1,11 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { Bell, ChevronLeft, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { UserAvatar } from '@/components/shell/user-avatar';
 import { useUnreadCount } from '@/features/notifications/unread-store';
 import { useScrolled } from '@/hooks/use-scrolled';
-import { formatDate } from '@/lib/format';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
+import { edit as profileEdit } from '@/routes/profile';
 
 export type AppBarProps = {
     title?: string;
@@ -12,9 +13,18 @@ export type AppBarProps = {
     back?: string;
     /** Replaces the default search + bell actions. */
     actions?: ReactNode;
-    /** Home screen: date + greeting in a large title (mockup MBeranda). */
+    /** Home screen: date overline + greeting + avatar (MBeranda). */
     variant?: 'default' | 'greeting';
 };
+
+/**
+ * Round 48px icon button of the phone screens (MTugas "Cari tugas"): surface,
+ * 1px border. Use for app bar actions so they line up with the defaults.
+ */
+export const appBarIconButton = cn(
+    'relative flex size-12 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-text transition-colors duration-120 ease-brand active:bg-surface-2',
+    focusRing,
+);
 
 function greeting(now: Date): string {
     const hour = Number(
@@ -40,31 +50,44 @@ function greeting(now: Date): string {
     return 'Selamat malam';
 }
 
-const iconButton =
-    'flex size-11 items-center justify-center rounded-full text-text transition-colors duration-120 ease-brand hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
+/** "Senin, 5 Oktober" (MBeranda overline). */
+function overlineDate(now: Date): string {
+    return new Intl.DateTimeFormat('id-ID', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        timeZone: 'Asia/Jakarta',
+    }).format(now);
+}
+
+function SearchAction() {
+    return (
+        <Link href="/cari" className={appBarIconButton} aria-label="Cari">
+            <Search className="size-[22px]" strokeWidth={2} aria-hidden />
+        </Link>
+    );
+}
 
 function DefaultActions() {
     const unread = useUnreadCount();
 
     return (
         <>
-            <Link href="/cari" className={iconButton} aria-label="Cari">
-                <Search className="size-5.5" strokeWidth={1.75} />
-            </Link>
+            <SearchAction />
             <Link
                 href="/inbox"
-                className={cn(iconButton, 'relative')}
+                className={appBarIconButton}
                 aria-label={
                     unread > 0
                         ? `Notifikasi, ${unread} belum dibaca`
                         : 'Notifikasi'
                 }
             >
-                <Bell className="size-5.5" strokeWidth={1.75} />
+                <Bell className="size-[22px]" strokeWidth={2} aria-hidden />
                 {unread > 0 && (
                     <span
                         aria-hidden
-                        className="absolute top-2.5 right-2.5 size-2 rounded-full bg-primary ring-2 ring-background"
+                        className="absolute top-2.5 right-2.5 size-2.5 rounded-full bg-badge ring-2 ring-surface"
                     />
                 )}
             </Link>
@@ -72,7 +95,14 @@ function DefaultActions() {
     );
 }
 
-/** Mobile app bar, 56px (docs/PLATFORM.md §2 & §4). */
+/**
+ * Mobile screen header (MBeranda / MTugas / MSDetailTugas):
+ * - tab roots: large title (32/40 extrabold) with round actions on the right,
+ *   scrolling away with the content;
+ * - `greeting` (home): date overline, greeting and the avatar (profile);
+ * - child screens (`back`): sticky 56px bar with a round back button that
+ *   turns to glass once the page scrolls.
+ */
 export function AppBar({
     title,
     back,
@@ -87,18 +117,54 @@ export function AppBar({
         const now = new Date();
 
         return (
-            <header className="px-4 pt-[calc(env(safe-area-inset-top)+16px)] pb-2">
-                <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                        <p className="text-[13px] text-text-muted">
-                            {formatDate(now)}
+            <header className="px-4 pt-[calc(env(safe-area-inset-top)+24px)] pb-2">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 flex-col gap-1">
+                        <p className="text-overline text-link">
+                            {overlineDate(now)}
                         </p>
-                        <h1 className="truncate text-[22px] leading-8 font-semibold text-text">
+                        <h1 className="text-display tracking-[-0.025em] break-words text-text">
                             {greeting(now)}
                             {firstName ? `, ${firstName}` : ''}
                         </h1>
                     </div>
-                    <div className="-mr-2 flex shrink-0 items-center">
+                    <div className="flex shrink-0 items-center gap-2">
+                        {actions ?? (
+                            <>
+                                <SearchAction />
+                                {auth.user && (
+                                    <Link
+                                        href={profileEdit()}
+                                        aria-label={`Profil ${auth.user.name}`}
+                                        className={cn(
+                                            'rounded-full',
+                                            focusRing,
+                                        )}
+                                    >
+                                        <UserAvatar
+                                            name={auth.user.name}
+                                            src={auth.user.avatar}
+                                            ring
+                                            className="size-12 text-[16px]"
+                                        />
+                                    </Link>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+            </header>
+        );
+    }
+
+    if (!back) {
+        return (
+            <header className="px-4 pt-[calc(env(safe-area-inset-top)+24px)] pb-2">
+                <div className="flex min-h-12 items-center justify-between gap-3">
+                    <h1 className="min-w-0 truncate text-display tracking-[-0.025em] text-text">
+                        {title}
+                    </h1>
+                    <div className="flex shrink-0 items-center gap-2">
                         {actions ?? <DefaultActions />}
                     </div>
                 </div>
@@ -113,28 +179,28 @@ export function AppBar({
                 scrolled ? 'glass border-x-0 border-t-0' : 'border-transparent',
             )}
         >
-            <div className="flex h-(--app-bar-height) items-center gap-1 px-2">
-                {back ? (
-                    <button
-                        type="button"
-                        className={iconButton}
-                        aria-label="Kembali"
-                        onClick={() =>
-                            window.history.length > 1
-                                ? window.history.back()
-                                : router.visit(back)
-                        }
-                    >
-                        <ChevronLeft className="size-6" strokeWidth={1.75} />
-                    </button>
-                ) : (
-                    <span className="w-2" aria-hidden />
-                )}
-                <h1 className="min-w-0 flex-1 truncate text-[17px] font-semibold text-text">
+            <div className="flex h-(--app-bar-height) items-center gap-2.5 px-4">
+                <button
+                    type="button"
+                    className={cn(appBarIconButton, 'size-11')}
+                    aria-label="Kembali"
+                    onClick={() =>
+                        window.history.length > 1
+                            ? window.history.back()
+                            : router.visit(back)
+                    }
+                >
+                    <ChevronLeft
+                        className="size-[22px]"
+                        strokeWidth={2.4}
+                        aria-hidden
+                    />
+                </button>
+                <h1 className="min-w-0 flex-1 truncate text-[17px] font-bold text-text">
                     {title}
                 </h1>
-                <div className="flex shrink-0 items-center">
-                    {actions ?? (back ? null : <DefaultActions />)}
+                <div className="flex shrink-0 items-center gap-2">
+                    {actions}
                 </div>
             </div>
         </header>

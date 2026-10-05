@@ -24,14 +24,14 @@ export function UserMenuContent({ user }: Props) {
 
     return (
         <>
-            <DropdownMenuLabel className="p-0 font-normal">
-                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+            <DropdownMenuLabel className="p-0 text-[15px] font-normal tracking-normal text-text normal-case">
+                <div className="flex items-center gap-3 px-2 py-2 text-left">
                     <UserInfo user={user} showEmail={true} />
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <div className="flex items-center justify-between gap-3 px-2 py-1.5">
-                <span className="text-[13px] text-text-muted">Tampilan</span>
+            <div className="flex items-center justify-between gap-3 px-3 py-1.5">
+                <span className="text-[14px] text-text-muted">Tampilan</span>
                 <ThemeSegmented size="sm" />
             </div>
             <DropdownMenuSeparator />

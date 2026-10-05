@@ -6,8 +6,8 @@ import { shellStatus } from '@/lib/check-in-status';
 import { index as attendanceIndex } from '@/routes/attendance';
 
 /**
- * Topbar check-in/check-out button (docs/DESIGN.md §5). Opens the Absensi page
- * with the selfie flow already started.
+ * Menu bar check-in/check-out pill (40px, like the design's meeting pill).
+ * Opens the Absensi page with the selfie flow already started.
  */
 export function CheckInButton() {
     const { attendanceStatus } = usePage().props;
@@ -18,7 +18,12 @@ export function CheckInButton() {
     }
 
     return (
-        <Button asChild size="sm" variant={button.variant} className="h-8">
+        <Button
+            asChild
+            size="sm"
+            variant={button.variant}
+            className="h-10 rounded-full px-4"
+        >
             <Link href={attendanceIndex({ query: { [START_PARAM]: '1' } })}>
                 {button.label === 'Check-in' ? (
                     <LogIn aria-hidden />

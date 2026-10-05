@@ -40,7 +40,7 @@ import { Dock } from './dock';
 function renderFor(roles: string[]) {
     page.props.auth.roles = roles;
 
-    return render(<Dock magnify={false} />);
+    return render(<Dock />);
 }
 
 describe('Dock', () => {
@@ -93,5 +93,14 @@ describe('Dock', () => {
 
         renderFor(['anggota']);
         expect(screen.queryByRole('link', { name: 'Manajemen' })).toBeNull();
+    });
+
+    it('starts with Dashboard and keeps the Workspace stack for everyone', () => {
+        renderFor(['anggota']);
+
+        expect(screen.getAllByRole('link')[0].getAttribute('href')).toBe(
+            '/dashboard',
+        );
+        expect(screen.getByRole('button', { name: 'Workspace' })).toBeTruthy();
     });
 });

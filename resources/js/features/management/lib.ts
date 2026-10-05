@@ -440,24 +440,6 @@ export function progressFill(health: ProjectHealth | null): string {
     }
 }
 
-/** Code badge gradient from the workspace palette colour. */
-export function projectGradient(color: string): string {
-    switch (color) {
-        case 'teal':
-        case 'green':
-            return 'bg-grad-merek';
-        case 'violet':
-            return 'bg-grad-indigo';
-        case 'orange':
-        case 'amber':
-        case 'red':
-        case 'pink':
-            return 'bg-grad-hangat';
-        default:
-            return 'bg-grad-aksi';
-    }
-}
-
 /** "Divisi · PIC" under the project name. */
 export function projectOwner(project: ProjectRow): string {
     return (

@@ -17,7 +17,7 @@ export default function AuthSimpleLayout({
                             href={home()}
                             className="flex flex-col items-center gap-2 rounded-md font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                         >
-                            <BrandMark className="[&>span:first-child]:size-10 [&>span:first-child]:text-sm" />
+                            <BrandMark size="md" />
                             <span className="sr-only">{title}</span>
                         </Link>
 

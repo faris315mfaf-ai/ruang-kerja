@@ -2,22 +2,21 @@ import type { LucideIcon } from 'lucide-react';
 import {
     BarChart3,
     BookOpen,
+    Calendar,
     Building2,
     ClipboardCheck,
-    CheckCheck,
     CircleCheck,
     Clock,
-    FileText,
     FolderKanban,
     Gauge,
     Home,
     Inbox,
-    LayoutGrid,
     MapPin,
     ListChecks,
     Menu,
     Network,
     ScrollText,
+    SquareCheckBig,
     Users,
     WalletCards,
 } from 'lucide-react';
@@ -36,32 +35,35 @@ export type AppNavItem = {
     desktopOnly?: boolean;
 };
 
-/** Desktop Dock main tiles (docs/DESIGN.md §5); the mobile tab bar has its own list. */
+/**
+ * Desktop Dock / tablet Rail main items in the order of Dock.dc.html
+ * (docs/DESIGN.md §7); the mobile tab bar has its own list.
+ */
 export const mainNavItems: AppNavItem[] = [
+    {
+        title: 'Dashboard',
+        href: '/dashboard',
+        icon: Home,
+        matchPrefix: true,
+    },
     { title: 'Inbox', href: '/inbox', icon: Inbox, matchPrefix: true },
     {
         title: 'Tugas saya',
         href: '/tugas',
-        icon: CircleCheck,
-        matchPrefix: true,
-    },
-    {
-        title: 'Dashboard',
-        href: '/dashboard',
-        icon: LayoutGrid,
+        icon: SquareCheckBig,
         matchPrefix: true,
     },
     { title: 'Absensi', href: '/absensi', icon: MapPin, matchPrefix: true },
     {
         title: 'Pengajuan',
         href: '/pengajuan',
-        icon: FileText,
+        icon: Calendar,
         matchPrefix: true,
     },
     {
         title: 'Persetujuan',
         href: '/persetujuan',
-        icon: CheckCheck,
+        icon: CircleCheck,
         matchPrefix: true,
         badge: 'approvals',
     },
@@ -166,7 +168,7 @@ export function mainNavItemsFor(roles: readonly string[]): AppNavItem[] {
 export const tabNavItems: AppNavItem[] = [
     { title: 'Beranda', href: '/dashboard', icon: Home, matchPrefix: true },
     { title: 'Absen', href: '/absensi', icon: MapPin, matchPrefix: true },
-    { title: 'Tugas', href: '/tugas', icon: CircleCheck, matchPrefix: true },
+    { title: 'Tugas', href: '/tugas', icon: SquareCheckBig, matchPrefix: true },
     { title: 'Inbox', href: '/inbox', icon: Inbox, matchPrefix: true },
     { title: 'Menu', href: '/menu', icon: Menu },
 ];

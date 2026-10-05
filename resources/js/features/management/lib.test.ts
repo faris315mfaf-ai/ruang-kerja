@@ -10,7 +10,6 @@ import {
     healthPill,
     milestoneWhen,
     periodNote,
-    projectGradient,
     shortDate,
     shortRange,
     tasksCard,
@@ -304,13 +303,6 @@ describe('management projects & attendance', () => {
             text: 'terlewat 2 Okt',
             late: true,
         });
-    });
-
-    it('picks a code-badge gradient from the workspace colour', () => {
-        expect(projectGradient('teal')).toBe('bg-grad-merek');
-        expect(projectGradient('violet')).toBe('bg-grad-indigo');
-        expect(projectGradient('orange')).toBe('bg-grad-hangat');
-        expect(projectGradient('blue')).toBe('bg-grad-aksi');
     });
 
     it('adds the Alpha segment only when someone has it', () => {

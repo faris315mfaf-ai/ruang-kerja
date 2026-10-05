@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { AppShellSkeleton } from '@/components/shell/app-shell-skeleton';
 import { NotificationListener } from '@/features/notifications/notification-listener';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
+import type { PageWidth } from '@/layouts/app/desktop-layout';
 import MobileLayout from '@/layouts/app/mobile-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -17,6 +18,8 @@ export type AppLayoutProps = {
     appBar?: 'default' | 'greeting';
     /** Mobile app bar actions replacing search + bell (self-contained element). */
     appBarActions?: ReactNode;
+    /** Desktop/tablet content column (default 1280px, wide 1480px, full). */
+    width?: PageWidth;
 };
 
 const loadDesktopLayout = () => import('@/layouts/app/desktop-layout');
@@ -44,6 +47,7 @@ export default function AppLayout({
     back,
     appBar = 'default',
     appBarActions,
+    width = 'default',
 }: AppLayoutProps) {
     const breakpoint = useBreakpoint();
 
@@ -70,6 +74,7 @@ export default function AppLayout({
             <DesktopLayout
                 breadcrumbs={breadcrumbs}
                 isTablet={breakpoint === 'tablet'}
+                width={width}
             >
                 <NotificationListener />
                 {children}

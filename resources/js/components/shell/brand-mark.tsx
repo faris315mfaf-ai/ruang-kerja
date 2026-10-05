@@ -5,9 +5,18 @@ type Props = {
     className?: string;
     /** Show the app & company name next to the mark. */
     withName?: boolean;
+    /** sm 34px (menu bar) · md 44px (auth) · lg 52px (rail). */
+    size?: 'sm' | 'md' | 'lg';
 };
 
-export function BrandMark({ className, withName = false }: Props) {
+const SIZES = {
+    sm: 'size-[34px] rounded-[10px] text-[14px]',
+    md: 'size-11 rounded-[13px] text-[17px]',
+    lg: 'size-13 rounded-[16px] text-[17px]',
+} as const;
+
+/** App identity: logo, or the initials on the gradient merek (MenuBar / Main.dc.html). */
+export function BrandMark({ className, withName = false, size = 'md' }: Props) {
     const { branding } = usePage().props;
 
     return (
@@ -16,23 +25,26 @@ export function BrandMark({ className, withName = false }: Props) {
                 <img
                     src={branding.logo}
                     alt=""
-                    className="size-8 shrink-0 rounded-md object-contain"
+                    className={cn('shrink-0 object-contain', SIZES[size])}
                 />
             ) : (
                 <span
                     aria-hidden
-                    className="flex size-8 shrink-0 items-center justify-center rounded-md bg-(image:--brand-gradient) text-xs font-semibold text-on-brand"
+                    className={cn(
+                        'flex shrink-0 items-center justify-center bg-grad-merek font-extrabold text-on-brand shadow-(--dock-letter-shadow)',
+                        SIZES[size],
+                    )}
                 >
                     {branding.shortName}
                 </span>
             )}
             {withName && (
                 <span className="grid min-w-0 leading-tight">
-                    <span className="truncate text-sm font-semibold text-text">
+                    <span className="truncate text-[17px] font-bold tracking-[-0.01em] text-text">
                         {branding.name}
                     </span>
                     {branding.companyName && (
-                        <span className="truncate text-[11px] text-text-muted">
+                        <span className="truncate text-[14px] text-text-muted">
                             {branding.companyName}
                         </span>
                     )}

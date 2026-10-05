@@ -244,6 +244,9 @@
     --dock-tile-shadow:
         0 0 0 1px rgb(11 26 43 / 0.06), 0 2px 6px rgb(11 26 43 / 0.08);
     --dock-divider: rgb(11 26 43 / 0.14);
+    --dock-active-shadow: 0 8px 20px rgb(30 95 214 / 0.38);
+    --dock-letter-shadow: 0 4px 12px rgb(30 95 214 / 0.25);
+    --dock-badge-ring: #ffffff;
     --tab-bar-bg: rgb(255 255 255 / 0.72);
     --tab-bar-border: rgb(255 255 255 / 0.85);
     --tab-bar-shadow:
@@ -260,6 +263,8 @@
     --dock-tile-bg: rgb(255 255 255 / 0.08);
     --dock-tile-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
     --dock-divider: rgb(255 255 255 / 0.16);
+    --dock-active-shadow: 0 8px 24px rgb(91 140 246 / 0.35);
+    --dock-badge-ring: #172131;
     --tab-bar-bg: rgb(23 33 49 / 0.72);
     --tab-bar-border: rgb(255 255 255 / 0.1);
     --tab-bar-shadow: 0 0 0 1px rgb(0 0 0 / 0.5), 0 14px 36px rgb(0 0 0 / 0.5);
@@ -673,14 +678,32 @@
 }
 
 /*
- * Dock — macOS-style launcher (desktop shell).
+ * Dock — macOS-style launcher (desktop shell, Dock.dc.html).
  *
  * Tile size comes from --dock-size, driven per frame by a critically damped
- * spring (hooks/use-dock-magnification.ts). Hover glyph loops start and end at
- * the identity transform, so they repeat without a seam, and only animate
- * transform/opacity.
+ * spring (hooks/use-dock-magnification.ts); the corner radius follows the
+ * size (28%). Hover glyph loops start and end at the identity transform, so
+ * they repeat without a seam, and only animate transform/opacity. The tablet
+ * Rail reuses .dock-glyph for the same loops.
  */
 @layer components {
+    .dock-surface {
+        background: var(--dock-bg);
+        border: 1px solid var(--dock-border);
+        box-shadow: var(--dock-shadow);
+        -webkit-backdrop-filter: blur(28px) saturate(180%);
+        backdrop-filter: blur(28px) saturate(180%);
+    }
+
+    /* Mobile tab bar capsule (TabBar.dc.html). */
+    .tab-bar-surface {
+        background: var(--tab-bar-bg);
+        border: 1px solid var(--tab-bar-border);
+        box-shadow: var(--tab-bar-shadow);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        backdrop-filter: blur(24px) saturate(180%);
+    }
+
     .dock-tile {
         width: var(--dock-size, var(--dock-tile));
         height: var(--dock-size, var(--dock-tile));
@@ -696,15 +719,35 @@
         transition-duration: 60ms;
     }
 
+    .dock-face {
+        border-radius: 28%;
+        background: var(--dock-tile-bg);
+        box-shadow: var(--dock-tile-shadow);
+        color: var(--text);
+    }
+
+    .dock-face[data-active='true'] {
+        background-image: var(--grad-active);
+        box-shadow: var(--dock-active-shadow);
+        color: var(--on-active);
+    }
+
+    .dock-face[data-letter='true'] {
+        box-shadow: var(--dock-letter-shadow);
+        color: var(--on-brand);
+        font-size: calc(var(--dock-size, var(--dock-tile)) * 0.4);
+        font-weight: 800;
+    }
+
     .dock-glyph {
-        width: 48%;
-        height: 48%;
+        width: 46%;
+        height: 46%;
         transform-origin: 50% 60%;
         will-change: transform;
     }
 
-    .dock-tile:hover .dock-glyph,
-    .dock-tile:focus-visible .dock-glyph {
+    :is(.dock-tile, .rail-item):hover .dock-glyph,
+    :is(.dock-tile, .rail-item):focus-visible .dock-glyph {
         animation: var(--dock-motion, dock-lift)
             var(--dock-motion-duration, 1.6s)
             var(--dock-motion-timing, ease-in-out) infinite;
@@ -811,8 +854,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .dock-tile:hover .dock-glyph,
-    .dock-tile:focus-visible .dock-glyph {
+    :is(.dock-tile, .rail-item):hover .dock-glyph,
+    :is(.dock-tile, .rail-item):focus-visible .dock-glyph {
         animation: none;
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .dock-surface,
+    .tab-bar-surface {
+        background: var(--surface);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
     }
 }

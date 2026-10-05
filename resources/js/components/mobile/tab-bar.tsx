@@ -7,14 +7,14 @@ import { activeTabIndex, tabNavItems } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 
 /**
- * Bottom tab bar as a floating "dock capsule": Beranda · Absen · Tugas · Inbox ·
- * Menu. Glass, inset from the screen edges and lifted above the safe area,
- * hidden while the keyboard is open (docs/PLATFORM.md §2 & §4).
+ * Bottom tab bar as a floating capsule (TabBar.dc.html): Beranda · Absen ·
+ * Tugas · Inbox · Menu. Glass, 12px from the sides, 14px above the safe
+ * area, 70px tall; hidden while the keyboard is open (docs/PLATFORM.md §4).
  *
- * The active tab sits on a pill that slides between tabs (transform only,
- * 180ms ease-brand; instant with prefers-reduced-motion). It moves on tap,
- * before the next page arrives, so the bar answers immediately; icons shrink
- * slightly on press for touch-down feedback.
+ * The active tab sits on a gradient pill (aksi; brighter with dark ink at
+ * night) that slides between tabs (transform only, 180ms ease-brand; instant
+ * with prefers-reduced-motion). It moves on tap, before the next page
+ * arrives, so the bar answers immediately; icons shrink slightly on press.
  */
 export function TabBar() {
     const { currentUrl } = useCurrentUrl();
@@ -36,21 +36,21 @@ export function TabBar() {
         <nav
             aria-label="Navigasi utama"
             data-tab-bar
-            className="fixed inset-x-(--screen-gutter) bottom-[calc(env(safe-area-inset-bottom)+var(--screen-gutter))] z-40 mx-auto max-w-[420px]"
+            className="fixed inset-x-(--tab-bar-inset) bottom-[calc(env(safe-area-inset-bottom)+var(--tab-bar-lift))] z-40 mx-auto max-w-[420px]"
         >
-            <ul className="glass relative grid h-(--tab-bar-capsule) grid-cols-5 rounded-full p-1 shadow-(--dock-shadow)">
+            <ul className="tab-bar-surface relative grid h-(--tab-bar-capsule) grid-cols-5 rounded-full p-1.5">
                 <li
                     aria-hidden
                     data-testid="tab-pill"
                     className={cn(
-                        'pointer-events-none absolute inset-y-1 left-1 w-[calc((100%-8px)/5)] transition-[transform,opacity] duration-180 ease-brand motion-reduce:transition-none',
+                        'pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc((100%-12px)/5)] transition-[transform,opacity] duration-180 ease-brand motion-reduce:transition-none',
                         shown < 0 && 'opacity-0',
                     )}
                     style={{
                         transform: `translateX(${Math.max(shown, 0) * 100}%)`,
                     }}
                 >
-                    <span className="block size-full rounded-full bg-link-soft dark:bg-primary/16" />
+                    <span className="block size-full rounded-full bg-grad-active shadow-button" />
                 </li>
                 {tabNavItems.map((item, index) => {
                     const active = index === current;
@@ -65,27 +65,28 @@ export function TabBar() {
                                 aria-current={active ? 'page' : undefined}
                                 onClick={() => setPending(index)}
                                 className={cn(
-                                    'group flex h-full min-h-11 flex-col items-center justify-center gap-0.5 rounded-full text-[11px] font-medium transition-colors duration-120 ease-brand select-none [-webkit-touch-callout:none] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset',
+                                    'group flex h-full min-h-11 flex-col items-center justify-center gap-[3px] rounded-full text-[12px] leading-4 font-bold transition-colors duration-120 ease-brand outline-none select-none [-webkit-touch-callout:none] focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:ring-inset',
                                     highlighted
-                                        ? 'text-primary'
+                                        ? 'text-on-active'
                                         : 'text-text-muted',
                                 )}
                             >
-                                <span className="relative transition-transform duration-120 ease-brand group-active:scale-90 motion-reduce:transition-none">
-                                    <item.icon
-                                        className="size-6"
-                                        strokeWidth={highlighted ? 2 : 1.75}
-                                        aria-hidden
-                                    />
-                                    {badge > 0 && (
-                                        <span className="absolute -top-1.5 -right-2.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground tnum ring-2 ring-background">
-                                            {badge > 99 ? '99+' : badge}
-                                        </span>
-                                    )}
-                                </span>
+                                <item.icon
+                                    className="size-6 transition-transform duration-120 ease-brand group-active:scale-90 motion-reduce:transition-none"
+                                    strokeWidth={2}
+                                    aria-hidden
+                                />
                                 <span className="max-w-full truncate px-0.5">
                                     {item.title}
                                 </span>
+                                {badge > 0 && !highlighted && (
+                                    <span
+                                        aria-hidden
+                                        className="absolute top-1 left-1/2 ml-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-badge px-1.5 text-[12px] leading-5 font-bold text-on-badge tnum"
+                                    >
+                                        {badge > 99 ? '99+' : badge}
+                                    </span>
+                                )}
                                 {badge > 0 && (
                                     <span className="sr-only">
                                         , {badge} belum dibaca
