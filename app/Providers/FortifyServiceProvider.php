@@ -6,6 +6,7 @@ use App\Actions\Fortify\ResetUserPassword;
 use App\Domain\Auth\Actions\AuthenticateSuperAdmin;
 use App\Domain\Auth\Support\GoogleOAuth;
 use App\Domain\Organization\Demo\DemoAccounts;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Models\Company;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -16,6 +17,7 @@ use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Laravel\Fortify\Http\Controllers\PasswordResetLinkController as FortifyPasswordResetLinkController;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -24,7 +26,8 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Reset links: Super Admins only, generic answer, throttled per IP.
+        $this->app->bind(FortifyPasswordResetLinkController::class, PasswordResetLinkController::class);
     }
 
     /**
@@ -111,6 +114,9 @@ class FortifyServiceProvider extends ServiceProvider
         // Google callback only: 60/min per client IP (dozens of employees share the
         // office NAT at 08:00) and 10/min per browser session behind that IP.
         // The client IP is resolved behind TRUSTED_PROXIES (config/trustedproxy.php).
+        // Forgot-password form: 5/min per IP (the answer is always generic).
+        RateLimiter::for('password-reset', fn (Request $request) => Limit::perMinute(5)->by('password-reset|'.$request->ip()));
+
         RateLimiter::for('google-login', function (Request $request) {
             $ip = (string) $request->ip();
             $limits = [Limit::perMinute(60)->by('google-ip|'.$ip)];
