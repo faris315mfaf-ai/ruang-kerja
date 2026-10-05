@@ -2,6 +2,8 @@
 
 use App\Domain\Search\Providers\ActionsSearchProvider;
 use App\Domain\Search\Providers\PeopleSearchProvider;
+use App\Domain\Search\Providers\TaskSearchProvider;
+use App\Domain\Search\Providers\WorkspaceSearchProvider;
 
 return [
 
@@ -20,7 +22,9 @@ return [
 
     'providers' => [
         ActionsSearchProvider::class,
+        TaskSearchProvider::class,
         PeopleSearchProvider::class,
+        WorkspaceSearchProvider::class,
     ],
 
     // Results per group when searching all groups ("Semua").
