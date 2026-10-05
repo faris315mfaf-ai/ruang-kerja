@@ -23,7 +23,7 @@ export function ViewPicker({
         <nav
             aria-label="Tampilan dashboard"
             className={cn(
-                'flex max-w-full [scrollbar-width:none] gap-1 overflow-x-auto rounded-[14px] border border-border bg-surface/70 p-1 md:inline-flex [&::-webkit-scrollbar]:hidden',
+                'flex max-w-full [scrollbar-width:none] gap-1 overflow-x-auto rounded-[14px] border border-border bg-surface/70 p-1 md:w-fit md:self-start [&::-webkit-scrollbar]:hidden',
                 className,
             )}
         >

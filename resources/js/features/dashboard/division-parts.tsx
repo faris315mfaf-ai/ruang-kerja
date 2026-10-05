@@ -1,8 +1,13 @@
 import { useState } from 'react';
-import type { DivisionMetrics, MetricDefinitions } from '@/types/dashboard';
+import { cn } from '@/lib/utils';
+import type {
+    ComparedMetric,
+    DivisionMetrics,
+    MetricDefinitions,
+} from '@/types/dashboard';
 import type { DivisionProps } from './division-types';
 import { compared, formatMetric, todayCaption } from './lib';
-import { StatCard } from './stat-card';
+import { MetricKpi } from './dashboard-ui';
 
 /** "3 di antaranya milik 1 orang" (mockup Main). */
 export function overdueCaption(
@@ -19,7 +24,13 @@ export function overdueCaption(
     return `${kpi.top_person} di antaranya milik 1 orang`;
 }
 
-/** The four headline KPIs (Main / MDashboardKadiv). */
+/** Phone KPI tile (MBeranda "Saldo cuti" tiles). */
+export const KPI_TILE = 'gap-0.5 rounded-card px-4 py-3.5 shadow-none';
+
+/**
+ * The four headline KPIs (DBeranda "Ringkasan"): attendance on the gradient
+ * highlight card, then completion, on-time rate and overdue tasks.
+ */
 export function DivisionKpis({
     props,
     compact = false,
@@ -29,21 +40,33 @@ export function DivisionKpis({
 }) {
     const { metrics, attendance, definitions } = props;
     const previous = props.filters.period.previous_label;
+    const card = compact ? KPI_TILE : undefined;
+    const layout = compact ? undefined : 'flex-[1_1_240px]';
+    // Phone tiles are narrow: the delta goes in the note line, not a pill.
+    const change = (metric: ComparedMetric) => {
+        const delta = compared(metric, 'percent', previous);
+
+        return compact ? { note: delta?.text } : { delta };
+    };
 
     return (
         <>
-            <StatCard
-                compact={compact}
-                label="Kehadiran hari ini"
-                definition="Hadir (termasuk terlambat) dari karyawan yang terjadwal hari ini."
+            <MetricKpi
+                tone="highlight"
+                label={
+                    compact ? 'Kehadiran hari ini' : 'Kehadiran divisi hari ini'
+                }
                 value={String(attendance.counts.present)}
-                suffix={`/ ${attendance.counts.scheduled}${compact ? '' : ' terjadwal'}`}
-                caption={todayCaption(attendance.counts)}
+                suffix={`/ ${attendance.counts.scheduled}`}
+                note={todayCaption(attendance.counts)}
+                className={cn(layout, compact && 'col-span-2')}
+                cardClassName={card}
             />
             {metrics && (
                 <>
-                    <StatCard
-                        compact={compact}
+                    <MetricKpi
+                        className={layout}
+                        cardClassName={card}
                         label={
                             compact ? 'Penyelesaian' : 'Tingkat penyelesaian'
                         }
@@ -52,38 +75,32 @@ export function DivisionKpis({
                             metrics.kpis.completion_rate.value,
                             'percent',
                         )}
-                        delta={compared(
-                            metrics.kpis.completion_rate,
-                            'percent',
-                            previous,
-                        )}
+                        {...change(metrics.kpis.completion_rate)}
                     />
-                    <StatCard
-                        compact={compact}
+                    <MetricKpi
+                        className={layout}
+                        cardClassName={card}
                         label="Ketepatan waktu"
                         definition={definitions.on_time_rate}
                         value={formatMetric(
                             metrics.kpis.on_time_rate.value,
                             'percent',
                         )}
-                        delta={compared(
-                            metrics.kpis.on_time_rate,
-                            'percent',
-                            previous,
-                        )}
+                        {...change(metrics.kpis.on_time_rate)}
                     />
-                    <StatCard
-                        compact={compact}
+                    <MetricKpi
+                        className={cn(layout, compact && 'col-span-2')}
+                        cardClassName={card}
                         label={compact ? 'Terlambat' : 'Tugas terlambat'}
                         definition={definitions.overdue_tasks}
                         value={String(metrics.kpis.overdue_tasks.value)}
                         suffix={compact ? 'tugas' : undefined}
-                        valueTone={
+                        valueClassName={
                             metrics.kpis.overdue_tasks.value > 0
-                                ? 'danger'
-                                : 'default'
+                                ? 'text-danger'
+                                : undefined
                         }
-                        caption={overdueCaption(metrics.kpis.overdue_tasks)}
+                        note={overdueCaption(metrics.kpis.overdue_tasks)}
                     />
                 </>
             )}
@@ -105,8 +122,7 @@ export function SecondaryKpis({
 
     return (
         <>
-            <StatCard
-                compact
+            <MetricKpi
                 label="Lead time (median)"
                 definition={definitions.lead_time}
                 value={formatMetric(metrics.kpis.lead_time.value, 'days')}
@@ -116,10 +132,9 @@ export function SecondaryKpis({
                     previous,
                     'lower',
                 )}
-                caption={`${metrics.kpis.lead_time.denominator} tugas selesai`}
+                note={`${metrics.kpis.lead_time.denominator} tugas selesai`}
             />
-            <StatCard
-                compact
+            <MetricKpi
                 label="Kedisiplinan hadir"
                 definition={definitions.attendance_discipline}
                 value={formatMetric(
@@ -131,10 +146,9 @@ export function SecondaryKpis({
                     'percent',
                     previous,
                 )}
-                caption={`${metrics.kpis.attendance_discipline.numerator} dari ${metrics.kpis.attendance_discipline.denominator} hari kerja tepat waktu`}
+                note={`${metrics.kpis.attendance_discipline.numerator} dari ${metrics.kpis.attendance_discipline.denominator} hari kerja tepat waktu`}
             />
-            <StatCard
-                compact
+            <MetricKpi
                 label="Rata-rata terlambat"
                 definition={definitions.average_lateness}
                 value={formatMetric(
@@ -147,7 +161,7 @@ export function SecondaryKpis({
                     previous,
                     'lower',
                 )}
-                caption={`${metrics.kpis.average_lateness.denominator} hari terlambat`}
+                note={`${metrics.kpis.average_lateness.denominator} hari terlambat`}
             />
         </>
     );

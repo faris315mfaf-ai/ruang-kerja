@@ -1,46 +1,78 @@
 import { Link } from '@inertiajs/react';
-import { cn } from '@/lib/utils';
+import { CircleCheckBig } from 'lucide-react';
+import { EmptyState } from '@/components/empty-state';
+import { Badge } from '@/components/ui/badge';
+import { cn, focusRing } from '@/lib/utils';
 import type { TaskSummary } from '@/types/dashboard';
-import { PanelEmpty } from './panel';
 
-/** "Tugas terlambat": key, title, days late (mockup Main). */
+/**
+ * "Tugas terlambat" (DBeranda): key chip, title, assignees, days late pill.
+ * `compact` drops the key chip (phones).
+ */
 export function OverdueList({
     items,
+    compact = false,
     className,
 }: {
     items: TaskSummary[];
+    compact?: boolean;
     className?: string;
 }) {
     if (items.length === 0) {
-        return <PanelEmpty>Tidak ada tugas terlambat.</PanelEmpty>;
+        return (
+            <div className="px-5 pb-2 md:px-7">
+                <EmptyState
+                    size="sm"
+                    icon={CircleCheckBig}
+                    title="Tidak ada tugas terlambat"
+                />
+            </div>
+        );
     }
 
     return (
-        <ul className={cn('divide-y divide-border', className)}>
+        <ul className={cn('divide-y divide-divider', className)}>
             {items.map((task) => (
                 <li key={task.id}>
                     <Link
                         href={task.url}
-                        className="flex min-h-11 items-center gap-3 px-4 py-2 text-sm transition-colors hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none"
+                        prefetch
+                        className={cn(
+                            'flex min-h-[68px] items-center gap-4 px-5 py-2 transition-colors duration-120 ease-brand hover:bg-background md:px-7',
+                            focusRing,
+                            'focus-visible:ring-inset',
+                        )}
                     >
-                        <span className="w-16 shrink-0 font-mono text-xs text-text-muted">
-                            {task.key}
+                        {!compact && (
+                            <span className="shrink-0 rounded-sm bg-surface-2 px-2 py-1 font-mono text-[14px] font-semibold">
+                                {task.key}
+                            </span>
+                        )}
+                        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                            <span className="truncate text-[17px] font-semibold">
+                                {task.title}
+                            </span>
+                            <span className="truncate text-label font-normal text-text-muted">
+                                {compact && (
+                                    <span className="font-mono text-[14px] font-semibold">
+                                        {task.key} ·{' '}
+                                    </span>
+                                )}
+                                {task.assignees.length > 0
+                                    ? task.assignees
+                                          .map((person) => person.name)
+                                          .join(', ')
+                                    : 'Belum ada penanggung jawab'}
+                            </span>
                         </span>
-                        <span className="min-w-0 flex-1 truncate text-text">
-                            {task.title}
-                            {task.assignees.length > 0 && (
-                                <span className="text-text-muted">
-                                    {' '}
-                                    ·{' '}
-                                    {task.assignees
-                                        .map((person) => person.name)
-                                        .join(', ')}
-                                </span>
-                            )}
-                        </span>
-                        <span className="shrink-0 text-[13px] text-danger tnum">
+                        <Badge
+                            variant="status"
+                            tone="danger"
+                            className="h-[30px]"
+                        >
                             {task.days_late} hari
-                        </span>
+                            <span className="sr-only"> terlambat</span>
+                        </Badge>
                     </Link>
                 </li>
             ))}

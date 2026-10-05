@@ -14,32 +14,12 @@ import {
     PanelSkeleton,
 } from './dashboard-ui';
 import { FilterBar } from './filter-bar';
-import { compared, formatMetric, periodNoun } from './lib';
+import { compared, formatMetric, greeting, periodNoun } from './lib';
 import { MyAttendanceCard } from './my-attendance-card';
 import { AttendanceStrip, FocusList, WeekStrip } from './personal-parts';
 import type { PersonalProps } from './personal-types';
 import { RequestRows } from './request-rows';
 import { ViewPicker } from './view-picker';
-
-export function greeting(now: Date = new Date()): string {
-    const hour = Number(
-        new Intl.DateTimeFormat('id-ID', {
-            hour: 'numeric',
-            hourCycle: 'h23',
-            timeZone: 'Asia/Jakarta',
-        }).format(now),
-    );
-
-    if (hour < 11) {
-        return 'Selamat pagi';
-    }
-
-    if (hour < 15) {
-        return 'Selamat siang';
-    }
-
-    return hour < 19 ? 'Selamat sore' : 'Selamat malam';
-}
 
 /** "Staf Data · atasan Dimas Pratama". */
 export function profileLine(profile: PersonalProps['live']['profile']): string {

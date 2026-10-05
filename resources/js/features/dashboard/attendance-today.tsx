@@ -1,4 +1,5 @@
-import { Cell, Pie, PieChart } from 'recharts';
+import { UserRoundCheck } from 'lucide-react';
+import { EmptyState } from '@/components/empty-state';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -7,46 +8,31 @@ import type {
     TodayPerson,
     TodayState,
 } from '@/types/dashboard';
-import { PanelEmpty } from './panel';
 
-/** Status colors carry state; every slice also has a text label + count. */
+/**
+ * Status colours of DBeranda / DHR (hadir green, terlambat amber, cuti blue,
+ * belum gray, alpha red). Every bar segment also has a text label + count.
+ */
 export const STATE_META: Record<
     TodayState,
-    { label: string; text: string; dot: string; fill: string }
+    { label: string; text: string; dot: string }
 > = {
-    present: {
-        label: 'Hadir',
-        text: 'text-success',
-        dot: 'bg-success',
-        fill: 'var(--success)',
-    },
-    late: {
-        label: 'Terlambat',
-        text: 'text-warning',
-        dot: 'bg-warning',
-        fill: 'var(--warning)',
-    },
+    present: { label: 'Hadir', text: 'text-success', dot: 'bg-success' },
+    late: { label: 'Terlambat', text: 'text-warning', dot: 'bg-fill-warning' },
     away: {
         label: 'Cuti/izin/sakit',
         text: 'text-info',
-        dot: 'bg-info',
-        fill: 'var(--info)',
+        dot: 'bg-accent-blue-strong',
     },
     not_checked_in: {
         label: 'Belum',
         text: 'text-text-muted',
         dot: 'bg-border-strong',
-        fill: 'var(--border-strong)',
     },
-    absent: {
-        label: 'Alpha',
-        text: 'text-danger',
-        dot: 'bg-danger',
-        fill: 'var(--danger)',
-    },
+    absent: { label: 'Alpha', text: 'text-danger', dot: 'bg-fill-danger' },
 };
 
-const ORDER: TodayState[] = [
+export const STATE_ORDER: TodayState[] = [
     'present',
     'late',
     'away',
@@ -65,6 +51,7 @@ export function stateCounts(data: TodayAttendance): Record<TodayState, number> {
     };
 }
 
+/** Legend: dot, label and count per state (alpha only when > 0). */
 export function StateLegend({
     data,
     className,
@@ -77,87 +64,58 @@ export function StateLegend({
     return (
         <ul
             className={cn(
-                'flex flex-wrap gap-x-3 gap-y-1.5 text-[13px] text-text-muted',
+                'grid grid-cols-2 gap-x-4 gap-y-2 text-label font-normal text-text-muted',
                 className,
             )}
         >
-            {ORDER.filter(
+            {STATE_ORDER.filter(
                 (state) => state !== 'absent' || counts.absent > 0,
             ).map((state) => (
-                <li key={state} className="inline-flex items-center gap-1.5">
+                <li key={state} className="inline-flex items-center gap-2">
                     <span
                         aria-hidden
                         className={cn(
-                            'size-2 rounded-full',
+                            'size-2.5 shrink-0 rounded-full',
                             STATE_META[state].dot,
                         )}
                     />
-                    {STATE_META[state].label}{' '}
-                    <span className="text-text tnum">{counts[state]}</span>
+                    {STATE_META[state].label}
+                    <b className="font-bold text-text tnum">{counts[state]}</b>
                 </li>
             ))}
         </ul>
     );
 }
 
-/** Donut of today's states with the scheduled total in the middle. */
-export function AttendanceDonut({
+/** Stacked bar of today's states (DBeranda "Kehadiran hari ini"). */
+export function AttendanceBar({
     data,
-    size = 120,
+    className,
 }: {
     data: TodayAttendance;
-    size?: number;
+    className?: string;
 }) {
     const counts = stateCounts(data);
-    const slices = ORDER.map((state) => ({
-        state,
-        value: counts[state],
-    })).filter((slice) => slice.value > 0);
 
     return (
         <div
-            className="relative shrink-0"
-            style={{ width: size, height: size }}
             role="img"
             aria-label={`${data.counts.present} dari ${data.counts.scheduled} terjadwal hadir`}
+            className={cn(
+                'flex h-3.5 gap-[3px] overflow-hidden rounded-[7px] bg-surface-2',
+                className,
+            )}
         >
-            <PieChart width={size} height={size}>
-                <Pie
-                    data={
-                        slices.length > 0
-                            ? slices
-                            : [{ state: 'not_checked_in', value: 1 }]
-                    }
-                    dataKey="value"
-                    innerRadius={size * 0.36}
-                    outerRadius={size * 0.5}
-                    paddingAngle={slices.length > 1 ? 2 : 0}
-                    stroke="none"
-                    isAnimationActive={false}
-                >
-                    {(slices.length > 0
-                        ? slices
-                        : [{ state: 'not_checked_in' as const, value: 1 }]
-                    ).map((slice) => (
-                        <Cell
-                            key={slice.state}
-                            fill={
-                                slices.length > 0
-                                    ? STATE_META[slice.state].fill
-                                    : 'var(--surface-2)'
-                            }
-                        />
-                    ))}
-                </Pie>
-            </PieChart>
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-xl font-semibold text-text tnum">
-                    {data.counts.present}
-                </span>
-                <span className="text-[11px] text-text-muted tnum">
-                    / {data.counts.scheduled}
-                </span>
-            </div>
+            {STATE_ORDER.filter((state) => counts[state] > 0).map((state) => (
+                <span
+                    key={state}
+                    className={cn(
+                        STATE_META[state].dot,
+                        state === 'present' && 'bg-grad-merek-x',
+                    )}
+                    style={{ flexGrow: counts[state], flexBasis: 0 }}
+                />
+            ))}
         </div>
     );
 }
@@ -165,7 +123,7 @@ export function AttendanceDonut({
 function personStatus(person: TodayPerson): string {
     switch (person.state) {
         case 'late':
-            return `Terlambat ${person.late_minutes}m`;
+            return `Terlambat ${person.late_minutes} menit`;
         case 'away':
             return person.request_type ?? person.status_label ?? 'Cuti';
         case 'not_checked_in':
@@ -177,45 +135,56 @@ function personStatus(person: TodayPerson): string {
     }
 }
 
-/** Person rows: avatar, name, status text, check-in time (mono). */
+/** Person rows (DBeranda): avatar 40, name, status text, check-in time. */
 export function AttendancePeople({
     people,
     limit,
+    className,
 }: {
     people: TodayPerson[];
     limit?: number;
+    className?: string;
 }) {
     if (people.length === 0) {
-        return <PanelEmpty>Tidak ada yang terjadwal hari ini.</PanelEmpty>;
+        return (
+            <EmptyState
+                size="sm"
+                icon={UserRoundCheck}
+                title="Tidak ada yang terjadwal hari ini"
+                className={className}
+            />
+        );
     }
 
     return (
-        <ul className="divide-y divide-border">
+        <ul className={cn('flex flex-col', className)}>
             {(limit ? people.slice(0, limit) : people).map((person) => (
                 <li
                     key={person.user.id}
-                    className="flex min-h-11 items-center gap-3 px-4 py-1.5"
+                    className="flex min-h-[60px] items-center gap-3 border-t border-divider py-1.5"
                 >
                     <UserAvatar
                         name={person.user.name}
                         src={person.user.avatar}
-                        className="size-7"
+                        className="size-10 text-[15px]"
                     />
-                    <span className="min-w-0 flex-1 truncate text-sm text-text">
-                        {person.user.name}
+                    <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="truncate text-[16px] font-semibold">
+                            {person.user.name}
+                        </span>
+                        <span
+                            className={cn(
+                                'truncate text-label',
+                                STATE_META[person.state].text,
+                            )}
+                        >
+                            {personStatus(person)}
+                        </span>
                     </span>
-                    <span
-                        className={cn(
-                            'shrink-0 text-[13px]',
-                            STATE_META[person.state].text,
-                        )}
-                    >
-                        {personStatus(person)}
-                    </span>
-                    <span className="w-11 shrink-0 text-right font-mono text-[13px] text-text-muted tnum">
+                    <span className="shrink-0 font-mono text-[15px] text-text-muted tnum">
                         {person.check_in_at
                             ? formatTime(person.check_in_at)
-                            : '–'}
+                            : '—'}
                     </span>
                 </li>
             ))}

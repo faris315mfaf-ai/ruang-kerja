@@ -1,40 +1,49 @@
 import { Link } from '@inertiajs/react';
 import { CheckCheck, ChevronRight } from 'lucide-react';
-import { formatDate } from '@/lib/format';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Panel } from '@/components/ui/panel';
+import { formatLongDate } from '@/lib/format';
+import { cn, focusRing } from '@/lib/utils';
 import { AtRiskProjects } from './at-risk-projects';
-import { AttendancePeople, StateLegend } from './attendance-today';
-import { DivisionKpis, useExpandable } from './division-parts';
+import {
+    AttendanceBar,
+    AttendancePeople,
+    StateLegend,
+} from './attendance-today';
+import { KpiSkeleton, PanelHint, PanelSkeleton } from './dashboard-ui';
+import { DivisionKpis, KPI_TILE, useExpandable } from './division-parts';
 import type { DivisionProps } from './division-types';
 import { Segmented } from './filter-bar';
 import { LiveBadge } from './live-badge';
 import { OverdueList } from './overdue-list';
-import { Panel, PanelSkeleton } from './panel';
-import { StatCardSkeleton } from './stat-card';
 import { TrendChart } from './trend-chart';
 import { useDashboardFilters } from './use-dashboard-filters';
 import { ViewPicker } from './view-picker';
 import { WorkloadBars } from './workload-bars';
 
-/** Dashboard Kepala Divisi on phones (mockup MDashboardKadiv): one column. */
+/**
+ * Dashboard Kepala Divisi on phones (MBeranda vocabulary: overline, gradient
+ * KPI first, 2-column tiles, panels stacked in one column).
+ */
 export function DivisionMobile({
     live,
     ...props
 }: DivisionProps & { live: boolean }) {
     const { metrics, attendance, approvals } = props;
     const { current, apply } = useDashboardFilters(props.filters);
-    const people = useExpandable(6);
+    const people = useExpandable(4);
 
     return (
-        <div className="space-y-4 pb-4">
-            <header>
-                <h1 className="text-[22px] leading-7 font-semibold text-text">
-                    {props.scope.label}
-                </h1>
-                <p className="text-sm text-text-muted">
-                    {props.scope.member_count} anggota ·{' '}
-                    {formatDate(new Date())}
+        <div className="flex flex-col gap-3.5 pb-4">
+            <div className="flex flex-col gap-0.5 px-1">
+                <p className="text-overline text-link">
+                    {formatLongDate(props.today)}
                 </p>
-            </header>
+                <p className="text-title text-text-muted">
+                    {props.scope.label} · {props.scope.member_count} anggota
+                </p>
+            </div>
             <ViewPicker views={props.views} />
             <Segmented
                 label="Periode"
@@ -47,101 +56,37 @@ export function DivisionMobile({
                 onChange={(value) => apply({ periode: value })}
             />
 
-            <div className="grid grid-cols-2 gap-3">
+            <section
+                aria-label="Ringkasan"
+                className="grid grid-cols-2 gap-2.5"
+            >
                 <DivisionKpis props={props} compact />
                 {!metrics &&
                     Array.from({ length: 3 }, (_, index) => (
-                        <StatCardSkeleton key={index} />
+                        <KpiSkeleton key={index} className={KPI_TILE} />
                     ))}
-            </div>
-
-            {metrics ? (
-                <Panel
-                    id="m-trend"
-                    title="Tren penyelesaian"
-                    aside="8 minggu · % selesai"
-                >
-                    <TrendChart
-                        points={metrics.trend}
-                        description="Tingkat penyelesaian per minggu"
-                        numeratorLabel="selesai"
-                        denominatorLabel="bertenggat"
-                        height={150}
-                        compact
-                    />
-                </Panel>
-            ) : (
-                <PanelSkeleton rows={3} />
-            )}
-
-            <Panel
-                id="m-today"
-                title="Kehadiran hari ini"
-                aside={<LiveBadge live={live} />}
-                flush
-            >
-                <StateLegend data={attendance} className="px-4 pb-2" />
-                <AttendancePeople
-                    people={attendance.people}
-                    limit={people.limit}
-                />
-                {attendance.people.length > 6 && (
-                    <button
-                        type="button"
-                        onClick={people.toggle}
-                        className="mx-4 inline-flex min-h-11 items-center text-[15px] text-primary"
-                    >
-                        {people.expanded
-                            ? 'Tampilkan lebih sedikit'
-                            : 'Lihat semua'}
-                    </button>
-                )}
-            </Panel>
-
-            {metrics ? (
-                <>
-                    <Panel
-                        id="m-workload"
-                        title="Beban kerja"
-                        aside="tugas terbuka"
-                    >
-                        <WorkloadBars rows={metrics.workload} limit={6} />
-                    </Panel>
-                    <Panel
-                        id="m-overdue"
-                        title="Tugas terlambat"
-                        aside={`${metrics.overdue.total} tugas`}
-                        flush
-                    >
-                        <OverdueList
-                            items={metrics.overdue.items.slice(0, 5)}
-                        />
-                    </Panel>
-                    {metrics.projects.length > 0 && (
-                        <Panel id="m-projects" title="Proyek berisiko" flush>
-                            <AtRiskProjects projects={metrics.projects} />
-                        </Panel>
-                    )}
-                </>
-            ) : (
-                <PanelSkeleton />
-            )}
+            </section>
 
             <Link
                 href="/persetujuan"
-                className="flex min-h-16 items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3"
+                prefetch
+                className={cn(
+                    'flex min-h-[72px] items-center gap-3.5 rounded-[22px] border border-border bg-surface px-4 py-3',
+                    focusRing,
+                )}
             >
-                <span className="flex size-10 items-center justify-center rounded-lg bg-link-soft text-primary">
-                    <CheckCheck className="size-5" aria-hidden />
+                <span
+                    aria-hidden
+                    className="flex size-11 shrink-0 items-center justify-center rounded-control bg-link-soft text-link"
+                >
+                    <CheckCheck className="size-5" />
                 </span>
-                <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2 text-[15px] font-semibold text-text">
-                        Menunggu persetujuan Anda
-                        <span className="rounded-full bg-primary px-2 text-xs text-primary-foreground tnum">
-                            {approvals.count}
-                        </span>
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="flex items-center gap-2 text-[17px] font-semibold">
+                        Menunggu persetujuan
+                        <Badge className="tnum">{approvals.count}</Badge>
                     </span>
-                    <span className="block truncate text-[13px] text-text-muted">
+                    <span className="truncate text-label font-normal text-text-muted">
                         {approvals.items.length > 0
                             ? approvals.items
                                   .map(
@@ -152,8 +97,102 @@ export function DivisionMobile({
                             : 'Tidak ada antrean'}
                     </span>
                 </span>
-                <ChevronRight className="size-5 text-text-subtle" aria-hidden />
+                <ChevronRight
+                    aria-hidden
+                    className="size-5 shrink-0 text-text-subtle"
+                />
             </Link>
+
+            {metrics ? (
+                <Panel
+                    title="Tren penyelesaian"
+                    action={<PanelHint>8 minggu · % selesai</PanelHint>}
+                    className="py-5"
+                >
+                    <TrendChart
+                        points={metrics.trend}
+                        description="Tingkat penyelesaian per minggu"
+                        numeratorLabel="selesai"
+                        denominatorLabel="bertenggat"
+                        height={170}
+                        compact
+                    />
+                </Panel>
+            ) : (
+                <PanelSkeleton title="Tren penyelesaian" rows={3} />
+            )}
+
+            <Panel
+                title="Kehadiran hari ini"
+                action={<LiveBadge live={live} />}
+                className="py-5"
+                bodyClassName="gap-4"
+            >
+                <AttendanceBar data={attendance} />
+                <StateLegend data={attendance} />
+                <AttendancePeople
+                    people={attendance.people}
+                    limit={people.limit}
+                />
+                {attendance.people.length > 4 && (
+                    <Button
+                        type="button"
+                        variant="quiet"
+                        onClick={people.toggle}
+                        aria-expanded={people.expanded}
+                        className="-mt-2 self-start px-1"
+                    >
+                        {people.expanded
+                            ? 'Tampilkan lebih sedikit'
+                            : `Lihat semua ${attendance.people.length} anggota`}
+                    </Button>
+                )}
+            </Panel>
+
+            {metrics ? (
+                <>
+                    <Panel
+                        title="Beban kerja"
+                        action={<PanelHint>tugas terbuka</PanelHint>}
+                        className="py-5"
+                    >
+                        <WorkloadBars rows={metrics.workload} limit={6} />
+                    </Panel>
+                    <Panel
+                        title={
+                            <>
+                                Tugas terlambat
+                                <Badge
+                                    variant="status"
+                                    tone="danger"
+                                    className="h-7"
+                                >
+                                    {metrics.overdue.total}
+                                </Badge>
+                            </>
+                        }
+                        flush
+                        className="pt-5 pb-1"
+                    >
+                        <OverdueList
+                            items={metrics.overdue.items.slice(0, 5)}
+                            compact
+                            className="border-t border-divider"
+                        />
+                    </Panel>
+                    {metrics.projects.length > 0 && (
+                        <Panel
+                            title="Proyek berisiko"
+                            flush
+                            className="pt-5 pb-1"
+                        >
+                            <AtRiskProjects projects={metrics.projects} />
+                        </Panel>
+                    )}
+                </>
+            ) : (
+                <PanelSkeleton title="Beban kerja" />
+            )}
         </div>
     );
 }
