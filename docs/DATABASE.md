@@ -21,7 +21,7 @@
 | Organisasi & akses | `companies`, `divisions`, `teams`, `positions`, `users`, `employee_profiles`, `roles`*, `permissions`*, `model_has_roles`*, `audit_logs` |
 | Absensi | `office_locations`, `shifts`, `shift_assignments`, `holidays`, `attendance_days`, `attendance_logs`, `qr_tokens`, `kiosks`, `attendance_consents` |
 | Pengajuan | `leave_types`, `leave_balances`, `leave_balance_adjustments`, `requests`, `request_sequences`, `request_approvals`, `approval_flows`, `approval_flow_steps`, `approval_delegations` |
-| Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_directions`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
+| Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_directions`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `task_plans`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
 | Google & file | `google_accounts`, `drive_files`, `attachments` |
 | Notifikasi | `notifications`*, `notification_preferences`, `notification_settings`, `notification_dispatch_logs` |
 | Fase 2 | `channels`, `channel_members`, `messages`, `notes`, `note_versions`, `calendar_events` |
@@ -399,6 +399,22 @@ Kolom `position` (tasks, task_statuses, checklist_items) bertipe `varchar(100) C
 - `task_watchers` (`task_id`, `user_id`)
 - `checklist_items` (`id`, `task_id`, `title`, `is_done`, `position`, `done_by`, `done_at`)
 
+### task_plans (tambahan "Ruang saya", Okt 2026)
+Rencana **pribadi** seorang pengguna atas sebuah tugas di Beranda ("Ruang saya": Hari ini · Minggu ini · Nanti). Tidak mengubah tugas itu sendiri.
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | ulid PK | |
+| user_id | FK users (cascade) | pemilik rencana |
+| task_id | FK tasks (cascade) | |
+| bucket | varchar(10) null | `today` · `week` · `later` (CHECK). **null = kembali otomatis** (baris hanya mengingat `seen_at`, supaya tugas yang sudah diterima tidak muncul lagi sebagai "tugas baru") |
+| planned_for | date null | tanggal kantor saat bucket ditetapkan; `today` dengan `planned_for` < hari ini = "terbawa dari kemarin". Mengurutkan ulang di bucket yang sama tidak mengubahnya |
+| position | varchar(100) `COLLATE "C"` null | lexorank di dalam bucket (`Lexorank`, diseimbangkan ulang bila kunci > 40 karakter). CHECK: null tepat bila `bucket` null |
+| seen_at | timestamptz null | kapan tugas yang ditugaskan orang lain diterima/direncanakan |
+| created_at / updated_at | timestamptz | |
+
+Unik `(user_id, task_id)`, indeks `(user_id, bucket, position)` dan `(task_id)`. **Privat**: hanya pemilik yang membaca/mengubah (`TaskPlanPolicy`, juga tidak untuk Direksi/HR/Super Admin); daftar selalu `TaskPlan::ownedBy($user)`. Merencanakan butuh `TaskPolicy::plan` (tugas terlihat, workspace tidak diarsipkan, dan ditugaskan kepada pengguna **atau** berada di workspace pribadinya). Tugas tanpa baris (atau `bucket` null) ditempatkan otomatis tanpa menulis baris: lewat tenggat/hari ini → Hari ini, sampai Minggu ISO berjalan → Minggu ini, selain itu/tanpa tenggat → Nanti. "Tugas baru" = tugas terbuka yang ditugaskan orang lain (`task_assignees.assigned_by` ≠ pengguna) dalam 14 hari terakhir dan belum punya `seen_at` (`App\Domain\Planner\Queries\PersonalPlanner`).
+
 ### comments
 `id`, `commentable_type`/`commentable_id` (morph: task, catatan F2), `user_id`, `body` jsonb, `body_text` text, `edited_at` null, soft delete.
 
@@ -532,6 +548,8 @@ erDiagram
     tasks ||--o{ task_assignees : ditugaskan
     tasks ||--o{ comments : komentar
     tasks ||--o{ checklist_items : checklist
+    tasks ||--o{ task_plans : rencana_pribadi
+    users ||--o{ task_plans : merencanakan
     workspaces ||--o{ drive_files : file
     drive_files ||--o{ attachments : dilampirkan
     workspaces ||--o{ activities : riwayat

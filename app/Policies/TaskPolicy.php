@@ -63,6 +63,32 @@ class TaskPolicy
         return $this->workspaces->view($user, $task->workspace);
     }
 
+    /**
+     * "Ruang saya" (Beranda): plan, accept and quick-complete — only tasks
+     * assigned to the user or living in their own personal workspace, in a
+     * workspace they can see and that is not archived. Completing also needs
+     * move().
+     */
+    public function plan(User $user, Task $task): Response
+    {
+        $workspace = $task->workspace;
+
+        if (! $this->workspaces->canView($user, $workspace)) {
+            return Response::denyAsNotFound();
+        }
+
+        if ($workspace->isArchived()) {
+            return Response::deny('Workspace diarsipkan: tugas tidak dapat direncanakan.');
+        }
+
+        $own = ($workspace->isPersonal() && $workspace->owner_id === $user->id)
+            || $task->assignees()->where('users.id', $user->id)->exists();
+
+        return $own
+            ? Response::allow()
+            : Response::deny('Hanya tugas yang ditugaskan kepada Anda atau catatan pribadi Anda yang bisa direncanakan.');
+    }
+
     public function delete(User $user, Task $task): Response
     {
         $workspace = $task->workspace;
