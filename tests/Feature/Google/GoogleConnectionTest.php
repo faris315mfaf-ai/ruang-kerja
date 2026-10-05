@@ -131,6 +131,7 @@ it('rejects Google accounts outside the company domain', function (string $email
 
 it('honours GOOGLE_ALLOWED_DOMAIN over the company domain', function () {
     config(['google.oauth.allowed_domain' => 'kantor.co.id']);
+    $this->user->forceFill(['email' => 'dimas@kantor.co.id'])->save();
     Socialite::fake('google-drive', googleUser('dimas@kantor.co.id', 'kantor.co.id'));
 
     $this->actingAs($this->user)->get('/google/connect/callback?code=abc');
@@ -234,4 +235,27 @@ it('reads the company domain fresh even when the user holds a partial company re
     $account = app(StoreGoogleAccount::class)->handle($user, googleUser($user->email, $this->domain));
 
     expect($account->email)->toBe(strtolower($user->email));
+});
+
+it('refuses a colleague\'s Workspace account', function () {
+    Socialite::fake('google-drive', googleUser('budi@'.$this->domain, $this->domain));
+
+    $this->actingAs($this->user)
+        ->get('/google/connect/callback?code=abc')
+        ->assertRedirect('/settings/google')
+        ->assertInertiaFlash('toast.message', "Gunakan akun Google Anda sendiri ({$this->user->email}).");
+
+    expect(GoogleAccount::query()->count())->toBe(0);
+});
+
+it('accepts the own account case-insensitively or by the linked Google id', function () {
+    Socialite::fake('google-drive', googleUser(strtoupper('dimas@'.$this->domain), $this->domain));
+    $this->actingAs($this->user)->get('/google/connect/callback?code=abc')->assertInertiaFlash('toast.type', 'success');
+
+    // Address renamed at Google, same Google identity as the sign-in.
+    $this->user->forceFill(['google_id' => '1098765'])->save();
+    Socialite::fake('google-drive', googleUser('dimas.baru@'.$this->domain, $this->domain));
+    $this->actingAs($this->user)->get('/google/connect/callback?code=abc')->assertInertiaFlash('toast.type', 'success');
+
+    expect(GoogleAccount::query()->sole()->email)->toBe('dimas.baru@'.$this->domain);
 });

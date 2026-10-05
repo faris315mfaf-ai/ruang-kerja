@@ -16,12 +16,13 @@ use Laravel\Socialite\Two\User as GoogleUser;
 final class StoreGoogleAccount
 {
     /**
-     * @throws GoogleAccountNotAllowed when outside GOOGLE_ALLOWED_DOMAIN
+     * @throws GoogleAccountNotAllowed when outside GOOGLE_ALLOWED_DOMAIN or not the user's own account
      */
     public function handle(User $user, GoogleUser $googleUser): GoogleAccount
     {
         $email = strtolower((string) $googleUser->getEmail());
-        $this->ensureAllowedDomain($user, $email, $googleUser);
+        $domain = $this->ensureAllowedDomain($user, $email, $googleUser);
+        $this->ensureOwnAccount($user, $email, (string) $googleUser->getId(), $domain);
 
         $account = GoogleAccount::query()->firstOrNew(['user_id' => $user->id]);
 
@@ -49,7 +50,7 @@ final class StoreGoogleAccount
      * Workspace domain (PRD M1). GOOGLE_ALLOWED_DOMAIN overrides
      * companies.google_domain when set.
      */
-    private function ensureAllowedDomain(User $user, string $email, GoogleUser $googleUser): void
+    private function ensureAllowedDomain(User $user, string $email, GoogleUser $googleUser): string
     {
         $domain = strtolower(trim((string) config('google.oauth.allowed_domain', '')));
 
@@ -63,6 +64,23 @@ final class StoreGoogleAccount
 
         if (! str_ends_with($email, '@'.$domain) || $hostedDomain !== $domain) {
             throw new GoogleAccountNotAllowed($domain);
+        }
+
+        return $domain;
+    }
+
+    /**
+     * Drive files are created as the employee: the account must be their own
+     * Workspace identity — same address (case-insensitive) or the Google id
+     * linked at sign-in (the address may have been renamed at Google).
+     */
+    private function ensureOwnAccount(User $user, string $email, string $googleId, string $domain): void
+    {
+        $sameEmail = $email === strtolower($user->email);
+        $sameIdentity = $user->google_id !== null && $user->google_id === $googleId;
+
+        if (! $sameEmail && ! $sameIdentity) {
+            throw GoogleAccountNotAllowed::notOwnAccount($domain, $user->email);
         }
     }
 }
