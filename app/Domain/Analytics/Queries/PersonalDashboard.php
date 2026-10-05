@@ -64,13 +64,16 @@ final class PersonalDashboard
     }
 
     /**
-     * Uncached, cheap blocks that must reflect actions immediately.
+     * Uncached, cheap blocks that must reflect actions immediately — including
+     * "Fokus hari ini" and "Minggu ini" (a task assigned a minute ago shows).
      *
      * @return array<string, mixed>
      */
     public function live(User $user, CarbonImmutable $now): array
     {
         $user->loadMissing(['position:id,name', 'manager:id,name']);
+        $scope = MetricScope::personal($user);
+        $today = Period::officeDate($now);
 
         $requests = EmployeeRequest::query()
             ->ownedBy($user)
@@ -88,6 +91,8 @@ final class PersonalDashboard
             ],
             'leave_balance' => $this->leaveBalance($user, $now),
             'requests' => $requests->map(fn (EmployeeRequest $request): array => $this->requests->item($request))->values()->all(),
+            'focus' => $this->focus($scope, $today),
+            'week' => $this->week($scope, $today),
         ];
     }
 
@@ -117,8 +122,6 @@ final class PersonalDashboard
                 'completion_rate' => $completion->compute($scope, $current)->compareTo($completion->compute($scope, $previous)),
                 'lead_time' => $leadTime->compute($scope, $current)->compareTo($leadTime->compute($scope, $previous), 1),
             ],
-            'focus' => $this->focus($scope, $today),
-            'week' => $this->week($scope, $today),
             'attendance' => [
                 'days' => $this->attendanceDays($scope, $current),
                 'attendance_discipline' => $discipline->compute($scope, $current)->compareTo($discipline->compute($scope, $previous)),

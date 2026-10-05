@@ -20,4 +20,5 @@ enum AttendanceRejection: string
     case QrInvalid = 'qr_invalid';
     case QrExpired = 'qr_expired';
     case QrWrongLocation = 'qr_wrong_location';
+    case QrLocationRequired = 'qr_location_required';
 }

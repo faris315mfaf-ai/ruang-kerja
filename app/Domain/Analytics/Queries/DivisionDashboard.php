@@ -13,11 +13,14 @@ use App\Domain\Analytics\MetricDefinitions\LeadTimeMedian;
 use App\Domain\Analytics\MetricDefinitions\OnTimeRate;
 use App\Domain\Analytics\MetricDefinitions\OverdueTasks;
 use App\Domain\Analytics\MetricDefinitions\Workload;
+use App\Domain\Analytics\Projects\ProjectFlags;
 use App\Domain\Analytics\Services\MetricCache;
 use App\Domain\Analytics\Services\TodayAttendance;
 use App\Domain\Analytics\Support\TaskSummary;
 use App\Domain\Projects\Enums\ProjectHealth;
 use App\Domain\Projects\Enums\ProjectStatus;
+use App\Domain\Projects\Queries\ProjectMetrics;
+use App\Domain\Projects\Services\ProjectClock;
 use App\Domain\Requests\Services\ApprovalQueue;
 use App\Domain\Workspaces\Enums\WorkspaceType;
 use App\Http\Presenters\RequestPresenter;
@@ -176,14 +179,18 @@ final class DivisionDashboard
 
     /**
      * Project workspaces involving the people that need attention: PIC
-     * health "Berisiko"/"Bermasalah", or an active project without an update
-     * for more than 7 days (PRD M10 "Update kedaluwarsa").
+     * health "Berisiko"/"Bermasalah", or the system flag "Update kedaluwarsa"
+     * with the same rule as the project pages and Portfolio
+     * (ProjectMetrics::isStale → ProjectFlags::evaluate: more than 7 office
+     * days, or never updated after 7 tracked days).
      *
      * @return array<int, array<string, mixed>>
      */
     private function projectsAtRisk(MetricScope $scope, CarbonImmutable $now): array
     {
-        $staleBefore = $now->subDays(config()->integer('analytics.stale_update_days'));
+        $today = CarbonImmutable::parse(ProjectClock::date($now));
+        // SQL pre-filter (a superset of the stale rule); the rule itself runs below.
+        $staleBefore = $now->subDays(ProjectFlags::STALE_AFTER_DAYS);
 
         $projects = Workspace::query()
             ->visibleTo($scope->viewer)
@@ -197,12 +204,14 @@ final class DivisionDashboard
             ->where(fn (Builder $query) => $query
                 ->whereIn('workspaces.health', [ProjectHealth::AtRisk->value, ProjectHealth::OffTrack->value])
                 ->orWhere(fn (Builder $stale) => $stale
-                    ->where('workspaces.project_status', ProjectStatus::Active->value)
+                    ->where(fn (Builder $active) => $active->whereNull('workspaces.project_status')->orWhere('workspaces.project_status', ProjectStatus::Active->value))
                     ->where(fn (Builder $update) => $update->whereNull('workspaces.last_update_at')->orWhere('workspaces.last_update_at', '<', $staleBefore->toIso8601String()))))
             ->orderByRaw("case workspaces.health when 'off_track' then 0 when 'at_risk' then 1 else 2 end")
             ->orderBy('workspaces.name')
-            ->limit(6)
-            ->get();
+            ->get()
+            ->filter(fn (Workspace $workspace): bool => in_array($workspace->health, [ProjectHealth::AtRisk, ProjectHealth::OffTrack], true)
+                || ProjectMetrics::isStale($workspace, $today))
+            ->take(6);
 
         // PIC names without touching the Workspace model (the project module owns its relations).
         $leads = User::query()->whereIn('id', $projects->pluck('lead_user_id')->filter()->unique()->values()->all())->pluck('name', 'id');
@@ -216,8 +225,7 @@ final class DivisionDashboard
                 'health' => $workspace->health?->value,
                 'health_label' => $workspace->health?->label(),
                 'last_update_at' => $workspace->last_update_at?->toIso8601String(),
-                'stale' => $workspace->project_status === ProjectStatus::Active
-                    && ($workspace->last_update_at === null || $workspace->last_update_at->lt($staleBefore)),
+                'stale' => ProjectMetrics::isStale($workspace, $today),
                 'target_date' => $workspace->target_date?->toDateString(),
                 'lead' => $workspace->lead_user_id !== null ? $leads->get($workspace->lead_user_id) : null,
             ])

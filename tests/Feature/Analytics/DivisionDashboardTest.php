@@ -165,6 +165,22 @@ it('flags project workspaces at risk that involve the division', function () {
             ->where('metrics.projects.1.stale', true)));
 });
 
+it('uses the project module rule for stale updates (more than 7 office days, new projects get 7 days)', function () {
+    $org = $this->org;
+    // Wed 7 Oct 10.00 WIB. Last update Wed 30 Sep 09.00 WIB: 7 office days → not stale yet (Portfolio agrees).
+    Workspace::factory()->project()->withMember($org['rizky'])->create(['name' => 'Tujuh hari', 'project_status' => 'active', 'health' => 'on_track', 'start_date' => '2026-09-01', 'last_update_at' => CarbonImmutable::parse('2026-09-30 09:00', 'Asia/Jakarta')->utc()]);
+    // Started 3 days ago, no update yet: not stale.
+    Workspace::factory()->project()->withMember($org['rizky'])->create(['name' => 'Baru mulai', 'project_status' => 'active', 'health' => 'on_track', 'start_date' => '2026-10-04', 'last_update_at' => null]);
+    // Last update Tue 29 Sep: 8 office days → stale.
+    Workspace::factory()->project()->withMember($org['rizky'])->create(['name' => 'Delapan hari', 'project_status' => 'active', 'health' => 'on_track', 'start_date' => '2026-09-01', 'last_update_at' => CarbonImmutable::parse('2026-09-29 17:00', 'Asia/Jakarta')->utc()]);
+
+    $this->actingAs($org['kadiv'])->get('/dashboard/divisi')
+        ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
+            ->has('metrics.projects', 1)
+            ->where('metrics.projects.0.name', 'Delapan hari')
+            ->where('metrics.projects.0.stale', true)));
+});
+
 it('does not count tasks in private personal workspaces of members', function () {
     $org = $this->org;
     $personal = Workspace::query()->where('type', 'personal')->where('owner_id', $org['rizky']->id)->firstOrFail();

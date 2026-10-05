@@ -24,6 +24,7 @@ final readonly class ReactivateEmployee
             $before = $employee->status;
 
             $employee->status = UserStatus::Active;
+            $employee->deactivated_at = null;
             $employee->saveQuietly();
 
             $this->audit->log(

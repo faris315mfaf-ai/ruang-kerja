@@ -9,7 +9,9 @@ use Carbon\CarbonImmutable;
 
 /**
  * HR marks a flagged check-in/out as reviewed ("Tandai sudah ditinjau").
- * Idempotent: the first reviewer and time are kept.
+ * Idempotent: the first reviewer and time are kept, also when two HR click at
+ * the same moment (conditional update on reviewed_at IS NULL; only the one
+ * that changed the row writes the audit entry).
  */
 final class MarkLogReviewed
 {
@@ -21,9 +23,18 @@ final class MarkLogReviewed
             return $log;
         }
 
-        $log->reviewed_by = $reviewer->id;
-        $log->reviewed_at = CarbonImmutable::now();
-        $log->save();
+        $now = CarbonImmutable::now();
+        $updated = AttendanceLog::query()
+            ->whereKey($log->id)
+            ->whereNull('reviewed_at')
+            ->update(['reviewed_by' => $reviewer->id, 'reviewed_at' => $now]);
+
+        if ($updated === 0) {
+            // Someone else reviewed it first: show their review.
+            return $log->refresh();
+        }
+
+        $log->forceFill(['reviewed_by' => $reviewer->id, 'reviewed_at' => $now])->syncOriginal();
 
         $this->audit->log('attendance.log_reviewed', $log, null, [
             'employee_id' => $log->user_id,

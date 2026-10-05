@@ -15,6 +15,7 @@ enum LogFlag: string
     case ImpossibleTravel = 'impossible_travel';
     case DarkSelfie = 'dark_selfie';
     case QrLocationMismatch = 'qr_location_mismatch';
+    case QrNoLocation = 'qr_no_location';
 
     public function label(): string
     {
@@ -26,6 +27,7 @@ enum LogFlag: string
             self::ImpossibleTravel => 'Perpindahan tidak wajar',
             self::DarkSelfie => 'Selfie gelap atau kosong',
             self::QrLocationMismatch => 'GPS jauh dari kiosk QR',
+            self::QrNoLocation => 'QR tanpa lokasi GPS',
         };
     }
 

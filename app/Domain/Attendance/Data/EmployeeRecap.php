@@ -7,12 +7,15 @@ use App\Models\User;
 /**
  * Monthly numbers of one employee (docs/PRD.md M2 "Rekap & ekspor").
  * `presentDays` already includes late days ("Terlambat … sudah termasuk dalam Hadir").
+ * A half-day leave/permit counts 0.5 leave/permit days, plus 0.5 present days
+ * when the employee checked in for the other half, so present, leave and
+ * permit days may be fractional.
  */
 final class EmployeeRecap
 {
     public int $workDays = 0;
 
-    public int $presentDays = 0;
+    public float $presentDays = 0;
 
     public int $lateCount = 0;
 
@@ -22,9 +25,9 @@ final class EmployeeRecap
 
     public int $absentDays = 0;
 
-    public int $leaveDays = 0;
+    public float $leaveDays = 0;
 
-    public int $permitDays = 0;
+    public float $permitDays = 0;
 
     public int $sickDays = 0;
 
@@ -53,6 +56,15 @@ final class EmployeeRecap
 
     public function __construct(public readonly User $user) {}
 
+    /**
+     * A day count for exports and props: whole numbers stay integers (12, not
+     * 12.0); half days keep their fraction (1.5).
+     */
+    public static function days(float $value): int|float
+    {
+        return floor($value) === $value ? (int) $value : $value;
+    }
+
     public function overtimeHours(): float
     {
         return round($this->overtimeMinutes / 60, 1);
@@ -61,16 +73,16 @@ final class EmployeeRecap
     /**
      * Days the employee was expected to be at work (requests excluded).
      */
-    public function expectedDays(): int
+    public function expectedDays(): float
     {
-        return max(0, $this->workDays - $this->leaveDays - $this->permitDays - $this->sickDays - $this->businessTripDays);
+        return max(0.0, $this->workDays - $this->leaveDays - $this->permitDays - $this->sickDays - $this->businessTripDays);
     }
 
     public function attendanceRate(): ?float
     {
         $expected = $this->expectedDays();
 
-        return $expected === 0 ? null : round(min(100, $this->presentDays / $expected * 100), 1);
+        return $expected <= 0 ? null : round(min(100, $this->presentDays / $expected * 100), 1);
     }
 
     public function averageCheckInLabel(): ?string

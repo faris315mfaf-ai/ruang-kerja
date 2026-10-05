@@ -5,7 +5,11 @@ import { StatusIcon } from '@/components/status-icon';
 import type { Priority } from '@/features/tasks/types';
 import { formatDue } from '@/features/tasks/lib/due-date';
 import { cn } from '@/lib/utils';
-import type { PersonalMetrics, TaskSummary } from '@/types/dashboard';
+import type {
+    PersonalLive,
+    PersonalMetrics,
+    TaskSummary,
+} from '@/types/dashboard';
 import { busiestDay } from './lib';
 import { PanelEmpty } from './panel';
 
@@ -124,7 +128,7 @@ export function FocusList({
 }
 
 /** "Minggu ini": tasks due per weekday as small bars. */
-export function WeekStrip({ week }: { week: PersonalMetrics['week'] }) {
+export function WeekStrip({ week }: { week: PersonalLive['week'] }) {
     const max = Math.max(1, ...week.days.map((day) => day.count));
     const busiest = busiestDay(week.days);
 

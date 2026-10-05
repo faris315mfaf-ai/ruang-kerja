@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import type { RecapDayCell, RecapDetail } from '@/types/attendance';
 import { ReviewButton } from '../review/review-button';
 import { SelfieButton } from '../review/selfie-dialog';
-import { formatDate, formatTime } from '@/lib/format';
+import { formatDate, formatNumber, formatTime } from '@/lib/format';
 import { LogsDialog } from './logs-dialog';
 import { CalendarLegend, MonthCalendar } from './month-calendar';
 
@@ -42,7 +42,7 @@ export function EmployeeMonthPanel({
             label: 'Hadir',
             value: (
                 <>
-                    {detail.presentDays}
+                    {formatNumber(detail.presentDays)}
                     <span className="text-sm font-normal text-text-muted">
                         /{detail.workDays}
                     </span>

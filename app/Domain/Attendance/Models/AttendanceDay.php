@@ -5,6 +5,7 @@ namespace App\Domain\Attendance\Models;
 use App\Domain\Attendance\Enums\AttendanceStatus;
 use App\Domain\Attendance\Enums\RequestPortion;
 use App\Domain\Organization\Enums\Permission;
+use App\Models\EmployeeRequest;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Database\Factories\AttendanceDayFactory;
@@ -165,6 +166,16 @@ class AttendanceDay extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * The approved absence request this day is linked to (request_id).
+     *
+     * @return BelongsTo<EmployeeRequest, $this>
+     */
+    public function employeeRequest(): BelongsTo
+    {
+        return $this->belongsTo(EmployeeRequest::class, 'request_id');
     }
 
     /**

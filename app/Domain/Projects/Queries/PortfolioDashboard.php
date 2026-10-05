@@ -57,11 +57,13 @@ final class PortfolioDashboard
         $open = $all->filter(fn (Workspace $workspace): bool => ProjectMetrics::status($workspace)->isOpen());
         $closed = $all->reject(fn (Workspace $workspace): bool => ProjectMetrics::status($workspace)->isOpen());
 
-        // Period: open projects whose [start, target] overlaps it.
+        // Period: open projects whose [start, target] overlaps it. Compared as
+        // office date strings: the range is in office time, the date casts are
+        // not, so instants would drop a project starting on the last day.
         if ($range !== null) {
-            [$from, $to] = $range;
-            $open = $open->filter(fn (Workspace $workspace): bool => ($workspace->start_date === null || $workspace->start_date->lte($to))
-                && ($workspace->target_date === null || $workspace->target_date->gte($from)));
+            [$from, $to] = [$range[0]->toDateString(), $range[1]->toDateString()];
+            $open = $open->filter(fn (Workspace $workspace): bool => ($workspace->start_date === null || $workspace->start_date->toDateString() <= $to)
+                && ($workspace->target_date === null || $workspace->target_date->toDateString() >= $from));
             // Recently finished: since the start of the previous quarter ("2 proyek selesai di Q3").
             $since = $today->startOfQuarter()->subQuarter()->toDateString();
             $closed = $closed->filter(fn (Workspace $workspace): bool => $workspace->completed_at !== null

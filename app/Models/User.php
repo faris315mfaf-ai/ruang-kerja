@@ -8,6 +8,7 @@ use App\Domain\Organization\Enums\Theme;
 use App\Domain\Organization\Enums\UserStatus;
 use App\Domain\Organization\Enums\WorkMode;
 use App\Models\Concerns\Auditable;
+use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -45,6 +46,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property WorkMode $work_mode
  * @property UserStatus $status
  * @property Carbon|null $joined_at
+ * @property CarbonImmutable|null $deactivated_at set to inactive/resigned (cleared on reactivation)
  * @property Theme $theme
  * @property Carbon|null $last_login_at
  * @property string|null $remember_token
@@ -91,6 +93,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         'position_id' => null,
         'manager_id' => null,
         'joined_at' => null,
+        'deactivated_at' => null,
         'last_login_at' => null,
     ];
 
@@ -109,6 +112,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'work_mode' => WorkMode::class,
             'status' => UserStatus::class,
             'joined_at' => 'date',
+            'deactivated_at' => 'datetime',
             'last_login_at' => 'datetime',
         ];
     }

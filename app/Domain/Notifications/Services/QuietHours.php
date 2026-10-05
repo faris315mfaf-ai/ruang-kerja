@@ -2,16 +2,21 @@
 
 namespace App\Domain\Notifications\Services;
 
+use App\Domain\Notifications\Contracts\WorkdayCalendar;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 
 /**
  * Working-hours window in the office timezone (config notifications.quiet_hours).
  * Outside it, email for users with quiet hours enabled is delayed until the
- * next window start.
+ * next window start. Days off are the weekdays outside
+ * notifications.quiet_hours.workdays and the holidays of the WorkdayCalendar
+ * (the Attendance module binds the holiday-aware one).
  */
 final class QuietHours
 {
+    public function __construct(private readonly WorkdayCalendar $calendar) {}
+
     public function isQuiet(CarbonInterface $at): bool
     {
         $local = $this->local($at);
@@ -60,7 +65,8 @@ final class QuietHours
         /** @var list<int> $workdays */
         $workdays = config('notifications.quiet_hours.workdays', [1, 2, 3, 4, 5]);
 
-        return in_array($local->dayOfWeekIso, $workdays, true);
+        return in_array($local->dayOfWeekIso, $workdays, true)
+            && $this->calendar->isWorkday($local->startOfDay());
     }
 
     private function start(): string

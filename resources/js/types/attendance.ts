@@ -143,6 +143,7 @@ export type RejectionReason =
     | 'qr_invalid'
     | 'qr_expired'
     | 'qr_wrong_location'
+    | 'qr_location_required'
     // Client-side reasons (not from the server's AttendanceRejection enum).
     | 'validation'
     | 'network'

@@ -33,9 +33,9 @@ final readonly class RecapReport
      */
     public function attendanceRate(): ?float
     {
-        $present = array_sum(array_map(fn (EmployeeRecap $row): int => $row->presentDays, $this->rows));
-        $expected = array_sum(array_map(fn (EmployeeRecap $row): int => $row->expectedDays(), $this->rows));
+        $present = array_sum(array_map(fn (EmployeeRecap $row): float => $row->presentDays, $this->rows));
+        $expected = array_sum(array_map(fn (EmployeeRecap $row): float => $row->expectedDays(), $this->rows));
 
-        return $expected === 0 ? null : round(min(100, $present / $expected * 100), 1);
+        return $expected <= 0 ? null : round(min(100, $present / $expected * 100), 1);
     }
 }

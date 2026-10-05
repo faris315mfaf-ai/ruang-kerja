@@ -8,6 +8,7 @@ use App\Domain\Attendance\Enums\LogFlag;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\AttendanceLog;
 use App\Domain\Attendance\Models\OfficeLocation;
+use App\Domain\Attendance\Services\OpenDayLocator;
 use App\Domain\Attendance\Services\ScheduleResolver;
 use App\Domain\Organization\Enums\Permission;
 use App\Http\Resources\Attendance\Concerns\NamesPeople;
@@ -201,7 +202,9 @@ final class TodayBoard
     }
 
     /**
-     * Yesterday's days with a check-in but no check-out.
+     * Yesterday's days with a check-in but no check-out whose check-out window
+     * has closed (OpenDayLocator::closesAt: scheduled end + grace), so a night
+     * shift that is still running is not listed.
      *
      * @return list<array<string, mixed>>
      */
@@ -217,6 +220,7 @@ final class TodayBoard
             ->whereNull('check_out_at')
             ->orderBy('check_in_at')
             ->get()
+            ->filter(fn (AttendanceDay $day): bool => $now->gte(OpenDayLocator::closesAt($day)))
             ->map(fn (AttendanceDay $day): array => [
                 'dayId' => $day->id,
                 'userId' => $day->user_id,

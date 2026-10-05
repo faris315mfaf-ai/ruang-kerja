@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Attendance\Actions\ActivateKiosk;
 use App\Domain\Attendance\Actions\IssueKioskActivation;
 use App\Domain\Attendance\Actions\SaveKiosk;
 use App\Domain\Attendance\Enums\AttendanceLogType;
@@ -139,6 +140,36 @@ test('pairing another device signs out the previous one', function () {
     $this->kiosk->forceFill(['activated_at' => now()->startOfSecond()])->saveQuietly();
 
     $this->get(route('kiosk.show', $this->office))->assertRedirect(route('kiosk.unpaired'));
+});
+
+test('signing out the previous device keeps the new pairing\'s remember cookie valid', function () {
+    // The old device's session (the guard loads the kiosk row from the database).
+    $oldSession = [
+        Auth::guard('kiosk')->getName() => $this->kiosk->id,
+        RestrictKioskDevice::SESSION_KEY => RestrictKioskDevice::marker($this->kiosk),
+    ];
+    $this->withSession($oldSession)->get(route('kiosk.show', $this->office))->assertOk();
+
+    // Another device redeems an activation link.
+    $this->travel(1)->minutes();
+    $activation = app(IssueKioskActivation::class)->handle($this->kiosk);
+    $paired = app(ActivateKiosk::class)->handle($activation['token']);
+    expect($paired)->not->toBeNull();
+    $token = (string) $paired?->remember_token;
+
+    // The old device is signed out without rotating the new device's token.
+    Auth::forgetGuards();
+    $this->withSession($oldSession)->get(route('kiosk.show', $this->office))->assertRedirect(route('kiosk.unpaired'));
+    $this->assertGuest('kiosk');
+    expect(Kiosk::query()->whereKey($this->kiosk->id)->value('remember_token'))->toBe($token);
+
+    // The new device's session expires: its remember cookie still signs it in.
+    Auth::forgetGuards();
+    $this->flushSession();
+    $this->withCookie(Auth::guard('kiosk')->getRecallerName(), $this->kiosk->id.'|'.$token.'|'.$this->kiosk->getAuthPassword())
+        ->get(route('kiosk.show', $this->office))
+        ->assertOk();
+    $this->assertAuthenticatedAs(Kiosk::query()->findOrFail($this->kiosk->id), 'kiosk');
 });
 
 test('HR activates a device with a single-use link', function () {

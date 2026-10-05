@@ -82,12 +82,15 @@ Indeks unik parsial `teams_division_code_unique (division_id, code) WHERE code I
 | work_mode | varchar | `office` · `hybrid` · `wfh` · `field` |
 | status | varchar | `active` · `inactive` · `resigned` |
 | joined_at | date | |
+| deactivated_at | timestamptz null | saat status menjadi `inactive`/`resigned` (dikosongkan saat diaktifkan lagi); batas akhir rekap bulanan |
 | theme | varchar | `system` · `light` · `dark` |
 | last_login_at | timestamptz null | |
 
 Indeks: `(company_id, status)`, `(division_id)`, `(manager_id)`, `(team_id)`, `(position_id)`.
 
 Implementasi (Sprint 1): kolom organisasi ditambahkan lewat migrasi `2026_10_05_000500_add_organization_columns_to_users_table` (bukan menulis ulang migrasi Sprint 0). `password` nullable. `two_factor_recovery_codes` & `two_factor_confirmed_at` (Fortify) dan `email_verified_at`, `remember_token` tetap ada. `work_mode` default `office`, `status` default `active`, `joined_at` nullable. FK `division_id`/`team_id`/`position_id`/`manager_id` = `nullOnDelete`.
+
+Tambahan perbaikan review Sprint 3–9 (#11): `deactivated_at` timestamptz null (migrasi `2026_10_07_300100_add_deactivated_at_to_users`), diisi `DeactivateEmployee` (nilai pertama dipertahankan saat berpindah inactive ↔ resigned), dikosongkan `ReactivateEmployee`; backfill dari audit `user.deactivated` terakhir, fallback `updated_at`. Rekap bulanan/ekspor payroll hanya menghitung tanggal `joined_at` … tanggal kantor `deactivated_at` (inklusif).
 
 ### employee_profiles
 `user_id` PK/FK (cascade), `employee_number` varchar(30) unique null, `nik` text null (encrypted, disembunyikan dari serialisasi), `phone` (untuk WA), `birth_date`, `address`, `emergency_contact` jsonb (`{name, relation, phone}`). Dipisah agar data pribadi tidak ikut ter-load di setiap query `users`.
@@ -215,7 +218,7 @@ Implementasi (Sprint 2): FK `check_in_log_id`/`check_out_log_id` ditambahkan ole
 
 Implementasi (Sprint 2): `accuracy_m` numeric(8,2), `distance_m` numeric(10,2) = jarak ke lokasi terdekat (juga untuk WFH), `office_location_id` hanya diisi bila di dalam radius. `qr_token_id` belum ber-FK (Sprint 3). `flags` jsonb default `[]`: `low_accuracy`, `clock_skew`, `new_device`, `new_ip`, `impossible_travel`, `dark_selfie`; `new_ip` saja tidak membuat `is_suspicious`. Baris immutable (model menolak update selain `reviewed_by/at` dan menolak delete). Indeks `(user_id, occurred_at)`, `attendance_day_id`, parsial `occurred_at WHERE is_suspicious AND reviewed_at IS NULL`.
 
-Implementasi (Sprint 3): FK `qr_token_id` → `qr_tokens` (`restrictOnDelete`) + indeks. Method `qr`: tanpa selfie, `office_location_id` = lokasi kiosk, `latitude/longitude/accuracy_m/distance_m` hanya bila GPS dikirim; flag baru `qr_location_mismatch` (GPS lebih jauh dari radius + akurasi dari lokasi kiosk, menandai). Method `manual` (koreksi HR): `occurred_at` = jam hasil koreksi, `corrected_by` = HR, `note` = alasan wajib. Selain kolom tinjauan, `selfie_path` boleh diubah **hanya menjadi null** oleh job retensi selfie (`attendance:purge-selfies`).
+Implementasi (Sprint 3): FK `qr_token_id` → `qr_tokens` (`restrictOnDelete`) + indeks. Method `qr`: tanpa selfie, `office_location_id` = lokasi kiosk, `latitude/longitude/accuracy_m/distance_m` hanya bila GPS dikirim; flag baru `qr_location_mismatch` (GPS lebih jauh dari radius + akurasi dari lokasi kiosk, menandai). Tambahan perbaikan review Sprint 3–9 (#15): flag `qr_no_location` ("QR tanpa lokasi GPS", menandai) bila scan QR tanpa GPS — kode QR yang diteruskan bisa dipindai dari mana saja; `config('attendance.qr.require_location')` (env `ATTENDANCE_QR_REQUIRE_LOCATION`, default false) menolak scan tanpa GPS (`qr_location_required`). Method `manual` (koreksi HR): `occurred_at` = jam hasil koreksi, `corrected_by` = HR, `note` = alasan wajib. Selain kolom tinjauan, `selfie_path` boleh diubah **hanya menjadi null** oleh job retensi selfie (`attendance:purge-selfies`).
 
 ### qr_tokens
 `id`, `office_location_id`, `token_hash`, `valid_from`, `valid_until` (≈30–45 detik), `kiosk_id`. Token di QR = `HMAC(secret, location_id|window)`. Tabel ini opsional bila validasi murni HMAC. Disimpan untuk audit.

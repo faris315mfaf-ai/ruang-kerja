@@ -71,12 +71,12 @@ class UserFactory extends Factory
 
     public function inactive(): static
     {
-        return $this->state(fn (): array => ['status' => UserStatus::Inactive]);
+        return $this->state(fn (): array => ['status' => UserStatus::Inactive, 'deactivated_at' => now()]);
     }
 
     public function resigned(): static
     {
-        return $this->state(fn (): array => ['status' => UserStatus::Resigned]);
+        return $this->state(fn (): array => ['status' => UserStatus::Resigned, 'deactivated_at' => now()]);
     }
 
     public function forCompany(Company $company): static

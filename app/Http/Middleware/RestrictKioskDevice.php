@@ -32,7 +32,13 @@ class RestrictKioskDevice
         $kiosk = self::current();
 
         if ($kiosk === null || ! $this->stillPaired($request, $kiosk, $guard instanceof SessionGuard && $guard->viaRemember())) {
-            $guard->logout();
+            // Only this browser: logout() would cycle remember_token and so
+            // break the remember cookie of a newly paired device.
+            if ($guard instanceof SessionGuard) {
+                $guard->logoutCurrentDevice();
+            } else {
+                $guard->logout();
+            }
 
             return $next($request);
         }

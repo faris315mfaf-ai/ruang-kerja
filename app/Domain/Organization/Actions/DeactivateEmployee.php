@@ -8,6 +8,7 @@ use App\Domain\Organization\Services\AuditLogger;
 use App\Domain\Organization\Services\LeadershipReleaser;
 use App\Models\GoogleAccount;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -45,6 +46,8 @@ final readonly class DeactivateEmployee
 
             // One explicit audit row (with the reason) instead of a generic user.updated.
             $employee->status = $status;
+            // Keeps the first end date when switching between inactive and resigned.
+            $employee->deactivated_at ??= CarbonImmutable::now();
             $employee->saveQuietly();
 
             $this->audit->log(

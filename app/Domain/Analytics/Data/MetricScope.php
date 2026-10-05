@@ -37,13 +37,14 @@ final readonly class MetricScope
     }
 
     /**
-     * Tasks in workspaces the viewer may see (no assignee filter).
+     * Tasks in workspaces the viewer may see (no assignee filter). Archived
+     * workspaces are frozen history and never count toward live metrics.
      *
      * @return Builder<Task>
      */
     public function visibleTasks(): Builder
     {
-        $workspaces = Workspace::query()->visibleTo($this->viewer);
+        $workspaces = Workspace::query()->visibleTo($this->viewer)->notArchived();
 
         if (! $this->includePersonal) {
             $workspaces->where('workspaces.type', '!=', WorkspaceType::Personal->value);

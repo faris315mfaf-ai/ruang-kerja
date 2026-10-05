@@ -63,8 +63,8 @@ final class CorrectAttendance
             }
 
             $old = self::snapshot($day);
-            $checkIn = $data->checkIn === null ? $day->check_in_at : self::at($workDate, $data->checkIn);
-            $checkOut = $data->checkOut === null ? $day->check_out_at : self::at($workDate, $data->checkOut);
+            $checkIn = $data->checkIn === null ? $day->check_in_at : self::at($workDate, $data->checkIn, $schedule);
+            $checkOut = $data->checkOut === null ? $day->check_out_at : self::at($workDate, $data->checkOut, $schedule);
 
             if ($checkIn === null) {
                 throw ValidationException::withMessages(['check_in' => 'Isi jam masuk: tanggal ini belum punya check-in.']);
@@ -183,9 +183,17 @@ final class CorrectAttendance
         ]);
     }
 
-    private static function at(CarbonImmutable $workDate, string $time): CarbonImmutable
+    /**
+     * An office time of the work date. For a shift crossing midnight, a time
+     * before its check-in window opens (start − window) belongs to the morning
+     * after the work date (e.g. 22.00–06.00: 00.20 and 06.00 are the next day).
+     */
+    private static function at(CarbonImmutable $workDate, string $time, DaySchedule $schedule): CarbonImmutable
     {
-        return CarbonImmutable::parse($workDate->toDateString().' '.$time, OfficeClock::timezone());
+        $at = CarbonImmutable::parse($workDate->toDateString().' '.$time, OfficeClock::timezone());
+        $opensAt = $schedule->shift?->crosses_midnight === true ? $schedule->checkInOpensAt() : null;
+
+        return $opensAt !== null && $at->lt($opensAt) ? $at->addDay() : $at;
     }
 
     /**

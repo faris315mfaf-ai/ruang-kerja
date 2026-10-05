@@ -3,7 +3,6 @@ import { TodayAttendanceCard } from '@/features/attendance/today-card';
 import { formatNumber } from '@/lib/format';
 import { formatShortDate } from '@/lib/requests';
 import { compared, formatMetric, periodNoun } from './lib';
-import { PanelSkeleton } from './panel';
 import { FocusList } from './personal-parts';
 import type { PersonalProps } from './personal-types';
 import { RequestRows } from './request-rows';
@@ -107,19 +106,15 @@ export function PersonalMobile(props: PersonalProps) {
                 <SectionHeader
                     title="Fokus hari ini"
                     href="/tugas"
-                    link={metrics ? `Semua ${metrics.focus.total}` : 'Semua'}
+                    link={`Semua ${live.focus.total}`}
                 />
-                {metrics ? (
-                    <div className="overflow-hidden rounded-xl border border-border bg-surface">
-                        <FocusList
-                            items={metrics.focus.items.slice(0, 3)}
-                            today={props.today}
-                            variant="mobile"
-                        />
-                    </div>
-                ) : (
-                    <PanelSkeleton rows={3} />
-                )}
+                <div className="overflow-hidden rounded-xl border border-border bg-surface">
+                    <FocusList
+                        items={live.focus.items.slice(0, 3)}
+                        today={props.today}
+                        variant="mobile"
+                    />
+                </div>
             </section>
 
             <section className="space-y-2">

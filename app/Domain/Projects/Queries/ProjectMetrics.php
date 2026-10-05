@@ -8,6 +8,7 @@ use App\Domain\Analytics\Projects\ProjectFlags;
 use App\Domain\Analytics\Projects\TaskTotals;
 use App\Domain\Projects\Data\ProjectMetricsData;
 use App\Domain\Projects\Enums\MilestoneStatus;
+use App\Domain\Projects\Enums\ProjectFlag;
 use App\Domain\Projects\Enums\ProjectStatus;
 use App\Domain\Projects\Services\MilestoneStatusResolver;
 use App\Domain\Projects\Services\ProjectClock;
@@ -151,10 +152,7 @@ final class ProjectMetrics
     {
         $actual = ActualProgress::calculate($totals);
         $planned = PlannedProgress::calculate($workspace->start_date, $workspace->target_date, $today);
-        $timezone = ProjectClock::timezone();
-        $updateAge = ProjectFlags::updateAgeDays($workspace->last_update_at, $today, $timezone);
-        $trackedSince = $workspace->start_date ?? ($workspace->created_at !== null ? CarbonImmutable::parse(ProjectClock::date($workspace->created_at)) : null);
-        $trackedDays = $trackedSince !== null ? ProjectClock::daysBetween($trackedSince, $today) : null;
+        [$updateAge, $trackedDays] = self::updateAge($workspace, $today);
         $missed = count(array_filter($milestones, fn (array $milestone): bool => $milestone['status'] === MilestoneStatus::Missed));
 
         // System flags only make sense while the project is running.
@@ -187,6 +185,34 @@ final class ProjectMetrics
     /**
      * A project without a lifecycle status yet is treated as running.
      */
+    /**
+     * [office days since the last update (null: never), office days tracked
+     * (since start_date, else creation)] — the inputs of the StaleUpdate flag.
+     *
+     * @return array{0: int|null, 1: int|null}
+     */
+    public static function updateAge(Workspace $workspace, CarbonImmutable $today): array
+    {
+        $updateAge = ProjectFlags::updateAgeDays($workspace->last_update_at, $today, ProjectClock::timezone());
+        $trackedSince = $workspace->start_date ?? ($workspace->created_at !== null ? CarbonImmutable::parse(ProjectClock::date($workspace->created_at)) : null);
+
+        return [$updateAge, $trackedSince !== null ? ProjectClock::daysBetween($trackedSince, $today) : null];
+    }
+
+    /**
+     * The system flag "Update kedaluwarsa" (ProjectFlags), only while active.
+     */
+    public static function isStale(Workspace $workspace, CarbonImmutable $today): bool
+    {
+        if (self::status($workspace) !== ProjectStatus::Active) {
+            return false;
+        }
+
+        [$updateAge, $trackedDays] = self::updateAge($workspace, $today);
+
+        return in_array(ProjectFlag::StaleUpdate, ProjectFlags::evaluate(null, null, 0, $updateAge, $trackedDays), true);
+    }
+
     public static function status(Workspace $workspace): ProjectStatus
     {
         return $workspace->project_status ?? ProjectStatus::Active;

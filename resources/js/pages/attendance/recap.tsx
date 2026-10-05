@@ -29,7 +29,7 @@ import { EmployeeMonthPanel } from '@/features/attendance/recap/employee-month-p
 import { CorrectionDialog } from '@/features/attendance/review/correction-dialog';
 import type { CorrectionTarget } from '@/features/attendance/review/correction-dialog';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
-import { formatTime } from '@/lib/format';
+import { formatNumber, formatTime } from '@/lib/format';
 import {
     formatHours,
     monthLabel,
@@ -656,7 +656,7 @@ function Num({ value, strong = false }: { value: number; strong?: boolean }) {
                       : 'text-text',
             )}
         >
-            {value}
+            {formatNumber(value)}
         </td>
     );
 }

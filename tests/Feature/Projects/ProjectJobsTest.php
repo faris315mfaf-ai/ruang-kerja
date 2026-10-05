@@ -65,6 +65,18 @@ describe('daily snapshot', function () {
         expect(ProjectProgressSnapshot::query()->orderBy('date')->pluck('date')->map->toDateString()->all())->toBe(['2026-10-05', '2026-10-06']);
     });
 
+    it('snapshots the office date of the dispatch even when a worker runs it after midnight', function () {
+        // Dispatched 23.55 WIB Mon 5 Oct, picked up by a busy queue at 00.20 WIB Tue 6 Oct.
+        $this->travelTo('2026-10-05 16:55:00');
+        $job = new TakeProjectProgressSnapshots;
+        $queued = unserialize(serialize($job));
+        $this->travelTo('2026-10-05 17:20:00');
+
+        app()->call([$queued, 'handle']);
+
+        expect(ProjectProgressSnapshot::query()->sole()->date->toDateString())->toBe('2026-10-05');
+    });
+
     it('is scheduled at 23.55 and Friday 15.00 office time', function () {
         $events = collect(app(Schedule::class)->events());
         $snapshot = $events->first(fn ($event) => str_contains((string) $event->description, TakeProjectProgressSnapshots::class));
