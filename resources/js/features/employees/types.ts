@@ -86,7 +86,7 @@ export type EmployeeIndexProps = {
     counts: { active: number; inactive: number };
     divisions: DivisionOption[];
     options: EnumOptions;
-    can: { manage: boolean; assignSuperAdmin: boolean };
+    can: { manage: boolean; assignPrivilegedRoles: boolean };
     companyDomain: string;
     formOptions: FormOptions | null;
     editing: EmployeeFormValues | null;

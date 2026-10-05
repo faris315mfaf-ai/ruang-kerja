@@ -313,7 +313,9 @@ final class EmployeeImportValidator
         $target = $existing ?? new User(['company_id' => $actor->company_id]);
 
         if (! $this->roleGuard->allows($actor, $target, $before, $roles)) {
-            $row->fail('Hanya Super Admin yang dapat memberikan atau mencabut peran Super Admin.');
+            $row->fail($actor->is($existing)
+                ? 'Anda tidak dapat mengubah peran Anda sendiri.'
+                : 'Hanya Super Admin yang dapat memberikan atau mencabut peran Super Admin, Direksi, atau HR.');
         }
 
         // Joined date.

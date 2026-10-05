@@ -46,6 +46,25 @@ it('refuses to grant super_admin inside CreateEmployee even without the form (de
     expect(User::query()->where('email', 'bayu@example.test')->exists())->toBeFalse();
 });
 
+it('refuses HR granting direksi/hr or changing own roles inside the actions (defense in depth)', function (Role $role) {
+    expect(fn () => app(CreateEmployee::class)->handle($this->hr, employeeData([$role])))
+        ->toThrow(AuthorizationException::class);
+
+    $bayu = app(CreateEmployee::class)->handle($this->hr, employeeData());
+
+    expect(fn () => app(UpdateEmployee::class)->handle($this->hr, $bayu, employeeData([$role])))
+        ->toThrow(AuthorizationException::class)
+        ->and($bayu->refresh()->hasRole($role))->toBeFalse();
+
+    $selfData = new EmployeeData(
+        name: $this->hr->name, email: $this->hr->email, divisionId: null, teamId: null, positionId: null,
+        managerId: null, workMode: WorkMode::Office, joinedAt: null, roles: [Role::Hr, Role::KepalaDivisi], nik: null,
+    );
+
+    expect(fn () => app(UpdateEmployee::class)->handle($this->hr, $this->hr, $selfData))
+        ->toThrow(AuthorizationException::class);
+})->with([Role::Direksi, Role::Hr]);
+
 it('defaults new employees to the anggota role and skips an empty profile', function () {
     $bayu = app(CreateEmployee::class)->handle($this->hr, employeeData([]));
 

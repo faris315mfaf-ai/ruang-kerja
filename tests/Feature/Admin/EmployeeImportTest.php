@@ -209,8 +209,26 @@ it('does not let HR import the super_admin role or change a super admin', functi
     $this->actingAs($this->hr)
         ->get(route('admin.employees.import', ['token' => $token]))
         ->assertInertia(fn (Assert $page) => $page
-            ->where('preview.rows.0.errors', ['Hanya Super Admin yang dapat memberikan atau mencabut peran Super Admin.'])
+            ->where('preview.rows.0.errors', ['Hanya Super Admin yang dapat memberikan atau mencabut peran Super Admin, Direksi, atau HR.'])
             ->where('preview.rows.1.errors.0', 'Hanya Super Admin yang dapat mengubah data Super Admin.')
+        );
+});
+
+it('does not let HR import direksi/hr roles or change their own roles', function () {
+    $token = previewImport(csvUpload(
+        'Calon Direksi,direksi.baru@kantor.test,,,,,,,direksi,,,',
+        'Calon HR,hr.baru@kantor.test,,,,,,,hr,,,',
+        'HR,hr@kantor.test,,,,,,,hr;kepala_divisi,,,',
+        'Calon Kadiv,kadiv.baru@kantor.test,,,,,,,kepala_divisi,,,',
+    ));
+
+    $this->actingAs($this->hr)
+        ->get(route('admin.employees.import', ['token' => $token]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('preview.rows.0.errors', ['Hanya Super Admin yang dapat memberikan atau mencabut peran Super Admin, Direksi, atau HR.'])
+            ->where('preview.rows.1.errors', ['Hanya Super Admin yang dapat memberikan atau mencabut peran Super Admin, Direksi, atau HR.'])
+            ->where('preview.rows.2.errors', ['Anda tidak dapat mengubah peran Anda sendiri.'])
+            ->where('preview.rows.3.errors', [])
         );
 });
 
