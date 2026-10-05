@@ -47,28 +47,43 @@ it('shows only my own numbers', function () {
             ->component('dashboard/personal')
             ->where('filters.periode', 'bulan')
             ->where('live.profile', ['position' => null, 'manager' => 'Dimas Pratama'])
+            // Overdue first, then nearest due date; undated last.
+            ->where('live.focus.total', 4)
+            ->where('live.focus.items.0.title', 'Rekap stok')
+            ->where('live.focus.items.0.days_late', 5)
+            ->where('live.focus.items.0.url', '/w/PRJ?q=PRJ-1')
+            ->where('live.focus.items.1.title', 'Hari ini')
+            ->where('live.focus.items.3.title', 'Catatan pribadi')
+            // Week 5–11 Oct, weekdays only: Mon 1 (done), Wed 1, Fri 1.
+            ->where('live.week.total', 3)
+            ->has('live.week.days', 5)
+            ->where('live.week.days.2', ['date' => '2026-10-07', 'weekday' => 'Rab', 'day' => 7, 'count' => 1, 'open' => 1, 'is_today' => true])
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->where('metrics.kpis.open_tasks', ['value' => 4, 'overdue' => 1])
                 // Finished 1–7 Oct: 2 (1–7 Sep: 1).
                 ->where('metrics.kpis.completed', ['value' => 2, 'numerator' => 2, 'denominator' => 0, 'previous' => 1, 'delta' => 1])
                 // 1 of 2 on time; 1–7 Sep 1 of 1 → −50 poin.
                 ->where('metrics.kpis.on_time_rate', ['value' => 50, 'numerator' => 1, 'denominator' => 2, 'previous' => 100, 'delta' => -50])
-                // Overdue first, then nearest due date; undated last.
-                ->where('metrics.focus.total', 4)
-                ->where('metrics.focus.items.0.title', 'Rekap stok')
-                ->where('metrics.focus.items.0.days_late', 5)
-                ->where('metrics.focus.items.0.url', '/w/PRJ?q=PRJ-1')
-                ->where('metrics.focus.items.1.title', 'Hari ini')
-                ->where('metrics.focus.items.3.title', 'Catatan pribadi')
-                // Week 5–11 Oct, weekdays only: Mon 1 (done), Wed 1, Fri 1.
-                ->where('metrics.week.total', 3)
-                ->has('metrics.week.days', 5)
-                ->where('metrics.week.days.2', ['date' => '2026-10-07', 'weekday' => 'Rab', 'day' => 7, 'count' => 1, 'open' => 1, 'is_today' => true])
                 // Attendance 1–7 Oct: 4 rows, 4 work days, 3 on time → 75%, lateness 24 min.
                 ->where('metrics.attendance.days.workdays', 4)
                 ->where('metrics.attendance.days.counts', ['present' => 3, 'late' => 1, 'absent' => 0, 'away' => 0])
                 ->where('metrics.attendance.attendance_discipline.value', 75)
                 ->where('metrics.attendance.average_lateness.value', 24)));
+});
+
+it('shows a task assigned a minute ago in "Fokus hari ini" and "Minggu ini" right away', function () {
+    // Warm the 5-minute metric cache.
+    $this->actingAs($this->me)->get('/dashboard')->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload->has('metrics')));
+
+    $ws = Workspace::query()->where('key', 'PRJ')->firstOrFail();
+    F::task($ws, Cat::Todo, [$this->me], ['due_date' => '2026-10-08', 'title' => 'Baru ditugaskan']);
+    $this->travel(1)->minutes();
+
+    $this->actingAs($this->me)->get('/dashboard')->assertInertia(fn (Assert $page) => $page
+        ->where('live.focus.total', 5)
+        ->where('live.focus.items.2.title', 'Baru ditugaskan')
+        ->where('live.week.total', 4)
+        ->where('live.week.days.3.count', 1));
 });
 
 it('shows my leave balance and latest requests', function () {

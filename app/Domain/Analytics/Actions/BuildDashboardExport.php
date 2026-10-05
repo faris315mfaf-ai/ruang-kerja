@@ -71,7 +71,7 @@ final class BuildDashboardExport
             $this->summary($context, $metrics['period'], $metrics['compared'], $now, $rows),
             new DashboardSheet('Fokus', ['Tugas', 'Judul', 'Workspace', 'Tenggat', 'Terlambat (hari)'], array_map(
                 fn (array $task): array => [$task['key'], $task['title'], $task['workspace'], $task['due_date'], $task['days_late'] ?: null],
-                $metrics['focus']['items'],
+                $live['focus']['items'],
             )),
             new DashboardSheet('Kehadiran', ['Tanggal', 'Status', 'Terlambat (menit)'], array_map(
                 fn (array $day): array => [$day['date'], $day['label'], $day['late_minutes'] ?: null],

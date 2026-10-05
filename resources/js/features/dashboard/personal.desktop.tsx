@@ -162,43 +162,31 @@ export function PersonalDesktop(props: PersonalProps) {
             {metrics && <ComparedNote compared={metrics.compared} />}
 
             <div className="grid gap-4 xl:grid-cols-12">
-                {metrics ? (
-                    <>
-                        <Panel
-                            id="focus"
-                            title="Fokus hari ini"
-                            aside="terlambat dulu, lalu tenggat terdekat"
-                            className="xl:col-span-7"
-                            flush
+                <Panel
+                    id="focus"
+                    title="Fokus hari ini"
+                    aside="terlambat dulu, lalu tenggat terdekat"
+                    className="xl:col-span-7"
+                    flush
+                >
+                    <FocusList items={live.focus.items} today={props.today} />
+                    {live.focus.total > 0 && (
+                        <Link
+                            href="/tugas"
+                            className="mx-4 mt-2 inline-flex min-h-9 items-center text-[13px] text-primary hover:underline"
                         >
-                            <FocusList
-                                items={metrics.focus.items}
-                                today={props.today}
-                            />
-                            {metrics.focus.total > 0 && (
-                                <Link
-                                    href="/tugas"
-                                    className="mx-4 mt-2 inline-flex min-h-9 items-center text-[13px] text-primary hover:underline"
-                                >
-                                    Lihat {metrics.focus.total} tugas terbuka →
-                                </Link>
-                            )}
-                        </Panel>
-                        <Panel
-                            id="week"
-                            title="Minggu ini"
-                            aside={`${metrics.week.total} tugas bertenggat`}
-                            className="xl:col-span-5"
-                        >
-                            <WeekStrip week={metrics.week} />
-                        </Panel>
-                    </>
-                ) : (
-                    <>
-                        <PanelSkeleton className="xl:col-span-7" />
-                        <PanelSkeleton className="xl:col-span-5" />
-                    </>
-                )}
+                            Lihat {live.focus.total} tugas terbuka →
+                        </Link>
+                    )}
+                </Panel>
+                <Panel
+                    id="week"
+                    title="Minggu ini"
+                    aside={`${live.week.total} tugas bertenggat`}
+                    className="xl:col-span-5"
+                >
+                    <WeekStrip week={live.week} />
+                </Panel>
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
