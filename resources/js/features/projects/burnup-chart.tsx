@@ -171,7 +171,7 @@ export function BurnupChart({
                         top: 24,
                         right: 12,
                         bottom: 0,
-                        left: compact ? -24 : -12,
+                        left: compact ? -16 : -12,
                     }}
                 >
                     <defs>

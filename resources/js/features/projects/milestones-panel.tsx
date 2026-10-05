@@ -291,7 +291,7 @@ export function MilestonesPanel({
                                                             'h-7 px-2 font-mono text-[13px]',
                                                             task.status_category ===
                                                                 'done' &&
-                                                                'text-text-muted line-through',
+                                                                'text-text-muted',
                                                         )}
                                                     >
                                                         {task.code}

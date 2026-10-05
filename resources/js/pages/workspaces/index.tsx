@@ -86,7 +86,7 @@ function WorkspaceCard({ workspace }: { workspace: Row }) {
                     className="size-12 rounded-[14px] text-[19px]"
                 />
                 <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-title font-bold">
+                    <span className="line-clamp-2 text-title font-bold">
                         {name}
                     </span>
                     <span className="truncate text-meta text-text-muted">

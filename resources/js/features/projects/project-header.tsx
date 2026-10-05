@@ -111,8 +111,6 @@ export function ProjectHeaderDesktop({ workspace, props, actions }: Props) {
                             ` · Sponsor ${project.sponsor.name}`}
                         {` · ${period(project.start_date, project.target_date)}`}
                         {` · ${workspace.members_count} anggota`}
-                        {project.member_divisions.length > 0 &&
-                            ` dari ${project.member_divisions.join(', ')}`}
                     </p>
                 </div>
             </div>
