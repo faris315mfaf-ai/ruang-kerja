@@ -25,6 +25,8 @@ final readonly class LeadershipReleaser
      */
     public function releaseAll(User $user, User $actor): int
     {
+        $user->forgetLedDivisionIds();
+
         return $this->releaseDivisions(Division::query()->withTrashed()->where('head_user_id', $user->id), $actor)
             + $this->releaseTeams(Team::query()->withTrashed()->where('lead_user_id', $user->id), $actor);
     }
@@ -36,6 +38,7 @@ final readonly class LeadershipReleaser
      */
     public function releaseLeft(User $user, ?string $oldDivisionId, ?string $oldTeamId, User $actor): int
     {
+        $user->forgetLedDivisionIds();
         $released = 0;
 
         if ($oldDivisionId !== null && $oldDivisionId !== $user->division_id) {
