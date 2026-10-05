@@ -121,7 +121,7 @@ export function ExportCard() {
             title="Unduh data saya"
             description="Profil, persetujuan, seluruh absensi & log, pengajuan, dan keputusan persetujuan Anda."
         >
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
                 {links.map(({ format, label, hint, icon: Icon }) => (
                     <a
                         key={format}
@@ -468,8 +468,8 @@ export function AttendanceCard({
                         )}
                     </ul>
 
-                    {/* Desktop/tablet: table. */}
-                    <div className="hidden overflow-x-auto md:block">
+                    {/* Wide screens: table. */}
+                    <div className="hidden overflow-x-auto xl:block">
                         <table className="w-full text-sm">
                             <caption className="sr-only">
                                 {attendance.days.length} hari absensi terakhir
@@ -532,7 +532,7 @@ export function AttendanceCard({
                                         <td className="px-3 py-2 font-mono text-text tnum">
                                             {day.check_out ?? '–'}
                                         </td>
-                                        <td className="px-3 py-2 text-text-muted">
+                                        <td className="max-w-56 truncate px-3 py-2 text-text-muted">
                                             {[day.method, day.location]
                                                 .filter(Boolean)
                                                 .join(' · ') || '–'}
@@ -547,8 +547,8 @@ export function AttendanceCard({
                         </table>
                     </div>
 
-                    {/* Mobile: list rows. */}
-                    <ul className="divide-y divide-border border-t border-border md:hidden">
+                    {/* Phones, tablets and narrow desktop columns: list rows. */}
+                    <ul className="divide-y divide-border border-t border-border xl:hidden">
                         {attendance.days.map((day) => (
                             <li
                                 key={day.date}

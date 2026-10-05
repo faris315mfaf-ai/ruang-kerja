@@ -187,3 +187,15 @@ it('never exposes masked secrets', function () {
         ->get('/admin/audit')
         ->assertInertia(fn (Assert $page) => $page->where('logs.data.0.newValues.password', '***'));
 });
+
+it('lists entries about a user (no soft deletes) without failing', function () {
+    $employee = User::factory()->create(['name' => 'Rizky Aditya']);
+    $this->actingAs($employee)->post(route('attendance.consent.store'));
+
+    $this->actingAs($this->admin)->get('/admin/audit')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('logs.data.0.action', 'attendance.consent_granted')
+            ->where('logs.data.0.subject.name', 'Rizky Aditya')
+            ->where('logs.data.0.subject.deleted', false));
+});

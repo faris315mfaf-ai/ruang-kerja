@@ -39,14 +39,11 @@ final class MyData
      */
     public function profile(User $user): array
     {
-        $user->loadMissing([
-            'division:id,name',
-            'team:id,name',
-            'position:id,name',
-            'manager:id,name',
-            'profile',
-            'roles:id,name',
-        ]);
+        // A fresh copy: never mixes with (partial) relations already loaded on
+        // the signed-in user instance during this request.
+        $user = User::query()
+            ->with(['division:id,name', 'team:id,name', 'position:id,name', 'manager:id,name', 'profile'])
+            ->findOrFail($user->id);
         $profile = $user->profile;
         $emergency = $profile?->emergency_contact;
 
