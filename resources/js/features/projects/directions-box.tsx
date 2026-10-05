@@ -31,7 +31,7 @@ export function DirectionsBox({ props }: { props: ProjectSummaryProps }) {
 
     if (!canSteer) {
         return props.directions.length > 0 ? (
-            <Panel title="Arahan Direksi">
+            <Panel id="arahan" title="Arahan Direksi" className="scroll-mt-24">
                 <DirectionList directions={props.directions} />
             </Panel>
         ) : null;

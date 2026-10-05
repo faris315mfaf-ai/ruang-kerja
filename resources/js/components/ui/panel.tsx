@@ -9,6 +9,7 @@ import { cn, focusRing } from '@/lib/utils';
  * the h3 scale (22/30 desktop, 20 phone) and an optional action on the right.
  */
 export function Panel({
+    id: anchor,
     title,
     action,
     children,
@@ -16,6 +17,8 @@ export function Panel({
     bodyClassName,
     flush = false,
 }: {
+    /** Anchor id (`#arahan` links from notifications). */
+    id?: string;
     title: ReactNode;
     /** Right side of the header (link or counter). */
     action?: ReactNode;
@@ -29,6 +32,7 @@ export function Panel({
 
     return (
         <section
+            id={anchor}
             aria-labelledby={id}
             className={cn(
                 'flex min-w-0 flex-col rounded-panel border border-border bg-surface py-6 shadow-card',

@@ -6,7 +6,7 @@ import { ListRow } from '@/components/ui/list-row';
 import { Panel, PanelLink } from '@/components/ui/panel';
 import { daysBetween } from '@/features/portfolio/lib';
 import type { ProjectSummaryProps } from '@/features/portfolio/types';
-import { show as taskShow } from '@/routes/tasks';
+import { page as taskPage } from '@/routes/tasks';
 import { show as workspaceTasks } from '@/routes/workspaces';
 
 /** "Tugas terlambat" (DProyek): mono code chip, title, assignee, red "N hari". */
@@ -68,7 +68,7 @@ export function OverduePanel({
                                 className="border-b border-divider last:border-b-0"
                             >
                                 <ListRow
-                                    href={taskShow.url(task.id)}
+                                    href={taskPageUrl(task.code)}
                                     className="min-h-[66px] gap-4"
                                     leading={
                                         <span className="rounded-sm bg-surface-2 px-2 py-1 font-mono text-[14px] font-semibold">
@@ -157,4 +157,14 @@ export function TeamLoadPanel({ props }: { props: ProjectSummaryProps }) {
             </p>
         </Panel>
     );
+}
+
+/** "PLQ-15" → /w/PLQ/tasks/15 (the task page; /tugas/{id} is the JSON API). */
+function taskPageUrl(code: string): string {
+    const dash = code.lastIndexOf('-');
+
+    return taskPage.url({
+        workspace: code.slice(0, dash),
+        number: code.slice(dash + 1),
+    });
 }
