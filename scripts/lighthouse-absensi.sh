@@ -3,9 +3,13 @@
 # account — Sprint 10 acceptance "Lighthouse ≥ 90 untuk halaman Absensi di ponsel".
 #
 # Needs: a production build (`npm run build`), APP_ENV=local with
-# DEMO_LOGIN_ENABLED=true, Google Chrome, and two terminals:
+# DEMO_LOGIN_ENABLED=true, Google Chrome, a throwaway self-signed certificate
+#   openssl req -x509 -newkey rsa:2048 -nodes -days 30 -subj /CN=127.0.0.1 \
+#     -keyout storage/app/lighthouse/key.pem -out storage/app/lighthouse/cert.pem
+# and two terminals:
 #   1. PHP_CLI_SERVER_WORKERS=4 php artisan serve --port=8795
-#   2. node scripts/lighthouse-proxy.mjs 8797 8795   # gzip like Caddy `encode`
+#   2. node scripts/lighthouse-proxy.mjs 8797 8795 storage/app/lighthouse/cert.pem storage/app/lighthouse/key.pem
+#      (HTTPS + HTTP/2 + gzip + immutable /build cache, like production)
 # Then: scripts/lighthouse-absensi.sh [label] [email]
 # Reports: storage/app/lighthouse/<label>.report.{html,json} (git-ignored).
 set -euo pipefail
@@ -13,7 +17,7 @@ set -euo pipefail
 LABEL=${1:-absensi}
 EMAIL=${2:-anggota@demo.test}
 APP=${APP:-http://127.0.0.1:8795}
-PROXY=${PROXY:-http://127.0.0.1:8797}
+PROXY=${PROXY:-https://127.0.0.1:8797}
 OUT=storage/app/lighthouse
 CHROME_PATH=${CHROME_PATH:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}
 export CHROME_PATH
@@ -32,7 +36,7 @@ HEADERS=$(python3 -c 'import json, sys; print(json.dumps({"Cookie": sys.argv[1]}
 npx -y lighthouse@12 "$PROXY/absensi" --quiet \
     --output=json --output=html --output-path="$OUT/$LABEL" \
     --extra-headers="$HEADERS" \
-    --chrome-flags="--headless=new --no-first-run" \
+    --chrome-flags="--headless=new --no-first-run --ignore-certificate-errors" \
     --only-categories=performance,accessibility,best-practices,seo
 
 python3 - "$OUT/$LABEL.report.json" <<'PY'

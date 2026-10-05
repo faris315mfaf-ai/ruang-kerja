@@ -1,6 +1,5 @@
 import { createInertiaApp } from '@inertiajs/react';
 import { Toaster } from '@/components/ui/sonner';
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
 import { configureEcho } from '@laravel/echo-react';
 import AppLayout from '@/layouts/app-layout';
@@ -37,10 +36,10 @@ void createInertiaApp({
     strictMode: true,
     withApp(app) {
         return (
-            <TooltipProvider delayDuration={0}>
+            <>
                 {app}
                 <Toaster />
-            </TooltipProvider>
+            </>
         );
     },
     progress: {

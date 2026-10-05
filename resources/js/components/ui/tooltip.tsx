@@ -16,10 +16,16 @@ function TooltipProvider({
   )
 }
 
+// Each tooltip brings its own provider (shadcn v4), so no app-wide provider —
+// and no Radix tooltip/floating-ui — is needed in the initial bundle.
 function Tooltip({
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
-  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+  return (
+    <TooltipProvider>
+      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+    </TooltipProvider>
+  )
 }
 
 function TooltipTrigger({
