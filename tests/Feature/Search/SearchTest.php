@@ -165,7 +165,7 @@ it('limits one group when a filter chip is selected', function () {
 
 it('validates the query and group', function () {
     $this->actingAs(searcher())
-        ->getJson('/cari/hasil?q='.str_repeat('a', 101).'&group=tasks')
+        ->getJson('/cari/hasil?q='.str_repeat('a', 101).'&group=unknown')
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['q', 'group']);
 });
@@ -189,7 +189,9 @@ it('renders the mobile search screen', function () {
             ->where('q', 'landing')
             ->where('groups', [
                 ['key' => 'actions', 'label' => 'Aksi'],
+                ['key' => 'tasks', 'label' => 'Tugas'],
                 ['key' => 'people', 'label' => 'Orang'],
+                ['key' => 'workspaces', 'label' => 'Workspace'],
             ]));
 });
 

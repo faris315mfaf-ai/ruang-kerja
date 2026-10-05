@@ -162,7 +162,7 @@ export function EmployeesDesktop(props: EmployeeIndexProps) {
                     formOptions={props.formOptions}
                     divisions={props.divisions}
                     options={props.options}
-                    canAssignSuperAdmin={props.can.assignSuperAdmin}
+                    canAssignPrivilegedRoles={props.can.assignPrivilegedRoles}
                     companyDomain={props.companyDomain}
                     onClose={closePanel}
                     onCreated={() => setCreating(false)}

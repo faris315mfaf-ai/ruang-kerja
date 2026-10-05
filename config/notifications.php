@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Notifications\Digest\Sections\InboxActionSection;
+use App\Domain\Requests\Digest\PendingApprovalsSection;
 
 return [
 
@@ -95,6 +96,7 @@ return [
         'catch_up_minutes' => 60,
         'workdays' => [1, 2, 3, 4, 5],
         'sections' => [
+            PendingApprovalsSection::class,
             InboxActionSection::class,
         ],
     ],

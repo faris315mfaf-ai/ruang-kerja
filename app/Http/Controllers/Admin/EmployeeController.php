@@ -67,7 +67,8 @@ class EmployeeController extends Controller
             ],
             'can' => [
                 'manage' => $canManage,
-                'assignSuperAdmin' => $user->isSuperAdmin(),
+                // Only a Super Admin grants/revokes super_admin, direksi and hr (UserPolicy::assignRole).
+                'assignPrivilegedRoles' => $user->isSuperAdmin(),
             ],
             'companyDomain' => Company::query()->findOrFail($user->company_id)->google_domain,
             'formOptions' => fn (): ?array => $canManage ? $this->formOptions($user) : null,

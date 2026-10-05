@@ -18,7 +18,8 @@ final class DisconnectGoogleAccount
         $account->delete();
 
         if ($token !== '') {
-            RevokeGoogleToken::dispatch($token);
+            // Only once the deletion is committed (callers may run inside a transaction).
+            RevokeGoogleToken::dispatch($token)->afterCommit();
         }
     }
 }

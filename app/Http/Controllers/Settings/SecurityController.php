@@ -8,7 +8,9 @@ use App\Http\Requests\Settings\PasswordUpdateRequest;
 use App\Http\Requests\Settings\TwoFactorAuthenticationRequest;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
@@ -45,9 +47,16 @@ class SecurityController extends Controller
     {
         Gate::authorize('manageCredentials', $user);
 
+        $password = $request->string('password')->toString();
+
         $user->update([
-            'password' => $request->password,
+            'password' => $password,
         ]);
+
+        // Sign out every other device (AuthenticateSession compares the session's
+        // password hash) and re-issue this device's remember-me cookie. The re-hash
+        // of the same new password is not a master-data change: no second audit row.
+        Model::withoutEvents(fn () => Auth::guard('web')->logoutOtherDevices($password));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Kata sandi diperbarui.']);
 

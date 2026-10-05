@@ -7,6 +7,8 @@ use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Socialite\Facades\Socialite;
@@ -280,12 +282,92 @@ it('is only available to guests', function () {
     $this->assertAuthenticatedAs($user);
 });
 
-it('is rate limited to 10 requests per minute per IP', function () {
-    Socialite::fake('google');
-
-    foreach (range(1, 10) as $attempt) {
+it('does not rate limit the redirect to Google', function () {
+    foreach (range(1, 70) as $attempt) {
         $this->get(route('auth.google.redirect'))->assertRedirect();
     }
+});
 
-    $this->get(route('auth.google.redirect'))->assertTooManyRequests();
+it('rate limits the callback to 60 requests per minute per IP (shared office NAT)', function () {
+    foreach (range(1, 60) as $attempt) {
+        $this->get(route('auth.google.callback', ['error' => 'access_denied']))->assertRedirect(route('login'));
+    }
+
+    $this->get(route('auth.google.callback', ['error' => 'access_denied']))->assertTooManyRequests();
+
+    // Another client IP is unaffected.
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])
+        ->get(route('auth.google.callback', ['error' => 'access_denied']))
+        ->assertRedirect(route('login'));
+});
+
+it('rate limits one browser session to 10 callbacks per minute', function () {
+    $sessionCookie = config('session.cookie');
+    $mine = str_repeat('a', 40);
+
+    foreach (range(1, 10) as $attempt) {
+        $this->withCookie($sessionCookie, $mine)
+            ->get(route('auth.google.callback', ['error' => 'access_denied']))
+            ->assertRedirect(route('login'));
+    }
+
+    $this->withCookie($sessionCookie, $mine)
+        ->get(route('auth.google.callback', ['error' => 'access_denied']))
+        ->assertTooManyRequests();
+
+    // A colleague behind the same IP still gets through.
+    $this->withCookie($sessionCookie, str_repeat('b', 40))
+        ->get(route('auth.google.callback', ['error' => 'access_denied']))
+        ->assertRedirect(route('login'));
+});
+
+it('defaults TRUSTED_PROXIES to loopback and private ranges', function () {
+    $saved = [$_SERVER['TRUSTED_PROXIES'] ?? null, $_ENV['TRUSTED_PROXIES'] ?? null, getenv('TRUSTED_PROXIES')];
+    unset($_SERVER['TRUSTED_PROXIES'], $_ENV['TRUSTED_PROXIES']);
+    putenv('TRUSTED_PROXIES');
+
+    try {
+        $config = require config_path('trustedproxy.php');
+    } finally {
+        [$server, $env, $putenv] = $saved;
+        $server === null ?: $_SERVER['TRUSTED_PROXIES'] = $server;
+        $env === null ?: $_ENV['TRUSTED_PROXIES'] = $env;
+        $putenv === false ?: putenv("TRUSTED_PROXIES={$putenv}");
+    }
+
+    expect($config['proxies'])->toBe('127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7');
+});
+
+it('resolves the client IP behind a trusted proxy only', function () {
+    config(['trustedproxy.proxies' => '127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7']);
+    Route::get('/_test/client-ip', fn (Request $request) => $request->ip());
+
+    // A reverse proxy on the private network forwards the real client address.
+    $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.5'])
+        ->get('/_test/client-ip', ['X-Forwarded-For' => '198.51.100.7'])
+        ->assertSee('198.51.100.7');
+
+    // A public peer cannot spoof its address.
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])
+        ->get('/_test/client-ip', ['X-Forwarded-For' => '198.51.100.7'])
+        ->assertSee('203.0.113.9');
+});
+
+it('records a remember-me restore on the Google callback as "remember", not "google"', function () {
+    $this->seed(RoleSeeder::class);
+    $admin = User::factory()->forCompany($this->company)->withRole(Role::SuperAdmin)->create([
+        'remember_token' => 'remember-token-123',
+    ]);
+    $recaller = $admin->getKey().'|remember-token-123|'.$admin->getAuthPassword();
+
+    // Expired session + valid remember-me cookie hitting the callback directly.
+    $this->withCookie(auth()->guard('web')->getRecallerName(), $recaller)
+        ->get(route('auth.google.callback', ['state' => 'x', 'code' => 'y']))
+        ->assertRedirect();
+
+    $this->assertAuthenticatedAs($admin);
+    expect(session(LoginMethod::SESSION_KEY))->toBe(LoginMethod::Remember->value);
+
+    // The TOTP requirement still applies to the restored session.
+    $this->get('/dashboard')->assertRedirect(route('security.edit'));
 });

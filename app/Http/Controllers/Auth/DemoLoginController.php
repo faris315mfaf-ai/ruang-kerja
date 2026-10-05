@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Domain\Auth\Enums\LoginMethod;
 use App\Domain\Organization\Demo\DemoAccounts;
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -38,6 +39,7 @@ class DemoLoginController extends Controller
             ]);
         }
 
+        LoginMethod::Demo->declareFor($request);
         Auth::guard('web')->login($user);
 
         $request->session()->regenerate();
