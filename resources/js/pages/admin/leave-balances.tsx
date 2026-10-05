@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label';
 import { selectClass } from '@/features/requests/form-fields';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { formatDays } from '@/lib/requests';
+import { cn } from '@/lib/utils';
 import { generate, index, update } from '@/routes/admin/leave-balances';
 import type { BalanceSummary, LeaveTypeInfo, Person } from '@/types/requests';
 
@@ -193,7 +194,7 @@ export default function LeaveBalances({
                 <div className="flex flex-wrap items-center gap-3">
                     <select
                         aria-label="Jenis cuti"
-                        className={`${selectClass} w-56`}
+                        className={cn(selectClass, 'w-56')}
                         value={type?.id ?? ''}
                         onChange={(e) => visit({ jenis: e.target.value })}
                     >
@@ -205,7 +206,7 @@ export default function LeaveBalances({
                     </select>
                     <select
                         aria-label="Tahun"
-                        className={`${selectClass} w-28`}
+                        className={cn(selectClass, 'w-28')}
                         value={year}
                         onChange={(e) =>
                             visit({ tahun: Number(e.target.value) })

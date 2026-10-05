@@ -45,7 +45,7 @@ function Progress({ item }: { item: RequestItem }) {
             </span>
             <span className="min-w-0 flex-1 truncate">
                 {item.step_position}/{item.step_count} · menunggu {who}
-                {since ? ` sejak ${since}` : ''}
+                {since && since !== 'baru saja' ? ` sejak ${since}` : ''}
             </span>
         </div>
     );

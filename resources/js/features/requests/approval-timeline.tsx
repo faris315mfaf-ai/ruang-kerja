@@ -3,8 +3,13 @@ import { formatDateTime, formatRelative } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { RequestDetail, TimelineStep } from '@/types/requests';
 
+/** " sejak 2 hari" (empty for just now). */
 function since(value: string | null): string {
-    return value ? formatRelative(value).replace(/ lalu$/, '') : '';
+    const relative = value ? formatRelative(value) : 'baru saja';
+
+    return relative === 'baru saja'
+        ? ''
+        : ` sejak ${relative.replace(/ lalu$/, '')}`;
 }
 
 function StepIcon({ step }: { step: TimelineStep }) {
@@ -83,11 +88,8 @@ function stepDetail(
         case 'waiting':
             return (
                 <span className="text-warning">
-                    {who ?? `Siapa pun dengan peran ${step.label}`}
-                    {delegated} · menunggu
-                    {step.activated_at
-                        ? ` sejak ${since(step.activated_at)}`
-                        : ''}
+                    {who ?? `Pemegang peran ${step.label}`}
+                    {delegated} · menunggu{since(step.activated_at)}
                 </span>
             );
         case 'approved':

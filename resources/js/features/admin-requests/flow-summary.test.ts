@@ -12,6 +12,7 @@ const options: AdminOptions = {
     metrics: [],
     role_holders: {},
     users: [],
+    default_sample_id: null,
 };
 
 describe('flow conditions', () => {

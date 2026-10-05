@@ -39,6 +39,7 @@ export type AdminOptions = {
     metrics: { value: string; label: string; unit: string }[];
     role_holders: Record<string, string[]>;
     users: { id: string; name: string }[];
+    default_sample_id: string | null;
 };
 
 export type AdminRequestTypesProps = {

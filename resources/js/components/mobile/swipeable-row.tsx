@@ -77,7 +77,11 @@ export function SwipeableRow({ children, actions, className }: Props) {
     return (
         <div className={cn('relative overflow-hidden', className)}>
             <div
-                className="absolute inset-y-0 right-0 flex"
+                className={cn(
+                    'absolute inset-y-0 right-0 flex',
+                    // Hidden at rest so no seam shows through the row's rounded edge.
+                    offset === 0 && 'invisible',
+                )}
                 aria-hidden={offset === 0}
             >
                 {actions.map((action) => (

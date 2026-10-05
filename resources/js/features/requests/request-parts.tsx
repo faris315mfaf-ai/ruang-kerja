@@ -41,7 +41,16 @@ export function RequestFields({
         });
         rows.push({
             label: 'Jam diminta',
-            value: `Check-in ${hhmm(request.payload.check_in)} · Check-out ${hhmm(request.payload.check_out)}`,
+            value: [
+                request.payload.check_in
+                    ? `Check-in ${hhmm(request.payload.check_in)}`
+                    : null,
+                request.payload.check_out
+                    ? `Check-out ${hhmm(request.payload.check_out)}`
+                    : null,
+            ]
+                .filter(Boolean)
+                .join(' · '),
         });
     } else if (request.minutes !== null) {
         rows.push({ label: 'Waktu', value: formatRequestPeriod(request) });
@@ -212,10 +221,11 @@ export function BalanceBar({
     className?: string;
 }) {
     const total = Math.max(summary.total, 0.0001);
-    const used = summary.used + summary.pending;
+    const used = summary.used;
+    const pending = summary.pending;
     const pct = (value: number) =>
         `${Math.max(0, Math.min(100, (value / total) * 100))}%`;
-    const left = Math.max(0, summary.total - used - requested);
+    const left = Math.max(0, summary.total - used - pending - requested);
 
     return (
         <div className={className}>
@@ -226,6 +236,10 @@ export function BalanceBar({
                 <span
                     className="h-full bg-text-subtle"
                     style={{ width: pct(used) }}
+                />
+                <span
+                    className="h-full bg-warning/70"
+                    style={{ width: pct(pending) }}
                 />
                 <span
                     className="h-full bg-primary"
@@ -240,6 +254,15 @@ export function BalanceBar({
                     />
                     Terpakai {formatDays(used)}
                 </li>
+                {pending > 0 && (
+                    <li className="inline-flex items-center gap-1.5">
+                        <span
+                            className="size-2 rounded-sm bg-warning/70"
+                            aria-hidden
+                        />
+                        Menunggu {formatDays(pending)}
+                    </li>
+                )}
                 <li className="inline-flex items-center gap-1.5">
                     <span
                         className="size-2 rounded-sm bg-primary"

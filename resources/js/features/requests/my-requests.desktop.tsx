@@ -202,7 +202,7 @@ export function MyRequestsDesktop({
                                                             select(item.id);
                                                         }}
                                                         aria-pressed={active}
-                                                        className="font-mono text-[13px] text-text focus-visible:underline focus-visible:outline-none"
+                                                        className="font-mono text-[13px] whitespace-nowrap text-text focus-visible:underline focus-visible:outline-none"
                                                     >
                                                         {item.number ?? 'DRAF'}
                                                     </button>

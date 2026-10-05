@@ -74,6 +74,8 @@ class RequestTypeController extends Controller
                 'roles' => Role::options(),
                 'metrics' => ConditionMetric::options(),
                 'role_holders' => $roleHolders,
+                // Preview sample: someone with a manager, so every step type resolves.
+                'default_sample_id' => User::query()->active()->where('company_id', $user->company_id)->whereNotNull('manager_id')->orderBy('name')->value('id'),
                 'users' => User::query()->active()->where('company_id', $user->company_id)->orderBy('name')
                     ->get(['id', 'name'])->map(fn (User $person): array => ['id' => $person->id, 'name' => $person->name])->values()->all(),
             ],

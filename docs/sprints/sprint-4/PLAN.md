@@ -25,7 +25,7 @@ Acuan: `docs/PROMPTS.md` blok Sprint 4 (acceptance criteria), `docs/PRD.md` M2 (
 | `approval_delegations` | + `reason` |
 | `request_sequences` | baru: `key` unik (mis. `CUT-2026-10`), `last_number`. Nomor diambil dengan satu `INSERT … ON CONFLICT DO UPDATE … RETURNING` (atomik, row lock Postgres) |
 
-Lampiran pengajuan: disk privat `local` (`storage/app/private/request-attachments/...`), metadata di `requests.payload.attachments` sampai tabel `attachments` (Sprint 7) tersedia; unduh lewat controller + policy + audit `request.attachment_viewed`.
+Lampiran pengajuan: disk privat `local` (`storage/app/private/request-attachments/...`), baris di tabel `attachments` (Sprint 7, `source = storage`); unduh lewat controller + policy + audit `request.attachment_viewed`. (Rencana awal: metadata di payload — diganti setelah Sprint 7 masuk `main`.)
 
 ## Domain (`app/Domain/Requests`, model di `app/Models`)
 
@@ -75,4 +75,4 @@ Acceptance: alur 2 langkah lengkap; tolak di langkah 1 menghentikan alur; kondis
 
 - Efek absensi & hari kerja bergantung Sprint 2 (`attendance_days`, shift, libur) — dibangun di balik kontrak.
 - Tabel `notifications` milik Sprint 8.
-- Tabel `attachments` milik Sprint 7 — sementara metadata di payload.
+- Tabel `attachments` milik Sprint 7 — sudah tersedia lewat merge `main`.

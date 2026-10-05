@@ -72,7 +72,9 @@ export function FlowEditor({
     );
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [saving, setSaving] = useState(false);
-    const [sampleId, setSampleId] = useState(options.users[0]?.id ?? '');
+    const [sampleId, setSampleId] = useState(
+        options.default_sample_id ?? options.users[0]?.id ?? '',
+    );
     const [preview, setPreview] = useState<FlowPreview | null>(null);
 
     const dirty = useMemo(
