@@ -1,4 +1,4 @@
-import { Deferred, Link } from '@inertiajs/react';
+import { Deferred, Link, usePage } from '@inertiajs/react';
 import { Clock, Eye, Mail } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useId } from 'react';
@@ -11,6 +11,7 @@ import type {
     NotificationSettingsProps,
 } from '@/features/notifications/settings/types';
 import { formatDate } from '@/lib/format';
+import { hasAnyRole } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 
 export const DIGEST_PREVIEW_URL = '/pengaturan/notifikasi/pratinjau-ringkasan';
@@ -348,23 +349,31 @@ export function EmailNote({
     );
 }
 
-export const ACCOUNT_LINKS = [
-    { title: 'Profil', href: '/settings/profile' },
-    { title: 'Keamanan', href: '/settings/security' },
-    { title: 'Notifikasi', href: '/pengaturan/notifikasi' },
-    { title: 'Tampilan', href: '/settings/appearance' },
-    { title: 'Privasi & data saya', href: '/privasi' },
-];
+/** Mirrors layouts/settings/layout.tsx (Keamanan only for the Super Admin emergency sign-in). */
+export function accountLinks(roles: readonly string[]) {
+    return [
+        { title: 'Profil', href: '/settings/profile' },
+        ...(hasAnyRole(roles, 'super_admin')
+            ? [{ title: 'Keamanan', href: '/settings/security' }]
+            : []),
+        { title: 'Notifikasi', href: '/pengaturan/notifikasi' },
+        { title: 'Tampilan', href: '/settings/appearance' },
+        { title: 'Akun Google', href: '/settings/google' },
+        { title: 'Privasi & data saya', href: '/privasi' },
+    ];
+}
 
 /** Left "Akun saya" navigation (desktop). */
 export function AccountNav() {
+    const { auth } = usePage().props;
+
     return (
         <nav aria-label="Akun saya" className="w-48 shrink-0">
             <p className="px-2.5 pb-2 text-[11px] font-medium tracking-[.04em] text-text-muted uppercase">
                 Akun saya
             </p>
             <ul className="space-y-0.5">
-                {ACCOUNT_LINKS.map((link) => {
+                {accountLinks(auth.roles).map((link) => {
                     const active = link.href === '/pengaturan/notifikasi';
 
                     return (

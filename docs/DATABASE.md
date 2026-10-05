@@ -347,27 +347,32 @@ Indeks: `(workspace_id, number)` unique, `(workspace_id, status_id, position)`, 
 ## 5. Google & file
 
 ### google_accounts
-`id`, `user_id` unique, `google_id`, `email`, `access_token` (encrypted), `refresh_token` (encrypted), `expires_at`, `scopes` text[]. Token per pengguna dipakai untuk Google Picker & tindakan atas nama pengguna. Operasi folder workspace memakai **service account dengan domain-wide delegation** (kredensial di secret file, bukan DB).
+`id`, `user_id` unique (FK users, cascade), `google_id` (indeks), `email`, `access_token` text (encrypted), `refresh_token` text null (encrypted; `null` = harus hubungkan ulang), `expires_at` timestamptz null, `scopes` text[] (default `{}`), timestamps. Token per pengguna dipakai untuk Google Picker & tindakan atas nama pengguna (scope `drive.file`). Satu-satunya migrasi pemilik tabel ini: `2026_10_05_230000_create_google_accounts_table` (Sprint 7); login Google (Sprint 1) hanya menyimpan `users.google_id/avatar_url/last_login_at` dan boleh memanggil Action `StoreGoogleAccount`. Operasi folder workspace memakai **service account dengan domain-wide delegation** (kredensial di secret file, bukan DB).
 
 ### drive_files — cache metadata file Drive
 | Kolom | Tipe | Keterangan |
 |---|---|---|
 | id | ulid PK | |
-| workspace_id | FK | |
-| google_file_id | varchar unique | |
-| name | varchar | |
+| workspace_id | ulid (indeks) | FK ke `workspaces` ditambahkan Sprint 7 bagian B (tabel belum ada saat bagian A) |
+| google_file_id | varchar unique | satu baris per file Drive di seluruh aplikasi; file mempertahankan workspace pertama yang mencatatnya |
+| parent_google_id | varchar null | **tambahan**: folder induk di Drive (sinkron isi folder per tingkat; file hasil Picker tidak ikut terhapus) |
+| name | varchar(500) | |
 | mime_type | varchar | `application/vnd.google-apps.document`, dll. |
 | kind | varchar | `doc` · `sheet` · `slide` · `pdf` · `image` · `folder` · `other` |
-| web_view_link | varchar | |
-| icon_link / thumbnail_link | varchar null | |
-| size_bytes | bigint null | |
-| owner_email | varchar | |
-| modified_at | timestamptz | |
-| added_by | FK users | |
+| web_view_link | varchar(1000) | |
+| icon_link | varchar(1000) null | |
+| thumbnail_link | text null | URL bertanda tangan Google bisa panjang |
+| size_bytes | bigint null | null untuk file Google native & folder |
+| owner_email | varchar null | **nullable**: file di Shared Drive tidak punya pemilik (diisi `lastModifyingUser` / penambah) |
+| modified_at | timestamptz null | |
+| added_by | FK users null | **nullable**, `nullOnDelete`: null = ditemukan lewat sinkron folder |
 | last_synced_at | timestamptz | |
+| created_at / updated_at / deleted_at | timestamptz | **soft delete**: file yang hilang dari Drive tetap tampil di lampiran |
+
+Indeks: `(workspace_id, parent_google_id)`, `(workspace_id, kind)`.
 
 ### attachments — tautan polimorfik
-`id`, `attachable_type`/`attachable_id` (task, comment, request, message), `source` (`drive` · `storage`), `drive_file_id` FK null, `storage_path` null, `filename`, `mime_type`, `size_bytes`, `uploaded_by`.
+`id`, `attachable_type`/`attachable_id` (morph ULID: task, comment, request, message; FQCN karena tanpa morph map), `source` (`drive` · `storage`), `drive_file_id` FK null (`nullOnDelete`), `storage_path` null, `filename`, `mime_type`, `size_bytes` null, `uploaded_by` FK users null (`nullOnDelete`), timestamps, `deleted_at` (soft delete = lepas lampiran; file Drive tidak dihapus). Selalu dimuat lewat induk yang sudah diotorisasi (`$task->attachments`).
 
 ---
 

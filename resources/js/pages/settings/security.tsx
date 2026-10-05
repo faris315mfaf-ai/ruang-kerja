@@ -1,22 +1,22 @@
 import { Form, Head } from '@inertiajs/react';
+import { ShieldAlert } from 'lucide-react';
 import { useRef } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { edit } from '@/routes/security';
-import type { Props as ManagePasskeysProps } from '@/components/manage-passkeys';
-import ManagePasskeys from '@/components/manage-passkeys';
 import type { Props as ManageTwoFactorProps } from '@/components/manage-two-factor';
 import ManageTwoFactor from '@/components/manage-two-factor';
 
-// oxfmt-ignore
 type Props = {
     passwordRules: string;
-} & ManagePasskeysProps &
-    ManageTwoFactorProps;
+    /** Super Admin signed in with a password but has no confirmed TOTP yet. */
+    twoFactorRequired: boolean;
+} & ManageTwoFactorProps;
 
 export default function Security(props: Props) {
     const passwordInput = useRef<HTMLInputElement>(null);
@@ -27,6 +27,26 @@ export default function Security(props: Props) {
             <Head title="Pengaturan keamanan" />
 
             <h1 className="sr-only">Pengaturan keamanan</h1>
+
+            {props.twoFactorRequired && (
+                <Alert className="border-warning/40 bg-warning/10 text-text">
+                    <ShieldAlert className="text-warning" />
+                    <AlertTitle>
+                        Wajib aktifkan autentikasi dua faktor
+                    </AlertTitle>
+                    <AlertDescription className="text-text-muted">
+                        Login dengan email dan kata sandi hanya untuk Super
+                        Admin dan wajib memakai kode TOTP. Aktifkan 2FA di bawah
+                        untuk melanjutkan ke aplikasi.
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            <ManageTwoFactor
+                canManageTwoFactor={props.canManageTwoFactor}
+                requiresConfirmation={props.requiresConfirmation}
+                twoFactorEnabled={props.twoFactorEnabled}
+            />
 
             <div className="space-y-6">
                 <Heading
@@ -125,17 +145,6 @@ export default function Security(props: Props) {
                     )}
                 </Form>
             </div>
-
-            <ManageTwoFactor
-                canManageTwoFactor={props.canManageTwoFactor}
-                requiresConfirmation={props.requiresConfirmation}
-                twoFactorEnabled={props.twoFactorEnabled}
-            />
-
-            <ManagePasskeys
-                canManagePasskeys={props.canManagePasskeys}
-                passkeys={props.passkeys}
-            />
         </>
     );
 }
