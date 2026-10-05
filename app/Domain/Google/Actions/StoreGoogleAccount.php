@@ -3,6 +3,7 @@
 namespace App\Domain\Google\Actions;
 
 use App\Domain\Google\Exceptions\GoogleAccountNotAllowed;
+use App\Models\Company;
 use App\Models\GoogleAccount;
 use App\Models\User;
 use Laravel\Socialite\Two\User as GoogleUser;
@@ -53,7 +54,8 @@ final class StoreGoogleAccount
         $domain = strtolower(trim((string) config('google.oauth.allowed_domain', '')));
 
         if ($domain === '') {
-            $domain = strtolower($user->company->google_domain);
+            // Fresh lookup: the in-memory relation may hold partial columns.
+            $domain = strtolower((string) Company::query()->whereKey($user->company_id)->value('google_domain'));
         }
 
         $raw = $googleUser->getRaw();

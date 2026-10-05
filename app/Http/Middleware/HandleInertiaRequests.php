@@ -3,6 +3,9 @@
 namespace App\Http\Middleware;
 
 use App\Domain\Notifications\Services\InboxQuery;
+use App\Models\Company;
+use App\Models\Division;
+use App\Models\Position;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -41,14 +44,18 @@ class HandleInertiaRequests extends Middleware
         $user = $user instanceof User ? $user : null;
 
         // Small PK lookups; gives the shell the user's place in the organization.
-        $user?->loadMissing(['company:id,name', 'division:id,name,code', 'position:id,name,level']);
+        // Separate queries on purpose: loading partial columns into the user's own
+        // relations would leak into controllers/actions (e.g. company.google_domain).
+        $company = $user !== null ? Company::query()->whereKey($user->company_id)->first(['id', 'name']) : null;
+        $division = $user?->division_id !== null ? Division::query()->whereKey($user->division_id)->first(['id', 'name', 'code']) : null;
+        $position = $user?->position_id !== null ? Position::query()->whereKey($user->position_id)->first(['id', 'name', 'level']) : null;
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'branding' => [
                 'name' => config('branding.name', config('app.name')),
-                'companyName' => $user !== null ? $user->company->name : config('branding.company_name'),
+                'companyName' => $company !== null ? $company->name : config('branding.company_name'),
                 'shortName' => config('branding.short_name', 'RK'),
                 'logo' => config('branding.logo'),
             ],
@@ -57,9 +64,9 @@ class HandleInertiaRequests extends Middleware
                     // Attributes only: relations loaded elsewhere (roles, permissions) never leak.
                     ...$user->attributesToArray(),
                     'avatar' => $user->avatar_url,
-                    'company' => $user->company->only(['id', 'name']),
-                    'division' => $user->division?->only(['id', 'name', 'code']),
-                    'position' => $user->position?->only(['id', 'name', 'level']),
+                    'company' => $company?->only(['id', 'name']),
+                    'division' => $division?->only(['id', 'name', 'code']),
+                    'position' => $position?->only(['id', 'name', 'level']),
                 ],
                 'roles' => $user?->getRoleNames()->values()->all() ?? [],
             ],

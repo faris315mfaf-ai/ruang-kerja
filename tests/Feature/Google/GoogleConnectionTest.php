@@ -1,6 +1,8 @@
 <?php
 
+use App\Domain\Google\Actions\StoreGoogleAccount;
 use App\Domain\Google\Jobs\RevokeGoogleToken;
+use App\Models\Company;
 use App\Models\GoogleAccount;
 use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
@@ -15,8 +17,10 @@ use Tests\Fixtures\Google\GoogleTesting;
 beforeEach(function () {
     GoogleTesting::disable();
     GoogleTesting::configureOAuth();
-    $this->user = User::factory()->create();
-    $this->domain = $this->user->company->google_domain;
+    $company = Company::factory()->create();
+    $this->domain = $company->google_domain;
+    // The Drive account must belong to the employee's own Workspace identity.
+    $this->user = User::factory()->forCompany($company)->create(['email' => 'dimas@'.$this->domain]);
 });
 
 function googleUser(string $email, string $hd, array $scopes = ['openid', 'email', GoogleAccount::DRIVE_FILE_SCOPE], ?string $refresh = '1//refresh-token'): SocialiteUser
@@ -196,4 +200,38 @@ it('treats an already revoked token as done but retries server errors', function
     (new RevokeGoogleToken('1//secret'))->handle();
 
     expect(fn () => (new RevokeGoogleToken('1//secret'))->handle())->toThrow(RuntimeException::class);
+});
+
+it('connects with the company domain when GOOGLE_ALLOWED_DOMAIN is empty and the shell preloaded a partial company', function () {
+    config(['google.oauth.allowed_domain' => '']);
+    // A fresh instance: nothing loaded the full company before HandleInertiaRequests runs.
+    $user = User::query()->findOrFail($this->user->id);
+    Socialite::fake('google-drive', googleUser($user->email, $this->domain));
+
+    $this->actingAs($user)
+        ->get('/google/connect/callback?code=abc')
+        ->assertRedirect('/settings/google')
+        ->assertInertiaFlash('toast.type', 'success');
+
+    expect(GoogleAccount::query()->sole()->user_id)->toBe($user->id);
+});
+
+it('does not overwrite the signed-in user relations with partial shell data', function () {
+    $user = User::query()->findOrFail($this->user->id);
+
+    $this->actingAs($user)->get('/settings/google')->assertOk();
+
+    expect($user->relationLoaded('company'))->toBeFalse()
+        ->and($user->relationLoaded('division'))->toBeFalse()
+        ->and($user->relationLoaded('position'))->toBeFalse();
+});
+
+it('reads the company domain fresh even when the user holds a partial company relation', function () {
+    config(['google.oauth.allowed_domain' => '']);
+    $user = User::query()->findOrFail($this->user->id);
+    $user->load('company:id,name');
+
+    $account = app(StoreGoogleAccount::class)->handle($user, googleUser($user->email, $this->domain));
+
+    expect($account->email)->toBe(strtolower($user->email));
 });
