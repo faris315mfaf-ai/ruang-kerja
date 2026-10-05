@@ -88,10 +88,10 @@ export function MembersSection({
             }
         >
             {editable && (
-                <div className="relative space-y-1.5 border-b border-border p-4">
+                <div className="relative space-y-1.5 border-b border-border px-5 pb-6 md:px-7">
                     <label
                         htmlFor="invite-member"
-                        className="text-[13px] font-medium text-text"
+                        className="text-label text-text"
                     >
                         Undang anggota
                     </label>
@@ -105,7 +105,7 @@ export function MembersSection({
                             }}
                             placeholder="Ketik nama atau email karyawan"
                             autoComplete="off"
-                            className="h-9 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-[13px] text-text placeholder:text-text-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            className="h-11 min-w-0 flex-1 rounded-control border border-border-strong bg-surface px-3.5 text-[16px] text-text placeholder:text-text-subtle focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                         />
                         <select
                             aria-label="Peran"
@@ -113,7 +113,7 @@ export function MembersSection({
                             onChange={(event) =>
                                 setRole(event.target.value as WorkspaceRole)
                             }
-                            className={cn(selectClass, 'h-9')}
+                            className={selectClass}
                         >
                             {roleOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
@@ -123,7 +123,6 @@ export function MembersSection({
                         </select>
                         <Button
                             type="button"
-                            className="h-9"
                             disabled={!selected || processing}
                             onClick={invite}
                         >
@@ -134,7 +133,7 @@ export function MembersSection({
                         <ul
                             role="listbox"
                             aria-label="Karyawan"
-                            className="absolute inset-x-4 top-full z-10 -mt-2 overflow-hidden rounded-md border border-border bg-popover shadow-card"
+                            className="absolute inset-x-5 top-full z-10 -mt-4 overflow-hidden rounded-lg border border-border bg-popover shadow-float md:inset-x-7"
                         >
                             {matches.map((candidate) => (
                                 <li key={candidate.id}>
@@ -143,17 +142,17 @@ export function MembersSection({
                                         role="option"
                                         aria-selected={false}
                                         onClick={() => setSelected(candidate)}
-                                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none"
+                                        className="flex min-h-12 w-full items-center gap-3 px-4 py-2 text-left text-[15px] hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none"
                                     >
                                         <UserAvatar
                                             name={candidate.name}
-                                            className="size-6 text-[10px]"
+                                            className="size-8 text-[12px]"
                                         />
                                         <span className="min-w-0 flex-1">
                                             <span className="block truncate text-text">
                                                 {candidate.name}
                                             </span>
-                                            <span className="block truncate text-[12px] text-text-muted">
+                                            <span className="block truncate text-meta text-text-muted">
                                                 {candidate.email}
                                                 {candidate.division
                                                     ? ` · ${candidate.division}`
@@ -166,7 +165,7 @@ export function MembersSection({
                         </ul>
                     )}
                     {needle !== '' && !selected && matches.length === 0 && (
-                        <p className="text-[12px] text-text-muted">
+                        <p className="text-meta text-text-muted">
                             Tidak ada karyawan aktif yang cocok (atau sudah
                             menjadi anggota).
                         </p>
@@ -174,46 +173,46 @@ export function MembersSection({
                 </div>
             )}
 
-            <table className="w-full text-[13px]">
-                <thead className="bg-surface-2 text-left text-[12px] text-text-muted">
+            <table className="w-full text-[15px]">
+                <thead className="bg-background text-left text-meta text-text-muted">
                     <tr>
-                        <th scope="col" className="px-4 py-2 font-medium">
+                        <th scope="col" className="px-5 py-3 font-semibold">
                             Nama
                         </th>
                         <th
                             scope="col"
-                            className="hidden px-4 py-2 font-medium md:table-cell"
+                            className="hidden px-5 py-3 font-semibold md:table-cell"
                         >
                             Divisi
                         </th>
-                        <th scope="col" className="px-4 py-2 font-medium">
+                        <th scope="col" className="px-5 py-3 font-semibold">
                             Peran
                         </th>
                         <th
                             scope="col"
-                            className="hidden px-4 py-2 font-medium md:table-cell"
+                            className="hidden px-5 py-3 font-semibold md:table-cell"
                         >
                             Akses Drive
                         </th>
                         {editable && (
-                            <th scope="col" className="w-10 px-2 py-2">
+                            <th scope="col" className="w-14 px-2 py-3">
                                 <span className="sr-only">Aksi</span>
                             </th>
                         )}
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-divider">
                     {shown.map((member) => {
                         const owner = member.role === 'owner';
 
                         return (
                             <tr key={member.id}>
-                                <td className="px-4 py-2.5">
+                                <td className="px-5 py-3.5">
                                     <span className="flex items-center gap-2.5">
                                         <UserAvatar
                                             name={member.name}
                                             src={member.avatar}
-                                            className="size-7 text-[10px]"
+                                            className="size-10 text-[14px]"
                                         />
                                         <span className="min-w-0">
                                             <span className="block truncate text-text">
@@ -226,7 +225,7 @@ export function MembersSection({
                                                     </span>
                                                 )}
                                             </span>
-                                            <span className="flex min-w-0 items-center gap-1 truncate text-[12px] text-text-muted">
+                                            <span className="flex min-w-0 items-center gap-1 truncate text-meta text-text-muted">
                                                 {member.position && (
                                                     <span className="truncate">
                                                         {member.position}
@@ -256,10 +255,10 @@ export function MembersSection({
                                         </span>
                                     </span>
                                 </td>
-                                <td className="hidden px-4 py-2.5 text-text-muted md:table-cell">
+                                <td className="hidden px-5 py-3.5 text-text-muted md:table-cell">
                                     {member.division ?? '–'}
                                 </td>
-                                <td className="px-4 py-2.5">
+                                <td className="px-5 py-3.5">
                                     {editable && !owner ? (
                                         <select
                                             aria-label={`Peran ${member.name}`}
@@ -295,11 +294,11 @@ export function MembersSection({
                                         </span>
                                     )}
                                 </td>
-                                <td className="hidden px-4 py-2.5 md:table-cell">
+                                <td className="hidden px-5 py-3.5 md:table-cell">
                                     <MemberDriveStatus drive={member.drive} />
                                 </td>
                                 {editable && (
-                                    <td className="px-2 py-2.5 text-right">
+                                    <td className="px-3 py-3.5 text-right">
                                         {!owner && !member.is_synced && (
                                             <button
                                                 type="button"
@@ -316,9 +315,9 @@ export function MembersSection({
                                                         },
                                                     )
                                                 }
-                                                className="rounded p-1 text-text-subtle hover:bg-surface-2 hover:text-danger focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                                className="flex size-10 items-center justify-center rounded-control text-text-subtle hover:bg-surface-2 hover:text-danger focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                                             >
-                                                <X className="size-4" />
+                                                <X className="size-5" />
                                             </button>
                                         )}
                                     </td>
@@ -328,11 +327,11 @@ export function MembersSection({
                     })}
                 </tbody>
             </table>
-            <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-2.5 text-[12px] text-text-muted">
+            <div className="flex items-center justify-between gap-2 border-t border-divider px-5 py-3.5 text-meta text-text-muted md:px-7">
                 {members.length > VISIBLE ? (
                     <button
                         type="button"
-                        className="font-medium text-text hover:underline"
+                        className="font-semibold text-link hover:underline"
                         onClick={() => setShowAll((value) => !value)}
                     >
                         {showAll

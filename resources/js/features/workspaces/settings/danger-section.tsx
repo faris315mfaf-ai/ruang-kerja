@@ -8,14 +8,14 @@ import { SettingsCard } from './settings-card';
 export function DangerSection({ workspace }: { workspace: WorkspaceDetail }) {
     return (
         <SettingsCard id="zona-bahaya" title="Zona bahaya" tone="danger">
-            <div className="flex flex-wrap items-center gap-4 p-4">
+            <div className="flex flex-wrap items-center gap-4 px-5 pb-6 md:px-7">
                 <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-medium text-text">
+                    <p className="text-label text-text">
                         {workspace.archived
                             ? 'Pulihkan workspace'
                             : 'Arsipkan workspace'}
                     </p>
-                    <p className="text-[13px] text-text-muted">
+                    <p className="text-[15px] text-text-muted">
                         {workspace.archived
                             ? 'Workspace kembali bisa diedit dan tugasnya muncul lagi di Tugas saya.'
                             : 'Workspace menjadi baca-saja, tugasnya tidak muncul di Tugas saya, dan hilang dari sidebar. Owner dapat memulihkannya kapan saja.'}

@@ -2,6 +2,7 @@ import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { fieldClasses } from '@/components/ui/input';
 import type { ProjectStatus } from '@/features/portfolio/types';
 import { cn } from '@/lib/utils';
 import { update } from '@/routes/projects/attributes';
@@ -29,8 +30,7 @@ type Props = {
     editable: boolean;
 };
 
-const input =
-    'h-9 w-full rounded-md border border-border bg-surface px-3 text-[13px] text-text focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60';
+const input = cn(fieldClasses, 'h-11');
 
 /** Pengaturan › Proyek (PRD M10 atribut proyek, Sprint 9). */
 export function ProjectSection({
@@ -59,10 +59,10 @@ export function ProjectSection({
         options: Option[],
         empty: string,
     ) => (
-        <label className="space-y-1.5">
-            <span className="text-[13px] font-medium text-text">{label}</span>
+        <label className="flex flex-col gap-2">
+            <span className="text-label text-text">{label}</span>
             <select
-                className={cn(selectClass, 'h-9 w-full')}
+                className={cn(selectClass, 'w-full')}
                 value={form.data[key]}
                 disabled={!editable}
                 onChange={(event) => form.setData(key, event.target.value)}
@@ -84,7 +84,10 @@ export function ProjectSection({
             title="Proyek"
             description="Atribut untuk portofolio Direksi: PIC, sponsor, jadwal, dan status siklus."
         >
-            <form onSubmit={submit} className="space-y-4 p-4">
+            <form
+                onSubmit={submit}
+                className="flex flex-col gap-4 px-5 pb-6 md:px-7"
+            >
                 <div className="grid gap-4 sm:grid-cols-2">
                     {select(
                         'lead_user_id',
@@ -107,12 +110,12 @@ export function ProjectSection({
                         settings.division_options,
                         'Tidak ada',
                     )}
-                    <label className="space-y-1.5">
-                        <span className="text-[13px] font-medium text-text">
+                    <label className="flex flex-col gap-2">
+                        <span className="text-label text-text">
                             Status siklus
                         </span>
                         <select
-                            className={cn(selectClass, 'h-9 w-full')}
+                            className={cn(selectClass, 'w-full')}
                             value={form.data.project_status}
                             disabled={!editable}
                             onChange={(event) =>
@@ -130,8 +133,8 @@ export function ProjectSection({
                         </select>
                         <InputError message={form.errors.project_status} />
                     </label>
-                    <label className="space-y-1.5">
-                        <span className="text-[13px] font-medium text-text">
+                    <label className="flex flex-col gap-2">
+                        <span className="text-label text-text">
                             Tanggal mulai
                         </span>
                         <input
@@ -145,8 +148,8 @@ export function ProjectSection({
                         />
                         <InputError message={form.errors.start_date} />
                     </label>
-                    <label className="space-y-1.5">
-                        <span className="text-[13px] font-medium text-text">
+                    <label className="flex flex-col gap-2">
+                        <span className="text-label text-text">
                             Target selesai
                         </span>
                         <input
@@ -161,7 +164,7 @@ export function ProjectSection({
                         <InputError message={form.errors.target_date} />
                     </label>
                 </div>
-                <p className="text-[12px] text-text-muted">
+                <p className="text-meta text-text-muted">
                     PIC harus anggota workspace; ia menulis update mingguan dan
                     mengelola milestone serta risiko. Progres rencana dihitung
                     dari tanggal mulai sampai target.
@@ -171,7 +174,6 @@ export function ProjectSection({
                         <Button
                             type="button"
                             variant="outline"
-                            size="sm"
                             disabled={!form.isDirty}
                             onClick={() => form.reset()}
                         >
@@ -179,7 +181,6 @@ export function ProjectSection({
                         </Button>
                         <Button
                             type="submit"
-                            size="sm"
                             disabled={form.processing || !form.isDirty}
                         >
                             Simpan perubahan

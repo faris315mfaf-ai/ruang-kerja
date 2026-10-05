@@ -2,6 +2,7 @@ import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { fieldClasses } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { update } from '@/routes/workspaces';
 import type { WorkspaceDetail } from '../types';
@@ -12,8 +13,7 @@ type Props = {
     editable: boolean;
 };
 
-const input =
-    'h-9 w-full rounded-md border border-border bg-surface px-3 text-[13px] text-text focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60';
+const input = cn(fieldClasses, 'h-11');
 
 /** Pengaturan › Umum: name, key, description, visibility. */
 export function GeneralSection({ workspace, editable }: Props) {
@@ -36,10 +36,13 @@ export function GeneralSection({ workspace, editable }: Props) {
             title="Umum"
             description="Identitas workspace dan siapa yang dapat menemukannya."
         >
-            <form onSubmit={submit} className="space-y-4 p-4">
+            <form
+                onSubmit={submit}
+                className="flex flex-col gap-4 px-5 pb-6 md:px-7"
+            >
                 <div className="grid gap-4 sm:grid-cols-[1fr_180px]">
-                    <label className="space-y-1.5">
-                        <span className="text-[13px] font-medium text-text">
+                    <label className="flex flex-col gap-2">
+                        <span className="text-label text-text">
                             Nama workspace
                         </span>
                         <input
@@ -53,10 +56,8 @@ export function GeneralSection({ workspace, editable }: Props) {
                         />
                         <InputError message={form.errors.name} />
                     </label>
-                    <label className="space-y-1.5">
-                        <span className="text-[13px] font-medium text-text">
-                            Key
-                        </span>
+                    <label className="flex flex-col gap-2">
+                        <span className="text-label text-text">Key</span>
                         <input
                             className={cn(input, 'font-mono uppercase')}
                             value={form.data.key}
@@ -72,19 +73,17 @@ export function GeneralSection({ workspace, editable }: Props) {
                         <InputError message={form.errors.key} />
                     </label>
                 </div>
-                <p className="-mt-2 text-[12px] text-text-muted">
+                <p className="-mt-2 text-meta text-text-muted">
                     Key menjadi awalan ID tugas, mis.{' '}
                     <span className="font-mono text-text">
                         {form.data.key || 'KEY'}-21
                     </span>
                     . Mengubah key tetap mengarahkan tautan lama.
                 </p>
-                <label className="block space-y-1.5">
-                    <span className="text-[13px] font-medium text-text">
-                        Deskripsi
-                    </span>
+                <label className="flex flex-col gap-2">
+                    <span className="text-label text-text">Deskripsi</span>
                     <textarea
-                        className={cn(input, 'h-auto min-h-20 py-2')}
+                        className={cn(input, 'h-auto min-h-24 py-2.5')}
                         value={form.data.description}
                         disabled={!editable}
                         onChange={(event) =>
@@ -94,8 +93,8 @@ export function GeneralSection({ workspace, editable }: Props) {
                     <InputError message={form.errors.description} />
                 </label>
                 {!personal && (
-                    <fieldset className="space-y-1.5">
-                        <legend className="text-[13px] font-medium text-text">
+                    <fieldset className="flex flex-col gap-2">
+                        <legend className="text-label text-text">
                             Visibilitas
                         </legend>
                         <div className="grid gap-3 sm:grid-cols-2">
@@ -116,9 +115,9 @@ export function GeneralSection({ workspace, editable }: Props) {
                                 <label
                                     key={value}
                                     className={cn(
-                                        'flex cursor-pointer items-start gap-3 rounded-lg border p-3',
+                                        'flex cursor-pointer items-start gap-3 rounded-lg border p-4',
                                         form.data.visibility === value
-                                            ? 'border-primary/60 bg-primary/5'
+                                            ? 'border-2 border-primary bg-link-soft'
                                             : 'border-border',
                                         !editable &&
                                             'cursor-default opacity-70',
@@ -133,13 +132,13 @@ export function GeneralSection({ workspace, editable }: Props) {
                                         onChange={() =>
                                             form.setData('visibility', value)
                                         }
-                                        className="mt-1 accent-primary"
+                                        className="mt-0.5 size-5 shrink-0 accent-primary"
                                     />
                                     <span>
-                                        <span className="block text-[13px] font-medium text-text">
+                                        <span className="block text-label text-text">
                                             {label}
                                         </span>
-                                        <span className="block text-[12px] text-text-muted">
+                                        <span className="block text-meta text-text-muted">
                                             {hint}
                                         </span>
                                     </span>
@@ -153,7 +152,6 @@ export function GeneralSection({ workspace, editable }: Props) {
                         <Button
                             type="button"
                             variant="outline"
-                            size="sm"
                             disabled={!form.isDirty}
                             onClick={() => form.reset()}
                         >
@@ -161,7 +159,6 @@ export function GeneralSection({ workspace, editable }: Props) {
                         </Button>
                         <Button
                             type="submit"
-                            size="sm"
                             disabled={form.processing || !form.isDirty}
                         >
                             Simpan perubahan

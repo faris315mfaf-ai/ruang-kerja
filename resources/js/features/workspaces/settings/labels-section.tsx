@@ -60,10 +60,10 @@ export function LabelsSection({ workspace, labels, editable }: Props) {
             title="Label"
             description="Label hanya berlaku di workspace ini. Angka = jumlah tugas aktif."
         >
-            <div className="space-y-3 p-4">
+            <div className="space-y-3 px-5 pb-6 md:px-7">
                 <div className="flex flex-wrap gap-2">
                     {labels.length === 0 && (
-                        <p className="text-[13px] text-text-muted">
+                        <p className="text-[15px] text-text-muted">
                             Belum ada label.
                         </p>
                     )}
@@ -79,13 +79,13 @@ export function LabelsSection({ workspace, labels, editable }: Props) {
                                         color: label.color,
                                     })
                                 }
-                                className="rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                className="rounded-full focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                                 aria-label={`Ubah label ${label.name}`}
                             >
                                 <LabelPill
                                     label={label}
                                     count={label.tasks_count}
-                                    className="h-7 px-2.5 text-[12px] hover:border-border-strong"
+                                    className="h-8 px-3 text-[14px] hover:border-border-strong"
                                 />
                             </button>
                         ) : (
@@ -93,7 +93,7 @@ export function LabelsSection({ workspace, labels, editable }: Props) {
                                 key={label.id}
                                 label={label}
                                 count={label.tasks_count}
-                                className="h-7 px-2.5 text-[12px]"
+                                className="h-8 px-3 text-[14px]"
                             />
                         ),
                     )}
@@ -103,7 +103,7 @@ export function LabelsSection({ workspace, labels, editable }: Props) {
                             onClick={() =>
                                 setDraft({ id: null, name: '', color: 'teal' })
                             }
-                            className="inline-flex h-7 items-center gap-1 rounded-full border border-dashed border-border-strong px-2.5 text-[12px] text-text-muted hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            className="inline-flex h-8 items-center gap-1 rounded-full border border-dashed border-border-strong px-3 text-[14px] text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                         >
                             <Plus className="size-3.5" />
                             Tambah label
@@ -113,7 +113,7 @@ export function LabelsSection({ workspace, labels, editable }: Props) {
                 {draft && (
                     <form
                         onSubmit={submit}
-                        className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-surface-2 p-2"
+                        className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface-2 p-3"
                     >
                         <ColorSelect
                             label="Warna label"
@@ -129,7 +129,7 @@ export function LabelsSection({ workspace, labels, editable }: Props) {
                                 setDraft({ ...draft, name: event.target.value })
                             }
                             placeholder="Nama label"
-                            className="h-8 min-w-40 flex-1 rounded-md border border-border bg-surface px-2 text-[13px] text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            className="h-11 min-w-40 flex-1 rounded-control border border-border-strong bg-surface px-3.5 text-[16px] text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                         />
                         <Button
                             type="submit"
@@ -166,14 +166,14 @@ export function LabelsSection({ workspace, labels, editable }: Props) {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="size-8"
+                            className="size-10"
                             aria-label="Batal"
                             onClick={() => setDraft(null)}
                         >
                             <X />
                         </Button>
                         {error && (
-                            <p className="w-full text-[12px] text-danger">
+                            <p className="w-full text-meta text-danger">
                                 {error}
                             </p>
                         )}

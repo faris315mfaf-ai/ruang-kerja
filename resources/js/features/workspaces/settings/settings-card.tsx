@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { fieldClasses } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -10,7 +11,7 @@ type Props = {
     children: ReactNode;
 };
 
-/** One section of Pengaturan (heading + bordered card). */
+/** One section of Pengaturan (SPengaturan card): h2 22px, description, radius 24 card. */
 export function SettingsCard({
     id,
     title,
@@ -23,38 +24,34 @@ export function SettingsCard({
         <section
             id={id}
             aria-labelledby={`${id}-title`}
-            className="scroll-mt-20 space-y-3"
+            className={cn(
+                'flex scroll-mt-24 flex-col overflow-hidden rounded-panel border bg-surface shadow-card',
+                tone === 'danger' ? 'border-danger/40' : 'border-border',
+            )}
         >
-            <div className="flex items-end justify-between gap-3">
-                <div>
+            <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-6 pb-3 md:px-7">
+                <div className="flex min-w-0 flex-col gap-1">
                     <h2
                         id={`${id}-title`}
                         className={cn(
-                            'text-base font-semibold',
+                            'text-[20px] leading-7 font-bold md:text-[22px]',
                             tone === 'danger' ? 'text-danger' : 'text-text',
                         )}
                     >
                         {title}
                     </h2>
                     {description && (
-                        <p className="text-[13px] text-text-muted">
+                        <p className="text-label font-normal text-text-muted">
                             {description}
                         </p>
                     )}
                 </div>
                 {action}
             </div>
-            <div
-                className={cn(
-                    'overflow-hidden rounded-lg border bg-surface',
-                    tone === 'danger' ? 'border-danger/40' : 'border-border',
-                )}
-            >
-                {children}
-            </div>
+            {children}
         </section>
     );
 }
 
-export const selectClass =
-    'h-8 rounded-md border border-border bg-surface px-2 text-[13px] text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60';
+/** Native select in the Arus field style (44px, radius 12). */
+export const selectClass = cn(fieldClasses, 'h-11 w-auto pr-8');
