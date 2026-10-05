@@ -20,6 +20,8 @@ enum ActivityEvent: string
     case TaskDescriptionChanged = 'task.description_changed';
     case ChecklistItemCompleted = 'task.checklist_completed';
     case SubtaskAdded = 'task.subtask_added';
+    case AttachmentAdded = 'task.attachment_added';
+    case AttachmentRemoved = 'task.attachment_removed';
     case WorkspaceCreated = 'workspace.created';
     case WorkspaceUpdated = 'workspace.updated';
     case WorkspaceArchived = 'workspace.archived';

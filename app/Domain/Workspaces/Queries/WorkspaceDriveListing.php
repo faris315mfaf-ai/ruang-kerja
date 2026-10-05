@@ -6,6 +6,7 @@ use App\Domain\Google\Enums\DriveFileKind;
 use App\Domain\Google\GoogleFeatures;
 use App\Domain\Google\Services\DriveUploadSessions;
 use App\Http\Resources\DriveFileResource;
+use App\Models\Comment;
 use App\Models\DriveFile;
 use App\Models\Task;
 use App\Models\User;
@@ -214,7 +215,8 @@ final class WorkspaceDriveListing
     }
 
     /**
-     * Tasks (visible to the user) that attach each file: "PLQ-21".
+     * Tasks (visible to the user) that attach each file, directly or in one
+     * of their (not deleted) comments: "PLQ-21" → /w/PLQ/tasks/21.
      *
      * @param  list<string>  $fileIds
      * @return array<string, list<array{key: string, title: string, url: string}>>
@@ -225,16 +227,33 @@ final class WorkspaceDriveListing
             return [];
         }
 
-        $rows = DB::table('attachments')
-            ->join('tasks', 'tasks.id', '=', 'attachments.attachable_id')
-            ->join('workspaces', 'workspaces.id', '=', 'tasks.workspace_id')
-            ->where('attachments.attachable_type', (new Task)->getMorphClass())
+        $taskType = (new Task)->getMorphClass();
+        $commentType = (new Comment)->getMorphClass();
+        $visible = Workspace::query()->visibleTo($user)->select('workspaces.id');
+
+        $direct = DB::table('attachments')
+            ->where('attachments.attachable_type', $taskType)
             ->whereNull('attachments.deleted_at')
-            ->whereNull('tasks.deleted_at')
             ->whereIn('attachments.drive_file_id', $fileIds)
-            ->whereIn('tasks.workspace_id', Workspace::query()->visibleTo($user)->select('workspaces.id'))
+            ->select(['attachments.drive_file_id', 'attachments.attachable_id as task_id']);
+
+        $viaComments = DB::table('attachments')
+            ->join('comments', 'comments.id', '=', 'attachments.attachable_id')
+            ->where('attachments.attachable_type', $commentType)
+            ->where('comments.commentable_type', $taskType)
+            ->whereNull('attachments.deleted_at')
+            ->whereNull('comments.deleted_at')
+            ->whereIn('attachments.drive_file_id', $fileIds)
+            ->select(['attachments.drive_file_id', 'comments.commentable_id as task_id']);
+
+        $rows = DB::query()
+            ->fromSub($direct->union($viaComments), 'used')
+            ->join('tasks', 'tasks.id', '=', 'used.task_id')
+            ->join('workspaces', 'workspaces.id', '=', 'tasks.workspace_id')
+            ->whereNull('tasks.deleted_at')
+            ->whereIn('tasks.workspace_id', $visible)
             ->orderBy('tasks.number')
-            ->get(['attachments.drive_file_id', 'tasks.number', 'tasks.title', 'workspaces.key']);
+            ->get(['used.drive_file_id', 'tasks.number', 'tasks.title', 'workspaces.key']);
 
         $used = [];
 
@@ -243,7 +262,7 @@ final class WorkspaceDriveListing
             $used[(string) $row->drive_file_id][] = [
                 'key' => $key,
                 'title' => (string) $row->title,
-                'url' => '/w/'.$row->key.'?q='.rawurlencode($key),
+                'url' => '/w/'.$row->key.'/tasks/'.$row->number,
             ];
         }
 

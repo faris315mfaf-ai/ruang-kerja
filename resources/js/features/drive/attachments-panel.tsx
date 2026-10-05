@@ -1,4 +1,11 @@
-import { ChevronDown, Paperclip, Plus, Upload } from 'lucide-react';
+import {
+    Camera,
+    ChevronDown,
+    FolderOpen,
+    Paperclip,
+    Plus,
+    Upload,
+} from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -9,6 +16,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import { requestJson } from '@/lib/http';
 import { cn } from '@/lib/utils';
 import {
@@ -18,10 +26,14 @@ import {
     index as indexRoute,
     upload as uploadRoute,
 } from '@/routes/attachments';
+import {
+    AttachMenuItems,
+    AttachSheet,
+    DOCUMENT_OPTIONS,
+    useAttachActions,
+} from './attach-actions';
 import { DriveFileCard } from './drive-file-card';
 import { DriveFileIcon } from './drive-file-icon';
-import { DrivePicker } from './drive-picker';
-import { NEW_ITEM_OPTIONS } from './new-item-options';
 import type { NewItemType } from './new-item-options';
 import { NewItemDialog } from './new-item-dialog';
 import type {
@@ -35,58 +47,80 @@ import { useDriveUploads } from './use-drive-uploads';
 import { errorMessage } from './upload-transport';
 
 type Props = {
-    /** URL alias of the parent (AttachableTypes::MAP): 'task', later 'comment'. */
+    /** URL alias of the parent (AttachableTypes::MAP): 'task' or 'comment'. */
     attachableType: string;
     attachableId: string;
     /**
+     * Data already loaded by the parent (task detail). Without it the panel
+     * fetches GET /lampiran/{type}/{id}; when it changes the panel follows.
+     */
+    initial?: AttachmentsPayload;
+    /**
      * Hide the add/remove controls even when the server allows them (e.g. a
-     * read-only view). The server still decides: `false` here never grants.
+     * read-only view). The server still decides: `true` here never grants.
      */
     canEdit?: boolean;
+    /**
+     * `desktop`: header with "Lampirkan dari Drive · Unggah · Dokumen baru",
+     * 2–3 column grid (mockup TaskDetail). `mobile`: "Lampirkan" + Kamera /
+     * Drive / File, cards scroll sideways (MTaskDetail). `compact`: one
+     * "Lampirkan" menu (inside a comment being edited).
+     */
+    variant?: 'desktop' | 'mobile' | 'compact';
     title?: string;
     className?: string;
-    /** Called after the list changed (e.g. to refresh an attachment count). */
+    /** Called after the list changed here (e.g. to refresh the timeline). */
     onChange?: (count: number) => void;
 };
 
-const DOC_OPTIONS = NEW_ITEM_OPTIONS.filter(
-    (option) => option.type !== 'folder',
-);
-
 /**
- * Drive attachments of any parent (task now, comment in Sprint 6) as a
- * self-contained panel: list (DriveFileCard), "Unggah" (chunked, ≤ 100 MB),
- * "Pilih dari Drive" (Google Picker), "Dokumen baru" (opens in Google) and
- * "lepas". Talks to /lampiran/{type}/{id} (AttachmentController) only.
- *
- * Usage in the TaskSheet: <AttachmentsPanel attachableType="task" attachableId={task.id} />
+ * Drive attachments of any parent (task, comment) as a self-contained
+ * panel: list (DriveFileCard), "Unggah" (chunked, ≤ 100 MB; camera on
+ * phones), "Pilih dari Drive" (Google Picker), "Dokumen baru" (opens in
+ * Google) and "lepas". Talks to /lampiran/{type}/{id} (AttachmentController).
  */
 export function AttachmentsPanel({
     attachableType,
     attachableId,
+    initial,
     canEdit = true,
+    variant = 'desktop',
     title = 'Lampiran',
     className,
     onChange,
 }: Props) {
     const args = { type: attachableType, id: attachableId };
-    const [data, setData] = useState<AttachmentsPayload | null>(null);
+    const [data, setData] = useState<AttachmentsPayload | null>(
+        initial ?? null,
+    );
     const [error, setError] = useState<string | null>(null);
     const [newItem, setNewItem] = useState<NewItemType | null>(null);
+    const [sheetOpen, setSheetOpen] = useState(false);
     const [removing, setRemoving] = useState<string | null>(null);
     const uploads = useDriveUploads();
-    const { create, creating } = useCreateDocument();
-    const input = useRef<HTMLInputElement>(null);
+    const { create, creating } = useCreateDocument({
+        fake: data?.drive.fake ?? false,
+    });
     const indexUrl = indexRoute.url(args);
+    const changed = useRef(onChange);
 
-    const apply = useCallback(
-        (payload: AttachmentsPayload) => {
-            setData(payload);
+    useEffect(() => {
+        changed.current = onChange;
+    });
+
+    // The parent refreshed its copy (realtime event, other edits): follow it.
+    useEffect(() => {
+        if (initial) {
+            setData(initial);
             setError(null);
-            onChange?.(payload.attachments.length);
-        },
-        [onChange],
-    );
+        }
+    }, [initial]);
+
+    const apply = useCallback((payload: AttachmentsPayload) => {
+        setData(payload);
+        setError(null);
+        changed.current?.(payload.attachments.length);
+    }, []);
 
     const load = useCallback(async () => {
         try {
@@ -96,9 +130,13 @@ export function AttachmentsPanel({
         }
     }, [apply, indexUrl]);
 
+    const hasInitial = initial !== undefined;
+
     useEffect(() => {
-        void load();
-    }, [load]);
+        if (!hasInitial) {
+            void load();
+        }
+    }, [hasInitial, load]);
 
     const editable =
         canEdit && (data?.can_edit ?? false) && (data?.drive.enabled ?? false);
@@ -120,6 +158,22 @@ export function AttachmentsPanel({
             toast.error(errorMessage(exception, 'File gagal dilampirkan.'));
         }
     };
+
+    const actions = useAttachActions({
+        onFiles: (files) => {
+            if (!data) {
+                return;
+            }
+
+            uploads.uploadMany(files, {
+                url: uploadRoute.url(args),
+                maxBytes: data.drive.max_upload_bytes,
+                onDone: () => void load(),
+            });
+        },
+        onPicked: (files) => void picked(files),
+        onNewDocument: setNewItem,
+    });
 
     const createDocument = async (type: NewItemType, name: string) => {
         const created = await create<
@@ -149,138 +203,257 @@ export function AttachmentsPanel({
         }
     };
 
-    return (
-        <section aria-label={title} className={cn('space-y-2', className)}>
-            <div className="flex flex-wrap items-center gap-2">
-                <h3 className="flex items-center gap-1.5 text-[13px] font-semibold text-text">
-                    <Paperclip aria-hidden className="size-4 text-text-muted" />
-                    {title}
-                    {data && data.attachments.length > 0 && (
-                        <span className="font-normal text-text-muted tnum">
-                            {data.attachments.length}
-                        </span>
-                    )}
-                </h3>
-                {editable && data && (
-                    <div className="ml-auto flex flex-wrap gap-1.5">
+    const mobile = variant === 'mobile';
+    const count = data?.attachments.length ?? 0;
+    const touch = 'min-h-11 md:min-h-0';
+
+    let controls = null;
+
+    if (editable && variant === 'desktop') {
+        controls = (
+            <div className="ml-auto flex flex-wrap justify-end gap-1.5">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={touch}
+                    disabled={actions.pickerLoading}
+                    aria-busy={actions.pickerLoading}
+                    onClick={actions.openPicker}
+                >
+                    {actions.pickerLoading ? <Spinner /> : <FolderOpen />}
+                    Lampirkan dari Drive
+                </Button>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={touch}
+                    onClick={actions.chooseFiles}
+                >
+                    <Upload />
+                    Unggah
+                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
                         <Button
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="min-h-11 md:min-h-0"
-                            onClick={() => input.current?.click()}
+                            className={touch}
                         >
-                            <Upload />
-                            Unggah
+                            <Plus />
+                            Dokumen baru
+                            <ChevronDown />
                         </Button>
-                        <input
-                            ref={input}
-                            type="file"
-                            multiple
-                            hidden
-                            onChange={(event) => {
-                                uploads.uploadMany(event.target.files, {
-                                    url: uploadRoute.url(args),
-                                    maxBytes: data.drive.max_upload_bytes,
-                                    onDone: () => void load(),
-                                });
-                                event.target.value = '';
-                            }}
-                        />
-                        <DrivePicker onPicked={(files) => void picked(files)} />
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="min-h-11 md:min-h-0"
-                                >
-                                    <Plus />
-                                    Dokumen baru
-                                    <ChevronDown />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-64">
-                                {DOC_OPTIONS.map((option) => (
-                                    <DropdownMenuItem
-                                        key={option.type}
-                                        className="gap-3 py-2"
-                                        onSelect={() => setNewItem(option.type)}
-                                    >
-                                        <DriveFileIcon
-                                            kind={option.kind}
-                                            size="sm"
-                                        />
-                                        <span>
-                                            <span className="block text-[13px] font-medium">
-                                                {option.label}
-                                            </span>
-                                            <span className="block text-[12px] text-text-muted">
-                                                {option.description}
-                                            </span>
-                                        </span>
-                                    </DropdownMenuItem>
-                                ))}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                )}
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-64">
+                        {DOCUMENT_OPTIONS.map((option) => (
+                            <DropdownMenuItem
+                                key={option.type}
+                                className="gap-3 py-2"
+                                onSelect={() => setNewItem(option.type)}
+                            >
+                                <DriveFileIcon kind={option.kind} size="sm" />
+                                <span>
+                                    <span className="block text-[13px] font-medium">
+                                        {option.label}
+                                    </span>
+                                    <span className="block text-[12px] text-text-muted">
+                                        {option.description}
+                                    </span>
+                                </span>
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
-
-            {error ? (
-                <p
-                    role="alert"
-                    className="flex items-center gap-2 text-[13px] text-danger"
-                >
-                    {error}
-                    <button
+        );
+    } else if (editable && mobile) {
+        controls = (
+            <Button
+                type="button"
+                variant="outline"
+                className="ml-auto h-11 border-primary/40 bg-primary/10 text-[15px] text-primary hover:bg-primary/15 hover:text-primary"
+                onClick={() => setSheetOpen(true)}
+            >
+                <Paperclip />
+                Lampirkan
+            </Button>
+        );
+    } else if (editable) {
+        controls = (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button
                         type="button"
-                        className="font-medium underline"
-                        onClick={() => void load()}
+                        variant="ghost"
+                        size="sm"
+                        className={cn('ml-auto', touch)}
                     >
-                        Coba lagi
-                    </button>
-                </p>
-            ) : data === null ? (
-                <div className="space-y-2" aria-busy>
-                    <Skeleton className="h-14 w-full" />
-                    <Skeleton className="h-14 w-full" />
-                </div>
-            ) : data.attachments.length === 0 ? (
+                        <Paperclip />
+                        Lampirkan
+                        <ChevronDown />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                    <AttachMenuItems actions={actions} />
+                </DropdownMenuContent>
+            </DropdownMenu>
+        );
+    }
+
+    let body;
+
+    if (error) {
+        body = (
+            <p
+                role="alert"
+                className="flex items-center gap-2 text-[13px] text-danger"
+            >
+                {error}
+                <button
+                    type="button"
+                    className="min-h-11 font-medium underline md:min-h-0"
+                    onClick={() => void load()}
+                >
+                    Coba lagi
+                </button>
+            </p>
+        );
+    } else if (data === null) {
+        body = (
+            <div className="grid gap-2 @md:grid-cols-2" aria-busy>
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-14 w-full" />
+            </div>
+        );
+    } else if (data.attachments.length === 0) {
+        body =
+            variant === 'compact' ? null : (
                 <p className="rounded-lg border border-dashed border-border-strong px-3 py-4 text-center text-[13px] text-text-muted">
                     {data.drive.enabled
                         ? 'Belum ada lampiran.'
                         : 'Belum ada lampiran. Integrasi Google Drive belum diaktifkan.'}
                 </p>
-            ) : (
-                <ul className="grid gap-2 sm:grid-cols-2">
-                    {data.attachments.map((attachment) => (
-                        <li key={attachment.id}>
-                            {attachment.drive_file ? (
-                                <DriveFileCard
-                                    file={attachment.drive_file}
-                                    removing={removing === attachment.id}
-                                    onRemove={
-                                        canEdit && attachment.can_remove
-                                            ? (file) =>
-                                                  void remove(
-                                                      file,
-                                                      attachment.id,
-                                                  )
-                                            : undefined
-                                    }
-                                />
-                            ) : (
-                                <p className="rounded-lg border border-border px-3 py-2 text-[13px] text-text-muted">
-                                    {attachment.filename}
-                                </p>
-                            )}
-                        </li>
-                    ))}
-                </ul>
+            );
+    } else {
+        body = (
+            <ul
+                className={cn(
+                    mobile &&
+                        '-mx-4 flex snap-x scroll-px-4 [scrollbar-width:none] gap-2 overflow-x-auto px-4 pb-1',
+                    variant === 'desktop' &&
+                        'grid gap-2 @md:grid-cols-2 @2xl:grid-cols-3',
+                    variant === 'compact' && 'grid gap-2 @md:grid-cols-2',
+                )}
+            >
+                {data.attachments.map((attachment) => (
+                    <li
+                        key={attachment.id}
+                        className={cn(
+                            mobile && 'w-[78%] max-w-72 shrink-0 snap-start',
+                        )}
+                    >
+                        {attachment.drive_file ? (
+                            <DriveFileCard
+                                file={attachment.drive_file}
+                                removing={removing === attachment.id}
+                                onRemove={
+                                    canEdit && attachment.can_remove
+                                        ? (file) =>
+                                              void remove(file, attachment.id)
+                                        : undefined
+                                }
+                            />
+                        ) : (
+                            <p className="rounded-lg border border-border px-3 py-2 text-[13px] text-text-muted">
+                                {attachment.filename}
+                            </p>
+                        )}
+                    </li>
+                ))}
+            </ul>
+        );
+    }
+
+    return (
+        <section
+            aria-label={title}
+            className={cn('@container space-y-2.5', className)}
+        >
+            <header
+                className={cn(
+                    'flex flex-wrap items-center gap-2',
+                    mobile ? 'min-h-11' : 'min-h-9',
+                )}
+            >
+                <h2
+                    className={cn(
+                        'font-medium',
+                        mobile && 'text-[15px] text-text',
+                        variant === 'desktop' && 'text-[13px] text-text',
+                        variant === 'compact' && 'text-xs text-text-muted',
+                    )}
+                >
+                    {title}
+                </h2>
+                {count > 0 && (
+                    <span
+                        className={cn(
+                            'text-text-muted tnum',
+                            mobile ? 'text-[15px]' : 'text-[13px]',
+                        )}
+                    >
+                        {count}
+                    </span>
+                )}
+                {controls}
+            </header>
+
+            {mobile && editable && (
+                <div className="grid grid-cols-3 gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="h-12 text-[15px]"
+                        onClick={actions.takePhoto}
+                    >
+                        <Camera className="size-5" />
+                        Kamera
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="h-12 text-[15px]"
+                        disabled={actions.pickerLoading}
+                        onClick={actions.openPicker}
+                    >
+                        <FolderOpen className="size-5" />
+                        Drive
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="h-12 text-[15px]"
+                        onClick={actions.chooseFiles}
+                    >
+                        <Upload className="size-5" />
+                        File
+                    </Button>
+                </div>
             )}
 
+            {body}
+
+            {actions.elements}
+            {mobile && (
+                <AttachSheet
+                    open={sheetOpen}
+                    onOpenChange={setSheetOpen}
+                    actions={actions}
+                />
+            )}
             <NewItemDialog
                 type={newItem}
                 location="Disimpan di folder Drive workspace dan dilampirkan."

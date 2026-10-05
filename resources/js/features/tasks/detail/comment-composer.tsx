@@ -1,16 +1,42 @@
-import { ArrowUp, AtSign, Bold, List, ListChecks } from 'lucide-react';
+import {
+    ArrowUp,
+    AtSign,
+    Bold,
+    List,
+    ListChecks,
+    Paperclip,
+} from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { AttachMenuItems, AttachSheet } from '@/features/drive/attach-actions';
+import type { AttachmentsDriveInfo } from '@/features/drive/types';
 import { cn } from '@/lib/utils';
 import type { RichTextEditorApi } from '../editor/rich-text-editor';
 import type { RichDoc } from '../editor/types';
+import {
+    PendingAttachmentChips,
+    useCommentAttachments,
+} from './comment-attachments';
 import { LazyRichTextEditor } from './lazy-editor';
 
 type Props = {
     workspaceKey: string;
     author: { name: string; avatar: string | null } | null;
-    onSubmit: (body: RichDoc) => Promise<boolean>;
+    /** Resolves to the posted comment (its files are attached next) or null. */
+    onSubmit: (body: RichDoc) => Promise<{ id: string } | null>;
+    /**
+     * Drive settings: when enabled the composer offers "Unggah / Pilih dari
+     * Drive / Dokumen baru"; the files are attached once the comment exists.
+     */
+    drive?: AttachmentsDriveInfo | null;
+    /** Comment attachments changed (refresh the detail). */
+    onAttachmentsChange?: () => void;
     variant?: 'desktop' | 'mobile';
     /** Hint under the box, e.g. "Balasan juga muncul di PLQ-15". */
     hint?: string;
@@ -32,10 +58,14 @@ export function CommentComposer({
     variant = 'desktop',
     hint,
     placeholder = 'Tulis komentar… ketik @ untuk menyebut rekan',
+    drive = null,
+    onAttachmentsChange,
 }: Props) {
     const [api, setApi] = useState<RichTextEditorApi | null>(null);
     const [empty, setEmpty] = useState(true);
     const [sending, setSending] = useState(false);
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const attachments = useCommentAttachments(drive);
     const onReady = useCallback(
         (next: RichTextEditorApi | null) => setApi(next),
         [],
@@ -49,21 +79,33 @@ export function CommentComposer({
         }
 
         setSending(true);
-        const ok = await onSubmit(body);
+        const comment = await onSubmit(body);
         setSending(false);
 
-        if (ok) {
+        if (comment) {
             api?.clear();
             setEmpty(true);
+            void attachments.flush(comment.id, () => onAttachmentsChange?.());
         }
     };
+
+    const waiting = attachments.pending.length > 0;
+    const chips = (
+        <PendingAttachmentChips
+            items={attachments.pending}
+            onRemove={attachments.remove}
+            mobile={variant === 'mobile'}
+        />
+    );
 
     const editor = (
         <LazyRichTextEditor
             value={null}
             workspaceKey={workspaceKey}
             ariaLabel="Komentar baru"
-            placeholder={placeholder}
+            placeholder={
+                waiting ? 'Tulis komentar untuk lampiran ini…' : placeholder
+            }
             onChange={(doc) => setEmpty(doc === null)}
             onSubmit={() => void send()}
             onReady={onReady}
@@ -75,27 +117,47 @@ export function CommentComposer({
 
     if (variant === 'mobile') {
         return (
-            <div className="flex items-end gap-2">
-                <button
-                    type="button"
-                    onClick={() => api?.startMention()}
-                    aria-label="Sebut rekan"
-                    className="flex size-11 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-surface-2"
-                >
-                    <AtSign className="size-5" aria-hidden />
-                </button>
-                <div className="min-h-11 min-w-0 flex-1 rounded-3xl border border-border bg-surface px-4 py-2.5 text-base focus-within:ring-2 focus-within:ring-ring">
-                    {editor}
+            <div className="space-y-2">
+                {chips}
+                <div className="flex items-end gap-1">
+                    <button
+                        type="button"
+                        onClick={() => api?.startMention()}
+                        aria-label="Sebut rekan"
+                        className="flex size-11 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-surface-2"
+                    >
+                        <AtSign className="size-5" aria-hidden />
+                    </button>
+                    {attachments.enabled && (
+                        <button
+                            type="button"
+                            onClick={() => setSheetOpen(true)}
+                            aria-label="Lampirkan file"
+                            className="flex size-11 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-surface-2"
+                        >
+                            <Paperclip className="size-5" aria-hidden />
+                        </button>
+                    )}
+                    <div className="min-h-11 min-w-0 flex-1 rounded-3xl border border-border bg-surface px-4 py-2.5 text-base focus-within:ring-2 focus-within:ring-ring">
+                        {editor}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => void send()}
+                        disabled={empty || sending}
+                        aria-label="Kirim komentar"
+                        className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:opacity-50"
+                    >
+                        <ArrowUp className="size-5" aria-hidden />
+                    </button>
                 </div>
-                <button
-                    type="button"
-                    onClick={() => void send()}
-                    disabled={empty || sending}
-                    aria-label="Kirim komentar"
-                    className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:opacity-50"
-                >
-                    <ArrowUp className="size-5" aria-hidden />
-                </button>
+                {attachments.elements}
+                <AttachSheet
+                    open={sheetOpen}
+                    onOpenChange={setSheetOpen}
+                    title="Lampirkan ke komentar"
+                    actions={attachments.actions}
+                />
             </div>
         );
     }
@@ -112,6 +174,7 @@ export function CommentComposer({
             <div className="min-w-0 flex-1">
                 <div className="rounded-lg border border-border bg-surface focus-within:border-border-strong focus-within:ring-2 focus-within:ring-ring">
                     <div className="px-3 pt-2.5 pb-1">{editor}</div>
+                    {waiting && <div className="px-3 pb-2">{chips}</div>}
                     <div className="flex items-center gap-1 border-t border-border px-2 py-1.5">
                         <button
                             type="button"
@@ -145,6 +208,30 @@ export function CommentComposer({
                         >
                             <AtSign className="size-4" aria-hidden />
                         </button>
+                        {attachments.enabled && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className={toolButton}
+                                        aria-label="Lampirkan file"
+                                    >
+                                        <Paperclip
+                                            className="size-4"
+                                            aria-hidden
+                                        />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    align="start"
+                                    className="w-56"
+                                >
+                                    <AttachMenuItems
+                                        actions={attachments.actions}
+                                    />
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                         <kbd className="ml-auto hidden font-mono text-[11px] text-text-subtle sm:inline">
                             ⌘ Enter
                         </kbd>
@@ -162,6 +249,7 @@ export function CommentComposer({
                 {hint && (
                     <p className="mt-1.5 text-xs text-text-muted">{hint}</p>
                 )}
+                {attachments.elements}
             </div>
         </div>
     );

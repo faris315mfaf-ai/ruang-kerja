@@ -10,10 +10,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { AttachmentsPanel } from '@/features/drive/attachments-panel';
 import { formatDateTime, formatRelative } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { RichTextView } from '../editor/rich-text-view';
 import type { RichDoc, TaskReferenceInfo } from '../editor/types';
+import { CommentAttachmentList } from './comment-attachments';
 import { LazyRichTextEditor } from './lazy-editor';
 import { Reactions } from './reactions';
 import type { TaskComment } from './types';
@@ -32,6 +34,8 @@ type Props = {
     onEdit: (body: RichDoc) => Promise<boolean>;
     onDelete: () => void;
     onReact: (emoji: string) => void;
+    /** Attachments changed while editing (refresh the detail). */
+    onAttachmentsChange?: () => void;
 };
 
 /** One comment card: author, time, "(diedit)", menu, body, reactions. */
@@ -49,6 +53,7 @@ export function CommentItem({
     onEdit,
     onDelete,
     onReact,
+    onAttachmentsChange,
 }: Props) {
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState<RichDoc | null>(comment.body);
@@ -197,6 +202,14 @@ export function CommentItem({
                                 autoFocus
                             />
                         </div>
+                        {/* Add/remove files of this comment (author only; the server checks). */}
+                        <AttachmentsPanel
+                            attachableType="comment"
+                            attachableId={comment.id}
+                            variant="compact"
+                            title="Lampiran komentar"
+                            onChange={() => onAttachmentsChange?.()}
+                        />
                         <div className="flex justify-end gap-2">
                             <Button
                                 type="button"
@@ -217,11 +230,17 @@ export function CommentItem({
                         </div>
                     </div>
                 ) : (
-                    <RichTextView
-                        doc={comment.body}
-                        references={references}
-                        className="mt-1.5"
-                    />
+                    <>
+                        <RichTextView
+                            doc={comment.body}
+                            references={references}
+                            className="mt-1.5"
+                        />
+                        <CommentAttachmentList
+                            attachments={comment.attachments}
+                            mobile={mobile}
+                        />
+                    </>
                 )}
 
                 {confirming && (

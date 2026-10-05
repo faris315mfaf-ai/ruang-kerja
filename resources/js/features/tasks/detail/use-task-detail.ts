@@ -148,6 +148,9 @@ export function useTaskDetail(taskId: string | null, options: Options = {}) {
         'comment.posted': onComment,
         'comment.updated': onComment,
         'comment.deleted': onComment,
+        // Task or comment attachments changed elsewhere: reload (authorized GET).
+        'attachment.added': ({ task_id }) => task_id === taskId && refresh(),
+        'attachment.removed': ({ task_id }) => task_id === taskId && refresh(),
     });
 
     usePolling(mode === 'polling' && taskId !== null && !deleted, refresh);
@@ -215,6 +218,8 @@ export function useTaskDetail(taskId: string | null, options: Options = {}) {
     const api = {
         update,
         reload: () => (taskId ? load(taskId) : Promise.resolve()),
+        /** Debounced background reload (e.g. after attachments changed). */
+        refresh,
 
         toggleWatch: async () => {
             if (!detail || !viewer) {
@@ -331,9 +336,10 @@ export function useTaskDetail(taskId: string | null, options: Options = {}) {
             }
         },
 
-        postComment: async (body: RichDoc) => {
+        /** Posts a comment; resolves to it (to attach files next) or null. */
+        postComment: async (body: RichDoc): Promise<TaskComment | null> => {
             if (!detail) {
-                return false;
+                return null;
             }
 
             try {
@@ -344,11 +350,11 @@ export function useTaskDetail(taskId: string | null, options: Options = {}) {
                 applyComment({ task_id: detail.task.id, comment });
                 refresh();
 
-                return true;
+                return comment;
             } catch (failure) {
                 toast.error(message(failure, 'Komentar gagal dikirim.'));
 
-                return false;
+                return null;
             }
         },
 

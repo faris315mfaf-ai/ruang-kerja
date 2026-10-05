@@ -20,6 +20,16 @@ export type TaskSignal = {
 
 export type CommentSignal = { task_id: string; comment: { id: string } };
 
+/** App\Events\Tasks\TaskAttachmentBroadcastEvent::broadcastWith(). */
+export type AttachmentEventPayload = {
+    task_id: string;
+    attachable_type: 'task' | 'comment';
+    attachable_id: string;
+    attachment_id: string;
+    /** Task-level attachments after the change. */
+    attachments_count: number;
+};
+
 /** Payloads broadcast on `private-workspace.{id}` (App\Events\Tasks\*). */
 export type WorkspaceEvents = {
     'task.created': { task: TaskSignal };
@@ -31,6 +41,8 @@ export type WorkspaceEvents = {
     'comment.posted': CommentSignal;
     'comment.updated': CommentSignal;
     'comment.deleted': CommentSignal;
+    'attachment.added': AttachmentEventPayload;
+    'attachment.removed': AttachmentEventPayload;
 };
 
 export type WorkspaceEventName = keyof WorkspaceEvents;
@@ -47,6 +59,8 @@ export const WORKSPACE_EVENTS: WorkspaceEventName[] = [
     'comment.posted',
     'comment.updated',
     'comment.deleted',
+    'attachment.added',
+    'attachment.removed',
 ];
 
 /** Subscribers per channel, so the board and an open sheet share one subscription. */

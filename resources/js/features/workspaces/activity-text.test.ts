@@ -107,4 +107,17 @@ describe('describeActivity (Sprint 6 events)', () => {
             describeActivity(item('task.estimate_changed', { to: 12.5 })),
         ).toBe('mengubah estimasi PLQ-21 menjadi 12,5 jam');
     });
+
+    it('describes attachments', () => {
+        expect(
+            describeActivity(
+                item('task.attachment_added', { filename: 'Wireframe v2.pdf' }),
+            ),
+        ).toBe('melampirkan Wireframe v2.pdf di PLQ-21');
+        expect(
+            describeActivity(
+                item('task.attachment_removed', { filename: 'Brief' }),
+            ),
+        ).toBe('melepas lampiran Brief dari PLQ-21');
+    });
 });
