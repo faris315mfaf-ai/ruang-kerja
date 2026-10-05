@@ -43,9 +43,9 @@ usage() { sed -n '2,25p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        --latest) source_mode=latest ;;
-        --remote) source_mode=remote; source_value=${2:?--remote needs a file name}; shift ;;
-        --file) source_mode=file; source_value=${2:?--file needs a path}; shift ;;
+        --latest) source_mode='latest' ;;
+        --remote) source_mode='remote'; source_value=${2:?--remote needs a file name}; shift ;;
+        --file) source_mode='file'; source_value=${2:?--file needs a path}; shift ;;
         --target) target=${2:?--target needs a database name}; shift ;;
         --create) create=1 ;;
         --compare) compare=${2:?--compare needs a database name}; shift ;;
@@ -94,7 +94,7 @@ case "$source_mode" in
             rclone copyto "$BACKUP_REMOTE/$name" "$workdir/$name"
             dump="$workdir/$name"
         else
-            dump=$(ls -1 "$BACKUP_DIR"/"$BACKUP_PREFIX"-*.dump 2>/dev/null | sort | tail -n 1 || true)
+            dump=$(find "$BACKUP_DIR" -maxdepth 1 -name "$BACKUP_PREFIX-*.dump" | sort | tail -n 1)
             [ -n "$dump" ] || fail "no dumps found in $BACKUP_DIR"
             log "latest local dump: $dump"
         fi
