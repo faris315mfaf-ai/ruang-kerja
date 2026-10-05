@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { formatDate } from '@/lib/format';
 import { AtRiskProjects } from './at-risk-projects';
+import { ComparedNote } from './compared-note';
 import {
     AttendanceDonut,
     AttendancePeople,
@@ -58,9 +59,11 @@ export function DivisionDesktop({
                     <SecondaryKpis
                         metrics={metrics}
                         definitions={definitions}
+                        previousLabel={props.filters.period.previous_label}
                     />
                 </div>
             )}
+            {metrics && <ComparedNote compared={metrics.compared} />}
 
             <div className="grid gap-4 xl:grid-cols-12">
                 {metrics ? (

@@ -13,6 +13,7 @@ import {
 } from './hr-parts';
 import type { HrProps } from './hr-types';
 import { FilterBar } from './filter-bar';
+import { ComparedNote } from './compared-note';
 import { compared, formatMetric } from './lib';
 import { LiveBadge } from './live-badge';
 import { MetricInfo } from './metric-info';
@@ -48,7 +49,7 @@ export function HrDesktop({ live, ...props }: HrProps & { live: boolean }) {
     const { attendance, review, pending, missingCheckOut, recap, definitions } =
         props;
     const total = totalRow(attendance.divisions);
-    const previous = recap?.compared.previous.label ?? '';
+    const previous = props.filters.period.previous_label;
 
     return (
         <div className="space-y-5">
@@ -324,6 +325,7 @@ export function HrDesktop({ live, ...props }: HrProps & { live: boolean }) {
                         ))
                     )}
                 </div>
+                {recap && <ComparedNote compared={recap.compared} />}
                 {recap ? (
                     <Panel
                         id="discipline-trend"

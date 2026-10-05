@@ -1,9 +1,9 @@
-import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { MetricDefinition } from '@/types/dashboard';
-import type { DeltaTone } from './lib';
+import type { DeltaInfo, DeltaTone } from './lib';
 import { MetricInfo } from './metric-info';
 
 const VALUE_TONES = {
@@ -28,7 +28,7 @@ export type StatCardProps = {
     valueTone?: keyof typeof VALUE_TONES;
     /** Tooltip with the metric formula. */
     definition?: Pick<MetricDefinition, 'label' | 'definition'> | string;
-    delta?: { text: string; tone: DeltaTone } | null;
+    delta?: DeltaInfo | null;
     caption?: ReactNode;
     className?: string;
     compact?: boolean;
@@ -49,7 +49,12 @@ export function StatCard({
     className,
     compact = false,
 }: StatCardProps) {
-    const Arrow = delta?.tone === 'danger' ? ArrowDownRight : ArrowUpRight;
+    const Arrow =
+        delta?.direction === 'up'
+            ? ArrowUpRight
+            : delta?.direction === 'down'
+              ? ArrowDownRight
+              : Minus;
 
     return (
         <section
@@ -90,9 +95,7 @@ export function StatCard({
                         DELTA_TONES[delta.tone],
                     )}
                 >
-                    {delta.tone !== 'neutral' && (
-                        <Arrow className="size-3.5 shrink-0" aria-hidden />
-                    )}
+                    <Arrow className="size-3.5 shrink-0" aria-hidden />
                     {delta.text}
                 </p>
             )}

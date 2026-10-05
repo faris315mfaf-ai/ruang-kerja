@@ -35,7 +35,7 @@ function SectionHeader({
 /** Beranda (mockup MBeranda): check-in card first, KPI 2×2, focus, requests. */
 export function PersonalMobile(props: PersonalProps) {
     const { metrics, live, definitions } = props;
-    const previous = metrics?.compared.previous.label ?? '';
+    const previous = props.filters.period.previous_label;
 
     return (
         <div className="space-y-5 pb-4">

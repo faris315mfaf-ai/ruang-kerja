@@ -90,7 +90,7 @@ final class HrDashboard
             ->whereIn('user_id', $userIds);
 
         $logs = (clone $query)
-            ->with(['user:id,name,avatar_url,division_id', 'user.division:id,name', 'officeLocation:id,name,radius_m'])
+            ->with(['user:id,name,avatar_url,division_id,company_id,manager_id', 'user.division:id,name', 'officeLocation:id,name,radius_m'])
             ->latest('occurred_at')
             ->limit(5)
             ->get();

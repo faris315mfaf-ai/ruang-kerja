@@ -68,7 +68,11 @@ describe('dashboard formatting', () => {
                 'percent',
                 'minggu lalu',
             ),
-        ).toEqual({ text: '+6 poin dari minggu lalu', tone: 'success' });
+        ).toEqual({
+            text: '+6 poin dari minggu lalu',
+            tone: 'success',
+            direction: 'up',
+        });
     });
 
     it('summarizes today attendance', () => {

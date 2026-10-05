@@ -34,7 +34,7 @@ export function RequestRows({
                                 <span className="truncate font-medium">
                                     {showUser ? item.user.name : item.type.name}
                                 </span>
-                                {item.number && (
+                                {item.number && !showUser && (
                                     <span className="shrink-0 font-mono text-xs text-text-muted">
                                         {item.number}
                                     </span>

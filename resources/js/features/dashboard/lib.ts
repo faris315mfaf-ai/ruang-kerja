@@ -9,6 +9,12 @@ export type Unit = MetricDefinition['unit'];
 
 export type DeltaTone = 'success' | 'danger' | 'neutral';
 
+export type DeltaInfo = {
+    text: string;
+    tone: DeltaTone;
+    direction: 'up' | 'down' | 'flat';
+};
+
 const MINUS = '−';
 
 /** "78%", "2,5 hari", "21 menit", "11" — "–" when undefined. */
@@ -87,12 +93,18 @@ export function compared(
     unit: Unit,
     previousLabel: string,
     better: 'higher' | 'lower' = 'higher',
-): { text: string; tone: DeltaTone } | null {
+): DeltaInfo | null {
     const text = deltaText(metric.delta, unit, previousLabel);
 
-    return text === null
-        ? null
-        : { text, tone: deltaTone(metric.delta, better) };
+    if (text === null || metric.delta === null) {
+        return null;
+    }
+
+    return {
+        text,
+        tone: deltaTone(metric.delta, better),
+        direction: metric.delta > 0 ? 'up' : metric.delta < 0 ? 'down' : 'flat',
+    };
 }
 
 /** "2 cuti/sakit · 0 belum check-in" (Kepala Divisi KPI caption). */

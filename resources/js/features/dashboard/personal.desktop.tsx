@@ -5,6 +5,7 @@ import { useTaskComposer } from '@/features/tasks/form/task-composer';
 import { formatDate, formatNumber } from '@/lib/format';
 import { formatShortDate } from '@/lib/requests';
 import type { PersonalProps } from './personal-types';
+import { ComparedNote } from './compared-note';
 import { compared, formatMetric, periodNoun } from './lib';
 import { MyAttendanceCard } from './my-attendance-card';
 import { Panel, PanelSkeleton } from './panel';
@@ -39,7 +40,7 @@ export function PersonalDesktop(props: PersonalProps) {
     const { auth } = usePage().props;
     const composer = useTaskComposer();
     const { metrics, live, definitions, filters } = props;
-    const previous = metrics?.compared.previous.label ?? '';
+    const previous = props.filters.period.previous_label;
     const firstName = auth.user?.name.split(' ')[0] ?? '';
 
     return (
@@ -157,6 +158,8 @@ export function PersonalDesktop(props: PersonalProps) {
                     ))
                 )}
             </div>
+
+            {metrics && <ComparedNote compared={metrics.compared} />}
 
             <div className="grid gap-4 xl:grid-cols-12">
                 {metrics ? (

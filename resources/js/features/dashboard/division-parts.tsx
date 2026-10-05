@@ -28,7 +28,7 @@ export function DivisionKpis({
     compact?: boolean;
 }) {
     const { metrics, attendance, definitions } = props;
-    const previous = metrics?.compared.previous.label ?? '';
+    const previous = props.filters.period.previous_label;
 
     return (
         <>
@@ -95,11 +95,13 @@ export function DivisionKpis({
 export function SecondaryKpis({
     metrics,
     definitions,
+    previousLabel,
 }: {
     metrics: DivisionMetrics;
     definitions: MetricDefinitions;
+    previousLabel: string;
 }) {
-    const previous = metrics.compared.previous.label;
+    const previous = previousLabel;
 
     return (
         <>
