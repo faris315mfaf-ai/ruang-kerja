@@ -163,7 +163,9 @@ it('notifies new assignees but not the actor assigning themselves', function () 
     $task = app(CreateTask::class)->handle($this->workspace, $other, ['title' => 'Sendiri', 'assignee_ids' => [$other->id]]);
 
     Notification::assertSentTo($other, TaskAssignedNotification::class, fn (TaskAssignedNotification $n) => $n->payload($other)->title === 'Dimas Pratama menugaskan PLQ-1 kepada Anda'
-        && $n->payload($other)->url === '/w/PLQ/tasks/1');
+        && $n->payload($other)->url === '/w/PLQ/tasks/1'
+        && $n->payload($other)->meta['plan_url'] === '/dashboard/saya#ruang-saya'
+        && $n->payload($other)->meta['plan_label'] === 'Rencanakan di Ruang saya');
     Notification::assertNotSentTo($this->owner, TaskAssignedNotification::class);
     // Already assigned before → no second notification.
     Notification::assertNotSentTo($this->member, TaskAssignedNotification::class);

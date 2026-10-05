@@ -1,6 +1,8 @@
+import { Link } from '@inertiajs/react';
 import {
     Archive,
     ArchiveRestore,
+    CalendarPlus,
     ExternalLink,
     Inbox,
     Mail,
@@ -68,6 +70,13 @@ export function InboxDetail({ notification, inbox }: Props) {
         typeof notification.meta.open_label === 'string'
             ? notification.meta.open_label
             : 'Buka';
+    // Secondary link (task assigned → "Rencanakan di Ruang saya"); app paths only.
+    const planUrl =
+        typeof notification.meta.plan_url === 'string' &&
+        notification.meta.plan_url.startsWith('/') &&
+        !notification.meta.plan_url.startsWith('//')
+            ? notification.meta.plan_url
+            : null;
     const archived = notification.archived_at !== null;
     const unread = notification.read_at === null;
     const hasSubject = Boolean(
@@ -147,6 +156,14 @@ export function InboxDetail({ notification, inbox }: Props) {
                     >
                         <ExternalLink />
                         {openLabel}
+                    </Button>
+                )}
+                {planUrl && (
+                    <Button asChild variant="tonal" className={ACTION}>
+                        <Link href={planUrl}>
+                            <CalendarPlus />
+                            {notification.meta.plan_label ?? 'Rencanakan'}
+                        </Link>
                     </Button>
                 )}
                 <Button

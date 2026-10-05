@@ -25,13 +25,16 @@ export type NotificationSubject = {
 
 /**
  * Documented `meta` keys (NotificationPayload): context, context_tone,
- * open_label, quote. Modules may add more scalar keys.
+ * open_label, quote, plan_url + plan_label. Modules may add more scalar keys.
  */
 export type NotificationMeta = {
     context?: string;
     context_tone?: NotificationTone;
     open_label?: string;
     quote?: boolean;
+    /** Secondary link (task assigned → "Rencanakan di Ruang saya"). */
+    plan_url?: string;
+    plan_label?: string;
     [key: string]: unknown;
 };
 
