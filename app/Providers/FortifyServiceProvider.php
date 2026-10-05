@@ -108,6 +108,18 @@ class FortifyServiceProvider extends ServiceProvider
             ];
         });
 
-        RateLimiter::for('google-login', fn (Request $request) => Limit::perMinute(10)->by((string) $request->ip()));
+        // Google callback only: 60/min per client IP (dozens of employees share the
+        // office NAT at 08:00) and 10/min per browser session behind that IP.
+        // The client IP is resolved behind TRUSTED_PROXIES (config/trustedproxy.php).
+        RateLimiter::for('google-login', function (Request $request) {
+            $ip = (string) $request->ip();
+            $limits = [Limit::perMinute(60)->by('google-ip|'.$ip)];
+
+            if ($request->hasSession()) {
+                $limits[] = Limit::perMinute(10)->by('google-session|'.$ip.'|'.$request->session()->getId());
+            }
+
+            return $limits;
+        });
     }
 }

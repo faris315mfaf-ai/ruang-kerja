@@ -21,6 +21,14 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        // Trusted reverse proxies come from config/trustedproxy.php (env TRUSTED_PROXIES,
+        // default private ranges) — read at request time, so `config:cache` is safe.
+        $middleware->trustProxies(headers: Request::HEADER_X_FORWARDED_FOR
+            | Request::HEADER_X_FORWARDED_HOST
+            | Request::HEADER_X_FORWARDED_PORT
+            | Request::HEADER_X_FORWARDED_PROTO
+            | Request::HEADER_X_FORWARDED_AWS_ELB);
+
         $middleware->web(append: [
             // Logs out inactive/resigned users on any web request (no-op for guests).
             EnsureActiveEmployee::class,

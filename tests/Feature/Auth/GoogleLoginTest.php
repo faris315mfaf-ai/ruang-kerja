@@ -7,6 +7,8 @@ use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Socialite\Facades\Socialite;
@@ -280,14 +282,57 @@ it('is only available to guests', function () {
     $this->assertAuthenticatedAs($user);
 });
 
-it('is rate limited to 10 requests per minute per IP', function () {
-    Socialite::fake('google');
-
-    foreach (range(1, 10) as $attempt) {
+it('does not rate limit the redirect to Google', function () {
+    foreach (range(1, 70) as $attempt) {
         $this->get(route('auth.google.redirect'))->assertRedirect();
     }
+});
 
-    $this->get(route('auth.google.redirect'))->assertTooManyRequests();
+it('rate limits the callback to 60 requests per minute per IP (shared office NAT)', function () {
+    foreach (range(1, 60) as $attempt) {
+        $this->get(route('auth.google.callback', ['error' => 'access_denied']))->assertRedirect(route('login'));
+    }
+
+    $this->get(route('auth.google.callback', ['error' => 'access_denied']))->assertTooManyRequests();
+
+    // Another client IP is unaffected.
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])
+        ->get(route('auth.google.callback', ['error' => 'access_denied']))
+        ->assertRedirect(route('login'));
+});
+
+it('rate limits one browser session to 10 callbacks per minute', function () {
+    $sessionCookie = config('session.cookie');
+    $mine = str_repeat('a', 40);
+
+    foreach (range(1, 10) as $attempt) {
+        $this->withCookie($sessionCookie, $mine)
+            ->get(route('auth.google.callback', ['error' => 'access_denied']))
+            ->assertRedirect(route('login'));
+    }
+
+    $this->withCookie($sessionCookie, $mine)
+        ->get(route('auth.google.callback', ['error' => 'access_denied']))
+        ->assertTooManyRequests();
+
+    // A colleague behind the same IP still gets through.
+    $this->withCookie($sessionCookie, str_repeat('b', 40))
+        ->get(route('auth.google.callback', ['error' => 'access_denied']))
+        ->assertRedirect(route('login'));
+});
+
+it('resolves the client IP behind a trusted proxy only', function () {
+    Route::get('/_test/client-ip', fn (Request $request) => $request->ip());
+
+    // Default TRUSTED_PROXIES: private ranges (reverse proxy on the same network).
+    $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.5'])
+        ->get('/_test/client-ip', ['X-Forwarded-For' => '198.51.100.7'])
+        ->assertSee('198.51.100.7');
+
+    // A public peer cannot spoof its address.
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])
+        ->get('/_test/client-ip', ['X-Forwarded-For' => '198.51.100.7'])
+        ->assertSee('203.0.113.9');
 });
 
 it('records a remember-me restore on the Google callback as "remember", not "google"', function () {

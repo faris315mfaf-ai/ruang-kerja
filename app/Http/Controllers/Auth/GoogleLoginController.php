@@ -19,7 +19,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse
 use Throwable;
 
 /**
- * "Masuk dengan Google Workspace" (guest only, rate limited 10/min/IP).
+ * "Masuk dengan Google Workspace" (guest only; the callback is rate limited
+ * 60/min per IP + 10/min per session, see FortifyServiceProvider).
  * Errors go back to the login page under the `google` key; the rejected
  * address is flashed as `google_email` for the error card.
  */
