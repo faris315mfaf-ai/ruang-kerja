@@ -125,6 +125,9 @@ class AppServiceProvider extends ServiceProvider
         // Admin › Dokumentasi (/admin/dokumentasi): repository docs, Super Admin only.
         Gate::define('viewDocumentation', fn (User $user): bool => $user->isSuperAdmin() && $user->isActive());
 
+        // Arus style guide (/dev/komponen): Super Admin, local environment only.
+        Gate::define('viewStyleGuide', fn (User $user): bool => $user->isSuperAdmin() && $user->isActive() && app()->environment('local'));
+
         // Global search (/cari): active employees; providers filter by visibility.
         Gate::define('search', fn (User $user): bool => $user->isActive());
     }
