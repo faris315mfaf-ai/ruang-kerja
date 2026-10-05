@@ -13,8 +13,8 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * A check-in/out was recorded. Live attendance boards of HR/Direksi
- * (`company.attendance`) and of the Kepala Divisi of the employee's division
+ * A check-in/out was recorded. Live attendance boards of HR/Direksi of the
+ * employee's company (`company.{id}.attendance`) and of the Kepala Divisi of the employee's division
  * or of any parent division (`division.{id}.attendance`) update from it. No location or selfie data.
  */
 final class AttendanceRecorded implements ShouldBroadcast, ShouldDispatchAfterCommit
@@ -31,8 +31,9 @@ final class AttendanceRecorded implements ShouldBroadcast, ShouldDispatchAfterCo
      */
     public function broadcastOn(): array
     {
-        $channels = [new PrivateChannel('company.attendance')];
-        $divisionId = $this->day->user->division_id;
+        $user = $this->day->user;
+        $channels = [new PrivateChannel(self::companyChannel($user->company_id))];
+        $divisionId = $user->division_id;
 
         // The employee's division and every parent division: a Kepala Divisi
         // also leads the sub-divisions below theirs.
@@ -41,6 +42,15 @@ final class AttendanceRecorded implements ShouldBroadcast, ShouldDispatchAfterCo
         }
 
         return $channels;
+    }
+
+    /**
+     * Name (without the `private-` prefix) of a company's live attendance
+     * channel, authorized in routes/channels.php.
+     */
+    public static function companyChannel(string $companyId): string
+    {
+        return "company.{$companyId}.attendance";
     }
 
     public function broadcastAs(): string

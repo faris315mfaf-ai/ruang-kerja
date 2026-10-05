@@ -15,7 +15,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * HR › Absensi hari ini: live board (Echo `company.attendance` /
+ * HR › Absensi hari ini: live board (Echo `company.{id}.attendance` /
  * `division.{id}.attendance` + polling), flagged logs, missing check-outs.
  */
 class AttendanceBoardController extends Controller

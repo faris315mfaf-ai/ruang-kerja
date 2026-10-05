@@ -1,6 +1,7 @@
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { echo, echoIsConfigured } from '@laravel/echo-react';
 import { useEffect, useRef, useState } from 'react';
+import { attendanceChannelNames } from '@/lib/attendance';
 
 export type LiveMode = 'realtime' | 'polling';
 
@@ -13,16 +14,19 @@ type Channels = { company: boolean; divisions: string[] };
 
 /**
  * Live "Absensi hari ini": listens to `attendance.recorded` on
- * `company.attendance` (HR/Direksi) or `division.{id}.attendance` (Kadiv) and
+ * `company.{companyId}.attendance` (HR/Direksi; company id from the shared
+ * `auth.user` prop) or `division.{id}.attendance` (Kadiv) and
  * reloads the board props (debounced). Falls back to polling every 60 s while
  * the socket is not connected and the tab is visible.
  */
 export function useLiveBoard(channels: Channels): LiveMode {
     const [mode, setMode] = useState<LiveMode>('polling');
     const pending = useRef<number | null>(null);
-    const names = channels.company
-        ? ['company.attendance']
-        : channels.divisions.map((id) => `division.${id}.attendance`);
+    const { auth } = usePage().props;
+    const names = attendanceChannelNames(
+        channels,
+        auth.user?.company?.id ?? auth.user?.company_id,
+    );
     const key = names.join('|');
 
     useEffect(() => {

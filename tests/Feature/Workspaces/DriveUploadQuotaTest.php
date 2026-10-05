@@ -63,3 +63,14 @@ it('throttles starting upload sessions', function () {
 
     startUpload($this->member, 10)->assertTooManyRequests();
 });
+
+it('explains a throttled upload start in Indonesian (review fix 3-9 B)', function () {
+    config(['google.upload.starts_per_minute' => 1, 'google.upload.max_open_sessions' => 100]);
+
+    startUpload($this->member, 10)->assertCreated();
+
+    startUpload($this->member, 10)
+        ->assertTooManyRequests()
+        ->assertHeader('Retry-After')
+        ->assertExactJson(['message' => 'Terlalu banyak unggahan. Coba lagi sebentar lagi.', 'code' => 'drive_upload_throttled']);
+});

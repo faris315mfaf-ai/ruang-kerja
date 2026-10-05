@@ -10,7 +10,7 @@ use Database\Seeders\RoleSeeder;
 use Illuminate\Broadcasting\BroadcastManager;
 use Illuminate\Broadcasting\PrivateChannel;
 
-test('the event broadcasts to the company and division channels without location data', function () {
+test('the event broadcasts to the employee\'s company channel and division channels without location data', function () {
     $division = Division::factory()->create();
     $user = User::factory()->inDivision($division)->create();
     $day = AttendanceDay::factory()->for($user)->create(['late_minutes' => 3]);
@@ -19,7 +19,7 @@ test('the event broadcasts to the company and division channels without location
     $event = new AttendanceRecorded($day, $log);
 
     expect(array_map(fn (PrivateChannel $channel) => $channel->name, $event->broadcastOn()))
-        ->toBe(['private-company.attendance', "private-division.{$division->id}.attendance"])
+        ->toBe(["private-company.{$user->company_id}.attendance", "private-division.{$division->id}.attendance"])
         ->and($event->broadcastAs())->toBe('attendance.recorded')
         ->and($event->broadcastWith())->toMatchArray([
             'user' => ['id' => $user->id, 'name' => $user->name, 'division_id' => $division->id],
@@ -34,7 +34,8 @@ test('employees without a division only reach the company channel', function () 
     $day = AttendanceDay::factory()->create();
     $event = new AttendanceRecorded($day, AttendanceLog::factory()->forDay($day)->create());
 
-    expect($event->broadcastOn())->toHaveCount(1);
+    expect(array_map(fn (PrivateChannel $channel) => $channel->name, $event->broadcastOn()))
+        ->toBe(["private-company.{$day->user->company_id}.attendance"]);
 });
 
 test('channel authorization uses the attendance policy', function () {
@@ -45,12 +46,13 @@ test('channel authorization uses the attendance policy', function () {
     $member = User::factory()->withRole(Role::Anggota)->inDivision($division)->create();
 
     $channels = app(BroadcastManager::class)->connection()->getChannels();
-    $company = $channels->get('company.attendance');
+    $company = $channels->get('company.{company}.attendance');
+    $own = $hr->company;
     $divisionChannel = $channels->get('division.{division}.attendance');
 
     expect($company)->toBeCallable()
-        ->and($company($hr))->toBeTrue()
-        ->and($company($kadiv))->toBeFalse()
+        ->and($company($hr, $own))->toBeTrue()
+        ->and($company($kadiv, $own))->toBeFalse()
         ->and($divisionChannel($kadiv, $division))->toBeTrue()
         ->and($divisionChannel($member, $division))->toBeFalse()
         ->and($divisionChannel($hr, $division))->toBeTrue();
@@ -66,7 +68,7 @@ test('the event also reaches the channels of every parent division (review #14)'
     $event = new AttendanceRecorded($day, AttendanceLog::factory()->forDay($day)->create());
 
     expect(array_map(fn (PrivateChannel $channel) => $channel->name, $event->broadcastOn()))->toBe([
-        'private-company.attendance',
+        "private-company.{$user->company_id}.attendance",
         "private-division.{$leaf->id}.attendance",
         "private-division.{$middle->id}.attendance",
         "private-division.{$root->id}.attendance",

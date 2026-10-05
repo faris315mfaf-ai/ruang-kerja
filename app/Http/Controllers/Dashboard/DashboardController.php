@@ -12,6 +12,7 @@ use App\Domain\Analytics\Queries\HrDashboard;
 use App\Domain\Analytics\Queries\PersonalDashboard;
 use App\Domain\Analytics\Services\DashboardAccess;
 use App\Domain\Analytics\Services\DashboardContextResolver;
+use App\Domain\Attendance\Events\AttendanceRecorded;
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Organization\Services\AuditLogger;
 use App\Http\Controllers\Controller;
@@ -143,7 +144,7 @@ class DashboardController extends Controller
 
         return Inertia::render('dashboard/hr', [
             ...$shared,
-            'channels' => ['company.attendance'],
+            'channels' => [AttendanceRecorded::companyChannel($context->viewer->company_id)],
             'attendance' => fn (): array => $queries->today($context->people, $now),
             'review' => fn (): array => $queries->review($context->viewer, $ids, $now),
             'pending' => fn (): array => $queries->pendingHr($ids),
@@ -183,7 +184,7 @@ class DashboardController extends Controller
     private function attendanceChannels(DashboardContext $context): array
     {
         if ($context->viewer->hasPermission(Permission::AttendanceViewAll)) {
-            return ['company.attendance'];
+            return [AttendanceRecorded::companyChannel($context->viewer->company_id)];
         }
 
         return $context->people->pluck('division_id')->filter()->unique()->map(fn (string $id): string => "division.{$id}.attendance")->values()->all();
