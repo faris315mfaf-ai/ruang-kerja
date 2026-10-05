@@ -48,3 +48,28 @@ if (! function_exists('addMember')) {
         return Task::query()->where('status_id', $status->id)->orderBy('position')->orderBy('number')->pluck('id')->all();
     }
 }
+
+if (! function_exists('richDoc')) {
+    /**
+     * Tiptap document: strings become text, ['@', User] a mention, ['#', Task] a task reference.
+     *
+     * @param  string|array{0: string, 1: User|Task}  ...$parts
+     * @return array<string, mixed>
+     */
+    function richDoc(string|array ...$parts): array
+    {
+        $inline = array_map(function (string|array $part): array {
+            if (is_string($part)) {
+                return ['type' => 'text', 'text' => $part];
+            }
+
+            [$kind, $model] = $part;
+
+            return $kind === '@'
+                ? ['type' => 'mention', 'attrs' => ['id' => $model->id, 'label' => $model instanceof User ? $model->name : '']]
+                : ['type' => 'taskReference', 'attrs' => ['id' => $model->id, 'label' => 'X-1']];
+        }, $parts);
+
+        return ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => $inline]]];
+    }
+}

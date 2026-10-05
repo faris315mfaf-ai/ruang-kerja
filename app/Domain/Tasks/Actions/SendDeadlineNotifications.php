@@ -7,6 +7,7 @@ use App\Domain\Notifications\Services\NotificationHistory;
 use App\Domain\Tasks\Notifications\TaskDueSoonNotification;
 use App\Domain\Tasks\Notifications\TaskOverdueNotification;
 use App\Domain\Tasks\Services\TaskAudience;
+use App\Models\InboxNotification;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
@@ -19,8 +20,8 @@ use Illuminate\Database\Eloquent\Builder;
  *
  * - H-1: due tomorrow (office date) → TaskDueSoonNotification, once per day;
  * - overdue: due before today → TaskOverdueNotification ("Perlu tindakan"),
- *   once per task, assignee and due date (resolved when the task closes or
- *   the due date moves — MoveTask / UpdateTask).
+ *   while no unresolved reminder exists for that task and assignee (resolved
+ *   when the task closes or the due date moves — MoveTask / UpdateTask).
  *
  * Archived workspaces and tasks without assignees are skipped. Idempotent.
  *
@@ -63,12 +64,12 @@ final class SendDeadlineNotifications
                         continue;
                     }
 
-                    // One reminder per due date: after it passed (office time).
-                    $since = CarbonImmutable::parse($due->toDateString(), $today->getTimezone())->addDay();
-                    $daysLate = (int) $since->diffInDays($today) + 1;
+                    $daysLate = (int) CarbonImmutable::parse($due->toDateString(), $today->getTimezone())->diffInDays($today);
 
                     foreach ($this->recipients($task) as $user) {
-                        if (! $this->history->wasSent($user, NotificationType::TaskOverdue, $task, since: $since)) {
+                        // One open reminder at a time: a resolved one (due date moved, task
+                        // reopened) allows a new reminder when the task is late again.
+                        if (! $this->hasOpenOverdueReminder($user, $task)) {
                             $user->notify(new TaskOverdueNotification($task, $daysLate));
                             $report['overdue']++;
                         }
@@ -77,6 +78,17 @@ final class SendDeadlineNotifications
             }, 'tasks.id', 'id');
 
         return $report;
+    }
+
+    private function hasOpenOverdueReminder(User $user, Task $task): bool
+    {
+        return InboxNotification::query()
+            ->visibleTo($user)
+            ->ofType(NotificationType::TaskOverdue)
+            ->where('subject_type', $task->getMorphClass())
+            ->where('subject_id', $task->id)
+            ->whereNull('resolved_at')
+            ->exists();
     }
 
     /**

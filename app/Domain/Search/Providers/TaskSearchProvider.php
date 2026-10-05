@@ -15,8 +15,8 @@ use Illuminate\Database\Eloquent\Builder;
  * "Tugas" (Sprint 5): tasks of workspaces the viewer may see
  * (Task::visibleTo → WorkspacePolicy rules, personal workspaces only for
  * their owner). Matches the id ("PLQ-21"), the title or the description text;
- * open tasks first. Links to the board filtered on the task until the task
- * detail (Sprint 6) exists.
+ * open tasks first. Links to the full-screen task detail /w/{KEY}/tasks/{n}
+ * (Sprint 6).
  */
 final class TaskSearchProvider implements SearchProvider
 {
@@ -68,7 +68,7 @@ final class TaskSearchProvider implements SearchProvider
                 id: 'task:'.$task->id,
                 title: $task->title,
                 icon: $task->status_category === TaskStatusCategory::Done ? 'circle-check' : 'circle',
-                url: '/w/'.$workspace->key.'?q='.rawurlencode($key),
+                url: '/w/'.$workspace->key.'/tasks/'.$task->number,
                 code: $key,
                 subtitle: $workspace->isPersonal() ? 'Pribadi' : $workspace->name,
                 meta: $task->status->name,

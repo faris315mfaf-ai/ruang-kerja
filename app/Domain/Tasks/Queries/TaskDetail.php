@@ -60,7 +60,7 @@ final class TaskDetail
 
         $subtasks = Task::query()
             ->where('parent_id', $task->id)
-            ->with(['assignees:id', 'labels:id', 'workspace:id,key'])
+            ->with(['assignees:id', 'labels:id', 'workspace:id,key', 'parent:id,number'])
             ->withCount([
                 'checklistItems',
                 'checklistItems as checklist_done_count' => fn (Builder $query) => $query->where('is_done', true),
