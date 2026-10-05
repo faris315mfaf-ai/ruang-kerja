@@ -1,6 +1,6 @@
 # OWASP ASVS 4.0.3 Level 1 — tinjauan RuangKerja
 
-Tinjauan: 2026-10-05, cabang `feat/sprint-10-ops` (Sprint 0 + inti Sprint 1 + pengerasan Sprint 10 bagian A). Modul domain yang sedang dibangun paralel (absensi, pengajuan, workspace, notifikasi, Google, login Google) **belum** termasuk; butir yang bergantung pada modul itu ditandai *Menunggu* dan wajib ditinjau ulang setelah integrasi (Sprint 10 bagian B).
+Tinjauan: 2026-10-05, cabang `feat/sprint-10-ops` setelah merge `main` (Sprint 0, Sprint 1 inti/login/karyawan/struktur, Sprint 7 Google bagian A, Sprint 8 notifikasi) + pengerasan Sprint 10 bagian A. Modul yang belum ada di `main` (absensi, pengajuan, workspace/tugas) **belum** termasuk; butir yang bergantung padanya ditandai *Menunggu* dan wajib ditinjau ulang di Sprint 10 bagian B.
 
 Status: **OK** = terpenuhi · **Diperbaiki** = ditemukan & diperbaiki di sprint ini · **Terbuka** = belum, ada rekomendasi · **Menunggu** = bergantung modul lain · **N/A** = tidak berlaku.
 
@@ -8,7 +8,7 @@ Status: **OK** = terpenuhi · **Diperbaiki** = ditemukan & diperbaiki di sprint 
 
 | # | Tingkat | Temuan | Status |
 |---|---|---|---|
-| F1 | **Tinggi** | `routes/channels.php`: otorisasi channel `App.Models.User.{id}` memakai `(int) $user->id === (int) $id`. ULID di-cast ke int menjadi `1` untuk hampir semua ID, sehingga **setiap user bisa berlangganan notifikasi privat user lain**. | **Diperbaiki** (perbandingan string + `BroadcastChannelTest`) |
+| F1 | **Tinggi** | `routes/channels.php`: otorisasi channel `App.Models.User.{id}` memakai `(int) $user->id === (int) $id`. ULID di-cast ke int menjadi `1` untuk hampir semua ID, sehingga **setiap user bisa berlangganan notifikasi privat user lain**. | **Diperbaiki** (perbandingan string; juga diperbaiki terpisah di Sprint 8, dijaga `BroadcastChannelTest`) |
 | F2 | Sedang | Tidak ada header keamanan/CSP dari aplikasi; hanya direncanakan di Caddy. | **Diperbaiki** (`SecurityHeaders` global, CSP nonce) |
 | F3 | Sedang | Limiter `login` 5/menit per email+IP saja (ARCHITECTURE §5 minta 10/menit/IP); `check-in` & `api` belum ada. | **Diperbaiki** (`AppServiceProvider`) |
 | F4 | Sedang | Cookie sesi tidak dipaksa `Secure` di produksi (bergantung `SESSION_SECURE_COOKIE`). | **Diperbaiki** (bawaan `true` saat `APP_ENV=production`) |
@@ -19,7 +19,8 @@ Status: **OK** = terpenuhi · **Diperbaiki** = ditemukan & diperbaiki di sprint 
 | F9 | Rendah | `style-src 'unsafe-inline'` (dibutuhkan Radix/sonner/progress Inertia). `script-src` tetap ketat (nonce). | Diterima |
 | F10 | Rendah | `/horizon` & `/pulse` memakai CSP longgar (`unsafe-inline`/`unsafe-eval`) karena front-end bawaan paket. | Diterima (hanya super_admin) |
 | F11 | Rendah | `/health` menampilkan `version` (SHA git). Tidak ada rahasia/host. | Diterima |
-| F12 | — | 2FA wajib untuk Super Admin, login Google domain terbatas. | Menunggu (`feat/sprint-1-login`) |
+| F12 | — | 2FA wajib untuk Super Admin, login Google domain terbatas. | OK (Sprint 1 login, sudah di `main`: `EnsureTwoFactorForSuperAdmin`, `RestrictCredentialRoutes`; diverifikasi di smoke test Docker) |
+| F14 | Rendah | `AuditLogController` me-lazy-load subjek per baris (N+1, `LazyLoadingViolationException` di non-produksi) untuk baris tanpa subjek. | **Diperbaiki** (terdeteksi `Model::shouldBeStrict`) |
 | F13 | — | Upload selfie/lampiran: validasi MIME/ukuran, disk privat, URL bertanda tangan 5 menit, audit akses selfie. | Menunggu (Sprint 2/4, tinjau di bagian B) |
 
 Tidak ada temuan tingkat tinggi yang terbuka untuk kode yang sudah ada di cabang ini.
@@ -37,7 +38,7 @@ Tidak ada temuan tingkat tinggi yang terbuka untuk kode yang sudah ada di cabang
 | 2.1.1 Sandi ≥ 12 karakter | OK | `Password::defaults()` produksi: min 12, huruf besar/kecil, angka, simbol, `uncompromised()`. |
 | 2.1.7 Cek sandi bocor | OK | `uncompromised()` (HIBP k-anonymity) di produksi. |
 | 2.2.1 Anti brute force | OK | `throttle:login` 10/menit/IP + 5/menit/email+IP; `two-factor` 5/menit; demo login memakai `throttle:login`. |
-| 2.2.? 2FA admin | Menunggu | Fortify 2FA (TOTP, confirm) & passkeys aktif; kewajiban untuk super_admin di `feat/sprint-1-login`. |
+| 2.2.? 2FA admin | OK | Login sandi hanya Super Admin dan TOTP wajib sebelum fitur lain (Sprint 1 login). Karyawan lain login Google (domain terbatas, `throttle:google-login`). |
 | 2.4.1 Hash sandi | OK | bcrypt, `BCRYPT_ROUNDS=12`. |
 | 2.5.? Reset sandi | Terbuka (F8) | Token kedaluwarsa 60 menit, throttle 60 dtk; pesan membedakan email tak dikenal. |
 | 2.5.4 Tidak ada akun bawaan | OK | Registrasi publik nonaktif (`RegistrationDisabledTest`); akun demo hanya `APP_ENV=local` + `DEMO_LOGIN_ENABLED=true` (dicek per request); Super Admin pertama dibuat dengan `ruangkerja:create-super-admin`. |
@@ -75,7 +76,7 @@ Tidak ada temuan tingkat tinggi yang terbuka untuk kode yang sudah ada di cabang
 |---|---|---|
 | 6.2.1 Algoritme standar | OK | `APP_KEY` AES-256-CBC (Laravel), bcrypt. |
 | 6.4.1 Rotasi kunci | OK | `APP_PREVIOUS_KEYS` di template produksi. |
-| 6.? Token Google terenkripsi | Menunggu | Cast `encrypted` (Sprint 7). |
+| 6.? Token Google terenkripsi | OK | `GoogleAccount`: `access_token`, `refresh_token` cast `encrypted` + hidden (Sprint 7). |
 
 ## V7 Galat & logging
 | Butir | Status | Catatan |

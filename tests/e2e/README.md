@@ -2,6 +2,8 @@
 
 Smoke test visual untuk `/dashboard` dan `/menu` di 3 lebar (375 · 834 · 1440 px) × 2 tema (terang · gelap) = 6 proyek. Tiap halaman dicek: status 200, tidak ada galat console (termasuk pelanggaran CSP), tidak ada gulir horizontal, dan cocok dengan screenshot acuan.
 
+Galat console yang sengaja diabaikan (bukan cacat halaman): koneksi WebSocket gagal (Reverb tidak dijalankan) dan respons 429 dari polling latar belakang (semua proyek memakai satu akun demo).
+
 **Tidak** termasuk `npm test` (Vitest) dan tidak jalan di CI.
 
 ## Menjalankan

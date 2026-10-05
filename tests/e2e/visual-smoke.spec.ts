@@ -10,12 +10,26 @@ const pages = [
     { name: 'menu', path: '/menu' },
 ] as const;
 
+/**
+ * Environment noise that is not a page defect: Reverb not running locally, and
+ * rate-limited background polling (every project signs in as the same demo user).
+ */
+const IGNORED_ERRORS = [
+    /WebSocket connection to .* failed/,
+    /status of 429 \(Too Many Requests\)/,
+];
+
 function collectErrors(page: Page): string[] {
     const errors: string[] = [];
 
     page.on('console', (message) => {
-        if (message.type() === 'error') {
-            errors.push(message.text());
+        const text = message.text();
+
+        if (
+            message.type() === 'error' &&
+            !IGNORED_ERRORS.some((pattern) => pattern.test(text))
+        ) {
+            errors.push(text);
         }
     });
     page.on('pageerror', (error) => errors.push(error.message));
