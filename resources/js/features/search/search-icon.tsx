@@ -5,6 +5,7 @@ import {
     CheckCheck,
     Circle,
     CircleCheck,
+    ClipboardList,
     File,
     FileImage,
     FileSpreadsheet,
@@ -48,6 +49,7 @@ const ICONS: Record<string, LucideIcon> = {
     bell: Bell,
     user: User,
     users: Users,
+    request: ClipboardList,
 };
 
 export function searchIcon(key: string): LucideIcon {
