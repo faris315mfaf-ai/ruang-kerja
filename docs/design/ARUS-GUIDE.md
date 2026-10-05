@@ -30,7 +30,7 @@ Kolom: **D** desktop · **M** ponsel · **T** tablet. Setiap layar punya pasanga
 | `/w/{ws}/dokumen`, `/file`, `/aktivitas`, `/pengaturan` | `workspaces/*` | DProyek (tab) · SProyekSaya | MSProyekSaya | `TabNav` untuk tab workspace |
 | `/workspace` | `workspaces/index` | SProyekSaya | MSProyekSaya | |
 | `/tugas` | `tasks/mine` | STugasSaya | MTugas | `ChipScroller`, `Fab` |
-| `/tugas/{task}`, `/w/{ws}/tasks/{n}` | `tasks/show` | DTugas · SDetailTugas | MSDetailTugas | |
+| `/w/{ws}/tasks/{n}` | `tasks/show` | DTugas · SDetailTugas | MSDetailTugas | `/tugas/{task}` = API JSON sheet detail, bukan halaman |
 | `/absensi` | `attendance/index` | DAbsensi · SAbsensi | MAbsen → MSukses | `appBar: 'greeting'`; tombol check-in `size="lg"` |
 | `/absensi/riwayat` | `attendance/history` | SAbsensi | MSRiwayat | |
 | `/absensi/hari-ini` | `attendance/board` | DHR (live) · MgAbsensi | PHRLive · MgPAbsensi | T: TfAbsensi |
@@ -82,6 +82,9 @@ Layar tanpa rute (Fase 2/3, jangan dibangun tanpa permintaan): DRapat, DRapatBar
 | tablist trek `#EEF2F7` / trek putih + border / pilihan gradien | `<SegmentedTabs variant="soft" | "glass" | "solid">` |
 | tab bergaris bawah | `<TabNav>` |
 | bar progres + penanda rencana | `<Progress value marker>` |
+| bar 8px di kartu KPI (antara nilai & catatan) | `<KpiCard bar={<KpiBar value label />}>` |
+| pilihan tunggal bergaya segmen (bukan ganti panel) | `<SegmentedTabs semantics="radio">` |
+| toolbar di garis tab workspace | `WorkspaceShell tabsAside` |
 | baris daftar 60–72px dengan avatar | `<ListRow>` di dalam `divide-y divide-divider` |
 | avatar `#D9E6FF`/`#1A4CB0` dsb. | `<UserAvatar name>` (nada otomatis); diri sendiri `ring` |
 | ID `JetBrains Mono` | `font-mono font-semibold` (14–15px) |
@@ -113,9 +116,25 @@ Aturan:
 - Kaca: `.glass`, `.glass-strong`; shell: `--menu-bar-height --page-max --page-max-wide --page-pad --dock-space --rail-width --tab-bar-height --app-bar-height`.
 - Komponen: `components/ui/{button,input,textarea,select,label,checkbox,radio,switch,badge,tabs,card,panel,kpi-card,progress,list-row,avatar,skeleton,table,dialog,sheet,dropdown-menu,tooltip,command,alert,toggle,toggle-group,sonner}`, `components/empty-state.tsx`, `components/mobile/*`, `components/shell/*`.
 
-## 5. Sisa pekerjaan yang diketahui (untuk agent modul)
+## 5. Sisa celah terhadap desain (per 6 Okt 2026)
 
-- Halaman masih memakai kelas lama di level fitur (mis. `text-[13px]`, `text-xs`, `rounded-xl` kartu buatan sendiri, `features/dashboard/panel.tsx` & `stat-card.tsx`, lingkaran inisial `bg-brand-600`): ganti dengan `Panel`, `KpiCard`, `UserAvatar`, skala huruf Arus saat halaman dikerjakan.
-- `features/tasks/detail/task-detail-header.tsx` dan `features/notifications/inbox-app-bar-actions.tsx` punya `iconButton` sendiri → pakai `appBarIconButton`.
-- Breadcrumb beberapa halaman tidak sesuai desain (mis. Persetujuan berada di bawah "Absensi"); rapikan bersama layoutnya.
-- Email (`resources/views/mail/*`) sudah memakai hex Arus, tetapi tata letaknya belum didesain ulang.
+Migrasi Arus selesai: semua rute §2 memakai primitif Arus, tidak ada kelas palet/hex di `.tsx`, kode UI lama sudah dihapus, dan pemeriksaan visual akhir (Playwright, 1440 terang/malam, 834, 390 terang/malam, 59 rute) bersih dari galat konsol, galat halaman, HTTP 4xx/5xx, dan gulir horizontal. Yang **sengaja belum** sama dengan desain:
+
+**Fitur Fase 2/3 (tidak dibangun, panel menampilkan keadaan kosong bila ada di desain)**
+- Rapat & notulen: DRapat*, DNotulen, DNotifRapat, MRapat*, MNotulen; panel "Jadwal terdekat"/"Notulensi terbaru" di `/manajemen` = EmptyState "Modul rapat & notulen belum aktif".
+- Kinerja (SKinerja/MSKinerja), widget (MWidget), lock screen, antrean offline (MOffline), quick add (MQuickAdd), biometrik di MLogin, kanal notifikasi selain in-app/email ("Fase 2" di matriks notifikasi).
+- Dashboard per peran SPKD (Peran*, P*, RoleDesk/RolePhone); peran memakai dashboard Saya/Divisi/HR/Portofolio.
+
+**Panel desain yang datanya belum ada**
+- SBeranda "Proyek saya" (ringkasan proyek di Beranda staf) belum dibangun; proyek tampil di `/workspace`.
+- SProyekSaya "Update mingguan · minggu N" (form update PIC langsung di `/workspace`) belum ada; update PIC ditulis lewat "Update proyek" di Ringkasan proyek.
+- DBoard tab "Todolist": dipetakan ke tampilan List (DTodo) di tab Tugas, bukan tab terpisah.
+- Lampiran & tab Dokumen/File menampilkan "Integrasi Google Drive belum aktif" sampai kredensial Google diisi (HANDOFF "Keputusan yang menunggu pemilik").
+
+**Penyimpangan kecil yang disengaja**
+- Toolbar board: kotak "Cari tugas" dan chip filter aktif berada di baris bawah garis tab (desain tidak punya pencarian); tombol "Tampilan tersimpan" dan "?" (pintasan) tambahan.
+- Tabel admin (karyawan, saldo cuti, penugasan, audit) tetap tabel padat bergaya DHR; ponsel menampilkan DesktopOnlyNotice atau daftar baca.
+- Email (`resources/views/mail/*`) memakai pita gradien & kartu radius 24, tetapi tidak ada layar desain untuk tata letaknya.
+
+**Belum diperiksa visual pada putaran akhir**
+- `/kiosk/{location}` (butuh perangkat terpasang; diperiksa saat migrasi modul Absensi), `/two-factor-challenge`, `/verify-email` (akun demo sudah terverifikasi), `/pengajuan/{id}/ubah` (data demo tidak punya draf/revisi; 403 untuk pengajuan menunggu itu benar).

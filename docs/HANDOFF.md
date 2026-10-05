@@ -1,6 +1,6 @@
 # Serah terima — RuangKerja Fase 1
 
-Status per 6 Okt 2026. Semua sprint Fase 1 (0–10) dibangun di Mac mulai 5 Okt 2026 dengan banyak agen paralel, lalu digabung ke `main` lokal. **Belum di-push ke GitHub** (repo masih public).
+Status per 6 Okt 2026 (termasuk migrasi UI Arus). Semua sprint Fase 1 (0–10) dibangun di Mac mulai 5 Okt 2026 dengan banyak agen paralel, lalu digabung ke `main` lokal. **Belum di-push ke GitHub** (repo masih public).
 
 ## Status sprint
 
@@ -18,11 +18,15 @@ Status per 6 Okt 2026. Semua sprint Fase 1 (0–10) dibangun di Mac mulai 5 Okt 
 | 9 | Dashboard Saya/Kepala Divisi/HR, portofolio proyek Direksi | `sprints/sprint-9/{SUMMARY,PORTFOLIO-SUMMARY}.md` |
 | 10 | Keamanan (CSP, rate limit), Docker produksi, backup/restore, deploy, Data Saya, kinerja | `sprints/sprint-10/{SUMMARY,PRIVASI-SUMMARY}.md`, `security/ASVS-L1.md` |
 
+## Sistem desain Arus (6 Okt 2026)
+
+Seluruh UI sudah dimigrasikan ke sistem desain **Arus** (`docs/ruangkerja-design/`, `docs/DESIGN.md`, panduan `docs/design/ARUS-GUIDE.md`): fondasi + 8 jalur modul, lalu satu putaran review & pemolesan akhir (toolbar board di garis tab, breadcrumb selaras Dock/Rail, halaman galat Arus, perbaikan regresi migrasi, aksesibilitas KPI, penghapusan kode UI lama). Pemeriksaan visual Playwright atas semua rute §2 panduan (1440 terang/malam, 834, 390 terang/malam): tanpa galat konsol/halaman, tanpa HTTP 4xx/5xx tak terduga, tanpa gulir horizontal. Celah yang sengaja tersisa (Fase 2/3, panel tanpa data) ada di ARUS-GUIDE §5. Acuan hidup komponen: `/dev/komponen` (lokal).
+
 Tiga putaran review independen (Sprint 0–1, 2/4/5, 3/6/7/8/9) sudah dijalankan dan semua temuannya diperbaiki dengan test regresi: `sprints/sprint-1/REVIEW-FIXES.md`, `sprints/REVIEW-FIXES-2-4-5.md`, `sprints/REVIEW-FIXES-3-9-{A,B}.md`.
 
 ## Kualitas saat serah terima
 
-- Pest ±1.870 test hijau (paralel), Vitest ±270 test hijau.
+- Pest ±2.020 test hijau (paralel), Vitest ±370 test hijau.
 - Pint + Larastan level 8 tanpa ignore/baseline, `tsc --noEmit`, `vp check` bersih.
 - Mode strict model aktif di luar produksi (tidak ada lazy loading); 40 halaman utama punya test jumlah query (anti N+1).
 - Lighthouse halaman Absensi di ponsel: 98 (HTTPS + HTTP/2, mirip produksi).
