@@ -14,6 +14,11 @@ Route::middleware('throttle:10,1')->group(function () {
     Route::post('kiosk/aktivasi/{token}', [KioskActivationController::class, 'store'])->name('kiosk.activate.store');
 });
 
+// Short pairing code typed on /kiosk (alternative to the link). Attempt
+// limit + lockout per IP live in the controller so the screen gets a
+// readable validation message instead of a bare 429.
+Route::post('kiosk/aktivasi', [KioskActivationController::class, 'redeemCode'])->name('kiosk.activate.code');
+
 Route::middleware(AuthenticateKiosk::class)->group(function () {
     Route::get('kiosk/{location}', [KioskController::class, 'show'])->whereUlid('location')->name('kiosk.show');
     Route::get('kiosk/{location}/kode', [KioskController::class, 'code'])->whereUlid('location')->name('kiosk.code');

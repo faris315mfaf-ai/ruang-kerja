@@ -32,6 +32,7 @@ use Illuminate\Support\Carbon;
  * @property string $code
  * @property bool $is_active
  * @property string|null $activation_token_hash
+ * @property string|null $activation_code_hash
  * @property CarbonImmutable|null $activation_expires_at
  * @property CarbonImmutable|null $activated_at
  * @property CarbonImmutable|null $last_seen_at
@@ -43,7 +44,7 @@ use Illuminate\Support\Carbon;
  * @property-read OfficeLocation $officeLocation
  */
 #[Fillable(['company_id', 'office_location_id', 'name', 'code', 'is_active'])]
-#[Hidden(['activation_token_hash', 'remember_token'])]
+#[Hidden(['activation_token_hash', 'activation_code_hash', 'remember_token'])]
 #[UseFactory(KioskFactory::class)]
 class Kiosk extends Model implements AuthenticatableContract
 {
@@ -54,6 +55,7 @@ class Kiosk extends Model implements AuthenticatableContract
     protected $attributes = [
         'is_active' => true,
         'activation_token_hash' => null,
+        'activation_code_hash' => null,
         'activation_expires_at' => null,
         'activated_at' => null,
         'last_seen_at' => null,
@@ -86,7 +88,7 @@ class Kiosk extends Model implements AuthenticatableContract
      */
     public function auditExclude(): array
     {
-        return ['last_seen_at', 'remember_token', 'activation_token_hash'];
+        return ['last_seen_at', 'remember_token', 'activation_token_hash', 'activation_code_hash'];
     }
 
     public function isPaired(): bool
@@ -94,9 +96,12 @@ class Kiosk extends Model implements AuthenticatableContract
         return $this->activated_at !== null;
     }
 
+    /**
+     * An unused activation link or code (issued together) that has not expired.
+     */
     public function hasPendingActivation(?CarbonImmutable $now = null): bool
     {
-        return $this->activation_token_hash !== null
+        return ($this->activation_token_hash !== null || $this->activation_code_hash !== null)
             && $this->activation_expires_at !== null
             && $this->activation_expires_at->isAfter($now ?? CarbonImmutable::now());
     }

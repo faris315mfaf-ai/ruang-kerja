@@ -32,7 +32,9 @@ storage/app/public/*
 storage/pail
 *.key
 
-docs
+# Markdown docs ship with the image for Admin › Dokumentasi (config/docs.php);
+# the mockup PNGs (~14 MB) do not.
+docs/mockups
 tests
 playwright-report
 test-results

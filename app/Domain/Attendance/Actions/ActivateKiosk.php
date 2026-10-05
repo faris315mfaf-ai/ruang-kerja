@@ -3,17 +3,14 @@
 namespace App\Domain\Attendance\Actions;
 
 use App\Domain\Attendance\Models\Kiosk;
-use App\Domain\Organization\Services\AuditLogger;
-use Carbon\CarbonImmutable;
-use Illuminate\Support\Str;
 
 /**
- * Redeems an activation link: the device becomes this kiosk. Any device that
- * was paired before is signed out (new remember token + new activated_at).
+ * Redeems an activation link: the device becomes this kiosk (PairKiosk), and
+ * the pairing code issued with the link stops working too.
  */
 final class ActivateKiosk
 {
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(private readonly PairKiosk $pair) {}
 
     /**
      * Returns null when the link is unknown, used, expired or the kiosk is inactive.
@@ -22,21 +19,7 @@ final class ActivateKiosk
     {
         $kiosk = self::findPending($token);
 
-        if ($kiosk === null) {
-            return null;
-        }
-
-        $kiosk->forceFill([
-            'activation_token_hash' => null,
-            'activation_expires_at' => null,
-            // Microseconds dropped: the value is compared with the session marker.
-            'activated_at' => CarbonImmutable::now()->startOfSecond(),
-            'remember_token' => Str::random(60),
-        ])->saveQuietly();
-
-        $this->audit->log('kiosk.activated', $kiosk);
-
-        return $kiosk;
+        return $kiosk === null ? null : $this->pair->handle($kiosk, 'link');
     }
 
     public static function findPending(string $token): ?Kiosk

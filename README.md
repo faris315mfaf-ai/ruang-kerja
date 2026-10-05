@@ -12,6 +12,9 @@ Aplikasi kantor internal: **absensi, pengajuan & persetujuan, workspace, kolabor
 
 | Dokumen | Isi |
 |---|---|
+| [`docs/HANDOFF.md`](docs/HANDOFF.md) | Serah terima Fase 1: status sprint, akun demo, keputusan yang menunggu pemilik |
+| [`docs/CRITICAL.md`](docs/CRITICAL.md) | **Hal kritis**: invariant yang tidak boleh rusak, area keamanan, rahasia, backup, checklist go-live |
+| [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | Riwayat perubahan per sprint (format Keep a Changelog) |
 | [`docs/PRD.md`](docs/PRD.md) | Kebutuhan produk, fase, user story, metrik |
 | [`docs/DATABASE.md`](docs/DATABASE.md) | Skema tabel, ERD, query metrik |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Arsitektur, struktur folder, integrasi Google, deploy |
@@ -21,6 +24,8 @@ Aplikasi kantor internal: **absensi, pengajuan & persetujuan, workspace, kolabor
 | [`docs/mockups/INDEX.md`](docs/mockups/INDEX.md) | Mockup layar desktop & mobile |
 | [`docs/PROMPTS.md`](docs/PROMPTS.md) · [`docs/sprints/`](docs/sprints/) | Prompt & ringkasan per sprint |
 | [`AGENTS.md`](AGENTS.md) · [`CLAUDE.md`](CLAUDE.md) | Aturan proyek untuk AI coding tool |
+
+Super Admin juga bisa membaca dokumen-dokumen ini di aplikasi: **Admin › Dokumentasi** (`/admin/dokumentasi`). Daftarnya diatur di `config/docs.php`.
 
 ## Teknologi
 

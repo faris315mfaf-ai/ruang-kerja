@@ -58,6 +58,16 @@ return [
         // Kiosk activation links are single-use and expire after this many hours.
         'activation_ttl_hours' => 24,
 
+        // Short pairing code typed on the unpaired kiosk screen (issued with
+        // the link, same TTL). Per IP: at most this many attempts per minute,
+        // and after max_failures wrong codes the IP is locked out for
+        // lockout_minutes.
+        'activation_code' => [
+            'attempts_per_minute' => 5,
+            'max_failures' => 10,
+            'lockout_minutes' => 15,
+        ],
+
         // "Baru saja check-in" on the kiosk screen.
         'recent_check_ins' => 5,
 

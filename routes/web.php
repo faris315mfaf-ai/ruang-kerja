@@ -29,3 +29,4 @@ require __DIR__.'/drive.php';
 require __DIR__.'/dashboard.php';
 require __DIR__.'/projects.php';
 require __DIR__.'/privacy.php';
+require __DIR__.'/docs.php';
