@@ -21,7 +21,7 @@ type Props = {
 export function RecentDays({
     history,
     today,
-    historyHref = '#riwayat',
+    historyHref = '/absensi/riwayat',
     className,
 }: Props) {
     const days = (history ?? [])

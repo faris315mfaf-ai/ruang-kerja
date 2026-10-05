@@ -3,6 +3,7 @@
 namespace App\Domain\Attendance\Services;
 
 use App\Domain\Attendance\Data\CheckInData;
+use App\Domain\Attendance\Data\QrCheckInData;
 use App\Domain\Attendance\Enums\LogFlag;
 use App\Domain\Attendance\Models\AttendanceLog;
 use App\Models\User;
@@ -22,7 +23,7 @@ final class FraudDetector
     /**
      * @return list<LogFlag>
      */
-    public function detect(User $user, CheckInData $data, CarbonInterface $now): array
+    public function detect(User $user, CheckInData|QrCheckInData $data, CarbonInterface $now): array
     {
         $flags = [];
 
@@ -63,7 +64,7 @@ final class FraudDetector
             }
         }
 
-        if ($this->selfies->isDarkOrBlank($data->selfie)) {
+        if ($data instanceof CheckInData && $this->selfies->isDarkOrBlank($data->selfie)) {
             $flags[] = LogFlag::DarkSelfie;
         }
 
@@ -84,8 +85,12 @@ final class FraudDetector
         return false;
     }
 
-    private function isImpossibleTravel(AttendanceLog $previous, CheckInData $data, CarbonInterface $now): bool
+    private function isImpossibleTravel(AttendanceLog $previous, CheckInData|QrCheckInData $data, CarbonInterface $now): bool
     {
+        if ($data->latitude === null || $data->longitude === null) {
+            return false;
+        }
+
         $distance = $this->geofence->distance(
             (float) $previous->latitude,
             (float) $previous->longitude,

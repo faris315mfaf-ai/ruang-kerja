@@ -2,12 +2,16 @@
 
 namespace App\Providers;
 
+use App\Domain\Google\Contracts\WorkspaceDriveAccess;
+use App\Domain\Google\GoogleFeatures;
+use App\Domain\Google\Jobs\CreateDriveFolder;
 use App\Domain\Workspaces\Actions\ArchiveWorkspace;
 use App\Domain\Workspaces\Actions\EnsurePersonalWorkspace;
 use App\Domain\Workspaces\Actions\PurgePersonalWorkspace;
 use App\Domain\Workspaces\Actions\SyncDivisionMembers;
 use App\Domain\Workspaces\Actions\SyncTeamMembers;
 use App\Domain\Workspaces\Enums\WorkspaceType;
+use App\Domain\Workspaces\Services\WorkspacePolicyDriveAccess;
 use App\Models\Division;
 use App\Models\Team;
 use App\Models\User;
@@ -22,13 +26,20 @@ use Illuminate\Support\ServiceProvider;
  * - division created/changed → division workspace created/synced;
  * - division deleted/restored → its workspace archived/restored;
  * - Ketua Tim changes → team workspaces synced;
- * - employee hard-deleted → personal workspace purged.
+ * - employee hard-deleted → personal workspace purged;
+ * - workspace renamed / key changed → Drive folder renamed (Sprint 7).
  *
  * Model events are muted by seeders using WithoutModelEvents; WorkspaceSeeder
  * runs the same actions explicitly.
  */
 class WorkspaceServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        // Drive metadata follows workspace access (replaces DenyWorkspaceDriveAccess).
+        $this->app->singleton(WorkspaceDriveAccess::class, WorkspacePolicyDriveAccess::class);
+    }
+
     public function boot(): void
     {
         User::created(function (User $user): void {
@@ -67,6 +78,13 @@ class WorkspaceServiceProvider extends ServiceProvider
 
         Division::deleted(fn (Division $division) => $this->archiveDivisionWorkspace($division, true));
         Division::restored(fn (Division $division) => $this->archiveDivisionWorkspace($division, false));
+
+        // Drive folder title "<Nama> [KEY]" follows renames and key changes.
+        Workspace::updated(function (Workspace $workspace): void {
+            if ($workspace->wasChanged(['name', 'key']) && $workspace->drive_folder_id !== null && GoogleFeatures::enabled()) {
+                CreateDriveFolder::dispatch($workspace)->afterCommit();
+            }
+        });
 
         Team::updated(function (Team $team): void {
             if ($team->wasChanged('lead_user_id')) {

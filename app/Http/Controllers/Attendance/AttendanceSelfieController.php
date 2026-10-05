@@ -13,8 +13,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Streams a selfie from the private disk. Requires a valid temporary signature
- * (middleware `signed`, 5 minutes) AND the viewSelfie policy. Viewing someone
- * else's selfie is written to audit_logs.
+ * (middleware `signed`, 5 minutes) AND the viewSelfie policy. Every access —
+ * also the employee's own — is written to audit_logs (docs/PROMPTS.md Sprint 3).
  */
 class AttendanceSelfieController extends Controller
 {
@@ -26,9 +26,10 @@ class AttendanceSelfieController extends Controller
     ): StreamedResponse {
         Gate::authorize('viewSelfie', $attendanceLog);
 
-        if ($attendanceLog->user_id !== $user->id) {
-            $audit->log('selfie.viewed', $attendanceLog, null, ['employee_id' => $attendanceLog->user_id]);
-        }
+        $audit->log('selfie.viewed', $attendanceLog, null, [
+            'employee_id' => $attendanceLog->user_id,
+            'own' => $attendanceLog->user_id === $user->id,
+        ]);
 
         return $selfies->response($attendanceLog);
     }

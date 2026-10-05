@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Domain\Google\Contracts\HasDriveFolder;
+use App\Domain\Google\Data\DriveMember;
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Organization\Enums\Role;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
@@ -63,7 +65,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
     'visibility', 'owner_id', 'division_id', 'team_id', 'drive_folder_id', 'archived_at',
     'lead_user_id', 'sponsor_user_id', 'start_date', 'target_date', 'project_status',
 ])]
-class Workspace extends Model
+class Workspace extends Model implements HasDriveFolder
 {
     /** @use HasFactory<WorkspaceFactory> */
     use HasFactory, HasUlids, SoftDeletes;
@@ -241,6 +243,83 @@ class Workspace extends Model
     {
         return $user->hasPermission(Permission::WorkspacesViewAll)
             || $user->hasPermission(Permission::WorkspacesManage);
+    }
+
+    /**
+     * Stable owner key written to the Drive folder's appProperties.rk_owner.
+     */
+    public function driveFolderKey(): string
+    {
+        return 'workspaces:'.$this->id;
+    }
+
+    /**
+     * "Proyek Peluncuran Q4 [PLQ]"; personal workspaces (all named "Pribadi")
+     * carry the owner's name so the Shared Drive stays readable for admins:
+     * "Pribadi · Dimas Pratama [DPR]".
+     */
+    public function driveFolderName(): string
+    {
+        $name = $this->name;
+
+        if ($this->isPersonal()) {
+            $owner = User::query()->whereKey($this->owner_id)->value('name');
+            $name = is_string($owner) ? "{$this->name} · {$owner}" : $name;
+        }
+
+        return "{$name} [{$this->key}]";
+    }
+
+    /**
+     * Workspace folders live at the root of the Shared Drive.
+     */
+    public function driveParentFolderId(): ?string
+    {
+        return null;
+    }
+
+    public function driveFolderId(): ?string
+    {
+        return $this->drive_folder_id;
+    }
+
+    /**
+     * Saved quietly: no `updated` event (which would queue a folder rename).
+     */
+    public function storeDriveFolderId(?string $folderId): void
+    {
+        $this->forceFill(['drive_folder_id' => $folderId])->saveQuietly();
+    }
+
+    public function driveWorkspaceId(): string
+    {
+        return $this->id;
+    }
+
+    /**
+     * Active members with their Drive role: owner/admin/member → writer,
+     * viewer → reader (docs/ARCHITECTURE.md §3.6). Inactive employees lose
+     * access on the next sync.
+     *
+     * @return list<DriveMember>
+     */
+    public function driveMembers(): array
+    {
+        return array_values(WorkspaceMember::query()
+            ->where('workspace_id', $this->id)
+            ->with('user:id,email,status')
+            ->get()
+            ->filter(fn (WorkspaceMember $member): bool => $member->user->isActive() && $member->user->email !== '')
+            ->map(fn (WorkspaceMember $member): DriveMember => DriveMember::forWorkspaceRole($member->user->email, $member->role->value))
+            ->all());
+    }
+
+    /**
+     * @return HasMany<DriveFile, $this>
+     */
+    public function driveFiles(): HasMany
+    {
+        return $this->hasMany(DriveFile::class);
     }
 
     /**

@@ -42,7 +42,7 @@ export function useAttendancePage({
 }: AttendancePageProps) {
     const now = useServerClock(serverTime);
     const flow = useCheckFlow(today, consent);
-    const action = primaryAction(today, now);
+    const action = primaryAction(today, now, flow.method);
     const started = useRef(false);
     const { request } = flow.geo;
     const { start } = flow;

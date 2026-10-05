@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Camera, Settings2 } from 'lucide-react';
+import { Camera, QrCode, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/format';
 import { hasAnyRole } from '@/lib/roles';
@@ -17,6 +17,7 @@ import { useAttendancePage } from './use-attendance-page';
 export function AttendanceDesktop(props: AttendancePageProps) {
     const { today, consent, history } = props;
     const { now, flow, action } = useAttendancePage(props);
+    const MethodIcon = flow.method === 'qr' ? QrCode : Camera;
     const { auth } = usePage().props;
     const canManage = hasAnyRole(auth.roles, 'hr', 'super_admin');
 
@@ -45,7 +46,10 @@ export function AttendanceDesktop(props: AttendancePageProps) {
                 <div className="flex flex-col gap-4">
                     <CheckInCard today={today} now={now} />
                     <div className="space-y-3 rounded-xl border border-border bg-surface p-4 shadow-card">
-                        <MethodSwitch />
+                        <MethodSwitch
+                            value={flow.method}
+                            onChange={flow.setMethod}
+                        />
                         <Button
                             type="button"
                             disabled={action.disabled}
@@ -55,7 +59,7 @@ export function AttendanceDesktop(props: AttendancePageProps) {
                             className="h-11 w-full text-[15px]"
                         >
                             {!action.disabled && (
-                                <Camera
+                                <MethodIcon
                                     className="size-5"
                                     strokeWidth={1.75}
                                     aria-hidden

@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * stay in Google Drive; rows are refreshed by DriveFolderContentsSync.
  *
  * @property string $id
- * @property string $workspace_id
+ * @property string|null $workspace_id null when the workspace row was purged
  * @property string $google_file_id
  * @property string|null $parent_google_id
  * @property string $name
@@ -37,6 +37,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonImmutable|null $updated_at
  * @property CarbonImmutable|null $deleted_at
  * @property-read User|null $addedBy
+ * @property-read Workspace|null $workspace
  */
 class DriveFile extends Model
 {
@@ -63,6 +64,14 @@ class DriveFile extends Model
             'modified_at' => 'datetime',
             'last_synced_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Workspace, $this>
+     */
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
     }
 
     /**

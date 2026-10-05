@@ -8,6 +8,7 @@ use App\Models\Attachment;
 use App\Models\DriveFile;
 use App\Models\GoogleAccount;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
@@ -18,7 +19,7 @@ beforeEach(function () {
     $this->drive = FakeDriveClient::fake();
     $this->user = User::factory()->create();
     $this->task = FolderOwner::createWith('Tugas PLQ-21', [$this->user->email => 'member']);
-    $this->workspaceId = (string) str()->ulid();
+    $this->workspaceId = Workspace::factory()->create()->id;
 });
 
 it('imports a picked file with the user own credentials and attaches it once', function () {

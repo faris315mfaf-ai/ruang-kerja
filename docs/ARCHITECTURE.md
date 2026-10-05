@@ -78,6 +78,7 @@ docker/ compose.yml compose.prod.yml Caddyfile
 ### 3.2 QR dinamis
 - Halaman kiosk `/kiosk/{location}` (login akun kiosk khusus) menampilkan QR berisi `ruangkerja://checkin?l={location}&w={window}&s={HMAC}` yang berganti tiap 30 detik.
 - Karyawan memindai dengan kamera di halaman Check-in. Server memvalidasi HMAC, jendela waktu (± 1 jendela), dan tetap merekam GPS bila diizinkan.
+- Implementasi (Sprint 3): akun kiosk = tabel `kiosks` + guard sesi `kiosk` (provider `kiosk-devices`, `AttendanceServiceProvider`). HR membuat kiosk dan tautan aktivasi sekali pakai (24 jam); perangkat yang membukanya masuk sebagai kiosk (remember cookie). Middleware `RestrictKioskDevice` (grup web, diprioritaskan sebelum `auth`) mengarahkan sesi kiosk ke `/kiosk/{location}` untuk rute apa pun selain `kiosk.*` (JSON: 403) dan mengakhiri sesi bila kiosk nonaktif/dihapus/dipasang di perangkat lain. Halaman kiosk mengambil kode baru dari `GET /kiosk/{location}/kode` tepat setelah tiap jendela 30 detik; SVG QR dibuat server (`bacon/bacon-qr-code`), rahasia HMAC tidak pernah ke klien. Pemindaian: `@zxing/browser` (dimuat lazy) → `POST /absensi/check-in/qr` atau `/check-out/qr` (limiter `check-in`) → `CheckIn`/`CheckOut` yang sama dengan GPS (method `qr`, tanpa selfie).
 
 ### 3.3 Tutup hari (scheduler, 00:30 waktu kantor)
 `CloseDay` untuk tanggal kemarin: setiap karyawan aktif yang terjadwal → bila tidak ada log dan tidak ada pengajuan disetujui → `absent`. Check-in tanpa check-out → `needs_correction` + notifikasi. Idempoten (aman dijalankan ulang).

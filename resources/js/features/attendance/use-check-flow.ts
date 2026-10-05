@@ -5,10 +5,13 @@ import { useGeolocation } from '@/hooks/use-geolocation';
 import { deviceId } from '@/lib/device';
 import { nearestLocation } from '@/lib/geo';
 import { checkIn, checkOut } from '@/routes/attendance';
+import checkInRoutes from '@/routes/attendance/check-in';
+import checkOutRoutes from '@/routes/attendance/check-out';
 import consentRoutes from '@/routes/attendance/consent';
 import { captureVideoFrame, compressFile } from '@/lib/image';
 import type {
     AttendanceConsentState,
+    CheckMethod,
     CheckRejection,
     CheckResult,
     TodayAttendance,
@@ -21,6 +24,7 @@ export type CheckStep =
     | 'consent'
     | 'capture'
     | 'review'
+    | 'scan'
     | 'submitting'
     | 'success'
     | 'failure';
@@ -31,6 +35,14 @@ const ENDPOINTS: Record<CheckType, () => string> = {
     in: () => checkIn.url(),
     out: () => checkOut.url(),
 };
+
+const QR_ENDPOINTS: Record<CheckType, () => string> = {
+    in: () => checkInRoutes.qr.url(),
+    out: () => checkOutRoutes.qr.url(),
+};
+
+/** How long a QR submit waits for a first GPS fix (GPS is optional for QR). */
+export const QR_GPS_WAIT_MS = 4_000;
 
 /** Props refreshed after a successful check-in/out. */
 const RELOAD_ONLY = ['today', 'history', 'attendanceStatus'];
@@ -157,7 +169,14 @@ export function useCheckFlow(
     const [progress, setProgress] = useState(0);
     const [captureError, setCaptureError] = useState<string | null>(null);
     const [consenting, setConsenting] = useState(false);
+    const [method, setMethodState] = useState<CheckMethod>('gps');
+    const methodRef = useRef<CheckMethod>('gps');
     const photoRef = useRef<CapturedPhoto | null>(null);
+
+    const setMethod = useCallback((next: CheckMethod) => {
+        methodRef.current = next;
+        setMethodState(next);
+    }, []);
 
     const match = useMemo(
         () =>
@@ -188,8 +207,30 @@ export function useCheckFlow(
         void camera.start('user');
     }, [camera, geo]);
 
+    /** QR: rear camera; location is read in parallel and sent when allowed. */
+    const beginScan = useCallback(() => {
+        setStep('scan');
+        setCaptureError(null);
+        void geo.request();
+        void camera.start('environment');
+    }, [camera, geo]);
+
+    const beginMethod = useCallback(() => {
+        if (methodRef.current === 'qr') {
+            beginScan();
+
+            return;
+        }
+
+        beginCapture();
+    }, [beginCapture, beginScan]);
+
     const start = useCallback(
-        (next: CheckType) => {
+        (next: CheckType, nextMethod?: CheckMethod) => {
+            if (nextMethod) {
+                setMethod(nextMethod);
+            }
+
             setType(next);
             setResult(null);
             setRejection(null);
@@ -203,9 +244,9 @@ export function useCheckFlow(
                 return;
             }
 
-            beginCapture();
+            beginMethod();
         },
-        [beginCapture, consent.granted, replacePhoto],
+        [beginMethod, consent.granted, replacePhoto, setMethod],
     );
 
     const acceptConsent = useCallback(() => {
@@ -217,11 +258,11 @@ export function useCheckFlow(
                 preserveScroll: true,
                 preserveState: true,
                 only: ['consent'],
-                onSuccess: () => beginCapture(),
+                onSuccess: () => beginMethod(),
                 onFinish: () => setConsenting(false),
             },
         );
-    }, [beginCapture]);
+    }, [beginMethod]);
 
     const capture = useCallback(async () => {
         const video = camera.videoRef.current;
@@ -341,6 +382,66 @@ export function useCheckFlow(
         }
     }, [geo, isRemote, note, photo, type]);
 
+    /** A kiosk code was read: send it with the GPS position when available. */
+    const submitQr = useCallback(
+        async (payload: string) => {
+            camera.stop();
+            setStep('submitting');
+            setProgress(0);
+
+            const position =
+                geo.position ??
+                (await Promise.race([
+                    geo.request(),
+                    new Promise<null>((resolve) =>
+                        window.setTimeout(() => resolve(null), QR_GPS_WAIT_MS),
+                    ),
+                ]));
+
+            const form = new FormData();
+            form.append('payload', payload);
+            form.append('client_time', new Date().toISOString());
+            form.append('device_id', deviceId());
+
+            if (position) {
+                form.append('latitude', String(position.latitude));
+                form.append('longitude', String(position.longitude));
+                form.append(
+                    'accuracy',
+                    String(Math.round(position.accuracy * 100) / 100),
+                );
+            }
+
+            try {
+                const response = await http.getClient().request({
+                    method: 'post',
+                    url: QR_ENDPOINTS[type](),
+                    data: form,
+                    headers: { Accept: 'application/json' },
+                });
+
+                const body = JSON.parse(response.data) as {
+                    result: CheckResult;
+                };
+                setResult(body.result);
+                setStep('success');
+                router.reload({ only: RELOAD_ONLY });
+            } catch (error) {
+                const next = rejectionFromError(error);
+
+                if (next.reason === 'consent_required') {
+                    setStep('consent');
+
+                    return;
+                }
+
+                setRejection(next);
+                setStep('failure');
+            }
+        },
+        [camera, geo, type],
+    );
+
     /** "Perbarui lokasi": read the position again and resend the same selfie. */
     const retryWithFreshLocation = useCallback(async () => {
         setStep('submitting');
@@ -364,6 +465,10 @@ export function useCheckFlow(
     return {
         step,
         type,
+        method,
+        setMethod,
+        beginScan,
+        submitQr,
         photo,
         note,
         setNote,

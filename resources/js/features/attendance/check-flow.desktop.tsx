@@ -14,6 +14,7 @@ import type {
 import { CheckFailure } from './flow/check-failure';
 import { CheckSuccess } from './flow/check-success';
 import { ConsentContent } from './flow/consent-content';
+import { QrScan } from './flow/qr-scan';
 import { SelfieCapture } from './flow/selfie-capture';
 import { SelfieReview } from './flow/selfie-review';
 import type { CheckFlow } from './use-check-flow';
@@ -28,10 +29,14 @@ type Props = {
 /** Desktop/tablet: the same steps in a dialog (check-in is a topbar action on desktop). */
 export function CheckFlowDesktop({ flow, today, consent, now }: Props) {
     const open = flow.step !== 'idle';
+    const scanning =
+        flow.method === 'qr' &&
+        (flow.step === 'scan' || flow.step === 'submitting');
     const camera =
-        flow.step === 'capture' ||
-        flow.step === 'review' ||
-        flow.step === 'submitting';
+        !scanning &&
+        (flow.step === 'capture' ||
+            flow.step === 'review' ||
+            flow.step === 'submitting');
     const verb = flow.type === 'in' ? 'Check-in' : 'Check-out';
 
     const titles: Record<string, { title: string; description: string }> = {
@@ -48,6 +53,10 @@ export function CheckFlowDesktop({ flow, today, consent, now }: Props) {
         review: {
             title: `Kirim ${verb.toLowerCase()}`,
             description: `Pukul ${formatTime(now)}`,
+        },
+        scan: {
+            title: `Pindai QR ${verb.toLowerCase()}`,
+            description: 'Arahkan kamera ke layar kiosk',
         },
         submitting: {
             title: `Kirim ${verb.toLowerCase()}`,
@@ -74,7 +83,7 @@ export function CheckFlowDesktop({ flow, today, consent, now }: Props) {
             <DialogContent
                 className={cn(
                     'max-h-[92vh] overflow-y-auto sm:max-w-[520px]',
-                    camera && 'dark bg-background text-text',
+                    (camera || scanning) && 'dark bg-background text-text',
                 )}
             >
                 <DialogHeader
@@ -107,6 +116,12 @@ export function CheckFlowDesktop({ flow, today, consent, now }: Props) {
                     </div>
                 )}
 
+                {scanning && (
+                    <div className="flex h-[min(68vh,620px)] flex-col">
+                        <QrScan flow={flow} />
+                    </div>
+                )}
+
                 {flow.step === 'success' && flow.result && (
                     <CheckSuccess result={flow.result} onDone={flow.close} />
                 )}
@@ -126,6 +141,7 @@ export function CheckFlowDesktop({ flow, today, consent, now }: Props) {
                                 : flow.start(flow.type)
                         }
                         onClose={flow.close}
+                        onScanQr={() => flow.start(flow.type, 'qr')}
                     />
                 )}
             </DialogContent>

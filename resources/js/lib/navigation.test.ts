@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adminNavItems, mainNavItems } from './navigation';
+import { adminNavItems, attendanceNavItems, mainNavItems } from './navigation';
 
 const titles = (roles: string[]) =>
     adminNavItems(roles).map((item) => item.title);
@@ -50,5 +50,21 @@ describe('navigation', () => {
             '/admin/pengajuan',
             '/admin/saldo-cuti',
         ]);
+    });
+
+    it('shows the attendance board to team leads and HR, the recap on desktop only', () => {
+        const hrefs = (roles: string[]) =>
+            attendanceNavItems(roles).map((item) => item.href);
+
+        expect(hrefs(['hr'])).toEqual(['/absensi/hari-ini', '/absensi/rekap']);
+        expect(hrefs(['kepala_divisi'])).toEqual([
+            '/absensi/hari-ini',
+            '/absensi/rekap',
+        ]);
+        expect(hrefs(['direksi'])).toHaveLength(2);
+        expect(hrefs(['anggota'])).toEqual([]);
+        expect(
+            attendanceNavItems(['hr']).find((item) => item.desktopOnly)?.href,
+        ).toBe('/absensi/rekap');
     });
 });

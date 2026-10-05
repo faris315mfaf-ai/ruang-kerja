@@ -120,7 +120,8 @@ export type CheckResult = {
     methodLabel: string;
     location: {
         name: string;
-        distanceM: number;
+        /** Null for a QR scan without GPS. */
+        distanceM: number | null;
         radiusM: number;
         inside: boolean;
     } | null;
@@ -139,6 +140,9 @@ export type RejectionReason =
     | 'no_office_location'
     | 'note_required'
     | 'day_has_request'
+    | 'qr_invalid'
+    | 'qr_expired'
+    | 'qr_wrong_location'
     // Client-side reasons (not from the server's AttendanceRejection enum).
     | 'validation'
     | 'network'
@@ -181,4 +185,214 @@ export type AttendanceStatusSummary = {
     endLabel: string | null;
     distanceM: number | null;
     isHoliday: boolean;
+};
+
+/* ------------------------------------------------------------------ */
+/* Sprint 3 — kiosk QR, HR board, monthly recap                        */
+/* ------------------------------------------------------------------ */
+
+export type CheckMethod = 'gps' | 'qr';
+
+export type KioskCode = {
+    payload: string;
+    /** Inline SVG rendered by the server (modules use currentColor). */
+    svg: string;
+    window: number;
+    validFrom: string;
+    validUntil: string;
+};
+
+export type KioskRecentCheckIn = {
+    id: string;
+    name: string;
+    initials: string;
+    at: string | null;
+};
+
+export type KioskState = {
+    code: KioskCode;
+    serverTime: string;
+    recent: KioskRecentCheckIn[];
+};
+
+export type LogFlagItem = { value: string; label: string };
+
+export type BoardPersonState =
+    | 'on_time'
+    | 'late'
+    | 'leave'
+    | 'not_checked_in'
+    | 'off';
+
+export type BoardPerson = {
+    id: string;
+    name: string;
+    initials: string;
+    divisionId: string | null;
+    divisionName: string;
+    locationId: string | null;
+    locationName: string | null;
+    shiftName: string;
+    scheduled: boolean;
+    state: BoardPersonState;
+    status: AttendanceStatus | null;
+    statusLabel: string | null;
+    checkInAt: string | null;
+    checkOutAt: string | null;
+    lateMinutes: number;
+    method: AttendanceMethod | null;
+    isSuspicious: boolean;
+};
+
+export type BoardDivision = {
+    id: string | null;
+    name: string;
+    scheduled: number;
+    onTime: number;
+    late: number;
+    onLeave: number;
+    notCheckedIn: number;
+};
+
+export type TodayBoardData = {
+    date: string;
+    generatedAt: string;
+    summary: {
+        scheduled: number;
+        shifts: { name: string; count: number }[];
+        present: number;
+        late: number;
+        onLeave: number;
+        leaveBreakdown: {
+            status: AttendanceStatus;
+            label: string;
+            count: number;
+        }[];
+        notCheckedIn: number;
+    };
+    divisions: BoardDivision[];
+    people: BoardPerson[];
+};
+
+export type SuspiciousLog = {
+    id: string;
+    userId: string;
+    name: string;
+    initials: string;
+    divisionName: string | null;
+    type: 'check_in' | 'check_out';
+    typeLabel: string;
+    method: AttendanceMethod;
+    methodLabel: string;
+    occurredAt: string;
+    clientTime: string | null;
+    locationName: string | null;
+    radiusM: number | null;
+    accuracyM: number | null;
+    distanceM: number | null;
+    note: string | null;
+    flags: LogFlagItem[];
+    hasSelfie: boolean;
+    canViewSelfie: boolean;
+    canReview: boolean;
+};
+
+export type MissingCheckOut = {
+    dayId: string;
+    userId: string;
+    name: string;
+    initials: string;
+    workDate: string;
+    shiftName: string | null;
+    locationName: string | null;
+    checkInAt: string | null;
+};
+
+export type Option = { id: string; name: string };
+
+export type RecapPeriodData = {
+    month: string;
+    label: string;
+    start: string;
+    end: string;
+    countedUntil: string | null;
+    isRunning: boolean;
+    previous: string;
+    next: string;
+};
+
+export type RecapRow = {
+    userId: string;
+    name: string;
+    initials: string;
+    divisionName: string | null;
+    positionName: string | null;
+    shiftName: string | null;
+    workDays: number;
+    presentDays: number;
+    lateCount: number;
+    lateMinutes: number;
+    earlyLeaveCount: number;
+    absentDays: number;
+    leaveDays: number;
+    permitDays: number;
+    sickDays: number;
+    businessTripDays: number;
+    wfhDays: number;
+    needsCorrectionDays: number;
+    offDays: number;
+    overtimeHours: number;
+    attendanceRate: number | null;
+    averageCheckIn: string | null;
+    suspiciousDays: number;
+};
+
+/** Calendar cell kind: a status value or off / holiday / upcoming / none. */
+export type RecapDayKind = AttendanceStatus | 'off' | 'upcoming' | 'none';
+
+export type RecapLog = AttendanceLogData & {
+    typeLabel: string;
+    accuracyM: number | null;
+    flags: LogFlagItem[];
+    reviewedAt: string | null;
+    isCorrection: boolean;
+    hasSelfie: boolean;
+    canViewSelfie: boolean;
+    canReview: boolean;
+};
+
+export type RecapDayCell = {
+    date: string;
+    kind: RecapDayKind;
+    isWorkday: boolean;
+    holidayName: string | null;
+    dayId: string | null;
+    statusLabel: string | null;
+    lateMinutes: number;
+    earlyLeaveMinutes: number;
+    workMinutes: number;
+    overtimeMinutes: number;
+    isSuspicious: boolean;
+    shiftName: string | null;
+    checkIn: AttendanceLogData | null;
+    checkOut: AttendanceLogData | null;
+};
+
+export type RecapDetail = RecapRow & {
+    days: RecapDayCell[];
+    logs: RecapLog[];
+};
+
+export type RecapReportData = {
+    summary: {
+        employees: number;
+        calendarWorkDays: number;
+        weekendDays: number;
+        holidayDays: number;
+        attendanceRate: number | null;
+        lateCount: number;
+        overtimeHours: number;
+        lateToleranceMin: number;
+    };
+    rows: RecapRow[];
 };

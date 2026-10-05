@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { DesktopOnlyNotice } from '@/components/desktop-only-notice';
 import { Skeleton } from '@/components/ui/skeleton';
 import { HolidaysSection } from '@/features/attendance/admin/holidays-section';
+import { KiosksSection } from '@/features/attendance/admin/kiosks-section';
 import { LocationsSection } from '@/features/attendance/admin/locations-section';
 import { ShiftsSection } from '@/features/attendance/admin/shifts-section';
 import type { AttendanceSettingsProps } from '@/features/attendance/admin/types';
@@ -13,6 +14,7 @@ const SECTIONS = [
     { id: 'lokasi', label: 'Lokasi' },
     { id: 'shift', label: 'Shift' },
     { id: 'hari-libur', label: 'Hari libur' },
+    { id: 'kiosk', label: 'Kiosk QR' },
 ] as const;
 
 /** Admin › Lokasi, shift & hari libur (HR). Desktop only (docs/PLATFORM.md §3). */
@@ -88,6 +90,10 @@ export default function AttendanceSettings(props: AttendanceSettingsProps) {
                     holidayYear={props.holidayYear}
                     holidayYears={props.holidayYears}
                     holidayTypes={props.holidayTypes}
+                />
+                <KiosksSection
+                    kiosks={props.kiosks}
+                    locations={props.locations}
                 />
             </div>
         </>

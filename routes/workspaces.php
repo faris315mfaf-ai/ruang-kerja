@@ -8,7 +8,9 @@ use App\Http\Controllers\Workspaces\LabelController;
 use App\Http\Controllers\Workspaces\TaskStatusController;
 use App\Http\Controllers\Workspaces\WorkspaceArchiveController;
 use App\Http\Controllers\Workspaces\WorkspaceController;
+use App\Http\Controllers\Workspaces\WorkspaceDocumentController;
 use App\Http\Controllers\Workspaces\WorkspaceFavoriteController;
+use App\Http\Controllers\Workspaces\WorkspaceFileController;
 use App\Http\Controllers\Workspaces\WorkspaceMemberController;
 use App\Http\Controllers\Workspaces\WorkspaceSettingsController;
 use App\Http\Controllers\Workspaces\WorkspaceTabController;
@@ -61,8 +63,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('w/{workspace}')->scopeBindings()->group(function () {
         Route::get('/', [WorkspaceTaskController::class, 'show'])->name('workspaces.show');
         Route::patch('/', [WorkspaceController::class, 'update'])->name('workspaces.update');
-        Route::get('dokumen', [WorkspaceTabController::class, 'documents'])->name('workspaces.documents');
-        Route::get('file', [WorkspaceTabController::class, 'files'])->name('workspaces.files');
+        Route::get('dokumen', [WorkspaceDocumentController::class, 'index'])->name('workspaces.documents');
+        Route::get('file', [WorkspaceFileController::class, 'index'])->name('workspaces.files');
         Route::get('aktivitas', [WorkspaceTabController::class, 'activity'])->name('workspaces.activity');
         Route::get('pengaturan', [WorkspaceSettingsController::class, 'show'])->name('workspaces.settings');
 

@@ -135,7 +135,8 @@ final class AttendancePresenter
             'methodLabel' => $log->method->label(),
             'location' => $match === null ? null : [
                 'name' => $match->location->name,
-                'distanceM' => $match->roundedDistance(),
+                // Null for a QR scan without GPS.
+                'distanceM' => $log->distance_m === null ? null : (int) round($log->distance_m),
                 'radiusM' => $match->location->radius_m,
                 'inside' => $match->inside,
             ],

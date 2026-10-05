@@ -42,6 +42,13 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Sprint 3: lobby kiosk devices (docs/ARCHITECTURE.md §3.2). A kiosk
+        // session can only open its own kiosk page (RestrictKioskDevice).
+        'kiosk' => [
+            'driver' => 'session',
+            'provider' => 'kiosks',
+        ],
     ],
 
     /*
@@ -65,6 +72,13 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
+        ],
+
+        // Eloquent provider for App\Domain\Attendance\Models\Kiosk, registered in
+        // AppServiceProvider under its own driver name so static analysis keeps
+        // treating `$request->user()` (guard web) as App\Models\User.
+        'kiosks' => [
+            'driver' => 'kiosk-devices',
         ],
 
         // 'users' => [
