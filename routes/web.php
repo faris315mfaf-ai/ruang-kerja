@@ -27,6 +27,7 @@ require __DIR__.'/organization.php';
 require __DIR__.'/workspaces.php';
 require __DIR__.'/drive.php';
 require __DIR__.'/dashboard.php';
+require __DIR__.'/planner.php';
 require __DIR__.'/management.php';
 require __DIR__.'/projects.php';
 require __DIR__.'/privacy.php';

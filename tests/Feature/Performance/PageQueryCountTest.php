@@ -64,6 +64,8 @@ function assertQueryBudgets(array $pages): void
 it('keeps the dashboards and the portfolio free of N+1', function () {
     assertQueryBudgets([
         '/dashboard' => ['anggota', 72],
+        '/dashboard/saya' => ['kadiv', 68],
+        '/ruang-saya' => ['anggota', 14],
         '/dashboard/divisi' => ['kadiv', 80],
         '/dashboard/hr' => ['hr', 76],
         '/portofolio' => ['direksi', 41],

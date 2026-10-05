@@ -7,6 +7,8 @@ use App\Domain\Attendance\Enums\LogFlag;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\AttendanceLog;
 use App\Domain\Notifications\Enums\NotificationType;
+use App\Domain\Planner\Actions\PlanTask;
+use App\Domain\Planner\Enums\PlanBucket;
 use App\Domain\Requests\Actions\SubmitRequest;
 use App\Domain\Requests\Data\RequestInput;
 use App\Domain\Requests\Support\OfficeTime;
@@ -139,6 +141,24 @@ final class PerformanceFixtures
                 'assignee_ids' => array_slice($members, $i % max(1, count($members)), 2),
                 'label_ids' => array_slice($labels, 0, 2),
                 'due_date' => $today->addDays($i - 5)->toDateString(),
+            ]);
+        }
+
+        // Ruang saya: planned personal notes and new assignments for the member.
+        foreach ([$anggota, $kadiv] as $owner) {
+            $personal = Workspace::query()->where('type', 'personal')->where('owner_id', $owner->id)->firstOrFail();
+
+            foreach (range(1, 6) as $i) {
+                $note = app(CreateTask::class)->handle($personal, $owner, ['title' => "Catatan {$round}.{$i}", 'assignee_ids' => [$owner->id]]);
+                app(PlanTask::class)->handle($owner, $note, PlanBucket::cases()[$i % 3]);
+            }
+        }
+
+        foreach (range(1, 4) as $i) {
+            app(CreateTask::class)->handle($ops, $kadiv, [
+                'title' => "Tugas baru {$round}.{$i}",
+                'assignee_ids' => [$anggota->id],
+                'due_date' => $today->addDays($i)->toDateString(),
             ]);
         }
 

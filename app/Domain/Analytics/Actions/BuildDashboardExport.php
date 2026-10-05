@@ -11,6 +11,8 @@ use App\Domain\Analytics\Queries\DivisionDashboard;
 use App\Domain\Analytics\Queries\HrDashboard;
 use App\Domain\Analytics\Queries\PersonalDashboard;
 use App\Domain\Attendance\Support\OfficeClock;
+use App\Domain\Planner\Enums\PlanBucket;
+use App\Domain\Planner\Queries\PersonalPlanner;
 use Carbon\CarbonImmutable;
 
 /**
@@ -27,6 +29,7 @@ final class BuildDashboardExport
         private readonly PersonalDashboard $personal,
         private readonly DivisionDashboard $division,
         private readonly HrDashboard $hr,
+        private readonly PersonalPlanner $planner,
     ) {}
 
     public function handle(DashboardContext $context, CarbonImmutable $now): DashboardExport
@@ -69,10 +72,7 @@ final class BuildDashboardExport
 
         return [
             $this->summary($context, $metrics['period'], $metrics['compared'], $now, $rows),
-            new DashboardSheet('Fokus', ['Tugas', 'Judul', 'Workspace', 'Tenggat', 'Terlambat (hari)'], array_map(
-                fn (array $task): array => [$task['key'], $task['title'], $task['workspace'], $task['due_date'], $task['days_late'] ?: null],
-                $live['focus']['items'],
-            )),
+            $this->plannerSheet($this->planner->for($context->viewer, $now)),
             new DashboardSheet('Kehadiran', ['Tanggal', 'Status', 'Terlambat (menit)'], array_map(
                 fn (array $day): array => [$day['date'], $day['label'], $day['late_minutes'] ?: null],
                 $metrics['attendance']['days']['items'],
@@ -82,6 +82,35 @@ final class BuildDashboardExport
                 $live['requests'],
             )),
         ];
+    }
+
+    /**
+     * "Ruang saya": open tasks per lane (the viewer's own plan), new assignments first.
+     *
+     * @param  array{incoming: list<array<string, mixed>>, lanes: array<string, list<array<string, mixed>>>}  $planner
+     */
+    private function plannerSheet(array $planner): DashboardSheet
+    {
+        $rows = array_map(fn (array $task): array => ['Tugas baru', ...self::plannerTask($task), 'Ditugaskan '.($task['assigned_by'] ?? '')], $planner['incoming']);
+
+        foreach (PlanBucket::cases() as $bucket) {
+            foreach ($planner['lanes'][$bucket->value] as $task) {
+                if ($task['done'] !== true) {
+                    $rows[] = [$bucket->label(), ...self::plannerTask($task), $task['status']['name'] ?? null];
+                }
+            }
+        }
+
+        return new DashboardSheet('Ruang saya', ['Rencana', 'Tugas', 'Judul', 'Workspace', 'Tenggat', 'Terlambat (hari)', 'Status'], $rows);
+    }
+
+    /**
+     * @param  array<string, mixed>  $task
+     * @return list<mixed>
+     */
+    private static function plannerTask(array $task): array
+    {
+        return [$task['key'], $task['title'], $task['workspace']['name'] ?? null, $task['due_date'], $task['days_late'] ?: null];
     }
 
     /**

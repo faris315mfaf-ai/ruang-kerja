@@ -47,17 +47,20 @@ it('shows only my own numbers', function () {
             ->component('dashboard/personal')
             ->where('filters.periode', 'bulan')
             ->where('live.profile', ['position' => null, 'manager' => 'Dimas Pratama'])
-            // Overdue first, then nearest due date; undated last.
-            ->where('live.focus.total', 4)
-            ->where('live.focus.items.0.title', 'Rekap stok')
-            ->where('live.focus.items.0.days_late', 5)
-            ->where('live.focus.items.0.url', '/w/PRJ?q=PRJ-1')
-            ->where('live.focus.items.1.title', 'Hari ini')
-            ->where('live.focus.items.3.title', 'Catatan pribadi')
-            // Week 5–11 Oct, weekdays only: Mon 1 (done), Wed 1, Fri 1.
-            ->where('live.week.total', 3)
-            ->has('live.week.days', 5)
-            ->where('live.week.days.2', ['date' => '2026-10-07', 'weekday' => 'Rab', 'day' => 7, 'count' => 1, 'open' => 1, 'is_today' => true])
+            // Ruang saya (automatic lanes, Wed 7 Oct): overdue + due today → today,
+            // Fri → this week, undated personal note → later; done & others' tasks absent.
+            ->where('planner.today', '2026-10-07')
+            ->where('planner.counts', ['incoming' => 0, 'today' => 2, 'week' => 1, 'later' => 1])
+            ->where('planner.lanes.today.0.title', 'Rekap stok')
+            ->where('planner.lanes.today.0.days_late', 5)
+            ->where('planner.lanes.today.0.url', '/w/PRJ/tasks/1')
+            ->where('planner.lanes.today.1.title', 'Hari ini')
+            ->where('planner.lanes.week.0.title', 'Landing page')
+            ->where('planner.lanes.later.0.title', 'Catatan pribadi')
+            ->where('planner.lanes.later.0.is_personal', true)
+            ->where('planner.progress', ['done' => 0, 'total' => 2])
+            ->missing('live.focus')
+            ->missing('live.week')
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->where('metrics.kpis.open_tasks', ['value' => 4, 'overdue' => 1])
                 // Finished 1–7 Oct: 2 (1–7 Sep: 1).
@@ -71,7 +74,7 @@ it('shows only my own numbers', function () {
                 ->where('metrics.attendance.average_lateness.value', 24)));
 });
 
-it('shows a task assigned a minute ago in "Fokus hari ini" and "Minggu ini" right away', function () {
+it('shows a task assigned a minute ago in Ruang saya right away', function () {
     // Warm the 5-minute metric cache.
     $this->actingAs($this->me)->get('/dashboard')->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload->has('metrics')));
 
@@ -80,10 +83,8 @@ it('shows a task assigned a minute ago in "Fokus hari ini" and "Minggu ini" righ
     $this->travel(1)->minutes();
 
     $this->actingAs($this->me)->get('/dashboard')->assertInertia(fn (Assert $page) => $page
-        ->where('live.focus.total', 5)
-        ->where('live.focus.items.2.title', 'Baru ditugaskan')
-        ->where('live.week.total', 4)
-        ->where('live.week.days.3.count', 1));
+        ->where('planner.counts.week', 2)
+        ->where('planner.lanes.week.0.title', 'Baru ditugaskan'));
 });
 
 it('shows my leave balance and latest requests', function () {

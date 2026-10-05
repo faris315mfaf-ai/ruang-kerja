@@ -14,7 +14,6 @@ use App\Domain\Analytics\MetricDefinitions\LeadTimeMedian;
 use App\Domain\Analytics\MetricDefinitions\OnTimeRate;
 use App\Domain\Analytics\MetricDefinitions\OverdueTasks;
 use App\Domain\Analytics\Services\MetricCache;
-use App\Domain\Analytics\Support\TaskSummary;
 use App\Domain\Attendance\Enums\AttendanceStatus;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Requests\Enums\RequestCategory;
@@ -24,20 +23,17 @@ use App\Domain\Tasks\Enums\TaskStatusCategory;
 use App\Http\Presenters\RequestPresenter;
 use App\Models\EmployeeRequest;
 use App\Models\LeaveType;
-use App\Models\Task;
 use App\Models\User;
 use Carbon\CarbonImmutable;
-use Illuminate\Database\Eloquent\Builder;
 
 /**
- * "Dashboard Saya" (PRD M7, mockups DashboardSaya / MBeranda): my tasks
- * today & this week, overdue, my attendance, leave balance and my requests.
+ * "Dashboard Saya" (PRD M7, mockups DashboardSaya / MBeranda): my task and
+ * attendance metrics, leave balance and my requests (the task lanes are
+ * "Ruang saya", App\Domain\Planner\Queries\PersonalPlanner).
  * Only the signed-in user's own data, so every employee may open it.
  */
 final class PersonalDashboard
 {
-    private const array WEEKDAYS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
-
     public function __construct(
         private readonly MetricCache $cache,
         private readonly RequestPresenter $requests,
@@ -64,16 +60,14 @@ final class PersonalDashboard
     }
 
     /**
-     * Uncached, cheap blocks that must reflect actions immediately — including
-     * "Fokus hari ini" and "Minggu ini" (a task assigned a minute ago shows).
+     * Uncached, cheap blocks that must reflect actions immediately. The task
+     * lists of Beranda are "Ruang saya" (App\Domain\Planner, prop `planner`).
      *
      * @return array<string, mixed>
      */
     public function live(User $user, CarbonImmutable $now): array
     {
         $user->loadMissing(['position:id,name', 'manager:id,name']);
-        $scope = MetricScope::personal($user);
-        $today = Period::officeDate($now);
 
         $requests = EmployeeRequest::query()
             ->ownedBy($user)
@@ -91,8 +85,6 @@ final class PersonalDashboard
             ],
             'leave_balance' => $this->leaveBalance($user, $now),
             'requests' => $requests->map(fn (EmployeeRequest $request): array => $this->requests->item($request))->values()->all(),
-            'focus' => $this->focus($scope, $today),
-            'week' => $this->week($scope, $today),
         ];
     }
 
@@ -140,75 +132,6 @@ final class PersonalDashboard
             ->where('tasks.completed_at', '>=', $period->startUtc()->toIso8601String())
             ->where('tasks.completed_at', '<', $period->endUtc()->toIso8601String())
             ->count());
-    }
-
-    /**
-     * "Fokus hari ini": open tasks, overdue first, then the nearest due date and priority.
-     *
-     * @return array{total: int, items: array<int, array<string, mixed>>}
-     */
-    private function focus(MetricScope $scope, CarbonImmutable $today): array
-    {
-        $tasks = $scope->tasks()
-            ->open()
-            ->with(['workspace:id,key,name'])
-            ->withCount([
-                'checklistItems',
-                'checklistItems as checklist_done_count' => fn (Builder $query) => $query->where('is_done', true),
-            ])
-            ->orderByRaw('tasks.due_date asc nulls last')
-            ->orderByRaw('case when tasks.priority = 0 then 9 else tasks.priority end')
-            ->orderBy('tasks.number')
-            ->limit(5)
-            ->get();
-
-        return [
-            'total' => $scope->tasks()->open()->count(),
-            'items' => $tasks->map(fn (Task $task): array => TaskSummary::from($task, $today))->values()->all(),
-        ];
-    }
-
-    /**
-     * "Minggu ini": tasks due on each day of the current week (not canceled).
-     *
-     * @return array{total: int, days: list<array{date: string, weekday: string, day: int, count: int, open: int, is_today: bool}>}
-     */
-    private function week(MetricScope $scope, CarbonImmutable $today): array
-    {
-        $start = $today->startOfWeek(CarbonImmutable::MONDAY);
-        $rows = $scope->tasks()
-            ->toBase()
-            ->where('tasks.status_category', '!=', TaskStatusCategory::Canceled->value)
-            ->where('tasks.due_date', '>=', $start->toDateString())
-            ->where('tasks.due_date', '<', $start->addWeek()->toDateString())
-            ->selectRaw('tasks.due_date::text as day, count(*) as total')
-            ->selectRaw('count(*) filter (where tasks.status_category <> ?) as open', [TaskStatusCategory::Done->value])
-            ->groupBy('tasks.due_date')
-            ->get()
-            ->keyBy('day');
-
-        $days = [];
-
-        for ($i = 0; $i < 7; $i++) {
-            $date = $start->addDays($i);
-            $row = $rows->get($date->toDateString());
-
-            // Weekends only when something is due.
-            if ($i >= 5 && $row === null) {
-                continue;
-            }
-
-            $days[] = [
-                'date' => $date->toDateString(),
-                'weekday' => self::WEEKDAYS[$i],
-                'day' => $date->day,
-                'count' => (int) ($row->total ?? 0),
-                'open' => (int) ($row->open ?? 0),
-                'is_today' => $date->isSameDay($today),
-            ];
-        }
-
-        return ['total' => array_sum(array_column($days, 'count')), 'days' => $days];
     }
 
     /**

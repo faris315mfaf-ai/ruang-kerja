@@ -41,7 +41,7 @@ it('exports the personal and HR dashboards', function () {
     Excel::fake();
 
     $this->actingAs($this->org['rizky'])->get('/dashboard/saya/ekspor')->assertOk();
-    Excel::assertDownloaded('dashboard-saya-2026-10-07.xlsx', fn (DashboardExport $export): bool => collect($export->sheets())->map->title()->all() === ['Ringkasan', 'Fokus', 'Kehadiran', 'Pengajuan']);
+    Excel::assertDownloaded('dashboard-saya-2026-10-07.xlsx', fn (DashboardExport $export): bool => collect($export->sheets())->map->title()->all() === ['Ringkasan', 'Ruang saya', 'Kehadiran', 'Pengajuan']);
 
     $this->actingAs($this->org['hr'])->get('/dashboard/hr/ekspor')->assertOk();
     Excel::assertDownloaded('dashboard-hr-2026-10-07.xlsx', fn (DashboardExport $export): bool => count($export->sheets()) === 7);
