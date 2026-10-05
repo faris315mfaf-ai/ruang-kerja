@@ -7,6 +7,7 @@ use App\Domain\Organization\Enums\Role;
 use App\Domain\Organization\Enums\WorkMode;
 use App\Domain\Organization\Rules\CompanyEmail;
 use App\Domain\Organization\Rules\ValidManager;
+use App\Domain\Organization\Services\RoleChangeGuard;
 use App\Models\Company;
 use App\Models\User;
 use Closure;
@@ -79,8 +80,8 @@ abstract class EmployeeFormRequest extends FormRequest
             'manager_id' => ['nullable', 'string', new ValidManager($employee, $companyId)],
             'work_mode' => ['required', Rule::enum(WorkMode::class)],
             'joined_at' => ['nullable', 'date_format:Y-m-d'],
-            'roles' => ['required', 'array', 'min:1'],
-            'roles.*' => ['required', 'distinct', Rule::enum(Role::class), $this->superAdminRoleRule($actor)],
+            'roles' => ['required', 'array', 'min:1', $this->roleChangeRule($actor, $employee)],
+            'roles.*' => ['required', 'distinct', Rule::enum(Role::class), $this->grantRoleRule($actor, $employee)],
             'employee_number' => [
                 'nullable', 'string', 'max:30',
                 Rule::unique('employee_profiles', 'employee_number')->ignore($employee?->id, 'user_id'),
@@ -131,13 +132,67 @@ abstract class EmployeeFormRequest extends FormRequest
     }
 
     /**
-     * Friendly validation error before UserPolicy::assignRole would answer 403.
+     * Friendly validation error before UserPolicy::assignRole would answer 403:
+     * only a Super Admin grants super_admin, direksi or hr.
      */
-    private function superAdminRoleRule(User $actor): Closure
+    private function grantRoleRule(User $actor, ?User $employee): Closure
     {
-        return function (string $attribute, mixed $value, Closure $fail) use ($actor): void {
-            if ($value === Role::SuperAdmin->value && ! $actor->isSuperAdmin()) {
-                $fail('Hanya Super Admin yang dapat memberikan peran Super Admin.');
+        return function (string $attribute, mixed $value, Closure $fail) use ($actor, $employee): void {
+            $role = is_string($value) ? Role::tryFrom($value) : null;
+
+            if ($role === null || ! $role->onlySuperAdminAssigns() || $actor->isSuperAdmin()) {
+                return;
+            }
+
+            if ($employee === null || ! in_array($role, RoleChangeGuard::rolesOf($employee), true)) {
+                $fail("Hanya Super Admin yang dapat memberikan peran {$role->label()}.");
+            }
+        };
+    }
+
+    /**
+     * Nobody changes their own roles; only a Super Admin revokes super_admin, direksi or hr.
+     */
+    private function roleChangeRule(User $actor, ?User $employee): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail) use ($actor, $employee): void {
+            if ($employee === null || ! is_array($value)) {
+                return;
+            }
+
+            $after = [];
+
+            foreach ($value as $item) {
+                $role = is_string($item) ? Role::tryFrom($item) : null;
+
+                if ($role !== null) {
+                    $after[] = $role;
+                }
+            }
+
+            $before = RoleChangeGuard::rolesOf($employee);
+            $changed = app(RoleChangeGuard::class)->changed($before, $after);
+
+            if ($changed === []) {
+                return;
+            }
+
+            if ($actor->is($employee)) {
+                $fail('Anda tidak dapat mengubah peran Anda sendiri.');
+
+                return;
+            }
+
+            if ($actor->isSuperAdmin()) {
+                return;
+            }
+
+            foreach ($changed as $role) {
+                if ($role->onlySuperAdminAssigns() && in_array($role, $before, true)) {
+                    $fail("Hanya Super Admin yang dapat mencabut peran {$role->label()}.");
+
+                    return;
+                }
             }
         };
     }

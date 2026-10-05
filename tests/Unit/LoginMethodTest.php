@@ -1,17 +1,30 @@
 <?php
 
 use App\Domain\Auth\Enums\LoginMethod;
+use Illuminate\Http\Request;
 
-it('derives the sign-in method from the route', function (?string $route, bool $remember, LoginMethod $expected) {
-    expect(LoginMethod::fromRoute($route, $remember))->toBe($expected);
+it('resolves the sign-in method from the declaration and remember-me', function (?LoginMethod $declared, bool $viaRemember, LoginMethod $expected) {
+    expect(LoginMethod::resolve($declared, $viaRemember))->toBe($expected);
 })->with([
-    'google callback' => ['auth.google.callback', false, LoginMethod::Google],
-    'password' => ['login.store', false, LoginMethod::Password],
-    'two-factor challenge' => ['two-factor.login.store', false, LoginMethod::Password],
-    'demo' => ['login.demo', false, LoginMethod::Demo],
-    'remember-me recall' => ['dashboard', true, LoginMethod::Remember],
-    'unknown route is treated strictly' => [null, false, LoginMethod::Password],
+    'google callback' => [LoginMethod::Google, false, LoginMethod::Google],
+    'password' => [LoginMethod::Password, false, LoginMethod::Password],
+    'demo' => [LoginMethod::Demo, false, LoginMethod::Demo],
+    'remember-me recall' => [null, true, LoginMethod::Remember],
+    // A recaller restore on the Google callback route must never count as Google.
+    'remember-me recall on the google callback' => [LoginMethod::Google, true, LoginMethod::Remember],
+    'remember-me recall on the demo route' => [LoginMethod::Demo, true, LoginMethod::Remember],
+    'undeclared login is treated strictly' => [null, false, LoginMethod::Password],
 ]);
+
+it('stores the declared method on the request', function () {
+    $request = Request::create('/auth/google/callback');
+
+    expect(LoginMethod::declaredFor($request))->toBeNull();
+
+    LoginMethod::Google->declareFor($request);
+
+    expect(LoginMethod::declaredFor($request))->toBe(LoginMethod::Google);
+});
 
 it('has Indonesian labels', function () {
     expect(LoginMethod::Google->label())->toBe('Google Workspace')

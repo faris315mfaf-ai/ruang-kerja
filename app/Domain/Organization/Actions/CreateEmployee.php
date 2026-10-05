@@ -6,6 +6,7 @@ use App\Domain\Organization\Data\EmployeeData;
 use App\Domain\Organization\Enums\Role;
 use App\Domain\Organization\Enums\UserStatus;
 use App\Domain\Organization\Services\EmployeeProfileWriter;
+use App\Domain\Organization\Services\ManagerHierarchy;
 use App\Domain\Organization\Services\RoleChangeGuard;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,7 @@ final readonly class CreateEmployee
         private SyncUserRoles $syncRoles,
         private RoleChangeGuard $roleGuard,
         private EmployeeProfileWriter $profiles,
+        private ManagerHierarchy $hierarchy,
     ) {}
 
     public function handle(User $actor, EmployeeData $data): User
@@ -39,6 +41,10 @@ final readonly class CreateEmployee
                 'status' => UserStatus::Active,
                 'joined_at' => $data->joinedAt?->toDateString(),
             ]);
+
+            // Same company lock as UpdateEmployee (a brand-new employee has no reports,
+            // so no cycle is possible, but concurrent reporting-line writes serialize).
+            $this->hierarchy->guardChange($employee, null, $data->managerId);
 
             // Company Workspace addresses are owned by the company: no verification mail.
             $employee->forceFill(['email_verified_at' => now()])->saveQuietly();

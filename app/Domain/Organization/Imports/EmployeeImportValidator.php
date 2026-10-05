@@ -313,7 +313,9 @@ final class EmployeeImportValidator
         $target = $existing ?? new User(['company_id' => $actor->company_id]);
 
         if (! $this->roleGuard->allows($actor, $target, $before, $roles)) {
-            $row->fail('Hanya Super Admin yang dapat memberikan atau mencabut peran Super Admin.');
+            $row->fail($actor->is($existing)
+                ? 'Anda tidak dapat mengubah peran Anda sendiri.'
+                : 'Hanya Super Admin yang dapat memberikan atau mencabut peran Super Admin, Direksi, atau HR.');
         }
 
         // Joined date.
@@ -381,6 +383,17 @@ final class EmployeeImportValidator
     }
 
     /**
+     * Whether the row keeps the employee's current manager (an already-inactive
+     * manager must not block unrelated changes).
+     */
+    private function keepsManager(EmployeeImportRow $row, User $manager): bool
+    {
+        $existing = $row->email === null ? null : ($this->users[$row->email] ?? null);
+
+        return $existing !== null && $existing->manager_id === $manager->id;
+    }
+
+    /**
      * Managers must be an active employee or a valid row of the same file, and the
      * resulting reporting graph must stay acyclic. Repeats until stable because a
      * failing manager row invalidates its subordinates.
@@ -428,7 +441,7 @@ final class EmployeeImportValidator
                     $row->fail("Atasan {$managerEmail} ada di baris {$managerRow->row} yang galat.");
                 } elseif ($managerRow === null && ($manager === null || $manager->company_id !== $actor->company_id)) {
                     $row->fail("Atasan {$managerEmail} tidak ditemukan.");
-                } elseif ($managerRow === null && $manager->status !== UserStatus::Active) {
+                } elseif ($managerRow === null && $manager->status !== UserStatus::Active && ! $this->keepsManager($row, $manager)) {
                     $row->fail("Atasan {$managerEmail} tidak aktif.");
                 } elseif ($this->reaches($graph, $managerEmail, $row->email)) {
                     $row->fail('Atasan ini membentuk siklus atasan (bawahan tidak boleh menjadi atasan).');

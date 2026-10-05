@@ -62,7 +62,7 @@ class TeamController extends OrganizationAdminController
     {
         Gate::authorize('update', $team);
 
-        $save->handle($request->payload(), $team);
+        $team = $save->handle($request->payload(), $team);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "{$team->name} disimpan."]);
 

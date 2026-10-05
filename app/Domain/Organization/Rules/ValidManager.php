@@ -9,7 +9,8 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
  * Validates a `manager_id` input: the manager must exist in the same company,
- * be active, and must not create a reporting cycle with $subject.
+ * be active (only checked when the manager changes), and must not create a
+ * reporting cycle with $subject.
  *
  * Usage: 'manager_id' => ['nullable', 'string', new ValidManager($employee, $companyId)]
  * ($employee is null when creating a new employee).
@@ -35,7 +36,10 @@ final readonly class ValidManager implements ValidationRule
             return;
         }
 
-        if (! $manager->isActive()) {
+        // An already-inactive current manager must not block unrelated edits.
+        $unchanged = $this->subject !== null && $this->subject->manager_id === $manager->id;
+
+        if (! $unchanged && ! $manager->isActive()) {
             $fail('Atasan langsung harus karyawan aktif.');
 
             return;

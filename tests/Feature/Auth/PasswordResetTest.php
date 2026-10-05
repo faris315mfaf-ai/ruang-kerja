@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Domain\Organization\Enums\Role;
 use App\Models\User;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -18,6 +20,9 @@ class PasswordResetTest extends TestCase
         parent::setUp();
 
         $this->skipUnlessFortifyHas(Features::resetPasswords());
+
+        // Only Super Admins have password sign-in, so only they get reset links.
+        $this->seed(RoleSeeder::class);
     }
 
     public function test_reset_password_link_screen_can_be_rendered()
@@ -31,7 +36,7 @@ class PasswordResetTest extends TestCase
     {
         Notification::fake();
 
-        $user = User::factory()->create();
+        $user = User::factory()->withRole(Role::SuperAdmin)->create();
 
         $this->post(route('password.email'), ['email' => $user->email]);
 
@@ -42,7 +47,7 @@ class PasswordResetTest extends TestCase
     {
         Notification::fake();
 
-        $user = User::factory()->create();
+        $user = User::factory()->withRole(Role::SuperAdmin)->create();
 
         $this->post(route('password.email'), ['email' => $user->email]);
 
@@ -59,7 +64,7 @@ class PasswordResetTest extends TestCase
     {
         Notification::fake();
 
-        $user = User::factory()->create();
+        $user = User::factory()->withRole(Role::SuperAdmin)->create();
 
         $this->post(route('password.email'), ['email' => $user->email]);
 

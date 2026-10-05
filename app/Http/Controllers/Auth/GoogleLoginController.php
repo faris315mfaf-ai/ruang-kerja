@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Domain\Auth\Actions\AuthenticateGoogleUser;
 use App\Domain\Auth\Data\GoogleProfile;
+use App\Domain\Auth\Enums\LoginMethod;
 use App\Domain\Auth\Exceptions\LoginRejected;
 use App\Domain\Auth\Support\GoogleOAuth;
 use App\Http\Controllers\Controller;
@@ -18,7 +19,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse
 use Throwable;
 
 /**
- * "Masuk dengan Google Workspace" (guest only, rate limited 10/min/IP).
+ * "Masuk dengan Google Workspace" (guest only; the callback is rate limited
+ * 60/min per IP + 10/min per session, see FortifyServiceProvider).
  * Errors go back to the login page under the `google` key; the rejected
  * address is flashed as `google_email` for the error card.
  */
@@ -78,6 +80,7 @@ class GoogleLoginController extends Controller
             return $this->fail($rejected->getMessage(), $rejected->email);
         }
 
+        LoginMethod::Google->declareFor($request);
         Auth::guard('web')->login($user);
 
         $request->session()->regenerate();

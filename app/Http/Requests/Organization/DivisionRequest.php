@@ -52,7 +52,9 @@ class DivisionRequest extends OrganizationRequest
                 $this->noBoardParent(),
                 $this->noCycle($division),
             ],
-            'head_user_id' => ['nullable', 'string', $this->activeEmployee()],
+            // Only a changed head must be active: an already-inactive current head
+            // must not block unrelated edits.
+            'head_user_id' => ['nullable', 'string', ...$this->unlessUnchanged($division?->head_user_id, 'head_user_id')],
         ];
     }
 

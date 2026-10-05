@@ -2,6 +2,7 @@ import { useForm } from '@inertiajs/react';
 import TeamController from '@/actions/App/Http/Controllers/Organization/TeamController';
 import { Input } from '@/components/ui/input';
 import { Field, SelectField } from './fields';
+import { withCurrentPerson } from './person-options';
 import type { OrganizationOptions, TeamRow } from './types';
 import { UnitSheet } from './unit-sheet';
 
@@ -120,7 +121,7 @@ export function TeamSheet({
                     id="team-lead"
                     value={form.data.lead_user_id}
                     onChange={(value) => form.setData('lead_user_id', value)}
-                    options={options.users}
+                    options={withCurrentPerson(options.users, team?.lead)}
                     placeholder="Belum ditentukan"
                     noneLabel="Belum ditentukan"
                     invalid={Boolean(form.errors.lead_user_id)}
