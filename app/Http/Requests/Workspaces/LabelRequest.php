@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Workspaces;
 
 use App\Domain\Tasks\Enums\PaletteColor;
+use App\Http\Requests\Concerns\HidesInvisibleWorkspaces;
 use App\Models\Label;
 use App\Models\Workspace;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -14,10 +15,7 @@ use Illuminate\Validation\Rule;
  */
 class LabelRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
+    use HidesInvisibleWorkspaces;
 
     /**
      * @return array<string, ValidationRule|array<mixed>|string>

@@ -28,7 +28,9 @@ class TaskFormOptionsController extends Controller
         $workspaces = Workspace::query()
             ->joinedBy($user)
             ->notArchived()
-            ->with(['statuses', 'labels'])
+            // Fixed number of queries: own role (policy) and members eager-loaded.
+            ->withMembershipOf($user)
+            ->with(['statuses', 'labels', 'memberships.user:id,name,avatar_url'])
             ->orderBy('name')
             ->get()
             ->filter(fn (Workspace $workspace): bool => $policy->canEditTasks($user, $workspace))

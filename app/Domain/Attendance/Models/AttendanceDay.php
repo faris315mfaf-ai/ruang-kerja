@@ -3,6 +3,7 @@
 namespace App\Domain\Attendance\Models;
 
 use App\Domain\Attendance\Enums\AttendanceStatus;
+use App\Domain\Attendance\Enums\RequestPortion;
 use App\Domain\Organization\Enums\Permission;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -36,6 +37,7 @@ use Illuminate\Support\Carbon;
  * @property int $work_minutes
  * @property int $overtime_minutes
  * @property string|null $request_id
+ * @property RequestPortion|null $request_portion
  * @property bool $is_suspicious
  * @property string|null $note
  * @property Carbon|null $created_at
@@ -48,7 +50,7 @@ use Illuminate\Support\Carbon;
 #[Fillable([
     'user_id', 'work_date', 'shift_id', 'scheduled_start', 'scheduled_end', 'check_in_at', 'check_out_at',
     'check_in_log_id', 'check_out_log_id', 'status', 'late_minutes', 'early_leave_minutes', 'work_minutes',
-    'overtime_minutes', 'request_id', 'is_suspicious', 'note',
+    'overtime_minutes', 'request_id', 'request_portion', 'is_suspicious', 'note',
 ])]
 #[UseFactory(AttendanceDayFactory::class)]
 class AttendanceDay extends Model
@@ -77,6 +79,7 @@ class AttendanceDay extends Model
             'check_in_at' => 'immutable_datetime',
             'check_out_at' => 'immutable_datetime',
             'status' => AttendanceStatus::class,
+            'request_portion' => RequestPortion::class,
             'late_minutes' => 'integer',
             'early_leave_minutes' => 'integer',
             'work_minutes' => 'integer',
@@ -93,6 +96,31 @@ class AttendanceDay extends Model
     public function hasCheckedOut(): bool
     {
         return $this->check_out_at !== null;
+    }
+
+    /**
+     * Linked to an approved absence request (cuti/izin/sakit/dinas).
+     */
+    public function isFromRequest(): bool
+    {
+        return $this->request_id !== null || $this->status->comesFromRequest();
+    }
+
+    /**
+     * An approved request covers this date but the employee is still expected to
+     * work: a half-day leave/permit, or a business trip (checked in remotely).
+     */
+    public function allowsCheckInDespiteRequest(): bool
+    {
+        return $this->status === AttendanceStatus::BusinessTrip || $this->request_portion === RequestPortion::HalfDay;
+    }
+
+    /**
+     * Check-in is refused: a full-day leave, permit or sick day.
+     */
+    public function blocksCheckIn(): bool
+    {
+        return $this->isFromRequest() && ! $this->allowsCheckInDespiteRequest();
     }
 
     /**

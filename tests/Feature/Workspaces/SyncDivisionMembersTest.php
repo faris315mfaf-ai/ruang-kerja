@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Organization\Enums\Role;
+use App\Domain\Workspaces\Actions\CreateWorkspace;
 use App\Domain\Workspaces\Actions\SyncDivisionMembers;
 use App\Domain\Workspaces\Actions\SyncTeamMembers;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
@@ -141,4 +142,45 @@ it('syncs team workspaces with the team and its lead', function () {
 
     $member->update(['team_id' => null]);
     expect($workspace->roleOf($member))->toBeNull();
+});
+
+it('removes a former head who is not a division member once a new head takes over (review #5)', function () {
+    $old = User::factory()->create(); // heads the division from outside it
+    $division = Division::factory()->headedBy($old)->create();
+    $new = User::factory()->inDivision($division)->create();
+    $guest = User::factory()->create();
+    $workspace = divisionWorkspace($division);
+    addMember($workspace, $guest, WorkspaceRole::Admin);
+
+    expect($workspace->memberships()->where('user_id', $old->id)->value('is_synced'))->toBeTrue();
+
+    $division->update(['head_user_id' => $new->id]);
+
+    expect($workspace->fresh()->owner_id)->toBe($new->id)
+        ->and($workspace->roleOf($old))->toBeNull()
+        ->and($workspace->roleOf($new))->toBe(WorkspaceRole::Owner)
+        ->and($workspace->roleOf($guest))->toBe(WorkspaceRole::Admin); // manual member untouched
+});
+
+it('removes the fallback Super Admin owner once the division gets a head (review #5)', function () {
+    $admin = User::factory()->withRole(Role::SuperAdmin)->create();
+    $division = Division::factory()->create();
+    $workspace = app(SyncDivisionMembers::class)->handle($division);
+    expect($workspace?->roleOf($admin))->toBe(WorkspaceRole::Owner);
+
+    $head = User::factory()->inDivision($division)->create();
+    $division->update(['head_user_id' => $head->id]);
+
+    expect($workspace?->roleOf($admin))->toBeNull()
+        ->and($workspace?->roleOf($head))->toBe(WorkspaceRole::Owner);
+});
+
+it('creates synced owner rows only for organization workspaces (review #5)', function () {
+    $owner = User::factory()->create();
+    $team = Team::factory()->create();
+    $teamWorkspace = app(CreateWorkspace::class)->handle($owner, ['type' => WorkspaceType::Team, 'name' => 'Tim Gudang', 'team_id' => $team->id]);
+    $project = app(CreateWorkspace::class)->handle($owner, ['type' => WorkspaceType::Project, 'name' => 'Proyek Q4']);
+
+    expect($teamWorkspace->memberships()->where('user_id', $owner->id)->value('is_synced'))->toBeTrue()
+        ->and($project->memberships()->where('user_id', $owner->id)->value('is_synced'))->toBeFalse();
 });

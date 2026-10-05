@@ -180,6 +180,7 @@ Implementasi: `weekdays` = `smallint[]` NOT NULL default `{}` (CHECK nilai 1–7
 | work_minutes | int | |
 | overtime_minutes | int | dari pengajuan lembur yang disetujui |
 | request_id | FK requests null | jika status berasal dari pengajuan |
+| request_portion | varchar(10) null | `full` · `half_day` (CHECK) — porsi tanggal yang ditutup pengajuan yang disetujui. Setengah hari dan dinas luar (`business_trip`) tetap boleh check-in: status & `request_id` dipertahankan, dinas boleh check-in di luar geofence dengan catatan |
 | is_suspicious | bool | ada log yang ditandai |
 | note | text null | |
 
@@ -259,7 +260,7 @@ Tambahan Sprint 4: `description` null, `max_backdate_days` null (koreksi absensi
 
 ### leave_balances
 `id`, `user_id`, `leave_type_id`, `year`, `entitled_days` numeric(5,1), `carried_over_days`, `used_days`, `pending_days`. Unik `(user_id, leave_type_id, year)`. `pending_days` dipakai agar saldo tidak terpakai dua kali saat pengajuan sedang diproses.
-CHECK: semua kolom ≥ 0 dan `entitled + carried_over − used − pending ≥ 0` (saldo tidak pernah minus). Hanya jenis ber-`annual_quota_days`. Dibuat oleh `requests:generate-balances` (1 Januari) atau saat pertama dipakai.
+CHECK: semua kolom ≥ 0 dan `entitled + carried_over − used − pending ≥ 0` (saldo tidak pernah minus). Hanya jenis ber-`annual_quota_days`. Dibuat oleh `requests:generate-balances` (1 Januari) atau saat pertama dipakai. `generated_at` timestamptz null: kapan carry-over ditetapkan (oleh generator atau HR). Baris yang dibuat saat pertama dipakai (mis. cuti Januari diajukan Desember) tetap null sehingga generator mengisi carry-over-nya tepat sekali; ubahan HR menetapkan `generated_at` sehingga tidak ditimpa.
 
 ### requests — semua jenis pengajuan dalam satu tabel
 | Kolom | Tipe | Keterangan |
@@ -345,7 +346,7 @@ Sprint 9: CHECK `project_status IN (planned, active, on_hold, completed, cancele
 `workspace_id`, `date` (PK gabungan), `scope_count` int (tugas non-batal), `done_count` int, `scope_hours` numeric(10,2) null, `done_hours` numeric(10,2) null (diisi bila ada estimasi), timestamps. CHECK `0 ≤ done_count ≤ scope_count`. Diisi job `TakeProjectProgressSnapshots` harian 23.55 WIB dengan upsert (idempoten) untuk proyek terbuka (planned/active/on_hold, tidak diarsipkan).
 
 ### workspace_members
-`workspace_id`, `user_id` (PK gabungan), `role` (`owner` · `admin` · `member` · `viewer`), `joined_at`, `is_synced` (true bila berasal dari sinkron divisi/tim). Tambahan Sprint 5: `favorited_at` timestamptz null (favorit di sidebar, urut waktu dibintangi). Tambahan Sprint 7 bagian B ("Akses Drive" per anggota, ditulis listener `DrivePermissionsSynced` lewat query builder sehingga `updated_at` tidak berubah): `drive_access` varchar(10) null (peran Drive terakhir yang dikonfirmasi sinkron izin: `writer`/`reader`; status "Tersinkron" bila sama dengan peran saat ini — owner/admin/member → `writer`, viewer → `reader` — selain itu "Menunggu sinkron"), `drive_error` varchar(100) null (alasan Google menolak, mis. `invalidSharingRequest`; status "Gagal sinkron"), `drive_synced_at` timestamptz null. Pemilik workspace pribadi juga punya baris `owner` di sini (memudahkan daftar sidebar & validasi penanggung jawab); aturan "pribadi hanya pemilik" tetap ditegakkan Policy.
+`workspace_id`, `user_id` (PK gabungan), `role` (`owner` · `admin` · `member` · `viewer`), `joined_at`, `is_synced` (true bila berasal dari sinkron divisi/tim; baris pemilik yang dibuat otomatis untuk workspace divisi/tim juga `true`, sehingga mantan pemilik yang bukan lagi kepala/anggota dihapus saat sinkron, anggota manual tidak disentuh). Tambahan Sprint 5: `favorited_at` timestamptz null (favorit di sidebar, urut waktu dibintangi). Tambahan Sprint 7 bagian B ("Akses Drive" per anggota, ditulis listener `DrivePermissionsSynced` lewat query builder sehingga `updated_at` tidak berubah): `drive_access` varchar(10) null (peran Drive terakhir yang dikonfirmasi sinkron izin: `writer`/`reader`; status "Tersinkron" bila sama dengan peran saat ini — owner/admin/member → `writer`, viewer → `reader` — selain itu "Menunggu sinkron"), `drive_error` varchar(100) null (alasan Google menolak, mis. `invalidSharingRequest`; status "Gagal sinkron"), `drive_synced_at` timestamptz null. Pemilik workspace pribadi juga punya baris `owner` di sini (memudahkan daftar sidebar & validasi penanggung jawab); aturan "pribadi hanya pemilik" tetap ditegakkan Policy.
 
 Indeks unik parsial: `workspaces (owner_id) WHERE type = 'personal'` (satu workspace pribadi per user) dan `workspaces (division_id) WHERE type = 'division'` (satu per divisi). Warna (`workspaces.color`, `task_statuses.color`, `labels.color`) disimpan sebagai **nama palet** (`gray`, `slate`, `teal`, `blue`, `green`, `amber`, `orange`, `red`, `violet`, `pink`; `resources/css/palette.css`), bukan hex.
 

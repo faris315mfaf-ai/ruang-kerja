@@ -24,7 +24,10 @@ final class BulkApprove
         $approved = [];
         $failed = [];
 
-        $requests = EmployeeRequest::query()->visibleTo($actor)->whereKey($requestIds)->get()->keyBy('id');
+        // Loaded by id only: whether the actor may decide is ApproveStep's job
+        // (DecisionGuard → ApprovalQueue::canDecide). A role-step approver
+        // without requests.view_all may decide requests outside their scope.
+        $requests = EmployeeRequest::query()->whereKey($requestIds)->get()->keyBy('id');
 
         foreach (array_values(array_unique($requestIds)) as $id) {
             $request = $requests->get($id);

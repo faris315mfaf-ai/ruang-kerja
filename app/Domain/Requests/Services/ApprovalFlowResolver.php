@@ -132,7 +132,7 @@ final class ApprovalFlowResolver
                 $step->approver_type,
                 $step->approver_role,
                 $step->approver_id,
-                $this->approvedIds(array_values($steps->all())),
+                $request->approverIdsOfRound(),
                 $flow->skip_self_approval ?? true,
                 $flow->allow_delegation ?? true,
                 $today,
@@ -140,6 +140,8 @@ final class ApprovalFlowResolver
 
             $step->fill([
                 'status' => $resolved->status,
+                // A role step may move to a fallback role (holders already approved).
+                'approver_role' => $step->approver_type === ApproverType::Role ? $resolved->role : $step->approver_role,
                 // A skipped fixed-person step keeps showing who it was meant for.
                 'approver_id' => $resolved->approver->id ?? ($step->approver_type === ApproverType::User ? $step->approver_id : null),
                 'delegated_from_id' => $resolved->delegatedFrom?->id,
@@ -207,8 +209,10 @@ final class ApprovalFlowResolver
             );
 
             if ($resolved->status === ApprovalStatus::Waiting) {
-                if ($resolved->approver !== null) {
-                    $approved[] = $resolved->approver->id;
+                foreach ([$resolved->approver, $resolved->delegatedFrom] as $person) {
+                    if ($person !== null) {
+                        $approved[] = $person->id;
+                    }
                 }
 
                 $resolved = new PlannedStep(
@@ -253,11 +257,7 @@ final class ApprovalFlowResolver
         $skip = fn (string $note): PlannedStep => new PlannedStep($stepOrder, $type, $role, ApprovalStatus::Skipped, note: $note);
 
         if ($type === ApproverType::Role) {
-            $label = Role::tryFrom((string) $role)?->label() ?? (string) $role;
-
-            return $role !== null && $this->approvers->roleHolders($role, $requester)->exists()
-                ? new PlannedStep($stepOrder, $type, $role, ApprovalStatus::Waiting)
-                : $skip("Tidak ada pemegang peran {$label} selain pemohon.");
+            return $this->resolveRole($requester, $stepOrder, $role, $approvedIds);
         }
 
         $person = $this->approvers->person($type, $userId, $requester);
@@ -291,7 +291,8 @@ final class ApprovalFlowResolver
         if ($allowDelegation) {
             $delegate = $this->approvers->activeDelegate($person, $today);
 
-            if ($delegate !== null && ! $delegate->is($requester)) {
+            // Never to the requester or to someone who already approved this round.
+            if ($delegate !== null && ! $delegate->is($requester) && ! in_array($delegate->id, $approvedIds, true)) {
                 $delegatedFrom = $person;
                 $person = $delegate;
             }
@@ -301,29 +302,50 @@ final class ApprovalFlowResolver
     }
 
     /**
-     * @param  list<RequestApproval>  $steps
-     * @return list<string>
+     * A role step is decided by any holder who has not approved this round yet.
+     * When every holder already approved (e.g. the Kepala Divisi HR approved as
+     * direct manager), the step moves to the next fallback role (HR → Direksi →
+     * Super Admin) so a second person still decides.
+     *
+     * @param  list<string>  $approvedIds
      */
-    private function approvedIds(array $steps): array
+    private function resolveRole(User $requester, int $stepOrder, ?string $role, array $approvedIds): PlannedStep
     {
-        $ids = [];
+        $label = self::roleLabel($role);
 
-        foreach ($steps as $step) {
-            if ($step->status === ApprovalStatus::Approved && $step->approver_id !== null) {
-                $ids[] = $step->approver_id;
-            }
+        if ($role === null || ! $this->approvers->roleHolders($role, $requester)->exists()) {
+            return new PlannedStep($stepOrder, ApproverType::Role, $role, ApprovalStatus::Skipped, note: "Tidak ada pemegang peran {$label} selain pemohon.");
         }
 
-        return $ids;
+        if ($this->approvers->roleHolders($role, $requester)->whereKeyNot($approvedIds)->exists()) {
+            return new PlannedStep($stepOrder, ApproverType::Role, $role, ApprovalStatus::Waiting);
+        }
+
+        $fallback = $this->fallbackRole($requester, $approvedIds, $role);
+
+        return $fallback === null
+            ? new PlannedStep($stepOrder, ApproverType::Role, $role, ApprovalStatus::Skipped, note: "Semua pemegang peran {$label} sudah menyetujui di langkah sebelumnya.")
+            : new PlannedStep($stepOrder, ApproverType::Role, $fallback, ApprovalStatus::Waiting, note: "Pemegang peran {$label} sudah menyetujui di langkah sebelumnya; dialihkan ke ".self::roleLabel($fallback).'.');
     }
 
-    private function fallbackRole(User $requester): ?string
+    private static function roleLabel(?string $role): string
+    {
+        return Role::tryFrom((string) $role)?->label() ?? (string) $role;
+    }
+
+    /**
+     * First fallback role with a holder other than the requester and the people
+     * in $exclude.
+     *
+     * @param  list<string>  $exclude
+     */
+    private function fallbackRole(User $requester, array $exclude = [], ?string $except = null): ?string
     {
         /** @var list<string> $roles */
         $roles = config('requests.fallback_roles', []);
 
         foreach ($roles as $role) {
-            if ($this->approvers->roleHolders($role, $requester)->exists()) {
+            if ($role !== $except && $this->approvers->roleHolders($role, $requester)->whereKeyNot($exclude)->exists()) {
                 return $role;
             }
         }

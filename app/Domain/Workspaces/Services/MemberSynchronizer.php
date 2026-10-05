@@ -12,7 +12,8 @@ use App\Models\WorkspaceMember;
  * organization: adds missing people (is_synced = true), removes synced rows of
  * people who left, never touches manually added members, and keeps role
  * changes made by admins (only ownership is enforced: the owner row follows
- * workspaces.owner_id and a former owner falls back to the synced role).
+ * workspaces.owner_id; a former owner falls back to the synced role while
+ * still in the division/team, and a synced former owner who is not is removed).
  */
 final class MemberSynchronizer
 {
@@ -75,7 +76,7 @@ final class MemberSynchronizer
                 continue;
             }
 
-            // A former owner that is no longer the head keeps access as admin.
+            // A manually added former owner (legacy rows) keeps access as admin.
             if ($row->role === WorkspaceRole::Owner && $userId !== $workspace->owner_id) {
                 $this->setRole($workspace, $userId, WorkspaceRole::Admin);
                 $changed = true;

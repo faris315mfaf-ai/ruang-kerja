@@ -4,6 +4,7 @@ namespace App\Domain\Requests\Actions;
 
 use App\Domain\Organization\Services\AuditLogger;
 use App\Domain\Requests\Data\RequestInput;
+use App\Domain\Requests\Data\RequestPeriod;
 use App\Domain\Requests\Enums\RequestStatus;
 use App\Domain\Requests\Services\ApprovalFlowResolver;
 use App\Domain\Requests\Services\BalanceLedger;
@@ -21,8 +22,10 @@ use Throwable;
 
 /**
  * Sends a request for approval (new, a draft, or a revision → next round):
- * validates period, overlap, attachments and balance; numbers it; reserves the
- * balance (pending); plans the flow and notifies the first approver.
+ * validates period, overlap (inside the transaction under a per-user advisory
+ * lock, so parallel submissions cannot both pass), attachments and balance;
+ * numbers it; reserves the balance (pending); plans the flow and notifies the
+ * first approver.
  */
 final class SubmitRequest
 {
@@ -43,25 +46,16 @@ final class SubmitRequest
         }
 
         $period = $this->writer->period($user, $input);
-
-        $overlap = $this->overlaps->find($user, $input->leaveType->category, $period->startAt, $period->endAt, $existing?->id);
-
-        if ($overlap !== null) {
-            throw ValidationException::withMessages([
-                'start_date' => sprintf(
-                    'Tumpang tindih dengan pengajuan %s (%s, %s).',
-                    $overlap->number ?? 'lain',
-                    $overlap->leaveType->name,
-                    RequestFormatter::period($overlap),
-                ),
-            ]);
-        }
-
         $stored = [];
 
         try {
             /** @var array{0: EmployeeRequest, 1: list<string>, 2: RequestApproval} $result */
             $result = DB::transaction(function () use ($user, $input, $period, $existing, &$stored): array {
+                // One submission per person at a time: two parallel submits cannot
+                // both pass the overlap check (released at commit/rollback).
+                DB::select('select pg_advisory_xact_lock(hashtextextended(?, 0))', ['requests.submit:'.$user->id]);
+                $this->assertNoOverlap($user, $input, $period, $existing);
+
                 $request = $existing === null ? new EmployeeRequest : EmployeeRequest::query()->lockForUpdate()->findOrFail($existing->id);
 
                 if ($request->exists && ! $request->status->isEditable()) {
@@ -105,5 +99,21 @@ final class SubmitRequest
         $this->notifier->awaitingApproval($request, $step);
 
         return $request;
+    }
+
+    private function assertNoOverlap(User $user, RequestInput $input, RequestPeriod $period, ?EmployeeRequest $existing): void
+    {
+        $overlap = $this->overlaps->find($user, $input->leaveType->category, $period->startAt, $period->endAt, $existing?->id);
+
+        if ($overlap !== null) {
+            throw ValidationException::withMessages([
+                'start_date' => sprintf(
+                    'Tumpang tindih dengan pengajuan %s (%s, %s).',
+                    $overlap->number ?? 'lain',
+                    $overlap->leaveType->name,
+                    RequestFormatter::period($overlap),
+                ),
+            ]);
+        }
     }
 }

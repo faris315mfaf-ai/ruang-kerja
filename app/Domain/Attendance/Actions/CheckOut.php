@@ -60,6 +60,10 @@ final class CheckOut
         $openDay = $days->open;
         $schedule = $this->schedules->forDate($user, ScheduleResolver::parseDate($openDay->work_date->toDateString()));
 
+        if ($openDay->status === AttendanceStatus::BusinessTrip) {
+            $schedule = $schedule->asBusinessTrip();
+        }
+
         [$location, $qr, $flags] = $this->presence->verify($user, $schedule, $data, $now);
         $selfiePath = $data instanceof CheckInData ? $this->selfies->store($user, $data->selfie, $now) : null;
 
@@ -72,7 +76,8 @@ final class CheckOut
                 }
 
                 $log = $this->logs->write($user, $day, AttendanceLogType::CheckOut, $data, $location, $flags, $selfiePath, $now, $qr);
-                $earlyMinutes = self::earlyLeaveMinutes($day, $now);
+                // Half-day leave/permit or business trip: the request explains the hours.
+                $earlyMinutes = $day->isFromRequest() ? 0 : self::earlyLeaveMinutes($day, $now);
 
                 $day->fill([
                     'check_out_at' => $now->utc(),

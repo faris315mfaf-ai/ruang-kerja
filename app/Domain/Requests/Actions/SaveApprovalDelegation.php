@@ -38,6 +38,10 @@ final class SaveApprovalDelegation
             throw ValidationException::withMessages(['starts_on' => 'Sudah ada delegasi pada rentang tanggal ini.']);
         }
 
+        if ($this->wouldCycle($delegator->id, $delegate->id, $data['starts_on'], $data['ends_on'])) {
+            throw ValidationException::withMessages(['delegate_id' => "{$delegate->name} sudah mendelegasikan persetujuannya (langsung atau berantai) kepada Anda pada periode ini. Delegasi tidak boleh melingkar."]);
+        }
+
         $delegation = ApprovalDelegation::query()->create([
             'delegator_id' => $delegator->id,
             'delegate_id' => $delegate->id,
@@ -55,5 +59,41 @@ final class SaveApprovalDelegation
         $this->route->handle($delegation);
 
         return $delegation;
+    }
+
+    /**
+     * Whether the delegate already hands approvals back to the delegator, directly
+     * or along a chain, in an overlapping period.
+     */
+    private function wouldCycle(string $delegatorId, string $delegateId, string $startsOn, string $endsOn): bool
+    {
+        $visited = [];
+        $queue = [$delegateId];
+
+        while ($queue !== []) {
+            $current = array_shift($queue);
+
+            if ($current === $delegatorId) {
+                return true;
+            }
+
+            if (isset($visited[$current])) {
+                continue;
+            }
+
+            $visited[$current] = true;
+
+            /** @var list<string> $next */
+            $next = ApprovalDelegation::query()
+                ->where('delegator_id', $current)
+                ->whereDate('starts_on', '<=', $endsOn)
+                ->whereDate('ends_on', '>=', $startsOn)
+                ->pluck('delegate_id')
+                ->all();
+
+            array_push($queue, ...$next);
+        }
+
+        return false;
     }
 }

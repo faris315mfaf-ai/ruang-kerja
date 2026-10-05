@@ -46,7 +46,12 @@ final class CheckIn
         }
 
         $now = CarbonImmutable::now();
-        $schedule = $this->pickSchedule($user, $now);
+        [$schedule, $existing] = $this->pickSchedule($user, $now);
+
+        if ($existing?->status === AttendanceStatus::BusinessTrip) {
+            $schedule = $schedule->asBusinessTrip();
+        }
+
         $opensAt = $schedule->isWorkday() ? $schedule->checkInOpensAt() : null;
 
         if ($opensAt !== null && $now->lt($opensAt)) {
@@ -68,14 +73,17 @@ final class CheckIn
                     throw AttendanceException::alreadyCheckedIn($day->check_in_at);
                 }
 
-                $lateMinutes = self::lateMinutes($schedule, $now);
+                // A half-day leave/permit or business trip keeps its request status
+                // and request_id; the request explains the hours, so never "late".
+                $fromRequest = $day->exists && $day->isFromRequest();
+                $lateMinutes = $fromRequest ? 0 : self::lateMinutes($schedule, $now);
 
                 $day->fill([
                     'shift_id' => $schedule->isWorkday() ? $schedule->shift?->id : null,
                     'scheduled_start' => $schedule->scheduledStart,
                     'scheduled_end' => $schedule->scheduledEnd,
                     'check_in_at' => $now->utc(),
-                    'status' => self::status($schedule, $location, $lateMinutes),
+                    'status' => $fromRequest ? $day->status : self::status($schedule, $location, $lateMinutes),
                     'late_minutes' => $lateMinutes,
                 ]);
                 $day->save();
@@ -107,12 +115,15 @@ final class CheckIn
 
     /**
      * Yesterday's overnight shift while it is still running (unless already
-     * checked in), otherwise today.
+     * checked in), otherwise today — with the existing attendance row, if any.
+     *
+     * @return array{0: DaySchedule, 1: AttendanceDay|null}
      */
-    private function pickSchedule(User $user, CarbonImmutable $now): DaySchedule
+    private function pickSchedule(User $user, CarbonImmutable $now): array
     {
         $candidates = $this->schedules->checkInCandidates($user, $now);
         $last = count($candidates) - 1;
+        $existing = null;
 
         foreach ($candidates as $index => $candidate) {
             $existing = AttendanceDay::query()
@@ -121,15 +132,16 @@ final class CheckIn
                 ->first();
 
             if ($existing === null) {
-                return $candidate;
+                return [$candidate, null];
             }
 
-            if ($existing->status->comesFromRequest()) {
+            // Full-day leave/permit/sick: no check-in. Half days and business trips may.
+            if ($existing->blocksCheckIn()) {
                 throw AttendanceException::dayHasRequest($existing->status);
             }
 
             if ($existing->check_in_at === null) {
-                return $candidate;
+                return [$candidate, $existing];
             }
 
             if ($index === $last) {
@@ -137,7 +149,7 @@ final class CheckIn
             }
         }
 
-        return $candidates[$last];
+        return [$candidates[$last], $existing];
     }
 
     /**

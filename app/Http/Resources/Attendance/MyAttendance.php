@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Attendance;
 
 use App\Domain\Attendance\Data\DaySchedule;
+use App\Domain\Attendance\Enums\AttendanceStatus;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Services\LocationVerifier;
 use App\Domain\Attendance\Services\OpenDayLocator;
@@ -36,6 +37,10 @@ final class MyAttendance
         if ($days->open !== null) {
             $schedule = $this->schedules->forDate($user, ScheduleResolver::parseDate($days->open->work_date->toDateString()));
 
+            if ($days->open->status === AttendanceStatus::BusinessTrip) {
+                $schedule = $schedule->asBusinessTrip();
+            }
+
             return ['action' => 'check_out', 'schedule' => $schedule, 'day' => $days->open];
         }
 
@@ -51,9 +56,10 @@ final class MyAttendance
             $day = $rows->get($candidate->workDateString());
 
             if ($day === null || $day->check_in_at === null) {
-                $action = $day !== null && ($day->status->comesFromRequest() || $day->request_id !== null) ? 'unavailable' : 'check_in';
+                $action = $day !== null && $day->blocksCheckIn() ? 'unavailable' : 'check_in';
+                $schedule = $day?->status === AttendanceStatus::BusinessTrip ? $candidate->asBusinessTrip() : $candidate;
 
-                return ['action' => $action, 'schedule' => $candidate, 'day' => $day];
+                return ['action' => $action, 'schedule' => $schedule, 'day' => $day];
             }
         }
 

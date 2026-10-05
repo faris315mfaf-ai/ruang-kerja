@@ -5,6 +5,7 @@ namespace App\Domain\Requests\Services;
 use App\Domain\Attendance\Actions\CheckOut;
 use App\Domain\Attendance\Data\DaySchedule;
 use App\Domain\Attendance\Enums\AttendanceStatus;
+use App\Domain\Attendance\Enums\RequestPortion;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Services\ScheduleResolver;
 use App\Domain\Organization\Enums\WorkMode;
@@ -18,8 +19,10 @@ use Carbon\CarbonImmutable;
  * Writes approved requests into attendance_days (ARCHITECTURE §3.4).
  *
  * - Absence (cuti/izin/sakit/dinas): every working date gets the category
- *   status + request_id, so closing the day never marks it `absent`. Days the
- *   employee actually checked in on keep their attendance.
+ *   status + request_id + request_portion (full / half_day), so closing the
+ *   day never marks it `absent`. Half days and business trips still allow a
+ *   check-in (the status and request link stay). Days the employee already
+ *   checked in on keep their attendance.
  * - Overtime: overtime_minutes = sum of approved overtime of that work date
  *   (ApprovedOvertime); a day without an attendance row is synced when it is
  *   closed (CloseAttendanceDay).
@@ -43,13 +46,27 @@ final class AttendanceDayEffects implements AttendanceEffects
             return;
         }
 
-        $note = trim($request->leaveType->name.' '.($request->number ?? '').(($request->payload['half_day'] ?? false) ? ' (setengah hari)' : ''));
+        $halfDay = (bool) ($request->payload['half_day'] ?? false);
+        $portion = $halfDay ? RequestPortion::HalfDay : RequestPortion::Full;
+        $note = trim($request->leaveType->name.' '.($request->number ?? '').($halfDay ? ' (setengah hari)' : ''));
 
         foreach ($workDates as $date) {
             $day = $this->lockedDay($request->user_id, $date);
 
             if ($day !== null && $day->check_in_at !== null) {
-                continue; // Came to work after all: attendance wins.
+                // Came to work after all: attendance wins. A half day or a business
+                // trip is still linked to its request; a business trip is shown as
+                // "Dinas", a half day keeps the attendance status (never an absence).
+                if ($halfDay || $status === AttendanceStatus::BusinessTrip) {
+                    $day->fill([
+                        'request_id' => $request->id,
+                        'request_portion' => $portion,
+                        'status' => $status === AttendanceStatus::BusinessTrip ? $status : $day->status,
+                        'note' => trim(($day->note ?? '').' '.$note),
+                    ])->save();
+                }
+
+                continue;
             }
 
             $schedule = $this->schedules->forDate($request->user, ScheduleResolver::parseDate($date));
@@ -58,6 +75,7 @@ final class AttendanceDayEffects implements AttendanceEffects
             $day->fill([
                 'status' => $status,
                 'request_id' => $request->id,
+                'request_portion' => $portion,
                 'shift_id' => $schedule->isWorkday() ? $schedule->shift?->id : null,
                 'scheduled_start' => $schedule->scheduledStart,
                 'scheduled_end' => $schedule->scheduledEnd,
@@ -129,7 +147,17 @@ final class AttendanceDayEffects implements AttendanceEffects
         if ($request->leaveType->category->isAbsence()) {
             // Rows written for the request return to "not closed yet"; the next close-day run re-evaluates them.
             AttendanceDay::query()->where('request_id', $request->id)->whereNull('check_in_at')->delete();
-            AttendanceDay::query()->where('request_id', $request->id)->update(['request_id' => null]);
+
+            // Days worked anyway (half day, business trip) become ordinary attendance.
+            AttendanceDay::query()->where('request_id', $request->id)->get()->each(function (AttendanceDay $day): void {
+                $day->fill([
+                    'request_id' => null,
+                    'request_portion' => null,
+                    'status' => $day->status->comesFromRequest()
+                        ? ($day->late_minutes > 0 ? AttendanceStatus::Late : AttendanceStatus::Present)
+                        : $day->status,
+                ])->save();
+            });
 
             return;
         }
