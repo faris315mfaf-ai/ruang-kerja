@@ -2,16 +2,32 @@
 
 namespace App\Http\Requests\Tasks;
 
+use App\Models\ChecklistItem;
+use App\Models\Task;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Add (POST: title) or change (PATCH: title and/or is_done) a checklist line.
+ * authorize() answers 404 to people who cannot see the task before validating
+ * (write permission is checked in the controller).
  */
 class ChecklistItemRequest extends FormRequest
 {
     public function authorize(): bool
     {
+        $task = $this->route('task');
+        $item = $this->route('item');
+
+        if ($task instanceof Task) {
+            Gate::authorize('view', $task);
+        }
+
+        if ($item instanceof ChecklistItem) {
+            Gate::authorize('view', $item);
+        }
+
         return true;
     }
 
