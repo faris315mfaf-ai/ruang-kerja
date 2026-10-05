@@ -1,6 +1,6 @@
 # Sprint 0–1 — Perbaikan hasil code review
 
-Cabang `fix/sprint-1-review`. Satu commit per temuan (`fix(<area>): ...`), masing-masing dengan test regresi yang **gagal sebelum perbaikan** (diverifikasi dengan menjalankan test baru terhadap kode lama) dan hijau sesudahnya. `main` sudah di-merge ke cabang ini; seluruh pemeriksaan hijau setelah merge.
+Cabang `fix/sprint-1-review`. Satu commit per temuan (`fix(<area>): ...`), masing-masing dengan test regresi yang **gagal sebelum perbaikan** (diverifikasi dengan menjalankan test baru terhadap kode lama) dan hijau sesudahnya. `main` (termasuk Sprint 2, 4, 5, 10) sudah di-merge ke cabang ini; seluruh pemeriksaan hijau setelah merge.
 
 | # | Tingkat | Commit |
 |---|---|---|
@@ -172,7 +172,7 @@ Cabang `fix/sprint-1-review`. Satu commit per temuan (`fix(<area>): ...`), masin
 
 ## Hasil pemeriksaan (setelah merge `main`)
 
-- Pest: **1226 test hijau** (`php artisan test --parallel --processes=4` pada DB test track ini). Catatan: menjalankan `composer test` tanpa batas proses sempat memicu `out of shared memory` di Postgres bersama (beban mesin, bukan kode); dengan 4 proses hijau.
+- Pest: **1320 test hijau** (`php artisan test --parallel --processes=4` pada DB test track ini). Catatan: menjalankan `composer test` tanpa batas proses sempat memicu `out of shared memory` di Postgres bersama (beban mesin, bukan kode); dengan 4 proses hijau.
 - `composer lint` (Pint + Larastan level 8): bersih.
-- `npm run typecheck`, `npm run lint`: bersih. `npm test` (Vitest): 190 test hijau.
+- `npm run typecheck`, `npm run lint`: bersih. `npm test` (Vitest): 198 test hijau.
 - `php artisan migrate:fresh --seed`: sukses.
