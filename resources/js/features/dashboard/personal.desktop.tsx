@@ -1,18 +1,24 @@
 import { Link, usePage } from '@inertiajs/react';
 import { CalendarDays, Plus, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Panel, PanelLink } from '@/components/ui/panel';
 import { useTaskComposer } from '@/features/tasks/form/task-composer';
-import { formatDate, formatNumber } from '@/lib/format';
+import { formatLongDate, formatNumber } from '@/lib/format';
 import { formatShortDate } from '@/lib/requests';
-import type { PersonalProps } from './personal-types';
 import { ComparedNote } from './compared-note';
+import {
+    KpiSkeleton,
+    MetricKpi,
+    PageHeader,
+    PanelHint,
+    PanelSkeleton,
+} from './dashboard-ui';
+import { FilterBar } from './filter-bar';
 import { compared, formatMetric, periodNoun } from './lib';
 import { MyAttendanceCard } from './my-attendance-card';
-import { Panel, PanelSkeleton } from './panel';
 import { AttendanceStrip, FocusList, WeekStrip } from './personal-parts';
+import type { PersonalProps } from './personal-types';
 import { RequestRows } from './request-rows';
-import { StatCard, StatCardSkeleton } from './stat-card';
-import { FilterBar } from './filter-bar';
 import { ViewPicker } from './view-picker';
 
 export function greeting(now: Date = new Date()): string {
@@ -35,34 +41,91 @@ export function greeting(now: Date = new Date()): string {
     return hour < 19 ? 'Selamat sore' : 'Selamat malam';
 }
 
-/** Dashboard Saya, desktop & tablet (mockup DashboardSaya). */
+/** "Staf Data · atasan Dimas Pratama". */
+export function profileLine(profile: PersonalProps['live']['profile']): string {
+    return [
+        profile.position,
+        profile.manager ? `atasan ${profile.manager}` : null,
+    ]
+        .filter(Boolean)
+        .join(' · ');
+}
+
+/** Dashboard Saya, desktop & tablet (design SBeranda). */
 export function PersonalDesktop(props: PersonalProps) {
     const { auth } = usePage().props;
     const composer = useTaskComposer();
     const { metrics, live, definitions, filters } = props;
     const previous = props.filters.period.previous_label;
     const firstName = auth.user?.name.split(' ')[0] ?? '';
+    const open = metrics?.kpis.open_tasks;
 
     return (
-        <div className="mx-auto max-w-[1200px] space-y-5">
-            <header className="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl leading-8 font-semibold text-text">
-                        {greeting()}, {firstName}
-                    </h1>
-                    <p className="text-sm text-text-muted">
-                        {[
-                            formatDate(new Date()),
-                            live.profile.position,
-                            live.profile.manager
-                                ? `atasan langsung ${live.profile.manager}`
-                                : null,
-                        ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                    </p>
-                </div>
-                <div className="flex gap-2">
+        <div className="flex flex-col gap-6">
+            <PageHeader
+                overline={formatLongDate(props.today)}
+                title={`${greeting()}, ${firstName}`}
+                subtitle={profileLine(live.profile) || undefined}
+            >
+                <ViewPicker views={props.views} />
+            </PageHeader>
+
+            <section
+                aria-label="Hari ini"
+                className="flex flex-wrap items-stretch gap-5"
+            >
+                <MyAttendanceCard className="flex-[1.4_1_420px]" />
+                <MetricKpi
+                    href="/pengajuan"
+                    linkLabel="Saldo cuti, buka pengajuan saya"
+                    label="Saldo cuti tahunan"
+                    definition="Sisa cuti tahunan setelah cuti yang disetujui."
+                    value={
+                        live.leave_balance
+                            ? formatNumber(live.leave_balance.remaining)
+                            : '–'
+                    }
+                    suffix={live.leave_balance ? 'hari' : undefined}
+                    note={
+                        live.leave_balance
+                            ? `${live.leave_balance.type.toLowerCase()} · berlaku s.d. 31 Des ${live.leave_balance.year}`
+                            : 'belum ada saldo'
+                    }
+                    className="flex-[1_1_220px]"
+                />
+                {open ? (
+                    <MetricKpi
+                        href="/tugas"
+                        linkLabel="Tugas terbuka, buka tugas saya"
+                        label="Tugas terbuka"
+                        definition="Tugas Anda yang belum Selesai atau Dibatalkan."
+                        value={formatNumber(open.value)}
+                        note={
+                            open.overdue > 0 ? (
+                                <b className="text-danger">
+                                    {open.overdue} terlambat
+                                </b>
+                            ) : (
+                                'tidak ada yang terlambat'
+                            )
+                        }
+                        className="flex-[1_1_220px]"
+                    />
+                ) : (
+                    <KpiSkeleton className="flex-[1_1_220px]" />
+                )}
+            </section>
+
+            <section
+                aria-label="Filter periode"
+                className="flex flex-wrap items-center justify-between gap-3"
+            >
+                <FilterBar
+                    filters={filters}
+                    exportUrl={props.exportUrl}
+                    withScope={false}
+                />
+                <div className="flex flex-wrap gap-2">
                     <Button asChild variant="outline">
                         <Link href="/pengajuan/baru?kategori=leave">
                             <CalendarDays aria-hidden />
@@ -74,147 +137,47 @@ export function PersonalDesktop(props: PersonalProps) {
                         Tugas baru
                     </Button>
                 </div>
-            </header>
+            </section>
 
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <ViewPicker views={props.views} />
-                <FilterBar
-                    filters={filters}
-                    exportUrl={props.exportUrl}
-                    withScope={false}
-                    className="ml-auto"
-                />
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-                <MyAttendanceCard className="md:col-span-2 xl:col-span-2" />
-                {metrics ? (
-                    <>
-                        <StatCard
-                            label="Tugas terbuka"
-                            definition="Tugas Anda yang belum Selesai atau Dibatalkan."
-                            value={formatNumber(metrics.kpis.open_tasks.value)}
-                            caption={
-                                metrics.kpis.open_tasks.overdue > 0 ? (
-                                    <span className="text-danger">
-                                        {metrics.kpis.open_tasks.overdue}{' '}
-                                        terlambat
-                                    </span>
-                                ) : (
-                                    'tidak ada yang terlambat'
-                                )
-                            }
-                        />
-                        <StatCard
-                            label={`Selesai ${periodNoun(filters.period.preset)}`}
-                            definition="Tugas Anda yang masuk kategori Selesai dalam periode, termasuk subtugas."
-                            value={formatNumber(
-                                metrics.kpis.completed.value ?? 0,
-                            )}
-                            delta={compared(
-                                metrics.kpis.completed,
-                                'count',
-                                previous,
-                            )}
-                            caption={`sejak ${formatShortDate(metrics.compared.current.from)}`}
-                        />
-                        <StatCard
-                            label="Ketepatan waktu saya"
-                            definition={definitions.on_time_rate}
-                            value={formatMetric(
-                                metrics.kpis.on_time_rate.value,
-                                'percent',
-                            )}
-                            delta={compared(
-                                metrics.kpis.on_time_rate,
-                                'percent',
-                                previous,
-                            )}
-                            caption={
-                                metrics.kpis.on_time_rate.denominator > 0
-                                    ? `${metrics.kpis.on_time_rate.numerator} dari ${metrics.kpis.on_time_rate.denominator} tepat tenggat`
-                                    : 'belum ada tugas bertenggat yang selesai'
-                            }
-                        />
-                        <StatCard
-                            label="Saldo cuti"
-                            definition="Sisa cuti tahunan setelah cuti yang disetujui."
-                            value={
-                                live.leave_balance
-                                    ? formatNumber(live.leave_balance.remaining)
-                                    : '–'
-                            }
-                            suffix={live.leave_balance ? 'hari' : undefined}
-                            caption={
-                                live.leave_balance
-                                    ? `${live.leave_balance.type.toLowerCase()} · berlaku s.d. 31 Des`
-                                    : 'belum ada saldo'
-                            }
-                        />
-                    </>
-                ) : (
-                    Array.from({ length: 4 }, (_, index) => (
-                        <StatCardSkeleton key={index} />
-                    ))
-                )}
-            </div>
-
-            {metrics && <ComparedNote compared={metrics.compared} />}
-
-            <div className="grid gap-4 xl:grid-cols-12">
-                <Panel
-                    id="focus"
-                    title="Fokus hari ini"
-                    aside="terlambat dulu, lalu tenggat terdekat"
-                    className="xl:col-span-7"
-                    flush
-                >
-                    <FocusList items={live.focus.items} today={props.today} />
-                    {live.focus.total > 0 && (
-                        <Link
-                            href="/tugas"
-                            className="mx-4 mt-2 inline-flex min-h-9 items-center text-[13px] text-primary hover:underline"
-                        >
-                            Lihat {live.focus.total} tugas terbuka →
-                        </Link>
-                    )}
-                </Panel>
-                <Panel
-                    id="week"
-                    title="Minggu ini"
-                    aside={`${live.week.total} tugas bertenggat`}
-                    className="xl:col-span-5"
-                >
-                    <WeekStrip week={live.week} />
-                </Panel>
-            </div>
-
-            <div className="grid gap-4 xl:grid-cols-2">
-                <Panel
-                    id="my-requests"
-                    title="Pengajuan saya"
-                    aside={
-                        <Link
-                            href="/pengajuan"
-                            className="text-primary hover:underline"
-                        >
-                            Semua pengajuan →
-                        </Link>
-                    }
-                    flush
-                >
-                    <RequestRows items={live.requests} />
-                </Panel>
-                {metrics ? (
-                    <Panel
-                        id="my-attendance-period"
-                        title={<>Kehadiran {metrics.compared.current.label}</>}
-                        aside={`${metrics.attendance.days.workdays} hari kerja`}
-                    >
-                        <AttendanceStrip days={metrics.attendance.days} />
-                        <div className="mt-4 grid grid-cols-2 gap-3">
-                            <StatCard
-                                compact
+            <section
+                aria-label="Kinerja periode"
+                className="flex flex-col gap-3"
+            >
+                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                    {metrics ? (
+                        <>
+                            <MetricKpi
+                                label={`Selesai ${periodNoun(filters.period.preset)}`}
+                                definition="Tugas Anda yang masuk kategori Selesai dalam periode, termasuk subtugas."
+                                value={formatNumber(
+                                    metrics.kpis.completed.value ?? 0,
+                                )}
+                                delta={compared(
+                                    metrics.kpis.completed,
+                                    'count',
+                                    previous,
+                                )}
+                                note={`sejak ${formatShortDate(metrics.compared.current.from)}`}
+                            />
+                            <MetricKpi
+                                label="Ketepatan waktu saya"
+                                definition={definitions.on_time_rate}
+                                value={formatMetric(
+                                    metrics.kpis.on_time_rate.value,
+                                    'percent',
+                                )}
+                                delta={compared(
+                                    metrics.kpis.on_time_rate,
+                                    'percent',
+                                    previous,
+                                )}
+                                note={
+                                    metrics.kpis.on_time_rate.denominator > 0
+                                        ? `${metrics.kpis.on_time_rate.numerator} dari ${metrics.kpis.on_time_rate.denominator} tepat tenggat`
+                                        : 'belum ada tugas bertenggat yang selesai'
+                                }
+                            />
+                            <MetricKpi
                                 label="Kedisiplinan hadir"
                                 definition={definitions.attendance_discipline}
                                 value={formatMetric(
@@ -228,8 +191,7 @@ export function PersonalDesktop(props: PersonalProps) {
                                     previous,
                                 )}
                             />
-                            <StatCard
-                                compact
+                            <MetricKpi
                                 label="Rata-rata terlambat"
                                 definition={definitions.average_lateness}
                                 value={formatMetric(
@@ -243,15 +205,84 @@ export function PersonalDesktop(props: PersonalProps) {
                                     'lower',
                                 )}
                             />
+                        </>
+                    ) : (
+                        Array.from({ length: 4 }, (_, index) => (
+                            <KpiSkeleton key={index} />
+                        ))
+                    )}
+                </div>
+                {metrics && <ComparedNote compared={metrics.compared} />}
+            </section>
+
+            <section className="flex flex-wrap items-start gap-5">
+                <div className="flex min-w-0 flex-[2_1_620px] flex-col gap-5">
+                    <Panel
+                        title="Fokus hari ini"
+                        action={
+                            <PanelLink
+                                href="/tugas"
+                                label={`Semua tugas (${live.focus.total} terbuka)`}
+                            >
+                                Semua tugas
+                            </PanelLink>
+                        }
+                        flush
+                        className="pb-2"
+                    >
+                        <FocusList
+                            items={live.focus.items}
+                            today={props.today}
+                        />
+                    </Panel>
+                    <Panel
+                        title="Minggu ini"
+                        action={
+                            <PanelHint>
+                                {live.week.total} tugas bertenggat
+                            </PanelHint>
+                        }
+                    >
+                        <WeekStrip week={live.week} />
+                    </Panel>
+                </div>
+
+                <div className="flex min-w-0 flex-[1_1_360px] flex-col gap-5">
+                    <Panel
+                        title="Pengajuan saya"
+                        action={
+                            <PanelLink href="/pengajuan/baru">Ajukan</PanelLink>
+                        }
+                        flush
+                        className="pb-3"
+                    >
+                        <RequestRows items={live.requests} />
+                        <div className="border-t border-divider px-6 pt-3 md:px-7">
+                            <PanelLink href="/pengajuan">
+                                Riwayat pengajuan
+                            </PanelLink>
                         </div>
                     </Panel>
-                ) : (
-                    <PanelSkeleton />
-                )}
-            </div>
+                    {metrics ? (
+                        <Panel
+                            title={`Kehadiran ${metrics.compared.current.label}`}
+                            action={
+                                <PanelHint>
+                                    {metrics.attendance.days.workdays} hari
+                                    kerja
+                                </PanelHint>
+                            }
+                        >
+                            <AttendanceStrip days={metrics.attendance.days} />
+                        </Panel>
+                    ) : (
+                        <PanelSkeleton title="Kehadiran" rows={3} />
+                    )}
+                </div>
+            </section>
 
-            <p className="flex items-center gap-2 text-[13px] text-text-muted">
-                <ShieldCheck className="size-4" aria-hidden />
+            <p className="flex items-center gap-2 text-meta text-text-muted">
+                <ShieldCheck className="size-4 shrink-0" aria-hidden />
                 Data ini hanya terlihat oleh Anda, atasan langsung, dan HR.
             </p>
         </div>
