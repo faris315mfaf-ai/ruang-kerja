@@ -74,7 +74,7 @@ export function DocList({ documents, groups, currentSlug, variant }: Props) {
                                                 aria-current={
                                                     active ? 'page' : undefined
                                                 }
-                                                title={doc.path}
+                                                title={`${doc.title} · ${doc.path}`}
                                                 className={cn(
                                                     'flex items-center gap-2 text-text transition-colors duration-150 ease-brand',
                                                     mobile
@@ -93,7 +93,14 @@ export function DocList({ documents, groups, currentSlug, variant }: Props) {
                                                             : 'text-text-subtle',
                                                     )}
                                                 />
-                                                <span className="min-w-0 flex-1 truncate">
+                                                <span
+                                                    className={cn(
+                                                        'min-w-0 flex-1',
+                                                        mobile
+                                                            ? 'line-clamp-2'
+                                                            : 'truncate',
+                                                    )}
+                                                >
                                                     {doc.title}
                                                 </span>
                                                 {mobile && (

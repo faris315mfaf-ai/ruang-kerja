@@ -23,10 +23,8 @@ export default function KioskUnpaired() {
             return;
         }
 
-        form.post(activateRoutes.code.url(), {
-            preserveScroll: true,
-            onError: () => form.setData('code', ''),
-        });
+        // The typed code stays on errors so a single typo can be fixed.
+        form.post(activateRoutes.code.url(), { preserveScroll: true });
     };
 
     return (

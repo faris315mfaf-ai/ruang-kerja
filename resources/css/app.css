@@ -441,6 +441,13 @@
         font-weight: 600;
         color: var(--text);
     }
+
+    /* Phones: keep table columns readable and scroll the table instead. */
+    @media (max-width: 767px) {
+        .doc-prose :is(th, td) {
+            min-width: 8.5rem;
+        }
+    }
 }
 
 /*
