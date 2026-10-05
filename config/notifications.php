@@ -100,6 +100,12 @@ return [
             PendingApprovalsSection::class,
             InboxActionSection::class,
         ],
+        // Notification types the generic "Perlu tindakan di Inbox" section
+        // leaves out because a richer section above already lists them
+        // (approvals waiting for the user → PendingApprovalsSection).
+        'inbox_section_excludes' => [
+            'request.submitted',
+        ],
     ],
 
 ];
