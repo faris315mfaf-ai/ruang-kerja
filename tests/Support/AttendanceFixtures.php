@@ -135,6 +135,30 @@ final class AttendanceFixtures
     }
 
     /**
+     * POST a scanned kiosk QR payload as the user (GPS ~33 m from the office
+     * unless overridden; pass latitude/longitude null to omit it).
+     *
+     * @param  array<string, mixed>  $fields
+     * @return TestResponse<Response>
+     */
+    public static function scanQr(User $user, string $payload, array $fields = [], string $type = 'in'): TestResponse
+    {
+        $data = array_filter([
+            'payload' => $payload,
+            'latitude' => self::OFFICE_LAT + 0.0003,
+            'longitude' => self::OFFICE_LNG,
+            'accuracy' => 12,
+            'client_time' => now()->toIso8601String(),
+            'device_id' => 'device-1',
+            ...$fields,
+        ], fn (mixed $value): bool => $value !== null);
+
+        return test()->actingAs($user)
+            ->withHeader('Accept', 'application/json')
+            ->post(route($type === 'in' ? 'attendance.check-in.qr' : 'attendance.check-out.qr'), $data);
+    }
+
+    /**
      * Office time "2026-10-05 08:00" → instant.
      */
     public static function at(string $officeTime): CarbonImmutable

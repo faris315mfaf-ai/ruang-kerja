@@ -31,11 +31,34 @@ return [
         // The client compresses to ≤ 300 KB; the server accepts a little headroom.
         'max_kilobytes' => 600,
 
-        // Retention before automatic deletion (job lands in Sprint 3).
+        // Retention before automatic deletion (monthly attendance:purge-selfies).
         'retention_months' => (int) env('ATTENDANCE_SELFIE_RETENTION_MONTHS', 12),
 
         // Mean luminance (0–255) below which a selfie is flagged as dark/empty.
         'dark_threshold' => 28,
+    ],
+
+    /*
+    | Dynamic QR code on lobby kiosks (docs/ARCHITECTURE.md §3.2).
+    | Code = HMAC-SHA256(secret, "{location_id}|{window}") with
+    | window = floor(unix time / window_seconds). The server accepts the current
+    | window ± tolerance_windows. An empty secret is derived from APP_KEY; set
+    | ATTENDANCE_QR_SECRET in production so rotating APP_KEY does not matter.
+    */
+    'qr' => [
+        'secret' => env('ATTENDANCE_QR_SECRET'),
+        'window_seconds' => 30,
+        'tolerance_windows' => 1,
+        'scheme' => 'ruangkerja://checkin',
+
+        // Displayed codes nobody scanned are pruned after this many days.
+        'prune_after_days' => 2,
+
+        // Kiosk activation links are single-use and expire after this many hours.
+        'activation_ttl_hours' => 24,
+
+        // "Baru saja check-in" on the kiosk screen.
+        'recent_check_ins' => 5,
     ],
 
     'geofence' => [

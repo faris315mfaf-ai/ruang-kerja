@@ -4,6 +4,7 @@ namespace App\Domain\Attendance\Actions;
 
 use App\Domain\Attendance\Data\AttendanceResult;
 use App\Domain\Attendance\Data\CheckInData;
+use App\Domain\Attendance\Data\QrCheckInData;
 use App\Domain\Attendance\Enums\AttendanceLogType;
 use App\Domain\Attendance\Enums\AttendanceStatus;
 use App\Domain\Attendance\Events\AttendanceRecorded;
@@ -12,9 +13,8 @@ use App\Domain\Attendance\Models\AttendanceConsent;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\Shift;
 use App\Domain\Attendance\Services\AttendanceLogWriter;
-use App\Domain\Attendance\Services\FraudDetector;
-use App\Domain\Attendance\Services\LocationVerifier;
 use App\Domain\Attendance\Services\OpenDayLocator;
+use App\Domain\Attendance\Services\PresenceVerifier;
 use App\Domain\Attendance\Services\ScheduleResolver;
 use App\Domain\Attendance\Services\SelfieStorage;
 use App\Models\User;
@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 
 /**
- * GPS + selfie check-out of the open day (today, or yesterday's overnight /
+ * GPS + selfie or kiosk QR check-out of the open day (today, or yesterday's overnight /
  * overtime day while it is still within the check-out grace period).
  */
 final class CheckOut
@@ -36,14 +36,13 @@ final class CheckOut
 
     public function __construct(
         private readonly ScheduleResolver $schedules,
-        private readonly LocationVerifier $locations,
-        private readonly FraudDetector $fraud,
+        private readonly PresenceVerifier $presence,
         private readonly SelfieStorage $selfies,
         private readonly AttendanceLogWriter $logs,
         private readonly OpenDayLocator $openDays,
     ) {}
 
-    public function handle(User $user, CheckInData $data): AttendanceResult
+    public function handle(User $user, CheckInData|QrCheckInData $data): AttendanceResult
     {
         if (! AttendanceConsent::hasCurrentConsent($user)) {
             throw AttendanceException::consentRequired();
@@ -61,19 +60,18 @@ final class CheckOut
         $openDay = $days->open;
         $schedule = $this->schedules->forDate($user, ScheduleResolver::parseDate($openDay->work_date->toDateString()));
 
-        $location = $this->locations->verify($user, $schedule, $data);
-        $flags = $this->fraud->detect($user, $data, $now);
-        $selfiePath = $this->selfies->store($user, $data->selfie, $now);
+        [$location, $qr, $flags] = $this->presence->verify($user, $schedule, $data, $now);
+        $selfiePath = $data instanceof CheckInData ? $this->selfies->store($user, $data->selfie, $now) : null;
 
         try {
-            [$day, $log] = DB::transaction(function () use ($user, $data, $openDay, $location, $flags, $selfiePath, $now): array {
+            [$day, $log] = DB::transaction(function () use ($user, $data, $openDay, $location, $qr, $flags, $selfiePath, $now): array {
                 $day = AttendanceDay::query()->whereKey($openDay->id)->lockForUpdate()->firstOrFail();
 
                 if ($day->check_out_at !== null) {
                     throw AttendanceException::alreadyCheckedOut($day->check_out_at);
                 }
 
-                $log = $this->logs->write($user, $day, AttendanceLogType::CheckOut, $data, $location, $flags, $selfiePath, $now);
+                $log = $this->logs->write($user, $day, AttendanceLogType::CheckOut, $data, $location, $flags, $selfiePath, $now, $qr);
                 $earlyMinutes = self::earlyLeaveMinutes($day, $now);
 
                 $day->fill([
@@ -93,7 +91,7 @@ final class CheckOut
                 return [$day, $log];
             });
         } catch (Throwable $exception) {
-            $this->selfies->delete($selfiePath);
+            $this->deleteSelfie($selfiePath);
 
             throw $exception;
         }
@@ -134,5 +132,12 @@ final class CheckOut
         }
 
         return max(0, $span - $break);
+    }
+
+    private function deleteSelfie(?string $path): void
+    {
+        if ($path !== null) {
+            $this->selfies->delete($path);
+        }
     }
 }
