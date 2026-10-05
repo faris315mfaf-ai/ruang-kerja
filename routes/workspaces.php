@@ -13,6 +13,7 @@ use App\Http\Controllers\Workspaces\WorkspaceMemberController;
 use App\Http\Controllers\Workspaces\WorkspaceSettingsController;
 use App\Http\Controllers\Workspaces\WorkspaceTabController;
 use App\Http\Controllers\Workspaces\WorkspaceTaskController;
+use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Route;
@@ -23,13 +24,15 @@ use Illuminate\Support\Facades\Route;
 | resolves (broadcast channel `workspace.{id}`).
 */
 Route::bind('workspace', function (string $value): Workspace {
+    $request = request();
+    $user = $request->user();
+    $companyId = $user instanceof User ? $user->company_id : null;
+
     $workspace = strlen($value) === 26
         ? Workspace::query()->find(strtolower($value))
-        : Workspace::findByKey($value);
+        : Workspace::findByKey($value, $companyId);
 
     abort_if($workspace === null, 404);
-
-    $request = request();
 
     // Old or lower-case key in a page URL → canonical /w/{KEY}.
     if (strlen($value) !== 26 && $value !== $workspace->key && $request->isMethod('GET')) {

@@ -133,15 +133,21 @@ class Workspace extends Model
     }
 
     /**
-     * Resolves a workspace by its key (case-insensitive). Falls back to keys used
-     * before a rename; callers redirect to the current key in that case.
+     * Resolves a workspace of one company by its key (case-insensitive; keys
+     * are unique per company only). Falls back to keys used before a rename;
+     * callers redirect to the current key in that case.
      */
-    public static function findByKey(string $key): ?self
+    public static function findByKey(string $key, ?string $companyId): ?self
     {
-        $key = mb_strtoupper(trim($key));
+        if ($companyId === null) {
+            return null;
+        }
 
-        return static::query()->where('key', $key)->first()
-            ?? static::query()->whereJsonContains('previous_keys', $key)->first();
+        $key = mb_strtoupper(trim($key));
+        $inCompany = fn () => static::query()->where('company_id', $companyId);
+
+        return $inCompany()->where('key', $key)->first()
+            ?? $inCompany()->whereJsonContains('previous_keys', $key)->orderByDesc('updated_at')->first();
     }
 
     /**
