@@ -46,7 +46,7 @@ class UserFactory extends Factory
             // Fixed past range (not relative to the real clock): tests that travel in
             // time never meet an employee who joined "later" or mid-year by chance
             // (leave proration, close-day before joining).
-            'joined_at' => fake()->dateTimeBetween('2019-01-01', '2025-06-30')->format('Y-m-d'),
+            'joined_at' => fake()->dateTimeBetween('2021-07-01', '2025-06-30')->format('Y-m-d'),
         ];
     }
 

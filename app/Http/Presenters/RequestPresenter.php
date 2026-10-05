@@ -123,18 +123,27 @@ final class RequestPresenter
             ? $this->colleagues->around($request->user, $request->start_at, $request->end_at, $request->id)
             : null;
 
+        // Substitute approvers of a sick request: dates, duration and status only.
+        $health = Gate::forUser($viewer)->allows('viewHealthDetails', $request);
+        $item = $this->item($request);
+
+        if (! $health && is_array($item['decision_note'])) {
+            $item['decision_note']['note'] = null;
+        }
+
         return [
-            ...$this->item($request),
-            'reason' => $request->reason,
+            ...$item,
+            'reason' => $health ? $request->reason : '',
+            'health_details_hidden' => ! $health,
             'substitute' => $request->substitute === null ? null : self::person($request->substitute),
-            'attachments' => $request->attachments->map(fn (Attachment $attachment): array => [
+            'attachments' => ! $health ? [] : $request->attachments->map(fn (Attachment $attachment): array => [
                 'id' => $attachment->id,
                 'filename' => $attachment->filename,
                 'mime_type' => $attachment->mime_type,
                 'size_bytes' => $attachment->size_bytes ?? 0,
                 'url' => route('requests.attachment', ['employeeRequest' => $request->id, 'attachment' => $attachment->id]),
             ])->values()->all(),
-            'timeline' => $this->timeline($request),
+            'timeline' => $this->timeline($request, $health ? null : $viewer),
             'balance' => $this->balanceImpact($request),
             'colleagues' => $colleagues === null || $colleagues['people'] === [] ? null : $colleagues,
             'can' => [
@@ -147,10 +156,12 @@ final class RequestPresenter
 
     /**
      * Steps of the current round (+ decided steps of earlier rounds as history).
+     * With $restrictedFor (substitute approver of a sick request) other people's
+     * decision notes are left out: they may describe the illness.
      *
      * @return list<array<string, mixed>>
      */
-    public function timeline(EmployeeRequest $request): array
+    public function timeline(EmployeeRequest $request, ?User $restrictedFor = null): array
     {
         return array_values($request->approvals
             ->filter(fn (RequestApproval $step): bool => $step->round === $request->round || $step->status->isDecision())
@@ -166,7 +177,7 @@ final class RequestPresenter
                 'status_label' => $step->status->label(),
                 'approver' => $step->approver === null ? null : self::person($step->approver),
                 'delegated_from' => $step->delegatedFrom === null ? null : self::person($step->delegatedFrom),
-                'note' => $step->note,
+                'note' => $restrictedFor !== null && $step->status->isDecision() && $step->approver_id !== $restrictedFor->id ? null : $step->note,
                 'activated_at' => $step->activated_at?->toIso8601String(),
                 'decided_at' => $step->decided_at?->toIso8601String(),
             ])

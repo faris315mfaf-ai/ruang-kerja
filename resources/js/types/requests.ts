@@ -155,6 +155,8 @@ export type RequestAttachment = {
 
 export type RequestDetail = RequestItem & {
     reason: string;
+    /** Sick request seen by a substitute approver: reason & attachments withheld. */
+    health_details_hidden?: boolean;
     substitute: Person | null;
     attachments: RequestAttachment[];
     timeline: TimelineStep[];

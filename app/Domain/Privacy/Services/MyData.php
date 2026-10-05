@@ -153,7 +153,7 @@ final class MyData
     {
         $query = EmployeeRequest::query()->ownedBy($user);
         $requests = (clone $query)
-            ->with('leaveType:id,name,category')
+            ->with('leaveType:id,name,category,counts_calendar_days')
             ->latest('created_at')
             ->when($limit !== null, fn (Builder $q) => $q->limit((int) $limit))
             ->get();
@@ -184,7 +184,7 @@ final class MyData
     {
         $query = $this->queue->decidedBy($user);
         $steps = (clone $query)
-            ->with(['request:id,number,user_id,leave_type_id,start_at,end_at,days,minutes,payload', 'request.user:id,name', 'request.leaveType:id,name,category'])
+            ->with(['request:id,number,user_id,leave_type_id,start_at,end_at,days,minutes,payload', 'request.user:id,name', 'request.leaveType:id,name,category,counts_calendar_days'])
             ->when($limit !== null, fn (Builder $q) => $q->limit((int) $limit))
             ->get();
 

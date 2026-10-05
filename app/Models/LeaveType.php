@@ -117,7 +117,8 @@ class LeaveType extends Model
      */
     public function dayUnit(): string
     {
-        if ($this->counts_calendar_days) {
+        // Tolerates partial selects (`leaveType:id,name,category`) instead of failing.
+        if (array_key_exists('counts_calendar_days', $this->attributes) && $this->counts_calendar_days) {
             return 'hari kalender';
         }
 
