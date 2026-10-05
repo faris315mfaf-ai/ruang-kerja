@@ -202,3 +202,25 @@ export function dueGroup(due: string | null, today: string): DueGroup {
 
     return state;
 }
+
+/**
+ * "Selesai 28 Sep · tepat waktu" / "Selesai 1 Okt · telat 1 hari" (DBoard,
+ * closed cards). `completedAt` is an ISO timestamp, compared in office time.
+ */
+export function formatCompletion(
+    completedAt: string,
+    due: string | null,
+): { text: string; late: boolean } {
+    const day = officeToday(new Date(completedAt));
+    const base = `Selesai ${formatDayMonth(day)}`;
+
+    if (!due) {
+        return { text: base, late: false };
+    }
+
+    const late = diffDays(due, day);
+
+    return late > 0
+        ? { text: `${base} · telat ${late} hari`, late: true }
+        : { text: `${base} · tepat waktu`, late: false };
+}

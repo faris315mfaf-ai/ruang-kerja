@@ -7,6 +7,7 @@ import { KanbanBoard } from '@/features/tasks/board/kanban-board';
 import { MobileBoard } from '@/features/tasks/board/mobile-board';
 import { TaskCalendar } from '@/features/tasks/calendar/task-calendar';
 import { FilterMenu } from '@/features/tasks/filters/filter-menu';
+import { toolbarControl } from '@/features/tasks/lib/toolbar';
 import { FilterSheet } from '@/features/tasks/filters/filter-sheet';
 import {
     TaskComposerProvider,
@@ -41,7 +42,7 @@ import type { WorkspacePageProps } from '@/features/workspaces/types';
 import { WorkspaceShell } from '@/features/workspaces/workspace-shell';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { formatNumber } from '@/lib/format';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { update as updateTask } from '@/routes/tasks';
 import { show } from '@/routes/workspaces';
 
@@ -93,7 +94,7 @@ function ViewSwitch({
         <nav
             aria-label="Tampilan"
             className={cn(
-                'inline-flex rounded-lg border border-border bg-surface p-0.5',
+                'inline-flex gap-1 rounded-[14px] border border-border bg-surface/70 p-1',
                 mobile && 'flex-1',
             )}
         >
@@ -104,16 +105,15 @@ function ViewSwitch({
                     preserveScroll
                     aria-current={view === current ? 'page' : undefined}
                     className={cn(
-                        'flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                        mobile
-                            ? 'h-10 flex-1 text-[15px]'
-                            : 'h-7 px-3 text-[13px]',
+                        'flex items-center justify-center gap-1.5 rounded-[10px] text-[15px] font-semibold whitespace-nowrap transition-[color,background-color,box-shadow] duration-120 ease-brand',
+                        focusRing,
+                        mobile ? 'h-[38px] flex-1' : 'h-[34px] px-3.5',
                         view === current
-                            ? 'bg-surface-2 text-text'
+                            ? 'bg-surface text-text shadow-segment dark:bg-surface-2'
                             : 'text-text-muted hover:text-text',
                     )}
                 >
-                    {mobile && <Icon className="size-4" aria-hidden />}
+                    {mobile && <Icon className="size-[18px]" aria-hidden />}
                     {label}
                 </Link>
             ))}
@@ -288,12 +288,14 @@ function TasksView(props: Props) {
             tab="tasks"
             onCreateTask={composer.canCreate ? () => create() : null}
         >
-            <div className="flex flex-wrap items-center gap-2">
-                <ViewSwitch
-                    current={view}
-                    workspaceKey={workspace.key}
-                    mobile={mobile}
-                />
+            <div className="flex flex-wrap items-center gap-2.5">
+                {mobile && (
+                    <ViewSwitch
+                        current={view}
+                        workspaceKey={workspace.key}
+                        mobile
+                    />
+                )}
                 {mobile ? (
                     <button
                         type="button"
@@ -303,9 +305,12 @@ function TasksView(props: Props) {
                                 ? `Filter (${activeFilters} aktif)`
                                 : 'Filter'
                         }
-                        className="relative flex size-11 items-center justify-center rounded-lg text-text hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        className={cn(
+                            toolbarControl,
+                            'relative size-11 justify-center px-0',
+                        )}
                     >
-                        <SlidersHorizontal className="size-5" />
+                        <SlidersHorizontal />
                         {activeFilters > 0 && (
                             <span className="absolute top-2 right-2 size-2 rounded-full bg-primary" />
                         )}
@@ -329,26 +334,36 @@ function TasksView(props: Props) {
                     mobile={mobile}
                 />
                 {!mobile && (
-                    <p className="ml-auto flex items-center gap-1 text-[13px] text-text-muted">
-                        <span>
-                            {visible.length === allTasks.length
-                                ? `${formatNumber(allTasks.length)} tugas`
-                                : `${formatNumber(visible.length)} dari ${formatNumber(allTasks.length)} tugas`}
-                            {hidden_closed_count > 0 &&
-                                ` · ${formatNumber(hidden_closed_count)} tugas selesai lama disembunyikan`}
-                            {' · '}
-                        </span>
-                        <ConnectionIndicator mode={connection} />
-                        <button
-                            type="button"
-                            onClick={() => shortcuts.setHelp(true)}
-                            className="ml-2 rounded border border-border px-1.5 font-mono text-[11px] text-text-muted hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                            aria-label="Pintasan keyboard"
-                            title="Pintasan keyboard (?)"
-                        >
-                            ?
-                        </button>
-                    </p>
+                    <div className="ml-auto flex flex-wrap items-center gap-2.5">
+                        <p className="flex items-center gap-1 text-[15px] text-text-muted">
+                            <span>
+                                {visible.length === allTasks.length
+                                    ? `${formatNumber(allTasks.length)} tugas`
+                                    : `${formatNumber(visible.length)} dari ${formatNumber(allTasks.length)} tugas`}
+                                {hidden_closed_count > 0 &&
+                                    ` · ${formatNumber(hidden_closed_count)} tugas selesai lama disembunyikan`}
+                                {' · '}
+                            </span>
+                            <ConnectionIndicator mode={connection} />
+                            <button
+                                type="button"
+                                onClick={() => shortcuts.setHelp(true)}
+                                className={cn(
+                                    'ml-1.5 inline-flex h-7 min-w-7 items-center justify-center rounded-xs border border-border bg-surface px-1.5 font-mono text-[13px] font-semibold text-text-muted hover:text-text',
+                                    focusRing,
+                                )}
+                                aria-label="Pintasan keyboard"
+                                title="Pintasan keyboard (?)"
+                            >
+                                ?
+                            </button>
+                        </p>
+                        <ViewSwitch
+                            current={view}
+                            workspaceKey={workspace.key}
+                            mobile={false}
+                        />
+                    </div>
                 )}
             </div>
 

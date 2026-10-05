@@ -8,6 +8,7 @@ import {
     dueTone,
     endOfWeek,
     formatDayRange,
+    formatCompletion,
     formatDue,
     formatMonthYear,
     formatShortDate,
@@ -82,5 +83,21 @@ describe('due state, tone and group', () => {
         expect(dueGroup('2026-10-11', TODAY)).toBe('week');
         expect(dueGroup('2026-10-12', TODAY)).toBe('later');
         expect(dueGroup(null, TODAY)).toBe('none');
+    });
+});
+
+describe('completion', () => {
+    it('describes when a task was finished relative to its due date', () => {
+        expect(
+            formatCompletion('2026-09-28T03:00:00Z', '2026-09-30').text,
+        ).toBe('Selesai 28 Sep · tepat waktu');
+        expect(formatCompletion('2026-10-01T03:00:00Z', '2026-09-30')).toEqual({
+            text: 'Selesai 1 Okt · telat 1 hari',
+            late: true,
+        });
+        // 23:30 UTC is already the next day in Jakarta.
+        expect(formatCompletion('2026-10-01T23:30:00Z', null).text).toBe(
+            'Selesai 2 Okt',
+        );
     });
 });

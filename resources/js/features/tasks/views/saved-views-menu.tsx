@@ -23,6 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { toolbarControl } from '../lib/toolbar';
 import views from '@/routes/workspaces/views';
 import { ApiError, requestJson } from '../lib/api';
 import type { TaskFilters } from '../lib/filters';
@@ -159,18 +160,12 @@ export function SavedViewsMenu({
                                 : 'Tampilan tersimpan'
                         }
                         className={cn(
-                            'inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface text-text transition-colors duration-120 ease-brand hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                            mobile
-                                ? 'size-11 justify-center'
-                                : 'h-8 px-2.5 text-[13px]',
-                            active && 'border-primary/50 text-primary',
+                            toolbarControl,
+                            mobile && 'size-11 justify-center px-0',
+                            active && 'border-primary/50 text-link',
                         )}
                     >
-                        <Bookmark
-                            className="size-4"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
+                        <Bookmark strokeWidth={2} aria-hidden />
                         {!mobile && (
                             <span className="max-w-40 truncate">
                                 {active?.name ?? 'Tampilan'}

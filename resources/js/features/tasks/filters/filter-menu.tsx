@@ -5,7 +5,6 @@ import {
     PriorityIcon,
 } from '@/components/priority-icon';
 import { UserAvatar } from '@/components/shell/user-avatar';
-import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -21,6 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { palette } from '@/lib/palette';
 import { cn } from '@/lib/utils';
+import { toolbarControl } from '../lib/toolbar';
 import type { DueFilter, TaskFilters } from '../lib/filters';
 import {
     countActiveFilters,
@@ -47,7 +47,7 @@ function toggle<T>(list: T[], value: T): T[] {
 }
 
 const chip =
-    'inline-flex h-8 max-w-72 items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 text-[13px] text-text';
+    'inline-flex h-10 max-w-72 items-center gap-1.5 rounded-control border border-border bg-surface px-3 text-[15px] font-medium text-text';
 
 /**
  * Desktop filter toolbar (mockup Kanban): dashed "Filter" button with
@@ -77,19 +77,15 @@ export function FilterMenu({
         <div className="flex min-w-0 flex-wrap items-center gap-2">
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 border-dashed bg-transparent text-text"
-                    >
-                        <ListFilter />
+                    <button type="button" className={toolbarControl}>
+                        <ListFilter strokeWidth={2} />
                         Filter
                         {active > 0 && (
-                            <span className="rounded-full bg-primary/15 px-1.5 text-[11px] text-primary tnum">
+                            <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-link-soft px-1.5 text-[14px] font-bold text-link tnum">
                                 {active}
                             </span>
                         )}
-                    </Button>
+                    </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56">
                     <DropdownMenuSub>
@@ -310,7 +306,7 @@ export function FilterMenu({
                     <span className="sr-only">Cari tugas</span>
                     <Search
                         aria-hidden
-                        className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-text-subtle"
+                        className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 text-text-subtle"
                     />
                     <input
                         type="search"
@@ -319,7 +315,7 @@ export function FilterMenu({
                             onChange({ ...filters, q: event.target.value })
                         }
                         placeholder="Cari tugas…"
-                        className="h-8 w-44 rounded-md border border-border bg-surface pr-2 pl-8 text-[13px] text-text placeholder:text-text-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        className="h-10 w-52 rounded-control border border-border bg-surface pr-3 pl-10 text-[15px] text-text placeholder:text-text-subtle focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-ring/55 focus-visible:outline-none"
                     />
                 </label>
             )}
@@ -333,9 +329,9 @@ function RemoveChip({ onClick }: { onClick: () => void }) {
             type="button"
             onClick={onClick}
             aria-label="Hapus filter"
-            className="-mr-1 rounded p-0.5 text-text-subtle hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="-mr-1 flex size-7 items-center justify-center rounded-sm text-text-muted hover:bg-surface-2 hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
         >
-            <X className="size-3.5" />
+            <X className="size-4" />
         </button>
     );
 }

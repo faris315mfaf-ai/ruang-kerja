@@ -8,25 +8,28 @@ type Props = {
     className?: string;
 };
 
-/** Label pill: colored dot + name (docs/DESIGN.md §6 kartu Kanban). */
+/**
+ * Label chip (DBoard/DTodo "Konten", "Keuangan"): neutral 26px chip, radius
+ * 8, semibold 14px, with the label's palette colour as a small leading dot.
+ */
 export function LabelPill({ label, count, className }: Props) {
     return (
         <span
             className={cn(
-                'inline-flex h-5 max-w-full min-w-0 items-center gap-1.5 rounded-full border border-border px-2 text-[11px] leading-none text-text-muted',
+                'inline-flex h-[26px] max-w-full min-w-0 items-center gap-1.5 rounded-sm bg-surface-2 px-2.5 text-[14px] leading-none font-semibold text-text dark:bg-border',
                 className,
             )}
         >
             <span
                 aria-hidden
                 className={cn(
-                    'size-1.5 shrink-0 rounded-full',
+                    'size-2 shrink-0 rounded-full',
                     palette(label.color).bg,
                 )}
             />
             <span className="truncate">{label.name}</span>
             {count !== undefined && (
-                <span className="text-text-subtle tnum">{count}</span>
+                <span className="text-text-muted tnum">{count}</span>
             )}
         </span>
     );

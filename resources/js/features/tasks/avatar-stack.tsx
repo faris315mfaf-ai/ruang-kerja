@@ -5,7 +5,8 @@ import { cn } from '@/lib/utils';
 type Props = {
     people: Person[];
     max?: number;
-    size?: 'sm' | 'md';
+    /** sm 20 · md 28 · lg 30 (Arus cards and rows). */
+    size?: 'sm' | 'md' | 'lg';
     className?: string;
 };
 
@@ -18,8 +19,11 @@ export function AvatarStack({
 }: Props) {
     const shown = people.slice(0, max);
     const rest = people.length - shown.length;
-    const dimension =
-        size === 'sm' ? 'size-5 text-[9px]' : 'size-7 text-[11px]';
+    const dimension = {
+        sm: 'size-5 text-[9px]',
+        md: 'size-7 text-[11px]',
+        lg: 'size-[30px] text-[12px]',
+    }[size];
 
     return (
         <span
