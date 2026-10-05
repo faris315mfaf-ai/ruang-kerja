@@ -87,7 +87,7 @@ export function HolidaysSection({
                         }
                     >
                         <SelectTrigger
-                            className="h-8 w-40"
+                            className="w-44"
                             aria-label="Tampilkan tahun"
                         >
                             <SelectValue />
@@ -133,7 +133,7 @@ export function HolidaysSection({
             {(importError || importErrors.length > 0) && (
                 <div
                     role="alert"
-                    className="border-b border-border bg-danger/8 px-4 py-3 text-[13px]"
+                    className="border-b border-divider bg-danger-soft px-6 py-3.5 text-[15px] md:px-7"
                 >
                     <p className="font-medium text-danger">
                         {importError ?? 'Impor dibatalkan.'}
@@ -147,30 +147,30 @@ export function HolidaysSection({
                     </ul>
                 </div>
             )}
-            <ul className="divide-y divide-border">
+            <ul className="divide-y divide-divider">
                 {holidays.map((holiday) => (
                     <li
                         key={holiday.id}
-                        className="flex items-center gap-4 px-4 py-2.5"
+                        className="flex min-h-16 items-center gap-4 px-6 py-2.5 md:px-7"
                     >
                         <CalendarDays
-                            className="size-4 shrink-0 text-text-muted"
+                            className="size-5 shrink-0 text-link"
                             strokeWidth={1.75}
                             aria-hidden
                         />
-                        <span className="w-32 shrink-0 text-[13px] text-text">
+                        <span className="w-36 shrink-0 text-[15px] font-semibold text-text">
                             {workDateLabel(holiday.date)}
                         </span>
-                        <span className="min-w-0 flex-1 truncate text-[13px] text-text">
+                        <span className="min-w-0 flex-1 truncate text-[16px] text-text">
                             {holiday.name}
                         </span>
-                        <span className="rounded-md bg-info-soft px-2 py-0.5 text-xs text-info">
+                        <span className="inline-flex h-6 items-center rounded-sm bg-info-soft px-2 text-[13px] font-semibold text-info">
                             {holiday.typeLabel}
                         </span>
                         <Button
                             variant="ghost"
-                            size="icon"
-                            className="size-8 text-text-muted"
+                            size="icon-sm"
+                            className="text-text-muted"
                             aria-label={`Hapus ${holiday.name}`}
                             onClick={() =>
                                 window.confirm(`Hapus ${holiday.name}?`) &&
@@ -185,11 +185,11 @@ export function HolidaysSection({
                     </li>
                 ))}
                 {holidays.length === 0 && (
-                    <li className="px-4 py-3 text-[13px] text-text-muted">
+                    <li className="px-6 py-4 text-[15px] text-text-muted md:px-7">
                         Belum ada hari libur pada periode ini.
                     </li>
                 )}
-                <li className="px-4 py-3">
+                <li className="bg-background/60 px-6 py-4 md:px-7">
                     <form
                         className="flex flex-wrap items-start gap-2"
                         onSubmit={(event) => {
@@ -201,7 +201,7 @@ export function HolidaysSection({
                         }}
                     >
                         <CalendarDays
-                            className="mt-2 size-4 shrink-0 text-text-subtle"
+                            className="mt-3 size-5 shrink-0 text-text-subtle"
                             aria-hidden
                         />
                         <div className="w-40">
@@ -212,7 +212,6 @@ export function HolidaysSection({
                                 onChange={(e) =>
                                     form.setData('date', e.target.value)
                                 }
-                                className="h-8"
                             />
                             <InputError message={form.errors.date} />
                         </div>
@@ -224,7 +223,6 @@ export function HolidaysSection({
                                 onChange={(e) =>
                                     form.setData('name', e.target.value)
                                 }
-                                className="h-8"
                             />
                             <InputError message={form.errors.name} />
                         </div>
@@ -234,10 +232,7 @@ export function HolidaysSection({
                                 form.setData('type', value)
                             }
                         >
-                            <SelectTrigger
-                                className="h-8 w-40"
-                                aria-label="Jenis"
-                            >
+                            <SelectTrigger className="w-44" aria-label="Jenis">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -261,7 +256,7 @@ export function HolidaysSection({
                     </form>
                 </li>
             </ul>
-            <p className="border-t border-border px-4 py-2.5 text-xs text-text-muted">
+            <p className="border-t border-divider px-6 py-3.5 text-meta text-text-muted md:px-7">
                 Format CSV:{' '}
                 <span className="font-mono">tanggal,nama,jenis</span> (jenis:
                 nasional · cuti bersama · perusahaan). Tanggal YYYY-MM-DD atau

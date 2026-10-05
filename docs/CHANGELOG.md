@@ -12,6 +12,7 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 - Shell: menu bar kaca 64px, Dock dengan ubin putih & aktif bergradien, **Rail 96px untuk tablet** (768–1023px, menggantikan Dock tanpa magnifikasi), tab bar kapsul 70px dengan pil gradien, app bar ponsel berjudul besar. Konten desktop di kolom 1280px (1480px untuk board & tabel).
 - Warna non-CSS (manifest PWA, halaman offline, email, `config/branding.php`) mengikuti Arus.
 - Dashboard Saya/Divisi/HR dan Portofolio proyek mengikuti layar Arus (SBeranda·MSBeranda, DBeranda·MBeranda, DHR·PHRLive, DPortofolio·PDirutPortofolio): hero absensi & KPI sorotan, `Panel`/`KpiCard`/`Badge`/`ListRow`/`UserAvatar`, tren 8 minggu sebagai kolom gradien, daftar orang per status (ponsel HR), kartu proyek dengan cincin progres; `features/dashboard/panel.tsx`, `stat-card.tsx` dan `features/portfolio/sections.tsx` dihapus.
+- Halaman Admin (organisasi, karyawan + profil + impor, absensi + penugasan + kiosk, jenis pengajuan & alur, saldo cuti, audit log, dokumentasi) bergaya Arus: header overline + judul display, `Panel`/tabel berkepala `bg-background`, `Badge` status/label, `TabNav`, `NativeSelect` 44px (`features/admin`).
 - **Pengajuan & Persetujuan** bergaya Arus (SPengajuan, SFormPengajuan, DPersetujuan, MS*/MPersetujuan): kartu saldo sorotan, daftar kartu + panel detail dengan jejak persetujuan, ubin jenis & kartu Ringkasan di formulir, antrean beravatar dengan filter jenis dan tombol Tolak/Setujui di kartu ponsel. Breadcrumb Persetujuan tidak lagi di bawah Absensi.
 
 ### Ditambahkan

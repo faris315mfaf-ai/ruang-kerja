@@ -5,6 +5,7 @@ import { DesktopOnlyNotice } from '@/components/desktop-only-notice';
 import { EmptyState } from '@/components/empty-state';
 import InputError from '@/components/input-error';
 import { UserAvatar } from '@/components/shell/user-avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -16,10 +17,20 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Panel } from '@/components/ui/panel';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { NativeSelect } from '@/features/admin/native-select';
+import { AdminPageHeader, AdminToolbar } from '@/features/admin/page-header';
 import { BalanceAdjustDialog } from '@/features/admin-requests/balance-adjust-dialog';
 import type { BalanceHistory } from '@/features/admin-requests/balance-adjust-dialog';
 import { BalanceImportDialog } from '@/features/admin-requests/balance-import-dialog';
-import { selectClass } from '@/features/requests/form-fields';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { formatDays } from '@/lib/requests';
 import { cn } from '@/lib/utils';
@@ -143,7 +154,7 @@ function EditBalance({
                         />
                         <InputError message={form.errors.opening_days} />
                     </div>
-                    <p className="col-span-2 text-[13px] text-text-muted">
+                    <p className="col-span-2 text-meta text-text-muted">
                         Saldo awal = sisa yang dibawa dari sistem lama.
                         Tambahan/potongan lain dicatat lewat Penyesuaian.
                     </p>
@@ -211,59 +222,45 @@ export default function LeaveBalances({
     return (
         <>
             <Head title="Saldo cuti" />
-            <div className="mx-auto max-w-[1200px] space-y-6">
-                <header className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                        <h1 className="text-xl leading-7 font-semibold text-text">
-                            Saldo cuti
-                        </h1>
-                        <p className="text-sm text-text-muted">
-                            Jatah, bawaan, saldo awal, penyesuaian, dan
-                            pemakaian cuti per karyawan. Saldo tahun baru dibuat
-                            otomatis tiap 1 Januari.
-                        </p>
-                        {proration.example_quota !== null &&
-                            proration.example_july !== null && (
-                                <p className="mt-1 text-[13px] text-text-subtle">
-                                    Karyawan baru: jatah prorata sisa bulan
-                                    (bulan masuk dihitung bila tanggal 1–15),
-                                    dibulatkan ke bawah per 0,5 hari — mis.
-                                    masuk 1 Juli ={' '}
-                                    {formatDays(proration.example_july)} dari{' '}
-                                    {formatDays(proration.example_quota)} hari.
-                                </p>
-                            )}
-                    </div>
-                    {type && (
-                        <div className="flex flex-wrap gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setImporting(true)}
-                            >
-                                <Upload aria-hidden /> Impor saldo
-                            </Button>
-                            <Button
-                                type="button"
-                                onClick={() =>
-                                    router.post(
-                                        generate.url(),
-                                        { year },
-                                        { preserveScroll: true },
-                                    )
-                                }
-                            >
-                                Buat saldo {year}
-                                {missing > 0 ? ` (${missing} belum ada)` : ''}
-                            </Button>
-                        </div>
-                    )}
-                </header>
+            <div className="flex flex-col gap-6">
+                <AdminPageHeader
+                    overline="Admin · Pengajuan"
+                    title="Saldo cuti"
+                    description="Jatah, bawaan, saldo awal, penyesuaian, dan pemakaian cuti per karyawan. Saldo tahun baru dibuat otomatis tiap 1 Januari."
+                    actions={
+                        type && (
+                            <>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setImporting(true)}
+                                >
+                                    <Upload aria-hidden /> Impor saldo
+                                </Button>
+                                <Button
+                                    type="button"
+                                    onClick={() =>
+                                        router.post(
+                                            generate.url(),
+                                            { year },
+                                            { preserveScroll: true },
+                                        )
+                                    }
+                                >
+                                    Buat saldo {year}
+                                    {missing > 0
+                                        ? ` (${missing} belum ada)`
+                                        : ''}
+                                </Button>
+                            </>
+                        )
+                    }
+                />
 
-                <div className="flex flex-wrap items-center gap-3">
-                    <select
+                <AdminToolbar>
+                    <NativeSelect
                         aria-label="Jenis cuti"
-                        className={cn(selectClass, 'w-56')}
+                        className="w-60"
                         value={type?.id ?? ''}
                         onChange={(e) => visit({ jenis: e.target.value })}
                     >
@@ -272,10 +269,10 @@ export default function LeaveBalances({
                                 {t.name}
                             </option>
                         ))}
-                    </select>
-                    <select
+                    </NativeSelect>
+                    <NativeSelect
                         aria-label="Tahun"
-                        className={cn(selectClass, 'w-28')}
+                        className="w-32"
                         value={year}
                         onChange={(e) =>
                             visit({ tahun: Number(e.target.value) })
@@ -286,8 +283,9 @@ export default function LeaveBalances({
                                 {y}
                             </option>
                         ))}
-                    </select>
+                    </NativeSelect>
                     <form
+                        role="search"
                         className="relative"
                         onSubmit={(event) => {
                             event.preventDefault();
@@ -295,18 +293,18 @@ export default function LeaveBalances({
                         }}
                     >
                         <Search
-                            className="pointer-events-none absolute top-2.5 left-3 size-4 text-text-muted"
+                            className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-text-muted"
                             aria-hidden
                         />
                         <Input
                             aria-label="Cari karyawan"
-                            className="w-64 pl-9"
+                            className="w-72 pl-11"
                             placeholder="Cari karyawan…"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                         />
                     </form>
-                </div>
+                </AdminToolbar>
 
                 {!type ? (
                     <EmptyState
@@ -321,79 +319,65 @@ export default function LeaveBalances({
                         description="Ubah pencarian."
                     />
                 ) : (
-                    <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
-                        <table className="w-full text-sm">
-                            <thead className="bg-surface-2/60 text-left text-[13px] text-text-muted">
-                                <tr>
-                                    <th
+                    <Panel
+                        flush
+                        title={`${type.name} ${year}`}
+                        action={
+                            <span className="text-meta text-text-muted tnum">
+                                {rows.length} karyawan
+                            </span>
+                        }
+                        bodyClassName="border-t border-divider"
+                    >
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead
                                         scope="col"
-                                        className="px-4 py-2.5 font-normal"
+                                        className="pl-6 md:pl-7"
                                     >
                                         Karyawan
-                                    </th>
-                                    <th
+                                    </TableHead>
+                                    {[
+                                        'Jatah',
+                                        'Bawaan',
+                                        'Saldo awal',
+                                        'Penyesuaian',
+                                        'Terpakai',
+                                        'Menunggu',
+                                        'Sisa',
+                                    ].map((label) => (
+                                        <TableHead
+                                            key={label}
+                                            scope="col"
+                                            className="text-right"
+                                        >
+                                            {label}
+                                        </TableHead>
+                                    ))}
+                                    <TableHead
                                         scope="col"
-                                        className="px-3 py-2.5 text-right font-normal"
+                                        className="pr-6 md:pr-7"
                                     >
-                                        Jatah
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-3 py-2.5 text-right font-normal"
-                                    >
-                                        Bawaan
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-3 py-2.5 text-right font-normal"
-                                    >
-                                        Saldo awal
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-3 py-2.5 text-right font-normal"
-                                    >
-                                        Penyesuaian
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-3 py-2.5 text-right font-normal"
-                                    >
-                                        Terpakai
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-3 py-2.5 text-right font-normal"
-                                    >
-                                        Menunggu
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-3 py-2.5 text-right font-normal"
-                                    >
-                                        Sisa
-                                    </th>
-                                    <th scope="col" className="px-4 py-2.5" />
-                                </tr>
-                            </thead>
-                            <tbody className="tnum">
+                                        <span className="sr-only">Aksi</span>
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {rows.map((row) => (
-                                    <tr
-                                        key={row.user.id}
-                                        className="border-t border-border"
-                                    >
-                                        <td className="px-4 py-2.5">
-                                            <span className="flex items-center gap-2">
+                                    <TableRow key={row.user.id}>
+                                        <TableCell className="pl-6 md:pl-7">
+                                            <span className="flex items-center gap-3">
                                                 <UserAvatar
                                                     name={row.user.name}
                                                     src={row.user.avatar}
-                                                    className="size-7"
+                                                    className="size-10"
                                                 />
-                                                <span>
-                                                    <span className="block font-medium text-text">
+                                                <span className="flex flex-col">
+                                                    <span className="text-[16px] font-semibold">
                                                         {row.user.name}
                                                     </span>
-                                                    <span className="block text-xs text-text-muted">
+                                                    <span className="text-meta text-text-muted">
                                                         {[
                                                             row.user.position,
                                                             row.user.division,
@@ -403,109 +387,148 @@ export default function LeaveBalances({
                                                     </span>
                                                 </span>
                                             </span>
-                                        </td>
+                                        </TableCell>
                                         {row.balance ? (
                                             <>
-                                                <td className="px-3 py-2.5 text-right">
-                                                    {formatDays(
-                                                        row.balance.entitled,
-                                                    )}
-                                                    {row.prorated && (
-                                                        <span
-                                                            className="ml-1.5 rounded-full bg-info-soft px-1.5 py-0.5 text-[11px] text-info"
-                                                            title={`Prorata: bergabung ${row.joined_at ?? ''}`}
-                                                        >
-                                                            prorata
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-2.5 text-right">
+                                                <TableCell className="text-right">
+                                                    <span className="inline-flex items-center gap-2">
+                                                        {row.prorated && (
+                                                            <Badge
+                                                                variant="status"
+                                                                tone="info"
+                                                                className="h-6 px-2 text-meta"
+                                                                title={`Prorata: bergabung ${row.joined_at ?? ''}`}
+                                                            >
+                                                                prorata
+                                                            </Badge>
+                                                        )}
+                                                        {formatDays(
+                                                            row.balance
+                                                                .entitled,
+                                                        )}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-right">
                                                     {formatDays(
                                                         row.balance
                                                             .carried_over,
                                                     )}
-                                                </td>
-                                                <td className="px-3 py-2.5 text-right">
+                                                </TableCell>
+                                                <TableCell className="text-right">
                                                     {formatDays(
                                                         row.balance.opening,
                                                     )}
-                                                </td>
-                                                <td className="px-3 py-2.5 text-right">
+                                                </TableCell>
+                                                <TableCell
+                                                    className={cn(
+                                                        'text-right',
+                                                        row.balance
+                                                            .adjustments > 0 &&
+                                                            'text-success',
+                                                        row.balance
+                                                            .adjustments < 0 &&
+                                                            'text-danger',
+                                                    )}
+                                                >
                                                     {signed(
                                                         row.balance.adjustments,
                                                     )}
-                                                </td>
-                                                <td className="px-3 py-2.5 text-right">
+                                                </TableCell>
+                                                <TableCell className="text-right">
                                                     {formatDays(
                                                         row.balance.used,
                                                     )}
-                                                </td>
-                                                <td className="px-3 py-2.5 text-right">
+                                                </TableCell>
+                                                <TableCell className="text-right text-text-muted">
                                                     {formatDays(
                                                         row.balance.pending,
                                                     )}
-                                                </td>
-                                                <td className="px-3 py-2.5 text-right font-semibold">
+                                                </TableCell>
+                                                <TableCell className="text-right text-[17px] font-bold">
                                                     {formatDays(
                                                         row.balance.available,
                                                     )}
-                                                </td>
-                                                <td className="px-4 py-2.5 text-right whitespace-nowrap">
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() =>
-                                                            row.balance?.id &&
-                                                            setEditing({
-                                                                ...row,
-                                                                balance: {
-                                                                    ...row.balance,
-                                                                    id: row
-                                                                        .balance
-                                                                        .id,
-                                                                },
-                                                            })
-                                                        }
-                                                    >
-                                                        Ubah
-                                                    </Button>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() =>
-                                                            row.balance?.id &&
-                                                            setAdjusting({
-                                                                ...row,
-                                                                balance: {
-                                                                    ...row.balance,
-                                                                    id: row
-                                                                        .balance
-                                                                        .id,
-                                                                },
-                                                            })
-                                                        }
-                                                    >
-                                                        Sesuaikan
-                                                    </Button>
-                                                </td>
+                                                </TableCell>
+                                                <TableCell className="pr-6 text-right md:pr-7">
+                                                    <span className="inline-flex gap-1">
+                                                        <Button
+                                                            type="button"
+                                                            variant="quiet"
+                                                            size="sm"
+                                                            onClick={() =>
+                                                                row.balance
+                                                                    ?.id &&
+                                                                setEditing({
+                                                                    ...row,
+                                                                    balance: {
+                                                                        ...row.balance,
+                                                                        id: row
+                                                                            .balance
+                                                                            .id,
+                                                                    },
+                                                                })
+                                                            }
+                                                        >
+                                                            Ubah
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant="quiet"
+                                                            size="sm"
+                                                            onClick={() =>
+                                                                row.balance
+                                                                    ?.id &&
+                                                                setAdjusting({
+                                                                    ...row,
+                                                                    balance: {
+                                                                        ...row.balance,
+                                                                        id: row
+                                                                            .balance
+                                                                            .id,
+                                                                    },
+                                                                })
+                                                            }
+                                                        >
+                                                            Sesuaikan
+                                                        </Button>
+                                                    </span>
+                                                </TableCell>
                                             </>
                                         ) : (
-                                            <td
+                                            <TableCell
                                                 colSpan={8}
-                                                className="px-3 py-2.5 text-right text-text-muted"
+                                                className="pr-6 text-right md:pr-7"
                                             >
-                                                {row.eligible
-                                                    ? 'Belum ada saldo'
-                                                    : 'Belum berhak'}
-                                            </td>
+                                                <Badge
+                                                    variant="status"
+                                                    tone={
+                                                        row.eligible
+                                                            ? 'warning'
+                                                            : 'neutral'
+                                                    }
+                                                >
+                                                    {row.eligible
+                                                        ? 'Belum ada saldo'
+                                                        : 'Belum berhak'}
+                                                </Badge>
+                                            </TableCell>
                                         )}
-                                    </tr>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
+                            </TableBody>
+                        </Table>
+                        {proration.example_quota !== null &&
+                            proration.example_july !== null && (
+                                <p className="border-t border-divider px-6 pt-4 text-meta text-text-muted md:px-7">
+                                    Karyawan baru: jatah prorata sisa bulan
+                                    (bulan masuk dihitung bila tanggal 1–15),
+                                    dibulatkan ke bawah per 0,5 hari — mis.
+                                    masuk 1 Juli ={' '}
+                                    {formatDays(proration.example_july)} dari{' '}
+                                    {formatDays(proration.example_quota)} hari.
+                                </p>
+                            )}
+                    </Panel>
                 )}
             </div>
             {editing && (

@@ -19,7 +19,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { WEEKDAYS } from '@/lib/attendance';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { store } from '@/routes/admin/attendance/assignments';
 import type { ShiftAssignmentsProps } from './types';
 
@@ -103,10 +103,8 @@ export function PatternDialog({
                     }}
                 >
                     <fieldset className="space-y-1.5">
-                        <legend className="text-sm font-medium text-text">
-                            Untuk
-                        </legend>
-                        <div className="flex gap-1 rounded-lg bg-surface-2 p-1">
+                        <legend className="text-label text-text">Untuk</legend>
+                        <div className="flex gap-1 rounded-[14px] bg-surface-2 p-1">
                             {[
                                 {
                                     value: 'employees',
@@ -130,9 +128,10 @@ export function PatternDialog({
                                         form.setData('target', option.value)
                                     }
                                     className={cn(
-                                        'h-8 flex-1 rounded-md text-[13px] disabled:opacity-50',
+                                        'h-[38px] flex-1 rounded-[10px] text-[15px] font-semibold transition-[color,background-color,box-shadow] duration-120 ease-brand disabled:opacity-50',
+                                        focusRing,
                                         form.data.target === option.value
-                                            ? 'bg-surface font-medium text-text shadow-card'
+                                            ? 'bg-surface text-text shadow-segment'
                                             : 'text-text-muted',
                                     )}
                                 >
@@ -192,7 +191,7 @@ export function PatternDialog({
                         <InputError message={form.errors.shift_id} />
                     </div>
                     <fieldset className="space-y-1.5">
-                        <legend className="text-sm font-medium text-text">
+                        <legend className="text-label text-text">
                             Hari kerja
                         </legend>
                         <div className="flex flex-wrap gap-1.5">
@@ -206,9 +205,10 @@ export function PatternDialog({
                                     aria-label={day.long}
                                     onClick={() => toggleDay(day.value)}
                                     className={cn(
-                                        'h-8 w-11 rounded-md border text-[13px] transition-colors duration-120 ease-brand',
+                                        'size-11 rounded-control border text-[15px] font-semibold transition-colors duration-120 ease-brand',
+                                        focusRing,
                                         form.data.weekdays.includes(day.value)
-                                            ? 'border-primary bg-primary text-primary-foreground'
+                                            ? 'border-transparent bg-grad-aksi text-on-brand'
                                             : 'border-border text-text-muted hover:bg-surface-2',
                                     )}
                                 >
@@ -273,7 +273,7 @@ export function PatternDialog({
                                 ))}
                             </SelectContent>
                         </Select>
-                        <p className="text-xs text-text-muted">
+                        <p className="text-meta text-text-muted">
                             Pilih WFH untuk hari kerja dari rumah karyawan
                             hybrid.
                         </p>
