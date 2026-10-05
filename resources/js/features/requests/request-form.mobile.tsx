@@ -22,7 +22,22 @@ type Props = {
     savedAt: string | null;
 };
 
-/** MFormPengajuan: category chips, fields, summary card, bottom action bar. */
+/** "Disetujui oleh Dimas Pratama, lalu HR" (skipped steps left out). */
+function flowSentence(state: RequestFormState): string | null {
+    const steps = (state.preview?.flow ?? []).filter(
+        (step) => step.status !== 'skipped',
+    );
+
+    if (steps.length === 0) {
+        return null;
+    }
+
+    const names = steps.map((step) => step.approver?.name ?? step.label);
+
+    return `Disetujui oleh ${names.join(', lalu ')}`;
+}
+
+/** MSFormPengajuan: category chips, fields, summary card, glass action bar. */
 export function RequestFormMobile({
     state,
     categories,
@@ -33,6 +48,7 @@ export function RequestFormMobile({
     savedAt,
 }: Props) {
     const { form, category, setCategory, submit } = state;
+    const flow = flowSentence(state);
 
     return (
         <form
@@ -40,15 +56,15 @@ export function RequestFormMobile({
                 event.preventDefault();
                 submit('submit');
             }}
-            className="space-y-5 pb-24"
+            className="flex flex-col gap-3.5 pb-44"
         >
             {savedAt && (
-                <p className="flex items-center gap-1.5 text-[13px] text-text-muted">
+                <p className="flex items-center gap-1.5 text-meta text-text-muted">
                     <span
-                        className="size-1.5 rounded-full bg-success"
+                        className="size-2 rounded-full bg-success"
                         aria-hidden
                     />{' '}
-                    Draf {formatTime(savedAt)}
+                    Draf tersimpan {formatTime(savedAt)}
                 </p>
             )}
 
@@ -64,7 +80,7 @@ export function RequestFormMobile({
                         value: item.value,
                         label: item.label,
                     }))}
-                    className="[&>button]:h-11 [&>button]:px-4 [&>button]:text-[15px]"
+                    className="[&>button]:h-11 [&>button]:px-4 [&>button]:text-[16px] [&>button]:font-bold"
                 />
             )}
 
@@ -76,32 +92,40 @@ export function RequestFormMobile({
             />
 
             <section
-                className="rounded-xl border border-border bg-surface p-4 shadow-card"
+                className="flex flex-col gap-3 rounded-[18px] border border-border bg-surface px-4 py-3.5"
                 aria-label="Ringkasan pengajuan"
             >
-                <p className="mb-3 text-[13px] text-text-muted">Ringkasan</p>
                 <RequestSummary state={state} today={today} mobile />
             </section>
 
-            <div className="glass fixed inset-x-0 bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom))] z-30 flex gap-3 border-x-0 border-b-0 px-4 py-3">
-                <Button
-                    type="button"
-                    variant="outline"
-                    className="h-12 flex-1 text-base"
-                    disabled={form.processing}
-                    onClick={() => submit('draft')}
-                >
-                    Simpan draf
-                </Button>
-                <Button
-                    type="submit"
-                    className="h-12 flex-[1.4] text-base"
-                    disabled={form.processing}
-                >
-                    {request?.status === 'revision_requested'
-                        ? 'Kirim ulang'
-                        : 'Kirim pengajuan'}
-                </Button>
+            <div className="glass fixed inset-x-0 bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom))] z-30 flex flex-col gap-2 border-x-0 border-b-0 px-4 pt-3.5 pb-3">
+                {flow && (
+                    <p className="text-center text-[14px] text-text-muted">
+                        {flow}
+                    </p>
+                )}
+                <div className="flex gap-3">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="lg"
+                        className="flex-1"
+                        disabled={form.processing}
+                        onClick={() => submit('draft')}
+                    >
+                        Simpan draf
+                    </Button>
+                    <Button
+                        type="submit"
+                        size="lg"
+                        className="flex-[1.6] text-[18px] font-extrabold"
+                        disabled={form.processing}
+                    >
+                        {request?.status === 'revision_requested'
+                            ? 'Kirim ulang'
+                            : 'Kirim pengajuan'}
+                    </Button>
+                </div>
             </div>
         </form>
     );

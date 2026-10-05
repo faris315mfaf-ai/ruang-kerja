@@ -1,37 +1,16 @@
 import { Link } from '@inertiajs/react';
-import {
-    Building2,
-    CalendarDays,
-    Clock,
-    FileClock,
-    ShieldPlus,
-    TrendingUp,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatTime } from '@/lib/format';
 import { formatDays } from '@/lib/requests';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { index as requestsIndex } from '@/routes/requests';
-import type {
-    FormCategory,
-    RequestCategory,
-    RequestDetail,
-} from '@/types/requests';
+import type { FormCategory, RequestDetail } from '@/types/requests';
 import { DeviceDraftNotice } from './device-draft-notice';
 import { CategoryFields } from './form-fields';
 import { RequestSummary } from './request-summary';
 import { RevisionBanner } from './revision-banner';
 import type { RequestFormState } from './use-request-form';
-
-export const categoryIcon: Record<RequestCategory, LucideIcon> = {
-    leave: CalendarDays,
-    permit: Clock,
-    sick: ShieldPlus,
-    overtime: TrendingUp,
-    correction: FileClock,
-    business_trip: Building2,
-};
 
 /** Second line of a category card ("Saldo 12 hari", "Surat bila > 1 hari"). */
 export function categoryHint(category: FormCategory): string {
@@ -85,14 +64,30 @@ export function RequestFormDesktop({
     const editing = request !== null;
 
     return (
-        <div className="mx-auto max-w-[1200px] space-y-6">
-            <header>
-                <h1 className="text-xl leading-7 font-semibold text-text">
+        <form
+            onSubmit={(event) => {
+                event.preventDefault();
+                submit('submit');
+            }}
+            className="flex flex-col gap-6"
+        >
+            <header className="flex flex-col gap-2">
+                <Button
+                    asChild
+                    variant="quiet"
+                    className="-ml-3 self-start text-[16px]"
+                >
+                    <Link href={requestsIndex()}>
+                        <ChevronLeft aria-hidden strokeWidth={2.2} />
+                        Pengajuan saya
+                    </Link>
+                </Button>
+                <h1 className="text-display text-text">
                     {editing
                         ? `Ubah pengajuan${request.number ? ` ${request.number}` : ''}`
-                        : 'Ajukan pengajuan'}
+                        : 'Ajukan baru'}
                 </h1>
-                <p className="text-sm text-text-muted">
+                <p className="text-body-lg text-text-muted">
                     Pilih jenis, isi detail, lalu kirim. Penyetuju akan
                     memutuskan secara berurutan.
                 </p>
@@ -101,113 +96,102 @@ export function RequestFormDesktop({
             {request && <RevisionBanner request={request} />}
             <DeviceDraftNotice state={state} />
 
-            <div
-                role="radiogroup"
-                aria-label="Kategori pengajuan"
-                className="grid grid-cols-3 gap-3 xl:grid-cols-6"
-            >
-                {categories.map((item) => {
-                    const Icon = categoryIcon[item.value];
-                    const active = item.value === category;
-
-                    return (
-                        <button
-                            key={item.value}
-                            type="button"
-                            role="radio"
-                            aria-checked={active}
-                            disabled={editing}
-                            onClick={() => setCategory(item.value)}
-                            className={cn(
-                                'flex items-center gap-3 rounded-lg border bg-surface p-3 text-left transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed',
-                                active
-                                    ? 'border-primary bg-brand-50 ring-1 ring-primary dark:bg-brand-500/10'
-                                    : 'border-border hover:border-border-strong disabled:opacity-50',
-                            )}
-                        >
-                            <span
-                                className={cn(
-                                    'flex size-9 shrink-0 items-center justify-center rounded-md',
-                                    active
-                                        ? 'bg-primary text-primary-foreground'
-                                        : 'bg-surface-2 text-text-muted',
-                                )}
-                            >
-                                <Icon className="size-4.5" aria-hidden />
-                            </span>
-                            <span className="min-w-0">
-                                <span className="block text-sm font-medium text-text">
-                                    {item.label}
-                                </span>
-                                <span
-                                    className={cn(
-                                        'block truncate text-xs',
-                                        active
-                                            ? 'text-primary'
-                                            : 'text-text-muted',
-                                    )}
-                                >
-                                    {categoryHint(item)}
-                                </span>
-                            </span>
-                        </button>
-                    );
-                })}
-            </div>
-
-            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,456px)]">
-                <form
-                    onSubmit={(event) => {
-                        event.preventDefault();
-                        submit('submit');
-                    }}
-                    className="overflow-hidden rounded-xl border border-border bg-surface shadow-card"
+            <div className="flex flex-wrap items-start gap-5">
+                <section
+                    aria-label="Detail pengajuan"
+                    className="flex min-w-0 flex-[999_1_620px] flex-col gap-6 rounded-panel border border-border bg-surface p-6 shadow-card lg:p-7"
                 >
-                    <div className="p-5">
-                        <CategoryFields
-                            state={state}
-                            substitutes={substitutes}
-                            limits={limits}
-                        />
-                    </div>
-                    <div className="flex items-center justify-between gap-3 border-t border-border bg-surface-2/50 px-5 py-3">
-                        <p className="text-[13px] text-text-muted">
-                            {savedAt ? (
-                                `Draf tersimpan ${formatTime(savedAt)}`
-                            ) : (
-                                <Link
-                                    href={requestsIndex()}
-                                    className="hover:underline"
-                                >
-                                    Kembali ke pengajuan saya
-                                </Link>
-                            )}
-                        </p>
-                        <div className="flex gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                disabled={form.processing}
-                                onClick={() => submit('draft')}
-                            >
-                                Simpan draf
-                            </Button>
-                            <Button type="submit" disabled={form.processing}>
-                                {request?.status === 'revision_requested'
-                                    ? 'Kirim ulang'
-                                    : 'Kirim pengajuan'}
-                            </Button>
+                    <div className="flex flex-col gap-3">
+                        <span
+                            id="kategori-label"
+                            className="text-[16px] font-bold text-text"
+                        >
+                            Jenis pengajuan
+                        </span>
+                        <div
+                            role="radiogroup"
+                            aria-labelledby="kategori-label"
+                            className="grid grid-cols-2 gap-2.5 md:grid-cols-3"
+                        >
+                            {categories.map((item) => {
+                                const active = item.value === category;
+
+                                return (
+                                    <button
+                                        key={item.value}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={active}
+                                        disabled={editing}
+                                        onClick={() => setCategory(item.value)}
+                                        className={cn(
+                                            'flex min-h-[76px] flex-col gap-1 rounded-lg px-3.5 py-3 text-left transition-[background-color,border-color,box-shadow] duration-120 ease-brand disabled:cursor-not-allowed',
+                                            focusRing,
+                                            active
+                                                ? 'bg-primary bg-grad-aksi text-on-brand shadow-button'
+                                                : 'border border-border bg-surface text-text hover:border-border-strong disabled:opacity-50',
+                                        )}
+                                    >
+                                        <span className="text-[17px] leading-6 font-bold">
+                                            {item.label}
+                                        </span>
+                                        <span
+                                            className={cn(
+                                                'truncate text-[14px] font-medium',
+                                                active
+                                                    ? 'text-on-brand'
+                                                    : 'text-text-muted',
+                                            )}
+                                        >
+                                            {categoryHint(item)}
+                                        </span>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
-                </form>
+
+                    <CategoryFields
+                        state={state}
+                        substitutes={substitutes}
+                        limits={limits}
+                    />
+                </section>
 
                 <aside
-                    className="rounded-xl border border-border bg-surface p-5 shadow-card"
+                    className="flex min-w-0 flex-[1_1_360px] flex-col gap-4 lg:sticky lg:top-[calc(var(--menu-bar-height)+20px)]"
                     aria-label="Ringkasan pengajuan"
                 >
-                    <RequestSummary state={state} today={today} />
+                    <section className="flex flex-col gap-4 rounded-panel border border-border bg-surface p-6 shadow-float">
+                        <h2 className="text-h3 text-text">Ringkasan</h2>
+                        <RequestSummary state={state} today={today} />
+                    </section>
+                    <Button
+                        type="submit"
+                        size="xl"
+                        className="w-full text-[18px] font-extrabold"
+                        disabled={form.processing}
+                    >
+                        {request?.status === 'revision_requested'
+                            ? 'Kirim ulang'
+                            : 'Kirim pengajuan'}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="h-12 w-full"
+                        disabled={form.processing}
+                        onClick={() => submit('draft')}
+                    >
+                        Simpan sebagai draf
+                    </Button>
+                    {savedAt && (
+                        <p className="text-center text-meta text-text-muted">
+                            Draf tersimpan {formatTime(savedAt)}
+                        </p>
+                    )}
                 </aside>
             </div>
-        </div>
+        </form>
     );
 }
