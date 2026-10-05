@@ -1,6 +1,6 @@
 # Sprint 2, 4, 5 — Perbaikan hasil code review
 
-Cabang `fix/sprint-2-4-5-review`. Satu commit per temuan (`fix(<area>): ...`). Setiap temuan diverifikasi dulu di kode, lalu diberi test regresi yang **gagal sebelum perbaikan** (dicek dengan menjalankan test baru terhadap kode lama via `git stash` kode aplikasi) dan hijau sesudahnya. Beberapa test tambahan sengaja ikut lulus di kode lama karena berfungsi sebagai pagar perilaku (disebut di bawah). `main` (termasuk Sprint 3 QR/rekap, Sprint 7 Drive bagian B, dan Sprint 9 dashboard) sudah di-merge; seluruh pemeriksaan hijau setelah merge.
+Cabang `fix/sprint-2-4-5-review`. Satu commit per temuan (`fix(<area>): ...`). Setiap temuan diverifikasi dulu di kode, lalu diberi test regresi yang **gagal sebelum perbaikan** (dicek dengan menjalankan test baru terhadap kode lama via `git stash` kode aplikasi) dan hijau sesudahnya. Beberapa test tambahan sengaja ikut lulus di kode lama karena berfungsi sebagai pagar perilaku (disebut di bawah). `main` (termasuk Sprint 3 QR/rekap, Sprint 7 Drive bagian B, Sprint 9 dashboard & portofolio) sudah di-merge; seluruh pemeriksaan hijau setelah merge.
 
 | # | Tingkat | Commit |
 |---|---|---|
@@ -162,4 +162,4 @@ Migrasi baru (semua bisa di-rollback, diuji `migrate:rollback` + `migrate`): `20
 
 ## Pemeriksaan
 
-Setelah merge `main` terakhir: **1570 Pest hijau** (`rk_test`), **229 Vitest hijau**, `composer lint` (Pint + Larastan level 8) hijau, `npm run typecheck` dan `npm run lint` hijau.
+Setelah merge `main` terakhir: **1645 Pest hijau** (`rk_test`), **236 Vitest hijau**, `composer lint` (Pint + Larastan level 8) hijau, `npm run typecheck` dan `npm run lint` hijau.
