@@ -71,4 +71,4 @@ Tidak ada (memakai yang sudah terpasang). `composer install`/`npm install` hanya
 - Test konkurensi nomor berjalan sekuensial (RefreshDatabase satu koneksi); keamanan race bergantung pada upsert atomik Postgres.
 - Pembatalan pengajuan yang **sudah disetujui** (oleh HR) belum ada UI; `AttendanceEffects::revert()` sudah tersedia.
 - Lembur yang disetujui untuk hari tanpa baris absensi baru tercatat saat baris itu ada (check-in/tutup hari).
-- Pencarian ⌘K untuk pengajuan (SearchProvider) belum dibuat.
+- ~~Pencarian ⌘K untuk pengajuan~~ — selesai Sprint 10B (`RequestSearchProvider`).

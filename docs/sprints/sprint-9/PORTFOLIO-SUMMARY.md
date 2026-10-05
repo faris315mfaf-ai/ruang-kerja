@@ -76,4 +76,4 @@ RKR (PIC Hana, SDM, bermasalah, update 9 hari, milestone terlewat), PLQ (PIC Put
 - Bentrok merge yang mungkin dengan bagian A: `resources/js/lib/navigation.ts` (+test), `app-sidebar.tsx`, `menu.tsx`, `NotificationType`/`NotificationEvent`, `config/notifications.php`, `routes/console.php`, `package.json`/lockfile (recharts), `docs/DATABASE.md`. Semua berupa penambahan baris.
 - Saat Sprint 6 (`comments`) masuk, pertimbangkan memindahkan `project_directions` ke komentar morph `project_updates` (dengan @mention).
 - Tablet (834 px) memakai tata letak desktop dengan tabel bergulir horizontal; belum diverifikasi visual khusus.
-- Widget absensi menghitung "belum check-in" = karyawan aktif − hadir − cuti/izin − libur (tanpa memeriksa jadwal shift tiap orang); Dashboard HR bagian A menjadi sumber angka rinci.
+- ~~Widget absensi menghitung "belum check-in" tanpa jadwal shift~~ — selesai Sprint 10B: memakai `TodayAttendance` (ScheduleSnapshot), angka sama dengan Dashboard HR.

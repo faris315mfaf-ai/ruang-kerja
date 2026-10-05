@@ -70,7 +70,7 @@ Pest 68 test baru di `tests/Feature/Analytics`; Vitest `features/dashboard/lib.t
 
 ## Sisa / risiko
 
-- Once-prop `attendanceStatus` (Sprint 2) bisa terbawa `null` dari halaman login tamu sampai 5 menit; Dashboard Saya menambalnya dengan reload parsial — sebaiknya diperbaiki di sumbernya.
-- Tombol "Tandai ditinjau" & "Koreksi" di Dashboard HR menunggu integrasi dengan Sprint 3.
+- ~~Once-prop `attendanceStatus` (Sprint 2) bisa terbawa `null` dari halaman login tamu sampai 5 menit~~ — selesai Sprint 10B (once-prop dikunci per user, tambalan Dashboard Saya dihapus).
+- ~~Tombol "Tandai ditinjau" & "Koreksi" di Dashboard HR~~ — selesai Sprint 10B.
 - Tren penyelesaian memakai kategori tugas saat ini (sesuai rumus PRD).
 - Ekspor berisi apa yang tampil, bukan seluruh data mentah.

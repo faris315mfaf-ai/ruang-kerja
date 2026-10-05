@@ -67,5 +67,5 @@ Contoh CSV: `tanggal;nama;jenis` / `2026-12-24;Cuti bersama Natal;cuti bersama` 
 - CSP produksi harus mengizinkan `https://tile.openstreetmap.org` (img-src) dan `Permissions-Policy: geolocation=(self), camera=(self)`.
 - Status cuti/izin/sakit/dinas dan `request_id` ditulis Sprint 4.
 - Retensi selfie, tinjauan HR, koreksi manual, rekap/ekspor = Sprint 3.
-- Halaman `/privasi` masih placeholder; pencabutan persetujuan sudah bisa dari halaman Absensi.
+- ~~Halaman `/privasi` masih placeholder~~ — selesai Sprint 10B (Data Saya, ekspor, kebijakan berversi).
 - Saldo cuti di kartu Absensi menunggu Sprint 4.

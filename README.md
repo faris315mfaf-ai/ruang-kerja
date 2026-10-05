@@ -6,7 +6,7 @@ Aplikasi kantor internal: **absensi, pengajuan & persetujuan, workspace, kolabor
 
 ## Daftar isi
 
-1. [Dokumentasi](#dokumentasi) · 2. [Teknologi](#teknologi) · 3. [Pengembangan lokal](#pengembangan-lokal) · [Google Workspace](#menyiapkan-google-workspace) · 4. [Perintah sehari-hari](#perintah-sehari-hari) · 5. [Uji](#uji) · 6. [Deploy ke VPS (dari nol)](#deploy-ke-vps-biznet-gio-dari-nol) · 7. [Deploy berikutnya & rollback](#deploy-berikutnya--rollback) · 8. [Backup & pemulihan](#backup--pemulihan) · 9. [Observabilitas & keamanan](#observabilitas--keamanan) · 10. [Troubleshooting](#troubleshooting)
+1. [Dokumentasi](#dokumentasi) · 2. [Teknologi](#teknologi) · 3. [Pengembangan lokal](#pengembangan-lokal) · [Google Workspace](#menyiapkan-google-workspace) · 4. [Perintah sehari-hari](#perintah-sehari-hari) · 5. [Uji](#uji) · 6. [Deploy ke VPS (dari nol)](#deploy-ke-vps-biznet-gio-dari-nol) · 7. [Deploy berikutnya & rollback](#deploy-berikutnya--rollback) · 8. [Backup & pemulihan](#backup--pemulihan) · 9. [Observabilitas & keamanan](#observabilitas--keamanan) · [Privasi](#privasi-uu-pdp) · [Kinerja](#kinerja) · 10. [Troubleshooting](#troubleshooting)
 
 ## Dokumentasi
 
@@ -218,8 +218,20 @@ Server baru dari nol: ikuti bagian 6 langkah 1–5 (tanpa membuat Super Admin), 
 - `/horizon` dan `/pulse` hanya untuk **super_admin**.
 - Sentry: isi `SENTRY_LARAVEL_DSN` (dan `SENTRY_TRACES_SAMPLE_RATE` bila perlu). Kosong = nonaktif. PII tidak dikirim.
 - Header keamanan & CSP dipasang aplikasi (`app/Http/Middleware/SecurityHeaders.php`, `config/security.php`); Caddy hanya menambah header dasar yang belum ada. Darurat: `CSP_REPORT_ONLY=true` atau `CSP_ENABLED=false`.
+- CSP `img-src` mengizinkan `tile.openstreetmap.org` (peta lokasi kantor & layar gagal check-in).
 - Rate limiter bernama (`AppServiceProvider`): `login` (10/menit/IP + 5/menit/email+IP), `check-in` (6/menit/user, pasang `throttle:check-in` di route check-in/out), `api` (120/menit).
 - Checklist keamanan: [`docs/security/ASVS-L1.md`](docs/security/ASVS-L1.md).
+
+## Privasi (UU PDP)
+
+- Karyawan melihat & mengunduh (Excel/PDF) seluruh datanya di **Menu → Privasi & data saya** (`/privasi`): profil (NIK tersamar), persetujuan lokasi & selfie beserta versinya, absensi & log, pengajuan, dan keputusan persetujuan. Setiap unduhan tercatat di audit log (`privacy.data_exported`).
+- Mencabut persetujuan menonaktifkan check-in GPS + selfie dan memberi tahu HR di Inbox (`attendance.consent_revoked`).
+- Kebijakan privasi publik di `/kebijakan-privasi`. Teksnya Markdown di `resources/markdown/privacy-policy.md` (placeholder `{{perusahaan}}`, `{{retensi_selfie_bulan}}`, `{{kontak}}`, dst.). Setelah mengubah teks, naikkan `PRIVACY_POLICY_VERSION` (+ `PRIVACY_POLICY_DATE`) di `.env`, lalu `php artisan config:cache`: semua karyawan diminta menyetujui ulang sebelum check-in GPS + selfie berikutnya.
+
+## Kinerja
+
+- Uji regresi jumlah query untuk setiap halaman utama: `tests/Feature/Performance/PageQueryCountTest.php` (gagal bila jumlah query bertambah seiring data = N+1, atau melewati anggaran). `QUERY_COUNTS=1 php artisan test --filter=PageQueryCount` mencetak angkanya.
+- Lighthouse halaman Absensi di ponsel: `scripts/lighthouse-absensi.sh` (langkah lengkap di kepala skrip: build produksi, `php artisan serve`, proxy HTTPS/HTTP2 + gzip `scripts/lighthouse-proxy.mjs`, login demo).
 
 ## Troubleshooting
 

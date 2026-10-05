@@ -122,6 +122,9 @@ Uji wajib: setiap Policy punya test matriks peran × aksi.
 - Selfie: disk privat, URL bertanda tangan 5 menit, job bulanan menghapus selfie lebih lama dari retensi.
 - Token Google: cast `encrypted`. `APP_KEY` dirotasi dengan `APP_PREVIOUS_KEYS`.
 - Persetujuan (UU PDP): layar persetujuan saat pertama kali check-in, versi kebijakan tercatat, karyawan dapat melihat data absensinya sendiri dan meminta ekspor.
+- Privasi › Data Saya (Sprint 10, `/privasi`, `App\Domain\Privacy`): setiap karyawan aktif (Gate `viewOwnData`) melihat dan mengunduh (Excel/PDF) **hanya datanya sendiri** — profil (NIK selalu tersamar), riwayat persetujuan lokasi & selfie, seluruh absensi & log (termasuk koordinat dan data teknis, tanpa gambar selfie), pengajuan, dan keputusan persetujuan. Query selalu memakai id pengguna yang login (`MyData`); setiap ekspor diaudit (`privacy.data_exported`). Mencabut persetujuan (`RevokeAttendanceConsent`, dari Absensi atau Data Saya) menolak check-in GPS + selfie sampai disetujui lagi dan mengirim notifikasi `attendance.consent_revoked` ke HR perusahaan.
+- Kebijakan privasi berversi: teks Markdown di `resources/markdown/privacy-policy.md` (diisi placeholder, HTML mentah di-escape), versi & tanggal di `config/privacy.php` (`PRIVACY_POLICY_VERSION`); versi persetujuan absensi mengikutinya (kecuali `ATTENDANCE_CONSENT_VERSION` diisi). Halaman publik `/kebijakan-privasi` (ditaut dari login).
+- CSP `img-src` mengizinkan `https://tile.openstreetmap.org` (peta Leaflet di layar gagal check-in & pengaturan lokasi). Mini-map kartu Absensi berupa sketsa SVG tanpa tile (ringan di 4G).
 
 ## 6. Deploy
 

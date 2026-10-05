@@ -245,7 +245,7 @@ Indeks `(office_location_id, is_active)`.
 ### attendance_consents
 `id`, `user_id`, `type` (`location` · `selfie` · `face`), `version` (versi teks kebijakan), `granted_at`, `revoked_at` null. Check-in ditolak bila persetujuan versi terbaru belum diberikan.
 
-Implementasi (Sprint 2): versi dari `config('attendance.consent.version')` (`ATTENDANCE_CONSENT_VERSION`). Check-in GPS + selfie butuh `location` **dan** `selfie` versi terkini yang belum dicabut. Indeks `(user_id, type, version)`.
+Implementasi (Sprint 2): versi dari `config('attendance.consent.version')` (`ATTENDANCE_CONSENT_VERSION`, sejak Sprint 10 default = `PRIVACY_POLICY_VERSION` kebijakan privasi). Check-in GPS + selfie butuh `location` **dan** `selfie` versi terkini yang belum dicabut. Indeks `(user_id, type, version)`.
 
 ---
 
