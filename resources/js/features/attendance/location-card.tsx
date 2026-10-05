@@ -4,7 +4,7 @@ import { formatDistance } from '@/lib/geo';
 import type { GeofenceMatch } from '@/lib/geo';
 import { cn } from '@/lib/utils';
 import type { DaySchedule, OfficeLocationPoint } from '@/types/attendance';
-import { GeofenceMap } from './map/lazy';
+import { GeofenceSketch } from './map/geofence-sketch';
 
 type Props = {
     locations: OfficeLocationPoint[];
@@ -15,6 +15,8 @@ type Props = {
     match: GeofenceMatch<OfficeLocationPoint> | null;
     onRefresh: () => void;
     mapClassName?: string;
+    /** Mini map height in px (120 on phones). */
+    mapHeight?: number;
     className?: string;
 };
 
@@ -72,7 +74,7 @@ function summary({
     };
 }
 
-/** Mini map + distance to the nearest geofence (mockup Absensi). */
+/** Schematic mini map + distance to the nearest geofence (mockup Absensi). */
 export function LocationCard(props: Props) {
     const {
         locations,
@@ -81,6 +83,7 @@ export function LocationCard(props: Props) {
         geoState,
         onRefresh,
         mapClassName,
+        mapHeight,
         className,
     } = props;
     const line = summary(props);
@@ -98,10 +101,11 @@ export function LocationCard(props: Props) {
             )}
         >
             {showMap && (
-                <GeofenceMap
+                <GeofenceSketch
                     locations={locations}
                     position={position}
-                    className={cn('h-[120px] w-full', mapClassName)}
+                    height={mapHeight}
+                    className={cn('w-full', mapClassName)}
                 />
             )}
             <div className="flex items-center gap-3 px-4 py-3">

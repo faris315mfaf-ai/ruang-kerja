@@ -70,6 +70,8 @@ return [
                 'https://*.googleusercontent.com',
                 'https://drive.google.com',
                 'https://docs.google.com',
+                // Attendance maps (Leaflet + OpenStreetMap tiles, Sprint 2).
+                'https://tile.openstreetmap.org',
                 // Private object storage (selfies, attachments) served through signed URLs.
                 $origin(env('AWS_URL')),
                 $origin(env('AWS_ENDPOINT')),

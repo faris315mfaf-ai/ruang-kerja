@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { distanceMeters, formatDistance, nearestLocation } from './geo';
+import {
+    distanceMeters,
+    formatDistance,
+    nearestLocation,
+    sketchLayout,
+} from './geo';
 
 const office = {
     id: 'a',
@@ -67,5 +72,54 @@ describe('formatDistance', () => {
     it('uses metres then kilometres', () => {
         expect(formatDistance(38.4)).toBe('38 m');
         expect(formatDistance(1234)).toBe('1,2 km');
+    });
+});
+
+describe('sketchLayout', () => {
+    const near = { latitude: -6.2 + 38 / 111_195, longitude: 106.816666 };
+
+    it('fills the frame height with the geofence when there is no position', () => {
+        expect(sketchLayout(office, null, 400, 120)).toEqual({
+            radius: 48,
+            marker: null,
+        });
+    });
+
+    it('places a position inside the radius at scale, north is up', () => {
+        const { radius, marker } = sketchLayout(office, near, 400, 120);
+
+        expect(radius).toBeCloseTo(48, 5);
+        expect(marker?.clamped).toBe(false);
+        expect(marker?.x).toBeCloseTo(200, 3);
+        // 38 m of 100 m radius → 0.38 × 48 units above the centre.
+        expect(marker?.y).toBeCloseTo(60 - 0.38 * 48, 1);
+    });
+
+    it('keeps a position east of the radius at scale (the frame is wide)', () => {
+        const east = { latitude: -6.2, longitude: 106.816666 + 0.0018 }; // ~199 m east
+        const { radius, marker } = sketchLayout(office, east, 400, 120);
+
+        expect(radius).toBeCloseTo(48, 5);
+        expect(marker?.clamped).toBe(false);
+        expect(marker!.x).toBeGreaterThan(200 + radius);
+    });
+
+    it('shrinks the circle to fit a position north of the radius', () => {
+        const north = { latitude: -6.2 + 150 / 111_195, longitude: 106.816666 };
+        const { radius, marker } = sketchLayout(office, north, 400, 120);
+
+        expect(radius).toBeCloseTo(32, 0);
+        expect(marker?.clamped).toBe(false);
+        expect(marker!.y).toBeCloseTo(12, 0);
+    });
+
+    it('pins a far-away position to the frame edge in its direction', () => {
+        const bandung = { latitude: -6.91, longitude: 107.61 };
+        const { radius, marker } = sketchLayout(office, bandung, 400, 120);
+
+        expect(radius).toBe(16);
+        expect(marker?.clamped).toBe(true);
+        expect(marker!.x).toBeGreaterThan(200);
+        expect(marker!.y).toBeCloseTo(108, 5);
     });
 });

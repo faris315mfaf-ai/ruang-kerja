@@ -7,6 +7,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+        <meta name="description" content="{{ config('branding.name', config('app.name', 'RuangKerja')) }}: aplikasi kerja internal untuk absensi, pengajuan, tugas, dan kolaborasi tim.">
 
         {{-- Apply the system dark preference before first paint to avoid a flash. Nonce: CSP (SecurityHeaders). --}}
         <script nonce="{{ Vite::cspNonce() }}">

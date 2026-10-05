@@ -82,7 +82,7 @@ export function AttendanceDesktop(props: AttendancePageProps) {
                         geoError={flow.geo.error}
                         match={flow.match}
                         onRefresh={() => void flow.geo.request()}
-                        mapClassName="h-56"
+                        mapHeight={224}
                     />
                     <RecentDays
                         history={history}
