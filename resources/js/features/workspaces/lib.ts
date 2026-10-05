@@ -27,23 +27,6 @@ export function workspaceInitial(
     return rest.charAt(0).toUpperCase() || '?';
 }
 
-/** Sidebar order: Pribadi, Divisi, Tim, Proyek. */
-export const TYPE_ORDER: WorkspaceType[] = [
-    'personal',
-    'division',
-    'team',
-    'project',
-];
-
-export function groupByType<T extends { type: WorkspaceType }>(
-    items: T[],
-): { type: WorkspaceType; items: T[] }[] {
-    return TYPE_ORDER.map((type) => ({
-        type,
-        items: items.filter((item) => item.type === type),
-    })).filter((group) => group.items.length > 0);
-}
-
 /** "PLQ · Proyek · Internal · 9 anggota dari 3 divisi" */
 export function workspaceMeta(workspace: {
     key: string;

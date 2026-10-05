@@ -31,21 +31,25 @@ export function PersonRow({
                 src={person.avatar}
                 className={cn(
                     'shrink-0',
-                    size === 'sm' ? 'size-6 text-[10px]' : 'size-8',
+                    size === 'sm'
+                        ? 'size-7 text-[11px]'
+                        : 'size-10 text-[14px]',
                 )}
             />
             <span className="grid min-w-0 flex-1 leading-tight">
                 <span
                     className={cn(
                         'truncate text-text',
-                        size === 'sm' ? 'text-[13px]' : 'text-sm',
+                        size === 'sm'
+                            ? 'text-[14px] font-semibold'
+                            : 'text-[15px] font-semibold',
                     )}
                 >
                     {person.name}
                     {isYou && <span className="text-text-muted"> (Anda)</span>}
                 </span>
                 {line && (
-                    <span className="truncate text-xs text-text-muted">
+                    <span className="truncate text-meta text-text-muted">
                         {line}
                     </span>
                 )}
@@ -69,17 +73,17 @@ export function AvatarStack({
     const rest = (total ?? people.length) - shown.length;
 
     return (
-        <span className="flex items-center -space-x-1.5" aria-hidden>
+        <span className="flex items-center -space-x-1" aria-hidden>
             {shown.map((person) => (
                 <UserAvatar
                     key={person.id}
                     name={person.name}
                     src={person.avatar}
-                    className="size-6 text-[10px] ring-2 ring-surface"
+                    className="size-6 text-[9px] ring-2 ring-surface"
                 />
             ))}
             {rest > 0 && (
-                <span className="flex size-6 items-center justify-center rounded-full bg-surface-2 text-[10px] font-semibold text-text-muted ring-2 ring-surface">
+                <span className="flex size-6 items-center justify-center rounded-full bg-surface-2 text-[9px] font-semibold text-text-muted ring-2 ring-surface">
                     +{rest}
                 </span>
             )}
@@ -89,7 +93,7 @@ export function AvatarStack({
 
 export function TeamBadge() {
     return (
-        <span className="rounded-full bg-link-soft px-2 py-0.5 text-[11px] font-medium text-primary">
+        <span className="inline-flex h-6 items-center rounded-full bg-link-soft px-2.5 text-[12px] font-bold text-link">
             Ketua
         </span>
     );
@@ -97,7 +101,7 @@ export function TeamBadge() {
 
 export function CodeBadge({ code }: { code: string }) {
     return (
-        <span className="rounded border border-border px-1.5 py-px font-mono text-[11px] text-text-muted">
+        <span className="rounded-xs bg-surface-2 px-2 py-0.5 font-mono text-[12px] font-semibold text-text-muted">
             {code}
         </span>
     );

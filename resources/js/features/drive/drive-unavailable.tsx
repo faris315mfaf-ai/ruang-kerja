@@ -19,12 +19,7 @@ export function DriveUnavailable({ missing }: { missing: string[] }) {
             }
             action={
                 missing.length > 0 ? (
-                    <Button
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        className="h-11 md:h-8"
-                    >
+                    <Button asChild variant="outline">
                         <Link href="/settings/google">
                             Pengaturan Akun Google
                         </Link>

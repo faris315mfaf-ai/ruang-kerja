@@ -3,6 +3,7 @@ import { History } from 'lucide-react';
 import { EmptyState } from '@/components/empty-state';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { Button } from '@/components/ui/button';
+import { Panel } from '@/components/ui/panel';
 import { describeActivity } from '@/features/workspaces/activity-text';
 import { workspaceLayout } from '@/features/workspaces/tab-layout';
 import type {
@@ -39,47 +40,62 @@ export default function WorkspaceActivity(props: Props) {
                         description="Perubahan tugas dan anggota akan tercatat di sini."
                     />
                 ) : (
-                    <ol className="max-w-3xl divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
-                        {activities.data.map((item) => (
-                            <li
-                                key={item.id}
-                                className="flex items-start gap-3 px-4 py-3"
-                            >
-                                {item.causer ? (
-                                    <UserAvatar
-                                        name={item.causer.name}
-                                        src={item.causer.avatar}
-                                        className="size-7 text-[10px]"
-                                    />
-                                ) : (
-                                    <span
-                                        aria-hidden
-                                        className="flex size-7 items-center justify-center rounded-full bg-surface-2 text-text-muted"
-                                    >
-                                        <History className="size-3.5" />
-                                    </span>
-                                )}
-                                <p className="min-w-0 flex-1 text-[14px] leading-6 text-text">
-                                    <span className="font-medium">
-                                        {item.causer?.name ?? 'Sistem'}
-                                    </span>{' '}
-                                    {describeActivity(item, names)}
-                                </p>
-                                <time
-                                    dateTime={item.created_at}
-                                    title={formatDateTime(item.created_at)}
-                                    className="shrink-0 text-[12px] text-text-muted"
+                    <Panel
+                        flush
+                        title="Aktivitas"
+                        action={
+                            <span className="text-label font-normal text-text-muted">
+                                terbaru di atas
+                            </span>
+                        }
+                        className="max-w-4xl pb-2"
+                    >
+                        <ol className="flex flex-col border-t border-divider">
+                            {activities.data.map((item) => (
+                                <li
+                                    key={item.id}
+                                    className="flex min-h-[68px] items-start gap-3.5 border-b border-divider px-5 py-3.5 last:border-b-0 md:px-7"
                                 >
-                                    {formatRelative(item.created_at)}
-                                </time>
-                            </li>
-                        ))}
-                    </ol>
+                                    {item.causer ? (
+                                        <UserAvatar
+                                            name={item.causer.name}
+                                            src={item.causer.avatar}
+                                            className="size-10 text-[14px]"
+                                        />
+                                    ) : (
+                                        <span
+                                            aria-hidden
+                                            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-text-muted"
+                                        >
+                                            <History className="size-5" />
+                                        </span>
+                                    )}
+                                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                        <p className="text-body">
+                                            <span className="font-bold">
+                                                {item.causer?.name ?? 'Sistem'}
+                                            </span>{' '}
+                                            {describeActivity(item, names)}
+                                        </p>
+                                        <time
+                                            dateTime={item.created_at}
+                                            title={formatDateTime(
+                                                item.created_at,
+                                            )}
+                                            className="text-meta text-text-muted"
+                                        >
+                                            {formatRelative(item.created_at)}
+                                        </time>
+                                    </div>
+                                </li>
+                            ))}
+                        </ol>
+                    </Panel>
                 )}
                 {(activities.prev_page_url || activities.next_page_url) && (
-                    <div className="flex max-w-3xl justify-between">
+                    <div className="flex max-w-4xl justify-between">
                         {activities.prev_page_url ? (
-                            <Button asChild variant="outline" size="sm">
+                            <Button asChild variant="outline">
                                 <Link
                                     href={activities.prev_page_url}
                                     preserveScroll
@@ -91,7 +107,7 @@ export default function WorkspaceActivity(props: Props) {
                             <span />
                         )}
                         {activities.next_page_url && (
-                            <Button asChild variant="outline" size="sm">
+                            <Button asChild variant="outline">
                                 <Link
                                     href={activities.next_page_url}
                                     preserveScroll

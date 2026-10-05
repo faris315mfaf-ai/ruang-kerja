@@ -23,9 +23,10 @@ import {
     DropdownMenuShortcut,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateTime, formatRelative } from '@/lib/format';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { DriveAccessBadge } from './drive-access-badge';
 import { DriveFileIcon } from './drive-file-icon';
 import { DriveFilePreview } from './drive-file-preview';
@@ -64,15 +65,15 @@ export function DriveFolderBar({
     const last = breadcrumbs.length - 1;
 
     return (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2.5">
+        <div className="flex flex-wrap items-center gap-3 rounded-card border border-border bg-surface px-4 py-3 shadow-card">
             <span
                 aria-hidden
-                className="flex size-8 items-center justify-center rounded-md border border-border text-text-muted"
+                className="flex size-10 items-center justify-center rounded-control bg-surface-2 text-text-muted"
             >
-                <HardDrive className="size-4" />
+                <HardDrive className="size-5" />
             </span>
             <nav aria-label="Lokasi folder" className="min-w-0 flex-1">
-                <ol className="flex min-w-0 flex-wrap items-center gap-1 text-[13px] text-text-muted">
+                <ol className="flex min-w-0 flex-wrap items-center gap-1.5 text-label font-normal text-text-muted">
                     <li>Google Shared Drive</li>
                     <li aria-hidden>
                         <ChevronRight className="size-3.5" />
@@ -90,14 +91,14 @@ export function DriveFolderBar({
                             {index === last ? (
                                 <span
                                     aria-current="page"
-                                    className="truncate font-medium text-text"
+                                    className="truncate font-bold text-text"
                                 >
                                     {crumb.name}
                                 </span>
                             ) : (
                                 <Link
                                     href={folderHref(crumb.id)}
-                                    className="truncate hover:text-text hover:underline"
+                                    className="truncate rounded-xs font-semibold text-link hover:underline"
                                 >
                                     {crumb.name}
                                 </Link>
@@ -108,7 +109,7 @@ export function DriveFolderBar({
             </nav>
             <DriveAccessBadge access={drive.access} />
             {drive.folder_url && (
-                <Button asChild variant="outline" size="sm" className="h-8">
+                <Button asChild variant="outline" size="sm">
                     <a
                         href={drive.folder_url}
                         target="_blank"
@@ -157,23 +158,19 @@ export function WorkspaceFilesDesktop({
     };
 
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-5">
             <DriveFolderBar
                 drive={drive}
                 breadcrumbs={breadcrumbs}
                 folderHref={folderHref}
             />
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-3">
                 {drive.can_contribute && (
                     <>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button
-                                    size="sm"
-                                    className="h-8"
-                                    disabled={!canAdd}
-                                >
+                                <Button disabled={!canAdd}>
                                     <Plus />
                                     Dokumen baru
                                     <ChevronDown />
@@ -196,10 +193,10 @@ export function WorkspaceFilesDesktop({
                                                 size="sm"
                                             />
                                             <span className="min-w-0 flex-1">
-                                                <span className="block text-[13px] font-medium text-text">
+                                                <span className="block text-label text-text">
                                                     {option.label}
                                                 </span>
-                                                <span className="block text-[12px] text-text-muted">
+                                                <span className="block text-meta text-text-muted">
                                                     {option.description}
                                                 </span>
                                             </span>
@@ -213,8 +210,7 @@ export function WorkspaceFilesDesktop({
                         </DropdownMenu>
                         <Button
                             variant="outline"
-                            size="sm"
-                            className="h-8"
+                            size="default"
                             disabled={!canAdd}
                             onClick={() => input.current?.click()}
                         >
@@ -231,11 +227,7 @@ export function WorkspaceFilesDesktop({
                                 event.target.value = '';
                             }}
                         />
-                        <DrivePicker
-                            onPicked={onPicked}
-                            className="h-8"
-                            disabled={!canAdd}
-                        />
+                        <DrivePicker onPicked={onPicked} disabled={!canAdd} />
                     </>
                 )}
                 <div className="ml-auto flex items-center gap-2">
@@ -243,24 +235,24 @@ export function WorkspaceFilesDesktop({
                         <span className="sr-only">Cari file</span>
                         <Search
                             aria-hidden
-                            className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-text-subtle"
+                            className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-text-subtle"
                         />
-                        <input
+                        <Input
                             type="search"
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
                             placeholder={`Cari di ${files.length} file`}
-                            className="h-8 w-60 rounded-md border border-border bg-surface pr-3 pl-8 text-[13px] text-text placeholder:text-text-subtle focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            className="w-64 pl-10"
                         />
                     </label>
-                    <label className="flex h-8 items-center gap-1 rounded-md border border-border bg-surface px-2.5 text-[13px] text-text-muted">
+                    <label className="flex h-11 items-center gap-1.5 rounded-control border border-border-strong bg-surface px-3.5 text-[15px] text-text-muted focus-within:border-primary focus-within:ring-4 focus-within:ring-ring/55">
                         Urutkan:
                         <select
                             value={sort}
                             onChange={(event) =>
                                 setSort(event.target.value as FileSort)
                             }
-                            className="bg-transparent font-medium text-text focus-visible:outline-none"
+                            className="bg-transparent font-semibold text-text focus-visible:outline-none"
                         >
                             {Object.entries(SORT_LABELS).map(
                                 ([value, label]) => (
@@ -290,26 +282,26 @@ export function WorkspaceFilesDesktop({
                     onDragLeave={() => setDragging(false)}
                     onDrop={drop}
                     className={cn(
-                        'overflow-hidden rounded-lg border border-border bg-surface',
-                        dragging && 'border-primary ring-2 ring-primary/30',
+                        'overflow-hidden rounded-panel border border-border bg-surface shadow-card',
+                        dragging && 'border-primary ring-4 ring-ring/55',
                     )}
                 >
                     {drive.access.state === 'preparing' ? (
-                        <div className="space-y-2 p-4" aria-busy>
-                            <p className="text-[13px] text-text-muted">
+                        <div className="flex flex-col gap-3 p-5" aria-busy>
+                            <p className="text-label font-normal text-text-muted">
                                 Menyiapkan folder Google Drive workspace…
                             </p>
                             {[0, 1, 2].map((index) => (
-                                <Skeleton key={index} className="h-9 w-full" />
+                                <Skeleton key={index} className="h-12 w-full" />
                             ))}
                         </div>
                     ) : rows.length === 0 ? (
                         drive.syncing && files.length === 0 ? (
-                            <div className="space-y-2 p-4" aria-busy>
+                            <div className="flex flex-col gap-3 p-5" aria-busy>
                                 {[0, 1, 2, 3].map((index) => (
                                     <Skeleton
                                         key={index}
-                                        className="h-9 w-full"
+                                        className="h-12 w-full"
                                     />
                                 ))}
                             </div>
@@ -332,19 +324,19 @@ export function WorkspaceFilesDesktop({
                             />
                         )
                     ) : (
-                        <table className="w-full table-fixed text-[13px]">
-                            <thead className="border-b border-border text-left text-[12px] text-text-muted">
+                        <table className="w-full table-fixed text-[15px]">
+                            <thead className="border-b border-border bg-background text-left text-meta text-text-muted">
                                 <tr>
                                     <th
                                         scope="col"
-                                        className="px-4 py-2.5 font-medium"
+                                        className="px-5 py-3 font-semibold"
                                     >
                                         Nama
                                     </th>
                                     <th
                                         scope="col"
                                         className={cn(
-                                            'w-44 px-4 py-2.5 font-medium',
+                                            'w-44 px-5 py-3 font-semibold',
                                             selected
                                                 ? 'hidden'
                                                 : 'hidden lg:table-cell',
@@ -354,20 +346,20 @@ export function WorkspaceFilesDesktop({
                                     </th>
                                     <th
                                         scope="col"
-                                        className="w-32 px-4 py-2.5 font-medium"
+                                        className="w-32 px-5 py-3 font-semibold"
                                     >
                                         Diubah
                                     </th>
                                     <th
                                         scope="col"
-                                        className="hidden w-24 px-4 py-2.5 text-right font-medium lg:table-cell"
+                                        className="hidden w-28 px-5 py-3 text-right font-semibold lg:table-cell"
                                     >
                                         Ukuran
                                     </th>
                                     <th
                                         scope="col"
                                         className={cn(
-                                            'w-48 px-4 py-2.5 font-medium',
+                                            'w-48 px-5 py-3 font-semibold',
                                             selected
                                                 ? 'hidden'
                                                 : 'hidden xl:table-cell',
@@ -377,7 +369,7 @@ export function WorkspaceFilesDesktop({
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-border">
+                            <tbody className="divide-y divide-divider">
                                 {rows.map((file) => {
                                     const folder = file.kind === 'folder';
 
@@ -388,12 +380,12 @@ export function WorkspaceFilesDesktop({
                                                 file.id === selectedId
                                             }
                                             className={cn(
-                                                'hover:bg-surface-2',
+                                                'transition-colors duration-120 ease-brand hover:bg-background',
                                                 file.id === selectedId &&
-                                                    'bg-primary/5',
+                                                    'bg-link-soft',
                                             )}
                                         >
-                                            <td className="max-w-0 px-4 py-2">
+                                            <td className="max-w-0 px-5 py-3.5">
                                                 <span className="flex min-w-0 items-center gap-2.5">
                                                     <DriveFileIcon
                                                         kind={file.kind}
@@ -404,7 +396,10 @@ export function WorkspaceFilesDesktop({
                                                             href={folderHref(
                                                                 file.google_file_id,
                                                             )}
-                                                            className="truncate font-medium text-text hover:underline"
+                                                            className={cn(
+                                                                'truncate rounded-xs text-[16px] font-semibold text-text hover:text-link',
+                                                                focusRing,
+                                                            )}
                                                         >
                                                             {file.name}
                                                         </Link>
@@ -419,7 +414,10 @@ export function WorkspaceFilesDesktop({
                                                                         : file.id,
                                                                 )
                                                             }
-                                                            className="truncate text-left font-medium text-text hover:underline focus-visible:underline focus-visible:outline-none"
+                                                            className={cn(
+                                                                'truncate rounded-xs text-left text-[16px] font-semibold text-text hover:text-link',
+                                                                focusRing,
+                                                            )}
                                                         >
                                                             {file.name}
                                                         </button>
@@ -427,7 +425,7 @@ export function WorkspaceFilesDesktop({
                                                     {file.linked && (
                                                         <span
                                                             title="Ditautkan dari Drive lain"
-                                                            className="inline-flex shrink-0 items-center gap-1 rounded bg-surface-2 px-1.5 py-0.5 text-[11px] text-text-muted"
+                                                            className="inline-flex shrink-0 items-center gap-1 rounded-xs bg-surface-2 px-2 py-0.5 text-[13px] font-semibold text-text-muted"
                                                         >
                                                             <Link2
                                                                 aria-hidden
@@ -440,7 +438,7 @@ export function WorkspaceFilesDesktop({
                                             </td>
                                             <td
                                                 className={cn(
-                                                    'truncate px-4 py-2 text-text',
+                                                    'truncate px-5 py-3.5 text-text',
                                                     selected
                                                         ? 'hidden'
                                                         : 'hidden lg:table-cell',
@@ -449,7 +447,7 @@ export function WorkspaceFilesDesktop({
                                                 {owner(file)}
                                             </td>
                                             <td
-                                                className="px-4 py-2 whitespace-nowrap text-text-muted"
+                                                className="px-5 py-3.5 whitespace-nowrap text-text-muted"
                                                 title={
                                                     file.modified_at
                                                         ? formatDateTime(
@@ -464,7 +462,7 @@ export function WorkspaceFilesDesktop({
                                                       )
                                                     : '–'}
                                             </td>
-                                            <td className="hidden px-4 py-2 text-right text-text-muted tnum lg:table-cell">
+                                            <td className="hidden px-5 py-3.5 text-right whitespace-nowrap text-text-muted tnum lg:table-cell">
                                                 {folder
                                                     ? `${file.children_count ?? 0} item`
                                                     : isGoogleNative(
@@ -478,7 +476,7 @@ export function WorkspaceFilesDesktop({
                                             </td>
                                             <td
                                                 className={cn(
-                                                    'px-4 py-2',
+                                                    'px-5 py-3.5',
                                                     selected
                                                         ? 'hidden'
                                                         : 'hidden xl:table-cell',
@@ -504,7 +502,10 @@ export function WorkspaceFilesDesktop({
                                                                     title={
                                                                         task.title
                                                                     }
-                                                                    className="rounded border border-border px-1.5 font-mono text-[11px] text-text-muted hover:text-text"
+                                                                    className={cn(
+                                                                        'rounded-sm bg-surface-2 px-2 py-0.5 font-mono text-[13px] font-semibold text-text hover:text-link',
+                                                                        focusRing,
+                                                                    )}
                                                                 >
                                                                     {task.key}
                                                                 </Link>
@@ -530,7 +531,7 @@ export function WorkspaceFilesDesktop({
                 )}
             </div>
 
-            <p className="flex flex-wrap items-center gap-x-2 text-[12px] text-text-muted">
+            <p className="flex flex-wrap items-center gap-x-2 text-meta text-text-muted">
                 <span>{levelSummary(files, totalFiles)}.</span>
                 <span>
                     Isi folder disegarkan otomatis bila lebih dari 5 menit.
@@ -539,12 +540,15 @@ export function WorkspaceFilesDesktop({
                     type="button"
                     onClick={onRefresh}
                     disabled={drive.syncing}
-                    className="inline-flex items-center gap-1 font-medium text-text hover:underline disabled:opacity-60"
+                    className={cn(
+                        '-my-2 inline-flex min-h-11 items-center gap-1.5 rounded-control px-1 font-semibold text-link hover:underline disabled:opacity-60',
+                        focusRing,
+                    )}
                 >
                     <RefreshCw
                         aria-hidden
                         className={cn(
-                            'size-3',
+                            'size-4 motion-reduce:animate-none',
                             drive.syncing && 'animate-spin',
                         )}
                     />

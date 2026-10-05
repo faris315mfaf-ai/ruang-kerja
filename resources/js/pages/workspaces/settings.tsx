@@ -50,28 +50,26 @@ function MobileSettings({ members }: { members: MemberDetail[] }) {
     const { auth } = usePage().props;
 
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
             <DesktopOnlyNotice feature="Pengaturan nama, key, kolom status, label, dan anggota" />
-            <p className="text-sm text-text-muted">
+            <p className="text-body text-text-muted">
                 Daftar anggota bisa dilihat di sini.
             </p>
-            <section className="space-y-2">
-                <h2 className="text-[15px] font-medium text-text">
-                    Anggota · {members.length}
-                </h2>
-                <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
+            <section className="flex flex-col gap-2.5">
+                <h2 className="text-h3">Anggota · {members.length}</h2>
+                <ul className="divide-y divide-divider overflow-hidden rounded-card border border-border bg-surface">
                     {members.map((member) => (
                         <li
                             key={member.id}
-                            className="flex min-h-14 items-center gap-3 px-4 py-2"
+                            className="flex min-h-[72px] items-center gap-3.5 px-4 py-2"
                         >
                             <UserAvatar
                                 name={member.name}
                                 src={member.avatar}
-                                className="size-9 text-xs"
+                                className="size-11 text-[15px]"
                             />
                             <span className="min-w-0 flex-1">
-                                <span className="block truncate text-[15px] text-text">
+                                <span className="block truncate text-[17px] font-semibold text-text">
                                     {member.name}
                                     {member.id === auth.user?.id && (
                                         <span className="text-text-muted">
@@ -80,12 +78,12 @@ function MobileSettings({ members }: { members: MemberDetail[] }) {
                                         </span>
                                     )}
                                 </span>
-                                <span className="block truncate text-[13px] text-text-muted">
+                                <span className="block truncate text-label font-normal text-text-muted">
                                     {member.division ?? member.position ?? '–'}
                                 </span>
                             </span>
                             <span className="flex shrink-0 flex-col items-end gap-1">
-                                <span className="text-[13px] text-text-muted">
+                                <span className="text-meta font-semibold text-text-muted">
                                     {ROLE_LABELS[member.role]}
                                 </span>
                                 <MemberDriveStatus drive={member.drive} />
@@ -125,12 +123,12 @@ export default function WorkspaceSettings(props: Props) {
                 {breakpoint === 'mobile' ? (
                     <MobileSettings members={member_details} />
                 ) : (
-                    <div className="grid gap-8 lg:grid-cols-[200px_minmax(0,760px)]">
+                    <div className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[220px_minmax(0,860px)]">
                         <nav
                             aria-label="Bagian pengaturan"
                             className="hidden lg:block"
                         >
-                            <ul className="sticky top-20 space-y-0.5">
+                            <ul className="sticky top-24 flex flex-col gap-1">
                                 {NAV.filter(
                                     ([id]) =>
                                         (id !== 'anggota' ||
@@ -141,11 +139,11 @@ export default function WorkspaceSettings(props: Props) {
                                     <li key={id}>
                                         <a
                                             href={`#${id}`}
-                                            className="flex h-8 items-center justify-between rounded-md px-2.5 text-[13px] text-text-muted hover:bg-surface-2 hover:text-text"
+                                            className="flex h-11 items-center justify-between rounded-control px-3.5 text-[16px] font-medium text-text-muted transition-colors duration-120 ease-brand hover:bg-surface hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                                         >
                                             {label}
                                             {id === 'anggota' && (
-                                                <span className="text-[12px] tnum">
+                                                <span className="text-[14px] tnum">
                                                     {member_details.length}
                                                 </span>
                                             )}
@@ -154,17 +152,17 @@ export default function WorkspaceSettings(props: Props) {
                                                     'synced' && (
                                                     <span
                                                         aria-label="Tersinkron"
-                                                        className="size-1.5 rounded-full bg-success"
+                                                        className="size-2 rounded-full bg-success"
                                                     />
                                                 )}
                                         </a>
                                     </li>
                                 ))}
                                 {can.archive && (
-                                    <li className="mt-2 border-t border-border pt-2">
+                                    <li className="mt-2 border-t border-border pt-3">
                                         <a
                                             href="#zona-bahaya"
-                                            className="flex h-8 items-center rounded-md px-2.5 text-[13px] text-danger hover:bg-danger-soft"
+                                            className="flex h-11 items-center rounded-control px-3.5 text-[16px] font-medium text-danger hover:bg-danger-soft focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                                         >
                                             Zona bahaya
                                         </a>
@@ -172,11 +170,11 @@ export default function WorkspaceSettings(props: Props) {
                                 )}
                             </ul>
                         </nav>
-                        <div className="space-y-8">
+                        <div className="flex min-w-0 flex-col gap-5">
                             {myRole && (
-                                <p className="text-right text-[13px] text-text-muted">
+                                <p className="text-right text-label font-normal text-text-muted">
                                     Anda:{' '}
-                                    <span className="font-medium text-text">
+                                    <span className="font-bold text-text">
                                         {ROLE_LABELS[myRole]}
                                     </span>
                                 </p>

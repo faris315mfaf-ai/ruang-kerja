@@ -65,10 +65,10 @@ export function NewItemDialog({
             : `${option.label} baru`
         : '';
     const form = option && (
-        <form id={id} onSubmit={submit} className="space-y-2">
+        <form id={id} onSubmit={submit} className="flex flex-col gap-2">
             <label
                 htmlFor={`${id}-name`}
-                className="flex items-center gap-2 text-[13px] font-medium text-text"
+                className="flex items-center gap-2 text-label text-text"
             >
                 <DriveFileIcon kind={option.kind} size="sm" />
                 Nama
@@ -81,9 +81,8 @@ export function NewItemDialog({
                 required={option.type === 'folder'}
                 placeholder={option.placeholder}
                 onChange={(event) => setName(event.target.value)}
-                className="h-11 text-base md:h-9 md:text-sm"
             />
-            <p className="text-[12px] text-text-muted">
+            <p className="text-meta text-text-muted">
                 {option.type === 'folder'
                     ? 'Akses folder mengikuti anggota workspace.'
                     : (hint ?? 'Dokumen dibuka di tab baru setelah dibuat.')}
@@ -95,7 +94,6 @@ export function NewItemDialog({
             <Button
                 type="button"
                 variant="outline"
-                className="h-11 md:h-9"
                 onClick={onCancel}
                 disabled={busy}
             >
@@ -104,7 +102,6 @@ export function NewItemDialog({
             <Button
                 type="submit"
                 form={id}
-                className="h-11 md:h-9"
                 disabled={
                     busy || (option?.type === 'folder' && name.trim() === '')
                 }

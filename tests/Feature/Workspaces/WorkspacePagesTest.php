@@ -75,7 +75,8 @@ it('renders the other tabs, the directory and the settings page', function () {
     $this->actingAs($this->member)->get('/workspace')->assertOk()->assertInertia(fn (Assert $page) => $page
         ->component('workspaces/index')
         ->where('can_create.project', false)
-        ->where('workspaces', fn ($list) => collect($list)->pluck('key')->contains('PLQ')));
+        ->where('workspaces', fn ($list) => collect($list)->pluck('key')->contains('PLQ'))
+        ->where('workspaces', fn ($list) => collect($list)->firstWhere('key', 'PLQ')['my_role'] === 'member'));
 });
 
 it('lists the activity feed newest first', function () {

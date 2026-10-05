@@ -62,7 +62,7 @@ export function DriveAccessBadge({
     return (
         <span
             className={cn(
-                'inline-flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[12px] font-medium',
+                'inline-flex h-8 max-w-full items-center gap-1.5 rounded-full px-3 text-[14px] font-bold',
                 TONES[tone],
                 className,
             )}
@@ -86,7 +86,7 @@ export function MemberDriveStatus({
     drive: DriveAccessMember | null;
 }) {
     if (!drive) {
-        return <span className="text-[12px] text-text-muted">–</span>;
+        return <span className="text-meta text-text-muted">–</span>;
     }
 
     const tone: keyof typeof TONES =
@@ -108,7 +108,7 @@ export function MemberDriveStatus({
         <span
             title={drive.error ? `Alasan Google: ${drive.error}` : undefined}
             className={cn(
-                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px]',
+                'inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-[13px] font-semibold',
                 TONES[tone],
             )}
         >

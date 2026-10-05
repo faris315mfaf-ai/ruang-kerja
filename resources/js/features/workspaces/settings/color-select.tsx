@@ -24,7 +24,7 @@ export function ColorSelect({ label, value, disabled, onChange }: Props) {
                 <button
                     type="button"
                     aria-label={`${label}: ${PALETTE_LABELS[value as PaletteColor] ?? value}`}
-                    className="flex size-8 items-center justify-center rounded-md hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
+                    className="flex size-10 items-center justify-center rounded-control hover:bg-surface-2 focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
                 >
                     <span
                         aria-hidden

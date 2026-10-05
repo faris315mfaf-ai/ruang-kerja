@@ -80,7 +80,7 @@ function Row({
                 transition,
             }}
             className={cn(
-                'grid grid-cols-[24px_20px_minmax(0,1fr)_170px_40px_32px] items-center gap-2 bg-surface px-3 py-2',
+                'grid grid-cols-[24px_20px_minmax(0,1fr)_170px_40px_40px] items-center gap-2 bg-surface px-5 py-2',
                 isDragging && 'relative z-10 shadow-card',
             )}
         >
@@ -90,7 +90,7 @@ function Row({
                 {...listeners}
                 aria-label={`Ubah urutan ${status.name}`}
                 disabled={!editable}
-                className="flex h-8 cursor-grab items-center justify-center rounded text-text-subtle hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-default disabled:opacity-40"
+                className="flex h-11 cursor-grab items-center justify-center rounded-sm text-text-subtle hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none disabled:cursor-default disabled:opacity-40"
             >
                 <GripVertical className="size-4" />
             </button>
@@ -109,7 +109,7 @@ function Row({
                 onKeyDown={(event) =>
                     event.key === 'Enter' && event.currentTarget.blur()
                 }
-                className="h-8 rounded-md border border-transparent bg-transparent px-2 text-[13px] text-text hover:border-border focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className="h-11 rounded-control border border-transparent bg-transparent px-2.5 text-[16px] text-text hover:border-border focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
             />
             <select
                 aria-label={`Kategori ${status.name}`}
@@ -135,7 +135,7 @@ function Row({
                     type="button"
                     aria-label={`Hapus kolom ${status.name}`}
                     onClick={() => onDelete(status)}
-                    className="flex size-8 items-center justify-center rounded text-text-subtle hover:bg-surface-2 hover:text-danger focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    className="flex size-10 items-center justify-center rounded-control text-text-subtle hover:bg-surface-2 hover:text-danger focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                 >
                     <Trash2 className="size-4" />
                 </button>
@@ -235,13 +235,13 @@ export function StatusesSection({
                 )
             }
         >
-            <p className="flex items-center gap-2 border-b border-border bg-info-soft px-4 py-2.5 text-[13px] text-text">
-                <Info className="size-4 shrink-0 text-info" aria-hidden />
+            <p className="mx-5 mb-4 flex items-start gap-3 rounded-lg bg-info-soft px-4 py-3 text-[15px] text-info md:mx-7">
+                <Info className="mt-0.5 size-5 shrink-0" aria-hidden />
                 Metrik dashboard memakai kategori, bukan nama kolom. Mis. kolom
                 “Menunggu persetujuan” berkategori Review dihitung sebagai
                 Review.
             </p>
-            <div className="grid grid-cols-[24px_20px_minmax(0,1fr)_170px_40px_32px] gap-2 bg-surface-2 px-3 py-2 text-[12px] text-text-muted">
+            <div className="grid grid-cols-[24px_20px_minmax(0,1fr)_170px_40px_40px] gap-2 bg-background px-5 py-3 text-meta text-text-muted">
                 <span />
                 <span />
                 <span>Nama kolom</span>
@@ -258,7 +258,7 @@ export function StatusesSection({
                     items={order}
                     strategy={verticalListSortingStrategy}
                 >
-                    <ul className="divide-y divide-border">
+                    <ul className="divide-y divide-divider">
                         {ordered.map((status) => (
                             <Row
                                 key={status.id}
@@ -277,7 +277,7 @@ export function StatusesSection({
                 open={deleting !== null}
                 onOpenChange={(open) => !open && setDeleting(null)}
             >
-                <DialogContent className="bg-surface">
+                <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Hapus kolom {deleting?.name}?</DialogTitle>
                         <DialogDescription>
@@ -286,14 +286,14 @@ export function StatusesSection({
                             tersimpan.
                         </DialogDescription>
                     </DialogHeader>
-                    <label className="space-y-1.5 text-[13px]">
+                    <label className="flex flex-col gap-2 text-[15px]">
                         <span className="font-medium text-text">
                             Pindahkan tugas ke
                         </span>
                         <select
                             value={target}
                             onChange={(event) => setTarget(event.target.value)}
-                            className={cn(selectClass, 'h-9 w-full')}
+                            className={cn(selectClass, 'w-full')}
                         >
                             {ordered
                                 .filter((status) => status.id !== deleting?.id)

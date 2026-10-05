@@ -1,18 +1,17 @@
-import { usePage } from '@inertiajs/react';
 import type { ProjectSummaryProps } from '@/features/portfolio/types';
-import {
-    BurnupPanel,
-    DirectionsBox,
-    LatestUpdatePanel,
-    MilestonesPanel,
-    OverduePanel,
-    RisksPanel,
-    SummaryKpis,
-    TeamLoadPanel,
-} from './panels';
+import { BurnupPanel } from './burnup-panel';
+import { DirectionsBox } from './directions-box';
+import { MilestonesPanel } from './milestones-panel';
+import { RisksPanel } from './risks-panel';
+import { ProgressCard, SummaryKpis } from './summary-kpis';
+import { OverduePanel, TeamLoadPanel } from './team-panels';
+import { LatestUpdatePanel } from './update-panel';
 import type { ProjectSummaryActions } from './use-project-summary';
 
-/** Tab Ringkasan, desktop (mockup ProyekDetail). */
+/**
+ * Tab Ringkasan, desktop & tablet (DProyek / TfProyek): flex-wrap rows, so
+ * on a tablet the 2:1 columns stack by themselves.
+ */
 export function SummaryDesktop({
     props,
     actions,
@@ -20,13 +19,14 @@ export function SummaryDesktop({
     props: ProjectSummaryProps;
     actions: ProjectSummaryActions;
 }) {
-    const { auth } = usePage().props;
-
     return (
-        <div className="space-y-5">
-            <SummaryKpis props={props} />
-            <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
-                <div className="min-w-0 space-y-5">
+        <div className="flex flex-col gap-6">
+            <section aria-label="Ringkasan" className="flex flex-wrap gap-5">
+                <ProgressCard props={props} className="flex-[1.6_1_360px]" />
+                <SummaryKpis props={props} cardClassName="flex-[1_1_200px]" />
+            </section>
+            <div className="flex flex-wrap items-start gap-5">
+                <div className="flex min-w-0 flex-[2_1_560px] flex-col gap-5">
                     <BurnupPanel props={props} />
                     <MilestonesPanel
                         props={props}
@@ -34,19 +34,8 @@ export function SummaryDesktop({
                         onEdit={actions.openMilestone}
                     />
                     <OverduePanel props={props} />
-                    <DirectionsBox
-                        props={props}
-                        currentUser={
-                            auth.user
-                                ? {
-                                      name: auth.user.name,
-                                      avatar: auth.user.avatar,
-                                  }
-                                : null
-                        }
-                    />
                 </div>
-                <div className="min-w-0 space-y-5">
+                <div className="flex min-w-0 flex-[1_1_340px] flex-col gap-5">
                     <LatestUpdatePanel
                         props={props}
                         onWrite={actions.openUpdate}
@@ -54,6 +43,7 @@ export function SummaryDesktop({
                         onResolve={actions.resolve}
                         resolving={actions.resolving}
                     />
+                    <DirectionsBox props={props} />
                     <RisksPanel
                         props={props}
                         onCreate={() => actions.openRisk('new')}

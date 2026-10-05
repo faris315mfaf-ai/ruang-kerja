@@ -34,15 +34,15 @@ export function DriveSection({ workspace, drive, editable }: Props) {
             title="Integrasi Drive"
             description="Folder Google Shared Drive milik workspace ini. Izin folder mengikuti daftar anggota: owner, admin, dan member dapat mengedit; viewer hanya melihat."
         >
-            <div className="flex flex-wrap items-center gap-3 p-4">
+            <div className="flex flex-wrap items-center gap-3 px-5 pb-6 md:px-7">
                 <div className="min-w-0 flex-1 space-y-1">
-                    <p className="truncate text-[13px] font-medium text-text">
+                    <p className="truncate text-label text-text">
                         {drive.folder_name}
                     </p>
                     <DriveAccessBadge access={drive.access} />
                 </div>
                 {drive.folder_url && (
-                    <Button asChild variant="outline" size="sm" className="h-8">
+                    <Button asChild variant="outline" size="sm">
                         <a
                             href={drive.folder_url}
                             target="_blank"
@@ -58,7 +58,6 @@ export function DriveSection({ workspace, drive, editable }: Props) {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-8"
                         disabled={processing}
                         onClick={() =>
                             router.post(
