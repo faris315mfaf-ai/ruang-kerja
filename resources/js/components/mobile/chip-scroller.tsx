@@ -14,7 +14,10 @@ type Props<T extends string> = {
     className?: string;
 };
 
-/** Horizontally scrolling filter chips (single choice). */
+/**
+ * Horizontally scrolling filter chips (single choice). Bleeds to the screen
+ * edge (`-mx-4 px-4`); `scroll-px-4` keeps snapped chips off the edge.
+ */
 export function ChipScroller<T extends string>({
     chips,
     value,
@@ -27,7 +30,7 @@ export function ChipScroller<T extends string>({
             role="radiogroup"
             aria-label={label}
             className={cn(
-                '-mx-4 flex snap-x [scrollbar-width:none] gap-2 overflow-x-auto px-4 pb-1 [&::-webkit-scrollbar]:hidden',
+                '-mx-4 flex snap-x scroll-px-4 [scrollbar-width:none] gap-2 overflow-x-auto px-4 pb-1 [&::-webkit-scrollbar]:hidden',
                 className,
             )}
         >

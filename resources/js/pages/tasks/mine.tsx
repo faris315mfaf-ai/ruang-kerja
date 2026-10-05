@@ -198,7 +198,7 @@ function MyTasksView({ tab, counts, tasks, today }: Props) {
             label="Workspace"
             value={workspaceId}
             onChange={setWorkspaceId}
-            className={cn(!mobile && 'mx-0 flex-wrap px-0')}
+            className={cn(!mobile && 'mx-0 scroll-px-0 flex-wrap px-0')}
             chips={[
                 { value: ALL, label: 'Semua', count: summary.open },
                 ...perWorkspace.map(({ row, count }) => ({

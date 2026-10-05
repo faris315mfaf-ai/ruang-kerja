@@ -80,7 +80,7 @@ export function RequestFormMobile({
                         value: item.value,
                         label: item.label,
                     }))}
-                    className="scroll-px-4 [&>button]:h-11 [&>button]:px-4 [&>button]:text-[16px] [&>button]:font-bold"
+                    className="[&>button]:h-11 [&>button]:px-4 [&>button]:text-[16px] [&>button]:font-bold"
                 />
             )}
 

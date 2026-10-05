@@ -254,7 +254,7 @@ export function SearchScreen({ initialQuery, groups: providers }: Props) {
                     chips={chips}
                     value={chip}
                     onChange={setChip}
-                    className="mt-3 scroll-px-4 md:mx-0 md:scroll-px-0 md:px-0"
+                    className="mt-3 md:mx-0 md:scroll-px-0 md:px-0"
                 />
             </div>
 

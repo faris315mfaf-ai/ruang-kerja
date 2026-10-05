@@ -7,7 +7,7 @@ import { UserAvatar } from '@/components/shell/user-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { KpiCard } from '@/components/ui/kpi-card';
+import { KpiBar, KpiCard } from '@/components/ui/kpi-card';
 import { Panel } from '@/components/ui/panel';
 import { formatDate, formatTime } from '@/lib/format';
 import { BOARD_STATES } from '@/lib/recap';
@@ -83,21 +83,8 @@ export function StatCards({
                 suffix={`/ ${summary.scheduled}`}
                 note={`${share}% · termasuk ${summary.late} terlambat`}
                 className={cn(compact && 'col-span-3')}
-            >
-                <div
-                    role="progressbar"
-                    aria-label="Hadir dari yang terjadwal"
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={share}
-                    className="h-2 overflow-hidden rounded-full bg-on-brand/25"
-                >
-                    <div
-                        className="h-full rounded-full bg-on-brand"
-                        style={{ width: `${share}%` }}
-                    />
-                </div>
-            </KpiCard>
+                bar={<KpiBar value={share} label="Hadir dari yang terjadwal" />}
+            />
             <KpiCard
                 label="Terjadwal"
                 value={summary.scheduled}
@@ -384,7 +371,7 @@ export function PeopleList({
                     chips={chips}
                     value={state}
                     onChange={setState}
-                    className={cn(!mobile && 'mx-0 px-0')}
+                    className={cn(!mobile && 'mx-0 scroll-px-0 px-0')}
                 />
             </div>
             {filtered.length === 0 ? (

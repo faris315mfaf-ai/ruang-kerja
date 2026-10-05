@@ -122,7 +122,7 @@ export function MyRequestsMobile({
                             ? counts[item.value]
                             : undefined,
                 }))}
-                className="scroll-px-4 [&>button]:h-11"
+                className="[&>button]:h-11"
             />
 
             {requests.length === 0 ? (
