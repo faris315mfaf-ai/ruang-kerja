@@ -17,8 +17,9 @@ type Props = {
 };
 
 /**
- * Full-screen task detail /w/{KEY}/tasks/{n} (mockups TaskDetail and
- * MTaskDetail). Target of search results, notifications and shared links.
+ * Full-screen task detail /w/{KEY}/tasks/{n} and /tugas/{task} (DTugas,
+ * SDetailTugas, MSDetailTugas). Target of search results, notifications and
+ * shared links.
  */
 export default function TaskShow({ detail: initial, today }: Props) {
     const breakpoint = useBreakpoint();
@@ -49,20 +50,20 @@ export default function TaskShow({ detail: initial, today }: Props) {
             ) : breakpoint === 'mobile' ? (
                 <TaskDetailMobile state={{ ...state, detail }} today={today} />
             ) : (
-                <div className="-m-4 flex min-h-[calc(100svh-56px)] flex-col lg:-m-6">
-                    <div className="relative">
-                        <TaskDetailHeader
-                            state={{ ...state, detail }}
-                            viewers={viewers}
-                            layout="page"
-                        />
-                    </div>
-                    <TaskDetailBody
-                        state={{ ...state, detail }}
-                        today={today}
-                        layout="page"
-                    />
-                </div>
+                <TaskDetailBody
+                    state={{ ...state, detail }}
+                    today={today}
+                    layout="page"
+                    header={
+                        <div className="relative">
+                            <TaskDetailHeader
+                                state={{ ...state, detail }}
+                                viewers={viewers}
+                                layout="page"
+                            />
+                        </div>
+                    }
+                />
             )}
         </>
     );

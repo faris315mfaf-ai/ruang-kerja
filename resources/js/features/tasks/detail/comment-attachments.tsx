@@ -224,8 +224,8 @@ export function PendingAttachmentChips({
                 <li
                     key={item.key}
                     className={cn(
-                        'flex max-w-full items-center gap-1.5 rounded-md border border-border bg-surface-2 pl-2 text-text',
-                        mobile ? 'h-11 text-[15px]' : 'h-7 text-xs',
+                        'flex max-w-full items-center gap-1.5 rounded-control border border-border bg-surface-2 pl-2 text-text',
+                        mobile ? 'h-11 text-[15px]' : 'h-7 text-meta',
                     )}
                 >
                     {item.kind === 'upload' && (
@@ -252,7 +252,7 @@ export function PendingAttachmentChips({
                         aria-label={`Batalkan lampiran ${item.name}`}
                         onClick={() => onRemove(item.key)}
                         className={cn(
-                            'flex shrink-0 items-center justify-center rounded-md text-text-muted hover:bg-surface hover:text-text',
+                            'flex shrink-0 items-center justify-center rounded-control text-text-muted hover:bg-surface hover:text-text',
                             mobile ? 'size-11' : 'size-7',
                         )}
                     >
@@ -292,7 +292,7 @@ export function CommentAttachmentList({
                             className="min-h-12 p-2.5 shadow-none"
                         />
                     ) : (
-                        <p className="rounded-lg border border-border px-3 py-2 text-[13px] text-text-muted">
+                        <p className="rounded-lg border border-border px-3 py-2 text-[15px] text-text-muted">
                             {attachment.filename}
                         </p>
                     )}

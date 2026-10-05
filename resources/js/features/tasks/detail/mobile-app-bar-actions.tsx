@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import { Share } from 'lucide-react';
 import { toast } from 'sonner';
+import { appBarIconButton } from '@/components/mobile/app-bar';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { presenceLabel, useTaskPresence } from '../realtime/presence';
 
@@ -55,9 +56,9 @@ export function MobileTaskAppBarActions({
                 type="button"
                 onClick={() => void share()}
                 aria-label="Bagikan tautan"
-                className="flex size-11 items-center justify-center rounded-full text-text hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className={appBarIconButton}
             >
-                <Share className="size-5" strokeWidth={1.75} aria-hidden />
+                <Share className="size-[22px]" strokeWidth={2} aria-hidden />
             </button>
         </>
     );

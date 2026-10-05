@@ -66,9 +66,9 @@ export function CommentItem({
         return (
             <div
                 id={`komentar-${comment.id}`}
-                className="flex items-center gap-3 rounded-lg border border-dashed border-border px-3 py-2 text-[13px] text-text-subtle"
+                className="flex items-center gap-3 rounded-lg border border-dashed border-border px-4 py-3 text-[15px] text-text-muted"
             >
-                <Trash2 className="size-3.5" aria-hidden />
+                <Trash2 className="size-4" aria-hidden />
                 Komentar {comment.author.name} dihapus.
             </div>
         );
@@ -98,25 +98,25 @@ export function CommentItem({
                 <UserAvatar
                     name={comment.author.name}
                     src={comment.author.avatar}
-                    className="mt-0.5 size-7 text-[10px]"
+                    className="size-10 text-[14px]"
                 />
             )}
-            <div className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-4 py-3">
+            <div className="min-w-0 flex-1 rounded-lg bg-background px-4 py-3 dark:bg-surface-2">
                 <header className="flex items-center gap-2">
                     {mobile && (
                         <UserAvatar
                             name={comment.author.name}
                             src={comment.author.avatar}
-                            className="size-6 text-[9px]"
+                            className="size-7 text-meta"
                         />
                     )}
-                    <span className="truncate text-[13px] font-semibold text-text">
+                    <span className="truncate text-[15px] font-bold text-text">
                         {comment.author.name}
                     </span>
                     <time
                         dateTime={comment.created_at}
                         title={formatDateTime(comment.created_at)}
-                        className="shrink-0 text-xs text-text-muted"
+                        className="shrink-0 text-meta text-text-muted"
                     >
                         {formatRelative(comment.created_at)}
                         {comment.edited_at && ' (diedit)'}
@@ -127,8 +127,10 @@ export function CommentItem({
                                 type="button"
                                 aria-label="Menu komentar"
                                 className={cn(
-                                    'ml-auto flex items-center justify-center rounded-md text-text-muted hover:bg-surface-2 hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                                    mobile ? '-my-2 -mr-2 size-11' : 'size-7',
+                                    'ml-auto flex items-center justify-center rounded-control text-text-muted hover:bg-surface hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none',
+                                    mobile
+                                        ? '-my-2 -mr-2 size-11'
+                                        : '-my-1 size-9',
                                 )}
                             >
                                 <MoreHorizontal
@@ -191,7 +193,7 @@ export function CommentItem({
                             }
                         }}
                     >
-                        <div className="rounded-md border border-border-strong px-3 py-2 focus-within:ring-2 focus-within:ring-ring">
+                        <div className="rounded-control border border-border-strong px-3 py-2 focus-within:ring-[3px] focus-within:ring-ring">
                             <LazyRichTextEditor
                                 value={comment.body}
                                 workspaceKey={workspaceKey}
@@ -247,7 +249,7 @@ export function CommentItem({
                     <div
                         role="alertdialog"
                         aria-label="Hapus komentar"
-                        className="mt-3 flex flex-wrap items-center gap-2 rounded-md bg-danger-soft px-3 py-2 text-[13px] text-danger"
+                        className="mt-3 flex flex-wrap items-center gap-2 rounded-control bg-danger-soft px-3 py-2 text-[15px] text-danger"
                     >
                         <span className="mr-auto">Hapus komentar ini?</span>
                         <Button

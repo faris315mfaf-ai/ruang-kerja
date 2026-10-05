@@ -1,21 +1,13 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    AlertCircle,
-    CalendarDays,
-    CircleCheck,
-    Clock,
-    MoreHorizontal,
-    Plus,
-} from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { CircleCheck, ListFilter, Plus, SearchX } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { EmptyState } from '@/components/empty-state';
 import { ChipScroller } from '@/components/mobile/chip-scroller';
 import { Fab } from '@/components/mobile/fab';
-import { SwipeableRow } from '@/components/mobile/swipeable-row';
-import { PriorityIcon } from '@/components/priority-icon';
-import { StatusIcon } from '@/components/status-icon';
 import { Button } from '@/components/ui/button';
-import { AvatarStack } from '@/features/tasks/avatar-stack';
-import { DueBadge } from '@/features/tasks/due-badge';
+import { KpiCard } from '@/components/ui/kpi-card';
+import { Panel } from '@/components/ui/panel';
+import { TabNav } from '@/components/ui/tabs';
 import { FilterMenu } from '@/features/tasks/filters/filter-menu';
 import { FilterSheet } from '@/features/tasks/filters/filter-sheet';
 import {
@@ -23,21 +15,27 @@ import {
     TaskComposerProvider,
     useTaskComposer,
 } from '@/features/tasks/form/task-composer';
-import { LabelPill } from '@/features/tasks/label-pill';
 import { filterTasks } from '@/features/tasks/lib/filters';
-import type { GroupMode, RowGroup } from '@/features/tasks/mine/grouping';
+import { toolbarControl } from '@/features/tasks/lib/toolbar';
+import type { GroupMode } from '@/features/tasks/mine/grouping';
 import {
     GROUP_MODES,
     groupRows,
-    postponedDue,
     summarize,
 } from '@/features/tasks/mine/grouping';
+import {
+    DesktopRow,
+    GroupPanel,
+    MobileRow,
+    workspaceLabel,
+} from '@/features/tasks/mine/parts';
 import type { Label, MyTaskRow, Person } from '@/features/tasks/types';
 import { useTaskFilters } from '@/features/tasks/use-task-filters';
 import { WorkspaceAvatar } from '@/features/workspaces/workspace-avatar';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
-import { cn } from '@/lib/utils';
-import { mine, move, update } from '@/routes/tasks';
+import { formatNumber } from '@/lib/format';
+import { cn, focusRing } from '@/lib/utils';
+import { mine } from '@/routes/tasks';
 
 type Tab = 'assigned' | 'watching' | 'created';
 
@@ -54,222 +52,25 @@ const TABS: { value: Tab; label: string }[] = [
     { value: 'created', label: 'Saya buat' },
 ];
 
-const GROUP_ICONS: Record<string, typeof Clock> = {
-    overdue: AlertCircle,
-    today: Clock,
-    week: CalendarDays,
-    later: CalendarDays,
-    none: MoreHorizontal,
-};
+const ALL = 'all';
 
 function unique<T extends { id: string }>(items: T[]): T[] {
     return [...new Map(items.map((item) => [item.id, item])).values()];
 }
 
-function GroupHeader({ group }: { group: RowGroup }) {
-    const Icon = group.dueGroup ? GROUP_ICONS[group.dueGroup] : null;
+/** Open tasks per workspace, busiest first (STugasSaya chips + "Menurut workspace"). */
+function workspaceCounts(rows: MyTaskRow[]) {
+    const map = new Map<string, { row: MyTaskRow; count: number }>();
 
-    return (
-        <div className="flex h-10 items-center gap-2 border-y border-border bg-surface-2 px-3 text-[13px] first:border-t-0 md:h-9">
-            {Icon && (
-                <Icon
-                    className={cn(
-                        'size-4',
-                        group.tone === 'danger'
-                            ? 'text-danger'
-                            : group.tone === 'warning'
-                              ? 'text-warning'
-                              : 'text-text-muted',
-                    )}
-                    aria-hidden
-                />
-            )}
-            <span
-                className={cn(
-                    'font-medium',
-                    group.tone === 'danger' ? 'text-danger' : 'text-text',
-                )}
-            >
-                {group.label}
-            </span>
-            <span className="text-text-muted tnum">{group.items.length}</span>
-            {group.hint && (
-                <span className="text-text-muted">· {group.hint}</span>
-            )}
-        </div>
-    );
-}
+    for (const row of rows) {
+        const entry = map.get(row.workspace.id);
+        map.set(row.workspace.id, { row, count: (entry?.count ?? 0) + 1 });
+    }
 
-function DesktopRow({
-    row,
-    today,
-    selected,
-    onOpen,
-    onSelect,
-}: {
-    row: MyTaskRow;
-    today: string;
-    selected: boolean;
-    onOpen: () => void;
-    onSelect: () => void;
-}) {
-    const ref = useRef<HTMLDivElement>(null);
-    const closed =
-        row.status_category === 'done' || row.status_category === 'canceled';
-
-    useEffect(() => {
-        if (selected) {
-            ref.current?.focus();
-        }
-    }, [selected]);
-
-    return (
-        <div
-            ref={ref}
-            role="row"
-            tabIndex={selected ? 0 : -1}
-            aria-selected={selected}
-            onClick={onOpen}
-            onFocus={onSelect}
-            onKeyDown={(event) => event.key === 'Enter' && onOpen()}
-            className={cn(
-                'grid h-10 cursor-pointer grid-cols-[20px_72px_20px_minmax(0,1fr)_auto_120px_auto] items-center gap-3 border-b border-border px-3 text-[13px] last:border-b-0 hover:bg-surface-2 focus-visible:outline-none',
-                selected && 'bg-surface-2 ring-1 ring-primary/50 ring-inset',
-            )}
-        >
-            <PriorityIcon priority={row.priority} />
-            <span className="font-mono text-[11px] text-text-subtle">
-                {row.key}
-            </span>
-            <StatusIcon
-                category={row.status.category}
-                color={row.status.color}
-                label={row.status.name}
-            />
-            <span
-                className={cn(
-                    'truncate text-text',
-                    closed && 'text-text-muted line-through',
-                )}
-            >
-                {row.title}
-            </span>
-            <span className="flex items-center gap-2">
-                <span title={row.workspace.name}>
-                    <WorkspaceAvatar
-                        name={row.workspace.name}
-                        type={row.workspace.type}
-                        color={row.workspace.color}
-                        className="size-4.5 text-[10px]"
-                    />
-                </span>
-                {row.labels[0] && <LabelPill label={row.labels[0]} />}
-            </span>
-            <span className="flex justify-end">
-                {row.due_date ? (
-                    <DueBadge
-                        due={row.due_date}
-                        today={today}
-                        closed={closed}
-                    />
-                ) : (
-                    <span className="text-text-subtle">–</span>
-                )}
-            </span>
-            <AvatarStack people={row.assignees} max={2} />
-        </div>
-    );
-}
-
-function MobileRow({
-    row,
-    today,
-    onOpen,
-}: {
-    row: MyTaskRow;
-    today: string;
-    onOpen: () => void;
-}) {
-    const closed =
-        row.status_category === 'done' || row.status_category === 'canceled';
-    const actions = [
-        {
-            label: 'Tunda',
-            tone: 'neutral' as const,
-            onAction: () =>
-                router.patch(
-                    update.url(row.id),
-                    { due_date: postponedDue(row.due_date, today) },
-                    { preserveScroll: true },
-                ),
-        },
-        ...(row.done_status_id && !closed
-            ? [
-                  {
-                      label: 'Selesai',
-                      tone: 'primary' as const,
-                      onAction: () =>
-                          router.patch(
-                              move.url(row.id),
-                              { status_id: row.done_status_id },
-                              { preserveScroll: true },
-                          ),
-                  },
-              ]
-            : []),
-    ];
-
-    return (
-        <SwipeableRow actions={actions} className="border-b border-border">
-            <button
-                type="button"
-                onClick={onOpen}
-                className="flex min-h-16 w-full items-start gap-3 px-4 py-3 text-left"
-            >
-                <StatusIcon
-                    category={row.status.category}
-                    color={row.status.color}
-                    className="mt-0.5 size-5"
-                    label={row.status.name}
-                />
-                <span className="min-w-0 flex-1">
-                    <span
-                        className={cn(
-                            'block truncate text-[15px] text-text',
-                            closed && 'text-text-muted line-through',
-                        )}
-                    >
-                        {row.title}
-                    </span>
-                    <span className="mt-0.5 flex min-w-0 items-center gap-2 text-[13px] text-text-muted">
-                        <span className="font-mono">{row.key}</span>
-                        <WorkspaceAvatar
-                            name={row.workspace.name}
-                            type={row.workspace.type}
-                            color={row.workspace.color}
-                            className="size-4 text-[9px]"
-                        />
-                        <span className="truncate">
-                            {row.workspace.type === 'personal'
-                                ? 'Pribadi'
-                                : row.workspace.name.replace(
-                                      /^(Divisi|Tim|Proyek) /,
-                                      '',
-                                  )}
-                        </span>
-                        {row.due_date && (
-                            <DueBadge
-                                due={row.due_date}
-                                today={today}
-                                closed={closed}
-                                className="text-[13px]"
-                            />
-                        )}
-                    </span>
-                </span>
-                <PriorityIcon priority={row.priority} className="mt-1" />
-            </button>
-        </SwipeableRow>
+    return [...map.values()].sort(
+        (a, b) =>
+            b.count - a.count ||
+            workspaceLabel(a.row).localeCompare(workspaceLabel(b.row), 'id'),
     );
 }
 
@@ -283,13 +84,21 @@ function MyTasksView({ tab, counts, tasks, today }: Props) {
     const [showClosed, setShowClosed] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [workspaceId, setWorkspaceId] = useState<string>(ALL);
 
     const summary = summarize(tasks, today);
+    const openRows = tasks.filter(
+        (row) =>
+            row.status_category !== 'done' &&
+            row.status_category !== 'canceled',
+    );
+    const perWorkspace = workspaceCounts(openRows);
     const filtered = filterTasks(tasks, filters, today).filter(
         (row) =>
-            showClosed ||
-            (row.status_category !== 'done' &&
-                row.status_category !== 'canceled'),
+            (showClosed ||
+                (row.status_category !== 'done' &&
+                    row.status_category !== 'canceled')) &&
+            (workspaceId === ALL || row.workspace.id === workspaceId),
     );
     const groups = groupRows(filtered, mode, today);
     const ordered = groups.flatMap((group) => group.items);
@@ -352,7 +161,7 @@ function MyTasksView({ tab, counts, tasks, today }: Props) {
                 ? 'aktif'
                 : `tugas aktif di ${summary.workspaces} workspace`}
             {summary.overdue > 0 && (
-                <span className="text-danger">
+                <span className="font-semibold text-danger">
                     {' '}
                     · {summary.overdue} terlambat
                 </span>
@@ -363,24 +172,16 @@ function MyTasksView({ tab, counts, tasks, today }: Props) {
     );
 
     const groupSelect = (
-        <label
-            className={cn(
-                'flex items-center gap-1.5 text-text-muted',
-                mobile ? 'text-[15px]' : 'text-[13px]',
-            )}
-        >
-            {mobile ? (
-                <CalendarDays className="size-4" aria-hidden />
-            ) : (
-                'Kelompokkan:'
-            )}
+        <label className="flex items-center gap-2 text-[15px] font-bold text-text-muted">
+            <span className={cn(mobile && 'sr-only')}>Kelompokkan</span>
             <select
                 aria-label="Kelompokkan"
                 value={mode}
                 onChange={(event) => setMode(event.target.value as GroupMode)}
                 className={cn(
-                    'rounded-md border border-border bg-surface text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                    mobile ? 'h-10 px-2' : 'h-8 px-2',
+                    toolbarControl,
+                    'pr-2',
+                    mobile ? 'h-11 text-[17px]' : '',
                 )}
             >
                 {GROUP_MODES.map((option) => (
@@ -392,91 +193,133 @@ function MyTasksView({ tab, counts, tasks, today }: Props) {
         </label>
     );
 
-    const empty = (
-        <div className="flex flex-col items-center gap-2 px-6 py-14 text-center">
-            <CircleCheck
-                className="size-8 text-text-subtle"
-                strokeWidth={1.75}
-                aria-hidden
+    const workspaceChips = perWorkspace.length > 1 && (
+        <ChipScroller
+            label="Workspace"
+            value={workspaceId}
+            onChange={setWorkspaceId}
+            className={cn(!mobile && 'mx-0 flex-wrap px-0')}
+            chips={[
+                { value: ALL, label: 'Semua', count: summary.open },
+                ...perWorkspace.map(({ row, count }) => ({
+                    value: row.workspace.id,
+                    label: row.workspace.key,
+                    count,
+                })),
+            ]}
+        />
+    );
+
+    const empty =
+        tasks.length === 0 ? (
+            <EmptyState
+                icon={CircleCheck}
+                title="Tidak ada tugas di sini"
+                description="Tugas yang ditugaskan, Anda amati, atau Anda buat akan muncul di sini."
             />
-            <p className="text-sm font-semibold text-text">
-                {tasks.length === 0
-                    ? 'Tidak ada tugas di sini'
-                    : 'Tidak ada tugas yang cocok'}
-            </p>
-            <p className="max-w-sm text-[13px] text-text-muted">
-                {tasks.length === 0
-                    ? 'Tugas yang ditugaskan, Anda amati, atau Anda buat akan muncul di sini.'
-                    : 'Ubah filter untuk melihat tugas lain.'}
-            </p>
-        </div>
+        ) : (
+            <EmptyState
+                icon={SearchX}
+                title="Tidak ada tugas yang cocok"
+                description="Ubah filter atau pilihan workspace untuk melihat tugas lain."
+            />
+        );
+
+    const closedToggle = summary.closed > 0 && (
+        <p className="text-[15px] text-text-muted">
+            {!mobile &&
+                (showClosed
+                    ? 'Tugas selesai minggu ini ditampilkan. '
+                    : 'Tugas selesai disembunyikan. ')}
+            <button
+                type="button"
+                className={cn(
+                    'font-semibold text-link underline underline-offset-2',
+                    focusRing,
+                )}
+                onClick={() => setShowClosed((value) => !value)}
+            >
+                {showClosed
+                    ? 'Sembunyikan tugas selesai'
+                    : `Tampilkan ${summary.closed} tugas selesai minggu ini`}
+            </button>
+        </p>
     );
 
     if (mobile) {
         return (
-            <div className="-mx-4 space-y-3">
-                <div className="px-4">
-                    <ChipScroller
-                        label="Jenis tugas"
-                        value={tab}
-                        chips={TABS.map((item) => ({
-                            ...item,
-                            count: counts[item.value],
-                        }))}
-                        onChange={(value) =>
-                            router.get(
-                                mine.url(),
-                                value === 'assigned' ? {} : { tab: value },
-                                { preserveScroll: true },
-                            )
-                        }
-                    />
-                </div>
-                <div className="flex items-center justify-between gap-2 px-4">
-                    <p className="text-[15px] text-text-muted">{summaryLine}</p>
-                    <div className="flex items-center gap-1">
+            <div className="flex flex-col gap-4">
+                <ChipScroller
+                    label="Jenis tugas"
+                    value={tab}
+                    chips={TABS.map((item) => ({
+                        ...item,
+                        count: counts[item.value],
+                    }))}
+                    onChange={(value) =>
+                        router.get(
+                            mine.url(),
+                            value === 'assigned' ? {} : { tab: value },
+                            { preserveScroll: true },
+                        )
+                    }
+                />
+                <div className="flex items-center justify-between gap-2">
+                    <p className="min-w-0 text-[15px] text-text-muted">
+                        {summaryLine}
+                    </p>
+                    <div className="flex shrink-0 items-center gap-2">
                         {groupSelect}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-10"
+                        <button
+                            type="button"
+                            className={cn(
+                                toolbarControl,
+                                'size-11 justify-center px-0',
+                            )}
                             aria-label="Filter"
                             onClick={() => setFilterOpen(true)}
                         >
-                            <MoreHorizontal />
-                        </Button>
+                            <ListFilter />
+                        </button>
                     </div>
                 </div>
-                <div className="border-t border-border bg-surface">
-                    {groups.length === 0
-                        ? empty
-                        : groups.map((group) => (
-                              <section key={group.id} aria-label={group.label}>
-                                  <GroupHeader group={group} />
-                                  {group.items.map((row) => (
-                                      <MobileRow
-                                          key={row.id}
-                                          row={row}
-                                          today={today}
-                                          onOpen={() => open(row)}
-                                      />
-                                  ))}
-                              </section>
-                          ))}
-                </div>
-                {summary.closed > 0 && (
-                    <p className="px-4 text-[13px] text-text-muted">
-                        <button
-                            type="button"
-                            className="text-primary underline underline-offset-2"
-                            onClick={() => setShowClosed((value) => !value)}
-                        >
-                            {showClosed
-                                ? 'Sembunyikan tugas selesai'
-                                : `Tampilkan ${summary.closed} tugas selesai minggu ini`}
-                        </button>
-                    </p>
-                )}
+                {workspaceChips}
+                {groups.length === 0
+                    ? empty
+                    : groups.map((group) => (
+                          <section
+                              key={group.id}
+                              aria-label={group.label}
+                              className="flex flex-col gap-2.5"
+                          >
+                              {(groups.length > 1 || mode !== 'due') && (
+                                  <h2
+                                      className={cn(
+                                          'flex items-center gap-2 text-overline',
+                                          group.tone === 'danger'
+                                              ? 'text-danger'
+                                              : group.tone === 'warning'
+                                                ? 'text-warning'
+                                                : 'text-text-muted',
+                                      )}
+                                  >
+                                      {group.label}
+                                      <span className="tnum">
+                                          {group.items.length}
+                                      </span>
+                                  </h2>
+                              )}
+                              {group.items.map((row) => (
+                                  <MobileRow
+                                      key={row.id}
+                                      row={row}
+                                      today={today}
+                                      onOpen={() => open(row)}
+                                  />
+                              ))}
+                          </section>
+                      ))}
+                {closedToggle}
                 {composer.canCreate && (
                     <Fab
                         label="Tugas baru"
@@ -497,57 +340,40 @@ function MyTasksView({ tab, counts, tasks, today }: Props) {
     }
 
     return (
-        <div className="space-y-4">
-            <header className="flex items-start justify-between gap-3">
-                <div>
-                    <h1 className="text-xl leading-7 font-semibold text-text">
-                        Tugas saya
-                    </h1>
-                    <p className="text-[13px] text-text-muted">{summaryLine}</p>
+        <div className="flex flex-col gap-[22px]">
+            <header className="flex flex-wrap items-end justify-between gap-4">
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-display text-text">Tugas saya</h1>
+                    <p className="text-body-lg text-text-muted">
+                        {summaryLine}
+                    </p>
                 </div>
-                <Button
-                    size="sm"
-                    className="h-8"
-                    onClick={() => composer.openCreate()}
-                >
+                <Button size="lg" onClick={() => composer.openCreate()}>
                     <Plus />
                     Tugas baru
-                    <kbd className="rounded border border-primary-foreground/30 px-1 font-mono text-[10px]">
+                    <kbd className="rounded-xs bg-on-brand/18 px-1.5 font-mono text-[13px]">
                         C
                     </kbd>
                 </Button>
             </header>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border">
-                <nav aria-label="Jenis tugas" className="flex gap-1">
-                    {TABS.map((item) => (
-                        <Link
-                            key={item.value}
-                            href={mine.url({
-                                query:
-                                    item.value === 'assigned'
-                                        ? {}
-                                        : { tab: item.value },
-                            })}
-                            preserveScroll
-                            aria-current={
-                                item.value === tab ? 'page' : undefined
-                            }
-                            className={cn(
-                                '-mb-px flex h-9 items-center gap-1.5 border-b-2 px-2.5 text-[13px] font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                                item.value === tab
-                                    ? 'border-primary text-text'
-                                    : 'border-transparent text-text-muted hover:text-text',
-                            )}
-                        >
-                            {item.label}
-                            <span className="rounded bg-surface-2 px-1 text-[11px] text-text-muted tnum">
-                                {counts[item.value]}
-                            </span>
-                        </Link>
-                    ))}
-                </nav>
-                <div className="flex items-center gap-2 pb-1.5">
+            <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-border">
+                <TabNav
+                    label="Jenis tugas"
+                    className="border-b-0"
+                    items={TABS.map((item) => ({
+                        href: mine.url({
+                            query:
+                                item.value === 'assigned'
+                                    ? {}
+                                    : { tab: item.value },
+                        }),
+                        label: item.label,
+                        count: counts[item.value],
+                        active: item.value === tab,
+                    }))}
+                />
+                <div className="flex flex-wrap items-center gap-2.5 pb-2.5">
                     <FilterMenu
                         filters={filters}
                         onChange={setFilters}
@@ -559,66 +385,87 @@ function MyTasksView({ tab, counts, tasks, today }: Props) {
                 </div>
             </div>
 
-            <div
-                role="grid"
-                aria-label="Tugas saya"
-                className="overflow-hidden rounded-lg border border-border bg-surface"
-            >
-                {groups.length === 0
-                    ? empty
-                    : groups.map((group) => (
-                          <div key={group.id} role="rowgroup">
-                              <GroupHeader group={group} />
-                              {group.items.map((row) => (
-                                  <DesktopRow
-                                      key={row.id}
-                                      row={row}
-                                      today={today}
-                                      selected={row.id === selectedId}
-                                      onOpen={() => open(row)}
-                                      onSelect={() => setSelectedId(row.id)}
-                                  />
-                              ))}
-                          </div>
-                      ))}
-            </div>
+            {workspaceChips}
 
-            {summary.closed > 0 && (
-                <p className="text-[13px] text-text-muted">
-                    {showClosed
-                        ? 'Tugas selesai minggu ini ditampilkan. '
-                        : 'Tugas selesai disembunyikan. '}
-                    <button
-                        type="button"
-                        className="text-primary underline underline-offset-2"
-                        onClick={() => setShowClosed((value) => !value)}
-                    >
-                        {showClosed
-                            ? 'Sembunyikan'
-                            : `Tampilkan ${summary.closed} tugas selesai minggu ini`}
-                    </button>
-                </p>
-            )}
+            <section className="flex flex-wrap items-start gap-5">
+                <div
+                    role="grid"
+                    aria-label="Tugas saya"
+                    className="flex min-w-0 flex-[999_1_640px] flex-col gap-4"
+                >
+                    {groups.length === 0
+                        ? empty
+                        : groups.map((group) => (
+                              <GroupPanel key={group.id} group={group}>
+                                  {group.items.map((row) => (
+                                      <DesktopRow
+                                          key={row.id}
+                                          row={row}
+                                          today={today}
+                                          selected={row.id === selectedId}
+                                          onOpen={() => open(row)}
+                                          onSelect={() => setSelectedId(row.id)}
+                                      />
+                                  ))}
+                              </GroupPanel>
+                          ))}
+                    {closedToggle}
+                </div>
 
-            <footer className="glass sticky bottom-0 z-20 -mx-4 flex h-11 items-center gap-4 border-x-0 border-b-0 px-4 text-[12px] text-text-muted lg:-mx-6 lg:px-6">
+                <aside className="flex min-w-0 flex-[1_1_300px] flex-col gap-4">
+                    <KpiCard
+                        tone="highlight"
+                        label="Selesai minggu ini"
+                        value={formatNumber(summary.closed)}
+                        note={`${formatNumber(summary.open)} tugas masih terbuka`}
+                    />
+                    {perWorkspace.length > 0 && (
+                        <Panel title="Menurut workspace" flush>
+                            <ul className="flex flex-col px-6 md:px-7">
+                                {perWorkspace.map(({ row, count }) => (
+                                    <li
+                                        key={row.workspace.id}
+                                        className="flex min-h-12 items-center gap-3 border-t border-divider"
+                                    >
+                                        <WorkspaceAvatar
+                                            name={row.workspace.name}
+                                            type={row.workspace.type}
+                                            color={row.workspace.color}
+                                            className="size-8 rounded-[10px] text-[14px] font-extrabold"
+                                        />
+                                        <span className="min-w-0 flex-1 truncate text-[16px] font-medium">
+                                            {workspaceLabel(row)}
+                                        </span>
+                                        <b className="text-[16px] tnum">
+                                            {count}
+                                        </b>
+                                    </li>
+                                ))}
+                            </ul>
+                        </Panel>
+                    )}
+                </aside>
+            </section>
+
+            <footer className="flex flex-wrap items-center gap-x-5 gap-y-2 text-meta text-text-muted">
                 <span>
-                    <kbd className="rounded border border-border px-1.5 font-mono">
+                    <kbd className="rounded-xs border border-border px-1.5 font-mono">
                         J
                     </kbd>{' '}
                     /{' '}
-                    <kbd className="rounded border border-border px-1.5 font-mono">
+                    <kbd className="rounded-xs border border-border px-1.5 font-mono">
                         K
                     </kbd>{' '}
                     pindah
                 </span>
                 <span>
-                    <kbd className="rounded border border-border px-1.5 font-mono">
+                    <kbd className="rounded-xs border border-border px-1.5 font-mono">
                         Enter
                     </kbd>{' '}
                     buka
                 </span>
                 <span>
-                    <kbd className="rounded border border-border px-1.5 font-mono">
+                    <kbd className="rounded-xs border border-border px-1.5 font-mono">
                         C
                     </kbd>{' '}
                     tugas baru
@@ -626,7 +473,7 @@ function MyTasksView({ tab, counts, tasks, today }: Props) {
                 {selected && (
                     <span className="ml-auto">
                         Terpilih:{' '}
-                        <span className="font-mono text-text">
+                        <span className="font-mono font-semibold text-text">
                             {selected.key}
                         </span>
                     </span>
@@ -636,7 +483,7 @@ function MyTasksView({ tab, counts, tasks, today }: Props) {
     );
 }
 
-/** "Tugas saya" across workspaces (mockups TugasSaya / MTugasSaya). */
+/** "Tugas saya" across workspaces (STugasSaya / MTugas). */
 export default function MyTasks(props: Props) {
     return (
         <>

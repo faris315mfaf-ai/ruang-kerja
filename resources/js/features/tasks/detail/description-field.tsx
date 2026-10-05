@@ -13,6 +13,8 @@ type Props = {
     editable: boolean;
     onSave: (doc: RichDoc | null) => Promise<boolean>;
     className?: string;
+    /** Type size of the read-only text (page: body-lg, DTugas). */
+    textClassName?: string;
 };
 
 /**
@@ -26,6 +28,7 @@ export function DescriptionField({
     editable,
     onSave,
     className,
+    textClassName,
 }: Props) {
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState<RichDoc | null>(value);
@@ -57,7 +60,7 @@ export function DescriptionField({
                     }
                 }}
             >
-                <div className="min-h-32 rounded-lg border border-border-strong bg-surface px-3 py-2 focus-within:ring-2 focus-within:ring-ring">
+                <div className="min-h-32 rounded-control border border-primary bg-surface px-4 py-3 ring-4 ring-ring/55">
                     <LazyRichTextEditor
                         value={value}
                         workspaceKey={workspaceKey}
@@ -70,7 +73,7 @@ export function DescriptionField({
                     />
                 </div>
                 <div className="flex items-center justify-end gap-2">
-                    <span className="mr-auto text-xs text-text-subtle">
+                    <span className="mr-auto text-meta text-text-muted">
                         ⌘ Enter untuk menyimpan · Esc untuk batal
                     </span>
                     <Button
@@ -99,17 +102,18 @@ export function DescriptionField({
             <RichTextView
                 doc={value}
                 references={references}
+                className={textClassName}
                 empty={
                     editable ? (
                         <button
                             type="button"
                             onClick={start}
-                            className="w-full rounded-md py-1 text-left text-[15px] text-text-subtle hover:text-text-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            className="w-full rounded-control py-1 text-left text-[16px] text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
                         >
                             Tambahkan deskripsi…
                         </button>
                     ) : (
-                        <p className="text-[15px] text-text-subtle">
+                        <p className="text-[16px] text-text-muted">
                             Belum ada deskripsi.
                         </p>
                     )
@@ -120,9 +124,9 @@ export function DescriptionField({
                     type="button"
                     onClick={start}
                     aria-label="Ubah deskripsi"
-                    className="absolute -top-1 right-0 flex h-7 items-center gap-1 rounded-md border border-border bg-surface px-2 text-xs text-text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-text focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-md:static max-md:mt-2 max-md:h-11 max-md:px-3 max-md:text-[15px] max-md:opacity-100"
+                    className="absolute -top-1 right-0 flex h-9 items-center gap-1.5 rounded-control border border-border bg-surface px-3 text-[14px] font-semibold text-text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-text focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-md:static max-md:mt-2 max-md:h-11 max-md:px-3 max-md:text-[15px] max-md:opacity-100"
                 >
-                    <Pencil className="size-3.5" aria-hidden />
+                    <Pencil className="size-4" aria-hidden />
                     Ubah
                 </button>
             )}

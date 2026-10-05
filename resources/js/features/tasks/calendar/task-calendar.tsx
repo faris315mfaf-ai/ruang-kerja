@@ -100,7 +100,7 @@ function Chip({
             type="button"
             onClick={() => onOpen(task)}
             className={cn(
-                'block w-full rounded-md border px-2 py-1.5 text-left transition-colors duration-120 ease-brand hover:border-border-strong focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                'block w-full rounded-control border px-2.5 py-2 text-left shadow-card transition-colors duration-120 ease-brand hover:border-border-strong focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none dark:shadow-none',
                 overdue
                     ? 'border-danger/40 bg-danger-soft'
                     : 'border-border bg-surface',
@@ -116,18 +116,18 @@ function Chip({
                 />
                 <span
                     className={cn(
-                        'truncate text-[12px] text-text',
+                        'truncate text-[14px] font-semibold text-text',
                         isClosed(task) && 'text-text-muted line-through',
                     )}
                 >
                     {task.title}
                 </span>
             </span>
-            <span className="mt-0.5 flex items-center gap-1.5 text-[11px]">
+            <span className="mt-1 flex items-center gap-1.5 text-[15px]">
                 <span
                     className={cn(
-                        'font-mono',
-                        overdue ? 'text-danger' : 'text-text-subtle',
+                        'font-mono font-semibold',
+                        overdue ? 'text-danger' : 'text-text-muted',
                     )}
                 >
                     {task.key}
@@ -150,7 +150,7 @@ function Chip({
                         <UserAvatar
                             name={assignee.name}
                             src={assignee.avatar}
-                            className="size-4 text-[8px]"
+                            className="size-5 text-[9px]"
                         />
                     )}
                 </span>
@@ -179,8 +179,7 @@ function MonthView({
             <div className="flex flex-wrap items-center gap-2">
                 <Button
                     variant="outline"
-                    size="icon"
-                    className="size-8"
+                    size="icon-sm"
                     aria-label="Bulan sebelumnya"
                     onClick={() => onMonthChange(addMonths(month, -1))}
                 >
@@ -188,26 +187,24 @@ function MonthView({
                 </Button>
                 <Button
                     variant="outline"
-                    size="icon"
-                    className="size-8"
+                    size="icon-sm"
                     aria-label="Bulan berikutnya"
                     onClick={() => onMonthChange(addMonths(month, 1))}
                 >
                     <ChevronRight />
                 </Button>
-                <h2 className="px-2 text-lg font-semibold text-text">
+                <h2 className="px-2 text-h3 text-text">
                     {formatMonthYear(month)}
                 </h2>
                 <Button
                     variant="outline"
                     size="sm"
-                    className="h-8"
                     onClick={() => onMonthChange(monthStart(today))}
                 >
                     Hari ini
                 </Button>
                 <ul
-                    className="ml-auto flex flex-wrap items-center gap-3 text-[12px] text-text-muted"
+                    className="ml-auto flex flex-wrap items-center gap-3 text-meta text-text-muted"
                     aria-label="Keterangan warna"
                 >
                     {LEGEND.map((item) => (
@@ -231,7 +228,7 @@ function MonthView({
                     ))}
                 </ul>
             </div>
-            <p className="text-right text-[12px] text-text-muted">
+            <p className="text-right text-meta text-text-muted">
                 Ditampilkan menurut tenggat
                 {undated > 0 && (
                     <>
@@ -239,7 +236,7 @@ function MonthView({
                         <button
                             type="button"
                             onClick={onShowUndated}
-                            className="text-primary underline underline-offset-2"
+                            className="text-link underline underline-offset-2"
                         >
                             {undated} tugas tanpa tenggat
                         </button>
@@ -250,17 +247,17 @@ function MonthView({
             <div
                 role="grid"
                 aria-label={`Kalender ${formatMonthYear(month)}`}
-                className="overflow-hidden rounded-lg border border-border bg-surface"
+                className="overflow-hidden rounded-panel border border-border bg-surface shadow-card"
             >
                 <div
                     role="row"
-                    className="grid grid-cols-7 border-b border-border bg-surface-2"
+                    className="grid grid-cols-7 border-b border-border bg-background"
                 >
                     {WEEKDAY_LABELS.map((day) => (
                         <div
                             key={day}
                             role="columnheader"
-                            className="px-3 py-2 text-[12px] text-text-muted"
+                            className="px-3 py-3 text-[14px] font-bold text-text-muted"
                         >
                             {day}
                         </div>
@@ -270,7 +267,7 @@ function MonthView({
                     <div
                         key={week[0]}
                         role="row"
-                        className="grid grid-cols-7 border-b border-border last:border-b-0"
+                        className="grid grid-cols-7 border-b border-divider last:border-b-0"
                     >
                         {week.map((day) => {
                             const items = sortDay(byDay.get(day) ?? []);
@@ -285,15 +282,15 @@ function MonthView({
                                     role="gridcell"
                                     aria-label={`${formatShortDate(day)}, ${items.length} tugas`}
                                     className={cn(
-                                        'min-h-32 space-y-1.5 border-r border-border p-1.5 last:border-r-0',
-                                        !inMonth && 'bg-surface-2/50',
+                                        'min-h-36 space-y-1.5 border-r border-divider p-2 last:border-r-0',
+                                        !inMonth && 'bg-background/60',
                                         isToday &&
-                                            'bg-primary/5 ring-1 ring-primary/40 ring-inset',
+                                            'bg-link-soft/50 ring-2 ring-primary/40 ring-inset',
                                     )}
                                 >
                                     <div
                                         className={cn(
-                                            'flex items-center gap-1.5 px-1 text-[12px]',
+                                            'flex items-center gap-1.5 px-1 text-[14px] font-semibold',
                                             inMonth
                                                 ? 'text-text'
                                                 : 'text-text-subtle',
@@ -301,10 +298,10 @@ function MonthView({
                                     >
                                         {isToday ? (
                                             <>
-                                                <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
+                                                <span className="flex size-6 items-center justify-center rounded-full bg-primary bg-grad-aksi text-[15px] font-bold text-on-brand">
                                                     {Number(day.slice(8))}
                                                 </span>
-                                                <span className="text-primary">
+                                                <span className="text-link">
                                                     Hari ini
                                                 </span>
                                             </>
@@ -316,7 +313,7 @@ function MonthView({
                                         )}
                                     </div>
                                     {isToday && items.length === 0 && (
-                                        <p className="px-1 text-[11px] text-text-muted">
+                                        <p className="px-1 text-meta text-text-muted">
                                             Tidak ada tenggat
                                         </p>
                                     )}
@@ -335,7 +332,7 @@ function MonthView({
                                             onClick={() =>
                                                 setExpanded(open ? null : day)
                                             }
-                                            className="px-1 text-[12px] text-text-muted hover:text-text"
+                                            className="px-1 text-meta font-semibold text-link hover:opacity-80"
                                         >
                                             {open
                                                 ? 'Lebih sedikit'
@@ -408,7 +405,7 @@ function AgendaView({
                     <p className="text-[17px] font-semibold text-text">
                         Kalender · {workspaceKey}
                     </p>
-                    <p className="text-sm text-text-muted">
+                    <p className="text-meta text-text-muted">
                         {formatDayRange(days[0], days[6])} {days[6].slice(0, 4)}
                     </p>
                 </div>
@@ -416,7 +413,7 @@ function AgendaView({
                     type="button"
                     aria-label="Minggu sebelumnya"
                     onClick={() => goToWeek(addDays(weekStart, -7))}
-                    className="flex size-11 items-center justify-center rounded-full hover:bg-surface-2"
+                    className="flex size-11 items-center justify-center rounded-full border border-border bg-surface text-text"
                 >
                     <ChevronLeft className="size-5" />
                 </button>
@@ -424,7 +421,7 @@ function AgendaView({
                     type="button"
                     aria-label="Minggu berikutnya"
                     onClick={() => goToWeek(addDays(weekStart, 7))}
-                    className="flex size-11 items-center justify-center rounded-full hover:bg-surface-2"
+                    className="flex size-11 items-center justify-center rounded-full border border-border bg-surface text-text"
                 >
                     <ChevronRight className="size-5" />
                 </button>
@@ -440,13 +437,13 @@ function AgendaView({
             </div>
 
             {showMonth && (
-                <div className="rounded-lg border border-border bg-surface p-2">
+                <div className="rounded-card border border-border bg-surface p-3 shadow-card">
                     <div className="mb-1 flex items-center justify-between">
                         <button
                             type="button"
                             aria-label="Bulan sebelumnya"
                             onClick={() => onMonthChange(addMonths(month, -1))}
-                            className="flex size-11 items-center justify-center rounded-full hover:bg-surface-2"
+                            className="flex size-11 items-center justify-center rounded-full text-text hover:bg-surface-2"
                         >
                             <ChevronLeft className="size-4" />
                         </button>
@@ -457,12 +454,12 @@ function AgendaView({
                             type="button"
                             aria-label="Bulan berikutnya"
                             onClick={() => onMonthChange(addMonths(month, 1))}
-                            className="flex size-11 items-center justify-center rounded-full hover:bg-surface-2"
+                            className="flex size-11 items-center justify-center rounded-full text-text hover:bg-surface-2"
                         >
                             <ChevronRight className="size-4" />
                         </button>
                     </div>
-                    <div className="grid grid-cols-7 text-center text-[11px] text-text-muted">
+                    <div className="grid grid-cols-7 text-center text-meta font-semibold text-text-muted">
                         {WEEKDAY_LABELS.map((day) => (
                             <span key={day}>{day}</span>
                         ))}
@@ -478,12 +475,11 @@ function AgendaView({
                                         setShowMonth(false);
                                     }}
                                     className={cn(
-                                        'flex h-11 flex-col items-center justify-center rounded-md text-sm',
+                                        'flex h-11 flex-col items-center justify-center rounded-control text-[15px]',
                                         isSameMonth(day, month)
                                             ? 'text-text'
                                             : 'text-text-subtle',
-                                        day === today &&
-                                            'font-semibold text-primary',
+                                        day === today && 'font-bold text-link',
                                     )}
                                 >
                                     {Number(day.slice(8))}
@@ -512,24 +508,24 @@ function AgendaView({
                             key={day}
                             href={`#hari-${day}`}
                             className={cn(
-                                'flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-text-muted',
+                                'flex min-h-16 flex-col items-center justify-center gap-1 rounded-lg text-text-muted',
                                 day === today &&
-                                    'bg-surface-2 ring-1 ring-border',
+                                    'bg-surface shadow-card ring-1 ring-border',
                             )}
                         >
                             <span
                                 className={cn(
-                                    'text-[13px]',
-                                    day === today && 'text-primary',
+                                    'text-meta font-semibold',
+                                    day === today && 'text-link',
                                 )}
                             >
                                 {WEEKDAY_LABELS[index]}
                             </span>
                             <span
                                 className={cn(
-                                    'flex size-8 items-center justify-center rounded-full text-[17px] font-medium',
+                                    'flex size-8 items-center justify-center rounded-full text-[17px] font-bold',
                                     day === today
-                                        ? 'bg-primary text-primary-foreground'
+                                        ? 'bg-primary bg-grad-aksi text-on-brand'
                                         : 'text-text',
                                 )}
                             >
@@ -563,14 +559,14 @@ function AgendaView({
                 <button
                     type="button"
                     onClick={() => onOpen(overdue[0])}
-                    className="flex min-h-12 w-full items-center gap-2 rounded-xl border border-danger/40 bg-danger-soft px-3 text-left text-[15px]"
+                    className="flex min-h-12 w-full items-center gap-2 rounded-lg border border-danger/40 bg-danger-soft px-3.5 text-left text-[15px]"
                 >
                     <AlertCircle
                         className="size-5 shrink-0 text-danger"
                         aria-hidden
                     />
                     <span className="min-w-0 flex-1 truncate">
-                        <span className="text-danger">
+                        <span className="font-bold text-danger">
                             {overdue.length} terlambat
                         </span>
                         <span className="text-text-muted">
@@ -602,10 +598,10 @@ function AgendaView({
                         id={`hari-${day}`}
                         className="scroll-mt-20 space-y-2"
                     >
-                        <h3 className="flex items-center gap-2 text-[15px] font-medium text-text">
+                        <h3 className="flex items-center gap-2 text-[15px] font-bold text-text">
                             {formatShortDate(day)}
                             {day === today && (
-                                <span className="rounded-full bg-link-soft px-2 py-0.5 text-[13px] text-primary">
+                                <span className="rounded-full bg-link-soft px-2.5 py-0.5 text-[15px] font-bold text-link">
                                     Hari ini
                                 </span>
                             )}
@@ -619,11 +615,11 @@ function AgendaView({
                             )}
                         </h3>
                         {items.length === 0 ? (
-                            <p className="rounded-xl border border-dashed border-border-strong px-4 py-3 text-[15px] text-text-muted">
+                            <p className="rounded-lg border border-dashed border-border-strong px-4 py-3 text-[15px] text-text-muted">
                                 Tidak ada tenggat
                             </p>
                         ) : (
-                            <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
+                            <div className="divide-y divide-divider overflow-hidden rounded-card border border-border bg-surface shadow-card">
                                 {shown.map((task) => {
                                     const status = statusById[task.status_id];
                                     const assignee = task.assignee_ids[0]
@@ -636,9 +632,9 @@ function AgendaView({
                                             type="button"
                                             onClick={() => onOpen(task)}
                                             className={cn(
-                                                'flex min-h-14 w-full items-center gap-3 px-3 py-2.5 text-left',
+                                                'flex min-h-[68px] w-full items-center gap-3.5 px-4 py-3 text-left',
                                                 isOverdue(task, today) &&
-                                                    'border-l-2 border-l-danger',
+                                                    'bg-danger-soft/40',
                                             )}
                                         >
                                             {status && (
@@ -649,11 +645,11 @@ function AgendaView({
                                                 />
                                             )}
                                             <span className="min-w-0 flex-1">
-                                                <span className="block truncate text-[15px] text-text">
+                                                <span className="block truncate text-[17px] leading-[23px] font-semibold text-text">
                                                     {task.title}
                                                 </span>
-                                                <span className="block truncate text-[13px] text-text-muted">
-                                                    <span className="font-mono">
+                                                <span className="block truncate text-[14px] text-text-muted">
+                                                    <span className="font-mono font-semibold">
                                                         {task.key}
                                                     </span>{' '}
                                                     · {subtitle(task)}
@@ -666,7 +662,7 @@ function AgendaView({
                                                 <UserAvatar
                                                     name={assignee.name}
                                                     src={assignee.avatar}
-                                                    className="size-8 text-[11px]"
+                                                    className="size-[30px] text-meta"
                                                 />
                                             )}
                                         </button>
@@ -678,7 +674,7 @@ function AgendaView({
                                         onClick={() =>
                                             setExpanded(open ? null : day)
                                         }
-                                        className="min-h-12 w-full px-12 text-left text-[15px] text-primary"
+                                        className="min-h-12 w-full px-12 text-left text-[15px] font-semibold text-link"
                                     >
                                         {open
                                             ? 'Lebih sedikit'

@@ -23,7 +23,7 @@ export function ConnectionIndicator({
                     : 'Koneksi langsung terputus. Data diperbarui tiap 30 detik.'
             }
             className={cn(
-                'inline-flex items-center gap-1.5 text-[13px] text-text-muted',
+                'inline-flex items-center gap-1.5 text-[15px] text-text-muted',
                 className,
             )}
         >

@@ -24,9 +24,9 @@ import { Plus } from 'lucide-react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import { memo, useState } from 'react';
 import { StatusIcon } from '@/components/status-icon';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { adjacentStatusId } from '../lib/board';
-import { TaskCardContent } from '../task-card';
+import { TaskCardContent, taskCardClass } from '../task-card';
 import type { Label, Person, Task, TaskStatus } from '../types';
 import type { MoveTarget } from '../use-task-board';
 
@@ -126,9 +126,10 @@ const SortableCard = memo(function SortableCard({
             aria-roledescription="Kartu tugas"
             aria-label={`${task.key} ${task.title}`}
             className={cn(
-                'cursor-pointer rounded-lg border border-border bg-surface p-3 shadow-card transition-colors duration-120 ease-brand [contain-intrinsic-size:auto_96px] [content-visibility:auto] hover:border-border-strong focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                taskCardClass(task, today),
+                'cursor-pointer transition-colors duration-120 ease-brand [contain-intrinsic-size:auto_132px] [content-visibility:auto] hover:border-border-strong focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none',
                 isDragging &&
-                    'border-dashed border-primary/60 bg-primary/5 opacity-60 [&>*]:invisible',
+                    'border-dashed border-primary/60 bg-primary/5 opacity-60 shadow-none [&>*]:invisible',
                 disabled && 'cursor-default',
             )}
         >
@@ -170,14 +171,24 @@ function Column({
     return (
         <section
             aria-label={`Kolom ${status.name}, ${ids.length} tugas`}
-            className="flex w-[300px] shrink-0 flex-col"
+            className={cn(
+                'flex w-[272px] shrink-0 flex-col gap-2.5 rounded-panel border border-border bg-surface-2/60 px-3 pt-4 pb-3 transition-colors duration-120 ease-brand dark:bg-surface/80',
+                highlighted && 'border-primary/40 bg-primary/5',
+            )}
         >
-            <header className="flex h-9 items-center gap-2 px-1">
-                <StatusIcon category={status.category} color={status.color} />
-                <h2 className="truncate text-[13px] font-medium text-text">
+            <header className="flex items-center gap-2.5 px-1.5 pb-1">
+                <StatusIcon
+                    category={status.category}
+                    color={status.color}
+                    className="size-5"
+                />
+                <h2
+                    className="truncate text-[17px] font-bold text-text"
+                    title={status.name}
+                >
                     {status.name}
                 </h2>
-                <span className="text-[13px] text-text-muted tnum">
+                <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-surface px-2 text-[14px] font-bold text-text-muted tnum dark:bg-surface-2">
                     {ids.length === total ? total : `${ids.length}/${total}`}
                 </span>
                 {canEdit && (
@@ -185,18 +196,18 @@ function Column({
                         type="button"
                         onClick={() => onCreate(status.id)}
                         aria-label={`Tambah tugas di ${status.name}`}
-                        className="ml-auto flex size-7 items-center justify-center rounded-md text-text-muted transition-colors duration-120 ease-brand hover:bg-surface-2 hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        className={cn(
+                            'ml-auto flex size-9 items-center justify-center rounded-[10px] text-text-muted transition-colors duration-120 ease-brand hover:bg-surface hover:text-text dark:hover:bg-surface-2',
+                            focusRing,
+                        )}
                     >
-                        <Plus className="size-4" />
+                        <Plus className="size-5" strokeWidth={2.2} />
                     </button>
                 )}
             </header>
             <div
                 ref={setNodeRef}
-                className={cn(
-                    'flex min-h-24 flex-1 flex-col gap-2 rounded-lg p-1 transition-colors duration-120 ease-brand',
-                    highlighted && 'bg-primary/5 ring-1 ring-primary/30',
-                )}
+                className="flex min-h-24 flex-1 flex-col gap-2.5"
             >
                 <SortableContext
                     items={shown}
@@ -207,20 +218,23 @@ function Column({
                 {showDropSlot && (
                     <div
                         aria-hidden
-                        className="h-16 rounded-lg border border-dashed border-primary/50 bg-primary/5"
+                        className="h-20 rounded-[18px] border-2 border-dashed border-primary/50 bg-primary/5"
                     />
                 )}
                 {ids.length > limit && (
                     <button
                         type="button"
                         onClick={() => setLimit((value) => value + PAGE)}
-                        className="h-9 rounded-md text-[13px] text-text-muted hover:bg-surface-2 hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        className={cn(
+                            'h-10 rounded-control text-[15px] font-semibold text-link transition-opacity duration-120 ease-brand hover:opacity-80',
+                            focusRing,
+                        )}
                     >
                         Tampilkan {Math.min(PAGE, ids.length - limit)} lainnya
                     </button>
                 )}
                 {ids.length === 0 && !showDropSlot && (
-                    <p className="px-2 py-6 text-center text-[13px] text-text-subtle">
+                    <p className="px-2 py-6 text-center text-meta text-text-muted">
                         {total === 0
                             ? 'Belum ada tugas'
                             : 'Tidak ada yang cocok dengan filter'}
@@ -402,7 +416,7 @@ export function KanbanBoard({
             }}
         >
             <div className="-mx-4 overflow-x-auto px-4 pb-4 lg:-mx-6 lg:px-6">
-                <div className="flex min-w-max gap-3">
+                <div className="flex min-w-max items-start gap-4">
                     {statuses.map((status) => (
                         <Column
                             key={status.id}
@@ -429,7 +443,12 @@ export function KanbanBoard({
                 }}
             >
                 {active ? (
-                    <div className="w-[292px] scale-[1.02] cursor-grabbing rounded-lg border border-border-strong bg-surface p-3 shadow-lg">
+                    <div
+                        className={cn(
+                            taskCardClass(active, today),
+                            'w-[246px] scale-[1.02] cursor-grabbing border-border-strong shadow-float',
+                        )}
+                    >
                         <TaskCardContent
                             task={active}
                             labels={resolve(active.label_ids, labelsById)}

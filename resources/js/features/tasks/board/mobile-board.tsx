@@ -1,6 +1,13 @@
-import { ArrowLeftRight, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import {
+    ArrowLeftRight,
+    ChevronLeft,
+    ChevronRight,
+    Inbox,
+    Plus,
+} from 'lucide-react';
 import type { PointerEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { EmptyState } from '@/components/empty-state';
 import { StatusIcon } from '@/components/status-icon';
 import {
     DropdownMenu,
@@ -10,10 +17,11 @@ import {
     DropdownMenuRadioItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { prioritySortWeight } from '../lib/priority';
 import { compareTasks } from '../lib/board';
-import { TaskCardContent } from '../task-card';
+import { toolbarControl } from '../lib/toolbar';
+import { TaskCardContent, taskCardClass } from '../task-card';
 import type { Label, Person, Task, TaskStatus } from '../types';
 import type { MoveTarget } from '../use-task-board';
 
@@ -136,7 +144,7 @@ export function MobileBoard({
             <div
                 role="tablist"
                 aria-label="Kolom status"
-                className="-mx-4 flex [scrollbar-width:none] gap-1 overflow-x-auto border-b border-border px-4 [&::-webkit-scrollbar]:hidden"
+                className="-mx-4 flex [scrollbar-width:none] gap-2 overflow-x-auto px-4 pb-1 [&::-webkit-scrollbar]:hidden"
             >
                 {statuses.map((status) => {
                     const selected = status.id === current.id;
@@ -152,18 +160,21 @@ export function MobileBoard({
                             aria-selected={selected}
                             onClick={() => setActiveId(status.id)}
                             className={cn(
-                                '-mb-px flex h-11 shrink-0 items-center gap-2 border-b-2 px-2.5 text-[15px] transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                                'flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-[16px] font-bold transition-colors duration-120 ease-brand',
+                                focusRing,
                                 selected
-                                    ? 'border-primary font-medium text-text'
-                                    : 'border-transparent text-text-muted',
+                                    ? 'bg-primary bg-grad-aksi text-on-brand'
+                                    : 'border border-border-strong bg-surface text-text',
                             )}
                         >
-                            <StatusIcon
-                                category={status.category}
-                                color={status.color}
-                            />
+                            {!selected && (
+                                <StatusIcon
+                                    category={status.category}
+                                    color={status.color}
+                                />
+                            )}
                             {status.name}
-                            <span className="text-text-muted tnum">
+                            <span className="text-[14px] font-semibold tnum opacity-80">
                                 {columns[status.id]?.length ?? 0}
                             </span>
                         </button>
@@ -173,7 +184,7 @@ export function MobileBoard({
 
             <div className="flex items-center justify-between gap-2">
                 <p className="min-w-0 truncate text-[15px] text-text-muted">
-                    <span className="font-medium text-text">
+                    <span className="font-semibold text-text">
                         {current.name}
                     </span>{' '}
                     · {tasks.length} tugas · urut prioritas
@@ -183,9 +194,12 @@ export function MobileBoard({
                         type="button"
                         onClick={() => onCreate(current.id)}
                         aria-label={`Tambah tugas di ${current.name}`}
-                        className="flex size-11 items-center justify-center rounded-full text-text hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        className={cn(
+                            'flex size-11 items-center justify-center rounded-full border border-border bg-surface text-text',
+                            focusRing,
+                        )}
                     >
-                        <Plus className="size-5" />
+                        <Plus className="size-5" strokeWidth={2.2} />
                     </button>
                 )}
             </div>
@@ -201,19 +215,27 @@ export function MobileBoard({
                 }}
             >
                 {tasks.length === 0 && (
-                    <p className="rounded-lg border border-dashed border-border-strong px-4 py-10 text-center text-sm text-text-muted">
-                        Belum ada tugas di kolom ini.
-                    </p>
+                    <EmptyState
+                        icon={Inbox}
+                        size="sm"
+                        title="Belum ada tugas di kolom ini"
+                    />
                 )}
                 {tasks.map((task) => (
                     <article
                         key={task.id}
-                        className="rounded-xl border border-border bg-surface p-4 [contain-intrinsic-size:auto_140px] [content-visibility:auto]"
+                        className={cn(
+                            taskCardClass(task, today),
+                            '[contain-intrinsic-size:auto_150px] [content-visibility:auto]',
+                        )}
                     >
                         <button
                             type="button"
                             onClick={() => onOpen(task)}
-                            className="block w-full text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            className={cn(
+                                'block w-full rounded-control text-left',
+                                focusRing,
+                            )}
                             aria-label={`Buka ${task.key} ${task.title}`}
                         >
                             <TaskCardContent
@@ -224,7 +246,6 @@ export function MobileBoard({
                                     peopleById,
                                 )}
                                 today={today}
-                                size="comfortable"
                             />
                         </button>
                         {canEdit && (
@@ -233,7 +254,10 @@ export function MobileBoard({
                                     <DropdownMenuTrigger asChild>
                                         <button
                                             type="button"
-                                            className="flex h-11 items-center gap-2 rounded-lg border border-border px-4 text-[15px] text-text hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                            className={cn(
+                                                toolbarControl,
+                                                'h-11',
+                                            )}
                                         >
                                             <ArrowLeftRight
                                                 className="size-4"
@@ -295,13 +319,13 @@ export function MobileBoard({
                             className={cn(
                                 'h-1.5 rounded-full transition-all duration-180 ease-brand',
                                 status.id === current.id
-                                    ? 'w-5 bg-primary'
+                                    ? 'w-5 bg-grad-aksi'
                                     : 'w-1.5 bg-border-strong',
                             )}
                         />
                     ))}
                 </div>
-                <div className="flex items-center gap-1 text-sm text-text-muted">
+                <div className="flex items-center gap-1 text-meta text-text-muted">
                     <button
                         type="button"
                         onClick={() => go(-1)}

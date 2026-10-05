@@ -37,7 +37,7 @@ export function TaskNotificationPreview({
 
     if (state.deleted) {
         return (
-            <p className="text-[13px] text-text-muted">
+            <p className="text-[15px] text-text-muted">
                 Tugas ini sudah dihapus atau Anda tidak lagi punya akses.
             </p>
         );
@@ -84,29 +84,29 @@ export function TaskNotificationPreview({
                         <RichTextView
                             doc={task.description}
                             references={detail.references}
-                            className="mt-1 line-clamp-3 text-[13px] text-text-muted"
+                            className="mt-1 line-clamp-3 text-[15px] text-text-muted"
                         />
                     </div>
-                    <span className="font-mono text-xs text-text-muted">
+                    <span className="font-mono text-meta text-text-muted">
                         {task.key}
                     </span>
                 </div>
-                <dl className="mt-4 grid grid-cols-2 gap-4 text-[13px] lg:grid-cols-4">
+                <dl className="mt-4 grid grid-cols-2 gap-4 text-[15px] lg:grid-cols-4">
                     <div>
-                        <dt className="text-xs text-text-muted">Status</dt>
+                        <dt className="text-meta text-text-muted">Status</dt>
                         <dd className="mt-1 text-text">
                             {status?.name ?? '–'}
                         </dd>
                     </div>
                     <div>
-                        <dt className="text-xs text-text-muted">Tenggat</dt>
+                        <dt className="text-meta text-text-muted">Tenggat</dt>
                         <dd className="mt-1">
                             {task.due_date ? (
                                 <DueBadge
                                     due={task.due_date}
                                     today={today}
                                     closed={closed}
-                                    className="text-[13px]"
+                                    className="text-[15px]"
                                 />
                             ) : (
                                 '–'
@@ -114,7 +114,7 @@ export function TaskNotificationPreview({
                         </dd>
                     </div>
                     <div>
-                        <dt className="text-xs text-text-muted">
+                        <dt className="text-meta text-text-muted">
                             Penanggung jawab
                         </dt>
                         <dd className="mt-1 flex flex-col gap-1">
@@ -138,7 +138,7 @@ export function TaskNotificationPreview({
                         </dd>
                     </div>
                     <div>
-                        <dt className="text-xs text-text-muted">Prioritas</dt>
+                        <dt className="text-meta text-text-muted">Prioritas</dt>
                         <dd className="mt-1 inline-flex items-center gap-1.5 text-text">
                             <PriorityIcon
                                 priority={task.priority}
@@ -149,7 +149,7 @@ export function TaskNotificationPreview({
                     </div>
                 </dl>
                 {detail.checklist.length > 0 && (
-                    <p className="mt-4 border-t border-border pt-3 text-[13px] text-text-muted">
+                    <p className="mt-4 border-t border-border pt-3 text-[15px] text-text-muted">
                         Checklist{' '}
                         {detail.checklist.filter((item) => item.is_done).length}
                         /{detail.checklist.length}
@@ -160,7 +160,7 @@ export function TaskNotificationPreview({
             <section aria-labelledby="preview-activity" className="space-y-3">
                 <h3
                     id="preview-activity"
-                    className="flex items-center gap-2 text-[13px] font-medium text-text"
+                    className="flex items-center gap-2 text-[15px] font-medium text-text"
                 >
                     Aktivitas & komentar
                     <span className="font-normal text-text-muted">
@@ -168,7 +168,7 @@ export function TaskNotificationPreview({
                     </span>
                     <Link
                         href={detail.url}
-                        className="ml-auto inline-flex items-center gap-1 text-xs font-normal text-primary hover:underline"
+                        className="ml-auto inline-flex items-center gap-1 text-meta font-normal text-link hover:underline"
                     >
                         Lihat semua
                         <ExternalLink className="size-3" aria-hidden />

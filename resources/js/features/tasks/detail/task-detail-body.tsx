@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
+import type { ReactNode } from 'react';
 import { AttachmentsPanel } from '@/features/drive/attachments-panel';
-import { cn } from '@/lib/utils';
 import type { Task } from '../types';
 import { ChecklistSection } from './checklist';
 import { CommentComposer } from './comment-composer';
@@ -18,14 +18,23 @@ type Props = {
     layout: 'sheet' | 'page';
     /** Open another task (sub-task, parent) — the sheet swaps, the page navigates. */
     onOpenTask?: (task: Pick<Task, 'id' | 'number'>) => void;
+    /** Page only: chips row above the title (back, key, status, priority). */
+    header?: ReactNode;
 };
 
 /**
- * Desktop task detail (mockup TaskDetail): title, description, checklist,
- * sub-tasks, Drive attachments, timeline + composer; properties in a right column on the
- * full page, at the top inside the 640px sheet.
+ * Desktop task detail (DTugas / SDetailTugas): chips, 40px title,
+ * description, then cards for checklist, sub-tasks, Drive attachments and
+ * "Komentar & aktivitas" (timeline + composer); the properties card sits in
+ * a right column on the full page, at the top inside the 640px sheet.
  */
-export function TaskDetailBody({ state, today, layout, onOpenTask }: Props) {
+export function TaskDetailBody({
+    state,
+    today,
+    layout,
+    onOpenTask,
+    header,
+}: Props) {
     const { detail, viewer } = state;
     const { task, can, parent } = detail;
     const open =
@@ -34,7 +43,7 @@ export function TaskDetailBody({ state, today, layout, onOpenTask }: Props) {
             router.visit(`/w/${detail.workspace.key}/tasks/${target.number}`));
 
     const main = (
-        <div className="min-w-0 space-y-6">
+        <div className="flex min-w-0 flex-col gap-5">
             <div className="space-y-3">
                 {parent && (
                     <button
@@ -45,7 +54,7 @@ export function TaskDetailBody({ state, today, layout, onOpenTask }: Props) {
                                 number: Number(parent.key.split('-').pop()),
                             })
                         }
-                        className="font-mono text-xs text-text-muted hover:text-text hover:underline"
+                        className="text-left font-mono text-[14px] font-semibold text-text-muted hover:text-text hover:underline"
                     >
                         {parent.key} › {parent.title}
                     </button>
@@ -54,7 +63,11 @@ export function TaskDetailBody({ state, today, layout, onOpenTask }: Props) {
                     value={task.title}
                     editable={can.edit}
                     onSave={(title) => void state.update({ title })}
-                    className="text-[22px] leading-tight"
+                    className={
+                        layout === 'page'
+                            ? 'text-[34px] leading-[42px] font-extrabold tracking-[-0.025em] xl:text-[40px] xl:leading-[48px]'
+                            : 'text-[26px] leading-[34px] font-bold tracking-[-0.02em]'
+                    }
                 />
                 <DescriptionField
                     value={task.description}
@@ -62,13 +75,16 @@ export function TaskDetailBody({ state, today, layout, onOpenTask }: Props) {
                     workspaceKey={detail.workspace.key}
                     editable={can.edit}
                     onSave={(description) => state.update({ description })}
+                    textClassName={
+                        layout === 'page'
+                            ? 'text-body-lg text-text-muted'
+                            : undefined
+                    }
                 />
             </div>
 
             {layout === 'sheet' && (
-                <div className="rounded-lg border border-border bg-surface p-4">
-                    <PropertiesPanel state={state} today={today} />
-                </div>
+                <PropertiesPanel state={state} today={today} />
             )}
 
             <ChecklistSection
@@ -102,30 +118,30 @@ export function TaskDetailBody({ state, today, layout, onOpenTask }: Props) {
                 onChange={state.refresh}
             />
 
-            <div className="border-t border-border pt-6">
+            <div className="flex flex-col gap-5 rounded-panel border border-border bg-surface px-6 pt-5 pb-6 shadow-card">
                 <TimelineSection state={state} />
-            </div>
 
-            {can.comment ? (
-                <CommentComposer
-                    workspaceKey={detail.workspace.key}
-                    author={
-                        viewer
-                            ? {
-                                  name: viewer.name,
-                                  avatar: viewer.avatar ?? null,
-                              }
-                            : null
-                    }
-                    onSubmit={state.postComment}
-                    drive={detail.attachments.drive}
-                    onAttachmentsChange={state.refresh}
-                />
-            ) : (
-                <p className="text-[13px] text-text-muted">
-                    Workspace diarsipkan: komentar tidak dapat ditambahkan.
-                </p>
-            )}
+                {can.comment ? (
+                    <CommentComposer
+                        workspaceKey={detail.workspace.key}
+                        author={
+                            viewer
+                                ? {
+                                      name: viewer.name,
+                                      avatar: viewer.avatar ?? null,
+                                  }
+                                : null
+                        }
+                        onSubmit={state.postComment}
+                        drive={detail.attachments.drive}
+                        onAttachmentsChange={state.refresh}
+                    />
+                ) : (
+                    <p className="text-[15px] text-text-muted">
+                        Workspace diarsipkan: komentar tidak dapat ditambahkan.
+                    </p>
+                )}
+            </div>
         </div>
     );
 
@@ -134,22 +150,15 @@ export function TaskDetailBody({ state, today, layout, onOpenTask }: Props) {
     }
 
     return (
-        <div
-            className={cn(
-                'grid min-h-full grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_320px]',
-            )}
-        >
-            <div className="mx-auto w-full max-w-[820px] px-6 py-8 xl:px-8">
-                {main}
-            </div>
+        <div className="grid grid-cols-1 items-start gap-x-6 gap-y-5 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_340px]">
+            {header && <div className="min-w-0 lg:col-start-1">{header}</div>}
             <aside
                 aria-label="Properti tugas"
-                className="border-l border-border px-5 py-6"
+                className="order-last min-w-0 lg:sticky lg:top-[calc(var(--menu-bar-height)+24px)] lg:order-none lg:col-start-2 lg:row-span-2 lg:row-start-1"
             >
-                <div className="sticky top-20">
-                    <PropertiesPanel state={state} today={today} />
-                </div>
+                <PropertiesPanel state={state} today={today} />
             </aside>
+            <div className="min-w-0 lg:col-start-1">{main}</div>
         </div>
     );
 }

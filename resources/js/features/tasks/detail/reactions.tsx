@@ -31,8 +31,8 @@ export function Reactions({
     }
 
     const chip = cn(
-        'inline-flex items-center gap-1 rounded-full border text-[13px] transition-colors duration-120 ease-brand focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-default',
-        mobile ? 'h-9 px-3' : 'h-7 px-2',
+        'inline-flex items-center gap-1.5 rounded-full border text-[14px] font-bold transition-colors duration-120 ease-brand focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none disabled:cursor-default',
+        mobile ? 'h-9 px-3' : 'h-8 px-2.5',
     );
 
     return (
@@ -53,7 +53,7 @@ export function Reactions({
                         className={cn(
                             chip,
                             mine
-                                ? 'border-primary/50 bg-link-soft text-primary'
+                                ? 'border-transparent bg-link-soft text-link'
                                 : 'border-border text-text-muted hover:bg-surface-2',
                         )}
                     >
@@ -73,10 +73,10 @@ export function Reactions({
                                 'border-border text-text-muted hover:bg-surface-2 hover:text-text',
                                 mobile
                                     ? 'w-9 justify-center px-0'
-                                    : 'w-7 justify-center px-0',
+                                    : 'w-8 justify-center px-0',
                             )}
                         >
-                            <SmilePlus className="size-3.5" aria-hidden />
+                            <SmilePlus className="size-4" aria-hidden />
                         </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent

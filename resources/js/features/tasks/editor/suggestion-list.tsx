@@ -76,7 +76,7 @@ export function SuggestionList({ items, loading, kind, command, ref }: Props) {
             className="glass max-h-72 w-72 overflow-y-auto rounded-lg border border-border p-1 shadow-card"
         >
             {items.length === 0 ? (
-                <p className="px-2.5 py-2 text-[13px] text-text-muted">
+                <p className="px-2.5 py-2 text-[15px] text-text-muted">
                     {loading
                         ? 'Mencari…'
                         : kind === 'person'
@@ -94,7 +94,7 @@ export function SuggestionList({ items, loading, kind, command, ref }: Props) {
                         onClick={() => command(item)}
                         onMouseEnter={() => setSelected(index)}
                         className={cn(
-                            'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] text-text',
+                            'flex w-full items-center gap-2 rounded-control px-2.5 py-1.5 text-left text-[15px] text-text',
                             index === selected && 'bg-surface-2',
                         )}
                     >
@@ -114,7 +114,7 @@ export function SuggestionList({ items, loading, kind, command, ref }: Props) {
                                         item.status_category as StatusCategory
                                     }
                                 />
-                                <span className="font-mono text-xs text-text-muted">
+                                <span className="font-mono text-meta text-text-muted">
                                     {item.key}
                                 </span>
                                 <span className="truncate">{item.title}</span>

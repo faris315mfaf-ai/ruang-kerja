@@ -184,9 +184,9 @@ export function TaskComposerProvider({
                 onDone={close}
             />
         ) : error ? (
-            <p className="py-6 text-center text-sm text-danger">{error}</p>
+            <p className="py-6 text-center text-[15px] text-danger">{error}</p>
         ) : list !== null ? (
-            <p className="py-6 text-center text-sm text-text-muted">
+            <p className="py-6 text-center text-[15px] text-text-muted">
                 Anda belum menjadi anggota workspace yang bisa ditambah tugas.
             </p>
         ) : (

@@ -25,11 +25,16 @@ import type { TaskDetail } from './types';
 
 type Size = 'default' | 'touch';
 
+/** Property row (DTugas side card): label left, value right, 58px. */
 function Row({ label, children }: { label: string; children: ReactNode }) {
     return (
-        <div className="grid min-h-9 grid-cols-[120px_minmax(0,1fr)] items-center gap-3">
-            <dt className="text-[13px] text-text-muted">{label}</dt>
-            <dd className="min-w-0 text-[13px] text-text">{children}</dd>
+        <div className="flex min-h-[58px] items-center justify-between gap-3 border-b border-divider py-2 last:border-b-0">
+            <dt className="shrink-0 text-[15px] font-medium text-text-muted">
+                {label}
+            </dt>
+            <dd className="flex min-w-0 justify-end text-right text-[16px] font-semibold text-text">
+                {children}
+            </dd>
         </div>
     );
 }
@@ -143,15 +148,12 @@ export function PropertiesPanel({ state, today }: Props) {
         task.status_category === 'done' || task.status_category === 'canceled';
 
     return (
-        <div className="space-y-6">
+        <div className="rounded-panel border border-border bg-surface px-[22px] py-1.5 shadow-card">
             <section aria-labelledby="task-properties">
-                <h2
-                    id="task-properties"
-                    className="mb-2 text-[11px] font-medium tracking-wide text-text-subtle uppercase"
-                >
+                <h2 id="task-properties" className="sr-only">
                     Properti
                 </h2>
-                <dl className="space-y-1">
+                <dl>
                     <Row label="Status">
                         {can.edit ? (
                             <StatusPicker
@@ -237,7 +239,7 @@ export function PropertiesPanel({ state, today }: Props) {
                                         <UserAvatar
                                             name={person.name}
                                             src={person.avatar}
-                                            className="size-5 text-[9px]"
+                                            className="size-6 text-[10px]"
                                         />
                                         {person.name}
                                     </span>
@@ -259,7 +261,7 @@ export function PropertiesPanel({ state, today }: Props) {
                                 due={task.due_date}
                                 today={today}
                                 closed={closed}
-                                className="text-[13px]"
+                                className="text-[16px]"
                             />
                         ) : (
                             <span className="text-text-muted">–</span>
@@ -322,19 +324,16 @@ export function PropertiesPanel({ state, today }: Props) {
 
             <section
                 aria-labelledby="task-meta"
-                className="border-t border-border pt-5"
+                className="border-t border-divider"
             >
-                <h2
-                    id="task-meta"
-                    className="mb-2 text-[11px] font-medium tracking-wide text-text-subtle uppercase"
-                >
+                <h2 id="task-meta" className="sr-only">
                     Detail
                 </h2>
-                <dl className="space-y-1">
+                <dl>
                     <Row label="Workspace">
                         <Link
                             href={`/w/${detail.workspace.key}`}
-                            className="inline-flex items-center gap-2 hover:underline"
+                            className="inline-flex min-w-0 items-center gap-2 text-link hover:underline"
                         >
                             <WorkspaceAvatar
                                 name={detail.workspace.name}
@@ -353,12 +352,12 @@ export function PropertiesPanel({ state, today }: Props) {
                         <Row label="Induk">
                             <Link
                                 href={`/w/${detail.workspace.key}/tasks/${detail.parent.key.split('-').pop()}`}
-                                className="inline-flex items-center gap-2 hover:underline"
+                                className="inline-flex min-w-0 items-center gap-2 text-link hover:underline"
                             >
                                 <StatusIcon
                                     category={detail.parent.status_category}
                                 />
-                                <span className="font-mono text-xs text-text-muted">
+                                <span className="font-mono text-[14px] text-text-muted">
                                     {detail.parent.key}
                                 </span>
                                 <span className="truncate">
@@ -389,15 +388,15 @@ export function PropertiesPanel({ state, today }: Props) {
                                     detail.watching ? 'Berhenti amati' : 'Amati'
                                 }
                                 className={cn(
-                                    'flex size-7 shrink-0 items-center justify-center rounded-full border border-dashed border-border text-text-muted hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                                    'flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border-strong text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none',
                                     detail.watching &&
-                                        'border-solid border-primary/50 text-primary',
+                                        'border-solid border-primary/50 bg-link-soft text-link',
                                 )}
                             >
                                 {detail.watching ? (
-                                    <EyeOff className="size-3.5" aria-hidden />
+                                    <EyeOff className="size-4" aria-hidden />
                                 ) : (
-                                    <Eye className="size-3.5" aria-hidden />
+                                    <Eye className="size-4" aria-hidden />
                                 )}
                             </button>
                         </span>
@@ -408,7 +407,7 @@ export function PropertiesPanel({ state, today }: Props) {
                                 <UserAvatar
                                     name={detail.creator.name}
                                     src={detail.creator.avatar}
-                                    className="size-5 text-[9px]"
+                                    className="size-6 text-[10px]"
                                 />
                                 <span className="truncate">
                                     {detail.creator.name.split(' ')[0]} ·{' '}

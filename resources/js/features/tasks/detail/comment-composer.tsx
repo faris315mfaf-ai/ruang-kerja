@@ -44,7 +44,7 @@ type Props = {
 };
 
 const toolButton =
-    'flex size-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-2 hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
+    'flex size-9 items-center justify-center rounded-[10px] text-text-muted hover:bg-surface-2 hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none';
 
 /**
  * New comment (Tiptap): "@" mentions people with access, "#" references
@@ -138,7 +138,7 @@ export function CommentComposer({
                             <Paperclip className="size-5" aria-hidden />
                         </button>
                     )}
-                    <div className="min-h-11 min-w-0 flex-1 rounded-3xl border border-border bg-surface px-4 py-2.5 text-base focus-within:ring-2 focus-within:ring-ring">
+                    <div className="min-h-11 min-w-0 flex-1 rounded-[22px] border border-border-strong bg-surface px-4 py-2.5 text-[17px] focus-within:border-primary focus-within:ring-4 focus-within:ring-ring/55">
                         {editor}
                     </div>
                     <button
@@ -146,7 +146,7 @@ export function CommentComposer({
                         onClick={() => void send()}
                         disabled={empty || sending}
                         aria-label="Kirim komentar"
-                        className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:opacity-50"
+                        className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary bg-grad-aksi text-on-brand shadow-button transition-opacity disabled:opacity-50"
                     >
                         <ArrowUp className="size-5" aria-hidden />
                     </button>
@@ -168,14 +168,14 @@ export function CommentComposer({
                 <UserAvatar
                     name={author.name}
                     src={author.avatar}
-                    className="mt-0.5 size-7 text-[10px]"
+                    className="size-10 text-[14px]"
                 />
             )}
             <div className="min-w-0 flex-1">
-                <div className="rounded-lg border border-border bg-surface focus-within:border-border-strong focus-within:ring-2 focus-within:ring-ring">
-                    <div className="px-3 pt-2.5 pb-1">{editor}</div>
-                    {waiting && <div className="px-3 pb-2">{chips}</div>}
-                    <div className="flex items-center gap-1 border-t border-border px-2 py-1.5">
+                <div className="rounded-control border border-border-strong bg-surface text-[16px] focus-within:border-primary focus-within:ring-4 focus-within:ring-ring/55">
+                    <div className="px-4 pt-3 pb-1">{editor}</div>
+                    {waiting && <div className="px-4 pb-2">{chips}</div>}
+                    <div className="flex items-center gap-1 border-t border-divider px-2 py-1.5">
                         <button
                             type="button"
                             className={toolButton}
@@ -232,7 +232,7 @@ export function CommentComposer({
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         )}
-                        <kbd className="ml-auto hidden font-mono text-[11px] text-text-subtle sm:inline">
+                        <kbd className="ml-auto hidden font-mono text-[13px] text-text-muted sm:inline">
                             ⌘ Enter
                         </kbd>
                         <Button
@@ -247,7 +247,7 @@ export function CommentComposer({
                     </div>
                 </div>
                 {hint && (
-                    <p className="mt-1.5 text-xs text-text-muted">{hint}</p>
+                    <p className="mt-1.5 text-meta text-text-muted">{hint}</p>
                 )}
                 {attachments.elements}
             </div>

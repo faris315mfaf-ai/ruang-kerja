@@ -44,21 +44,21 @@ export function TimelineSection({ state, mobile = false }: Props) {
     }, [detail.task.id]);
 
     return (
-        <section aria-labelledby="task-activity" className="space-y-3">
-            <header className="flex items-center gap-2">
+        <section aria-labelledby="task-activity" className="space-y-4">
+            <header className="flex flex-wrap items-center gap-2">
                 <h2
                     id="task-activity"
                     className={cn(
-                        'font-medium text-text',
-                        mobile ? 'text-[15px]' : 'text-[13px]',
+                        'font-bold text-text',
+                        mobile ? 'text-[17px]' : 'text-[21px] leading-7',
                     )}
                 >
-                    Aktivitas
+                    {mobile ? 'Aktivitas' : 'Komentar & aktivitas'}
                 </h2>
                 <div
                     role="tablist"
                     aria-label="Filter aktivitas"
-                    className="ml-auto inline-flex rounded-lg border border-border bg-surface p-0.5"
+                    className="ml-auto inline-flex gap-1 rounded-[14px] bg-surface-2 p-1"
                 >
                     {(['all', 'comments'] as const).map((value) => (
                         <button
@@ -68,10 +68,10 @@ export function TimelineSection({ state, mobile = false }: Props) {
                             aria-selected={filter === value}
                             onClick={() => setFilter(value)}
                             className={cn(
-                                'rounded-md px-3 font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                                mobile ? 'h-10 text-[15px]' : 'h-7 text-[13px]',
+                                'rounded-[10px] px-3.5 text-[15px] font-semibold transition-colors duration-120 ease-brand focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none',
+                                mobile ? 'h-10' : 'h-[34px]',
                                 filter === value
-                                    ? 'bg-surface-2 text-text'
+                                    ? 'bg-surface text-text shadow-segment'
                                     : 'text-text-muted hover:text-text',
                             )}
                         >
@@ -84,11 +84,11 @@ export function TimelineSection({ state, mobile = false }: Props) {
             </header>
 
             {items.length === 0 ? (
-                <p className="py-2 text-[13px] text-text-muted">
+                <p className="py-2 text-[15px] text-text-muted">
                     Belum ada komentar. Mulai diskusi di bawah.
                 </p>
             ) : (
-                <ol className="space-y-2.5">
+                <ol className="space-y-4">
                     {items.map((item) => (
                         <li key={`${item.kind}-${item.id}`}>
                             {item.kind === 'activity' ? (
