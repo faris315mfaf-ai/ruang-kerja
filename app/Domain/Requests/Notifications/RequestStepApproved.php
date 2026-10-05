@@ -42,6 +42,15 @@ final class RequestStepApproved extends RequestNotification
         return RequestFormatter::summary($this->request);
     }
 
+    public function neutralTitle(User $notifiable): string
+    {
+        return sprintf(
+            'Pengajuan Anda disetujui %s, diteruskan ke %s',
+            $this->decided->approver->name ?? 'penyetuju',
+            $this->next->approver->name ?? $this->next->stepLabel(),
+        );
+    }
+
     public function url(User $notifiable): string
     {
         return '/pengajuan/'.$this->request->id;

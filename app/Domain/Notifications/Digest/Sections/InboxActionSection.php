@@ -40,10 +40,13 @@ final class InboxActionSection implements DigestSection
 
         foreach ((clone $query)->orderBy('created_at')->limit(self::LIMIT)->get() as $notification) {
             $type = $notification->notificationType();
+            // A module may give a neutral title for email (meta.external_title, e.g. sick leave):
+            // then neither the in-app title nor the subject code leaves the app.
+            $external = $notification->dataString('meta.external_title');
 
             $items[] = new DigestItem(
-                title: $notification->dataString('title') ?? 'Notifikasi',
-                code: $notification->dataString('subject.code'),
+                title: $external ?? $notification->dataString('title') ?? 'Notifikasi',
+                code: $external === null ? $notification->dataString('subject.code') : null,
                 badge: $type?->label(),
                 badgeTone: $type?->tone() === 'danger' ? 'danger' : 'info',
             );

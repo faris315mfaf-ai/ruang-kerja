@@ -56,7 +56,9 @@ final class RequestRevision
             $this->audit->log('request.revision_requested', $request, ['status' => RequestStatus::Pending->value], [
                 'status' => RequestStatus::RevisionRequested->value,
                 'step' => $step->step_order,
-                'note' => $note,
+                // Privacy: ids + a flag only; the note itself lives on the step (in-app).
+                'step_id' => $step->id,
+                'has_note' => true,
             ], $actor);
 
             return [$request, $step];

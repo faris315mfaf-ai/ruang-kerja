@@ -29,6 +29,16 @@ final class RequestRejected extends RequestNotification
         return $this->step->note;
     }
 
+    public function neutralTitle(User $notifiable): string
+    {
+        return 'Pengajuan Anda ditolak oleh '.($this->step->approver->name ?? 'penyetuju');
+    }
+
+    protected function noteInApp(): bool
+    {
+        return true;
+    }
+
     public function url(User $notifiable): string
     {
         return '/pengajuan/'.$this->request->id;

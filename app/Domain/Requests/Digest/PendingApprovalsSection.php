@@ -5,6 +5,7 @@ namespace App\Domain\Requests\Digest;
 use App\Domain\Notifications\Digest\Contracts\DigestSection;
 use App\Domain\Notifications\Digest\Data\DigestItem;
 use App\Domain\Notifications\Digest\Data\DigestSectionData;
+use App\Domain\Requests\Enums\RequestCategory;
 use App\Domain\Requests\Services\ApprovalQueue;
 use App\Domain\Requests\Support\RequestFormatter;
 use App\Models\RequestApproval;
@@ -35,9 +36,10 @@ final class PendingApprovalsSection implements DigestSection
             ->get()
             ->map(fn (RequestApproval $step): DigestItem => new DigestItem(
                 title: $step->request->user->name,
-                code: $step->request->number,
+                // Email: health-related requests show no type or number (Fitur pengajuan #4).
+                code: $step->request->leaveType->category === RequestCategory::Sick ? null : $step->request->number,
                 detail: RequestFormatter::summary($step->request),
-                badge: $step->request->leaveType->name,
+                badge: $step->request->leaveType->category === RequestCategory::Sick ? 'Pengajuan' : $step->request->leaveType->name,
                 badgeTone: 'info',
                 avatarName: $step->request->user->name,
             ))

@@ -16,6 +16,8 @@ use InvalidArgumentException;
  * - `context_tone` (danger|warning|info|success): color of `context`.
  * - `open_label` (string): label of the primary button, e.g. "Buka tugas".
  * - `quote` (bool): render `body` as a quote (comments, mentions).
+ * - `external_title` (string): neutral title used instead of `title` (and without
+ *   the subject code) when the item is listed in an email, e.g. sick leave.
  * Modules may add other scalar keys; they are kept but not rendered.
  */
 final readonly class NotificationPayload

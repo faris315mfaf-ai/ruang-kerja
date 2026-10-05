@@ -26,6 +26,11 @@ final class RequestCanceled extends RequestNotification
         return RequestFormatter::summary($this->request);
     }
 
+    public function neutralTitle(User $notifiable): string
+    {
+        return "{$this->request->user->name} membatalkan pengajuan";
+    }
+
     public function url(User $notifiable): string
     {
         return '/persetujuan?tab=diputus';
