@@ -5,8 +5,13 @@ use App\Models\Division;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
-Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
-    return (int) $user->id === (int) $id;
+/*
+| Private per-user channel for broadcast notifications (Laravel default name).
+| IDs are ULID strings: compare as strings — an (int) cast would map many
+| different ULIDs to the same number.
+*/
+Broadcast::channel('App.Models.User.{id}', function (User $user, string $id): bool {
+    return $user->id === $id;
 });
 
 // Sprint 2 — live attendance boards (authorized by AttendanceDayPolicy).

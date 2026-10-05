@@ -3,63 +3,40 @@
 namespace App\Domain\Attendance\Notifications;
 
 use App\Domain\Attendance\Support\OfficeClock;
+use App\Domain\Notifications\BaseNotification;
+use App\Domain\Notifications\Data\NotificationPayload;
+use App\Domain\Notifications\Enums\NotificationType;
+use App\Models\User;
 use Carbon\CarbonImmutable;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Notification;
 
 /**
- * "Belum check-in" reminder, 15 minutes after the scheduled start.
- *
- * TODO(sprint-8): extend App\Domain\Notifications\BaseNotification with
- * NotificationType::CheckInReminder so via() honours notification_preferences.
- * Until then: database channel only, payload in the Sprint 8 shape
- * {type, title, body, url, actor, subject, meta}.
+ * "Belum check-in" reminder, sent by SendCheckInReminders 15 minutes after the
+ * scheduled start. Channels follow notification_preferences (Sprint 8).
  */
-final class CheckInReminderNotification extends Notification implements ShouldQueue
+final class CheckInReminderNotification extends BaseNotification
 {
-    use Queueable;
-
-    public const string TYPE = 'attendance.check_in_reminder';
-
     public function __construct(
         public readonly string $workDate,
         public readonly string $shiftName,
         public readonly CarbonImmutable $scheduledStart,
     ) {}
 
-    /**
-     * @return list<string>
-     */
-    public function via(object $notifiable): array
+    public function type(): NotificationType
     {
-        return ['database'];
+        return NotificationType::CheckInReminder;
     }
 
-    public function databaseType(object $notifiable): string
+    public function payload(User $notifiable): NotificationPayload
     {
-        return self::TYPE;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function toArray(object $notifiable): array
-    {
-        $start = OfficeClock::time($this->scheduledStart);
-
-        return [
-            'type' => self::TYPE,
-            'title' => 'Anda belum check-in',
-            'body' => "Shift {$this->shiftName} dimulai pukul {$start}. Lakukan check-in sekarang.",
-            'url' => '/absensi',
-            'actor' => null,
-            'subject' => null,
-            'meta' => [
+        return new NotificationPayload(
+            title: 'Anda belum check-in',
+            body: "Shift {$this->shiftName} dimulai pukul ".OfficeClock::time($this->scheduledStart).'. Lakukan check-in sekarang.',
+            url: '/absensi',
+            meta: [
                 'work_date' => $this->workDate,
                 'open_label' => 'Check-in sekarang',
                 'context_tone' => 'warning',
             ],
-        ];
+        );
     }
 }

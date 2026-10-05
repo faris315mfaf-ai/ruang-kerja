@@ -8,7 +8,7 @@ use App\Domain\Organization\Enums\Role;
  * Fixed list of local demo accounts (password `password`).
  *
  * Demo login is only available when APP_ENV=local AND DEMO_LOGIN_ENABLED=true.
- * Sprint 1 replaces this with Google login.
+ * Production sign-in is Google Workspace (GoogleLoginController).
  */
 final class DemoAccounts
 {

@@ -1,190 +1,130 @@
-import { Form, Head } from '@inertiajs/react';
-import InputError from '@/components/input-error';
-import PasskeyVerify from '@/components/passkey-verify';
-import PasswordInput from '@/components/password-input';
-import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
-import { demo, store } from '@/routes/login';
-import { request } from '@/routes/password';
-
-type DemoAccount = {
-    email: string;
-    name: string;
-    role_label: string;
-};
+import { Head, usePage } from '@inertiajs/react';
+import { useState } from 'react';
+import { DemoLoginSection } from '@/features/auth/demo-login';
+import {
+    GoogleSignInButton,
+    LoginErrorCard,
+} from '@/features/auth/google-sign-in';
+import { LoginBrandPanel } from '@/features/auth/login-brand-panel';
+import { LoginMobileHero } from '@/features/auth/login-mobile-hero';
+import { LoginPrivacyNote } from '@/features/auth/login-privacy-note';
+import { SuperAdminLogin } from '@/features/auth/super-admin-login';
+import type { DemoAccount, GoogleLoginState } from '@/features/auth/types';
 
 type Props = {
     status?: string;
     canResetPassword: boolean;
+    google: GoogleLoginState;
+    /** Name of the company (companies.name); null before seeding. */
+    companyName: string | null;
     /** Only filled when APP_ENV=local and DEMO_LOGIN_ENABLED=true. */
     demoAccounts?: DemoAccount[];
 };
 
+/**
+ * Login (mockups `Login` desktop & `MLogin` mobile). Rendered without the
+ * shared auth layout (see app.tsx): desktop is a split brand panel + card,
+ * mobile a centered brand header with the actions at the bottom.
+ */
 export default function Login({
     status,
     canResetPassword,
+    google,
+    companyName,
     demoAccounts = [],
 }: Props) {
+    const { errors, branding } = usePage().props;
+    const company = companyName ?? branding.companyName ?? 'perusahaan';
+
+    // <Form> submissions preserve state, so the emergency form stays open after
+    // a failed attempt and shows Fortify's `email` errors in place.
+    const [superAdminOpen, setSuperAdminOpen] = useState(false);
+
+    const googleError = errors.google;
+    // `email` errors on a fresh page load come from EnsureActiveEmployee (signed
+    // out because the account was deactivated): show them in the error card.
+    const generalError =
+        googleError ?? (superAdminOpen ? undefined : errors.email);
+
     return (
         <>
             <Head title="Masuk" />
 
-            <PasskeyVerify />
+            <div className="min-h-svh bg-background lg:grid lg:grid-cols-[minmax(0,53fr)_minmax(0,47fr)]">
+                <LoginBrandPanel companyName={company} />
 
-            <Form
-                {...store.form()}
-                resetOnSuccess={['password']}
-                className="flex flex-col gap-6"
-            >
-                {({ processing, errors }) => (
-                    <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    name="email"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="email"
-                                    placeholder="nama@perusahaan.co.id"
-                                />
-                                <InputError message={errors.email} />
-                            </div>
+                <main className="flex min-h-svh flex-col bg-linear-to-b from-brand-50/70 via-background to-background lg:items-center lg:justify-center lg:bg-surface-2 lg:bg-none lg:px-10 lg:py-12 dark:from-brand-700/20">
+                    <LoginMobileHero companyName={company} />
 
-                            <div className="grid gap-2">
-                                <div className="flex items-center">
-                                    <Label htmlFor="password">Kata sandi</Label>
-                                    {canResetPassword && (
-                                        <TextLink
-                                            href={request()}
-                                            className="ml-auto text-sm"
-                                            tabIndex={5}
-                                        >
-                                            Lupa kata sandi?
-                                        </TextLink>
+                    <div className="mt-auto w-full px-4 pb-8 lg:mt-0 lg:max-w-md lg:px-0 lg:pb-0">
+                        <section
+                            aria-labelledby="login-title"
+                            className="space-y-5 lg:rounded-xl lg:border lg:border-border lg:bg-surface lg:p-8 lg:shadow-card"
+                        >
+                            <div className="space-y-1.5 text-center lg:text-left">
+                                <h1
+                                    id="login-title"
+                                    className="text-xl font-semibold text-text lg:text-2xl"
+                                >
+                                    Masuk ke {branding.name}
+                                </h1>
+                                <p className="text-base text-text-muted lg:text-sm">
+                                    Gunakan akun Google kantor Anda
+                                    {google.domain && (
+                                        <>
+                                            {' ('}
+                                            <span className="font-mono text-sm text-text">
+                                                @{google.domain}
+                                            </span>
+                                            {')'}
+                                        </>
                                     )}
-                                </div>
-                                <PasswordInput
-                                    id="password"
-                                    name="password"
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="current-password"
-                                    placeholder="Kata sandi"
-                                />
-                                <InputError message={errors.password} />
+                                    .
+                                </p>
                             </div>
 
-                            <div className="flex items-center space-x-3">
-                                <Checkbox
-                                    id="remember"
-                                    name="remember"
-                                    tabIndex={3}
+                            <GoogleSignInButton google={google} />
+
+                            {generalError && (
+                                <LoginErrorCard
+                                    message={generalError}
+                                    email={
+                                        googleError
+                                            ? google.rejectedEmail
+                                            : null
+                                    }
                                 />
-                                <Label htmlFor="remember">Ingat saya</Label>
+                            )}
+
+                            {status && (
+                                <p className="rounded-lg bg-success/10 px-4 py-3 text-sm font-medium text-success">
+                                    {status}
+                                </p>
+                            )}
+
+                            <div className="border-t border-border pt-4 text-center lg:text-left">
+                                <SuperAdminLogin
+                                    open={superAdminOpen}
+                                    onOpenChange={setSuperAdminOpen}
+                                    canResetPassword={canResetPassword}
+                                />
                             </div>
+                        </section>
 
-                            <Button
-                                type="submit"
-                                className="mt-4 w-full"
-                                tabIndex={4}
-                                disabled={processing}
-                                data-test="login-button"
-                            >
-                                {processing && <Spinner />}
-                                Masuk
-                            </Button>
-                        </div>
-                    </>
-                )}
-            </Form>
+                        <LoginPrivacyNote className="mt-5 hidden px-2 lg:block" />
 
-            {status && (
-                <div className="mb-4 text-center text-sm font-medium text-success">
-                    {status}
-                </div>
-            )}
+                        {demoAccounts.length > 0 && (
+                            <div className="mt-6">
+                                <DemoLoginSection accounts={demoAccounts} />
+                            </div>
+                        )}
+                    </div>
 
-            {demoAccounts.length > 0 && (
-                <DemoLoginSection accounts={demoAccounts} />
-            )}
+                    <footer className="border-t border-border px-4 py-5 text-center lg:hidden">
+                        <LoginPrivacyNote />
+                    </footer>
+                </main>
+            </div>
         </>
     );
 }
-
-function DemoLoginSection({ accounts }: { accounts: DemoAccount[] }) {
-    return (
-        <section
-            aria-labelledby="demo-login-title"
-            className="flex flex-col gap-3 border-t border-border pt-6"
-        >
-            <div className="flex flex-col gap-1">
-                <h2
-                    id="demo-login-title"
-                    className="text-sm font-semibold text-foreground"
-                >
-                    Masuk cepat (demo lokal)
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                    Hanya tersedia di lingkungan lokal. Pilih akun untuk masuk
-                    tanpa kata sandi.
-                </p>
-            </div>
-
-            <ul className="grid gap-2">
-                {accounts.map((account) => (
-                    <li key={account.email}>
-                        <Form {...demo.form()}>
-                            {({ processing, errors }) => (
-                                <>
-                                    <input
-                                        type="hidden"
-                                        name="email"
-                                        value={account.email}
-                                    />
-                                    <Button
-                                        type="submit"
-                                        variant="outline"
-                                        disabled={processing}
-                                        aria-label={`Masuk sebagai ${account.name} (${account.role_label})`}
-                                        className="h-auto min-h-11 w-full justify-between gap-3 px-3 py-2 text-left"
-                                        data-test="demo-login-button"
-                                    >
-                                        <span className="flex min-w-0 flex-col">
-                                            <span className="truncate text-sm font-medium text-foreground">
-                                                {account.name}
-                                            </span>
-                                            <span className="truncate text-xs font-normal text-muted-foreground">
-                                                {account.email}
-                                            </span>
-                                        </span>
-                                        <span className="flex shrink-0 items-center gap-2 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                                            {processing && <Spinner />}
-                                            {account.role_label}
-                                        </span>
-                                    </Button>
-                                    <InputError
-                                        message={errors.email}
-                                        className="mt-1"
-                                    />
-                                </>
-                            )}
-                        </Form>
-                    </li>
-                ))}
-            </ul>
-        </section>
-    );
-}
-
-Login.layout = {
-    title: 'Masuk ke akun Anda',
-    description: 'Masukkan email dan kata sandi Anda untuk masuk',
-};

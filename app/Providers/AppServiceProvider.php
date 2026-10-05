@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Domain\Attendance\Support\HolidayAwareWorkdayCalendar;
+use App\Domain\Notifications\Contracts\WorkdayCalendar;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +17,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Daily digest skips company holidays (Sprint 2 ↔ Sprint 8 contract).
+        $this->app->bind(WorkdayCalendar::class, HolidayAwareWorkdayCalendar::class);
     }
 
     /**

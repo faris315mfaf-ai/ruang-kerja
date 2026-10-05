@@ -5,6 +5,10 @@ use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\Holiday;
 use App\Domain\Attendance\Models\Shift;
 use App\Domain\Attendance\Notifications\CheckInReminderNotification;
+use App\Domain\Attendance\Support\HolidayAwareWorkdayCalendar;
+use App\Domain\Notifications\Channels\InAppChannel;
+use App\Domain\Notifications\Contracts\WorkdayCalendar;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Notification;
 use Tests\Support\AttendanceFixtures as F;
 
@@ -33,7 +37,7 @@ test('reminds 15 minutes after the start when not checked in, once per day', fun
     Notification::assertSentTo($user, CheckInReminderNotification::class, function (CheckInReminderNotification $notification) use ($user) {
         $data = $notification->toArray($user);
 
-        return $notification->via($user) === ['database']
+        return in_array(InAppChannel::class, $notification->via($user), true)
             && $data['type'] === 'attendance.check_in_reminder'
             && $data['body'] === 'Shift Reguler dimulai pukul 08.00. Lakukan check-in sekarang.'
             && $data['url'] === '/absensi';
@@ -71,4 +75,14 @@ test('night shift reminders follow the shift start', function () {
     runReminders();
 
     Notification::assertSentTo($user, CheckInReminderNotification::class, fn ($n) => $n->workDate === '2026-10-05');
+});
+
+test('the daily digest calendar skips company holidays', function () {
+    Holiday::factory()->on('2026-10-05')->create();
+    $calendar = app(WorkdayCalendar::class);
+
+    expect($calendar)->toBeInstanceOf(HolidayAwareWorkdayCalendar::class)
+        ->and($calendar->isWorkday(CarbonImmutable::parse('2026-10-05')))->toBeFalse()
+        ->and($calendar->isWorkday(CarbonImmutable::parse('2026-10-06')))->toBeTrue()
+        ->and($calendar->isWorkday(CarbonImmutable::parse('2026-10-10')))->toBeFalse();
 });
