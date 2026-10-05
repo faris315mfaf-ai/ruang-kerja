@@ -341,9 +341,11 @@ export function AttachmentsPanel({
         body = (
             <ul
                 className={cn(
-                    mobile
-                        ? '-mx-4 flex snap-x [scrollbar-width:none] gap-2 overflow-x-auto px-4 pb-1'
-                        : 'grid gap-2 @md:grid-cols-2 @2xl:grid-cols-3',
+                    mobile &&
+                        '-mx-4 flex snap-x scroll-px-4 [scrollbar-width:none] gap-2 overflow-x-auto px-4 pb-1',
+                    variant === 'desktop' &&
+                        'grid gap-2 @md:grid-cols-2 @2xl:grid-cols-3',
+                    variant === 'compact' && 'grid gap-2 @md:grid-cols-2',
                 )}
             >
                 {data.attachments.map((attachment) => (
