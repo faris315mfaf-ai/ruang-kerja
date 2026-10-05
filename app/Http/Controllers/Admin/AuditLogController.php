@@ -131,15 +131,17 @@ class AuditLogController extends Controller
     }
 
     /**
-     * Loads each row's subject — soft-deleted ones included, so their name stays visible.
+     * Loads each row's subject with one query per subject type — soft-deleted
+     * ones included, so their name stays visible. Every row gets the relation
+     * set (null for system rows without a subject), so nothing lazy-loads.
      *
      * @param  Collection<int, AuditLog>  $rows
      */
     private function loadSubjects(Collection $rows): void
     {
-        foreach ($rows->whereNotNull('auditable_type')->groupBy('auditable_type') as $type => $group) {
-            $subject = AuditSubject::fromModelClass((string) $type);
-            $models = $subject === null ? collect() : $subject->modelClass()::query()
+        foreach ($rows->groupBy(fn (AuditLog $log): string => (string) $log->auditable_type) as $type => $group) {
+            $type = (string) $type;
+            $models = $type === '' || ! is_subclass_of($type, Model::class) ? collect() : $type::query()
                 ->withoutGlobalScopes()
                 ->whereKey($group->pluck('auditable_id')->filter()->unique()->values()->all())
                 ->get()

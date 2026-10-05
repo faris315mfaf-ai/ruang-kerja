@@ -3,6 +3,7 @@ import {
     Building2,
     CheckCheck,
     CircleCheck,
+    Clock,
     FileText,
     Home,
     Inbox,
@@ -91,6 +92,16 @@ export function adminNavItems(roles: readonly string[]): AppNavItem[] {
             title: 'Organisasi',
             href: '/admin/organisasi',
             icon: Building2,
+            matchPrefix: true,
+            desktopOnly: true,
+        });
+    }
+
+    if (hasAnyRole(roles, 'super_admin', 'hr')) {
+        items.push({
+            title: 'Lokasi & shift',
+            href: '/admin/absensi',
+            icon: Clock,
             matchPrefix: true,
             desktopOnly: true,
         });

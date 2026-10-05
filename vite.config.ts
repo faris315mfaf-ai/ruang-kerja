@@ -69,6 +69,7 @@ export default defineConfig({
             '*.md',
             '.claude/**',
             'compose.yml',
+            'compose.prod.yml',
             'docs/**',
             'resources/css/tokens.css',
             '.github/**',

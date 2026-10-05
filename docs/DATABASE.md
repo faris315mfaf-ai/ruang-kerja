@@ -133,7 +133,7 @@ Indeks: `(auditable_type, auditable_id)`, `(action)`, `(created_at)`, `(user_id,
 ## 2. Absensi
 
 ### office_locations
-`id`, `company_id`, `name`, `address`, `latitude` numeric(10,7), `longitude` numeric(10,7), `radius_m` int (default 100), `is_active`.
+`id`, `company_id`, `name` varchar(120), `address` varchar(255) null, `latitude` numeric(10,7), `longitude` numeric(10,7), `radius_m` int (default 100), `is_active`, `deleted_at`. CHECK koordinat valid & `radius_m > 0`. Indeks `(company_id, is_active)`.
 
 ### shifts
 | Kolom | Tipe | Keterangan |
@@ -146,15 +146,20 @@ Indeks: `(auditable_type, auditable_id)`, `(action)`, `(created_at)`, `(user_id,
 | crosses_midnight | bool | |
 | late_tolerance_min | smallint | default 10 |
 | early_leave_tolerance_min | smallint | |
-| check_in_window_before_min | smallint | boleh check-in mulai X menit sebelum jam masuk |
+| check_in_window_before_min | smallint | boleh check-in mulai X menit sebelum jam masuk (default 120) |
+| office_location_id | FK office_locations null | **tambahan Sprint 2**: lokasi check-in shift ini (mis. shift gudang). Null = semua lokasi aktif perusahaan |
+
+`crosses_midnight` diturunkan otomatis dari jam (pulang ≤ masuk). Soft delete; shift yang masih dipakai penugasan aktif tidak bisa dihapus.
 
 ### shift_assignments
 `id`, `user_id`, `shift_id`, `weekdays` smallint[] (1=Senin…7=Minggu), `valid_from` date, `valid_until` date null, `override_date` date null (penugasan khusus satu tanggal, mengalahkan pola), `work_mode_override` varchar null.
 
-Resolusi jadwal: `override_date` → pola aktif pada tanggal tersebut → tidak terjadwal (libur).
+Resolusi jadwal (Sprint 2): `override_date` → hari libur perusahaan → pola aktif pada tanggal tersebut (bila beberapa, `valid_from` terbaru) → tidak terjadwal. Override mengalahkan hari libur.
+
+Implementasi: `weekdays` = `smallint[]` NOT NULL default `{}` (CHECK nilai 1–7), `shift_id` **nullable** hanya untuk override = libur khusus, CHECK `override_date IS NOT NULL OR (shift_id IS NOT NULL AND cardinality(weekdays) > 0)`, unik parsial `(user_id, override_date)`. Override menyimpan `valid_from = valid_until = override_date`. `work_mode_override` (`office`/`hybrid`/`wfh`/`field`) dipakai untuk hari WFH karyawan hybrid. Pola baru tanpa tanggal akhir mengakhiri pola lama yang hari-harinya tercakup (`valid_until` = sehari sebelumnya).
 
 ### holidays
-`id`, `company_id`, `date`, `name`, `type` (`national` · `collective_leave` · `company`). Unik `(company_id, date)`.
+`id`, `company_id`, `date`, `name` varchar(150), `type` (`national` · `collective_leave` · `company`). Unik `(company_id, date)`. Tanpa soft delete (tidak dirujuk FK).
 
 ### attendance_days — satu baris per karyawan per tanggal kerja
 | Kolom | Tipe | Keterangan |
@@ -176,6 +181,8 @@ Resolusi jadwal: `override_date` → pola aktif pada tanggal tersebut → tidak 
 | note | text null | |
 
 Indeks: `(work_date, status)`, `(user_id, work_date)` unique.
+
+Implementasi (Sprint 2): FK `check_in_log_id`/`check_out_log_id` ditambahkan oleh migrasi `attendance_logs` (referensi melingkar); `request_id` belum ber-FK (tabel `requests` dibuat Sprint 4). `late_minutes` dihitung dari **batas toleransi** (mulai + toleransi), `early_leave_minutes` dari akhir − toleransi, keduanya menit utuh. `work_minutes` dikurangi istirahat bila rentang kerja > 4 jam. Status: `late` > `wfh`/`present`; `early_leave` hanya menggantikan `present`/`wfh`. `attendance:close-day` menulis `absent`, `holiday` (hari pola yang jatuh pada libur) dan `needs_correction`.
 
 ### attendance_logs — setiap peristiwa check-in/out (immutable)
 | Kolom | Tipe | Keterangan |
@@ -202,11 +209,15 @@ Indeks: `(work_date, status)`, `(user_id, work_date)` unique.
 | corrected_by | FK users null | untuk `method = manual` |
 | note | text null | |
 
+Implementasi (Sprint 2): `accuracy_m` numeric(8,2), `distance_m` numeric(10,2) = jarak ke lokasi terdekat (juga untuk WFH), `office_location_id` hanya diisi bila di dalam radius. `qr_token_id` belum ber-FK (Sprint 3). `flags` jsonb default `[]`: `low_accuracy`, `clock_skew`, `new_device`, `new_ip`, `impossible_travel`, `dark_selfie`; `new_ip` saja tidak membuat `is_suspicious`. Baris immutable (model menolak update selain `reviewed_by/at` dan menolak delete). Indeks `(user_id, occurred_at)`, `attendance_day_id`, parsial `occurred_at WHERE is_suspicious AND reviewed_at IS NULL`.
+
 ### qr_tokens
 `id`, `office_location_id`, `token_hash`, `valid_from`, `valid_until` (≈30–45 detik), `kiosk_id`. Token di QR = `HMAC(secret, location_id|window)`. Tabel ini opsional bila validasi murni HMAC. Disimpan untuk audit.
 
 ### attendance_consents
 `id`, `user_id`, `type` (`location` · `selfie` · `face`), `version` (versi teks kebijakan), `granted_at`, `revoked_at` null. Check-in ditolak bila persetujuan versi terbaru belum diberikan.
+
+Implementasi (Sprint 2): versi dari `config('attendance.consent.version')` (`ATTENDANCE_CONSENT_VERSION`). Check-in GPS + selfie butuh `location` **dan** `selfie` versi terkini yang belum dicabut. Indeks `(user_id, type, version)`.
 
 ---
 

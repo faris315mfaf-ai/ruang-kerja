@@ -68,11 +68,30 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     /** @use HasFactory<UserFactory> */
     use Auditable, HasFactory, HasRoles, HasUlids, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
-    /** @var array<string, mixed> */
+    /**
+     * Column defaults, mirroring the database. Nullable columns are listed too so
+     * a freshly created (not re-fetched) model is complete under
+     * Model::preventAccessingMissingAttributes() (strict mode outside production).
+     *
+     * @var array<string, mixed>
+     */
     protected $attributes = [
         'theme' => 'system',
         'work_mode' => 'office',
         'status' => 'active',
+        'email_verified_at' => null,
+        'two_factor_secret' => null,
+        'two_factor_recovery_codes' => null,
+        'two_factor_confirmed_at' => null,
+        'remember_token' => null,
+        'google_id' => null,
+        'avatar_url' => null,
+        'division_id' => null,
+        'team_id' => null,
+        'position_id' => null,
+        'manager_id' => null,
+        'joined_at' => null,
+        'last_login_at' => null,
     ];
 
     /**

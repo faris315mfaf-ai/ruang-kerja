@@ -42,3 +42,6 @@ google-sa*.json
 
 # macOS
 .DS_Store
+
+# Playwright: screenshot acuan lokal & sesi login
+/tests/e2e/__screenshots__
