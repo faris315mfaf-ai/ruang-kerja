@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Middleware\EnsureActiveEmployee;
+use App\Http\Middleware\EnsureTwoFactorForSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RestrictCredentialRoutes;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -22,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             // Logs out inactive/resigned users on any web request (no-op for guests).
             EnsureActiveEmployee::class,
+            // Password/2FA routes: Super Admin only (everyone else uses Google).
+            RestrictCredentialRoutes::class,
+            // Password-signed-in Super Admins must set up TOTP before anything else.
+            EnsureTwoFactorForSuperAdmin::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,

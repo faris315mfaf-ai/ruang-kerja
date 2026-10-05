@@ -1,6 +1,8 @@
 <?php
 
+use App\Domain\Auth\Enums\LoginMethod;
 use App\Domain\Organization\Enums\Role;
+use App\Models\AuditLog;
 use App\Models\User;
 use Database\Seeders\DemoUserSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -112,4 +114,32 @@ it('is only available to guests', function () {
         ->assertRedirect();
 
     $this->assertAuthenticatedAs($user);
+});
+
+it('stamps last_login_at and records the demo login method', function () {
+    $this->seed(DemoUserSeeder::class);
+    useDemoEnvironment('local', true);
+    $this->travelTo(now()->setDateTime(2026, 10, 5, 3, 15));
+
+    $this->withHeader('Sec-Fetch-Site', 'same-origin')
+        ->post(route('login.demo'), ['email' => 'anggota@demo.test'])
+        ->assertRedirect('/dashboard');
+
+    $anggota = User::query()->where('email', 'anggota@demo.test')->firstOrFail();
+    expect($anggota->last_login_at?->toIso8601String())->toBe(now()->toIso8601String())
+        ->and(session(LoginMethod::SESSION_KEY))->toBe('demo');
+});
+
+it('lets the demo Super Admin in without TOTP setup and audits the sign-in', function () {
+    $this->seed(DemoUserSeeder::class);
+    useDemoEnvironment('local', true);
+
+    $this->withHeader('Sec-Fetch-Site', 'same-origin')
+        ->post(route('login.demo'), ['email' => 'admin@demo.test'])
+        ->assertRedirect('/dashboard');
+
+    $this->withHeader('Sec-Fetch-Site', 'same-origin')->get('/dashboard')->assertOk();
+
+    $log = AuditLog::query()->where('action', 'user.logged_in')->sole();
+    expect($log->new_values)->toBe(['method' => 'demo']);
 });

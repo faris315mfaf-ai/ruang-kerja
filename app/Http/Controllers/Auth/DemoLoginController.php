@@ -12,7 +12,9 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
- * One-click login for local demo accounts. Sprint 1 replaces this with Google login.
+ * One-click login for local demo accounts (APP_ENV=local + DEMO_LOGIN_ENABLED only).
+ * Bypasses the Google / Super-Admin-TOTP rules by design; `last_login_at` is stamped
+ * by the RecordLogin listener.
  */
 class DemoLoginController extends Controller
 {

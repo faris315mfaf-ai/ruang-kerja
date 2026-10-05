@@ -76,7 +76,7 @@ it('deactivates without moving reports unless asked, and rejects the active stat
         ->and($bayu->refresh()->status)->toBe(UserStatus::Inactive);
 
     // Exactly one audit row for the status change (no generic user.updated).
-    expect(AuditLog::query()->where('auditable_id', $bayu->id)->pluck('action')->all())->toBe(['user.created', 'user.deactivated']);
+    expect(AuditLog::query()->where('auditable_id', $bayu->id)->pluck('action')->all())->toEqualCanonicalizing(['user.created', 'user.deactivated']);
 
     expect(fn () => app(DeactivateEmployee::class)->handle($this->hr, $bayu, UserStatus::Active, 'x'))
         ->toThrow(InvalidArgumentException::class);

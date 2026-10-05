@@ -100,3 +100,18 @@ it('denies managing employees of another company', function () {
         ->and($gate->allows('update', $foreign))->toBeFalse()
         ->and($gate->allows('deactivate', $foreign))->toBeFalse();
 });
+
+it('lets only a Super Admin manage their own password and 2FA', function (Role $role, bool $expected) {
+    $actor = User::factory()->withRole($role)->create();
+    $otherAdmin = User::factory()->withRole(Role::SuperAdmin)->create();
+    $gate = Gate::forUser($actor);
+
+    expect($gate->allows('manageCredentials', $actor))->toBe($expected)
+        ->and($gate->allows('manageCredentials', $otherAdmin))->toBeFalse();
+})->with([
+    'super_admin' => [Role::SuperAdmin, true],
+    'direksi' => [Role::Direksi, false],
+    'hr' => [Role::Hr, false],
+    'kepala_divisi' => [Role::KepalaDivisi, false],
+    'anggota' => [Role::Anggota, false],
+]);
