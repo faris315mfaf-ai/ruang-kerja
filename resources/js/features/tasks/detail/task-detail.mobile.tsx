@@ -61,6 +61,7 @@ export function TaskDetailMobile({ state, today }: Props) {
                     editable={can.edit}
                     onSave={(title) => void state.update({ title })}
                     className="text-2xl leading-tight"
+                    tapToEdit
                 />
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>

@@ -24,6 +24,15 @@ abstract class TaskBroadcastEvent implements ShouldBroadcast, ShouldDispatchAfte
     public function __construct(public Task $task) {}
 
     /**
+     * Dedicated queue with its own Horizon worker (config/horizon.php
+     * `supervisor-realtime`): broadcasts never wait behind mail jobs.
+     */
+    public function broadcastQueue(): string
+    {
+        return 'realtime';
+    }
+
+    /**
      * @return list<PrivateChannel>
      */
     public function broadcastOn(): array

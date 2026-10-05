@@ -177,3 +177,14 @@ it('dispatches CommentUpdated on edit and CommentDeleted on delete', function ()
     Event::assertDispatched(CommentDeleted::class, fn (CommentDeleted $e) => $e->broadcastWith()['comment']['deleted'] === true);
     expect(AuditLog::query()->where('action', 'comment.deleted')->exists())->toBeFalse();
 });
+
+it('keeps spaces around mentions and marks (no input trimming inside rich text)', function () {
+    Notification::fake();
+
+    $this->actingAs($this->member)
+        ->postJson("/tugas/{$this->task->id}/komentar", ['body' => richDoc('Halo ', ['@', $this->other], ' tolong cek ')])
+        ->assertCreated()
+        ->assertJsonPath('comment.body.content.0.content.0.text', 'Halo ')
+        ->assertJsonPath('comment.body.content.0.content.2.text', ' tolong cek ')
+        ->assertJsonPath('comment.body_text', "Halo @{$this->other->name} tolong cek");
+});

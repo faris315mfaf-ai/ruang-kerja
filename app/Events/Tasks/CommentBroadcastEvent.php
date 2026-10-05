@@ -24,6 +24,15 @@ abstract class CommentBroadcastEvent implements ShouldBroadcast, ShouldDispatchA
     public function __construct(public Comment $comment, public Task $task) {}
 
     /**
+     * Dedicated queue with its own Horizon worker (config/horizon.php
+     * `supervisor-realtime`): broadcasts never wait behind mail jobs.
+     */
+    public function broadcastQueue(): string
+    {
+        return 'realtime';
+    }
+
+    /**
      * @return list<PrivateChannel>
      */
     public function broadcastOn(): array

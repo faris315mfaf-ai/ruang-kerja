@@ -123,8 +123,14 @@ export function TaskDetailBody({ state, today, layout, onOpenTask }: Props) {
     }
 
     return (
-        <div className={cn('grid min-h-full grid-cols-[minmax(0,1fr)_320px]')}>
-            <div className="mx-auto w-full max-w-[820px] px-8 py-8">{main}</div>
+        <div
+            className={cn(
+                'grid min-h-full grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_320px]',
+            )}
+        >
+            <div className="mx-auto w-full max-w-[820px] px-6 py-8 xl:px-8">
+                {main}
+            </div>
             <aside
                 aria-label="Properti tugas"
                 className="border-l border-border px-5 py-6"

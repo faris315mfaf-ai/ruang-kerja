@@ -65,7 +65,7 @@
         ],
         "dev:win": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c green,yellow,magenta,cyan --names=vite,reverb,queue,schedule --kill-others \"npm run dev\" \"php artisan reverb:start\" \"php artisan queue:work --tries=3\" \"php artisan schedule:work\""
+            "npx concurrently -c green,yellow,magenta,cyan --names=vite,reverb,queue,schedule --kill-others \"npm run dev\" \"php artisan reverb:start\" \"php artisan queue:work --queue=realtime,default --tries=3\" \"php artisan schedule:work\""
         ],
         "lint": [
             "pint --test",

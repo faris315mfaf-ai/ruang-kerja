@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Domain\Tasks\Services\RichText;
+use App\Models\Activity;
 use App\Models\Comment;
 use App\Models\Mention;
 use App\Models\Reaction;
@@ -65,6 +66,13 @@ class TaskCollaborationSeeder extends Seeder
                 [$text('Formulir demo terhubung ke CRM, sesuai '), ['type' => 'text', 'text' => 'panduan merek 2026', 'marks' => [['type' => 'link', 'attrs' => ['href' => 'https://drive.google.com/']]]]],
             ])],
         ]];
+
+        // History before the discussion: the seeded activities happened when the task was created.
+        $start = $task->created_at !== null && $task->created_at->lt(now()->subDays(3)) ? $task->created_at : now()->subDays(3);
+
+        foreach (Activity::query()->where('subject_id', $task->id)->orderBy('id')->pluck('id') as $index => $activityId) {
+            Activity::query()->whereKey($activityId)->update(['created_at' => $start->addMinutes($index)]);
+        }
 
         $task->forceFill([
             'description' => $description,

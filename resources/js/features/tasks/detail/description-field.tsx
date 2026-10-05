@@ -120,7 +120,7 @@ export function DescriptionField({
                     type="button"
                     onClick={start}
                     aria-label="Ubah deskripsi"
-                    className="absolute -top-1 right-0 flex h-7 items-center gap-1 rounded-md border border-border bg-surface px-2 text-xs text-text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-text focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-md:opacity-100"
+                    className="absolute -top-1 right-0 flex h-7 items-center gap-1 rounded-md border border-border bg-surface px-2 text-xs text-text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-text focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-md:static max-md:mt-2 max-md:h-11 max-md:px-3 max-md:text-[15px] max-md:opacity-100"
                 >
                     <Pencil className="size-3.5" aria-hidden />
                     Ubah

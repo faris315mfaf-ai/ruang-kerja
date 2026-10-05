@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { PRIORITY_LABELS, PriorityIcon } from '@/components/priority-icon';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { StatusIcon } from '@/components/status-icon';
+import { cn } from '@/lib/utils';
 import { AvatarStack } from '../avatar-stack';
 import { DueBadge } from '../due-badge';
 import {
@@ -378,14 +379,26 @@ export function PropertiesPanel({ state, today }: Props) {
                             <button
                                 type="button"
                                 onClick={() => void state.toggleWatch()}
-                                className="inline-flex h-7 items-center gap-1.5 rounded-md border border-dashed border-border px-2 text-xs text-text-muted hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                aria-pressed={detail.watching}
+                                aria-label={
+                                    detail.watching
+                                        ? 'Berhenti amati tugas ini'
+                                        : 'Amati tugas ini'
+                                }
+                                title={
+                                    detail.watching ? 'Berhenti amati' : 'Amati'
+                                }
+                                className={cn(
+                                    'flex size-7 shrink-0 items-center justify-center rounded-full border border-dashed border-border text-text-muted hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                                    detail.watching &&
+                                        'border-solid border-primary/50 text-primary',
+                                )}
                             >
                                 {detail.watching ? (
                                     <EyeOff className="size-3.5" aria-hidden />
                                 ) : (
                                     <Eye className="size-3.5" aria-hidden />
                                 )}
-                                {detail.watching ? 'Berhenti amati' : 'Amati'}
                             </button>
                         </span>
                     </Row>

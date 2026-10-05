@@ -210,6 +210,21 @@ return [
             'timeout' => 60,
             'nice' => 0,
         ],
+
+        // Sprint 6: board/comment broadcasts (queue `realtime`) get their own worker so
+        // other members see changes in < 1 s even while mail jobs are running.
+        'supervisor-realtime' => [
+            'connection' => 'redis',
+            'queue' => ['realtime'],
+            'balance' => 'simple',
+            'maxProcesses' => 1,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 128,
+            'tries' => 1,
+            'timeout' => 30,
+            'nice' => 0,
+        ],
     ],
 
     'environments' => [
@@ -218,6 +233,9 @@ return [
                 'maxProcesses' => 10,
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
+            ],
+            'supervisor-realtime' => [
+                'maxProcesses' => 2,
             ],
         ],
 
