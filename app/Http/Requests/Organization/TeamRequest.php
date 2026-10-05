@@ -2,9 +2,12 @@
 
 namespace App\Http\Requests\Organization;
 
+use App\Domain\Organization\Actions\SaveTeam;
 use App\Models\Team;
+use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class TeamRequest extends OrganizationRequest
 {
@@ -40,6 +43,7 @@ class TeamRequest extends OrganizationRequest
             'division_id' => [
                 'required', 'string',
                 Rule::exists('divisions', 'id')->where('company_id', $this->actor()->company_id)->whereNull('deleted_at'),
+                $this->movableTeam($team instanceof Team ? $team : null),
             ],
             'name' => ['required', 'string', 'max:120'],
             'code' => [
@@ -69,6 +73,24 @@ class TeamRequest extends OrganizationRequest
             'code.unique' => 'Kode :input sudah dipakai tim lain di divisi ini.',
             'lead_user_id.exists' => 'Ketua tim harus karyawan aktif di perusahaan ini.',
         ];
+    }
+
+    /**
+     * A team with active members keeps its division (SaveTeam re-checks under lock).
+     */
+    private function movableTeam(?Team $team): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail) use ($team): void {
+            if ($team === null || ! is_string($value)) {
+                return;
+            }
+
+            try {
+                SaveTeam::ensureMovable($team, $value);
+            } catch (ValidationException $exception) {
+                $fail($exception->validator->errors()->first('division_id'));
+            }
+        };
     }
 
     /**

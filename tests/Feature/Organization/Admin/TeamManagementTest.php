@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Organization\Actions\SaveTeam;
 use App\Domain\Organization\Enums\Role;
 use App\Models\AuditLog;
 use App\Models\Company;
@@ -7,6 +8,7 @@ use App\Models\Division;
 use App\Models\Team;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -145,4 +147,44 @@ it('keeps an already-inactive lead on unrelated edits but rejects switching to a
     $this->actingAs($hr)
         ->put("/admin/organisasi/tim/{$team->id}", ['division_id' => $division->id, 'name' => 'Tim Logistik', 'lead_user_id' => User::factory()->forCompany($hr->company)->inactive()->create()->id])
         ->assertSessionHasErrors(['lead_user_id' => 'Ketua tim harus karyawan aktif di perusahaan ini.']);
+});
+
+it('refuses to move a team with active members to another division', function () {
+    $hr = User::factory()->withRole(Role::Hr)->create();
+    $ops = Division::factory()->forCompany($hr->company)->create();
+    $keu = Division::factory()->forCompany($hr->company)->create();
+    $team = Team::factory()->for($ops)->create(['name' => 'Tim Gudang']);
+    $member = User::factory()->inDivision($ops, $team)->create();
+
+    $this->actingAs($hr)
+        ->put("/admin/organisasi/tim/{$team->id}", ['division_id' => $keu->id, 'name' => 'Tim Gudang'])
+        ->assertSessionHasErrors(['division_id' => 'Tim Gudang masih memiliki 1 anggota aktif. Pindahkan anggota ke tim lain terlebih dahulu sebelum mengganti divisi tim.']);
+
+    expect($team->refresh()->division_id)->toBe($ops->id);
+
+    // Renaming within the same division is still fine.
+    $this->actingAs($hr)
+        ->put("/admin/organisasi/tim/{$team->id}", ['division_id' => $ops->id, 'name' => 'Tim Gudang Utama'])
+        ->assertSessionHasNoErrors();
+
+    // Without active members the team may move.
+    $member->forceFill(['status' => 'inactive'])->saveQuietly();
+
+    $this->actingAs($hr)
+        ->put("/admin/organisasi/tim/{$team->id}", ['division_id' => $keu->id, 'name' => 'Tim Gudang Utama'])
+        ->assertSessionHasNoErrors();
+
+    expect($team->refresh()->division_id)->toBe($keu->id);
+});
+
+it('refuses the division change inside SaveTeam too (defense in depth)', function () {
+    $ops = Division::factory()->create();
+    $keu = Division::factory()->forCompany($ops->company)->create();
+    $team = Team::factory()->for($ops)->create();
+    User::factory()->inDivision($ops, $team)->create();
+
+    expect(fn () => app(SaveTeam::class)->handle(['division_id' => $keu->id, 'name' => $team->name, 'code' => null, 'lead_user_id' => null], $team))
+        ->toThrow(ValidationException::class);
+
+    expect($team->refresh()->division_id)->toBe($ops->id);
 });
