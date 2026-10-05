@@ -32,6 +32,7 @@ final class UpdateTask
         private readonly TaskRichText $richText,
         private readonly SyncMentions $syncMentions,
         private readonly ResolveNotificationsForSubject $resolveNotifications,
+        private readonly ResolveOverdueNotices $overdueNotices,
     ) {}
 
     /**
@@ -164,6 +165,8 @@ final class UpdateTask
 
                 if ($removed !== []) {
                     $this->recordActivity->handle($workspace, $task, $actor, ActivityEvent::TaskUnassigned, [...$base, 'user_ids' => $removed]);
+                    // No longer their task: their overdue reminder is settled.
+                    $this->overdueNotices->handle($task, $removed);
                 }
             }
 
