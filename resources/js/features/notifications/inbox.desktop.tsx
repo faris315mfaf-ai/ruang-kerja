@@ -207,7 +207,10 @@ export function InboxDesktop({ inbox, kinds, retentionDays }: Props) {
                     </div>
                 </section>
 
-                <div className="min-w-0 md:sticky md:top-6 md:max-h-[calc(100svh-48px)] md:overflow-y-auto lg:top-[calc(var(--menu-bar-height)+24px)] lg:max-h-[calc(100svh-var(--menu-bar-height)-var(--dock-space)-24px)]">
+                {/* Sticky; scrolls on its own when taller than the viewport. The
+                    padding (cancelled by the negative margin) keeps the
+                    panel shadow from being clipped by the scroll box. */}
+                <div className="min-w-0 md:sticky md:top-2 md:-m-4 md:max-h-[calc(100svh-16px)] md:overflow-y-auto md:p-4 lg:top-[calc(var(--menu-bar-height)+8px)] lg:max-h-[calc(100svh-var(--menu-bar-height)-var(--dock-space)+24px)]">
                     <InboxDetail notification={selected} inbox={inbox} />
                 </div>
             </div>

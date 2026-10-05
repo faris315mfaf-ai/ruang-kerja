@@ -50,7 +50,7 @@ function ResultRow({
             ) : (
                 <span
                     aria-hidden
-                    className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-link-soft text-link"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-link-soft text-link group-data-[selected=true]/item:bg-surface"
                 >
                     <Icon className="size-[18px]" strokeWidth={2} />
                 </span>
