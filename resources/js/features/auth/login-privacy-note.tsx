@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { cn } from '@/lib/utils';
-import { index as privacy } from '@/routes/privacy';
+import { policy as privacy } from '@/routes/privacy';
 
 export function LoginPrivacyNote({ className }: { className?: string }) {
     return (

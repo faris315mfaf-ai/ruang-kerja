@@ -11,9 +11,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Shell entries whose modules arrive in later sprints. Each sprint replaces
     // its entry with real routes.
-    $upcoming = [
-        'privasi' => ['privacy.index', 'Privasi & data saya'],
-    ];
+    // (Privasi & data saya arrived in Sprint 10: routes/privacy.php.)
+    $upcoming = [];
 
     foreach ($upcoming as $uri => [$name, $title]) {
         Route::inertia($uri, 'placeholder', ['title' => $title])->name($name);
@@ -38,3 +37,4 @@ require __DIR__.'/workspaces.php';
 require __DIR__.'/drive.php';
 require __DIR__.'/dashboard.php';
 require __DIR__.'/projects.php';
+require __DIR__.'/privacy.php';

@@ -20,6 +20,9 @@ void createInertiaApp({
             // Full-screen split layout of its own (mockups Login / MLogin).
             case name === 'auth/login':
                 return [];
+            // Public privacy policy: picks the app shell itself when signed in (Sprint 10).
+            case name === 'privacy/policy':
+                return [];
             // Lobby kiosk: full screen, no navigation (Sprint 3).
             case name.startsWith('kiosk/'):
                 return [];
