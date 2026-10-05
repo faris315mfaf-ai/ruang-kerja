@@ -14,7 +14,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 /**
- * Creates an empty Google Docs/Sheets/Slides file in the owner's folder and
+ * Creates an empty Google Docs/Sheets/Slides file in the owner's folder (or
+ * `$folderId`, a sub-folder of it the caller authorized) and
  * caches it in drive_files. Runs synchronously (the user waits to open the
  * new document) with the 10-second sync timeout allowed by AGENTS.md; the
  * folder is created on first use (e.g. personal workspaces).
@@ -32,7 +33,7 @@ final class DocCreator
      *
      * @throws DriveRequestFailed|GoogleNotConfigured|LockTimeoutException
      */
-    public function create(Model&HasDriveFolder $owner, GoogleDocType $type, string $name, User $user): DriveFile
+    public function create(Model&HasDriveFolder $owner, GoogleDocType $type, string $name, User $user, ?string $folderId = null): DriveFile
     {
         $timeout = $this->google->syncTimeout();
         $folder = $this->folders->ensure($owner, $timeout);
@@ -42,11 +43,12 @@ final class DocCreator
         }
 
         $title = Str::limit(trim($name), 250, '');
+        $parentId = $folderId ?? $folder->folderId;
 
         $item = $this->google
             ->serviceAccount($timeout)
-            ->createFile($title === '' ? $type->defaultName() : $title, $type->mimeType(), $folder->folderId);
+            ->createFile($title === '' ? $type->defaultName() : $title, $type->mimeType(), $parentId);
 
-        return $this->recorder->record($item, $owner->driveWorkspaceId(), $user, $folder->folderId);
+        return $this->recorder->record($item, $owner->driveWorkspaceId(), $user, $parentId);
     }
 }

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Domain\Google\Enums\DriveFileKind;
 use App\Models\DriveFile;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -20,7 +21,7 @@ class DriveFileFactory extends Factory
         $id = Str::random(33);
 
         return [
-            'workspace_id' => (string) Str::ulid(),
+            'workspace_id' => Workspace::factory(),
             'google_file_id' => $id,
             'parent_google_id' => 'folder-'.Str::random(20),
             'name' => fake()->sentence(3),

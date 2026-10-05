@@ -14,10 +14,13 @@ use Illuminate\Support\Facades\DB;
  */
 final class WorkspacePage
 {
-    public function __construct(private readonly WorkspacePolicy $policy) {}
+    public function __construct(
+        private readonly WorkspacePolicy $policy,
+        private readonly WorkspaceDriveListing $drive,
+    ) {}
 
     /**
-     * @return array{workspace: array<string, mixed>, can: array<string, bool>, members: list<array{id: string, name: string, avatar: string|null, role: string}>}
+     * @return array{workspace: array<string, mixed>, can: array<string, bool>, members: list<array{id: string, name: string, avatar: string|null, role: string}>, drive_counts: array{documents: int, files: int}}
      */
     public function props(Workspace $workspace, User $user): array
     {
@@ -33,6 +36,8 @@ final class WorkspacePage
             'workspace' => (new WorkspaceResource($workspace))->resolve(),
             'can' => $this->abilities($workspace, $user),
             'members' => $this->members($workspace),
+            // Tab badges "Dokumen 6 · File 24" (Sprint 7).
+            'drive_counts' => $this->drive->counts($workspace),
         ];
     }
 

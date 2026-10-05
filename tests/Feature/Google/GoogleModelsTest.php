@@ -10,6 +10,7 @@ use App\Domain\Google\Enums\GoogleDocType;
 use App\Models\Attachment;
 use App\Models\DriveFile;
 use App\Models\GoogleAccount;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\DB;
 
 it('stores Google tokens encrypted and never serializes them', function () {
@@ -126,7 +127,7 @@ it('builds iframe preview urls per kind', function () {
 });
 
 it('filters cached files by folder and document kinds', function () {
-    $workspace = (string) str()->ulid();
+    $workspace = Workspace::factory()->create()->id;
     DriveFile::factory()->create(['workspace_id' => $workspace, 'parent_google_id' => 'folder-a']);
     DriveFile::factory()->pdf()->create(['workspace_id' => $workspace, 'parent_google_id' => 'folder-a']);
     DriveFile::factory()->create(['workspace_id' => $workspace, 'parent_google_id' => 'folder-b']);

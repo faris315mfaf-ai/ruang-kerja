@@ -1,3 +1,4 @@
+import type { DriveAccessMember } from '@/features/drive/types';
 import type {
     Label,
     TaskStatus,
@@ -34,6 +35,8 @@ export type WorkspacePageProps = {
     workspace: WorkspaceDetail;
     can: WorkspaceAbilities;
     members: WorkspaceMember[];
+    /** Tab badges "Dokumen 6 · File 24" (Sprint 7). */
+    drive_counts?: { documents: number; files: number };
 };
 
 export type WorkspaceTab =
@@ -45,6 +48,8 @@ export type WorkspaceTab =
 
 export type MemberDetail = WorkspaceMember & {
     is_synced: boolean;
+    /** "Akses Drive" (Sprint 7); null when the row could not be resolved. */
+    drive: DriveAccessMember | null;
     division: string | null;
     position: string | null;
     joined_at: string | null;

@@ -13,24 +13,11 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Tabs "Dokumen" and "File" (Google Drive, Sprint 7) and "Aktivitas".
+ * Tab "Aktivitas". ("Dokumen" and "File" live in WorkspaceDocumentController
+ * and WorkspaceFileController, Sprint 7.)
  */
 class WorkspaceTabController extends Controller
 {
-    public function documents(Workspace $workspace, #[CurrentUser] User $user, WorkspacePage $page): Response
-    {
-        Gate::authorize('view', $workspace);
-
-        return Inertia::render('workspaces/documents', $page->props($workspace, $user));
-    }
-
-    public function files(Workspace $workspace, #[CurrentUser] User $user, WorkspacePage $page): Response
-    {
-        Gate::authorize('view', $workspace);
-
-        return Inertia::render('workspaces/files', $page->props($workspace, $user));
-    }
-
     public function activity(Workspace $workspace, #[CurrentUser] User $user, WorkspacePage $page): Response
     {
         Gate::authorize('view', $workspace);

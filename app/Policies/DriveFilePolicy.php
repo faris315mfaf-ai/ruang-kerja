@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Domain\Google\Contracts\WorkspaceDriveAccess;
 use App\Models\DriveFile;
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 /**
  * Drive metadata follows workspace access (WorkspaceDriveAccess, bound by
@@ -25,15 +26,17 @@ class DriveFilePolicy
 
     public function view(User $user, DriveFile $file): bool
     {
-        return $this->access->canView($user, $file->workspace_id);
+        return $file->workspace_id !== null && $this->access->canView($user, $file->workspace_id);
     }
 
     /**
      * Upload, create documents/folders: Gate::authorize('create', [DriveFile::class, $workspaceId]).
      */
-    public function create(User $user, string $workspaceId): bool
+    public function create(User $user, string $workspaceId): Response
     {
-        return $this->access->canContribute($user, $workspaceId);
+        return $this->access->canContribute($user, $workspaceId)
+            ? Response::allow()
+            : Response::deny('Anda tidak punya akses untuk menambah file di workspace ini.');
     }
 
     /**
@@ -42,6 +45,10 @@ class DriveFilePolicy
      */
     public function delete(User $user, DriveFile $file): bool
     {
+        if ($file->workspace_id === null) {
+            return false;
+        }
+
         if ($this->access->canManage($user, $file->workspace_id)) {
             return true;
         }

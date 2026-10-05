@@ -36,6 +36,9 @@ return [
     // Shared Drive "RuangKerja" that holds every workspace folder.
     'shared_drive_id' => env('GOOGLE_SHARED_DRIVE_ID'),
 
+    // Display name of that Shared Drive in the File tab breadcrumb.
+    'shared_drive_name' => env('GOOGLE_SHARED_DRIVE_NAME', 'RuangKerja'),
+
     /*
     | Per-user OAuth (incremental auth) used by Google Picker. The redirect
     | differs from the login callback (/auth/google/callback); register both

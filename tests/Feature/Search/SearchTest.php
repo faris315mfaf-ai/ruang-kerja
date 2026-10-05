@@ -192,6 +192,7 @@ it('renders the mobile search screen', function () {
                 ['key' => 'tasks', 'label' => 'Tugas'],
                 ['key' => 'people', 'label' => 'Orang'],
                 ['key' => 'workspaces', 'label' => 'Workspace'],
+                ['key' => 'documents', 'label' => 'Dokumen'],
             ]));
 });
 

@@ -27,6 +27,8 @@ Schedule::job(new SendCheckInReminders)->everyFiveMinutes()->withoutOverlapping(
 // Sprint 8 — notifications (office timezone, see config/notifications.php).
 Schedule::command('notifications:send-daily-digests')->everyFiveMinutes()->withoutOverlapping();
 Schedule::command('notifications:prune')->dailyAt('02:15')->timezone((string) config('app.office_timezone'));
+// Sprint 7 — abandoned chunked uploads to Google Drive.
+Schedule::command('ruangkerja:drive-uploads:prune')->dailyAt('03:10')->timezone((string) config('app.office_timezone'))->onOneServer();
 
 // Sprint 1 — uploaded employee import files contain NIK: never keep them past their session.
 Schedule::command('employee-imports:prune')->hourly()->withoutOverlapping();
