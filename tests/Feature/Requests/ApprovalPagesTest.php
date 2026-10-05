@@ -4,11 +4,14 @@ use App\Domain\Organization\Enums\Permission;
 use App\Domain\Organization\Enums\Role;
 use App\Domain\Requests\Enums\ApproverType;
 use App\Domain\Requests\Enums\RequestStatus;
+use App\Domain\Requests\Services\ColleagueAbsences;
 use App\Models\ApprovalDelegation;
 use App\Models\EmployeeRequest;
+use App\Models\Team;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\Support\RequestScenario;
@@ -144,4 +147,44 @@ it('bulk-approves role steps for approvers without requests.view_all (review #8)
         ->assertRedirect('/persetujuan');
 
     expect($request->refresh()->status)->toBe(RequestStatus::Approved);
+});
+
+it('builds the approval queue with a fixed number of queries (review #9)', function () {
+    $s = $this->s;
+    $teams = [Team::factory()->create(['division_id' => $s->division->id]), null];
+
+    $queries = function (int $count) use ($s, $teams): int {
+        foreach (range(1, $count) as $i) {
+            $employee = User::factory()->inDivision($s->division, $teams[$i % 2])->managedBy($s->manager)->create();
+            $s->submit($employee, $s->annual, ['start_date' => '2026-10-12', 'end_date' => '2026-10-13']);
+        }
+
+        $this->actingAs($s->manager)->get('/persetujuan')->assertOk(); // warms the permission cache
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $this->actingAs($s->manager)->get('/persetujuan')->assertOk();
+        DB::disableQueryLog();
+
+        return count(DB::getQueryLog());
+    };
+
+    $few = $queries(2);
+    $many = $queries(6); // 8 waiting cards now
+
+    expect($many)->toBe($few);
+});
+
+it('shows the same colleague warning on queue cards as on the detail (review #9)', function () {
+    $s = $this->s;
+    $nadia = User::factory()->inDivision($s->division)->managedBy($s->manager)->create(['name' => 'Nadia Putri']);
+    $s->submit($nadia, $s->annual, ['start_date' => '2026-10-13', 'end_date' => '2026-10-13']);
+    $request = $s->submit($s->employee, $s->annual, ['start_date' => '2026-10-12', 'end_date' => '2026-10-14']);
+
+    $expected = app(ColleagueAbsences::class)->around($s->employee, $request->start_at, $request->end_at, $request->id);
+
+    $this->actingAs($s->manager)->get('/persetujuan')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('items', fn ($items) => collect($items)->firstWhere('id', $request->id)['colleagues'] === $expected));
+
+    expect($expected['people'])->toHaveCount(1)->and($expected['people'][0]['dates'])->toBe(['2026-10-13']);
 });
