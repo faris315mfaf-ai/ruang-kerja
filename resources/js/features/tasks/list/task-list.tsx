@@ -185,7 +185,12 @@ function TaskRow({
                     </span>
                 </span>
             </span>
-            <span role="cell" className="shrink-0 text-right">
+            {/* Phones: "Selesai 25 Sep · telat 2 hari" wraps instead of
+                squeezing the title to a few letters. */}
+            <span
+                role="cell"
+                className="max-w-[8.5rem] shrink-0 text-right md:max-w-none"
+            >
                 {closed && row.completed_at ? (
                     <CompletionText
                         completedAt={row.completed_at}

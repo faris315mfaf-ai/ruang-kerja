@@ -670,10 +670,17 @@
         vertical-align: top;
     }
 
+    /* The table scrolls sideways, so cells break only between words
+       (emails, "Sprint" headers stay whole). */
+    .doc-prose :is(th, td) {
+        overflow-wrap: break-word;
+    }
+
     .doc-prose th {
         background: var(--surface-2);
         font-weight: 600;
         color: var(--text);
+        white-space: nowrap;
     }
 
     /* Phones: keep table columns readable and scroll the table instead. */
