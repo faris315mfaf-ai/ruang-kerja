@@ -143,7 +143,7 @@ export function CheckSuccess({ result, onDone }: Props) {
                     {result.shift && (
                         <Row label="Shift">
                             {result.shift.name}{' '}
-                            <span className="font-mono text-sm">
+                            <span className="font-mono text-sm whitespace-nowrap">
                                 {result.shift.hours}
                             </span>
                         </Row>

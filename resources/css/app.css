@@ -86,8 +86,13 @@
     --ease-brand: var(--ease);
 }
 
-/* Variabel shadcn/ui dipetakan ke token, terang & gelap ikut otomatis. */
-:root {
+/*
+ * Variabel shadcn/ui dipetakan ke token, terang & gelap ikut otomatis.
+ * Diulang pada .dark agar subtree bertema gelap (mis. layar kamera check-in)
+ * menghitung ulang nilainya.
+ */
+:root,
+.dark {
     --background: var(--bg);
     --foreground: var(--text);
     --card: var(--surface);

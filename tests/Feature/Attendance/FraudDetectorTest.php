@@ -84,3 +84,9 @@ test('the selfie inspector measures luminance and contrast', function () {
         ->and($deviation)->toBeGreaterThan(6)
         ->and($inspector->isDarkOrBlank(F::selfie()))->toBeFalse();
 });
+
+test('history without device or network data never makes a device "new"', function () {
+    previousLog($this->user, ['device_fingerprint' => null, 'ip_address' => null]);
+
+    expect($this->detector->detect($this->user, F::data(['device' => 'device-9', 'ip' => '10.9.9.9']), now()))->toBe([]);
+});

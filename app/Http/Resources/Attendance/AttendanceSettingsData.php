@@ -30,6 +30,7 @@ final class AttendanceSettingsData
         return OfficeLocation::query()
             ->visibleTo($viewer)
             ->orderByDesc('is_active')
+            ->orderBy('created_at')
             ->orderBy('name')
             ->get()
             ->map(fn (OfficeLocation $location): array => [

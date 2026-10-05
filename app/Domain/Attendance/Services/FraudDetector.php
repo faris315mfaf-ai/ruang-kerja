@@ -44,11 +44,15 @@ final class FraudDetector
             ->get(['id', 'occurred_at', 'latitude', 'longitude', 'ip_address', 'device_fingerprint']);
 
         if ($history->isNotEmpty()) {
-            if ($data->deviceFingerprint !== null && ! $history->contains('device_fingerprint', $data->deviceFingerprint)) {
+            // Only compare against history that recorded the value at all.
+            $devices = $history->pluck('device_fingerprint')->filter();
+            $ips = $history->pluck('ip_address')->filter();
+
+            if ($data->deviceFingerprint !== null && $devices->isNotEmpty() && ! $devices->contains($data->deviceFingerprint)) {
                 $flags[] = LogFlag::NewDevice;
             }
 
-            if ($data->ipAddress !== null && ! $history->contains('ip_address', $data->ipAddress)) {
+            if ($data->ipAddress !== null && $ips->isNotEmpty() && ! $ips->contains($data->ipAddress)) {
                 $flags[] = LogFlag::NewIp;
             }
 

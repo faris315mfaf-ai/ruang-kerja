@@ -67,7 +67,7 @@ class AttendanceSeeder extends Seeder
 
         DB::transaction(function () use ($company, $schedules, $geofence): void {
             [$office, $warehouse] = $this->locations($company);
-            $shifts = $this->shifts($company, $warehouse);
+            $shifts = $this->shifts($company, $office, $warehouse);
             $this->holidays($company);
 
             $employees = User::query()
@@ -113,10 +113,10 @@ class AttendanceSeeder extends Seeder
     /**
      * @return array<string, Shift>
      */
-    private function shifts(Company $company, OfficeLocation $warehouse): array
+    private function shifts(Company $company, OfficeLocation $office, OfficeLocation $warehouse): array
     {
         $definitions = [
-            'Reguler' => ['08:00', '17:00', 60, false, null],
+            'Reguler' => ['08:00', '17:00', 60, false, $office->id],
             'Gudang Pagi' => ['06:00', '14:00', 30, false, $warehouse->id],
             'Gudang Malam' => ['22:00', '06:00', 30, true, $warehouse->id],
         ];
@@ -298,9 +298,10 @@ class AttendanceSeeder extends Seeder
             'accuracy_m' => $flags === [] ? 8 + $roll % 20 : 140,
             'office_location_id' => $remote ? null : $location->id,
             'distance_m' => round($distance, 2),
-            'ip_address' => '10.20.0.'.(10 + $roll % 200),
-            'user_agent' => 'Seeder',
-            'device_fingerprint' => 'demo-'.substr($day->user_id, -8),
+            // No network/device data: the first real check-in is not "perangkat baru".
+            'ip_address' => null,
+            'user_agent' => 'Data demo',
+            'device_fingerprint' => null,
             'flags' => $flags,
             'is_suspicious' => $flags !== [],
             'note' => $remote ? 'Bekerja dari rumah' : null,
