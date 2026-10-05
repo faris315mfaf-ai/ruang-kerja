@@ -143,3 +143,28 @@ test("yesterday's missing check-outs are listed", function () {
             ->where('missingCheckOut.0.name', 'Sari Wulandari')
             ->where('missingCheckOut.0.workDate', '2026-10-04'));
 });
+
+test('night-shift workers still inside their check-out window are not listed as missing a check-out', function () {
+    // Sun 4 Oct 22.00 → Mon 5 Oct 06.00; with the 6 h grace the check-out stays open until 12.00.
+    $night = F::employee(shift: Shift::factory()->night()->create(['office_location_id' => $this->office->id]));
+    $night->update(['name' => 'Rudi Malam', 'division_id' => $this->ops->id]);
+    AttendanceDay::factory()->for($night)->on('2026-10-04')->status(S::Present)->create([
+        'check_in_at' => F::at('2026-10-04 21:55')->utc(),
+        'scheduled_start' => F::at('2026-10-04 22:00')->utc(),
+        'scheduled_end' => F::at('2026-10-05 06:00')->utc(),
+    ]);
+    // Day shift of yesterday, ended 17.00 + grace: listed.
+    AttendanceDay::factory()->for($this->sari)->on('2026-10-04')->status(S::Present)->create([
+        'check_in_at' => F::at('2026-10-04 07:57')->utc(),
+        'scheduled_start' => F::at('2026-10-04 08:00')->utc(),
+        'scheduled_end' => F::at('2026-10-04 17:00')->utc(),
+    ]);
+
+    $names = fn () => collect($this->actingAs($this->hr)->get(route('attendance.board'))->viewData('page')['props']['missingCheckOut'])->pluck('name')->all();
+
+    expect($names())->toBe(['Sari Wulandari']);
+
+    // After 12.00 the night shift can no longer check out: now it is missing.
+    $this->travelTo(F::at('2026-10-05 12:00'));
+    expect($names())->toBe(['Sari Wulandari', 'Rudi Malam']);
+});
