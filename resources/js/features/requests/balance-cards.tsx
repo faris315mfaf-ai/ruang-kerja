@@ -61,6 +61,12 @@ export function BalanceCardView({
                         Jatah {formatDays(balance.entitled)}
                         {balance.carried_over > 0
                             ? ` + bawaan ${formatDays(balance.carried_over)}`
+                            : ''}
+                        {balance.opening > 0
+                            ? ` + saldo awal ${formatDays(balance.opening)}`
+                            : ''}
+                        {balance.adjustments !== 0
+                            ? ` ${balance.adjustments > 0 ? '+' : '−'} penyesuaian ${formatDays(Math.abs(balance.adjustments))}`
                             : ''}{' '}
                         · terpakai {formatDays(balance.used)}
                     </p>

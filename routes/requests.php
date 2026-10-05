@@ -53,6 +53,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('saldo-cuti', [LeaveBalanceController::class, 'index'])->name('leave-balances.index');
         Route::post('saldo-cuti/buat', [LeaveBalanceController::class, 'generate'])->name('leave-balances.generate');
+        Route::get('saldo-cuti/impor/templat/{format}', [LeaveBalanceController::class, 'template'])
+            ->whereIn('format', ['csv', 'xlsx'])
+            ->name('leave-balances.import.template');
+        Route::post('saldo-cuti/impor', [LeaveBalanceController::class, 'import'])->middleware('throttle:20,1')->name('leave-balances.import');
         Route::put('saldo-cuti/{leaveBalance}', [LeaveBalanceController::class, 'update'])->name('leave-balances.update');
+        Route::post('saldo-cuti/{leaveBalance}/penyesuaian', [LeaveBalanceController::class, 'adjust'])->name('leave-balances.adjust');
     });
 });

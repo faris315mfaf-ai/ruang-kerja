@@ -43,7 +43,10 @@ class UserFactory extends Factory
             'two_factor_confirmed_at' => null,
             'work_mode' => WorkMode::Office,
             'status' => UserStatus::Active,
-            'joined_at' => fake()->dateTimeBetween('-5 years', '-1 month')->format('Y-m-d'),
+            // Fixed past range (not relative to the real clock): tests that travel in
+            // time never meet an employee who joined "later" or mid-year by chance
+            // (leave proration, close-day before joining).
+            'joined_at' => fake()->dateTimeBetween('2019-01-01', '2025-06-30')->format('Y-m-d'),
         ];
     }
 

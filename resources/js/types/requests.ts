@@ -60,6 +60,10 @@ export type BalanceSummary = {
     year: number;
     entitled: number;
     carried_over: number;
+    /** "Saldo awal" set by HR / import. */
+    opening: number;
+    /** Σ HR adjustments (may be negative). */
+    adjustments: number;
     used: number;
     pending: number;
     total: number;
