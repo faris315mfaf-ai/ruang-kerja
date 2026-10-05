@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { LayoutGrid } from 'lucide-react';
 import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
+import { TodayAttendanceCard } from '@/features/attendance/today-card';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { formatDate } from '@/lib/format';
 import { dashboard } from '@/routes';
@@ -32,6 +33,7 @@ export default function Dashboard() {
             <Head title="Dashboard" />
             {breakpoint === 'mobile' ? (
                 <div className="space-y-4">
+                    <TodayAttendanceCard />
                     <DashboardEmptyState />
                 </div>
             ) : (
@@ -44,6 +46,7 @@ export default function Dashboard() {
                             {formatDate(new Date())}
                         </p>
                     </header>
+                    <TodayAttendanceCard className="max-w-md" />
                     <DashboardEmptyState />
                 </div>
             )}

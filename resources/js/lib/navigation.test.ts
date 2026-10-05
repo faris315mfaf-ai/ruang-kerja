@@ -12,13 +12,18 @@ describe('navigation', () => {
     });
 
     it('gives HR the organization admin but not the audit log', () => {
-        expect(titles(['hr'])).toEqual(['Karyawan', 'Organisasi']);
+        expect(titles(['hr'])).toEqual([
+            'Karyawan',
+            'Organisasi',
+            'Lokasi & shift',
+        ]);
     });
 
     it('gives Super Admin the organization admin and the audit log', () => {
         expect(titles(['super_admin'])).toEqual([
             'Karyawan',
             'Organisasi',
+            'Lokasi & shift',
             'Audit log',
         ]);
     });
@@ -34,6 +39,6 @@ describe('navigation', () => {
 
         expect(
             items.filter((item) => item.desktopOnly).map((item) => item.href),
-        ).toEqual(['/admin/organisasi', '/admin/audit']);
+        ).toEqual(['/admin/organisasi', '/admin/absensi', '/admin/audit']);
     });
 });
