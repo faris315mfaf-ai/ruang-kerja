@@ -21,7 +21,7 @@
 | Organisasi & akses | `companies`, `divisions`, `teams`, `positions`, `users`, `employee_profiles`, `roles`*, `permissions`*, `model_has_roles`*, `audit_logs` |
 | Absensi | `office_locations`, `shifts`, `shift_assignments`, `holidays`, `attendance_days`, `attendance_logs`, `qr_tokens`, `attendance_consents` |
 | Pengajuan | `leave_types`, `leave_balances`, `requests`, `request_sequences`, `request_approvals`, `approval_flows`, `approval_flow_steps`, `approval_delegations` |
-| Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
+| Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_directions`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
 | Google & file | `google_accounts`, `drive_files`, `attachments` |
 | Notifikasi | `notifications`*, `notification_preferences`, `notification_settings` |
 | Fase 2 | `channels`, `channel_members`, `messages`, `notes`, `note_versions`, `calendar_events` |
@@ -289,7 +289,7 @@ Lampiran pengajuan (surat dokter, dll.) memakai tabel `attachments` (morph ke `r
 | icon / color | varchar null | |
 | visibility | varchar | `private` · `internal` |
 | owner_id | FK users | |
-| division_id / team_id | FK null | untuk tipe division/team (sinkron anggota) |
+| division_id / team_id | FK null | untuk tipe division/team (sinkron anggota). Tipe `project`: `division_id` = **divisi utama** (Sprint 9; sinkron divisi hanya membaca `type = division`) |
 | drive_folder_id | varchar null | ID folder di Shared Drive |
 | task_sequence | int | penghitung nomor task berikutnya (dikunci `SELECT … FOR UPDATE`) |
 | archived_at | timestamptz null | |
@@ -301,19 +301,24 @@ Lampiran pengajuan (surat dokter, dll.) memakai tabel `attachments` (morph ke `r
 | project_status | varchar null | `planned` · `active` · `on_hold` · `completed` · `canceled` |
 | health | varchar null | denormalisasi dari update terakhir: `on_track` · `at_risk` · `off_track` |
 | last_update_at | timestamptz null | denormalisasi, untuk penanda "update kedaluwarsa" |
-| completed_at | timestamptz null | |
+| completed_at | timestamptz null | diisi saat `project_status` menjadi `completed`, dikosongkan bila berubah lagi |
+
+Sprint 9: CHECK `project_status IN (planned, active, on_hold, completed, canceled)` dan `health IN (on_track, at_risk, off_track)` (keduanya boleh null), indeks parsial `(company_id, project_status) WHERE type = 'project'`. `project_status` null diperlakukan sebagai `active`.
 
 ### milestones
-`id`, `workspace_id` FK, `name`, `description` null, `target_date` date, `completed_at` timestamptz null, `position` varchar, `created_by`. Status diturunkan: selesai / selesai terlambat (`completed_at::date > target_date`) / terlewat (target < hari ini dan belum selesai) / berjalan / belum mulai. Pivot `milestone_tasks` (`milestone_id`, `task_id`).
+`id`, `workspace_id` FK (cascade), `name` varchar(160), `description` null, `target_date` date, `completed_at` timestamptz null, `position` varchar(100) `COLLATE "C"` (lexorank), `created_by` FK null, timestamps (tanpa soft delete; penghapusan tercatat di `activities`). Indeks `(workspace_id, target_date)`. Status diturunkan (`MilestoneStatusResolver`; "berjalan" = ada tugas terkait di kategori in_progress/review/done): selesai / selesai terlambat (`completed_at::date > target_date`) / terlewat (target < hari ini dan belum selesai) / berjalan / belum mulai. Pivot `milestone_tasks` (`milestone_id`, `task_id`).
 
 ### project_updates
-`id`, `workspace_id` FK, `author_id` FK users, `health` (`on_track` · `at_risk` · `off_track`), `summary` text, `blockers` text null, `decision_needed` text null, `decision_resolved_at` timestamptz null, `decision_resolved_by` FK null, `progress_snapshot` numeric(5,2) (progres aktual saat update ditulis), `planned_snapshot` numeric(5,2), `created_at`. Komentar/arahan Direksi memakai `comments` (morph ke `project_updates`). Setelah insert: perbarui `workspaces.health` dan `last_update_at`.
+`id`, `workspace_id` FK (cascade), `author_id` FK users null (nullOnDelete), `health` (`on_track` · `at_risk` · `off_track`), `summary` text, `blockers` text null, `decision_needed` text null, `decision_resolved_at` timestamptz null, `decision_resolved_by` FK null, `progress_snapshot` numeric(5,2) (progres aktual saat update ditulis), `planned_snapshot` numeric(5,2), `created_at`, `updated_at`. CHECK health. Indeks `(workspace_id, created_at)` + parsial "keputusan terbuka" `(workspace_id) WHERE decision_needed IS NOT NULL AND decision_resolved_at IS NULL`. Update tidak pernah diedit (riwayat). Setelah insert: perbarui `workspaces.health` dan `last_update_at` (`PostProjectUpdate`). Arahan Direksi memakai tabel `project_directions` (bukan `comments`, lihat di bawah).
+
+### project_directions (tambahan Sprint 9)
+`id`, `workspace_id` FK (cascade), `project_update_id` FK null (nullOnDelete; arahan umum bila null), `author_id` FK users null, `body` text, timestamps. Indeks `(workspace_id, created_at)`. Alasan: tabel `comments` milik Sprint 6 belum ada; arahan cukup teks polos dan perlu notifikasi ke PIC. Bila nanti `comments` dipakai, data bisa dimigrasi ke morph `project_updates`.
 
 ### project_risks
-`id`, `workspace_id` FK, `title`, `level` (`high` · `medium` · `low`), `owner_id` FK users, `status` (`open` · `resolved`), `resolved_at` null, `task_id` FK null, timestamps.
+`id`, `workspace_id` FK (cascade), `title` varchar(200), `level` (`high` · `medium` · `low`), `owner_id` FK users null, `status` (`open` · `resolved`, default `open`), `resolved_at` null, `task_id` FK null (nullOnDelete), timestamps. CHECK level & status, indeks `(workspace_id, status)`.
 
 ### project_progress_snapshots (untuk grafik burn-up)
-`workspace_id`, `date` (PK gabungan), `scope_count` int, `done_count` int, `scope_hours` numeric null, `done_hours` numeric null. Diisi job harian 23.55.
+`workspace_id`, `date` (PK gabungan), `scope_count` int (tugas non-batal), `done_count` int, `scope_hours` numeric(10,2) null, `done_hours` numeric(10,2) null (diisi bila ada estimasi), timestamps. CHECK `0 ≤ done_count ≤ scope_count`. Diisi job `TakeProjectProgressSnapshots` harian 23.55 WIB dengan upsert (idempoten) untuk proyek terbuka (planned/active/on_hold, tidak diarsipkan).
 
 ### workspace_members
 `workspace_id`, `user_id` (PK gabungan), `role` (`owner` · `admin` · `member` · `viewer`), `joined_at`, `is_synced` (true bila berasal dari sinkron divisi/tim). Tambahan Sprint 5: `favorited_at` timestamptz null (favorit di sidebar, urut waktu dibintangi). Pemilik workspace pribadi juga punya baris `owner` di sini (memudahkan daftar sidebar & validasi penanggung jawab); aturan "pribadi hanya pemilik" tetap ditegakkan Policy.
@@ -369,7 +374,7 @@ Kolom `position` (tasks, task_statuses, checklist_items) bertipe `varchar(100) C
 `id`, `reactable_type`/`reactable_id`, `user_id`, `emoji`. Unik `(reactable, user_id, emoji)`.
 
 ### activities — feed & riwayat
-`id`, `workspace_id`, `subject_type`/`subject_id`, `causer_id`, `event` (`task.created`, `task.status_changed`, `task.assigned`, …), `properties` jsonb (`{"from": …, "to": …}`), `created_at`. Append-only. `subject_type` = FQCN (`App\Models\Task`, `App\Models\Workspace`; tanpa morph map, sama dengan audit_logs). Event Sprint 5: `task.created`, `task.status_changed`, `task.assigned`, `task.unassigned`, `task.due_date_changed`, `task.priority_changed`, `task.renamed`, `task.deleted`, `workspace.created|updated|archived|restored`, `workspace.member_added|member_removed|member_role_changed`. Properti tugas selalu memuat `key` & `title` agar feed tetap terbaca setelah tugas dihapus.
+`id`, `workspace_id`, `subject_type`/`subject_id`, `causer_id`, `event` (`task.created`, `task.status_changed`, `task.assigned`, …), `properties` jsonb (`{"from": …, "to": …}`), `created_at`. Append-only. `subject_type` = FQCN (`App\Models\Task`, `App\Models\Workspace`; tanpa morph map, sama dengan audit_logs). Event Sprint 5: `task.created`, `task.status_changed`, `task.assigned`, `task.unassigned`, `task.due_date_changed`, `task.priority_changed`, `task.renamed`, `task.deleted`, `workspace.created|updated|archived|restored`, `workspace.member_added|member_removed|member_role_changed`. Event Sprint 9: `project.attributes_changed`, `project.update_posted`, `project.update_requested`, `project.direction_given`, `project.decision_resolved`, `milestone.created|updated|completed|reopened|deleted`, `risk.created|updated|resolved|deleted`. Properti tugas selalu memuat `key` & `title` agar feed tetap terbaca setelah tugas dihapus.
 
 ### saved_views
 `id`, `user_id`, `workspace_id` null (null = lintas workspace, mis. "Tugas saya"), `name`, `layout` (`board` · `list` · `calendar`), `filters` jsonb, `sort` jsonb, `is_shared`.

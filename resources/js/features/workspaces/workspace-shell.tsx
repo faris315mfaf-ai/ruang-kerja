@@ -55,7 +55,8 @@ function tabHref(tab: WorkspaceTab, key: string): string {
 /**
  * Workspace header + tabs (mockup Kanban / WorkspacePengaturan): avatar,
  * name, "KEY · Jenis · Visibilitas · N anggota", member avatars, "Tugas baru"
- * and the tabs Tugas · Dokumen · File · Aktivitas · Pengaturan. On mobile a
+ * and the tabs (Ringkasan for projects ·) Tugas · Dokumen · File · Aktivitas ·
+ * Pengaturan. `header` replaces the default header (project summary). On mobile a
  * compact header and a scrollable tab row.
  */
 export function WorkspaceShell({

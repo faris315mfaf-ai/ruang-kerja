@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     ChevronRight,
     CircleCheck,
@@ -418,6 +418,7 @@ export function ProjectTable({
 /** Mobile project card (mockup MDashboardDireksi). */
 export function ProjectCard({ project }: { project: ProjectRow }) {
     const { metrics } = project;
+    const { auth } = usePage().props;
     const behind = metrics.flags.includes('behind');
 
     return (
@@ -459,7 +460,7 @@ export function ProjectCard({ project }: { project: ProjectRow }) {
                         Update kedaluwarsa
                     </span>
                 )}
-                {project.sponsor && (
+                {project.sponsor && project.sponsor.id !== auth.user?.id && (
                     <span className="text-[12px] text-text-muted">
                         Sponsor {project.sponsor.name}
                     </span>

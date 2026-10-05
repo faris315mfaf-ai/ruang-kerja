@@ -951,7 +951,7 @@ export function RisksPanel({
                                 <p className="text-[14px] text-text">
                                     {risk.title}
                                     {risk.task && (
-                                        <span className="ml-1.5 font-mono text-[12px] text-primary">
+                                        <span className="ml-1.5 font-mono text-[12px] whitespace-nowrap text-primary">
                                             {risk.task.code}
                                         </span>
                                     )}

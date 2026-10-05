@@ -194,14 +194,14 @@ export function PortfolioDesktop({
                             aria-hidden
                         />
                         {completed.length > 0 ? (
-                            <>
+                            <span>
                                 {completed.length} proyek selesai
                                 {completed[0]?.quarter &&
                                     ` di ${[...new Set(completed.map((item) => item.quarter))].join(' & ')}`}
                                 {' · '}
                                 {completed.map((project, index) => (
                                     <span key={project.id}>
-                                        {index > 0 && ', '}
+                                        {index > 0 ? ', ' : ''}
                                         <Link
                                             href={summary.url(project.key)}
                                             className="hover:underline"
@@ -210,7 +210,7 @@ export function PortfolioDesktop({
                                         </Link>
                                     </span>
                                 ))}
-                            </>
+                            </span>
                         ) : (
                             'Belum ada proyek selesai baru-baru ini'
                         )}
