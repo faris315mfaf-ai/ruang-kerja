@@ -107,7 +107,7 @@ export function BalanceCardView({
                     <p className="mt-2 text-lg font-semibold text-text">
                         Tidak memotong cuti
                     </p>
-                    {card.type.max_days_per_request !== null && (
+                    {card.type.max_days_per_request != null && (
                         <p className="mt-1 text-[13px] text-text-muted">
                             Maks. {formatDays(card.type.max_days_per_request)}{' '}
                             {dayUnit(card.type)} per pengajuan

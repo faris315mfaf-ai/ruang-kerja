@@ -207,8 +207,7 @@ export function formatRequestPeriod(
 
 /** Unit of a whole-day duration: "hari kalender", "hari kerja" (leave) or "hari". */
 export function dayUnit(
-    type: Pick<LeaveTypeInfo, 'category'> &
-        Partial<Pick<LeaveTypeInfo, 'counts_calendar_days'>>,
+    type: Pick<LeaveTypeInfo, 'category' | 'counts_calendar_days'>,
 ): string {
     if (type.counts_calendar_days) {
         return 'hari kalender';

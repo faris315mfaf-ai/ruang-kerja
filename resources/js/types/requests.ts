@@ -46,13 +46,17 @@ export type LeaveTypeInfo = {
     allow_half_day: boolean;
     max_backdate_days: number | null;
     is_paid: boolean;
+    /*
+     * Fitur pengajuan; always sent by RequestPresenter::type(), optional so
+     * older fixtures/partial shapes stay valid.
+     */
     /** Duration counted in calendar days (Cuti melahirkan). */
-    counts_calendar_days: boolean;
-    max_days_per_request: number | null;
+    counts_calendar_days?: boolean;
+    max_days_per_request?: number | null;
     /** "hari kalender" · "hari kerja" · "hari". */
-    day_unit: string;
+    day_unit?: string;
     /** Seeded default not yet reviewed by HR ("Bawaan sementara"). */
-    is_provisional_default: boolean;
+    is_provisional_default?: boolean;
 };
 
 export type BalanceSummary = {

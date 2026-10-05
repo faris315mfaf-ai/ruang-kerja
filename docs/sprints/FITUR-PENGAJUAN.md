@@ -63,6 +63,8 @@ Baru: `LeaveTypeDefaultsTest` (7), `LeaveBalanceLedgerTest` (28 termasuk dataset
 
 Test lama yang ekspektasinya berubah karena perilaku baru: `RequestSeederTest` (daftar kode jenis kini 10, menambah CML/CAP/CLT). `UserFactory.joined_at` kini rentang tetap 2021-07-01…2025-06-30 (bukan relatif ke jam asli) agar test yang "berjalan di waktu" tidak acak-acakan mengenai karyawan baru tengah tahun (prorata) dan tetap < 6 tahun masa kerja (asumsi test Cuti besar).
 
+Pemeriksaan akhir (setelah `git merge main`, termasuk fitur navigasi & dokumentasi): **1983 Pest hijau** (`rk_test`, 12323 asersi), **319 Vitest hijau**, `composer lint` (Pint + Larastan level 8), `npm run typecheck`, `npm run lint` hijau. Migrasi baru diuji `migrate:rollback` + `migrate`. Field baru `LeaveTypeInfo` di TypeScript dibuat opsional agar fixture lama (mis. `approvals.mobile.test.tsx` dari `main`) tetap valid.
+
 ## Cara uji manual (`php artisan migrate:fresh --seed`, sandi `password`)
 
 1. **hr@demo.test** → Admin › Jenis pengajuan: lencana "Bawaan sementara" di semua jenis bawaan; buka Cuti melahirkan → "…" → Ubah jenis → Simpan → lencana hilang.

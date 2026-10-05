@@ -32,7 +32,7 @@ export function LeaveTypeHint({ type }: { type: FormLeaveType | undefined }) {
     }
 
     const rules = [
-        type.max_days_per_request !== null
+        type.max_days_per_request != null
             ? `Maks. ${formatDays(type.max_days_per_request)} ${dayUnit(type)} per pengajuan`
             : null,
         type.is_paid ? null : 'Tidak dibayar, tidak memotong saldo cuti',

@@ -5,6 +5,7 @@ use App\Domain\Requests\Actions\AdjustLeaveBalance;
 use App\Domain\Requests\Actions\GenerateAnnualBalances;
 use App\Domain\Requests\Services\BalanceLedger;
 use App\Domain\Requests\Services\LeaveEntitlement;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\AuditLog;
 use App\Models\LeaveBalance;
 use App\Models\LeaveBalanceAdjustment;
@@ -168,7 +169,8 @@ describe('opening balance and adjustments', function () {
 
         // History on demand.
         $this->actingAs($s->hr)->get("/admin/saldo-cuti?tahun=2026&riwayat={$balance->id}", [
-            'X-Inertia' => 'true', 'X-Inertia-Partial-Component' => 'admin/leave-balances', 'X-Inertia-Partial-Data' => 'history',
+            'X-Inertia' => 'true', 'X-Inertia-Version' => (string) app(HandleInertiaRequests::class)->version(request()),
+            'X-Inertia-Partial-Component' => 'admin/leave-balances', 'X-Inertia-Partial-Data' => 'history',
         ])->assertJsonPath('props.history.balance_id', $balance->id)
             ->assertJsonPath('props.history.items.0.delta_days', -1)
             ->assertJsonPath('props.history.items.1.reason', 'Kompensasi lembur hari libur')

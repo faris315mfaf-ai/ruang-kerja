@@ -11,6 +11,11 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 - `docs/CHANGELOG.md` (berkas ini) dan `docs/CRITICAL.md` (hal kritis operasional + checklist go-live).
 - **Kode aktivasi kiosk**: selain tautan sekali pakai, HR mendapat kode 8 karakter (mis. `ABCD-2345`, tanpa huruf/angka mirip) yang diketik di layar `/kiosk` perangkat. TTL sama dengan tautan (24 jam), sekali pakai, memakai tautan atau kode membatalkan keduanya; maks. 5 percobaan/menit per IP, kunci 15 menit setelah 10 kode salah.
 - Shell desktop: Dock ala macOS (magnifikasi pegas), menu bar tipis, konten penuh layar.
+- **Pengajuan** (`docs/sprints/FITUR-PENGAJUAN.md`): jenis bawaan Cuti melahirkan (90 hari kalender), Cuti alasan penting (maks. 3 hari per peristiwa), Cuti di luar tanggungan (tidak dibayar, tidak memotong saldo) dengan penanda **"Bawaan sementara"** sampai ditinjau HR; draf form tersimpan otomatis di perangkat ("Draf dipulihkan dari perangkat ini" + Buang); saldo cuti prorata untuk karyawan baru, **saldo awal**, **penyesuaian** beralasan (teraudit, tabel `leave_balance_adjustments`) dan **impor saldo CSV/XLSX** dengan pratinjau galat per baris.
+
+### Keamanan
+- Email/WhatsApp pengajuan tidak memuat catatan penolakan/revisi (hanya di aplikasi); pengajuan Sakit memakai subjek netral tanpa jenis/nomor; audit keputusan hanya menyimpan id + `has_note`.
+- Penyetuju pengganti (delegasi) pengajuan Sakit hanya melihat tanggal, durasi, status — alasan, catatan, dan lampiran disembunyikan (juga unduhan lampiran dan pencarian).
 
 ## Perbaikan review Sprint 3–9 (bagian A, B, dan sisa akhir)
 
