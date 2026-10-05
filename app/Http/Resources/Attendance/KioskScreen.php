@@ -8,6 +8,7 @@ use App\Domain\Attendance\Models\Kiosk;
 use App\Domain\Attendance\Services\QrCodeService;
 use App\Domain\Attendance\Services\QrImageRenderer;
 use App\Domain\Attendance\Services\ScheduleResolver;
+use App\Http\Resources\Attendance\Concerns\NamesPeople;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 
@@ -17,6 +18,8 @@ use Illuminate\Support\Str;
  */
 final class KioskScreen
 {
+    use NamesPeople;
+
     public function __construct(
         private readonly QrCodeService $codes,
         private readonly QrImageRenderer $images,
@@ -81,14 +84,5 @@ final class KioskScreen
         }
 
         return $first.' '.Str::upper(mb_substr((string) end($parts), 0, 1)).'.';
-    }
-
-    public static function initials(string $name): string
-    {
-        $parts = preg_split('/\s+/', trim($name)) ?: [];
-        $first = $parts[0] ?? '';
-        $last = count($parts) > 1 ? (string) end($parts) : '';
-
-        return Str::upper(mb_substr($first, 0, 1).mb_substr($last, 0, 1));
     }
 }

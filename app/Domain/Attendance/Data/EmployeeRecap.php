@@ -42,6 +42,9 @@ final class EmployeeRecap
 
     public int $suspiciousDays = 0;
 
+    /** Most frequent shift on the work days of the month, e.g. "Reguler 08.00–17.00". */
+    public ?string $shiftName = null;
+
     /** Average check-in, minutes after office midnight (null without check-ins). */
     public ?int $averageCheckInMinute = null;
 

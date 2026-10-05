@@ -6,11 +6,16 @@ use App\Http\Controllers\Attendance\Admin\KioskController;
 use App\Http\Controllers\Attendance\Admin\OfficeLocationController;
 use App\Http\Controllers\Attendance\Admin\ShiftAssignmentController;
 use App\Http\Controllers\Attendance\Admin\ShiftController;
+use App\Http\Controllers\Attendance\AttendanceBoardController;
 use App\Http\Controllers\Attendance\AttendanceConsentController;
 use App\Http\Controllers\Attendance\AttendanceController;
+use App\Http\Controllers\Attendance\AttendanceCorrectionController;
+use App\Http\Controllers\Attendance\AttendanceLogController;
+use App\Http\Controllers\Attendance\AttendanceRecapController;
 use App\Http\Controllers\Attendance\AttendanceSelfieController;
 use App\Http\Controllers\Attendance\CheckInController;
 use App\Http\Controllers\Attendance\CheckOutController;
+use App\Http\Controllers\Attendance\MyAttendanceHistoryController;
 use App\Http\Controllers\Attendance\QrCheckController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +36,16 @@ Route::middleware(['auth', 'verified'])->group(function () use ($throttle) {
     Route::get('absensi/log/{attendanceLog}/selfie', AttendanceSelfieController::class)
         ->middleware('signed')
         ->name('attendance.selfie');
+
+    // Sprint 3 — HR review, recap & export, personal history.
+    Route::get('absensi/riwayat', [MyAttendanceHistoryController::class, 'index'])->name('attendance.history');
+    Route::get('absensi/riwayat/pdf', [MyAttendanceHistoryController::class, 'pdf'])->name('attendance.history.pdf');
+    Route::get('absensi/hari-ini', [AttendanceBoardController::class, 'index'])->name('attendance.board');
+    Route::get('absensi/rekap', [AttendanceRecapController::class, 'index'])->name('attendance.recap');
+    Route::get('absensi/rekap/ekspor/{format}', [AttendanceRecapController::class, 'export'])->whereIn('format', ['xlsx', 'pdf'])->name('attendance.recap.export');
+    Route::get('absensi/log/{attendanceLog}/selfie-url', [AttendanceLogController::class, 'selfieUrl'])->name('attendance.logs.selfie-url');
+    Route::post('absensi/log/{attendanceLog}/tinjau', [AttendanceLogController::class, 'review'])->name('attendance.logs.review');
+    Route::post('absensi/koreksi', [AttendanceCorrectionController::class, 'store'])->name('attendance.corrections.store');
 
     Route::prefix('admin/absensi')->name('admin.attendance.')->group(function () {
         Route::get('/', [AttendanceSettingsController::class, 'index'])->name('index');

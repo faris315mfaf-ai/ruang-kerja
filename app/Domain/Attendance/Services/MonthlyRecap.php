@@ -93,6 +93,7 @@ final class MonthlyRecap
             $recap = new EmployeeRecap($user);
             $own = $records->get($user->id, collect());
             $checkIns = [];
+            $shifts = [];
 
             for ($date = $period->monthStart; $date->lte($period->monthEnd); $date = $date->addDay()) {
                 $key = $date->toDateString();
@@ -117,6 +118,11 @@ final class MonthlyRecap
 
                 $isWorkday ? $recap->workDays++ : $recap->offDays++;
 
+                if ($isWorkday && $schedule->shift !== null) {
+                    $label = $schedule->shift->name.' '.$schedule->shift->hoursLabel();
+                    $shifts[$label] = ($shifts[$label] ?? 0) + 1;
+                }
+
                 if ($record !== null) {
                     $minute = $this->tally($recap, $record);
 
@@ -126,6 +132,8 @@ final class MonthlyRecap
                 }
             }
 
+            arsort($shifts);
+            $recap->shiftName = array_key_first($shifts);
             $recap->averageCheckInMinute = $checkIns === [] ? null : (int) round(array_sum($checkIns) / count($checkIns));
             $rows[] = $recap;
         }
