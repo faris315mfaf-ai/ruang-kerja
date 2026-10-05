@@ -354,6 +354,17 @@ describe('create & update', function () {
         expect(User::query()->where('email', 'bayu@kantor.test')->firstOrFail()->hasRole(Role::SuperAdmin))->toBeTrue();
     });
 
+    it('saves unrelated edits when the current manager is already inactive', function () {
+        $boss = User::factory()->forCompany($this->company)->inactive()->create(['email' => 'bos@kantor.test']);
+        $bayu = User::factory()->forCompany($this->company)->managedBy($boss)->create(['email' => 'bayu@kantor.test']);
+
+        $this->actingAs($this->hr)
+            ->put(route('admin.employees.update', $bayu), employeePayload(['name' => 'Bayu S.', 'manager_id' => $boss->id]))
+            ->assertSessionHasNoErrors();
+
+        expect($bayu->refresh()->name)->toBe('Bayu S.')->and($bayu->manager_id)->toBe($boss->id);
+    });
+
     it('locks the email once the employee has signed in', function () {
         $bayu = User::factory()->forCompany($this->company)->create(['email' => 'bayu@kantor.test', 'last_login_at' => now()]);
 

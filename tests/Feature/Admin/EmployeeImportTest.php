@@ -341,3 +341,24 @@ describe('uploaded file retention (contains NIK)', function () {
             ->and($events->first()->expression)->toBe('0 * * * *');
     });
 });
+
+it('does not block rows whose unchanged manager became inactive', function () {
+    $boss = User::factory()->forCompany($this->company)->inactive()->create(['email' => 'bos.lama@kantor.test']);
+    User::factory()->forCompany($this->company)->managedBy($boss)->create(['email' => 'bayu@kantor.test']);
+    User::factory()->forCompany($this->company)->managedBy($boss)->create(['email' => 'dewi@kantor.test']);
+    User::factory()->forCompany($this->company)->create(['email' => 'citra@kantor.test']);
+
+    $token = previewImport(csvUpload(
+        'Bayu Baru,bayu@kantor.test,,,,,,,,,,',
+        'Dewi,dewi@kantor.test,,,,,bos.lama@kantor.test,,,,,',
+        'Citra,citra@kantor.test,,,,,bos.lama@kantor.test,,,,,',
+    ));
+
+    $this->actingAs($this->hr)
+        ->get(route('admin.employees.import', ['token' => $token]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('preview.rows.0.errors', [])
+            ->where('preview.rows.1.errors', [])
+            ->where('preview.rows.2.errors', ['Atasan bos.lama@kantor.test tidak aktif.'])
+        );
+});
