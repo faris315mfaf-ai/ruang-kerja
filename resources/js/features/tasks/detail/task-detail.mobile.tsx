@@ -16,6 +16,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { AttachmentsPanel } from '@/features/drive/attachments-panel';
 import { useKeyboardInset, useKeyboardOpen } from '@/hooks/use-keyboard-open';
 import {
     AssigneePicker,
@@ -41,7 +42,8 @@ type Props = {
 
 /**
  * Mobile task detail (mockup MTaskDetail): full screen, property chips,
- * "Semua properti" sheet, checklist/sub-tasks with 44px targets, timeline,
+ * "Semua properti" sheet, checklist/sub-tasks with 44px targets, Drive
+ * attachments (Lampirkan · Kamera · Drive · File), timeline,
  * and a comment box stuck to the bottom (above the tab bar, or the
  * keyboard while typing).
  */
@@ -238,6 +240,15 @@ export function TaskDetailMobile({ state, today }: Props) {
                 onCreate={(title) => void state.createSubtask(title)}
             />
 
+            <AttachmentsPanel
+                key={task.id}
+                attachableType="task"
+                attachableId={task.id}
+                initial={detail.attachments}
+                variant="mobile"
+                onChange={state.refresh}
+            />
+
             <TimelineSection state={state} mobile />
 
             {can.comment && (
@@ -261,6 +272,8 @@ export function TaskDetailMobile({ state, today }: Props) {
                                 : null
                         }
                         onSubmit={state.postComment}
+                        drive={detail.attachments.drive}
+                        onAttachmentsChange={state.refresh}
                         placeholder="Tulis komentar…"
                     />
                 </div>

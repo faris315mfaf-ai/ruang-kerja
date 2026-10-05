@@ -6,7 +6,7 @@ use App\Domain\Google\Actions\AttachDriveFile;
 use App\Domain\Google\Actions\CreateGoogleDoc;
 use App\Domain\Google\Actions\RemoveAttachment;
 use App\Domain\Google\Actions\StartDriveUpload;
-use App\Domain\Google\GoogleFeatures;
+use App\Domain\Google\Queries\AttachmentList;
 use App\Domain\Google\Services\DriveUploadSessions;
 use App\Domain\Workspaces\Contracts\HasWorkspaceAttachments;
 use App\Domain\Workspaces\Support\AttachableTypes;
@@ -14,18 +14,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Google\CreateDriveDocumentRequest;
 use App\Http\Requests\Google\LinkDriveFilesRequest;
 use App\Http\Requests\Google\StartDriveUploadRequest;
-use App\Http\Resources\AttachmentResource;
 use App\Models\Attachment;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * Drive attachments of any HasWorkspaceAttachments model (task now,
- * comment in Sprint 6) — JSON endpoints behind
+ * Drive attachments of any HasWorkspaceAttachments model (task, comment) — JSON endpoints behind
  * features/drive/attachments-panel.tsx. Listing needs `view` on the parent,
  * changes need AttachmentPolicy::create (`update` on the parent).
  */
@@ -33,11 +30,13 @@ class AttachmentController extends Controller
 {
     private const string FORBIDDEN = 'Anda tidak punya akses untuk mengubah lampiran di sini.';
 
-    public function index(Request $request, string $type, string $id, #[CurrentUser] User $user): JsonResponse
+    public function __construct(private readonly AttachmentList $list) {}
+
+    public function index(string $type, string $id, #[CurrentUser] User $user): JsonResponse
     {
         $attachable = $this->visible($type, $id);
 
-        return new JsonResponse($this->payload($request, $attachable, $user));
+        return new JsonResponse($this->payload($attachable, $user));
     }
 
     /**
@@ -52,7 +51,7 @@ class AttachmentController extends Controller
             $attach->handle($user, $attachable, $workspace->id, $fileId);
         }
 
-        return new JsonResponse($this->payload($request, $attachable, $user), 201);
+        return new JsonResponse($this->payload($attachable, $user), 201);
     }
 
     /**
@@ -65,7 +64,7 @@ class AttachmentController extends Controller
         $file = $create->handle($attachable->attachmentWorkspace(), $request->type(), $request->string('name')->toString(), $user, $attachable);
 
         return new JsonResponse([
-            ...$this->payload($request, $attachable, $user),
+            ...$this->payload($attachable, $user),
             'web_view_link' => $file->web_view_link,
             'message' => "{$request->type()->label()} {$file->name} dibuat dan dilampirkan.",
         ], 201);
@@ -102,7 +101,7 @@ class AttachmentController extends Controller
             abort(403, self::FORBIDDEN);
         }
 
-        $remove->handle($attachment);
+        $remove->handle($attachment, $user);
 
         return new JsonResponse(['removed' => true, 'message' => "{$attachment->filename} dilepas."]);
     }
@@ -137,30 +136,8 @@ class AttachmentController extends Controller
      * @param  Model&HasWorkspaceAttachments  $attachable
      * @return array<string, mixed>
      */
-    private function payload(Request $request, Model $attachable, User $user): array
+    private function payload(Model $attachable, User $user): array
     {
-        $attachments = Attachment::query()
-            ->where('attachable_type', $attachable->getMorphClass())
-            ->where('attachable_id', $attachable->getKey())
-            ->latest()
-            ->latest('id')
-            ->with(['driveFile.addedBy:id,name', 'uploader:id,name'])->get()
-            // The parent is known: AttachmentPolicy reads it without a query per row.
-            ->each(fn (Attachment $attachment) => $attachment->setRelation('attachable', $attachable));
-        $gate = Gate::forUser($user);
-
-        return [
-            'attachments' => $attachments->map(fn (Attachment $attachment): array => [
-                ...(new AttachmentResource($attachment))->toArray($request),
-                'can_remove' => $gate->allows('delete', $attachment),
-            ])->values()->all(),
-            'can_edit' => $gate->allows('create', [Attachment::class, $attachable]),
-            'drive' => [
-                'enabled' => GoogleFeatures::enabled(),
-                'picker_enabled' => GoogleFeatures::pickerEnabled(),
-                'max_upload_bytes' => GoogleFeatures::maxUploadBytes(),
-                'chunk_bytes' => DriveUploadSessions::chunkBytes(),
-            ],
-        ];
+        return $this->list->for($attachable, $user);
     }
 }

@@ -1,16 +1,9 @@
 import { FolderOpen } from 'lucide-react';
 import type { ComponentProps } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+import { DriveConnectPrompt } from './attach-actions';
 import type { PickedDriveFile } from './types';
 import { useDrivePicker } from './use-drive-picker';
 
@@ -57,43 +50,7 @@ export function DrivePicker({
                 {label}
             </Button>
 
-            <Dialog
-                open={state.status === 'needs_connect'}
-                onOpenChange={(isOpen) => !isOpen && dismiss()}
-            >
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Hubungkan akun Google</DialogTitle>
-                        <DialogDescription>
-                            {state.status === 'needs_connect'
-                                ? state.message
-                                : null}
-                        </DialogDescription>
-                    </DialogHeader>
-                    <p className="text-sm text-text-muted">
-                        RuangKerja hanya dapat membuka file yang Anda pilih
-                        sendiri di Google Picker. Anda akan diarahkan ke Google,
-                        lalu kembali ke halaman ini.
-                    </p>
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="h-11 md:h-9"
-                            onClick={dismiss}
-                        >
-                            Batal
-                        </Button>
-                        {state.status === 'needs_connect' && (
-                            <Button asChild className="h-11 md:h-9">
-                                <a href={state.connectUrl}>
-                                    Hubungkan akun Google
-                                </a>
-                            </Button>
-                        )}
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <DriveConnectPrompt state={state} onDismiss={dismiss} />
         </>
     );
 }

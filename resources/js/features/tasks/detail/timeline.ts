@@ -123,6 +123,10 @@ export function describeTaskActivity(
             return `menyelesaikan “${str(p.item)}”`;
         case 'task.subtask_added':
             return `menambahkan sub-tugas ${nested(p.subtask, 'key')}`;
+        case 'task.attachment_added':
+            return `melampirkan ${str(p.filename)}`;
+        case 'task.attachment_removed':
+            return `melepas lampiran ${str(p.filename)}`;
         default:
             return item.event;
     }

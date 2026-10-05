@@ -2,6 +2,7 @@
 
 namespace App\Domain\Tasks\Queries;
 
+use App\Domain\Google\Queries\AttachmentList;
 use App\Domain\Tasks\Services\MentionParser;
 use App\Domain\Workspaces\Queries\WorkspacePage;
 use App\Http\Resources\CommentResource;
@@ -23,8 +24,9 @@ use Illuminate\Database\Eloquent\Builder;
 /**
  * Everything the task detail (TaskSheet, full-screen page, mobile
  * MTaskDetail, Inbox preview) shows for one task, as seen by $viewer:
- * properties, sub-tasks, checklist, watchers, and the unified timeline of
- * activities + comments (oldest first). Shape mirrors
+ * properties, sub-tasks, checklist, watchers, Drive attachments (task-level,
+ * viewer-specific rights; comment attachments ride on each comment), and the
+ * unified timeline of activities + comments (oldest first). Shape mirrors
  * resources/js/features/tasks/detail/types.ts `TaskDetail`.
  */
 final class TaskDetail
@@ -37,6 +39,7 @@ final class TaskDetail
         private readonly TaskPolicy $tasks,
         private readonly WorkspacePolicy $workspaces,
         private readonly MentionParser $parser,
+        private readonly AttachmentList $attachments,
     ) {}
 
     /**
@@ -69,6 +72,7 @@ final class TaskDetail
             ->get();
 
         $references = $this->references($task, $viewer);
+        $attachments = $this->attachments->for($task, $viewer);
 
         return [
             'task' => [
@@ -76,6 +80,7 @@ final class TaskDetail
                 'description' => $task->description,
                 'updated_at' => $task->updated_at?->toIso8601String(),
                 'started_at' => $task->started_at?->toIso8601String(),
+                'attachments_count' => count($attachments['attachments']),
             ],
             'url' => $task->url(),
             'workspace' => WorkspaceResource::reference($workspace),
@@ -102,6 +107,7 @@ final class TaskDetail
                     'done_by' => $item->done_by,
                     'done_at' => $item->done_at?->toIso8601String(),
                 ])->values()->all(),
+            'attachments' => $attachments,
             'timeline' => $this->timeline($task),
             'references' => $references,
             'reactions' => Reaction::EMOJI,
@@ -121,7 +127,7 @@ final class TaskDetail
      */
     public function comment(Comment $comment): array
     {
-        $comment->loadMissing(['author', 'reactions.user']);
+        $comment->loadMissing(CommentResource::RELATIONS);
 
         return (new CommentResource($comment))->resolve();
     }
@@ -152,7 +158,7 @@ final class TaskDetail
         $comments = Comment::withTrashed()
             ->where('commentable_type', $task->getMorphClass())
             ->where('commentable_id', $task->id)
-            ->with(['author', 'reactions.user'])
+            ->with(CommentResource::RELATIONS)
             ->latest('created_at')
             ->limit(self::TIMELINE_LIMIT)
             ->get()

@@ -1,3 +1,7 @@
+import type {
+    AttachmentData,
+    AttachmentsPayload,
+} from '@/features/drive/types';
 import type { RichDoc, TaskReferenceInfo } from '../editor/types';
 import type {
     Label,
@@ -27,6 +31,8 @@ export type TaskComment = {
     edited_at: string | null;
     deleted: boolean;
     reactions: ReactionGroup[];
+    /** Drive attachments shown under the comment (empty when deleted). */
+    attachments: AttachmentData[];
 };
 
 export type TaskActivity = {
@@ -53,6 +59,7 @@ export type DetailTask = Task & {
     description: RichDoc | null;
     updated_at: string | null;
     started_at: string | null;
+    attachments_count: number;
 };
 
 /** GET /tugas/{id} (App\Domain\Tasks\Queries\TaskDetail). */
@@ -75,6 +82,8 @@ export type TaskDetail = {
     } | null;
     subtasks: Task[];
     checklist: ChecklistEntry[];
+    /** Task-level Drive attachments as GET /lampiran/task/{id} returns them. */
+    attachments: AttachmentsPayload;
     timeline: TimelineItem[];
     references: Record<string, TaskReferenceInfo>;
     reactions: string[];

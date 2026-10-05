@@ -65,6 +65,10 @@ export function describeActivity(
             return `menyelesaikan “${str(p.item)}” di ${key}`;
         case 'task.subtask_added':
             return `menambahkan sub-tugas ${nested(p.subtask, 'key')} ke ${key}`;
+        case 'task.attachment_added':
+            return `melampirkan ${str(p.filename)} di ${key}`;
+        case 'task.attachment_removed':
+            return `melepas lampiran ${str(p.filename)} dari ${key}`;
         case 'task.deleted':
             return `menghapus ${key} “${str(p.title)}”`;
         case 'workspace.created':

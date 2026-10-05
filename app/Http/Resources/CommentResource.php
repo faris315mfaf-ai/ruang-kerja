@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Attachment;
 use App\Models\Comment;
 use App\Models\Reaction;
 use Illuminate\Http\Request;
@@ -10,13 +11,25 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * Comment in the task timeline (resources/js/features/tasks/detail/types.ts
  * `TaskComment`). Viewer-independent so it can be broadcast; the client
- * derives "mine" from `user_ids`. Eager-load `author` and `reactions.user`.
- * A soft-deleted comment keeps its place without body.
+ * derives "mine" from `user_ids`. Eager-load self::RELATIONS. A soft-deleted
+ * comment keeps its place without body and without attachments.
  *
  * @mixin Comment
  */
 class CommentResource extends JsonResource
 {
+    /**
+     * Relations the resource reads (avoid N+1 in timelines and broadcasts).
+     *
+     * @var list<string>
+     */
+    public const array RELATIONS = [
+        'author',
+        'reactions.user',
+        'attachments.driveFile.addedBy:id,name',
+        'attachments.uploader:id,name',
+    ];
+
     /**
      * @return array<string, mixed>
      */
@@ -37,6 +50,9 @@ class CommentResource extends JsonResource
             'edited_at' => $deleted ? null : $comment->edited_at?->toIso8601String(),
             'deleted' => $deleted,
             'reactions' => $deleted ? [] : self::reactions($comment),
+            'attachments' => $deleted || ! $comment->relationLoaded('attachments')
+                ? []
+                : $comment->attachments->map(fn (Attachment $attachment): array => (new AttachmentResource($attachment))->resolve())->values()->all(),
         ];
     }
 

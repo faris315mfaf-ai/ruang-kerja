@@ -24,6 +24,10 @@ type Props = {
     busy: boolean;
     onCancel: () => void;
     onSubmit: (type: NewItemType, name: string) => void;
+    /** Defaults: "Buat & buka" / "Buat folder". */
+    submitLabel?: string;
+    /** Defaults to "Dokumen dibuka di tab baru setelah dibuat." */
+    hint?: string;
 };
 
 /** Asks for the name of a new Docs/Sheets/Slides file or folder. */
@@ -33,6 +37,8 @@ export function NewItemDialog({
     busy,
     onCancel,
     onSubmit,
+    submitLabel,
+    hint,
 }: Props) {
     const mobile = useBreakpoint() === 'mobile';
     const id = useId();
@@ -80,7 +86,7 @@ export function NewItemDialog({
             <p className="text-[12px] text-text-muted">
                 {option.type === 'folder'
                     ? 'Akses folder mengikuti anggota workspace.'
-                    : 'Dokumen dibuka di tab baru setelah dibuat.'}
+                    : (hint ?? 'Dokumen dibuka di tab baru setelah dibuat.')}
             </p>
         </form>
     );
@@ -104,7 +110,8 @@ export function NewItemDialog({
                 }
             >
                 {busy && <Spinner />}
-                {option?.type === 'folder' ? 'Buat folder' : 'Buat & buka'}
+                {submitLabel ??
+                    (option?.type === 'folder' ? 'Buat folder' : 'Buat & buka')}
             </Button>
         </>
     );
