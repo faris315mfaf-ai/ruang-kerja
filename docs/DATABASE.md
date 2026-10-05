@@ -23,7 +23,7 @@
 | Pengajuan | `leave_types`, `leave_balances`, `requests`, `request_approvals`, `approval_flows`, `approval_flow_steps`, `approval_delegations` |
 | Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
 | Google & file | `google_accounts`, `drive_files`, `attachments` |
-| Notifikasi | `notifications`*, `notification_preferences` |
+| Notifikasi | `notifications`*, `notification_preferences`, `notification_settings` |
 | Fase 2 | `channels`, `channel_members`, `messages`, `notes`, `note_versions`, `calendar_events` |
 | Fase 3 | `devices`, `face_templates`, `objectives`, `key_results` |
 
@@ -378,8 +378,23 @@ Indeks: `(workspace_id, parent_google_id)`, `(workspace_id, kind)`.
 
 ## 6. Notifikasi
 
-- `notifications`: tabel bawaan Laravel (`id` uuid, `type`, `notifiable`, `data` jsonb, `read_at`).
-- `notification_preferences`: `user_id`, `event` (`task.assigned`, `mention`, `request.pending`, …), `channel` (`in_app` · `email` · `whatsapp`), `enabled`. Unik `(user_id, event, channel)`. Baris tidak ada = pakai default di `config/notifications.php`.
+- `notifications`: tabel bawaan Laravel (`id` uuid, `type`, `notifiable`, `data` jsonb, `read_at`) dengan perluasan Sprint 8:
+  | Kolom | Tipe | Keterangan |
+  |---|---|---|
+  | id | uuid PK | dibuat Laravel (`Str::uuid`) |
+  | type | varchar(80) | nilai `NotificationType`, mis. `task.assigned`, `request.submitted` (bukan nama kelas) |
+  | notifiable_type / notifiable_id | morph ULID | penerima (`App\Models\User`) |
+  | data | jsonb | payload seragam `{type, title, body, url, actor{id,name,avatar}, subject{type,id,code,title}, meta}` |
+  | subject_type / subject_id | morph ULID null | objek notifikasi (task, pengajuan, …) untuk de-duplikasi & menyelesaikan "Perlu tindakan" |
+  | action_required | bool | tampil di tab **Perlu tindakan** selama `resolved_at` kosong |
+  | resolved_at | timestamptz null | diisi modul lewat `ResolveNotificationsForSubject` saat aksinya selesai |
+  | read_at | timestamptz null | |
+  | archived_at | timestamptz null | diarsipkan dari Inbox (sekaligus dibaca) |
+  | created_at / updated_at | timestamptz | |
+
+  Indeks: `(notifiable_type, notifiable_id)`, `(notifiable_id, created_at)`, `(subject_type, subject_id)`, indeks parsial `notifications_unread_index (notifiable_id) WHERE read_at IS NULL AND archived_at IS NULL` untuk hitungan lonceng. Retensi 30 hari (`notifications:prune`), kecuali yang masih perlu tindakan. Model baca: `App\Models\InboxNotification`.
+- `notification_preferences`: `id` ulid, `user_id`, `event` (`task.assigned`, `mention`, `task.commented`, `task.due_soon`, `task.overdue`, `request.pending`, `request.decided`, `attendance.check_in_reminder`, `attendance.check_out_reminder`, `system`, `digest.daily`), `channel` (`in_app` · `email` · `whatsapp`), `enabled`, timestamps. Unik `(user_id, event, channel)`. Baris tidak ada = pakai default di `config/notifications.php`. Daftar kejadian = enum `NotificationEvent`.
+- `notification_settings` (Sprint 8, 1:1 dengan `users`): `user_id` PK/FK, `digest_time` time (jam kirim ringkasan harian, zona kantor, default `07:30`), `quiet_hours` bool (default `true`: email di luar 07.00–17.30 & akhir pekan ditunda), `pause_while_on_leave` bool (tahan notifikasi saat cuti), `digest_last_run_on` date (idempotensi ringkasan harian), timestamps.
 
 ---
 

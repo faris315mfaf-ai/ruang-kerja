@@ -1,10 +1,15 @@
 import { Link } from '@inertiajs/react';
 import { Bell, LogIn, Search } from 'lucide-react';
 import { useEffect } from 'react';
-import { toast } from 'sonner';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useUnreadCount } from '@/features/notifications/unread-store';
+import { CommandPalette } from '@/features/search/command-palette';
+import {
+    setCommandPaletteOpen,
+    toggleCommandPalette,
+} from '@/features/search/command-palette-store';
 import type { BreadcrumbItem } from '@/types';
 
 type Props = {
@@ -13,10 +18,11 @@ type Props = {
     canToggleSidebar: boolean;
 };
 
-const announceSearch = () =>
-    toast.info('Pencarian dan command palette segera tersedia.');
+const openSearch = () => setCommandPaletteOpen(true);
 
 export function AppTopbar({ breadcrumbs, canToggleSidebar }: Props) {
+    const unread = useUnreadCount();
+
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
             if (
@@ -24,7 +30,7 @@ export function AppTopbar({ breadcrumbs, canToggleSidebar }: Props) {
                 (event.metaKey || event.ctrlKey)
             ) {
                 event.preventDefault();
-                announceSearch();
+                toggleCommandPalette();
             }
         };
 
@@ -47,7 +53,7 @@ export function AppTopbar({ breadcrumbs, canToggleSidebar }: Props) {
 
             <button
                 type="button"
-                onClick={announceSearch}
+                onClick={openSearch}
                 className="hidden h-8 w-64 items-center gap-2 rounded-md border border-border bg-surface/70 px-2.5 text-[13px] text-text-muted transition-colors duration-120 ease-brand hover:border-border-strong focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:flex xl:w-72"
             >
                 <Search className="size-4" aria-hidden />
@@ -62,7 +68,7 @@ export function AppTopbar({ breadcrumbs, canToggleSidebar }: Props) {
                 variant="ghost"
                 size="icon"
                 className="text-text-muted lg:hidden"
-                onClick={announceSearch}
+                onClick={openSearch}
                 aria-label="Cari"
             >
                 <Search />
@@ -81,10 +87,26 @@ export function AppTopbar({ breadcrumbs, canToggleSidebar }: Props) {
                 size="icon"
                 className="relative text-text-muted"
             >
-                <Link href="/inbox" prefetch aria-label="Notifikasi">
+                <Link
+                    href="/inbox"
+                    prefetch
+                    aria-label={
+                        unread > 0
+                            ? `Notifikasi, ${unread} belum dibaca`
+                            : 'Notifikasi'
+                    }
+                >
                     <Bell />
+                    {unread > 0 && (
+                        <span
+                            aria-hidden
+                            className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary ring-2 ring-background"
+                        />
+                    )}
                 </Link>
             </Button>
+
+            <CommandPalette />
         </header>
     );
 }
