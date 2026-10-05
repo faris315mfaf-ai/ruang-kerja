@@ -4,6 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Field, SelectField } from './fields';
+import { withCurrentPerson } from './person-options';
 import type { DivisionRow, OrganizationOptions } from './types';
 import { UnitSheet } from './unit-sheet';
 
@@ -174,7 +175,7 @@ export function DivisionSheet({
                     id="division-head"
                     value={form.data.head_user_id}
                     onChange={(value) => form.setData('head_user_id', value)}
-                    options={options.users}
+                    options={withCurrentPerson(options.users, division?.head)}
                     placeholder="Belum ditentukan"
                     noneLabel="Belum ditentukan"
                     invalid={Boolean(form.errors.head_user_id)}

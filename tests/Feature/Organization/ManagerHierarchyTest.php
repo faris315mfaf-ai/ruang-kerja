@@ -90,3 +90,13 @@ it('validates manager input with Indonesian messages', function () {
         ->and(validateManager($b, $foreign->id, $a->company_id))->toBe(['Atasan langsung tidak ditemukan.'])
         ->and(validateManager($b, '01JXXXXXXXXXXXXXXXXXXXXXXX', $a->company_id))->toBe(['Atasan langsung tidak ditemukan.']);
 });
+
+it('accepts an unchanged inactive manager but rejects switching to one', function () {
+    $oldBoss = User::factory()->inactive()->create();
+    $staff = User::factory()->forCompany($oldBoss->company)->managedBy($oldBoss)->create();
+    $otherInactive = User::factory()->forCompany($oldBoss->company)->inactive()->create();
+
+    expect(validateManager($staff, $oldBoss->id, $staff->company_id))->toBe([])
+        ->and(validateManager($staff, $otherInactive->id, $staff->company_id))->toBe(['Atasan langsung harus karyawan aktif.'])
+        ->and(validateManager(null, $oldBoss->id, $staff->company_id))->toBe(['Atasan langsung harus karyawan aktif.']);
+});

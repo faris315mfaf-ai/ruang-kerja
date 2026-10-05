@@ -38,3 +38,32 @@ export function hasAnyRole(
 ): boolean {
     return candidates.some((candidate) => roles.includes(candidate));
 }
+
+/** Roles only a Super Admin may grant or revoke (UserPolicy::assignRole). */
+export const SUPER_ADMIN_ONLY_ROLES: readonly RoleName[] = [
+    'super_admin',
+    'direksi',
+    'hr',
+];
+
+/**
+ * Why the role checkbox is locked in the employee form, or null when the
+ * actor may toggle it. Mirrors UserPolicy::assignRole.
+ */
+export function roleLockReason(
+    role: RoleName,
+    actor: { canAssignPrivilegedRoles: boolean; editingSelf: boolean },
+): string | null {
+    if (actor.editingSelf) {
+        return 'peran sendiri tidak bisa diubah';
+    }
+
+    if (
+        SUPER_ADMIN_ONLY_ROLES.includes(role) &&
+        !actor.canAssignPrivilegedRoles
+    ) {
+        return 'hanya bisa diatur oleh Super Admin';
+    }
+
+    return null;
+}

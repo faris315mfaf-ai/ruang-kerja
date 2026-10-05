@@ -13,9 +13,11 @@ return [
     */
 
     'reset' => 'Kata sandi Anda berhasil diatur ulang.',
-    'sent' => 'Tautan atur ulang kata sandi telah kami kirim ke email Anda.',
+    // Generic on purpose: never reveals whether an address is registered.
+    'sent' => 'Jika email tersebut terdaftar untuk login dengan kata sandi, tautan atur ulang telah kami kirim.',
     'throttled' => 'Mohon tunggu sebentar sebelum mencoba lagi.',
     'token' => 'Token atur ulang kata sandi ini tidak valid.',
-    'user' => 'Kami tidak menemukan pengguna dengan alamat email tersebut.',
+    // Same text as `token`: an unknown address must look like an invalid link.
+    'user' => 'Token atur ulang kata sandi ini tidak valid.',
 
 ];
