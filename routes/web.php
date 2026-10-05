@@ -6,8 +6,6 @@ use Illuminate\Support\Facades\Route;
 Route::redirect('/', '/dashboard')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
-
     // Mobile "Menu" tab (also reachable on desktop).
     Route::inertia('menu', 'menu')->name('menu');
 
@@ -38,3 +36,4 @@ require __DIR__.'/google.php';
 require __DIR__.'/organization.php';
 require __DIR__.'/workspaces.php';
 require __DIR__.'/drive.php';
+require __DIR__.'/dashboard.php';

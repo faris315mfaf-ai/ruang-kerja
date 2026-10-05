@@ -1,5 +1,6 @@
 <?php
 
+use App\Providers\AnalyticsServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\AttendanceServiceProvider;
 use App\Providers\FortifyServiceProvider;
@@ -18,4 +19,5 @@ return [
     RequestsServiceProvider::class,
     WorkspaceServiceProvider::class,
     NotificationServiceProvider::class,
+    AnalyticsServiceProvider::class,
 ];
