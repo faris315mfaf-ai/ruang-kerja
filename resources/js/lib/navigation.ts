@@ -9,6 +9,7 @@ import {
     Clock,
     FileText,
     FolderKanban,
+    Gauge,
     Home,
     Inbox,
     LayoutGrid,
@@ -122,9 +123,33 @@ export function canSeePortfolio(roles: readonly string[]): boolean {
     return hasAnyRole(roles, 'direksi', 'super_admin');
 }
 
-/** Main navigation for the signed-in roles: Portofolio right after Dashboard. */
+/**
+ * "Manajemen" (Dashboard Manajemen, /manajemen) for the holders of
+ * `dashboard.view_company`: Direksi, HR and Super Admin (Gate
+ * `viewManagementDashboard`).
+ */
+export const managementNavItem: AppNavItem = {
+    title: 'Manajemen',
+    href: '/manajemen',
+    icon: Gauge,
+    matchPrefix: true,
+};
+
+export function canSeeManagement(roles: readonly string[]): boolean {
+    return hasAnyRole(roles, 'direksi', 'hr', 'super_admin');
+}
+
+/**
+ * Main navigation for the signed-in roles: Portofolio right after Dashboard,
+ * then Manajemen.
+ */
 export function mainNavItemsFor(roles: readonly string[]): AppNavItem[] {
-    if (!canSeePortfolio(roles)) {
+    const extra = [
+        ...(canSeePortfolio(roles) ? [portfolioNavItem] : []),
+        ...(canSeeManagement(roles) ? [managementNavItem] : []),
+    ];
+
+    if (extra.length === 0) {
         return mainNavItems;
     }
 
@@ -132,7 +157,7 @@ export function mainNavItemsFor(roles: readonly string[]): AppNavItem[] {
 
     return [
         ...mainNavItems.slice(0, index + 1),
-        portfolioNavItem,
+        ...extra,
         ...mainNavItems.slice(index + 1),
     ];
 }

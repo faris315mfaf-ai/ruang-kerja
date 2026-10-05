@@ -11,6 +11,8 @@
 /* Sumber kebenaran warna, radius, font, glass. Lihat docs/DESIGN.md. */
 @import './tokens.css';
 @import './palette.css';
+/* Token Arus: page-scoped (.theme-arus) for the Manajemen pages. */
+@import './arus.css';
 @import './rich-text.css';
 
 @source '../views';

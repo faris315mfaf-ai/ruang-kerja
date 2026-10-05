@@ -3,6 +3,7 @@ import {
     activeTabIndex,
     adminNavItems,
     attendanceNavItems,
+    canSeeManagement,
     mainNavItems,
     mainNavItemsFor,
     organizationNavItems,
@@ -158,6 +159,7 @@ describe('navigation', () => {
             direksi: [
                 '/organisasi/struktur',
                 '/portofolio',
+                '/manajemen',
                 '/absensi/hari-ini',
             ],
             anggota: ['/organisasi/struktur'],
@@ -221,6 +223,44 @@ describe('navigation', () => {
         expect(hrefs(['anggota'])).toEqual(
             mainNavItems.map((item) => item.href),
         );
+    });
+
+    it('adds Manajemen once for Direksi, HR and Super Admin, after Portofolio', () => {
+        const hrefs = (roles: string[]) =>
+            mainNavItemsFor(roles).map((item) => item.href);
+
+        expect(hrefs(['direksi'])).toEqual([
+            '/inbox',
+            '/tugas',
+            '/dashboard',
+            '/portofolio',
+            '/manajemen',
+            '/absensi',
+            '/pengajuan',
+            '/persetujuan',
+        ]);
+        // HR has no Portofolio: Manajemen follows Dashboard.
+        expect(hrefs(['hr']).indexOf('/manajemen')).toBe(
+            hrefs(['hr']).indexOf('/dashboard') + 1,
+        );
+        expect(hrefs(['super_admin'])).toContain('/manajemen');
+        expect(hrefs(['kepala_divisi'])).not.toContain('/manajemen');
+        expect(hrefs(['anggota'])).not.toContain('/manajemen');
+
+        // Exactly once on desktop, whatever the role combination.
+        for (const roles of [['direksi'], ['hr'], ['super_admin'], ROLES]) {
+            expect(
+                desktopHrefs(roles).filter(
+                    (href) => href.href === '/manajemen',
+                ),
+            ).toHaveLength(1);
+        }
+
+        expect(ROLES.filter((role) => canSeeManagement([role]))).toEqual([
+            'super_admin',
+            'direksi',
+            'hr',
+        ]);
     });
 
     it('finds the tab that owns the current page for the sliding pill', () => {

@@ -75,4 +75,23 @@ describe('Dock', () => {
         // Attendance board still sits in the Admin stack.
         expect(screen.getByRole('button', { name: 'Admin' })).toBeTruthy();
     });
+
+    it('shows the Manajemen tile once to Direksi and HR, never to members', () => {
+        renderFor(['direksi']);
+        expect(
+            screen
+                .getAllByRole('link', { name: 'Manajemen' })
+                .map((link) => link.getAttribute('href')),
+        ).toEqual(['/manajemen']);
+        cleanup();
+
+        renderFor(['hr']);
+        expect(screen.getAllByRole('link', { name: 'Manajemen' })).toHaveLength(
+            1,
+        );
+        cleanup();
+
+        renderFor(['anggota']);
+        expect(screen.queryByRole('link', { name: 'Manajemen' })).toBeNull();
+    });
 });

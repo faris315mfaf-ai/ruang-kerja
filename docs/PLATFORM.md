@@ -49,6 +49,7 @@
 | Inbox & notifikasi | ✓ | ✓ | Geser untuk arsip/dibaca |
 | Cari | ✓ | ✓ | Layar penuh |
 | Dashboard Kadiv / HR | ✓ | ✓ | Versi ringkas 1 kolom |
+| Dashboard Manajemen (`/manajemen`) | ✓ | ✓ | Kartu bertumpuk: hero kehadiran + tugas, 2 tile KPI, grafik ringkas, daftar proyek, absensi, milestone (MgPDashboard) |
 | Portofolio & detail proyek (Direksi) | ✓ | ✓ | Tabel proyek → kartu proyek; roadmap hanya desktop (mobile: milestone berikutnya per kartu); "Minta update" & "Beri arahan" di bilah aksi bawah |
 | Pengaturan notifikasi & tema | ✓ | ✓ | Matriks → daftar accordion |
 | Admin karyawan | ✓ | ◐ | Cari & lihat profil. Tambah/ubah/impor di desktop |

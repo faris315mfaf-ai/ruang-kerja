@@ -63,6 +63,10 @@ const LOOKS: Record<string, { color: PaletteColor; motion: Motion }> = {
         color: 'violet',
         motion: { name: 'dock-tilt', duration: '1.8s' },
     },
+    '/manajemen': {
+        color: 'blue',
+        motion: { name: 'dock-lift', duration: '1.6s' },
+    },
     '/absensi': {
         color: 'orange',
         motion: { name: 'dock-drop', duration: '1.4s' },

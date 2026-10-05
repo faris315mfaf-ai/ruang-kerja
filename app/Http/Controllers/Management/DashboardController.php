@@ -1,0 +1,41 @@
+<?php
+
+namespace App\Http\Controllers\Management;
+
+use App\Domain\Analytics\Queries\ManagementDashboard;
+use App\Domain\Analytics\Services\DashboardAccess;
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Carbon\CarbonImmutable;
+use Illuminate\Container\Attributes\CurrentUser;
+use Illuminate\Support\Facades\Gate;
+use Inertia\Inertia;
+use Inertia\Response;
+
+/**
+ * /manajemen — Dashboard Manajemen (design MgDashboard): company summary for
+ * Direksi, HR and Super Admin (Gate `viewManagementDashboard`).
+ *
+ * The heavy blocks are deferred (skeleton first) and cached 5 minutes per
+ * viewer. The meeting & minutes module does not exist yet (PRD Fase 2):
+ * `agenda` and `notes` stay empty lists so the page shows its empty states.
+ */
+class DashboardController extends Controller
+{
+    public function __invoke(#[CurrentUser] User $user, ManagementDashboard $dashboard, DashboardAccess $access): Response
+    {
+        Gate::authorize('viewManagementDashboard');
+
+        $now = CarbonImmutable::now();
+
+        return Inertia::render('manajemen/dashboard', [
+            ...$dashboard->header($user, $now),
+            // "Semua proyek" links to the portfolio only for those who may open it (not HR).
+            'can' => ['portfolio' => $access->canSeePortfolio($user)],
+            'agenda' => [],
+            'notes' => [],
+            'summary' => Inertia::defer(fn (): array => $dashboard->summary($user, CarbonImmutable::now()), 'summary'),
+            'portfolio' => Inertia::defer(fn (): array => $dashboard->portfolio($user, CarbonImmutable::now()), 'portfolio'),
+        ]);
+    }
+}

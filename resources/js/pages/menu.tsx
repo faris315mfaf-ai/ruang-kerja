@@ -18,7 +18,9 @@ import { MenuWorkspaceGrid } from '@/features/workspaces/menu-workspace-grid';
 import {
     adminNavItems,
     attendanceNavItems,
+    canSeeManagement,
     canSeePortfolio,
+    managementNavItem,
     organizationNavItems,
     portfolioNavItem,
 } from '@/lib/navigation';
@@ -149,6 +151,13 @@ export default function Menu() {
                                 icon={portfolioNavItem.icon}
                                 label="Portofolio proyek"
                                 href={portfolioNavItem.href}
+                            />
+                        )}
+                        {canSeeManagement(auth.roles) && (
+                            <Row
+                                icon={managementNavItem.icon}
+                                label="Ringkasan manajemen"
+                                href={managementNavItem.href}
                             />
                         )}
                         <Row

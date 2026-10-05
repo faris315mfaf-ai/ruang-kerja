@@ -21,11 +21,12 @@ final class MetricCache
     /**
      * @template T
      *
+     * @param  DashboardView|string  $view  a dashboard view, or the key of a dashboard outside the picker (e.g. "manajemen")
      * @param  array<string, mixed>  $parts  scope fingerprint, filter, today …
      * @param  Closure(): T  $callback
      * @return T
      */
-    public function remember(DashboardView $view, User $viewer, string $block, array $parts, Closure $callback): mixed
+    public function remember(DashboardView|string $view, User $viewer, string $block, array $parts, Closure $callback): mixed
     {
         return $this->store()->remember(self::key($view, $viewer, $block, $parts), config()->integer('analytics.cache_ttl'), $callback);
     }
@@ -33,11 +34,11 @@ final class MetricCache
     /**
      * @param  array<string, mixed>  $parts
      */
-    public static function key(DashboardView $view, User $viewer, string $block, array $parts): string
+    public static function key(DashboardView|string $view, User $viewer, string $block, array $parts): string
     {
         ksort($parts);
 
-        return implode(':', [self::PREFIX, $view->value, $viewer->id, $block, sha1((string) json_encode($parts))]);
+        return implode(':', [self::PREFIX, $view instanceof DashboardView ? $view->value : $view, $viewer->id, $block, sha1((string) json_encode($parts))]);
     }
 
     private function store(): Repository

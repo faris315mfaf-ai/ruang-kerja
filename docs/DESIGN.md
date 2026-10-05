@@ -130,3 +130,13 @@ Ikon: **Lucide**, stroke 1.75, ukuran 16 (UI) / 20 (navigasi).
 - `--accent-blue` dan `--accent-green` untuk gradien, ikon, dan titik status. Teks berwarna memakai token semantik (`--info`, `--success`).
 - Fokus selalu terlihat. Seluruh aplikasi dapat dipakai dengan keyboard (termasuk pindah kartu: `Shift+→`).
 - Target sentuh ≥ 44px di ponsel.
+
+## 10. Token Arus — halaman Manajemen
+
+Halaman **Manajemen** (`/manajemen`, desain `docs/ruangkerja-design/screens/MgDashboard*.dc.html`) memakai tema "Arus" dari paket desain. Token-nya **berlaku hanya di dalam pembungkus `.theme-arus`** (`resources/css/arus.css`, diimpor dari `app.css`); token global di `tokens.css` tidak berubah.
+
+- Variabel `--arus-*`: latar, permukaan, permukaan 2, garis, garis tegas, teks / sekunder / samar, pasangan sukses · peringatan · bahaya · info · teal tautan (teks/latar), isian batang (amber, ungu, teal), gradien **aksi / merek / hangat / indigo**, bayangan, radius kontrol 12 · kartu 22 · panel 24, tinggi kontrol 44. Nilai mode malam ada di `.dark .theme-arus` (mengikuti `.dark` pada `<html>`), satu komponen untuk dua tema.
+- Utilitas Tailwind lewat `@theme inline`: `bg-arus-surface`, `text-arus-text-2`, `border-arus-border`, `rounded-arus-panel`, `shadow-arus-card`, `h-arus-control`; gradien sebagai utilitas `bg-arus-action`, `bg-arus-brand(-x/-y)`, `bg-arus-warm`, `bg-arus-indigo`, `bg-arus-highlight`, `bg-arus-page`. Komponen tidak memakai hex.
+- Huruf **Figtree** 400–800 di-host sendiri (`@fontsource/figtree`, CSP memblokir Google Fonts) dan hanya aktif di `.theme-arus`; kode/ID tetap JetBrains Mono. Ukuran isi 16px (ponsel ≥ 15–16px), judul halaman 44px desktop.
+- Halaman tetap memakai shell aplikasi (MenuBar + Dock / AppBar + TabBar); MenuBar/Dock milik desain tidak dirender.
+- Tab periode = WAI-ARIA tabs (←/→/Home/End), grafik punya tabel tersembunyi untuk pembaca layar.

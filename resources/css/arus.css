@@ -1,0 +1,208 @@
+/*
+ * Token "Arus" (docs/ruangkerja-design/README.md) — page-scoped design tokens
+ * for the Manajemen pages (design MgDashboard). Only inside `.theme-arus`;
+ * the global tokens in tokens.css are untouched. Night values follow the
+ * app's `.dark` on <html>. See docs/DESIGN.md "Token Arus — halaman Manajemen".
+ *
+ * Figtree is self-hosted (@fontsource) because the CSP blocks Google Fonts.
+ */
+@import '@fontsource/figtree/400.css';
+@import '@fontsource/figtree/500.css';
+@import '@fontsource/figtree/600.css';
+@import '@fontsource/figtree/700.css';
+@import '@fontsource/figtree/800.css';
+
+.theme-arus {
+    /* Surfaces & text (README "Token desain"). */
+    --arus-bg: #f3f6fa;
+    --arus-surface: #ffffff;
+    --arus-surface-2: #eef2f7;
+    --arus-border: #dde4ec;
+    --arus-border-strong: #c3ceda;
+    --arus-text: #0b1a2b;
+    --arus-text-2: #46576b;
+    --arus-text-3: #8495a8;
+
+    /* Semantic text / background pairs. */
+    --arus-success: #0f7a55;
+    --arus-success-bg: #e3f6ee;
+    --arus-warning: #9a5800;
+    --arus-warning-bg: #fff1dc;
+    --arus-danger: #c42137;
+    --arus-danger-bg: #fde7ea;
+    --arus-info: #1a4cb0;
+    --arus-info-bg: #e6eefe;
+    --arus-link: #09656e;
+    --arus-link-bg: #e8fbf8;
+
+    /* Fills for bars, dots and markers (same hues as the design data). */
+    --arus-fill-warning: #e08a00;
+    --arus-fill-danger: #c42137;
+    --arus-fill-violet: #6d4ae0;
+    --arus-fill-teal: #14b8a6;
+    --arus-accent: #1e5fd6;
+    --arus-marker: #0b1a2b;
+    --arus-on-gradient: #ffffff;
+
+    /* Gradients: aksi, merek, hangat, indigo. */
+    --arus-grad-action: linear-gradient(135deg, #0b7f86 0%, #1e5fd6 100%);
+    --arus-grad-brand: linear-gradient(135deg, #14b8a6 0%, #2f7bea 100%);
+    --arus-grad-brand-x: linear-gradient(90deg, #14b8a6 0%, #2f7bea 100%);
+    --arus-grad-brand-y: linear-gradient(180deg, #14b8a6 0%, #2f7bea 100%);
+    --arus-grad-warm: linear-gradient(135deg, #c2410c 0%, #be185d 100%);
+    --arus-grad-indigo: linear-gradient(135deg, #2f7bea 0%, #6d4ae0 100%);
+    --arus-glow: rgb(255 255 255 / 0.22);
+    --arus-badge-bg: rgb(255 255 255 / 0.75);
+    --arus-page-glow:
+        radial-gradient(
+            1000px 480px at 0% 0%,
+            rgb(20 184 166 / 0.2),
+            transparent 65%
+        ),
+        radial-gradient(
+            1000px 480px at 100% 0%,
+            rgb(47 123 234 / 0.18),
+            transparent 65%
+        );
+
+    /* Elevation. */
+    --arus-shadow-card:
+        0 1px 2px rgb(11 26 43 / 0.06), 0 8px 24px rgb(11 26 43 / 0.06);
+    --arus-shadow-action: 0 12px 28px rgb(30 95 214 / 0.3);
+    --arus-shadow-warm: 0 12px 28px rgb(190 24 93 / 0.24);
+
+    /* Shape & size. */
+    --arus-radius-control: 12px;
+    --arus-radius-card: 22px;
+    --arus-radius-panel: 24px;
+    --arus-control: 44px;
+
+    font-family: 'Figtree', ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+    color: var(--arus-text);
+    -webkit-font-smoothing: antialiased;
+    color-scheme: light;
+}
+
+/* Mode malam (MgDashboardMalam). */
+.dark .theme-arus {
+    --arus-bg: #070b14;
+    --arus-surface: #0f1622;
+    --arus-surface-2: #172131;
+    --arus-border: #233247;
+    --arus-border-strong: #34465e;
+    --arus-text: #eaf1f8;
+    --arus-text-2: #a6b4c6;
+    --arus-text-3: #7d8fa5;
+
+    --arus-success: #4ade9b;
+    --arus-success-bg: #0e2a20;
+    --arus-warning: #f6b95c;
+    --arus-warning-bg: #2e2210;
+    --arus-danger: #ff7a8a;
+    --arus-danger-bg: #3a1520;
+    --arus-info: #a9c2ff;
+    --arus-info-bg: #14223f;
+    --arus-link: #5ad6c8;
+    --arus-link-bg: #0e2a2c;
+
+    --arus-fill-danger: #ff7a8a;
+    --arus-marker: #3b4f6b;
+    --arus-badge-bg: rgb(15 22 34 / 0.75);
+
+    --arus-shadow-card:
+        0 1px 2px rgb(0 0 0 / 0.15), 0 8px 24px rgb(0 0 0 / 0.15);
+
+    color-scheme: dark;
+}
+
+/* Tailwind utilities: bg-arus-surface, text-arus-text-2, border-arus-border … */
+@theme inline {
+    --color-arus-bg: var(--arus-bg);
+    --color-arus-surface: var(--arus-surface);
+    --color-arus-surface-2: var(--arus-surface-2);
+    --color-arus-border: var(--arus-border);
+    --color-arus-border-strong: var(--arus-border-strong);
+    --color-arus-text: var(--arus-text);
+    --color-arus-text-2: var(--arus-text-2);
+    --color-arus-text-3: var(--arus-text-3);
+    --color-arus-success: var(--arus-success);
+    --color-arus-success-bg: var(--arus-success-bg);
+    --color-arus-warning: var(--arus-warning);
+    --color-arus-warning-bg: var(--arus-warning-bg);
+    --color-arus-danger: var(--arus-danger);
+    --color-arus-danger-bg: var(--arus-danger-bg);
+    --color-arus-info: var(--arus-info);
+    --color-arus-info-bg: var(--arus-info-bg);
+    --color-arus-link: var(--arus-link);
+    --color-arus-link-bg: var(--arus-link-bg);
+    --color-arus-fill-warning: var(--arus-fill-warning);
+    --color-arus-fill-danger: var(--arus-fill-danger);
+    --color-arus-fill-violet: var(--arus-fill-violet);
+    --color-arus-fill-teal: var(--arus-fill-teal);
+    --color-arus-accent: var(--arus-accent);
+    --color-arus-marker: var(--arus-marker);
+    --color-arus-on-gradient: var(--arus-on-gradient);
+    --color-arus-badge: var(--arus-badge-bg);
+
+    --radius-arus-control: var(--arus-radius-control);
+    --radius-arus-card: var(--arus-radius-card);
+    --radius-arus-panel: var(--arus-radius-panel);
+
+    --shadow-arus-card: var(--arus-shadow-card);
+    --shadow-arus-action: var(--arus-shadow-action);
+    --shadow-arus-warm: var(--arus-shadow-warm);
+}
+
+/* Gradient fills (background-image, so a bg-* colour can sit underneath). */
+@utility bg-arus-action {
+    background-image: var(--arus-grad-action);
+}
+
+@utility bg-arus-brand {
+    background-image: var(--arus-grad-brand);
+}
+
+@utility bg-arus-brand-x {
+    background-image: var(--arus-grad-brand-x);
+}
+
+@utility bg-arus-brand-y {
+    background-image: var(--arus-grad-brand-y);
+}
+
+@utility bg-arus-warm {
+    background-image: var(--arus-grad-warm);
+}
+
+@utility bg-arus-indigo {
+    background-image: var(--arus-grad-indigo);
+}
+
+/* Highlight KPI card: soft light in the corner over the action gradient. */
+@utility bg-arus-highlight {
+    background-image:
+        radial-gradient(
+            240px 160px at 100% 0%,
+            var(--arus-glow),
+            transparent 70%
+        ),
+        var(--arus-grad-action);
+}
+
+/* Page background with the two corner glows. */
+@utility bg-arus-page {
+    background-color: var(--arus-bg);
+    background-image: var(--arus-page-glow);
+    background-repeat: no-repeat;
+}
+
+@utility h-arus-control {
+    height: var(--arus-control);
+}
+
+@utility min-h-arus-control {
+    min-height: var(--arus-control);
+}
