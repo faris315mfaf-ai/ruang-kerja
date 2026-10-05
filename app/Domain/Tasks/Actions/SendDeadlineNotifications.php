@@ -3,6 +3,7 @@
 namespace App\Domain\Tasks\Actions;
 
 use App\Domain\Notifications\Enums\NotificationType;
+use App\Domain\Notifications\Services\NotificationDispatchLog;
 use App\Domain\Notifications\Services\NotificationHistory;
 use App\Domain\Tasks\Notifications\TaskDueSoonNotification;
 use App\Domain\Tasks\Notifications\TaskOverdueNotification;
@@ -23,7 +24,10 @@ use Illuminate\Database\Eloquent\Builder;
  *   while no unresolved reminder exists for that task and assignee (resolved
  *   when the task closes or the due date moves — MoveTask / UpdateTask).
  *
- * Archived workspaces and tasks without assignees are skipped. Idempotent.
+ * Archived workspaces and tasks without assignees are skipped. Idempotent
+ * whatever channels people enabled: besides the Inbox row, every reminder is
+ * claimed in `notification_dispatch_logs` (type, task, recipient, due date), so
+ * e-mail-only recipients are not reminded again every day.
  *
  * @phpstan-type Report array{due_soon: int, overdue: int}
  */
@@ -32,6 +36,7 @@ final class SendDeadlineNotifications
     public function __construct(
         private readonly NotificationHistory $history,
         private readonly TaskAudience $audience,
+        private readonly NotificationDispatchLog $dispatchLog,
     ) {}
 
     /**
@@ -47,7 +52,8 @@ final class SendDeadlineNotifications
             ->chunkById(200, function ($tasks) use ($now, &$report): void {
                 foreach ($tasks as $task) {
                     foreach ($this->recipients($task) as $user) {
-                        if (! $this->history->wasSent($user, NotificationType::TaskDueSoon, $task, since: $now->subHours(20))) {
+                        if (! $this->history->wasSent($user, NotificationType::TaskDueSoon, $task, since: $now->subHours(20))
+                            && $this->dispatchLog->claim($user, NotificationType::TaskDueSoon, $task, (string) $task->due_date?->toDateString())) {
                             $user->notify(new TaskDueSoonNotification($task));
                             $report['due_soon']++;
                         }
@@ -69,7 +75,8 @@ final class SendDeadlineNotifications
                     foreach ($this->recipients($task) as $user) {
                         // One open reminder at a time: a resolved one (due date moved, task
                         // reopened) allows a new reminder when the task is late again.
-                        if (! $this->hasOpenOverdueReminder($user, $task)) {
+                        if (! $this->hasOpenOverdueReminder($user, $task)
+                            && $this->dispatchLog->claim($user, NotificationType::TaskOverdue, $task, $due->toDateString())) {
                             $user->notify(new TaskOverdueNotification($task, $daysLate));
                             $report['overdue']++;
                         }

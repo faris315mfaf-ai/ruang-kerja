@@ -3,6 +3,7 @@
 namespace App\Domain\Tasks\Actions;
 
 use App\Domain\Notifications\Enums\NotificationType;
+use App\Domain\Notifications\Services\NotificationDispatchLog;
 use App\Models\InboxNotification;
 use App\Models\Task;
 use App\Models\User;
@@ -18,6 +19,8 @@ use App\Models\Workspace;
  */
 final class ResolveOverdueNotices
 {
+    public function __construct(private readonly NotificationDispatchLog $dispatchLog) {}
+
     /**
      * @param  list<string>|null  $recipientIds  null = every recipient
      * @return int number of notifications resolved
@@ -36,11 +39,12 @@ final class ResolveOverdueNotices
             ->where('action_required', true)
             ->whereNull('resolved_at');
 
-        if ($scope instanceof Task) {
-            $query->where('subject_id', $scope->id);
-        } else {
-            $query->whereIn('subject_id', Task::query()->withTrashed()->where('workspace_id', $scope->id)->select('id'));
-        }
+        $subjectIds = $scope instanceof Task
+            ? [$scope->id]
+            : Task::query()->withTrashed()->where('workspace_id', $scope->id)->select('id')->toBase();
+
+        $query->whereIn('subject_id', $subjectIds);
+        $this->dispatchLog->release(NotificationType::TaskOverdue, $taskMorph, $subjectIds, $recipientIds);
 
         if ($recipientIds !== null) {
             $query->where('notifiable_type', (new User)->getMorphClass())
