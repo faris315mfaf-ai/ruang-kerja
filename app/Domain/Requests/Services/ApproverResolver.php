@@ -88,19 +88,34 @@ final class ApproverResolver
     }
 
     /**
-     * Active delegate standing in for $approver on the office date, if any.
+     * Active delegate standing in for $approver on the office date, following
+     * chains (A → B while B → C: C). Stops at a cycle or an inactive delegate
+     * (the last active person wins); null when nobody stands in.
      */
     public function activeDelegate(User $approver, string $date): ?User
     {
-        $delegation = ApprovalDelegation::query()
-            ->where('delegator_id', $approver->id)
-            ->activeOn($date)
-            ->latest('starts_on')
-            ->with('delegate')
-            ->first();
+        $visited = [$approver->id => true];
+        $current = $approver;
 
-        $delegate = $delegation?->delegate;
+        for ($hops = 0; $hops < 10; $hops++) {
+            $delegation = ApprovalDelegation::query()
+                ->where('delegator_id', $current->id)
+                ->activeOn($date)
+                ->orderByDesc('starts_on')
+                ->orderBy('id')
+                ->with('delegate')
+                ->first();
 
-        return $delegate !== null && $delegate->isActive() ? $delegate : null;
+            $delegate = $delegation?->delegate;
+
+            if ($delegate === null || ! $delegate->isActive() || isset($visited[$delegate->id])) {
+                break;
+            }
+
+            $visited[$delegate->id] = true;
+            $current = $delegate;
+        }
+
+        return $current->is($approver) ? null : $current;
     }
 }
