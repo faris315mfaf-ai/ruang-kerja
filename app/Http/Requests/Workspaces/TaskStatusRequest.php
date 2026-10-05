@@ -4,6 +4,7 @@ namespace App\Http\Requests\Workspaces;
 
 use App\Domain\Tasks\Enums\PaletteColor;
 use App\Domain\Tasks\Enums\TaskStatusCategory;
+use App\Http\Requests\Concerns\HidesInvisibleWorkspaces;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -14,10 +15,7 @@ use Illuminate\Validation\Rule;
  */
 class TaskStatusRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
+    use HidesInvisibleWorkspaces;
 
     /**
      * @return array<string, ValidationRule|array<mixed>|string>

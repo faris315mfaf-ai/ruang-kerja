@@ -16,6 +16,7 @@ use App\Http\Controllers\Workspaces\WorkspaceTaskController;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -32,7 +33,9 @@ Route::bind('workspace', function (string $value): Workspace {
         ? Workspace::query()->find(strtolower($value))
         : Workspace::findByKey($value, $companyId);
 
-    abort_if($workspace === null, 404);
+    // Never reveal whether a workspace (or an old key) exists to someone who may
+    // not see it: 404 before any redirect, validation or controller code.
+    abort_if($workspace === null || ! $user instanceof User || Gate::forUser($user)->denies('view', $workspace), 404);
 
     // Old or lower-case key in a page URL → canonical /w/{KEY}.
     if (strlen($value) !== 26 && $value !== $workspace->key && $request->isMethod('GET')) {
