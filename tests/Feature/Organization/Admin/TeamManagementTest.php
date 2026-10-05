@@ -129,3 +129,20 @@ it('forbids team management to other roles', function (Role $role) {
     $this->actingAs($actor)->put("/admin/organisasi/tim/{$team->id}", ['division_id' => $team->division_id, 'name' => 'X'])->assertForbidden();
     $this->actingAs($actor)->delete("/admin/organisasi/tim/{$team->id}")->assertForbidden();
 })->with([Role::Direksi, Role::KepalaDivisi, Role::Anggota]);
+
+it('keeps an already-inactive lead on unrelated edits but rejects switching to an inactive lead', function () {
+    $hr = User::factory()->withRole(Role::Hr)->create();
+    $division = Division::factory()->forCompany($hr->company)->create();
+    $staleLead = User::factory()->forCompany($hr->company)->inactive()->create();
+    $team = Team::factory()->for($division)->ledBy($staleLead)->create(['name' => 'Tim Gudang']);
+
+    $this->actingAs($hr)
+        ->put("/admin/organisasi/tim/{$team->id}", ['division_id' => $division->id, 'name' => 'Tim Logistik', 'lead_user_id' => $staleLead->id])
+        ->assertSessionHasNoErrors();
+
+    expect($team->refresh()->name)->toBe('Tim Logistik');
+
+    $this->actingAs($hr)
+        ->put("/admin/organisasi/tim/{$team->id}", ['division_id' => $division->id, 'name' => 'Tim Logistik', 'lead_user_id' => User::factory()->forCompany($hr->company)->inactive()->create()->id])
+        ->assertSessionHasErrors(['lead_user_id' => 'Ketua tim harus karyawan aktif di perusahaan ini.']);
+});

@@ -49,7 +49,8 @@ class TeamRequest extends OrganizationRequest
                     ->whereNull('deleted_at')
                     ->ignore($teamId),
             ],
-            'lead_user_id' => ['nullable', 'string', $this->activeEmployee()],
+            // Only a changed lead must be active (see DivisionRequest).
+            'lead_user_id' => ['nullable', 'string', ...$this->unlessUnchanged($team instanceof Team ? $team->lead_user_id : null, 'lead_user_id')],
         ];
     }
 

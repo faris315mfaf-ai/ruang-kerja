@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Google\Jobs\RevokeGoogleToken;
 use App\Domain\Organization\Actions\CreateEmployee;
 use App\Domain\Organization\Actions\DeactivateEmployee;
 use App\Domain\Organization\Actions\ReactivateEmployee;
@@ -12,10 +13,14 @@ use App\Domain\Organization\Enums\WorkMode;
 use App\Domain\Organization\Services\EmployeeDirectory;
 use App\Http\Presenters\EmployeePresenter;
 use App\Models\AuditLog;
+use App\Models\Division;
+use App\Models\GoogleAccount;
+use App\Models\Team;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
@@ -135,4 +140,74 @@ it('escapes LIKE wildcards in the search term', function () {
     $result = app(EmployeeDirectory::class)->query($this->hr, new EmployeeFilters(search: '%'))->pluck('name')->all();
 
     expect($result)->toBe(['Persen 100%']);
+});
+
+describe('leadership clean-up', function () {
+    beforeEach(function () {
+        $this->ops = Division::factory()->create(['code' => 'OPS']);
+        $this->keu = Division::factory()->forCompany($this->ops->company)->create(['code' => 'KEU']);
+        $this->head = User::factory()->withRole(Role::KepalaDivisi)->inDivision($this->ops)->create();
+        $this->ops->forceFill(['head_user_id' => $this->head->id])->saveQuietly();
+        $this->gudang = Team::factory()->for($this->ops)->ledBy($this->head)->create();
+        $this->kirim = Team::factory()->for($this->ops)->create();
+        $this->head->update(['team_id' => $this->gudang->id]);
+        $this->member = User::factory()->inDivision($this->ops)->create();
+    });
+
+    function moveData(User $user, ?string $divisionId, ?string $teamId, array $roles = []): EmployeeData
+    {
+        return new EmployeeData(
+            name: $user->name, email: $user->email, divisionId: $divisionId, teamId: $teamId, positionId: null,
+            managerId: null, workMode: WorkMode::Office, joinedAt: null, roles: $roles, nik: null,
+        );
+    }
+
+    it('clears the division head and team lead (audited) and revokes Google on deactivation', function () {
+        Queue::fake();
+        GoogleAccount::factory()->for($this->head)->create(['refresh_token' => '1//refresh']);
+
+        app(DeactivateEmployee::class)->handle($this->hr, $this->head, UserStatus::Resigned, 'Resign');
+
+        expect($this->ops->refresh()->head_user_id)->toBeNull()
+            ->and($this->gudang->refresh()->lead_user_id)->toBeNull()
+            ->and(GoogleAccount::query()->where('user_id', $this->head->id)->exists())->toBeFalse();
+
+        $divisionLog = AuditLog::query()->where('auditable_id', $this->ops->id)->where('action', 'division.updated')->sole();
+        $teamLog = AuditLog::query()->where('auditable_id', $this->gudang->id)->where('action', 'team.updated')->sole();
+
+        expect($divisionLog->old_values)->toBe(['head_user_id' => $this->head->id])
+            ->and($divisionLog->new_values)->toBe(['head_user_id' => null])
+            ->and($divisionLog->user_id)->toBe($this->hr->id)
+            ->and($teamLog->new_values)->toBe(['lead_user_id' => null]);
+
+        Queue::assertPushed(RevokeGoogleToken::class, fn (RevokeGoogleToken $job) => $job->token === '1//refresh');
+
+        // The visibility scope no longer sees a led division through the stale head.
+        $this->head->status = UserStatus::Active;
+        $this->head->syncRoles([Role::Anggota->value]);
+        expect($this->head->ledDivisionIds())->toBe([]);
+    });
+
+    it('releases the old division and team when the head moves elsewhere', function () {
+        app(UpdateEmployee::class)->handle($this->hr, $this->head, moveData($this->head, $this->keu->id, null));
+
+        expect($this->ops->refresh()->head_user_id)->toBeNull()
+            ->and($this->gudang->refresh()->lead_user_id)->toBeNull()
+            ->and(AuditLog::query()->where('auditable_id', $this->ops->id)->where('action', 'division.updated')->count())->toBe(1);
+    });
+
+    it('releases only the team lead when moving to another team of the same division', function () {
+        app(UpdateEmployee::class)->handle($this->hr, $this->head, moveData($this->head, $this->ops->id, $this->kirim->id));
+
+        expect($this->ops->refresh()->head_user_id)->toBe($this->head->id)
+            ->and($this->gudang->refresh()->lead_user_id)->toBeNull();
+    });
+
+    it('keeps leadership on unrelated edits', function () {
+        app(UpdateEmployee::class)->handle($this->hr, $this->head, moveData($this->head, $this->ops->id, $this->gudang->id));
+
+        expect($this->ops->refresh()->head_user_id)->toBe($this->head->id)
+            ->and($this->gudang->refresh()->lead_user_id)->toBe($this->head->id)
+            ->and(AuditLog::query()->whereIn('action', ['division.updated', 'team.updated'])->count())->toBe(0);
+    });
 });

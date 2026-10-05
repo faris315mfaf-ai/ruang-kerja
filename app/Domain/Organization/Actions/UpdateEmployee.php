@@ -4,6 +4,7 @@ namespace App\Domain\Organization\Actions;
 
 use App\Domain\Organization\Data\EmployeeData;
 use App\Domain\Organization\Services\EmployeeProfileWriter;
+use App\Domain\Organization\Services\LeadershipReleaser;
 use App\Domain\Organization\Services\RoleChangeGuard;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\DB;
  * Updates an employee's master data, roles and profile. Field changes are audited
  * by the Auditable trait (`user.updated`), roles by SyncUserRoles. Input must
  * already be validated (company email, ValidManager, team within division).
+ * Moving out of a division/team releases its head/lead (LeadershipReleaser).
  */
 final readonly class UpdateEmployee
 {
@@ -19,11 +21,15 @@ final readonly class UpdateEmployee
         private SyncUserRoles $syncRoles,
         private RoleChangeGuard $roleGuard,
         private EmployeeProfileWriter $profiles,
+        private LeadershipReleaser $leadership,
     ) {}
 
     public function handle(User $actor, User $employee, EmployeeData $data): User
     {
         return DB::transaction(function () use ($actor, $employee, $data): User {
+            $oldDivisionId = $employee->division_id;
+            $oldTeamId = $employee->team_id;
+
             $employee->fill([
                 'name' => $data->name,
                 'email' => $data->email,
@@ -41,6 +47,9 @@ final readonly class UpdateEmployee
             }
 
             $employee->save();
+
+            // Leaving a division/team ends heading/leading it.
+            $this->leadership->releaseLeft($employee, $oldDivisionId, $oldTeamId, $actor);
 
             if ($data->roles !== []) {
                 $before = RoleChangeGuard::rolesOf($employee);
