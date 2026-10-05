@@ -12,7 +12,7 @@ Branch `feat/sprint-1-struktur`, berbasis `feat/sprint-1-core` (lihat `CORE.md`)
 | FormRequest | `Organization/DivisionRequest`, `TeamRequest`, `PositionRequest`, `Admin/AuditLogIndexRequest` |
 | Controller | `Organization/DivisionController`, `TeamController`, `PositionController`, `OrganizationChartController`, `Admin/AuditLogController` |
 | Rute | `routes/organization.php` (satu `require` di `web.php`) |
-| Policy | Dari core. Tambahan kecil: `DivisionPolicy::manage` (halaman admin organisasi). |
+| Policy | Dari core, tanpa perubahan. Halaman admin memakai ability `create` (organization.manage). Tambahan kecil: scope `AuditLog::visibleTo`. |
 
 Aturan:
 - Kode divisi: wajib, huruf besar (dinormalisasi), alfanumerik, maks 10, unik per perusahaan **termasuk yang terhapus**.
