@@ -3,6 +3,9 @@
 namespace App\Domain\Google\Jobs;
 
 use App\Domain\Google\Contracts\HasDriveFolder;
+use App\Domain\Google\Events\DrivePermissionsSynced;
+use App\Domain\Google\Events\DrivePermissionsSyncFailed;
+use App\Domain\Google\Exceptions\GoogleException;
 use App\Domain\Google\Jobs\Concerns\HandlesGoogleFailures;
 use App\Domain\Google\Services\DriveFolderService;
 use App\Domain\Google\Services\DrivePermissionSync;
@@ -10,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Queue\Queueable;
+use Throwable;
 
 /**
  * Creates the owner's folder in the Shared Drive (idempotent) and, when it
@@ -40,9 +44,20 @@ final class CreateDriveFolder implements ShouldBeUnique, ShouldQueue
             $folder = $folders->ensure($this->owner);
 
             if ($folder->needsPermissionSync()) {
-                $permissions->sync($folder->folderId, $this->owner->driveMembers());
+                $members = $this->owner->driveMembers();
+                $result = $permissions->sync($folder->folderId, $members);
+
+                DrivePermissionsSynced::dispatch($this->owner, $folder->folderId, $members, $result);
             }
         });
+    }
+
+    public function failed(?Throwable $exception): void
+    {
+        DrivePermissionsSyncFailed::dispatch(
+            $this->owner,
+            $exception instanceof GoogleException ? $exception->errorCode() : 'sync_failed',
+        );
     }
 
     protected function subject(): string

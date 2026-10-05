@@ -38,9 +38,24 @@ export type AdminHoliday = {
 
 export type Option = { value: string; label: string };
 
+export type AdminKiosk = {
+    id: string;
+    name: string;
+    code: string;
+    officeLocationId: string;
+    locationName: string;
+    isActive: boolean;
+    isPaired: boolean;
+    activatedAt: string | null;
+    lastSeenAt: string | null;
+    pendingActivationUntil: string | null;
+    url: string;
+};
+
 export type AttendanceSettingsProps = {
     locations: AdminLocation[];
     shifts: AdminShift[];
+    kiosks: AdminKiosk[];
     holidays: AdminHoliday[];
     holidayYear: number | null;
     holidayYears: number[];

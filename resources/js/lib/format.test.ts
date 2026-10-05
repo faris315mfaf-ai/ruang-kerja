@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import {
+    formatLongDate,
     OFFICE_TIMEZONE,
     formatDate,
     formatDateTime,
@@ -191,5 +192,18 @@ describe('formatPercent', () => {
 
     it('returns a placeholder for empty values', () => {
         expect(formatPercent(undefined)).toBe('–');
+    });
+});
+
+describe('formatLongDate', () => {
+    it('writes the full weekday and month in the office timezone', () => {
+        expect(formatLongDate('2026-10-05T00:52:00Z')).toBe(
+            'Senin, 5 Oktober 2026',
+        );
+        // 23.30 UTC on Sunday is already Monday in Jakarta.
+        expect(formatLongDate('2026-10-04T23:30:00Z')).toBe(
+            'Senin, 5 Oktober 2026',
+        );
+        expect(formatLongDate(null)).toBe('–');
     });
 });

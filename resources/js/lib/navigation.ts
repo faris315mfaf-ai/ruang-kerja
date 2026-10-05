@@ -1,6 +1,8 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+    BarChart3,
     Building2,
+    ClipboardCheck,
     CheckCheck,
     CircleCheck,
     Clock,
@@ -98,6 +100,30 @@ export const tabNavItems: AppNavItem[] = [
     { title: 'Inbox', href: '/inbox', icon: Inbox, matchPrefix: true },
     { title: 'Menu', href: '/menu', icon: Menu },
 ];
+
+/**
+ * Team attendance (Sprint 3): live board for HR, Direksi, Super Admin and
+ * Kepala Divisi; the monthly recap & export is desktop only.
+ */
+export function attendanceNavItems(roles: readonly string[]): AppNavItem[] {
+    if (!hasAnyRole(roles, 'super_admin', 'hr', 'direksi', 'kepala_divisi')) {
+        return [];
+    }
+
+    return [
+        {
+            title: 'Absensi hari ini',
+            href: '/absensi/hari-ini',
+            icon: ClipboardCheck,
+        },
+        {
+            title: 'Rekap absensi',
+            href: '/absensi/rekap',
+            icon: BarChart3,
+            desktopOnly: true,
+        },
+    ];
+}
 
 /** Admin entries depend on global roles. */
 export function adminNavItems(roles: readonly string[]): AppNavItem[] {

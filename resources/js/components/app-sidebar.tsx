@@ -18,7 +18,12 @@ import { SidebarWorkspaces } from '@/features/workspaces/sidebar-workspaces';
 import { useUnreadCount } from '@/features/notifications/unread-store';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { AppNavItem } from '@/lib/navigation';
-import { adminNavItems, isActivePath, mainNavItemsFor } from '@/lib/navigation';
+import {
+    adminNavItems,
+    attendanceNavItems,
+    isActivePath,
+    mainNavItemsFor,
+} from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 
 function NavList({ items }: { items: AppNavItem[] }) {
@@ -63,7 +68,10 @@ function NavList({ items }: { items: AppNavItem[] }) {
 
 export function AppSidebar({ className }: { className?: string }) {
     const { auth } = usePage().props;
-    const adminItems = adminNavItems(auth.roles);
+    const adminItems = [
+        ...attendanceNavItems(auth.roles),
+        ...adminNavItems(auth.roles),
+    ];
 
     return (
         <Sidebar

@@ -28,6 +28,7 @@ class AttendanceSettingsController extends Controller
         return Inertia::render('admin/attendance/index', [
             'locations' => $data->locations($user),
             'shifts' => $data->shifts($user),
+            'kiosks' => $data->kiosks($user),
             'holidays' => $data->holidays($user, $year),
             'holidayYear' => $year,
             'holidayYears' => $data->holidayYears($user),

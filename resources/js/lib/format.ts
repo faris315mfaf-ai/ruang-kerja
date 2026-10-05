@@ -26,6 +26,14 @@ const dateParts = new Intl.DateTimeFormat(LOCALE, {
     timeZone: OFFICE_TIMEZONE,
 });
 
+const longDateParts = new Intl.DateTimeFormat(LOCALE, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: OFFICE_TIMEZONE,
+});
+
 const timeParts = new Intl.DateTimeFormat(LOCALE, {
     hour: '2-digit',
     minute: '2-digit',
@@ -74,6 +82,19 @@ export function formatDate(value: DateInput | null | undefined): string {
 
     // Assembled from parts so the output does not depend on ICU punctuation.
     const parts = dateParts.formatToParts(date);
+
+    return `${part(parts, 'weekday')}, ${part(parts, 'day')} ${part(parts, 'month')} ${part(parts, 'year')}`;
+}
+
+/** "Senin, 5 Oktober 2026" in the office timezone (kiosk, page headers). */
+export function formatLongDate(value: DateInput | null | undefined): string {
+    const date = toDate(value);
+
+    if (!date) {
+        return EMPTY;
+    }
+
+    const parts = longDateParts.formatToParts(date);
 
     return `${part(parts, 'weekday')}, ${part(parts, 'day')} ${part(parts, 'month')} ${part(parts, 'year')}`;
 }

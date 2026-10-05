@@ -237,16 +237,16 @@ describe('SyncDriveFolderContents', function () {
         $doc = $this->drive->seedFile('Brief', 'application/vnd.google-apps.document', $folder->id);
         $pdf = $this->drive->seedFile('Wireframe v2.pdf', 'application/pdf', $folder->id, 2_400_000, 'sari@demo.test');
         $this->drive->seedFolder('Materi desain', $folder->id);
-        $picked = DriveFile::factory()->create(['workspace_id' => $this->owner->id, 'parent_google_id' => 'somewhere-else']);
+        $picked = DriveFile::factory()->create(['workspace_id' => $this->owner->workspace_id, 'parent_google_id' => 'somewhere-else']);
 
-        SyncDriveFolderContents::dispatch($this->owner->id, $folder->id);
+        SyncDriveFolderContents::dispatch($this->owner->workspace_id, $folder->id);
 
         expect(DriveFile::query()->inFolder($folder->id)->pluck('name')->sort()->values()->all())
             ->toBe(['Brief', 'Materi desain', 'Wireframe v2.pdf'])
             ->and(DriveFile::query()->where('google_file_id', $pdf->id)->value('size_bytes'))->toBe(2_400_000);
 
         $this->drive->forget($doc->id);
-        app(DriveFolderContentsSync::class)->sync($this->owner->id, $folder->id);
+        app(DriveFolderContentsSync::class)->sync($this->owner->workspace_id, $folder->id);
 
         expect(DriveFile::query()->inFolder($folder->id)->count())->toBe(2)
             ->and(DriveFile::withTrashed()->where('google_file_id', $doc->id)->first()?->trashed())->toBeTrue()
@@ -258,9 +258,9 @@ describe('SyncDriveFolderContents', function () {
         $file = $this->drive->seedFile('a.pdf', 'application/pdf', $folder->id, 1);
         $sync = app(DriveFolderContentsSync::class);
 
-        $sync->sync($this->owner->id, $folder->id);
+        $sync->sync($this->owner->workspace_id, $folder->id);
         DriveFile::query()->where('google_file_id', $file->id)->delete();
-        $sync->sync($this->owner->id, $folder->id);
+        $sync->sync($this->owner->workspace_id, $folder->id);
 
         expect(DriveFile::query()->where('google_file_id', $file->id)->exists())->toBeTrue();
     });
@@ -272,13 +272,13 @@ describe('SyncDriveFolderContents', function () {
 
         expect($sync->isStale($folder->id))->toBeTrue();
 
-        $sync->sync($this->owner->id, $folder->id);
+        $sync->sync($this->owner->workspace_id, $folder->id);
         expect($sync->isStale($folder->id))->toBeFalse();
 
         $this->travel(6)->minutes();
         expect($sync->isStale($folder->id))->toBeTrue();
 
-        $sync->sync($this->owner->id, $folder->id);
+        $sync->sync($this->owner->workspace_id, $folder->id);
         $sync->markStale($folder->id);
         expect($sync->isStale($folder->id))->toBeTrue();
     });

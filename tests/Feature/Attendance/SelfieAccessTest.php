@@ -81,3 +81,46 @@ test('there is no public path to the selfie disk', function () {
         expect($this->actingAs($this->employee)->get($path)->status())->toBeIn([403, 404]);
     }
 });
+
+test('a Kepala Divisi of another division cannot view the selfie', function () {
+    $otherDivision = Division::factory()->create(['name' => 'Keuangan']);
+    $otherKadiv = User::factory()->withRole(Role::KepalaDivisi)->inDivision($otherDivision)->create();
+    $otherDivision->update(['head_user_id' => $otherKadiv->id]);
+    $url = (string) app(SelfieStorage::class)->temporaryUrl($this->log);
+
+    $this->actingAs($otherKadiv)->get($url)->assertForbidden();
+    $this->actingAs($otherKadiv)->getJson(route('attendance.logs.selfie-url', $this->log))->assertForbidden();
+
+    expect(AuditLog::query()->where('action', 'selfie.viewed')->count())->toBe(0);
+});
+
+test('every selfie access is audited, including the employee viewing their own', function () {
+    $hr = User::factory()->withRole(Role::Hr)->create();
+    $url = (string) app(SelfieStorage::class)->temporaryUrl($this->log);
+
+    $this->actingAs($this->employee)->get($url)->assertOk();
+    $this->actingAs($hr)->get($url)->assertOk();
+    $this->actingAs($hr)->get($url)->assertOk();
+
+    $rows = AuditLog::query()->where('action', 'selfie.viewed')->orderBy('created_at')->orderBy('id')->get();
+
+    expect($rows)->toHaveCount(3)
+        ->and($rows->pluck('user_id')->countBy()->all())->toEqual([$this->employee->id => 1, $hr->id => 2])
+        ->and($rows->every(fn (AuditLog $row) => $row->auditable_id === $this->log->id))->toBeTrue()
+        ->and($rows->firstWhere('user_id', $this->employee->id)?->new_values)->toMatchArray(['own' => true, 'employee_id' => $this->employee->id]);
+});
+
+test('HR and the direct manager get a fresh signed URL on demand; the URL request itself is not a view', function () {
+    $hr = User::factory()->withRole(Role::Hr)->create();
+
+    $url = (string) $this->actingAs($hr)->getJson(route('attendance.logs.selfie-url', $this->log))
+        ->assertOk()
+        ->assertHeader('Cache-Control', 'no-store, private')
+        ->json('url');
+
+    expect($url)->toContain('signature=');
+    $this->actingAs($this->manager)->getJson(route('attendance.logs.selfie-url', $this->log))->assertOk();
+    expect(AuditLog::query()->where('action', 'selfie.viewed')->count())->toBe(0);
+
+    $this->actingAs(User::factory()->withRole(Role::Direksi)->create())->getJson(route('attendance.logs.selfie-url', $this->log))->assertForbidden();
+});

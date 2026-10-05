@@ -34,7 +34,7 @@ it('creates Docs, Sheets and Slides in the workspace folder and caches them', fu
     expect($file)->toBeInstanceOf(DriveFile::class)
         ->and($file->kind)->toBe($kind)
         ->and($file->web_view_link)->toStartWith('https://docs.google.com/')
-        ->and($file->workspace_id)->toBe($this->owner->id)
+        ->and($file->workspace_id)->toBe($this->owner->workspace_id)
         ->and($file->parent_google_id)->toBe($folderId)
         ->and($file->added_by)->toBe($this->user->id)
         ->and($file->owner_email)->toBe($this->user->email);

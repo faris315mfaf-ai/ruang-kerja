@@ -6,6 +6,7 @@ use App\Domain\Attendance\Data\AttendanceResult;
 use App\Domain\Attendance\Data\CheckInData;
 use App\Domain\Attendance\Data\DaySchedule;
 use App\Domain\Attendance\Data\LocationVerdict;
+use App\Domain\Attendance\Data\QrCheckInData;
 use App\Domain\Attendance\Enums\AttendanceLogType;
 use App\Domain\Attendance\Enums\AttendanceMethod;
 use App\Domain\Attendance\Enums\AttendanceStatus;
@@ -14,8 +15,7 @@ use App\Domain\Attendance\Exceptions\AttendanceException;
 use App\Domain\Attendance\Models\AttendanceConsent;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Services\AttendanceLogWriter;
-use App\Domain\Attendance\Services\FraudDetector;
-use App\Domain\Attendance\Services\LocationVerifier;
+use App\Domain\Attendance\Services\PresenceVerifier;
 use App\Domain\Attendance\Services\ScheduleResolver;
 use App\Domain\Attendance\Services\SelfieStorage;
 use App\Domain\Organization\Enums\WorkMode;
@@ -26,21 +26,20 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 
 /**
- * GPS + selfie check-in (docs/ARCHITECTURE.md §3.1): consent → schedule →
- * geofence → fraud flags → private selfie → log + day in one transaction →
- * broadcast.
+ * Check-in (docs/ARCHITECTURE.md §3.1, §3.2): consent → schedule → GPS
+ * geofence or kiosk QR → fraud flags → private selfie (GPS only) → log + day
+ * in one transaction → broadcast.
  */
 final class CheckIn
 {
     public function __construct(
         private readonly ScheduleResolver $schedules,
-        private readonly LocationVerifier $locations,
-        private readonly FraudDetector $fraud,
+        private readonly PresenceVerifier $presence,
         private readonly SelfieStorage $selfies,
         private readonly AttendanceLogWriter $logs,
     ) {}
 
-    public function handle(User $user, CheckInData $data): AttendanceResult
+    public function handle(User $user, CheckInData|QrCheckInData $data): AttendanceResult
     {
         if (! AttendanceConsent::hasCurrentConsent($user)) {
             throw AttendanceException::consentRequired();
@@ -54,12 +53,11 @@ final class CheckIn
             throw AttendanceException::tooEarly($opensAt, $schedule->shift->name ?? '');
         }
 
-        $location = $this->locations->verify($user, $schedule, $data);
-        $flags = $this->fraud->detect($user, $data, $now);
-        $selfiePath = $this->selfies->store($user, $data->selfie, $now);
+        [$location, $qr, $flags] = $this->presence->verify($user, $schedule, $data, $now);
+        $selfiePath = $data instanceof CheckInData ? $this->selfies->store($user, $data->selfie, $now) : null;
 
         try {
-            [$day, $log] = DB::transaction(function () use ($user, $data, $schedule, $location, $flags, $selfiePath, $now): array {
+            [$day, $log] = DB::transaction(function () use ($user, $data, $schedule, $location, $qr, $flags, $selfiePath, $now): array {
                 $day = AttendanceDay::query()
                     ->where('user_id', $user->id)
                     ->whereDate('work_date', $schedule->workDateString())
@@ -82,7 +80,7 @@ final class CheckIn
                 ]);
                 $day->save();
 
-                $log = $this->logs->write($user, $day, AttendanceLogType::CheckIn, $data, $location, $flags, $selfiePath, $now);
+                $log = $this->logs->write($user, $day, AttendanceLogType::CheckIn, $data, $location, $flags, $selfiePath, $now, $qr);
 
                 $day->check_in_log_id = $log->id;
                 $day->is_suspicious = $day->is_suspicious || $log->is_suspicious;
@@ -92,12 +90,12 @@ final class CheckIn
             });
         } catch (UniqueConstraintViolationException) {
             // A parallel request created the day first.
-            $this->selfies->delete($selfiePath);
+            $this->deleteSelfie($selfiePath);
             $existing = AttendanceDay::query()->where('user_id', $user->id)->whereDate('work_date', $schedule->workDateString())->first();
 
             throw AttendanceException::alreadyCheckedIn($existing->check_in_at ?? $now);
         } catch (Throwable $exception) {
-            $this->selfies->delete($selfiePath);
+            $this->deleteSelfie($selfiePath);
 
             throw $exception;
         }
@@ -166,5 +164,12 @@ final class CheckIn
             $location->method === AttendanceMethod::Wfh && $schedule->workMode !== WorkMode::Field => AttendanceStatus::Wfh,
             default => AttendanceStatus::Present,
         };
+    }
+
+    private function deleteSelfie(?string $path): void
+    {
+        if ($path !== null) {
+            $this->selfies->delete($path);
+        }
     }
 }

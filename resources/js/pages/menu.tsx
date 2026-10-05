@@ -18,6 +18,7 @@ import { UserAvatar } from '@/components/shell/user-avatar';
 import { MenuWorkspaceGrid } from '@/features/workspaces/menu-workspace-grid';
 import {
     adminNavItems,
+    attendanceNavItems,
     canSeePortfolio,
     portfolioNavItem,
 } from '@/lib/navigation';
@@ -170,14 +171,17 @@ export default function Menu() {
                         <Row
                             icon={Calendar}
                             label="Riwayat absensi"
-                            href="/absensi"
+                            href="/absensi/riwayat"
                         />
                         <Row
                             icon={Network}
                             label="Struktur organisasi"
                             href="/organisasi/struktur"
                         />
-                        {adminNavItems(auth.roles)
+                        {[
+                            ...attendanceNavItems(auth.roles),
+                            ...adminNavItems(auth.roles),
+                        ]
                             .filter((item) => !item.desktopOnly)
                             .map((item) => (
                                 <Row

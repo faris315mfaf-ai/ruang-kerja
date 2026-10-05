@@ -2,7 +2,7 @@
 
 > Untuk agent/modul yang memakai Google Drive: workspace, tugas, komentar, pengajuan.
 > Kode: `app/Domain/Google`, model `GoogleAccount`, `DriveFile`, `Attachment`, frontend `resources/js/features/drive`.
-> Bagian B (penyambungan ke UI workspace/tugas) tinggal memanggil API di bawah.
+> Bagian B (penyambungan ke UI workspace/tugas) sudah dibangun: lihat [`WIRING-SUMMARY.md`](WIRING-SUMMARY.md) (status Akses Drive, unggah bertahap, endpoint & komponen lampiran).
 
 ## 1. Gambaran singkat
 

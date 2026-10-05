@@ -114,12 +114,12 @@ export function SelfieCapture({
             />
 
             <div className="grid grid-cols-3 items-center pb-[calc(env(safe-area-inset-bottom)+8px)]">
-                <div className="flex flex-col items-center gap-1.5 text-[13px] text-text-subtle">
+                <div className="flex flex-col items-center gap-1.5 text-[13px] text-text-muted">
                     <button
                         type="button"
                         className={control}
-                        disabled
-                        aria-label="Pindai QR (segera tersedia)"
+                        onClick={() => flow.start(flow.type, 'qr')}
+                        aria-label="Pindai QR kiosk"
                     >
                         <QrCode
                             className="size-6"

@@ -10,6 +10,8 @@ use App\Domain\Organization\Enums\WorkMode;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 /**
  * Answers "which work date, shift and hours apply to this employee?".
@@ -65,6 +67,81 @@ final class ScheduleResolver
             isOverride: false,
             workday: $pattern?->shift !== null && $holiday === null,
         );
+    }
+
+    /**
+     * Schedules of many employees over a date range with three queries (monthly
+     * recap, today's board). Same precedence as forDate(): date override →
+     * company holiday → latest active weekly pattern → unscheduled.
+     *
+     * @param  iterable<User>  $users
+     * @return array<string, array<string, DaySchedule>> user id => [Y-m-d => schedule]
+     */
+    public function forRange(iterable $users, CarbonInterface $from, CarbonInterface $to): array
+    {
+        $users = collect($users);
+        $first = self::officeDate($from);
+        $last = self::officeDate($to);
+
+        if ($users->isEmpty() || $first->gt($last)) {
+            return [];
+        }
+
+        $firstDay = $first->toDateString();
+        $lastDay = $last->toDateString();
+
+        /** @var Collection<string, Collection<int, ShiftAssignment>> $assignments */
+        $assignments = ShiftAssignment::query()
+            ->with('shift')
+            ->whereIn('user_id', $users->pluck('id'))
+            ->where(function (Builder $query) use ($firstDay, $lastDay): void {
+                $query->whereBetween('override_date', [$firstDay, $lastDay])
+                    ->orWhere(function (Builder $pattern) use ($firstDay, $lastDay): void {
+                        $pattern->whereNull('override_date')
+                            ->where('valid_from', '<=', $lastDay)
+                            ->where(fn (Builder $until) => $until->whereNull('valid_until')->orWhere('valid_until', '>=', $firstDay));
+                    });
+            })
+            ->orderByDesc('valid_from')
+            ->orderByDesc('created_at')
+            ->get()
+            ->groupBy('user_id');
+
+        $holidays = Holiday::query()
+            ->whereIn('company_id', $users->pluck('company_id')->unique())
+            ->whereBetween('date', [$firstDay, $lastDay])
+            ->get()
+            ->keyBy(fn (Holiday $holiday): string => $holiday->company_id.'|'.$holiday->date->toDateString());
+
+        $result = [];
+
+        foreach ($users as $user) {
+            /** @var Collection<int, ShiftAssignment> $own */
+            $own = $assignments->get($user->id, collect());
+            $overrides = $own->filter(fn (ShiftAssignment $a): bool => $a->override_date !== null)
+                ->keyBy(fn (ShiftAssignment $a): string => $a->override_date?->toDateString() ?? '');
+            $patterns = $own->filter(fn (ShiftAssignment $a): bool => $a->override_date === null);
+
+            for ($date = $first; $date->lte($last); $date = $date->addDay()) {
+                $day = $date->toDateString();
+                $holiday = $holidays->get($user->company_id.'|'.$day);
+                $override = $overrides->get($day);
+
+                if ($override !== null) {
+                    $result[$user->id][$day] = $this->schedule($date, $override->shift, $override->work_mode_override ?? $user->work_mode, $holiday, isOverride: true, workday: $override->shift !== null);
+
+                    continue;
+                }
+
+                $pattern = $patterns->first(fn (ShiftAssignment $a): bool => $a->valid_from->toDateString() <= $day
+                    && ($a->valid_until === null || $a->valid_until->toDateString() >= $day)
+                    && in_array($date->dayOfWeekIso, $a->weekdays, true));
+
+                $result[$user->id][$day] = $this->schedule($date, $pattern?->shift, $pattern->work_mode_override ?? $user->work_mode, $holiday, isOverride: false, workday: $pattern?->shift !== null && $holiday === null);
+            }
+        }
+
+        return $result;
     }
 
     /**

@@ -1,8 +1,11 @@
 import { Head, usePage } from '@inertiajs/react';
 import { DesktopOnlyNotice } from '@/components/desktop-only-notice';
+import { MemberDriveStatus } from '@/features/drive/drive-access-badge';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import type { StatusCategory, WorkspaceRole } from '@/features/tasks/types';
 import { DangerSection } from '@/features/workspaces/settings/danger-section';
+import { DriveSection } from '@/features/workspaces/settings/drive-section';
+import type { WorkspaceDriveSettings } from '@/features/workspaces/settings/drive-section';
 import { GeneralSection } from '@/features/workspaces/settings/general-section';
 import { LabelsSection } from '@/features/workspaces/settings/labels-section';
 import { MembersSection } from '@/features/workspaces/settings/members-section';
@@ -29,6 +32,7 @@ type Props = WorkspacePageProps & {
     candidates: MemberCandidate[];
     role_options: Option<WorkspaceRole>[];
     category_options: Option<StatusCategory>[];
+    drive: WorkspaceDriveSettings;
     project_settings: ProjectSettings | null;
 };
 
@@ -38,6 +42,7 @@ const NAV = [
     ['anggota', 'Anggota'],
     ['kolom-status', 'Kolom status'],
     ['label', 'Label'],
+    ['integrasi-drive', 'Integrasi Drive'],
 ] as const;
 
 /** Mobile: members are readable, the rest is desktop only (docs/PLATFORM.md §3 ◐). */
@@ -79,8 +84,11 @@ function MobileSettings({ members }: { members: MemberDetail[] }) {
                                     {member.division ?? member.position ?? '–'}
                                 </span>
                             </span>
-                            <span className="text-[13px] text-text-muted">
-                                {ROLE_LABELS[member.role]}
+                            <span className="flex shrink-0 flex-col items-end gap-1">
+                                <span className="text-[13px] text-text-muted">
+                                    {ROLE_LABELS[member.role]}
+                                </span>
+                                <MemberDriveStatus drive={member.drive} />
                             </span>
                         </li>
                     ))}
@@ -101,6 +109,7 @@ export default function WorkspaceSettings(props: Props) {
         candidates,
         role_options,
         category_options,
+        drive,
     } = props;
     const breakpoint = useBreakpoint();
     const { auth } = usePage().props;
@@ -140,6 +149,14 @@ export default function WorkspaceSettings(props: Props) {
                                                     {member_details.length}
                                                 </span>
                                             )}
+                                            {id === 'integrasi-drive' &&
+                                                drive.access.state ===
+                                                    'synced' && (
+                                                    <span
+                                                        aria-label="Tersinkron"
+                                                        className="size-1.5 rounded-full bg-success"
+                                                    />
+                                                )}
                                         </a>
                                     </li>
                                 ))}
@@ -194,6 +211,11 @@ export default function WorkspaceSettings(props: Props) {
                             <LabelsSection
                                 workspace={workspace}
                                 labels={labels}
+                                editable={editable}
+                            />
+                            <DriveSection
+                                workspace={workspace}
+                                drive={drive}
                                 editable={editable}
                             />
                             {can.archive && (

@@ -3,6 +3,9 @@
 namespace App\Domain\Google\Jobs;
 
 use App\Domain\Google\Contracts\HasDriveFolder;
+use App\Domain\Google\Events\DrivePermissionsSynced;
+use App\Domain\Google\Events\DrivePermissionsSyncFailed;
+use App\Domain\Google\Exceptions\GoogleException;
 use App\Domain\Google\Jobs\Concerns\HandlesGoogleFailures;
 use App\Domain\Google\Services\DriveFolderService;
 use App\Domain\Google\Services\DrivePermissionSync;
@@ -11,6 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Throwable;
 
 /**
  * Makes the folder's permissions match `$owner->driveMembers()` at the time
@@ -47,8 +51,19 @@ final class SyncDrivePermissions implements ShouldBeUniqueUntilProcessing, Shoul
         $this->runGoogle(function () use ($folders, $permissions): void {
             $folder = $folders->ensure($this->owner);
 
-            $permissions->sync($folder->folderId, $this->owner->driveMembers());
+            $members = $this->owner->driveMembers();
+            $result = $permissions->sync($folder->folderId, $members);
+
+            DrivePermissionsSynced::dispatch($this->owner, $folder->folderId, $members, $result);
         });
+    }
+
+    public function failed(?Throwable $exception): void
+    {
+        DrivePermissionsSyncFailed::dispatch(
+            $this->owner,
+            $exception instanceof GoogleException ? $exception->errorCode() : 'sync_failed',
+        );
     }
 
     protected function subject(): string

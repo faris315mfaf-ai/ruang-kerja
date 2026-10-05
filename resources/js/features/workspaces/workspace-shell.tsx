@@ -52,6 +52,21 @@ function tabHref(tab: WorkspaceTab, key: string): string {
     }
 }
 
+/** "Dokumen 6", "File 24" (mockup WorkspaceFile); nothing when empty. */
+function tabCount(
+    tab: WorkspaceTab,
+    counts: WorkspacePageProps['drive_counts'] | undefined,
+): number | null {
+    const value =
+        tab === 'documents'
+            ? counts?.documents
+            : tab === 'files'
+              ? counts?.files
+              : undefined;
+
+    return value ? value : null;
+}
+
 /**
  * Workspace header + tabs (mockup Kanban / WorkspacePengaturan): avatar,
  * name, "KEY · Jenis · Visibilitas · N anggota", member avatars, "Tugas baru"
@@ -62,6 +77,7 @@ function tabHref(tab: WorkspaceTab, key: string): string {
 export function WorkspaceShell({
     workspace,
     members,
+    drive_counts,
     tab,
     children,
     onCreateTask,
@@ -170,6 +186,11 @@ export function WorkspaceShell({
                             )}
                         >
                             {item.label}
+                            {tabCount(item.tab, drive_counts) !== null && (
+                                <span className="ml-1 text-[11px] font-normal text-text-muted tnum">
+                                    {tabCount(item.tab, drive_counts)}
+                                </span>
+                            )}
                         </Link>
                     );
                 })}

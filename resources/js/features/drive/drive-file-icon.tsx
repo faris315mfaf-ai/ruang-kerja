@@ -47,7 +47,8 @@ export function DriveFileIcon({ kind, size = 'md', className }: Props) {
                 className,
             )}
         >
-            <Icon strokeWidth={1.75} />
+            {/* text-current: menus mute svgs without their own text-* class. */}
+            <Icon strokeWidth={1.75} className="text-current" />
         </span>
     );
 }
