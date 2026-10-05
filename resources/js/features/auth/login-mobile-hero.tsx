@@ -1,40 +1,45 @@
 import { usePage } from '@inertiajs/react';
-import { Building2 } from 'lucide-react';
 
-/** Brand header of the mobile login (mockup `MLogin`); hidden on desktop. */
+/**
+ * Night aurora behind the phone login (design MLogin: teal top-left, blue
+ * right, violet bottom over the night background). Tokens only.
+ */
+export const MOBILE_LOGIN_BACKGROUND = [
+    'radial-gradient(420px 360px at 0% 0%, color-mix(in srgb, var(--fill-teal) 55%, transparent), transparent 70%)',
+    'radial-gradient(420px 360px at 100% 30%, color-mix(in srgb, var(--accent-blue) 55%, transparent), transparent 70%)',
+    'radial-gradient(360px 300px at 50% 100%, color-mix(in srgb, var(--fill-violet) 45%, transparent), transparent 70%)',
+].join(', ');
+
+/** Brand header of the phone login (design MLogin). */
 export function LoginMobileHero({ companyName }: { companyName: string }) {
     const { branding } = usePage().props;
 
     return (
-        <header className="flex flex-col items-center gap-4 px-4 pt-16 pb-10 text-center lg:hidden">
+        <header className="flex flex-col gap-3.5 px-6 pt-20">
             {branding.logo ? (
                 <img
                     src={branding.logo}
                     alt=""
-                    className="size-14 rounded-2xl object-contain"
+                    className="size-16 rounded-[20px] object-contain shadow-glow"
                 />
             ) : (
                 <span
                     aria-hidden
-                    className="flex size-14 items-center justify-center rounded-2xl bg-(image:--brand-gradient) text-xl font-semibold text-on-brand shadow-card"
+                    className="flex size-16 items-center justify-center rounded-[20px] bg-grad-merek text-[22px] font-extrabold text-on-brand shadow-glow"
                 >
                     {branding.shortName}
                 </span>
             )}
-            <div className="space-y-1.5">
-                <p className="text-2xl font-semibold text-text">
-                    {branding.name}
-                </p>
-                <p className="mx-auto max-w-xs text-base text-text-muted">
-                    Absensi, tugas, dan kolaborasi tim dalam satu tempat
-                </p>
-            </div>
-            <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-sm text-text-muted">
-                <Building2 className="size-4 shrink-0" aria-hidden />
-                <span className="truncate">
-                    Aplikasi internal {companyName}
-                </span>
+            <span className="text-label font-bold text-text-muted">
+                {branding.name} · {companyName}
             </span>
+            <p className="text-[34px] leading-[42px] font-extrabold tracking-[-0.02em] text-text">
+                Selamat datang kembali
+            </p>
+            <p className="text-body text-text-muted">
+                Absen, kerja, dan pantau proyek dalam satu tempat. Masuk dengan
+                akun Google kantor Anda.
+            </p>
         </header>
     );
 }

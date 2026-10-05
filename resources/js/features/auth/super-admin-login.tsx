@@ -1,8 +1,8 @@
-import { Form } from '@inertiajs/react';
-import { ChevronDown, ShieldCheck } from 'lucide-react';
+import { Form, Link } from '@inertiajs/react';
+import { ChevronDown } from 'lucide-react';
+import type { ReactNode } from 'react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
-import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import {
     Collapsible,
@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 
@@ -20,56 +20,70 @@ type Props = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     canResetPassword: boolean;
+    /** Right side of the link row (DLogin: "Kebijakan privasi"). */
+    aside?: ReactNode;
+    className?: string;
 };
 
+/** Teal 15px text link with a 44px hit area (DLogin footer row). */
+export const loginLinkClass = cn(
+    '-mx-1 inline-flex min-h-control items-center gap-1.5 rounded-sm px-1 text-label font-semibold text-link transition-opacity duration-120 ease-brand hover:opacity-80',
+    focusRing,
+);
+
 /**
- * Collapsible emergency sign-in: email + password, Super Admin only, followed
- * by the TOTP challenge (or a forced TOTP setup).
+ * Emergency sign-in (DLogin "Masuk sebagai Super Admin"): email + password,
+ * Super Admin only, followed by the TOTP challenge (or a forced TOTP setup).
  */
 export function SuperAdminLogin({
     open,
     onOpenChange,
     canResetPassword,
+    aside,
+    className,
 }: Props) {
     return (
-        <Collapsible open={open} onOpenChange={onOpenChange}>
-            <CollapsibleTrigger asChild>
-                <button
-                    type="button"
-                    className="mx-auto flex min-h-11 items-center gap-2 rounded-md px-2 text-sm text-text-muted underline underline-offset-4 hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:mx-0"
-                    data-test="super-admin-toggle"
-                >
-                    <ShieldCheck className="size-4" aria-hidden />
-                    <span>
-                        Masuk darurat (Super Admin
-                        <span className="hidden lg:inline">, wajib 2FA</span>)
-                    </span>
-                    <ChevronDown
-                        className={cn(
-                            'size-4 transition-transform duration-200 ease-brand',
-                            open && 'rotate-180',
-                        )}
-                        aria-hidden
-                    />
-                </button>
-            </CollapsibleTrigger>
+        <Collapsible
+            open={open}
+            onOpenChange={onOpenChange}
+            className={className}
+        >
+            <div className="flex flex-wrap items-center justify-between gap-x-4">
+                <CollapsibleTrigger asChild>
+                    <button
+                        type="button"
+                        className={loginLinkClass}
+                        data-test="super-admin-toggle"
+                    >
+                        Masuk sebagai Super Admin
+                        <ChevronDown
+                            className={cn(
+                                'size-4 transition-transform duration-180 ease-brand motion-reduce:transition-none',
+                                open && 'rotate-180',
+                            )}
+                            aria-hidden
+                        />
+                    </button>
+                </CollapsibleTrigger>
+                {aside}
+            </div>
 
             <CollapsibleContent>
                 <Form
                     {...store.form()}
                     resetOnSuccess={['password']}
                     resetOnError={['password']}
-                    className="mt-4 grid gap-4 rounded-lg border border-border bg-surface-2 p-4"
+                    className="mt-3 flex flex-col gap-4 rounded-[18px] border border-border bg-surface p-5"
                 >
                     {({ processing, errors }) => (
                         <>
-                            <p className="text-sm text-text-muted">
+                            <p className="text-label font-normal text-text-muted">
                                 Hanya untuk Super Admin saat Google tidak bisa
                                 dipakai. Setelah kata sandi, Anda diminta kode
                                 autentikator (TOTP).
                             </p>
 
-                            <div className="grid gap-2">
+                            <div className="flex flex-col gap-2">
                                 <Label htmlFor="email">Email</Label>
                                 <Input
                                     id="email"
@@ -78,21 +92,26 @@ export function SuperAdminLogin({
                                     required
                                     autoComplete="username"
                                     placeholder="admin@perusahaan.co.id"
-                                    className="h-11 text-base md:text-sm"
+                                    aria-invalid={
+                                        errors.email ? true : undefined
+                                    }
                                 />
                                 <InputError message={errors.email} />
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="flex flex-col gap-2">
                                 <div className="flex items-center">
                                     <Label htmlFor="password">Kata sandi</Label>
                                     {canResetPassword && (
-                                        <TextLink
+                                        <Link
                                             href={request()}
-                                            className="ml-auto text-sm"
+                                            className={cn(
+                                                loginLinkClass,
+                                                '-my-2 ml-auto',
+                                            )}
                                         >
                                             Lupa kata sandi?
-                                        </TextLink>
+                                        </Link>
                                     )}
                                 </div>
                                 <PasswordInput
@@ -101,14 +120,16 @@ export function SuperAdminLogin({
                                     required
                                     autoComplete="current-password"
                                     placeholder="Kata sandi"
-                                    className="h-11 text-base md:text-sm"
+                                    aria-invalid={
+                                        errors.password ? true : undefined
+                                    }
                                 />
                                 <InputError message={errors.password} />
                             </div>
 
                             <Button
                                 type="submit"
-                                className="h-11 w-full"
+                                className="w-full"
                                 disabled={processing}
                                 data-test="login-button"
                             >

@@ -5,29 +5,23 @@ import { Spinner } from '@/components/ui/spinner';
 import { demo } from '@/routes/login';
 import type { DemoAccount } from './types';
 
-/** One-click demo accounts (APP_ENV=local + DEMO_LOGIN_ENABLED only). */
+/**
+ * "Masuk cepat · demo lokal" card (DLogin): one outline button per demo
+ * account in a two-column grid. APP_ENV=local + DEMO_LOGIN_ENABLED only.
+ */
 export function DemoLoginSection({ accounts }: { accounts: DemoAccount[] }) {
     return (
         <section
             aria-labelledby="demo-login-title"
-            className="flex flex-col gap-3 rounded-lg border border-dashed border-border-strong bg-surface p-4"
+            className="flex flex-col gap-3 rounded-[18px] border border-border bg-surface p-5"
         >
-            <div className="flex flex-col gap-1">
-                <h2
-                    id="demo-login-title"
-                    className="text-sm font-semibold text-text"
-                >
-                    Masuk cepat (demo lokal)
-                </h2>
-                <p className="text-xs text-text-muted">
-                    Hanya tersedia di lingkungan lokal. Pilih akun untuk masuk
-                    tanpa kata sandi.
-                </p>
-            </div>
+            <h2 id="demo-login-title" className="text-[16px] font-bold">
+                Masuk cepat · demo lokal
+            </h2>
 
-            <ul className="grid gap-2">
+            <ul className="grid grid-cols-2 gap-2">
                 {accounts.map((account) => (
-                    <li key={account.email}>
+                    <li key={account.email} className="min-w-0">
                         <Form {...demo.form()}>
                             {({ processing, errors }) => (
                                 <>
@@ -41,19 +35,12 @@ export function DemoLoginSection({ accounts }: { accounts: DemoAccount[] }) {
                                         variant="outline"
                                         disabled={processing}
                                         aria-label={`Masuk sebagai ${account.name} (${account.role_label})`}
-                                        className="h-auto min-h-11 w-full justify-between gap-3 px-3 py-2 text-left"
+                                        title={account.email}
+                                        className="w-full px-3 text-[15px]"
                                         data-test="demo-login-button"
                                     >
-                                        <span className="flex min-w-0 flex-col">
-                                            <span className="truncate text-sm font-medium text-text">
-                                                {account.name}
-                                            </span>
-                                            <span className="truncate text-xs font-normal text-text-muted">
-                                                {account.email}
-                                            </span>
-                                        </span>
-                                        <span className="flex shrink-0 items-center gap-2 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                                            {processing && <Spinner />}
+                                        {processing && <Spinner />}
+                                        <span className="truncate">
                                             {account.role_label}
                                         </span>
                                     </Button>
@@ -67,6 +54,10 @@ export function DemoLoginSection({ accounts }: { accounts: DemoAccount[] }) {
                     </li>
                 ))}
             </ul>
+
+            <p className="text-meta font-normal text-text-muted">
+                Hanya tampil bila APP_ENV=local. Masuk tanpa kata sandi.
+            </p>
         </section>
     );
 }
