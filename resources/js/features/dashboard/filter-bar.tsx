@@ -105,6 +105,9 @@ export function FilterBar({
                 value={custom ? 'kustom' : current.periode}
                 onChange={(value) => {
                     if (value === 'kustom') {
+                        // Start from the period on screen (state survives filter reloads).
+                        setFrom(filters.period.from);
+                        setTo(filters.period.to);
                         setCustom(true);
 
                         return;
