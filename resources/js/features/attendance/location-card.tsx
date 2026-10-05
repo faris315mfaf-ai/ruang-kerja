@@ -1,12 +1,15 @@
 import { Loader2, MapPin, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import type { GeolocationState, GeoPosition } from '@/hooks/use-geolocation';
+import type { StatusTone } from '@/lib/attendance';
+import { TONE_CLASSES } from '@/lib/attendance';
 import { formatDistance } from '@/lib/geo';
 import type { GeofenceMatch } from '@/lib/geo';
 import { cn } from '@/lib/utils';
 import type { DaySchedule, OfficeLocationPoint } from '@/types/attendance';
 import { GeofenceSketch } from './map/geofence-sketch';
 
-type Props = {
+export type LocationProps = {
     locations: OfficeLocationPoint[];
     schedule: DaySchedule;
     position: GeoPosition | null;
@@ -14,41 +17,59 @@ type Props = {
     geoError: string | null;
     match: GeofenceMatch<OfficeLocationPoint> | null;
     onRefresh: () => void;
-    mapClassName?: string;
-    /** Mini map height in px (120 on phones). */
-    mapHeight?: number;
-    className?: string;
 };
 
-function summary({
+export type LocationStatus = {
+    /** "Kantor Pusat · dalam radius". */
+    title: string;
+    /** "38 m dari titik · akurasi 12 m". */
+    detail: string;
+    tone: StatusTone;
+};
+
+/** What the location row says for the current GPS reading (DAbsensi / MAbsen). */
+export function locationStatus({
     locations,
     schedule,
     position,
     geoState,
     geoError,
     match,
-}: Props): { text: string; tone: string } {
+}: LocationProps): LocationStatus {
+    const name =
+        match?.location.name ??
+        (locations.length === 1 ? locations[0].name : 'Lokasi kantor');
+    const accuracy = position
+        ? ` · akurasi ${Math.round(position.accuracy)} m`
+        : '';
+
     if (geoState === 'locating') {
-        return { text: 'Membaca lokasi…', tone: 'text-text-muted' };
+        return { title: name, detail: 'Membaca lokasi…', tone: 'neutral' };
     }
 
     if (geoError) {
-        return { text: geoError, tone: 'text-danger' };
+        return { title: name, detail: geoError, tone: 'danger' };
     }
 
     if (!position) {
         return {
-            text: 'Lokasi dibaca saat Anda check-in.',
-            tone: 'text-text-muted',
+            title: name,
+            detail: 'Lokasi dibaca saat Anda check-in.',
+            tone: 'neutral',
         };
     }
 
     if (!match) {
         return locations.length === 0 && schedule.allowsRemote
-            ? { text: 'Check-in sebagai WFH/lapangan', tone: 'text-info' }
+            ? {
+                  title: 'WFH/lapangan',
+                  detail: `Check-in sebagai WFH/lapangan${accuracy}`,
+                  tone: 'info',
+              }
             : {
-                  text: 'Belum ada lokasi kantor aktif',
-                  tone: 'text-text-muted',
+                  title: name,
+                  detail: 'Belum ada lokasi kantor aktif',
+                  tone: 'neutral',
               };
     }
 
@@ -56,98 +77,151 @@ function summary({
 
     if (match.inside) {
         return {
-            text: `${distance} dari titik · dalam radius ${match.location.radiusM} m`,
-            tone: 'text-success',
+            title: `${name} · dalam radius`,
+            detail: `${distance} dari titik${accuracy}`,
+            tone: 'success',
         };
     }
 
     if (schedule.allowsRemote) {
         return {
-            text: `${distance} dari kantor · check-in sebagai WFH/lapangan`,
-            tone: 'text-info',
+            title: `${name} · di luar radius`,
+            detail: `${distance} dari kantor · check-in sebagai WFH/lapangan`,
+            tone: 'info',
         };
     }
 
     return {
-        text: `${distance} dari titik · di luar radius ${match.location.radiusM} m`,
-        tone: 'text-danger',
+        title: `${name} · di luar radius ${match.location.radiusM} m`,
+        detail: `${distance} dari titik${accuracy}`,
+        tone: 'danger',
     };
 }
 
-/** Schematic mini map + distance to the nearest geofence (mockup Absensi). */
-export function LocationCard(props: Props) {
-    const {
-        locations,
-        position,
-        match,
-        geoState,
-        onRefresh,
-        mapClassName,
-        mapHeight,
-        className,
-    } = props;
-    const line = summary(props);
-    const title =
-        match?.location.name ??
-        (locations.length === 1 ? locations[0].name : 'Lokasi kantor');
-    const showMap = locations.length > 0 || position !== null;
+function RefreshButton({
+    geoState,
+    onRefresh,
+    className,
+}: Pick<LocationProps, 'geoState' | 'onRefresh'> & { className?: string }) {
+    const locating = geoState === 'locating';
 
     return (
-        <section
-            aria-label="Lokasi"
+        <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onRefresh}
+            disabled={locating}
+            aria-label="Perbarui lokasi"
+            className={cn('shrink-0 text-text-muted', className)}
+        >
+            {locating ? (
+                <Loader2 className="animate-spin" aria-hidden />
+            ) : (
+                <RefreshCw strokeWidth={1.9} aria-hidden />
+            )}
+        </Button>
+    );
+}
+
+/**
+ * Bordered location row of the check-in card (DAbsensi "Kantor Pusat ·
+ * dalam radius"): 40px teal pin tile, place + distance, refresh.
+ */
+export function LocationRow({
+    className,
+    ...props
+}: LocationProps & { className?: string }) {
+    const status = locationStatus(props);
+    const bad = status.tone === 'danger';
+
+    return (
+        <div
             className={cn(
-                'overflow-hidden rounded-xl border border-border bg-surface shadow-card',
+                'flex min-w-0 items-center gap-3 rounded-lg border border-border py-3 pr-2 pl-4',
                 className,
             )}
         >
-            {showMap && (
-                <GeofenceSketch
-                    locations={locations}
-                    position={position}
-                    height={mapHeight}
-                    className={cn('w-full', mapClassName)}
-                />
-            )}
-            <div className="flex items-center gap-3 px-4 py-3">
-                <MapPin
-                    aria-hidden
-                    strokeWidth={1.75}
-                    className={cn(
-                        'size-6 shrink-0',
-                        match && !match.inside ? 'text-danger' : 'text-primary',
-                    )}
-                />
-                <div className="min-w-0 flex-1">
-                    <p className="truncate text-[17px] font-medium text-text">
-                        {title}
-                    </p>
-                    <p className={cn('text-sm', line.tone)} aria-live="polite">
-                        {line.text}
-                    </p>
-                </div>
-                {position && (
-                    <span className="shrink-0 text-[13px] text-text-muted">
-                        Akurasi ±{Math.round(position.accuracy)} m
-                    </span>
+            <span
+                aria-hidden
+                className={cn(
+                    'flex size-10 shrink-0 items-center justify-center rounded-control',
+                    bad
+                        ? 'bg-danger-soft text-danger'
+                        : 'bg-link-soft text-link',
                 )}
-                <button
-                    type="button"
-                    onClick={onRefresh}
-                    disabled={geoState === 'locating'}
-                    aria-label="Perbarui lokasi"
-                    className="-mr-2 flex size-11 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors duration-120 ease-brand hover:bg-surface-2 hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60"
-                >
-                    {geoState === 'locating' ? (
-                        <Loader2 className="size-5 animate-spin" aria-hidden />
-                    ) : (
-                        <RefreshCw
-                            className="size-5"
-                            strokeWidth={1.75}
-                            aria-hidden
-                        />
+            >
+                <MapPin className="size-[22px]" strokeWidth={1.9} />
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-[16px] leading-6 font-semibold text-text">
+                    {status.title}
+                </span>
+                <span
+                    aria-live="polite"
+                    className={cn(
+                        'text-[15px] leading-[22px]',
+                        status.tone === 'neutral' || status.tone === 'success'
+                            ? 'text-text-muted'
+                            : TONE_CLASSES[status.tone].text,
                     )}
-                </button>
+                >
+                    {status.detail}
+                </span>
+            </span>
+            <RefreshButton
+                geoState={props.geoState}
+                onRefresh={props.onRefresh}
+            />
+        </div>
+    );
+}
+
+/**
+ * Map header of the phone check-in screen (MAbsen): schematic geofence with
+ * a glass GPS chip and the refresh button floating on top.
+ */
+export function LocationMap({
+    height = 220,
+    className,
+    ...props
+}: LocationProps & { height?: number; className?: string }) {
+    const { position, geoState, onRefresh, locations } = props;
+    const accurate = position !== null && position.accuracy <= 50;
+
+    return (
+        <div className={cn('relative overflow-hidden', className)}>
+            <GeofenceSketch
+                locations={locations}
+                position={position}
+                height={height}
+                className="w-full"
+            />
+            <div className="absolute inset-x-4 top-4 flex items-center justify-between gap-2">
+                <span className="glass-strong inline-flex h-10 items-center gap-2 rounded-full px-3.5 text-[15px] font-bold text-text shadow-float">
+                    <span
+                        aria-hidden
+                        className={cn(
+                            'size-2 rounded-full',
+                            position
+                                ? accurate
+                                    ? 'bg-success'
+                                    : 'bg-fill-warning'
+                                : 'bg-text-subtle',
+                        )}
+                    />
+                    {position
+                        ? `GPS ${accurate ? 'akurat' : 'kurang akurat'} · ${Math.round(position.accuracy)} m`
+                        : geoState === 'locating'
+                          ? 'Membaca GPS…'
+                          : 'GPS belum dibaca'}
+                </span>
+                <RefreshButton
+                    geoState={geoState}
+                    onRefresh={onRefresh}
+                    className="glass-strong rounded-full text-text shadow-float"
+                />
             </div>
-        </section>
+        </div>
     );
 }

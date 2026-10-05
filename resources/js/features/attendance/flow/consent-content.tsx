@@ -42,17 +42,17 @@ function Item({
             <span
                 aria-hidden
                 className={cn(
-                    'flex size-9 shrink-0 items-center justify-center rounded-lg',
+                    'flex size-10 shrink-0 items-center justify-center rounded-control',
                     accent
-                        ? 'bg-link-soft text-primary'
+                        ? 'bg-link-soft text-link'
                         : 'bg-surface-2 text-text-muted',
                 )}
             >
                 <Icon className="size-5" strokeWidth={1.75} />
             </span>
             <div className="min-w-0 space-y-1">
-                <p className="text-[15px] font-semibold text-text">{title}</p>
-                <div className="text-sm leading-6 text-text-muted">
+                <p className="text-[16px] font-bold text-text">{title}</p>
+                <div className="text-[15px] leading-[22px] text-text-muted">
                     {children}
                 </div>
             </div>
@@ -75,21 +75,21 @@ export function ConsentContent({
             <div className="flex-1 space-y-5 px-4 pb-6 md:px-0">
                 <span
                     aria-hidden
-                    className="flex size-12 items-center justify-center rounded-xl border border-primary/20 bg-link-soft text-primary"
+                    className="flex size-16 items-center justify-center rounded-xl bg-grad-soft text-link"
                 >
-                    <ShieldCheck className="size-6" strokeWidth={1.75} />
+                    <ShieldCheck className="size-[30px]" strokeWidth={1.9} />
                 </span>
                 <div className="space-y-2">
-                    <h2 className="text-[22px] leading-8 font-semibold text-text">
+                    <h2 className="text-h2 text-text">
                         Sebelum check-in pertama
                     </h2>
-                    <p className="text-[15px] leading-6 text-text-muted">
+                    <p className="text-body text-text-muted">
                         Absensi memakai data pribadi Anda. Berikut yang kami
                         kumpulkan dan alasannya, sesuai UU Pelindungan Data
                         Pribadi.
                     </p>
                 </div>
-                <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
+                <ul className="divide-y divide-divider overflow-hidden rounded-panel border border-border bg-surface shadow-card">
                     <Item icon={MapPin} title="Yang direkam">
                         <ul className="list-disc space-y-0.5 pl-4">
                             <li>
@@ -118,15 +118,15 @@ export function ConsentContent({
             </div>
             <div
                 className={cn(
-                    'space-y-4 border-t border-border bg-background px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+16px)] md:px-0 md:pb-0',
-                    stickyFooter && 'sticky bottom-0',
+                    'space-y-4 border-t border-border px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+16px)] md:px-0 md:pb-0',
+                    stickyFooter &&
+                        'glass sticky bottom-0 border-x-0 border-b-0',
                 )}
             >
-                <label className="flex min-h-11 cursor-pointer items-center gap-3 text-[15px] text-text">
+                <label className="flex min-h-11 cursor-pointer items-center gap-3 text-[16px] font-semibold text-text">
                     <Checkbox
                         checked={agreed}
                         onCheckedChange={(value) => setAgreed(value === true)}
-                        className="size-6 rounded-md"
                         aria-describedby="consent-version"
                     />
                     Saya sudah membaca dan menyetujui
@@ -135,7 +135,8 @@ export function ConsentContent({
                     type="button"
                     onClick={onAccept}
                     disabled={!agreed || processing}
-                    className="h-12 w-full text-base"
+                    size="lg"
+                    className="w-full"
                 >
                     {processing ? (
                         <Loader2 className="animate-spin" aria-hidden />
@@ -146,7 +147,7 @@ export function ConsentContent({
                 <p id="consent-version" className="text-center">
                     <Link
                         href={policy()}
-                        className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+                        className="inline-flex min-h-11 items-center gap-1.5 text-[15px] font-semibold text-link hover:underline"
                     >
                         Baca kebijakan lengkap (versi {version})
                         <ExternalLink className="size-4" aria-hidden />

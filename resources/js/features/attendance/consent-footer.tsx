@@ -23,13 +23,13 @@ export function ConsentFooter({
     const [processing, setProcessing] = useState(false);
 
     return (
-        <p className="text-center text-[13px] leading-6 text-text-muted">
+        <p className="text-center text-meta text-text-muted">
             {consent.granted
                 ? `Persetujuan data lokasi & selfie: diberikan (versi ${consent.version}).`
                 : 'Persetujuan data lokasi & selfie diminta saat check-in pertama.'}{' '}
             <Link
                 href={policy()}
-                className="font-medium text-primary hover:underline"
+                className="font-semibold text-link hover:underline"
             >
                 Baca kebijakan
             </Link>
@@ -39,7 +39,7 @@ export function ConsentFooter({
                     <button
                         type="button"
                         onClick={() => setConfirming(true)}
-                        className="font-medium text-danger hover:underline"
+                        className="inline-flex min-h-11 items-center font-semibold text-danger hover:underline md:min-h-0"
                     >
                         Cabut persetujuan
                     </button>

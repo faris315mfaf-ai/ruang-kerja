@@ -69,9 +69,9 @@ function Option({
             <span
                 aria-hidden
                 className={cn(
-                    'flex size-11 shrink-0 items-center justify-center rounded-lg',
+                    'flex size-11 shrink-0 items-center justify-center rounded-control',
                     primary
-                        ? 'bg-link-soft text-primary'
+                        ? 'bg-link-soft text-link'
                         : 'bg-surface-2 text-text-muted',
                 )}
             >
@@ -84,14 +84,14 @@ function Option({
             <span className="min-w-0 flex-1">
                 <span
                     className={cn(
-                        'block text-[16px]',
-                        primary ? 'font-medium text-primary' : 'text-text',
+                        'block text-[17px] leading-6 font-semibold',
+                        primary ? 'text-link' : 'text-text',
                     )}
                 >
                     {label}
                 </span>
                 {hint && (
-                    <span className="block text-[13px] text-text-muted">
+                    <span className="block text-meta text-text-muted">
                         {hint}
                     </span>
                 )}
@@ -103,7 +103,7 @@ function Option({
         </>
     );
     const className =
-        'flex min-h-16 w-full items-center gap-3.5 px-4 py-2.5 text-left transition-colors duration-120 ease-brand hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent';
+        'flex min-h-[72px] w-full items-center gap-3.5 px-5 py-2.5 text-left transition-colors duration-120 ease-brand hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent';
 
     return (
         <li>
@@ -169,7 +169,7 @@ export function CheckFailure({
     return (
         <div className="flex flex-col gap-5">
             {outside && position && (
-                <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
+                <div className="overflow-hidden rounded-panel border border-border bg-surface shadow-card">
                     <GeofenceMap
                         locations={
                             mapLocations.length > 0 ? mapLocations : locations
@@ -179,7 +179,7 @@ export function CheckFailure({
                         showLabels
                         className="h-[200px] w-full"
                     />
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm text-text-muted">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 text-[15px] text-text-muted">
                         <span className="inline-flex items-center gap-1.5">
                             <span
                                 aria-hidden
@@ -190,7 +190,7 @@ export function CheckFailure({
                         <span className="inline-flex items-center gap-1.5">
                             <span
                                 aria-hidden
-                                className="size-3 rounded-full bg-info"
+                                className="size-3 rounded-full bg-accent-blue-strong"
                             />
                             Posisi Anda
                         </span>
@@ -205,7 +205,7 @@ export function CheckFailure({
 
             <div
                 role="alert"
-                className="flex gap-3 rounded-xl border border-danger/25 bg-danger/8 p-4"
+                className="flex gap-3 rounded-lg bg-danger-soft p-4"
             >
                 <AlertCircle
                     className="mt-0.5 size-6 shrink-0 text-danger"
@@ -213,7 +213,7 @@ export function CheckFailure({
                     aria-hidden
                 />
                 <div className="space-y-1">
-                    <p className="text-[17px] font-semibold text-danger">
+                    <p className="text-[17px] font-bold text-danger">
                         {TITLES[rejection.reason] ?? 'Belum bisa diproses'}
                     </p>
                     <p className="text-[15px] leading-6 text-text">
@@ -226,11 +226,11 @@ export function CheckFailure({
                 <section aria-labelledby="other-ways" className="space-y-2">
                     <h3
                         id="other-ways"
-                        className="px-1 text-[15px] text-text-muted"
+                        className="px-1 text-overline text-text-muted"
                     >
                         Pilih cara lain
                     </h3>
-                    <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
+                    <ul className="divide-y divide-divider overflow-hidden rounded-panel border border-border bg-surface shadow-card">
                         <Option
                             icon={RefreshCw}
                             label="Perbarui lokasi"
@@ -259,31 +259,19 @@ export function CheckFailure({
             ) : (
                 <div className="grid gap-2">
                     {RESCAN.includes(rejection.reason) && onScanQr && (
-                        <Button
-                            type="button"
-                            onClick={onScanQr}
-                            className="h-12 text-base"
-                        >
+                        <Button type="button" onClick={onScanQr} size="lg">
                             <QrCode aria-hidden />
                             Pindai ulang
                         </Button>
                     )}
                     {retryable && (
-                        <Button
-                            type="button"
-                            onClick={onRetry}
-                            className="h-12 text-base"
-                        >
+                        <Button type="button" onClick={onRetry} size="lg">
                             Coba lagi
                         </Button>
                     )}
                     {(rejection.reason === 'not_checked_in' ||
                         rejection.reason === 'already_checked_out') && (
-                        <Button
-                            asChild
-                            variant="outline"
-                            className="h-12 text-base"
-                        >
+                        <Button asChild variant="outline" size="lg">
                             <Link href="/pengajuan/baru?kategori=koreksi">
                                 Ajukan koreksi absensi
                             </Link>
@@ -293,11 +281,11 @@ export function CheckFailure({
                         type="button"
                         variant={
                             retryable || RESCAN.includes(rejection.reason)
-                                ? 'ghost'
+                                ? 'quiet'
                                 : 'default'
                         }
                         onClick={onClose}
-                        className="h-12 text-base"
+                        size="lg"
                     >
                         Kembali ke absensi
                     </Button>
@@ -305,7 +293,7 @@ export function CheckFailure({
             )}
 
             {outside && accuracy !== null && accuracy > 50 && (
-                <p className="flex gap-3 rounded-xl bg-surface-2 p-4 text-[15px] leading-6 text-text-muted">
+                <p className="flex gap-3 rounded-lg bg-surface-2 p-4 text-[15px] leading-6 text-text-muted">
                     <MapPin
                         className="mt-0.5 size-5 shrink-0"
                         strokeWidth={1.75}

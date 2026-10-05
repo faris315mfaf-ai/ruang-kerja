@@ -18,14 +18,16 @@ export default function KioskActivate({ token, kiosk }: Props) {
     return (
         <div className="dark flex min-h-dvh items-center justify-center bg-background p-6 text-text">
             <Head title="Aktivasi kiosk" />
-            <div className="w-full max-w-md space-y-5 rounded-2xl border border-border bg-surface p-6 shadow-card">
+            <div className="flex w-full max-w-md flex-col gap-5 rounded-panel border border-border bg-surface p-7 shadow-card">
                 {kiosk === null ? (
-                    <div className="space-y-3 text-center">
-                        <AlertCircle
-                            className="mx-auto size-8 text-warning"
+                    <div className="flex flex-col items-center gap-3 text-center">
+                        <span
                             aria-hidden
-                        />
-                        <h1 className="text-xl font-semibold">
+                            className="flex size-16 items-center justify-center rounded-xl bg-warning-soft text-warning"
+                        >
+                            <AlertCircle className="size-[30px]" />
+                        </span>
+                        <h1 className="text-h3">
                             Tautan aktivasi tidak berlaku
                         </h1>
                         <p className="text-[15px] text-text-muted">
@@ -36,25 +38,29 @@ export default function KioskActivate({ token, kiosk }: Props) {
                     </div>
                 ) : (
                     <>
-                        <div className="flex items-start gap-3">
-                            <MonitorCheck
-                                className="mt-0.5 size-7 shrink-0 text-primary"
-                                strokeWidth={1.75}
+                        <div className="flex items-start gap-4">
+                            <span
                                 aria-hidden
-                            />
+                                className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-grad-soft text-link"
+                            >
+                                <MonitorCheck
+                                    className="size-7"
+                                    strokeWidth={1.9}
+                                />
+                            </span>
                             <div>
-                                <h1 className="text-xl font-semibold">
+                                <h1 className="text-h3">
                                     Jadikan perangkat ini kiosk?
                                 </h1>
                                 <p className="mt-1 text-[15px] text-text-muted">
                                     {kiosk.locationName} · {kiosk.name}{' '}
-                                    <span className="font-mono">
+                                    <span className="font-mono font-semibold">
                                         ({kiosk.code})
                                     </span>
                                 </p>
                             </div>
                         </div>
-                        <ul className="list-disc space-y-1 pl-5 text-sm text-text-muted">
+                        <ul className="list-disc space-y-1.5 pl-5 text-[15px] leading-[22px] text-text-muted">
                             <li>
                                 Browser ini hanya akan menampilkan layar QR
                                 absensi.
@@ -70,7 +76,8 @@ export default function KioskActivate({ token, kiosk }: Props) {
                         </ul>
                         <Button
                             type="button"
-                            className="h-12 w-full text-base"
+                            size="lg"
+                            className="w-full"
                             disabled={form.processing}
                             onClick={() =>
                                 form.post(activateRoutes.store.url(token))

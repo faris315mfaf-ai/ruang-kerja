@@ -1,7 +1,7 @@
 import {
     TONE_CLASSES,
     checkInTiming,
-    formatDuration,
+    formatDurationShort,
     minutesBetween,
     statusLabel,
 } from '@/lib/attendance';
@@ -10,9 +10,10 @@ import { formatTime, toDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { TodayAttendance } from '@/types/attendance';
 
-type Pill = { label: string; tone: StatusTone };
+export type Pill = { label: string; tone: StatusTone };
 
-function statusPill(today: TodayAttendance): Pill {
+/** Status chip above the clock ("Sudah check-in", "Selesai hari ini"). */
+export function statusPill(today: TodayAttendance): Pill {
     const day = today.day;
 
     switch (today.action) {
@@ -31,17 +32,18 @@ function statusPill(today: TodayAttendance): Pill {
                     day?.status === 'wfh'
                         ? 'Sudah check-in · WFH'
                         : 'Sudah check-in',
-                tone: 'success',
+                tone: 'info',
             };
         case 'done':
-            return { label: 'Sudah check-out', tone: 'success' };
+            return { label: 'Selesai hari ini', tone: 'success' };
         case 'unavailable':
             return { label: day?.statusLabel ?? 'Tidak masuk', tone: 'info' };
     }
 }
 
+/** "Shift Reguler 08.00–17.00 · Kantor Pusat" (DAbsensi subtitle). */
 export function scheduleLine(today: TodayAttendance): string {
-    const { schedule } = today;
+    const { schedule, locations } = today;
 
     if (schedule.isHoliday) {
         return schedule.holidayName
@@ -53,110 +55,145 @@ export function scheduleLine(today: TodayAttendance): string {
         return 'Tidak ada jadwal hari ini';
     }
 
-    const mode =
+    const place =
         schedule.workMode === 'wfh' || schedule.workMode === 'field'
-            ? ` · ${schedule.workModeLabel}`
-            : '';
+            ? schedule.workModeLabel
+            : locations.length === 1
+              ? locations[0].name
+              : null;
 
-    return `Shift ${schedule.shiftName ?? ''} · masuk ${formatTime(schedule.start)} · pulang ${formatTime(schedule.end)}${mode}`;
+    return [
+        `Shift ${schedule.shiftName ?? ''} ${formatTime(schedule.start)}–${formatTime(schedule.end)}`,
+        place,
+    ]
+        .filter(Boolean)
+        .join(' · ');
 }
 
-function detailLine(
+/** Timing hint before checking in ("8 menit sebelum jam masuk"). */
+export function timingHint(
     today: TodayAttendance,
     now: Date,
-): { text: string; tone: StatusTone } {
-    const day = today.day;
-
-    if (today.action === 'check_in') {
-        const timing = checkInTiming(today.schedule, now);
-
-        return { text: timing.text, tone: timing.tone };
+): { text: string; tone: StatusTone } | null {
+    if (today.action !== 'check_in') {
+        return null;
     }
 
-    if (!day?.checkInAt) {
-        return { text: '', tone: 'neutral' };
-    }
+    const timing = checkInTiming(today.schedule, now);
 
-    const place =
-        day.checkIn?.locationName ??
-        (day.checkIn?.method === 'wfh' ? 'WFH/lapangan' : null);
-    const checkIn = `Masuk ${formatTime(day.checkInAt)}${place ? ` · ${place}` : ''}`;
-
-    if (today.action === 'done' && day.checkOutAt) {
-        return {
-            text: `${checkIn} · pulang ${formatTime(day.checkOutAt)} · ${formatDuration(day.workMinutes)}`,
-            tone: 'neutral',
-        };
-    }
-
-    const start = toDate(day.checkInAt);
-    const worked = start ? formatDuration(minutesBetween(start, now)) : '';
-
-    return {
-        text: `${checkIn} · ${worked} berjalan`,
-        tone: day.status === 'late' ? 'warning' : 'success',
-    };
+    return timing.text ? { text: timing.text, tone: timing.tone } : null;
 }
 
-type Props = {
+export type DayTile = {
+    label: string;
+    value: string;
+    note: string;
+    tone: StatusTone;
+};
+
+/** Masuk · Pulang · Durasi kerja tiles of the check-in card (DAbsensi). */
+export function dayTiles(today: TodayAttendance, now: Date): DayTile[] {
+    const { day, schedule } = today;
+    const checkIn: DayTile = day?.checkInAt
+        ? {
+              label: 'Masuk',
+              value: formatTime(day.checkInAt),
+              note:
+                  day.lateMinutes > 0
+                      ? `Terlambat ${day.lateMinutes} mnt`
+                      : day.status === 'wfh'
+                        ? 'WFH'
+                        : 'Tepat waktu',
+              tone: day.lateMinutes > 0 ? 'warning' : 'success',
+          }
+        : {
+              label: 'Masuk',
+              value: schedule.start ? formatTime(schedule.start) : '–',
+              note: schedule.start ? 'Terjadwal' : 'Tidak ada jadwal',
+              tone: 'neutral',
+          };
+    const checkOut: DayTile = day?.checkOutAt
+        ? {
+              label: 'Pulang',
+              value: formatTime(day.checkOutAt),
+              note:
+                  day.earlyLeaveMinutes > 0
+                      ? `Pulang cepat ${day.earlyLeaveMinutes} mnt`
+                      : 'Tercatat',
+              tone: day.earlyLeaveMinutes > 0 ? 'warning' : 'neutral',
+          }
+        : {
+              label: 'Pulang',
+              value: schedule.end ? formatTime(schedule.end) : '–',
+              note: schedule.end ? 'Terjadwal' : 'Tidak ada jadwal',
+              tone: 'neutral',
+          };
+    const started = toDate(day?.checkInAt ?? null);
+    const duration: DayTile = day?.checkOutAt
+        ? {
+              label: 'Durasi kerja',
+              value: formatDurationShort(day.workMinutes),
+              note: 'Total hari ini',
+              tone: 'neutral',
+          }
+        : started
+          ? {
+                label: 'Durasi kerja',
+                value: formatDurationShort(minutesBetween(started, now)),
+                note: 'Berjalan',
+                tone: 'neutral',
+            }
+          : {
+                label: 'Durasi kerja',
+                value: '–',
+                note: 'Belum mulai',
+                tone: 'neutral',
+            };
+
+    return [checkIn, checkOut, duration];
+}
+
+/** Grey 16px-radius tiles (DAbsensi "Masuk 07.41 · Tepat waktu"). */
+export function DayTiles({
+    today,
+    now,
+    className,
+    tileClassName = 'bg-background',
+}: {
     today: TodayAttendance;
     now: Date;
     className?: string;
-};
-
-/**
- * "Kartu Check-in" (docs/DESIGN.md §6): status, big mono clock, today's
- * schedule and a timing hint (mockup Absensi).
- */
-export function CheckInCard({ today, now, className }: Props) {
-    const pill = statusPill(today);
-    const detail = detailLine(today, now);
-
+    /** Tile surface: grey inside a card, bordered card on the page (phone). */
+    tileClassName?: string;
+}) {
     return (
-        <section
-            aria-label="Absensi hari ini"
-            className={cn(
-                'rounded-xl border border-border bg-surface p-4 shadow-card md:p-5',
-                className,
-            )}
-        >
-            <div className="flex items-start justify-between gap-3">
-                <p className="text-sm text-text-muted">Jam sekarang</p>
-                <span
+        <dl className={cn('grid grid-cols-3 gap-2 md:gap-3', className)}>
+            {dayTiles(today, now).map((tile) => (
+                <div
+                    key={tile.label}
                     className={cn(
-                        'inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium',
-                        TONE_CLASSES[pill.tone].soft,
+                        'flex min-w-0 flex-col gap-1 rounded-lg px-3 py-3 md:px-[18px] md:py-4',
+                        tileClassName,
                     )}
                 >
-                    <span
-                        aria-hidden
+                    <dt className="truncate text-meta text-text-muted md:text-[15px]">
+                        {tile.label}
+                    </dt>
+                    <dd className="truncate text-[20px] leading-7 font-bold text-text tnum md:text-[26px] md:leading-8">
+                        {tile.value}
+                    </dd>
+                    <dd
                         className={cn(
-                            'size-1.5 rounded-full',
-                            TONE_CLASSES[pill.tone].solid,
+                            'truncate text-meta font-semibold md:text-[15px]',
+                            tile.tone === 'neutral'
+                                ? 'text-text-muted'
+                                : TONE_CLASSES[tile.tone].text,
                         )}
-                    />
-                    {pill.label}
-                </span>
-            </div>
-            <p
-                className="mt-1 font-mono text-[56px] leading-none font-medium tracking-tight text-text tnum md:text-[64px]"
-                aria-live="off"
-            >
-                <time dateTime={now.toISOString()}>{formatTime(now)}</time>
-            </p>
-            <p className="mt-4 text-[15px] text-text-muted">
-                {scheduleLine(today)}
-            </p>
-            {detail.text !== '' && (
-                <p
-                    className={cn(
-                        'mt-1 text-[15px]',
-                        TONE_CLASSES[detail.tone].text,
-                    )}
-                >
-                    {detail.text}
-                </p>
-            )}
-        </section>
+                    >
+                        {tile.note}
+                    </dd>
+                </div>
+            ))}
+        </dl>
     );
 }

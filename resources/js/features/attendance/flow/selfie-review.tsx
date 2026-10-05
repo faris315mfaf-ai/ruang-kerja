@@ -48,7 +48,7 @@ export function SelfieReview({
 
             {(flow.isRemote || flow.noteError) && (
                 <div className="space-y-1.5">
-                    <Label htmlFor="check-note" className="text-sm text-text">
+                    <Label htmlFor="check-note" className="text-text">
                         Catatan lokasi / aktivitas{' '}
                         <span className="text-text-muted">
                             (wajib untuk WFH/lapangan)
@@ -65,12 +65,12 @@ export function SelfieReview({
                         aria-describedby={
                             flow.noteError ? 'check-note-error' : undefined
                         }
-                        className="min-h-12 bg-surface text-base"
+                        className="min-h-12"
                     />
                     {flow.noteError && (
                         <p
                             id="check-note-error"
-                            className="text-sm text-danger"
+                            className="text-[15px] text-danger"
                         >
                             {flow.noteError}
                         </p>
@@ -84,7 +84,8 @@ export function SelfieReview({
                     variant="outline"
                     onClick={flow.retake}
                     disabled={submitting}
-                    className="h-12 px-4 text-[15px]"
+                    size="lg"
+                    className="px-5"
                 >
                     <RotateCcw aria-hidden />
                     Ulangi
@@ -93,7 +94,7 @@ export function SelfieReview({
                     type="button"
                     onClick={() => void flow.submit()}
                     disabled={submitting}
-                    className="h-12 text-base"
+                    size="lg"
                 >
                     {submitting ? (
                         <Loader2 className="animate-spin" aria-hidden />

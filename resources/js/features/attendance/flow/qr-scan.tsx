@@ -85,7 +85,7 @@ export function QrScan({
 
     return (
         <div className={cn('flex min-h-0 flex-1 flex-col gap-4', className)}>
-            <div className="relative min-h-0 flex-1 overflow-hidden rounded-2xl border border-border bg-surface">
+            <div className="relative min-h-0 flex-1 overflow-hidden rounded-panel border border-border bg-surface">
                 <video
                     ref={camera.attachVideo}
                     playsInline
@@ -104,7 +104,7 @@ export function QrScan({
                         failed && 'hidden',
                     )}
                 >
-                    <div className="aspect-square w-[62%] max-w-[280px] rounded-2xl border-2 border-dashed border-text/80" />
+                    <div className="aspect-square w-[62%] max-w-[280px] rounded-xl border-2 border-dashed border-text/80" />
                 </div>
                 {(camera.state === 'starting' || submitting) && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/60 text-text">
@@ -137,7 +137,7 @@ export function QrScan({
                         </Button>
                     </div>
                 )}
-                <div className="glass absolute inset-x-3 bottom-3 flex items-start gap-3 rounded-xl px-4 py-3 text-[15px] leading-6 text-text">
+                <div className="glass-strong absolute inset-x-3 bottom-3 flex items-start gap-3 rounded-lg px-4 py-3 text-[15px] leading-6 text-text">
                     <QrCode
                         className="mt-0.5 size-5 shrink-0"
                         strokeWidth={1.75}
@@ -149,7 +149,7 @@ export function QrScan({
                     </span>
                 </div>
             </div>
-            <p className="pb-[calc(env(safe-area-inset-bottom)+8px)] text-center text-sm text-text-muted">
+            <p className="pb-[calc(env(safe-area-inset-bottom)+8px)] text-center text-[15px] text-text-muted">
                 {flow.geo.position
                     ? 'Lokasi GPS ikut direkam.'
                     : flow.geo.error

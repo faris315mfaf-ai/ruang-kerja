@@ -5,7 +5,7 @@ import { AttendanceMobile } from '@/features/attendance/attendance.mobile';
 import type { AttendancePageProps } from '@/features/attendance/use-attendance-page';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 
-/** /absensi — check-in GPS + selfie, today's status and 30-day history (Sprint 2). */
+/** /absensi — check-in GPS + selfie / QR, today and recent days (DAbsensi, MAbsen → MSukses). */
 export default function AttendanceIndex(props: AttendancePageProps) {
     const breakpoint = useBreakpoint();
 
@@ -13,9 +13,9 @@ export default function AttendanceIndex(props: AttendancePageProps) {
         <>
             <Head title="Absensi" />
             {breakpoint === null ? (
-                <div className="space-y-4" aria-busy>
-                    <Skeleton className="h-48 rounded-xl" />
-                    <Skeleton className="h-40 rounded-xl" />
+                <div className="flex flex-col gap-5" aria-busy>
+                    <Skeleton className="h-[420px] rounded-[28px]" />
+                    <Skeleton className="h-64 rounded-panel" />
                 </div>
             ) : breakpoint === 'mobile' ? (
                 <AttendanceMobile {...props} />

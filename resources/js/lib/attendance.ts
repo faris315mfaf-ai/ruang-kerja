@@ -98,6 +98,21 @@ export function formatDuration(totalMinutes: number): string {
     return rest === 0 ? `${hours} jam` : `${hours} jam ${rest} menit`;
 }
 
+/** Compact form for tiles and tables (DAbsensi): "45 m", "8 j", "8 j 05 m". */
+export function formatDurationShort(totalMinutes: number): string {
+    const minutes = Math.max(0, Math.round(totalMinutes));
+    const hours = Math.floor(minutes / 60);
+    const rest = minutes % 60;
+
+    if (hours === 0) {
+        return `${rest} m`;
+    }
+
+    return rest === 0
+        ? `${hours} j`
+        : `${hours} j ${String(rest).padStart(2, '0')} m`;
+}
+
 export type Timing = {
     text: string;
     tone: StatusTone;

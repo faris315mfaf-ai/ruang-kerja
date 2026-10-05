@@ -1,4 +1,5 @@
-import { TONE_CLASSES, statusLabel, statusTone } from '@/lib/attendance';
+import { Badge } from '@/components/ui/badge';
+import { statusLabel, statusTone } from '@/lib/attendance';
 import { cn } from '@/lib/utils';
 import type { AttendanceDayData, AttendanceStatus } from '@/types/attendance';
 
@@ -6,32 +7,31 @@ type Props = {
     status: AttendanceStatus;
     minutes?: number;
     compact?: boolean;
+    /** `sm`: 30px table pill (DAbsensi "Riwayat"); `md`: 32px status pill. */
+    size?: 'sm' | 'md';
     className?: string;
 };
 
-/** Dot + text, never colour alone (docs/DESIGN.md §1.5, §6 "Badge status absensi"). */
+/**
+ * Attendance status pill: dot + text, never colour alone (Arus
+ * `Badge variant="status"`, DAbsensi "Riwayat 7 hari kerja").
+ */
 export function StatusBadge({
     status,
     minutes = 0,
     compact = false,
+    size = 'sm',
     className,
 }: Props) {
-    const tone = TONE_CLASSES[statusTone(status)];
-
     return (
-        <span
-            className={cn(
-                'inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium whitespace-nowrap',
-                tone.soft,
-                className,
-            )}
+        <Badge
+            variant="status"
+            tone={statusTone(status)}
+            dot
+            className={cn(size === 'sm' && 'h-[30px] gap-1.5 px-3', className)}
         >
-            <span
-                aria-hidden
-                className={cn('size-1.5 rounded-full', tone.solid)}
-            />
             {statusLabel(status, minutes, compact)}
-        </span>
+        </Badge>
     );
 }
 

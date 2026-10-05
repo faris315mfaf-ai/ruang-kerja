@@ -1,4 +1,8 @@
 import { ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Panel } from '@/components/ui/panel';
 import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { SuspiciousLog } from '@/types/attendance';
@@ -39,7 +43,10 @@ type Props = {
     className?: string;
 };
 
-/** "Perlu ditinjau" (mockups DashboardHR / MDashboardHR). */
+/** Cards shown before "Tampilkan semua". */
+const PREVIEW = 3;
+
+/** "Perlu ditinjau" (DHR): flagged check-ins as grey cards with actions. */
 export function SuspiciousPanel({
     items,
     total,
@@ -48,124 +55,119 @@ export function SuspiciousPanel({
     className,
 }: Props) {
     const mobile = variant === 'mobile';
+    const [expanded, setExpanded] = useState(false);
+    const shown = expanded ? items : items.slice(0, PREVIEW);
 
     return (
-        <section
-            aria-labelledby="review-title"
-            className={cn(
-                'rounded-xl border border-border bg-surface shadow-card',
-                className,
-            )}
-        >
-            <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-                <h2
-                    id="review-title"
-                    className="flex items-center gap-2 text-[15px] font-semibold text-text"
-                >
+        <Panel
+            title={
+                <>
                     Perlu ditinjau
-                    <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-warning-soft px-2 text-xs font-semibold text-warning tnum">
+                    <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-danger bg-grad-hangat px-2.5 text-[15px] font-bold text-on-brand tnum">
                         {total}
                     </span>
-                </h2>
-                <span className="text-[13px] text-text-muted">
-                    absensi tidak biasa
-                </span>
-            </div>
-
+                </>
+            }
+            className={className}
+            bodyClassName="gap-3.5"
+        >
             {items.length === 0 ? (
-                <p className="m-4 flex gap-2 rounded-lg bg-success-soft p-3 text-sm text-success">
+                <p className="flex gap-2 rounded-lg bg-success-soft p-4 text-[15px] leading-[22px] text-success">
                     <ShieldCheck
-                        className="mt-0.5 size-4 shrink-0"
+                        className="mt-0.5 size-5 shrink-0"
                         aria-hidden
                     />
                     Tidak ada temuan. Diperiksa: akurasi GPS, perangkat & IP
                     baru, jam perangkat, lompatan lokasi, selfie gelap.
                 </p>
             ) : (
-                <ul className="divide-y divide-border">
-                    {items.map((log) => (
-                        <li key={log.id} className="space-y-2.5 px-4 py-3.5">
-                            <div className="flex items-start gap-3">
-                                <span
-                                    aria-hidden
-                                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-on-brand"
-                                >
-                                    {log.initials}
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                    <p className="truncate text-[15px] font-medium text-text">
-                                        {log.name}
-                                        {mobile && log.locationName && (
-                                            <span className="font-normal text-text-muted">
-                                                {' '}
-                                                · {log.locationName}
-                                            </span>
-                                        )}
-                                    </p>
-                                    {!mobile && (
-                                        <p className="truncate text-[13px] text-text-muted">
-                                            {log.locationName ??
-                                                log.methodLabel}{' '}
-                                            · {log.typeLabel.toLowerCase()}{' '}
-                                            <span className="font-mono">
-                                                {formatTime(log.occurredAt)}
-                                            </span>
-                                        </p>
-                                    )}
-                                </div>
-                                {mobile ? (
-                                    <span className="font-mono text-[15px] text-text tnum">
-                                        {formatTime(log.occurredAt)}
+                <ul className="flex flex-col gap-3">
+                    {shown.map((log) => {
+                        const detail = flagDetail(log);
+
+                        return (
+                            <li
+                                key={log.id}
+                                className="flex flex-col gap-2.5 rounded-[18px] bg-background p-4"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <span
+                                        aria-hidden
+                                        className="flex size-10 shrink-0 items-center justify-center rounded-full bg-danger-soft text-[15px] font-bold text-danger"
+                                    >
+                                        {log.initials}
                                     </span>
-                                ) : (
-                                    <FlagChips log={log} />
-                                )}
-                            </div>
-                            {mobile && <FlagChips log={log} />}
-                            {flagDetail(log) && (
-                                <p className="text-[13px] text-text-muted">
-                                    {flagDetail(log)}
-                                </p>
-                            )}
-                            {(log.canViewSelfie || log.canReview) && (
-                                <div
-                                    className={cn(
-                                        'flex gap-2',
-                                        mobile && 'grid grid-cols-2',
-                                    )}
-                                >
-                                    {log.canViewSelfie && (
-                                        <SelfieButton
-                                            logId={log.id}
-                                            name={log.name}
-                                            occurredAt={log.occurredAt}
-                                            size={mobile ? 'lg' : 'sm'}
-                                        />
-                                    )}
-                                    {log.canReview && (
-                                        <ReviewButton
-                                            logId={log.id}
-                                            only={reload}
-                                            size={mobile ? 'lg' : 'sm'}
-                                        />
-                                    )}
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-[16px] leading-6 font-bold text-text">
+                                            {log.name}
+                                        </p>
+                                        <p className="truncate text-[15px] leading-[22px] text-text-muted">
+                                            {log.typeLabel}{' '}
+                                            {formatTime(log.occurredAt)} ·{' '}
+                                            {log.locationName ??
+                                                log.methodLabel}
+                                        </p>
+                                    </div>
                                 </div>
-                            )}
-                        </li>
-                    ))}
+                                <FlagChips log={log} />
+                                {detail && (
+                                    <p className="text-[15px] leading-[22px] font-semibold text-danger">
+                                        {detail}
+                                    </p>
+                                )}
+                                {(log.canViewSelfie || log.canReview) && (
+                                    <div
+                                        className={cn(
+                                            'flex flex-wrap gap-2',
+                                            mobile && 'grid grid-cols-2',
+                                        )}
+                                    >
+                                        {log.canViewSelfie && (
+                                            <SelfieButton
+                                                logId={log.id}
+                                                name={log.name}
+                                                occurredAt={log.occurredAt}
+                                                size={mobile ? 'lg' : 'sm'}
+                                            />
+                                        )}
+                                        {log.canReview && (
+                                            <ReviewButton
+                                                logId={log.id}
+                                                only={reload}
+                                                size={mobile ? 'lg' : 'sm'}
+                                            />
+                                        )}
+                                    </div>
+                                )}
+                            </li>
+                        );
+                    })}
                 </ul>
             )}
 
+            {items.length > PREVIEW && (
+                <Button
+                    type="button"
+                    variant="quiet"
+                    className="self-start"
+                    aria-expanded={expanded}
+                    onClick={() => setExpanded((open) => !open)}
+                >
+                    {expanded
+                        ? 'Tampilkan lebih sedikit'
+                        : `Tampilkan semua (${items.length})`}
+                </Button>
+            )}
             {total > items.length && (
-                <p className="border-t border-border px-4 py-2.5 text-[13px] text-text-muted">
+                <p className="text-meta text-text-muted">
                     Menampilkan {items.length} dari {total} log terbaru.
                 </p>
             )}
-            <p className="flex items-center gap-1.5 border-t border-border px-4 py-2.5 text-[13px] text-text-muted">
-                <ShieldCheck className="size-3.5" aria-hidden />
-                Lihat selfie: akses tercatat di audit log.
+            <p className="flex items-center gap-1.5 text-[14px] leading-5 text-text-muted">
+                <ShieldCheck className="size-4 shrink-0" aria-hidden />
+                Melihat selfie selalu tercatat di audit log.
             </p>
-        </section>
+        </Panel>
     );
 }
 
@@ -173,12 +175,14 @@ function FlagChips({ log }: { log: SuspiciousLog }) {
     return (
         <span className="flex flex-wrap gap-1.5">
             {log.flags.map((flag) => (
-                <span
+                <Badge
                     key={flag.value}
-                    className="inline-flex h-6 items-center rounded-full bg-warning-soft px-2.5 text-xs font-medium whitespace-nowrap text-warning"
+                    variant="status"
+                    tone="warning"
+                    className="h-7 px-2.5 text-[14px]"
                 >
                     {flag.label}
-                </span>
+                </Badge>
             ))}
         </span>
     );

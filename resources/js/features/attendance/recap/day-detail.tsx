@@ -1,4 +1,5 @@
 import { LogIn, LogOut } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { TONE_CLASSES, formatDuration, statusTone } from '@/lib/attendance';
 import { formatDate, formatTime } from '@/lib/format';
 import { cellLabel } from '@/lib/recap';
@@ -32,9 +33,7 @@ export function DayDetail({
     const status = ['off', 'upcoming', 'none', 'holiday'].includes(cell.kind)
         ? null
         : (cell.kind as AttendanceStatus);
-    const tone = status
-        ? TONE_CLASSES[statusTone(status)]
-        : TONE_CLASSES.neutral;
+    const tone = status ? statusTone(status) : 'neutral';
     const badge =
         status === 'late'
             ? `Terlambat ${cell.lateMinutes} m`
@@ -51,94 +50,89 @@ export function DayDetail({
         <section
             aria-label={`Detail ${formatDate(cell.date)}`}
             className={cn(
-                'overflow-hidden rounded-xl border border-border bg-surface shadow-card',
+                'overflow-hidden rounded-panel border border-border bg-surface shadow-card',
                 className,
             )}
         >
-            <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-                <h3 className="text-[17px] font-semibold text-text">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-divider px-5 py-4 md:px-6">
+                <h3 className="text-title font-bold text-text">
                     {formatDate(cell.date)}
                 </h3>
-                <span
-                    className={cn(
-                        'inline-flex h-7 items-center rounded-full px-3 text-[13px] font-medium',
-                        tone.soft,
-                    )}
-                >
+                <Badge variant="status" tone={tone} dot>
                     {badge}
-                </span>
+                </Badge>
             </div>
             {cell.checkIn || cell.checkOut ? (
-                <ul className="divide-y divide-border">
+                <ul className="divide-y divide-divider">
                     {cell.checkIn && (
-                        <li className="flex items-center gap-3 px-4 py-3">
+                        <li className="flex min-h-[72px] items-center gap-3.5 px-5 py-3 md:px-6">
                             <span
                                 aria-hidden
                                 className={cn(
-                                    'flex size-11 shrink-0 items-center justify-center rounded-full',
+                                    'flex size-11 shrink-0 items-center justify-center rounded-control',
                                     cell.lateMinutes > 0
                                         ? TONE_CLASSES.warning.soft
-                                        : 'bg-surface-2 text-text-muted',
+                                        : 'bg-link-soft text-link',
                                 )}
                             >
                                 <LogIn className="size-5" strokeWidth={1.75} />
                             </span>
                             <div className="min-w-0 flex-1">
-                                <p className="text-[15px] text-text">
+                                <p className="text-[17px] leading-6 font-semibold text-text">
                                     Masuk
                                     {cell.lateMinutes > 0 && (
-                                        <span className="text-warning">
+                                        <span className="font-normal text-warning">
                                             {' '}
                                             · terlambat {cell.lateMinutes} m
                                         </span>
                                     )}
                                 </p>
-                                <p className="truncate text-[13px] text-text-muted">
+                                <p className="truncate text-[15px] leading-[22px] text-text-muted">
                                     {place(cell.checkIn)}
                                 </p>
                             </div>
-                            <span className="font-mono text-[17px] text-text tnum">
+                            <span className="text-[20px] font-bold text-text tnum">
                                 {formatTime(cell.checkIn.occurredAt)}
                             </span>
                         </li>
                     )}
                     {cell.checkOut && (
-                        <li className="flex items-center gap-3 px-4 py-3">
+                        <li className="flex min-h-[72px] items-center gap-3.5 px-5 py-3 md:px-6">
                             <span
                                 aria-hidden
-                                className="flex size-11 shrink-0 items-center justify-center rounded-full bg-surface-2 text-text-muted"
+                                className="flex size-11 shrink-0 items-center justify-center rounded-control bg-surface-2 text-text-muted"
                             >
                                 <LogOut className="size-5" strokeWidth={1.75} />
                             </span>
                             <div className="min-w-0 flex-1">
-                                <p className="text-[15px] text-text">
+                                <p className="text-[17px] leading-6 font-semibold text-text">
                                     Pulang
                                     {cell.workMinutes > 0 && (
-                                        <span className="text-text-muted">
+                                        <span className="font-normal text-text-muted">
                                             {' '}
                                             · durasi{' '}
                                             {formatDuration(cell.workMinutes)}
                                         </span>
                                     )}
                                 </p>
-                                <p className="truncate text-[13px] text-text-muted">
+                                <p className="truncate text-[15px] leading-[22px] text-text-muted">
                                     {place(cell.checkOut)}
                                 </p>
                             </div>
-                            <span className="font-mono text-[17px] text-text tnum">
+                            <span className="text-[20px] font-bold text-text tnum">
                                 {formatTime(cell.checkOut.occurredAt)}
                             </span>
                         </li>
                     )}
                     {cell.overtimeMinutes > 0 && (
-                        <li className="px-4 py-3 text-[13px] text-text-muted">
+                        <li className="px-5 py-3 text-meta text-text-muted md:px-6">
                             Lembur disetujui{' '}
                             {formatDuration(cell.overtimeMinutes)}
                         </li>
                     )}
                 </ul>
             ) : (
-                <p className="px-4 py-5 text-[15px] text-text-muted">
+                <p className="px-5 py-5 text-[16px] text-text-muted md:px-6">
                     {cell.kind === 'off' || cell.kind === 'holiday'
                         ? 'Tidak ada jadwal kerja pada tanggal ini.'
                         : cell.kind === 'upcoming'

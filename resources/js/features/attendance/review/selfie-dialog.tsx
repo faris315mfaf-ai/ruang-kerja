@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/dialog';
 import { formatDateTime } from '@/lib/format';
 import { HttpRequestError, requestJson } from '@/lib/http';
-import { cn } from '@/lib/utils';
 import logRoutes from '@/routes/attendance/logs';
 
 type Props = {
@@ -67,10 +66,8 @@ export function SelfieButton({
             <Button
                 type="button"
                 variant="outline"
-                className={cn(
-                    size === 'lg' ? 'h-11 text-[15px]' : 'h-8',
-                    className,
-                )}
+                size={size}
+                className={className}
                 onClick={() => void show()}
             >
                 <Eye aria-hidden />
@@ -84,7 +81,7 @@ export function SelfieButton({
                             {formatDateTime(occurredAt)}
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-xl border border-border bg-surface-2">
+                    <div className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-lg border border-border bg-surface-2">
                         {loading && (
                             <Loader2
                                 className="size-6 animate-spin text-text-muted"
@@ -92,7 +89,7 @@ export function SelfieButton({
                             />
                         )}
                         {error && (
-                            <p className="flex flex-col items-center gap-2 p-6 text-center text-sm text-text-muted">
+                            <p className="flex flex-col items-center gap-2 p-6 text-center text-[15px] text-text-muted">
                                 <AlertCircle
                                     className="size-6 text-warning"
                                     aria-hidden
@@ -108,7 +105,7 @@ export function SelfieButton({
                             />
                         )}
                     </div>
-                    <p className="flex items-center gap-1.5 text-xs text-text-muted">
+                    <p className="flex items-center gap-1.5 text-meta text-text-muted">
                         <ShieldCheck className="size-3.5" aria-hidden />
                         Akses selfie tercatat di audit log.
                     </p>
