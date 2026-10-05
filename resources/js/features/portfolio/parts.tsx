@@ -151,49 +151,6 @@ export function PersonChip({
     );
 }
 
-/**
- * Bordered panel with a header row. Still used by features/projects (project
- * summary); the portfolio page itself uses the Arus `Panel`.
- */
-export function Panel({
-    title,
-    count,
-    aside,
-    children,
-    className,
-    id,
-}: {
-    title: ReactNode;
-    count?: ReactNode;
-    aside?: ReactNode;
-    children: ReactNode;
-    className?: string;
-    id?: string;
-}) {
-    return (
-        <section
-            id={id}
-            className={cn(
-                'scroll-mt-20 overflow-hidden rounded-lg border border-border bg-surface',
-                className,
-            )}
-        >
-            <header className="flex min-h-12 items-center justify-between gap-3 border-b border-border px-4 py-2.5">
-                <h2 className="flex items-center gap-2 text-[15px] font-semibold text-text">
-                    {title}
-                    {count !== undefined && (
-                        <span className="text-[13px] font-normal text-text-muted tnum">
-                            {count}
-                        </span>
-                    )}
-                </h2>
-                {aside}
-            </header>
-            {children}
-        </section>
-    );
-}
-
 /** Dialog on desktop, bottom sheet on mobile. */
 export function ResponsiveSheet({
     open,
