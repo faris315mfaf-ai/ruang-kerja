@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Pengaturan staf · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #F3F6FA">
+  <div style="padding: 24px 16px 0; display: flex; flex-direction: column; gap: 14px">
+    <h1 style="margin: 0; font-size: 32px; line-height: 40px; font-weight: 800; letter-spacing: -0.025em">Pengaturan</h1>
+    <div style="display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 22px; color: #FFFFFF; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)">
+      <span style="width: 54px; height: 54px; border-radius: 27px; background: rgba(255,255,255,0.18); border: 2px solid rgba(255,255,255,0.5); box-sizing: border-box; font-size: 19px; font-weight: 800; display: flex; align-items: center; justify-content: center">SW</span>
+      <span style="display: flex; flex-direction: column"><span style="font-size: 19px; font-weight: 800">Sari Wulandari</span><span style="font-size: 14px">OPS-0231 · Staf Data</span></span>
+    </div>
+    <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #46576B; padding: 2px 4px 0">Notifikasi</span>
+    <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 22px; overflow: hidden">
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 0 16px; min-height: 58px; border-top: {{r.sep}}">
+          <span style="flex: 1; font-size: 16px; font-weight: 500">{{r.label}}</span>
+          <button type="button" role="switch" aria-checked="{{r.aria}}" aria-label="{{r.label}}" onClick="{{r.toggle}}" style="width: 52px; height: 32px; padding: 3px; border: 0; border-radius: 16px; background: {{r.track}}; cursor: pointer; display: flex; justify-content: {{r.justify}}"><span style="width: 26px; height: 26px; border-radius: 13px; background: #FFFFFF; box-shadow: 0 1px 4px rgba(11,26,43,0.25)"></span></button>
+        </div>
+      </sc-for>
+    </div>
+    <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #46576B; padding: 2px 4px 0">Tampilan</span>
+    <div role="radiogroup" aria-label="Tema" style="display: flex; padding: 4px; border-radius: 16px; background: #E4EAF1">
+      <sc-for list="{{themes}}" as="t" hint-placeholder-count="3">
+        <button type="button" role="radio" aria-checked="{{t.sel}}" onClick="{{t.pick}}" style="flex: 1; height: 44px; border: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.color}}; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: {{t.shadow}}">{{t.label}}</button>
+      </sc-for>
+    </div>
+    <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #46576B; padding: 2px 4px 0">Privasi</span>
+    <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 22px; overflow: hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 16px; min-height: 56px; font-size: 16px"><span>Lokasi &amp; selfie</span><b style="color: #0F7A55">Disetujui</b></div>
+      <a href="#" style="display: flex; justify-content: space-between; align-items: center; padding: 0 16px; min-height: 56px; font-size: 16px; color: #0B1A2B; border-top: 1px solid #EEF2F7"><span>Unduh data saya</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8495A8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></a>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" active="menu" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var EV = ['Tugas baru & mention', 'Tenggat H-1', 'Status pengajuan', 'Pengingat check-in'];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { on: { 0: true, 1: true, 2: true, 3: false }, theme: 'Sistem' };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var on = st.on || {};
+    var th = st.theme || 'Sistem';
+    return {
+      rows: EV.map(function (l, i) { var v = !!on[i]; return { label: l, aria: v ? 'true' : 'false', track: v ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : '#C3CEDA', justify: v ? 'flex-end' : 'flex-start', sep: i ? '1px solid #EEF2F7' : '0', toggle: function () { var n = Object.assign({}, on); n[i] = !v; self.setState({ on: n }); } }; }),
+      themes: ['Terang', 'Gelap', 'Sistem'].map(function (t) { var s = t === th; return { label: t, sel: s ? 'true' : 'false', bg: s ? '#FFFFFF' : 'transparent', color: s ? '#0B1A2B' : '#46576B', shadow: s ? '0 2px 8px rgba(11,26,43,0.12)' : 'none', pick: function () { self.setState({ theme: t }); } }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

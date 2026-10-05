@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Direktur Utama · keputusan · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; background: #F3F6FA">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="PeranMDirut.dc.html" aria-label="Kembali" style="width: 44px; height: 44px; border-radius: 22px; background: #FFFFFF; border: 1px solid #DDE4EC; color: #0B1A2B; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="height: 32px; padding: 0 12px; border-radius: 16px; background: #FDE7EA; color: #C42137; font-size: 14px; font-weight: 800; display: inline-flex; align-items: center">Keputusan · 1 dari 3</span>
+    </div>
+    <h1 style="margin: 0; font-size: 26px; line-height: 32px; font-weight: 800; letter-spacing: -0.02em">Perpanjangan timeline Dashboard Eksekutif Pemda</h1>
+    <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 14px; color: #46576B">Diajukan <b style="color: #0B1A2B">Agus Setiawan</b> · Kam, 1 Okt</span>
+      <span style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 30px; font-weight: 800; color: #C42137">30%</span><span style="font-size: 14px; color: #46576B">progres · rencana 50%</span></span>
+      <span style="position: relative; display: block; height: 8px; border-radius: 4px; background: #EEF2F7"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 30%; border-radius: 4px; background: #C42137"></span><span style="position: absolute; top: -4px; left: 50%; width: 3px; height: 16px; background: #0B1A2B; border-radius: 2px"></span></span>
+      <span style="font-size: 14px; line-height: 20px; color: #253445">Akses API Pemda tertahan 12 hari. Data 9 dari 17 OPD belum masuk.</span>
+    </div>
+    <span style="font-size: 15px; font-weight: 800; padding-top: 2px">Pilih keputusan</span>
+    <div role="radiogroup" aria-label="Opsi" style="display: flex; flex-direction: column; gap: 8px">
+      <sc-for list="{{opts}}" as="o" hint-placeholder-count="3">
+        <button type="button" role="radio" aria-checked="{{o.sel}}" onClick="{{o.pick}}" style="display: flex; gap: 12px; padding: 12px 14px; border-radius: 16px; border: {{o.border}}; background: {{o.bg}}; font: inherit; text-align: left; cursor: pointer; color: #0B1A2B">
+          <span style="width: 22px; height: 22px; border-radius: 11px; box-sizing: border-box; border: {{o.ring}}; flex-shrink: 0; margin-top: 2px"></span>
+          <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 800">{{o.t}}</span><span style="font-size: 13px; line-height: 18px; color: #46576B">{{o.d}}</span></span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px 22px; display: flex; flex-direction: column; gap: 8px; background: rgba(255,255,255,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid #DDE4EC">
+    <button type="button" onClick="{{decide}}" style="height: 56px; border: 0; border-radius: 16px; background: {{btnBg}}; color: #FFFFFF; font: inherit; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 24px rgba(30,95,214,0.30)">{{btn}}</button>
+    <span style="font-size: 13px; color: #46576B; text-align: center">{{note}}</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var O = [['A · Mundurkan serah terima ke 18 Des', 'Tim tetap 4 orang, perlu adendum kontrak dengan Pemda'], ['B · Tambah 1 programmer dari RKJ', 'Rilis RuangKerja Fase 1 mundur 1 minggu'], ['C · Serah terima bertahap', '8 OPD yang datanya lengkap dulu pada 27 Nov']];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { o: 0, done: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var oi = st.o || 0;
+    return {
+      opts: O.map(function (o, i) { var on = i === oi; return { t: o[0], d: o[1], sel: on ? 'true' : 'false', bg: on ? '#EEF4FE' : '#FFFFFF', border: on ? '2px solid #1E5FD6' : '1px solid #DDE4EC', ring: on ? '7px solid #1E5FD6' : '2px solid #C3CEDA', pick: function () { self.setState({ o: i, done: false }); } }; }),
+      btn: st.done ? 'Keputusan terkirim ✓' : 'Putuskan opsi ' + 'ABC'[oi],
+      btnBg: st.done ? 'linear-gradient(135deg, #14B8A6 0%, #0F7A55 100%)' : 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)',
+      note: st.done ? 'Agus dan Rina diberi tahu · tercatat di notulen rapat direksi' : 'Keputusan dikirim ke pengaju dan PIC proyek',
+      decide: function () { self.setState({ done: true }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

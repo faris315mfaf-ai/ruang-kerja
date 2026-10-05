@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Monitoring tugas</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}a:hover{color:#0A4E57}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #F3F6FA; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" crumbs="Tugas / Monitoring" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 40px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #09656E">Minggu 41 · 5–9 Oktober 2026</span>
+        <h1 style="margin: 0; font-size: 44px; line-height: 52px; font-weight: 800; letter-spacing: -0.03em">Monitoring tugas</h1>
+        <span style="font-size: 18px; color: #46576B">Semua tugas anggota Divisi Operasional, di workspace divisi maupun proyek</span>
+      </div>
+      <button type="button" style="height: 44px; padding: 0 18px; border: 1px solid #C3CEDA; border-radius: 12px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Ekspor Excel</button>
+    </section>
+
+    <section aria-label="Filter" style="display: flex; flex-wrap: wrap; gap: 12px; padding: 14px; border-radius: 20px; background: rgba(255,255,255,0.75); border: 1px solid #DDE4EC">
+      <sc-for list="{{selects}}" as="s" hint-placeholder-count="4">
+        <label style="display: flex; flex-direction: column; gap: 6px; flex: 1 1 200px">
+          <span style="font-size: 14px; font-weight: 700; color: #46576B">{{s.label}}</span>
+          <select style="height: 44px; padding: 0 12px; border: 1px solid #C3CEDA; border-radius: 12px; background: #FFFFFF; font: inherit; font-size: 16px; color: #0B1A2B"><option>{{s.value}}</option></select>
+        </label>
+      </sc-for>
+    </section>
+
+    <section aria-label="Ringkasan" style="display: flex; flex-wrap: wrap; gap: 16px">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="5">
+        <div style="flex: 1 1 200px; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 6px; background: {{k.bg}}; color: {{k.fg}}; border: {{k.border}}; box-shadow: {{k.shadow}}">
+          <span style="font-size: 16px; font-weight: 600; color: {{k.sub}}">{{k.label}}</span>
+          <span style="font-size: 40px; line-height: 48px; font-weight: 700; color: {{k.valueColor}}">{{k.value}}</span>
+          <span style="font-size: 15px; color: {{k.sub}}">{{k.note}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch">
+      <div style="flex: 1 1 460px; min-width: 0; background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px 28px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 18px">
+        <h2 style="margin: 0; font-size: 22px; font-weight: 700">Status tugas terbuka</h2>
+        <div aria-hidden="true" style="height: 28px; border-radius: 14px; overflow: hidden; display: flex; gap: 3px">
+          <sc-for list="{{status}}" as="s" hint-placeholder-count="4"><div style="flex: {{s.n}}; background: {{s.color}}"></div></sc-for>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <sc-for list="{{status}}" as="s" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: #F3F6FA">
+              <span style="width: 14px; height: 14px; border-radius: 7px; background: {{s.color}}"></span>
+              <span style="flex: 1; font-size: 16px; font-weight: 600">{{s.label}}</span>
+              <span style="font-size: 22px; font-weight: 700">{{s.n}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <span style="font-size: 15px; line-height: 22px; color: #46576B">10 tugas menunggu review; 2 di antaranya sudah di Review lebih dari 5 hari.</span>
+      </div>
+
+      <div style="flex: 1.3 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px 28px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700">Dibuat vs selesai</h2>
+          <div style="display: flex; gap: 16px; font-size: 15px; color: #46576B">
+            <span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #C3CEDA"></span>Dibuat</span>
+            <span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 4px; background: linear-gradient(135deg, #14B8A6, #2F7BEA)"></span>Selesai</span>
+          </div>
+        </div>
+        <div style="height: 200px; display: flex; align-items: flex-end; gap: 14px">
+          <sc-for list="{{flow}}" as="w" hint-placeholder-count="8">
+            <div style="flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 8px">
+              <div style="width: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 4px; height: 160px">
+                <div style="width: 40%; max-width: 20px; height: {{w.c}}px; border-radius: 6px 6px 3px 3px; background: #C3CEDA"></div>
+                <div style="width: 40%; max-width: 20px; height: {{w.d}}px; border-radius: 6px 6px 3px 3px; background: linear-gradient(180deg, #2F7BEA 0%, #14B8A6 100%)"></div>
+              </div>
+              <span style="font-size: 14px; color: {{w.labelColor}}; font-weight: {{w.weight}}; white-space: nowrap">{{w.week}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <span style="font-size: 15px; color: #46576B">Minggu ini lebih banyak yang selesai (19) daripada yang dibuat (16).</span>
+      </div>
+    </section>
+
+    <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px 0 8px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 0 28px 16px">
+        <h2 style="margin: 0; font-size: 22px; font-weight: 700">Tugas yang perlu perhatian</h2>
+        <div role="tablist" aria-label="Jenis risiko" style="display: flex; flex-wrap: wrap; gap: 8px">
+          <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+            <button type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="height: 40px; padding: 0 16px; border-radius: 20px; border: {{t.border}}; background: {{t.bg}}; color: {{t.color}}; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">{{t.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="overflow-x: auto">
+        <div style="min-width: 980px">
+          <div style="display: grid; grid-template-columns: 110px 2.4fr 1fr 1.3fr 1.1fr 1fr 1fr; gap: 16px; padding: 12px 28px; background: #F3F6FA; font-size: 14px; font-weight: 700; color: #46576B">
+            <span>ID</span><span>Tugas</span><span>Workspace</span><span>Penanggung jawab</span><span>Status</span><span>Tenggat</span><span style="text-align: right">{{colLabel}}</span>
+          </div>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="7">
+            <a href="DTugas.dc.html" style="display: grid; grid-template-columns: 110px 2.4fr 1fr 1.3fr 1.1fr 1fr 1fr; gap: 16px; align-items: center; padding: 0 28px; min-height: 62px; border-top: 1px solid #EEF2F7; color: #0B1A2B; font-size: 16px">
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600">{{r.id}}</span>
+              <span style="font-weight: 600">{{r.title}}</span>
+              <span><span style="height: 28px; padding: 0 10px; border-radius: 8px; background: #EEF2F7; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center">{{r.ws}}</span></span>
+              <span style="color: {{r.whoColor}}">{{r.who}}</span>
+              <span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 10px; height: 10px; border-radius: 5px; background: {{r.sColor}}"></span>{{r.status}}</span>
+              <span>{{r.due}}</span>
+              <span style="text-align: right"><span style="height: 30px; padding: 0 12px; border-radius: 15px; background: {{r.tagBg}}; color: {{r.tagFg}}; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center">{{r.tag}}</span></span>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 1.5 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px 28px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700">Tenggat per orang minggu ini</h2>
+          <span style="font-size: 15px; color: #46576B">angka = jumlah tugas jatuh tempo</span>
+        </div>
+        <div style="overflow-x: auto">
+          <div style="min-width: 560px; display: flex; flex-direction: column; gap: 8px">
+            <div style="display: grid; grid-template-columns: 170px repeat(5, minmax(0, 1fr)) 90px; gap: 8px; font-size: 14px; font-weight: 700; color: #46576B; text-align: center">
+              <span style="text-align: left">Orang</span><span>Sen 5</span><span>Sel 6</span><span>Rab 7</span><span>Kam 8</span><span>Jum 9</span><span>Terbuka</span>
+            </div>
+            <sc-for list="{{heat}}" as="h" hint-placeholder-count="5">
+              <div style="display: grid; grid-template-columns: 170px repeat(5, minmax(0, 1fr)) 90px; gap: 8px; align-items: center">
+                <span style="font-size: 16px; font-weight: 600">{{h.name}}</span>
+                <sc-for list="{{h.days}}" as="d" hint-placeholder-count="5">
+                  <span style="height: 44px; border-radius: 12px; background: {{d.bg}}; color: {{d.fg}}; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{d.n}}</span>
+                </sc-for>
+                <span style="font-size: 16px; font-weight: 700; text-align: center">{{h.open}}<span style="color: #C42137">{{h.late}}</span></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex: 1 1 360px; min-width: 0; background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px 28px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 14px">
+        <h2 style="margin: 0; font-size: 22px; font-weight: 700">Per workspace</h2>
+        <sc-for list="{{ws}}" as="w" hint-placeholder-count="5">
+          <a href="{{w.href}}" style="display: grid; grid-template-columns: 40px 1fr 70px; gap: 12px; align-items: center; color: #0B1A2B">
+            <span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 12px; background: {{w.grad}}; color: #FFFFFF; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{w.l}}</span>
+            <span style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 16px; font-weight: 600">{{w.name}}</span><span style="height: 8px; border-radius: 4px; background: #EEF2F7; display: flex; overflow: hidden"><span style="width: {{w.ok}}%; background: linear-gradient(90deg, #14B8A6, #2F7BEA)"></span><span style="width: {{w.lt}}%; background: #C42137"></span></span></span>
+            <span style="font-size: 16px; font-weight: 700; text-align: right">{{w.open}}<span style="color: #C42137">{{w.late}}</span></span>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" active="tugas" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1900}}'>
+var SC = { Backlog: '#8495A8', Todo: '#46576B', Dikerjakan: '#E08A00', Review: '#1E5FD6' };
+var G1 = 'linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%)', G2 = 'linear-gradient(135deg, #2F7BEA 0%, #6D4AE0 100%)', G3 = 'linear-gradient(135deg, #C2410C 0%, #BE185D 100%)';
+var ROWS = {
+  'Terlambat': { col: 'Terlambat', tag: ['#FDE7EA', '#C42137'], rows: [
+    ['OPS-142', 'Rekap stok gudang September', 'OPS', 'Rizky Aditya', 'Dikerjakan', 'Rab, 30 Sep', '5 hari'],
+    ['OPS-138', 'Perbarui SOP penerimaan barang', 'OPS', 'Rizky Aditya', 'Todo', 'Jum, 2 Okt', '3 hari'],
+    ['OPS-131', 'Jadwal perawatan kendaraan operasional', 'OPS', 'Bayu Saputra', 'Review', 'Sab, 3 Okt', '2 hari'],
+    ['PLQ-15', 'Siaran pers peluncuran', 'PLQ', 'Sari Wulandari', 'Review', 'Sab, 3 Okt', '2 hari'],
+    ['OPS-127', 'Verifikasi tagihan vendor logistik', 'OPS', 'Rizky Aditya', 'Dikerjakan', 'Min, 4 Okt', '1 hari'],
+    ['GDG-48', 'Laporan selisih stok rak C', 'GDG', 'Sari Wulandari', 'Review', 'Min, 4 Okt', '1 hari'],
+    ['MSG-19', 'Validasi kode SKU ganda', 'MSG', 'Yoga Permana', 'Dikerjakan', 'Min, 4 Okt', '1 hari'] ] },
+  'Jatuh tempo ≤ 3 hari': { col: 'Sisa waktu', tag: ['#FFF1DC', '#9A5800'], rows: [
+    ['MSG-23', 'Uji impor data stok batch 2', 'MSG', 'Sari Wulandari', 'Dikerjakan', 'Sen, 5 Okt', 'Hari ini'],
+    ['PLQ-18', 'Finalisasi anggaran peluncuran', 'PLQ', 'Dimas Pratama', 'Dikerjakan', 'Sel, 6 Okt', 'Besok'],
+    ['OPS-150', 'Jadwal pengiriman minggu 42', 'OPS', 'Bayu Saputra', 'Todo', 'Rab, 7 Okt', '2 hari'],
+    ['GDG-52', 'Tata letak rak baru gudang C', 'GDG', 'Sari Wulandari', 'Todo', 'Kam, 8 Okt', '3 hari'] ] },
+  'Tanpa penanggung jawab': { col: 'Dibuat', tag: ['#EEF2F7', '#46576B'], rows: [
+    ['OPS-155', 'Inventaris APAR lantai 1', 'OPS', 'Belum ditugaskan', 'Todo', 'Jum, 16 Okt', '2 hari lalu'],
+    ['PLQ-29', 'Daftar mitra distribusi tahap 2', 'PLQ', 'Belum ditugaskan', 'Backlog', '—', '6 hari lalu'] ] },
+  'Macet > 5 hari': { col: 'Di status', tag: ['#E6EEFE', '#1A4CB0'], rows: [
+    ['OPS-133', 'Revisi kontrak sewa forklift', 'OPS', 'Bayu Saputra', 'Review', 'Jum, 9 Okt', '7 hari'],
+    ['MSG-17', 'Mapping lokasi rak gudang', 'MSG', 'Yoga Permana', 'Dikerjakan', 'Sen, 12 Okt', '6 hari'] ] }
+};
+var HEAT = [['Rizky Aditya', [2, 1, 3, 1, 2], 11, 3], ['Sari Wulandari', [1, 2, 1, 2, 0], 9, 2], ['Maya Lestari', [0, 1, 2, 0, 1], 8, 0], ['Bayu Saputra', [0, 1, 1, 0, 2], 7, 1], ['Yoga Permana', [1, 0, 0, 1, 1], 5, 1]];
+var SHADE = [['#F3F6FA', '#8495A8'], ['#C8F4EE', '#0A4E57'], ['#5AD6C8', '#0A4E57'], ['#0B7F86', '#FFFFFF']];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'Terlambat' };
+  }
+  renderVals() {
+    var self = this;
+    var tab = (this.state && this.state.tab) || 'Terlambat';
+    var cur = ROWS[tab];
+    var created = [14, 16, 12, 18, 15, 17, 20, 16], done = [12, 15, 14, 13, 16, 15, 15, 19];
+    var weeks = ['17 Agu', '24 Agu', '31 Agu', '7 Sep', '14 Sep', '21 Sep', '28 Sep', '5 Okt'];
+    return {
+      selects: [['Cakupan', 'Divisi Operasional'], ['Workspace', 'Semua workspace'], ['Penanggung jawab', 'Semua anggota'], ['Prioritas', 'Semua prioritas']].map(function (s) { return { label: s[0], value: s[1] }; }),
+      kpis: [
+        { label: 'Tugas terbuka', value: '52', note: 'di 5 workspace', bg: '#FFFFFF', fg: '#0B1A2B', sub: '#46576B', valueColor: '#0B1A2B', border: '1px solid #DDE4EC', shadow: '0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)' },
+        { label: 'Terlambat', value: '7', note: '5 divisi · 2 proyek', bg: 'linear-gradient(135deg, #C2410C 0%, #BE185D 100%)', fg: '#FFFFFF', sub: '#FFFFFF', valueColor: '#FFFFFF', border: '0', shadow: '0 12px 28px rgba(190,24,93,0.26)' },
+        { label: 'Jatuh tempo minggu ini', value: '14', note: '4 dalam 3 hari', bg: '#FFFFFF', fg: '#0B1A2B', sub: '#46576B', valueColor: '#0B1A2B', border: '1px solid #DDE4EC', shadow: '0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)' },
+        { label: 'Selesai minggu ini', value: '19', note: '4 lebih banyak dari minggu lalu', bg: '#FFFFFF', fg: '#0B1A2B', sub: '#46576B', valueColor: '#0F7A55', border: '1px solid #DDE4EC', shadow: '0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)' },
+        { label: 'Median lead time', value: '3,2 hr', note: 'dibuat sampai selesai', bg: '#FFFFFF', fg: '#0B1A2B', sub: '#46576B', valueColor: '#0B1A2B', border: '1px solid #DDE4EC', shadow: '0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)' }
+      ],
+      status: [['Backlog', 9], ['Todo', 18], ['Dikerjakan', 15], ['Review', 10]].map(function (s) { return { label: s[0], n: s[1], color: SC[s[0]] }; }),
+      flow: weeks.map(function (w, i) { var last = i === weeks.length - 1; return { week: w, c: created[i] * 7, d: done[i] * 7, labelColor: last ? '#0B1A2B' : '#46576B', weight: last ? 800 : 500 }; }),
+      tabs: Object.keys(ROWS).map(function (k) {
+        var on = k === tab;
+        return { label: k + ' · ' + ROWS[k].rows.length, sel: on ? 'true' : 'false', bg: on ? '#0B1A2B' : '#FFFFFF', color: on ? '#FFFFFF' : '#0B1A2B', border: on ? '1px solid #0B1A2B' : '1px solid #C3CEDA', pick: function () { self.setState({ tab: k }); } };
+      }),
+      colLabel: cur.col,
+      rows: cur.rows.map(function (r) {
+        return { id: r[0], title: r[1], ws: r[2], who: r[3], whoColor: r[3] === 'Belum ditugaskan' ? '#C42137' : '#0B1A2B', status: r[4], sColor: SC[r[4]], due: r[5], tag: r[6], tagBg: cur.tag[0], tagFg: cur.tag[1] };
+      }),
+      heat: HEAT.map(function (h) {
+        return { name: h[0], open: h[2], late: h[3] ? ' · ' + h[3] : '', days: h[1].map(function (n) { var s = SHADE[Math.min(n, 3)]; return { n: n || '–', bg: s[0], fg: s[1] }; }) };
+      }),
+      ws: [['O', 'Divisi Operasional', G2, 21, 4, '#'], ['G', 'Tim Gudang', G1, 12, 1, '#'], ['P', 'Proyek Peluncuran Q4', G1, 9, 1, 'DProyek.dc.html'], ['K', 'Renovasi kantor lt. 2', G3, 6, 0, '#'], ['M', 'Migrasi sistem gudang', G2, 4, 1, '#']].map(function (w) {
+        return { l: w[0], name: w[1], grad: w[2], open: w[3], late: w[4] ? ' · ' + w[4] : '', ok: Math.round((w[3] - w[4]) / 22 * 100), lt: Math.round(w[4] / 22 * 100), href: w[5] };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Fondasi · Warna dan gradien</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1560px; box-sizing: border-box; padding: 64px 72px; display: flex; flex-direction: column; gap: 48px; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: radial-gradient(900px 420px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(900px 420px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #F3F6FA">
+
+  <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <div aria-hidden="true" style="width: 44px; height: 44px; border-radius: 13px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); color: #FFFFFF; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(30,95,214,0.28)">RK</div>
+        <span style="font-size: 15px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #09656E">Fondasi desain · 01</span>
+      </div>
+      <h1 style="margin: 0; font-size: 52px; line-height: 60px; font-weight: 800; letter-spacing: -0.03em">Warna &amp; gradien</h1>
+      <p style="margin: 0; max-width: 760px; font-size: 19px; line-height: 30px; color: #46576B">Satu gradien untuk aksi, satu untuk identitas, satu hangat untuk perhatian. Latar tetap tenang supaya data mudah dibaca berjam-jam.</p>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 15px; color: #46576B">
+      <span>Semua teks lolos WCAG AA</span>
+      <span>Terang &amp; gelap</span>
+    </div>
+  </header>
+
+  <section style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px">
+    <sc-for list="{{gradients}}" as="g" hint-placeholder-count="4">
+      <div style="display: flex; flex-direction: column; border-radius: 24px; overflow: hidden; background: #FFFFFF; border: 1px solid #DDE4EC; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+        <div style="height: 168px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; background: {{g.css}}; color: {{g.ink}}">
+          <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; opacity: 0.92">{{g.token}}</span>
+          <span style="font-size: 28px; line-height: 34px; font-weight: 800; letter-spacing: -0.02em">{{g.sample}}</span>
+        </div>
+        <div style="padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 19px; line-height: 26px; font-weight: 700">{{g.name}}</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #46576B">{{g.stops}}</span>
+          <span style="font-size: 15px; line-height: 22px; color: #46576B">{{g.use}}</span>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px">
+    <sc-for list="{{ramps}}" as="r" hint-placeholder-count="2">
+      <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+        <div style="display: flex; align-items: baseline; justify-content: space-between">
+          <span style="font-size: 21px; font-weight: 700; letter-spacing: -0.01em">{{r.name}}</span>
+          <span style="font-size: 15px; color: #46576B">{{r.note}}</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px">
+          <sc-for list="{{r.steps}}" as="s" hint-placeholder-count="10">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <div style="height: 64px; border-radius: 12px; background: {{s.hex}}; box-shadow: inset 0 0 0 1px rgba(11,26,43,0.06); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; box-sizing: border-box; color: {{s.ink}}; font-size: 13px; font-weight: 700">{{s.star}}</div>
+              <span style="font-size: 14px; font-weight: 700; text-align: center">{{s.step}}</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #46576B; text-align: center">{{s.hex}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section style="display: grid; grid-template-columns: 1.35fr 1fr; gap: 20px">
+    <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+      <span style="font-size: 21px; font-weight: 700; letter-spacing: -0.01em">Netral &amp; permukaan</span>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="display: grid; grid-template-columns: 170px repeat(2, minmax(0, 1fr)); gap: 16px; align-items: center">
+        <span style="font-size: 14px; font-weight: 700; color: #46576B">Token</span>
+        <span style="font-size: 14px; font-weight: 700; color: #46576B">Terang</span>
+        <span style="font-size: 14px; font-weight: 700; color: #46576B">Gelap</span>
+        </div>
+        <sc-for list="{{neutrals}}" as="n" hint-placeholder-count="8">
+          <div style="display: grid; grid-template-columns: 170px repeat(2, minmax(0, 1fr)); gap: 16px; align-items: center">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600">{{n.token}}</span>
+          <span style="display: flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #46576B"><span style="width: 40px; height: 32px; border-radius: 9px; background: {{n.light}}; box-shadow: inset 0 0 0 1px rgba(11,26,43,0.12)"></span>{{n.light}}</span>
+          <span style="display: flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #46576B"><span style="width: 40px; height: 32px; border-radius: 9px; background: {{n.dark}}; box-shadow: inset 0 0 0 1px rgba(11,26,43,0.12)"></span>{{n.dark}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 20px">
+      <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+        <span style="font-size: 21px; font-weight: 700; letter-spacing: -0.01em">Semantik</span>
+        <sc-for list="{{semantic}}" as="m" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span style="display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: 17px; background: {{m.tint}}; color: {{m.text}}; font-size: 15px; font-weight: 700"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{m.text}}"></span>{{m.label}}</span>
+            <span style="flex: 1; font-size: 15px; color: #46576B">{{m.use}}</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #46576B">{{m.text}}</span>
+            <span style="width: 28px; height: 28px; border-radius: 8px; background: #0F1622; display: flex; align-items: center; justify-content: center"><span style="width: 10px; height: 10px; border-radius: 5px; background: {{m.dark}}"></span></span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="background: #0F1622; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 12px; color: #EAF1F8">
+        <span style="font-size: 21px; font-weight: 700; letter-spacing: -0.01em">Uji kontras</span>
+        <sc-for list="{{contrast}}" as="c" hint-placeholder-count="5">
+          <div style="display: flex; align-items: center; gap: 12px; font-size: 15px">
+            <span style="width: 54px; height: 30px; border-radius: 8px; background: {{c.bg}}; color: {{c.fg}}; font-weight: 700; display: flex; align-items: center; justify-content: center">Aa</span>
+            <span style="flex: 1; color: #A6B4C6">{{c.label}}</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600">{{c.ratio}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1560}}'>
+var TEAL = [['50','#E8FBF8'],['100','#C8F4EE'],['200','#95E8DD'],['300','#5AD6C8'],['400','#2DBFB1'],['500','#14A39C'],['600','#0B7F86'],['700','#09656E'],['800','#0A4E57'],['900','#0B3A42']];
+var BLUE = [['50','#EEF4FF'],['100','#D9E6FF'],['200','#B5CDFE'],['300','#86ACFB'],['400','#5B8CF6'],['500','#3A70EC'],['600','#1E5FD6'],['700','#1A4CB0'],['800','#1B3F8A'],['900','#1A3366']];
+function ramp(list, primary) {
+  return list.map(function (s, i) {
+    return { step: s[0], hex: s[1], ink: i >= 5 ? '#FFFFFF' : '#0B1A2B', star: s[0] === primary ? 'utama' : '' };
+  });
+}
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      gradients: [
+        { token: 'grad-aksi', sample: 'Check-in', name: 'Gradien aksi', stops: '#0B7F86 → #1E5FD6 · 135°', use: 'Tombol utama, tile Dock aktif, kartu KPI sorotan. Teks putih 4,8:1.', css: 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', ink: '#FFFFFF' },
+        { token: 'grad-brand', sample: 'RuangKerja', name: 'Gradien brand', stops: '#14B8A6 → #2F7BEA · 135°', use: 'Logo, avatar workspace, isian grafik, ilustrasi. Tidak untuk teks.', css: 'linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%)', ink: '#FFFFFF' },
+        { token: 'grad-hangat', sample: 'Butuh keputusan', name: 'Gradien hangat', stops: '#C2410C → #BE185D · 135°', use: 'Sorotan perhatian dan momen perayaan. Maksimal satu per layar.', css: 'linear-gradient(135deg, #C2410C 0%, #BE185D 100%)', ink: '#FFFFFF' },
+        { token: 'aurora', sample: 'Latar hero', name: 'Aurora', stops: 'radial teal 20% + biru 18%', use: 'Latar atas halaman di belakang judul. Selalu di atas #F3F6FA.', css: 'radial-gradient(260px 160px at 0% 0%, rgba(20,184,166,0.38), transparent 70%), radial-gradient(260px 160px at 100% 0%, rgba(47,123,234,0.34), transparent 70%), #F3F6FA', ink: '#0B1A2B' }
+      ],
+      ramps: [
+        { name: 'Teal SPKD', note: 'utama terang = 600, gelap = 400', steps: ramp(TEAL, '600') },
+        { name: 'Biru', note: 'pasangan gradien & info = 600', steps: ramp(BLUE, '600') }
+      ],
+      neutrals: [
+        { token: '--bg', light: '#F3F6FA', dark: '#070B14' },
+        { token: '--surface', light: '#FFFFFF', dark: '#0F1622' },
+        { token: '--surface-2', light: '#EEF2F7', dark: '#172131' },
+        { token: '--border', light: '#DDE4EC', dark: '#233247' },
+        { token: '--border-strong', light: '#C3CEDA', dark: '#314560' },
+        { token: '--text', light: '#0B1A2B', dark: '#EAF1F8' },
+        { token: '--text-muted', light: '#46576B', dark: '#A6B4C6' },
+        { token: '--text-subtle', light: '#8495A8', dark: '#6B7C92' }
+      ],
+      semantic: [
+        { label: 'Hadir', use: 'Sukses, selesai, tepat waktu', text: '#0F7A55', tint: '#E3F6EE', dark: '#4ADE9B' },
+        { label: 'Terlambat', use: 'Peringatan, tenggat dekat', text: '#9A5800', tint: '#FFF1DC', dark: '#FBBF4C' },
+        { label: 'Alpha', use: 'Bahaya, terlambat, ditolak', text: '#C42137', tint: '#FDE7EA', dark: '#FF7A8A' },
+        { label: 'Cuti', use: 'Info, cuti, izin, dinas', text: '#1E5FD6', tint: '#E6EEFE', dark: '#7FA8FF' }
+      ],
+      contrast: [
+        { label: 'Teks utama di surface', fg: '#0B1A2B', bg: '#FFFFFF', ratio: '17,6 : 1' },
+        { label: 'Teks redup di latar', fg: '#46576B', bg: '#F3F6FA', ratio: '6,8 : 1' },
+        { label: 'Putih di gradien aksi', fg: '#FFFFFF', bg: '#0B7F86', ratio: '4,8 : 1' },
+        { label: 'Teks redup gelap', fg: '#A6B4C6', bg: '#0F1622', ratio: '8,6 : 1' },
+        { label: 'Tinta gelap di aksi gelap', fg: '#041421', bg: '#2DBFB1', ratio: '8,2 : 1' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

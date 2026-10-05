@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Notifikasi rapat · ponsel · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #070B14">
+  <div aria-hidden="true" style="padding: 24px 16px; display: flex; flex-direction: column; gap: 14px; opacity: 0.45">
+    <div style="width: 160px; height: 36px; border-radius: 10px; background: #233247"></div>
+    <div style="height: 150px; border-radius: 24px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)"></div>
+    <div style="height: 210px; border-radius: 22px; background: #0F1622"></div>
+  </div>
+  <sc-if value="{{showBanner}}" hint-placeholder-val="{{true}}">
+    <a href="MRapatDetailMalam.dc.html" style="position: absolute; left: 10px; right: 10px; top: 12px; padding: 14px; border-radius: 22px; background: rgba(15,22,34,0.92); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); box-shadow: 0 16px 40px rgba(0,0,0,0.55); display: flex; gap: 12px; color: #EAF1F8">
+      <span style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); color: #FFFFFF; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0">RK</span>
+      <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; color: #A6B4C6; font-weight: 600">RUANGKERJA · 10.32</span><span style="font-size: 16px; font-weight: 800">Koordinasi peluncuran Q4 sudah mulai</span><span style="font-size: 14px; color: #C9D4E2">Google Meet · ketuk untuk bergabung</span></span>
+    </a>
+  </sc-if>
+  <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.57)"></div>
+  <div role="dialog" aria-label="Rapat dimulai" style="position: absolute; left: 0; right: 0; bottom: 0; border-radius: 28px 28px 0 0; background: #0F1622; padding: 12px 18px 28px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 -16px 40px rgba(0,0,0,0.5)">
+    <span style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: #34465E"></span>
+    <span style="display: flex; align-items: center; gap: 12px">
+      <span style="width: 12px; height: 12px; border-radius: 6px; background: #C42137; box-shadow: 0 0 0 5px rgba(196,33,55,0.18)"></span>
+      <span style="font-size: 15px; font-weight: 800; color: #FF7A8A">{{sheet.badge}}</span>
+    </span>
+    <span style="font-size: 26px; line-height: 33px; font-weight: 800; letter-spacing: -0.02em">Koordinasi peluncuran Q4</span>
+    <span style="font-size: 16px; color: #A6B4C6">Putri, Dimas, dan 3 lainnya sudah bergabung</span>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+      <button type="button" onClick="{{join}}" style="grid-column: span 2; height: 58px; border: 0; border-radius: 16px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 24px rgba(30,95,214,0.34)">{{sheet.cta}}</button>
+      <button type="button" style="height: 50px; border: 1px solid #34465E; border-radius: 14px; background: #0F1622; color: #EAF1F8; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">Salin tautan</button>
+      <button type="button" onClick="{{late}}" style="height: 50px; border: 1px solid #34465E; border-radius: 14px; background: #0F1622; color: #EAF1F8; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">{{sheet.lateLabel}}</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { joined: false, late: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    return {
+      showBanner: true,
+      sheet: { badge: 'SEDANG BERLANGSUNG · 2 MENIT', cta: st.joined ? 'Membuka Google Meet…' : 'Gabung sekarang', lateLabel: st.late ? 'Terkirim ke Putri' : 'Kabari terlambat' },
+      join: function () { self.setState({ joined: true }); },
+      late: function () { self.setState({ late: true }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Persetujuan</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}a:hover{color:#0A4E57}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #F3F6FA; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" crumbs="Persetujuan" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 40px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h1 style="margin: 0; font-size: 44px; line-height: 52px; font-weight: 800; letter-spacing: -0.03em">Persetujuan</h1>
+        <span style="font-size: 18px; color: #46576B">{{pendingCount}} menunggu Anda · rata-rata diputus 6 jam</span>
+      </div>
+      <div style="display: flex; gap: 12px">
+        <button type="button" style="height: 44px; padding: 0 18px; border: 1px solid #C3CEDA; border-radius: 12px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Delegasikan</button>
+        <button type="button" onClick="{{approveAll}}" style="height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 20px rgba(30,95,214,0.30)">Setujui lembur ({{overtimeLeft}})</button>
+      </div>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 10px">
+      <sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+        <button type="button" aria-pressed="{{f.sel}}" onClick="{{f.pick}}" style="height: 40px; padding: 0 16px; border-radius: 20px; border: {{f.border}}; background: {{f.bg}}; color: {{f.color}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">{{f.label}}</button>
+      </sc-for>
+    </div>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+        <sc-for list="{{list}}" as="r" hint-placeholder-count="5">
+          <button type="button" onClick="{{r.select}}" aria-pressed="{{r.selAria}}" style="display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 20px; text-align: left; font: inherit; cursor: pointer; color: #0B1A2B; background: #FFFFFF; border: {{r.border}}; box-shadow: {{r.shadow}}">
+            <span aria-hidden="true" style="width: 48px; height: 48px; border-radius: 24px; background: {{r.avBg}}; color: {{r.avFg}}; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0">{{r.init}}</span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+              <span style="font-size: 17px; font-weight: 700">{{r.name}}</span>
+              <span style="font-size: 15px; color: #46576B">{{r.when}}</span>
+            </span>
+            <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+              <span style="height: 28px; padding: 0 10px; border-radius: 8px; background: {{r.typeBg}}; color: {{r.typeFg}}; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center">{{r.type}}</span>
+              <span style="font-size: 14px; font-weight: 600; color: {{r.stateColor}}">{{r.stateLabel}}</span>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+
+      <div style="flex: 1.3 1 520px; min-width: 0; background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; box-shadow: 0 2px 6px rgba(11,26,43,0.06), 0 20px 48px rgba(11,26,43,0.10); overflow: hidden">
+        <div style="padding: 28px; display: flex; flex-direction: column; gap: 22px">
+          <div style="display: flex; align-items: center; gap: 16px">
+            <span aria-hidden="true" style="width: 60px; height: 60px; border-radius: 30px; background: {{d.avBg}}; color: {{d.avFg}}; font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{d.init}}</span>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 24px; font-weight: 700; letter-spacing: -0.01em">{{d.name}}</span>
+              <span style="font-size: 16px; color: #46576B">{{d.role}}</span>
+            </div>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; padding: 6px 10px; border-radius: 8px; background: #EEF2F7">{{d.no}}</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+            <div style="padding: 16px; border-radius: 16px; background: #F3F6FA; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 600; color: #46576B">Jenis</span><span style="font-size: 19px; font-weight: 700">{{d.type}}</span></div>
+            <div style="padding: 16px; border-radius: 16px; background: #F3F6FA; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 600; color: #46576B">Waktu</span><span style="font-size: 19px; font-weight: 700">{{d.when}}</span></div>
+            <div style="padding: 16px; border-radius: 16px; background: #F3F6FA; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 600; color: #46576B">{{d.amountLabel}}</span><span style="font-size: 19px; font-weight: 700">{{d.amount}}</span></div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 15px; font-weight: 700; color: #46576B">Alasan</span>
+            <span style="font-size: 18px; line-height: 28px">{{d.reason}}</span>
+          </div>
+
+          <sc-if value="{{d.hasNote}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; gap: 12px; padding: 14px 16px; border-radius: 16px; background: #FFF1DC; color: #7A4600">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"></path><path d="M12 8v5"></path><path d="M12 16h.01"></path></svg>
+              <span style="font-size: 16px; line-height: 24px; font-weight: 500">{{d.note}}</span>
+            </div>
+          </sc-if>
+
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <span style="font-size: 15px; font-weight: 700; color: #46576B">Alur persetujuan</span>
+            <div style="display: flex; align-items: center; gap: 10px">
+              <span style="display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 19px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 15px; font-weight: 700">1 · Anda (atasan langsung)</span>
+              <span style="flex: 0 0 28px; height: 2px; background: #C3CEDA"></span>
+              <span style="display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 19px; background: #EEF2F7; color: #46576B; font-size: 15px; font-weight: 700">2 · {{d.next}}</span>
+            </div>
+          </div>
+        </div>
+        <div style="padding: 20px 28px; background: #F3F6FA; border-top: 1px solid #DDE4EC; display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+          <sc-if value="{{d.pending}}" hint-placeholder-val="{{true}}">
+            <button type="button" style="height: 48px; padding: 0 20px; border: 1px solid #C3CEDA; border-radius: 14px; background: #FFFFFF; color: #C42137; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">Tolak</button>
+            <button type="button" style="height: 48px; padding: 0 20px; border: 1px solid #C3CEDA; border-radius: 14px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Minta revisi</button>
+            <span style="flex: 1"></span>
+            <button type="button" onClick="{{approve}}" style="height: 48px; padding: 0 28px; border: 0; border-radius: 14px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 24px rgba(30,95,214,0.32)">Setujui</button>
+          </sc-if>
+          <sc-if value="{{d.decided}}" hint-placeholder-val="{{false}}">
+            <span style="display: inline-flex; align-items: center; gap: 10px; height: 48px; padding: 0 18px; border-radius: 14px; background: #E3F6EE; color: #0F7A55; font-size: 17px; font-weight: 700"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg>Disetujui · diteruskan ke {{d.next}}</span>
+          </sc-if>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" active="persetujuan" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+var AV = [['#FFF1DC', '#9A5800'], ['#E6EEFE', '#1A4CB0'], ['#C8F4EE', '#0A4E57'], ['#EEF2F7', '#46576B']];
+var TYPE = { Cuti: ['#E6EEFE', '#1A4CB0'], Lembur: ['#E8FBF8', '#09656E'], Koreksi: ['#FFF1DC', '#9A5800'] };
+var REQ = [
+  { id: 'r1', init: 'ML', av: 0, name: 'Maya Lestari', role: 'Staf Operasional · Divisi Operasional', cat: 'Cuti', type: 'Cuti tahunan', when: '12–14 Okt', list: '12–14 Okt · 3 hari kerja', amountLabel: 'Saldo', amount: '9 → 6 hari', reason: 'Acara keluarga di Yogyakarta.', note: 'Nadia Putri juga cuti 13 Okt. Divisi tetap 12 dari 14 orang.', no: 'CUT-2026-10-0012', next: 'HR' },
+  { id: 'r2', init: 'YP', av: 1, name: 'Yoga Permana', role: 'Staf Gudang · Tim Gudang', cat: 'Lembur', type: 'Lembur', when: 'Sab, 3 Okt', list: 'Sab, 3 Okt · 17.00–20.30', amountLabel: 'Durasi', amount: '3,5 jam', reason: 'Stock opname rak C sebelum audit stok bulanan.', note: '', no: 'LBR-2026-10-0007', next: 'HR' },
+  { id: 'r3', init: 'RA', av: 2, name: 'Rizky Aditya', role: 'Staf Operasional · Divisi Operasional', cat: 'Koreksi', type: 'Koreksi absensi', when: 'Jum, 2 Okt', list: 'Jum, 2 Okt · lupa check-out', amountLabel: 'Diminta', amount: 'Pulang 17.10', reason: 'Lupa check-out karena langsung rapat vendor di luar kantor.', note: 'Lokasi terakhir tercatat di Kantor Pusat pukul 16.58.', no: 'KOR-2026-10-0003', next: 'HR' },
+  { id: 'r4', init: 'BS', av: 3, name: 'Bayu Saputra', role: 'Koordinator Armada · Divisi Operasional', cat: 'Cuti', type: 'Cuti tahunan', when: '19–20 Okt', list: '19–20 Okt · 2 hari kerja', amountLabel: 'Saldo', amount: '7 → 5 hari', reason: 'Mengurus administrasi rumah.', note: '', no: 'CUT-2026-10-0015', next: 'HR' },
+  { id: 'r5', init: 'FH', av: 1, name: 'Fitri Handayani', role: 'Staf Administrasi · Divisi Operasional', cat: 'Lembur', type: 'Lembur', when: 'Jum, 2 Okt', list: 'Jum, 2 Okt · 17.00–19.00', amountLabel: 'Durasi', amount: '2 jam', reason: 'Input dokumen pengiriman akhir bulan.', note: '', no: 'LBR-2026-10-0006', next: 'HR' }
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 'r1', filter: 'Semua', ok: {} };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var ok = st.ok || {};
+    var filter = st.filter || 'Semua';
+    var sel = st.sel || 'r1';
+    var shown = REQ.filter(function (r) { return filter === 'Semua' || r.cat === filter; });
+    var cur = REQ.filter(function (r) { return r.id === sel; })[0] || REQ[0];
+    var pending = REQ.filter(function (r) { return !ok[r.id]; }).length;
+    var otLeft = REQ.filter(function (r) { return r.cat === 'Lembur' && !ok[r.id]; }).length;
+    var counts = { Semua: REQ.length, Cuti: 2, Lembur: 2, Koreksi: 1 };
+    return {
+      pendingCount: pending,
+      overtimeLeft: otLeft,
+      approveAll: function () { var n = Object.assign({}, ok); REQ.forEach(function (r) { if (r.cat === 'Lembur') n[r.id] = true; }); self.setState({ ok: n }); },
+      filters: ['Semua', 'Cuti', 'Lembur', 'Koreksi'].map(function (f) {
+        var on = f === filter;
+        return { label: f + ' · ' + counts[f], sel: on ? 'true' : 'false', bg: on ? '#0B1A2B' : '#FFFFFF', color: on ? '#FFFFFF' : '#0B1A2B', border: on ? '1px solid #0B1A2B' : '1px solid #C3CEDA', pick: function () { self.setState({ filter: f }); } };
+      }),
+      list: shown.map(function (r) {
+        var on = r.id === sel;
+        var done = !!ok[r.id];
+        return {
+          init: r.init, name: r.name, when: r.list, type: r.type, avBg: AV[r.av][0], avFg: AV[r.av][1],
+          typeBg: TYPE[r.cat][0], typeFg: TYPE[r.cat][1],
+          stateLabel: done ? 'Disetujui' : 'Menunggu', stateColor: done ? '#0F7A55' : '#46576B',
+          selAria: on ? 'true' : 'false',
+          border: on ? '2px solid #0B7F86' : '1px solid #DDE4EC',
+          shadow: on ? '0 0 0 4px rgba(20,184,166,0.16), 0 8px 24px rgba(11,26,43,0.08)' : '0 1px 2px rgba(11,26,43,0.06)',
+          select: function () { self.setState({ sel: r.id }); }
+        };
+      }),
+      d: Object.assign({}, cur, { avBg: AV[cur.av][0], avFg: AV[cur.av][1], hasNote: !!cur.note, pending: !ok[cur.id], decided: !!ok[cur.id] }),
+      approve: function () { var n = Object.assign({}, ok); n[cur.id] = true; self.setState({ ok: n }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

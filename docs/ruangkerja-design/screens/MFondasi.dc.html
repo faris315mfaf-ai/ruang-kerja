@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Fondasi mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="min-height: 100vh; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #F3F6FA; background-repeat: no-repeat">
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 56px 40px 80px; box-sizing: border-box; display: flex; flex-direction: column; gap: 40px">
+    <header style="display: flex; flex-direction: column; gap: 10px">
+      <span style="align-self: flex-start; height: 32px; padding: 0 12px; border-radius: 16px; background: rgba(255,255,255,0.75); border: 1px solid #DDE4EC; font-size: 14px; font-weight: 800; color: #09656E; display: inline-flex; align-items: center">Fondasi · ponsel & lipat</span>
+      <h1 style="margin: 0; font-size: 56px; line-height: 64px; font-weight: 800; letter-spacing: -0.03em">Mobile-first untuk SPKD</h1>
+      <p style="margin: 0; max-width: 820px; font-size: 20px; line-height: 30px; color: #46576B">Sebagian besar pekerjaan harian terjadi di ponsel: check-in, menyetujui, mencatat rapat di lapangan, dan memantau proyek dari mobil. Aturan di bawah berlaku untuk semua layar ponsel dan tablet lipat.</p>
+    </header>
+
+    <section style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px">
+      <sc-for list="{{principles}}" as="p" hint-placeholder-count="4">
+        <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+          <span style="width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 20px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{p.n}}</span>
+          <span style="font-size: 22px; font-weight: 800">{{p.t}}</span>
+          <span style="font-size: 16px; line-height: 24px; color: #46576B">{{p.d}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section style="display: grid; grid-template-columns: 420px minmax(0, 1fr); gap: 32px; align-items: start">
+      <div style="position: relative; width: 300px; height: 620px; margin: 0 auto; border-radius: 44px; background: #0B1A2B; padding: 12px; box-sizing: border-box">
+        <div style="position: relative; width: 100%; height: 100%; border-radius: 34px; overflow: hidden; background: #FFFFFF; display: flex; flex-direction: column">
+          <span style="flex: 30; background: #FDE7EA; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; color: #C42137">Sulit dijangkau</span>
+          <span style="flex: 30; background: #FFF1DC; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; color: #9A5800">Menjangkau</span>
+          <span style="flex: 40; background: #E3F6EE; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; font-size: 15px; font-weight: 800; color: #0F7A55">Zona jempol<span style="width: 220px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; display: flex; align-items: center; justify-content: center">Aksi utama</span><span style="width: 240px; height: 52px; border-radius: 26px; background: #FFFFFF; border: 1px solid #C3CEDA; color: #46576B; display: flex; align-items: center; justify-content: center">Tab bar</span></span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <h2 style="margin: 0; font-size: 32px; line-height: 40px; font-weight: 800; letter-spacing: -0.02em">Zona jempol & ukuran sentuh</h2>
+        <sc-for list="{{rules}}" as="r" hint-placeholder-count="5">
+          <div style="display: grid; grid-template-columns: 200px 1fr; gap: 16px; padding: 14px 0; border-top: 1px solid #DDE4EC">
+            <span style="font-size: 18px; font-weight: 800">{{r.k}}</span>
+            <span style="font-size: 17px; line-height: 26px; color: #253445">{{r.v}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px">
+      <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 6px">
+        <h2 style="margin: 0 0 8px; font-size: 26px; font-weight: 800">Skala huruf ponsel</h2>
+        <sc-for list="{{type}}" as="t" hint-placeholder-count="7">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 10px 0; border-top: 1px solid #EEF2F7">
+            <span style="font-size: {{t.size}}px; line-height: {{t.lh}}px; font-weight: {{t.w}}">{{t.name}}</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: #46576B; white-space: nowrap">{{t.spec}}</span>
+          </div>
+        </sc-for>
+        <span style="font-size: 15px; line-height: 22px; color: #46576B; padding-top: 8px">13px hanya untuk meta sekunder (waktu, nama file). Isi yang harus dibaca minimal 15px. Ikuti setelan ukuran huruf sistem sampai 130% tanpa teks terpotong.</span>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 6px">
+        <h2 style="margin: 0 0 8px; font-size: 26px; font-weight: 800">Gestur</h2>
+        <sc-for list="{{gestures}}" as="g" hint-placeholder-count="6">
+          <div style="display: flex; gap: 16px; padding: 12px 0; border-top: 1px solid #EEF2F7">
+            <span style="width: 44px; height: 44px; border-radius: 12px; background: #E6EEFE; color: #1A4CB0; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{g.icon}}"></path></svg></span>
+            <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 17px; font-weight: 800">{{g.t}}</span><span style="font-size: 15px; line-height: 22px; color: #46576B">{{g.d}}</span></span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 16px">
+      <h2 style="margin: 0; font-size: 32px; line-height: 40px; font-weight: 800; letter-spacing: -0.02em">Lima keadaan setiap layar</h2>
+      <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px">
+        <sc-for list="{{states}}" as="s" hint-placeholder-count="5">
+          <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+            <div style="height: 200px; border-radius: 16px; background: {{s.bg}}; padding: 14px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; justify-content: {{s.justify}}; align-items: {{s.align}}">
+              <sc-if value="{{s.skeleton}}" hint-placeholder-val="{{false}}">
+                <span style="width: 70%; height: 16px; border-radius: 8px; background: linear-gradient(90deg, #E6ECF2 0%, #F3F6FA 50%, #E6ECF2 100%)"></span>
+                <span style="width: 100%; height: 56px; border-radius: 12px; background: linear-gradient(90deg, #E6ECF2 0%, #F3F6FA 50%, #E6ECF2 100%)"></span>
+                <span style="width: 100%; height: 40px; border-radius: 10px; background: linear-gradient(90deg, #E6ECF2 0%, #F3F6FA 50%, #E6ECF2 100%)"></span>
+                <span style="width: 100%; height: 40px; border-radius: 10px; background: linear-gradient(90deg, #E6ECF2 0%, #F3F6FA 50%, #E6ECF2 100%)"></span>
+              </sc-if>
+              <sc-if value="{{s.plain}}" hint-placeholder-val="{{true}}">
+                <span style="width: 56px; height: 56px; border-radius: 28px; background: {{s.iconBg}}; color: {{s.iconFg}}; font-size: 24px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{s.glyph}}</span>
+                <span style="font-size: 15px; font-weight: 800; text-align: center; color: {{s.fg}}">{{s.msg}}</span>
+                <span style="height: 34px; padding: 0 12px; border-radius: 10px; background: {{s.btnBg}}; color: {{s.btnFg}}; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center">{{s.btn}}</span>
+              </sc-if>
+            </div>
+            <span style="font-size: 18px; font-weight: 800">{{s.t}}</span>
+            <span style="font-size: 15px; line-height: 22px; color: #46576B">{{s.d}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px">
+      <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 6px">
+        <h2 style="margin: 0 0 8px; font-size: 26px; font-weight: 800">Notifikasi & getar</h2>
+        <div style="display: grid; grid-template-columns: 1.2fr 0.9fr 1fr 0.9fr; gap: 12px; padding: 10px 0; font-size: 14px; font-weight: 800; color: #46576B; border-bottom: 1px solid #DDE4EC"><span>Jenis</span><span>Prioritas</span><span>Kanal</span><span>Getar</span></div>
+        <sc-for list="{{notifs}}" as="n" hint-placeholder-count="6">
+          <div style="display: grid; grid-template-columns: 1.2fr 0.9fr 1fr 0.9fr; gap: 12px; align-items: center; min-height: 48px; border-bottom: 1px solid #EEF2F7; font-size: 15px">
+            <span style="font-weight: 700">{{n.a}}</span>
+            <span><span style="height: 26px; padding: 0 10px; border-radius: 13px; background: {{n.pBg}}; color: {{n.pFg}}; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center">{{n.b}}</span></span>
+            <span style="color: #46576B">{{n.c}}</span>
+            <span style="color: #46576B">{{n.d}}</span>
+          </div>
+        </sc-for>
+        <span style="font-size: 15px; line-height: 22px; color: #46576B; padding-top: 8px">Jam tenang 21.00–06.00: hanya prioritas tinggi yang berbunyi. Notifikasi sejenis digabung ("3 pengajuan baru"), bukan dikirim satu per satu.</span>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 6px">
+        <h2 style="margin: 0 0 8px; font-size: 26px; font-weight: 800">Ukuran layar</h2>
+        <sc-for list="{{sizes}}" as="z" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 18px; padding: 14px 0; border-top: 1px solid #EEF2F7">
+            <span style="width: 80px; height: 64px; display: flex; align-items: flex-end; justify-content: center; flex-shrink: 0"><span style="width: {{z.w}}px; height: {{z.h}}px; border-radius: 6px; border: 3px solid #0B1A2B; box-sizing: border-box; background: {{z.fill}}"></span></span>
+            <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 17px; font-weight: 800">{{z.t}}</span><span style="font-size: 15px; line-height: 22px; color: #46576B">{{z.d}}</span></span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: #09656E; white-space: nowrap">{{z.px}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2700}}'>
+var PRI = { tinggi: ['#FDE7EA', '#C42137'], sedang: ['#FFF1DC', '#9A5800'], rendah: ['#EEF2F7', '#46576B'] };
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      principles: [['1', 'Satu tangan', 'Aksi utama selalu di sepertiga bawah layar. Tidak ada tombol penting di pojok atas.'], ['2', 'Satu tujuan per layar', 'Beranda tiap peran hanya menampilkan yang harus dikerjakan hari ini. Detail ada satu ketukan di bawahnya.'], ['3', 'Tahan sinyal lemah', 'Check-in, notulen, dan update tugas tersimpan dulu di perangkat lalu dikirim saat sinyal kembali.'], ['4', 'Cepat terasa', 'Respons sentuh di bawah 100 ms, getar halus untuk konfirmasi, dan skeleton saat memuat.']].map(function (x) { return { n: x[0], t: x[1], d: x[2] }; }),
+      rules: [['Target sentuh', 'Minimal 44×44 px, standar 48 px, aksi utama 56 px. Jarak antar target minimal 8 px.'], ['Aksi utama', 'Tombol penuh selebar layar di bilah bawah melekat, di atas area gestur sistem (padding bawah 22 px).'], ['Tab bar', '5 tab maksimal, label selalu tampil, lencana merah hanya untuk hal yang menunggu Anda.'], ['Tombol tambah', 'Satu tombol bulat di pojok kanan bawah membuka lembar aksi cepat, bukan menu bertingkat.'], ['Kembali', 'Tombol kembali di kiri atas dan gestur geser dari tepi kiri selalu tersedia.']].map(function (x) { return { k: x[0], v: x[1] }; }),
+      type: [['Display', 32, 40, 800, '32/40 · 800'], ['Judul layar', 26, 32, 800, '26/32 · 800'], ['Judul kartu', 20, 26, 800, '20/26 · 800'], ['Isi', 17, 26, 500, '17/26 · 500'], ['Isi daftar', 16, 22, 700, '16/22 · 700'], ['Label', 15, 20, 600, '15/20 · 600'], ['Meta', 13, 18, 600, '13/18 · 600']].map(function (t) { return { name: t[0], size: t[1], lh: t[2], w: t[3], spec: t[4] }; }),
+      gestures: [['M12 4v10m0 0-4-4m4 4 4-4M5 20h14', 'Tarik untuk menyegarkan', 'Di semua daftar: beranda, tugas, inbox, absensi tim.'], ['M5 12h14m0 0-5-5m5 5-5 5', 'Geser item', 'Geser kanan untuk setujui atau selesai, geser kiri untuk tolak atau tunda. Selalu bisa diurungkan 5 detik.'], ['M12 8v4l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'Tekan lama', 'Membuka menu cepat item: salin tautan, tugaskan ulang, jadikan tugas.'], ['M12 5v14m0 0 5-5m-5 5-5-5', 'Sapu ke bawah', 'Menutup lembar bawah dan tampilan detail layar penuh.'], ['M15 6l-6 6 6 6', 'Geser dari tepi', 'Kembali ke layar sebelumnya. Jangan ditimpa gestur lain.'], ['M4 12h4l2-6 4 12 2-6h4', 'Getar konfirmasi', 'Ringan saat check-in berhasil, menyetujui, atau menyelesaikan tugas.']].map(function (g) { return { icon: g[0], t: g[1], d: g[2] }; }),
+      states: [
+        { t: 'Memuat', d: 'Skeleton seukuran isi asli, bukan spinner di tengah layar.', skeleton: true, plain: false, bg: '#FFFFFF', justify: 'flex-start', align: 'stretch' },
+        { t: 'Kosong', d: 'Jelaskan kenapa kosong dan beri satu aksi berikutnya.', skeleton: false, plain: true, bg: '#F3F6FA', justify: 'center', align: 'center', glyph: '✓', iconBg: '#E3F6EE', iconFg: '#0F7A55', fg: '#0B1A2B', msg: 'Semua tugas hari ini selesai', btn: 'Lihat besok', btnBg: '#FFFFFF', btnFg: '#09656E' },
+        { t: 'Offline', d: 'Data terakhir tetap tampil, perubahan masuk antrean sinkron.', skeleton: false, plain: true, bg: '#FFF1DC', justify: 'center', align: 'center', glyph: '!', iconBg: '#FFFFFF', iconFg: '#9A5800', fg: '#0B1A2B', msg: 'Tidak ada sinyal · 2 perubahan menunggu', btn: 'Coba lagi', btnBg: '#FFFFFF', btnFg: '#9A5800' },
+        { t: 'Gagal', d: 'Bahasa manusia, tanpa kode error, dengan tombol coba lagi.', skeleton: false, plain: true, bg: '#FDE7EA', justify: 'center', align: 'center', glyph: '×', iconBg: '#FFFFFF', iconFg: '#C42137', fg: '#0B1A2B', msg: 'Check-in belum terkirim', btn: 'Kirim ulang', btnBg: '#C42137', btnFg: '#FFFFFF' },
+        { t: 'Berhasil', d: 'Konfirmasi singkat dengan getar ringan lalu kembali otomatis.', skeleton: false, plain: true, bg: 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', justify: 'center', align: 'center', glyph: '✓', iconBg: '#FFFFFF', iconFg: '#0B7F86', fg: '#FFFFFF', msg: 'Pengajuan disetujui', btn: 'Urungkan', btnBg: 'rgba(255,255,255,0.2)', btnFg: '#FFFFFF' }
+      ],
+      notifs: [['Rapat dimulai', 'tinggi', 'Push + in-app', 'Ganda'], ['Persetujuan masuk', 'sedang', 'Push digabung', 'Ringan'], ['Tugas ditugaskan', 'sedang', 'Push + inbox', 'Ringan'], ['Lupa check-in', 'tinggi', 'Push 08.15', 'Ganda'], ['Bug kritis produksi', 'tinggi', 'Push + email', 'Ganda'], ['Komentar baru', 'rendah', 'Inbox saja', '—']].map(function (n) { var p = PRI[n[1]]; return { a: n[0], b: n[1][0].toUpperCase() + n[1].slice(1), pBg: p[0], pFg: p[1], c: n[2], d: n[3] }; }),
+      sizes: [['Ponsel', '1 kolom, tab bar bawah, bilah aksi melekat.', '360–430', 22, 44, '#E8FBF8'], ['Lipat tertutup', 'Layar luar sempit: hanya beranda, check-in, notifikasi, gabung rapat.', '320–380', 18, 46, '#FFF1DC'], ['Lipat terbuka', '2 panel daftar–detail, rail kiri menggantikan tab bar.', '840–900', 50, 58, '#E6EEFE'], ['Tablet', 'Sama dengan lipat terbuka, kartu boleh 3 kolom.', '≥ 768', 66, 50, '#EEF2F7']].map(function (z) { return { t: z[0], d: z[1], px: z[2], w: z[3], h: z[4], fill: z[5] }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Beranda mode gelap · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; background: radial-gradient(420px 220px at 0% 0%, rgba(45,191,177,0.16), transparent 70%), radial-gradient(420px 220px at 100% 0%, rgba(91,140,246,0.16), transparent 70%), #070B14">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 800; color: #5AD6C8">SPKD · Programming</span><span style="font-size: 26px; line-height: 32px; font-weight: 800; letter-spacing: -0.02em">Malam, Dimas</span></span>
+      <span style="width: 48px; height: 48px; border-radius: 24px; background: linear-gradient(135deg, #2DBFB1 0%, #5B8CF6 100%); color: #041421; font-size: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center">DP</span>
+    </div>
+    <div style="border-radius: 24px; padding: 18px; color: #041421; display: flex; flex-direction: column; gap: 6px; background: linear-gradient(135deg, #2DBFB1 0%, #5B8CF6 100%); box-shadow: 0 14px 30px rgba(91,140,246,0.25)">
+      <span style="font-size: 15px; font-weight: 800">Deploy produksi malam ini</span>
+      <span style="font-size: 36px; line-height: 42px; font-weight: 800">21.00</span>
+      <span style="font-size: 15px; font-weight: 600">hotfix SIM-388 · jendela pemeliharaan 30 menit</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+      <div style="background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 14px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600; color: #A6B4C6">Sprint 6 · KMB</span><span style="font-size: 28px; line-height: 34px; font-weight: 800">68%</span><span style="font-size: 13px; color: #A6B4C6">naik 6 poin hari ini</span></div>
+      <div style="background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 14px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600; color: #A6B4C6">PR menunggu</span><span style="font-size: 28px; line-height: 34px; font-weight: 800; color: #F6B95C">6</span><span style="font-size: 13px; color: #A6B4C6">3 selesai direview</span></div>
+    </div>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; padding: 14px 16px 2px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 6px"><span style="font-size: 17px; font-weight: 800">Ringkasan hari ini</span><a href="#" style="font-size: 15px; font-weight: 700">Laporan</a></div>
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 60px; border-top: 1px solid #172131">
+          <span style="width: 38px; height: 38px; border-radius: 12px; background: {{r.bg}}; color: {{r.fg}}; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0">{{r.tag}}</span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 700">{{r.t}}</span><span style="font-size: 13px; color: #A6B4C6">{{r.m}}</span></span>
+        </div>
+      </sc-for>
+    </div>
+    <span style="font-size: 13px; color: #A6B4C6; text-align: center">Mengikuti setelan sistem · otomatis gelap setelah 18.00</span>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" active="beranda" dark="{{ true }}" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { rows: [['SIM', 'SIM-388 lolos verifikasi di RS', 'Lina · 16.40', 'rgba(45,191,177,0.18)', '#5AD6C8'], ['KMB', 'KMB-214 sandbox akhirnya aktif', 'Yoga · 15.10', 'rgba(91,140,246,0.18)', '#A9C2FF'], ['PR', 'PR #412 digabung ke main', 'Fitri · 14.55', 'rgba(91,140,246,0.18)', '#A9C2FF'], ['DEP', 'DEP-51 masih menunggu API Pemda', 'Rina · hari ke-13', 'rgba(246,185,92,0.18)', '#F6B95C']].map(function (r) { return { tag: r[0], t: r[1], m: r[2], bg: r[3], fg: r[4] }; }) };
+  }
+}
+</script>
+</body>
+</html>

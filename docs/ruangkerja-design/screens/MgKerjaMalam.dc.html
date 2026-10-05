@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Tracking kerja manajemen · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #070B14; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" malam="{{ true }}" dark="{{ true }}" crumbs="Manajemen / Tracking kerja" initials="HW" person="Hendra Wijaya" status="Masuk 07.55" meeting="Rapat direksi · 10.00" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 40px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h1 style="margin: 0; font-size: 44px; line-height: 52px; font-weight: 800; letter-spacing: -0.03em">Tracking kerja</h1>
+        <span style="font-size: 18px; color: #A6B4C6">{{v.range}}</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <div role="tablist" aria-label="Periode" style="display: flex; gap: 4px; padding: 4px; border-radius: 16px; background: #0F1622; border: 1px solid #233247">
+          <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+            <button type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="height: 44px; padding: 0 22px; border: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.fg}}; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">{{t.label}}</button>
+          </sc-for>
+        </div>
+        <button type="button" style="height: 52px; padding: 0 20px; border: 1px solid #34465E; border-radius: 14px; background: #0F1622; color: #EAF1F8; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Ekspor laporan</button>
+      </div>
+    </section>
+
+    <section aria-label="Ringkasan" style="display: flex; flex-wrap: wrap; gap: 20px">
+      <sc-for list="{{v.kpis}}" as="k" hint-placeholder-count="4">
+        <div style="flex: 1 1 230px; border-radius: 22px; padding: 24px; display: flex; flex-direction: column; gap: 8px; background: {{k.bg}}; color: {{k.fg}}; border: {{k.border}}; box-shadow: {{k.shadow}}">
+          <span style="font-size: 16px; font-weight: 600; color: {{k.sub}}">{{k.label}}</span>
+          <span style="font-size: 42px; line-height: 50px; font-weight: 700; letter-spacing: -0.02em">{{k.value}}</span>
+          <span style="font-size: 15px; line-height: 22px; color: {{k.sub}}">{{k.note}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px 0 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+      <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; padding: 0 28px 12px"><h2 style="margin: 0; font-size: 22px; font-weight: 700">Per divisi</h2><span style="font-size: 15px; color: #A6B4C6">ketuk baris untuk melihat tugas divisi</span></div>
+      <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) 100px 100px 120px 120px minmax(0, 1.6fr); gap: 16px; padding: 10px 28px; background: #070B14; font-size: 14px; font-weight: 700; color: #A6B4C6">
+        <span>Divisi</span><span style="text-align: right">Rencana</span><span style="text-align: right">Selesai</span><span style="text-align: right">{{v.col3}}</span><span style="text-align: right">{{v.col4}}</span><span>Penyelesaian</span>
+      </div>
+      <sc-for list="{{v.rows}}" as="r" hint-placeholder-count="5">
+        <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) 100px 100px 120px 120px minmax(0, 1.6fr); gap: 16px; align-items: center; min-height: 68px; padding: 0 28px; border-top: 1px solid #172131">
+          <span style="display: flex; flex-direction: column"><span style="font-size: 17px; font-weight: 700">{{r.name}}</span><span style="font-size: 14px; color: #A6B4C6">{{r.head}}</span></span>
+          <span style="font-size: 17px; text-align: right">{{r.plan}}</span>
+          <span style="font-size: 17px; font-weight: 800; text-align: right">{{r.done}}</span>
+          <span style="font-size: 17px; text-align: right; color: {{r.c3Color}}; font-weight: 700">{{r.c3}}</span>
+          <span style="font-size: 17px; text-align: right; color: {{r.c4Color}}; font-weight: 700">{{r.c4}}</span>
+          <span style="display: flex; align-items: center; gap: 12px"><span style="position: relative; flex: 1; height: 12px; border-radius: 6px; background: #172131"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{r.pct}}%; border-radius: 6px; background: {{r.fill}}"></span></span><span style="width: 48px; text-align: right; font-size: 16px; font-weight: 800">{{r.pct}}%</span></span>
+        </div>
+      </sc-for>
+      <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) 100px 100px 120px 120px minmax(0, 1.6fr); gap: 16px; align-items: center; min-height: 60px; padding: 0 28px; border-top: 2px solid #233247; font-weight: 800">
+        <span style="font-size: 17px">Total SPKD</span><span style="font-size: 17px; text-align: right">{{v.total.plan}}</span><span style="font-size: 17px; text-align: right">{{v.total.done}}</span><span style="font-size: 17px; text-align: right">{{v.total.c3}}</span><span style="font-size: 17px; text-align: right">{{v.total.c4}}</span><span style="font-size: 16px; color: #A6B4C6">{{v.total.pct}}% dari rencana</span>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 2 1 620px; min-width: 0; background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px 28px 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+        <h2 style="margin: 0 0 10px; font-size: 22px; font-weight: 700">{{v.listTitle}}</h2>
+        <sc-for list="{{v.list}}" as="x" hint-placeholder-count="5">
+          <div style="display: flex; gap: 16px; padding: 14px 0; border-top: 1px solid #172131">
+            <span style="width: 92px; flex-shrink: 0; font-size: 15px; font-weight: 800; color: #5AD6C8">{{x.a}}</span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 16px; font-weight: 700">{{x.b}}</span><span style="font-size: 15px; line-height: 22px; color: #A6B4C6">{{x.c}}</span></span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="flex: 1 1 360px; min-width: 0; border-radius: 24px; padding: 24px; color: #FFFFFF; background: linear-gradient(135deg, #C2410C 0%, #BE185D 100%); box-shadow: 0 12px 28px rgba(190,24,93,0.24); display: flex; flex-direction: column; gap: 4px">
+        <h2 style="margin: 0 0 8px; font-size: 22px; font-weight: 700">Hambatan & perhatian</h2>
+        <sc-for list="{{v.risks}}" as="i" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.28)"><span style="font-size: 16px; font-weight: 700">{{i.t}}</span><span style="font-size: 14px; line-height: 20px">{{i.m}}</span></div>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" malam="{{ true }}" dark="{{ true }}" active="kerja" role="manajemen" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tab":{"editor":"enum","options":["Harian","Mingguan","Bulanan"],"default":"Harian"},"$preview":{"width":1440,"height":1900}}'>
+var HEADS = ['Dimas Pratama', 'Bayu Saputra', 'Maya Lestari', 'Putri Ramadhani', 'Nadia Putri & Hana Nuraini'];
+var NAMES = ['Programming', 'Implementer', 'Analis', 'Branding & Marketing', 'Sekretariat, HR, Direksi'];
+var V = {
+  Harian: { range: 'Senin, 5 Oktober 2026 · per 09.40', col3: 'Berjalan', col4: 'Terlambat',
+    kpis: [['Selesai hari ini', '23/54', '43% dari tugas terjadwal', 'hl'], ['Sedang berjalan', '25', '6 belum dimulai', ''], ['Terlambat', '11', 'lewat tenggat, belum selesai', ''], ['Terblokir', '4', '3 menunggu pihak klien', 'warm']],
+    rows: [[18, 9, 7, 6], [12, 5, 6, 2], [8, 4, 3, 1], [7, 3, 3, 1], [9, 2, 6, 1]],
+    listTitle: 'Aktivitas terkini',
+    list: [['09.38', 'Rizky Aditya · hotfix SIM-388 di-deploy ke staging', 'Programming · menunggu verifikasi Lina di RS Harapan Sehat'], ['09.31', 'Maya Lestari · SRS pelacakan armada v2 diunggah', 'Analis · siap dibahas di workshop 10.00'], ['09.20', 'Tono · migrasi anggota Koperasi 1.840 dari 2.300 baris', 'Implementer · tahap 2 berjalan'], ['09.05', 'Putri Ramadhani · carousel RuangKerja dijadwalkan', 'Branding & Marketing · tayang Rab, 7 Okt 09.00'], ['08.52', 'Nadia Putri · undangan tender Kominfo didisposisi', 'Sekretariat · ke Direktur Utama']],
+    risks: [['KMB-214 tertahan 3 hari', 'kredensial sandbox payment gateway dari bank belum diterima'], ['DEP-51 menunggu akses API Pemda', 'sudah dieskalasi ke Direktur'], ['6 tugas terlambat di Programming', '4 di antaranya ikut tergeser hotfix SIMRS']] },
+  Mingguan: { range: 'Minggu 40 · Senin 28 Sep – Jumat 2 Okt 2026', col3: 'Tepat waktu', col4: 'Dibawa',
+    kpis: [['Tugas selesai', '141/150', '94% dari rencana', 'hl'], ['Tepat waktu', '86%', 'naik 3 poin dari minggu 39', ''], ['Rata-rata siklus', '2,4 hari', 'dari mulai dikerjakan sampai selesai', ''], ['Dibawa ke minggu ini', '9', '5 dari Programming', 'warm']],
+    rows: [[52, 47, '79%', 5], [34, 33, '93%', 1], [22, 21, '90%', 1], [20, 18, '78%', 2], [22, 22, '95%', 0]],
+    listTitle: 'Laporan mingguan kepala divisi',
+    list: [['Programming', 'Sprint 5 KMB selesai, 38 dari 40 poin', 'Hotfix SIMRS menyita 2 hari kerja 4 orang pada Rabu.'], ['Implementer', 'Migrasi data SIMRS tahap 1 selesai', '48.000 rekam medis, 85% tervalidasi; pelatihan 5 dari 8 unit.'], ['Analis', 'UAT SIMRS naik ke 148 dari 200 skenario', 'Analisis alur pinjaman KMB diserahkan ke Programming.'], ['Branding', 'Tiga alternatif logo siap ditinjau Direksi', 'Materi tender Kominfo mulai disusun.'], ['Sekretariat & HR', 'NDA RS Harapan Sehat ditandatangani', '2 karyawan baru siap orientasi Rab, 7 Okt.']],
+    risks: [['Branding tepat waktu 78%', 'materi tender menyita kapasitas tim konten'], ['Programming membawa 5 tugas', 'dampak hotfix SIMRS hari Rabu'], ['DEP tertinggal 20 poin dari rencana', 'menunggu keputusan perpanjangan timeline']] },
+  Bulanan: { range: '4 minggu terakhir · 7 September – 2 Oktober 2026', col3: 'Tepat waktu', col4: 'Lembur',
+    kpis: [['Tugas selesai', '549/593', '93% dari rencana', 'hl'], ['Tepat waktu', '87%', 'di atas target 85%', ''], ['Rata-rata siklus', '2,6 hari', 'turun dari 3,1 hari di Agustus', ''], ['Lembur', '96 jam', '58 jam di Programming', 'warm']],
+    rows: [[205, 184, '84%', '58 j'], [136, 129, '91%', '22 j'], [88, 82, '88%', '8 j'], [80, 71, '79%', '6 j'], [84, 83, '94%', '2 j']],
+    listTitle: 'Milestone tercapai, 4 minggu terakhir',
+    list: [['Kam, 1 Okt', 'SIM · migrasi data tahap 1', 'Implementer · tepat waktu'], ['Jum, 2 Okt', 'KMB · Sprint 5 selesai', 'Programming · 38 dari 40 poin'], ['Jum, 25 Sep', 'RKJ · modul absensi selesai UAT internal', 'Programming · 2 hari lebih cepat'], ['Rab, 16 Sep', 'PSL · kickoff & NDA', 'Analis & Sekretariat'], ['Jum, 2 Okt', 'DEP · integrasi API Pemda', 'terlewat · akses API dari klien belum ada']],
+    risks: [['Lembur Programming 58 jam', 'diajukan tambah 1 programmer untuk KMB'], ['Branding di bawah target 85%', 'tender dan rebranding berjalan bersamaan'], ['1 milestone terlewat', 'DEP · menunggu keputusan Direktur Utama']] }
+};
+var ORDER = ['Harian', 'Mingguan', 'Bulanan'];
+function kpi(k) {
+  if (k[3] === 'hl') return { label: k[0], value: k[1], note: k[2], bg: 'radial-gradient(240px 160px at 100% 0%, rgba(255,255,255,0.22), transparent 70%), linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', fg: '#FFFFFF', sub: '#FFFFFF', border: '0', shadow: '0 12px 28px rgba(30,95,214,0.30)' };
+  if (k[3] === 'warm') return { label: k[0], value: k[1], note: k[2], bg: 'linear-gradient(135deg, #C2410C 0%, #BE185D 100%)', fg: '#FFFFFF', sub: '#FFFFFF', border: '0', shadow: '0 12px 28px rgba(190,24,93,0.24)' };
+  return { label: k[0], value: k[1], note: k[2], bg: '#0F1622', fg: '#EAF1F8', sub: '#A6B4C6', border: '1px solid #233247', shadow: '0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)' };
+}
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: null };
+  }
+  renderVals() {
+    var self = this;
+    var cur = (this.state && this.state.tab) || (this.props && this.props.tab) || 'Harian';
+    var s = V[cur];
+    var daily = cur === 'Harian';
+    var tp = 0, td = 0, t3 = 0, t4 = 0;
+    var rows = s.rows.map(function (r, i) {
+      tp += r[0]; td += r[1];
+      if (daily) { t3 += r[2]; t4 += r[3]; } else if (cur === 'Mingguan') { t4 += r[3]; }
+      var pct = Math.round(r[1] / r[0] * 100);
+      var c3Num = parseInt(r[2], 10);
+      return { name: NAMES[i], head: HEADS[i], plan: r[0], done: r[1], c3: r[2], c4: r[3], pct: pct,
+        c3Color: daily ? '#EAF1F8' : (c3Num < 85 ? '#F6B95C' : '#4ADE9B'),
+        c4Color: daily ? (r[3] > 2 ? '#FF7A8A' : '#EAF1F8') : '#EAF1F8',
+        fill: pct >= 90 || daily ? 'linear-gradient(90deg, #14B8A6 0%, #2F7BEA 100%)' : '#E08A00' };
+    });
+    return {
+      tabs: ORDER.map(function (l) { var on = l === cur; return { label: l, sel: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : 'transparent', fg: on ? '#FFFFFF' : '#A6B4C6', pick: function () { self.setState({ tab: l }); } }; }),
+      v: {
+        range: s.range, col3: s.col3, col4: s.col4, listTitle: s.listTitle,
+        kpis: s.kpis.map(kpi), rows: rows,
+        total: { plan: tp, done: td, c3: daily ? t3 : (cur === 'Mingguan' ? '86%' : '87%'), c4: daily ? t4 : (cur === 'Mingguan' ? t4 : '96 j'), pct: Math.round(td / tp * 100) },
+        list: s.list.map(function (x) { return { a: x[0], b: x[1], c: x[2] }; }),
+        risks: s.risks.map(function (x) { return { t: x[0], m: x[1] }; })
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

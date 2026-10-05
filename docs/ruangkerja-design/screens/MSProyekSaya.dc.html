@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Proyek saya · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #F3F6FA">
+  <div style="padding: 24px 16px 0; display: flex; flex-direction: column; gap: 14px">
+    <h1 style="margin: 0; font-size: 32px; line-height: 40px; font-weight: 800; letter-spacing: -0.025em">Proyek saya</h1>
+    <div style="display: flex; gap: 10px; overflow-x: auto; margin: 0 -16px; padding: 0 16px 4px">
+      <sc-for list="{{projects}}" as="p" hint-placeholder-count="2">
+        <a href="{{p.href}}" style="flex: 0 0 250px; display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 22px; background: #FFFFFF; border: {{p.border}}; color: #0B1A2B">
+          <span style="display: flex; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 12px; background: {{p.grad}}; color: #FFFFFF; font-size: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{p.l}}</span><span style="display: flex; flex-direction: column"><span style="font-size: 16px; font-weight: 700">{{p.name}}</span><span style="font-size: 13px; font-weight: 700; color: {{p.roleFg}}">{{p.role}}</span></span></span>
+          <span style="display: flex; justify-content: space-between; font-size: 14px; color: #46576B"><span><b style="color: #0B1A2B">{{p.pct}}%</b> · rencana {{p.plan}}%</span><b style="color: {{p.hFg}}">{{p.health}}</b></span>
+          <span style="height: 8px; border-radius: 4px; background: #EEF2F7; overflow: hidden"><span style="display: block; width: {{p.pct}}%; height: 100%; background: linear-gradient(90deg, #14B8A6, #2F7BEA)"></span></span>
+        </a>
+      </sc-for>
+    </div>
+    <div style="border-radius: 24px; padding: 2px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%)">
+      <div style="border-radius: 22px; background: #FFFFFF; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+        <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 800; letter-spacing: 0.05em; color: #09656E">UPDATE MINGGUAN · MSG</span><span style="font-size: 20px; font-weight: 800">Jatuh tempo Jum, 15.00</span></span>
+        <span id="h-label" style="font-size: 15px; font-weight: 700">Status kesehatan</span>
+        <div role="radiogroup" aria-labelledby="h-label" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+          <sc-for list="{{health}}" as="h" hint-placeholder-count="3">
+            <button type="button" role="radio" aria-checked="{{h.sel}}" onClick="{{h.pick}}" style="height: 48px; border-radius: 14px; border: {{h.border}}; background: {{h.bg}}; color: {{h.fg}}; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer">{{h.label}}</button>
+          </sc-for>
+        </div>
+        <label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 15px; font-weight: 700">Ringkasan</span><textarea rows="3" placeholder="Yang selesai minggu ini dan berikutnya" style="padding: 12px 14px; border: 1px solid #C3CEDA; border-radius: 14px; font: inherit; font-size: 17px; line-height: 25px; color: #0B1A2B; resize: none"></textarea></label>
+        <label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 15px; font-weight: 700">Keputusan dari Direksi (opsional)</span><input type="text" placeholder="Kosongkan bila tidak ada" style="height: 50px; padding: 0 14px; border: 1px solid #C3CEDA; border-radius: 14px; font: inherit; font-size: 17px; color: #0B1A2B"></label>
+        <sc-if value="{{sent}}" hint-placeholder-val="{{false}}"><span style="padding: 12px 14px; border-radius: 14px; background: #E3F6EE; color: #0F7A55; font-size: 15px; font-weight: 700">Terkirim ke Agus Setiawan dan Dimas</span></sc-if>
+        <button type="button" onClick="{{send}}" style="height: 52px; border: 0; border-radius: 16px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer">Kirim update</button>
+      </div>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" active="menu" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var H = [['Sesuai jalur', '#0F7A55', '#E3F6EE'], ['Berisiko', '#9A5800', '#FFF1DC'], ['Bermasalah', '#C42137', '#FDE7EA']];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { h: 'Sesuai jalur', sent: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var h = st.h || 'Sesuai jalur';
+    return {
+      projects: [
+        { l: 'M', name: 'Migrasi gudang', role: 'ANDA PIC', roleFg: '#09656E', pct: 41, plan: 39, health: 'Sesuai jalur', hFg: '#0F7A55', grad: 'linear-gradient(135deg, #2F7BEA 0%, #6D4AE0 100%)', border: '2px solid #0B7F86', href: '#' },
+        { l: 'P', name: 'Peluncuran Q4', role: 'ANGGOTA', roleFg: '#46576B', pct: 48, plan: 61, health: 'Berisiko', hFg: '#9A5800', grad: 'linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%)', border: '1px solid #DDE4EC', href: 'MTodo.dc.html' }
+      ],
+      health: H.map(function (x) { var on = x[0] === h; return { label: x[0], sel: on ? 'true' : 'false', fg: on ? x[1] : '#0B1A2B', bg: on ? x[2] : '#FFFFFF', border: on ? '2px solid ' + x[1] : '1px solid #DDE4EC', pick: function () { self.setState({ h: x[0], sent: false }); } }; }),
+      sent: !!st.sent,
+      send: function () { self.setState({ sent: true }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

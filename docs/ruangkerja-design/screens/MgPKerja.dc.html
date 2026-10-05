@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Tracking kerja · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; background: radial-gradient(420px 220px at 0% 0%, rgba(20,184,166,0.20), transparent 70%), radial-gradient(420px 220px at 100% 0%, rgba(47,123,234,0.18), transparent 70%), #F3F6FA">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <h1 style="margin: 0; font-size: 30px; line-height: 38px; font-weight: 800; letter-spacing: -0.025em">Tracking kerja</h1>
+    <div role="tablist" aria-label="Periode" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DDE4EC">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+        <button type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="height: 44px; border: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.fg}}; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">{{t.label}}</button>
+      </sc-for>
+    </div>
+    <div style="border-radius: 24px; padding: 18px; color: #FFFFFF; display: flex; flex-direction: column; gap: 8px; background: radial-gradient(220px 160px at 100% 0%, rgba(255,255,255,0.22), transparent 70%), linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); box-shadow: 0 14px 30px rgba(30,95,214,0.30)">
+      <span style="font-size: 14px; font-weight: 700">{{v.range}}</span>
+      <span style="display: flex; align-items: baseline; justify-content: space-between"><span style="font-size: 38px; line-height: 44px; font-weight: 800">{{v.done}}<span style="font-size: 22px; opacity: 0.8">/{{v.plan}}</span></span><span style="font-size: 22px; font-weight: 800">{{v.pct}}%</span></span>
+      <span style="position: relative; display: block; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.28)"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{v.pct}}%; border-radius: 4px; background: #FFFFFF"></span></span>
+      <span style="font-size: 14px">{{v.note}}</span>
+    </div>
+    <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 22px; padding: 14px 16px 2px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 6px"><span style="font-size: 17px; font-weight: 800">Per divisi</span><a href="MgPDivisi.dc.html" style="font-size: 14px; font-weight: 800; color: #09656E">Detail Programming</a></div>
+      <sc-for list="{{v.rows}}" as="r" hint-placeholder-count="5">
+        <div style="display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-top: 1px solid #EEF2F7">
+          <span style="display: flex; justify-content: space-between; gap: 8px; font-size: 15px"><span style="font-weight: 700">{{r.name}}</span><span><b>{{r.done}}/{{r.plan}}</b> <span style="font-weight: 800; color: {{r.xColor}}">· {{r.x}}</span></span></span>
+          <span style="position: relative; display: block; height: 6px; border-radius: 3px; background: #EEF2F7"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{r.pct}}%; border-radius: 3px; background: {{r.fill}}"></span></span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="border-radius: 18px; padding: 12px 14px; color: #FFFFFF; background: linear-gradient(135deg, #C2410C 0%, #BE185D 100%); display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">{{v.risk.t}}</span><span style="font-size: 13px">{{v.risk.m}}</span></div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" set="manajemen" active="kerja" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tab":{"editor":"enum","options":["Harian","Mingguan","Bulanan"],"default":"Harian"},"$preview":{"width":390,"height":844}}'>
+var NAMES = ['Programming', 'Implementer', 'Analis', 'Branding & Marketing', 'Sekretariat & HR'];
+var V = {
+  Harian: { range: 'Hari ini · per 09.40', note: '25 berjalan · 11 terlambat · 4 terblokir', extra: 'selesai · terlambat', rows: [[18, 9, '6 telat'], [12, 5, '2 telat'], [8, 4, '1 telat'], [7, 3, '1 telat'], [9, 2, '1 telat']], risk: ['KMB-214 tertahan 3 hari', 'kredensial sandbox bank belum diterima'] },
+  Mingguan: { range: 'Minggu lalu · 28 Sep–2 Okt', note: 'tepat waktu 86% · 9 tugas dibawa ke minggu ini', extra: 'selesai · tepat waktu', rows: [[52, 47, '79%'], [34, 33, '93%'], [22, 21, '90%'], [20, 18, '78%'], [22, 22, '95%']], risk: ['Branding tepat waktu 78%', 'materi tender menyita kapasitas'] },
+  Bulanan: { range: '4 minggu · 7 Sep–2 Okt', note: 'tepat waktu 87% · lembur 96 jam', extra: 'selesai · tepat waktu', rows: [[205, 184, '84%'], [136, 129, '91%'], [88, 82, '88%'], [80, 71, '79%'], [84, 83, '94%']], risk: ['Lembur Programming 58 jam', 'diusulkan tambah 1 programmer']}
+};
+var ORDER = ['Harian', 'Mingguan', 'Bulanan'];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: null };
+  }
+  renderVals() {
+    var self = this;
+    var cur = (this.state && this.state.tab) || (this.props && this.props.tab) || 'Harian';
+    var s = V[cur];
+    var daily = cur === 'Harian';
+    var tp = 0, td = 0;
+    var rows = s.rows.map(function (r, i) { tp += r[0]; td += r[1]; var pct = Math.round(r[1] / r[0] * 100); var n = parseInt(r[2], 10); return { name: NAMES[i], plan: r[0], done: r[1], pct: pct, x: r[2], xColor: daily ? (n > 2 ? '#C42137' : '#46576B') : (n < 85 ? '#9A5800' : '#0F7A55'), fill: daily || pct >= 90 ? 'linear-gradient(90deg, #14B8A6 0%, #2F7BEA 100%)' : '#E08A00' }; });
+    return {
+      tabs: ORDER.map(function (l) { var on = l === cur; return { label: l, sel: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : 'transparent', fg: on ? '#FFFFFF' : '#46576B', pick: function () { self.setState({ tab: l }); } }; }),
+      v: { range: s.range, note: s.note, extra: s.extra, rows: rows, done: td, plan: tp, pct: Math.round(td / tp * 100), risk: { t: s.risk[0], m: s.risk[1] } }
+    };
+  }
+}
+</script>
+</body>
+</html>

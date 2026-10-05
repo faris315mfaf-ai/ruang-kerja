@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Ajukan cuti · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #F3F6FA">
+  <sc-if value="{{form}}" hint-placeholder-val="{{true}}">
+    <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <a href="MSPengajuanSaya.dc.html" aria-label="Kembali" style="width: 44px; height: 44px; border-radius: 22px; background: #FFFFFF; border: 1px solid #DDE4EC; color: #0B1A2B; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+        <h1 style="margin: 0; font-size: 26px; line-height: 32px; font-weight: 800">Ajukan baru</h1>
+      </div>
+      <div role="radiogroup" aria-label="Jenis" style="display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 0 16px">
+        <sc-for list="{{types}}" as="t" hint-placeholder-count="5">
+          <button type="button" role="radio" aria-checked="{{t.sel}}" onClick="{{t.pick}}" style="flex-shrink: 0; height: 44px; padding: 0 16px; border-radius: 22px; border: {{t.border}}; background: {{t.bg}}; color: {{t.color}}; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">{{t.label}}</button>
+        </sc-for>
+      </div>
+      <label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 15px; font-weight: 700">{{f.aLabel}}</span><input type="text" value="{{f.a}}" readonly="" style="height: 52px; padding: 0 16px; border: 1px solid #C3CEDA; border-radius: 14px; font: inherit; font-size: 17px; background: #FFFFFF; color: #0B1A2B"></label>
+      <label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 15px; font-weight: 700">{{f.bLabel}}</span><input type="text" value="{{f.b}}" readonly="" style="height: 52px; padding: 0 16px; border: 1px solid #C3CEDA; border-radius: 14px; font: inherit; font-size: 17px; background: #FFFFFF; color: #0B1A2B"></label>
+      <label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 15px; font-weight: 700">Alasan</span><textarea rows="2" value="{{f.reason}}" readonly="" style="padding: 12px 16px; border: 1px solid #C3CEDA; border-radius: 14px; font: inherit; font-size: 17px; line-height: 25px; color: #0B1A2B; resize: none"></textarea></label>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-radius: 18px; background: #FFFFFF; border: 1px solid #DDE4EC; font-size: 16px"><span style="color: #46576B">{{f.sumK}}</span><b>{{f.sumV}}</b></div>
+      <sc-if value="{{f.hasWarn}}" hint-placeholder-val="{{true}}">
+        <div style="padding: 14px 16px; border-radius: 18px; color: #FFFFFF; background: linear-gradient(135deg, #C2410C 0%, #BE185D 100%); font-size: 15px; line-height: 22px; font-weight: 600">{{f.warn}}</div>
+      </sc-if>
+    </div>
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px 22px; background: rgba(255,255,255,0.86); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid #DDE4EC; display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 14px; color: #46576B; text-align: center">Disetujui oleh Dimas Pratama, lalu HR</span>
+      <button type="button" onClick="{{submit}}" style="height: 56px; border: 0; border-radius: 16px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 24px rgba(30,95,214,0.34)">Kirim pengajuan</button>
+    </div>
+  </sc-if>
+  <sc-if value="{{sent}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; padding: 80px 24px 28px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; color: #FFFFFF; background: radial-gradient(320px 260px at 50% 22%, rgba(255,255,255,0.22), transparent 70%), linear-gradient(160deg, #0B7F86 0%, #1E5FD6 100%)">
+      <span style="width: 96px; height: 96px; border-radius: 48px; background: #FFFFFF; color: #0B7F86; display: flex; align-items: center; justify-content: center"><svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg></span>
+      <h1 style="margin: 0; font-size: 30px; line-height: 38px; font-weight: 800">Pengajuan terkirim</h1>
+      <span style="font-size: 17px; line-height: 26px">Dimas Pratama mendapat notifikasi. Anda akan diberi tahu setiap langkah persetujuan.</span>
+      <span style="flex: 1"></span>
+      <a href="MSPengajuanSaya.dc.html" style="width: 100%; height: 56px; border-radius: 18px; background: #FFFFFF; color: #0A4E57; font-size: 18px; font-weight: 800; display: flex; align-items: center; justify-content: center">Lihat status</a>
+      <button type="button" onClick="{{again}}" style="height: 44px; border: 0; background: transparent; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">Ajukan lagi</button>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var T = {
+  'Cuti': { aLabel: 'Tanggal', a: 'Jum, 16 Okt 2026', bLabel: 'Sampai', b: 'Jum, 16 Okt 2026', reason: 'Urusan keluarga di luar kota.', sumK: 'Saldo cuti', sumV: '7 → 4 hari', warn: '16 Okt adalah milestone Uji coba data stok (MSG). Anda PIC; tunjuk pengganti.' },
+  'Izin': { aLabel: 'Tanggal', a: 'Rab, 7 Okt 2026', bLabel: 'Jam', b: '13.00 – 15.00', reason: 'Mengurus dokumen di kelurahan.', sumK: 'Durasi', sumV: '2 jam', warn: '' },
+  'Sakit': { aLabel: 'Tanggal', a: 'Sen, 5 Okt 2026', bLabel: 'Sampai', b: 'Sen, 5 Okt 2026', reason: '', sumK: 'Surat dokter', sumV: 'wajib bila > 1 hari', warn: '' },
+  'Lembur': { aLabel: 'Tanggal', a: 'Sab, 10 Okt 2026', bLabel: 'Jam', b: '09.00 – 12.00', reason: 'Uji coba impor batch 3.', sumK: 'Lembur Oktober', sumV: '3 dari 40 jam', warn: '' },
+  'Koreksi': { aLabel: 'Tanggal', a: 'Jum, 2 Okt 2026', bLabel: 'Jam yang benar', b: 'Pulang 17.05', reason: 'Lupa check-out setelah rapat.', sumK: 'Tercatat', sumV: 'pulang —', warn: '' }
+};
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { t: 'Cuti', sent: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var t = st.t || 'Cuti';
+    var c = T[t];
+    return {
+      form: !st.sent, sent: !!st.sent,
+      submit: function () { self.setState({ sent: true }); },
+      again: function () { self.setState({ sent: false }); },
+      types: Object.keys(T).map(function (k) { var on = k === t; return { label: k, sel: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : '#FFFFFF', color: on ? '#FFFFFF' : '#0B1A2B', border: on ? '0' : '1px solid #C3CEDA', pick: function () { self.setState({ t: k }); } }; }),
+      f: Object.assign({}, c, { hasWarn: !!c.warn })
+    };
+  }
+}
+</script>
+</body>
+</html>

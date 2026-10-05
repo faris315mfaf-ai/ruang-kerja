@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Persetujuan · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: radial-gradient(420px 220px at 0% 0%, rgba(20,184,166,0.20), transparent 70%), radial-gradient(420px 220px at 100% 0%, rgba(47,123,234,0.18), transparent 70%), #F3F6FA">
+  <div style="padding: 24px 16px 0; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <h1 style="margin: 0; font-size: 32px; line-height: 40px; font-weight: 800; letter-spacing: -0.025em">Persetujuan</h1>
+      <button type="button" style="height: 44px; padding: 0 16px; border: 1px solid #C3CEDA; border-radius: 22px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">Pilih</button>
+    </div>
+    <div role="tablist" aria-label="Status" style="display: flex; padding: 4px; border-radius: 16px; background: #E4EAF1">
+      <button type="button" role="tab" aria-selected="true" style="flex: 1; height: 44px; border: 0; border-radius: 12px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 16px; font-weight: 700; box-shadow: 0 2px 8px rgba(11,26,43,0.12)">Menunggu · {{left}}</button>
+      <button type="button" role="tab" aria-selected="false" style="flex: 1; height: 44px; border: 0; border-radius: 12px; background: transparent; color: #46576B; font: inherit; font-size: 16px; font-weight: 700">Diputus</button>
+    </div>
+    <span style="font-size: 15px; color: #46576B; padding: 0 4px">Geser kartu ke kanan untuk setujui, ke kiri untuk tolak.</span>
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <sc-for list="{{cards}}" as="c" hint-placeholder-count="4">
+        <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 20px rgba(11,26,43,0.05)">
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span aria-hidden="true" style="width: 46px; height: 46px; border-radius: 23px; background: {{c.avBg}}; color: {{c.avFg}}; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0">{{c.init}}</span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 17px; font-weight: 700">{{c.name}}</span><span style="font-size: 15px; color: #46576B">{{c.detail}}</span></span>
+            <span style="height: 28px; padding: 0 10px; border-radius: 8px; background: {{c.tBg}}; color: {{c.tFg}}; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center">{{c.type}}</span>
+          </div>
+          <sc-if value="{{c.pending}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; gap: 10px">
+              <button type="button" style="flex: 1; height: 48px; border: 1px solid #C3CEDA; border-radius: 14px; background: #FFFFFF; color: #C42137; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">Tolak</button>
+              <button type="button" onClick="{{c.approve}}" style="flex: 1.4; height: 48px; border: 0; border-radius: 14px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 20px rgba(30,95,214,0.30)">Setujui</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{c.done}}" hint-placeholder-val="{{false}}">
+            <span style="height: 48px; border-radius: 14px; background: #E3F6EE; color: #0F7A55; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg>Disetujui · diteruskan ke HR</span>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" active="menu" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var AV = [['#FFF1DC', '#9A5800'], ['#E6EEFE', '#1A4CB0'], ['#C8F4EE', '#0A4E57'], ['#EEF2F7', '#46576B']];
+var T = { Cuti: ['#E6EEFE', '#1A4CB0'], Lembur: ['#E8FBF8', '#09656E'], Koreksi: ['#FFF1DC', '#9A5800'] };
+var R = [
+  ['ML', 'Maya Lestari', '12–14 Okt · 3 hari · sisa 9', 'Cuti', 0],
+  ['YP', 'Yoga Permana', 'Sab, 3 Okt · 3,5 jam', 'Lembur', 1],
+  ['RA', 'Rizky Aditya', 'Jum, 2 Okt · minta pulang 17.10', 'Koreksi', 2],
+  ['BS', 'Bayu Saputra', '19–20 Okt · 2 hari · sisa 7', 'Cuti', 3]
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { ok: {} };
+  }
+  renderVals() {
+    var self = this;
+    var ok = (this.state && this.state.ok) || {};
+    var doneN = Object.keys(ok).length;
+    return {
+      left: 5 - doneN,
+      cards: R.map(function (r, i) {
+        var d = !!ok[i];
+        return { init: r[0], name: r[1], detail: r[2], type: r[3], avBg: AV[r[4]][0], avFg: AV[r[4]][1], tBg: T[r[3]][0], tFg: T[r[3]][1], pending: !d, done: d, approve: function () { var n = Object.assign({}, ok); n[i] = true; self.setState({ ok: n }); } };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

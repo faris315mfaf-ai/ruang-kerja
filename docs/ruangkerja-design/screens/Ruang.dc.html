@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Fondasi · Spasi, radius, elevasi, ikon</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1560px; box-sizing: border-box; padding: 64px 72px; display: flex; flex-direction: column; gap: 32px; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: radial-gradient(900px 420px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(900px 420px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #F3F6FA">
+  <header style="display: flex; flex-direction: column; gap: 12px">
+    <span style="font-size: 15px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #09656E">Fondasi desain · 03</span>
+    <h1 style="margin: 0; font-size: 52px; line-height: 60px; font-weight: 800; letter-spacing: -0.03em">Spasi, radius, elevasi &amp; ikon</h1>
+  </header>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+    <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <span style="font-size: 21px; font-weight: 700">Spasi · kelipatan 4</span>
+        <span style="font-size: 15px; color: #46576B">jarak kartu 20 · padding kartu 24</span>
+      </div>
+      <sc-for list="{{space}}" as="s" hint-placeholder-count="9">
+        <div style="display: flex; align-items: center; gap: 16px">
+          <span style="width: 64px; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600">{{s.token}}</span>
+          <span style="width: 48px; font-size: 15px; color: #46576B">{{s.px}}px</span>
+          <span style="height: 18px; width: {{s.px}}px; border-radius: 4px; background: linear-gradient(90deg, #14B8A6 0%, #2F7BEA 100%)"></span>
+          <span style="font-size: 15px; color: #46576B">{{s.use}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+      <span style="font-size: 21px; font-weight: 700">Radius</span>
+      <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px">
+        <sc-for list="{{radius}}" as="r" hint-placeholder-count="5">
+          <div style="display: flex; flex-direction: column; gap: 8px; align-items: center">
+            <div style="width: 96px; height: 96px; border-radius: {{r.px}}px; background: #E8FBF8; border: 2px solid #0B7F86"></div>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600">{{r.token}}</span>
+            <span style="font-size: 14px; color: #46576B; text-align: center">{{r.use}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <span style="font-size: 21px; font-weight: 700; padding-top: 8px">Tinggi kontrol</span>
+      <div style="display: flex; align-items: flex-end; gap: 14px">
+        <div style="display: flex; flex-direction: column; gap: 6px; align-items: center"><span style="height: 36px; padding: 0 16px; border-radius: 10px; background: #EEF2F7; font-size: 15px; font-weight: 600; display: flex; align-items: center">Kecil 36</span><span style="font-size: 14px; color: #46576B">toolbar, chip</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px; align-items: center"><span style="height: 44px; padding: 0 20px; border-radius: 12px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 16px; font-weight: 600; display: flex; align-items: center">Standar 44</span><span style="font-size: 14px; color: #46576B">tombol &amp; input desktop</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px; align-items: center"><span style="height: 52px; padding: 0 24px; border-radius: 14px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 17px; font-weight: 700; display: flex; align-items: center">Besar 52</span><span style="font-size: 14px; color: #46576B">aksi utama ponsel</span></div>
+      </div>
+    </section>
+
+    <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+      <span style="font-size: 21px; font-weight: 700">Elevasi</span>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; padding: 12px; background: #F3F6FA; border-radius: 18px">
+        <sc-for list="{{elev}}" as="e" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <div style="height: 110px; border-radius: 18px; background: {{e.bg}}; box-shadow: {{e.shadow}}; border: {{e.border}}"></div>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600">{{e.token}}</span>
+            <span style="font-size: 14px; line-height: 20px; color: #46576B">{{e.use}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <span style="font-size: 15px; line-height: 22px; color: #46576B">Mode gelap tidak memakai bayangan gelap; kartu dibedakan dengan border #233247 dan sorot tipis di tepi atas.</span>
+    </section>
+
+    <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <span style="font-size: 21px; font-weight: 700">Ikon · Lucide, garis 1,9</span>
+        <span style="font-size: 15px; color: #46576B">20px UI · 24px navigasi</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px">
+        <sc-for list="{{icons}}" as="i" hint-placeholder-count="12">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 6px; border-radius: 16px; background: #F3F6FA">
+            <span style="width: 44px; height: 44px; border-radius: 13px; background: #FFFFFF; color: #0B1A2B; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(11,26,43,0.08)">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.d1}}"></path><path d="{{i.d2}}"></path><path d="{{i.d3}}"></path><path d="{{i.d4}}"></path></svg>
+            </span>
+            <span style="font-size: 14px; font-weight: 500">{{i.label}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <span style="font-size: 21px; font-weight: 700; padding-top: 4px">Status tugas &amp; prioritas</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 18px; font-size: 15px">
+        <span style="display: inline-flex; align-items: center; gap: 8px"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="#8495A8" stroke-width="2" stroke-dasharray="2.6 2.6"></circle></svg>Backlog</span>
+        <span style="display: inline-flex; align-items: center; gap: 8px"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="#46576B" stroke-width="2"></circle></svg>Todo</span>
+        <span style="display: inline-flex; align-items: center; gap: 8px"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="#B26B00" stroke-width="2"></circle><path d="M10 5a5 5 0 0 1 0 10z" fill="#B26B00"></path></svg>Dikerjakan</span>
+        <span style="display: inline-flex; align-items: center; gap: 8px"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="#1E5FD6" stroke-width="2"></circle><path d="M10 5a5 5 0 1 1-5 5h5z" fill="#1E5FD6"></path></svg>Review</span>
+        <span style="display: inline-flex; align-items: center; gap: 8px"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="#0F7A55"></circle><path d="m6.5 10.2 2.3 2.3 4.7-4.8" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>Selesai</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 18px; font-size: 15px">
+        <span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 20px; height: 20px; border-radius: 6px; background: #C42137; color: #FFFFFF; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center">!</span>Urgent</span>
+        <span style="display: inline-flex; align-items: center; gap: 8px"><span style="display: inline-flex; align-items: flex-end; gap: 2px; height: 16px"><span style="width: 4px; height: 7px; border-radius: 1px; background: #0B1A2B"></span><span style="width: 4px; height: 11px; border-radius: 1px; background: #0B1A2B"></span><span style="width: 4px; height: 16px; border-radius: 1px; background: #0B1A2B"></span></span>Tinggi</span>
+        <span style="display: inline-flex; align-items: center; gap: 8px"><span style="display: inline-flex; align-items: flex-end; gap: 2px; height: 16px"><span style="width: 4px; height: 7px; border-radius: 1px; background: #0B1A2B"></span><span style="width: 4px; height: 11px; border-radius: 1px; background: #0B1A2B"></span><span style="width: 4px; height: 16px; border-radius: 1px; background: #C3CEDA"></span></span>Sedang</span>
+        <span style="display: inline-flex; align-items: center; gap: 8px"><span style="display: inline-flex; align-items: flex-end; gap: 2px; height: 16px"><span style="width: 4px; height: 7px; border-radius: 1px; background: #0B1A2B"></span><span style="width: 4px; height: 11px; border-radius: 1px; background: #C3CEDA"></span><span style="width: 4px; height: 16px; border-radius: 1px; background: #C3CEDA"></span></span>Rendah</span>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1560}}'>
+var ICONS = [
+  ['Beranda', ['M3 10.5 12 3l9 7.5', 'M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5']],
+  ['Absensi', ['M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z', 'M12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z']],
+  ['Tugas', ['m9 11 3 3 8-8', 'M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11']],
+  ['Inbox', ['M22 12h-6l-2 3h-4l-2-3H2', 'M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z']],
+  ['Pengajuan', ['M8 3v4', 'M16 3v4', 'M4 9h16', 'M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z']],
+  ['Persetujuan', ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'm8.5 12.5 2.5 2.5 4.5-5']],
+  ['Dashboard', ['M4 20h16', 'M7 16v-4', 'M12 16V6', 'M17 16v-7']],
+  ['Portofolio', ['M4 6h10', 'M8 12h12', 'M6 18h8']],
+  ['Workspace', ['M4 4h7v7H4z', 'M13 4h7v7h-7z', 'M4 13h7v7H4z', 'M13 13h7v7h-7z']],
+  ['Drive', ['M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z']],
+  ['Organisasi', ['M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20', 'M10 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z', 'M20 20v-1.5a3.5 3.5 0 0 0-2.5-3.35', 'M15.5 4.15a3.5 3.5 0 0 1 0 6.7']],
+  ['Cari', ['M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z', 'm20 20-3.5-3.5']]
+];
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      space: [
+        ['s-1', 4, 'ikon ke teks rapat'], ['s-2', 8, 'jarak dalam chip'], ['s-3', 12, 'jarak baris daftar'],
+        ['s-4', 16, 'gutter ponsel'], ['s-5', 20, 'jarak antar kartu'], ['s-6', 24, 'padding kartu'],
+        ['s-8', 32, 'jarak seksi'], ['s-10', 40, 'margin halaman desktop'], ['s-16', 64, 'padding hero']
+      ].map(function (s) { return { token: s[0], px: s[1], use: s[2] }; }),
+      radius: [
+        ['r-sm', 8, 'chip, badge'], ['r-md', 12, 'tombol, input'], ['r-lg', 16, 'tile, item daftar'],
+        ['r-xl', 20, 'kartu'], ['r-2xl', 28, 'panel, sheet']
+      ].map(function (r) { return { token: r[0], px: r[1], use: r[2] }; }),
+      elev: [
+        { token: 'e-0', use: 'Datar: baris tabel, isian kolom', bg: '#FFFFFF', shadow: 'none', border: '1px solid #DDE4EC' },
+        { token: 'e-1', use: 'Kartu standar', bg: '#FFFFFF', shadow: '0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)', border: '1px solid #DDE4EC' },
+        { token: 'e-2', use: 'Mengambang: Dock, popover, sheet', bg: '#FFFFFF', shadow: '0 2px 6px rgba(11,26,43,0.08), 0 20px 48px rgba(11,26,43,0.16)', border: '1px solid #DDE4EC' },
+        { token: 'e-glow', use: 'Tombol gradien & KPI sorotan', bg: 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', shadow: '0 12px 28px rgba(30,95,214,0.32)', border: '0' }
+      ],
+      icons: ICONS.map(function (i) {
+        var d = i[1];
+        return { label: i[0], d1: d[0] || '', d2: d[1] || '', d3: d[2] || '', d4: d[3] || '' };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

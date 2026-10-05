@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Widget layar utama · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B1A2B}
+a{text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: radial-gradient(360px 300px at 10% 10%, #2DBFB1, transparent 70%), radial-gradient(380px 340px at 100% 40%, #5B8CF6, transparent 70%), radial-gradient(360px 320px at 30% 100%, #6D4AE0, transparent 70%), #12233A">
+  <div style="display: flex; justify-content: space-between; padding: 14px 28px 0; color: #FFFFFF; font-size: 15px; font-weight: 700"><span>09.20</span><span>5G · 82%</span></div>
+  <div style="padding: 24px 20px 0; display: flex; flex-direction: column; gap: 16px">
+    <a href="MRapatDetail.dc.html" style="border-radius: 26px; padding: 18px; background: rgba(255,255,255,0.86); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); display: flex; flex-direction: column; gap: 10px; color: #0B1A2B; box-shadow: 0 10px 30px rgba(0,0,0,0.18)">
+      <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: #09656E"><span style="width: 22px; height: 22px; border-radius: 7px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); color: #FFFFFF; font-size: 10px; display: flex; align-items: center; justify-content: center">RK</span>RAPAT BERIKUTNYA</span>
+      <span style="font-size: 21px; line-height: 27px; font-weight: 800">Review arsitektur KMB</span>
+      <span style="font-size: 15px; color: #253445">14.00–15.00 · Google Meet · 5 peserta</span>
+      <span style="display: flex; gap: 8px"><span style="flex: 1; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center">Gabung</span><span style="flex: 1; height: 44px; border-radius: 12px; background: #FFFFFF; border: 1px solid #C3CEDA; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center">Agenda</span></span>
+    </a>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+      <a href="MAbsen.dc.html" style="aspect-ratio: 1; border-radius: 26px; padding: 16px; box-sizing: border-box; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 10px 30px rgba(0,0,0,0.18)">
+        <span style="font-size: 13px; font-weight: 800">ABSEN</span>
+        <span style="display: flex; flex-direction: column"><span style="font-size: 30px; line-height: 34px; font-weight: 800">07.41</span><span style="font-size: 14px">masuk · tepat waktu</span></span>
+        <span style="height: 34px; border-radius: 10px; background: rgba(255,255,255,0.22); font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center">Check-out 17.00</span>
+      </a>
+      <a href="MTugas.dc.html" style="aspect-ratio: 1; border-radius: 26px; padding: 16px; box-sizing: border-box; background: rgba(255,255,255,0.86); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); color: #0B1A2B; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 10px 30px rgba(0,0,0,0.18)">
+        <span style="font-size: 13px; font-weight: 800; color: #09656E">TUGAS HARI INI</span>
+        <span style="display: flex; align-items: center; gap: 12px"><span style="width: 62px; height: 62px; border-radius: 31px; background: conic-gradient(#1E5FD6 0 43%, #DDE4EC 43% 100%); display: flex; align-items: center; justify-content: center"><span style="width: 46px; height: 46px; border-radius: 23px; background: #FFFFFF; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center">3/7</span></span><span style="font-size: 13px; line-height: 17px; color: #46576B">2 terlambat</span></span>
+        <span style="font-size: 13px; font-weight: 700; color: #C42137">SIM-388 · kritis</span>
+      </a>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 10px; padding-top: 8px">
+      <sc-for list="{{apps}}" as="a" hint-placeholder-count="8">
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 60px; height: 60px; border-radius: 16px; background: {{a.bg}}; color: #FFFFFF; font-size: 18px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(0,0,0,0.18)">{{a.g}}</span><span style="font-size: 12px; font-weight: 700; color: #FFFFFF">{{a.n}}</span></span>
+      </sc-for>
+    </div>
+  </div>
+  <div style="position: absolute; left: 14px; right: 14px; bottom: 18px; height: 88px; border-radius: 30px; background: rgba(255,255,255,0.22); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); display: flex; align-items: center; justify-content: space-around">
+    <sc-for list="{{dock}}" as="d" hint-placeholder-count="4">
+      <span style="width: 60px; height: 60px; border-radius: 16px; background: {{d.bg}}; color: #FFFFFF; font-size: 18px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{d.g}}</span>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var A = [['RK', 'RuangKerja', 'linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%)'], ['Kl', 'Kalender', '#C2410C'], ['Ps', 'Pesan', '#0F7A55'], ['Su', 'Surel', '#1E5FD6'], ['Fo', 'Foto', '#BE185D'], ['Ka', 'Kamera', '#46576B'], ['Ca', 'Catatan', '#9A5800'], ['Pe', 'Peta', '#6D4AE0']];
+    return {
+      apps: A.map(function (a) { return { g: a[0], n: a[1], bg: a[2] }; }),
+      dock: [['Te', '#0F7A55'], ['Br', '#1E5FD6'], ['Ps', '#0B7F86'], ['RK', 'linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%)']].map(function (d) { return { g: d[0], bg: d[1] }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

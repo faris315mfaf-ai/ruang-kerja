@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Pemberitahuan rapat online · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; padding: 48px 40px 64px; display: flex; flex-direction: column; gap: 28px; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #070B14; background-repeat: no-repeat">
+  <header style="width: 100%; max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px">
+    <h1 style="margin: 0; font-size: 44px; line-height: 52px; font-weight: 800; letter-spacing: -0.03em">Pemberitahuan rapat online</h1>
+    <span style="font-size: 18px; line-height: 28px; color: #A6B4C6">Satu rapat, lima titik sentuh: notifikasi browser, toast di aplikasi, chip menu bar, banner saat berlangsung, dan Inbox atau email.</span>
+  </header>
+
+  <div style="width: 100%; max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #A6B4C6">1 · Toast 5 menit sebelum mulai</span>
+      <div style="position: relative; height: 320px; border-radius: 24px; overflow: hidden; border: 1px solid #233247; background: #172131">
+        <div aria-hidden="true" style="padding: 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; opacity: 0.6"><div style="height: 110px; border-radius: 16px; background: #0F1622"></div><div style="height: 110px; border-radius: 16px; background: #0F1622"></div><div style="height: 110px; border-radius: 16px; background: #0F1622"></div><div style="grid-column: span 3; height: 140px; border-radius: 16px; background: #0F1622"></div></div>
+        <div role="status" style="position: absolute; top: 20px; right: 20px; width: 380px; padding: 18px; border-radius: 22px; background: rgba(15,22,34,0.86); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid #0F1622; box-shadow: 0 20px 48px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 12px">
+          <span style="display: flex; align-items: center; gap: 12px">
+            <span style="width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 13 5.2 3.5a.5.5 0 0 0 .8-.4V7.9a.5.5 0 0 0-.8-.4L16 11"></path><path d="M4 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"></path></svg></span>
+            <span style="display: flex; flex-direction: column"><span style="font-size: 17px; font-weight: 800">{{toast.title}}</span><span style="font-size: 15px; color: #A6B4C6">{{toast.sub}}</span></span>
+          </span>
+          <div style="display: flex; gap: 8px">
+            <button type="button" onClick="{{join}}" style="flex: 1; height: 44px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer">Gabung</button>
+            <button type="button" onClick="{{snooze}}" style="height: 44px; padding: 0 14px; border: 1px solid #34465E; border-radius: 12px; background: #0F1622; color: #EAF1F8; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Tunda 5 mnt</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #A6B4C6">2 · Notifikasi browser (PWA)</span>
+      <div style="position: relative; height: 320px; border-radius: 24px; overflow: hidden; background: linear-gradient(160deg, #2A3A4F 0%, #0F1622 100%)">
+        <div style="position: absolute; top: 20px; right: 20px; width: 400px; padding: 16px; border-radius: 16px; background: rgba(40,48,60,0.92); color: #EAF1F8; box-shadow: 0 16px 40px rgba(0,0,0,0.45); display: flex; gap: 12px">
+          <span style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); color: #FFFFFF; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0">RK</span>
+          <span style="flex: 1; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; color: #A6B4C6">RuangKerja · sekarang</span><span style="font-size: 16px; font-weight: 700">Koordinasi peluncuran Q4 mulai 10.30</span><span style="font-size: 15px; color: #2A3A4F">Google Meet · klik untuk bergabung</span></span>
+        </div>
+        <span style="position: absolute; left: 24px; bottom: 20px; right: 24px; font-size: 15px; line-height: 22px; color: #2A3A4F">Muncul walau tab RuangKerja tidak aktif, setelah pengguna mengizinkan notifikasi. Klik membuka tautan rapat langsung.</span>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #A6B4C6">3 · Chip menu bar &amp; banner saat berlangsung</span>
+      <div style="border-radius: 24px; overflow: hidden; border: 1px solid #233247; background: #070B14">
+        <dc-import name="MenuBar" malam="{{ true }}" dark="{{ true }}" crumbs="Tugas saya" meeting="Koordinasi PLQ · 5 mnt" hint-size="100%,64px"></dc-import>
+        <div style="margin: 20px; padding: 16px 18px; border-radius: 18px; display: flex; align-items: center; gap: 14px; color: #FFFFFF; background: linear-gradient(135deg, #C2410C 0%, #BE185D 100%)">
+          <span style="width: 12px; height: 12px; border-radius: 6px; background: #0F1622; box-shadow: 0 0 0 5px rgba(255,255,255,0.3); flex-shrink: 0"></span>
+          <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 17px; font-weight: 800">Sedang berlangsung · 12 menit</span><span style="font-size: 15px">Koordinasi peluncuran Q4 · 5 dari 6 peserta sudah bergabung</span></span>
+          <button type="button" style="height: 44px; padding: 0 18px; border: 0; border-radius: 12px; background: #0F1622; color: #F9A8D4; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer">Gabung</button>
+        </div>
+        <span style="display: block; padding: 0 20px 20px; font-size: 15px; line-height: 22px; color: #A6B4C6">Chip muncul 15 menit sebelum mulai. Banner merah muda tampil di Beranda bila rapat sudah mulai dan Anda belum bergabung.</span>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #A6B4C6">4 · Inbox &amp; email undangan</span>
+      <div style="border-radius: 24px; border: 1px solid #233247; background: #0F1622; overflow: hidden">
+        <div style="display: flex; gap: 14px; padding: 18px 20px; border-bottom: 1px solid #172131">
+          <span style="width: 44px; height: 44px; border-radius: 14px; background: #0E2A2C; color: #5AD6C8; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v4M16 3v4M4 9h16"></path><path d="M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"></path></svg></span>
+          <span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 16px; font-weight: 700">Putri mengundang Anda: Koordinasi peluncuran Q4</span><span style="font-size: 15px; color: #A6B4C6">Sen, 5 Okt · 10.30–11.30 · Google Meet</span>
+            <span style="display: flex; gap: 8px; padding-top: 6px"><button type="button" onClick="{{rsvpYes}}" style="height: 38px; padding: 0 14px; border: 0; border-radius: 10px; background: {{rsvp.yesBg}}; color: {{rsvp.yesFg}}; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">{{rsvp.yes}}</button><button type="button" style="height: 38px; padding: 0 14px; border: 1px solid #34465E; border-radius: 10px; background: #0F1622; color: #EAF1F8; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Tidak bisa</button></span>
+          </span>
+        </div>
+        <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; background: #070B14">
+          <span style="font-size: 14px; font-weight: 700; color: #A6B4C6">Email · Subjek</span>
+          <span style="font-size: 17px; font-weight: 700">Undangan: Koordinasi peluncuran Q4 · Sen 5 Okt 10.30 WIB</span>
+          <span style="font-size: 15px; line-height: 22px; color: #C9D4E2">Tautan rapat, agenda, dan tombol tambahkan ke kalender. Notulen dikirim otomatis setelah difinalkan.</span>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { mode: 'idle', rsvp: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var mode = st.mode || 'idle';
+    var toast = mode === 'joined' ? { title: 'Membuka Google Meet…', sub: 'Kehadiran tercatat untuk notulen' } : (mode === 'snooze' ? { title: 'Diingatkan lagi 10.30', sub: 'Koordinasi peluncuran Q4' } : { title: 'Mulai 5 menit lagi', sub: 'Koordinasi peluncuran Q4 · Google Meet' });
+    return {
+      toast: toast,
+      join: function () { self.setState({ mode: 'joined' }); },
+      snooze: function () { self.setState({ mode: 'snooze' }); },
+      rsvp: st.rsvp ? { yes: 'Hadir ✓', yesBg: '#0E2A20', yesFg: '#4ADE9B' } : { yes: 'Hadir', yesBg: 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', yesFg: '#FFFFFF' },
+      rsvpYes: function () { self.setState({ rsvp: true }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

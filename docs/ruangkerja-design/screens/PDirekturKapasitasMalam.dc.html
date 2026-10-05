@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Direktur · kapasitas tim · ponsel · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; background: #070B14">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="PeranMDirekturMalam.dc.html" aria-label="Kembali" style="width: 44px; height: 44px; border-radius: 22px; background: #0F1622; border: 1px solid #233247; color: #EAF1F8; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="font-size: 26px; line-height: 32px; font-weight: 800">Kapasitas tim</span>
+    </div>
+    <div role="tablist" aria-label="Divisi" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 16px; background: #0F1622; border: 1px solid #233247">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+        <button type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="height: 42px; border: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.fg}}; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">{{t.label}}</button>
+      </sc-for>
+    </div>
+    <div style="border-radius: 22px; padding: 16px; color: #FFFFFF; background: {{d.heroBg}}; display: flex; align-items: center; gap: 16px">
+      <span style="font-size: 40px; line-height: 46px; font-weight: 800">{{d.pct}}%</span>
+      <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 800">{{d.label}}</span><span style="font-size: 14px">{{d.sub}}</span></span>
+    </div>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; padding: 12px 16px 2px">
+      <span style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; color: #A6B4C6; padding-bottom: 6px"><span>Jam terpakai minggu ini</span><span>dari 40 jam</span></span>
+      <sc-for list="{{d.people}}" as="p" hint-placeholder-count="6">
+        <div style="display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-top: 1px solid #172131">
+          <span style="display: flex; justify-content: space-between; gap: 8px"><span style="font-size: 15px; font-weight: 700">{{p.n}}</span><span style="font-size: 15px; font-weight: 800; color: {{p.c}}">{{p.h}} j</span></span>
+          <span style="position: relative; display: block; height: 8px; border-radius: 4px; background: #172131"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{p.w}}%; border-radius: 4px; background: {{p.fill}}"></span></span>
+          <span style="font-size: 13px; color: #A6B4C6">{{p.proj}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" malam="{{ true }}" dark="{{ true }}" active="beranda" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var D = [
+  ['Programming', 92, '14 orang · 5 terpadat', [['Rizky Aditya', 46, 'SIM hotfix · KMB'], ['Yoga Permana', 44, 'KMB payment gateway'], ['Fitri Handayani', 41, 'KMB · RKJ'], ['Rina Oktaviani', 38, 'DEP · tertahan API'], ['Arif Nugroho', 36, 'RKJ'], ['Dimas Pratama', 34, 'review & arsitektur']]],
+  ['Analis', 81, '6 orang · 5 terpadat', [['Maya Lestari', 38, 'PSL SRS · review kode'], ['Dewi Anggraini', 36, 'UAT SIMRS'], ['Bagas Wicaksono', 33, 'pemetaan data DEP'], ['Laras Putri', 31, 'skenario UAT KMB'], ['Nanda Prasetyo', 29, 'review kode'], ['Wulan Sari', 27, 'SRS PSL']]],
+  ['Implementer', 74, '9 orang · 2 di klien · 5 terpadat', [['Bayu Saputra', 40, 'on-site RS Harapan Sehat'], ['Lina Marlina', 39, 'on-site RS Harapan Sehat'], ['Tono Wibisono', 32, 'migrasi data Koperasi'], ['Gilang Ramadhan', 24, 'izin hari ini'], ['Sekar Ayu', 28, 'materi pelatihan'], ['Hadi Kurnia', 26, 'tiket dukungan']]]
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { t: 0 };
+  }
+  renderVals() {
+    var self = this;
+    var ti = (this.state && this.state.t) || 0;
+    var d = D[ti];
+    return {
+      tabs: D.map(function (x, i) { var on = i === ti; return { label: x[0], sel: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : 'transparent', fg: on ? '#FFFFFF' : '#A6B4C6', pick: function () { self.setState({ t: i }); } }; }),
+      d: { pct: d[1], label: d[1] >= 90 ? 'Padat · risiko lembur' : (d[1] >= 80 ? 'Hampir penuh' : 'Masih ada ruang'), sub: d[2], heroBg: d[1] >= 90 ? 'linear-gradient(135deg, #C2410C 0%, #BE185D 100%)' : 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)',
+        people: d[3].slice().sort(function (a, b) { return b[1] - a[1]; }).slice(0, 5).map(function (p) { var over = p[1] > 40; return { n: p[0], h: p[1], proj: p[2], w: Math.min(100, Math.round(p[1] / 40 * 100)), c: over ? '#FF7A8A' : '#EAF1F8', fill: over ? '#C42137' : (p[1] >= 36 ? '#E08A00' : 'linear-gradient(90deg, #14B8A6 0%, #2F7BEA 100%)') }; }) }
+    };
+  }
+}
+</script>
+</body>
+</html>

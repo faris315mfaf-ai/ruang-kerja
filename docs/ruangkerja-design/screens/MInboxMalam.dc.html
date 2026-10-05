@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Inbox · ponsel · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: radial-gradient(420px 220px at 0% 0%, rgba(20,184,166,0.20), transparent 70%), radial-gradient(420px 220px at 100% 0%, rgba(47,123,234,0.18), transparent 70%), #070B14">
+  <div style="padding: 24px 16px 0; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <h1 style="margin: 0; font-size: 32px; line-height: 40px; font-weight: 800; letter-spacing: -0.025em">Inbox</h1>
+      <button type="button" onClick="{{readAll}}" style="height: 44px; padding: 0 14px; border: 0; border-radius: 22px; background: transparent; color: #5AD6C8; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">Baca semua</button>
+    </div>
+    <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #A6B4C6; padding: 6px 4px 0">Hari ini · {{unread}} baru</span>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; overflow: hidden">
+      <sc-for list="{{today}}" as="n" hint-placeholder-count="3">
+        <button type="button" onClick="{{n.open}}" style="width: 100%; display: flex; gap: 12px; padding: 16px; border: 0; border-top: {{n.sep}}; background: transparent; text-align: left; font: inherit; color: #EAF1F8; cursor: pointer">
+          <span style="width: 44px; height: 44px; border-radius: 14px; background: {{n.bg}}; color: {{n.fg}}; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{n.d1}}"></path><path d="{{n.d2}}"></path></svg></span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 17px; line-height: 23px; font-weight: {{n.weight}}">{{n.title}}</span><span style="font-size: 15px; color: #A6B4C6">{{n.time}}</span></span>
+          <sc-if value="{{n.unread}}" hint-placeholder-val="{{true}}"><span aria-label="Belum dibaca" style="width: 11px; height: 11px; margin-top: 6px; border-radius: 6px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); flex-shrink: 0"></span></sc-if>
+        </button>
+      </sc-for>
+    </div>
+    <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #A6B4C6; padding: 6px 4px 0">Kemarin</span>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; overflow: hidden">
+      <div style="display: flex; gap: 12px; padding: 16px">
+        <span style="width: 44px; height: 44px; border-radius: 14px; background: #0E2A2C; color: #5AD6C8; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 11 3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg></span>
+        <span style="flex: 1; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 17px; line-height: 23px; font-weight: 500">Dimas menyetujui GDG-49 selesai</span><span style="font-size: 15px; color: #A6B4C6">Min, 16.05</span></span>
+      </div>
+      <div style="display: flex; gap: 12px; padding: 16px; border-top: 1px solid #172131">
+        <span style="width: 44px; height: 44px; border-radius: 14px; background: #2E2210; color: #F6B95C; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v4M16 3v4M4 9h16"></path><path d="M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"></path></svg></span>
+        <span style="flex: 1; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 17px; line-height: 23px; font-weight: 500">Ringkasan minggu: 9 tugas selesai</span><span style="font-size: 15px; color: #A6B4C6">Min, 07.30</span></span>
+      </div>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" malam="{{ true }}" dark="{{ true }}" active="inbox" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var N = [
+  ['Putri menyebut Anda di PLQ-15', '10.12 · Siaran pers peluncuran', '#14223F', '#A9C2FF', 'M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8', 'M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'],
+  ['MSG-23 jatuh tempo hari ini', '07.30 · Uji impor data stok batch 2', '#3A1520', '#FF7A8A', 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'M12 7v5l3 2'],
+  ['Dimas menugaskan GDG-52 ke Anda', '07.05 · Tata letak rak baru gudang C', '#0E2A2C', '#5AD6C8', 'm9 11 3 3 8-8', 'M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11']
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { read: {} };
+  }
+  renderVals() {
+    var self = this;
+    var read = (this.state && this.state.read) || {};
+    return {
+      unread: N.filter(function (n, i) { return !read[i]; }).length,
+      readAll: function () { self.setState({ read: { 0: true, 1: true, 2: true } }); },
+      today: N.map(function (n, i) {
+        var un = !read[i];
+        return { title: n[0], time: n[1], bg: n[2], fg: n[3], d1: n[4], d2: n[5], unread: un, weight: un ? 700 : 500, sep: i ? '1px solid #172131' : '0', open: function () { var r = Object.assign({}, read); r[i] = true; self.setState({ read: r }); } };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

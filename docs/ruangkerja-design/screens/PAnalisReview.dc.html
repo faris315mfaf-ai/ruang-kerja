@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Analis · review kode · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #F3F6FA">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="PeranMAnalis.dc.html" aria-label="Kembali" style="width: 44px; height: 44px; border-radius: 22px; background: #FFFFFF; border: 1px solid #DDE4EC; color: #0B1A2B; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 18px; font-weight: 800">PR #409 · modul farmasi</span><span style="font-size: 13px; color: #46576B">Rizky Aditya · 14 berkas · +612 −88</span></span>
+    </div>
+    <div style="border-radius: 16px; background: #0B1A2B; padding: 12px 14px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 19px; color: #C9D4E2; overflow: hidden">
+      <span style="display: block; color: #8495A8">app/Services/ResepService.php · 42</span>
+      <span style="display: block; background: rgba(196,33,55,0.25); color: #FFB3BE">- foreach ($resep as $r) { $r->obat; }</span>
+      <span style="display: block; background: rgba(20,184,166,0.22); color: #9FF0E5">+ $resep->load('obat');</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 17px; font-weight: 800">Temuan</span><span style="font-size: 14px; font-weight: 700; color: #46576B">{{open}} terbuka dari 6</span></div>
+    <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 20px; overflow: hidden">
+      <sc-for list="{{items}}" as="x" hint-placeholder-count="6">
+        <button type="button" role="checkbox" aria-checked="{{x.aria}}" onClick="{{x.toggle}}" style="width: 100%; display: flex; gap: 12px; align-items: flex-start; padding: 11px 14px; border: 0; border-top: {{x.sep}}; background: {{x.rowBg}}; font: inherit; text-align: left; cursor: pointer; color: #0B1A2B">
+          <span style="height: 22px; min-width: 52px; padding: 0 6px; border-radius: 11px; background: {{x.sBg}}; color: {{x.sFg}}; font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box">{{x.sev}}</span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 700; text-decoration: {{x.deco}}">{{x.t}}</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #46576B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{x.f}}</span></span>
+          <span style="width: 22px; height: 22px; border-radius: 6px; box-sizing: border-box; border: {{x.border}}; background: {{x.bg}}; color: #FFFFFF; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0">{{x.g}}</span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px 22px; display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px; background: rgba(255,255,255,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid #DDE4EC">
+    <button type="button" style="height: 56px; border-radius: 16px; border: 1px solid #C3CEDA; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer">Minta perubahan</button>
+    <button type="button" style="height: 56px; border: 0; border-radius: 16px; background: {{btnBg}}; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; opacity: {{btnOp}}">{{btn}}</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var SEV = { Tinggi: ['#FDE7EA', '#C42137'], Sedang: ['#FFF1DC', '#9A5800'], Rendah: ['#EEF2F7', '#46576B'] };
+var F = [['Tinggi', 'Query N+1 saat memuat resep', 'Services/ResepService.php:42'], ['Tinggi', 'Stok bisa minus saat dua kasir bersamaan', 'Services/StokService.php:118'], ['Sedang', 'Format tanggal kedaluwarsa tidak konsisten', 'Http/Resources/ObatResource.php:27'], ['Sedang', 'Ukuran label ditulis langsung di kode', 'Printing/LabelPrinter.php:15'], ['Rendah', 'Nama variabel $x kurang jelas', 'Services/ResepService.php:77'], ['Rendah', 'Belum ada uji untuk retur sebagian', 'tests/Feature/ReturObatTest.php']];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { r: {} };
+  }
+  renderVals() {
+    var self = this;
+    var r = (this.state && this.state.r) || {};
+    var open = F.filter(function (x, i) { return !r[i]; }).length;
+    var highOpen = F.filter(function (x, i) { return !r[i] && x[0] === 'Tinggi'; }).length;
+    return {
+      open: open,
+      items: F.map(function (x, i) { var on = !!r[i]; var s = SEV[x[0]]; return { sev: x[0], t: x[1], f: x[2], sBg: s[0], sFg: s[1], aria: on ? 'true' : 'false', g: on ? '✓' : '', bg: on ? '#0F7A55' : '#FFFFFF', border: on ? '0' : '2px solid #C3CEDA', deco: on ? 'line-through' : 'none', rowBg: on ? '#F7FBF9' : '#FFFFFF', sep: i ? '1px solid #EEF2F7' : '0', toggle: function () { var n = Object.assign({}, r); n[i] = !on; self.setState({ r: n }); } }; }),
+      btn: highOpen ? highOpen + ' temuan tinggi tersisa' : 'Setujui PR', btnOp: highOpen ? 0.6 : 1,
+      btnBg: highOpen ? '#8495A8' : 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)'
+    };
+  }
+}
+</script>
+</body>
+</html>

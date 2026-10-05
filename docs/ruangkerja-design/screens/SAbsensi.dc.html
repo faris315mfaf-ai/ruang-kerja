@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Absensi saya · staf</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}a:hover{color:#0A4E57}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #F3F6FA; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" crumbs="Absensi" initials="SW" person="Sari Wulandari" status="Masuk 07.52" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 40px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h1 style="margin: 0; font-size: 44px; line-height: 52px; font-weight: 800; letter-spacing: -0.03em">Absensi saya</h1>
+        <span style="font-size: 18px; color: #46576B">Shift Reguler 08.00–17.00 · Kantor Pusat · mode kerja hybrid</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 12px">
+        <a href="SFormPengajuan.dc.html" style="height: 44px; padding: 0 18px; border: 1px solid #C3CEDA; border-radius: 12px; background: #FFFFFF; color: #0B1A2B; font-size: 16px; font-weight: 600; display: inline-flex; align-items: center">Ajukan koreksi</a>
+        <button type="button" style="height: 44px; padding: 0 18px; border: 1px solid #C3CEDA; border-radius: 12px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Unduh rekap saya (PDF)</button>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; align-items: center; gap: 18px; padding: 20px 24px; border-radius: 24px; color: #FFFFFF; background: radial-gradient(300px 200px at 100% 0%, rgba(255,255,255,0.22), transparent 70%), linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); box-shadow: 0 12px 28px rgba(30,95,214,0.28)">
+      <span style="width: 52px; height: 52px; border-radius: 16px; background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"></path><path d="M12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"></path></svg></span>
+      <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 20px; font-weight: 800">Hari ini · masuk 07.52, tepat waktu</span><span style="font-size: 16px">Kantor Pusat · 38 m dari titik · GPS + selfie</span></span>
+      <button type="button" style="height: 50px; padding: 0 24px; border: 0; border-radius: 14px; background: #FFFFFF; color: #0A4E57; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer">Check-out</button>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+      <div role="tablist" aria-label="Bulan" style="display: inline-flex; padding: 4px; border-radius: 14px; background: rgba(255,255,255,0.75); border: 1px solid #DDE4EC">
+        <sc-for list="{{months}}" as="m" hint-placeholder-count="2">
+          <button type="button" role="tab" aria-selected="{{m.sel}}" onClick="{{m.pick}}" style="height: 40px; padding: 0 20px; border: 0; border-radius: 10px; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; background: {{m.bg}}; color: {{m.color}}; box-shadow: {{m.shadow}}">{{m.label}}</button>
+        </sc-for>
+      </div>
+      <span style="font-size: 15px; color: #46576B">Data ini hanya terlihat oleh Anda, atasan, dan HR.</span>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 16px">
+      <sc-for list="{{stats}}" as="s" hint-placeholder-count="5">
+        <div style="flex: 1 1 170px; background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+          <span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: #46576B"><span style="width: 10px; height: 10px; border-radius: 5px; background: {{s.dot}}"></span>{{s.label}}</span>
+          <span style="font-size: 36px; line-height: 44px; font-weight: 700">{{s.value}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 1.6 1 600px; min-width: 0; background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 14px">
+        <h2 style="margin: 0; font-size: 22px; font-weight: 700">{{title}}</h2>
+        <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px">
+          <sc-for list="{{weekdays}}" as="w" hint-placeholder-count="7"><span style="font-size: 14px; font-weight: 700; color: #46576B; text-align: center">{{w}}</span></sc-for>
+          <sc-for list="{{cells}}" as="c" hint-placeholder-count="35">
+            <div style="height: 74px; border-radius: 14px; padding: 8px 10px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; background: {{c.bg}}; color: {{c.fg}}; border: {{c.border}}">
+              <span style="font-size: 16px; font-weight: 700">{{c.n}}</span>
+              <span style="font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{c.label}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="flex: 1 1 360px; min-width: 0; background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px 0 8px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+        <h2 style="margin: 0; padding: 0 24px 10px; font-size: 22px; font-weight: 700">Catatan bulan ini</h2>
+        <sc-for list="{{notes}}" as="n" hint-placeholder-count="5">
+          <div style="display: flex; gap: 14px; padding: 14px 24px; border-top: 1px solid #EEF2F7">
+            <span style="width: 54px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding: 6px 0; border-radius: 12px; background: #F3F6FA"><span style="font-size: 20px; font-weight: 800; line-height: 24px">{{n.d}}</span><span style="font-size: 13px; font-weight: 700; color: #46576B">{{n.dow}}</span></span>
+            <span style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+              <span style="align-self: flex-start; height: 28px; padding: 0 10px; border-radius: 14px; background: {{n.bg}}; color: {{n.fg}}; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center">{{n.kind}}</span>
+              <span style="font-size: 16px; line-height: 23px">{{n.text}}</span>
+            </span>
+          </div>
+        </sc-for>
+        <sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><span style="display: block; padding: 14px 24px; font-size: 16px; color: #46576B; border-top: 1px solid #EEF2F7">Belum ada catatan. Semua hari tepat waktu.</span></sc-if>
+      </div>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" active="absensi" role="staf" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1560}}'>
+var C = { ok: ['#E3F6EE', '#0F7A55'], late: ['#FFF1DC', '#9A5800'], wfh: ['#E8FBF8', '#09656E'], izin: ['#E6EEFE', '#1E5FD6'], fix: ['#F3EEFF', '#5B3CC4'] };
+var TIMES = ['07.48', '07.55', '07.51', '07.46', '07.58', '07.53', '07.50', '07.57', '07.44', '07.52'];
+var MONTHS = {
+  'September 2026': { first: 1, days: 30, special: { 15: ['fix', '07.49*'], 18: ['izin', 'Izin'], 22: ['late', 'Telat 12m'], 29: ['wfh', 'WFH'] }, today: 0, until: 30,
+    stats: [['Tepat waktu', '19', '#0F7A55'], ['Terlambat', '1', '#9A5800'], ['WFH', '1', '#09656E'], ['Izin / cuti', '1', '#1E5FD6'], ['Lembur', '2 jam', '#46576B']],
+    notes: [
+      ['15', 'Sel', 'fix', 'Koreksi disetujui', 'Lupa check-out. Dikoreksi ke 17.05 oleh HR atas persetujuan Dimas.'],
+      ['18', 'Jum', 'izin', 'Izin', 'Keperluan keluarga, sehari penuh. Disetujui.'],
+      ['22', 'Sel', 'late', 'Terlambat 12 menit', 'Masuk 08.12. Batas toleransi 08.10.'],
+      ['26', 'Sab', 'ok', 'Lembur 2 jam', 'Stock opname rak B, 09.00–11.00. Disetujui.'],
+      ['29', 'Sel', 'wfh', 'WFH', 'Disetujui atasan; rekap data migrasi dari rumah.']
+    ] },
+  'Oktober 2026': { first: 3, days: 31, special: {}, today: 5, until: 5,
+    stats: [['Tepat waktu', '3', '#0F7A55'], ['Terlambat', '0', '#9A5800'], ['WFH', '0', '#09656E'], ['Izin / cuti', '0', '#1E5FD6'], ['Lembur', '0 jam', '#46576B']],
+    notes: [] }
+};
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { m: 'Oktober 2026' };
+  }
+  renderVals() {
+    var self = this;
+    var m = (this.state && this.state.m) || 'Oktober 2026';
+    var cfg = MONTHS[m];
+    var cells = [];
+    for (var b = 0; b < cfg.first; b++) cells.push({ n: '', label: '', bg: 'transparent', fg: '#0B1A2B', border: '0' });
+    for (var d = 1; d <= cfg.days; d++) {
+      var dow = (d - 1 + cfg.first) % 7;
+      var weekend = dow >= 5;
+      var sp = cfg.special[d];
+      var cell = { n: d, label: '', bg: '#FFFFFF', fg: '#8495A8', border: '1px solid #EEF2F7' };
+      if (d === cfg.today) { cell = { n: d, label: 'Masuk 07.52', bg: 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', fg: '#FFFFFF', border: '0' }; }
+      else if (weekend) { cell = { n: d, label: d === 26 && m === 'September 2026' ? 'Lembur' : '', bg: '#F3F6FA', fg: '#8495A8', border: '0' }; }
+      else if (d <= cfg.until && !(cfg.today && d > cfg.today)) {
+        var k = sp ? sp[0] : 'ok';
+        cell = { n: d, label: sp ? sp[1] : TIMES[d % TIMES.length], bg: C[k][0], fg: C[k][1], border: '0' };
+      }
+      cells.push(cell);
+    }
+    return {
+      title: m,
+      months: Object.keys(MONTHS).map(function (k) { var on = k === m; return { label: k, sel: on ? 'true' : 'false', bg: on ? '#FFFFFF' : 'transparent', color: on ? '#0B1A2B' : '#46576B', shadow: on ? '0 2px 8px rgba(11,26,43,0.12)' : 'none', pick: function () { self.setState({ m: k }); } }; }),
+      stats: cfg.stats.map(function (s) { return { label: s[0], value: s[1], dot: s[2] }; }),
+      weekdays: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+      cells: cells,
+      notes: cfg.notes.map(function (n) { return { d: n[0], dow: n[1], kind: n[3], text: n[4], bg: C[n[2]][0], fg: C[n[2]][1] }; }),
+      empty: cfg.notes.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>

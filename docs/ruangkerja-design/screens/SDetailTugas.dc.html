@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Detail tugas · MSG-23</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}a:hover{color:#0A4E57}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #F3F6FA; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" crumbs="Tugas saya / MSG-23" initials="SW" person="Sari Wulandari" status="Masuk 07.52" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 36px 40px 0; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+    <article style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+        <a href="STugasSaya.dc.html" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px 0 8px; border-radius: 10px; background: #FFFFFF; border: 1px solid #DDE4EC; color: #0B1A2B; font-size: 15px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>Tugas saya</a>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; height: 36px; padding: 0 12px; border-radius: 10px; background: #EEF2F7; display: inline-flex; align-items: center">MSG-23</span>
+        <span style="height: 36px; padding: 0 14px; border-radius: 18px; background: #FFF1DC; color: #9A5800; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center">Tenggat hari ini</span>
+      </div>
+      <h1 style="margin: 0; font-size: 40px; line-height: 48px; font-weight: 800; letter-spacing: -0.025em">Uji impor data stok batch 2</h1>
+
+      <section aria-label="Status" style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 20px 22px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 14px">
+        <span style="font-size: 15px; font-weight: 700; color: #46576B">Status · klik untuk mengubah</span>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+          <sc-for list="{{steps}}" as="s" hint-placeholder-count="4">
+            <button type="button" onClick="{{s.pick}}" aria-pressed="{{s.aria}}" style="height: 54px; border-radius: 14px; border: {{s.border}}; background: {{s.bg}}; color: {{s.color}}; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: {{s.shadow}}"><span style="width: 22px; height: 22px; border-radius: 11px; background: {{s.dotBg}}; color: {{s.dotFg}}; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{s.n}}</span>{{s.label}}</button>
+          </sc-for>
+        </div>
+        <span style="font-size: 15px; line-height: 22px; color: #46576B">{{statusNote}}</span>
+      </section>
+
+      <p style="margin: 0; font-size: 18px; line-height: 30px; color: #253445">Impor 1.240 SKU dari sistem lama ke sistem gudang baru, lalu cocokkan jumlah stok per rak dengan hasil stock opname September. Catat selisih di sheet terlampir.</p>
+
+      <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: center; justify-content: space-between"><h2 style="margin: 0; font-size: 21px; font-weight: 700">Checklist</h2><span style="font-size: 16px; font-weight: 700; color: #09656E">{{doneN}} dari 5</span></div>
+        <div style="height: 10px; border-radius: 5px; background: #EEF2F7; overflow: hidden"><div style="width: {{pct}}%; height: 100%; border-radius: 5px; background: linear-gradient(90deg, #14B8A6 0%, #2F7BEA 100%); transition: width .2s"></div></div>
+        <sc-for list="{{checks}}" as="c" hint-placeholder-count="5">
+          <button type="button" role="checkbox" aria-checked="{{c.aria}}" onClick="{{c.toggle}}" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 4px; border: 0; border-top: 1px solid #EEF2F7; background: transparent; font: inherit; text-align: left; cursor: pointer; color: #0B1A2B">
+            <span style="width: 26px; height: 26px; border-radius: 8px; box-sizing: border-box; border: {{c.border}}; background: {{c.bg}}; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.tick}}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg></span>
+            <span style="flex: 1; font-size: 17px; color: {{c.color}}; text-decoration: {{c.deco}}">{{c.label}}</span>
+          </button>
+        </sc-for>
+      </section>
+
+      <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; align-items: center; justify-content: space-between"><h2 style="margin: 0; font-size: 21px; font-weight: 700">Lampiran</h2><button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #C3CEDA; border-radius: 12px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Unggah ke Drive</button></div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <a href="#" style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px; border: 1px solid #DDE4EC; color: #0B1A2B"><span style="width: 44px; height: 44px; border-radius: 12px; background: #E3F6EE; color: #0F7A55; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"></path><path d="M4 10h16"></path><path d="M10 4v16"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-size: 16px; font-weight: 600">Selisih stok batch 2</span><span style="font-size: 14px; color: #46576B">Sheets · Anda, 40 menit lalu</span></span></a>
+          <a href="#" style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px; border: 1px solid #DDE4EC; color: #0B1A2B"><span style="width: 44px; height: 44px; border-radius: 12px; background: #EEF2F7; color: #46576B; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><path d="M14 3v6h6"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-size: 16px; font-weight: 600">export_sku_batch2.csv</span><span style="font-size: 14px; color: #46576B">Drive · 1,8 MB · Yoga, kemarin</span></span></a>
+        </div>
+      </section>
+
+      <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 16px">
+        <h2 style="margin: 0; font-size: 21px; font-weight: 700">Komentar</h2>
+        <div style="display: flex; gap: 14px">
+          <span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 20px; background: #EEF2F7; color: #46576B; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0">YP</span>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 6px">
+            <span style="font-size: 15px; color: #46576B"><b style="color: #0B1A2B; font-size: 16px">Yoga Permana</b> · kemarin 16.40</span>
+            <div style="padding: 14px 16px; border-radius: 4px 16px 16px 16px; background: #F3F6FA; font-size: 17px; line-height: 26px">Ada 12 SKU dengan kode ganda di batch 2. Sudah saya tandai kuning di CSV, terkait <a href="#" style="font-weight: 700">#MSG-19</a>.</div>
+          </div>
+        </div>
+        <sc-for list="{{myComments}}" as="m" hint-placeholder-count="0">
+          <div style="display: flex; gap: 14px">
+            <span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 20px; background: #D9E6FF; color: #1A4CB0; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0">SW</span>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 6px">
+              <span style="font-size: 15px; color: #46576B"><b style="color: #0B1A2B; font-size: 16px">Anda</b> · baru saja</span>
+              <div style="padding: 14px 16px; border-radius: 4px 16px 16px 16px; background: #E8FBF8; font-size: 17px; line-height: 26px">{{m}}</div>
+            </div>
+          </div>
+        </sc-for>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <label for="kom" style="font-size: 15px; font-weight: 600">Tulis komentar</label>
+          <textarea id="kom" rows="2" value="{{draft}}" onInput="{{setDraft}}" placeholder="Ketik @ untuk menyebut rekan" style="padding: 14px 16px; border: 1px solid #C3CEDA; border-radius: 14px; font: inherit; font-size: 17px; line-height: 26px; color: #0B1A2B; resize: none"></textarea>
+          <button type="button" onClick="{{send}}" style="align-self: flex-end; height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Kirim</button>
+        </div>
+      </section>
+    </article>
+
+    <aside style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+      <button type="button" onClick="{{toReview}}" style="height: 58px; border: 0; border-radius: 16px; background: {{cta.bg}}; color: {{cta.fg}}; font: inherit; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: {{cta.shadow}}">{{cta.label}}</button>
+      <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 20px; padding: 6px 22px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+        <sc-for list="{{props}}" as="p" hint-placeholder-count="8">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; border-bottom: {{p.sep}}">
+            <span style="font-size: 15px; font-weight: 600; color: #46576B">{{p.k}}</span>
+            <span style="font-size: 16px; font-weight: 600; color: {{p.color}}; text-align: right">{{p.v}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 20px; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px">
+        <span style="font-size: 18px; font-weight: 700">Butuh bantuan?</span>
+        <span style="font-size: 15px; line-height: 22px; color: #46576B">Minta tambahan waktu atau bantuan; atasan Anda mendapat notifikasi di Inbox.</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #C3CEDA; border-radius: 12px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Minta perpanjangan</button>
+          <button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #C3CEDA; border-radius: 12px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Tandai terhambat</button>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" active="tugas" role="staf" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1440}}'>
+var STEPS = ['Todo', 'Dikerjakan', 'Review', 'Selesai'];
+var NOTE = {
+  Todo: 'Belum dimulai.',
+  Dikerjakan: 'Sedang Anda kerjakan sejak Kam, 1 Okt. Kirim ke review bila checklist selesai.',
+  Review: 'Menunggu review Dimas Pratama. Ia mendapat notifikasi di Inbox.',
+  Selesai: 'Selesai. Masuk hitungan penyelesaian dan ketepatan waktu Anda.'
+};
+var CHECK = ['Ekspor data dari sistem lama', 'Bersihkan 12 SKU kode ganda', 'Impor ke sistem baru', 'Cocokkan jumlah per rak', 'Catat selisih di sheet'];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { status: 'Dikerjakan', done: { 0: true, 1: true, 2: true }, draft: '', mine: [] };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var status = st.status || 'Dikerjakan';
+    var done = st.done || {};
+    var idx = STEPS.indexOf(status);
+    var n = CHECK.filter(function (c, i) { return done[i]; }).length;
+    return {
+      steps: STEPS.map(function (l, i) {
+        var cur = i === idx, past = i < idx;
+        return {
+          label: l, n: past ? '✓' : String(i + 1), aria: cur ? 'true' : 'false',
+          bg: cur ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : (past ? '#E8FBF8' : '#FFFFFF'),
+          color: cur ? '#FFFFFF' : (past ? '#09656E' : '#46576B'),
+          border: cur ? '0' : (past ? '1px solid #C8F4EE' : '1px solid #DDE4EC'),
+          shadow: cur ? '0 8px 20px rgba(30,95,214,0.30)' : 'none',
+          dotBg: cur ? 'rgba(255,255,255,0.25)' : (past ? '#0B7F86' : '#EEF2F7'), dotFg: cur || past ? '#FFFFFF' : '#46576B',
+          pick: function () { self.setState({ status: l }); }
+        };
+      }),
+      statusNote: NOTE[status],
+      doneN: n, pct: Math.round(n / CHECK.length * 100),
+      checks: CHECK.map(function (label, i) {
+        var on = !!done[i];
+        return { label: label, aria: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : '#FFFFFF', border: on ? '0' : '2px solid #C3CEDA', tick: on ? '#FFFFFF' : 'transparent', color: on ? '#46576B' : '#0B1A2B', deco: on ? 'line-through' : 'none', toggle: function () { var d = Object.assign({}, done); d[i] = !on; self.setState({ done: d }); } };
+      }),
+      cta: status === 'Dikerjakan' || status === 'Todo'
+        ? { label: 'Kirim ke review', bg: 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', fg: '#FFFFFF', shadow: '0 12px 28px rgba(30,95,214,0.32)' }
+        : (status === 'Review' ? { label: 'Menunggu review · tarik kembali', bg: '#E6EEFE', fg: '#1A4CB0', shadow: 'none' } : { label: 'Selesai · buka lagi', bg: '#E3F6EE', fg: '#0F7A55', shadow: 'none' }),
+      toReview: function () { self.setState({ status: status === 'Review' || status === 'Selesai' ? 'Dikerjakan' : 'Review' }); },
+      props: [
+        ['Penanggung jawab', 'Anda', '#0B1A2B'], ['Reviewer', 'Dimas Pratama', '#0B1A2B'], ['Tenggat', 'Sen, 5 Okt · hari ini', '#9A5800'],
+        ['Estimasi', '5 jam', '#0B1A2B'], ['Prioritas', 'Tinggi', '#0B1A2B'], ['Milestone', 'Uji coba data stok · 16 Okt', '#09656E'],
+        ['Workspace', 'Migrasi sistem gudang', '#09656E'], ['Label', 'Data', '#0B1A2B']
+      ].map(function (p, i, a) { return { k: p[0], v: p[1], color: p[2], sep: i < a.length - 1 ? '1px solid #EEF2F7' : '0' }; }),
+      myComments: st.mine || [],
+      draft: st.draft || '',
+      setDraft: function (e) { self.setState({ draft: e && e.target ? e.target.value : '' }); },
+      send: function () { var v = (st.draft || '').trim(); if (!v) return; self.setState({ mine: (st.mine || []).concat([v]), draft: '' }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

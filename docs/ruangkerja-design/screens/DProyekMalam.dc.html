@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Monitoring proyek · PLQ · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}a:hover{color:#5AD6C8}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #070B14; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" malam="{{ true }}" dark="{{ true }}" crumbs="Portofolio / Proyek Peluncuran Q4 / Ringkasan" initials="HW" person="Hendra Wijaya" status="Masuk 07.55" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 36px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <section style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px">
+      <div style="display: flex; align-items: center; gap: 18px">
+        <span aria-hidden="true" style="width: 68px; height: 68px; border-radius: 20px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); color: #FFFFFF; font-size: 28px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 28px rgba(47,123,234,0.30)">P</span>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+            <h1 style="margin: 0; font-size: 38px; line-height: 46px; font-weight: 800; letter-spacing: -0.025em">Proyek Peluncuran Q4</h1>
+            <span style="display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: 17px; background: #2E2210; color: #F6B95C; font-size: 15px; font-weight: 700"><span style="width: 9px; height: 9px; border-radius: 5px; background: #9A5800"></span>Berisiko · kata PIC</span>
+          </div>
+          <span style="font-size: 17px; color: #A6B4C6"><span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600">PLQ</span> · PIC Putri Ramadhani · Sponsor Hendra Wijaya · 1 Sep – 27 Okt 2026</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 12px">
+        <button type="button" onClick="{{askUpdate}}" style="height: 48px; padding: 0 20px; border: 1px solid #34465E; border-radius: 14px; background: #0F1622; color: #EAF1F8; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">{{askLabel}}</button>
+        <a href="#arahan" style="height: 48px; padding: 0 22px; border-radius: 14px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 16px; font-weight: 700; display: inline-flex; align-items: center; box-shadow: 0 10px 24px rgba(30,95,214,0.30)">Beri arahan</a>
+      </div>
+    </section>
+
+    <nav aria-label="Bagian proyek" style="display: flex; gap: 28px; border-bottom: 1px solid #233247">
+      <a href="#" aria-current="page" style="padding: 0 2px 14px; font-size: 17px; font-weight: 700; color: #EAF1F8; border-bottom: 3px solid #2DBFB1">Ringkasan</a>
+      <a href="DBoard.dc.html" style="padding: 0 2px 14px; font-size: 17px; font-weight: 500; color: #A6B4C6">Tugas <span style="font-size: 15px">18</span></a>
+      <a href="DTodoMalam.dc.html" style="padding: 0 2px 14px; font-size: 17px; font-weight: 500; color: #A6B4C6">Todolist</a>
+      <a href="#" style="padding: 0 2px 14px; font-size: 17px; font-weight: 500; color: #A6B4C6">Dokumen <span style="font-size: 15px">6</span></a>
+      <a href="#" style="padding: 0 2px 14px; font-size: 17px; font-weight: 500; color: #A6B4C6">File <span style="font-size: 15px">24</span></a>
+      <a href="#" style="padding: 0 2px 14px; font-size: 17px; font-weight: 500; color: #A6B4C6">Aktivitas</a>
+    </nav>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px">
+      <div style="flex: 1.6 1 360px; background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px; display: flex; gap: 24px; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+        <div style="position: relative; width: 132px; height: 132px; flex-shrink: 0">
+          <svg width="132" height="132" viewBox="0 0 132 132" aria-hidden="true">
+            <defs><linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14B8A6"></stop><stop offset="1" stop-color="#2F7BEA"></stop></linearGradient></defs>
+            <circle cx="66" cy="66" r="56" fill="none" stroke="#172131" stroke-width="14"></circle>
+            <circle cx="66" cy="66" r="56" fill="none" stroke="url(#pg)" stroke-width="14" stroke-linecap="round" stroke-dasharray="169 352" transform="rotate(-90 66 66)"></circle>
+            <circle cx="66" cy="66" r="40" fill="none" stroke="#172131" stroke-width="6"></circle>
+            <circle cx="66" cy="66" r="40" fill="none" stroke="#EAF1F8" stroke-width="6" stroke-linecap="round" stroke-dasharray="153 251" transform="rotate(-90 66 66)"></circle>
+          </svg>
+          <span style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center"><span style="font-size: 30px; font-weight: 800; line-height: 34px">48%</span><span style="font-size: 13px; font-weight: 700; color: #A6B4C6">aktual</span></span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 16px; font-weight: 600; color: #A6B4C6">Progres aktual vs rencana</span>
+          <span style="font-size: 18px"><b>48%</b> aktual · <b>61%</b> rencana</span>
+          <span style="align-self: flex-start; height: 30px; padding: 0 12px; border-radius: 15px; background: #2E2210; color: #F6B95C; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center">Tertinggal 13 poin</span>
+          <span style="font-size: 15px; line-height: 22px; color: #A6B4C6">62 dari 129 jam estimasi selesai. Cincin luar = aktual, cincin dalam = rencana.</span>
+        </div>
+      </div>
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="3">
+        <div style="flex: 1 1 200px; background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+          <span style="font-size: 16px; font-weight: 600; color: #A6B4C6">{{k.label}}</span>
+          <span style="font-size: 40px; line-height: 48px; font-weight: 700; color: {{k.color}}">{{k.value}}</span>
+          <span style="font-size: 15px; line-height: 22px; color: #A6B4C6">{{k.note}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 2 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px 28px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <h2 style="margin: 0; font-size: 22px; font-weight: 700">Burn-up</h2>
+              <span style="font-size: 15px; color: #A6B4C6">Jam estimasi: lingkup, selesai, dan garis ideal sampai target</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 15px; color: #A6B4C6">
+              <span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 18px; height: 3px; border-radius: 2px; background: #7D8FA5"></span>Lingkup</span>
+              <span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 18px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #14B8A6, #2F7BEA)"></span>Selesai</span>
+              <span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 18px; height: 0; border-top: 2px dashed #EAF1F8"></span>Ideal</span>
+              <span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 18px; height: 0; border-top: 2px dotted #5B8CF6"></span>Proyeksi</span>
+            </div>
+          </div>
+          <div style="position: relative">
+            <svg width="100%" height="280" viewBox="0 0 800 280" preserveAspectRatio="none" aria-label="Grafik burn-up: selesai 62 dari 129 jam per 5 Oktober">
+              <defs>
+                <linearGradient id="bu" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#14B8A6"></stop><stop offset="1" stop-color="#2F7BEA"></stop></linearGradient>
+                <linearGradient id="bf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F7BEA" stop-opacity="0.22"></stop><stop offset="1" stop-color="#14B8A6" stop-opacity="0"></stop></linearGradient>
+              </defs>
+              <g stroke="#172131" stroke-width="1"><line x1="20" y1="20" x2="780" y2="20"></line><line x1="20" y1="80" x2="780" y2="80"></line><line x1="20" y1="140" x2="780" y2="140"></line><line x1="20" y1="200" x2="780" y2="200"></line><line x1="20" y1="260" x2="780" y2="260"></line></g>
+              <rect x="495" y="10" width="285" height="250" fill="#070B14"></rect>
+              <line x1="495" y1="10" x2="495" y2="260" stroke="#5AD6C8" stroke-width="2"></line>
+              <polyline points="20,260 780,39" fill="none" stroke="#EAF1F8" stroke-width="2" stroke-dasharray="7 6"></polyline>
+              <polyline points="20,95 115,82 210,68 305,54 400,47 495,39" fill="none" stroke="#7D8FA5" stroke-width="3" stroke-linejoin="round"></polyline>
+              <polygon points="20,260 115,239 210,219 305,195 400,174 495,154 495,260" fill="url(#bf)"></polygon>
+              <polyline points="20,260 115,239 210,219 305,195 400,174 495,154" fill="none" stroke="url(#bu)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>
+              <polyline points="495,154 780,90" fill="none" stroke="#8DB4FF" stroke-width="2.5" stroke-dasharray="2 6" stroke-linecap="round"></polyline>
+              <circle cx="495" cy="154" r="7" fill="#FFFFFF" stroke="#8DB4FF" stroke-width="3"></circle>
+            </svg>
+            <span style="position: absolute; left: 62%; top: 4px; margin-left: 8px; font-size: 14px; font-weight: 700; color: #5AD6C8">Hari ini</span>
+            <span style="position: absolute; left: 62%; top: 138px; margin-left: 14px; padding: 4px 10px; border-radius: 10px; background: #3B4F6B; color: #FFFFFF; font-size: 14px; font-weight: 700">62 / 129 jam</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 14px; color: #A6B4C6; padding: 0 2px">
+            <span>1 Sep</span><span>8 Sep</span><span>15 Sep</span><span>22 Sep</span><span>29 Sep</span><span style="font-weight: 700; color: #5AD6C8">5 Okt</span><span>12 Okt</span><span>19 Okt</span><span>27 Okt</span>
+          </div>
+          <div style="display: flex; gap: 12px; padding: 14px 16px; border-radius: 16px; background: #14223F; color: #A9C2FF">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M3 17 9 11l4 4 8-8"></path><path d="M14 7h7v7"></path></svg>
+            <span style="font-size: 16px; line-height: 24px">Dengan laju 12 jam per minggu, sisa 67 jam selesai sekitar <b>12 Nov</b>, sekitar 2 minggu setelah target. Lingkup naik 33 jam sejak awal.</span>
+          </div>
+        </div>
+
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px 28px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 10px">
+            <h2 style="margin: 0; font-size: 22px; font-weight: 700">Milestone</h2>
+            <span style="font-size: 15px; color: #A6B4C6">1 dari 5 selesai</span>
+          </div>
+          <sc-for list="{{milestones}}" as="m" hint-placeholder-count="5">
+            <div style="display: flex; gap: 16px">
+              <div style="display: flex; flex-direction: column; align-items: center; width: 32px; flex-shrink: 0">
+                <span style="width: 32px; height: 32px; border-radius: 16px; background: {{m.dotBg}}; border: {{m.dotBorder}}; box-sizing: border-box; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800">{{m.mark}}</span>
+                <span style="flex: 1; width: 2px; min-height: 22px; background: {{m.line}}"></span>
+              </div>
+              <div style="flex: 1; display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px; padding-bottom: 18px">
+                <div style="display: flex; flex-direction: column; gap: 4px">
+                  <span style="font-size: 17px; font-weight: 700">{{m.name}}</span>
+                  <span style="font-size: 15px; color: #A6B4C6">{{m.meta}}</span>
+                  <sc-if value="{{m.hasBar}}" hint-placeholder-val="{{false}}">
+                    <span style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: #A6B4C6"><span style="width: 180px; height: 8px; border-radius: 4px; background: #172131; overflow: hidden"><span style="display: block; width: {{m.pct}}%; height: 100%; background: linear-gradient(90deg, #14B8A6, #2F7BEA)"></span></span>{{m.pct}}% tugas</span>
+                  </sc-if>
+                </div>
+                <span style="height: 30px; padding: 0 12px; border-radius: 15px; background: {{m.sBg}}; color: {{m.sFg}}; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center">{{m.status}}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px 0 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 28px 10px">
+            <div style="display: flex; align-items: center; gap: 10px"><h2 style="margin: 0; font-size: 22px; font-weight: 700">Tugas terlambat</h2><span style="height: 28px; padding: 0 10px; border-radius: 14px; background: #3A1520; color: #FF7A8A; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center">3</span></div>
+            <a href="DTodoMalam.dc.html" style="font-size: 16px; font-weight: 600">Buka todolist</a>
+          </div>
+          <sc-for list="{{late}}" as="t" hint-placeholder-count="3">
+            <a href="DTugasMalam.dc.html" style="display: flex; align-items: center; gap: 16px; padding: 0 28px; min-height: 66px; border-top: 1px solid #172131; color: #EAF1F8">
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; padding: 4px 8px; border-radius: 8px; background: #172131">{{t.id}}</span>
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-size: 17px; font-weight: 600">{{t.title}}</span><span style="font-size: 15px; color: #A6B4C6">{{t.who}}</span></span>
+              <span style="height: 30px; padding: 0 12px; border-radius: 15px; background: #3A1520; color: #FF7A8A; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center">{{t.late}}</span>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; align-items: center; justify-content: space-between">
+            <h2 style="margin: 0; font-size: 22px; font-weight: 700">Update PIC</h2>
+            <span style="font-size: 15px; color: #A6B4C6">Sab, 3 Okt</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span aria-hidden="true" style="width: 44px; height: 44px; border-radius: 22px; background: #1C2D50; color: #A9C2FF; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center">PR</span>
+            <span style="display: flex; flex-direction: column"><span style="font-size: 17px; font-weight: 700">Putri Ramadhani</span><span style="font-size: 15px; color: #F6B95C; font-weight: 700">Berisiko</span></span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 700; color: #A6B4C6; text-transform: uppercase; letter-spacing: 0.05em">Ringkasan</span><span style="font-size: 16px; line-height: 24px">Landing page 4 dari 7 bagian. Materi 14 Okt masih terkejar bila kutipan masuk Selasa.</span></div>
+          <div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 700; color: #A6B4C6; text-transform: uppercase; letter-spacing: 0.05em">Hambatan</span><span style="font-size: 16px; line-height: 24px">Siaran pers tertahan kutipan direksi.</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border-radius: 16px; color: #FFFFFF; background: linear-gradient(135deg, #C2410C 0%, #BE185D 100%)"><span style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em">Keputusan dibutuhkan</span><span style="font-size: 16px; line-height: 24px; font-weight: 600">Tambahan anggaran vendor video [nominal].</span></div>
+          <a href="#" style="font-size: 16px; font-weight: 600">Riwayat update (5)</a>
+        </div>
+
+        <div id="arahan" style="background: #0F1622; border: 2px solid transparent; border-radius: 24px; padding: 22px 24px; background-image: linear-gradient(#0F1622, #0F1622), linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); background-origin: border-box; background-clip: padding-box, border-box; display: flex; flex-direction: column; gap: 12px">
+          <label for="arahan-txt" style="font-size: 20px; font-weight: 700">Arahan untuk PIC</label>
+          <textarea id="arahan-txt" rows="3" placeholder="Tulis arahan; Putri mendapat notifikasi" style="padding: 12px 14px; border: 1px solid #34465E; border-radius: 14px; font: inherit; font-size: 16px; line-height: 24px; color: #EAF1F8; resize: none"></textarea>
+          <sc-if value="{{sentShow}}" hint-placeholder-val="{{false}}"><span style="font-size: 15px; font-weight: 700; color: #4ADE9B">Arahan terkirim ke Putri Ramadhani</span></sc-if>
+          <button type="button" onClick="{{send}}" style="align-self: flex-end; height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">Kirim arahan</button>
+        </div>
+
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between"><h2 style="margin: 0; font-size: 22px; font-weight: 700">Risiko terbuka</h2><span style="font-size: 15px; color: #A6B4C6">2 terbuka · 1 teratasi</span></div>
+          <sc-for list="{{risks}}" as="r" hint-placeholder-count="3">
+            <div style="display: flex; gap: 12px; padding-top: 12px; border-top: 1px solid #172131">
+              <span style="height: 28px; padding: 0 10px; border-radius: 8px; background: {{r.bg}}; color: {{r.fg}}; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; flex-shrink: 0">{{r.level}}</span>
+              <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 600; text-decoration: {{r.deco}}">{{r.title}}</span><span style="font-size: 14px; color: #A6B4C6">{{r.owner}}</span></span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between"><h2 style="margin: 0; font-size: 22px; font-weight: 700">Tim &amp; beban</h2><span style="font-size: 15px; color: #A6B4C6">terbuka · telat</span></div>
+          <sc-for list="{{team}}" as="p" hint-placeholder-count="5">
+            <div style="display: grid; grid-template-columns: 40px 1fr 56px; gap: 12px; align-items: center">
+              <span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 20px; background: #172131; color: #A6B4C6; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{p.init}}</span>
+              <span style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 15px; font-weight: 600">{{p.name}}</span><span style="height: 8px; border-radius: 4px; background: #172131; display: flex; overflow: hidden"><span style="width: {{p.ok}}%; background: linear-gradient(90deg, #14B8A6, #2F7BEA)"></span><span style="width: {{p.lt}}%; background: #C42137"></span></span></span>
+              <span style="font-size: 16px; font-weight: 700; text-align: right">{{p.open}}<span style="color: #FF7A8A">{{p.lateLabel}}</span></span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" malam="{{ true }}" dark="{{ true }}" active="portofolio" role="direksi" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2080}}'>
+var MS = {
+  done: { mark: '✓', dotBg: '#0F7A55', dotBorder: '0', status: 'Selesai', sBg: '#0E2A20', sFg: '#4ADE9B' },
+  missed: { mark: '!', dotBg: '#C42137', dotBorder: '0', status: 'Terlewat', sBg: '#3A1520', sFg: '#FF7A8A' },
+  run: { mark: '', dotBg: 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', dotBorder: '0', status: 'Berjalan', sBg: '#14223F', sFg: '#8DB4FF' },
+  todo: { mark: '', dotBg: '#0F1622', dotBorder: '3px solid #34465E', status: 'Belum mulai', sBg: '#172131', sFg: '#A6B4C6' }
+};
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { asked: false, sent: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var ms = [
+      ['Tanggal & venue ditetapkan', 'Target Jum, 18 Sep · selesai Kam, 17 Sep', 'done', 0],
+      ['Siaran pers final', 'Target Kam, 1 Okt · tertahan kutipan direksi', 'missed', 0],
+      ['Materi & landing page siap', 'Target Rab, 14 Okt · 9 hari lagi', 'run', 57],
+      ['Undangan media terkirim', 'Target Sel, 20 Okt', 'todo', 0],
+      ['Acara peluncuran', 'Target Sel, 27 Okt', 'todo', 0]
+    ];
+    var team = [['PR', 'Putri Ramadhani', 5, 1], ['ML', 'Maya Lestari', 6, 0], ['SW', 'Sari Wulandari', 4, 1], ['RA', 'Rizky Aditya', 3, 0], ['HW', 'Hendra Wijaya', 1, 1]];
+    return {
+      askLabel: st.asked ? 'Permintaan terkirim' : 'Minta update',
+      askUpdate: function () { self.setState({ asked: true }); },
+      sentShow: !!st.sent,
+      send: function () { self.setState({ sent: true }); },
+      kpis: [
+        { label: 'Milestone terlewat', value: '1', color: '#FF7A8A', note: 'Siaran pers final, sejak 1 Okt' },
+        { label: 'Tugas terlambat', value: '3', color: '#EAF1F8', note: 'dari 12 tugas terbuka' },
+        { label: 'Sisa waktu', value: '22 hari', color: '#EAF1F8', note: 'target Sel, 27 Okt · update 2 hari lalu' }
+      ],
+      milestones: ms.map(function (m, i) {
+        var s = MS[m[2]];
+        return Object.assign({ name: m[0], meta: m[1], pct: m[3], hasBar: m[2] === 'run', line: i < ms.length - 1 ? '#233247' : 'transparent' }, s);
+      }),
+      late: [
+        ['PLQ-16', 'Kutipan direksi untuk siaran pers', 'Hendra Wijaya · milestone Siaran pers final', '4 hari'],
+        ['PLQ-15', 'Siaran pers peluncuran', 'Sari Wulandari · Review', '2 hari'],
+        ['PLQ-23', 'Daftar tamu VIP', 'Putri Ramadhani · Todo', '1 hari']
+      ].map(function (t) { return { id: t[0], title: t[1], who: t[2], late: t[3] }; }),
+      risks: [
+        ['Tinggi', '#3A1520', '#FF7A8A', 'Anggaran vendor video melebihi rencana', 'Putri Ramadhani · terbuka', 'none'],
+        ['Sedang', '#2E2210', '#F6B95C', 'Kutipan direksi terlambat menahan siaran pers', 'Putri Ramadhani · terbuka', 'none'],
+        ['Rendah', '#172131', '#A6B4C6', 'Kapasitas venue kurang dari tamu undangan', 'Maya Lestari · teratasi', 'line-through']
+      ].map(function (r) { return { level: r[0], bg: r[1], fg: r[2], title: r[3], owner: r[4], deco: r[5] }; }),
+      team: team.map(function (p) { return { init: p[0], name: p[1], open: p[2], ok: Math.round((p[2] - p[3]) / 7 * 100), lt: Math.round(p[3] / 7 * 100), lateLabel: p[3] ? ' · ' + p[3] : '' }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

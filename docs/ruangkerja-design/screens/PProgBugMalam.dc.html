@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Programming · bug kritis · ponsel · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #070B14">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="PeranMProgrammingMalam.dc.html" aria-label="Kembali" style="width: 44px; height: 44px; border-radius: 22px; background: #0F1622; border: 1px solid #233247; color: #EAF1F8; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: #5AD6C8">SIM-388</span>
+      <span style="height: 30px; padding: 0 10px; border-radius: 15px; background: #3A1520; color: #FF7A8A; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center">Kritis · produksi</span>
+    </div>
+    <h1 style="margin: 0; font-size: 24px; line-height: 30px; font-weight: 800">Antrean farmasi berhenti saat resep racikan</h1>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px">
+      <span style="font-size: 14px; font-weight: 800; color: #A6B4C6">PROGRES</span>
+      <sc-for list="{{steps}}" as="s" hint-placeholder-count="4">
+        <div style="display: flex; gap: 12px">
+          <span style="display: flex; flex-direction: column; align-items: center"><span style="width: 24px; height: 24px; border-radius: 12px; box-sizing: border-box; background: {{s.bg}}; border: {{s.border}}; color: #FFFFFF; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{s.g}}</span><span style="width: 2px; height: 16px; background: {{s.line}}"></span></span>
+          <span style="display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 800; color: {{s.c}}">{{s.t}}</span><span style="font-size: 13px; color: #A6B4C6">{{s.m}}</span></span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 4px 16px">
+      <div style="display: flex; justify-content: space-between; align-items: center; min-height: 46px; border-bottom: 1px solid #172131; font-size: 15px"><span style="color: #A6B4C6">Pelapor</span><b>Lina · RS Harapan Sehat</b></div>
+      <div style="display: flex; justify-content: space-between; align-items: center; min-height: 46px; border-bottom: 1px solid #172131; font-size: 15px"><span style="color: #A6B4C6">Ditangani</span><b>Rizky Aditya</b></div>
+      <div style="display: flex; justify-content: space-between; align-items: center; min-height: 46px; font-size: 15px"><span style="color: #A6B4C6">Dampak</span><b style="color: #FF7A8A">3 loket farmasi</b></div>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px 22px; display: flex; flex-direction: column; gap: 6px; background: rgba(15,22,34,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid #233247">
+    <button type="button" onClick="{{next}}" style="height: 56px; border: 0; border-radius: 16px; background: {{btnBg}}; color: #FFFFFF; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer">{{btn}}</button>
+    <span style="font-size: 13px; color: #A6B4C6; text-align: center">{{foot}}</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var S = [['Dilaporkan', '08.58 · dari aplikasi Implementer'], ['Diperbaiki', '09.31 · PR #418 oleh Rizky'], ['Lolos di staging', 'verifikasi Lina di RS'], ['Deploy produksi', 'jendela pemeliharaan 21.00']];
+var BTN = ['Tandai sudah diperbaiki', 'Tandai lolos staging', 'Jadwalkan deploy 21.00', 'Selesai ✓'];
+var FOOT = ['Rizky dan Lina diberi tahu', 'Lina mendapat notifikasi untuk verifikasi', 'Direktur dan RS Harapan Sehat diberi tahu jadwal deploy', 'Laporan insiden dibuat otomatis'];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { at: 2 };
+  }
+  renderVals() {
+    var self = this;
+    var at = typeof (this.state && this.state.at) === 'number' ? this.state.at : 2;
+    return {
+      steps: S.map(function (s, i) { var done = i < at, cur = i === at; return { t: s[0], m: s[1], g: done ? '✓' : '', bg: done ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : '#0F1622', border: done ? '0' : (cur ? '4px solid #5B8CF6' : '2px solid #34465E'), line: i === S.length - 1 ? 'transparent' : (done ? '#3A70EC' : '#233247'), c: cur ? '#8DB4FF' : '#EAF1F8' }; }),
+      btn: BTN[at], foot: FOOT[at],
+      btnBg: at >= 3 ? 'linear-gradient(135deg, #14B8A6 0%, #0F7A55 100%)' : 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)',
+      next: function () { self.setState({ at: at >= 3 ? 1 : at + 1 }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

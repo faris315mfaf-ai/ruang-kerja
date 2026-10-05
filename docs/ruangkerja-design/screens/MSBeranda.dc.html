@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Beranda staf · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; background: radial-gradient(420px 260px at 0% 0%, rgba(20,184,166,0.24), transparent 70%), radial-gradient(420px 260px at 100% 0%, rgba(47,123,234,0.22), transparent 70%), #F3F6FA">
+  <div style="padding: 24px 16px 0; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #09656E">Senin, 5 Oktober</span>
+        <h1 style="margin: 0; font-size: 32px; line-height: 40px; font-weight: 800; letter-spacing: -0.025em">Halo, Sari</h1>
+      </div>
+      <a href="MSPengaturan.dc.html" aria-label="Profil" style="width: 48px; height: 48px; padding: 2px; box-sizing: border-box; border-radius: 24px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%)"><span style="width: 100%; height: 100%; border-radius: 22px; background: #FFFFFF; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; color: #0B1A2B">SW</span></a>
+    </div>
+
+    <div style="border-radius: 24px; padding: 18px; display: flex; align-items: center; gap: 14px; color: #FFFFFF; background: radial-gradient(220px 160px at 100% 0%, rgba(255,255,255,0.22), transparent 70%), linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); box-shadow: 0 14px 30px rgba(30,95,214,0.30)">
+      <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 700">{{att.chip}}</span><span style="font-size: 30px; line-height: 36px; font-weight: 800">{{att.big}}</span><span style="font-size: 15px">{{att.sub}}</span></span>
+      <sc-if value="{{att.canOut}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{out}}" style="height: 48px; padding: 0 16px; border: 0; border-radius: 14px; background: #FFFFFF; color: #0A4E57; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer">Check-out</button></sc-if>
+    </div>
+
+    <a href="MSProyekSaya.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 20px; color: #FFFFFF; background: linear-gradient(135deg, #C2410C 0%, #BE185D 100%)">
+      <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 800; letter-spacing: 0.05em">ANDA PIC · MSG</span><span style="font-size: 17px; line-height: 23px; font-weight: 700">Update mingguan jatuh tempo Jumat 15.00</span></span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 4px 4px 0">
+      <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 700">Fokus hari ini</h2>
+      <a href="MTugas.dc.html" style="font-size: 16px; font-weight: 600">Semua</a>
+    </div>
+    <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 22px; overflow: hidden">
+      <sc-for list="{{focus}}" as="t" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 0 14px 0 6px; min-height: 70px; border-top: {{t.sep}}">
+          <button type="button" role="checkbox" aria-checked="{{t.aria}}" aria-label="Selesaikan {{t.title}}" onClick="{{t.toggle}}" style="width: 44px; height: 44px; padding: 0; border: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><span style="width: 28px; height: 28px; border-radius: 9px; border: {{t.border}}; background: {{t.bg}}; box-sizing: border-box; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{t.tick}}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg></span></button>
+          <a href="MSDetailTugas.dc.html" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; color: #0B1A2B"><span style="font-size: 17px; line-height: 22px; font-weight: 600; text-decoration: {{t.deco}}">{{t.title}}</span><span style="font-size: 14px; color: #46576B"><span style="font-family: 'JetBrains Mono', monospace; font-weight: 600">{{t.id}}</span> · {{t.status}}</span></a>
+          <span style="font-size: 14px; font-weight: 700; color: {{t.dueColor}}; white-space: nowrap">{{t.due}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+      <a href="MSPengajuanSaya.dc.html" style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 20px; padding: 14px 16px; color: #0B1A2B; display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 600; color: #46576B">Saldo cuti</span><span style="font-size: 26px; font-weight: 800">7 hari</span><span style="font-size: 13px; font-weight: 700; color: #9A5800">2 menunggu HR</span></a>
+      <a href="MSKinerja.dc.html" style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 20px; padding: 14px 16px; color: #0B1A2B; display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 600; color: #46576B">Tepat waktu</span><span style="font-size: 26px; font-weight: 800">88%</span><span style="font-size: 13px; font-weight: 700; color: #09656E">Kinerja saya</span></a>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" active="beranda" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var F = [['PLQ-15', 'Siaran pers peluncuran', 'Review', 'Lewat 2 hr', '#C42137'], ['GDG-48', 'Laporan selisih stok rak C', 'Review', 'Lewat 1 hr', '#C42137'], ['MSG-23', 'Uji impor data stok batch 2', 'Dikerjakan', 'Hari ini', '#9A5800']];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { done: {}, out: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var done = st.done || {};
+    return {
+      att: st.out ? { chip: 'SELESAI HARI INI', big: '07.52 – 17.04', sub: '8 jam 12 menit', canOut: false } : { chip: 'SUDAH CHECK-IN · TEPAT WAKTU', big: 'Masuk 07.52', sub: 'Kantor Pusat · pulang 17.00', canOut: true },
+      out: function () { self.setState({ out: true }); },
+      focus: F.map(function (t, i) {
+        var on = !!done[t[0]];
+        return { id: t[0], title: t[1], status: on ? 'Selesai' : t[2], due: on ? 'Selesai' : t[3], dueColor: on ? '#0F7A55' : t[4], aria: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : '#FFFFFF', border: on ? '0' : '2px solid #C3CEDA', tick: on ? '#FFFFFF' : 'transparent', deco: on ? 'line-through' : 'none', sep: i ? '1px solid #EEF2F7' : '0', toggle: function () { var d = Object.assign({}, done); d[t[0]] = !on; self.setState({ done: d }); } };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

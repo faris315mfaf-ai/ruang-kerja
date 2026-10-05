@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Implementer · tiket klien · ponsel · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #070B14">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="PeranMImplementerMalam.dc.html" aria-label="Kembali" style="width: 44px; height: 44px; border-radius: 22px; background: #0F1622; border: 1px solid #233247; color: #EAF1F8; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="height: 30px; padding: 0 10px; border-radius: 15px; background: #3A1520; color: #FF7A8A; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center">P1 · Tinggi</span>
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #A6B4C6">TKT-1093</span>
+    </div>
+    <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 22px; line-height: 28px; font-weight: 800">Label farmasi tidak terbaca</span><span style="font-size: 14px; color: #A6B4C6">RS Harapan Sehat · dibuka 07.58 · Lina di lokasi</span></span>
+    <span style="font-size: 15px; font-weight: 800">Status</span>
+    <div role="radiogroup" aria-label="Status" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+      <sc-for list="{{status}}" as="s" hint-placeholder-count="4">
+        <button type="button" role="radio" aria-checked="{{s.sel}}" onClick="{{s.pick}}" style="height: 46px; border-radius: 14px; border: {{s.border}}; background: {{s.bg}}; color: {{s.fg}}; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer">{{s.l}}</button>
+      </sc-for>
+    </div>
+    <div style="display: flex; gap: 8px">
+      <span style="width: 84px; height: 84px; border-radius: 14px; background: linear-gradient(135deg, #233247 0%, #34465E 100%); display: flex; align-items: flex-end; padding: 6px; box-sizing: border-box; font-size: 11px; font-weight: 800; color: #C9D4E2">label_01.jpg</span>
+      <span style="width: 84px; height: 84px; border-radius: 14px; background: linear-gradient(135deg, #233247 0%, #34465E 100%); display: flex; align-items: flex-end; padding: 6px; box-sizing: border-box; font-size: 11px; font-weight: 800; color: #C9D4E2">printer.jpg</span>
+      <span style="width: 84px; height: 84px; border-radius: 14px; border: 2px dashed #34465E; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #A6B4C6; font-size: 12px; font-weight: 800"><span style="font-size: 24px; line-height: 24px">+</span>Foto</span>
+    </div>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 12px 16px 4px">
+      <span style="font-size: 14px; font-weight: 800; color: #A6B4C6">LINIMASA</span>
+      <sc-for list="{{log}}" as="l" hint-placeholder-count="3">
+        <div style="display: flex; gap: 12px; padding: 10px 0; border-top: {{l.sep}}; margin-top: 6px">
+          <span style="width: 44px; font-size: 13px; font-weight: 800; color: #5AD6C8">{{l.t}}</span>
+          <span style="flex: 1; font-size: 14px; line-height: 20px">{{l.m}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px 22px; display: grid; grid-template-columns: 56px 1fr; gap: 10px; background: rgba(15,22,34,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid #233247">
+    <span aria-label="Telepon PIC klien" style="height: 56px; border-radius: 16px; border: 1px solid #34465E; background: #0F1622; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EAF1F8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"></path></svg></span>
+    <button type="button" onClick="{{save}}" style="height: 56px; border: 0; border-radius: 16px; background: {{btnBg}}; color: #FFFFFF; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer">{{btn}}</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var ST = ['Baru', 'Ditangani', 'Menunggu klien', 'Selesai'];
+var LOG = [['07.58', 'Dilaporkan perawat farmasi lewat telepon ke Lina'], ['08.20', 'Penyebab: driver printer label versi lama setelah pembaruan Windows'], ['08.58', 'Diteruskan ke Programming sebagai SIM-388 karena antrean ikut berhenti']];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { s: 1, saved: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var si = typeof st.s === 'number' ? st.s : 1;
+    return {
+      status: ST.map(function (l, i) { var on = i === si; return { l: l, sel: on ? 'true' : 'false', bg: on ? '#0E2A2C' : '#0F1622', fg: on ? '#5AD6C8' : '#EAF1F8', border: on ? '2px solid #2DBFB1' : '1px solid #233247', pick: function () { self.setState({ s: i, saved: false }); } }; }),
+      log: LOG.map(function (l, i) { return { t: l[0], m: l[1], sep: i ? '1px solid #172131' : '0' }; }),
+      btn: st.saved ? 'Tersimpan · klien diberi tahu' : 'Simpan update',
+      btnBg: st.saved ? 'linear-gradient(135deg, #14B8A6 0%, #0F7A55 100%)' : 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)',
+      save: function () { self.setState({ saved: true }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

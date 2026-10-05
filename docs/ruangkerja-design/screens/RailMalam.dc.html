@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Rail navigasi tablet · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<nav aria-label="Navigasi manajemen" style="width: 96px; height: 100%; min-height: 600px; box-sizing: border-box; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: rgba(15,22,34,0.72); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border-right: 1px solid #233247; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+  <span style="width: 52px; height: 52px; border-radius: 16px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); color: #FFFFFF; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: 0 8px 20px rgba(30,95,214,0.30)">RK</span>
+  <sc-for list="{{items}}" as="it" hint-placeholder-count="5">
+    <a href="{{it.href}}" aria-current="{{it.current}}" onClick="{{it.pick}}" style="position: relative; width: 76px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; text-decoration: none; color: {{it.color}}">
+      <span style="width: 56px; height: 36px; border-radius: 18px; background: {{it.bg}}; box-shadow: {{it.shadow}}; display: flex; align-items: center; justify-content: center">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{it.glyph}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{it.d1}}"></path><path d="{{it.d2}}"></path></svg>
+      </span>
+      <span style="font-size: 13px; line-height: 16px; font-weight: 700; text-align: center">{{it.label}}</span>
+      <sc-if value="{{it.hasBadge}}" hint-placeholder-val="{{false}}"><span style="position: absolute; top: 2px; right: 8px; min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 10px; background: #C42137; color: #FFFFFF; font-size: 12px; font-weight: 700; line-height: 20px; text-align: center; box-shadow: 0 0 0 2px #0F1622">{{it.badge}}</span></sc-if>
+    </a>
+  </sc-for>
+  <span style="flex: 1"></span>
+  <span style="width: 44px; height: 44px; border-radius: 22px; background: #1C2D50; color: #A9C2FF; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center">HW</span>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["ringkasan","kerja","absensi","proyek","jadwal"],"default":"ringkasan"},"$preview":{"width":96,"height":1104}}'>
+var ITEMS = [
+  ['ringkasan', 'Ringkasan', 'TfDashboardMalam.dc.html', ['M3 10.5 12 3l9 7.5', 'M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5'], ''],
+  ['kerja', 'Kerja', 'TfKerjaMalam.dc.html', ['M4 20V10M10 20V4M16 20v-7', 'M22 20H2'], ''],
+  ['absensi', 'Absensi', 'TfAbsensiMalam.dc.html', ['M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z', 'M12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z'], ''],
+  ['proyek', 'Proyek', 'TfProyekMalam.dc.html', ['M5 21V4', 'M5 4h11l-2 4 2 4H5'], ''],
+  ['jadwal', 'Jadwal', 'TfJadwalMalam.dc.html', ['M8 3v4M16 3v4M4 9h16', 'M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z'], '2']
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { picked: null };
+  }
+  renderVals() {
+    var self = this;
+    var active = (this.state && this.state.picked) || (this.props && this.props.active) || 'ringkasan';
+    return {
+      items: ITEMS.map(function (x) {
+        var on = x[0] === active;
+        return { label: x[1], href: x[2], d1: x[3][0], d2: x[3][1], current: on ? 'page' : undefined, bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : 'transparent', glyph: on ? '#FFFFFF' : '#A6B4C6', color: on ? '#EAF1F8' : '#A6B4C6', shadow: on ? '0 6px 16px rgba(30,95,214,0.32)' : 'none', hasBadge: !!x[4] && !on, badge: x[4], pick: function () { self.setState({ picked: x[0] }); } };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

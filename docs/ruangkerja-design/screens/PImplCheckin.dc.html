@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Implementer · check-in di klien · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #F3F6FA">
+  <div style="position: relative; height: 380px; overflow: hidden; background: linear-gradient(0deg, rgba(243,246,250,1) 0%, rgba(243,246,250,0) 30%), repeating-linear-gradient(0deg, transparent 0 39px, rgba(132,149,168,0.18) 39px 40px), repeating-linear-gradient(90deg, transparent 0 39px, rgba(132,149,168,0.18) 39px 40px), #E9EFF5">
+    <span style="position: absolute; left: -40px; top: 150px; width: 520px; height: 22px; background: #FFFFFF; transform: rotate(-14deg)"></span>
+    <span style="position: absolute; left: 210px; top: -20px; width: 18px; height: 420px; background: #FFFFFF; transform: rotate(8deg)"></span>
+    <span style="position: absolute; left: 40px; top: 40px; width: 120px; height: 120px; border-radius: 60px; background: rgba(132,149,168,0.16); border: 2px dashed #8495A8"></span>
+    <span style="position: absolute; left: 56px; top: 92px; font-size: 12px; font-weight: 800; color: #46576B">Kantor SPKD · 4,8 km</span>
+    <span style="position: absolute; left: 196px; top: 164px; width: 140px; height: 140px; border-radius: 70px; background: rgba(20,184,166,0.18); border: 2px solid #14B8A6"></span>
+    <span style="position: absolute; left: 252px; top: 220px; width: 28px; height: 28px; border-radius: 14px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); border: 4px solid #FFFFFF; box-shadow: 0 6px 16px rgba(30,95,214,0.4)"></span>
+    <span style="position: absolute; left: 186px; top: 312px; padding: 6px 10px; border-radius: 10px; background: #FFFFFF; font-size: 13px; font-weight: 800; box-shadow: 0 4px 12px rgba(11,26,43,0.12)">RS Harapan Sehat · Anda di sini</span>
+    <a href="PeranMImplementer.dc.html" aria-label="Kembali" style="position: absolute; left: 16px; top: 20px; width: 44px; height: 44px; border-radius: 22px; background: #FFFFFF; color: #0B1A2B; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(11,26,43,0.12)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+  </div>
+  <div style="padding: 0 16px; margin-top: -10px; display: flex; flex-direction: column; gap: 12px; position: relative">
+    <span style="display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 800; color: #09656E">CHECK-IN DINAS LUAR</span><span style="font-size: 26px; line-height: 32px; font-weight: 800">Sen, 5 Okt · 07.50</span></span>
+    <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 20px; padding: 4px 16px">
+      <div style="display: flex; align-items: center; gap: 10px; min-height: 52px; border-bottom: 1px solid #EEF2F7"><span style="width: 24px; height: 24px; border-radius: 12px; background: #E3F6EE; color: #0F7A55; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center">✓</span><span style="flex: 1; font-size: 15px; font-weight: 700">Dinas luar disetujui</span><span style="font-size: 13px; color: #46576B">5–9 Okt</span></div>
+      <div style="display: flex; align-items: center; gap: 10px; min-height: 52px; border-bottom: 1px solid #EEF2F7"><span style="width: 24px; height: 24px; border-radius: 12px; background: #E3F6EE; color: #0F7A55; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center">✓</span><span style="flex: 1; font-size: 15px; font-weight: 700">Lokasi klien cocok</span><span style="font-size: 13px; color: #46576B">akurasi 12 m</span></div>
+      <div style="display: flex; align-items: center; gap: 10px; min-height: 52px"><span style="width: 24px; height: 24px; border-radius: 12px; background: {{v.selfBg}}; color: {{v.selfFg}}; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{v.selfG}}</span><span style="flex: 1; font-size: 15px; font-weight: 700">Selfie</span><button type="button" onClick="{{snap}}" style="height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid #C3CEDA; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer">{{v.selfBtn}}</button></div>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px 22px; display: flex; flex-direction: column; gap: 6px; background: rgba(255,255,255,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid #DDE4EC">
+    <button type="button" onClick="{{go}}" style="height: 58px; border: 0; border-radius: 16px; background: {{v.btnBg}}; color: #FFFFFF; font: inherit; font-size: 18px; font-weight: 800; cursor: pointer; opacity: {{v.op}}">{{v.btn}}</button>
+    <span style="font-size: 13px; color: #46576B; text-align: center">{{v.foot}}</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { selfie: false, done: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    return {
+      snap: function () { self.setState({ selfie: true }); },
+      go: function () { if (st.selfie) self.setState({ done: true }); },
+      v: {
+        selfBg: st.selfie ? '#E3F6EE' : '#FFF1DC', selfFg: st.selfie ? '#0F7A55' : '#9A5800', selfG: st.selfie ? '✓' : '!', selfBtn: st.selfie ? 'Ulangi' : 'Ambil foto',
+        btn: st.done ? 'Check-in tercatat ✓' : 'Check-in sekarang', op: st.selfie ? 1 : 0.55,
+        btnBg: st.done ? 'linear-gradient(135deg, #14B8A6 0%, #0F7A55 100%)' : 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)',
+        foot: st.done ? 'Tanpa sinyal pun aman: tersimpan dan dikirim otomatis' : (st.selfie ? 'Di luar radius kantor, ditandai wajar karena dinas luar' : 'Ambil selfie dulu untuk melanjutkan')
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

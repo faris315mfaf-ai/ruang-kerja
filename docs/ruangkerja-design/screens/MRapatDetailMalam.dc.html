@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Detail rapat · ponsel · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #070B14">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="MRapatMalam.dc.html" aria-label="Kembali" style="width: 44px; height: 44px; border-radius: 22px; background: #0F1622; border: 1px solid #233247; color: #EAF1F8; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="height: 32px; padding: 0 12px; border-radius: 16px; background: #2E2210; color: #F6B95C; font-size: 14px; font-weight: 800; display: inline-flex; align-items: center">Mulai 5 menit lagi</span>
+    </div>
+    <h1 style="margin: 0; font-size: 28px; line-height: 35px; font-weight: 800; letter-spacing: -0.02em">Koordinasi peluncuran Q4</h1>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; padding: 4px 16px">
+      <div style="display: flex; justify-content: space-between; align-items: center; min-height: 50px; font-size: 16px; border-bottom: 1px solid #172131"><span style="color: #A6B4C6">Waktu</span><b>Sen, 5 Okt · 10.30–11.30</b></div>
+      <div style="display: flex; justify-content: space-between; align-items: center; min-height: 50px; font-size: 16px; border-bottom: 1px solid #172131"><span style="color: #A6B4C6">Tempat</span><b style="color: #5AD6C8">Google Meet</b></div>
+      <div style="display: flex; justify-content: space-between; align-items: center; min-height: 50px; font-size: 16px"><span style="color: #A6B4C6">Penyelenggara</span><b>Putri Ramadhani</b></div>
+    </div>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 16px; font-weight: 700">Kehadiran Anda</span>
+      <div role="radiogroup" aria-label="Kehadiran" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+        <sc-for list="{{rsvp}}" as="r" hint-placeholder-count="3">
+          <button type="button" role="radio" aria-checked="{{r.sel}}" onClick="{{r.pick}}" style="height: 44px; border-radius: 12px; border: {{r.border}}; background: {{r.bg}}; color: {{r.fg}}; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer">{{r.label}}</button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 16px; font-weight: 700">Agenda</span>
+      <span style="font-size: 16px; line-height: 25px; color: #C9D4E2">1. Status landing page<br>2. Kutipan direksi untuk siaran pers<br>3. Anggaran vendor video</span>
+    </div>
+    <span style="display: flex; align-items: center; gap: 8px; font-size: 15px; color: #A6B4C6"><span style="display: flex"><span style="width: 30px; height: 30px; border-radius: 15px; background: #1C2D50; color: #A9C2FF; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px #070B14">PR</span><span style="width: 30px; height: 30px; margin-left: -8px; border-radius: 15px; background: #103A38; color: #5AD6C8; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px #070B14">DP</span><span style="width: 30px; height: 30px; margin-left: -8px; border-radius: 15px; background: #172131; color: #A6B4C6; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px #070B14">+4</span></span>6 peserta · notulis Maya</span>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px 22px; display: flex; flex-direction: column; gap: 8px; background: rgba(15,22,34,0.86); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid #233247">
+    <button type="button" onClick="{{join}}" style="height: 56px; border: 0; border-radius: 16px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 24px rgba(30,95,214,0.34)">{{joinLabel}}</button>
+    <span style="font-size: 13px; color: #A6B4C6; text-align: center">Membuka aplikasi Google Meet bila terpasang</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { r: 'Hadir', joined: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var r = st.r || 'Hadir';
+    return {
+      rsvp: ['Hadir', 'Mungkin', 'Tidak'].map(function (l) { var on = l === r; return { label: l, sel: on ? 'true' : 'false', bg: on ? '#0E2A2C' : '#0F1622', fg: on ? '#5AD6C8' : '#EAF1F8', border: on ? '2px solid #2DBFB1' : '1px solid #233247', pick: function () { self.setState({ r: l }); } }; }),
+      joinLabel: st.joined ? 'Membuka Google Meet…' : 'Gabung lewat Google Meet',
+      join: function () { self.setState({ joined: true }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

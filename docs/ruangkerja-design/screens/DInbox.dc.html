@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Inbox</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}a:hover{color:#0A4E57}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #F3F6FA; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" crumbs="Inbox" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 40px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 22px">
+    <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h1 style="margin: 0; font-size: 44px; line-height: 52px; font-weight: 800; letter-spacing: -0.03em">Inbox</h1>
+        <span style="font-size: 18px; color: #46576B">{{unread}} belum dibaca · ringkasan harian dikirim 07.30</span>
+      </div>
+      <button type="button" onClick="{{readAll}}" style="height: 44px; padding: 0 18px; border: 1px solid #C3CEDA; border-radius: 12px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Tandai semua dibaca</button>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 10px">
+      <sc-for list="{{filters}}" as="f" hint-placeholder-count="5">
+        <button type="button" aria-pressed="{{f.sel}}" onClick="{{f.pick}}" style="height: 40px; padding: 0 16px; border-radius: 20px; border: {{f.border}}; background: {{f.bg}}; color: {{f.color}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">{{f.label}}</button>
+      </sc-for>
+    </div>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 1 1 460px; min-width: 0; background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; overflow: hidden; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+        <sc-for list="{{items}}" as="n" hint-placeholder-count="7">
+          <sc-if value="{{n.hasGroup}}" hint-placeholder-val="{{false}}">
+            <div style="padding: 16px 22px 8px; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #46576B; background: #F3F6FA">{{n.group}}</div>
+          </sc-if>
+          <button type="button" onClick="{{n.select}}" style="width: 100%; display: flex; gap: 14px; padding: 18px 22px; border: 0; border-top: 1px solid #EEF2F7; text-align: left; font: inherit; cursor: pointer; color: #0B1A2B; background: {{n.bg}}; box-shadow: {{n.ring}}">
+            <span style="position: relative; width: 44px; height: 44px; border-radius: 14px; background: {{n.iconBg}}; color: {{n.iconFg}}; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{n.d1}}"></path><path d="{{n.d2}}"></path></svg>
+            </span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+              <span style="font-size: 16px; line-height: 23px; font-weight: {{n.weight}}">{{n.title}}</span>
+              <span style="font-size: 15px; color: #46576B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{n.sub}}</span>
+            </span>
+            <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0">
+              <span style="font-size: 14px; color: #46576B">{{n.time}}</span>
+              <sc-if value="{{n.unread}}" hint-placeholder-val="{{false}}"><span aria-label="Belum dibaca" style="width: 10px; height: 10px; border-radius: 5px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%)"></span></sc-if>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+
+      <div style="flex: 1.2 1 480px; min-width: 0; background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 2px 6px rgba(11,26,43,0.06), 0 20px 48px rgba(11,26,43,0.10)">
+        <span style="display: inline-flex; align-self: flex-start; align-items: center; height: 30px; padding: 0 12px; border-radius: 8px; background: {{cur.iconBg}}; color: {{cur.iconFg}}; font-size: 14px; font-weight: 700">{{cur.kind}}</span>
+        <h2 style="margin: 0; font-size: 28px; line-height: 36px; font-weight: 700; letter-spacing: -0.015em">{{cur.title}}</h2>
+        <span style="font-size: 16px; color: #46576B">{{cur.meta}}</span>
+        <div style="padding: 18px 20px; border-radius: 18px; background: #F3F6FA; font-size: 18px; line-height: 28px">{{cur.body}}</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px">
+          <a href="{{cur.href}}" style="height: 48px; padding: 0 22px; border-radius: 14px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 16px; font-weight: 700; display: inline-flex; align-items: center; box-shadow: 0 10px 24px rgba(30,95,214,0.30)">{{cur.cta}}</a>
+          <button type="button" style="height: 48px; padding: 0 18px; border: 1px solid #C3CEDA; border-radius: 14px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Arsipkan</button>
+          <button type="button" style="height: 48px; padding: 0 18px; border: 1px solid #C3CEDA; border-radius: 14px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Ingatkan nanti</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" active="inbox" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1080}}'>
+var IC = {
+  mention: [['M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8', 'M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'], '#E6EEFE', '#1A4CB0', 'Disebut'],
+  task: [['m9 11 3 3 8-8', 'M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'], '#E8FBF8', '#09656E', 'Tugas'],
+  request: [['M8 3v4M16 3v4M4 9h16', 'M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z'], '#FFF1DC', '#9A5800', 'Pengajuan'],
+  due: [['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'M12 7v5l3 2'], '#FDE7EA', '#C42137', 'Tenggat']
+};
+var N = [
+  { id: 'n1', g: 'Hari ini', k: 'mention', title: 'Putri Ramadhani menyebut Anda di PLQ-18', sub: '“@Dimas angka vendor video naik karena tambahan 2 hari…”', time: '10.12', unread: true, body: '@Dimas angka vendor video naik karena tambahan 2 hari syuting. Menunggu keputusan Pak Hendra, saya tandai di update proyek.', meta: 'Finalisasi anggaran peluncuran · Proyek Peluncuran Q4', cta: 'Buka tugas', href: 'DTugas.dc.html' },
+  { id: 'n2', g: '', k: 'request', title: 'Maya Lestari mengajukan cuti tahunan', sub: '12–14 Okt · 3 hari kerja · menunggu Anda', time: '09.40', unread: true, body: 'Cuti tahunan 12–14 Oktober untuk acara keluarga di Yogyakarta. Saldo 9 hari menjadi 6 hari.', meta: 'CUT-2026-10-0012 · langkah 1 dari 2', cta: 'Tinjau pengajuan', href: 'DPersetujuan.dc.html' },
+  { id: 'n3', g: '', k: 'due', title: 'PLQ-18 jatuh tempo besok', sub: 'Finalisasi anggaran peluncuran · checklist 3 dari 5', time: '07.30', unread: true, body: 'Tugas ini jatuh tempo Selasa, 6 Oktober. Dua butir checklist belum selesai.', meta: 'Pengingat H-1 · Proyek Peluncuran Q4', cta: 'Buka tugas', href: 'DTugas.dc.html' },
+  { id: 'n4', g: '', k: 'task', title: 'Sari Wulandari menugaskan GDG-52 ke Anda', sub: 'Tinjau tata letak rak baru gudang C', time: '07.05', unread: true, body: 'Mohon tinjau usulan tata letak rak sebelum rapat Kamis.', meta: 'Tim Gudang · tenggat Kam, 8 Okt', cta: 'Buka tugas', href: 'DTugas.dc.html' },
+  { id: 'n5', g: 'Kemarin', k: 'request', title: 'Pengajuan lembur Yoga disetujui HR', sub: 'Sab, 3 Okt · 3,5 jam · selesai', time: 'Min', unread: false, body: 'Lembur Yoga Permana 3,5 jam telah disetujui di semua langkah dan masuk rekap Oktober.', meta: 'LBR-2026-10-0007', cta: 'Lihat pengajuan', href: 'DPersetujuan.dc.html' },
+  { id: 'n6', g: '', k: 'task', title: 'Rizky memindahkan OPS-140 ke Selesai', sub: 'Jadwal pengiriman minggu 41', time: 'Min', unread: false, body: 'OPS-140 selesai 1 hari sebelum tenggat.', meta: 'Divisi Operasional', cta: 'Buka tugas', href: 'DTugas.dc.html' }
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 'n1', read: {}, filter: 'Semua' };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var read = st.read || {};
+    var filter = st.filter || 'Semua';
+    var sel = st.sel || 'n1';
+    var isUnread = function (n) { return n.unread && !read[n.id]; };
+    var map = { 'Disebut': 'mention', 'Tugas': 'task', 'Pengajuan': 'request' };
+    var shown = N.filter(function (n) {
+      if (filter === 'Belum dibaca') return isUnread(n);
+      if (map[filter]) return n.k === map[filter];
+      return true;
+    });
+    var cur = N.filter(function (n) { return n.id === sel; })[0] || N[0];
+    var ci = IC[cur.k];
+    var unreadCount = N.filter(isUnread).length;
+    return {
+      unread: unreadCount,
+      readAll: function () { var r = {}; N.forEach(function (n) { r[n.id] = true; }); self.setState({ read: r }); },
+      filters: ['Semua', 'Belum dibaca', 'Disebut', 'Tugas', 'Pengajuan'].map(function (f) {
+        var on = f === filter;
+        var label = f === 'Belum dibaca' ? f + ' · ' + unreadCount : f;
+        return { label: label, sel: on ? 'true' : 'false', bg: on ? '#0B1A2B' : '#FFFFFF', color: on ? '#FFFFFF' : '#0B1A2B', border: on ? '1px solid #0B1A2B' : '1px solid #C3CEDA', pick: function () { self.setState({ filter: f }); } };
+      }),
+      items: shown.map(function (n, i) {
+        var ic = IC[n.k];
+        var on = n.id === sel;
+        var un = isUnread(n);
+        return {
+          hasGroup: !!n.g && filter === 'Semua', group: n.g,
+          title: n.title, sub: n.sub, time: n.time, unread: un, weight: un ? 700 : 500,
+          d1: ic[0][0], d2: ic[0][1], iconBg: ic[1], iconFg: ic[2],
+          bg: on ? '#F0FAF9' : '#FFFFFF', ring: on ? 'inset 0 0 0 2px #0B7F86' : 'none',
+          select: function () { var r = Object.assign({}, read); r[n.id] = true; self.setState({ sel: n.id, read: r }); }
+        };
+      }),
+      cur: { kind: ci[3], iconBg: ci[1], iconFg: ci[2], title: cur.title, meta: cur.meta, body: cur.body, cta: cur.cta, href: cur.href }
+    };
+  }
+}
+</script>
+</body>
+</html>

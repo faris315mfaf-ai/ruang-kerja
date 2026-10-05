@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Masuk · RuangKerja · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8}a:hover{color:#5AD6C8}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-wrap: wrap; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; color: #EAF1F8; background: #070B14">
+  <section style="flex: 1 1 520px; min-height: 420px; box-sizing: border-box; padding: 56px 64px; display: flex; flex-direction: column; justify-content: space-between; gap: 40px; color: #FFFFFF; background: radial-gradient(600px 400px at 85% 15%, rgba(91,140,246,0.55), transparent 70%), radial-gradient(600px 500px at 10% 90%, rgba(45,191,177,0.45), transparent 70%), linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <span aria-hidden="true" style="width: 44px; height: 44px; border-radius: 13px; background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35); font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center">RK</span>
+      <span style="font-size: 20px; font-weight: 700">RuangKerja</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 20px; max-width: 560px">
+      <h1 style="margin: 0; font-size: 52px; line-height: 60px; font-weight: 800; letter-spacing: -0.03em">Absen, kerja, dan pantau proyek dalam satu tempat.</h1>
+      <p style="margin: 0; font-size: 19px; line-height: 30px">Terhubung dengan Google Workspace kantor Anda. Data lokasi hanya direkam saat check-in dan check-out.</p>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px">
+      <span style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 20px; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.28); font-size: 16px; font-weight: 600">Check-in GPS &amp; QR</span>
+      <span style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 20px; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.28); font-size: 16px; font-weight: 600">Board tugas realtime</span>
+      <span style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 20px; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.28); font-size: 16px; font-weight: 600">Portofolio proyek</span>
+    </div>
+  </section>
+
+  <section style="flex: 1 1 480px; box-sizing: border-box; padding: 56px 40px; display: flex; align-items: center; justify-content: center">
+    <div style="width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 28px">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 34px; line-height: 42px; font-weight: 700; letter-spacing: -0.02em">Masuk</h2>
+        <p style="margin: 0; font-size: 17px; line-height: 26px; color: #A6B4C6">Gunakan akun Google kantor dengan domain [@domain-perusahaan].</p>
+      </div>
+      <a href="DBerandaMalam.dc.html" style="height: 56px; border-radius: 14px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 18px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 12px 28px rgba(30,95,214,0.32)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><path d="m10 17 5-5-5-5"></path><path d="M15 12H3"></path></svg>
+        Masuk dengan Google
+      </a>
+      <div style="display: flex; align-items: center; gap: 14px; color: #A6B4C6; font-size: 15px"><span style="flex: 1; height: 1px; background: #233247"></span>atau<span style="flex: 1; height: 1px; background: #233247"></span></div>
+      <div style="display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 18px; background: #0F1622; border: 1px solid #233247">
+        <span style="font-size: 16px; font-weight: 700">Masuk cepat · demo lokal</span>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+          <a href="DBerandaMalam.dc.html" style="height: 44px; border-radius: 12px; border: 1px solid #34465E; color: #EAF1F8; font-size: 15px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center">Kepala Divisi</a>
+          <a href="DPortofolioMalam.dc.html" style="height: 44px; border-radius: 12px; border: 1px solid #34465E; color: #EAF1F8; font-size: 15px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center">Direksi</a>
+          <a href="DHRMalam.dc.html" style="height: 44px; border-radius: 12px; border: 1px solid #34465E; color: #EAF1F8; font-size: 15px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center">HR</a>
+          <a href="DAbsensiMalam.dc.html" style="height: 44px; border-radius: 12px; border: 1px solid #34465E; color: #EAF1F8; font-size: 15px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center">Anggota</a>
+        </div>
+        <span style="font-size: 14px; color: #A6B4C6">Hanya tampil bila APP_ENV=local.</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 15px">
+        <a href="#">Masuk sebagai Super Admin</a>
+        <a href="#">Kebijakan privasi</a>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

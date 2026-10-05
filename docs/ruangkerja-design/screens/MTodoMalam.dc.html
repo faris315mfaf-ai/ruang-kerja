@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Todolist proyek · ponsel · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: radial-gradient(420px 220px at 0% 0%, rgba(20,184,166,0.20), transparent 70%), radial-gradient(420px 220px at 100% 0%, rgba(47,123,234,0.18), transparent 70%), #070B14">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <a href="#" aria-label="Kembali" style="width: 44px; height: 44px; border-radius: 22px; background: #0F1622; border: 1px solid #233247; color: #EAF1F8; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <div style="display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 700; color: #5AD6C8">PROYEK PELUNCURAN Q4</span><h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 800; letter-spacing: -0.02em">Todolist</h1></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="display: flex; justify-content: space-between; font-size: 15px; color: #A6B4C6"><span><b style="color: #EAF1F8">{{done}}</b> dari {{total}} selesai di milestone ini</span><span>{{pct}}%</span></span>
+      <span style="height: 10px; border-radius: 5px; background: #233247; overflow: hidden"><span style="display: block; width: {{pct}}%; height: 100%; background: linear-gradient(90deg, #14B8A6, #2F7BEA); transition: width .2s"></span></span>
+    </div>
+    <div style="display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 0 16px">
+      <span style="flex-shrink: 0; height: 40px; padding: 0 14px; border-radius: 20px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center">Materi · 14 Okt</span>
+      <span style="flex-shrink: 0; height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid #FF7A8A; background: #0F1622; color: #FF7A8A; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center; box-sizing: border-box">Siaran pers · terlewat</span>
+      <span style="flex-shrink: 0; height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid #34465E; background: #0F1622; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center; box-sizing: border-box">Undangan · 20 Okt</span>
+    </div>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; overflow: hidden">
+      <sc-for list="{{items}}" as="t" hint-placeholder-count="7">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 0 14px; min-height: 66px; border-top: {{t.sep}}">
+          <button type="button" role="checkbox" aria-checked="{{t.aria}}" aria-label="Tandai {{t.title}}" onClick="{{t.toggle}}" style="width: 44px; height: 44px; margin-left: -8px; padding: 0; border: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><span style="width: 28px; height: 28px; border-radius: 9px; border: {{t.border}}; background: {{t.bg}}; box-sizing: border-box; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{t.tick}}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg></span></button>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 17px; line-height: 22px; font-weight: 600; color: {{t.color}}; text-decoration: {{t.deco}}">{{t.title}}</span>
+            <span style="font-size: 14px; color: #A6B4C6"><span style="font-family: 'JetBrains Mono', monospace; font-weight: 600">{{t.id}}</span> · {{t.owner}}</span>
+          </span>
+          <span style="font-size: 15px; font-weight: 700; color: {{t.dueColor}}; white-space: nowrap">{{t.due}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <button type="button" aria-label="Tambah tugas" style="position: absolute; right: 18px; bottom: 112px; width: 60px; height: 60px; border: 0; border-radius: 20px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 30px rgba(30,95,214,0.40)"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" malam="{{ true }}" dark="{{ true }}" active="tugas" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var ITEMS = [
+  ['PLQ-18', 'Finalisasi anggaran peluncuran', 'Dimas', 'Besok', 'soon'],
+  ['PLQ-22', 'Materi presentasi untuk direksi', 'Dimas', 'Kam', 'n'],
+  ['PLQ-21', 'Landing page produk baru', 'Rizky', 'Jum', 'n'],
+  ['PLQ-27', 'Desain banner & spanduk', 'Maya', 'Sab', 'n'],
+  ['PLQ-24', 'Skrip video demo produk', 'Maya', '12 Okt', 'n'],
+  ['PLQ-17', 'Desain key visual', 'Maya', '', 'd'],
+  ['PLQ-20', 'Foto produk untuk materi', 'Sari', '', 'd']
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { done: { 'PLQ-17': true, 'PLQ-20': true } };
+  }
+  renderVals() {
+    var self = this;
+    var done = (this.state && this.state.done) || {};
+    var n = ITEMS.filter(function (t) { return done[t[0]]; }).length;
+    return {
+      done: n, total: ITEMS.length, pct: Math.round(n / ITEMS.length * 100),
+      items: ITEMS.map(function (t, i) {
+        var on = !!done[t[0]];
+        return {
+          id: t[0], title: t[1], owner: t[2], due: on ? 'Selesai' : t[3],
+          dueColor: on ? '#4ADE9B' : (t[4] === 'soon' ? '#F6B95C' : '#A6B4C6'),
+          aria: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : '#0F1622', border: on ? '0' : '2px solid #34465E', tick: on ? '#FFFFFF' : 'transparent',
+          color: on ? '#A6B4C6' : '#EAF1F8', deco: on ? 'line-through' : 'none', sep: i ? '1px solid #172131' : '0',
+          toggle: function () { var d = Object.assign({}, done); d[t[0]] = !on; self.setState({ done: d }); }
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

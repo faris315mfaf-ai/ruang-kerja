@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Tugas saya · staf · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}a:hover{color:#5AD6C8}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #070B14; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" malam="{{ true }}" dark="{{ true }}" crumbs="Tugas saya" initials="SW" person="Sari Wulandari" status="Masuk 07.52" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 40px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 22px">
+    <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h1 style="margin: 0; font-size: 44px; line-height: 52px; font-weight: 800; letter-spacing: -0.03em">Tugas saya</h1>
+        <span style="font-size: 18px; color: #A6B4C6">{{openCount}} terbuka di 4 workspace · klik status untuk memajukan tugas</span>
+      </div>
+      <button type="button" style="height: 48px; padding: 0 22px; border: 0; border-radius: 14px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 24px rgba(30,95,214,0.30); display: inline-flex; align-items: center; gap: 8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Tugas baru</button>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 10px">
+      <sc-for list="{{chips}}" as="c" hint-placeholder-count="5">
+        <button type="button" aria-pressed="{{c.sel}}" onClick="{{c.pick}}" style="height: 40px; padding: 0 16px; border-radius: 20px; border: {{c.border}}; background: {{c.bg}}; color: {{c.color}}; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">{{c.label}}</button>
+      </sc-for>
+    </div>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+          <sc-if value="{{g.show}}" hint-placeholder-val="{{true}}">
+            <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+              <div style="display: flex; align-items: center; gap: 12px; padding: 16px 22px; background: {{g.headBg}}">
+                <span style="width: 10px; height: 10px; border-radius: 5px; background: {{g.dot}}"></span>
+                <span style="flex: 1; font-size: 18px; font-weight: 700; color: {{g.headFg}}">{{g.name}}</span>
+                <span style="font-size: 16px; font-weight: 700; color: {{g.headFg}}">{{g.count}}</span>
+              </div>
+              <sc-for list="{{g.items}}" as="t" hint-placeholder-count="2">
+                <div style="display: flex; align-items: center; gap: 16px; padding: 0 22px; min-height: 70px; border-top: 1px solid #172131">
+                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; padding: 4px 8px; border-radius: 8px; background: #172131; flex-shrink: 0">{{t.id}}</span>
+                  <a href="SDetailTugasMalam.dc.html" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; color: #EAF1F8">
+                    <span style="font-size: 17px; font-weight: 600; text-decoration: {{t.deco}}; color: {{t.titleColor}}">{{t.title}}</span>
+                    <span style="font-size: 15px; color: #A6B4C6">{{t.ws}}<sc-if value="{{t.hasCheck}}" hint-placeholder-val="{{false}}"> · checklist {{t.check}}</sc-if></span>
+                  </a>
+                  <button type="button" onClick="{{t.next}}" aria-label="Status {{t.status}}, klik untuk memajukan" style="height: 36px; padding: 0 12px; border: 1px solid {{t.sBorder}}; border-radius: 18px; background: {{t.sBg}}; color: {{t.sFg}}; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap"><span style="width: 9px; height: 9px; border-radius: 5px; background: {{t.sFg}}"></span>{{t.status}}</button>
+                  <span style="width: 110px; text-align: right; font-size: 15px; font-weight: {{t.dueWeight}}; color: {{t.dueColor}}; white-space: nowrap">{{t.due}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </sc-for>
+      </div>
+
+      <aside style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div style="border-radius: 24px; padding: 22px 24px; color: #FFFFFF; display: flex; flex-direction: column; gap: 6px; background: radial-gradient(220px 160px at 100% 0%, rgba(255,255,255,0.22), transparent 70%), linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); box-shadow: 0 12px 28px rgba(30,95,214,0.28)">
+          <span style="font-size: 16px; font-weight: 600">Selesai minggu ini</span>
+          <span style="font-size: 44px; line-height: 50px; font-weight: 800">{{doneWeek}}</span>
+          <span style="font-size: 15px">Minggu lalu 4 · <a href="SKinerjaMalam.dc.html" style="color: #FFFFFF; font-weight: 700; text-decoration: underline">Kinerja saya</a></span>
+        </div>
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 6px">
+          <h2 style="margin: 0 0 6px; font-size: 21px; font-weight: 700">Menurut workspace</h2>
+          <sc-for list="{{ws}}" as="w" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 12px; min-height: 48px; border-top: 1px solid #172131">
+              <span aria-hidden="true" style="width: 32px; height: 32px; border-radius: 10px; background: {{w.grad}}; color: #FFFFFF; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{w.l}}</span>
+              <span style="flex: 1; font-size: 16px; font-weight: 500">{{w.name}}</span>
+              <b style="font-size: 16px">{{w.n}}</b>
+            </div>
+          </sc-for>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" malam="{{ true }}" dark="{{ true }}" active="tugas" role="staf" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1360}}'>
+var FLOW = ['Todo', 'Dikerjakan', 'Review', 'Selesai'];
+var SS = { Todo: ['#172131', '#A6B4C6', '#34465E'], Dikerjakan: ['#2E2210', '#F6B95C', '#2E2210'], Review: ['#14223F', '#5B8CF6', '#14223F'], Selesai: ['#0E2A20', '#4ADE9B', '#0E2A20'] };
+var T = [
+  ['PLQ-15', 'Siaran pers peluncuran', 'PLQ', 'Proyek Peluncuran Q4', 'Review', 'Lewat 2 hari', 'late', ''],
+  ['GDG-48', 'Laporan selisih stok rak C', 'GDG', 'Tim Gudang', 'Review', 'Lewat 1 hari', 'late', ''],
+  ['MSG-23', 'Uji impor data stok batch 2', 'MSG', 'Migrasi sistem gudang', 'Dikerjakan', 'Hari ini', 'today', '3/5'],
+  ['GDG-52', 'Tata letak rak baru gudang C', 'GDG', 'Tim Gudang', 'Todo', 'Kam, 8 Okt', 'week', ''],
+  ['MSG-24', 'Mapping kode lokasi rak', 'MSG', 'Migrasi sistem gudang', 'Dikerjakan', 'Jum, 9 Okt', 'week', '6/9'],
+  ['MSG-25', 'Uji ekspor laporan stok', 'MSG', 'Migrasi sistem gudang', 'Todo', 'Sen, 12 Okt', 'later', ''],
+  ['MSG-27', 'Dokumentasi alur penerimaan barang', 'MSG', 'Migrasi sistem gudang', 'Todo', 'Rab, 14 Okt', 'later', ''],
+  ['OPS-151', 'Rekap pemakaian ATK September', 'OPS', 'Divisi Operasional', 'Todo', 'Kam, 15 Okt', 'later', ''],
+  ['PLQ-25', 'Kontrak vendor percetakan materi acara', 'PLQ', 'Proyek Peluncuran Q4', 'Todo', 'Jum, 16 Okt', 'later', '']
+];
+var GROUPS = [
+  ['late', 'Terlambat', '#FF7A8A', '#3A1520', '#FF7A8A'],
+  ['today', 'Hari ini', '#F6B95C', '#FFF8EC', '#F6B95C'],
+  ['week', 'Minggu ini', '#5B8CF6', '#070B14', '#EAF1F8'],
+  ['later', 'Nanti', '#7D8FA5', '#070B14', '#EAF1F8']
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    var st = {};
+    T.forEach(function (t) { st[t[0]] = t[4]; });
+    this.state = { status: st, ws: 'Semua' };
+  }
+  renderVals() {
+    var self = this;
+    var s = this.state || {};
+    var status = s.status || {};
+    var ws = s.ws || 'Semua';
+    var open = T.filter(function (t) { return status[t[0]] !== 'Selesai'; }).length;
+    var doneWeek = 4 + T.filter(function (t) { return status[t[0]] === 'Selesai'; }).length;
+    var counts = { Semua: 9, PLQ: 2, GDG: 2, MSG: 4, OPS: 1 };
+    return {
+      openCount: open,
+      doneWeek: doneWeek,
+      chips: ['Semua', 'MSG', 'GDG', 'PLQ', 'OPS'].map(function (c) {
+        var on = c === ws;
+        return { label: (c === 'Semua' ? 'Semua' : c) + ' · ' + counts[c], sel: on ? 'true' : 'false', bg: on ? '#3B4F6B' : '#0F1622', color: on ? '#FFFFFF' : '#EAF1F8', border: on ? '1px solid #EAF1F8' : '1px solid #34465E', pick: function () { self.setState({ ws: c }); } };
+      }),
+      groups: GROUPS.map(function (g) {
+        var items = T.filter(function (t) { return t[6] === g[0] && (ws === 'Semua' || t[2] === ws); });
+        return {
+          name: g[1], dot: g[2], headBg: g[3], headFg: g[4], count: items.length, show: items.length > 0,
+          items: items.map(function (t) {
+            var cur = status[t[0]];
+            var sc = SS[cur];
+            var done = cur === 'Selesai';
+            return {
+              id: t[0], title: t[1], ws: t[3], status: cur, sBg: sc[0], sFg: sc[1], sBorder: sc[2],
+              check: t[7], hasCheck: !!t[7] && !done, deco: done ? 'line-through' : 'none', titleColor: done ? '#A6B4C6' : '#EAF1F8',
+              due: done ? 'Selesai' : t[5], dueColor: done ? '#4ADE9B' : (t[6] === 'late' ? '#FF7A8A' : (t[6] === 'today' ? '#F6B95C' : '#A6B4C6')), dueWeight: t[6] === 'late' || t[6] === 'today' || done ? 700 : 500,
+              next: function () { var n = Object.assign({}, status); var i = FLOW.indexOf(cur); n[t[0]] = FLOW[(i + 1) % FLOW.length]; self.setState({ status: n }); }
+            };
+          })
+        };
+      }),
+      ws: [['M', 'Migrasi sistem gudang', 4, 'linear-gradient(135deg, #2F7BEA 0%, #6D4AE0 100%)'], ['G', 'Tim Gudang', 2, 'linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%)'], ['P', 'Proyek Peluncuran Q4', 2, 'linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%)'], ['O', 'Divisi Operasional', 1, 'linear-gradient(135deg, #2F7BEA 0%, #6D4AE0 100%)']].map(function (w) { return { l: w[0], name: w[1], n: w[2], grad: w[3] }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

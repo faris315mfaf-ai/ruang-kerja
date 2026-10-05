@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Portofolio proyek · Direksi · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}a:hover{color:#5AD6C8}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #070B14; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" malam="{{ true }}" dark="{{ true }}" crumbs="Portofolio proyek" initials="HW" person="Hendra Wijaya" status="Masuk 07.55" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 40px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #5AD6C8">Q4 2026 · per Senin, 5 Oktober</span>
+        <h1 style="margin: 0; font-size: 44px; line-height: 52px; font-weight: 800; letter-spacing: -0.03em">Portofolio proyek</h1>
+        <span style="font-size: 18px; color: #A6B4C6">6 proyek aktif di 4 divisi · 2 butuh keputusan Anda</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <div role="tablist" aria-label="Periode" style="display: inline-flex; padding: 4px; border-radius: 14px; background: rgba(15,22,34,0.7); border: 1px solid #233247">
+          <sc-for list="{{periods}}" as="s" hint-placeholder-count="3">
+            <button type="button" role="tab" aria-selected="{{s.sel}}" onClick="{{s.pick}}" style="height: 38px; padding: 0 18px; border: 0; border-radius: 10px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; background: {{s.bg}}; color: {{s.color}}; box-shadow: {{s.shadow}}">{{s.label}}</button>
+          </sc-for>
+        </div>
+        <button type="button" style="height: 44px; padding: 0 18px; border: 1px solid #34465E; border-radius: 12px; background: #0F1622; color: #EAF1F8; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Ekspor PDF</button>
+      </div>
+    </section>
+
+    <section aria-label="Ringkasan" style="display: flex; flex-wrap: wrap; gap: 20px">
+      <a href="#keputusan" style="flex: 1.2 1 240px; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 8px; color: #FFFFFF; background: radial-gradient(240px 160px at 100% 0%, rgba(255,255,255,0.22), transparent 70%), linear-gradient(135deg, #C2410C 0%, #BE185D 100%); box-shadow: 0 12px 28px rgba(190,24,93,0.28)">
+        <span style="font-size: 16px; font-weight: 600; color: #FFFFFF">Butuh keputusan Anda</span>
+        <span style="font-size: 44px; line-height: 52px; font-weight: 700">{{pending}}</span>
+        <span style="font-size: 15px; color: #FFFFFF">Semua dari PLQ · tinjau di bawah</span>
+      </a>
+      <div style="flex: 1.3 1 260px; background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+        <span style="font-size: 16px; font-weight: 600; color: #A6B4C6">Proyek aktif</span>
+        <span style="font-size: 44px; line-height: 52px; font-weight: 700">6</span>
+        <div aria-hidden="true" style="height: 10px; border-radius: 5px; overflow: hidden; display: flex; gap: 3px"><div style="flex: 3; background: #0F7A55"></div><div style="flex: 2; background: #E08A00"></div><div style="flex: 1; background: #C42137"></div></div>
+        <span style="font-size: 15px; color: #A6B4C6">3 sesuai jalur · 2 berisiko · 1 bermasalah</span>
+      </div>
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="3">
+        <div style="flex: 1 1 190px; background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+          <span style="font-size: 16px; font-weight: 600; color: #A6B4C6">{{k.label}}</span>
+          <span style="font-size: 44px; line-height: 52px; font-weight: 700; color: {{k.color}}">{{k.value}}</span>
+          <span style="font-size: 15px; color: #A6B4C6">{{k.note}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px 0 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+      <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; padding: 0 28px 14px">
+        <h2 style="margin: 0; font-size: 22px; font-weight: 700">Proyek aktif</h2>
+        <span style="font-size: 15px; color: #A6B4C6">Urut: status, lalu target · garis hitam = rencana hari ini</span>
+      </div>
+      <div style="overflow-x: auto">
+        <div style="min-width: 1120px">
+          <div style="display: grid; grid-template-columns: 2.3fr 1.3fr 1.4fr 1.6fr 1.6fr 1fr 0.7fr; gap: 16px; padding: 12px 28px; background: #070B14; font-size: 14px; font-weight: 700; color: #A6B4C6">
+            <span>Proyek</span><span>PIC</span><span>Status</span><span>Progres</span><span>Milestone berikutnya</span><span>Target</span><span style="text-align: right">Telat</span>
+          </div>
+          <sc-for list="{{projects}}" as="p" hint-placeholder-count="6">
+            <a href="DProyekMalam.dc.html" style="display: grid; grid-template-columns: 2.3fr 1.3fr 1.4fr 1.6fr 1.6fr 1fr 0.7fr; gap: 16px; align-items: center; padding: 14px 28px; min-height: 84px; box-sizing: border-box; border-top: 1px solid #172131; color: #EAF1F8">
+              <span style="display: flex; align-items: center; gap: 14px; min-width: 0">
+                <span aria-hidden="true" style="width: 44px; height: 44px; border-radius: 13px; background: {{p.grad}}; color: #FFFFFF; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0">{{p.initial}}</span>
+                <span style="display: flex; flex-direction: column; min-width: 0">
+                  <span style="font-size: 17px; font-weight: 700">{{p.name}}</span>
+                  <span style="font-size: 14px; color: #A6B4C6"><span style="font-family: 'JetBrains Mono', monospace; font-weight: 600">{{p.code}}</span> · {{p.division}}</span>
+                </span>
+              </span>
+              <span style="font-size: 16px; font-weight: 500">{{p.pic}}</span>
+              <span style="display: flex; flex-direction: column; align-items: flex-start; gap: 6px">
+                <span style="display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 15px; background: {{p.hBg}}; color: {{p.hFg}}; font-size: 15px; font-weight: 700"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{p.hFg}}"></span>{{p.health}}</span>
+                <sc-if value="{{p.hasFlags}}" hint-placeholder-val="{{false}}"><span style="font-size: 14px; line-height: 19px; font-weight: 600; color: #FF7A8A">{{p.flags}}</span></sc-if>
+              </span>
+              <span style="display: flex; flex-direction: column; gap: 8px">
+                <span style="font-size: 15px; color: #A6B4C6"><b style="font-size: 18px; color: #EAF1F8">{{p.actual}}%</b> · rencana {{p.planned}}%</span>
+                <span aria-hidden="true" style="position: relative; display: block; height: 10px; border-radius: 5px; background: #172131">
+                  <span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{p.actual}}%; border-radius: 5px; background: {{p.bar}}"></span>
+                  <span style="position: absolute; top: -4px; left: {{p.planned}}%; width: 3px; height: 18px; margin-left: -1.5px; border-radius: 2px; background: #3B4F6B"></span>
+                </span>
+              </span>
+              <span style="display: flex; flex-direction: column"><span style="font-size: 16px; font-weight: 600">{{p.ms}}</span><span style="font-size: 14px; color: #A6B4C6">{{p.msDate}}</span></span>
+              <span style="display: flex; flex-direction: column"><span style="font-size: 16px; font-weight: 600">{{p.target}}</span><span style="font-size: 14px; color: #A6B4C6">{{p.targetIn}}</span></span>
+              <span style="text-align: right; font-size: 18px; font-weight: 700; color: {{p.odColor}}">{{p.overdue}}</span>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div id="keputusan" style="flex: 2 1 600px; min-width: 0; background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px 28px 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+        <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 6px">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700">Butuh keputusan Anda</h2>
+          <span style="height: 28px; padding: 0 10px; border-radius: 14px; background: linear-gradient(135deg, #C2410C 0%, #BE185D 100%); color: #FFFFFF; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center">{{pending}}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding: 18px 0; border-bottom: 1px solid #172131">
+          <span style="font-size: 15px; color: #A6B4C6"><span style="font-family: 'JetBrains Mono', monospace; font-weight: 600">PLQ</span> · Proyek Peluncuran Q4 · tertahan sejak Kam, 1 Okt</span>
+          <span style="font-size: 20px; line-height: 28px; font-weight: 700">Kutipan direksi untuk siaran pers</span>
+          <span style="font-size: 17px; line-height: 26px; color: #C9D4E2">Milestone “Siaran pers final” menunggu kutipan dari Anda.</span>
+          <a href="DTugasMalam.dc.html" style="align-self: flex-start; height: 44px; padding: 0 18px; border-radius: 12px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 16px; font-weight: 600; display: inline-flex; align-items: center; box-shadow: 0 8px 20px rgba(30,95,214,0.28)">Buka tugas PLQ-15</a>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding: 18px 0">
+          <span style="font-size: 15px; color: #A6B4C6"><span style="font-family: 'JetBrains Mono', monospace; font-weight: 600">PLQ</span> · diminta Putri Ramadhani, Sab, 3 Okt</span>
+          <span style="font-size: 20px; line-height: 28px; font-weight: 700">Tambahan anggaran vendor video</span>
+          <span style="font-size: 17px; line-height: 26px; color: #C9D4E2">Tambahan [nominal] untuk 2 hari syuting. Terkait risiko “Anggaran vendor video melebihi rencana”.</span>
+          <sc-if value="{{budgetOpen}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; gap: 10px">
+              <button type="button" style="height: 44px; padding: 0 18px; border: 1px solid #34465E; border-radius: 12px; background: #0F1622; color: #EAF1F8; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Diskusikan</button>
+              <button type="button" onClick="{{approveBudget}}" style="height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 20px rgba(30,95,214,0.28)">Setujui</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{budgetDone}}" hint-placeholder-val="{{false}}">
+            <span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; border-radius: 12px; background: #0E2A20; color: #4ADE9B; font-size: 16px; font-weight: 700"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg>Disetujui · Putri mendapat notifikasi</span>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 22px 24px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+          <span style="font-size: 16px; font-weight: 600; color: #A6B4C6">Kehadiran hari ini</span>
+          <span style="font-size: 34px; line-height: 40px; font-weight: 700">39 <span style="font-size: 18px; font-weight: 600; color: #A6B4C6">dari 48 hadir</span></span>
+          <div aria-hidden="true" style="height: 8px; border-radius: 4px; overflow: hidden; display: flex; gap: 2px"><div style="flex: 39; background: #0F7A55"></div><div style="flex: 6; background: #3A70EC"></div><div style="flex: 3; background: #34465E"></div></div>
+          <span style="font-size: 15px; color: #A6B4C6">6 cuti atau izin · 3 belum check-in</span>
+          <a href="DHRMalam.dc.html" style="font-size: 16px; font-weight: 600; padding-top: 4px">Detail di Dashboard HR</a>
+        </div>
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+          <span style="font-size: 20px; font-weight: 700">Update terbaru PIC</span>
+          <sc-for list="{{updates}}" as="u" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid #172131">
+              <span style="display: flex; align-items: center; gap: 8px; font-size: 15px"><b>{{u.who}}</b><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; padding: 2px 6px; border-radius: 6px; background: #172131">{{u.code}}</span><span style="color: #A6B4C6">{{u.when}}</span></span>
+              <span style="font-size: 16px; line-height: 24px; color: #C9D4E2">{{u.text}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" malam="{{ true }}" dark="{{ true }}" active="portofolio" role="direksi" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1760}}'>
+var H = { on: ['Sesuai jalur', '#0E2A20', '#4ADE9B', 'linear-gradient(90deg, #14B8A6 0%, #0F7A55 100%)'], risk: ['Berisiko', '#2E2210', '#F6B95C', '#E08A00'], off: ['Bermasalah', '#3A1520', '#FF7A8A', '#FF7A8A'] };
+var G = ['linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%)', 'linear-gradient(135deg, #2F7BEA 0%, #6D4AE0 100%)', 'linear-gradient(135deg, #C2410C 0%, #BE185D 100%)'];
+var RAW = [
+  ['R', 'RKR', 'Rekrutmen 6 staf gudang', 'SDM', 'Hana Nuraini', 'off', 'Tertinggal 32 poin · milestone terlewat · update 9 hari', 25, 57, 'Wawancara tahap 2', 'Jum, 9 Okt', 'Sab, 31 Okt', '26 hari lagi', 4, 2],
+  ['P', 'PLQ', 'Proyek Peluncuran Q4', 'Pemasaran', 'Putri Ramadhani', 'risk', 'Milestone terlewat', 48, 61, 'Materi & landing page', 'Rab, 14 Okt', 'Sel, 27 Okt', '22 hari lagi', 3, 0],
+  ['A', 'ANG', 'Penyusunan anggaran 2027', 'Keuangan', 'Agus Setiawan', 'risk', '', 18, 25, 'Draf anggaran per divisi', 'Kam, 15 Okt', 'Jum, 4 Des', '60 hari lagi', 2, 1],
+  ['K', 'KTR', 'Renovasi kantor lantai 2', 'Operasional', 'Dimas Pratama', 'on', '', 76, 72, 'Serah terima', 'Jum, 30 Okt', 'Jum, 30 Okt', '25 hari lagi', 0, 2],
+  ['A', 'AUD', 'Persiapan audit eksternal', 'Keuangan', 'Agus Setiawan', 'on', '', 63, 57, 'Rekonsiliasi saldo Q3', 'Sen, 12 Okt', 'Jum, 13 Nov', '39 hari lagi', 0, 1],
+  ['M', 'MSG', 'Migrasi sistem gudang', 'Operasional', 'Sari Wulandari', 'on', '', 41, 39, 'Uji coba data stok', 'Jum, 16 Okt', 'Jum, 27 Nov', '53 hari lagi', 1, 0]
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { period: 'Kuartal ini', budget: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var period = st.period || 'Kuartal ini';
+    var done = !!st.budget;
+    return {
+      periods: ['Kuartal ini', 'Bulan ini', 'Semua'].map(function (l) {
+        var sel = l === period;
+        return { label: l, sel: sel ? 'true' : 'false', bg: sel ? '#0F1622' : 'transparent', color: sel ? '#EAF1F8' : '#A6B4C6', shadow: sel ? '0 2px 8px rgba(0,0,0,0.3)' : 'none', pick: function () { self.setState({ period: l }); } };
+      }),
+      pending: done ? 1 : 2,
+      kpis: [
+        { label: 'Milestone 2 minggu', value: '5', color: '#EAF1F8', note: 'terdekat Jum, 9 Okt' },
+        { label: 'Milestone terlewat', value: '2', color: '#FF7A8A', note: 'di PLQ dan RKR' },
+        { label: 'Tugas proyek terlambat', value: '10', color: '#EAF1F8', note: 'di 4 dari 6 proyek' }
+      ],
+      projects: RAW.map(function (r) {
+        var h = H[r[5]];
+        return { initial: r[0], code: r[1], name: r[2], division: r[3], pic: r[4], health: h[0], hBg: h[1], hFg: h[2], bar: h[3], flags: r[6], hasFlags: !!r[6], actual: r[7], planned: r[8], ms: r[9], msDate: r[10], target: r[11], targetIn: r[12], overdue: r[13], odColor: r[13] ? '#FF7A8A' : '#A6B4C6', grad: G[r[14]] };
+      }),
+      updates: [
+        { who: 'Sari Wulandari', code: 'MSG', when: 'kemarin', text: 'Mapping 1.240 SKU selesai 90%. Uji coba data stok tetap 16 Okt.' },
+        { who: 'Putri Ramadhani', code: 'PLQ', when: '2 hari lalu', text: 'Siaran pers menunggu kutipan direksi. Landing page 4 dari 7 bagian.' },
+        { who: 'Dimas Pratama', code: 'KTR', when: '3 hari lalu', text: 'Pengecatan dan listrik selesai. Tinggal furnitur.' }
+      ],
+      budgetOpen: !done, budgetDone: done,
+      approveBudget: function () { self.setState({ budget: true }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

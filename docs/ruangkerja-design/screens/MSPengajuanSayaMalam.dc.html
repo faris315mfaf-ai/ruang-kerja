@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Pengajuan saya · ponsel · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; background: #070B14">
+  <div style="padding: 24px 16px 0; display: flex; flex-direction: column; gap: 14px">
+    <h1 style="margin: 0; font-size: 32px; line-height: 40px; font-weight: 800; letter-spacing: -0.025em">Pengajuan saya</h1>
+    <div style="border-radius: 24px; padding: 18px; color: #FFFFFF; display: flex; flex-direction: column; gap: 8px; background: radial-gradient(220px 160px at 100% 0%, rgba(255,255,255,0.22), transparent 70%), linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); box-shadow: 0 14px 30px rgba(30,95,214,0.30)">
+      <span style="font-size: 15px; font-weight: 700">Cuti tahunan 2026</span>
+      <span style="font-size: 36px; line-height: 40px; font-weight: 800">7 <span style="font-size: 17px; font-weight: 600">dari 12 hari</span></span>
+      <div aria-hidden="true" style="height: 8px; border-radius: 4px; background: rgba(255,255,255,0.25); display: flex; overflow: hidden"><div style="flex: 5; background: rgba(255,255,255,0.45)"></div><div style="flex: 2; background: #3A2A10"></div><div style="flex: 5; background: #0F1622"></div></div>
+      <span style="font-size: 14px">5 terpakai · 2 menunggu HR</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+        <a href="#" style="display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 20px; background: #0F1622; border: 1px solid #233247; color: #EAF1F8">
+          <span style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px"><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 17px; font-weight: 700">{{r.type}}</span><span style="font-size: 15px; color: #A6B4C6">{{r.when}}</span></span><span style="height: 28px; padding: 0 10px; border-radius: 14px; background: {{r.bg}}; color: {{r.fg}}; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; white-space: nowrap">{{r.status}}</span></span>
+          <sc-if value="{{r.hasTrack}}" hint-placeholder-val="{{false}}">
+            <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800"><span style="height: 26px; padding: 0 8px; border-radius: 13px; background: #0E2A20; color: #4ADE9B; display: inline-flex; align-items: center">Dimas ✓</span><span style="width: 14px; height: 2px; background: #34465E"></span><span style="height: 26px; padding: 0 8px; border-radius: 13px; background: #2E2210; color: #F6B95C; display: inline-flex; align-items: center">HR · menunggu</span></span>
+          </sc-if>
+        </a>
+      </sc-for>
+    </div>
+  </div>
+  <a href="MSFormPengajuanMalam.dc.html" aria-label="Ajukan baru" style="position: absolute; right: 18px; bottom: 112px; height: 60px; padding: 0 22px; border-radius: 20px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 17px; font-weight: 800; display: flex; align-items: center; gap: 8px; box-shadow: 0 14px 30px rgba(30,95,214,0.40)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Ajukan</a>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" malam="{{ true }}" dark="{{ true }}" active="menu" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var S = { wait: ['Menunggu HR', '#2E2210', '#F6B95C'], ok: ['Disetujui', '#0E2A20', '#4ADE9B'], no: ['Ditolak', '#3A1520', '#FF7A8A'] };
+    return {
+      rows: [
+        ['Cuti tahunan · 2 hari', 'Sen–Sel, 26–27 Okt', 'wait'], ['Lembur · 2 jam', 'Sab, 26 Sep · 09.00–11.00', 'ok'], ['Izin · 1 hari', 'Jum, 18 Sep', 'ok'], ['Koreksi absensi', 'Sel, 15 Sep · lupa check-out', 'ok']
+      ].map(function (r) { var s = S[r[2]]; return { type: r[0], when: r[1], status: s[0], bg: s[1], fg: s[2], hasTrack: r[2] === 'wait' }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

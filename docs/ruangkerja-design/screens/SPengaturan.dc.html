@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Profil &amp; pengaturan · staf</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}a:hover{color:#0A4E57}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #F3F6FA; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" crumbs="Akun / Pengaturan" initials="SW" person="Sari Wulandari" status="Masuk 07.52" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 40px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <section style="display: flex; flex-wrap: wrap; align-items: center; gap: 22px; padding: 26px; border-radius: 26px; color: #FFFFFF; background: radial-gradient(320px 220px at 100% 0%, rgba(255,255,255,0.22), transparent 70%), linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); box-shadow: 0 14px 32px rgba(30,95,214,0.28)">
+      <span style="width: 84px; height: 84px; border-radius: 42px; background: rgba(255,255,255,0.18); border: 3px solid rgba(255,255,255,0.6); box-sizing: border-box; font-size: 30px; font-weight: 800; display: flex; align-items: center; justify-content: center">SW</span>
+      <span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 34px; line-height: 40px; font-weight: 800; letter-spacing: -0.02em">Sari Wulandari</span><span style="font-size: 17px">Staf Data · Divisi Operasional · Tim Gudang · bergabung Mar 2023</span></span>
+      <span style="display: flex; flex-direction: column; gap: 2px; font-size: 16px; text-align: right"><span>sari.w@[domain-perusahaan]</span><span>Atasan: Dimas Pratama</span></span>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 1.4 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+        <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px 0 8px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 28px 12px"><h2 style="margin: 0; font-size: 22px; font-weight: 700">Notifikasi</h2><span style="font-size: 15px; color: #46576B">ringkasan harian 07.30</span></div>
+          <div style="display: grid; grid-template-columns: 1fr 96px 96px 120px; gap: 8px; padding: 10px 28px; background: #F3F6FA; font-size: 14px; font-weight: 700; color: #46576B; text-align: center">
+            <span style="text-align: left">Kejadian</span><span>Aplikasi</span><span>Email</span><span>WhatsApp</span>
+          </div>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+            <div style="display: grid; grid-template-columns: 1fr 96px 96px 120px; gap: 8px; align-items: center; padding: 0 28px; min-height: 60px; border-top: 1px solid #EEF2F7">
+              <span style="font-size: 16px; font-weight: 500">{{r.label}}</span>
+              <sc-for list="{{r.cells}}" as="c" hint-placeholder-count="2">
+                <span style="display: flex; justify-content: center"><button type="button" role="switch" aria-checked="{{c.aria}}" aria-label="{{c.aria2}}" onClick="{{c.toggle}}" style="width: 48px; height: 30px; padding: 3px; border: 0; border-radius: 15px; background: {{c.track}}; cursor: pointer; display: flex; justify-content: {{c.justify}}"><span style="width: 24px; height: 24px; border-radius: 12px; background: #FFFFFF; box-shadow: 0 1px 4px rgba(11,26,43,0.25)"></span></button></span>
+              </sc-for>
+              <span style="font-size: 14px; font-weight: 700; color: #8495A8; text-align: center">Fase 2</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px 28px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 16px">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700">Data pribadi</h2>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+            <label style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 15px; font-weight: 700">Nomor karyawan</span><input type="text" value="OPS-0231" readonly="" style="height: 48px; padding: 0 14px; border: 1px solid #DDE4EC; border-radius: 12px; font: inherit; font-size: 16px; background: #F3F6FA; color: #46576B"></label>
+            <label style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 15px; font-weight: 700">Nomor WhatsApp</span><input type="tel" value="[nomor WhatsApp]" style="height: 48px; padding: 0 14px; border: 1px solid #C3CEDA; border-radius: 12px; font: inherit; font-size: 16px; color: #0B1A2B"></label>
+          </div>
+          <span style="font-size: 15px; line-height: 22px; color: #46576B">Jabatan, divisi, atasan, dan shift diatur HR. Ajukan perubahan lewat HR.</span>
+        </div>
+      </div>
+
+      <div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+        <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 14px">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700">Tampilan</h2>
+          <div role="radiogroup" aria-label="Tema" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+            <sc-for list="{{themes}}" as="t" hint-placeholder-count="3">
+              <button type="button" role="radio" aria-checked="{{t.sel}}" onClick="{{t.pick}}" style="display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 16px; border: {{t.border}}; background: #FFFFFF; font: inherit; cursor: pointer; color: #0B1A2B">
+                <span style="height: 64px; border-radius: 10px; background: {{t.preview}}; box-shadow: inset 0 0 0 1px rgba(11,26,43,0.08)"></span>
+                <span style="font-size: 15px; font-weight: 700">{{t.label}}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 14px">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700">Data saya &amp; privasi</h2>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 16px; background: #E3F6EE">
+            <span style="font-size: 16px; font-weight: 700; color: #0F7A55">Lokasi &amp; selfie: disetujui</span>
+            <span style="font-size: 15px; line-height: 22px; color: #253445">Kebijakan versi 1.2 · disetujui Sel, 1 Sep 2026. Selfie disimpan 12 bulan lalu dihapus otomatis.</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 16px; font-weight: 700">Siapa yang melihat data Anda</span>
+            <span style="font-size: 15px; line-height: 22px; color: #46576B">Selfie Anda dibuka 1 kali dalam 30 hari terakhir: Hana Nuraini (HR), Sel, 15 Sep, untuk koreksi absensi.</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px">
+            <button type="button" style="height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Unduh data saya</button>
+            <button type="button" style="height: 44px; padding: 0 16px; border: 1px solid #C3CEDA; border-radius: 12px; background: #FFFFFF; color: #C42137; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Cabut persetujuan</button>
+          </div>
+          <span style="font-size: 14px; line-height: 20px; color: #46576B">Bila dicabut, check-in hanya lewat QR kiosk atau koreksi manual HR.</span>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 22px 24px; display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 18px; font-weight: 700">Akun Google</span>
+          <span style="font-size: 15px; line-height: 22px; color: #46576B">Terhubung untuk Drive dan Docs. Masuk terakhir hari ini 07.49 dari Chrome · Windows.</span>
+          <button type="button" style="align-self: flex-start; height: 44px; padding: 0 16px; border: 1px solid #C3CEDA; border-radius: 12px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Keluar dari semua perangkat</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" active="" role="staf" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1480}}'>
+var EV = ['Ditugaskan tugas baru', 'Disebut (@mention)', 'Komentar di tugas yang saya ikuti', 'Tenggat H-1 dan terlewat', 'Status pengajuan saya', 'Pengingat check-in'];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { on: { '0-0': true, '0-1': true, '1-0': true, '1-1': true, '2-0': true, '3-0': true, '3-1': true, '4-0': true, '4-1': true, '5-0': true }, theme: 'Ikuti sistem' };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var on = st.on || {};
+    var theme = st.theme || 'Ikuti sistem';
+    return {
+      rows: EV.map(function (label, i) {
+        return {
+          label: label,
+          cells: ['Aplikasi', 'Email'].map(function (ch, j) {
+            var k = i + '-' + j, v = !!on[k];
+            return { aria: v ? 'true' : 'false', aria2: label + ' lewat ' + ch, track: v ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : '#C3CEDA', justify: v ? 'flex-end' : 'flex-start', toggle: function () { var n = Object.assign({}, on); n[k] = !v; self.setState({ on: n }); } };
+          })
+        };
+      }),
+      themes: [['Terang', '#F3F6FA'], ['Gelap', '#070B14'], ['Ikuti sistem', 'linear-gradient(90deg, #F3F6FA 50%, #070B14 50%)']].map(function (t) {
+        var s = t[0] === theme;
+        return { label: t[0], preview: t[1], sel: s ? 'true' : 'false', border: s ? '2px solid #0B7F86' : '1px solid #DDE4EC', pick: function () { self.setState({ theme: t[0] }); } };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Menu bar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<header style="width: 100%; height: 64px; box-sizing: border-box; display: flex; align-items: center; gap: 16px; padding: 0 28px; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; color: {{t.text}}; background: {{t.bg}}; backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%); border-bottom: 1px solid {{t.border}}">
+  <a href="{{links.home}}" aria-label="Ke beranda" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: {{t.text}}; flex-shrink: 0">
+    <span aria-hidden="true" style="width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); color: #FFFFFF; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(30,95,214,0.28)">RK</span>
+    <span style="font-size: 17px; font-weight: 700; letter-spacing: -0.01em">RuangKerja</span>
+  </a>
+  <span aria-hidden="true" style="width: 1px; height: 22px; background: {{t.border}}; flex-shrink: 0"></span>
+  <nav aria-label="Lokasi halaman" style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; font-size: 16px; white-space: nowrap; overflow: hidden">
+    <sc-for list="{{crumbs}}" as="c" hint-placeholder-count="2">
+      <span style="color: {{c.color}}; font-weight: {{c.weight}}; overflow: hidden; text-overflow: ellipsis">{{c.label}}</span>
+      <sc-if value="{{c.notLast}}" hint-placeholder-val="{{true}}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{t.subtle}}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="m9 6 6 6-6 6"></path></svg>
+      </sc-if>
+    </sc-for>
+  </nav>
+  <sc-if value="{{hasMeeting}}" hint-placeholder-val="{{false}}">
+    <a href="{{links.rapat}}" style="display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 6px 0 14px; border-radius: 20px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 15px; font-weight: 700; text-decoration: none; flex-shrink: 0; box-shadow: 0 6px 16px rgba(30,95,214,0.30)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 13 5.2 3.5a.5.5 0 0 0 .8-.4V7.9a.5.5 0 0 0-.8-.4L16 11"></path><path d="M4 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"></path></svg>{{meeting}}<span style="height: 30px; padding: 0 12px; border-radius: 15px; background: #FFFFFF; color: #0A4E57; display: inline-flex; align-items: center">Gabung</span></a>
+  </sc-if>
+  <span style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border-radius: 20px; background: {{t.chip}}; font-size: 15px; font-weight: 600; flex-shrink: 0"><span aria-hidden="true" style="width: 9px; height: 9px; border-radius: 5px; background: {{t.green}}; box-shadow: 0 0 0 3px {{t.greenRing}}"></span>{{status}}</span>
+  <button type="button" style="height: 40px; min-width: 200px; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 14px; border: 1px solid {{t.border}}; border-radius: 12px; background: {{t.field}}; color: {{t.muted}}; font: inherit; font-size: 15px; cursor: pointer; flex-shrink: 0">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z"></path><path d="m20 20-3.5-3.5"></path></svg>
+    <span style="flex: 1; text-align: left">Cari apa saja</span>
+    <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; padding: 2px 6px; border-radius: 6px; border: 1px solid {{t.border}}">Ctrl K</span>
+  </button>
+  <a href="{{links.inbox}}" aria-label="Inbox, 4 belum dibaca" style="position: relative; width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; color: {{t.text}}; flex-shrink: 0">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+    <span aria-hidden="true" style="position: absolute; top: 6px; right: 5px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: #C42137; color: #FFFFFF; font-size: 12px; font-weight: 700; line-height: 18px; text-align: center">4</span>
+  </a>
+  <button type="button" aria-label="Menu akun {{person}}" style="width: 44px; height: 44px; border: 0; padding: 2px; border-radius: 22px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); cursor: pointer; flex-shrink: 0">
+    <span style="width: 100%; height: 100%; border-radius: 20px; background: {{t.avatarBg}}; color: {{t.text}}; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{initials}}</span>
+  </button>
+</header>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"crumbs":{"editor":"text","default":"Beranda"},"status":{"editor":"text","default":"Masuk 07.41"},"initials":{"editor":"text","default":"DP"},"person":{"editor":"text","default":"Dimas Pratama"},"dark":{"editor":"boolean","default":false},"malam":{"editor":"boolean","default":false},"meeting":{"editor":"text","default":""},"$preview":{"width":1440,"height":64}}'>
+var LIGHT = { bg: 'rgba(255,255,255,0.72)', border: '#DDE4EC', text: '#0B1A2B', muted: '#46576B', subtle: '#8495A8', chip: '#E3F6EE', green: '#0F7A55', greenRing: 'rgba(15,122,85,0.18)', field: 'rgba(238,242,247,0.9)', avatarBg: '#FFFFFF' };
+var DARK = { bg: 'rgba(15,22,34,0.72)', border: '#233247', text: '#EAF1F8', muted: '#A6B4C6', subtle: '#6B7C92', chip: 'rgba(74,222,155,0.14)', green: '#4ADE9B', greenRing: 'rgba(74,222,155,0.18)', field: 'rgba(23,33,49,0.9)', avatarBg: '#0F1622' };
+function nm(h, on) { return on && /\.dc\.html$/.test(h) && h !== 'DBoard.dc.html' ? h.replace('.dc.html', 'Malam.dc.html') : h; }
+class Component extends DCLogic {
+  renderVals() {
+    var p = this.props || {};
+    var t = p.dark ? DARK : LIGHT;
+    var parts = String(p.crumbs || 'Beranda').split(' / ');
+    var crumbs = parts.map(function (label, i) {
+      var last = i === parts.length - 1;
+      return { label: label, notLast: !last, color: last ? t.text : t.muted, weight: last ? 700 : 500 };
+    });
+    var links = { home: nm('DBeranda.dc.html', p.malam), rapat: nm('DRapat.dc.html', p.malam), inbox: nm('DInbox.dc.html', p.malam) };
+    return { links: links, hasMeeting: !!p.meeting, meeting: p.meeting || '', t: t, crumbs: crumbs, status: p.status || 'Masuk 07.41', initials: p.initials || 'DP', person: p.person || 'Dimas Pratama' };
+  }
+}
+</script>
+</body>
+</html>

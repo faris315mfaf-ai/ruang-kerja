@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Proyek & milestone · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; background: #F3F6FA">
+  <div style="padding: 20px 0 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 16px"><h1 style="margin: 0; font-size: 30px; line-height: 38px; font-weight: 800; letter-spacing: -0.025em">Proyek</h1><a href="MgPMilestone.dc.html" style="height: 40px; padding: 0 14px; border-radius: 20px; background: #FFFFFF; border: 1px solid #DDE4EC; color: #09656E; font-size: 15px; font-weight: 800; display: inline-flex; align-items: center; text-decoration: none">Semua milestone</a></div>
+    <div role="tablist" aria-label="Pilih proyek" style="display: flex; gap: 8px; padding: 0 16px; overflow-x: auto">
+      <sc-for list="{{chips}}" as="c" hint-placeholder-count="6">
+        <button type="button" role="tab" aria-selected="{{c.sel}}" onClick="{{c.pick}}" style="flex-shrink: 0; height: 42px; padding: 0 14px; border-radius: 21px; border: {{c.border}}; background: {{c.bg}}; color: {{c.fg}}; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{c.dot}}"></span>{{c.code}}</button>
+      </sc-for>
+    </div>
+    <div style="padding: 0 16px; display: flex; flex-direction: column; gap: 12px">
+      <div style="border-radius: 24px; padding: 18px; color: #FFFFFF; display: flex; flex-direction: column; gap: 8px; background: radial-gradient(220px 160px at 100% 0%, rgba(255,255,255,0.22), transparent 70%), {{d.grad}}; box-shadow: 0 14px 30px rgba(30,95,214,0.28)">
+        <span style="display: flex; justify-content: space-between; align-items: center"><span style="font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace">{{d.client}}</span><span style="height: 26px; padding: 0 10px; border-radius: 13px; background: #FFFFFF; color: {{d.sFg}}; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center">{{d.status}}</span></span>
+        <span style="font-size: 22px; line-height: 28px; font-weight: 800">{{d.name}}</span>
+        <span style="display: flex; align-items: baseline; justify-content: space-between"><span style="font-size: 34px; line-height: 40px; font-weight: 800">{{d.pct}}%</span><span style="font-size: 14px">rencana {{d.plan}}% · PIC {{d.pic}}</span></span>
+        <span style="position: relative; display: block; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.28)"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{d.pct}}%; border-radius: 4px; background: #FFFFFF"></span><span style="position: absolute; top: -4px; left: {{d.plan}}%; width: 3px; height: 16px; margin-left: -1.5px; background: #0B1A2B; border-radius: 2px"></span></span>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 22px; padding: 12px 16px 2px">
+        <span style="display: block; font-size: 17px; font-weight: 800; padding-bottom: 4px">Milestone</span>
+        <sc-for list="{{d.ms}}" as="m" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 12px; min-height: 54px; border-top: 1px solid #EEF2F7">
+            <span style="width: 13px; height: 13px; margin: 0 3px; transform: rotate(45deg); box-sizing: border-box; border-radius: 3px; background: {{m.bg}}; border: {{m.border}}; flex-shrink: 0"></span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 700; color: {{m.color}}">{{m.t}}</span><span style="font-size: 13px; color: #46576B">{{m.m}}</span></span>
+            <span style="font-size: 13px; font-weight: 800; white-space: nowrap">{{m.d}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="border-radius: 18px; padding: 12px 14px; color: #FFFFFF; background: linear-gradient(135deg, #C2410C 0%, #BE185D 100%); display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 800">RISIKO UTAMA</span><span style="font-size: 15px; font-weight: 700">{{d.risk}}</span></div>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" set="manajemen" active="proyek" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"project":{"editor":"enum","options":["SIM","KMB","PSL","RKJ","WEB","DEP"],"default":"SIM"},"$preview":{"width":390,"height":844}}'>
+var G = { teal: 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', indigo: 'linear-gradient(135deg, #2F7BEA 0%, #6D4AE0 100%)', warm: 'linear-gradient(135deg, #C2410C 0%, #BE185D 100%)' };
+var ST = { ok: ['Sesuai jalur', '#0F7A55', '#14B8A6'], warn: ['Berisiko', '#9A5800', '#E08A00'], late: ['Bermasalah', '#C42137', '#C42137'] };
+var P = [
+  ['SIM', 'SIMRS RS Harapan Sehat', 'RS Harapan Sehat', 'Bayu', 'ok', 'teal', 72, 70, [['Migrasi data tahap 1', 'selesai', 'Kam, 1 Okt', 'done'], ['UAT sesi 3', 'target 90% lulus', 'Kam, 8 Okt', 'todo'], ['Go-live', 'tim lengkap on-site', 'Sen, 19 Okt', 'todo'], ['Hypercare selesai', 'serah terima TI RS', 'Sen, 16 Nov', 'todo']], 'Kapasitas server go-live · uji beban Rab, 7 Okt'],
+  ['KMB', 'Aplikasi Koperasi Maju Bersama', 'Koperasi Maju', 'Dimas', 'warn', 'indigo', 45, 52, [['Sprint 5 selesai', '38 dari 40 poin', 'Jum, 2 Okt', 'done'], ['Sprint 6 review', 'demo ke klien', 'Jum, 9 Okt', 'todo'], ['UAT bersama klien', '130 skenario', 'Sen, 26 Okt', 'todo'], ['Go-live', 'pelatihan kasir', 'Sen, 9 Nov', 'todo']], 'Payment gateway tertahan kredensial bank'],
+  ['PSL', 'Portal Logistik Sinar', 'PT Sinar Logistik', 'Maya', 'ok', 'teal', 20, 18, [['Kontrak ditandatangani', 'berkas oleh Sekretariat', 'Kam, 8 Okt', 'todo'], ['SRS disetujui klien', 'draf v2', 'Kam, 15 Okt', 'todo'], ['Desain UI disetujui', '18 layar', 'Jum, 13 Nov', 'todo'], ['Rilis MVP', 'pelacakan pengiriman', 'Jum, 18 Des', 'todo']], 'Tambahan scope armada +18 hari'],
+  ['RKJ', 'RuangKerja internal', 'SPKD internal', 'Dimas', 'ok', 'teal', 88, 80, [['Modul absensi lulus UAT', 'selesai', 'Jum, 25 Sep', 'done'], ['Rilis Fase 1', 'absensi, tugas, rapat', 'Sen, 26 Okt', 'todo'], ['Fase 2 mulai', 'WhatsApp & payroll', 'Sen, 2 Nov', 'todo'], ['Rilis Fase 2', 'mendatang', 'Jum, 11 Des', 'todo']], 'Push di iOS butuh PWA terpasang'],
+  ['WEB', 'Rebranding & website SPKD', 'SPKD internal', 'Putri', 'ok', 'warm', 60, 65, [['Logo final disetujui', '3 alternatif', 'Rab, 7 Okt', 'todo'], ['Website baru tayang', '12 halaman', 'Jum, 30 Okt', 'todo'], ['Kampanye Q4 selesai', 'LinkedIn 12 minggu', 'Jum, 18 Des', 'todo']], 'Kapasitas tim konten · tender 9 Okt'],
+  ['DEP', 'Dashboard Eksekutif Pemda', 'Pemerintah Daerah', 'Rina', 'late', 'indigo', 30, 50, [['Integrasi API Pemda', 'terlewat · akses belum ada', 'Jum, 2 Okt', 'miss'], ['Prototipe dashboard', 'butuh data 17 OPD', 'Jum, 23 Okt', 'todo'], ['Serah terima', 'usul mundur ke 18 Des', 'Jum, 27 Nov', 'todo']], 'Akses API Pemda tertahan 12 hari']
+];
+function ms(s) { return s === 'done' ? { bg: '#0B1A2B', border: '0' } : (s === 'miss' ? { bg: '#C42137', border: '0' } : { bg: '#FFFFFF', border: '2px solid #0B1A2B' }); }
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: null };
+  }
+  renderVals() {
+    var self = this;
+    var code = (this.state && this.state.sel) || (this.props && this.props.project) || 'SIM';
+    var c = P.filter(function (x) { return x[0] === code; })[0] || P[0];
+    var s = ST[c[4]];
+    return {
+      chips: P.map(function (p) { var on = p[0] === c[0]; return { code: p[0], dot: ST[p[4]][2], sel: on ? 'true' : 'false', bg: on ? '#0B1A2B' : '#FFFFFF', fg: on ? '#FFFFFF' : '#0B1A2B', border: on ? '0' : '1px solid #DDE4EC', pick: function () { self.setState({ sel: p[0] }); } }; }),
+      d: { name: c[1], client: c[2], pic: c[3], status: s[0], sFg: s[1], grad: G[c[5]], pct: c[6], plan: c[7], risk: c[9],
+        ms: c[8].map(function (m) { var st = ms(m[3]); return { t: m[0], m: m[1], d: m[2], bg: st.bg, border: st.border, color: m[3] === 'miss' ? '#C42137' : '#0B1A2B' }; }) }
+    };
+  }
+}
+</script>
+</body>
+</html>

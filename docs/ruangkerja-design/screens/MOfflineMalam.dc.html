@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Mode offline & sinkron · ponsel · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #070B14">
+  <div role="status" style="display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: {{v.barBg}}; color: {{v.barFg}}">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{v.barIcon}}"></path></svg>
+    <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 800">{{v.barTitle}}</span><span style="font-size: 13px; font-weight: 600">{{v.barSub}}</span></span>
+  </div>
+  <div style="padding: 16px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <span style="display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 800; color: #F6B95C">IMPLEMENTER · ON-SITE</span><span style="font-size: 26px; line-height: 32px; font-weight: 800">RS Harapan Sehat</span><span style="font-size: 14px; color: #A6B4C6">Ruang server lantai basement · sinyal sering hilang</span></span>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; padding: 14px 16px 4px">
+      <span style="display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 6px"><span style="font-size: 17px; font-weight: 800">Antrean sinkron</span><span style="font-size: 14px; font-weight: 700; color: #A6B4C6">{{v.count}}</span></span>
+      <sc-for list="{{v.queue}}" as="q" hint-placeholder-count="4">
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 62px; border-top: 1px solid #172131">
+          <span style="width: 36px; height: 36px; border-radius: 18px; background: {{q.iBg}}; color: {{q.iFg}}; font-size: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0">{{q.glyph}}</span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 700">{{q.t}}</span><span style="font-size: 13px; color: #A6B4C6">{{q.m}}</span></span>
+          <span style="font-size: 13px; font-weight: 800; color: {{q.sFg}}; white-space: nowrap">{{q.s}}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 17px; font-weight: 800">Tetap bisa dikerjakan tanpa sinyal</span>
+      <span style="font-size: 15px; line-height: 23px; color: #A6B4C6">Check-in dengan GPS & selfie, update status tiket, centang checklist UAT, dan catat notulen. Lampiran foto dikompres dulu di perangkat.</span>
+      <span style="font-size: 13px; color: #7D8FA5">Data tersimpan terenkripsi di perangkat maksimal 72 jam.</span>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px 22px; background: rgba(15,22,34,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid #233247">
+    <button type="button" onClick="{{go}}" style="width: 100%; height: 56px; border: 0; border-radius: 16px; background: {{v.btnBg}}; color: #FFFFFF; font: inherit; font-size: 18px; font-weight: 800; cursor: pointer">{{v.btn}}</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var Q = [['Check-in dinas luar 07.50', 'GPS di luar radius kantor · selfie 180 KB'], ['Tiket P1 → Sedang ditangani', 'label farmasi tidak terbaca · 2 foto'], ['UAT SIMRS skenario 141–148', '8 skenario lulus'], ['Catatan kunjungan', '“Printer label perlu driver versi baru”']];
+var OFF = 'M2 8.8a15 15 0 0 1 4-2.5M10.7 5.1A15 15 0 0 1 22 8.8M5 12.5a10 10 0 0 1 5.2-2.7M16.8 11a10 10 0 0 1 2.2 1.5M8.5 16a5 5 0 0 1 7 0M12 20h.01M2 2l20 20';
+var ON = 'M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M2 8.8a15 15 0 0 1 20 0M12 20h.01';
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { phase: 0 };
+  }
+  renderVals() {
+    var self = this;
+    var ph = (this.state && this.state.phase) || 0;
+    return {
+      go: function () { self.setState({ phase: ph >= 2 ? 0 : ph + 1 }); },
+      v: {
+        barBg: ph === 0 ? '#2E2210' : (ph === 1 ? '#14223F' : '#0E2A20'), barFg: ph === 0 ? '#F6B95C' : (ph === 1 ? '#A9C2FF' : '#4ADE9B'),
+        barIcon: ph === 0 ? OFF : ON,
+        barTitle: ph === 0 ? 'Tidak ada sinyal' : (ph === 1 ? 'Terhubung · mengirim…' : 'Semua tersinkron'),
+        barSub: ph === 0 ? 'terakhir sinkron 09.12 · data tampil dari perangkat' : (ph === 1 ? '2 dari 4 terkirim' : 'baru saja · 10.06'),
+        count: ph === 2 ? '0 menunggu' : (ph === 1 ? '2 menunggu' : '4 menunggu'),
+        queue: Q.map(function (q, i) { var done = ph === 2 || (ph === 1 && i < 2); return { t: q[0], m: q[1], glyph: done ? '✓' : '•', iBg: done ? '#0E2A20' : '#2E2210', iFg: done ? '#4ADE9B' : '#F6B95C', s: done ? 'Terkirim' : 'Menunggu', sFg: done ? '#4ADE9B' : '#F6B95C' }; }),
+        btn: ph === 0 ? 'Coba kirim sekarang' : (ph === 1 ? 'Mengirim…' : 'Selesai'),
+        btnBg: ph === 2 ? 'linear-gradient(135deg, #14B8A6 0%, #0F7A55 100%)' : 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)'
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

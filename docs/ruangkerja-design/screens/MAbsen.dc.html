@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Absen · check-in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; background: #F3F6FA">
+  <div style="position: relative; height: 330px; overflow: hidden; background: radial-gradient(180px 180px at 50% 52%, rgba(20,184,166,0.30), rgba(20,184,166,0.10) 70%, transparent 71%), linear-gradient(180deg, #E8FBF8 0%, #EEF4FF 100%)">
+    <div aria-hidden="true" style="position: absolute; inset: 0; background-image: linear-gradient(rgba(11,26,43,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(11,26,43,0.06) 1px, transparent 1px); background-size: 44px 44px"></div>
+    <div aria-hidden="true" style="position: absolute; left: -20px; right: -20px; top: 196px; height: 18px; background: rgba(255,255,255,0.9); transform: rotate(-8deg)"></div>
+    <div aria-hidden="true" style="position: absolute; top: -20px; bottom: -20px; left: 250px; width: 16px; background: rgba(255,255,255,0.9); transform: rotate(6deg)"></div>
+    <div aria-hidden="true" style="position: absolute; left: 50%; top: 52%; width: 180px; height: 180px; margin: -90px 0 0 -90px; border-radius: 90px; border: 2px dashed rgba(11,127,134,0.55); box-sizing: border-box"></div>
+    <div aria-hidden="true" style="position: absolute; left: 50%; top: 52%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 11px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); box-shadow: 0 0 0 6px rgba(255,255,255,0.9), 0 0 0 14px rgba(30,95,214,0.18)"></div>
+    <div style="position: absolute; left: 16px; right: 16px; top: 20px; display: flex; align-items: center; justify-content: space-between">
+      <a href="MBeranda.dc.html" aria-label="Kembali" style="width: 48px; height: 48px; border-radius: 24px; background: rgba(255,255,255,0.86); color: #0B1A2B; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(11,26,43,0.12)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="height: 40px; padding: 0 14px; border-radius: 20px; background: rgba(255,255,255,0.86); font-size: 15px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(11,26,43,0.12)"><span style="width: 8px; height: 8px; border-radius: 4px; background: #0F7A55"></span>GPS akurat · 12 m</span>
+    </div>
+    <span style="position: absolute; left: 16px; bottom: 14px; font-size: 13px; font-weight: 600; color: #46576B">[Peta lokasi]</span>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; top: 300px; bottom: 0; border-radius: 28px 28px 0 0; background: #FFFFFF; box-shadow: 0 -10px 30px rgba(11,26,43,0.10); padding: 22px 16px 0; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <h1 style="margin: 0; font-size: 28px; line-height: 36px; font-weight: 800; letter-spacing: -0.02em">Check-in</h1>
+      <span style="font-size: 17px; color: #46576B">Kantor Pusat · 38 m dari titik, dalam radius 100 m</span>
+    </div>
+    <div role="tablist" aria-label="Metode" style="display: flex; padding: 4px; border-radius: 16px; background: #EEF2F7">
+      <sc-for list="{{methods}}" as="m" hint-placeholder-count="3">
+        <button type="button" role="tab" aria-selected="{{m.sel}}" onClick="{{m.pick}}" style="flex: 1; height: 44px; border: 0; border-radius: 12px; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; background: {{m.bg}}; color: {{m.color}}; box-shadow: {{m.shadow}}">{{m.label}}</button>
+      </sc-for>
+    </div>
+    <div style="display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 18px; border: 1px solid #DDE4EC">
+      <span style="width: 64px; height: 64px; border-radius: 18px; background: linear-gradient(135deg, #E8FBF8 0%, #EEF4FF 100%); color: #09656E; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"></path><path d="M12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"></path></svg></span>
+      <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 17px; font-weight: 700">{{hint.title}}</span><span style="font-size: 15px; line-height: 21px; color: #46576B">{{hint.sub}}</span></span>
+    </div>
+    <a href="MSukses.dc.html" style="height: 58px; border-radius: 18px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 19px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 14px 30px rgba(30,95,214,0.36)">{{hint.cta}}</a>
+    <span style="font-size: 14px; line-height: 20px; color: #46576B; text-align: center">Lokasi dan foto hanya direkam saat ini. <a href="#" style="font-weight: 700">Privasi</a></span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var HINTS = {
+  'Selfie': { title: 'Ambil selfie', sub: 'Kamera depan terbuka setelah Anda menekan tombol.', cta: 'Buka kamera' },
+  'QR': { title: 'Pindai QR di lobi', sub: 'Arahkan kamera ke layar kiosk. Kode berganti tiap 30 detik.', cta: 'Pindai QR' },
+  'WFH': { title: 'Check-in dari rumah', sub: 'Tulis catatan aktivitas. Radius kantor tidak berlaku.', cta: 'Lanjut WFH' }
+};
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { m: 'Selfie' };
+  }
+  renderVals() {
+    var self = this;
+    var m = (this.state && this.state.m) || 'Selfie';
+    return {
+      methods: ['Selfie', 'QR', 'WFH'].map(function (l) {
+        var on = l === m;
+        return { label: l === 'Selfie' ? 'GPS + selfie' : l, sel: on ? 'true' : 'false', bg: on ? '#FFFFFF' : 'transparent', color: on ? '#0B1A2B' : '#46576B', shadow: on ? '0 2px 8px rgba(11,26,43,0.12)' : 'none', pick: function () { self.setState({ m: l }); } };
+      }),
+      hint: HINTS[m]
+    };
+  }
+}
+</script>
+</body>
+</html>

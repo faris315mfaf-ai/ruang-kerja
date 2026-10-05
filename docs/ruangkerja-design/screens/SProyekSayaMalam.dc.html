@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Workspace &amp; proyek saya · staf · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}a:hover{color:#5AD6C8}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #070B14; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" malam="{{ true }}" dark="{{ true }}" crumbs="Workspace saya" initials="SW" person="Sari Wulandari" status="Masuk 07.52" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 40px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <section style="display: flex; flex-direction: column; gap: 8px">
+      <h1 style="margin: 0; font-size: 44px; line-height: 52px; font-weight: 800; letter-spacing: -0.03em">Workspace &amp; proyek saya</h1>
+      <span style="font-size: 18px; color: #A6B4C6">5 workspace · Anda PIC di 1 proyek</span>
+    </section>
+
+    <section style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px">
+      <sc-for list="{{ws}}" as="w" hint-placeholder-count="5">
+        <a href="{{w.href}}" style="display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: 24px; background: #0F1622; border: {{w.border}}; box-shadow: {{w.shadow}}; color: #EAF1F8">
+          <span style="display: flex; align-items: center; gap: 12px">
+            <span aria-hidden="true" style="width: 48px; height: 48px; border-radius: 14px; background: {{w.grad}}; color: #FFFFFF; font-size: 19px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{w.l}}</span>
+            <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 18px; font-weight: 700">{{w.name}}</span><span style="font-size: 14px; color: #A6B4C6">{{w.type}}</span></span>
+          </span>
+          <span style="align-self: flex-start; height: 28px; padding: 0 10px; border-radius: 14px; background: {{w.roleBg}}; color: {{w.roleFg}}; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center">{{w.role}}</span>
+          <sc-if value="{{w.isProject}}" hint-placeholder-val="{{false}}">
+            <span style="display: flex; flex-direction: column; gap: 6px">
+              <span style="display: flex; justify-content: space-between; font-size: 15px; color: #A6B4C6"><span><b style="color: #EAF1F8">{{w.pct}}%</b> · rencana {{w.plan}}%</span><span style="font-weight: 700; color: {{w.hFg}}">{{w.health}}</span></span>
+              <span style="position: relative; display: block; height: 8px; border-radius: 4px; background: #172131"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{w.pct}}%; border-radius: 4px; background: linear-gradient(90deg, #14B8A6, #2F7BEA)"></span><span style="position: absolute; left: {{w.plan}}%; top: -3px; width: 2px; height: 14px; background: #3B4F6B"></span></span>
+            </span>
+          </sc-if>
+          <span style="display: flex; justify-content: space-between; font-size: 15px; color: #A6B4C6; padding-top: 10px; border-top: 1px solid #172131"><span>Tugas saya <b style="color: #EAF1F8">{{w.mine}}</b></span><span>{{w.next}}</span></span>
+        </a>
+      </sc-for>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 999 1 640px; min-width: 0; border-radius: 26px; padding: 2px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); box-shadow: 0 16px 40px rgba(30,95,214,0.18)">
+        <div style="border-radius: 24px; background: #0F1622; padding: 28px; display: flex; flex-direction: column; gap: 22px">
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #5AD6C8">Anda PIC · MSG</span>
+              <h2 style="margin: 0; font-size: 30px; line-height: 38px; font-weight: 800; letter-spacing: -0.02em">Update mingguan · minggu 41</h2>
+              <span style="font-size: 16px; color: #A6B4C6">Jatuh tempo Jum, 9 Okt 15.00 · dibaca Direksi (sponsor Agus Setiawan) dan Dimas</span>
+            </div>
+            <span style="height: 34px; padding: 0 14px; border-radius: 17px; background: #172131; color: #A6B4C6; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center">Draf</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+            <div style="padding: 16px; border-radius: 16px; background: #070B14; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600; color: #A6B4C6">Progres aktual</span><span style="font-size: 26px; font-weight: 800">41%</span><span style="font-size: 14px; color: #A6B4C6">otomatis dari tugas</span></div>
+            <div style="padding: 16px; border-radius: 16px; background: #070B14; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600; color: #A6B4C6">Rencana</span><span style="font-size: 26px; font-weight: 800">39%</span><span style="font-size: 14px; color: #4ADE9B; font-weight: 700">unggul 2 poin</span></div>
+            <div style="padding: 16px; border-radius: 16px; background: #070B14; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600; color: #A6B4C6">Milestone berikutnya</span><span style="font-size: 18px; font-weight: 800; line-height: 26px">Uji coba data stok</span><span style="font-size: 14px; color: #A6B4C6">Jum, 16 Okt</span></div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <span id="health-label" style="font-size: 16px; font-weight: 700">Status kesehatan menurut Anda</span>
+            <div role="radiogroup" aria-labelledby="health-label" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+              <sc-for list="{{health}}" as="h" hint-placeholder-count="3">
+                <button type="button" role="radio" aria-checked="{{h.sel}}" onClick="{{h.pick}}" style="height: 56px; border-radius: 16px; border: {{h.border}}; background: {{h.bg}}; color: {{h.fg}}; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px"><span style="width: 12px; height: 12px; border-radius: 6px; background: {{h.dot}}"></span>{{h.label}}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <label style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 16px; font-weight: 700">Ringkasan minggu ini</span><textarea rows="3" placeholder="Apa yang selesai dan apa berikutnya" style="padding: 14px 16px; border: 1px solid #34465E; border-radius: 14px; font: inherit; font-size: 17px; line-height: 26px; color: #EAF1F8; resize: none"></textarea></label>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+            <label style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 16px; font-weight: 700">Hambatan</span><textarea rows="2" placeholder="Opsional" style="padding: 14px 16px; border: 1px solid #34465E; border-radius: 14px; font: inherit; font-size: 17px; line-height: 26px; color: #EAF1F8; resize: none"></textarea></label>
+            <label style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 16px; font-weight: 700">Keputusan yang dibutuhkan dari Direksi</span><textarea rows="2" placeholder="Opsional · muncul di dashboard Direksi" style="padding: 14px 16px; border: 1px solid #34465E; border-radius: 14px; font: inherit; font-size: 17px; line-height: 26px; color: #EAF1F8; resize: none"></textarea></label>
+          </div>
+          <sc-if value="{{sent}}" hint-placeholder-val="{{false}}"><span style="padding: 14px 16px; border-radius: 14px; background: #0E2A20; color: #4ADE9B; font-size: 16px; font-weight: 700">Update terkirim. Portofolio Direksi kini menampilkan status {{healthLabel}}.</span></sc-if>
+          <div style="display: flex; justify-content: flex-end; gap: 12px">
+            <button type="button" style="height: 50px; padding: 0 20px; border: 1px solid #34465E; border-radius: 14px; background: #0F1622; color: #EAF1F8; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Simpan draf</button>
+            <button type="button" onClick="{{send}}" style="height: 50px; padding: 0 26px; border: 0; border-radius: 14px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 24px rgba(30,95,214,0.30)">Kirim update</button>
+          </div>
+        </div>
+      </div>
+
+      <aside style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 12px">
+          <h2 style="margin: 0; font-size: 21px; font-weight: 700">Update sebelumnya</h2>
+          <div style="display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid #172131">
+            <span style="display: flex; justify-content: space-between; font-size: 15px"><b>Min, 4 Okt</b><span style="color: #4ADE9B; font-weight: 700">Sesuai jalur</span></span>
+            <span style="font-size: 16px; line-height: 24px">Mapping 1.240 SKU selesai 90%. Uji coba data stok tetap 16 Okt.</span>
+            <span style="font-size: 14px; color: #A6B4C6">Dibaca Agus Setiawan · 1 balasan</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid #172131">
+            <span style="display: flex; justify-content: space-between; font-size: 15px"><b>Jum, 25 Sep</b><span style="color: #4ADE9B; font-weight: 700">Sesuai jalur</span></span>
+            <span style="font-size: 16px; line-height: 24px">Ekspor data lama selesai. Mulai pembersihan kode SKU.</span>
+          </div>
+        </div>
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 22px 24px; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 18px; font-weight: 700">Pengingat otomatis</span>
+          <span style="font-size: 15px; line-height: 22px; color: #A6B4C6">Bila belum ada update sampai Jumat 15.00, Anda dan Dimas mendapat pengingat. Lebih dari 7 hari, proyek ditandai “Update kedaluwarsa”.</span>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" malam="{{ true }}" dark="{{ true }}" active="MSG" role="staf" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1560}}'>
+var G1 = 'linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%)', G2 = 'linear-gradient(135deg, #2F7BEA 0%, #6D4AE0 100%)', G3 = 'linear-gradient(135deg, #46576B 0%, #0B1A2B 100%)';
+var H = [['Sesuai jalur', '#4ADE9B', '#0E2A20'], ['Berisiko', '#F6B95C', '#2E2210'], ['Bermasalah', '#FF7A8A', '#3A1520']];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { h: 'Sesuai jalur', sent: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var h = st.h || 'Sesuai jalur';
+    return {
+      ws: [
+        { l: 'M', name: 'Migrasi sistem gudang', type: 'Proyek · 1 Sep – 27 Nov', role: 'PIC', roleBg: 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', roleFg: '#FFFFFF', grad: G2, isProject: true, pct: 41, plan: 39, health: 'Sesuai jalur', hFg: '#4ADE9B', mine: 4, next: 'Uji coba · 16 Okt', href: '#', border: '2px solid #2DBFB1', shadow: '0 0 0 4px rgba(20,184,166,0.14), 0 8px 24px rgba(0,0,0,0.2)' },
+        { l: 'P', name: 'Proyek Peluncuran Q4', type: 'Proyek · 1 Sep – 27 Okt', role: 'Anggota', roleBg: '#172131', roleFg: '#A6B4C6', grad: G1, isProject: true, pct: 48, plan: 61, health: 'Berisiko', hFg: '#F6B95C', mine: 2, next: 'Materi · 14 Okt', href: 'DTodoMalam.dc.html', border: '1px solid #233247', shadow: '0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)' },
+        { l: 'G', name: 'Tim Gudang', type: 'Tim · 6 anggota', role: 'Anggota', roleBg: '#172131', roleFg: '#A6B4C6', grad: G1, isProject: false, mine: 2, next: '1 terlambat', href: '#', border: '1px solid #233247', shadow: '0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)' },
+        { l: 'O', name: 'Divisi Operasional', type: 'Divisi · 14 anggota', role: 'Anggota', roleBg: '#172131', roleFg: '#A6B4C6', grad: G2, isProject: false, mine: 1, next: 'Kam, 15 Okt', href: '#', border: '1px solid #233247', shadow: '0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)' },
+        { l: 'S', name: 'Pribadi', type: 'Hanya Anda', role: 'Pemilik', roleBg: '#172131', roleFg: '#A6B4C6', grad: G3, isProject: false, mine: 3, next: 'catatan & to-do', href: '#', border: '1px solid #233247', shadow: '0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)' }
+      ],
+      health: H.map(function (x) {
+        var on = x[0] === h;
+        return { label: x[0], sel: on ? 'true' : 'false', dot: x[1], fg: on ? x[1] : '#EAF1F8', bg: on ? x[2] : '#0F1622', border: on ? '2px solid ' + x[1] : '1px solid #233247', pick: function () { self.setState({ h: x[0], sent: false }); } };
+      }),
+      healthLabel: h,
+      sent: !!st.sent,
+      send: function () { self.setState({ sent: true }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

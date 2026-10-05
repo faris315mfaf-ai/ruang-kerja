@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Dock</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 100%; height: 380px; box-sizing: border-box; display: flex; align-items: flex-end; justify-content: center; padding: 0 12px 20px; pointer-events: none; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+  <nav aria-label="Navigasi utama" onMouseLeave="{{leave}}" style="pointer-events: auto; position: relative; display: flex; align-items: flex-end; gap: 8px; padding: 10px 12px 14px; border-radius: 30px; background: {{t.dockBg}}; backdrop-filter: blur(28px) saturate(180%); -webkit-backdrop-filter: blur(28px) saturate(180%); border: 1px solid {{t.dockBorder}}; box-shadow: {{t.dockShadow}}">
+    <sc-for list="{{items}}" as="it" hint-placeholder-count="12">
+      <sc-if value="{{it.isSep}}" hint-placeholder-val="{{false}}">
+        <span aria-hidden="true" style="width: 1px; height: 38px; margin: 0 4px 7px; background: {{t.divider}}"></span>
+      </sc-if>
+      <sc-if value="{{it.isTile}}" hint-placeholder-val="{{true}}">
+        <div onMouseEnter="{{it.enter}}" style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 52px">
+          <sc-if value="{{it.showLabel}}" hint-placeholder-val="{{false}}">
+            <div style="position: absolute; bottom: {{it.labelBottom}}px; left: 50%; transform: translateX(-50%); padding: 6px 12px; border-radius: 10px; font-size: 14px; font-weight: 600; line-height: 18px; white-space: nowrap; background: {{t.labelBg}}; color: {{t.labelText}}; box-shadow: {{t.labelShadow}}; pointer-events: none">{{it.label}}</div>
+          </sc-if>
+          <a href="{{it.href}}" aria-label="{{it.aria}}" aria-current="{{it.current}}" onClick="{{it.click}}" onFocus="{{it.enter}}" style="position: relative; flex-shrink: 0; width: {{it.size}}px; height: {{it.size}}px; border-radius: {{it.radius}}px; background: {{it.bg}}; color: {{it.glyph}}; box-shadow: {{it.shadow}}; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: {{it.letterSize}}px; font-weight: 800; transition: width .22s cubic-bezier(.2,.8,.2,1), height .22s cubic-bezier(.2,.8,.2,1), border-radius .22s cubic-bezier(.2,.8,.2,1)">
+            <sc-if value="{{it.isLetter}}" hint-placeholder-val="{{false}}">{{it.letter}}</sc-if>
+            <sc-if value="{{it.isIcon}}" hint-placeholder-val="{{true}}">
+              <svg width="{{it.icon}}" height="{{it.icon}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{it.d1}}"></path><path d="{{it.d2}}"></path><path d="{{it.d3}}"></path><path d="{{it.d4}}"></path></svg>
+            </sc-if>
+            <sc-if value="{{it.hasBadge}}" hint-placeholder-val="{{false}}">
+              <span style="position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 10px; background: #C42137; color: #FFFFFF; font-size: 12px; font-weight: 700; line-height: 20px; text-align: center; box-shadow: 0 0 0 2px {{t.badgeRing}}">{{it.badge}}</span>
+            </sc-if>
+          </a>
+          <sc-if value="{{it.isActive}}" hint-placeholder-val="{{false}}">
+            <span aria-hidden="true" style="position: absolute; bottom: -10px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 3px; background: {{t.dot}}"></span>
+          </sc-if>
+          <sc-if value="{{it.showStack}}" hint-placeholder-val="{{false}}">
+            <div role="dialog" aria-label="{{it.label}}" style="position: absolute; left: 50%; bottom: calc(100% + 22px); transform: translateX(-50%); width: 372px; box-sizing: border-box; padding: 16px 14px 14px; border-radius: 24px; background: {{t.popBg}}; backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%); border: 1px solid {{t.dockBorder}}; box-shadow: {{t.dockShadow}}">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 6px 10px">
+                <span style="font-size: 16px; font-weight: 700; color: {{t.popText}}">{{it.label}}</span>
+                <a href="#" style="font-size: 14px; font-weight: 600; color: {{t.link}}; text-decoration: none">Lihat semua</a>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px">
+                <sc-for list="{{it.entries}}" as="e" hint-placeholder-count="6">
+                  <a href="{{e.href}}" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 4px; border-radius: 16px; text-decoration: none; color: {{t.popText}}">
+                    <span style="width: 52px; height: 52px; border-radius: 15px; background: {{e.bg}}; color: {{e.glyph}}; box-shadow: {{t.tileShadow}}; display: flex; align-items: center; justify-content: center; font-size: 19px; font-weight: 800">{{e.letter}}</span>
+                    <span style="font-size: 14px; font-weight: 600; line-height: 18px; text-align: center">{{e.label}}</span>
+                  </a>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+    </sc-for>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["dashboard","portofolio","inbox","rapat","kerja","proyek","tugas","absensi","pengajuan","persetujuan","PLQ","OPS","MSG"],"default":"dashboard","section":"Dock"},"role":{"editor":"enum","options":["kadiv","direksi","hr","staf","manajemen"],"default":"kadiv","section":"Dock"},"dark":{"editor":"boolean","default":false,"section":"Dock"},"malam":{"editor":"boolean","default":false,"section":"Dock"},"mag":{"editor":"enum","options":["Kuat","Halus","Mati"],"default":"Kuat","section":"Dock"},"hoverPreview":{"editor":"int","default":-1,"min":-1,"max":14,"section":"Pratinjau"},"stackOpen":{"editor":"enum","options":["","workspace","organisasi","admin"],"default":"","section":"Pratinjau"},"$preview":{"width":1200,"height":380}}'>
+var ICONS = {
+  dashboard: ['M3 10.5 12 3l9 7.5', 'M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5'],
+  portofolio: ['M4 6h10', 'M8 12h12', 'M6 18h8'],
+  inbox: ['M22 12h-6l-2 3h-4l-2-3H2', 'M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'],
+  tugas: ['m9 11 3 3 8-8', 'M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'],
+  absensi: ['M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z', 'M12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z'],
+  pengajuan: ['M8 3v4', 'M16 3v4', 'M4 9h16', 'M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z'],
+  persetujuan: ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'm8.5 12.5 2.5 2.5 4.5-5'],
+  workspace: ['M4 4h7v7H4z', 'M13 4h7v7h-7z', 'M4 13h7v7H4z', 'M13 13h7v7h-7z'],
+  organisasi: ['M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20', 'M10 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z', 'M20 20v-1.5a3.5 3.5 0 0 0-2.5-3.35', 'M15.5 4.15a3.5 3.5 0 0 1 0 6.7'],
+  admin: ['M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z', 'm9 12 2 2 4-4'],
+  kerja: ['M4 20V10', 'M10 20V4', 'M16 20v-7', 'M22 20H2'],
+  proyek: ['M5 21V4', 'M5 4h11l-2 4 2 4H5'],
+  rapat: ['m16 13 5.2 3.5a.5.5 0 0 0 .8-.4V7.9a.5.5 0 0 0-.8-.4L16 11', 'M4 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z']
+};
+var G_TEAL = 'linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%)';
+var G_INDIGO = 'linear-gradient(135deg, #2F7BEA 0%, #6D4AE0 100%)';
+var G_WARM = 'linear-gradient(135deg, #C2410C 0%, #BE185D 100%)';
+var STACKS = {
+  workspace: [['P', 'Pribadi', 'linear-gradient(135deg, #46576B 0%, #0B1A2B 100%)'], ['O', 'Divisi Operasional', G_INDIGO], ['G', 'Tim Gudang', G_TEAL], ['P', 'Peluncuran Q4', G_TEAL], ['K', 'Renovasi lt. 2', G_WARM], ['M', 'Migrasi gudang', G_INDIGO]],
+  organisasi: [['S', 'Struktur organisasi', G_TEAL], ['A', 'Anggota divisi', G_INDIGO]],
+  admin: [['L', 'Lokasi & shift', G_TEAL], ['R', 'Rekap absensi', G_INDIGO], ['J', 'Jenis pengajuan', G_TEAL], ['C', 'Saldo cuti', G_WARM], ['K', 'Kelola organisasi', G_INDIGO], ['K', 'Karyawan', G_TEAL]]
+};
+var LIGHT = {
+  dockBg: 'rgba(255,255,255,0.62)', dockBorder: 'rgba(255,255,255,0.8)',
+  dockShadow: '0 0 0 1px rgba(11,26,43,0.08), 0 20px 48px rgba(11,26,43,0.18), inset 0 1px 0 rgba(255,255,255,0.9)',
+  tile: '#FFFFFF', tileShadow: '0 0 0 1px rgba(11,26,43,0.06), 0 2px 6px rgba(11,26,43,0.08)', glyph: '#0B1A2B',
+  active: 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', activeGlyph: '#FFFFFF', activeShadow: '0 8px 20px rgba(30,95,214,0.38)',
+  dot: '#0B1A2B', divider: 'rgba(11,26,43,0.14)', labelBg: '#0B1A2B', labelText: '#FFFFFF', labelShadow: '0 6px 16px rgba(11,26,43,0.24)',
+  popBg: 'rgba(255,255,255,0.82)', popText: '#0B1A2B', link: '#09656E', badgeRing: '#FFFFFF'
+};
+var DARK = {
+  dockBg: 'rgba(23,33,49,0.6)', dockBorder: 'rgba(255,255,255,0.10)',
+  dockShadow: '0 0 0 1px rgba(0,0,0,0.5), 0 20px 48px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)',
+  tile: 'rgba(255,255,255,0.08)', tileShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08)', glyph: '#EAF1F8',
+  active: 'linear-gradient(135deg, #2DBFB1 0%, #5B8CF6 100%)', activeGlyph: '#041421', activeShadow: '0 8px 24px rgba(91,140,246,0.35)',
+  dot: '#EAF1F8', divider: 'rgba(255,255,255,0.16)', labelBg: '#EAF1F8', labelText: '#0B1A2B', labelShadow: '0 6px 16px rgba(0,0,0,0.4)',
+  popBg: 'rgba(23,33,49,0.88)', popText: '#EAF1F8', link: '#5AD6C8', badgeRing: '#172131'
+};
+function buildMgmt() {
+  return [
+    { key: 'dashboard', label: 'Dashboard manajemen', href: 'MgDashboard.dc.html' },
+    { key: 'kerja', label: 'Tracking kerja', href: 'MgKerja.dc.html' },
+    { key: 'absensi', label: 'Tracking absensi', href: 'MgAbsensi.dc.html' },
+    { key: 'proyek', label: 'Proyek & milestone', href: 'MgProyek.dc.html' },
+    { key: 'rapat', label: 'Jadwal & notulensi', href: 'MgJadwal.dc.html', badge: '2' },
+    { sep: true },
+    { key: 'inbox', label: 'Inbox', href: 'DInbox.dc.html', badge: '4' },
+    { key: 'persetujuan', label: 'Persetujuan', href: 'DPersetujuan.dc.html', badge: '3' },
+    { sep: true },
+    { key: 'organisasi', label: 'Organisasi', stack: 'organisasi' }
+  ];
+}
+function build(role) {
+  if (role === 'manajemen') return buildMgmt();
+  var staf = role === 'staf';
+  var list = [{ key: 'dashboard', label: role === 'hr' ? 'Dashboard HR' : (staf ? 'Beranda' : 'Dashboard'), href: role === 'hr' ? 'DHR.dc.html' : (staf ? 'SBeranda.dc.html' : 'DBeranda.dc.html') }];
+  if (role === 'direksi') list.push({ key: 'portofolio', label: 'Portofolio', href: 'DPortofolio.dc.html' });
+  list.push({ key: 'inbox', label: 'Inbox', href: 'DInbox.dc.html', badge: staf ? '3' : '4' });
+  list.push({ key: 'rapat', label: 'Rapat', href: 'DRapat.dc.html', badge: '1' });
+  list.push({ key: 'tugas', label: 'Tugas saya', href: staf ? 'STugasSaya.dc.html' : 'DTugas.dc.html' });
+  list.push({ key: 'absensi', label: 'Absensi', href: staf ? 'SAbsensi.dc.html' : 'DAbsensi.dc.html' });
+  list.push({ key: 'pengajuan', label: 'Pengajuan', href: staf ? 'SPengajuan.dc.html' : '#' });
+  if (!staf) list.push({ key: 'persetujuan', label: 'Persetujuan', href: 'DPersetujuan.dc.html', badge: '5' });
+  list.push({ sep: true });
+  if (staf) {
+    list.push({ key: 'MSG', label: 'Migrasi sistem gudang', href: 'SProyekSaya.dc.html', letter: 'M', grad: G_INDIGO });
+    list.push({ key: 'PLQ', label: 'Proyek Peluncuran Q4', href: 'DTodo.dc.html', letter: 'P', grad: G_TEAL });
+  } else {
+    list.push({ key: 'PLQ', label: 'Proyek Peluncuran Q4', href: 'DBoard.dc.html', letter: 'P', grad: G_TEAL });
+    list.push({ key: 'OPS', label: 'Divisi Operasional', href: '#', letter: 'O', grad: G_INDIGO });
+  }
+  list.push({ key: 'workspace', label: 'Workspace', stack: 'workspace' });
+  list.push({ sep: true });
+  if (staf) list.push({ key: 'organisasi', label: 'Struktur organisasi', href: '#' });
+  else list.push({ key: 'organisasi', label: 'Organisasi', stack: 'organisasi' });
+  if (role === 'hr') list.push({ key: 'admin', label: 'Admin', stack: 'admin' });
+  return list;
+}
+function nm(h, on) { return on && /\.dc\.html$/.test(h) && h !== 'DBoard.dc.html' ? h.replace('.dc.html', 'Malam.dc.html') : h; }
+function pad(d) { d = d || []; return { d1: d[0] || '', d2: d[1] || '', d3: d[2] || '', d4: d[3] || '' }; }
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { hover: null, open: null };
+  }
+  renderVals() {
+    var self = this;
+    var p = this.props || {};
+    var st = this.state || {};
+    var t = p.dark ? DARK : LIGHT;
+    var active = p.active || 'dashboard';
+    var mode = p.mag || 'Kuat';
+    var steps = mode === 'Mati' ? [1, 1, 1] : (mode === 'Halus' ? [1.2, 1.08, 1.02] : [1.42, 1.2, 1.06]);
+    var preview = (typeof p.hoverPreview === 'number' && p.hoverPreview >= 0) ? p.hoverPreview : null;
+    var h = (st.hover === null || st.hover === undefined) ? preview : st.hover;
+    var open = (st.open === null || st.open === undefined) ? (p.stackOpen || '') : st.open;
+    var BASE = 52;
+    var idx = -1;
+    var items = build(p.role || 'kadiv').map(function (it) {
+      if (it.sep) return { isSep: true, isTile: false };
+      idx += 1;
+      var i = idx;
+      var s = 1;
+      if (h !== null && !open) { var d = Math.abs(i - h); s = d < 3 ? steps[d] : 1; }
+      var size = Math.round(BASE * s);
+      var isActive = it.key === active || (it.stack && open === it.stack);
+      var isLetter = !!it.letter;
+      var bg = isLetter ? it.grad : (isActive ? t.active : t.tile);
+      var stackEntries = it.stack ? STACKS[it.stack].map(function (e) {
+        return { letter: e[0], label: e[1], bg: e[2], glyph: '#FFFFFF', href: e[1] === 'Peluncuran Q4' ? 'DBoard.dc.html' : '#' };
+      }) : [];
+      return Object.assign({ isSep: false, isTile: true, isLetter: isLetter, isIcon: !isLetter }, pad(ICONS[it.key]), {
+        label: it.label,
+        aria: it.badge ? it.label + ', ' + it.badge : it.label,
+        href: nm(it.href || '#', p.malam),
+        letter: it.letter || '',
+        size: size, radius: Math.round(size * 0.28), icon: Math.round(size * 0.46), letterSize: Math.round(size * 0.4),
+        labelBottom: size + 14,
+        showLabel: h === i && !open,
+        bg: bg,
+        glyph: isLetter ? '#FFFFFF' : (isActive ? t.activeGlyph : t.glyph),
+        shadow: isActive && !isLetter ? t.activeShadow : (isLetter ? '0 4px 12px rgba(30,95,214,0.25)' : t.tileShadow),
+        isActive: it.key === active || (it.stack && open === it.stack),
+        current: it.key === active ? 'page' : undefined,
+        hasBadge: !!it.badge, badge: it.badge || '',
+        showStack: !!it.stack && open === it.stack,
+        entries: stackEntries,
+        enter: function () { self.setState({ hover: i }); },
+        click: it.stack ? function (e) { if (e && e.preventDefault) e.preventDefault(); self.setState({ open: open === it.stack ? '' : it.stack, hover: null }); } : undefined
+      });
+    });
+    return { t: t, items: items, leave: function () { self.setState({ hover: null }); } };
+  }
+}
+</script>
+</body>
+</html>

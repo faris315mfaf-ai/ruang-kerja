@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Kinerja saya · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; background: radial-gradient(420px 220px at 0% 0%, rgba(20,184,166,0.20), transparent 70%), radial-gradient(420px 220px at 100% 0%, rgba(47,123,234,0.18), transparent 70%), #F3F6FA">
+  <div style="padding: 24px 16px 0; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <h1 style="margin: 0; font-size: 32px; line-height: 40px; font-weight: 800; letter-spacing: -0.025em">Kinerja saya</h1>
+      <span style="font-size: 15px; color: #46576B">8 minggu terakhir · tanpa skor gabungan</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+      <sc-for list="{{m}}" as="x" hint-placeholder-count="4">
+        <div style="padding: 16px; border-radius: 20px; display: flex; flex-direction: column; gap: 2px; background: {{x.bg}}; color: {{x.fg}}; border: {{x.border}}">
+          <span style="font-size: 14px; font-weight: 700; color: {{x.sub}}">{{x.l}}</span>
+          <span style="font-size: 32px; line-height: 38px; font-weight: 800">{{x.v}}</span>
+          <span style="font-size: 13px; font-weight: 600; color: {{x.sub}}">{{x.n}}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+      <span style="font-size: 17px; font-weight: 700">Selesai per minggu</span>
+      <div style="height: 150px; display: flex; align-items: flex-end; gap: 8px">
+        <sc-for list="{{weeks}}" as="w" hint-placeholder-count="8">
+          <div style="flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 6px">
+            <span style="font-size: 13px; font-weight: 700">{{w.t}}</span>
+            <div style="width: 100%; display: flex; flex-direction: column; border-radius: 7px; overflow: hidden"><div style="height: {{w.l}}px; background: #E08A00"></div><div style="height: {{w.o}}px; background: linear-gradient(180deg, #2F7BEA 0%, #14B8A6 100%)"></div></div>
+            <span style="font-size: 12px; font-weight: 600; color: #46576B">{{w.k}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <span style="font-size: 13px; color: #46576B">Oranye = selesai lewat tenggat</span>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center; padding: 14px 16px; border-radius: 20px; background: #FFFFFF; border: 1px solid #DDE4EC">
+      <span style="width: 40px; height: 40px; border-radius: 12px; background: #E8FBF8; color: #09656E; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-3.5 8-10V5l-8-3-8 3v7c0 6.5 8 10 8 10z"></path></svg></span>
+      <span style="font-size: 14px; line-height: 20px; color: #253445">Hanya Anda, atasan, dan HR yang melihat data ini.</span>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" active="beranda" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var W = [['17/8', 4, 1], ['24/8', 5, 0], ['31/8', 3, 1], ['7/9', 5, 0], ['14/9', 4, 1], ['21/9', 5, 0], ['28/9', 4, 1], ['5/10', 3, 0]];
+    var card = { bg: '#FFFFFF', fg: '#0B1A2B', sub: '#46576B', border: '1px solid #DDE4EC' };
+    return {
+      m: [
+        { l: 'Penyelesaian', v: '82%', n: '37 dari 45', bg: 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', fg: '#FFFFFF', sub: '#FFFFFF', border: '0' },
+        Object.assign({ l: 'Tepat waktu', v: '88%', n: '33 dari 37' }, card),
+        Object.assign({ l: 'Lead time', v: '2,6 hr', n: 'divisi 3,2 hari' }, card),
+        Object.assign({ l: 'Hadir tepat waktu', v: '95%', n: 'September' }, card)
+      ],
+      weeks: W.map(function (w) { return { k: w[0], t: w[1] + w[2], o: w[1] * 18, l: w[2] * 18 }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

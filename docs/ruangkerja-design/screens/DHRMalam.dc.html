@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Dashboard HR · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}a:hover{color:#5AD6C8}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #070B14; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" malam="{{ true }}" dark="{{ true }}" crumbs="Dashboard HR" initials="HN" person="Hana Nuraini" status="Masuk 07.38" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 40px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #5AD6C8">Senin, 5 Oktober 2026 · 09.14</span>
+        <h1 style="margin: 0; font-size: 44px; line-height: 52px; font-weight: 800; letter-spacing: -0.03em">Dashboard HR</h1>
+        <span style="font-size: 18px; color: #A6B4C6">48 karyawan terjadwal hari ini di 6 divisi</span>
+      </div>
+      <div style="display: flex; gap: 12px">
+        <button type="button" style="height: 44px; padding: 0 18px; border: 1px solid #34465E; border-radius: 12px; background: #0F1622; color: #EAF1F8; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Rekap Oktober</button>
+        <button type="button" style="height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 20px rgba(30,95,214,0.30)">Ekspor payroll (Excel)</button>
+      </div>
+    </section>
+
+    <section aria-label="Ringkasan" style="display: flex; flex-wrap: wrap; gap: 20px">
+      <div style="flex: 1.3 1 260px; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 8px; color: #FFFFFF; background: radial-gradient(260px 160px at 100% 0%, rgba(255,255,255,0.22), transparent 70%), linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); box-shadow: 0 12px 28px rgba(30,95,214,0.30)">
+        <span style="font-size: 16px; font-weight: 600">Hadir sekarang</span>
+        <span style="font-size: 44px; line-height: 52px; font-weight: 700">39<span style="font-size: 24px; font-weight: 600"> / 48</span></span>
+        <div aria-hidden="true" style="height: 8px; border-radius: 4px; background: rgba(255,255,255,0.25); overflow: hidden"><div style="width: 81%; height: 100%; background: #0F1622"></div></div>
+        <span style="font-size: 15px">81% · naik 3 orang dari jam 08.30</span>
+      </div>
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="3">
+        <div style="flex: 1 1 200px; background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+          <span style="font-size: 16px; font-weight: 600; color: #A6B4C6">{{k.label}}</span>
+          <span style="font-size: 44px; line-height: 52px; font-weight: 700; color: {{k.color}}">{{k.value}}</span>
+          <span style="font-size: 15px; color: #A6B4C6">{{k.note}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 1.5 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px 28px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px">
+            <h2 style="margin: 0; font-size: 22px; font-weight: 700">Kehadiran per divisi</h2>
+            <div style="display: flex; flex-wrap: wrap; gap: 14px; font-size: 14px; color: #A6B4C6">
+              <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 5px; background: #0F7A55"></span>Hadir</span>
+              <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 5px; background: #E08A00"></span>Terlambat</span>
+              <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 5px; background: #3A70EC"></span>Cuti/izin</span>
+              <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 5px; background: #34465E"></span>Belum</span>
+            </div>
+          </div>
+          <sc-for list="{{divisions}}" as="d" hint-placeholder-count="6">
+            <div style="display: grid; grid-template-columns: 150px 1fr 70px; gap: 16px; align-items: center">
+              <span style="font-size: 16px; font-weight: 600">{{d.name}}</span>
+              <div style="height: 16px; border-radius: 8px; overflow: hidden; display: flex; gap: 2px; background: #172131">
+                <div style="flex: {{d.ok}}; background: #0F7A55"></div>
+                <div style="flex: {{d.late}}; background: #E08A00"></div>
+                <div style="flex: {{d.leave}}; background: #3A70EC"></div>
+                <div style="flex: {{d.none}}; background: #34465E"></div>
+              </div>
+              <span style="font-size: 16px; font-weight: 700; text-align: right">{{d.present}}/{{d.total}}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px 0 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 28px 10px">
+            <h2 style="margin: 0; font-size: 22px; font-weight: 700">Belum check-in</h2>
+            <button type="button" onClick="{{remindAll}}" style="height: 40px; padding: 0 14px; border: 0; border-radius: 12px; background: #0E2A2C; color: #5AD6C8; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">{{remindLabel}}</button>
+          </div>
+          <sc-for list="{{absent}}" as="a" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; gap: 14px; padding: 0 28px; min-height: 64px; border-top: 1px solid #172131">
+              <span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 20px; background: #172131; color: #A6B4C6; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{a.init}}</span>
+              <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 16px; font-weight: 600">{{a.name}}</span><span style="font-size: 15px; color: #A6B4C6">{{a.meta}}</span></span>
+              <span style="font-size: 15px; font-weight: 700; color: #F6B95C">{{a.late}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <h2 style="margin: 0; font-size: 22px; font-weight: 700">Perlu ditinjau</h2>
+            <span style="height: 28px; padding: 0 10px; border-radius: 14px; background: linear-gradient(135deg, #C2410C 0%, #BE185D 100%); color: #FFFFFF; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center">{{flagCount}}</span>
+          </div>
+          <sc-for list="{{flags}}" as="f" hint-placeholder-count="2">
+            <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 18px; background: #070B14">
+              <span style="display: flex; align-items: center; gap: 12px">
+                <span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 20px; background: #3A1520; color: #FF7A8A; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{f.init}}</span>
+                <span style="display: flex; flex-direction: column"><span style="font-size: 16px; font-weight: 700">{{f.name}}</span><span style="font-size: 15px; color: #A6B4C6">{{f.when}}</span></span>
+              </span>
+              <span style="font-size: 15px; line-height: 22px; font-weight: 600; color: #FF7A8A">{{f.reason}}</span>
+              <sc-if value="{{f.open}}" hint-placeholder-val="{{true}}">
+                <div style="display: flex; gap: 8px">
+                  <button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #34465E; border-radius: 12px; background: #0F1622; color: #EAF1F8; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Lihat selfie</button>
+                  <button type="button" onClick="{{f.ok}}" style="height: 40px; padding: 0 14px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Tandai wajar</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{f.closed}}" hint-placeholder-val="{{false}}"><span style="font-size: 15px; font-weight: 700; color: #4ADE9B">Ditinjau · dicatat di audit log</span></sc-if>
+            </div>
+          </sc-for>
+          <span style="font-size: 14px; line-height: 20px; color: #A6B4C6">Melihat selfie selalu tercatat di audit log.</span>
+        </div>
+
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 12px">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700">Pengajuan menunggu HR</h2>
+          <sc-for list="{{requests}}" as="r" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; justify-content: space-between; min-height: 48px; border-top: 1px solid #172131; font-size: 16px"><span>{{r.label}}</span><b>{{r.n}}</b></div>
+          </sc-for>
+          <a href="DPersetujuanMalam.dc.html" style="font-size: 16px; font-weight: 600">Buka antrean (7)</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" malam="{{ true }}" dark="{{ true }}" active="dashboard" role="hr" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1360}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { reminded: false, ok: {} };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var ok = st.ok || {};
+    var flags = [
+      { id: 'f1', init: 'RP', name: 'Reza Pahlevi', when: 'Check-in 07.52 · GPS + selfie', reason: '152 m di luar radius Kantor Pusat · akurasi GPS 140 m' },
+      { id: 'f2', init: 'LM', name: 'Lina Marlina', when: 'Check-in 08.03 · GPS + selfie', reason: 'Perangkat baru dan selfie terlalu gelap' }
+    ];
+    return {
+      kpis: [
+        { label: 'Terlambat', value: '4', color: '#F6B95C', note: 'rata-rata 14 menit' },
+        { label: 'Belum check-in', value: '3', color: '#EAF1F8', note: 'shift mulai 08.00' },
+        { label: 'Cuti / izin / sakit', value: '6', color: '#8DB4FF', note: '4 cuti · 1 izin · 1 sakit' }
+      ],
+      divisions: [
+        ['Operasional', 14, 10, 2, 2, 0], ['Pemasaran', 9, 7, 1, 1, 0], ['Keuangan', 8, 6, 0, 1, 1],
+        ['TI', 7, 4, 1, 1, 1], ['SDM', 6, 5, 0, 0, 1], ['Direksi', 4, 3, 0, 1, 0]
+      ].map(function (d) { return { name: d[0], total: d[1], ok: d[2], late: d[3], leave: d[4], none: d[5], present: d[2] + d[3] }; }),
+      remindLabel: st.reminded ? 'Pengingat terkirim' : 'Kirim pengingat (3)',
+      remindAll: function () { self.setState({ reminded: true }); },
+      absent: [
+        ['DS', 'Dewi Sartika', 'Keuangan · shift 08.00 · tidak ada pengajuan', '74 mnt'],
+        ['TW', 'Teguh Wibowo', 'TI · shift 08.00 · tidak ada pengajuan', '74 mnt'],
+        ['NA', 'Nur Aini', 'SDM · shift 08.00 · tidak ada pengajuan', '74 mnt']
+      ].map(function (a) { return { init: a[0], name: a[1], meta: a[2], late: a[3] }; }),
+      flagCount: flags.filter(function (f) { return !ok[f.id]; }).length,
+      flags: flags.map(function (f) {
+        var c = !!ok[f.id];
+        return Object.assign({}, f, { open: !c, closed: c, ok: function () { var n = Object.assign({}, ok); n[f.id] = true; self.setState({ ok: n }); } });
+      }),
+      requests: [['Cuti', 4], ['Lembur', 2], ['Koreksi absensi', 1]].map(function (r) { return { label: r[0], n: r[1] }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

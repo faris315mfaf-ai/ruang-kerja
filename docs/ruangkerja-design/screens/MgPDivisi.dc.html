@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Manajemen · detail divisi · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; background: #F3F6FA">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="MgPKerja.dc.html" aria-label="Kembali" style="width: 44px; height: 44px; border-radius: 22px; background: #FFFFFF; border: 1px solid #DDE4EC; color: #0B1A2B; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 24px; line-height: 30px; font-weight: 800">Programming</span><span style="font-size: 13px; color: #46576B">Dimas Pratama · 14 orang · hari ini</span></span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+      <div style="border-radius: 18px; padding: 12px; color: #FFFFFF; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 700">Selesai</span><span style="font-size: 26px; font-weight: 800">9/18</span></div>
+      <div style="border-radius: 18px; padding: 12px; background: #FFFFFF; border: 1px solid #DDE4EC; display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 700; color: #46576B">Berjalan</span><span style="font-size: 26px; font-weight: 800">7</span></div>
+      <div style="border-radius: 18px; padding: 12px; background: #FFFFFF; border: 1px solid #DDE4EC; display: flex; flex-direction: column"><span style="font-size: 13px; font-weight: 700; color: #46576B">Terlambat</span><span style="font-size: 26px; font-weight: 800; color: #C42137">6</span></div>
+    </div>
+    <div role="tablist" aria-label="Tampilan" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DDE4EC">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+        <button type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="height: 42px; border: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.fg}}; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">{{t.label}}</button>
+      </sc-for>
+    </div>
+    <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 22px; overflow: hidden">
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 0 14px; border-top: {{r.sep}}">
+          <span style="width: 38px; height: 38px; border-radius: 19px; background: {{r.aBg}}; color: {{r.aFg}}; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: {{r.font}}">{{r.a}}</span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 700">{{r.t}}</span><span style="font-size: 13px; color: #46576B">{{r.m}}</span></span>
+          <span style="font-size: 14px; font-weight: 800; color: {{r.rc}}; white-space: nowrap">{{r.right}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" set="manajemen" active="kerja" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var PEOPLE = [['RA', 'Rizky Aditya', 'SIM-388 hotfix · 1 terlambat', '2/4', 'warn'], ['YP', 'Yoga Permana', 'KMB-214 tertahan · 2 terlambat', '0/3', 'late'], ['FH', 'Fitri Handayani', 'PR #412 · KMB-231', '2/3', 'ok'], ['RO', 'Rina Oktaviani', 'DEP-51 tertahan · 2 terlambat', '1/3', 'late'], ['AN', 'Arif Nugroho', 'belum check-in', '0/2', 'late'], ['DP', 'Dimas Pratama', 'review & rapat', '4/3', 'ok']];
+var LATE = [['KMB-214', 'Integrasi payment gateway', 'Yoga · lewat 3 hari · tertahan bank', '3 hr'], ['DEP-51', 'Konsumsi API Pemda', 'Rina · tertahan klien', '12 hr'], ['KMB-219', 'Simulasi angsuran pinjaman', 'Rizky · tergeser hotfix SIMRS', '1 hr'], ['DEP-48', 'Peta sebaran OPD', 'Rina · menunggu data', '2 hr'], ['KMB-226', 'Halaman profil anggota', 'Yoga · tergeser KMB-214', '1 hr'], ['RKJ-171', 'Ekspor rekap absensi', 'Arif · belum check-in', '1 hr']];
+var C = { ok: '#0F7A55', warn: '#9A5800', late: '#C42137' };
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { t: 0 };
+  }
+  renderVals() {
+    var self = this;
+    var ti = (this.state && this.state.t) || 0;
+    var rows = ti === 0
+      ? PEOPLE.map(function (p, i) { return { a: p[0], t: p[1], m: p[2], right: p[3], rc: C[p[4]], aBg: '#D9E6FF', aFg: '#1A4CB0', font: 'inherit', sep: i ? '1px solid #EEF2F7' : '0' }; })
+      : LATE.map(function (l, i) { return { a: '!', t: l[1], m: l[0] + ' · ' + l[2], right: l[3], rc: '#C42137', aBg: '#FDE7EA', aFg: '#C42137', font: 'inherit', sep: i ? '1px solid #EEF2F7' : '0' }; });
+    return {
+      tabs: ['Per orang', 'Terlambat (6)'].map(function (l, i) { var on = i === ti; return { label: l, sel: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : 'transparent', fg: on ? '#FFFFFF' : '#46576B', pick: function () { self.setState({ t: i }); } }; }),
+      rows: rows
+    };
+  }
+}
+</script>
+</body>
+</html>

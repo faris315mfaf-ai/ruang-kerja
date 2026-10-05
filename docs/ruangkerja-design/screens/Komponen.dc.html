@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Fondasi · Komponen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E}a:hover{color:#0A4E57}
+</style>
+</helmet>
+<div style="width: 1440px; height: 2000px; box-sizing: border-box; padding: 64px 72px; display: flex; flex-direction: column; gap: 32px; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: radial-gradient(900px 420px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(900px 420px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #F3F6FA">
+  <header style="display: flex; flex-direction: column; gap: 12px">
+    <span style="font-size: 15px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #09656E">Fondasi desain · 04</span>
+    <h1 style="margin: 0; font-size: 52px; line-height: 60px; font-weight: 800; letter-spacing: -0.03em">Komponen</h1>
+  </header>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start">
+
+    <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+      <span style="font-size: 21px; font-weight: 700">Tombol</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+        <button type="button" style="height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 20px rgba(30,95,214,0.30); display: inline-flex; align-items: center; gap: 8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Tugas baru</button>
+        <button type="button" style="height: 44px; padding: 0 20px; border: 1px solid #C3CEDA; border-radius: 12px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Ekspor</button>
+        <button type="button" style="height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: #E8FBF8; color: #09656E; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Minta update</button>
+        <button type="button" style="height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: transparent; color: #09656E; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Batal</button>
+        <button type="button" style="height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: #C42137; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Tolak</button>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+        <button type="button" style="height: 52px; padding: 0 28px; border: 0; border-radius: 14px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 24px rgba(30,95,214,0.32)">Check-in sekarang</button>
+        <button type="button" style="height: 36px; padding: 0 14px; border: 1px solid #C3CEDA; border-radius: 10px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Kecil</button>
+        <button type="button" disabled="" style="height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: #EEF2F7; color: #8495A8; font: inherit; font-size: 16px; font-weight: 600">Nonaktif</button>
+        <button type="button" aria-label="Lainnya" style="width: 44px; height: 44px; border: 1px solid #C3CEDA; border-radius: 12px; background: #FFFFFF; color: #0B1A2B; cursor: pointer; display: inline-flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg></button>
+      </div>
+      <span style="font-size: 15px; line-height: 22px; color: #46576B">Satu tombol gradien per area. Fokus: cincin 3px teal 40% di luar tombol.</span>
+    </section>
+
+    <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+      <span style="font-size: 21px; font-weight: 700">Input &amp; formulir</span>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <label for="k-judul" style="font-size: 15px; font-weight: 600">Judul tugas</label>
+          <input id="k-judul" type="text" value="Finalisasi anggaran peluncuran" style="height: 44px; padding: 0 14px; border: 1px solid #C3CEDA; border-radius: 12px; font: inherit; font-size: 16px; color: #0B1A2B; background: #FFFFFF; box-sizing: border-box">
+          <span style="font-size: 14px; color: #46576B">Maksimal 255 karakter</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <label for="k-fokus" style="font-size: 15px; font-weight: 600">Penanggung jawab</label>
+          <input id="k-fokus" type="text" value="Sari W" style="height: 44px; padding: 0 14px; border: 1px solid #0B7F86; border-radius: 12px; font: inherit; font-size: 16px; color: #0B1A2B; background: #FFFFFF; box-sizing: border-box; box-shadow: 0 0 0 4px rgba(20,184,166,0.22)">
+          <span style="font-size: 14px; color: #09656E">Keadaan fokus</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <label for="k-tgl" style="font-size: 15px; font-weight: 600">Tanggal mulai cuti</label>
+          <input id="k-tgl" type="text" value="12/10/2025" style="height: 44px; padding: 0 14px; border: 1px solid #C42137; border-radius: 12px; font: inherit; font-size: 16px; color: #0B1A2B; background: #FFFFFF; box-sizing: border-box">
+          <span style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #C42137; font-weight: 600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"></path><path d="M12 8v5"></path><path d="M12 16h.01"></path></svg>Tanggal sudah lewat</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <label for="k-jenis" style="font-size: 15px; font-weight: 600">Jenis pengajuan</label>
+          <select id="k-jenis" style="height: 44px; padding: 0 14px; border: 1px solid #C3CEDA; border-radius: 12px; font: inherit; font-size: 16px; color: #0B1A2B; background: #FFFFFF"><option>Cuti tahunan</option><option>Izin</option><option>Lembur</option></select>
+          <span style="font-size: 14px; color: #46576B">Sisa saldo 9 hari</span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <label for="k-alasan" style="font-size: 15px; font-weight: 600">Alasan</label>
+        <textarea id="k-alasan" rows="2" style="padding: 12px 14px; border: 1px solid #C3CEDA; border-radius: 12px; font: inherit; font-size: 16px; line-height: 24px; color: #0B1A2B; resize: none">Acara keluarga di Yogyakarta</textarea>
+      </div>
+    </section>
+
+    <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+      <span style="font-size: 21px; font-weight: 700">Pilihan &amp; tab</span>
+      <div role="tablist" aria-label="Periode" style="display: inline-flex; align-self: flex-start; padding: 4px; border-radius: 14px; background: #EEF2F7">
+        <sc-for list="{{segs}}" as="s" hint-placeholder-count="3">
+          <button type="button" role="tab" aria-selected="{{s.sel}}" onClick="{{s.pick}}" style="height: 38px; padding: 0 18px; border: 0; border-radius: 10px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; background: {{s.bg}}; color: {{s.color}}; box-shadow: {{s.shadow}}">{{s.label}}</button>
+        </sc-for>
+      </div>
+      <div style="display: flex; gap: 28px; border-bottom: 1px solid #DDE4EC">
+        <a href="#" style="padding: 0 2px 12px; font-size: 16px; font-weight: 700; color: #0B1A2B; text-decoration: none; border-bottom: 3px solid #0B7F86">Tugas</a>
+        <a href="#" style="padding: 0 2px 12px; font-size: 16px; font-weight: 500; color: #46576B; text-decoration: none">Dokumen <span style="font-size: 14px; color: #46576B">6</span></a>
+        <a href="#" style="padding: 0 2px 12px; font-size: 16px; font-weight: 500; color: #46576B; text-decoration: none">File <span style="font-size: 14px; color: #46576B">24</span></a>
+        <a href="#" style="padding: 0 2px 12px; font-size: 16px; font-weight: 500; color: #46576B; text-decoration: none">Aktivitas</a>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 28px; align-items: center">
+        <label style="display: inline-flex; align-items: center; gap: 10px; font-size: 16px; cursor: pointer"><span style="width: 24px; height: 24px; border-radius: 7px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg></span>Kirim email</label>
+        <label style="display: inline-flex; align-items: center; gap: 10px; font-size: 16px; cursor: pointer"><span style="width: 24px; height: 24px; border-radius: 7px; border: 2px solid #C3CEDA; box-sizing: border-box"></span>WhatsApp</label>
+        <label style="display: inline-flex; align-items: center; gap: 10px; font-size: 16px; cursor: pointer"><span style="width: 24px; height: 24px; border-radius: 12px; border: 7px solid #0B7F86; box-sizing: border-box"></span>Hari penuh</label>
+        <button type="button" role="switch" aria-checked="{{sw.checked}}" aria-label="Mode gelap" onClick="{{sw.toggle}}" style="width: 52px; height: 32px; border: 0; padding: 3px; border-radius: 16px; background: {{sw.track}}; cursor: pointer; display: flex; justify-content: {{sw.justify}}; transition: background .18s"><span style="width: 26px; height: 26px; border-radius: 13px; background: #FFFFFF; box-shadow: 0 2px 6px rgba(11,26,43,0.25)"></span></button>
+        <span style="font-size: 16px">Mode gelap</span>
+      </div>
+    </section>
+
+    <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+      <span style="font-size: 21px; font-weight: 700">Badge, status &amp; label</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px">
+        <sc-for list="{{badges}}" as="b" hint-placeholder-count="8">
+          <span style="display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 16px; background: {{b.bg}}; color: {{b.fg}}; font-size: 15px; font-weight: 700"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{b.fg}}"></span>{{b.label}}</span>
+        </sc-for>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px">
+        <span style="display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 8px; background: #EEF2F7; font-size: 14px; font-weight: 600">Keuangan</span>
+        <span style="display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 8px; background: #E6EEFE; color: #1A4CB0; font-size: 14px; font-weight: 600">Web</span>
+        <span style="display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 8px; background: #E8FBF8; color: #09656E; font-size: 14px; font-weight: 600">Konten</span>
+        <span style="display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 8px; background: #FFF1DC; color: #9A5800; font-size: 14px; font-weight: 600">Legal</span>
+        <span style="display: inline-flex; align-items: center; height: 26px; min-width: 26px; padding: 0 8px; box-sizing: border-box; border-radius: 13px; background: #C42137; color: #FFFFFF; font-size: 14px; font-weight: 700; justify-content: center">5</span>
+        <span style="display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 13px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 14px; font-weight: 700">Baru</span>
+      </div>
+      <span style="font-size: 21px; font-weight: 700; padding-top: 6px">Avatar</span>
+      <div style="display: flex; align-items: center; gap: 20px">
+        <span style="width: 48px; height: 48px; border-radius: 24px; padding: 2px; box-sizing: border-box; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%)"><span style="width: 100%; height: 100%; border-radius: 22px; background: #FFFFFF; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center">DP</span></span>
+        <span style="width: 40px; height: 40px; border-radius: 20px; background: #D9E6FF; color: #1A4CB0; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center">SW</span>
+        <span style="width: 32px; height: 32px; border-radius: 16px; background: #C8F4EE; color: #0A4E57; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">RA</span>
+        <span style="display: flex">
+          <span style="width: 36px; height: 36px; border-radius: 18px; background: #D9E6FF; color: #1A4CB0; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px #FFFFFF">SW</span>
+          <span style="width: 36px; height: 36px; margin-left: -10px; border-radius: 18px; background: #C8F4EE; color: #0A4E57; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px #FFFFFF">RA</span>
+          <span style="width: 36px; height: 36px; margin-left: -10px; border-radius: 18px; background: #FFF1DC; color: #9A5800; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px #FFFFFF">ML</span>
+          <span style="width: 36px; height: 36px; margin-left: -10px; border-radius: 18px; background: #EEF2F7; color: #46576B; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px #FFFFFF">+5</span>
+        </span>
+        <span style="width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); color: #FFFFFF; font-size: 20px; font-weight: 800; display: flex; align-items: center; justify-content: center">P</span>
+      </div>
+    </section>
+
+    <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+      <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 20px; padding: 22px 24px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+        <span style="font-size: 15px; font-weight: 600; color: #46576B">Tingkat penyelesaian</span>
+        <span style="font-size: 40px; line-height: 48px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums">78%</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 15px; color: #46576B"><span style="display: inline-flex; align-items: center; gap: 3px; height: 26px; padding: 0 9px; border-radius: 13px; background: #E3F6EE; color: #0F7A55; font-weight: 700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></svg>6 poin</span>vs minggu lalu</span>
+        <svg width="100%" height="44" viewBox="0 0 200 44" preserveAspectRatio="none" aria-hidden="true"><path d="M0 34 L28 26 L57 29 L86 22 L114 17 L143 24 L171 22 L200 10" fill="none" stroke="#0B7F86" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+      <div style="border-radius: 20px; padding: 22px 24px; display: flex; flex-direction: column; gap: 8px; color: #FFFFFF; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); box-shadow: 0 12px 28px rgba(30,95,214,0.30)">
+        <span style="font-size: 15px; font-weight: 600">Menunggu persetujuan Anda</span>
+        <span style="font-size: 40px; line-height: 48px; font-weight: 700; letter-spacing: -0.02em">5</span>
+        <span style="font-size: 15px; line-height: 22px">2 cuti · 2 lembur · 1 koreksi</span>
+        <a href="#" style="align-self: flex-start; margin-top: 6px; height: 36px; padding: 0 14px; border-radius: 10px; background: rgba(255,255,255,0.18); color: #FFFFFF; font-size: 15px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center">Tinjau sekarang</a>
+      </div>
+      <div style="grid-column: span 2; background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 20px; padding: 18px 24px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+        <div style="display: flex; justify-content: space-between; font-size: 15px"><span style="font-weight: 600">Progres proyek</span><span style="color: #46576B"><b style="color: #0B1A2B">48%</b> · rencana 61%</span></div>
+        <div style="position: relative; height: 10px; border-radius: 5px; background: #EEF2F7"><div style="width: 48%; height: 100%; border-radius: 5px; background: linear-gradient(90deg, #14B8A6 0%, #2F7BEA 100%)"></div><span style="position: absolute; left: 61%; top: -4px; width: 3px; height: 18px; margin-left: -1.5px; border-radius: 2px; background: #0B1A2B"></span></div>
+      </div>
+    </section>
+
+    <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 12px 0; display: flex; flex-direction: column; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+      <span style="font-size: 21px; font-weight: 700; padding: 14px 28px 8px">Baris daftar</span>
+      <a href="#" style="display: flex; align-items: center; gap: 14px; padding: 0 28px; min-height: 72px; color: #0B1A2B; text-decoration: none; background: #F3F6FA">
+        <span style="width: 44px; height: 44px; border-radius: 22px; background: #FFF1DC; color: #9A5800; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0">ML</span>
+        <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 17px; font-weight: 600">Maya Lestari · Cuti tahunan</span><span style="font-size: 15px; color: #46576B">12–14 Okt · 3 hari kerja · sisa saldo 9</span></span>
+        <span style="font-size: 14px; color: #46576B">Keadaan sorot</span>
+      </a>
+      <a href="#" style="display: flex; align-items: center; gap: 14px; padding: 0 28px; min-height: 72px; color: #0B1A2B; text-decoration: none; border-top: 1px solid #EEF2F7">
+        <span style="width: 44px; height: 44px; border-radius: 22px; background: #E6EEFE; color: #1A4CB0; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0">YP</span>
+        <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 17px; font-weight: 600">Yoga Permana · Lembur</span><span style="font-size: 15px; color: #46576B">Sab, 3 Okt · 17.00–20.30 · 3,5 jam</span></span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8495A8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+      </a>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 18px; background: #0B1A2B; color: #FFFFFF; box-shadow: 0 20px 48px rgba(11,26,43,0.24)">
+        <span style="width: 32px; height: 32px; border-radius: 16px; background: #4ADE9B; color: #052E1F; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg></span>
+        <span style="flex: 1; font-size: 16px; font-weight: 500">PLQ-21 dipindah ke Review</span>
+        <button type="button" style="height: 36px; padding: 0 12px; border: 0; border-radius: 10px; background: rgba(255,255,255,0.12); color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Urungkan</button>
+      </div>
+      <div style="background: #FFFFFF; border: 1px dashed #C3CEDA; border-radius: 24px; padding: 36px 28px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center">
+        <span style="width: 64px; height: 64px; border-radius: 20px; background: linear-gradient(135deg, #E8FBF8 0%, #EEF4FF 100%); color: #09656E; display: flex; align-items: center; justify-content: center"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 11 3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg></span>
+        <span style="font-size: 20px; font-weight: 700">Semua tugas beres</span>
+        <span style="font-size: 16px; line-height: 24px; color: #46576B; max-width: 340px">Tidak ada tugas bertenggat minggu ini. Buat tugas baru atau lihat board tim.</span>
+        <button type="button" style="height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Tugas baru</button>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { seg: 'Minggu ini', dark: true };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var seg = st.seg || 'Minggu ini';
+    var on = !!st.dark;
+    return {
+      segs: ['Minggu ini', 'Bulan ini', 'Kuartal'].map(function (l) {
+        var sel = l === seg;
+        return { label: l, sel: sel ? 'true' : 'false', bg: sel ? '#FFFFFF' : 'transparent', color: sel ? '#0B1A2B' : '#46576B', shadow: sel ? '0 2px 8px rgba(11,26,43,0.12)' : 'none', pick: function () { self.setState({ seg: l }); } };
+      }),
+      sw: { checked: on ? 'true' : 'false', track: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : '#C3CEDA', justify: on ? 'flex-end' : 'flex-start', toggle: function () { self.setState({ dark: !on }); } },
+      badges: [
+        { label: 'Hadir', bg: '#E3F6EE', fg: '#0F7A55' },
+        { label: 'Terlambat 12 mnt', bg: '#FFF1DC', fg: '#9A5800' },
+        { label: 'Alpha', bg: '#FDE7EA', fg: '#C42137' },
+        { label: 'Cuti', bg: '#E6EEFE', fg: '#1E5FD6' },
+        { label: 'WFH', bg: '#E8FBF8', fg: '#09656E' },
+        { label: 'Sesuai jalur', bg: '#E3F6EE', fg: '#0F7A55' },
+        { label: 'Berisiko', bg: '#FFF1DC', fg: '#9A5800' },
+        { label: 'Bermasalah', bg: '#FDE7EA', fg: '#C42137' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

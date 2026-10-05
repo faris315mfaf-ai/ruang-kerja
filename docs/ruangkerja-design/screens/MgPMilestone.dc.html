@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Manajemen · milestone · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: radial-gradient(420px 220px at 0% 0%, rgba(20,184,166,0.20), transparent 70%), radial-gradient(420px 220px at 100% 0%, rgba(47,123,234,0.18), transparent 70%), #F3F6FA">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <span style="display: flex; flex-direction: column"><span style="font-size: 30px; line-height: 38px; font-weight: 800; letter-spacing: -0.025em">Milestone</span><span style="font-size: 14px; color: #46576B">{{sum}}</span></span>
+    <div role="tablist" aria-label="Bulan" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DDE4EC">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+        <button type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="height: 42px; border: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.fg}}; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">{{t.label}}</button>
+      </sc-for>
+    </div>
+    <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 22px; padding: 14px 16px 2px">
+      <sc-for list="{{ms}}" as="m" hint-placeholder-count="9">
+        <div style="display: flex; gap: 12px">
+          <span style="display: flex; flex-direction: column; align-items: center; flex-shrink: 0; padding-top: 2px">
+            <span style="width: 14px; height: 14px; margin: 2px; transform: rotate(45deg); box-sizing: border-box; border-radius: 3px; background: {{m.bg}}; border: {{m.border}}"></span>
+            <span style="flex: 1; width: 2px; margin-top: 4px; background: {{m.line}}"></span>
+          </span>
+          <span style="flex: 1; min-width: 0; display: flex; justify-content: space-between; gap: 8px; padding-bottom: 12px">
+            <span style="display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 700; color: {{m.color}}">{{m.t}}</span><span style="font-size: 13px; color: #46576B"><b style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #09656E">{{m.code}}</b> · {{m.note}}</span></span>
+            <span style="font-size: 13px; font-weight: 800; white-space: nowrap; color: {{m.color}}">{{m.d}}</span>
+          </span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" set="manajemen" active="proyek" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var M = [
+  ['Oktober', '9 milestone · 2 selesai · 1 terlewat', [['SIM', 'Migrasi data tahap 1', 'Kam, 1', 'done', 'Implementer'], ['KMB', 'Sprint 5 selesai', 'Jum, 2', 'done', '38/40 poin'], ['DEP', 'Integrasi API Pemda', 'Jum, 2', 'miss', 'akses klien belum ada'], ['WEB', 'Logo final disetujui', 'Rab, 7', 'next', 'Branding'], ['PSL', 'Kontrak ditandatangani', 'Kam, 8', 'todo', 'Sekretariat'], ['KMB', 'Sprint 6 review', 'Jum, 9', 'todo', 'demo ke klien'], ['SIM', 'Go-live SIMRS', 'Sen, 19', 'todo', 'tim lengkap on-site'], ['RKJ', 'Rilis Fase 1', 'Sen, 26', 'todo', 'internal'], ['WEB', 'Website baru tayang', 'Jum, 30', 'todo', '12 halaman']]],
+  ['November', '5 milestone · DEP diusulkan mundur', [['RKJ', 'Fase 2 mulai', 'Sen, 2', 'todo', 'WhatsApp & payroll'], ['KMB', 'Go-live Koperasi', 'Sen, 9', 'todo', 'pelatihan kasir berjalan'], ['PSL', 'Desain UI disetujui', 'Jum, 13', 'todo', '18 layar'], ['SIM', 'Hypercare selesai', 'Sen, 16', 'todo', 'serah terima TI RS'], ['DEP', 'Serah terima', 'Jum, 27', 'risk', 'usul mundur 18 Des']]],
+  ['Desember', '3 milestone', [['RKJ', 'Rilis Fase 2', 'Jum, 11', 'todo', 'internal'], ['PSL', 'Rilis MVP', 'Jum, 18', 'todo', 'pelacakan pengiriman'], ['WEB', 'Kampanye Q4 selesai', 'Jum, 18', 'todo', 'LinkedIn 12 minggu']]]
+];
+function sty(s) {
+  if (s === 'done') return { bg: '#0B1A2B', border: '0', color: '#0B1A2B' };
+  if (s === 'miss') return { bg: '#C42137', border: '0', color: '#C42137' };
+  if (s === 'risk') return { bg: '#FFFFFF', border: '2px solid #E08A00', color: '#9A5800' };
+  if (s === 'next') return { bg: '#FFFFFF', border: '3px solid #1E5FD6', color: '#1E5FD6' };
+  return { bg: '#FFFFFF', border: '2px solid #0B1A2B', color: '#0B1A2B' };
+}
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { m: 0 };
+  }
+  renderVals() {
+    var self = this;
+    var mi = (this.state && this.state.m) || 0;
+    var list = M[mi][2];
+    return {
+      sum: M[mi][1],
+      tabs: M.map(function (x, i) { var on = i === mi; return { label: x[0].slice(0, 3), sel: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : 'transparent', fg: on ? '#FFFFFF' : '#46576B', pick: function () { self.setState({ m: i }); } }; }),
+      ms: list.map(function (m, i) { var s = sty(m[3]); return { code: m[0], t: m[1], d: m[2], note: m[4], bg: s.bg, border: s.border, color: s.color, line: i === list.length - 1 ? 'transparent' : (m[3] === 'done' ? '#0B1A2B' : '#DDE4EC') }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

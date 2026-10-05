@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Board · Proyek Peluncuran Q4</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}a:hover{color:#95E8DD}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(45,191,177,0.16), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(91,140,246,0.16), transparent 65%), #070B14; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" crumbs="Workspace / Proyek Peluncuran Q4 / Tugas" dark="{{ true }}" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1480px; margin: 0 auto; padding: 36px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <section style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px">
+      <div style="display: flex; align-items: center; gap: 18px">
+        <span aria-hidden="true" style="width: 64px; height: 64px; border-radius: 18px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); color: #FFFFFF; font-size: 26px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 28px rgba(47,123,234,0.35)">P</span>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <h1 style="margin: 0; font-size: 36px; line-height: 44px; font-weight: 800; letter-spacing: -0.025em">Proyek Peluncuran Q4</h1>
+          <span style="font-size: 17px; color: #A6B4C6"><span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600">PLQ</span> · Proyek · 9 anggota dari 3 divisi · PIC Putri Ramadhani</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px">
+        <div style="display: flex">
+          <span aria-hidden="true" style="width: 38px; height: 38px; border-radius: 19px; background: #1B3F8A; color: #D9E6FF; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px #070B14">PR</span>
+          <span aria-hidden="true" style="width: 38px; height: 38px; margin-left: -10px; border-radius: 19px; background: #0A4E57; color: #C8F4EE; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px #070B14">SW</span>
+          <span aria-hidden="true" style="width: 38px; height: 38px; margin-left: -10px; border-radius: 19px; background: #5A3A0A; color: #FFE1B0; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px #070B14">ML</span>
+          <span aria-hidden="true" style="width: 38px; height: 38px; margin-left: -10px; border-radius: 19px; background: #233247; color: #A6B4C6; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px #070B14">+6</span>
+        </div>
+        <button type="button" style="height: 48px; padding: 0 22px; border: 0; border-radius: 14px; background: linear-gradient(135deg, #2DBFB1 0%, #5B8CF6 100%); color: #041421; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 28px rgba(91,140,246,0.35); display: inline-flex; align-items: center; gap: 8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Tugas baru <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 1px 6px; border-radius: 6px; background: rgba(4,20,33,0.14)">C</span></button>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; border-bottom: 1px solid #233247">
+      <nav aria-label="Bagian workspace" style="display: flex; gap: 28px">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+          <a href="{{t.href}}" aria-current="{{t.current}}" style="padding: 0 2px 14px; font-size: 17px; font-weight: {{t.weight}}; color: {{t.color}}; border-bottom: 3px solid {{t.line}}">{{t.label}}<span style="margin-left: 6px; font-size: 15px; color: #A6B4C6">{{t.count}}</span></a>
+        </sc-for>
+      </nav>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-bottom: 10px">
+        <span style="font-size: 15px; color: #A6B4C6; display: inline-flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 4px; background: #4ADE9B"></span>18 tugas · tersinkron langsung</span>
+        <button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #233247; border-radius: 12px; background: #0F1622; color: #EAF1F8; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16"></path><path d="M7 12h10"></path><path d="M10 18h4"></path></svg>Filter</button>
+        <div role="tablist" aria-label="Tampilan" style="display: inline-flex; padding: 4px; border-radius: 14px; background: #0F1622; border: 1px solid #233247">
+          <sc-for list="{{views}}" as="v" hint-placeholder-count="3">
+            <button type="button" role="tab" aria-selected="{{v.sel}}" onClick="{{v.pick}}" style="height: 34px; padding: 0 14px; border: 0; border-radius: 10px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; background: {{v.bg}}; color: {{v.color}}">{{v.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Board" style="overflow-x: auto; padding-bottom: 8px">
+      <div style="display: flex; gap: 16px; align-items: flex-start; min-width: max-content">
+        <sc-for list="{{columns}}" as="col" hint-placeholder-count="5">
+          <div style="flex: 0 0 272px; background: rgba(15,22,34,0.8); border: 1px solid #233247; border-radius: 24px; padding: 16px 12px 12px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 0 6px 4px">
+              <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="{{col.color}}" stroke-width="2" stroke-dasharray="{{col.dash}}"></circle><path d="{{col.fill}}" fill="{{col.color}}"></path></svg>
+              <span style="font-size: 17px; font-weight: 700">{{col.name}}</span>
+              <span style="height: 24px; min-width: 24px; padding: 0 8px; box-sizing: border-box; border-radius: 12px; background: #172131; color: #A6B4C6; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">{{col.count}}</span>
+              <span style="flex: 1"></span>
+              <button type="button" aria-label="Tambah tugas di {{col.name}}" style="width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; color: #A6B4C6; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
+            </div>
+            <sc-for list="{{col.cards}}" as="c" hint-placeholder-count="3">
+              <a href="DTugas.dc.html" style="display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 18px; background: #172131; border: 1px solid {{c.border}}; box-shadow: {{c.shadow}}; color: #EAF1F8">
+                <span style="display: flex; align-items: center; justify-content: space-between">
+                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: #A6B4C6">{{c.id}}</span>
+                  <span aria-label="{{c.prioLabel}}" style="display: inline-flex; align-items: flex-end; gap: 2px; height: 16px">
+                    <span style="width: 4px; height: 7px; border-radius: 1px; background: {{c.p1}}"></span>
+                    <span style="width: 4px; height: 11px; border-radius: 1px; background: {{c.p2}}"></span>
+                    <span style="width: 4px; height: 16px; border-radius: 1px; background: {{c.p3}}"></span>
+                  </span>
+                </span>
+                <span style="font-size: 17px; line-height: 24px; font-weight: 600; color: {{c.titleColor}}">{{c.title}}</span>
+                <sc-if value="{{c.hasCheck}}" hint-placeholder-val="{{false}}">
+                  <span style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: #A6B4C6"><span style="flex: 1; height: 6px; border-radius: 3px; background: #233247; overflow: hidden"><span style="display: block; width: {{c.checkPct}}%; height: 100%; background: linear-gradient(90deg, #2DBFB1 0%, #5B8CF6 100%)"></span></span>{{c.check}}</span>
+                </sc-if>
+                <span style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px">
+                  <sc-if value="{{c.hasLabel}}" hint-placeholder-val="{{true}}"><span style="height: 26px; padding: 0 10px; border-radius: 8px; background: rgba(255,255,255,0.08); color: #D5DEE9; font-weight: 600; display: inline-flex; align-items: center">{{c.label}}</span></sc-if>
+                  <sc-if value="{{c.hasMeta}}" hint-placeholder-val="{{true}}"><span style="color: {{c.metaColor}}; font-weight: {{c.metaWeight}}">{{c.meta}}</span></sc-if>
+                  <span style="flex: 1"></span>
+                  <sc-if value="{{c.hasOwner}}" hint-placeholder-val="{{true}}"><span aria-label="{{c.ownerName}}" style="width: 30px; height: 30px; border-radius: 15px; background: #314560; color: #EAF1F8; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{c.owner}}</span></sc-if>
+                </span>
+              </a>
+            </sc-for>
+            <sc-if value="{{col.hasMore}}" hint-placeholder-val="{{false}}">
+              <button type="button" style="height: 40px; border: 0; border-radius: 12px; background: transparent; color: #5AD6C8; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">{{col.more}}</button>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" active="PLQ" dark="{{ true }}" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1160}}'>
+var ON = '#EAF1F8', OFF = '#314560';
+var PRIO = { 0: [OFF, OFF, OFF, 'Tanpa prioritas'], 1: ['#FF7A8A', '#FF7A8A', '#FF7A8A', 'Urgent'], 2: [ON, ON, ON, 'Tinggi'], 3: [ON, ON, OFF, 'Sedang'], 4: [ON, OFF, OFF, 'Rendah'] };
+var OWN = { DP: 'Dimas Pratama', SW: 'Sari Wulandari', RA: 'Rizky Aditya', ML: 'Maya Lestari', YP: 'Yoga Permana', BS: 'Bayu Saputra' };
+function card(id, title, prio, label, meta, kind, owner, check) {
+  var p = PRIO[prio];
+  return {
+    id: id, title: title, p1: p[0], p2: p[1], p3: p[2], prioLabel: p[3],
+    label: label || '', hasLabel: !!label, meta: meta || '', hasMeta: !!meta,
+    metaColor: kind === 'late' ? '#FF7A8A' : (kind === 'soon' ? '#FBBF4C' : (kind === 'done' ? '#4ADE9B' : '#A6B4C6')),
+    metaWeight: kind === 'late' || kind === 'soon' ? 700 : 500,
+    owner: owner || '', hasOwner: !!owner, ownerName: owner ? OWN[owner] : '',
+    hasCheck: !!check, check: check ? check[0] + '/' + check[1] : '', checkPct: check ? Math.round(check[0] / check[1] * 100) : 0,
+    titleColor: kind === 'done' ? '#A6B4C6' : '#EAF1F8',
+    border: kind === 'late' ? 'rgba(255,122,138,0.55)' : '#233247',
+    shadow: kind === 'late' ? '0 0 0 3px rgba(255,122,138,0.12)' : 'none'
+  };
+}
+var COLUMNS = [
+  { name: 'Backlog', color: '#6B7C92', dash: '2.6 2.6', fill: '', cards: [
+    card('PLQ-31', 'Riset harga kompetitor wilayah Jawa Barat', 4, 'Riset', '', '', 'YP'),
+    card('PLQ-29', 'Daftar mitra distribusi tahap 2', 0, '', 'Belum ditugaskan', '', ''),
+    card('PLQ-34', 'Ide konten video teaser media sosial', 4, 'Konten', '', '', 'ML') ] },
+  { name: 'Todo', color: '#A6B4C6', dash: '', fill: '', cards: [
+    card('PLQ-22', 'Siapkan materi presentasi untuk direksi', 2, '', 'Kam, 8 Okt', '', 'DP'),
+    card('PLQ-25', 'Kontrak vendor percetakan materi acara', 3, 'Legal', '', '', 'SW'),
+    card('PLQ-27', 'Desain banner & spanduk peluncuran', 3, 'Desain', 'Sab, 10 Okt', '', 'ML'),
+    card('PLQ-30', 'Kirim undangan ke media mitra', 4, '', 'Kam, 15 Okt', '', 'RA') ] },
+  { name: 'Dikerjakan', color: '#FBBF4C', dash: '', fill: 'M10 5a5 5 0 0 1 0 10z', cards: [
+    card('PLQ-18', 'Finalisasi anggaran peluncuran', 1, 'Keuangan', 'Besok', 'soon', 'DP'),
+    card('PLQ-21', 'Landing page produk baru', 2, 'Web', 'Jum, 9 Okt', '', 'RA', [4, 7]),
+    card('PLQ-24', 'Skrip video demo produk', 3, 'Konten', '', '', 'ML') ] },
+  { name: 'Review', color: '#7FA8FF', dash: '', fill: 'M10 5a5 5 0 1 1-5 5h5z', cards: [
+    card('PLQ-15', 'Siaran pers peluncuran', 1, 'Konten', 'Lewat 2 hari', 'late', 'SW'),
+    card('PLQ-19', 'Rencana logistik hari acara', 3, 'Operasional', 'Sen, 12 Okt', '', 'BS') ] },
+  { name: 'Selesai', color: '#4ADE9B', dash: '', fill: 'M10 5a5 5 0 1 1 0 10 5 5 0 0 1 0-10z', count: 6, more: 'Tampilkan 4 lainnya', cards: [
+    card('PLQ-12', 'Penetapan tanggal peluncuran', 3, '', 'Selesai 28 Sep · tepat waktu', 'done', 'DP'),
+    card('PLQ-14', 'Pemesanan venue acara', 3, '', 'Selesai 1 Okt · telat 1 hari', 'done', 'SW') ] }
+];
+function seg(list, cur, key, self, dark) {
+  return list.map(function (l) {
+    var sel = l === cur;
+    return { label: l, sel: sel ? 'true' : 'false', bg: sel ? '#233247' : 'transparent', color: sel ? '#EAF1F8' : '#A6B4C6', pick: function () { var s = {}; s[key] = l; self.setState(s); } };
+  });
+}
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { view: 'Board' };
+  }
+  renderVals() {
+    var st = this.state || {};
+    return {
+      tabs: [['Ringkasan', '', 'DProyek.dc.html'], ['Todolist', '', 'DTodo.dc.html'], ['Tugas', '18', '#'], ['Dokumen', '6', '#'], ['File', '24', '#'], ['Aktivitas', '', '#']].map(function (t) {
+        var on = t[0] === 'Tugas';
+        return { label: t[0], count: t[1], href: t[2], current: on ? 'page' : undefined, weight: on ? 700 : 500, color: on ? '#EAF1F8' : '#A6B4C6', line: on ? '#2DBFB1' : 'transparent' };
+      }),
+      views: seg(['Board', 'List', 'Kalender'], st.view || 'Board', 'view', this),
+      columns: COLUMNS.map(function (c) {
+        return Object.assign({}, c, { count: c.count || c.cards.length, hasMore: !!c.more, more: c.more || '' });
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

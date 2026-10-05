@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Notulensi rapat</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}a:hover{color:#0A4E57}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #F3F6FA; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" crumbs="Rapat / Stand-up 5 Okt / Notulen" meeting="Koordinasi PLQ · 5 mnt" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 36px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 22px">
+    <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <a href="DRapat.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>Rapat</a>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+          <h1 style="margin: 0; font-size: 40px; line-height: 48px; font-weight: 800; letter-spacing: -0.025em">Stand-up Divisi Operasional</h1>
+          <span style="height: 34px; padding: 0 14px; border-radius: 17px; background: {{st.bg}}; color: {{st.fg}}; font-size: 15px; font-weight: 800; display: inline-flex; align-items: center">{{st.label}}</span>
+        </div>
+        <span style="font-size: 17px; color: #46576B">Sen, 5 Okt 2026 · 09.00–09.30 · Google Meet · notulis Dimas Pratama</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 15px; color: #46576B"><span style="display: flex"><span style="width: 30px; height: 30px; border-radius: 15px; background: #FFF1DC; color: #9A5800; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #E08A00">FH</span></span>Fitri ikut mengedit</span>
+        <button type="button" style="height: 48px; padding: 0 18px; border: 1px solid #C3CEDA; border-radius: 14px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Ekspor ke Google Docs</button>
+        <button type="button" onClick="{{finalize}}" style="height: 48px; padding: 0 22px; border: 0; border-radius: 14px; background: {{fin.bg}}; color: {{fin.fg}}; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: {{fin.shadow}}">{{fin.label}}</button>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 999 1 660px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+        <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between"><h2 style="margin: 0; font-size: 21px; font-weight: 700">Kehadiran</h2><span style="font-size: 16px; font-weight: 700; color: #09656E">{{presentN}} dari {{total}} hadir</span></div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <sc-for list="{{people}}" as="p" hint-placeholder-count="14">
+              <button type="button" aria-pressed="{{p.aria}}" onClick="{{p.toggle}}" style="height: 40px; padding: 0 14px 0 6px; border-radius: 20px; border: {{p.border}}; background: {{p.bg}}; color: {{p.fg}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: {{p.deco}}"><span style="width: 28px; height: 28px; border-radius: 14px; background: {{p.avBg}}; color: {{p.avFg}}; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; text-decoration: none">{{p.init}}</span>{{p.name}}</button>
+            </sc-for>
+          </div>
+          <span style="font-size: 14px; color: #46576B">Diisi otomatis dari peserta Google Meet; klik untuk mengubah. Nadia cuti, Andi sakit.</span>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px 28px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 22px">
+          <h2 style="margin: 0; font-size: 21px; font-weight: 700">Agenda &amp; catatan</h2>
+          <sc-for list="{{agenda}}" as="a" hint-placeholder-count="3">
+            <div style="display: flex; gap: 16px">
+              <span style="width: 36px; height: 36px; border-radius: 12px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); color: #FFFFFF; font-size: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0">{{a.n}}</span>
+              <div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+                <span style="font-size: 19px; font-weight: 700">{{a.title}}</span>
+                <span style="font-size: 17px; line-height: 28px; color: #253445; white-space: pre-line">{{a.body}}</span>
+              </div>
+            </div>
+          </sc-for>
+          <div style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; border: 1px dashed #C3CEDA; color: #46576B; font-size: 16px">Ketik / untuk menambah agenda, @ untuk menyebut, # untuk merujuk tugas</div>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px 28px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 12px">
+          <h2 style="margin: 0; font-size: 21px; font-weight: 700">Keputusan</h2>
+          <sc-for list="{{decisions}}" as="d" hint-placeholder-count="3">
+            <div style="display: flex; gap: 12px; align-items: flex-start; padding-top: 10px; border-top: 1px solid #EEF2F7">
+              <span style="width: 26px; height: 26px; border-radius: 13px; background: #E3F6EE; color: #0F7A55; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg></span>
+              <span style="font-size: 17px; line-height: 26px">{{d}}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px 0 8px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 28px 12px"><h2 style="margin: 0; font-size: 21px; font-weight: 700">Tindak lanjut</h2><button type="button" onClick="{{makeAll}}" style="height: 40px; padding: 0 14px; border: 0; border-radius: 12px; background: #E8FBF8; color: #09656E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Jadikan semua tugas</button></div>
+          <div style="display: grid; grid-template-columns: 2.4fr 1.2fr 1fr 150px; gap: 14px; padding: 10px 28px; background: #F3F6FA; font-size: 14px; font-weight: 700; color: #46576B"><span>Butir</span><span>Penanggung jawab</span><span>Tenggat</span><span style="text-align: right">Tugas</span></div>
+          <sc-for list="{{items}}" as="i" hint-placeholder-count="4">
+            <div style="display: grid; grid-template-columns: 2.4fr 1.2fr 1fr 150px; gap: 14px; align-items: center; padding: 0 28px; min-height: 64px; border-top: 1px solid #EEF2F7; font-size: 16px">
+              <span style="font-weight: 600">{{i.text}}</span>
+              <span>{{i.who}}</span>
+              <span>{{i.due}}</span>
+              <span style="text-align: right">
+                <sc-if value="{{i.isTask}}" hint-placeholder-val="{{false}}"><a href="DTugas.dc.html" style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; padding: 6px 10px; border-radius: 8px; background: #E3F6EE; color: #0F7A55">{{i.taskId}}</a></sc-if>
+                <sc-if value="{{i.canMake}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{i.make}}" style="height: 38px; padding: 0 12px; border: 1px solid #C3CEDA; border-radius: 10px; background: #FFFFFF; color: #0B1A2B; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">Jadikan tugas</button></sc-if>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <aside style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 8px 22px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+          <sc-for list="{{info}}" as="x" hint-placeholder-count="6">
+            <div style="display: flex; justify-content: space-between; gap: 12px; align-items: center; min-height: 54px; border-bottom: {{x.sep}}; font-size: 15px"><span style="font-weight: 600; color: #46576B">{{x.k}}</span><span style="font-weight: 700; text-align: right; color: {{x.color}}">{{x.v}}</span></div>
+          </sc-for>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 18px; font-weight: 700">Lampiran</span>
+          <a href="#" style="display: flex; align-items: center; gap: 12px; color: #0B1A2B"><span style="width: 40px; height: 40px; border-radius: 12px; background: #FDE7EA; color: #C42137; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 600">Rekaman Meet · 28 menit</span><span style="font-size: 13px; color: #46576B">Drive · Divisi Operasional</span></span></a>
+          <a href="#" style="display: flex; align-items: center; gap: 12px; color: #0B1A2B"><span style="width: 40px; height: 40px; border-radius: 12px; background: #E3F6EE; color: #0F7A55; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M4 4h16v16H4z"></path><path d="M4 10h16"></path><path d="M10 4v16"></path></svg></span><span style="display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 600">Rekap stok September</span><span style="font-size: 13px; color: #46576B">Sheets · dari OPS-142</span></span></a>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 20px 22px; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 18px; font-weight: 700">Setelah difinalkan</span>
+          <span style="font-size: 15px; line-height: 22px; color: #46576B">Notulen terkunci dan dikirim ke 14 peserta lewat Inbox dan email. Tindak lanjut yang sudah jadi tugas muncul di Tugas saya masing-masing.</span>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" active="rapat" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1700}}'>
+var P = [['DP', 'Dimas'], ['RA', 'Rizky'], ['SW', 'Sari'], ['ML', 'Maya'], ['BS', 'Bayu'], ['YP', 'Yoga'], ['FH', 'Fitri'], ['RO', 'Rina'], ['NP', 'Nadia'], ['AK', 'Andi'], ['TW', 'Tono'], ['LM', 'Lina'], ['HS', 'Hadi'], ['WA', 'Wulan']];
+var ITEMS = [
+  ['Selesaikan rekap stok September', 'Rizky Aditya', 'Rab, 7 Okt', 'OPS-142'],
+  ['Kirim jadwal servis 2 kendaraan ke vendor', 'Dimas Pratama', 'Rab, 7 Okt', ''],
+  ['Kalibrasi timbangan rak C', 'Yoga Permana', 'Kam, 8 Okt', ''],
+  ['Bagikan hasil impor batch 2 ke tim gudang', 'Sari Wulandari', 'Sel, 6 Okt', 'MSG-23']
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { absent: { NP: true, AK: true }, made: {}, final: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var absent = st.absent || {};
+    var made = st.made || {};
+    var fin = !!st.final;
+    var present = P.filter(function (p) { return !absent[p[0]]; }).length;
+    return {
+      st: fin ? { label: 'Final · dibagikan', bg: '#E3F6EE', fg: '#0F7A55' } : { label: 'Draf', bg: '#FFF1DC', fg: '#9A5800' },
+      fin: fin ? { label: 'Dibagikan ke 14 peserta', bg: '#E3F6EE', fg: '#0F7A55', shadow: 'none' } : { label: 'Finalkan & bagikan', bg: 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', fg: '#FFFFFF', shadow: '0 10px 24px rgba(30,95,214,0.30)' },
+      finalize: function () { self.setState({ final: !fin }); },
+      presentN: present, total: P.length,
+      people: P.map(function (p) {
+        var off = !!absent[p[0]];
+        return { init: p[0], name: p[1], aria: off ? 'false' : 'true', bg: off ? '#F3F6FA' : '#E8FBF8', fg: off ? '#8495A8' : '#0A4E57', border: off ? '1px dashed #C3CEDA' : '1px solid #C8F4EE', deco: off ? 'line-through' : 'none', avBg: off ? '#DDE4EC' : '#FFFFFF', avFg: off ? '#8495A8' : '#0A4E57', toggle: function () { var a = Object.assign({}, absent); a[p[0]] = !off; self.setState({ absent: a }); } };
+      }),
+      agenda: [
+        { n: '1', title: 'Status stok & gudang', body: 'Selisih stok rak C turun dari 42 ke 18 SKU setelah hitung ulang.\nMigrasi batch 2 sedang diimpor; 12 SKU kode ganda sudah dibersihkan.' },
+        { n: '2', title: 'Tugas terlambat divisi', body: 'Lima tugas terlambat, tiga milik Rizky. Rizky minta bantuan Fitri untuk input tagihan vendor (OPS-127).' },
+        { n: '3', title: 'Persiapan audit stok Oktober', body: 'Jadwal hitung fisik Sabtu, 17 Okt. Butuh 4 orang; lembur diajukan minggu ini.' }
+      ],
+      decisions: [
+        'Fitri membantu OPS-127 sampai Rabu; Rizky fokus ke rekap stok.',
+        'Hitung fisik audit stok dilakukan Sabtu, 17 Okt pukul 08.00–12.00.',
+        'Laporan selisih stok mingguan dikirim setiap Jumat ke Kepala Divisi.'
+      ],
+      items: ITEMS.map(function (it, i) {
+        var linked = it[3] || made[i];
+        return { text: it[0], who: it[1], due: it[2], isTask: !!linked, taskId: it[3] || ('OPS-' + (156 + i)), canMake: !linked, make: function () { var m = Object.assign({}, made); m[i] = true; self.setState({ made: m }); } };
+      }),
+      makeAll: function () { var m = {}; ITEMS.forEach(function (x, i) { m[i] = true; }); self.setState({ made: m }); },
+      info: [
+        ['Platform', 'Google Meet', '#09656E'], ['Penyelenggara', 'Dimas Pratama', '#0B1A2B'], ['Workspace', 'Divisi Operasional', '#09656E'],
+        ['Berulang', 'Senin, Rabu, Jumat', '#0B1A2B'], ['Durasi', '28 menit', '#0B1A2B'], ['Versi', 'Disimpan 10.18 · 4 versi', '#0B1A2B']
+      ].map(function (x, i, a) { return { k: x[0], v: x[1], color: x[2], sep: i < a.length - 1 ? '1px solid #EEF2F7' : '0' }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

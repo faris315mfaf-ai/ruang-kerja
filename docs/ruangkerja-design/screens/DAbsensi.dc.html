@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Absensi saya</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}a:hover{color:#0A4E57}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #F3F6FA; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" crumbs="Absensi" status="{{menuStatus}}" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 40px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #09656E">Senin, 5 Oktober 2026</span>
+        <h1 style="margin: 0; font-size: 44px; line-height: 52px; font-weight: 800; letter-spacing: -0.03em">Absensi</h1>
+        <span style="font-size: 18px; color: #46576B">Shift Reguler 08.00–17.00 · Kantor Pusat</span>
+      </div>
+      <div style="display: flex; gap: 12px">
+        <a href="#" style="height: 44px; padding: 0 18px; border: 1px solid #C3CEDA; border-radius: 12px; background: #FFFFFF; color: #0B1A2B; font-size: 16px; font-weight: 600; display: inline-flex; align-items: center">Ajukan koreksi</a>
+        <a href="#" style="height: 44px; padding: 0 18px; border: 1px solid #C3CEDA; border-radius: 12px; background: #FFFFFF; color: #0B1A2B; font-size: 16px; font-weight: 600; display: inline-flex; align-items: center">Ajukan cuti</a>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 3 1 560px; min-width: 0; border-radius: 28px; padding: 2px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); box-shadow: 0 16px 40px rgba(30,95,214,0.20)">
+        <div style="border-radius: 26px; background: #FFFFFF; padding: 32px; display: flex; flex-direction: column; gap: 24px">
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <span style="display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; height: 34px; padding: 0 14px; border-radius: 17px; background: {{state.chipBg}}; color: {{state.chipFg}}; font-size: 15px; font-weight: 700"><span style="width: 9px; height: 9px; border-radius: 5px; background: {{state.chipFg}}"></span>{{state.chip}}</span>
+              <span style="font-size: 72px; line-height: 80px; font-weight: 800; letter-spacing: -0.04em">13.42</span>
+              <span style="font-size: 17px; color: #46576B">Waktu server · WIB</span>
+            </div>
+            <div role="tablist" aria-label="Metode" style="display: inline-flex; padding: 4px; border-radius: 14px; background: #EEF2F7">
+              <sc-for list="{{methods}}" as="m" hint-placeholder-count="3">
+                <button type="button" role="tab" aria-selected="{{m.sel}}" onClick="{{m.pick}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 10px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; background: {{m.bg}}; color: {{m.color}}; box-shadow: {{m.shadow}}">{{m.label}}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+            <div style="padding: 16px 18px; border-radius: 16px; background: #F3F6FA; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 15px; color: #46576B">Masuk</span><span style="font-size: 26px; font-weight: 700">07.41</span><span style="font-size: 15px; font-weight: 600; color: #0F7A55">Tepat waktu</span></div>
+            <div style="padding: 16px 18px; border-radius: 16px; background: #F3F6FA; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 15px; color: #46576B">Pulang</span><span style="font-size: 26px; font-weight: 700">{{state.outTime}}</span><span style="font-size: 15px; font-weight: 600; color: #46576B">{{state.outNote}}</span></div>
+            <div style="padding: 16px 18px; border-radius: 16px; background: #F3F6FA; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 15px; color: #46576B">Durasi kerja</span><span style="font-size: 26px; font-weight: 700">{{state.duration}}</span><span style="font-size: 15px; font-weight: 600; color: #46576B">istirahat 60 mnt</span></div>
+          </div>
+
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+            <span style="flex: 1 1 260px; display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; border: 1px solid #DDE4EC">
+              <span style="width: 40px; height: 40px; border-radius: 12px; background: #E8FBF8; color: #09656E; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"></path><path d="M12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"></path></svg></span>
+              <span style="display: flex; flex-direction: column"><span style="font-size: 16px; font-weight: 600">Kantor Pusat · dalam radius</span><span style="font-size: 15px; color: #46576B">38 m dari titik · akurasi 12 m</span></span>
+            </span>
+            <sc-if value="{{state.canOut}}" hint-placeholder-val="{{true}}">
+              <button type="button" onClick="{{checkOut}}" style="flex: 0 0 auto; height: 56px; padding: 0 32px; border: 0; border-radius: 16px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 18px; font-weight: 700; cursor: pointer; box-shadow: 0 12px 28px rgba(30,95,214,0.34); display: inline-flex; align-items: center; gap: 10px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path></svg>Check-out</button>
+            </sc-if>
+            <sc-if value="{{state.done}}" hint-placeholder-val="{{false}}">
+              <span style="height: 56px; padding: 0 24px; border-radius: 16px; background: #E3F6EE; color: #0F7A55; font-size: 17px; font-weight: 700; display: inline-flex; align-items: center; gap: 10px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg>Check-out tercatat</span>
+            </sc-if>
+          </div>
+          <span style="font-size: 15px; line-height: 22px; color: #46576B">Lokasi dan selfie hanya direkam saat check-in dan check-out. <a href="#" style="font-weight: 600">Kebijakan privasi</a></span>
+        </div>
+      </div>
+
+      <div style="flex: 2 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+        <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 20px; padding: 24px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; align-items: center; justify-content: space-between">
+            <h2 style="margin: 0; font-size: 22px; font-weight: 700">Oktober 2026</h2>
+            <div style="display: flex; gap: 6px">
+              <button type="button" aria-label="Bulan sebelumnya" style="width: 40px; height: 40px; border: 1px solid #DDE4EC; border-radius: 12px; background: #FFFFFF; color: #0B1A2B; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></button>
+              <button type="button" aria-label="Bulan berikutnya" style="width: 40px; height: 40px; border: 1px solid #DDE4EC; border-radius: 12px; background: #FFFFFF; color: #0B1A2B; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></button>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; text-align: center">
+            <sc-for list="{{weekdays}}" as="w" hint-placeholder-count="7"><span style="font-size: 14px; font-weight: 700; color: #46576B; padding-bottom: 6px">{{w}}</span></sc-for>
+            <sc-for list="{{days}}" as="d" hint-placeholder-count="35">
+              <span style="height: 46px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 16px; font-weight: {{d.weight}}; color: {{d.color}}; background: {{d.bg}}">{{d.n}}<span style="width: 6px; height: 6px; border-radius: 3px; background: {{d.dot}}"></span></span>
+            </sc-for>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 14px; font-size: 14px; color: #46576B">
+            <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 4px; background: #0F7A55"></span>Hadir</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 4px; background: #E08A00"></span>Terlambat</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 4px; background: #1E5FD6"></span>Cuti / WFH</span>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 15px; color: #46576B">Saldo cuti 2026</span><span style="font-size: 34px; font-weight: 700">9 <span style="font-size: 18px; font-weight: 600; color: #46576B">hari</span></span></div>
+          <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 15px; color: #46576B">Tepat waktu September</span><span style="font-size: 34px; font-weight: 700">95%</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 20px; padding: 24px 0 8px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 28px 12px">
+        <h2 style="margin: 0; font-size: 22px; font-weight: 700">Riwayat 7 hari kerja</h2>
+        <a href="#" style="font-size: 16px; font-weight: 600">Semua riwayat</a>
+      </div>
+      <div style="overflow-x: auto">
+        <div style="min-width: 760px">
+          <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1.4fr 1fr; gap: 16px; padding: 12px 28px; background: #F3F6FA; font-size: 14px; font-weight: 700; color: #46576B">
+            <span>Tanggal</span><span>Masuk</span><span>Pulang</span><span>Durasi</span><span>Status</span><span>Metode</span>
+          </div>
+          <sc-for list="{{history}}" as="h" hint-placeholder-count="7">
+            <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1.4fr 1fr; gap: 16px; align-items: center; padding: 0 28px; min-height: 60px; border-top: 1px solid #EEF2F7; font-size: 16px">
+              <span style="font-weight: 600">{{h.date}}</span>
+              <span>{{h.in}}</span>
+              <span>{{h.out}}</span>
+              <span style="color: #46576B">{{h.dur}}</span>
+              <span><span style="display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 15px; background: {{h.bg}}; color: {{h.fg}}; font-size: 15px; font-weight: 700"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{h.fg}}"></span>{{h.status}}</span></span>
+              <span style="color: #46576B">{{h.method}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" active="absensi" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1260}}'>
+var ST = {
+  hadir: ['Hadir', '#E3F6EE', '#0F7A55'], telat: ['Terlambat 11 mnt', '#FFF1DC', '#9A5800'],
+  wfh: ['WFH', '#E8FBF8', '#09656E'], cuti: ['Cuti', '#E6EEFE', '#1E5FD6'], jalan: ['Sedang bekerja', '#E6EEFE', '#1E5FD6']
+};
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { method: 'GPS + selfie', out: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var method = st.method || 'GPS + selfie';
+    var out = !!st.out;
+    var marks = { 1: 'hadir', 2: 'hadir' };
+    var days = [];
+    for (var b = 0; b < 3; b++) days.push({ n: '', bg: 'transparent', color: '#0B1A2B', weight: 500, dot: 'transparent' });
+    for (var d = 1; d <= 31; d++) {
+      var dow = (d + 2) % 7;
+      var weekend = dow === 5 || dow === 6;
+      var today = d === 5;
+      days.push({
+        n: d,
+        bg: today ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : 'transparent',
+        color: today ? '#FFFFFF' : (weekend ? '#8495A8' : '#0B1A2B'),
+        weight: today ? 800 : 500,
+        dot: today ? '#FFFFFF' : (marks[d] === 'hadir' ? '#0F7A55' : 'transparent')
+      });
+    }
+    var hist = [
+      ['Sen, 5 Okt', '07.41', out ? '17.02' : '—', out ? '8 j 21 m' : 'berjalan', out ? 'hadir' : 'jalan', 'GPS + selfie'],
+      ['Jum, 2 Okt', '07.55', '17.10', '8 j 15 m', 'hadir', 'QR kiosk'],
+      ['Kam, 1 Okt', '07.58', '17.04', '8 j 06 m', 'hadir', 'QR kiosk'],
+      ['Rab, 30 Sep', '07.48', '17.02', '8 j 14 m', 'hadir', 'GPS + selfie'],
+      ['Sel, 29 Sep', '07.59', '17.00', '8 j 01 m', 'wfh', 'WFH'],
+      ['Sen, 28 Sep', '08.21', '17.15', '7 j 54 m', 'telat', 'GPS + selfie'],
+      ['Jum, 25 Sep', '—', '—', '—', 'cuti', 'Pengajuan']
+    ];
+    return {
+      menuStatus: out ? 'Pulang 17.02' : 'Masuk 07.41',
+      methods: ['GPS + selfie', 'Pindai QR', 'WFH'].map(function (l) {
+        var sel = l === method;
+        return { label: l, sel: sel ? 'true' : 'false', bg: sel ? '#FFFFFF' : 'transparent', color: sel ? '#0B1A2B' : '#46576B', shadow: sel ? '0 2px 8px rgba(11,26,43,0.12)' : 'none', pick: function () { self.setState({ method: l }); } };
+      }),
+      state: {
+        chip: out ? 'Selesai hari ini' : 'Sudah check-in', chipBg: out ? '#E3F6EE' : '#E6EEFE', chipFg: out ? '#0F7A55' : '#1E5FD6',
+        outTime: out ? '17.02' : '17.00', outNote: out ? 'Tercatat' : 'Terjadwal',
+        duration: out ? '8 j 21 m' : '5 j 01 m', canOut: !out, done: out
+      },
+      checkOut: function () { self.setState({ out: true }); },
+      weekdays: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+      days: days,
+      history: hist.map(function (h) {
+        var s = ST[h[4]];
+        return { date: h[0], in: h[1], out: h[2], dur: h[3], status: s[0], bg: s[1], fg: s[2], method: h[5] };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

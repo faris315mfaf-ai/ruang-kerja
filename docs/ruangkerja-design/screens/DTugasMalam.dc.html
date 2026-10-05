@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Detail tugas · PLQ-18 · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}a:hover{color:#5AD6C8}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #070B14; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" malam="{{ true }}" dark="{{ true }}" crumbs="Proyek Peluncuran Q4 / Tugas / PLQ-18" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 36px 40px 0; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+    <article style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+        <a href="DBoard.dc.html" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px 0 8px; border-radius: 10px; background: #0F1622; border: 1px solid #233247; color: #EAF1F8; font-size: 15px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>Board</a>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; height: 36px; padding: 0 12px; border-radius: 10px; background: #172131; display: inline-flex; align-items: center">PLQ-18</span>
+        <span style="display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 18px; background: #2E2210; color: #F6B95C; font-size: 15px; font-weight: 700"><svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M10 5a5 5 0 0 1 0 10z" fill="currentColor"></path></svg>Dikerjakan</span>
+        <span style="display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 18px; background: #3A1520; color: #FF7A8A; font-size: 15px; font-weight: 700"><span style="width: 18px; height: 18px; border-radius: 5px; background: #C42137; color: #FFFFFF; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center">!</span>Urgent</span>
+      </div>
+      <h1 style="margin: 0; font-size: 40px; line-height: 48px; font-weight: 800; letter-spacing: -0.025em">Finalisasi anggaran peluncuran</h1>
+      <p style="margin: 0; font-size: 18px; line-height: 30px; color: #C9D4E2">Kunci angka akhir untuk acara peluncuran, materi cetak, dan vendor video. Draf di sheet terlampir sudah disetujui Putri; tinggal menyesuaikan tambahan vendor video sesuai keputusan Direksi.</p>
+
+      <section style="background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+          <h2 style="margin: 0; font-size: 21px; font-weight: 700">Checklist</h2>
+          <span style="font-size: 16px; font-weight: 700; color: #5AD6C8">{{doneCount}} dari {{total}}</span>
+        </div>
+        <div style="height: 10px; border-radius: 5px; background: #172131; overflow: hidden"><div style="width: {{pct}}%; height: 100%; border-radius: 5px; background: linear-gradient(90deg, #14B8A6 0%, #2F7BEA 100%); transition: width .2s"></div></div>
+        <sc-for list="{{checks}}" as="c" hint-placeholder-count="5">
+          <button type="button" role="checkbox" aria-checked="{{c.aria}}" onClick="{{c.toggle}}" style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 4px; border: 0; border-top: 1px solid #172131; background: transparent; font: inherit; text-align: left; cursor: pointer; color: #EAF1F8">
+            <span style="width: 26px; height: 26px; border-radius: 8px; box-sizing: border-box; border: {{c.border}}; background: {{c.bg}}; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.tick}}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg></span>
+            <span style="flex: 1; font-size: 17px; color: {{c.color}}; text-decoration: {{c.deco}}">{{c.label}}</span>
+          </button>
+        </sc-for>
+      </section>
+
+      <section style="background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <h2 style="margin: 0; font-size: 21px; font-weight: 700">Lampiran Drive</h2>
+          <button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #34465E; border-radius: 12px; background: #0F1622; color: #EAF1F8; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Lampirkan</button>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <a href="#" style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px; border: 1px solid #233247; color: #EAF1F8">
+            <span style="width: 44px; height: 44px; border-radius: 12px; background: #0E2A20; color: #4ADE9B; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"></path><path d="M4 10h16"></path><path d="M10 4v16"></path></svg></span>
+            <span style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 16px; font-weight: 600">Anggaran peluncuran Q4</span><span style="font-size: 14px; color: #A6B4C6">Sheets · diubah Putri, 2 jam lalu</span></span>
+          </a>
+          <a href="#" style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px; border: 1px solid #233247; color: #EAF1F8">
+            <span style="width: 44px; height: 44px; border-radius: 12px; background: #14223F; color: #8DB4FF; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><path d="M14 3v6h6"></path><path d="M8 13h8"></path><path d="M8 17h5"></path></svg></span>
+            <span style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 16px; font-weight: 600">Penawaran vendor video</span><span style="font-size: 14px; color: #A6B4C6">Docs · diunggah Sari, kemarin</span></span>
+          </a>
+        </div>
+      </section>
+
+      <section style="background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 18px">
+        <h2 style="margin: 0; font-size: 21px; font-weight: 700">Komentar &amp; aktivitas</h2>
+        <div style="display: flex; gap: 14px">
+          <span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 20px; background: #1C2D50; color: #A9C2FF; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0">PR</span>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 6px">
+            <span style="font-size: 15px; color: #A6B4C6"><b style="color: #EAF1F8; font-size: 16px">Putri Ramadhani</b> · 2 jam lalu</span>
+            <div style="padding: 14px 16px; border-radius: 4px 16px 16px 16px; background: #070B14; font-size: 17px; line-height: 26px"><a href="#" style="font-weight: 700">@Dimas</a> angka vendor video naik karena tambahan 2 hari syuting. Menunggu keputusan Pak Hendra, saya tandai di update proyek.</div>
+            <span style="display: flex; gap: 8px"><span style="height: 30px; padding: 0 10px; border-radius: 15px; background: #0E2A2C; color: #5AD6C8; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center">Paham · 2</span></span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px; padding-left: 54px; font-size: 15px; color: #A6B4C6">
+          <span style="width: 8px; height: 8px; border-radius: 4px; background: #E08A00"></span>Dimas Pratama memindahkan ke <b style="color: #EAF1F8">Dikerjakan</b> · kemarin 16.20
+        </div>
+        <div style="display: flex; gap: 14px; align-items: flex-start">
+          <span style="width: 40px; height: 40px; border-radius: 20px; padding: 2px; box-sizing: border-box; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); flex-shrink: 0"><span style="width: 100%; height: 100%; border-radius: 18px; background: #0F1622; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center">DP</span></span>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
+            <label for="komentar" style="font-size: 15px; font-weight: 600">Tulis komentar</label>
+            <textarea id="komentar" rows="3" placeholder="Ketik @ untuk menyebut, # untuk merujuk tugas" style="padding: 14px 16px; border: 1px solid #34465E; border-radius: 14px; font: inherit; font-size: 17px; line-height: 26px; color: #EAF1F8; resize: none"></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 10px">
+              <button type="button" style="height: 44px; padding: 0 16px; border: 1px solid #34465E; border-radius: 12px; background: #0F1622; color: #EAF1F8; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Lampirkan dari Drive</button>
+              <button type="button" style="height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 20px rgba(30,95,214,0.28)">Kirim</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </article>
+
+    <aside style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+      <div style="background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 8px 22px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+        <sc-for list="{{props}}" as="p" hint-placeholder-count="9">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 58px; border-bottom: {{p.sep}}">
+            <span style="font-size: 15px; font-weight: 600; color: #A6B4C6">{{p.k}}</span>
+            <span style="font-size: 16px; font-weight: 600; color: {{p.color}}; text-align: right">{{p.v}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <button type="button" onClick="{{complete}}" style="height: 56px; border: 0; border-radius: 16px; background: {{doneBtn.bg}}; color: {{doneBtn.fg}}; font: inherit; font-size: 18px; font-weight: 700; cursor: pointer; box-shadow: {{doneBtn.shadow}}; display: flex; align-items: center; justify-content: center; gap: 10px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg>{{doneBtn.label}}</button>
+      <div style="padding: 18px 20px; border-radius: 20px; color: #FFFFFF; background: linear-gradient(135deg, #C2410C 0%, #BE185D 100%); display: flex; flex-direction: column; gap: 6px; box-shadow: 0 12px 28px rgba(190,24,93,0.24)">
+        <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase">Menunggu keputusan Direksi</span>
+        <span style="font-size: 17px; line-height: 25px; font-weight: 600">Tambahan anggaran vendor video, diajukan di update PLQ Sab, 3 Okt.</span>
+      </div>
+    </aside>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" malam="{{ true }}" dark="{{ true }}" active="PLQ" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1320}}'>
+var ITEMS = ['Rekap biaya venue dan katering', 'Cek ulang harga cetak banner', 'Masukkan penawaran vendor video', 'Konfirmasi angka ke Keuangan', 'Kirim versi final ke Putri'];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { done: { 0: true, 1: true, 2: true, 3: false, 4: false }, complete: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var done = st.done || {};
+    var count = ITEMS.filter(function (x, i) { return done[i]; }).length;
+    var complete = !!st.complete;
+    return {
+      doneCount: count, total: ITEMS.length, pct: Math.round(count / ITEMS.length * 100),
+      checks: ITEMS.map(function (label, i) {
+        var on = !!done[i];
+        return {
+          label: label, aria: on ? 'true' : 'false',
+          bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : '#0F1622', border: on ? '0' : '2px solid #34465E', tick: on ? '#FFFFFF' : 'transparent',
+          color: on ? '#A6B4C6' : '#EAF1F8', deco: on ? 'line-through' : 'none',
+          toggle: function () { var n = Object.assign({}, done); n[i] = !on; self.setState({ done: n }); }
+        };
+      }),
+      props: [
+        ['Status', complete ? 'Selesai' : 'Dikerjakan', complete ? '#4ADE9B' : '#F6B95C'],
+        ['Penanggung jawab', 'Dimas Pratama', '#EAF1F8'],
+        ['Tenggat', 'Sel, 6 Okt · besok', '#F6B95C'],
+        ['Mulai', 'Kam, 1 Okt', '#EAF1F8'],
+        ['Estimasi', '6 jam', '#EAF1F8'],
+        ['Label', 'Keuangan', '#EAF1F8'],
+        ['Milestone', 'Materi & landing page siap', '#5AD6C8'],
+        ['Workspace', 'Proyek Peluncuran Q4', '#5AD6C8'],
+        ['Pengamat', 'Putri, Sari, +1', '#EAF1F8']
+      ].map(function (p, i, arr) { return { k: p[0], v: p[1], color: p[2], sep: i < arr.length - 1 ? '1px solid #172131' : '0' }; }),
+      doneBtn: complete
+        ? { label: 'Selesai · urungkan', bg: '#0E2A20', fg: '#4ADE9B', shadow: 'none' }
+        : { label: 'Tandai selesai', bg: 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', fg: '#FFFFFF', shadow: '0 12px 28px rgba(30,95,214,0.32)' },
+      complete: function () { self.setState({ complete: !complete }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

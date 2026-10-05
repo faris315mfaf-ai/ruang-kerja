@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Jadwal & notulensi manajemen · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #070B14; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" malam="{{ true }}" dark="{{ true }}" crumbs="Manajemen / Jadwal & notulensi" initials="HW" person="Hendra Wijaya" status="Masuk 07.55" meeting="Rapat direksi · 10.00" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 40px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h1 style="margin: 0; font-size: 44px; line-height: 52px; font-weight: 800; letter-spacing: -0.03em">Jadwal & notulensi</h1>
+        <span style="font-size: 18px; color: #A6B4C6">Minggu 41 · 5–9 Oktober 2026 · agenda pimpinan dan lintas divisi</span>
+      </div>
+      <a href="DRapatBaruMalam.dc.html" style="height: 52px; padding: 0 22px; border-radius: 14px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 16px; font-weight: 700; display: inline-flex; align-items: center; box-shadow: 0 10px 24px rgba(30,95,214,0.30)">Jadwalkan rapat</a>
+    </section>
+
+    <section style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 20px 24px 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+      <div style="display: grid; grid-template-columns: 64px repeat(5, minmax(0, 1fr)); gap: 10px; padding-bottom: 10px">
+        <span></span>
+        <sc-for list="{{days}}" as="d" hint-placeholder-count="5">
+          <span style="display: flex; align-items: baseline; gap: 8px; padding: 8px 12px; border-radius: 12px; background: {{d.bg}}; color: {{d.fg}}"><span style="font-size: 15px; font-weight: 700">{{d.dow}}</span><span style="font-size: 22px; font-weight: 800">{{d.n}}</span></span>
+        </sc-for>
+      </div>
+      <div style="position: relative; display: grid; grid-template-columns: 64px repeat(5, minmax(0, 1fr)); gap: 10px; height: 576px">
+        <div style="position: relative">
+          <sc-for list="{{hours}}" as="h" hint-placeholder-count="9">
+            <span style="position: absolute; left: 0; top: {{h.top}}px; font-size: 13px; font-weight: 700; color: #7D8FA5; margin-top: -8px">{{h.l}}</span>
+          </sc-for>
+        </div>
+        <sc-for list="{{days}}" as="d" hint-placeholder-count="5">
+          <div style="position: relative; border-left: 1px solid #172131; background: repeating-linear-gradient(180deg, #172131 0, #172131 1px, transparent 1px, transparent 64px)">
+            <sc-if value="{{d.today}}" hint-placeholder-val="{{false}}"><span style="position: absolute; left: 0; right: 0; top: 107px; border-top: 2px solid #FF7A8A; z-index: 2"><span style="position: absolute; left: -5px; top: -6px; width: 10px; height: 10px; border-radius: 5px; background: #C42137"></span></span></sc-if>
+            <sc-for list="{{d.ev}}" as="e" hint-placeholder-count="2">
+              <a href="{{e.href}}" style="position: absolute; left: 4px; right: 4px; top: {{e.top}}px; height: {{e.h}}px; box-sizing: border-box; padding: 6px 10px; border-radius: 10px; background: {{e.bg}}; border-left: 4px solid {{e.edge}}; color: #EAF1F8; overflow: hidden; display: flex; flex-direction: column; gap: 1px">
+                <span style="font-size: 14px; font-weight: 800; line-height: 18px">{{e.title}}</span>
+                <span style="font-size: 13px; color: #A6B4C6; line-height: 17px">{{e.time}} · {{e.place}}</span>
+              </a>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 1 1 500px; min-width: 0; background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px 24px 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 12px">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700">Notulensi</h2>
+          <div role="tablist" aria-label="Saring notulen" style="display: flex; gap: 6px">
+            <sc-for list="{{filters}}" as="f" hint-placeholder-count="3">
+              <button type="button" role="tab" aria-selected="{{f.sel}}" onClick="{{f.pick}}" style="height: 38px; padding: 0 12px; border-radius: 19px; border: {{f.border}}; background: {{f.bg}}; color: {{f.fg}}; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">{{f.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+        <sc-for list="{{notes}}" as="n" hint-placeholder-count="5">
+          <a href="DNotulenMalam.dc.html" style="display: flex; flex-direction: column; gap: 8px; padding: 14px 0; border-top: 1px solid #172131; color: #EAF1F8">
+            <span style="display: flex; align-items: center; gap: 10px"><span style="flex: 1; font-size: 16px; font-weight: 700">{{n.title}}</span><span style="height: 26px; padding: 0 10px; border-radius: 13px; background: {{n.sBg}}; color: {{n.sFg}}; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center">{{n.status}}</span></span>
+            <span style="font-size: 14px; color: #A6B4C6">{{n.meta}}</span>
+            <span style="display: flex; align-items: center; gap: 10px"><span style="position: relative; flex: 1; height: 8px; border-radius: 4px; background: #172131"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{n.pct}}%; border-radius: 4px; background: linear-gradient(90deg, #14B8A6 0%, #2F7BEA 100%)"></span></span><span style="font-size: 14px; font-weight: 700; color: #A6B4C6; white-space: nowrap">{{n.act}}</span></span>
+          </a>
+        </sc-for>
+      </div>
+
+      <div style="flex: 1 1 560px; min-width: 0; background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px 24px 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 12px"><h2 style="margin: 0; font-size: 22px; font-weight: 700">Tindak lanjut rapat pimpinan</h2><span style="font-size: 15px; color: #A6B4C6">{{openCount}} terbuka</span></div>
+        <sc-for list="{{actions}}" as="a" hint-placeholder-count="7">
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 96px 120px; gap: 12px; align-items: center; min-height: 66px; border-top: 1px solid #172131">
+            <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0"><span style="font-size: 16px; font-weight: 700">{{a.t}}</span><span style="font-size: 14px; color: #A6B4C6">{{a.who}} · dari {{a.src}}</span></span>
+            <span style="font-size: 15px; font-weight: 700; color: {{a.dueColor}}">{{a.due}}</span>
+            <span style="justify-self: start; height: 28px; padding: 0 10px; border-radius: 14px; background: {{a.sBg}}; color: {{a.sFg}}; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; white-space: nowrap">{{a.status}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" malam="{{ true }}" dark="{{ true }}" active="rapat" role="manajemen" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1900}}'>
+var PL = { Meet: ['Google Meet', '#0E2A2C', '#2DBFB1'], Zoom: ['Zoom', '#14223F', '#5B8CF6'], Ruang: ['Tatap muka', '#172131', '#A6B4C6'], Klien: ['Di klien', '#2E2210', '#C2410C'], Tenggat: ['Tenggat', '#3A1520', '#FF7A8A'] };
+var D = [
+  ['Sen', '5', true, [[9.5, 10, 'Stand-up lintas divisi', 'Meet', 'DRapatMalam.dc.html'], [10, 11.5, 'Rapat direksi mingguan', 'Ruang', 'DNotulenMalam.dc.html'], [13, 14, 'Demo SIMRS ke RS Harapan Sehat', 'Zoom', 'DRapatMalam.dc.html'], [14, 15, 'Review arsitektur KMB', 'Meet', 'DRapatMalam.dc.html']]],
+  ['Sel', '6', false, [[9, 10, 'Review keuangan Q3', 'Ruang', '#'], [14, 15, 'Review materi tender Kominfo', 'Meet', '#']]],
+  ['Rab', '7', false, [[10, 11, 'Persetujuan logo baru SPKD', 'Ruang', '#'], [13, 14.5, 'Uji beban server SIMRS', 'Meet', '#']]],
+  ['Kam', '8', false, [[9, 11, 'Tanda tangan kontrak Sinar Logistik', 'Klien', '#'], [13, 15, 'UAT SIMRS sesi 3', 'Klien', '#']]],
+  ['Jum', '9', false, [[9.5, 10, 'Stand-up lintas divisi', 'Meet', '#'], [13, 13.5, 'Kirim materi tender', 'Tenggat', '#'], [15, 16, 'Sprint review KMB', 'Meet', '#']]]
+];
+var NOTES = [
+  ['Rapat direksi mingguan', 'Sen, 5 Okt 10.00 · notulis Nadia · template agenda siap', 'Belum mulai', 0, 0, 'draft'],
+  ['Stand-up lintas divisi teknis', 'Sen, 5 Okt 09.30 · notulis Fitri · 3 keputusan', 'Draf', 0, 4, 'draft'],
+  ['Retro Sprint 5 KMB', 'Jum, 2 Okt · notulis Yoga · 2 keputusan', 'Final', 3, 5, 'final'],
+  ['Persiapan go-live SIMRS', 'Jum, 2 Okt · notulis Lina · 3 keputusan', 'Final', 3, 5, 'final'],
+  ['Eskalasi proyek DEP', 'Kam, 1 Okt · notulis Rina · 2 keputusan', 'Final', 1, 3, 'final'],
+  ['Sprint review RuangKerja', 'Rab, 30 Sep · notulis Fitri · 2 keputusan', 'Final', 2, 3, 'final'],
+  ['Rapat direksi mingguan', 'Sen, 28 Sep · notulis Nadia · 4 keputusan', 'Final', 4, 6, 'final']
+];
+var ACT = [
+  ['Putuskan perpanjangan timeline DEP', 'Hendra Wijaya', 'Eskalasi DEP', 'Rab, 7 Okt', 'open'],
+  ['Surati Pemda soal akses API', 'Agus Setiawan', 'Eskalasi DEP', 'Jum, 2 Okt', 'late'],
+  ['Uji beban server SIMRS', 'Dimas Pratama', 'Persiapan go-live', 'Rab, 7 Okt', 'open'],
+  ['Kirim kredensial sandbox ke tim', 'Yoga Permana', 'Retro Sprint 5', 'Sel, 6 Okt', 'open'],
+  ['Lengkapi berkas izin usaha', 'Nadia Putri', 'Rapat direksi 28 Sep', 'Jum, 30 Okt', 'open'],
+  ['Rekrut 1 programmer untuk KMB', 'Hana Nuraini', 'Rapat direksi 28 Sep', 'Jum, 30 Okt', 'open'],
+  ['Siapkan 3 alternatif logo', 'Putri Ramadhani', 'Rapat direksi 28 Sep', 'Jum, 2 Okt', 'done']
+];
+var AS = { open: ['Berjalan', '#14223F', '#A9C2FF'], late: ['Terlambat', '#3A1520', '#FF7A8A'], done: ['Selesai', '#0E2A20', '#4ADE9B'] };
+var FIL = ['Semua', 'Draf', 'Tindak lanjut terbuka'];
+function fmt(h) { var hh = Math.floor(h); var mm = Math.round((h - hh) * 60); return (hh < 10 ? '0' : '') + hh + '.' + (mm < 10 ? '0' : '') + mm; }
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { f: 0 };
+  }
+  renderVals() {
+    var self = this;
+    var fi = (this.state && this.state.f) || 0;
+    var hours = [];
+    for (var i = 0; i <= 8; i++) hours.push({ top: i * 64, l: fmt(8 + i) });
+    return {
+      hours: hours,
+      days: D.map(function (d) {
+        return { dow: d[0], n: d[1], today: d[2], bg: d[2] ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : 'transparent', fg: d[2] ? '#FFFFFF' : '#EAF1F8',
+          ev: d[3].map(function (e) { var p = PL[e[3]]; return { title: e[2], time: fmt(e[0]) + '–' + fmt(e[1]), place: p[0], bg: p[1], edge: p[2], top: Math.round((e[0] - 8) * 64) + 2, h: Math.max(Math.round((e[1] - e[0]) * 64) - 4, 30), href: e[4] }; }) };
+      }),
+      filters: FIL.map(function (l, i) { var on = i === fi; return { label: l, sel: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : '#0F1622', fg: on ? '#FFFFFF' : '#EAF1F8', border: on ? '0' : '1px solid #34465E', pick: function () { self.setState({ f: i }); } }; }),
+      notes: NOTES.filter(function (n) { return fi === 0 || (fi === 1 && n[5] === 'draft') || (fi === 2 && n[4] > n[3]); }).map(function (n) {
+        var fin = n[5] === 'final';
+        return { title: n[0], meta: n[1], status: n[2], sBg: fin ? '#0E2A20' : '#2E2210', sFg: fin ? '#4ADE9B' : '#F6B95C', pct: n[4] ? Math.round(n[3] / n[4] * 100) : 0, act: n[4] ? (n[3] + ' dari ' + n[4] + ' tindak lanjut selesai') : 'belum ada tindak lanjut' };
+      }),
+      openCount: ACT.filter(function (a) { return a[4] !== 'done'; }).length,
+      actions: ACT.map(function (a) { var s = AS[a[4]]; return { t: a[0], who: a[1], src: a[2], due: a[3], dueColor: a[4] === 'late' ? '#FF7A8A' : '#EAF1F8', status: s[0], sBg: s[1], sFg: s[2] }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

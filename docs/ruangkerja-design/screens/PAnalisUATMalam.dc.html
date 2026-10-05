@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Analis · jalankan UAT · ponsel · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; background: #070B14">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="PeranMAnalisMalam.dc.html" aria-label="Kembali" style="width: 44px; height: 44px; border-radius: 22px; background: #0F1622; border: 1px solid #233247; color: #EAF1F8; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 18px; font-weight: 800">UAT SIMRS · sesi 3</span><span style="font-size: 13px; color: #A6B4C6">modul farmasi · bersama klien</span></span>
+      <span style="font-size: 18px; font-weight: 800">{{v.done}}/200</span>
+    </div>
+    <span style="position: relative; display: block; height: 8px; border-radius: 4px; background: #233247"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{v.pct}}%; border-radius: 4px; background: linear-gradient(90deg, #14B8A6 0%, #2F7BEA 100%)"></span></span>
+    <span style="display: flex; gap: 14px; font-size: 13px; font-weight: 800"><span style="color: #4ADE9B">{{v.pass}} lulus</span><span style="color: #FF7A8A">{{v.fail}} gagal</span><span style="color: #A6B4C6">target 90% sebelum go-live</span></span>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #5AD6C8">SKENARIO #{{v.no}}</span>
+      <span style="font-size: 20px; line-height: 26px; font-weight: 800">{{v.title}}</span>
+      <sc-for list="{{v.steps}}" as="s" hint-placeholder-count="3">
+        <button type="button" role="checkbox" aria-checked="{{s.aria}}" onClick="{{s.toggle}}" style="display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; border: 0; border-top: 1px solid #172131; background: transparent; font: inherit; text-align: left; cursor: pointer; color: #EAF1F8">
+          <span style="width: 24px; height: 24px; border-radius: 7px; box-sizing: border-box; border: {{s.border}}; background: {{s.bg}}; color: #FFFFFF; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0">{{s.g}}</span>
+          <span style="font-size: 15px; line-height: 21px">{{s.t}}</span>
+        </button>
+      </sc-for>
+      <div style="border-radius: 12px; background: #0E2A2C; padding: 10px 12px; font-size: 14px; line-height: 20px; color: #5AD6C8"><b>Hasil yang diharapkan:</b> {{v.expect}}</div>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: rgba(15,22,34,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid #233247">
+    <button type="button" onClick="{{fail}}" style="height: 60px; border-radius: 16px; border: 2px solid #FF7A8A; background: #0F1622; color: #FF7A8A; font: inherit; font-size: 18px; font-weight: 800; cursor: pointer">✕ Gagal</button>
+    <button type="button" onClick="{{pass}}" style="height: 60px; border: 0; border-radius: 16px; background: linear-gradient(135deg, #14B8A6 0%, #0F7A55 100%); color: #FFFFFF; font: inherit; font-size: 18px; font-weight: 800; cursor: pointer">✓ Lulus</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var SC = [
+  ['Cetak label obat racikan', ['Buka resep racikan pasien rawat jalan', 'Pilih 3 komponen obat dan jumlah puyer', 'Tekan Cetak label di loket farmasi'], 'Label tercetak berisi nama pasien, aturan pakai, dan kode batang yang terbaca pemindai.'],
+  ['Retur obat sebagian', ['Buka transaksi obat yang sudah dibayar', 'Pilih 1 dari 4 item untuk diretur', 'Simpan dengan alasan retur'], 'Stok bertambah, tagihan pasien terkoreksi, dan riwayat retur tercatat.'],
+  ['Peringatan interaksi obat', ['Masukkan 2 obat yang saling berinteraksi', 'Lanjutkan ke verifikasi apoteker'], 'Muncul peringatan merah dan apoteker wajib mengisi alasan sebelum melanjutkan.']
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { i: 0, pass: 148, fail: 0, chk: {} };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var i = st.i || 0, p = typeof st.pass === 'number' ? st.pass : 148, f = st.fail || 0, chk = st.chk || {};
+    var sc = SC[i % SC.length];
+    var done = p + f;
+    function next(isPass) { self.setState({ i: i + 1, pass: p + (isPass ? 1 : 0), fail: f + (isPass ? 0 : 1), chk: {} }); }
+    return {
+      v: { done: done, pct: Math.round(done / 200 * 100), pass: p, fail: f, no: done + 1, title: sc[0], expect: sc[2],
+        steps: sc[1].map(function (t, k) { var on = !!chk[k]; return { t: t, aria: on ? 'true' : 'false', g: on ? '✓' : '', bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : '#0F1622', border: on ? '0' : '2px solid #34465E', toggle: function () { var n = Object.assign({}, chk); n[k] = !on; self.setState({ chk: n }); } }; }) },
+      pass: function () { next(true); }, fail: function () { next(false); }
+    };
+  }
+}
+</script>
+</body>
+</html>

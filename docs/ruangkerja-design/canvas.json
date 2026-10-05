@@ -1,0 +1,2515 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "DAbsensi.dc.html": {
+      "expand": "fill",
+      "h": 1260,
+      "is_interactive": true,
+      "page": "desktop",
+      "title": "Absensi saya",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "DBeranda.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "desktop",
+      "title": "Beranda · Kepala Divisi",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "DBoard.dc.html": {
+      "expand": "fill",
+      "h": 1160,
+      "is_interactive": true,
+      "page": "desktop",
+      "title": "Board proyek PLQ (gelap)",
+      "w": 1440,
+      "x": 0,
+      "y": 1620
+    },
+    "DHR.dc.html": {
+      "expand": "fill",
+      "h": 1360,
+      "is_interactive": true,
+      "page": "desktop",
+      "title": "Dashboard HR",
+      "w": 1440,
+      "x": 1520,
+      "y": 3060
+    },
+    "DInbox.dc.html": {
+      "expand": "fill",
+      "h": 1080,
+      "is_interactive": true,
+      "page": "desktop",
+      "title": "Inbox",
+      "w": 1440,
+      "x": 3040,
+      "y": 3060
+    },
+    "DLogin.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "desktop",
+      "title": "Masuk",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "DMonitorTugas.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "is_interactive": true,
+      "page": "proyek",
+      "title": "Monitoring tugas · Kepala Divisi",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "DNotifRapat.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "is_interactive": true,
+      "page": "rapat",
+      "title": "Pemberitahuan rapat online",
+      "w": 1440,
+      "x": 0,
+      "y": 1820
+    },
+    "DNotulen.dc.html": {
+      "expand": "fill",
+      "h": 1700,
+      "is_interactive": true,
+      "page": "rapat",
+      "title": "Notulensi rapat",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "DPersetujuan.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "is_interactive": true,
+      "page": "desktop",
+      "title": "Persetujuan",
+      "w": 1440,
+      "x": 3040,
+      "y": 1620
+    },
+    "DPortofolio.dc.html": {
+      "expand": "fill",
+      "h": 1760,
+      "is_interactive": true,
+      "page": "desktop",
+      "title": "Portofolio proyek · Direksi",
+      "w": 1440,
+      "x": 0,
+      "y": 3060
+    },
+    "DProyek.dc.html": {
+      "expand": "fill",
+      "h": 2080,
+      "is_interactive": true,
+      "page": "proyek",
+      "title": "Monitoring per proyek · PLQ",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "DRapat.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "is_interactive": true,
+      "page": "rapat",
+      "title": "Rapat · agenda & gabung",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "DRapatBaru.dc.html": {
+      "expand": "fill",
+      "h": 1240,
+      "is_interactive": true,
+      "page": "rapat",
+      "title": "Jadwalkan rapat (Meet / Zoom)",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "DTodo.dc.html": {
+      "expand": "fill",
+      "h": 2000,
+      "is_interactive": true,
+      "page": "proyek",
+      "title": "Todolist proyek · PLQ",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "DTugas.dc.html": {
+      "expand": "fill",
+      "h": 1320,
+      "is_interactive": true,
+      "page": "desktop",
+      "title": "Detail tugas",
+      "w": 1440,
+      "x": 1520,
+      "y": 1620
+    },
+    "Dock.dc.html": {
+      "h": 380,
+      "is_interactive": true,
+      "page": "fondasi",
+      "title": "Komponen · Dock",
+      "w": 1200,
+      "x": 3040,
+      "y": 1864
+    },
+    "Komponen.dc.html": {
+      "h": 2000,
+      "is_interactive": true,
+      "page": "fondasi",
+      "title": "Komponen",
+      "w": 1440,
+      "x": 0,
+      "y": 1680
+    },
+    "MAbsen.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "mobile",
+      "title": "Absen · check-in",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "MBeranda.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "mobile",
+      "title": "Beranda",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "MInbox.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "mobile",
+      "title": "Inbox",
+      "w": 390,
+      "x": 2350,
+      "y": 0
+    },
+    "MMenu.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "mobile",
+      "title": "Menu",
+      "w": 390,
+      "x": 2820,
+      "y": 0
+    },
+    "MNotifRapat.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "rapat",
+      "title": "Ponsel · Notifikasi rapat dimulai",
+      "w": 390,
+      "x": 1410,
+      "y": 3480
+    },
+    "MNotulen.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "rapat",
+      "title": "Ponsel · Notulensi",
+      "w": 390,
+      "x": 940,
+      "y": 3480
+    },
+    "MPersetujuan.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "mobile",
+      "title": "Persetujuan",
+      "w": 390,
+      "x": 1880,
+      "y": 0
+    },
+    "MProyek.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "proyek",
+      "title": "Ponsel · Monitoring proyek",
+      "w": 390,
+      "x": 0,
+      "y": 2200
+    },
+    "MRapat.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "rapat",
+      "title": "Ponsel · Rapat hari ini",
+      "w": 390,
+      "x": 0,
+      "y": 3480
+    },
+    "MRapatDetail.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "rapat",
+      "title": "Ponsel · Detail rapat & gabung",
+      "w": 390,
+      "x": 470,
+      "y": 3480
+    },
+    "MSBeranda.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf ponsel · Beranda",
+      "w": 390,
+      "x": 0,
+      "y": 5220
+    },
+    "MSDetailTugas.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf ponsel · Detail tugas",
+      "w": 390,
+      "x": 470,
+      "y": 5220
+    },
+    "MSFormPengajuan.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf ponsel · Ajukan cuti",
+      "w": 390,
+      "x": 1880,
+      "y": 5220
+    },
+    "MSKinerja.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf ponsel · Kinerja saya",
+      "w": 390,
+      "x": 2820,
+      "y": 5220
+    },
+    "MSPengajuanSaya.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf ponsel · Pengajuan saya",
+      "w": 390,
+      "x": 1410,
+      "y": 5220
+    },
+    "MSPengaturan.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf ponsel · Pengaturan & privasi",
+      "w": 390,
+      "x": 3290,
+      "y": 5220
+    },
+    "MSProyekSaya.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf ponsel · Proyek saya & update PIC",
+      "w": 390,
+      "x": 2350,
+      "y": 5220
+    },
+    "MSRiwayat.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf ponsel · Riwayat absensi",
+      "w": 390,
+      "x": 940,
+      "y": 5220
+    },
+    "MSukses.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "mobile",
+      "title": "Check-in berhasil",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "MTodo.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "proyek",
+      "title": "Ponsel · Todolist proyek",
+      "w": 390,
+      "x": 470,
+      "y": 2200
+    },
+    "MTugas.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "mobile",
+      "title": "Tugas saya",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "h": 1560,
+      "page": "fondasi",
+      "title": "Warna & gradien",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "MenuBar.dc.html": {
+      "h": 64,
+      "page": "fondasi",
+      "title": "Komponen · MenuBar",
+      "w": 1440,
+      "x": 3040,
+      "y": 1680
+    },
+    "MgAbsensi.dc.html": {
+      "expand": "fill",
+      "h": 2000,
+      "is_interactive": true,
+      "page": "manajemen",
+      "title": "Manajemen · Tracking absensi",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "MgDashboard.dc.html": {
+      "expand": "fill",
+      "h": 2100,
+      "is_interactive": true,
+      "page": "manajemen",
+      "title": "Manajemen · Dashboard",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "MgJadwal.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "is_interactive": true,
+      "page": "manajemen",
+      "title": "Manajemen · Jadwal & notulensi",
+      "w": 1440,
+      "x": 6080,
+      "y": 0
+    },
+    "MgKerja.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "is_interactive": true,
+      "page": "manajemen",
+      "title": "Manajemen · Tracking kerja harian/mingguan/bulanan",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "MgPAbsensi.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "manajemen",
+      "title": "Ponsel · Absensi",
+      "w": 390,
+      "x": 940,
+      "y": 4280
+    },
+    "MgPDashboard.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "manajemen",
+      "title": "Ponsel · Ringkasan",
+      "w": 390,
+      "x": 0,
+      "y": 4280
+    },
+    "MgPJadwal.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "manajemen",
+      "title": "Ponsel · Jadwal & notulen",
+      "w": 390,
+      "x": 1880,
+      "y": 4280
+    },
+    "MgPKerja.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "manajemen",
+      "title": "Ponsel · Tracking kerja",
+      "w": 390,
+      "x": 470,
+      "y": 4280
+    },
+    "MgPProyek.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "manajemen",
+      "title": "Ponsel · Proyek & milestone",
+      "w": 390,
+      "x": 1410,
+      "y": 4280
+    },
+    "MgProyek.dc.html": {
+      "expand": "fill",
+      "h": 2200,
+      "is_interactive": true,
+      "page": "manajemen",
+      "title": "Manajemen · Proyek & milestone",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "Navigasi.dc.html": {
+      "h": 1760,
+      "is_interactive": true,
+      "page": "fondasi",
+      "title": "Navigasi: menu bar, Dock, tab bar",
+      "w": 1440,
+      "x": 1520,
+      "y": 1680
+    },
+    "PeranAnalis.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "spkd",
+      "title": "Divisi Analis (Analis Koding)",
+      "w": 1440,
+      "x": 4560,
+      "y": 1620
+    },
+    "PeranCorsec.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "spkd",
+      "title": "Sekretaris Perusahaan",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "PeranDirektur.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "spkd",
+      "title": "Direktur",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "PeranDirut.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "spkd",
+      "title": "Direktur Utama",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "PeranHR.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "spkd",
+      "title": "HR",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "PeranImplementer.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "spkd",
+      "title": "Divisi Implementer",
+      "w": 1440,
+      "x": 3040,
+      "y": 1620
+    },
+    "PeranMAnalis.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "spkd",
+      "title": "Ponsel · Divisi Analis (Analis Koding)",
+      "w": 390,
+      "x": 3290,
+      "y": 3480
+    },
+    "PeranMCorsec.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "spkd",
+      "title": "Ponsel · Sekretaris Perusahaan",
+      "w": 390,
+      "x": 1410,
+      "y": 3480
+    },
+    "PeranMDirektur.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "spkd",
+      "title": "Ponsel · Direktur",
+      "w": 390,
+      "x": 470,
+      "y": 3480
+    },
+    "PeranMDirut.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "spkd",
+      "title": "Ponsel · Direktur Utama",
+      "w": 390,
+      "x": 0,
+      "y": 3480
+    },
+    "PeranMHR.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "spkd",
+      "title": "Ponsel · HR",
+      "w": 390,
+      "x": 940,
+      "y": 3480
+    },
+    "PeranMImplementer.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "spkd",
+      "title": "Ponsel · Divisi Implementer",
+      "w": 390,
+      "x": 2820,
+      "y": 3480
+    },
+    "PeranMMarketing.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "spkd",
+      "title": "Ponsel · Divisi Branding & Marketing",
+      "w": 390,
+      "x": 1880,
+      "y": 3480
+    },
+    "PeranMProgramming.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "spkd",
+      "title": "Ponsel · Divisi Programming",
+      "w": 390,
+      "x": 2350,
+      "y": 3480
+    },
+    "PeranMarketing.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "spkd",
+      "title": "Divisi Branding & Marketing",
+      "w": 1440,
+      "x": 0,
+      "y": 1620
+    },
+    "PeranProgramming.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "spkd",
+      "title": "Divisi Programming",
+      "w": 1440,
+      "x": 1520,
+      "y": 1620
+    },
+    "Rail.dc.html": {
+      "h": 1104,
+      "is_interactive": true,
+      "page": "fondasi",
+      "title": "Komponen · Rail tablet",
+      "w": 96,
+      "x": 3510,
+      "y": 2364
+    },
+    "RoleDesk.dc.html": {
+      "h": 1500,
+      "w": 1440,
+      "x": 7600,
+      "y": 0,
+      "title": "Komponen · RoleDesk (templat dashboard peran)",
+      "page": "fondasi"
+    },
+    "RolePhone.dc.html": {
+      "h": 844,
+      "w": 390,
+      "x": 9120,
+      "y": 0,
+      "title": "Komponen · RolePhone (beranda ponsel peran)",
+      "page": "fondasi"
+    },
+    "Ruang.dc.html": {
+      "h": 1560,
+      "page": "fondasi",
+      "title": "Spasi, radius, elevasi & ikon",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "SAbsensi.dc.html": {
+      "expand": "fill",
+      "h": 1560,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf · Absensi & riwayat",
+      "w": 1440,
+      "x": 0,
+      "y": 1620
+    },
+    "SBeranda.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf · Beranda (Dashboard saya)",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "SDetailTugas.dc.html": {
+      "expand": "fill",
+      "h": 1440,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf · Detail tugas",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "SFormPengajuan.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf · Ajukan cuti/izin/lembur",
+      "w": 1440,
+      "x": 3040,
+      "y": 1620
+    },
+    "SKinerja.dc.html": {
+      "expand": "fill",
+      "h": 1440,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf · Kinerja saya",
+      "w": 1440,
+      "x": 1520,
+      "y": 3300
+    },
+    "SPengajuan.dc.html": {
+      "expand": "fill",
+      "h": 1280,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf · Pengajuan saya",
+      "w": 1440,
+      "x": 1520,
+      "y": 1620
+    },
+    "SPengaturan.dc.html": {
+      "expand": "fill",
+      "h": 1480,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf · Profil, notifikasi & privasi",
+      "w": 1440,
+      "x": 3040,
+      "y": 3300
+    },
+    "SProyekSaya.dc.html": {
+      "expand": "fill",
+      "h": 1560,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf · Workspace & proyek saya (PIC)",
+      "w": 1440,
+      "x": 0,
+      "y": 3300
+    },
+    "STugasSaya.dc.html": {
+      "expand": "fill",
+      "h": 1360,
+      "is_interactive": true,
+      "page": "staf",
+      "title": "Staf · Tugas saya",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "TabBar.dc.html": {
+      "h": 110,
+      "is_interactive": true,
+      "page": "fondasi",
+      "title": "Komponen · TabBar ponsel",
+      "w": 390,
+      "x": 3040,
+      "y": 2364
+    },
+    "TfAbsensi.dc.html": {
+      "h": 1104,
+      "is_interactive": true,
+      "page": "manajemen",
+      "title": "Tablet · Tracking absensi",
+      "w": 884,
+      "x": 1928,
+      "y": 2680
+    },
+    "TfDashboard.dc.html": {
+      "h": 1104,
+      "is_interactive": true,
+      "page": "manajemen",
+      "title": "Tablet · Dashboard",
+      "w": 884,
+      "x": 0,
+      "y": 2680
+    },
+    "TfJadwal.dc.html": {
+      "h": 1104,
+      "is_interactive": true,
+      "page": "manajemen",
+      "title": "Tablet · Jadwal & notulensi",
+      "w": 884,
+      "x": 3856,
+      "y": 2680
+    },
+    "TfKerja.dc.html": {
+      "h": 1104,
+      "is_interactive": true,
+      "page": "manajemen",
+      "title": "Tablet · Tracking kerja",
+      "w": 884,
+      "x": 964,
+      "y": 2680
+    },
+    "TfProyek.dc.html": {
+      "h": 1104,
+      "is_interactive": true,
+      "page": "manajemen",
+      "title": "Tablet · Proyek & milestone",
+      "w": 884,
+      "x": 2892,
+      "y": 2680
+    },
+    "Tipografi.dc.html": {
+      "h": 1560,
+      "page": "fondasi",
+      "title": "Tipografi",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "MFondasi.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 2700,
+      "title": "Fondasi mobile: zona jempol, huruf, gestur, keadaan, notifikasi, ukuran",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "MLogin.dc.html": {
+      "x": 0,
+      "y": 3180,
+      "w": 390,
+      "h": 844,
+      "title": "Masuk biometrik",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "MLockScreen.dc.html": {
+      "x": 470,
+      "y": 3180,
+      "w": 390,
+      "h": 844,
+      "title": "Layar kunci · notifikasi dengan aksi",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "MWidget.dc.html": {
+      "x": 940,
+      "y": 3180,
+      "w": 390,
+      "h": 844,
+      "title": "Widget layar utama",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "MNotifCenter.dc.html": {
+      "x": 1410,
+      "y": 3180,
+      "w": 390,
+      "h": 844,
+      "title": "Pusat notifikasi",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "MQuickAdd.dc.html": {
+      "x": 1880,
+      "y": 3180,
+      "w": 390,
+      "h": 844,
+      "title": "Aksi cepat (tombol +)",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "MOffline.dc.html": {
+      "x": 2350,
+      "y": 3180,
+      "w": 390,
+      "h": 844,
+      "title": "Offline & antrean sinkron",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "MDark.dc.html": {
+      "x": 2820,
+      "y": 3180,
+      "w": 390,
+      "h": 844,
+      "title": "Mode gelap",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "PDirutKeputusan.dc.html": {
+      "x": 0,
+      "y": 4504,
+      "w": 390,
+      "h": 844,
+      "title": "Direktur Utama · putuskan",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "PDirutPortofolio.dc.html": {
+      "x": 450,
+      "y": 4504,
+      "w": 390,
+      "h": 844,
+      "title": "Direktur Utama · portofolio",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "PDirekturSetuju.dc.html": {
+      "x": 1000,
+      "y": 4504,
+      "w": 390,
+      "h": 844,
+      "title": "Direktur · setujui",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "PDirekturKapasitas.dc.html": {
+      "x": 1450,
+      "y": 4504,
+      "w": 390,
+      "h": 844,
+      "title": "Direktur · kapasitas tim",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "PHRLive.dc.html": {
+      "x": 2000,
+      "y": 4504,
+      "w": 390,
+      "h": 844,
+      "title": "HR · kehadiran langsung",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "PHRCuti.dc.html": {
+      "x": 2450,
+      "y": 4504,
+      "w": 390,
+      "h": 844,
+      "title": "HR · tinjau cuti",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "PCorsecSurat.dc.html": {
+      "x": 3000,
+      "y": 4504,
+      "w": 390,
+      "h": 844,
+      "title": "Sekretaris · disposisi surat",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "PCorsecNotulis.dc.html": {
+      "x": 3450,
+      "y": 4504,
+      "w": 390,
+      "h": 844,
+      "title": "Sekretaris · notulen langsung",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "PMarketingKalender.dc.html": {
+      "x": 0,
+      "y": 5468,
+      "w": 390,
+      "h": 844,
+      "title": "Branding · kalender konten",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "PMarketingReview.dc.html": {
+      "x": 450,
+      "y": 5468,
+      "w": 390,
+      "h": 844,
+      "title": "Branding · review materi",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "PProgSprint.dc.html": {
+      "x": 1000,
+      "y": 5468,
+      "w": 390,
+      "h": 844,
+      "title": "Programming · board sprint",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "PProgBug.dc.html": {
+      "x": 1450,
+      "y": 5468,
+      "w": 390,
+      "h": 844,
+      "title": "Programming · bug kritis",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "PImplCheckin.dc.html": {
+      "x": 2000,
+      "y": 5468,
+      "w": 390,
+      "h": 844,
+      "title": "Implementer · check-in di klien",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "PImplTiket.dc.html": {
+      "x": 2450,
+      "y": 5468,
+      "w": 390,
+      "h": 844,
+      "title": "Implementer · tiket klien",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "PAnalisUAT.dc.html": {
+      "x": 3000,
+      "y": 5468,
+      "w": 390,
+      "h": 844,
+      "title": "Analis · jalankan UAT",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "PAnalisReview.dc.html": {
+      "x": 3450,
+      "y": 5468,
+      "w": 390,
+      "h": 844,
+      "title": "Analis · review kode",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "MgPDivisi.dc.html": {
+      "x": 0,
+      "y": 6912,
+      "w": 390,
+      "h": 844,
+      "title": "Manajemen · detail divisi",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "MgPMilestone.dc.html": {
+      "x": 470,
+      "y": 6912,
+      "w": 390,
+      "h": 844,
+      "title": "Manajemen · milestone 3 bulan",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "MgPNotulen.dc.html": {
+      "x": 940,
+      "y": 6912,
+      "w": 390,
+      "h": 844,
+      "title": "Manajemen · notulen & tindak lanjut",
+      "page": "ponsel2",
+      "is_interactive": true
+    },
+    "DLoginMalam.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "page": "malam",
+      "title": "Masuk · malam",
+      "w": 1440,
+      "x": 0,
+      "y": 240,
+      "is_interactive": true
+    },
+    "DBerandaMalam.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Beranda · Kepala Divisi · malam",
+      "w": 1440,
+      "x": 1520,
+      "y": 240
+    },
+    "DAbsensiMalam.dc.html": {
+      "expand": "fill",
+      "h": 1260,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Absensi saya · malam",
+      "w": 1440,
+      "x": 3040,
+      "y": 240
+    },
+    "DTugasMalam.dc.html": {
+      "expand": "fill",
+      "h": 1320,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Detail tugas · malam",
+      "w": 1440,
+      "x": 1520,
+      "y": 1860
+    },
+    "DPersetujuanMalam.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Persetujuan · malam",
+      "w": 1440,
+      "x": 3040,
+      "y": 1860
+    },
+    "DPortofolioMalam.dc.html": {
+      "expand": "fill",
+      "h": 1760,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Portofolio proyek · Direksi · malam",
+      "w": 1440,
+      "x": 0,
+      "y": 3300
+    },
+    "DHRMalam.dc.html": {
+      "expand": "fill",
+      "h": 1360,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Dashboard HR · malam",
+      "w": 1440,
+      "x": 1520,
+      "y": 3300
+    },
+    "DInboxMalam.dc.html": {
+      "expand": "fill",
+      "h": 1080,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Inbox · malam",
+      "w": 1440,
+      "x": 3040,
+      "y": 3300
+    },
+    "MBerandaMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Beranda · malam",
+      "w": 390,
+      "x": 0,
+      "y": 5800
+    },
+    "MAbsenMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Absen · check-in · malam",
+      "w": 390,
+      "x": 470,
+      "y": 5800
+    },
+    "MSuksesMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Check-in berhasil · malam",
+      "w": 390,
+      "x": 940,
+      "y": 5800
+    },
+    "MTugasMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Tugas saya · malam",
+      "w": 390,
+      "x": 1410,
+      "y": 5800
+    },
+    "MPersetujuanMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Persetujuan · malam",
+      "w": 390,
+      "x": 1880,
+      "y": 5800
+    },
+    "MInboxMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Inbox · malam",
+      "w": 390,
+      "x": 2350,
+      "y": 5800
+    },
+    "MMenuMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Menu · malam",
+      "w": 390,
+      "x": 2820,
+      "y": 5800
+    },
+    "DProyekMalam.dc.html": {
+      "expand": "fill",
+      "h": 2080,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Monitoring per proyek · PLQ · malam",
+      "w": 1440,
+      "x": 0,
+      "y": 7384
+    },
+    "DMonitorTugasMalam.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Monitoring tugas · Kepala Divisi · malam",
+      "w": 1440,
+      "x": 1520,
+      "y": 7384
+    },
+    "DTodoMalam.dc.html": {
+      "expand": "fill",
+      "h": 2000,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Todolist proyek · PLQ · malam",
+      "w": 1440,
+      "x": 3040,
+      "y": 7384
+    },
+    "MProyekMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Monitoring proyek · malam",
+      "w": 390,
+      "x": 0,
+      "y": 9584
+    },
+    "MTodoMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Todolist proyek · malam",
+      "w": 390,
+      "x": 470,
+      "y": 9584
+    },
+    "SBerandaMalam.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf · Beranda (Dashboard saya) · malam",
+      "w": 1440,
+      "x": 0,
+      "y": 11168
+    },
+    "STugasSayaMalam.dc.html": {
+      "expand": "fill",
+      "h": 1360,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf · Tugas saya · malam",
+      "w": 1440,
+      "x": 1520,
+      "y": 11168
+    },
+    "SDetailTugasMalam.dc.html": {
+      "expand": "fill",
+      "h": 1440,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf · Detail tugas · malam",
+      "w": 1440,
+      "x": 3040,
+      "y": 11168
+    },
+    "SAbsensiMalam.dc.html": {
+      "expand": "fill",
+      "h": 1560,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf · Absensi & riwayat · malam",
+      "w": 1440,
+      "x": 0,
+      "y": 12788
+    },
+    "SPengajuanMalam.dc.html": {
+      "expand": "fill",
+      "h": 1280,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf · Pengajuan saya · malam",
+      "w": 1440,
+      "x": 1520,
+      "y": 12788
+    },
+    "SFormPengajuanMalam.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf · Ajukan cuti/izin/lembur · malam",
+      "w": 1440,
+      "x": 3040,
+      "y": 12788
+    },
+    "SProyekSayaMalam.dc.html": {
+      "expand": "fill",
+      "h": 1560,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf · Workspace & proyek saya (PIC) · malam",
+      "w": 1440,
+      "x": 0,
+      "y": 14468
+    },
+    "SKinerjaMalam.dc.html": {
+      "expand": "fill",
+      "h": 1440,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf · Kinerja saya · malam",
+      "w": 1440,
+      "x": 1520,
+      "y": 14468
+    },
+    "SPengaturanMalam.dc.html": {
+      "expand": "fill",
+      "h": 1480,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf · Profil, notifikasi & privasi · malam",
+      "w": 1440,
+      "x": 3040,
+      "y": 14468
+    },
+    "MSBerandaMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf ponsel · Beranda · malam",
+      "w": 390,
+      "x": 0,
+      "y": 16388
+    },
+    "MSDetailTugasMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf ponsel · Detail tugas · malam",
+      "w": 390,
+      "x": 470,
+      "y": 16388
+    },
+    "MSRiwayatMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf ponsel · Riwayat absensi · malam",
+      "w": 390,
+      "x": 940,
+      "y": 16388
+    },
+    "MSPengajuanSayaMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf ponsel · Pengajuan saya · malam",
+      "w": 390,
+      "x": 1410,
+      "y": 16388
+    },
+    "MSFormPengajuanMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf ponsel · Ajukan cuti · malam",
+      "w": 390,
+      "x": 1880,
+      "y": 16388
+    },
+    "MSProyekSayaMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf ponsel · Proyek saya & update PIC · malam",
+      "w": 390,
+      "x": 2350,
+      "y": 16388
+    },
+    "MSKinerjaMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf ponsel · Kinerja saya · malam",
+      "w": 390,
+      "x": 2820,
+      "y": 16388
+    },
+    "MSPengaturanMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Staf ponsel · Pengaturan & privasi · malam",
+      "w": 390,
+      "x": 3290,
+      "y": 16388
+    },
+    "DRapatMalam.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Rapat · agenda & gabung · malam",
+      "w": 1440,
+      "x": 0,
+      "y": 17972
+    },
+    "DNotulenMalam.dc.html": {
+      "expand": "fill",
+      "h": 1700,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Notulensi rapat · malam",
+      "w": 1440,
+      "x": 1520,
+      "y": 17972
+    },
+    "DRapatBaruMalam.dc.html": {
+      "expand": "fill",
+      "h": 1240,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Jadwalkan rapat (Meet / Zoom) · malam",
+      "w": 1440,
+      "x": 3040,
+      "y": 17972
+    },
+    "DNotifRapatMalam.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Pemberitahuan rapat online · malam",
+      "w": 1440,
+      "x": 0,
+      "y": 19792
+    },
+    "MRapatMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Rapat hari ini · malam",
+      "w": 390,
+      "x": 0,
+      "y": 21452
+    },
+    "MRapatDetailMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Detail rapat & gabung · malam",
+      "w": 390,
+      "x": 470,
+      "y": 21452
+    },
+    "MNotulenMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Notulensi · malam",
+      "w": 390,
+      "x": 940,
+      "y": 21452
+    },
+    "MNotifRapatMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Notifikasi rapat dimulai · malam",
+      "w": 390,
+      "x": 1410,
+      "y": 21452
+    },
+    "PeranDirutMalam.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Direktur Utama · malam",
+      "w": 1440,
+      "x": 0,
+      "y": 23036
+    },
+    "PeranDirekturMalam.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Direktur · malam",
+      "w": 1440,
+      "x": 1520,
+      "y": 23036
+    },
+    "PeranHRMalam.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "HR · malam",
+      "w": 1440,
+      "x": 3040,
+      "y": 23036
+    },
+    "PeranCorsecMalam.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Sekretaris Perusahaan · malam",
+      "w": 1440,
+      "x": 4560,
+      "y": 23036
+    },
+    "PeranMarketingMalam.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Divisi Branding & Marketing · malam",
+      "w": 1440,
+      "x": 0,
+      "y": 24656
+    },
+    "PeranProgrammingMalam.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Divisi Programming · malam",
+      "w": 1440,
+      "x": 1520,
+      "y": 24656
+    },
+    "PeranImplementerMalam.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Divisi Implementer · malam",
+      "w": 1440,
+      "x": 3040,
+      "y": 24656
+    },
+    "PeranAnalisMalam.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Divisi Analis (Analis Koding) · malam",
+      "w": 1440,
+      "x": 4560,
+      "y": 24656
+    },
+    "PeranMDirutMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Direktur Utama · malam",
+      "w": 390,
+      "x": 0,
+      "y": 26516
+    },
+    "PeranMDirekturMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Direktur · malam",
+      "w": 390,
+      "x": 470,
+      "y": 26516
+    },
+    "PeranMHRMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · HR · malam",
+      "w": 390,
+      "x": 940,
+      "y": 26516
+    },
+    "PeranMCorsecMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Sekretaris Perusahaan · malam",
+      "w": 390,
+      "x": 1410,
+      "y": 26516
+    },
+    "PeranMMarketingMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Divisi Branding & Marketing · malam",
+      "w": 390,
+      "x": 1880,
+      "y": 26516
+    },
+    "PeranMProgrammingMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Divisi Programming · malam",
+      "w": 390,
+      "x": 2350,
+      "y": 26516
+    },
+    "PeranMImplementerMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Divisi Implementer · malam",
+      "w": 390,
+      "x": 2820,
+      "y": 26516
+    },
+    "PeranMAnalisMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Divisi Analis (Analis Koding) · malam",
+      "w": 390,
+      "x": 3290,
+      "y": 26516
+    },
+    "MgDashboardMalam.dc.html": {
+      "expand": "fill",
+      "h": 2100,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Manajemen · Dashboard · malam",
+      "w": 1440,
+      "x": 0,
+      "y": 28100
+    },
+    "MgKerjaMalam.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Manajemen · Tracking kerja harian/mingguan/bulanan · malam",
+      "w": 1440,
+      "x": 1520,
+      "y": 28100
+    },
+    "MgAbsensiMalam.dc.html": {
+      "expand": "fill",
+      "h": 2000,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Manajemen · Tracking absensi · malam",
+      "w": 1440,
+      "x": 3040,
+      "y": 28100
+    },
+    "MgProyekMalam.dc.html": {
+      "expand": "fill",
+      "h": 2200,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Manajemen · Proyek & milestone · malam",
+      "w": 1440,
+      "x": 4560,
+      "y": 28100
+    },
+    "MgJadwalMalam.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Manajemen · Jadwal & notulensi · malam",
+      "w": 1440,
+      "x": 6080,
+      "y": 28100
+    },
+    "TfDashboardMalam.dc.html": {
+      "h": 1104,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Tablet · Dashboard · malam",
+      "w": 884,
+      "x": 0,
+      "y": 30780
+    },
+    "TfKerjaMalam.dc.html": {
+      "h": 1104,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Tablet · Tracking kerja · malam",
+      "w": 884,
+      "x": 964,
+      "y": 30780
+    },
+    "TfAbsensiMalam.dc.html": {
+      "h": 1104,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Tablet · Tracking absensi · malam",
+      "w": 884,
+      "x": 1928,
+      "y": 30780
+    },
+    "TfProyekMalam.dc.html": {
+      "h": 1104,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Tablet · Proyek & milestone · malam",
+      "w": 884,
+      "x": 2892,
+      "y": 30780
+    },
+    "TfJadwalMalam.dc.html": {
+      "h": 1104,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Tablet · Jadwal & notulensi · malam",
+      "w": 884,
+      "x": 3856,
+      "y": 30780
+    },
+    "MgPDashboardMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Ringkasan · malam",
+      "w": 390,
+      "x": 0,
+      "y": 32380
+    },
+    "MgPKerjaMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Tracking kerja · malam",
+      "w": 390,
+      "x": 470,
+      "y": 32380
+    },
+    "MgPAbsensiMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Absensi · malam",
+      "w": 390,
+      "x": 940,
+      "y": 32380
+    },
+    "MgPProyekMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Proyek & milestone · malam",
+      "w": 390,
+      "x": 1410,
+      "y": 32380
+    },
+    "MgPJadwalMalam.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "malam",
+      "title": "Ponsel · Jadwal & notulen · malam",
+      "w": 390,
+      "x": 1880,
+      "y": 32380
+    },
+    "MNotifCenterMalam.dc.html": {
+      "x": 1410,
+      "y": 34264,
+      "w": 390,
+      "h": 844,
+      "title": "Pusat notifikasi · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "MQuickAddMalam.dc.html": {
+      "x": 1880,
+      "y": 34264,
+      "w": 390,
+      "h": 844,
+      "title": "Aksi cepat (tombol +) · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "MOfflineMalam.dc.html": {
+      "x": 2350,
+      "y": 34264,
+      "w": 390,
+      "h": 844,
+      "title": "Offline & antrean sinkron · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "PDirutKeputusanMalam.dc.html": {
+      "x": 0,
+      "y": 35588,
+      "w": 390,
+      "h": 844,
+      "title": "Direktur Utama · putuskan · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "PDirutPortofolioMalam.dc.html": {
+      "x": 450,
+      "y": 35588,
+      "w": 390,
+      "h": 844,
+      "title": "Direktur Utama · portofolio · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "PDirekturSetujuMalam.dc.html": {
+      "x": 1000,
+      "y": 35588,
+      "w": 390,
+      "h": 844,
+      "title": "Direktur · setujui · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "PDirekturKapasitasMalam.dc.html": {
+      "x": 1450,
+      "y": 35588,
+      "w": 390,
+      "h": 844,
+      "title": "Direktur · kapasitas tim · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "PHRLiveMalam.dc.html": {
+      "x": 2000,
+      "y": 35588,
+      "w": 390,
+      "h": 844,
+      "title": "HR · kehadiran langsung · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "PHRCutiMalam.dc.html": {
+      "x": 2450,
+      "y": 35588,
+      "w": 390,
+      "h": 844,
+      "title": "HR · tinjau cuti · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "PCorsecSuratMalam.dc.html": {
+      "x": 3000,
+      "y": 35588,
+      "w": 390,
+      "h": 844,
+      "title": "Sekretaris · disposisi surat · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "PCorsecNotulisMalam.dc.html": {
+      "x": 3450,
+      "y": 35588,
+      "w": 390,
+      "h": 844,
+      "title": "Sekretaris · notulen langsung · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "PMarketingKalenderMalam.dc.html": {
+      "x": 0,
+      "y": 36552,
+      "w": 390,
+      "h": 844,
+      "title": "Branding · kalender konten · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "PMarketingReviewMalam.dc.html": {
+      "x": 450,
+      "y": 36552,
+      "w": 390,
+      "h": 844,
+      "title": "Branding · review materi · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "PProgSprintMalam.dc.html": {
+      "x": 1000,
+      "y": 36552,
+      "w": 390,
+      "h": 844,
+      "title": "Programming · board sprint · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "PProgBugMalam.dc.html": {
+      "x": 1450,
+      "y": 36552,
+      "w": 390,
+      "h": 844,
+      "title": "Programming · bug kritis · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "PImplCheckinMalam.dc.html": {
+      "x": 2000,
+      "y": 36552,
+      "w": 390,
+      "h": 844,
+      "title": "Implementer · check-in di klien · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "PImplTiketMalam.dc.html": {
+      "x": 2450,
+      "y": 36552,
+      "w": 390,
+      "h": 844,
+      "title": "Implementer · tiket klien · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "PAnalisUATMalam.dc.html": {
+      "x": 3000,
+      "y": 36552,
+      "w": 390,
+      "h": 844,
+      "title": "Analis · jalankan UAT · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "PAnalisReviewMalam.dc.html": {
+      "x": 3450,
+      "y": 36552,
+      "w": 390,
+      "h": 844,
+      "title": "Analis · review kode · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "MgPDivisiMalam.dc.html": {
+      "x": 0,
+      "y": 37996,
+      "w": 390,
+      "h": 844,
+      "title": "Manajemen · detail divisi · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "MgPMilestoneMalam.dc.html": {
+      "x": 470,
+      "y": 37996,
+      "w": 390,
+      "h": 844,
+      "title": "Manajemen · milestone 3 bulan · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "MgPNotulenMalam.dc.html": {
+      "x": 940,
+      "y": 37996,
+      "w": 390,
+      "h": 844,
+      "title": "Manajemen · notulen & tindak lanjut · malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "RoleDeskMalam.dc.html": {
+      "x": 0,
+      "y": 39580,
+      "w": 1440,
+      "h": 1500,
+      "title": "Komponen · RoleDesk malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "RolePhoneMalam.dc.html": {
+      "x": 1520,
+      "y": 39580,
+      "w": 390,
+      "h": 844,
+      "title": "Komponen · RolePhone malam",
+      "page": "malam",
+      "is_interactive": true
+    },
+    "RailMalam.dc.html": {
+      "x": 1990,
+      "y": 39580,
+      "w": 96,
+      "h": 1104,
+      "title": "Komponen · Rail malam",
+      "page": "malam",
+      "is_interactive": true
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-05T07:55:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "page": "fondasi",
+    "view": "canvas"
+  },
+  "notes": {
+    "mgPhone": {
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "manajemen",
+      "text": "Ponsel · manajemen",
+      "w": 300,
+      "x": 0,
+      "y": 4040
+    },
+    "mgTablet": {
+      "kind": "title1",
+      "maxW": 4800,
+      "page": "manajemen",
+      "text": "Tablet lipat · layar dalam 884×1104",
+      "w": 420,
+      "x": 0,
+      "y": 2440
+    },
+    "rapatMobile": {
+      "kind": "title1",
+      "maxW": 1800,
+      "page": "rapat",
+      "text": "Ponsel · semua pengguna",
+      "w": 240,
+      "x": 0,
+      "y": 3240
+    },
+    "spkdMobile": {
+      "kind": "title1",
+      "maxW": 3680,
+      "page": "spkd",
+      "text": "Ponsel · per peran",
+      "w": 240,
+      "x": 0,
+      "y": 3240
+    },
+    "stafMobile": {
+      "kind": "title1",
+      "maxW": 3680,
+      "page": "staf",
+      "text": "Ponsel · staf",
+      "w": 240,
+      "x": 0,
+      "y": 4980
+    },
+    "p2Pola": {
+      "kind": "title1",
+      "maxW": 3300,
+      "page": "ponsel2",
+      "text": "Pola ponsel lintas peran",
+      "w": 400,
+      "x": 0,
+      "y": 2940
+    },
+    "p2Peran": {
+      "kind": "title1",
+      "maxW": 3840,
+      "page": "ponsel2",
+      "text": "Alur kerja per peran (2 layar tiap peran)",
+      "w": 560,
+      "x": 0,
+      "y": 4264
+    },
+    "p2Mg": {
+      "kind": "title1",
+      "maxW": 1400,
+      "page": "ponsel2",
+      "text": "Manajemen · layar lanjutan",
+      "w": 420,
+      "x": 0,
+      "y": 6672
+    },
+    "malam_desktop": {
+      "kind": "title1",
+      "maxW": 4480,
+      "page": "malam",
+      "text": "Mode malam · Desktop",
+      "w": 600,
+      "x": 0,
+      "y": 0
+    },
+    "malam_mobile": {
+      "kind": "title1",
+      "maxW": 3210,
+      "page": "malam",
+      "text": "Mode malam · Ponsel",
+      "w": 600,
+      "x": 0,
+      "y": 5560
+    },
+    "malam_proyek": {
+      "kind": "title1",
+      "maxW": 4480,
+      "page": "malam",
+      "text": "Mode malam · Proyek & tugas",
+      "w": 600,
+      "x": 0,
+      "y": 7144
+    },
+    "malam_staf": {
+      "kind": "title1",
+      "maxW": 4480,
+      "page": "malam",
+      "text": "Mode malam · Tampilan staf",
+      "w": 600,
+      "x": 0,
+      "y": 10928
+    },
+    "malam_staf_stafMobile": {
+      "kind": "title1",
+      "maxW": 3680,
+      "page": "malam",
+      "text": "Ponsel · staf",
+      "w": 240,
+      "x": 0,
+      "y": 16148
+    },
+    "malam_rapat": {
+      "kind": "title1",
+      "maxW": 4480,
+      "page": "malam",
+      "text": "Mode malam · Rapat & notulen",
+      "w": 600,
+      "x": 0,
+      "y": 17732
+    },
+    "malam_rapat_rapatMobile": {
+      "kind": "title1",
+      "maxW": 1800,
+      "page": "malam",
+      "text": "Ponsel · semua pengguna",
+      "w": 240,
+      "x": 0,
+      "y": 21212
+    },
+    "malam_spkd": {
+      "kind": "title1",
+      "maxW": 6000,
+      "page": "malam",
+      "text": "Mode malam · SPKD per peran",
+      "w": 600,
+      "x": 0,
+      "y": 22796
+    },
+    "malam_spkd_spkdMobile": {
+      "kind": "title1",
+      "maxW": 3680,
+      "page": "malam",
+      "text": "Ponsel · per peran",
+      "w": 240,
+      "x": 0,
+      "y": 26276
+    },
+    "malam_manajemen": {
+      "kind": "title1",
+      "maxW": 7520,
+      "page": "malam",
+      "text": "Mode malam · Manajemen",
+      "w": 600,
+      "x": 0,
+      "y": 27860
+    },
+    "malam_manajemen_mgPhone": {
+      "kind": "title1",
+      "maxW": 2400,
+      "page": "malam",
+      "text": "Ponsel · manajemen",
+      "w": 300,
+      "x": 0,
+      "y": 32140
+    },
+    "malam_manajemen_mgTablet": {
+      "kind": "title1",
+      "maxW": 4800,
+      "page": "malam",
+      "text": "Tablet lipat · layar dalam 884×1104",
+      "w": 420,
+      "x": 0,
+      "y": 30540
+    },
+    "malam_ponsel2": {
+      "kind": "title1",
+      "maxW": 3840,
+      "page": "malam",
+      "text": "Mode malam · Ponsel lanjutan",
+      "w": 600,
+      "x": 0,
+      "y": 33724
+    },
+    "malam_ponsel2_p2Pola": {
+      "kind": "title1",
+      "maxW": 3300,
+      "page": "malam",
+      "text": "Pola ponsel lintas peran",
+      "w": 400,
+      "x": 0,
+      "y": 34024
+    },
+    "malam_ponsel2_p2Peran": {
+      "kind": "title1",
+      "maxW": 3840,
+      "page": "malam",
+      "text": "Alur kerja per peran (2 layar tiap peran)",
+      "w": 560,
+      "x": 0,
+      "y": 35348
+    },
+    "malam_ponsel2_p2Mg": {
+      "kind": "title1",
+      "maxW": 1400,
+      "page": "malam",
+      "text": "Manajemen · layar lanjutan",
+      "w": 420,
+      "x": 0,
+      "y": 37756
+    },
+    "malam_komp": {
+      "kind": "title1",
+      "maxW": 3000,
+      "page": "malam",
+      "text": "Mode malam · komponen",
+      "w": 600,
+      "x": 0,
+      "y": 39340
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Tipografi.dc.html",
+    "Ruang.dc.html",
+    "Komponen.dc.html",
+    "Navigasi.dc.html",
+    "MenuBar.dc.html",
+    "Dock.dc.html",
+    "TabBar.dc.html",
+    "DLogin.dc.html",
+    "DBeranda.dc.html",
+    "DAbsensi.dc.html",
+    "DBoard.dc.html",
+    "DTugas.dc.html",
+    "DPersetujuan.dc.html",
+    "DPortofolio.dc.html",
+    "DHR.dc.html",
+    "DInbox.dc.html",
+    "MBeranda.dc.html",
+    "MAbsen.dc.html",
+    "MSukses.dc.html",
+    "MTugas.dc.html",
+    "MPersetujuan.dc.html",
+    "MInbox.dc.html",
+    "MMenu.dc.html",
+    "DProyek.dc.html",
+    "DMonitorTugas.dc.html",
+    "DTodo.dc.html",
+    "MProyek.dc.html",
+    "MTodo.dc.html",
+    "SBeranda.dc.html",
+    "STugasSaya.dc.html",
+    "SDetailTugas.dc.html",
+    "SAbsensi.dc.html",
+    "SPengajuan.dc.html",
+    "SFormPengajuan.dc.html",
+    "SProyekSaya.dc.html",
+    "SKinerja.dc.html",
+    "SPengaturan.dc.html",
+    "MSBeranda.dc.html",
+    "MSDetailTugas.dc.html",
+    "MSRiwayat.dc.html",
+    "MSPengajuanSaya.dc.html",
+    "MSFormPengajuan.dc.html",
+    "MSProyekSaya.dc.html",
+    "MSKinerja.dc.html",
+    "MSPengaturan.dc.html",
+    "DRapat.dc.html",
+    "DNotulen.dc.html",
+    "DRapatBaru.dc.html",
+    "DNotifRapat.dc.html",
+    "MRapat.dc.html",
+    "MRapatDetail.dc.html",
+    "MNotulen.dc.html",
+    "MNotifRapat.dc.html",
+    "PeranDirut.dc.html",
+    "PeranDirektur.dc.html",
+    "PeranHR.dc.html",
+    "PeranCorsec.dc.html",
+    "PeranMarketing.dc.html",
+    "PeranProgramming.dc.html",
+    "PeranImplementer.dc.html",
+    "PeranAnalis.dc.html",
+    "PeranMDirut.dc.html",
+    "PeranMDirektur.dc.html",
+    "PeranMHR.dc.html",
+    "PeranMCorsec.dc.html",
+    "PeranMMarketing.dc.html",
+    "PeranMProgramming.dc.html",
+    "PeranMImplementer.dc.html",
+    "PeranMAnalis.dc.html",
+    "MgDashboard.dc.html",
+    "MgKerja.dc.html",
+    "MgAbsensi.dc.html",
+    "MgProyek.dc.html",
+    "MgJadwal.dc.html",
+    "TfDashboard.dc.html",
+    "TfKerja.dc.html",
+    "TfAbsensi.dc.html",
+    "TfProyek.dc.html",
+    "TfJadwal.dc.html",
+    "MgPDashboard.dc.html",
+    "MgPKerja.dc.html",
+    "MgPAbsensi.dc.html",
+    "MgPProyek.dc.html",
+    "MgPJadwal.dc.html",
+    "Rail.dc.html",
+    "RoleDesk.dc.html",
+    "RolePhone.dc.html",
+    "MFondasi.dc.html",
+    "MLogin.dc.html",
+    "MLockScreen.dc.html",
+    "MWidget.dc.html",
+    "MNotifCenter.dc.html",
+    "MQuickAdd.dc.html",
+    "MOffline.dc.html",
+    "MDark.dc.html",
+    "PDirutKeputusan.dc.html",
+    "PDirutPortofolio.dc.html",
+    "PDirekturSetuju.dc.html",
+    "PDirekturKapasitas.dc.html",
+    "PHRLive.dc.html",
+    "PHRCuti.dc.html",
+    "PCorsecSurat.dc.html",
+    "PCorsecNotulis.dc.html",
+    "PMarketingKalender.dc.html",
+    "PMarketingReview.dc.html",
+    "PProgSprint.dc.html",
+    "PProgBug.dc.html",
+    "PImplCheckin.dc.html",
+    "PImplTiket.dc.html",
+    "PAnalisUAT.dc.html",
+    "PAnalisReview.dc.html",
+    "MgPDivisi.dc.html",
+    "MgPMilestone.dc.html",
+    "MgPNotulen.dc.html",
+    "DLoginMalam.dc.html",
+    "DBerandaMalam.dc.html",
+    "DAbsensiMalam.dc.html",
+    "DTugasMalam.dc.html",
+    "DPersetujuanMalam.dc.html",
+    "DPortofolioMalam.dc.html",
+    "DHRMalam.dc.html",
+    "DInboxMalam.dc.html",
+    "MBerandaMalam.dc.html",
+    "MAbsenMalam.dc.html",
+    "MSuksesMalam.dc.html",
+    "MTugasMalam.dc.html",
+    "MPersetujuanMalam.dc.html",
+    "MInboxMalam.dc.html",
+    "MMenuMalam.dc.html",
+    "DProyekMalam.dc.html",
+    "DMonitorTugasMalam.dc.html",
+    "DTodoMalam.dc.html",
+    "MProyekMalam.dc.html",
+    "MTodoMalam.dc.html",
+    "SBerandaMalam.dc.html",
+    "STugasSayaMalam.dc.html",
+    "SDetailTugasMalam.dc.html",
+    "SAbsensiMalam.dc.html",
+    "SPengajuanMalam.dc.html",
+    "SFormPengajuanMalam.dc.html",
+    "SProyekSayaMalam.dc.html",
+    "SKinerjaMalam.dc.html",
+    "SPengaturanMalam.dc.html",
+    "MSBerandaMalam.dc.html",
+    "MSDetailTugasMalam.dc.html",
+    "MSRiwayatMalam.dc.html",
+    "MSPengajuanSayaMalam.dc.html",
+    "MSFormPengajuanMalam.dc.html",
+    "MSProyekSayaMalam.dc.html",
+    "MSKinerjaMalam.dc.html",
+    "MSPengaturanMalam.dc.html",
+    "DRapatMalam.dc.html",
+    "DNotulenMalam.dc.html",
+    "DRapatBaruMalam.dc.html",
+    "DNotifRapatMalam.dc.html",
+    "MRapatMalam.dc.html",
+    "MRapatDetailMalam.dc.html",
+    "MNotulenMalam.dc.html",
+    "MNotifRapatMalam.dc.html",
+    "PeranDirutMalam.dc.html",
+    "PeranDirekturMalam.dc.html",
+    "PeranHRMalam.dc.html",
+    "PeranCorsecMalam.dc.html",
+    "PeranMarketingMalam.dc.html",
+    "PeranProgrammingMalam.dc.html",
+    "PeranImplementerMalam.dc.html",
+    "PeranAnalisMalam.dc.html",
+    "PeranMDirutMalam.dc.html",
+    "PeranMDirekturMalam.dc.html",
+    "PeranMHRMalam.dc.html",
+    "PeranMCorsecMalam.dc.html",
+    "PeranMMarketingMalam.dc.html",
+    "PeranMProgrammingMalam.dc.html",
+    "PeranMImplementerMalam.dc.html",
+    "PeranMAnalisMalam.dc.html",
+    "MgDashboardMalam.dc.html",
+    "MgKerjaMalam.dc.html",
+    "MgAbsensiMalam.dc.html",
+    "MgProyekMalam.dc.html",
+    "MgJadwalMalam.dc.html",
+    "TfDashboardMalam.dc.html",
+    "TfKerjaMalam.dc.html",
+    "TfAbsensiMalam.dc.html",
+    "TfProyekMalam.dc.html",
+    "TfJadwalMalam.dc.html",
+    "MgPDashboardMalam.dc.html",
+    "MgPKerjaMalam.dc.html",
+    "MgPAbsensiMalam.dc.html",
+    "MgPProyekMalam.dc.html",
+    "MgPJadwalMalam.dc.html",
+    "MNotifCenterMalam.dc.html",
+    "MQuickAddMalam.dc.html",
+    "MOfflineMalam.dc.html",
+    "PDirutKeputusanMalam.dc.html",
+    "PDirutPortofolioMalam.dc.html",
+    "PDirekturSetujuMalam.dc.html",
+    "PDirekturKapasitasMalam.dc.html",
+    "PHRLiveMalam.dc.html",
+    "PHRCutiMalam.dc.html",
+    "PCorsecSuratMalam.dc.html",
+    "PCorsecNotulisMalam.dc.html",
+    "PMarketingKalenderMalam.dc.html",
+    "PMarketingReviewMalam.dc.html",
+    "PProgSprintMalam.dc.html",
+    "PProgBugMalam.dc.html",
+    "PImplCheckinMalam.dc.html",
+    "PImplTiketMalam.dc.html",
+    "PAnalisUATMalam.dc.html",
+    "PAnalisReviewMalam.dc.html",
+    "MgPDivisiMalam.dc.html",
+    "MgPMilestoneMalam.dc.html",
+    "MgPNotulenMalam.dc.html",
+    "RoleDeskMalam.dc.html",
+    "RolePhoneMalam.dc.html",
+    "RailMalam.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "fondasi",
+      "name": "1 · Fondasi desain"
+    },
+    {
+      "id": "desktop",
+      "name": "2 · Desktop"
+    },
+    {
+      "id": "mobile",
+      "name": "3 · Ponsel"
+    },
+    {
+      "id": "proyek",
+      "name": "4 · Proyek & tugas"
+    },
+    {
+      "id": "staf",
+      "name": "5 · Tampilan staf"
+    },
+    {
+      "id": "rapat",
+      "name": "6 · Rapat & notulen"
+    },
+    {
+      "id": "spkd",
+      "name": "7 · SPKD per peran"
+    },
+    {
+      "id": "manajemen",
+      "name": "8 · Manajemen"
+    },
+    {
+      "id": "ponsel2",
+      "name": "9 · Ponsel lanjutan"
+    },
+    {
+      "id": "malam",
+      "name": "10 · Mode malam"
+    }
+  ],
+  "title": "RuangKerja · Desain Modern Gradien"
+}

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Layar kunci · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #FFFFFF; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: radial-gradient(400px 360px at 0% 20%, rgba(20,184,166,0.65), transparent 70%), radial-gradient(400px 360px at 100% 60%, rgba(91,140,246,0.6), transparent 70%), #070B14">
+  <div style="display: flex; justify-content: space-between; padding: 14px 28px 0; font-size: 15px; font-weight: 700"><span>13.58</span><span>5G · 64%</span></div>
+  <div style="display: flex; flex-direction: column; align-items: center; padding-top: 40px">
+    <span style="font-size: 18px; font-weight: 700">Senin, 5 Oktober</span>
+    <span style="font-size: 92px; line-height: 100px; font-weight: 700; letter-spacing: -0.03em">13.58</span>
+  </div>
+  <div style="position: absolute; left: 12px; right: 12px; top: 300px; display: flex; flex-direction: column; gap: 10px">
+    <sc-for list="{{notes}}" as="n" hint-placeholder-count="3">
+      <div style="border-radius: 24px; padding: 14px; background: rgba(255,255,255,0.18); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); display: flex; flex-direction: column; gap: 10px">
+        <span style="display: flex; gap: 12px">
+          <span style="width: 38px; height: 38px; border-radius: 11px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0">RK</span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="display: flex; justify-content: space-between"><span style="font-size: 15px; font-weight: 800">{{n.t}}</span><span style="font-size: 13px; opacity: 0.85">{{n.time}}</span></span><span style="font-size: 15px; line-height: 21px">{{n.b}}</span></span>
+        </span>
+        <sc-if value="{{n.acts}}" hint-placeholder-val="{{false}}">
+          <span style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+            <button type="button" onClick="{{n.go}}" style="height: 46px; border: 0; border-radius: 14px; background: #FFFFFF; color: #0A4E57; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer">{{n.a1}}</button>
+            <button type="button" style="height: 46px; border: 0; border-radius: 14px; background: rgba(255,255,255,0.22); color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">{{n.a2}}</button>
+          </span>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+  <div style="position: absolute; left: 40px; right: 40px; bottom: 44px; display: flex; justify-content: space-between">
+    <span style="width: 52px; height: 52px; border-radius: 26px; background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2h6l-1 7h-4zM10 9v13h4V9"></path></svg></span>
+    <span style="width: 52px; height: 52px; border-radius: 26px; background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v12H4zM12 17a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"></path></svg></span>
+  </div>
+  <span style="position: absolute; left: 50%; bottom: 10px; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: #FFFFFF"></span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { joined: false };
+  }
+  renderVals() {
+    var self = this;
+    var j = this.state && this.state.joined;
+    return {
+      notes: [
+        { t: 'Rapat mulai 2 menit lagi', time: 'sekarang', b: 'Review arsitektur KMB · Google Meet · Maya sudah bergabung', acts: true, a1: j ? 'Membuka Meet…' : 'Gabung', a2: 'Tunda 5 mnt', go: function () { self.setState({ joined: true }); } },
+        { t: '3 pengajuan lembur', time: '08.40', b: 'Yoga, Fitri, Rizky menunggu persetujuan Anda', acts: false, a1: '', a2: '', go: null },
+        { t: 'Bug kritis SIM-388', time: '08.58', b: 'Rizky: hotfix sudah di staging, minta verifikasi', acts: false, a1: '', a2: '', go: null }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

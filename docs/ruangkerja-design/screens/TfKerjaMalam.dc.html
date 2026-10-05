@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Tracking kerja · tablet lipat · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 884px; height: 1104px; overflow: hidden; display: flex; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; background: radial-gradient(600px 300px at 10% 0%, rgba(20,184,166,0.20), transparent 70%), radial-gradient(600px 300px at 100% 0%, rgba(47,123,234,0.18), transparent 70%), #070B14">
+  <div style="width: 96px; height: 1104px; flex-shrink: 0"><dc-import name="RailMalam" active="kerja" hint-size="96px,1104px"></dc-import></div>
+  <div style="flex: 1; min-width: 0; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 32px; line-height: 40px; font-weight: 800; letter-spacing: -0.02em">Tracking kerja</span><span style="font-size: 15px; color: #A6B4C6">{{v.range}}</span></span>
+      <div role="tablist" aria-label="Periode" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 16px; background: #0F1622; border: 1px solid #233247">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+          <button type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="height: 46px; border: 0; border-radius: 12px; background: {{t.bg}}; color: {{t.fg}}; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">{{t.label}}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+      <sc-for list="{{v.kpis}}" as="k" hint-placeholder-count="4">
+        <div style="border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 4px; background: {{k.bg}}; color: {{k.fg}}; border: {{k.border}}; box-shadow: {{k.shadow}}">
+          <span style="font-size: 14px; font-weight: 600; color: {{k.sub}}">{{k.label}}</span>
+          <span style="font-size: 28px; line-height: 34px; font-weight: 800">{{k.value}}</span>
+          <span style="font-size: 13px; line-height: 18px; color: {{k.sub}}">{{k.note}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; padding: 18px 18px 6px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 8px"><span style="font-size: 19px; font-weight: 800">Per divisi</span><span style="font-size: 14px; color: #A6B4C6">selesai / rencana · {{v.extra}}</span></div>
+      <sc-for list="{{v.rows}}" as="r" hint-placeholder-count="5">
+        <div style="display: grid; grid-template-columns: 190px minmax(0, 1fr) 84px 92px; gap: 14px; align-items: center; min-height: 58px; border-top: 1px solid #172131">
+          <span style="display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 700">{{r.name}}</span><span style="font-size: 13px; color: #A6B4C6">{{r.head}}</span></span>
+          <span style="position: relative; display: block; height: 10px; border-radius: 5px; background: #172131"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{r.pct}}%; border-radius: 5px; background: {{r.fill}}"></span></span>
+          <span style="font-size: 15px; font-weight: 800; text-align: right">{{r.done}}/{{r.plan}}</span>
+          <span style="font-size: 14px; font-weight: 800; text-align: right; color: {{r.xColor}}">{{r.x}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px">
+      <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; padding: 18px 18px 6px">
+        <span style="display: block; font-size: 19px; font-weight: 800; padding-bottom: 8px">{{v.listTitle}}</span>
+        <sc-for list="{{v.list}}" as="x" hint-placeholder-count="4">
+          <div style="display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid #172131">
+            <span style="width: 74px; flex-shrink: 0; font-size: 14px; font-weight: 800; color: #5AD6C8">{{x.a}}</span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">{{x.b}}</span><span style="font-size: 13px; line-height: 18px; color: #A6B4C6">{{x.c}}</span></span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="border-radius: 22px; padding: 18px; color: #FFFFFF; background: linear-gradient(135deg, #C2410C 0%, #BE185D 100%); box-shadow: 0 10px 24px rgba(190,24,93,0.22); display: flex; flex-direction: column">
+        <span style="font-size: 19px; font-weight: 800; padding-bottom: 8px">Hambatan</span>
+        <sc-for list="{{v.risks}}" as="i" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: 2px; padding: 10px 0; border-top: 1px solid rgba(255,255,255,0.28)"><span style="font-size: 15px; font-weight: 700">{{i.t}}</span><span style="font-size: 13px; line-height: 18px">{{i.m}}</span></div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tab":{"editor":"enum","options":["Harian","Mingguan","Bulanan"],"default":"Harian"},"$preview":{"width":884,"height":1104}}'>
+var NAMES = ['Programming', 'Implementer', 'Analis', 'Branding & Marketing', 'Sekretariat, HR, Direksi'];
+var HEADS = ['Dimas Pratama', 'Bayu Saputra', 'Maya Lestari', 'Putri Ramadhani', 'Nadia & Hana'];
+var V = {
+  Harian: { range: 'Sen, 5 Okt 2026 · per 09.40', extra: 'terlambat',
+    kpis: [['Selesai', '23/54', 'terjadwal hari ini', 'hl'], ['Berjalan', '25', '6 belum mulai', ''], ['Terlambat', '11', 'lewat tenggat', ''], ['Terblokir', '4', '3 menunggu klien', 'warm']],
+    rows: [[18, 9, '6 telat'], [12, 5, '2 telat'], [8, 4, '1 telat'], [7, 3, '1 telat'], [9, 2, '1 telat']],
+    listTitle: 'Aktivitas terkini',
+    list: [['09.38', 'Hotfix SIM-388 ke staging', 'Rizky · menunggu verifikasi di RS'], ['09.31', 'SRS armada v2 diunggah', 'Maya · untuk workshop 10.00'], ['09.20', 'Migrasi anggota 1.840/2.300', 'Tono · Koperasi Maju'], ['09.05', 'Carousel RuangKerja dijadwalkan', 'Putri · tayang Rab 09.00']],
+    risks: [['KMB-214 tertahan 3 hari', 'kredensial sandbox bank'], ['DEP-51 menunggu API Pemda', 'sudah dieskalasi'], ['6 terlambat di Programming', 'tergeser hotfix SIMRS']] },
+  Mingguan: { range: 'Minggu 40 · 28 Sep – 2 Okt 2026', extra: 'tepat waktu',
+    kpis: [['Selesai', '141/150', '94% dari rencana', 'hl'], ['Tepat waktu', '86%', 'naik 3 poin', ''], ['Siklus', '2,4 hari', 'rata-rata', ''], ['Dibawa', '9', 'ke minggu ini', 'warm']],
+    rows: [[52, 47, '79%'], [34, 33, '93%'], [22, 21, '90%'], [20, 18, '78%'], [22, 22, '95%']],
+    listTitle: 'Laporan kepala divisi',
+    list: [['Prog.', 'Sprint 5 KMB 38/40 poin', 'hotfix SIMRS menyita 2 hari'], ['Impl.', 'Migrasi SIMRS tahap 1 selesai', 'pelatihan 5 dari 8 unit'], ['Analis', 'UAT SIMRS 148/200 skenario', 'alur pinjaman KMB diserahkan'], ['Brand.', '3 alternatif logo siap', 'materi tender mulai disusun']],
+    risks: [['Branding tepat waktu 78%', 'tender menyita kapasitas'], ['Programming bawa 5 tugas', 'dampak hotfix Rabu'], ['DEP tertinggal 20 poin', 'menunggu keputusan']] },
+  Bulanan: { range: '4 minggu · 7 Sep – 2 Okt 2026', extra: 'tepat waktu',
+    kpis: [['Selesai', '549/593', '93% dari rencana', 'hl'], ['Tepat waktu', '87%', 'target 85%', ''], ['Siklus', '2,6 hari', 'Agustus 3,1 hari', ''], ['Lembur', '96 jam', '58 j di Programming', 'warm']],
+    rows: [[205, 184, '84%'], [136, 129, '91%'], [88, 82, '88%'], [80, 71, '79%'], [84, 83, '94%']],
+    listTitle: 'Milestone tercapai',
+    list: [['1 Okt', 'SIM · migrasi data tahap 1', 'tepat waktu'], ['2 Okt', 'KMB · Sprint 5 selesai', '38 dari 40 poin'], ['25 Sep', 'RKJ · modul absensi lulus UAT', '2 hari lebih cepat'], ['16 Sep', 'PSL · kickoff & NDA', 'Analis & Sekretariat']],
+    risks: [['Lembur Programming 58 jam', 'usul tambah 1 programmer'], ['Branding di bawah target', 'tender + rebranding'], ['1 milestone terlewat', 'DEP · API Pemda']] }
+};
+var ORDER = ['Harian', 'Mingguan', 'Bulanan'];
+function kpi(k) {
+  if (k[3] === 'hl') return { label: k[0], value: k[1], note: k[2], bg: 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', fg: '#FFFFFF', sub: '#FFFFFF', border: '0', shadow: '0 10px 24px rgba(30,95,214,0.28)' };
+  if (k[3] === 'warm') return { label: k[0], value: k[1], note: k[2], bg: 'linear-gradient(135deg, #C2410C 0%, #BE185D 100%)', fg: '#FFFFFF', sub: '#FFFFFF', border: '0', shadow: '0 10px 24px rgba(190,24,93,0.22)' };
+  return { label: k[0], value: k[1], note: k[2], bg: '#0F1622', fg: '#EAF1F8', sub: '#A6B4C6', border: '1px solid #233247', shadow: 'none' };
+}
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: null };
+  }
+  renderVals() {
+    var self = this;
+    var cur = (this.state && this.state.tab) || (this.props && this.props.tab) || 'Harian';
+    var s = V[cur];
+    var daily = cur === 'Harian';
+    return {
+      tabs: ORDER.map(function (l) { var on = l === cur; return { label: l, sel: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : 'transparent', fg: on ? '#FFFFFF' : '#A6B4C6', pick: function () { self.setState({ tab: l }); } }; }),
+      v: {
+        range: s.range, extra: s.extra, listTitle: s.listTitle, kpis: s.kpis.map(kpi),
+        rows: s.rows.map(function (r, i) { var pct = Math.round(r[1] / r[0] * 100); var n = parseInt(r[2], 10); return { name: NAMES[i], head: HEADS[i], plan: r[0], done: r[1], pct: pct, x: r[2], xColor: daily ? (n > 2 ? '#FF7A8A' : '#A6B4C6') : (n < 85 ? '#F6B95C' : '#4ADE9B'), fill: daily || pct >= 90 ? 'linear-gradient(90deg, #14B8A6 0%, #2F7BEA 100%)' : '#E08A00' }; }),
+        list: s.list.map(function (x) { return { a: x[0], b: x[1], c: x[2] }; }),
+        risks: s.risks.map(function (x) { return { t: x[0], m: x[1] }; })
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

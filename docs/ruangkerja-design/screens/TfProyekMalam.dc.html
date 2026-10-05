@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Proyek & milestone · tablet lipat · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 884px; height: 1104px; overflow: hidden; display: flex; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; background: #070B14">
+  <div style="width: 96px; height: 1104px; flex-shrink: 0"><dc-import name="RailMalam" active="proyek" hint-size="96px,1104px"></dc-import></div>
+  <div style="width: 300px; flex-shrink: 0; box-sizing: border-box; padding: 24px 14px; display: flex; flex-direction: column; gap: 10px; border-right: 1px solid #233247; background: radial-gradient(300px 240px at 0% 0%, rgba(20,184,166,0.18), transparent 70%), #070B14">
+    <span style="font-size: 28px; line-height: 36px; font-weight: 800; letter-spacing: -0.02em; padding: 0 6px">Proyek</span>
+    <span style="font-size: 14px; color: #A6B4C6; padding: 0 6px 6px">6 aktif · 1 berisiko · 1 bermasalah</span>
+    <sc-for list="{{list}}" as="p" hint-placeholder-count="6">
+      <button type="button" onClick="{{p.pick}}" aria-pressed="{{p.sel}}" style="display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 18px; border: {{p.border}}; background: {{p.bg}}; box-shadow: {{p.shadow}}; font: inherit; text-align: left; cursor: pointer; color: #EAF1F8">
+        <span style="display: flex; align-items: center; gap: 10px"><span style="width: 34px; height: 34px; border-radius: 10px; background: {{p.grad}}; color: #FFFFFF; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0">{{p.code}}</span><span style="flex: 1; min-width: 0; font-size: 15px; font-weight: 700; line-height: 19px">{{p.name}}</span></span>
+        <span style="display: flex; align-items: center; gap: 10px"><span style="position: relative; flex: 1; height: 8px; border-radius: 4px; background: #172131"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{p.pct}}%; border-radius: 4px; background: {{p.fill}}"></span></span><span style="font-size: 14px; font-weight: 800">{{p.pct}}%</span></span>
+        <span style="font-size: 13px; font-weight: 800; color: {{p.sFg}}">{{p.status}} · {{p.next}}</span>
+      </button>
+    </sc-for>
+  </div>
+  <div style="flex: 1; min-width: 0; padding: 24px 20px; display: flex; flex-direction: column; gap: 14px">
+    <div style="border-radius: 22px; padding: 20px; color: #FFFFFF; background: radial-gradient(300px 160px at 100% 0%, rgba(255,255,255,0.20), transparent 70%), {{d.grad}}; box-shadow: 0 12px 28px rgba(30,95,214,0.26); display: flex; flex-direction: column; gap: 12px">
+      <span style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace">{{d.code}} · {{d.client}}</span><span style="height: 28px; padding: 0 10px; border-radius: 14px; background: #0F1622; color: {{d.sFg}}; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center">{{d.status}}</span></span>
+      <span style="font-size: 24px; line-height: 30px; font-weight: 800">{{d.name}}</span>
+      <span style="font-size: 14px">PIC {{d.pic}}</span>
+      <span style="display: flex; gap: 22px"><span style="display: flex; flex-direction: column"><span style="font-size: 30px; line-height: 36px; font-weight: 800">{{d.pct}}%</span><span style="font-size: 13px">rencana {{d.plan}}%</span></span><span style="display: flex; flex-direction: column"><span style="font-size: 30px; line-height: 36px; font-weight: 800">{{d.done}}/{{d.total}}</span><span style="font-size: 13px">tugas selesai</span></span></span>
+      <span style="position: relative; display: block; height: 10px; border-radius: 5px; background: rgba(255,255,255,0.28)"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{d.pct}}%; border-radius: 5px; background: #0F1622"></span><span style="position: absolute; top: -4px; left: {{d.plan}}%; width: 3px; height: 18px; margin-left: -1.5px; background: #3B4F6B; border-radius: 2px"></span></span>
+    </div>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; padding: 16px 16px 4px">
+      <span style="display: block; font-size: 18px; font-weight: 800; padding-bottom: 6px">Milestone</span>
+      <sc-for list="{{d.ms}}" as="m" hint-placeholder-count="4">
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 54px; border-top: 1px solid #172131">
+          <span style="width: 14px; height: 14px; margin: 0 3px; transform: rotate(45deg); box-sizing: border-box; border-radius: 3px; background: {{m.bg}}; border: {{m.border}}; flex-shrink: 0"></span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 700; color: {{m.color}}">{{m.t}}</span><span style="font-size: 13px; color: #A6B4C6">{{m.m}}</span></span>
+          <span style="font-size: 14px; font-weight: 800; white-space: nowrap">{{m.d}}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 18px; font-weight: 800">Status tugas</span>
+      <div style="display: flex; height: 14px; border-radius: 7px; overflow: hidden; gap: 2px"><span style="flex: {{d.done}}; background: linear-gradient(90deg, #14B8A6 0%, #2F7BEA 100%)"></span><span style="flex: {{d.wip}}; background: #7FB0F5"></span><span style="flex: {{d.todo}}; background: #233247"></span></div>
+      <span style="font-size: 14px; color: #A6B4C6">Selesai <b style="color: #EAF1F8">{{d.done}}</b> · berjalan <b style="color: #EAF1F8">{{d.wip}}</b> · belum dimulai <b style="color: #EAF1F8">{{d.todo}}</b></span>
+    </div>
+    <div style="border-radius: 22px; padding: 16px; color: #FFFFFF; background: linear-gradient(135deg, #C2410C 0%, #BE185D 100%); display: flex; flex-direction: column">
+      <span style="font-size: 18px; font-weight: 800; padding-bottom: 6px">Risiko</span>
+      <sc-for list="{{d.risks}}" as="r" hint-placeholder-count="2">
+        <div style="display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.28)"><span style="font-size: 15px; font-weight: 700">{{r.t}}</span><span style="font-size: 13px">{{r.m}}</span></div>
+      </sc-for>
+    </div>
+    <a href="DNotulenMalam.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; background: #0F1622; border: 1px solid #233247; color: #EAF1F8">
+      <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; font-weight: 800; color: #5AD6C8">NOTULEN TERAKHIR</span><span style="font-size: 15px; font-weight: 700">{{d.note}}</span></span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7D8FA5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+    </a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"project":{"editor":"enum","options":["SIM","KMB","PSL","RKJ","WEB","DEP"],"default":"SIM"},"$preview":{"width":884,"height":1104}}'>
+var G = { teal: 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', indigo: 'linear-gradient(135deg, #2F7BEA 0%, #6D4AE0 100%)', warm: 'linear-gradient(135deg, #C2410C 0%, #BE185D 100%)' };
+var ST = { ok: ['Sesuai jalur', '#4ADE9B', 'linear-gradient(90deg, #14B8A6 0%, #2F7BEA 100%)'], warn: ['Berisiko', '#F6B95C', '#E08A00'], late: ['Bermasalah', '#FF7A8A', '#FF7A8A'] };
+var P = [
+  ['SIM', 'SIMRS RS Harapan Sehat', 'RS Harapan Sehat', 'Bayu Saputra', 'ok', 'teal', 72, 70, 134, 31, 21, 'go-live 19 Okt', [['Migrasi data tahap 1', '48.000 rekam medis', 'Kam, 1 Okt', 'done'], ['UAT sesi 3', 'target 90% lulus', 'Kam, 8 Okt', 'todo'], ['Go-live', 'tim lengkap on-site', 'Sen, 19 Okt', 'todo'], ['Hypercare selesai', 'serah terima TI RS', 'Sen, 16 Nov', 'todo']], [['Kapasitas server saat go-live', 'uji beban Rab, 7 Okt'], ['UAT baru 74%', 'butuh 90%']], 'Persiapan go-live SIMRS · Jum, 2 Okt'],
+  ['KMB', 'Aplikasi Koperasi Maju Bersama', 'Koperasi Maju Bersama', 'Dimas Pratama', 'warn', 'indigo', 45, 52, 64, 38, 40, 'sprint review 9 Okt', [['Sprint 5 selesai', '38 dari 40 poin', 'Jum, 2 Okt', 'done'], ['Sprint 6 review', 'demo ke klien', 'Jum, 9 Okt', 'todo'], ['UAT bersama klien', '130 skenario', 'Sen, 26 Okt', 'todo'], ['Go-live', 'pelatihan kasir berjalan', 'Sen, 9 Nov', 'todo']], [['Payment gateway tertahan', 'kredensial sandbox bank'], ['Cakupan test 48%', 'target 70%']], 'Retro Sprint 5 KMB · Jum, 2 Okt'],
+  ['PSL', 'Portal Logistik Sinar', 'PT Sinar Logistik', 'Maya Lestari', 'ok', 'teal', 20, 18, 8, 10, 22, 'kontrak 8 Okt', [['Kontrak ditandatangani', 'berkas oleh Sekretariat', 'Kam, 8 Okt', 'todo'], ['SRS disetujui klien', 'draf v2', 'Kam, 15 Okt', 'todo'], ['Desain UI disetujui', '18 layar', 'Jum, 13 Nov', 'todo'], ['Rilis MVP', 'pelacakan pengiriman', 'Jum, 18 Des', 'todo']], [['Tambahan scope armada', '+18 hari, menunggu Direktur'], ['Kontrak belum diteken', 'Kam, 8 Okt']], 'Kickoff Portal Logistik · Rab, 16 Sep'],
+  ['RKJ', 'RuangKerja internal', 'SPKD internal', 'Dimas Pratama', 'ok', 'teal', 88, 80, 185, 15, 10, 'rilis 26 Okt', [['Modul absensi lulus UAT', '2 hari lebih cepat', 'Jum, 25 Sep', 'done'], ['Rilis Fase 1', 'absensi, tugas, rapat', 'Sen, 26 Okt', 'todo'], ['Fase 2 mulai', 'WhatsApp & payroll', 'Sen, 2 Nov', 'todo'], ['Rilis Fase 2', 'mendatang', 'Jum, 11 Des', 'todo']], [['Push di iOS', 'perlu PWA terpasang'], ['Adopsi karyawan', 'sosialisasi oleh HR']], 'Sprint review RuangKerja · Rab, 30 Sep'],
+  ['WEB', 'Rebranding & website SPKD', 'SPKD internal', 'Putri Ramadhani', 'ok', 'warm', 60, 65, 35, 12, 11, 'logo 7 Okt', [['Logo final disetujui', '3 alternatif', 'Rab, 7 Okt', 'todo'], ['Website baru tayang', '12 halaman', 'Jum, 30 Okt', 'todo'], ['Kampanye Q4 selesai', 'LinkedIn 12 minggu', 'Jum, 18 Des', 'todo']], [['Kapasitas tim konten', 'tender tenggat 9 Okt']], 'Rapat kreatif mingguan · Sen, 28 Sep'],
+  ['DEP', 'Dashboard Eksekutif Pemda', 'Pemerintah Daerah', 'Rina Oktaviani', 'late', 'indigo', 30, 50, 29, 14, 53, 'API terlewat 2 Okt', [['Integrasi API Pemda', 'terlewat · akses belum ada', 'Jum, 2 Okt', 'miss'], ['Prototipe dashboard', 'butuh data 17 OPD', 'Jum, 23 Okt', 'todo'], ['Serah terima', 'usul mundur ke 18 Des', 'Jum, 27 Nov', 'todo']], [['Akses API Pemda', 'tertahan 12 hari'], ['Data 9 OPD belum masuk', 'pemetaan tertahan']], 'Eskalasi proyek DEP · Kam, 1 Okt']
+];
+function ms(s) { return s === 'done' ? { bg: '#3B4F6B', border: '0' } : (s === 'miss' ? { bg: '#C42137', border: '0' } : { bg: '#0F1622', border: '2px solid #EAF1F8' }); }
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: null };
+  }
+  renderVals() {
+    var self = this;
+    var code = (this.state && this.state.sel) || (this.props && this.props.project) || 'SIM';
+    var c = P.filter(function (x) { return x[0] === code; })[0] || P[0];
+    var s = ST[c[4]];
+    return {
+      list: P.map(function (p) { var on = p[0] === c[0]; var t = ST[p[4]]; return { code: p[0], name: p[1], pct: p[6], status: t[0], sFg: t[1], fill: t[2], grad: G[p[5]], next: p[11], sel: on ? 'true' : 'false', bg: '#0F1622', border: on ? '2px solid #5B8CF6' : '1px solid #233247', shadow: on ? '0 10px 24px rgba(30,95,214,0.18)' : 'none', pick: function () { self.setState({ sel: p[0] }); } }; }),
+      d: { code: c[0], name: c[1], client: c[2], pic: c[3], status: s[0], sFg: s[1], grad: G[c[5]], pct: c[6], plan: c[7], done: c[8], wip: c[9], todo: c[10], total: c[8] + c[9] + c[10],
+        ms: c[12].map(function (m) { var st = ms(m[3]); return { t: m[0], m: m[1], d: m[2], bg: st.bg, border: st.border, color: m[3] === 'miss' ? '#FF7A8A' : '#EAF1F8' }; }),
+        risks: c[13].map(function (r) { return { t: r[0], m: r[1] }; }), note: c[14] }
+    };
+  }
+}
+</script>
+</body>
+</html>

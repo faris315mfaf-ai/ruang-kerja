@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Direktur · persetujuan · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #F3F6FA">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="PeranMDirektur.dc.html" aria-label="Kembali" style="width: 44px; height: 44px; border-radius: 22px; background: #FFFFFF; border: 1px solid #DDE4EC; color: #0B1A2B; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="flex: 1; font-size: 26px; line-height: 32px; font-weight: 800">Persetujuan</span>
+      <span style="height: 32px; padding: 0 12px; border-radius: 16px; background: #FFF1DC; color: #9A5800; font-size: 14px; font-weight: 800; display: inline-flex; align-items: center">{{left}} menunggu</span>
+    </div>
+    <span style="font-size: 14px; color: #46576B">Geser kanan untuk setujui, kiri untuk tolak. Atau ketuk tombolnya.</span>
+    <sc-for list="{{items}}" as="x" hint-placeholder-count="4">
+      <div style="position: relative; border-radius: 20px; overflow: hidden; background: {{x.under}}">
+        <div style="position: relative; left: {{x.shift}}px; background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 20px; padding: 14px; display: flex; flex-direction: column; gap: 10px; opacity: {{x.op}}">
+          <span style="display: flex; gap: 10px"><span style="width: 40px; height: 40px; border-radius: 12px; background: {{x.tBg}}; color: {{x.tFg}}; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0">{{x.tag}}</span><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 800">{{x.t}}</span><span style="font-size: 13px; line-height: 18px; color: #46576B">{{x.m}}</span></span></span>
+          <sc-if value="{{x.open}}" hint-placeholder-val="{{true}}">
+            <span style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px"><button type="button" onClick="{{x.no}}" style="height: 44px; border-radius: 12px; border: 1px solid #C3CEDA; background: #FFFFFF; color: #C42137; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer">Tolak</button><button type="button" onClick="{{x.yes}}" style="height: 44px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer">Setujui</button></span>
+          </sc-if>
+          <sc-if value="{{x.closed}}" hint-placeholder-val="{{false}}">
+            <span style="display: flex; justify-content: space-between; align-items: center"><span style="font-size: 14px; font-weight: 800; color: {{x.resFg}}">{{x.res}}</span><button type="button" onClick="{{x.undo}}" style="height: 36px; padding: 0 12px; border: 0; border-radius: 10px; background: #EEF2F7; color: #0B1A2B; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer">Urungkan</button></span>
+          </sc-if>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" active="inbox" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var X = [['LBR', 'Lembur Programming 32 jam', 'Sprint 6 KMB · Yoga, Fitri, Rizky, Rina · minggu ini', '#FFF1DC', '#9A5800'], ['PSL', 'Tambahan scope pelacakan armada', 'Estimasi Analis 18 hari · permintaan PT Sinar Logistik', '#E6EEFE', '#1A4CB0'], ['SRV', 'Server staging baru', 'Diajukan Dimas · untuk KMB dan DEP · sewa bulanan', '#E6EEFE', '#1A4CB0'], ['LIS', 'Lisensi alat desain 2 kursi', 'Diajukan Putri · untuk website dan materi tender', '#EEF2F7', '#46576B']];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { r: {} };
+  }
+  renderVals() {
+    var self = this;
+    var r = (this.state && this.state.r) || {};
+    var left = X.filter(function (x, i) { return !r[i]; }).length;
+    function set(i, v) { var n = Object.assign({}, r); if (v) n[i] = v; else delete n[i]; self.setState({ r: n }); }
+    return {
+      left: left,
+      items: X.map(function (x, i) {
+        var v = r[i];
+        return { tag: x[0], t: x[1], m: x[2], tBg: x[3], tFg: x[4], open: !v, closed: !!v,
+          res: v === 'yes' ? '✓ Disetujui · pengaju diberi tahu' : '✕ Ditolak · minta alasan dari pengaju', resFg: v === 'yes' ? '#0F7A55' : '#C42137',
+          under: v === 'yes' ? '#E3F6EE' : (v === 'no' ? '#FDE7EA' : 'transparent'), shift: 0, op: v ? 0.92 : 1,
+          yes: function () { set(i, 'yes'); }, no: function () { set(i, 'no'); }, undo: function () { set(i, null); } };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

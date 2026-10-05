@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Programming · board sprint · ponsel · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#EAF1F8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; background: #070B14">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="border-radius: 22px; padding: 16px; color: #FFFFFF; background: linear-gradient(135deg, #2F7BEA 0%, #6D4AE0 100%); display: flex; gap: 14px; align-items: center; box-shadow: 0 12px 28px rgba(109,74,224,0.28)">
+      <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 800">SPRINT 6 · KMB · HARI 7/10</span><span style="font-size: 30px; line-height: 36px; font-weight: 800">62%</span><span style="font-size: 13px">25 dari 40 poin · rencana 70%</span></span>
+      <svg width="130" height="70" viewBox="0 0 130 70" aria-label="Burndown" role="img"><polyline points="0,6 130,66" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2" stroke-dasharray="4 4"></polyline><polyline points="0,6 13,10 26,14 39,22 52,24 65,30 78,38 91,37" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline><circle cx="91" cy="37" r="4" fill="#FFFFFF"></circle></svg>
+    </div>
+    <div role="tablist" aria-label="Kolom" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 16px; background: #0F1622; border: 1px solid #233247">
+      <sc-for list="{{cols}}" as="c" hint-placeholder-count="4">
+        <button type="button" role="tab" aria-selected="{{c.sel}}" onClick="{{c.pick}}" style="height: 48px; border: 0; border-radius: 12px; background: {{c.bg}}; color: {{c.fg}}; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center"><span style="font-size: 13px; font-weight: 700">{{c.l}}</span><span style="font-size: 15px; font-weight: 800">{{c.n}}</span></button>
+      </sc-for>
+    </div>
+    <sc-for list="{{cards}}" as="k" hint-placeholder-count="4">
+      <a href="{{k.href}}" style="background: #0F1622; border: 1px solid #233247; border-left: 4px solid {{k.edge}}; border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px">
+        <span style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #5AD6C8">{{k.id}}</span><span style="height: 22px; min-width: 22px; padding: 0 6px; border-radius: 11px; background: #172131; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center">{{k.pt}} pt</span></span>
+        <span style="font-size: 15px; line-height: 21px; font-weight: 700">{{k.t}}</span>
+        <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #A6B4C6"><span style="width: 24px; height: 24px; border-radius: 12px; background: #1C2D50; color: #A9C2FF; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{k.ini}}</span>{{k.m}}</span>
+      </a>
+    </sc-for>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" malam="{{ true }}" dark="{{ true }}" active="tugas" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var COLS = [
+  ['Akan', 4, [['KMB-231', 'Laporan SHU per anggota', 2, 'FH', 'Fitri · belum mulai', '#34465E', '#'], ['KMB-233', 'Ekspor mutasi ke PDF', 1, 'AN', 'Arif · belum mulai', '#34465E', '#'], ['KMB-235', 'Notifikasi jatuh tempo pinjaman', 1, 'YP', 'Yoga · belum mulai', '#34465E', '#']]],
+  ['Jalan', 6, [['KMB-214', 'Integrasi payment gateway', 3, 'YP', 'Yoga · tertahan kredensial 3 hari', '#FF7A8A', '#'], ['KMB-219', 'Simulasi angsuran pinjaman', 2, 'RA', 'Rizky · dialihkan sementara ke SIM', '#E08A00', '#'], ['KMB-222', 'Rekap simpanan wajib', 1, 'RO', 'Rina · 60%', '#5B8CF6', '#']]],
+  ['Review', 5, [['PR #412', 'Modul simpanan anggota', 2, 'FH', 'Fitri · menunggu Anda 2 hari', '#E08A00', '#'], ['PR #415', 'Validasi NIK anggota', 2, 'AN', 'Arif · 1 komentar', '#5B8CF6', '#'], ['PR #416', 'Perbaikan tampilan ponsel kasir', 1, 'RO', 'Rina · lulus uji otomatis', '#5B8CF6', '#']]],
+  ['Selesai', 25, [['KMB-208', 'Login kasir dengan PIN', 5, 'YP', 'Yoga · Kam, 1 Okt', '#4ADE9B', '#'], ['KMB-210', 'Daftar anggota & pencarian', 3, 'FH', 'Fitri · Jum, 2 Okt', '#4ADE9B', '#'], ['KMB-212', 'Setoran simpanan harian', 3, 'RO', 'Rina · Sen, 5 Okt', '#4ADE9B', '#']]]
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { c: 1 };
+  }
+  renderVals() {
+    var self = this;
+    var ci = typeof (this.state && this.state.c) === 'number' ? this.state.c : 1;
+    return {
+      cols: COLS.map(function (c, i) { var on = i === ci; return { l: c[0], n: c[1] + ' pt', sel: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #2F7BEA 0%, #6D4AE0 100%)' : 'transparent', fg: on ? '#FFFFFF' : '#A6B4C6', pick: function () { self.setState({ c: i }); } }; }),
+      cards: COLS[ci][2].map(function (k) { return { id: k[0], t: k[1], pt: k[2], ini: k[3], m: k[4], edge: k[5], href: k[6] }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

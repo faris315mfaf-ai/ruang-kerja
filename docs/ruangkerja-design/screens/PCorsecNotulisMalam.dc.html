@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Sekretaris Perusahaan · notulen langsung · ponsel · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #070B14">
+  <div style="padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 10px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="PeranMCorsecMalam.dc.html" aria-label="Kembali" style="width: 40px; height: 40px; border-radius: 20px; background: rgba(255,255,255,0.18); color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="flex: 1; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800"><span style="width: 10px; height: 10px; border-radius: 5px; background: #FF8A9A; box-shadow: 0 0 0 4px rgba(255,138,154,0.3)"></span>Mencatat · 00.24.10</span>
+      <span style="font-size: 13px; font-weight: 700">4 direksi hadir</span>
+    </div>
+    <span style="font-size: 22px; line-height: 28px; font-weight: 800">Rapat direksi mingguan</span>
+    <div role="tablist" aria-label="Agenda" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+      <sc-for list="{{agenda}}" as="a" hint-placeholder-count="4">
+        <button type="button" role="tab" aria-selected="{{a.sel}}" onClick="{{a.pick}}" style="height: 52px; border: 0; border-radius: 12px; background: {{a.bg}}; color: {{a.fg}}; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0 4px"><span style="font-size: 12px; font-weight: 800">{{a.n}}</span><span style="font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%">{{a.t}}</span></button>
+      </sc-for>
+    </div>
+  </div>
+  <div style="padding: 12px 16px 0; display: flex; flex-direction: column; gap: 10px">
+    <span style="font-size: 14px; font-weight: 800; color: #A6B4C6">AGENDA {{cur.n}} · {{cur.t}}</span>
+    <sc-for list="{{items}}" as="x" hint-placeholder-count="4">
+      <div style="background: #0F1622; border: 1px solid #233247; border-left: 4px solid {{x.edge}}; border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 3px">
+        <span style="font-size: 12px; font-weight: 800; color: {{x.edge}}">{{x.kind}}</span>
+        <span style="font-size: 15px; line-height: 21px; font-weight: 600">{{x.t}}</span>
+        <sc-if value="{{x.hasMeta}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; color: #A6B4C6">{{x.m}}</span></sc-if>
+      </div>
+    </sc-for>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px 22px; display: flex; flex-direction: column; gap: 10px; background: rgba(15,22,34,0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid #233247">
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+      <sc-for list="{{adds}}" as="b" hint-placeholder-count="3">
+        <button type="button" onClick="{{b.add}}" style="height: 48px; border-radius: 14px; border: 1px solid #34465E; background: #0F1622; color: {{b.c}}; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer">+ {{b.l}}</button>
+      </sc-for>
+    </div>
+    <div style="display: flex; gap: 10px">
+      <span style="width: 56px; height: 56px; border-radius: 28px; background: #C42137; color: #FFFFFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM19 11a7 7 0 0 1-14 0M12 18v3"></path></svg></span>
+      <a href="DNotulenMalam.dc.html" style="flex: 1; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center">Akhiri & finalkan</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var AG = [['1', 'Status proyek'], ['2', 'Keputusan DEP'], ['3', 'Tender Kominfo'], ['4', 'Lain-lain']];
+var BASE = {
+  0: [['Catatan', 'SIMRS siap go-live 19 Okt; UAT naik ke 74%.', ''], ['Keputusan', 'Uji beban server dimajukan ke Rab, 7 Okt.', ''], ['Tindak lanjut', 'Kirim jadwal hypercare ke RS Harapan Sehat', 'Bayu · Kam, 8 Okt']],
+  1: [['Catatan', 'API Pemda tertahan 12 hari, data 9 OPD belum masuk.', ''], ['Keputusan', 'Opsi A: serah terima mundur ke 18 Des, adendum kontrak disiapkan.', '']],
+  2: [['Catatan', 'Dokumen tender wajib masuk Jum, 9 Okt 13.00.', '']],
+  3: []
+};
+var KIND = { 'Catatan': '#A6B4C6', 'Keputusan': '#5B8CF6', 'Tindak lanjut': '#C2410C' };
+var ADD = { 'Keputusan': ['Keputusan', 'Dicatat dari suara: “setuju, lanjutkan”', ''], 'Tindak lanjut': ['Tindak lanjut', 'Tugas baru dari rapat', 'PIC belum dipilih · ketuk untuk atur'], 'Catatan': ['Catatan', 'Catatan baru', ''] };
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { a: 1, extra: {} };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var ai = typeof st.a === 'number' ? st.a : 1;
+    var extra = st.extra || {};
+    var list = (BASE[ai] || []).concat(extra[ai] || []);
+    return {
+      cur: { n: AG[ai][0], t: AG[ai][1].toUpperCase() },
+      agenda: AG.map(function (a, i) { var on = i === ai; var done = i < ai; return { n: done ? '✓ ' + a[0] : a[0], t: a[1], sel: on ? 'true' : 'false', bg: on ? '#0F1622' : 'rgba(255,255,255,0.16)', fg: on ? '#5AD6C8' : '#FFFFFF', pick: function () { self.setState({ a: i }); } }; }),
+      items: list.slice(-4).map(function (x) { return { kind: x[0].toUpperCase(), t: x[1], m: x[2], hasMeta: !!x[2], edge: KIND[x[0]] }; }),
+      adds: ['Keputusan', 'Tindak lanjut', 'Catatan'].map(function (k) { return { l: k, c: KIND[k], add: function () { var n = Object.assign({}, extra); n[ai] = (n[ai] || []).concat([ADD[k]]); self.setState({ extra: n }); } }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

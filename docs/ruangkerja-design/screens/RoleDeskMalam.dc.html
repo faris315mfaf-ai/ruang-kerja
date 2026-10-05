@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Dashboard per peran SPKD · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #070B14; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" malam="{{ true }}" dark="{{ true }}" crumbs="{{r.crumbs}}" initials="{{r.initials}}" person="{{r.name}}" status="{{r.status}}" meeting="{{r.meeting}}" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 40px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="display: inline-flex; align-self: flex-start; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 16px; background: rgba(15,22,34,0.75); border: 1px solid #233247; font-size: 14px; font-weight: 800; color: #5AD6C8">SPKD · {{r.unit}}</span>
+        <h1 style="margin: 0; font-size: 44px; line-height: 52px; font-weight: 800; letter-spacing: -0.03em">{{r.greet}}</h1>
+        <span style="font-size: 18px; color: #A6B4C6">{{r.title}} · {{r.sub}}</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 12px">
+        <button type="button" style="height: 44px; padding: 0 18px; border: 1px solid #34465E; border-radius: 12px; background: #0F1622; color: #EAF1F8; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">{{r.cta2}}</button>
+        <button type="button" style="height: 48px; padding: 0 22px; border: 0; border-radius: 14px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 24px rgba(30,95,214,0.30)">{{r.cta}}</button>
+      </div>
+    </section>
+
+    <section aria-label="Ringkasan" style="display: flex; flex-wrap: wrap; gap: 20px">
+      <sc-for list="{{r.kpis}}" as="k" hint-placeholder-count="4">
+        <div style="flex: 1 1 230px; border-radius: 22px; padding: 24px; display: flex; flex-direction: column; gap: 8px; background: {{k.bg}}; color: {{k.fg}}; border: {{k.border}}; box-shadow: {{k.shadow}}">
+          <span style="font-size: 16px; font-weight: 600; color: {{k.sub}}">{{k.label}}</span>
+          <span style="font-size: 42px; line-height: 50px; font-weight: 700; letter-spacing: -0.02em; color: {{k.valueColor}}">{{k.value}}</span>
+          <span style="font-size: 15px; line-height: 22px; color: {{k.sub}}">{{k.note}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 2 1 620px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px 0 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 0 28px 10px">
+            <h2 style="margin: 0; font-size: 22px; font-weight: 700">{{r.a.title}}</h2>
+            <a href="#" style="font-size: 16px; font-weight: 600; color: #5AD6C8; text-decoration: none">{{r.a.link}}</a>
+          </div>
+          <sc-for list="{{r.a.rows}}" as="x" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 16px; padding: 0 28px; min-height: 72px; border-top: 1px solid #172131">
+              <span style="width: 44px; height: 44px; border-radius: 14px; background: {{x.iconBg}}; color: {{x.iconFg}}; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0">{{x.tag}}</span>
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+                <span style="font-size: 17px; font-weight: 600">{{x.title}}</span>
+                <span style="font-size: 15px; color: #A6B4C6">{{x.meta}}</span>
+              </span>
+              <span style="height: 30px; padding: 0 12px; border-radius: 15px; background: {{x.bBg}}; color: {{x.bFg}}; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; white-space: nowrap">{{x.badge}}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px 28px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px">
+            <h2 style="margin: 0; font-size: 22px; font-weight: 700">{{r.b.title}}</h2>
+            <span style="font-size: 15px; color: #A6B4C6">{{r.b.note}}</span>
+          </div>
+          <sc-for list="{{r.b.bars}}" as="b" hint-placeholder-count="5">
+            <div style="display: grid; grid-template-columns: 240px 1fr 140px; gap: 16px; align-items: center">
+              <span style="display: flex; flex-direction: column"><span style="font-size: 16px; font-weight: 700">{{b.name}}</span><span style="font-size: 14px; color: #A6B4C6">{{b.sub}}</span></span>
+              <span style="position: relative; display: block; height: 12px; border-radius: 6px; background: #172131">
+                <span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{b.pct}}%; border-radius: 6px; background: {{b.fill}}"></span>
+                <sc-if value="{{b.hasPlan}}" hint-placeholder-val="{{false}}"><span style="position: absolute; top: -4px; left: {{b.plan}}%; width: 3px; height: 20px; margin-left: -1.5px; border-radius: 2px; background: #3B4F6B"></span></sc-if>
+              </span>
+              <span style="font-size: 15px; font-weight: 700; text-align: right; color: {{b.noteColor}}">{{b.note}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 8px"><h2 style="margin: 0; font-size: 22px; font-weight: 700">Jadwal terdekat</h2><a href="DRapatMalam.dc.html" style="font-size: 16px; font-weight: 600; color: #5AD6C8; text-decoration: none">Rapat</a></div>
+          <sc-for list="{{r.c}}" as="c" hint-placeholder-count="3">
+            <div style="display: flex; gap: 14px; padding: 12px 0; border-top: 1px solid #172131">
+              <span style="width: 64px; flex-shrink: 0; display: flex; flex-direction: column"><span style="font-size: 18px; font-weight: 800">{{c.time}}</span><span style="font-size: 13px; font-weight: 700; color: #A6B4C6">{{c.day}}</span></span>
+              <span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 16px; font-weight: 700">{{c.title}}</span><span style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #A6B4C6"><span style="height: 22px; padding: 0 8px; border-radius: 6px; background: {{c.pBg}}; color: {{c.pFg}}; font-weight: 800; display: inline-flex; align-items: center">{{c.place}}</span>{{c.meta}}</span></span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 4px; background: {{r.d.bg}}; color: {{r.d.fg}}; border: {{r.d.border}}; box-shadow: {{r.d.shadow}}">
+          <h2 style="margin: 0 0 8px; font-size: 22px; font-weight: 700">{{r.d.title}}</h2>
+          <sc-for list="{{r.d.items}}" as="i" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-top: 1px solid {{r.d.line}}">
+              <span style="font-size: 16px; font-weight: 700">{{i.t}}</span>
+              <span style="font-size: 14px; line-height: 20px; color: {{r.d.sub}}">{{i.m}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" malam="{{ true }}" dark="{{ true }}" active="dashboard" role="{{r.dock}}" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"role":{"editor":"enum","options":["dirut","direktur","hr","corsec","marketing","programming","implementer","analis"],"default":"dirut"},"$preview":{"width":1440,"height":1500}}'>
+var BADGE = { late: ['#3A1520', '#FF7A8A'], warn: ['#2E2210', '#F6B95C'], info: ['#14223F', '#5B8CF6'], ok: ['#0E2A20', '#4ADE9B'], neutral: ['#172131', '#A6B4C6'] };
+var ICON = { late: ['#3A1520', '#FF7A8A'], warn: ['#2E2210', '#F6B95C'], info: ['#14223F', '#A9C2FF'], ok: ['#0E2A20', '#4ADE9B'], neutral: ['#172131', '#A6B4C6'] };
+var PLACE = { Meet: ['#0E2A2C', '#5AD6C8'], Zoom: ['#14223F', '#A9C2FF'], Ruang: ['#172131', '#A6B4C6'], Klien: ['#2E2210', '#F6B95C'], Tenggat: ['#3A1520', '#FF7A8A'] };
+var FILL = { ok: 'linear-gradient(90deg, #14B8A6 0%, #2F7BEA 100%)', warn: '#E08A00', late: '#FF7A8A' };
+var NOTEC = { ok: '#4ADE9B', warn: '#F6B95C', late: '#FF7A8A', neutral: '#A6B4C6' };
+var R = {
+  dirut: { name: 'Hendra Wijaya', initials: 'HW', unit: 'Direksi', title: 'Direktur Utama', greet: 'Selamat pagi, Pak Hendra', sub: '6 proyek klien aktif · 48 karyawan', status: 'Masuk 07.55', meeting: 'Rapat direksi · 10.00', crumbs: 'Dashboard', dock: 'direksi', cta: 'Ringkasan untuk rapat direksi', cta2: 'Ekspor PDF',
+    kpis: [['Proyek aktif', '6', '4 sesuai jalur · 1 berisiko · 1 bermasalah', 'hl'], ['Milestone Oktober', '2/9', '2 selesai · 1 terlewat (DEP)', ''], ['Kehadiran hari ini', '44/48', '2 cuti · 2 belum check-in', ''], ['Butuh keputusan Anda', '3', 'dari Direktur dan PIC proyek', 'warm']],
+    a: { title: 'Butuh keputusan Anda', link: 'Semua', rows: [['DEP', 'Perpanjangan timeline Dashboard Eksekutif Pemda', 'Diajukan Agus Setiawan · API Pemda belum tersedia', 'Keputusan', 'late'], ['KMB', 'Tambah 1 programmer untuk Aplikasi Koperasi', 'Diajukan Dimas Pratama · sprint tertinggal 7 poin', 'Keputusan', 'warn'], ['WEB', 'Persetujuan konsep logo baru SPKD', 'Diajukan Putri Ramadhani · 3 alternatif', 'Tinjau', 'info']] },
+    b: { title: 'Portofolio proyek', note: 'aktual vs rencana (garis)', bars: [['SIMRS RS Harapan Sehat', 'SIM · Implementer', 72, 70, 'Sesuai jalur', 'ok'], ['Aplikasi Koperasi Maju Bersama', 'KMB · Programming', 45, 52, 'Berisiko', 'warn'], ['Portal Logistik Sinar', 'PSL · Analis', 20, 18, 'Sesuai jalur', 'ok'], ['RuangKerja internal', 'RKJ · Programming', 88, 80, 'Sesuai jalur', 'ok'], ['Rebranding & website SPKD', 'WEB · Branding', 60, 65, 'Sesuai jalur', 'ok'], ['Dashboard Eksekutif Pemda', 'DEP · Programming', 30, 50, 'Bermasalah', 'late']] },
+    c: [['10.00', 'Hari ini', 'Rapat direksi mingguan', 'Ruang', 'Ruang Direksi · notulis Nadia'], ['13.00', 'Hari ini', 'Demo SIMRS ke RS Harapan Sehat', 'Zoom', 'bersama tim Implementer'], ['09.00', 'Kam, 8 Okt', 'Tanda tangan kontrak Sinar Logistik', 'Klien', 'Kantor klien']],
+    d: { title: 'Ketepatan waktu per divisi', kind: 'plain', items: [['Implementer · 91%', 'tugas selesai sebelum tenggat, 4 minggu'], ['Analis · 88%', 'review kode rata-rata 1,4 hari'], ['Programming · 84%', '2 proyek berjalan paralel'], ['Branding & Marketing · 79%', 'materi tender menyita kapasitas']] } },
+  direktur: { name: 'Agus Setiawan', initials: 'AS', unit: 'Direksi', title: 'Direktur Operasional & Teknologi', greet: 'Selamat pagi, Pak Agus', sub: 'membawahi Programming, Implementer, Analis', status: 'Masuk 07.48', meeting: 'Rapat direksi · 10.00', crumbs: 'Dashboard', dock: 'direksi', cta: 'Buka portofolio teknis', cta2: 'Ekspor',
+    kpis: [['Persetujuan menunggu', '4', 'lembur, scope, pengadaan', 'hl'], ['Tugas terbuka lintas divisi', '128', '3 divisi teknis', ''], ['Terlambat', '11', '6 di Programming', ''], ['Go-live Oktober', '1', 'SIMRS · Sen, 19 Okt', '']],
+    a: { title: 'Persetujuan & eskalasi', link: 'Persetujuan', rows: [['LBR', 'Lembur tim Programming 32 jam', 'Sprint 6 KMB · 4 orang · minggu ini', 'Menunggu', 'warn'], ['PSL', 'Tambahan scope modul pelacakan armada', 'Permintaan klien · estimasi Analis 18 hari', 'Tinjau', 'info'], ['SRV', 'Pengadaan server staging baru', 'Diajukan Dimas · untuk KMB dan DEP', 'Menunggu', 'warn'], ['DEP', 'Eskalasi: API Pemda belum tersedia', 'Tertahan 12 hari · risiko tinggi', 'Eskalasi', 'late']] },
+    b: { title: 'Kapasitas divisi', note: 'jam terpakai vs tersedia minggu ini', bars: [['Programming', '14 orang · 2 proyek', 92, 0, '92% · padat', 'late'], ['Analis', '6 orang · 3 proyek', 81, 0, '81%', 'warn'], ['Implementer', '9 orang · 2 klien on-site', 74, 0, '74%', 'ok']] },
+    c: [['09.30', 'Hari ini', 'Stand-up lintas divisi teknis', 'Meet', '3 kepala divisi'], ['10.00', 'Hari ini', 'Rapat direksi mingguan', 'Ruang', 'Ruang Direksi'], ['14.00', 'Hari ini', 'Review arsitektur KMB', 'Meet', 'Programming & Analis']],
+    d: { title: 'Risiko teknis terbuka', kind: 'warm', items: [['DEP · integrasi API Pemda', 'belum ada akses sandbox dari klien'], ['KMB · cakupan test 48%', 'target 70% sebelum UAT'], ['SIM · kapasitas server go-live', 'uji beban dijadwalkan Rab']] } },
+  hr: { name: 'Hana Nuraini', initials: 'HN', unit: 'HR', title: 'HR', greet: 'Selamat pagi, Hana', sub: '48 karyawan terjadwal hari ini', status: 'Masuk 07.38', meeting: '', crumbs: 'Dashboard HR', dock: 'hr', cta: 'Ekspor payroll Oktober', cta2: 'Rekap absensi',
+    kpis: [['Hadir sekarang', '44/48', '92% · naik 6 dari 08.15', 'hl'], ['Terlambat', '3', 'rata-rata 11 menit', ''], ['Cuti / izin', '2', '1 cuti · 1 izin', ''], ['Belum check-in', '2', 'pengingat sudah terkirim', '']],
+    a: { title: 'Pengajuan menunggu HR', link: 'Antrean (7)', rows: [['CUT', 'Sari Wulandari · cuti tahunan 26–27 Okt', 'Disetujui atasan · saldo 7 → 5', 'Menunggu', 'warn'], ['LBR', 'Lembur tim Programming · 4 orang', '32 jam · perlu persetujuan Direktur', 'Menunggu', 'warn'], ['DNS', 'Dinas luar Bayu & Lina ke RS Harapan Sehat', '5–9 Okt · disetujui Direktur', 'Selesai', 'ok'], ['KOR', 'Koreksi absensi Rizky 2 Okt', 'Lupa check-out · minta 17.10', 'Menunggu', 'warn']] },
+    b: { title: 'Kehadiran per divisi', note: 'hadir / terjadwal', bars: [['Programming', '14 orang', 93, 0, '13/14', 'ok'], ['Implementer', '9 orang · 2 dinas luar', 89, 0, '8/9', 'ok'], ['Analis', '6 orang', 100, 0, '6/6', 'ok'], ['Branding & Marketing', '6 orang', 83, 0, '5/6', 'warn'], ['Sekretariat, HR, Direksi', '13 orang', 92, 0, '12/13', 'ok']] },
+    c: [['10.00', 'Hari ini', 'Wawancara kandidat programmer', 'Meet', 'bersama Dimas'], ['09.00', 'Rab, 7 Okt', 'Orientasi 2 karyawan baru', 'Ruang', 'Ruang Rapat Lt. 2'], ['17.00', 'Jum, 23 Okt', 'Tenggat rekap payroll Oktober', 'Tenggat', 'ke bagian keuangan']],
+    d: { title: 'Perlu ditinjau', kind: 'warm', items: [['2 check-in di luar radius', 'Implementer on-site · dinas luar sudah disetujui, tandai wajar'], ['1 selfie gelap', 'Tono · perangkat baru'], ['3 kontrak kerja habis November', 'perpanjang atau akhiri sebelum 31 Okt']] } },
+  corsec: { name: 'Nadia Putri', initials: 'NP', unit: 'Sekretariat Perusahaan', title: 'Sekretaris Perusahaan', greet: 'Selamat pagi, Nadia', sub: '3 agenda direksi hari ini', status: 'Masuk 07.42', meeting: 'Rapat direksi · 10.00', crumbs: 'Dashboard', dock: 'staf', cta: 'Catat surat masuk', cta2: 'Arsip dokumen',
+    kpis: [['Agenda direksi hari ini', '3', 'Anda notulis di 1 rapat', 'hl'], ['Surat masuk belum diproses', '6', '2 butuh disposisi Dirut', ''], ['Dokumen legal jatuh tempo', '2', 'dalam 30 hari', ''], ['Notulen belum final', '1', 'Rapat direksi 5 Okt', '']],
+    a: { title: 'Surat & dokumen', link: 'Arsip', rows: [['IN', 'Undangan tender Dinas Kominfo', 'Surat masuk 3 Okt · disposisi ke Direktur Utama', 'Disposisi', 'warn'], ['IZN', 'Perpanjangan izin usaha (NIB)', 'Tenggat Jum, 30 Okt · berkas 60%', '25 hari', 'late'], ['KTR', 'Kontrak Sinar Logistik draf v3', 'Review legal · tanda tangan Kam, 8 Okt', 'Review', 'info'], ['NDA', 'NDA RS Harapan Sehat', 'Ditandatangani 2 Okt · tersimpan di Drive', 'Selesai', 'ok']] },
+    b: { title: 'Kepatuhan & perizinan', note: 'progres berkas', bars: [['Perpanjangan izin usaha', 'tenggat 30 Okt', 60, 0, '60%', 'warn'], ['Persiapan ISO 27001', 'audit awal Desember', 35, 0, '35%', 'ok'], ['Laporan tahunan 2026', 'draf mulai November', 10, 0, '10%', 'ok']] },
+    c: [['10.00', 'Hari ini', 'Rapat direksi mingguan', 'Ruang', 'Anda notulis'], ['13.00', 'Hari ini', 'Demo SIMRS ke RS Harapan Sehat', 'Zoom', 'agenda Dirut'], ['09.00', 'Kam, 8 Okt', 'Tanda tangan kontrak Sinar Logistik', 'Klien', 'siapkan materai & berkas']],
+    d: { title: 'Notulen rapat direksi', kind: 'plain', items: [['Rapat direksi 5 Okt · draf', 'mulai 10.00 · template sudah disiapkan'], ['Rapat direksi 28 Sep · final', '4 keputusan · 6 tindak lanjut, 4 selesai'], ['Rapat direksi 21 Sep · final', 'dibagikan ke 4 direksi']] } },
+  marketing: { name: 'Putri Ramadhani', initials: 'PR', unit: 'Branding & Marketing', title: 'Kepala Divisi Branding & Marketing', greet: 'Selamat pagi, Putri', sub: '6 anggota · 3 kampanye berjalan', status: 'Masuk 07.58', meeting: 'Rapat kreatif · 10.00', crumbs: 'Dashboard divisi', dock: 'kadiv', cta: 'Konten baru', cta2: 'Kalender konten',
+    kpis: [['Konten terjadwal minggu ini', '12', 'LinkedIn 5 · Instagram 4 · blog 3', 'hl'], ['Materi menunggu review', '4', '2 dari Direksi', ''], ['Prospek baru Oktober', '7', '3 minta demo', ''], ['Tenggat materi tender', '4 hari', 'Dinas Kominfo · Jum, 9 Okt', 'warm']],
+    a: { title: 'Pipeline konten', link: 'Board konten', rows: [['VID', 'Video studi kasus SIMRS', 'Editing · Dinda · tayang Sel, 13 Okt', 'Editing', 'info'], ['BLG', 'Artikel: digitalisasi koperasi', 'Review Direktur · 1.200 kata', 'Review', 'warn'], ['LNK', 'Carousel peluncuran RuangKerja', 'Terjadwal Rab, 7 Okt 09.00', 'Terjadwal', 'ok'], ['TND', 'Brosur & profil perusahaan untuk tender', 'Draf · tenggat Jum, 9 Okt', 'Draf', 'late']] },
+    b: { title: 'Proyek divisi', note: 'aktual vs rencana', bars: [['Rebranding & website SPKD', 'WEB · 4 milestone', 60, 65, 'Sesuai jalur', 'ok'], ['Materi tender Kominfo', 'TND · tenggat 9 Okt', 30, 40, 'Berisiko', 'warn'], ['Kampanye LinkedIn Q4', 'LNK · 12 minggu', 50, 45, 'Sesuai jalur', 'ok']] },
+    c: [['10.00', 'Hari ini', 'Rapat kreatif mingguan', 'Meet', '6 peserta'], ['14.00', 'Hari ini', 'Pemotretan tim untuk website', 'Ruang', 'Studio Lt. 1'], ['15.00', 'Jum, 9 Okt', 'Kirim materi tender', 'Tenggat', 'Dinas Kominfo']],
+    d: { title: 'Prospek terbaru', kind: 'plain', items: [['RSUD Kota Mandiri · minta demo SIMRS', 'dari formulir website · 2 Okt'], ['Koperasi Sejahtera · tanya harga', 'dari LinkedIn · 4 Okt'], ['Dinas Kominfo · undangan tender', 'via Sekretariat · 3 Okt']] } },
+  programming: { name: 'Dimas Pratama', initials: 'DP', unit: 'Programming', title: 'Kepala Divisi Programming', greet: 'Selamat pagi, Dimas', sub: '14 programmer · Sprint 6 KMB hari ke-7 dari 10', status: 'Masuk 07.41', meeting: 'Stand-up · 09.00', crumbs: 'Dashboard divisi', dock: 'kadiv', cta: 'Buka board sprint', cta2: 'Laporan sprint',
+    kpis: [['Sprint 6 · KMB', '62%', 'poin selesai · rencana 70%', 'hl'], ['Pull request menunggu review', '9', '3 lebih dari 2 hari', ''], ['Bug terbuka', '14', '3 kritis · 2 di produksi SIM', ''], ['Deploy minggu ini', '4', '2 produksi · 2 staging', '']],
+    a: { title: 'Perlu perhatian', link: 'Semua tugas', rows: [['SIM', 'SIM-388 · bug kritis antrean farmasi', 'Rizky · produksi RS Harapan Sehat · hari ini', 'Kritis', 'late'], ['KMB', 'KMB-214 · integrasi payment gateway', 'Yoga · tertahan kredensial sandbox 3 hari', 'Tertahan', 'warn'], ['PR', 'PR #412 · modul simpanan anggota', 'Fitri · menunggu review 2 hari', 'Review', 'info'], ['DEP', 'DEP-51 · konsumsi API Pemda', 'Rina · menunggu akses dari klien', 'Tertahan', 'warn']] },
+    b: { title: 'Sprint & proyek', note: 'aktual vs rencana', bars: [['KMB · Sprint 6', 'Koperasi Maju Bersama', 62, 70, '-8 poin', 'warn'], ['SIM · hotfix & go-live', 'RS Harapan Sehat', 80, 75, 'Sesuai jalur', 'ok'], ['RKJ · RuangKerja', 'internal', 88, 80, 'Sesuai jalur', 'ok'], ['DEP · Dashboard Pemda', 'Pemda', 30, 50, '-20 poin', 'late']] },
+    c: [['09.00', 'Hari ini', 'Stand-up Programming', 'Meet', 'notulis Fitri'], ['14.00', 'Hari ini', 'Review arsitektur KMB', 'Meet', 'dengan Analis'], ['15.00', 'Jum, 9 Okt', 'Sprint review KMB', 'Meet', 'demo ke klien']],
+    d: { title: 'Beban developer', kind: 'plain', items: [['Rizky Aditya · 9 tugas', '2 bug kritis · SIM'], ['Yoga Permana · 7 tugas', '1 tertahan · KMB'], ['Fitri Handayani · 6 tugas', 'PR #412 menunggu review'], ['Rina Oktaviani · 5 tugas', 'DEP tertahan']] } },
+  implementer: { name: 'Bayu Saputra', initials: 'BS', unit: 'Implementer', title: 'Kepala Divisi Implementer', greet: 'Selamat pagi, Bayu', sub: 'on-site di RS Harapan Sehat · 9 anggota', status: 'Dinas luar · 07.50', meeting: '', crumbs: 'Dashboard divisi', dock: 'kadiv', cta: 'Tiket baru', cta2: 'Jadwal on-site',
+    kpis: [['Go-live terjadwal', '2', 'SIM 19 Okt · KMB 9 Nov', 'hl'], ['Tiket dukungan terbuka', '11', '1 prioritas tinggi', ''], ['Kunjungan klien minggu ini', '3', '2 orang di lapangan hari ini', ''], ['Pelatihan pengguna', '2', 'terjadwal minggu ini', '']],
+    a: { title: 'Tiket klien', link: 'Semua tiket', rows: [['P1', 'RS Harapan Sehat · label farmasi tidak terbaca', 'dibuka 2 jam lalu · Lina di lokasi', 'Tinggi', 'late'], ['P2', 'Koperasi Maju · migrasi data anggota tahap 2', '1.840 dari 2.300 baris · Tono', 'Berjalan', 'info'], ['P3', 'RS Harapan Sehat · akun 6 perawat baru', 'menunggu data dari HRD klien', 'Menunggu', 'warn'], ['P3', 'Sinar Logistik · permintaan demo ulang', 'dijadwalkan Kam, 8 Okt', 'Terjadwal', 'ok']] },
+    b: { title: 'Kesiapan go-live SIMRS', note: 'Sen, 19 Okt · 14 hari lagi', bars: [['Instalasi server', 'produksi & cadangan', 100, 0, 'Selesai', 'ok'], ['Migrasi data pasien', '48.000 rekam medis', 85, 0, '85%', 'ok'], ['UAT bersama klien', '74% skenario lulus', 74, 0, '74%', 'warn'], ['Pelatihan pengguna', '5 dari 8 unit', 62, 0, '62%', 'warn']] },
+    c: [['09.00', 'Hari ini', 'On-site RS Harapan Sehat', 'Klien', 'sampai 16.00 · dinas luar'], ['10.00', 'Rab, 7 Okt', 'Pelatihan kasir Koperasi Maju', 'Zoom', '24 peserta'], ['08.00', 'Sen, 19 Okt', 'Go-live SIMRS', 'Klien', 'tim lengkap on-site']],
+    d: { title: 'Tim di lapangan hari ini', kind: 'plain', items: [['Bayu & Lina · RS Harapan Sehat', 'check-in 07.50 · dinas luar disetujui'], ['Tono · remote', 'migrasi data Koperasi Maju'], ['6 orang · kantor', 'persiapan materi pelatihan']] } },
+  analis: { name: 'Maya Lestari', initials: 'ML', unit: 'Analis', title: 'Kepala Divisi Analis (Analis Koding)', greet: 'Selamat pagi, Maya', sub: '6 analis · 3 proyek aktif', status: 'Masuk 07.46', meeting: 'Workshop PSL · 10.00', crumbs: 'Dashboard divisi', dock: 'kadiv', cta: 'Dokumen analisis baru', cta2: 'Template SRS',
+    kpis: [['Dokumen analisis berjalan', '5', 'SRS 3 · BRD 1 · alur data 1', 'hl'], ['Review kode menunggu', '6', '2 lebih dari 1 hari', ''], ['Temuan QA terbuka', '18', '4 tinggi', ''], ['Skenario UAT SIM siap', '74%', '148 dari 200', '']],
+    a: { title: 'Antrean analisis & review', link: 'Semua', rows: [['PSL', 'SRS modul pelacakan armada', 'Draf v2 · review klien Kam, 8 Okt', 'Draf', 'info'], ['KMB', 'Analisis alur pinjaman anggota', 'Selesai · diserahkan ke Programming', 'Selesai', 'ok'], ['SIM', 'Review kode modul farmasi', '6 temuan · 2 tinggi · PR #409', 'Review', 'warn'], ['DEP', 'Pemetaan data 17 OPD', 'Tertahan · data 9 OPD belum masuk', 'Tertahan', 'late']] },
+    b: { title: 'Kesiapan UAT per proyek', note: 'skenario uji lulus', bars: [['SIMRS RS Harapan Sehat', '148 dari 200 skenario', 74, 0, '74%', 'warn'], ['Aplikasi Koperasi', '52 dari 130 skenario', 40, 0, '40%', 'ok'], ['Portal Logistik Sinar', 'skenario sedang disusun', 10, 0, '10%', 'ok']] },
+    c: [['10.00', 'Hari ini', 'Workshop kebutuhan Sinar Logistik', 'Zoom', 'dengan klien'], ['13.30', 'Hari ini', 'Review kode modul farmasi', 'Meet', 'dengan Rizky'], ['09.00', 'Kam, 8 Okt', 'UAT SIMRS sesi 3', 'Klien', 'RS Harapan Sehat']],
+    d: { title: 'Temuan kode berulang', kind: 'warm', items: [['Query N+1 di 3 modul', 'tambahkan eager loading · panduan sudah dibagikan'], ['Validasi tanggal tidak konsisten', 'gunakan helper format bersama'], ['Konfigurasi ditulis langsung di kode', 'pindahkan ke .env dan config']] } }
+};
+function kpi(k) {
+  if (k[3] === 'hl') return { label: k[0], value: k[1], note: k[2], bg: 'radial-gradient(240px 160px at 100% 0%, rgba(255,255,255,0.22), transparent 70%), linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)', fg: '#FFFFFF', sub: '#FFFFFF', valueColor: '#FFFFFF', border: '0', shadow: '0 12px 28px rgba(30,95,214,0.30)' };
+  if (k[3] === 'warm') return { label: k[0], value: k[1], note: k[2], bg: 'linear-gradient(135deg, #C2410C 0%, #BE185D 100%)', fg: '#FFFFFF', sub: '#FFFFFF', valueColor: '#FFFFFF', border: '0', shadow: '0 12px 28px rgba(190,24,93,0.24)' };
+  return { label: k[0], value: k[1], note: k[2], bg: '#0F1622', fg: '#EAF1F8', sub: '#A6B4C6', valueColor: '#EAF1F8', border: '1px solid #233247', shadow: '0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)' };
+}
+class Component extends DCLogic {
+  renderVals() {
+    var key = (this.props && this.props.role) || 'dirut';
+    var s = R[key] || R.dirut;
+    var warm = s.d.kind === 'warm';
+    return {
+      r: {
+        name: s.name, initials: s.initials, unit: s.unit, title: s.title, greet: s.greet, sub: s.sub, status: s.status, meeting: s.meeting, crumbs: s.crumbs, dock: s.dock, cta: s.cta, cta2: s.cta2,
+        kpis: s.kpis.map(kpi),
+        a: { title: s.a.title, link: s.a.link, rows: s.a.rows.map(function (x) { return { tag: x[0], title: x[1], meta: x[2], badge: x[3], bBg: BADGE[x[4]][0], bFg: BADGE[x[4]][1], iconBg: ICON[x[4]][0], iconFg: ICON[x[4]][1] }; }) },
+        b: { title: s.b.title, note: s.b.note, bars: s.b.bars.map(function (b) { return { name: b[0], sub: b[1], pct: b[2], plan: b[3], hasPlan: b[3] > 0, note: b[4], noteColor: NOTEC[b[5]], fill: FILL[b[5]] }; }) },
+        c: s.c.map(function (c) { var p = PLACE[c[3]]; return { time: c[0], day: c[1], title: c[2], place: c[3] === 'Ruang' ? 'Tatap muka' : (c[3] === 'Meet' ? 'Google Meet' : c[3]), meta: c[4], pBg: p[0], pFg: p[1] }; }),
+        d: { title: s.d.title, items: s.d.items.map(function (i) { return { t: i[0], m: i[1] }; }), bg: warm ? 'linear-gradient(135deg, #C2410C 0%, #BE185D 100%)' : '#0F1622', fg: warm ? '#FFFFFF' : '#EAF1F8', sub: warm ? '#FFFFFF' : '#A6B4C6', line: warm ? 'rgba(255,255,255,0.28)' : '#172131', border: warm ? '0' : '1px solid #233247', shadow: warm ? '0 12px 28px rgba(190,24,93,0.24)' : '0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)' }
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

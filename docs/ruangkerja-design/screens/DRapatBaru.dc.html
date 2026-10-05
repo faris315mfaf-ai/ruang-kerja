@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Jadwalkan rapat</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}a:hover{color:#0A4E57}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #F3F6FA; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" crumbs="Rapat / Jadwalkan" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 36px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 22px">
+    <section style="display: flex; flex-direction: column; gap: 8px">
+      <a href="DRapat.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>Rapat</a>
+      <h1 style="margin: 0; font-size: 44px; line-height: 52px; font-weight: 800; letter-spacing: -0.03em">Jadwalkan rapat</h1>
+    </section>
+
+    <sc-if value="{{saved}}" hint-placeholder-val="{{false}}">
+      <section style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 22px 24px; border-radius: 22px; color: #FFFFFF; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); box-shadow: 0 12px 28px rgba(30,95,214,0.30)">
+        <span style="width: 48px; height: 48px; border-radius: 24px; background: #FFFFFF; color: #0B7F86; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg></span>
+        <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 20px; font-weight: 800">Undangan terkirim ke 5 peserta</span><span style="font-size: 16px">{{savedNote}}</span></span>
+        <a href="DRapat.dc.html" style="height: 46px; padding: 0 18px; border-radius: 14px; background: #FFFFFF; color: #0A4E57; font-size: 16px; font-weight: 800; display: inline-flex; align-items: center">Ke daftar rapat</a>
+      </section>
+    </sc-if>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 999 1 640px; min-width: 0; background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 28px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 22px">
+        <label style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 16px; font-weight: 700">Judul rapat</span><input type="text" value="Review vendor logistik" readonly="" style="height: 52px; padding: 0 16px; border: 1px solid #C3CEDA; border-radius: 14px; font: inherit; font-size: 18px; font-weight: 600; color: #0B1A2B"></label>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+          <label style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 16px; font-weight: 700">Tanggal</span><input type="text" value="Sen, 5 Okt 2026" readonly="" style="height: 50px; padding: 0 14px; border: 1px solid #C3CEDA; border-radius: 14px; font: inherit; font-size: 17px; color: #0B1A2B"></label>
+          <label style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 16px; font-weight: 700">Mulai</span><input type="text" value="13.30" readonly="" style="height: 50px; padding: 0 14px; border: 1px solid #C3CEDA; border-radius: 14px; font: inherit; font-size: 17px; color: #0B1A2B"></label>
+          <label style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 16px; font-weight: 700">Durasi</span><select style="height: 50px; padding: 0 12px; border: 1px solid #C3CEDA; border-radius: 14px; font: inherit; font-size: 17px; color: #0B1A2B; background: #FFFFFF"><option>60 menit</option><option>30 menit</option></select></label>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span id="pf-label" style="font-size: 16px; font-weight: 700">Tempat rapat</span>
+          <div role="radiogroup" aria-labelledby="pf-label" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+            <sc-for list="{{platforms}}" as="p" hint-placeholder-count="3">
+              <button type="button" role="radio" aria-checked="{{p.sel}}" onClick="{{p.pick}}" style="min-height: 76px; padding: 12px 16px; border-radius: 16px; border: {{p.border}}; background: {{p.bg}}; color: {{p.fg}}; font: inherit; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 4px; box-shadow: {{p.shadow}}"><span style="font-size: 17px; font-weight: 800">{{p.label}}</span><span style="font-size: 14px; font-weight: 500">{{p.hint}}</span></button>
+            </sc-for>
+          </div>
+          <sc-if value="{{pf.isMeet}}" hint-placeholder-val="{{true}}">
+            <span style="display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 14px; background: #E8FBF8; color: #0A4E57; font-size: 16px; font-weight: 600">Tautan Google Meet dibuat otomatis lewat Google Calendar saat disimpan.</span>
+          </sc-if>
+          <sc-if value="{{pf.isZoom}}" hint-placeholder-val="{{false}}">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px">
+              <label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 15px; font-weight: 700">Tautan Zoom</span><input type="url" value="https://zoom.us/j/[nomor-rapat]" readonly="" style="height: 50px; padding: 0 14px; border: 1px solid #C3CEDA; border-radius: 14px; font-family: 'JetBrains Mono', monospace; font-size: 15px; color: #0B1A2B"></label>
+              <label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 15px; font-weight: 700">Kode sandi</span><input type="text" value="[kode]" readonly="" style="height: 50px; padding: 0 14px; border: 1px solid #C3CEDA; border-radius: 14px; font: inherit; font-size: 16px; color: #0B1A2B"></label>
+            </div>
+            <span style="font-size: 14px; color: #46576B">Tautan dicek formatnya. Kode sandi hanya terlihat oleh peserta.</span>
+          </sc-if>
+          <sc-if value="{{pf.isRoom}}" hint-placeholder-val="{{false}}">
+            <label style="display: flex; flex-direction: column; gap: 6px"><span style="font-size: 15px; font-weight: 700">Ruangan</span><select style="height: 50px; padding: 0 12px; border: 1px solid #C3CEDA; border-radius: 14px; font: inherit; font-size: 17px; color: #0B1A2B; background: #FFFFFF"><option>Ruang Rapat Lt. 3 · kapasitas 10</option></select></label>
+          </sc-if>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 16px; font-weight: 700">Peserta</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; border: 1px solid #C3CEDA; border-radius: 14px">
+            <sc-for list="{{guests}}" as="g" hint-placeholder-count="5">
+              <span style="height: 38px; padding: 0 12px 0 5px; border-radius: 19px; background: {{g.bg}}; color: {{g.fg}}; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px"><span style="width: 28px; height: 28px; border-radius: 14px; background: #FFFFFF; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; color: #0B1A2B">{{g.init}}</span>{{g.name}}</span>
+            </sc-for>
+            <span style="height: 38px; padding: 0 8px; display: inline-flex; align-items: center; font-size: 15px; color: #8495A8">Tambah nama atau email…</span>
+          </div>
+        </div>
+
+        <label style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 16px; font-weight: 700">Agenda</span><textarea rows="3" readonly="" style="padding: 14px 16px; border: 1px solid #C3CEDA; border-radius: 14px; font: inherit; font-size: 17px; line-height: 26px; color: #0B1A2B; resize: none">1. Evaluasi ketepatan pengiriman September
+2. Penawaran harga kuartal IV
+3. SLA klaim barang rusak</textarea></label>
+
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+          <label style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 16px; font-weight: 700">Notulis</span><select style="height: 50px; padding: 0 12px; border: 1px solid #C3CEDA; border-radius: 14px; font: inherit; font-size: 17px; color: #0B1A2B; background: #FFFFFF"><option>Fitri Handayani</option><option>Saya</option></select></label>
+          <label style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 16px; font-weight: 700">Workspace</span><select style="height: 50px; padding: 0 12px; border: 1px solid #C3CEDA; border-radius: 14px; font: inherit; font-size: 17px; color: #0B1A2B; background: #FFFFFF"><option>Divisi Operasional</option></select></label>
+        </div>
+      </div>
+
+      <aside style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06); display: flex; flex-direction: column; gap: 12px">
+          <h2 style="margin: 0; font-size: 21px; font-weight: 700">Pengingat</h2>
+          <sc-for list="{{reminders}}" as="r" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; border-top: 1px solid #EEF2F7">
+              <span style="font-size: 16px; color: {{r.color}}">{{r.label}}</span>
+              <button type="button" role="switch" aria-checked="{{r.aria}}" aria-label="{{r.label}}" onClick="{{r.toggle}}" disabled="{{r.disabled}}" style="width: 48px; height: 30px; padding: 3px; border: 0; border-radius: 15px; background: {{r.track}}; cursor: pointer; display: flex; justify-content: {{r.justify}}"><span style="width: 24px; height: 24px; border-radius: 12px; background: #FFFFFF; box-shadow: 0 1px 4px rgba(11,26,43,0.25)"></span></button>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; gap: 12px; padding: 16px 18px; border-radius: 20px; color: #FFFFFF; background: linear-gradient(135deg, #C2410C 0%, #BE185D 100%)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"></path><path d="M12 7v5l3 2"></path></svg>
+          <span style="font-size: 16px; line-height: 24px; font-weight: 600">Bayu Saputra ada rapat lain 13.00–14.00. Usulan waktu kosong semua peserta: 14.30.</span>
+        </div>
+        <button type="button" onClick="{{save}}" style="height: 58px; border: 0; border-radius: 16px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: 0 12px 28px rgba(30,95,214,0.32)">Simpan &amp; kirim undangan</button>
+        <span style="font-size: 14px; line-height: 20px; color: #46576B; text-align: center">Undangan masuk ke Google Calendar peserta dan Inbox RuangKerja.</span>
+      </aside>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" active="rapat" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1240}}'>
+var PF = [['Google Meet', 'tautan dibuat otomatis'], ['Zoom', 'tempel tautan rapat'], ['Tatap muka', 'pilih ruangan']];
+var RM = [['30 menit sebelum', false], ['15 menit sebelum', true], ['5 menit sebelum', true], ['WhatsApp · Fase 2', false]];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { pf: 'Zoom', rm: { 1: true, 2: true }, saved: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var pf = st.pf || 'Zoom';
+    var rm = st.rm || {};
+    return {
+      saved: !!st.saved,
+      savedNote: pf === 'Zoom' ? 'Tautan Zoom ikut di undangan dan pengingat.' : (pf === 'Google Meet' ? 'Tautan Google Meet dibuat dan dibagikan.' : 'Ruang Rapat Lt. 3 dipesan.'),
+      save: function () { self.setState({ saved: true }); },
+      platforms: PF.map(function (p) { var on = p[0] === pf; return { label: p[0], hint: p[1], sel: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : '#FFFFFF', fg: on ? '#FFFFFF' : '#0B1A2B', border: on ? '0' : '1px solid #DDE4EC', shadow: on ? '0 10px 24px rgba(30,95,214,0.28)' : 'none', pick: function () { self.setState({ pf: p[0], saved: false }); } }; }),
+      pf: { isMeet: pf === 'Google Meet', isZoom: pf === 'Zoom', isRoom: pf === 'Tatap muka' },
+      guests: [['DP', 'Dimas (Anda)', '#E8FBF8', '#0A4E57'], ['BS', 'Bayu Saputra', '#FFF1DC', '#7A4600'], ['RA', 'Rizky Aditya', '#E8FBF8', '#0A4E57'], ['FH', 'Fitri Handayani', '#E8FBF8', '#0A4E57'], ['EX', 'logistik@[vendor].co.id', '#EEF2F7', '#46576B']].map(function (g) { return { init: g[0], name: g[1], bg: g[2], fg: g[3] }; }),
+      reminders: RM.map(function (r, i) {
+        var dis = i === 3; var v = !dis && !!rm[i];
+        return { label: r[0], color: dis ? '#8495A8' : '#0B1A2B', aria: v ? 'true' : 'false', disabled: dis, track: v ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : (dis ? '#EEF2F7' : '#C3CEDA'), justify: v ? 'flex-end' : 'flex-start', toggle: function () { if (dis) return; var n = Object.assign({}, rm); n[i] = !v; self.setState({ rm: n }); } };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

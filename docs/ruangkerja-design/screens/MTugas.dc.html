@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Tugas saya · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: radial-gradient(420px 220px at 0% 0%, rgba(20,184,166,0.20), transparent 70%), radial-gradient(420px 220px at 100% 0%, rgba(47,123,234,0.18), transparent 70%), #F3F6FA">
+  <div style="padding: 24px 16px 0; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <h1 style="margin: 0; font-size: 32px; line-height: 40px; font-weight: 800; letter-spacing: -0.025em">Tugas saya</h1>
+      <button type="button" aria-label="Cari tugas" style="width: 48px; height: 48px; border: 1px solid #DDE4EC; border-radius: 24px; background: #FFFFFF; color: #0B1A2B; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z"></path><path d="m20 20-3.5-3.5"></path></svg></button>
+    </div>
+    <div style="display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 0 16px">
+      <sc-for list="{{chips}}" as="c" hint-placeholder-count="4">
+        <button type="button" aria-pressed="{{c.sel}}" onClick="{{c.pick}}" style="flex-shrink: 0; height: 42px; padding: 0 16px; border-radius: 21px; border: {{c.border}}; background: {{c.bg}}; color: {{c.color}}; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">{{c.label}}</button>
+      </sc-for>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <sc-for list="{{rows}}" as="t" hint-placeholder-count="6">
+        <a href="#" style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 20px; background: #FFFFFF; border: 1px solid {{t.border}}; color: #0B1A2B">
+          <svg width="26" height="26" viewBox="0 0 20 20" aria-hidden="true" style="flex-shrink: 0"><circle cx="10" cy="10" r="7.5" fill="none" stroke="{{t.color}}" stroke-width="2"></circle><path d="{{t.fill}}" fill="{{t.color}}"></path></svg>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 17px; line-height: 23px; font-weight: 600">{{t.title}}</span>
+            <span style="display: flex; align-items: center; gap: 8px; font-size: 15px; color: #46576B"><span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600">{{t.id}}</span><span style="height: 24px; padding: 0 8px; border-radius: 7px; background: #EEF2F7; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center">{{t.label}}</span></span>
+          </span>
+          <span style="font-size: 15px; font-weight: 700; color: {{t.dueColor}}; white-space: nowrap">{{t.due}}</span>
+        </a>
+      </sc-for>
+    </div>
+  </div>
+  <button type="button" aria-label="Tugas baru" style="position: absolute; right: 18px; bottom: 112px; width: 60px; height: 60px; border: 0; border-radius: 20px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 30px rgba(30,95,214,0.40)"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></button>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" active="tugas" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var ALL = [
+  ['PLQ-15', 'Siaran pers peluncuran', 'Konten', 'Lewat 2 hr', 'late', 'review'],
+  ['MSG-23', 'Uji impor data stok batch 2', 'Data', 'Hari ini', 'today', 'doing'],
+  ['GDG-52', 'Tata letak rak baru gudang C', 'Gudang', 'Kam', 'week', 'todo'],
+  ['PLQ-25', 'Kontrak vendor percetakan materi acara', 'Legal', 'Jum', 'week', 'todo'],
+  ['MSG-27', 'Dokumentasi alur penerimaan barang', 'Data', '14 Okt', 'later', 'todo'],
+  ['GDG-49', 'Label ulang rak B', 'Gudang', 'Selesai', 'done', 'done']
+];
+var ST = { review: ['#1E5FD6', 'M10 5a5 5 0 1 1-5 5h5z'], doing: ['#B26B00', 'M10 5a5 5 0 0 1 0 10z'], todo: ['#46576B', ''], done: ['#0F7A55', 'M10 3.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13z'] };
+var DUE = { late: '#C42137', today: '#9A5800', week: '#46576B', later: '#46576B', done: '#0F7A55' };
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { f: 'Semua' };
+  }
+  renderVals() {
+    var self = this;
+    var f = (this.state && this.state.f) || 'Semua';
+    var filt = { 'Semua': function () { return true; }, 'Terlambat · 1': function (r) { return r[4] === 'late'; }, 'Hari ini': function (r) { return r[4] === 'today'; }, 'Minggu ini': function (r) { return r[4] === 'week' || r[4] === 'today'; } };
+    return {
+      chips: Object.keys(filt).map(function (l) {
+        var on = l === f;
+        return { label: l, sel: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : '#FFFFFF', color: on ? '#FFFFFF' : '#0B1A2B', border: on ? '0' : '1px solid #C3CEDA', pick: function () { self.setState({ f: l }); } };
+      }),
+      rows: ALL.filter(filt[f]).map(function (r) {
+        var s = ST[r[5]];
+        return { id: r[0], title: r[1], label: r[2], due: r[3], dueColor: DUE[r[4]], color: s[0], fill: s[1], border: r[4] === 'late' ? 'rgba(196,33,55,0.45)' : '#DDE4EC' };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

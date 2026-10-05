@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Ajukan pengajuan · staf · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}a:hover{color:#5AD6C8}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #070B14; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" malam="{{ true }}" dark="{{ true }}" crumbs="Pengajuan / Ajukan baru" initials="SW" person="Sari Wulandari" status="Masuk 07.52" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 40px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <section style="display: flex; flex-direction: column; gap: 8px">
+      <a href="SPengajuanMalam.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>Pengajuan saya</a>
+      <h1 style="margin: 0; font-size: 44px; line-height: 52px; font-weight: 800; letter-spacing: -0.03em">Ajukan baru</h1>
+    </section>
+
+    <sc-if value="{{sent}}" hint-placeholder-val="{{false}}">
+      <section style="display: flex; flex-wrap: wrap; align-items: center; gap: 18px; padding: 24px 26px; border-radius: 24px; color: #FFFFFF; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); box-shadow: 0 14px 32px rgba(30,95,214,0.30)">
+        <span style="width: 56px; height: 56px; border-radius: 28px; background: #0F1622; color: #5AD6C8; display: flex; align-items: center; justify-content: center"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg></span>
+        <span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 22px; font-weight: 800">Pengajuan terkirim · CUT-2026-10-0021</span><span style="font-size: 16px">Dimas Pratama mendapat notifikasi. Status bisa dipantau di Pengajuan saya.</span></span>
+        <a href="SPengajuanMalam.dc.html" style="height: 48px; padding: 0 20px; border-radius: 14px; background: #0F1622; color: #5AD6C8; font-size: 16px; font-weight: 800; display: inline-flex; align-items: center">Lihat status</a>
+      </section>
+    </sc-if>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 999 1 620px; min-width: 0; background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 28px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 24px">
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <span id="jenis-label" style="font-size: 16px; font-weight: 700">Jenis pengajuan</span>
+          <div role="radiogroup" aria-labelledby="jenis-label" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+            <sc-for list="{{types}}" as="t" hint-placeholder-count="6">
+              <button type="button" role="radio" aria-checked="{{t.sel}}" onClick="{{t.pick}}" style="min-height: 76px; padding: 12px 14px; border-radius: 16px; border: {{t.border}}; background: {{t.bg}}; color: {{t.color}}; font: inherit; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 4px; box-shadow: {{t.shadow}}">
+                <span style="font-size: 17px; font-weight: 700">{{t.label}}</span>
+                <span style="font-size: 14px; font-weight: 500; opacity: 0.92">{{t.hint}}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+          <label style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 16px; font-weight: 700">{{f.aLabel}}</span><input type="text" value="{{f.a}}" readonly="" style="height: 50px; padding: 0 16px; border: 1px solid #34465E; border-radius: 14px; font: inherit; font-size: 17px; color: #EAF1F8; background: #0F1622"></label>
+          <label style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 16px; font-weight: 700">{{f.bLabel}}</span><input type="text" value="{{f.b}}" readonly="" style="height: 50px; padding: 0 16px; border: 1px solid #34465E; border-radius: 14px; font: inherit; font-size: 17px; color: #EAF1F8; background: #0F1622"></label>
+        </div>
+
+        <sc-if value="{{f.hasHalf}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; align-items: center; gap: 12px; font-size: 16px">
+            <span style="width: 24px; height: 24px; border-radius: 7px; border: 2px solid #34465E; box-sizing: border-box"></span>Setengah hari
+          </div>
+        </sc-if>
+
+        <label style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 16px; font-weight: 700">Alasan</span><textarea rows="3" value="{{f.reason}}" readonly="" placeholder="Tulis alasan singkat" style="padding: 14px 16px; border: 1px solid #34465E; border-radius: 14px; font: inherit; font-size: 17px; line-height: 26px; color: #EAF1F8; resize: none"></textarea></label>
+
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+          <label style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 16px; font-weight: 700">Serahkan tugas ke (opsional)</span><select style="height: 50px; padding: 0 14px; border: 1px solid #34465E; border-radius: 14px; font: inherit; font-size: 17px; color: #EAF1F8; background: #0F1622"><option>Yoga Permana</option><option>Maya Lestari</option></select></label>
+          <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 16px; font-weight: 700">Lampiran</span><button type="button" style="height: 50px; border: 2px dashed #34465E; border-radius: 14px; background: #070B14; color: #A6B4C6; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">{{f.attach}}</button></div>
+        </div>
+      </div>
+
+      <aside style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 24px; box-shadow: 0 2px 6px rgba(0,0,0,0.15), 0 20px 48px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 16px">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700">Ringkasan</h2>
+          <sc-for list="{{summary}}" as="s" hint-placeholder-count="4">
+            <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 16px; padding-bottom: 12px; border-bottom: 1px solid #172131"><span style="color: #A6B4C6">{{s.k}}</span><b style="text-align: right">{{s.v}}</b></div>
+          </sc-for>
+          <sc-if value="{{showSaldo}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <span style="display: flex; justify-content: space-between; font-size: 15px; color: #A6B4C6"><span>Saldo cuti</span><span><b style="color: #EAF1F8">7</b> → <b style="color: #5AD6C8">4 hari</b></span></span>
+              <div aria-hidden="true" style="height: 12px; border-radius: 6px; background: #172131; display: flex; overflow: hidden; gap: 2px"><div style="flex: 4; background: linear-gradient(90deg, #14B8A6, #2F7BEA)"></div><div style="flex: 2; background: #E08A00"></div><div style="flex: 1; background: #3A70EC"></div><div style="flex: 5; background: #172131"></div></div>
+              <span style="font-size: 14px; color: #A6B4C6">4 tersisa · 2 tertunda (26–27 Okt) · 1 pengajuan ini</span>
+            </div>
+          </sc-if>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <span style="font-size: 15px; font-weight: 700; color: #A6B4C6">Akan disetujui oleh</span>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+              <span style="height: 36px; padding: 0 12px; border-radius: 18px; background: #14223F; color: #A9C2FF; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center">1 · Dimas Pratama</span>
+              <span style="width: 18px; height: 2px; background: #34465E"></span>
+              <span style="height: 36px; padding: 0 12px; border-radius: 18px; background: #172131; color: #A6B4C6; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center">2 · HR</span>
+            </div>
+          </div>
+        </div>
+        <sc-if value="{{f.hasWarn}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; gap: 12px; padding: 16px 18px; border-radius: 20px; color: #FFFFFF; background: linear-gradient(135deg, #C2410C 0%, #BE185D 100%)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"></path><path d="M12 8v5"></path><path d="M12 16h.01"></path></svg>
+            <span style="font-size: 16px; line-height: 24px; font-weight: 600">{{f.warn}}</span>
+          </div>
+        </sc-if>
+        <button type="button" onClick="{{submit}}" style="height: 58px; border: 0; border-radius: 16px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: 0 12px 28px rgba(30,95,214,0.32)">Kirim pengajuan</button>
+        <button type="button" style="height: 48px; border: 1px solid #34465E; border-radius: 14px; background: #0F1622; color: #EAF1F8; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Simpan sebagai draf</button>
+      </aside>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" malam="{{ true }}" dark="{{ true }}" active="pengajuan" role="staf" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1400}}'>
+var TYPES = {
+  'Cuti': { hint: 'sisa 7 hari', aLabel: 'Tanggal mulai', a: 'Jum, 16 Okt 2026', bLabel: 'Tanggal selesai', b: 'Jum, 16 Okt 2026', half: true, reason: 'Urusan keluarga di luar kota.', attach: 'Tidak perlu lampiran', saldo: true,
+    sum: [['Jenis', 'Cuti tahunan'], ['Tanggal', 'Jum, 16 Okt'], ['Dihitung', '1 hari kerja']],
+    warn: '16 Okt adalah milestone “Uji coba data stok” proyek Migrasi sistem gudang. Anda PIC proyek ini; tunjuk pengganti atau geser tanggal.' },
+  'Izin': { hint: 'per jam atau hari', aLabel: 'Tanggal', a: 'Rab, 7 Okt 2026', bLabel: 'Jam', b: '13.00 – 15.00', half: false, reason: 'Mengurus dokumen di kelurahan.', attach: 'Opsional', saldo: false,
+    sum: [['Jenis', 'Izin'], ['Tanggal', 'Rab, 7 Okt'], ['Durasi', '2 jam']], warn: '' },
+  'Sakit': { hint: 'surat dokter > 1 hari', aLabel: 'Tanggal mulai', a: 'Sen, 5 Okt 2026', bLabel: 'Tanggal selesai', b: 'Sen, 5 Okt 2026', half: false, reason: '', attach: 'Unggah foto surat dokter', saldo: false,
+    sum: [['Jenis', 'Sakit'], ['Tanggal', 'Sen, 5 Okt'], ['Dihitung', '1 hari kerja']], warn: '' },
+  'Lembur': { hint: 'atasan lalu HR', aLabel: 'Tanggal', a: 'Sab, 10 Okt 2026', bLabel: 'Jam', b: '09.00 – 12.00', half: false, reason: 'Uji coba impor batch 3 di luar jam sibuk.', attach: 'Opsional', saldo: false,
+    sum: [['Jenis', 'Lembur'], ['Tanggal', 'Sab, 10 Okt'], ['Durasi', '3 jam'], ['Lembur Oktober', '3 dari 40 jam']], warn: '' },
+  'Koreksi absensi': { hint: 'lupa check-in/out', aLabel: 'Tanggal', a: 'Jum, 2 Okt 2026', bLabel: 'Jam yang benar', b: 'Pulang 17.05', half: false, reason: 'Lupa check-out setelah rapat.', attach: 'Opsional', saldo: false,
+    sum: [['Jenis', 'Koreksi absensi'], ['Tanggal', 'Jum, 2 Okt'], ['Tercatat', 'Masuk 07.50 · pulang —']], warn: '' },
+  'Dinas luar': { hint: 'tanpa geofence', aLabel: 'Tanggal mulai', a: 'Kam, 8 Okt 2026', bLabel: 'Tanggal selesai', b: 'Kam, 8 Okt 2026', half: false, reason: 'Kunjungan gudang mitra di Cikarang.', attach: 'Surat tugas (opsional)', saldo: false,
+    sum: [['Jenis', 'Dinas luar'], ['Tanggal', 'Kam, 8 Okt'], ['Lokasi', 'Cikarang']], warn: '' }
+};
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { t: 'Cuti', sent: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var t = st.t || 'Cuti';
+    var cfg = TYPES[t];
+    return {
+      sent: !!st.sent,
+      submit: function () { self.setState({ sent: true }); },
+      types: Object.keys(TYPES).map(function (k) {
+        var on = k === t;
+        return { label: k, hint: TYPES[k].hint, sel: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : '#0F1622', color: on ? '#FFFFFF' : '#EAF1F8', border: on ? '0' : '1px solid #233247', shadow: on ? '0 10px 24px rgba(30,95,214,0.28)' : 'none', pick: function () { self.setState({ t: k, sent: false }); } };
+      }),
+      f: { aLabel: cfg.aLabel, a: cfg.a, bLabel: cfg.bLabel, b: cfg.b, hasHalf: cfg.half, reason: cfg.reason, attach: cfg.attach, warn: cfg.warn, hasWarn: !!cfg.warn },
+      summary: cfg.sum.map(function (s) { return { k: s[0], v: s[1] }; }),
+      showSaldo: cfg.saldo
+    };
+  }
+}
+</script>
+</body>
+</html>

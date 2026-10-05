@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Fondasi · Tipografi</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;family=Plus+Jakarta+Sans:wght@400&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1560px; box-sizing: border-box; padding: 64px 72px; display: flex; flex-direction: column; gap: 40px; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: radial-gradient(900px 420px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(900px 420px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #F3F6FA">
+  <header style="display: flex; flex-direction: column; gap: 12px">
+    <span style="font-size: 15px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #09656E">Fondasi desain · 02</span>
+    <h1 style="margin: 0; font-size: 52px; line-height: 60px; font-weight: 800; letter-spacing: -0.03em">Tipografi</h1>
+    <p style="margin: 0; max-width: 820px; font-size: 19px; line-height: 30px; color: #46576B">Figtree: huruf lebar, tinggi-x besar, angka jelas. Teks dasar naik dari 13px menjadi 16px; tidak ada teks yang harus dibaca di bawah 14px.</p>
+  </header>
+
+  <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 24px; align-items: start">
+    <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 8px 28px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+      <sc-for list="{{scale}}" as="t" hint-placeholder-count="11">
+        <div style="display: grid; grid-template-columns: 150px 1fr; gap: 20px; align-items: baseline; padding: 18px 0; border-bottom: {{t.sep}}">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: #09656E">{{t.token}}</span>
+            <span style="font-size: 14px; color: #46576B">{{t.spec}}</span>
+          </div>
+          <span style="font-size: {{t.size}}px; line-height: {{t.lh}}px; font-weight: {{t.w}}; letter-spacing: {{t.ls}}; text-transform: {{t.tt}}; color: {{t.color}}">{{t.sample}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <div style="display: flex; flex-direction: column; gap: 24px">
+      <section style="border-radius: 24px; padding: 28px; color: #FFFFFF; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); box-shadow: 0 12px 32px rgba(30,95,214,0.28); display: flex; flex-direction: column; gap: 10px">
+        <span style="font-size: 15px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase">Huruf utama</span>
+        <span style="font-size: 72px; line-height: 76px; font-weight: 800; letter-spacing: -0.04em">Aa Gg 08</span>
+        <span style="font-size: 26px; line-height: 32px; font-weight: 700">Figtree</span>
+        <span style="font-size: 16px; line-height: 24px">Regular 400 · Medium 500 · Semibold 600 · Bold 700 · Extrabold 800 (judul besar saja)</span>
+      </section>
+
+      <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px 28px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+        <span style="font-size: 20px; font-weight: 700">Angka &amp; kode</span>
+        <div style="display: flex; align-items: baseline; gap: 16px">
+          <span style="font-size: 44px; line-height: 52px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums">1.250</span>
+          <span style="font-size: 44px; line-height: 52px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums">92%</span>
+          <span style="font-size: 44px; line-height: 52px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums">08.05</span>
+        </div>
+        <span style="font-size: 15px; line-height: 22px; color: #46576B">Angka tabular (tnum) di tabel, KPI, dan jam supaya kolom rata.</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; padding: 4px 10px; border-radius: 8px; background: #EEF2F7">PLQ-18</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; padding: 4px 10px; border-radius: 8px; background: #EEF2F7">CUT-2026-10-0012</span>
+        </div>
+        <span style="font-size: 15px; line-height: 22px; color: #46576B">JetBrains Mono 15px untuk ID tugas dan nomor pengajuan.</span>
+      </section>
+
+      <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px 28px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+        <span style="font-size: 20px; font-weight: 700">Sebelum dan sesudah</span>
+        <div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 14px; background: #EEF2F7">
+          <span style="font-size: 13px; font-weight: 700; color: #46576B">Lama · 13px Plus Jakarta Sans</span>
+          <span style="font-size: 13px; line-height: 20px; font-family: 'Plus Jakarta Sans', system-ui, sans-serif">Finalisasi anggaran peluncuran · tenggat besok</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 14px; background: #E8FBF8">
+          <span style="font-size: 14px; font-weight: 700; color: #09656E">Baru · 16px Figtree</span>
+          <span style="font-size: 16px; line-height: 24px">Finalisasi anggaran peluncuran · tenggat besok</span>
+        </div>
+      </section>
+
+      <section style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 24px; padding: 24px 28px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px rgba(11,26,43,0.06), 0 8px 24px rgba(11,26,43,0.06)">
+        <span style="font-size: 20px; font-weight: 700">Ponsel</span>
+        <span style="font-size: 16px; line-height: 24px; color: #46576B">Judul besar 32/40 · judul bagian 22/28 · isi 17/26 · meta 15/22 · label tab 12/16 semibold. Input selalu 17px agar iOS tidak memperbesar layar.</span>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1560}}'>
+var SEP = '1px solid #EEF2F7';
+var ROWS = [
+  ['display', '44 / 52 · 800', 44, 52, 800, '-0.03em', 'none', '#0B1A2B', 'Selamat pagi, Dimas'],
+  ['h1', '34 / 42 · 700', 34, 42, 700, '-0.02em', 'none', '#0B1A2B', 'Portofolio proyek'],
+  ['h2', '26 / 34 · 700', 26, 34, 700, '-0.015em', 'none', '#0B1A2B', 'Menunggu persetujuan'],
+  ['h3', '21 / 28 · 700', 21, 28, 700, '-0.01em', 'none', '#0B1A2B', 'Tren penyelesaian 8 minggu'],
+  ['title', '18 / 26 · 600', 18, 26, 600, '0', 'none', '#0B1A2B', 'Finalisasi anggaran peluncuran'],
+  ['body-lg', '18 / 28 · 400', 18, 28, 400, '0', 'none', '#0B1A2B', 'Teks pengantar dan isi deskripsi tugas.'],
+  ['body', '16 / 24 · 400', 16, 24, 400, '0', 'none', '#0B1A2B', 'Teks dasar antarmuka: daftar, tabel, formulir, komentar.'],
+  ['label', '15 / 22 · 600', 15, 22, 600, '0', 'none', '#0B1A2B', 'Setujui · Ajukan cuti · Tugas baru'],
+  ['meta', '14 / 20 · 500', 14, 20, 500, '0', 'none', '#46576B', 'Sari Wulandari · 2 jam lalu · PLQ-18'],
+  ['overline', '13 / 18 · 700 · kapital', 13, 18, 700, '0.06em', 'uppercase', '#46576B', 'Label seksi'],
+  ['kpi', '40 / 48 · 700 · tnum', 40, 48, 700, '-0.02em', 'none', '#0B1A2B', '78% · 12 / 14']
+];
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      scale: ROWS.map(function (r, i) {
+        return { token: r[0], spec: r[1], size: r[2], lh: r[3], w: r[4], ls: r[5], tt: r[6], color: r[7], sample: r[8], sep: i < ROWS.length - 1 ? SEP : '0' };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

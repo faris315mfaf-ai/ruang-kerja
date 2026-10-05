@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Pusat notifikasi · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F3F6FA}
+a{color:#09656E;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #0B1A2B; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #F3F6FA">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <h1 style="margin: 0; font-size: 30px; line-height: 38px; font-weight: 800; letter-spacing: -0.025em">Notifikasi</h1>
+      <button type="button" onClick="{{readAll}}" style="height: 40px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: #09656E; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">{{readLabel}}</button>
+    </div>
+    <div role="tablist" aria-label="Jenis" style="display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 0 16px">
+      <sc-for list="{{chips}}" as="c" hint-placeholder-count="5">
+        <button type="button" role="tab" aria-selected="{{c.sel}}" onClick="{{c.pick}}" style="flex-shrink: 0; height: 40px; padding: 0 14px; border-radius: 20px; border: {{c.border}}; background: {{c.bg}}; color: {{c.fg}}; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">{{c.label}}</button>
+      </sc-for>
+    </div>
+    <span style="font-size: 14px; font-weight: 800; color: #46576B; padding-top: 4px">HARI INI</span>
+    <div style="background: #FFFFFF; border: 1px solid #DDE4EC; border-radius: 22px; overflow: hidden">
+      <sc-for list="{{items}}" as="n" hint-placeholder-count="6">
+        <div style="display: flex; gap: 12px; padding: 14px 14px 14px 12px; border-top: {{n.sep}}; background: {{n.bg}}">
+          <span style="width: 8px; flex-shrink: 0; display: flex; justify-content: center; padding-top: 16px"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{n.dot}}"></span></span>
+          <span style="width: 40px; height: 40px; border-radius: 12px; background: {{n.iBg}}; color: {{n.iFg}}; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{n.icon}}"></path></svg></span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+            <span style="display: flex; justify-content: space-between; gap: 8px"><span style="font-size: 15px; font-weight: 800">{{n.title}}</span><span style="font-size: 13px; font-weight: 600; color: #46576B; white-space: nowrap">{{n.time}}</span></span>
+            <span style="font-size: 14px; line-height: 20px; color: #46576B">{{n.body}}</span>
+            <sc-if value="{{n.hasAct}}" hint-placeholder-val="{{false}}">
+              <span style="display: flex; gap: 8px; padding-top: 6px"><a href="{{n.href}}" style="height: 36px; padding: 0 14px; border-radius: 10px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font-size: 14px; font-weight: 800; display: inline-flex; align-items: center">{{n.act}}</a><span style="height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid #C3CEDA; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center">{{n.act2}}</span></span>
+            </sc-if>
+          </span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" active="inbox" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var IC = {
+  rapat: ['m16 13 5.2 3.5a.5.5 0 0 0 .8-.4V7.9a.5.5 0 0 0-.8-.4L16 11M4 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z', '#E8FBF8', '#09656E'],
+  setuju: ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM8.5 12.5l2.5 2.5 4.5-5', '#FFF1DC', '#9A5800'],
+  tugas: ['m9 11 3 3 8-8M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11', '#E6EEFE', '#1A4CB0'],
+  bug: ['M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z', '#FDE7EA', '#C42137'],
+  absen: ['M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z', '#EEF2F7', '#46576B']
+};
+var N = [
+  ['rapat', 'Review arsitektur KMB · 14.00', 'Google Meet · Maya dan 4 lainnya diundang', '09.40', true, 'Gabung nanti', 'Tunda', 'MRapatDetail.dc.html'],
+  ['bug', 'Bug kritis di produksi', 'SIM-388 antrean farmasi · dilaporkan Lina dari RS Harapan Sehat', '08.58', true, 'Buka bug', 'Tugaskan', 'PProgBug.dc.html'],
+  ['setuju', '3 pengajuan lembur', 'Yoga, Fitri, Rizky · Sprint 6 KMB · total 18 jam', '08.40', false],
+  ['tugas', 'PR #412 butuh review Anda', 'Fitri · modul simpanan anggota · 2 hari menunggu', '08.20', false],
+  ['absen', 'Check-in tercatat 07.41', 'Kantor pusat · dalam radius', '07.41', false],
+  ['rapat', 'Notulen stand-up sudah final', 'Notulis Fitri · 3 tindak lanjut untuk tim Anda', '09.35', false]
+];
+var CH = [['semua', 'Semua'], ['rapat', 'Rapat'], ['setuju', 'Persetujuan'], ['tugas', 'Tugas'], ['bug', 'Bug'], ['absen', 'Absensi']];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { f: 'semua', read: false };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var f = st.f || 'semua';
+    var list = N.filter(function (n) { return f === 'semua' || n[0] === f; });
+    return {
+      readLabel: st.read ? 'Sudah dibaca' : 'Tandai dibaca',
+      readAll: function () { self.setState({ read: true }); },
+      chips: CH.map(function (c) { var on = c[0] === f; return { label: c[1], sel: on ? 'true' : 'false', bg: on ? '#0B1A2B' : '#FFFFFF', fg: on ? '#FFFFFF' : '#0B1A2B', border: on ? '0' : '1px solid #DDE4EC', pick: function () { self.setState({ f: c[0] }); } }; }),
+      items: list.map(function (n, i) { var ic = IC[n[0]]; var unread = !st.read && i < 3 && f === 'semua'; return { title: n[1], body: n[2], time: n[3], hasAct: !!n[4], act: n[5] || '', act2: n[6] || '', href: n[7] || '#', icon: ic[0], iBg: ic[1], iFg: ic[2], dot: unread ? '#1E5FD6' : 'transparent', bg: unread ? '#F5F9FF' : '#FFFFFF', sep: i ? '1px solid #EEF2F7' : '0' }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

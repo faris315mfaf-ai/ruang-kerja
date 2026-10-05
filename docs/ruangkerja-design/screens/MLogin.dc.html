@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Masuk biometrik · ponsel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #FFFFFF; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: radial-gradient(420px 360px at 0% 0%, rgba(20,184,166,0.55), transparent 70%), radial-gradient(420px 360px at 100% 30%, rgba(47,123,234,0.55), transparent 70%), radial-gradient(360px 300px at 50% 100%, rgba(109,74,224,0.45), transparent 70%), #070B14">
+  <div style="position: absolute; left: 24px; right: 24px; top: 96px; display: flex; flex-direction: column; gap: 14px">
+    <span style="width: 64px; height: 64px; border-radius: 20px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); font-size: 22px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 30px rgba(47,123,234,0.45)">RK</span>
+    <span style="font-size: 15px; font-weight: 700; color: #A6B4C6">RuangKerja · SPKD</span>
+    <span style="font-size: 34px; line-height: 42px; font-weight: 800; letter-spacing: -0.02em">Selamat datang kembali, Dimas</span>
+    <span style="font-size: 17px; line-height: 26px; color: #C9D4E2">Perangkat ini sudah terdaftar. Masuk tanpa kata sandi.</span>
+  </div>
+  <div style="position: absolute; left: 24px; right: 24px; bottom: 40px; display: flex; flex-direction: column; align-items: center; gap: 18px">
+    <button type="button" onClick="{{scan}}" aria-label="Masuk dengan sidik jari" style="width: 112px; height: 112px; border-radius: 56px; border: 0; cursor: pointer; background: {{s.ring}}; box-shadow: {{s.glow}}; display: flex; align-items: center; justify-content: center; padding: 0">
+      <span style="width: 96px; height: 96px; border-radius: 48px; background: #0F1622; color: {{s.icon}}; display: flex; align-items: center; justify-content: center">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 11c0 3.5-1 6.5-3 9"></path><path d="M8 4.8A8 8 0 0 1 20 12c0 1.5-.2 3-.6 4.4"></path><path d="M4 16a12 12 0 0 1-.5-4A8 8 0 0 1 5 7.3"></path><path d="M9 12a3 3 0 0 1 6 0c0 2.7-.6 5.3-1.8 7.6"></path><path d="M16.5 20c.4-.8.7-1.6 1-2.4"></path></svg>
+      </span>
+    </button>
+    <span style="font-size: 18px; font-weight: 800; text-align: center">{{s.label}}</span>
+    <span style="font-size: 15px; color: #A6B4C6; text-align: center">{{s.sub}}</span>
+    <div style="width: 100%; height: 1px; background: rgba(255,255,255,0.14); margin: 6px 0"></div>
+    <button type="button" style="width: 100%; height: 54px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.24); background: rgba(255,255,255,0.06); color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">Masuk dengan email & kata sandi</button>
+    <span style="font-size: 13px; color: #A6B4C6; text-align: center">Sesi berakhir otomatis setelah 30 hari tidak aktif</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var S = [
+  { label: 'Sentuh sensor untuk masuk', sub: 'atau gunakan pengenalan wajah', ring: 'linear-gradient(135deg, #2DBFB1 0%, #5B8CF6 100%)', glow: '0 0 0 10px rgba(91,140,246,0.18), 0 16px 40px rgba(91,140,246,0.45)', icon: '#5AD6C8' },
+  { label: 'Memverifikasi…', sub: 'tahan jari sebentar', ring: 'linear-gradient(135deg, #5B8CF6 0%, #6D4AE0 100%)', glow: '0 0 0 18px rgba(109,74,224,0.22), 0 16px 40px rgba(109,74,224,0.5)', icon: '#A9B8FF' },
+  { label: 'Berhasil · membuka beranda', sub: 'Programming · Masuk 07.41', ring: 'linear-gradient(135deg, #14B8A6 0%, #0F7A55 100%)', glow: '0 0 0 10px rgba(20,184,166,0.25), 0 16px 40px rgba(20,184,166,0.45)', icon: '#5AD6C8' }
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { step: 0 };
+  }
+  renderVals() {
+    var self = this;
+    var st = (this.state && this.state.step) || 0;
+    return { s: S[st], scan: function () { self.setState({ step: st >= 2 ? 0 : st + 1 }); } };
+  }
+}
+</script>
+</body>
+</html>

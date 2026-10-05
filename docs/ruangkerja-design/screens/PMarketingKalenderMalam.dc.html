@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Branding & Marketing · kalender konten · ponsel · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: radial-gradient(420px 220px at 0% 0%, rgba(194,65,12,0.14), transparent 70%), radial-gradient(420px 220px at 100% 0%, rgba(190,24,93,0.12), transparent 70%), #070B14">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <span style="display: flex; flex-direction: column"><span style="font-size: 30px; line-height: 38px; font-weight: 800; letter-spacing: -0.025em">Kalender konten</span><span style="font-size: 14px; color: #A6B4C6">Minggu 41 · 12 konten terjadwal</span></span>
+      <a href="MQuickAddMalam.dc.html" aria-label="Konten baru" style="width: 48px; height: 48px; border-radius: 24px; background: linear-gradient(135deg, #C2410C 0%, #BE185D 100%); color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
+    </div>
+    <div role="tablist" aria-label="Hari" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px">
+      <sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+        <button type="button" role="tab" aria-selected="{{d.sel}}" onClick="{{d.pick}}" style="height: 70px; border-radius: 14px; border: {{d.border}}; background: {{d.bg}}; color: {{d.fg}}; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0"><span style="font-size: 12px; font-weight: 700">{{d.dow}}</span><span style="font-size: 19px; font-weight: 800">{{d.n}}</span><span style="font-size: 11px; font-weight: 800; opacity: 0.85">{{d.c}}</span></button>
+      </sc-for>
+    </div>
+    <sc-for list="{{items}}" as="x" hint-placeholder-count="3">
+      <div style="background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 14px; display: flex; gap: 12px">
+        <span style="width: 54px; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 17px; font-weight: 800">{{x.time}}</span><span style="height: 22px; padding: 0 6px; border-radius: 6px; background: {{x.cBg}}; color: {{x.cFg}}; font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center">{{x.ch}}</span></span>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 16px; font-weight: 800">{{x.t}}</span><span style="font-size: 13px; color: #A6B4C6">{{x.m}}</span><span style="align-self: flex-start; height: 24px; padding: 0 8px; border-radius: 12px; background: {{x.sBg}}; color: {{x.sFg}}; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center">{{x.s}}</span></span>
+      </div>
+    </sc-for>
+    <sc-if value="{{empty}}" hint-placeholder-val="{{false}}">
+      <div style="border-radius: 20px; padding: 22px; background: #0F1622; border: 1px dashed #34465E; text-align: center; font-size: 15px; color: #A6B4C6">Akhir pekan dikosongkan. Jadwalkan ulang jika perlu.</div>
+    </sc-if>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 110px"><dc-import name="TabBar" malam="{{ true }}" dark="{{ true }}" active="tugas" hint-size="100%,110px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var CH = { LinkedIn: ['#14223F', '#A9C2FF'], Instagram: ['#3A1430', '#F9A8D4'], Blog: ['#0E2A2C', '#5AD6C8'], Video: ['#2E2210', '#F6B95C'] };
+var SS = { Terbit: ['#0E2A20', '#4ADE9B'], Terjadwal: ['#14223F', '#A9C2FF'], Review: ['#2E2210', '#F6B95C'], Draf: ['#172131', '#A6B4C6'] };
+var D = [
+  ['Sen', '5', [['09.00', 'LinkedIn', 'Lowongan programmer backend', 'Reza · didukung HR', 'Terbit'], ['16.00', 'Instagram', 'Di balik layar: tim Implementer di RS', 'foto Lina · 4 slide', 'Review']]],
+  ['Sel', '6', [['10.00', 'Blog', 'Digitalisasi koperasi: 5 pelajaran', '1.200 kata · menunggu Direktur', 'Review']]],
+  ['Rab', '7', [['09.00', 'LinkedIn', 'Carousel peluncuran RuangKerja', '8 slide · Putri', 'Terjadwal'], ['12.00', 'Instagram', 'Reels 30 detik RuangKerja', 'Dinda · editing', 'Draf']]],
+  ['Kam', '8', [['09.00', 'LinkedIn', 'Kontrak baru: Portal Logistik Sinar', 'tunggu tanda tangan', 'Draf']]],
+  ['Jum', '9', [['10.00', 'Blog', 'Studi kasus SIMRS bagian 1', 'Analis menulis bagian teknis', 'Draf'], ['15.00', 'LinkedIn', 'Ucapan HUT kota', 'desain siap', 'Terjadwal']]],
+  ['Sab', '10', []], ['Min', '11', []]
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { d: 0 };
+  }
+  renderVals() {
+    var self = this;
+    var di = (this.state && this.state.d) || 0;
+    var list = D[di][2];
+    return {
+      days: D.map(function (d, i) { var on = i === di; return { dow: d[0], n: d[1], c: d[2].length ? d[2].length + ' konten' : '—', sel: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #C2410C 0%, #BE185D 100%)' : '#0F1622', fg: on ? '#FFFFFF' : '#EAF1F8', border: on ? '0' : '1px solid #233247', pick: function () { self.setState({ d: i }); } }; }),
+      items: list.map(function (x) { var c = CH[x[1]]; var s = SS[x[4]]; return { time: x[0], ch: x[1], cBg: c[0], cFg: c[1], t: x[2], m: x[3], s: x[4], sBg: s[0], sFg: s[1] }; }),
+      empty: list.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>

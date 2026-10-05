@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Manajemen · notulen & tindak lanjut · ponsel · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #070B14">
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="MgPJadwalMalam.dc.html" aria-label="Kembali" style="width: 44px; height: 44px; border-radius: 22px; background: #0F1622; border: 1px solid #233247; color: #EAF1F8; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+      <span style="height: 32px; padding: 0 12px; border-radius: 16px; background: #0E2A20; color: #4ADE9B; font-size: 14px; font-weight: 800; display: inline-flex; align-items: center">Final · notulis Nadia</span>
+    </div>
+    <span style="display: flex; flex-direction: column"><span style="font-size: 24px; line-height: 30px; font-weight: 800">Rapat direksi mingguan</span><span style="font-size: 14px; color: #A6B4C6">Sen, 28 Sep · 4 direksi hadir</span></span>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 16px; font-weight: 800">4 keputusan</span>
+      <span style="font-size: 15px; line-height: 22px">• Ikut tender Dinas Kominfo.</span>
+      <span style="font-size: 15px; line-height: 22px">• Rekrut 1 programmer untuk KMB.</span>
+      <span style="font-size: 15px; line-height: 22px">• Go-live SIMRS tetap 19 Okt.</span>
+      <span style="font-size: 15px; line-height: 22px">• Logo baru dipilih Rab, 7 Okt.</span>
+    </div>
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 20px; padding: 12px 16px 2px">
+      <span style="display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 4px"><span style="font-size: 16px; font-weight: 800">Tindak lanjut</span><span style="font-size: 13px; font-weight: 800; color: #A6B4C6">4/6 selesai</span></span>
+      <sc-for list="{{acts}}" as="a" hint-placeholder-count="6">
+        <div style="display: flex; align-items: center; gap: 10px; min-height: 50px; border-top: 1px solid #172131">
+          <span style="width: 22px; height: 22px; border-radius: 6px; background: {{a.bg}}; border: {{a.border}}; box-sizing: border-box; color: #FFFFFF; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0">{{a.g}}</span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 700; color: {{a.c}}">{{a.t}}</span><span style="font-size: 12px; color: #A6B4C6">{{a.m}}</span></span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px 22px; display: flex; flex-direction: column; gap: 6px; background: rgba(15,22,34,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid #233247">
+    <button type="button" onClick="{{ping}}" style="height: 54px; border: 0; border-radius: 16px; background: {{btnBg}}; color: #FFFFFF; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer">{{btn}}</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var A = [['Siapkan 3 alternatif logo', 'Putri · Jum, 2 Okt', 1], ['Tanda tangani NDA RS Harapan Sehat', 'Nadia · Jum, 2 Okt', 1], ['Kirim proposal ke Sinar Logistik', 'Agus · Rab, 30 Sep', 1], ['Jadwalkan demo SIMRS ke RS', 'Bayu · Kam, 1 Okt', 1], ['Lengkapi berkas izin usaha', 'Nadia · Jum, 30 Okt · 60%', 0], ['Rekrut 1 programmer untuk KMB', 'Hana · Jum, 30 Okt · wawancara hari ini', 0]];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sent: false };
+  }
+  renderVals() {
+    var self = this;
+    var sent = this.state && this.state.sent;
+    return {
+      acts: A.map(function (a) { var d = !!a[2]; return { t: a[0], m: a[1], g: d ? '✓' : '', bg: d ? '#0F7A55' : '#0F1622', border: d ? '0' : '2px solid #34465E', c: d ? '#A6B4C6' : '#EAF1F8' }; }),
+      btn: sent ? 'Pengingat terkirim ke Nadia & Hana ✓' : 'Ingatkan 2 PIC yang belum selesai',
+      btnBg: sent ? 'linear-gradient(135deg, #14B8A6 0%, #0F7A55 100%)' : 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)',
+      ping: function () { self.setState({ sent: true }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

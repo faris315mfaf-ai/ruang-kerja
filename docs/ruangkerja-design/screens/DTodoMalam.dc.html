@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Todolist proyek · PLQ · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}a:hover{color:#5AD6C8}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; overflow-x: clip; background: radial-gradient(1000px 480px at 0% 0%, rgba(20,184,166,0.20), transparent 65%), radial-gradient(1000px 480px at 100% 0%, rgba(47,123,234,0.18), transparent 65%), #070B14; background-repeat: no-repeat">
+  <div style="position: sticky; top: 0; z-index: 30"><dc-import name="MenuBar" malam="{{ true }}" dark="{{ true }}" crumbs="Workspace / Proyek Peluncuran Q4 / Todolist" hint-size="100%,64px"></dc-import></div>
+
+  <main style="width: 100%; max-width: 1280px; margin: 0 auto; padding: 36px 40px 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 22px">
+    <section style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px">
+      <div style="display: flex; align-items: center; gap: 16px">
+        <span aria-hidden="true" style="width: 60px; height: 60px; border-radius: 18px; background: linear-gradient(135deg, #14B8A6 0%, #2F7BEA 100%); color: #FFFFFF; font-size: 24px; font-weight: 800; display: flex; align-items: center; justify-content: center">P</span>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <h1 style="margin: 0; font-size: 36px; line-height: 44px; font-weight: 800; letter-spacing: -0.025em">Proyek Peluncuran Q4</h1>
+          <span style="font-size: 17px; color: #A6B4C6">{{total}} tugas · <b style="color: #4ADE9B">{{done}} selesai</b> · 3 terlambat</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 6px; width: 220px">
+          <span style="font-size: 15px; font-weight: 600; color: #A6B4C6">Selesai {{pct}}%</span>
+          <span style="height: 10px; border-radius: 5px; background: #233247; overflow: hidden"><span style="display: block; width: {{pct}}%; height: 100%; background: linear-gradient(90deg, #14B8A6, #2F7BEA); transition: width .2s"></span></span>
+        </div>
+      </div>
+    </section>
+
+    <nav aria-label="Bagian proyek" style="display: flex; gap: 28px; border-bottom: 1px solid #233247">
+      <a href="DProyekMalam.dc.html" style="padding: 0 2px 14px; font-size: 17px; font-weight: 500; color: #A6B4C6">Ringkasan</a>
+      <a href="DBoard.dc.html" style="padding: 0 2px 14px; font-size: 17px; font-weight: 500; color: #A6B4C6">Board</a>
+      <a href="#" aria-current="page" style="padding: 0 2px 14px; font-size: 17px; font-weight: 700; color: #EAF1F8; border-bottom: 3px solid #2DBFB1">Todolist</a>
+      <a href="#" style="padding: 0 2px 14px; font-size: 17px; font-weight: 500; color: #A6B4C6">Kalender</a>
+      <a href="#" style="padding: 0 2px 14px; font-size: 17px; font-weight: 500; color: #A6B4C6">Dokumen</a>
+      <a href="#" style="padding: 0 2px 14px; font-size: 17px; font-weight: 500; color: #A6B4C6">File</a>
+    </nav>
+
+    <section style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+        <span style="font-size: 15px; font-weight: 700; color: #A6B4C6">Kelompokkan</span>
+        <div role="tablist" aria-label="Kelompokkan" style="display: inline-flex; padding: 4px; border-radius: 14px; background: rgba(15,22,34,0.75); border: 1px solid #233247">
+          <sc-for list="{{groupBy}}" as="g" hint-placeholder-count="3">
+            <button type="button" role="tab" aria-selected="{{g.sel}}" onClick="{{g.pick}}" style="height: 36px; padding: 0 14px; border: 0; border-radius: 10px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; background: {{g.bg}}; color: {{g.color}}; box-shadow: {{g.shadow}}">{{g.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <button type="button" role="switch" aria-checked="{{showDone.aria}}" onClick="{{showDone.toggle}}" style="display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px 0 8px; border: 1px solid #233247; border-radius: 20px; background: #0F1622; font: inherit; font-size: 15px; font-weight: 600; color: #EAF1F8; cursor: pointer">
+          <span style="width: 40px; height: 24px; border-radius: 12px; padding: 2px; box-sizing: border-box; background: {{showDone.track}}; display: flex; justify-content: {{showDone.justify}}"><span style="width: 20px; height: 20px; border-radius: 10px; background: #0F1622; box-shadow: 0 1px 4px rgba(0,0,0,0.6)"></span></span>Tampilkan selesai
+        </button>
+        <button type="button" style="height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 20px rgba(30,95,214,0.30)">Tugas baru</button>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="5">
+          <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15)">
+            <button type="button" aria-expanded="{{g.expanded}}" onClick="{{g.toggle}}" style="width: 100%; display: flex; align-items: center; gap: 14px; padding: 18px 22px; border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; color: #EAF1F8">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: rotate({{g.rot}}deg); transition: transform .18s"><path d="m9 6 6 6-6 6"></path></svg>
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+                <span style="font-size: 19px; font-weight: 700">{{g.name}}</span>
+                <span style="font-size: 15px; color: #A6B4C6">{{g.meta}}</span>
+              </span>
+              <span style="height: 30px; padding: 0 12px; border-radius: 15px; background: {{g.sBg}}; color: {{g.sFg}}; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center">{{g.status}}</span>
+              <span style="width: 64px; text-align: right; font-size: 16px; font-weight: 700">{{g.count}}</span>
+            </button>
+            <sc-if value="{{g.open}}" hint-placeholder-val="{{true}}">
+              <div>
+                <sc-for list="{{g.items}}" as="t" hint-placeholder-count="3">
+                  <div style="display: flex; align-items: center; gap: 14px; padding: 0 22px; min-height: 68px; border-top: 1px solid #172131; background: {{t.rowBg}}">
+                    <button type="button" role="checkbox" aria-checked="{{t.aria}}" aria-label="Tandai {{t.title}}" onClick="{{t.toggle}}" style="width: 28px; height: 28px; padding: 0; border-radius: 9px; border: {{t.border}}; background: {{t.bg}}; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{t.tick}}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg></button>
+                    <a href="DTugasMalam.dc.html" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; color: {{t.color}}">
+                      <span style="font-size: 17px; font-weight: 600; text-decoration: {{t.deco}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{t.title}}</span>
+                      <span style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 14px; color: #A6B4C6">
+                        <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600">{{t.id}}</span>
+                        <sc-if value="{{t.hasCheck}}" hint-placeholder-val="{{false}}"><span style="display: inline-flex; align-items: center; gap: 4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 11 3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>{{t.check}}</span></sc-if>
+                        <sc-if value="{{t.hasPrio}}" hint-placeholder-val="{{false}}"><span style="height: 22px; padding: 0 8px; border-radius: 6px; background: {{t.pBg}}; color: {{t.pFg}}; font-weight: 700; display: inline-flex; align-items: center">{{t.prio}}</span></sc-if>
+                        <span>{{t.status}}</span>
+                      </span>
+                    </a>
+                    <span style="font-size: 15px; font-weight: {{t.dueWeight}}; color: {{t.dueColor}}; white-space: nowrap">{{t.due}}</span>
+                    <span aria-label="{{t.ownerName}}" style="width: 36px; height: 36px; border-radius: 18px; background: {{t.avBg}}; color: {{t.avFg}}; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0">{{t.owner}}</span>
+                  </div>
+                </sc-for>
+                <sc-if value="{{g.canAdd}}" hint-placeholder-val="{{false}}">
+                  <div style="display: flex; align-items: center; gap: 12px; padding: 12px 22px 16px; border-top: 1px solid #172131">
+                    <span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 9px; border: 2px dashed #34465E; box-sizing: border-box; flex-shrink: 0"></span>
+                    <label for="tambah" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Tambah tugas ke milestone ini</label>
+                    <input id="tambah" type="text" value="{{draft}}" onInput="{{setDraft}}" placeholder="Tambah tugas ke milestone ini" style="flex: 1; height: 44px; padding: 0 14px; border: 1px solid #233247; border-radius: 12px; font: inherit; font-size: 16px; color: #EAF1F8; background: #070B14">
+                    <button type="button" onClick="{{add}}" style="height: 44px; padding: 0 18px; border: 0; border-radius: 12px; background: #0E2A2C; color: #5AD6C8; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">Tambah</button>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+
+      <aside style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 14px">
+          <h2 style="margin: 0; font-size: 21px; font-weight: 700">Progres milestone</h2>
+          <sc-for list="{{progress}}" as="p" hint-placeholder-count="5">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <span style="display: flex; justify-content: space-between; font-size: 15px"><span style="font-weight: 600">{{p.name}}</span><span style="color: #A6B4C6">{{p.label}}</span></span>
+              <span style="height: 8px; border-radius: 4px; background: #172131; overflow: hidden"><span style="display: block; width: {{p.pct}}%; height: 100%; background: {{p.fill}}; transition: width .2s"></span></span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background: #0F1622; border: 1px solid #233247; border-radius: 24px; padding: 22px 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 10px">
+          <h2 style="margin: 0; font-size: 21px; font-weight: 700">Tampilan tersimpan</h2>
+          <a href="#" style="display: flex; justify-content: space-between; align-items: center; min-height: 44px; font-size: 16px; color: #EAF1F8; border-top: 1px solid #172131"><span>Tugas saya</span><b>2</b></a>
+          <a href="#" style="display: flex; justify-content: space-between; align-items: center; min-height: 44px; font-size: 16px; color: #EAF1F8; border-top: 1px solid #172131"><span>Terlambat</span><b style="color: #FF7A8A">3</b></a>
+          <a href="#" style="display: flex; justify-content: space-between; align-items: center; min-height: 44px; font-size: 16px; color: #EAF1F8; border-top: 1px solid #172131"><span>Tenggat minggu ini</span><b>5</b></a>
+          <a href="#" style="display: flex; justify-content: space-between; align-items: center; min-height: 44px; font-size: 16px; color: #EAF1F8; border-top: 1px solid #172131"><span>Tanpa penanggung jawab</span><b>1</b></a>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div style="flex: 1 0 150px"></div>
+  <div style="position: sticky; bottom: 0; height: 0; z-index: 20">
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 380px; pointer-events: none">
+      <dc-import name="Dock" malam="{{ true }}" dark="{{ true }}" active="PLQ" hint-size="100%,380px"></dc-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2000}}'>
+var AV = { DP: ['#103A38', '#5AD6C8', 'Dimas Pratama'], SW: ['#1C2D50', '#A9C2FF', 'Sari Wulandari'], RA: ['#2E2210', '#F6B95C', 'Rizky Aditya'], ML: ['#0E2A2C', '#5AD6C8', 'Maya Lestari'], PR: ['#14223F', '#A9C2FF', 'Putri Ramadhani'], HW: ['#3A1520', '#FF7A8A', 'Hendra Wijaya'], BS: ['#172131', '#A6B4C6', 'Bayu Saputra'], YP: ['#172131', '#A6B4C6', 'Yoga Permana'], '': ['#172131', '#7D8FA5', 'Belum ditugaskan'] };
+var PR = { U: ['Urgent', '#3A1520', '#FF7A8A'], T: ['Tinggi', '#2E2210', '#F6B95C'], S: ['', '', ''] };
+var GROUPS = [
+  { key: 'g0', name: 'Tanggal & venue ditetapkan', meta: 'Target Jum, 18 Sep', status: 'Selesai', sBg: '#0E2A20', sFg: '#4ADE9B', open: false, items: [
+    ['PLQ-11', 'Brief kreatif peluncuran', 'PR', 'S', 'Selesai', 'Sel, 8 Sep', 'n', true],
+    ['PLQ-12', 'Penetapan tanggal peluncuran', 'DP', 'S', 'Selesai', 'Sen, 28 Sep', 'n', true],
+    ['PLQ-14', 'Pemesanan venue acara', 'SW', 'S', 'Selesai', 'Kam, 1 Okt', 'n', true] ] },
+  { key: 'g1', name: 'Siaran pers final', meta: 'Target Kam, 1 Okt · terlewat 4 hari', status: 'Terlewat', sBg: '#3A1520', sFg: '#FF7A8A', open: true, items: [
+    ['PLQ-16', 'Kutipan direksi untuk siaran pers', 'HW', 'U', 'Todo', 'Lewat 4 hari', 'late', false],
+    ['PLQ-15', 'Siaran pers peluncuran', 'SW', 'U', 'Review', 'Lewat 2 hari', 'late', false],
+    ['PLQ-13', 'Daftar media nasional & daerah', 'PR', 'S', 'Selesai', 'Sel, 29 Sep', 'n', true] ] },
+  { key: 'g2', name: 'Materi & landing page siap', meta: 'Target Rab, 14 Okt · 9 hari lagi', status: 'Berjalan', sBg: '#14223F', sFg: '#8DB4FF', open: true, add: true, items: [
+    ['PLQ-18', 'Finalisasi anggaran peluncuran', 'DP', 'U', 'Dikerjakan', 'Besok', 'soon', false, '3/5'],
+    ['PLQ-22', 'Siapkan materi presentasi untuk direksi', 'DP', 'T', 'Todo', 'Kam, 8 Okt', 'n', false],
+    ['PLQ-21', 'Landing page produk baru', 'RA', 'T', 'Dikerjakan', 'Jum, 9 Okt', 'n', false, '4/7'],
+    ['PLQ-27', 'Desain banner & spanduk peluncuran', 'ML', 'S', 'Todo', 'Sab, 10 Okt', 'n', false],
+    ['PLQ-24', 'Skrip video demo produk', 'ML', 'S', 'Dikerjakan', 'Sen, 12 Okt', 'n', false],
+    ['PLQ-17', 'Desain key visual', 'ML', 'S', 'Selesai', 'Jum, 2 Okt', 'n', true],
+    ['PLQ-20', 'Foto produk untuk materi', 'SW', 'S', 'Selesai', 'Sab, 3 Okt', 'n', true] ] },
+  { key: 'g3', name: 'Undangan media terkirim', meta: 'Target Sel, 20 Okt', status: 'Belum mulai', sBg: '#172131', sFg: '#A6B4C6', open: true, items: [
+    ['PLQ-23', 'Daftar tamu VIP', 'PR', 'T', 'Todo', 'Lewat 1 hari', 'late', false],
+    ['PLQ-30', 'Kirim undangan ke media mitra', 'RA', 'S', 'Todo', 'Kam, 15 Okt', 'n', false],
+    ['PLQ-25', 'Kontrak vendor percetakan materi acara', 'SW', 'S', 'Todo', 'Jum, 16 Okt', 'n', false] ] },
+  { key: 'g4', name: 'Acara peluncuran', meta: 'Target Sel, 27 Okt', status: 'Belum mulai', sBg: '#172131', sFg: '#A6B4C6', open: false, items: [
+    ['PLQ-19', 'Rencana logistik hari acara', 'BS', 'S', 'Review', 'Sen, 12 Okt', 'n', false] ] },
+  { key: 'g5', name: 'Tanpa milestone', meta: 'Backlog proyek', status: 'Backlog', sBg: '#172131', sFg: '#A6B4C6', open: false, items: [
+    ['PLQ-31', 'Riset harga kompetitor wilayah Jawa Barat', 'YP', 'S', 'Backlog', '—', 'n', false],
+    ['PLQ-29', 'Daftar mitra distribusi tahap 2', '', 'S', 'Backlog', '—', 'n', false],
+    ['PLQ-34', 'Ide konten video teaser media sosial', 'ML', 'S', 'Backlog', '—', 'n', false] ] }
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    var done = {}, open = {};
+    GROUPS.forEach(function (g) { open[g.key] = g.open; g.items.forEach(function (t) { if (t[7]) done[t[0]] = true; }); });
+    this.state = { done: done, open: open, showDone: true, draft: '', added: [], by: 'Milestone' };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state || {};
+    var done = st.done || {};
+    var open = st.open || {};
+    var showDone = st.showDone !== false;
+    var added = st.added || [];
+    var total = 0, doneN = 0;
+    var groups = GROUPS.map(function (g) {
+      var items = g.items.slice();
+      if (g.add) added.forEach(function (a, i) { items.push(['PLQ-' + (35 + i), a, 'DP', 'S', 'Todo', '—', 'n', false]); });
+      var gDone = items.filter(function (t) { return done[t[0]]; }).length;
+      total += items.length; doneN += gDone;
+      var visible = items.filter(function (t) { return showDone || !done[t[0]]; });
+      return {
+        name: g.name, meta: g.meta, status: g.status, sBg: g.sBg, sFg: g.sFg,
+        count: gDone + '/' + items.length, pct: Math.round(gDone / items.length * 100),
+        open: !!open[g.key], expanded: open[g.key] ? 'true' : 'false', rot: open[g.key] ? 90 : 0,
+        canAdd: !!g.add,
+        toggle: function () { var o = Object.assign({}, open); o[g.key] = !open[g.key]; self.setState({ open: o }); },
+        items: visible.map(function (t) {
+          var on = !!done[t[0]];
+          var av = AV[t[2]];
+          var pr = PR[t[3]];
+          var late = t[6] === 'late' && !on, soon = t[6] === 'soon' && !on;
+          return {
+            id: t[0], title: t[1], owner: t[2] || '?', ownerName: av[2], avBg: av[0], avFg: av[1],
+            prio: pr[0], hasPrio: !!pr[0] && !on, pBg: pr[1], pFg: pr[2],
+            status: on ? 'Selesai' : t[4], due: on ? 'Selesai' : t[5],
+            dueColor: on ? '#4ADE9B' : (late ? '#FF7A8A' : (soon ? '#F6B95C' : '#A6B4C6')), dueWeight: late || soon || on ? 700 : 500,
+            check: t[8] || '', hasCheck: !!t[8] && !on,
+            aria: on ? 'true' : 'false', bg: on ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : '#0F1622', border: on ? '0' : (late ? '2px solid #FF7A8A' : '2px solid #34465E'), tick: on ? '#FFFFFF' : 'transparent',
+            color: on ? '#A6B4C6' : '#EAF1F8', deco: on ? 'line-through' : 'none', rowBg: late ? '#2A1218' : '#0F1622',
+            toggle: function () { var d = Object.assign({}, done); d[t[0]] = !on; self.setState({ done: d }); }
+          };
+        })
+      };
+    });
+    return {
+      total: total, done: doneN, pct: Math.round(doneN / total * 100),
+      groups: groups,
+      progress: groups.map(function (g) {
+        return { name: g.name, label: g.count, pct: g.pct, fill: g.status === 'Terlewat' ? '#C42137' : 'linear-gradient(90deg, #14B8A6, #2F7BEA)' };
+      }),
+      groupBy: ['Milestone', 'Status', 'Orang'].map(function (l) {
+        var sel = l === (st.by || 'Milestone');
+        return { label: l, sel: sel ? 'true' : 'false', bg: sel ? '#0F1622' : 'transparent', color: sel ? '#EAF1F8' : '#A6B4C6', shadow: sel ? '0 2px 8px rgba(0,0,0,0.3)' : 'none', pick: function () { self.setState({ by: l }); } };
+      }),
+      showDone: { aria: showDone ? 'true' : 'false', track: showDone ? 'linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%)' : '#34465E', justify: showDone ? 'flex-end' : 'flex-start', toggle: function () { self.setState({ showDone: !showDone }); } },
+      draft: st.draft || '',
+      setDraft: function (e) { self.setState({ draft: e && e.target ? e.target.value : '' }); },
+      add: function () { var v = (st.draft || '').trim(); if (!v) return; self.setState({ added: added.concat([v]), draft: '' }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

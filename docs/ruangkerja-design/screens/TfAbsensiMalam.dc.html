@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Tracking absensi · tablet lipat · mode malam</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#070B14}
+a{color:#5AD6C8;text-decoration:none}
+</style>
+</helmet>
+<div style="position: relative; width: 884px; height: 1104px; overflow: hidden; display: flex; color: #EAF1F8; font-family: 'Figtree', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; background: radial-gradient(600px 300px at 10% 0%, rgba(20,184,166,0.20), transparent 70%), radial-gradient(600px 300px at 100% 0%, rgba(47,123,234,0.18), transparent 70%), #070B14">
+  <div style="width: 96px; height: 1104px; flex-shrink: 0"><dc-import name="RailMalam" active="absensi" hint-size="96px,1104px"></dc-import></div>
+  <div style="flex: 1; min-width: 0; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+    <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 32px; line-height: 40px; font-weight: 800; letter-spacing: -0.02em">Tracking absensi</span><span style="font-size: 15px; color: #A6B4C6">Sen, 5 Okt 2026 · jam masuk 08.00 · per 09.40</span></span>
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+      <div style="border-radius: 20px; padding: 16px; color: #FFFFFF; background: linear-gradient(135deg, #0B7F86 0%, #1E5FD6 100%); box-shadow: 0 10px 24px rgba(30,95,214,0.28); display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 600">Hadir</span><span style="font-size: 30px; line-height: 36px; font-weight: 800">44/48</span><span style="font-size: 13px">92% · 2 dinas luar</span></div>
+      <div style="border-radius: 20px; padding: 16px; background: #0F1622; border: 1px solid #233247; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 600; color: #A6B4C6">Terlambat</span><span style="font-size: 30px; line-height: 36px; font-weight: 800; color: #F6B95C">3</span><span style="font-size: 13px; color: #A6B4C6">rata-rata 11 menit</span></div>
+      <div style="border-radius: 20px; padding: 16px; background: #0F1622; border: 1px solid #233247; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 600; color: #A6B4C6">Cuti / izin</span><span style="font-size: 30px; line-height: 36px; font-weight: 800">2</span><span style="font-size: 13px; color: #A6B4C6">1 cuti · 1 izin</span></div>
+      <div style="border-radius: 20px; padding: 16px; background: #0F1622; border: 1px solid #233247; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 14px; font-weight: 600; color: #A6B4C6">Belum check-in</span><span style="font-size: 30px; line-height: 36px; font-weight: 800; color: #FF7A8A">2</span><span style="font-size: 13px; color: #A6B4C6">pengingat 08.15</span></div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px">
+      <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; padding: 18px 18px 6px">
+        <span style="display: block; font-size: 19px; font-weight: 800; padding-bottom: 8px">Per divisi hari ini</span>
+        <sc-for list="{{divs}}" as="d" hint-placeholder-count="5">
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-top: 1px solid #172131">
+            <span style="display: flex; justify-content: space-between; font-size: 15px"><span style="font-weight: 700">{{d.name}}</span><b>{{d.v}}</b></span>
+            <span style="position: relative; display: block; height: 8px; border-radius: 4px; background: #172131"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{d.pct}}%; border-radius: 4px; background: {{d.fill}}"></span></span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+        <span style="font-size: 19px; font-weight: 800">Rata-rata mingguan</span>
+        <div style="display: flex; align-items: flex-end; gap: 14px; height: 170px; border-bottom: 1px solid #233247">
+          <sc-for list="{{weeks}}" as="w" hint-placeholder-count="4">
+            <span style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end"><span style="font-size: 15px; font-weight: 800">{{w.v}}%</span><span style="width: 100%; max-width: 56px; height: {{w.h}}px; border-radius: 10px 10px 0 0; background: {{w.fill}}"></span></span>
+          </sc-for>
+        </div>
+        <div style="display: flex; gap: 14px">
+          <sc-for list="{{weeks}}" as="w" hint-placeholder-count="4">
+            <span style="flex: 1; text-align: center; font-size: 13px; font-weight: 700; color: #A6B4C6">{{w.l}}</span>
+          </sc-for>
+        </div>
+        <span style="font-size: 14px; line-height: 20px; color: #A6B4C6">Skala dimulai dari 85%. Target 95% tercapai di minggu 39 dan 40.</span>
+      </div>
+    </div>
+
+    <div style="background: #0F1622; border: 1px solid #233247; border-radius: 22px; padding: 18px 18px 6px">
+      <span style="display: block; font-size: 19px; font-weight: 800; padding-bottom: 8px">Perlu ditindaklanjuti</span>
+      <sc-for list="{{people}}" as="p" hint-placeholder-count="6">
+        <div style="display: flex; align-items: center; gap: 12px; min-height: 56px; border-top: 1px solid #172131">
+          <span style="width: 36px; height: 36px; border-radius: 18px; background: #14223F; color: #A9C2FF; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0">{{p.ini}}</span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 700">{{p.name}}</span><span style="font-size: 13px; color: #A6B4C6">{{p.meta}}</span></span>
+          <span style="height: 28px; padding: 0 10px; border-radius: 14px; background: {{p.sBg}}; color: {{p.sFg}}; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; white-space: nowrap">{{p.status}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":884,"height":1104}}'>
+var DV = [['Programming', 13, 14], ['Implementer', 8, 9], ['Analis', 6, 6], ['Branding & Marketing', 5, 6], ['Sekretariat, HR, Direksi', 12, 13]];
+var WK = [['Mg 37', 94], ['Mg 38', 93], ['Mg 39', 95], ['Mg 40', 95]];
+var ST = { late: ['Terlambat', '#2E2210', '#F6B95C'], none: ['Belum check-in', '#3A1520', '#FF7A8A'], dl: ['Dinas luar', '#14223F', '#A9C2FF'], cuti: ['Cuti', '#241B45', '#B8A6FF'], izin: ['Izin', '#241B45', '#B8A6FF'] };
+var PP = [['Arif Nugroho', 'Programming · pengingat terkirim 08.15', 'none'], ['Tika Maharani', 'Sekretariat · telepon tidak diangkat', 'none'], ['Yoga Permana', 'Programming · masuk 08.12', 'late'], ['Dewi Anggraini', 'Analis · masuk 08.09', 'late'], ['Reza Mahendra', 'Branding · masuk 08.14 · ke-3 minggu ini', 'late'], ['Bayu & Lina', 'Implementer · RS Harapan Sehat, di luar radius', 'dl']];
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      divs: DV.map(function (d) { var pct = Math.round(d[1] / d[2] * 100); return { name: d[0], v: d[1] + '/' + d[2], pct: pct, fill: pct >= 90 ? 'linear-gradient(90deg, #14B8A6 0%, #2F7BEA 100%)' : '#E08A00' }; }),
+      weeks: WK.map(function (w) { return { l: w[0], v: w[1], h: Math.round((w[1] - 85) / 15 * 130), fill: w[1] >= 95 ? 'linear-gradient(180deg, #14B8A6 0%, #2F7BEA 100%)' : '#7FB0F5' }; }),
+      people: PP.map(function (p) { var s = ST[p[2]]; var n = p[0].split(' '); return { name: p[0], meta: p[1], ini: (n[0][0] + (n[n.length - 1][0] || '')).toUpperCase(), status: s[0], sBg: s[1], sFg: s[2] }; })
+    };
+  }
+}
+</script>
+</body>
+</html>
