@@ -2,23 +2,93 @@ import { Link, router } from '@inertiajs/react';
 import { FileText, Plus } from 'lucide-react';
 import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
+import { TabNav } from '@/components/ui/tabs';
 import {
     formatMonthYear,
-    formatRequestDuration,
     formatRequestPeriod,
-    formatShortDate,
+    formatRequestTitle,
     officeDay,
     stepProgress,
 } from '@/lib/requests';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import { create, index } from '@/routes/requests';
-import { BalanceCardView } from './balance-cards';
-import { CategoryBadge, StatusBadge } from './badges';
+import type { RequestItem } from '@/types/requests';
+import { BalanceCardView, highlightIndex } from './balance-cards';
+import { CategoryTile, StatusBadge } from './badges';
+import { FILTERS } from './my-requests-filters';
+import type { MyRequestsProps } from './my-requests-filters';
 import { RequestActions } from './request-actions';
 import { RequestDetailCard } from './request-detail-card';
 import { EmptyDetail } from './request-parts';
-import { FILTERS } from './my-requests-filters';
-import type { MyRequestsProps } from './my-requests-filters';
+
+/** "langkah 1/2 · menunggu Hana" for pending rows. */
+export function waitingText(item: RequestItem): string | null {
+    const progress = item.status === 'pending' ? stepProgress(item) : null;
+
+    if (!progress) {
+        return null;
+    }
+
+    const who =
+        item.waiting?.approver?.name.split(' ')[0] ?? item.waiting?.label;
+
+    return `langkah ${progress.replace(' dari ', '/')}${who ? ` · menunggu ${who}` : ''}`;
+}
+
+function RequestCardButton({
+    item,
+    active,
+    onSelect,
+}: {
+    item: RequestItem;
+    active: boolean;
+    onSelect: () => void;
+}) {
+    const waiting = waitingText(item);
+    const note =
+        item.decision_note?.note && item.status !== 'pending'
+            ? item.decision_note.note
+            : null;
+
+    return (
+        <button
+            type="button"
+            onClick={onSelect}
+            aria-pressed={active}
+            className={cn(
+                'flex w-full items-center gap-3.5 rounded-card border bg-surface p-[18px] text-left transition-[border-color,box-shadow] duration-120 ease-brand',
+                active
+                    ? 'border-2 border-primary p-[17px] shadow-card ring-4 ring-ring/40'
+                    : 'border-border shadow-card hover:border-border-strong',
+                focusRing,
+            )}
+        >
+            <CategoryTile category={item.type.category} />
+            <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
+                <span className="text-[17px] leading-6 font-bold text-text">
+                    {formatRequestTitle(item)}
+                </span>
+                <span className="text-[15px] leading-[22px] text-text-muted">
+                    {formatRequestPeriod(item)}
+                    <span className="font-mono text-[14px]">
+                        {' · '}
+                        {item.number ?? 'DRAF'}
+                    </span>
+                </span>
+                {(waiting || note) && (
+                    <span className="truncate text-[15px] leading-[22px] text-text-muted">
+                        {waiting ?? `“${note}”`}
+                    </span>
+                )}
+            </span>
+            <StatusBadge
+                status={item.status}
+                label={item.status_label}
+                className="h-[30px] px-3 text-[14px]"
+            />
+        </button>
+    );
+}
 
 export function MyRequestsDesktop({
     filter,
@@ -46,78 +116,64 @@ export function MyRequestsDesktop({
         );
 
     const sinceParts = since ? officeDay(since) : null;
+    const highlight = highlightIndex(balances);
+    const cards = balances.slice(0, 4);
 
     return (
-        <div className="mx-auto max-w-[1200px] space-y-6">
-            <header className="flex items-start justify-between gap-4">
-                <div>
-                    <h1 className="text-xl leading-7 font-semibold text-text">
-                        Pengajuan saya
-                    </h1>
-                    <p className="text-sm text-text-muted">
+        <div className="flex flex-col gap-6">
+            <header className="flex flex-wrap items-end justify-between gap-4">
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-display text-text">Pengajuan saya</h1>
+                    <p className="text-body-lg text-text-muted">
                         Cuti, izin, sakit, lembur, koreksi absensi, dan dinas
-                        luar yang pernah Anda ajukan.
+                        luar
                     </p>
                 </div>
-                <Button asChild>
+                <Button asChild size="lg">
                     <Link href={create()}>
-                        <Plus aria-hidden /> Ajukan baru
+                        <Plus aria-hidden strokeWidth={2.4} /> Ajukan baru
                     </Link>
                 </Button>
             </header>
 
-            {balances.length > 0 && (
-                <div className="grid gap-4 md:grid-cols-3">
-                    {balances.slice(0, 3).map((card) => (
-                        <BalanceCardView key={card.type.id} card={card} />
+            {cards.length > 0 && (
+                <section aria-label="Saldo" className="flex flex-wrap gap-4">
+                    {cards.map((card, i) => (
+                        <BalanceCardView
+                            key={card.type.id}
+                            card={card}
+                            highlight={i === highlight}
+                            className={
+                                i === highlight
+                                    ? 'flex-[1.4_1_300px]'
+                                    : 'flex-[1_1_200px]'
+                            }
+                        />
                     ))}
-                </div>
+                </section>
             )}
 
-            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
-                <div className="min-w-0 space-y-3">
-                    <nav
-                        aria-label="Filter status"
-                        className="inline-flex rounded-lg bg-surface-2 p-1"
-                    >
-                        {FILTERS.map((item) => (
-                            <Link
-                                key={item.value}
-                                href={index({
-                                    query:
-                                        item.value === 'semua'
-                                            ? {}
-                                            : { status: item.value },
-                                })}
-                                preserveScroll
-                                aria-current={
-                                    filter === item.value ? 'page' : undefined
-                                }
-                                className={cn(
-                                    'inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-sm',
-                                    filter === item.value
-                                        ? 'bg-surface font-medium text-text shadow-card'
-                                        : 'text-text-muted hover:text-text',
-                                )}
-                            >
-                                {item.label}
-                                {counts[item.value] > 0 &&
-                                    (item.value === 'semua' ||
-                                        item.value === 'menunggu') && (
-                                        <span
-                                            className={cn(
-                                                'text-xs tnum',
-                                                item.value === 'menunggu' &&
-                                                    'rounded-full bg-warning-soft px-1.5 text-warning',
-                                            )}
-                                        >
-                                            {counts[item.value]}
-                                        </span>
-                                    )}
-                            </Link>
-                        ))}
-                    </nav>
+            <TabNav
+                label="Filter status"
+                items={FILTERS.map((item) => ({
+                    href: index.url({
+                        query:
+                            item.value === 'semua'
+                                ? {}
+                                : { status: item.value },
+                    }),
+                    label: item.label,
+                    active: filter === item.value,
+                    count:
+                        (item.value === 'semua' || item.value === 'menunggu') &&
+                        counts[item.value] > 0
+                            ? counts[item.value]
+                            : undefined,
+                }))}
+            />
 
+            <div className="flex flex-wrap items-start gap-5">
+                <div className="flex min-w-0 flex-[1_1_440px] flex-col gap-3">
                     {requests.length === 0 ? (
                         <EmptyState
                             icon={FileText}
@@ -128,146 +184,35 @@ export function MyRequestsDesktop({
                             }
                             description="Ajukan cuti, izin, sakit, lembur, koreksi absensi, atau dinas luar."
                             action={
-                                <Button asChild size="sm">
+                                <Button asChild>
                                     <Link href={create()}>Ajukan baru</Link>
                                 </Button>
                             }
                         />
                     ) : (
-                        <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-card">
-                            <table className="w-full text-sm">
-                                <thead className="bg-surface-2/60 text-left text-[13px] text-text-muted">
-                                    <tr>
-                                        <th
-                                            scope="col"
-                                            className="px-4 py-2.5 font-normal"
-                                        >
-                                            Nomor
-                                        </th>
-                                        <th
-                                            scope="col"
-                                            className="px-3 py-2.5 font-normal"
-                                        >
-                                            Jenis
-                                        </th>
-                                        <th
-                                            scope="col"
-                                            className="px-3 py-2.5 font-normal"
-                                        >
-                                            Waktu
-                                        </th>
-                                        <th
-                                            scope="col"
-                                            className="px-3 py-2.5 text-right font-normal"
-                                        >
-                                            Durasi
-                                        </th>
-                                        <th
-                                            scope="col"
-                                            className="px-3 py-2.5 font-normal"
-                                        >
-                                            Status
-                                        </th>
-                                        <th
-                                            scope="col"
-                                            className="px-4 py-2.5 text-right font-normal"
-                                        >
-                                            Diajukan
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {requests.map((item) => {
-                                        const active = selected?.id === item.id;
-                                        const progress =
-                                            item.status === 'pending'
-                                                ? stepProgress(item)
-                                                : null;
-
-                                        return (
-                                            <tr
-                                                key={item.id}
-                                                onClick={() => select(item.id)}
-                                                className={cn(
-                                                    'cursor-pointer border-t border-border align-top transition-colors hover:bg-surface-2/60',
-                                                    active &&
-                                                        'bg-brand-50/60 shadow-[inset_3px_0_0_var(--primary)] dark:bg-brand-500/10',
-                                                )}
-                                            >
-                                                <td className="px-4 py-3">
-                                                    <button
-                                                        type="button"
-                                                        onClick={(event) => {
-                                                            event.stopPropagation();
-                                                            select(item.id);
-                                                        }}
-                                                        aria-pressed={active}
-                                                        className="font-mono text-[13px] whitespace-nowrap text-text focus-visible:underline focus-visible:outline-none"
-                                                    >
-                                                        {item.number ?? 'DRAF'}
-                                                    </button>
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    <CategoryBadge
-                                                        type={item.type}
-                                                    />
-                                                </td>
-                                                <td className="px-3 py-3 whitespace-nowrap text-text">
-                                                    {formatRequestPeriod(item)}
-                                                </td>
-                                                <td className="px-3 py-3 text-right whitespace-nowrap text-text tnum">
-                                                    {formatRequestDuration(
-                                                        item,
-                                                    )}
-                                                </td>
-                                                <td className="px-3 py-3">
-                                                    <StatusBadge
-                                                        status={item.status}
-                                                        label={
-                                                            item.status_label
-                                                        }
-                                                        suffix={
-                                                            progress
-                                                                ? `langkah ${progress.replace(' dari ', '/')}`
-                                                                : null
-                                                        }
-                                                    />
-                                                    {item.decision_note?.note &&
-                                                        item.status !==
-                                                            'pending' && (
-                                                            <p className="mt-1 max-w-56 text-[13px] text-text-muted">
-                                                                “
-                                                                {
-                                                                    item
-                                                                        .decision_note
-                                                                        .note
-                                                                }
-                                                                ”
-                                                            </p>
-                                                        )}
-                                                </td>
-                                                <td className="px-4 py-3 text-right whitespace-nowrap text-text-muted">
-                                                    {formatShortDate(
-                                                        item.submitted_at ??
-                                                            item.created_at,
-                                                    ).replace(/ \d{4}$/, '')}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                            <p className="border-t border-border px-4 py-3 text-[13px] text-text-muted">
+                        <>
+                            <ul className="flex flex-col gap-3">
+                                {requests.map((item) => (
+                                    <li key={item.id}>
+                                        <RequestCardButton
+                                            item={item}
+                                            active={selected?.id === item.id}
+                                            onSelect={() => select(item.id)}
+                                        />
+                                    </li>
+                                ))}
+                            </ul>
+                            <p className="px-1 text-meta text-text-muted">
                                 {counts.semua} pengajuan
                                 {sinceParts
                                     ? ` sejak ${formatMonthYear(sinceParts.year, sinceParts.month)}`
                                     : ''}
                             </p>
-                        </div>
+                        </>
                     )}
                 </div>
 
-                <div className="lg:sticky lg:top-20">
+                <div className="min-w-0 flex-[1.25_1_520px] lg:sticky lg:top-[calc(var(--menu-bar-height)+20px)]">
                     {selected ? (
                         <RequestDetailCard
                             request={selected}

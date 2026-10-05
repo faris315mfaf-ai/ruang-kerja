@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { ChevronLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { RequestActions } from '@/features/requests/request-actions';
 import { RequestDetailCard } from '@/features/requests/request-detail-card';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
@@ -15,10 +16,7 @@ export default function RequestShow({ request }: { request: RequestDetail }) {
             <Head title={request.number ?? 'Draf pengajuan'} />
             {mobile ? (
                 <div className={actionable ? 'pb-24' : undefined}>
-                    <RequestDetailCard
-                        request={request}
-                        className="-mx-1 rounded-xl"
-                    />
+                    <RequestDetailCard request={request} />
                     {actionable && (
                         <div className="glass fixed inset-x-0 bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom))] z-30 border-x-0 border-b-0 px-4 py-3">
                             <RequestActions request={request} mobile />
@@ -26,14 +24,16 @@ export default function RequestShow({ request }: { request: RequestDetail }) {
                     )}
                 </div>
             ) : (
-                <div className="mx-auto max-w-2xl space-y-4">
-                    <Link
-                        href={index()}
-                        className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text"
+                <div className="mx-auto flex max-w-3xl flex-col gap-4">
+                    <Button
+                        asChild
+                        variant="quiet"
+                        className="-ml-3 self-start"
                     >
-                        <ChevronLeft className="size-4" aria-hidden /> Pengajuan
-                        saya
-                    </Link>
+                        <Link href={index()}>
+                            <ChevronLeft aria-hidden /> Pengajuan saya
+                        </Link>
+                    </Button>
                     <RequestDetailCard
                         request={request}
                         footer={

@@ -14,26 +14,26 @@ function since(value: string | null): string {
 
 function StepIcon({ step }: { step: TimelineStep }) {
     const base =
-        'relative z-10 flex size-5 shrink-0 items-center justify-center rounded-full';
+        'relative z-10 flex size-[30px] shrink-0 items-center justify-center rounded-full';
 
     switch (step.status) {
         case 'approved':
             return (
                 <span className={cn(base, 'bg-success text-on-brand')}>
-                    <Check className="size-3" strokeWidth={3} aria-hidden />
+                    <Check className="size-4" strokeWidth={3} aria-hidden />
                 </span>
             );
         case 'rejected':
             return (
                 <span className={cn(base, 'bg-danger text-on-danger')}>
-                    <X className="size-3" strokeWidth={3} aria-hidden />
+                    <X className="size-4" strokeWidth={3} aria-hidden />
                 </span>
             );
         case 'revision_requested':
             return (
                 <span className={cn(base, 'bg-info text-on-brand')}>
                     <CornerUpLeft
-                        className="size-3"
+                        className="size-4"
                         strokeWidth={3}
                         aria-hidden
                     />
@@ -42,20 +42,21 @@ function StepIcon({ step }: { step: TimelineStep }) {
         case 'waiting':
             return (
                 <span
-                    className={cn(base, 'border-2 border-warning bg-surface')}
-                >
-                    <span className="size-2 rounded-full bg-warning" />
-                </span>
+                    className={cn(
+                        base,
+                        'border-[3px] border-fill-warning bg-surface',
+                    )}
+                ></span>
             );
         case 'skipped':
             return (
                 <span
                     className={cn(
                         base,
-                        'border border-dashed border-border-strong bg-surface text-text-subtle',
+                        'border-2 border-dashed border-border-strong bg-surface text-text-subtle',
                     )}
                 >
-                    <Minus className="size-3" aria-hidden />
+                    <Minus className="size-4" aria-hidden />
                 </span>
             );
         default:
@@ -63,7 +64,7 @@ function StepIcon({ step }: { step: TimelineStep }) {
                 <span
                     className={cn(
                         base,
-                        'border border-dashed border-border-strong bg-surface text-[10px] font-semibold text-text-muted',
+                        'border-[3px] border-border-strong bg-surface text-[13px] font-bold text-text-muted',
                     )}
                 >
                     {step.step_order}
@@ -143,8 +144,8 @@ export function ApprovalTimeline({
     rows.push({
         key: 'submitted',
         icon: (
-            <span className="relative z-10 flex size-5 items-center justify-center rounded-full bg-success text-on-brand">
-                <Check className="size-3" strokeWidth={3} aria-hidden />
+            <span className="relative z-10 flex size-[30px] shrink-0 items-center justify-center rounded-full bg-success text-on-brand">
+                <Check className="size-4" strokeWidth={3} aria-hidden />
             </span>
         ),
         title: isSelf
@@ -177,25 +178,28 @@ export function ApprovalTimeline({
     });
 
     return (
-        <ol className="relative space-y-4" aria-label="Alur persetujuan">
+        <ol className="relative" aria-label="Alur persetujuan">
             {rows.map((row, index) => (
-                <li key={row.key} className="relative flex gap-3">
+                <li
+                    key={row.key}
+                    className="relative flex gap-3.5 pb-4 last:pb-0"
+                >
                     {index < rows.length - 1 && (
                         <span
                             aria-hidden
-                            className="absolute top-5 bottom-[-1rem] left-[9px] w-px bg-border"
+                            className="absolute top-[30px] bottom-0 left-[14px] w-0.5 bg-border"
                         />
                     )}
                     {row.icon}
-                    <div className="min-w-0 pb-0.5">
-                        <p className="text-sm leading-5 font-medium text-text">
+                    <div className="flex min-w-0 flex-col gap-0.5 pt-0.5">
+                        <p className="text-[16px] leading-6 font-bold text-text md:text-[17px]">
                             {row.title}
                         </p>
-                        <p className="text-[13px] leading-5 text-text-muted">
+                        <p className="text-[15px] leading-[22px] text-text-muted">
                             {row.detail}
                         </p>
                         {row.note && (
-                            <p className="mt-1 rounded-md bg-surface-2 px-2.5 py-1.5 text-[13px] text-text">
+                            <p className="mt-1.5 rounded-control bg-surface-2 px-3 py-2 text-[15px] leading-[22px] text-text">
                                 “{row.note}”
                             </p>
                         )}

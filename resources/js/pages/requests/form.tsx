@@ -1,4 +1,6 @@
 import { Head } from '@inertiajs/react';
+import { FileText } from 'lucide-react';
+import { EmptyState } from '@/components/empty-state';
 import { RequestFormDesktop } from '@/features/requests/request-form.desktop';
 import { RequestFormMobile } from '@/features/requests/request-form.mobile';
 import { useRequestForm } from '@/features/requests/use-request-form';
@@ -42,16 +44,18 @@ export default function RequestForm({
         return (
             <>
                 <Head title="Ajukan pengajuan" />
-                <p className="rounded-lg border border-dashed border-border-strong p-8 text-center text-sm text-text-muted">
-                    Belum ada jenis pengajuan aktif. Hubungi HR.
-                </p>
+                <EmptyState
+                    icon={FileText}
+                    title="Belum ada jenis pengajuan aktif"
+                    description="Hubungi HR untuk mengaktifkan jenis cuti, izin, atau lembur."
+                />
             </>
         );
     }
 
     return (
         <>
-            <Head title={request ? 'Ubah pengajuan' : 'Ajukan pengajuan'} />
+            <Head title={request ? 'Ubah pengajuan' : 'Ajukan baru'} />
             {breakpoint === 'mobile' ? (
                 <RequestFormMobile {...shared} />
             ) : (
@@ -66,6 +70,6 @@ RequestForm.layout = {
         { title: 'Pengajuan', href: index() },
         { title: 'Ajukan baru', href: create() },
     ],
-    title: 'Ajukan pengajuan',
+    title: 'Ajukan baru',
     back: '/pengajuan',
 };
