@@ -121,7 +121,8 @@ class AuditLogController extends Controller
                 'typeLabel' => $subject?->label() ?? class_basename($log->auditable_type),
                 'id' => $log->auditable_id,
                 'name' => is_string($name) ? $name : (is_string($fallback) ? $fallback : null),
-                'deleted' => $model === null || ($model->getAttribute('deleted_at') !== null),
+                // Only soft-deletable subjects can be "deleted" (users have no deleted_at).
+                'deleted' => $model === null || (method_exists($model, 'trashed') && $model->trashed()),
             ],
             'oldValues' => $log->old_values,
             'newValues' => $log->new_values,

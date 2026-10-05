@@ -54,7 +54,7 @@ function ResultRow({
                 />
             )}
             {item.code && (
-                <span className="w-16 shrink-0 font-mono text-xs text-text-muted">
+                <span className="min-w-16 shrink-0 font-mono text-xs whitespace-nowrap text-text-muted">
                     {item.code}
                 </span>
             )}

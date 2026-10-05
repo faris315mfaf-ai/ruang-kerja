@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import { LogOut, Settings, ShieldCheck } from 'lucide-react';
 import { ThemeSegmented } from '@/components/shell/theme-segmented';
 import {
     DropdownMenuGroup,
@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user-info';
 import { logout } from '@/routes';
+import { index as privacy } from '@/routes/privacy';
 import { edit } from '@/routes/profile';
 import type { User } from '@/types';
 
@@ -43,6 +44,15 @@ export function UserMenuContent({ user }: Props) {
                     >
                         <Settings className="mr-2" />
                         Pengaturan
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link
+                        className="block w-full cursor-pointer"
+                        href={privacy()}
+                    >
+                        <ShieldCheck className="mr-2" />
+                        Privasi &amp; data saya
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>

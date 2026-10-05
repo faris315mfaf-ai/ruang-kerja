@@ -223,7 +223,7 @@ final class PersonalDashboard
             ->where('work_date', '>=', $period->startDate())
             ->where('work_date', '<', $period->endDate())
             ->orderBy('work_date')
-            ->get(['id', 'work_date', 'status', 'late_minutes', 'shift_id']);
+            ->get(['id', 'work_date', 'status', 'late_minutes', 'shift_id', 'check_in_at']);
 
         $counts = ['present' => 0, 'late' => 0, 'absent' => 0, 'away' => 0];
         $workdays = 0;
@@ -237,14 +237,16 @@ final class PersonalDashboard
                 'late_minutes' => $day->late_minutes,
             ];
 
-            if ($day->shift_id !== null && ! in_array($day->status, AttendanceDiscipline::EXCUSED, true)) {
+            // A half day / business trip with a check-in is a worked day too.
+            if ($day->shift_id !== null && (! in_array($day->status, AttendanceDiscipline::EXCUSED, true) || $day->check_in_at !== null)) {
                 $workdays++;
             }
 
             match (true) {
                 $day->status === AttendanceStatus::Late => $counts['late']++,
                 $day->status === AttendanceStatus::Absent => $counts['absent']++,
-                $day->status->comesFromRequest() => $counts['away']++,
+                // Half-day leave / business trip with a check-in: present.
+                $day->status->comesFromRequest() => $day->check_in_at === null ? $counts['away']++ : $counts['present']++,
                 $day->status->isAttended() => $counts['present']++,
                 default => null,
             };

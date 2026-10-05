@@ -18,7 +18,8 @@ return [
     | consent again before their next check-in.
     */
     'consent' => [
-        'version' => env('ATTENDANCE_CONSENT_VERSION', '1.0'),
+        // Follows the privacy policy version (config/privacy.php) unless set explicitly.
+        'version' => env('ATTENDANCE_CONSENT_VERSION', env('PRIVACY_POLICY_VERSION', '1.0')),
     ],
 
     'selfie' => [

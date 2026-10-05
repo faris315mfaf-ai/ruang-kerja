@@ -50,8 +50,9 @@ export function ConsentFooter({
                                 <DialogDescription>
                                     Anda tidak bisa check-in atau check-out
                                     dengan GPS + selfie sampai menyetujui lagi.
-                                    Data absensi yang sudah tercatat tetap
-                                    disimpan sesuai kebijakan.
+                                    HR akan diberi tahu untuk mengatur cara
+                                    absensi lain. Data absensi yang sudah
+                                    tercatat tetap disimpan sesuai kebijakan.
                                 </DialogDescription>
                             </DialogHeader>
                             <DialogFooter>

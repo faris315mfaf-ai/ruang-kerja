@@ -2,6 +2,7 @@
 
 namespace App\Domain\Organization\Actions;
 
+use App\Domain\Organization\Support\UniqueViolations;
 use App\Models\Division;
 use App\Models\Team;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +19,7 @@ final class RestoreTeam
      */
     public function handle(Team $team): Team
     {
-        return DB::transaction(function () use ($team): Team {
+        return UniqueViolations::asValidation(fn (): Team => DB::transaction(function () use ($team): Team {
             $division = Division::withTrashed()->findOrFail($team->division_id);
 
             if ($division->trashed()) {
@@ -39,6 +40,8 @@ final class RestoreTeam
             $team->restore();
 
             return $team;
-        });
+        }), [
+            'teams_division_code_unique' => ['team', "Kode {$team->code} sudah dipakai tim lain di divisi ini."],
+        ]);
     }
 }

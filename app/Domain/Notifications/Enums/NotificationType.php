@@ -26,6 +26,8 @@ enum NotificationType: string
     // Attendance (Sprint 2)
     case CheckInReminder = 'attendance.check_in_reminder';
     case CheckOutReminder = 'attendance.check_out_reminder';
+    // Privacy (Sprint 10): an employee withdrew location/selfie consent → HR.
+    case ConsentRevoked = 'attendance.consent_revoked';
 
     // Projects (Sprint 9, PRD M10)
     case ProjectUpdateReminder = 'project.update_reminder';
@@ -53,6 +55,7 @@ enum NotificationType: string
             self::RequestCanceled => 'Pengajuan dibatalkan',
             self::CheckInReminder => 'Pengingat check-in',
             self::CheckOutReminder => 'Pengingat check-out',
+            self::ConsentRevoked => 'Persetujuan data dicabut',
             self::ProjectUpdateReminder => 'Pengingat update proyek',
             self::ProjectUpdateRequested => 'Diminta update proyek',
             self::ProjectDirection => 'Arahan Direksi',
@@ -78,6 +81,8 @@ enum NotificationType: string
             self::RequestApproved, self::RequestRejected, self::RequestRevisionRequested => NotificationEvent::RequestDecided,
             self::CheckInReminder => NotificationEvent::CheckInReminder,
             self::CheckOutReminder => NotificationEvent::CheckOutReminder,
+            // Compliance notice for HR: in-app is locked on (cannot be switched off).
+            self::ConsentRevoked => NotificationEvent::System,
             self::ProjectUpdateReminder, self::ProjectUpdateRequested, self::ProjectDirection,
             self::ProjectDecisionNeeded, self::ProjectDecisionResolved => NotificationEvent::ProjectActivity,
             self::SystemAnnouncement, self::SystemTest => NotificationEvent::System,
@@ -105,6 +110,7 @@ enum NotificationType: string
             self::RequestRejected, self::RequestCanceled => 'x',
             self::RequestRevisionRequested => 'rotate',
             self::CheckInReminder, self::CheckOutReminder => 'alarm',
+            self::ConsentRevoked => 'shield',
             self::ProjectUpdateReminder => 'alarm',
             self::ProjectUpdateRequested => 'rotate',
             self::ProjectDirection => 'message',
@@ -124,7 +130,7 @@ enum NotificationType: string
             self::Mention, self::SystemTest => 'primary',
             self::RequestSubmitted, self::SystemAnnouncement => 'info',
             self::RequestApproved => 'success',
-            self::TaskDueSoon, self::RequestRevisionRequested, self::CheckInReminder, self::CheckOutReminder,
+            self::TaskDueSoon, self::RequestRevisionRequested, self::CheckInReminder, self::CheckOutReminder, self::ConsentRevoked,
             self::ProjectUpdateReminder, self::ProjectUpdateRequested => 'warning',
             self::TaskOverdue, self::RequestRejected => 'danger',
             self::ProjectDirection, self::ProjectDecisionNeeded => 'info',

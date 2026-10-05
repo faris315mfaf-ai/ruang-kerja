@@ -3,6 +3,7 @@
 use App\Domain\Search\Providers\ActionsSearchProvider;
 use App\Domain\Search\Providers\DocumentSearchProvider;
 use App\Domain\Search\Providers\PeopleSearchProvider;
+use App\Domain\Search\Providers\RequestSearchProvider;
 use App\Domain\Search\Providers\TaskSearchProvider;
 use App\Domain\Search\Providers\WorkspaceSearchProvider;
 
@@ -27,6 +28,7 @@ return [
         PeopleSearchProvider::class,
         WorkspaceSearchProvider::class,
         DocumentSearchProvider::class,
+        RequestSearchProvider::class,
     ],
 
     // Results per group when searching all groups ("Semua").

@@ -115,3 +115,43 @@ it('filters the HR dashboard by division', function () {
             ->where('attendance.counts.scheduled', 2)
             ->where('missingCheckOut.count', 0));
 });
+
+it('counts a half-day leave or business trip with a check-in as present (as the Absensi board)', function () {
+    $regular = Shift::query()->where('name', 'Reguler')->value('id');
+    F::day($this->org['kadiv'], '2026-10-07', AttendanceStatus::Leave, ['shift_id' => $regular, 'request_portion' => 'half_day', 'check_in_at' => F::at('2026-10-07 12:55')]);
+    F::day($this->org['kadivKeu'], '2026-10-07', AttendanceStatus::BusinessTrip, ['shift_id' => $regular, 'request_portion' => 'full', 'check_in_at' => F::at('2026-10-07 08:00')]);
+
+    $this->actingAs($this->org['hr'])->get('/dashboard/hr')->assertInertia(fn (Assert $page) => $page
+        ->where('attendance.counts.scheduled', 5)
+        ->where('attendance.counts.present', 4)
+        ->where('attendance.counts.away', 1)
+        ->where('attendance.counts.business_trip', 0)
+        ->where('attendance.counts.not_checked_in', 0));
+});
+
+it('offers "Tandai ditinjau" and "Koreksi" only to those allowed, and both actions work from the dashboard', function () {
+    $log = AttendanceLog::factory()->forDay($this->rizkyDay)->create(['is_suspicious' => true, 'occurred_at' => now()->subHour()]);
+
+    $this->actingAs($this->org['hr'])->get('/dashboard/hr')->assertInertia(fn (Assert $page) => $page
+        ->where('review.items.0.can_review', true)
+        ->where('missingCheckOut.items.0.can_correct', true));
+
+    // Direksi sees the HR dashboard read-only.
+    $this->actingAs($this->org['direksi'])->get('/dashboard/hr')->assertInertia(fn (Assert $page) => $page
+        ->where('review.items.0.can_review', false)
+        ->where('missingCheckOut.items.0.can_correct', false));
+
+    $this->actingAs($this->org['hr'])->from('/dashboard/hr')
+        ->post(route('attendance.logs.review', $log))
+        ->assertRedirect('/dashboard/hr');
+    expect($log->refresh()->reviewed_at)->not->toBeNull();
+
+    $this->actingAs($this->org['hr'])->from('/dashboard/hr')
+        ->post(route('attendance.corrections.store'), ['user_id' => $this->org['sari']->id, 'work_date' => '2026-10-06', 'check_out' => '14:05', 'reason' => 'Lupa check-out, dikonfirmasi atasan'])
+        ->assertRedirect('/dashboard/hr')
+        ->assertSessionHasNoErrors();
+
+    $this->actingAs($this->org['hr'])->get('/dashboard/hr')->assertInertia(fn (Assert $page) => $page
+        ->where('review.count', 0)
+        ->where('missingCheckOut.count', 0));
+});

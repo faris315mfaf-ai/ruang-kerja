@@ -1,15 +1,15 @@
 import { Link } from '@inertiajs/react';
 import { Bell, Search } from 'lucide-react';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { CheckInButton } from '@/components/shell/check-in-button';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useUnreadCount } from '@/features/notifications/unread-store';
-import { CommandPalette } from '@/features/search/command-palette';
 import {
     setCommandPaletteOpen,
     toggleCommandPalette,
+    useCommandPaletteOpen,
 } from '@/features/search/command-palette-store';
 import type { BreadcrumbItem } from '@/types';
 
@@ -20,6 +20,30 @@ type Props = {
 };
 
 const openSearch = () => setCommandPaletteOpen(true);
+
+// cmdk + the palette load on first use (⌘K or the search button), not with
+// every page (Sprint 10 performance).
+const CommandPalette = lazy(() =>
+    import('@/features/search/command-palette').then((module) => ({
+        default: module.CommandPalette,
+    })),
+);
+
+/** Mounts the palette once it was opened the first time, then keeps it. */
+function LazyCommandPalette() {
+    const open = useCommandPaletteOpen();
+    const [used, setUsed] = useState(open);
+
+    if (open && !used) {
+        setUsed(true);
+    }
+
+    return used ? (
+        <Suspense fallback={null}>
+            <CommandPalette />
+        </Suspense>
+    ) : null;
+}
 
 export function AppTopbar({ breadcrumbs, canToggleSidebar }: Props) {
     const unread = useUnreadCount();
@@ -102,7 +126,7 @@ export function AppTopbar({ breadcrumbs, canToggleSidebar }: Props) {
                 </Link>
             </Button>
 
-            <CommandPalette />
+            <LazyCommandPalette />
         </header>
     );
 }

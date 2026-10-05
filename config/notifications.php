@@ -104,6 +104,14 @@ return [
             PendingApprovalsSection::class,
             InboxActionSection::class,
         ],
+        // Notification types the generic "Perlu tindakan di Inbox" section
+        // leaves out because a richer section above already lists them
+        // (overdue tasks → TasksOverdueSection, approvals waiting for the
+        // user → PendingApprovalsSection).
+        'inbox_section_excludes' => [
+            'task.overdue',
+            'request.submitted',
+        ],
     ],
 
 ];

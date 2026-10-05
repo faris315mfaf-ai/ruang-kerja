@@ -7,6 +7,7 @@ use App\Providers\FortifyServiceProvider;
 use App\Providers\GoogleServiceProvider;
 use App\Providers\HorizonServiceProvider;
 use App\Providers\NotificationServiceProvider;
+use App\Providers\PrivacyServiceProvider;
 use App\Providers\RequestsServiceProvider;
 use App\Providers\WorkspaceServiceProvider;
 
@@ -20,4 +21,5 @@ return [
     WorkspaceServiceProvider::class,
     NotificationServiceProvider::class,
     AnalyticsServiceProvider::class,
+    PrivacyServiceProvider::class,
 ];

@@ -2,6 +2,7 @@
 
 namespace App\Domain\Organization\Actions;
 
+use App\Domain\Organization\Support\UniqueViolations;
 use App\Models\Team;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -23,7 +24,8 @@ final class SaveTeam
      */
     public function handle(array $data, ?Team $team = null): Team
     {
-        return DB::transaction(function () use ($data, $team): Team {
+        // Concurrent saves that both passed TeamRequest: the unique index decides.
+        return UniqueViolations::asValidation(fn (): Team => DB::transaction(function () use ($data, $team): Team {
             if ($team?->exists) {
                 $team = Team::query()->lockForUpdate()->findOrFail($team->id);
                 self::ensureMovable($team, $data['division_id']);
@@ -39,7 +41,9 @@ final class SaveTeam
             ])->save();
 
             return $team;
-        });
+        }), [
+            'teams_division_code_unique' => ['code', "Kode {$data['code']} sudah dipakai tim lain di divisi ini."],
+        ]);
     }
 
     /**

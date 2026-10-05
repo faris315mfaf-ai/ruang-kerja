@@ -106,23 +106,38 @@ export default function AttendancePrivacyPolicy({
                     <ul className="list-disc space-y-1 pl-5">
                         <li>
                             Melihat riwayat absensi Anda kapan saja di halaman
-                            Absensi.
+                            Absensi, dan mengunduh seluruh data Anda (Excel atau
+                            PDF) di{' '}
+                            <Link
+                                href="/privasi"
+                                className="font-medium text-primary hover:underline"
+                            >
+                                Privasi &amp; data saya
+                            </Link>
+                            .
                         </li>
-                        <li>Meminta salinan atau koreksi data kepada HR.</li>
+                        <li>Meminta koreksi data kepada HR.</li>
                         <li>
-                            Mencabut persetujuan lewat halaman Absensi atau Menu
-                            → Privasi. Setelah dicabut, check-in GPS + selfie
-                            tidak bisa dilakukan sampai Anda menyetujui lagi;
-                            hubungi HR untuk cara absensi lain.
+                            Mencabut persetujuan lewat halaman Absensi atau
+                            Privasi &amp; data saya. Setelah dicabut, check-in
+                            GPS + selfie tidak bisa dilakukan sampai Anda
+                            menyetujui lagi; HR diberi tahu untuk mengatur cara
+                            absensi lain.
                         </li>
                     </ul>
                 </Section>
 
                 <p className="border-t border-border pt-4 text-[13px] text-text-subtle">
                     Kebijakan ini mengikuti UU No. 27 Tahun 2022 tentang
-                    Pelindungan Data Pribadi. Bila teks berubah, versinya
-                    dinaikkan dan Anda diminta menyetujui ulang sebelum check-in
-                    berikutnya.
+                    Pelindungan Data Pribadi dan merupakan bagian dari{' '}
+                    <Link
+                        href="/kebijakan-privasi"
+                        className="font-medium text-primary hover:underline"
+                    >
+                        kebijakan privasi
+                    </Link>
+                    . Bila teks berubah, versinya dinaikkan dan Anda diminta
+                    menyetujui ulang sebelum check-in berikutnya.
                 </p>
             </article>
         </>

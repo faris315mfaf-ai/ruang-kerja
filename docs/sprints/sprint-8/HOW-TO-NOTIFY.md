@@ -6,7 +6,7 @@
 
 | Enum | Isi | Dipakai untuk |
 |---|---|---|
-| `App\Domain\Notifications\Enums\NotificationType` | jenis rinci: `task.assigned`, `mention`, `task.commented`, `task.due_soon`, `task.overdue`, `request.submitted`, `request.approved`, `request.rejected`, `request.revision_requested`, `attendance.check_in_reminder`, `attendance.check_out_reminder`, `system.announcement`, `system.test` | `notifications.type`, ikon & nada di Inbox, "Perlu tindakan" default |
+| `App\Domain\Notifications\Enums\NotificationType` | jenis rinci: `task.assigned`, `mention`, `task.commented`, `task.due_soon`, `task.overdue`, `request.submitted`, `request.approved`, `request.rejected`, `request.revision_requested`, `attendance.check_in_reminder`, `attendance.check_out_reminder`, `attendance.consent_revoked` (Sprint 10, ke HR; baris pengaturan `system`, in-app terkunci), `system.announcement`, `system.test` | `notifications.type`, ikon & nada di Inbox, "Perlu tindakan" default |
 | `App\Domain\Notifications\Enums\NotificationEvent` | baris matriks pengaturan (`notification_preferences.event`): `task.assigned`, `mention`, `task.commented`, `task.due_soon`, `task.overdue`, `request.pending`, `request.decided`, `attendance.check_in_reminder`, `attendance.check_out_reminder`, `system`, `digest.daily` | preferensi per kanal, kanal terkunci |
 | `NotificationChannel` | `in_app` · `email` · `whatsapp` (F2, nonaktif) | |
 | `NotificationCategory` | `task` · `request` · `attendance` · `system` | grup matriks & filter Inbox |
@@ -103,7 +103,7 @@ return new DigestSectionData(
     more: 'dan 1 tugas lainnya',
 );
 ```
-Mockup acuan tiga seksi: Tenggat hari ini (Tugas), Terlambat (Tugas, `danger`), Menunggu persetujuan Anda (Pengajuan, `avatarName` + `badge`). Setelah seksi persetujuan ada, `InboxActionSection` boleh dicabut dari config.
+Mockup acuan tiga seksi: Tenggat hari ini (Tugas), Terlambat (Tugas, `danger`), Menunggu persetujuan Anda (Pengajuan, `avatarName` + `badge`). Sprint 10: `InboxActionSection` tetap ada untuk item "Perlu tindakan" lain, tetapi melewati type yang sudah punya seksi kaya (`config/notifications.php` → `digest.inbox_section_excludes`: `task.overdue`, `request.submitted`), jadi tugas terlambat & persetujuan tidak tampil dua kali. Modul yang menambah seksi untuk type "Perlu tindakan" lain menambahkan type itu ke daftar tersebut.
 
 ## 7. Detail di Inbox desktop (opsional)
 
@@ -124,4 +124,4 @@ Implementasikan `App\Domain\Search\Contracts\SearchProvider` (`key()`, `label()`
 - Kunci ikon frontend: `resources/js/features/search/search-icon.tsx`.
 - Aksi tambahan tanpa provider baru: `config/search.php` → `actions` (title, url/route, icon, keywords, roles, quick).
 
-Bawaan: `ActionsSearchProvider` (navigasi + aksi cepat, difilter peran) dan `PeopleSearchProvider` (`User::visibleTo($viewer)->active()`, nama/email + jabatan · divisi).
+Bawaan: `ActionsSearchProvider` (navigasi + aksi cepat, difilter peran) dan `PeopleSearchProvider` (`User::visibleTo($viewer)->active()`, nama/email + jabatan · divisi). Sprint 10: `RequestSearchProvider` (grup **Pengajuan**, kunci `requests`): pengajuan milik sendiri (→ `/pengajuan/{id}`) dan yang menunggu keputusan penonton (`ApprovalQueue`, → `/persetujuan/{id}`), selalu di dalam `EmployeeRequest::visibleTo`; cari nomor, jenis, nama pemohon, alasan.

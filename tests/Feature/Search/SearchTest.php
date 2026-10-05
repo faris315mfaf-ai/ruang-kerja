@@ -193,6 +193,7 @@ it('renders the mobile search screen', function () {
                 ['key' => 'people', 'label' => 'Orang'],
                 ['key' => 'workspaces', 'label' => 'Workspace'],
                 ['key' => 'documents', 'label' => 'Dokumen'],
+                ['key' => 'requests', 'label' => 'Pengajuan'],
             ]));
 });
 

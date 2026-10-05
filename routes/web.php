@@ -8,16 +8,6 @@ Route::redirect('/', '/dashboard')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     // Mobile "Menu" tab (also reachable on desktop).
     Route::inertia('menu', 'menu')->name('menu');
-
-    // Shell entries whose modules arrive in later sprints. Each sprint replaces
-    // its entry with real routes.
-    $upcoming = [
-        'privasi' => ['privacy.index', 'Privasi & data saya'],
-    ];
-
-    foreach ($upcoming as $uri => [$name, $title]) {
-        Route::inertia($uri, 'placeholder', ['title' => $title])->name($name);
-    }
 });
 
 // Local demo login (APP_ENV=local + DEMO_LOGIN_ENABLED=true; otherwise 404).
@@ -38,3 +28,4 @@ require __DIR__.'/workspaces.php';
 require __DIR__.'/drive.php';
 require __DIR__.'/dashboard.php';
 require __DIR__.'/projects.php';
+require __DIR__.'/privacy.php';

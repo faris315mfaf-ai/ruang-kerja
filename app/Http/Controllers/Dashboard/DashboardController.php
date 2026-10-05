@@ -147,7 +147,7 @@ class DashboardController extends Controller
             'attendance' => fn (): array => $queries->today($context->people, $now),
             'review' => fn (): array => $queries->review($context->viewer, $ids, $now),
             'pending' => fn (): array => $queries->pendingHr($ids),
-            'missingCheckOut' => fn (): array => $queries->missingCheckOut($ids, $now),
+            'missingCheckOut' => fn (): array => $queries->missingCheckOut($context->viewer, $ids, $now),
             'recap' => Inertia::defer(fn (): array => $queries->recap($context->viewer, $ids, $context->filters, $now)),
         ]);
     }

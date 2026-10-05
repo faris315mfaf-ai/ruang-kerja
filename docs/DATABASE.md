@@ -248,7 +248,7 @@ Indeks `(office_location_id, is_active)`.
 ### attendance_consents
 `id`, `user_id`, `type` (`location` · `selfie` · `face`), `version` (versi teks kebijakan), `granted_at`, `revoked_at` null. Check-in ditolak bila persetujuan versi terbaru belum diberikan.
 
-Implementasi (Sprint 2): versi dari `config('attendance.consent.version')` (`ATTENDANCE_CONSENT_VERSION`). Check-in GPS + selfie butuh `location` **dan** `selfie` versi terkini yang belum dicabut. Indeks `(user_id, type, version)`.
+Implementasi (Sprint 2): versi dari `config('attendance.consent.version')` (`ATTENDANCE_CONSENT_VERSION`, sejak Sprint 10 default = `PRIVACY_POLICY_VERSION` kebijakan privasi). Check-in GPS + selfie butuh `location` **dan** `selfie` versi terkini yang belum dicabut. Indeks `(user_id, type, version)`.
 
 ---
 
@@ -293,6 +293,7 @@ CHECK: semua kolom ≥ 0 dan `entitled + carried_over − used − pending ≥ 0
 
 ### request_approvals
 `id`, `request_id`, **`round`**, `step_order` (unik per request+round), **`approver_type`**, **`approver_role`** null (salinan langkah alur saat dikirim), `approver_id` FK users null (diresolusi saat langkah aktif; null untuk langkah peran yang menunggu — siapa pun pemegang peran boleh memutus, lalu terisi), `delegated_from_id` null, `status` (**`queued`** · `waiting` · `approved` · `rejected` · `revision_requested` · `skipped`), `note`, **`activated_at`**, `decided_at`.
+Indeks: `(request_id, round, step_order)` unique, `(approver_id, status)`, `(status, approver_role)`, parsial `(delegated_from_id) WHERE delegated_from_id IS NOT NULL` (Sprint 10: visibilitas pengajuan "penyetuju ATAU pemberi delegasi").
 
 ### approval_delegations
 `id`, `delegator_id`, `delegate_id`, `starts_on`, `ends_on`, **`reason`** null. CHECK `ends_on >= starts_on` dan delegator ≠ delegate.
@@ -382,7 +383,7 @@ Indeks unik parsial: `workspaces (owner_id) WHERE type = 'personal'` (satu works
 | canceled_at | timestamptz null | |
 | search_vector | tsvector | kolom GENERATED STORED: `setweight(to_tsvector('simple', title),'A') || setweight(to_tsvector('simple', description_text),'B')`, indeks GIN. Konfigurasi `simple` karena PostgreSQL tidak punya stemmer Indonesia |
 
-Indeks: `(workspace_id, number)` unique, `(workspace_id, status_id, position)`, `(workspace_id, status_category)`, `(due_date) where status_category not in ('done','canceled')`, GIN `search_vector`. CHECK `priority BETWEEN 0 AND 4`, `number > 0`.
+Indeks: `(workspace_id, number)` unique, `(workspace_id, status_id, position)`, `(status_id, position)` (Sprint 10: kartu satu kolom tanpa filter workspace — pindah kartu, ubah/hapus kolom), `(workspace_id, status_category)`, `(due_date) where status_category not in ('done','canceled')`, GIN `search_vector`. CHECK `priority BETWEEN 0 AND 4`, `number > 0`.
 
 Kolom `position` (tasks, task_statuses, checklist_items) bertipe `varchar(100) COLLATE "C"` agar urutan lexorank = urutan byte (`App\Domain\Tasks\Services\Lexorank`, base-62, kolom diseimbangkan ulang bila kunci > 40 karakter). Lifecycle: `started_at` diisi saat pertama kali masuk kategori `in_progress` **atau `review`**; `completed_at` diisi saat masuk `done` dan dikosongkan saat keluar; `canceled_at` sama untuk `canceled`. Mengubah kategori sebuah kolom menyinkronkan semua tugas di kolom itu.
 
@@ -445,7 +446,7 @@ Implementasi (Sprint 6): `name` varchar(60), CHECK `layout`, `filters` default `
 Indeks: `(workspace_id, parent_google_id)`, `(workspace_id, kind)`.
 
 ### attachments — tautan polimorfik
-`id`, `attachable_type`/`attachable_id` (morph ULID: task, comment, request, message; FQCN karena tanpa morph map), `source` (`drive` · `storage`), `drive_file_id` FK null (`nullOnDelete`), `storage_path` null, `filename`, `mime_type`, `size_bytes` null, `uploaded_by` FK users null (`nullOnDelete`), timestamps, `deleted_at` (soft delete = lepas lampiran; file Drive tidak dihapus). Selalu dimuat lewat induk yang sudah diotorisasi (`$task->attachments`, `$comment->attachments`). Hak: lihat = `view` induk, tambah/lepas = `update` induk (tugas: bisa mengedit tugas; komentar: penulisnya). Komentar terhapus (soft) menyembunyikan lampirannya (induk tidak ter-resolve → 404).
+`id`, `attachable_type`/`attachable_id` (morph ULID: task, comment, request, message; FQCN karena tanpa morph map), `source` (`drive` · `storage`), `drive_file_id` FK null (`nullOnDelete`), `storage_path` null, `filename`, `mime_type`, `size_bytes` null, `uploaded_by` FK users null (`nullOnDelete`), timestamps, `deleted_at` (soft delete = lepas lampiran; file Drive tidak dihapus). Selalu dimuat lewat induk yang sudah diotorisasi (`$task->attachments`, `$comment->attachments`). Hak: lihat = `view` induk, tambah/lepas = `update` induk (tugas: bisa mengedit tugas; komentar: penulisnya). Komentar terhapus (soft) menyembunyikan lampirannya (induk tidak ter-resolve → 404). Indeks `(attachable_type, attachable_id)` dan parsial `(drive_file_id) WHERE drive_file_id IS NOT NULL` (Sprint 10: "Dipakai di tugas" di tab File).
 
 ---
 

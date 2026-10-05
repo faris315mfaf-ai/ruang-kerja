@@ -2,8 +2,7 @@
 
 namespace App\Domain\Projects\Queries;
 
-use App\Domain\Attendance\Enums\AttendanceStatus;
-use App\Domain\Attendance\Models\AttendanceDay;
+use App\Domain\Analytics\Services\TodayAttendance;
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Projects\Data\PortfolioFilters;
 use App\Domain\Projects\Data\ProjectMetricsData;
@@ -19,7 +18,6 @@ use App\Models\ProjectUpdate;
 use App\Models\User;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
@@ -38,7 +36,10 @@ final class PortfolioDashboard
 
     public const int FEED_SIZE = 6;
 
-    public function __construct(private readonly ProjectMetrics $metrics) {}
+    public function __construct(
+        private readonly ProjectMetrics $metrics,
+        private readonly TodayAttendance $todayAttendance,
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -117,7 +118,7 @@ final class PortfolioDashboard
             'decisions' => $this->decisions($openIds, $open, $canSteer),
             'attention' => $this->attention($open, $metrics, $viewer),
             'feed' => $this->feed($openIds, $open),
-            'attendance' => $canSteer ? $this->attendance($viewer, $today) : null,
+            'attendance' => $canSteer ? $this->attendance($viewer, CarbonImmutable::now()) : null,
         ];
     }
 
@@ -360,28 +361,28 @@ final class PortfolioDashboard
 
     /**
      * The ONE attendance widget (hadir / cuti-izin / belum check-in today),
-     * linking to Dashboard HR. Company-wide, active employees.
+     * linking to Dashboard HR. Company-wide, active employees who are
+     * scheduled today (bulk ScheduleSnapshot via TodayAttendance — the same
+     * numbers as Dashboard HR): "belum check-in" only counts people whose shift
+     * makes today a work day.
      *
      * @return array{present: int, total: int, on_leave: int, not_checked_in: int}
      */
-    private function attendance(User $viewer, CarbonImmutable $today): array
+    private function attendance(User $viewer, CarbonImmutable $now): array
     {
-        $total = User::query()->active()->where('company_id', $viewer->company_id)->count();
+        $users = User::query()
+            ->active()
+            ->where('company_id', $viewer->company_id)
+            ->with('division:id,name')
+            ->get(['id', 'name', 'avatar_url', 'company_id', 'division_id']);
 
-        $days = AttendanceDay::query()
-            ->whereDate('work_date', $today->toDateString())
-            ->whereHas('user', fn (Builder $query) => $query->active()->where('company_id', $viewer->company_id))
-            ->get(['id', 'user_id', 'status', 'check_in_at', 'shift_id']);
-
-        $present = $days->filter(fn (AttendanceDay $day): bool => $day->check_in_at !== null)->count();
-        $onLeave = $days->filter(fn (AttendanceDay $day): bool => $day->check_in_at === null && $day->status->comesFromRequest())->count();
-        $off = $days->filter(fn (AttendanceDay $day): bool => $day->check_in_at === null && $day->status === AttendanceStatus::Holiday)->count();
+        $counts = $this->todayAttendance->for($users, $now)['counts'];
 
         return [
-            'present' => $present,
-            'total' => $total,
-            'on_leave' => $onLeave,
-            'not_checked_in' => max(0, $total - $present - $onLeave - $off),
+            'present' => $counts['present'],
+            'total' => $counts['scheduled'],
+            'on_leave' => $counts['away'],
+            'not_checked_in' => $counts['not_checked_in'],
         ];
     }
 }

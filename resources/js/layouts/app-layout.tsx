@@ -1,8 +1,8 @@
+import { lazy, Suspense } from 'react';
 import type { ReactNode } from 'react';
 import { AppShellSkeleton } from '@/components/shell/app-shell-skeleton';
 import { NotificationListener } from '@/features/notifications/notification-listener';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
-import DesktopLayout from '@/layouts/app/desktop-layout';
 import MobileLayout from '@/layouts/app/mobile-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -18,6 +18,20 @@ export type AppLayoutProps = {
     /** Mobile app bar actions replacing search + bell (self-contained element). */
     appBarActions?: ReactNode;
 };
+
+const loadDesktopLayout = () => import('@/layouts/app/desktop-layout');
+
+// The desktop/tablet shell (sidebar, topbar, menus) is its own chunk so phones
+// never download it (Lighthouse "Absensi" on mobile, Sprint 10). Wide screens
+// start fetching it immediately, in parallel with the page.
+const DesktopLayout = lazy(loadDesktopLayout);
+
+if (
+    typeof window !== 'undefined' &&
+    window.matchMedia('(min-width: 768px)').matches
+) {
+    void loadDesktopLayout();
+}
 
 /**
  * Picks the shell by viewport width, never by user agent (docs/PLATFORM.md §1).
@@ -52,12 +66,14 @@ export default function AppLayout({
     }
 
     return (
-        <DesktopLayout
-            breadcrumbs={breadcrumbs}
-            isTablet={breakpoint === 'tablet'}
-        >
-            <NotificationListener />
-            {children}
-        </DesktopLayout>
+        <Suspense fallback={<AppShellSkeleton />}>
+            <DesktopLayout
+                breadcrumbs={breadcrumbs}
+                isTablet={breakpoint === 'tablet'}
+            >
+                <NotificationListener />
+                {children}
+            </DesktopLayout>
+        </Suspense>
     );
 }

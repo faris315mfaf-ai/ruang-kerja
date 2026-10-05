@@ -2,6 +2,7 @@
 
 namespace App\Domain\Organization\Actions;
 
+use App\Domain\Organization\Support\UniqueViolations;
 use App\Models\Division;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -18,7 +19,7 @@ final class RestoreDivision
      */
     public function handle(Division $division): Division
     {
-        return DB::transaction(function () use ($division): Division {
+        return UniqueViolations::asValidation(fn (): Division => DB::transaction(function () use ($division): Division {
             if ($division->is_board && Division::query()
                 ->where('company_id', $division->company_id)
                 ->where('is_board', true)
@@ -35,6 +36,8 @@ final class RestoreDivision
             $division->restore();
 
             return $division;
-        });
+        }), [
+            'divisions_one_board_per_company_unique' => ['division', 'Sudah ada unit Direksi aktif. Hapus atau ubah unit tersebut terlebih dahulu.'],
+        ]);
     }
 }

@@ -5,15 +5,15 @@ namespace App\Domain\Notifications\Digest\Sections;
 use App\Domain\Notifications\Digest\Contracts\DigestSection;
 use App\Domain\Notifications\Digest\Data\DigestItem;
 use App\Domain\Notifications\Digest\Data\DigestSectionData;
-use App\Domain\Notifications\Enums\NotificationType;
 use App\Models\InboxNotification;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 
 /**
  * Built-in section: unresolved "Perlu tindakan" items in the Inbox. Works for
- * every module that sends action-required notifications, until modules add
- * richer sections (tasks due today, overdue, pending approvals).
+ * every module that sends action-required notifications; types covered by a
+ * richer section (overdue tasks, pending approvals) are excluded so nothing
+ * is listed twice (config notifications.digest.inbox_section_excludes).
  */
 final class InboxActionSection implements DigestSection
 {
@@ -21,9 +21,15 @@ final class InboxActionSection implements DigestSection
 
     public function build(User $user, CarbonImmutable $date): ?DigestSectionData
     {
-        // Kinds with their own section: overdue tasks (TasksOverdueSection), pending approvals (PendingApprovalsSection).
-        $query = InboxNotification::query()->visibleTo($user)->needsAction()
-            ->whereNotIn('type', [NotificationType::TaskOverdue->value, NotificationType::RequestSubmitted->value]);
+        // Types with a dedicated section (config notifications.digest.inbox_section_excludes)
+        // are not repeated here, e.g. approvals → "Menunggu persetujuan Anda".
+        $query = InboxNotification::query()
+            ->visibleTo($user)
+            ->needsAction()
+            ->whereNotIn('type', array_values(array_filter(
+                (array) config('notifications.digest.inbox_section_excludes', []),
+                is_string(...),
+            )));
         $count = (clone $query)->count();
 
         if ($count === 0) {

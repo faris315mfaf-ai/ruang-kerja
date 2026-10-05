@@ -70,14 +70,3 @@ it('shares the organization of the signed-in user', function () {
             ->missing('auth.user.roles'),
         );
 });
-
-it('titles placeholder pages in Indonesian', function () {
-    $user = User::factory()->create();
-
-    $this->actingAs($user)
-        ->get('/privasi')
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('placeholder')
-            ->where('title', 'Privasi & data saya'),
-        );
-});

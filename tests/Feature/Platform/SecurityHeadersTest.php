@@ -59,6 +59,12 @@ it('allows the Google domains the app needs', function () {
         ->and($csp['form-action'])->toContain('https://accounts.google.com');
 });
 
+it('allows the OpenStreetMap tiles of the attendance maps', function () {
+    $csp = cspDirectives((string) $this->get('/login')->headers->get('Content-Security-Policy'));
+
+    expect($csp['img-src'])->toContain('https://tile.openstreetmap.org');
+});
+
 it('allows the browser-facing Reverb WebSocket endpoint', function () {
     config([
         'security.csp.reverb.host' => 'ruangkerja.example.com',
