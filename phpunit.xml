@@ -18,6 +18,9 @@
         </include>
     </source>
     <php>
+        <!-- Herd CLI defaults to 128M; long-lived parallel workers plus zipstream's 16 MB
+             read buffer (Excel exports) can exceed it. Production uses 256M (docker/app/php.ini). -->
+        <ini name="memory_limit" value="512M"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
