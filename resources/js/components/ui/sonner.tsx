@@ -13,6 +13,10 @@ function Toaster({ ...props }: ToasterProps) {
             className="toaster group"
             position="bottom-right"
             containerAriaLabel="Notifikasi"
+            offset={{ bottom: 'var(--toast-offset-bottom, 24px)' }}
+            mobileOffset={{
+                bottom: 'var(--toast-offset-bottom, 16px)',
+            }}
             toastOptions={{ closeButtonAriaLabel: 'Tutup notifikasi' }}
             style={
                 {

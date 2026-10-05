@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
     BarChart3,
+    BookOpen,
     Building2,
     ClipboardCheck,
     CheckCheck,
@@ -34,7 +35,7 @@ export type AppNavItem = {
     desktopOnly?: boolean;
 };
 
-/** Desktop sidebar: main navigation (docs/DESIGN.md §5). */
+/** Desktop Dock main tiles (docs/DESIGN.md §5); the mobile tab bar has its own list. */
 export const mainNavItems: AppNavItem[] = [
     { title: 'Inbox', href: '/inbox', icon: Inbox, matchPrefix: true },
     {
@@ -63,13 +64,52 @@ export const mainNavItems: AppNavItem[] = [
         matchPrefix: true,
         badge: 'approvals',
     },
-    {
-        title: 'Struktur organisasi',
-        href: '/organisasi/struktur',
-        icon: Network,
-        matchPrefix: true,
-    },
 ];
+
+/** Org chart: every role (mobile Menu row, first entry of the Dock "Organisasi" stack). */
+export const orgChartNavItem: AppNavItem = {
+    title: 'Struktur organisasi',
+    href: '/organisasi/struktur',
+    icon: Network,
+    matchPrefix: true,
+};
+
+/**
+ * Everything about the organization in one place (Dock "Organisasi" stack):
+ * the org chart for everyone, the organization admin for HR & Super Admin and
+ * the employee list (Kepala Divisi sees it as "Anggota divisi"). Each
+ * destination lives here only, never in {@link adminNavItems} as well.
+ */
+export function organizationNavItems(roles: readonly string[]): AppNavItem[] {
+    const items: AppNavItem[] = [orgChartNavItem];
+
+    if (hasAnyRole(roles, 'super_admin', 'hr')) {
+        items.push(
+            {
+                title: 'Kelola organisasi',
+                href: '/admin/organisasi',
+                icon: Building2,
+                matchPrefix: true,
+                desktopOnly: true,
+            },
+            {
+                title: 'Karyawan',
+                href: '/admin/karyawan',
+                icon: Users,
+                matchPrefix: true,
+            },
+        );
+    } else if (hasAnyRole(roles, 'kepala_divisi' satisfies RoleName)) {
+        items.push({
+            title: 'Anggota divisi',
+            href: '/admin/karyawan',
+            icon: Users,
+            matchPrefix: true,
+        });
+    }
+
+    return items;
+}
 
 /** "Portofolio" (Dashboard Direksi, Sprint 9) for Direksi and Super Admin. */
 export const portfolioNavItem: AppNavItem = {
@@ -106,6 +146,11 @@ export const tabNavItems: AppNavItem[] = [
     { title: 'Menu', href: '/menu', icon: Menu },
 ];
 
+/** Index of the tab owning the current URL, or -1 (e.g. /persetujuan). */
+export function activeTabIndex(currentPath: string): number {
+    return tabNavItems.findIndex((item) => isActivePath(item, currentPath));
+}
+
 /**
  * Team attendance (Sprint 3): live board for HR, Direksi, Super Admin and
  * Kepala Divisi; the monthly recap & export is desktop only.
@@ -130,35 +175,12 @@ export function attendanceNavItems(roles: readonly string[]): AppNavItem[] {
     ];
 }
 
-/** Admin entries depend on global roles. */
+/**
+ * Admin entries depend on global roles. Organization screens (org admin,
+ * employees) live in {@link organizationNavItems} instead.
+ */
 export function adminNavItems(roles: readonly string[]): AppNavItem[] {
     const items: AppNavItem[] = [];
-
-    if (hasAnyRole(roles, 'super_admin', 'hr')) {
-        items.push({
-            title: 'Karyawan',
-            href: '/admin/karyawan',
-            icon: Users,
-            matchPrefix: true,
-        });
-    } else if (hasAnyRole(roles, 'kepala_divisi' satisfies RoleName)) {
-        items.push({
-            title: 'Anggota divisi',
-            href: '/admin/karyawan',
-            icon: Users,
-            matchPrefix: true,
-        });
-    }
-
-    if (hasAnyRole(roles, 'super_admin', 'hr')) {
-        items.push({
-            title: 'Organisasi',
-            href: '/admin/organisasi',
-            icon: Building2,
-            matchPrefix: true,
-            desktopOnly: true,
-        });
-    }
 
     if (hasAnyRole(roles, 'super_admin', 'hr')) {
         items.push({
@@ -197,6 +219,16 @@ export function adminNavItems(roles: readonly string[]): AppNavItem[] {
                 desktopOnly: true,
             },
         );
+    }
+
+    if (hasAnyRole(roles, 'super_admin')) {
+        items.push({
+            title: 'Dokumentasi',
+            href: '/admin/dokumentasi',
+            icon: BookOpen,
+            matchPrefix: true,
+            desktopOnly: true,
+        });
     }
 
     return items;

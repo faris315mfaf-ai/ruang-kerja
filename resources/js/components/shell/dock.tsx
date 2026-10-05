@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
-import { Layers, Settings2 } from 'lucide-react';
+import { Layers, Network, Settings2 } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { forwardRef } from 'react';
 import {
@@ -26,6 +26,7 @@ import {
     attendanceNavItems,
     isActivePath,
     mainNavItemsFor,
+    organizationNavItems,
 } from '@/lib/navigation';
 import type { PaletteColor } from '@/lib/palette';
 import { isPaletteColor, palette } from '@/lib/palette';
@@ -343,7 +344,8 @@ function StackIcon({
                 palette(color).bg,
             )}
         >
-            <Icon className="size-[18px]" strokeWidth={1.9} />
+            {/* Explicit colour: menu items mute icons without a text-* class. */}
+            <Icon className="size-[18px] text-on-brand" strokeWidth={1.9} />
         </span>
     );
 }
@@ -416,16 +418,22 @@ export function Dock({ magnify }: { magnify: boolean }) {
         icon: <StackIcon icon={Layers} color="slate" />,
     });
 
-    const adminEntries: StackEntry[] = [
-        ...attendanceNavItems(auth.roles),
-        ...adminNavItems(auth.roles),
-    ].map((item) => ({
-        key: item.href + item.title,
-        label: item.title,
-        href: item.href,
-        active: isActivePath(item, currentUrl),
-        icon: <StackIcon icon={item.icon} color="gray" />,
-    }));
+    const toEntries = (items: AppNavItem[], color: PaletteColor) =>
+        items.map((item): StackEntry => ({
+            key: item.href + item.title,
+            label: item.title,
+            href: item.href,
+            active: isActivePath(item, currentUrl),
+            icon: <StackIcon icon={item.icon} color={color} />,
+        }));
+    const adminEntries = toEntries(
+        [...attendanceNavItems(auth.roles), ...adminNavItems(auth.roles)],
+        'gray',
+    );
+    // A one-item stack is just a detour: roles that only see the org chart
+    // get it as a plain tile instead.
+    const organization = organizationNavItems(auth.roles);
+    const tiles = organization.length > 1 ? main : [...main, ...organization];
 
     return (
         <nav
@@ -437,7 +445,7 @@ export function Dock({ magnify }: { magnify: boolean }) {
                 onPointerLeave={onPointerLeave}
                 className="glass pointer-events-auto flex h-[calc(var(--dock-tile)+2*var(--dock-pad))] items-end gap-1.5 rounded-[22px] px-(--dock-pad) pb-(--dock-pad) shadow-(--dock-shadow)"
             >
-                {main.map((item) => {
+                {tiles.map((item) => {
                     const look = LOOKS[item.href] ?? DEFAULT_LOOK;
 
                     return (
@@ -456,6 +464,18 @@ export function Dock({ magnify }: { magnify: boolean }) {
                         </li>
                     );
                 })}
+
+                {organization.length > 1 && (
+                    <DockStack
+                        id="stack-organization"
+                        label="Organisasi"
+                        icon={Network}
+                        color="slate"
+                        motion={{ name: 'dock-breathe', duration: '2.2s' }}
+                        entries={toEntries(organization, 'slate')}
+                        register={register}
+                    />
+                )}
 
                 {(favourites.length > 0 || workspaceEntries.length > 0) && (
                     <Separator />
