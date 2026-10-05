@@ -1,37 +1,50 @@
 import { Link } from '@inertiajs/react';
 import { BrandMark } from '@/components/shell/brand-mark';
+import { authLinkClass } from '@/features/auth/parts';
+import { focusRing, cn } from '@/lib/utils';
 import { home } from '@/routes';
+import { policy as privacy } from '@/routes/privacy';
 import type { AuthLayoutProps } from '@/types';
 
+/**
+ * Card layout of the secondary auth screens (forgot/reset password, TOTP
+ * challenge, confirm password, verify email): the DLogin sign-in column as a
+ * card on the page background with the two corner glows.
+ */
 export default function AuthSimpleLayout({
     children,
     title,
     description,
 }: AuthLayoutProps) {
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-            <div className="w-full max-w-sm">
-                <div className="flex flex-col gap-8">
-                    <div className="flex flex-col items-center gap-4">
-                        <Link
-                            href={home()}
-                            className="flex flex-col items-center gap-2 rounded-md font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                        >
-                            <BrandMark size="md" />
-                            <span className="sr-only">{title}</span>
-                        </Link>
+        <div className="flex min-h-svh flex-col items-center bg-page px-4 py-10 text-text md:justify-center md:px-10 md:py-14">
+            <div className="flex w-full max-w-[440px] flex-col gap-6">
+                <Link
+                    href={home()}
+                    aria-label="Beranda"
+                    className={cn('self-start rounded-control', focusRing)}
+                >
+                    <BrandMark withName />
+                </Link>
 
-                        <div className="space-y-2 text-center">
-                            <h1 className="text-xl font-semibold text-text">
-                                {title}
-                            </h1>
-                            <p className="text-center text-sm text-muted-foreground">
+                <main className="flex flex-col gap-7 rounded-panel border border-border bg-surface p-6 shadow-card md:p-8">
+                    <div className="flex flex-col gap-2.5">
+                        <h1 className="text-h2">{title}</h1>
+                        {description && (
+                            <p className="text-body text-text-muted">
                                 {description}
                             </p>
-                        </div>
+                        )}
                     </div>
                     {children}
-                </div>
+                </main>
+
+                <Link
+                    href={privacy()}
+                    className={cn(authLinkClass, 'self-center')}
+                >
+                    Kebijakan privasi
+                </Link>
             </div>
         </div>
     );

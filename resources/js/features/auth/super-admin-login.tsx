@@ -12,7 +12,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { cn, focusRing } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { authLinkClass } from './parts';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 
@@ -24,12 +25,6 @@ type Props = {
     aside?: ReactNode;
     className?: string;
 };
-
-/** Teal 15px text link with a 44px hit area (DLogin footer row). */
-export const loginLinkClass = cn(
-    '-mx-1 inline-flex min-h-control items-center gap-1.5 rounded-sm px-1 text-label font-semibold text-link transition-opacity duration-120 ease-brand hover:opacity-80',
-    focusRing,
-);
 
 /**
  * Emergency sign-in (DLogin "Masuk sebagai Super Admin"): email + password,
@@ -52,7 +47,7 @@ export function SuperAdminLogin({
                 <CollapsibleTrigger asChild>
                     <button
                         type="button"
-                        className={loginLinkClass}
+                        className={authLinkClass}
                         data-test="super-admin-toggle"
                     >
                         Masuk sebagai Super Admin
@@ -106,7 +101,7 @@ export function SuperAdminLogin({
                                         <Link
                                             href={request()}
                                             className={cn(
-                                                loginLinkClass,
+                                                authLinkClass,
                                                 '-my-2 ml-auto',
                                             )}
                                         >

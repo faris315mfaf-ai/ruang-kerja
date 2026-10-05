@@ -10,10 +10,8 @@ import {
     LoginMobileHero,
     MOBILE_LOGIN_BACKGROUND,
 } from '@/features/auth/login-mobile-hero';
-import {
-    loginLinkClass,
-    SuperAdminLogin,
-} from '@/features/auth/super-admin-login';
+import { AuthStatus, authLinkClass } from '@/features/auth/parts';
+import { SuperAdminLogin } from '@/features/auth/super-admin-login';
 import type { DemoAccount, GoogleLoginState } from '@/features/auth/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { policy as privacy } from '@/routes/privacy';
@@ -67,14 +65,7 @@ export default function Login({
                 />
             )}
 
-            {status && (
-                <p
-                    role="status"
-                    className="rounded-lg bg-success-soft px-4 py-3.5 text-label text-success"
-                >
-                    {status}
-                </p>
-            )}
+            {status && <AuthStatus>{status}</AuthStatus>}
 
             {demoAccounts.length > 0 && (
                 <>
@@ -95,7 +86,7 @@ export default function Login({
                 onOpenChange={setSuperAdminOpen}
                 canResetPassword={canResetPassword}
                 aside={
-                    <Link href={privacy()} className={loginLinkClass}>
+                    <Link href={privacy()} className={authLinkClass}>
                         Kebijakan privasi
                     </Link>
                 }

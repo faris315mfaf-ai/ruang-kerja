@@ -13,8 +13,8 @@ export default function ConfirmPassword() {
 
             <Form {...store.form()} resetOnSuccess={['password']}>
                 {({ processing, errors }) => (
-                    <div className="space-y-6">
-                        <div className="grid gap-2">
+                    <div className="flex flex-col gap-6">
+                        <div className="flex flex-col gap-2">
                             <Label htmlFor="password">Kata sandi</Label>
                             <PasswordInput
                                 id="password"
@@ -22,21 +22,23 @@ export default function ConfirmPassword() {
                                 placeholder="Kata sandi"
                                 autoComplete="current-password"
                                 autoFocus
+                                aria-invalid={
+                                    errors.password ? true : undefined
+                                }
                             />
 
                             <InputError message={errors.password} />
                         </div>
 
-                        <div className="flex items-center">
-                            <Button
-                                className="w-full"
-                                disabled={processing}
-                                data-test="confirm-password-button"
-                            >
-                                {processing && <Spinner />}
-                                Konfirmasi kata sandi
-                            </Button>
-                        </div>
+                        <Button
+                            size="lg"
+                            className="w-full"
+                            disabled={processing}
+                            data-test="confirm-password-button"
+                        >
+                            {processing && <Spinner />}
+                            Konfirmasi kata sandi
+                        </Button>
                     </div>
                 )}
             </Form>
