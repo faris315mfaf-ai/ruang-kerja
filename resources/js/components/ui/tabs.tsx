@@ -149,10 +149,16 @@ export function TabNav({
     label,
     items,
     className,
+    prefetch = true,
+    preserveScroll = false,
 }: {
     label: string;
     items: TabNavItem[];
     className?: string;
+    /** Inertia link prefetch (on hover) — on by default. */
+    prefetch?: boolean;
+    /** Keep the scroll position when switching tabs (workspace tabs). */
+    preserveScroll?: boolean;
 }) {
     return (
         <nav
@@ -166,7 +172,8 @@ export function TabNav({
                 <Link
                     key={item.href}
                     href={item.href}
-                    prefetch
+                    prefetch={prefetch}
+                    preserveScroll={preserveScroll}
                     aria-current={item.active ? 'page' : undefined}
                     className={cn(
                         '-mb-px inline-flex shrink-0 items-center gap-1.5 border-b-[3px] px-0.5 pt-1 pb-3 text-[16px] whitespace-nowrap transition-colors duration-120 ease-brand outline-none focus-visible:rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring',

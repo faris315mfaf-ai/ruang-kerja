@@ -180,6 +180,7 @@ export function WorkspaceShell({
                 <TabNav
                     label="Bagian workspace"
                     items={tabs}
+                    preserveScroll
                     className={cn(
                         'min-w-0 border-b-0',
                         mobile
