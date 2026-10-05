@@ -3,13 +3,15 @@
 namespace App\Domain\Workspaces\Support;
 
 use App\Domain\Workspaces\Contracts\HasWorkspaceAttachments;
+use App\Models\Comment;
 use App\Models\Task;
 use Illuminate\Database\Eloquent\Model;
 
 /**
  * URL aliases of models that accept attachments: /lampiran/{type}/{id}.
- * Sprint 6 adds `'comment' => Comment::class` (Comment must implement
- * HasWorkspaceAttachments and have a policy with view/update).
+ * Each model implements HasWorkspaceAttachments and has a policy with
+ * view/update (comments: update = author). Soft-deleted parents are not
+ * found (→ 404), so a deleted comment hides its attachments.
  */
 final class AttachableTypes
 {
@@ -18,6 +20,7 @@ final class AttachableTypes
      */
     public const array MAP = [
         'task' => Task::class,
+        'comment' => Comment::class,
     ];
 
     /**

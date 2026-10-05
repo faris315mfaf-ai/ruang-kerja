@@ -131,7 +131,7 @@ describe('AttachmentPolicy', function () {
             'delete' => $gate->allows('delete', $target),
         ])->toBe($expected);
     })->with([
-        'uploader (viewer of the task)' => ['uploader', ['view' => true, 'create' => false, 'delete' => true]],
+        'uploader who cannot edit the task' => ['uploader', ['view' => true, 'create' => false, 'delete' => false]],
         'member who can edit the task' => ['member', ['view' => true, 'create' => true, 'delete' => true]],
         'viewer who did not upload' => ['viewer', ['view' => true, 'create' => false, 'delete' => false]],
         'super admin outside the task' => ['outsider', ['view' => false, 'create' => false, 'delete' => false]],

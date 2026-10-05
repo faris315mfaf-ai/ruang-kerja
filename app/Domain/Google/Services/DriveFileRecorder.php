@@ -4,6 +4,7 @@ namespace App\Domain\Google\Services;
 
 use App\Domain\Google\Data\DriveItem;
 use App\Domain\Google\Enums\AttachmentSource;
+use App\Domain\Google\Events\AttachmentAdded;
 use App\Models\Attachment;
 use App\Models\DriveFile;
 use App\Models\User;
@@ -32,10 +33,11 @@ final class DriveFileRecorder
 
     /**
      * Links a Drive file to a task/comment/request (idempotent per parent).
+     * A new link dispatches AttachmentAdded (after commit).
      */
     public function attach(DriveFile $file, Model $attachable, ?User $by = null): Attachment
     {
-        return Attachment::query()->firstOrCreate([
+        $attachment = Attachment::query()->firstOrCreate([
             'attachable_type' => $attachable->getMorphClass(),
             'attachable_id' => $attachable->getKey(),
             'drive_file_id' => $file->id,
@@ -46,6 +48,13 @@ final class DriveFileRecorder
             'size_bytes' => $file->size_bytes,
             'uploaded_by' => $by?->id,
         ]);
+
+        if ($attachment->wasRecentlyCreated) {
+            $attachment->setRelation('attachable', $attachable);
+            AttachmentAdded::dispatch($attachment, $by?->id);
+        }
+
+        return $attachment;
     }
 
     private function write(DriveItem $item, string $workspaceId, ?User $addedBy, ?string $parentId): DriveFile

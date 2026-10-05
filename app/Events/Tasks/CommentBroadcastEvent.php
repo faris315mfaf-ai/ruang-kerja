@@ -45,7 +45,7 @@ abstract class CommentBroadcastEvent implements ShouldBroadcast, ShouldDispatchA
      */
     public function broadcastWith(): array
     {
-        $comment = Comment::withTrashed()->with(['author', 'reactions.user'])->find($this->comment->id) ?? $this->comment;
+        $comment = Comment::withTrashed()->with(CommentResource::RELATIONS)->find($this->comment->id) ?? $this->comment;
 
         return [
             'task_id' => $this->task->id,
