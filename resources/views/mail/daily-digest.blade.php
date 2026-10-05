@@ -3,8 +3,8 @@
 @php
     /** @var \App\Domain\Notifications\Digest\Data\DailyDigest $digest */
     $c = [
-        'text' => '#0B1A2B', 'muted' => '#46576B', 'border' => '#DDE4EC', 'surface' => '#FFFFFF',
-        'primary' => '#0B7F86', 'danger' => '#C42137', 'dangerBg' => '#FDE7EA', 'dangerBorder' => '#F3C4C4',
+        'text' => '#0B1A2B', 'muted' => '#46576B', 'border' => '#DDE4EC', 'divider' => '#EEF2F7', 'surface' => '#FFFFFF',
+        'link' => '#09656E', 'danger' => '#C42137', 'dangerBg' => '#FDE7EA', 'dangerBorder' => '#F6C7CE',
     ];
     $badge = [
         'neutral' => ['#EEF2F7', '#46576B'],
@@ -12,9 +12,10 @@
         'warning' => ['#FFF1DC', '#9A5800'],
         'danger' => ['#FDE7EA', '#C42137'],
         'success' => ['#E3F6EE', '#0F7A55'],
-        'primary' => ['#E8FBF8', '#0B7F86'],
+        'primary' => ['#E8FBF8', '#09656E'],
     ];
-    $avatarColors = ['#7A4E6A', '#5B6B2E', '#3E4C8A', '#0A6C70', '#8A5A2B', '#4B5563'];
+    // Avatar tones (Komponen "Avatar"): background + text pairs.
+    $avatarColors = [['#D9E6FF', '#1A4CB0'], ['#C8F4EE', '#0A4E57'], ['#FFF1DC', '#9A5800']];
     $initials = fn (string $name): string => \Illuminate\Support\Str::of($name)->explode(' ')->filter()->take(2)->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))->implode('');
     $tiles = array_slice($digest->sections, 0, 3);
 @endphp
@@ -22,22 +23,22 @@
 @section('title', 'Ringkasan harian · '.$dateLabel)
 @section('preview', $greeting.', '.$firstName.'. Ini ringkasan '.$dateLabel.'.')
 @section('preheader')
-    Ringkasan harian · {{ $dateLabel }} · <a href="{{ $browserUrl }}" style="color:#0B7F86;">Lihat di browser</a>
+    Ringkasan harian · {{ $dateLabel }} · <a href="{{ $browserUrl }}" style="color:#09656E;font-weight:700;">Lihat di browser</a>
 @endsection
 
 @section('content')
-    <h1 style="margin:0 0 4px;font-size:22px;line-height:30px;font-weight:600;color:{{ $c['text'] }};">{{ $greeting }}, {{ $firstName }}.</h1>
-    <p style="margin:0 0 20px;font-size:14px;line-height:20px;color:{{ $c['muted'] }};">Ini ringkasan {{ $dateLabel }}.</p>
+    <h1 style="margin:0 0 6px;font-size:26px;line-height:34px;font-weight:800;letter-spacing:-0.015em;color:{{ $c['text'] }};">{{ $greeting }}, {{ $firstName }}.</h1>
+    <p style="margin:0 0 24px;font-size:16px;line-height:24px;color:{{ $c['muted'] }};">Ini ringkasan {{ $dateLabel }}.</p>
 
     {{-- KPI tiles --}}
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;">
         <tr>
             @foreach ($tiles as $tile)
                 @php $danger = $tile->tone === 'danger'; @endphp
-                <td class="rk-stat" width="{{ floor(100 / max(count($tiles), 1)) }}%" style="padding:{{ $loop->first ? '0 4px 0 0' : ($loop->last ? '0 0 0 4px' : '0 4px') }};vertical-align:top;">
-                    <div style="border:1px solid {{ $danger ? $c['dangerBorder'] : $c['border'] }};background:{{ $danger ? $c['dangerBg'] : $c['surface'] }};border-radius:8px;padding:12px 12px 10px;">
-                        <div style="font-size:12px;line-height:16px;color:{{ $danger ? $c['danger'] : $c['muted'] }};">{{ $tile->tileLabel }}</div>
-                        <div style="margin-top:6px;font-size:24px;line-height:30px;font-weight:600;color:{{ $danger ? $c['danger'] : $c['text'] }};">{{ $tile->count }}</div>
+                <td class="rk-stat" width="{{ floor(100 / max(count($tiles), 1)) }}%" style="padding:{{ $loop->first ? '0 5px 0 0' : ($loop->last ? '0 0 0 5px' : '0 5px') }};vertical-align:top;">
+                    <div style="border:1px solid {{ $danger ? $c['dangerBorder'] : $c['border'] }};background:{{ $danger ? $c['dangerBg'] : $c['surface'] }};border-radius:20px;padding:14px 16px;">
+                        <div style="font-size:14px;line-height:20px;font-weight:600;color:{{ $danger ? $c['danger'] : $c['muted'] }};">{{ $tile->tileLabel }}</div>
+                        <div style="margin-top:4px;font-size:32px;line-height:40px;font-weight:800;letter-spacing:-0.02em;color:{{ $danger ? $c['danger'] : $c['text'] }};">{{ $tile->count }}</div>
                     </div>
                 </td>
             @endforeach
@@ -46,55 +47,50 @@
 
     @foreach ($digest->sections as $section)
         @php $danger = $section->tone === 'danger'; @endphp
-        <h2 style="margin:0 0 8px;font-size:15px;line-height:22px;font-weight:600;color:{{ $danger ? $c['danger'] : $c['text'] }};">{{ $section->title }}</h2>
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid {{ $danger ? $c['dangerBorder'] : $c['border'] }};background:{{ $danger ? $c['dangerBg'] : $c['surface'] }};border-radius:8px;border-collapse:separate;">
+        <h2 style="margin:0 0 10px;font-size:18px;line-height:26px;font-weight:700;color:{{ $danger ? $c['danger'] : $c['text'] }};">{{ $section->title }}</h2>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid {{ $danger ? $c['dangerBorder'] : $c['border'] }};background:{{ $danger ? $c['dangerBg'] : $c['surface'] }};border-radius:16px;border-collapse:separate;">
             @foreach ($section->items as $item)
                 <tr>
-                    <td style="padding:10px 12px;{{ $loop->last && ! $section->more ? '' : 'border-bottom:1px solid '.$c['border'].';' }}font-size:13px;line-height:20px;color:{{ $c['text'] }};">
+                    <td style="padding:12px 16px;{{ $loop->last && ! $section->more ? '' : 'border-bottom:1px solid '.$c['divider'].';' }}font-size:15px;line-height:22px;color:{{ $c['text'] }};">
                         @if ($item->avatarName)
-                            <span style="display:inline-block;width:20px;height:20px;line-height:20px;border-radius:10px;background:{{ $avatarColors[crc32($item->avatarName) % count($avatarColors)] }};color:#FFFFFF;font-size:9px;font-weight:600;text-align:center;vertical-align:middle;margin-right:6px;">{{ $initials($item->avatarName) }}</span>
+                            @php [$avatarBg, $avatarFg] = $avatarColors[crc32($item->avatarName) % count($avatarColors)]; @endphp
+                            <span style="display:inline-block;width:26px;height:26px;line-height:26px;border-radius:13px;background:{{ $avatarBg }};color:{{ $avatarFg }};font-size:11px;font-weight:700;text-align:center;vertical-align:middle;margin-right:8px;">{{ $initials($item->avatarName) }}</span>
                         @endif
                         @if ($item->code)
-                            <span style="font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-size:12px;color:{{ $c['muted'] }};margin-right:8px;">{{ $item->code }}</span>
+                            <span style="font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-size:14px;font-weight:600;color:{{ $c['muted'] }};margin-right:8px;">{{ $item->code }}</span>
                         @endif
                         <span>{{ $item->title }}</span>
                         @if ($item->detail)
                             <span style="color:{{ $c['muted'] }};"> · {{ $item->detail }}</span>
                         @endif
                     </td>
-                    <td align="right" style="padding:10px 12px;{{ $loop->last && ! $section->more ? '' : 'border-bottom:1px solid '.$c['border'].';' }}white-space:nowrap;vertical-align:middle;">
+                    <td align="right" style="padding:12px 16px;{{ $loop->last && ! $section->more ? '' : 'border-bottom:1px solid '.$c['divider'].';' }}white-space:nowrap;vertical-align:middle;">
                         @if ($item->badge)
                             @php [$bg, $fg] = $badge[$item->badgeTone] ?? $badge['neutral']; @endphp
-                            <span style="display:inline-block;padding:1px 8px;border-radius:999px;background:{{ $bg }};color:{{ $fg }};font-size:12px;line-height:18px;">{{ $item->badge }}</span>
+                            <span style="display:inline-block;padding:3px 10px;border-radius:999px;background:{{ $bg }};color:{{ $fg }};font-size:13px;line-height:18px;font-weight:700;">{{ $item->badge }}</span>
                         @endif
                         @if ($item->trailing)
-                            <span style="font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-size:12px;color:{{ $c['muted'] }};">{{ $item->trailing }}</span>
+                            <span style="font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-size:13px;color:{{ $c['muted'] }};">{{ $item->trailing }}</span>
                         @endif
                     </td>
                 </tr>
             @endforeach
             @if ($section->more)
                 <tr>
-                    <td colspan="2" style="padding:10px 12px;font-size:12px;line-height:18px;color:{{ $c['muted'] }};">{{ $section->more }}</td>
+                    <td colspan="2" style="padding:12px 16px;font-size:14px;line-height:20px;color:{{ $c['muted'] }};">{{ $section->more }}</td>
                 </tr>
             @endif
         </table>
         @if ($section->note)
-            <p style="margin:8px 0 0;font-size:12px;line-height:18px;color:{{ $c['muted'] }};">{{ $section->note }}</p>
+            <p style="margin:8px 0 0;font-size:14px;line-height:20px;color:{{ $c['muted'] }};">{{ $section->note }}</p>
         @endif
         <div style="height:24px;line-height:24px;">&nbsp;</div>
     @endforeach
 
-    <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
-        <tr>
-            <td style="border-radius:8px;background:{{ $c['primary'] }};">
-                <a href="{{ $appUrl }}" style="display:inline-block;padding:11px 24px;font-size:14px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:8px;">Buka RuangKerja</a>
-            </td>
-        </tr>
-    </table>
-    <p style="margin:12px 0 0;text-align:center;font-size:12px;line-height:18px;color:{{ $c['muted'] }};">Item yang perlu tindakan bisa langsung diproses dari <a href="{{ $inboxUrl }}" style="color:#0B7F86;">Inbox</a>.</p>
+    @include('mail.partials.button', ['url' => $appUrl, 'label' => 'Buka RuangKerja'])
+    <p style="margin:16px 0 0;text-align:center;font-size:14px;line-height:20px;color:{{ $c['muted'] }};">Item yang perlu tindakan bisa langsung diproses dari <a href="{{ $inboxUrl }}" style="color:#09656E;font-weight:700;">Inbox</a>.</p>
 @endsection
 
 @section('footer')
-    Email ini dikirim pukul {{ $sendTimeLabel }} karena Anda mengaktifkan ringkasan harian. <a href="{{ $settingsUrl }}" style="color:#0B7F86;">Atur notifikasi</a>
+    Email ini dikirim pukul {{ $sendTimeLabel }} karena Anda mengaktifkan ringkasan harian. <a href="{{ $settingsUrl }}" style="color:#09656E;font-weight:700;">Atur notifikasi</a>
 @endsection
