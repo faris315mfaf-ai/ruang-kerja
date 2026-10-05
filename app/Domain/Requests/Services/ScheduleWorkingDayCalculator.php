@@ -39,6 +39,13 @@ final class ScheduleWorkingDayCalculator implements WorkingDayCalculator
         return $dates;
     }
 
+    public function crossesMidnight(User $user, CarbonImmutable $date): bool
+    {
+        $schedule = $this->schedules->forDate($user, ScheduleResolver::officeDate($date));
+
+        return $schedule->isWorkday() && $schedule->shift !== null && $schedule->shift->crosses_midnight;
+    }
+
     /**
      * @return list<string>
      */

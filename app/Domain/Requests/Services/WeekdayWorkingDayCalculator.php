@@ -23,4 +23,9 @@ final class WeekdayWorkingDayCalculator implements WorkingDayCalculator
 
         return $dates;
     }
+
+    public function crossesMidnight(User $user, CarbonImmutable $date): bool
+    {
+        return false;
+    }
 }

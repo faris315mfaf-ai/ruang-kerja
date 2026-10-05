@@ -19,4 +19,10 @@ interface WorkingDayCalculator
      * @return list<string>
      */
     public function workingDates(User $user, CarbonImmutable $from, CarbonImmutable $to): array;
+
+    /**
+     * Whether the person's shift on the office date runs past midnight (night
+     * shift): an attendance correction may then check out "before" checking in.
+     */
+    public function crossesMidnight(User $user, CarbonImmutable $date): bool;
 }
