@@ -38,6 +38,8 @@ type Props = {
     currentUserId?: string;
     /** Hide the text search (when the page has its own). */
     withSearch?: boolean;
+    /** Hide the active-filter chips (rendered elsewhere). */
+    withChips?: boolean;
 };
 
 function toggle<T>(list: T[], value: T): T[] {
@@ -61,14 +63,9 @@ export function FilterMenu({
     labels,
     currentUserId,
     withSearch = true,
+    withChips = true,
 }: Props) {
     const active = countActiveFilters(filters);
-    const name = (id: string) =>
-        id === NO_ASSIGNEE
-            ? 'Belum ditugaskan'
-            : id === currentUserId
-              ? 'Saya'
-              : (people.find((person) => person.id === id)?.name ?? '?');
     const orderedPeople = [...people].sort((a, b) =>
         a.id === currentUserId ? -1 : b.id === currentUserId ? 1 : 0,
     );
@@ -251,6 +248,44 @@ export function FilterMenu({
                 </DropdownMenuContent>
             </DropdownMenu>
 
+            {withChips && (
+                <ActiveFilterChips
+                    filters={filters}
+                    onChange={onChange}
+                    people={people}
+                    labels={labels}
+                    currentUserId={currentUserId}
+                />
+            )}
+            {withSearch && (
+                <TaskSearchField filters={filters} onChange={onChange} />
+            )}
+        </div>
+    );
+}
+
+type ChipProps = Pick<
+    Props,
+    'filters' | 'onChange' | 'people' | 'labels' | 'currentUserId'
+>;
+
+/** Removable chips for the active filters (next to "Filter" or below it). */
+export function ActiveFilterChips({
+    filters,
+    onChange,
+    people,
+    labels,
+    currentUserId,
+}: ChipProps) {
+    const name = (id: string) =>
+        id === NO_ASSIGNEE
+            ? 'Belum ditugaskan'
+            : id === currentUserId
+              ? 'Saya'
+              : (people.find((person) => person.id === id)?.name ?? '?');
+
+    return (
+        <>
             {filters.assignees.length > 0 && (
                 <span className={chip}>
                     <span className="truncate">
@@ -300,26 +335,32 @@ export function FilterMenu({
                     />
                 </span>
             )}
+        </>
+    );
+}
 
-            {withSearch && (
-                <label className="relative">
-                    <span className="sr-only">Cari tugas</span>
-                    <Search
-                        aria-hidden
-                        className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 text-text-subtle"
-                    />
-                    <input
-                        type="search"
-                        value={filters.q}
-                        onChange={(event) =>
-                            onChange({ ...filters, q: event.target.value })
-                        }
-                        placeholder="Cari tugas…"
-                        className="h-10 w-52 rounded-control border border-border bg-surface pr-3 pl-10 text-[15px] text-text placeholder:text-text-subtle focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-ring/55 focus-visible:outline-none"
-                    />
-                </label>
-            )}
-        </div>
+/** "Cari tugas…" text search of the task filters. */
+export function TaskSearchField({
+    filters,
+    onChange,
+}: Pick<Props, 'filters' | 'onChange'>) {
+    return (
+        <label className="relative">
+            <span className="sr-only">Cari tugas</span>
+            <Search
+                aria-hidden
+                className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 text-text-subtle"
+            />
+            <input
+                type="search"
+                value={filters.q}
+                onChange={(event) =>
+                    onChange({ ...filters, q: event.target.value })
+                }
+                placeholder="Cari tugas…"
+                className="h-10 w-52 rounded-control border border-border bg-surface pr-3 pl-10 text-[15px] text-text placeholder:text-text-subtle focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-ring/55 focus-visible:outline-none"
+            />
+        </label>
     );
 }
 

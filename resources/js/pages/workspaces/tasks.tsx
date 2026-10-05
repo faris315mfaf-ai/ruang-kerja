@@ -6,7 +6,11 @@ import { Fab } from '@/components/mobile/fab';
 import { KanbanBoard } from '@/features/tasks/board/kanban-board';
 import { MobileBoard } from '@/features/tasks/board/mobile-board';
 import { TaskCalendar } from '@/features/tasks/calendar/task-calendar';
-import { FilterMenu } from '@/features/tasks/filters/filter-menu';
+import {
+    ActiveFilterChips,
+    FilterMenu,
+    TaskSearchField,
+} from '@/features/tasks/filters/filter-menu';
 import { toolbarControl } from '@/features/tasks/lib/toolbar';
 import { FilterSheet } from '@/features/tasks/filters/filter-sheet';
 import {
@@ -279,6 +283,63 @@ function TasksView(props: Props) {
             },
         );
 
+    const savedViewsMenu = (
+        <SavedViewsMenu
+            workspaceKey={workspace.key}
+            savedViews={saved_views}
+            layout={view}
+            filters={filters}
+            canShare={can.edit_tasks}
+            canManage={can.manage}
+            mobile={mobile}
+        />
+    );
+
+    // DBoard: "18 tugas · tersinkron langsung · Filter · Board/List/Kalender"
+    // sits on the tab line (wraps below it on narrower windows).
+    const toolbar = mobile ? undefined : (
+        <>
+            <p className="flex items-center gap-1 text-[15px] text-text-muted">
+                <span>
+                    {visible.length === allTasks.length
+                        ? `${formatNumber(allTasks.length)} tugas`
+                        : `${formatNumber(visible.length)} dari ${formatNumber(allTasks.length)} tugas`}
+                    {hidden_closed_count > 0 &&
+                        ` · ${formatNumber(hidden_closed_count)} selesai lama disembunyikan`}
+                    {' · '}
+                </span>
+                <ConnectionIndicator mode={connection} />
+                <button
+                    type="button"
+                    onClick={() => shortcuts.setHelp(true)}
+                    className={cn(
+                        'ml-1.5 inline-flex h-7 min-w-7 items-center justify-center rounded-xs border border-border bg-surface px-1.5 font-mono text-[13px] font-semibold text-text-muted hover:text-text',
+                        focusRing,
+                    )}
+                    aria-label="Pintasan keyboard"
+                    title="Pintasan keyboard (?)"
+                >
+                    ?
+                </button>
+            </p>
+            <FilterMenu
+                filters={filters}
+                onChange={setFilters}
+                people={members}
+                labels={labels}
+                currentUserId={auth.user?.id}
+                withSearch={false}
+                withChips={false}
+            />
+            {savedViewsMenu}
+            <ViewSwitch
+                current={view}
+                workspaceKey={workspace.key}
+                mobile={false}
+            />
+        </>
+    );
+
     return (
         <WorkspaceShell
             workspace={workspace}
@@ -287,16 +348,15 @@ function TasksView(props: Props) {
             drive_counts={props.drive_counts}
             tab="tasks"
             onCreateTask={composer.canCreate ? () => create() : null}
+            tabsAside={toolbar}
         >
-            <div className="flex flex-wrap items-center gap-2.5">
-                {mobile && (
+            {mobile ? (
+                <div className="flex flex-wrap items-center gap-2.5">
                     <ViewSwitch
                         current={view}
                         workspaceKey={workspace.key}
                         mobile
                     />
-                )}
-                {mobile ? (
                     <button
                         type="button"
                         onClick={() => setFilterOpen(true)}
@@ -315,60 +375,23 @@ function TasksView(props: Props) {
                             <span className="absolute top-2 right-2 size-2 rounded-full bg-primary" />
                         )}
                     </button>
-                ) : (
-                    <FilterMenu
+                    {savedViewsMenu}
+                </div>
+            ) : (
+                <div className="flex flex-wrap items-center gap-2.5">
+                    <TaskSearchField filters={filters} onChange={setFilters} />
+                    <ActiveFilterChips
                         filters={filters}
                         onChange={setFilters}
                         people={members}
                         labels={labels}
                         currentUserId={auth.user?.id}
                     />
-                )}
-                <SavedViewsMenu
-                    workspaceKey={workspace.key}
-                    savedViews={saved_views}
-                    layout={view}
-                    filters={filters}
-                    canShare={can.edit_tasks}
-                    canManage={can.manage}
-                    mobile={mobile}
-                />
-                {!mobile && (
-                    <div className="ml-auto flex flex-wrap items-center gap-2.5">
-                        <p className="flex items-center gap-1 text-[15px] text-text-muted">
-                            <span>
-                                {visible.length === allTasks.length
-                                    ? `${formatNumber(allTasks.length)} tugas`
-                                    : `${formatNumber(visible.length)} dari ${formatNumber(allTasks.length)} tugas`}
-                                {hidden_closed_count > 0 &&
-                                    ` · ${formatNumber(hidden_closed_count)} tugas selesai lama disembunyikan`}
-                                {' · '}
-                            </span>
-                            <ConnectionIndicator mode={connection} />
-                            <button
-                                type="button"
-                                onClick={() => shortcuts.setHelp(true)}
-                                className={cn(
-                                    'ml-1.5 inline-flex h-7 min-w-7 items-center justify-center rounded-xs border border-border bg-surface px-1.5 font-mono text-[13px] font-semibold text-text-muted hover:text-text',
-                                    focusRing,
-                                )}
-                                aria-label="Pintasan keyboard"
-                                title="Pintasan keyboard (?)"
-                            >
-                                ?
-                            </button>
-                        </p>
-                        <ViewSwitch
-                            current={view}
-                            workspaceKey={workspace.key}
-                            mobile={false}
-                        />
-                    </div>
-                )}
-            </div>
+                </div>
+            )}
 
             {mobile && connection === 'polling' && (
-                <ConnectionIndicator mode={connection} className="text-xs" />
+                <ConnectionIndicator mode={connection} className="text-meta" />
             )}
 
             <div ref={container} className="contents">
