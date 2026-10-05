@@ -9,50 +9,53 @@ import {
     RequestsCard,
 } from '@/features/privacy/sections';
 import type { PrivacyPageProps } from '@/features/privacy/types';
+import SettingsLayout from '@/layouts/settings/layout';
 import { formatDate } from '@/lib/format';
+import { cn, focusRing } from '@/lib/utils';
 import { policy as policyRoute } from '@/routes/privacy';
 
 /**
- * Privasi › Data Saya (Sprint 10, UU PDP): everything the app holds about the
+ * Privasi › Data Saya (Sprint 10, UU PDP; design SPengaturan "Data saya &
+ * privasi" / MSPengaturan "Privasi"): everything the app holds about the
  * signed-in user, downloadable as Excel/PDF, with the location & selfie
- * consent. One responsive layout: the side column (export, consent, profile)
- * comes first on mobile and sits on the right on desktop.
+ * consent. The side column (consent, export, profile) comes first on phones
+ * and sits on the right from desktop width.
  */
 export default function PrivacyIndex(props: PrivacyPageProps) {
     return (
         <>
             <Head title="Privasi & data saya" />
-            <div className="mx-auto max-w-6xl space-y-4">
-                <header className="flex flex-wrap items-end justify-between gap-3">
-                    <div className="min-w-0">
-                        <h1 className="hidden text-xl font-semibold text-text md:block">
-                            Privasi &amp; data saya
-                        </h1>
-                        <p className="max-w-2xl text-[15px] text-text-muted md:mt-1 md:text-sm">
-                            Data pribadi Anda yang tersimpan di aplikasi ini.
-                            Hanya Anda yang melihat halaman ini.
-                        </p>
-                    </div>
+            <h1 className="sr-only">Privasi &amp; data saya</h1>
+
+            <SettingsLayout>
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                    <p className="max-w-2xl text-body text-text-muted">
+                        Data pribadi Anda yang tersimpan di aplikasi ini. Hanya
+                        Anda yang melihat halaman ini.
+                    </p>
                     <Link
                         href={policyRoute()}
-                        className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary hover:underline md:min-h-0"
+                        className={cn(
+                            'inline-flex min-h-control items-center gap-2 rounded-control text-label font-semibold text-link hover:opacity-80',
+                            focusRing,
+                        )}
                     >
-                        <ShieldCheck className="size-4" aria-hidden />
+                        <ShieldCheck className="size-5" aria-hidden />
                         Kebijakan privasi v{props.policy.version} · berlaku{' '}
                         {formatDate(props.policy.effective_date)}
                     </Link>
-                </header>
+                </div>
 
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+                <div className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-start">
                     <aside
-                        aria-label="Unduhan, persetujuan, dan profil"
-                        className="space-y-4 lg:col-start-2 lg:row-start-1"
+                        aria-label="Persetujuan, unduhan, dan profil"
+                        className="flex min-w-0 flex-col gap-5 lg:col-start-2 lg:row-start-1"
                     >
-                        <ExportCard />
                         <ConsentCard consent={props.consent} />
+                        <ExportCard />
                         <ProfileCard profile={props.profile} />
                     </aside>
-                    <div className="min-w-0 space-y-4 lg:col-start-1 lg:row-start-1">
+                    <div className="flex min-w-0 flex-col gap-5 lg:col-start-1 lg:row-start-1">
                         <AttendanceCard
                             attendance={props.attendance}
                             statusLabels={props.statusLabels}
@@ -61,13 +64,16 @@ export default function PrivacyIndex(props: PrivacyPageProps) {
                         <DecisionsCard decisions={props.decisions} />
                     </div>
                 </div>
-            </div>
+            </SettingsLayout>
         </>
     );
 }
 
 PrivacyIndex.layout = {
-    breadcrumbs: [{ title: 'Privasi & data saya', href: '/privasi' }],
+    breadcrumbs: [
+        { title: 'Pengaturan', href: '/settings/profile' },
+        { title: 'Privasi & data saya', href: '/privasi' },
+    ],
     title: 'Privasi & data saya',
     back: '/menu',
 };
