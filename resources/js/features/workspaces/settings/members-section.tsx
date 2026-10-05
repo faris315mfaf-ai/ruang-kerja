@@ -172,7 +172,7 @@ export function MembersSection({
                 </div>
             )}
 
-            <div className="overflow-x-auto">
+            <div className="min-w-0 overflow-x-auto">
                 <table className="w-full text-[15px]">
                     <thead className="bg-background text-left text-meta text-text-muted">
                         <tr>
@@ -181,7 +181,7 @@ export function MembersSection({
                             </th>
                             <th
                                 scope="col"
-                                className="hidden px-5 py-3 font-semibold md:table-cell"
+                                className="hidden px-5 py-3 font-semibold lg:table-cell"
                             >
                                 Divisi
                             </th>
@@ -257,7 +257,7 @@ export function MembersSection({
                                             </span>
                                         </span>
                                     </td>
-                                    <td className="hidden px-5 py-3.5 text-text-muted md:table-cell">
+                                    <td className="hidden px-5 py-3.5 text-text-muted lg:table-cell">
                                         {member.division ?? '–'}
                                     </td>
                                     <td className="px-5 py-3.5">
