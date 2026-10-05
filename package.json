@@ -1,6 +1,6 @@
 {
-    "name": "ruang-kerja",
     "$schema": "https://www.schemastore.org/package.json",
+    "name": "ruang-kerja",
     "private": true,
     "type": "module",
     "scripts": {
