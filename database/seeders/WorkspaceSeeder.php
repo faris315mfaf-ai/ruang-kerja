@@ -15,6 +15,7 @@ use App\Domain\Workspaces\Enums\WorkspaceRole;
 use App\Domain\Workspaces\Enums\WorkspaceType;
 use App\Domain\Workspaces\Enums\WorkspaceVisibility;
 use App\Domain\Workspaces\Services\WorkspaceMembership;
+use App\Events\Tasks\TaskAssigneesAdded;
 use App\Events\Tasks\TaskCreated;
 use App\Events\Workspaces\WorkspaceCreated;
 use App\Events\Workspaces\WorkspaceMembersChanged;
@@ -97,7 +98,7 @@ class WorkspaceSeeder extends Seeder
 
         Event::fakeFor(function (): void {
             Model::withoutEvents(fn () => $this->seed());
-        }, [TaskCreated::class, WorkspaceCreated::class, WorkspaceMembersChanged::class]);
+        }, [TaskCreated::class, TaskAssigneesAdded::class, WorkspaceCreated::class, WorkspaceMembersChanged::class]);
 
         if ($modelDispatcher === null) {
             Model::unsetEventDispatcher();

@@ -4,6 +4,7 @@ namespace App\Http\Requests\Tasks;
 
 use App\Models\Task;
 use App\Models\Workspace;
+use App\Rules\RichTextDocument;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -45,6 +46,7 @@ class TaskRequest extends FormRequest
 
         return [
             'title' => [$presence, 'string', 'max:255'],
+            'description' => ['sometimes', 'nullable', 'array', new RichTextDocument],
             'description_text' => ['sometimes', 'nullable', 'string', 'max:20000'],
             'status_id' => ['sometimes', 'nullable', 'string', Rule::exists('task_statuses', 'id')->where('workspace_id', $workspaceId)],
             'priority' => ['sometimes', 'integer', 'between:0,4'],
@@ -83,7 +85,7 @@ class TaskRequest extends FormRequest
     /**
      * Validated attributes in the shape expected by CreateTask / UpdateTask.
      *
-     * @return array{title?: string, description_text?: string|null, status_id?: string, priority?: int, start_date?: string|null, due_date?: string|null, estimate_hours?: string|null, assignee_ids?: list<string>, label_ids?: list<string>, parent_id?: string|null}
+     * @return array{title?: string, description?: array<mixed>|null, description_text?: string|null, status_id?: string, priority?: int, start_date?: string|null, due_date?: string|null, estimate_hours?: string|null, assignee_ids?: list<string>, label_ids?: list<string>, parent_id?: string|null}
      */
     public function payload(): array
     {
@@ -98,6 +100,11 @@ class TaskRequest extends FormRequest
 
         if (array_key_exists('title', $data)) {
             $data['title'] = (string) $data['title'];
+        }
+
+        if ($this->has('description')) {
+            $document = $this->input('description');
+            $data['description'] = is_array($document) ? $document : null;
         }
 
         if ($this->filled('status_id')) {

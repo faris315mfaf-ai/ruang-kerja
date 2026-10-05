@@ -5,6 +5,7 @@ namespace App\Domain\Notifications\Digest\Sections;
 use App\Domain\Notifications\Digest\Contracts\DigestSection;
 use App\Domain\Notifications\Digest\Data\DigestItem;
 use App\Domain\Notifications\Digest\Data\DigestSectionData;
+use App\Domain\Notifications\Enums\NotificationType;
 use App\Models\InboxNotification;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -20,7 +21,9 @@ final class InboxActionSection implements DigestSection
 
     public function build(User $user, CarbonImmutable $date): ?DigestSectionData
     {
-        $query = InboxNotification::query()->visibleTo($user)->needsAction();
+        // Overdue tasks have their own section (Tasks\Digest\TasksOverdueSection).
+        $query = InboxNotification::query()->visibleTo($user)->needsAction()
+            ->where('type', '!=', NotificationType::TaskOverdue->value);
         $count = (clone $query)->count();
 
         if ($count === 0) {

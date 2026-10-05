@@ -6,8 +6,10 @@ use App\Domain\Tasks\Queries\BoardTasks;
 use App\Domain\Workspaces\Queries\WorkspacePage;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\LabelResource;
+use App\Http\Resources\SavedViewResource;
 use App\Http\Resources\TaskResource;
 use App\Http\Resources\TaskStatusResource;
+use App\Models\SavedView;
 use App\Models\User;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
@@ -41,6 +43,16 @@ class WorkspaceTaskController extends Controller
             'labels' => fn (): array => LabelResource::collection($workspace->labels()->get())->resolve(),
             'tasks' => fn (): array => TaskResource::collection($boardTasks->for($workspace, $range))->resolve(),
             'hidden_closed_count' => fn (): int => $boardTasks->hiddenClosedCount($workspace),
+            'saved_views' => fn (): array => SavedView::query()
+                ->visibleTo($user)
+                ->where('workspace_id', $workspace->id)
+                ->with('user:id,name')
+                ->orderByDesc('is_shared')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (SavedView $view): array => SavedViewResource::from($view, $user))
+                ->values()
+                ->all(),
             'view' => $view,
             'month' => $month->toDateString(),
             'today' => $today->toDateString(),

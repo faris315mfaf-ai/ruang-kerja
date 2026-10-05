@@ -189,6 +189,32 @@ class Task extends Model
     }
 
     /**
+     * @return MorphMany<Comment, $this>
+     */
+    public function comments(): MorphMany
+    {
+        return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    /**
+     * Mentions inside the description.
+     *
+     * @return MorphMany<Mention, $this>
+     */
+    public function mentions(): MorphMany
+    {
+        return $this->morphMany(Mention::class, 'mentionable');
+    }
+
+    /**
+     * Full-screen detail page (/w/{KEY}/tasks/{number}); needs the workspace relation.
+     */
+    public function url(): string
+    {
+        return '/w/'.$this->workspace->key.'/tasks/'.$this->number;
+    }
+
+    /**
      * @return MorphMany<Activity, $this>
      */
     public function activities(): MorphMany
