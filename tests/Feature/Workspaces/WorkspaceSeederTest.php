@@ -38,3 +38,18 @@ it('seeds the mockup workspaces idempotently', function () {
     $this->actingAs($kadiv)->get('/dashboard')->assertInertia(fn ($page) => $page
         ->where('workspaces', fn ($list) => collect($list)->pluck('name')->sort()->values()->all() === ['Divisi Operasional', 'Pribadi', 'Proyek Peluncuran Q4', 'Tim Gudang']));
 });
+
+it('renders every workspace screen on the full demo data (strict mode: no lazy loading)', function () {
+    $this->seed(DatabaseSeeder::class);
+
+    foreach (['kadiv@demo.test', 'anggota@demo.test', 'direksi@demo.test', 'admin@demo.test'] as $email) {
+        $user = User::query()->where('email', $email)->firstOrFail();
+
+        foreach (['/w/PLQ', '/w/PLQ?view=list', '/w/PLQ?view=calendar', '/w/PLQ/aktivitas', '/w/PLQ/pengaturan', '/w/OPS', '/tugas', '/tugas?tab=watching', '/tugas?tab=created', '/workspace', '/dashboard'] as $uri) {
+            $this->actingAs($user)->get($uri)->assertOk();
+        }
+
+        $this->actingAs($user)->getJson('/tugas/opsi-form')->assertOk();
+        $this->actingAs($user)->getJson('/cari/hasil?q=peluncuran')->assertOk();
+    }
+});

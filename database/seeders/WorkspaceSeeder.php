@@ -27,6 +27,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Event;
 
@@ -89,10 +90,20 @@ class WorkspaceSeeder extends Seeder
 
     public function run(): void
     {
-        // Seeding must not broadcast or queue Drive jobs.
+        // Seeding must not broadcast, queue Drive jobs or write audit rows. Event::fakeFor()
+        // re-installs the real dispatcher on Eloquent afterwards, so the model dispatcher
+        // (null under WithoutModelEvents) is saved and restored around it.
+        $modelDispatcher = Model::getEventDispatcher();
+
         Event::fakeFor(function (): void {
-            $this->seed();
+            Model::withoutEvents(fn () => $this->seed());
         }, [TaskCreated::class, WorkspaceCreated::class, WorkspaceMembersChanged::class]);
+
+        if ($modelDispatcher === null) {
+            Model::unsetEventDispatcher();
+        } else {
+            Model::setEventDispatcher($modelDispatcher);
+        }
     }
 
     private function seed(): void

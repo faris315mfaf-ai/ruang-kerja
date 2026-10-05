@@ -29,8 +29,8 @@ class WorkspaceResource extends JsonResource
             'description' => $workspace->description,
             'owner_id' => $workspace->owner_id,
             'archived' => $workspace->isArchived(),
-            'members_count' => (int) ($workspace->getAttribute('members_count') ?? 0),
-            'divisions_count' => (int) ($workspace->getAttribute('member_divisions_count') ?? 0),
+            'members_count' => (int) ($workspace->getAttributes()['members_count'] ?? 0),
+            'divisions_count' => (int) ($workspace->getAttributes()['member_divisions_count'] ?? 0),
         ];
     }
 

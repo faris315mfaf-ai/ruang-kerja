@@ -2,6 +2,7 @@
 
 namespace App\Events\Tasks;
 
+use App\Domain\Tasks\Queries\BoardTasks;
 use App\Http\Resources\TaskResource;
 use App\Models\Task;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -35,6 +36,9 @@ abstract class TaskBroadcastEvent implements ShouldBroadcast, ShouldDispatchAfte
      */
     public function broadcastWith(): array
     {
-        return ['task' => (new TaskResource($this->task))->resolve()];
+        // Fresh board shape (relations + checklist counts), as sent by PATCH /tugas/{id}/move.
+        $task = BoardTasks::query()->withTrashed()->find($this->task->id) ?? $this->task->loadMissing('workspace');
+
+        return ['task' => (new TaskResource($task))->resolve()];
     }
 }

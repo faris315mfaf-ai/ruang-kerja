@@ -23,7 +23,7 @@ beforeEach(function () {
     $this->gudang = Team::factory()->create(['division_id' => $this->ops->id, 'name' => 'Tim Gudang']);
     $this->staff = Position::factory()->create(['company_id' => $this->company->id, 'name' => 'Staf Operasional', 'level' => 5]);
 
-    $this->hr = User::factory()->forCompany($this->company)->withRole(Role::Hr)->create(['email' => 'hr@kantor.test']);
+    $this->hr = User::factory()->forCompany($this->company)->withRole(Role::Hr)->create(['email' => 'hr@kantor.test', 'name' => 'Hana Personalia']); // fixed name: a random one could match the "agus" search
 });
 
 /**

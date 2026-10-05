@@ -22,7 +22,9 @@ class TaskResource extends JsonResource
     {
         /** @var Task $task */
         $task = $this->resource;
-        $total = (int) ($task->getAttribute('checklist_items_count') ?? 0);
+        // Counts come from BoardTasks::query() (withCount); other callers may not load them.
+        $attributes = $task->getAttributes();
+        $total = (int) ($attributes['checklist_items_count'] ?? 0);
         $parent = $task->relationLoaded('parent') ? $task->parent : null;
 
         return [
@@ -43,7 +45,7 @@ class TaskResource extends JsonResource
             'parent_key' => $parent !== null ? $task->workspace->key.'-'.$parent->number : null,
             'assignee_ids' => $task->relationLoaded('assignees') ? $task->assignees->pluck('id')->values()->all() : [],
             'label_ids' => $task->relationLoaded('labels') ? $task->labels->pluck('id')->values()->all() : [],
-            'checklist' => $total > 0 ? ['done' => (int) ($task->getAttribute('checklist_done_count') ?? 0), 'total' => $total] : null,
+            'checklist' => $total > 0 ? ['done' => (int) ($attributes['checklist_done_count'] ?? 0), 'total' => $total] : null,
             'created_by' => $task->created_by,
             'created_at' => $task->created_at?->toIso8601String(),
             'completed_at' => $task->completed_at?->toIso8601String(),
