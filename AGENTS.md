@@ -34,11 +34,11 @@ PHP 8.4 · Laravel 13 · PostgreSQL 17 · Redis · Inertia.js 3 · React 19 + Ty
 **Frontend**
 - Halaman di `resources/js/pages`, komponen per modul di `resources/js/features/<modul>`.
 - Gunakan komponen shadcn/ui yang sudah ada sebelum membuat baru. Warna **hanya** dari token CSS (`var(--primary)`, kelas Tailwind yang dipetakan ke token). Tidak ada hex hard-coded di komponen.
-- Glassmorphism (`.glass`) hanya untuk sidebar, topbar, command palette, popover, modal, toast.
+- Glassmorphism (`.glass` / `.glass-strong`) hanya untuk menu bar, Dock, Rail, tab bar, command palette, popover, modal, sheet, toast. Sistem desain = **Arus** (`docs/DESIGN.md`, panduan agent modul `docs/design/ARUS-GUIDE.md`, contoh hidup `/dev/komponen`).
 - Semua teks UI **Bahasa Indonesia** (lihat `docs/DESIGN.md` §8). Kode, nama variabel, dan komentar dalam bahasa Inggris.
 - Format tanggal/jam/angka lewat helper `resources/js/lib/format.ts` (locale `id-ID`, zona `Asia/Jakarta`).
 - Setiap halaman wajib menangani: loading (skeleton), kosong (empty state), galat, dan mode gelap.
-- Setiap halaman dibangun untuk **dua shell**: `DesktopLayout` (≥ 1024px, tablet 768–1023 memakai rail) dan `MobileLayout` (< 768px: app bar + tab bawah). Bila tata letak berbeda jauh, buat `*.desktop.tsx` dan `*.mobile.tsx` yang berbagi hook data yang sama. Ikuti matriks fitur di `docs/PLATFORM.md` §3; fitur yang dibatasi di mobile menampilkan versi baca-saja atau banner "Tersedia di desktop", bukan tata letak desktop yang terpotong.
+- Setiap halaman dibangun untuk **dua shell**: `DesktopLayout` (≥ 1024px MenuBar + Dock; tablet 768–1023 memakai Rail 96px) dan `MobileLayout` (< 768px: app bar + tab bawah). Bila tata letak berbeda jauh, buat `*.desktop.tsx` dan `*.mobile.tsx` yang berbagi hook data yang sama. Ikuti matriks fitur di `docs/PLATFORM.md` §3; fitur yang dibatasi di mobile menampilkan versi baca-saja atau banner "Tersedia di desktop", bukan tata letak desktop yang terpotong.
 - Aksesibilitas: label pada input, fokus terlihat, bisa dioperasikan keyboard.
 
 **Uji**

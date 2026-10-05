@@ -1,118 +1,143 @@
-# Design System — RuangKerja
+# Design System — RuangKerja ("Arus")
 
-> Gaya: **minimal profesional ala Linear**, glassmorphism **tipis**, nuansa **hijau-biru (teal)** ala SPKD, mode terang & gelap, Bahasa Indonesia.
-> Warna di bawah adalah **perkiraan sementara**. Setelah hex resmi SPKD diterima, cukup ganti nilai `--brand-*` di `resources/css/tokens.css`.
+> Gaya: **Arus** — latar tenang dengan dua cahaya (teal kiri atas, biru kanan atas), kartu putih bersudut lebar, **gradien hanya untuk aksi & identitas**, huruf Figtree besar (isi 16px desktop, 17px ponsel), kaca untuk lapisan mengambang. Mode terang & **Malam**, Bahasa Indonesia.
+> Sumber kebenaran visual: paket desain `docs/ruangkerja-design/` (baca README-nya, terutama cara membaca `.dc.html`). Token ada di `resources/css/tokens.css` (+ `palette.css`), utilitas Tailwind di `resources/css/app.css` (`@theme inline`). Panduan untuk agent modul: **`docs/design/ARUS-GUIDE.md`**. Acuan hidup komponen: **`/dev/komponen`** (lokal, Super Admin).
 
 ## 1. Prinsip
 
-1. **Konten dulu.** Kerapatan informasi tinggi, dekorasi rendah. Warna brand hanya untuk aksi utama, fokus, dan status penting.
-2. **Glass hanya di lapisan mengambang.** Sidebar, topbar, command palette, popover, modal, toast. **Tidak** untuk tabel, form, atau kartu Kanban (kontras turun, melelahkan dibaca berjam-jam).
-3. **Satu aksi utama per layar.** Tombol primer (teal) maksimal satu per area.
-4. **Keyboard-first.** Setiap aksi utama punya pintasan dan muncul di command palette.
-5. **Status selalu punya ikon + teks**, bukan warna saja (aksesibilitas).
+1. **Konten dulu, tenang.** Latar netral bercahaya tipis; warna kuat hanya untuk aksi utama, fokus, dan status penting.
+2. **Satu gradien aksi per area.** Tombol utama, ubin Dock aktif, satu kartu KPI sorotan. Gradien hangat maksimal satu per layar.
+3. **Kaca hanya di lapisan mengambang.** Menu bar, Dock, Rail, tab bar, app bar saat menggulir, popover/stack, dialog, sheet, command palette. **Tidak** untuk tabel, form, atau kartu.
+4. **Keyboard-first.** Aksi utama punya pintasan dan ada di command palette (⌘K / Ctrl K).
+5. **Status selalu ikon/titik + teks**, tidak pernah warna saja.
+6. **Tidak ada hex di komponen.** Warna, gradien, bayangan, radius dari token (dijaga uji `lib/color-tokens.test.ts`).
 
 ## 2. Warna
 
-### Brand (sementara)
-| Token | Hex | Pakai untuk |
-|---|---|---|
-| `--brand-50` | `#ECFBF8` | latar sorotan lembut (terang) |
-| `--brand-100` | `#CFF5EE` | |
-| `--brand-300` | `#5FD6C4` | |
-| `--brand-400` | `#2FC0B0` | primer di mode gelap |
-| `--brand-500` | `#14A3A0` | |
-| `--brand-600` | `#0A7C85` | **primer** di mode terang |
-| `--brand-700` | `#075F69` | hover primer |
-| `--accent-blue` | `#2F7BEA` | tautan, info, gradien brand |
-| `--accent-green` | `#1FAE6B` | sukses |
-| Gradien brand | `linear-gradient(135deg, #14A3A0, #2F7BEA)` | logo, avatar workspace, ilustrasi kecil. **Bukan** untuk tombol |
+Semua nilai dari `docs/ruangkerja-design/README.md` + `screens/Main.dc.html`. Nama variabel lama dipertahankan (kode lama tetap jalan); kolom "Utilitas" = kelas Tailwind.
 
 ### Netral & permukaan
-| Token | Terang | Gelap |
-|---|---|---|
-| `--bg` | `#F6F8F9` | `#0A0E11` |
-| `--surface` | `#FFFFFF` | `#10161A` |
-| `--surface-2` (hover, header tabel) | `#F1F4F6` | `#151C21` |
-| `--border` | `#E2E8EB` | `#1F292F` |
-| `--border-strong` | `#CBD5DA` | `#2B373E` |
-| `--text` | `#0F1A1F` | `#E7EEF1` |
-| `--text-muted` | `#5A6A72` | `#8C9CA4` |
-| `--text-subtle` | `#8A979E` | `#5F6E76` |
-| `--glass-bg` | `rgba(255,255,255,0.72)` | `rgba(16,22,26,0.66)` |
-| `--glass-border` | `rgba(15,26,31,0.08)` | `rgba(255,255,255,0.07)` |
-| `--glass-blur` | `16px` | `16px` |
+| Token | Terang | Malam | Utilitas | Pakai |
+|---|---|---|---|---|
+| `--bg` | `#F3F6FA` | `#070B14` | `bg-background` | latar halaman (+ `--page-glow`) |
+| `--surface` | `#FFFFFF` | `#0F1622` | `bg-surface` | kartu, input |
+| `--surface-2` | `#EEF2F7` | `#172131` | `bg-surface-2` | hover, trek segmented, chip netral |
+| `--border` | `#DDE4EC` | `#233247` | `border-border` | garis kartu |
+| `--border-strong` | `#C3CEDA` | `#34465E` | `border-border-strong` | input, tombol outline |
+| `--divider` | `#EEF2F7` | `#172131` | `border-divider`, `divide-divider` | pemisah baris dalam kartu |
+| `--text` | `#0B1A2B` | `#EAF1F8` | `text-text` | teks utama |
+| `--text-muted` | `#46576B` | `#A6B4C6` | `text-text-muted` | teks sekunder (≥ 4,5:1) |
+| `--text-subtle` | `#8495A8` | `#7D8FA5` | `text-text-subtle` | placeholder, ikon dekoratif, nonaktif — **bukan teks yang harus dibaca** |
 
-Latar `--bg` mode gelap boleh diberi dua cahaya radial sangat tipis (teal kiri atas, biru kanan bawah, opasitas ≤ 8%) agar glassmorphism terasa, tanpa mengganggu keterbacaan.
-
-### Semantik
-| Makna | Terang | Gelap | Contoh |
+### Merek & aksi
+| Token | Terang | Malam | Utilitas / catatan |
 |---|---|---|---|
-| Sukses / hadir | `#13804F` | `#3CCB86` | Hadir tepat waktu, task selesai |
-| Peringatan / terlambat | `#9A6200` | `#F2B13A` | Terlambat, tenggat hari ini |
-| Bahaya / alpha | `#C42B2B` | `#F06A6A` | Alpha, task terlambat, ditolak |
-| Info / cuti | `#1F66D1` | `#5C9BFF` | Cuti, izin, dinas |
-| Netral / libur | `--text-muted` | | Libur, dibatalkan |
+| `--brand-50…900` | ramp Teal SPKD (`#E8FBF8` … `#0B3A42`) | sama | `bg-brand-*`; utama terang = 600, malam = 400 |
+| `--primary` | `#0B7F86` (teal 600) | `#2DBFB1` (teal 400) | `bg-primary`, `text-primary`, `--primary-fg` putih / `#041421` |
+| `--ring` | teal `#14B8A6` 40% | `#2DBFB1` 45% | `ring-ring` (fokus 3px; input `ring-4 ring-ring/55`) |
+| `--accent-blue` / `--accent-blue-strong` | `#2F7BEA` / `#1E5FD6` | sama | ikon, isian; teks putih hanya di atas `-strong` |
+| `--link` / `--link-soft` | `#09656E` / `#E8FBF8` | `#5AD6C8` / `#0E2A2C` | tautan teal, tombol `tonal`, chip "WFH/Konten" |
 
-### Prioritas task (ikon batang ala Linear)
-`Urgent` kotak merah dengan `!` · `Tinggi` 3 batang · `Sedang` 2 batang · `Rendah` 1 batang · `Tanpa` tiga titik.
+### Semantik (pasangan teks + latar lembut)
+| Makna | Teks terang / lembut | Teks malam / lembut | Utilitas |
+|---|---|---|---|
+| Sukses · hadir · sesuai jalur | `#0F7A55` / `#E3F6EE` | `#4ADE9B` / `#0E2A20` | `text-success` + `bg-success-soft` |
+| Peringatan · terlambat · berisiko | `#9A5800` / `#FFF1DC` | `#F6B95C` / `#2E2210` | `text-warning` + `bg-warning-soft` |
+| Bahaya · alpha · bermasalah | `#C42137` / `#FDE7EA` | `#FF7A8A` / `#3A1520` | `text-danger` + `bg-danger-soft` |
+| Info · cuti · izin | `#1A4CB0` / `#E6EEFE` | `#A9C2FF` / `#14223F` | `text-info` + `bg-info-soft` |
+| Netral · libur | `--text-muted` / `--surface-2` | | `text-text-muted` + `bg-surface-2` |
 
-### Status task (ikon lingkaran ala Linear)
-`Backlog` lingkaran putus-putus · `Todo` lingkaran kosong · `Sedang dikerjakan` lingkaran setengah (kuning) · `Review` lingkaran tiga-perempat (biru) · `Selesai` lingkaran centang (brand) · `Dibatalkan` lingkaran silang (abu).
+Isian grafik & titik (bukan teks): `bg-fill-teal` (#14B8A6), `bg-fill-warning` (#E08A00), `bg-fill-danger`, `bg-fill-violet` (#6D4AE0), penanda rencana `bg-marker`. Badge angka notifikasi: `bg-badge text-on-badge` (merah, sama di dua tema). Chip inverse (label Dock, toast): `bg-inverse text-on-inverse`. Avatar inisial: `bg-avatar-{blue|teal|amber|neutral}` + `text-avatar-*-fg` (pilih lewat `avatarTone(name)`).
+
+### Gradien
+| Token | Nilai | Utilitas | Pakai |
+|---|---|---|---|
+| `--grad-aksi` | `135deg #0B7F86 → #1E5FD6` | `bg-grad-aksi` | tombol utama, tab/segmented aktif, KPI sorotan (`bg-grad-highlight` = + cahaya sudut) |
+| `--grad-merek` | `135deg #14B8A6 → #2F7BEA` (`-x` 90°, `-y` 180°) | `bg-grad-merek(-x/-y)` | logo, avatar workspace, isian progres/grafik. Bukan untuk teks |
+| `--grad-hangat` | `135deg #C2410C → #BE185D` | `bg-grad-hangat` | perhatian/perayaan, maks. satu per layar |
+| `--grad-indigo` | `135deg #2F7BEA → #6D4AE0` | `bg-grad-indigo` | identitas kedua (workspace) |
+| `--grad-slate` | `#46576B → #0B1A2B` | `bg-grad-slate` | workspace Pribadi, "Semua workspace" |
+| `--grad-soft` | teal-50 → blue-50 (malam gelap) | `bg-grad-soft` | ubin ikon empty state |
+| `--grad-active` | terang = aksi; malam `#2DBFB1 → #5B8CF6` + tinta `#041421` | `bg-grad-active` + `text-on-active` | ubin Dock aktif, pil tab bar |
+| `--page-glow` | dua radial 1000×480 (teal 20%, biru 18%) | `bg-page` | latar `body` (otomatis) |
+
+Palet label (`palette.css`, `lib/palette.ts`): `gray · slate · teal · blue · green · amber · orange · red · violet · pink` dalam rona Arus; `paletteGradient(color)` memetakan ke gradien ubin workspace/kode proyek.
 
 ## 3. Tipografi
 
-- **UI:** `Plus Jakarta Sans` (karya Tokotype, Jakarta; rapi, modern, dan punya karakter lokal). Pakai angka `tnum` di tabel & dashboard.
-- **Mono:** `JetBrains Mono` untuk ID task (`KEU-12`), jam, dan kode.
-- Skala (px / line-height): 11/16 label kecil · **13/20 teks dasar UI** · 14/20 teks konten · 16/24 judul kartu · 20/28 judul halaman · 28/36 angka KPI.
-- Berat: 400 teks, 500 label & tombol, 600 judul. Hindari 700+.
-- Huruf kapital hanya untuk label seksi kecil (11px, `letter-spacing: .04em`).
+- **Figtree** 400–800 (UI) dan **JetBrains Mono** 500/600 (ID tugas `PLQ-18`, nomor pengajuan, jam di tabel), di-host sendiri lewat `@fontsource` (CSP memblokir Google Fonts). Plus Jakarta Sans sudah dihapus.
+- Angka tabular (`tnum`) aktif di seluruh `body`.
+- Skala sebagai utilitas (nilai ponsel < 768px otomatis berganti lewat `tokens.css`):
 
-## 4. Ruang, radius, bayangan
+| Utilitas | Desktop/tablet | Ponsel | Contoh |
+|---|---|---|---|
+| `text-display` | 44/52 · 800 · −0.03em | 32/40 | "Selamat pagi, Dimas", judul layar ponsel |
+| `text-h1` | 34/42 · 700 | 26/32 | judul halaman sekunder |
+| `text-h2` | 26/34 · 700 | 22/28 | judul seksi besar |
+| `text-h3` | 22/30 · 700 | 20/26 | judul kartu/panel |
+| `text-title` | 18/26 · 600 | 17/24 | judul item |
+| `text-body-lg` | 18/28 | 18/28 | pengantar |
+| `text-body` | 16/24 | 17/26 | teks dasar (default `body`) |
+| `text-label` | 15/22 · 600 | 15/20 | label form, tombol kecil |
+| `text-meta` | 14/20 · 500 | 13/18 | waktu, nama file (sekunder) |
+| `text-overline` | 14/20 · 700 · kapital · 0.06em | sama | label seksi, tanggal di atas judul |
+| `text-kpi` | 40/48 · 700 | 28/34 | angka KPI |
 
-- Grid 4 px. Jarak umum: 4, 8, 12, 16, 24, 32.
-- Radius: 6 (input, tombol), 8 (kartu, menu), 12 (modal, panel), 999 (avatar, pill).
-- Bayangan terang: `0 1px 2px rgba(15,26,31,.06), 0 4px 12px rgba(15,26,31,.04)`. Gelap: tidak ada bayangan, gunakan border + highlight atas `inset 0 1px 0 rgba(255,255,255,.04)`.
-- Tinggi kontrol: 28 (kecil), **32 (default)**, 36 (form utama), 44 (tombol check-in di ponsel).
+- Teks yang harus dibaca minimal 14px (ponsel 15px; 13px hanya meta). Input ponsel 17px (iOS tidak zoom).
+- Berat 800 hanya untuk judul besar/angka sorotan.
 
-## 5. Tata letak
+## 4. Ruang, radius, elevasi, ukuran
 
-```
-┌──────────┬──────────────────────────────────────────────┐
-│ Sidebar  │ Topbar: breadcrumb · cari (⌘K) · check-in · 🔔 │
-│ 240px    ├──────────────────────────────────────────────┤
-│ (glass)  │ Konten (maks 1440px, padding 24)              │
-│          │                                              │
-└──────────┴──────────────────────────────────────────────┘
-```
+- Grid 4px. Jarak umum: 4 · 8 · 12 · 16 (gutter ponsel) · 20 (antar kartu) · 24 (padding kartu) · 32 (antar seksi) · 40 (padding halaman desktop).
+- Radius (`rounded-*`): `sm` 8 chip/badge · `md` = `control` 12 tombol/input · `lg` 16 ubin/item · `xl` = `card` 20 kartu KPI · `2xl` = `panel` 24 panel/kartu seksi · `3xl` = `sheet` 28 sheet. (`xs` 6 untuk kbd.)
+- Elevasi: `shadow-card` (e-1, kartu) · `shadow-float` (e-2, popover/sheet) · `shadow-glow` (KPI & elemen gradien) · `shadow-button`/`shadow-button-lg` (tombol gradien) · `shadow-warm` · `shadow-inverse` (toast) · `shadow-segment` (tab terpilih) · `shadow-knob` (switch). Malam memakai bayangan hitam tipis + border.
+- Tinggi kontrol: `h-control-sm` 36 (toolbar, chip) · `h-control` 44 (tombol & input desktop, sentuh minimum) · `h-control-lg` 52 (aksi utama ponsel) · `h-control-xl` 56.
+- Kaca: `.glass` (bar/rail, 72% + blur 24) dan `.glass-strong` (popover, dialog, sheet, palette; 82%/88% + blur 30). `prefers-reduced-transparency` → permukaan solid.
 
-**Shell desktop (keputusan pemilik, 6 Okt 2026):** menu bar glass 38px di atas, konten penuh layar dengan margin 10px, dan **Dock ala macOS** mengambang di bawah. Ikon Dock berbentuk squircle berwarna palet, membesar mengikuti kursor (spring critically damped, bisa diinterupsi), menampilkan label di atas, titik di bawah ikon aktif, dan badge jumlah. Workspace favorit tampil sebagai ikon; semua workspace, menu Organisasi (struktur, kelola organisasi, karyawan) dan menu Admin ada di *stack* — setiap tujuan hanya ada di satu tempat; stack yang isinya satu tampil sebagai ikon biasa. Saat disorot, glyph ikon bergerak dalam loop tanpa sambungan (berhenti dengan `prefers-reduced-motion`). Mockup lama dengan sidebar 240px tetap jadi acuan isi halaman, bukan shell.
+## 5. Tata letak & shell
 
-**Ponsel (< 768px):** tidak ada sidebar. App bar 56px + tab bawah glass berbentuk *dock kapsul* mengambang (lihat PLATFORM.md §4): Beranda · Absen · Tugas · Inbox · Menu (workspace & admin ada di tab Menu). Tombol check-in besar di halaman Absen. Aturan lengkap, matriks fitur, dan cara implementasi: **`docs/PLATFORM.md`**.
+| Lebar | Shell |
+|---|---|
+| ≥ 1024 | **MenuBar** kaca 64px (merek, breadcrumb 16px, chip status absensi + pil Check-in, cari ⌘K/Ctrl K, lonceng berangka, avatar bercincin gradien) · konten di kolom **1280px** (`width: 'wide'` 1480px untuk board/tabel besar, `'full'` bila halaman mengatur kolomnya sendiri) dengan padding 40px · **Dock** mengambang 20px dari bawah |
+| 768–1023 | **Rail** kaca 96px di kiri (merek, Cari, tujuan utama, stack Workspace/Organisasi/Admin, avatar = menu akun); tanpa menu bar & Dock; padding konten 24px |
+| < 768 | **App bar** berjudul besar (32/40) + tombol bulat 48px; Beranda: tanggal (overline) + sapaan + avatar; layar turunan: bar 56px lengket dengan tombol kembali bulat · **Tab bar kapsul** 70px |
+
+**Dock** (Dock.dc.html): urutan Dashboard · (Portofolio · Manajemen) · Inbox · Tugas saya · Absensi · Pengajuan · Persetujuan │ workspace favorit (ubin huruf bergradien) · stack Workspace │ stack Organisasi · stack Admin. Ubin 52px putih (malam 8% putih) radius 28%, aktif `--grad-active`, titik 5px di bawah, label chip inverse di atas, badge merah. Magnifikasi pegas critically damped (52 → 74px), loop glyph tanpa sambungan saat disorot (berhenti dengan reduced motion). Stack = popover kaca 372px, grid 3 kolom ubin 52px bergradien. Setiap tujuan hanya di satu tempat (favorit juga tercantum di stack Workspace). Model navigasi bersama Dock & Rail: `components/shell/use-shell-navigation.ts`.
+
+Detail platform & matriks fitur: **`docs/PLATFORM.md`**.
 
 ## 6. Komponen utama
 
-| Komponen | Catatan |
-|---|---|
-| **Button** | `primary` (teal solid), `secondary` (surface + border), `ghost`, `danger`. Ikon 16px, gap 6 |
-| **Input / Select / Combobox** | Border 1px, fokus ring 2px `--brand-500` 40% |
-| **Kartu Kanban** | Surface solid, border, radius 8, padding 10–12. Baris 1: ID mono + ikon prioritas. Baris 2: judul (maks 2 baris). Baris 3: label pill, tenggat (merah bila lewat), avatar penanggung jawab |
-| **Kolom Kanban** | Header: ikon status + nama + jumlah + tombol `+`. Lebar 300px |
-| **TaskSheet** | Panel samping kanan (640px) atau halaman penuh. Kiri: judul, deskripsi Tiptap, sub-task, aktivitas & komentar. Kanan: properti (status, prioritas, penanggung jawab, tenggat, label, workspace, lampiran Drive) |
-| **StatCard** | Label kecil, angka 28px `tnum`, delta vs periode lalu (hijau/merah + panah), sparkline opsional |
-| **Kartu Check-in** | Status hari ini, jam masuk/pulang terjadwal, jam sekarang besar (mono), tombol primer 44px, metode (GPS/QR) sebagai segmented control |
-| **Badge status absensi** | Titik warna + teks: "Hadir", "Terlambat 12m", "Cuti", "Alpha" |
-| **Command palette** | Glass, lebar 640px, grup: Aksi · Tugas · Orang · Workspace · Dokumen |
-| **Toast** | Glass, pojok kanan bawah, otomatis hilang 4 detik, ada aksi "Urungkan" untuk pindah/hapus task |
-| **Empty state** | Ikon garis 32px + satu kalimat + satu tombol aksi |
+Semua di `resources/js/components/ui/*` (API shadcn tetap kompatibel; varian Arus ditambahkan). Contoh hidup: `/dev/komponen`.
 
-Ikon: **Lucide**, stroke 1.75, ukuran 16 (UI) / 20 (navigasi).
+| Komponen | Arus |
+|---|---|
+| **Button** | `default` gradien aksi + glow · `outline` (surface + border kuat, "Ekspor") · `tonal` (teal lembut, "Minta update") · `quiet` (teks teal, "Batal") · `ghost` (netral, ikon) · `secondary` · `destructive` · `link`. Ukuran `sm` 36 · default 44 · `lg` 52 · `xl` 56 · `icon` 44 · `icon-sm` 36 · `icon-lg` 52. Nonaktif = abu `surface-2` |
+| **Input / Textarea / Select** | 44px, radius 12, border kuat, fokus border teal + cincin 4px lembut, galat `aria-invalid` merah; `fieldClasses` diekspor dari `input.tsx` |
+| **Checkbox / Radio / Switch** | 24px radius 7 (tercentang = gradien aksi) · radio native 24px (cincin 7px teal) · switch 52×32 (`md`) / 40×24 (`sm`), aktif gradien |
+| **Label** | 15/22 semibold |
+| **Badge** | `status` 32px pil lembut + `dot` (tone success/warning/danger/info/link/neutral) · `label` 30px radius 8 · `count` merah · default "Baru" gradien |
+| **SegmentedTabs** (`ui/tabs.tsx`) | WAI-ARIA tabs (←/→/Home/End): `soft` (trek abu, pilihan putih), `glass` (trek tembus), `solid` (pilihan gradien, MgDashboard) |
+| **TabNav** | navigasi bergaris bawah 3px teal ("Tugas · Dokumen 6 · File 24") |
+| **Card / Panel** | radius 24, border, `shadow-card`, padding 24; `Panel` = kartu berjudul + aksi (`PanelLink` teal 44px) |
+| **KpiCard** | `plain` / `highlight` (gradien aksi + cahaya) / `warm`; nilai `text-kpi`, pil delta lembut |
+| **Progress** | trek `surface-2`, isian gradien merek, penanda rencana opsional, `role="progressbar"` |
+| **ListRow** | ≥ 72px, avatar/ikon, judul 17/600, meta 15, trailing atau chevron |
+| **Avatar / UserAvatar** | inisial bernada per orang; `ring` = cincin gradien merek (pengguna sendiri) |
+| **Dialog / Sheet / Dropdown / Select menu / Command** | `glass-strong`, radius 16–28, `shadow-float`, item ≥ 40px, label seksi 13px kapital |
+| **Tooltip / Toast** | chip inverse (`bg-inverse`), toast radius 18, ikon status berwarna terbaca, aksi "Urungkan" pil tembus |
+| **Table** | kepala `bg-background` 14px tebal abu, baris pemisah `divider`, hover `surface-2/60`, sel 16px padding |
+| **EmptyState** | `md`: kartu putus-putus radius 24, ubin ikon 64px `bg-grad-soft`, judul 20, satu aksi · `sm`: ringkas di dalam panel |
+| **Skeleton** | blok `surface-2` radius 12, berdenyut (diam dengan reduced motion) |
+| **Mobile** | `ChipScroller` 42px (aktif gradien), `Fab` 60px radius 20 gradien, `BottomSheet` kaca radius 28, `SwipeableRow`, `appBarIconButton` 48px |
+
+Ikon: **Lucide**, garis 1,9–2, 20px UI · 22–24px navigasi. Status tugas & prioritas: `components/status-icon.tsx`, `priority-icon.tsx` (Ruang.dc.html).
 
 ## 7. Gerak
 
-- Durasi 120 ms (hover, toggle), 180 ms (popover, sheet), easing `cubic-bezier(.2,.8,.2,1)`.
-- Drag Kanban: kartu terangkat (scale 1.02, bayangan), placeholder garis putus-putus.
-- Hormati `prefers-reduced-motion`.
-- Ikon beranimasi / loop ambient: gerak halus berulang tanpa sambungan (frame awal = frame akhir), hanya `transform`/`opacity`, dan berhenti di frame diam saat `prefers-reduced-motion`. Pakai seperlunya — status hidup (sinkron, check-in berhasil, menunggu), bukan dekorasi.
+- Durasi 120 ms (hover, toggle), 180 ms (popover, sheet, pil tab), easing `ease-brand` = `cubic-bezier(.2,.8,.2,1)`; Dock memakai pegas.
+- Hanya `transform`/`opacity` bila bisa; tekan = skala 0,98 (tombol) / 0,9 (ubin Dock, ikon tab).
+- Loop ikon/ambient tanpa sambungan (frame awal = frame akhir), berhenti di frame diam saat `prefers-reduced-motion` (aturan global di `tokens.css`).
 - Panduan kerja dengan agent (skill `animate`, `review-animations`, `motion-design`, `apple-hig`): lihat CLAUDE.md.
 
 ## 8. Bahasa & tulisan UI
@@ -125,18 +150,8 @@ Ikon: **Lucide**, stroke 1.75, ukuran 16 (UI) / 20 (navigasi).
 
 ## 9. Aksesibilitas
 
-- Kontras teks ≥ 4.5:1 di kedua mode. Sudah dicek untuk `--text`, `--text-muted`, `--primary`, dan warna semantik di atas. Cek ulang bila warna brand diganti.
-- `--text-subtle` (≈3:1) hanya untuk placeholder, ikon dekoratif, dan elemen nonaktif, **bukan** teks yang harus dibaca.
-- `--accent-blue` dan `--accent-green` untuk gradien, ikon, dan titik status. Teks berwarna memakai token semantik (`--info`, `--success`).
-- Fokus selalu terlihat. Seluruh aplikasi dapat dipakai dengan keyboard (termasuk pindah kartu: `Shift+→`).
-- Target sentuh ≥ 44px di ponsel.
-
-## 10. Token Arus — halaman Manajemen
-
-Halaman **Manajemen** (`/manajemen`, desain `docs/ruangkerja-design/screens/MgDashboard*.dc.html`) memakai tema "Arus" dari paket desain. Token-nya **berlaku hanya di dalam pembungkus `.theme-arus`** (`resources/css/arus.css`, diimpor dari `app.css`); token global di `tokens.css` tidak berubah.
-
-- Variabel `--arus-*`: latar, permukaan, permukaan 2, garis, garis tegas, teks / sekunder / samar, pasangan sukses · peringatan · bahaya · info · teal tautan (teks/latar), isian batang (amber, ungu, teal), gradien **aksi / merek / hangat / indigo**, bayangan, radius kontrol 12 · kartu 22 · panel 24, tinggi kontrol 44. Nilai mode malam ada di `.dark .theme-arus` (mengikuti `.dark` pada `<html>`), satu komponen untuk dua tema.
-- Utilitas Tailwind lewat `@theme inline`: `bg-arus-surface`, `text-arus-text-2`, `border-arus-border`, `rounded-arus-panel`, `shadow-arus-card`, `h-arus-control`; gradien sebagai utilitas `bg-arus-action`, `bg-arus-brand(-x/-y)`, `bg-arus-warm`, `bg-arus-indigo`, `bg-arus-highlight`, `bg-arus-page`. Komponen tidak memakai hex.
-- Huruf **Figtree** 400–800 di-host sendiri (`@fontsource/figtree`, CSP memblokir Google Fonts) dan hanya aktif di `.theme-arus`; kode/ID tetap JetBrains Mono. Ukuran isi 16px (ponsel ≥ 15–16px), judul halaman 44px desktop.
-- Halaman tetap memakai shell aplikasi (MenuBar + Dock / AppBar + TabBar); MenuBar/Dock milik desain tidak dirender.
-- Tab periode = WAI-ARIA tabs (←/→/Home/End), grafik punya tabel tersembunyi untuk pembaca layar.
+- Kontras teks ≥ 4.5:1 di kedua mode, dicek untuk semua pasangan token (Okt 2026): teks/surface 17,6 · muted/bg 6,8 · putih/primer 4,8 · status/lembut ≥ 4,75 (terang) dan ≥ 6,4 (malam) · tinta/aksi malam 8,2. Tidak ada pasangan yang perlu disesuaikan.
+- `--text-subtle` (≈ 3:1) hanya placeholder, ikon dekoratif, elemen nonaktif.
+- `--accent-blue` & isian `fill-*` untuk gradien, ikon, titik; teks berwarna memakai token semantik. Teks putih di atas biru memakai `accent-blue-strong`.
+- Fokus selalu terlihat: cincin 3px teal (`focusRing` di `lib/utils.ts`). Seluruh aplikasi bisa dipakai dengan keyboard.
+- Target sentuh ≥ 44px; tab bar ≥ 58px.

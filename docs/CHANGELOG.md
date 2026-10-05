@@ -6,8 +6,20 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 
 ## [Belum dirilis]
 
+### Diubah
+- **Sistem desain Arus untuk seluruh aplikasi** (`docs/ruangkerja-design/`, `docs/DESIGN.md`): palet terang & Malam baru dengan nama token lama, pasangan status lembut (`bg-success-soft` …), gradien aksi/merek/hangat/indigo, latar halaman dua cahaya, huruf **Figtree** (isi 16px desktop, 17px ponsel, display 44px) + JetBrains Mono, skala radius 8–28, elevasi e-1/e-2/glow, kontrol 44px. Tema halaman Manajemen (`arus.css`) dilebur ke sistem global; Plus Jakarta Sans dihapus.
+- Komponen dasar bergaya Arus: tombol gradien (varian `tonal`, `quiet`, ukuran 36/44/52/56), input/select 44px, checkbox/radio/switch, badge status & label, `SegmentedTabs`/`TabNav`, `Panel`, `KpiCard`, `Progress`, `ListRow`, empty state, dialog/sheet/menu kaca, toast inverse.
+- Shell: menu bar kaca 64px, Dock dengan ubin putih & aktif bergradien, **Rail 96px untuk tablet** (768–1023px, menggantikan Dock tanpa magnifikasi), tab bar kapsul 70px dengan pil gradien, app bar ponsel berjudul besar. Konten desktop di kolom 1280px (1480px untuk board & tabel).
+- Warna non-CSS (manifest PWA, halaman offline, email, `config/branding.php`) mengikuti Arus.
+
 ### Ditambahkan
-- **Dashboard Manajemen** (`/manajemen`, Direksi · HR · Super Admin = `dashboard.view_company`; menu Dock "Manajemen" dan baris Menu ponsel): ringkasan perusahaan sesuai desain MgDashboard dengan tab Harian / Mingguan / Bulanan tanpa muat ulang — KPI kehadiran, tugas selesai dari rencana, tugas terlambat / tepat waktu (delta periode sebelumnya), proyek perlu perhatian; grafik rencana vs selesai per divisi / hari / minggu; absensi hari ini per divisi; tracking proyek aktif & milestone bulan ini (cakupan portofolio penonton). Data deferred + cache 5 menit per penonton; panel Jadwal & Notulensi menampilkan keadaan kosong sampai modul rapat (Fase 2) ada. Tema halaman "Arus" (`.theme-arus`, Figtree via `@fontsource/figtree`) terang & malam.
+- `/dev/komponen` (lokal, Super Admin): contoh hidup semua komponen Arus. Panduan agent modul: `docs/design/ARUS-GUIDE.md`.
+
+### Dihapus
+- Komponen tak terpakai `ui/sidebar`, `ui/navigation-menu`, `ui/icon`, `ui/placeholder-pattern`, hook `use-mobile*`, prop bersama `sidebarOpen`, paket `@radix-ui/react-navigation-menu` dan `@fontsource/plus-jakarta-sans`.
+
+### Ditambahkan
+- **Dashboard Manajemen** (`/manajemen`, Direksi · HR · Super Admin = `dashboard.view_company`; menu Dock "Manajemen" dan baris Menu ponsel): ringkasan perusahaan sesuai desain MgDashboard dengan tab Harian / Mingguan / Bulanan tanpa muat ulang — KPI kehadiran, tugas selesai dari rencana, tugas terlambat / tepat waktu (delta periode sebelumnya), proyek perlu perhatian; grafik rencana vs selesai per divisi / hari / minggu; absensi hari ini per divisi; tracking proyek aktif & milestone bulan ini (cakupan portofolio penonton). Data deferred + cache 5 menit per penonton; panel Jadwal & Notulensi menampilkan keadaan kosong sampai modul rapat (Fase 2) ada. Memakai sistem desain Arus global (terang & malam).
 - **Admin › Dokumentasi** (`/admin/dokumentasi`, khusus Super Admin): dokumen repo pilihan (README, serah terima, arsitektur, database, desain, platform, setup lokal, PRD, ASVS L1, changelog, hal kritis, ringkasan sprint) dirender di server dengan daftar isi dan pencarian. Daftar dokumen dikunci di `config/docs.php`; URL hanya memuat slug, tidak pernah path.
 - `docs/CHANGELOG.md` (berkas ini) dan `docs/CRITICAL.md` (hal kritis operasional + checklist go-live).
 - **Kode aktivasi kiosk**: selain tautan sekali pakai, HR mendapat kode 8 karakter (mis. `ABCD-2345`, tanpa huruf/angka mirip) yang diketik di layar `/kiosk` perangkat. TTL sama dengan tautan (24 jam), sekali pakai, memakai tautan atau kode membatalkan keduanya; maks. 5 percobaan/menit per IP, kunci 15 menit setelah 10 kode salah.

@@ -9,20 +9,20 @@
 | Satu aplikasi atau dua? | **Satu aplikasi web** (Laravel + Inertia + React), dua *layout shell*: `DesktopLayout` dan `MobileLayout`. Dipasang sebagai **PWA** di ponsel. |
 | Aplikasi native | Fase 3 (React Native/Expo) memakai **desain mobile yang sama** dan API yang sama. Mockup mobile = spesifikasi aplikasi native. |
 | Cara memilih layout | Berdasarkan **lebar layar** (bukan user-agent). Server tidak perlu tahu perangkatnya. |
-| Breakpoint | `< 768px` = mobile · `768–1023px` = tablet (memakai layout desktop dengan rail ringkas 56px) · `≥ 1024px` = desktop (sidebar penuh 240px, bisa diciutkan) |
+| Breakpoint | `< 768px` = mobile · `768–1023px` = tablet (`DesktopLayout` dengan **Rail** 96px, Rail.dc.html) · `≥ 1024px` = desktop (MenuBar 64px + Dock) |
 | Data & logika | **Sama persis.** Controller, Action, Policy, props Inertia tidak dibedakan. Hanya komponen tampilan yang berbeda. |
 
 ## 2. Shell per platform
 
 | Elemen | Desktop (≥ 1024) | Tablet (768–1023) | Mobile (< 768) |
 |---|---|---|---|
-| Navigasi utama | **Dock ala macOS** mengambang di bawah (ikon membesar mengikuti kursor dengan spring, stack Organisasi, Workspace & Admin) | Dock yang sama tanpa magnifikasi | **Tab bawah 5 item** sebagai *dock kapsul* mengambang: Beranda · Absen · Tugas · Inbox · Menu |
-| Workspace & admin | Di sidebar | Di rail | Di tab **Menu** |
-| Topbar | **Menu bar tipis 38px**: merek, breadcrumb, status absensi, check-in, cari ⌘K, lonceng, akun. Konten penuh layar, margin 10px | Sama | **App bar 56px**: judul + aksi (cari, lonceng) / tombol kembali di layar turunan |
-| Cari | Command palette (modal glass) | Sama | Layar cari penuh |
+| Navigasi utama | **Dock ala macOS** mengambang di bawah (ubin 52px membesar mengikuti kursor dengan pegas, stack Workspace, Organisasi & Admin) | **Rail** kaca 96px di kiri: merek, Cari, tujuan yang sama dengan Dock, stack membuka ke kanan, avatar = menu akun | **Tab bawah 5 item** sebagai kapsul mengambang 70px: Beranda · Absen · Tugas · Inbox · Menu |
+| Workspace & admin | Stack di Dock | Stack di Rail | Di tab **Menu** |
+| Topbar | **Menu bar kaca 64px** (MenuBar.dc.html): merek, breadcrumb, chip status absensi + pil Check-in, cari ⌘K/Ctrl K, lonceng berangka, avatar. Konten di kolom 1280px (lebar 1480px untuk board/tabel) padding 40px | Tidak ada (Rail memuat cari & akun); padding konten 24px | **Judul besar 32/40** + tombol bulat 48px (cari, lonceng); Beranda: tanggal + sapaan + avatar; layar turunan: bar 56px lengket + tombol kembali bulat |
+| Cari | Command palette (modal kaca) | Sama (tombol Cari di Rail, ⌘K) | Layar cari penuh |
 | Panel detail | Panel samping kanan (TaskSheet 640px, detail pengajuan) | Panel samping atau layar penuh | **Layar penuh baru** atau **bottom sheet** |
 | Tabel | Tabel penuh (TanStack Table) | Tabel dengan kolom diciutkan | **Daftar kartu / baris 56px** |
-| Aksi utama | Tombol di header | Sama | **FAB 56px** atau **bilah aksi bawah** |
+| Aksi utama | Tombol di header | Sama | **FAB 60px** (gradien, radius 20) atau **bilah aksi bawah** |
 | Aksi baris | Hover + menu | Menu | **Geser kartu** (swipe) + menu "more" |
 | Board Kanban | Semua kolom berdampingan, drag & drop | Scroll horizontal | **Satu kolom per layar**, tab kolom geser; pindah status lewat menu "Pindahkan" (tanpa drag) |
 | Kalender | Grid bulan | Grid bulan | **Strip minggu + agenda** |
@@ -64,11 +64,11 @@ Fitur ◐ dan — di mobile tetap punya rute. Rute itu menampilkan versi baca-sa
 
 ## 4. Aturan sentuh & tipografi mobile
 
-- Target sentuh ≥ 44×44 px. Baris daftar ≥ 56 px. Tombol utama 48–52 px.
-- **Input `font-size: 16px`** (mencegah zoom otomatis iOS). Tinggi input 44–48 px.
-- Padding samping 16 px. Teks dasar 14 px, judul app bar 17 px.
+- Target sentuh ≥ 44×44 px. Baris daftar ≥ 56 px (desain: 60–72). Tombol utama 52 px (`size="lg"`).
+- **Input `font-size: 17px`** (Tipografi "Ponsel"; mencegah zoom otomatis iOS). Tinggi input 44–48 px.
+- Padding samping 16 px. Teks dasar 17 px (`text-body`), judul layar 32/40 (`text-display`), judul bar layar turunan 17 px.
 - Hormati *safe area* (`env(safe-area-inset-*)`) untuk tab bawah dan bilah aksi.
-- Tab bawah = **dock kapsul**: glass, `rounded-full`, jarak 10px dari tepi kiri/kanan, melayang 10px di atas safe area, lebar maks 420px di tengah, bayangan `--dock-shadow`. Tab aktif ditandai pil yang bergeser (transform 180ms `ease-brand`, instan dengan `prefers-reduced-motion`), ikon mengecil saat ditekan. Semua elemen yang menempel di atas tab bar (padding konten, FAB, bilah aksi, toast) memakai `--tab-bar-height` (= ruang yang dipakai kapsul di atas safe area), jangan angka tetap.
+- Tab bawah = **kapsul** (TabBar.dc.html): kaca (`.tab-bar-surface`), `rounded-full`, 12px dari tepi kiri/kanan (`--tab-bar-inset`), melayang 14px di atas safe area (`--tab-bar-lift`), tinggi 70px (`--tab-bar-capsule`), lebar maks 420px di tengah. Tab aktif = pil **gradien aksi** (malam: gradien terang + tinta gelap, `--grad-active`) dengan label putih yang bergeser (transform 180ms `ease-brand`, instan dengan `prefers-reduced-motion`); label 12px tebal, ikon 24px, badge merah di Inbox. Semua elemen yang menempel di atas tab bar (padding konten, FAB, bilah aksi, toast) memakai `--tab-bar-height`, jangan angka tetap.
 - Keyboard: saat input fokus, bilah aksi bawah ikut naik (pakai `visualViewport`), tab bawah disembunyikan.
 - Glass hanya untuk app bar (saat menggulir), tab bawah, bottom sheet, toast.
 - Tidak ada interaksi yang hanya mengandalkan hover. Pintasan keyboard hanya desktop.
@@ -79,7 +79,7 @@ Fitur ◐ dan — di mobile tetap punya rute. Rute itu menampilkan versi baca-sa
 resources/js/
 ├── layouts/
 │   ├── AppLayout.tsx          # memilih shell sesuai breakpoint
-│   ├── DesktopLayout.tsx      # sidebar / rail + topbar
+│   ├── DesktopLayout.tsx      # MenuBar + Dock (desktop) / Rail (tablet), prop width
 │   └── MobileLayout.tsx       # app bar + tab bawah, props: title, back, actions, bottomBar
 ├── hooks/useBreakpoint.ts     # 'mobile' | 'tablet' | 'desktop' (matchMedia, SSR-safe)
 ├── pages/tasks/Show.tsx       # satu halaman Inertia...
@@ -104,7 +104,7 @@ Aturan:
 |---|---|---|
 | Login | Login | MLogin |
 | Beranda / dashboard pribadi | DashboardSaya | MBeranda |
-| Menu & workspace | Sidebar (Main) | MMenu |
+| Menu & workspace | Dock (Dock.dc.html) | MMenu |
 | Cari | CommandPalette | MCari |
 | Inbox | Inbox | MInbox |
 | Pengaturan notifikasi | PengaturanNotifikasi | MPengaturanNotifikasi |
