@@ -62,7 +62,7 @@ Buka https://ruangkerja.test → "Masuk cepat (demo lokal)". Sandi semua akun de
 - Fitur yang sengaja ditunda: ekspor PNG struktur organisasi, read receipts komentar, presence per kartu di board, folder Drive per tugas, UI pembatalan pengajuan yang sudah disetujui (fungsi backend ada).
 - Browser bawaan Claude memblokir port non-standar (Vite 5173, Reverb 8081) dan service worker; verifikasi visual lokal memakai `npm run build`.
 
-## Lingkungan pengembangan Mac (sementara)
+## Lingkungan pengembangan Mac
 
-- Worktree paralel di `~/PROYEK/rk-worktrees/*` (sudah digabung ke `main`, aman dihapus dengan `git worktree remove`).
-- Database per jalur `ruangkerja_<track>` / `ruangkerja_testing_<track>` di Postgres Docker (port 5434) bisa di-drop.
+- Semua branch pembangunan (`feat/sprint-*`, `fix/*`) sudah digabung ke `main`; worktree paralel dan database per jalur sudah dibersihkan. Branch lama tetap ada sebagai jejak dan aman dihapus.
+- Postgres dev memakai `max_locks_per_transaction=256` (`compose.yml`) dan suite test memakai `memory_limit=512M` (`phpunit.xml`) agar test paralel stabil.
