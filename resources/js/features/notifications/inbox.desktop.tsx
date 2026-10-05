@@ -208,9 +208,11 @@ export function InboxDesktop({ inbox, kinds, retentionDays }: Props) {
                 </section>
 
                 {/* Sticky; scrolls on its own when taller than the viewport. The
-                    padding (cancelled by the negative margin) keeps the
-                    panel shadow from being clipped by the scroll box. */}
-                <div className="min-w-0 md:sticky md:top-2 md:-m-4 md:max-h-[calc(100svh-16px)] md:overflow-y-auto md:p-4 lg:top-[calc(var(--menu-bar-height)+8px)] lg:max-h-[calc(100svh-var(--menu-bar-height)-var(--dock-space)+24px)]">
+                    32px padding (cancelled by the negative margin) is the
+                    reach of the panel shadow (0 8px 24px), so the scroll box
+                    never cuts it into a visible rectangle. The box overlaps
+                    the list column, hence pointer events only on the panel. */}
+                <div className="pointer-events-none min-w-0 md:sticky md:-top-2 md:-m-8 md:max-h-[calc(100svh+16px)] md:overflow-y-auto md:p-8 lg:top-[calc(var(--menu-bar-height)-8px)] lg:max-h-[calc(100svh-var(--menu-bar-height)-var(--dock-space)+56px)] [&>*]:pointer-events-auto">
                     <InboxDetail notification={selected} inbox={inbox} />
                 </div>
             </div>
