@@ -3,7 +3,6 @@
 namespace App\Domain\Projects\Services;
 
 use App\Domain\Projects\Data\ProjectMetricsData;
-use App\Domain\Projects\Enums\ProjectFlag;
 use App\Domain\Projects\Queries\ProjectMetrics;
 use App\Http\Resources\WorkspaceResource;
 use App\Models\User;
@@ -85,24 +84,5 @@ final class ProjectPresenter
                 'status' => $milestone['status']->value,
             ], $metrics->milestones),
         ];
-    }
-
-    /**
-     * Short Indonesian description of the system flags, e.g.
-     * "Tertinggal 32 poin · Milestone terlewat · Update 9 hari".
-     */
-    public static function flagSummary(ProjectMetricsData $metrics): string
-    {
-        $parts = [];
-
-        foreach ($metrics->flags as $flag) {
-            $parts[] = match ($flag) {
-                ProjectFlag::Behind => 'Tertinggal '.(int) round(abs((float) $metrics->variance)).' poin',
-                ProjectFlag::MissedMilestone => 'Milestone terlewat',
-                ProjectFlag::StaleUpdate => $metrics->updateAgeDays === null ? 'Belum ada update' : "Update {$metrics->updateAgeDays} hari",
-            };
-        }
-
-        return implode(' · ', $parts);
     }
 }

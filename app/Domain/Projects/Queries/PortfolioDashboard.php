@@ -62,9 +62,10 @@ final class PortfolioDashboard
             [$from, $to] = $range;
             $open = $open->filter(fn (Workspace $workspace): bool => ($workspace->start_date === null || $workspace->start_date->lte($to))
                 && ($workspace->target_date === null || $workspace->target_date->gte($from)));
+            // Recently finished: since the start of the previous quarter ("2 proyek selesai di Q3").
+            $since = $today->startOfQuarter()->subQuarter()->toDateString();
             $closed = $closed->filter(fn (Workspace $workspace): bool => $workspace->completed_at !== null
-                && ProjectClock::date($workspace->completed_at) >= $from->toDateString()
-                && ProjectClock::date($workspace->completed_at) <= $to->toDateString());
+                && ProjectClock::date($workspace->completed_at) >= $since);
         }
 
         $divisionOptions = $this->divisionOptions($all);
@@ -103,10 +104,13 @@ final class PortfolioDashboard
             'projects' => $listed->map(fn (Workspace $workspace): array => ProjectPresenter::project($workspace, $metrics[$workspace->id]))->all(),
             'completed' => $closed->filter(fn (Workspace $workspace): bool => ProjectMetrics::status($workspace) === ProjectStatus::Completed)
                 ->sortBy('completed_at')
-                ->map(fn (Workspace $workspace): array => WorkspaceResource::reference($workspace))
+                ->map(fn (Workspace $workspace): array => [
+                    ...WorkspaceResource::reference($workspace),
+                    'completed_at' => $workspace->completed_at?->toIso8601String(),
+                    'quarter' => $workspace->completed_at !== null ? 'Q'.CarbonImmutable::parse(ProjectClock::date($workspace->completed_at))->quarter : null,
+                ])
                 ->values()
                 ->all(),
-            'quarter_label' => 'Q'.$today->quarter,
             'roadmap' => $this->roadmap($open->sortBy(fn (Workspace $workspace): string => sprintf('%d|%s', $workspace->health?->rank() ?? 1, $workspace->target_date?->toDateString() ?? '9999')), $metrics, $today),
             'decisions' => $this->decisions($openIds, $open, $canSteer),
             'attention' => $this->attention($open, $metrics, $viewer),
