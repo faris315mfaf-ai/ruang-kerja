@@ -82,7 +82,7 @@ class AppServiceProvider extends ServiceProvider
             $email = Str::transliterate(Str::lower((string) $request->input(Fortify::username())));
 
             return [
-                Limit::perMinute(10)->by('ip:'.$request->ip()),
+                Limit::perMinute(10)->by('ip|'.$request->ip()),
                 Limit::perMinute(5)->by($email.'|'.$request->ip()),
             ];
         });

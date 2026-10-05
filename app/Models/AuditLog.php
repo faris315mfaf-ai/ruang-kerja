@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Domain\Organization\Enums\Permission;
 use Database\Factories\AuditLogFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -53,6 +55,26 @@ class AuditLog extends Model
             'new_values' => 'array',
             'created_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Rows a viewer may read: nothing without audit.view; otherwise changes made by
+     * people of the viewer's company plus system changes (console/queue, no actor).
+     *
+     * @param  Builder<AuditLog>  $query
+     */
+    public function scopeVisibleTo(Builder $query, User $viewer): void
+    {
+        if (! $viewer->hasPermission(Permission::AuditView)) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->where(function (Builder $scope) use ($viewer): void {
+            $scope->whereNull($this->qualifyColumn('user_id'))
+                ->orWhereIn($this->qualifyColumn('user_id'), User::query()->select('id')->where('company_id', $viewer->company_id));
+        });
     }
 
     /**

@@ -13,6 +13,8 @@ declare module '@inertiajs/core' {
             branding: Branding;
             auth: Auth;
             sidebarOpen: boolean;
+            /** Unread Inbox count (Sprint 8); null for guests. */
+            inbox: { unread: number } | null;
             [key: string]: unknown;
         };
     }

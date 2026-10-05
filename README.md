@@ -6,7 +6,7 @@ Aplikasi kantor internal: **absensi, pengajuan & persetujuan, workspace, kolabor
 
 ## Daftar isi
 
-1. [Dokumentasi](#dokumentasi) · 2. [Teknologi](#teknologi) · 3. [Pengembangan lokal](#pengembangan-lokal) · 4. [Perintah sehari-hari](#perintah-sehari-hari) · 5. [Uji](#uji) · 6. [Deploy ke VPS (dari nol)](#deploy-ke-vps-biznet-gio-dari-nol) · 7. [Deploy berikutnya & rollback](#deploy-berikutnya--rollback) · 8. [Backup & pemulihan](#backup--pemulihan) · 9. [Observabilitas & keamanan](#observabilitas--keamanan) · 10. [Troubleshooting](#troubleshooting)
+1. [Dokumentasi](#dokumentasi) · 2. [Teknologi](#teknologi) · 3. [Pengembangan lokal](#pengembangan-lokal) · [Google Workspace](#menyiapkan-google-workspace) · 4. [Perintah sehari-hari](#perintah-sehari-hari) · 5. [Uji](#uji) · 6. [Deploy ke VPS (dari nol)](#deploy-ke-vps-biznet-gio-dari-nol) · 7. [Deploy berikutnya & rollback](#deploy-berikutnya--rollback) · 8. [Backup & pemulihan](#backup--pemulihan) · 9. [Observabilitas & keamanan](#observabilitas--keamanan) · 10. [Troubleshooting](#troubleshooting)
 
 ## Dokumentasi
 
@@ -26,7 +26,8 @@ Aplikasi kantor internal: **absensi, pengajuan & persetujuan, workspace, kolabor
 
 | Lapisan | Pilihan |
 |---|---|
-| Backend | PHP 8.4, Laravel 13, PostgreSQL 17, Redis 7, Fortify (sandi, 2FA, passkey), spatie/laravel-permission |
+| Backend | PHP 8.4, Laravel 13, PostgreSQL 17, Redis 7, Fortify (sandi + 2FA khusus Super Admin), Socialite (login Google), spatie/laravel-permission, maatwebsite/excel |
+| Google | Klien Drive v3 tipis berbasis HTTP (bukan google/apiclient, lihat `docs/sprints/sprint-7/GOOGLE-API.md`) |
 | Frontend | Inertia.js 3 + React 19 + TypeScript (strict), Tailwind CSS 4, shadcn/ui, TanStack Table, dnd-kit, Wayfinder |
 | Realtime / antrean | Laravel Reverb + Echo · Horizon (Redis) · Scheduler |
 | Penyimpanan | S3-compatible (Biznet Gio NEO Object Storage) untuk file privat & backup; Google Drive untuk file kerja |
@@ -78,6 +79,16 @@ Buka https://ruangkerja.test. **Akun demo** (hanya `APP_ENV=local` + `DEMO_LOGIN
 | http://localhost:8025 | Mailpit |
 | localhost:5432 / 6379 | Postgres / Redis |
 
+## Menyiapkan Google Workspace
+
+1. **Google Cloud Console** → buat proyek → aktifkan **Google Drive API**, **Google Picker API**, **Admin SDK API** (opsional), dan **Google Calendar API** (Fase 2).
+2. **OAuth consent screen** → tipe **Internal** (hanya akun di domain Anda).
+3. **OAuth Client ID** (Web) → redirect URI `https://<domain-app>/auth/google/callback` (login) **dan** `https://<domain-app>/google/connect/callback` (hubungkan Drive untuk Picker), JavaScript origin `https://<domain-app>`. Scope: `openid email profile` + `https://www.googleapis.com/auth/drive.file`. Buat juga **API key** untuk Google Picker → `GOOGLE_PICKER_API_KEY`.
+4. **Service Account** → buat kunci JSON → simpan sebagai secret (jangan di-commit). Di server produksi taruh di volume `storage` (mis. `docker compose -f compose.prod.yml cp google-sa.json app:/app/storage/app/private/google-sa.json`) dan isi `GOOGLE_SERVICE_ACCOUNT_JSON=/app/storage/app/private/google-sa.json`.
+5. **Admin Console** → Security → API controls → **Domain-wide delegation** → tambahkan Client ID service account dengan scope `https://www.googleapis.com/auth/drive` (dan `calendar` di Fase 2).
+6. Buat **Shared Drive** "RuangKerja", tambahkan akun impersonasi sebagai *Manager*, salin ID-nya ke `GOOGLE_SHARED_DRIVE_ID`.
+7. Jalankan `php artisan ruangkerja:google-check --write` untuk menguji koneksi. Rincian: [`docs/sprints/sprint-7/GOOGLE-API.md`](docs/sprints/sprint-7/GOOGLE-API.md) §8.
+
 ## Perintah sehari-hari
 
 ```bash
@@ -91,6 +102,7 @@ npm test                    # Vitest
 npm run test:e2e            # uji visual Playwright (lihat tests/e2e/README.md)
 php artisan migrate:fresh --seed                 # reset database lokal + data demo
 php artisan wayfinder:generate --with-form       # setelah menambah route/controller
+php artisan ruangkerja:google-check --write      # uji koneksi Google (service account, Shared Drive)
 ```
 
 ## Uji
@@ -152,7 +164,7 @@ Isi setiap `<...>`: `APP_IMAGE`/`BACKUP_IMAGE` (huruf kecil), `APP_DOMAIN`, `ACM
    docker run --rm --entrypoint php ghcr.io/<org>/ruangkerja:latest artisan key:generate --show
    ```
 3. Setujui deploy. `scripts/deploy-remote.sh` menjalankan: pin `APP_TAG` → `docker compose pull` → `up -d --wait` → `php artisan migrate --force` → `php artisan db:seed --force` (peran & izin) → `php artisan horizon:terminate`. Workflow lalu memanggil `https://<domain>/health`.
-4. Buat Super Admin pertama, lalu login di `https://<domain>/login`, ganti sandi, dan aktifkan 2FA (Pengaturan → Keamanan):
+4. Buat Super Admin pertama, lalu login dengan sandi di `https://<domain>/login`; aplikasi mewajibkan penyiapan 2FA (TOTP) sebelum fitur lain bisa dipakai, lalu ganti sandi sementara:
    ```bash
    cd /opt/ruangkerja
    docker compose -f compose.prod.yml exec app php artisan ruangkerja:create-super-admin it@perusahaan.co.id --name="Admin Sistem" --company="PT Perusahaan" --generate-password

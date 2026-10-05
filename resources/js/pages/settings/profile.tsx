@@ -1,129 +1,143 @@
-import { Form, Head, Link, usePage } from '@inertiajs/react';
-import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import DeleteUser from '@/components/delete-user';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { Info, ShieldCheck } from 'lucide-react';
+import type { ReactNode } from 'react';
 import Heading from '@/components/heading';
-import InputError from '@/components/input-error';
+import { ThemeSegmented } from '@/components/shell/theme-segmented';
+import { UserAvatar } from '@/components/shell/user-avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { formatDate } from '@/lib/format';
+import { primaryRoleLabel } from '@/lib/roles';
 import { edit } from '@/routes/profile';
-import { send } from '@/routes/verification';
+import { edit as editSecurity } from '@/routes/security';
 
-export default function Profile({
-    mustVerifyEmail,
-    status,
-}: {
-    mustVerifyEmail: boolean;
-    status?: string;
-}) {
-    const { user } = usePage().props.auth;
+type ProfileData = {
+    name: string;
+    email: string;
+    division: string | null;
+    team: string | null;
+    position: string | null;
+    manager: { name: string; email: string } | null;
+    workMode: string;
+    joinedAt: string | null;
+};
 
-    // The page sits behind the auth middleware, so this only guards the type.
-    if (!user) {
-        return null;
-    }
+type Props = {
+    profile: ProfileData;
+    canManageCredentials: boolean;
+};
+
+const EMPTY = '—';
+
+export default function Profile({ profile, canManageCredentials }: Props) {
+    const { auth } = usePage().props;
+    const roleLabel = primaryRoleLabel(auth.roles);
+    const subtitle = [profile.position, roleLabel].filter(Boolean).join(' · ');
+
+    const rows: { label: string; value: ReactNode }[] = [
+        { label: 'Nama', value: profile.name },
+        { label: 'Email', value: profile.email },
+        { label: 'Divisi', value: profile.division ?? EMPTY },
+        { label: 'Tim', value: profile.team ?? EMPTY },
+        { label: 'Jabatan', value: profile.position ?? EMPTY },
+        {
+            label: 'Atasan langsung',
+            value: profile.manager ? (
+                <span className="flex flex-col">
+                    <span>{profile.manager.name}</span>
+                    <span className="text-xs text-text-muted">
+                        {profile.manager.email}
+                    </span>
+                </span>
+            ) : (
+                EMPTY
+            ),
+        },
+        { label: 'Mode kerja', value: profile.workMode },
+        {
+            label: 'Bergabung',
+            value: profile.joinedAt ? formatDate(profile.joinedAt) : EMPTY,
+        },
+    ];
 
     return (
         <>
-            <Head title="Pengaturan profil" />
+            <Head title="Profil" />
 
-            <h1 className="sr-only">Pengaturan profil</h1>
+            <h1 className="sr-only">Profil</h1>
 
             <div className="space-y-6">
                 <Heading
                     variant="small"
                     title="Profil"
-                    description="Perbarui nama dan alamat email Anda"
+                    description="Data karyawan Anda di perusahaan"
                 />
 
-                <Form
-                    {...ProfileController.update.form()}
-                    options={{
-                        preserveScroll: true,
-                    }}
-                    className="space-y-6"
+                <div className="flex items-center gap-3">
+                    <UserAvatar
+                        name={profile.name}
+                        src={auth.user?.avatar}
+                        className="size-12 text-sm"
+                    />
+                    <div className="min-w-0">
+                        <p className="truncate font-semibold text-text">
+                            {profile.name}
+                        </p>
+                        <p className="truncate text-sm text-text-muted">
+                            {subtitle || profile.email}
+                        </p>
+                    </div>
+                </div>
+
+                <dl
+                    className="divide-y divide-border rounded-lg border border-border bg-surface shadow-card"
+                    data-test="profile-data"
                 >
-                    {({ processing, errors }) => (
-                        <>
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">Nama</Label>
+                    {rows.map((row) => (
+                        <div
+                            key={row.label}
+                            className="grid gap-1 px-4 py-3 sm:grid-cols-[10rem_1fr] sm:gap-4"
+                        >
+                            <dt className="text-sm text-text-muted">
+                                {row.label}
+                            </dt>
+                            <dd className="min-w-0 text-sm break-words text-text">
+                                {row.value}
+                            </dd>
+                        </div>
+                    ))}
+                </dl>
 
-                                <Input
-                                    id="name"
-                                    className="mt-1 block w-full"
-                                    defaultValue={user.name}
-                                    name="name"
-                                    required
-                                    autoComplete="name"
-                                    placeholder="Nama lengkap"
-                                />
-
-                                <InputError
-                                    className="mt-2"
-                                    message={errors.name}
-                                />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email</Label>
-
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    className="mt-1 block w-full"
-                                    defaultValue={user.email}
-                                    name="email"
-                                    required
-                                    autoComplete="username"
-                                    placeholder="nama@perusahaan.co.id"
-                                />
-
-                                <InputError
-                                    className="mt-2"
-                                    message={errors.email}
-                                />
-                            </div>
-
-                            {mustVerifyEmail &&
-                                user.email_verified_at === null && (
-                                    <div>
-                                        <p className="-mt-4 text-sm text-muted-foreground">
-                                            Alamat email Anda belum
-                                            diverifikasi.{' '}
-                                            <Link
-                                                href={send()}
-                                                as="button"
-                                                className="text-foreground underline decoration-border-strong underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-text-subtle"
-                                            >
-                                                Klik di sini untuk mengirim
-                                                ulang email verifikasi.
-                                            </Link>
-                                        </p>
-
-                                        {status ===
-                                            'verification-link-sent' && (
-                                            <div className="mt-2 text-sm font-medium text-success">
-                                                Tautan verifikasi baru telah
-                                                dikirim ke alamat email Anda.
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                            <div className="flex items-center gap-4">
-                                <Button
-                                    disabled={processing}
-                                    data-test="update-profile-button"
-                                >
-                                    Simpan
-                                </Button>
-                            </div>
-                        </>
-                    )}
-                </Form>
+                <p className="flex items-start gap-2 text-sm text-text-muted">
+                    <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
+                    Data ini dikelola HR. Hubungi HR bila ada yang perlu
+                    diperbaiki.
+                </p>
             </div>
 
-            <DeleteUser />
+            <div className="space-y-4">
+                <Heading
+                    variant="small"
+                    title="Tampilan"
+                    description="Pilih tema terang, gelap, atau ikuti sistem"
+                />
+                <ThemeSegmented />
+            </div>
+
+            {canManageCredentials && (
+                <div className="space-y-4">
+                    <Heading
+                        variant="small"
+                        title="Keamanan Super Admin"
+                        description="Kata sandi darurat dan autentikasi dua faktor (TOTP)"
+                    />
+                    <Button variant="outline" asChild className="min-h-11">
+                        <Link href={editSecurity()}>
+                            <ShieldCheck aria-hidden />
+                            Buka pengaturan keamanan
+                        </Link>
+                    </Button>
+                </div>
+            )}
         </>
     );
 }
@@ -131,7 +145,7 @@ export default function Profile({
 Profile.layout = {
     breadcrumbs: [
         {
-            title: 'Pengaturan profil',
+            title: 'Profil',
             href: edit(),
         },
     ],

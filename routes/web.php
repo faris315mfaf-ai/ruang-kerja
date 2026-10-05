@@ -14,14 +14,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Shell entries whose modules arrive in later sprints. Each sprint replaces
     // its entry with real routes.
     $upcoming = [
-        'inbox' => ['inbox', 'Inbox'],
         'tugas' => ['tasks.mine', 'Tugas saya'],
         'absensi' => ['attendance.index', 'Absensi'],
         'pengajuan' => ['requests.index', 'Pengajuan'],
         'persetujuan' => ['approvals.index', 'Persetujuan'],
         'workspace' => ['workspaces.index', 'Workspace'],
-        'admin/karyawan' => ['admin.employees.index', 'Karyawan'],
-        'pengaturan/notifikasi' => ['settings.notifications', 'Pengaturan notifikasi'],
         'privasi' => ['privacy.index', 'Privasi & data saya'],
     ];
 
@@ -35,4 +32,9 @@ Route::post('login/demo', [DemoLoginController::class, 'store'])
     ->middleware(['guest', 'throttle:login'])
     ->name('login.demo');
 
+require __DIR__.'/auth.php';
 require __DIR__.'/settings.php';
+require __DIR__.'/admin-employees.php';
+require __DIR__.'/notifications.php';
+require __DIR__.'/google.php';
+require __DIR__.'/organization.php';
