@@ -18,7 +18,7 @@ Cabang `feat/sprint-3-qr-rekap`. Dibangun di atas Sprint 2 (absensi inti) dan su
 | Job bulanan hapus selfie > ATTENDANCE_SELFIE_RETENTION_MONTHS | ✓ | `PurgeExpiredSelfiesJob` (tgl 1, 02.30 WIB) + `attendance:purge-selfies`; `SelfieRetentionTest` |
 | Test: QR kedaluwarsa ditolak, HMAC palsu ditolak, kiosk tidak bisa membuka halaman lain, Kadiv tidak bisa melihat selfie divisi lain, akses selfie tercatat, angka rekap cocok | ✓ | `QrCheckInTest`, `KioskTest`, `SelfieAccessTest`, `MonthlyRecapTest`, `AttendanceRecapPageTest` |
 
-Jumlah test: lihat laporan akhir (Pest penuh, Vitest 209). `composer lint`, `npm run typecheck`, `npm run lint` hijau.
+Jumlah test: **1431 Pest** hijau setelah merge `main` (238 di `tests/Feature/Attendance`, 75 baru untuk Sprint 3), **209 Vitest**. `composer lint`, `npm run typecheck`, `npm run lint` hijau. Catatan: `composer test` paralel di mesin bersama sempat gagal dengan `out of shared memory` dari Postgres (lock table penuh karena banyak agent); suite yang sama dijalankan berurutan (`pest`, memory_limit 2G) seluruhnya hijau.
 
 ## Cara uji manual (https://ruangkerja.test, `php artisan migrate:fresh --seed`)
 
