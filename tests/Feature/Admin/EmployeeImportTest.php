@@ -2,6 +2,7 @@
 
 use App\Domain\Organization\Enums\Role;
 use App\Domain\Organization\Enums\WorkMode;
+use App\Domain\Organization\Services\EmployeeImportStore;
 use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\Division;
@@ -10,6 +11,8 @@ use App\Models\Position;
 use App\Models\Team;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Console\Scheduling\Event;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -294,4 +297,47 @@ it('keeps an import private to the uploader and forbids anggota', function () {
         ->assertForbidden();
     $this->actingAs($anggota)->post(route('admin.employees.import.commit', $token))->assertForbidden();
     $this->actingAs($anggota)->get(route('admin.employees.import.template', 'csv'))->assertForbidden();
+});
+
+describe('uploaded file retention (contains NIK)', function () {
+    it('deletes the previous uncommitted upload when the same user uploads again', function () {
+        $first = previewImport(csvUpload('Bayu,bayu@kantor.test,,,,,,,,,,3201010101010001'));
+        $firstFiles = Storage::disk('local')->allFiles(EmployeeImportStore::DIRECTORY);
+
+        $second = previewImport(csvUpload('Citra,citra@kantor.test,,,,,,,,,,3201010101010002'));
+
+        expect($firstFiles)->toHaveCount(1)
+            ->and(Storage::disk('local')->allFiles(EmployeeImportStore::DIRECTORY))->toHaveCount(1)
+            ->and(Storage::disk('local')->exists($firstFiles[0]))->toBeFalse()
+            ->and(app(EmployeeImportStore::class)->get($first, $this->hr))->toBeNull()
+            ->and(app(EmployeeImportStore::class)->get($second, $this->hr))->not->toBeNull();
+    });
+
+    it('does not extend the import session on update, so it never outlives its file', function () {
+        $token = previewImport(csvUpload('Bayu,bayu@kantor.test,,,,,,,,,,'));
+
+        $this->travel(50)->minutes();
+        app(EmployeeImportStore::class)->update($token, ['preview' => []]);
+        $this->travel(11)->minutes();
+
+        expect(app(EmployeeImportStore::class)->get($token, $this->hr))->toBeNull();
+    });
+
+    it('prunes upload files older than the TTL every hour', function () {
+        $disk = Storage::disk('local');
+        $disk->put(EmployeeImportStore::DIRECTORY.'/old.csv', 'nik');
+        $disk->put(EmployeeImportStore::DIRECTORY.'/fresh.csv', 'nik');
+        touch($disk->path(EmployeeImportStore::DIRECTORY.'/old.csv'), now()->subMinutes(EmployeeImportStore::TTL_MINUTES + 1)->getTimestamp());
+
+        $this->artisan('employee-imports:prune')->expectsOutput('1 berkas impor kedaluwarsa dihapus.')->assertSuccessful();
+
+        expect($disk->exists(EmployeeImportStore::DIRECTORY.'/old.csv'))->toBeFalse()
+            ->and($disk->exists(EmployeeImportStore::DIRECTORY.'/fresh.csv'))->toBeTrue();
+
+        $events = collect(app(Schedule::class)->events())
+            ->filter(fn (Event $event) => str_contains((string) $event->command, 'employee-imports:prune'));
+
+        expect($events)->toHaveCount(1)
+            ->and($events->first()->expression)->toBe('0 * * * *');
+    });
 });
