@@ -14,13 +14,13 @@ export function DocToc({
     }
 
     return (
-        <ol className={cn('space-y-0.5 text-[13px]', className)}>
+        <ol className={cn('space-y-0.5 text-[14px]', className)}>
             {items.map((item) => (
                 <li key={item.id}>
                     <a
                         href={`#${item.id}`}
                         className={cn(
-                            'block min-h-7 rounded-md py-1 pr-2 leading-5 text-text-muted transition-colors duration-150 ease-brand hover:bg-surface-2 hover:text-text',
+                            'block min-h-8 rounded-sm py-1.5 pr-2 leading-5 text-text-muted transition-colors duration-120 ease-brand hover:bg-surface-2 hover:text-text',
                             item.level === 3 ? 'pl-5' : 'pl-2',
                         )}
                     >
