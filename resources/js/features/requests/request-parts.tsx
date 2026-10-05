@@ -28,15 +28,20 @@ function hhmm(value: string | null | undefined): string {
 /** Label/value rows of a request (detail panel, mobile detail card). */
 export function RequestFields({
     request,
+    withPeriod = true,
     className,
 }: {
     request: RequestDetail;
+    /** False when the period is already shown elsewhere (approval tiles). */
+    withPeriod?: boolean;
     className?: string;
 }) {
     const category = request.type.category;
     const rows: { label: string; value: React.ReactNode }[] = [];
 
-    if (category === 'correction') {
+    if (!withPeriod) {
+        // Period rows are shown by the caller.
+    } else if (category === 'correction') {
         rows.push({
             label: 'Tanggal',
             value: formatRequestPeriod({
