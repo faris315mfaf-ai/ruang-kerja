@@ -5,7 +5,10 @@ use App\Domain\Attendance\Enums\AttendanceStatus as S;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\Holiday;
 use App\Domain\Attendance\Services\MonthlyRecap;
+use App\Domain\Organization\Actions\DeactivateEmployee;
+use App\Domain\Organization\Actions\ReactivateEmployee;
 use App\Domain\Organization\Enums\Role;
+use App\Domain\Organization\Enums\UserStatus;
 use App\Models\Division;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
@@ -147,6 +150,54 @@ test('the company report follows the viewer scope, filters and the calendar of t
     expect(collect($recaps->report($kadiv, $period)->rows)->map(fn ($row) => $row->user->name)->all())->toBe(['Rizky Aditya'])
         ->and(collect($recaps->report($hr, $period, ['division_id' => $finance->id])->rows)->map(fn ($row) => $row->user->name)->all())->toBe(['Fitri Handayani'])
         ->and(collect($recaps->report($hr, $period, ['search' => 'rizk'])->rows)->map(fn ($row) => $row->user->name)->all())->toBe(['Rizky Aditya']);
+});
+
+test('only dates of employment count: from joined_at up to the deactivation date', function () {
+    $hr = User::factory()->withRole(Role::Hr)->create();
+    $period = RecapPeriod::forMonth('2026-09', now());
+
+    // Joined Wed 16 Sep: 16–30 Sep minus Maulid (25) = 10 work days.
+    $newcomer = F::employee();
+    $newcomer->update(['name' => 'Bayu Baru', 'joined_at' => '2026-09-16']);
+    AttendanceDay::factory()->for($newcomer)->on('2026-09-16')->status(S::Present)->create(['check_in_at' => F::at('2026-09-16 07:55')->utc()]);
+
+    // Deactivated Thu 10 Sep 16.00 WIB: 1–10 Sep = 8 work days; later days are not counted.
+    $leaver = F::employee();
+    $leaver->update(['name' => 'Lina Keluar']);
+    $this->travelTo(F::at('2026-09-10 16:00'));
+    app(DeactivateEmployee::class)->handle($hr, $leaver, UserStatus::Resigned, 'Mengundurkan diri');
+    $this->travelTo(F::at('2026-10-05 09:15'));
+    AttendanceDay::factory()->for($leaver)->on('2026-09-10')->status(S::Present)->create(['check_in_at' => F::at('2026-09-10 07:58')->utc()]);
+    AttendanceDay::factory()->for($leaver)->on('2026-09-14')->status(S::Absent)->create();
+
+    // Deactivated in August: nothing to count in September, left out of the report.
+    $gone = F::employee();
+    $gone->update(['name' => 'Gani Lama']);
+    $this->travelTo(F::at('2026-08-20 10:00'));
+    app(DeactivateEmployee::class)->handle($hr, $gone, UserStatus::Inactive, 'Kontrak selesai');
+    $this->travelTo(F::at('2026-10-05 09:15'));
+
+    $recaps = app(MonthlyRecap::class);
+    $kinds = fn ($recap) => collect($recap->days)->mapWithKeys(fn ($cell) => [$cell->date => $cell->kind]);
+
+    $newcomerRecap = $recaps->employee($newcomer->fresh() ?? $newcomer, $period);
+    expect($newcomerRecap->workDays)->toBe(10)
+        ->and($newcomerRecap->expectedDays())->toBe(10)
+        ->and($kinds($newcomerRecap)['2026-09-15'])->toBe('off')
+        ->and($kinds($newcomerRecap)['2026-09-16'])->toBe('present');
+
+    $leaverRecap = $recaps->employee($leaver->fresh() ?? $leaver, $period);
+    expect($leaverRecap->workDays)->toBe(8)
+        ->and($leaverRecap->absentDays)->toBe(0)
+        ->and($leaverRecap->presentDays)->toBe(1)
+        ->and($kinds($leaverRecap)['2026-09-10'])->toBe('present')
+        ->and($kinds($leaverRecap)['2026-09-14'])->toBe('off');
+
+    expect(collect($recaps->report($hr, $period)->rows)->map(fn ($row) => $row->user->name)->all())->toBe(['Bayu Baru', 'Lina Keluar']);
+
+    // Reactivation clears the end date.
+    app(ReactivateEmployee::class)->handle($hr, $gone);
+    expect($gone->fresh()?->deactivated_at)->toBeNull();
 });
 
 test('the month parameter is validated', function (?string $value, string $expected) {

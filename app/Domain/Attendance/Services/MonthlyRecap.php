@@ -26,7 +26,9 @@ use Illuminate\Support\Collection;
  *   closing the day and by approved requests (Sprint 4).
  * - Overtime: attendance_days.overtime_minutes (approved overtime, Sprint 4).
  *
- * Only dates up to today count in the running month.
+ * Only dates up to today count in the running month, and only dates of
+ * employment: from joined_at up to the deactivation date (inactive/resigned).
+ * Employees with nothing counted in the month are left out of the report.
  */
 final class MonthlyRecap
 {
@@ -94,9 +96,18 @@ final class MonthlyRecap
             $own = $records->get($user->id, collect());
             $checkIns = [];
             $shifts = [];
+            [$employedFrom, $employedUntil] = self::employment($user);
 
             for ($date = $period->monthStart; $date->lte($period->monthEnd); $date = $date->addDay()) {
                 $key = $date->toDateString();
+
+                if (($employedFrom !== null && $key < $employedFrom) || ($employedUntil !== null && $key > $employedUntil)) {
+                    // Not employed on this date: shown as unscheduled, never counted.
+                    $recap->days[] = new RecapDay($key, 'off', false);
+
+                    continue;
+                }
+
                 $schedule = $schedules[$user->id][$key] ?? null;
                 $record = $own->get($key);
                 $counted = $period->countedUntil !== null && $date->lte($period->countedUntil);
@@ -139,6 +150,25 @@ final class MonthlyRecap
         }
 
         return $rows;
+    }
+
+    /**
+     * First and last office date of employment ("Y-m-d", null = open):
+     * joined_at, and for inactive/resigned employees the office date of
+     * deactivated_at (rows from before that column fall back to updated_at).
+     *
+     * @return array{0: string|null, 1: string|null}
+     */
+    private static function employment(User $user): array
+    {
+        $until = null;
+
+        if (! $user->isActive()) {
+            $end = $user->deactivated_at ?? $user->updated_at;
+            $until = $end !== null ? ScheduleResolver::officeDate($end)->toDateString() : null;
+        }
+
+        return [$user->joined_at?->toDateString(), $until];
     }
 
     /**
