@@ -144,7 +144,7 @@ export function CheckSuccess({ result, onDone, variant = 'card' }: Props) {
                     aria-hidden
                     className="flex size-[132px] items-center justify-center rounded-full bg-on-brand/16"
                 >
-                    <span className="flex size-24 items-center justify-center rounded-full bg-on-brand text-primary shadow-float">
+                    <span className="flex size-24 items-center justify-center rounded-full bg-on-brand text-brand-700 shadow-float">
                         <Check className="size-12" strokeWidth={2.6} />
                     </span>
                 </span>
@@ -195,7 +195,7 @@ export function CheckSuccess({ result, onDone, variant = 'card' }: Props) {
                     size="xl"
                     variant="outline"
                     onClick={onDone}
-                    className="w-full rounded-[18px] border-0 bg-on-brand font-extrabold text-primary shadow-float hover:bg-on-brand/90"
+                    className="w-full rounded-[18px] border-0 bg-on-brand font-extrabold text-brand-800 shadow-float hover:bg-on-brand/90"
                 >
                     Selesai
                 </Button>

@@ -1,3 +1,7 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { WEEKDAYS } from '@/lib/attendance';
+import { formatTime } from '@/lib/format';
 import {
     CALENDAR_TONES,
     calendarWeeks,
@@ -5,15 +9,14 @@ import {
     kindTone,
     legend,
 } from '@/lib/recap';
-import { WEEKDAYS } from '@/lib/attendance';
-import { cn } from '@/lib/utils';
+import { cn, focusRing } from '@/lib/utils';
 import type { RecapDayCell, RecapRow } from '@/types/attendance';
 
 type Props = {
     days: RecapDayCell[];
     selected?: string | null;
     onSelect?: (cell: RecapDayCell) => void;
-    /** `cells`: labelled rectangles (desktop panel); `dots`: round days (mobile). */
+    /** `cells`: 74px labelled tiles (SAbsensi); `dots`: 40px day tiles (MSRiwayat). */
     variant?: 'cells' | 'dots';
     today?: string;
     className?: string;
@@ -34,7 +37,45 @@ function describe(cell: RecapDayCell): string {
     return `${Number(cell.date.slice(8))} · ${label}${cell.lateMinutes > 0 ? ` ${cell.lateMinutes} menit` : ''}`;
 }
 
-/** Month grid (mockups RekapAbsensi detail panel, MRiwayatAbsensi). */
+/** Text under the day number: check-in time for a normal day, else the short status. */
+function tileLabel(cell: RecapDayCell): string | null {
+    if (cell.kind === 'present' && cell.checkIn) {
+        return formatTime(cell.checkIn.occurredAt);
+    }
+
+    if (cell.kind === 'holiday') {
+        return cell.holidayName ?? 'Libur';
+    }
+
+    return cellLabel(cell);
+}
+
+/** Colours of one day tile. */
+function tileClasses(
+    cell: RecapDayCell,
+    isToday: boolean,
+    dots: boolean,
+): string {
+    if (isToday) {
+        return 'bg-primary bg-grad-aksi text-on-brand';
+    }
+
+    const tone = kindTone(cell.kind);
+
+    if (tone !== 'neutral') {
+        return CALENDAR_TONES[tone].soft;
+    }
+
+    if (dots) {
+        return 'text-text-subtle';
+    }
+
+    return cell.isWorkday && cell.kind !== 'holiday'
+        ? 'border border-divider bg-surface text-text-subtle'
+        : 'bg-background text-text-subtle';
+}
+
+/** Month grid (SAbsensi "Oktober 2026", MSRiwayat, recap detail panel). */
 export function MonthCalendar({
     days,
     selected,
@@ -49,7 +90,10 @@ export function MonthCalendar({
     return (
         <div className={className}>
             <div
-                className="grid grid-cols-7 gap-1.5 pb-1.5 text-center text-xs text-text-muted"
+                className={cn(
+                    'grid grid-cols-7 pb-1.5 text-center font-bold text-text-muted',
+                    dots ? 'gap-1 text-[13px]' : 'gap-2 text-[14px]',
+                )}
                 aria-hidden
             >
                 {WEEKDAYS.map((day) => (
@@ -59,13 +103,16 @@ export function MonthCalendar({
             <div
                 role="grid"
                 aria-label="Kalender absensi"
-                className="grid gap-1.5"
+                className={cn('grid', dots ? 'gap-1' : 'gap-2')}
             >
                 {weeks.map((week, index) => (
                     <div
                         key={index}
                         role="row"
-                        className="grid grid-cols-7 gap-1.5"
+                        className={cn(
+                            'grid grid-cols-7',
+                            dots ? 'gap-1' : 'gap-2',
+                        )}
                     >
                         {week.map((cell, slot) => {
                             if (!cell) {
@@ -78,23 +125,22 @@ export function MonthCalendar({
                                 );
                             }
 
-                            const tone = kindTone(cell.kind);
-                            const muted = tone === 'neutral';
-                            const classes = CALENDAR_TONES[tone];
-                            const label = cellLabel(cell);
                             const isSelected = selected === cell.date;
+                            const colours = tileClasses(
+                                cell,
+                                today === cell.date,
+                                dots,
+                            );
+                            const label = tileLabel(cell);
+                            const ring =
+                                isSelected &&
+                                'ring-2 ring-primary ring-offset-2 ring-offset-surface';
                             const content = dots ? (
                                 <span
                                     className={cn(
-                                        'mx-auto flex size-11 items-center justify-center rounded-full text-[17px] font-medium tnum',
-                                        muted
-                                            ? 'text-text-subtle'
-                                            : classes.soft,
-                                        isSelected &&
-                                            'ring-2 ring-text ring-offset-2 ring-offset-surface',
-                                        today === cell.date &&
-                                            !isSelected &&
-                                            'ring-1 ring-border-strong',
+                                        'flex h-10 items-center justify-center rounded-[11px] text-[15px] font-bold tnum',
+                                        colours,
+                                        ring,
                                     )}
                                 >
                                     {Number(cell.date.slice(8))}
@@ -102,18 +148,16 @@ export function MonthCalendar({
                             ) : (
                                 <span
                                     className={cn(
-                                        'flex h-11 flex-col items-start justify-between rounded-md px-1.5 py-1 text-left',
-                                        muted
-                                            ? 'bg-surface-2 text-text-subtle'
-                                            : classes.soft,
-                                        isSelected && 'ring-2 ring-primary',
+                                        'flex h-[74px] flex-col justify-between rounded-[14px] px-2.5 py-2 text-left',
+                                        colours,
+                                        ring,
                                     )}
                                 >
-                                    <span className="text-[13px] leading-none font-semibold tnum">
+                                    <span className="text-[16px] leading-5 font-bold tnum">
                                         {Number(cell.date.slice(8))}
                                     </span>
-                                    {label && cell.kind !== 'holiday' && (
-                                        <span className="truncate text-[10px] leading-none">
+                                    {label && (
+                                        <span className="truncate text-[13px] leading-4 font-bold tnum">
                                             {label}
                                         </span>
                                     )}
@@ -125,13 +169,17 @@ export function MonthCalendar({
                                     key={cell.date}
                                     role="gridcell"
                                     aria-selected={isSelected || undefined}
+                                    className="min-w-0"
                                 >
                                     {onSelect ? (
                                         <button
                                             type="button"
                                             onClick={() => onSelect(cell)}
                                             aria-label={describe(cell)}
-                                            className="block w-full rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                            className={cn(
+                                                'block w-full rounded-[14px]',
+                                                focusRing,
+                                            )}
                                         >
                                             {content}
                                         </button>
@@ -166,7 +214,7 @@ export function CalendarLegend({
     return (
         <ul
             className={cn(
-                'flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-text',
+                'flex flex-wrap gap-x-4 gap-y-1.5 text-[14px] text-text-muted',
                 className,
             )}
         >
@@ -178,13 +226,79 @@ export function CalendarLegend({
                     <span
                         aria-hidden
                         className={cn(
-                            'size-2.5 rounded-full',
+                            'size-2 rounded-full',
                             CALENDAR_TONES[item.tone].solid,
                         )}
                     />
-                    {item.label} <span className="tnum">{item.count}</span>
+                    {item.label}{' '}
+                    <span className="font-semibold text-text tnum">
+                        {item.count}
+                    </span>
                 </li>
             ))}
         </ul>
+    );
+}
+
+/**
+ * Month switch (SAbsensi / MSRiwayat "Bulan"): previous · label · next in a
+ * light track. `fill` stretches it over the width (phone).
+ */
+export function MonthNav({
+    label,
+    onPrevious,
+    onNext,
+    nextDisabled = false,
+    fill = false,
+    className,
+}: {
+    label: string;
+    onPrevious: () => void;
+    onNext: () => void;
+    nextDisabled?: boolean;
+    fill?: boolean;
+    className?: string;
+}) {
+    return (
+        <div
+            className={cn(
+                'items-center gap-1 rounded-[14px] p-1',
+                fill
+                    ? 'flex w-full rounded-lg bg-surface-2'
+                    : 'inline-flex border border-border bg-surface/75',
+                className,
+            )}
+        >
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={cn('rounded-[10px]', !fill && 'size-10')}
+                onClick={onPrevious}
+                aria-label="Bulan sebelumnya"
+            >
+                <ChevronLeft aria-hidden />
+            </Button>
+            <h2
+                aria-live="polite"
+                className={cn(
+                    'min-w-0 px-3 text-center text-[16px] font-bold text-text first-letter:uppercase',
+                    fill && 'flex-1 truncate',
+                )}
+            >
+                {label}
+            </h2>
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={cn('rounded-[10px]', !fill && 'size-10')}
+                onClick={onNext}
+                disabled={nextDisabled}
+                aria-label="Bulan berikutnya"
+            >
+                <ChevronRight aria-hidden />
+            </Button>
+        </div>
     );
 }

@@ -1,15 +1,20 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, Download, FileText } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Panel } from '@/components/ui/panel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DayDetail } from '@/features/attendance/recap/day-detail';
-import { EmployeeMonthPanel } from '@/features/attendance/recap/employee-month-panel';
+import { LogsDialog } from '@/features/attendance/recap/logs-dialog';
 import {
     CalendarLegend,
     MonthCalendar,
+    MonthNav,
 } from '@/features/attendance/recap/month-calendar';
+import { MonthNotes } from '@/features/attendance/recap/month-notes';
+import { TodayBar } from '@/features/attendance/recap/today-bar';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
+import { formatHours } from '@/lib/recap';
 import { formatNumber } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { history as historyRoute } from '@/routes/attendance';
@@ -27,6 +32,7 @@ type Props = {
 };
 
 const CORRECTION_HREF = '/pengajuan/baru?kategori=koreksi';
+const PRIVACY_NOTE = 'Data ini hanya terlihat oleh Anda, atasan, dan HR.';
 
 /** Default selected day: today in the running month, else the last day with a record. */
 function initialDay(recap: RecapDetail, today: string): string | null {
@@ -41,15 +47,60 @@ function initialDay(recap: RecapDetail, today: string): string | null {
     return recorded?.date ?? recap.days[0]?.date ?? null;
 }
 
+type Stat = { label: string; value: string; dot: string; text?: string };
+
+/** Month counters (SAbsensi "Tepat waktu · Terlambat · WFH · Izin / cuti · Lembur"). */
+function monthStats(recap: RecapDetail): Stat[] {
+    return [
+        {
+            label: 'Tepat waktu',
+            value: formatNumber(
+                Math.max(0, recap.presentDays - recap.lateCount),
+            ),
+            dot: 'bg-success',
+            text: 'text-success',
+        },
+        {
+            label: 'Terlambat',
+            value: formatNumber(recap.lateCount),
+            dot: 'bg-fill-warning',
+            text: 'text-warning',
+        },
+        {
+            label: 'WFH',
+            value: formatNumber(recap.wfhDays),
+            dot: 'bg-fill-teal',
+            text: 'text-link',
+        },
+        {
+            label: 'Izin / cuti',
+            value: formatNumber(
+                recap.leaveDays +
+                    recap.permitDays +
+                    recap.sickDays +
+                    recap.businessTripDays,
+            ),
+            dot: 'bg-accent-blue-strong',
+            text: 'text-info',
+        },
+        {
+            label: 'Lembur',
+            value: `${formatHours(recap.overtimeHours)} jam`,
+            dot: 'bg-text-muted',
+        },
+    ];
+}
+
 /**
- * Absensi Saya (mockups MRiwayatAbsensi, RekapAbsensi detail): the own monthly
- * recap with a calendar, the selected day's check-in/out and a personal PDF.
+ * Absensi saya (SAbsensi, MSRiwayat): today's status, the month's counters,
+ * calendar with notes, the selected day's check-in/out and a personal PDF.
  */
 export default function AttendanceHistory({ period, today, recap }: Props) {
     const breakpoint = useBreakpoint();
     const [selected, setSelected] = useState<string | null>(() =>
         initialDay(recap, today),
     );
+    const [logsOpen, setLogsOpen] = useState(false);
     const cell = recap.days.find((item) => item.date === selected) ?? null;
     const go = (month: string) =>
         router.get(
@@ -61,144 +112,75 @@ export default function AttendanceHistory({ period, today, recap }: Props) {
     const nextDisabled = period.countedUntil === null || period.isRunning;
     const subtitle = `${recap.workDays} hari kerja${recap.shiftName ? ` · Shift ${recap.shiftName}` : ''}`;
     const select = (next: RecapDayCell) => setSelected(next.date);
-
-    const monthNav = (
-        <div className="flex items-center justify-between gap-3">
-            <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="size-11 rounded-full"
-                onClick={() => go(period.previous)}
-                aria-label="Bulan sebelumnya"
-            >
-                <ChevronLeft aria-hidden />
-            </Button>
-            <div className="min-w-0 text-center">
-                <h1 className="text-[19px] font-semibold text-text md:text-xl">
-                    {period.label}
-                </h1>
-                <p className="truncate text-[13px] text-text-muted">
-                    {subtitle}
-                </p>
-            </div>
-            <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="size-11 rounded-full"
-                onClick={() => go(period.next)}
-                disabled={nextDisabled}
-                aria-label="Bulan berikutnya"
-            >
-                <ChevronRight aria-hidden />
-            </Button>
-        </div>
+    const stats = monthStats(recap);
+    const nav = (fill: boolean) => (
+        <MonthNav
+            label={period.label}
+            onPrevious={() => go(period.previous)}
+            onNext={() => go(period.next)}
+            nextDisabled={nextDisabled}
+            fill={fill}
+        />
     );
-
-    const actions = (
-        <div className="grid grid-cols-2 items-center gap-3">
-            <Button asChild variant="outline" className="h-12 text-[15px]">
-                <Link href={CORRECTION_HREF}>
-                    <FileText aria-hidden />
-                    Ajukan koreksi
-                </Link>
-            </Button>
-            <a
-                href={pdfUrl}
-                download
-                className="inline-flex h-12 items-center justify-center gap-2 text-[15px] font-medium text-primary hover:underline"
-            >
-                <Download className="size-5" aria-hidden />
-                Unduh rekap (PDF)
-            </a>
-        </div>
+    const logsButton = (
+        <Button
+            type="button"
+            variant="quiet"
+            size="sm"
+            onClick={() => setLogsOpen(true)}
+        >
+            Lihat {recap.logs.length} log
+        </Button>
+    );
+    const logsDialog = (
+        <LogsDialog
+            open={logsOpen}
+            onOpenChange={setLogsOpen}
+            name={recap.name}
+            logs={recap.logs}
+            reload={['recap']}
+        />
     );
 
     if (breakpoint === null) {
         return (
-            <div className="space-y-4" aria-busy>
-                <Skeleton className="h-20 rounded-xl" />
-                <Skeleton className="h-80 rounded-xl" />
+            <div className="flex flex-col gap-5" aria-busy>
+                <Skeleton className="h-24 rounded-panel" />
+                <Skeleton className="h-96 rounded-panel" />
             </div>
         );
     }
 
     if (breakpoint === 'mobile') {
-        const cards = [
-            {
-                label: 'Hadir',
-                value: (
-                    <>
-                        {formatNumber(
-                            Math.max(0, recap.presentDays - recap.lateCount),
-                        )}
-                    </>
-                ),
-                dot: 'bg-success',
-            },
-            {
-                label: 'Terlambat',
-                value:
-                    recap.lateCount === 0 ? (
-                        <>0</>
-                    ) : (
-                        <span className="text-warning">
-                            {recap.lateCount}
-                            <span className="text-[13px] font-medium">
-                                {' '}
-                                · {recap.lateMinutes}m
-                            </span>
-                        </span>
-                    ),
-                dot: null,
-            },
-            {
-                label: 'Cuti',
-                value: (
-                    <>
-                        {formatNumber(
-                            recap.leaveDays +
-                                recap.permitDays +
-                                recap.businessTripDays,
-                        )}
-                    </>
-                ),
-                dot: 'bg-info',
-            },
-            { label: 'Sakit', value: <>{recap.sickDays}</>, dot: 'bg-primary' },
-        ];
-
         return (
             <>
                 <Head title="Riwayat absensi" />
-                <div className="space-y-4">
-                    {monthNav}
-                    <div className="grid grid-cols-4 gap-2">
-                        {cards.map((card) => (
+                <div className="flex flex-col gap-3.5">
+                    {nav(true)}
+                    <dl className="grid grid-cols-4 gap-2">
+                        {stats.slice(0, 4).map((stat) => (
                             <div
-                                key={card.label}
-                                className="min-w-0 rounded-xl border border-border bg-surface px-2 py-2.5 shadow-card"
+                                key={stat.label}
+                                className="flex min-w-0 flex-col items-center gap-0.5 rounded-lg border border-border bg-surface px-2 py-2.5 text-center"
                             >
-                                <p className="flex items-center gap-1 truncate text-[13px] text-text-muted">
-                                    {card.dot && (
-                                        <span
-                                            aria-hidden
-                                            className={cn(
-                                                'size-1.5 rounded-full',
-                                                card.dot,
-                                            )}
-                                        />
+                                <dt className="order-2 truncate text-[12px] font-bold text-text-muted">
+                                    {stat.label}
+                                </dt>
+                                <dd
+                                    className={cn(
+                                        'order-1 text-[24px] leading-8 font-extrabold tnum',
+                                        stat.text ?? 'text-text',
                                     )}
-                                    {card.label}
-                                </p>
-                                <p className="mt-0.5 text-[19px] font-semibold whitespace-nowrap text-text tnum">
-                                    {card.value}
-                                </p>
+                                >
+                                    {stat.value}
+                                </dd>
                             </div>
                         ))}
-                    </div>
-                    <section className="space-y-3 rounded-xl border border-border bg-surface p-3 shadow-card">
+                    </dl>
+                    <section
+                        aria-label={`Kalender ${period.label}`}
+                        className="rounded-[22px] border border-border bg-surface p-3.5"
+                    >
                         <MonthCalendar
                             days={recap.days}
                             variant="dots"
@@ -208,11 +190,46 @@ export default function AttendanceHistory({ period, today, recap }: Props) {
                         />
                         <CalendarLegend
                             row={recap}
-                            className="border-t border-border pt-3"
+                            className="mt-3 border-t border-divider pt-3"
                         />
                     </section>
                     {cell && <DayDetail cell={cell} />}
-                    {actions}
+                    <section
+                        aria-label="Catatan bulan ini"
+                        className="overflow-hidden rounded-[22px] border border-border bg-surface"
+                    >
+                        <MonthNotes
+                            compact
+                            days={recap.days}
+                            selected={selected}
+                            onSelect={setSelected}
+                        />
+                    </section>
+                    <div className="grid grid-cols-2 gap-3">
+                        <Button asChild variant="outline" size="lg">
+                            <Link href={CORRECTION_HREF}>
+                                <FileText aria-hidden />
+                                Koreksi
+                            </Link>
+                        </Button>
+                        <Button asChild variant="tonal" size="lg">
+                            <a href={pdfUrl} download>
+                                <Download aria-hidden />
+                                PDF
+                            </a>
+                        </Button>
+                    </div>
+                    <p className="text-center text-meta text-text-muted">
+                        {subtitle} · {PRIVACY_NOTE}{' '}
+                        <button
+                            type="button"
+                            onClick={() => setLogsOpen(true)}
+                            className="inline-flex min-h-11 items-center font-semibold text-link"
+                        >
+                            Lihat {recap.logs.length} log
+                        </button>
+                    </p>
+                    {logsDialog}
                 </div>
             </>
         );
@@ -221,68 +238,95 @@ export default function AttendanceHistory({ period, today, recap }: Props) {
     return (
         <>
             <Head title="Absensi saya" />
-            <div className="space-y-5">
-                <header className="flex flex-wrap items-end justify-between gap-3">
-                    <div>
-                        <h1 className="text-xl leading-7 font-semibold text-text">
-                            Absensi saya · {period.label}
-                        </h1>
-                        <p className="text-sm text-text-muted">{subtitle}</p>
+            <div className="flex flex-col gap-6">
+                <header className="flex flex-wrap items-end justify-between gap-4">
+                    <div className="flex flex-col gap-2">
+                        <h1 className="text-display text-text">Absensi saya</h1>
+                        <p className="text-body-lg text-text-muted">
+                            {period.label} · {subtitle}
+                        </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            className="size-9"
-                            onClick={() => go(period.previous)}
-                            aria-label="Bulan sebelumnya"
-                        >
-                            <ChevronLeft aria-hidden />
+                    <div className="flex flex-wrap gap-3">
+                        <Button asChild variant="outline">
+                            <Link href={CORRECTION_HREF}>Ajukan koreksi</Link>
                         </Button>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            className="size-9"
-                            onClick={() => go(period.next)}
-                            disabled={nextDisabled}
-                            aria-label="Bulan berikutnya"
-                        >
-                            <ChevronRight aria-hidden />
-                        </Button>
-                        <Button asChild variant="outline" className="h-9">
+                        <Button asChild variant="outline">
                             <a href={pdfUrl} download>
                                 <Download aria-hidden />
-                                Unduh rekap (PDF)
+                                Unduh rekap saya (PDF)
                             </a>
                         </Button>
                     </div>
                 </header>
-                <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,440px)_minmax(0,1fr)]">
-                    <EmployeeMonthPanel
-                        detail={recap}
-                        monthLabel={period.label}
-                        reload={['recap']}
-                        selected={selected}
-                        onSelectDay={select}
-                    />
-                    <div className="space-y-4">
-                        {cell && <DayDetail cell={cell} />}
-                        <div className="flex flex-wrap gap-2">
-                            <Button asChild variant="outline" className="h-10">
-                                <Link href={CORRECTION_HREF}>
-                                    <FileText aria-hidden />
-                                    Ajukan koreksi
-                                </Link>
-                            </Button>
+
+                <TodayBar />
+
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    {nav(false)}
+                    <p className="text-[15px] text-text-muted">
+                        {PRIVACY_NOTE}
+                    </p>
+                </div>
+
+                <dl className="flex flex-wrap gap-4">
+                    {stats.map((stat) => (
+                        <div
+                            key={stat.label}
+                            className="flex min-w-0 flex-[1_1_170px] flex-col gap-1 rounded-card border border-border bg-surface p-5 shadow-card"
+                        >
+                            <dt className="flex items-center gap-2 text-[15px] font-semibold text-text-muted">
+                                <span
+                                    aria-hidden
+                                    className={cn(
+                                        'size-2.5 rounded-full',
+                                        stat.dot,
+                                    )}
+                                />
+                                {stat.label}
+                            </dt>
+                            <dd className="text-[36px] leading-[44px] font-bold text-text tnum">
+                                {stat.value}
+                            </dd>
                         </div>
-                        <p className="text-[13px] text-text-muted">
-                            Data ini hanya terlihat oleh Anda, atasan langsung,
-                            dan HR.
-                        </p>
+                    ))}
+                </dl>
+
+                <div className="flex flex-wrap items-start gap-5">
+                    <Panel
+                        title={
+                            <span className="first-letter:uppercase">
+                                {period.label}
+                            </span>
+                        }
+                        className="flex-[1.6_1_600px]"
+                        bodyClassName="gap-4"
+                    >
+                        <MonthCalendar
+                            days={recap.days}
+                            selected={selected}
+                            today={today}
+                            onSelect={select}
+                        />
+                        <CalendarLegend row={recap} />
+                    </Panel>
+                    <div className="flex min-w-0 flex-[1_1_360px] flex-col gap-5">
+                        {cell && <DayDetail cell={cell} />}
+                        <Panel
+                            title="Catatan bulan ini"
+                            action={logsButton}
+                            flush
+                            className="pb-2"
+                        >
+                            <MonthNotes
+                                days={recap.days}
+                                selected={selected}
+                                onSelect={setSelected}
+                                className="border-t border-divider"
+                            />
+                        </Panel>
                     </div>
                 </div>
+                {logsDialog}
             </div>
         </>
     );
