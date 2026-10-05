@@ -66,33 +66,34 @@ export function WorkspaceShell({
 
     return (
         <div className="space-y-4">
-            <header className="flex items-start gap-3">
-                <WorkspaceAvatar
-                    name={workspace.name}
-                    type={workspace.type}
-                    color={workspace.color}
-                    ownerName={auth.user?.name}
-                    className={cn(
-                        'rounded-md',
-                        mobile ? 'size-9 text-base' : 'size-8 text-sm',
-                    )}
-                />
-                <div className="min-w-0 flex-1">
-                    <h1
-                        className={cn(
-                            'truncate font-semibold text-text',
-                            mobile
-                                ? 'text-[17px] leading-6'
-                                : 'text-xl leading-7',
-                        )}
-                    >
-                        {title}
-                    </h1>
-                    <p className="truncate text-[13px] text-text-muted">
-                        {workspaceMeta(workspace)}
-                    </p>
-                </div>
-                {!mobile && (
+            {mobile ? (
+                // The app bar already shows the name (mockup MBoard): only the meta line here.
+                <p className="-mt-2 flex items-center gap-2 text-[13px] text-text-muted">
+                    <WorkspaceAvatar
+                        name={workspace.name}
+                        type={workspace.type}
+                        color={workspace.color}
+                        ownerName={auth.user?.name}
+                    />
+                    <span className="truncate">{workspaceMeta(workspace)}</span>
+                </p>
+            ) : (
+                <header className="flex items-start gap-3">
+                    <WorkspaceAvatar
+                        name={workspace.name}
+                        type={workspace.type}
+                        color={workspace.color}
+                        ownerName={auth.user?.name}
+                        className="size-8 rounded-md text-sm"
+                    />
+                    <div className="min-w-0 flex-1">
+                        <h1 className="truncate text-xl leading-7 font-semibold text-text">
+                            {title}
+                        </h1>
+                        <p className="truncate text-[13px] text-text-muted">
+                            {workspaceMeta(workspace)}
+                        </p>
+                    </div>
                     <div className="flex shrink-0 items-center gap-3">
                         {workspace.type !== 'personal' && (
                             <AvatarStack people={members} max={4} size="md" />
@@ -111,8 +112,8 @@ export function WorkspaceShell({
                             </Button>
                         )}
                     </div>
-                )}
-            </header>
+                </header>
+            )}
 
             {workspace.archived && (
                 <div

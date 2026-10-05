@@ -122,6 +122,7 @@ const SortableCard = memo(function SortableCard({
             {...listeners}
             onKeyDown={onKeyDown}
             onClick={() => onOpen(task)}
+            data-task-id={task.id}
             aria-roledescription="Kartu tugas"
             aria-label={`${task.key} ${task.title}`}
             className={cn(
@@ -285,6 +286,12 @@ export function KanbanBoard({
 
         if (target) {
             onMove(task.id, { statusId: target }, { announce: true });
+            // The card remounts in the other column: keep keyboard focus on it.
+            window.requestAnimationFrame(() => {
+                document
+                    .querySelector<HTMLElement>(`[data-task-id="${task.id}"]`)
+                    ?.focus();
+            });
         }
     };
 

@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import type { WorkspaceType } from '@/features/tasks/types';
 import { palette } from '@/lib/palette';
 import { cn } from '@/lib/utils';
@@ -7,7 +8,7 @@ type Props = {
     name: string;
     type: WorkspaceType;
     color: string | null;
-    /** Owner name for personal workspaces (initial of the person). */
+    /** Owner name for personal workspaces; defaults to the signed-in user. */
     ownerName?: string | null;
     className?: string;
 };
@@ -21,6 +22,7 @@ export function WorkspaceAvatar({
     className,
 }: Props) {
     const personal = type === 'personal';
+    const { auth } = usePage().props;
 
     return (
         <span
@@ -33,7 +35,12 @@ export function WorkspaceAvatar({
                 className,
             )}
         >
-            {workspaceInitial(name, type, ownerName)}
+            {workspaceInitial(
+                name,
+                type,
+                // Personal workspaces are only visible to their owner = the viewer.
+                ownerName ?? auth.user?.name,
+            )}
         </span>
     );
 }
