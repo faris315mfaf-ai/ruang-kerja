@@ -154,10 +154,9 @@ export default function WorkspaceIndex({
             <div className="flex flex-col gap-5 md:gap-6">
                 <header className="flex flex-wrap items-end justify-between gap-4">
                     <div className="flex flex-col gap-1 md:gap-2">
-                        <h1 className="text-display">
-                            {mobile
-                                ? 'Workspace saya'
-                                : 'Workspace & proyek saya'}
+                        {/* The phone app bar already shows "Workspace". */}
+                        <h1 className="sr-only text-display md:not-sr-only">
+                            Workspace &amp; proyek saya
                         </h1>
                         <p className="text-body text-text-muted md:text-body-lg">
                             {formatNumber(workspaces.length)} workspace ·{' '}

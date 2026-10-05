@@ -123,7 +123,7 @@ export default function WorkspaceSettings(props: Props) {
                 {breakpoint === 'mobile' ? (
                     <MobileSettings members={member_details} />
                 ) : (
-                    <div className="grid gap-8 lg:grid-cols-[220px_minmax(0,860px)]">
+                    <div className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[220px_minmax(0,860px)]">
                         <nav
                             aria-label="Bagian pengaturan"
                             className="hidden lg:block"
@@ -170,7 +170,7 @@ export default function WorkspaceSettings(props: Props) {
                                 )}
                             </ul>
                         </nav>
-                        <div className="flex flex-col gap-5">
+                        <div className="flex min-w-0 flex-col gap-5">
                             {myRole && (
                                 <p className="text-right text-label font-normal text-text-muted">
                                     Anda:{' '}

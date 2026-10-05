@@ -212,7 +212,7 @@ function AvatarStack({
 
     return (
         <span
-            className="flex items-center -space-x-2.5"
+            className="flex items-center -space-x-2"
             title={people.map((person) => person.name).join(', ')}
         >
             {shown.map((person) => (

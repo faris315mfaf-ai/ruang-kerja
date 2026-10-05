@@ -464,7 +464,7 @@ function TeamCard({
                 aria-expanded={open}
                 onClick={() => setMembersOpen((value) => !value)}
                 disabled={team.members.length === 0}
-                className="mt-2.5 flex w-full items-center gap-2 rounded text-left text-label font-normal text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none disabled:hover:text-text-muted"
+                className="mt-2.5 flex w-full items-center gap-2 rounded-xs text-left text-[14px] whitespace-nowrap text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none disabled:hover:text-text-muted"
             >
                 <AvatarStack people={everyone} total={team.size} />
                 <span className="flex-1">{team.size} orang</span>
@@ -516,7 +516,7 @@ function MembersSummary({
                 type="button"
                 aria-expanded={open}
                 onClick={onToggle}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-label font-normal text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[14px] whitespace-nowrap text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
             >
                 <AvatarStack people={members} />
                 <span className="flex-1 text-text">{label}</span>

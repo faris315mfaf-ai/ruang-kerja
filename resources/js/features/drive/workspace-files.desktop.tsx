@@ -352,7 +352,7 @@ export function WorkspaceFilesDesktop({
                                     </th>
                                     <th
                                         scope="col"
-                                        className="hidden w-24 px-5 py-3 text-right font-semibold lg:table-cell"
+                                        className="hidden w-28 px-5 py-3 text-right font-semibold lg:table-cell"
                                     >
                                         Ukuran
                                     </th>
@@ -462,7 +462,7 @@ export function WorkspaceFilesDesktop({
                                                       )
                                                     : '–'}
                                             </td>
-                                            <td className="hidden px-5 py-3.5 text-right text-text-muted tnum lg:table-cell">
+                                            <td className="hidden px-5 py-3.5 text-right whitespace-nowrap text-text-muted tnum lg:table-cell">
                                                 {folder
                                                     ? `${file.children_count ?? 0} item`
                                                     : isGoogleNative(

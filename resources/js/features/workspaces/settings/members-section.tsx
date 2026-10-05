@@ -172,160 +172,168 @@ export function MembersSection({
                 </div>
             )}
 
-            <table className="w-full text-[15px]">
-                <thead className="bg-background text-left text-meta text-text-muted">
-                    <tr>
-                        <th scope="col" className="px-5 py-3 font-semibold">
-                            Nama
-                        </th>
-                        <th
-                            scope="col"
-                            className="hidden px-5 py-3 font-semibold md:table-cell"
-                        >
-                            Divisi
-                        </th>
-                        <th scope="col" className="px-5 py-3 font-semibold">
-                            Peran
-                        </th>
-                        <th
-                            scope="col"
-                            className="hidden px-5 py-3 font-semibold md:table-cell"
-                        >
-                            Akses Drive
-                        </th>
-                        {editable && (
-                            <th scope="col" className="w-14 px-2 py-3">
-                                <span className="sr-only">Aksi</span>
+            <div className="overflow-x-auto">
+                <table className="w-full text-[15px]">
+                    <thead className="bg-background text-left text-meta text-text-muted">
+                        <tr>
+                            <th scope="col" className="px-5 py-3 font-semibold">
+                                Nama
                             </th>
-                        )}
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-divider">
-                    {shown.map((member) => {
-                        const owner = member.role === 'owner';
+                            <th
+                                scope="col"
+                                className="hidden px-5 py-3 font-semibold md:table-cell"
+                            >
+                                Divisi
+                            </th>
+                            <th scope="col" className="px-5 py-3 font-semibold">
+                                Peran
+                            </th>
+                            <th
+                                scope="col"
+                                className="hidden px-5 py-3 font-semibold md:table-cell"
+                            >
+                                Akses Drive
+                            </th>
+                            {editable && (
+                                <th scope="col" className="w-14 px-2 py-3">
+                                    <span className="sr-only">Aksi</span>
+                                </th>
+                            )}
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-divider">
+                        {shown.map((member) => {
+                            const owner = member.role === 'owner';
 
-                        return (
-                            <tr key={member.id}>
-                                <td className="px-5 py-3.5">
-                                    <span className="flex items-center gap-2.5">
-                                        <UserAvatar
-                                            name={member.name}
-                                            src={member.avatar}
-                                            className="size-10 text-[14px]"
-                                        />
-                                        <span className="min-w-0">
-                                            <span className="block truncate text-text">
-                                                {member.name}
-                                                {member.id ===
-                                                    auth.user?.id && (
-                                                    <span className="text-text-muted">
-                                                        {' '}
-                                                        (Anda)
-                                                    </span>
-                                                )}
-                                            </span>
-                                            <span className="flex min-w-0 items-center gap-1 truncate text-meta text-text-muted">
-                                                {member.position && (
-                                                    <span className="truncate">
-                                                        {member.position}
-                                                    </span>
-                                                )}
-                                                {member.position && (
-                                                    <span aria-hidden>·</span>
-                                                )}
-                                                {member.is_synced ? (
-                                                    <span className="inline-flex shrink-0 items-center gap-0.5 text-success">
-                                                        <RefreshCw
-                                                            className="size-3"
-                                                            aria-hidden
-                                                        />
-                                                        Sinkron{' '}
-                                                        {workspace.type ===
-                                                        'team'
-                                                            ? 'tim'
-                                                            : 'divisi'}
-                                                    </span>
-                                                ) : (
-                                                    <span className="shrink-0">
-                                                        Diundang
-                                                    </span>
-                                                )}
+                            return (
+                                <tr key={member.id}>
+                                    <td className="px-5 py-3.5">
+                                        <span className="flex items-center gap-2.5">
+                                            <UserAvatar
+                                                name={member.name}
+                                                src={member.avatar}
+                                                className="size-10 text-[14px]"
+                                            />
+                                            <span className="min-w-0">
+                                                <span className="block truncate text-text">
+                                                    {member.name}
+                                                    {member.id ===
+                                                        auth.user?.id && (
+                                                        <span className="text-text-muted">
+                                                            {' '}
+                                                            (Anda)
+                                                        </span>
+                                                    )}
+                                                </span>
+                                                <span className="flex min-w-0 items-center gap-1 truncate text-meta text-text-muted">
+                                                    {member.position && (
+                                                        <span className="truncate">
+                                                            {member.position}
+                                                        </span>
+                                                    )}
+                                                    {member.position && (
+                                                        <span aria-hidden>
+                                                            ·
+                                                        </span>
+                                                    )}
+                                                    {member.is_synced ? (
+                                                        <span className="inline-flex shrink-0 items-center gap-0.5 text-success">
+                                                            <RefreshCw
+                                                                className="size-3"
+                                                                aria-hidden
+                                                            />
+                                                            Sinkron{' '}
+                                                            {workspace.type ===
+                                                            'team'
+                                                                ? 'tim'
+                                                                : 'divisi'}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="shrink-0">
+                                                            Diundang
+                                                        </span>
+                                                    )}
+                                                </span>
                                             </span>
                                         </span>
-                                    </span>
-                                </td>
-                                <td className="hidden px-5 py-3.5 text-text-muted md:table-cell">
-                                    {member.division ?? '–'}
-                                </td>
-                                <td className="px-5 py-3.5">
-                                    {editable && !owner ? (
-                                        <select
-                                            aria-label={`Peran ${member.name}`}
-                                            value={member.role}
-                                            onChange={(event) =>
-                                                router.patch(
-                                                    update.url({
-                                                        workspace:
-                                                            workspace.key,
-                                                        member: member.id,
-                                                    }),
-                                                    {
-                                                        role: event.target
-                                                            .value,
-                                                    },
-                                                    { preserveScroll: true },
-                                                )
-                                            }
-                                            className={selectClass}
-                                        >
-                                            {roleOptions.map((option) => (
-                                                <option
-                                                    key={option.value}
-                                                    value={option.value}
-                                                >
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    ) : (
-                                        <span className="text-text">
-                                            {ROLE_LABELS[member.role]}
-                                        </span>
-                                    )}
-                                </td>
-                                <td className="hidden px-5 py-3.5 md:table-cell">
-                                    <MemberDriveStatus drive={member.drive} />
-                                </td>
-                                {editable && (
-                                    <td className="px-3 py-3.5 text-right">
-                                        {!owner && !member.is_synced && (
-                                            <button
-                                                type="button"
-                                                aria-label={`Keluarkan ${member.name}`}
-                                                onClick={() =>
-                                                    router.delete(
-                                                        destroy.url({
+                                    </td>
+                                    <td className="hidden px-5 py-3.5 text-text-muted md:table-cell">
+                                        {member.division ?? '–'}
+                                    </td>
+                                    <td className="px-5 py-3.5">
+                                        {editable && !owner ? (
+                                            <select
+                                                aria-label={`Peran ${member.name}`}
+                                                value={member.role}
+                                                onChange={(event) =>
+                                                    router.patch(
+                                                        update.url({
                                                             workspace:
                                                                 workspace.key,
                                                             member: member.id,
                                                         }),
                                                         {
+                                                            role: event.target
+                                                                .value,
+                                                        },
+                                                        {
                                                             preserveScroll: true,
                                                         },
                                                     )
                                                 }
-                                                className="flex size-10 items-center justify-center rounded-control text-text-subtle hover:bg-surface-2 hover:text-danger focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
+                                                className={selectClass}
                                             >
-                                                <X className="size-5" />
-                                            </button>
+                                                {roleOptions.map((option) => (
+                                                    <option
+                                                        key={option.value}
+                                                        value={option.value}
+                                                    >
+                                                        {option.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <span className="text-text">
+                                                {ROLE_LABELS[member.role]}
+                                            </span>
                                         )}
                                     </td>
-                                )}
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
+                                    <td className="hidden px-5 py-3.5 md:table-cell">
+                                        <MemberDriveStatus
+                                            drive={member.drive}
+                                        />
+                                    </td>
+                                    {editable && (
+                                        <td className="px-3 py-3.5 text-right">
+                                            {!owner && !member.is_synced && (
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Keluarkan ${member.name}`}
+                                                    onClick={() =>
+                                                        router.delete(
+                                                            destroy.url({
+                                                                workspace:
+                                                                    workspace.key,
+                                                                member: member.id,
+                                                            }),
+                                                            {
+                                                                preserveScroll: true,
+                                                            },
+                                                        )
+                                                    }
+                                                    className="flex size-10 items-center justify-center rounded-control text-text-subtle hover:bg-surface-2 hover:text-danger focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
+                                                >
+                                                    <X className="size-5" />
+                                                </button>
+                                            )}
+                                        </td>
+                                    )}
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
             <div className="flex items-center justify-between gap-2 border-t border-divider px-5 py-3.5 text-meta text-text-muted md:px-7">
                 {members.length > VISIBLE ? (
                     <button

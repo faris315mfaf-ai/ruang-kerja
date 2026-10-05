@@ -73,17 +73,17 @@ export function AvatarStack({
     const rest = (total ?? people.length) - shown.length;
 
     return (
-        <span className="flex items-center -space-x-1.5" aria-hidden>
+        <span className="flex items-center -space-x-1" aria-hidden>
             {shown.map((person) => (
                 <UserAvatar
                     key={person.id}
                     name={person.name}
                     src={person.avatar}
-                    className="size-6 text-[10px] ring-2 ring-surface"
+                    className="size-6 text-[9px] ring-2 ring-surface"
                 />
             ))}
             {rest > 0 && (
-                <span className="flex size-6 items-center justify-center rounded-full bg-surface-2 text-[10px] font-semibold text-text-muted ring-2 ring-surface">
+                <span className="flex size-6 items-center justify-center rounded-full bg-surface-2 text-[9px] font-semibold text-text-muted ring-2 ring-surface">
                     +{rest}
                 </span>
             )}
