@@ -163,7 +163,7 @@ class RequestSeeder extends Seeder
             $sick = $this->submit($get('anggota@demo.test'), $type('SKT'), ['start_date' => $day($weekday($today->subDays(94))), 'end_date' => $day($weekday($today->subDays(94)))], $today->subDays(94)->setTime(7, 30), 'Demam, istirahat di rumah.');
             $this->approve($sick, [$get('kadiv@demo.test'), $get('hr@demo.test')]);
 
-            $leaveStart = $mondayBefore(48);
+            $leaveStart = $mondayBefore(48)->addDays(2); // Wed–Thu (avoids 17 Aug)
             $leave = $this->submit($get('anggota@demo.test'), $type('CUT'), ['start_date' => $day($leaveStart), 'end_date' => $day($leaveStart->addDay())], $leaveStart->subDays(14)->setTime(9, 0), 'Pulang kampung.');
             $this->approve($leave, [$get('kadiv@demo.test'), $get('hr@demo.test')]);
 
