@@ -59,6 +59,10 @@ return [
 
         // "Baru saja check-in" on the kiosk screen.
         'recent_check_ins' => 5,
+
+        // Refuse QR scans without GPS. Off: they are accepted but flagged
+        // `qr_no_location` for HR review (a forwarded code works anywhere).
+        'require_location' => (bool) env('ATTENDANCE_QR_REQUIRE_LOCATION', false),
     ],
 
     'geofence' => [

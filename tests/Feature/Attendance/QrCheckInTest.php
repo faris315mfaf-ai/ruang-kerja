@@ -63,16 +63,40 @@ test('a displayed QR code checks the employee in with method qr and records GPS'
     Event::assertDispatched(AttendanceRecorded::class);
 });
 
-test('GPS is optional for a QR scan', function () {
+test('GPS is optional for a QR scan, but a scan without location is flagged for review', function () {
     $user = F::employee();
 
+    // A forwarded photo of the kiosk code can be scanned from anywhere: without GPS nothing proves presence.
     F::scanQr($user, displayedCode($this->kiosk), ['latitude' => null, 'longitude' => null, 'accuracy' => null])
         ->assertCreated()
-        ->assertJsonPath('result.location.distanceM', null);
+        ->assertJsonPath('result.location.distanceM', null)
+        ->assertJsonPath('result.isSuspicious', true);
 
     $log = AttendanceLog::query()->sole();
 
-    expect($log->latitude)->toBeNull()->and($log->distance_m)->toBeNull()->and($log->is_suspicious)->toBeFalse();
+    expect($log->latitude)->toBeNull()->and($log->distance_m)->toBeNull()
+        ->and($log->flags->all())->toBe([LogFlag::QrNoLocation])
+        ->and(LogFlag::QrNoLocation->label())->toBe('QR tanpa lokasi GPS')
+        ->and($log->is_suspicious)->toBeTrue();
+});
+
+test('a QR scan with GPS near the kiosk is not flagged', function () {
+    F::scanQr(F::employee(), displayedCode($this->kiosk))->assertCreated()->assertJsonPath('result.isSuspicious', false);
+
+    expect(AttendanceLog::query()->sole()->flags->all())->toBe([]);
+});
+
+test('GPS can be required for QR scans', function () {
+    config(['attendance.qr.require_location' => true]);
+    $user = F::employee();
+
+    F::scanQr($user, displayedCode($this->kiosk), ['latitude' => null, 'longitude' => null, 'accuracy' => null])
+        ->assertUnprocessable()
+        ->assertJsonPath('reason', 'qr_location_required');
+
+    expect(AttendanceLog::query()->count())->toBe(0);
+
+    F::scanQr($user, displayedCode($this->kiosk))->assertCreated();
 });
 
 test('a late QR check-in counts late minutes like GPS', function () {

@@ -145,6 +145,14 @@ final class AttendanceException extends RuntimeException
         return new self(AttendanceRejection::QrWrongLocation, $message, ['location' => $scanned]);
     }
 
+    public static function qrLocationRequired(): self
+    {
+        return new self(
+            AttendanceRejection::QrLocationRequired,
+            'Check-in dengan kode QR memerlukan lokasi GPS. Aktifkan izin lokasi di peramban lalu pindai kode QR lagi.',
+        );
+    }
+
     private static function time(CarbonInterface $at): string
     {
         return OfficeClock::time($at);

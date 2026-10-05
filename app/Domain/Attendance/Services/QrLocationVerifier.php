@@ -17,7 +17,9 @@ use Carbon\CarbonInterface;
 /**
  * QR kiosk check-in: the scanned code proves presence at the kiosk location,
  * which must be one the employee may check in at (same rules as GPS). GPS is
- * only recorded; a position far from the kiosk is flagged, never blocked.
+ * only recorded; a position far from the kiosk is flagged, never blocked. A
+ * scan without GPS is flagged `qr_no_location` (a forwarded code), or refused
+ * when `attendance.qr.require_location` is on.
  */
 final class QrLocationVerifier
 {
@@ -40,12 +42,21 @@ final class QrLocationVerifier
             );
         }
 
-        $distance = $data->latitude !== null && $data->longitude !== null
+        $hasLocation = $data->latitude !== null && $data->longitude !== null;
+
+        if (! $hasLocation && config()->boolean('attendance.qr.require_location')) {
+            throw AttendanceException::qrLocationRequired();
+        }
+
+        $distance = $hasLocation
             ? $this->geofence->distance($location->latitude, $location->longitude, $data->latitude, $data->longitude)
             : null;
         $flags = [];
 
-        if ($distance !== null && $distance > $location->radius_m + max(0.0, $data->accuracyM ?? 0.0)) {
+        if ($distance === null) {
+            // A forwarded photo of the kiosk code works anywhere; nothing proves presence.
+            $flags[] = LogFlag::QrNoLocation;
+        } elseif ($distance > $location->radius_m + max(0.0, $data->accuracyM ?? 0.0)) {
             $flags[] = LogFlag::QrLocationMismatch;
         }
 

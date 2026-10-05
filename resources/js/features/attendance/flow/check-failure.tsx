@@ -32,10 +32,16 @@ const TITLES: Partial<Record<CheckRejection['reason'], string>> = {
     qr_invalid: 'Kode QR tidak dikenali',
     qr_expired: 'Kode QR kedaluwarsa',
     qr_wrong_location: 'Kode QR lokasi lain',
+    qr_location_required: 'Lokasi GPS diperlukan',
 };
 
 /** Rejections where scanning the kiosk again is the next step. */
-const RESCAN = ['qr_invalid', 'qr_expired', 'qr_wrong_location'];
+const RESCAN = [
+    'qr_invalid',
+    'qr_expired',
+    'qr_wrong_location',
+    'qr_location_required',
+];
 
 type OptionProps = {
     icon: LucideIcon;
