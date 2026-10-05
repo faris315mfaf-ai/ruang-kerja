@@ -11,6 +11,7 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 - Komponen dasar bergaya Arus: tombol gradien (varian `tonal`, `quiet`, ukuran 36/44/52/56), input/select 44px, checkbox/radio/switch, badge status & label, `SegmentedTabs`/`TabNav`, `Panel`, `KpiCard`, `Progress`, `ListRow`, empty state, dialog/sheet/menu kaca, toast inverse.
 - Shell: menu bar kaca 64px, Dock dengan ubin putih & aktif bergradien, **Rail 96px untuk tablet** (768–1023px, menggantikan Dock tanpa magnifikasi), tab bar kapsul 70px dengan pil gradien, app bar ponsel berjudul besar. Konten desktop di kolom 1280px (1480px untuk board & tabel).
 - Warna non-CSS (manifest PWA, halaman offline, email, `config/branding.php`) mengikuti Arus.
+- Dashboard Saya/Divisi/HR dan Portofolio proyek mengikuti layar Arus (SBeranda·MSBeranda, DBeranda·MBeranda, DHR·PHRLive, DPortofolio·PDirutPortofolio): hero absensi & KPI sorotan, `Panel`/`KpiCard`/`Badge`/`ListRow`/`UserAvatar`, tren 8 minggu sebagai kolom gradien, daftar orang per status (ponsel HR), kartu proyek dengan cincin progres; `features/dashboard/panel.tsx`, `stat-card.tsx` dan `features/portfolio/sections.tsx` dihapus.
 
 ### Ditambahkan
 - `/dev/komponen` (lokal, Super Admin): contoh hidup semua komponen Arus. Panduan agent modul: `docs/design/ARUS-GUIDE.md`.
