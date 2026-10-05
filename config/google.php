@@ -90,6 +90,12 @@ return [
         'chunk_bytes' => 8 * 1024 * 1024,
         'disk' => 'local',
         'directory' => 'drive-uploads',
+        // Per user: unfinished sessions and their declared bytes that may sit on
+        // the server's disk at once (protects the disk from upload floods).
+        'max_open_sessions' => (int) env('GOOGLE_UPLOAD_MAX_OPEN_SESSIONS', 5),
+        'max_pending_bytes' => (int) env('GOOGLE_UPLOAD_MAX_PENDING_BYTES', 300 * 1024 * 1024),
+        // New upload sessions per user per minute (POST …/unggah).
+        'starts_per_minute' => (int) env('GOOGLE_UPLOAD_STARTS_PER_MINUTE', 20),
     ],
 
     'folders' => [

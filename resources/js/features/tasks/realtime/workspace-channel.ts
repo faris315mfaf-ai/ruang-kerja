@@ -1,7 +1,24 @@
 import { echo, echoIsConfigured } from '@laravel/echo-react';
 import { useEffect, useRef } from 'react';
-import type { TaskComment } from '../detail/types';
-import type { Task } from '../types';
+import type { StatusCategory } from '../types';
+
+/**
+ * Thin task event: ids and placement only. Removed members may still be
+ * subscribed until they reload, so content (title, description, comments) is
+ * never broadcast; subscribers refetch it through the authorized endpoints
+ * (`fetchTaskCard`, task detail), which answer 404 once access is gone.
+ */
+export type TaskSignal = {
+    id: string;
+    workspace_id: string;
+    parent_id: string | null;
+    status_id: string;
+    status_category: StatusCategory;
+    position: number;
+    updated_at: string | null;
+};
+
+export type CommentSignal = { task_id: string; comment: { id: string } };
 
 /** App\Events\Tasks\TaskAttachmentBroadcastEvent::broadcastWith(). */
 export type AttachmentEventPayload = {
@@ -15,13 +32,15 @@ export type AttachmentEventPayload = {
 
 /** Payloads broadcast on `private-workspace.{id}` (App\Events\Tasks\*). */
 export type WorkspaceEvents = {
-    'task.created': { task: Task };
-    'task.updated': { task: Task };
-    'task.moved': { task: Task };
-    'task.deleted': { task: { id: string; workspace_id: string } };
-    'comment.posted': { task_id: string; comment: TaskComment };
-    'comment.updated': { task_id: string; comment: TaskComment };
-    'comment.deleted': { task_id: string; comment: TaskComment };
+    'task.created': { task: TaskSignal };
+    'task.updated': { task: TaskSignal };
+    'task.moved': { task: TaskSignal };
+    'task.deleted': {
+        task: { id: string; workspace_id: string; parent_id: string | null };
+    };
+    'comment.posted': CommentSignal;
+    'comment.updated': CommentSignal;
+    'comment.deleted': CommentSignal;
     'attachment.added': AttachmentEventPayload;
     'attachment.removed': AttachmentEventPayload;
 };

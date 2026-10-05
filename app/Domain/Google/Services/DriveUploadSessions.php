@@ -3,6 +3,7 @@
 namespace App\Domain\Google\Services;
 
 use App\Domain\Google\Data\DriveUploadSession;
+use App\Domain\Google\Exceptions\DriveUploadQuotaExceeded;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -15,6 +16,11 @@ use RuntimeException;
  * once complete, UploadToDrive streams it to Drive. The browser can resume
  * an interrupted upload from `received`. Sessions live in the cache for a
  * day; `ruangkerja:drive-uploads:prune` removes abandoned temporary files.
+ *
+ * Disk protection: each user may have at most google.upload.max_open_sessions
+ * unfinished sessions totalling google.upload.max_pending_bytes (declared
+ * sizes); a per-user index in the cache tracks them (finished, failed,
+ * cancelled or expired sessions no longer count).
  */
 final class DriveUploadSessions
 {
@@ -26,6 +32,8 @@ final class DriveUploadSessions
 
     /**
      * Writes a new session and its empty temporary file.
+     *
+     * @throws DriveUploadQuotaExceeded
      */
     public function create(
         string $userId,
@@ -39,6 +47,51 @@ final class DriveUploadSessions
         string $mimeType,
         int $size,
     ): DriveUploadSession {
+        return Cache::lock('google:browser-upload-quota-lock:'.$userId, 10)->block(5, fn (): DriveUploadSession => $this->createWithinQuota(
+            $userId, $ownerType, $ownerId, $workspaceId, $folderId, $attachableType, $attachableId, $filename, $mimeType, $size,
+        ));
+    }
+
+    /**
+     * Unfinished sessions of the user: id => declared size.
+     *
+     * @return array<string, int>
+     */
+    public function pendingFor(string $userId): array
+    {
+        $index = Cache::get($this->userKey($userId));
+        $pending = [];
+
+        foreach (is_array($index) ? array_keys($index) : [] as $id) {
+            $session = $this->find((string) $id);
+
+            if ($session !== null && in_array($session->state, [DriveUploadSession::RECEIVING, DriveUploadSession::PROCESSING], true)) {
+                $pending[$session->id] = $session->size;
+            }
+        }
+
+        return $pending;
+    }
+
+    private function createWithinQuota(
+        string $userId,
+        string $ownerType,
+        string $ownerId,
+        string $workspaceId,
+        ?string $folderId,
+        ?string $attachableType,
+        ?string $attachableId,
+        string $filename,
+        string $mimeType,
+        int $size,
+    ): DriveUploadSession {
+        $pending = $this->pendingFor($userId);
+
+        if (count($pending) >= config()->integer('google.upload.max_open_sessions', 5)
+            || array_sum($pending) + $size > config()->integer('google.upload.max_pending_bytes', 300 * 1024 * 1024)) {
+            throw new DriveUploadQuotaExceeded;
+        }
+
         $id = strtolower((string) Str::ulid());
         $disk = (string) config('google.upload.disk', 'local');
         $path = trim((string) config('google.upload.directory', 'drive-uploads'), '/').'/'.$id.'/upload.bin';
@@ -64,6 +117,7 @@ final class DriveUploadSessions
         );
 
         $this->save($session);
+        Cache::put($this->userKey($userId), [...$pending, $id => $size], now()->addHours(self::TTL_HOURS));
 
         return $session;
     }
@@ -125,6 +179,7 @@ final class DriveUploadSessions
     public function discard(DriveUploadSession $session): void
     {
         Cache::forget($this->key($session->id));
+        // The per-user index drops it on the next create() (session no longer found).
 
         $storage = Storage::disk($session->disk);
         $storage->deleteDirectory(dirname($session->path));
@@ -185,6 +240,11 @@ final class DriveUploadSessions
             'k' => $number * 1024,
             default => $number,
         };
+    }
+
+    private function userKey(string $userId): string
+    {
+        return 'google:browser-uploads:user:'.$userId;
     }
 
     private function key(string $id): string

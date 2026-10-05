@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Attendance\Models\AttendanceDay;
+use App\Models\Company;
 use App\Models\Division;
 use App\Models\Task;
 use App\Models\User;
@@ -33,8 +34,16 @@ Broadcast::channel('task.{task}', function (User $user, Task $task): array|false
 });
 
 // Sprint 2 — live attendance boards (authorized by AttendanceDayPolicy).
+// `company.attendance` carries no company id (name kept for the clients and
+// AttendanceRecorded), so it is authorized by the viewer's company: only while
+// the installation has exactly one company, the viewer's own. With several
+// companies the live board falls back to polling instead of leaking another
+// company's check-ins (review fix 3-9 #30; per-company channel = follow-up).
 Broadcast::channel('company.attendance', function (User $user): bool {
-    return $user->can('viewCompanyFeed', AttendanceDay::class);
+    $companies = Company::query()->limit(2)->pluck('id')->all();
+
+    return $companies === [$user->company_id]
+        && $user->can('viewCompanyFeed', AttendanceDay::class);
 });
 
 Broadcast::channel('division.{division}.attendance', function (User $user, Division $division): bool {

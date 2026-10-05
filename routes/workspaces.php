@@ -73,7 +73,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('tugas/{task}/komentar', [CommentController::class, 'store'])->middleware('throttle:comments')->name('comments.store');
     Route::patch('komentar/{comment}', [CommentController::class, 'update'])->middleware('throttle:comments')->name('comments.update');
     Route::delete('komentar/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
-    Route::post('komentar/{comment}/reaksi', [CommentController::class, 'react'])->name('comments.react');
+    Route::post('komentar/{comment}/reaksi', [CommentController::class, 'react'])->middleware('throttle:comments')->name('comments.react');
 
     Route::get('workspace', [WorkspaceController::class, 'index'])->name('workspaces.index');
     Route::post('workspace', [WorkspaceController::class, 'store'])->name('workspaces.store');

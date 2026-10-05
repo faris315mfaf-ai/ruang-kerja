@@ -18,8 +18,19 @@ use Illuminate\Database\UniqueConstraintViolationException;
 final class DriveFileRecorder
 {
     /**
-     * A file keeps the workspace and `added_by` of its first record
-     * (google_file_id is globally unique).
+     * Records a Drive item for a workspace. google_file_id is globally unique
+     * (one row per Drive file), so when the row already belongs to another
+     * workspace (review fix 3-9 #30):
+     *
+     * - `$parentId` given = the item was found or created inside this
+     *   workspace's folder tree (folder sync, upload, new document/sub-folder):
+     *   the Drive location is the truth, so the row moves to this workspace;
+     * - no `$parentId` (linking an existing file from Drive): a live row of the
+     *   other workspace is left where it is (metadata refreshed, its parent and
+     *   deletion state untouched); a row that workspace already removed is
+     *   re-homed here instead of being silently restored over there.
+     *
+     * `added_by` is kept unless the row changes workspace.
      */
     public function record(DriveItem $item, string $workspaceId, ?User $addedBy = null, ?string $parentId = null): DriveFile
     {
@@ -60,15 +71,19 @@ final class DriveFileRecorder
     private function write(DriveItem $item, string $workspaceId, ?User $addedBy, ?string $parentId): DriveFile
     {
         $file = DriveFile::withTrashed()->firstOrNew(['google_file_id' => $item->id]);
+        $foreignLive = $file->exists && $file->workspace_id !== $workspaceId && ! $file->trashed() && $parentId === null;
 
-        if (! $file->exists) {
+        if (! $file->exists || ($file->workspace_id !== $workspaceId && ! $foreignLive)) {
             $file->workspace_id = $workspaceId;
-            $file->added_by = $addedBy?->id;
+            $file->added_by = $addedBy->id ?? ($file->exists ? $file->added_by : null);
         }
 
-        $file->deleted_at = null;
+        if (! $foreignLive) {
+            $file->deleted_at = null;
+            $file->parent_google_id = $parentId ?? ($item->parents[0] ?? null);
+        }
+
         $file->fill([
-            'parent_google_id' => $parentId ?? ($item->parents[0] ?? null),
             'name' => $item->name,
             'mime_type' => $item->mimeType,
             'kind' => $item->kind(),

@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Organization\Enums\Role;
+use App\Domain\Organization\Enums\UserStatus;
 use App\Domain\Search\Contracts\SearchProvider;
 use App\Domain\Search\Data\SearchResult;
 use App\Domain\Search\Providers\ActionsSearchProvider;
@@ -10,6 +11,7 @@ use App\Models\Division;
 use App\Models\Position;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -222,3 +224,16 @@ final class OwnOnlyFakeProvider implements SearchProvider
         return [new SearchResult(id: 'task:1', title: "Tugas milik {$viewer->name}", icon: 'circle', url: '/tugas')];
     }
 }
+
+it('authorizes search with the search gate (active employees)', function () {
+    $user = searcher();
+    $inactive = User::factory()->create(['status' => UserStatus::Inactive]);
+
+    expect(Gate::forUser($user)->allows('search'))->toBeTrue()
+        ->and(Gate::forUser($inactive)->allows('search'))->toBeFalse();
+
+    // The endpoints really ask the gate.
+    Gate::define('search', fn () => false);
+    $this->actingAs($user)->getJson('/cari/hasil?q=penguji')->assertForbidden();
+    $this->actingAs($user)->get('/cari')->assertForbidden();
+});

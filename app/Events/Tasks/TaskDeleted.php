@@ -14,6 +14,6 @@ final class TaskDeleted extends TaskBroadcastEvent
      */
     public function broadcastWith(): array
     {
-        return ['task' => ['id' => $this->task->id, 'workspace_id' => $this->task->workspace_id]];
+        return ['task' => ['id' => $this->task->id, 'workspace_id' => $this->task->workspace_id, 'parent_id' => $this->task->parent_id]];
     }
 }

@@ -52,7 +52,7 @@ it('posts a comment: sanitized body, author becomes watcher, watchers notified, 
     Notification::assertNotSentTo($this->member, TaskCommentedNotification::class);
     Event::assertDispatched(CommentPosted::class, fn (CommentPosted $event) => $event->broadcastOn()[0]->name === 'private-workspace.'.$this->workspace->id
         && $event->broadcastAs() === 'comment.posted'
-        && $event->broadcastWith()['comment']['body_text'] === 'Brief sudah final.');
+        && $event->broadcastWith() === ['task_id' => $this->task->id, 'comment' => ['id' => $comment->id]]);
 });
 
 it('rejects empty comments', function () {
@@ -174,7 +174,7 @@ it('dispatches CommentUpdated on edit and CommentDeleted on delete', function ()
     app(DeleteComment::class)->handle($comment, $this->member);
 
     Event::assertDispatched(CommentUpdated::class, fn (CommentUpdated $e) => $e->broadcastAs() === 'comment.updated');
-    Event::assertDispatched(CommentDeleted::class, fn (CommentDeleted $e) => $e->broadcastWith()['comment']['deleted'] === true);
+    Event::assertDispatched(CommentDeleted::class, fn (CommentDeleted $e) => $e->broadcastWith()['comment'] === ['id' => $comment->id]);
     expect(AuditLog::query()->where('action', 'comment.deleted')->exists())->toBeFalse();
 });
 
@@ -187,4 +187,15 @@ it('keeps spaces around mentions and marks (no input trimming inside rich text)'
         ->assertJsonPath('comment.body.content.0.content.0.text', 'Halo ')
         ->assertJsonPath('comment.body.content.0.content.2.text', ' tolong cek ')
         ->assertJsonPath('comment.body_text', "Halo @{$this->other->name} tolong cek");
+});
+
+it('throttles reactions like comments', function () {
+    Notification::fake();
+    $comment = Comment::factory()->on($this->task)->by($this->owner)->create();
+
+    foreach (range(1, 30) as $i) {
+        $this->actingAs($this->member)->postJson("/komentar/{$comment->id}/reaksi", ['emoji' => '👍'])->assertOk();
+    }
+
+    $this->actingAs($this->member)->postJson("/komentar/{$comment->id}/reaksi", ['emoji' => '👍'])->assertTooManyRequests();
 });

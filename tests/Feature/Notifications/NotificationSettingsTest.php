@@ -161,12 +161,15 @@ it('only changes the signed-in user\'s preferences', function () {
     $this->assertDatabaseMissing('notification_preferences', ['user_id' => $other->id]);
 });
 
-it('resets today\'s digest run when the time changes', function () {
+it('keeps today\'s digest run when the time changes (no second digest the same day)', function () {
     $user = User::factory()->create();
     NotificationSetting::query()->create(['user_id' => $user->id, 'digest_last_run_on' => now()->toDateString()]);
 
     app(UpdateNotificationSettings::class)->handle($user, ['digest_time' => '09:00']);
-    expect(NotificationSetting::query()->findOrFail($user->id)->digest_last_run_on)->toBeNull();
+    $setting = NotificationSetting::query()->findOrFail($user->id);
+
+    expect($setting->digest_last_run_on?->toDateString())->toBe(now()->toDateString())
+        ->and($setting->digest_time)->toBe(NotificationSetting::normalizeTime('09:00'));
 });
 
 it('throws a validation error from the action for locked cells', function () {

@@ -8,6 +8,7 @@ use App\Domain\Notifications\Data\NotificationSubject;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Friday 15.00 reminder to the PIC when the project has no update this week
@@ -16,6 +17,17 @@ use App\Models\Workspace;
 final class ProjectUpdateReminderNotification extends BaseNotification
 {
     public function __construct(public readonly Workspace $workspace) {}
+
+    /**
+     * Dropped when the project was deleted or the recipient lost access to it
+     * while the notification waited in the queue (fresh row, soft-delete scope).
+     */
+    protected function stillVisibleTo(User $notifiable): bool
+    {
+        $workspace = Workspace::query()->find($this->workspace->id);
+
+        return $workspace !== null && Gate::forUser($notifiable)->allows('view', $workspace);
+    }
 
     public function type(): NotificationType
     {

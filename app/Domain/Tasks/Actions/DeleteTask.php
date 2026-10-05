@@ -9,11 +9,15 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Soft-deletes a task (its number is never reused).
+ * Soft-deletes a task (its number is never reused). Its open "melewati
+ * tenggat" reminders are resolved.
  */
 final class DeleteTask
 {
-    public function __construct(private readonly RecordActivity $recordActivity) {}
+    public function __construct(
+        private readonly RecordActivity $recordActivity,
+        private readonly ResolveOverdueNotices $overdueNotices,
+    ) {}
 
     public function handle(Task $task, User $actor): void
     {
@@ -26,6 +30,8 @@ final class DeleteTask
             ]);
 
             $task->delete();
+
+            $this->overdueNotices->handle($task);
         });
 
         TaskDeleted::dispatch($task);

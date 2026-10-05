@@ -21,6 +21,14 @@ final class TaskCommentedNotification extends TaskNotification
         parent::__construct($task);
     }
 
+    /**
+     * A deleted comment is never delivered.
+     */
+    protected function stillVisibleTo(User $notifiable): bool
+    {
+        return ! $this->comment->trashed() && parent::stillVisibleTo($notifiable);
+    }
+
     public function type(): NotificationType
     {
         return NotificationType::TaskCommented;

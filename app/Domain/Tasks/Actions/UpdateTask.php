@@ -32,6 +32,7 @@ final class UpdateTask
         private readonly TaskRichText $richText,
         private readonly SyncMentions $syncMentions,
         private readonly ResolveNotificationsForSubject $resolveNotifications,
+        private readonly ResolveOverdueNotices $overdueNotices,
     ) {}
 
     /**
@@ -41,15 +42,17 @@ final class UpdateTask
      */
     public function handle(Task $task, User $actor, array $changes): Task
     {
-        if (isset($changes['status_id']) && $changes['status_id'] !== $task->status_id) {
-            $status = TaskStatus::query()->where('workspace_id', $task->workspace_id)->findOrFail($changes['status_id']);
-            $task = $this->moveTask->handle($task, $actor, $status);
-        }
-
         $addedAssignees = [];
         $mentionIds = null;
 
+        // One transaction for the move and the field changes: a failure in either
+        // leaves the task untouched (MoveTask's own transaction becomes a savepoint).
         $task = DB::transaction(function () use ($task, $actor, $changes, &$addedAssignees, &$mentionIds): Task {
+            if (isset($changes['status_id']) && $changes['status_id'] !== $task->status_id) {
+                $status = TaskStatus::query()->where('workspace_id', $task->workspace_id)->findOrFail($changes['status_id']);
+                $task = $this->moveTask->handle($task, $actor, $status);
+            }
+
             $task->loadMissing('workspace');
             $workspace = $task->workspace;
             $now = now();
@@ -164,6 +167,8 @@ final class UpdateTask
 
                 if ($removed !== []) {
                     $this->recordActivity->handle($workspace, $task, $actor, ActivityEvent::TaskUnassigned, [...$base, 'user_ids' => $removed]);
+                    // No longer their task: their overdue reminder is settled.
+                    $this->overdueNotices->handle($task, $removed);
                 }
             }
 

@@ -15,8 +15,10 @@ use Illuminate\Database\Eloquent\Collection;
 /**
  * Runs every 5 minutes (routes/console.php). For each user whose digest time
  * (office timezone) has passed today — within notifications.digest.catch_up_minutes
- * — and who has not had today's run yet, records the run and queues
- * SendDailyDigest. Idempotent: running again the same day does nothing.
+ * — and who has not had today's run yet, claims the day and queues
+ * SendDailyDigest. Idempotent: the day is claimed with a conditional UPDATE
+ * (`digest_last_run_on` < today), so overlapping runs (or several servers)
+ * queue one digest per user and day.
  */
 final class DispatchDueDailyDigests
 {
@@ -41,11 +43,13 @@ final class DispatchDueDailyDigests
         $queued = 0;
 
         User::query()->active()->orderBy('id')->chunkById(200, function (Collection $users) use ($local, $today, $catchUp, &$queued): void {
+            // Preloaded per chunk: no per-user settings or preference queries.
             $settings = NotificationSetting::query()->whereIn('user_id', $users->modelKeys())->get()->keyBy('user_id');
+            $wantsDigest = $this->preferences->enabledFor(array_values($users->modelKeys()), NotificationEvent::DailyDigest, NotificationChannel::Email);
 
             /** @var User $user */
             foreach ($users as $user) {
-                $setting = $settings->get($user->id) ?? NotificationSetting::for($user);
+                $setting = $settings->get($user->id) ?? NotificationSetting::defaultsFor($user);
 
                 if ($setting->digest_last_run_on?->toDateString() === $today) {
                     continue;
@@ -57,12 +61,13 @@ final class DispatchDueDailyDigests
                     continue;
                 }
 
-                if (! $this->preferences->isEnabled($user, NotificationEvent::DailyDigest, NotificationChannel::Email)) {
+                if (! ($wantsDigest[$user->id] ?? false)) {
                     continue;
                 }
 
-                $setting->digest_last_run_on = $local->startOfDay();
-                $setting->save();
+                if (! $this->claimDay($setting, $today)) {
+                    continue;
+                }
 
                 SendDailyDigest::dispatch($user, $today);
                 $queued++;
@@ -70,5 +75,25 @@ final class DispatchDueDailyDigests
         });
 
         return $queued;
+    }
+
+    /**
+     * Atomically records today's run; false when another run already did.
+     */
+    private function claimDay(NotificationSetting $setting, string $today): bool
+    {
+        if (! $setting->exists) {
+            // Defaults row for people who never opened the settings (concurrent-safe).
+            NotificationSetting::query()->insertOrIgnore([
+                ...$setting->getAttributes(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return NotificationSetting::query()
+            ->whereKey($setting->user_id)
+            ->where(fn ($query) => $query->whereNull('digest_last_run_on')->orWhere('digest_last_run_on', '<', $today))
+            ->update(['digest_last_run_on' => $today, 'updated_at' => now()]) === 1;
     }
 }

@@ -6,7 +6,10 @@ use App\Domain\Google\Jobs\CreateDriveFolder;
 use App\Domain\Google\Jobs\SyncDrivePermissions;
 use App\Domain\Google\Services\DriveFolderContentsSync;
 use App\Domain\Google\Testing\FakeDriveClient;
+use App\Domain\Organization\Actions\DeactivateEmployee;
+use App\Domain\Organization\Actions\ReactivateEmployee;
 use App\Domain\Organization\Enums\Role;
+use App\Domain\Organization\Enums\UserStatus;
 use App\Domain\Workspaces\Actions\AddWorkspaceMember;
 use App\Domain\Workspaces\Actions\CreateWorkspace;
 use App\Domain\Workspaces\Actions\RemoveWorkspaceMember;
@@ -191,4 +194,36 @@ it('treats a folder synced moments ago as fresh even when the cache returns a st
     $this->travel(6)->minutes();
 
     expect($sync->isStale('folder-x'))->toBeTrue();
+});
+
+it('revokes Drive access when a member is deactivated and restores it on reactivation', function () {
+    $workspace = createProject($this->owner);
+    $folderId = $workspace->fresh()->drive_folder_id;
+    $rizky = User::factory()->create(['email' => 'rizky@demo.test']);
+    app(AddWorkspaceMember::class)->handle($workspace, $this->owner, $rizky, WorkspaceRole::Member);
+    $this->drive->assertPermission($folderId, 'rizky@demo.test', DriveRole::Writer);
+    $hr = User::factory()->withRole(Role::Hr)->create();
+
+    app(DeactivateEmployee::class)
+        ->handle($hr, $rizky, UserStatus::Resigned, 'Resign');
+
+    $this->drive->assertNoPermission($folderId, 'rizky@demo.test');
+    $this->drive->assertPermission($folderId, 'dimas@demo.test', DriveRole::Writer);
+
+    app(ReactivateEmployee::class)->handle($hr, $rizky->fresh());
+
+    $this->drive->assertPermission($folderId, 'rizky@demo.test', DriveRole::Writer);
+});
+
+it('queues a Drive re-sync of the member workspaces on deactivation', function () {
+    $workspace = createProject($this->owner);
+    $rizky = User::factory()->create(['email' => 'rizky@demo.test']);
+    app(AddWorkspaceMember::class)->handle($workspace, $this->owner, $rizky, WorkspaceRole::Member);
+    $hr = User::factory()->withRole(Role::Hr)->create();
+    Queue::fake();
+
+    app(DeactivateEmployee::class)
+        ->handle($hr, $rizky, UserStatus::Inactive, 'Cuti panjang');
+
+    Queue::assertPushed(SyncDrivePermissions::class, fn (SyncDrivePermissions $job) => $job->owner->is($workspace));
 });

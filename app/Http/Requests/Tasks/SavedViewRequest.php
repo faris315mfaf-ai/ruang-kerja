@@ -3,17 +3,30 @@
 namespace App\Http\Requests\Tasks;
 
 use App\Domain\Tasks\Enums\SavedViewLayout;
+use App\Models\SavedView;
+use App\Models\Workspace;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 /**
- * Create/update a saved view. Authorization in the controller (SavedViewPolicy).
+ * Create/update a saved view. Authorization in the controller (SavedViewPolicy);
+ * authorize() first answers 404 to people who cannot see the workspace (or a
+ * view of another workspace), before validating.
  */
 class SavedViewRequest extends FormRequest
 {
     public function authorize(): bool
     {
+        $workspace = $this->route('workspace');
+        $view = $this->route('view');
+
+        if ($workspace instanceof Workspace) {
+            Gate::authorize('view', $workspace);
+            abort_if($view instanceof SavedView && $view->workspace_id !== $workspace->id, 404);
+        }
+
         return true;
     }
 

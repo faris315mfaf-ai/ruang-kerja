@@ -112,6 +112,30 @@ it('notifies only newly mentioned people when a comment is edited', function () 
         ->and($comment->fresh()?->edited_at)->not->toBeNull();
 });
 
+it('never notifies the same person twice for one comment, even after removing and re-adding the mention', function () {
+    Notification::fake();
+
+    $comment = app(PostComment::class)->handle($this->task, $this->owner, richDoc(['@', $this->member], ' cek'));
+
+    foreach (range(1, 3) as $round) {
+        app(UpdateComment::class)->handle($comment->fresh(), $this->owner, richDoc('cek '.$round));
+        app(UpdateComment::class)->handle($comment->fresh(), $this->owner, richDoc(['@', $this->member], ' cek '.$round));
+    }
+
+    Notification::assertSentToTimes($this->member, MentionNotification::class, 1);
+    expect(Mention::query()->where('mentionable_id', $comment->id)->pluck('mentioned_user_id')->all())->toBe([$this->member->id]);
+});
+
+it('notifies a description mention once even when it is removed and re-added', function () {
+    Notification::fake();
+
+    app(UpdateTask::class)->handle($this->task, $this->owner, ['description' => richDoc(['@', $this->member])]);
+    app(UpdateTask::class)->handle($this->task->fresh(), $this->owner, ['description' => richDoc('tanpa sebutan')]);
+    app(UpdateTask::class)->handle($this->task->fresh(), $this->owner, ['description' => richDoc(['@', $this->member], ' lagi')]);
+
+    Notification::assertSentToTimes($this->member, MentionNotification::class, 1);
+});
+
 it('records mentions in a task description and notifies once', function () {
     Notification::fake();
 

@@ -5,10 +5,12 @@ namespace App\Domain\Attendance\Exports;
 use App\Domain\Attendance\Data\EmployeeRecap;
 use App\Domain\Attendance\Data\RecapReport;
 use App\Domain\Attendance\Enums\PayrollColumn;
+use App\Support\Excel\BindsValuesSafely;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithTitle;
@@ -20,8 +22,10 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
  * Payroll-ready Excel of the monthly recap; columns from
  * config/payroll_export.php (PayrollColumn).
  */
-final class PayrollRecapExport implements FromArray, ShouldAutoSize, WithColumnFormatting, WithHeadings, WithStyles, WithTitle
+final class PayrollRecapExport implements FromArray, ShouldAutoSize, WithColumnFormatting, WithCustomValueBinder, WithHeadings, WithStyles, WithTitle
 {
+    use BindsValuesSafely;
+
     /** @var list<array{0: PayrollColumn, 1: string}> */
     private array $columns;
 

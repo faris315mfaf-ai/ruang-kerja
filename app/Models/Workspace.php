@@ -239,8 +239,14 @@ class Workspace extends Model implements HasDriveFolder
         $divisionIds = $viewer->hasRole(Role::KepalaDivisi) ? $viewer->ledDivisionIds() : [];
 
         $query->where(function (Builder $scope) use ($viewer, $divisionIds): void {
-            $scope->where($this->qualifyColumn('lead_user_id'), $viewer->id)
-                ->orWhere($this->qualifyColumn('sponsor_user_id'), $viewer->id)
+            // PIC / sponsor only while they can still see the project (a stale
+            // assignment must not keep a private project on their portfolio).
+            $scope->where(function (Builder $role) use ($viewer): void {
+                $role->where(fn (Builder $either) => $either
+                    ->where($this->qualifyColumn('lead_user_id'), $viewer->id)
+                    ->orWhere($this->qualifyColumn('sponsor_user_id'), $viewer->id))
+                    ->whereIn($this->qualifyColumn('id'), self::query()->visibleTo($viewer)->select('id'));
+            })
                 ->orWhereExists(function (QueryBuilder $member) use ($viewer): void {
                     $member->selectRaw('1')
                         ->from('workspace_members')

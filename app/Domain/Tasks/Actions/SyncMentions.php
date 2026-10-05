@@ -2,6 +2,8 @@
 
 namespace App\Domain\Tasks\Actions;
 
+use App\Domain\Notifications\Enums\NotificationType;
+use App\Domain\Notifications\Services\NotificationDispatchLog;
 use App\Domain\Tasks\Notifications\MentionNotification;
 use App\Domain\Tasks\Services\TaskAudience;
 use App\Models\Comment;
@@ -13,7 +15,9 @@ use Illuminate\Support\Facades\Notification;
 /**
  * Rebuilds the `mentions` rows of a comment or task description from the
  * mentioned ids (MentionParser) and notifies people mentioned for the first
- * time. Only people who can see the workspace are kept: mentioning someone
+ * time — ever: removing and re-adding a mention while editing does not notify
+ * again (one claim per comment/description and person in
+ * `notification_dispatch_logs`). Only people who can see the workspace are kept: mentioning someone
  * outside a private workspace creates no row and no notification, so no
  * content leaks. The author never notifies themselves.
  *
@@ -21,7 +25,10 @@ use Illuminate\Support\Facades\Notification;
  */
 final class SyncMentions
 {
-    public function __construct(private readonly TaskAudience $audience) {}
+    public function __construct(
+        private readonly TaskAudience $audience,
+        private readonly NotificationDispatchLog $dispatchLog,
+    ) {}
 
     /**
      * @param  list<string>  $mentionedIds
@@ -48,7 +55,10 @@ final class SyncMentions
             ]);
         }
 
-        $recipients = $new->filter(fn (User $user): bool => $user->id !== $actor->id)->values();
+        $recipients = $new
+            ->filter(fn (User $user): bool => $user->id !== $actor->id
+                && $this->dispatchLog->claim($user, NotificationType::Mention, $mentionable, 'once'))
+            ->values();
 
         if ($recipients->isNotEmpty()) {
             Notification::send($recipients->all(), new MentionNotification(

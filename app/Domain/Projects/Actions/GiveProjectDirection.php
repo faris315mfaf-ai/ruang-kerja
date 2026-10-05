@@ -10,6 +10,7 @@ use App\Models\ProjectUpdate;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
 
 /**
@@ -46,7 +47,11 @@ final class GiveProjectDirection
 
         if ($recipientIds !== []) {
             $direction->setRelation('workspace', $workspace)->setRelation('author', $author);
-            Notification::send(User::query()->active()->whereKey($recipientIds)->get(), new ProjectDirectionNotification($direction));
+            // Only people who can still see the project (a former PIC/author may have been removed).
+            $recipients = User::query()->active()->whereKey($recipientIds)->get()
+                ->filter(fn (User $user): bool => Gate::forUser($user)->allows('view', $workspace));
+
+            Notification::send($recipients, new ProjectDirectionNotification($direction));
         }
 
         return $direction;

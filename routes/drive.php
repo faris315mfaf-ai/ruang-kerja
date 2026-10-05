@@ -19,7 +19,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('file/folder', [WorkspaceFileController::class, 'storeFolder'])->name('workspaces.files.folders.store');
         Route::post('file/tautkan', [WorkspaceFileController::class, 'link'])->name('workspaces.files.link');
         Route::post('file/segarkan', [WorkspaceFileController::class, 'refresh'])->name('workspaces.files.refresh');
-        Route::post('file/unggah', [DriveUploadController::class, 'store'])->name('workspaces.files.upload');
+        Route::post('file/unggah', [DriveUploadController::class, 'store'])->middleware('throttle:drive-uploads')->name('workspaces.files.upload');
         Route::post('drive/sinkron', [WorkspaceDriveController::class, 'sync'])->name('workspaces.drive.sync');
     });
 
@@ -33,7 +33,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [AttachmentController::class, 'index'])->name('attachments.index');
         Route::post('drive', [AttachmentController::class, 'storeDrive'])->name('attachments.drive');
         Route::post('dokumen', [AttachmentController::class, 'storeDocument'])->name('attachments.document');
-        Route::post('unggah', [AttachmentController::class, 'storeUpload'])->name('attachments.upload');
+        Route::post('unggah', [AttachmentController::class, 'storeUpload'])->middleware('throttle:drive-uploads')->name('attachments.upload');
     });
     Route::delete('lampiran/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
 });

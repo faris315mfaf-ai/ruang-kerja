@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\Tasks;
 
+use App\Domain\Tasks\Queries\BoardTasks;
 use App\Domain\Tasks\Queries\TaskDetail;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\TaskResource;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,12 +20,19 @@ use Inertia\Response;
  * Task detail: JSON for the TaskSheet / Inbox preview (GET /tugas/{task})
  * and the full-screen page /w/{KEY}/tasks/{number} (also the mobile
  * MTaskDetail and search/notification deep links).
+ *
+ * `GET /tugas/{task}?view=card` returns only the board card shape; the board
+ * refetches it after a (thin) realtime task event.
  */
 class TaskDetailController extends Controller
 {
-    public function show(Task $task, #[CurrentUser] User $user, TaskDetail $detail): JsonResponse
+    public function show(Task $task, Request $request, #[CurrentUser] User $user, TaskDetail $detail): JsonResponse
     {
         Gate::authorize('view', $task);
+
+        if ($request->query('view') === 'card') {
+            return response()->json(['task' => (new TaskResource(BoardTasks::query()->findOrFail($task->id)))->resolve()]);
+        }
 
         return response()->json($detail->for($task, $user));
     }

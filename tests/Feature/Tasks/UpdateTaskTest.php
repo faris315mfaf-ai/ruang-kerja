@@ -94,3 +94,17 @@ it('soft-deletes tasks for the creator or an admin only', function () {
 
     Event::assertDispatchedTimes(TaskDeleted::class, 2);
 });
+
+it('rolls back the status move when another change in the same update fails', function () {
+    $done = statusOf($this->workspace, 'done');
+    $before = $this->task->fresh();
+
+    expect(fn () => app(UpdateTask::class)->handle($this->task, $this->owner, ['status_id' => $done->id, 'priority' => 99]))
+        ->toThrow(ValueError::class);
+
+    $after = $this->task->fresh();
+    expect($after->status_id)->toBe($before->status_id)
+        ->and($after->status_category)->toBe($before->status_category)
+        ->and($after->completed_at)->toBeNull()
+        ->and(Activity::query()->where('subject_id', $this->task->id)->pluck('event')->all())->toBe(['task.created']);
+});

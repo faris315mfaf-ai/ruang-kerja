@@ -9,6 +9,8 @@ use App\Domain\Notifications\Data\NotificationSubject;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Models\ProjectUpdate;
 use App\Models\User;
+use App\Models\Workspace;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * An update asks Direksi for a decision (to the sponsor, or every Direksi
@@ -17,6 +19,17 @@ use App\Models\User;
 final class ProjectDecisionNeededNotification extends BaseNotification
 {
     public function __construct(public readonly ProjectUpdate $update) {}
+
+    /**
+     * Dropped when the project was deleted or the recipient lost access to it
+     * while the notification waited in the queue (fresh row, soft-delete scope).
+     */
+    protected function stillVisibleTo(User $notifiable): bool
+    {
+        $workspace = Workspace::query()->find($this->update->workspace_id);
+
+        return $workspace !== null && Gate::forUser($notifiable)->allows('view', $workspace);
+    }
 
     public function type(): NotificationType
     {

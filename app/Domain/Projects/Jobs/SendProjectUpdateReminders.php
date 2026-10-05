@@ -14,6 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Friday 15.00 (office time): reminds the PIC of every running project that
@@ -48,7 +49,8 @@ final class SendProjectUpdateReminders implements ShouldBeUnique, ShouldQueue
             ->each(function (Workspace $workspace) use ($weekStart, &$sent): void {
                 $lead = $workspace->lead;
 
-                if ($lead === null || ! $lead->isActive()) {
+                // A PIC who lost access to the project is not reminded about it.
+                if ($lead === null || ! $lead->isActive() || Gate::forUser($lead)->denies('view', $workspace)) {
                     return;
                 }
 
