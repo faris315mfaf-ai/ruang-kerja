@@ -43,7 +43,9 @@ class KioskController extends Controller
     }
 
     /**
-     * JSON: the plain link is shown to HR once and never stored.
+     * JSON: the plain link and pairing code are shown to HR once and never
+     * stored. The code is typed on the device's /kiosk screen instead of
+     * opening the link.
      */
     public function activation(Kiosk $kiosk, IssueKioskActivation $issue): JsonResponse
     {
@@ -53,6 +55,8 @@ class KioskController extends Controller
 
         return response()->json([
             'url' => route('kiosk.activate.show', ['token' => $activation['token']]),
+            'code' => $activation['code'],
+            'pairUrl' => route('kiosk.unpaired'),
             'expiresAt' => $activation['expires_at']->toIso8601ZuluString(),
         ])->header('Cache-Control', 'no-store');
     }

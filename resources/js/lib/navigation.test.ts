@@ -1,60 +1,196 @@
 import { describe, expect, it } from 'vitest';
 import {
+    activeTabIndex,
     adminNavItems,
     attendanceNavItems,
     mainNavItems,
     mainNavItemsFor,
+    organizationNavItems,
 } from './navigation';
 
 const titles = (roles: string[]) =>
     adminNavItems(roles).map((item) => item.title);
+const orgTitles = (roles: string[]) =>
+    organizationNavItems(roles).map((item) => item.title);
+
+const ROLES = ['super_admin', 'direksi', 'hr', 'kepala_divisi', 'anggota'];
+
+/** Every desktop destination: main tiles + Organisasi stack + Admin stack. */
+const desktopHrefs = (roles: string[]) => [
+    ...mainNavItemsFor(roles),
+    ...organizationNavItems(roles),
+    ...attendanceNavItems(roles),
+    ...adminNavItems(roles),
+];
 
 describe('navigation', () => {
-    it('shows the org chart to everyone', () => {
+    it('shows the org chart to everyone, in the organization group only', () => {
+        for (const role of ROLES) {
+            expect(organizationNavItems([role])[0]?.href).toBe(
+                '/organisasi/struktur',
+            );
+        }
+
         expect(
             mainNavItems.some((item) => item.href === '/organisasi/struktur'),
-        ).toBe(true);
+        ).toBe(false);
     });
 
-    it('gives HR the organization and request admin but not the audit log', () => {
-        expect(titles(['hr'])).toEqual([
+    it('groups the organization admin and employees for HR & Super Admin', () => {
+        expect(orgTitles(['hr'])).toEqual([
+            'Struktur organisasi',
+            'Kelola organisasi',
             'Karyawan',
-            'Organisasi',
+        ]);
+        expect(orgTitles(['super_admin'])).toEqual([
+            'Struktur organisasi',
+            'Kelola organisasi',
+            'Karyawan',
+        ]);
+        expect(
+            organizationNavItems(['super_admin']).map((item) => item.href),
+        ).toEqual([
+            '/organisasi/struktur',
+            '/admin/organisasi',
+            '/admin/karyawan',
+        ]);
+    });
+
+    it('gives Kepala Divisi their division members and others only the chart', () => {
+        expect(orgTitles(['kepala_divisi'])).toEqual([
+            'Struktur organisasi',
+            'Anggota divisi',
+        ]);
+        expect(orgTitles(['direksi'])).toEqual(['Struktur organisasi']);
+        expect(orgTitles(['anggota'])).toEqual(['Struktur organisasi']);
+    });
+
+    it('gives HR the attendance and request admin but not the audit log', () => {
+        expect(titles(['hr'])).toEqual([
             'Lokasi & shift',
             'Jenis pengajuan',
             'Saldo cuti',
         ]);
     });
 
-    it('gives Super Admin the organization admin and the audit log', () => {
+    it('gives Super Admin the audit log and the documentation', () => {
         expect(titles(['super_admin'])).toEqual([
-            'Karyawan',
-            'Organisasi',
             'Lokasi & shift',
             'Audit log',
             'Jenis pengajuan',
             'Saldo cuti',
+            'Dokumentasi',
         ]);
+        expect(
+            adminNavItems(['super_admin']).find(
+                (item) => item.title === 'Dokumentasi',
+            )?.href,
+        ).toBe('/admin/dokumentasi');
     });
 
-    it('gives other roles no organization admin', () => {
+    it('shows the documentation to Super Admin only', () => {
+        for (const role of ['direksi', 'hr', 'kepala_divisi', 'anggota']) {
+            expect(titles([role])).not.toContain('Dokumentasi');
+        }
+    });
+
+    it('gives other roles no admin entries', () => {
         expect(titles(['direksi'])).toEqual([]);
-        expect(titles(['kepala_divisi'])).toEqual(['Anggota divisi']);
+        expect(titles(['kepala_divisi'])).toEqual([]);
         expect(titles(['anggota'])).toEqual([]);
     });
 
     it('marks admin CRUD screens as desktop only', () => {
-        const items = adminNavItems(['super_admin']);
-
         expect(
-            items.filter((item) => item.desktopOnly).map((item) => item.href),
+            adminNavItems(['super_admin'])
+                .filter((item) => item.desktopOnly)
+                .map((item) => item.href),
         ).toEqual([
-            '/admin/organisasi',
             '/admin/absensi',
             '/admin/audit',
             '/admin/pengajuan',
             '/admin/saldo-cuti',
+            '/admin/dokumentasi',
         ]);
+        expect(
+            organizationNavItems(['super_admin'])
+                .filter((item) => item.desktopOnly)
+                .map((item) => item.href),
+        ).toEqual(['/admin/organisasi']);
+    });
+
+    it('lists every desktop destination exactly once per role', () => {
+        for (const roles of [...ROLES.map((role) => [role]), ROLES]) {
+            const hrefs = desktopHrefs(roles).map((item) => item.href);
+
+            expect(new Set(hrefs).size).toBe(hrefs.length);
+        }
+    });
+
+    it('keeps every destination that was reachable before the regrouping', () => {
+        const before: Record<string, string[]> = {
+            super_admin: [
+                '/organisasi/struktur',
+                '/portofolio',
+                '/absensi/hari-ini',
+                '/absensi/rekap',
+                '/admin/karyawan',
+                '/admin/organisasi',
+                '/admin/absensi',
+                '/admin/audit',
+                '/admin/pengajuan',
+                '/admin/saldo-cuti',
+            ],
+            hr: [
+                '/organisasi/struktur',
+                '/absensi/hari-ini',
+                '/admin/karyawan',
+                '/admin/organisasi',
+                '/admin/absensi',
+                '/admin/pengajuan',
+                '/admin/saldo-cuti',
+            ],
+            kepala_divisi: [
+                '/organisasi/struktur',
+                '/absensi/hari-ini',
+                '/admin/karyawan',
+            ],
+            direksi: [
+                '/organisasi/struktur',
+                '/portofolio',
+                '/absensi/hari-ini',
+            ],
+            anggota: ['/organisasi/struktur'],
+        };
+
+        for (const [role, hrefs] of Object.entries(before)) {
+            const now = desktopHrefs([role]).map((item) => item.href);
+
+            expect(now).toEqual(expect.arrayContaining(hrefs));
+        }
+    });
+
+    it('keeps the mobile Menu rows (non desktop-only) the same', () => {
+        const mobile = (roles: string[]) =>
+            [
+                ...organizationNavItems(roles),
+                ...attendanceNavItems(roles),
+                ...adminNavItems(roles),
+            ]
+                .filter((item) => !item.desktopOnly)
+                .map((item) => item.title);
+
+        expect(mobile(['super_admin'])).toEqual([
+            'Struktur organisasi',
+            'Karyawan',
+            'Absensi hari ini',
+        ]);
+        expect(mobile(['kepala_divisi'])).toEqual([
+            'Struktur organisasi',
+            'Anggota divisi',
+            'Absensi hari ini',
+        ]);
+        expect(mobile(['anggota'])).toEqual(['Struktur organisasi']);
     });
 
     it('shows the attendance board to team leads and HR, the recap on desktop only', () => {
@@ -85,5 +221,15 @@ describe('navigation', () => {
         expect(hrefs(['anggota'])).toEqual(
             mainNavItems.map((item) => item.href),
         );
+    });
+
+    it('finds the tab that owns the current page for the sliding pill', () => {
+        expect(activeTabIndex('/dashboard')).toBe(0);
+        expect(activeTabIndex('/absensi/riwayat')).toBe(1);
+        expect(activeTabIndex('/tugas')).toBe(2);
+        expect(activeTabIndex('/inbox')).toBe(3);
+        expect(activeTabIndex('/menu')).toBe(4);
+        expect(activeTabIndex('/persetujuan')).toBe(-1);
+        expect(activeTabIndex('/menu/lain')).toBe(-1);
     });
 });
