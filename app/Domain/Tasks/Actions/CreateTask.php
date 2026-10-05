@@ -9,6 +9,8 @@ use App\Domain\Tasks\Services\TaskDescription;
 use App\Domain\Tasks\Services\TaskLifecycle;
 use App\Domain\Tasks\Services\TaskPositioner;
 use App\Domain\Tasks\Services\TaskRelations;
+use App\Domain\Tasks\Services\TaskRichText;
+use App\Events\Tasks\TaskAssigneesAdded;
 use App\Events\Tasks\TaskCreated;
 use App\Models\Task;
 use App\Models\TaskStatus;
@@ -31,14 +33,18 @@ final class CreateTask
         private readonly TaskPositioner $positioner,
         private readonly TaskRelations $relations,
         private readonly RecordActivity $recordActivity,
+        private readonly TaskRichText $richText,
+        private readonly SyncMentions $syncMentions,
     ) {}
 
     /**
-     * @param  array{title: string, status_id?: string|null, priority?: TaskPriority|int|null, start_date?: string|null, due_date?: string|null, estimate_hours?: float|int|string|null, description_text?: string|null, assignee_ids?: list<string>, label_ids?: list<string>, parent_id?: string|null}  $input
+     * @param  array{title: string, description?: array<mixed>|null, status_id?: string|null, priority?: TaskPriority|int|null, start_date?: string|null, due_date?: string|null, estimate_hours?: float|int|string|null, description_text?: string|null, assignee_ids?: list<string>, label_ids?: list<string>, parent_id?: string|null}  $input
      */
     public function handle(Workspace $workspace, User $actor, array $input): Task
     {
-        $task = DB::transaction(function () use ($workspace, $actor, $input): Task {
+        $assignees = [];
+
+        $task = DB::transaction(function () use ($workspace, $actor, $input, &$assignees): Task {
             $number = $this->nextNumber($workspace);
             $status = $this->resolveStatus($workspace, $input['status_id'] ?? null);
             $now = now();
@@ -63,6 +69,13 @@ final class CreateTask
                 'created_by' => $actor->id,
             ]);
 
+            $prepared = array_key_exists('description', $input) ? $this->richText->prepare($workspace, $actor, $input['description']) : null;
+
+            if ($prepared !== null) {
+                $task->description = $prepared['document'];
+                $task->description_text = $prepared['text'];
+            }
+
             TaskLifecycle::apply($task, $status, $now);
             $task->save();
             $task->setRelation('workspace', $workspace);
@@ -86,10 +99,30 @@ final class CreateTask
                 ]);
             }
 
+            if ($task->parent_id !== null) {
+                $parent = Task::query()->find($task->parent_id);
+
+                if ($parent !== null) {
+                    $this->recordActivity->handle($workspace, $parent, $actor, ActivityEvent::SubtaskAdded, [
+                        'key' => $workspace->key.'-'.$parent->number,
+                        'title' => $parent->title,
+                        'subtask' => ['id' => $task->id, 'key' => $task->displayKey(), 'title' => $task->title],
+                    ]);
+                }
+            }
+
+            if ($prepared !== null && $prepared['mentioned_ids'] !== []) {
+                $this->syncMentions->handle($task, $task, $actor, $prepared['mentioned_ids']);
+            }
+
             return $task;
         });
 
         TaskCreated::dispatch($task);
+
+        if ($assignees !== []) {
+            TaskAssigneesAdded::dispatch($task, $actor, $assignees);
+        }
 
         return $task;
     }

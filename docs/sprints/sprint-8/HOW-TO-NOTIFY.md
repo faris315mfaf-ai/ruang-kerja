@@ -103,7 +103,7 @@ return new DigestSectionData(
     more: 'dan 1 tugas lainnya',
 );
 ```
-Mockup acuan tiga seksi: Tenggat hari ini (Tugas), Terlambat (Tugas, `danger`), Menunggu persetujuan Anda (Pengajuan, `avatarName` + `badge`). Sprint 10: `InboxActionSection` tetap ada untuk item "Perlu tindakan" lain, tetapi melewati type yang sudah punya seksi kaya (`config/notifications.php` → `digest.inbox_section_excludes`, berisi `request.submitted`), jadi persetujuan tidak tampil dua kali. Modul yang menambah seksi untuk type "Perlu tindakan" lain (mis. `task.overdue`) menambahkan type itu ke daftar tersebut.
+Mockup acuan tiga seksi: Tenggat hari ini (Tugas), Terlambat (Tugas, `danger`), Menunggu persetujuan Anda (Pengajuan, `avatarName` + `badge`). Sprint 10: `InboxActionSection` tetap ada untuk item "Perlu tindakan" lain, tetapi melewati type yang sudah punya seksi kaya (`config/notifications.php` → `digest.inbox_section_excludes`: `task.overdue`, `request.submitted`), jadi tugas terlambat & persetujuan tidak tampil dua kali. Modul yang menambah seksi untuk type "Perlu tindakan" lain menambahkan type itu ke daftar tersebut.
 
 ## 7. Detail di Inbox desktop (opsional)
 

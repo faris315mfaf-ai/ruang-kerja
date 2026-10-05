@@ -35,6 +35,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        // Rich-text documents (Tiptap JSON of comments and task descriptions): spaces
+        // around mentions and marks are content — never trim the text nodes.
+        $middleware->trimStrings(except: ['body.content.*', 'description.content.*']);
+
         // Trusted reverse proxies come from config/trustedproxy.php (env TRUSTED_PROXIES,
         // default private ranges) — read at request time, so `config:cache` is safe.
         $middleware->trustProxies(headers: Request::HEADER_X_FORWARDED_FOR

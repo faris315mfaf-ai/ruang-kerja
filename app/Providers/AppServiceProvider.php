@@ -78,6 +78,7 @@ class AppServiceProvider extends ServiceProvider
      *   plus 5/min per email+IP so one account cannot be brute-forced from an IP.
      * - `check-in`: attendance check-in/out routes. 6/min per user.
      * - `api`: JSON API (Phase 3, Sanctum). 120/min per user, or per IP for guests.
+     * - `comments`: posting/editing task comments, 30/min per user.
      */
     protected function configureRateLimiting(): void
     {
@@ -95,6 +96,10 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('api', fn (Request $request): Limit => Limit::perMinute(120)
             ->by($this->userOrIpKey($request)));
+
+        // Task comments (post/edit): generous for humans, stops scripted floods of mention notifications.
+        RateLimiter::for('comments', fn (Request $request): Limit => Limit::perMinute(30)
+            ->by('comments|'.$this->userOrIpKey($request)));
     }
 
     /**

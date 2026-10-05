@@ -28,7 +28,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('unggah/{upload}', [DriveUploadController::class, 'chunk'])->middleware('throttle:600,1')->name('drive-uploads.chunk');
     Route::delete('unggah/{upload}', [DriveUploadController::class, 'destroy'])->name('drive-uploads.destroy');
 
-    // Attachments of tasks (and, from Sprint 6, comments): features/drive/attachments-panel.tsx.
+    // Attachments of tasks and comments: features/drive/attachments-panel.tsx + comment composer.
     Route::prefix('lampiran/{type}/{id}')->whereIn('type', AttachableTypes::aliases())->group(function () {
         Route::get('/', [AttachmentController::class, 'index'])->name('attachments.index');
         Route::post('drive', [AttachmentController::class, 'storeDrive'])->name('attachments.drive');

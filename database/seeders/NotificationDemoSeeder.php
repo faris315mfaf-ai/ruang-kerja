@@ -8,7 +8,9 @@ use App\Domain\Notifications\Data\NotificationSubject;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Organization\Demo\DemoAccounts;
 use App\Models\InboxNotification;
+use App\Models\Task;
 use App\Models\User;
+use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Ramsey\Uuid\Uuid;
@@ -49,13 +51,27 @@ class NotificationDemoSeeder extends Seeder
         $actor = fn (string $email): ?NotificationActor => ($user = User::query()->where('email', $email)->first()) !== null
             ? NotificationActor::fromUser($user)
             : null;
-        $subject = fn (string $type, string $code, string $title): NotificationSubject => new NotificationSubject($type, '', $code, $title);
+        // Tasks seeded by WorkspaceSeeder are linked for real (Inbox preview, deep link to the detail).
+        $task = function (string $code): ?Task {
+            [$key, $number] = explode('-', $code) + [1 => '0'];
+            $workspace = Workspace::query()->where('key', $key)->first();
+
+            return $workspace === null ? null : Task::query()->where('workspace_id', $workspace->id)->where('number', (int) $number)->first();
+        };
+        $subject = function (string $type, string $code, string $title) use ($task): NotificationSubject {
+            $model = $type === 'task' ? $task($code) : null;
+
+            return $model !== null
+                ? NotificationSubject::fromModel($model, $code, $title)
+                : new NotificationSubject($type, '', $code, $title);
+        };
+        $taskUrl = fn (string $code): string => ($model = $task($code)) !== null ? '/w/'.explode('-', $code)[0].'/tasks/'.$model->number : '/tugas';
 
         $items = [
             ['mention', NotificationType::Mention, 18, new NotificationPayload(
                 title: 'Sari Wulandari menyebut Anda di PLQ-15',
                 body: '@Dimas Pratama mohon cek kutipan direksi di paragraf 2…',
-                url: '/tugas',
+                url: $taskUrl('PLQ-15'),
                 actor: $actor('sari.wulandari@demo.test'),
                 subject: $subject('task', 'PLQ-15', 'Siaran pers peluncuran'),
                 meta: ['quote' => true, 'open_label' => 'Buka tugas'],
@@ -71,14 +87,14 @@ class NotificationDemoSeeder extends Seeder
             ['overdue', NotificationType::TaskOverdue, 80, new NotificationPayload(
                 title: 'OPS-127 melewati tenggat',
                 body: null,
-                url: '/tugas',
+                url: $taskUrl('OPS-127'),
                 subject: $subject('task', 'OPS-127', 'Verifikasi tagihan vendor logistik'),
                 meta: ['context' => 'lewat 1 hari kerja', 'context_tone' => 'danger', 'open_label' => 'Buka tugas'],
             )],
             ['comment', NotificationType::TaskCommented, 82, new NotificationPayload(
                 title: 'Rizky Aditya mengomentari PLQ-21',
                 body: 'Checklist 4/7. Form pendaftaran & SEO menyusul Rabu.',
-                url: '/tugas',
+                url: $taskUrl('PLQ-21'),
                 actor: $actor('anggota@demo.test'),
                 subject: $subject('task', 'PLQ-21', 'Landing page produk baru'),
                 meta: ['quote' => true, 'open_label' => 'Buka tugas'],
@@ -86,7 +102,7 @@ class NotificationDemoSeeder extends Seeder
             ['assigned', NotificationType::TaskAssigned, 110, new NotificationPayload(
                 title: 'Putri Ramadhani menugaskan PLQ-27 ke tim Anda',
                 body: null,
-                url: '/tugas',
+                url: $taskUrl('PLQ-27'),
                 actor: $actor('putri.ramadhani@demo.test'),
                 subject: $subject('task', 'PLQ-27', 'Desain banner & spanduk peluncuran'),
                 meta: ['open_label' => 'Buka tugas'],
@@ -109,7 +125,7 @@ class NotificationDemoSeeder extends Seeder
             ['reply', NotificationType::TaskCommented, 60 * 19, new NotificationPayload(
                 title: 'Nadia Putri membalas di GDG-48',
                 body: 'Stok rak C sudah dihitung ulang, selisih 3 unit.',
-                url: '/tugas',
+                url: $taskUrl('GDG-48'),
                 actor: $actor('nadia.putri@demo.test'),
                 subject: $subject('task', 'GDG-48', 'Laporan selisih stok rak C'),
                 meta: ['quote' => true],

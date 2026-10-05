@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 import { InboxDetail } from '@/features/notifications/inbox-detail';
+import '@/features/tasks/register-inbox';
 import {
     emptyCopy,
     InboxFilterMenu,

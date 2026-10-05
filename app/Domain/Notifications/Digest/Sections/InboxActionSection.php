@@ -12,7 +12,8 @@ use Carbon\CarbonImmutable;
 /**
  * Built-in section: unresolved "Perlu tindakan" items in the Inbox. Works for
  * every module that sends action-required notifications; types covered by a
- * richer section (pending approvals) are excluded so nothing is listed twice.
+ * richer section (overdue tasks, pending approvals) are excluded so nothing
+ * is listed twice (config notifications.digest.inbox_section_excludes).
  */
 final class InboxActionSection implements DigestSection
 {

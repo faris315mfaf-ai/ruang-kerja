@@ -2,6 +2,8 @@
 
 use App\Domain\Notifications\Digest\Sections\InboxActionSection;
 use App\Domain\Requests\Digest\PendingApprovalsSection;
+use App\Domain\Tasks\Digest\TasksDueTodaySection;
+use App\Domain\Tasks\Digest\TasksOverdueSection;
 
 return [
 
@@ -97,13 +99,17 @@ return [
         'catch_up_minutes' => 60,
         'workdays' => [1, 2, 3, 4, 5],
         'sections' => [
+            TasksDueTodaySection::class,
+            TasksOverdueSection::class,
             PendingApprovalsSection::class,
             InboxActionSection::class,
         ],
         // Notification types the generic "Perlu tindakan di Inbox" section
         // leaves out because a richer section above already lists them
-        // (approvals waiting for the user → PendingApprovalsSection).
+        // (overdue tasks → TasksOverdueSection, approvals waiting for the
+        // user → PendingApprovalsSection).
         'inbox_section_excludes' => [
+            'task.overdue',
             'request.submitted',
         ],
     ],

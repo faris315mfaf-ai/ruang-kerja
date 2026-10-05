@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { CalendarDays, Columns3, List, SlidersHorizontal } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Fab } from '@/components/mobile/fab';
 import { KanbanBoard } from '@/features/tasks/board/kanban-board';
 import { MobileBoard } from '@/features/tasks/board/mobile-board';
@@ -11,10 +12,24 @@ import {
     TaskComposerProvider,
     useTaskComposer,
 } from '@/features/tasks/form/task-composer';
+import { ApiError, requestJson } from '@/features/tasks/lib/api';
 import { countActiveFilters, filterTasks } from '@/features/tasks/lib/filters';
+import {
+    useConnectionMode,
+    usePolling,
+} from '@/features/tasks/realtime/connection';
+import { ConnectionIndicator } from '@/features/tasks/realtime/connection-indicator';
+import { useWorkspaceEvents } from '@/features/tasks/realtime/workspace-channel';
+import { toggleAssignee } from '@/features/tasks/shortcuts/keys';
+import { QuickPropertyDialog } from '@/features/tasks/shortcuts/quick-property-dialog';
+import { ShortcutHelpDialog } from '@/features/tasks/shortcuts/shortcut-help-dialog';
+import { useTaskShortcuts } from '@/features/tasks/shortcuts/use-task-shortcuts';
+import { SavedViewsMenu } from '@/features/tasks/views/saved-views-menu';
 import { TaskList } from '@/features/tasks/list/task-list';
 import type {
     Label,
+    Priority,
+    SavedView,
     Task,
     TaskStatus,
     TaskViewMode,
@@ -26,6 +41,7 @@ import { WorkspaceShell } from '@/features/workspaces/workspace-shell';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { formatNumber } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { update as updateTask } from '@/routes/tasks';
 import { show } from '@/routes/workspaces';
 
 type Props = WorkspacePageProps & {
@@ -33,6 +49,7 @@ type Props = WorkspacePageProps & {
     labels: Label[];
     tasks: Task[];
     hidden_closed_count: number;
+    saved_views: SavedView[];
     view: TaskViewMode;
     month: string;
     today: string;
@@ -115,6 +132,7 @@ function TasksView(props: Props) {
         month,
         can,
         hidden_closed_count,
+        saved_views,
     } = props;
     const { auth } = usePage().props;
     const breakpoint = useBreakpoint();
@@ -141,6 +159,90 @@ function TasksView(props: Props) {
         ]),
     );
     const activeFilters = countActiveFilters(filters);
+    const { upsertTask, removeTask, moveTask } = board;
+    const container = useRef<HTMLDivElement>(null);
+    const connection = useConnectionMode();
+
+    // Realtime: other members' changes appear without a reload.
+    useWorkspaceEvents(workspace.id, {
+        'task.created': ({ task }) => upsertTask(task),
+        'task.updated': ({ task }) => upsertTask(task),
+        'task.moved': ({ task }) => upsertTask(task),
+        'task.deleted': ({ task }) => removeTask(task.id),
+    });
+
+    // WebSocket down: refresh the tasks every 30 s.
+    usePolling(connection === 'polling', () =>
+        router.reload({ only: ['tasks', 'hidden_closed_count'] }),
+    );
+
+    // Display order for the sheet (J/K, "6 dari 18").
+    const orderKey = (
+        view === 'calendar'
+            ? visible.map((task) => task.id)
+            : statuses.flatMap((status) => visibleColumns[status.id] ?? [])
+    ).join(',');
+    const { registerList } = composer;
+
+    useEffect(() => {
+        registerList({
+            ids: orderKey === '' ? [] : orderKey.split(','),
+            onTaskChange: upsertTask,
+        });
+    }, [registerList, orderKey, upsertTask]);
+
+    const patch = useCallback(
+        async (task: Task, changes: Record<string, unknown>) => {
+            try {
+                const response = await requestJson<{ task: Task }>(
+                    updateTask(task.id),
+                    changes,
+                );
+                upsertTask(response.task);
+
+                return response.task;
+            } catch (error) {
+                toast.error(
+                    error instanceof ApiError
+                        ? error.message
+                        : `Gagal mengubah ${task.key}.`,
+                );
+
+                return null;
+            }
+        },
+        [upsertTask],
+    );
+
+    const assignMe = useCallback(
+        (task: Task, userId: string) => {
+            const assigned = !task.assignee_ids.includes(userId);
+
+            void patch(task, {
+                assignee_ids: toggleAssignee(task.assignee_ids, userId),
+            }).then((result) => {
+                if (result) {
+                    toast.success(
+                        assigned
+                            ? `${task.key} ditugaskan ke Anda.`
+                            : `Anda dilepas dari ${task.key}.`,
+                    );
+                }
+            });
+        },
+        [patch],
+    );
+
+    const shortcuts = useTaskShortcuts({
+        enabled:
+            !mobile &&
+            (view === 'board' || view === 'list') &&
+            composer.openTaskId === null,
+        container,
+        tasks: board.byId,
+        canEdit: can.edit_tasks,
+        onAssignMe: assignMe,
+    });
 
     const open = (task: Task) => composer.openEdit(task);
     const create = (statusId?: string) =>
@@ -196,78 +298,143 @@ function TasksView(props: Props) {
                         currentUserId={auth.user?.id}
                     />
                 )}
+                <SavedViewsMenu
+                    workspaceKey={workspace.key}
+                    savedViews={saved_views}
+                    layout={view}
+                    filters={filters}
+                    canShare={can.edit_tasks}
+                    canManage={can.manage}
+                    mobile={mobile}
+                />
                 {!mobile && (
-                    <p className="ml-auto text-[13px] text-text-muted">
-                        {visible.length === allTasks.length
-                            ? `${formatNumber(allTasks.length)} tugas`
-                            : `${formatNumber(visible.length)} dari ${formatNumber(allTasks.length)} tugas`}
-                        {hidden_closed_count > 0 &&
-                            ` · ${formatNumber(hidden_closed_count)} tugas selesai lama disembunyikan`}
+                    <p className="ml-auto flex items-center gap-1 text-[13px] text-text-muted">
+                        <span>
+                            {visible.length === allTasks.length
+                                ? `${formatNumber(allTasks.length)} tugas`
+                                : `${formatNumber(visible.length)} dari ${formatNumber(allTasks.length)} tugas`}
+                            {hidden_closed_count > 0 &&
+                                ` · ${formatNumber(hidden_closed_count)} tugas selesai lama disembunyikan`}
+                            {' · '}
+                        </span>
+                        <ConnectionIndicator mode={connection} />
+                        <button
+                            type="button"
+                            onClick={() => shortcuts.setHelp(true)}
+                            className="ml-2 rounded border border-border px-1.5 font-mono text-[11px] text-text-muted hover:text-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            aria-label="Pintasan keyboard"
+                            title="Pintasan keyboard (?)"
+                        >
+                            ?
+                        </button>
                     </p>
                 )}
             </div>
 
-            {statuses.length === 0 ? null : view === 'list' ? (
-                <TaskList
-                    statuses={statuses}
-                    tasks={visible}
-                    labelsById={labelsById}
-                    peopleById={peopleById}
-                    today={today}
-                    onOpen={open}
-                />
-            ) : view === 'calendar' ? (
-                <TaskCalendar
-                    statuses={statuses}
-                    tasks={visible}
-                    labelsById={labelsById}
-                    peopleById={peopleById}
-                    today={today}
-                    month={month}
-                    workspaceKey={workspace.key}
-                    onMonthChange={changeMonth}
-                    onOpen={open}
-                    onShowUndated={() => {
-                        setFilters({ ...filters, due: 'none' });
-                        router.get(
-                            show.url(workspace.key),
-                            { view: 'list', due: 'none' },
-                            { preserveState: true },
-                        );
-                    }}
-                />
-            ) : mobile ? (
-                <MobileBoard
-                    statuses={statuses}
-                    columns={visibleColumns}
-                    byId={board.byId}
-                    labelsById={labelsById}
-                    peopleById={peopleById}
-                    today={today}
-                    canEdit={can.edit_tasks}
-                    onMove={(id, target, options) =>
-                        void board.moveTask(id, target, options)
-                    }
-                    onOpen={open}
-                    onCreate={create}
-                    onColumnChange={setMobileColumn}
-                />
-            ) : (
-                <KanbanBoard
-                    statuses={statuses}
-                    columns={visibleColumns}
-                    byId={board.byId}
-                    labelsById={labelsById}
-                    peopleById={peopleById}
-                    today={today}
-                    canEdit={can.edit_tasks}
-                    onMove={(id, target, options) =>
-                        void board.moveTask(id, target, options)
-                    }
-                    onOpen={open}
-                    onCreate={create}
-                />
+            {mobile && connection === 'polling' && (
+                <ConnectionIndicator mode={connection} className="text-xs" />
             )}
+
+            <div ref={container} className="contents">
+                {statuses.length === 0 ? null : view === 'list' ? (
+                    <TaskList
+                        statuses={statuses}
+                        tasks={visible}
+                        labelsById={labelsById}
+                        peopleById={peopleById}
+                        today={today}
+                        onOpen={open}
+                    />
+                ) : view === 'calendar' ? (
+                    <TaskCalendar
+                        statuses={statuses}
+                        tasks={visible}
+                        labelsById={labelsById}
+                        peopleById={peopleById}
+                        today={today}
+                        month={month}
+                        workspaceKey={workspace.key}
+                        onMonthChange={changeMonth}
+                        onOpen={open}
+                        onShowUndated={() => {
+                            setFilters({ ...filters, due: 'none' });
+                            router.get(
+                                show.url(workspace.key),
+                                { view: 'list', due: 'none' },
+                                { preserveState: true },
+                            );
+                        }}
+                    />
+                ) : mobile ? (
+                    <MobileBoard
+                        statuses={statuses}
+                        columns={visibleColumns}
+                        byId={board.byId}
+                        labelsById={labelsById}
+                        peopleById={peopleById}
+                        today={today}
+                        canEdit={can.edit_tasks}
+                        onMove={(id, target, options) =>
+                            void board.moveTask(id, target, options)
+                        }
+                        onOpen={open}
+                        onCreate={create}
+                        onColumnChange={setMobileColumn}
+                    />
+                ) : (
+                    <KanbanBoard
+                        statuses={statuses}
+                        columns={visibleColumns}
+                        byId={board.byId}
+                        labelsById={labelsById}
+                        peopleById={peopleById}
+                        today={today}
+                        canEdit={can.edit_tasks}
+                        onMove={(id, target, options) =>
+                            void board.moveTask(id, target, options)
+                        }
+                        onOpen={open}
+                        onCreate={create}
+                    />
+                )}
+            </div>
+
+            <ShortcutHelpDialog
+                open={shortcuts.help}
+                onOpenChange={shortcuts.setHelp}
+            />
+            <QuickPropertyDialog
+                property={shortcuts.quick?.property ?? null}
+                task={shortcuts.quickTask}
+                statuses={statuses}
+                today={today}
+                onOpenChange={(value) => !value && shortcuts.closeQuick()}
+                onStatus={(statusId) => {
+                    const task = shortcuts.quickTask;
+
+                    if (task && task.status_id !== statusId) {
+                        void moveTask(
+                            task.id,
+                            { statusId },
+                            { announce: true },
+                        );
+                    }
+                }}
+                onPriority={(priority: Priority) => {
+                    const task = shortcuts.quickTask;
+
+                    if (task) {
+                        void patch(task, { priority });
+                    }
+                }}
+                onDue={(date) => {
+                    const task = shortcuts.quickTask;
+
+                    if (task) {
+                        void patch(task, { due_date: date });
+                    }
+                }}
+            />
 
             {mobile && (
                 <>

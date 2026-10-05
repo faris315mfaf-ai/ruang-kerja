@@ -78,3 +78,46 @@ describe('describeActivity', () => {
         ).toBe('meminta update proyek dari Putri');
     });
 });
+
+describe('describeActivity (Sprint 6 events)', () => {
+    const item = (event: string, properties: Record<string, unknown>) => ({
+        id: '1',
+        event,
+        properties: { key: 'PLQ-21', ...properties },
+        subject_id: 't',
+        created_at: '2026-10-05T00:00:00Z',
+        causer: null,
+    });
+
+    it('describes checklist, sub-task, description and estimate changes', () => {
+        expect(
+            describeActivity(
+                item('task.checklist_completed', { item: 'Hero section' }),
+            ),
+        ).toBe('menyelesaikan “Hero section” di PLQ-21');
+        expect(
+            describeActivity(
+                item('task.subtask_added', { subtask: { key: 'PLQ-33' } }),
+            ),
+        ).toBe('menambahkan sub-tugas PLQ-33 ke PLQ-21');
+        expect(describeActivity(item('task.description_changed', {}))).toBe(
+            'memperbarui deskripsi PLQ-21',
+        );
+        expect(
+            describeActivity(item('task.estimate_changed', { to: 12.5 })),
+        ).toBe('mengubah estimasi PLQ-21 menjadi 12,5 jam');
+    });
+
+    it('describes attachments', () => {
+        expect(
+            describeActivity(
+                item('task.attachment_added', { filename: 'Wireframe v2.pdf' }),
+            ),
+        ).toBe('melampirkan Wireframe v2.pdf di PLQ-21');
+        expect(
+            describeActivity(
+                item('task.attachment_removed', { filename: 'Brief' }),
+            ),
+        ).toBe('melepas lampiran Brief dari PLQ-21');
+    });
+});
