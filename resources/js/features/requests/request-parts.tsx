@@ -340,13 +340,13 @@ export function FlowChips({
                     <span
                         title={step.note ?? undefined}
                         className={cn(
-                            'inline-flex min-h-10 items-center gap-2 rounded-full border px-2 pr-3.5 text-[15px] font-semibold',
+                            'inline-flex min-h-10 items-center gap-2 rounded-[20px] border py-1.5 pr-3.5 pl-2 text-[15px] leading-5 font-semibold',
                             step.status === 'skipped'
                                 ? 'border-dashed border-border text-text-muted'
                                 : 'border-border bg-surface text-text',
                         )}
                     >
-                        <span className="flex size-6 items-center justify-center rounded-full bg-surface-2 text-[13px] font-bold text-text-muted">
+                        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-2 text-[13px] font-bold text-text-muted">
                             {step.step_order}
                         </span>
                         {step.approver ? (
@@ -354,18 +354,20 @@ export function FlowChips({
                                 <UserAvatar
                                     name={step.approver.name}
                                     src={step.approver.avatar}
-                                    className="size-6 text-[10px]"
+                                    className="size-6 shrink-0 text-[10px]"
                                 />
-                                <span
-                                    className={cn(
-                                        step.status === 'skipped' &&
-                                            'line-through',
-                                    )}
-                                >
-                                    {step.approver.name}
-                                </span>
-                                <span className="font-normal text-text-muted">
-                                    ({step.label.toLowerCase()})
+                                <span className="min-w-0">
+                                    <span
+                                        className={cn(
+                                            step.status === 'skipped' &&
+                                                'line-through',
+                                        )}
+                                    >
+                                        {step.approver.name}
+                                    </span>{' '}
+                                    <span className="font-normal text-text-muted">
+                                        ({step.label.toLowerCase()})
+                                    </span>
                                 </span>
                             </>
                         ) : (

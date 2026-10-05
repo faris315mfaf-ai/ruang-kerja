@@ -90,7 +90,7 @@ export function MyRequestsMobile({
             {hero && <BalanceCardView card={hero} highlight />}
 
             {others.length > 0 && (
-                <div className="-mx-4 flex snap-x [scrollbar-width:none] gap-3 overflow-x-auto px-4 pb-1">
+                <div className="-mx-4 flex snap-x scroll-px-4 [scrollbar-width:none] gap-3 overflow-x-auto px-4 pb-1">
                     {others.map((card) => (
                         <BalanceCardView
                             key={card.type.id}
@@ -122,7 +122,7 @@ export function MyRequestsMobile({
                             ? counts[item.value]
                             : undefined,
                 }))}
-                className="[&>button]:h-11"
+                className="scroll-px-4 [&>button]:h-11"
             />
 
             {requests.length === 0 ? (

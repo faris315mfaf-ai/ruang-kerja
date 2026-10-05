@@ -100,12 +100,14 @@ function QueueCardContent({
                         {duration !== '—' ? ` · ${duration}` : ''}
                     </span>
                 </span>
-                <CategoryBadge type={item.type} className="h-7 px-2.5" />
             </span>
-            <span className="text-meta text-text-muted">
-                {waiting
-                    ? `Diajukan ${formatRelative(item.submitted_at)}${progress ? ` · langkah ${progress}` : ''}`
-                    : `Diputus ${formatRelative(item.my_decision?.decided_at ?? null)}`}
+            <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                <CategoryBadge type={item.type} className="h-7 px-2.5" />
+                <span className="text-meta text-text-muted">
+                    {waiting
+                        ? `Diajukan ${formatRelative(item.submitted_at)}${progress ? ` · langkah ${progress}` : ''}`
+                        : `Diputus ${formatRelative(item.my_decision?.decided_at ?? null)}`}
+                </span>
             </span>
             {waiting && warning && (
                 <span className="flex items-center gap-1.5 text-meta font-semibold text-warning">

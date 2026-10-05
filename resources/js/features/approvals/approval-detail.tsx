@@ -34,15 +34,18 @@ export function RequestTiles({
     return (
         <dl
             className={cn(
-                'grid gap-3',
-                tiles.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2',
+                'grid grid-cols-2 gap-3',
+                tiles.length === 3 && 'sm:grid-cols-3',
                 className,
             )}
         >
-            {tiles.map((tile) => (
+            {tiles.map((tile, i) => (
                 <div
                     key={tile.label}
-                    className="flex flex-col gap-1 rounded-lg bg-background p-4"
+                    className={cn(
+                        'flex min-w-0 flex-col gap-1 rounded-lg bg-background p-4',
+                        i === 2 && 'col-span-2 sm:col-span-1',
+                    )}
                 >
                     <dt className="text-[14px] font-semibold text-text-muted">
                         {tile.label}
@@ -71,7 +74,7 @@ export function RequesterHeader({
                 src={request.user.avatar}
                 className="size-[60px] text-[20px]"
             />
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <div className="flex min-w-[180px] flex-1 flex-col gap-0.5">
                 <h2 className="text-[22px] leading-8 font-bold tracking-[-0.01em] text-text md:text-[24px]">
                     {request.user.name}
                 </h2>
@@ -87,7 +90,7 @@ export function RequesterHeader({
                         .join(' · ')}
                 </p>
             </div>
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center justify-between gap-2 max-sm:w-full sm:flex-col sm:items-end">
                 <span className="rounded-sm bg-surface-2 px-2.5 py-1.5 font-mono text-[14px] font-semibold text-text">
                     {request.number ?? 'DRAF'}
                 </span>
