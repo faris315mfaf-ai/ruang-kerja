@@ -11,10 +11,8 @@ use App\Domain\Attendance\Models\OfficeLocation;
 use App\Domain\Attendance\Models\Shift;
 use App\Domain\Attendance\Models\ShiftAssignment;
 use App\Domain\Organization\Enums\WorkMode;
-use App\Models\User;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Testing\TestResponse;
 use Tests\Support\AttendanceFixtures as F;
 
 beforeEach(function () {
@@ -23,29 +21,11 @@ beforeEach(function () {
     $this->office = F::office();
 });
 
-/**
- * @param  array<string, mixed>  $fields
- */
-function checkIn(User $user, array $fields = [], string $type = 'in'): TestResponse
-{
-    return test()->actingAs($user)
-        ->withHeader('Accept', 'application/json')
-        ->post($type === 'in' ? route('attendance.check-in') : route('attendance.check-out'), [
-            'latitude' => F::OFFICE_LAT + 0.0003, // ~33 m from the office
-            'longitude' => F::OFFICE_LNG,
-            'accuracy' => 12,
-            'client_time' => now()->toIso8601String(),
-            'selfie' => F::selfie(),
-            'device_id' => 'device-1',
-            ...$fields,
-        ]);
-}
-
 test('on time: check-in before the start inside the radius', function () {
     $user = F::employee();
     $this->travelTo(F::at('2026-10-05 07:52'));
 
-    $response = checkIn($user)->assertCreated();
+    $response = F::checkIn($user)->assertCreated();
 
     $response->assertJsonPath('result.type', 'check_in')
         ->assertJsonPath('result.status', 'present')
@@ -85,14 +65,14 @@ test('seconds inside the tolerance minute are still on time', function () {
     $user = F::employee();
     $this->travelTo(F::at('2026-10-05 08:10:59'));
 
-    checkIn($user)->assertCreated()->assertJsonPath('result.status', 'present')->assertJsonPath('result.lateMinutes', 0);
+    F::checkIn($user)->assertCreated()->assertJsonPath('result.status', 'present')->assertJsonPath('result.lateMinutes', 0);
 });
 
 test('late beyond the tolerance counts minutes from the tolerance limit', function () {
     $user = F::employee();
     $this->travelTo(F::at('2026-10-05 08:34'));
 
-    checkIn($user)->assertCreated()
+    F::checkIn($user)->assertCreated()
         ->assertJsonPath('result.status', 'late')
         ->assertJsonPath('result.statusLabel', 'Terlambat')
         ->assertJsonPath('result.lateMinutes', 24)
@@ -105,19 +85,19 @@ test('check-in opens only within the window before the start', function () {
     $user = F::employee();
     $this->travelTo(F::at('2026-10-05 05:30'));
 
-    checkIn($user)->assertUnprocessable()
+    F::checkIn($user)->assertUnprocessable()
         ->assertJsonPath('reason', 'too_early')
         ->assertJsonPath('message', 'Check-in untuk shift Reguler baru dibuka pukul 06.00.');
 
     $this->travelTo(F::at('2026-10-05 06:00'));
-    checkIn($user)->assertCreated();
+    F::checkIn($user)->assertCreated();
 });
 
 test('outside the radius an office employee is rejected with a helpful message', function () {
     $user = F::employee();
     $this->travelTo(F::at('2026-10-05 07:55'));
 
-    checkIn($user, ['latitude' => F::northOfOffice(340), 'accuracy' => 85])
+    F::checkIn($user, ['latitude' => F::northOfOffice(340), 'accuracy' => 85])
         ->assertUnprocessable()
         ->assertJsonPath('reason', 'outside_geofence')
         ->assertJsonPath('message', 'Anda berada 340 m dari Kantor Pusat (batas 100 m). Ajukan dinas luar jika sedang bertugas di luar.')
@@ -135,11 +115,11 @@ test('outside the radius a WFH employee is accepted as WFH with a note', functio
     $user = F::employee(WorkMode::Wfh);
     $this->travelTo(F::at('2026-10-05 07:58'));
 
-    checkIn($user, ['latitude' => F::northOfOffice(25_000)])
+    F::checkIn($user, ['latitude' => F::northOfOffice(25_000)])
         ->assertUnprocessable()
         ->assertJsonPath('reason', 'note_required');
 
-    checkIn($user, ['latitude' => F::northOfOffice(25_000), 'note' => 'Rumah, menyusun laporan'])
+    F::checkIn($user, ['latitude' => F::northOfOffice(25_000), 'note' => 'Rumah, menyusun laporan'])
         ->assertCreated()
         ->assertJsonPath('result.method', 'wfh')
         ->assertJsonPath('result.status', 'wfh')
@@ -158,7 +138,7 @@ test('outside the radius a field employee is accepted and counted present', func
     $user = F::employee(WorkMode::Field);
     $this->travelTo(F::at('2026-10-05 07:58'));
 
-    checkIn($user, ['latitude' => F::northOfOffice(8_000), 'note' => 'Kunjungan gudang mitra'])
+    F::checkIn($user, ['latitude' => F::northOfOffice(8_000), 'note' => 'Kunjungan gudang mitra'])
         ->assertCreated()
         ->assertJsonPath('result.method', 'wfh')
         ->assertJsonPath('result.status', 'present');
@@ -171,26 +151,26 @@ test('a hybrid employee is accepted outside the radius only on a WFH day', funct
     $far = ['latitude' => F::northOfOffice(12_000), 'note' => 'WFH sesuai jadwal'];
 
     $this->travelTo(F::at('2026-10-05 07:58'));
-    checkIn($user, $far)->assertUnprocessable()->assertJsonPath('reason', 'outside_geofence');
+    F::checkIn($user, $far)->assertUnprocessable()->assertJsonPath('reason', 'outside_geofence');
 
     $this->travelTo(F::at('2026-10-06 07:58'));
-    checkIn($user, $far)->assertCreated()->assertJsonPath('result.status', 'wfh');
+    F::checkIn($user, $far)->assertCreated()->assertJsonPath('result.status', 'wfh');
 });
 
 test('a WFH employee inside the office radius checks in normally', function () {
     $user = F::employee(WorkMode::Wfh);
     $this->travelTo(F::at('2026-10-05 07:58'));
 
-    checkIn($user)->assertCreated()->assertJsonPath('result.method', 'gps_selfie')->assertJsonPath('result.status', 'present');
+    F::checkIn($user)->assertCreated()->assertJsonPath('result.method', 'gps_selfie')->assertJsonPath('result.status', 'present');
 });
 
 test('a second check-in on the same day is rejected', function () {
     $user = F::employee();
     $this->travelTo(F::at('2026-10-05 07:52'));
-    checkIn($user)->assertCreated();
+    F::checkIn($user)->assertCreated();
 
     $this->travelTo(F::at('2026-10-05 09:00'));
-    checkIn($user)->assertUnprocessable()
+    F::checkIn($user)->assertUnprocessable()
         ->assertJsonPath('reason', 'already_checked_in')
         ->assertJsonPath('message', 'Anda sudah check-in pukul 07.52. Lakukan check-out saat selesai bekerja.');
 
@@ -202,13 +182,13 @@ test('check-in requires consent for the current policy version', function () {
     $user = F::employee(consent: false);
     $this->travelTo(F::at('2026-10-05 07:52'));
 
-    checkIn($user)->assertUnprocessable()
+    F::checkIn($user)->assertUnprocessable()
         ->assertJsonPath('reason', 'consent_required')
         ->assertJsonPath('context.version', '1.0');
 
     $this->actingAs($user)->post(route('attendance.consent.store'))->assertRedirect();
 
-    checkIn($user)->assertCreated();
+    F::checkIn($user)->assertCreated();
 });
 
 test('on a holiday a check-in is recorded without lateness', function () {
@@ -216,7 +196,7 @@ test('on a holiday a check-in is recorded without lateness', function () {
     Holiday::factory()->on('2026-10-05', 'Libur uji')->create();
     $this->travelTo(F::at('2026-10-05 10:30'));
 
-    checkIn($user)->assertCreated()
+    F::checkIn($user)->assertCreated()
         ->assertJsonPath('result.status', 'present')
         ->assertJsonPath('result.lateMinutes', 0)
         ->assertJsonPath('result.shift', null);
@@ -228,7 +208,7 @@ test('an unscheduled day (weekend) accepts a check-in without lateness', functio
     $user = F::employee();
     $this->travelTo(F::at('2026-10-10 11:00'));
 
-    checkIn($user)->assertCreated()->assertJsonPath('result.status', 'present')->assertJsonPath('result.lateMinutes', 0);
+    F::checkIn($user)->assertCreated()->assertJsonPath('result.status', 'present')->assertJsonPath('result.lateMinutes', 0);
 });
 
 test('night shift: a late check-in after midnight belongs to the previous work date', function () {
@@ -236,7 +216,7 @@ test('night shift: a late check-in after midnight belongs to the previous work d
     $user = F::employee(shift: $night);
     $this->travelTo(F::at('2026-10-06 00:30'));
 
-    checkIn($user)->assertCreated()
+    F::checkIn($user)->assertCreated()
         ->assertJsonPath('result.workDate', '2026-10-05')
         ->assertJsonPath('result.status', 'late')
         ->assertJsonPath('result.lateMinutes', 140);
@@ -247,7 +227,7 @@ test('night shift: checking in before the start of the overnight shift', functio
     $user = F::employee(shift: $night);
     $this->travelTo(F::at('2026-10-05 21:55'));
 
-    checkIn($user)->assertCreated()
+    F::checkIn($user)->assertCreated()
         ->assertJsonPath('result.workDate', '2026-10-05')
         ->assertJsonPath('result.status', 'present')
         ->assertJsonPath('result.minutesBeforeStart', 5);
@@ -259,11 +239,11 @@ test('a shift bound to a location only accepts that geofence', function () {
     $user = F::employee(shift: $shift);
     $this->travelTo(F::at('2026-10-05 07:50'));
 
-    checkIn($user)->assertUnprocessable()
+    F::checkIn($user)->assertUnprocessable()
         ->assertJsonPath('reason', 'outside_geofence')
         ->assertJsonPath('context.location.name', 'Gudang Cikarang');
 
-    checkIn($user, ['latitude' => -6.3, 'longitude' => 107.15])->assertCreated()
+    F::checkIn($user, ['latitude' => -6.3, 'longitude' => 107.15])->assertCreated()
         ->assertJsonPath('result.location.name', 'Gudang Cikarang');
 });
 
@@ -272,7 +252,7 @@ test('inactive locations are ignored', function () {
     $user = F::employee();
     $this->travelTo(F::at('2026-10-05 07:50'));
 
-    checkIn($user)->assertUnprocessable()->assertJsonPath('reason', 'no_office_location');
+    F::checkIn($user)->assertUnprocessable()->assertJsonPath('reason', 'no_office_location');
 });
 
 test('a day already covered by an approved request cannot be checked in', function () {
@@ -280,7 +260,7 @@ test('a day already covered by an approved request cannot be checked in', functi
     AttendanceDay::factory()->for($user)->on('2026-10-05')->status(AttendanceStatus::Leave)->create();
     $this->travelTo(F::at('2026-10-05 07:50'));
 
-    checkIn($user)->assertUnprocessable()
+    F::checkIn($user)->assertUnprocessable()
         ->assertJsonPath('reason', 'day_has_request')
         ->assertJsonPath('message', 'Hari ini tercatat Cuti dari pengajuan yang disetujui. Hubungi HR bila Anda tetap masuk kerja.');
 });
@@ -289,7 +269,7 @@ test('fraud signals flag the log without blocking the check-in', function () {
     $user = F::employee();
     $this->travelTo(F::at('2026-10-05 07:50'));
 
-    checkIn($user, ['accuracy' => 150, 'client_time' => now()->subMinutes(9)->toIso8601String()])->assertCreated()
+    F::checkIn($user, ['accuracy' => 150, 'client_time' => now()->subMinutes(9)->toIso8601String()])->assertCreated()
         ->assertJsonPath('result.isSuspicious', true);
 
     $log = AttendanceLog::query()->sole();
@@ -317,8 +297,8 @@ test('check-in attempts are rate limited per user', function () {
     $this->travelTo(F::at('2026-10-05 05:00'));
 
     foreach (range(1, 6) as $attempt) {
-        checkIn($user)->assertUnprocessable();
+        F::checkIn($user)->assertUnprocessable();
     }
 
-    checkIn($user)->assertTooManyRequests();
+    F::checkIn($user)->assertTooManyRequests();
 });

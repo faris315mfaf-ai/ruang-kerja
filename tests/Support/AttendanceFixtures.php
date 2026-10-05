@@ -11,7 +11,9 @@ use App\Domain\Organization\Enums\WorkMode;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Testing\TestResponse;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Shared fixtures for attendance tests. Times are written in office time
@@ -109,6 +111,27 @@ final class AttendanceFixtures
         }
 
         return $user;
+    }
+
+    /**
+     * POST a check-in (or check-out) as the user, ~33 m from the office.
+     *
+     * @param  array<string, mixed>  $fields
+     * @return TestResponse<Response>
+     */
+    public static function checkIn(User $user, array $fields = [], string $type = 'in'): TestResponse
+    {
+        return test()->actingAs($user)
+            ->withHeader('Accept', 'application/json')
+            ->post(route($type === 'in' ? 'attendance.check-in' : 'attendance.check-out'), [
+                'latitude' => self::OFFICE_LAT + 0.0003,
+                'longitude' => self::OFFICE_LNG,
+                'accuracy' => 12,
+                'client_time' => now()->toIso8601String(),
+                'selfie' => self::selfie(),
+                'device_id' => 'device-1',
+                ...$fields,
+            ]);
     }
 
     /**

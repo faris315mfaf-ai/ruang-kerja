@@ -123,6 +123,9 @@ final class MyAttendance
             'shiftName' => $schedule->isWorkday() ? $schedule->shift?->name : null,
             'start' => AttendancePresenter::iso($schedule->scheduledStart),
             'startLabel' => $schedule->scheduledStart === null ? null : OfficeClock::time($schedule->scheduledStart),
+            'end' => AttendancePresenter::iso($schedule->scheduledEnd),
+            'endLabel' => $schedule->scheduledEnd === null ? null : OfficeClock::time($schedule->scheduledEnd),
+            'distanceM' => $day?->checkInLog?->distance_m === null ? null : (int) round($day->checkInLog->distance_m),
             'isHoliday' => $schedule->isHoliday(),
         ];
     }
