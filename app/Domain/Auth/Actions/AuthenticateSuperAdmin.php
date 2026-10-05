@@ -76,6 +76,7 @@ final class AuthenticateSuperAdmin
         }
 
         $request->attributes->set(self::REQUEST_CACHE_KEY, $user);
+        LoginMethod::Password->declareFor($request);
 
         return $user;
     }

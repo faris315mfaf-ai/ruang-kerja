@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\HealthController;
+use App\Http\Middleware\AuthenticateSession;
 use App\Http\Middleware\EnsureActiveEmployee;
 use App\Http\Middleware\EnsureTwoFactorForSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
@@ -31,6 +32,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(SecurityHeaders::class);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+
+        // Trusted reverse proxies come from config/trustedproxy.php (env TRUSTED_PROXIES,
+        // default private ranges) — read at request time, so `config:cache` is safe.
+        $middleware->trustProxies(headers: Request::HEADER_X_FORWARDED_FOR
+            | Request::HEADER_X_FORWARDED_HOST
+            | Request::HEADER_X_FORWARDED_PORT
+            | Request::HEADER_X_FORWARDED_PROTO
+            | Request::HEADER_X_FORWARDED_AWS_ELB);
+
+        // Sessions remember the password hash: changing the password (SecurityController)
+        // signs out every other device on its next request.
+        $middleware->authenticateSessions();
+        $middleware->alias(['auth.session' => AuthenticateSession::class]);
 
         $middleware->web(append: [
             // Logs out inactive/resigned users on any web request (no-op for guests).

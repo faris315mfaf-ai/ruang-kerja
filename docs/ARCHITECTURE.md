@@ -115,7 +115,8 @@ Uji wajib: setiap Policy punya test matriks peran × aksi.
 ## 5. Keamanan & privasi
 
 - Sesi cookie `HttpOnly`, `Secure`, `SameSite=Lax`. CSRF untuk semua POST.
-- Rate limit: login 10/menit/IP, check-in 6/menit/user, API umum 120/menit.
+- Rate limit: login kata sandi 10/menit/IP (+5/menit per email+IP); callback login Google 60/menit/IP + 10/menit per sesi (puluhan karyawan berbagi NAT kantor); check-in 6/menit/user, API umum 120/menit. IP klien dibaca di belakang proxy tepercaya (`TRUSTED_PROXIES`, default rentang privat).
+- Sesi: cookie `SESSION_SECURE_COOKIE=true` (wajib di produksi, HTTPS). Middleware `AuthenticateSession` aktif; mengganti kata sandi (Super Admin) memanggil `logoutOtherDevices` sehingga perangkat lain keluar pada request berikutnya.
 - Header keamanan dipasang **aplikasi** (`SecurityHeaders`, `config/security.php`) agar berlaku di balik proxy apa pun: HSTS (produksi), CSP ketat dengan nonce (izinkan domain Google untuk Picker, OAuth, pratinjau Drive, avatar), `Permissions-Policy` hanya `geolocation=(self), camera=(self)`. Caddy menambah header dasar hanya bila belum ada. Checklist: `docs/security/ASVS-L1.md`.
 - Selfie: disk privat, URL bertanda tangan 5 menit, job bulanan menghapus selfie lebih lama dari retensi.
 - Token Google: cast `encrypted`. `APP_KEY` dirotasi dengan `APP_PREVIOUS_KEYS`.

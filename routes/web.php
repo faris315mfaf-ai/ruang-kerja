@@ -14,8 +14,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Shell entries whose modules arrive in later sprints. Each sprint replaces
     // its entry with real routes.
     $upcoming = [
-        'pengajuan' => ['requests.index', 'Pengajuan'],
-        'persetujuan' => ['approvals.index', 'Persetujuan'],
         'privasi' => ['privacy.index', 'Privasi & data saya'],
     ];
 
@@ -31,6 +29,7 @@ Route::post('login/demo', [DemoLoginController::class, 'store'])
 
 require __DIR__.'/auth.php';
 require __DIR__.'/settings.php';
+require __DIR__.'/requests.php';
 require __DIR__.'/attendance.php';
 require __DIR__.'/admin-employees.php';
 require __DIR__.'/notifications.php';

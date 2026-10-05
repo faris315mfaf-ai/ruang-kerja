@@ -12,7 +12,8 @@ use App\Models\User;
  * - HR & Super Admin manage employees (employees.manage).
  * - HR, Direksi, Super Admin see everyone (employees.view).
  * - Kepala Divisi sees their division; everyone sees themselves and direct reports.
- * - Only a Super Admin may edit a Super Admin or grant the super_admin role.
+ * - Only a Super Admin may edit a Super Admin or grant/revoke super_admin, direksi
+ *   or hr; HR may grant/revoke kepala_divisi and anggota. Nobody changes their own roles.
  * - Employees are never hard-deleted: deactivate instead.
  */
 class UserPolicy
@@ -71,8 +72,9 @@ class UserPolicy
      */
     public function assignRole(User $actor, User $target, Role $role): bool
     {
-        return $this->update($actor, $target)
-            && ($role !== Role::SuperAdmin || $actor->isSuperAdmin());
+        return ! $actor->is($target)
+            && $this->update($actor, $target)
+            && (! $role->onlySuperAdminAssigns() || $actor->isSuperAdmin());
     }
 
     /**

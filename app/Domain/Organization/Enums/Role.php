@@ -25,6 +25,17 @@ enum Role: string
     }
 
     /**
+     * Roles only a Super Admin may grant or revoke (HR may handle kepala_divisi/anggota).
+     */
+    public function onlySuperAdminAssigns(): bool
+    {
+        return match ($this) {
+            self::SuperAdmin, self::Direksi, self::Hr => true,
+            self::KepalaDivisi, self::Anggota => false,
+        };
+    }
+
+    /**
      * Permission matrix (single source of truth, synced by RoleSeeder and
      * documented in docs/sprints/sprint-1/CORE.md).
      *

@@ -20,7 +20,7 @@
 |---|---|
 | Organisasi & akses | `companies`, `divisions`, `teams`, `positions`, `users`, `employee_profiles`, `roles`*, `permissions`*, `model_has_roles`*, `audit_logs` |
 | Absensi | `office_locations`, `shifts`, `shift_assignments`, `holidays`, `attendance_days`, `attendance_logs`, `qr_tokens`, `attendance_consents` |
-| Pengajuan | `leave_types`, `leave_balances`, `requests`, `request_approvals`, `approval_flows`, `approval_flow_steps`, `approval_delegations` |
+| Pengajuan | `leave_types`, `leave_balances`, `requests`, `request_sequences`, `request_approvals`, `approval_flows`, `approval_flow_steps`, `approval_delegations` |
 | Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
 | Google & file | `google_accounts`, `drive_files`, `attachments` |
 | Notifikasi | `notifications`*, `notification_preferences`, `notification_settings` |
@@ -55,8 +55,11 @@
 | head_user_id | FK users null | Kepala Divisi |
 | is_board | bool | `true` untuk unit **Direksi** |
 
+Indeks unik parsial `divisions_one_board_per_company_unique (company_id) WHERE is_board AND deleted_at IS NULL`: paling banyak satu unit Direksi aktif per perusahaan.
+
 ### teams
 `id`, `division_id` FK, `name`, `code` varchar(10) null (label singkat di bagan, mis. `GDG`; huruf besar), `lead_user_id` FK users null (Ketua Tim).
+Indeks unik parsial `teams_division_code_unique (division_id, code) WHERE code IS NOT NULL AND deleted_at IS NULL`: kode tim unik per divisi (kode tim terhapus boleh dipakai ulang). Tim yang masih punya anggota aktif tidak boleh pindah divisi (aturan aplikasi, `SaveTeam`).
 
 ### positions
 `id`, `company_id`, `name` (mis. "Staf Keuangan"), `level` smallint (1 = Direksi … 5 = Staf).
@@ -223,39 +226,52 @@ Implementasi (Sprint 2): versi dari `config('attendance.consent.version')` (`ATT
 
 ## 3. Pengajuan & approval
 
+> Diimplementasikan Sprint 4 (`docs/sprints/sprint-4/SUMMARY.md`). Model: `LeaveType`, `LeaveBalance`, `EmployeeRequest` (tabel `requests`), `ApprovalFlow`, `ApprovalFlowStep`, `RequestApproval`, `ApprovalDelegation`.
+
 ### leave_types
-`id`, `company_id`, `code` (`ANNUAL`, `SICK`, …), `name`, `category` (`leave` · `permit` · `sick` · `overtime` · `correction` · `business_trip`), `annual_quota_days` null, `requires_attachment_after_days` null, `is_paid`, `allow_half_day`, `carry_over_max_days` null, `approval_flow_id` FK.
+`id`, `company_id`, `code`, `name`, `category` (`leave` · `permit` · `sick` · `overtime` · `correction` · `business_trip`), `annual_quota_days` numeric(5,1) null, `requires_attachment_after_days` smallint null (0 = selalu wajib), `is_paid`, `allow_half_day`, `carry_over_max_days` numeric(5,1) null, `approval_flow_id` FK null (null = alur "Default" perusahaan).
+Tambahan Sprint 4: `description` null, `max_backdate_days` null (koreksi absensi "maks. 7 hari lalu"), `min_service_months` null (cuti besar "Belum berhak"), `is_active`, `sort_order`, `deleted_at`.
+`code` = 2–10 huruf besar/angka (CHECK), **juga prefiks nomor** (`CUT`, `CBR`, `SKT`, `IZN`, `LBR`, `KOR`, `DNS`). Unik `(company_id, code)` termasuk yang terhapus.
 
 ### leave_balances
 `id`, `user_id`, `leave_type_id`, `year`, `entitled_days` numeric(5,1), `carried_over_days`, `used_days`, `pending_days`. Unik `(user_id, leave_type_id, year)`. `pending_days` dipakai agar saldo tidak terpakai dua kali saat pengajuan sedang diproses.
+CHECK: semua kolom ≥ 0 dan `entitled + carried_over − used − pending ≥ 0` (saldo tidak pernah minus). Hanya jenis ber-`annual_quota_days`. Dibuat oleh `requests:generate-balances` (1 Januari) atau saat pertama dipakai.
 
 ### requests — semua jenis pengajuan dalam satu tabel
 | Kolom | Tipe | Keterangan |
 |---|---|---|
 | id | ulid PK | |
-| number | varchar unique | mis. `CUT-2026-10-0012` |
+| number | varchar null unique | mis. `CUT-2026-10-0012`; diisi saat pertama dikirim (draf belum bernomor) |
 | user_id | FK | pemohon |
 | leave_type_id | FK | jenis |
-| start_at / end_at | timestamptz | lembur & izin memakai jam. Cuti memakai hari penuh |
-| days | numeric(5,1) null | hari kerja terhitung (tidak termasuk libur) |
+| start_at / end_at | timestamptz | lembur & izin memakai jam. Cuti memakai hari penuh (00.00–23.59.59 waktu kantor). CHECK `end_at >= start_at` |
+| days | numeric(5,1) null | hari kerja terhitung (jadwal shift, tanpa libur); 0,5 = setengah hari |
 | minutes | int null | lembur / izin per jam |
 | reason | text | |
-| payload | jsonb | data khusus per jenis (koreksi: jam yang diminta, dll.) |
+| payload | jsonb | per jenis: `half_day`, `mode` (izin `hours`/`days`), `date`/`start_time`/`end_time` (lembur, izin jam), `check_in`/`check_out` (koreksi), `destination` (dinas) |
+| substitute_id | FK users null | **tambahan**: pengganti selama cuti |
 | status | varchar | `draft` · `pending` · `approved` · `rejected` · `revision_requested` · `canceled` |
-| current_step | smallint | |
+| round | smallint | **tambahan**: putaran; +1 setiap dikirim ulang setelah revisi |
+| current_step | smallint null | langkah yang sedang menunggu |
+| submitted_at | timestamptz null | **tambahan** |
 | decided_at | timestamptz null | |
 
+### request_sequences (tambahan Sprint 4)
+`id`, `key` unik (mis. `CUT-2026-10`), `last_number`. Nomor diambil dengan satu `INSERT … ON CONFLICT (key) DO UPDATE SET last_number = last_number + 1 RETURNING` (atomik, aman dari race condition). Periode = bulan pengiriman (waktu kantor).
+
 ### approval_flows / approval_flow_steps
-`approval_flows`: `id`, `company_id`, `name`.
-`approval_flow_steps`: `id`, `approval_flow_id`, `step_order`, `approver_type` (`direct_manager` · `division_head` · `role` · `user`), `approver_role` null, `approver_user_id` null, `condition` jsonb null (mis. `{"overtime_month_minutes_gt": 2400}` → langkah hanya aktif bila kondisi terpenuhi).
+`approval_flows`: `id`, `company_id`, `name`, **`skip_self_approval`** bool (default true; mati = naik ke atasan pemohon), **`allow_delegation`** bool (default true), `deleted_at`. Alur bernama `Default` = cadangan perusahaan.
+`approval_flow_steps`: `id`, `approval_flow_id`, `step_order` (unik per alur), `approver_type` (`direct_manager` · `division_head` · `role` · `user`), `approver_role` null, `approver_user_id` null, `condition` jsonb null (mis. `{"overtime_month_minutes_gt": 2400}` → langkah hanya aktif bila kondisi terpenuhi). Kunci `<metrik>_<op>`; metrik `overtime_month_minutes` · `days` · `minutes`; op `gt` · `gte` · `lt` · `lte`; semua kunci harus terpenuhi.
 
 ### request_approvals
-`id`, `request_id`, `step_order`, `approver_id` FK users (diresolusi saat langkah aktif), `delegated_from_id` null, `status` (`waiting` · `approved` · `rejected` · `revision_requested` · `skipped`), `note`, `decided_at`.
+`id`, `request_id`, **`round`**, `step_order` (unik per request+round), **`approver_type`**, **`approver_role`** null (salinan langkah alur saat dikirim), `approver_id` FK users null (diresolusi saat langkah aktif; null untuk langkah peran yang menunggu — siapa pun pemegang peran boleh memutus, lalu terisi), `delegated_from_id` null, `status` (**`queued`** · `waiting` · `approved` · `rejected` · `revision_requested` · `skipped`), `note`, **`activated_at`**, `decided_at`.
 
 ### approval_delegations
-`id`, `delegator_id`, `delegate_id`, `starts_on`, `ends_on`.
+`id`, `delegator_id`, `delegate_id`, `starts_on`, `ends_on`, **`reason`** null. CHECK `ends_on >= starts_on` dan delegator ≠ delegate.
 
-Lampiran pengajuan (surat dokter, dll.) memakai tabel `attachments` (morph ke `requests`), disimpan di object storage privat, **bukan** Drive.
+Lampiran pengajuan (surat dokter, dll.) memakai tabel `attachments` (morph ke `requests`, `source = storage`), disimpan di disk privat (`config/requests.php`), **bukan** Drive; diunduh lewat `/pengajuan/{id}/lampiran/{attachment}` (policy + audit `request.attachment_viewed`).
+
+`attendance_days.request_id` mendapat FK ke `requests` (nullOnDelete) di migrasi Sprint 4.
 
 ---
 

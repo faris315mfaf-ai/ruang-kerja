@@ -24,6 +24,9 @@ import { cn } from '@/lib/utils';
 function NavList({ items }: { items: AppNavItem[] }) {
     const { currentUrl } = useCurrentUrl();
     const unread = useUnreadCount();
+    const { approvals } = usePage().props;
+    const badgeCount = (item: AppNavItem): number =>
+        item.badge === 'approvals' ? (approvals?.pending ?? 0) : 0;
 
     return (
         <SidebarMenu>
@@ -44,6 +47,12 @@ function NavList({ items }: { items: AppNavItem[] }) {
                         <SidebarMenuBadge className="text-primary tnum">
                             {unread > 99 ? '99+' : unread}
                             <span className="sr-only"> belum dibaca</span>
+                        </SidebarMenuBadge>
+                    )}
+                    {badgeCount(item) > 0 && (
+                        <SidebarMenuBadge className="text-primary tnum">
+                            {badgeCount(item)}
+                            <span className="sr-only"> menunggu keputusan</span>
                         </SidebarMenuBadge>
                     )}
                 </SidebarMenuItem>
