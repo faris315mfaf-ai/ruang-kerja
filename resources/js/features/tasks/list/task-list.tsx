@@ -341,7 +341,7 @@ export function TaskList({
                                 <button
                                     type="button"
                                     aria-expanded={!closed}
-                                    aria-controls={panelId}
+                                    aria-controls={closed ? undefined : panelId}
                                     onClick={() =>
                                         setCollapsed((value) => ({
                                             ...value,

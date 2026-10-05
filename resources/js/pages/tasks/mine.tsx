@@ -93,12 +93,19 @@ function MyTasksView({ tab, counts, tasks, today }: Props) {
             row.status_category !== 'canceled',
     );
     const perWorkspace = workspaceCounts(openRows);
+    // A workspace whose last open task was just closed drops out of the
+    // chips; fall back to "Semua" instead of filtering on a hidden chip.
+    const activeWorkspace = perWorkspace.some(
+        ({ row }) => row.workspace.id === workspaceId,
+    )
+        ? workspaceId
+        : ALL;
     const filtered = filterTasks(tasks, filters, today).filter(
         (row) =>
             (showClosed ||
                 (row.status_category !== 'done' &&
                     row.status_category !== 'canceled')) &&
-            (workspaceId === ALL || row.workspace.id === workspaceId),
+            (activeWorkspace === ALL || row.workspace.id === activeWorkspace),
     );
     const groups = groupRows(filtered, mode, today);
     const ordered = groups.flatMap((group) => group.items);
@@ -196,7 +203,7 @@ function MyTasksView({ tab, counts, tasks, today }: Props) {
     const workspaceChips = perWorkspace.length > 1 && (
         <ChipScroller
             label="Workspace"
-            value={workspaceId}
+            value={activeWorkspace}
             onChange={setWorkspaceId}
             className={cn(!mobile && 'mx-0 scroll-px-0 flex-wrap px-0')}
             chips={[

@@ -123,26 +123,26 @@ function Chip({
                     {task.title}
                 </span>
             </span>
-            <span className="mt-1 flex items-center gap-1.5 text-[15px]">
+            <span className="mt-1 flex min-w-0 items-center gap-1.5 text-[15px] whitespace-nowrap">
                 <span
                     className={cn(
-                        'font-mono font-semibold',
+                        'shrink-0 font-mono font-semibold',
                         overdue ? 'text-danger' : 'text-text-muted',
                     )}
                 >
                     {task.key}
                 </span>
                 {overdue && (
-                    <span className="text-danger">
+                    <span className="min-w-0 truncate text-danger">
                         · lewat {-diffDays(today, task.due_date ?? today)} hari
                     </span>
                 )}
                 {task.checklist && (
-                    <span className="text-text-subtle tnum">
+                    <span className="shrink-0 text-text-subtle tnum">
                         · {task.checklist.done}/{task.checklist.total}
                     </span>
                 )}
-                <span className="ml-auto flex items-center gap-1">
+                <span className="ml-auto flex shrink-0 items-center gap-1">
                     {task.priority === 1 && (
                         <PriorityIcon priority={1} className="size-3.5" />
                     )}
