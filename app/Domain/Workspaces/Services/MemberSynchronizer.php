@@ -17,6 +17,8 @@ use App\Models\WorkspaceMember;
  */
 final class MemberSynchronizer
 {
+    public function __construct(private readonly ProjectRolesReleaser $projectRoles) {}
+
     /**
      * @param  array<string, WorkspaceRole>  $desired  user id => role for new rows
      */
@@ -82,6 +84,8 @@ final class MemberSynchronizer
                 $changed = true;
             }
         }
+
+        $this->projectRoles->release($workspace, $removed);
 
         if ($added !== [] || $removed !== [] || $changed) {
             WorkspaceMembersChanged::dispatch($workspace, $added, $removed);
