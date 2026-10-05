@@ -9,28 +9,52 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { formatDuration } from '@/lib/attendance';
-import { formatDate, formatTime } from '@/lib/format';
+import { formatDurationShort, shortDay } from '@/lib/attendance';
+import { formatTime } from '@/lib/format';
 import { formatDistance } from '@/lib/geo';
 import type { AttendanceDayData } from '@/types/attendance';
 import { StatusBadge, badgeMinutes } from './status-badge';
 
-type Props = { history: AttendanceDayData[] | undefined };
+type Props = {
+    history: AttendanceDayData[] | undefined;
+    /** Rows shown (DAbsensi "Riwayat 7 hari kerja"). */
+    limit?: number;
+    /** Office work date of today: an open day there reads "berjalan". */
+    today?: string;
+};
 
-function dateOnly(workDate: string): string {
-    // Work dates are office-local calendar dates: format at local noon to stay on the day.
-    return formatDate(`${workDate}T05:00:00Z`);
+/** "Sen, 5 Okt" (DAbsensi table). */
+export function dayLabel(workDate: string): string {
+    const [year, month, day] = workDate.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    const weekday = shortDay(workDate).split(' ')[0];
+    const monthName = new Intl.DateTimeFormat('id-ID', {
+        month: 'short',
+        timeZone: 'UTC',
+    }).format(date);
+
+    return `${weekday}, ${day} ${monthName.replace('.', '')}`;
 }
 
-function times(day: AttendanceDayData): string {
-    if (!day.checkInAt) {
-        return '–';
+function duration(day: AttendanceDayData, workDate: string): string {
+    if (day.checkOutAt) {
+        return formatDurationShort(day.workMinutes);
     }
 
-    return `${formatTime(day.checkInAt)} – ${day.checkOutAt ? formatTime(day.checkOutAt) : '…'}`;
+    return day.checkInAt && day.workDate === workDate ? 'berjalan' : '–';
 }
 
-function place(day: AttendanceDayData): string {
+/** "GPS + selfie", "QR kiosk", "Pengajuan" (DAbsensi "Metode"). */
+export function methodText(day: AttendanceDayData): string {
+    if (day.checkIn) {
+        return day.checkIn.methodLabel;
+    }
+
+    return day.requestPortion ? 'Pengajuan' : '–';
+}
+
+/** "Kantor Pusat · 38 m" or "WFH/lapangan". */
+export function placeText(day: AttendanceDayData): string {
     const log = day.checkIn;
 
     if (!log) {
@@ -49,18 +73,25 @@ function place(day: AttendanceDayData): string {
 function Empty() {
     return (
         <EmptyState
+            size="sm"
             icon={CalendarDays}
             title="Belum ada riwayat absensi"
-            description="Riwayat 30 hari terakhir muncul di sini setelah Anda check-in."
+            description="Riwayat muncul di sini setelah Anda check-in."
         />
     );
 }
 
-/** 30-day history as a list of 56px rows (mobile). */
-export function HistoryList({ history }: Props) {
+function shown(history: AttendanceDayData[], limit?: number) {
+    const days = history.filter((day) => day.status !== 'holiday');
+
+    return limit ? days.slice(0, limit) : days;
+}
+
+/** Recent days as list rows (MSRiwayat style, phone). */
+export function HistoryList({ history, limit, today = '' }: Props) {
     if (history === undefined) {
         return (
-            <div className="space-y-2" aria-busy>
+            <div className="space-y-2 px-5 py-2" aria-busy>
                 {Array.from({ length: 4 }, (_, index) => (
                     <Skeleton key={index} className="h-14" />
                 ))}
@@ -68,29 +99,43 @@ export function HistoryList({ history }: Props) {
         );
     }
 
-    if (history.length === 0) {
-        return <Empty />;
+    const days = shown(history, limit);
+
+    if (days.length === 0) {
+        return (
+            <div className="px-5 pb-2">
+                <Empty />
+            </div>
+        );
     }
 
     return (
-        <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
-            {history.map((day) => (
+        <ul className="divide-y divide-divider">
+            {days.map((day) => (
                 <li
                     key={day.id}
-                    className="flex min-h-14 items-center gap-3 px-4 py-2.5"
+                    className="flex min-h-[64px] items-center gap-3 px-5 py-2.5"
                 >
                     <div className="min-w-0 flex-1">
-                        <p className="text-[15px] text-text">
-                            {dateOnly(day.workDate)}
+                        <p className="text-[17px] leading-6 font-semibold text-text">
+                            {dayLabel(day.workDate)}
                         </p>
-                        <p className="truncate text-[13px] text-text-muted">
-                            <span className="font-mono">{times(day)}</span>
-                            {place(day) && ` · ${place(day)}`}
+                        <p className="truncate text-meta text-text-muted">
+                            <span className="tnum">
+                                {day.checkInAt
+                                    ? `${formatTime(day.checkInAt)}–${day.checkOutAt ? formatTime(day.checkOutAt) : '…'}`
+                                    : '–'}
+                            </span>
+                            {[duration(day, today), methodText(day)]
+                                .filter((part) => part !== '–')
+                                .map((part) => ` · ${part}`)
+                                .join('')}
                         </p>
                     </div>
                     <StatusBadge
                         status={day.status}
                         minutes={badgeMinutes(day)}
+                        compact
                     />
                 </li>
             ))}
@@ -98,55 +143,54 @@ export function HistoryList({ history }: Props) {
     );
 }
 
-/** 30-day history table (desktop). */
-export function HistoryTable({ history }: Props) {
+/** History table (DAbsensi "Riwayat 7 hari kerja"). */
+export function HistoryTable({ history, limit, today = '' }: Props) {
     if (history === undefined) {
         return (
-            <div className="space-y-2 p-4" aria-busy>
+            <div className="space-y-2 px-7 py-3" aria-busy>
                 {Array.from({ length: 5 }, (_, index) => (
-                    <Skeleton key={index} className="h-9" />
+                    <Skeleton key={index} className="h-11" />
                 ))}
             </div>
         );
     }
 
-    if (history.length === 0) {
+    const days = shown(history, limit);
+
+    if (days.length === 0) {
         return (
-            <div className="p-4">
+            <div className="px-7 pb-4">
                 <Empty />
             </div>
         );
     }
 
     return (
-        <Table>
+        <Table className="min-w-[760px] text-[16px]">
             <TableHeader>
-                <TableRow className="bg-surface-2 hover:bg-surface-2">
-                    <TableHead className="pl-4 text-[13px] text-text-muted">
-                        Tanggal
-                    </TableHead>
-                    <TableHead className="text-[13px] text-text-muted">
-                        Status
-                    </TableHead>
-                    <TableHead className="text-[13px] text-text-muted">
-                        Masuk
-                    </TableHead>
-                    <TableHead className="text-[13px] text-text-muted">
-                        Pulang
-                    </TableHead>
-                    <TableHead className="text-[13px] text-text-muted">
-                        Durasi kerja
-                    </TableHead>
-                    <TableHead className="pr-4 text-[13px] text-text-muted">
-                        Lokasi / metode
-                    </TableHead>
+                <TableRow>
+                    <TableHead className="pl-7">Tanggal</TableHead>
+                    <TableHead>Masuk</TableHead>
+                    <TableHead>Pulang</TableHead>
+                    <TableHead>Durasi</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="pr-7">Metode</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {history.map((day) => (
-                    <TableRow key={day.id}>
-                        <TableCell className="pl-4 text-[13px] text-text">
-                            {dateOnly(day.workDate)}
+                {days.map((day) => (
+                    <TableRow key={day.id} className="h-[60px]">
+                        <TableCell className="pl-7 font-semibold text-text">
+                            {dayLabel(day.workDate)}
+                        </TableCell>
+                        <TableCell className="text-text">
+                            {day.checkInAt ? formatTime(day.checkInAt) : '–'}
+                        </TableCell>
+                        <TableCell className="text-text">
+                            {day.checkOutAt ? formatTime(day.checkOutAt) : '–'}
+                        </TableCell>
+                        <TableCell className="text-text-muted">
+                            {duration(day, today)}
                         </TableCell>
                         <TableCell>
                             <StatusBadge
@@ -154,19 +198,11 @@ export function HistoryTable({ history }: Props) {
                                 minutes={badgeMinutes(day)}
                             />
                         </TableCell>
-                        <TableCell className="font-mono text-[13px] text-text tnum">
-                            {formatTime(day.checkInAt)}
-                        </TableCell>
-                        <TableCell className="font-mono text-[13px] text-text tnum">
-                            {formatTime(day.checkOutAt)}
-                        </TableCell>
-                        <TableCell className="text-[13px] text-text-muted">
-                            {day.checkOutAt
-                                ? formatDuration(day.workMinutes)
-                                : '–'}
-                        </TableCell>
-                        <TableCell className="pr-4 text-[13px] text-text-muted">
-                            {place(day) || '–'}
+                        <TableCell
+                            className="pr-7 text-text-muted"
+                            title={placeText(day) || undefined}
+                        >
+                            {methodText(day)}
                         </TableCell>
                     </TableRow>
                 ))}

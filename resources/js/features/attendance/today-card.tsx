@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { LogIn, LogOut } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TONE_CLASSES } from '@/lib/attendance';
 import { shellStatus } from '@/lib/check-in-status';
@@ -28,18 +29,18 @@ export function TodayAttendanceCard({ className }: { className?: string }) {
         <section
             aria-labelledby="today-attendance"
             className={cn(
-                'rounded-xl border border-border bg-surface p-4 shadow-card',
+                'rounded-panel border border-border bg-surface p-5 shadow-card',
                 className,
             )}
         >
             <div className="flex items-baseline justify-between gap-3">
                 <h2
                     id="today-attendance"
-                    className="text-[15px] font-semibold text-text"
+                    className="text-title font-bold text-text"
                 >
                     Absensi hari ini
                 </h2>
-                <span className="truncate text-[13px] text-text-muted">
+                <span className="truncate text-meta text-text-muted">
                     {[
                         status.shiftName ? `Shift ${status.shiftName}` : null,
                         status.locationName,
@@ -50,10 +51,10 @@ export function TodayAttendanceCard({ className }: { className?: string }) {
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3">
                 <div>
-                    <p className="text-sm text-text-muted">Check-in</p>
+                    <p className="text-meta text-text-muted">Check-in</p>
                     <p
                         className={cn(
-                            'font-mono text-[28px] leading-9 font-medium tnum',
+                            'text-[28px] leading-9 font-bold tnum',
                             checkedIn
                                 ? TONE_CLASSES[shell.tone].text
                                 : 'text-text-subtle',
@@ -61,33 +62,26 @@ export function TodayAttendanceCard({ className }: { className?: string }) {
                     >
                         {checkedIn ? formatTime(status.checkInAt) : '––.––'}
                     </p>
-                    <span
-                        className={cn(
-                            'mt-1 inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium',
-                            TONE_CLASSES[shell.tone].soft,
-                        )}
+                    <Badge
+                        variant="status"
+                        tone={shell.tone}
+                        dot
+                        className="mt-1 h-[30px] gap-1.5 px-3"
                     >
-                        <span
-                            aria-hidden
-                            className={cn(
-                                'size-1.5 rounded-full',
-                                TONE_CLASSES[shell.tone].solid,
-                            )}
-                        />
                         {shell.title}
-                    </span>
+                    </Badge>
                 </div>
                 <div>
-                    <p className="text-sm text-text-muted">
+                    <p className="text-meta text-text-muted">
                         {status.checkOutAt ? 'Check-out' : 'Jadwal pulang'}
                     </p>
-                    <p className="font-mono text-[28px] leading-9 font-medium text-text tnum">
+                    <p className="text-[28px] leading-9 font-bold text-text tnum">
                         {status.checkOutAt
                             ? formatTime(status.checkOutAt)
                             : (status.endLabel ?? '–')}
                     </p>
                     {status.distanceM !== null && (
-                        <p className="mt-1 text-[13px] text-text-muted">
+                        <p className="mt-1 text-meta text-text-muted">
                             {formatDistance(status.distanceM)} dari titik lokasi
                         </p>
                     )}
@@ -96,7 +90,8 @@ export function TodayAttendanceCard({ className }: { className?: string }) {
             {shell.button && (
                 <Button
                     asChild
-                    className="mt-4 h-11 w-full text-[15px]"
+                    size="lg"
+                    className="mt-4 w-full"
                     variant={
                         shell.button.label === 'Check-in'
                             ? 'default'

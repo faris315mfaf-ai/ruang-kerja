@@ -59,7 +59,7 @@ export function GeofenceSketch({
     return (
         <div
             ref={ref}
-            className={cn('overflow-hidden bg-primary/5', className)}
+            className={cn('overflow-hidden bg-grad-soft', className)}
             style={{ height }}
         >
             <svg
@@ -73,12 +73,12 @@ export function GeofenceSketch({
                 <defs>
                     <pattern
                         id={patternId}
-                        width="28"
-                        height="28"
+                        width="44"
+                        height="44"
                         patternUnits="userSpaceOnUse"
                     >
                         <path
-                            d="M 28 0 L 0 0 0 28"
+                            d="M 44 0 L 0 0 0 44"
                             fill="none"
                             className="stroke-border"
                             strokeWidth="1"
@@ -96,9 +96,9 @@ export function GeofenceSketch({
                             cx={cx}
                             cy={cy}
                             r={layout.radius}
-                            className="fill-primary/12 stroke-primary"
-                            strokeWidth="1.5"
-                            strokeDasharray="4 4"
+                            className="fill-fill-teal/20 stroke-primary/60"
+                            strokeWidth="2"
+                            strokeDasharray="6 5"
                         />
                         <rect
                             x={cx - 6}
@@ -114,12 +114,9 @@ export function GeofenceSketch({
                     <g
                         transform={`translate(${layout?.marker?.x ?? cx} ${layout?.marker?.y ?? cy})`}
                     >
-                        <circle r="11" className="fill-info/25" />
-                        <circle
-                            r="7"
-                            className="fill-info stroke-surface"
-                            strokeWidth="2.5"
-                        />
+                        <circle r="25" className="fill-accent-blue/18" />
+                        <circle r="17" className="fill-surface" />
+                        <circle r="11" className="fill-accent-blue-strong" />
                     </g>
                 )}
             </svg>

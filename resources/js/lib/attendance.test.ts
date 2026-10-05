@@ -4,6 +4,7 @@ import {
     attendanceChannelNames,
     checkInTiming,
     formatDuration,
+    formatDurationShort,
     minutesBetween,
     shortDay,
     statusLabel,
@@ -53,6 +54,16 @@ describe('statusTone', () => {
         expect(statusTone('absent')).toBe('danger');
         expect(statusTone('wfh')).toBe('info');
         expect(statusTone('holiday')).toBe('neutral');
+    });
+});
+
+describe('formatDurationShort', () => {
+    it('uses j/m with zero-padded minutes', () => {
+        expect(formatDurationShort(45)).toBe('45 m');
+        expect(formatDurationShort(480)).toBe('8 j');
+        expect(formatDurationShort(485)).toBe('8 j 05 m');
+        expect(formatDurationShort(501)).toBe('8 j 21 m');
+        expect(formatDurationShort(-3)).toBe('0 m');
     });
 });
 
