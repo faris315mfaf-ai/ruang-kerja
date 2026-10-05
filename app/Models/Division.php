@@ -94,6 +94,31 @@ class Division extends Model
     }
 
     /**
+     * The division id followed by its parent, grandparent, … (closest first).
+     *
+     * @return list<string>
+     */
+    public static function withAncestorIds(string $id): array
+    {
+        $ids = [$id];
+        $current = $id;
+
+        // Bounded and cycle-safe, like withDescendantIds().
+        for ($depth = 0; $depth < 20; $depth++) {
+            $parent = static::query()->whereKey($current)->value('parent_id');
+
+            if (! is_string($parent) || in_array($parent, $ids, true)) {
+                break;
+            }
+
+            $ids[] = $parent;
+            $current = $parent;
+        }
+
+        return $ids;
+    }
+
+    /**
      * @return BelongsTo<Company, $this>
      */
     public function company(): BelongsTo

@@ -55,3 +55,20 @@ test('channel authorization uses the attendance policy', function () {
         ->and($divisionChannel($member, $division))->toBeFalse()
         ->and($divisionChannel($hr, $division))->toBeTrue();
 });
+
+test('the event also reaches the channels of every parent division (review #14)', function () {
+    $root = Division::factory()->create();
+    $middle = Division::factory()->create(['parent_id' => $root->id]);
+    $leaf = Division::factory()->create(['parent_id' => $middle->id]);
+    $user = User::factory()->inDivision($leaf)->create();
+    $day = AttendanceDay::factory()->for($user)->create();
+
+    $event = new AttendanceRecorded($day, AttendanceLog::factory()->forDay($day)->create());
+
+    expect(array_map(fn (PrivateChannel $channel) => $channel->name, $event->broadcastOn()))->toBe([
+        'private-company.attendance',
+        "private-division.{$leaf->id}.attendance",
+        "private-division.{$middle->id}.attendance",
+        "private-division.{$root->id}.attendance",
+    ]);
+});
