@@ -32,11 +32,6 @@ const monthYear = new Intl.DateTimeFormat('id-ID', {
     timeZone: 'UTC',
 });
 
-const monthShort = new Intl.DateTimeFormat('id-ID', {
-    month: 'short',
-    timeZone: 'UTC',
-});
-
 /** Today's date in the office timezone ("YYYY-MM-DD"). */
 export function officeToday(now: Date = new Date()): string {
     return isoDay.format(now);
@@ -100,11 +95,6 @@ export function formatShortDate(date: string): string {
 /** "Oktober 2026" */
 export function formatMonthYear(date: string): string {
     return capitalize(monthYear.format(toUtc(date)));
-}
-
-/** "Okt" */
-export function formatMonthShort(date: string): string {
-    return monthShort.format(toUtc(date)).replace('.', '');
 }
 
 /** "6–11 Okt" or "28 Sep–4 Okt" */

@@ -11,7 +11,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { fieldClasses } from '@/components/ui/input';
 import { BottomSheet } from '@/components/mobile/bottom-sheet';
 import type { Person } from '@/features/tasks/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
@@ -200,6 +199,3 @@ export function ResponsiveSheet({
         </Dialog>
     );
 }
-
-/** Arus field look for plain textareas/inputs (17px on phones). */
-export const fieldClass = cn(fieldClasses, 'py-2.5 max-md:text-[17px]');

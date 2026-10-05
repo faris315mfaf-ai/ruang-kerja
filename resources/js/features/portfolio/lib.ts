@@ -1,6 +1,5 @@
 import type {
     MilestoneStatus,
-    ProjectFlag,
     ProjectHealth,
     ProjectMetrics,
     RiskLevel,
@@ -40,12 +39,6 @@ export const HEALTH_TONES: Record<
     },
 };
 
-export const FLAG_LABELS: Record<ProjectFlag, string> = {
-    behind: 'Tertinggal',
-    missed_milestone: 'Milestone terlewat',
-    stale_update: 'Update kedaluwarsa',
-};
-
 export const MILESTONE_LABELS: Record<MilestoneStatus, string> = {
     not_started: 'Belum mulai',
     in_progress: 'Berjalan',
@@ -58,12 +51,6 @@ export const RISK_LABELS: Record<RiskLevel, string> = {
     high: 'Tinggi',
     medium: 'Sedang',
     low: 'Rendah',
-};
-
-export const RISK_TONES: Record<RiskLevel, string> = {
-    high: 'bg-danger-soft text-danger',
-    medium: 'bg-warning-soft text-warning',
-    low: 'bg-surface-2 text-text-muted',
 };
 
 const MONTHS_SHORT = [
@@ -201,13 +188,4 @@ export function positionPercent(day: string, from: string, to: string): number {
     const offset = parseDay(day) - parseDay(from);
 
     return Math.min(100, Math.max(0, (offset / span) * 100));
-}
-
-/** Sort weight: problems first, projects without update in between. */
-export function healthRank(health: ProjectHealth | null): number {
-    if (health === null) {
-        return 1.5;
-    }
-
-    return { off_track: 0, at_risk: 1, on_track: 2 }[health];
 }

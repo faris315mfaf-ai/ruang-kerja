@@ -43,12 +43,3 @@ export type Branding = {
     shortName: string;
     logo: string | null;
 };
-
-export type TwoFactorSetupData = {
-    svg: string;
-    url: string;
-};
-
-export type TwoFactorSecretKey = {
-    secretKey: string;
-};

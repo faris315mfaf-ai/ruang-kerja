@@ -103,7 +103,6 @@
      teal → blue with dark ink at night (Dock/TabBar "dark"). */
   --grad-active: var(--grad-aksi);
   --on-active: #FFFFFF;
-  --brand-gradient: var(--grad-merek);
   /* Soft light in the corner of highlight cards. */
   --glow-hi: rgb(255 255 255 / 0.22);
   /* Page background: two corner glows over --bg (Main.dc.html "Aurora"). */

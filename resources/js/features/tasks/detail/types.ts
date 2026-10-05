@@ -94,9 +94,3 @@ export type TaskDetail = {
         moderate: boolean;
     };
 };
-
-/** Board context of an open sheet ("6 dari 18 · Sedang dikerjakan"). */
-export type SheetNavigation = {
-    ids: string[];
-    onNavigate: (taskId: string) => void;
-};

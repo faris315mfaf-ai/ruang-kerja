@@ -51,12 +51,3 @@ export function auditFieldsLabel(fields: readonly string[]): string {
         .map((field) => FIELD_LABELS[field] ?? field.replaceAll('_', ' '))
         .join(', ');
 }
-
-export const SORTABLE_COLUMNS = [
-    'name',
-    'division',
-    'position',
-    'manager',
-    'work_mode',
-    'status',
-] as const;
