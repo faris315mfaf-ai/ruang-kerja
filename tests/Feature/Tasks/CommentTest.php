@@ -188,3 +188,14 @@ it('keeps spaces around mentions and marks (no input trimming inside rich text)'
         ->assertJsonPath('comment.body.content.0.content.2.text', ' tolong cek ')
         ->assertJsonPath('comment.body_text', "Halo @{$this->other->name} tolong cek");
 });
+
+it('throttles reactions like comments', function () {
+    Notification::fake();
+    $comment = Comment::factory()->on($this->task)->by($this->owner)->create();
+
+    foreach (range(1, 30) as $i) {
+        $this->actingAs($this->member)->postJson("/komentar/{$comment->id}/reaksi", ['emoji' => '👍'])->assertOk();
+    }
+
+    $this->actingAs($this->member)->postJson("/komentar/{$comment->id}/reaksi", ['emoji' => '👍'])->assertTooManyRequests();
+});
