@@ -102,7 +102,8 @@ it('builds the portfolio KPIs, decisions, attention list, roadmap and feed', fun
         ->where('roadmap.from', '2026-08-01')
         ->where('roadmap.to', '2026-12-31')
         ->has('roadmap.months', 5)
-        ->where('attendance.total', User::query()->count()));
+        // Nobody has a shift in this fixture: nobody is expected today.
+        ->where('attendance.total', 0));
 
     // Filters live in the URL.
     $this->actingAs($this->direksi)->get('/portofolio?status=on_track&periode=bulan')->assertInertia(fn (Assert $page) => $page

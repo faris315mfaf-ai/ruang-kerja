@@ -56,7 +56,10 @@ final class CorrectAttendance
                 ->lockForUpdate()
                 ->first() ?? new AttendanceDay(['user_id' => $employee->id, 'work_date' => $workDate->toDateString()]);
 
-            if ($day->exists && $day->status->comesFromRequest()) {
+            // Full-day leave/permit/sick belongs to the request. Half days and
+            // business trips expect work, so a forgotten check-in/out is corrected
+            // here while the request status and request_id stay.
+            if ($day->exists && $day->status->comesFromRequest() && ! $day->allowsCheckInDespiteRequest()) {
                 throw ValidationException::withMessages([
                     'work_date' => "Tanggal ini tercatat {$day->status->label()} dari pengajuan yang disetujui. Ubah lewat pengajuan.",
                 ]);
@@ -149,13 +152,18 @@ final class CorrectAttendance
             return;
         }
 
-        $day->late_minutes = CheckIn::lateMinutes($schedule, $checkIn);
+        // Half-day leave/permit or business trip (same as CheckIn/CheckOut): the
+        // request explains the hours, so never late/early, and a request status
+        // (Cuti/Izin/Dinas) stays.
+        $fromRequest = $day->isFromRequest();
+        $requestStatus = $day->status->comesFromRequest() ? $day->status : null;
+        $day->late_minutes = $fromRequest ? 0 : CheckIn::lateMinutes($schedule, $checkIn);
         $status = $day->late_minutes > 0 ? AttendanceStatus::Late : ($remote ? AttendanceStatus::Wfh : AttendanceStatus::Present);
         $day->early_leave_minutes = 0;
         $day->work_minutes = 0;
 
         if ($day->check_out_at !== null) {
-            $day->early_leave_minutes = CheckOut::earlyLeaveMinutes($day, $day->check_out_at);
+            $day->early_leave_minutes = $fromRequest ? 0 : CheckOut::earlyLeaveMinutes($day, $day->check_out_at);
             $day->work_minutes = CheckOut::workMinutes($day, $day->check_out_at);
 
             if ($day->early_leave_minutes > 0 && in_array($status, [AttendanceStatus::Present, AttendanceStatus::Wfh], true)) {
@@ -165,7 +173,7 @@ final class CorrectAttendance
             $status = AttendanceStatus::NeedsCorrection;
         }
 
-        $day->status = $status;
+        $day->status = $requestStatus ?? $status;
     }
 
     private function log(User $actor, User $employee, AttendanceDay $day, AttendanceLogType $type, CarbonImmutable $at, string $reason): AttendanceLog

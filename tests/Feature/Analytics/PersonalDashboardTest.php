@@ -100,3 +100,14 @@ it('ignores division filters on the personal dashboard', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('filters.divisi', null)->where('scope.member_count', 1));
 });
+
+it('counts a half-day leave or business trip with a check-in as present, a full-day leave as away', function () {
+    F::day($this->me, '2026-10-03', AttendanceStatus::Leave, ['request_portion' => 'half_day', 'check_in_at' => F::at('2026-10-03 12:55')]);
+    F::day($this->me, '2026-10-07', AttendanceStatus::BusinessTrip, ['request_portion' => 'full', 'check_in_at' => F::at('2026-10-07 08:00')]);
+    F::day($this->me, '2026-10-04', AttendanceStatus::Leave, ['request_portion' => 'full']);
+
+    $this->actingAs($this->me)->get('/dashboard')->assertInertia(fn (Assert $page) => $page
+        ->loadDeferredProps(fn (Assert $reload) => $reload
+            ->where('metrics.attendance.days.counts', ['present' => 5, 'late' => 1, 'absent' => 0, 'away' => 1])
+            ->where('metrics.attendance.days.workdays', 6)));
+});

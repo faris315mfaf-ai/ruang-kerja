@@ -108,7 +108,8 @@ final class TodayAttendance
     }
 
     /**
-     * present (on time, WFH, early leave, needs correction), late, away,
+     * present (on time, WFH, early leave, needs correction, checked in on a
+     * half-day request or business trip), late, away,
      * absent (alpha) or not checked in yet.
      *
      * @return 'present'|'late'|'away'|'not_checked_in'|'absent'
@@ -119,8 +120,10 @@ final class TodayAttendance
             return 'not_checked_in';
         }
 
+        // A full-day request, or a half day / business trip without a check-in
+        // yet, is "away"; with a check-in it counts as present (as TodayBoard).
         if ($day->status->comesFromRequest()) {
-            return 'away';
+            return $day->check_in_at === null ? 'away' : 'present';
         }
 
         if ($day->status === AttendanceStatus::Absent) {

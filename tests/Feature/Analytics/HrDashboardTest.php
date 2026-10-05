@@ -115,3 +115,16 @@ it('filters the HR dashboard by division', function () {
             ->where('attendance.counts.scheduled', 2)
             ->where('missingCheckOut.count', 0));
 });
+
+it('counts a half-day leave or business trip with a check-in as present (as the Absensi board)', function () {
+    $regular = Shift::query()->where('name', 'Reguler')->value('id');
+    F::day($this->org['kadiv'], '2026-10-07', AttendanceStatus::Leave, ['shift_id' => $regular, 'request_portion' => 'half_day', 'check_in_at' => F::at('2026-10-07 12:55')]);
+    F::day($this->org['kadivKeu'], '2026-10-07', AttendanceStatus::BusinessTrip, ['shift_id' => $regular, 'request_portion' => 'full', 'check_in_at' => F::at('2026-10-07 08:00')]);
+
+    $this->actingAs($this->org['hr'])->get('/dashboard/hr')->assertInertia(fn (Assert $page) => $page
+        ->where('attendance.counts.scheduled', 5)
+        ->where('attendance.counts.present', 4)
+        ->where('attendance.counts.away', 1)
+        ->where('attendance.counts.business_trip', 0)
+        ->where('attendance.counts.not_checked_in', 0));
+});
