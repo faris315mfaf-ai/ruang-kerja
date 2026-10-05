@@ -2,14 +2,17 @@
 
 use App\Domain\Attendance\Enums\AttendanceStatus;
 use App\Domain\Attendance\Enums\LogFlag;
+use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\AttendanceLog;
 use App\Domain\Attendance\Models\Shift;
 use App\Domain\Attendance\Models\ShiftAssignment;
+use App\Domain\Organization\Enums\Role;
 use App\Domain\Requests\Enums\ApproverType;
 use App\Domain\Requests\Enums\RequestStatus;
 use App\Models\EmployeeRequest;
 use App\Models\LeaveType;
 use App\Models\RequestApproval;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Database\Seeders\RoleSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -58,6 +61,34 @@ it('summarizes company attendance today per division', function () {
             ->where('missingCheckOut.count', 1)
             ->where('missingCheckOut.items.0.user.name', 'Sari Wulandari')
             ->where('missingCheckOut.items.0.shift', 'Gudang Pagi'));
+});
+
+it('does not list night-shift workers still inside their check-out window as missing a check-out', function () {
+    // 01.00 WIB: yesterday's 22.00–06.00 night shift is still running (open until 06.00 + grace).
+    $this->travelTo(F::at('2026-10-07 01:00'));
+    $night = Shift::factory()->night()->create();
+    $rudi = User::factory()->withRole(Role::Anggota)->inDivision($this->org['ops'])->create(['name' => 'Rudi Malam']);
+    ShiftAssignment::factory()->create(['user_id' => $rudi->id, 'shift_id' => $night->id]);
+    F::day($rudi, '2026-10-06', AttendanceStatus::Present, [
+        'shift_id' => $night->id,
+        'check_in_at' => F::at('2026-10-06 21:55'),
+        'scheduled_start' => F::at('2026-10-06 22:00'),
+        'scheduled_end' => F::at('2026-10-07 06:00'),
+    ]);
+    // Sari's 06.00–14.00 shift of yesterday closed long ago: listed.
+    AttendanceDay::query()->where('user_id', $this->org['sari']->id)->whereDate('work_date', '2026-10-06')
+        ->update(['scheduled_start' => F::at('2026-10-06 06:00'), 'scheduled_end' => F::at('2026-10-06 14:00')]);
+
+    $this->actingAs($this->org['hr'])->get('/dashboard/hr')->assertInertia(fn (Assert $page) => $page
+        ->where('missingCheckOut.count', 1)
+        ->has('missingCheckOut.items', 1)
+        ->where('missingCheckOut.items.0.user.name', 'Sari Wulandari'));
+
+    // Once the window closes (06.00 + grace) the night shift is missing too.
+    $this->travelTo(F::at('2026-10-07 12:00'));
+    $this->actingAs($this->org['hr'])->get('/dashboard/hr')->assertInertia(fn (Assert $page) => $page
+        ->where('missingCheckOut.count', 2)
+        ->where('missingCheckOut.items.1.user.name', 'Rudi Malam'));
 });
 
 it('lists unreviewed suspicious check-ins with the selfie link only for those allowed', function () {

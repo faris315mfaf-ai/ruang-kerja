@@ -15,6 +15,7 @@ use App\Domain\Attendance\Enums\AttendanceStatus;
 use App\Domain\Attendance\Enums\LogFlag;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\AttendanceLog;
+use App\Domain\Attendance\Services\OpenDayLocator;
 use App\Domain\Attendance\Services\SelfieStorage;
 use App\Domain\Organization\Enums\Role;
 use App\Domain\Requests\Enums\ApprovalStatus;
@@ -37,6 +38,9 @@ use Illuminate\Support\Facades\Gate;
  */
 final class HrDashboard
 {
+    /** Rows shown in "Lupa check-out kemarin". */
+    public const int MISSING_CHECK_OUT_LIMIT = 6;
+
     public function __construct(
         private readonly MetricCache $cache,
         private readonly TodayAttendance $attendance,
@@ -153,7 +157,11 @@ final class HrDashboard
     }
 
     /**
-     * Live: yesterday's days with a check-in but no check-out ("Lupa check-out kemarin").
+     * Live: yesterday's days with a check-in but no check-out ("Lupa check-out
+     * kemarin") whose check-out window has closed (OpenDayLocator::closesAt:
+     * scheduled end + grace), so a night shift still running is not listed.
+     * Same rule as the Absensi board (TodayBoard::missingCheckOut); count and
+     * the top items are taken after that filter.
      *
      * @param  list<string>  $userIds
      * @return array{date: string, count: int, items: array<int, array<string, mixed>>}
@@ -161,22 +169,21 @@ final class HrDashboard
     public function missingCheckOut(User $viewer, array $userIds, CarbonImmutable $now): array
     {
         $yesterday = Period::officeDate($now)->subDay()->toDateString();
-        $query = AttendanceDay::query()
+        $days = AttendanceDay::query()
             ->whereIn('user_id', $userIds)
             ->whereDate('work_date', $yesterday)
             ->whereNotNull('check_in_at')
-            ->whereNull('check_out_at');
-
-        $days = (clone $query)
+            ->whereNull('check_out_at')
             ->with(['user:id,name,avatar_url,company_id', 'shift:id,name'])
             ->orderBy('check_in_at')
-            ->limit(6)
-            ->get();
+            ->get()
+            ->filter(fn (AttendanceDay $day): bool => $now->gte(OpenDayLocator::closesAt($day)))
+            ->values();
 
         return [
             'date' => $yesterday,
-            'count' => $query->count(),
-            'items' => $days->map(fn (AttendanceDay $day): array => [
+            'count' => $days->count(),
+            'items' => $days->take(self::MISSING_CHECK_OUT_LIMIT)->map(fn (AttendanceDay $day): array => [
                 'id' => $day->id,
                 'user' => ['id' => $day->user->id, 'name' => $day->user->name, 'avatar' => $day->user->avatar_url],
                 'shift' => $day->shift?->name,
