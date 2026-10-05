@@ -27,6 +27,17 @@ class AttendanceLogPolicy
         return $actor->hasPermission(Permission::AttendanceViewSelfie) || $owner->manager_id === $actor->id;
     }
 
+    /**
+     * "Tandai sudah ditinjau" on a flagged log: HR & Super Admin
+     * (attendance.manage) of the same company, never for their own log.
+     */
+    public function review(User $actor, AttendanceLog $log): bool
+    {
+        return $actor->hasPermission(Permission::AttendanceManage)
+            && $log->user_id !== $actor->id
+            && $log->user->company_id === $actor->company_id;
+    }
+
     public function update(User $actor, AttendanceLog $log): bool
     {
         return false;

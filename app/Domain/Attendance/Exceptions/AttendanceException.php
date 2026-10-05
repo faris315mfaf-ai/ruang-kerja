@@ -117,6 +117,34 @@ final class AttendanceException extends RuntimeException
         );
     }
 
+    public static function qrInvalid(): self
+    {
+        return new self(
+            AttendanceRejection::QrInvalid,
+            'Kode QR tidak dikenali. Pindai kode yang tampil di layar kiosk RuangKerja.',
+        );
+    }
+
+    public static function qrExpired(): self
+    {
+        return new self(
+            AttendanceRejection::QrExpired,
+            'Kode QR sudah kedaluwarsa. Pindai kode terbaru di layar kiosk (berganti tiap 30 detik).',
+        );
+    }
+
+    /**
+     * @param  list<string>  $allowed  names of the locations the employee may use
+     */
+    public static function qrWrongLocation(string $scanned, array $allowed): self
+    {
+        $message = $allowed === []
+            ? "Kode QR ini untuk {$scanned}, bukan lokasi check-in Anda."
+            : "Kode QR ini untuk {$scanned}. Check-in Anda di ".implode(', ', $allowed).'.';
+
+        return new self(AttendanceRejection::QrWrongLocation, $message, ['location' => $scanned]);
+    }
+
     private static function time(CarbonInterface $at): string
     {
         return OfficeClock::time($at);

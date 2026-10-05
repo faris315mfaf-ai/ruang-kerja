@@ -82,6 +82,8 @@
     --color-glass-border: var(--glass-border);
     --color-on-brand: var(--on-brand);
     --color-on-danger: var(--on-danger);
+    --color-qr-ink: var(--qr-ink);
+    --color-qr-paper: var(--qr-paper);
 
     --shadow-card: var(--shadow-1);
     --ease-brand: var(--ease);

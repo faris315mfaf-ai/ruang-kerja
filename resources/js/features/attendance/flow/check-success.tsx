@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Camera, Check, ChevronRight, Info } from 'lucide-react';
+import { Camera, Check, ChevronRight, Info, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TONE_CLASSES, formatDuration, statusTone } from '@/lib/attendance';
 import { formatTime } from '@/lib/format';
@@ -123,17 +123,21 @@ export function CheckSuccess({ result, onDone }: Props) {
                                 {result.method === 'wfh'
                                     ? 'WFH/lapangan'
                                     : result.location.name}
-                                <span
-                                    className={cn(
-                                        'ml-1',
-                                        result.location.inside
-                                            ? 'text-success'
-                                            : 'text-text-muted',
-                                    )}
-                                >
-                                    ·{' '}
-                                    {formatDistance(result.location.distanceM)}
-                                </span>
+                                {result.location.distanceM !== null && (
+                                    <span
+                                        className={cn(
+                                            'ml-1',
+                                            result.location.inside
+                                                ? 'text-success'
+                                                : 'text-text-muted',
+                                        )}
+                                    >
+                                        ·{' '}
+                                        {formatDistance(
+                                            result.location.distanceM,
+                                        )}
+                                    </span>
+                                )}
                             </>
                         ) : (
                             'WFH/lapangan'
@@ -155,6 +159,11 @@ export function CheckSuccess({ result, onDone }: Props) {
                             src={result.selfieUrl}
                             alt="Selfie Anda"
                             className="size-full object-cover"
+                        />
+                    ) : result.method === 'qr' ? (
+                        <QrCode
+                            className="size-6 text-text-muted"
+                            aria-hidden
                         />
                     ) : (
                         <Camera

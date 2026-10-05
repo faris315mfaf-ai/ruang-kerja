@@ -17,4 +17,7 @@ enum AttendanceRejection: string
     case NoOfficeLocation = 'no_office_location';
     case NoteRequired = 'note_required';
     case DayHasRequest = 'day_has_request';
+    case QrInvalid = 'qr_invalid';
+    case QrExpired = 'qr_expired';
+    case QrWrongLocation = 'qr_wrong_location';
 }

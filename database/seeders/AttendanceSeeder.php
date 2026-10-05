@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Domain\Attendance\Actions\IssueKioskActivation;
 use App\Domain\Attendance\Enums\AttendanceLogType;
 use App\Domain\Attendance\Enums\AttendanceMethod;
 use App\Domain\Attendance\Enums\AttendanceStatus;
@@ -12,6 +13,7 @@ use App\Domain\Attendance\Models\AttendanceConsent;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\AttendanceLog;
 use App\Domain\Attendance\Models\Holiday;
+use App\Domain\Attendance\Models\Kiosk;
 use App\Domain\Attendance\Models\OfficeLocation;
 use App\Domain\Attendance\Models\Shift;
 use App\Domain\Attendance\Models\ShiftAssignment;
@@ -69,6 +71,7 @@ class AttendanceSeeder extends Seeder
             [$office, $warehouse] = $this->locations($company);
             $shifts = $this->shifts($company, $office, $warehouse);
             $this->holidays($company);
+            $this->kiosk($company, $office);
 
             $employees = User::query()
                 ->where('company_id', $company->id)
@@ -141,6 +144,23 @@ class AttendanceSeeder extends Seeder
         }
 
         return $shifts;
+    }
+
+    /**
+     * Sprint 3: lobby kiosk at Kantor Pusat (mockup Kiosk, code KP-LOBI). In
+     * local development a fresh single-use activation link is printed.
+     */
+    private function kiosk(Company $company, OfficeLocation $office): void
+    {
+        $kiosk = Kiosk::withTrashed()->updateOrCreate(
+            ['company_id' => $company->id, 'code' => 'KP-LOBI'],
+            ['office_location_id' => $office->id, 'name' => 'Lobi', 'is_active' => true, 'deleted_at' => null],
+        );
+
+        if (app()->environment('local') && ! $kiosk->isPaired()) {
+            $activation = app(IssueKioskActivation::class)->handle($kiosk);
+            $this->command->info('Aktivasi kiosk KP-LOBI: '.route('kiosk.activate.show', ['token' => $activation['token']]));
+        }
     }
 
     private function holidays(Company $company): void

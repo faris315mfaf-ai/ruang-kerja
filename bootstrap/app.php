@@ -7,7 +7,9 @@ use App\Http\Middleware\EnsureTwoFactorForSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RestrictCredentialRoutes;
+use App\Http\Middleware\RestrictKioskDevice;
 use App\Http\Middleware\SecurityHeaders;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -49,6 +51,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             // Logs out inactive/resigned users on any web request (no-op for guests).
             EnsureActiveEmployee::class,
+            // Kiosk devices (guard `kiosk`) may only open their kiosk page (Sprint 3).
+            RestrictKioskDevice::class,
             // Password/2FA routes: Super Admin only (everyone else uses Google).
             RestrictCredentialRoutes::class,
             // Password-signed-in Super Admins must set up TOTP before anything else.
@@ -57,6 +61,9 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
+
+        // Must run before `auth`, which Laravel's priority list would otherwise move ahead of it.
+        $middleware->prependToPriorityList(before: AuthenticatesRequests::class, prepend: RestrictKioskDevice::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Reports to Sentry only when SENTRY_LARAVEL_DSN is set (no-op otherwise).

@@ -19,7 +19,7 @@
 | Domain | Tabel |
 |---|---|
 | Organisasi & akses | `companies`, `divisions`, `teams`, `positions`, `users`, `employee_profiles`, `roles`*, `permissions`*, `model_has_roles`*, `audit_logs` |
-| Absensi | `office_locations`, `shifts`, `shift_assignments`, `holidays`, `attendance_days`, `attendance_logs`, `qr_tokens`, `attendance_consents` |
+| Absensi | `office_locations`, `shifts`, `shift_assignments`, `holidays`, `attendance_days`, `attendance_logs`, `qr_tokens`, `kiosks`, `attendance_consents` |
 | Pengajuan | `leave_types`, `leave_balances`, `requests`, `request_sequences`, `request_approvals`, `approval_flows`, `approval_flow_steps`, `approval_delegations` |
 | Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
 | Google & file | `google_accounts`, `drive_files`, `attachments` |
@@ -214,8 +214,32 @@ Implementasi (Sprint 2): FK `check_in_log_id`/`check_out_log_id` ditambahkan ole
 
 Implementasi (Sprint 2): `accuracy_m` numeric(8,2), `distance_m` numeric(10,2) = jarak ke lokasi terdekat (juga untuk WFH), `office_location_id` hanya diisi bila di dalam radius. `qr_token_id` belum ber-FK (Sprint 3). `flags` jsonb default `[]`: `low_accuracy`, `clock_skew`, `new_device`, `new_ip`, `impossible_travel`, `dark_selfie`; `new_ip` saja tidak membuat `is_suspicious`. Baris immutable (model menolak update selain `reviewed_by/at` dan menolak delete). Indeks `(user_id, occurred_at)`, `attendance_day_id`, parsial `occurred_at WHERE is_suspicious AND reviewed_at IS NULL`.
 
+Implementasi (Sprint 3): FK `qr_token_id` → `qr_tokens` (`restrictOnDelete`) + indeks. Method `qr`: tanpa selfie, `office_location_id` = lokasi kiosk, `latitude/longitude/accuracy_m/distance_m` hanya bila GPS dikirim; flag baru `qr_location_mismatch` (GPS lebih jauh dari radius + akurasi dari lokasi kiosk, menandai). Method `manual` (koreksi HR): `occurred_at` = jam hasil koreksi, `corrected_by` = HR, `note` = alasan wajib. Selain kolom tinjauan, `selfie_path` boleh diubah **hanya menjadi null** oleh job retensi selfie (`attendance:purge-selfies`).
+
 ### qr_tokens
 `id`, `office_location_id`, `token_hash`, `valid_from`, `valid_until` (≈30–45 detik), `kiosk_id`. Token di QR = `HMAC(secret, location_id|window)`. Tabel ini opsional bila validasi murni HMAC. Disimpan untuk audit.
+
+Implementasi (Sprint 3): `office_location_id` FK restrict, `kiosk_id` FK `kiosks` null (`nullOnDelete`), `token_hash` char(64) **unik** = SHA-256 dari tanda tangan di QR (kode asli tidak disimpan), tambahan `window` bigint (= floor(unix / 30)), `valid_from`/`valid_until` = awal/akhir jendela 30 detik. Satu baris dibuat saat kiosk menampilkan kode (upsert per jendela). Pindaian diterima bila HMAC cocok, jendela ±1 dari jendela server, **dan** barisnya ada dari kiosk aktif. Tanda tangan = 128 bit pertama HMAC-SHA256 (32 hex) agar QR tidak terlalu padat. Kode yang tidak pernah dipindai dihapus setelah 2 hari (`attendance:prune-qr-tokens`, harian). Indeks `(office_location_id, valid_from)`.
+
+### kiosks (tambahan Sprint 3)
+Akun perangkat kiosk lobi (guard sesi `kiosk`, bukan baris `users`).
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | ulid PK | |
+| company_id | FK companies | restrict |
+| office_location_id | FK office_locations | lokasi QR, restrict |
+| name | varchar(80) | mis. "Lobi" |
+| code | varchar(20) | huruf besar, tampil di kartu QR (mis. `KP-LOBI`); unik `(company_id, code)` |
+| is_active | bool | nonaktif = perangkat langsung keluar |
+| activation_token_hash | char(64) null unik | SHA-256 tautan aktivasi sekali pakai |
+| activation_expires_at | timestamptz null | 24 jam |
+| activated_at | timestamptz null | pemasangan terakhir; dibandingkan dengan penanda di sesi perangkat |
+| last_seen_at | timestamptz null | diperbarui tiap kode diambil |
+| remember_token | varchar(100) null | dirotasi tiap pemasangan/nonaktif |
+| deleted_at | timestamptz null | soft delete |
+
+Indeks `(office_location_id, is_active)`.
 
 ### attendance_consents
 `id`, `user_id`, `type` (`location` · `selfie` · `face`), `version` (versi teks kebijakan), `granted_at`, `revoked_at` null. Check-in ditolak bila persetujuan versi terbaru belum diberikan.
