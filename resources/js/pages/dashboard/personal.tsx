@@ -23,10 +23,7 @@ export default function PersonalDashboard(props: PersonalProps) {
 }
 
 PersonalDashboard.layout = {
-    breadcrumbs: [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Saya', href: '/dashboard/saya' },
-    ],
+    breadcrumbs: [{ title: 'Dashboard', href: '/dashboard' }],
     title: 'Beranda',
     appBar: 'greeting',
 };

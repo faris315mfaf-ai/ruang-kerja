@@ -55,12 +55,12 @@ export default function ProjectSummaryPage(props: Props) {
 ProjectSummaryPage.layout = (props: Props) => {
     const layout = workspaceLayout(props, 'Ringkasan');
 
-    // Direksi come from the portfolio: "Portofolio proyek / Nama proyek".
+    // Direksi come from the portfolio: "Portofolio › Nama proyek".
     return {
         ...layout,
         breadcrumbs: props.project_can.steer
             ? [
-                  { title: 'Portofolio proyek', href: '/portofolio' },
+                  { title: 'Portofolio', href: '/portofolio' },
                   { title: props.workspace.name, href: '' },
               ]
             : layout.breadcrumbs,

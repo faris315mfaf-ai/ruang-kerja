@@ -43,6 +43,7 @@ import type {
 import { useTaskBoard } from '@/features/tasks/use-task-board';
 import { useTaskFilters } from '@/features/tasks/use-task-filters';
 import type { WorkspacePageProps } from '@/features/workspaces/types';
+import { workspaceLayout } from '@/features/workspaces/tab-layout';
 import { WorkspaceShell } from '@/features/workspaces/workspace-shell';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { formatNumber } from '@/lib/format';
@@ -544,19 +545,4 @@ export default function WorkspaceTasks(props: Props) {
     );
 }
 
-WorkspaceTasks.layout = (props: Props) => ({
-    breadcrumbs: [
-        { title: 'Workspace', href: '/workspace' },
-        {
-            title:
-                props.workspace.type === 'personal'
-                    ? 'Pribadi'
-                    : props.workspace.name,
-            href: show.url(props.workspace.key),
-        },
-    ],
-    title:
-        props.workspace.type === 'personal' ? 'Pribadi' : props.workspace.name,
-    back: '/menu',
-    width: 'wide',
-});
+WorkspaceTasks.layout = (props: Props) => workspaceLayout(props, 'Tugas');

@@ -51,7 +51,7 @@ export default function EmployeeImport(props: EmployeeImportProps) {
 
 EmployeeImport.layout = {
     breadcrumbs: [
-        { title: 'Admin', href: index() },
+        { title: 'Organisasi', href: '' },
         { title: 'Karyawan', href: index() },
         { title: 'Impor', href: importMethod() },
     ],

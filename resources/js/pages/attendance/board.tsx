@@ -224,7 +224,7 @@ export default function AttendanceBoard(props: BoardPageProps) {
 
 AttendanceBoard.layout = {
     breadcrumbs: [
-        { title: 'Absensi', href: '/absensi' },
+        { title: 'Admin', href: '' },
         { title: 'Absensi hari ini', href: '/absensi/hari-ini' },
     ],
     title: 'Absensi hari ini',

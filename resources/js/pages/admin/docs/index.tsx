@@ -219,7 +219,7 @@ function Overview({
 
 DocsIndex.layout = (props: Props) => ({
     breadcrumbs: [
-        { title: 'Admin', href: INDEX_URL },
+        { title: 'Admin', href: '' },
         { title: 'Dokumentasi', href: INDEX_URL },
         ...(props.document
             ? [

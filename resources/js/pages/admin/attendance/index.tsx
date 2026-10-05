@@ -100,8 +100,8 @@ export default function AttendanceSettings(props: AttendanceSettingsProps) {
 AttendanceSettings.layout = {
     width: 'wide',
     breadcrumbs: [
-        { title: 'Admin', href: '/admin/absensi' },
-        { title: 'Lokasi, shift & hari libur', href: '/admin/absensi' },
+        { title: 'Admin', href: '' },
+        { title: 'Lokasi & shift', href: '/admin/absensi' },
     ],
     title: 'Lokasi & shift',
     back: '/menu',

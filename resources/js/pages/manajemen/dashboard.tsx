@@ -51,10 +51,7 @@ export default function ManagementDashboard(props: ManagementProps) {
 }
 
 ManagementDashboard.layout = {
-    breadcrumbs: [
-        { title: 'Manajemen', href: '/manajemen' },
-        { title: 'Dashboard', href: '/manajemen' },
-    ],
+    breadcrumbs: [{ title: 'Manajemen', href: '/manajemen' }],
     title: 'Manajemen',
     width: 'full',
 };

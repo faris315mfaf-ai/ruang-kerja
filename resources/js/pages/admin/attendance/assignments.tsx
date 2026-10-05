@@ -399,7 +399,8 @@ export default function ShiftAssignments({
 ShiftAssignments.layout = {
     width: 'wide',
     breadcrumbs: [
-        { title: 'Lokasi, shift & hari libur', href: '/admin/absensi' },
+        { title: 'Admin', href: '' },
+        { title: 'Lokasi & shift', href: '/admin/absensi' },
         { title: 'Penugasan shift', href: '/admin/absensi/penugasan' },
     ],
     title: 'Penugasan shift',

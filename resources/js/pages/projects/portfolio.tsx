@@ -30,9 +30,6 @@ export default function Portfolio(props: PortfolioProps) {
 }
 
 Portfolio.layout = {
-    breadcrumbs: [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Portofolio proyek', href: '/portofolio' },
-    ],
+    breadcrumbs: [{ title: 'Portofolio', href: '/portofolio' }],
     title: 'Portofolio proyek',
 };

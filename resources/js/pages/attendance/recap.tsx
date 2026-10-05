@@ -112,7 +112,7 @@ function SortIcon({ direction }: { direction: false | 'asc' | 'desc' }) {
     return <ChevronsUpDown className="size-3 opacity-40" aria-hidden />;
 }
 
-/** Absensi › Rekap bulanan (mockup RekapAbsensi). Desktop only. */
+/** Admin › Rekap absensi (mockup RekapAbsensi). Desktop only. */
 export default function AttendanceRecap(props: Props) {
     const breakpoint = useBreakpoint();
     const { auth } = usePage().props;
@@ -688,8 +688,8 @@ function RecapKpis({
 AttendanceRecap.layout = {
     width: 'wide',
     breadcrumbs: [
-        { title: 'Absensi', href: '/absensi' },
-        { title: 'Rekap bulanan', href: '/absensi/rekap' },
+        { title: 'Admin', href: '' },
+        { title: 'Rekap absensi', href: '/absensi/rekap' },
     ],
     title: 'Rekap absensi',
     back: '/menu',

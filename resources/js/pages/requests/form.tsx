@@ -65,11 +65,13 @@ export default function RequestForm({
     );
 }
 
-RequestForm.layout = {
+RequestForm.layout = (props: Props) => ({
     breadcrumbs: [
         { title: 'Pengajuan', href: index() },
-        { title: 'Ajukan baru', href: create() },
+        props.request
+            ? { title: 'Ubah', href: '' }
+            : { title: 'Ajukan baru', href: create() },
     ],
-    title: 'Ajukan baru',
+    title: props.request ? 'Ubah pengajuan' : 'Ajukan baru',
     back: '/pengajuan',
-};
+});

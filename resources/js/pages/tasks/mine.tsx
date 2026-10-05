@@ -496,9 +496,6 @@ export default function MyTasks(props: Props) {
 }
 
 MyTasks.layout = {
-    breadcrumbs: [
-        { title: 'Kerja', href: '/tugas' },
-        { title: 'Tugas saya', href: '/tugas' },
-    ],
+    breadcrumbs: [{ title: 'Tugas saya', href: '/tugas' }],
     title: 'Tugas saya',
 };

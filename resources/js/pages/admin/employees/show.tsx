@@ -340,9 +340,9 @@ export default function EmployeeShow({
 
 EmployeeShow.layout = {
     breadcrumbs: [
-        { title: 'Admin', href: index() },
+        { title: 'Organisasi', href: '' },
         { title: 'Karyawan', href: index() },
-        { title: 'Profil', href: index() },
+        { title: 'Profil', href: '' },
     ],
     title: 'Profil karyawan',
     back: '/admin/karyawan',

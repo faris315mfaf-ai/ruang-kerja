@@ -30,6 +30,12 @@ export function Breadcrumbs({
                                             <BreadcrumbPage>
                                                 {item.title}
                                             </BreadcrumbPage>
+                                        ) : item.href === '' ? (
+                                            // Group without its own page
+                                            // ("Admin", "Organisasi").
+                                            <span className="font-medium">
+                                                {item.title}
+                                            </span>
                                         ) : (
                                             <BreadcrumbLink asChild>
                                                 <Link href={item.href}>

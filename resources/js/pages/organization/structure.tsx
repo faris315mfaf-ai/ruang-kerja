@@ -218,7 +218,7 @@ export default function Structure({ chart, can }: Props) {
 
 Structure.layout = {
     breadcrumbs: [
-        { title: 'Organisasi', href: '/organisasi/struktur' },
+        { title: 'Organisasi', href: '' },
         { title: 'Struktur organisasi', href: '/organisasi/struktur' },
     ],
     title: 'Struktur organisasi',

@@ -554,7 +554,7 @@ export default function LeaveBalances({
 LeaveBalances.layout = {
     width: 'wide',
     breadcrumbs: [
-        { title: 'Admin', href: index() },
+        { title: 'Admin', href: '' },
         { title: 'Saldo cuti', href: index() },
     ],
     title: 'Saldo cuti',
