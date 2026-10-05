@@ -200,6 +200,17 @@ it('ignores tasks in workspaces the viewer cannot see', function () {
     expect((new CompletionRate)->compute($this->team, $this->period)->denominator)->toBe(1.0);
 });
 
+it('ignores tasks in archived workspaces', function () {
+    $archived = Workspace::factory()->internal()->archived()->create();
+    F::task($archived, Cat::Done, [$this->a], ['due_date' => '2026-10-06', 'completed_at' => '2026-10-06 09:00']);
+    F::task($archived, Cat::Todo, [$this->b], ['due_date' => '2026-10-02', 'estimate_hours' => 3]);
+    F::task($this->ws, Cat::Todo, [$this->b], ['due_date' => '2026-10-06']);
+
+    expect((new CompletionRate)->compute($this->team, $this->period)->denominator)->toBe(1.0)
+        ->and((new OverdueTasks)->compute($this->team, $this->today)->value)->toBe(1.0)
+        ->and((new Workload)->compute($this->team, $this->today)[$this->b->id])->toBe(['open' => 1, 'overdue' => 1, 'estimate_hours' => null]);
+});
+
 it('describes every metric for the tooltips and has no composite score', function () {
     $definitions = MetricCatalog::definitions();
 
