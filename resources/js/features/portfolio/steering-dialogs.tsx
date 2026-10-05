@@ -2,9 +2,10 @@ import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { requestUpdate } from '@/routes/projects';
 import { store as storeDirection } from '@/routes/projects/directions';
-import { fieldClass, ResponsiveSheet } from './parts';
+import { ResponsiveSheet } from './parts';
 
 type Target = { key: string; name: string };
 
@@ -63,14 +64,14 @@ export function DirectionDialog({
                     <Button
                         type="button"
                         variant="outline"
-                        className="h-11 md:h-9"
+                        className="max-md:h-12"
                         onClick={() => onOpenChange(false)}
                     >
                         Batal
                     </Button>
                     <Button
                         type="button"
-                        className="h-11 md:h-9"
+                        className="max-md:h-12"
                         disabled={
                             form.processing || form.data.body.trim() === ''
                         }
@@ -83,14 +84,14 @@ export function DirectionDialog({
         >
             <form onSubmit={submit} className="space-y-3">
                 {context && (
-                    <blockquote className="rounded-md border-l-2 border-primary bg-surface-2 px-3 py-2 text-[13px] text-text-muted">
+                    <blockquote className="rounded-control border-l-[3px] border-primary bg-surface-2 px-4 py-3 text-label font-normal text-text-muted">
                         {context}
                     </blockquote>
                 )}
                 <label className="block space-y-1.5">
                     <span className="sr-only">Arahan</span>
-                    <textarea
-                        className={`${fieldClass} min-h-28`}
+                    <Textarea
+                        className="min-h-28 max-md:text-[17px]"
                         placeholder="Tulis arahan untuk PIC…"
                         value={form.data.body}
                         maxLength={2000}
@@ -153,14 +154,14 @@ export function RequestUpdateDialog({
                     <Button
                         type="button"
                         variant="outline"
-                        className="h-11 md:h-9"
+                        className="max-md:h-12"
                         onClick={() => onOpenChange(false)}
                     >
                         Batal
                     </Button>
                     <Button
                         type="button"
-                        className="h-11 md:h-9"
+                        className="max-md:h-12"
                         disabled={form.processing}
                         onClick={() => submit()}
                     >
@@ -171,11 +172,11 @@ export function RequestUpdateDialog({
         >
             <form onSubmit={submit} className="space-y-2">
                 <label className="block space-y-1.5">
-                    <span className="text-[13px] font-medium text-text">
+                    <span className="text-label text-text">
                         Catatan (opsional)
                     </span>
-                    <textarea
-                        className={`${fieldClass} min-h-20`}
+                    <Textarea
+                        className="max-md:text-[17px]"
                         placeholder="Mis. mohon update sebelum rapat Senin."
                         value={form.data.note}
                         maxLength={500}

@@ -53,17 +53,23 @@ export function MetricKpi({
         return card;
     }
 
+    const linkClass = cn(
+        'block min-w-0 rounded-card transition-transform duration-120 ease-brand hover:-translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0',
+        focusRing,
+        className,
+    );
+
+    // In-page anchors ("#keputusan") are plain links, not Inertia visits.
+    if (href.startsWith('#')) {
+        return (
+            <a href={href} aria-label={linkLabel} className={linkClass}>
+                {card}
+            </a>
+        );
+    }
+
     return (
-        <Link
-            href={href}
-            prefetch
-            aria-label={linkLabel}
-            className={cn(
-                'block min-w-0 rounded-card transition-transform duration-120 ease-brand hover:-translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0',
-                focusRing,
-                className,
-            )}
-        >
+        <Link href={href} prefetch aria-label={linkLabel} className={linkClass}>
             {card}
         </Link>
     );
