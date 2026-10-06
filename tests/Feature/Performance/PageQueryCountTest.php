@@ -2,7 +2,12 @@
 
 use App\Models\Channel;
 use App\Models\EmployeeRequest;
+use App\Models\Note;
+use App\Models\NoteShare;
+use App\Models\NoteVersion;
+use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceMember;
 use Carbon\CarbonImmutable;
 use Tests\Support\PerformanceFixtures as P;
 
@@ -161,4 +166,52 @@ it('keeps Obrolan free of N+1', function () {
         "/obrolan/{$plq->id}" => ['kadiv', 50],
         "/obrolan/{$plq->id}/pesan" => ['kadiv', 18],
     ]);
+});
+
+it('keeps Catatan free of N+1', function () {
+    config(['features.notes' => true, 'collab.secret' => '']);
+    $ops = Workspace::query()->where('key', 'OPS')->firstOrFail();
+    $note = Note::query()->where('workspace_id', $ops->id)->where('title', 'SOP Penerimaan Barang')->firstOrFail();
+    $pages = [
+        '/catatan' => ['kadiv', 38],
+        '/catatan?q=barang' => ['kadiv', 39],
+        "/catatan/{$note->id}" => ['kadiv', 47],
+        '/w/OPS/catatan' => ['kadiv', 54],
+    ];
+    $first = [];
+
+    foreach ($pages as $url => [$who]) {
+        P::queries($who, $url);
+        $first[$url] = P::queries($who, $url);
+    }
+
+    // More notes, folders, authors, shares and versions.
+    $authors = User::query()->whereIn('id', WorkspaceMember::query()->where('workspace_id', $ops->id)->select('user_id'))->limit(6)->get();
+    $folder = Note::factory()->folder()->in($ops)->by($authors->first())->create(['title' => 'Arsip barang']);
+
+    foreach ($authors as $index => $author) {
+        $extra = Note::factory()->in($ops)->by($author)->create(['title' => "Catatan barang {$index}", 'parent_id' => $index % 2 === 0 ? $folder->id : null]);
+        NoteShare::factory()->create(['note_id' => $extra->id, 'user_id' => $authors->last()->id, 'role' => 'edit']);
+        NoteVersion::factory()->of($extra)->create();
+    }
+
+    $failures = [];
+
+    foreach ($pages as $url => [$who, $budget]) {
+        $second = P::queries($who, $url);
+
+        if (getenv('QUERY_COUNTS')) {
+            fwrite(STDERR, sprintf("QUERIES %-8s %-50s %3d -> %3d (budget %d)\n", $who, $url, $first[$url], $second, $budget));
+        }
+
+        if ($second > $first[$url]) {
+            $failures[] = "{$who} {$url}: {$first[$url]} → {$second} queries after adding rows (N+1)";
+        }
+
+        if ($first[$url] > $budget) {
+            $failures[] = "{$who} {$url}: {$first[$url]} queries, budget {$budget}";
+        }
+    }
+
+    expect($failures)->toBe([]);
 });

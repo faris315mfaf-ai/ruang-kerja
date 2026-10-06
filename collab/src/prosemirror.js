@@ -29,7 +29,11 @@ function textNodes(text) {
                 .map(([name, attrs]) => {
                     const mark = { type: markName(name) };
 
-                    if (attrs && typeof attrs === 'object' && Object.keys(attrs).length > 0) {
+                    if (
+                        attrs &&
+                        typeof attrs === 'object' &&
+                        Object.keys(attrs).length > 0
+                    ) {
                         mark.attrs = attrs;
                     }
 
@@ -165,6 +169,9 @@ export function replaceDoc(ydoc, json, field = FIELD, origin = null) {
         const types = jsonChildrenToTypes(content);
 
         // An empty note still needs one paragraph for the editor.
-        fragment.insert(0, types.length > 0 ? types : [new Y.XmlElement('paragraph')]);
+        fragment.insert(
+            0,
+            types.length > 0 ? types : [new Y.XmlElement('paragraph')],
+        );
     }, origin);
 }

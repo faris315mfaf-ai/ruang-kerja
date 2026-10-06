@@ -17,6 +17,7 @@ import {
     ListChecks,
     Menu,
     Network,
+    NotebookPen,
     ScrollText,
     SquareCheckBig,
     Users,
@@ -176,6 +177,17 @@ export const chatNavItem: AppNavItem = {
     icon: MessagesSquare,
     matchPrefix: true,
     badge: 'chat',
+};
+
+/**
+ * "Catatan" (/catatan, F2-2): shared notes, shown while the `notes` feature
+ * flag is on (shared prop `features.notes`).
+ */
+export const notesNavItem: AppNavItem = {
+    title: 'Catatan',
+    href: '/catatan',
+    icon: NotebookPen,
+    matchPrefix: true,
 };
 
 /**

@@ -52,6 +52,41 @@ final class NoteContent
     }
 
     /**
+     * Same document? jsonb does not keep key order, so keys are compared
+     * order-insensitively (list order still matters).
+     *
+     * @param  array<mixed>|null  $a
+     * @param  array<mixed>|null  $b
+     */
+    public static function same(?array $a, ?array $b): bool
+    {
+        if ($a === null || $b === null) {
+            return $a === $b;
+        }
+
+        return self::canonical($a) === self::canonical($b);
+    }
+
+    /**
+     * @param  array<mixed>  $value
+     * @return array<mixed>
+     */
+    private static function canonical(array $value): array
+    {
+        if (! array_is_list($value)) {
+            ksort($value);
+        }
+
+        foreach ($value as $key => $item) {
+            if (is_array($item)) {
+                $value[$key] = self::canonical($item);
+            }
+        }
+
+        return $value;
+    }
+
+    /**
      * @param  array<mixed>|null  $document
      * @return array{document: array<string, mixed>|null, text: string, mentioned_ids: list<string>}
      */

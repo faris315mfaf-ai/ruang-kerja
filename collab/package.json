@@ -1,11 +1,8 @@
 {
     "name": "ruangkerja-collab",
     "private": true,
-    "type": "module",
     "description": "Catatan bersama: Hocuspocus (Yjs) server. Auth and persistence go through Laravel.",
-    "engines": {
-        "node": ">=22"
-    },
+    "type": "module",
     "scripts": {
         "start": "node src/server.js",
         "test": "node --test test/"
@@ -17,5 +14,8 @@
     "devDependencies": {
         "@hocuspocus/provider": "^4.7.0",
         "y-protocols": "^1.0.7"
+    },
+    "engines": {
+        "node": ">=22"
     }
 }

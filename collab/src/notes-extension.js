@@ -22,7 +22,11 @@ function readJson(request) {
             size += chunk.length;
 
             if (size > MAX_BODY_BYTES) {
-                reject(Object.assign(new Error('payload too large'), { status: 413 }));
+                reject(
+                    Object.assign(new Error('payload too large'), {
+                        status: 413,
+                    }),
+                );
                 request.destroy();
 
                 return;
@@ -35,7 +39,9 @@ function readJson(request) {
                 const text = Buffer.concat(chunks).toString('utf8');
                 resolve(text === '' ? {} : JSON.parse(text));
             } catch {
-                reject(Object.assign(new Error('invalid json'), { status: 400 }));
+                reject(
+                    Object.assign(new Error('invalid json'), { status: 400 }),
+                );
             }
         });
         request.on('error', reject);
@@ -60,7 +66,12 @@ function send(response, status, body) {
  * - onRequest: GET /health and the internal Laravel → collab endpoints
  *   POST /internal/documents/{id}/replace|reconnect (Bearer secret).
  */
-export function createNotesExtension({ laravel, secret, logger = console, now }) {
+export function createNotesExtension({
+    laravel,
+    secret,
+    logger = console,
+    now,
+}) {
     /** documentName → ids of people who changed it since the last store. */
     const editors = new Map();
 
@@ -78,14 +89,23 @@ export function createNotesExtension({ laravel, secret, logger = console, now })
                 connectionConfig.readOnly = true;
             }
 
-            return { user: { id: payload.user, name: payload.name, canEdit: payload.edit } };
+            return {
+                user: {
+                    id: payload.user,
+                    name: payload.name,
+                    canEdit: payload.edit,
+                },
+            };
         },
 
         async onLoadDocument({ document, documentName }) {
             const stored = await laravel.loadState(documentName);
 
             if (stored.yjs_state) {
-                Y.applyUpdate(document, Buffer.from(stored.yjs_state, 'base64'));
+                Y.applyUpdate(
+                    document,
+                    Buffer.from(stored.yjs_state, 'base64'),
+                );
             } else if (stored.content) {
                 replaceDoc(document, stored.content);
             }
@@ -120,7 +140,9 @@ export function createNotesExtension({ laravel, secret, logger = console, now })
                 const pending = editors.get(documentName) ?? new Set();
                 ids.forEach((id) => pending.add(id));
                 editors.set(documentName, pending);
-                logger.error(`[collab] store ${documentName} failed: ${error.message}`);
+                logger.error(
+                    `[collab] store ${documentName} failed: ${error.message}`,
+                );
                 throw error;
             }
         },
@@ -129,11 +151,17 @@ export function createNotesExtension({ laravel, secret, logger = console, now })
             const url = new URL(request.url ?? '/', 'http://collab.local');
 
             if (url.pathname === '/health') {
-                send(response, 200, { ok: true, documents: instance.getDocumentsCount() });
+                send(response, 200, {
+                    ok: true,
+                    documents: instance.getDocumentsCount(),
+                });
                 throw null;
             }
 
-            const match = /^\/internal\/documents\/([^/]+)\/(replace|reconnect)$/.exec(url.pathname);
+            const match =
+                /^\/internal\/documents\/([^/]+)\/(replace|reconnect)$/.exec(
+                    url.pathname,
+                );
 
             if (!match) {
                 return;
@@ -147,7 +175,11 @@ export function createNotesExtension({ laravel, secret, logger = console, now })
                 throw null;
             }
 
-            if (!secret || !auth.startsWith('Bearer ') || !sameSecret(auth.slice(7), secret)) {
+            if (
+                !secret ||
+                !auth.startsWith('Bearer ') ||
+                !sameSecret(auth.slice(7), secret)
+            ) {
                 send(response, 401, { message: 'unauthorized' });
                 throw null;
             }
@@ -162,8 +194,12 @@ export function createNotesExtension({ laravel, secret, logger = console, now })
                 const loaded = instance.documents.has(id);
 
                 if (loaded && action === 'replace') {
-                    const connection = await instance.openDirectConnection(id, { source: 'laravel' });
-                    await connection.transact((document) => replaceDoc(document, body.content ?? null));
+                    const connection = await instance.openDirectConnection(id, {
+                        source: 'laravel',
+                    });
+                    await connection.transact((document) =>
+                        replaceDoc(document, body.content ?? null),
+                    );
                     await connection.disconnect();
                 }
 

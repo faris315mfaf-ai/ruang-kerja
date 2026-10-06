@@ -21,14 +21,14 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { SegmentedTabs } from '@/components/ui/tabs';
-import { useFakeMutation } from '@/features/prototype/use-fake-mutation';
+import { ApiError } from '@/features/tasks/lib/api';
 import { cn } from '@/lib/utils';
-import { saveShare } from './store';
+import { notesApi } from './api';
 import type {
     Note,
     NoteAccessRole,
+    NotePerson,
     NoteShare,
-    NotesState,
     NoteWorkspace,
 } from './types';
 
@@ -38,33 +38,44 @@ type Props = {
     note: Note;
     workspace: NoteWorkspace | undefined;
     share: NoteShare;
-    state: NotesState;
+    people: NotePerson[];
+    viewerId: string;
+    onSaved: (share: NoteShare) => void;
     mobile?: boolean;
 };
 
-/** "Bagikan": workspace or invited-only access, per-person edit/read rights. */
+/**
+ * "Bagikan": workspace or invited-only access, per-person edit/read rights
+ * (PUT /catatan/{note}/akses, audited). Open editing sessions reconnect with
+ * the new rights.
+ */
 export function ShareDialog({
     open,
     onOpenChange,
     note,
     workspace,
     share,
-    state,
+    people,
+    viewerId,
+    onSaved,
     mobile = false,
 }: Props) {
     const [draft, setDraft] = useState<NoteShare>(share);
     const [prevShare, setPrevShare] = useState(share);
     const [adding, setAdding] = useState('');
-    const { processing, run } = useFakeMutation();
+    const [processing, setProcessing] = useState(false);
 
     if (prevShare !== share) {
         setPrevShare(share);
         setDraft(share);
     }
 
-    const others = state.people.filter(
-        (person) => !draft.people.some((item) => item.user_id === person.id),
+    const others = people.filter(
+        (person) =>
+            person.id !== note.created_by &&
+            !draft.people.some((item) => item.user_id === person.id),
     );
+    const author = people.find((person) => person.id === note.created_by);
 
     const setRole = (userId: string, role: NoteAccessRole | 'remove') =>
         setDraft((current) => ({
@@ -78,12 +89,26 @@ export function ShareDialog({
         }));
 
     const save = async () => {
-        const ok = await run(() => saveShare(draft), {
-            success: 'Akses catatan diperbarui.',
-        });
+        setProcessing(true);
 
-        if (ok) {
+        try {
+            const response = await notesApi.share(
+                note.id,
+                draft.access,
+                draft.people,
+            );
+            onSaved(response.share);
+            toast.success('Akses catatan diperbarui.');
             onOpenChange(false);
+        } catch (error) {
+            setDraft(share);
+            toast.error(
+                error instanceof ApiError
+                    ? error.message
+                    : 'Akses gagal disimpan. Coba lagi.',
+            );
+        } finally {
+            setProcessing(false);
         }
     };
 
@@ -114,8 +139,8 @@ export function ShareDialog({
                 />
                 <p className="text-[14px] leading-5 text-text-muted">
                     {draft.access === 'workspace'
-                        ? `Semua anggota ${workspace?.name ?? 'workspace'} dapat membuka dan menyunting.`
-                        : 'Hanya orang di daftar ini yang dapat membuka catatan.'}
+                        ? `Semua yang bisa membuka ${workspace?.name ?? 'workspace'} dapat membaca; anggota yang menyunting tugas juga bisa menyunting.`
+                        : `Hanya ${author ? author.name.split(' ')[0] : 'penulis'} dan orang di daftar ini yang dapat membuka catatan. Direksi dan HR tidak melihatnya otomatis.`}
                 </p>
             </div>
 
@@ -123,9 +148,14 @@ export function ShareDialog({
                 <p className="text-[15px] font-semibold text-text">
                     Orang dengan akses
                 </p>
+                {draft.people.length === 0 && (
+                    <p className="text-[14px] text-text-muted">
+                        Belum ada orang yang diundang khusus.
+                    </p>
+                )}
                 <ul className="flex flex-col">
                     {draft.people.map((item) => {
-                        const person = state.people.find(
+                        const person = people.find(
                             (candidate) => candidate.id === item.user_id,
                         );
 
@@ -133,7 +163,7 @@ export function ShareDialog({
                             return null;
                         }
 
-                        const self = person.id === state.viewerId;
+                        const self = person.id === viewerId;
 
                         return (
                             <li

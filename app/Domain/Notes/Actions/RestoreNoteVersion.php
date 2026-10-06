@@ -3,6 +3,7 @@
 namespace App\Domain\Notes\Actions;
 
 use App\Domain\Notes\Services\CollabBridge;
+use App\Domain\Notes\Services\NoteContent;
 use App\Domain\Tasks\Services\RichText;
 use App\Models\Note;
 use App\Models\NoteVersion;
@@ -33,7 +34,7 @@ final class RestoreNoteVersion
 
             $latest = NoteVersion::query()->where('note_id', $note->id)->latest('created_at')->latest('id')->first();
 
-            if ($locked->content !== null && ($latest === null || $latest->content !== $locked->content || $latest->title !== $locked->title)) {
+            if ($locked->content !== null && ($latest === null || ! NoteContent::same($latest->content, $locked->content) || $latest->title !== $locked->title)) {
                 NoteVersion::query()->create([
                     'note_id' => $locked->id,
                     'yjs_state' => $locked->yjs_state,

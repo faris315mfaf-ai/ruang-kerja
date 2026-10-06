@@ -5,7 +5,11 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
  * (App\Domain\Notes\Services\CollabToken): base64url(JSON) "." base64url(HMAC-SHA256).
  * Returns { note, user, name, edit, exp } or throws.
  */
-export function verifyToken(token, secret, nowSeconds = Math.floor(Date.now() / 1000)) {
+export function verifyToken(
+    token,
+    secret,
+    nowSeconds = Math.floor(Date.now() / 1000),
+) {
     if (!secret) {
         throw new Error('collab secret not configured');
     }
@@ -21,7 +25,9 @@ export function verifyToken(token, secret, nowSeconds = Math.floor(Date.now() / 
     }
 
     const [body, signature] = parts;
-    const expected = createHmac('sha256', secret).update(body).digest('base64url');
+    const expected = createHmac('sha256', secret)
+        .update(body)
+        .digest('base64url');
     const given = Buffer.from(signature);
     const wanted = Buffer.from(expected);
 

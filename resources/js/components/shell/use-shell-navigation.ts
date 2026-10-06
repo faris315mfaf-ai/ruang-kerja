@@ -14,6 +14,7 @@ import {
     attendanceNavItems,
     isActivePath,
     chatNavItem,
+    notesNavItem,
     mainNavItemsFor,
     organizationNavItems,
     prototypeNavItem,
@@ -201,12 +202,17 @@ export function useShellNavigation(): ShellNavigation {
     // get it as a plain tile instead.
     const organizationItems = organizationNavItems(auth.roles);
     const main = mainNavItemsFor(auth.roles);
-    // Obrolan right after Inbox (messages next to notifications).
-    const withChat = features?.chat
-        ? main.flatMap((item) =>
-              item.href === '/inbox' ? [item, chatNavItem] : [item],
-          )
-        : main;
+    // Obrolan right after Inbox (messages next to notifications), Catatan after it.
+    const afterInbox = [
+        ...(features?.chat ? [chatNavItem] : []),
+        ...(features?.notes ? [notesNavItem] : []),
+    ];
+    const withChat =
+        afterInbox.length > 0
+            ? main.flatMap((item) =>
+                  item.href === '/inbox' ? [item, ...afterInbox] : [item],
+              )
+            : main;
     const tiles = [
         ...(organizationItems.length > 1
             ? withChat

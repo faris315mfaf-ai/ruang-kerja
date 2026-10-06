@@ -17,7 +17,10 @@ import tls from 'node:tls';
 const production = process.env.NODE_ENV === 'production';
 const secret = process.env.COLLAB_SECRET ?? '';
 const port = Number(process.env.COLLAB_PORT ?? 1234);
-const appUrl = process.env.COLLAB_APP_URL || process.env.APP_URL || 'http://127.0.0.1:8000';
+const appUrl =
+    process.env.COLLAB_APP_URL ||
+    process.env.APP_URL ||
+    'http://127.0.0.1:8000';
 
 /**
  * In development a missing setup must not stop the other `composer run dev`
@@ -41,20 +44,37 @@ if (secret.length < 32) {
     let modules;
 
     try {
-        modules = await Promise.all([import('@hocuspocus/server'), import('./laravel.js'), import('./notes-extension.js')]);
+        modules = await Promise.all([
+            import('@hocuspocus/server'),
+            import('./laravel.js'),
+            import('./notes-extension.js'),
+        ]);
     } catch (error) {
-        unavailable(`Paket server kolaborasi belum terpasang (npm --prefix collab ci): ${error.message}`);
+        unavailable(
+            `Paket server kolaborasi belum terpasang (npm --prefix collab ci): ${error.message}`,
+        );
     }
 
     if (modules) {
-        const [{ Server }, { createLaravelClient }, { createNotesExtension }] = modules;
+        const [{ Server }, { createLaravelClient }, { createNotesExtension }] =
+            modules;
 
         // Local Herd sites (https://*.test) use a self-signed CA Node does not know.
-        const herdCa = join(homedir(), 'Library/Application Support/Herd/config/valet/CA/LaravelValetCASelfSigned.pem');
-        const caFile = process.env.COLLAB_CA_FILE || (/\.test(:\d+)?\/?$/.test(appUrl) && existsSync(herdCa) ? herdCa : '');
+        const herdCa = join(
+            homedir(),
+            'Library/Application Support/Herd/config/valet/CA/LaravelValetCASelfSigned.pem',
+        );
+        const caFile =
+            process.env.COLLAB_CA_FILE ||
+            (/\.test(:\d+)?\/?$/.test(appUrl) && existsSync(herdCa)
+                ? herdCa
+                : '');
 
         if (caFile && typeof tls.setDefaultCACertificates === 'function') {
-            tls.setDefaultCACertificates([...tls.getCACertificates('default'), readFileSync(caFile, 'utf8')]);
+            tls.setDefaultCACertificates([
+                ...tls.getCACertificates('default'),
+                readFileSync(caFile, 'utf8'),
+            ]);
         }
 
         const server = new Server({
@@ -67,7 +87,12 @@ if (secret.length < 32) {
             maxDebounce: 10000,
             unloadImmediately: false,
             websocketOptions: { maxPayload: 8 * 1024 * 1024 },
-            extensions: [createNotesExtension({ laravel: createLaravelClient({ baseUrl: appUrl, secret }), secret })],
+            extensions: [
+                createNotesExtension({
+                    laravel: createLaravelClient({ baseUrl: appUrl, secret }),
+                    secret,
+                }),
+            ],
         });
 
         await server.listen();

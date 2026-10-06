@@ -52,7 +52,7 @@ final class StoreNoteState
         $changed = DB::transaction(function () use ($note, $yjsState, $prepared, $editor): bool {
             /** @var Note $locked */
             $locked = Note::query()->whereKey($note->id)->lockForUpdate()->firstOrFail();
-            $changed = $locked->content !== $prepared['document'];
+            $changed = ! NoteContent::same($locked->content, $prepared['document']);
 
             if ($changed) {
                 $this->keepPreviousVersion($locked);
@@ -99,7 +99,7 @@ final class StoreNoteState
         $latest = NoteVersion::query()->where('note_id', $note->id)->latest('created_at')->latest('id')->first();
         $threshold = CarbonImmutable::now()->subMinutes(self::VERSION_INTERVAL_MINUTES);
 
-        if ($latest !== null && ($latest->created_at->greaterThan($threshold) || $latest->content === $note->content)) {
+        if ($latest !== null && ($latest->created_at->greaterThan($threshold) || NoteContent::same($latest->content, $note->content))) {
             return;
         }
 

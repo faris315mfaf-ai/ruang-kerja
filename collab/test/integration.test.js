@@ -18,7 +18,12 @@ const SECRET = 'integration-secret-integration-secret-1';
 const NOTE = '01JAAAAAAAAAAAAAAAAAAAAAAA';
 const HANA = '01JBBBBBBBBBBBBBBBBBBBBBBB';
 const DEWI = '01JCCCCCCCCCCCCCCCCCCCCCCC';
-const content = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Isi awal' }] }] };
+const content = {
+    type: 'doc',
+    content: [
+        { type: 'paragraph', content: [{ type: 'text', text: 'Isi awal' }] },
+    ],
+};
 
 const stored = [];
 let laravel;
@@ -26,7 +31,15 @@ let collab;
 let url;
 
 function token(user, edit = true, note = NOTE) {
-    const body = Buffer.from(JSON.stringify({ note, user, name: user === HANA ? 'Hana' : 'Dewi', edit, exp: Math.floor(Date.now() / 1000) + 60 })).toString('base64url');
+    const body = Buffer.from(
+        JSON.stringify({
+            note,
+            user,
+            name: user === HANA ? 'Hana' : 'Dewi',
+            edit,
+            exp: Math.floor(Date.now() / 1000) + 60,
+        }),
+    ).toString('base64url');
 
     return `${body}.${createHmac('sha256', SECRET).update(body).digest('base64url')}`;
 }
@@ -48,7 +61,12 @@ function waitFor(check, timeout = 5000) {
 }
 
 function connect(user, edit = true, note = NOTE) {
-    const provider = new HocuspocusProvider({ url, name: note, token: token(user, edit, note), document: new Y.Doc() });
+    const provider = new HocuspocusProvider({
+        url,
+        name: note,
+        token: token(user, edit, note),
+        document: new Y.Doc(),
+    });
     provider.awareness?.setLocalStateField('user', { id: user });
 
     return provider;
@@ -68,7 +86,9 @@ before(async () => {
             response.setHeader('Content-Type', 'application/json');
 
             if (request.method === 'GET') {
-                response.end(JSON.stringify({ id: NOTE, yjs_state: null, content }));
+                response.end(
+                    JSON.stringify({ id: NOTE, yjs_state: null, content }),
+                );
 
                 return;
             }
@@ -88,7 +108,10 @@ before(async () => {
         maxDebounce: 200,
         extensions: [
             createNotesExtension({
-                laravel: createLaravelClient({ baseUrl: `http://127.0.0.1:${laravel.address().port}`, secret: SECRET }),
+                laravel: createLaravelClient({
+                    baseUrl: `http://127.0.0.1:${laravel.address().port}`,
+                    secret: SECRET,
+                }),
                 secret: SECRET,
                 logger: { error() {} },
             }),
@@ -103,7 +126,7 @@ after(async () => {
     await new Promise((resolve) => laravel.close(resolve));
 });
 
-test('two sessions edit the same note and the state is stored', async () => {
+void test('two sessions edit the same note and the state is stored', async () => {
     const hana = connect(HANA);
     const dewi = connect(DEWI);
 
@@ -113,7 +136,11 @@ test('two sessions edit the same note and the state is stored', async () => {
     const paragraph = hana.document.getXmlFragment('default').get(0);
     paragraph.get(0).insert(8, ' dari Hana');
 
-    await waitFor(() => docToJson(dewi.document)?.content[0].content[0].text === 'Isi awal dari Hana');
+    await waitFor(
+        () =>
+            docToJson(dewi.document)?.content[0].content[0].text ===
+            'Isi awal dari Hana',
+    );
     await waitFor(() => stored.some((body) => body.editor_ids.includes(HANA)));
 
     const last = stored.at(-1);
@@ -127,7 +154,7 @@ test('two sessions edit the same note and the state is stored', async () => {
     dewi.destroy();
 });
 
-test('a read-only session cannot change the document', async () => {
+void test('a read-only session cannot change the document', async () => {
     const reader = connect(DEWI, false);
     const writer = connect(HANA);
 
@@ -135,43 +162,66 @@ test('a read-only session cannot change the document', async () => {
     reader.document.getXmlFragment('default').get(0).get(0).insert(0, 'X ');
     await new Promise((resolve) => setTimeout(resolve, 300));
 
-    assert.ok(!docToJson(writer.document).content[0].content[0].text.startsWith('X '));
+    assert.ok(
+        !docToJson(writer.document).content[0].content[0].text.startsWith('X '),
+    );
 
     reader.destroy();
     writer.destroy();
 });
 
-test('Laravel replaces the open document (restore) only with the secret', async () => {
+void test('Laravel replaces the open document (restore) only with the secret', async () => {
     const hana = connect(HANA);
     await waitFor(() => hana.isSynced);
     const http = `http://127.0.0.1:${collab.address.port}`;
-    const restored = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Versi lama' }] }] };
+    const restored = {
+        type: 'doc',
+        content: [
+            {
+                type: 'paragraph',
+                content: [{ type: 'text', text: 'Versi lama' }],
+            },
+        ],
+    };
 
     const refused = await fetch(`${http}/internal/documents/${NOTE}/replace`, {
         method: 'POST',
-        headers: { Authorization: 'Bearer wrong', 'Content-Type': 'application/json' },
+        headers: {
+            Authorization: 'Bearer wrong',
+            'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ content: restored }),
     });
     assert.equal(refused.status, 401);
 
     const accepted = await fetch(`${http}/internal/documents/${NOTE}/replace`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${SECRET}`, 'Content-Type': 'application/json' },
+        headers: {
+            Authorization: `Bearer ${SECRET}`,
+            'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ content: restored }),
     });
     assert.deepEqual(await accepted.json(), { loaded: true });
-    await waitFor(() => docToJson(hana.document)?.content[0].content[0].text === 'Versi lama');
+    await waitFor(
+        () =>
+            docToJson(hana.document)?.content[0].content[0].text ===
+            'Versi lama',
+    );
 
-    const unknown = await fetch(`${http}/internal/documents/01JZZZZZZZZZZZZZZZZZZZZZZZ/replace`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${SECRET}` },
-    });
+    const unknown = await fetch(
+        `${http}/internal/documents/01JZZZZZZZZZZZZZZZZZZZZZZZ/replace`,
+        {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${SECRET}` },
+        },
+    );
     assert.deepEqual(await unknown.json(), { loaded: false });
 
     hana.destroy();
 });
 
-test('refuses a token for another note', async () => {
+void test('refuses a token for another note', async () => {
     let failed = false;
     const provider = new HocuspocusProvider({
         url,
