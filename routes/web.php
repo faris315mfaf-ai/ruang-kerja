@@ -22,6 +22,7 @@ Route::post('demo/ganti-akun', [DemoSwitchController::class, 'store'])
     ->name('demo.switch');
 
 require __DIR__.'/auth.php';
+require __DIR__.'/password-reset.php';
 require __DIR__.'/settings.php';
 require __DIR__.'/requests.php';
 require __DIR__.'/attendance.php';

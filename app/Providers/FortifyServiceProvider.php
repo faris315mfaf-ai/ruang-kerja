@@ -2,21 +2,17 @@
 
 namespace App\Providers;
 
-use App\Actions\Fortify\ResetUserPassword;
-use App\Domain\Auth\Actions\AuthenticateSuperAdmin;
-use App\Domain\Auth\Support\GoogleOAuth;
+use App\Domain\Auth\Actions\AuthenticateEmployee;
+use App\Domain\Auth\Data\PasswordResetSession;
 use App\Domain\Organization\Demo\DemoAccounts;
-use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Models\Company;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
-use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
-use Laravel\Fortify\Http\Controllers\PasswordResetLinkController as FortifyPasswordResetLinkController;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -25,8 +21,7 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Reset links: Super Admins only, generic answer, throttled per IP.
-        $this->app->bind(FortifyPasswordResetLinkController::class, PasswordResetLinkController::class);
+        //
     }
 
     /**
@@ -44,10 +39,9 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureActions(): void
     {
-        Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
-
-        // Email + password: Super Admin only (TOTP enforced afterwards).
-        Fortify::authenticateUsing(fn (Request $request) => app(AuthenticateSuperAdmin::class)->handle($request));
+        // Email + password for every active employee (owner decision 6 Oct 2026);
+        // Super Admins then need TOTP. Forgotten passwords: routes/password-reset.php.
+        Fortify::authenticateUsing(fn (Request $request) => app(AuthenticateEmployee::class)->handle($request));
     }
 
     /**
@@ -55,32 +49,17 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
+        // Google sign-in is on hold (owner decision 6 Oct 2026): its routes and code
+        // stay (routes/auth.php) but the login page only offers email + password.
         Fortify::loginView(function (Request $request) {
-            $company = Company::query()->oldest()->first(['id', 'name', 'google_domain']);
-            $googleEmail = $request->session()->get('google_email');
+            $company = Company::query()->oldest()->first(['id', 'name']);
 
             return Inertia::render('auth/login', [
-                'canResetPassword' => Features::enabled(Features::resetPasswords()),
                 'status' => $request->session()->get('status'),
                 'demoAccounts' => DemoAccounts::loginPageProps(),
-                'google' => [
-                    'enabled' => GoogleOAuth::configured(),
-                    'domain' => $company?->google_domain,
-                    'rejectedEmail' => is_string($googleEmail) ? $googleEmail : null,
-                ],
                 'companyName' => $company?->name,
             ]);
         });
-
-        Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/reset-password', [
-            'email' => $request->email,
-            'token' => $request->route('token'),
-            'passwordRules' => Password::defaults()->toPasswordRulesString(),
-        ]));
-
-        Fortify::requestPasswordResetLinkView(fn (Request $request) => Inertia::render('auth/forgot-password', [
-            'status' => $request->session()->get('status'),
-        ]));
 
         Fortify::verifyEmailView(fn (Request $request) => Inertia::render('auth/verify-email', [
             'status' => $request->session()->get('status'),
@@ -103,11 +82,27 @@ class FortifyServiceProvider extends ServiceProvider
         // The `login` limiter (10/min per IP + 5/min per email+IP) lives in
         // AppServiceProvider with the other named limiters (check-in, api).
 
-        // Google callback only: 60/min per client IP (dozens of employees share the
-        // office NAT at 08:00) and 10/min per browser session behind that IP.
-        // The client IP is resolved behind TRUSTED_PROXIES (config/trustedproxy.php).
-        // Forgot-password form: 5/min per IP (the answer is always generic).
-        RateLimiter::for('password-reset', fn (Request $request) => Limit::perMinute(5)->by('password-reset|'.$request->ip()));
+        // "Lupa kata sandi" (routes/password-reset.php). The answer is always the
+        // same, so the limits apply whether or not the address exists:
+        // - request form: 5/min per IP and 5/hour per address;
+        // - status polling (every 5 s): 30/min per request (token in the session), or per IP;
+        // - setting the new password: 6/min per IP.
+        RateLimiter::for('password-reset', fn (Request $request) => [
+            Limit::perMinute(5)->by('password-reset-ip|'.$request->ip()),
+            Limit::perHour(5)->by('password-reset-email|'.Str::lower(trim($request->string('email')->toString()))),
+        ]);
+
+        RateLimiter::for('password-reset-status', function (Request $request) {
+            $token = $request->hasSession() ? PasswordResetSession::from($request->session())?->token : null;
+
+            return Limit::perMinute(30)->by('password-reset-status|'.($token !== null ? hash('sha256', $token) : $request->ip()));
+        });
+
+        RateLimiter::for('password-reset-setup', fn (Request $request) => Limit::perMinute(6)->by('password-reset-setup|'.$request->ip()));
+
+        // Google callback only (sign-in on hold, routes kept): 60/min per client IP
+        // (dozens of employees share the office NAT at 08:00) and 10/min per browser
+        // session behind that IP. The client IP is resolved behind TRUSTED_PROXIES.
 
         RateLimiter::for('google-login', function (Request $request) {
             $ip = (string) $request->ip();

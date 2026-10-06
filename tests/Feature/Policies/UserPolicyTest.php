@@ -101,13 +101,15 @@ it('denies managing employees of another company', function () {
         ->and($gate->allows('deactivate', $foreign))->toBeFalse();
 });
 
-it('lets only a Super Admin manage their own password and 2FA', function (Role $role, bool $expected) {
+it('lets every active employee manage only their own password, and only a Super Admin their 2FA', function (Role $role, bool $twoFactor) {
     $actor = User::factory()->withRole($role)->create();
     $otherAdmin = User::factory()->withRole(Role::SuperAdmin)->create();
     $gate = Gate::forUser($actor);
 
-    expect($gate->allows('manageCredentials', $actor))->toBe($expected)
-        ->and($gate->allows('manageCredentials', $otherAdmin))->toBeFalse();
+    expect($gate->allows('manageCredentials', $actor))->toBeTrue()
+        ->and($gate->allows('manageCredentials', $otherAdmin))->toBeFalse()
+        ->and($gate->allows('manageTwoFactor', $actor))->toBe($twoFactor)
+        ->and($gate->allows('manageTwoFactor', $otherAdmin))->toBeFalse();
 })->with([
     'super_admin' => [Role::SuperAdmin, true],
     'direksi' => [Role::Direksi, false],
@@ -115,6 +117,38 @@ it('lets only a Super Admin manage their own password and 2FA', function (Role $
     'kepala_divisi' => [Role::KepalaDivisi, false],
     'anggota' => [Role::Anggota, false],
 ]);
+
+it('denies own password management to an inactive account', function () {
+    $actor = User::factory()->inactive()->withRole(Role::Anggota)->create();
+
+    expect(Gate::forUser($actor)->allows('manageCredentials', $actor))->toBeFalse();
+});
+
+it('applies the set-password matrix (HR sets others, Super Admin targets only by a Super Admin)', function (Role $actorRole, Role $targetRole, bool $expected) {
+    $actor = User::factory()->withRole($actorRole)->create();
+    $target = User::factory()->withRole($targetRole)->create();
+
+    expect(Gate::forUser($actor)->allows('setPassword', $target))->toBe($expected)
+        ->and(Gate::forUser($actor)->allows('setPassword', $actor))->toBeFalse();
+})->with([
+    'hr → anggota' => [Role::Hr, Role::Anggota, true],
+    'hr → kadiv' => [Role::Hr, Role::KepalaDivisi, true],
+    'hr → direksi' => [Role::Hr, Role::Direksi, true],
+    'hr → hr' => [Role::Hr, Role::Hr, true],
+    'hr → super admin' => [Role::Hr, Role::SuperAdmin, false],
+    'super admin → anggota' => [Role::SuperAdmin, Role::Anggota, true],
+    'super admin → super admin' => [Role::SuperAdmin, Role::SuperAdmin, true],
+    'direksi → anggota' => [Role::Direksi, Role::Anggota, false],
+    'kadiv → anggota' => [Role::KepalaDivisi, Role::Anggota, false],
+    'anggota → anggota' => [Role::Anggota, Role::Anggota, false],
+]);
+
+it('never lets HR set the password of another company', function () {
+    $hr = User::factory()->withRole(Role::Hr)->create();
+    $foreign = User::factory()->forCompany(Company::factory()->create())->withRole(Role::Anggota)->create();
+
+    expect(Gate::forUser($hr)->allows('setPassword', $foreign))->toBeFalse();
+});
 
 it('applies the role assignment matrix', function (Role $actorRole, array $expected) {
     $actor = User::factory()->withRole($actorRole)->create();

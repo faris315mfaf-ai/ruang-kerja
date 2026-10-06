@@ -2,6 +2,8 @@
 
 use App\Models\Channel;
 use App\Models\EmployeeRequest;
+use App\Models\PasswordResetRequest;
+use App\Models\User;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 use Tests\Support\PerformanceFixtures as P;
@@ -141,7 +143,34 @@ it('keeps the admin and organization pages free of N+1', function () {
         '/admin/organisasi/jabatan' => ['hr', 37],
         '/admin/audit' => ['admin', 29],
         '/organisasi/struktur' => ['anggota', 36],
+        // Akun & kata sandi (6 Okt 2026): own password page for every role.
+        '/settings/security' => ['anggota', 30],
     ]);
+});
+
+it('keeps the "Lupa kata sandi" requests on Admin › Karyawan free of N+1', function () {
+    $hr = P::user('hr');
+    $make = function (int $count) use ($hr): void {
+        foreach (range(1, $count) as $i) {
+            $employee = User::factory()->forCompany($hr->company)->create();
+            PasswordResetRequest::query()->create([
+                'company_id' => $hr->company_id,
+                'user_id' => $employee->id,
+                'email' => $employee->email,
+                'request_token_hash' => hash('sha256', $employee->id),
+                'expires_at' => now()->addDay(),
+            ]);
+        }
+    };
+
+    $make(1);
+    P::queries('hr', '/admin/karyawan');
+    $one = P::queries('hr', '/admin/karyawan');
+
+    $make(5);
+    $six = P::queries('hr', '/admin/karyawan');
+
+    expect($six)->toBeLessThanOrEqual($one);
 });
 
 it('keeps Data Saya free of N+1', function () {

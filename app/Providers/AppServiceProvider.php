@@ -52,14 +52,12 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
-        Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
-                ->mixedCase()
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
-            : null,
+        // Every employee signs in with a password (owner decision 6 Oct 2026):
+        // at least 8 characters; production also rejects known-breached passwords.
+        // "Not the email address" is added by App\Concerns\PasswordValidationRules.
+        Password::defaults(fn (): Password => app()->isProduction()
+            ? Password::min(8)->uncompromised()
+            : Password::min(8),
         );
     }
 

@@ -3,7 +3,7 @@ import type { PropsWithChildren } from 'react';
 import { TabNav } from '@/components/ui/tabs';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
-import { hasAnyRole, primaryRoleLabel } from '@/lib/roles';
+import { primaryRoleLabel } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit as editProfile } from '@/routes/profile';
@@ -13,19 +13,17 @@ import { google as googleSettings } from '@/routes/settings';
 type SettingsLink = { title: string; href: string };
 
 /**
- * Account pages in tab order. Keamanan (password & 2FA) exists only for the
- * Super Admin emergency sign-in.
+ * Account pages in tab order. Keamanan (own password; TOTP for Super Admins)
+ * is for every employee since password sign-in (owner decision 6 Oct 2026).
  */
-export function settingsLinks(roles: readonly string[]): SettingsLink[] {
+export function settingsLinks(_roles: readonly string[]): SettingsLink[] {
     return [
         { title: 'Profil', href: editProfile().url },
         { title: 'Notifikasi', href: '/pengaturan/notifikasi' },
         { title: 'Tampilan', href: editAppearance().url },
         { title: 'Akun Google', href: googleSettings().url },
         { title: 'Privasi & data saya', href: '/privasi' },
-        ...(hasAnyRole(roles, 'super_admin')
-            ? [{ title: 'Keamanan', href: editSecurity().url }]
-            : []),
+        { title: 'Keamanan', href: editSecurity().url },
     ];
 }
 

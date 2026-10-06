@@ -44,7 +44,8 @@ it('shows the organization data read-only', function () {
                 'workMode' => 'Hybrid',
                 'joinedAt' => '2024-02-01',
             ])
-            ->where('canManageCredentials', false),
+            // Every employee manages their own password (owner decision 6 Oct 2026).
+            ->where('canManageCredentials', true),
         );
 });
 

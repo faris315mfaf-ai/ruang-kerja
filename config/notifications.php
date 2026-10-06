@@ -32,6 +32,8 @@ return [
         'attendance.check_in_reminder' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'attendance.check_out_reminder' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'project.activity' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
+        // Password reset requests (→ HR) and "HR set your password" (locked on).
+        'account.security' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
         'system' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'digest.daily' => ['email' => true],
     ],

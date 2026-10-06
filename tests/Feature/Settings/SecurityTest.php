@@ -1,6 +1,8 @@
 <?php
 
+use App\Domain\Auth\Rules\NotSameAsEmail;
 use App\Domain\Organization\Enums\Role;
+use App\Models\AuditLog;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Auth\Events\OtherDeviceLogout;
@@ -84,16 +86,100 @@ it('requires the current password to update it', function () {
         ->assertRedirect(route('security.edit'));
 });
 
-it('forbids password and two-factor routes for other roles', function (Role $role) {
+it('lets every other role open the security page without a password prompt or 2FA section', function (Role $role) {
+    $user = User::factory()->withRole($role)->create();
+
+    $this->actingAs($user)
+        ->get(route('security.edit'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('settings/security')
+            ->where('canManageTwoFactor', false)
+            ->where('twoFactorRequired', false)
+            ->where('passwordChangeRequired', false)
+            ->where('hasPassword', true)
+            ->missing('twoFactorEnabled'),
+        );
+})->with([Role::Direksi, Role::Hr, Role::KepalaDivisi, Role::Anggota]);
+
+it('lets every role change their own password and audits it without the value', function (Role $role) {
+    $user = User::factory()->withRole($role)->create();
+
+    $this->actingAs($user)
+        ->from(route('security.edit'))
+        ->put(route('user-password.update'), [
+            'current_password' => 'password',
+            'password' => 'sandi-baru-123',
+            'password_confirmation' => 'sandi-baru-123',
+        ])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('security.edit'));
+
+    expect(Hash::check('sandi-baru-123', $user->refresh()->password))->toBeTrue();
+
+    $audit = AuditLog::query()->where('action', 'user.password_changed')->sole();
+    expect($audit->user_id)->toBe($user->id)
+        ->and($audit->auditable_id)->toBe($user->id)
+        ->and($audit->new_values)->toBe(['required_change' => false])
+        ->and(json_encode($audit->new_values))->not->toContain('sandi-baru-123')
+        ->and(AuditLog::query()->where('action', 'user.updated')->count())->toBe(0);
+})->with([Role::SuperAdmin, Role::Direksi, Role::Hr, Role::KepalaDivisi, Role::Anggota]);
+
+it('enforces the password rules: at least 8 characters, confirmed, not the email, different from the current one', function (string $password, string $confirmation, string $field) {
+    $user = User::factory()->withRole(Role::Anggota)->create(['email' => 'rizky.aditya@kantor.test']);
+
+    $this->actingAs($user)
+        ->from(route('security.edit'))
+        ->put(route('user-password.update'), [
+            'current_password' => 'password',
+            'password' => $password,
+            'password_confirmation' => $confirmation,
+        ])
+        ->assertSessionHasErrors($field);
+
+    expect(Hash::check('password', $user->refresh()->password))->toBeTrue();
+})->with([
+    'too short' => ['pendek7', 'pendek7', 'password'],
+    'not confirmed' => ['sandi-baru-123', 'sandi-lain-123', 'password'],
+    'same as email' => ['Rizky.Aditya@kantor.test', 'Rizky.Aditya@kantor.test', 'password'],
+    'same as email name' => ['rizky.aditya', 'rizky.aditya', 'password'],
+    'same as current' => ['password', 'password', 'password'],
+]);
+
+it('explains why the email cannot be the password', function () {
+    $user = User::factory()->withRole(Role::Anggota)->create(['email' => 'rizky.aditya@kantor.test']);
+
+    $this->actingAs($user)
+        ->from(route('security.edit'))
+        ->put(route('user-password.update'), [
+            'current_password' => 'password',
+            'password' => 'rizky.aditya@kantor.test',
+            'password_confirmation' => 'rizky.aditya@kantor.test',
+        ])
+        ->assertSessionHasErrors(['password' => NotSameAsEmail::MESSAGE]);
+});
+
+it('lets an account without a password set its first one without the current password', function () {
+    $user = User::factory()->withRole(Role::Anggota)->create(['password' => null]);
+
+    $this->actingAs($user)->get(route('security.edit'))
+        ->assertInertia(fn (Assert $page) => $page->where('hasPassword', false));
+
+    $this->actingAs($user)
+        ->from(route('security.edit'))
+        ->put(route('user-password.update'), [
+            'password' => 'sandi-pertama-1',
+            'password_confirmation' => 'sandi-pertama-1',
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect(Hash::check('sandi-pertama-1', (string) $user->refresh()->password))->toBeTrue();
+});
+
+it('forbids two-factor routes and password confirmation for other roles', function (Role $role) {
     $user = User::factory()->withRole($role)->create();
     $session = ['auth.password_confirmed_at' => time()];
 
-    $this->actingAs($user)->withSession($session)->get(route('security.edit'))->assertForbidden();
-    $this->actingAs($user)->withSession($session)->put(route('user-password.update'), [
-        'current_password' => 'password',
-        'password' => 'new-password',
-        'password_confirmation' => 'new-password',
-    ])->assertForbidden();
     $this->actingAs($user)->get(route('password.confirm'))->assertForbidden();
     $this->actingAs($user)->post(route('password.confirm.store'), ['password' => 'password'])->assertForbidden();
 

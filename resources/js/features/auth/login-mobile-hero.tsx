@@ -15,7 +15,7 @@ export function LoginMobileHero({ companyName }: { companyName: string }) {
     const { branding } = usePage().props;
 
     return (
-        <header className="flex flex-col gap-3.5 px-6 pt-20">
+        <header className="flex flex-col gap-3.5 px-6 pt-14">
             {branding.logo ? (
                 <img
                     src={branding.logo}
@@ -38,7 +38,7 @@ export function LoginMobileHero({ companyName }: { companyName: string }) {
             </p>
             <p className="text-body text-text-muted">
                 Absen, kerja, dan pantau proyek dalam satu tempat. Masuk dengan
-                akun Google kantor Anda.
+                email kantor dan kata sandi Anda.
             </p>
         </header>
     );

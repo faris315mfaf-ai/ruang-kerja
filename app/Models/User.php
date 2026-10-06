@@ -34,6 +34,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property string|null $password
+ * @property bool $password_change_required HR set a temporary password: change it before using the app
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
@@ -86,6 +87,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         'two_factor_recovery_codes' => null,
         'two_factor_confirmed_at' => null,
         'remember_token' => null,
+        'password_change_required' => false,
         'google_id' => null,
         'avatar_url' => null,
         'division_id' => null,
@@ -107,6 +109,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'password_change_required' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
             'theme' => Theme::class,
             'work_mode' => WorkMode::class,

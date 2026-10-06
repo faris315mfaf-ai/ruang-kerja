@@ -9,21 +9,30 @@ use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Password, password-confirmation and two-factor management routes (ours and
- * Fortify's) are for Super Admins only — every other employee signs in with
- * Google and has no password to manage. Registered in the `web` group because
+ * Credential routes (ours and Fortify's). Registered in the `web` group because
  * Fortify's routes cannot take per-route middleware.
+ *
+ * - Own password (Pengaturan › Keamanan): every active employee
+ *   (UserPolicy::manageCredentials; owner decision 6 Oct 2026).
+ * - Password confirmation and two-factor management: Super Admin only
+ *   (UserPolicy::manageTwoFactor) — TOTP exists only for them.
  */
 class RestrictCredentialRoutes
 {
-    public const string MESSAGE = 'Pengaturan kata sandi dan 2FA hanya untuk Super Admin.';
+    public const string MESSAGE = 'Autentikasi dua faktor hanya untuk Super Admin.';
 
     /**
      * @var list<string>
      */
-    public const array ROUTES = [
+    public const array PASSWORD_ROUTES = [
         'security.edit',
         'user-password.update',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    public const array TWO_FACTOR_ROUTES = [
         'password.confirm',
         'password.confirm.store',
         'password.confirmation',
@@ -40,8 +49,14 @@ class RestrictCredentialRoutes
     {
         $user = $request->user();
 
-        if ($user instanceof User && $request->routeIs(...self::ROUTES)) {
-            abort_unless(Gate::forUser($user)->allows('manageCredentials', $user), Response::HTTP_FORBIDDEN, self::MESSAGE);
+        if (! $user instanceof User) {
+            return $next($request);
+        }
+
+        if ($request->routeIs(...self::PASSWORD_ROUTES)) {
+            abort_unless(Gate::forUser($user)->allows('manageCredentials', $user), Response::HTTP_FORBIDDEN);
+        } elseif ($request->routeIs(...self::TWO_FACTOR_ROUTES)) {
+            abort_unless(Gate::forUser($user)->allows('manageTwoFactor', $user), Response::HTTP_FORBIDDEN, self::MESSAGE);
         }
 
         return $next($request);

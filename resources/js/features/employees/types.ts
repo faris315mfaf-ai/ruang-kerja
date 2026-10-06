@@ -90,6 +90,22 @@ export type EmployeeIndexProps = {
     companyDomain: string;
     formOptions: FormOptions | null;
     editing: EmployeeFormValues | null;
+    /** "Lupa kata sandi" requests the viewer may decide (empty without employees.manage). */
+    passwordResets: PasswordResetItem[];
+};
+
+/** A "Lupa kata sandi" request awaiting HR (owner decision 6 Oct 2026). */
+export type PasswordResetItem = {
+    id: string;
+    employee: {
+        id: string | null;
+        name: string;
+        email: string;
+        avatar_url: string | null;
+    };
+    requested_at: string;
+    expires_at: string;
+    ip: string | null;
 };
 
 export type AuditEntry = {
@@ -124,7 +140,16 @@ export type EmployeeShowProps = {
     directReports: DirectReport[];
     audit: AuditEntry[] | null;
     options: EnumOptions;
-    can: { manage: boolean; update: boolean; deactivate: boolean };
+    can: {
+        manage: boolean;
+        update: boolean;
+        deactivate: boolean;
+        setPassword: boolean;
+    };
+    /** This employee's request awaiting a decision, if the viewer may decide it. */
+    passwordReset: PasswordResetItem | null;
+    /** Whether a password is set (HR only; null for read-only viewers). */
+    hasPassword: boolean | null;
 };
 
 export type ImportRowResult = {

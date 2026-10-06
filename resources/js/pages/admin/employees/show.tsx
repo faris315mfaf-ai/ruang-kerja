@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { History, Mail, Pencil, Users } from 'lucide-react';
+import { History, KeyRound, Mail, Pencil, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { EmptyState } from '@/components/empty-state';
@@ -15,6 +15,9 @@ import {
     auditActionLabel,
     auditFieldsLabel,
 } from '@/features/employees/labels';
+import { PasswordResetRequests } from '@/features/employees/password-reset-requests';
+import type { SetPasswordTarget } from '@/features/employees/set-password-dialog';
+import { SetPasswordDialog } from '@/features/employees/set-password-dialog';
 import type { StatusTarget } from '@/features/employees/status-dialog';
 import { StatusDialog } from '@/features/employees/status-dialog';
 import type { EmployeeShowProps } from '@/features/employees/types';
@@ -23,7 +26,15 @@ import { formatDate, formatDateTime, formatRelative } from '@/lib/format';
 import { cn, focusRing } from '@/lib/utils';
 import { index, show } from '@/routes/admin/employees';
 
-const STATUS_ACTIONS = ['user.deactivated', 'user.reactivated'];
+const STATUS_ACTIONS = [
+    'user.deactivated',
+    'user.reactivated',
+    'user.password_set_by_hr',
+    'user.password_changed',
+    'user.password_reset_approved',
+    'user.password_reset_rejected',
+    'user.password_reset_completed',
+];
 
 /** Employee profile: personal data, org placement, direct reports, audit (HR). */
 export default function EmployeeShow({
@@ -31,10 +42,14 @@ export default function EmployeeShow({
     directReports,
     audit,
     can,
+    passwordReset,
+    hasPassword,
 }: EmployeeShowProps) {
     const breakpoint = useBreakpoint();
     const isMobile = breakpoint === 'mobile';
     const [statusTarget, setStatusTarget] = useState<StatusTarget | null>(null);
+    const [passwordTarget, setPasswordTarget] =
+        useState<SetPasswordTarget | null>(null);
 
     return (
         <>
@@ -100,6 +115,22 @@ export default function EmployeeShow({
                                     : 'Aktifkan kembali'}
                             </Button>
                         )}
+                        {!isMobile && can.setPassword && (
+                            <Button
+                                variant="outline"
+                                onClick={() =>
+                                    setPasswordTarget({
+                                        id: employee.id,
+                                        name: employee.name,
+                                        email: employee.email,
+                                    })
+                                }
+                                data-test="set-password-button"
+                            >
+                                <KeyRound />
+                                Atur kata sandi
+                            </Button>
+                        )}
                         {!isMobile && can.update && (
                             <Button asChild>
                                 <Link
@@ -114,6 +145,13 @@ export default function EmployeeShow({
                         )}
                     </div>
                 </header>
+
+                {passwordReset && (
+                    <PasswordResetRequests
+                        requests={[passwordReset]}
+                        showEmployee={false}
+                    />
+                )}
 
                 <div className="grid items-start gap-5 lg:grid-cols-2">
                     <div className="flex flex-col gap-5">
@@ -150,6 +188,13 @@ export default function EmployeeShow({
                                     ? formatDate(employee.joined_at)
                                     : '—'}
                             </Row>
+                            {hasPassword !== null && (
+                                <Row label="Kata sandi">
+                                    {hasPassword
+                                        ? 'Sudah diatur'
+                                        : 'Belum diatur'}
+                                </Row>
+                            )}
                             <Row label="Terakhir masuk">
                                 {employee.last_login_at
                                     ? formatRelative(employee.last_login_at)
@@ -325,7 +370,7 @@ export default function EmployeeShow({
 
                 {isMobile && can.update && (
                     <p className="text-center text-meta text-text-muted">
-                        Ubah data, divisi, atau peran lewat desktop.
+                        Ubah data, divisi, peran, atau kata sandi lewat desktop.
                     </p>
                 )}
             </div>
@@ -333,6 +378,10 @@ export default function EmployeeShow({
             <StatusDialog
                 target={statusTarget}
                 onClose={() => setStatusTarget(null)}
+            />
+            <SetPasswordDialog
+                target={passwordTarget}
+                onClose={() => setPasswordTarget(null)}
             />
         </>
     );

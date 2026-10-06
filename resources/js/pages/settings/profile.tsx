@@ -73,12 +73,13 @@ export default function Profile({ profile, canManageCredentials }: Props) {
 
                     {canManageCredentials && (
                         <Panel
-                            title="Keamanan Super Admin"
+                            title="Kata sandi & keamanan"
                             bodyClassName="gap-3"
                         >
                             <p className="text-label font-normal text-text-muted">
-                                Kata sandi darurat dan autentikasi dua faktor
-                                (TOTP).
+                                Ganti kata sandi yang Anda pakai untuk masuk.
+                                Super Admin juga mengatur autentikasi dua faktor
+                                (TOTP) di sini.
                             </p>
                             <Button
                                 variant="outline"

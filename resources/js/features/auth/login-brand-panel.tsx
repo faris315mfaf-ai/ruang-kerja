@@ -56,8 +56,8 @@ export function LoginBrandPanel({ companyName }: { companyName: string }) {
                     Absen, kerja, dan pantau proyek dalam satu tempat.
                 </p>
                 <p className="text-[19px] leading-[30px]">
-                    Terhubung dengan Google Workspace kantor Anda. Data lokasi
-                    hanya direkam saat check-in dan check-out.
+                    Satu akun kantor untuk semua karyawan. Data lokasi hanya
+                    direkam saat check-in dan check-out.
                 </p>
             </div>
 

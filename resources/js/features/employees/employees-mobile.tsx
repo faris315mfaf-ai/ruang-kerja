@@ -19,6 +19,7 @@ import { cn, focusRing } from '@/lib/utils';
 import { index, show } from '@/routes/admin/employees';
 import { RoleBadges, StatusBadge, WorkModeBadge } from './employee-badges';
 import { STATUS_LABELS } from './labels';
+import { PasswordResetRequests } from './password-reset-requests';
 import type { EmployeeIndexProps, EmployeeRow } from './types';
 import { useEmployeeFilters } from './use-employee-filters';
 
@@ -32,6 +33,7 @@ export function EmployeesMobile({
     counts,
     divisions,
     can,
+    passwordResets,
 }: EmployeeIndexProps) {
     const { search, changeSearch, apply, loading } =
         useEmployeeFilters(filters);
@@ -88,6 +90,8 @@ export function EmployeesMobile({
                 <span className="tnum">{formatNumber(counts.inactive)}</span>{' '}
                 nonaktif
             </p>
+
+            <PasswordResetRequests requests={passwordResets} />
 
             {can.manage && (
                 <p

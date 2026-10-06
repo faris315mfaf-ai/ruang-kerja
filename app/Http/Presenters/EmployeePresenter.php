@@ -4,6 +4,7 @@ namespace App\Http\Presenters;
 
 use App\Http\Requests\Admin\UpdateEmployeeRequest;
 use App\Models\AuditLog;
+use App\Models\PasswordResetRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 
@@ -106,5 +107,26 @@ final class EmployeePresenter
         }
 
         return str_repeat('•', max(0, mb_strlen($nik) - 4)).mb_substr($nik, -4);
+    }
+
+    /**
+     * A "Lupa kata sandi" request awaiting HR (Admin › Karyawan).
+     *
+     * @return array{id: string, employee: array{id: string|null, name: string, email: string, avatar_url: string|null}, requested_at: string, expires_at: string, ip: string|null}
+     */
+    public static function passwordReset(PasswordResetRequest $request): array
+    {
+        return [
+            'id' => $request->id,
+            'employee' => [
+                'id' => $request->user_id,
+                'name' => $request->user->name ?? $request->email,
+                'email' => $request->email,
+                'avatar_url' => $request->user?->avatar_url,
+            ],
+            'requested_at' => $request->created_at->toIso8601String(),
+            'expires_at' => $request->expires_at->toIso8601String(),
+            'ip' => $request->ip,
+        ];
     }
 }
