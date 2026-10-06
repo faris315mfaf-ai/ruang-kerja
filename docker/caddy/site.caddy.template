@@ -1,0 +1,40 @@
+# RuangKerja site block for the SHARED edge proxy (compose.shared.yml,
+# docs/deploy/VPS-BERSAMA.md). scripts/deploy-remote.sh renders it to
+# /opt/edge/sites/ruangkerja.caddy, replacing __APP_DOMAIN__ with APP_DOMAIN.
+# Same rules as docker/caddy/Caddyfile (standalone stack); keep them in sync.
+#
+# The app sends its own security headers (SecurityHeaders middleware, CSP with
+# nonce); `?` = set only if the upstream did not.
+__APP_DOMAIN__ {
+	encode zstd gzip
+
+	request_body {
+		# Drive uploads are limited to 100 MB per file.
+		max_size 110MB
+	}
+
+	header {
+		?Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		?X-Content-Type-Options "nosniff"
+		?X-Frame-Options "DENY"
+		?Referrer-Policy "strict-origin-when-cross-origin"
+		?Permissions-Policy "camera=(self), geolocation=(self), microphone=(), payment=(), usb=(), browsing-topics=()"
+		-Server
+		-X-Powered-By
+	}
+
+	# Reverb: WebSocket (/app/{key}) and HTTP API (/apps/{id}/...).
+	@reverb path /app /app/* /apps /apps/*
+	handle @reverb {
+		reverse_proxy ruangkerja-reverb:8080
+	}
+
+	handle {
+		reverse_proxy ruangkerja-app:8000
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

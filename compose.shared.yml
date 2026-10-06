@@ -1,0 +1,75 @@
+# Override for a VPS SHARED with other projects (docs/deploy/VPS-BERSAMA.md):
+#   COMPOSE_FILE=compose.prod.yml:compose.shared.yml docker compose up -d
+#
+# - The stack's own Caddy never starts: the shared edge proxy (/opt/edge,
+#   deploy/edge) owns ports 80/443 and routes the domain here.
+# - Only `app` and `reverb` join the external `edge` network, under aliases
+#   prefixed with the project name so they never clash with another project's
+#   `app`. Postgres, Redis, queue, scheduler and backup stay on the private
+#   project network.
+# - Memory/CPU limits keep one project from starving the others.
+services:
+  caddy:
+    # Not in any enabled profile = never started.
+    profiles: ["standalone-proxy"]
+
+  app:
+    networks:
+      default: {}
+      edge:
+        aliases: [ruangkerja-app]
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2g
+
+  reverb:
+    networks:
+      default: {}
+      edge:
+        aliases: [ruangkerja-reverb]
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512m
+
+  queue:
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1g
+
+  scheduler:
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+
+  postgres:
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 4g
+
+  redis:
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 768m
+
+  backup:
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512m
+
+networks:
+  edge:
+    external: true

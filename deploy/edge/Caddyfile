@@ -1,0 +1,10 @@
+# Shared edge proxy (deploy/edge/compose.yml). Global options only: every
+# project adds its own site block in sites/<project>.caddy, e.g.
+# sites/ruangkerja.caddy rendered from docker/caddy/site.caddy.template by
+# scripts/deploy-remote.sh. Validate before reloading:
+#   docker exec edge-caddy caddy validate --config /etc/caddy/Caddyfile
+{
+	email {$ACME_EMAIL}
+}
+
+import /etc/caddy/sites/*.caddy

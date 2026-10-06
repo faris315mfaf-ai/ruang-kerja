@@ -117,6 +117,8 @@ php artisan ruangkerja:google-check --write      # uji koneksi Google (service a
 
 ## Deploy ke VPS (Biznet Gio) dari nol
 
+> **VPS dipakai bersama project lain?** Ikuti `docs/deploy/VPS-BERSAMA.md`: proxy edge bersama di `/opt/edge`, stack ini tanpa Caddy sendiri (`compose.shared.yml`), skrip `scripts/server-bootstrap.sh` dan `scripts/server-init-env.sh`. Bagian di bawah ini untuk server khusus RuangKerja.
+
 Topologi (`compose.prod.yml`, ARCHITECTURE §6): `caddy` (80/443, TLS otomatis) → `app` (FrankenPHP :8000) dan `reverb` (:8080, path `/app` & `/apps`); `queue` (Horizon), `scheduler`, `postgres:17`, `redis:7`, `backup`. Hanya Caddy yang membuka port.
 
 ### 1. Siapkan server (sekali)
@@ -190,7 +192,7 @@ Deploy manual tanpa GitHub (mis. staging): di server, `DEPLOY_PATH=/opt/ruangker
 
 ## Backup & pemulihan
 
-- Kontainer `backup` menjalankan `scripts/backup.sh` setiap hari **02.00 WIB** (`BACKUP_SCHEDULE`): `pg_dump` format custom → cek `pg_restore --list` → unggah ke `BACKUP_S3_BUCKET/BACKUP_S3_PREFIX` lewat rclone → hapus dump remote > **30 hari** (`BACKUP_RETENTION_DAYS`) dan lokal > 7 hari. `BACKUP_HEARTBEAT_URL` (opsional, mis. healthchecks.io) dipanggil saat sukses dan `/fail` saat gagal.
+- Kontainer `backup` menjalankan `scripts/backup.sh` setiap hari **02.00 WIB** (`BACKUP_SCHEDULE`): `pg_dump` format custom → cek `pg_restore --list` → unggah ke `BACKUP_REMOTE` (`backup:<bucket>/<prefix>`, kosong = hanya lokal) lewat rclone → hapus dump remote > **30 hari** (`BACKUP_RETENTION_DAYS`) dan lokal > 7 hari. `BACKUP_HEARTBEAT_URL` (opsional, mis. healthchecks.io) dipanggil saat sukses dan `/fail` saat gagal.
 - Backup manual: `docker compose -f compose.prod.yml exec backup backup.sh`
 - Daftar dump: `docker compose -f compose.prod.yml exec backup rclone lsl backup:<bucket>/postgres`
 

@@ -13,6 +13,9 @@ name: Deploy
 #   DEPLOY_USER      e.g. deploy
 #   DEPLOY_PORT      optional, default 22
 #   DEPLOY_PATH      optional, default /opt/ruangkerja
+# Stack layout (own Caddy vs. the shared edge proxy of a VPS shared with other
+# projects) is chosen on the server by COMPOSE_FILE in /opt/ruangkerja/.env
+# (docs/deploy/VPS-BERSAMA.md); both compose files are uploaded every deploy.
 # Environment secrets (environment `production`):
 #   DEPLOY_SSH_KEY      private key of the deploy user (ed25519, no passphrase)
 #   DEPLOY_KNOWN_HOSTS  output of `ssh-keyscan -p <port> <host>`
@@ -143,8 +146,8 @@ jobs:
         run: |
           # shellcheck disable=SC2029
           ssh production "mkdir -p '${DEPLOY_PATH}/docker/caddy'"
-          scp compose.prod.yml "production:${DEPLOY_PATH}/compose.prod.yml"
-          scp docker/caddy/Caddyfile "production:${DEPLOY_PATH}/docker/caddy/Caddyfile"
+          scp compose.prod.yml compose.shared.yml "production:${DEPLOY_PATH}/"
+          scp docker/caddy/Caddyfile docker/caddy/site.caddy.template "production:${DEPLOY_PATH}/docker/caddy/"
 
       - name: Log in to GHCR on the server (short-lived job token)
         env:

@@ -1,0 +1,4 @@
+# One file per project: <project>.caddy with a single site block.
+# Upstreams are container aliases on the `edge` network, always prefixed with
+# the project name (ruangkerja-app, ruangkerja-reverb, ...) so two projects
+# that both have a service called `app` never collide.

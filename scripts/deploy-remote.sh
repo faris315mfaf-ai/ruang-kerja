@@ -13,14 +13,27 @@ set -euo pipefail
 
 cd "$DEPLOY_PATH"
 
-# Standard Compose variables, overridable for a staging/smoke stack.
-export COMPOSE_FILE=${COMPOSE_FILE:-compose.prod.yml}
+[ -f .env ] || { echo "[deploy] .env missing in $DEPLOY_PATH" >&2; exit 1; }
+
+# Standard Compose variables, overridable for a staging/smoke stack. On a VPS
+# shared with other projects .env sets COMPOSE_FILE=compose.prod.yml:compose.shared.yml
+# (docs/deploy/VPS-BERSAMA.md).
+env_compose_file=$(grep -E '^COMPOSE_FILE=' .env | cut -d= -f2- | tr -d '"' || true)
+export COMPOSE_FILE=${COMPOSE_FILE:-${env_compose_file:-compose.prod.yml}}
 export COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-ruangkerja}
+EDGE_PATH=${EDGE_PATH:-/opt/edge}
 
 compose() { docker compose "$@"; }
 log() { echo "[deploy] $(date -u '+%Y-%m-%dT%H:%M:%SZ') $*"; }
 
-[ -f .env ] || { echo "[deploy] .env missing in $DEPLOY_PATH" >&2; exit 1; }
+shared=0
+case "$COMPOSE_FILE" in *compose.shared.yml*) shared=1 ;; esac
+if [ "$shared" = 1 ]; then
+    docker network inspect edge > /dev/null 2>&1 \
+        || { echo "[deploy] Docker network 'edge' missing: run scripts/server-bootstrap.sh first" >&2; exit 1; }
+    [ -f docker/caddy/site.caddy.template ] \
+        || { echo "[deploy] docker/caddy/site.caddy.template missing in $DEPLOY_PATH" >&2; exit 1; }
+fi
 
 previous=$(grep -E '^APP_TAG=' .env | cut -d= -f2- || true)
 log "deploying $APP_TAG (previous: ${previous:-none})"
@@ -38,6 +51,22 @@ fi
 
 log "starting containers"
 compose up -d --remove-orphans --wait --wait-timeout 300
+
+if [ "$shared" = 1 ]; then
+    domain=$(grep -E '^APP_DOMAIN=' .env | cut -d= -f2- | tr -d '"')
+    site="$EDGE_PATH/sites/ruangkerja.caddy"
+    log "publishing $domain on the shared edge proxy ($site)"
+    [ -f "$site" ] && cp "$site" "$site.prev"
+    sed "s/__APP_DOMAIN__/${domain}/g" docker/caddy/site.caddy.template > "$site"
+    if docker exec edge-caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile > /dev/null 2>&1; then
+        docker exec edge-caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+        rm -f "$site.prev"
+    else
+        echo "[deploy] edge config invalid, restoring the previous site file" >&2
+        if [ -f "$site.prev" ]; then mv "$site.prev" "$site"; else rm -f "$site"; fi
+        exit 1
+    fi
+fi
 
 log "running migrations"
 compose exec -T app php artisan migrate --force

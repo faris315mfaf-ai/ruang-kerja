@@ -1,0 +1,48 @@
+# Shared edge reverse proxy for every project on this VPS
+# (docs/deploy/VPS-BERSAMA.md). Owns ports 80/443, gets TLS certificates
+# automatically and routes each domain to a container on the external Docker
+# network `edge`. Projects never publish host ports; each one drops a site
+# file into ./sites/<project>.caddy and runs `caddy reload` (see reload.sh).
+#
+# On the server (directory /opt/edge, created by scripts/server-bootstrap.sh):
+#   docker network create edge        # once
+#   echo "ACME_EMAIL=it@perusahaan.co.id" > .env
+#   docker compose up -d
+name: edge
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: edge-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in /opt/edge/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./sites:/etc/caddy/sites:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - edge
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+networks:
+  edge:
+    external: true
+
+volumes:
+  caddy_data:
+  caddy_config:
