@@ -1,6 +1,6 @@
 # Deploy ke VPS bersama (beberapa project di satu server)
 
-Panduan ini untuk VPS yang **dipakai bersama project lain**. Server khusus RuangKerja saja tetap memakai langkah di `README.md` › *Deploy ke VPS dari nol* (stack dengan Caddy sendiri).
+Panduan ini untuk VPS yang **dipakai bersama project lain**. Server khusus RuangKerja saja tetap memakai langkah di `README.md` › *Deploy ke VPS dari nol* (stack dengan Caddy sendiri). Untuk memisah web dan database/antrean ke dua server: `docs/deploy/DUA-VPS.md`.
 
 ## 1. Topologi
 

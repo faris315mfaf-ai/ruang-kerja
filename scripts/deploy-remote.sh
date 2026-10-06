@@ -68,14 +68,23 @@ if [ "$shared" = 1 ]; then
     fi
 fi
 
-log "running migrations"
-compose exec -T app php artisan migrate --force
+# Two-server split (docs/deploy/DUA-VPS.md): the web VPS has `app` (runs the
+# migrations), the data VPS has `queue`. Deploy the data VPS first.
+services=$(compose config --services)
+has_service() { printf '%s\n' "$services" | grep -qx "$1"; }
 
-log "syncing roles & permissions"
-compose exec -T app php artisan db:seed --force
+if has_service app; then
+    log "running migrations"
+    compose exec -T app php artisan migrate --force
 
-log "restarting Horizon workers"
-compose exec -T queue php artisan horizon:terminate || log "horizon:terminate failed (queue container restarts it anyway)"
+    log "syncing roles & permissions"
+    compose exec -T app php artisan db:seed --force
+fi
+
+if has_service queue; then
+    log "restarting Horizon workers"
+    compose exec -T queue php artisan horizon:terminate || log "horizon:terminate failed (queue container restarts it anyway)"
+fi
 
 echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') ${APP_TAG} (previous ${previous:-none})" >> .deploy-history
 
