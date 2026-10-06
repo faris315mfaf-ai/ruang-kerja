@@ -312,7 +312,8 @@ export function EditorToolbar({
             role="toolbar"
             aria-label="Format teks"
             className={cn(
-                'flex [scrollbar-width:none] items-center gap-0.5 overflow-x-auto',
+                // relative: sr-only labels inside stay clipped by the scroller.
+                'relative flex [scrollbar-width:none] items-center gap-0.5 overflow-x-auto',
                 className,
             )}
         >

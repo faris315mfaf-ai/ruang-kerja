@@ -85,7 +85,7 @@ export function MinutesReturnPill() {
             className={cn(
                 'pointer-events-none fixed z-40 flex',
                 breakpoint === 'desktop' &&
-                    'inset-x-0 bottom-[calc(var(--dock-space)-4px)] justify-center px-6',
+                    'inset-x-0 bottom-[calc(var(--dock-space)+6px)] justify-center px-6',
                 breakpoint === 'tablet' && 'right-6 bottom-6',
                 breakpoint === 'mobile' &&
                     'right-[96px] bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom)+12px)] left-4',
@@ -100,7 +100,8 @@ export function MinutesReturnPill() {
                     'glass-strong pointer-events-auto flex h-12 max-w-[min(100%,520px)] min-w-0 items-center gap-2.5 rounded-full pr-2 pl-3 text-left text-text shadow-float transition-transform duration-120 ease-brand active:scale-[0.98]',
                     'data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-2',
                     'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-bottom-2',
-                    'duration-180 ease-brand',
+                    // Enter/exit 180 ms (transform + opacity); press stays 120 ms.
+                    'animation-duration-180',
                     focusRing,
                 )}
             >

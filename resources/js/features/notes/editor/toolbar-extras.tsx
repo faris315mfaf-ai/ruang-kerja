@@ -52,6 +52,17 @@ const HIGHLIGHT_SWATCH: Record<PaletteColor, string> = {
 
 type Kind = 'textColor' | 'highlight';
 
+/**
+ * Back to the text after a menu closes. A function of its own so the React
+ * Compiler never reads `editor.commands` while rendering (it throws before
+ * the view is mounted).
+ */
+function refocus(editor: Editor): void {
+    if (!editor.isDestroyed && editor.isInitialized) {
+        editor.commands.focus();
+    }
+}
+
 const COPY: Record<Kind, { label: string; title: string }> = {
     textColor: { label: 'Warna teks', title: 'Warna teks' },
     highlight: { label: 'Stabilo', title: 'Stabilo (Ctrl/⌘ + Shift + H)' },
@@ -111,7 +122,7 @@ export function ColorMenu({
                 onCloseAutoFocus={(event) => {
                     // Back to the text, not the toolbar button.
                     event.preventDefault();
-                    editor.commands.focus();
+                    refocus(editor);
                 }}
             >
                 <DropdownMenuLabel>{COPY[kind].label}</DropdownMenuLabel>

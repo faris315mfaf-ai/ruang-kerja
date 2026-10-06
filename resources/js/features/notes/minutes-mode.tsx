@@ -150,9 +150,14 @@ export function MinutesModeBar({
                 className,
             )}
         >
-            <NotebookPen aria-hidden className="size-5 shrink-0 text-link" />
+            {!mobile && (
+                <NotebookPen
+                    aria-hidden
+                    className="size-5 shrink-0 text-link"
+                />
+            )}
             <div className="flex min-w-0 flex-1 flex-col">
-                <p className="text-[15px] font-bold text-link">
+                <p className="truncate text-[15px] font-bold text-link">
                     Mode catat aktif
                 </p>
                 {!mobile && (
