@@ -6,6 +6,7 @@ import {
     CalendarClock,
     CheckCheck,
     CircleAlert,
+    ClipboardPen,
     Megaphone,
     MessageSquare,
     Plus,
@@ -30,6 +31,7 @@ const ICONS: Record<string, LucideIcon> = {
     megaphone: Megaphone,
     bell: Bell,
     shield: ShieldAlert,
+    clipboard: ClipboardPen,
 };
 
 export const toneClasses: Record<NotificationTone, string> = {

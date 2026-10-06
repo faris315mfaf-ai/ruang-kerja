@@ -32,6 +32,8 @@ return [
         'attendance.check_in_reminder' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'attendance.check_out_reminder' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'project.activity' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
+        // Laporan progres harian (keputusan pemilik 6 Okt 2026): in-app only by default.
+        'report.reminder' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'system' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'digest.daily' => ['email' => true],
     ],

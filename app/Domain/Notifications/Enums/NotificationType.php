@@ -38,6 +38,9 @@ enum NotificationType: string
     case ProjectDecisionNeeded = 'project.decision_needed';
     case ProjectDecisionResolved = 'project.decision_resolved';
 
+    // Laporan progres harian (keputusan pemilik 6 Okt 2026): 16.30 reminder.
+    case ReportReminder = 'report.reminder';
+
     // System (Sprint 8)
     case SystemAnnouncement = 'system.announcement';
     case SystemTest = 'system.test';
@@ -64,6 +67,7 @@ enum NotificationType: string
             self::ProjectDirection => 'Arahan Direksi',
             self::ProjectDecisionNeeded => 'Butuh keputusan',
             self::ProjectDecisionResolved => 'Keputusan diberikan',
+            self::ReportReminder => 'Pengingat laporan harian',
             self::SystemAnnouncement => 'Pengumuman',
             self::SystemTest => 'Notifikasi uji',
         };
@@ -89,6 +93,7 @@ enum NotificationType: string
             self::ConsentRevoked => NotificationEvent::System,
             self::ProjectUpdateReminder, self::ProjectUpdateRequested, self::ProjectDirection,
             self::ProjectDecisionNeeded, self::ProjectDecisionResolved => NotificationEvent::ProjectActivity,
+            self::ReportReminder => NotificationEvent::ReportReminder,
             self::SystemAnnouncement, self::SystemTest => NotificationEvent::System,
         };
     }
@@ -120,6 +125,7 @@ enum NotificationType: string
             self::ProjectDirection => 'message',
             self::ProjectDecisionNeeded => 'alert',
             self::ProjectDecisionResolved => 'check-check',
+            self::ReportReminder => 'clipboard',
             self::SystemAnnouncement => 'megaphone',
             self::SystemTest => 'bell',
         };
@@ -135,7 +141,7 @@ enum NotificationType: string
             self::RequestSubmitted, self::SystemAnnouncement => 'info',
             self::RequestApproved => 'success',
             self::TaskDueSoon, self::RequestRevisionRequested, self::CheckInReminder, self::CheckOutReminder, self::ConsentRevoked,
-            self::ProjectUpdateReminder, self::ProjectUpdateRequested => 'warning',
+            self::ProjectUpdateReminder, self::ProjectUpdateRequested, self::ReportReminder => 'warning',
             self::TaskOverdue, self::RequestRejected => 'danger',
             self::ProjectDirection, self::ProjectDecisionNeeded => 'info',
             self::ProjectDecisionResolved => 'success',

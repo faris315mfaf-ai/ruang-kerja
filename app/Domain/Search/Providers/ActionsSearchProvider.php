@@ -78,6 +78,10 @@ final class ActionsSearchProvider implements SearchProvider
             ['id' => 'attendance', 'title' => 'Absensi', 'icon' => 'map-pin', 'url' => '/absensi', 'keywords' => ['riwayat', 'kehadiran']],
             ['id' => 'requests', 'title' => 'Pengajuan saya', 'icon' => 'file-text', 'url' => '/pengajuan', 'keywords' => ['cuti', 'izin']],
             ['id' => 'approvals', 'title' => 'Persetujuan', 'icon' => 'check-check', 'url' => '/persetujuan', 'keywords' => ['approval', 'setujui']],
+            // Keputusan pemilik 6 Okt 2026: laporan progres harian & pengumuman.
+            ['id' => 'daily-report', 'title' => 'Tulis laporan hari ini', 'icon' => 'file-text', 'url' => '/laporan/hari-ini', 'keywords' => ['laporan', 'progres', 'harian', 'notulen', 'notulensi']],
+            ['id' => 'reports', 'title' => 'Laporan harian', 'icon' => 'file-text', 'url' => '/laporan', 'keywords' => ['laporan', 'riwayat', 'tim']],
+            ['id' => 'announcements', 'title' => 'Pengumuman', 'icon' => 'bell', 'url' => '/pengumuman', 'keywords' => ['info', 'kabar', 'berita']],
             ['id' => 'workspace', 'title' => 'Workspace', 'icon' => 'folder', 'url' => '/workspace', 'keywords' => ['proyek', 'tim', 'divisi']],
             ['id' => 'notification-settings', 'title' => 'Pengaturan notifikasi', 'icon' => 'bell', 'url' => '/pengaturan/notifikasi', 'keywords' => ['email', 'ringkasan', 'jam tenang']],
             ['id' => 'profile', 'title' => 'Profil saya', 'icon' => 'user', 'url' => '/settings/profile', 'keywords' => ['akun', 'nama', 'sandi']],

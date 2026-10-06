@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { CalendarDays, Plus, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Panel, PanelLink } from '@/components/ui/panel';
+import { DailyReportCard } from '@/features/reports/daily-report-card';
 import { isStaffOnly } from '@/features/staff/roles';
 import { useTaskComposer } from '@/features/tasks/form/task-composer';
 import { formatLongDate, formatNumber } from '@/lib/format';
@@ -59,6 +60,14 @@ export function PersonalDesktop(props: PersonalProps) {
                 className="flex flex-wrap items-stretch gap-5"
             >
                 <MyAttendanceCard className="flex-[1.4_1_420px]" />
+                {/* Laporan harian: most prominent for staff (keputusan pemilik 6 Okt 2026). */}
+                <DailyReportCard
+                    status={props.dailyReport}
+                    prominent={staff}
+                    className={
+                        staff ? 'flex-[1.2_1_320px]' : 'flex-[1_1_260px]'
+                    }
+                />
                 {!staff && (
                     <MetricKpi
                         href="/pengajuan"

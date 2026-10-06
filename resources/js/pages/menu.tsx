@@ -5,6 +5,7 @@ import {
     Calendar,
     CheckCheck,
     ChevronRight,
+    ClipboardPen,
     CloudCog,
     FileText,
     Inbox,
@@ -23,6 +24,7 @@ import { useAppearance } from '@/hooks/use-appearance';
 import { useInitials } from '@/hooks/use-initials';
 import {
     adminNavItems,
+    announcementsNavItem,
     attendanceNavItems,
     canSeeManagement,
     canSeePortfolio,
@@ -243,6 +245,16 @@ export default function Menu() {
                                     </Badge>
                                 ) : undefined
                             }
+                        />
+                        <Row
+                            icon={ClipboardPen}
+                            label="Laporan harian"
+                            href="/laporan"
+                        />
+                        <Row
+                            icon={announcementsNavItem.icon}
+                            label={announcementsNavItem.title}
+                            href={announcementsNavItem.href}
                         />
                         <Row
                             icon={FileText}

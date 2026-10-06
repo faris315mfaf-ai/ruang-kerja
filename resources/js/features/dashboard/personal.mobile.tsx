@@ -1,4 +1,5 @@
 import { usePage } from '@inertiajs/react';
+import { DailyReportCard } from '@/features/reports/daily-report-card';
 import { isStaffOnly } from '@/features/staff/roles';
 import { formatNumber } from '@/lib/format';
 import { formatShortDate } from '@/lib/requests';
@@ -33,6 +34,11 @@ export function PersonalMobile(props: PersonalProps) {
         <div className="flex flex-col gap-3.5 pb-24">
             <ViewPicker views={props.views} />
             <MyAttendanceCard compact />
+            <DailyReportCard
+                status={props.dailyReport}
+                prominent={staff}
+                compact
+            />
 
             <RuangSaya planner={props.planner} variant="mobile" />
 

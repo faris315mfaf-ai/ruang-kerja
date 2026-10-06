@@ -6,6 +6,7 @@ import {
     Building2,
     ClipboardCheck,
     CircleCheck,
+    ClipboardPen,
     Clock,
     FlaskConical,
     FolderKanban,
@@ -13,6 +14,7 @@ import {
     Home,
     Inbox,
     MapPin,
+    Megaphone,
     MessagesSquare,
     ListChecks,
     Menu,
@@ -54,6 +56,13 @@ export const mainNavItems: AppNavItem[] = [
         title: 'Tugas saya',
         href: '/tugas',
         icon: SquareCheckBig,
+        matchPrefix: true,
+    },
+    // Laporan progres harian (keputusan pemilik 6 Okt 2026).
+    {
+        title: 'Laporan harian',
+        href: '/laporan',
+        icon: ClipboardPen,
         matchPrefix: true,
     },
     { title: 'Absensi', href: '/absensi', icon: MapPin, matchPrefix: true },
@@ -170,6 +179,17 @@ export function mainNavItemsFor(roles: readonly string[]): AppNavItem[] {
         ...mainNavItems.slice(index + 1),
     ];
 }
+
+/**
+ * Pengumuman (/pengumuman, keputusan pemilik 6 Okt 2026): mobile Menu row and
+ * command palette; the dashboards show the latest ones as banners.
+ */
+export const announcementsNavItem: AppNavItem = {
+    title: 'Pengumuman',
+    href: '/pengumuman',
+    icon: Megaphone,
+    matchPrefix: true,
+};
 
 /**
  * "Obrolan" (/obrolan, F2-1): shown while the `chat` feature flag is on

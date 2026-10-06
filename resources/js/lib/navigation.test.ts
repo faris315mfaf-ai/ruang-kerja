@@ -240,6 +240,7 @@ describe('navigation', () => {
             '/manajemen',
             '/inbox',
             '/tugas',
+            '/laporan',
             '/absensi',
             '/pengajuan',
             '/persetujuan',

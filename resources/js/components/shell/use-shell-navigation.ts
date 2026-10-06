@@ -38,6 +38,7 @@ const MOTIONS: Record<string, GlyphMotion> = {
     '/inbox': { name: 'dock-drop', duration: '1.4s' },
     '/obrolan': { name: 'dock-nudge', duration: '1.5s' },
     '/tugas': { name: 'dock-pulse', duration: '1.5s' },
+    '/laporan': { name: 'dock-tilt', duration: '1.8s' },
     '/absensi': { name: 'dock-drop', duration: '1.4s' },
     '/pengajuan': { name: 'dock-tilt', duration: '1.8s' },
     '/persetujuan': { name: 'dock-nudge', duration: '1.5s' },
