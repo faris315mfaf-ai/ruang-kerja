@@ -202,3 +202,4 @@ Repo ini siap dikerjakan Claude Code dan Codex bergantian (mis. saat kuota salah
 5. Cek tampilan tanpa Chrome: `node scripts/ui-shots.mjs /rute --akun kadiv@demo.test` (screenshot 1440/390 terang & malam di `storage/app/ui-shots/`).
 6. Skill proyek diedit di `.agents/skills/` saja, lalu `node scripts/sync-agent-skills.mjs`.
 
+**Bersamaan (paralel):** siapkan satu worktree per agen dengan `bash scripts/agen-mulai.sh codex codex/<tugas>` (folder `../ruang-kerja-codex`, situs `https://ruangkerja-codex.test`, database dev & test sendiri), klaim tugas di `docs/PEMBAGIAN-TUGAS.md`, dan buka Codex di folder itu. Worktree Claude Code: `bash scripts/agen-mulai.sh claude --di-sini`. Aturan lengkap: `AGENTS.md` › Kerja paralel.

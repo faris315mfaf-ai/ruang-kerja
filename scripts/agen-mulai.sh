@@ -126,7 +126,7 @@ fi
 
 if [ "$BUILD" = 1 ]; then
     log "npm run build"
-    npm run build > /dev/null
+    npm run build > /dev/null 2>&1
 fi
 
 log "situs Herd https://$SITE.test"
