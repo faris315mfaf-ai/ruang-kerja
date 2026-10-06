@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useId } from 'react';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -138,20 +139,36 @@ export function TextField({
     return (
         <div className={cn('flex min-w-0 flex-col gap-1.5', className)}>
             <Label htmlFor={id}>{label}</Label>
-            <Input
-                id={id}
-                type={type}
-                value={value}
-                min={min}
-                max={max}
-                placeholder={placeholder}
-                onChange={(event) => onChange(event.target.value)}
-                aria-invalid={error ? true : undefined}
-                aria-describedby={
-                    error ? `${id}-error` : hint ? `${id}-hint` : undefined
-                }
-                className={cn(FIELD_SIZE, inputClassName)}
-            />
+            {type === 'date' ? (
+                <DateInput
+                    id={id}
+                    value={value}
+                    min={min === undefined ? undefined : String(min)}
+                    max={max === undefined ? undefined : String(max)}
+                    placeholder={placeholder}
+                    onChange={onChange}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={
+                        error ? `${id}-error` : hint ? `${id}-hint` : undefined
+                    }
+                    inputClassName={cn(FIELD_SIZE, inputClassName)}
+                />
+            ) : (
+                <Input
+                    id={id}
+                    type={type}
+                    value={value}
+                    min={min}
+                    max={max}
+                    placeholder={placeholder}
+                    onChange={(event) => onChange(event.target.value)}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={
+                        error ? `${id}-error` : hint ? `${id}-hint` : undefined
+                    }
+                    className={cn(FIELD_SIZE, inputClassName)}
+                />
+            )}
             {error ? (
                 <FieldError id={`${id}-error`} error={error} />
             ) : (

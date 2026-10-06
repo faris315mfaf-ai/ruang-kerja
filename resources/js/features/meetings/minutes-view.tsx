@@ -18,6 +18,7 @@ import { UserAvatar } from '@/components/shell/user-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Panel } from '@/components/ui/panel';
 import {
@@ -454,7 +455,7 @@ function ActionTable({ data }: { data: MinutesData }) {
                 >
                     <div
                         role="row"
-                        className="hidden grid-cols-[minmax(0,2.4fr)_minmax(0,1.3fr)_minmax(0,1fr)_150px] gap-3.5 bg-background px-7 py-2.5 text-[14px] font-bold text-text-muted lg:grid"
+                        className="hidden grid-cols-[minmax(0,2.2fr)_minmax(0,1.2fr)_minmax(0,1.3fr)_150px] gap-3.5 bg-background px-7 py-2.5 text-[14px] font-bold text-text-muted lg:grid"
                     >
                         <span role="columnheader">Butir</span>
                         <span role="columnheader">Penanggung jawab</span>
@@ -471,7 +472,7 @@ function ActionTable({ data }: { data: MinutesData }) {
                             <div
                                 key={item.id}
                                 role="row"
-                                className="grid grid-cols-1 items-center gap-x-3.5 gap-y-2 border-t border-divider px-6 py-3 sm:grid-cols-2 md:px-7 lg:min-h-16 lg:grid-cols-[minmax(0,2.4fr)_minmax(0,1.3fr)_minmax(0,1fr)_150px]"
+                                className="grid grid-cols-1 items-center gap-x-3.5 gap-y-2 border-t border-divider px-6 py-3 sm:grid-cols-2 md:px-7 lg:min-h-16 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1.2fr)_minmax(0,1.3fr)_150px]"
                             >
                                 <span
                                     role="cell"
@@ -570,15 +571,12 @@ function ActionTable({ data }: { data: MinutesData }) {
                                             )}
                                         </span>
                                     ) : (
-                                        <Input
-                                            type="date"
+                                        <DateInput
                                             aria-label={`Tenggat butir ${index + 1}`}
                                             value={item.due_date ?? ''}
-                                            onChange={(event) =>
+                                            onChange={(value) =>
                                                 data.updateItem(item.id, {
-                                                    due_date:
-                                                        event.target.value ||
-                                                        null,
+                                                    due_date: value || null,
                                                 })
                                             }
                                         />

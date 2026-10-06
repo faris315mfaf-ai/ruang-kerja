@@ -5,6 +5,7 @@ import InputError from '@/components/input-error';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -423,13 +424,10 @@ function EmployeeForm({
                     label="Tanggal bergabung"
                     error={errors.joined_at}
                 >
-                    <Input
+                    <DateInput
                         id="joined_at"
-                        type="date"
                         value={data.joined_at}
-                        onChange={(event) =>
-                            setData('joined_at', event.target.value)
-                        }
+                        onChange={(value) => setData('joined_at', value)}
                         aria-invalid={Boolean(errors.joined_at) || undefined}
                     />
                 </Field>

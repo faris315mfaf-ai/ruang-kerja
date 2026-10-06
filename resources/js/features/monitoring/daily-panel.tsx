@@ -4,7 +4,7 @@ import { EmptyState } from '@/components/empty-state';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Panel } from '@/components/ui/panel';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -42,17 +42,18 @@ export function DateStepper({
             <label className="sr-only" htmlFor="monitoring-date">
                 Tanggal laporan
             </label>
-            <Input
+            <DateInput
                 id="monitoring-date"
-                type="date"
+                size="sm"
                 value={date}
                 max={today}
-                onChange={(event) => {
-                    if (event.target.value !== '') {
-                        onChange(event.target.value);
+                clearable={false}
+                onChange={(value) => {
+                    if (value !== '') {
+                        onChange(value);
                     }
                 }}
-                className="h-control-sm w-40"
+                className="w-56"
             />
             <Button
                 type="button"

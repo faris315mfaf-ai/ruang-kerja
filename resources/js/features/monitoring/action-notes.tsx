@@ -12,6 +12,7 @@ import { EmptyState } from '@/components/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Panel } from '@/components/ui/panel';
 import { formatDate } from '@/lib/format';
@@ -191,6 +192,7 @@ export function ActionNotes({
     const open = notes.filter((note) => !note.done);
     const done = notes.filter((note) => note.done);
     const inputId = useId();
+    const dueId = useId();
 
     const submit = async (event: FormEvent) => {
         event.preventDefault();
@@ -252,17 +254,18 @@ export function ActionNotes({
                         <Plus aria-hidden strokeWidth={2.4} />
                     </Button>
                 </div>
-                <label className="flex items-center gap-2 text-meta text-text-muted">
+                <div className="flex items-center gap-2 text-meta text-text-muted">
                     <CalendarDays className="size-4" aria-hidden />
-                    <span>Tenggat (opsional)</span>
-                    <Input
-                        type="date"
+                    <label htmlFor={dueId}>Tenggat (opsional)</label>
+                    <DateInput
+                        id={dueId}
+                        size="sm"
                         value={due}
                         min={today}
-                        onChange={(event) => setDue(event.target.value)}
-                        className="h-control-sm w-44"
+                        onChange={setDue}
+                        className="w-60"
                     />
-                </label>
+                </div>
             </form>
             {notes.length === 0 ? (
                 <EmptyState size="sm" icon={ListTodo} title="Belum ada catatan">

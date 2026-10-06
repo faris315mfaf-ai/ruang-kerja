@@ -99,6 +99,92 @@ export function formatLongDate(value: DateInput | null | undefined): string {
     return `${part(parts, 'weekday')}, ${part(parts, 'day')} ${part(parts, 'month')} ${part(parts, 'year')}`;
 }
 
+const WEEKDAYS = [
+    'Minggu',
+    'Senin',
+    'Selasa',
+    'Rabu',
+    'Kamis',
+    'Jumat',
+    'Sabtu',
+] as const;
+
+const ISO_DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * Calendar day "YYYY-MM-DD" of a value. A date-only string is taken as is
+ * (a pure calendar date, never shifted by a timezone); timestamps are
+ * converted to the office timezone first.
+ */
+export function toIsoDay(value: DateInput | null | undefined): string | null {
+    if (typeof value === 'string' && ISO_DAY.test(value)) {
+        return value;
+    }
+
+    const date = toDate(value);
+
+    return date ? calendarDay.format(date) : null;
+}
+
+function isoDayParts(
+    value: DateInput | null | undefined,
+): { year: number; month: number; day: number } | null {
+    const iso = toIsoDay(value);
+    const match = iso ? ISO_DAY.exec(iso) : null;
+
+    if (!match) {
+        return null;
+    }
+
+    const [year, month, day] = match.slice(1).map(Number);
+    const check = new Date(Date.UTC(year, month - 1, day));
+
+    if (
+        check.getUTCFullYear() !== year ||
+        check.getUTCMonth() !== month - 1 ||
+        check.getUTCDate() !== day
+    ) {
+        return null;
+    }
+
+    return { year, month, day };
+}
+
+const pad2 = (value: number): string => String(value).padStart(2, '0');
+
+/** "30/10/2026" (day/month/year), the editable form of a date field. */
+export function formatNumericDate(value: DateInput | null | undefined): string {
+    const parts = isoDayParts(value);
+
+    if (!parts) {
+        return EMPTY;
+    }
+
+    return `${pad2(parts.day)}/${pad2(parts.month)}/${parts.year}`;
+}
+
+/**
+ * "Senin, 30/10/2026": how a date field shows its value (owner decision,
+ * Okt 2026), independent of the browser language. Date-only strings are pure
+ * calendar dates; timestamps use the office timezone.
+ */
+export function formatDayDate(value: DateInput | null | undefined): string {
+    const parts = isoDayParts(value);
+
+    if (!parts) {
+        return EMPTY;
+    }
+
+    const weekday =
+        WEEKDAYS[
+            new Date(
+                Date.UTC(parts.year, parts.month - 1, parts.day),
+            ).getUTCDay()
+        ];
+
+    return `${weekday}, ${formatNumericDate(value)}`;
+}
+
 /** "08.05" (24-hour clock, dot separator) in the office timezone. */
 export function formatTime(value: DateInput | null | undefined): string {
     const date = toDate(value);

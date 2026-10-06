@@ -5,11 +5,14 @@ import {
     OFFICE_TIMEZONE,
     formatDate,
     formatDateTime,
+    formatDayDate,
+    formatNumericDate,
     formatNumber,
     formatPercent,
     formatRelative,
     formatTime,
     toDate,
+    toIsoDay,
 } from './format';
 
 describe('OFFICE_TIMEZONE', () => {
@@ -66,6 +69,42 @@ describe('formatDate', () => {
     it('returns a placeholder for empty values', () => {
         expect(formatDate(null)).toBe('–');
         expect(formatDate('invalid')).toBe('–');
+    });
+});
+
+describe('formatDayDate', () => {
+    it('shows the full Indonesian weekday and dd/mm/yyyy', () => {
+        expect(formatDayDate('2026-10-05')).toBe('Senin, 05/10/2026');
+        expect(formatDayDate('2026-10-30')).toBe('Jumat, 30/10/2026');
+        expect(formatDayDate('2026-11-01')).toBe('Minggu, 01/11/2026');
+    });
+
+    it('treats date-only strings as pure calendar dates', () => {
+        // Never shifted by the device or office timezone.
+        expect(formatDayDate('2026-01-01')).toBe('Kamis, 01/01/2026');
+    });
+
+    it('converts timestamps to the office day', () => {
+        expect(formatDayDate('2026-10-04T17:05:00Z')).toBe('Senin, 05/10/2026');
+    });
+
+    it('returns a placeholder for empty or impossible values', () => {
+        expect(formatDayDate('')).toBe('–');
+        expect(formatDayDate(null)).toBe('–');
+        expect(formatDayDate('2026-02-30')).toBe('–');
+    });
+});
+
+describe('formatNumericDate / toIsoDay', () => {
+    it('gives the editable dd/mm/yyyy form', () => {
+        expect(formatNumericDate('2026-01-03')).toBe('03/01/2026');
+    });
+
+    it('returns the office calendar day', () => {
+        expect(toIsoDay('2026-10-05')).toBe('2026-10-05');
+        expect(toIsoDay('2026-10-04T16:59:00Z')).toBe('2026-10-04');
+        expect(toIsoDay('2026-10-04T17:05:00Z')).toBe('2026-10-05');
+        expect(toIsoDay(null)).toBeNull();
     });
 });
 

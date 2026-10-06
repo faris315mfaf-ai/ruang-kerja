@@ -11,6 +11,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -169,15 +170,14 @@ export function CreateAnnouncement({
                         (opsional)
                     </span>
                 </Label>
-                <Input
+                <DateInput
                     id="announcement-expires"
-                    type="date"
                     min={today}
-                    className={cn(control, 'md:max-w-60')}
+                    className="md:max-w-64"
+                    inputClassName={control}
                     value={data.expires_on}
-                    onChange={(event) =>
-                        setData('expires_on', event.target.value)
-                    }
+                    onChange={(value) => setData('expires_on', value)}
+                    aria-invalid={Boolean(errors.expires_on) || undefined}
                 />
                 <p className="text-meta text-text-muted">
                     Setelah tanggal ini pengumuman hilang dari dashboard.

@@ -2,6 +2,7 @@ import { Camera, CircleAlert, Lock, Paperclip, Upload, X } from 'lucide-react';
 import { useRef } from 'react';
 import InputError from '@/components/input-error';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DateInput } from '@/components/ui/date-input';
 import { Input, fieldClasses } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -204,12 +205,13 @@ export function CategoryFields({
             ) : category === 'correction' ? (
                 <div className="grid gap-4 md:grid-cols-3">
                     <Field id="date" label="Tanggal" error={error('date')}>
-                        <Input
+                        <DateInput
                             id="date"
-                            type="date"
-                            className={control}
+                            clearable={false}
+                            inputClassName={control}
                             value={data.date}
-                            onChange={(e) => setData('date', e.target.value)}
+                            onChange={(value) => setData('date', value)}
+                            aria-invalid={Boolean(error('date')) || undefined}
                         />
                     </Field>
                     <Field
@@ -258,12 +260,13 @@ export function CategoryFields({
                         error={error('date')}
                         className="col-span-2 md:col-span-1"
                     >
-                        <Input
+                        <DateInput
                             id="date"
-                            type="date"
-                            className={control}
+                            clearable={false}
+                            inputClassName={control}
                             value={data.date}
-                            onChange={(e) => setData('date', e.target.value)}
+                            onChange={(value) => setData('date', value)}
+                            aria-invalid={Boolean(error('date')) || undefined}
                         />
                     </Field>
                     <Field
@@ -305,19 +308,21 @@ export function CategoryFields({
                 </div>
             ) : (
                 <>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <Field
                             id="start_date"
                             label="Tanggal mulai"
                             error={error('start_date')}
                         >
-                            <Input
+                            <DateInput
                                 id="start_date"
-                                type="date"
-                                className={control}
+                                clearable={false}
+                                inputClassName={control}
                                 value={data.start_date}
-                                onChange={(e) => {
-                                    const value = e.target.value;
+                                aria-invalid={
+                                    Boolean(error('start_date')) || undefined
+                                }
+                                onChange={(value) => {
                                     setData((d) => ({
                                         ...d,
                                         start_date: value,
@@ -334,15 +339,16 @@ export function CategoryFields({
                             label="Tanggal selesai"
                             error={error('end_date')}
                         >
-                            <Input
+                            <DateInput
                                 id="end_date"
-                                type="date"
-                                className={control}
+                                clearable={false}
+                                inputClassName={control}
                                 value={data.end_date}
-                                min={data.start_date}
-                                onChange={(e) =>
-                                    setData('end_date', e.target.value)
+                                min={data.start_date || undefined}
+                                aria-invalid={
+                                    Boolean(error('end_date')) || undefined
                                 }
+                                onChange={(value) => setData('end_date', value)}
                             />
                         </Field>
                     </div>

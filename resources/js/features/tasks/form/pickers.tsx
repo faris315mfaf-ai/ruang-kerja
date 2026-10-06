@@ -1,6 +1,6 @@
 import { CalendarDays, Check, ChevronDown, Tag, UserRound } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useRef } from 'react';
+import { useId, useRef } from 'react';
 import {
     PRIORITY_LABELS,
     PRIORITY_ORDER,
@@ -18,6 +18,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { DateInput } from '@/components/ui/date-input';
 import { palette } from '@/lib/palette';
 import { cn } from '@/lib/utils';
 import {
@@ -376,6 +377,7 @@ export function DuePicker({
     size?: Size;
 }) {
     const input = useRef<HTMLInputElement>(null);
+    const otherId = useId();
 
     return (
         <DropdownMenu>
@@ -434,22 +436,20 @@ export function DuePicker({
                     className="px-2 py-1.5"
                     onKeyDown={(event) => event.stopPropagation()}
                 >
-                    <label className="space-y-1 text-meta text-text-muted">
-                        <span>Tanggal lain</span>
-                        <input
-                            ref={input}
-                            type="date"
-                            value={value ?? ''}
-                            onChange={(event) =>
-                                onChange(
-                                    event.target.value === ''
-                                        ? null
-                                        : event.target.value,
-                                )
-                            }
-                            className="h-8 w-full rounded-control border border-border bg-surface px-2 text-[15px] text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
-                        />
+                    <label
+                        htmlFor={otherId}
+                        className="mb-1 block text-meta text-text-muted"
+                    >
+                        Tanggal lain
                     </label>
+                    <DateInput
+                        ref={input}
+                        id={otherId}
+                        size="sm"
+                        clearable={false}
+                        value={value ?? ''}
+                        onChange={(date) => onChange(date === '' ? null : date)}
+                    />
                 </div>
                 {value && (
                     <>

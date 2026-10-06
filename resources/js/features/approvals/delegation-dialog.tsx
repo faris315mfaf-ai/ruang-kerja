@@ -10,6 +10,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { selectClass } from '@/features/requests/form-fields';
@@ -138,32 +139,29 @@ export function DelegationDialog({
                             </select>
                             <InputError message={form.errors.delegate_id} />
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <div className="grid gap-2">
                                 <Label htmlFor="starts_on">Mulai</Label>
-                                <Input
+                                <DateInput
                                     id="starts_on"
-                                    type="date"
                                     min={delegations.today}
+                                    clearable={false}
                                     value={form.data.starts_on}
-                                    onChange={(e) =>
-                                        form.setData(
-                                            'starts_on',
-                                            e.target.value,
-                                        )
+                                    onChange={(value) =>
+                                        form.setData('starts_on', value)
                                     }
                                 />
                                 <InputError message={form.errors.starts_on} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="ends_on">Selesai</Label>
-                                <Input
+                                <DateInput
                                     id="ends_on"
-                                    type="date"
                                     min={form.data.starts_on}
+                                    clearable={false}
                                     value={form.data.ends_on}
-                                    onChange={(e) =>
-                                        form.setData('ends_on', e.target.value)
+                                    onChange={(value) =>
+                                        form.setData('ends_on', value)
                                     }
                                 />
                                 <InputError message={form.errors.ends_on} />
