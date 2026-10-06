@@ -6,12 +6,17 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuLabel,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useDockMagnification } from '@/hooks/use-dock-magnification';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { cn } from '@/lib/utils';
-import type { GlyphMotion, NavStack } from './use-shell-navigation';
+import type {
+    GlyphMotion,
+    NavStack,
+    NavStackEntry,
+} from './use-shell-navigation';
 import { useShellNavigation } from './use-shell-navigation';
 
 /** Resting and magnified tile sizes (px, Dock.dc.html "Kuat" ×1.42). */
@@ -189,6 +194,33 @@ export function StackTile({
     );
 }
 
+function StackGrid({ entries }: { entries: NavStackEntry[] }) {
+    return (
+        <div className="grid grid-cols-3 gap-1">
+            {entries.map((entry) => (
+                <DropdownMenuItem key={entry.key} asChild className="p-0">
+                    <Link
+                        href={entry.href}
+                        prefetch
+                        aria-current={entry.active ? 'page' : undefined}
+                        className={cn(
+                            'flex flex-col items-center gap-2 rounded-lg px-1 py-2.5 text-center text-[14px] leading-[18px] font-semibold text-text',
+                            entry.active && 'bg-link-soft',
+                        )}
+                    >
+                        <StackTile
+                            letter={entry.letter}
+                            icon={entry.icon}
+                            gradient={entry.gradient}
+                        />
+                        <span className="line-clamp-2">{entry.label}</span>
+                    </Link>
+                </DropdownMenuItem>
+            ))}
+        </div>
+    );
+}
+
 /** Popover grid of a stack (Dock.dc.html "Tumpukan"), shared with the Rail. */
 export function StackContent({
     stack,
@@ -219,28 +251,37 @@ export function StackContent({
                     </DropdownMenuItem>
                 )}
             </div>
-            <div className="grid grid-cols-3 gap-1">
-                {stack.entries.map((entry) => (
-                    <DropdownMenuItem key={entry.key} asChild className="p-0">
-                        <Link
-                            href={entry.href}
-                            prefetch
-                            aria-current={entry.active ? 'page' : undefined}
-                            className={cn(
-                                'flex flex-col items-center gap-2 rounded-lg px-1 py-2.5 text-center text-[14px] leading-[18px] font-semibold text-text',
-                                entry.active && 'bg-link-soft',
+            {stack.sections ? (
+                <div className="flex max-h-[min(70vh,560px)] flex-col gap-1 overflow-y-auto">
+                    {stack.sections.map((section) => (
+                        <div key={section.key} className="flex flex-col">
+                            {section.label && (
+                                <DropdownMenuLabel className="flex items-center gap-2 px-1.5 pt-2 pb-1 text-[13px] font-bold tracking-[0.06em] text-text-muted uppercase">
+                                    {section.dot && (
+                                        <span
+                                            aria-hidden
+                                            className={cn(
+                                                'size-2 rounded-full',
+                                                section.dot,
+                                            )}
+                                        />
+                                    )}
+                                    {section.label}
+                                </DropdownMenuLabel>
                             )}
-                        >
-                            <StackTile
-                                letter={entry.letter}
-                                icon={entry.icon}
-                                gradient={entry.gradient}
-                            />
-                            <span className="line-clamp-2">{entry.label}</span>
-                        </Link>
-                    </DropdownMenuItem>
-                ))}
-            </div>
+                            {section.entries.length === 0 ? (
+                                <p className="px-1.5 pb-1.5 text-[14px] text-text-muted">
+                                    {section.empty}
+                                </p>
+                            ) : (
+                                <StackGrid entries={section.entries} />
+                            )}
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <StackGrid entries={stack.entries} />
+            )}
         </DropdownMenuContent>
     );
 }

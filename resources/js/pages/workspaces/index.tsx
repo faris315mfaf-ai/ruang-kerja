@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Plus, Users } from 'lucide-react';
 import { useState } from 'react';
 import { EmptyState } from '@/components/empty-state';
@@ -9,22 +9,35 @@ import {
     CreateWorkspaceDialog,
     type CreateAbilities,
 } from '@/features/workspaces/create-workspace-dialog';
+import {
+    groupCounts,
+    groupWorkspaces,
+    parseWorkspaceFilter,
+} from '@/features/workspaces/groups';
+import type {
+    WorkspaceFilter,
+    WorkspaceGroupKey,
+} from '@/features/workspaces/groups';
 import type { WorkspaceDetail } from '@/features/workspaces/types';
+import { WorkspaceGroupChips } from '@/features/workspaces/workspace-group-chips';
 import { ROLE_LABELS } from '@/features/workspaces/types';
 import { WorkspaceAvatar } from '@/features/workspaces/workspace-avatar';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { formatNumber } from '@/lib/format';
 import { cn, focusRing } from '@/lib/utils';
-import { show } from '@/routes/workspaces';
+import { index, show } from '@/routes/workspaces';
 
 type Row = WorkspaceDetail & {
     open_tasks_count: number;
     is_member: boolean;
     my_role: WorkspaceRole | null;
+    group: WorkspaceGroupKey;
 };
 
 type Props = {
     workspaces: Row[];
+    /** `?jenis=` chip (null = Semua). */
+    filter: WorkspaceGroupKey | null;
     can_create: CreateAbilities;
     teams: { id: string; name: string }[];
 };
@@ -130,14 +143,35 @@ function WorkspaceCard({ workspace }: { workspace: Row }) {
 
 /**
  * /workspace (SProyekSaya / MSProyekSaya): every workspace the user can see
- * as cards, ordered Pribadi · Divisi · Tim · Proyek.
+ * as cards in titled groups Pribadi · Divisi & tim · Proyek yang diikuti
+ * (· Lainnya), with filter chips kept in `?jenis=` (keputusan pemilik
+ * 6 Okt 2026).
  */
 export default function WorkspaceIndex({
     workspaces,
+    filter: initialFilter,
     can_create,
     teams,
 }: Props) {
     const [creating, setCreating] = useState(false);
+    const [filter, setFilter] = useState<WorkspaceFilter>(
+        parseWorkspaceFilter(initialFilter),
+    );
+    const counts = groupCounts(workspaces);
+    const sections = groupWorkspaces(workspaces, filter);
+    const changeFilter = (next: WorkspaceFilter) => {
+        setFilter(next);
+        router.get(
+            index.url({ query: next === 'semua' ? {} : { jenis: next } }),
+            {},
+            {
+                only: ['filter'],
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
+    };
     const mobile = useBreakpoint() === 'mobile';
     const canCreate = can_create.team || can_create.project;
     const projects = workspaces.filter(
@@ -183,13 +217,58 @@ export default function WorkspaceIndex({
                         description="Workspace pribadi Anda akan muncul di sini."
                     />
                 ) : (
-                    <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(280px,100%),1fr))] gap-3 md:gap-4">
-                        {workspaces.map((workspace) => (
-                            <li key={workspace.id} className="min-w-0">
-                                <WorkspaceCard workspace={workspace} />
-                            </li>
+                    <>
+                        <WorkspaceGroupChips
+                            value={filter}
+                            counts={counts}
+                            onChange={changeFilter}
+                            withOther={counts.lainnya > 0}
+                        />
+                        {sections.map(({ group, items }) => (
+                            <section
+                                key={group.key}
+                                aria-labelledby={`ws-group-${group.key}`}
+                                className="flex flex-col gap-3"
+                            >
+                                <h2
+                                    id={`ws-group-${group.key}`}
+                                    className="flex items-center gap-2 text-overline text-text-muted"
+                                >
+                                    <span
+                                        aria-hidden
+                                        className={cn(
+                                            'size-2.5 rounded-full',
+                                            group.dot,
+                                        )}
+                                    />
+                                    {group.label}
+                                    <span className="tnum">
+                                        {formatNumber(items.length)}
+                                    </span>
+                                </h2>
+                                {items.length === 0 ? (
+                                    <EmptyState
+                                        size="sm"
+                                        icon={Users}
+                                        title={group.empty}
+                                    />
+                                ) : (
+                                    <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(280px,100%),1fr))] gap-3 md:gap-4">
+                                        {items.map((workspace) => (
+                                            <li
+                                                key={workspace.id}
+                                                className="min-w-0"
+                                            >
+                                                <WorkspaceCard
+                                                    workspace={workspace}
+                                                />
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </section>
                         ))}
-                    </ul>
+                    </>
                 )}
             </div>
             {canCreate && (

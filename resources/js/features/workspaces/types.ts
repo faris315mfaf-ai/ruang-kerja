@@ -1,4 +1,5 @@
 import type { DriveAccessMember } from '@/features/drive/types';
+import type { WorkspaceGroupKey } from '@/features/workspaces/groups';
 import type {
     Label,
     TaskStatus,
@@ -10,6 +11,8 @@ import type {
 /** Shared Inertia prop `workspaces` (sidebar + mobile Menu). */
 export type SidebarWorkspace = WorkspaceRef & {
     favorite: boolean;
+    /** Pribadi · Divisi & tim · Proyek (SidebarWorkspaces, keputusan pemilik 6 Okt 2026). */
+    group?: WorkspaceGroupKey;
 };
 
 export type WorkspaceDetail = WorkspaceRef & {
