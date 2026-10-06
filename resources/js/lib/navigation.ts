@@ -25,6 +25,7 @@ import {
     ScrollText,
     SquareCheckBig,
     Target,
+    UserRoundSearch,
     Users,
     WalletCards,
     Workflow,
@@ -216,6 +217,7 @@ export const chatNavItem: AppNavItem = {
 export const roleDashboardNavItem: AppNavItem = {
     title: 'Dashboard jabatan',
     href: '/peran',
+    icon: BriefcaseBusiness,
     matchPrefix: true,
 };
 
@@ -227,7 +229,7 @@ export const roleDashboardNavItem: AppNavItem = {
 export const hiringNavItem: AppNavItem = {
     title: 'Hiring',
     href: '/hiring',
-    icon: BriefcaseBusiness,
+    icon: UserRoundSearch,
     matchPrefix: true,
 };
 

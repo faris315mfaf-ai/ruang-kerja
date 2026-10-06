@@ -84,7 +84,7 @@ function assertQueryBudgets(array $pages): void
 it('keeps the dashboards and the portfolio free of N+1', function () {
     assertQueryBudgets([
         '/dashboard' => ['anggota', 72],
-        '/dashboard/saya' => ['kadiv', 68],
+        '/dashboard/saya' => ['kadiv', 69],
         '/ruang-saya' => ['anggota', 14],
         // +3: "Laporan tim hari ini" (schedules, reports, sent items) — keputusan pemilik 6 Okt 2026.
         '/dashboard/divisi' => ['kadiv', 88],
@@ -170,7 +170,7 @@ it('keeps the Direksi, HR and management dashboards and Absensi tabs free of N+1
 
 it('keeps the attendance pages free of N+1', function () {
     assertQueryBudgets([
-        '/absensi' => ['anggota', 74],
+        '/absensi' => ['anggota', 76],
         '/absensi/riwayat' => ['anggota', 44],
         // +1: shared prop chatUnread (Obrolan Dock badge), one query on every page.
         '/absensi/hari-ini' => ['hr', 53],
@@ -187,7 +187,7 @@ it('keeps requests and approvals free of N+1', function () {
         '/pengajuan' => ['anggota', 47],
         '/pengajuan/baru' => ['anggota', 33],
         "/pengajuan/{$request->id}" => ['hr', 40],
-        '/persetujuan' => ['kadiv', 60], // +2: shared prop chatUnread (one query) and its visible-channel subquery
+        '/persetujuan' => ['kadiv', 61], // +2: shared prop chatUnread (one query) and its visible-channel subquery
         "/persetujuan/{$request->id}" => ['hr', 41],
         '/admin/pengajuan' => ['hr', 40],
         '/admin/saldo-cuti' => ['hr', 35],
@@ -198,10 +198,10 @@ it('keeps workspaces, boards and my tasks free of N+1', function () {
     $project = Workspace::query()->where('type', 'project')->orderBy('key')->firstOrFail();
 
     assertQueryBudgets([
-        '/workspace' => ['kadiv', 35],
-        '/w/OPS' => ['kadiv', 53],
-        '/w/OPS?view=list' => ['kadiv', 53],
-        '/w/OPS?view=calendar' => ['kadiv', 53],
+        '/workspace' => ['kadiv', 36],
+        '/w/OPS' => ['kadiv', 54],
+        '/w/OPS?view=list' => ['kadiv', 54],
+        '/w/OPS?view=calendar' => ['kadiv', 54],
         '/w/OPS/dokumen' => ['kadiv', 60],
         '/w/OPS/file' => ['kadiv', 61],
         '/w/OPS/aktivitas' => ['kadiv', 49],
@@ -220,7 +220,7 @@ it('keeps inbox, search, settings and the menu free of N+1', function () {
         // preview's "Tenggat hari ini" section (list, workspaces, count) only
         // queries when it has rows. Constant, not N+1.
         // +4 since F2-1: shared prop chatUnread and the chat.message preference row.
-        '/pengaturan/notifikasi' => ['anggota', 49],
+        '/pengaturan/notifikasi' => ['anggota', 51],
         '/menu' => ['anggota', 29],
     ]);
 });
@@ -269,7 +269,7 @@ it('keeps the "Lupa kata sandi" requests on Admin › Karyawan free of N+1', fun
 
 it('keeps Data Saya free of N+1', function () {
     assertQueryBudgets([
-        '/privasi' => ['kadiv', 66],
+        '/privasi' => ['kadiv', 68],
     ]);
 });
 

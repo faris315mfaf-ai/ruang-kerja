@@ -17,7 +17,6 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\Support\AnalyticsFixtures as F;
 
@@ -71,7 +70,7 @@ it('shows requests waiting for HR and today\'s attendance numbers only (keputusa
             ->missing('missingCheckOut')
             ->missing('recap')
             ->has('pending')
-            ->where('hiring', null));
+            ->where('hiring', '/hiring'));
 });
 
 it('summarizes company attendance today per division (Dashboard Manajemen and role dashboards)', function () {
@@ -207,10 +206,7 @@ it('offers "Koreksi" only to those allowed, and review + correction clear the HR
         ->where('attendance.missing_check_out_count', 0));
 });
 
-it('links the Hiring card once the Hiring module registers /hiring', function () {
-    Route::get('hiring', fn () => 'ok')->middleware('web');
-    app('router')->getRoutes()->refreshNameLookups();
-
+it('links the Hiring card to the Hiring module', function () {
     $this->actingAs($this->org['hr'])->get('/dashboard/hr')
         ->assertInertia(fn (Assert $page) => $page->where('hiring', '/hiring'));
 });
