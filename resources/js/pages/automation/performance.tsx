@@ -38,7 +38,7 @@ export default function AutomationPerformancePage({
 AutomationPerformancePage.layout = {
     breadcrumbs: [
         { title: 'Beranda', href: '/dashboard' },
-        { title: 'Kinerja', href: '/kinerja' },
+        { title: 'Kinerja saya', href: '/kinerja' },
     ],
-    title: 'Kinerja',
+    title: 'Kinerja saya',
 };

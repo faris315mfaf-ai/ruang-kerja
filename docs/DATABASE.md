@@ -22,6 +22,7 @@
 | Absensi | `office_locations`, `shifts`, `shift_assignments`, `holidays`, `attendance_days`, `attendance_logs`, `qr_tokens`, `kiosks`, `attendance_consents` |
 | Pengajuan | `leave_types`, `leave_balances`, `leave_balance_adjustments`, `requests`, `request_sequences`, `request_approvals`, `approval_flows`, `approval_flow_steps`, `approval_delegations` |
 | Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_directions`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `task_plans`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
+| Otomasi (F2-4) | `automation_rules`, `automation_runs`, `recurring_tasks`, `recurring_task_occurrences`, `task_templates`, `workspace_templates` |
 | Google & file | `google_accounts`, `drive_files`, `attachments` |
 | Notifikasi | `notifications`*, `notification_preferences`, `notification_settings`, `notification_dispatch_logs` |
 | Fase 2 | `channels`, `channel_members`, `messages`, `notes`, `note_versions`, `calendar_events` |
@@ -437,6 +438,44 @@ Implementasi (Sprint 6): `emoji` varchar(16) dari daftar tetap `Reaction::EMOJI`
 `id`, `user_id`, `workspace_id` null (null = lintas workspace, mis. "Tugas saya"), `name`, `layout` (`board` · `list` · `calendar`), `filters` jsonb, `sort` jsonb, `is_shared`.
 
 Implementasi (Sprint 6): `name` varchar(60), CHECK `layout`, `filters` default `{}` dengan bentuk `{assignees[], priorities[], labels[], due, q}` (sama dengan filter query string; `assignees` boleh berisi `me` = penonton), `sort` null, timestamps, indeks `(workspace_id, is_shared)` & `(user_id, workspace_id)`. Pribadi hanya pemilik; dibagikan terlihat oleh semua yang bisa melihat workspace; membagikan butuh hak ubah tugas.
+
+### Otomasi (F2-4, Fase 2)
+
+Migrasi `2026_10_11_300100_create_automation_tables` (bisa di-rollback). Model `AutomationRule`, `AutomationRun`, `RecurringTask`, `TaskTemplate`, `WorkspaceTemplate`; logika di `app/Domain/Automation`. Di balik `FEATURE_AUTOMATION`.
+
+#### automation_rules — aturan "jika … maka …" per workspace
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | ulid PK | |
+| company_id | FK companies | restrict |
+| workspace_id | FK workspaces | cascade |
+| name | varchar(80) | |
+| trigger_type | varchar(30) | denormalisasi `trigger->type` (CHECK `task_moved` · `task_overdue` · `task_created_with_label`) untuk mencari aturan lewat indeks |
+| trigger | jsonb | `{type: task_moved, category}` · `{type: task_overdue}` · `{type: task_created_with_label, label_id}` — **kategori** kolom, bukan nama |
+| condition | jsonb null | `{type: priority, priority 1–4}` · `{type: assignee, user_id}` |
+| actions | jsonb | 1–3 aksi (CHECK): `{type: notify, target: {kind: user, id} \| {kind: role, role: kepala_divisi\|hr\|direksi\|anggota} \| {kind: assignees} \| {kind: watchers}}` · `{type: assign, user_id}` · `{type: add_label, label_id}` · `{type: move_status, category}`. Tanpa aksi WhatsApp (ditahan) |
+| is_active | bool | default true; dijeda = tidak berjalan |
+| run_count / last_run_at | int / timestamptz null | dihitung dari setiap run yang dicatat |
+| created_by | FK users null | nullOnDelete; aksi dijalankan sebagai pembuat (atau owner workspace bila pembuat kehilangan akses) |
+
+Indeks `(workspace_id, trigger_type, is_active)`, `(trigger_type, is_active)`. Penjaga loop: validasi `move_status` ≠ kategori pemicu, satu aturan tidak berjalan dua kali dalam satu rantai, rantai berhenti setelah 3 aturan (`AutomationContext`).
+
+#### automation_runs — log eksekusi (append-only)
+`id` ulid, `rule_id` FK cascade, `task_id` FK tasks null (nullOnDelete), `task_key` varchar(20) + `task_title` varchar(255) (salinan agar log tetap terbaca), `result` (`success` · `failed` · `skipped`, CHECK), `detail` varchar(255), `depth` smallint (0 = dipicu orang/job), `cycle` varchar(40) null (kunci de-dup pemicu berulang: `overdue:<tenggat>`), `ran_at` timestamptz. Indeks `(rule_id, ran_at)`, `(ran_at)`, unik parsial `(rule_id, task_id, cycle) WHERE cycle IS NOT NULL` (aturan "lewat tenggat" sekali per tugas per tenggat). Kondisi "Dan" yang tidak terpenuhi tidak dicatat.
+
+#### recurring_tasks — tugas berulang
+`id`, `company_id`, `workspace_id` FK cascade, `title` varchar(255), `assignee_id` FK users null, `priority` smallint 0–4 (CHECK), `pattern` jsonb (`{kind: daily, weekdays_only}` · `{kind: weekly, weekdays[1–7]}` · `{kind: monthly, day_of_month 1–31}` (31 = akhir bulan) · `{kind: every_n_weeks, interval 1–12, weekdays}` dijangkar pada minggu `starts_on`), `starts_on` date, `ends_on` date null (CHECK ≥ starts_on), `is_active`, `created_count`, `last_created_on` date null, `created_by` FK users null, timestamps. Indeks `(is_active, starts_on)`, `(workspace_id)`. Jadwal dihitung `RecurrenceSchedule` (port `recurrence.ts`, diuji dengan fixture bersama `resources/js/features/automation/recurrence-cases.json`).
+
+#### recurring_task_occurrences
+`recurring_task_id` FK cascade + `occurs_on` date (PK gabungan), `task_id` FK tasks null, `created_at`. Diklaim lebih dulu oleh job 07.00 WIB (`CreateRecurringTasks`) sehingga satu tanggal hanya membuat satu tugas walau job berjalan dua kali. "Buat sekarang" tidak menulis baris di sini (tugas tambahan, di luar jadwal). Tugas terjadwal bertenggat pada tanggal jadwalnya.
+
+#### task_templates
+`id`, `company_id`, `workspace_id` FK null (cascade; **null = semua workspace** perusahaan), `name` varchar(80), `description` varchar(255) null, `title` varchar(255), `priority` smallint 0–4, `estimate_hours` numeric(6,2) null (CHECK 0,5–999), `checklist` jsonb (string), `labels` jsonb (`[{name, color}]`, dicocokkan dengan nama label di workspace tujuan; yang belum ada dibuat bila pemakai admin workspace, selain itu dilewati), `used_count`, `created_by`, timestamps. Indeks `(company_id, workspace_id)`.
+
+#### workspace_templates
+`id`, `company_id`, `name` varchar(80), `description` varchar(255) null, `type` (`team` · `project`, CHECK), `statuses` jsonb (`[{name, category, color}]` urut papan, minimal 1), `labels` jsonb (`[{name, color}]`), `used_count`, `source_workspace_id` FK workspaces null (nullOnDelete), `created_by`, timestamps. Dibuat dari Pengaturan workspace ("Simpan sebagai template"); "Pakai template" membuat workspace lewat `CreateWorkspace` lalu mengganti 5 kolom bawaan dengan kolom template. Key workspace divalidasi `^[A-Z][A-Z0-9]{1,9}$` dan unik termasuk `previous_keys`.
+
+Notifikasi: tipe `automation.notify` (event preferensi `automation.notify`, default in-app saja). Kinerja saya (`/kinerja`) tidak menambah tabel: memakai `MetricDefinitions` Analytics.
 
 ---
 
