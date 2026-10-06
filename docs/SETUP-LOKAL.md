@@ -191,3 +191,14 @@ Aplikasi disajikan di `https://ruangkerja.test`, dan browser selalu memaksa `wss
 - Setelah mengubah nilai `REVERB_*`, jalankan `php artisan config:clear` dan build ulang aset (`npm run build`) atau restart `npm run dev`, karena nilai `VITE_REVERB_*` dibaca saat build.
 - Cek cepat tanpa browser: `curl --http1.1 -H "Connection: Upgrade" -H "Upgrade: websocket" -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" "https://ruangkerja.test:8081/app/<REVERB_APP_KEY>?protocol=7"` harus menjawab `101`.
 
+## 11. Bergantian dengan Codex
+
+Repo ini siap dikerjakan Claude Code dan Codex bergantian (mis. saat kuota salah satu habis). Aturan bersama ada di `AGENTS.md` (dibaca Codex langsung; Claude Code lewat `CLAUDE.md`).
+
+1. Sekali saja: jalankan `codex` di folder proyek (checkout utama, mis. `/Users/godam/PROYEK/ruang-kerja`) dan pilih **trust** agar `.codex/config.toml` proyek dipakai (sandbox `workspace-write` + jaringan lokal untuk Postgres/Redis/Herd). Skill proyek tersedia sebagai `$sprint`, `$cek-ui`, `$cek-lokal`, `$tinjau` (dari `.agents/skills/`).
+2. Sebelum berpindah, minta agen yang sedang dipakai: "perbarui docs/SESI-AKTIF.md lalu commit". Pekerjaan setengah jadi di-commit sebagai `wip(...)`.
+3. Di agen berikutnya, buka sesi di folder/branch yang sama lalu tulis: "Lanjutkan pekerjaan dari docs/SESI-AKTIF.md."
+4. Pekerjaan di worktree `.claude/worktrees/*` milik sesi Claude Code; Codex sebaiknya bekerja di checkout utama atau worktree-nya sendiri. Merge ke `main` sebelum berpindah bila memungkinkan.
+5. Cek tampilan tanpa Chrome: `node scripts/ui-shots.mjs /rute --akun kadiv@demo.test` (screenshot 1440/390 terang & malam di `storage/app/ui-shots/`).
+6. Skill proyek diedit di `.agents/skills/` saja, lalu `node scripts/sync-agent-skills.mjs`.
+

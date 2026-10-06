@@ -66,6 +66,9 @@ jobs:
       - name: npm run lint (vp check)
         run: npm run lint
 
+      - name: Agent skills in sync (.agents/skills = .claude/skills)
+        run: node scripts/sync-agent-skills.mjs --check
+
       - name: npm test (Vitest)
         run: npm test
         env:
