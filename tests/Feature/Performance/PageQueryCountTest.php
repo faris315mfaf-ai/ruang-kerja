@@ -2,6 +2,7 @@
 
 use App\Models\Channel;
 use App\Models\EmployeeRequest;
+use App\Models\Objective;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 use Tests\Support\PerformanceFixtures as P;
@@ -160,5 +161,16 @@ it('keeps Obrolan free of N+1', function () {
         '/obrolan' => ['kadiv', 36],
         "/obrolan/{$plq->id}" => ['kadiv', 50],
         "/obrolan/{$plq->id}/pesan" => ['kadiv', 18],
+    ]);
+});
+
+it('keeps OKR free of N+1', function () {
+    config(['features.okr' => true]);
+    $objective = Objective::query()->where('quarter', '2026-Q4')->whereHas('division', fn ($division) => $division->where('code', 'OPS'))->orderBy('created_at')->firstOrFail();
+
+    assertQueryBudgets([
+        '/okr' => ['kadiv', 40],
+        '/okr?kuartal=2026-Q3' => ['direksi', 30],
+        "/okr/{$objective->id}" => ['kadiv', 42],
     ]);
 });

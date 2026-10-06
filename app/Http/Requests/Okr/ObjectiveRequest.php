@@ -35,7 +35,7 @@ class ObjectiveRequest extends FormRequest
         $division = $this->division();
 
         // Unknown division: the validator reports it.
-        return $division === null ? Response::allow() : Gate::inspect('create', $division);
+        return $division === null ? Response::allow() : Gate::inspect('create', [Objective::class, $division]);
     }
 
     protected function prepareForValidation(): void

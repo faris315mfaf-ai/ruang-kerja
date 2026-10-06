@@ -60,8 +60,8 @@ class OkrDemoSeeder extends Seeder
             ['Karyawan absen lewat RuangKerja', KeyResultUnit::Percent, '', 80, 95, 92, 50, 'hr@demo.test'],
         ]],
         ['KEU', 'agus.setiawan@demo.test', 'Anggaran 2027 disahkan tepat waktu', null, [
-            ['Divisi yang menyerahkan RAB', KeyResultUnit::Number, 'divisi', 0, 6, 1, 60, 'fitri.handayani@demo.test'],
-            ['Selisih realisasi anggaran', KeyResultUnit::Percent, '', 12, 5, 11, 40, 'agus.setiawan@demo.test'],
+            ['Divisi yang menyerahkan RAB', KeyResultUnit::Number, 'divisi', 0, 6, 0, 60, 'fitri.handayani@demo.test'],
+            ['Selisih realisasi anggaran', KeyResultUnit::Percent, '', 12, 5, 16, 40, 'agus.setiawan@demo.test'],
         ]],
     ];
 
