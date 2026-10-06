@@ -18,7 +18,7 @@ Integrator dua gelombang agen paralel. Rencana: `docs/PEMBAGIAN-TUGAS.md` + kepu
 ## Langkah berikutnya
 1. PR #5 (`claude/integrasi-f2` → `main`) terbuka, mergeable. Setelah di-merge, tutup PR #3 dan #4 (isinya sudah tercakup).
 2. Sudah diputus pemilik: `/manajemen` tanpa Kehadiran hari ini & KPI Tugas terlambat; retensi pelamar 30 hari; format isian tanggal; persona Reynandio (Dirut) & Faris (Project Leader).
-3. Masih terbuka: chip "rapat 5 menit lagi" di MenuBar.
+3. Chip "rapat 5 menit lagi" di MenuBar: **tidak dibangun** (keputusan pemilik 6 Okt 2026). Tidak ada pertanyaan terbuka.
 
 ## Keputusan pemilik yang berlaku (6 Okt 2026)
 - DITAHAN: login Google, Google Drive/Docs/Calendar/Meet, WhatsApp + provider, aplikasi ponsel (biometrik, integritas, offline, widget, wajah, perangkat), mesin fingerprint, fitur yang belum ada sama sekali.
@@ -30,4 +30,4 @@ Integrator dua gelombang agen paralel. Rencana: `docs/PEMBAGIAN-TUGAS.md` + kepu
 - Catatan: tabel `note_shares` + Hocuspocus; dashboard jabatan melengkapi dashboard per peran.
 
 ## Butuh dari integrator / agen lain
-- Chip "rapat 5 menit lagi" di MenuBar (agen Rapat). CI image `collab` + `npm --prefix collab ci` di `agen-mulai.sh` (agen Catatan). Tautan "Kinerja saya" dari Beranda (agen Otomasi).
+CI image `collab` + `npm --prefix collab ci` di `agen-mulai.sh` (agen Catatan). Tautan "Kinerja saya" dari Beranda (agen Otomasi).

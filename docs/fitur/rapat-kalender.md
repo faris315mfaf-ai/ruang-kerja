@@ -120,7 +120,7 @@ Grid minggu jam 08–17 dengan garis "sekarang", panel Notulensi (Semua/Draf/Tin
 
 - Tautan **Google Meet otomatis**, sinkron **Google Calendar** (tabel `calendar_events`), **freeBusy** Google untuk bentrok, email/undangan kalender untuk **tamu eksternal**, ekspor notulen ke **Google Docs**: tampil sebagai label/tombol nonaktif "Ditahan".
 - Pengingat **WhatsApp**: baris "WhatsApp · Ditahan".
-- Belum ada: pembatalan satu kemunculan saja (pembatalan berlaku untuk seluruh seri), lampiran Drive di rapat, ko-editor realtime notulen, "Kabari terlambat", chip "rapat 5 menit lagi" di MenuBar (shell bersama, menunggu integrator).
+- Belum ada: pembatalan satu kemunculan saja (pembatalan berlaku untuk seluruh seri), lampiran Drive di rapat, ko-editor realtime notulen, "Kabari terlambat". Chip "rapat 5 menit lagi" di MenuBar **tidak dibangun** (keputusan pemilik 6 Okt 2026); pengingat cukup lewat notifikasi `meeting.starting`.
 
 ## 7. Keadaan & aksesibilitas
 
