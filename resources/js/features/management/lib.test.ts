@@ -193,22 +193,14 @@ describe('management KPI cards', () => {
             on_time: null,
         };
 
-        expect(attendanceCard(today)).toMatchObject({
-            label: 'Kehadiran',
-            value: '44/48',
-            note: '92% · 3 terlambat · 2 belum check-in',
-            tone: 'highlight',
-        });
+        // Today's presence and overdue tasks live in Absensi / are gone
+        // from the management dashboard (keputusan pemilik 6 Okt 2026).
+        expect(attendanceCard(today)).toBeNull();
         expect(tasksCard('harian', today)).toMatchObject({
             value: '23',
             note: 'dari 54 terjadwal hari ini',
         });
-        expect(thirdCard('harian', today)).toMatchObject({
-            label: 'Tugas terlambat',
-            value: '11',
-            note: '6 di Programming',
-            alert: true,
-        });
+        expect(thirdCard('harian', today)).toBeNull();
     });
 
     it('builds the weekly cards with the on-time delta', () => {

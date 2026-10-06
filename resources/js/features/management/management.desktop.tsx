@@ -1,6 +1,5 @@
 import { ActionNotes } from '@/features/monitoring/action-notes';
 import { formatLongDate, formatTime } from '@/lib/format';
-import { AttendancePanel, AttendancePanelSkeleton } from './attendance-panel';
 import { KpiCardSkeleton, KpiCardView } from './kpi-cards';
 import {
     attendanceCard,
@@ -66,9 +65,19 @@ export function ManagementDesktop({
                 >
                     {block ? (
                         <>
-                            <KpiCardView card={attendanceCard(block)} />
-                            <KpiCardView card={tasksCard(period, block)} />
-                            <KpiCardView card={thirdCard(period, block)} />
+                            {[
+                                attendanceCard(block),
+                                tasksCard(period, block),
+                                thirdCard(period, block),
+                            ].map(
+                                (card) =>
+                                    card && (
+                                        <KpiCardView
+                                            key={card.key}
+                                            card={card}
+                                        />
+                                    ),
+                            )}
                         </>
                     ) : (
                         <>
@@ -95,10 +104,6 @@ export function ManagementDesktop({
                                 generatedAt={summary.generated_at}
                                 className="flex-[2_1_620px] px-1"
                             />
-                            <AttendancePanel
-                                attendance={summary.attendance}
-                                className="flex-[1_1_360px]"
-                            />
                         </>
                     ) : (
                         <>
@@ -106,7 +111,6 @@ export function ManagementDesktop({
                                 period={period}
                                 className="flex-[2_1_620px]"
                             />
-                            <AttendancePanelSkeleton className="flex-[1_1_360px]" />
                         </>
                     )}
                 </section>

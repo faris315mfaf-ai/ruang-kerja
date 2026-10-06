@@ -2,7 +2,6 @@ import { Link } from '@inertiajs/react';
 import { ActionNotes } from '@/features/monitoring/action-notes';
 import { formatTime } from '@/lib/format';
 import { cn, focusRing } from '@/lib/utils';
-import { AttendancePanel, AttendancePanelSkeleton } from './attendance-panel';
 import type { KpiCard } from './lib';
 import {
     attentionCard,
@@ -39,18 +38,10 @@ function Hero({
     generatedAt: string;
 }) {
     const attendance = block.attendance;
+    // Today's presence lives in the Absensi module (keputusan pemilik 6 Okt 2026).
     const presence =
         attendance.kind === 'today'
-            ? {
-                  value:
-                      attendance.scheduled === 0
-                          ? '–'
-                          : `${attendance.present}/${attendance.scheduled}`,
-                  caption:
-                      attendance.rate === null
-                          ? 'tidak ada jadwal hari ini'
-                          : `hadir · ${attendance.rate}%`,
-              }
+            ? null
             : {
                   value: attendance.rate === null ? '–' : `${attendance.rate}%`,
                   caption: 'kehadiran rata-rata',
@@ -63,13 +54,20 @@ function Hero({
                 {shortDate(today)} · per {formatTime(generatedAt)} ·{' '}
                 {periodNote(period, block)}
             </span>
-            <div className="grid grid-cols-2 gap-3">
-                <span className="flex flex-col">
-                    <span className="text-[36px] leading-[42px] font-extrabold">
-                        {presence.value}
+            <div
+                className={cn(
+                    'grid gap-3',
+                    presence ? 'grid-cols-2' : 'grid-cols-1',
+                )}
+            >
+                {presence && (
+                    <span className="flex flex-col">
+                        <span className="text-[36px] leading-[42px] font-extrabold">
+                            {presence.value}
+                        </span>
+                        <span className="text-[15px]">{presence.caption}</span>
                     </span>
-                    <span className="text-[15px]">{presence.caption}</span>
-                </span>
+                )}
                 <span className="flex flex-col">
                     <span className="text-[36px] leading-[42px] font-extrabold">
                         {block.tasks.done}/{block.tasks.planned}
@@ -92,6 +90,19 @@ function Hero({
             </span>
         </div>
     );
+}
+
+/** On-time rate (week/month) next to the attention tile; nothing for today. */
+function SecondaryTile({
+    period,
+    block,
+}: {
+    period: PeriodKey;
+    block: PeriodBlock;
+}) {
+    const card = thirdCard(period, block);
+
+    return card ? <Tile card={card} /> : null;
 }
 
 /** Small KPI tile; a link when there is somewhere to go. */
@@ -190,7 +201,7 @@ export function ManagementMobile({
 
                 <div className="grid grid-cols-2 gap-2.5">
                     {block ? (
-                        <Tile card={thirdCard(period, block)} />
+                        <SecondaryTile period={period} block={block} />
                     ) : (
                         <Skeleton className="h-[112px] rounded-[20px]" />
                     )}
@@ -226,15 +237,6 @@ export function ManagementMobile({
                 />
             ) : (
                 <ProjectsPanelSkeleton />
-            )}
-
-            {summary ? (
-                <AttendancePanel
-                    attendance={summary.attendance}
-                    className="py-4"
-                />
-            ) : (
-                <AttendancePanelSkeleton />
             )}
 
             {portfolio ? (
