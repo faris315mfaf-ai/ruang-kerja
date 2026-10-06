@@ -1,4 +1,4 @@
-# S3 sendiri: penyimpanan file di VPS terpisah
+# Penyimpanan file S3: Biznet Gio NEO Object Storage (cadangan: S3 sendiri)
 
 S3 di RuangKerja **bukan database**. S3 menyimpan file, dan database PostgreSQL tetap di server aplikasi. Isinya:
 
@@ -9,7 +9,25 @@ S3 di RuangKerja **bukan database**. S3 menyimpan file, dan database PostgreSQL 
 
 Alasannya: tanpa S3, file-file ini ada di disk server aplikasi dan **tidak ikut** di backup database. Bila server rusak, file hilang. Dengan S3 di VPS lain, file dan backup tetap selamat.
 
-Perangkat lunak: **SeaweedFS** (Apache-2.0, satu server cukup), versi dipatok `4.48`. MinIO edisi gratis tidak dipakai karena image Docker-nya tidak dirilis lagi sejak Okt 2025 dan repo-nya diarsipkan April 2026.
+## 0. Keputusan: Biznet Gio NEO Object Storage (pemilik, 7 Okt 2026)
+
+Produksi memakai **Biznet Gio NEO Object Storage** (layanan S3 siap pakai), bukan VPS S3 sendiri:
+- Harga single region Rp1.000/GB/bulan. Perkiraan tahun pertama 15–30 GB ≈ Rp15.000–30.000/bulan.
+- Tanpa biaya bandwidth, data di Indonesia (selfie = data pribadi, UU PDP).
+- Tidak ada server yang perlu dirawat.
+
+Langkah:
+1. Di portal NEO, buat **dua** Object Storage terpisah, masing-masing dengan kuncinya sendiri: `ruangkerja-private` (aplikasi) dan `ruangkerja-backup` (backup). Dengan begitu kunci aplikasi tidak bisa menghapus backup.
+2. Di masing-masing, buat bucket dengan nama yang sama, lalu salin **S3 URL, Key ID, Secret key** dari portal. Secret key hanya tampil sekali.
+3. Isi `.env` server aplikasi seperti §3 di bawah dengan endpoint `https://nos.wjv-1.neo.id` (gunakan S3 URL dari portal bila berbeda).
+   - `AWS_USE_PATH_STYLE_ENDPOINT=true` dan `RCLONE_CONFIG_BACKUP_FORCE_PATH_STYLE=true` (bawaan). Bila perintah cek di §4 gagal dengan galat bucket/host, ganti `AWS_USE_PATH_STYLE_ENDPOINT=false`.
+4. Jalankan perintah cek di §4.
+
+Panduan resmi: https://kb.biznetgio.com/98042-neo-object-storage/s3-api-neo-object-storage
+
+Bagian berikutnya (VPS S3 sendiri dengan SeaweedFS) tetap disimpan sebagai **cadangan** bila nanti ingin memakai server sendiri. §3–§5 berlaku untuk keduanya.
+
+Perangkat lunak (cadangan): **SeaweedFS** (Apache-2.0, satu server cukup), versi dipatok `4.48`. MinIO edisi gratis tidak dipakai karena image Docker-nya tidak dirilis lagi sejak Okt 2025 dan repo-nya diarsipkan April 2026.
 
 Berkas: `compose.storage.yml`, `docker/caddy/Caddyfile.storage`, `docker/seaweedfs/s3.json.example`.
 
