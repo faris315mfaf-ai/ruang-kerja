@@ -37,7 +37,9 @@ final class ConvertActionItemsToTasks
      */
     public function handle(Occurrence $occurrence, User $actor, array $itemIds, ?Workspace $chosen = null): array
     {
-        $workspace = $occurrence->meeting->workspace ?? $chosen;
+        // Full row: the meeting's relation may be a partial (id, key, name) load.
+        $meetingWorkspace = $occurrence->meeting->workspace_id !== null ? Workspace::query()->find($occurrence->meeting->workspace_id) : null;
+        $workspace = $meetingWorkspace ?? $chosen;
 
         if ($workspace === null) {
             throw ValidationException::withMessages(['workspace_id' => 'Pilih workspace untuk tugas tindak lanjut.']);

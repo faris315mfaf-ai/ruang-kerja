@@ -115,7 +115,7 @@ class SaveMeetingRequest extends MeetingRequest
             function (Validator $validator): void {
                 $user = $this->user();
 
-                if (! $user instanceof User || $validator->errors()->isNotEmpty()) {
+                if (! $user instanceof User) {
                     return;
                 }
 
@@ -139,9 +139,9 @@ class SaveMeetingRequest extends MeetingRequest
                     }
                 }
 
-                [$startsAt] = $this->times();
+                $timeErrors = $validator->errors()->hasAny(['date', 'start', 'duration']);
 
-                if ($this->route('meeting') === null && $startsAt->isPast()) {
+                if (! $timeErrors && $this->route('meeting') === null && $this->times()[0]->isPast()) {
                     $validator->errors()->add('start', 'Jam mulai sudah lewat. Pilih jam yang akan datang.');
                 }
             },

@@ -2,6 +2,11 @@
 
 use App\Models\Channel;
 use App\Models\EmployeeRequest;
+use App\Models\Meeting;
+use App\Models\MeetingActionItem;
+use App\Models\MeetingMinutes;
+use App\Models\MeetingParticipant;
+use App\Models\User;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 use Tests\Support\PerformanceFixtures as P;
@@ -161,4 +166,62 @@ it('keeps Obrolan free of N+1', function () {
         "/obrolan/{$plq->id}" => ['kadiv', 50],
         "/obrolan/{$plq->id}/pesan" => ['kadiv', 18],
     ]);
+});
+
+it('keeps Rapat & Kalender free of N+1', function () {
+    config(['features.meetings' => true]);
+    $kadiv = P::user('kadiv');
+    $standup = Meeting::query()->where('title', 'Stand-up Divisi Operasional')->firstOrFail();
+    $draft = MeetingMinutes::query()->where('meeting_id', $standup->id)->where('status', 'draft')->firstOrFail();
+    $pages = [
+        '/rapat' => ['kadiv', 42],
+        '/rapat/baru' => ['kadiv', 36],
+        "/rapat/{$standup->id}" => ['kadiv', 38],
+        "/rapat/{$standup->id}/notulen?tanggal={$draft->occurrence_date->toDateString()}" => ['kadiv', 39],
+        '/kalender' => ['kadiv', 40],
+        '/manajemen/jadwal' => ['direksi', 28],
+    ];
+
+    // Meetings are not part of P::grow(): add participants, meetings, minutes and follow-ups here.
+    $growMeetings = function () use ($kadiv, $standup, $draft): void {
+        $today = CarbonImmutable::now('Asia/Jakarta')->toDateString();
+        $people = User::factory()->count(5)->create(['company_id' => $kadiv->company_id]);
+        Meeting::factory()->count(4)->by($kadiv)->at($today.' 15:00')->withParticipants($people->all())->create();
+        Meeting::factory()->count(2)->by(P::user('direksi'))->leadership()->at($today.' 08:00')->withParticipants($people->all())->create();
+
+        foreach ($people as $person) {
+            MeetingParticipant::query()->create(['meeting_id' => $standup->id, 'user_id' => $person->id]);
+            MeetingActionItem::query()->create(['minutes_id' => $draft->id, 'text' => 'Butir', 'assignee_id' => $person->id, 'due_date' => '2026-10-09']);
+            MeetingActionItem::query()->create(['minutes_id' => $draft->id, 'text' => 'Butir saya', 'assignee_id' => $kadiv->id, 'due_date' => '2026-10-09']);
+        }
+    };
+
+    $first = [];
+
+    foreach ($pages as $url => [$who]) {
+        P::queries($who, $url);
+        $first[$url] = P::queries($who, $url);
+    }
+
+    $growMeetings();
+    $growMeetings();
+    $failures = [];
+
+    foreach ($pages as $url => [$who, $budget]) {
+        $second = P::queries($who, $url);
+
+        if (getenv('QUERY_COUNTS')) {
+            fwrite(STDERR, sprintf("QUERIES %-8s %-50s %3d -> %3d (budget %d)\n", $who, $url, $first[$url], $second, $budget));
+        }
+
+        if ($second > $first[$url]) {
+            $failures[] = "{$who} {$url}: {$first[$url]} → {$second} queries after adding rows (N+1)";
+        }
+
+        if ($first[$url] > $budget) {
+            $failures[] = "{$who} {$url}: {$first[$url]} queries, budget {$budget}";
+        }
+    }
+
+    expect($failures)->toBe([]);
 });

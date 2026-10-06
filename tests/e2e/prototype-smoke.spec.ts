@@ -26,14 +26,7 @@ const routes = [
     // F2-2 · Notes (F2-1 · Obrolan left the preview: real routes, routes/chat.php)
     '/catatan',
     '/catatan/sop-onboarding',
-    // F2-3 · Meetings, minutes & calendar
-    '/rapat',
-    '/rapat/baru',
-    '/rapat/koordinasi-q4',
-    '/rapat/standup-ops',
-    '/rapat/standup-ops/notulen',
-    '/kalender',
-    '/manajemen/jadwal',
+    // F2-3 · Rapat & kalender left the preview: real routes, routes/meetings.php
     // F2-4 · WhatsApp, automation, Kinerja saya
     '/pengaturan/whatsapp',
     '/otomasi',
@@ -60,7 +53,6 @@ const routes = [
 /** Preview-state switch (?keadaan=) on one route per module. */
 const stateRoutes = [
     '/catatan',
-    '/rapat',
     '/otomasi',
     '/pengaturan/perangkat',
     '/okr',
@@ -157,7 +149,6 @@ test('tautan tak dikenal menampilkan keadaan "tidak ditemukan"', async ({
 
     for (const path of [
         '/catatan/tidak-ada',
-        '/rapat/tidak-ada',
         '/okr/tidak-ada',
     ]) {
         await expectRendered(page, path);

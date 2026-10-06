@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             $this->call(ProjectSeeder::class);
             $this->call(TaskCollaborationSeeder::class);
             $this->call(ChatDemoSeeder::class);
+            $this->call(MeetingDemoSeeder::class);
             $this->call(NotificationDemoSeeder::class);
             $this->call(PlannerDemoSeeder::class);
             $this->call(AttendanceSeeder::class);
