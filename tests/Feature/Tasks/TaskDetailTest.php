@@ -176,7 +176,7 @@ it('notifies new assignees but not the actor assigning themselves', function () 
 it('lets Direksi read the detail but not edit', function () {
     $direksi = User::factory()->withRole(Role::Direksi)->create();
 
-    $this->actingAs($direksi)->getJson("/tugas/{$this->task->id}")->assertOk()->assertJsonPath('can.edit', false)->assertJsonPath('can.comment', true);
+    $this->actingAs($direksi)->getJson("/tugas/{$this->task->id}")->assertOk()->assertJsonPath('can.edit', false)->assertJsonPath('can.comment', false)->assertJsonPath('can.watch', false);
     $this->actingAs($direksi)->patchJson("/tugas/{$this->task->id}", ['title' => 'X'])->assertForbidden();
 });
 

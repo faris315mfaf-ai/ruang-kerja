@@ -62,8 +62,9 @@ it('applies the comment matrix', function (string $actor, string $view, string $
     'admin' => ['admin', 'allow', 'allow', 'deny', 'allow', 'allow'],
     'member' => ['member', 'allow', 'allow', 'deny', 'deny', 'allow'],
     'viewer' => ['viewer', 'allow', 'allow', 'deny', 'deny', 'allow'],
-    'direksi' => ['direksi', 'allow', 'allow', 'deny', 'deny', 'allow'],
-    'super admin' => ['super_admin', 'allow', 'allow', 'deny', 'allow', 'allow'],
+    // Keputusan pemilik 6 Okt 2026: management outside the workspace only looks.
+    'direksi' => ['direksi', 'allow', 'deny', 'deny', 'deny', 'deny'],
+    'super admin' => ['super_admin', 'allow', 'deny', 'deny', 'deny', 'deny'],
     'outsider' => ['outsider', 'hidden', 'hidden', 'hidden', 'hidden', 'hidden'],
 ]);
 

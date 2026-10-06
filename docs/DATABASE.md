@@ -113,12 +113,14 @@ Permission dasar (guard `web`; sumber kebenaran `App\Domain\Organization\Enums\R
 | `attendance.export` — ekspor rekap | ✓ | | ✓ | | |
 | `requests.view_all` — semua pengajuan | ✓ | ✓ | ✓ | | |
 | `requests.manage_flows` — alur approval & jenis cuti | ✓ | | ✓ | | |
-| `workspaces.view_all` — lihat workspace non-pribadi | | ✓ | | | |
+| `workspaces.view_all` — lihat workspace non-pribadi (baca saja bila bukan anggota; keputusan pemilik 6 Okt 2026) | | ✓ | ✓ | | |
 | `workspaces.manage` — kelola workspace non-pribadi | ✓ | | | | |
 | `dashboard.view_company` — dashboard seluruh perusahaan | ✓ | ✓ | ✓ | | |
 | `portfolio.view` — portofolio proyek (M10) | ✓ | ✓ | | | |
 
 Tidak ada `Gate::before` untuk Super Admin: workspace pribadi & selfie tetap tertutup baginya.
+
+**Mode lihat saja (keputusan pemilik 6 Okt 2026):** Direksi, HR (`workspaces.view_all`) dan Super Admin (`workspaces.manage`) melihat semua workspace tim/divisi/proyek, tetapi bila bukan anggota hanya membaca (`WorkspacePolicy::isViewOnly`): tidak membuat/mengubah/memindah tugas, tidak berkomentar/bereaksi/mengamati, tidak melampirkan file. Aksi pengarah proyek Direksi (Minta update, Beri arahan, Tandai keputusan selesai; PRD M10) tetap ada; pengaturan workspace oleh Super Admin (`workspaces.manage`) tetap ada.
 
 ### audit_logs
 | Kolom | Tipe | Keterangan |
