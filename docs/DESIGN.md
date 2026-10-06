@@ -114,6 +114,7 @@ Semua di `resources/js/components/ui/*` (API shadcn tetap kompatibel; varian Aru
 |---|---|
 | **Button** | `default` gradien aksi + glow · `outline` (surface + border kuat, "Ekspor") · `tonal` (teal lembut, "Minta update") · `quiet` (teks teal, "Batal") · `ghost` (netral, ikon) · `secondary` · `destructive` · `link`. Ukuran `sm` 36 · default 44 · `lg` 52 · `xl` 56 · `icon` 44 · `icon-sm` 36 · `icon-lg` 52. Nonaktif = abu `surface-2` |
 | **Input / Textarea / Select** | 44px, radius 12, border kuat, fokus border teal + cincin 4px lembut, galat `aria-invalid` merah; `fieldClasses` diekspor dari `input.tsx` |
+| **DateInput** (`ui/date-input.tsx`) | **Satu-satunya isian tanggal** (jangan `<input type="date">` langsung). Ukuran `fieldClasses` (44px; ponsel 48px/17px; `size="sm"` 36px). Tampil "Senin, 05/10/2026"; saat fokus diketik `dd/mm/yyyy` (juga `d/m/yyyy`, `dd-mm-yyyy`, `ddmmyyyy`; "/" disisipkan otomatis), ↑/↓ ±1 hari, Alt+↓ buka kalender, Esc batalkan ketikan. Disimpan saat blur/Enter. Tombol ikon kalender (44px) membuka pemilih bawaan OS/browser; tombol × bila tidak `required` (`clearable={false}` untuk tanggal wajib tanpa validasi native). Nilai selalu `YYYY-MM-DD` (`onChange`, `name` → input tersembunyi). Teks salah / di luar `min`–`max` / dikosongkan padahal wajib → nilai lama dipertahankan + satu pesan singkat merah di bawah isian (`aria-invalid`, `aria-describedby`, `aria-live`); galat server tetap milik pemanggil. `DatePickerTrigger` = tombol yang membuka pemilih OS untuk pil/petak yang sudah menulis tanggalnya sendiri |
 | **Checkbox / Radio / Switch** | 24px radius 7 (tercentang = gradien aksi) · radio native 24px (cincin 7px teal) · switch 52×32 (`md`) / 40×24 (`sm`), aktif gradien |
 | **Label** | 15/22 semibold |
 | **Badge** | `status` 32px pil lembut + `dot` (tone success/warning/danger/info/link/neutral) · `label` 30px radius 8 · `count` merah · default "Baru" gradien |
@@ -145,6 +146,7 @@ Ikon: **Lucide**, garis 1,9–2, 20px UI · 22–24px navigasi. Status tugas & p
 - Bahasa Indonesia baku tapi ringkas dan ramah: "Check-in berhasil", "Tugas saya", "Ajukan cuti", "Tenggat", "Penanggung jawab".
 - Istilah yang dipakai konsisten: *Tugas* (task), *Workspace*, *Pengajuan*, *Persetujuan*, *Tenggat*, *Check-in/Check-out*.
 - Tanggal: `Sab, 3 Okt 2026`. Jam: `08.05` (format Indonesia, titik). Relatif: "2 jam lalu", "besok".
+- **Isian tanggal** (keputusan pemilik, Okt 2026): selalu `Hari, dd/mm/yyyy`, mis. `Senin, 05/10/2026`, tidak mengikuti bahasa browser (bukan `mm/dd/yyyy`). Pakai `DateInput`; helper `formatDayDate()` / `formatNumericDate()` di `lib/format.ts` (tanggal murni tanpa geser zona). Teks tanggal di daftar/kartu tetap `formatDate` ("Sen, 5 Okt 2026").
 - Angka: `1.250` (titik ribuan), persen `92%`.
 - Pesan galat menyebut solusi: "Anda berada 340 m dari Kantor Pusat (batas 100 m). Ajukan dinas luar jika sedang bertugas di luar."
 
