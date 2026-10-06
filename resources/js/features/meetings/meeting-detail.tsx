@@ -1,26 +1,17 @@
-import { Link } from '@inertiajs/react';
-import {
-    BellRing,
-    CalendarX2,
-    Copy,
-    FileText,
-    MapPin,
-    NotebookPen,
-    Presentation,
-    Sheet as SheetIcon,
-    Video,
-} from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
+import { Copy, MapPin, NotebookPen, Pencil, Video } from 'lucide-react';
 import type { KeyboardEvent } from 'react';
 import { useRef, useState } from 'react';
-import { EmptyState } from '@/components/empty-state';
+import { toast } from 'sonner';
+import { CancelMeetingDialog } from './cancel-dialog';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Panel } from '@/components/ui/panel';
 import { nextTabIndex } from '@/components/ui/tabs';
-import { useFakeMutation } from '@/features/prototype/use-fake-mutation';
 import { cn } from '@/lib/utils';
-import { GOOGLE_SYNC, ME, MEETINGS, PEOPLE } from './fixtures';
+import meetingRoutes from '@/routes/meetings';
+import { errorMessage, meetingsApi } from './api';
 import {
     displayLink,
     durationLabel,
@@ -38,62 +29,79 @@ import {
     timeRange,
 } from './lib';
 import { MeetingStartNotice } from './meeting-notice';
+import { useMeetingsContext, useNow } from './meetings-context';
 import {
     AvatarStack,
-    ErrorState,
-    ListSkeleton,
+    CanceledBadge,
+    HeldChip,
     MinutesBadge,
     participantName,
     PlatformBadge,
-    PreviewBar,
-    SyncChip,
     useMeetingActions,
 } from './meeting-ui';
-import type { Meeting, Participant, RelatedDocument, Rsvp } from './types';
-import { useDemoClock, usePreviewState } from './use-preview';
+import type {
+    Meeting,
+    MeetingDetailProps,
+    Participant,
+    Person,
+    PersonId,
+    Rsvp,
+} from './types';
 
-export const DETAIL_PREVIEWS = [
-    { label: 'Rapat berlangsung', query: 'jam=10.42' },
-];
-
-export function useMeetingDetail(meetingId: string) {
-    const { state } = usePreviewState();
-    const now = useDemoClock();
-    const meeting =
-        state === 'kosong'
-            ? null
-            : (MEETINGS.find((item) => item.id === meetingId) ?? null);
-    const mine = meeting?.participants.find((p) => p.user_id === ME);
+/** Shared data of /rapat/{id}: RSVP (optimistic + rollback), cancel. */
+export function useMeetingDetail(props: MeetingDetailProps) {
+    const now = useNow();
+    const meeting = props.meeting;
+    const mine = meeting.participants.find(
+        (p) => p.user_id === props.viewer_id,
+    );
     const [rsvp, setRsvp] = useState<Rsvp>(mine?.rsvp ?? 'pending');
-    const [noticeOpen, setNoticeOpen] = useState(false);
-    const mutation = useFakeMutation();
+    const [saving, setSaving] = useState(false);
+    const [cancelOpen, setCancelOpen] = useState(false);
     const actions = useMeetingActions(meeting);
 
     const answer = (value: Rsvp) => {
+        if (value === 'pending' || value === rsvp || saving) {
+            return;
+        }
+
+        const previous = rsvp;
         setRsvp(value);
-        void mutation.run(() => {}, {
-            delay: 300,
-            success: `Kehadiran Anda: ${RSVP_LABEL[value]}. Penyelenggara diberi tahu.`,
-        });
+        setSaving(true);
+        meetingsApi
+            .rsvp(meeting.id, value)
+            .then(() => toast.success(`Kehadiran Anda: ${RSVP_LABEL[value]}.`))
+            .catch((error: unknown) => {
+                setRsvp(previous);
+                toast.error(
+                    errorMessage(error, 'Kehadiran gagal disimpan. Coba lagi.'),
+                );
+            })
+            .finally(() => setSaving(false));
     };
 
+    const cancel = () =>
+        router.delete(meetingRoutes.cancel(meeting.id).url, {
+            preserveScroll: true,
+            onFinish: () => setCancelOpen(false),
+            onError: () => toast.error('Rapat gagal dibatalkan. Coba lagi.'),
+        });
+
     // The viewer's own answer replaces the stored one in counts and lists.
-    const participants: Participant[] = meeting
-        ? meeting.participants.map((p) =>
-              p.user_id === ME ? { ...p, rsvp } : p,
-          )
-        : [];
+    const participants: Participant[] = meeting.participants.map((p) =>
+        p.user_id === props.viewer_id ? { ...p, rsvp } : p,
+    );
 
     return {
-        state,
         now,
         meeting,
         participants,
-        isGuest: Boolean(mine),
+        can: props.can,
         rsvp,
         answer,
-        noticeOpen,
-        setNoticeOpen,
+        cancel,
+        cancelOpen,
+        setCancelOpen,
         actions,
     };
 }
@@ -101,16 +109,16 @@ export function useMeetingDetail(meetingId: string) {
 export type MeetingDetailData = ReturnType<typeof useMeetingDetail>;
 
 const RSVP_TONE: Record<Rsvp, 'success' | 'warning' | 'danger' | 'neutral'> = {
-    accepted: 'success',
-    tentative: 'warning',
-    declined: 'danger',
+    yes: 'success',
+    maybe: 'warning',
+    no: 'danger',
     pending: 'neutral',
 };
 
 const RSVP_CHOICES: { value: Rsvp; label: string }[] = [
-    { value: 'accepted', label: 'Hadir' },
-    { value: 'tentative', label: 'Mungkin' },
-    { value: 'declined', label: 'Tidak' },
+    { value: 'yes', label: 'Hadir' },
+    { value: 'maybe', label: 'Mungkin' },
+    { value: 'no', label: 'Tidak' },
 ];
 
 /** Hadir · Mungkin · Tidak (MRapatDetail "Kehadiran Anda"). */
@@ -179,66 +187,17 @@ function RsvpPicker({
     );
 }
 
-const DOC_ICON: Record<
-    RelatedDocument['kind'],
-    { icon: typeof FileText; tone: string }
-> = {
-    doc: { icon: FileText, tone: 'bg-info-soft text-info' },
-    sheet: { icon: SheetIcon, tone: 'bg-success-soft text-success' },
-    slide: { icon: Presentation, tone: 'bg-warning-soft text-warning' },
-    video: { icon: Video, tone: 'bg-danger-soft text-danger' },
-    pdf: { icon: FileText, tone: 'bg-danger-soft text-danger' },
-};
-
-export function DocumentsList({ documents }: { documents: RelatedDocument[] }) {
-    if (documents.length === 0) {
-        return (
-            <EmptyState size="sm" icon={FileText} title="Belum ada dokumen">
-                Lampirkan dokumen dari Drive workspace saat mengubah rapat.
-            </EmptyState>
-        );
-    }
-
-    return (
-        <ul className="flex flex-col gap-2.5">
-            {documents.map((document) => {
-                const { icon: Icon, tone } = DOC_ICON[document.kind];
-
-                return (
-                    <li key={document.id} className="flex items-center gap-3">
-                        <span
-                            aria-hidden
-                            className={cn(
-                                'flex size-10 shrink-0 items-center justify-center rounded-control',
-                                tone,
-                            )}
-                        >
-                            <Icon className="size-5" />
-                        </span>
-                        <span className="flex min-w-0 flex-col">
-                            <span className="truncate text-[15px] font-semibold">
-                                {document.name}
-                            </span>
-                            <span className="truncate text-[13px] text-text-muted">
-                                {document.source}
-                            </span>
-                        </span>
-                    </li>
-                );
-            })}
-        </ul>
-    );
-}
-
 export function ParticipantList({
     participants,
 }: {
     participants: Participant[];
 }) {
+    const { people, me } = useMeetingsContext();
+
     return (
         <ul className="flex flex-col">
             {participants.map((participant) => {
-                const person = personById(PEOPLE, participant.user_id);
+                const person = personById(people, participant.user_id);
 
                 return (
                     <li
@@ -247,15 +206,17 @@ export function ParticipantList({
                     >
                         <UserAvatar
                             name={person?.name ?? participant.email ?? 'Tamu'}
-                            ring={participant.user_id === ME}
+                            ring={participant.user_id === me}
                             className="size-9"
                         />
                         <span className="flex min-w-0 flex-1 flex-col">
                             <span className="truncate text-[16px] font-semibold">
-                                {participantName(participant)}
+                                {participantName(participant, people, me)}
                             </span>
                             <span className="truncate text-[14px] text-text-muted">
-                                {person ? person.title : 'Tamu eksternal'}
+                                {person
+                                    ? person.title || person.division
+                                    : 'Tamu eksternal · undangan email ditahan'}
                                 {participant.optional ? ' · opsional' : ''}
                             </span>
                         </span>
@@ -273,9 +234,13 @@ export function ParticipantList({
     );
 }
 
-function infoRows(meeting: Meeting): [string, string][] {
-    const organizer = personById(PEOPLE, meeting.organizer_id);
-    const taker = personById(PEOPLE, meeting.minute_taker_id);
+function infoRows(
+    meeting: Meeting,
+    people: Person[],
+    me: PersonId,
+): [string, string][] {
+    const organizer = personById(people, meeting.organizer_id);
+    const taker = personById(people, meeting.minute_taker_id);
 
     return [
         [
@@ -289,12 +254,12 @@ function infoRows(meeting: Meeting): [string, string][] {
         ['Tempat', meeting.location ?? PLATFORM_LABEL[meeting.platform]],
         [
             'Penyelenggara',
-            organizer ? (organizer.id === ME ? 'Anda' : organizer.name) : '–',
+            organizer ? (organizer.id === me ? 'Anda' : organizer.name) : '–',
         ],
         [
             'Notulis',
             taker
-                ? taker.id === ME
+                ? taker.id === me
                     ? 'Anda'
                     : taker.name
                 : 'Belum ditentukan',
@@ -303,25 +268,12 @@ function infoRows(meeting: Meeting): [string, string][] {
         ['Berulang', RECURRENCE_LABEL[meeting.recurrence]],
         [
             'Pengingat',
-            meeting.reminders.map((m) => `${m}`).join(' dan ') +
-                ' menit sebelum',
+            meeting.reminders.length === 0
+                ? 'Tidak ada'
+                : meeting.reminders.map((m) => `${m}`).join(' dan ') +
+                  ' menit sebelum',
         ],
     ];
-}
-
-function NotFound() {
-    return (
-        <EmptyState
-            icon={CalendarX2}
-            title="Rapat tidak ditemukan"
-            description="Rapat ini mungkin sudah dibatalkan atau Anda tidak diundang."
-            action={
-                <Button asChild>
-                    <Link href="/rapat">Ke daftar rapat</Link>
-                </Button>
-            }
-        />
-    );
 }
 
 function phaseTone(
@@ -340,9 +292,49 @@ function phaseTone(
 }
 
 function canJoin(meeting: Meeting): boolean {
+    return Boolean(joinLink(meeting)) && !meeting.canceled;
+}
+
+/** Organizer tools: edit and cancel (with confirmation). */
+function OrganizerActions({
+    data,
+    compact = false,
+}: {
+    data: MeetingDetailData;
+    compact?: boolean;
+}) {
+    if (!data.can.update) {
+        return null;
+    }
+
     return (
-        Boolean(joinLink(meeting)) &&
-        (meeting.platform === 'meet' || meeting.platform === 'zoom')
+        <>
+            <Button
+                variant="outline"
+                size="lg"
+                className={cn(compact && 'px-3')}
+                asChild
+            >
+                <Link href={meetingRoutes.edit(data.meeting.id).url}>
+                    <Pencil aria-hidden />
+                    Ubah
+                </Link>
+            </Button>
+            <Button
+                variant="outline"
+                size="lg"
+                className={cn('text-danger', compact && 'px-3')}
+                onClick={() => data.setCancelOpen(true)}
+            >
+                Batalkan
+            </Button>
+            <CancelMeetingDialog
+                open={data.cancelOpen}
+                onOpenChange={data.setCancelOpen}
+                recurring={data.meeting.recurrence !== 'none'}
+                onConfirm={data.cancel}
+            />
+        </>
     );
 }
 
@@ -355,171 +347,148 @@ export function MeetingDetailDesktop({
     isTablet: boolean;
 }) {
     const { meeting, now, actions } = data;
-
-    if (data.state === 'memuat') {
-        return (
-            <div className="flex flex-col gap-6">
-                <PreviewBar extra={DETAIL_PREVIEWS} />
-                <ListSkeleton rows={5} />
-            </div>
-        );
-    }
+    const { people, me } = useMeetingsContext();
+    const isParticipant = data.can.respond;
 
     return (
         <div className="flex flex-col gap-6">
-            <PreviewBar extra={DETAIL_PREVIEWS} />
-            {data.state === 'galat' ? (
-                <ErrorState
-                    title="Detail rapat gagal dimuat"
-                    description="Google Calendar tidak menjawab. Coba lagi sebentar."
-                />
-            ) : !meeting ? (
-                <NotFound />
-            ) : (
-                <>
-                    <section className="flex flex-wrap items-end justify-between gap-4">
-                        <div className="flex min-w-0 flex-col gap-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <Badge
-                                    variant="status"
-                                    tone={phaseTone(meeting, now)}
-                                    dot
-                                >
-                                    {phaseLabel(meeting, now)}
-                                </Badge>
-                                <MinutesBadge
-                                    status={meeting.minutes_status}
-                                    className="h-8 text-[14px]"
-                                />
-                            </div>
-                            <h1 className="text-[34px] leading-[42px] font-extrabold tracking-[-0.025em] lg:text-[40px] lg:leading-[48px]">
-                                {meeting.title}
-                            </h1>
-                            <p className="text-[17px] text-text-muted">
-                                {shortDate(officeDate(meeting.starts_at))} ·{' '}
-                                {timeRange(meeting.starts_at, meeting.ends_at)}{' '}
-                                · {PLATFORM_LABEL[meeting.platform]}
-                                {meeting.workspace
-                                    ? ` · ${meeting.workspace.name}`
-                                    : ''}
-                            </p>
-                        </div>
-                        <div className="flex flex-wrap gap-3">
-                            <Button
-                                variant="outline"
-                                size="lg"
-                                onClick={() => data.setNoticeOpen(true)}
+            <section className="flex flex-wrap items-end justify-between gap-4">
+                <div className="flex min-w-0 flex-col gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        {meeting.canceled ? (
+                            <CanceledBadge />
+                        ) : (
+                            <Badge
+                                variant="status"
+                                tone={phaseTone(meeting, now)}
+                                dot
                             >
-                                <BellRing aria-hidden />
-                                Uji pemberitahuan
+                                {phaseLabel(meeting, now)}
+                            </Badge>
+                        )}
+                        <MinutesBadge
+                            status={meeting.minutes_status}
+                            className="h-8 text-[14px]"
+                        />
+                        {meeting.leadership && (
+                            <Badge
+                                variant="status"
+                                tone="info"
+                                className="h-8 text-[14px]"
+                            >
+                                Rapat pimpinan
+                            </Badge>
+                        )}
+                    </div>
+                    <h1 className="text-[34px] leading-[42px] font-extrabold tracking-[-0.025em] lg:text-[40px] lg:leading-[48px]">
+                        {meeting.title}
+                    </h1>
+                    <p className="text-[17px] text-text-muted">
+                        {shortDate(officeDate(meeting.starts_at))} ·{' '}
+                        {timeRange(meeting.starts_at, meeting.ends_at)} ·{' '}
+                        {PLATFORM_LABEL[meeting.platform]}
+                        {meeting.workspace
+                            ? ` · ${meeting.workspace.name}`
+                            : ''}
+                    </p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                    <OrganizerActions data={data} />
+                    <Button variant="outline" size="lg" asChild>
+                        <Link href={meeting.minutes_href}>
+                            <NotebookPen aria-hidden />
+                            {meeting.minutes_status === 'none' &&
+                            data.can.write_minutes
+                                ? 'Mulai notulen'
+                                : 'Buka notulen'}
+                        </Link>
+                    </Button>
+                    {canJoin(meeting) &&
+                        meetingPhase(meeting, now) !== 'done' && (
+                            <Button size="lg" onClick={actions.join}>
+                                <Video aria-hidden />
+                                {actions.joined
+                                    ? `Buka lagi ${actions.app}`
+                                    : `Gabung lewat ${actions.app}`}
                             </Button>
-                            <Button variant="outline" size="lg" asChild>
-                                <Link href={`/rapat/${meeting.id}/notulen`}>
-                                    <NotebookPen aria-hidden />
-                                    {meeting.minutes_status === 'none'
-                                        ? 'Mulai notulen'
-                                        : 'Buka notulen'}
-                                </Link>
-                            </Button>
-                            {canJoin(meeting) &&
-                                meetingPhase(meeting, now) !== 'done' && (
-                                    <Button size="lg" onClick={actions.join}>
-                                        <Video aria-hidden />
-                                        {actions.joined
-                                            ? `Buka lagi ${actions.app}`
-                                            : `Gabung lewat ${actions.app}`}
-                                    </Button>
-                                )}
-                        </div>
-                    </section>
+                        )}
+                </div>
+            </section>
 
-                    <section className="flex flex-wrap items-start gap-5">
-                        <div className="flex min-w-0 flex-[2_1_600px] flex-col gap-5">
-                            <JoinCard meeting={meeting} actions={actions} />
-                            <Panel title="Agenda">
-                                <ol className="flex flex-col gap-3">
-                                    {meeting.agenda.map((item, index) => (
-                                        <li
-                                            key={item}
-                                            className="flex items-center gap-3.5"
-                                        >
-                                            <span
-                                                aria-hidden
-                                                className="flex size-9 shrink-0 items-center justify-center rounded-control bg-grad-merek text-[16px] font-extrabold text-on-brand"
-                                            >
-                                                {index + 1}
-                                            </span>
-                                            <span className="text-[17px] leading-6 font-semibold">
-                                                {item}
-                                            </span>
-                                        </li>
-                                    ))}
-                                </ol>
-                            </Panel>
-                            <ParticipantsPanel
-                                participants={data.participants}
+            <section className="flex flex-wrap items-start gap-5">
+                <div className="flex min-w-0 flex-[2_1_600px] flex-col gap-5">
+                    <JoinCard meeting={meeting} actions={actions} />
+                    {meeting.description && (
+                        <Panel title="Keterangan">
+                            <p className="text-[16px] leading-6 whitespace-pre-line">
+                                {meeting.description}
+                            </p>
+                        </Panel>
+                    )}
+                    <Panel title="Agenda">
+                        <ol className="flex flex-col gap-3">
+                            {meeting.agenda.map((item, index) => (
+                                <li
+                                    key={`${index}-${item}`}
+                                    className="flex items-center gap-3.5"
+                                >
+                                    <span
+                                        aria-hidden
+                                        className="flex size-9 shrink-0 items-center justify-center rounded-control bg-grad-merek text-[16px] font-extrabold text-on-brand"
+                                    >
+                                        {index + 1}
+                                    </span>
+                                    <span className="text-[17px] leading-6 font-semibold">
+                                        {item}
+                                    </span>
+                                </li>
+                            ))}
+                        </ol>
+                    </Panel>
+                    <ParticipantsPanel participants={data.participants} />
+                </div>
+                <aside
+                    className={cn(
+                        'flex min-w-0 flex-col gap-4',
+                        isTablet ? 'flex-[1_1_100%]' : 'flex-[1_1_320px]',
+                    )}
+                >
+                    {isParticipant && (
+                        <Panel title="Kehadiran Anda">
+                            <RsvpPicker
+                                value={data.rsvp}
+                                onChange={data.answer}
                             />
-                        </div>
-                        <aside
-                            className={cn(
-                                'flex min-w-0 flex-col gap-4',
-                                isTablet
-                                    ? 'flex-[1_1_100%]'
-                                    : 'flex-[1_1_320px]',
+                        </Panel>
+                    )}
+                    <Panel title="Detail">
+                        <dl className="flex flex-col">
+                            {infoRows(meeting, people, me).map(
+                                ([key, value]) => (
+                                    <div
+                                        key={key}
+                                        className="flex min-h-12 items-center justify-between gap-3 border-t border-divider text-[15px] first:border-t-0"
+                                    >
+                                        <dt className="font-semibold text-text-muted">
+                                            {key}
+                                        </dt>
+                                        <dd className="text-right font-bold">
+                                            {value}
+                                        </dd>
+                                    </div>
+                                ),
                             )}
-                        >
-                            {data.isGuest && (
-                                <Panel title="Kehadiran Anda">
-                                    <RsvpPicker
-                                        value={data.rsvp}
-                                        onChange={data.answer}
-                                    />
-                                </Panel>
-                            )}
-                            <Panel title="Detail">
-                                <dl className="flex flex-col">
-                                    {infoRows(meeting).map(([key, value]) => (
-                                        <div
-                                            key={key}
-                                            className="flex min-h-12 items-center justify-between gap-3 border-t border-divider text-[15px] first:border-t-0"
-                                        >
-                                            <dt className="font-semibold text-text-muted">
-                                                {key}
-                                            </dt>
-                                            <dd className="text-right font-bold">
-                                                {value}
-                                            </dd>
-                                        </div>
-                                    ))}
-                                </dl>
-                            </Panel>
-                            <Panel title="Dokumen terkait">
-                                <DocumentsList documents={meeting.documents} />
-                            </Panel>
-                            <div className="flex flex-col gap-2">
-                                <SyncChip
-                                    sync={GOOGLE_SYNC}
-                                    now={now}
-                                    className="w-full justify-start"
-                                />
-                                {meeting.calendar_event && (
-                                    <p className="px-1 font-mono text-[13px] text-text-muted">
-                                        {meeting.calendar_event.google_event_id}
-                                    </p>
-                                )}
-                            </div>
-                        </aside>
-                    </section>
+                        </dl>
+                    </Panel>
+                    <HeldChip className="w-full justify-start" />
+                </aside>
+            </section>
 
-                    <MeetingStartNotice
-                        meeting={meeting}
-                        now={now}
-                        open={data.noticeOpen}
-                        onOpenChange={data.setNoticeOpen}
-                        variant={isTablet ? 'tablet' : 'desktop'}
-                    />
-                </>
-            )}
+            <MeetingStartNotice
+                meeting={meeting}
+                now={now}
+                variant={isTablet ? 'tablet' : 'desktop'}
+            />
         </div>
     );
 }
@@ -527,7 +496,7 @@ export function MeetingDetailDesktop({
 function ParticipantsPanel({ participants }: { participants: Participant[] }) {
     const counts = participants.reduce<Record<Rsvp, number>>(
         (acc, p) => ({ ...acc, [p.rsvp]: acc[p.rsvp] + 1 }),
-        { accepted: 0, tentative: 0, declined: 0, pending: 0 },
+        { yes: 0, maybe: 0, no: 0, pending: 0 },
     );
 
     return (
@@ -535,7 +504,7 @@ function ParticipantsPanel({ participants }: { participants: Participant[] }) {
             title="Peserta"
             action={
                 <span className="text-[15px] font-bold text-link">
-                    {counts.accepted} hadir · {counts.tentative} mungkin ·{' '}
+                    {counts.yes} hadir · {counts.maybe} mungkin ·{' '}
                     {counts.pending} belum menjawab
                 </span>
             }
@@ -554,6 +523,7 @@ function JoinCard({
     actions: ReturnType<typeof useMeetingActions>;
 }) {
     const link = joinLink(meeting);
+    const online = meeting.platform === 'meet' || meeting.platform === 'zoom';
 
     if (!link) {
         return (
@@ -562,14 +532,23 @@ function JoinCard({
                     aria-hidden
                     className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-text-muted"
                 >
-                    <MapPin className="size-6" />
+                    {online ? (
+                        <Video className="size-6" />
+                    ) : (
+                        <MapPin className="size-6" />
+                    )}
                 </span>
                 <span className="flex flex-col">
                     <span className="text-[18px] font-bold">
-                        {meeting.location ?? PLATFORM_LABEL[meeting.platform]}
+                        {online
+                            ? PLATFORM_LABEL[meeting.platform]
+                            : (meeting.location ??
+                              PLATFORM_LABEL[meeting.platform])}
                     </span>
                     <span className="text-[15px] text-text-muted">
-                        Rapat tatap muka · tidak ada tautan daring
+                        {online
+                            ? 'Tautan rapat belum diisi penyelenggara. Tautan Meet otomatis ditahan.'
+                            : 'Rapat tatap muka · tidak ada tautan daring'}
                     </span>
                 </span>
             </div>
@@ -604,44 +583,22 @@ function JoinCard({
 /** /rapat/{id} on phones (design MRapatDetail). */
 export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
     const { meeting, now, actions } = data;
+    const { people, me } = useMeetingsContext();
     const [allPeople, setAllPeople] = useState(false);
-
-    if (data.state === 'memuat') {
-        return (
-            <div className="flex flex-col gap-3.5">
-                <PreviewBar extra={DETAIL_PREVIEWS} />
-                <ListSkeleton rows={5} />
-            </div>
-        );
-    }
-
-    if (data.state === 'galat' || !meeting) {
-        return (
-            <div className="flex flex-col gap-3.5">
-                <PreviewBar extra={DETAIL_PREVIEWS} />
-                {data.state === 'galat' ? (
-                    <ErrorState
-                        title="Detail rapat gagal dimuat"
-                        description="Periksa koneksi lalu coba lagi."
-                    />
-                ) : (
-                    <NotFound />
-                )}
-            </div>
-        );
-    }
-
     const counts = rsvpCounts({ ...meeting, participants: data.participants });
-    const taker = personById(PEOPLE, meeting.minute_taker_id);
+    const taker = personById(people, meeting.minute_taker_id);
     const joinable = canJoin(meeting) && meetingPhase(meeting, now) !== 'done';
 
     return (
         <div className={cn('flex flex-col gap-3.5', joinable && 'pb-28')}>
-            <PreviewBar extra={DETAIL_PREVIEWS} />
             <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="status" tone={phaseTone(meeting, now)} dot>
-                    {phaseLabel(meeting, now)}
-                </Badge>
+                {meeting.canceled ? (
+                    <CanceledBadge />
+                ) : (
+                    <Badge variant="status" tone={phaseTone(meeting, now)} dot>
+                        {phaseLabel(meeting, now)}
+                    </Badge>
+                )}
                 <MinutesBadge
                     status={meeting.minutes_status}
                     className="h-8 text-[14px]"
@@ -651,7 +608,7 @@ export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
                 {meeting.title}
             </h2>
             <dl className="rounded-[22px] border border-border bg-surface px-4 py-1">
-                {infoRows(meeting)
+                {infoRows(meeting, people, me)
                     .filter(([key]) =>
                         [
                             'Waktu',
@@ -677,7 +634,7 @@ export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
                         </div>
                     ))}
             </dl>
-            {data.isGuest && (
+            {data.can.respond && (
                 <section
                     aria-label="Kehadiran Anda"
                     className="flex flex-col gap-2.5 rounded-[22px] border border-border bg-surface p-4"
@@ -688,14 +645,25 @@ export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
                     <RsvpPicker value={data.rsvp} onChange={data.answer} />
                 </section>
             )}
+            {meeting.description && (
+                <section
+                    aria-label="Keterangan"
+                    className="flex flex-col gap-2 rounded-[22px] border border-border bg-surface p-4"
+                >
+                    <span className="text-[16px] font-bold">Keterangan</span>
+                    <p className="text-[16px] leading-[25px] whitespace-pre-line">
+                        {meeting.description}
+                    </p>
+                </section>
+            )}
             <section
                 aria-label="Agenda"
                 className="flex flex-col gap-2 rounded-[22px] border border-border bg-surface p-4"
             >
                 <span className="text-[16px] font-bold">Agenda</span>
                 <ol className="flex list-decimal flex-col gap-1 pl-5 text-[16px] leading-[25px] text-text">
-                    {meeting.agenda.map((item) => (
-                        <li key={item}>{item}</li>
+                    {meeting.agenda.map((item, index) => (
+                        <li key={`${index}-${item}`}>{item}</li>
                     ))}
                 </ol>
             </section>
@@ -711,8 +679,7 @@ export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
                 >
                     <AvatarStack participants={data.participants} />
                     <span className="flex-1">
-                        {data.participants.length} peserta · {counts.accepted}{' '}
-                        hadir
+                        {data.participants.length} peserta · {counts.yes} hadir
                         {taker ? ` · notulis ${taker.name.split(' ')[0]}` : ''}
                     </span>
                     <span className="font-bold text-link">
@@ -723,29 +690,22 @@ export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
                     <ParticipantList participants={data.participants} />
                 )}
             </section>
-            <section
-                aria-label="Dokumen terkait"
-                className="flex flex-col gap-3 rounded-[22px] border border-border bg-surface p-4"
-            >
-                <span className="text-[16px] font-bold">Dokumen terkait</span>
-                <DocumentsList documents={meeting.documents} />
-            </section>
             <div className="grid grid-cols-2 gap-2.5">
-                <Button variant="outline" size="lg" className="px-3" asChild>
-                    <Link href={`/rapat/${meeting.id}/notulen`}>
-                        {meeting.minutes_status === 'none'
+                <Button
+                    variant="outline"
+                    size="lg"
+                    className="col-span-2 px-3"
+                    asChild
+                >
+                    <Link href={meeting.minutes_href}>
+                        <NotebookPen aria-hidden />
+                        {meeting.minutes_status === 'none' &&
+                        data.can.write_minutes
                             ? 'Mulai notulen'
                             : 'Notulen'}
                     </Link>
                 </Button>
-                <Button
-                    variant="outline"
-                    size="lg"
-                    className="px-3"
-                    onClick={() => data.setNoticeOpen(true)}
-                >
-                    Uji notifikasi
-                </Button>
+                <OrganizerActions data={data} compact />
                 {joinLink(meeting) && (
                     <Button
                         variant="outline"
@@ -769,7 +729,7 @@ export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
                         onClick={actions.join}
                     >
                         {actions.joined
-                            ? `Membuka ${actions.app}…`
+                            ? `Buka lagi ${actions.app}`
                             : `Gabung lewat ${actions.app}`}
                     </Button>
                     <span className="text-center text-[13px] text-text-muted">
@@ -778,13 +738,7 @@ export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
                 </div>
             )}
 
-            <MeetingStartNotice
-                meeting={meeting}
-                now={now}
-                open={data.noticeOpen}
-                onOpenChange={data.setNoticeOpen}
-                variant="mobile"
-            />
+            <MeetingStartNotice meeting={meeting} now={now} variant="mobile" />
         </div>
     );
 }

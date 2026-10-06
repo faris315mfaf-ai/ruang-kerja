@@ -3,7 +3,6 @@ import type { KeyboardEvent } from 'react';
 import { useId, useMemo, useState } from 'react';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { cn } from '@/lib/utils';
-import { ME } from './fixtures';
 import { isEmail } from './lib';
 import type { Person } from './types';
 
@@ -35,6 +34,7 @@ export function searchPeople(
  */
 export function PeoplePicker({
     people,
+    me,
     value,
     onAdd,
     onRemove,
@@ -43,6 +43,8 @@ export function PeoplePicker({
     labelId,
 }: {
     people: Person[];
+    /** The organizer (cannot be removed). */
+    me: string;
     value: string[];
     onAdd: (idOrEmail: string) => void;
     onRemove: (idOrEmail: string) => void;
@@ -108,7 +110,7 @@ export function PeoplePicker({
                 {value.map((item) => {
                     const person = people.find((p) => p.id === item);
                     const name = person
-                        ? person.id === ME
+                        ? person.id === me
                             ? `${person.name.split(' ')[0]} (Anda)`
                             : person.name
                         : item;
@@ -137,7 +139,7 @@ export function PeoplePicker({
                                 </span>
                             )}
                             <span className="truncate">{name}</span>
-                            {item !== ME ? (
+                            {item !== me ? (
                                 <button
                                     type="button"
                                     onClick={() => onRemove(item)}

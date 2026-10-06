@@ -29,6 +29,7 @@ import {
     managementNavItem,
     organizationNavItems,
     chatNavItem,
+    meetingsNavItem,
     portfolioNavItem,
     prototypeNavItem,
 } from '@/lib/navigation';
@@ -210,6 +211,13 @@ export default function Menu() {
                                         </Badge>
                                     ) : undefined
                                 }
+                            />
+                        )}
+                        {features?.meetings && (
+                            <Row
+                                icon={meetingsNavItem.icon}
+                                label="Kalender & rapat"
+                                href={meetingsNavItem.href}
                             />
                         )}
                         {features?.chat && (

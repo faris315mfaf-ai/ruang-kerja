@@ -1,11 +1,8 @@
 import { formatTime, OFFICE_TIMEZONE } from '@/lib/format';
 import type {
     ActionItem,
-    ApprovedLeave,
-    BusyBlock,
     CalendarEntry,
     CalendarLayer,
-    Holiday,
     Meeting,
     Minutes,
     Person,
@@ -13,7 +10,6 @@ import type {
     Platform,
     Recurrence,
     Rsvp,
-    TaskDue,
 } from './types';
 
 const MINUTE = 60_000;
@@ -348,9 +344,9 @@ export function nextMeeting(meetings: Meeting[], now: number): Meeting | null {
 
 export function rsvpCounts(meeting: Meeting): Record<Rsvp, number> {
     const counts: Record<Rsvp, number> = {
-        accepted: 0,
-        tentative: 0,
-        declined: 0,
+        yes: 0,
+        maybe: 0,
+        no: 0,
         pending: 0,
     };
 
@@ -369,9 +365,9 @@ export const PLATFORM_LABEL: Record<Platform, string> = {
 };
 
 export const RSVP_LABEL: Record<Rsvp, string> = {
-    accepted: 'Hadir',
-    tentative: 'Mungkin',
-    declined: 'Tidak hadir',
+    yes: 'Hadir',
+    maybe: 'Mungkin',
+    no: 'Tidak hadir',
     pending: 'Belum menjawab',
 };
 
@@ -382,146 +378,16 @@ export const RECURRENCE_LABEL: Record<Recurrence, string> = {
     mon_wed_fri: 'Senin, Rabu, Jumat',
 };
 
-/** Link a participant opens to join (Meet from Calendar, Zoom pasted). */
+/** Link a participant opens to join (pasted by the organizer). */
 export function joinLink(meeting: Meeting): string | null {
-    return meeting.calendar_event?.meet_link ?? meeting.join_url ?? null;
+    return meeting.platform === 'meet' || meeting.platform === 'zoom'
+        ? meeting.join_url || null
+        : null;
 }
 
 /** "meet.google.com/abc-defg-hij" without the scheme. */
 export function displayLink(url: string): string {
     return url.replace(/^https?:\/\//, '');
-}
-
-// ---------------------------------------------------------------------------
-// Scheduling: conflicts & free slot
-// ---------------------------------------------------------------------------
-
-export type Conflict = {
-    user_id: PersonId;
-    title: string;
-    starts_at: string;
-    ends_at: string;
-};
-
-function overlaps(
-    aStart: number,
-    aEnd: number,
-    bStart: number,
-    bEnd: number,
-): boolean {
-    return aStart < bEnd && bStart < aEnd;
-}
-
-/**
- * Who is already busy between `startsAt` and `endsAt`: RuangKerja meetings
- * they did not decline plus busy blocks from their Google Calendar.
- */
-export function findConflicts(
-    participantIds: PersonId[],
-    startsAt: string,
-    endsAt: string,
-    meetings: Meeting[],
-    busy: BusyBlock[],
-    ignoreMeetingId?: string,
-): Conflict[] {
-    const start = Date.parse(startsAt);
-    const end = Date.parse(endsAt);
-    const result: Conflict[] = [];
-
-    for (const id of participantIds) {
-        for (const meeting of meetings) {
-            if (meeting.id === ignoreMeetingId) {
-                continue;
-            }
-
-            const seat = meeting.participants.find((p) => p.user_id === id);
-
-            if (
-                seat &&
-                seat.rsvp !== 'declined' &&
-                overlaps(
-                    start,
-                    end,
-                    Date.parse(meeting.starts_at),
-                    Date.parse(meeting.ends_at),
-                )
-            ) {
-                result.push({
-                    user_id: id,
-                    title: meeting.title,
-                    starts_at: meeting.starts_at,
-                    ends_at: meeting.ends_at,
-                });
-            }
-        }
-
-        for (const block of busy) {
-            if (
-                block.user_id === id &&
-                overlaps(
-                    start,
-                    end,
-                    Date.parse(block.starts_at),
-                    Date.parse(block.ends_at),
-                )
-            ) {
-                result.push({
-                    user_id: id,
-                    title: block.title,
-                    starts_at: block.starts_at,
-                    ends_at: block.ends_at,
-                });
-            }
-        }
-    }
-
-    return result.sort((a, b) => a.starts_at.localeCompare(b.starts_at));
-}
-
-/**
- * Earliest start (30-minute steps, from the requested time until the day
- * ends at 17.00) at which every participant is free; null when none.
- */
-export function suggestFreeSlot(
-    participantIds: PersonId[],
-    date: string,
-    startClock: string,
-    duration: number,
-    meetings: Meeting[],
-    busy: BusyBlock[],
-    ignoreMeetingId?: string,
-): string | null {
-    const from = parseClock(startClock);
-
-    if (from === null) {
-        return null;
-    }
-
-    const step = 30;
-    const first = Math.ceil(from / step) * step;
-
-    for (let minutes = first; minutes + duration <= 17 * 60; minutes += step) {
-        const clock = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
-        const startsAt = officeInstant(date, clock);
-        const endsAt = new Date(
-            Date.parse(startsAt) + duration * MINUTE,
-        ).toISOString();
-
-        if (
-            findConflicts(
-                participantIds,
-                startsAt,
-                endsAt,
-                meetings,
-                busy,
-                ignoreMeetingId,
-            ).length === 0
-        ) {
-            return clock;
-        }
-    }
-
-    return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -533,31 +399,34 @@ export type MeetingFormValues = {
     date: string;
     start: string;
     duration: number;
-    platform: Exclude<Platform, 'client'>;
-    zoomUrl: string;
-    zoomPasscode: string;
-    room: string;
+    platform: Platform;
+    /** Meet or Zoom link (pasted; Google Meet links are not created yet). */
+    joinUrl: string;
+    /** Room or client address for `room` / `client`. */
+    location: string;
     /** Person ids and guest emails, organizer first. */
     participants: string[];
     agenda: string[];
     recurrence: Recurrence;
+    recurrenceUntil: string;
     reminders: number[];
     minuteTakerId: PersonId;
+    /** Workspace id, or 'none'. */
     workspace: string;
+    leadership: boolean;
 };
 
-export type MeetingFormErrors = Partial<
-    Record<
-        | 'title'
-        | 'date'
-        | 'start'
-        | 'participants'
-        | 'zoomUrl'
-        | 'room'
-        | 'agenda',
-        string
-    >
->;
+export type MeetingFormField =
+    | 'title'
+    | 'date'
+    | 'start'
+    | 'participants'
+    | 'joinUrl'
+    | 'location'
+    | 'agenda'
+    | 'recurrenceUntil';
+
+export type MeetingFormErrors = Partial<Record<MeetingFormField, string>>;
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 const ZOOM_URL =
@@ -571,11 +440,21 @@ export function isZoomUrl(value: string): boolean {
     return ZOOM_URL.test(value.trim());
 }
 
+export function isHttpsUrl(value: string): boolean {
+    try {
+        return new URL(value.trim()).protocol === 'https:';
+    } catch {
+        return false;
+    }
+}
+
 /** Field errors in Indonesian, each naming the fix (docs/DESIGN.md §8). */
 export function validateMeetingForm(
     values: MeetingFormValues,
     now: number,
     organizerId: PersonId,
+    /** Editing an existing meeting: past dates are kept as they are. */
+    editing = false,
 ): MeetingFormErrors {
     const errors: MeetingFormErrors = {};
     const title = values.title.trim();
@@ -586,13 +465,13 @@ export function validateMeetingForm(
         errors.title = 'Isi judul rapat.';
     } else if (title.length < 3) {
         errors.title = 'Judul minimal 3 karakter.';
-    } else if (title.length > 120) {
-        errors.title = 'Judul maksimal 120 karakter.';
+    } else if (title.length > 160) {
+        errors.title = 'Judul maksimal 160 karakter.';
     }
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(values.date)) {
         errors.date = 'Pilih tanggal rapat.';
-    } else if (values.date < today) {
+    } else if (!editing && values.date < today) {
         errors.date = 'Tanggal sudah lewat. Pilih hari ini atau sesudahnya.';
     }
 
@@ -601,6 +480,7 @@ export function validateMeetingForm(
     } else if (start + values.duration > 24 * 60) {
         errors.start = 'Rapat harus selesai di hari yang sama.';
     } else if (
+        !editing &&
         !errors.date &&
         values.date === today &&
         Date.parse(officeInstant(values.date, values.start)) < now
@@ -612,13 +492,35 @@ export function validateMeetingForm(
         errors.participants = 'Undang minimal satu peserta selain Anda.';
     }
 
-    if (values.platform === 'zoom' && !isZoomUrl(values.zoomUrl)) {
-        errors.zoomUrl =
+    if (values.platform === 'zoom' && !isZoomUrl(values.joinUrl)) {
+        errors.joinUrl =
             'Tempel tautan Zoom lengkap, misalnya https://zoom.us/j/81234567890.';
+    } else if (
+        values.platform === 'meet' &&
+        values.joinUrl.trim() !== '' &&
+        !isHttpsUrl(values.joinUrl)
+    ) {
+        errors.joinUrl =
+            'Tempel tautan Meet lengkap, misalnya https://meet.google.com/abc-defg-hij.';
     }
 
-    if (values.platform === 'room' && values.room.trim() === '') {
-        errors.room = 'Pilih ruangan.';
+    if (
+        (values.platform === 'room' || values.platform === 'client') &&
+        values.location.trim() === ''
+    ) {
+        errors.location =
+            values.platform === 'room'
+                ? 'Isi ruangan rapat.'
+                : 'Isi alamat klien.';
+    }
+
+    if (
+        values.recurrence !== 'none' &&
+        values.recurrenceUntil !== '' &&
+        values.recurrenceUntil < values.date
+    ) {
+        errors.recurrenceUntil =
+            'Tanggal akhir pengulangan harus sesudah tanggal rapat.';
     }
 
     if (values.agenda.every((item) => item.trim() === '')) {
@@ -639,7 +541,7 @@ export function actionStatus(item: ActionItem, today: string): ActionStatus {
         return 'done';
     }
 
-    return item.due_date < today ? 'late' : 'open';
+    return item.due_date !== null && item.due_date < today ? 'late' : 'open';
 }
 
 export function minutesProgress(minutes: Pick<Minutes, 'action_items'>): {
@@ -657,26 +559,12 @@ export function minutesProgress(minutes: Pick<Minutes, 'action_items'>): {
     };
 }
 
-export type OwnedAction = ActionItem & { meeting_id: string };
-
-/** Open follow-ups of one person across minutes, most urgent first. */
-export function openActionsFor(
-    minutes: Minutes[],
-    personId: PersonId,
-): OwnedAction[] {
-    return minutes
-        .flatMap((record) =>
-            record.action_items.map((item) => ({
-                ...item,
-                meeting_id: record.meeting_id,
-            })),
-        )
-        .filter((item) => item.assignee_id === personId && !item.done)
-        .sort((a, b) => a.due_date.localeCompare(b.due_date));
-}
-
 /** "Lewat 1 hari", "Hari ini", "Besok", "Rab, 7 Okt". */
-export function dueLabel(due: string, today: string): string {
+export function dueLabel(due: string | null, today: string): string {
+    if (due === null) {
+        return 'Tanpa tenggat';
+    }
+
     if (due === today) {
         return 'Hari ini';
     }
@@ -697,38 +585,6 @@ export function dueLabel(due: string, today: string): string {
     return shortDate(due);
 }
 
-/** Next task key for "Jadikan tugas": OPS-156, OPS-157 … */
-export function nextTaskKey(prefix: string, number: number): string {
-    return `${prefix}-${number}`;
-}
-
-/**
- * Turns follow-ups into tasks: each item without a key gets the next number
- * of the workspace sequence. Returns the items and the next free number.
- */
-export function convertToTasks(
-    items: ActionItem[],
-    ids: string[],
-    prefix: string,
-    nextNumber: number,
-): { items: ActionItem[]; nextNumber: number; created: string[] } {
-    let number = nextNumber;
-    const created: string[] = [];
-    const result = items.map((item) => {
-        if (!ids.includes(item.id) || item.task_key) {
-            return item;
-        }
-
-        const key = nextTaskKey(prefix, number);
-        number += 1;
-        created.push(key);
-
-        return { ...item, task_key: key };
-    });
-
-    return { items: result, nextNumber: number, created };
-}
-
 // ---------------------------------------------------------------------------
 // Calendar layers
 // ---------------------------------------------------------------------------
@@ -746,91 +602,6 @@ export const ALL_LAYERS: CalendarLayer[] = [
     'leave',
     'holidays',
 ];
-
-export function buildCalendarEntries({
-    meetings,
-    tasks,
-    leaves,
-    holidays,
-    people,
-    personId,
-    today,
-}: {
-    meetings: Meeting[];
-    tasks: TaskDue[];
-    leaves: ApprovedLeave[];
-    holidays: Holiday[];
-    people: Person[];
-    personId: PersonId;
-    today: string;
-}): CalendarEntry[] {
-    const entries: CalendarEntry[] = [];
-
-    for (const meeting of meetings) {
-        if (!isParticipant(meeting, personId)) {
-            continue;
-        }
-
-        entries.push({
-            id: `meeting-${meeting.id}`,
-            layer: 'meetings',
-            date: officeDate(meeting.starts_at),
-            title: meeting.title,
-            starts_at: meeting.starts_at,
-            ends_at: meeting.ends_at,
-            meta: `${timeRange(meeting.starts_at, meeting.ends_at)} · ${PLATFORM_LABEL[meeting.platform]}`,
-            href: `/rapat/${meeting.id}`,
-        });
-    }
-
-    for (const task of tasks) {
-        if (task.done) {
-            continue;
-        }
-
-        entries.push({
-            id: `task-${task.key}`,
-            layer: 'tasks',
-            date: task.due_date,
-            title: `${task.key} · ${task.title}`,
-            meta: task.due_date < today ? 'Terlambat' : 'Tenggat',
-            overdue: task.due_date < today,
-        });
-    }
-
-    for (const leave of leaves) {
-        const person = personById(people, leave.user_id);
-
-        entries.push({
-            id: `leave-${leave.id}`,
-            layer: 'leave',
-            date: leave.start_date,
-            end_date: leave.end_date,
-            title: `${person ? firstName(person.name) : 'Karyawan'} · ${leave.type}`,
-            meta:
-                leave.start_date === leave.end_date
-                    ? shortDate(leave.start_date)
-                    : `${shortDate(leave.start_date)} – ${shortDate(leave.end_date)}`,
-        });
-    }
-
-    for (const holiday of holidays) {
-        entries.push({
-            id: `holiday-${holiday.date}`,
-            layer: 'holidays',
-            date: holiday.date,
-            title: holiday.name,
-            meta:
-                holiday.type === 'national'
-                    ? 'Libur nasional'
-                    : holiday.type === 'collective_leave'
-                      ? 'Cuti bersama'
-                      : 'Libur kantor',
-        });
-    }
-
-    return entries;
-}
 
 const LAYER_ORDER: Record<CalendarLayer, number> = {
     holidays: 0,
@@ -901,35 +672,10 @@ export function minutesProblems(
             problems.push(`${label} belum punya penanggung jawab.`);
         }
 
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(item.due_date)) {
+        if (!item.due_date || !/^\d{4}-\d{2}-\d{2}$/.test(item.due_date)) {
             problems.push(`${label} belum punya tenggat.`);
         }
     });
 
     return problems;
-}
-
-/** Fresh draft for a meeting without minutes: agenda → empty sections. */
-export function blankMinutes(meeting: Meeting, now: string): Minutes {
-    return {
-        meeting_id: meeting.id,
-        status: 'draft',
-        saved_at: now,
-        version_count: 0,
-        co_editor_id: null,
-        attendance: meeting.participants
-            .filter(
-                (participant) =>
-                    participant.user_id && participant.rsvp !== 'declined',
-            )
-            .map((participant) => ({
-                user_id: participant.user_id as PersonId,
-                present: true,
-            })),
-        sections: meeting.agenda.map((title) => ({ title, body: '' })),
-        decisions: [],
-        action_items: [],
-        task_prefix: meeting.workspace?.key ?? 'RPT',
-        next_task_number: 1,
-    };
 }

@@ -1,4 +1,3 @@
-import { Link } from '@inertiajs/react';
 import { Check, Clock, Plus, Sparkles, Trash2 } from 'lucide-react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import { useId, useRef } from 'react';
@@ -17,7 +16,6 @@ import { Switch } from '@/components/ui/switch';
 import { nextTabIndex } from '@/components/ui/tabs';
 import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { PEOPLE, ROOMS } from './fixtures';
 import type { MeetingFormValues } from './lib';
 import {
     durationLabel,
@@ -31,14 +29,22 @@ import {
 import { PeoplePicker } from './people-picker';
 import type { Recurrence } from './types';
 import type { MeetingForm } from './use-meeting-form';
-import { DURATIONS, REMINDER_OPTIONS, WORKSPACES } from './use-meeting-form';
+import { REMINDER_OPTIONS } from './use-meeting-form';
+
+/** Start times every 15 minutes, 06.00–21.45, shown 24-hour ("13.30"). */
+const START_TIMES = Array.from({ length: 64 }, (_, index) => {
+    const minutes = 6 * 60 + index * 15;
+
+    return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+});
 
 type FormPlatform = MeetingFormValues['platform'];
 
 const PLATFORMS: { value: FormPlatform; hint: string }[] = [
-    { value: 'meet', hint: 'tautan dibuat otomatis' },
-    { value: 'zoom', hint: 'tempel tautan rapat' },
-    { value: 'room', hint: 'pilih ruangan' },
+    { value: 'meet', hint: 'tempel tautan Meet' },
+    { value: 'zoom', hint: 'tempel tautan Zoom' },
+    { value: 'room', hint: 'isi ruangan' },
+    { value: 'client', hint: 'alamat klien' },
 ];
 
 function FieldError({ id, message }: { id: string; message?: string }) {
@@ -112,7 +118,7 @@ function PlatformPicker({
         <div
             role="radiogroup"
             aria-labelledby={labelId}
-            className="grid grid-cols-1 gap-2.5 sm:grid-cols-3"
+            className="grid grid-cols-2 gap-2.5 xl:grid-cols-4"
         >
             {PLATFORMS.map((platform, index) => {
                 const selected = platform.value === value;
@@ -171,7 +177,7 @@ export function MeetingFormFields({ form }: { form: MeetingForm }) {
                     value={values.title}
                     onChange={(event) => set('title', event.target.value)}
                     placeholder="Misalnya: Review vendor logistik"
-                    maxLength={140}
+                    maxLength={160}
                     aria-invalid={Boolean(errors.title) || undefined}
                     aria-describedby={describe('title')}
                     className="h-[52px] text-[18px] font-semibold"
@@ -189,7 +195,7 @@ export function MeetingFormFields({ form }: { form: MeetingForm }) {
                         id={fid('date')}
                         type="date"
                         value={values.date}
-                        min={form.today}
+                        min={form.editing ? undefined : form.today}
                         onChange={(event) => set('date', event.target.value)}
                         aria-invalid={Boolean(errors.date) || undefined}
                         aria-describedby={describe('date')}
@@ -202,16 +208,29 @@ export function MeetingFormFields({ form }: { form: MeetingForm }) {
                     error={errors.start}
                     errorId={err('start')}
                 >
-                    <Input
-                        id={fid('start')}
-                        type="time"
-                        step={900}
+                    <Select
                         value={values.start}
-                        onChange={(event) => set('start', event.target.value)}
-                        aria-invalid={Boolean(errors.start) || undefined}
-                        aria-describedby={describe('start')}
-                        className="h-[50px]"
-                    />
+                        onValueChange={(value) => value && set('start', value)}
+                    >
+                        <SelectTrigger
+                            id={fid('start')}
+                            className="h-[50px] w-full"
+                            aria-invalid={Boolean(errors.start) || undefined}
+                            aria-describedby={describe('start')}
+                        >
+                            <SelectValue placeholder="Pilih jam" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {(START_TIMES.includes(values.start)
+                                ? START_TIMES
+                                : [values.start, ...START_TIMES].sort()
+                            ).map((time) => (
+                                <SelectItem key={time} value={time}>
+                                    {time.replace(':', '.')}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </Field>
                 <Field
                     label="Durasi"
@@ -231,7 +250,7 @@ export function MeetingFormFields({ form }: { form: MeetingForm }) {
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            {DURATIONS.map((minutes) => (
+                            {form.durations.map((minutes) => (
                                 <SelectItem
                                     key={minutes}
                                     value={String(minutes)}
@@ -253,86 +272,69 @@ export function MeetingFormFields({ form }: { form: MeetingForm }) {
                     onChange={(value) => set('platform', value)}
                     labelId={fid('platform')}
                 />
-                {values.platform === 'meet' && (
-                    <p className="rounded-[14px] bg-link-soft px-4 py-3.5 text-[16px] font-semibold text-link">
-                        Tautan Google Meet dibuat otomatis lewat Google Calendar
-                        saat disimpan.
-                    </p>
-                )}
-                {values.platform === 'zoom' && (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr]">
-                        <Field
-                            label="Tautan Zoom"
-                            htmlFor={fid('zoom')}
-                            error={errors.zoomUrl}
-                            errorId={err('zoomUrl')}
-                        >
-                            <Input
-                                id={fid('zoom')}
-                                type="url"
-                                inputMode="url"
-                                value={values.zoomUrl}
-                                onChange={(event) =>
-                                    set('zoomUrl', event.target.value)
-                                }
-                                placeholder="https://zoom.us/j/81234567890"
-                                aria-invalid={
-                                    Boolean(errors.zoomUrl) || undefined
-                                }
-                                aria-describedby={describe('zoomUrl')}
-                                className="h-[50px] font-mono text-[15px]"
-                            />
-                        </Field>
-                        <Field
-                            label="Kode sandi"
-                            htmlFor={fid('pass')}
-                            errorId={err('pass')}
-                        >
-                            <Input
-                                id={fid('pass')}
-                                value={values.zoomPasscode}
-                                onChange={(event) =>
-                                    set('zoomPasscode', event.target.value)
-                                }
-                                autoComplete="off"
-                                className="h-[50px]"
-                            />
-                        </Field>
-                        <p className="text-[14px] text-text-muted sm:col-span-2">
-                            Tautan dicek formatnya. Kode sandi hanya terlihat
-                            oleh peserta.
-                        </p>
-                    </div>
-                )}
-                {values.platform === 'room' && (
+                {(values.platform === 'meet' || values.platform === 'zoom') && (
                     <Field
-                        label="Ruangan"
-                        htmlFor={fid('room')}
-                        error={errors.room}
-                        errorId={err('room')}
+                        label={
+                            values.platform === 'zoom'
+                                ? 'Tautan Zoom'
+                                : 'Tautan Google Meet (opsional)'
+                        }
+                        htmlFor={fid('link')}
+                        error={errors.joinUrl}
+                        errorId={err('joinUrl')}
                     >
-                        <Select
-                            value={values.room}
-                            onValueChange={(value) =>
-                                value && set('room', value)
+                        <Input
+                            id={fid('link')}
+                            type="url"
+                            inputMode="url"
+                            value={values.joinUrl}
+                            onChange={(event) =>
+                                set('joinUrl', event.target.value)
                             }
-                        >
-                            <SelectTrigger
-                                id={fid('room')}
-                                className="h-[50px] w-full"
-                                aria-invalid={Boolean(errors.room) || undefined}
-                                aria-describedby={describe('room')}
-                            >
-                                <SelectValue placeholder="Pilih ruangan" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {ROOMS.map((room) => (
-                                    <SelectItem key={room} value={room}>
-                                        {room}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                            placeholder={
+                                values.platform === 'zoom'
+                                    ? 'https://zoom.us/j/81234567890'
+                                    : 'https://meet.google.com/abc-defg-hij'
+                            }
+                            aria-invalid={Boolean(errors.joinUrl) || undefined}
+                            aria-describedby={describe('joinUrl')}
+                            className="h-[50px] font-mono text-[15px]"
+                        />
+                        <p className="text-[14px] text-text-muted">
+                            {values.platform === 'meet'
+                                ? 'Tautan Meet otomatis lewat Google Calendar ditahan. Tempel tautan dari Google Meet, atau isi nanti saat mengubah rapat.'
+                                : 'Tautan dicek formatnya dan ikut di pengingat peserta.'}
+                        </p>
+                    </Field>
+                )}
+                {(values.platform === 'room' ||
+                    values.platform === 'client') && (
+                    <Field
+                        label={
+                            values.platform === 'room'
+                                ? 'Ruangan'
+                                : 'Alamat klien'
+                        }
+                        htmlFor={fid('location')}
+                        error={errors.location}
+                        errorId={err('location')}
+                    >
+                        <Input
+                            id={fid('location')}
+                            value={values.location}
+                            onChange={(event) =>
+                                set('location', event.target.value)
+                            }
+                            maxLength={200}
+                            placeholder={
+                                values.platform === 'room'
+                                    ? 'Misalnya: Ruang Rapat Lt. 3'
+                                    : 'Nama klien dan alamatnya'
+                            }
+                            aria-invalid={Boolean(errors.location) || undefined}
+                            aria-describedby={describe('location')}
+                            className="h-[50px]"
+                        />
                     </Field>
                 )}
             </div>
@@ -345,7 +347,8 @@ export function MeetingFormFields({ form }: { form: MeetingForm }) {
                     </span>
                 </span>
                 <PeoplePicker
-                    people={PEOPLE}
+                    people={form.people}
+                    me={form.me}
                     value={values.participants}
                     onAdd={form.addParticipant}
                     onRemove={form.removeParticipant}
@@ -463,7 +466,7 @@ export function MeetingFormFields({ form }: { form: MeetingForm }) {
                         <SelectContent>
                             {form.internalPeople.map((person) => (
                                 <SelectItem key={person.id} value={person.id}>
-                                    {person.id === 'dimas'
+                                    {person.id === form.me
                                         ? 'Saya'
                                         : person.name}
                                 </SelectItem>
@@ -517,18 +520,75 @@ export function MeetingFormFields({ form }: { form: MeetingForm }) {
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            {WORKSPACES.map((workspace) => (
+                            <SelectItem value="none">
+                                Tanpa workspace
+                            </SelectItem>
+                            {form.workspaces.map((workspace) => (
                                 <SelectItem
-                                    key={workspace.key}
-                                    value={workspace.key}
+                                    key={workspace.id}
+                                    value={workspace.id}
                                 >
-                                    {workspace.name}
+                                    {workspace.key} · {workspace.name}
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
                 </Field>
             </div>
+
+            {values.recurrence !== 'none' && (
+                <Field
+                    label="Berulang sampai (opsional)"
+                    htmlFor={fid('until')}
+                    error={errors.recurrenceUntil}
+                    errorId={err('recurrenceUntil')}
+                    className="sm:max-w-[260px]"
+                >
+                    <Input
+                        id={fid('until')}
+                        type="date"
+                        value={values.recurrenceUntil}
+                        min={values.date}
+                        onChange={(event) =>
+                            set('recurrenceUntil', event.target.value)
+                        }
+                        aria-invalid={
+                            Boolean(errors.recurrenceUntil) || undefined
+                        }
+                        aria-describedby={describe('recurrenceUntil')}
+                        className="h-[50px]"
+                    />
+                </Field>
+            )}
+
+            <p className="-mt-2 text-[14px] text-text-muted">
+                Workspace dipakai saat tindak lanjut notulen dijadikan tugas.
+            </p>
+
+            {form.canLead && (
+                <div className="flex min-h-12 items-center justify-between gap-3 rounded-[16px] border border-border px-4 py-2">
+                    <span className="flex flex-col">
+                        <span
+                            id={fid('lead')}
+                            className="text-[16px] font-bold"
+                        >
+                            Rapat pimpinan
+                        </span>
+                        <span className="text-[14px] text-text-muted">
+                            Tampil di Jadwal & notulensi manajemen untuk Direksi
+                            dan HR.
+                        </span>
+                    </span>
+                    <Switch
+                        size="md"
+                        checked={values.leadership}
+                        onCheckedChange={(checked) =>
+                            set('leadership', checked)
+                        }
+                        aria-labelledby={fid('lead')}
+                    />
+                </div>
+            )}
         </div>
     );
 }
@@ -579,13 +639,9 @@ export function RemindersCard({
                         >
                             WhatsApp
                         </span>
-                        <Link
-                            href="/pengaturan/whatsapp"
-                            // 44px touch target without changing the layout.
-                            className="relative self-start text-[14px] font-semibold text-link after:absolute after:-inset-x-1 after:-inset-y-3 after:content-[''] hover:underline"
-                        >
-                            Atur WhatsApp
-                        </Link>
+                        <span className="text-[14px] font-semibold text-text-muted">
+                            Ditahan
+                        </span>
                     </span>
                     <Switch
                         size="md"
@@ -644,13 +700,16 @@ export function ConflictCard({
                 />
                 <div className="flex flex-col gap-1 text-[16px] leading-6 font-semibold">
                     {form.conflicts.map((conflict) => {
-                        const person = personById(PEOPLE, conflict.user_id);
+                        const person = personById(
+                            form.people,
+                            conflict.user_id,
+                        );
 
                         return (
                             <span
                                 key={`${conflict.user_id}-${conflict.starts_at}`}
                             >
-                                {person?.id === 'dimas'
+                                {person?.id === form.me
                                     ? 'Anda'
                                     : (person?.name ?? 'Peserta')}{' '}
                                 ada{' '}
@@ -691,11 +750,11 @@ export function MeetingSummary({ form }: { form: MeetingForm }) {
     const internal = values.participants.filter((p) => !isEmail(p));
     const guests = values.participants.filter(isEmail);
     const place =
-        values.platform === 'room'
-            ? values.room
-            : values.platform === 'zoom'
-              ? `Zoom · ${values.zoomUrl.replace(/^https:\/\//, '')}`
-              : 'Google Meet (tautan dibuat otomatis)';
+        values.platform === 'room' || values.platform === 'client'
+            ? `${PLATFORM_LABEL[values.platform]} · ${values.location.trim()}`
+            : values.joinUrl.trim()
+              ? `${PLATFORM_LABEL[values.platform]} · ${values.joinUrl.trim().replace(/^https:\/\//, '')}`
+              : `${PLATFORM_LABEL[values.platform]} (tautan belum diisi)`;
     const rows: [string, string][] = [
         ['Judul', values.title.trim()],
         [
@@ -705,7 +764,7 @@ export function MeetingSummary({ form }: { form: MeetingForm }) {
         ['Tempat', place],
         [
             'Peserta',
-            `${internal.map((id) => firstName(personById(PEOPLE, id)?.name ?? id)).join(', ')}${guests.length ? ` + ${guests.length} tamu` : ''}`,
+            `${internal.map((id) => firstName(personById(form.people, id)?.name ?? id)).join(', ')}${guests.length ? ` + ${guests.length} tamu` : ''}`,
         ],
         [
             'Agenda',
@@ -714,8 +773,13 @@ export function MeetingSummary({ form }: { form: MeetingForm }) {
                 .map((item, i) => `${i + 1}. ${item.trim()}`)
                 .join('\n'),
         ],
-        ['Notulis', personById(PEOPLE, values.minuteTakerId)?.name ?? '–'],
-        ['Ulangi', RECURRENCE_LABEL[values.recurrence]],
+        ['Notulis', personById(form.people, values.minuteTakerId)?.name ?? '–'],
+        [
+            'Ulangi',
+            values.recurrence !== 'none' && values.recurrenceUntil
+                ? `${RECURRENCE_LABEL[values.recurrence]} sampai ${shortDate(values.recurrenceUntil)}`
+                : RECURRENCE_LABEL[values.recurrence],
+        ],
         [
             'Pengingat',
             values.reminders.length
@@ -749,58 +813,10 @@ export function MeetingSummary({ form }: { form: MeetingForm }) {
                 </p>
             )}
             <p className="text-[14px] text-text-muted">
-                Undangan masuk ke Google Calendar peserta dan Inbox RuangKerja.
+                Undangan masuk ke Inbox RuangKerja dan email peserta internal.
+                {guests.length > 0 &&
+                    ' Tamu eksternal belum menerima email: undangan kalender Google ditahan.'}
             </p>
         </div>
-    );
-}
-
-/** Success card after sending (DRapatBaru "Undangan terkirim"). */
-export function SavedCard({ form }: { form: MeetingForm }) {
-    const values = form.saved!;
-    const count = values.participants.length - 1;
-    const note =
-        values.platform === 'zoom'
-            ? 'Tautan Zoom ikut di undangan dan pengingat.'
-            : values.platform === 'meet'
-              ? 'Tautan Google Meet dibuat dan dibagikan.'
-              : `${values.room.split(' · ')[0]} dipesan.`;
-
-    return (
-        <section
-            role="status"
-            className="flex flex-wrap items-center gap-4 rounded-[22px] bg-grad-aksi px-6 py-[22px] text-on-brand shadow-glow"
-        >
-            <span
-                aria-hidden
-                className="flex size-12 items-center justify-center rounded-full bg-on-brand text-primary"
-            >
-                <Check className="size-[26px]" strokeWidth={3} />
-            </span>
-            <span className="flex min-w-0 flex-[1_1_240px] flex-col gap-0.5">
-                <span className="text-[20px] font-extrabold">
-                    Undangan terkirim ke {count} peserta
-                </span>
-                <span className="text-[16px]">
-                    {values.title.trim()} · {shortDate(values.date)}{' '}
-                    {values.start.replace(':', '.')}. {note}
-                </span>
-            </span>
-            <span className="flex flex-wrap gap-2">
-                <Button
-                    variant="outline"
-                    className="border-on-brand/45 bg-on-brand/12 font-bold text-on-brand hover:bg-on-brand/20"
-                    onClick={form.reset}
-                >
-                    Jadwalkan lagi
-                </Button>
-                <Button
-                    asChild
-                    className="bg-on-brand bg-none font-extrabold text-brand-800 shadow-none hover:bg-on-brand/90"
-                >
-                    <Link href="/rapat">Ke daftar rapat</Link>
-                </Button>
-            </span>
-        </section>
     );
 }

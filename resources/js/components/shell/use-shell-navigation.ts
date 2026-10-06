@@ -14,6 +14,7 @@ import {
     attendanceNavItems,
     isActivePath,
     chatNavItem,
+    meetingsNavItem,
     mainNavItemsFor,
     organizationNavItems,
     prototypeNavItem,
@@ -36,6 +37,7 @@ const MOTIONS: Record<string, GlyphMotion> = {
     '/manajemen': { name: 'dock-lift', duration: '1.6s' },
     '/inbox': { name: 'dock-drop', duration: '1.4s' },
     '/obrolan': { name: 'dock-nudge', duration: '1.5s' },
+    '/rapat': { name: 'dock-tilt', duration: '1.8s' },
     '/tugas': { name: 'dock-pulse', duration: '1.5s' },
     '/absensi': { name: 'dock-drop', duration: '1.4s' },
     '/pengajuan': { name: 'dock-tilt', duration: '1.8s' },
@@ -207,10 +209,16 @@ export function useShellNavigation(): ShellNavigation {
               item.href === '/inbox' ? [item, chatNavItem] : [item],
           )
         : main;
+    // Rapat right after Tugas saya (work planning next to tasks).
+    const withMeetings = features?.meetings
+        ? withChat.flatMap((item) =>
+              item.href === '/tugas' ? [item, meetingsNavItem] : [item],
+          )
+        : withChat;
     const tiles = [
         ...(organizationItems.length > 1
-            ? withChat
-            : [...withChat, ...organizationItems]),
+            ? withMeetings
+            : [...withMeetings, ...organizationItems]),
         ...(features?.prototype ? [prototypeNavItem] : []),
     ].map(toTile);
 

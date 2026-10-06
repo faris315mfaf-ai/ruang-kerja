@@ -3,6 +3,7 @@ import {
     BarChart3,
     BookOpen,
     Calendar,
+    CalendarClock,
     Building2,
     ClipboardCheck,
     CircleCheck,
@@ -176,6 +177,19 @@ export const chatNavItem: AppNavItem = {
     icon: MessagesSquare,
     matchPrefix: true,
     badge: 'chat',
+};
+
+/**
+ * "Rapat" (/rapat, F2-3): meetings, minutes & calendar, shown while the
+ * `meetings` feature flag is on (shared prop `features.meetings`). Also
+ * matches /kalender via the Rapat page links; the Menu row reads "Kalender &
+ * rapat".
+ */
+export const meetingsNavItem: AppNavItem = {
+    title: 'Rapat',
+    href: '/rapat',
+    icon: CalendarClock,
+    matchPrefix: true,
 };
 
 /**

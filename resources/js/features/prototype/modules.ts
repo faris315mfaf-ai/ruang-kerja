@@ -1,6 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-    CalendarDays,
     Fingerprint,
     NotebookPen,
     Smartphone,
@@ -36,25 +35,6 @@ export const PROTOTYPE_MODULES: PrototypeModule[] = [
         icon: NotebookPen,
         gradient: 'bg-grad-indigo',
         screens: [{ label: 'Semua catatan', href: '/catatan' }],
-    },
-    {
-        key: 'meetings',
-        phase: 'Fase 2',
-        sprint: 'F2-3',
-        title: 'Rapat & kalender',
-        description:
-            'Jadwalkan rapat dengan Google Meet, notulen dengan tindak lanjut, dan kalender tenggat & cuti.',
-        icon: CalendarDays,
-        gradient: 'bg-grad-merek',
-        screens: [
-            { label: 'Rapat', href: '/rapat' },
-            { label: 'Jadwalkan rapat', href: '/rapat/baru' },
-            { label: 'Kalender', href: '/kalender' },
-            {
-                label: 'Jadwal & notulensi (manajemen)',
-                href: '/manajemen/jadwal',
-            },
-        ],
     },
     {
         key: 'automation',

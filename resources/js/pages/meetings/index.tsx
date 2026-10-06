@@ -3,19 +3,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { NewMeetingAction } from '@/features/meetings/agenda-parts';
 import { AgendaDesktop } from '@/features/meetings/agenda.desktop';
 import { AgendaMobile } from '@/features/meetings/agenda.mobile';
+import { MeetingsProvider } from '@/features/meetings/meetings-context';
+import type { AgendaProps } from '@/features/meetings/types';
 import { useAgenda } from '@/features/meetings/use-agenda';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 
 /**
- * /rapat — meeting agenda (designs DRapat, MRapat). Prototype: sample data
- * from features/meetings/fixtures; the backend will pass the same shapes.
+ * /rapat — the viewer's meetings of the week (designs DRapat, MRapat),
+ * props from MeetingController@index (AgendaQuery).
  */
-export default function MeetingsIndexPage() {
+export default function MeetingsIndexPage({ agenda }: { agenda: AgendaProps }) {
     const breakpoint = useBreakpoint();
-    const data = useAgenda();
+    const data = useAgenda(agenda);
 
     return (
-        <>
+        <MeetingsProvider people={agenda.people} me={agenda.viewer_id}>
             <Head title="Rapat" />
             {breakpoint === null ? (
                 <div className="flex flex-col gap-4" aria-busy>
@@ -28,7 +30,7 @@ export default function MeetingsIndexPage() {
             ) : (
                 <AgendaDesktop data={data} isTablet={breakpoint === 'tablet'} />
             )}
-        </>
+        </MeetingsProvider>
     );
 }
 
