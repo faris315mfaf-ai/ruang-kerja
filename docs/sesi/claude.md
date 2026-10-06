@@ -12,12 +12,13 @@ Integrator dua gelombang agen paralel. Rencana: `docs/PEMBAGIAN-TUGAS.md` + kepu
 - Shell ponsel mobile-first (`ad89015`), papan tugas (`ab19be2`), panduan pratinjau `/pratinjau/panduan` (merge `895d2e5`), skema laporan progres harian (`5b64553`).
 
 ## Agen (branch → status)
-- Semua sudah digabung ke `claude/integrasi-f2`: `claude/f3-peran`, `claude/f3-okr`, `claude/f2-otomasi`, `claude/f2-catatan`, `claude/f2-rapat`, `claude/akun-sandi`, `claude/staf`, `claude/pimpinan`, `claude/hiring`, `docs/panduan-pratinjau`.
-- Verifikasi terakhir: Pest 2.927, Vitest 586, Larastan/Pint/oxlint/tsc bersih; ui-shots anggota/hr/direksi/kadiv tanpa galat.
+- Semua sudah digabung ke `claude/integrasi-f2`, termasuk `claude/tanggal` (DateInput "Hari, dd/mm/yyyy"), `claude/bug-ringan` (PR #4), dan `main` terbaru.
+- Verifikasi terakhir: Pest 2.930, Vitest 644, Larastan/Pint/oxlint/tsc bersih, `npm run build` ok, ui-shots hr@/dio@ tanpa galat.
 
 ## Langkah berikutnya
-1. Menunggu izin pemilik untuk push `claude/integrasi-f2` dan membuka PR (gabungkan juga PR #3/#4 lebih dulu atau tutup karena sudah termasuk).
-2. Pertanyaan terbuka ke pemilik: apakah "Kehadiran hari ini" & KPI "Tugas terlambat" di `/manajemen` juga dihapus; retensi data pelamar hiring (UU PDP); chip "rapat 5 menit lagi" di MenuBar.
+1. PR #5 (`claude/integrasi-f2` → `main`) terbuka, mergeable. Setelah di-merge, tutup PR #3 dan #4 (isinya sudah tercakup).
+2. Sudah diputus pemilik: `/manajemen` tanpa Kehadiran hari ini & KPI Tugas terlambat; retensi pelamar 30 hari; format isian tanggal; persona Reynandio (Dirut) & Faris (Project Leader).
+3. Masih terbuka: chip "rapat 5 menit lagi" di MenuBar.
 
 ## Keputusan pemilik yang berlaku (6 Okt 2026)
 - DITAHAN: login Google, Google Drive/Docs/Calendar/Meet, WhatsApp + provider, aplikasi ponsel (biometrik, integritas, offline, widget, wajah, perangkat), mesin fingerprint, fitur yang belum ada sama sekali.
