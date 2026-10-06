@@ -23,6 +23,19 @@ __APP_DOMAIN__ {
 		-X-Powered-By
 	}
 
+	# Internal endpoints (collab server <-> Laravel) never go through the edge.
+	@internal path /internal /internal/* /collab/internal/* /collab/health
+	handle @internal {
+		respond 404
+	}
+
+	# Catatan bersama: collab server WebSocket (wss://domain/collab).
+	@collab path /collab /collab/*
+	handle @collab {
+		uri strip_prefix /collab
+		reverse_proxy ruangkerja-collab:1234
+	}
+
 	# Reverb: WebSocket (/app/{key}) and HTTP API (/apps/{id}/...).
 	@reverb path /app /app/* /apps /apps/*
 	handle @reverb {

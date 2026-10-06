@@ -82,6 +82,23 @@ services:
     healthcheck:
       disable: true
 
+  # Catatan bersama (F2-2): Hocuspocus/Yjs server built from collab/Dockerfile.
+  # Opt-in (COMPOSE_PROFILES=collab) until CI publishes COLLAB_IMAGE; Caddy
+  # proxies wss://APP_DOMAIN/collab to it. Talks to Laravel over the internal
+  # network (http://app:8000/internal/catatan/*) with COLLAB_SECRET.
+  collab:
+    image: ${COLLAB_IMAGE:-ghcr.io/ruangkerja/collab}:${APP_TAG:-latest}
+    profiles: ["collab"]
+    restart: unless-stopped
+    environment:
+      COLLAB_SECRET: ${COLLAB_SECRET:-}
+      COLLAB_PORT: 1234
+      COLLAB_APP_URL: http://app:8000
+    depends_on:
+      app:
+        condition: service_healthy
+    logging: *logging
+
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped

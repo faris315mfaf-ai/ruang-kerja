@@ -46,6 +46,21 @@ services:
       - "${MAIL_FORWARD_PORT:-1025}:1025"
       - "${MAILPIT_UI_PORT:-8025}:8025"
 
+  # Catatan bersama: server kolaborasi (Hocuspocus/Yjs). Opsional; sehari-hari
+  # cukup `composer run dev` (menjalankan collab/ sebagai proses Node di host).
+  # Container butuh COLLAB_APP_URL yang terjangkau dari Docker.
+  # Jalankan: docker compose --profile collab up -d collab
+  collab:
+    build: ./collab
+    profiles: ["collab"]
+    restart: unless-stopped
+    environment:
+      COLLAB_SECRET: ${COLLAB_SECRET:-}
+      COLLAB_PORT: 1234
+      COLLAB_APP_URL: ${COLLAB_APP_URL:-http://host.docker.internal:8000}
+    ports:
+      - "${COLLAB_PORT:-1234}:1234"
+
 volumes:
   pgdata:
   redisdata:
