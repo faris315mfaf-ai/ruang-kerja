@@ -26,6 +26,7 @@ class PlannerDemoSeeder extends Seeder
     private const array ACCEPT = [
         'anggota@demo.test' => [PlanBucket::Today, PlanBucket::Today, PlanBucket::Week],
         'kadiv@demo.test' => [PlanBucket::Today, PlanBucket::Today, PlanBucket::Week],
+        'programmer@demo.test' => [PlanBucket::Today, PlanBucket::Today, PlanBucket::Week],
     ];
 
     public function run(PersonalPlanner $planner, PlanTask $planTask): void

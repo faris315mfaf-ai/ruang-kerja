@@ -1,6 +1,14 @@
 # AGENTS.md — Aturan proyek RuangKerja untuk AI coding tool
 
-Berlaku untuk Claude Code, Z-AI, dan agent lain. Baca file ini sebelum mengubah kode apa pun.
+Berlaku untuk **Claude Code, Codex, Z-AI**, dan agent lain. Baca file ini sebelum mengubah kode apa pun. File ini satu-satunya sumber aturan; `CLAUDE.md` hanya menambah hal khusus Claude Code.
+
+| Agen | Membaca | Skill proyek | Pengaturan |
+|---|---|---|---|
+| Codex | `AGENTS.md` | `.agents/skills/` (`$sprint`, `$cek-ui`, `$cek-lokal`, `$tinjau`) | `.codex/config.toml` (sandbox workspace-write + jaringan lokal; proyek harus *trusted*) |
+| Claude Code | `CLAUDE.md` → `@AGENTS.md` | `.claude/skills/` (`/sprint`, `/cek-ui`, `/cek-lokal`, `/tinjau`) | `.claude/settings.json` |
+| Z-AI / lainnya | `AGENTS.md` | — | — |
+
+Skill proyek ditulis sekali di `.agents/skills/`, lalu `node scripts/sync-agent-skills.mjs` menyalinnya ke `.claude/skills/` (CI memeriksa keduanya sama). Jangan mengedit `.claude/skills/` langsung.
 
 ## Konteks
 
@@ -48,24 +56,49 @@ PHP 8.4 · Laravel 13 · PostgreSQL 17 · Redis · Inertia.js 3 · React 19 + Ty
 
 ## Alur kerja agent
 
-1. Baca dokumen terkait sebelum mulai. Ringkas rencana singkat (file yang akan dibuat/diubah) lalu kerjakan.
+1. Baca dokumen terkait sebelum mulai. Untuk sprint/fitur baru, tunjukkan rencana singkat (file yang akan dibuat/diubah) ke pengguna **sebelum** menulis kode; tugas kecil boleh langsung dikerjakan.
 2. Kerjakan dalam langkah kecil. Setelah tiap langkah jalankan:
    `composer test` · `composer lint` · `npm run typecheck` · `npm run lint` · `npm test`
 3. Jangan menandai pekerjaan selesai jika ada test merah atau error tipe.
 4. Jangan menambah paket baru tanpa menjelaskan alasannya di ringkasan akhir.
 5. Akhiri setiap tugas dengan ringkasan: apa yang dibuat, cara mencoba manual, keputusan yang diambil, dan hal yang belum selesai.
 6. Jika instruksi bertentangan dengan dokumen di `docs/`, **berhenti dan tanyakan**. Jangan menebak.
+7. Jalankan test & lint sendiri; jangan meminta pengguna menjalankannya. Commit per langkah logis dengan format Conventional Commits (pesan berbahasa Indonesia). Jangan `git push`, `migrate:fresh`, atau `docker compose down` tanpa izin.
+8. **Jangan membaca atau menampilkan isi `.env`** (juga `secrets/`). Cek konfigurasi lewat `php artisan about` / `php artisan config:show <kunci>`; minta pengguna mengisi rahasia sendiri.
+9. Untuk memeriksa tampilan, pakai skill `cek-ui`: `node scripts/ui-shots.mjs <rute> --akun <email>` (screenshot 1440/390 terang & malam + laporan galat), lalu bandingkan dengan `docs/mockups/png/` dan `docs/ruangkerja-design/`. Agen dengan browser sendiri boleh memakainya untuk interaksi.
+
+## Lingkungan lokal
+
+- **macOS (mesin utama saat ini):** Laravel Herd menyajikan `https://ruangkerja.test`; layanan via `docker compose` (OrbStack/Docker Desktop) dengan port pengganti (`docs/SETUP-LOKAL.md` §10: Postgres 5434, Redis 6380, Mailpit UI 8026, Reverb 8081). Bila `php`/`composer`/`herd` tidak ditemukan di shell agen: `export PATH="$HOME/Library/Application Support/Herd/bin:$PATH"`. Proses dev: `composer run dev`; untuk sekadar melihat UI cukup `npm run build`.
+- **Windows:** Herd + Git Bash, `composer run dev:win` (Horizon & pail tidak jalan).
+- Jangan menjalankan `php artisan serve` kecuali untuk uji OAuth Google (`docs/SETUP-LOKAL.md` §6).
+- Akun demo lokal (sandi `password`, hanya `APP_ENV=local` + `DEMO_LOGIN_ENABLED`): `admin@`, `direksi@`, `hr@`, `kadiv@`, `anggota@`, `programmer@demo.test`, `maya.lestari@demo.test`. Setelah masuk, pemilih akun demo di bagian atas shell berpindah antar persona.
+
+## Serah terima antar agen (Claude Code ↔ Codex)
+
+Pengguna bisa berpindah agen di tengah pekerjaan (mis. kuota habis). Agen berikutnya tidak melihat percakapan sebelumnya, jadi keadaan kerja harus ada di repo:
+
+- **`docs/SESI-AKTIF.md`** memuat tugas yang sedang berjalan: tujuan, branch/worktree, langkah yang sudah selesai (dengan hash commit), langkah berikutnya, keputusan yang sudah diambil pengguna, perintah verifikasi, dan hal yang sengaja tidak disentuh. Perbarui setiap selesai satu langkah logis dan sebelum berhenti; kosongkan (kembalikan ke templat) bila tugas selesai.
+- Commit sering. Pekerjaan setengah jadi di-commit sebagai `wip(<modul>): …` di branch fitur, bukan dibiarkan tak ter-commit, dan jangan memakai `git stash` untuk menitipkan pekerjaan antar agen.
+- Agen yang melanjutkan: baca `docs/SESI-AKTIF.md`, `git log --oneline -15`, dan `git status` dulu; jangan mengulang pekerjaan yang sudah di-commit.
+- Hal yang hanya ada di memori/percakapan satu agen (preferensi pengguna, keputusan) dipindah ke dokumen di `docs/` atau `AGENTS.md`.
+
+## Gerak & animasi
+
+Durasi & easing dari `docs/DESIGN.md` §7 (`duration-120` / `duration-180`, `ease-brand`); loop ikon/ambient boleh lebih lama tetapi frame awal = frame akhir. Animasikan hanya `transform`/`opacity` bila bisa; warna lewat token. Wajib menghormati `prefers-reduced-motion` (aturan global di `tokens.css`; loop berhenti di frame diam yang bermakna). Jangan menambah pustaka animasi baru tanpa alasan di ringkasan; utamakan CSS/`tw-animate-css`, Lottie hanya aset desainer yang dimuat lazy dan tidak di bundle awal halaman Absensi. Bila agen punya skill `animate`, `review-animations`, `apple-hig`, `mobile-native`, `break-ui`: pakai, tetapi bila sarannya bertentangan dengan `docs/`, dokumen proyek menang.
 
 ## Perintah
 
 ```bash
+composer run dev      # macOS/Linux: server + horizon + reverb + vite
 composer run dev:win  # Windows + Herd: vite + reverb + queue:work + schedule:work
-composer run dev      # macOS/Linux/CI: server + horizon + reverb + vite (Horizon jalan di macOS & Linux)
 composer test         # pest --parallel
 composer lint         # pint --test && phpstan analyse
 npm run typecheck     # tsc --noEmit
 npm run lint          # vp check (oxlint + oxfmt)
 npm test              # vitest (vp test)
+node scripts/ui-shots.mjs /dashboard --akun kadiv@demo.test   # screenshot UI + galat
+node scripts/sync-agent-skills.mjs                            # .agents/skills → .claude/skills
 ```
 
 ## Definition of Done

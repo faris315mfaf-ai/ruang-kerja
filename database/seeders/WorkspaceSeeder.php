@@ -56,6 +56,7 @@ class WorkspaceSeeder extends Seeder
         ],
         'OPS' => ['Keuangan' => 'green', 'Laporan' => 'blue', 'SOP' => 'gray', 'Operasional' => 'amber'],
         'GDG' => ['Shift' => 'amber', 'Riset' => 'blue', 'Stok' => 'teal'],
+        'PRG' => ['Backend' => 'violet', 'Frontend' => 'blue', 'Bug' => 'red', 'Infrastruktur' => 'slate', 'Dokumentasi' => 'gray'],
     ];
 
     /**
@@ -86,6 +87,10 @@ class WorkspaceSeeder extends Seeder
         ],
         'anggota@demo.test' => [
             ['Perpanjang SIM', 20, TaskPriority::Low],
+        ],
+        'programmer@demo.test' => [
+            ['Pelajari fitur baru Laravel 13', null, TaskPriority::Low],
+            ['Perbarui sertifikat SSL laptop kerja', 6, TaskPriority::Medium],
         ],
     ];
 
@@ -129,8 +134,9 @@ class WorkspaceSeeder extends Seeder
         $gudang = $this->teamWorkspace($kadiv);
         $project = $this->projectWorkspace($kadiv, $users);
         $ops = Workspace::query()->where('key', 'OPS')->first();
+        $programming = Workspace::query()->where('key', 'PRG')->first();
 
-        foreach (['PLQ' => $project, 'OPS' => $ops, 'GDG' => $gudang] as $key => $workspace) {
+        foreach (['PLQ' => $project, 'OPS' => $ops, 'GDG' => $gudang, 'PRG' => $programming] as $key => $workspace) {
             if ($workspace !== null) {
                 $this->seedLabels($workspace, self::LABELS[$key]);
                 $this->seedTasks($workspace, self::demoTasks()[$key], $users);
@@ -209,6 +215,22 @@ class WorkspaceSeeder extends Seeder
                 self::task(61, 'Usulan tata letak rak Gudang Cikarang', TaskStatusCategory::Backlog, TaskPriority::None, null, ['kadiv@demo.test'], ['Riset'], 'sari.wulandari@demo.test'),
                 self::task(62, 'Cek suhu ruang penyimpanan dingin', TaskStatusCategory::Todo, TaskPriority::Medium, 1, ['nadia.putri@demo.test'], ['Stok'], 'sari.wulandari@demo.test'),
                 self::task(63, 'Stock opname mingguan', TaskStatusCategory::InProgress, TaskPriority::Medium, 4, ['yoga.pratama@demo.test'], ['Stok'], 'sari.wulandari@demo.test'),
+            ],
+            // Staf programmer (Arif) and his Kepala Divisi (Yudi): overdue, today,
+            // this week, later, review, done and new assignments for Ruang saya.
+            'PRG' => [
+                self::task(87, 'Migrasi server staging ke Docker Compose', TaskStatusCategory::Done, TaskPriority::High, -9, ['programmer@demo.test'], ['Infrastruktur'], 'yudi.hartono@demo.test', completedDaysAgo: 8),
+                self::task(91, 'Perbaiki galat 500 saat ekspor rekap absensi', TaskStatusCategory::Done, TaskPriority::Urgent, -4, ['programmer@demo.test'], ['Bug', 'Backend'], 'yudi.hartono@demo.test', completedDaysAgo: 5),
+                self::task(94, 'Rancang API sinkron data pelanggan', TaskStatusCategory::InProgress, TaskPriority::High, -2, ['programmer@demo.test'], ['Backend'], 'yudi.hartono@demo.test', checklist: 5, checklistDone: 2),
+                self::task(95, 'Endpoint daftar pelanggan dengan paginasi', TaskStatusCategory::InProgress, TaskPriority::Medium, 0, ['programmer@demo.test'], ['Backend'], 'programmer@demo.test', parent: 94),
+                self::task(96, 'Uji beban endpoint sinkron (100 req/dtk)', TaskStatusCategory::Todo, TaskPriority::Medium, 3, ['programmer@demo.test'], ['Backend'], 'programmer@demo.test', parent: 94),
+                self::task(98, 'Review pull request modul tagihan', TaskStatusCategory::Review, TaskPriority::High, 0, ['programmer@demo.test', 'yudi.hartono@demo.test'], ['Backend'], 'yudi.hartono@demo.test'),
+                self::task(101, 'Halaman profil pelanggan responsif', TaskStatusCategory::Todo, TaskPriority::Medium, 2, ['programmer@demo.test'], ['Frontend'], 'yudi.hartono@demo.test'),
+                self::task(103, 'Login gagal di Safari iOS 18', TaskStatusCategory::Todo, TaskPriority::Urgent, 1, ['programmer@demo.test'], ['Bug', 'Frontend'], 'yudi.hartono@demo.test'),
+                self::task(104, 'Dokumentasi API v2 untuk tim implementer', TaskStatusCategory::Todo, TaskPriority::Low, 9, ['programmer@demo.test'], ['Dokumentasi'], 'yudi.hartono@demo.test'),
+                self::task(106, 'Pasang pemantauan galat (Sentry) di aplikasi klien', TaskStatusCategory::Backlog, TaskPriority::Medium, null, ['programmer@demo.test'], ['Infrastruktur'], 'yudi.hartono@demo.test'),
+                self::task(108, 'Refaktor modul notifikasi email', TaskStatusCategory::Backlog, TaskPriority::Low, 24, ['programmer@demo.test'], ['Backend'], 'programmer@demo.test'),
+                self::task(110, 'Rencana sprint 22 tim programming', TaskStatusCategory::Todo, TaskPriority::Medium, 4, ['yudi.hartono@demo.test'], [], 'yudi.hartono@demo.test'),
             ],
         ];
     }

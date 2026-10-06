@@ -13,7 +13,9 @@ export default defineConfig({
             refresh: true,
             // Serve Vite over HTTPS with the Herd certificate of APP_URL
             // (https://ruangkerja.test), otherwise assets are blocked as mixed content.
-            detectTls: 'ruangkerja.test',
+            // Off under Vitest and CI: there is no Herd configuration directory.
+            detectTls:
+                process.env.VITEST || process.env.CI ? null : 'ruangkerja.test',
         }),
         inertia(),
         react(),

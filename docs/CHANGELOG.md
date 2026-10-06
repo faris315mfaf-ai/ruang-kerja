@@ -9,7 +9,11 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 ### Ditambahkan
 - **Ruang saya** di Beranda (Dashboard Saya, desktop & ponsel): tugas baru yang diberikan orang lain (terima ke Hari ini / Minggu ini), lajur Hari ini · Minggu ini · Nanti dengan penempatan otomatis per tenggat dan penanda "terbawa dari kemarin", catatan pribadi cepat, tandai selesai (lewat Review bila kolom itu ada), progres "selesai hari ini". Rencana bersifat pribadi (`task_plans`). Seeder demo `PlannerDemoSeeder`.
 
+- **Pemilih akun demo** (lokal saja) di bagian atas shell untuk meninjau UI per persona: Staf programmer, Staf admin & HR, Staf sosial media/branding & marketing, Admin, Direksi & manajemen. Akun demo baru `programmer@demo.test` (divisi baru Programming, kepala Yudi Hartono) dengan 12 tugas contoh, 2 tugas pribadi dan rencana Ruang saya; tombol masuk cepat di halaman login memakai nama persona.
+
 ### Diperbaiki
+- Status absensi di shell tidak lagi galat 500 di lokal (`LazyLoadingViolationException` pada `checkInLog`) untuk karyawan yang check-in kemarin dan hari ini tetapi belum check-out: log hari yang masih terbuka dimuat sekaligus.
+- Breadcrumb menu bar tidak bertumpuk saat sempit: induk terpotong dengan elipsis, halaman aktif tetap utuh.
 - Beranda anggota tidak lagi kosong (`Cannot read properties of undefined (reading 'total')`): bagian "Fokus hari ini" dan "Minggu ini" diganti Ruang saya.
 
 ### Diubah

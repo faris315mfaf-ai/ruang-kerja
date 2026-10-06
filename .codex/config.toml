@@ -1,0 +1,12 @@
+# Codex project settings for RuangKerja (read when the project is trusted).
+# Rules for every agent are in AGENTS.md; project skills in .agents/skills.
+# Model and reasoning effort stay in ~/.codex/config.toml (personal choice).
+
+# Edit the repo, ask before anything outside it or before escalating.
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+
+[sandbox_workspace_write]
+# Tests and the dev app talk to Postgres/Redis in Docker on localhost and to
+# https://ruangkerja.test (Herd); composer/npm need the registries.
+network_access = true

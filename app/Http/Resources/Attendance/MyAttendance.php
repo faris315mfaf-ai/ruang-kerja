@@ -35,6 +35,8 @@ final class MyAttendance
         $days = $this->openDays->find($user, $now);
 
         if ($days->open !== null) {
+            // OpenDayLocator loads yesterday and today together; strict mode forbids lazy loading their logs.
+            $days->open->loadMissing(['checkInLog.officeLocation', 'checkOutLog.officeLocation']);
             $schedule = $this->schedules->forDate($user, ScheduleResolver::parseDate($days->open->work_date->toDateString()));
 
             if ($days->open->status === AttendanceStatus::BusinessTrip) {

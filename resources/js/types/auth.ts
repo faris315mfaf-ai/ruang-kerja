@@ -43,3 +43,13 @@ export type Branding = {
     shortName: string;
     logo: string | null;
 };
+
+/** Persona of the local demo account switcher (shared prop `demoSwitcher`). */
+export type DemoSwitcherAccount = {
+    email: string;
+    name: string;
+    /** "Staf programmer", "Direksi & manajemen", … */
+    persona: string;
+    role_label: string;
+    current: boolean;
+};

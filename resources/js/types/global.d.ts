@@ -1,5 +1,5 @@
 import type { AttendanceStatusSummary } from '@/types/attendance';
-import type { Auth, Branding } from '@/types/auth';
+import type { Auth, Branding, DemoSwitcherAccount } from '@/types/auth';
 
 declare module 'react' {
     interface InputHTMLAttributes<T> {
@@ -17,6 +17,8 @@ declare module '@inertiajs/core' {
             approvals?: { pending: number } | null;
             /** Feature flags (config/features.php). `prototype` = Fase 2 & 3 previews at /pratinjau. */
             features?: { prototype: boolean };
+            /** Local demo only: personas of the account switcher; null elsewhere. */
+            demoSwitcher?: DemoSwitcherAccount[] | null;
             /** Sprint 2: once-prop, refreshed every 5 minutes and after a check-in/out. */
             attendanceStatus?: AttendanceStatusSummary | null;
             /** Unread Inbox count (Sprint 8); null for guests. */

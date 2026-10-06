@@ -18,9 +18,9 @@ it('seeds the mockup workspaces idempotently', function () {
     // ProjectSeeder (Sprint 9) adds the demo portfolio and 13 earlier PLQ tasks.
     $portfolioOnly = ['ANG', 'AUD', 'IRK', 'KTR', 'MSG', 'RKR', 'SOPK'];
 
-    expect(array_values(array_diff($keys, $portfolioOnly)))->toBe(['DIR', 'GDG', 'KEU', 'OPS', 'PLQ', 'PMS', 'SDM'])
+    expect(array_values(array_diff($keys, $portfolioOnly)))->toBe(['DIR', 'GDG', 'KEU', 'OPS', 'PLQ', 'PMS', 'PRG', 'SDM'])
         ->and(Workspace::query()->where('type', 'personal')->count())->toBe(User::query()->count())
-        ->and(Task::query()->whereNotIn('workspace_id', Workspace::query()->whereIn('key', $portfolioOnly)->select('id'))->count())->toBe(36 + 13);
+        ->and(Task::query()->whereNotIn('workspace_id', Workspace::query()->whereIn('key', $portfolioOnly)->select('id'))->count())->toBe(50 + 13);
 
     $plq = Workspace::query()->where('key', 'PLQ')->firstOrFail();
     $divisions = $plq->members()->pluck('division_id')->filter()->unique();

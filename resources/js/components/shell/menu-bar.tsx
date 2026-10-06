@@ -4,6 +4,7 @@ import { useSyncExternalStore } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { BrandMark } from '@/components/shell/brand-mark';
 import { CheckInButton } from '@/components/shell/check-in-button';
+import { DemoAccountSwitcher } from '@/components/shell/demo-account-switcher';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import {
     DropdownMenu,
@@ -95,6 +96,7 @@ export function MenuBar({ breadcrumbs }: { breadcrumbs: BreadcrumbItem[] }) {
                 <Breadcrumbs breadcrumbs={breadcrumbs} />
             </div>
 
+            <DemoAccountSwitcher />
             <AttendanceStatusChip />
             <CheckInButton />
 
