@@ -122,6 +122,51 @@ Grid minggu jam 08–17 dengan garis "sekarang", panel Notulensi (Semua/Draf/Tin
 - Pengingat **WhatsApp**: baris "WhatsApp · Ditahan".
 - Belum ada: pembatalan satu kemunculan saja (pembatalan berlaku untuk seluruh seri), lampiran Drive di rapat, ko-editor realtime notulen, "Kabari terlambat". Chip "rapat 5 menit lagi" di MenuBar **tidak dibangun** (keputusan pemilik 6 Okt 2026); pengingat cukup lewat notifikasi `meeting.starting`.
 
+## 6a. Rencana: video rapat sendiri pengganti Google Meet (uji coba, keputusan pemilik 6 Okt 2026)
+
+Tujuan: rapat video yang semirip mungkin dengan Google Meet dan serealtime mungkin, berjalan di server sendiri tanpa kuota bandwidth dan tanpa biaya per menit. **Belum dibangun.** Diuji dulu, lalu diputuskan.
+
+**Pilihan teknologi**
+- **La Suite Meet** (`suitenumerique/meet`, lisensi MIT) di atas **LiveKit** (SFU WebRTC, Apache-2.0). Tampilan mirip Meet: ruang tunggu, grid, sorotan pembicara, chat, beberapa layar dibagikan, 100+ peserta, rekaman lewat LiveKit Egress (beta), transkrip & ringkasan (beta, tidak bersamaan dengan rekaman). Dipasang dengan Docker Compose.
+- Alternatif setelah uji coba: layar rapat sendiri di RuangKerja dengan `@livekit/components-react`. Lebih terpadu dengan Rapat dan Notulensi; perlu paket baru dan 1–2 sprint.
+- Jitsi Meet adalah cadangan (paling cepat dipasang, rekaman Jibri berat).
+
+**Server rapat (terpisah dari VPS aplikasi)**
+| Kebutuhan | Tanpa rekaman | Dengan 1 rekaman |
+|---|---|---|
+| CPU | 4 vCPU **eksklusif** | 8 vCPU |
+| RAM | 8 GB | 16 GB |
+| Disk | 40 GB SSD (rekaman ke object storage S3) | sama |
+| Jaringan | IP publik statis, port 1 Gbps, **trafik tanpa kuota**, UDP masuk dibuka | sama |
+
+- Kandidat: **Biznet Gio NEO Lite Pro** (vCPU/RAM eksklusif, kapasitas 10 Gbps tanpa biaya trafik tambahan, pusat data Indonesia).
+- Sebelum membeli, tanyakan ke sales:
+  1. Ada batas pemakaian wajar (FUP) untuk trafik keluar 60–100 Mbps selama 1–2 jam/hari (±1,5 TB/bulan)?
+  2. Kecepatan port dijamin, atau dibagi?
+  3. UDP (rentang media + 3478) tidak diblokir firewall atau proteksi DDoS?
+  4. Ada IPv4 statis?
+  5. Paket mana yang 4 vCPU eksklusif / 8 GB, dan berapa harganya?
+- Hindari VPS dengan kuota trafik keluar (mis. OVH Singapura: 1–3 TB lalu 10 Mbps) dan VPS OpenVZ.
+- Perkiraan trafik: rapat 20 orang 720p ±60 Mbps keluar, ±25–35 GB/jam. Peserta perlu ≥ 3 Mbps unduh, ≥ 1,5 Mbps unggah.
+
+**Agar serealtime mungkin**
+- Server di Jakarta; ping < 20 ms dari ISP Indonesia.
+- UDP langsung. TURN/TLS 443 hanya cadangan untuk jaringan yang memblokir UDP.
+- Simulcast + dynacast + adaptive stream.
+- Opus DTX + RED.
+- vCPU eksklusif.
+
+**Langkah uji coba (sprint rapat)**
+1. Sewa VPS rapat, pasang LiveKit + La Suite Meet (Docker Compose, domain mis. `rapat.<domain-kantor>`, TLS otomatis).
+2. Uji 1–2 minggu dengan rapat nyata hingga 20 orang. Catat: jeda suara, putus-sambung, CPU, trafik, kualitas di 4G.
+3. Bila lolos:
+   - login tunggal (OIDC) dari RuangKerja;
+   - rapat dengan `platform = meet` mendapat tautan ruang otomatis (menggantikan tempel tautan manual);
+   - tombol **Gabung** di detail rapat.
+4. Tahap berikutnya (opsional): rekaman ke Biznet NEO Object Storage, transkrip otomatis ke Notulensi (Whisper lokal), atau layar rapat sendiri dengan LiveKit.
+
+Privasi: rekaman dan transkrip = data pribadi. Wajib pemberitahuan "rapat direkam" ke semua peserta, retensi terbatas, dan akses hanya peserta rapat.
+
 ## 7. Keadaan & aksesibilitas
 
 - Skeleton saat breakpoint belum diketahui dan saat kalender memuat bulan lain; EmptyState untuk agenda/kalender/notulen kosong; galat jaringan → toast + rollback (RSVP, tindak lanjut) atau "Perubahan belum tersimpan" (autosave).
