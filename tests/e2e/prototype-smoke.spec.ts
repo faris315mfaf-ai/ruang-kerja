@@ -43,11 +43,7 @@ const routes = [
 ] as const;
 
 /** Preview-state switch (?keadaan=) on one route per module. */
-const stateRoutes = [
-    '/rapat',
-    '/otomasi',
-    '/pengaturan/perangkat',
-] as const;
+const stateRoutes = ['/rapat', '/otomasi', '/pengaturan/perangkat'] as const;
 
 /**
  * Environment noise that is not a page defect: Reverb not running locally, and

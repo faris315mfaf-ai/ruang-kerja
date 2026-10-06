@@ -2,10 +2,10 @@
 
 use App\Models\Channel;
 use App\Models\EmployeeRequest;
-use App\Models\Objective;
 use App\Models\Note;
 use App\Models\NoteShare;
 use App\Models\NoteVersion;
+use App\Models\Objective;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;

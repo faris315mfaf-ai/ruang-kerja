@@ -1,10 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import {
-    CalendarDays,
-    Fingerprint,
-    Smartphone,
-    Workflow,
-} from 'lucide-react';
+import { CalendarDays, Fingerprint, Smartphone, Workflow } from 'lucide-react';
 
 export type PrototypeScreen = { label: string; href: string };
 
