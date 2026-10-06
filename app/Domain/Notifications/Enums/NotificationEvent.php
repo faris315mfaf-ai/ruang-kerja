@@ -26,6 +26,7 @@ enum NotificationEvent: string
     case OkrActivity = 'okr.activity';
     case Automation = 'automation.notify';
     case Meeting = 'meeting';
+    case AccountSecurity = 'account.security';
     case System = 'system';
     case DailyDigest = 'digest.daily';
 
@@ -46,6 +47,7 @@ enum NotificationEvent: string
             self::ProjectActivity => 'Proyek: pengingat update, arahan & keputusan',
             self::OkrActivity => 'OKR: pengingat check-in & objective berisiko',
             self::Meeting => 'Rapat: undangan, pengingat, notulen & tindak lanjut',
+            self::AccountSecurity => 'Keamanan akun: kata sandi',
             self::System => 'Pengumuman & info sistem',
             self::DailyDigest => 'Ringkasan harian',
         };
@@ -58,7 +60,7 @@ enum NotificationEvent: string
             self::ProjectActivity, self::ChatMessage, self::OkrActivity, self::Automation, self::Meeting => NotificationCategory::Task,
             self::RequestPending, self::RequestDecided => NotificationCategory::Request,
             self::CheckInReminder, self::CheckOutReminder => NotificationCategory::Attendance,
-            self::System, self::DailyDigest => NotificationCategory::System,
+            self::AccountSecurity, self::System, self::DailyDigest => NotificationCategory::System,
         };
     }
 
@@ -86,6 +88,8 @@ enum NotificationEvent: string
     {
         return match ($this) {
             self::RequestPending, self::System => [NotificationChannel::InApp],
+            // Password notices cannot be switched off (security, ASVS V2.2).
+            self::AccountSecurity => [NotificationChannel::InApp, NotificationChannel::Email],
             default => [],
         };
     }

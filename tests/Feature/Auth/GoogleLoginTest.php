@@ -78,19 +78,18 @@ it('shows a friendly error when Google login is not configured', function () {
     $this->assertGuest();
 });
 
-it('tells the login page whether Google is configured', function (bool $configured) {
-    if (! $configured) {
-        config(['services.google.client_secret' => '']);
-    }
-
+it('does not offer Google sign-in on the login page while it is on hold', function () {
+    // Owner decision 6 Oct 2026: email + password for everyone; the Google
+    // routes and code stay for later but the login page does not show them.
     $this->get(route('login'))
         ->assertInertia(fn (Assert $page) => $page
             ->component('auth/login')
-            ->where('google.enabled', $configured)
-            ->where('google.domain', 'kantor.test')
+            ->missing('google')
             ->where('companyName', $this->company->name),
         );
-})->with([true, false]);
+
+    expect(Route::has('auth.google.redirect'))->toBeTrue();
+});
 
 it('logs in an active registered employee and links the Google identity', function () {
     $this->travelTo(now()->setDateTime(2026, 10, 5, 1, 30));

@@ -6,6 +6,7 @@ import {
     CalendarClock,
     CheckCheck,
     CircleAlert,
+    KeyRound,
     Megaphone,
     MessageSquare,
     NotebookPen,
@@ -38,6 +39,7 @@ const ICONS: Record<string, LucideIcon> = {
     workflow: Workflow,
     video: Video,
     notebook: NotebookPen,
+    key: KeyRound,
 };
 
 export const toneClasses: Record<NotificationTone, string> = {

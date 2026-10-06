@@ -50,7 +50,8 @@ Butir 2–4 diterapkan modul masing-masing; shell (butir 1) sudah berlaku.
 
 | Modul / fitur | Desktop | Mobile | Catatan mobile |
 |---|---|---|---|
-| Login Google | ✓ | ✓ | |
+| Login email + kata sandi (keputusan pemilik 6 Okt 2026; login Google ditahan) | ✓ | ✓ | Form di zona jempol; "Lupa kata sandi" → halaman tunggu persetujuan HR |
+| Ganti kata sandi sendiri (Pengaturan › Keamanan) | ✓ | ✓ | Juga di tab Menu › "Kata sandi & keamanan" |
 | Beranda / Dashboard Saya | ✓ | ✓ | Kartu check-in di atas |
 | Check-in/out GPS + selfie | ✓ | ✓ | **Prioritas ponsel**, tab tengah. Geser untuk check-in, kamera depan, akurasi tinggi |
 | Pindai QR kiosk | ✓ | ✓ | |
@@ -68,7 +69,8 @@ Butir 2–4 diterapkan modul masing-masing; shell (butir 1) sudah berlaku.
 | Dashboard Manajemen (`/manajemen`) | ✓ | ✓ | Kartu bertumpuk: hero kehadiran + tugas, 2 tile KPI, grafik ringkas, daftar proyek, absensi, milestone (MgPDashboard) |
 | Portofolio & detail proyek (Direksi) | ✓ | ✓ | Tabel proyek → kartu proyek; roadmap hanya desktop (mobile: milestone berikutnya per kartu); "Minta update" & "Beri arahan" di bilah aksi bawah |
 | Pengaturan notifikasi & tema | ✓ | ✓ | Matriks → daftar accordion |
-| Admin karyawan | ✓ | ◐ | Cari & lihat profil. Tambah/ubah/impor di desktop |
+| Admin karyawan | ✓ | ◐ | Cari & lihat profil. Tambah/ubah/impor dan "Atur kata sandi" di desktop |
+| Permintaan reset kata sandi (HR) | ✓ | ✓ | Panel di Admin › Karyawan & profil; Setujui / Tolak juga di ponsel karena karyawan menunggu |
 | Struktur organisasi | ✓ | ◐ | Daftar bertingkat, bukan bagan |
 | Alur persetujuan, jenis cuti | ✓ | — | Banner "Buka di desktop" bila diakses |
 | Lokasi, shift, hari libur | ✓ | — | Sama |

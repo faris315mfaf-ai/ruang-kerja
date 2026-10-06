@@ -20,6 +20,12 @@ const AUDIT_ACTIONS: Record<string, string> = {
     'user.deactivated': 'Dinonaktifkan',
     'user.reactivated': 'Diaktifkan kembali',
     'employee_profile.updated': 'Data pribadi diubah',
+    'user.password_set_by_hr': 'Kata sandi diatur HR',
+    'user.password_changed': 'Kata sandi diganti sendiri',
+    'user.password_reset_approved': 'Reset kata sandi disetujui',
+    'user.password_reset_rejected': 'Reset kata sandi ditolak',
+    'user.password_reset_completed': 'Kata sandi baru dibuat (lupa sandi)',
+    'user.login_failed': 'Gagal masuk',
 };
 
 const FIELD_LABELS: Record<string, string> = {

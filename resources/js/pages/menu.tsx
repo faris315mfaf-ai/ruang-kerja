@@ -8,6 +8,7 @@ import {
     CloudCog,
     FileText,
     Inbox,
+    KeyRound,
     LayoutGrid,
     LogOut,
     Moon,
@@ -43,6 +44,7 @@ import { cn, focusRing } from '@/lib/utils';
 import { logout } from '@/routes';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
+import { edit as editSecurity } from '@/routes/security';
 import { google as googleSettings } from '@/routes/settings';
 
 const APPEARANCE_LABELS = {
@@ -343,6 +345,11 @@ export default function Menu() {
                             label="Tampilan"
                             href={editAppearance().url}
                             trailing={APPEARANCE_LABELS[appearance]}
+                        />
+                        <Row
+                            icon={KeyRound}
+                            label="Kata sandi & keamanan"
+                            href={editSecurity().url}
                         />
                         <Row
                             icon={ShieldCheck}

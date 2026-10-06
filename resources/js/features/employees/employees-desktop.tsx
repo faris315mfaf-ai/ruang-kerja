@@ -7,6 +7,7 @@ import { formatNumber } from '@/lib/format';
 import { importMethod } from '@/routes/admin/employees';
 import { EmployeeFormSheet } from './employee-form-sheet';
 import { EmployeeTable } from './employee-table';
+import { PasswordResetRequests } from './password-reset-requests';
 import type { StatusTarget } from './status-dialog';
 import { StatusDialog } from './status-dialog';
 import type {
@@ -144,6 +145,8 @@ export function EmployeesDesktop(props: EmployeeIndexProps) {
                     )
                 }
             />
+
+            <PasswordResetRequests requests={props.passwordResets} />
 
             <EmployeeTable
                 employees={props.employees}

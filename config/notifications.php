@@ -37,6 +37,8 @@ return [
         'okr.activity' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         // Rapat (F2-3): invitations, reminders, final minutes and follow-ups.
         'meeting' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
+        // Password reset requests (→ HR) and "HR set your password" (locked on).
+        'account.security' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
         'system' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'digest.daily' => ['email' => true],
     ],

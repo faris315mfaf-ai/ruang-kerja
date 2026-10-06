@@ -21,6 +21,7 @@ use App\Http\Requests\Admin\UpdateEmployeeRequest;
 use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\Division;
+use App\Models\PasswordResetRequest;
 use App\Models\Position;
 use App\Models\Team;
 use App\Models\User;
@@ -73,6 +74,7 @@ class EmployeeController extends Controller
             'companyDomain' => Company::query()->findOrFail($user->company_id)->google_domain,
             'formOptions' => fn (): ?array => $canManage ? $this->formOptions($user) : null,
             'editing' => fn (): ?array => $this->editing($request, $user),
+            'passwordResets' => fn (): array => $this->passwordResets($user),
         ]);
     }
 
@@ -135,7 +137,10 @@ class EmployeeController extends Controller
                 'manage' => $canManage,
                 'update' => Gate::allows('update', $employee),
                 'deactivate' => Gate::allows('deactivate', $employee),
+                'setPassword' => Gate::allows('setPassword', $employee),
             ],
+            'passwordReset' => fn (): ?array => $this->passwordResets($user, $employee)[0] ?? null,
+            'hasPassword' => $canManage ? $employee->password !== null : null,
         ]);
     }
 
@@ -187,6 +192,30 @@ class EmployeeController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => "{$employee->name} diaktifkan kembali."]);
 
         return $this->backToList($request);
+    }
+
+    /**
+     * "Lupa kata sandi" requests awaiting a decision that the viewer may decide
+     * (all, or one employee's), oldest first.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function passwordResets(User $user, ?User $employee = null): array
+    {
+        if (Gate::denies('viewAny', PasswordResetRequest::class)) {
+            return [];
+        }
+
+        return array_values(PasswordResetRequest::query()
+            ->visibleTo($user)
+            ->awaitingDecision()
+            ->when($employee !== null, fn ($query) => $query->where('user_id', $employee?->id))
+            ->with('user:id,name,avatar_url')
+            ->oldest()
+            ->limit(50)
+            ->get()
+            ->map(fn (PasswordResetRequest $request): array => EmployeePresenter::passwordReset($request))
+            ->all());
     }
 
     /**

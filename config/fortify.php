@@ -159,8 +159,9 @@ return [
     |
     */
 
+    // No Features::resetPasswords(): "Lupa kata sandi" needs HR approval
+    // (routes/password-reset.php, owner decision 6 Oct 2026), no email links.
     'features' => [
-        Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([
             'confirm' => true,

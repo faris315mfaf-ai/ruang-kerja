@@ -29,7 +29,7 @@ RuangKerja adalah aplikasi kantor internal yang menyatukan empat kebutuhan dalam
 | Bahasa UI | Bahasa Indonesia saja |
 | Zona waktu | Disimpan UTC, ditampilkan per zona waktu kantor (default `Asia/Jakarta`) |
 | Hosting | VPS Biznet Gio (Docker Compose) |
-| Identitas | Google Workspace (login Google, domain dibatasi) |
+| Identitas | Email kantor + kata sandi untuk semua karyawan (keputusan pemilik 6 Okt 2026); login Google Workspace **ditahan** |
 | Tim pengembang | Ris + tim, dibantu Claude Code dan Z-AI |
 
 **Sasaran terukur 3 bulan setelah Fase 1 rilis**
@@ -90,13 +90,17 @@ Estimasi mengasumsikan 2–3 developer dibantu AI coding tool. Angka ini harus d
 ### M1. Autentikasi & Organisasi
 
 **User stories**
-- Sebagai karyawan, saya login dengan akun Google kantor agar tidak perlu mengingat password baru.
+- Sebagai karyawan, saya login dengan email kantor dan kata sandi; bila lupa, saya mengajukan reset dan HR menyetujuinya.
+- Sebagai HR, saya mengatur kata sandi karyawan (mis. sandi sementara untuk karyawan baru) dan memutus permintaan reset.
 - Sebagai HR, saya menambah karyawan, menentukan divisi, tim, jabatan, atasan, shift, dan mode kerja.
 - Sebagai Super Admin, saya mengatur peran dan melihat audit log.
 
 **Kebutuhan**
-- Login Google (Socialite) dibatasi ke domain Workspace perusahaan (cek klaim `hd` **dan** domain email di server).
-- Login email + password hanya untuk Super Admin darurat, wajib 2FA (TOTP).
+- **Keputusan pemilik 6 Okt 2026:** semua karyawan aktif login dengan **email + kata sandi**. Super Admin tetap wajib 2FA (TOTP); peran lain tanpa 2FA. Login Google (Socialite, domain dibatasi) **ditahan**: kode & rute tetap ada, tombolnya tidak ditampilkan.
+- Pesan galat login selalu generik (email salah, sandi salah, sandi belum diatur, akun nonaktif) dan memakai waktu yang sama, sehingga keberadaan akun tidak bocor.
+- Aturan kata sandi (semua jalur): minimal 8 karakter, tidak sama dengan alamat email; produksi juga menolak sandi yang pernah bocor. Ganti sandi sendiri di Pengaturan › Keamanan (sandi lama wajib, perangkat lain dikeluarkan).
+- **HR mengatur kata sandi** di Admin › Karyawan › profil › "Atur kata sandi": ketik sendiri atau "Buat sandi sementara" (ditampilkan sekali), opsi "wajib ganti saat login berikutnya". Semua sesi karyawan dikeluarkan, karyawan diberi notifikasi in-app + email (tanpa isi sandi). Sandi Super Admin hanya oleh Super Admin.
+- **Lupa kata sandi dengan persetujuan HR:** karyawan mengisi email → halaman tunggu (teks sama untuk email tak dikenal) yang memeriksa status tiap 5 detik → HR menyetujui/menolak (alasan wajib) dari Admin › Karyawan → halaman karyawan otomatis pindah ke form sandi baru (berlaku 30 menit, hanya di peramban yang meminta) → sandi tersimpan, perangkat lain keluar, karyawan langsung masuk. Permintaan kedaluwarsa setelah 24 jam; satu permintaan aktif per karyawan. Tidak ada tautan reset lewat email.
 - Akun hanya bisa login jika emailnya sudah didaftarkan HR (tidak ada pendaftaran mandiri).
 - Halaman struktur organisasi (bagan) otomatis dari data divisi, tim, dan atasan.
 - Impor karyawan via CSV/Excel.

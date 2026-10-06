@@ -1,5 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
-import { ShieldAlert } from 'lucide-react';
+import { KeyRound, ShieldAlert } from 'lucide-react';
 import { useRef } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
 import InputError from '@/components/input-error';
@@ -17,6 +17,10 @@ type Props = {
     passwordRules: string;
     /** Super Admin signed in with a password but has no confirmed TOTP yet. */
     twoFactorRequired: boolean;
+    /** HR set a temporary password: choose your own before continuing. */
+    passwordChangeRequired: boolean;
+    /** false = no password yet (first one is set without the current one). */
+    hasPassword: boolean;
 } & ManageTwoFactorProps;
 
 export default function Security(props: Props) {
@@ -28,6 +32,29 @@ export default function Security(props: Props) {
             <Head title="Pengaturan keamanan" />
 
             <h1 className="hidden md:sr-only md:block">Pengaturan keamanan</h1>
+
+            {props.passwordChangeRequired && (
+                <div
+                    role="alert"
+                    className="flex gap-3 rounded-lg bg-warning-soft px-4 py-3.5"
+                    data-test="password-change-required"
+                >
+                    <KeyRound
+                        aria-hidden
+                        className="mt-0.5 size-5 shrink-0 text-warning"
+                    />
+                    <div className="flex flex-col gap-0.5">
+                        <p className="text-body font-bold text-warning">
+                            Ganti kata sandi sementara Anda
+                        </p>
+                        <p className="text-label font-normal text-text">
+                            HR mengatur kata sandi sementara untuk akun Anda.
+                            Buat kata sandi Anda sendiri di bawah untuk
+                            melanjutkan ke aplikasi.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {props.twoFactorRequired && (
                 <div
@@ -43,9 +70,9 @@ export default function Security(props: Props) {
                             Wajib aktifkan autentikasi dua faktor
                         </p>
                         <p className="text-label font-normal text-text">
-                            Login dengan email dan kata sandi hanya untuk Super
-                            Admin dan wajib memakai kode TOTP. Aktifkan 2FA di
-                            bawah untuk melanjutkan ke aplikasi.
+                            Super Admin wajib memakai kode TOTP setiap kali
+                            masuk dengan kata sandi. Aktifkan 2FA di bawah untuk
+                            melanjutkan ke aplikasi.
                         </p>
                     </div>
                 </div>
@@ -59,8 +86,8 @@ export default function Security(props: Props) {
 
             <Panel title="Ubah kata sandi" bodyClassName="gap-5">
                 <p className="text-label font-normal text-text-muted">
-                    Gunakan kata sandi yang panjang dan acak agar akun Anda
-                    tetap aman.
+                    Minimal 8 karakter dan tidak sama dengan alamat email.
+                    Setelah disimpan, semua perangkat lain otomatis keluar.
                 </p>
 
                 <Form
@@ -87,21 +114,33 @@ export default function Security(props: Props) {
                 >
                     {({ errors, processing }) => (
                         <>
-                            <div className="flex flex-col gap-2">
-                                <Label htmlFor="current_password">
-                                    Kata sandi saat ini
-                                </Label>
+                            {props.hasPassword && (
+                                <div className="flex flex-col gap-2">
+                                    <Label htmlFor="current_password">
+                                        {props.passwordChangeRequired
+                                            ? 'Kata sandi sementara dari HR'
+                                            : 'Kata sandi saat ini'}
+                                    </Label>
 
-                                <PasswordInput
-                                    id="current_password"
-                                    ref={currentPasswordInput}
-                                    name="current_password"
-                                    autoComplete="current-password"
-                                    placeholder="Kata sandi saat ini"
-                                />
+                                    <PasswordInput
+                                        id="current_password"
+                                        ref={currentPasswordInput}
+                                        name="current_password"
+                                        required
+                                        autoComplete="current-password"
+                                        placeholder="Kata sandi saat ini"
+                                        aria-invalid={
+                                            errors.current_password
+                                                ? true
+                                                : undefined
+                                        }
+                                    />
 
-                                <InputError message={errors.current_password} />
-                            </div>
+                                    <InputError
+                                        message={errors.current_password}
+                                    />
+                                </div>
+                            )}
 
                             <div className="flex flex-col gap-2">
                                 <Label htmlFor="password">
@@ -113,8 +152,12 @@ export default function Security(props: Props) {
                                     ref={passwordInput}
                                     name="password"
                                     autoComplete="new-password"
+                                    required
                                     placeholder="Kata sandi baru"
                                     passwordrules={props.passwordRules}
+                                    aria-invalid={
+                                        errors.password ? true : undefined
+                                    }
                                 />
 
                                 <InputError message={errors.password} />

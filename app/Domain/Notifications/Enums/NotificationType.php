@@ -48,6 +48,10 @@ enum NotificationType: string
     case MeetingStarting = 'meeting.starting';
     case MinutesFinalized = 'minutes.finalized';
     case ActionItemDue = 'action_item.due';
+    // Account security (owner decision 6 Oct 2026): "Lupa kata sandi" → HR,
+    // and the employee is told when HR set their password.
+    case PasswordResetRequested = 'account.password_reset_requested';
+    case PasswordSetByHr = 'account.password_set_by_hr';
 
     // System (Sprint 8)
     case SystemAnnouncement = 'system.announcement';
@@ -82,6 +86,8 @@ enum NotificationType: string
             self::MeetingStarting => 'Rapat segera dimulai',
             self::MinutesFinalized => 'Notulen rapat',
             self::ActionItemDue => 'Tindak lanjut rapat',
+            self::PasswordResetRequested => 'Permintaan reset kata sandi',
+            self::PasswordSetByHr => 'Kata sandi diatur ulang',
             self::SystemAnnouncement => 'Pengumuman',
             self::SystemTest => 'Notifikasi uji',
         };
@@ -110,6 +116,7 @@ enum NotificationType: string
             self::ProjectDecisionNeeded, self::ProjectDecisionResolved => NotificationEvent::ProjectActivity,
             self::OkrCheckinReminder, self::OkrObjectiveAtRisk => NotificationEvent::OkrActivity,
             self::MeetingInvited, self::MeetingStarting, self::MinutesFinalized, self::ActionItemDue => NotificationEvent::Meeting,
+            self::PasswordResetRequested, self::PasswordSetByHr => NotificationEvent::AccountSecurity,
             self::SystemAnnouncement, self::SystemTest => NotificationEvent::System,
         };
     }
@@ -147,6 +154,7 @@ enum NotificationType: string
             self::MeetingInvited, self::MeetingStarting => 'video',
             self::MinutesFinalized => 'notebook',
             self::ActionItemDue => 'calendar-clock',
+            self::PasswordResetRequested, self::PasswordSetByHr => 'key',
             self::SystemAnnouncement => 'megaphone',
             self::SystemTest => 'bell',
         };
@@ -162,7 +170,8 @@ enum NotificationType: string
             self::RequestSubmitted, self::SystemAnnouncement => 'info',
             self::RequestApproved => 'success',
             self::TaskDueSoon, self::RequestRevisionRequested, self::CheckInReminder, self::CheckOutReminder, self::ConsentRevoked,
-            self::ProjectUpdateReminder, self::ProjectUpdateRequested, self::OkrCheckinReminder, self::OkrObjectiveAtRisk => 'warning',
+            self::ProjectUpdateReminder, self::ProjectUpdateRequested, self::OkrCheckinReminder, self::OkrObjectiveAtRisk, self::PasswordResetRequested => 'warning',
+            self::PasswordSetByHr => 'info',
             self::TaskOverdue, self::RequestRejected => 'danger',
             self::ProjectDirection, self::ProjectDecisionNeeded => 'info',
             self::ProjectDecisionResolved => 'success',
@@ -181,7 +190,7 @@ enum NotificationType: string
     {
         return match ($this) {
             self::TaskOverdue, self::RequestSubmitted, self::RequestRevisionRequested,
-            self::ProjectUpdateRequested, self::ProjectDecisionNeeded, self::ActionItemDue => true,
+            self::ProjectUpdateRequested, self::ProjectDecisionNeeded, self::ActionItemDue, self::PasswordResetRequested => true,
             default => false,
         };
     }

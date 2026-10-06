@@ -3,6 +3,7 @@
 use App\Http\Controllers\HealthController;
 use App\Http\Middleware\AuthenticateSession;
 use App\Http\Middleware\EnsureActiveEmployee;
+use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\EnsureTwoFactorForSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -57,10 +58,12 @@ return Application::configure(basePath: dirname(__DIR__))
             EnsureActiveEmployee::class,
             // Kiosk devices (guard `kiosk`) may only open their kiosk page (Sprint 3).
             RestrictKioskDevice::class,
-            // Password/2FA routes: Super Admin only (everyone else uses Google).
+            // Own password: every employee; password confirmation & 2FA: Super Admin only.
             RestrictCredentialRoutes::class,
             // Password-signed-in Super Admins must set up TOTP before anything else.
             EnsureTwoFactorForSuperAdmin::class,
+            // A temporary password set by HR must be replaced before anything else.
+            EnsurePasswordChanged::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,

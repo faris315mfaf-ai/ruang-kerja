@@ -2,6 +2,7 @@
 
 use App\Domain\Attendance\Jobs\PurgeExpiredSelfiesJob;
 use App\Domain\Attendance\Jobs\SendCheckInReminders;
+use App\Domain\Auth\Jobs\ExpirePasswordResetRequests;
 use App\Domain\Automation\Jobs\CreateRecurringTasks;
 use App\Domain\Automation\Jobs\RunOverdueAutomations;
 use App\Domain\Meetings\Jobs\SendActionItemReminders;
@@ -60,3 +61,5 @@ Schedule::job(RunOverdueAutomations::class)->dailyAt('07:05')->timezone(config()
 // F2-3 — meetings (FEATURE_MEETINGS): "rapat segera dimulai" every minute, follow-up reminders daily 07.05 office time.
 Schedule::job(new SendMeetingReminders)->everyMinute()->when(fn (): bool => (bool) config('features.meetings'))->withoutOverlapping()->onOneServer();
 Schedule::job(new SendActionItemReminders)->dailyAt('07:05')->timezone(config()->string('app.office_timezone'))->when(fn (): bool => (bool) config('features.meetings'))->withoutOverlapping()->onOneServer();
+// Akun & kata sandi (6 Okt 2026) — expire unanswered "Lupa kata sandi" requests, prune old ones.
+Schedule::job(new ExpirePasswordResetRequests)->hourly()->withoutOverlapping()->onOneServer();

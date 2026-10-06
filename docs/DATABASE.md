@@ -18,7 +18,7 @@
 
 | Domain | Tabel |
 |---|---|
-| Organisasi & akses | `companies`, `divisions`, `teams`, `positions`, `users`, `employee_profiles`, `roles`*, `permissions`*, `model_has_roles`*, `audit_logs` |
+| Organisasi & akses | `companies`, `divisions`, `teams`, `positions`, `users`, `employee_profiles`, `roles`*, `permissions`*, `model_has_roles`*, `audit_logs`, `password_reset_requests` |
 | Absensi | `office_locations`, `shifts`, `shift_assignments`, `holidays`, `attendance_days`, `attendance_logs`, `qr_tokens`, `kiosks`, `attendance_consents` |
 | Pengajuan | `leave_types`, `leave_balances`, `leave_balance_adjustments`, `requests`, `request_sequences`, `request_approvals`, `approval_flows`, `approval_flow_steps`, `approval_delegations` |
 | Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_directions`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `task_plans`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
@@ -74,7 +74,8 @@ Tambahan Dashboard per jabatan (F3, migrasi `2026_10_11_500000_add_dashboard_rol
 | company_id | FK | |
 | name | varchar(150) | |
 | email | varchar(190) unique | email Google Workspace |
-| password | varchar null | hanya Super Admin darurat |
+| password | varchar null | kata sandi login semua karyawan (keputusan pemilik 6 Okt 2026); null = belum diatur (HR mengatur atau karyawan memakai "Lupa kata sandi") |
+| password_change_required | bool | default false; true = HR mengatur sandi sementara dan karyawan wajib menggantinya sebelum memakai aplikasi |
 | two_factor_secret | text null encrypted | |
 | google_id | varchar null unique | `sub` dari Google |
 | avatar_url | varchar null | |
@@ -92,6 +93,8 @@ Tambahan Dashboard per jabatan (F3, migrasi `2026_10_11_500000_add_dashboard_rol
 Indeks: `(company_id, status)`, `(division_id)`, `(manager_id)`, `(team_id)`, `(position_id)`.
 
 Implementasi (Sprint 1): kolom organisasi ditambahkan lewat migrasi `2026_10_05_000500_add_organization_columns_to_users_table` (bukan menulis ulang migrasi Sprint 0). `password` nullable. `two_factor_recovery_codes` & `two_factor_confirmed_at` (Fortify) dan `email_verified_at`, `remember_token` tetap ada. `work_mode` default `office`, `status` default `active`, `joined_at` nullable. FK `division_id`/`team_id`/`position_id`/`manager_id` = `nullOnDelete`.
+
+Tambahan akun & kata sandi (6 Okt 2026, migrasi `2026_10_12_100100_add_password_change_required_to_users`): `password_change_required` boolean default false. Diisi `SetEmployeePassword` (opsi HR), dikosongkan saat karyawan mengganti sandinya sendiri atau lewat "Lupa kata sandi". Perubahan sandi memakai `saveQuietly()` + baris audit eksplisit (`user.password_changed`, `user.password_set_by_hr`, `user.password_reset_completed`; tidak pernah berisi nilai sandi), bukan `user.updated`.
 
 Tambahan perbaikan review Sprint 3–9 (#11): `deactivated_at` timestamptz null (migrasi `2026_10_07_300100_add_deactivated_at_to_users`), diisi `DeactivateEmployee` (nilai pertama dipertahankan saat berpindah inactive ↔ resigned), dikosongkan `ReactivateEmployee`; backfill dari audit `user.deactivated` terakhir, fallback `updated_at`. Rekap bulanan/ekspor payroll hanya menghitung tanggal `joined_at` … tanggal kantor `deactivated_at` (inklusif).
 
@@ -136,6 +139,28 @@ Tidak ada `Gate::before` untuk Super Admin: workspace pribadi & selfie tetap ter
 | created_at | timestamptz | append-only, tanpa update (model menolak update) |
 
 Indeks: `(auditable_type, auditable_id)`, `(action)`, `(created_at)`, `(user_id, created_at)`. `auditable_type` berisi nama kelas model (tanpa morph map).
+
+### password_reset_requests (akun & kata sandi, 6 Okt 2026)
+"Lupa kata sandi" dengan persetujuan HR (migrasi `2026_10_12_100200_create_password_reset_requests_table`, model `PasswordResetRequest`, Policy `PasswordResetRequestPolicy`).
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | ulid PK | |
+| company_id | FK companies null | nullOnDelete |
+| user_id | FK users null | karyawan; nullOnDelete. Baris **hanya** dibuat untuk karyawan aktif — email tak dikenal/nonaktif tidak menulis apa pun (halaman tunggu dari sesi saja) |
+| email | varchar(190) | email akun (huruf kecil) |
+| request_token_hash | char(64) unik | SHA-256 token permintaan acak; token asli hanya di sesi peramban peminta |
+| setup_token_hash | char(64) null unik | SHA-256 setup token sekali pakai, diterbitkan ke sesi yang sama setelah disetujui; dikosongkan saat dipakai/kedaluwarsa/dibatalkan |
+| status | varchar(10) | `pending` · `approved` · `rejected` · `used` · `expired` · `canceled` (CHECK). `canceled` = digantikan permintaan baru atau dijawab HR lewat "Atur kata sandi" |
+| decided_by | FK users null | HR/Super Admin yang memutus; nullOnDelete |
+| decided_at | timestamptz null | awal jendela 30 menit untuk membuat sandi baru |
+| reject_reason | varchar(500) null | wajib saat `rejected` (CHECK); ditampilkan di halaman tunggu |
+| expires_at | timestamptz | dibuat + 24 jam (batas keputusan HR) |
+| ip | inet null | |
+| user_agent | varchar(512) null | |
+| created_at / updated_at | timestamptz | |
+
+Indeks: `(company_id, status)`, `(user_id, status)`, unik parsial `password_reset_requests_one_pending (user_id) WHERE status = 'pending'` (satu permintaan menunggu per karyawan; `RequestPasswordReset` membatalkan yang lama di bawah row lock `users`). Visibilitas (`visibleTo`): `employees.manage` di perusahaan yang sama, bukan permintaan sendiri, permintaan Super Admin hanya untuk Super Admin lain. Job `ExpirePasswordResetRequests` (tiap jam) menandai `expired` (pending > 24 jam, approved > 30 menit tanpa sandi baru) dan menghapus baris tertutup > 90 hari. Fortify `password_reset_tokens` tidak dipakai lagi (fitur `resetPasswords` dimatikan).
 
 ---
 
@@ -539,7 +564,7 @@ Indeks: `(workspace_id, parent_google_id)`, `(workspace_id, kind)`.
   | created_at / updated_at | timestamptz | |
 
   Indeks: `(notifiable_type, notifiable_id)`, `(notifiable_id, created_at)`, `(subject_type, subject_id)`, indeks parsial `notifications_unread_index (notifiable_id) WHERE read_at IS NULL AND archived_at IS NULL` untuk hitungan lonceng. Retensi 30 hari (`notifications:prune`), kecuali yang masih perlu tindakan. Model baca: `App\Models\InboxNotification`.
-- `notification_preferences`: `id` ulid, `user_id`, `event` (`task.assigned`, `mention`, `task.commented`, `task.due_soon`, `task.overdue`, `request.pending`, `request.decided`, `attendance.check_in_reminder`, `attendance.check_out_reminder`, `system`, `digest.daily`), `channel` (`in_app` · `email` · `whatsapp`), `enabled`, timestamps. Unik `(user_id, event, channel)`. Baris tidak ada = pakai default di `config/notifications.php`. Daftar kejadian = enum `NotificationEvent`.
+- `notification_preferences`: `id` ulid, `user_id`, `event` (`task.assigned`, `mention`, `task.commented`, `task.due_soon`, `task.overdue`, `request.pending`, `request.decided`, `attendance.check_in_reminder`, `attendance.check_out_reminder`, `account.security` (6 Okt 2026: permintaan reset sandi ke HR & "sandi diatur HR"; in-app + email terkunci), `system`, `digest.daily`), `channel` (`in_app` · `email` · `whatsapp`), `enabled`, timestamps. Unik `(user_id, event, channel)`. Baris tidak ada = pakai default di `config/notifications.php`. Daftar kejadian = enum `NotificationEvent`.
 - `notification_settings` (Sprint 8, 1:1 dengan `users`): `user_id` PK/FK, `digest_time` time (jam kirim ringkasan harian, zona kantor, default `07:30`), `quiet_hours` bool (default `true`: email di luar 07.00–17.30 & akhir pekan ditunda), `pause_while_on_leave` bool (tahan notifikasi saat cuti), `digest_last_run_on` date (idempotensi ringkasan harian), timestamps.
 - `notification_dispatch_logs` (review fix 3-9 #8): `id` ulid, `type` varchar(80) (`NotificationType`), `subject_type`/`subject_id` (ulid morph), `user_id` FK cascade, `cycle` varchar(40) (mis. tanggal tenggat), `created_at`. Unik `(type, subject_type, subject_id, user_id, cycle)`. Klaim atomik (`INSERT … ON CONFLICT DO NOTHING`) sebelum pengingat terjadwal dikirim (H-1, lewat tenggat) agar de-dup tidak bergantung pada kanal (penerima email-saja tidak lagi dapat email harian). Baris dihapus saat pengingat diselesaikan (`ResolveNotificationsForSubject`, `ResolveOverdueNotices`) dan saat subjeknya hilang (`notifications:prune`). Diakses lewat `App\Domain\Notifications\Services\NotificationDispatchLog` (tanpa model Eloquent).
 
