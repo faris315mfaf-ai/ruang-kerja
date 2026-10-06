@@ -29,7 +29,7 @@ it('seeds the new leave defaults as provisional, with their rules', function () 
 
     $types = LeaveType::query()->with('approvalFlow')->get()->keyBy('code');
 
-    expect($types->keys()->sort()->values()->all())->toBe(['CAP', 'CBR', 'CLT', 'CML', 'CUT', 'DNS', 'IZN', 'KOR', 'LBR', 'SKT'])
+    expect($types->keys()->sort()->values()->all())->toBe(['BRG', 'CAP', 'CBR', 'CLT', 'CML', 'CUT', 'DNS', 'IZN', 'KOR', 'LBR', 'SKT'])
         ->and($types->every(fn (LeaveType $type): bool => $type->is_provisional_default))->toBeTrue();
 
     // Cuti & lembur are locked until the SOP exists (keputusan pemilik 6 Okt 2026).
@@ -181,5 +181,6 @@ it('saves calendar-day and maximum rules from the admin dialog, only where they 
         'code' => 'XYZ', 'name' => 'Salah', 'category' => 'leave', 'max_days_per_request' => 0,
     ])->assertSessionHasErrors(['max_days_per_request' => 'Minimal 0,5 hari.']);
 
-    expect(ApprovalFlow::query()->count())->toBe(1);
+    // Default + "Pengajuan barang" of the scenario: saving types creates no flow.
+    expect(ApprovalFlow::query()->count())->toBe(2);
 });

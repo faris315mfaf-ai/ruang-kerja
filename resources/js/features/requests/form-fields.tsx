@@ -10,6 +10,7 @@ import { formatNumber } from '@/lib/format';
 import { dayUnit, formatDays } from '@/lib/requests';
 import { cn } from '@/lib/utils';
 import type { FormLeaveType } from '@/types/requests';
+import { ProcurementFields } from './procurement-fields';
 import type { RequestFormState } from './use-request-form';
 
 type Props = {
@@ -198,7 +199,9 @@ export function CategoryFields({
                 </div>
             )}
 
-            {category === 'correction' ? (
+            {category === 'procurement' ? (
+                <ProcurementFields state={state} mobile={mobile} />
+            ) : category === 'correction' ? (
                 <div className="grid gap-4 md:grid-cols-3">
                     <Field id="date" label="Tanggal" error={error('date')}>
                         <Input
@@ -401,7 +404,11 @@ export function CategoryFields({
             )}
 
             <div className="grid gap-2">
-                <Label htmlFor="reason">Alasan</Label>
+                <Label htmlFor="reason">
+                    {category === 'procurement'
+                        ? 'Alasan / kebutuhan'
+                        : 'Alasan'}
+                </Label>
                 <Textarea
                     id="reason"
                     rows={3}
@@ -411,7 +418,9 @@ export function CategoryFields({
                     placeholder={
                         category === 'overtime'
                             ? 'Pekerjaan yang diselesaikan saat lembur'
-                            : 'Mis. acara keluarga di luar kota'
+                            : category === 'procurement'
+                              ? 'Untuk apa barang ini dibutuhkan'
+                              : 'Mis. acara keluarga di luar kota'
                     }
                     onChange={(e) => setData('reason', e.target.value)}
                 />

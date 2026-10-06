@@ -69,7 +69,7 @@ it('renders the form with categories, balance and substitutes', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('requests/form')
             ->where('initial.category', 'overtime')
-            ->has('categories', 6)
+            ->has('categories', 7)
             ->where('categories.0.types.0.balance.available', 12)
             ->where('substitutes', fn ($people) => collect($people)->pluck('id')->contains($s->manager->id)),
         );

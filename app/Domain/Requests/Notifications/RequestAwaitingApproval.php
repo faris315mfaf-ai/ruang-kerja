@@ -18,7 +18,11 @@ final class RequestAwaitingApproval extends RequestNotification
 
     public function title(User $notifiable): string
     {
-        return "{$this->request->user->name} mengajukan {$this->request->leaveType->name} · menunggu persetujuan Anda";
+        $what = $this->request->leaveType->category->isProcurement()
+            ? 'barang: '.((string) ($this->request->payload['item_name'] ?? $this->request->leaveType->name))
+            : $this->request->leaveType->name;
+
+        return "{$this->request->user->name} mengajukan {$what} · menunggu persetujuan Anda";
     }
 
     public function body(User $notifiable): string

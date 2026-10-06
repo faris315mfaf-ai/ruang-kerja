@@ -23,6 +23,12 @@ export type StoredDraftFields = {
     destination: string;
     substitute_id: string;
     reason: string;
+    item_name: string;
+    quantity: string;
+    unit: string;
+    unit_price: string;
+    reference_url: string;
+    urgency: string;
 };
 
 export type StoredDraft = {
@@ -43,6 +49,12 @@ const STRING_FIELDS = [
     'destination',
     'substitute_id',
     'reason',
+    'item_name',
+    'quantity',
+    'unit',
+    'unit_price',
+    'reference_url',
+    'urgency',
 ] as const;
 
 /** Storage-like object (window.localStorage in the app, a fake in tests). */

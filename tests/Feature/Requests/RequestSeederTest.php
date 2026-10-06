@@ -17,10 +17,12 @@ it('seeds flows, leave types, balances and demo requests idempotently', function
     $this->seed(DatabaseSeeder::class);
     $this->seed(RequestSeeder::class);
 
-    expect(LeaveType::query()->orderBy('sort_order')->pluck('code')->all())->toBe(['CUT', 'CBR', 'SKT', 'IZN', 'LBR', 'KOR', 'DNS', 'CML', 'CAP', 'CLT'])
+    expect(LeaveType::query()->orderBy('sort_order')->pluck('code')->all())->toBe(['CUT', 'CBR', 'SKT', 'IZN', 'LBR', 'KOR', 'DNS', 'CML', 'CAP', 'CLT', 'BRG'])
         ->and(LeaveType::query()->where('code', 'CUT')->value('annual_quota_days'))->toEqual(12)
         ->and(ApprovalFlow::query()->where('name', ApprovalFlow::DEFAULT_NAME)->sole()->steps)->toHaveCount(2)
-        ->and(EmployeeRequest::query()->count())->toBe(10);
+        ->and(ApprovalFlow::query()->where('name', 'Pengajuan barang')->sole()->steps->pluck('approver_role')->all())->toBe([null, 'direksi'])
+        ->and(LeaveType::query()->where('code', 'BRG')->sole()->isLocked())->toBeFalse()
+        ->and(EmployeeRequest::query()->count())->toBe(11);
 
     $rizky = User::query()->where('email', 'anggota@demo.test')->sole();
     $balance = LeaveBalance::query()->where('user_id', $rizky->id)->whereHas('leaveType', fn ($q) => $q->where('code', 'CUT'))->where('year', 2026)->sole();
@@ -28,11 +30,11 @@ it('seeds flows, leave types, balances and demo requests idempotently', function
     expect($balance->remaining())->toBe(12.0)
         ->and($balance->pending_days)->toBe(3.0)
         ->and(EmployeeRequest::query()->where('user_id', $rizky->id)->pluck('status')->map->value->sort()->values()->all())
-        ->toBe(['approved', 'approved', 'approved', 'pending', 'rejected']);
+        ->toBe(['approved', 'approved', 'approved', 'pending', 'pending', 'rejected']);
 
     $queue = app(ApprovalQueue::class);
-    expect($queue->count(User::query()->where('email', 'kadiv@demo.test')->sole()))->toBe(3)
+    expect($queue->count(User::query()->where('email', 'kadiv@demo.test')->sole()))->toBe(4)
         ->and($queue->count(User::query()->where('email', 'hr@demo.test')->sole()))->toBe(1)
         ->and($queue->count(User::query()->where('email', 'direksi@demo.test')->sole()))->toBe(1)
-        ->and(EmployeeRequest::query()->where('status', RequestStatus::Pending)->count())->toBe(5);
+        ->and(EmployeeRequest::query()->where('status', RequestStatus::Pending)->count())->toBe(6);
 });

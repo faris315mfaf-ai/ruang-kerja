@@ -125,8 +125,8 @@ export function MyRequestsDesktop({
                 <div className="flex flex-col gap-2">
                     <h1 className="text-display text-text">Pengajuan saya</h1>
                     <p className="text-body-lg text-text-muted">
-                        Cuti, izin, sakit, lembur, koreksi absensi, dan dinas
-                        luar
+                        Izin, sakit, koreksi absensi, dinas luar, dan pengajuan
+                        barang
                     </p>
                 </div>
                 <Button asChild size="lg">
@@ -183,7 +183,7 @@ export function MyRequestsDesktop({
                                     ? 'Belum ada pengajuan'
                                     : 'Tidak ada pengajuan dengan status ini'
                             }
-                            description="Ajukan cuti, izin, sakit, lembur, koreksi absensi, atau dinas luar."
+                            description="Ajukan izin, sakit, koreksi absensi, dinas luar, atau barang."
                             action={
                                 <Button asChild>
                                     <Link href={create()}>Ajukan baru</Link>

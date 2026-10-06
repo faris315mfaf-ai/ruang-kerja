@@ -252,6 +252,10 @@ final class RequestPresenter
      */
     private static function publicPayload(EmployeeRequest $request): array
     {
-        return array_intersect_key($request->payload, array_flip(['half_day', 'mode', 'date', 'start_time', 'end_time', 'check_in', 'check_out', 'destination']));
+        return array_intersect_key($request->payload, array_flip([
+            'half_day', 'mode', 'date', 'start_time', 'end_time', 'check_in', 'check_out', 'destination',
+            // Pengajuan barang
+            'item_name', 'quantity', 'unit', 'unit_price', 'total', 'reference_url', 'urgency',
+        ]));
     }
 }

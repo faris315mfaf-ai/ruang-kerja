@@ -50,6 +50,13 @@ class SaveEmployeeRequestRequest extends FormRequest
             'attachments.*' => ['file', 'mimes:'.implode(',', (array) ($attachments['mimes'] ?? ['pdf'])), 'max:'.(int) ($attachments['max_kilobytes'] ?? 5120)],
             'remove_attachments' => ['nullable', 'array'],
             'remove_attachments.*' => ['string', 'ulid'],
+            // Pengajuan barang; required-ness per category is checked by RequestDurationCalculator.
+            'item_name' => ['nullable', 'string', 'max:160'],
+            'quantity' => ['nullable', 'integer', 'min:1', 'max:100000'],
+            'unit' => ['nullable', 'string', 'max:30'],
+            'unit_price' => ['nullable', 'integer', 'min:0', 'max:1000000000000'],
+            'reference_url' => ['nullable', 'string', 'max:500', 'url:http,https'],
+            'urgency' => ['nullable', Rule::in(['biasa', 'mendesak'])],
         ];
     }
 
@@ -68,6 +75,16 @@ class SaveEmployeeRequestRequest extends FormRequest
             'attachments.*.mimes' => 'Lampiran harus PDF, JPG, atau PNG.',
             'attachments.*.max' => 'Ukuran lampiran maksimal 5 MB.',
             'substitute_id.exists' => 'Pengganti tidak valid.',
+            'item_name.max' => 'Nama barang maksimal :max karakter.',
+            'quantity.integer' => 'Jumlah harus bilangan bulat.',
+            'quantity.min' => 'Jumlah minimal 1.',
+            'quantity.max' => 'Jumlah terlalu besar.',
+            'unit_price.integer' => 'Harga harus angka rupiah tanpa koma.',
+            'unit_price.min' => 'Harga tidak boleh negatif.',
+            'unit_price.max' => 'Harga terlalu besar.',
+            'reference_url.url' => 'Tautan harus diawali http:// atau https://.',
+            'reference_url.max' => 'Tautan terlalu panjang.',
+            'urgency.in' => 'Pilih tingkat kebutuhan.',
         ];
     }
 

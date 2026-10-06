@@ -35,6 +35,12 @@ export type RequestFormInitial = {
     destination?: string | null;
     substitute_id?: string | null;
     reason?: string;
+    item_name?: string | null;
+    quantity?: number | null;
+    unit?: string | null;
+    unit_price?: number | null;
+    reference_url?: string | null;
+    urgency?: 'biasa' | 'mendesak' | null;
 };
 
 export type RequestFormData = {
@@ -51,6 +57,13 @@ export type RequestFormData = {
     destination: string;
     substitute_id: string;
     reason: string;
+    /* Pengajuan barang: numbers kept as typed text, validated by the server. */
+    item_name: string;
+    quantity: string;
+    unit: string;
+    unit_price: string;
+    reference_url: string;
+    urgency: string;
     attachments: File[];
     remove_attachments: string[];
 };
@@ -120,6 +133,18 @@ export function useRequestForm({
         destination: initial.destination ?? '',
         substitute_id: initial.substitute_id ?? '',
         reason: initial.reason ?? '',
+        item_name: initial.item_name ?? '',
+        quantity:
+            initial.quantity !== undefined && initial.quantity !== null
+                ? String(initial.quantity)
+                : '1',
+        unit: initial.unit ?? 'unit',
+        unit_price:
+            initial.unit_price !== undefined && initial.unit_price !== null
+                ? String(initial.unit_price)
+                : '',
+        reference_url: initial.reference_url ?? '',
+        urgency: initial.urgency ?? 'biasa',
         attachments: [],
         remove_attachments: [],
     });
@@ -309,6 +334,15 @@ export function useRequestForm({
                 check_in: form.data.check_in,
                 check_out: form.data.check_out,
             });
+        } else if (category === 'procurement') {
+            Object.assign(params, {
+                item_name: form.data.item_name,
+                quantity: form.data.quantity,
+                unit: form.data.unit,
+                unit_price: form.data.unit_price,
+                reference_url: form.data.reference_url,
+                urgency: form.data.urgency,
+            });
         } else if (usesHours) {
             Object.assign(params, {
                 date: form.data.date,
@@ -343,6 +377,12 @@ export function useRequestForm({
         form.data.end_date,
         form.data.half_day,
         form.data.destination,
+        form.data.item_name,
+        form.data.quantity,
+        form.data.unit,
+        form.data.unit_price,
+        form.data.reference_url,
+        form.data.urgency,
     ]);
 
     useEffect(() => {

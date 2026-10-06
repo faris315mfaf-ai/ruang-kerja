@@ -40,6 +40,8 @@ export function categoryHint(category: FormCategory): string {
                 first?.max_backdate_days !== undefined
                 ? `Maks. ${first.max_backdate_days} hari lalu`
                 : 'Jam masuk/pulang';
+        case 'procurement':
+            return 'Atasan, lalu Direksi';
         default:
             return 'Absen dari lokasi lain';
     }

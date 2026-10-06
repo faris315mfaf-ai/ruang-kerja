@@ -6,9 +6,12 @@ import {
     formatDays,
     formatHours,
     formatLongDateRange,
+    formatRupiah,
+    formatShortDate,
 } from '@/lib/requests';
 import { cn } from '@/lib/utils';
 import { MonthCalendar } from './month-calendar';
+import { procurementTotal } from './procurement-fields';
 import { BalanceBar, ColleagueWarning, FlowChips } from './request-parts';
 import type { RequestFormState } from './use-request-form';
 
@@ -42,14 +45,21 @@ export function RequestSummary({
         );
     }
 
-    const headline =
-        period === null
-            ? '—'
-            : period.minutes !== null
-              ? formatHours(period.minutes)
-              : period.days !== null
-                ? `${formatDays(period.days)} ${type ? dayUnit(type) : dayUnit({ category })}`
-                : 'Koreksi 1 hari';
+    const procurement = category === 'procurement';
+    const headline = procurement
+        ? formatRupiah(
+              procurementTotal(
+                  state.form.data.quantity,
+                  state.form.data.unit_price,
+              ),
+          )
+        : period === null
+          ? '—'
+          : period.minutes !== null
+            ? formatHours(period.minutes)
+            : period.days !== null
+              ? `${formatDays(period.days)} ${type ? dayUnit(type) : dayUnit({ category })}`
+              : 'Koreksi 1 hari';
 
     const marked = (preview.colleagues?.people ?? []).flatMap(
         (person) => person.dates,
@@ -60,12 +70,16 @@ export function RequestSummary({
             : period.minutes !== null
               ? formatDateRange(period.start_at, period.start_at)
               : formatLongDateRange(period.start_at, period.end_at);
+    // Pengajuan barang: dated on the day it is sent, total instead of duration.
+    const amountLabel = procurement ? 'Perkiraan total' : 'Durasi';
     const rows = mobile
-        ? [{ k: 'Durasi', v: headline }]
+        ? [{ k: amountLabel, v: headline }]
         : [
               { k: 'Jenis', v: type?.name ?? '—' },
-              { k: 'Tanggal', v: when },
-              { k: 'Durasi', v: headline },
+              procurement
+                  ? { k: 'Tanggal kirim', v: formatShortDate(today) }
+                  : { k: 'Tanggal', v: when },
+              { k: amountLabel, v: headline },
           ];
 
     return (

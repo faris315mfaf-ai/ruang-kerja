@@ -6,7 +6,9 @@ export type RequestCategory =
     | 'sick'
     | 'overtime'
     | 'correction'
-    | 'business_trip';
+    | 'business_trip'
+    /** Pengajuan barang (keputusan pemilik 6 Okt 2026). */
+    | 'procurement';
 
 export type RequestStatus =
     | 'draft'
@@ -87,6 +89,16 @@ export type RequestPayload = {
     check_in?: string | null;
     check_out?: string | null;
     destination?: string | null;
+    /* Pengajuan barang */
+    item_name?: string;
+    quantity?: number;
+    unit?: string;
+    /** Estimated unit price, whole rupiah. */
+    unit_price?: number;
+    /** quantity × unit_price. */
+    total?: number;
+    reference_url?: string | null;
+    urgency?: 'biasa' | 'mendesak';
 };
 
 export type ColleagueAbsence = {

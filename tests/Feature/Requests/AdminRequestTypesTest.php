@@ -40,7 +40,7 @@ it('renders leave types, flows and options', function () {
         ->get('/admin/pengajuan')
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/request-types')
-            ->has('types', 6)
+            ->has('types', 7)
             ->where('flows.0.is_default', true)
             ->has('flows.0.steps', 2)
             ->where('options.role_holders.hr', ['Hana Pratiwi']),

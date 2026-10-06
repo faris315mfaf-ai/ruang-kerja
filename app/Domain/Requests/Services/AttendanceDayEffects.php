@@ -144,6 +144,10 @@ final class AttendanceDayEffects implements AttendanceEffects
     {
         $request->loadMissing('leaveType');
 
+        if ($request->leaveType->category->isProcurement()) {
+            return;
+        }
+
         if ($request->leaveType->category->isAbsence()) {
             // Rows written for the request return to "not closed yet"; the next close-day run re-evaluates them.
             AttendanceDay::query()->where('request_id', $request->id)->whereNull('check_in_at')->delete();

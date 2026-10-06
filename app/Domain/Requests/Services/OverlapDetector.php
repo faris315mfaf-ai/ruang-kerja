@@ -12,7 +12,8 @@ use Illuminate\Database\Eloquent\Builder;
 /**
  * Finds an existing request that occupies the same period:
  * absences (cuti/izin/sakit/dinas) clash with each other, overtime with
- * overtime, corrections with corrections (same date).
+ * overtime, corrections with corrections (same date). Pengajuan barang
+ * never clashes.
  */
 final class OverlapDetector
 {
@@ -23,6 +24,11 @@ final class OverlapDetector
         CarbonInterface $endAt,
         ?string $ignoreId = null,
     ): ?EmployeeRequest {
+        // Pengajuan barang never occupies time.
+        if ($category->isProcurement()) {
+            return null;
+        }
+
         $group = $category->isAbsence()
             ? array_values(array_filter(RequestCategory::cases(), fn (RequestCategory $c): bool => $c->isAbsence()))
             : [$category];
