@@ -64,20 +64,20 @@ class ChannelFactory extends Factory
             'type' => count($ids) > 2 ? ChannelType::Group : ChannelType::Dm,
             'name' => null,
             'direct_key' => Channel::directKey($ids),
-        ])->withMembers($users);
+        ])->withMembers($users, owner: false);
     }
 
     /**
-     * @param  list<User>  $users  first one is the owner
+     * @param  list<User>  $users  first one is the owner (unless `$owner` is false: DM/group)
      */
-    public function withMembers(array $users): static
+    public function withMembers(array $users, bool $owner = true): static
     {
-        return $this->afterCreating(function (Channel $channel) use ($users): void {
+        return $this->afterCreating(function (Channel $channel) use ($users, $owner): void {
             foreach ($users as $index => $user) {
                 $channel->memberships()->getQuery()->insertOrIgnore([
                     'channel_id' => $channel->id,
                     'user_id' => $user->id,
-                    'role' => ($index === 0 ? ChannelRole::Owner : ChannelRole::Member)->value,
+                    'role' => ($owner && $index === 0 ? ChannelRole::Owner : ChannelRole::Member)->value,
                     'muted' => false,
                     'joined_at' => now(),
                     'created_at' => now(),
