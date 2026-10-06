@@ -37,7 +37,6 @@ dataset('prototype pages', [
     ['/okr', 'okr/index'],
     ['/okr/q4-ops-1', 'okr/show'],
     ['/admin/mesin-absensi', 'okr/fingerprint-devices'],
-    ['/peran/dirut', 'okr/role-dashboard'],
 ]);
 
 it('renders every preview page for a signed-in employee', function (string $uri, string $component) {
@@ -62,7 +61,7 @@ it('answers 404 when the prototype flag is off', function (string $uri) {
     $user->assignRole(Role::Anggota->value);
 
     $this->actingAs($user)->get($uri)->assertNotFound();
-})->with(['/pratinjau', '/catatan', '/rapat', '/okr', '/peran/hr']);
+})->with(['/pratinjau', '/catatan', '/rapat', '/okr']);
 
 it('shares the flag as off with the shell', function () {
     config(['features.prototype' => false]);
@@ -72,11 +71,4 @@ it('shares the flag as off with the shell', function () {
     $this->actingAs($user)
         ->get('/menu')
         ->assertInertia(fn (Assert $page) => $page->where('features.prototype', false));
-});
-
-it('rejects unknown role dashboards', function () {
-    $user = User::factory()->create();
-    $user->assignRole(Role::Anggota->value);
-
-    $this->actingAs($user)->get('/peran/bendahara')->assertNotFound();
 });

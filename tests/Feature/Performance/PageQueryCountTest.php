@@ -162,3 +162,15 @@ it('keeps Obrolan free of N+1', function () {
         "/obrolan/{$plq->id}/pesan" => ['kadiv', 18],
     ]);
 });
+
+it('keeps Dashboard per jabatan free of N+1', function () {
+    config(['features.role_dashboards' => true]);
+
+    assertQueryBudgets([
+        // Visit (flow closure: queue / decisions / one request in full) + deferred dashboard.
+        '/peran/dirut' => ['direksi', 58],
+        '/peran/direktur' => ['direksi', 65],
+        '/peran/hr' => ['hr', 78],
+        '/peran/implementer' => ['kadiv', 78],
+    ]);
+});
