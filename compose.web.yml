@@ -31,6 +31,7 @@ services:
       - "443:443/udp"
     environment:
       APP_DOMAIN: ${APP_DOMAIN:?set APP_DOMAIN in .env}
+      APP_ALIASES: ${APP_ALIASES:-}
       ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in .env}
     volumes:
       - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
