@@ -87,7 +87,8 @@ class RequestPreviewController extends Controller
                 'work_dates' => $period->workDates,
             ],
             'errors' => $errors,
-            'balance' => $this->balance($user, $type, $period?->startAt, $period?->days, $ignoreId),
+            // Staff never see an annual leave balance (keputusan pemilik 6 Okt 2026).
+            'balance' => $user->isStaffOnly() ? null : $this->balance($user, $type, $period?->startAt, $period?->days, $ignoreId),
             'overlap' => $overlap === null ? null : sprintf('Tumpang tindih dengan %s (%s, %s).', $overlap->number ?? 'draf', $overlap->leaveType->name, RequestFormatter::period($overlap)),
             'colleagues' => $period !== null && $type->category->isAbsence()
                 ? $this->colleagues->around($user, $period->startAt, $period->endAt, $ignoreId)

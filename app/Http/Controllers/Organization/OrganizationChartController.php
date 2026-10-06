@@ -13,12 +13,13 @@ use Inertia\Response;
 
 /**
  * Struktur organisasi: chart on desktop, nested list on mobile (docs/PLATFORM.md §3).
+ * Not for staff: 404 (DivisionPolicy::viewChart, keputusan pemilik 6 Okt 2026).
  */
 class OrganizationChartController extends Controller
 {
     public function __invoke(#[CurrentUser] User $viewer, OrganizationTree $tree): Response
     {
-        Gate::authorize('viewAny', Division::class);
+        Gate::authorize('viewChart', Division::class);
 
         return Inertia::render('organization/structure', [
             'chart' => $tree->for($viewer),

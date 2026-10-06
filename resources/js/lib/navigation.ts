@@ -22,6 +22,7 @@ import {
     Users,
     WalletCards,
 } from 'lucide-react';
+import { isStaffOnly } from '@/features/staff/roles';
 import type { RoleName } from '@/lib/roles';
 import { hasAnyRole } from '@/lib/roles';
 
@@ -71,7 +72,11 @@ export const mainNavItems: AppNavItem[] = [
     },
 ];
 
-/** Org chart: every role (mobile Menu row, first entry of the Dock "Organisasi" stack). */
+/**
+ * Org chart (mobile Menu row, first entry of the Dock "Organisasi" stack):
+ * every role except staff (keputusan pemilik 6 Okt 2026; the route is a 404
+ * for them, DivisionPolicy::viewChart).
+ */
 export const orgChartNavItem: AppNavItem = {
     title: 'Struktur organisasi',
     href: '/organisasi/struktur',
@@ -86,7 +91,7 @@ export const orgChartNavItem: AppNavItem = {
  * destination lives here only, never in {@link adminNavItems} as well.
  */
 export function organizationNavItems(roles: readonly string[]): AppNavItem[] {
-    const items: AppNavItem[] = [orgChartNavItem];
+    const items: AppNavItem[] = isStaffOnly(roles) ? [] : [orgChartNavItem];
 
     if (hasAnyRole(roles, 'super_admin', 'hr')) {
         items.push(

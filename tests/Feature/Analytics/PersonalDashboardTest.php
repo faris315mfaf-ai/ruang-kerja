@@ -88,6 +88,8 @@ it('shows a task assigned a minute ago in Ruang saya right away', function () {
 });
 
 it('shows my leave balance and latest requests', function () {
+    // Annual leave balance: not for staff (keputusan pemilik 6 Okt 2026).
+    $this->me->assignRole('kepala_divisi');
     $type = LeaveType::factory()->create(['name' => 'Cuti tahunan']);
     LeaveBalance::factory()->create(['user_id' => $this->me->id, 'leave_type_id' => $type->id, 'year' => 2026, 'entitled_days' => 12, 'carried_over_days' => 2, 'used_days' => 4]);
     EmployeeRequest::factory()->status(RequestStatus::Pending)->create(['user_id' => $this->me->id, 'leave_type_id' => $type->id]);
@@ -99,6 +101,15 @@ it('shows my leave balance and latest requests', function () {
             ->where('live.leave_balance', ['type' => 'Cuti tahunan', 'remaining' => 10, 'year' => 2026])
             ->has('live.requests', 1)
             ->where('live.requests.0.user.id', $this->me->id));
+});
+
+it('never sends the annual leave balance to staff', function () {
+    $type = LeaveType::factory()->create(['name' => 'Cuti tahunan']);
+    LeaveBalance::factory()->create(['user_id' => $this->me->id, 'leave_type_id' => $type->id, 'year' => 2026, 'entitled_days' => 12]);
+
+    expect($this->me->isStaffOnly())->toBeTrue();
+    $this->actingAs($this->me)->get('/dashboard/saya')
+        ->assertInertia(fn (Assert $page) => $page->where('live.leave_balance', null));
 });
 
 it('applies the period filter from the URL', function () {

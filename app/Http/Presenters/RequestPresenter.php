@@ -144,7 +144,8 @@ final class RequestPresenter
                 'url' => route('requests.attachment', ['employeeRequest' => $request->id, 'attachment' => $attachment->id]),
             ])->values()->all(),
             'timeline' => $this->timeline($request, $health ? null : $viewer),
-            'balance' => $this->balanceImpact($request),
+            // Staff never see an annual leave balance (keputusan pemilik 6 Okt 2026).
+            'balance' => $viewer->isStaffOnly() ? null : $this->balanceImpact($request),
             'colleagues' => $colleagues === null || $colleagues['people'] === [] ? null : $colleagues,
             'can' => [
                 'edit' => Gate::forUser($viewer)->allows('update', $request),

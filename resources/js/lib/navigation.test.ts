@@ -26,12 +26,15 @@ const desktopHrefs = (roles: string[]) => [
 ];
 
 describe('navigation', () => {
-    it('shows the org chart to everyone, in the organization group only', () => {
-        for (const role of ROLES) {
+    it('shows the org chart to everyone but staff, in the organization group only', () => {
+        for (const role of ROLES.filter((r) => r !== 'anggota')) {
             expect(organizationNavItems([role])[0]?.href).toBe(
                 '/organisasi/struktur',
             );
         }
+
+        // Keputusan pemilik 6 Okt 2026: no org chart for staff.
+        expect(organizationNavItems(['anggota'])).toEqual([]);
 
         expect(
             mainNavItems.some((item) => item.href === '/organisasi/struktur'),
@@ -64,7 +67,7 @@ describe('navigation', () => {
             'Anggota divisi',
         ]);
         expect(orgTitles(['direksi'])).toEqual(['Struktur organisasi']);
-        expect(orgTitles(['anggota'])).toEqual(['Struktur organisasi']);
+        expect(orgTitles(['anggota'])).toEqual([]);
     });
 
     it('gives HR the attendance and request admin but not the audit log', () => {
@@ -163,7 +166,8 @@ describe('navigation', () => {
                 '/manajemen',
                 '/absensi/hari-ini',
             ],
-            anggota: ['/organisasi/struktur'],
+            // Keputusan pemilik 6 Okt 2026: staff lose the org chart.
+            anggota: [],
         };
 
         for (const [role, hrefs] of Object.entries(before)) {
@@ -193,7 +197,7 @@ describe('navigation', () => {
             'Anggota divisi',
             'Absensi hari ini',
         ]);
-        expect(mobile(['anggota'])).toEqual(['Struktur organisasi']);
+        expect(mobile(['anggota'])).toEqual([]);
     });
 
     it('shows the attendance board to team leads and HR, the recap on desktop only', () => {

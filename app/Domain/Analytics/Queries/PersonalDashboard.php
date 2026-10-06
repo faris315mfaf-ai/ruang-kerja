@@ -83,7 +83,8 @@ final class PersonalDashboard
                 'position' => $user->position?->name,
                 'manager' => $user->manager?->name,
             ],
-            'leave_balance' => $this->leaveBalance($user, $now),
+            // Staff never get the annual leave balance (keputusan pemilik 6 Okt 2026).
+            'leave_balance' => $user->isStaffOnly() ? null : $this->leaveBalance($user, $now),
             'requests' => $requests->map(fn (EmployeeRequest $request): array => $this->requests->item($request))->values()->all(),
         ];
     }

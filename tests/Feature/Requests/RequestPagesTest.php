@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Organization\Enums\Role;
 use App\Domain\Requests\Enums\RequestStatus;
 use App\Models\AuditLog;
 use App\Models\EmployeeRequest;
@@ -20,8 +21,17 @@ beforeEach(function () {
     $this->s = RequestScenario::make();
 });
 
+/** The scenario employee holds only `anggota` (staf); balances are shown to everyone else. */
+function notStaff(User $user): User
+{
+    $user->assignRole(Role::KepalaDivisi->value);
+
+    return $user->refresh();
+}
+
 it('shows "Pengajuan saya" with balances, counts and the selected detail', function () {
     $s = $this->s;
+    notStaff($s->employee);
     $request = $s->submit($s->employee, $s->annual, ['start_date' => '2026-10-12', 'end_date' => '2026-10-14']);
     $s->submit($s->employee, $s->overtime, ['date' => '2026-10-07', 'start_time' => '17:00', 'end_time' => '20:00']);
 
@@ -51,6 +61,7 @@ it('shows "Pengajuan saya" with balances, counts and the selected detail', funct
 
 it('renders the form with categories, balance and substitutes', function () {
     $s = $this->s;
+    notStaff($s->employee);
 
     $this->actingAs($s->employee)
         ->get('/pengajuan/baru?kategori=lembur')
@@ -62,6 +73,34 @@ it('renders the form with categories, balance and substitutes', function () {
             ->where('categories.0.types.0.balance.available', 12)
             ->where('substitutes', fn ($people) => collect($people)->pluck('id')->contains($s->manager->id)),
         );
+});
+
+it('never sends the annual leave balance to staff (keputusan pemilik 6 Okt 2026)', function () {
+    $s = $this->s;
+    expect($s->employee->isStaffOnly())->toBeTrue();
+    $request = $s->submit($s->employee, $s->annual, ['start_date' => '2026-10-12', 'end_date' => '2026-10-14']);
+
+    $this->actingAs($s->employee)->get('/pengajuan?pilih='.$request->id)
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('balances', [])
+            ->where('selected.balance', null));
+
+    $this->actingAs($s->employee)->get('/pengajuan/baru')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('categories.0.types.0.balance', null));
+
+    $this->actingAs($s->employee)->get("/pengajuan/{$request->id}")
+        ->assertInertia(fn (Assert $page) => $page->where('request.balance', null));
+
+    $this->actingAs($s->employee)
+        ->getJson('/pengajuan/pratinjau?'.http_build_query(['leave_type_id' => $s->annual->id, 'start_date' => '2026-10-19', 'end_date' => '2026-10-19']))
+        ->assertOk()
+        ->assertJsonPath('balance', null)
+        ->assertJsonPath('period.days', 1);
+
+    // The approver (Kepala Divisi) still sees the requester's balance impact.
+    $this->actingAs($s->manager)->get("/persetujuan/{$request->id}")
+        ->assertInertia(fn (Assert $page) => $page->where('request.balance.before', 12));
 });
 
 it('submits a request through HTTP and redirects to the list', function () {
@@ -172,6 +211,7 @@ it('cancels a pending request', function () {
 
 it('previews days, balance, overlap and the flow without storing anything', function () {
     $s = $this->s;
+    notStaff($s->employee);
     $s->submit($s->employee, $s->annual, ['start_date' => '2026-10-12', 'end_date' => '2026-10-12']);
 
     $this->actingAs($s->employee)

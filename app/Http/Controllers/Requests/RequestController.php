@@ -241,7 +241,8 @@ class RequestController extends Controller
                     'types' => $ofCategory->map(fn (LeaveType $type): array => [
                         ...RequestPresenter::type($type),
                         'eligible' => $type->isEligible($user),
-                        'balance' => RequestPresenter::balance($this->ledger->peek($user, $type, $year)),
+                        // Staff never get the annual leave balance (keputusan pemilik 6 Okt 2026).
+                        'balance' => $user->isStaffOnly() ? null : RequestPresenter::balance($this->ledger->peek($user, $type, $year)),
                     ])->values()->all(),
                 ];
             })
@@ -275,11 +276,17 @@ class RequestController extends Controller
 
     /**
      * Cards above the list: yearly balances, eligibility, sick-leave rule.
+     * Staff get none of them (no annual leave balance, keputusan pemilik
+     * 6 Okt 2026), so not even the quota is sent.
      *
      * @return list<array<string, mixed>>
      */
     private function balanceCards(User $user): array
     {
+        if ($user->isStaffOnly()) {
+            return [];
+        }
+
         $year = OfficeTime::today()->year;
 
         return array_values(LeaveType::query()
