@@ -19,8 +19,6 @@ export type PrototypeModule = {
 /** Every Fase 2 & 3 preview, in the order of docs/PROMPTS.md. */
 export const PROTOTYPE_MODULES: PrototypeModule[] = [
     {
-    },
-    {
         key: 'automation',
         phase: 'Fase 2',
         sprint: 'F2-4',

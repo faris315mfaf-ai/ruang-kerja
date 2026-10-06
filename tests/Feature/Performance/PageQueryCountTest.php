@@ -1,11 +1,11 @@
 <?php
 
+use App\Models\Channel;
+use App\Models\EmployeeRequest;
 use App\Models\Meeting;
 use App\Models\MeetingActionItem;
 use App\Models\MeetingMinutes;
 use App\Models\MeetingParticipant;
-use App\Models\Channel;
-use App\Models\EmployeeRequest;
 use App\Models\Note;
 use App\Models\NoteShare;
 use App\Models\NoteVersion;

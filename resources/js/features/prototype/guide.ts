@@ -17,13 +17,10 @@ export function guideHref(slug: string, guideSlug: string): string {
 export type ModuleStatus = 'next' | 'hold';
 
 export const MODULE_STATUS: Record<string, ModuleStatus> = {
-    notes: 'next',
-    meetings: 'next',
-    automation: 'next',
+    // Otomasi left the preview (real: /otomasi); only WhatsApp stays here.
+    automation: 'hold',
     'mobile-app': 'hold',
-    okr: 'next',
     fingerprint: 'hold',
-    roles: 'next',
 };
 
 export const STATUS_BADGE: Record<

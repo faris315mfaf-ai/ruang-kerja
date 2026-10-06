@@ -237,6 +237,8 @@ export default function Menu() {
                                 icon={notesNavItem.icon}
                                 label={notesNavItem.title}
                                 href={notesNavItem.href}
+                            />
+                        )}
                         {features?.meetings && (
                             <Row
                                 icon={meetingsNavItem.icon}

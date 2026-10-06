@@ -28,10 +28,10 @@ describe('module status', () => {
         }
     });
 
-    it('marks the mobile app and fingerprint machines as on hold', () => {
+    it('marks every module left in the preview as on hold', () => {
         expect(moduleStatusBadge('mobile-app')?.label).toBe('Ditahan');
         expect(moduleStatusBadge('fingerprint')?.label).toBe('Ditahan');
-        expect(moduleStatusBadge('notes')?.label).toBe('Akan dibangun');
+        expect(moduleStatusBadge('automation')?.label).toBe('Ditahan');
         expect(moduleStatusBadge('tidak-ada')).toBeNull();
     });
 });

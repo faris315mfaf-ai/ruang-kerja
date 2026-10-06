@@ -120,4 +120,3 @@ for (const path of stateRoutes) {
         });
     }
 }
-
