@@ -31,10 +31,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * "Dashboard HR" (PRD M7, mockups DashboardHR / MDashboardHR): company-wide
- * attendance today (per division), unusual check-ins to review, requests
- * waiting for HR, missed check-outs yesterday and the period recap
- * (kedisiplinan hadir, rata-rata terlambat, alpha) with an 8-week trend.
+ * "Dashboard HR" (PRD M7). Since the owner's decision of 6 Okt 2026 the HR
+ * dashboard shows requests waiting for HR and a short attendance summary
+ * (attendanceSummary); the attendance panels (per division, review queue,
+ * missing check-outs) live in Absensi › Hari ini and the recap (recap())
+ * in Absensi › Kedisiplinan. today(), review(), missingCheckOut() and
+ * recap() stay public: Dashboard Manajemen, Kedisiplinan and the role
+ * dashboards reuse them.
  */
 final class HrDashboard
 {
@@ -47,6 +50,32 @@ final class HrDashboard
         private readonly RequestPresenter $requests,
         private readonly SelfieStorage $selfies,
     ) {}
+
+    /**
+     * Live: the "Absensi hari ini" card of the HR dashboard — numbers only
+     * (no list of people) plus how many items wait in Absensi › Hari ini.
+     *
+     * @param  Collection<int, User>  $people  with `division` loaded
+     * @return array{date: string, counts: array<string, int>, shifts: list<array{name: string, count: int}>, review_count: int, missing_check_out_count: int}
+     */
+    public function attendanceSummary(User $viewer, Collection $people, CarbonImmutable $now): array
+    {
+        $today = $this->attendance->for($people, $now);
+        $ids = array_values(array_map('strval', $people->modelKeys()));
+
+        return [
+            'date' => $today['date'],
+            'counts' => $today['counts'],
+            'shifts' => $today['shifts'],
+            'review_count' => AttendanceLog::query()
+                ->where('is_suspicious', true)
+                ->whereNull('reviewed_at')
+                ->where('occurred_at', '>=', $now->subDays(7)->toIso8601String())
+                ->whereIn('user_id', $ids)
+                ->count(),
+            'missing_check_out_count' => $this->missingCheckOut($viewer, $ids, $now)['count'],
+        ];
+    }
 
     /**
      * Live: today's attendance + per-division table.

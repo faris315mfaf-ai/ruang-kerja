@@ -1,58 +1,64 @@
-import type { DriveAccessMember } from "@/features/drive/types";
+import type { DriveAccessMember } from '@/features/drive/types';
 import type {
-  Label,
-  TaskStatus,
-  WorkspaceMember,
-  WorkspaceRef,
-  WorkspaceRole,
-} from "@/features/tasks/types";
+    Label,
+    TaskStatus,
+    WorkspaceMember,
+    WorkspaceRef,
+    WorkspaceRole,
+} from '@/features/tasks/types';
 
 /** Shared Inertia prop `workspaces` (sidebar + mobile Menu). */
 export type SidebarWorkspace = WorkspaceRef & {
-  favorite: boolean;
+    favorite: boolean;
 };
 
 export type WorkspaceDetail = WorkspaceRef & {
-  type_label: string;
-  visibility: "private" | "internal";
-  description: string | null;
-  owner_id: string;
-  archived: boolean;
-  members_count: number;
-  divisions_count: number;
+    type_label: string;
+    visibility: 'private' | 'internal';
+    description: string | null;
+    owner_id: string;
+    archived: boolean;
+    members_count: number;
+    divisions_count: number;
 };
 
 export type WorkspaceAbilities = {
-  edit_tasks: boolean;
-  manage: boolean;
-  manage_members: boolean;
-  archive: boolean;
-  favorite: boolean;
-  /**
-   * Direksi / HR / Super Admin looking at a workspace they are not a member
-   * of: everything is read-only (keputusan pemilik 6 Okt 2026).
-   */
-  view_only: boolean;
+    edit_tasks: boolean;
+    manage: boolean;
+    manage_members: boolean;
+    archive: boolean;
+    favorite: boolean;
+    /**
+     * Direksi / HR / Super Admin looking at a workspace they are not a member
+     * of: everything is read-only (keputusan pemilik 6 Okt 2026).
+     */
+    view_only: boolean;
 };
 
 /** Props every workspace tab receives (WorkspacePage::props). */
 export type WorkspacePageProps = {
-  workspace: WorkspaceDetail;
-  can: WorkspaceAbilities;
-  members: WorkspaceMember[];
-  /** Tab badges "Dokumen 6 · File 24" (Sprint 7). */
-  drive_counts?: { documents: number; files: number };
+    workspace: WorkspaceDetail;
+    can: WorkspaceAbilities;
+    members: WorkspaceMember[];
+    /** Tab badges "Dokumen 6 · File 24" (Sprint 7). */
+    drive_counts?: { documents: number; files: number };
 };
 
-export type WorkspaceTab = "summary" | "tasks" | "documents" | "files" | "activity" | "settings";
+export type WorkspaceTab =
+    | 'summary'
+    | 'tasks'
+    | 'documents'
+    | 'files'
+    | 'activity'
+    | 'settings';
 
 export type MemberDetail = WorkspaceMember & {
-  is_synced: boolean;
-  /** "Akses Drive" (Sprint 7); null when the row could not be resolved. */
-  drive: DriveAccessMember | null;
-  division: string | null;
-  position: string | null;
-  joined_at: string | null;
+    is_synced: boolean;
+    /** "Akses Drive" (Sprint 7); null when the row could not be resolved. */
+    drive: DriveAccessMember | null;
+    division: string | null;
+    position: string | null;
+    joined_at: string | null;
 };
 
 export type StatusWithCount = TaskStatus & { tasks_count: number };
@@ -62,26 +68,26 @@ export type LabelWithCount = Label & { tasks_count: number };
 export type Option<T extends string = string> = { value: T; label: string };
 
 export type MemberCandidate = {
-  id: string;
-  name: string;
-  email: string;
-  division: string | null;
+    id: string;
+    name: string;
+    email: string;
+    division: string | null;
 };
 
 export type ActivityItem = {
-  id: string;
-  event: string;
-  properties: Record<string, unknown>;
-  subject_id: string;
-  created_at: string;
-  causer: { id: string; name: string; avatar: string | null } | null;
+    id: string;
+    event: string;
+    properties: Record<string, unknown>;
+    subject_id: string;
+    created_at: string;
+    causer: { id: string; name: string; avatar: string | null } | null;
 };
 
 export type WorkspaceRoleLabel = Record<WorkspaceRole, string>;
 
 export const ROLE_LABELS: WorkspaceRoleLabel = {
-  owner: "Owner",
-  admin: "Admin",
-  member: "Member",
-  viewer: "Viewer",
+    owner: 'Owner',
+    admin: 'Admin',
+    member: 'Member',
+    viewer: 'Viewer',
 };

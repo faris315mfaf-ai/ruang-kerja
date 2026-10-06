@@ -1,3 +1,4 @@
+import { ActionNotes } from '@/features/monitoring/action-notes';
 import { formatLongDate, formatTime } from '@/lib/format';
 import { AttendancePanel, AttendancePanelSkeleton } from './attendance-panel';
 import { KpiCardSkeleton, KpiCardView } from './kpi-cards';
@@ -14,6 +15,7 @@ import { PANEL_ID, PeriodTabs, tabId } from './period-tabs';
 import { ProjectsPanel, ProjectsPanelSkeleton } from './projects-panel';
 import type { ManagementProps, PeriodKey } from './types';
 import { WorkChart, WorkChartSkeleton } from './work-chart';
+import { WorkloadPanel } from './workload-panel';
 
 /**
  * Desktop & tablet (design MgDashboard): sections are flex-wrap rows, so on
@@ -132,13 +134,28 @@ export function ManagementDesktop({
                 )}
             </section>
 
+            <section className="flex flex-wrap items-start gap-5">
+                <WorkloadPanel
+                    workload={props.workload}
+                    className="flex-[2_1_620px]"
+                />
+                <ActionNotes
+                    notes={props.notes}
+                    today={props.today}
+                    className="flex-[1_1_360px]"
+                />
+            </section>
+
             <section className="flex flex-wrap items-stretch gap-5">
                 <AgendaPanel
                     agenda={props.agenda}
                     today={props.today}
                     className="flex-[1_1_420px]"
                 />
-                <NotesPanel notes={props.notes} className="flex-[1_1_420px]" />
+                <NotesPanel
+                    notes={props.minutes}
+                    className="flex-[1_1_420px]"
+                />
             </section>
         </div>
     );

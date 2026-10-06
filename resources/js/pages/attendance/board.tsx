@@ -2,6 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ChevronRight, Monitor } from 'lucide-react';
 import { useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AttendanceTabs } from '@/features/attendance/board/attendance-tabs';
 import {
     DivisionBars,
     LivePill,
@@ -106,6 +107,7 @@ export default function AttendanceBoard(props: BoardPageProps) {
             <Head title="Absensi hari ini" />
             {isMobile ? (
                 <div className="flex flex-col gap-4">
+                    <AttendanceTabs active="today" mobile />
                     <header className="flex flex-col gap-2">
                         <div className="flex flex-wrap items-center gap-2">
                             <p className="text-overline text-link">
@@ -187,6 +189,7 @@ export default function AttendanceBoard(props: BoardPageProps) {
                             <RecapLink />
                         </div>
                     </header>
+                    <AttendanceTabs active="today" />
                     <StatCards summary={props.board.summary} />
                     <div className="flex flex-wrap items-start gap-5">
                         <div className="flex min-w-0 flex-[1.5_1_560px] flex-col gap-5">
@@ -224,8 +227,8 @@ export default function AttendanceBoard(props: BoardPageProps) {
 
 AttendanceBoard.layout = {
     breadcrumbs: [
-        { title: 'Admin', href: '' },
-        { title: 'Absensi hari ini', href: '/absensi/hari-ini' },
+        { title: 'Absensi', href: '/absensi/hari-ini' },
+        { title: 'Hari ini', href: '/absensi/hari-ini' },
     ],
     title: 'Absensi hari ini',
     back: '/menu',

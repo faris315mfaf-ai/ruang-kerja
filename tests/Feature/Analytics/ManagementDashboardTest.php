@@ -9,6 +9,7 @@ use App\Domain\Projects\Enums\ProjectHealth;
 use App\Domain\Projects\Enums\ProjectStatus;
 use App\Domain\Tasks\Enums\TaskStatusCategory as Cat;
 use App\Models\Company;
+use App\Models\ManagementNote;
 use App\Models\Milestone;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
@@ -126,9 +127,11 @@ it('renders the header first and defers the heavy blocks', function () {
             ->where('today', '2026-10-07')
             ->where('can', ['portfolio' => true])
             ->where('agenda', [])
+            ->where('minutes', [])
             ->where('notes', [])
             ->missing('summary')
             ->missing('portfolio')
+            ->missing('workload')
             ->loadDeferredProps(['summary', 'portfolio'], fn (Assert $reload) => $reload
                 ->has('summary.periods', 3)
                 ->has('summary.periods.harian')
@@ -320,10 +323,14 @@ it('limits projects and milestones to the viewer\'s portfolio scope', function (
 it('counts tasks only from workspaces the viewer may see', function () {
     $private = Workspace::factory()->create(['company_id' => $this->org['hr']->company_id]);
     F::task($private, Cat::Todo, [$this->org['rizky']], ['due_date' => '2026-10-07']);
+    // Rizky's own to-do in his personal workspace never counts for anyone else.
+    $personal = Workspace::query()->where('type', 'personal')->where('owner_id', $this->org['rizky']->id)->first()
+        ?? Workspace::factory()->personal($this->org['rizky'])->create();
+    F::task($personal, Cat::Todo, [$this->org['rizky']], ['due_date' => '2026-10-07']);
 
-    // Direksi sees every non-personal workspace; HR is not a member of this private one.
+    // Direksi and, since the owner's decision of 6 Okt 2026, HR read every shared workspace.
     expect(managementProps($this, 'direksi')['summary']['periods']['harian']['tasks']['planned'])->toBe(1)
-        ->and(managementProps($this, 'hr')['summary']['periods']['harian']['tasks']['planned'])->toBe(0);
+        ->and(managementProps($this, 'hr')['summary']['periods']['harian']['tasks']['planned'])->toBe(1);
 });
 
 it('caches the blocks for 5 minutes per viewer', function () {
@@ -339,4 +346,34 @@ it('caches the blocks for 5 minutes per viewer', function () {
 
     $this->travel(6)->minutes();
     expect($planned('direksi'))->toBe(2);
+});
+
+it('shows the workload per division and per person (keputusan pemilik 6 Okt 2026)', function () {
+    $ws = Workspace::factory()->create(['company_id' => $this->org['direksi']->company_id]);
+    // Operasional: Rizky 2 open (1 overdue), Sari 1 open; Keuangan: Budi 1 open. Done tasks do not count.
+    F::task($ws, Cat::Todo, [$this->org['rizky']], ['due_date' => '2026-10-01']);
+    F::task($ws, Cat::InProgress, [$this->org['rizky']], ['due_date' => '2026-10-20', 'estimate_hours' => 4]);
+    F::task($ws, Cat::Todo, [$this->org['sari']]);
+    F::task($ws, Cat::Todo, [$this->org['budi']], ['due_date' => '2026-10-30']);
+    F::task($ws, Cat::Done, [$this->org['budi']], ['due_date' => '2026-10-02']);
+
+    $workload = managementProps($this, 'hr')['workload'];
+
+    expect($workload['total'])->toBe(['open' => 4, 'overdue' => 1, 'people' => 3])
+        ->and(array_column($workload['divisions'], 'name'))->toBe(['Operasional', 'Keuangan', 'Tanpa divisi'])
+        ->and($workload['divisions'][0]['open'])->toBe(3)
+        ->and($workload['divisions'][0]['overdue'])->toBe(1)
+        ->and($workload['divisions'][0]['people'][0])->toMatchArray(['open' => 2, 'overdue' => 1, 'estimate_hours' => 4.0])
+        ->and($workload['divisions'][0]['people'][0]['user']['name'])->toBe('Rizky Aditya')
+        ->and($workload['divisions'][1]['open'])->toBe(1);
+});
+
+it('lists only the viewer\'s own action notes', function () {
+    ManagementNote::factory()->ownedBy($this->org['direksi'])->create(['body' => 'Telepon vendor', 'position' => 'a']);
+    ManagementNote::factory()->ownedBy($this->org['hr'])->create(['body' => 'Catatan HR', 'position' => 'a']);
+
+    $this->actingAs($this->org['direksi'])->get('/manajemen')
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('notes', 1)
+            ->where('notes.0.body', 'Telepon vendor'));
 });

@@ -44,7 +44,11 @@ it('exports the personal and HR dashboards', function () {
     Excel::assertDownloaded('dashboard-saya-2026-10-07.xlsx', fn (DashboardExport $export): bool => collect($export->sheets())->map->title()->all() === ['Ringkasan', 'Ruang saya', 'Kehadiran', 'Pengajuan']);
 
     $this->actingAs($this->org['hr'])->get('/dashboard/hr/ekspor')->assertOk();
-    Excel::assertDownloaded('dashboard-hr-2026-10-07.xlsx', fn (DashboardExport $export): bool => count($export->sheets()) === 7);
+    // Keputusan pemilik 6 Okt 2026: attendance lists and the recap are exported from Absensi.
+    Excel::assertDownloaded('dashboard-hr-2026-10-07.xlsx', fn (DashboardExport $export): bool => collect($export->sheets())->map->title()->all() === ['Ringkasan', 'Menunggu HR']);
+
+    $this->actingAs($this->org['direksi'])->get('/dashboard/direksi/ekspor')->assertOk();
+    Excel::assertDownloaded('dashboard-direksi-2026-10-07.xlsx', fn (DashboardExport $export): bool => collect($export->sheets())->map->title()->all() === ['Ringkasan', 'Harian per divisi', 'Laporan hari ini', 'Mingguan', 'Proyek']);
 });
 
 it('produces a real xlsx file', function () {

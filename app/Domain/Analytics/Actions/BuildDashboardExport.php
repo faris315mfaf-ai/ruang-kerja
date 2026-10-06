@@ -3,6 +3,7 @@
 namespace App\Domain\Analytics\Actions;
 
 use App\Domain\Analytics\Data\DashboardContext;
+use App\Domain\Analytics\Data\Period;
 use App\Domain\Analytics\Enums\DashboardView;
 use App\Domain\Analytics\Exports\DashboardExport;
 use App\Domain\Analytics\Exports\DashboardSheet;
@@ -11,6 +12,9 @@ use App\Domain\Analytics\Queries\DivisionDashboard;
 use App\Domain\Analytics\Queries\HrDashboard;
 use App\Domain\Analytics\Queries\PersonalDashboard;
 use App\Domain\Attendance\Support\OfficeClock;
+use App\Domain\Monitoring\Queries\DailyWorkMonitor;
+use App\Domain\Monitoring\Queries\ProjectWorkMonitor;
+use App\Domain\Monitoring\Queries\WeeklyWorkMonitor;
 use App\Domain\Planner\Enums\PlanBucket;
 use App\Domain\Planner\Queries\PersonalPlanner;
 use Carbon\CarbonImmutable;
@@ -30,6 +34,9 @@ final class BuildDashboardExport
         private readonly DivisionDashboard $division,
         private readonly HrDashboard $hr,
         private readonly PersonalPlanner $planner,
+        private readonly DailyWorkMonitor $daily,
+        private readonly WeeklyWorkMonitor $weekly,
+        private readonly ProjectWorkMonitor $projects,
     ) {}
 
     public function handle(DashboardContext $context, CarbonImmutable $now): DashboardExport
@@ -38,6 +45,7 @@ final class BuildDashboardExport
             DashboardView::Personal => $this->personalSheets($context, $now),
             DashboardView::Division => $this->divisionSheets($context, $now),
             DashboardView::Hr => $this->hrSheets($context, $now),
+            DashboardView::Direksi => $this->direksiSheets($context, $now),
         });
     }
 
@@ -155,52 +163,129 @@ final class BuildDashboardExport
     }
 
     /**
+     * HR dashboard since the owner's decision of 6 Okt 2026: today's
+     * attendance numbers and the requests waiting for HR (the attendance
+     * lists and the discipline recap are exported from Absensi).
+     *
      * @return list<DashboardSheet>
      */
     private function hrSheets(DashboardContext $context, CarbonImmutable $now): array
     {
         $ids = $context->userIds();
-        $recap = $this->hr->recap($context->viewer, $ids, $context->filters, $now);
-        $today = $this->hr->today($context->people, $now);
-        $review = $this->hr->review($context->viewer, $ids, $now);
+        $today = $this->hr->attendanceSummary($context->viewer, $context->people, $now);
         $pending = $this->hr->pendingHr($ids);
-        $missing = $this->hr->missingCheckOut($context->viewer, $ids, $now);
         $counts = $today['counts'];
-        $kpis = $recap['kpis'];
 
         $rows = [
             ['Terjadwal hari ini', $counts['scheduled'], null, null, 'orang', 'Karyawan dengan jadwal kerja hari ini.'],
             ['Hadir hari ini', $counts['present'], null, null, 'orang', 'Termasuk '.$counts['late'].' terlambat.'],
             ['Cuti/izin/sakit/dinas', $counts['away'], null, null, 'orang', 'Dari pengajuan yang disetujui.'],
             ['Belum check-in', $counts['not_checked_in'], null, null, 'orang', 'Terjadwal tetapi belum check-in.'],
-            $this->kpi('attendance_discipline', $kpis['attendance_discipline']),
-            $this->kpi('average_lateness', $kpis['average_lateness']),
-            ['Hari alpha', $kpis['absent_days']['value'], $kpis['absent_days']['previous'], $kpis['absent_days']['delta'], 'hari', 'Hari berstatus Alpha dalam periode.'],
-            ['Hari terlambat', $kpis['late_days']['value'], $kpis['late_days']['previous'], $kpis['late_days']['delta'], 'hari', 'Hari berstatus Terlambat dalam periode.'],
+            ['Perlu ditinjau', $today['review_count'], null, null, 'absensi', 'Absensi tidak biasa 7 hari terakhir yang belum ditinjau (Absensi › Hari ini).'],
+            ['Lupa check-out kemarin', $today['missing_check_out_count'], null, null, 'orang', 'Check-in kemarin tanpa check-out (Absensi › Hari ini).'],
+            ['Pengajuan menunggu HR', $pending['count'], null, null, 'pengajuan', 'Langkah persetujuan yang sedang menunggu HR.'],
+        ];
+        $summary = [
+            ['Dashboard', $context->view->label()],
+            ['Cakupan', $context->scopeLabel().' ('.$context->people->count().' orang)'],
+            ['Tanggal', OfficeClock::date($now)],
+            ['Diekspor', OfficeClock::date($now).' '.OfficeClock::time($now)],
+            [],
+            self::KPI_HEADINGS,
+            ...$rows,
         ];
 
         return [
-            $this->summary($context, $recap['period'], $recap['compared'], $now, $rows),
-            new DashboardSheet('Per divisi', ['Divisi', 'Terjadwal', 'Hadir', 'Terlambat', 'Cuti/izin/sakit', 'Belum check-in', 'Alpha'], array_map(
-                fn (array $row): array => [$row['name'], $row['scheduled'], $row['present'], $row['late'], $row['away'], $row['not_checked_in'], $row['absent']],
-                $today['divisions'],
-            )),
-            $this->todaySheet($today['people']),
-            new DashboardSheet('Tren kedisiplinan', ['Minggu mulai', 'Kedisiplinan hadir (%)', 'Tepat waktu', 'Hari terjadwal'], array_map(
-                fn (array $week): array => [$week['week_start'], $week['value'], $week['numerator'], $week['denominator']],
-                $recap['trend'],
-            )),
-            new DashboardSheet('Perlu ditinjau', ['Nama', 'Waktu', 'Lokasi', 'Penanda'], array_map(
-                fn (array $log): array => [$log['user']['name'], self::dateTime($log['occurred_at']), $log['location'], implode(', ', array_column($log['flags'], 'label'))],
-                $review['items'],
-            )),
+            new DashboardSheet('Ringkasan', [], $summary),
             new DashboardSheet('Menunggu HR', ['Nomor', 'Nama', 'Jenis', 'Mulai', 'Selesai'], array_map(
                 fn (array $request): array => [$request['number'], $request['user']['name'], $request['type']['name'], self::date($request['start_at']), self::date($request['end_at'])],
                 $pending['items'],
             )),
-            new DashboardSheet('Lupa check-out', ['Nama', 'Tanggal', 'Shift', 'Masuk'], array_map(
-                fn (array $day): array => [$day['user']['name'], $missing['date'], $day['shift'], self::time($day['check_in_at'])],
-                $missing['items'],
+        ];
+    }
+
+    /**
+     * Direksi work monitoring (keputusan pemilik 6 Okt 2026): today's daily
+     * reports per division, the reports, this week's matrix and the projects.
+     *
+     * @return list<DashboardSheet>
+     */
+    private function direksiSheets(DashboardContext $context, CarbonImmutable $now): array
+    {
+        $today = Period::officeDate($now);
+        $monday = WeeklyWorkMonitor::weekStart($today);
+        $daily = $this->daily->for($context->viewer, $context->people, $today, $now);
+        $weekly = $this->weekly->for($context->viewer, $context->people, $monday, $now);
+        $projects = $this->projects->for($context->viewer, $monday);
+        $totals = $daily['totals'];
+
+        $summary = [
+            ['Dashboard', $context->view->label()],
+            ['Cakupan', $context->scopeLabel().' ('.$context->people->count().' orang)'],
+            ['Tanggal', OfficeClock::date($now)],
+            ['Minggu', $weekly['week']['label']],
+            ['Diekspor', OfficeClock::date($now).' '.OfficeClock::time($now)],
+            [],
+            ['Ringkasan', 'Nilai'],
+            ['Terjadwal hari ini', $totals['scheduled']],
+            ['Sudah lapor', $totals['reported']],
+            ['Draf', $totals['draft']],
+            ['Belum lapor', $totals['missing']],
+            ['Laporan minggu ini', $weekly['totals']['reported'].' dari '.$weekly['totals']['expected'].' hari kerja'],
+            ['Jam tercatat minggu ini', $weekly['totals']['hours']],
+            ['Proyek aktif', $projects['total']],
+        ];
+        $weekRows = [];
+
+        foreach ($weekly['divisions'] as $division) {
+            foreach ($division['people'] as $person) {
+                $weekRows[] = [
+                    $division['name'],
+                    $person['user']['name'],
+                    ...array_map(fn (array $cell): string => match ($cell['state']) {
+                        'reported' => 'Lapor ('.$cell['items'].' tugas'.($cell['hours'] !== null ? ', '.$cell['hours'].' jam' : '').')',
+                        'draft' => 'Draf',
+                        'missing' => 'Belum',
+                        'future' => '',
+                        default => 'Libur',
+                    }, $person['days']),
+                    $person['reported_days'].'/'.$person['scheduled_days'],
+                    $person['hours'],
+                ];
+            }
+        }
+
+        return [
+            new DashboardSheet('Ringkasan', [], $summary),
+            new DashboardSheet('Harian per divisi', ['Divisi', 'Orang', 'Terjadwal', 'Sudah lapor', 'Draf', 'Belum lapor'], array_map(
+                fn (array $row): array => [$row['name'], $row['people'], $row['scheduled'], $row['reported'], $row['draft'], $row['missing']],
+                $daily['divisions'],
+            )),
+            new DashboardSheet('Laporan hari ini', ['Nama', 'Divisi', 'Dikirim', 'Ringkasan', 'Tugas', 'Jam', 'Hambatan'], array_map(
+                fn (array $report): array => [
+                    $report['user']['name'],
+                    $report['user']['division'],
+                    self::time($report['submitted_at']),
+                    $report['summary'],
+                    implode('; ', array_map(fn (array $item): string => trim(($item['key'] ?? '').' '.($item['title'] ?? '').($item['percent'] !== null ? ' ('.$item['percent'].'%)' : '')), $report['items'])),
+                    $report['hours'],
+                    $report['blockers'],
+                ],
+                $daily['reports'],
+            )),
+            new DashboardSheet('Mingguan', ['Divisi', 'Nama', ...array_column($weekly['days'], 'label'), 'Hari lapor', 'Jam'], $weekRows),
+            new DashboardSheet('Proyek', ['Key', 'Proyek', 'Status PIC', 'Progres aktual (%)', 'Rencana (%)', 'Milestone berikutnya', 'Laporan minggu ini', 'Orang'], array_map(
+                fn (array $project): array => [
+                    $project['key'],
+                    $project['name'],
+                    $project['health'],
+                    $project['metrics']['actual'],
+                    $project['metrics']['planned'],
+                    $project['next_milestone'] !== null ? $project['next_milestone']['name'].' ('.$project['next_milestone']['target_date'].')' : null,
+                    $project['week']['reports'],
+                    $project['week']['people'],
+                ],
+                $projects['projects'],
             )),
         ];
     }
@@ -275,10 +360,5 @@ final class BuildDashboardExport
     private static function time(mixed $iso): ?string
     {
         return is_string($iso) ? OfficeClock::time(CarbonImmutable::parse($iso)) : null;
-    }
-
-    private static function dateTime(mixed $iso): ?string
-    {
-        return is_string($iso) ? OfficeClock::date(CarbonImmutable::parse($iso)).' '.OfficeClock::time(CarbonImmutable::parse($iso)) : null;
     }
 }

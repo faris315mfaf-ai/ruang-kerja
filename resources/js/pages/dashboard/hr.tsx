@@ -5,14 +5,10 @@ import type { HrProps } from '@/features/dashboard/hr-types';
 import { useLiveAttendance } from '@/features/dashboard/use-live-attendance';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 
-/** Dashboard HR (PRD M7, Sprint 9). */
+/** Dashboard HR (PRD M7; isi diperbarui keputusan pemilik 6 Okt 2026). */
 export default function HrDashboard(props: HrProps) {
     const breakpoint = useBreakpoint();
-    const live = useLiveAttendance(props.channels, [
-        'attendance',
-        'review',
-        'missingCheckOut',
-    ]);
+    const live = useLiveAttendance(props.channels, ['attendance']);
 
     return (
         <>
@@ -29,7 +25,7 @@ export default function HrDashboard(props: HrProps) {
 HrDashboard.layout = {
     breadcrumbs: [
         { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Absensi perusahaan', href: '/dashboard/hr' },
+        { title: 'HR', href: '/dashboard/hr' },
     ],
     title: 'Dashboard',
 };

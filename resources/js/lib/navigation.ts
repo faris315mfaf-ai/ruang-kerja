@@ -237,7 +237,9 @@ export function activeTabIndex(currentPath: string, chat: boolean): number {
 
 /**
  * Team attendance (Sprint 3): live board for HR, Direksi, Super Admin and
- * Kepala Divisi; the monthly recap & export is desktop only.
+ * Kepala Divisi; the monthly recap & export is desktop only. Kedisiplinan
+ * (keputusan pemilik 6 Okt 2026) holds the discipline recap, completion and
+ * lead time that left the dashboards.
  */
 export function attendanceNavItems(roles: readonly string[]): AppNavItem[] {
     if (!hasAnyRole(roles, 'super_admin', 'hr', 'direksi', 'kepala_divisi')) {
@@ -255,6 +257,11 @@ export function attendanceNavItems(roles: readonly string[]): AppNavItem[] {
             href: '/absensi/rekap',
             icon: BarChart3,
             desktopOnly: true,
+        },
+        {
+            title: 'Kedisiplinan',
+            href: '/absensi/kedisiplinan',
+            icon: Gauge,
         },
     ];
 }

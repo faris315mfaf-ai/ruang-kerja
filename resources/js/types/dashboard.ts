@@ -7,7 +7,7 @@
 import type { AttendanceStatus } from '@/types/attendance';
 import type { RequestItem } from '@/types/requests';
 
-export type DashboardViewKey = 'saya' | 'divisi' | 'hr';
+export type DashboardViewKey = 'saya' | 'divisi' | 'hr' | 'direksi';
 
 export type PeriodPresetKey = 'minggu' | 'bulan' | 'kuartal' | 'kustom';
 
@@ -52,7 +52,7 @@ export type ComparedPeriods = {
 };
 
 export type PickerItem = {
-    key: DashboardViewKey | 'direksi';
+    key: DashboardViewKey;
     label: string;
     href: string;
     active: boolean;

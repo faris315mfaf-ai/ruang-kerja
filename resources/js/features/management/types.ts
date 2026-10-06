@@ -2,6 +2,8 @@
  * Props of /manajemen (App\Http\Controllers\Management\DashboardController,
  * App\Domain\Analytics\Queries\ManagementDashboard).
  */
+import type { ActionNote } from '@/features/monitoring/types';
+import type { WorkloadRow } from '@/types/dashboard';
 
 export type PeriodKey = 'harian' | 'mingguan' | 'bulanan';
 
@@ -180,9 +182,27 @@ export type ManagementProps = {
     today: string;
     can: { portfolio: boolean };
     agenda: AgendaItem[];
-    notes: NoteItem[];
+    /** Meeting minutes (module "Rapat & notulen"); empty until it exists. */
+    minutes: NoteItem[];
+    /** The viewer's own "catatan tindakan" (keputusan pemilik 6 Okt 2026). */
+    notes: ActionNote[];
+    /** Deferred: undefined until loaded (skeleton). */
+    workload?: ManagementWorkload;
     /** Deferred: undefined until loaded (skeleton). */
     summary?: ManagementSummary;
     /** Deferred: undefined until loaded (skeleton). */
     portfolio?: ManagementPortfolio;
+};
+
+/** "Beban kerja" (ManagementDashboard::workload). */
+export type ManagementWorkload = {
+    total: { open: number; overdue: number; people: number };
+    divisions: {
+        id: string | null;
+        name: string;
+        open: number;
+        overdue: number;
+        estimate_hours: number | null;
+        people: WorkloadRow[];
+    }[];
 };

@@ -1,12 +1,11 @@
 import { Link } from '@inertiajs/react';
-import { ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PickerItem } from '@/types/dashboard';
 
 /**
- * Dashboard view picker (SBeranda header nav: glass segmented track of links) for people with several roles (PRD M7): Saya ·
- * Kepala Divisi · HR, plus Direksi → the portfolio page. Hidden when the
- * user has a single view.
+ * Dashboard view picker (SBeranda header nav: glass segmented track of links)
+ * for people with several roles (PRD M7): Saya · Kepala Divisi · HR ·
+ * Direksi. Hidden when the user has a single view.
  */
 export function ViewPicker({
     views,
@@ -40,9 +39,6 @@ export function ViewPicker({
                     )}
                 >
                     {view.label}
-                    {view.key === 'direksi' && (
-                        <ArrowUpRight className="size-3.5" aria-hidden />
-                    )}
                 </Link>
             ))}
         </nav>

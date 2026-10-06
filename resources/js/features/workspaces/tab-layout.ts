@@ -1,19 +1,22 @@
-import { show } from "@/routes/workspaces";
-import type { WorkspacePageProps } from "./types";
+import { show } from '@/routes/workspaces';
+import type { WorkspacePageProps } from './types';
 
 /** Layout props (breadcrumbs + mobile app bar) for every workspace tab. */
 export function workspaceLayout(props: WorkspacePageProps, section?: string) {
-  const name = props.workspace.type === "personal" ? "Pribadi" : props.workspace.name;
-  const breadcrumbs = [
-    { title: "Workspace", href: "/workspace" },
-    { title: name, href: show.url(props.workspace.key) },
-  ];
+    const name =
+        props.workspace.type === 'personal' ? 'Pribadi' : props.workspace.name;
+    const breadcrumbs = [
+        { title: 'Workspace', href: '/workspace' },
+        { title: name, href: show.url(props.workspace.key) },
+    ];
 
-  return {
-    breadcrumbs: section ? [...breadcrumbs, { title: section, href: "" }] : breadcrumbs,
-    title: name,
-    back: "/menu",
-    // Workspace screens (board, lists) use the wide column (DBoard 1480px).
-    width: "wide" as const,
-  };
+    return {
+        breadcrumbs: section
+            ? [...breadcrumbs, { title: section, href: '' }]
+            : breadcrumbs,
+        title: name,
+        back: '/menu',
+        // Workspace screens (board, lists) use the wide column (DBoard 1480px).
+        width: 'wide' as const,
+    };
 }
