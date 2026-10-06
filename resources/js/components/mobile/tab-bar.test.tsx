@@ -5,12 +5,20 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 const state = vi.hoisted(() => ({
     url: '/dashboard',
     unread: 0,
+    chat: true,
+    chatUnread: 0,
     keyboardOpen: false,
     finish: [] as Array<() => void>,
 }));
 
 vi.mock('@inertiajs/react', () => ({
-    usePage: () => ({ url: state.url, props: {} }),
+    usePage: () => ({
+        url: state.url,
+        props: {
+            features: { prototype: false, chat: state.chat },
+            chatUnread: state.chatUnread,
+        },
+    }),
     router: {
         on: (_event: string, callback: () => void) => {
             state.finish.push(callback);
@@ -61,14 +69,29 @@ describe('TabBar (dock capsule)', () => {
         cleanup();
         state.url = '/dashboard';
         state.unread = 0;
+        state.chat = true;
+        state.chatUnread = 0;
         state.keyboardOpen = false;
+    });
+
+    it('orders the tabs mobile-first with Absen raised in the middle', () => {
+        render(<TabBar />);
+
+        expect(
+            screen.getAllByRole('link').map((link) => link.textContent),
+        ).toEqual(['Beranda', 'Tugas', 'Absen', 'Obrolan', 'Lainnya']);
+        expect(
+            screen
+                .getByRole('link', { name: 'Absen' })
+                .hasAttribute('data-tab-center'),
+        ).toBe(true);
     });
 
     it('puts the pill under the tab of the current page', () => {
         state.url = '/tugas';
         render(<TabBar />);
 
-        expect(pill().style.transform).toBe('translateX(200%)');
+        expect(pill().style.transform).toBe('translateX(100%)');
         expect(
             screen
                 .getByRole('link', { name: 'Tugas' })
@@ -80,12 +103,24 @@ describe('TabBar (dock capsule)', () => {
         render(<TabBar />);
         expect(pill().style.transform).toBe('translateX(0%)');
 
-        fireEvent.click(screen.getByRole('link', { name: 'Menu' }));
+        fireEvent.click(screen.getByRole('link', { name: 'Lainnya' }));
         expect(pill().style.transform).toBe('translateX(400%)');
 
         // Visit cancelled: the pill returns to the page that is shown.
         act(() => state.finish.forEach((fn) => fn()));
         expect(pill().style.transform).toBe('translateX(0%)');
+    });
+
+    it('lets the raised Absen button stand in for the pill', () => {
+        state.url = '/absensi/riwayat';
+        render(<TabBar />);
+
+        expect(pill().className).toContain('opacity-0');
+        expect(
+            screen
+                .getByRole('link', { name: 'Absen' })
+                .getAttribute('aria-current'),
+        ).toBe('page');
     });
 
     it('hides the pill on pages outside the five tabs', () => {
@@ -95,12 +130,24 @@ describe('TabBar (dock capsule)', () => {
         expect(pill().className).toContain('opacity-0');
     });
 
-    it('keeps the unread badge on Inbox', () => {
-        state.unread = 120;
+    it('badges Obrolan with unread conversations', () => {
+        state.chatUnread = 120;
+        state.unread = 4;
         render(<TabBar />);
 
         expect(screen.getByText('99+')).toBeTruthy();
         expect(screen.getByText(/120 belum dibaca/)).toBeTruthy();
+        expect(screen.queryByText('4')).toBeNull();
+    });
+
+    it('gives the fourth slot back to Inbox when Obrolan is off', () => {
+        state.chat = false;
+        state.unread = 7;
+        render(<TabBar />);
+
+        expect(screen.queryByRole('link', { name: /Obrolan/ })).toBeNull();
+        expect(screen.getByRole('link', { name: /Inbox/ })).toBeTruthy();
+        expect(screen.getByText('7')).toBeTruthy();
     });
 
     it('hides while the keyboard is open', () => {

@@ -7,6 +7,7 @@ import {
     ChevronRight,
     CloudCog,
     FileText,
+    Inbox,
     LayoutGrid,
     LogOut,
     Moon,
@@ -16,6 +17,7 @@ import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ListRow } from '@/components/ui/list-row';
+import { useUnreadCount } from '@/features/notifications/unread-store';
 import { MenuWorkspaceGrid } from '@/features/workspaces/menu-workspace-grid';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useInitials } from '@/hooks/use-initials';
@@ -151,17 +153,21 @@ function ProfileCard() {
     );
 }
 
-/** Mobile "Menu" tab: profile, workspaces, work & settings (design MMenu). */
+/**
+ * Mobile "Lainnya" tab (/menu): profile, workspaces, work & settings
+ * (mobile-first canvas › Menu). Holds Inbox too while Obrolan has its tab.
+ */
 export default function Menu() {
     const { auth, approvals, features, chatUnread } = usePage().props;
     const { appearance } = useAppearance();
     const pending = approvals?.pending ?? 0;
+    const unread = useUnreadCount();
 
     return (
         <>
-            <Head title="Menu" />
+            <Head title="Lainnya" />
             <div className="mx-auto flex max-w-xl flex-col gap-4 pb-2">
-                <h1 className="hidden md:sr-only md:block">Menu</h1>
+                <h1 className="hidden md:sr-only md:block">Lainnya</h1>
                 <ProfileCard />
 
                 <Section title="Workspace">
@@ -201,6 +207,23 @@ export default function Menu() {
                                             aria-label={`${chatUnread ?? 0} obrolan belum dibaca`}
                                         >
                                             {chatUnread}
+                                        </Badge>
+                                    ) : undefined
+                                }
+                            />
+                        )}
+                        {features?.chat && (
+                            <Row
+                                icon={Inbox}
+                                label="Inbox"
+                                href="/inbox"
+                                trailing={
+                                    unread > 0 ? (
+                                        <Badge
+                                            variant="count"
+                                            aria-label={`${unread} notifikasi belum dibaca`}
+                                        >
+                                            {unread > 99 ? '99+' : unread}
                                         </Badge>
                                     ) : undefined
                                 }
@@ -305,5 +328,5 @@ export default function Menu() {
 }
 
 Menu.layout = {
-    breadcrumbs: [{ title: 'Menu', href: '/menu' }],
+    breadcrumbs: [{ title: 'Lainnya', href: '/menu' }],
 };

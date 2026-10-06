@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
     activeTabIndex,
+    tabNavItems,
     adminNavItems,
     attendanceNavItems,
     canSeeManagement,
@@ -264,12 +265,26 @@ describe('navigation', () => {
     });
 
     it('finds the tab that owns the current page for the sliding pill', () => {
-        expect(activeTabIndex('/dashboard')).toBe(0);
-        expect(activeTabIndex('/absensi/riwayat')).toBe(1);
-        expect(activeTabIndex('/tugas')).toBe(2);
-        expect(activeTabIndex('/inbox')).toBe(3);
-        expect(activeTabIndex('/menu')).toBe(4);
-        expect(activeTabIndex('/persetujuan')).toBe(-1);
-        expect(activeTabIndex('/menu/lain')).toBe(-1);
+        expect(activeTabIndex('/dashboard', true)).toBe(0);
+        expect(activeTabIndex('/tugas', true)).toBe(1);
+        expect(activeTabIndex('/absensi/riwayat', true)).toBe(2);
+        expect(activeTabIndex('/obrolan/abc', true)).toBe(3);
+        expect(activeTabIndex('/menu', true)).toBe(4);
+        expect(activeTabIndex('/inbox', true)).toBe(-1);
+        expect(activeTabIndex('/persetujuan', true)).toBe(-1);
+        expect(activeTabIndex('/menu/lain', true)).toBe(-1);
+    });
+
+    it('gives the fourth tab back to Inbox when Obrolan is off', () => {
+        expect(tabNavItems(false).map((item) => item.title)).toEqual([
+            'Beranda',
+            'Tugas',
+            'Absen',
+            'Inbox',
+            'Lainnya',
+        ]);
+        expect(activeTabIndex('/inbox', false)).toBe(3);
+        expect(activeTabIndex('/obrolan', false)).toBe(-1);
+        expect(tabNavItems(true).filter((item) => item.center)).toHaveLength(1);
     });
 });

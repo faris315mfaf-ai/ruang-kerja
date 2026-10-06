@@ -12,6 +12,9 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 
 - **Pemilih akun demo** (lokal saja) di bagian atas shell untuk meninjau UI per persona: Staf programmer, Staf admin & HR, Staf sosial media/branding & marketing, Admin, Direksi & manajemen. Akun demo baru `programmer@demo.test` (divisi baru Programming, kepala Yudi Hartono) dengan 12 tugas contoh, 2 tugas pribadi dan rencana Ruang saya; tombol masuk cepat di halaman login memakai nama persona.
 
+### Diubah
+- **Shell ponsel mobile-first** (`docs/PLATFORM.md` §2.1, canvas "RuangKerja · Mockup Mobile-first"): tab bawah Beranda · Tugas · **Absen** (tombol bulat gradien yang menonjol di tengah) · Obrolan · Lainnya; Inbox lewat lonceng berbadge di app bar (dan baris Inbox di Lainnya), kembali menjadi tab ke-4 bila `FEATURE_CHAT` mati. Beranda ponsel menampilkan cari + lonceng (profil lewat Lainnya). Tab Menu berganti nama menjadi Lainnya.
+
 ### Diperbaiki
 - Status absensi di shell tidak lagi galat 500 di lokal (`LazyLoadingViolationException` pada `checkInLog`) untuk karyawan yang check-in kemarin dan hari ini tetapi belum check-out: log hari yang masih terbuka dimuat sekaligus.
 - Breadcrumb menu bar tidak bertumpuk saat sempit: induk terpotong dengan elipsis, halaman aktif tetap utuh.

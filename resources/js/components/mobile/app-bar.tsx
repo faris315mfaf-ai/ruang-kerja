@@ -1,11 +1,9 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { Bell, ChevronLeft, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { UserAvatar } from '@/components/shell/user-avatar';
 import { useUnreadCount } from '@/features/notifications/unread-store';
 import { useScrolled } from '@/hooks/use-scrolled';
 import { cn, focusRing } from '@/lib/utils';
-import { edit as profileEdit } from '@/routes/profile';
 
 export type AppBarProps = {
     title?: string;
@@ -13,7 +11,7 @@ export type AppBarProps = {
     back?: string;
     /** Replaces the default search + bell actions. */
     actions?: ReactNode;
-    /** Home screen: date overline + greeting + avatar (MBeranda). */
+    /** Home screen: date overline + greeting, search + bell (mobile-first Beranda). */
     variant?: 'default' | 'greeting';
 };
 
@@ -97,9 +95,9 @@ function DefaultActions() {
 
 /**
  * Mobile screen header (MBeranda / MTugas / MSDetailTugas):
- * - tab roots: large title (32/40 extrabold) with round actions on the right,
- *   scrolling away with the content;
- * - `greeting` (home): date overline, greeting and the avatar (profile);
+ * - tab roots: large title (32/40 extrabold) with round actions on the right
+ *   (search + bell, the way into Inbox), scrolling away with the content;
+ * - `greeting` (home): date overline and greeting; profile lives in Lainnya;
  * - child screens (`back`): sticky 56px bar with a round back button that
  *   turns to glass once the page scrolls.
  */
@@ -129,28 +127,7 @@ export function AppBar({
                         </h1>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                        {actions ?? (
-                            <>
-                                <SearchAction />
-                                {auth.user && (
-                                    <Link
-                                        href={profileEdit()}
-                                        aria-label={`Profil ${auth.user.name}`}
-                                        className={cn(
-                                            'rounded-full',
-                                            focusRing,
-                                        )}
-                                    >
-                                        <UserAvatar
-                                            name={auth.user.name}
-                                            src={auth.user.avatar}
-                                            ring
-                                            className="size-12 text-[16px]"
-                                        />
-                                    </Link>
-                                )}
-                            </>
-                        )}
+                        {actions ?? <DefaultActions />}
                     </div>
                 </div>
             </header>

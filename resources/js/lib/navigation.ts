@@ -189,18 +189,50 @@ export const prototypeNavItem: AppNavItem = {
     matchPrefix: true,
 };
 
-/** Mobile bottom tab bar: exactly five items (docs/PLATFORM.md §2). */
-export const tabNavItems: AppNavItem[] = [
-    { title: 'Beranda', href: '/dashboard', icon: Home, matchPrefix: true },
-    { title: 'Absen', href: '/absensi', icon: MapPin, matchPrefix: true },
-    { title: 'Tugas', href: '/tugas', icon: SquareCheckBig, matchPrefix: true },
-    { title: 'Inbox', href: '/inbox', icon: Inbox, matchPrefix: true },
-    { title: 'Menu', href: '/menu', icon: Menu },
-];
+export type TabNavItem = AppNavItem & {
+    /** Raised round action in the middle of the capsule (Absen). */
+    center?: boolean;
+};
+
+/**
+ * Mobile bottom tab bar, five items (docs/PLATFORM.md §2.1): Beranda ·
+ * Tugas · Absen (raised centre action) · Obrolan · Lainnya. Inbox lives
+ * behind the app bar bell; it takes the fourth slot back when Obrolan is
+ * switched off (FEATURE_CHAT).
+ */
+export function tabNavItems(chat: boolean): TabNavItem[] {
+    return [
+        { title: 'Beranda', href: '/dashboard', icon: Home, matchPrefix: true },
+        {
+            title: 'Tugas',
+            href: '/tugas',
+            icon: SquareCheckBig,
+            matchPrefix: true,
+        },
+        {
+            title: 'Absen',
+            href: '/absensi',
+            icon: MapPin,
+            matchPrefix: true,
+            center: true,
+        },
+        chat
+            ? chatNavItem
+            : {
+                  title: 'Inbox',
+                  href: '/inbox',
+                  icon: Inbox,
+                  matchPrefix: true,
+              },
+        { title: 'Lainnya', href: '/menu', icon: Menu },
+    ];
+}
 
 /** Index of the tab owning the current URL, or -1 (e.g. /persetujuan). */
-export function activeTabIndex(currentPath: string): number {
-    return tabNavItems.findIndex((item) => isActivePath(item, currentPath));
+export function activeTabIndex(currentPath: string, chat: boolean): number {
+    return tabNavItems(chat).findIndex((item) =>
+        isActivePath(item, currentPath),
+    );
 }
 
 /**
