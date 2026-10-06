@@ -15,7 +15,7 @@ Menyiapkan repo agar bisa dikerjakan bergantian oleh Claude Code dan Codex.
 - `60a3559` fix(ci): Vitest (detectTls Herd) dan SessionCookieTest hijau di GitHub Actions. CI `main` (`bf711aa`) masih merah sampai commit ini masuk.
 - `0448bb3` feat(demo): pemilih akun demo di atas (5 persona).
 - `533f25f` feat(demo): tugas contoh staf programmer + perbaikan status absensi (lazy loading) + breadcrumb.
-- Commit berikutnya: dukungan Codex (AGENTS.md sumber tunggal, `.agents/skills`, `.codex/config.toml`, `scripts/ui-shots.mjs`, `scripts/sync-agent-skills.mjs`, berkas ini).
+- `7e3ab94` chore(agen): dukungan Codex (AGENTS.md sumber tunggal, `.agents/skills`, `.codex/config.toml`, `scripts/ui-shots.mjs`, `scripts/sync-agent-skills.mjs`, berkas ini).
 
 ## Langkah berikutnya
 1. Merge branch ini ke `main` (fast-forward) lalu push, supaya CI hijau dan Codex di checkout utama melihat semua perubahan.
