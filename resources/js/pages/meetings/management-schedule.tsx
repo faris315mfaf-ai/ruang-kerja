@@ -1,21 +1,46 @@
 import { Head } from '@inertiajs/react';
-import { PrototypeBanner } from '@/features/prototype/prototype-banner';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+    ScheduleDesktop,
+    ScheduleMobile,
+    useSchedule,
+} from '@/features/meetings/schedule-view';
+import { useBreakpoint } from '@/hooks/use-breakpoint';
 
-// Placeholder created by the prototype scaffold; replaced by the module build.
+/**
+ * /manajemen/jadwal — leadership schedule, latest minutes and open
+ * follow-ups for Direksi/HR (designs MgJadwal, TfJadwal, MgPJadwal).
+ * Prototype only.
+ */
 export default function MeetingsManagementSchedulePage() {
+    const breakpoint = useBreakpoint();
+    const data = useSchedule();
+
     return (
         <>
             <Head title="Jadwal & notulensi" />
-            <div className="flex flex-col gap-4">
-                <PrototypeBanner phase="Fase 2" />
-                <h1 className="text-display">Jadwal & notulensi</h1>
-            </div>
+            {breakpoint === null ? (
+                <div className="flex flex-col gap-4" aria-busy>
+                    <Skeleton className="h-10 w-72" />
+                    <Skeleton className="h-[600px] w-full" />
+                </div>
+            ) : breakpoint === 'mobile' ? (
+                <ScheduleMobile data={data} />
+            ) : (
+                <ScheduleDesktop
+                    data={data}
+                    isTablet={breakpoint === 'tablet'}
+                />
+            )}
         </>
     );
 }
 
 MeetingsManagementSchedulePage.layout = {
-    breadcrumbs: [{ title: 'Jadwal & notulensi', href: '/manajemen/jadwal' }],
-    title: 'Jadwal & notulensi',
+    breadcrumbs: [
+        { title: 'Manajemen', href: '/manajemen' },
+        { title: 'Jadwal & notulensi', href: '/manajemen/jadwal' },
+    ],
+    title: 'Jadwal',
     back: '/manajemen',
 };
