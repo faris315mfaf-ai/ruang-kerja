@@ -7,6 +7,7 @@ import {
     CheckCheck,
     CircleAlert,
     KeyRound,
+    ClipboardPen,
     Megaphone,
     MessageSquare,
     NotebookPen,
@@ -40,6 +41,7 @@ const ICONS: Record<string, LucideIcon> = {
     video: Video,
     notebook: NotebookPen,
     key: KeyRound,
+    clipboard: ClipboardPen,
 };
 
 export const toneClasses: Record<NotificationTone, string> = {

@@ -102,7 +102,7 @@ Estimasi mengasumsikan 2–3 developer dibantu AI coding tool. Angka ini harus d
 - **HR mengatur kata sandi** di Admin › Karyawan › profil › "Atur kata sandi": ketik sendiri atau "Buat sandi sementara" (ditampilkan sekali), opsi "wajib ganti saat login berikutnya". Semua sesi karyawan dikeluarkan, karyawan diberi notifikasi in-app + email (tanpa isi sandi). Sandi Super Admin hanya oleh Super Admin.
 - **Lupa kata sandi dengan persetujuan HR:** karyawan mengisi email → halaman tunggu (teks sama untuk email tak dikenal) yang memeriksa status tiap 5 detik → HR menyetujui/menolak (alasan wajib) dari Admin › Karyawan → halaman karyawan otomatis pindah ke form sandi baru (berlaku 30 menit, hanya di peramban yang meminta) → sandi tersimpan, perangkat lain keluar, karyawan langsung masuk. Permintaan kedaluwarsa setelah 24 jam; satu permintaan aktif per karyawan. Tidak ada tautan reset lewat email.
 - Akun hanya bisa login jika emailnya sudah didaftarkan HR (tidak ada pendaftaran mandiri).
-- Halaman struktur organisasi (bagan) otomatis dari data divisi, tim, dan atasan.
+- Halaman struktur organisasi (bagan) otomatis dari data divisi, tim, dan atasan. **Keputusan pemilik 6 Okt 2026:** tidak tersedia untuk **staf** (pengguna yang hanya berperan `anggota`, termasuk Ketua Tim tanpa peran lain): menu disembunyikan dan rute `/organisasi/struktur` 404.
 - Impor karyawan via CSV/Excel.
 - Audit log untuk semua perubahan data master dan keputusan approval.
 
@@ -128,8 +128,10 @@ Face recognition dan fingerprint ada di Fase 3. Skema data sudah menyiapkan kolo
 - **Deteksi kecurangan dasar (web):** akurasi GPS > 100 m ditandai, lompatan lokasi tidak masuk akal, check-in dari IP/perangkat baru, selfie kosong/gelap. Semua hanya **ditandai** (`is_suspicious`) untuk ditinjau HR, tidak diblokir otomatis.
 
 **Pengajuan & approval**
-- Jenis: cuti (tahunan, besar, melahirkan, dll.), izin, sakit (lampiran surat dokter jika > 1 hari, dapat diatur), lembur, koreksi absensi, dinas luar.
-- Saldo cuti per tahun per jenis, carry-over opsional.
+- Jenis: cuti (tahunan, besar, melahirkan, dll.), izin, sakit (lampiran surat dokter jika > 1 hari, dapat diatur), lembur, koreksi absensi, dinas luar, **pengajuan barang**.
+- Saldo cuti per tahun per jenis, carry-over opsional. **Keputusan pemilik 6 Okt 2026:** saldo cuti tahunan **tidak ditampilkan dan tidak dikirim** ke staf (Beranda, Pengajuan saya, form, ringkasan, detail); penyetuju non-staf tetap melihat dampak saldo pemohon.
+- **Jenis terkunci (keputusan pemilik 6 Okt 2026):** semua jenis kategori cuti dan lembur dikunci ("Dikunci sampai SOP cuti/lembur ditetapkan.") untuk semua karyawan. Form menampilkan ubin bergembok berisi alasan; server menolak membuat, menyimpan draf, atau mengirim pengajuan jenis terkunci; draf lama jenis terkunci hanya bisa dibatalkan. Pengajuan yang sudah dikirim/disetujui tidak berubah. HR membuka/mengunci di Admin › Jenis pengajuan.
+- **Pengajuan barang (keputusan pemilik 6 Okt 2026):** nama barang, jumlah, satuan, perkiraan harga satuan (Rp), total otomatis, tautan referensi (opsional), alasan/kebutuhan, tingkat kebutuhan (biasa/mendesak). Tanggal = tanggal dikirim; tidak memengaruhi absensi, saldo, rekap, atau daftar rekan absen; tidak bentrok dengan pengajuan lain. Jenis bawaan `BRG` dengan alur bawaan "Pengajuan barang": **atasan langsung → Direksi**.
 - Alur default: **Atasan langsung → HR**. Lembur di atas X jam/bulan → tambah **Direksi**. Alur dapat dikonfigurasi per jenis pengajuan.
 - Penyetuju bisa menyetujui, menolak (wajib alasan), atau meminta revisi. Delegasi saat penyetuju cuti.
 - Notifikasi ke penyetuju dan pemohon di setiap langkah.
@@ -155,6 +157,8 @@ Setiap workspace punya:
 - **Pengaturan**: anggota, peran, status kolom, label, prefix nomor task (mis. `KEU-12`).
 
 Visibilitas: `private` (hanya anggota) atau `internal` (semua karyawan bisa melihat, hanya anggota yang mengubah). Direksi bisa melihat semua workspace non-pribadi.
+
+**Pengelompokan (keputusan pemilik 6 Okt 2026):** daftar `/workspace`, grid Menu ponsel, dan stack Workspace di Dock/Rail dikelompokkan **Pribadi** · **Divisi & tim** (workspace divisi/tim tempat ia anggota) · **Proyek yang diikuti**, ditambah **Lainnya (lihat saja)** bagi yang melihat workspace tanpa menjadi anggota. Chip filter Semua · Pribadi · Divisi & tim · Proyek bertitik warna, tersimpan di `?jenis=`; kelompok kosong menampilkan empty state kecil.
 
 ### M4. Task & Kolaborasi
 
@@ -206,12 +210,16 @@ Catatan: selfie absensi **tidak** disimpan di Drive. Data biometrik/sensitif dis
 
 | Dashboard | Isi |
 |---|---|
-| **Saya** | Tugas hari ini & minggu ini, terlambat, status absensi hari ini, saldo cuti, pengajuan saya |
+| **Saya** | Tugas hari ini & minggu ini, terlambat, status absensi hari ini, **kartu Laporan hari ini**, saldo cuti (**bukan untuk staf**, keputusan pemilik 6 Okt 2026), pengajuan saya |
 | **Kepala Divisi** | Siapa yang hadir/terlambat/cuti hari ini, beban kerja per anggota, task terlambat divisi, tren penyelesaian 8 minggu, antrean persetujuan |
 | **HR** | Kehadiran seluruh perusahaan hari ini, absensi mencurigakan, pengajuan tertunda, rekap bulanan |
 | **Direksi** | **Portofolio & tracking proyek** (lihat M10): KPI portofolio, tabel proyek (status kesehatan, progres aktual vs rencana, milestone berikutnya, target, tugas terlambat, umur update), roadmap/timeline, daftar "Butuh keputusan Anda", feed update PIC. Absensi hanya **satu widget kecil** (hadir / cuti / belum check-in hari ini) yang menaut ke Dashboard HR. Tidak ada metrik per divisi di halaman ini. |
 
 Semua dashboard bisa difilter periode, divisi, dan tim, serta diekspor.
+
+**Laporan progres harian (keputusan pemilik 6 Okt 2026).** Setiap karyawan menulis laporan harian (`/laporan/hari-ini`): tugas yang dikerjakan (saran dari Ruang saya "Hari ini" dan tugas yang ditugaskan; cari tugas lain yang terlihat), per tugas catatan progres (wajib), persen dan jam (opsional), dan "pindahkan ke …" (dipindah saat dikirim, tunduk Policy tugas); pekerjaan di luar tugas; ringkasan; hambatan; catatan/notulensi bebas. Draf tersimpan otomatis; Kirim bisa diulang sampai 23.59 hari itu, lalu terkunci. Kartu "Laporan hari ini" ada di Beranda semua karyawan (paling menonjol untuk staf). Pembaca: pemilik, atasan langsung, Kepala Divisi divisinya, Direksi, HR, Super Admin (lainnya 404); judul tugas hanya untuk pembaca yang bisa melihat tugasnya. Pengingat in-app 16.30 WIB hari kerja bagi karyawan terjadwal yang belum mengirim.
+
+**Pengumuman (keputusan pemilik 6 Okt 2026).** Direksi/HR/Super Admin mengumumkan ke semua karyawan, divisi, atau tim tertentu; Kepala Divisi ke divisi yang dipimpin; Ketua Tim ke timnya. Penerima mendapat notifikasi `system.announcement` dan spanduk di atas semua dashboard (Saya, Divisi, HR, Manajemen, Portofolio; maks. 3 terbaru + "Lihat semua"); menutup spanduk hanya menyembunyikannya dari dashboard orang itu (notifikasi tetap di Inbox). Pembuat bisa menghapus miliknya (hilang dari semua dashboard). Halaman `/pengumuman`.
 
 ### M10. Proyek & Portofolio (tracking untuk Direksi)
 
@@ -246,7 +254,8 @@ Master data (divisi, tim, jabatan, lokasi kantor + peta radius, shift, jenis cut
 
 ### M9. Pengalaman pengguna lintas modul
 
-- Command palette ⌘K/Ctrl+K: cari task, orang, workspace, dokumen. Aksi cepat ("Check-in", "Ajukan cuti", "Task baru").
+- Command palette ⌘K/Ctrl+K: cari task, orang, workspace, dokumen. Aksi cepat ("Check-in", "Buat pengajuan", "Task baru"); juga "Tulis laporan hari ini", "Laporan harian", "Pengumuman" (keputusan pemilik 6 Okt 2026).
+- **Staf** (keputusan pemilik 6 Okt 2026) = pengguna yang hanya punya peran `anggota` (tanpa `kepala_divisi`, `hr`, `direksi`, `super_admin`): tanpa saldo cuti tahunan dan tanpa struktur organisasi. Satu definisi: `User::isStaffOnly()` / `isStaffOnly(roles)`.
 - Pintasan keyboard ala Linear (`C` buat task, `G` lalu `I` ke Inbox, dll.).
 - **Inbox**: semua notifikasi + item yang perlu tindakan saya.
 - Mode terang & gelap (ikut sistem, bisa diganti manual).

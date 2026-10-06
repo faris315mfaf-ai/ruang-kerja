@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Domain\Organization\Enums\Permission;
 use App\Models\Division;
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 /**
  * Everyone in the company may see divisions (org chart); HR & Super Admin manage them.
@@ -14,6 +15,17 @@ class DivisionPolicy
     public function viewAny(User $actor): bool
     {
         return true;
+    }
+
+    /**
+     * Struktur organisasi (/organisasi/struktur): every active employee except
+     * staff (keputusan pemilik 6 Okt 2026), for whom the page does not exist.
+     */
+    public function viewChart(User $actor): Response
+    {
+        return $actor->isActive() && ! $actor->isStaffOnly()
+            ? Response::allow()
+            : Response::denyAsNotFound();
     }
 
     public function view(User $actor, Division $division): bool

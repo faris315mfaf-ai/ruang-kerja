@@ -10,6 +10,7 @@ import {
     formatRequestDuration,
     formatRequestPeriod,
     formatRequestTitle,
+    formatRupiah,
     dayUnit,
     officeDay,
     stepProgress,
@@ -115,6 +116,31 @@ describe('formatRequestTitle', () => {
                 minutes: null,
             }),
         ).toBe('Cuti tahunan');
+    });
+});
+
+describe('pengajuan barang', () => {
+    const procurement = {
+        type: { ...type('procurement'), name: 'Pengajuan barang' },
+        days: null,
+        minutes: null,
+        payload: { item_name: 'Laptop kantor', quantity: 2, unit: 'unit' },
+    };
+
+    it('titles with the item and counts the quantity', () => {
+        expect(formatRequestTitle(procurement)).toBe(
+            'Pengajuan barang · Laptop kantor',
+        );
+        expect(formatRequestDuration(procurement)).toBe('2 unit');
+        expect(formatRequestDuration({ ...procurement, payload: {} })).toBe(
+            '—',
+        );
+    });
+
+    it('formats whole rupiah', () => {
+        expect(formatRupiah(30000000)).toBe('Rp30.000.000');
+        expect(formatRupiah(0)).toBe('Rp0');
+        expect(formatRupiah(null)).toBe('–');
     });
 });
 

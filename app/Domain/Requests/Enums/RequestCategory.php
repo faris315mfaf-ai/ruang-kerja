@@ -14,6 +14,8 @@ enum RequestCategory: string
     case Overtime = 'overtime';
     case Correction = 'correction';
     case BusinessTrip = 'business_trip';
+    // Pengajuan barang (keputusan pemilik 6 Okt 2026): no period, balance or attendance effect.
+    case Procurement = 'procurement';
 
     public function label(): string
     {
@@ -24,6 +26,7 @@ enum RequestCategory: string
             self::Overtime => 'Lembur',
             self::Correction => 'Koreksi absensi',
             self::BusinessTrip => 'Dinas luar',
+            self::Procurement => 'Pengajuan barang',
         };
     }
 
@@ -39,6 +42,7 @@ enum RequestCategory: string
             self::Overtime => 'lembur',
             self::Correction => 'koreksi',
             self::BusinessTrip => 'dinas',
+            self::Procurement => 'barang',
         };
     }
 
@@ -62,6 +66,15 @@ enum RequestCategory: string
     }
 
     /**
+     * Requests about a thing to buy, not about time: dated on the day they are
+     * sent, never overlapping, without balance or attendance effect.
+     */
+    public function isProcurement(): bool
+    {
+        return $this === self::Procurement;
+    }
+
+    /**
      * attendance_days.status written for approved whole-day absences.
      */
     public function attendanceStatus(): ?string
@@ -71,7 +84,7 @@ enum RequestCategory: string
             self::Permit => 'permit',
             self::Sick => 'sick',
             self::BusinessTrip => 'business_trip',
-            self::Overtime, self::Correction => null,
+            self::Overtime, self::Correction, self::Procurement => null,
         };
     }
 

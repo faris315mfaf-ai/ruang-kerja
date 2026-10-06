@@ -10,6 +10,7 @@ use App\Domain\Meetings\Jobs\SendMeetingReminders;
 use App\Domain\Okr\Jobs\SendKeyResultCheckinReminders;
 use App\Domain\Projects\Jobs\SendProjectUpdateReminders;
 use App\Domain\Projects\Jobs\TakeProjectProgressSnapshots;
+use App\Domain\Reports\Jobs\SendDailyReportReminders;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -63,3 +64,5 @@ Schedule::job(new SendMeetingReminders)->everyMinute()->when(fn (): bool => (boo
 Schedule::job(new SendActionItemReminders)->dailyAt('07:05')->timezone(config()->string('app.office_timezone'))->when(fn (): bool => (bool) config('features.meetings'))->withoutOverlapping()->onOneServer();
 // Akun & kata sandi (6 Okt 2026) — expire unanswered "Lupa kata sandi" requests, prune old ones.
 Schedule::job(new ExpirePasswordResetRequests)->hourly()->withoutOverlapping()->onOneServer();
+// Laporan progres harian (keputusan pemilik 6 Okt 2026): reminder 16.30 WIB on weekdays.
+Schedule::job(new SendDailyReportReminders)->weekdays()->dailyAt('16:30')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();

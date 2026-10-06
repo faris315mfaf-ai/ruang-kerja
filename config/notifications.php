@@ -39,6 +39,8 @@ return [
         'meeting' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
         // Password reset requests (→ HR) and "HR set your password" (locked on).
         'account.security' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
+        // Laporan progres harian (keputusan pemilik 6 Okt 2026): in-app only by default.
+        'report.reminder' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'system' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'digest.daily' => ['email' => true],
     ],

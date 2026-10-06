@@ -52,6 +52,12 @@ const fields = {
     destination: '',
     substitute_id: '',
     reason: 'Acara keluarga',
+    item_name: '',
+    quantity: '1',
+    unit: 'unit',
+    unit_price: '',
+    reference_url: '',
+    urgency: 'biasa',
 };
 
 describe('draft storage', () => {

@@ -1,3 +1,4 @@
+import { AnnouncementBanner } from '@/features/announcements/announcement-banner';
 import { Head } from '@inertiajs/react';
 import { HrDesktop } from '@/features/dashboard/hr.desktop';
 import { HrMobile } from '@/features/dashboard/hr.mobile';
@@ -17,6 +18,8 @@ export default function HrDashboard(props: HrProps) {
     return (
         <>
             <Head title="Dashboard HR" />
+            {/* Pengumuman (keputusan pemilik 6 Okt 2026), loaded apart from the page. */}
+            <AnnouncementBanner className="mb-5" />
             {breakpoint === 'mobile' ? (
                 <HrMobile {...props} live={live} />
             ) : (

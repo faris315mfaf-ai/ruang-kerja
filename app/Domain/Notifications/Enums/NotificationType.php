@@ -52,6 +52,8 @@ enum NotificationType: string
     // and the employee is told when HR set their password.
     case PasswordResetRequested = 'account.password_reset_requested';
     case PasswordSetByHr = 'account.password_set_by_hr';
+    // Laporan progres harian (keputusan pemilik 6 Okt 2026): 16.30 reminder.
+    case ReportReminder = 'report.reminder';
 
     // System (Sprint 8)
     case SystemAnnouncement = 'system.announcement';
@@ -88,6 +90,7 @@ enum NotificationType: string
             self::ActionItemDue => 'Tindak lanjut rapat',
             self::PasswordResetRequested => 'Permintaan reset kata sandi',
             self::PasswordSetByHr => 'Kata sandi diatur ulang',
+            self::ReportReminder => 'Pengingat laporan harian',
             self::SystemAnnouncement => 'Pengumuman',
             self::SystemTest => 'Notifikasi uji',
         };
@@ -117,6 +120,7 @@ enum NotificationType: string
             self::OkrCheckinReminder, self::OkrObjectiveAtRisk => NotificationEvent::OkrActivity,
             self::MeetingInvited, self::MeetingStarting, self::MinutesFinalized, self::ActionItemDue => NotificationEvent::Meeting,
             self::PasswordResetRequested, self::PasswordSetByHr => NotificationEvent::AccountSecurity,
+            self::ReportReminder => NotificationEvent::ReportReminder,
             self::SystemAnnouncement, self::SystemTest => NotificationEvent::System,
         };
     }
@@ -155,6 +159,7 @@ enum NotificationType: string
             self::MinutesFinalized => 'notebook',
             self::ActionItemDue => 'calendar-clock',
             self::PasswordResetRequested, self::PasswordSetByHr => 'key',
+            self::ReportReminder => 'clipboard',
             self::SystemAnnouncement => 'megaphone',
             self::SystemTest => 'bell',
         };
@@ -170,7 +175,7 @@ enum NotificationType: string
             self::RequestSubmitted, self::SystemAnnouncement => 'info',
             self::RequestApproved => 'success',
             self::TaskDueSoon, self::RequestRevisionRequested, self::CheckInReminder, self::CheckOutReminder, self::ConsentRevoked,
-            self::ProjectUpdateReminder, self::ProjectUpdateRequested, self::OkrCheckinReminder, self::OkrObjectiveAtRisk, self::PasswordResetRequested => 'warning',
+            self::ProjectUpdateReminder, self::ProjectUpdateRequested, self::OkrCheckinReminder, self::OkrObjectiveAtRisk, self::PasswordResetRequested, self::ReportReminder => 'warning',
             self::PasswordSetByHr => 'info',
             self::TaskOverdue, self::RequestRejected => 'danger',
             self::ProjectDirection, self::ProjectDecisionNeeded => 'info',

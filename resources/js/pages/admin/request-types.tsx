@@ -137,6 +137,19 @@ export default function RequestTypes({
                                                     {item.is_provisional_default && (
                                                         <ProvisionalBadge />
                                                     )}
+                                                    {item.locked_reason !==
+                                                        null && (
+                                                        <Badge
+                                                            variant="status"
+                                                            tone="warning"
+                                                            className="h-6 px-2 text-[13px]"
+                                                            title={
+                                                                item.locked_reason
+                                                            }
+                                                        >
+                                                            Dikunci
+                                                        </Badge>
+                                                    )}
                                                     {!item.is_active && (
                                                         <Badge
                                                             variant="status"

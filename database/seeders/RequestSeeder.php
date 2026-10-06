@@ -48,6 +48,8 @@ class RequestSeeder extends Seeder
         'CML' => ['Cuti melahirkan', RequestCategory::Leave, null, null, 0, false, null, null, ApprovalFlow::DEFAULT_NAME, 8],
         'CAP' => ['Cuti alasan penting', RequestCategory::Leave, null, null, null, false, null, null, ApprovalFlow::DEFAULT_NAME, 9],
         'CLT' => ['Cuti di luar tanggungan', RequestCategory::Leave, null, null, null, false, null, null, 'Cuti besar', 10],
+        // Keputusan pemilik 6 Okt 2026: Pengajuan barang, atasan langsung lalu Direksi.
+        'BRG' => ['Pengajuan barang', RequestCategory::Procurement, null, null, null, false, null, null, 'Pengajuan barang', 11],
     ];
 
     /**
@@ -59,6 +61,7 @@ class RequestSeeder extends Seeder
         'CML' => [true, true, 90, 'Maks. 3 bulan (90 hari kalender), mis. 1,5 bulan sebelum dan 1,5 bulan sesudah melahirkan. Lampirkan surat dokter/bidan.'],
         'CAP' => [true, false, 3, 'Per peristiwa, maks. 3 hari: menikah (3), menikahkan/khitan/baptis anak (2), istri melahirkan/keguguran (2), keluarga meninggal (2). Tidak memotong saldo.'],
         'CLT' => [false, false, null, 'Tidak dibayar dan tidak memotong saldo cuti tahunan. Perlu persetujuan Direksi.'],
+        'BRG' => [true, false, null, 'Barang atau perlengkapan kerja yang perlu dibeli. Disetujui atasan langsung, lalu Direksi.'],
     ];
 
     public function run(): void
@@ -94,6 +97,8 @@ class RequestSeeder extends Seeder
             ],
             'Cuti besar' => [[ApproverType::DirectManager, null, null], [ApproverType::Role, Role::Hr, null], [ApproverType::Role, Role::Direksi, null]],
             'Dinas luar' => [[ApproverType::DirectManager, null, null], [ApproverType::Role, Role::Direksi, null]],
+            // Keputusan pemilik 6 Okt 2026 (skip_self_approval stays on: the default).
+            'Pengajuan barang' => [[ApproverType::DirectManager, null, null], [ApproverType::Role, Role::Direksi, null]],
         ];
 
         $flows = [];
@@ -146,6 +151,8 @@ class RequestSeeder extends Seeder
                     'min_service_months' => $service,
                     'approval_flow_id' => $flows[$flow]->id,
                     'sort_order' => $sort,
+                    // Cuti & lembur wait for the SOP (keputusan pemilik 6 Okt 2026).
+                    'locked_reason' => in_array($category, [RequestCategory::Leave, RequestCategory::Overtime], true) ? LeaveType::SOP_LOCK_REASON : null,
                 ])->save();
             }
         }
@@ -165,6 +172,11 @@ class RequestSeeder extends Seeder
         }
 
         $types = LeaveType::query()->whereIn('code', array_keys(self::TYPES))->get()->keyBy('code');
+        // The demo history was sent before cuti & lembur were locked (keputusan pemilik
+        // 6 Okt 2026): unlock in memory only, the stored types stay locked.
+        $types->each(function (LeaveType $type): void {
+            $type->locked_reason = null;
+        });
         $type = fn (string $code): LeaveType => $types->get($code) ?? throw new \LogicException("Missing leave type {$code}");
         $get = fn (string $email): User => $users->get($email) ?? throw new \LogicException("Missing demo user {$email}");
 
@@ -211,6 +223,12 @@ class RequestSeeder extends Seeder
             $maya = $this->submit($get('maya.lestari@demo.test'), $type('CUT'), ['start_date' => $day($nextMonday->addDays(7)), 'end_date' => $day($nextMonday->addDays(8))], $today->subDays(3)->setTime(11, 0), 'Liburan keluarga.');
             $this->approve($maya, [$get('putri.ramadhani@demo.test')]);
             $this->submit($get('hr@demo.test'), $type('CUT'), ['start_date' => $day($nextMonday->addDays(14)), 'end_date' => $day($nextMonday->addDays(14))], $today->subDay()->setTime(9, 30), 'Keperluan pribadi.');
+
+            // Pengajuan barang: Rizky waits for Dimas (then Direksi).
+            $this->submit($get('anggota@demo.test'), $type('BRG'), [
+                'item_name' => 'Monitor 24 inci', 'quantity' => 1, 'unit' => 'unit', 'unit_price' => 2150000,
+                'reference_url' => 'https://example.com/monitor-24', 'urgency' => 'biasa',
+            ], $today->setTime(8, 40), 'Layar laptop terlalu kecil untuk rekap stok harian.');
 
             // Seeders write no audit trail (like the other seeders under WithoutModelEvents).
             AuditLog::query()

@@ -2,18 +2,20 @@
 
 namespace App\Domain\Workspaces\Queries;
 
+use App\Domain\Workspaces\Enums\WorkspaceGroup;
 use App\Models\User;
 use App\Models\Workspace;
 
 /**
  * Shared Inertia prop `workspaces`: the user's workspaces for the sidebar and
- * the mobile Menu grid (members only, not archived). Grouped and ordered on
- * the client: Pribadi, Divisi, Tim, Proyek; favorites first.
+ * the mobile Menu grid (members only, not archived). Ordered Pribadi,
+ * Divisi, Tim, Proyek, favorites first; shown in the groups Pribadi ·
+ * Divisi & tim · Proyek yang diikuti (`group`, keputusan pemilik 6 Okt 2026).
  */
 final class SidebarWorkspaces
 {
     /**
-     * @return list<array{id: string, key: string, name: string, type: string, color: string, favorite: bool}>
+     * @return list<array{id: string, key: string, name: string, type: string, color: string, favorite: bool, group: string}>
      */
     public function for(User $user): array
     {
@@ -33,6 +35,7 @@ final class SidebarWorkspaces
                 'type' => $workspace->type->value,
                 'color' => $workspace->color ?? 'gray',
                 'favorite' => $workspace->membership?->favorited_at !== null,
+                'group' => WorkspaceGroup::of($workspace->type, true)->value,
             ])
             ->all());
     }

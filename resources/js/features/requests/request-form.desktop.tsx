@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatTime } from '@/lib/format';
 import { formatDays } from '@/lib/requests';
@@ -8,6 +8,7 @@ import { index as requestsIndex } from '@/routes/requests';
 import type { FormCategory, RequestDetail } from '@/types/requests';
 import { DeviceDraftNotice } from './device-draft-notice';
 import { CategoryFields } from './form-fields';
+import { categoryLockReason } from './locks';
 import { RequestSummary } from './request-summary';
 import { RevisionBanner } from './revision-banner';
 import type { RequestFormState } from './use-request-form';
@@ -19,9 +20,12 @@ export function categoryHint(category: FormCategory): string {
 
     switch (category.value) {
         case 'leave':
+            // Staff get no balance (keputusan pemilik 6 Okt 2026).
             return first?.balance
                 ? `Saldo ${formatDays(first.balance.available)} hari`
-                : 'Tanpa saldo';
+                : first?.annual_quota_days
+                  ? 'Memotong saldo cuti'
+                  : 'Hari kerja';
         case 'permit':
             return 'Per jam atau hari';
         case 'sick':
@@ -36,6 +40,8 @@ export function categoryHint(category: FormCategory): string {
                 first?.max_backdate_days !== undefined
                 ? `Maks. ${first.max_backdate_days} hari lalu`
                 : 'Jam masuk/pulang';
+        case 'procurement':
+            return 'Atasan, lalu Direksi';
         default:
             return 'Absen dari lokasi lain';
     }
@@ -60,7 +66,7 @@ export function RequestFormDesktop({
     today,
     savedAt,
 }: Props) {
-    const { form, category, setCategory, submit } = state;
+    const { form, category, setCategory, submit, locked } = state;
     const editing = request !== null;
 
     return (
@@ -115,6 +121,34 @@ export function RequestFormDesktop({
                         >
                             {categories.map((item) => {
                                 const active = item.value === category;
+                                const lockReason = categoryLockReason(item);
+
+                                if (lockReason && !active) {
+                                    return (
+                                        <div
+                                            key={item.value}
+                                            role="radio"
+                                            aria-checked={false}
+                                            aria-disabled
+                                            title={lockReason}
+                                            className="flex min-h-[76px] cursor-not-allowed flex-col gap-1 rounded-lg border border-dashed border-border-strong bg-surface-2 px-3.5 py-3 text-left text-text-muted"
+                                        >
+                                            <span className="flex items-center gap-1.5 text-[17px] leading-6 font-bold">
+                                                <Lock
+                                                    className="size-4 shrink-0"
+                                                    aria-hidden
+                                                />
+                                                {item.label}
+                                                <span className="sr-only">
+                                                    (dikunci)
+                                                </span>
+                                            </span>
+                                            <span className="line-clamp-2 text-[14px] leading-5 font-medium">
+                                                {lockReason}
+                                            </span>
+                                        </div>
+                                    );
+                                }
 
                                 return (
                                     <button
@@ -170,7 +204,7 @@ export function RequestFormDesktop({
                         type="submit"
                         size="xl"
                         className="w-full text-[18px] font-extrabold"
-                        disabled={form.processing}
+                        disabled={form.processing || locked}
                     >
                         {request?.status === 'revision_requested'
                             ? 'Kirim ulang'
@@ -180,7 +214,7 @@ export function RequestFormDesktop({
                         type="button"
                         variant="outline"
                         className="h-12 w-full"
-                        disabled={form.processing}
+                        disabled={form.processing || locked}
                         onClick={() => submit('draft')}
                     >
                         Simpan sebagai draf

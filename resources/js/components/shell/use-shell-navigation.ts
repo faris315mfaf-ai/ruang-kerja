@@ -2,6 +2,7 @@ import { usePage } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
 import { Layers, LayoutGrid, ShieldCheck, Users } from 'lucide-react';
 import { useUnreadCount } from '@/features/notifications/unread-store';
+import { groupWorkspaces } from '@/features/workspaces/groups';
 import { workspaceInitial } from '@/features/workspaces/lib';
 import {
     useSidebarWorkspaces,
@@ -44,6 +45,7 @@ const MOTIONS: Record<string, GlyphMotion> = {
     '/obrolan': { name: 'dock-nudge', duration: '1.5s' },
     '/rapat': { name: 'dock-tilt', duration: '1.8s' },
     '/tugas': { name: 'dock-pulse', duration: '1.5s' },
+    '/laporan': { name: 'dock-tilt', duration: '1.8s' },
     '/absensi': { name: 'dock-drop', duration: '1.4s' },
     '/pengajuan': { name: 'dock-tilt', duration: '1.8s' },
     '/persetujuan': { name: 'dock-nudge', duration: '1.5s' },
@@ -84,12 +86,26 @@ export type NavStackEntry = {
     gradient: string;
 };
 
+/** Titled group of a stack (Workspace: Pribadi · Divisi & tim · Proyek). */
+export type NavStackSection = {
+    key: string;
+    /** null = untitled (the "Semua workspace" link at the end). */
+    label: string | null;
+    /** Dot colour utility of the group. */
+    dot?: string;
+    entries: NavStackEntry[];
+    /** Shown when the group has no entries. */
+    empty?: string;
+};
+
 export type NavStack = {
     id: string;
     label: string;
     icon: LucideIcon;
     motion: GlyphMotion;
     entries: NavStackEntry[];
+    /** Render the entries in these titled groups instead of one grid. */
+    sections?: NavStackSection[];
     active: boolean;
     /** "Lihat semua" link in the stack header. */
     allHref?: string;
@@ -196,14 +212,31 @@ export function useShellNavigation(): ShellNavigation {
             gradient: workspaceGradient(workspace.type, workspace.color),
         };
     });
-    workspaceEntries.push({
+    const allWorkspaces: NavStackEntry = {
         key: 'all-workspaces',
         label: 'Semua workspace',
         href: '/workspace',
         active: currentUrl === '/workspace',
         icon: Layers,
         gradient: 'bg-grad-slate',
-    });
+    };
+    // Groups Pribadi · Divisi & tim · Proyek yang diikuti (keputusan pemilik 6 Okt 2026).
+    const workspaceSections: NavStackSection[] = [
+        ...groupWorkspaces(workspaces).map(({ group, items }) => ({
+            key: group.key,
+            label: group.label,
+            dot: group.dot,
+            empty: group.empty,
+            entries: items.flatMap(
+                (workspace) =>
+                    workspaceEntries.find(
+                        (entry) => entry.key === workspace.id,
+                    ) ?? [],
+            ),
+        })),
+        { key: 'all', label: null, entries: [allWorkspaces] },
+    ];
+    workspaceEntries.push(allWorkspaces);
 
     // A one-item stack is just a detour: roles that only see the org chart
     // get it as a plain tile instead.
@@ -297,6 +330,7 @@ export function useShellNavigation(): ShellNavigation {
             icon: LayoutGrid,
             motion: { name: 'dock-lift' },
             entries: workspaceEntries,
+            sections: workspaceSections,
             // A favourite tile already marks the open workspace.
             active:
                 workspaceEntries.some((entry) => entry.active) &&

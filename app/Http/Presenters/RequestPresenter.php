@@ -61,6 +61,8 @@ final class RequestPresenter
             'max_days_per_request' => $type->max_days_per_request,
             'day_unit' => $type->dayUnit(),
             'is_provisional_default' => $type->is_provisional_default,
+            'locked' => $type->isLocked(),
+            'locked_reason' => $type->isLocked() ? $type->locked_reason : null,
         ];
     }
 
@@ -144,7 +146,8 @@ final class RequestPresenter
                 'url' => route('requests.attachment', ['employeeRequest' => $request->id, 'attachment' => $attachment->id]),
             ])->values()->all(),
             'timeline' => $this->timeline($request, $health ? null : $viewer),
-            'balance' => $this->balanceImpact($request),
+            // Staff never see an annual leave balance (keputusan pemilik 6 Okt 2026).
+            'balance' => $viewer->isStaffOnly() ? null : $this->balanceImpact($request),
             'colleagues' => $colleagues === null || $colleagues['people'] === [] ? null : $colleagues,
             'can' => [
                 'edit' => Gate::forUser($viewer)->allows('update', $request),
@@ -249,6 +252,10 @@ final class RequestPresenter
      */
     private static function publicPayload(EmployeeRequest $request): array
     {
-        return array_intersect_key($request->payload, array_flip(['half_day', 'mode', 'date', 'start_time', 'end_time', 'check_in', 'check_out', 'destination']));
+        return array_intersect_key($request->payload, array_flip([
+            'half_day', 'mode', 'date', 'start_time', 'end_time', 'check_in', 'check_out', 'destination',
+            // Pengajuan barang
+            'item_name', 'quantity', 'unit', 'unit_price', 'total', 'reference_url', 'urgency',
+        ]));
     }
 }

@@ -16,6 +16,7 @@ use App\Domain\Attendance\Events\AttendanceRecorded;
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Organization\Services\AuditLogger;
 use App\Domain\Planner\Queries\PersonalPlanner;
+use App\Domain\Reports\Queries\MyDailyReports;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -119,6 +120,8 @@ class DashboardController extends Controller
             'live' => fn (): array => $queries->live($context->viewer, $now),
             // "Ruang saya": the viewer's own plan, never cached (reloads alone with `only`).
             'planner' => fn (): array => $planner->for($context->viewer, $now),
+            // Kartu "Laporan hari ini" (keputusan pemilik 6 Okt 2026): one query.
+            'dailyReport' => fn (): array => app(MyDailyReports::class)->status($context->viewer, $now),
             'metrics' => Inertia::defer(fn (): array => $queries->metrics($context->viewer, $context->filters, $now)),
         ]);
     }

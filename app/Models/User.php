@@ -149,6 +149,18 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * "Staf": holds only the `anggota` role, none of kepala_divisi, hr,
+     * direksi or super_admin (keputusan pemilik 6 Okt 2026). Staff do not see
+     * annual leave balances nor the org chart. A Ketua Tim (teams.lead_user_id)
+     * without one of those roles is staff too. Mirrors isStaffOnly() in
+     * resources/js/features/staff/roles.ts.
+     */
+    public function isStaffOnly(): bool
+    {
+        return ! $this->hasAnyRole(Role::aboveStaff());
+    }
+
+    /**
      * Per-instance memo of ledDivisionIds(), keyed by what it depends on locally.
      *
      * @var array{key: string, ids: list<string>}|null

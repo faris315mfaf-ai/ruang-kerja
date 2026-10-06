@@ -215,10 +215,25 @@ export function dayUnit(
     return type.category === 'leave' ? 'hari kerja' : 'hari';
 }
 
-/** "3 hari kerja", "1 hari", "2 jam", "—" (corrections). */
+/** 1500000 → "Rp1.500.000" (whole rupiah). */
+export function formatRupiah(value: number | null | undefined): string {
+    return value === null || value === undefined || !Number.isFinite(value)
+        ? '–'
+        : `Rp${formatNumber(Math.round(value))}`;
+}
+
+/** "3 hari kerja", "1 hari", "2 jam", "2 unit" (barang), "—" (corrections). */
 export function formatRequestDuration(
-    item: Pick<RequestItem, 'type' | 'days' | 'minutes'>,
+    item: Pick<RequestItem, 'type' | 'days' | 'minutes'> & {
+        payload?: RequestItem['payload'];
+    },
 ): string {
+    if (item.type.category === 'procurement') {
+        return item.payload?.quantity !== undefined
+            ? `${formatNumber(item.payload.quantity)} ${item.payload.unit ?? 'unit'}`
+            : '—';
+    }
+
     if (item.minutes !== null) {
         return formatHours(item.minutes);
     }
@@ -230,10 +245,19 @@ export function formatRequestDuration(
     return '—';
 }
 
-/** "Cuti tahunan · 2 hari kerja"; just the type name when there is no duration (corrections). */
+/**
+ * "Cuti tahunan · 2 hari kerja", "Pengajuan barang · Laptop kantor"; just
+ * the type name when there is no duration (corrections).
+ */
 export function formatRequestTitle(
-    item: Pick<RequestItem, 'type' | 'days' | 'minutes'>,
+    item: Pick<RequestItem, 'type' | 'days' | 'minutes'> & {
+        payload?: RequestItem['payload'];
+    },
 ): string {
+    if (item.type.category === 'procurement' && item.payload?.item_name) {
+        return `${item.type.name} · ${item.payload.item_name}`;
+    }
+
     const duration = formatRequestDuration(item);
 
     return duration === '—'

@@ -68,8 +68,8 @@ export function AttendanceDesktop(props: AttendancePageProps) {
                         </Link>
                     </Button>
                     <Button asChild variant="outline">
-                        <Link href="/pengajuan/baru?kategori=cuti">
-                            Ajukan cuti
+                        <Link href="/pengajuan/baru?kategori=izin">
+                            Ajukan izin
                         </Link>
                     </Button>
                 </div>

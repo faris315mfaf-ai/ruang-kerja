@@ -52,9 +52,25 @@ final class SaveLeaveType
                 ? ($data['max_days_per_request'] ?? null)
                 : null,
             'is_provisional_default' => false,
+            // Lock (keputusan pemilik 6 Okt 2026): kept as is when the form does not send it.
+            'locked_reason' => array_key_exists('is_locked', $data) ? self::lockReason($data) : $type->locked_reason,
         ]);
         $type->save();
 
         return $type;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private static function lockReason(array $data): ?string
+    {
+        if (! filter_var($data['is_locked'], FILTER_VALIDATE_BOOL)) {
+            return null;
+        }
+
+        $reason = is_string($data['locked_reason'] ?? null) ? trim($data['locked_reason']) : '';
+
+        return $reason !== '' ? $reason : LeaveType::SOP_LOCK_REASON;
     }
 }

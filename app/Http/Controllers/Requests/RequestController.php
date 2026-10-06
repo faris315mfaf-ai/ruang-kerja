@@ -97,12 +97,12 @@ class RequestController extends Controller
     {
         Gate::authorize('create', EmployeeRequest::class);
 
-        $category = RequestCategory::fromSlug(is_string($http->query('kategori')) ? $http->query('kategori') : null) ?? RequestCategory::Leave;
+        $wanted = RequestCategory::fromSlug(is_string($http->query('kategori')) ? $http->query('kategori') : null) ?? RequestCategory::Leave;
 
         return Inertia::render('requests/form', [
             ...$this->formProps($user),
             'request' => null,
-            'initial' => ['category' => $category->value],
+            'initial' => ['category' => self::openCategory($user, $wanted)],
         ]);
     }
 
@@ -155,6 +155,12 @@ class RequestController extends Controller
                 'check_out' => $payload['check_out'] ?? null,
                 'half_day' => (bool) ($payload['half_day'] ?? false),
                 'destination' => $payload['destination'] ?? null,
+                'item_name' => $payload['item_name'] ?? null,
+                'quantity' => $payload['quantity'] ?? null,
+                'unit' => $payload['unit'] ?? null,
+                'unit_price' => $payload['unit_price'] ?? null,
+                'reference_url' => $payload['reference_url'] ?? null,
+                'urgency' => $payload['urgency'] ?? null,
                 'substitute_id' => $employeeRequest->substitute_id,
                 'reason' => $employeeRequest->reason,
             ],
@@ -219,6 +225,31 @@ class RequestController extends Controller
     }
 
     /**
+     * The asked category when one of its types can be requested, else the
+     * first category that has one (cuti & lembur are locked, keputusan
+     * pemilik 6 Okt 2026).
+     */
+    private static function openCategory(User $user, RequestCategory $wanted): string
+    {
+        $open = LeaveType::query()->visibleTo($user)->active()->whereNull('locked_reason')
+            ->distinct()->pluck('category')
+            ->map(fn (mixed $category): string => $category instanceof RequestCategory ? $category->value : (string) $category)
+            ->all();
+
+        if (in_array($wanted->value, $open, true)) {
+            return $wanted->value;
+        }
+
+        foreach (RequestCategory::cases() as $category) {
+            if (in_array($category->value, $open, true)) {
+                return $category->value;
+            }
+        }
+
+        return $wanted->value;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function formProps(User $user): array
@@ -241,7 +272,8 @@ class RequestController extends Controller
                     'types' => $ofCategory->map(fn (LeaveType $type): array => [
                         ...RequestPresenter::type($type),
                         'eligible' => $type->isEligible($user),
-                        'balance' => RequestPresenter::balance($this->ledger->peek($user, $type, $year)),
+                        // Staff never get the annual leave balance (keputusan pemilik 6 Okt 2026).
+                        'balance' => $user->isStaffOnly() ? null : RequestPresenter::balance($this->ledger->peek($user, $type, $year)),
                     ])->values()->all(),
                 ];
             })
@@ -275,11 +307,17 @@ class RequestController extends Controller
 
     /**
      * Cards above the list: yearly balances, eligibility, sick-leave rule.
+     * Staff get none of them (no annual leave balance, keputusan pemilik
+     * 6 Okt 2026), so not even the quota is sent.
      *
      * @return list<array<string, mixed>>
      */
     private function balanceCards(User $user): array
     {
+        if ($user->isStaffOnly()) {
+            return [];
+        }
+
         $year = OfficeTime::today()->year;
 
         return array_values(LeaveType::query()

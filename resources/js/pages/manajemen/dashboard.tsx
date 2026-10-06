@@ -1,3 +1,4 @@
+import { AnnouncementBanner } from '@/features/announcements/announcement-banner';
 import { Head } from '@inertiajs/react';
 import { useState } from 'react';
 import { ManagementDesktop } from '@/features/management/management.desktop';
@@ -20,6 +21,8 @@ export default function ManagementDashboard(props: ManagementProps) {
     return (
         <>
             <Head title="Dashboard manajemen" />
+            {/* Pengumuman (keputusan pemilik 6 Okt 2026), loaded apart from the page. */}
+            <AnnouncementBanner className="mb-5" />
             <div
                 className={cn(
                     'text-base',

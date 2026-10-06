@@ -27,6 +27,7 @@ enum NotificationEvent: string
     case Automation = 'automation.notify';
     case Meeting = 'meeting';
     case AccountSecurity = 'account.security';
+    case ReportReminder = 'report.reminder';
     case System = 'system';
     case DailyDigest = 'digest.daily';
 
@@ -48,6 +49,7 @@ enum NotificationEvent: string
             self::OkrActivity => 'OKR: pengingat check-in & objective berisiko',
             self::Meeting => 'Rapat: undangan, pengingat, notulen & tindak lanjut',
             self::AccountSecurity => 'Keamanan akun: kata sandi',
+            self::ReportReminder => 'Pengingat laporan harian (16.30)',
             self::System => 'Pengumuman & info sistem',
             self::DailyDigest => 'Ringkasan harian',
         };
@@ -57,7 +59,7 @@ enum NotificationEvent: string
     {
         return match ($this) {
             self::TaskAssigned, self::Mention, self::TaskCommented, self::TaskDueSoon, self::TaskOverdue,
-            self::ProjectActivity, self::ChatMessage, self::OkrActivity, self::Automation, self::Meeting => NotificationCategory::Task,
+            self::ProjectActivity, self::ChatMessage, self::OkrActivity, self::Automation, self::Meeting, self::ReportReminder => NotificationCategory::Task,
             self::RequestPending, self::RequestDecided => NotificationCategory::Request,
             self::CheckInReminder, self::CheckOutReminder => NotificationCategory::Attendance,
             self::AccountSecurity, self::System, self::DailyDigest => NotificationCategory::System,

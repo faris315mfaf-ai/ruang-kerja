@@ -6,7 +6,9 @@ export type RequestCategory =
     | 'sick'
     | 'overtime'
     | 'correction'
-    | 'business_trip';
+    | 'business_trip'
+    /** Pengajuan barang (keputusan pemilik 6 Okt 2026). */
+    | 'procurement';
 
 export type RequestStatus =
     | 'draft'
@@ -57,6 +59,9 @@ export type LeaveTypeInfo = {
     day_unit?: string;
     /** Seeded default not yet reviewed by HR ("Bawaan sementara"). */
     is_provisional_default?: boolean;
+    /** Locked by HR: cannot be requested (cuti & lembur, keputusan pemilik 6 Okt 2026). */
+    locked?: boolean;
+    locked_reason?: string | null;
 };
 
 export type BalanceSummary = {
@@ -84,6 +89,16 @@ export type RequestPayload = {
     check_in?: string | null;
     check_out?: string | null;
     destination?: string | null;
+    /* Pengajuan barang */
+    item_name?: string;
+    quantity?: number;
+    unit?: string;
+    /** Estimated unit price, whole rupiah. */
+    unit_price?: number;
+    /** quantity × unit_price. */
+    total?: number;
+    reference_url?: string | null;
+    urgency?: 'biasa' | 'mendesak';
 };
 
 export type ColleagueAbsence = {

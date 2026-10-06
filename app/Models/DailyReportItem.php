@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $task_title
  * @property string $progress_note
  * @property TaskStatusCategory|null $status_category_after
+ * @property string|null $move_status_id "pindahkan ke" column, applied when the report is sent
  * @property int|null $percent
  * @property string|null $hours
  * @property int $position
@@ -30,7 +31,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read DailyReport $report
  * @property-read Task|null $task
  */
-#[Fillable(['daily_report_id', 'task_id', 'task_key', 'task_title', 'progress_note', 'status_category_after', 'percent', 'hours', 'position'])]
+#[Fillable(['daily_report_id', 'task_id', 'task_key', 'task_title', 'progress_note', 'status_category_after', 'move_status_id', 'percent', 'hours', 'position'])]
 class DailyReportItem extends Model
 {
     /** @use HasFactory<DailyReportItemFactory> */
@@ -55,6 +56,14 @@ class DailyReportItem extends Model
     public function report(): BelongsTo
     {
         return $this->belongsTo(DailyReport::class, 'daily_report_id');
+    }
+
+    /**
+     * @return BelongsTo<TaskStatus, $this>
+     */
+    public function moveStatus(): BelongsTo
+    {
+        return $this->belongsTo(TaskStatus::class, 'move_status_id');
     }
 
     /**

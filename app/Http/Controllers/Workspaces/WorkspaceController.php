@@ -7,6 +7,7 @@ use App\Domain\Organization\Enums\Role;
 use App\Domain\Tasks\Enums\TaskStatusCategory;
 use App\Domain\Workspaces\Actions\CreateWorkspace;
 use App\Domain\Workspaces\Actions\UpdateWorkspace;
+use App\Domain\Workspaces\Enums\WorkspaceGroup;
 use App\Domain\Workspaces\Enums\WorkspaceType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Workspaces\StoreWorkspaceRequest;
@@ -18,6 +19,7 @@ use App\Models\Workspace;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,7 +29,7 @@ use Inertia\Response;
  */
 class WorkspaceController extends Controller
 {
-    public function index(#[CurrentUser] User $user): Response
+    public function index(Request $request, #[CurrentUser] User $user): Response
     {
         Gate::authorize('viewAny', Workspace::class);
 
@@ -50,9 +52,13 @@ class WorkspaceController extends Controller
                     'is_member' => $workspace->membership !== null,
                     // Role pill on the card (SProyekSaya "PIC · Anggota · Pemilik").
                     'my_role' => $workspace->membership?->role->value,
+                    // Pribadi · Divisi & tim · Proyek · Lainnya (keputusan pemilik 6 Okt 2026).
+                    'group' => WorkspaceGroup::of($workspace->type, $workspace->membership !== null || $workspace->type === WorkspaceType::Personal)->value,
                 ])
                 ->values()
                 ->all(),
+            // Chip filter `?jenis=` (null = Semua); the client filters the list.
+            'filter' => WorkspaceGroup::fromQuery($request->query('jenis'))?->value,
             'can_create' => [
                 'team' => Gate::allows('create', [Workspace::class, WorkspaceType::Team]),
                 'project' => Gate::allows('create', [Workspace::class, WorkspaceType::Project]),

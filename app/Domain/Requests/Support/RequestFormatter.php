@@ -16,6 +16,10 @@ final class RequestFormatter
 
     public static function summary(EmployeeRequest $request): string
     {
+        if ($request->leaveType->category === RequestCategory::Procurement) {
+            return self::procurement($request);
+        }
+
         $duration = self::duration($request);
 
         return self::period($request).($duration === null ? '' : ' · '.$duration);
@@ -73,6 +77,32 @@ final class RequestFormatter
         }
 
         return null;
+    }
+
+    /**
+     * "Laptop kantor × 2 unit · Rp30.000.000 · mendesak".
+     */
+    public static function procurement(EmployeeRequest $request): string
+    {
+        $payload = $request->payload;
+        $quantity = is_numeric($payload['quantity'] ?? null) ? (int) $payload['quantity'] : 0;
+        $total = is_numeric($payload['total'] ?? null) ? (int) $payload['total'] : 0;
+        $parts = [
+            ((string) ($payload['item_name'] ?? 'Barang')).' × '.number_format($quantity, 0, ',', '.').' '.((string) ($payload['unit'] ?? 'unit')),
+            self::rupiah($total),
+        ];
+
+        if (($payload['urgency'] ?? null) === 'mendesak') {
+            $parts[] = 'mendesak';
+        }
+
+        return implode(' · ', $parts);
+    }
+
+    /** 1500000 → "Rp1.500.000". */
+    public static function rupiah(int $amount): string
+    {
+        return 'Rp'.number_format($amount, 0, ',', '.');
     }
 
     private static function day(CarbonImmutable $date): string

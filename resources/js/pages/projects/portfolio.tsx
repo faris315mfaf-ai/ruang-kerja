@@ -1,3 +1,4 @@
+import { AnnouncementBanner } from '@/features/announcements/announcement-banner';
 import { Head } from '@inertiajs/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PortfolioDesktop } from '@/features/portfolio/portfolio.desktop';
@@ -14,6 +15,8 @@ export default function Portfolio(props: PortfolioProps) {
     return (
         <>
             <Head title="Portofolio proyek" />
+            {/* Pengumuman (keputusan pemilik 6 Okt 2026), loaded apart from the page. */}
+            <AnnouncementBanner className="mb-5" />
             {breakpoint === null ? (
                 <div className="space-y-4" aria-busy>
                     <Skeleton className="h-8 w-56" />

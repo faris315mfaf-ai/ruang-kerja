@@ -30,6 +30,13 @@ final readonly class RequestInput
         public ?string $substituteId = null,
         public array $attachments = [],
         public array $removeAttachments = [],
+        // Pengajuan barang (procurement).
+        public ?string $itemName = null,
+        public ?int $quantity = null,
+        public ?string $unit = null,
+        public ?int $unitPrice = null,
+        public ?string $referenceUrl = null,
+        public ?string $urgency = null,
     ) {}
 
     /**
@@ -66,6 +73,21 @@ final readonly class RequestInput
             substituteId: $string('substitute_id'),
             attachments: $files,
             removeAttachments: $remove,
+            itemName: $string('item_name'),
+            quantity: self::integer($data['quantity'] ?? null),
+            unit: $string('unit'),
+            unitPrice: self::integer($data['unit_price'] ?? null),
+            referenceUrl: $string('reference_url'),
+            urgency: $string('urgency'),
         );
+    }
+
+    private static function integer(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+
+        return is_string($value) && preg_match('/^-?\d{1,15}$/', trim($value)) === 1 ? (int) trim($value) : null;
     }
 }
