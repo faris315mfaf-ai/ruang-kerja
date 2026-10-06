@@ -12,12 +12,14 @@ import type { AppNavItem } from '@/lib/navigation';
 import {
     adminNavItems,
     attendanceNavItems,
+    automationNavItem,
     isActivePath,
     chatNavItem,
     roleDashboardNavItem,
     mainNavItemsFor,
     organizationNavItems,
     okrNavItem,
+    performanceNavItem,
     prototypeNavItem,
 } from '@/lib/navigation';
 import { paletteGradient } from '@/lib/palette';
@@ -215,8 +217,22 @@ export function useShellNavigation(): ShellNavigation {
               item.href === '/inbox' ? [item, chatNavItem] : [item],
           )
         : main;
+    // Otomasi (F2-4) right after Tugas saya; Kinerja saya after Absensi.
+    const withAutomation = features?.automation
+        ? withChat.flatMap((item) => {
+              if (item.href === '/tugas') {
+                  return [item, automationNavItem];
+              }
+
+              return item.href === '/absensi'
+                  ? [item, performanceNavItem]
+                  : [item];
+          })
+        : withChat;
     // OKR after the daily work destinations (F3-3).
-    const withOkr = features?.okr ? [...withChat, okrNavItem] : withChat;
+    const withOkr = features?.okr
+        ? [...withAutomation, okrNavItem]
+        : withAutomation;
     const tiles = [
         ...(organizationItems.length > 1
             ? withOkr

@@ -31,7 +31,11 @@ import {
     validateRule,
 } from '@/features/automation/rules';
 import type { RuleContext, RuleDraft } from '@/features/automation/rules';
-import type { PeriodCounts } from '@/features/automation/types';
+import recurrenceCases from '@/features/automation/recurrence-cases.json';
+import type {
+    PeriodCounts,
+    RecurrencePattern,
+} from '@/features/automation/types';
 
 describe('normalizePhone', () => {
     it.each([
@@ -177,6 +181,30 @@ describe('nextOccurrences', () => {
     });
 });
 
+describe('shared recurrence fixture (same cases as RecurrenceSchedule in PHP)', () => {
+    it.each(recurrenceCases.occurrences)('$name', (testCase) => {
+        expect(
+            nextOccurrences(
+                {
+                    pattern: testCase.rule.pattern as RecurrencePattern,
+                    starts_on: testCase.rule.starts_on,
+                    ends_on: testCase.rule.ends_on,
+                },
+                testCase.from,
+                testCase.count,
+            ),
+        ).toEqual(testCase.expected);
+    });
+
+    it('describes every pattern the same way', () => {
+        for (const testCase of recurrenceCases.descriptions) {
+            expect(describePattern(testCase.pattern as RecurrencePattern)).toBe(
+                testCase.expected,
+            );
+        }
+    });
+});
+
 describe('describePattern', () => {
     it('reads naturally in Indonesian', () => {
         expect(describePattern({ kind: 'daily', weekdays_only: true })).toBe(
@@ -209,6 +237,7 @@ describe('validateRecurring', () => {
         title: 'Rekap stok mingguan',
         workspace_id: 'ws-1',
         assignee_id: '',
+        priority: 3,
         pattern: { kind: 'weekly', weekdays: [1] },
         starts_on: '2026-10-05',
         ends_on: '',
@@ -341,7 +370,8 @@ describe('performance metrics', () => {
         done_of_due: 37,
         done_with_due: 37,
         on_time: 33,
-        lead_times: [1, 2, 3, 2.5, 4, 2.7],
+        lead_time: 2.6,
+        lead_time_samples: 6,
         division_lead_time: 3.2,
         scheduled_days: 21,
         on_time_days: 20,
@@ -376,7 +406,9 @@ describe('performance metrics', () => {
             done_of_due: 0,
             done_with_due: 0,
             on_time: 0,
-            lead_times: [],
+            lead_time: null,
+            lead_time_samples: 0,
+            scheduled_days: 0,
         };
 
         expect(

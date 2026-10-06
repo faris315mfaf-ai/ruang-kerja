@@ -2,6 +2,7 @@ import { Head, usePage } from '@inertiajs/react';
 import { DesktopOnlyNotice } from '@/components/desktop-only-notice';
 import { MemberDriveStatus } from '@/features/drive/drive-access-badge';
 import { UserAvatar } from '@/components/shell/user-avatar';
+import { SaveWorkspaceTemplateSection } from '@/features/automation/save-workspace-template';
 import type { StatusCategory, WorkspaceRole } from '@/features/tasks/types';
 import { DangerSection } from '@/features/workspaces/settings/danger-section';
 import { DriveSection } from '@/features/workspaces/settings/drive-section';
@@ -209,6 +210,10 @@ export default function WorkspaceSettings(props: Props) {
                             <LabelsSection
                                 workspace={workspace}
                                 labels={labels}
+                                editable={editable}
+                            />
+                            <SaveWorkspaceTemplateSection
+                                workspace={workspace}
                                 editable={editable}
                             />
                             <DriveSection

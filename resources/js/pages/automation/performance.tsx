@@ -1,36 +1,33 @@
 import { Head } from '@inertiajs/react';
-import { PERFORMANCE } from '@/features/automation/fixtures';
 import { PerformanceScreen } from '@/features/automation/performance/performance-screen';
-import {
-    PreviewSkeleton,
-    usePreviewState,
-} from '@/features/automation/preview-state';
+import { PreviewSkeleton } from '@/features/automation/preview-state';
 import type { PerformanceProps } from '@/features/automation/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 
 /**
- * /kinerja — Kinerja saya (design SKinerja / MSKinerja; Fase 2 · F2-4
- * preview). Output metrics side by side, no combined score (PRD M7).
+ * /kinerja and /kinerja/{user} — Kinerja saya (design SKinerja /
+ * MSKinerja; Fase 2 · F2-4). Output metrics side by side, no combined
+ * score (PRD M7). Props from PerformanceController
+ * (App\Domain\Automation\Queries\PersonalPerformance).
  */
 export default function AutomationPerformancePage({
-    performance: data = PERFORMANCE,
+    performance,
 }: {
-    /** Same shape as the fixture; the controller passes it later. */
-    performance?: PerformanceProps;
+    performance: PerformanceProps;
 }) {
     const breakpoint = useBreakpoint();
-    const { state } = usePreviewState();
+    const title = performance.person.is_self
+        ? 'Kinerja saya'
+        : `Kinerja ${performance.person.name}`;
 
     return (
         <>
-            <Head title="Kinerja saya" />
+            <Head title={title} />
             {breakpoint === null ? (
                 <PreviewSkeleton kpis={4} />
             ) : (
                 <PerformanceScreen
-                    key={state}
-                    props={data}
-                    state={state}
+                    props={performance}
                     mobile={breakpoint === 'mobile'}
                 />
             )}

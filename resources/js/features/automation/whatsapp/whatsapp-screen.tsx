@@ -1,3 +1,4 @@
+import { PauseCircle } from 'lucide-react';
 import {
     PreviewBar,
     PreviewError,
@@ -75,6 +76,21 @@ export function WhatsappScreen({ settings, state, mobile }: Props) {
     return (
         <div className="flex flex-col gap-5 md:gap-6">
             <PreviewBar />
+            <p
+                role="note"
+                className="flex w-fit max-w-full items-start gap-2 rounded-card border border-border bg-warning-soft px-4 py-3 text-[15px] leading-[22px] text-warning"
+            >
+                <PauseCircle
+                    aria-hidden
+                    className="mt-0.5 size-5 shrink-0"
+                    strokeWidth={2}
+                />
+                <span>
+                    <b>Ditahan.</b> Notifikasi WhatsApp belum aktif sampai
+                    penyedia diputuskan. Halaman ini hanya pratinjau; aturan
+                    otomasi memakai notifikasi aplikasi dan email.
+                </span>
+            </p>
             <h1 className="hidden md:sr-only md:block">Pengaturan WhatsApp</h1>
             <SettingsHeader />
             {body}

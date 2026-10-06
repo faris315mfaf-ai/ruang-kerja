@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { BarChart3, Info, ShieldCheck } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
@@ -21,14 +21,15 @@ import {
     WeekChart,
     WeekLegend,
 } from '@/features/automation/performance/week-chart';
-import {
-    PreviewBar,
-    PreviewError,
-    PreviewSkeleton,
-} from '@/features/automation/preview-state';
-import type { PreviewState } from '@/features/automation/preview-state';
 import type { PerformanceProps, PeriodKey } from '@/features/automation/types';
 import { cn, focusRing } from '@/lib/utils';
+
+/** URL slug of each period (`?periode=`, PerformanceController). */
+const PERIOD_SLUGS: Record<PeriodKey, string> = {
+    '8w': '8-minggu',
+    month: 'bulan',
+    quarter: 'kuartal',
+};
 
 const PERIODS: { value: PeriodKey; label: string }[] = [
     { value: '8w', label: '8 minggu' },
@@ -44,7 +45,7 @@ const SHORT_LABELS: Record<Metric['key'], string> = {
 };
 
 const OVERDUE_DEFINITION =
-    'Tugas Anda yang belum selesai dengan tenggat sebelum hari ini.';
+    'Tugas yang belum selesai dengan tenggat sebelum hari ini.';
 
 function MetricLabel({
     label,
@@ -77,7 +78,7 @@ function MetricLabel({
     );
 }
 
-function PrivacyNote({ compact }: { compact: boolean }) {
+function PrivacyNote({ compact, self }: { compact: boolean; self: boolean }) {
     return (
         <section
             aria-label="Privasi"
@@ -104,7 +105,7 @@ function PrivacyNote({ compact }: { compact: boolean }) {
                     ? 'Hanya Anda, atasan, dan HR yang melihat data ini.'
                     : 'Hanya Anda, atasan langsung, dan HR yang bisa melihat halaman ini. Tidak ada pelacakan layar atau aplikasi; lokasi hanya direkam saat check-in dan check-out.'}
             </p>
-            {!compact && (
+            {!compact && self && (
                 <PanelLink href="/privasi">Data saya &amp; privasi</PanelLink>
             )}
         </section>
@@ -153,18 +154,29 @@ function Definitions({ metrics }: { metrics: Metric[] }) {
 
 export function PerformanceScreen({
     props,
-    state,
     mobile,
 }: {
     props: PerformanceProps;
-    state: PreviewState;
     mobile: boolean;
 }) {
-    const [period, setPeriod] = useState<PeriodKey>('8w');
-    const counts = props.periods[period];
+    const path = usePage().url.split('?')[0];
+    const [switching, setSwitching] = useState(false);
+    const period = props.period;
+    const counts = props.counts;
     const metrics = computeMetrics(counts);
-    const empty = state === 'empty' || isEmptyPerformance(counts, props.weeks);
-    const overdue = state === 'empty' ? [] : props.overdue;
+    const empty =
+        isEmptyPerformance(counts, props.weeks) && props.overdue_count === 0;
+    const overdue = props.overdue;
+    const self = props.person.is_self;
+    const setPeriod = (next: PeriodKey) =>
+        router.get(path, next === '8w' ? {} : { periode: PERIOD_SLUGS[next] }, {
+            preserveScroll: true,
+            preserveState: true,
+            replace: true,
+            only: ['performance'],
+            onStart: () => setSwitching(true),
+            onFinish: () => setSwitching(false),
+        });
     const mobileNote = (key: Metric['key']): string => {
         switch (key) {
             case 'completion':
@@ -201,15 +213,23 @@ export function PerformanceScreen({
                     />
                 )
             }
-            value={overdue.length}
-            valueClassName={overdue.length > 0 ? 'text-danger' : 'text-success'}
+            value={props.overdue_count}
+            valueClassName={
+                props.overdue_count > 0 ? 'text-danger' : 'text-success'
+            }
             note={
-                overdue.length === 0 ? (
+                props.overdue_count === 0 ? (
                     'Tidak ada'
-                ) : (
-                    <span className="font-mono text-[14px] font-semibold">
-                        {overdue.map((t) => t.key).join(' dan ')}
+                ) : overdue.length > 0 ? (
+                    <span className="font-mono text-[14px] font-semibold break-words">
+                        {overdue
+                            .slice(0, 3)
+                            .map((t) => t.key)
+                            .join(', ')}
+                        {props.overdue_count > 3 ? ' …' : ''}
                     </span>
+                ) : (
+                    'di workspace yang tidak Anda lihat'
                 )
             }
         />
@@ -217,11 +237,7 @@ export function PerformanceScreen({
 
     let body: ReactNode;
 
-    if (state === 'loading') {
-        body = <PreviewSkeleton kpis={mobile ? 4 : 4} />;
-    } else if (state === 'error') {
-        body = <PreviewError what="Data kinerja" />;
-    } else if (empty) {
+    if (empty) {
         body = (
             <EmptyState
                 icon={BarChart3}
@@ -249,18 +265,18 @@ export function PerformanceScreen({
                         />
                     ))}
                 </div>
-                {overdue.length > 0 && (
+                {props.overdue_count > 0 && (
                     <Link
-                        href="/tugas"
+                        href={self ? '/tugas' : (overdue[0]?.url ?? path)}
                         className={cn(
                             'flex min-h-[56px] items-center justify-between gap-3 rounded-[20px] bg-danger-soft px-4 text-danger',
                             focusRing,
                         )}
                     >
-                        <span className="text-body font-bold">
-                            {overdue.length} tugas terlambat
+                        <span className="shrink-0 text-body font-bold">
+                            {props.overdue_count} tugas terlambat
                         </span>
-                        <span className="font-mono text-[14px] font-semibold">
+                        <span className="min-w-0 truncate font-mono text-[14px] font-semibold">
                             {overdue.map((t) => t.key).join(', ')}
                         </span>
                     </Link>
@@ -275,7 +291,7 @@ export function PerformanceScreen({
                     </p>
                 </section>
                 <Definitions metrics={metrics} />
-                <PrivacyNote compact />
+                <PrivacyNote compact self={self} />
             </div>
         );
     } else {
@@ -325,6 +341,11 @@ export function PerformanceScreen({
                             title="Selesai per workspace"
                             bodyClassName="gap-3.5"
                         >
+                            {props.by_workspace.length === 0 && (
+                                <p className="text-body text-text-muted">
+                                    Belum ada tugas selesai di periode ini.
+                                </p>
+                            )}
                             {props.by_workspace.map(({ workspace, done }) => (
                                 <div
                                     key={workspace.id}
@@ -342,7 +363,7 @@ export function PerformanceScreen({
                             ))}
                         </Panel>
                         <Panel
-                            title={`Kehadiran · ${props.attendance.month_label}`}
+                            title={`Kehadiran · ${props.attendance.label}`}
                             bodyClassName="gap-3"
                         >
                             <div className="grid grid-cols-2 gap-2.5">
@@ -351,7 +372,9 @@ export function PerformanceScreen({
                                         Tepat waktu
                                     </span>
                                     <span className="text-[28px] leading-9 font-extrabold tnum">
-                                        {props.attendance.on_time_rate}%
+                                        {props.attendance.on_time_rate === null
+                                            ? '–'
+                                            : `${props.attendance.on_time_rate}%`}
                                     </span>
                                 </div>
                                 <div className="rounded-lg bg-background p-3.5">
@@ -359,58 +382,73 @@ export function PerformanceScreen({
                                         Rata-rata masuk
                                     </span>
                                     <span className="text-[28px] leading-9 font-extrabold text-text tnum">
-                                        {props.attendance.average_check_in}
+                                        {props.attendance.average_check_in ??
+                                            '–'}
                                     </span>
                                 </div>
                             </div>
-                            <PanelLink href="/absensi/riwayat">
-                                Lihat riwayat absensi
-                            </PanelLink>
+                            {self && (
+                                <PanelLink href="/absensi/riwayat">
+                                    Lihat riwayat absensi
+                                </PanelLink>
+                            )}
                         </Panel>
                     </div>
                 </div>
                 <Definitions metrics={metrics} />
-                <PrivacyNote compact={false} />
+                <PrivacyNote compact={false} self={self} />
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col gap-5 md:gap-6">
-            <PreviewBar />
+        <div
+            className={cn(
+                'flex flex-col gap-5 transition-opacity duration-180 ease-brand md:gap-6',
+                switching && 'opacity-60',
+            )}
+            aria-busy={switching || undefined}
+        >
             <section className="flex flex-wrap items-end justify-between gap-5">
                 <div className="flex min-w-0 flex-col gap-1 md:gap-2">
-                    <h1 className="hidden text-display tracking-[-0.03em] text-text md:block">
-                        Kinerja saya
+                    <h1 className="hidden text-display tracking-[-0.03em] break-words text-text md:block">
+                        {self ? 'Kinerja saya' : `Kinerja ${props.person.name}`}
                     </h1>
+                    {!self && mobile && (
+                        <h1 className="text-h3 break-words text-text">
+                            {props.person.name}
+                        </h1>
+                    )}
                     <p className="text-[15px] text-text-muted md:text-body-lg">
                         {mobile
-                            ? `${counts.label} · tanpa skor gabungan`
-                            : 'Berdasarkan output tugas dan kehadiran. Tidak ada skor gabungan.'}
+                            ? `${counts.label} · ${props.period_label} · tanpa skor gabungan`
+                            : `${props.period_label} · berdasarkan output tugas dan kehadiran. Tidak ada skor gabungan.`}
                     </p>
                 </div>
                 {!mobile && (
                     <div className="flex flex-wrap items-center gap-3">
-                        <nav
-                            aria-label="Beranda"
-                            className="inline-flex gap-1 rounded-[14px] border border-border bg-surface/70 p-1"
-                        >
-                            <Link
-                                href="/dashboard"
-                                className={cn(
-                                    'inline-flex h-[38px] items-center rounded-[10px] px-[18px] text-[15px] font-semibold text-text-muted hover:text-text',
-                                    focusRing,
-                                )}
+                        {self && (
+                            <nav
+                                aria-label="Beranda"
+                                className="inline-flex gap-1 rounded-[14px] border border-border bg-surface/70 p-1"
                             >
-                                Ringkasan
-                            </Link>
-                            <span
-                                aria-current="page"
-                                className="inline-flex h-[38px] items-center rounded-[10px] bg-surface px-[18px] text-[15px] font-bold text-text shadow-segment"
-                            >
-                                Kinerja saya
-                            </span>
-                        </nav>
+                                <Link
+                                    href="/dashboard"
+                                    className={cn(
+                                        'inline-flex h-[38px] items-center rounded-[10px] px-[18px] text-[15px] font-semibold text-text-muted hover:text-text',
+                                        focusRing,
+                                    )}
+                                >
+                                    Ringkasan
+                                </Link>
+                                <span
+                                    aria-current="page"
+                                    className="inline-flex h-[38px] items-center rounded-[10px] bg-surface px-[18px] text-[15px] font-bold text-text shadow-segment"
+                                >
+                                    Kinerja saya
+                                </span>
+                            </nav>
+                        )}
                         {periodTabs}
                     </div>
                 )}

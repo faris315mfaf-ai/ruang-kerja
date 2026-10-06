@@ -1,8 +1,6 @@
 # Otomasi, WhatsApp, tugas berulang, template & Kinerja saya (F2-4)
 
-> **Status:** Aturan otomasi, tugas berulang, template, dan Kinerja saya **Akan dibangun** (keputusan pemilik 6 Okt 2026): backend nyata dikerjakan berikutnya; dokumen ini menjelaskan keadaan pratinjau saat ini. Notifikasi WhatsApp + pemilihan provider **Ditahan** (keputusan pemilik 6 Okt 2026): tidak dikerjakan sampai pemilik membuka lagi; layar pratinjau tetap bisa dicoba. Panduan pemakaian: [PANDUAN-PRATINJAU.md](PANDUAN-PRATINJAU.md).
->
-> Pratinjau Fase 2 · dibangun Agen C · rute `/pengaturan/whatsapp`, `/otomasi`, `/otomasi/berulang`, `/otomasi/template`, `/kinerja` · data contoh, tidak menyimpan apa pun. Indeks: [README](README.md).
+> **Status: Nyata** (Okt 2026, `FEATURE_AUTOMATION`) untuk `/otomasi`, `/otomasi/berulang`, `/otomasi/template`, `/kinerja` — data dari server, tersimpan. **WhatsApp ditahan**: `/pengaturan/whatsapp` tetap pratinjau data contoh. Indeks: [README](README.md).
 
 ## 1. Tujuan & masalah
 
@@ -147,55 +145,59 @@ sequenceDiagram
 
 ## 5. Penjelasan kode
 
+**Backend (nyata, `FEATURE_AUTOMATION`)**
+
 | File | Peran |
 |---|---|
-| `pages/automation/{whatsapp,rules,recurring,templates,performance}.tsx` | Halaman. Setiap halaman memakai satu komponen layar dengan prop `mobile` (dialog di desktop/tablet, BottomSheet + FAB di ponsel; tabel di desktop, kartu di ponsel), bukan file `*.desktop/*.mobile` terpisah, karena perbedaannya kecil. |
-| `features/automation/types.ts` | `WhatsappSettings` (+ `WhatsappEvent`, `WhatsappTemplate`), `AutomationProps` (`AutomationRule` dengan `RuleTrigger`/`RuleCondition`/`RuleAction`/`RuleTarget`, `RuleRun`), `RecurringProps` (`RecurringTask`, `RecurrencePattern`), `TemplatesProps` (`TaskTemplate`, `WorkspaceTemplate`), `PerformanceProps` (`PeriodCounts`, `WeekBucket`, `OverdueTask`). |
-| `features/automation/fixtures.ts` | `TODAY = '2026-10-05'`, `PEOPLE`, `WORKSPACES`, `LABELS`, `WHATSAPP`, `DEMO_OTP = '246810'`, `AUTOMATION`, `RECURRING`, `TEMPLATES`, `PERFORMANCE`. Setiap halaman menerima **satu prop** berbentuk sama dengan fixture-nya (`whatsapp`, `automation`, `recurring`, `templates`, `performance`) karena prop bersama `workspaces` dari `HandleInertiaRequests` akan tertimpa bila digabung. |
-| `phone.ts` | `normalizePhone` (E.164 `+62…`), `formatPhone` (`+62 812-3456-7890`), `maskPhone`. |
-| `rules.ts` | `describeRule`/`describeAction` (kalimat pratinjau), `validateRule` (termasuk penjaga loop), `encodeTarget`/`decodeTarget`. Pemicu memakai **kategori** status, bukan nama kolom (PRD M4). |
-| `recurrence.ts` | `nextOccurrences` (tanggal 31 di bulan pendek, jangkar tiap N minggu), `describePattern`, `validateRecurring`. |
-| `performance.ts` | `rate`, `median`, `computeMetrics`, `weekBars`, `isEmptyPerformance`. Rumus PRD M7 (ketepatan waktu 33/37 = 89%). |
-| `helpers.ts`, `automation.test.ts` (35 test) | `renderTemplate`/`boldSegments`, jam tenang lintas tengah malam, kunci workspace, `previewStateFromUrl`; test juga memastikan **tidak ada skor gabungan**. |
-| `whatsapp/use-whatsapp.ts` + `connection-card.tsx`, `event-optins.tsx`, `side-cards.tsx`, `settings-header.tsx`, `whatsapp-screen.tsx` | Hook status sambungan/OTP/opt-in + tampilan. `settings-header.tsx` = salinan header Pengaturan dengan tab "WhatsApp". |
-| `rules/rule-builder.tsx`, `rules/rules-screen.tsx`, `recurring/*`, `templates/*`, `performance/week-chart.tsx`, `performance/performance-screen.tsx` | Tampilan per layar. |
-| `preview-state.tsx`, `automation-nav.tsx`, `form-fields.tsx`, `form-surface.tsx` | `PreviewBar`, navigasi antar layar otomasi, field berlabel, permukaan Dialog/BottomSheet. |
+| `routes/automation.php` | `/otomasi` (+ `aturan/*`), `/otomasi/berulang/*`, `/otomasi/template` (+ `tugas/*`, `workspace/*`), `/kinerja`, `/kinerja/{user}`. Flag mati → 404. |
+| `app/Domain/Automation/Actions` | `RunAutomationRule` (menjalankan satu aturan pada satu tugas, mencatat run), `Save/Duplicate/Delete/SetAutomationRuleActive`, `Save/Delete/SetRecurringTaskActive`, `CreateTaskFromRecurring` (job & "Buat sekarang"), `Save/Delete/ApplyTaskTemplate`, `CreateWorkspaceFromTemplate`, `SaveWorkspaceAsTemplate`, `DeleteWorkspaceTemplate`. Aksi aturan memakai `UpdateTask` (tugaskan, label), `MoveTask` (pindah kolom) dan notifikasi `AutomationNotification` (`automation.notify`). |
+| `app/Listeners/Automation/TriggerTaskAutomations` | `TaskMoved` (hanya bila **kategori** berubah, dicatat `TaskCategoryChanges` lewat `Task::updated`) dan `TaskCreated` → antrekan `RunTaskAutomations`. |
+| `app/Domain/Automation/Jobs` | `RunTaskAutomations`, `RunOverdueAutomations` (07.05 WIB, sekali per tugas per tenggat), `CreateRecurringTasks` (07.00 WIB, idempoten lewat `recurring_task_occurrences`). |
+| `app/Domain/Automation/Services` | `AutomationContext` (penjaga loop: maks. 3 aturan per rantai, aturan tidak memicu dirinya sendiri), `RecurrenceSchedule` (port `recurrence.ts`), `RuleMatcher`, `AutomationAccess`, `TemplateShapes`. |
+| `app/Domain/Automation/Queries` | `AutomationPage` (KPI benar-benar 7 hari terakhir), `RecurringPage`, `TemplatesPage`, `PersonalPerformance` (Kinerja saya), `AutomationWorkspaces`. |
+| `app/Policies` | `AutomationRulePolicy`, `AutomationRunPolicy`, `RecurringTaskPolicy`, `TaskTemplatePolicy`, `WorkspaceTemplatePolicy`, `PerformancePolicy` (gate `viewPerformance`, `AutomationServiceProvider`). |
+| `database/seeders/AutomationDemoSeeder.php` | Data demo (4 aturan + log, 5 tugas berulang, 3 template tugas, 2 template workspace). |
+
+**Frontend**
+
+| File | Peran |
+|---|---|
+| `pages/automation/{rules,recurring,templates,performance}.tsx` | Halaman nyata: props dari controller, skeleton saat breakpoint belum diketahui. |
+| `features/automation/mutation.ts` | `mutate()` = `router` Inertia + toast galat; controller menjawab redirect back + toast. Sakelar aktif/jeda optimistis dan kembali bila gagal. |
+| `features/automation/confirm-delete.tsx` | Konfirmasi hapus aturan, tugas berulang, template. |
+| `features/automation/save-workspace-template.tsx` | Kartu "Simpan sebagai template" di Pengaturan workspace (tim/proyek, owner/admin). |
+| `rules.ts`, `recurrence.ts`, `performance.ts`, `helpers.ts` | Logika murni (kalimat aturan, validasi, jadwal, metrik). `recurrence-cases.json` = fixture bersama Vitest & Pest. |
+| `whatsapp/*`, `fixtures.ts`, `preview-state.tsx` | **WhatsApp tetap pratinjau** (data contoh, banner "Ditahan"). |
 
 ## 6. Bentuk data → tabel DATABASE.md
 
-| Tipe frontend | Tabel | Catatan |
-|---|---|---|
-| `WhatsappEvent` (in_app/email/whatsapp) | `notification_preferences` (`channel = whatsapp`) | Sudah ada |
-| `WhatsappSettings.phone`, `connected_at` | **belum ada**: `employee_profiles.phone` + `whatsapp_verified_at`, atau tabel `whatsapp_channels` | |
-| `quiet_hours` WA | perluas `notification_settings` (`wa_quiet_start/end`, `wa_allow_high_priority`) | |
-| `WhatsappTemplate` | **belum ada**: `whatsapp_templates` (name, event, body, status persetujuan) | |
-| `AutomationRule`, `RuleRun` | **belum ada**: `automation_rules` (workspace_id, name, trigger/condition/actions jsonb, is_active, created_by, last_run_at, run_count), `automation_runs` (rule_id, task_id, result, detail, ran_at) | |
-| `RecurringTask` | **belum ada**: `recurring_tasks` (workspace_id, title, assignee_id, priority, pattern jsonb, starts_on, ends_on, is_active, created_count, last_created_on) | PRD Fase 2 "task berulang" |
-| `TaskTemplate`, `WorkspaceTemplate` | **belum ada**: `task_templates`, `workspace_templates` | |
-| `PerformanceProps` | tanpa tabel baru: `tasks`, `task_assignees`, `attendance_days` (MetricDefinitions di `app/Domain/Analytics`) | |
+| Tipe frontend | Tabel |
+|---|---|
+| `AutomationRule`, `RuleRun` | `automation_rules`, `automation_runs` |
+| `RecurringTask` | `recurring_tasks` (+ `recurring_task_occurrences`) |
+| `TaskTemplate`, `WorkspaceTemplate` | `task_templates`, `workspace_templates` |
+| `PerformanceProps` | tanpa tabel baru: `tasks`, `task_assignees`, `attendance_days` (`MetricDefinitions`) |
+| `WhatsappSettings` | **belum ada** (ditahan) |
 
-## 7. Pekerjaan backend tersisa
+Rincian kolom: `docs/DATABASE.md` §4 "Otomasi".
 
-- [ ] **Keputusan pemilik:** provider WhatsApp (Meta Cloud API resmi vs gateway).
-- [ ] WhatsApp: penyimpanan nomor terverifikasi, `SendWhatsappOtp` (rate limit, kode berumur pendek, simpan hash, maks. 3 percobaan), `VerifyWhatsappOtp`, `DisconnectWhatsapp` (+ `audit_logs`). Kanal `WhatsappChannel` di balik `NotificationChannel`, tabel template, job antrean dengan retry/backoff.
-- [ ] Otomasi: migrasi `automation_rules`, `automation_runs`; Policy (hanya owner/admin workspace); listener pada `TaskMoved`/`TaskCreated` + job harian "lewat tenggat"; penjaga loop & batas kedalaman berantai; aksi memakai Action yang ada (`AssignTask`, `MoveTask`, label, Notification).
-- [ ] Tugas berulang: migrasi `recurring_tasks`; job terjadwal 07.00 WIB memanggil `CreateTask` (idempoten per tanggal) dengan porting `recurrence.ts` ke PHP + test Pest.
-- [ ] Template: migrasi `task_templates`, `workspace_templates`; `ApplyTaskTemplate`, `CreateWorkspaceFromTemplate` (key `^[A-Z][A-Z0-9]{1,9}$`, unik termasuk `previous_keys`); "Simpan sebagai template" di Pengaturan workspace.
-- [ ] Kinerja saya: query `app/Domain/Analytics` untuk satu orang (periode, tren 8 minggu, per workspace, terlambat, rata-rata jam masuk); akses pemilik/atasan langsung/HR (Policy + test matriks), cache 5 menit.
-- [ ] Shell: tab "WhatsApp" di `settingsLinks()` (`layouts/settings/layout.tsx`), tautan "Kinerja saya" dari Beranda (SBeranda "Ringkasan · Kinerja saya").
-- [ ] Perbarui DATABASE.md untuk semua tabel baru.
+## 7. Status & cara pakai (Nyata, Okt 2026)
+
+- **Aturan** — semua anggota workspace melihat aturan workspace-nya; **owner/admin** membuat, mengubah, menjeda, menduplikat, dan menghapus (dengan konfirmasi). Direksi/HR/Super Admin tidak melihat aturan workspace yang bukan miliknya. Pemicu: pindah ke kategori kolom, lewat tenggat (07.05 WIB), dibuat berlabel; kondisi prioritas/penanggung jawab; aksi beri tahu (aplikasi + email sesuai preferensi "Otomasi workspace"; penerima selalu disaring ke yang bisa melihat tugas), tugaskan, tambah label, pindah kolom. Log eksekusi 7 hari dengan hasil Berhasil/Gagal/Dilewati.
+- **Tugas berulang** — anggota (bukan viewer) membuat; pembuat atau owner/admin mengubah, menjeda, "Buat sekarang", menghapus. Ada pilihan **prioritas**. Tugas dibuat 07.00 WIB, bertenggat hari itu, sekali per tanggal.
+- **Template** — template tugas untuk semua workspace dibuat Kepala Divisi/Ketua Tim/Direksi/Super Admin; template khusus satu workspace oleh owner/admin-nya. "Pakai template" membuat tugas dengan checklist, label, estimasi (0,5–999 jam) dan **tenggat** yang dipilih. Template workspace disimpan dari Pengaturan workspace dan "Pakai template" **membuat workspace** (kolom + label template) lalu membukanya.
+- **Kinerja saya** (`/kinerja`) — periode 8 minggu / Bulan ini / Kuartal (`?periode=`); grafik per minggu dan panel kehadiran mengikuti periode; tanpa skor gabungan. Atasan langsung dan HR membuka `/kinerja/{id}` (diaudit `performance.viewed`); workspace pribadi karyawan tidak ikut dan workspace yang tidak terlihat penonton disamarkan "Workspace lain".
+- **Navigasi** — tile Otomasi & Kinerja saya di Dock/Rail (semua karyawan, flag menyala), baris di Menu ponsel.
+- **Ditahan:** WhatsApp (`/pengaturan/whatsapp` tetap pratinjau berlabel "Ditahan", tidak ada aksi WhatsApp di aturan).
 
 ## 8. Keadaan kosong/galat & aksesibilitas
 
-- "Lihat keadaan: Berisi · Kosong · Galat · Memuat" di samping banner (atau `?keadaan=`).
-- Grafik Kinerja punya tabel `sr-only` (dibungkus `div.sr-only`, perbaikan bug #4); metrik selalu angka + teks hitungan, tidak warna saja.
-- Jam tenang memakai Select "21.00" (bukan `input type=time` yang mengikuti locale).
-- OTP memakai `InputOTP` (`autocomplete="one-time-code"`). Galat nomor diumumkan di bawah field.
-- Tablet 834: baris tugas berulang turun ke bawah judul (perbaikan bug #5).
+- Setiap layar punya keadaan kosong (EmptyState) yang menjelaskan siapa yang bisa menambah; galat validasi tampil per isian (pesan sama dengan server), galat lain sebagai toast.
+- Grafik Kinerja punya tabel `sr-only`; metrik selalu angka + teks hitungan.
+- Kontrol yang tidak boleh dipakai pengguna disembunyikan atau dinonaktifkan (sakelar aturan bagi anggota biasa).
 
-## 9. Batasan prototipe
+## 9. Batasan
 
-- Grafik per minggu selalu 8 minggu terakhir (tidak ikut filter periode), sama dengan desain. Ketepatan waktu 89% (rumus PRD) sedangkan desain menulis 88%.
-- Kode OTP contoh `246810` ditampilkan di layar.
-- Tab "WhatsApp" hanya ada di header salinan halaman ini; halaman Pengaturan lain belum menampilkannya.
-- `/kinerja` hanya bisa dibuka dari hub `/pratinjau`.
+- Tanggal yang terlewat saat dijeda atau saat job tidak berjalan tidak disusulkan.
+- Aturan "lewat tenggat" yang baru dibuat langsung berlaku untuk tugas yang sudah terlambat.
+- Tautan "Kinerja saya" dari Beranda menunggu integrator (halaman Beranda sedang dirombak agen lain); sementara lewat Dock/Rail/Menu.

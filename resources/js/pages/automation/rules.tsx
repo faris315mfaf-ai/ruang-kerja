@@ -1,25 +1,19 @@
 import { Head } from '@inertiajs/react';
-import { AUTOMATION } from '@/features/automation/fixtures';
-import {
-    PreviewSkeleton,
-    usePreviewState,
-} from '@/features/automation/preview-state';
+import { PreviewSkeleton } from '@/features/automation/preview-state';
 import { RulesScreen } from '@/features/automation/rules/rules-screen';
 import type { AutomationProps } from '@/features/automation/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 
 /**
- * /otomasi — automation rules "jika … maka …" (Fase 2 · F2-4, preview).
- * Props default to fixtures (features/automation/types.ts shape).
+ * /otomasi — automation rules "jika … maka …" (Fase 2 · F2-4).
+ * Props from AutomationRuleController (App\Domain\Automation\Queries\AutomationPage).
  */
 export default function AutomationRulesPage({
-    automation: data = AUTOMATION,
+    automation,
 }: {
-    /** Same shape as the fixture; the controller passes it later. */
-    automation?: AutomationProps;
+    automation: AutomationProps;
 }) {
     const breakpoint = useBreakpoint();
-    const { state } = usePreviewState();
 
     return (
         <>
@@ -28,9 +22,7 @@ export default function AutomationRulesPage({
                 <PreviewSkeleton kpis={3} />
             ) : (
                 <RulesScreen
-                    key={state}
-                    props={data}
-                    state={state}
+                    props={automation}
                     mobile={breakpoint === 'mobile'}
                 />
             )}
