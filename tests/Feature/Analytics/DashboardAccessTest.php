@@ -3,6 +3,7 @@
 use App\Domain\Analytics\Enums\DashboardView;
 use App\Domain\Analytics\Services\DashboardAccess;
 use App\Domain\Organization\Enums\Role;
+use App\Models\Division;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -43,6 +44,13 @@ it('keeps the HR and division tabs for a Direksi who is also HR or leads a divis
 
     expect(array_map(fn (DashboardView $view): string => $view->value, $access->views($head->fresh())))->toBe(['saya', 'divisi', 'direksi'])
         ->and($access->divisions($head->fresh(), DashboardView::Division)->pluck('id')->all())->toBe([$this->org['keu']->id]);
+
+    // Heading the Direksi board unit itself does not open a Kepala Divisi dashboard.
+    $dirut = User::factory()->withRole(Role::Direksi)->create();
+    Division::factory()->headedBy($dirut)->create(['name' => 'Direksi', 'code' => 'DIR', 'is_board' => true]);
+
+    expect(array_map(fn (DashboardView $view): string => $view->value, app(DashboardAccess::class)->views($dirut->fresh())))->toBe(['saya', 'direksi'])
+        ->and(app(DashboardAccess::class)->defaultView($dirut->fresh()))->toBe(DashboardView::Direksi);
 });
 
 it('authorizes every dashboard route per role', function (string $who, string $view, int $status) {

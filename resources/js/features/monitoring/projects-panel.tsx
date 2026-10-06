@@ -209,7 +209,7 @@ export function ProjectsPanel({
                     ))}
                 </ul>
             ) : (
-                <div className="overflow-x-auto">
+                <div className="relative overflow-x-auto [contain:inline-size]">
                     <table className="w-full min-w-[860px] text-left">
                         <caption className="sr-only">
                             Proyek berjalan

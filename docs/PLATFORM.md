@@ -64,8 +64,10 @@ Butir 2–4 diterapkan modul masing-masing; shell (butir 1) sudah berlaku.
 | File & dokumen Drive | ✓ | ✓ | Buka di aplikasi Google, unggah dari kamera/galeri |
 | Inbox & notifikasi | ✓ | ✓ | Lewat lonceng di app bar (atau tab ke-4 bila Obrolan mati). Geser untuk arsip/dibaca |
 | Cari | ✓ | ✓ | Layar penuh, kolom cari di bawah |
-| Dashboard Kadiv / HR | ✓ | ✓ | Versi ringkas 1 kolom |
-| Dashboard Manajemen (`/manajemen`) | ✓ | ✓ | Kartu bertumpuk: hero kehadiran + tugas, 2 tile KPI, grafik ringkas, daftar proyek, absensi, milestone (MgPDashboard) |
+| Dashboard Kadiv / HR | ✓ | ✓ | Versi ringkas 1 kolom (HR: pengajuan menunggu HR, ringkasan absensi, Hiring — keputusan pemilik 6 Okt 2026) |
+| Dashboard Direksi (`/dashboard/direksi`) | ✓ | ✓ | Tab **Harian · Mingguan · Proyek · Catatan**, kartu bertumpuk; matriks mingguan = baris kotak hari per orang; detail laporan = bottom sheet; akses cepat workspace di tab Proyek; ekspor hanya desktop |
+| Absensi › Hari ini · Rekap · Kedisiplinan | ✓ | ◐ | Tab bergaris bawah; Kedisiplinan: KPI 2×2, tren ringkas, daftar orang (chip filter); ekspor di desktop |
+| Dashboard Manajemen (`/manajemen`) | ✓ | ✓ | Kartu bertumpuk: hero kehadiran + tugas, 2 tile KPI, grafik ringkas, daftar proyek, absensi, milestone (MgPDashboard), **beban kerja** per divisi (buka per orang) dan **catatan tindakan** |
 | Portofolio & detail proyek (Direksi) | ✓ | ✓ | Tabel proyek → kartu proyek; roadmap hanya desktop (mobile: milestone berikutnya per kartu); "Minta update" & "Beri arahan" di bilah aksi bawah |
 | Pengaturan notifikasi & tema | ✓ | ✓ | Matriks → daftar accordion |
 | Admin karyawan | ✓ | ◐ | Cari & lihat profil. Tambah/ubah/impor di desktop |
@@ -137,7 +139,8 @@ Aturan:
 | File & dokumen | WorkspaceFile | MFile |
 | Dashboard Kadiv | Main | MDashboardKadiv |
 | Dashboard HR | DashboardHR | MDashboardHR |
-| Dashboard Direksi (portofolio proyek) | DashboardDireksi | MDashboardDireksi |
+| Dashboard Direksi (monitoring kerja, keputusan pemilik 6 Okt 2026) | — (disusun dari primitif Arus: Panel, Progress, tabel DHR) | — (tab Harian · Mingguan · Proyek · Catatan) |
+| Portofolio proyek (`/portofolio`) | DashboardDireksi | MDashboardDireksi |
 | Detail proyek | ProyekDetail | MProyekDetail |
 | Admin karyawan | Karyawan | MKaryawan (terbatas) |
 | Struktur org, alur, lokasi/shift, pengaturan workspace, kiosk | ada | desktop saja / terbatas |

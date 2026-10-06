@@ -389,7 +389,7 @@ export function WeeklyPanel({
                         ))}
                     </div>
                 ) : (
-                    <div className="-mx-1 overflow-x-auto px-1">
+                    <div className="relative -mx-1 overflow-x-auto px-1 [contain:inline-size]">
                         <table className="w-full min-w-[720px] border-separate border-spacing-y-1 text-left">
                             <caption className="sr-only">
                                 Laporan per orang per hari, {weekly.week.label}

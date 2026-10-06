@@ -108,7 +108,7 @@ Aturan: pemohon tidak bisa menyetujui pengajuannya sendiri. Jika penyetuju = pem
 |---|---|
 | Peran global | `spatie/laravel-permission` (`super_admin`, `direksi`, `hr`, `kepala_divisi`, `anggota`) |
 | Cakupan data | Policy + query scope: `Attendance::visibleTo($user)` → diri sendiri; bawahan langsung; divisi bila Kadiv; semua bila HR/Direksi/Super Admin |
-| Workspace | `WorkspacePolicy` membaca `workspace_members.role` + aturan visibilitas. Direksi: lihat semua non-pribadi. Workspace pribadi hanya pemilik (bahkan Super Admin tidak bisa membaca isi) |
+| Workspace | `WorkspacePolicy` membaca `workspace_members.role` + aturan visibilitas. Direksi, HR (`workspaces.view_all`) dan Super Admin: lihat semua non-pribadi; bila bukan anggota **mode lihat saja** (`WorkspacePolicy::isViewOnly`, keputusan pemilik 6 Okt 2026). Workspace pribadi hanya pemilik (bahkan Super Admin tidak bisa membaca isi) |
 | Data sensitif | Melihat selfie membutuhkan izin `attendance.view_selfie` (HR & atasan langsung) dan **selalu** dicatat `audit_logs` |
 | Broadcast | `routes/channels.php` memakai Policy yang sama |
 

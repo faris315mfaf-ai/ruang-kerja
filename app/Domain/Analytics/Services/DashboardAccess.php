@@ -30,6 +30,9 @@ use Illuminate\Database\Eloquent\Collection;
  */
 final class DashboardAccess
 {
+    /** @var array<string, list<string>> board division ids per company (one query per request) */
+    private array $boardIds = [];
+
     public function can(User $user, DashboardView $view): bool
     {
         if (! $user->isActive()) {
@@ -38,10 +41,30 @@ final class DashboardAccess
 
         return match ($view) {
             DashboardView::Personal => true,
-            DashboardView::Division => $this->companyWide($user) || $user->ledDivisionIds() !== [],
+            DashboardView::Division => $this->companyWide($user) || $this->ledOperationalDivisionIds($user) !== [],
             DashboardView::Hr => $this->companyWide($user) && $user->hasPermission(Permission::AttendanceViewAll),
             DashboardView::Direksi => $user->hasPermission(Permission::PortfolioView),
         };
+    }
+
+    /**
+     * Divisions the user leads, without the Direksi board unit: the Direktur
+     * Utama heading "Direksi" does not get a Kepala Divisi dashboard of it
+     * (keputusan pemilik 6 Okt 2026).
+     *
+     * @return list<string>
+     */
+    private function ledOperationalDivisionIds(User $user): array
+    {
+        $led = $user->ledDivisionIds();
+
+        if ($led === []) {
+            return [];
+        }
+
+        $this->boardIds[$user->company_id] ??= array_values(array_map('strval', Division::query()->where('company_id', $user->company_id)->where('is_board', true)->pluck('id')->all()));
+
+        return array_values(array_diff($led, $this->boardIds[$user->company_id]));
     }
 
     /**
@@ -81,7 +104,7 @@ final class DashboardAccess
             return DashboardView::Hr;
         }
 
-        if (($user->hasRole(Role::KepalaDivisi) || $user->ledDivisionIds() !== []) && $this->can($user, DashboardView::Division)) {
+        if (($user->hasRole(Role::KepalaDivisi) || $this->ledOperationalDivisionIds($user) !== []) && $this->can($user, DashboardView::Division)) {
             return DashboardView::Division;
         }
 
@@ -107,7 +130,7 @@ final class DashboardAccess
             DashboardView::Hr, DashboardView::Direksi => $query->get(),
             DashboardView::Division => $this->companyWide($user)
                 ? $query->where('is_board', false)->get()
-                : $query->whereIn('id', $user->ledDivisionIds())->get(),
+                : $query->whereIn('id', $this->ledOperationalDivisionIds($user))->get(),
         };
     }
 

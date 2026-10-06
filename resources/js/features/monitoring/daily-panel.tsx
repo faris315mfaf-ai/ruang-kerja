@@ -299,7 +299,9 @@ export function DailyPanel({
                                             <span className="font-bold text-text">
                                                 {division.reported}
                                             </span>
-                                            /{division.scheduled} lapor
+                                            {division.scheduled > 0
+                                                ? `/${division.scheduled} lapor`
+                                                : ' lapor (tanpa jadwal)'}
                                             {division.draft > 0 &&
                                                 ` · ${division.draft} draf`}
                                             {division.missing > 0 && (
