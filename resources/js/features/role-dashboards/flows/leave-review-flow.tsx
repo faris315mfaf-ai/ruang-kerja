@@ -1,237 +1,223 @@
-import { AlertTriangle, Check } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { useId, useState } from 'react';
-import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { UserAvatar } from '@/components/shell/user-avatar';
-import { useFakeMutation } from '@/features/prototype/use-fake-mutation';
-import { cn } from '@/lib/utils';
-import { LEAVE_REVIEW_FLOW } from '../fixtures';
+import { RequestDetailCard } from '@/features/requests/request-detail-card';
+import { cn, focusRing } from '@/lib/utils';
+import { approve, reject, revise } from '@/routes/roles/approvals';
+import type { LeaveReviewFlowData, RoleKey } from '../types';
+import { submitFlowAction } from './submit';
 import type { FlowProps } from './surface';
 import { FlowSurface } from './surface';
 
-const WEEKDAYS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+type Kind = 'approve' | 'reject' | 'revise';
 
-type Decision = 'approved' | 'rejected' | null;
+const ROUTES = { approve, reject, revise } as const;
 
-/** HR "Tinjau cuti" (PHRCuti): calendar, checks, approve or reject with reason. */
-export function LeaveReviewFlowSheet(props: FlowProps) {
-    const flow = LEAVE_REVIEW_FLOW;
-    const reasonId = useId();
-    const [decision, setDecision] = useState<Decision>(null);
-    const [rejecting, setRejecting] = useState(false);
-    const [reason, setReason] = useState('');
-    const [reasonError, setReasonError] = useState(false);
-    const { processing, run } = useFakeMutation();
+const FAILURE: Record<Kind, string> = {
+    approve: 'Pengajuan gagal disetujui.',
+    reject: 'Pengajuan gagal ditolak.',
+    revise: 'Permintaan revisi gagal dikirim.',
+};
 
-    const approve = () =>
-        void run(() => setDecision('approved'), {
-            success: 'Cuti Sari disetujui · saldo menjadi 5 hari',
-        });
+/**
+ * HR "Tinjau cuti" (PHRCuti): the full request (period, balance impact,
+ * colleagues absent, approval trail — RequestDetailCard) and the decision,
+ * with the Fase 1 actions. Absences come first in the queue; another request
+ * is loaded on demand (`?pilih=`, partial reload of `flow`).
+ */
+export function LeaveReviewFlowSheet({
+    role,
+    data,
+    loading,
+    onSelect,
+    ...props
+}: FlowProps & {
+    role: RoleKey;
+    data: LeaveReviewFlowData;
+    loading: boolean;
+    onSelect: (id: string) => void;
+}) {
+    const noteId = useId();
+    const [note, setNote] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [busy, setBusy] = useState<Kind | null>(null);
+    const selected = data.selected;
+    const waitingOnOther = loading;
+    const canDecide = selected?.can.decide ?? false;
 
-    const reject = () => {
-        if (!rejecting) {
-            setRejecting(true);
+    const decide = (kind: Kind) => {
+        if (!selected) {
+            return;
+        }
+
+        if (kind !== 'approve' && note.trim() === '') {
+            setError(
+                kind === 'reject'
+                    ? 'Alasan wajib diisi saat menolak.'
+                    : 'Catatan wajib diisi saat meminta revisi.',
+            );
 
             return;
         }
 
-        if (reason.trim().length < 5) {
-            setReasonError(true);
-
-            return;
-        }
-
-        void run(
-            () => {
-                setDecision('rejected');
-                setRejecting(false);
+        submitFlowAction(
+            ROUTES[kind].url({ role, employeeRequest: selected.id }),
+            { note: note.trim() === '' ? null : note.trim() },
+            {
+                failure: FAILURE[kind],
+                onStart: () => setBusy(kind),
+                onSuccess: () => {
+                    setNote('');
+                    setError(null);
+                },
+                onFinish: () => setBusy(null),
             },
-            { success: 'Cuti ditolak · Sari diberi tahu alasannya' },
         );
     };
-
-    const chip =
-        decision === 'approved'
-            ? { tone: 'success' as const, text: 'Disetujui HR' }
-            : decision === 'rejected'
-              ? { tone: 'danger' as const, text: 'Ditolak' }
-              : { tone: 'warning' as const, text: 'Menunggu HR' };
 
     return (
         <FlowSurface
             {...props}
-            title="Tinjau cuti"
-            description="Cuti tahunan · langkah 2 dari 2"
+            title="Tinjau pengajuan"
+            description={
+                data.total > 0
+                    ? `${data.total} menunggu keputusan Anda · cuti & izin lebih dulu`
+                    : 'Tidak ada yang menunggu keputusan Anda.'
+            }
             footer={
-                decision ? (
-                    <Button
-                        variant="outline"
-                        size="lg"
-                        className="w-full"
-                        onClick={() => setDecision(null)}
-                    >
-                        Urungkan keputusan
-                    </Button>
-                ) : (
-                    <div className="grid grid-cols-[1fr_2fr] gap-2">
+                selected && canDecide && !waitingOnOther ? (
+                    <div className="grid grid-cols-[auto_1fr_2fr] gap-2">
+                        <Button
+                            variant="quiet"
+                            size="lg"
+                            className="px-3"
+                            disabled={busy !== null}
+                            onClick={() => decide('revise')}
+                        >
+                            {busy === 'revise' && <Spinner />}
+                            Revisi
+                        </Button>
                         <Button
                             variant="outline"
                             size="lg"
-                            className="text-danger"
-                            disabled={processing}
-                            onClick={reject}
+                            className="font-bold text-danger"
+                            disabled={busy !== null}
+                            onClick={() => decide('reject')}
                         >
-                            {rejecting ? 'Kirim penolakan' : 'Tolak'}
+                            {busy === 'reject' && <Spinner />}
+                            Tolak
                         </Button>
                         <Button
                             size="lg"
-                            disabled={processing}
-                            onClick={approve}
+                            disabled={busy !== null}
+                            onClick={() => decide('approve')}
                         >
-                            {processing && <Spinner />}
-                            Setujui cuti
+                            {busy === 'approve' && <Spinner />}
+                            Setujui
                         </Button>
                     </div>
-                )
+                ) : undefined
             }
         >
-            <div className="flex items-center justify-between gap-3">
-                <span className="flex min-w-0 items-center gap-3">
-                    <UserAvatar
-                        name={flow.employee}
-                        className="size-12 text-[16px]"
-                    />
-                    <span className="flex min-w-0 flex-col">
-                        <span className="text-[18px] font-bold text-text">
-                            {flow.employee}
-                        </span>
-                        <span className="text-[15px] text-text-muted">
-                            {flow.role}
-                        </span>
-                    </span>
-                </span>
-                <Badge variant="status" tone={chip.tone} dot role="status">
-                    {chip.text}
-                </Badge>
-            </div>
-
-            <section
-                aria-label={`Kalender ${flow.month}`}
-                className="flex flex-col gap-3 rounded-[20px] border border-border bg-surface p-4"
-            >
-                <span className="text-[16px] font-bold">{flow.month}</span>
-                <div className="grid grid-cols-7 gap-1 text-center">
-                    {WEEKDAYS.map((day) => (
-                        <span
-                            key={day}
-                            className="text-[13px] font-bold text-text-muted"
-                        >
-                            {day}
-                        </span>
-                    ))}
-                    {flow.days.map((iso, index) => {
-                        const off = flow.leaveDays.includes(iso);
-                        const weekend = index % 7 >= 5;
-                        const day = Number(iso.slice(8));
-                        const otherMonth = iso.slice(5, 7) !== '10';
+            {data.items.length > 1 && (
+                <div
+                    role="radiogroup"
+                    aria-label="Pilih pengajuan"
+                    className="-mx-1 flex [scrollbar-width:none] gap-2 overflow-x-auto px-1 py-1 [&::-webkit-scrollbar]:hidden"
+                >
+                    {data.items.map((item) => {
+                        const active = selected?.id === item.id;
 
                         return (
-                            <span
-                                key={iso}
-                                aria-label={
-                                    off ? `${day} Oktober, cuti` : undefined
-                                }
+                            <button
+                                key={item.id}
+                                type="button"
+                                role="radio"
+                                aria-checked={active}
+                                onClick={() => onSelect(item.id)}
                                 className={cn(
-                                    'flex h-10 items-center justify-center rounded-[10px] text-[15px] font-semibold tnum',
-                                    off &&
-                                        'bg-grad-aksi font-extrabold text-on-brand',
-                                    !off &&
-                                        iso === flow.highlight &&
-                                        'bg-warning-soft text-warning',
-                                    !off &&
-                                        (weekend || otherMonth) &&
-                                        'text-text-subtle',
+                                    'inline-flex h-11 shrink-0 items-center rounded-full border px-4 text-[15px] font-bold whitespace-nowrap transition-colors duration-120 ease-brand',
+                                    active
+                                        ? 'border-transparent bg-grad-aksi text-on-brand'
+                                        : 'border-border bg-surface text-text hover:bg-surface-2',
+                                    focusRing,
                                 )}
                             >
-                                {day}
-                            </span>
+                                {item.user.name.split(' ')[0]} ·{' '}
+                                {item.type.code}
+                            </button>
                         );
                     })}
                 </div>
-                <span className="text-[15px] text-text-muted">
-                    {flow.range}
-                </span>
-            </section>
+            )}
 
-            <ul className="flex flex-col rounded-[20px] border border-border bg-surface px-4">
-                {flow.checks.map((check) => (
-                    <li
-                        key={check.title}
-                        className="flex items-start gap-3 border-t border-divider py-3 first:border-t-0"
-                    >
-                        <span
-                            className={cn(
-                                'flex size-8 shrink-0 items-center justify-center rounded-full',
-                                check.ok
-                                    ? 'bg-success-soft text-success'
-                                    : 'bg-warning-soft text-warning',
-                            )}
-                        >
-                            {check.ok ? (
-                                <Check
-                                    aria-label="Terpenuhi"
-                                    className="size-4"
-                                    strokeWidth={3}
-                                />
-                            ) : (
-                                <AlertTriangle
-                                    aria-label="Perlu perhatian"
-                                    className="size-4"
-                                />
-                            )}
-                        </span>
-                        <span className="flex flex-col">
-                            <span className="text-[16px] font-bold">
-                                {check.title}
-                            </span>
-                            <span className="text-[14px] leading-5 text-text-muted">
-                                {check.meta}
-                            </span>
-                        </span>
-                    </li>
-                ))}
-            </ul>
-
-            {rejecting && !decision && (
-                <div className="flex flex-col gap-2">
-                    <Label htmlFor={reasonId}>Alasan penolakan</Label>
-                    <Textarea
-                        id={reasonId}
-                        value={reason}
-                        autoFocus
-                        aria-invalid={reasonError || undefined}
-                        aria-describedby={`${reasonId}-hint`}
-                        onChange={(event) => {
-                            setReason(event.target.value);
-                            setReasonError(false);
-                        }}
-                        placeholder="Mis. bertepatan dengan hypercare go-live SIMRS"
-                    />
-                    <p
-                        id={`${reasonId}-hint`}
-                        className={cn(
-                            'text-[14px]',
-                            reasonError ? 'text-danger' : 'text-text-muted',
-                        )}
-                    >
-                        {reasonError
-                            ? 'Tulis alasan minimal 5 karakter.'
-                            : 'Alasan dikirim ke Sari dan atasannya.'}
-                    </p>
+            {waitingOnOther ? (
+                <div
+                    className="flex flex-col gap-3"
+                    aria-busy
+                    aria-label="Memuat"
+                >
+                    <Skeleton className="h-8 w-48" />
+                    <Skeleton className="h-64 w-full rounded-panel" />
                 </div>
+            ) : !selected ? (
+                <EmptyState
+                    size="sm"
+                    icon={CheckCircle2}
+                    title="Tidak ada yang menunggu"
+                >
+                    Pengajuan baru yang perlu keputusan Anda muncul di sini.
+                </EmptyState>
+            ) : (
+                <>
+                    <RequestDetailCard
+                        request={selected}
+                        className="shadow-none"
+                    />
+                    {canDecide ? (
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor={noteId}>
+                                Catatan untuk pemohon{' '}
+                                <span className="font-normal text-text-muted">
+                                    (opsional bila menyetujui)
+                                </span>
+                            </Label>
+                            <Textarea
+                                id={noteId}
+                                value={note}
+                                rows={3}
+                                maxLength={1000}
+                                className="min-h-24 text-[17px] md:text-[16px]"
+                                placeholder="Wajib diisi bila menolak atau meminta revisi"
+                                aria-invalid={error ? true : undefined}
+                                aria-describedby={`${noteId}-hint`}
+                                onChange={(event) => {
+                                    setNote(event.target.value);
+                                    setError(null);
+                                }}
+                            />
+                            <p
+                                id={`${noteId}-hint`}
+                                className={cn(
+                                    'text-[14px]',
+                                    error ? 'text-danger' : 'text-text-muted',
+                                )}
+                            >
+                                {error ??
+                                    `Terlihat oleh ${selected.user.name.split(' ')[0]} dan penyetuju lain.`}
+                            </p>
+                        </div>
+                    ) : (
+                        <p className="text-[15px] text-text-muted">
+                            Pengajuan ini bukan giliran Anda untuk diputus.
+                        </p>
+                    )}
+                </>
             )}
         </FlowSurface>
     );

@@ -1,101 +1,105 @@
 import { describe, expect, it } from 'vitest';
-import { APPROVAL_ITEMS, ROLE_DASHBOARDS } from './fixtures';
 import {
-    emptyDashboard,
+    firstName,
+    formatKpiValue,
     isRoleKey,
-    nextBugStep,
-    pendingCount,
-    reviewButtonLabel,
-    toggleIndex,
-    uatTally,
+    kpiSuffix,
+    progressTone,
+    rowMeta,
+    scheduleDay,
+    shortGreeting,
+    tileTone,
+    withoutHidden,
 } from './lib';
-import { ROLE_KEYS } from './types';
 
-describe('role configs', () => {
-    it('has one complete config per role', () => {
-        for (const key of ROLE_KEYS) {
-            const config = ROLE_DASHBOARDS[key];
+// Mon 5 Oct 2026, 09.00 WIB.
+const NOW = new Date('2026-10-05T02:00:00Z');
 
-            expect(config.key).toBe(key);
-            expect(config.kpis).toHaveLength(4);
-            expect(config.phone.tiles).toHaveLength(2);
-            expect(config.list.rows.length).toBeGreaterThan(0);
-            // at most one warm gradient per screen (KPI or side panel)
-            const warm =
-                config.kpis.filter((kpi) => kpi.tone === 'warm').length +
-                (config.side.warm ? 1 : 0);
-
-            expect(warm).toBeLessThanOrEqual(1);
-            expect(
-                config.kpis.filter((kpi) => kpi.tone === 'highlight'),
-            ).toHaveLength(1);
-
-            if (config.flowRow !== undefined) {
-                expect(config.list.rows[config.flowRow]).toBeDefined();
-            }
-        }
-    });
-
-    it('recognises role keys from the URL', () => {
+describe('isRoleKey', () => {
+    it('accepts the 8 SPKD jobs only', () => {
         expect(isRoleKey('dirut')).toBe(true);
-        expect(isRoleKey('admin')).toBe(false);
-    });
-
-    it('empties every list for the empty preview', () => {
-        const empty = emptyDashboard(ROLE_DASHBOARDS.hr);
-
-        expect(empty.list.rows).toEqual([]);
-        expect(empty.bars.items).toEqual([]);
-        expect(empty.schedule).toEqual([]);
-        expect(empty.side.items).toEqual([]);
-        expect(empty.phone.rows).toEqual([]);
-        expect(empty.flowRow).toBeUndefined();
-        expect(empty.kpis).toBe(ROLE_DASHBOARDS.hr.kpis);
+        expect(isRoleKey('analis')).toBe(true);
+        expect(isRoleKey('bendahara')).toBe(false);
     });
 });
 
-describe('flows', () => {
-    it('counts pending approvals', () => {
-        const ids = APPROVAL_ITEMS.map((item) => item.id);
+describe('KPI formatting', () => {
+    it('formats counts, percents and missing values', () => {
+        expect(formatKpiValue({ value: 1250, unit: 'count' })).toBe('1.250');
+        expect(formatKpiValue({ value: 77.4, unit: 'percent' })).toBe('77%');
+        expect(formatKpiValue({ value: null, unit: 'percent' })).toBe('–');
+    });
 
-        expect(pendingCount(ids, {})).toBe(4);
+    it('shows the whole as a suffix', () => {
+        expect(kpiSuffix({ total: 47 })).toBe('/ 47');
+        expect(kpiSuffix({ total: null })).toBeUndefined();
+    });
+
+    it('marks only a non-zero warm KPI as alarming on the phone', () => {
+        expect(tileTone('warm', 3)).toBe('late');
+        expect(tileTone('warm', 0)).toBe('neutral');
+        expect(tileTone('plain', 5)).toBe('neutral');
+    });
+});
+
+describe('rowMeta', () => {
+    it('appends a relative date or a calendar date', () => {
         expect(
-            pendingCount(ids, {
-                lbr: 'approved',
-                srv: 'rejected',
-                psl: undefined,
+            rowMeta(
+                {
+                    meta: 'Diajukan Agus',
+                    at: { value: '2026-10-03T02:00:00Z', style: 'relative' },
+                },
+                NOW,
+            ),
+        ).toBe('Diajukan Agus · 2 hari lalu');
+        expect(
+            rowMeta({
+                meta: 'CUT-2026-10-0001 · 2 hari',
+                at: { value: '2026-10-12T00:00:00+07:00', style: 'date' },
             }),
-        ).toBe(2);
+        ).toBe('CUT-2026-10-0001 · 2 hari · Sen, 12 Okt 2026');
     });
 
-    it('tallies UAT runs', () => {
-        expect(uatTally(148, 0, 200)).toEqual({
-            done: 148,
-            percent: 74,
-            passRate: 74,
-            next: 149,
-            finished: false,
-        });
-        expect(uatTally(190, 10, 200)).toMatchObject({
-            next: 200,
-            finished: true,
-        });
-        expect(uatTally(0, 0, 0)).toMatchObject({ percent: 0, passRate: 0 });
+    it('keeps the meta alone without a date', () => {
+        expect(rowMeta({ meta: 'OPS-12', at: null })).toBe('OPS-12');
+    });
+});
+
+describe('scheduleDay', () => {
+    it('names today and tomorrow, else a short date', () => {
+        expect(scheduleDay('2026-10-05', NOW)).toBe('Hari ini');
+        expect(scheduleDay('2026-10-06', NOW)).toBe('Besok');
+        expect(scheduleDay('2026-10-08', NOW)).toBe('Kam, 8 Okt');
+    });
+});
+
+describe('progressTone', () => {
+    it('follows the PRD M10 variance flag', () => {
+        expect(progressTone(30, 50)).toBe('danger');
+        expect(progressTone(45, 52)).toBe('warning');
+        expect(progressTone(72, 70)).toBe('brand');
+        expect(progressTone(null, 50)).toBe('brand');
+    });
+});
+
+describe('helpers', () => {
+    it('takes the first name', () => {
+        expect(firstName('Hendra Wijaya')).toBe('Hendra');
+        expect(firstName('  Rahmawati ')).toBe('Rahmawati');
+        expect(firstName(null)).toBe('');
     });
 
-    it('walks the bug steps and loops back', () => {
-        expect(nextBugStep(2, 4)).toBe(3);
-        expect(nextBugStep(3, 4)).toBe(1);
+    it('shortens the greeting for phones', () => {
+        expect(shortGreeting(NOW)).toBe('Pagi');
     });
 
-    it('toggles chip selections in order', () => {
-        expect(toggleIndex([0, 3], 2)).toEqual([0, 2, 3]);
-        expect(toggleIndex([0, 2, 3], 2)).toEqual([0, 3]);
-    });
+    it('hides optimistically decided items', () => {
+        const items = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
 
-    it('labels the review button', () => {
-        expect(reviewButtonLabel(3, false)).toBe('Setujui (3 terbuka)');
-        expect(reviewButtonLabel(0, false)).toBe('Setujui & kirim');
-        expect(reviewButtonLabel(0, true)).toBe('Disetujui');
+        expect(withoutHidden(items, new Set(['b']))).toEqual([
+            { id: 'a' },
+            { id: 'c' },
+        ]);
     });
 });

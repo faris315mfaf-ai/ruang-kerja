@@ -29,6 +29,7 @@ import {
     managementNavItem,
     organizationNavItems,
     chatNavItem,
+    roleDashboardNavItem,
     portfolioNavItem,
     prototypeNavItem,
 } from '@/lib/navigation';
@@ -181,6 +182,13 @@ export default function Menu() {
                             label="Dashboard"
                             href="/dashboard"
                         />
+                        {features?.role_dashboards && (
+                            <Row
+                                icon={roleDashboardNavItem.icon}
+                                label={roleDashboardNavItem.title}
+                                href={roleDashboardNavItem.href}
+                            />
+                        )}
                         {canSeePortfolio(auth.roles) && (
                             <Row
                                 icon={portfolioNavItem.icon}

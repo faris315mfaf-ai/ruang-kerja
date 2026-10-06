@@ -14,6 +14,7 @@ import {
     attendanceNavItems,
     isActivePath,
     chatNavItem,
+    roleDashboardNavItem,
     mainNavItemsFor,
     organizationNavItems,
     prototypeNavItem,
@@ -200,7 +201,12 @@ export function useShellNavigation(): ShellNavigation {
     // A one-item stack is just a detour: roles that only see the org chart
     // get it as a plain tile instead.
     const organizationItems = organizationNavItems(auth.roles);
-    const main = mainNavItemsFor(auth.roles);
+    // Dashboard jabatan right after Dashboard (F3, FEATURE_ROLE_DASHBOARDS).
+    const main = mainNavItemsFor(auth.roles).flatMap((item) =>
+        item.href === '/dashboard' && features?.role_dashboards
+            ? [item, roleDashboardNavItem]
+            : [item],
+    );
     // Obrolan right after Inbox (messages next to notifications).
     const withChat = features?.chat
         ? main.flatMap((item) =>
