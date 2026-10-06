@@ -2,6 +2,8 @@ export type DemoAccount = {
     email: string;
     name: string;
     role_label: string;
+    /** Persona of the shell switcher ("Staf programmer"); null for the others. */
+    persona: string | null;
 };
 
 export type GoogleLoginState = {

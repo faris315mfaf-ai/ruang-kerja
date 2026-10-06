@@ -87,6 +87,26 @@ test('the shell status follows the day', function () {
     expect($status())->toMatchArray(['action' => 'done', 'checkOutAt' => '2026-10-05T10:10:00Z']);
 });
 
+test('the shell status loads the open day logs eagerly when yesterday was worked too', function () {
+    $user = F::employee();
+
+    $this->travelTo(F::at('2026-10-05 07:50'));
+    F::checkIn($user)->assertCreated();
+    $this->travelTo(F::at('2026-10-05 17:05'));
+    F::checkIn($user, type: 'out')->assertCreated();
+
+    // Yesterday and today come back in one query: strict mode forbids lazy loading them.
+    $this->travelTo(F::at('2026-10-06 07:45'));
+    F::checkIn($user)->assertCreated();
+    $this->flushHeaders();
+
+    $this->actingAs($user)->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('attendanceStatus.action', 'check_out')
+            ->where('attendanceStatus.locationName', 'Kantor Pusat'));
+});
+
 test('the shell status shows holidays and request days', function () {
     $user = F::employee();
     Holiday::factory()->on('2026-10-05')->create();

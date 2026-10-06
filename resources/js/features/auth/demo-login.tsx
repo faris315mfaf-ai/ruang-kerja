@@ -34,14 +34,15 @@ export function DemoLoginSection({ accounts }: { accounts: DemoAccount[] }) {
                                         type="submit"
                                         variant="outline"
                                         disabled={processing}
-                                        aria-label={`Masuk sebagai ${account.name} (${account.role_label})`}
+                                        aria-label={`Masuk sebagai ${account.name} (${account.persona ?? account.role_label})`}
                                         title={account.email}
                                         className="w-full px-3 text-[15px]"
                                         data-test="demo-login-button"
                                     >
                                         {processing && <Spinner />}
                                         <span className="truncate">
-                                            {account.role_label}
+                                            {account.persona ??
+                                                account.role_label}
                                         </span>
                                     </Button>
                                     <InputError

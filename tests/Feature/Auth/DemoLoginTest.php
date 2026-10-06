@@ -30,7 +30,9 @@ it('lists the demo accounts on the login page when enabled locally', function ()
                 'email' => 'admin@demo.test',
                 'name' => 'Admin Sistem',
                 'role_label' => 'Super Admin',
+                'persona' => 'Admin',
             ])
+            ->where('demoAccounts.4.persona', null)
             ->where('demoAccounts.3.email', 'kadiv@demo.test')
             ->where('demoAccounts.3.role_label', 'Kepala Divisi'),
         );

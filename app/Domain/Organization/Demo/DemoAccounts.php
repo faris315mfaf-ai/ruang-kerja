@@ -84,7 +84,7 @@ final class DemoAccounts
     /**
      * Props for the login page; empty when demo login is disabled.
      *
-     * @return list<array{email: string, name: string, role_label: string}>
+     * @return list<array{email: string, name: string, role_label: string, persona: string|null}>
      */
     public static function loginPageProps(): array
     {

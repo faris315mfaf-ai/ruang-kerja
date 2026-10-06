@@ -25,7 +25,16 @@ export function Breadcrumbs({
 
                             return (
                                 <Fragment key={index}>
-                                    <BreadcrumbItem>
+                                    {/* In a tight menu bar the parents give way
+                                        first (ellipsis), the current page last. */}
+                                    <BreadcrumbItem
+                                        className={
+                                            isLast
+                                                ? 'max-w-[60%] shrink-0'
+                                                : 'shrink'
+                                        }
+                                        title={item.title}
+                                    >
                                         {isLast ? (
                                             <BreadcrumbPage>
                                                 {item.title}
@@ -33,18 +42,23 @@ export function Breadcrumbs({
                                         ) : item.href === '' ? (
                                             // Group without its own page
                                             // ("Admin", "Organisasi").
-                                            <span className="font-medium">
+                                            <span className="truncate font-medium">
                                                 {item.title}
                                             </span>
                                         ) : (
-                                            <BreadcrumbLink asChild>
+                                            <BreadcrumbLink
+                                                asChild
+                                                className="truncate"
+                                            >
                                                 <Link href={item.href}>
                                                     {item.title}
                                                 </Link>
                                             </BreadcrumbLink>
                                         )}
                                     </BreadcrumbItem>
-                                    {!isLast && <BreadcrumbSeparator />}
+                                    {!isLast && (
+                                        <BreadcrumbSeparator className="shrink-0" />
+                                    )}
                                 </Fragment>
                             );
                         })}
