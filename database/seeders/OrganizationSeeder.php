@@ -224,7 +224,8 @@ class OrganizationSeeder extends Seeder
             ]);
 
             if (! $isDemo) {
-                // Regular employees sign in with Google only (no password).
+                // Regular employees start without a password: HR sets one
+                // (Atur kata sandi) or they use "Lupa kata sandi" (6 Okt 2026).
                 $user->forceFill(['name' => $name, 'password' => null]);
             }
 

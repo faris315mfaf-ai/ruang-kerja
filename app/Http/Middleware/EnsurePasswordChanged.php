@@ -39,6 +39,8 @@ class EnsurePasswordChanged
         'verification.verify',
         'verification.send',
         'theme.update',
+        // The shell's unread badge keeps polling on the security page.
+        'inbox.feed',
         'logout',
     ];
 

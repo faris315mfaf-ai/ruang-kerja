@@ -227,7 +227,9 @@ describe('wajib ganti saat login berikutnya', function () {
     it('sends the employee to the security page until they change it', function () {
         $this->actingAs($this->employee)->get('/dashboard')->assertRedirect(route('security.edit'));
         $this->actingAs($this->employee)->get(route('tasks.mine'))->assertRedirect(route('security.edit'));
-        $this->actingAs($this->employee)->getJson(route('inbox.feed'))->assertForbidden();
+        $this->actingAs($this->employee)->getJson('/cari/hasil?q=ab')->assertForbidden();
+        // The shell's unread badge on the security page keeps working.
+        $this->actingAs($this->employee)->getJson(route('inbox.feed'))->assertOk();
 
         $this->actingAs($this->employee)
             ->get(route('security.edit'))
