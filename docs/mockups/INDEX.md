@@ -2,6 +2,8 @@
 
 Sumber kebenaran tampilan untuk Claude Code / Z-AI. Ekspor dari canvas "RuangKerja — Mockup UI".
 
+> **Ponsel:** acuan terbaru = canvas **"RuangKerja · Mockup Mobile-first"** (https://claude.ai/artifact/WWiCQBjLHrsdNPUo79dxjX, 43 layar: Masuk & Beranda per peran, Absensi, Pengajuan & Persetujuan, Tugas & Proyek, Obrolan & Rapat, Inbox/Cari/Profil, Fase 3, keadaan memuat/kosong/galat, mode malam). Bila berbeda dengan PNG `mobile/` di bawah, canvas itu yang berlaku (`docs/PLATFORM.md` §2.1).
+
 - `html/<Nama>.html`: HTML statis, semua style inline. Bisa dibuka langsung di browser; tautan antarlayar juga berfungsi. Font dimuat dari Google Fonts.
 - `png/desktop/<Nama>.png` (lebar 1440, skala 1) dan `png/mobile/<Nama>.png` (lebar 390, skala 2): gambar acuan. Claude Code bisa melihat PNG dengan membaca file gambarnya.
 

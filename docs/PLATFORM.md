@@ -1,6 +1,8 @@
 # Pemisahan Tampilan Desktop & Mobile — RuangKerja
 
 > Wajib dibaca sebelum membangun halaman apa pun. Setiap halaman Fase 1 punya **dua tata letak**: desktop dan mobile. Mockup acuan ada di canvas "RuangKerja — Mockup UI" (halaman berawalan **Desktop ·** dan **Mobile ·**).
+>
+> **Mobile-first (6 Okt 2026):** tampilan ponsel mengikuti canvas **"RuangKerja · Mockup Mobile-first"** (43 layar, https://claude.ai/artifact/WWiCQBjLHrsdNPUo79dxjX; privat, minta akses ke pemilik). Bila berbeda dengan mockup mobile lama (`docs/mockups/png/mobile/`), canvas mobile-first yang berlaku. Keputusannya dirangkum di §2.1.
 
 ## 1. Keputusan
 
@@ -16,10 +18,10 @@
 
 | Elemen | Desktop (≥ 1024) | Tablet (768–1023) | Mobile (< 768) |
 |---|---|---|---|
-| Navigasi utama | **Dock ala macOS** mengambang di bawah (ubin 52px membesar mengikuti kursor dengan pegas, stack Workspace, Organisasi & Admin) | **Rail** kaca 96px di kiri: merek, Cari, tujuan yang sama dengan Dock, stack membuka ke kanan, avatar = menu akun | **Tab bawah 5 item** sebagai kapsul mengambang 70px: Beranda · Absen · Tugas · Inbox · Menu |
-| Workspace & admin | Stack di Dock | Stack di Rail | Di tab **Menu** |
-| Topbar | **Menu bar kaca 64px** (MenuBar.dc.html): merek, breadcrumb, chip status absensi + pil Check-in, cari ⌘K/Ctrl K, lonceng berangka, avatar. Konten di kolom 1280px (lebar 1480px untuk board/tabel) padding 40px | Tidak ada (Rail memuat cari & akun); padding konten 24px | **Judul besar 32/40** + tombol bulat 48px (cari, lonceng); Beranda: tanggal + sapaan + avatar; layar turunan: bar 56px lengket + tombol kembali bulat |
-| Cari | Command palette (modal kaca) | Sama (tombol Cari di Rail, ⌘K) | Layar cari penuh |
+| Navigasi utama | **Dock ala macOS** mengambang di bawah (ubin 52px membesar mengikuti kursor dengan pegas, stack Workspace, Organisasi & Admin) | **Rail** kaca 96px di kiri: merek, Cari, tujuan yang sama dengan Dock, stack membuka ke kanan, avatar = menu akun | **Tab bawah 5 item** sebagai kapsul mengambang 70px: Beranda · Tugas · **Absen** (tombol bulat di tengah) · Obrolan · Lainnya. Bila Obrolan mati (`FEATURE_CHAT=false`), slot ke-4 = Inbox |
+| Workspace & admin | Stack di Dock | Stack di Rail | Di tab **Lainnya** (`/menu`) |
+| Topbar | **Menu bar kaca 64px** (MenuBar.dc.html): merek, breadcrumb, chip status absensi + pil Check-in, cari ⌘K/Ctrl K, lonceng berangka, avatar. Konten di kolom 1280px (lebar 1480px untuk board/tabel) padding 40px | Tidak ada (Rail memuat cari & akun); padding konten 24px | **Judul besar 32/40** + tombol bulat 48px (cari, lonceng berbadge = **pintu Inbox**); Beranda: tanggal + sapaan + cari + lonceng (profil lewat Lainnya); layar turunan: bar 56px lengket + tombol kembali bulat |
+| Cari | Command palette (modal kaca) | Sama (tombol Cari di Rail, ⌘K) | Layar cari penuh, **kolom cari di bawah** (zona jempol) |
 | Panel detail | Panel samping kanan (TaskSheet 640px, detail pengajuan) | Panel samping atau layar penuh | **Layar penuh baru** atau **bottom sheet** |
 | Tabel | Tabel penuh (TanStack Table) | Tabel dengan kolom diciutkan | **Daftar kartu / baris 56px** |
 | Aksi utama | Tombol di header | Sama | **FAB 60px** (gradien, radius 20) atau **bilah aksi bawah** |
@@ -27,6 +29,20 @@
 | Board Kanban | Semua kolom berdampingan, drag & drop | Scroll horizontal | **Satu kolom per layar**, tab kolom geser; pindah status lewat menu "Pindahkan" (tanpa drag) |
 | Kalender | Grid bulan | Grid bulan | **Strip minggu + agenda** |
 | Dashboard | Grid multi-kolom | 2 kolom | 1 kolom, KPI 2×2, grafik disederhanakan |
+
+### 2.1 Keputusan mobile-first (disetujui 6 Okt 2026)
+
+Ponsel dirancang untuk dipakai satu tangan: aksi yang sering ada di zona jempol (sepertiga bawah layar), bacaan di atas.
+
+| # | Keputusan | Berlaku di |
+|---|---|---|
+| 1 | Tab bawah: Beranda · Tugas · **Absen** · Obrolan · Lainnya. Absen = tombol bulat gradien 54px yang menonjol di tengah kapsul (aksi harian terpenting). Inbox pindah ke **lonceng berbadge di app bar** setiap layar akar tab, dan tetap ada di Lainnya. Tanpa Obrolan, slot ke-4 kembali Inbox | Shell (`TabBar`, `AppBar`) |
+| 2 | Layar Cari: kolom cari menempel di bawah layar, hasil di atasnya | `/cari` |
+| 3 | Persetujuan: **tumpukan kartu** (geser kanan = setujui, kiri = tolak) dengan tombol Tolak · Minta revisi · Setujui di zona jempol; detail lewat tautan kartu | `/persetujuan` |
+| 4 | Check-in: **geser untuk check-in** (bukan sekali ketuk) supaya tidak absen tanpa sengaja; pilihan metode (GPS + selfie · QR · WFH) sebagai segmented di atas peta | `/absensi` |
+| 5 | Antrean absen **offline** hanya untuk aplikasi native Fase 3. PWA tetap menolak check-in tanpa koneksi (§5 butir 6) | Fase 3 |
+
+Butir 2–4 diterapkan modul masing-masing; shell (butir 1) sudah berlaku.
 
 ## 3. Matriks fitur per platform
 
@@ -36,18 +52,18 @@
 |---|---|---|---|
 | Login Google | ✓ | ✓ | |
 | Beranda / Dashboard Saya | ✓ | ✓ | Kartu check-in di atas |
-| Check-in/out GPS + selfie | ✓ | ✓ | **Prioritas ponsel**. Kamera depan, akurasi tinggi |
+| Check-in/out GPS + selfie | ✓ | ✓ | **Prioritas ponsel**, tab tengah. Geser untuk check-in, kamera depan, akurasi tinggi |
 | Pindai QR kiosk | ✓ | ✓ | |
 | Halaman kiosk QR | ✓ (tablet/TV) | — | Perangkat khusus di lobi |
 | Riwayat absensi saya | ✓ | ✓ | Kalender bulan kecil + daftar |
 | Pengajuan (buat, lihat, batalkan) | ✓ | ✓ | Lampiran bisa langsung dari kamera |
-| Persetujuan (setuju/tolak/revisi) | ✓ | ✓ | Geser kartu untuk keputusan cepat. Aksi massal hanya desktop |
+| Persetujuan (setuju/tolak/revisi) | ✓ | ✓ | Tumpukan kartu + tombol di zona jempol (§2.1). Aksi massal hanya desktop |
 | Tugas saya, detail tugas, komentar | ✓ | ✓ | Kotak komentar menempel di bawah |
 | Buat tugas | ✓ | ✓ | Bottom sheet cepat |
 | Board / List / Kalender | ✓ | ✓ | Board satu kolom, kalender agenda |
 | File & dokumen Drive | ✓ | ✓ | Buka di aplikasi Google, unggah dari kamera/galeri |
-| Inbox & notifikasi | ✓ | ✓ | Geser untuk arsip/dibaca |
-| Cari | ✓ | ✓ | Layar penuh |
+| Inbox & notifikasi | ✓ | ✓ | Lewat lonceng di app bar (atau tab ke-4 bila Obrolan mati). Geser untuk arsip/dibaca |
+| Cari | ✓ | ✓ | Layar penuh, kolom cari di bawah |
 | Dashboard Kadiv / HR | ✓ | ✓ | Versi ringkas 1 kolom |
 | Dashboard Manajemen (`/manajemen`) | ✓ | ✓ | Kartu bertumpuk: hero kehadiran + tugas, 2 tile KPI, grafik ringkas, daftar proyek, absensi, milestone (MgPDashboard) |
 | Portofolio & detail proyek (Direksi) | ✓ | ✓ | Tabel proyek → kartu proyek; roadmap hanya desktop (mobile: milestone berikutnya per kartu); "Minta update" & "Beri arahan" di bilah aksi bawah |
@@ -68,7 +84,7 @@ Fitur ◐ dan — di mobile tetap punya rute. Rute itu menampilkan versi baca-sa
 - **Input `font-size: 17px`** (Tipografi "Ponsel"; mencegah zoom otomatis iOS). Tinggi input 44–48 px.
 - Padding samping 16 px. Teks dasar 17 px (`text-body`), judul layar 32/40 (`text-display`), judul bar layar turunan 17 px.
 - Hormati *safe area* (`env(safe-area-inset-*)`) untuk tab bawah dan bilah aksi.
-- Tab bawah = **kapsul** (TabBar.dc.html): kaca (`.tab-bar-surface`), `rounded-full`, 12px dari tepi kiri/kanan (`--tab-bar-inset`), melayang 14px di atas safe area (`--tab-bar-lift`), tinggi 70px (`--tab-bar-capsule`), lebar maks 420px di tengah. Tab aktif = pil **gradien aksi** (malam: gradien terang + tinta gelap, `--grad-active`) dengan label putih yang bergeser (transform 180ms `ease-brand`, instan dengan `prefers-reduced-motion`); label 12px tebal, ikon 24px, badge merah di Inbox. Semua elemen yang menempel di atas tab bar (padding konten, FAB, bilah aksi, toast) memakai `--tab-bar-height`, jangan angka tetap.
+- Tab bawah = **kapsul** (TabBar.dc.html): kaca (`.tab-bar-surface`), `rounded-full`, 12px dari tepi kiri/kanan (`--tab-bar-inset`), melayang 14px di atas safe area (`--tab-bar-lift`), tinggi 70px (`--tab-bar-capsule`), lebar maks 420px di tengah. Tab aktif = pil **gradien aksi** (malam: gradien terang + tinta gelap, `--grad-active`) dengan label putih yang bergeser (transform 180ms `ease-brand`, instan dengan `prefers-reduced-motion`); label 12px tebal, ikon 24px, badge merah di Obrolan (pesan belum dibaca) atau Inbox (bila slot ke-4 = Inbox). Tab tengah **Absen** tidak memakai pil: tombol bulat 54px gradien aksi, naik 26px di atas kapsul dengan cincin 4px warna permukaan; saat aktif labelnya tebal berwarna teks utama. Semua elemen yang menempel di atas tab bar (padding konten, FAB, bilah aksi, toast) memakai `--tab-bar-height`, jangan angka tetap.
 - Keyboard: saat input fokus, bilah aksi bawah ikut naik (pakai `visualViewport`), tab bawah disembunyikan.
 - Glass hanya untuk app bar (saat menggulir), tab bawah, bottom sheet, toast.
 - Tidak ada interaksi yang hanya mengandalkan hover. Pintasan keyboard hanya desktop.
@@ -95,7 +111,7 @@ Aturan:
 3. Komponen primitif (Button, Input, Badge, StatusIcon, PriorityIcon, Avatar) **sama** di kedua platform. Hanya ukuran yang berubah lewat varian `size`.
 4. Komponen khusus mobile di `components/mobile/`: `BottomSheet` (Vaul / Radix Dialog), `SwipeableRow`, `Fab`, `TabBar`, `AppBar`, `ChipScroller`, `WeekStrip`.
 5. Hindari *hydration mismatch*: render awal SSR memakai shell netral (skeleton). Breakpoint ditentukan di klien. Atau set cookie `viewport=mobile` dari klien untuk render berikutnya.
-6. **PWA:** manifest (nama, ikon, `display: standalone`, `theme_color` teal), service worker hanya untuk shell & aset statis (data selalu dari jaringan). Halaman offline sederhana: "Anda sedang offline. Check-in butuh koneksi."
+6. **PWA:** manifest (nama, ikon, `display: standalone`, `theme_color` teal), service worker hanya untuk shell & aset statis (data selalu dari jaringan). Halaman offline sederhana: "Anda sedang offline. Check-in butuh koneksi." Antrean offline (canvas mobile-first › Offline) hanya untuk aplikasi native Fase 3.
 7. **Uji:** setiap halaman diuji di 3 lebar (375, 834, 1440) memakai Playwright (snapshot visual). Dark & light masing-masing.
 
 ## 6. Pemetaan layar mockup
