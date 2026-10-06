@@ -17,7 +17,7 @@ Prioritas dari atas. "Folder milik" = satu-satunya tempat agen itu menulis (sela
 
 | # | Tugas | Folder milik | Agen | Branch | Status |
 |---|---|---|---|---|---|
-| 1 | F2-1 Obrolan: backend (tabel `channels`, `channel_members`, `messages`; Action, Policy, broadcast Reverb) menggantikan data contoh di `features/chat` | `app/Domain/Chat`, `routes/chat.php`, `resources/js/features/chat`, `resources/js/pages/chat` | Claude Code | `claude/f2-obrolan` | bebas |
+| 1 | F2-1 Obrolan: backend (tabel `channels`, `channel_members`, `messages`; Action, Policy, broadcast Reverb) menggantikan data contoh di `features/chat` | `app/Domain/Chat`, `routes/chat.php`, `resources/js/features/chat`, `resources/js/pages/chat` | Claude Code | `claude/f2-obrolan` | dikerjakan |
 | 2 | F2-3 Rapat & Kalender: backend (`calendar_events`, job Google Calendar/Meet di-mock) menggantikan data contoh di `features/meetings` | `app/Domain/Meetings`, `routes/meetings.php`, `resources/js/features/meetings`, `resources/js/pages/meetings` | Codex | `codex/f2-rapat` | bebas |
 | 3 | F2-2 Catatan bersama: backend (`notes`, `note_versions`; Yjs/Hocuspocus diputuskan dulu) | `app/Domain/Notes`, `routes/notes.php`, `resources/js/features/notes`, `resources/js/pages/notes` | — | — | bebas |
 | 4 | F2-4 Otomasi & tugas berulang: backend (aturan, jadwal berulang, template) | `app/Domain/Automation`, `routes/automation.php`, `resources/js/features/automation`, `resources/js/pages/automation` | — | — | bebas |

@@ -3,33 +3,30 @@
 **Terakhir diperbarui:** 6 Okt 2026 · Claude Code
 
 ## Tugas berjalan
-Menyiapkan kerja paralel Claude Code + Codex (`scripts/agen-mulai.sh`, database test per worktree, `docs/PEMBAGIAN-TUGAS.md`, `docs/sesi/`). Branch `claude/kerja-paralel` di atas PR #1.
+Tugas #1 `docs/PEMBAGIAN-TUGAS.md`: F2-1 Obrolan — backend nyata menggantikan data contoh di `resources/js/features/chat`. Rencana disetujui pengguna: `docs/fitur/obrolan.md` §6–7 + keputusan di bawah.
 
-## Branch / worktree
-- Branch `claude/project-overview-status-ebff38` (worktree `.claude/worktrees/project-overview-status-ebff38`), disajikan Herd di `https://ruangkerja-proto.test`.
-- `main` (checkout utama `/Users/godam/PROYEK/ruang-kerja`, `https://ruangkerja.test`) = `bf711aa`, sudah di-push. Branch ini beberapa commit di depan `main` dan **belum di-merge / di-push**.
+## Worktree / branch
+`.claude/worktrees/project-overview-status-ebff38` · `claude/f2-obrolan` (di atas `claude/kerja-paralel`, PR #2) · https://ruangkerja-claude.test · DB `ruangkerja_claude` / test `ruangkerja_testing_claude`
 
 ## Sudah selesai
-- `78e649f` chore(agen): kerja paralel (branch `claude/kerja-paralel`). Diuji: worktree `../ruang-kerja-codex` (branch `codex/kerja`, https://ruangkerja-codex.test) dan worktree ini sebagai agen `claude` (https://ruangkerja-claude.test); dua `composer test` bersamaan → 2.104 + 2.104 lulus dengan database test terpisah.
-
-## Sudah selesai (PR #1, `claude/project-overview-status-ebff38`)
-- `60a3559` fix(ci): Vitest (detectTls Herd) dan SessionCookieTest hijau di GitHub Actions. CI `main` (`bf711aa`) masih merah sampai commit ini masuk.
-- `0448bb3` feat(demo): pemilih akun demo di atas (5 persona).
-- `533f25f` feat(demo): tugas contoh staf programmer + perbaikan status absensi (lazy loading) + breadcrumb.
-- `7e3ab94` chore(agen): dukungan Codex (AGENTS.md sumber tunggal, `.agents/skills`, `.codex/config.toml`, `scripts/ui-shots.mjs`, `scripts/sync-agent-skills.mjs`, berkas ini).
+- (mulai) klaim tugas.
 
 ## Langkah berikutnya
-1. PR #1 menunggu CI lalu di-merge ke `main`; setelah itu buka PR `claude/kerja-paralel` → `main`. Worktree `codex/kerja` dibuat dari `claude/kerja-paralel`: setelah merge cukup `git rebase main`.
-2. Klaim tugas di `docs/PEMBAGIAN-TUGAS.md` (usulan: Claude #1 Obrolan, Codex #2 Rapat & Kalender).
-3. Deploy VPS bersama (`docs/deploy/VPS-BERSAMA.md`): menunggu dari pengguna — domain, email Let's Encrypt, izin menjalankan `scripts/server-bootstrap.sh` di `root@187.77.118.216`, object storage (ada/tidak). Isi secret & variabel GitHub Actions dilakukan pengguna sendiri.
+1. Migrasi `channels`, `channel_members`, `messages` + model/enum/factory + `docs/DATABASE.md` §7.
+2. `ChannelPolicy`/`MessagePolicy` + matriks test.
+3. Actions (`CreateChannel`, `OpenDirectConversation`, `PostMessage`, `EditMessage`, `DeleteMessage`, `ToggleMessageReaction`, `MarkChannelRead`, `SetChannelMuted`, `AttachMessageFiles`, `SyncWorkspaceChannel`) + test.
+4. Queries (`ChatInbox`, `ChannelTimeline`, `AttachableDriveFiles`), controller, `routes/chat.php`, flag `FEATURE_CHAT`.
+5. Broadcast `chat.{channel}`, presence `chat-online.{company}`, notifikasi `chat.message` + mention.
+6. `ChatDemoSeeder`. 7. Frontend store bersumber server + navigasi. 8. Verifikasi + docs → PR.
 
 ## Keputusan pengguna yang berlaku
-- Fase 2 & 3 dibangun sebagai **pratinjau frontend** dengan data contoh (`FEATURE_PROTOTYPE`, mati di produksi); backend menyusul.
-- VPS dipakai bersama project lain: proxy edge bersama di `/opt/edge`, stack ini memakai `compose.shared.yml`.
-- Deploy lewat GitHub Actions + GHCR; Postgres & Redis kontainer sendiri.
+- DM/grup/channel privat hanya dibaca anggota (Super Admin/HR/Direksi pun tidak). Channel workspace ikut akses workspace; publik = karyawan aktif satu perusahaan.
+- Lampiran Drive boleh di DM/grup bila setiap anggota bisa melihat workspace pemilik file.
+- Notifikasi hanya DM/grup + @mention; channel dibisukan hanya saat disebut.
+- Obrolan keluar dari Pratinjau: flag `FEATURE_CHAT` (lokal nyala, produksi mati) + tile Dock/Rail + Menu ponsel.
+
+## Butuh dari integrator / agen lain
+- (Claude juga integrator) Navigasi `lib/navigation.ts`, `HandleInertiaRequests` (prop `chat.unread`), `NotificationType`/`NotificationEvent` diubah di branch ini — beri tahu Codex agar tidak menyentuhnya di #2.
 
 ## Verifikasi
-`composer test` · `composer lint` · `npm run typecheck` · `npm run lint` · `npm test` · `node scripts/sync-agent-skills.mjs --check` · `node scripts/ui-shots.mjs /dashboard`
-
-## Jangan disentuh tanpa izin
-`.env`, `secrets/`, `git push`, server VPS, pengaturan repo GitHub.
+composer test · composer lint · npm run typecheck · npm run lint · npm test
