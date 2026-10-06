@@ -176,6 +176,6 @@ export function dateInputMessage(
         case 'after_max':
             return `Tanggal paling lambat ${formatDayDate(max)}.`;
         default:
-            return 'Tanggal tidak valid. Tulis dd/mm/yyyy, mis. 30/10/2026.';
+            return 'Tanggal tidak valid. Contoh: 30/10/2026.';
     }
 }

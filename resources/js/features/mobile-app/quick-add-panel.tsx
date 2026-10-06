@@ -336,7 +336,7 @@ export function QuickAddPanel({
                         </Button>
                     )}
                     {action.key === 'leave' && (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid gap-3">
                             <div className="flex flex-col gap-1.5">
                                 <Label htmlFor={`${id}-start`}>Mulai</Label>
                                 <DateInput
@@ -358,7 +358,7 @@ export function QuickAddPanel({
                                     inputClassName="text-[17px] md:text-[16px]"
                                 />
                             </div>
-                            <p className="col-span-2 text-[15px] font-semibold text-text">
+                            <p className="text-[15px] font-semibold text-text">
                                 {leaveDays(start, end)} hari · sisa saldo{' '}
                                 {Math.max(
                                     LEAVE_BALANCE_DAYS - leaveDays(start, end),

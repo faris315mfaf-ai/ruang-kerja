@@ -158,6 +158,14 @@ function DateInput({
 
     const textRef = React.useRef<HTMLInputElement | null>(null);
     const nativeRef = React.useRef<HTMLInputElement | null>(null);
+    /** Pending "select all on focus"; dropped as soon as the user types. */
+    const selectFrame = React.useRef<number | null>(null);
+    const cancelSelect = () => {
+        if (selectFrame.current !== null) {
+            cancelAnimationFrame(selectFrame.current);
+            selectFrame.current = null;
+        }
+    };
     const [editing, setEditing] = React.useState(false);
     const [draft, setDraft] = React.useState('');
     const [problem, setProblem] = React.useState<DateInputProblem | null>(null);
@@ -238,6 +246,8 @@ function DateInput({
     };
 
     const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        cancelSelect();
+
         if (event.key === 'Enter') {
             if (!commit(draft, true)) {
                 // Keep the form from submitting the previous value silently.
@@ -299,6 +309,8 @@ function DateInput({
                     autoComplete="off"
                     spellCheck={false}
                     value={display}
+                    // Full text when a narrow box ellipsizes it.
+                    title={!editing && current ? display : undefined}
                     placeholder={editing ? 'dd/mm/yyyy' : placeholder}
                     required={required}
                     disabled={disabled}
@@ -310,18 +322,24 @@ function DateInput({
                         setEditing(true);
                         setDraft(editable);
                         const target = event.currentTarget;
-                        requestAnimationFrame(() => {
+                        cancelSelect();
+                        // After the click that focused it, so the caret
+                        // placement does not undo the selection.
+                        selectFrame.current = requestAnimationFrame(() => {
+                            selectFrame.current = null;
                             if (document.activeElement === target) {
                                 target.select();
                             }
                         });
                     }}
                     onChange={(event) => {
+                        cancelSelect();
                         const next = event.target.value;
                         setProblem(null);
                         setDraft((previous) => maskDateDraft(previous, next));
                     }}
                     onBlur={() => {
+                        cancelSelect();
                         commit(draft);
                         setEditing(false);
                         onBlur?.();

@@ -54,6 +54,25 @@ describe('DateInput', () => {
         expect(field().value).toBe('Jumat, 30/10/2026');
     });
 
+    it('selects the text after focus, unless the user already typed', async () => {
+        const select = vi.spyOn(HTMLInputElement.prototype, 'select');
+        const frame = () =>
+            new Promise((resolve) => requestAnimationFrame(resolve));
+        render(<Controlled initial="2026-10-30" />);
+
+        field().focus();
+        await frame();
+        expect(select).toHaveBeenCalledTimes(1);
+
+        field().blur();
+        field().focus();
+        fireEvent.change(field(), { target: { value: '0' } });
+        await frame();
+        expect(select).toHaveBeenCalledTimes(1);
+        expect(field().value).toBe('0');
+        select.mockRestore();
+    });
+
     it('shows the placeholder when empty', () => {
         render(<Controlled />);
 

@@ -121,7 +121,7 @@ describe('resolveDateInput', () => {
 describe('dateInputMessage', () => {
     it('explains each problem in Indonesian with the day name', () => {
         expect(dateInputMessage('invalid')).toBe(
-            'Tanggal tidak valid. Tulis dd/mm/yyyy, mis. 30/10/2026.',
+            'Tanggal tidak valid. Contoh: 30/10/2026.',
         );
         expect(dateInputMessage('required')).toBe('Tanggal wajib diisi.');
         expect(dateInputMessage('before_min', '2026-10-05')).toBe(
