@@ -57,6 +57,9 @@ export type LeaveTypeInfo = {
     day_unit?: string;
     /** Seeded default not yet reviewed by HR ("Bawaan sementara"). */
     is_provisional_default?: boolean;
+    /** Locked by HR: cannot be requested (cuti & lembur, keputusan pemilik 6 Okt 2026). */
+    locked?: boolean;
+    locked_reason?: string | null;
 };
 
 export type BalanceSummary = {

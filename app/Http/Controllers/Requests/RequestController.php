@@ -97,12 +97,12 @@ class RequestController extends Controller
     {
         Gate::authorize('create', EmployeeRequest::class);
 
-        $category = RequestCategory::fromSlug(is_string($http->query('kategori')) ? $http->query('kategori') : null) ?? RequestCategory::Leave;
+        $wanted = RequestCategory::fromSlug(is_string($http->query('kategori')) ? $http->query('kategori') : null) ?? RequestCategory::Leave;
 
         return Inertia::render('requests/form', [
             ...$this->formProps($user),
             'request' => null,
-            'initial' => ['category' => $category->value],
+            'initial' => ['category' => self::openCategory($user, $wanted)],
         ]);
     }
 
@@ -216,6 +216,31 @@ class RequestController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => "Pengajuan {$request->number} terkirim{$to}."]);
 
         return to_route('requests.index', ['pilih' => $request->id]);
+    }
+
+    /**
+     * The asked category when one of its types can be requested, else the
+     * first category that has one (cuti & lembur are locked, keputusan
+     * pemilik 6 Okt 2026).
+     */
+    private static function openCategory(User $user, RequestCategory $wanted): string
+    {
+        $open = LeaveType::query()->visibleTo($user)->active()->whereNull('locked_reason')
+            ->distinct()->pluck('category')
+            ->map(fn (mixed $category): string => $category instanceof RequestCategory ? $category->value : (string) $category)
+            ->all();
+
+        if (in_array($wanted->value, $open, true)) {
+            return $wanted->value;
+        }
+
+        foreach (RequestCategory::cases() as $category) {
+            if (in_array($category->value, $open, true)) {
+                return $category->value;
+            }
+        }
+
+        return $wanted->value;
     }
 
     /**

@@ -56,6 +56,9 @@ export function LeaveTypeDialog({
             type?.max_days_per_request ?? (null as number | null),
         is_paid: type?.is_paid ?? true,
         is_active: type?.is_active ?? true,
+        // Lock (keputusan pemilik 6 Okt 2026): cuti & lembur wait for the SOP.
+        is_locked: (type?.locked_reason ?? null) !== null,
+        locked_reason: type?.locked_reason ?? '',
         approval_flow_id: type?.approval_flow_id ?? '',
     });
     const { data, setData, errors } = form;
@@ -357,6 +360,45 @@ export function LeaveTypeDialog({
                                 }
                             />
                         </label>
+                        <div className="flex flex-col gap-2 px-4 py-2">
+                            <label className="flex min-h-11 items-center justify-between gap-3 text-[15px] font-semibold">
+                                <span className="flex flex-col">
+                                    Kunci (tampil, tetapi belum bisa diajukan)
+                                    <span className="text-meta font-normal text-text-muted">
+                                        Pengajuan yang sudah dikirim atau
+                                        disetujui tidak berubah.
+                                    </span>
+                                </span>
+                                <Switch
+                                    checked={data.is_locked}
+                                    onCheckedChange={(value) =>
+                                        setData('is_locked', value)
+                                    }
+                                />
+                            </label>
+                            {data.is_locked && (
+                                <div className="grid gap-1.5 pb-1">
+                                    <Label htmlFor="locked_reason">
+                                        Alasan kunci
+                                    </Label>
+                                    <Input
+                                        id="locked_reason"
+                                        maxLength={200}
+                                        value={data.locked_reason}
+                                        placeholder="Dikunci sampai SOP cuti/lembur ditetapkan."
+                                        onChange={(e) =>
+                                            setData(
+                                                'locked_reason',
+                                                e.target.value,
+                                            )
+                                        }
+                                    />
+                                    <InputError
+                                        message={errors.locked_reason}
+                                    />
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </form>
                 <DialogFooter>

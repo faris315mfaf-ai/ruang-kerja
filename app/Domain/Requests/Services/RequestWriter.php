@@ -34,6 +34,10 @@ final class RequestWriter
             throw ValidationException::withMessages(['leave_type_id' => 'Jenis pengajuan tidak tersedia.']);
         }
 
+        if ($type->isLocked()) {
+            throw ValidationException::withMessages(['leave_type_id' => "{$type->name} belum bisa diajukan. {$type->locked_reason}"]);
+        }
+
         if (! $type->isEligible($user)) {
             throw ValidationException::withMessages(['leave_type_id' => "Anda belum berhak atas {$type->name}."]);
         }

@@ -49,6 +49,7 @@ class RequestTypeController extends Controller
                 'carry_over_max_days' => $type->carry_over_max_days,
                 'min_service_months' => $type->min_service_months,
                 'is_active' => $type->is_active,
+                'locked_reason' => $type->locked_reason,
                 'sort_order' => $type->sort_order,
             ])->values()->all(),
             'flows' => $flows->map(fn (ApprovalFlow $flow): array => [

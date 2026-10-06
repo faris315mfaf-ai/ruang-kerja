@@ -37,6 +37,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $min_service_months
  * @property string|null $approval_flow_id
  * @property bool $is_active
+ * @property string|null $locked_reason not null = locked: cannot be requested (keputusan pemilik 6 Okt 2026)
  * @property int $sort_order
  * @property bool $is_provisional_default seeded default not yet reviewed by HR ("Bawaan sementara")
  * @property Carbon|null $created_at
@@ -49,7 +50,7 @@ use Illuminate\Support\Carbon;
     'company_id', 'code', 'name', 'category', 'description', 'annual_quota_days',
     'requires_attachment_after_days', 'is_paid', 'allow_half_day', 'carry_over_max_days',
     'max_backdate_days', 'min_service_months', 'approval_flow_id', 'is_active', 'sort_order',
-    'counts_calendar_days', 'max_days_per_request', 'is_provisional_default',
+    'counts_calendar_days', 'max_days_per_request', 'is_provisional_default', 'locked_reason',
 ])]
 class LeaveType extends Model
 {
@@ -94,6 +95,21 @@ class LeaveType extends Model
     protected function code(): Attribute
     {
         return Attribute::make(set: fn (string $value): string => mb_strtoupper(trim($value)));
+    }
+
+    /**
+     * Default reason of the cuti & lembur lock (keputusan pemilik 6 Okt 2026).
+     */
+    public const string SOP_LOCK_REASON = 'Dikunci sampai SOP cuti/lembur ditetapkan.';
+
+    /**
+     * Locked types stay visible (lock tile in the form) but cannot be drafted
+     * or submitted; requests already sent or approved are not affected.
+     */
+    public function isLocked(): bool
+    {
+        // Tolerates partial selects that leave the column out.
+        return array_key_exists('locked_reason', $this->attributes) && $this->locked_reason !== null;
     }
 
     /**

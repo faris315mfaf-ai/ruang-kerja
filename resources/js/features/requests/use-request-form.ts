@@ -19,6 +19,7 @@ import {
     saveDraft,
 } from './draft-storage';
 import type { StoredDraft, StoredDraftFields } from './draft-storage';
+import { categoryLocked, firstOpenType } from './locks';
 
 export type RequestFormInitial = {
     category: RequestCategory;
@@ -71,9 +72,9 @@ function firstType(
     categories: FormCategory[],
     category: RequestCategory,
 ): FormLeaveType | undefined {
-    const types = categories.find((c) => c.value === category)?.types ?? [];
-
-    return types.find((t) => t.eligible) ?? types[0];
+    return firstOpenType(
+        categories.find((c) => c.value === category)?.types ?? [],
+    );
 }
 
 /**
@@ -86,10 +87,18 @@ export function useRequestForm({
     request,
     today,
 }: Options) {
+    // An edited request keeps its category even when locked (its draft can
+    // then only be canceled); a new one never starts on a locked category.
     const [category, setCategoryState] = useState<RequestCategory>(
-        categories.some((c) => c.value === initial.category)
+        categories.some(
+            (c) =>
+                c.value === initial.category &&
+                (request !== null || !categoryLocked(c)),
+        )
             ? initial.category
-            : (categories[0]?.value ?? 'leave'),
+            : (categories.find((c) => !categoryLocked(c))?.value ??
+                  categories[0]?.value ??
+                  'leave'),
     );
     const [permitMode, setPermitMode] = useState<PermitMode>(
         initial.start_time ? 'hours' : 'days',
@@ -230,6 +239,12 @@ export function useRequestForm({
         types.find((t) => t.id === form.data.leave_type_id) ?? types[0];
 
     const setCategory = (next: RequestCategory) => {
+        const target = categories.find((c) => c.value === next);
+
+        if (!target || categoryLocked(target)) {
+            return;
+        }
+
         setCategoryState(next);
         const nextType = firstType(categories, next);
         const nextData: RequestFormData = {
@@ -420,6 +435,8 @@ export function useRequestForm({
         setCategory,
         types,
         type,
+        /** The chosen type is locked: nothing can be sent or saved. */
+        locked: type?.locked === true,
         permitMode,
         changePermitMode,
         usesHours,

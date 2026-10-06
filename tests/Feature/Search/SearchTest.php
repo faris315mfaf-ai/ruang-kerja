@@ -54,7 +54,7 @@ it('shows quick actions on an empty query', function () {
     $response = $this->actingAs(searcher())->getJson('/cari/hasil')->assertOk();
 
     expect(groupKeys($response))->toBe(['actions'])
-        ->and(itemTitles($response, 'actions'))->toBe(['Check-in', 'Ajukan cuti', 'Buat tugas baru', 'Ganti tema']);
+        ->and(itemTitles($response, 'actions'))->toBe(['Check-in', 'Buat pengajuan', 'Buat tugas baru', 'Ganti tema']);
 });
 
 it('matches actions by title and keywords', function (string $query, string $expected) {
@@ -62,7 +62,8 @@ it('matches actions by title and keywords', function (string $query, string $exp
 
     expect(itemTitles($response, 'actions'))->toContain($expected);
 })->with([
-    ['cuti', 'Ajukan cuti'],
+    ['cuti', 'Buat pengajuan'],
+    ['barang', 'Buat pengajuan'],
     ['gelap', 'Ganti tema'],
     ['notif', 'Pengaturan notifikasi'],
     ['PERSETUJUAN', 'Persetujuan'],

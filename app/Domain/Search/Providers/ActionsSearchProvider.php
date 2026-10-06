@@ -69,7 +69,7 @@ final class ActionsSearchProvider implements SearchProvider
     {
         $builtIn = [
             ['id' => 'check-in', 'title' => 'Check-in', 'icon' => 'log-in', 'url' => '/absensi', 'subtitle' => 'Buka halaman absensi', 'keywords' => ['absen', 'hadir', 'check-out', 'masuk', 'pulang'], 'quick' => true],
-            ['id' => 'leave', 'title' => 'Ajukan cuti', 'icon' => 'calendar', 'url' => '/pengajuan', 'keywords' => ['cuti', 'izin', 'sakit', 'lembur', 'pengajuan'], 'quick' => true],
+            ['id' => 'leave', 'title' => 'Buat pengajuan', 'icon' => 'calendar', 'url' => '/pengajuan/baru', 'keywords' => ['cuti', 'izin', 'sakit', 'lembur', 'pengajuan', 'barang', 'pembelian'], 'quick' => true],
             ['id' => 'new-task', 'title' => 'Buat tugas baru', 'icon' => 'plus', 'url' => '/tugas', 'shortcut' => 'C', 'keywords' => ['task', 'tugas'], 'quick' => true],
             ['id' => 'theme', 'title' => 'Ganti tema', 'icon' => 'sun-moon', 'action' => 'theme.toggle', 'keywords' => ['tema', 'gelap', 'terang', 'dark', 'light', 'mode'], 'quick' => true],
             ['id' => 'inbox', 'title' => 'Buka Inbox', 'icon' => 'inbox', 'url' => '/inbox', 'keywords' => ['notifikasi', 'pesan']],

@@ -61,6 +61,8 @@ final class RequestPresenter
             'max_days_per_request' => $type->max_days_per_request,
             'day_unit' => $type->dayUnit(),
             'is_provisional_default' => $type->is_provisional_default,
+            'locked' => $type->isLocked(),
+            'locked_reason' => $type->isLocked() ? $type->locked_reason : null,
         ];
     }
 

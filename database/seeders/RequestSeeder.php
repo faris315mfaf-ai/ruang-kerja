@@ -146,6 +146,8 @@ class RequestSeeder extends Seeder
                     'min_service_months' => $service,
                     'approval_flow_id' => $flows[$flow]->id,
                     'sort_order' => $sort,
+                    // Cuti & lembur wait for the SOP (keputusan pemilik 6 Okt 2026).
+                    'locked_reason' => in_array($category, [RequestCategory::Leave, RequestCategory::Overtime], true) ? LeaveType::SOP_LOCK_REASON : null,
                 ])->save();
             }
         }
@@ -165,6 +167,11 @@ class RequestSeeder extends Seeder
         }
 
         $types = LeaveType::query()->whereIn('code', array_keys(self::TYPES))->get()->keyBy('code');
+        // The demo history was sent before cuti & lembur were locked (keputusan pemilik
+        // 6 Okt 2026): unlock in memory only, the stored types stay locked.
+        $types->each(function (LeaveType $type): void {
+            $type->locked_reason = null;
+        });
         $type = fn (string $code): LeaveType => $types->get($code) ?? throw new \LogicException("Missing leave type {$code}");
         $get = fn (string $email): User => $users->get($email) ?? throw new \LogicException("Missing demo user {$email}");
 

@@ -10,6 +10,8 @@ export type AdminLeaveType = LeaveTypeInfo & {
     carry_over_max_days: number | null;
     min_service_months: number | null;
     is_active: boolean;
+    /** Not null = locked (cannot be requested). */
+    locked_reason: string | null;
     sort_order: number;
 };
 

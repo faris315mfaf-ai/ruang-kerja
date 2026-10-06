@@ -49,6 +49,8 @@ class SaveLeaveTypeRequest extends FormRequest
             'max_days_per_request' => ['nullable', 'numeric', 'min:0.5', 'max:366', 'multiple_of:0.5'],
             'is_paid' => ['sometimes', 'boolean'],
             'is_active' => ['sometimes', 'boolean'],
+            'is_locked' => ['sometimes', 'boolean'],
+            'locked_reason' => ['nullable', 'string', 'max:200'],
             'approval_flow_id' => ['nullable', 'string', 'ulid'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:1000'],
         ];
@@ -68,6 +70,7 @@ class SaveLeaveTypeRequest extends FormRequest
             '*.numeric' => 'Harus berupa angka.',
             '*.integer' => 'Harus berupa bilangan bulat.',
             'max_days_per_request.min' => 'Minimal 0,5 hari.',
+            'locked_reason.max' => 'Alasan kunci maksimal :max karakter.',
             '*.min' => 'Tidak boleh negatif.',
             '*.multiple_of' => 'Kelipatan 0,5 hari.',
         ];
