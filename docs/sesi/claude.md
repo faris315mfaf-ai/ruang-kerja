@@ -1,11 +1,9 @@
-# Sesi aktif — serah terima antar agen
-
-> Diperbarui oleh agen yang sedang bekerja (Claude Code / Codex) setiap selesai satu langkah dan sebelum berhenti. Agen berikutnya membaca ini dulu, lalu `git log --oneline -15` dan `git status`. Aturan: `AGENTS.md` › Serah terima antar agen.
+# Sesi claude
 
 **Terakhir diperbarui:** 6 Okt 2026 · Claude Code
 
 ## Tugas berjalan
-Menyiapkan repo agar bisa dikerjakan bergantian oleh Claude Code dan Codex.
+Menyiapkan kerja paralel Claude Code + Codex (`scripts/agen-mulai.sh`, database test per worktree, `docs/PEMBAGIAN-TUGAS.md`, `docs/sesi/`). Branch `claude/kerja-paralel` di atas PR #1.
 
 ## Branch / worktree
 - Branch `claude/project-overview-status-ebff38` (worktree `.claude/worktrees/project-overview-status-ebff38`), disajikan Herd di `https://ruangkerja-proto.test`.

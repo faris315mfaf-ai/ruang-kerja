@@ -16,7 +16,7 @@ Dokumen acuan:
 Catatan khusus Claude Code (aturan umum, lingkungan, serah terima antar agen, dan batasan gerak ada di AGENTS.md):
 - Gunakan Plan Mode untuk setiap sprint baru.
 - Untuk interaksi di browser pakai panel browser bawaan atau Chrome (sesi `--chrome`); screenshot acuan tetap dari `node scripts/ui-shots.mjs`. Perintah siap pakai: `/sprint`, `/cek-ui`, `/cek-lokal`, `/tinjau` (sumbernya `.agents/skills/`, jangan edit `.claude/skills/` langsung).
-- Bila kuota hampir habis atau pengguna akan pindah ke Codex: perbarui `docs/SESI-AKTIF.md` dan commit sebelum berhenti.
+- Bila kuota hampir habis atau pengguna akan pindah ke Codex: perbarui `docs/sesi/<agen>.md` dan commit sebelum berhenti.
 
 ## Skill desain & animasi (global, `~/.claude/skills`; juga tersedia untuk Codex di `~/.agents/skills`)
 
