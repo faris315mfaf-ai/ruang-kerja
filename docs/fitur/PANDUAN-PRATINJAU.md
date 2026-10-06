@@ -44,7 +44,8 @@ Kolom **Desktop/Ponsel**: ✓ penuh · ◐ terbatas · — tidak ada. **Akun** =
 | `/pratinjau/panduan` | Panduan ini (+ dokumen modul di `/pratinjau/panduan/{dokumen}`) | — (dokumentasi) | ✓ | ✓ | siapa pun |
 | `/obrolan`, `/obrolan/{id}` | Daftar obrolan, percakapan | Nyata | ✓ | ✓ | `kadiv@demo.test` |
 | `/catatan` | Daftar catatan | **Nyata** | ✓ | ✓ | `kadiv@demo.test` |
-| `/catatan/{id}` | Editor catatan, riwayat versi, bagikan | **Nyata** | ✓ | ✓ (tanpa pohon) | `kadiv@demo.test` |
+| `/catatan/{id}` | Editor catatan, tab dokumen, warna & stabilo, ukuran huruf, mode catat, riwayat versi, bagikan | **Nyata** | ✓ | ✓ (strip tab, tanpa pohon) | `kadiv@demo.test` |
+| `/dashboard` › **Mulai notulensi** | Notulensi cepat di workspace Pribadi + pil "Kembali ke notulensi" | **Nyata** | ✓ | ✓ | `anggota@demo.test` |
 | `/rapat` | Agenda rapat | **Nyata** | ✓ | ◐ (tanpa tampilan "Minggu ini") | `kadiv@demo.test` |
 | `/rapat/baru` | Jadwalkan rapat | **Nyata** | ✓ | ✓ | `kadiv@demo.test` |
 | `/rapat/{id}` | Detail rapat & RSVP | **Nyata** | ✓ | ◐ (info ringkas) | `kadiv@demo.test` |
@@ -211,6 +212,8 @@ Sudah nyata. Produksi: jalankan migrasi, `php artisan chat:sync-workspace-channe
 ## 4. Modul yang kini Nyata (uraian di bawah = keadaan pratinjau sebelumnya)
 
 ### 4.1 Catatan bersama · `/catatan`
+
+> **Notulensi (6 Okt 2026, Nyata).** Coba: masuk `anggota@demo.test` → Dashboard → **Mulai notulensi** → editor dalam mode catat → **+** di "Tab dokumen" (ponsel: chip "+ Tab") → ⋯ pada tab › Tambah sub-tab → pilih teks → Warna teks / Stabilo → A+ → buka Tugas: pil "Kembali ke notulensi" → klik → kembali ke tab yang sama → buka menu Catatan: langsung ke notulensi → **Selesai mencatat** → pil hilang. Rincian: [catatan.md](catatan.md) §3.
 
 **Fungsi.** Wiki, SOP, checklist onboarding, dan notulen ringan yang diedit bersama di dalam workspace, dengan riwayat versi dan pengaturan berbagi. Menggantikan Google Docs/pesan WhatsApp yang tercecer untuk dokumen ringan; dokumen formal tetap Google Docs (ADR #6). Untuk semua anggota workspace. Rincian: [catatan.md](catatan.md).
 

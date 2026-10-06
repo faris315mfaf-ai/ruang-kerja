@@ -40,6 +40,21 @@ Pohon workspace di kiri (≥ 1280 px), lokasi `workspace › folder`, status sim
 - **Mode tanpa kolaborasi**: bila server kolaborasi tidak diatur atau tidak tersinkron dalam 5 detik, banner muncul dan editor menyimpan langsung (`PATCH /catatan/{note}/isi`) dengan kunci `updated_at`; bila orang lain menyimpan lebih dulu → 409 + banner "Muat ulang".
 - ⌘K: grup **Catatan** (hanya catatan yang boleh dibuka).
 
+### Notulensi cepat (keputusan pemilik 6 Okt 2026)
+
+Untuk mencatat secepat mungkin, termasuk saat mendesak. Notulensi = **catatan biasa** di workspace **Pribadi** (bisa dipindah atau dibagikan kemudian).
+
+1. **Mulai notulensi** ada di header semua dashboard (Saya, Divisi, HR, Direksi, `/manajemen`; ponsel: tombol 52px di bawah kartu absensi/judul) dan di ⌘K (aksi cepat). Satu ketukan membuat catatan berjudul `Notulensi · Selasa, 06/10/2026 14.05` (waktu kantor) dengan templat: Tanggal & jam, Peserta, Agenda, Pembahasan, Keputusan, Tindak lanjut (checklist), lalu membukanya dalam **mode catat** (`/catatan/{id}?mode=catat`; parameter dihapus dari URL setelah dibaca). Menu ▾ di sebelahnya (ponsel: tombol riwayat) memuat **Notulensi terakhir** (3 terbaru, dimuat saat dibuka: `GET /catatan/notulensi`).
+2. **Tab & sub-tab** ala Google Docs: dokumen = catatan induk, **tab** = catatan anak, **sub-tab** = cucu (maks. 2 tingkat di UI; data memakai `parent_id`). Desktop ≥ 1024: panel kiri "Tab dokumen" (+ tab "Workspace" berisi pohon lama di ≥ 1280); tablet: panel bisa diciutkan; ponsel: strip chip di bawah app bar, baris kedua untuk sub-tab, tombol daftar → lembar "Tab dokumen" (Tab baru, Sub-tab, Ganti nama, Hapus). Menghapus tab kembali ke dokumen di atasnya (`?kembali=induk`); sub-tab-nya naik satu tingkat.
+3. **Warna teks & stabilo**: tombol di toolbar membuka palet (nama palet `lib/palette.ts`, warna dari `--tag-*` sehingga ikut mode terang/Malam), plus "Warna bawaan/Tanpa stabilo" dan "Hapus warna". Ctrl/⌘ + Shift + H = stabilo terakhir. Disimpan sebagai mark `textColor`/`highlight` (hanya nama palet; server membuang nilai lain).
+4. **Ukuran huruf**: A− / 100% / A+ (90–160%, langkah 10%) hanya untuk isi editor catatan, diingat per perangkat (`localStorage rk.notes.scale.v1`). Ukuran dasar per perangkat: ponsel 17px, tablet 18px, desktop 17px. Desktop: Ctrl/⌘ + Alt + `=` / `-` / `0`. Ponsel: tombol "Aa" di toolbar atau Aksi catatan › Ukuran huruf → lembar "Tampilan teks".
+5. **Mode catat** (`localStorage rk.notes.session.v1`, per pengguna, sinkron antar-tab peramban):
+   - pita "Mode catat aktif" + **Selesai mencatat** di editor — satu-satunya cara keluar (konfirmasi, simpan paksa judul/isi dulu);
+   - pil melayang **"Notulensi berjalan · {judul} · Kembali"** di semua halaman lain (desktop di atas Dock, tablet kanan bawah, ponsel di atas tab bar, tanpa tombol tutup) → kembali ke tab terakhir yang dibuka;
+   - membuka menu **Catatan** (`/catatan`, dari Dock/Rail/Lainnya) langsung kembali ke notulensi aktif (pencarian `?q=` tetap menampilkan daftar);
+   - tombol **Mode catat** di editor memulai mode untuk catatan lain (bila tidak ada notulensi berjalan);
+   - catatan aktif dihapus atau aksesnya hilang (404/403) → mode berakhir otomatis dengan pesan.
+
 ## 4. Arsitektur
 
 ```mermaid
@@ -67,6 +82,7 @@ sequenceDiagram
 | Policy | `NotePolicy`, `NoteVersionPolicy`, `NoteSharePolicy` |
 | Frontend | `resources/js/features/notes/*` (`use-collab.ts` = HocuspocusProvider + awareness, `use-note-session.ts`, `note-editor.tsx` = Collaboration + CollaborationCaret, `tree-actions.tsx`, `workspace-notes.tsx`), `pages/notes/*`, `pages/workspaces/notes.tsx` |
 | Server kolaborasi | `collab/src/{server,notes-extension,token,laravel,prosemirror}.js`, `collab/Dockerfile` |
+| Notulensi | `StartQuickMinutes`, `QuickMinutesController` (`POST/GET /catatan/notulensi`), `NotePreset`; frontend `quick-minutes-button.tsx`, `document-tabs.tsx`, `minutes-session.ts` (store), `minutes-mode.tsx`, `minutes-return-pill.tsx` (dipasang sekali di `layouts/app-layout.tsx`), `minutes-navigation.ts`, `note-scale.ts`, `editor/color-marks.ts`, `editor/toolbar-extras.tsx` |
 | Seeder | `NoteDemoSeeder` (SOP SDM + riwayat, OPS + satu catatan "Hanya diundang" untuk HR, GDG, PLQ, PRG, folder "Ide & draf" di Pribadi Dimas) |
 
 Konfigurasi `config/collab.php`: `COLLAB_SECRET` (≥ 32 karakter, sama untuk Laravel & collab; kosong = mode tanpa kolaborasi), `COLLAB_PORT` (1234), `COLLAB_URL` (Laravel → collab, HTTP internal), `VITE_COLLAB_URL` (browser → collab, WebSocket; dibaca Laravel saat runtime dan dipakai juga di CSP `connect-src`).

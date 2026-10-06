@@ -97,8 +97,10 @@ export function NoteDesktop({
         canCreate: workspace?.can_create ?? false,
         mobile: false,
     });
-    // Tablet: the panel folds away; open by default when the document has tabs.
-    const [panelOpen, setPanelOpen] = useState(() => tabs.tabs.length > 1);
+    // Tablet: the panel folds away; until toggled it is open when the
+    // document has tabs or note-taking mode is on.
+    const [panelToggled, setPanelOpen] = useState<boolean | null>(null);
+    const panelOpen = panelToggled ?? (tabs.tabs.length > 1 || mode.active);
     const [panelTab, setPanelTab] = useState<'document' | 'workspace'>(
         'document',
     );

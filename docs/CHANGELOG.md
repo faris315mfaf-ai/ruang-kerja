@@ -14,6 +14,11 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 - **Dashboard Direksi** (`/dashboard/direksi`): monitoring kerja harian, mingguan, per proyek dari laporan harian, catatan tindakan (`management_notes`), akses cepat workspace (baca saja). **Absensi bertab** Hari ini · Rekap · Kedisiplinan (`/absensi/kedisiplinan`: kedisiplinan, tren, penyelesaian, lead time, rata-rata terlambat); Dashboard HR diringkas; beban kerja pindah ke `/manajemen`; HR + Direksi melihat semua workspace tim **baca saja**; panel "Laporan tim hari ini" untuk Kepala Divisi.
 - Modul pratinjau menjadi **nyata** (flag sendiri, nyala lokal, mati produksi): **Catatan bersama** dengan folder & kolaborasi Hocuspocus (`FEATURE_NOTES`, layanan `collab/`), **Rapat, notulen & kalender** (`FEATURE_MEETINGS`; Google Calendar/Meet ditahan), **Otomasi, tugas berulang, template, Kinerja saya** (`FEATURE_AUTOMATION`), **OKR divisi** (`FEATURE_OKR`), **Dashboard per jabatan** (`FEATURE_ROLE_DASHBOARDS`, `positions.dashboard_role`). Panduan `/pratinjau/panduan`.
 
+### Ditambahkan (6 Okt 2026, Notulensi — keputusan pemilik)
+- **Notulensi cepat** di Catatan: tombol **Mulai notulensi** di semua dashboard dan ⌘K membuat catatan bertemplat di workspace Pribadi (`notes.preset = minutes`) dan membukanya dalam **mode catat**; menu "Notulensi terakhir".
+- **Tab & sub-tab dokumen** ala Google Docs (catatan anak/cucu), **warna teks & stabilo** bernama palet yang ikut mode terang/Malam (hanya di catatan), **ukuran huruf** A−/A+ 90–160% per perangkat.
+- **Mode catat persisten**: pil "Kembali ke notulensi" di semua halaman, menu Catatan langsung kembali ke notulensi aktif, keluar hanya lewat "Selesai mencatat". `docs/fitur/catatan.md` §3.
+
 ### Diubah (6 Okt 2026)
 - Semua isian tanggal memakai komponen `DateInput` berformat **"Hari, dd/mm/yyyy"** (mis. "Selasa, 06/10/2026") apa pun bahasa peramban; server tetap menerima `YYYY-MM-DD`.
 - `/manajemen`: kartu "Kehadiran hari ini" dan KPI "Tugas terlambat" dihapus.
