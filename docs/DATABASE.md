@@ -25,7 +25,7 @@
 | Google & file | `google_accounts`, `drive_files`, `attachments` |
 | Notifikasi | `notifications`*, `notification_preferences`, `notification_settings`, `notification_dispatch_logs` |
 | Fase 2 | `channels`, `channel_members`, `messages`, `notes`, `note_versions`, `calendar_events` |
-| Fase 3 | `devices`, `face_templates`, `objectives`, `key_results` |
+| Fase 3 | `devices`, `face_templates`, `objectives`, `key_results`, `key_result_checkins`, `key_result_tasks` (OKR sudah dimigrasi, F3-3) |
 
 \* tabel bawaan paket (spatie/laravel-permission, Laravel notifications).
 
@@ -512,7 +512,51 @@ Indeks: `(workspace_id, parent_google_id)`, `(workspace_id, kind)`.
 
 - `devices`: `id`, `user_id`, `platform`, `device_id_hash`, `push_token`, `integrity_verdict` jsonb, `last_seen_at`, `is_trusted`.
 - `face_templates`: `id`, `user_id`, `template` bytea (dienkripsi), `model_version`, `consent_id` FK attendance_consents, `created_at`. Dihapus otomatis bila persetujuan dicabut.
-- `objectives` / `key_results`: OKR per divisi per kuartal, `key_results` dapat ditautkan ke `tasks`.
+
+### OKR divisi (F3-3, sudah dimigrasi)
+
+Migrasi `2026_10_11_400100_create_okr_tables`, di balik flag `FEATURE_OKR` (`config/features.php` `okr`). Model `Objective`, `KeyResult`, `KeyResultCheckin`; rumus di `app/Domain/Analytics/Okr` (`docs/fitur/okr.md`).
+
+#### objectives
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | ulid PK | |
+| company_id | FK companies | restrict |
+| division_id | FK divisions | restrict; divisi pemilik objective |
+| quarter | varchar(7) | `YYYY-Qn`, CHECK `quarter ~ '^[0-9]{4}-Q[1-4]$'`; kuartal kalender tanggal kantor |
+| title | varchar(200) | |
+| description | text null | |
+| owner_id | FK users | restrict; pemilik/PIC objective (karyawan aktif atau kepala divisi itu) |
+| status | varchar(10) | `draft` · `active` · `closed` (CHECK, default `active`); `closed` = hanya baca |
+| closed_at | timestamptz null | CHECK `(status = 'closed') = (closed_at IS NOT NULL)` |
+| created_at / updated_at / deleted_at | timestamptz | soft delete; `updated_at` disentuh setiap KR/check-in berubah |
+
+Indeks `(company_id, quarter)`, `(division_id, quarter)`. Visibilitas (`Objective::visibleTo` = `ObjectivePolicy::view`): pemegang `dashboard.view_company` (Direksi, HR, Super Admin), karyawan divisi itu, Kepala Divisi (`ledDivisionIds`, termasuk sub-divisi), pemilik objective, dan pemilik salah satu KR-nya. Buat/ubah/tutup: Kepala Divisi divisi itu dan Direksi.
+
+#### key_results
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | ulid PK | |
+| objective_id | FK objectives | cascade |
+| title | varchar(160) | |
+| unit | varchar(10) | `number` · `percent` · `currency` · `days` (CHECK) |
+| unit_label | varchar(20) | default `''`; hanya untuk `number` ("skenario", "bug") |
+| start_value / target_value / current_value | numeric(14,2) | CHECK `target_value <> start_value`; target boleh lebih kecil dari awal ("makin kecil makin baik") |
+| weight | numeric(5,2) | default 1, CHECK `0 < weight <= 100` (form: bilangan bulat 1–100) |
+| owner_id | FK users | restrict |
+| position | smallint | urutan dalam objective (ditambah di akhir, row lock objective) |
+| created_at / updated_at | timestamptz | |
+
+Indeks `(objective_id, position)`, `(owner_id)`. Tambah/hapus KR: pemilik objective dan Kepala Divisi; ubah, check-in, tautkan tugas: pemilik KR, pemilik objective, Kepala Divisi. Objective `closed` menolak semuanya (403).
+
+#### key_result_checkins (append-only)
+`id` ulid, `key_result_id` FK cascade, `value` numeric(14,2), `confidence` smallint null (CHECK 1–10), `note` text null, `author_id` FK users null (nullOnDelete), `checked_on` date (tanggal kantor), `created_at`. Indeks `(key_result_id, checked_on)`. Model menolak update. `RecordKeyResultCheckin` menulis baris ini dan `key_results.current_value` dalam satu transaksi (row lock KR).
+
+#### key_result_tasks
+`key_result_id` FK cascade, `task_id` FK tasks cascade (PK gabungan = unik), `linked_by` FK users null, `created_at`. Indeks `(task_id)`. Hanya tugas yang terlihat oleh penaut **dan** berada di workspace divisi objective (workspace divisi, workspace tim divisi itu, atau proyek dengan `division_id` = divisi utama; bukan pribadi/diarsipkan) — `LinkableTasks`. Detail objective hanya menampilkan tugas tertaut yang terlihat oleh penonton.
+
+Notifikasi: `okr.checkin_reminder` (Jumat 15.00 WIB, satu per pemilik KR per minggu bila belum ada check-in sejak Senin, de-dup `notification_dispatch_logs` dengan cycle = tanggal Senin) dan `okr.objective_at_risk` (status objective aktif memburuk; ke pemilik objective + Kepala Divisi, bukan pelaku; sekali per tingkat status per kuartal, dilepas saat kembali sesuai jalur/ditutup). Baris preferensi `okr.activity`.
+
 
 ---
 

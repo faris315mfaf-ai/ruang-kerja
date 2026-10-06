@@ -162,12 +162,12 @@ export function ObjectiveDetail({
                             {objective.description}
                         </p>
                     )}
-                    <p className="flex flex-wrap items-center gap-2 text-[15px] text-text-muted">
+                    <p className="flex items-center gap-2 text-[15px] text-text-muted">
                         <UserAvatar
                             name={objective.owner.name}
-                            className="size-7"
+                            className="size-7 shrink-0"
                         />
-                        <span>
+                        <span className="min-w-0">
                             PIC{' '}
                             <b className="font-semibold text-text">
                                 {objective.owner.name}
