@@ -8,9 +8,9 @@ import {
 } from './dashboard-ui';
 import { compared, formatMetric, periodNoun } from './lib';
 import { MyAttendanceCard } from './my-attendance-card';
-import { FocusList } from './personal-parts';
 import type { PersonalProps } from './personal-types';
 import { RequestRows } from './request-rows';
+import { RuangSaya } from './ruang-saya/ruang-saya';
 import { ViewPicker } from './view-picker';
 
 /** Small phone KPI tile (MSBeranda "Saldo cuti", "Tepat waktu"). */
@@ -18,36 +18,18 @@ const TILE = 'gap-0.5 rounded-card px-4 py-3.5 shadow-none';
 
 /**
  * Beranda (design MSBeranda): the shell app bar holds the greeting; then the
- * attendance hero, "Fokus hari ini", KPI tiles 2×2 and "Pengajuan saya".
+ * attendance hero, "Ruang saya", KPI tiles 2×2 and "Pengajuan saya".
  */
 export function PersonalMobile(props: PersonalProps) {
     const { metrics, live, definitions } = props;
     const previous = props.filters.period.previous_label;
 
     return (
-        <div className="flex flex-col gap-3.5 pb-4">
+        <div className="flex flex-col gap-3.5 pb-24">
             <ViewPicker views={props.views} />
             <MyAttendanceCard compact />
 
-            <section
-                aria-labelledby="focus-heading"
-                className="flex flex-col gap-2"
-            >
-                <SectionHeader
-                    id="focus-heading"
-                    title="Fokus hari ini"
-                    href="/tugas"
-                    link="Semua"
-                    linkLabel={`Semua tugas (${live.focus.total} terbuka)`}
-                />
-                <MobileCard>
-                    <FocusList
-                        items={live.focus.items.slice(0, 3)}
-                        today={props.today}
-                        variant="mobile"
-                    />
-                </MobileCard>
-            </section>
+            <RuangSaya planner={props.planner} variant="mobile" />
 
             <section
                 aria-label="Ringkasan"

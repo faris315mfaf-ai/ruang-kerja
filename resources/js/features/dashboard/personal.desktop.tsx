@@ -16,9 +16,10 @@ import {
 import { FilterBar } from './filter-bar';
 import { compared, formatMetric, greeting, periodNoun } from './lib';
 import { MyAttendanceCard } from './my-attendance-card';
-import { AttendanceStrip, FocusList, WeekStrip } from './personal-parts';
+import { AttendanceStrip } from './personal-parts';
 import type { PersonalProps } from './personal-types';
 import { RequestRows } from './request-rows';
+import { RuangSaya } from './ruang-saya/ruang-saya';
 import { ViewPicker } from './view-picker';
 
 /** "Staf Data · atasan Dimas Pratama". */
@@ -99,6 +100,8 @@ export function PersonalDesktop(props: PersonalProps) {
                     <KpiSkeleton className="flex-[1_1_220px]" />
                 )}
             </section>
+
+            <RuangSaya planner={props.planner} variant="desktop" />
 
             <section
                 aria-label="Filter periode"
@@ -200,74 +203,46 @@ export function PersonalDesktop(props: PersonalProps) {
             </section>
 
             <section className="flex flex-wrap items-start gap-5">
-                <div className="flex min-w-0 flex-[2_1_620px] flex-col gap-5">
+                <Panel
+                    title="Pengajuan saya"
+                    action={
+                        <PanelLink href="/pengajuan/baru">Ajukan</PanelLink>
+                    }
+                    flush
+                    className="min-w-0 flex-[1_1_420px] pb-3"
+                >
+                    <RequestRows items={live.requests} />
+                    <div className="border-t border-divider px-6 pt-3 md:px-7">
+                        <PanelLink href="/pengajuan">
+                            Riwayat pengajuan
+                        </PanelLink>
+                    </div>
+                </Panel>
+                {metrics ? (
                     <Panel
-                        title="Fokus hari ini"
-                        action={
-                            <PanelLink
-                                href="/tugas"
-                                label={`Semua tugas (${live.focus.total} terbuka)`}
-                            >
-                                Semua tugas
-                            </PanelLink>
-                        }
-                        flush
-                        className="pb-2"
-                    >
-                        <FocusList
-                            items={live.focus.items}
-                            today={props.today}
-                        />
-                    </Panel>
-                    <Panel
-                        title="Minggu ini"
+                        title={`Kehadiran ${metrics.compared.current.label}`}
                         action={
                             <PanelHint>
-                                {live.week.total} tugas bertenggat
+                                {metrics.attendance.days.workdays} hari kerja
                             </PanelHint>
                         }
+                        className="min-w-0 flex-[1_1_420px]"
                     >
-                        <WeekStrip week={live.week} />
+                        <AttendanceStrip days={metrics.attendance.days} />
                     </Panel>
-                </div>
-
-                <div className="flex min-w-0 flex-[1_1_360px] flex-col gap-5">
-                    <Panel
-                        title="Pengajuan saya"
-                        action={
-                            <PanelLink href="/pengajuan/baru">Ajukan</PanelLink>
-                        }
-                        flush
-                        className="pb-3"
-                    >
-                        <RequestRows items={live.requests} />
-                        <div className="border-t border-divider px-6 pt-3 md:px-7">
-                            <PanelLink href="/pengajuan">
-                                Riwayat pengajuan
-                            </PanelLink>
-                        </div>
-                    </Panel>
-                    {metrics ? (
-                        <Panel
-                            title={`Kehadiran ${metrics.compared.current.label}`}
-                            action={
-                                <PanelHint>
-                                    {metrics.attendance.days.workdays} hari
-                                    kerja
-                                </PanelHint>
-                            }
-                        >
-                            <AttendanceStrip days={metrics.attendance.days} />
-                        </Panel>
-                    ) : (
-                        <PanelSkeleton title="Kehadiran" rows={3} />
-                    )}
-                </div>
+                ) : (
+                    <PanelSkeleton
+                        title="Kehadiran"
+                        rows={3}
+                        className="min-w-0 flex-[1_1_420px]"
+                    />
+                )}
             </section>
 
             <p className="flex items-center gap-2 text-meta text-text-muted">
                 <ShieldCheck className="size-4 shrink-0" aria-hidden />
                 Data ini hanya terlihat oleh Anda, atasan langsung, dan HR.
+                Rencana di Ruang saya hanya terlihat oleh Anda.
             </p>
         </div>
     );

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import type { TodayCounts } from '@/types/dashboard';
 import {
     awayBreakdown,
-    busiestDay,
     compared,
     deltaText,
     deltaTone,
@@ -85,16 +84,8 @@ describe('dashboard formatting', () => {
         );
     });
 
-    it('computes shares and the busiest day safely', () => {
+    it('computes shares safely', () => {
         expect(share(3, 12)).toBe(25);
         expect(share(3, 0)).toBe(0);
-        expect(
-            busiestDay([
-                { day: 'Sen', count: 2 },
-                { day: 'Rab', count: 3 },
-                { day: 'Kam', count: 0 },
-            ]),
-        ).toEqual({ day: 'Rab', count: 3 });
-        expect(busiestDay([{ count: 0 }])).toBeNull();
     });
 });

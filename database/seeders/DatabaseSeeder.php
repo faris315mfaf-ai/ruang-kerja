@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             $this->call(ProjectSeeder::class);
             $this->call(TaskCollaborationSeeder::class);
             $this->call(NotificationDemoSeeder::class);
+            $this->call(PlannerDemoSeeder::class);
             $this->call(AttendanceSeeder::class);
             $this->call(AnalyticsDemoSeeder::class); // APP_ENV=local only: ~50 employees × 6 months
         }

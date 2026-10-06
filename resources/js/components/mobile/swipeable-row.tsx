@@ -15,6 +15,8 @@ type Props = {
     children: ReactNode;
     /** Revealed when swiping left (right edge). */
     actions: SwipeAction[];
+    /** Revealed when swiping right (left edge), e.g. "Selesai". */
+    leadingActions?: SwipeAction[];
     className?: string;
 };
 
@@ -27,12 +29,55 @@ const toneClass: Record<NonNullable<SwipeAction['tone']>, string> = {
     neutral: 'bg-surface-2 text-text',
 };
 
+function ActionButtons({
+    actions,
+    hidden,
+    onDone,
+}: {
+    actions: SwipeAction[];
+    hidden: boolean;
+    onDone: () => void;
+}) {
+    return actions.map((action) => (
+        <button
+            key={action.label}
+            type="button"
+            tabIndex={hidden ? -1 : 0}
+            style={{ width: ACTION_WIDTH }}
+            className={cn(
+                'h-full text-sm font-medium',
+                toneClass[action.tone ?? 'neutral'],
+            )}
+            onClick={() => {
+                onDone();
+                action.onAction();
+            }}
+        >
+            {action.icon && (
+                <action.icon
+                    aria-hidden
+                    className="mx-auto mb-1 size-5"
+                    strokeWidth={1.75}
+                />
+            )}
+            {action.label}
+        </button>
+    ));
+}
+
 /**
- * Row that reveals quick actions on a left swipe (docs/PLATFORM.md §2).
- * Actions stay reachable without swiping through the row's own "more" menu.
+ * Row that reveals quick actions on a left swipe (and optional leading
+ * actions on a right swipe, docs/PLATFORM.md §2). Actions stay reachable
+ * without swiping through the row's own "more" menu.
  */
-export function SwipeableRow({ children, actions, className }: Props) {
+export function SwipeableRow({
+    children,
+    actions,
+    leadingActions = [],
+    className,
+}: Props) {
     const maxOffset = actions.length * ACTION_WIDTH;
+    const maxLeading = leadingActions.length * ACTION_WIDTH;
     const [offset, setOffset] = useState(0);
     const start = useRef<{ x: number; y: number; offset: number } | null>(null);
     const horizontal = useRef(false);
@@ -60,7 +105,7 @@ export function SwipeableRow({ children, actions, className }: Props) {
         }
 
         const next = Math.min(
-            0,
+            maxLeading,
             Math.max(-maxOffset, start.current.offset + dx),
         );
         setOffset(next);
@@ -68,7 +113,13 @@ export function SwipeableRow({ children, actions, className }: Props) {
 
     const onPointerUp = () => {
         if (horizontal.current) {
-            setOffset(offset < -maxOffset / 2 ? -maxOffset : 0);
+            setOffset(
+                offset < -maxOffset / 2
+                    ? -maxOffset
+                    : maxLeading > 0 && offset > maxLeading / 2
+                      ? maxLeading
+                      : 0,
+            );
         }
 
         start.current = null;
@@ -76,39 +127,34 @@ export function SwipeableRow({ children, actions, className }: Props) {
 
     return (
         <div className={cn('relative overflow-hidden', className)}>
+            {leadingActions.length > 0 && (
+                <div
+                    className={cn(
+                        'absolute inset-y-0 left-0 flex',
+                        offset <= 0 && 'invisible',
+                    )}
+                    aria-hidden={offset <= 0}
+                >
+                    <ActionButtons
+                        actions={leadingActions}
+                        hidden={offset <= 0}
+                        onDone={() => setOffset(0)}
+                    />
+                </div>
+            )}
             <div
                 className={cn(
                     'absolute inset-y-0 right-0 flex',
                     // Hidden at rest so no seam shows through the row's rounded edge.
-                    offset === 0 && 'invisible',
+                    offset >= 0 && 'invisible',
                 )}
-                aria-hidden={offset === 0}
+                aria-hidden={offset >= 0}
             >
-                {actions.map((action) => (
-                    <button
-                        key={action.label}
-                        type="button"
-                        tabIndex={offset === 0 ? -1 : 0}
-                        style={{ width: ACTION_WIDTH }}
-                        className={cn(
-                            'h-full text-sm font-medium',
-                            toneClass[action.tone ?? 'neutral'],
-                        )}
-                        onClick={() => {
-                            setOffset(0);
-                            action.onAction();
-                        }}
-                    >
-                        {action.icon && (
-                            <action.icon
-                                aria-hidden
-                                className="mx-auto mb-1 size-5"
-                                strokeWidth={1.75}
-                            />
-                        )}
-                        {action.label}
-                    </button>
-                ))}
+                <ActionButtons
+                    actions={actions}
+                    hidden={offset >= 0}
+                    onDone={() => setOffset(0)}
+                />
             </div>
             <div
                 className="relative touch-pan-y bg-surface transition-transform duration-180 ease-brand"

@@ -134,17 +134,6 @@ export function share(part: number, total: number): number {
     return total > 0 ? (part / total) * 100 : 0;
 }
 
-/** The busiest day of a week strip, for "Rabu paling padat." */
-export function busiestDay<T extends { count: number }>(days: T[]): T | null {
-    return days.reduce<T | null>(
-        (best, day) =>
-            day.count > 0 && (best === null || day.count > best.count)
-                ? day
-                : best,
-        null,
-    );
-}
-
 /** "minggu ini", "bulan ini", "kuartal ini", "periode ini". */
 export function periodNoun(preset: string): string {
     return (

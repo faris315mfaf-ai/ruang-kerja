@@ -151,20 +151,6 @@ export type PersonalLive = {
     profile: { position: string | null; manager: string | null };
     leave_balance: { type: string; remaining: number; year: number } | null;
     requests: RequestItem[];
-    /** Live (not cached): "Fokus hari ini". */
-    focus: { total: number; items: TaskSummary[] };
-    /** Live (not cached): "Minggu ini". */
-    week: {
-        total: number;
-        days: {
-            date: string;
-            weekday: string;
-            day: number;
-            count: number;
-            open: number;
-            is_today: boolean;
-        }[];
-    };
 };
 
 /* ------------------------------------------------- attendance (today) */

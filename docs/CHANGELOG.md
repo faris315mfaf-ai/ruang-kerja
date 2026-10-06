@@ -6,6 +6,12 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 
 ## [Belum dirilis]
 
+### Ditambahkan
+- **Ruang saya** di Beranda (Dashboard Saya, desktop & ponsel): tugas baru yang diberikan orang lain (terima ke Hari ini / Minggu ini), lajur Hari ini · Minggu ini · Nanti dengan penempatan otomatis per tenggat dan penanda "terbawa dari kemarin", catatan pribadi cepat, tandai selesai (lewat Review bila kolom itu ada), progres "selesai hari ini". Rencana bersifat pribadi (`task_plans`). Seeder demo `PlannerDemoSeeder`.
+
+### Diperbaiki
+- Beranda anggota tidak lagi kosong (`Cannot read properties of undefined (reading 'total')`): bagian "Fokus hari ini" dan "Minggu ini" diganti Ruang saya.
+
 ### Diubah
 - **Sistem desain Arus untuk seluruh aplikasi** (`docs/ruangkerja-design/`, `docs/DESIGN.md`): palet terang & Malam baru dengan nama token lama, pasangan status lembut (`bg-success-soft` …), gradien aksi/merek/hangat/indigo, latar halaman dua cahaya, huruf **Figtree** (isi 16px desktop, 17px ponsel, display 44px) + JetBrains Mono, skala radius 8–28, elevasi e-1/e-2/glow, kontrol 44px. Tema halaman Manajemen (`arus.css`) dilebur ke sistem global; Plus Jakarta Sans dihapus.
 - Komponen dasar bergaya Arus: tombol gradien (varian `tonal`, `quiet`, ukuran 36/44/52/56), input/select 44px, checkbox/radio/switch, badge status & label, `SegmentedTabs`/`TabNav`, `Panel`, `KpiCard`, `Progress`, `ListRow`, empty state, dialog/sheet/menu kaca, toast inverse.

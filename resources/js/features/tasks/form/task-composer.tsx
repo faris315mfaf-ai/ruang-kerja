@@ -29,7 +29,10 @@ type ComposerApi = {
      * Opens the task detail: the TaskSheet on desktop/tablet, the
      * full-screen page /w/{KEY}/tasks/{n} on mobile (Sprint 6).
      */
-    openEdit: (task: Task, workspaceKey?: string) => void;
+    openEdit: (
+        task: Pick<Task, 'id' | 'key' | 'number'>,
+        workspaceKey?: string,
+    ) => void;
     /** Id of the task open in the sheet (board highlight / shortcuts). */
     openTaskId: string | null;
     /**
