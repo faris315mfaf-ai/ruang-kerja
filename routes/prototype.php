@@ -1,5 +1,7 @@
 <?php
 
+use App\Domain\Documentation\Services\PrototypeGuideLinks;
+use App\Http\Controllers\Prototype\PrototypeGuideController;
 use App\Http\Middleware\EnsureFeatureEnabled;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +14,15 @@ use Illuminate\Support\Facades\Route;
  */
 Route::middleware([EnsureFeatureEnabled::class.':prototype', 'auth', 'verified'])->name('prototype.')->group(function () {
     Route::inertia('pratinjau', 'prototype/hub')->name('hub');
+
+    // Panduan pratinjau: docs/fitur/PANDUAN-PRATINJAU.md + module docs of
+    // docs/fitur (config/docs.php group `features`) and their screenshots.
+    Route::get('pratinjau/panduan', [PrototypeGuideController::class, 'index'])->name('guide');
+    Route::get('pratinjau/panduan/gambar/{folder}/{file}', [PrototypeGuideController::class, 'image'])
+        ->where(['folder' => PrototypeGuideLinks::FOLDER_PATTERN, 'file' => PrototypeGuideLinks::FILE_PATTERN])
+        ->name('guide.image');
+    Route::get('pratinjau/panduan/{slug}', [PrototypeGuideController::class, 'show'])
+        ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')->name('guide.show');
 
     // F2-1 · Obrolan has its own backend now: routes/chat.php (FEATURE_CHAT).
 

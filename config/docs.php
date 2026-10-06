@@ -17,6 +17,10 @@
 | the path (docs/sprints/sprint-3/SUMMARY.md → sprints-sprint-3-summary) and
 | the title from the first "# " heading.
 |
+| The `features` group is also readable by every employee at
+| /pratinjau/panduan (prototype flag on; PrototypeGuideController), with its
+| screenshots from docs/fitur/img.
+|
 */
 
 return [
@@ -38,6 +42,7 @@ return [
         'prd' => ['path' => 'docs/PRD.md', 'title' => 'PRD', 'group' => 'product'],
         'design' => ['path' => 'docs/DESIGN.md', 'title' => 'Design system', 'group' => 'product'],
         'platform' => ['path' => 'docs/PLATFORM.md', 'title' => 'Desktop & mobile', 'group' => 'product'],
+        'panduan-pratinjau' => ['path' => 'docs/fitur/PANDUAN-PRATINJAU.md', 'title' => 'Panduan pratinjau', 'group' => 'features'],
         'fitur' => ['path' => 'docs/fitur/README.md', 'title' => 'Pratinjau Fase 2 & 3', 'group' => 'features'],
         'fitur-obrolan' => ['path' => 'docs/fitur/obrolan.md', 'title' => 'Obrolan (F2-1)', 'group' => 'features'],
         'fitur-catatan' => ['path' => 'docs/fitur/catatan.md', 'title' => 'Catatan bersama (F2-2)', 'group' => 'features'],

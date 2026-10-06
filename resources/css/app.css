@@ -649,6 +649,22 @@
         padding-left: 0.9rem;
     }
 
+    /* Screenshots (only served by the preview guide, /pratinjau/panduan). */
+    .doc-prose img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 0.75rem 0;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--surface-2);
+    }
+
+    /* Phone screenshots (390 px wide at 2x) stay phone-sized. */
+    .doc-prose img[src*='-ponsel'] {
+        width: 300px;
+    }
+
     .doc-prose hr {
         margin: 1.5rem 0;
         border-color: var(--border);
