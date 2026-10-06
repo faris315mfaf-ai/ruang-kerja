@@ -76,7 +76,8 @@ it('keeps the attendance pages free of N+1', function () {
     assertQueryBudgets([
         '/absensi' => ['anggota', 74],
         '/absensi/riwayat' => ['anggota', 44],
-        '/absensi/hari-ini' => ['hr', 52],
+        // +1: shared prop chat.unread (Obrolan Dock badge), one query on every page.
+        '/absensi/hari-ini' => ['hr', 53],
         '/absensi/rekap' => ['hr', 46],
         '/admin/absensi' => ['hr', 41],
         '/admin/absensi/penugasan' => ['hr', 36],
@@ -90,7 +91,7 @@ it('keeps requests and approvals free of N+1', function () {
         '/pengajuan' => ['anggota', 47],
         '/pengajuan/baru' => ['anggota', 33],
         "/pengajuan/{$request->id}" => ['hr', 40],
-        '/persetujuan' => ['kadiv', 58],
+        '/persetujuan' => ['kadiv', 60], // +2: shared prop chat.unread (one query) and its visible-channel subquery
         "/persetujuan/{$request->id}" => ['hr', 41],
         '/admin/pengajuan' => ['hr', 40],
         '/admin/saldo-cuti' => ['hr', 35],

@@ -14,4 +14,8 @@
 
 return [
     'prototype' => (bool) env('FEATURE_PROTOTYPE', env('APP_ENV', 'production') !== 'production'),
+
+    // Obrolan (Fase 2, F2-1) with a real backend: /obrolan, Dock tile.
+    // Off in production until the release is decided.
+    'chat' => (bool) env('FEATURE_CHAT', env('APP_ENV', 'production') !== 'production'),
 ];

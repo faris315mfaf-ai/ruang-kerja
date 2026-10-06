@@ -12,8 +12,6 @@ beforeEach(function () {
 
 dataset('prototype pages', [
     ['/pratinjau', 'prototype/hub'],
-    ['/obrolan', 'chat/index'],
-    ['/obrolan/umum', 'chat/show'],
     ['/catatan', 'notes/index'],
     ['/catatan/sop-onboarding', 'notes/show'],
     ['/rapat', 'meetings/index'],
@@ -55,7 +53,7 @@ it('renders every preview page for a signed-in employee', function (string $uri,
 })->with('prototype pages');
 
 it('sends guests to the login page', function () {
-    $this->get('/obrolan')->assertRedirect(route('login'));
+    $this->get('/rapat')->assertRedirect(route('login'));
 });
 
 it('answers 404 when the prototype flag is off', function (string $uri) {
@@ -64,7 +62,7 @@ it('answers 404 when the prototype flag is off', function (string $uri) {
     $user->assignRole(Role::Anggota->value);
 
     $this->actingAs($user)->get($uri)->assertNotFound();
-})->with(['/pratinjau', '/obrolan', '/rapat', '/okr', '/peran/hr']);
+})->with(['/pratinjau', '/catatan', '/rapat', '/okr', '/peran/hr']);
 
 it('shares the flag as off with the shell', function () {
     config(['features.prototype' => false]);

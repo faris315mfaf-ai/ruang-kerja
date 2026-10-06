@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Middleware\EnsurePrototypeEnabled;
+use App\Http\Middleware\EnsureFeatureEnabled;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -10,13 +10,10 @@ use Illuminate\Support\Facades\Route;
  * backend lands, swap Route::inertia for a controller that passes the same
  * props shape (resources/js/features/<module>/types.ts). Flag off = 404.
  */
-Route::middleware([EnsurePrototypeEnabled::class, 'auth', 'verified'])->name('prototype.')->group(function () {
+Route::middleware([EnsureFeatureEnabled::class.':prototype', 'auth', 'verified'])->name('prototype.')->group(function () {
     Route::inertia('pratinjau', 'prototype/hub')->name('hub');
 
-    // F2-1 · Chat
-    Route::inertia('obrolan', 'chat/index')->name('chat.index');
-    Route::get('obrolan/{channel}', fn (string $channel) => inertia('chat/show', ['channelId' => $channel]))
-        ->where('channel', '[a-z0-9-]+')->name('chat.show');
+    // F2-1 · Obrolan has its own backend now: routes/chat.php (FEATURE_CHAT).
 
     // F2-2 · Realtime notes
     Route::inertia('catatan', 'notes/index')->name('notes.index');

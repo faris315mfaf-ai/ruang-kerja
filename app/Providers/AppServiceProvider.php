@@ -104,6 +104,10 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('comments', fn (Request $request): Limit => Limit::perMinute(30)
             ->by('comments|'.$this->userOrIpKey($request)));
 
+        // Obrolan (F2-1): sending, editing and reacting to messages.
+        RateLimiter::for('messages', fn (Request $request): Limit => Limit::perMinute(60)
+            ->by('messages|'.$this->userOrIpKey($request)));
+
         // Opening chunked Drive upload sessions (each reserves disk space until finished).
         // The upload client shows `message` as is: Indonesian instead of "Too Many Attempts.".
         RateLimiter::for('drive-uploads', fn (Request $request): Limit => Limit::perMinute(config()->integer('google.upload.starts_per_minute', 20))
