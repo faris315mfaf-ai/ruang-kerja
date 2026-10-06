@@ -24,6 +24,27 @@ Seluruh UI sudah dimigrasikan ke sistem desain **Arus** (`docs/ruangkerja-design
 
 Tiga putaran review independen (Sprint 0–1, 2/4/5, 3/6/7/8/9) sudah dijalankan dan semua temuannya diperbaiki dengan test regresi: `sprints/sprint-1/REVIEW-FIXES.md`, `sprints/REVIEW-FIXES-2-4-5.md`, `sprints/REVIEW-FIXES-3-9-{A,B}.md`.
 
+## Pratinjau Fase 2 & 3 (6 Okt 2026)
+
+Alur **frontend** semua modul Fase 2 dan 3 sudah bisa dicoba sebagai pratinjau dengan data contoh (tidak ada migrasi, Action, atau integrasi; tidak menyimpan apa pun). Dokumentasi bergambar per modul, peta alur, dan checklist pekerjaan backend: **`docs/fitur/README.md`** (juga di Admin › Dokumentasi, grup "Fitur & pratinjau").
+
+| Modul | Sprint | Rute utama | Dokumen |
+|---|---|---|---|
+| Obrolan | F2-1 | `/obrolan` | `fitur/obrolan.md` |
+| Catatan bersama | F2-2 | `/catatan` | `fitur/catatan.md` |
+| Rapat, notulen & kalender | F2-3 | `/rapat`, `/kalender`, `/manajemen/jadwal` | `fitur/rapat-kalender.md` |
+| Otomasi, WhatsApp, Kinerja saya | F2-4 | `/otomasi`, `/pengaturan/whatsapp`, `/kinerja` | `fitur/otomasi-whatsapp.md` |
+| Aplikasi ponsel | F3-1 · F3-2 | `/pratinjau/ponsel`, `/absensi/wajah`, `/pengaturan/perangkat` | `fitur/aplikasi-ponsel.md` |
+| OKR divisi | F3-3 | `/okr` | `fitur/okr.md` |
+| Mesin fingerprint (ADMS) | F3-3 | `/admin/mesin-absensi` | `fitur/mesin-fingerprint.md` |
+| Dashboard per peran SPKD | SPKD | `/peran/dirut` … | `fitur/dashboard-peran.md` |
+
+**Cara mencoba:** flag `FEATURE_PROTOTYPE` (`config/features.php`) menyala otomatis di luar produksi dan **mati di produksi** (rute 404, ubin Dock/baris Menu tersembunyi). Buka https://ruangkerja-proto.test/pratinjau (worktree pratinjau) atau https://ruangkerja.test/pratinjau setelah digabung, masuk dengan `kadiv@demo.test` (sebagian besar modul), `direksi@demo.test` (`/manajemen/jadwal`, peran Dirut/Direktur) atau `hr@demo.test` (mesin absensi, peran HR). Setiap layar menerima `?keadaan=memuat|kosong|galat`.
+
+**Kualitas:** Vitest per modul (logika murni), typecheck & lint bersih, smoke e2e `tests/e2e/prototype-smoke.spec.ts` (36 rute × 375/834/1440 × terang/malam; jalankan `--workers=2 --retries=1`). Laporan cek bug: `sprints/fase-2-3-prototipe/BUG-REPORT.md`. **Bug kritis terbuka (Fase 1, bukan pratinjau):** `/dashboard` sebagai `anggota@demo.test` crash (`live.focus.total` sudah pindah ke prop `planner` "Ruang saya").
+
+**Keputusan yang dibutuhkan sebelum backend Fase 2/3:** provider WhatsApp, tabel berbagi catatan (`note_shares`), tabel rapat & peserta di samping `calendar_events`, kolom tambahan `devices`, dan apakah dashboard per jabatan SPKD menggantikan atau melengkapi dashboard per peran akses (lihat checklist di tiap dokumen `fitur/`).
+
 ## Kualitas saat serah terima
 
 - Pest ±2.020 test hijau (paralel), Vitest ±370 test hijau.

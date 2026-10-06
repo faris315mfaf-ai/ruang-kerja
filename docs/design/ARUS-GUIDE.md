@@ -116,14 +116,16 @@ Aturan:
 - Kaca: `.glass`, `.glass-strong`; shell: `--menu-bar-height --page-max --page-max-wide --page-pad --dock-space --rail-width --tab-bar-height --app-bar-height`.
 - Komponen: `components/ui/{button,input,textarea,select,label,checkbox,radio,switch,badge,tabs,card,panel,kpi-card,progress,list-row,avatar,skeleton,table,dialog,sheet,dropdown-menu,tooltip,command,alert,toggle,toggle-group,sonner}`, `components/empty-state.tsx`, `components/mobile/*`, `components/shell/*`.
 
-## 5. Sisa celah terhadap desain (per 6 Okt 2026)
+## 5. Sisa celah terhadap desain (per 6 Okt 2026, diperbarui setelah pratinjau Fase 2 & 3)
 
 Migrasi Arus selesai: semua rute §2 memakai primitif Arus, tidak ada kelas palet/hex di `.tsx`, kode UI lama sudah dihapus, dan pemeriksaan visual akhir (Playwright, 1440 terang/malam, 834, 390 terang/malam, 59 rute) bersih dari galat konsol, galat halaman, HTTP 4xx/5xx, dan gulir horizontal. Yang **sengaja belum** sama dengan desain:
 
-**Fitur Fase 2/3 (tidak dibangun, panel menampilkan keadaan kosong bila ada di desain)**
-- Rapat & notulen: DRapat*, DNotulen, DNotifRapat, MRapat*, MNotulen; panel "Jadwal terdekat"/"Notulensi terbaru" di `/manajemen` = EmptyState "Modul rapat & notulen belum aktif".
-- Kinerja (SKinerja/MSKinerja), widget (MWidget), lock screen, antrean offline (MOffline), quick add (MQuickAdd), biometrik di MLogin, kanal notifikasi selain in-app/email ("Fase 2" di matriks notifikasi).
-- Dashboard per peran SPKD (Peran*, P*, RoleDesk/RolePhone); peran memakai dashboard Saya/Divisi/HR/Portofolio.
+**Fitur Fase 2/3: kini ada pratinjau frontend (data contoh, flag `FEATURE_PROTOTYPE`; rincian `docs/fitur/`, pemetaan layar `docs/PLATFORM.md` §6)**
+- Rapat & notulen: DRapat, DRapatBaru, DNotulen, DNotifRapat, MRapat, MRapatDetail, MNotulen, MNotifRapat, MgJadwal/MgPJadwal/MgPNotulen/TfJadwal dibangun di `/rapat*`, `/kalender`, `/manajemen/jadwal`. **Celah tersisa:** panel "Jadwal terdekat"/"Notulensi terbaru" di `/manajemen` masih EmptyState (belum memakai data rapat), chip "rapat 5 menit lagi" di MenuBar/Dock (DNotifRapat §3) belum ada, editor notulen = textarea per agenda (bukan Tiptap).
+- Kinerja (SKinerja/MSKinerja) di `/kinerja`; widget (MWidget), lock screen (MLockScreen), antrean offline (MOffline), quick add (MQuickAdd), biometrik MLogin, MFondasi di `/pratinjau/ponsel/*`. **Celah:** tab "Ringkasan · Kinerja saya" di SBeranda belum menaut ke `/kinerja`; tab WhatsApp hanya di header salinan `/pengaturan/whatsapp` (belum di `settingsLinks()`); kolom WhatsApp di matriks notifikasi Pengaturan masih "Fase 2"; MLogin memakai "Masuk dengan Google" sebagai cadangan, bukan email & kata sandi (PRD M1).
+- Dashboard per peran SPKD: RoleDesk/RolePhone, Peran*/PeranM* dan satu layar P* per peran (PDirutKeputusan, PDirekturSetuju, PHRCuti, PCorsecSurat, PMarketingReview, PProgBug, PImplTiket, PAnalisUAT) di `/peran/{role}`. **Celah:** P* kedua (PDirutPortofolio, PDirekturKapasitas, PHRLive, PCorsecNotulis, PMarketingKalender, PProgSprint, PImplCheckin, PAnalisReview) belum; peran akses Fase 1 tetap memakai dashboard Saya/Divisi/HR/Portofolio.
+- Obrolan, Catatan bersama, OKR, Mesin fingerprint **tidak punya layar desain** khusus; gayanya disusun dari primitif Arus dan layar terdekat (OKR dari DPortofolio/DProyek, mesin dari tabel admin bergaya DHR). Perlu ditinjau desainer.
+- Semua layar pratinjau sudah diperiksa visual (Playwright 375/834/1440, terang & Malam): tanpa galat konsol, tanpa gulir horizontal halaman. Sisa kecil: tabel Perangkat saya bergulir di dalam kartunya di 834; chip reaksi bersama 36 px di ponsel (BUG-REPORT §3).
 
 **Panel desain yang datanya belum ada**
 - SBeranda "Proyek saya" (ringkasan proyek di Beranda staf) belum dibangun; proyek tampil di `/workspace`.

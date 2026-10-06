@@ -125,3 +125,20 @@ Aturan:
 | Detail proyek | ProyekDetail | MProyekDetail |
 | Admin karyawan | Karyawan | MKaryawan (terbatas) |
 | Struktur org, alur, lokasi/shift, pengaturan workspace, kiosk | ada | desktop saja / terbatas |
+
+**Pratinjau Fase 2 & 3** (rute `routes/prototype.php`, data contoh; acuan = paket desain Arus `docs/ruangkerja-design/screens/*.dc.html`, bukan canvas mockup lama). Rincian & gambar: `docs/fitur/`.
+
+| Fitur (rute) | Desktop (Arus) | Mobile (Arus) |
+|---|---|---|
+| Obrolan (`/obrolan`, `/obrolan/{channel}`) | 3 kolom: daftar · percakapan · thread/detail (≥ 1280; di bawahnya Sheet kanan), tanpa layar desain khusus | daftar layar penuh + FAB, percakapan layar penuh, aksi pesan/thread/detail = bottom sheet |
+| Catatan bersama (`/catatan`, `/catatan/{note}`) | panel pohon per workspace, editor dengan pohon kiri (≥ 1280), riwayat di panel kanan (tanpa layar desain khusus) | editor layar penuh, toolbar format di atas tab bar/keyboard, riwayat = bottom sheet |
+| Rapat (`/rapat`, `/rapat/baru`, `/rapat/{id}`) | DRapat, DRapatBaru, DNotifRapat (toast) | MRapat, MRapatDetail, MNotifRapat (bottom sheet) |
+| Notulen (`/rapat/{id}/notulen`) | DNotulen | MNotulen (ubah PIC/tenggat ◐ desktop) |
+| Kalender (`/kalender`) | grid bulan + tampilan minggu | strip minggu + agenda |
+| Jadwal manajemen (`/manajemen/jadwal`) | MgJadwal (tablet TfJadwal) | MgPJadwal, MgPNotulen |
+| WhatsApp, otomasi, berulang, template (`/pengaturan/whatsapp`, `/otomasi*`) | SPengaturan (tab WhatsApp), tabel + dialog | MSPengaturan, kartu + FAB + bottom sheet |
+| Kinerja saya (`/kinerja`) | SKinerja | MSKinerja (KPI 2×2) |
+| Aplikasi ponsel (`/pratinjau/ponsel/*`, `/absensi/wajah`, `/pengaturan/perangkat`) | PhoneStage: penjelasan + Simulasi + bingkai 390×844 | MLogin, MLockScreen, MWidget, MOffline, MQuickAdd, MFondasi, MAbsen/MSukses (layar OS tanpa shell) |
+| OKR (`/okr`, `/okr/{objective}`) | turunan DPortofolio/DProyek (tanpa layar khusus) | kartu + chip divisi, KR = bottom sheet |
+| Mesin fingerprint (`/admin/mesin-absensi`) | tabel + Sheet detail + dialog ADMS | ◐ baca-saja + "Kelola di desktop" |
+| Dashboard per peran (`/peran/{role}`) | RoleDesk, Peran*, P* (Sheet 560 px) | RolePhone, PeranM*, P* (bottom sheet) |
