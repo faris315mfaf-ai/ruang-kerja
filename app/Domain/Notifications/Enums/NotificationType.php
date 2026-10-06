@@ -38,6 +38,10 @@ enum NotificationType: string
     case ProjectDecisionNeeded = 'project.decision_needed';
     case ProjectDecisionResolved = 'project.decision_resolved';
 
+    // OKR divisi (F3-3): weekly check-in reminder, objective status dropped
+    case OkrCheckinReminder = 'okr.checkin_reminder';
+    case OkrObjectiveAtRisk = 'okr.objective_at_risk';
+
     // System (Sprint 8)
     case SystemAnnouncement = 'system.announcement';
     case SystemTest = 'system.test';
@@ -64,6 +68,8 @@ enum NotificationType: string
             self::ProjectDirection => 'Arahan Direksi',
             self::ProjectDecisionNeeded => 'Butuh keputusan',
             self::ProjectDecisionResolved => 'Keputusan diberikan',
+            self::OkrCheckinReminder => 'Pengingat check-in OKR',
+            self::OkrObjectiveAtRisk => 'Objective berisiko',
             self::SystemAnnouncement => 'Pengumuman',
             self::SystemTest => 'Notifikasi uji',
         };
@@ -89,6 +95,7 @@ enum NotificationType: string
             self::ConsentRevoked => NotificationEvent::System,
             self::ProjectUpdateReminder, self::ProjectUpdateRequested, self::ProjectDirection,
             self::ProjectDecisionNeeded, self::ProjectDecisionResolved => NotificationEvent::ProjectActivity,
+            self::OkrCheckinReminder, self::OkrObjectiveAtRisk => NotificationEvent::OkrActivity,
             self::SystemAnnouncement, self::SystemTest => NotificationEvent::System,
         };
     }
@@ -120,6 +127,8 @@ enum NotificationType: string
             self::ProjectDirection => 'message',
             self::ProjectDecisionNeeded => 'alert',
             self::ProjectDecisionResolved => 'check-check',
+            self::OkrCheckinReminder => 'alarm',
+            self::OkrObjectiveAtRisk => 'target',
             self::SystemAnnouncement => 'megaphone',
             self::SystemTest => 'bell',
         };
@@ -135,7 +144,7 @@ enum NotificationType: string
             self::RequestSubmitted, self::SystemAnnouncement => 'info',
             self::RequestApproved => 'success',
             self::TaskDueSoon, self::RequestRevisionRequested, self::CheckInReminder, self::CheckOutReminder, self::ConsentRevoked,
-            self::ProjectUpdateReminder, self::ProjectUpdateRequested => 'warning',
+            self::ProjectUpdateReminder, self::ProjectUpdateRequested, self::OkrCheckinReminder, self::OkrObjectiveAtRisk => 'warning',
             self::TaskOverdue, self::RequestRejected => 'danger',
             self::ProjectDirection, self::ProjectDecisionNeeded => 'info',
             self::ProjectDecisionResolved => 'success',

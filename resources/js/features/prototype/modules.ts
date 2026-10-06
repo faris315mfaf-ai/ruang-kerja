@@ -4,7 +4,6 @@ import {
     Fingerprint,
     NotebookPen,
     Smartphone,
-    Target,
     UsersRound,
     Workflow,
 } from 'lucide-react';
@@ -87,17 +86,6 @@ export const PROTOTYPE_MODULES: PrototypeModule[] = [
             { label: 'Check-in wajah', href: '/absensi/wajah' },
             { label: 'Perangkat saya', href: '/pengaturan/perangkat' },
         ],
-    },
-    {
-        key: 'okr',
-        phase: 'Fase 3',
-        sprint: 'F3-3',
-        title: 'OKR divisi',
-        description:
-            'Objective per kuartal dengan key result yang ditautkan ke tugas.',
-        icon: Target,
-        gradient: 'bg-grad-indigo',
-        screens: [{ label: 'OKR', href: '/okr' }],
     },
     {
         key: 'fingerprint',

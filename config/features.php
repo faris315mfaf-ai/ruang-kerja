@@ -18,4 +18,8 @@ return [
     // Obrolan (Fase 2, F2-1) with a real backend: /obrolan, Dock tile.
     // Off in production until the release is decided.
     'chat' => (bool) env('FEATURE_CHAT', env('APP_ENV', 'production') !== 'production'),
+
+    // OKR divisi (Fase 3, F3-3) with a real backend: /okr, Dock/Rail tile,
+    // Menu row. Off in production until the release is decided.
+    'okr' => (bool) env('FEATURE_OKR', env('APP_ENV', 'production') !== 'production'),
 ];

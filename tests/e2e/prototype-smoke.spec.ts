@@ -50,9 +50,7 @@ const routes = [
     '/pratinjau/ponsel/aksi-cepat',
     '/absensi/wajah',
     '/pengaturan/perangkat',
-    // F3-3 · OKR, fingerprint devices, role dashboards
-    '/okr',
-    '/okr/q4-ops-1',
+    // F3-3 · fingerprint devices, role dashboards (OKR is real: /okr)
     '/admin/mesin-absensi',
     ...roles.map((role) => `/peran/${role}`),
 ] as const;
@@ -63,7 +61,6 @@ const stateRoutes = [
     '/rapat',
     '/otomasi',
     '/pengaturan/perangkat',
-    '/okr',
 ] as const;
 
 /**
@@ -158,7 +155,6 @@ test('tautan tak dikenal menampilkan keadaan "tidak ditemukan"', async ({
     for (const path of [
         '/catatan/tidak-ada',
         '/rapat/tidak-ada',
-        '/okr/tidak-ada',
     ]) {
         await expectRendered(page, path);
         await expect(

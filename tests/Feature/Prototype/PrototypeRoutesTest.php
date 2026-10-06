@@ -34,8 +34,6 @@ dataset('prototype pages', [
     ['/pratinjau/ponsel/aksi-cepat', 'mobile-app/quick-add'],
     ['/absensi/wajah', 'mobile-app/face-check-in'],
     ['/pengaturan/perangkat', 'mobile-app/devices'],
-    ['/okr', 'okr/index'],
-    ['/okr/q4-ops-1', 'okr/show'],
     ['/admin/mesin-absensi', 'okr/fingerprint-devices'],
     ['/peran/dirut', 'okr/role-dashboard'],
 ]);
@@ -62,7 +60,7 @@ it('answers 404 when the prototype flag is off', function (string $uri) {
     $user->assignRole(Role::Anggota->value);
 
     $this->actingAs($user)->get($uri)->assertNotFound();
-})->with(['/pratinjau', '/catatan', '/rapat', '/okr', '/peran/hr']);
+})->with(['/pratinjau', '/catatan', '/rapat', '/peran/hr']);
 
 it('shares the flag as off with the shell', function () {
     config(['features.prototype' => false]);

@@ -11,6 +11,7 @@ import {
     Plus,
     RotateCcw,
     ShieldAlert,
+    Target,
     X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -30,6 +31,7 @@ const ICONS: Record<string, LucideIcon> = {
     megaphone: Megaphone,
     bell: Bell,
     shield: ShieldAlert,
+    target: Target,
 };
 
 export const toneClasses: Record<NotificationTone, string> = {
