@@ -38,7 +38,7 @@ Route::middleware([EnsureFeatureEnabled::class.':automation', 'auth', 'verified'
         Route::delete('template/tugas/{template}', [TaskTemplateController::class, 'destroy'])->whereUlid('template')->name('templates.tasks.destroy');
         Route::post('template/tugas/{template}/pakai', [TaskTemplateController::class, 'apply'])->whereUlid('template')->name('templates.tasks.apply');
 
-        Route::post('template/workspace/dari/{workspace}', [WorkspaceTemplateController::class, 'store'])->whereUlid('workspace')->name('templates.workspaces.store');
+        Route::post('template/workspace/dari/{source}', [WorkspaceTemplateController::class, 'store'])->whereUlid('source')->name('templates.workspaces.store');
         Route::post('template/workspace/{template}/pakai', [WorkspaceTemplateController::class, 'apply'])->whereUlid('template')->name('templates.workspaces.apply');
         Route::delete('template/workspace/{template}', [WorkspaceTemplateController::class, 'destroy'])->whereUlid('template')->name('templates.workspaces.destroy');
     });

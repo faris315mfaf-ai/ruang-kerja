@@ -23,12 +23,12 @@ use Inertia\Inertia;
  */
 class WorkspaceTemplateController extends Controller
 {
-    public function store(SaveWorkspaceTemplateRequest $request, string $workspace, #[CurrentUser] User $user, SaveWorkspaceAsTemplate $save): RedirectResponse
+    public function store(SaveWorkspaceTemplateRequest $request, string $source, #[CurrentUser] User $user, SaveWorkspaceAsTemplate $save): RedirectResponse
     {
-        $source = Workspace::query()->where('company_id', $user->company_id)->findOrFail($workspace);
-        Gate::authorize('create', [WorkspaceTemplate::class, $source]);
+        $workspace = Workspace::query()->where('company_id', $user->company_id)->findOrFail($source);
+        Gate::authorize('create', [WorkspaceTemplate::class, $workspace]);
 
-        $template = $save->handle($source, $user, $request->payload());
+        $template = $save->handle($workspace, $user, $request->payload());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Template \"{$template->name}\" disimpan. Pakai dari Otomasi › Template."]);
 

@@ -36,7 +36,7 @@ class TaskTemplateRequest extends FormRequest
             'priority' => ['required', 'integer', 'between:0,4'],
             'estimate_hours' => ['nullable', 'numeric', 'between:0.5,999'],
             'checklist' => ['present', 'array', 'max:30'],
-            'checklist.*' => ['string', 'max:255'],
+            'checklist.*' => ['nullable', 'string', 'max:255'],
             'labels' => ['present', 'array', 'max:10'],
             'labels.*.name' => ['required', 'string', 'max:50'],
             'labels.*.color' => ['required', Rule::in($colors)],
