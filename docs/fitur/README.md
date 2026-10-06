@@ -1,6 +1,6 @@
 # Fitur & pratinjau Fase 2 dan 3
 
-> **Status per 6 Okt 2026 (keputusan pemilik):** Obrolan **Nyata** (`FEATURE_CHAT`). **Akan dibangun** dengan backend nyata: Rapat & notulen, Kalender & jadwal manajemen, Catatan bersama, Otomasi (aturan, tugas berulang, template), Kinerja saya, OKR divisi, Dashboard per peran. **Ditahan** (tidak dikerjakan sampai pemilik membuka lagi): notifikasi WhatsApp + pemilihan provider, Aplikasi ponsel, Mesin fingerprint, login Google, Google Drive & Docs, serta semua hal yang belum ada sama sekali. Panduan pemakaian lengkap (apa yang sudah ada, apa yang belum, cara memakai, kebutuhan): **[PANDUAN-PRATINJAU.md](PANDUAN-PRATINJAU.md)**, juga dibaca di aplikasi lewat **Pratinjau › Panduan pratinjau** (`/pratinjau/panduan`, dengan gambar).
+> **Status per 6 Okt 2026 (keputusan pemilik):** Obrolan **Nyata** (`FEATURE_CHAT`). **Akan dibangun** dengan backend nyata: Rapat & notulen, Kalender & jadwal manajemen, Catatan bersama, Otomasi (aturan, tugas berulang, template), Kinerja saya, OKR divisi. **Nyata** juga: Dashboard per jabatan (`FEATURE_ROLE_DASHBOARDS`). **Ditahan** (tidak dikerjakan sampai pemilik membuka lagi): notifikasi WhatsApp + pemilihan provider, Aplikasi ponsel, Mesin fingerprint, login Google, Google Drive & Docs, serta semua hal yang belum ada sama sekali. Panduan pemakaian lengkap (apa yang sudah ada, apa yang belum, cara memakai, kebutuhan): **[PANDUAN-PRATINJAU.md](PANDUAN-PRATINJAU.md)**, juga dibaca di aplikasi lewat **Pratinjau › Panduan pratinjau** (`/pratinjau/panduan`, dengan gambar).
 
 > Status per 6 Okt 2026 · worktree `claude/project-overview-status-ebff38` · dibangun lima agen frontend (A–E), diperiksa Agen Cek Bug (`docs/sprints/fase-2-3-prototipe/BUG-REPORT.md`).
 
@@ -57,7 +57,7 @@ Catatan: persona di data contoh **tetap** (mis. Obrolan selalu dilihat sebagai D
 | Aplikasi ponsel (biometrik, wajah, integritas, offline, widget) · **Ditahan** | F3-1 · F3-2 | `/pratinjau/ponsel/*`, `/absensi/wajah`, `/pengaturan/perangkat` | [aplikasi-ponsel.md](aplikasi-ponsel.md) |
 | OKR divisi · **Akan dibangun** | F3-3 | `/okr`, `/okr/{objective}` | [okr.md](okr.md) |
 | Mesin fingerprint ZKTeco (ADMS) · **Ditahan** | F3-3 | `/admin/mesin-absensi` | [mesin-fingerprint.md](mesin-fingerprint.md) |
-| Dashboard per peran SPKD · **Akan dibangun** | SPKD | `/peran/{dirut,direktur,hr,corsec,marketing,programming,implementer,analis}` | [dashboard-peran.md](dashboard-peran.md) |
+| Dashboard per jabatan SPKD · **Nyata** (`FEATURE_ROLE_DASHBOARDS`) | SPKD | `/peran/{dirut,direktur,hr,corsec,marketing,programming,implementer,analis}` | [dashboard-peran.md](dashboard-peran.md) |
 
 Gambar di setiap dokumen ada di `docs/fitur/img/<modul>/` dengan pola `<layar>-desktop.jpg` (1440×900 terang), `<layar>-desktop-malam.jpg` (1440×900 Malam), dan `<layar>-ponsel.jpg` (390×844, skala 2). Semua dibuat ulang dengan:
 

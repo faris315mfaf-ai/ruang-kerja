@@ -8,6 +8,7 @@ import { UnitSheet } from './unit-sheet';
 type FormData = {
     name: string;
     level: number;
+    dashboard_role?: string | null;
 };
 
 type Props = {
@@ -25,9 +26,14 @@ export function PositionSheet({
     onDelete,
     options,
 }: Props) {
+    const dashboards = options.dashboardRoles;
     const form = useForm<FormData>({
         name: position?.name ?? '',
         level: position?.level ?? 5,
+        // Sent only while the field is shown, so a hidden field never clears a mapping.
+        ...(dashboards.length > 0
+            ? { dashboard_role: position?.dashboardRole ?? null }
+            : {}),
     });
 
     const submit = () => {
@@ -94,6 +100,27 @@ export function PositionSheet({
                     invalid={Boolean(form.errors.level)}
                 />
             </Field>
+
+            {dashboards.length > 0 && (
+                <Field
+                    id="position-dashboard"
+                    label="Dashboard jabatan"
+                    error={form.errors.dashboard_role}
+                    hint="Pemegang jabatan ini membuka dashboard tersebut di /peran. Direksi bisa melihat semua."
+                >
+                    <SelectField
+                        id="position-dashboard"
+                        value={form.data.dashboard_role ?? null}
+                        onChange={(value) =>
+                            form.setData('dashboard_role', value)
+                        }
+                        options={dashboards}
+                        placeholder="Tanpa dashboard jabatan"
+                        noneLabel="Tanpa dashboard jabatan"
+                        invalid={Boolean(form.errors.dashboard_role)}
+                    />
+                </Field>
+            )}
         </UnitSheet>
     );
 }

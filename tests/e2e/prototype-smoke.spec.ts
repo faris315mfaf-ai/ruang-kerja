@@ -10,17 +10,6 @@ import { expect, test, type Page } from '@playwright/test';
  * (static assets then answer 502 and lazy chunks fail to load):
  *   E2E_BASE_URL=https://ruangkerja-proto.test npx playwright test tests/e2e/prototype-smoke.spec.ts --workers=2 --retries=1
  */
-const roles = [
-    'dirut',
-    'direktur',
-    'hr',
-    'corsec',
-    'marketing',
-    'programming',
-    'implementer',
-    'analis',
-] as const;
-
 const routes = [
     '/pratinjau',
     // F2-2 · Notes (F2-1 · Obrolan left the preview: real routes, routes/chat.php)
@@ -50,11 +39,10 @@ const routes = [
     '/pratinjau/ponsel/aksi-cepat',
     '/absensi/wajah',
     '/pengaturan/perangkat',
-    // F3-3 · OKR, fingerprint devices, role dashboards
+    // F3-3 · OKR, fingerprint devices (Dashboard per jabatan is real now: /peran, FEATURE_ROLE_DASHBOARDS)
     '/okr',
     '/okr/q4-ops-1',
     '/admin/mesin-absensi',
-    ...roles.map((role) => `/peran/${role}`),
 ] as const;
 
 /** Preview-state switch (?keadaan=) on one route per module. */

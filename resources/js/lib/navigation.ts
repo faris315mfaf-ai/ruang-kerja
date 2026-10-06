@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
     BarChart3,
     BookOpen,
+    BriefcaseBusiness,
     Calendar,
     Building2,
     ClipboardCheck,
@@ -176,6 +177,18 @@ export const chatNavItem: AppNavItem = {
     icon: MessagesSquare,
     matchPrefix: true,
     badge: 'chat',
+};
+
+/**
+ * "Dashboard jabatan" (/peran, F3): the job dashboard of the user's position
+ * (Direksi & Super Admin: every job). Shown only when the shared prop
+ * `features.role_dashboards` is true (flag on AND the user has access).
+ */
+export const roleDashboardNavItem: AppNavItem = {
+    title: 'Dashboard jabatan',
+    href: '/peran',
+    icon: BriefcaseBusiness,
+    matchPrefix: true,
 };
 
 /**

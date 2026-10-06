@@ -18,4 +18,8 @@ return [
     // Obrolan (Fase 2, F2-1) with a real backend: /obrolan, Dock tile.
     // Off in production until the release is decided.
     'chat' => (bool) env('FEATURE_CHAT', env('APP_ENV', 'production') !== 'production'),
+
+    // Dashboard per jabatan (F3, /peran/{role}): job dashboards mapped from
+    // positions.dashboard_role. Off in production until the release is decided.
+    'role_dashboards' => (bool) env('FEATURE_ROLE_DASHBOARDS', env('APP_ENV', 'production') !== 'production'),
 ];

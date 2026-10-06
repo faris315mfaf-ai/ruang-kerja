@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Organization;
 
 use App\Domain\Organization\Enums\PositionLevel;
+use App\Domain\RoleDashboards\Enums\DashboardRole;
 use App\Models\Position;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -35,6 +36,7 @@ class PositionRequest extends OrganizationRequest
         return [
             'name' => ['required', 'string', 'max:120', $this->uniqueName()],
             'level' => ['required', 'integer', Rule::enum(PositionLevel::class)],
+            'dashboard_role' => ['nullable', 'string', Rule::enum(DashboardRole::class)],
         ];
     }
 
@@ -49,18 +51,27 @@ class PositionRequest extends OrganizationRequest
             'level.required' => 'Pilih level jabatan.',
             'level.integer' => 'Level jabatan tidak valid.',
             'level.enum' => 'Level jabatan tidak valid.',
+            'dashboard_role.enum' => 'Dashboard jabatan tidak valid.',
         ];
     }
 
     /**
-     * @return array{name: string, level: int}
+     * @return array{name: string, level: int, dashboard_role?: DashboardRole|null}
      */
     public function payload(): array
     {
-        return [
+        $payload = [
             'name' => $this->string('name')->toString(),
             'level' => $this->integer('level'),
         ];
+
+        // Only when sent: older clients (and the field hidden while the
+        // role_dashboards flag is off) never clear an existing mapping.
+        if ($this->exists('dashboard_role')) {
+            $payload['dashboard_role'] = $this->enum('dashboard_role', DashboardRole::class);
+        }
+
+        return $payload;
     }
 
     /**

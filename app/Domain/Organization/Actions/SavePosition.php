@@ -2,6 +2,7 @@
 
 namespace App\Domain\Organization\Actions;
 
+use App\Domain\RoleDashboards\Enums\DashboardRole;
 use App\Models\Position;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 final class SavePosition
 {
     /**
-     * @param  array{name: string, level: int}  $data
+     * @param  array{name: string, level: int, dashboard_role?: DashboardRole|null}  $data
      */
     public function handle(User $actor, array $data, ?Position $position = null): Position
     {
@@ -23,7 +24,13 @@ final class SavePosition
             $position->fill([
                 'name' => $data['name'],
                 'level' => $data['level'],
-            ])->save();
+            ]);
+
+            if (array_key_exists('dashboard_role', $data)) {
+                $position->dashboard_role = $data['dashboard_role'];
+            }
+
+            $position->save();
 
             return $position;
         });

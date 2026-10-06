@@ -64,6 +64,8 @@ Indeks unik parsial `teams_division_code_unique (division_id, code) WHERE code I
 ### positions
 `id`, `company_id`, `name` (mis. "Staf Keuangan"), `level` smallint (1 = Direksi … 5 = Staf).
 
+Tambahan Dashboard per jabatan (F3, migrasi `2026_10_11_500000_add_dashboard_role_to_positions`, `docs/fitur/dashboard-peran.md`): `dashboard_role` varchar(20) null — dashboard jabatan SPKD pemegang jabatan ini (`dirut` · `direktur` · `hr` · `corsec` · `marketing` · `programming` · `implementer` · `analis`, CHECK `positions_dashboard_role_check`; enum `App\Domain\RoleDashboards\Enums\DashboardRole`). Diisi HR di Admin › Organisasi › Jabatan; tidak unik (Kepala Divisi dan staf boleh berbagi). Null = tanpa dashboard jabatan. Akses `/peran/{kunci}`: pemegang jabatan dengan kunci itu, plus Direksi & Super Admin untuk semua kunci (Gate `viewRoleDashboard`). Tanpa tabel baru: dashboard memakai data portofolio, persetujuan, tugas, dan absensi yang sudah ada.
+
 ### users
 | Kolom | Tipe | Keterangan |
 |---|---|---|

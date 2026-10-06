@@ -5,7 +5,6 @@ import {
     NotebookPen,
     Smartphone,
     Target,
-    UsersRound,
     Workflow,
 } from 'lucide-react';
 
@@ -109,25 +108,5 @@ export const PROTOTYPE_MODULES: PrototypeModule[] = [
         icon: Fingerprint,
         gradient: 'bg-grad-slate',
         screens: [{ label: 'Mesin absensi', href: '/admin/mesin-absensi' }],
-    },
-    {
-        key: 'roles',
-        phase: 'Fase 3',
-        sprint: 'SPKD',
-        title: 'Dashboard per peran',
-        description:
-            'Beranda khusus Direktur Utama, Direktur, HR, Sekretaris, dan divisi SPKD.',
-        icon: UsersRound,
-        gradient: 'bg-grad-merek',
-        screens: [
-            { label: 'Direktur Utama', href: '/peran/dirut' },
-            { label: 'Direktur', href: '/peran/direktur' },
-            { label: 'HR', href: '/peran/hr' },
-            { label: 'Sekretaris Perusahaan', href: '/peran/corsec' },
-            { label: 'Branding & Marketing', href: '/peran/marketing' },
-            { label: 'Programming', href: '/peran/programming' },
-            { label: 'Implementer', href: '/peran/implementer' },
-            { label: 'Analis', href: '/peran/analis' },
-        ],
     },
 ];
