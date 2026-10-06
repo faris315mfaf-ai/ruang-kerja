@@ -30,6 +30,7 @@ import {
     organizationNavItems,
     chatNavItem,
     roleDashboardNavItem,
+    okrNavItem,
     portfolioNavItem,
     prototypeNavItem,
 } from '@/lib/navigation';
@@ -201,6 +202,13 @@ export default function Menu() {
                                 icon={managementNavItem.icon}
                                 label="Ringkasan manajemen"
                                 href={managementNavItem.href}
+                            />
+                        )}
+                        {features?.okr && (
+                            <Row
+                                icon={okrNavItem.icon}
+                                label="OKR divisi"
+                                href={okrNavItem.href}
                             />
                         )}
                         {features?.chat && (

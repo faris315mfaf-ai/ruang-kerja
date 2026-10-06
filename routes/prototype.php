@@ -59,9 +59,6 @@ Route::middleware([EnsureFeatureEnabled::class.':prototype', 'auth', 'verified']
     Route::inertia('absensi/wajah', 'mobile-app/face-check-in')->name('mobile.face');
     Route::inertia('pengaturan/perangkat', 'mobile-app/devices')->name('mobile.devices');
 
-    // F3-3 · OKR, fingerprint devices (Dashboard per jabatan has its own backend now: routes/roles.php, FEATURE_ROLE_DASHBOARDS)
-    Route::inertia('okr', 'okr/index')->name('okr.index');
-    Route::get('okr/{objective}', fn (string $objective) => inertia('okr/show', ['objectiveId' => $objective]))
-        ->where('objective', '[a-z0-9-]+')->name('okr.show');
+    // F3-3 · fingerprint devices. OKR (routes/okr.php) and Dashboard per jabatan (routes/roles.php) have real backends.
     Route::inertia('admin/mesin-absensi', 'okr/fingerprint-devices')->name('fingerprint');
 });

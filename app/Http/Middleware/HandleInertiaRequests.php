@@ -90,6 +90,7 @@ class HandleInertiaRequests extends Middleware
             'features' => [
                 'prototype' => (bool) config('features.prototype'),
                 'chat' => (bool) config('features.chat'),
+                'okr' => (bool) config('features.okr'),
                 'role_dashboards' => $user !== null && (bool) config('features.role_dashboards') && app(RoleDashboardAccess::class)->hasAny($user, $position?->dashboard_role),
             ],
             // Obrolan (F2-1): channels with unread messages (Dock tile / Menu badge). Closure: skipped on

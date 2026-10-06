@@ -22,4 +22,7 @@ return [
     // Dashboard per jabatan (F3, /peran/{role}): job dashboards mapped from
     // positions.dashboard_role. Off in production until the release is decided.
     'role_dashboards' => (bool) env('FEATURE_ROLE_DASHBOARDS', env('APP_ENV', 'production') !== 'production'),
+    // OKR divisi (Fase 3, F3-3) with a real backend: /okr, Dock/Rail tile,
+    // Menu row. Off in production until the release is decided.
+    'okr' => (bool) env('FEATURE_OKR', env('APP_ENV', 'production') !== 'production'),
 ];

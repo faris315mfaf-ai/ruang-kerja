@@ -20,6 +20,7 @@ import {
     Network,
     ScrollText,
     SquareCheckBig,
+    Target,
     Users,
     WalletCards,
 } from 'lucide-react';
@@ -188,6 +189,18 @@ export const roleDashboardNavItem: AppNavItem = {
     title: 'Dashboard jabatan',
     href: '/peran',
     icon: BriefcaseBusiness,
+    matchPrefix: true,
+};
+
+/**
+ * "OKR" (/okr, F3-3): division objectives & key results, shown while the
+ * `okr` feature flag is on (shared prop `features.okr`). Every employee
+ * sees the OKR of their division.
+ */
+export const okrNavItem: AppNavItem = {
+    title: 'OKR',
+    href: '/okr',
+    icon: Target,
     matchPrefix: true,
 };
 

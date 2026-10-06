@@ -2,6 +2,7 @@
 
 use App\Domain\Attendance\Jobs\PurgeExpiredSelfiesJob;
 use App\Domain\Attendance\Jobs\SendCheckInReminders;
+use App\Domain\Okr\Jobs\SendKeyResultCheckinReminders;
 use App\Domain\Projects\Jobs\SendProjectUpdateReminders;
 use App\Domain\Projects\Jobs\TakeProjectProgressSnapshots;
 use Illuminate\Foundation\Inspiring;
@@ -46,3 +47,6 @@ Schedule::command('employee-imports:prune')->hourly()->withoutOverlapping();
 // Class name: the job (and its snapshot date) is built when the event fires, not when the schedule loads.
 Schedule::job(TakeProjectProgressSnapshots::class)->dailyAt('23:55')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
 Schedule::job(new SendProjectUpdateReminders)->weeklyOn(5, '15:00')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
+
+// F3-3 — OKR: weekly key result check-in reminder, Friday 15.00 office time.
+Schedule::job(new SendKeyResultCheckinReminders)->weeklyOn(5, '15:00')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
