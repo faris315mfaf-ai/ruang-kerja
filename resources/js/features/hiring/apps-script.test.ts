@@ -1,8 +1,12 @@
 import { createHmac } from 'node:crypto';
+import { runInNewContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
 import { appsScript } from './apps-script';
 
-type Fetched = { url: string; options: { payload: string; headers: Record<string, string> } };
+type Fetched = {
+    url: string;
+    options: { payload: string; headers: Record<string, string> };
+};
 
 /**
  * Runs the Apps Script with fake Google services and returns what it sent.
@@ -18,9 +22,18 @@ function run(secret: string): Fetched {
         getTimestamp: () => new Date('2026-10-05T02:30:00Z'),
         getRespondentEmail: () => 'nadia@contoh.id',
         getItemResponses: () => [
-            { getItem: () => item('Nama lengkap', 'TEXT'), getResponse: () => 'Nádia Putri' },
-            { getItem: () => item('Keahlian', 'CHECKBOX'), getResponse: () => ['PHP', 'Go'] },
-            { getItem: () => item('CV', 'FILE_UPLOAD'), getResponse: () => ['file-1'] },
+            {
+                getItem: () => item('Nama lengkap', 'TEXT'),
+                getResponse: () => 'Nádia Putri',
+            },
+            {
+                getItem: () => item('Keahlian', 'CHECKBOX'),
+                getResponse: () => ['PHP', 'Go'],
+            },
+            {
+                getItem: () => item('CV', 'FILE_UPLOAD'),
+                getResponse: () => ['file-1'],
+            },
         ],
     };
     const globals = {
@@ -32,26 +45,28 @@ function run(secret: string): Fetched {
         Utilities: {
             Charset: { UTF_8: 'UTF-8' },
             computeHmacSha256Signature: (value: string, key: string) =>
-                Array.from(createHmac('sha256', key).update(value, 'utf8').digest()).map(
-                    (byte) => (byte > 127 ? byte - 256 : byte),
-                ),
+                Array.from(
+                    createHmac('sha256', key).update(value, 'utf8').digest(),
+                ).map((byte) => (byte > 127 ? byte - 256 : byte)),
         },
         UrlFetchApp: {
             fetch: (url: string, options: Fetched['options']) => {
                 sent.push({ url, options });
 
-                return { getResponseCode: () => 201, getContentText: () => '{}' };
+                return {
+                    getResponseCode: () => 201,
+                    getContentText: () => '{}',
+                };
             },
         },
     };
 
     const script = appsScript('https://rk.test/api/hiring/form/abc', secret);
-    const factory = new Function(
-        ...Object.keys(globals),
-        `${script}\nreturn kirimKeRuangKerja;`,
-    ) as (...args: unknown[]) => (event: unknown) => void;
+    const send = runInNewContext(`${script}\nkirimKeRuangKerja;`, globals) as (
+        event: unknown,
+    ) => void;
 
-    factory(...Object.values(globals))({ response });
+    send({ response });
 
     return sent[0];
 }
@@ -66,7 +81,7 @@ describe('Apps Script for the Google Form webhook', () => {
         expect(sent.options.headers['X-RuangKerja-Signature']).toBe(
             createHmac('sha256', secret).update(body).digest('hex'),
         );
-        expect(/^[\x00-\x7e]*$/.test(body)).toBe(true);
+        expect(/^[ -~]*$/.test(body)).toBe(true);
 
         expect(JSON.parse(body)).toEqual({
             response_id: 'resp-42',
@@ -76,7 +91,9 @@ describe('Apps Script for the Google Form webhook', () => {
                 { question: 'Nama lengkap', answer: 'Nádia Putri' },
                 { question: 'Keahlian', answer: 'PHP, Go' },
             ],
-            files: [{ label: 'CV', url: 'https://drive.google.com/open?id=file-1' }],
+            files: [
+                { label: 'CV', url: 'https://drive.google.com/open?id=file-1' },
+            ],
         });
     });
 

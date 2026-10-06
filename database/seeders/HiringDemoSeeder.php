@@ -24,6 +24,7 @@ use App\Models\InterviewScore;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
@@ -112,16 +113,16 @@ class HiringDemoSeeder extends Seeder
         ));
 
         foreach (self::CANDIDATES as $email => [$name, $stage, $source, $daysAgo]) {
-            $this->candidate($position, $questions->all(), $email, $name, $stage, $source, $daysAgo, $hr, $faris, $dio);
+            $this->candidate($position, $questions, $email, $name, $stage, $source, $daysAgo, $hr, $faris, $dio);
         }
     }
 
     /**
-     * @param  list<HiringQuestion>  $questions
+     * @param  Collection<int, HiringQuestion>  $questions
      */
     private function candidate(
         HiringPosition $position,
-        array $questions,
+        Collection $questions,
         string $email,
         string $name,
         CandidateStage $stage,

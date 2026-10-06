@@ -88,7 +88,9 @@ describe('hiring lib', () => {
 
     it('totals the averages of the scored questions only', () => {
         expect(scoreTotal([question(5, null)])).toBeNull();
-        expect(scoreTotal([question(5, 3.5), question(5, 4), question(10, null)])).toEqual({
+        expect(
+            scoreTotal([question(5, 3.5), question(5, 4), question(10, null)]),
+        ).toEqual({
             total: 7.5,
             max: 10,
             scored: 2,
@@ -100,7 +102,11 @@ describe('hiring lib', () => {
         const faris = { id: 'f', name: 'Faris', avatar: null, position: null };
         const items = [
             item({ role: 'approver', reviewer: faris }),
-            item({ role: 'interviewer', reviewer: dimas, checked_at: '2026-10-05T00:00:00Z' }),
+            item({
+                role: 'interviewer',
+                reviewer: dimas,
+                checked_at: '2026-10-05T00:00:00Z',
+            }),
             item({ role: 'hr', required: false }),
             item({ role: 'hr' }),
         ];
