@@ -140,7 +140,8 @@ it('keeps the admin and organization pages free of N+1', function () {
         '/admin/organisasi/tim' => ['hr', 39],
         '/admin/organisasi/jabatan' => ['hr', 37],
         '/admin/audit' => ['admin', 29],
-        '/organisasi/struktur' => ['anggota', 36],
+        // Staff get a 404 here since 6 Oct 2026 (keputusan pemilik).
+        '/organisasi/struktur' => ['kadiv', 36],
     ]);
 });
 
@@ -160,5 +161,15 @@ it('keeps Obrolan free of N+1', function () {
         '/obrolan' => ['kadiv', 36],
         "/obrolan/{$plq->id}" => ['kadiv', 50],
         "/obrolan/{$plq->id}/pesan" => ['kadiv', 18],
+    ]);
+});
+
+it('keeps laporan harian and pengumuman free of N+1', function () {
+    assertQueryBudgets([
+        '/laporan' => ['kadiv', 56],
+        '/laporan/hari-ini' => ['anggota', 43],
+        '/laporan/tugas?q=la' => ['anggota', 14],
+        '/pengumuman' => ['hr', 36],
+        '/pengumuman/spanduk' => ['anggota', 10],
     ]);
 });
