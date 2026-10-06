@@ -21,11 +21,13 @@ import type { DemoSwitcherAccount } from '@/types';
  * null (production, demo login off).
  */
 function useDemoSwitcher() {
-    const { demoSwitcher } = usePage().props;
+    const { demoSwitcher, auth } = usePage().props;
     const [pending, setPending] = useState<string | null>(null);
 
     const accounts = demoSwitcher ?? [];
     const current = accounts.find((account) => account.current) ?? null;
+    // Signed in as a demo account outside the five personas (e.g. kadiv@): show its name.
+    const label = current?.persona ?? auth.user?.name ?? 'akun lain';
 
     const switchTo = (account: DemoSwitcherAccount) => {
         if (account.current || pending !== null) {
@@ -44,7 +46,7 @@ function useDemoSwitcher() {
         );
     };
 
-    return { accounts, current, pending, switchTo };
+    return { accounts, current, label, pending, switchTo };
 }
 
 function AccountItems({
@@ -99,7 +101,7 @@ function AccountItems({
 
 /** Desktop menu bar: compact pill "Demo · <persona>". */
 export function DemoAccountSwitcher() {
-    const { accounts, current, pending, switchTo } = useDemoSwitcher();
+    const { accounts, label, pending, switchTo } = useDemoSwitcher();
 
     if (accounts.length === 0) {
         return null;
@@ -112,7 +114,7 @@ export function DemoAccountSwitcher() {
                     'flex h-10 max-w-[240px] shrink-0 items-center gap-2 rounded-full border border-border bg-info-soft pr-3 pl-3.5 text-[14px] font-semibold text-info transition-colors duration-120 ease-brand hover:border-border-strong',
                     focusRing,
                 )}
-                aria-label={`Ganti akun demo, sekarang ${current?.persona ?? 'akun lain'}`}
+                aria-label={`Ganti akun demo, sekarang ${label}`}
             >
                 {pending !== null ? (
                     <Spinner className="size-4 shrink-0" />
@@ -124,9 +126,7 @@ export function DemoAccountSwitcher() {
                     />
                 )}
                 <span className="shrink-0 max-2xl:sr-only">Demo ·</span>
-                <span className="min-w-0 truncate">
-                    {current?.persona ?? 'Pilih akun'}
-                </span>
+                <span className="min-w-0 truncate">{label}</span>
                 <ChevronDown
                     aria-hidden
                     className="size-4 shrink-0"
@@ -149,7 +149,7 @@ export function DemoAccountSwitcher() {
  * bar): a slim strip with the current persona and a "Ganti akun" menu.
  */
 export function DemoAccountStrip({ className }: { className?: string }) {
-    const { accounts, current, pending, switchTo } = useDemoSwitcher();
+    const { accounts, label, pending, switchTo } = useDemoSwitcher();
 
     if (accounts.length === 0) {
         return null;
@@ -168,9 +168,7 @@ export function DemoAccountStrip({ className }: { className?: string }) {
                     className="size-4 shrink-0"
                     strokeWidth={2.2}
                 />
-                <span className="truncate">
-                    Demo · {current?.persona ?? 'akun lain'}
-                </span>
+                <span className="truncate">Demo · {label}</span>
             </p>
             <DropdownMenu>
                 <DropdownMenuTrigger

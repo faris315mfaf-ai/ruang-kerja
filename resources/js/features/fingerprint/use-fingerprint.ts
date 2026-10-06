@@ -9,6 +9,9 @@ import type {
     PersonRef,
 } from './types';
 
+/** Page load time: the sample clock runs from `initial.now` from here on. */
+const loadedAt = Date.now();
+
 /**
  * Local state of the fingerprint admin preview: add devices, map PINs and
  * test connections (simulated). The real page posts and gets fresh props.
@@ -22,6 +25,14 @@ export function useFingerprint(initial: FingerprintPageProps) {
         Record<string, { ok: boolean; at: string }>
     >({});
     const { processing, run } = useFakeMutation();
+    // Same clock as the sample data ("now" = initial.now), so new rows sort and read consistently.
+    const sampleNow = useCallback(
+        () =>
+            new Date(
+                Date.parse(initial.now) + (Date.now() - loadedAt),
+            ).toISOString(),
+        [initial.now],
+    );
 
     const addDevice = useCallback(
         async (draft: DeviceDraft): Promise<FingerprintDevice | null> => {
@@ -39,7 +50,7 @@ export function useFingerprint(initial: FingerprintPageProps) {
                 timezone: draft.timezone,
                 last_push_at: null,
                 users_count: 0,
-                created_at: new Date().toISOString(),
+                created_at: sampleNow(),
             };
             const ok = await run(
                 () => setDevices((current) => [...current, device]),
@@ -50,7 +61,7 @@ export function useFingerprint(initial: FingerprintPageProps) {
 
             return ok ? device : null;
         },
-        [initial.locations, run],
+        [initial.locations, run, sampleNow],
     );
 
     const assignPin = useCallback(
@@ -80,7 +91,7 @@ export function useFingerprint(initial: FingerprintPageProps) {
                 () =>
                     setTests((current) => ({
                         ...current,
-                        [device.id]: { ok, at: new Date().toISOString() },
+                        [device.id]: { ok, at: sampleNow() },
                     })),
                 {
                     delay: 1200,
@@ -92,12 +103,12 @@ export function useFingerprint(initial: FingerprintPageProps) {
             if (!ok) {
                 setTests((current) => ({
                     ...current,
-                    [device.id]: { ok: false, at: new Date().toISOString() },
+                    [device.id]: { ok: false, at: sampleNow() },
                 }));
             }
             setTesting(null);
         },
-        [initial.now, run],
+        [initial.now, run, sampleNow],
     );
 
     return {

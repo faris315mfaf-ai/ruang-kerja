@@ -314,6 +314,26 @@
     }
 }
 
+/*
+ * Invisible touch target of at least 44×44 around a smaller control (switch
+ * 52×32, chips 36–42px, segmented tabs 38px; docs/DESIGN.md §9), so the Arus
+ * sizes stay while fingers still hit it. Uses ::before: do not combine with
+ * other before: utilities on the same element.
+ */
+@utility hit-area {
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: max(100%, 44px);
+        height: max(100%, 44px);
+        transform: translate(-50%, -50%);
+    }
+}
+
 @utility tnum {
     font-variant-numeric: tabular-nums;
 }
