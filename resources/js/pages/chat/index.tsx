@@ -1,15 +1,38 @@
 import { Head } from '@inertiajs/react';
-import { PrototypeBanner } from '@/features/prototype/prototype-banner';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ChatDesktop } from '@/features/chat/chat.desktop';
+import { ChatListMobile } from '@/features/chat/chat.mobile';
+import { usePreviewState } from '@/features/chat/preview-state';
+import { useChatState } from '@/features/chat/store';
+import { useBreakpoint } from '@/hooks/use-breakpoint';
 
-// Placeholder created by the prototype scaffold; replaced by the module build.
+/**
+ * /obrolan — Obrolan (Fase 2 preview, F2-1): channels per workspace, public
+ * and private channels, DMs and small groups. Sample data, client-only.
+ */
 export default function ChatIndexPage() {
+    const breakpoint = useBreakpoint();
+    const state = useChatState();
+    const preview = usePreviewState();
+
     return (
         <>
             <Head title="Obrolan" />
-            <div className="flex flex-col gap-4">
-                <PrototypeBanner phase="Fase 2" />
-                <h1 className="text-display">Obrolan</h1>
-            </div>
+            {breakpoint === null ? (
+                <div className="flex flex-col gap-4" aria-busy>
+                    <Skeleton className="h-9 w-80" />
+                    <Skeleton className="h-[560px] w-full" />
+                </div>
+            ) : breakpoint === 'mobile' ? (
+                <ChatListMobile state={state} preview={preview} />
+            ) : (
+                <ChatDesktop
+                    state={state}
+                    channelId={null}
+                    preview={preview}
+                    isTablet={breakpoint === 'tablet'}
+                />
+            )}
         </>
     );
 }
@@ -17,4 +40,5 @@ export default function ChatIndexPage() {
 ChatIndexPage.layout = {
     breadcrumbs: [{ title: 'Obrolan', href: '/obrolan' }],
     title: 'Obrolan',
+    width: 'wide',
 };
