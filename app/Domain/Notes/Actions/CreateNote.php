@@ -4,6 +4,7 @@ namespace App\Domain\Notes\Actions;
 
 use App\Domain\Notes\Enums\NoteAccess;
 use App\Domain\Notes\Enums\NoteKind;
+use App\Domain\Notes\Enums\NotePreset;
 use App\Domain\Tasks\Services\Lexorank;
 use App\Models\Note;
 use App\Models\User;
@@ -23,7 +24,7 @@ final class CreateNote
     public function __construct(private readonly NotePolicy $policy) {}
 
     /**
-     * @param  array{title: string, parent_id?: string|null, access?: string|null, kind?: string|null}  $data
+     * @param  array{title: string, parent_id?: string|null, access?: string|null, kind?: string|null, preset?: string|null}  $data
      */
     public function handle(User $author, Workspace $workspace, array $data): Note
     {
@@ -56,6 +57,7 @@ final class CreateNote
                 'workspace_id' => $workspace->id,
                 'parent_id' => $parentId,
                 'kind' => $kind,
+                'preset' => $kind === NoteKind::Note ? NotePreset::tryFrom((string) ($data['preset'] ?? '')) : null,
                 'title' => $title,
                 'access' => NoteAccess::tryFrom((string) ($data['access'] ?? '')) ?? NoteAccess::Workspace,
                 'content' => null,

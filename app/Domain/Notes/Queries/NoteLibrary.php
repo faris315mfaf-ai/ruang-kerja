@@ -2,6 +2,7 @@
 
 namespace App\Domain\Notes\Queries;
 
+use App\Domain\Notes\Enums\NotePreset;
 use App\Domain\Organization\Enums\UserStatus;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
 use App\Domain\Workspaces\Enums\WorkspaceType;
@@ -64,8 +65,32 @@ final class NoteLibrary
             ->orderByRaw("CASE WHEN notes.kind = 'folder' THEN 0 ELSE 1 END")
             ->orderBy('notes.position')
             ->orderBy('notes.id')
-            ->get(['notes.id', 'notes.workspace_id', 'notes.parent_id', 'notes.kind', 'notes.title', 'notes.access', 'notes.created_by', 'notes.updated_by', 'notes.position', 'notes.created_at', 'notes.updated_at'])
+            ->get(['notes.id', 'notes.workspace_id', 'notes.parent_id', 'notes.kind', 'notes.preset', 'notes.title', 'notes.access', 'notes.created_by', 'notes.updated_by', 'notes.position', 'notes.created_at', 'notes.updated_at'])
             ->map(fn (Note $note): array => self::row($note))
+            ->all());
+    }
+
+    /**
+     * Latest "Notulensi cepat" the viewer can open (dashboard button menu),
+     * newest edit first. Tabs (children) are not listed on their own.
+     *
+     * @return list<array{id: string, title: string, workspace_name: string|null, updated_at: string|null}>
+     */
+    public function recentMinutes(User $viewer, int $limit = 3): array
+    {
+        return array_values($this->visible($viewer)
+            ->where('notes.preset', NotePreset::Minutes->value)
+            ->with('workspace:id,name,type')
+            ->orderByDesc('notes.updated_at')
+            ->orderByDesc('notes.id')
+            ->limit($limit)
+            ->get(['notes.id', 'notes.workspace_id', 'notes.title', 'notes.updated_at'])
+            ->map(fn (Note $note): array => [
+                'id' => $note->id,
+                'title' => $note->title,
+                'workspace_name' => $note->workspace === null ? null : ($note->workspace->isPersonal() ? 'Pribadi' : $note->workspace->name),
+                'updated_at' => self::iso($note->updated_at),
+            ])
             ->all());
     }
 
@@ -218,6 +243,7 @@ final class NoteLibrary
             'workspace_id' => $note->workspace_id,
             'parent_id' => $note->parent_id,
             'kind' => $note->kind->value,
+            'preset' => $note->preset?->value,
             'title' => $note->title,
             'access' => $note->access->value,
             'created_by' => $note->created_by,

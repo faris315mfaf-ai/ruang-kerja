@@ -89,6 +89,12 @@ final class ActionsSearchProvider implements SearchProvider
             ['id' => 'division-members', 'title' => 'Anggota divisi', 'icon' => 'users', 'url' => '/admin/karyawan', 'keywords' => ['tim', 'anggota'], 'roles' => [Role::KepalaDivisi->value]],
         ];
 
+        // Notulensi cepat (keputusan pemilik 6 Okt 2026): the client posts to
+        // /catatan/notulensi, or returns to the minutes being taken.
+        if ((bool) config('features.notes')) {
+            array_splice($builtIn, 3, 0, [['id' => 'quick-minutes', 'title' => 'Mulai notulensi', 'icon' => 'file-text', 'action' => 'notes.minutes', 'subtitle' => 'Catatan baru di workspace pribadi', 'keywords' => ['notulen', 'notulensi', 'catatan', 'rapat', 'minutes'], 'quick' => true]]);
+        }
+
         /** @var list<array{id: string, title: string, icon: string, url?: string, action?: string, subtitle?: string, shortcut?: string, keywords?: list<string>, roles?: list<string>, quick?: bool}> $extra */
         $extra = config('search.actions', []);
 

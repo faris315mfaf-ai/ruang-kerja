@@ -126,3 +126,28 @@ it('parses mention and reference ids in order without duplicates', function () {
         ->and($parser->taskIds($doc))->toBe([RT_TASK])
         ->and($parser->userIds(null))->toBe([]);
 });
+
+it('keeps palette colour and highlight marks only when the caller opts in (notes)', function () {
+    $doc = rtDoc(rtParagraph(
+        rtText('merah', [['type' => 'textColor', 'attrs' => ['color' => 'red', 'style' => 'x']], ['type' => 'bold']]),
+        rtText(' stabilo', [['type' => 'highlight', 'attrs' => ['color' => 'amber']]]),
+        rtText(' hex', [['type' => 'textColor', 'attrs' => ['color' => '#ff0000']], ['type' => 'highlight', 'attrs' => ['color' => 'url(x)']]]),
+        rtText(' ganda', [['type' => 'highlight', 'attrs' => ['color' => 'green']], ['type' => 'highlight', 'attrs' => ['color' => 'pink']]]),
+    ));
+
+    // Tasks and comments: colour marks are dropped.
+    expect(RichText::sanitize($doc)['content'][0]['content'])->toBe([
+        rtText('merah', [['type' => 'bold']]),
+        rtText(' stabilo'),
+        rtText(' hex'),
+        rtText(' ganda'),
+    ]);
+
+    // Notes: only palette names survive, one mark of each type.
+    expect(RichText::sanitize($doc, colors: true)['content'][0]['content'])->toBe([
+        rtText('merah', [['type' => 'textColor', 'attrs' => ['color' => 'red']], ['type' => 'bold']]),
+        rtText(' stabilo', [['type' => 'highlight', 'attrs' => ['color' => 'amber']]]),
+        rtText(' hex'),
+        rtText(' ganda', [['type' => 'highlight', 'attrs' => ['color' => 'green']]]),
+    ]);
+});

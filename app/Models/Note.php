@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Casts\PostgresBytea;
 use App\Domain\Notes\Enums\NoteAccess;
 use App\Domain\Notes\Enums\NoteKind;
+use App\Domain\Notes\Enums\NotePreset;
 use App\Domain\Organization\Enums\UserStatus;
 use App\Domain\Workspaces\Enums\WorkspaceType;
 use Carbon\CarbonImmutable;
@@ -34,6 +35,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  * @property string|null $parent_id
  * @property string $title
  * @property NoteKind $kind
+ * @property NotePreset|null $preset
  * @property NoteAccess $access
  * @property string|null $yjs_state
  * @property array<string, mixed>|null $content
@@ -51,7 +53,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  * @property-read Collection<int, NoteShare> $shares
  * @property-read Collection<int, NoteVersion> $versions
  */
-#[Fillable(['company_id', 'workspace_id', 'parent_id', 'kind', 'title', 'access', 'yjs_state', 'content', 'content_text', 'created_by', 'updated_by', 'position'])]
+#[Fillable(['company_id', 'workspace_id', 'parent_id', 'kind', 'preset', 'title', 'access', 'yjs_state', 'content', 'content_text', 'created_by', 'updated_by', 'position'])]
 #[Hidden(['yjs_state', 'search_vector'])]
 class Note extends Model
 {
@@ -65,6 +67,7 @@ class Note extends Model
     {
         return [
             'kind' => NoteKind::class,
+            'preset' => NotePreset::class,
             'access' => NoteAccess::class,
             'content' => 'array',
             'yjs_state' => PostgresBytea::class,

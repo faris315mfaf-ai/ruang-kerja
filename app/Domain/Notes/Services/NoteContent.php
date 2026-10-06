@@ -13,6 +13,8 @@ use App\Models\User;
  * (RichText::sanitize); `@mentions` survive only for people who can open the
  * note (NoteAudience), everything else becomes plain text. Notes are longer
  * than comments, so the size limits are wider than RichText::violation().
+ * Unlike tasks and comments, notes keep text colour and highlight marks
+ * (palette names only).
  */
 final class NoteContent
 {
@@ -100,7 +102,8 @@ final class NoteContent
             ->mapWithKeys(fn (User $user): array => [$user->id => $user->name])
             ->all();
 
-        $clean = RichText::sanitize($document, $people);
+        // Notes keep palette text colours and highlights (Notulensi, 6 Okt 2026).
+        $clean = RichText::sanitize($document, $people, colors: true);
 
         return [
             'document' => $clean,

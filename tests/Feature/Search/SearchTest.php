@@ -51,10 +51,22 @@ it('requires authentication', function () {
 });
 
 it('shows quick actions on an empty query', function () {
+    config(['features.notes' => false]);
     $response = $this->actingAs(searcher())->getJson('/cari/hasil')->assertOk();
 
     expect(groupKeys($response))->toBe(['actions'])
         ->and(itemTitles($response, 'actions'))->toBe(['Check-in', 'Buat pengajuan', 'Buat tugas baru', 'Ganti tema']);
+});
+
+it('offers "Mulai notulensi" as a quick action while notes are on', function () {
+    config(['features.notes' => true]);
+    $viewer = searcher();
+    $response = $this->actingAs($viewer)->getJson('/cari/hasil')->assertOk();
+    $items = collect($response->json('groups'))->firstWhere('key', 'actions')['items'];
+
+    expect(itemTitles($response, 'actions'))->toBe(['Check-in', 'Buat pengajuan', 'Buat tugas baru', 'Mulai notulensi', 'Ganti tema'])
+        ->and(collect($items)->firstWhere('title', 'Mulai notulensi')['action'])->toBe('notes.minutes')
+        ->and(itemTitles($this->actingAs($viewer)->getJson('/cari/hasil?q=notulen')->assertOk(), 'actions'))->toContain('Mulai notulensi');
 });
 
 it('matches actions by title and keywords', function (string $query, string $expected) {
