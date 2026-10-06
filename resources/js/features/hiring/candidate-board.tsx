@@ -24,7 +24,7 @@ export function CandidateBoard({
     const groups = groupByStage(candidates);
 
     return (
-        <div className="-mx-1 overflow-x-auto px-1 pb-2">
+        <div className="relative w-full min-w-0 overflow-x-auto pb-2">
             <div className="grid auto-cols-[minmax(232px,1fr)] grid-flow-col gap-3">
                 {STAGES.map((stage) => (
                     <section

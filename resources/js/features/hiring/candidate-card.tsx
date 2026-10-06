@@ -53,7 +53,7 @@ export function CandidateCard({
     const SourceIcon = candidate.source === 'google_form' ? Sheet : FileText;
 
     return (
-        <article className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 shadow-card">
+        <article className="relative flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 shadow-card">
             <Link
                 href={hiringUrls.candidate(candidate.id)}
                 className={cn(
