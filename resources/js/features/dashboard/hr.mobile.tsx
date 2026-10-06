@@ -7,6 +7,7 @@ import {
 import type { HrProps } from './hr-types';
 import { LiveBadge } from './live-badge';
 import { ViewPicker } from './view-picker';
+import { QuickMinutesButton } from '@/features/notes/quick-minutes-button';
 
 /**
  * Dashboard HR on phones (keputusan pemilik 6 Okt 2026): requests waiting
@@ -23,6 +24,7 @@ export function HrMobile({ live, ...props }: HrProps & { live: boolean }) {
                 <p className="text-meta text-text-muted">{props.scope.label}</p>
             </div>
             <ViewPicker views={props.views} />
+            <QuickMinutesButton mobile />
             <PendingHrPanel pending={props.pending} compact />
             <AttendanceSummaryPanel
                 attendance={props.attendance}

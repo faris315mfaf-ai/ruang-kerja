@@ -280,6 +280,26 @@
     --field-bg: rgb(23 33 49 / 0.9);
 }
 
+/* Note editor body (Catatan, keputusan pemilik 6 Okt 2026): base size per
+   device × the A−/A+ choice (--note-scale, 0.9–1.6, set on the element).
+   Headings use em (NOTE_PROSE) so they grow with it. */
+:root {
+    --note-base: 17px;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    :root {
+        --note-base: 18px;
+    }
+}
+
+@layer components {
+    .note-body {
+        font-size: calc(var(--note-base) * var(--note-scale, 1));
+        line-height: 1.65;
+    }
+}
+
 /* Toasts clear the floating chrome at the bottom: the desktop Dock (its
    reserved --dock-space) and the mobile tab bar capsule. */
 :root:has(nav[data-dock]) {

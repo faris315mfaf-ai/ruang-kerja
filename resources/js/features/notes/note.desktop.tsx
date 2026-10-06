@@ -1,5 +1,12 @@
 import { router } from '@inertiajs/react';
-import { History, MoreHorizontal, Plus, Share2, X } from 'lucide-react';
+import {
+    History,
+    MoreHorizontal,
+    PanelLeft,
+    Plus,
+    Share2,
+    X,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,7 +22,15 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SegmentedTabs } from '@/components/ui/tabs';
 import { cn, focusRing } from '@/lib/utils';
+import { DocumentTabsPanel, useDocumentTabs } from './document-tabs';
+import { handleScaleShortcut } from './editor/toolbar-extras';
+import {
+    MinutesModeBar,
+    StartModeButton,
+    useMinutesMode,
+} from './minutes-mode';
 import { NewNoteDialog } from './new-note-dialog';
 import { EditorToolbar, NoteEditor } from './note-editor';
 import {
@@ -54,9 +69,10 @@ function useMinWidth(px: number): boolean {
 }
 
 /**
- * Note editor on desktop & tablet: workspace tree (≥ 1280px), the editor
- * card with live co-editors, and version history (third column ≥ 1280px,
- * sheet below).
+ * Note editor on desktop & tablet: left panel with the document tabs
+ * (≥ 1024px; collapsible on tablets) and the workspace tree (≥ 1280px, own
+ * tab), the editor card with live co-editors and note-taking mode, and
+ * version history (third column ≥ 1280px, sheet below).
  */
 export function NoteDesktop({
     props,
@@ -67,11 +83,38 @@ export function NoteDesktop({
 }) {
     const session = useNoteSession(props, versions);
     const wide = useMinWidth(1280);
+    const desktop = useMinWidth(1024);
     const [creating, setCreating] = useState(false);
     const { note, history } = session;
     const workspace = props.workspaces.find(
         (item) => item.id === note.workspace_id,
     );
+    const mode = useMinutesMode(session);
+    const tabs = useDocumentTabs({
+        notes: props.notes,
+        current: note,
+        rootId: mode.rootId,
+        canCreate: workspace?.can_create ?? false,
+        mobile: false,
+    });
+    // Tablet: the panel folds away; until toggled it is open when the
+    // document has tabs or note-taking mode is on.
+    const [panelToggled, setPanelOpen] = useState<boolean | null>(null);
+    const panelOpen = panelToggled ?? (tabs.tabs.length > 1 || mode.active);
+    const [panelTab, setPanelTab] = useState<'document' | 'workspace'>(
+        'document',
+    );
+    const showPanel = desktop || panelOpen;
+
+    // Ctrl/⌘ + Alt + = / − / 0: text size of the note body.
+    useEffect(() => {
+        const onKeyDown = (event: KeyboardEvent) => {
+            handleScaleShortcut(event);
+        };
+        window.addEventListener('keydown', onKeyDown);
+
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, []);
     const previewVersion = history.preview;
     const newDefaults = useMemo(
         () => ({ kind: 'note' as const, workspaceId: note.workspace_id }),
@@ -130,39 +173,82 @@ export function NoteDesktop({
             <div
                 className={cn(
                     'grid items-start gap-5',
-                    wide &&
-                        (history.open
+                    showPanel &&
+                        (wide && history.open
                             ? 'grid-cols-[240px_minmax(0,1fr)_340px]'
-                            : 'grid-cols-[240px_minmax(0,1fr)]'),
+                            : desktop
+                              ? 'grid-cols-[240px_minmax(0,1fr)]'
+                              : 'grid-cols-[220px_minmax(0,1fr)]'),
                 )}
             >
-                {wide && (
+                {showPanel && (
                     <aside
-                        aria-label={`Catatan ${workspace?.name ?? ''}`}
-                        className="sticky top-[calc(var(--menu-bar-height)+24px)] flex flex-col gap-2 rounded-panel border border-border bg-surface p-3 shadow-card"
+                        aria-label="Panel catatan"
+                        className="sticky top-[calc(var(--menu-bar-height)+24px)] flex max-h-[calc(100svh-var(--menu-bar-height)-var(--dock-space)-48px)] flex-col gap-3 overflow-y-auto rounded-panel border border-border bg-surface p-3 shadow-card max-lg:top-6 max-lg:max-h-[calc(100svh-48px)]"
                     >
-                        <div className="flex items-center justify-between gap-2 px-2 pt-1">
-                            <p className="truncate text-[13px] font-bold tracking-[.06em] text-text-muted uppercase">
-                                {workspace?.name}
-                            </p>
-                            {workspace?.can_create && (
-                                <Button
-                                    size="icon-sm"
-                                    variant="ghost"
-                                    aria-label="Catatan baru"
-                                    title="Catatan baru"
-                                    onClick={() => setCreating(true)}
-                                >
-                                    <Plus aria-hidden />
-                                </Button>
+                        {wide && (
+                            <SegmentedTabs
+                                label="Isi panel"
+                                value={panelTab}
+                                onValueChange={setPanelTab}
+                                options={[
+                                    {
+                                        value: 'document',
+                                        label: 'Tab dokumen',
+                                        id: 'note-panel-document',
+                                        controls: 'note-panel',
+                                    },
+                                    {
+                                        value: 'workspace',
+                                        label: 'Workspace',
+                                        id: 'note-panel-workspace',
+                                        controls: 'note-panel',
+                                    },
+                                ]}
+                                className="flex w-full [&>button]:flex-1 [&>button]:px-2"
+                            />
+                        )}
+                        <div
+                            id="note-panel"
+                            role={wide ? 'tabpanel' : undefined}
+                            aria-labelledby={
+                                wide ? `note-panel-${panelTab}` : undefined
+                            }
+                        >
+                            {wide && panelTab === 'workspace' ? (
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center justify-between gap-2 px-2 pt-1">
+                                        <p className="truncate text-[13px] font-bold tracking-[.06em] text-text-muted uppercase">
+                                            {workspace?.name}
+                                        </p>
+                                        {workspace?.can_create && (
+                                            <Button
+                                                size="icon-sm"
+                                                variant="ghost"
+                                                aria-label="Catatan baru"
+                                                title="Catatan baru"
+                                                onClick={() =>
+                                                    setCreating(true)
+                                                }
+                                            >
+                                                <Plus aria-hidden />
+                                            </Button>
+                                        )}
+                                    </div>
+                                    <NoteTree
+                                        notes={props.notes}
+                                        activeId={note.id}
+                                        people={props.people}
+                                        compact
+                                    />
+                                </div>
+                            ) : (
+                                <DocumentTabsPanel
+                                    state={tabs}
+                                    current={note}
+                                />
                             )}
                         </div>
-                        <NoteTree
-                            notes={props.notes}
-                            activeId={note.id}
-                            people={props.people}
-                            compact
-                        />
                     </aside>
                 )}
 
@@ -175,6 +261,23 @@ export function NoteDesktop({
                                 <EditorsPresence session={session} />
                             </div>
                         </div>
+                        {!desktop && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label={
+                                    panelOpen
+                                        ? 'Sembunyikan tab dokumen'
+                                        : 'Tampilkan tab dokumen'
+                                }
+                                title="Tab dokumen"
+                                aria-pressed={panelOpen}
+                                onClick={() => setPanelOpen(!panelOpen)}
+                            >
+                                <PanelLeft aria-hidden />
+                            </Button>
+                        )}
+                        <StartModeButton mode={mode} />
                         <Button
                             variant="outline"
                             aria-pressed={history.open}
@@ -247,6 +350,7 @@ export function NoteDesktop({
                                 </div>
                             )}
                             <div className="flex flex-col gap-4 px-6 pt-8 pb-12 lg:px-12">
+                                <MinutesModeBar mode={mode} />
                                 <NoteBanners session={session} />
                                 <TitleField session={session} size={34} />
                                 <NoteEditor

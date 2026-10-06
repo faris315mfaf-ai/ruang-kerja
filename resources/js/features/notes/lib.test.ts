@@ -5,8 +5,11 @@ import {
     childCounts,
     connectedLabel,
     docText,
+    documentRoot,
+    documentTabs,
     editorsLabel,
     flattenTree,
+    nextTabTitle,
     parentOptions,
     savedLabel,
     subtreeIds,
@@ -26,6 +29,7 @@ function row(
         workspace_id: 'w',
         parent_id: parent,
         kind,
+        preset: null,
         title: id,
         access: 'workspace',
         created_by: 'u',
@@ -158,5 +162,48 @@ describe('labels', () => {
         expect(docText(doc)).toBe('Satu dua\ntiga\n');
         expect(wordCount(doc)).toBe(3);
         expect(wordCount(null)).toBe(0);
+    });
+});
+
+describe('document tabs (Notulensi)', () => {
+    const doc: Note[] = [
+        row('folder', null, 'a', 'folder'),
+        row('rapat', 'folder', 'b'),
+        row('tab-b', 'rapat', 'c'),
+        row('tab-a', 'rapat', 'b'),
+        row('sub-1', 'tab-a', 'a'),
+        row('deep', 'sub-1', 'a'),
+        row('arsip', 'rapat', 'd', 'folder'),
+    ];
+
+    it('finds the top note of the document, never a folder', () => {
+        expect(documentRoot(doc, 'deep')?.id).toBe('rapat');
+        expect(documentRoot(doc, 'tab-b')?.id).toBe('rapat');
+        expect(documentRoot(doc, 'rapat')?.id).toBe('rapat');
+        expect(documentRoot(doc, 'nope')).toBeUndefined();
+    });
+
+    it('lists the document, its tabs in order and their sub-tabs', () => {
+        expect(
+            documentTabs(doc, 'rapat').map((tab) => [
+                tab.note.id,
+                tab.level,
+                tab.tabId,
+            ]),
+        ).toEqual([
+            ['rapat', 0, 'rapat'],
+            ['tab-a', 0, 'tab-a'],
+            ['sub-1', 1, 'tab-a'],
+            ['tab-b', 0, 'tab-b'],
+        ]);
+        expect(documentTabs(doc, 'nope')).toEqual([]);
+    });
+
+    it('names new tabs and sub-tabs', () => {
+        const tabs = documentTabs(doc, 'rapat');
+
+        expect(nextTabTitle(tabs, 'rapat', 'rapat')).toBe('Tab 4');
+        expect(nextTabTitle(tabs, 'tab-a', 'rapat')).toBe('Sub-tab 2');
+        expect(nextTabTitle(tabs, 'tab-b', 'rapat')).toBe('Sub-tab 1');
     });
 });

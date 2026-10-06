@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Domain\Notes\Enums\NoteAccess;
 use App\Domain\Notes\Enums\NoteKind;
+use App\Domain\Notes\Enums\NotePreset;
 use App\Domain\Tasks\Services\Lexorank;
 use App\Models\Note;
 use App\Models\User;
@@ -59,6 +60,11 @@ class NoteFactory extends Factory
     public function folder(): static
     {
         return $this->state(fn (): array => ['kind' => NoteKind::Folder, 'content' => null, 'content_text' => '']);
+    }
+
+    public function minutes(): static
+    {
+        return $this->state(fn (): array => ['preset' => NotePreset::Minutes]);
     }
 
     public function childOf(Note $parent): static

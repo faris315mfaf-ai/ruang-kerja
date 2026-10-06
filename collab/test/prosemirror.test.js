@@ -109,3 +109,29 @@ void test('strips the hash of overlapping marks', () => {
         { type: 'comment', attrs: { id: 'c1' } },
     ]);
 });
+
+void test('keeps text colour and highlight marks with their palette name', () => {
+    const coloured = {
+        type: 'doc',
+        content: [
+            {
+                type: 'paragraph',
+                content: [
+                    {
+                        type: 'text',
+                        text: 'Keputusan',
+                        marks: [
+                            { type: 'textColor', attrs: { color: 'red' } },
+                            { type: 'highlight', attrs: { color: 'amber' } },
+                        ],
+                    },
+                    { type: 'text', text: ' biasa' },
+                ],
+            },
+        ],
+    };
+    const ydoc = new Y.Doc();
+    replaceDoc(ydoc, coloured);
+
+    assert.deepEqual(docToJson(ydoc), coloured);
+});

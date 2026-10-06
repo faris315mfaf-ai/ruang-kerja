@@ -142,10 +142,16 @@ class NoteController extends Controller
         Gate::authorize('delete', $note);
 
         $workspaceKey = $note->workspace?->key;
+        $parent = $note->parent;
         $message = $note->isFolder() ? 'Folder dihapus. Isinya dipindah ke tingkat atas.' : 'Catatan dihapus.';
         $delete->handle($note, $user);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => $message]);
+
+        // ?kembali=induk: a document tab goes back to the note above it.
+        if ($request->query('kembali') === 'induk' && $parent !== null && ! $parent->isFolder() && Gate::allows('view', $parent)) {
+            return to_route('notes.show', $parent);
+        }
 
         // ?kembali=workspace: back to the workspace tab the note was opened from.
         return $request->query('kembali') === 'workspace' && $workspaceKey !== null

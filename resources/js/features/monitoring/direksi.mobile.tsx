@@ -9,6 +9,7 @@ import type { DireksiViewProps, MobileTab } from './direksi-page';
 import { ProjectsPanel } from './projects-panel';
 import { WeeklyPanel } from './weekly-panel';
 import { WorkspaceGrid } from './workspace-grid';
+import { QuickMinutesButton } from '@/features/notes/quick-minutes-button';
 
 const PANEL_ID = 'direksi-panel';
 
@@ -39,6 +40,7 @@ export function DireksiMobile({
                 </p>
             </div>
             <ViewPicker views={props.views} />
+            <QuickMinutesButton mobile />
             <SegmentedTabs
                 label="Bagian monitoring"
                 value={tab}

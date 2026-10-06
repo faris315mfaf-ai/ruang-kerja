@@ -1,8 +1,11 @@
 import { router } from '@inertiajs/react';
 import {
+    ALargeSmall,
     ArrowLeft,
     History,
     MoreHorizontal,
+    NotebookPen,
+    Plus,
     RotateCcw,
     Share2,
 } from 'lucide-react';
@@ -19,6 +22,9 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useKeyboardInset, useKeyboardOpen } from '@/hooks/use-keyboard-open';
 import { cn } from '@/lib/utils';
+import { DocumentTabStrip, useDocumentTabs } from './document-tabs';
+import { TextSizeControl } from './editor/toolbar-extras';
+import { MinutesModeBar, useMinutesMode } from './minutes-mode';
 import { EditorToolbar, NoteEditor } from './note-editor';
 import {
     EditorsPresence,
@@ -120,6 +126,16 @@ export function NoteMobile({
     const workspace = props.workspaces.find(
         (item) => item.id === note.workspace_id,
     );
+    const mode = useMinutesMode(session);
+    const tabs = useDocumentTabs({
+        notes: props.notes,
+        current: note,
+        rootId: mode.rootId,
+        canCreate: workspace?.can_create ?? false,
+        mobile: true,
+    });
+    const [textSizeOpen, setTextSizeOpen] = useState(false);
+    const showTabs = tabs.tabs.length > 1 || mode.active;
 
     // App bar → session.
     useEffect(() => {
@@ -156,6 +172,8 @@ export function NoteMobile({
 
     return (
         <div className="flex flex-col gap-3">
+            {showTabs && <DocumentTabStrip state={tabs} current={note} />}
+            <MinutesModeBar mode={mode} mobile />
             <NotePath session={session} />
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <SaveStatus session={session} />
@@ -185,7 +203,11 @@ export function NoteMobile({
                     )}
                     style={keyboardOpen ? { bottom: keyboardInset } : undefined}
                 >
-                    <EditorToolbar editor={session.editor} mobile />
+                    <EditorToolbar
+                        editor={session.editor}
+                        mobile
+                        onTextSize={() => setTextSizeOpen(true)}
+                    />
                 </div>
             )}
 
@@ -259,6 +281,44 @@ export function NoteMobile({
                 title="Aksi catatan"
             >
                 <div className="flex flex-col gap-2">
+                    {mode.canStart && (
+                        <Button
+                            variant="tonal"
+                            size="lg"
+                            onClick={() => {
+                                setNoteUi({ more: false });
+                                mode.start();
+                            }}
+                        >
+                            <NotebookPen aria-hidden />
+                            Mode catat
+                        </Button>
+                    )}
+                    {tabs.canCreate && (
+                        <Button
+                            variant="outline"
+                            size="lg"
+                            disabled={tabs.adding}
+                            onClick={() => {
+                                setNoteUi({ more: false });
+                                tabs.add(tabs.rootId);
+                            }}
+                        >
+                            <Plus aria-hidden />
+                            Tambah tab
+                        </Button>
+                    )}
+                    <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={() => {
+                            setNoteUi({ more: false });
+                            setTextSizeOpen(true);
+                        }}
+                    >
+                        <ALargeSmall aria-hidden />
+                        Ukuran huruf
+                    </Button>
                     {note.can_edit && (
                         <Button
                             variant="outline"
@@ -289,6 +349,20 @@ export function NoteMobile({
                             Anda hanya dapat membaca catatan ini.
                         </p>
                     )}
+                </div>
+            </BottomSheet>
+
+            <BottomSheet
+                open={textSizeOpen}
+                onOpenChange={setTextSizeOpen}
+                title="Tampilan teks"
+                description="Ukuran huruf isi catatan, diingat di perangkat ini"
+            >
+                <div className="flex justify-center py-2">
+                    <TextSizeControl
+                        large
+                        buttonClassName="flex size-13 items-center justify-center rounded-full border border-border-strong bg-surface text-text transition-colors duration-120 ease-brand disabled:opacity-40 focus-visible:ring-[3px] focus-visible:ring-ring outline-none"
+                    />
                 </div>
             </BottomSheet>
 

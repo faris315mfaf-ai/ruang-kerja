@@ -11,6 +11,7 @@ import {
 import type { HrProps } from './hr-types';
 import { LiveBadge } from './live-badge';
 import { ViewPicker } from './view-picker';
+import { QuickMinutesButton } from '@/features/notes/quick-minutes-button';
 
 /** "48 karyawan terjadwal hari ini · 40 Reguler · 8 Pagi". */
 export function hrSubtitle(props: HrProps): string {
@@ -40,6 +41,7 @@ export function HrDesktop({ live, ...props }: HrProps & { live: boolean }) {
                 title="Dashboard HR"
                 subtitle={hrSubtitle(props)}
             >
+                <QuickMinutesButton />
                 <Button asChild variant="outline">
                     <Link href="/absensi/rekap">
                         <CalendarRange aria-hidden />

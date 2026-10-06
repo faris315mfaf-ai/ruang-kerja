@@ -60,6 +60,7 @@ Butir 2–4 diterapkan modul masing-masing; shell (butir 1) sudah berlaku.
 | Pengajuan (buat, lihat, batalkan) | ✓ | ✓ | Lampiran bisa langsung dari kamera. Jenis terkunci (cuti & lembur, keputusan pemilik 6 Okt 2026) tidak jadi chip: tampil sebagai daftar bergembok di bawah chip; desktop: ubin bergembok. Pengajuan barang penuh di kedua platform |
 | Laporan progres harian (`/laporan`, `/laporan/hari-ini`) | ✓ | ✓ | Keputusan pemilik 6 Okt 2026. Form satu kolom, tombol Kirim di bilah kaca di atas tab bar; kartu "Laporan hari ini" di Beranda |
 | Pengumuman (`/pengumuman`) | ✓ | ✓ | Buat lewat FAB + bottom sheet (desktop: dialog). Spanduk di atas dashboard di kedua platform |
+| Catatan & notulensi (`/catatan`, keputusan pemilik 6 Okt 2026) | ✓ | ✓ | "Mulai notulensi" 52px di dashboard (desktop: tombol di header + menu "Notulensi terakhir"). Tab dokumen: desktop panel kiri ≥ 1024 (tablet bisa diciutkan), ponsel strip chip di bawah app bar + bottom sheet "Tab dokumen" (sub-tab). Warna teks & stabilo di toolbar; ukuran huruf A−/A+ (90–160%, per perangkat) di toolbar desktop, ponsel lewat lembar "Tampilan teks". Mode catat: pil "Kembali ke notulensi" di semua halaman (desktop di atas Dock, tablet kanan bawah, ponsel di atas tab bar), keluar hanya lewat "Selesai mencatat" |
 | Persetujuan (setuju/tolak/revisi) | ✓ | ✓ | Tumpukan kartu + tombol di zona jempol (§2.1). Aksi massal hanya desktop |
 | Tugas saya, detail tugas, komentar | ✓ | ✓ | Kotak komentar menempel di bawah |
 | Buat tugas | ✓ | ✓ | Bottom sheet cepat |
@@ -155,7 +156,7 @@ Aturan:
 | Fitur (rute) | Desktop (Arus) | Mobile (Arus) |
 |---|---|---|
 | Obrolan (`/obrolan`, `/obrolan/{channel}`) | 3 kolom: daftar · percakapan · thread/detail (≥ 1280; di bawahnya Sheet kanan), tanpa layar desain khusus | daftar layar penuh + FAB, percakapan layar penuh, aksi pesan/thread/detail = bottom sheet |
-| Catatan bersama (`/catatan`, `/catatan/{note}`) | panel pohon per workspace, editor dengan pohon kiri (≥ 1280), riwayat di panel kanan (tanpa layar desain khusus) | editor layar penuh, toolbar format di atas tab bar/keyboard, riwayat = bottom sheet |
+| Catatan bersama (`/catatan`, `/catatan/{note}`) | panel pohon per workspace; editor dengan panel kiri "Tab dokumen" (≥ 1024) + "Workspace" (pohon, ≥ 1280), riwayat di panel kanan (tanpa layar desain khusus) | editor layar penuh, strip tab dokumen, toolbar format di atas tab bar/keyboard, riwayat & tab = bottom sheet |
 | Rapat (`/rapat`, `/rapat/baru`, `/rapat/{id}`) | DRapat, DRapatBaru, DNotifRapat (toast) | MRapat, MRapatDetail, MNotifRapat (bottom sheet) |
 | Notulen (`/rapat/{id}/notulen`) | DNotulen | MNotulen (ubah PIC/tenggat ◐ desktop) |
 | Kalender (`/kalender`) | grid bulan + tampilan minggu | strip minggu + agenda |

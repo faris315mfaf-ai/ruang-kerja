@@ -160,10 +160,58 @@ export function useNoteSession(
         );
     };
 
+    /**
+     * "Selesai mencatat": save now instead of waiting for the debounce —
+     * the pending title, the pending body (save fallback) and, live, until
+     * the collab server confirmed every change (max. 4 seconds). Resolves
+     * false when something may not be saved.
+     */
+    const flushNow = async (): Promise<boolean> => {
+        let ok = true;
+        const pendingTitle = titleTimer.current !== undefined;
+        window.clearTimeout(titleTimer.current);
+        titleTimer.current = undefined;
+
+        if (pendingTitle && title !== current.title) {
+            try {
+                const { note } = await notesApi.rename(current.id, title);
+                setCurrent((state) => ({
+                    ...state,
+                    title: note.title,
+                    updated_at: note.updated_at,
+                }));
+                base.current = note.updated_at ?? base.current;
+            } catch {
+                ok = false;
+            }
+        }
+
+        if (pending.current !== undefined) {
+            window.clearTimeout(saveTimer.current);
+            await flushContent();
+            ok = ok && pending.current === undefined && !conflict;
+        }
+
+        const provider = collab.provider;
+
+        if (mode === 'live' && provider) {
+            const deadline = Date.now() + 4000;
+
+            while (provider.hasUnsyncedChanges && Date.now() < deadline) {
+                await new Promise((resolve) => window.setTimeout(resolve, 150));
+            }
+
+            ok = ok && !provider.hasUnsyncedChanges;
+        }
+
+        return ok;
+    };
+
     const setTitle = (next: string) => {
         setTitleState(next);
         window.clearTimeout(titleTimer.current);
         titleTimer.current = window.setTimeout(() => {
+            titleTimer.current = undefined;
             notesApi
                 .rename(current.id, next)
                 .then(({ note }) => {
@@ -290,6 +338,7 @@ export function useNoteSession(
         status,
         saving,
         setContent,
+        flushNow,
         editor,
         editorKey,
         onReady,

@@ -9,6 +9,7 @@ import { ProjectsPanel } from './projects-panel';
 import type { DireksiViewProps } from './direksi-page';
 import { WeeklyPanel } from './weekly-panel';
 import { WorkspaceGrid } from './workspace-grid';
+import { QuickMinutesButton } from '@/features/notes/quick-minutes-button';
 
 /**
  * Dashboard Direksi, desktop & tablet (keputusan pemilik 6 Okt 2026):
@@ -30,6 +31,7 @@ export function DireksiDesktop({
                 title="Monitoring kerja"
                 subtitle={`${props.scope.label} · ${props.scope.member_count} karyawan aktif`}
             >
+                <QuickMinutesButton />
                 <Button asChild variant="outline">
                     <a href={props.exportUrl} download>
                         <Download aria-hidden />

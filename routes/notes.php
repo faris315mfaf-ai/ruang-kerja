@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Notes\CollabStateController;
 use App\Http\Controllers\Notes\NoteController;
+use App\Http\Controllers\Notes\QuickMinutesController;
 use App\Http\Controllers\Notes\WorkspaceNotesController;
 use App\Http\Middleware\EnsureFeatureEnabled;
 use App\Http\Middleware\VerifyCollabSecret;
@@ -15,6 +16,10 @@ use Illuminate\Support\Facades\Route;
 Route::middleware([EnsureFeatureEnabled::class.':notes', 'auth', 'verified'])->prefix('catatan')->name('notes.')->group(function () {
     Route::get('/', [NoteController::class, 'index'])->name('index');
     Route::post('/', [NoteController::class, 'store'])->middleware('throttle:60,1')->name('store');
+
+    // Notulensi cepat (keputusan pemilik 6 Okt 2026): start from a dashboard, latest list.
+    Route::post('notulensi', [QuickMinutesController::class, 'store'])->middleware('throttle:20,1')->name('minutes.start');
+    Route::get('notulensi', [QuickMinutesController::class, 'index'])->middleware('throttle:60,1')->name('minutes.index');
 
     Route::get('{note}', [NoteController::class, 'show'])->whereUlid('note')->name('show');
     Route::patch('{note}', [NoteController::class, 'update'])->whereUlid('note')->middleware('throttle:120,1')->name('update');

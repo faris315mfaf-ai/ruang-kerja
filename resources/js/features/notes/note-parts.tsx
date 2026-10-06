@@ -201,6 +201,9 @@ export function NotePath({ session }: { session: NoteSession }) {
     );
 }
 
+/** Id of the title field ("Ganti nama" of the open tab focuses it). */
+export const TITLE_FIELD_ID = 'note-title-field';
+
 /** Large title field; Enter jumps into the body. */
 export function TitleField({
     session,
@@ -222,6 +225,7 @@ export function TitleField({
     return (
         <textarea
             ref={field}
+            id={TITLE_FIELD_ID}
             rows={1}
             value={session.title}
             readOnly={!session.note.can_edit}

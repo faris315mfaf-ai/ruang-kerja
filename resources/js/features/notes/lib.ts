@@ -253,3 +253,83 @@ export function toneFor(id: string, tones: number): number {
 
     return tones > 0 ? hash % tones : 0;
 }
+
+/**
+ * Top note of the document a note belongs to (Notulensi tabs, keputusan
+ * pemilik 6 Okt 2026): walks up through parent NOTES and stops below a
+ * folder or a parent that is not visible. A note without a note parent is
+ * its own document.
+ */
+export function documentRoot(notes: Note[], id: string): Note | undefined {
+    const byId = new Map(notes.map((note) => [note.id, note]));
+    let current = byId.get(id);
+    const seen = new Set<string>();
+
+    while (current?.parent_id && !seen.has(current.id)) {
+        seen.add(current.id);
+        const parent = byId.get(current.parent_id);
+
+        if (!parent || parent.kind !== 'note') {
+            break;
+        }
+
+        current = parent;
+    }
+
+    return current;
+}
+
+export type DocumentTab = {
+    note: Note;
+    /** 0 = the document and its tabs, 1 = sub-tabs. */
+    level: 0 | 1;
+    /** The level-0 row it sits under (itself for level 0). */
+    tabId: string;
+};
+
+/**
+ * Google Docs-like tab list of a document: the document itself first, its
+ * child notes as tabs, their children as sub-tabs. Deeper pages and
+ * folders are not tabs (they stay in the workspace tree).
+ */
+export function documentTabs(notes: Note[], rootId: string): DocumentTab[] {
+    const root = notes.find((note) => note.id === rootId);
+
+    if (!root) {
+        return [];
+    }
+
+    const childrenOf = (id: string) =>
+        notes
+            .filter((note) => note.parent_id === id && note.kind === 'note')
+            .sort(compareNotes);
+
+    return [
+        { note: root, level: 0, tabId: root.id },
+        ...childrenOf(root.id).flatMap((tab): DocumentTab[] => [
+            { note: tab, level: 0, tabId: tab.id },
+            ...childrenOf(tab.id).map((sub): DocumentTab => ({
+                note: sub,
+                level: 1,
+                tabId: tab.id,
+            })),
+        ]),
+    ];
+}
+
+/** "Tab 3" / "Sub-tab 2": default title of a new tab under `parentId`. */
+export function nextTabTitle(
+    tabs: DocumentTab[],
+    parentId: string,
+    rootId: string,
+): string {
+    if (parentId === rootId) {
+        return `Tab ${tabs.filter((tab) => tab.level === 0).length + 1}`;
+    }
+
+    const siblings = tabs.filter(
+        (tab) => tab.level === 1 && tab.tabId === parentId,
+    ).length;
+
+    return `Sub-tab ${siblings + 1}`;
+}

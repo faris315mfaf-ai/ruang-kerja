@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import type { CSSProperties } from 'react';
 import type * as Y from 'yjs';
 import { suggestionOptions } from '@/features/tasks/editor/suggestions';
 import type { RichDoc } from '@/features/tasks/editor/types';
@@ -31,16 +32,25 @@ import {
     CURSOR_TONES,
     selectionAttributes,
 } from './cursor-tones';
+import { Highlight, TextColor } from './editor/color-marks';
+import {
+    ColorMenu,
+    TextSizeButton,
+    TextSizeControl,
+} from './editor/toolbar-extras';
 import { toneFor } from './lib';
+import { useNoteScale } from './note-scale';
 
 /**
  * Document-sized headings for notes (the shared .rich-text scale is tuned
- * for comments). Editor: h1–h3; read-only view renders levels as h3–h5.
+ * for comments). Sizes are relative (em) so they follow the text size of
+ * the editor (A− / A+, --note-scale). Editor: h1–h3; read-only view
+ * renders levels as h3–h5.
  */
 export const NOTE_PROSE = cn(
-    '[&_.ProseMirror_h1]:mt-8 [&_.ProseMirror_h1]:text-[26px] [&_.ProseMirror_h1]:leading-8 [&_.ProseMirror_h1]:font-bold',
-    '[&_.ProseMirror_h2]:mt-7 [&_.ProseMirror_h2]:text-[22px] [&_.ProseMirror_h2]:leading-[30px] [&_.ProseMirror_h2]:font-bold',
-    '[&_.ProseMirror_h3]:mt-5 [&_.ProseMirror_h3]:text-[18px] [&_.ProseMirror_h3]:leading-[26px] [&_.ProseMirror_h3]:font-bold',
+    '[&_.ProseMirror_h1]:mt-[1.9em] [&_.ProseMirror_h1]:text-[1.53em] [&_.ProseMirror_h1]:leading-[1.23] [&_.ProseMirror_h1]:font-bold',
+    '[&_.ProseMirror_h2]:mt-[1.6em] [&_.ProseMirror_h2]:text-[1.3em] [&_.ProseMirror_h2]:leading-[1.36] [&_.ProseMirror_h2]:font-bold',
+    '[&_.ProseMirror_h3]:mt-[1.2em] [&_.ProseMirror_h3]:text-[1.06em] [&_.ProseMirror_h3]:leading-[1.44] [&_.ProseMirror_h3]:font-bold',
 );
 
 /** Same scale for RichTextView (heading levels 1/2/3 render as h3/h4/h5). */
@@ -89,6 +99,7 @@ export function NoteEditor({
     className,
 }: Props) {
     const callbacks = useRef({ onChange });
+    const scale = useNoteScale();
 
     useEffect(() => {
         callbacks.current = { onChange };
@@ -113,6 +124,8 @@ export function NoteEditor({
         }),
         TaskList,
         TaskItem.configure({ nested: true }),
+        TextColor,
+        Highlight,
         Placeholder.configure({ placeholder: 'Tulis isi catatan…' }),
         Mention.configure({
             HTMLAttributes: { class: 'rt-mention' },
@@ -181,11 +194,9 @@ export function NoteEditor({
     return (
         <EditorContent
             editor={editor}
-            className={cn(
-                'text-[17px] leading-7 text-text',
-                NOTE_PROSE,
-                className,
-            )}
+            // Text size per device (app.css .note-body) × the A−/A+ choice.
+            style={{ '--note-scale': scale / 100 } as CSSProperties}
+            className={cn('note-body text-text', NOTE_PROSE, className)}
         />
     );
 }
@@ -260,10 +271,13 @@ const ITEMS: ToolbarItem[] = [
 export function EditorToolbar({
     editor,
     mobile = false,
+    onTextSize,
     className,
 }: {
     editor: Editor;
     mobile?: boolean;
+    /** Phone: opens "Tampilan teks" (the size control lives in a sheet). */
+    onTextSize?: () => void;
     className?: string;
 }) {
     const active = useEditorState({
@@ -298,7 +312,8 @@ export function EditorToolbar({
             role="toolbar"
             aria-label="Format teks"
             className={cn(
-                'flex [scrollbar-width:none] items-center gap-0.5 overflow-x-auto',
+                // relative: sr-only labels inside stay clipped by the scroller.
+                'relative flex [scrollbar-width:none] items-center gap-0.5 overflow-x-auto',
                 className,
             )}
         >
@@ -337,6 +352,28 @@ export function EditorToolbar({
                     <item.icon className="size-[18px]" aria-hidden />
                 </button>
             ))}
+            <span aria-hidden className="mx-1 h-6 w-px shrink-0 bg-divider" />
+            <ColorMenu
+                editor={editor}
+                kind="textColor"
+                buttonClassName={button}
+            />
+            <ColorMenu
+                editor={editor}
+                kind="highlight"
+                buttonClassName={button}
+            />
+            <span aria-hidden className="mx-1 h-6 w-px shrink-0 bg-divider" />
+            {mobile ? (
+                onTextSize && (
+                    <TextSizeButton
+                        buttonClassName={button}
+                        onClick={onTextSize}
+                    />
+                )
+            ) : (
+                <TextSizeControl buttonClassName={button} />
+            )}
         </div>
     );
 }
