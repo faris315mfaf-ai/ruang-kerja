@@ -415,6 +415,15 @@ Rencana **pribadi** seorang pengguna atas sebuah tugas di Beranda ("Ruang saya":
 
 Unik `(user_id, task_id)`, indeks `(user_id, bucket, position)` dan `(task_id)`. **Privat**: hanya pemilik yang membaca/mengubah (`TaskPlanPolicy`, juga tidak untuk Direksi/HR/Super Admin); daftar selalu `TaskPlan::ownedBy($user)`. Merencanakan butuh `TaskPolicy::plan` (tugas terlihat, workspace tidak diarsipkan, dan ditugaskan kepada pengguna **atau** berada di workspace pribadinya). Tugas tanpa baris (atau `bucket` null) ditempatkan otomatis tanpa menulis baris: lewat tenggat/hari ini → Hari ini, sampai Minggu ISO berjalan → Minggu ini, selain itu/tanpa tenggat → Nanti. "Tugas baru" = tugas terbuka yang ditugaskan orang lain (`task_assignees.assigned_by` ≠ pengguna) dalam 14 hari terakhir dan belum punya `seen_at` (`App\Domain\Planner\Queries\PersonalPlanner`).
 
+### daily_reports & daily_report_items (Laporan progres harian, Okt 2026)
+Laporan progres kerja harian karyawan (Beranda staf) yang dibaca atasan langsung dan monitoring kerja Direksi.
+
+`daily_reports`: `id` ulid, `company_id` FK restrict, `user_id` FK cascade, `report_date` date (tanggal kantor), `summary` text null, `blockers` text null (hambatan), `notes` text null (catatan/notulensi bebas), `submitted_at` timestamptz null (null = draf), timestamps. Unik `(user_id, report_date)`, indeks `(company_id, report_date)`.
+
+`daily_report_items`: `id` ulid, `daily_report_id` FK cascade, `task_id` FK null (nullOnDelete; null = pekerjaan di luar tugas), `task_key` varchar(30) null + `task_title` varchar(255) null (salinan saat lapor agar riwayat tetap terbaca), `progress_note` text, `status_category_after` varchar(20) null (CHECK kategori status; kategori tugas setelah laporan bila dipindah), `percent` smallint null (CHECK 0–100), `hours` numeric(5,2) null (CHECK > 0 dan ≤ 24), `position` smallint, timestamps. Indeks `(daily_report_id, position)`, `(task_id)`.
+
+Akses: pemilik (tulis selama hari itu), atasan langsung & Kepala Divisi divisinya (baca), Direksi/HR/Super Admin (baca, monitoring). Tidak pernah memakai `visibleTo` workspace untuk ringkasan, tetapi judul tugas hanya ditampilkan ke pembaca yang bisa melihat tugas itu; selain itu memakai salinan `task_key` saja.
+
 ### comments
 `id`, `commentable_type`/`commentable_id` (morph: task, catatan F2), `user_id`, `body` jsonb, `body_text` text, `edited_at` null, soft delete.
 
