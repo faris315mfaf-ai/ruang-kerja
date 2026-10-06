@@ -27,7 +27,7 @@ class MeetingFactory extends Factory
         $start = CarbonImmutable::now(config()->string('app.office_timezone'))->addDay()->setTime(10, 0);
 
         return [
-            'company_id' => fn (array $attributes): string => User::query()->whereKey($attributes['organizer_id'])->value('company_id') ?? CompanyFactory::defaultId(),
+            'company_id' => fn (): string => CompanyFactory::defaultId(),
             'organizer_id' => User::factory(),
             'title' => 'Rapat '.fake()->word().' '.fake()->word(),
             'starts_at' => $start->utc(),
