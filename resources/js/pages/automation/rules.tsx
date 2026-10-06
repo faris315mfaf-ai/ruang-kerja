@@ -1,15 +1,39 @@
 import { Head } from '@inertiajs/react';
-import { PrototypeBanner } from '@/features/prototype/prototype-banner';
+import { AUTOMATION } from '@/features/automation/fixtures';
+import {
+    PreviewSkeleton,
+    usePreviewState,
+} from '@/features/automation/preview-state';
+import { RulesScreen } from '@/features/automation/rules/rules-screen';
+import type { AutomationProps } from '@/features/automation/types';
+import { useBreakpoint } from '@/hooks/use-breakpoint';
 
-// Placeholder created by the prototype scaffold; replaced by the module build.
-export default function AutomationRulesPage() {
+/**
+ * /otomasi — automation rules "jika … maka …" (Fase 2 · F2-4, preview).
+ * Props default to fixtures (features/automation/types.ts shape).
+ */
+export default function AutomationRulesPage({
+    automation: data = AUTOMATION,
+}: {
+    /** Same shape as the fixture; the controller passes it later. */
+    automation?: AutomationProps;
+}) {
+    const breakpoint = useBreakpoint();
+    const { state } = usePreviewState();
+
     return (
         <>
             <Head title="Otomasi" />
-            <div className="flex flex-col gap-4">
-                <PrototypeBanner phase="Fase 2" />
-                <h1 className="text-display">Otomasi</h1>
-            </div>
+            {breakpoint === null ? (
+                <PreviewSkeleton kpis={3} />
+            ) : (
+                <RulesScreen
+                    key={state}
+                    props={data}
+                    state={state}
+                    mobile={breakpoint === 'mobile'}
+                />
+            )}
         </>
     );
 }

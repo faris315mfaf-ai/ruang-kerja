@@ -1,21 +1,45 @@
 import { Head } from '@inertiajs/react';
-import { PrototypeBanner } from '@/features/prototype/prototype-banner';
+import { TEMPLATES } from '@/features/automation/fixtures';
+import {
+    PreviewSkeleton,
+    usePreviewState,
+} from '@/features/automation/preview-state';
+import { TemplatesScreen } from '@/features/automation/templates/templates-screen';
+import type { TemplatesProps } from '@/features/automation/types';
+import { useBreakpoint } from '@/hooks/use-breakpoint';
 
-// Placeholder created by the prototype scaffold; replaced by the module build.
-export default function AutomationTemplatesPage() {
+/** /otomasi/template — task & workspace templates (Fase 2 · F2-4, preview). */
+export default function AutomationTemplatesPage({
+    templates: data = TEMPLATES,
+}: {
+    /** Same shape as the fixture; the controller passes it later. */
+    templates?: TemplatesProps;
+}) {
+    const breakpoint = useBreakpoint();
+    const { state } = usePreviewState();
+
     return (
         <>
             <Head title="Template" />
-            <div className="flex flex-col gap-4">
-                <PrototypeBanner phase="Fase 2" />
-                <h1 className="text-display">Template</h1>
-            </div>
+            {breakpoint === null ? (
+                <PreviewSkeleton />
+            ) : (
+                <TemplatesScreen
+                    key={state}
+                    props={data}
+                    state={state}
+                    mobile={breakpoint === 'mobile'}
+                />
+            )}
         </>
     );
 }
 
 AutomationTemplatesPage.layout = {
-    breadcrumbs: [{ title: 'Template', href: '/otomasi/template' }],
+    breadcrumbs: [
+        { title: 'Otomasi', href: '/otomasi' },
+        { title: 'Template', href: '/otomasi/template' },
+    ],
     title: 'Template',
     back: '/otomasi',
 };

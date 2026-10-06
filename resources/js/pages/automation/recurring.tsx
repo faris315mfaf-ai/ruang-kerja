@@ -1,21 +1,45 @@
 import { Head } from '@inertiajs/react';
-import { PrototypeBanner } from '@/features/prototype/prototype-banner';
+import { RECURRING } from '@/features/automation/fixtures';
+import {
+    PreviewSkeleton,
+    usePreviewState,
+} from '@/features/automation/preview-state';
+import { RecurringScreen } from '@/features/automation/recurring/recurring-screen';
+import type { RecurringProps } from '@/features/automation/types';
+import { useBreakpoint } from '@/hooks/use-breakpoint';
 
-// Placeholder created by the prototype scaffold; replaced by the module build.
-export default function AutomationRecurringPage() {
+/** /otomasi/berulang — recurring tasks (Fase 2 · F2-4, preview). */
+export default function AutomationRecurringPage({
+    recurring: data = RECURRING,
+}: {
+    /** Same shape as the fixture; the controller passes it later. */
+    recurring?: RecurringProps;
+}) {
+    const breakpoint = useBreakpoint();
+    const { state } = usePreviewState();
+
     return (
         <>
             <Head title="Tugas berulang" />
-            <div className="flex flex-col gap-4">
-                <PrototypeBanner phase="Fase 2" />
-                <h1 className="text-display">Tugas berulang</h1>
-            </div>
+            {breakpoint === null ? (
+                <PreviewSkeleton />
+            ) : (
+                <RecurringScreen
+                    key={state}
+                    props={data}
+                    state={state}
+                    mobile={breakpoint === 'mobile'}
+                />
+            )}
         </>
     );
 }
 
 AutomationRecurringPage.layout = {
-    breadcrumbs: [{ title: 'Tugas berulang', href: '/otomasi/berulang' }],
+    breadcrumbs: [
+        { title: 'Otomasi', href: '/otomasi' },
+        { title: 'Tugas berulang', href: '/otomasi/berulang' },
+    ],
     title: 'Tugas berulang',
     back: '/otomasi',
 };
