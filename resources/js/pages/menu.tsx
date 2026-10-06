@@ -34,6 +34,7 @@ import {
     okrNavItem,
     performanceNavItem,
     notesNavItem,
+    meetingsNavItem,
     portfolioNavItem,
     prototypeNavItem,
 } from '@/lib/navigation';
@@ -236,6 +237,11 @@ export default function Menu() {
                                 icon={notesNavItem.icon}
                                 label={notesNavItem.title}
                                 href={notesNavItem.href}
+                        {features?.meetings && (
+                            <Row
+                                icon={meetingsNavItem.icon}
+                                label="Kalender & rapat"
+                                href={meetingsNavItem.href}
                             />
                         )}
                         {features?.chat && (

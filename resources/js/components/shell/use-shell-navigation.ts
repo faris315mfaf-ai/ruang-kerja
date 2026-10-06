@@ -17,6 +17,7 @@ import {
     chatNavItem,
     roleDashboardNavItem,
     notesNavItem,
+    meetingsNavItem,
     mainNavItemsFor,
     organizationNavItems,
     okrNavItem,
@@ -41,6 +42,7 @@ const MOTIONS: Record<string, GlyphMotion> = {
     '/manajemen': { name: 'dock-lift', duration: '1.6s' },
     '/inbox': { name: 'dock-drop', duration: '1.4s' },
     '/obrolan': { name: 'dock-nudge', duration: '1.5s' },
+    '/rapat': { name: 'dock-tilt', duration: '1.8s' },
     '/tugas': { name: 'dock-pulse', duration: '1.5s' },
     '/absensi': { name: 'dock-drop', duration: '1.4s' },
     '/pengajuan': { name: 'dock-tilt', duration: '1.8s' },
@@ -235,10 +237,16 @@ export function useShellNavigation(): ShellNavigation {
                   : [item];
           })
         : withChat;
+    // Rapat right after Tugas saya (work planning next to tasks).
+    const withMeetings = features?.meetings
+        ? withAutomation.flatMap((item) =>
+              item.href === '/tugas' ? [item, meetingsNavItem] : [item],
+          )
+        : withAutomation;
     // OKR after the daily work destinations (F3-3).
     const withOkr = features?.okr
-        ? [...withAutomation, okrNavItem]
-        : withAutomation;
+        ? [...withMeetings, okrNavItem]
+        : withMeetings;
     const tiles = [
         ...(organizationItems.length > 1
             ? withOkr

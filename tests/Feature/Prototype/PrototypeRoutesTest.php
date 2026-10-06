@@ -12,17 +12,7 @@ beforeEach(function () {
 
 dataset('prototype pages', [
     ['/pratinjau', 'prototype/hub'],
-    ['/rapat', 'meetings/index'],
-    ['/rapat/baru', 'meetings/create'],
-    ['/rapat/standup-ops', 'meetings/show'],
-    ['/rapat/standup-ops/notulen', 'meetings/minutes'],
-    ['/kalender', 'meetings/calendar'],
-    ['/manajemen/jadwal', 'meetings/management-schedule'],
     ['/pengaturan/whatsapp', 'automation/whatsapp'],
-    ['/otomasi', 'automation/rules'],
-    ['/otomasi/berulang', 'automation/recurring'],
-    ['/otomasi/template', 'automation/templates'],
-    ['/kinerja', 'automation/performance'],
     ['/pratinjau/ponsel', 'mobile-app/index'],
     ['/pratinjau/ponsel/masuk', 'mobile-app/biometric-login'],
     ['/pratinjau/ponsel/integritas', 'mobile-app/integrity'],
@@ -48,7 +38,7 @@ it('renders every preview page for a signed-in employee', function (string $uri,
 })->with('prototype pages');
 
 it('sends guests to the login page', function () {
-    $this->get('/rapat')->assertRedirect(route('login'));
+    $this->get('/catatan')->assertRedirect(route('login'));
 });
 
 it('answers 404 when the prototype flag is off', function (string $uri) {
@@ -57,7 +47,7 @@ it('answers 404 when the prototype flag is off', function (string $uri) {
     $user->assignRole(Role::Anggota->value);
 
     $this->actingAs($user)->get($uri)->assertNotFound();
-})->with(['/pratinjau', '/rapat']);
+})->with(['/pratinjau']);
 
 it('shares the flag as off with the shell', function () {
     config(['features.prototype' => false]);

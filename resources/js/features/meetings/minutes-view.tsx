@@ -1,12 +1,12 @@
 import { Link } from '@inertiajs/react';
 import {
     AlertCircle,
+    BellRing,
     Check,
     ChevronDown,
     FileDown,
     ListPlus,
     Lock,
-    NotebookPen,
     Plus,
     Trash2,
     X,
@@ -31,7 +31,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { ME, PEOPLE } from './fixtures';
 import {
     actionStatus,
     dueLabel,
@@ -46,8 +45,7 @@ import {
     shortDate,
     timeRange,
 } from './lib';
-import { DocumentsList } from './meeting-detail';
-import { ErrorState, ListSkeleton, PreviewBar } from './meeting-ui';
+import { useMeetingsContext } from './meetings-context';
 import type { ActionItem, Minutes } from './types';
 import type { MinutesData } from './use-minutes';
 
@@ -67,7 +65,7 @@ function StatusBadge({ minutes }: { minutes: Minutes }) {
 }
 
 function SaveIndicator({ data }: { data: MinutesData }) {
-    const minutes = data.minutes!;
+    const minutes = data.minutes;
 
     return (
         <span
@@ -77,7 +75,11 @@ function SaveIndicator({ data }: { data: MinutesData }) {
         >
             {data.saving
                 ? 'Menyimpan…'
-                : `Disimpan ${formatTime(minutes.saved_at)} · ${minutes.version_count} versi`}
+                : data.unsaved
+                  ? 'Perubahan belum tersimpan'
+                  : minutes.saved_at
+                    ? `Disimpan ${formatTime(minutes.saved_at)} · ${minutes.version_count} versi`
+                    : 'Draf baru · belum disimpan'}
         </span>
     );
 }
@@ -109,13 +111,22 @@ function ProblemList({ problems }: { problems: string[] }) {
 
 /** Attendance chips: pressed = present (DNotulen "Kehadiran"). */
 function AttendanceChips({ data }: { data: MinutesData }) {
-    const minutes = data.minutes!;
+    const minutes = data.minutes;
+    const { people } = useMeetingsContext();
+
+    if (minutes.attendance.length === 0) {
+        return (
+            <p className="text-[15px] text-text-muted">
+                Belum ada peserta internal yang tercatat.
+            </p>
+        );
+    }
 
     return (
         <div className="flex flex-wrap gap-2">
             {minutes.attendance.map((mark) => {
-                const person = personById(PEOPLE, mark.user_id);
-                const name = person ? firstName(person.name) : mark.user_id;
+                const person = personById(people, mark.user_id);
+                const name = person ? firstName(person.name) : 'Peserta';
 
                 return (
                     <button
@@ -202,7 +213,7 @@ function Sections({
     data: MinutesData;
     compact?: boolean;
 }) {
-    const minutes = data.minutes!;
+    const minutes = data.minutes;
 
     return (
         <div className={cn('flex flex-col', compact ? 'gap-4' : 'gap-[22px]')}>
@@ -259,7 +270,7 @@ function Sections({
 }
 
 function Decisions({ data }: { data: MinutesData }) {
-    const minutes = data.minutes!;
+    const minutes = data.minutes;
 
     return (
         <div className="flex flex-col gap-3">
@@ -308,20 +319,42 @@ function Decisions({ data }: { data: MinutesData }) {
     );
 }
 
+function TaskKey({ item }: { item: ActionItem }) {
+    const chip =
+        'inline-flex h-8 items-center rounded-sm bg-success-soft px-2.5 font-mono text-[14px] font-bold text-success';
+
+    return item.task_url ? (
+        <Link
+            href={item.task_url}
+            className={cn(chip, 'hover:underline')}
+            aria-label={`Buka tugas ${item.task_key}`}
+        >
+            {item.task_key}
+        </Link>
+    ) : (
+        <span className={chip}>{item.task_key}</span>
+    );
+}
+
 function TaskCell({ item, data }: { item: ActionItem; data: MinutesData }) {
     if (item.task_key) {
-        return (
-            <span className="inline-flex h-8 items-center rounded-sm bg-success-soft px-2.5 font-mono text-[14px] font-bold text-success">
-                {item.task_key}
-            </span>
-        );
+        return <TaskKey item={item} />;
+    }
+
+    if (!data.canEdit) {
+        return null;
     }
 
     return (
         <Button
             variant="outline"
             size="sm"
-            disabled={!item.text.trim() || data.processing}
+            disabled={
+                !item.text.trim() ||
+                data.processing ||
+                item.id.startsWith('tmp-') ||
+                (!data.meeting.workspace && !data.workspaceId)
+            }
             onClick={() => data.makeTask(item.id)}
         >
             Jadikan tugas
@@ -329,12 +362,46 @@ function TaskCell({ item, data }: { item: ActionItem; data: MinutesData }) {
     );
 }
 
+/** Target workspace of "Jadikan tugas" for a meeting without one. */
+function WorkspacePicker({ data }: { data: MinutesData }) {
+    if (data.meeting.workspace || !data.canEdit) {
+        return null;
+    }
+
+    if (data.workspaces.length === 0) {
+        return (
+            <span className="text-[14px] text-text-muted">
+                Tidak ada workspace tempat Anda dapat membuat tugas.
+            </span>
+        );
+    }
+
+    return (
+        <Select
+            value={data.workspaceId ?? undefined}
+            onValueChange={(value) => value && data.setWorkspaceId(value)}
+        >
+            <SelectTrigger
+                aria-label="Workspace tugas tindak lanjut"
+                className="h-control-sm w-[220px]"
+            >
+                <SelectValue placeholder="Pilih workspace" />
+            </SelectTrigger>
+            <SelectContent>
+                {data.workspaces.map((workspace) => (
+                    <SelectItem key={workspace.id} value={workspace.id}>
+                        {workspace.key} · {workspace.name}
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+    );
+}
+
 /** Follow-up table (DNotulen "Tindak lanjut"). */
 function ActionTable({ data }: { data: MinutesData }) {
-    const minutes = data.minutes!;
-    const assignable = PEOPLE.filter((person) =>
-        minutes.attendance.some((mark) => mark.user_id === person.id),
-    );
+    const minutes = data.minutes;
+    const { people, me } = useMeetingsContext();
     const pending = minutes.action_items.filter(
         (item) => !item.task_key && item.text.trim(),
     ).length;
@@ -351,16 +418,22 @@ function ActionTable({ data }: { data: MinutesData }) {
                 >
                     Tindak lanjut
                 </h2>
-                {pending > 0 && (
-                    <Button
-                        variant="tonal"
-                        size="sm"
-                        onClick={data.makeAllTasks}
-                        disabled={data.processing}
-                    >
-                        Jadikan semua tugas
-                    </Button>
-                )}
+                <div className="flex flex-wrap items-center gap-2">
+                    <WorkspacePicker data={data} />
+                    {pending > 0 && data.canEdit && (
+                        <Button
+                            variant="tonal"
+                            size="sm"
+                            onClick={data.makeAllTasks}
+                            disabled={
+                                data.processing ||
+                                (!data.meeting.workspace && !data.workspaceId)
+                            }
+                        >
+                            Jadikan semua tugas
+                        </Button>
+                    )}
+                </div>
             </div>
             {minutes.action_items.length === 0 ? (
                 <div className="px-6 pb-4 md:px-7">
@@ -391,7 +464,7 @@ function ActionTable({ data }: { data: MinutesData }) {
                         </span>
                     </div>
                     {minutes.action_items.map((item, index) => {
-                        const person = personById(PEOPLE, item.assignee_id);
+                        const person = personById(people, item.assignee_id);
                         const status = actionStatus(item, data.today);
 
                         return (
@@ -411,6 +484,7 @@ function ActionTable({ data }: { data: MinutesData }) {
                                                 onCheckedChange={() =>
                                                     data.toggleDone(item.id)
                                                 }
+                                                disabled={!data.canTick(item)}
                                                 aria-label={`Selesai: ${item.text}`}
                                                 className={HIT_AREA}
                                             />
@@ -450,7 +524,9 @@ function ActionTable({ data }: { data: MinutesData }) {
                                         </span>
                                     ) : (
                                         <Select
-                                            value={item.assignee_id}
+                                            value={
+                                                item.assignee_id ?? undefined
+                                            }
                                             onValueChange={(value) =>
                                                 value &&
                                                 data.updateItem(item.id, {
@@ -462,15 +538,15 @@ function ActionTable({ data }: { data: MinutesData }) {
                                                 aria-label={`Penanggung jawab butir ${index + 1}`}
                                                 className="w-full"
                                             >
-                                                <SelectValue />
+                                                <SelectValue placeholder="Pilih orang" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {assignable.map((p) => (
+                                                {people.map((p) => (
                                                     <SelectItem
                                                         key={p.id}
                                                         value={p.id}
                                                     >
-                                                        {p.id === ME
+                                                        {p.id === me
                                                             ? `${p.name} (Anda)`
                                                             : p.name}
                                                     </SelectItem>
@@ -497,12 +573,12 @@ function ActionTable({ data }: { data: MinutesData }) {
                                         <Input
                                             type="date"
                                             aria-label={`Tenggat butir ${index + 1}`}
-                                            value={item.due_date}
-                                            min={data.today}
+                                            value={item.due_date ?? ''}
                                             onChange={(event) =>
                                                 data.updateItem(item.id, {
                                                     due_date:
-                                                        event.target.value,
+                                                        event.target.value ||
+                                                        null,
                                                 })
                                             }
                                         />
@@ -544,56 +620,11 @@ function ActionTable({ data }: { data: MinutesData }) {
     );
 }
 
-function NoMeeting({ data }: { data: MinutesData }) {
-    if (data.state === 'galat') {
-        return (
-            <ErrorState
-                title="Notulen gagal dimuat"
-                description="Versi terakhir tetap aman di server. Coba muat ulang sebentar lagi."
-            />
-        );
-    }
-
-    return (
-        <EmptyState
-            icon={NotebookPen}
-            title="Notulen tidak ditemukan"
-            description="Rapat ini belum punya notulen atau Anda tidak termasuk peserta."
-            action={
-                <Button asChild>
-                    <Link href="/rapat">Ke daftar rapat</Link>
-                </Button>
-            }
-        />
-    );
-}
-
-const PREVIEWS = [{ label: 'Notulen final', query: 'final=1' }];
-
 /** /rapat/{id}/notulen on desktop & tablet (design DNotulen). */
 export function MinutesDesktop({ data }: { data: MinutesData }) {
     const { meeting, minutes } = data;
-
-    if (data.state === 'memuat') {
-        return (
-            <div className="flex flex-col gap-6">
-                <PreviewBar />
-                <ListSkeleton rows={6} />
-            </div>
-        );
-    }
-
-    if (data.state === 'galat' || !meeting || !minutes) {
-        return (
-            <div className="flex flex-col gap-6">
-                <PreviewBar />
-                <NoMeeting data={data} />
-            </div>
-        );
-    }
-
-    const taker = personById(PEOPLE, meeting.minute_taker_id);
-    const coEditor = personById(PEOPLE, minutes.co_editor_id);
+    const { people } = useMeetingsContext();
+    const taker = personById(people, meeting.minute_taker_id);
     const present = minutes.attendance.filter((mark) => mark.present).length;
     const absentReasons = minutes.attendance.filter(
         (mark) => !mark.present && mark.reason,
@@ -606,7 +637,7 @@ export function MinutesDesktop({ data }: { data: MinutesData }) {
         ],
         [
             'Penyelenggara',
-            personById(PEOPLE, meeting.organizer_id)?.name ?? '–',
+            personById(people, meeting.organizer_id)?.name ?? '–',
         ],
         ['Workspace', meeting.workspace?.name ?? '–', true],
         ['Berulang', RECURRENCE_LABEL[meeting.recurrence]],
@@ -616,13 +647,14 @@ export function MinutesDesktop({ data }: { data: MinutesData }) {
         ],
         [
             'Versi',
-            `Disimpan ${formatTime(minutes.saved_at)} · ${minutes.version_count} versi`,
+            minutes.saved_at
+                ? `Disimpan ${formatTime(minutes.saved_at)} · ${minutes.version_count} versi`
+                : 'Belum disimpan',
         ],
     ];
 
     return (
         <div className="flex flex-col gap-[22px]">
-            <PreviewBar extra={PREVIEWS} />
             <section className="flex flex-wrap items-end justify-between gap-4">
                 <div className="flex min-w-0 flex-col gap-2">
                     <div className="flex flex-wrap items-center gap-3">
@@ -639,35 +671,43 @@ export function MinutesDesktop({ data }: { data: MinutesData }) {
                     </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                    {!data.readOnly && coEditor && (
-                        <span className="inline-flex items-center gap-2 text-[15px] text-text-muted">
-                            <UserAvatar
-                                name={coEditor.name}
-                                className="size-[30px] text-[12px] ring-2 ring-fill-warning ring-offset-2 ring-offset-surface"
-                            />
-                            {firstName(coEditor.name)} ikut mengedit
-                        </span>
-                    )}
                     {!data.readOnly && <SaveIndicator data={data} />}
                     <Button
                         variant="outline"
                         size="lg"
-                        onClick={data.exportDocs}
-                        disabled={data.processing}
+                        disabled
+                        title="Ekspor ke Google Docs ditahan"
                     >
                         <FileDown aria-hidden />
-                        Ekspor ke Google Docs
+                        Ekspor ke Google Docs · Ditahan
                     </Button>
-                    {data.readOnly ? (
+                    {minutes.status === 'final' &&
+                        data.canEdit &&
+                        data.openOwners.length > 0 && (
+                            <Button
+                                variant="tonal"
+                                size="lg"
+                                onClick={data.remind}
+                                disabled={data.processing || data.reminded}
+                            >
+                                <BellRing aria-hidden />
+                                {data.reminded
+                                    ? 'PIC sudah diingatkan'
+                                    : `Ingatkan ${data.openOwners.length} PIC`}
+                            </Button>
+                        )}
+                    {minutes.status === 'final' && data.canReopen && (
                         <Button
                             variant="outline"
                             size="lg"
                             onClick={data.reopen}
+                            disabled={data.processing}
                         >
                             <Lock aria-hidden />
                             Buka kembali draf
                         </Button>
-                    ) : (
+                    )}
+                    {!data.readOnly && (
                         <Button
                             size="lg"
                             onClick={data.finalize}
@@ -694,11 +734,11 @@ export function MinutesDesktop({ data }: { data: MinutesData }) {
                     >
                         <AttendanceChips data={data} />
                         <p className="mt-3.5 text-[14px] text-text-muted">
-                            Diisi otomatis dari peserta{' '}
-                            {PLATFORM_LABEL[meeting.platform]}
+                            Diisi otomatis dari peserta yang tidak menolak
+                            undangan
                             {data.readOnly ? '.' : '; klik untuk mengubah.'}
                             {absentReasons.length > 0 &&
-                                ` ${absentReasons.map((mark) => `${firstName(personById(PEOPLE, mark.user_id)?.name ?? '')} ${mark.reason}`).join(', ')}.`}
+                                ` ${absentReasons.map((mark) => `${firstName(personById(people, mark.user_id)?.name ?? '')} ${mark.reason}`).join(', ')}.`}
                         </p>
                     </Panel>
                     <Panel title="Agenda & catatan">
@@ -730,9 +770,6 @@ export function MinutesDesktop({ data }: { data: MinutesData }) {
                             </div>
                         ))}
                     </dl>
-                    <Panel title="Lampiran">
-                        <DocumentsList documents={meeting.documents} />
-                    </Panel>
                     <Panel
                         title={
                             data.readOnly
@@ -741,10 +778,10 @@ export function MinutesDesktop({ data }: { data: MinutesData }) {
                         }
                     >
                         <p className="text-[15px] leading-[22px] text-text-muted">
-                            Notulen terkunci dan dikirim ke{' '}
-                            {minutes.attendance.length} peserta lewat Inbox dan
-                            email. Tindak lanjut yang sudah jadi tugas muncul di
-                            Tugas saya masing-masing.
+                            Notulen terkunci dan dikirim ke peserta lewat Inbox
+                            dan email. Tindak lanjut yang sudah jadi tugas
+                            muncul di Tugas saya masing-masing; butir lain bisa
+                            dicentang penanggung jawabnya.
                         </p>
                     </Panel>
                 </aside>
@@ -758,33 +795,17 @@ export function MinutesMobile({ data }: { data: MinutesData }) {
     const { meeting, minutes } = data;
     const [showNotes, setShowNotes] = useState(false);
     const [showAttendance, setShowAttendance] = useState(false);
-
-    if (data.state === 'memuat') {
-        return (
-            <div className="flex flex-col gap-3.5">
-                <PreviewBar />
-                <ListSkeleton rows={5} />
-            </div>
-        );
-    }
-
-    if (data.state === 'galat' || !meeting || !minutes) {
-        return (
-            <div className="flex flex-col gap-3.5">
-                <PreviewBar />
-                <NoMeeting data={data} />
-            </div>
-        );
-    }
-
+    const { people, me } = useMeetingsContext();
     const present = minutes.attendance.filter((mark) => mark.present).length;
     const progress = minutesProgress(minutes);
     const owners = data.openOwners.length;
-    const bar = !data.readOnly || (owners > 0 && !data.reminded);
+    const bar =
+        !data.readOnly ||
+        (data.canEdit && owners > 0 && !data.reminded) ||
+        (minutes.status === 'final' && data.canReopen);
 
     return (
         <div className={cn('flex flex-col gap-3.5', bar && 'pb-24')}>
-            <PreviewBar extra={PREVIEWS} />
             <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge minutes={minutes} />
                 {!data.readOnly && <SaveIndicator data={data} />}
@@ -825,12 +846,12 @@ export function MinutesMobile({ data }: { data: MinutesData }) {
                 </div>
                 {minutes.action_items.length === 0 && (
                     <p className="py-3 text-[15px] text-text-muted">
-                        Belum ada tindak lanjut. Tambahkan di desktop.
+                        Belum ada tindak lanjut.
                     </p>
                 )}
                 <ul className="flex flex-col">
                     {minutes.action_items.map((item) => {
-                        const person = personById(PEOPLE, item.assignee_id);
+                        const person = personById(people, item.assignee_id);
                         const late = actionStatus(item, data.today) === 'late';
 
                         return (
@@ -843,6 +864,7 @@ export function MinutesMobile({ data }: { data: MinutesData }) {
                                     onCheckedChange={() =>
                                         data.toggleDone(item.id)
                                     }
+                                    disabled={!data.canTick(item)}
                                     aria-label={`Selesai: ${item.text || 'butir baru'}`}
                                     className={cn(
                                         'size-[26px] rounded-[8px]',
@@ -861,7 +883,7 @@ export function MinutesMobile({ data }: { data: MinutesData }) {
                                     </span>
                                     <span className="text-[13px] text-text-muted">
                                         {person
-                                            ? person.id === ME
+                                            ? person.id === me
                                                 ? 'Anda'
                                                 : firstName(person.name)
                                             : '–'}{' '}
@@ -884,17 +906,23 @@ export function MinutesMobile({ data }: { data: MinutesData }) {
                                         )}
                                     </span>
                                 </span>
-                                {!item.task_key && item.text.trim() && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-11"
-                                        onClick={() => data.makeTask(item.id)}
-                                        disabled={data.processing}
-                                    >
-                                        Jadikan tugas
-                                    </Button>
-                                )}
+                                {!item.task_key &&
+                                    item.text.trim() &&
+                                    data.canEdit &&
+                                    (data.meeting.workspace ||
+                                        data.workspaceId) && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-11"
+                                            onClick={() =>
+                                                data.makeTask(item.id)
+                                            }
+                                            disabled={data.processing}
+                                        >
+                                            Jadikan tugas
+                                        </Button>
+                                    )}
                             </li>
                         );
                     })}
@@ -950,14 +978,27 @@ export function MinutesMobile({ data }: { data: MinutesData }) {
             {bar && (
                 <div className="glass fixed inset-x-0 bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom))] z-30 border-x-0 border-b-0 px-4 py-3">
                     {data.readOnly ? (
-                        <Button
-                            size="lg"
-                            className="w-full font-extrabold"
-                            onClick={data.remind}
-                            disabled={data.processing}
-                        >
-                            Ingatkan {owners} PIC yang belum selesai
-                        </Button>
+                        data.canEdit && owners > 0 && !data.reminded ? (
+                            <Button
+                                size="lg"
+                                className="w-full font-extrabold"
+                                onClick={data.remind}
+                                disabled={data.processing}
+                            >
+                                Ingatkan {owners} PIC yang belum selesai
+                            </Button>
+                        ) : (
+                            <Button
+                                size="lg"
+                                variant="outline"
+                                className="w-full font-extrabold"
+                                onClick={data.reopen}
+                                disabled={data.processing}
+                            >
+                                <Lock aria-hidden />
+                                Buka kembali draf
+                            </Button>
+                        )
                     ) : (
                         <Button
                             size="lg"

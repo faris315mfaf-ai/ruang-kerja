@@ -1,6 +1,5 @@
 import { Link } from '@inertiajs/react';
 import { CalendarClock, NotebookPen, Plus } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 import { EmptyState } from '@/components/empty-state';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +10,6 @@ import { SegmentedTabs } from '@/components/ui/tabs';
 import { formatTime } from '@/lib/format';
 import { cn, focusRing } from '@/lib/utils';
 import { DayTabs } from './day-tabs';
-import { LEADERSHIP_DEADLINES, MEETINGS, MINUTES, PEOPLE } from './fixtures';
 import type { ActionStatus } from './lib';
 import {
     actionStatus,
@@ -26,9 +24,8 @@ import {
     timeRange,
     weekDates,
 } from './lib';
-import { ErrorState, ListSkeleton, PreviewBar } from './meeting-ui';
-import type { Platform } from './types';
-import { useDemoClock, usePreviewState } from './use-preview';
+import { useNow } from './meetings-context';
+import type { Platform, ScheduleProps } from './types';
 import type { TimedItem } from './week-time-grid';
 import { WeekTimeGrid } from './week-time-grid';
 
@@ -83,123 +80,102 @@ const STATUS: Record<
     done: { label: 'Selesai', tone: 'success' },
 };
 
-/** Data of /manajemen/jadwal (MgJadwal, TfJadwal, MgPJadwal). */
-export function useSchedule() {
-    const { state } = usePreviewState();
-    const now = useDemoClock();
+/** Data of /manajemen/jadwal (MgJadwal, TfJadwal, MgPJadwal) from server props. */
+export function useSchedule(props: ScheduleProps) {
+    const now = useNow();
     const today = officeDate(now);
-    const days = useMemo(() => weekDates(today), [today]);
-    const [day, setDay] = useState(today);
+    const people = props.people;
+    const days = useMemo(() => weekDates(props.week_start), [props.week_start]);
+    const [day, setDay] = useState(() =>
+        days.includes(today) ? today : days[0],
+    );
     const [filter, setFilter] = useState<NoteFilter>('all');
-    const empty = state === 'kosong';
 
-    const agenda = useMemo<AgendaItem[]>(() => {
-        if (empty) {
-            return [];
-        }
+    const agenda = useMemo<AgendaItem[]>(
+        () =>
+            sortByStart(
+                props.meetings.filter((m) =>
+                    days.includes(officeDate(m.starts_at)),
+                ),
+            ).map((m): AgendaItem => ({
+                id: m.key,
+                title: m.title,
+                starts_at: m.starts_at,
+                ends_at: m.ends_at,
+                meta: PLACE[m.platform].label,
+                tone: PLACE[m.platform].tone,
+                edge: PLACE[m.platform].edge,
+                href: m.href,
+                place: m.platform,
+                note:
+                    m.minutes_status === 'draft'
+                        ? 'notulen draf'
+                        : m.minute_taker_id
+                          ? `notulis ${firstName(personById(people, m.minute_taker_id)?.name ?? '')}`
+                          : '',
+            })),
+        [days, props.meetings, people],
+    );
 
-        const meetings = sortByStart(
-            MEETINGS.filter(
-                (m) => m.leadership && days.includes(officeDate(m.starts_at)),
-            ),
-        ).map((m): AgendaItem => ({
-            id: m.id,
-            title: m.title,
-            starts_at: m.starts_at,
-            ends_at: m.ends_at,
-            meta: PLACE[m.platform].label,
-            tone: PLACE[m.platform].tone,
-            edge: PLACE[m.platform].edge,
-            href: `/rapat/${m.id}`,
-            place: m.platform,
-            note:
-                m.minutes_status === 'draft'
-                    ? 'notulen draf'
-                    : m.minute_taker_id
-                      ? `notulis ${firstName(personById(PEOPLE, m.minute_taker_id)?.name ?? '')}`
-                      : (m.note ?? ''),
-        }));
-        const deadlines = LEADERSHIP_DEADLINES.map((d): AgendaItem => ({
-            id: d.id,
-            title: d.title,
-            starts_at: d.at,
-            ends_at: null,
-            meta: 'Tenggat',
-            tone: PLACE.deadline.tone,
-            edge: PLACE.deadline.edge,
-            place: 'deadline',
-            note: d.meta,
-        }));
+    const notes = useMemo(
+        () =>
+            sortByStart(
+                props.meetings.filter(
+                    (m) =>
+                        (m.minutes_status !== 'none' || m.minute_taker_id) &&
+                        officeDate(m.starts_at) <= today,
+                ),
+            )
+                .reverse()
+                .map((meeting) => {
+                    const record =
+                        props.minutes.find(
+                            (item) => item.meeting_key === meeting.key,
+                        ) ?? null;
+                    const progress = record
+                        ? minutesProgress(record)
+                        : { done: 0, total: 0, pct: 0 };
+                    const taker = personById(people, meeting.minute_taker_id);
 
-        return [...meetings, ...deadlines].sort((a, b) =>
-            a.starts_at.localeCompare(b.starts_at),
-        );
-    }, [days, empty]);
-
-    const notes = useMemo(() => {
-        if (empty) {
-            return [];
-        }
-
-        return sortByStart(
-            MEETINGS.filter(
-                (m) =>
-                    m.leadership &&
-                    (m.minutes_status !== 'none' || m.minute_taker_id) &&
-                    officeDate(m.starts_at) <= today,
-            ),
-        )
-            .reverse()
-            .map((meeting) => {
-                const record =
-                    MINUTES.find((item) => item.meeting_id === meeting.id) ??
-                    null;
-                const progress = record
-                    ? minutesProgress(record)
-                    : { done: 0, total: 0, pct: 0 };
-                const taker = personById(PEOPLE, meeting.minute_taker_id);
-
-                return {
-                    meeting,
-                    status: record ? record.status : ('none' as const),
-                    progress,
-                    meta: `${shortDate(officeDate(meeting.starts_at))} ${formatTime(meeting.starts_at)} · notulis ${taker ? firstName(taker.name) : '–'} · ${record ? `${record.decisions.length} keputusan` : 'template agenda siap'}`,
-                };
-            });
-    }, [empty, today]);
+                    return {
+                        meeting,
+                        status: record ? record.status : ('none' as const),
+                        progress,
+                        meta: `${shortDate(officeDate(meeting.starts_at))} ${formatTime(meeting.starts_at)} · notulis ${taker ? firstName(taker.name) : '–'} · ${record ? `${record.decisions.length} keputusan` : 'belum ditulis'}`,
+                    };
+                }),
+        [props.meetings, props.minutes, people, today],
+    );
 
     const actions = useMemo(() => {
-        if (empty) {
-            return [];
-        }
-
         const order: Record<ActionStatus, number> = {
             late: 0,
             open: 1,
             done: 2,
         };
 
-        return MINUTES.filter(
-            (record) =>
-                MEETINGS.find((m) => m.id === record.meeting_id)?.leadership,
-        )
+        return props.minutes
             .flatMap((record) => {
-                const meeting = MEETINGS.find(
-                    (m) => m.id === record.meeting_id,
-                )!;
+                const meeting = props.meetings.find(
+                    (m) => m.key === record.meeting_key,
+                );
 
-                return record.action_items.map((item) => ({
-                    item,
-                    meeting,
-                    status: actionStatus(item, today),
-                }));
+                return meeting
+                    ? record.action_items.map((item) => ({
+                          item,
+                          meeting,
+                          status: actionStatus(item, today),
+                      }))
+                    : [];
             })
             .sort(
                 (a, b) =>
                     order[a.status] - order[b.status] ||
-                    a.item.due_date.localeCompare(b.item.due_date),
+                    (a.item.due_date ?? '9999').localeCompare(
+                        b.item.due_date ?? '9999',
+                    ),
             );
-    }, [empty, today]);
+    }, [props.minutes, props.meetings, today]);
 
     const filteredNotes = notes.filter((note) =>
         filter === 'all'
@@ -210,9 +186,9 @@ export function useSchedule() {
     );
 
     return {
-        state,
         now,
         today,
+        people,
         days,
         day,
         setDay,
@@ -240,7 +216,7 @@ function NoteRow({
     return (
         <li className="border-t border-divider first:border-t-0">
             <Link
-                href={`/rapat/${note.meeting.id}/notulen`}
+                href={note.meeting.minutes_href}
                 className={cn(
                     'flex flex-col gap-2 rounded-sm py-3.5 transition-opacity duration-120 ease-brand hover:opacity-85',
                     focusRing,
@@ -339,7 +315,7 @@ function NotesPanel({
                 <ul className="flex flex-col">
                     {data.notes.map((note) => (
                         <NoteRow
-                            key={note.meeting.id}
+                            key={note.meeting.key}
                             note={note}
                             compact={compact}
                         />
@@ -391,11 +367,11 @@ function ActionsPanel({
             ) : (
                 <ul className="flex flex-col">
                     {shown.map(({ item, meeting, status }) => {
-                        const who = personById(PEOPLE, item.assignee_id);
+                        const who = personById(data.people, item.assignee_id);
 
                         return (
                             <li
-                                key={`${meeting.id}-${item.id}`}
+                                key={item.id}
                                 className={cn(
                                     'grid items-center gap-3 border-t border-divider py-3 first:border-t-0',
                                     compact
@@ -416,7 +392,7 @@ function ActionsPanel({
                                     </span>
                                     <span className="text-[13px] text-text-muted md:text-[14px]">
                                         {compact
-                                            ? `${who ? firstName(who.name) : '–'} · ${shortDate(item.due_date)}`
+                                            ? `${who ? firstName(who.name) : '–'} · ${item.due_date ? shortDate(item.due_date) : 'tanpa tenggat'}`
                                             : `${who?.name ?? '–'} · dari ${meeting.title}`}
                                     </span>
                                 </span>
@@ -427,7 +403,9 @@ function ActionsPanel({
                                             status === 'late' && 'text-danger',
                                         )}
                                     >
-                                        {shortDate(item.due_date)}
+                                        {item.due_date
+                                            ? shortDate(item.due_date)
+                                            : '–'}
                                     </span>
                                 )}
                                 <Badge
@@ -466,7 +444,7 @@ function AgendaList({ items }: { items: AgendaItem[] }) {
                 title="Tidak ada agenda"
                 className="bg-surface"
             >
-                Tidak ada rapat pimpinan atau tenggat di hari ini.
+                Tidak ada rapat pimpinan di hari ini.
             </EmptyState>
         );
     }
@@ -532,23 +510,6 @@ function AgendaList({ items }: { items: AgendaItem[] }) {
     );
 }
 
-function Body({ data, children }: { data: ScheduleData; children: ReactNode }) {
-    if (data.state === 'memuat') {
-        return <ListSkeleton rows={5} />;
-    }
-
-    if (data.state === 'galat') {
-        return (
-            <ErrorState
-                title="Jadwal pimpinan gagal dimuat"
-                description="Google Calendar tidak menjawab. Coba lagi sebentar."
-            />
-        );
-    }
-
-    return <>{children}</>;
-}
-
 /** /manajemen/jadwal on desktop (MgJadwal) and tablet (TfJadwal). */
 export function ScheduleDesktop({
     data,
@@ -559,7 +520,6 @@ export function ScheduleDesktop({
 }) {
     return (
         <div className="flex flex-col gap-6">
-            <PreviewBar />
             <section className="flex flex-wrap items-end justify-between gap-5">
                 <div className="flex flex-col gap-2">
                     <h1 className="text-display">Jadwal & notulensi</h1>
@@ -576,61 +536,56 @@ export function ScheduleDesktop({
                     </Link>
                 </Button>
             </section>
-            <Body data={data}>
-                {isTablet ? (
-                    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] items-start gap-4">
-                        <div className="flex flex-col gap-3">
-                            <DayTabs
-                                dates={data.days}
-                                value={data.day}
-                                onChange={data.setDay}
-                                today={data.today}
-                                size="sm"
-                            />
-                            <AgendaList items={data.dayAgenda} />
-                        </div>
-                        <div className="flex flex-col gap-4">
-                            <NotesPanel data={data} compact />
-                            <ActionsPanel data={data} compact />
-                        </div>
+            {isTablet ? (
+                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] items-start gap-4">
+                    <div className="flex flex-col gap-3">
+                        <DayTabs
+                            dates={data.days}
+                            value={data.day}
+                            onChange={data.setDay}
+                            today={data.today}
+                            size="sm"
+                        />
+                        <AgendaList items={data.dayAgenda} />
                     </div>
-                ) : (
-                    <>
-                        <section
-                            aria-label="Agenda minggu ini"
-                            className="rounded-panel border border-border bg-surface px-6 pt-5 pb-6 shadow-card"
-                        >
-                            {data.agenda.length === 0 ? (
-                                <EmptyState
-                                    size="sm"
-                                    icon={CalendarClock}
-                                    title="Belum ada agenda pimpinan minggu ini"
-                                >
-                                    Rapat direksi dan lintas divisi yang
-                                    dijadwalkan akan tampil di grid ini.
-                                </EmptyState>
-                            ) : (
-                                <WeekTimeGrid
-                                    days={data.days}
-                                    items={data.agenda}
-                                    today={data.today}
-                                    now={data.now}
-                                />
-                            )}
-                        </section>
-                        <section className="flex flex-wrap items-start gap-5">
-                            <NotesPanel
-                                data={data}
-                                className="flex-[1_1_500px]"
+                    <div className="flex flex-col gap-4">
+                        <NotesPanel data={data} compact />
+                        <ActionsPanel data={data} compact />
+                    </div>
+                </div>
+            ) : (
+                <>
+                    <section
+                        aria-label="Agenda minggu ini"
+                        className="rounded-panel border border-border bg-surface px-6 pt-5 pb-6 shadow-card"
+                    >
+                        {data.agenda.length === 0 ? (
+                            <EmptyState
+                                size="sm"
+                                icon={CalendarClock}
+                                title="Belum ada agenda pimpinan minggu ini"
+                            >
+                                Rapat direksi dan lintas divisi yang dijadwalkan
+                                akan tampil di grid ini.
+                            </EmptyState>
+                        ) : (
+                            <WeekTimeGrid
+                                days={data.days}
+                                items={data.agenda}
+                                today={data.today}
+                                now={data.now}
                             />
-                            <ActionsPanel
-                                data={data}
-                                className="flex-[1_1_560px]"
-                            />
-                        </section>
-                    </>
-                )}
-            </Body>
+                        )}
+                    </section>
+                    <section className="flex flex-wrap items-start gap-5">
+                        <NotesPanel data={data} className="flex-[1_1_500px]" />
+                        <ActionsPanel
+                            data={data}
+                            className="flex-[1_1_560px]"
+                        />
+                    </section>
+                </>
+            )}
         </div>
     );
 }
@@ -641,7 +596,6 @@ export function ScheduleMobile({ data }: { data: ScheduleData }) {
 
     return (
         <div className="flex flex-col gap-3">
-            <PreviewBar />
             <SegmentedTabs
                 label="Tampilan"
                 value={view}
@@ -653,25 +607,23 @@ export function ScheduleMobile({ data }: { data: ScheduleData }) {
                     { value: 'notes', label: 'Notulen' },
                 ]}
             />
-            <Body data={data}>
-                {view === 'agenda' ? (
-                    <>
-                        <DayTabs
-                            dates={data.days}
-                            value={data.day}
-                            onChange={data.setDay}
-                            today={data.today}
-                            size="sm"
-                        />
-                        <AgendaList items={data.dayAgenda} />
-                    </>
-                ) : (
-                    <>
-                        <NotesPanel data={data} compact />
-                        <ActionsPanel data={data} compact />
-                    </>
-                )}
-            </Body>
+            {view === 'agenda' ? (
+                <>
+                    <DayTabs
+                        dates={data.days}
+                        value={data.day}
+                        onChange={data.setDay}
+                        today={data.today}
+                        size="sm"
+                    />
+                    <AgendaList items={data.dayAgenda} />
+                </>
+            ) : (
+                <>
+                    <NotesPanel data={data} compact />
+                    <ActionsPanel data={data} compact />
+                </>
+            )}
             <Button size="lg" variant="outline" asChild>
                 <Link href="/rapat/baru">
                     <Plus aria-hidden />

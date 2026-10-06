@@ -1,17 +1,8 @@
 import { Link } from '@inertiajs/react';
-import {
-    CalendarOff,
-    CalendarRange,
-    ChevronLeft,
-    ChevronRight,
-    Link2,
-    Plus,
-    RefreshCw,
-} from 'lucide-react';
+import { CalendarRange, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 import { Panel } from '@/components/ui/panel';
-import { Spinner } from '@/components/ui/spinner';
 import { SegmentedTabs } from '@/components/ui/tabs';
 import { cn, focusRing } from '@/lib/utils';
 import { DayTabs } from './day-tabs';
@@ -25,12 +16,11 @@ import {
     monthTitle,
     rangeTitle,
 } from './lib';
-import { ErrorState, ListSkeleton, PreviewBar, SyncChip } from './meeting-ui';
+import { HeldChip, ListSkeleton } from './meeting-ui';
 import type { CalendarEntry, CalendarLayer } from './types';
 import type { CalendarData, CalendarView } from './use-calendar';
 import { WeekTimeGrid } from './week-time-grid';
 
-const PREVIEWS = [{ label: 'Belum terhubung', query: 'keadaan=terputus' }];
 const WEEKDAYS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
 /** Colours per layer (dot/edge = fills, chip = soft background + text). */
@@ -117,30 +107,6 @@ function LayerFilters({
                 );
             })}
         </div>
-    );
-}
-
-function DisconnectedCard({ data }: { data: CalendarData }) {
-    return (
-        <section
-            aria-label="Google Calendar"
-            className="flex flex-wrap items-center gap-4 rounded-[22px] border border-border bg-warning-soft px-5 py-4"
-        >
-            <CalendarOff aria-hidden className="size-7 shrink-0 text-warning" />
-            <span className="flex min-w-0 flex-[1_1_240px] flex-col gap-0.5">
-                <span className="text-[17px] font-bold text-text">
-                    Google Calendar belum terhubung
-                </span>
-                <span className="text-[15px] text-text-muted">
-                    Rapat, tenggat dan cuti hanya tampil di RuangKerja.
-                    Hubungkan agar ikut masuk ke kalender Google Anda.
-                </span>
-            </span>
-            <Button onClick={data.connect} disabled={data.processing}>
-                {data.processing ? <Spinner /> : <Link2 aria-hidden />}
-                Hubungkan Google Calendar
-            </Button>
-        </section>
     );
 }
 
@@ -418,7 +384,6 @@ export function CalendarDesktop({
 
     return (
         <div className="flex flex-col gap-5">
-            <PreviewBar extra={PREVIEWS} />
             <section className="flex flex-wrap items-end justify-between gap-4">
                 <div className="flex flex-col gap-2">
                     <span className="text-overline text-link">
@@ -428,22 +393,7 @@ export function CalendarDesktop({
                     <h1 className="text-display">Kalender</h1>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                    <SyncChip sync={data.sync} now={data.now} />
-                    {data.sync.connected && (
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            onClick={data.syncNow}
-                            disabled={data.processing}
-                        >
-                            {data.processing ? (
-                                <Spinner />
-                            ) : (
-                                <RefreshCw aria-hidden />
-                            )}
-                            Sinkronkan
-                        </Button>
-                    )}
+                    {!isTablet && <HeldChip />}
                     <Button size="lg" asChild>
                         <Link href="/rapat/baru">
                             <Plus aria-hidden />
@@ -452,8 +402,6 @@ export function CalendarDesktop({
                     </Button>
                 </div>
             </section>
-
-            {!data.sync.connected && <DisconnectedCard data={data} />}
 
             <section className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
@@ -500,13 +448,8 @@ export function CalendarDesktop({
             </section>
             <LayerFilters data={data} className="flex-wrap" />
 
-            {data.state === 'memuat' ? (
+            {data.loading ? (
                 <ListSkeleton rows={5} className="[&>div]:h-28" />
-            ) : data.state === 'galat' ? (
-                <ErrorState
-                    title="Kalender gagal dimuat"
-                    description="Google Calendar tidak menjawab. Jadwal di RuangKerja tetap aman; coba lagi sebentar."
-                />
             ) : (
                 <section className="flex flex-wrap items-start gap-5">
                     <div className="min-w-0 flex-[3_1_640px]">
@@ -559,31 +502,6 @@ export function CalendarDesktop({
 export function CalendarMobile({ data }: { data: CalendarData }) {
     return (
         <div className="flex flex-col gap-3.5">
-            <PreviewBar extra={PREVIEWS} />
-            {data.sync.connected ? (
-                <div className="flex items-center justify-between gap-2">
-                    <SyncChip
-                        sync={data.sync}
-                        now={data.now}
-                        className="h-auto min-h-11 flex-1 justify-start py-2 whitespace-normal"
-                    />
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        aria-label="Sinkronkan sekarang"
-                        onClick={data.syncNow}
-                        disabled={data.processing}
-                    >
-                        {data.processing ? (
-                            <Spinner />
-                        ) : (
-                            <RefreshCw aria-hidden />
-                        )}
-                    </Button>
-                </div>
-            ) : (
-                <DisconnectedCard data={data} />
-            )}
             <LayerFilters
                 data={data}
                 className="-mx-4 [scrollbar-width:none] overflow-x-auto px-4 [&::-webkit-scrollbar]:hidden"
@@ -628,13 +546,8 @@ export function CalendarMobile({ data }: { data: CalendarData }) {
                     ? `Hari ini · ${longDate(data.selected)}`
                     : longDate(data.selected)}
             </h2>
-            {data.state === 'memuat' ? (
+            {data.loading ? (
                 <ListSkeleton rows={4} />
-            ) : data.state === 'galat' ? (
-                <ErrorState
-                    title="Kalender gagal dimuat"
-                    description="Periksa koneksi lalu coba lagi."
-                />
             ) : data.entries.length === 0 ? (
                 <EmptyState
                     icon={CalendarRange}

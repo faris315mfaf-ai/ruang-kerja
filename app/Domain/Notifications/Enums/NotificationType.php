@@ -43,6 +43,11 @@ enum NotificationType: string
     // OKR divisi (F3-3): weekly check-in reminder, objective status dropped
     case OkrCheckinReminder = 'okr.checkin_reminder';
     case OkrObjectiveAtRisk = 'okr.objective_at_risk';
+    // Rapat (F2-3)
+    case MeetingInvited = 'meeting.invited';
+    case MeetingStarting = 'meeting.starting';
+    case MinutesFinalized = 'minutes.finalized';
+    case ActionItemDue = 'action_item.due';
 
     // System (Sprint 8)
     case SystemAnnouncement = 'system.announcement';
@@ -73,6 +78,10 @@ enum NotificationType: string
             self::ProjectDecisionResolved => 'Keputusan diberikan',
             self::OkrCheckinReminder => 'Pengingat check-in OKR',
             self::OkrObjectiveAtRisk => 'Objective berisiko',
+            self::MeetingInvited => 'Undangan rapat',
+            self::MeetingStarting => 'Rapat segera dimulai',
+            self::MinutesFinalized => 'Notulen rapat',
+            self::ActionItemDue => 'Tindak lanjut rapat',
             self::SystemAnnouncement => 'Pengumuman',
             self::SystemTest => 'Notifikasi uji',
         };
@@ -100,6 +109,7 @@ enum NotificationType: string
             self::ProjectUpdateReminder, self::ProjectUpdateRequested, self::ProjectDirection,
             self::ProjectDecisionNeeded, self::ProjectDecisionResolved => NotificationEvent::ProjectActivity,
             self::OkrCheckinReminder, self::OkrObjectiveAtRisk => NotificationEvent::OkrActivity,
+            self::MeetingInvited, self::MeetingStarting, self::MinutesFinalized, self::ActionItemDue => NotificationEvent::Meeting,
             self::SystemAnnouncement, self::SystemTest => NotificationEvent::System,
         };
     }
@@ -134,6 +144,9 @@ enum NotificationType: string
             self::ProjectDecisionResolved => 'check-check',
             self::OkrCheckinReminder => 'alarm',
             self::OkrObjectiveAtRisk => 'target',
+            self::MeetingInvited, self::MeetingStarting => 'video',
+            self::MinutesFinalized => 'notebook',
+            self::ActionItemDue => 'calendar-clock',
             self::SystemAnnouncement => 'megaphone',
             self::SystemTest => 'bell',
         };
@@ -153,6 +166,8 @@ enum NotificationType: string
             self::TaskOverdue, self::RequestRejected => 'danger',
             self::ProjectDirection, self::ProjectDecisionNeeded => 'info',
             self::ProjectDecisionResolved => 'success',
+            self::MeetingInvited, self::MinutesFinalized => 'info',
+            self::MeetingStarting, self::ActionItemDue => 'warning',
             self::TaskAssigned, self::TaskCommented, self::RequestCanceled, self::ChatMessage => 'neutral',
             self::AutomationNotify => 'primary',
         };
@@ -166,7 +181,7 @@ enum NotificationType: string
     {
         return match ($this) {
             self::TaskOverdue, self::RequestSubmitted, self::RequestRevisionRequested,
-            self::ProjectUpdateRequested, self::ProjectDecisionNeeded => true,
+            self::ProjectUpdateRequested, self::ProjectDecisionNeeded, self::ActionItemDue => true,
             default => false,
         };
     }

@@ -1,37 +1,27 @@
 import { useMemo, useState } from 'react';
-import { GOOGLE_SYNC, ME, MEETINGS, MINUTES } from './fixtures';
 import {
-    isParticipant,
     meetingPhase,
     meetingsOn,
     nextMeeting,
     officeDate,
-    openActionsFor,
     weekDates,
 } from './lib';
-import type { Meeting } from './types';
-import { useDemoClock, usePreviewState } from './use-preview';
+import { useNow } from './meetings-context';
+import type { AgendaProps } from './types';
 
 /**
- * Shared data for /rapat (desktop & mobile): the viewer's meetings this
- * week, the selected day, the hero meeting and open follow-ups. Later the
- * controller passes `meetings`, `minutes` and `sync` as props.
+ * Shared data for /rapat (desktop & mobile): the viewer's meetings of the
+ * week (server props, series already expanded), the selected day, the hero
+ * meeting and open follow-ups.
  */
-export function useAgenda() {
-    const { state } = usePreviewState();
-    const now = useDemoClock();
+export function useAgenda(props: AgendaProps) {
+    const now = useNow();
     const today = officeDate(now);
-    const days = useMemo(() => weekDates(today), [today]);
-    const [day, setDay] = useState(today);
-    const [noticeOpen, setNoticeOpen] = useState(false);
-
-    const meetings = useMemo<Meeting[]>(
-        () =>
-            state === 'kosong'
-                ? []
-                : MEETINGS.filter((meeting) => isParticipant(meeting, ME)),
-        [state],
+    const days = useMemo(() => weekDates(props.week_start), [props.week_start]);
+    const [day, setDay] = useState(() =>
+        days.includes(today) ? today : days[0],
     );
+    const meetings = props.meetings;
 
     const counts = useMemo(
         () =>
@@ -43,17 +33,16 @@ export function useAgenda() {
 
     const next = nextMeeting(meetings, now);
     const live = next && meetingPhase(next, now) === 'live' ? next : null;
-    const followUps = state === 'kosong' ? [] : openActionsFor(MINUTES, ME);
     const pendingMinutes = meetings.filter(
         (meeting) =>
-            meeting.minute_taker_id === ME &&
+            meeting.minute_taker_id === props.viewer_id &&
             meeting.minutes_status === 'draft',
     ).length;
 
     return {
-        state,
         now,
         today,
+        me: props.viewer_id,
         days,
         day,
         setDay,
@@ -66,11 +55,8 @@ export function useAgenda() {
         counts,
         next,
         live,
-        followUps,
+        followUps: props.follow_ups,
         pendingMinutes,
-        sync: GOOGLE_SYNC,
-        noticeOpen,
-        setNoticeOpen,
     };
 }
 

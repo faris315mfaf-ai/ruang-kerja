@@ -31,4 +31,7 @@ return [
     // Catatan bersama (Fase 2, F2-2) with a real backend: /catatan, Dock tile,
     // collab server in collab/ (COLLAB_*). Off in production until decided.
     'notes' => (bool) env('FEATURE_NOTES', env('APP_ENV', 'production') !== 'production'),
+    // Rapat, notulen & kalender (Fase 2, F2-3) with a real backend: /rapat, /kalender,
+    // /manajemen/jadwal, Dock tile. Google Calendar/Meet sync stays on hold.
+    'meetings' => (bool) env('FEATURE_MEETINGS', env('APP_ENV', 'production') !== 'production'),
 ];

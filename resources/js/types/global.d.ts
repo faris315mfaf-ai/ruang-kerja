@@ -25,6 +25,7 @@ declare module '@inertiajs/core' {
                 okr: boolean;
                 automation: boolean;
                 notes: boolean;
+                meetings: boolean;
                 role_dashboards: boolean;
             };
             /** Obrolan: channels with unread messages; null when the feature is off. */

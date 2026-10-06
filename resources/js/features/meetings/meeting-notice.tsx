@@ -5,84 +5,145 @@ import { BottomSheet } from '@/components/mobile/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { PEOPLE } from './fixtures';
 import { firstName, meetingPhase, personById, phaseLabel } from './lib';
+import { useMeetingsContext } from './meetings-context';
 import { useMeetingActions } from './meeting-ui';
-import type { Meeting } from './types';
+import type { Meeting, Person } from './types';
 
 const SNOOZE_MINUTES = 5;
 
-/** "Putri, Dimas, dan 3 lainnya sudah bergabung" (sample: accepted = joined). */
-function joinedLine(meeting: Meeting): string {
+/** Minutes before the start at which the notice opens by itself. */
+export const NOTICE_MINUTES = 5;
+
+/** "Putri, Dimas, dan 3 lainnya akan hadir" (RSVP yes). */
+function attendingLine(meeting: Meeting, people: Person[]): string {
     const names = meeting.participants
         .filter(
-            (participant) =>
-                participant.rsvp === 'accepted' && participant.user_id,
+            (participant) => participant.rsvp === 'yes' && participant.user_id,
         )
         .map((participant) =>
-            firstName(personById(PEOPLE, participant.user_id)?.name ?? ''),
-        );
+            firstName(personById(people, participant.user_id)?.name ?? ''),
+        )
+        .filter((name) => name !== '');
 
     if (names.length === 0) {
-        return 'Belum ada peserta yang bergabung';
+        return 'Belum ada peserta yang menyatakan hadir';
     }
 
     if (names.length <= 2) {
-        return `${names.join(' dan ')} sudah bergabung`;
+        return `${names.join(' dan ')} akan hadir`;
     }
 
-    return `${names[0]}, ${names[1]}, dan ${names.length - 2} lainnya sudah bergabung`;
+    return `${names[0]}, ${names[1]}, dan ${names.length - 2} lainnya akan hadir`;
+}
+
+const DISMISSED_KEY = 'rk.meeting-notice.dismissed';
+
+function readDismissed(): string[] {
+    try {
+        const raw = window.sessionStorage.getItem(DISMISSED_KEY);
+
+        return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+        return [];
+    }
+}
+
+function writeDismissed(keys: string[]): void {
+    try {
+        window.sessionStorage.setItem(
+            DISMISSED_KEY,
+            JSON.stringify(keys.slice(-20)),
+        );
+    } catch {
+        // Storage blocked (private mode): the notice may show again after a reload.
+    }
+}
+
+/**
+ * Opens the "Rapat dimulai" notice by itself from `NOTICE_MINUTES` before
+ * the start until the end of the meeting (client clock, no polling), unless
+ * the viewer closed it for this occurrence in this tab; "Tunda" hides it
+ * for five minutes. The server also sends `meeting.starting` notifications.
+ */
+export function useStartNotice(meeting: Meeting | null, now: number) {
+    const [dismissed, setDismissed] = useState<string[]>(() =>
+        typeof window === 'undefined' ? [] : readDismissed(),
+    );
+    const [snoozedUntil, setSnoozedUntil] = useState<number | null>(null);
+    const due =
+        meeting !== null &&
+        !meeting.canceled &&
+        meetingPhase(meeting, now) !== 'done' &&
+        Date.parse(meeting.starts_at) - now <= NOTICE_MINUTES * 60_000;
+    const open =
+        due &&
+        meeting !== null &&
+        !dismissed.includes(meeting.key) &&
+        (snoozedUntil === null || now >= snoozedUntil);
+
+    return {
+        open,
+        snooze: () => setSnoozedUntil(Date.now() + SNOOZE_MINUTES * 60_000),
+        dismiss: () => {
+            if (!meeting) {
+                return;
+            }
+
+            const next = [...dismissed, meeting.key];
+            setDismissed(next);
+            writeDismissed(next);
+        },
+    };
 }
 
 /**
  * "Rapat dimulai" notice (designs DNotifRapat & MNotifRapat): a glass toast
- * at the top right on desktop/tablet, a bottom sheet on phones. Pages open
- * it from "Lihat contoh pemberitahuan"; in production the reminder job would
- * trigger it 5 minutes before start.
+ * at the top right on desktop/tablet, a bottom sheet on phones.
  */
 export function MeetingStartNotice({
     meeting,
     now,
-    open,
-    onOpenChange,
     variant,
 }: {
     meeting: Meeting;
     now: number;
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
     variant: 'desktop' | 'tablet' | 'mobile';
 }) {
+    const { people } = useMeetingsContext();
     const actions = useMeetingActions(meeting);
-    const [snoozedUntil, setSnoozedUntil] = useState<number | null>(null);
-    const [lateSent, setLateSent] = useState(false);
+    const notice = useStartNotice(meeting, now);
     const live = meetingPhase(meeting, now) === 'live';
-    const organizer = personById(PEOPLE, meeting.organizer_id);
 
     const snooze = () => {
-        const until = now + SNOOZE_MINUTES * 60_000;
-        setSnoozedUntil(until);
-        toast(`Diingatkan lagi ${formatTime(until)}`, {
-            description: meeting.title,
-        });
+        notice.snooze();
+        toast(
+            `Diingatkan lagi ${formatTime(Date.now() + SNOOZE_MINUTES * 60_000)}`,
+            { description: meeting.title },
+        );
     };
 
-    const sendLate = () => {
-        setLateSent(true);
-        toast.success(
-            `Pesan "terlambat 5 menit" terkirim ke ${organizer ? firstName(organizer.name) : 'penyelenggara'}`,
-        );
+    const join = () => {
+        actions.join();
+
+        if (actions.link) {
+            notice.dismiss();
+        }
     };
 
     if (variant === 'mobile') {
         return (
             <BottomSheet
-                open={open}
-                onOpenChange={onOpenChange}
+                open={notice.open}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        notice.dismiss();
+                    }
+                }}
                 title={meeting.title}
                 description={
                     live
-                        ? joinedLine(meeting)
+                        ? attendingLine(meeting, people)
                         : `${actions.app} · ${formatTime(meeting.starts_at)}`
                 }
             >
@@ -107,17 +168,17 @@ export function MeetingStartNotice({
                         </span>
                     </span>
                     <div className="grid grid-cols-2 gap-2.5">
-                        <Button
-                            size="xl"
-                            className="col-span-2"
-                            onClick={actions.join}
-                        >
-                            {actions.joined
-                                ? `Membuka ${actions.app}…`
-                                : live
-                                  ? 'Gabung sekarang'
-                                  : `Gabung lewat ${actions.app}`}
-                        </Button>
+                        {actions.link && (
+                            <Button
+                                size="xl"
+                                className="col-span-2"
+                                onClick={join}
+                            >
+                                {live
+                                    ? 'Gabung sekarang'
+                                    : `Gabung lewat ${actions.app}`}
+                            </Button>
+                        )}
                         <Button
                             variant="outline"
                             size="lg"
@@ -131,12 +192,9 @@ export function MeetingStartNotice({
                             variant="outline"
                             size="lg"
                             className="px-3"
-                            onClick={sendLate}
-                            disabled={lateSent}
+                            onClick={snooze}
                         >
-                            {lateSent
-                                ? `Terkirim ke ${organizer ? firstName(organizer.name) : 'penyelenggara'}`
-                                : 'Kabari terlambat'}
+                            Tunda {SNOOZE_MINUTES} mnt
                         </Button>
                     </div>
                 </div>
@@ -144,20 +202,9 @@ export function MeetingStartNotice({
         );
     }
 
-    if (!open) {
+    if (!notice.open) {
         return null;
     }
-
-    const title = actions.joined
-        ? `Membuka ${actions.app}…`
-        : snoozedUntil
-          ? `Diingatkan lagi ${formatTime(snoozedUntil)}`
-          : phaseLabel(meeting, now);
-    const subtitle = actions.joined
-        ? 'Kehadiran tercatat untuk notulen'
-        : snoozedUntil
-          ? meeting.title
-          : `${meeting.title} · ${actions.app}`;
 
     return (
         <div
@@ -180,32 +227,32 @@ export function MeetingStartNotice({
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col">
                     <span className="text-[17px] leading-6 font-extrabold">
-                        {title}
+                        {phaseLabel(meeting, now)}
                     </span>
                     <span className="truncate text-[15px] text-text-muted">
-                        {subtitle}
+                        {meeting.title}
+                        {actions.link ? ` · ${actions.app}` : ''}
                     </span>
                 </span>
                 <Button
                     variant="ghost"
                     size="icon-sm"
                     aria-label="Tutup pemberitahuan"
-                    onClick={() => onOpenChange(false)}
+                    onClick={notice.dismiss}
                 >
                     <X aria-hidden />
                 </Button>
             </div>
             <div className="flex gap-2">
-                <Button
-                    className="flex-1 font-extrabold"
-                    onClick={actions.join}
-                >
-                    Gabung
-                </Button>
+                {actions.link && (
+                    <Button className="flex-1 font-extrabold" onClick={join}>
+                        Gabung
+                    </Button>
+                )}
                 <Button
                     variant="outline"
+                    className={cn(!actions.link && 'flex-1')}
                     onClick={snooze}
-                    disabled={actions.joined}
                 >
                     Tunda {SNOOZE_MINUTES} mnt
                 </Button>
@@ -229,8 +276,8 @@ export function LiveMeetingBanner({
     onJoin: () => void;
     className?: string;
 }) {
-    const joined = meeting.participants.filter(
-        (participant) => participant.rsvp === 'accepted',
+    const attending = meeting.participants.filter(
+        (participant) => participant.rsvp === 'yes',
     ).length;
 
     return (
@@ -250,8 +297,8 @@ export function LiveMeetingBanner({
                     {phaseLabel(meeting, now)}
                 </span>
                 <span className="text-[15px]">
-                    {meeting.title} · {joined} dari{' '}
-                    {meeting.participants.length} peserta sudah bergabung
+                    {meeting.title} · {attending} dari{' '}
+                    {meeting.participants.length} peserta menyatakan hadir
                 </span>
             </span>
             <Button

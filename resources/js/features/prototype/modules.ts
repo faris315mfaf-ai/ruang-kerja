@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { CalendarDays, Fingerprint, Smartphone, Workflow } from 'lucide-react';
+import { Fingerprint, Smartphone, Workflow } from 'lucide-react';
 
 export type PrototypeScreen = { label: string; href: string };
 
@@ -19,23 +19,6 @@ export type PrototypeModule = {
 /** Every Fase 2 & 3 preview, in the order of docs/PROMPTS.md. */
 export const PROTOTYPE_MODULES: PrototypeModule[] = [
     {
-        key: 'meetings',
-        phase: 'Fase 2',
-        sprint: 'F2-3',
-        title: 'Rapat & kalender',
-        description:
-            'Jadwalkan rapat dengan Google Meet, notulen dengan tindak lanjut, dan kalender tenggat & cuti.',
-        icon: CalendarDays,
-        gradient: 'bg-grad-merek',
-        screens: [
-            { label: 'Rapat', href: '/rapat' },
-            { label: 'Jadwalkan rapat', href: '/rapat/baru' },
-            { label: 'Kalender', href: '/kalender' },
-            {
-                label: 'Jadwal & notulensi (manajemen)',
-                href: '/manajemen/jadwal',
-            },
-        ],
     },
     {
         key: 'automation',

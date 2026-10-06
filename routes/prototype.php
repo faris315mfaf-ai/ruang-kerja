@@ -28,15 +28,7 @@ Route::middleware([EnsureFeatureEnabled::class.':prototype', 'auth', 'verified']
 
     // F2-2 · Catatan bersama has its own backend now: routes/notes.php (FEATURE_NOTES).
 
-    // F2-3 · Meetings, minutes & calendar
-    Route::inertia('rapat', 'meetings/index')->name('meetings.index');
-    Route::inertia('rapat/baru', 'meetings/create')->name('meetings.create');
-    Route::get('rapat/{meeting}', fn (string $meeting) => inertia('meetings/show', ['meetingId' => $meeting]))
-        ->where('meeting', '[a-z0-9-]+')->name('meetings.show');
-    Route::get('rapat/{meeting}/notulen', fn (string $meeting) => inertia('meetings/minutes', ['meetingId' => $meeting]))
-        ->where('meeting', '[a-z0-9-]+')->name('meetings.minutes');
-    Route::inertia('kalender', 'meetings/calendar')->name('calendar');
-    Route::inertia('manajemen/jadwal', 'meetings/management-schedule')->name('management.schedule');
+    // F2-3 · Rapat & kalender has its own backend now: routes/meetings.php (FEATURE_MEETINGS).
 
     // F2-4 · WhatsApp stays a preview (held by the owner until the provider is
     // chosen). Otomasi, berulang, template and Kinerja saya: routes/automation.php.

@@ -12,16 +12,8 @@ import { expect, test, type Page } from '@playwright/test';
  */
 const routes = [
     '/pratinjau',
-    // F2-1 · Obrolan and F2-2 · Catatan left the preview: real routes
-    // (routes/chat.php, routes/notes.php).
-    // F2-3 · Meetings, minutes & calendar
-    '/rapat',
-    '/rapat/baru',
-    '/rapat/koordinasi-q4',
-    '/rapat/standup-ops',
-    '/rapat/standup-ops/notulen',
-    '/kalender',
-    '/manajemen/jadwal',
+    // F2-1 Obrolan, F2-2 Catatan, F2-3 Rapat & kalender left the preview: real routes
+    // (routes/chat.php, routes/notes.php, routes/meetings.php).
     // F2-4 · WhatsApp, automation, Kinerja saya
     '/pengaturan/whatsapp',
     '/otomasi',
@@ -43,7 +35,7 @@ const routes = [
 ] as const;
 
 /** Preview-state switch (?keadaan=) on one route per module. */
-const stateRoutes = ['/rapat', '/otomasi', '/pengaturan/perangkat'] as const;
+const stateRoutes = ['/pengaturan/whatsapp', '/pengaturan/perangkat'] as const;
 
 /**
  * Environment noise that is not a page defect: Reverb not running locally, and
@@ -129,18 +121,3 @@ for (const path of stateRoutes) {
     }
 }
 
-test('tautan tak dikenal menampilkan keadaan "tidak ditemukan"', async ({
-    page,
-}) => {
-    const errors = collectErrors(page);
-
-    for (const path of ['/rapat/tidak-ada']) {
-        await expectRendered(page, path);
-        await expect(
-            page.getByText(/tidak ditemukan/i).first(),
-            path,
-        ).toBeVisible();
-    }
-
-    expect(errors, 'console tidak boleh berisi galat').toEqual([]);
-});

@@ -1,34 +1,35 @@
 # Rapat, notulen & kalender (F2-3)
 
-> **Status:** Rapat & notulen serta Kalender & jadwal manajemen **Akan dibangun** (keputusan pemilik 6 Okt 2026): backend nyata dikerjakan berikutnya; dokumen ini menjelaskan keadaan pratinjau saat ini. Integrasi Google Calendar/Meet sungguhan mengikuti status **ditahan** integrasi Google. Panduan pemakaian: [PANDUAN-PRATINJAU.md](PANDUAN-PRATINJAU.md).
->
-> Pratinjau Fase 2 · dibangun Agen B · rute `/rapat`, `/rapat/baru`, `/rapat/{meeting}`, `/rapat/{meeting}/notulen`, `/kalender`, `/manajemen/jadwal` · data contoh, tidak menyimpan apa pun. Indeks: [README](README.md).
+> **Fitur nyata sejak Okt 2026** (branch `claude/f2-rapat`) · rute `/rapat`, `/rapat/baru`, `/rapat/{meeting}`, `/rapat/{meeting}/ubah`, `/rapat/{meeting}/notulen`, `/kalender`, `/manajemen/jadwal` (`routes/meetings.php`) di balik `FEATURE_MEETINGS` (nyala lokal, mati produksi sampai rilis) · data tersimpan di `meetings`, `meeting_participants`, `meeting_minutes`, `meeting_minute_versions`, `meeting_action_items` (`docs/DATABASE.md` §7). **Integrasi Google Calendar/Meet dan WhatsApp ditahan pemilik.** Gambar di bawah berasal dari masa pratinjau; tata letaknya sama, kontrol Google kini berlabel "Ditahan". Indeks: [README](README.md).
 
 ## 1. Tujuan & masalah
 
-PRD §6 menjadikan **Google Calendar + Meet** sebagai "video call tanpa membangun sendiri". Masalah saat ini: undangan rapat dibuat manual di Google Calendar, notulen ditulis terpisah, dan tindak lanjut rapat tidak pernah menjadi tugas sehingga tidak terlacak. Modul ini menyatukan:
+Undangan rapat selama ini dibuat manual, notulen ditulis terpisah, dan tindak lanjut rapat tidak pernah menjadi tugas sehingga tidak terlacak. Modul ini menyatukan:
 
-- **Agenda rapat** saya hari ini/minggu ini dengan aksi sesuai keadaan (Gabung, Lengkapi notulen, Lihat notulen).
-- **Jadwalkan rapat** dengan tautan Meet otomatis, deteksi **bentrok** jadwal peserta (rapat RuangKerja + blok sibuk Google Calendar) dan usulan slot kosong.
-- **Notulen** per agenda: kehadiran, keputusan, **tindak lanjut** yang bisa **"Jadikan tugas"** (nomor `OPS-156` dst.), finalisasi yang mengunci.
-- **Kalender** gabungan: rapat, tenggat tugas, cuti disetujui, hari libur (lapisan bisa dinyalakan/dimatikan).
-- **Jadwal & notulensi manajemen** untuk Direksi (rapat pimpinan + tindak lanjut lintas divisi), mengisi panel kosong di `/manajemen`.
+- **Agenda rapat** saya minggu ini dengan aksi sesuai keadaan (Gabung, Lengkapi notulen, Lihat notulen).
+- **Jadwalkan / ubah / batalkan rapat**, termasuk rapat berulang (setiap hari kerja, setiap minggu, Senin-Rabu-Jumat) dengan tanggal akhir opsional, deteksi **bentrok** jadwal peserta terhadap rapat RuangKerja lain dan usulan jam kosong.
+- **Notulen per kemunculan rapat**: kehadiran, catatan per butir agenda (tersimpan otomatis, berversi), keputusan, **tindak lanjut** yang bisa **"Jadikan tugas"** (nomor `OPS-156` dst. di workspace rapat), finalisasi yang mengunci dan dibagikan ke peserta.
+- **Kalender** gabungan: rapat, tenggat tugas saya, cuti/izin/sakit/dinas yang disetujui, hari libur (lapisan bisa dinyalakan/dimatikan).
+- **Jadwal & notulensi manajemen** untuk Direksi/HR: rapat pimpinan minggu ini, notulen terbaru, dan tindak lanjut lintas divisi.
 
-## 2. Peran yang memakai
+## 2. Peran & akses
 
-| Peran | Layar |
+| Siapa | Bisa |
 |---|---|
-| Semua karyawan | `/rapat`, detail, notulen (sebagai peserta/notulis), `/kalender` |
-| Penyelenggara | `/rapat/baru`, ubah rapat, finalkan notulen |
-| Direksi · HR · Super Admin (`dashboard.view_company`) | `/manajemen/jadwal` |
+| Peserta internal (diundang) | Melihat rapat & notulen, menjawab kehadiran (Hadir/Mungkin/Tidak), mencentang tindak lanjut miliknya |
+| Notulis | + menulis notulen draf, finalkan & bagikan, jadikan tugas, ingatkan PIC |
+| Penyelenggara | + ubah & batalkan rapat, buka kembali notulen final |
+| Direksi · HR · Super Admin (`dashboard.view_company`) | `/manajemen/jadwal`; **rapat pimpinan** (`leadership`) terlihat (baca saja) walau tidak diundang; hanya mereka yang bisa menandai rapat sebagai rapat pimpinan |
+| Lainnya (termasuk Super Admin untuk rapat biasa) | Tidak melihat apa pun — **404** |
+| Tamu eksternal (email) | Disimpan sebagai peserta, belum menerima email (undangan kalender Google ditahan), tidak pernah melihat isi aplikasi |
 
-Pratinjau: persona Dimas, jam contoh **Sen 5 Okt 2026 10.25 WIB** yang berjalan real time (tick 15 detik), sehingga "Mulai 5 menit lagi" benar-benar bergerak.
+Sumber kebenaran: `App\Policies\MeetingPolicy` = `Meeting::visibleTo()` (diuji identik).
 
 ## 3. Layar
 
 ### Agenda · `/rapat`
 
-Kartu gradien "Rapat berikutnya" (Gabung, Salin tautan, Buka notulen), tab hari Sen–Jum atau "Minggu ini", baris rapat dengan aksi sesuai keadaannya.
+Kartu gradien "Rapat berikutnya" (Gabung membuka tautan di tab baru, Salin tautan, Buka notulen), tab hari Sen–Jum atau "Minggu ini" (`?minggu=YYYY-MM-DD` untuk minggu lain), baris rapat dengan aksi sesuai keadaannya, panel "Tindak lanjut untuk Anda" (butir terbuka yang belum menjadi tugas). Banner hangat saat rapat sedang berlangsung.
 
 ![Agenda rapat, desktop terang](img/rapat-kalender/agenda-desktop.jpg)
 
@@ -36,194 +37,93 @@ Kartu gradien "Rapat berikutnya" (Gabung, Salin tautan, Buka notulen), tab hari 
 
 ![Agenda rapat, ponsel](img/rapat-kalender/agenda-ponsel.jpg)
 
-Chip Keadaan "Rapat berlangsung" (`?jam=10.42`) menampilkan banner "Sedang berlangsung · 12 menit".
-
 ![Banner rapat sedang berlangsung](img/rapat-kalender/berlangsung-desktop.jpg)
 
-**Pemberitahuan rapat dimulai** (DNotifRapat/MNotifRapat): toast kaca di kanan atas (desktop/tablet: Gabung, Tunda 5 mnt) atau bottom sheet (ponsel: Gabung, Salin tautan, Kabari terlambat). Semua aksi hanya toast.
+**Pemberitahuan rapat dimulai** (DNotifRapat/MNotifRapat): muncul sendiri mulai 5 menit sebelum rapat (jam perangkat, tanpa polling) sampai rapat selesai, kecuali sudah ditutup di tab itu; **Tunda 5 mnt**, Gabung, Salin tautan. Server juga mengirim notifikasi `meeting.starting` sesuai pengingat rapat (Inbox + email sesuai preferensi).
 
 ![Toast pemberitahuan rapat, desktop](img/rapat-kalender/pemberitahuan-desktop.jpg)
 
 ![Bottom sheet pemberitahuan rapat, ponsel](img/rapat-kalender/pemberitahuan-ponsel.jpg)
 
-### Jadwalkan rapat · `/rapat/baru`
+### Jadwalkan / ubah rapat · `/rapat/baru`, `/rapat/{id}/ubah`
 
-Judul, tanggal/jam/durasi, peserta (combobox ARIA, tamu lewat email), platform (Google Meet / Zoom / Tatap muka), agenda, Ulangi, Notulis, Workspace, pengingat. Kartu **bentrok** + usulan slot.
+Judul, tanggal, jam mulai (pilihan 24 jam per 15 menit, tidak mengikuti locale browser), durasi, tempat (**Google Meet** / Zoom: tempel tautan; Tatap muka / Di klien: ruangan atau alamat), peserta (combobox ARIA, tamu lewat email), agenda, notulis, ulangi + "berulang sampai", workspace (dipakai "Jadikan tugas"), pengingat (30/15/5 menit), dan sakelar **Rapat pimpinan** untuk Direksi/HR. Kartu **bentrok** + "Pakai 14.30" diperbarui langsung dari `GET /rapat/bentrok`. Galat per isian (klien + server) dan fokus pindah ke galat pertama; ringkasan sebelum kirim (dialog di desktop, sheet di ponsel). Setelah tersimpan, halaman pindah ke detail rapat dengan toast "Undangan rapat terkirim ke N peserta".
 
 ![Form jadwalkan rapat terisi contoh dengan kartu bentrok, desktop](img/rapat-kalender/jadwalkan-desktop.jpg)
 
-![Form jadwalkan rapat, desktop Malam](img/rapat-kalender/jadwalkan-desktop-malam.jpg)
-
 ![Form jadwalkan rapat, ponsel](img/rapat-kalender/jadwalkan-ponsel.jpg)
-
-Validasi per isian (fokus pindah ke galat pertama):
 
 ![Galat validasi form rapat](img/rapat-kalender/jadwalkan-validasi-desktop.jpg)
 
-Ringkasan sebelum mengirim undangan (dialog di desktop, sheet di ponsel):
-
 ![Dialog ringkasan undangan](img/rapat-kalender/jadwalkan-ringkasan-desktop.jpg)
-
-![Sheet ringkasan undangan, ponsel](img/rapat-kalender/jadwalkan-ringkasan-ponsel.jpg)
 
 ### Detail rapat · `/rapat/{meeting}`
 
-Hitung mundur, kartu tautan Meet, agenda, peserta + RSVP, dokumen terkait, info rapat, status sinkron Google Calendar, "Kehadiran Anda" (Hadir/Mungkin/Tidak). Contoh: `koordinasi-q4`, `standup-ops`.
+Status (hitung mundur / berlangsung / selesai / **Dibatalkan**), kartu tautan rapat (atau ruangan), keterangan, agenda, peserta + RSVP, detail, "Kehadiran Anda" (simpan optimistis, kembali bila gagal), **Ubah** dan **Batalkan** (konfirmasi) untuk penyelenggara. Rapat berulang membuka kemunculan hari ini/berikutnya, atau `?tanggal=YYYY-MM-DD`.
 
 ![Detail rapat, desktop terang](img/rapat-kalender/detail-desktop.jpg)
-
-![Detail rapat, desktop Malam](img/rapat-kalender/detail-desktop-malam.jpg)
 
 ![Detail rapat dengan bilah aksi "Gabung lewat Google Meet", ponsel](img/rapat-kalender/detail-ponsel.jpg)
 
 ### Notulen · `/rapat/{meeting}/notulen`
 
-Draf dengan "Fitri ikut mengedit", chip kehadiran, catatan per agenda (simpan otomatis "Disimpan HH.MM · N versi"), keputusan, tabel tindak lanjut (butir, penanggung jawab, tenggat, Jadikan tugas), Finalkan & bagikan.
+Draf: chip kehadiran, catatan per agenda (tersimpan otomatis ±1 detik setelah berhenti mengetik: "Disimpan HH.MM · N versi"), keputusan, tabel tindak lanjut (butir, penanggung jawab, tenggat, **Jadikan tugas** / **Jadikan semua tugas**; rapat tanpa workspace → pilih workspace dulu), **Finalkan & bagikan** (daftar masalah bila belum lengkap). Final: terkunci, tindak lanjut menjadi checklist (penanggung jawab boleh mencentang), **Ingatkan N PIC**, **Buka kembali draf** (penyelenggara). Tanpa `?tanggal` sebuah seri membuka kemunculan terakhir yang sudah dimulai.
 
 ![Notulen draf, desktop terang](img/rapat-kalender/notulen-desktop.jpg)
 
-![Notulen draf, desktop Malam](img/rapat-kalender/notulen-desktop-malam.jpg)
-
 ![Notulen, ponsel](img/rapat-kalender/notulen-ponsel.jpg)
-
-Setelah "Jadikan tugas", butir mendapat kunci tugas:
 
 ![Tindak lanjut yang sudah menjadi tugas OPS-156](img/rapat-kalender/notulen-tugas-desktop.jpg)
 
-Notulen final (terkunci, tindak lanjut jadi checklist; ponsel punya "Ingatkan N PIC yang belum selesai"):
-
 ![Notulen final, desktop](img/rapat-kalender/notulen-final-desktop.jpg)
 
-![Notulen final, ponsel](img/rapat-kalender/notulen-final-ponsel.jpg)
+### Kalender · `/kalender?bulan=YYYY-MM`
 
-### Kalender · `/kalender`
-
-Grid bulan dengan chip per lapisan, "+N lainnya", panel agenda hari terpilih, ‹ / Hari ini / ›, tombol lapisan, Sinkronkan.
+Grid bulan dengan chip per lapisan, "+N lainnya", panel agenda hari terpilih, ‹ / Hari ini / › (bulan lain dimuat dengan kunjungan parsial), tab Minggu, lapisan (diingat per browser, lapisan terakhir tidak bisa dimatikan). Ponsel: strip minggu + agenda.
 
 ![Kalender bulan, desktop terang](img/rapat-kalender/kalender-desktop.jpg)
-
-![Kalender bulan, desktop Malam](img/rapat-kalender/kalender-desktop-malam.jpg)
 
 ![Strip minggu dan agenda harian, ponsel](img/rapat-kalender/kalender-ponsel.jpg)
 
 ![Tampilan minggu dengan grid jam dan baris Sehari](img/rapat-kalender/kalender-minggu-desktop.jpg)
 
-![Keadaan belum terhubung Google Calendar](img/rapat-kalender/kalender-terputus-desktop.jpg)
-
 ### Jadwal manajemen · `/manajemen/jadwal`
 
-Grid minggu jam 08–17 dengan garis "sekarang", panel Notulensi (Semua/Draf/Tindak lanjut terbuka), Tindak lanjut rapat pimpinan (Terlambat/Berjalan/Selesai). Tablet memakai tata letak TfJadwal, ponsel MgPJadwal (segmen Agenda | Notulen).
+Grid minggu jam 08–17 dengan garis "sekarang", panel Notulensi (Semua/Draf/Tindak lanjut terbuka), Tindak lanjut rapat pimpinan (Terlambat/Berjalan/Selesai). Data: rapat pimpinan 4 minggu ke belakang sampai akhir minggu ini.
 
 ![Jadwal & notulensi manajemen, desktop terang](img/rapat-kalender/jadwal-manajemen-desktop.jpg)
 
-![Jadwal manajemen, desktop Malam](img/rapat-kalender/jadwal-manajemen-desktop-malam.jpg)
-
 ![Jadwal manajemen, ponsel](img/rapat-kalender/jadwal-manajemen-ponsel.jpg)
 
-## 4. Alur langkah demi langkah
+## 4. Cara mencoba (lokal)
 
-1. **Agenda.** Masuk sebagai `kadiv@demo.test` → `/rapat`. Kartu "Koordinasi peluncuran Q4 · Mulai 5 menit lagi". Pilih Sel–Jum atau "Minggu ini".
-2. **Rapat berlangsung.** Chip "Rapat berlangsung" (`?jam=10.42`) → banner → **Gabung** → banner hilang, kartu menampilkan "Anda sudah bergabung" (toast "Membuka Google Meet…", URL contoh tidak dibuka).
-3. **Pemberitahuan.** "Lihat contoh pemberitahuan" (atau "Uji pemberitahuan" di detail) → toast/sheet → Tunda 5 mnt.
-4. **Jadwalkan.** `/rapat/baru` → **Periksa & kirim undangan** tanpa isian → galat per isian. **Isi contoh** → kartu "Bayu Saputra ada rapat lain 13.00–14.00…" + **Pakai 14.30**. Ketik "gudang" di Peserta (↑/↓ + Enter) atau email tamu + Enter. Ganti platform ke Zoom (tautan divalidasi) atau Tatap muka (ruangan wajib). **Periksa** → ringkasan → **Kirim undangan** → "Undangan terkirim ke N peserta". `?keadaan=galat` = pengiriman gagal + toast.
-5. **Detail & RSVP.** `/rapat/koordinasi-q4` → ubah "Kehadiran Anda" → jumlah RSVP berubah + toast. `/rapat/tidak-ada` = "Rapat tidak ditemukan".
-6. **Notulen.** `/rapat/standup-ops/notulen` → ubah kehadiran, tulis catatan agenda, tambah/hapus keputusan, ubah butir tindak lanjut → **Jadikan tugas** (OPS-156, OPS-157 …) atau **Jadikan semua tugas** → **Finalkan & bagikan** (bila ada isian kosong, daftar masalah tampil) → Final & terkunci → **Buka kembali draf**.
-7. **Kalender.** `/kalender` → klik tanggal → panel agenda; tab **Minggu**; matikan lapisan (lapisan terakhir tidak bisa dimatikan); **Sinkronkan** → "Tersinkron … lalu". `?keadaan=terputus` = kartu "Hubungkan Google Calendar".
-8. **Manajemen.** Masuk `direksi@demo.test` → `/manajemen/jadwal` → filter notulensi, lihat tindak lanjut terlambat.
-
-```mermaid
-flowchart TD
-    A[/rapat · agenda/] -->|Gabung| G[Toast 'Membuka Google Meet…']
-    A -->|Lihat contoh pemberitahuan| P[Toast / sheet rapat dimulai]
-    A -->|Jadwalkan rapat| F[/rapat/baru/]
-    F -->|Periksa tanpa isian| E[Galat per isian]
-    F -->|Isi contoh| K{Bentrok?}
-    K -->|ya| U[Usulan slot · Pakai 14.30] --> R
-    K -->|tidak| R[Ringkasan]
-    R -->|Kirim undangan| S[Undangan terkirim]
-    A -->|Detail| D[/rapat/id/] -->|RSVP| D
-    D -->|Buka notulen| N[/rapat/id/notulen/]
-    N -->|Jadikan tugas| T[(Tugas OPS-156)]
-    N -->|Finalkan| Q{Lengkap?}
-    Q -->|tidak| X[Daftar masalah]
-    Q -->|ya| FN[Final · terkunci] -->|Buka kembali draf| N
-    C[/kalender/] -->|lapisan| C
-    C -->|Sinkronkan| C
-```
-
-Alur backend nanti (jadwalkan rapat):
-
-```mermaid
-sequenceDiagram
-    actor O as Penyelenggara
-    participant W as Web
-    participant L as Laravel
-    participant DB as PostgreSQL
-    participant GC as Google Calendar API
-    participant Q as Antrean
-    O->>W: Isi form + peserta
-    W->>L: GET konflik (peserta, waktu)
-    L->>DB: rapat peserta
-    L->>GC: freeBusy (cache/job)
-    L-->>W: bentrok + usulan slot
-    O->>W: Kirim undangan
-    W->>L: POST /rapat (ScheduleMeeting)
-    L->>GC: events.insert + conferenceData (Meet), timeout 10 dtk
-    GC-->>L: google_event_id, meet_link
-    L->>DB: calendar_events + peserta (transaksi)
-    L->>Q: SendMeetingReminders (15 & 5 menit), notifikasi undangan
-    L-->>W: redirect /rapat/{id}
-```
+1. `FEATURE_MEETINGS=true` (bawaan lokal), `php artisan migrate --seed` atau `php artisan db:seed --class=MeetingDemoSeeder`. Data demo relatif terhadap minggu berjalan: stand-up Operasional Sen/Rab/Jum (Dimas) dengan notulen final Jumat lalu — butir pertamanya sudah menjadi tugas OPS — dan draf kemunculan terbaru minggu ini; koordinasi peluncuran Q4 (Putri, PLQ); review vendor logistik lewat Zoom dengan tamu eksternal; rapat direksi mingguan dan sprint review RuangKerja (rapat pimpinan); 1:1 Dimas & Sari.
+2. `kadiv@demo.test` → **Rapat** di Dock (Rail di tablet, **Lainnya › Kalender & rapat** di ponsel) → buka stand-up → **Notulen** → ketik catatan, tambah keputusan & tindak lanjut → **Jadikan tugas** → **Finalkan & bagikan** → muat ulang: semua tersimpan.
+3. **Jadwalkan rapat** → undang Bayu pada jam stand-up → kartu bentrok + "Pakai 09.30" → **Periksa & kirim undangan**. `anggota@demo.test` melihat undangan di Inbox dan menjawab "Kehadiran Anda".
+4. `direksi@demo.test` → `/manajemen/jadwal`; `anggota@demo.test` → `/manajemen/jadwal` = 403.
+5. Pengingat: `php artisan schedule:work` (atau jalankan `App\Domain\Meetings\Jobs\SendMeetingReminders` / `SendActionItemReminders`).
 
 ## 5. Penjelasan kode
 
-| File | Peran |
+| Lapisan | Berkas |
 |---|---|
-| `pages/meetings/{index,create,show,minutes,calendar,management-schedule}.tsx` | Halaman Inertia. `show`/`minutes` menerima `meetingId`. Notulen & kalender diberi `key` per URL agar state lokal ter-reset saat keadaan berganti. |
-| `features/meetings/types.ts` | `Person`, `Meeting` (+ `Participant`, `CalendarEventLink`, `RelatedDocument`), `Minutes` (+ `AttendanceMark`, `MinutesSection`, `ActionItem`), `BusyBlock`, `CalendarEntry`, `GoogleSync`, `TaskDue`, `ApprovedLeave`, `Holiday`. |
-| `features/meetings/fixtures.ts` | `NOW = 2026-10-05T10:25:00+07:00`, `ME = 'dimas'`, `PEOPLE`, `MEETINGS`, `LEADERSHIP_DEADLINES`, `MINUTES`, `BUSY` (blok sibuk Google), `ROOMS`, `TASKS_DUE`, `LEAVES`, `HOLIDAYS`, `GOOGLE_SYNC`. |
-| `features/meetings/lib.ts` (+ `lib.test.ts`, 17 test) | Tanggal kantor (`officeDate`, `weekDates`, `monthGrid`, `isoWeekNumber`), fase rapat & hitung mundur (`meetingPhase`, `phaseLabel`, `nextMeeting`), `rsvpCounts`, `findConflicts`, `suggestFreeSlot` (per 30 menit sampai 17.00), `validateMeetingForm`, tindak lanjut (`actionStatus`, `convertToTasks`, `nextTaskKey`), `minutesProblems`, `buildCalendarEntries`, `toggleLayer`. |
-| `use-preview.ts` | `readPreviewQuery` (`?keadaan=memuat|kosong|galat|terputus`, `?jam=HH.MM`, `?final=1`), `useDemoClock()`. |
-| Hook per layar: `use-agenda.ts`, `use-meeting-form.ts`, `use-minutes.ts`, `use-calendar.ts` (+ `useMeetingDetail`, `useSchedule` di komponennya) | Data & mutasi bersama desktop/tablet dan ponsel (PLATFORM.md §5). |
-| `agenda.desktop.tsx`, `agenda.mobile.tsx`, `agenda-parts.tsx`, `meeting-form.tsx`, `create-meeting.tsx`, `meeting-detail.tsx`, `minutes-view.tsx`, `calendar-view.tsx`, `schedule-view.tsx` | Tampilan. |
-| `day-tabs.tsx`, `people-picker.tsx` (combobox ARIA), `week-time-grid.tsx` (dipakai kalender & jadwal manajemen), `meeting-notice.tsx` (`MeetingStartNotice`, `LiveMeetingBanner`), `meeting-ui.tsx` (`PreviewBar`) | Komponen kecil khusus modul. |
+| Skema | `database/migrations/2026_10_11_100100_create_meetings_tables.php`; model `App\Models\{Meeting,MeetingParticipant,MeetingMinutes,MeetingMinuteVersion,MeetingActionItem}`; enum `App\Domain\Meetings\Enums\{MeetingPlatform,Rsvp,Recurrence,MinutesStatus}` |
+| Aturan | `App\Policies\MeetingPolicy`, `Meeting::visibleTo` / `involving` / `overlapping` |
+| Actions | `ScheduleMeeting`, `UpdateMeeting` (ubah jam → RSVP peserta kembali "Belum menjawab" + notifikasi), `CancelMeeting`, `UpdateRsvp`, `SaveMinutes` (versi maks. satu per orang per 5 menit), `FinalizeMinutes` & `ReopenMinutes` (audit), `AddActionItem`, `UpdateActionItem`, `RemoveActionItem`, `ConvertActionItemsToTasks` (memakai `CreateTask`, butuh `WorkspacePolicy::editTasks`, idempoten), `RemindActionItemOwners` |
+| Query | `AgendaQuery`, `FindConflicts` (+ saran slot 30 menit sampai 17.00), `CalendarFeed`, `ManagementSchedule`, `MeetingFeed` (pemuat bersama, tanpa N+1), `EditableWorkspaces`; layanan `MeetingOccurrences` (pengembangan seri), `MinutesStore`, `MeetingParticipants` |
+| Notifikasi & jadwal | `MeetingInvitedNotification` (undangan/berubah/dibatalkan), `MeetingStartingNotification`, `MinutesFinalizedNotification`, `ActionItemDueNotification`; job `SendMeetingReminders` (tiap menit) dan `SendActionItemReminders` (07.05) di `routes/console.php` |
+| HTTP | `App\Http\Controllers\Meetings\{MeetingController,MinutesController,CalendarController,ManagementScheduleController}`, FormRequest `App\Http\Requests\Meetings\*` (rapat tak terlihat → 404 sebelum validasi), `MeetingPresenter` |
+| Frontend | `pages/meetings/*`; `features/meetings/{types,api,meetings-context,lib}.ts(x)`; hook `use-agenda`, `use-meeting-form`, `use-minutes`, `use-calendar`, `useMeetingDetail`, `useSchedule`; tampilan desktop/tablet/ponsel seperti masa pratinjau |
+| Uji | `tests/Feature/Meetings/*` (policy, action, seri & bentrok, pengingat, HTTP, seeder), blok Rapat di `PageQueryCountTest`, `features/meetings/lib.test.ts` |
 
-Pemetaan warna: Meet = `link`/teal, Zoom = `info`, tatap muka = netral, di klien = `warning`; lapisan kalender rapat = teal, tenggat = warning (terlambat = danger), cuti = info, libur = netral. Gradien hangat hanya satu per layar (banner berlangsung atau kartu bentrok).
+## 6. Ditahan (tidak dibangun)
 
-## 6. Bentuk data → tabel DATABASE.md
+- Tautan **Google Meet otomatis**, sinkron **Google Calendar** (tabel `calendar_events`), **freeBusy** Google untuk bentrok, email/undangan kalender untuk **tamu eksternal**, ekspor notulen ke **Google Docs**: tampil sebagai label/tombol nonaktif "Ditahan".
+- Pengingat **WhatsApp**: baris "WhatsApp · Ditahan".
+- Belum ada: pembatalan satu kemunculan saja (pembatalan berlaku untuk seluruh seri), lampiran Drive di rapat, ko-editor realtime notulen, "Kabari terlambat", chip "rapat 5 menit lagi" di MenuBar (shell bersama, menunggu integrator).
 
-| Tipe frontend | Tabel | Catatan |
-|---|---|---|
-| `Meeting.calendar_event` | `calendar_events` (§7: `google_event_id`, `calendar_id`, `source_type/id`, `user_id`, `meet_link`, `synced_at`) | |
-| `Meeting` (judul, agenda, platform, lokasi, `join_url`, penyelenggara, notulis, workspace, ulangi, pengingat) | **belum ada**: usul tabel `meetings` atau kolom tambahan di `calendar_events` | Perlu ditulis di DATABASE.md |
-| `Participant` | **belum ada**: usul `meeting_participants` (`user_id`/`email`, `rsvp`, `optional`) | |
-| `Minutes` | `notes` (`content` jsonb: attendance, sections, decisions, action_items) + `note_versions` | + `status` draft/final, `finalized_at` |
-| `ActionItem.task_key` | `tasks` (penomoran `task_sequence` dengan row lock) | |
-| `TaskDue`, `ApprovedLeave`, `Holiday` | `tasks`, `requests` (approved), `holidays` | Sudah ada di Fase 1 |
-| `GoogleSync` | `google_accounts` (scope `calendar.events`) | |
+## 7. Keadaan & aksesibilitas
 
-## 7. Pekerjaan backend tersisa
-
-- [ ] Migrasi `calendar_events` + tabel/kolom rapat + `meeting_participants`; notulen di `notes` dengan status & `finalized_at`. Perbarui DATABASE.md.
-- [ ] Actions: `ScheduleMeeting` (event Google Calendar + `conferenceData` Meet, sinkron dengan timeout 10 detik atau lewat job), `UpdateRsvp`, `SaveMinutes` (autosave + versi), `FinalizeMinutes` (kunci + bagikan), `ConvertActionItemsToTasks`, `RemindActionOwners`.
-- [ ] Query `FindConflicts` (rapat peserta + freeBusy Google, cache) + saran slot.
-- [ ] Policy: `MeetingPolicy` (lihat = peserta / Direksi untuk rapat pimpinan; ubah = penyelenggara), `MinutesPolicy` (sunting = notulis/penyelenggara selama draf). Scope untuk `/manajemen/jadwal` (`dashboard.view_company`).
-- [ ] Jobs: `SyncGoogleCalendar` (pull/push, `synced_at`, retry/backoff), `SendMeetingReminders` (15 & 5 menit, `via()` membaca `notification_preferences`).
-- [ ] Event broadcast: `MeetingStarting` (toast/sheet), `MinutesUpdated` + presence `presence-meeting.{id}` (co-editor).
-- [ ] Endpoint kalender (tenggat terbuka, cuti disetujui, libur, rapat); hubungkan/putuskan Google Calendar.
-- [ ] Chip "rapat 5 menit lagi" di MenuBar/Dock (shell bersama), notifikasi browser PWA, email undangan.
-- [ ] Audit log saat notulen difinalkan/dibuka kembali; test Pest `ScheduleMeeting`, `FindConflicts`, `FinalizeMinutes`, `ConvertActionItemsToTasks`, matriks Policy.
-
-## 8. Keadaan kosong/galat & aksesibilitas
-
-- Chip "Keadaan:" di samping banner: Normal / Memuat / Kosong / Galat (+ "Rapat berlangsung", "Belum terhubung", "Notulen final"). Galat punya tombol "Coba lagi".
-- Form: label pada semua input, galat diumumkan, fokus ke galat pertama; `PeoplePicker` = combobox ARIA (↑/↓, Enter, Esc).
-- Ponsel: tombol hapus keputusan/butir 44 px dan area sentuh checkbox 44 px (perbaikan bug #6), chip peserta & tautan "Atur WhatsApp" ≥ 44 px (#8).
-- Radix Select diberi pengaman agar nilai kosong diabaikan (Select mengirim `''` saat daftar item berubah).
-
-## 9. Batasan prototipe
-
-- Input `type=date/time` mengikuti locale browser (`03:00 PM` di Chromium en-US; 24 jam di browser id-ID).
-- Rapat baru dari `/rapat/baru` tidak masuk ke daftar `/rapat` (state tidak dibagi). Tugas hasil "Jadikan tugas" hanya berupa kunci contoh.
-- Catatan notulen memakai textarea per agenda (belum Tiptap dengan @mention/#rujukan); "Fitri ikut mengedit" statis.
-- Mengubah penanggung jawab & tenggat tindak lanjut hanya di desktop (◐ di ponsel).
+- Skeleton saat breakpoint belum diketahui dan saat kalender memuat bulan lain; EmptyState untuk agenda/kalender/notulen kosong; galat jaringan → toast + rollback (RSVP, tindak lanjut) atau "Perubahan belum tersimpan" (autosave).
+- Form: label pada semua input, galat diumumkan, fokus ke galat pertama; `PeoplePicker` = combobox ARIA (↑/↓, Enter, Esc); RSVP = radiogroup dengan panah.
+- Ponsel: target sentuh ≥ 44 px, bilah aksi bawah di atas tab bar.

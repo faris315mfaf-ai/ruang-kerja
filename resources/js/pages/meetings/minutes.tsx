@@ -1,50 +1,51 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MeetingsProvider } from '@/features/meetings/meetings-context';
 import {
     MinutesDesktop,
     MinutesMobile,
 } from '@/features/meetings/minutes-view';
+import type { MinutesProps } from '@/features/meetings/types';
 import { useMinutes } from '@/features/meetings/use-minutes';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 
-function MinutesScreen({ meetingId }: { meetingId: string }) {
+function MinutesScreen({ record }: { record: MinutesProps }) {
     const breakpoint = useBreakpoint();
-    const data = useMinutes(meetingId);
+    const data = useMinutes(record);
 
-    return (
-        <>
-            <Head
-                title={
-                    data.meeting ? `Notulen · ${data.meeting.title}` : 'Notulen'
-                }
-            />
-            {breakpoint === null ? (
-                <div className="flex flex-col gap-4" aria-busy>
-                    <Skeleton className="h-12 w-96" />
-                    <Skeleton className="h-[560px] w-full" />
-                </div>
-            ) : breakpoint === 'mobile' ? (
-                <MinutesMobile data={data} />
-            ) : (
-                <MinutesDesktop data={data} />
-            )}
-        </>
+    if (breakpoint === null) {
+        return (
+            <div className="flex flex-col gap-4" aria-busy>
+                <Skeleton className="h-12 w-96" />
+                <Skeleton className="h-[560px] w-full" />
+            </div>
+        );
+    }
+
+    return breakpoint === 'mobile' ? (
+        <MinutesMobile data={data} />
+    ) : (
+        <MinutesDesktop data={data} />
     );
 }
 
 /**
- * /rapat/{meeting}/notulen — minutes: attendance, notes per agenda item,
- * decisions, follow-ups → tasks, draft/final (designs DNotulen, MNotulen,
- * MgPNotulen). Prototype only; the preview state in the URL remounts it.
+ * /rapat/{meeting}/notulen — minutes of one occurrence: attendance, notes
+ * per agenda item, decisions, follow-ups → tasks, draft/final (designs
+ * DNotulen, MNotulen, MgPNotulen). Props from MinutesController@show; keyed
+ * per occurrence so local edits reset when another date is opened.
  */
 export default function MeetingsMinutesPage({
-    meetingId,
+    record,
 }: {
-    meetingId: string;
+    record: MinutesProps;
 }) {
-    const { url } = usePage();
-
-    return <MinutesScreen key={url} meetingId={meetingId} />;
+    return (
+        <MeetingsProvider people={record.people} me={record.viewer_id}>
+            <Head title={`Notulen · ${record.meeting.title}`} />
+            <MinutesScreen key={record.meeting.key} record={record} />
+        </MeetingsProvider>
+    );
 }
 
 MeetingsMinutesPage.layout = {

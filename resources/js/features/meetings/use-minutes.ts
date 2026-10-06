@@ -1,142 +1,339 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { useFakeMutation } from '@/features/prototype/use-fake-mutation';
-import { ME, MEETINGS, MINUTES, PEOPLE } from './fixtures';
+import { errorMessage, fieldErrors, meetingsApi } from './api';
 import {
     addDays,
-    blankMinutes,
-    convertToTasks,
     firstName,
     minutesProblems,
     officeDate,
     personById,
 } from './lib';
-import type { ActionItem, Minutes } from './types';
-import { useDemoClock, usePreviewState } from './use-preview';
+import { useNow } from './meetings-context';
+import type { ActionItem, Minutes, MinutesProps } from './types';
 
 const AUTOSAVE_MS = 900;
+const ITEM_SAVE_MS = 700;
+
+type ItemPatch = Partial<
+    Pick<ActionItem, 'text' | 'assignee_id' | 'due_date' | 'done'>
+>;
 
 /**
- * Editable minutes of one meeting (DNotulen / MNotulen), shared by the
- * desktop and phone layouts. Edits autosave (simulated) into a new version;
- * "Finalkan & bagikan" locks them and shares with the participants.
+ * Minutes of one meeting occurrence (DNotulen / MNotulen), shared by the
+ * desktop and phone layouts. Content edits autosave (debounced PUT, a new
+ * version at most every five minutes per person on the server); follow-ups
+ * are saved one by one, optimistically with rollback; "Finalkan & bagikan"
+ * locks the minutes and notifies the participants.
  */
-export function useMinutes(meetingId: string) {
-    const { state, query } = usePreviewState();
-    const now = useDemoClock();
-    const forceFinal = new URLSearchParams(query).get('final') === '1';
+export function useMinutes(props: MinutesProps) {
+    const now = useNow();
     const today = officeDate(now);
-    const meeting =
-        state === 'kosong'
-            ? null
-            : (MEETINGS.find((item) => item.id === meetingId) ?? null);
-    const [minutes, setMinutes] = useState<Minutes | null>(() => {
-        if (!meeting) {
-            return null;
-        }
-
-        const record = structuredClone(
-            MINUTES.find((item) => item.meeting_id === meeting.id) ??
-                blankMinutes(meeting, new Date(now).toISOString()),
-        );
-
-        return forceFinal ? { ...record, status: 'final' } : record;
-    });
+    const meeting = props.meeting;
+    const me = props.viewer_id;
+    const date = meeting.recurrence === 'none' ? null : meeting.occurrence_date;
+    const [minutes, setMinutes] = useState<Minutes>(props.minutes);
     const [saving, setSaving] = useState(false);
+    const [unsaved, setUnsaved] = useState(false);
+    const [processing, setProcessing] = useState(false);
     const [problems, setProblems] = useState<string[]>([]);
     const [reminded, setReminded] = useState(false);
+    const [workspaceId, setWorkspaceId] = useState<string | null>(
+        meeting.workspace?.id ?? props.workspaces[0]?.id ?? null,
+    );
+    const latest = useRef(minutes);
     const timer = useRef<number | null>(null);
-    const mutation = useFakeMutation();
+    const inflight = useRef<Promise<void> | null>(null);
+    const itemTimers = useRef(new Map<string, number>());
+    const itemPatches = useRef(new Map<string, ItemPatch>());
 
-    useEffect(
-        () => () => {
+    latest.current = minutes;
+
+    useEffect(() => {
+        const timers = itemTimers.current;
+
+        return () => {
             if (timer.current) {
                 window.clearTimeout(timer.current);
             }
-        },
-        [],
-    );
 
-    const readOnly = !minutes || minutes.status === 'final';
+            timers.forEach((id) => window.clearTimeout(id));
+        };
+    }, []);
 
-    /** Apply an edit and schedule the simulated autosave. */
+    const canEdit = props.can.edit;
+    const readOnly = !canEdit || minutes.status === 'final';
+
+    const saveContent = (): Promise<void> => {
+        const current = latest.current;
+        setSaving(true);
+
+        const request = meetingsApi
+            .saveMinutes(meeting.id, date, {
+                attendance: current.attendance,
+                sections: current.sections,
+                decisions: current.decisions,
+            })
+            .then(({ minutes: saved }) => {
+                setUnsaved(false);
+                setMinutes((value) => ({
+                    ...value,
+                    id: saved.id,
+                    saved_at: saved.saved_at,
+                    version_count: saved.version_count,
+                }));
+            })
+            .catch((error: unknown) => {
+                setUnsaved(true);
+                toast.error(
+                    errorMessage(
+                        error,
+                        'Notulen belum tersimpan. Periksa koneksi lalu ketik lagi.',
+                    ),
+                );
+            })
+            .finally(() => setSaving(false));
+
+        inflight.current = request;
+
+        return request;
+    };
+
+    /** Saves the pending autosave now and waits for every save in flight. */
+    const flush = async (): Promise<void> => {
+        if (timer.current) {
+            window.clearTimeout(timer.current);
+            timer.current = null;
+            await saveContent();
+        }
+
+        await inflight.current;
+
+        for (const [id, handle] of itemTimers.current) {
+            window.clearTimeout(handle);
+            itemTimers.current.delete(id);
+            await sendItem(id);
+        }
+    };
+
+    /** Apply a content edit and schedule the autosave. */
     const edit = (change: (current: Minutes) => Minutes) => {
         if (readOnly) {
             return;
         }
 
-        setMinutes((current) => (current ? change(current) : current));
-        setSaving(true);
+        setMinutes((current) => change(current));
+        setUnsaved(true);
 
         if (timer.current) {
             window.clearTimeout(timer.current);
         }
 
         timer.current = window.setTimeout(() => {
-            setSaving(false);
-            setMinutes((current) =>
-                current
-                    ? {
-                          ...current,
-                          saved_at: new Date().toISOString(),
-                          version_count: current.version_count + 1,
-                      }
-                    : current,
-            );
+            timer.current = null;
+            void saveContent();
         }, AUTOSAVE_MS);
     };
 
-    const updateItem = (id: string, patch: Partial<ActionItem>) =>
-        edit((current) => ({
+    const replaceItem = (id: string, item: ActionItem) =>
+        setMinutes((current) => ({
+            ...current,
+            action_items: current.action_items.map((value) =>
+                value.id === id ? item : value,
+            ),
+        }));
+
+    const patchLocal = (id: string, patch: ItemPatch) =>
+        setMinutes((current) => ({
             ...current,
             action_items: current.action_items.map((item) =>
                 item.id === id ? { ...item, ...patch } : item,
             ),
         }));
 
-    const makeTasks = (ids: string[]) => {
-        if (!minutes) {
+    const sendItem = async (id: string): Promise<void> => {
+        const patch = itemPatches.current.get(id);
+        itemPatches.current.delete(id);
+
+        if (!patch) {
             return;
         }
 
-        const result = convertToTasks(
-            minutes.action_items,
-            ids,
-            minutes.task_prefix,
-            minutes.next_task_number,
+        const before = latest.current.action_items.find(
+            (item) => item.id === id,
         );
 
-        if (result.created.length === 0) {
+        try {
+            const { item } = await meetingsApi.updateItem(
+                meeting.id,
+                id,
+                patch,
+            );
+            // Keep text typed meanwhile; take the rest from the server.
+            const local = latest.current.action_items.find(
+                (value) => value.id === id,
+            );
+            replaceItem(id, local ? { ...item, text: local.text } : item);
+        } catch (error) {
+            if (before) {
+                patchLocal(
+                    id,
+                    Object.fromEntries(
+                        Object.keys(patch).map((key) => [
+                            key,
+                            before[key as keyof ItemPatch],
+                        ]),
+                    ) as ItemPatch,
+                );
+            }
+
+            toast.error(
+                errorMessage(error, 'Tindak lanjut gagal disimpan. Coba lagi.'),
+            );
+        }
+    };
+
+    /** Optimistic change of a follow-up; text is debounced, the rest immediate. */
+    const updateItem = (id: string, patch: ItemPatch) => {
+        if (id.startsWith('tmp-')) {
             return;
         }
 
-        void mutation.run(
-            () =>
-                setMinutes((current) =>
-                    current
-                        ? {
-                              ...current,
-                              action_items: result.items,
-                              next_task_number: result.nextNumber,
-                          }
-                        : current,
-                ),
-            {
-                delay: 400,
-                success:
-                    result.created.length === 1
-                        ? `Tugas ${result.created[0]} dibuat dan masuk ke Tugas saya penanggung jawab`
-                        : `${result.created.length} tugas dibuat: ${result.created.join(', ')}`,
-            },
+        patchLocal(id, patch);
+        itemPatches.current.set(id, {
+            ...itemPatches.current.get(id),
+            ...patch,
+        });
+
+        const existing = itemTimers.current.get(id);
+
+        if (existing) {
+            window.clearTimeout(existing);
+        }
+
+        const delay = 'text' in patch ? ITEM_SAVE_MS : 0;
+        itemTimers.current.set(
+            id,
+            window.setTimeout(() => {
+                itemTimers.current.delete(id);
+                void sendItem(id);
+            }, delay),
         );
     };
 
-    const finalize = () => {
-        if (!minutes) {
+    const addItem = () => {
+        if (readOnly) {
             return;
         }
 
-        const found = minutesProblems(minutes);
+        const tempId = `tmp-${Date.now()}`;
+        const draft: ActionItem = {
+            id: tempId,
+            text: '',
+            assignee_id: me,
+            due_date: addDays(today, 2),
+            task_key: null,
+            done: false,
+        };
+
+        setMinutes((current) => ({
+            ...current,
+            action_items: [...current.action_items, draft],
+        }));
+
+        meetingsApi
+            .addItem(meeting.id, date, {
+                text: '',
+                assignee_id: draft.assignee_id,
+                due_date: draft.due_date,
+            })
+            .then(({ item }) => replaceItem(tempId, item))
+            .catch((error: unknown) => {
+                setMinutes((current) => ({
+                    ...current,
+                    action_items: current.action_items.filter(
+                        (value) => value.id !== tempId,
+                    ),
+                }));
+                toast.error(
+                    errorMessage(error, 'Butir gagal ditambahkan. Coba lagi.'),
+                );
+            });
+    };
+
+    const removeItem = (id: string) => {
+        const before = latest.current.action_items;
+        setMinutes((current) => ({
+            ...current,
+            action_items: current.action_items.filter((item) => item.id !== id),
+        }));
+
+        meetingsApi.removeItem(meeting.id, id).catch((error: unknown) => {
+            setMinutes((current) => ({ ...current, action_items: before }));
+            toast.error(errorMessage(error, 'Butir gagal dihapus. Coba lagi.'));
+        });
+    };
+
+    const toggleDone = (id: string) => {
+        const item = latest.current.action_items.find(
+            (value) => value.id === id,
+        );
+
+        if (item) {
+            updateItem(id, { done: !item.done });
+        }
+    };
+
+    const makeTasks = async (ids: string[]) => {
+        const targets = latest.current.action_items.filter(
+            (item) =>
+                ids.includes(item.id) &&
+                !item.task_key &&
+                item.text.trim() !== '' &&
+                !item.id.startsWith('tmp-'),
+        );
+
+        if (targets.length === 0 || processing) {
+            return;
+        }
+
+        if (!meeting.workspace && !workspaceId) {
+            toast.error('Pilih workspace untuk tugas tindak lanjut.');
+
+            return;
+        }
+
+        setProcessing(true);
+
+        try {
+            await flush();
+            const response = await meetingsApi.makeTasks(
+                meeting.id,
+                date,
+                targets.map((item) => item.id),
+                meeting.workspace ? null : workspaceId,
+            );
+            setMinutes((current) => ({
+                ...current,
+                action_items: response.minutes.action_items,
+            }));
+            const keys = response.minutes.action_items
+                .filter((item) => targets.some((t) => t.id === item.id))
+                .map((item) => item.task_key)
+                .filter((key): key is string => Boolean(key));
+            toast.success(
+                keys.length === 1
+                    ? `Tugas ${keys[0]} dibuat dan masuk ke Tugas saya penanggung jawab`
+                    : `${keys.length} tugas dibuat: ${keys.join(', ')}`,
+            );
+        } catch (error) {
+            toast.error(errorMessage(error, 'Tugas gagal dibuat. Coba lagi.'));
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const finalize = async () => {
+        const found = minutesProblems(latest.current);
         setProblems(found);
 
         if (found.length > 0) {
@@ -147,74 +344,114 @@ export function useMinutes(meetingId: string) {
             return;
         }
 
-        const count = minutes.attendance.length;
+        setProcessing(true);
 
-        void mutation.run(
-            () => {
-                if (timer.current) {
-                    window.clearTimeout(timer.current);
-                }
-
-                setSaving(false);
-                setMinutes((current) =>
-                    current
-                        ? {
-                              ...current,
-                              status: 'final',
-                              saved_at: new Date().toISOString(),
-                              version_count: current.version_count + 1,
-                          }
-                        : current,
-                );
-            },
-            {
-                success: `Notulen difinalkan dan dibagikan ke ${count} peserta lewat Inbox & email`,
-                fail: state === 'galat',
-                error: 'Gagal membagikan notulen. Coba lagi sebentar.',
-            },
-        );
+        try {
+            await flush();
+            const response = await meetingsApi.finalize(meeting.id, date);
+            setMinutes(response.minutes);
+            setUnsaved(false);
+            toast.success(
+                'Notulen difinalkan dan dibagikan ke peserta lewat Inbox & email',
+            );
+        } catch (error) {
+            const serverProblems = fieldErrors(error, 'minutes');
+            setProblems(serverProblems);
+            toast.error(
+                serverProblems.length > 0
+                    ? 'Notulen belum bisa difinalkan'
+                    : errorMessage(
+                          error,
+                          'Gagal membagikan notulen. Coba lagi.',
+                      ),
+                serverProblems.length > 0
+                    ? { description: serverProblems[0] }
+                    : undefined,
+            );
+        } finally {
+            setProcessing(false);
+        }
     };
 
-    const reopen = () =>
-        setMinutes((current) =>
-            current ? { ...current, status: 'draft' } : current,
-        );
+    const reopen = async () => {
+        setProcessing(true);
 
-    const openOwners = minutes
-        ? [
-              ...new Set(
-                  minutes.action_items
-                      .filter((item) => !item.done)
-                      .map((item) => item.assignee_id),
-              ),
-          ]
-        : [];
+        try {
+            const response = await meetingsApi.reopen(meeting.id, date);
+            setMinutes(response.minutes);
+            toast.success('Notulen dibuka kembali sebagai draf');
+        } catch (error) {
+            toast.error(
+                errorMessage(error, 'Notulen gagal dibuka. Coba lagi.'),
+            );
+        } finally {
+            setProcessing(false);
+        }
+    };
 
-    const remind = () =>
-        mutation.run(() => setReminded(true), {
-            success: `Pengingat terkirim ke ${openOwners.map((id) => firstName(personById(PEOPLE, id)?.name ?? id)).join(' & ')}`,
-        });
+    const openOwners = [
+        ...new Set(
+            minutes.action_items
+                .filter(
+                    (item) => !item.done && !item.task_key && item.assignee_id,
+                )
+                .map((item) => item.assignee_id as string),
+        ),
+    ];
+
+    const remind = async () => {
+        setProcessing(true);
+
+        try {
+            const { reminded: ids } = await meetingsApi.remind(
+                meeting.id,
+                date,
+            );
+            setReminded(true);
+            toast.success(
+                ids.length === 0
+                    ? 'Semua penanggung jawab sudah diingatkan hari ini'
+                    : `Pengingat terkirim ke ${ids
+                          .map((id) =>
+                              firstName(
+                                  personById(props.people, id)?.name ?? '',
+                              ),
+                          )
+                          .join(' & ')}`,
+            );
+        } catch (error) {
+            toast.error(
+                errorMessage(error, 'Pengingat gagal dikirim. Coba lagi.'),
+            );
+        } finally {
+            setProcessing(false);
+        }
+    };
 
     return {
-        state,
         now,
         today,
+        me,
         meeting,
         minutes,
         readOnly,
+        canEdit,
+        canReopen: props.can.reopen,
+        canTick: (item: ActionItem) =>
+            !item.id.startsWith('tmp-') && (canEdit || item.assignee_id === me),
         saving,
+        unsaved,
         problems,
-        processing: mutation.processing,
-        canEdit: Boolean(
-            meeting &&
-            (meeting.minute_taker_id === ME || meeting.organizer_id === ME),
-        ),
+        processing,
+        workspaces: props.workspaces,
+        workspaceId,
+        setWorkspaceId,
         toggleAttendance: (userId: string) =>
             edit((current) => ({
                 ...current,
                 attendance: current.attendance.map((mark) =>
                     mark.user_id === userId
-                        ? { ...mark, present: !mark.present, reason: undefined }
+                        ? { ...mark, present: !mark.present, reason: null }
                         : mark,
                 ),
             })),
@@ -245,54 +482,17 @@ export function useMinutes(meetingId: string) {
                 ...current,
                 decisions: current.decisions.filter((_, i) => i !== index),
             })),
-        addItem: () =>
-            edit((current) => ({
-                ...current,
-                action_items: [
-                    ...current.action_items,
-                    {
-                        id: `new-${Date.now()}`,
-                        text: '',
-                        assignee_id: ME,
-                        due_date: addDays(today, 2),
-                        task_key: null,
-                        done: false,
-                    },
-                ],
-            })),
+        addItem,
         updateItem,
-        removeItem: (id: string) =>
-            edit((current) => ({
-                ...current,
-                action_items: current.action_items.filter(
-                    (item) => item.id !== id,
-                ),
-            })),
-        toggleDone: (id: string) =>
-            setMinutes((current) =>
-                current
-                    ? {
-                          ...current,
-                          action_items: current.action_items.map((item) =>
-                              item.id === id
-                                  ? { ...item, done: !item.done }
-                                  : item,
-                          ),
-                      }
-                    : current,
-            ),
-        makeTask: (id: string) => makeTasks([id]),
+        removeItem,
+        toggleDone,
+        makeTask: (id: string) => void makeTasks([id]),
         makeAllTasks: () =>
-            minutes && makeTasks(minutes.action_items.map((item) => item.id)),
-        finalize,
-        reopen,
-        exportDocs: () =>
-            mutation.run(() => {}, {
-                delay: 500,
-                success: 'Notulen diekspor ke Google Docs di folder workspace',
-            }),
+            void makeTasks(latest.current.action_items.map((item) => item.id)),
+        finalize: () => void finalize(),
+        reopen: () => void reopen(),
         openOwners,
-        remind,
+        remind: () => void remind(),
         reminded,
     };
 }

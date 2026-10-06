@@ -8,11 +8,13 @@ import {
     CircleAlert,
     Megaphone,
     MessageSquare,
+    NotebookPen,
     Plus,
     RotateCcw,
     ShieldAlert,
     Target,
     Workflow,
+    Video,
     X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -34,6 +36,8 @@ const ICONS: Record<string, LucideIcon> = {
     shield: ShieldAlert,
     target: Target,
     workflow: Workflow,
+    video: Video,
+    notebook: NotebookPen,
 };
 
 export const toneClasses: Record<NotificationTone, string> = {

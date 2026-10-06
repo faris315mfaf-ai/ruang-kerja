@@ -1,74 +1,77 @@
-import { useMemo, useState } from 'react';
-import { useFakeMutation } from '@/features/prototype/use-fake-mutation';
-import {
-    GOOGLE_SYNC,
-    HOLIDAYS,
-    LEAVES,
-    ME,
-    MEETINGS,
-    PEOPLE,
-    TASKS_DUE,
-} from './fixtures';
+import { router } from '@inertiajs/react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { calendar as calendarRoute } from '@/routes';
 import {
     addDays,
     ALL_LAYERS,
-    buildCalendarEntries,
     entriesOn,
     monthGrid,
     officeDate,
     toggleLayer,
     weekDates,
 } from './lib';
-import type { CalendarLayer, GoogleSync } from './types';
-import { useDemoClock, usePreviewState } from './use-preview';
+import { useNow } from './meetings-context';
+import type { CalendarLayer, CalendarProps } from './types';
 
 export type CalendarView = 'month' | 'week';
 
-/**
- * State of /kalender for both layouts: month/week cursor, selected day,
- * enabled layers and the Google Calendar connection (`?keadaan=terputus`
- * previews the not-connected state).
- */
-export function useCalendar() {
-    const { state } = usePreviewState();
-    const now = useDemoClock();
-    const today = officeDate(now);
-    const [view, setView] = useState<CalendarView>('month');
-    const [selected, setSelected] = useState(today);
-    const [month, setMonth] = useState({
-        year: Number(today.slice(0, 4)),
-        month: Number(today.slice(5, 7)),
-    });
-    const [layers, setLayers] = useState<CalendarLayer[]>(ALL_LAYERS);
-    const [sync, setSync] = useState<GoogleSync>(() =>
-        state === 'terputus'
-            ? { connected: false, account: null, last_synced_at: null }
-            : GOOGLE_SYNC,
-    );
-    const mutation = useFakeMutation();
+const LAYERS_KEY = 'rk.calendar.layers';
 
-    const entries = useMemo(
-        () =>
-            state === 'kosong'
-                ? []
-                : buildCalendarEntries({
-                      meetings: MEETINGS,
-                      tasks: TASKS_DUE,
-                      leaves: LEAVES,
-                      holidays: HOLIDAYS,
-                      people: PEOPLE,
-                      personId: ME,
-                      today,
-                  }),
-        [state, today],
+function storedLayers(): CalendarLayer[] {
+    try {
+        const raw = window.localStorage.getItem(LAYERS_KEY);
+        const value = raw ? (JSON.parse(raw) as CalendarLayer[]) : null;
+        const valid = value?.filter((layer) => ALL_LAYERS.includes(layer));
+
+        return valid && valid.length > 0 ? valid : ALL_LAYERS;
+    } catch {
+        return ALL_LAYERS;
+    }
+}
+
+const monthKey = (date: string) => date.slice(0, 7);
+
+/**
+ * State of /kalender for both layouts: month/week cursor, selected day and
+ * enabled layers (remembered per browser). Entries come from the server for
+ * the weeks covering one month (`?bulan=YYYY-MM`); moving outside them loads
+ * that month with a partial Inertia visit.
+ */
+export function useCalendar(props: CalendarProps) {
+    const now = useNow(60_000);
+    const today = officeDate(now);
+    const loadedMonth = `${props.year}-${String(props.month).padStart(2, '0')}`;
+    const [view, setView] = useState<CalendarView>('month');
+    const [selected, setSelected] = useState(() =>
+        monthKey(today) === loadedMonth ? today : `${loadedMonth}-01`,
     );
+    const [layers, setLayers] = useState<CalendarLayer[]>(() =>
+        typeof window === 'undefined' ? ALL_LAYERS : storedLayers(),
+    );
+    const [loading, setLoading] = useState(false);
+
+    const load = (month: string) =>
+        router.get(
+            calendarRoute({ query: { bulan: month } }).url,
+            {},
+            {
+                only: ['calendar'],
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                onStart: () => setLoading(true),
+                onFinish: () => setLoading(false),
+                onError: () => toast.error('Kalender gagal dimuat. Coba lagi.'),
+            },
+        );
 
     const select = (date: string) => {
         setSelected(date);
-        setMonth({
-            year: Number(date.slice(0, 4)),
-            month: Number(date.slice(5, 7)),
-        });
+
+        if (date < props.from || date > props.to) {
+            load(monthKey(date));
+        }
     };
 
     /** Previous/next month (month view) or week (week view & phone strip). */
@@ -82,61 +85,46 @@ export function useCalendar() {
             return;
         }
 
-        const index = month.year * 12 + (month.month - 1) + direction;
-        const next = { year: Math.floor(index / 12), month: (index % 12) + 1 };
-        setMonth(next);
-        setSelected(`${next.year}-${String(next.month).padStart(2, '0')}-01`);
+        const index = props.year * 12 + (props.month - 1) + direction;
+        const month = `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, '0')}`;
+        setSelected(monthKey(today) === month ? today : `${month}-01`);
+        load(month);
     };
 
+    const toggle = (layer: CalendarLayer) =>
+        setLayers((current) => {
+            const next = toggleLayer(current, layer);
+
+            try {
+                window.localStorage.setItem(LAYERS_KEY, JSON.stringify(next));
+            } catch {
+                // Storage blocked: the choice only lasts for this visit.
+            }
+
+            return next;
+        });
+
+    const entries = props.entries;
+
     return {
-        state,
         now,
         today,
         view,
         setView,
         selected,
         select,
-        month,
+        month: { year: props.year, month: props.month },
         shift,
         goToday: () => select(today),
-        weeks: monthGrid(month.year, month.month),
+        weeks: monthGrid(props.year, props.month),
         week: weekDates(selected, 7),
         layers,
-        toggle: (layer: CalendarLayer) =>
-            setLayers((current) => toggleLayer(current, layer)),
+        toggle,
         entries,
+        loading,
         on: (date: string) => entriesOn(entries, date, layers),
         countFor: (layer: CalendarLayer) =>
             entries.filter((entry) => entry.layer === layer).length,
-        sync,
-        processing: mutation.processing,
-        connect: () =>
-            mutation.run(
-                () =>
-                    setSync({
-                        connected: true,
-                        account: 'dimas@spkd.co.id',
-                        last_synced_at: new Date(now).toISOString(),
-                    }),
-                {
-                    delay: 900,
-                    success:
-                        'Google Calendar terhubung. Rapat, tenggat dan cuti akan tersinkron.',
-                },
-            ),
-        syncNow: () =>
-            mutation.run(
-                () =>
-                    setSync((current) => ({
-                        ...current,
-                        last_synced_at: new Date(now).toISOString(),
-                    })),
-                {
-                    success: 'Kalender tersinkron dengan Google Calendar',
-                    fail: state === 'galat',
-                    error: 'Sinkron gagal: Google Calendar tidak menjawab.',
-                },
-            ),
     };
 }
 

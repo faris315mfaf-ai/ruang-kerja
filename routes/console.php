@@ -5,6 +5,8 @@ use App\Domain\Attendance\Jobs\SendCheckInReminders;
 use App\Domain\Automation\Jobs\CreateRecurringTasks;
 use App\Domain\Automation\Jobs\RunOverdueAutomations;
 use App\Domain\Okr\Jobs\SendKeyResultCheckinReminders;
+use App\Domain\Meetings\Jobs\SendActionItemReminders;
+use App\Domain\Meetings\Jobs\SendMeetingReminders;
 use App\Domain\Projects\Jobs\SendProjectUpdateReminders;
 use App\Domain\Projects\Jobs\TakeProjectProgressSnapshots;
 use Illuminate\Foundation\Inspiring;
@@ -55,3 +57,6 @@ Schedule::job(new SendKeyResultCheckinReminders)->weeklyOn(5, '15:00')->timezone
 // F2-4 Otomasi (office timezone): recurring tasks 07.00, "lewat tenggat" rules 07.05 (after the deadline reminders).
 Schedule::job(CreateRecurringTasks::class)->dailyAt('07:00')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
 Schedule::job(RunOverdueAutomations::class)->dailyAt('07:05')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
+// F2-3 — meetings (FEATURE_MEETINGS): "rapat segera dimulai" every minute, follow-up reminders daily 07.05 office time.
+Schedule::job(new SendMeetingReminders)->everyMinute()->when(fn (): bool => (bool) config('features.meetings'))->withoutOverlapping()->onOneServer();
+Schedule::job(new SendActionItemReminders)->dailyAt('07:05')->timezone(config()->string('app.office_timezone'))->when(fn (): bool => (bool) config('features.meetings'))->withoutOverlapping()->onOneServer();
