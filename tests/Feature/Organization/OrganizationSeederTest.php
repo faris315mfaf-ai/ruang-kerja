@@ -32,8 +32,8 @@ it('seeds the demo organization idempotently', function () {
         ->and(Division::query()->where('is_board', true)->pluck('code')->all())->toBe(['DIR'])
         ->and(Team::query()->count())->toBe(2)
         ->and(Position::query()->count())->toBe(19)
-        ->and(User::query()->count())->toBe(24)
-        ->and(EmployeeProfile::query()->count())->toBe(24)
+        ->and(User::query()->count())->toBe(26) // + Faris & Dio (Hiring, 6 Okt 2026)
+        ->and(EmployeeProfile::query()->count())->toBe(24) // demo accounts without an organization row (Faris, Dio) have no profile
         ->and(User::query()->where('status', UserStatus::Inactive)->count())->toBe(1)
         ->and(User::query()->where('status', UserStatus::Resigned)->count())->toBe(1);
 });
@@ -100,5 +100,5 @@ it('writes no audit rows when run through DatabaseSeeder', function () {
     $this->seed(DatabaseSeeder::class);
 
     expect(AuditLog::query()->count())->toBe(0)
-        ->and(User::query()->count())->toBe(24);
+        ->and(User::query()->count())->toBe(26); // + Faris & Dio (Hiring)
 });

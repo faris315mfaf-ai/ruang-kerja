@@ -19,6 +19,7 @@ import {
     roleDashboardNavItem,
     notesNavItem,
     meetingsNavItem,
+    hiringNavItem,
     mainNavItemsFor,
     organizationNavItems,
     okrNavItem,
@@ -212,6 +213,17 @@ export function useShellNavigation(): ShellNavigation {
             gradient: workspaceGradient(workspace.type, workspace.color),
         };
     });
+    // The Hiring space sits with the workspaces (it is styled like one).
+    const hiringEntry: NavStackEntry | null = features?.hiring
+        ? {
+              key: 'hiring',
+              label: hiringNavItem.title,
+              href: hiringNavItem.href,
+              active: isActivePath(hiringNavItem, currentUrl),
+              icon: hiringNavItem.icon,
+              gradient: 'bg-grad-indigo',
+          }
+        : null;
     const allWorkspaces: NavStackEntry = {
         key: 'all-workspaces',
         label: 'Semua workspace',
@@ -234,8 +246,17 @@ export function useShellNavigation(): ShellNavigation {
                     ) ?? [],
             ),
         })),
-        { key: 'all', label: null, entries: [allWorkspaces] },
+        {
+            key: 'all',
+            label: null,
+            entries: hiringEntry
+                ? [hiringEntry, allWorkspaces]
+                : [allWorkspaces],
+        },
     ];
+    if (hiringEntry) {
+        workspaceEntries.push(hiringEntry);
+    }
     workspaceEntries.push(allWorkspaces);
 
     // A one-item stack is just a detour: roles that only see the org chart

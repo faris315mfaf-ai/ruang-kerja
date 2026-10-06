@@ -1,9 +1,13 @@
 <?php
 
+use App\Models\Candidate;
+use App\Models\CandidateNote;
 use App\Models\Channel;
 use App\Models\DailyReport;
 use App\Models\DailyReportItem;
 use App\Models\EmployeeRequest;
+use App\Models\HiringPosition;
+use App\Models\InterviewScore;
 use App\Models\Meeting;
 use App\Models\MeetingActionItem;
 use App\Models\MeetingMinutes;
@@ -18,6 +22,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
 use Carbon\CarbonImmutable;
+use Database\Seeders\HiringDemoSeeder;
 use Tests\Support\PerformanceFixtures as P;
 
 /*
@@ -431,4 +436,63 @@ it('keeps laporan harian and pengumuman free of N+1', function () {
         '/pengumuman' => ['hr', 36],
         '/pengumuman/spanduk' => ['anggota', 10],
     ]);
+});
+
+it('keeps Hiring free of N+1', function () {
+    $position = HiringPosition::query()->where('title', HiringDemoSeeder::POSITION_TITLE)->firstOrFail();
+    $candidate = Candidate::query()->where('position_id', $position->id)->where('stage', 'final_review')->firstOrFail();
+    $pages = [
+        '/hiring' => ['hr', 34],
+        '/hiring/lowongan' => ['hr', 34],
+        "/hiring/lowongan/{$position->id}" => ['hr', 37],
+        '/hiring/pengaturan' => ['hr', 34],
+        "/hiring/kandidat/{$candidate->id}" => ['hr', 42],
+        "/hiring/kandidat/{$candidate->id}?tab=keputusan" => ['faris', 42],
+        "/hiring/kandidat/{$candidate->id}?tab=wawancara" => ['programmer', 44],
+    ];
+
+    $first = [];
+
+    foreach ($pages as $url => [$who]) {
+        P::queries($who, $url);
+        $first[$url] = P::queries($who, $url);
+    }
+
+    // More candidates (with checklists), more interviewers' points and notes.
+    foreach (range(1, 8) as $i) {
+        Candidate::factory()->forPosition($position)->withChecklist()->create();
+    }
+
+    foreach ($position->questions()->get() as $question) {
+        foreach (User::query()->where('status', 'active')->whereNotIn('id', $position->interviewer_ids)->orderBy('email')->limit(3)->get() as $extra) {
+            InterviewScore::query()->firstOrCreate(
+                ['candidate_id' => $candidate->id, 'question_id' => $question->id, 'interviewer_id' => $extra->id],
+                ['score' => 3],
+            );
+        }
+    }
+
+    foreach (User::query()->whereIn('id', $position->interviewer_ids)->get() as $person) {
+        CandidateNote::query()->create(['candidate_id' => $candidate->id, 'author_id' => $person->id, 'body' => 'Catatan tambahan.']);
+    }
+
+    $failures = [];
+
+    foreach ($pages as $url => [$who, $budget]) {
+        $second = P::queries($who, $url);
+
+        if (getenv('QUERY_COUNTS')) {
+            fwrite(STDERR, sprintf("QUERIES %-8s %-50s %3d -> %3d (budget %d)\n", $who, $url, $first[$url], $second, $budget));
+        }
+
+        if ($second > $first[$url]) {
+            $failures[] = "{$who} {$url}: {$first[$url]} -> {$second} queries after adding rows (N+1)";
+        }
+
+        if ($first[$url] > $budget) {
+            $failures[] = "{$who} {$url}: {$first[$url]} queries, budget {$budget}";
+        }
+    }
+
+    expect($failures)->toBe([]);
 });

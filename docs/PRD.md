@@ -77,7 +77,7 @@ Setiap karyawan punya satu **atasan langsung** (`manager_id`). Atasan langsung m
 
 | Fase | Isi | Target |
 |---|---|---|
-| **Fase 1 — MVP inti** | Auth & organisasi, absensi web, pengajuan + approval, workspace, task Kanban, komentar/mention, integrasi Drive & Google Docs, notifikasi in-app + email, dashboard, **portofolio & tracking proyek (Direksi)**, ekspor rekap | 8–10 minggu |
+| **Fase 1 — MVP inti** | Auth & organisasi, **Hiring/rekrutmen (M11, keputusan pemilik 6 Okt 2026)**, absensi web, pengajuan + approval, workspace, task Kanban, komentar/mention, integrasi Drive & Google Docs, notifikasi in-app + email, dashboard, **portofolio & tracking proyek (Direksi)**, ekspor rekap | 8–10 minggu |
 | **Fase 2 — Kolaborasi realtime** | Chat (channel + DM), catatan internal realtime (Tiptap + Yjs), Google Calendar + Meet, notifikasi WhatsApp, task berulang, ekspor payroll lanjutan | +6–8 minggu |
 | **Fase 3 — Mobile & perangkat** | Aplikasi React Native (Expo), anti fake-GPS native, face recognition + liveness, mesin fingerprint (ZKTeco ADMS), KPI/OKR divisi | +8–10 minggu |
 
@@ -249,6 +249,14 @@ Status kesehatan **ditetapkan PIC**, bukan dihitung otomatis. Penanda sistem dit
 **Layar:** Dashboard Direksi = portofolio (M7). **Detail proyek** (tab Ringkasan di workspace proyek): KPI proyek, grafik burn-up (lingkup vs selesai vs ideal), milestone, update terbaru + riwayat, risiko terbuka, tugas terlambat, tim & beban, kotak arahan Direksi. Tab Tugas/Dokumen/File/Aktivitas tetap seperti workspace biasa.
 
 **Akses:** Direksi melihat semua proyek. Kepala Divisi melihat proyek yang melibatkan divisinya. Anggota melihat proyek tempat ia menjadi anggota. Hanya PIC (dan admin workspace) yang menulis update proyek dan mengubah milestone.
+
+### M11. Hiring (keputusan pemilik 6 Okt 2026)
+
+HR punya ruang khusus **Hiring** untuk proses rekrutmen (rincian: `docs/fitur/hiring.md`):
+- Lowongan dengan pertanyaan wawancara, **pewawancara** (karyawan non-HR, "tim luar") dan **penyetuju akhir** (bawaan diatur HR, mis. Faris & Dio; bisa diubah per lowongan).
+- Pelamar mengisi **Google Form** dan otomatis masuk lewat Google Apps Script (webhook bertanda tangan HMAC, tanpa kredensial Google di server); HR juga bisa menambah kandidat manual.
+- Tahap: Masuk → Seleksi berkas → Wawancara → Penilaian → Keputusan akhir → Diterima/Ditolak. Profil kandidat (data & tautan CV, jawaban formulir), checklist per pemeriksa, jawaban kandidat (diisi HR) dan poin per pewawancara per pertanyaan, notulensi, keputusan akhir (semua penyetuju setuju → diterima; satu menolak → ditolak).
+- Akses: HR & Super Admin penuh; pewawancara/penyetuju hanya lowongan yang ditugaskan; lainnya tidak melihat ruang ini. Tidak ada ekspor data pelamar.
 
 ### M8. Pengaturan & Admin
 

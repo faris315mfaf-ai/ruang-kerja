@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Workspaces;
 
+use App\Domain\Hiring\Queries\HiringOverview;
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Organization\Enums\Role;
 use App\Domain\Tasks\Enums\TaskStatusCategory;
@@ -64,6 +65,8 @@ class WorkspaceController extends Controller
                 'project' => Gate::allows('create', [Workspace::class, WorkspaceType::Project]),
             ],
             'teams' => fn (): array => $this->linkableTeams($user),
+            // The Hiring space as a special card (null without access; docs/fitur/hiring.md).
+            'hiring' => fn (): ?array => app(HiringOverview::class)->card($user),
         ]);
     }
 

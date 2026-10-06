@@ -216,6 +216,17 @@ export const chatNavItem: AppNavItem = {
 export const roleDashboardNavItem: AppNavItem = {
     title: 'Dashboard jabatan',
     href: '/peran',
+    matchPrefix: true,
+};
+
+/**
+ * "Hiring" (/hiring): the recruitment space, shown as a special entry of the
+ * Workspace stack / mobile Menu for HR, Super Admin and the people assigned
+ * as interviewer or final approver (shared prop `features.hiring`).
+ */
+export const hiringNavItem: AppNavItem = {
+    title: 'Hiring',
+    href: '/hiring',
     icon: BriefcaseBusiness,
     matchPrefix: true,
 };

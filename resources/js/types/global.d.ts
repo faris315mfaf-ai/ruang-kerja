@@ -26,6 +26,8 @@ declare module '@inertiajs/core' {
                 automation: boolean;
                 notes: boolean;
                 meetings: boolean;
+                /** The signed-in user may open /hiring (HR, Super Admin, assigned reviewers). */
+                hiring?: boolean;
                 role_dashboards: boolean;
             };
             /** Obrolan: channels with unread messages; null when the feature is off. */

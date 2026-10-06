@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { EmptyState } from '@/components/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { HiringWorkspaceCard } from '@/features/hiring/hiring-workspace-card';
+import type { HiringOverview } from '@/features/hiring/types';
 import type { WorkspaceRole } from '@/features/tasks/types';
 import {
     CreateWorkspaceDialog,
@@ -40,6 +42,8 @@ type Props = {
     filter: WorkspaceGroupKey | null;
     can_create: CreateAbilities;
     teams: { id: string; name: string }[];
+    /** The Hiring space card; null without access (docs/fitur/hiring.md). */
+    hiring?: HiringOverview | null;
 };
 
 /** "Proyek · 9 anggota" · "Pribadi · Hanya Anda". */
@@ -152,6 +156,7 @@ export default function WorkspaceIndex({
     filter: initialFilter,
     can_create,
     teams,
+    hiring,
 }: Props) {
     const [creating, setCreating] = useState(false);
     const [filter, setFilter] = useState<WorkspaceFilter>(
@@ -210,7 +215,7 @@ export default function WorkspaceIndex({
                     )}
                 </header>
 
-                {workspaces.length === 0 ? (
+                {workspaces.length === 0 && !hiring ? (
                     <EmptyState
                         icon={Users}
                         title="Belum ada workspace"
@@ -218,6 +223,13 @@ export default function WorkspaceIndex({
                     />
                 ) : (
                     <>
+                        {hiring && (
+                            <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(280px,100%),1fr))] gap-3 md:gap-4">
+                                <li className="min-w-0">
+                                    <HiringWorkspaceCard overview={hiring} />
+                                </li>
+                            </ul>
+                        )}
                         <WorkspaceGroupChips
                             value={filter}
                             counts={counts}

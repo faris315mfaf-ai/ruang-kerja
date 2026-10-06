@@ -54,6 +54,10 @@ enum NotificationType: string
     case PasswordSetByHr = 'account.password_set_by_hr';
     // Laporan progres harian (keputusan pemilik 6 Okt 2026): 16.30 reminder.
     case ReportReminder = 'report.reminder';
+    // Hiring (owner decision 6 Oct 2026, docs/fitur/hiring.md)
+    case HiringCandidateReceived = 'hiring.candidate_received';
+    case HiringDecisionNeeded = 'hiring.decision_needed';
+    case HiringCandidateDecided = 'hiring.candidate_decided';
 
     // System (Sprint 8)
     case SystemAnnouncement = 'system.announcement';
@@ -91,6 +95,9 @@ enum NotificationType: string
             self::PasswordResetRequested => 'Permintaan reset kata sandi',
             self::PasswordSetByHr => 'Kata sandi diatur ulang',
             self::ReportReminder => 'Pengingat laporan harian',
+            self::HiringCandidateReceived => 'Kandidat baru',
+            self::HiringDecisionNeeded => 'Keputusan kandidat',
+            self::HiringCandidateDecided => 'Kandidat diputus',
             self::SystemAnnouncement => 'Pengumuman',
             self::SystemTest => 'Notifikasi uji',
         };
@@ -121,6 +128,7 @@ enum NotificationType: string
             self::MeetingInvited, self::MeetingStarting, self::MinutesFinalized, self::ActionItemDue => NotificationEvent::Meeting,
             self::PasswordResetRequested, self::PasswordSetByHr => NotificationEvent::AccountSecurity,
             self::ReportReminder => NotificationEvent::ReportReminder,
+            self::HiringCandidateReceived, self::HiringDecisionNeeded, self::HiringCandidateDecided => NotificationEvent::HiringActivity,
             self::SystemAnnouncement, self::SystemTest => NotificationEvent::System,
         };
     }
@@ -160,6 +168,9 @@ enum NotificationType: string
             self::ActionItemDue => 'calendar-clock',
             self::PasswordResetRequested, self::PasswordSetByHr => 'key',
             self::ReportReminder => 'clipboard',
+            self::HiringCandidateReceived => 'user-plus',
+            self::HiringDecisionNeeded => 'check-check',
+            self::HiringCandidateDecided => 'user-check',
             self::SystemAnnouncement => 'megaphone',
             self::SystemTest => 'bell',
         };
@@ -182,6 +193,7 @@ enum NotificationType: string
             self::ProjectDecisionResolved => 'success',
             self::MeetingInvited, self::MinutesFinalized => 'info',
             self::MeetingStarting, self::ActionItemDue => 'warning',
+            self::HiringCandidateReceived, self::HiringDecisionNeeded, self::HiringCandidateDecided => 'info',
             self::TaskAssigned, self::TaskCommented, self::RequestCanceled, self::ChatMessage => 'neutral',
             self::AutomationNotify => 'primary',
         };
@@ -195,7 +207,7 @@ enum NotificationType: string
     {
         return match ($this) {
             self::TaskOverdue, self::RequestSubmitted, self::RequestRevisionRequested,
-            self::ProjectUpdateRequested, self::ProjectDecisionNeeded, self::ActionItemDue, self::PasswordResetRequested => true,
+            self::ProjectUpdateRequested, self::ProjectDecisionNeeded, self::ActionItemDue, self::PasswordResetRequested, self::HiringDecisionNeeded => true,
             default => false,
         };
     }

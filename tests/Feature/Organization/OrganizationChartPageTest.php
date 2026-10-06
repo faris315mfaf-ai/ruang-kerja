@@ -18,7 +18,7 @@ it('shows the org chart to every role except staff', function (string $email, bo
             ->component('organization/structure')
             ->where('chart.board.code', 'DIR')
             ->has('chart.divisions', 5)
-            ->where('chart.stats.people', 22)
+            ->where('chart.stats.people', 24) // + Faris & Dio (Hiring demo accounts)
             ->where('chart.divisions.1.code', 'OPS')
             ->where('chart.divisions.1.teams.0.lead.name', 'Sari Wulandari')
             ->where('can.manageEmployees', $manageEmployees)

@@ -16,7 +16,7 @@ it('seeds demo Inbox content idempotently', function () {
         ->and(InboxNotification::query()->visibleTo($dimas)->needsAction()->count())->toBe(3)
         ->and(InboxNotification::query()->visibleTo($dimas)->whereNull('read_at')->count())->toBe(6)
         ->and(InboxNotification::query()->visibleTo($rizky)->count())->toBe(1)
-        ->and(InboxNotification::query()->count())->toBe(15);
+        ->and(InboxNotification::query()->count())->toBe(17); // + welcome notices of Faris & Dio (Hiring)
 
     $mention = InboxNotification::query()->visibleTo($dimas)->where('type', 'mention')->sole();
     expect($mention->data['actor']['name'])->toBe('Sari Wulandari')

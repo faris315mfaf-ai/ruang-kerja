@@ -21,7 +21,8 @@ it('seeds the demo users in the testing environment, idempotently', function () 
     $this->seed(DatabaseSeeder::class);
     $this->seed(DatabaseSeeder::class);
 
-    expect(User::query()->count())->toBe(24)
+    // 24 + Faris & Dio (Hiring final approvers, 6 Oct 2026).
+    expect(User::query()->count())->toBe(26)
         ->and(RoleModel::query()->count())->toBe(5);
 
     foreach (DemoAccounts::all() as $account) {

@@ -41,6 +41,8 @@ return [
         'account.security' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
         // Laporan progres harian (keputusan pemilik 6 Okt 2026): in-app only by default.
         'report.reminder' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
+        // Hiring: applicant data stays in the app (email off by default, text without names).
+        'hiring.activity' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'system' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'digest.daily' => ['email' => true],
     ],

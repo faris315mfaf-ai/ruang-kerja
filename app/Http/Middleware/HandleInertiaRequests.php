@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Domain\Chat\Queries\ChatInbox;
+use App\Domain\Hiring\Services\HiringAccess;
 use App\Domain\Notifications\Services\InboxQuery;
 use App\Domain\Organization\Demo\DemoAccounts;
 use App\Domain\Requests\Services\ApprovalQueue;
@@ -94,6 +95,8 @@ class HandleInertiaRequests extends Middleware
                 'automation' => (bool) config('features.automation'),
                 'notes' => (bool) config('features.notes'),
                 'meetings' => (bool) config('features.meetings'),
+                // `hiring`: may open /hiring (HR, Super Admin, assigned reviewers; one EXISTS query for the others).
+                'hiring' => $user !== null && app(HiringAccess::class)->canEnter($user),
                 'role_dashboards' => $user !== null && (bool) config('features.role_dashboards') && app(RoleDashboardAccess::class)->hasAny($user, $position?->dashboard_role),
             ],
             // Obrolan (F2-1): channels with unread messages (Dock tile / Menu badge). Closure: skipped on
