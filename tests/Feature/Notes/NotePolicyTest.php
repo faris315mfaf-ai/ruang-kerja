@@ -94,7 +94,7 @@ it('applies the note matrix', function (string $access, string $actor, string $v
     'workspace · invited (view)' => ['workspace', 'invited', 'allow', 'deny', 'deny', 'deny'],
     'workspace · anggota' => ['workspace', 'anggota', 'hidden', 'hidden', 'hidden', 'hidden'],
     'workspace · kadiv' => ['workspace', 'kadiv', 'hidden', 'hidden', 'hidden', 'hidden'],
-    'workspace · hr' => ['workspace', 'hr', 'hidden', 'hidden', 'hidden', 'hidden'],
+    'workspace · hr' => ['workspace', 'hr', 'allow', 'deny', 'deny', 'deny'], // HR reads every shared workspace (keputusan pemilik 6 Okt 2026)
     'workspace · direksi' => ['workspace', 'direksi', 'allow', 'deny', 'deny', 'deny'],
     'workspace · super admin' => ['workspace', 'super_admin', 'allow', 'deny', 'deny', 'deny'],
     'workspace · other company' => ['workspace', 'foreign', 'hidden', 'hidden', 'hidden', 'hidden'],

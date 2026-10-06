@@ -246,9 +246,22 @@ it('notifies roles only when they can see the task', function () {
 
     moveTo($this->task, 'review');
 
-    // Private workspace: HR (not a member) is skipped, Direksi sees every shared workspace.
-    Notification::assertNotSentTo($hr, AutomationNotification::class);
+    // Direksi and HR see every shared workspace (read only, keputusan pemilik 6 Okt 2026).
+    Notification::assertSentTo($hr, AutomationNotification::class);
     Notification::assertSentTo($direksi, AutomationNotification::class);
+});
+
+it('skips a role that cannot see the task', function () {
+    $outsider = User::factory()->withRole(Role::KepalaDivisi)->create();
+    Division::factory()->headedBy($outsider)->create();
+    automationRule(['type' => 'task_moved', 'category' => 'review'], [
+        ['type' => 'notify', 'target' => ['kind' => 'role', 'role' => 'kepala_divisi']],
+    ]);
+
+    moveTo($this->task, 'review');
+
+    // Private workspace, not a member and not their division: skipped.
+    Notification::assertNotSentTo($outsider, AutomationNotification::class);
 });
 
 it('notifies the head of the division and the whole workspace', function () {

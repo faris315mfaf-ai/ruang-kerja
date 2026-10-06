@@ -144,22 +144,19 @@ it('lets the direct manager open the page without the personal workspace and aud
 });
 
 it('hides workspaces the viewer cannot see', function () {
-    $private = Workspace::factory()->create(['key' => 'RHS', 'name' => 'Rahasia']);
+    $private = Workspace::factory()->create(['key' => 'RHS', 'name' => 'Rahasia', 'type' => WorkspaceType::Team, 'visibility' => 'private']);
     addMember($private, $this->subject);
     $task = Task::factory()->inStatus(statusOf($private, 'done'))->create(['workspace_id' => $private->id, 'completed_at' => now()->subDay()]);
     $task->assignees()->attach($this->subject->id, ['assigned_at' => now()]);
-    $hr = User::factory()->withRole(Role::Hr)->create();
-
-    $this->actingAs($hr)
+    $this->actingAs($this->manager)
         ->get("/kinerja/{$this->subject->id}?periode=bulan")
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            // Neither OPS nor RHS is visible to HR (private, not a member): names hidden.
-            ->has('performance.by_workspace', 1)
-            ->where('performance.by_workspace.0.workspace.name', 'Workspace lain')
-            ->where('performance.by_workspace.0.done', 3)
+            // The manager owns OPS but is not in RHS (private): its name is hidden.
+            ->has('performance.by_workspace', 2)
+            ->where('performance.by_workspace.1.workspace.name', 'Workspace lain')
             ->where('performance.overdue_count', 1)
-            ->has('performance.overdue', 0));
+            ->has('performance.overdue', 1)); // OPS overdue task: the manager can see it
 });
 
 it('answers 404 to everyone else', function () {

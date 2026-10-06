@@ -26,7 +26,7 @@ beforeEach(function () {
     $this->note = ManagementNote::factory()->ownedBy($this->direksi)->create(['body' => 'Telepon vendor', 'position' => 'V']);
 });
 
-function noteActor(string $who): User
+function managementNoteActor(string $who): User
 {
     $company = test()->direksi->company_id;
 
@@ -42,7 +42,7 @@ function noteActor(string $who): User
     };
 }
 
-function noteVerdict(User $user, string $ability, mixed $arguments): string
+function managementNoteVerdict(User $user, string $ability, mixed $arguments): string
 {
     $response = Gate::forUser($user)->inspect($ability, $arguments);
 
@@ -50,13 +50,13 @@ function noteVerdict(User $user, string $ability, mixed $arguments): string
 }
 
 it('applies the policy matrix', function (string $who, string $create, string $view, string $update, string $delete) {
-    $user = noteActor($who);
+    $user = managementNoteActor($who);
 
     expect([
-        noteVerdict($user, 'create', ManagementNote::class),
-        noteVerdict($user, 'view', $this->note),
-        noteVerdict($user, 'update', $this->note),
-        noteVerdict($user, 'delete', $this->note),
+        managementNoteVerdict($user, 'create', ManagementNote::class),
+        managementNoteVerdict($user, 'view', $this->note),
+        managementNoteVerdict($user, 'update', $this->note),
+        managementNoteVerdict($user, 'delete', $this->note),
     ])->toBe([$create, $view, $update, $delete]);
 })->with([
     //                   create   view      update    delete
@@ -103,7 +103,7 @@ it('creates, edits, ticks and deletes a note over HTTP', function () {
 });
 
 it('hides other people\'s notes behind 404 before validating', function (string $who) {
-    $user = noteActor($who);
+    $user = managementNoteActor($who);
 
     $this->actingAs($user)->patchJson("/catatan-tindakan/{$this->note->id}", ['body' => ''])->assertNotFound();
     $this->actingAs($user)->patchJson("/catatan-tindakan/{$this->note->id}", ['done' => true])->assertNotFound();
@@ -113,7 +113,7 @@ it('hides other people\'s notes behind 404 before validating', function (string 
 })->with(['direksi', 'hr', 'super_admin', 'anggota', 'other_company']);
 
 it('refuses notes to people outside management', function (string $who) {
-    $this->actingAs(noteActor($who))->postJson('/catatan-tindakan', ['body' => 'Coba'])->assertForbidden();
+    $this->actingAs(managementNoteActor($who))->postJson('/catatan-tindakan', ['body' => 'Coba'])->assertForbidden();
 })->with(['kepala_divisi', 'anggota']);
 
 it('validates the text and the due date', function () {

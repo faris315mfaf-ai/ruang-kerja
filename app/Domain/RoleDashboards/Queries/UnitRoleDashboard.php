@@ -56,8 +56,14 @@ final class UnitRoleDashboard
      */
     public function divisions(User $viewer): Collection
     {
-        return $this->access->can($viewer, DashboardView::Division)
-            ? $this->access->divisions($viewer, DashboardView::Division)
+        if ($this->access->can($viewer, DashboardView::Division)) {
+            return $this->access->divisions($viewer, DashboardView::Division);
+        }
+
+        // Direksi no longer get the Kepala Divisi dashboard (keputusan pemilik
+        // 6 Okt 2026) but still look over any division job's shoulder here.
+        return $this->access->can($viewer, DashboardView::Direksi)
+            ? Division::query()->visibleTo($viewer)->where('is_board', false)->orderBy('name')->get()
             : new Collection;
     }
 

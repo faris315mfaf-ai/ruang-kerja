@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AnnouncementBanner } from '@/features/announcements/announcement-banner';
 import { DireksiDesktop } from '@/features/monitoring/direksi.desktop';
 import { DireksiMobile } from '@/features/monitoring/direksi.mobile';
 import {
@@ -33,6 +34,8 @@ export default function DireksiDashboard(props: DireksiProps) {
     return (
         <>
             <Head title="Dashboard Direksi" />
+            {/* Pengumuman (keputusan pemilik 6 Okt 2026), loaded apart from the page. */}
+            <AnnouncementBanner className="mb-5" />
             {breakpoint === null ? (
                 <div className="flex flex-col gap-5" aria-busy>
                     <Skeleton className="h-28 rounded-panel" />
