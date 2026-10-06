@@ -208,13 +208,20 @@
     /* Mobile app bar (title row) and the floating tab bar capsule
        (TabBar.dc.html: 70px tall, 12px from the sides, 14px above the safe
        area). --tab-bar-height is the space it reserves above the safe area
-       (lift + capsule + 8px breathing room), so anything offset by it
-       (content padding, FAB, sticky action bars, toasts) clears the capsule. */
+       (lift + capsule + raised Absen button + 8px breathing room), so
+       anything offset by it (content padding, FAB, sticky action bars,
+       toasts) clears the capsule and the centre button above it. */
     --app-bar-height: 56px;
     --tab-bar-capsule: 70px;
     --tab-bar-inset: 12px;
     --tab-bar-lift: 14px;
-    --tab-bar-height: calc(var(--tab-bar-capsule) + var(--tab-bar-lift) + 8px);
+    /* How far the centre Absen button (54px, -26px margin, 4px ring) rises
+       above the capsule's top edge (docs/PLATFORM.md §2.1). */
+    --tab-bar-raise: 16px;
+    --tab-bar-height: calc(
+        var(--tab-bar-capsule) + var(--tab-bar-lift) + var(--tab-bar-raise) +
+            8px
+    );
 
     /* Desktop shell (MenuBar.dc.html + Dock.dc.html): 64px glass menu bar,
        content column max 1280px with 40px padding, floating Dock. */
