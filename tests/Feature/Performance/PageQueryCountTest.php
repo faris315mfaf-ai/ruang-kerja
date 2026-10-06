@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Channel;
 use App\Models\EmployeeRequest;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
@@ -123,7 +124,8 @@ it('keeps inbox, search, settings and the menu free of N+1', function () {
         // +3 when the seeded user happens to have a task due today: the digest
         // preview's "Tenggat hari ini" section (list, workspaces, count) only
         // queries when it has rows. Constant, not N+1.
-        '/pengaturan/notifikasi' => ['anggota', 45],
+        // +4 since F2-1: shared prop chat.unread and the chat.message preference row.
+        '/pengaturan/notifikasi' => ['anggota', 49],
         '/menu' => ['anggota', 29],
     ]);
 });
@@ -145,5 +147,18 @@ it('keeps the admin and organization pages free of N+1', function () {
 it('keeps Data Saya free of N+1', function () {
     assertQueryBudgets([
         '/privasi' => ['kadiv', 66],
+    ]);
+});
+
+it('keeps Obrolan free of N+1', function () {
+    config(['features.chat' => true]);
+    $plq = Channel::query()->where('type', 'workspace')
+        ->whereIn('workspace_id', Workspace::query()->where('key', 'PLQ')->select('id'))
+        ->firstOrFail();
+
+    assertQueryBudgets([
+        '/obrolan' => ['kadiv', 36],
+        "/obrolan/{$plq->id}" => ['kadiv', 50],
+        "/obrolan/{$plq->id}/pesan" => ['kadiv', 18],
     ]);
 });

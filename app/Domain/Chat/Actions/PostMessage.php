@@ -66,9 +66,11 @@ final class PostMessage
             $this->attachments->handle($channel, $message, $author, $driveFileIds);
             $mentioned = $this->mentions->handle($channel, $message, $author, $prepared['mentioned_ids']);
 
+            // The author has read up to their own message; the pointer only moves forward.
             ChannelMember::query()
                 ->where('channel_id', $channel->id)
                 ->where('user_id', $author->id)
+                ->where(fn ($query) => $query->whereNull('last_read_message_id')->orWhere('last_read_message_id', '<', $message->id))
                 ->update(['last_read_message_id' => $message->id, 'updated_at' => now()]);
 
             $this->notifyDirect($channel, $message, $author, $mentioned);

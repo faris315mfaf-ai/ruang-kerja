@@ -6,6 +6,10 @@ use App\Domain\Attendance\Enums\AttendanceStatus;
 use App\Domain\Attendance\Enums\LogFlag;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\AttendanceLog;
+use App\Domain\Chat\Actions\CreateChannel;
+use App\Domain\Chat\Actions\OpenDirectConversation;
+use App\Domain\Chat\Actions\PostMessage;
+use App\Domain\Chat\Actions\ToggleMessageReaction;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Planner\Actions\PlanTask;
 use App\Domain\Planner\Enums\PlanBucket;
@@ -16,6 +20,7 @@ use App\Domain\Tasks\Actions\CreateTask;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\AuditLog;
+use App\Models\Channel;
 use App\Models\DriveFile;
 use App\Models\InboxNotification;
 use App\Models\LeaveType;
@@ -191,5 +196,38 @@ final class PerformanceFixtures
         Milestone::factory()->count(5)->for($project, 'workspace')->create();
         ProjectRisk::factory()->count(5)->for($project, 'workspace')->create();
         ProjectUpdate::factory()->count(5)->for($project, 'workspace')->create(['author_id' => $kadiv->id]);
+
+        // Obrolan: more channels, DMs, threads, reactions and mentions for the Kepala Divisi.
+        $post = app(PostMessage::class);
+        $react = app(ToggleMessageReaction::class);
+
+        foreach (range(1, 3) as $i) {
+            $channel = app(CreateChannel::class)->handle($kadiv, ['name' => "volume {$round} {$i}", 'member_ids' => [$anggota->id, $hr->id]]);
+            $dm = app(OpenDirectConversation::class)->handle($kadiv, [$team[$i]->id ?? $hr->id]);
+
+            foreach ([$channel, $dm] as $conversation) {
+                $root = $post->handle($conversation, $anggota->id === $kadiv->id ? $hr : $anggota, richDocument('Pesan volume '.$i));
+                $post->handle($conversation, $kadiv, richDocument('Balasan '.$i), [], $root);
+                $react->handle($root, $kadiv, '👍');
+            }
+        }
+
+        $plqChannel = Channel::query()->where('type', 'workspace')->whereIn('workspace_id', Workspace::query()->where('key', 'PLQ')->select('id'))->first();
+
+        if ($plqChannel !== null) {
+            foreach (range(1, 6) as $i) {
+                $root = $post->handle($plqChannel, $kadiv, richDocument('Diskusi volume '.$round.'.'.$i));
+                $post->handle($plqChannel, $kadiv, richDocument('Lanjutan '.$i), [], $root);
+                $react->handle($root, $kadiv, '🎉');
+            }
+        }
     }
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function richDocument(string $text): array
+{
+    return ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text]]]]];
 }
