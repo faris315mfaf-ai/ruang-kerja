@@ -1,5 +1,7 @@
 # Dashboard per peran SPKD
 
+> **Status:** **Akan dibangun** (keputusan pemilik 6 Okt 2026): backend nyata dikerjakan berikutnya; dokumen ini menjelaskan keadaan pratinjau saat ini. Panduan pemakaian: [PANDUAN-PRATINJAU.md](PANDUAN-PRATINJAU.md).
+>
 > Pratinjau Fase 3 · dibangun Agen E · rute `/peran/{dirut,direktur,hr,corsec,marketing,programming,implementer,analis}` · data contoh, tidak menyimpan apa pun. Indeks: [README](README.md).
 
 ## 1. Tujuan & masalah

@@ -1,12 +1,14 @@
 import { Head, Link } from '@inertiajs/react';
-import { ChevronRight } from 'lucide-react';
+import { BookOpen, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { GUIDE_URL, moduleStatusBadge } from '@/features/prototype/guide';
 import type { PrototypeModule } from '@/features/prototype/modules';
 import { PROTOTYPE_MODULES } from '@/features/prototype/modules';
 import { cn, focusRing } from '@/lib/utils';
 
 function ModuleCard({ module }: { module: PrototypeModule }) {
     const Icon = module.icon;
+    const status = moduleStatusBadge(module.key);
 
     return (
         <article className="flex min-w-0 flex-col gap-4 rounded-panel border border-border bg-surface p-5 shadow-card md:p-6">
@@ -26,6 +28,11 @@ function ModuleCard({ module }: { module: PrototypeModule }) {
                         <Badge variant="status" tone="neutral">
                             {module.sprint}
                         </Badge>
+                        {status && (
+                            <Badge variant="status" tone={status.tone} dot>
+                                {status.label}
+                            </Badge>
+                        )}
                     </div>
                     <p className="text-[15px] leading-[22px] text-text-muted">
                         {module.description}
@@ -58,6 +65,40 @@ function ModuleCard({ module }: { module: PrototypeModule }) {
     );
 }
 
+/** Entry to /pratinjau/panduan: what exists, what does not, how to use it. */
+function GuideCard() {
+    return (
+        <Link
+            href={GUIDE_URL}
+            prefetch
+            className={cn(
+                'flex min-w-0 items-center gap-4 rounded-panel border border-border bg-surface p-5 shadow-card transition-colors duration-120 ease-brand hover:border-border-strong md:p-6',
+                focusRing,
+            )}
+        >
+            <span
+                aria-hidden
+                className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-grad-soft text-link"
+            >
+                <BookOpen className="size-6" strokeWidth={1.9} />
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="text-title font-bold">Panduan pratinjau</span>
+                <span className="text-[15px] leading-[22px] text-text-muted">
+                    Fitur yang sudah ada dan yang belum, cara memakai tiap
+                    layar, status modul (akan dibangun atau ditahan), dan apa
+                    yang dibutuhkan agar menjadi nyata.
+                </span>
+            </span>
+            <ChevronRight
+                aria-hidden
+                className="size-5 shrink-0 text-text-subtle"
+                strokeWidth={2.4}
+            />
+        </Link>
+    );
+}
+
 /** /pratinjau — index of every Fase 2 & 3 front-end preview. */
 export default function PrototypeHub() {
     const phases = ['Fase 2', 'Fase 3'] as const;
@@ -74,6 +115,7 @@ export default function PrototypeHub() {
                         backend dibangun. Semua data di sini adalah contoh.
                     </p>
                 </header>
+                <GuideCard />
                 {phases.map((phase) => (
                     <section
                         key={phase}

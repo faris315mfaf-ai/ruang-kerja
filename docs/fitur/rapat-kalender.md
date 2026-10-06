@@ -1,5 +1,7 @@
 # Rapat, notulen & kalender (F2-3)
 
+> **Status:** Rapat & notulen serta Kalender & jadwal manajemen **Akan dibangun** (keputusan pemilik 6 Okt 2026): backend nyata dikerjakan berikutnya; dokumen ini menjelaskan keadaan pratinjau saat ini. Integrasi Google Calendar/Meet sungguhan mengikuti status **ditahan** integrasi Google. Panduan pemakaian: [PANDUAN-PRATINJAU.md](PANDUAN-PRATINJAU.md).
+>
 > Pratinjau Fase 2 · dibangun Agen B · rute `/rapat`, `/rapat/baru`, `/rapat/{meeting}`, `/rapat/{meeting}/notulen`, `/kalender`, `/manajemen/jadwal` · data contoh, tidak menyimpan apa pun. Indeks: [README](README.md).
 
 ## 1. Tujuan & masalah
@@ -38,7 +40,7 @@ Chip Keadaan "Rapat berlangsung" (`?jam=10.42`) menampilkan banner "Sedang berla
 
 ![Banner rapat sedang berlangsung](img/rapat-kalender/berlangsung-desktop.jpg)
 
-**Pemberitahuan rapat dimulai** (DNotifRapat/MNotifRapat): toast kaca di kanan atas (desktop) atau bottom sheet (ponsel) dengan Gabung, Tunda 5 mnt, Salin tautan, Kabari terlambat.
+**Pemberitahuan rapat dimulai** (DNotifRapat/MNotifRapat): toast kaca di kanan atas (desktop/tablet: Gabung, Tunda 5 mnt) atau bottom sheet (ponsel: Gabung, Salin tautan, Kabari terlambat). Semua aksi hanya toast.
 
 ![Toast pemberitahuan rapat, desktop](img/rapat-kalender/pemberitahuan-desktop.jpg)
 

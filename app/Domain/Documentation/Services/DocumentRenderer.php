@@ -2,6 +2,7 @@
 
 namespace App\Domain\Documentation\Services;
 
+use App\Domain\Documentation\Contracts\DocumentLinks;
 use App\Domain\Documentation\Data\DocumentEntry;
 use App\Domain\Documentation\Data\RenderedDocument;
 use Illuminate\Support\Facades\Cache;
@@ -28,25 +29,28 @@ use RuntimeException;
  * - relative links to other allowlisted docs become in-app links, other
  *   relative links (source files, docs not in the list) are unwrapped to text;
  * - external links open in a new tab with rel="noopener noreferrer";
- * - images are replaced by their alt text (no requests to arbitrary hosts,
- *   repository images are not served).
+ * - images are replaced by their alt text (no requests to arbitrary hosts),
+ *   unless the reading context serves that repository image itself.
+ * Where in-app links and images point is decided by a DocumentLinks context:
+ * AdminDocumentLinks by default, PrototypeGuideLinks for /pratinjau/panduan.
  */
 final class DocumentRenderer
 {
     public const string ID_PREFIX = 'doc';
 
     /** Bump to invalidate cached HTML after changing the rendering. */
-    private const int VERSION = 1;
+    private const int VERSION = 2;
 
     public function __construct(private readonly DocumentCatalog $catalog) {}
 
-    public function render(DocumentEntry $entry): RenderedDocument
+    public function render(DocumentEntry $entry, ?DocumentLinks $links = null): RenderedDocument
     {
-        $key = sprintf('docs:%d:%s', self::VERSION, sha1($entry->absolutePath.'|'.$entry->size.'|'.$entry->modifiedAt));
+        $links ??= new AdminDocumentLinks;
+        $key = sprintf('docs:%d:%s:%s', self::VERSION, $links->key(), sha1($entry->absolutePath.'|'.$entry->size.'|'.$entry->modifiedAt));
 
         /** @var array{html: string, toc: list<array{id: string, text: string, level: int}>} $cached */
-        $cached = Cache::remember($key, config()->integer('docs.cache_ttl_seconds'), function () use ($entry): array {
-            $document = $this->convert($entry);
+        $cached = Cache::remember($key, config()->integer('docs.cache_ttl_seconds'), function () use ($entry, $links): array {
+            $document = $this->convert($entry, links: $links);
 
             return ['html' => $document->html, 'toc' => $document->toc];
         });
@@ -57,8 +61,9 @@ final class DocumentRenderer
     /**
      * Uncached rendering of Markdown text as if it lived at $entry->path.
      */
-    public function convert(DocumentEntry $entry, ?string $markdown = null): RenderedDocument
+    public function convert(DocumentEntry $entry, ?string $markdown = null, ?DocumentLinks $links = null): RenderedDocument
     {
+        $links ??= new AdminDocumentLinks;
         $markdown ??= $this->read($entry);
         $markdown = (string) preg_replace('/<!--.*?-->/s', '', $markdown);
 
@@ -78,8 +83,8 @@ final class DocumentRenderer
         $environment->addExtension(new CommonMarkCoreExtension);
         $environment->addExtension(new GithubFlavoredMarkdownExtension);
         $environment->addExtension(new HeadingPermalinkExtension);
-        $environment->addEventListener(DocumentParsedEvent::class, function (DocumentParsedEvent $event) use ($entry): void {
-            $this->rewriteLinks($event, $entry);
+        $environment->addEventListener(DocumentParsedEvent::class, function (DocumentParsedEvent $event) use ($entry, $links): void {
+            $this->rewriteLinks($event, $entry, $links);
         });
 
         $result = (new MarkdownConverter($environment))->convert($markdown);
@@ -128,7 +133,7 @@ final class DocumentRenderer
         return $toc;
     }
 
-    private function rewriteLinks(DocumentParsedEvent $event, DocumentEntry $entry): void
+    private function rewriteLinks(DocumentParsedEvent $event, DocumentEntry $entry, DocumentLinks $context): void
     {
         $links = [];
         $images = [];
@@ -142,7 +147,7 @@ final class DocumentRenderer
         }
 
         foreach ($images as $image) {
-            $this->unwrap($image);
+            $this->rewriteImage($image, $entry, $context);
         }
 
         foreach ($links as $link) {
@@ -159,16 +164,39 @@ final class DocumentRenderer
                     $link->data->set('attributes/rel', 'noopener noreferrer');
                 }
             } else {
-                $target = $this->resolveDocLink($entry, $url);
+                $target = $this->resolveDocLink($entry, $url, $context);
                 $target === null ? $this->unwrap($link) : $link->setUrl($target);
             }
         }
     }
 
     /**
+     * A relative image the context serves keeps an in-app URL (lazy loaded);
+     * any other image becomes its alt text.
+     */
+    private function rewriteImage(Image $image, DocumentEntry $entry, DocumentLinks $links): void
+    {
+        $url = trim($image->getUrl());
+        $path = $url === '' || str_contains($url, '#') || preg_match('/^[a-z][a-z0-9+.-]*:/i', $url) === 1
+            ? null
+            : $this->resolvePath($entry, $url);
+        $target = $path === null ? null : $links->image($path);
+
+        if ($target === null) {
+            $this->unwrap($image);
+
+            return;
+        }
+
+        $image->setUrl($target);
+        $image->data->set('attributes/loading', 'lazy');
+        $image->data->set('attributes/decoding', 'async');
+    }
+
+    /**
      * In-app URL of a relative link to another allowlisted doc, else null.
      */
-    private function resolveDocLink(DocumentEntry $entry, string $url): ?string
+    private function resolveDocLink(DocumentEntry $entry, string $url, DocumentLinks $links): ?string
     {
         $fragment = '';
 
@@ -177,9 +205,21 @@ final class DocumentRenderer
             $fragment = $fragment === '' ? '' : '#'.self::ID_PREFIX.'-'.$fragment;
         }
 
+        $path = $this->resolvePath($entry, $url);
+        $target = $path === null ? null : $this->catalog->findByPath($path);
+
+        return $target === null ? null : $links->document($target, $fragment);
+    }
+
+    /**
+     * Repository-relative path of a relative URL in $entry (query dropped),
+     * or null when it is empty, absolute or climbs above the repository.
+     */
+    private function resolvePath(DocumentEntry $entry, string $url): ?string
+    {
         $url = rawurldecode((string) strtok($url, '?'));
 
-        if ($url === '' || str_starts_with($url, '/')) {
+        if ($url === '' || str_starts_with($url, '/') || str_contains($url, "\0") || str_contains($url, '\\')) {
             return null;
         }
 
@@ -197,9 +237,7 @@ final class DocumentRenderer
             }
         }
 
-        $target = $this->catalog->findByPath(implode('/', $segments));
-
-        return $target === null ? null : route('admin.docs.show', ['slug' => $target->slug], absolute: false).$fragment;
+        return $segments === [] ? null : implode('/', $segments);
     }
 
     /**
