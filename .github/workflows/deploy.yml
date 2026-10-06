@@ -58,6 +58,7 @@ jobs:
           {
             echo "app=ghcr.io/${owner}/ruangkerja"
             echo "backup=ghcr.io/${owner}/ruangkerja-backup"
+            echo "collab=ghcr.io/${owner}/ruangkerja-collab"
             echo "tag=$(git rev-parse HEAD)"
           } >> "$GITHUB_OUTPUT"
 
@@ -98,6 +99,20 @@ jobs:
             ${{ steps.meta.outputs.backup }}:latest
           cache-from: type=gha,scope=backup
           cache-to: type=gha,mode=max,scope=backup
+
+      # Catatan bersama (FEATURE_NOTES): Hocuspocus/Yjs server, started on the
+      # server with COMPOSE_PROFILES=collab (COLLAB_IMAGE in .env).
+      - name: Build & push collab image
+        uses: docker/build-push-action@v6
+        with:
+          context: collab
+          file: collab/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.collab }}:${{ steps.meta.outputs.tag }}
+            ${{ steps.meta.outputs.collab }}:latest
+          cache-from: type=gha,scope=collab
+          cache-to: type=gha,mode=max,scope=collab
 
   deploy:
     name: Deploy to production
