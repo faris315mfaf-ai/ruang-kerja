@@ -150,6 +150,19 @@ it('keeps Data Saya free of N+1', function () {
     ]);
 });
 
+it('keeps Otomasi and Kinerja saya free of N+1', function () {
+    config(['features.automation' => true]);
+
+    assertQueryBudgets([
+        '/otomasi' => ['kadiv', 40],
+        '/otomasi/berulang' => ['kadiv', 38],
+        '/otomasi/template' => ['kadiv', 42],
+        // Metric blocks are cached per viewer + period (MetricCache).
+        '/kinerja' => ['anggota', 44],
+        '/kinerja?periode=kuartal' => ['anggota', 44],
+    ]);
+});
+
 it('keeps Obrolan free of N+1', function () {
     config(['features.chat' => true]);
     $plq = Channel::query()->where('type', 'workspace')
