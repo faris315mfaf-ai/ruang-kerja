@@ -27,7 +27,7 @@ it('builds Direksi → Divisi → Tim → anggota from the demo organization', f
     $chart = app(OrganizationTree::class)->for($viewer);
 
     expect($chart->companyName)->toBe($viewer->company->name)
-        ->and($chart->stats)->toBe(['divisions' => 5, 'teams' => 2, 'people' => 22])
+        ->and($chart->stats)->toBe(['divisions' => 5, 'teams' => 2, 'people' => 24 /* + Faris & Dio (Hiring demo accounts) */])
         ->and($chart->board?->code)->toBe('DIR')
         ->and($chart->board?->head?->name)->toBe('Hendra Wijaya')
         ->and(names($chart->board->members ?? []))->toBe(['Lestari Anggraini'])
@@ -58,8 +58,8 @@ it('builds Direksi → Divisi → Tim → anggota from the demo organization', f
         ->and($pms->teams[0]->lead?->name)->toBe('Maya Lestari')
         ->and(names($pms->teams[0]->members))->toBe(['Rendi Oktavian']);
 
-    // Admin Sistem has no division and leads nothing.
-    expect(names($chart->unassigned))->toBe(['Admin Sistem']);
+    // Admin Sistem, and the Hiring final approvers Dio & Faris (demo accounts, 6 Oct 2026), have no division.
+    expect(names($chart->unassigned))->toBe(['Admin Sistem', 'Dio', 'Faris']);
 });
 
 it('exposes directory fields only', function () {
