@@ -5,6 +5,7 @@ use App\Domain\Attendance\Jobs\SendCheckInReminders;
 use App\Domain\Auth\Jobs\ExpirePasswordResetRequests;
 use App\Domain\Automation\Jobs\CreateRecurringTasks;
 use App\Domain\Automation\Jobs\RunOverdueAutomations;
+use App\Domain\Hiring\Jobs\PurgeExpiredApplicantData;
 use App\Domain\Meetings\Jobs\SendActionItemReminders;
 use App\Domain\Meetings\Jobs\SendMeetingReminders;
 use App\Domain\Okr\Jobs\SendKeyResultCheckinReminders;
@@ -64,5 +65,7 @@ Schedule::job(new SendMeetingReminders)->everyMinute()->when(fn (): bool => (boo
 Schedule::job(new SendActionItemReminders)->dailyAt('07:05')->timezone(config()->string('app.office_timezone'))->when(fn (): bool => (bool) config('features.meetings'))->withoutOverlapping()->onOneServer();
 // Akun & kata sandi (6 Okt 2026) — expire unanswered "Lupa kata sandi" requests, prune old ones.
 Schedule::job(new ExpirePasswordResetRequests)->hourly()->withoutOverlapping()->onOneServer();
+// Hiring (keputusan pemilik 6 Okt 2026): applicant data kept 30 days after decision / deletion / position closed.
+Schedule::job(new PurgeExpiredApplicantData)->dailyAt('02:30')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
 // Laporan progres harian (keputusan pemilik 6 Okt 2026): reminder 16.30 WIB on weekdays.
 Schedule::job(new SendDailyReportReminders)->weekdays()->dailyAt('16:30')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();

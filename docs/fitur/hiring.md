@@ -212,3 +212,7 @@ Coba: masuk sebagai `hr@` → Hiring → pindahkan Yoga (Penilaian) ke Keputusan
 - Tanpa unggah file ke RuangKerja: CV dan berkas tetap berupa tautan.
 - Pewawancara/penyetuju yang ditambah saat kandidat sudah di Keputusan akhir tidak menerima notifikasi ulang (pindahkan kandidat keluar lalu masuk lagi untuk memicu ulang).
 - Retensi/penghapusan otomatis data pelamar belum diatur (perlu kebijakan pemilik; UU PDP).
+
+## Retensi data pelamar (keputusan pemilik 6 Okt 2026)
+
+Data pelamar disimpan **30 hari** (`HIRING_RETENTION_DAYS`, `config/hiring.php`), dihitung sejak keputusan akhir (Diterima/Ditolak), sejak HR menghapus kandidat, atau — untuk kandidat yang belum diputus — sejak lowongan ditutup. Setelah itu job harian `PurgeExpiredApplicantData` (02.30 WIB) menghapus permanen kandidat beserta checklist, jawaban, poin, notulensi, keputusan, dan notifikasi Inbox tentangnya. Audit hanya mencatat jumlah yang dihapus (`hiring.applicants_purged`). Bila pelamar diterima, data yang perlu disimpan dipindah HR ke profil karyawan sebelum masa retensi habis.
