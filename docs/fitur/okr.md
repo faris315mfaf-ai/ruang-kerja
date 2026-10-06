@@ -1,5 +1,7 @@
 # OKR divisi (F3-3)
 
+> **Status:** **Akan dibangun** (keputusan pemilik 6 Okt 2026): backend nyata dikerjakan berikutnya; dokumen ini menjelaskan keadaan pratinjau saat ini. Panduan pemakaian: [PANDUAN-PRATINJAU.md](PANDUAN-PRATINJAU.md).
+>
 > Pratinjau Fase 3 · dibangun Agen E · rute `/okr`, `/okr/{objective}` · data contoh, tidak menyimpan apa pun. Indeks: [README](README.md).
 
 ## 1. Tujuan & masalah

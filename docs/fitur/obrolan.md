@@ -1,5 +1,7 @@
 # Obrolan (F2-1)
 
+> **Status:** **Nyata** (keputusan pemilik 6 Okt 2026). Bagian 3–5 dan 8–9 sebagian masih menggambarkan masa pratinjau (id contoh `umum`/`plq`, balasan otomatis, pemilih Drive tiruan, `?keadaan=`); keadaan nyata saat ini dirangkum di [PANDUAN-PRATINJAU.md](PANDUAN-PRATINJAU.md) §3.
+>
 > **Fitur nyata sejak tugas #1 (6 Okt 2026)** · rute `/obrolan`, `/obrolan/{channel}` (`routes/chat.php`) di balik `FEATURE_CHAT` (nyala lokal, mati produksi sampai rilis) · data tersimpan di `channels`, `channel_members`, `messages`, realtime Reverb. Gambar di bawah berasal dari masa pratinjau; tata letaknya sama. Indeks: [README](README.md).
 
 ## 1. Tujuan & masalah

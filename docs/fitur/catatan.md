@@ -1,5 +1,7 @@
 # Catatan bersama (F2-2)
 
+> **Status:** **Akan dibangun** (keputusan pemilik 6 Okt 2026): backend nyata dikerjakan berikutnya; dokumen ini menjelaskan keadaan pratinjau saat ini. Panduan pemakaian: [PANDUAN-PRATINJAU.md](PANDUAN-PRATINJAU.md).
+>
 > Pratinjau Fase 2 · dibangun Agen A · rute `/catatan`, `/catatan/{note}` · data contoh, tidak menyimpan apa pun. Indeks: [README](README.md).
 
 ## 1. Tujuan & masalah
@@ -115,7 +117,7 @@ sequenceDiagram
 | `features/notes/note-editor.tsx`, `note-parts.tsx` | Editor Tiptap + toolbar. Skala judul lewat utilitas varian Tailwind pada pembungkus (`NOTE_PROSE`/`NOTE_PROSE_VIEW`) tanpa mengubah `rich-text.css` bersama. Fokus ke isi lewat callback berbasis ref (React Compiler tidak membaca `editor.commands` saat render). |
 | `note-tree.tsx`, `notes-index.tsx` (satu komponen dengan prop `mobile`), `note.desktop.tsx`, `note.mobile.tsx`, `version-history.tsx`, `share-dialog.tsx`, `new-note-dialog.tsx` | Tampilan. Tombol app bar ponsel (Riwayat/Bagikan) memakai store mikro di `note.mobile.tsx`. |
 
-Keadaan pratinjau memakai `features/chat/preview-state.tsx` (milik modul yang sama).
+Keadaan pratinjau memakai `features/notes/preview-state.tsx` (`PreviewBar`: Normal · Memuat · Kosong · Galat).
 
 ## 6. Bentuk data → tabel DATABASE.md
 

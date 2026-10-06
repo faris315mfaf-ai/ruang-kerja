@@ -1,5 +1,7 @@
 # Otomasi, WhatsApp, tugas berulang, template & Kinerja saya (F2-4)
 
+> **Status:** Aturan otomasi, tugas berulang, template, dan Kinerja saya **Akan dibangun** (keputusan pemilik 6 Okt 2026): backend nyata dikerjakan berikutnya; dokumen ini menjelaskan keadaan pratinjau saat ini. Notifikasi WhatsApp + pemilihan provider **Ditahan** (keputusan pemilik 6 Okt 2026): tidak dikerjakan sampai pemilik membuka lagi; layar pratinjau tetap bisa dicoba. Panduan pemakaian: [PANDUAN-PRATINJAU.md](PANDUAN-PRATINJAU.md).
+>
 > Pratinjau Fase 2 · dibangun Agen C · rute `/pengaturan/whatsapp`, `/otomasi`, `/otomasi/berulang`, `/otomasi/template`, `/kinerja` · data contoh, tidak menyimpan apa pun. Indeks: [README](README.md).
 
 ## 1. Tujuan & masalah
