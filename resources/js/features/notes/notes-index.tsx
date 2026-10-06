@@ -24,8 +24,8 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { prototypeNow } from '@/features/chat/lib';
-import type { PreviewState } from '@/features/chat/preview-state';
-import { PreviewBar } from '@/features/chat/preview-state';
+import type { PreviewState } from '@/features/notes/preview-state';
+import { PreviewBar } from '@/features/notes/preview-state';
 import { formatRelative } from '@/lib/format';
 import { paletteGradient } from '@/lib/palette';
 import { cn } from '@/lib/utils';

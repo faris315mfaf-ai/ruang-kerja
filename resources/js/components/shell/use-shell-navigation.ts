@@ -13,6 +13,7 @@ import {
     adminNavItems,
     attendanceNavItems,
     isActivePath,
+    chatNavItem,
     mainNavItemsFor,
     organizationNavItems,
     prototypeNavItem,
@@ -34,6 +35,7 @@ const MOTIONS: Record<string, GlyphMotion> = {
     '/portofolio': { name: 'dock-tilt', duration: '1.8s' },
     '/manajemen': { name: 'dock-lift', duration: '1.6s' },
     '/inbox': { name: 'dock-drop', duration: '1.4s' },
+    '/obrolan': { name: 'dock-nudge', duration: '1.5s' },
     '/tugas': { name: 'dock-pulse', duration: '1.5s' },
     '/absensi': { name: 'dock-drop', duration: '1.4s' },
     '/pengajuan': { name: 'dock-tilt', duration: '1.8s' },
@@ -104,7 +106,7 @@ const ICON_GRADIENTS = ['bg-grad-merek', 'bg-grad-indigo'] as const;
  * Workspace stack (like the macOS Dock).
  */
 export function useShellNavigation(): ShellNavigation {
-    const { auth, approvals, features } = usePage().props;
+    const { auth, approvals, features, chatUnread } = usePage().props;
     const { currentUrl } = useCurrentUrl();
     const unread = useUnreadCount();
     const workspaces = useSidebarWorkspaces();
@@ -112,6 +114,10 @@ export function useShellNavigation(): ShellNavigation {
     const badgeFor = (item: AppNavItem): number | undefined => {
         if (item.href === '/inbox') {
             return unread;
+        }
+
+        if (item.badge === 'chat') {
+            return chatUnread ?? 0;
         }
 
         return item.badge === 'approvals'
@@ -195,10 +201,16 @@ export function useShellNavigation(): ShellNavigation {
     // get it as a plain tile instead.
     const organizationItems = organizationNavItems(auth.roles);
     const main = mainNavItemsFor(auth.roles);
+    // Obrolan right after Inbox (messages next to notifications).
+    const withChat = features?.chat
+        ? main.flatMap((item) =>
+              item.href === '/inbox' ? [item, chatNavItem] : [item],
+          )
+        : main;
     const tiles = [
         ...(organizationItems.length > 1
-            ? main
-            : [...main, ...organizationItems]),
+            ? withChat
+            : [...withChat, ...organizationItems]),
         ...(features?.prototype ? [prototypeNavItem] : []),
     ].map(toTile);
 

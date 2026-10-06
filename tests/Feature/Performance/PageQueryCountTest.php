@@ -77,7 +77,7 @@ it('keeps the attendance pages free of N+1', function () {
     assertQueryBudgets([
         '/absensi' => ['anggota', 74],
         '/absensi/riwayat' => ['anggota', 44],
-        // +1: shared prop chat.unread (Obrolan Dock badge), one query on every page.
+        // +1: shared prop chatUnread (Obrolan Dock badge), one query on every page.
         '/absensi/hari-ini' => ['hr', 53],
         '/absensi/rekap' => ['hr', 46],
         '/admin/absensi' => ['hr', 41],
@@ -92,7 +92,7 @@ it('keeps requests and approvals free of N+1', function () {
         '/pengajuan' => ['anggota', 47],
         '/pengajuan/baru' => ['anggota', 33],
         "/pengajuan/{$request->id}" => ['hr', 40],
-        '/persetujuan' => ['kadiv', 60], // +2: shared prop chat.unread (one query) and its visible-channel subquery
+        '/persetujuan' => ['kadiv', 60], // +2: shared prop chatUnread (one query) and its visible-channel subquery
         "/persetujuan/{$request->id}" => ['hr', 41],
         '/admin/pengajuan' => ['hr', 40],
         '/admin/saldo-cuti' => ['hr', 35],
@@ -124,7 +124,7 @@ it('keeps inbox, search, settings and the menu free of N+1', function () {
         // +3 when the seeded user happens to have a task due today: the digest
         // preview's "Tenggat hari ini" section (list, workspaces, count) only
         // queries when it has rows. Constant, not N+1.
-        // +4 since F2-1: shared prop chat.unread and the chat.message preference row.
+        // +4 since F2-1: shared prop chatUnread and the chat.message preference row.
         '/pengaturan/notifikasi' => ['anggota', 49],
         '/menu' => ['anggota', 29],
     ]);

@@ -18,7 +18,7 @@ declare module '@inertiajs/core' {
             /** Feature flags (config/features.php). `prototype` = Fase 2 & 3 previews at /pratinjau. */
             features?: { prototype: boolean; chat: boolean };
             /** Obrolan: channels with unread messages; null when the feature is off. */
-            chat?: { unread: number } | null;
+            chatUnread?: number | null;
             /** Local demo only: personas of the account switcher; null elsewhere. */
             demoSwitcher?: DemoSwitcherAccount[] | null;
             /** Sprint 2: once-prop, refreshed every 5 minutes and after a check-in/out. */

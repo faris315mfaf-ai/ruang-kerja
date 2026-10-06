@@ -23,11 +23,7 @@ const roles = [
 
 const routes = [
     '/pratinjau',
-    // F2-1 · Chat, F2-2 · Notes
-    '/obrolan',
-    '/obrolan/umum',
-    '/obrolan/plq',
-    '/obrolan/dm-sari',
+    // F2-2 · Notes (F2-1 · Obrolan left the preview: real routes, routes/chat.php)
     '/catatan',
     '/catatan/sop-onboarding',
     // F2-3 · Meetings, minutes & calendar
@@ -63,7 +59,6 @@ const routes = [
 
 /** Preview-state switch (?keadaan=) on one route per module. */
 const stateRoutes = [
-    '/obrolan',
     '/catatan',
     '/rapat',
     '/otomasi',
@@ -161,7 +156,6 @@ test('tautan tak dikenal menampilkan keadaan "tidak ditemukan"', async ({
     const errors = collectErrors(page);
 
     for (const path of [
-        '/obrolan/tidak-ada',
         '/catatan/tidak-ada',
         '/rapat/tidak-ada',
         '/okr/tidak-ada',

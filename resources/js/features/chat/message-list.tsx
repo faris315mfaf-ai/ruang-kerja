@@ -1,14 +1,17 @@
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import {
     groupMessages,
     otherMembers,
-    prototypeNow,
     readers,
     receiptLabel,
     typingLabel,
 } from './lib';
 import { MessageRunView } from './message-run';
 import type { RunHandlers } from './message-run';
+import { loadOlder } from './store';
 import type { Channel, ChatState, Message } from './types';
 
 /** "Rizky sedang mengetik…" with three pulsing dots (still with reduced motion). */
@@ -100,11 +103,30 @@ export function MessageList({
     matches?: Set<string>;
     inThread?: boolean;
 }) {
-    const groups = groupMessages(messages, prototypeNow());
+    const groups = groupMessages(messages, new Date());
     const receipts = receiptsFor(messages, channel, state);
+    const [loadingOlder, setLoadingOlder] = useState(false);
+
+    const older = () => {
+        setLoadingOlder(true);
+        void loadOlder().finally(() => setLoadingOlder(false));
+    };
 
     return (
         <div className="flex flex-col gap-1">
+            {!inThread && state.hasMore && (
+                <div className="flex justify-center py-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={older}
+                        disabled={loadingOlder}
+                    >
+                        {loadingOlder && <Spinner />}
+                        Muat pesan sebelumnya
+                    </Button>
+                </div>
+            )}
             {groups.map((group) => (
                 <section key={group.key} aria-label={group.label}>
                     <div

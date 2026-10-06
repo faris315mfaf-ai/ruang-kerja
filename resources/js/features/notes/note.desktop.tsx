@@ -18,8 +18,8 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { PreviewState } from '@/features/chat/preview-state';
-import { PreviewBar } from '@/features/chat/preview-state';
+import type { PreviewState } from '@/features/notes/preview-state';
+import { PreviewBar } from '@/features/notes/preview-state';
 import { cn, focusRing } from '@/lib/utils';
 import { NewNoteDialog } from './new-note-dialog';
 import { EditorToolbar, NoteEditor } from './note-editor';

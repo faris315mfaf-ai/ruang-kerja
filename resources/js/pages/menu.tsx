@@ -26,6 +26,7 @@ import {
     canSeePortfolio,
     managementNavItem,
     organizationNavItems,
+    chatNavItem,
     portfolioNavItem,
     prototypeNavItem,
 } from '@/lib/navigation';
@@ -152,7 +153,7 @@ function ProfileCard() {
 
 /** Mobile "Menu" tab: profile, workspaces, work & settings (design MMenu). */
 export default function Menu() {
-    const { auth, approvals, features } = usePage().props;
+    const { auth, approvals, features, chatUnread } = usePage().props;
     const { appearance } = useAppearance();
     const pending = approvals?.pending ?? 0;
 
@@ -186,6 +187,23 @@ export default function Menu() {
                                 icon={managementNavItem.icon}
                                 label="Ringkasan manajemen"
                                 href={managementNavItem.href}
+                            />
+                        )}
+                        {features?.chat && (
+                            <Row
+                                icon={chatNavItem.icon}
+                                label={chatNavItem.title}
+                                href={chatNavItem.href}
+                                trailing={
+                                    (chatUnread ?? 0) > 0 ? (
+                                        <Badge
+                                            variant="count"
+                                            aria-label={`${chatUnread ?? 0} obrolan belum dibaca`}
+                                        >
+                                            {chatUnread}
+                                        </Badge>
+                                    ) : undefined
+                                }
                             />
                         )}
                         <Row

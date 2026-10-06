@@ -1,24 +1,44 @@
+import { router } from '@inertiajs/react';
 import { useSyncExternalStore } from 'react';
-import { AUTO_REPLIES, initialChatState } from './fixtures';
-import { parseMessage, prototypeNow, toggleReaction } from './lib';
+import { toast } from 'sonner';
+import type { ApiError } from '@/features/tasks/lib/api';
+import { chatApi } from './api';
+import { parseMessage, toggleReaction } from './lib';
 import type {
     Channel,
     ChannelMember,
+    ChatProps,
     ChatState,
+    ChatTask,
     Message,
     MessageAttachment,
 } from './types';
 
 /**
- * Client-only store for the Obrolan preview. It lives in the module so sent
- * messages, read state and new channels survive Inertia visits between
- * /obrolan and /obrolan/{channel} (a full reload restores the samples). In
- * production this is server props + Reverb events on `private-channel.{id}`.
+ * Obrolan store: hydrated from the Inertia props of /obrolan and
+ * /obrolan/{channel} (ChatController), mutated optimistically through the
+ * JSON endpoints (chatApi, rolled back with a toast on failure) and kept
+ * fresh by the realtime events of `private-chat.{id}` (realtime.ts).
+ * Components keep calling the same functions as in the prototype.
  */
-let state: ChatState = initialChatState();
-const listeners = new Set<() => void>();
+const EMPTY: ChatState = {
+    viewerId: '',
+    people: [],
+    channels: [],
+    messages: [],
+    tasks: [],
+    driveFiles: [],
+    typing: {},
+    hasMore: false,
+};
+
+let state: ChatState = EMPTY;
+let hydratedFrom: ChatProps | null = null;
+let currentChannelId: string | null = null;
 let sequence = 0;
-let demoStarted = false;
+const listeners = new Set<() => void>();
+const readTimers = new Map<string, number>();
+let inboxTimer: number | null = null;
 
 function emit(next: ChatState): void {
     state = next;
@@ -27,47 +47,119 @@ function emit(next: ChatState): void {
 
 function subscribe(listener: () => void): () => void {
     listeners.add(listener);
-    startDemo();
 
     return () => listeners.delete(listener);
-}
-
-export function useChatState(): ChatState {
-    return useSyncExternalStore(
-        subscribe,
-        () => state,
-        () => state,
-    );
 }
 
 export function getChatState(): ChatState {
     return state;
 }
 
-function nextId(prefix: string): string {
-    sequence += 1;
+/** Channel open on this page (null on /obrolan). */
+export function currentChannel(): string | null {
+    return currentChannelId;
+}
 
-    return `${prefix}-${Date.now().toString(36)}-${sequence}`;
+function mergeTasks(current: ChatTask[], incoming: ChatTask[]): ChatTask[] {
+    const byId = new Map(current.map((task) => [task.id, task]));
+    incoming.forEach((task) => byId.set(task.id, task));
+
+    return [...byId.values()];
+}
+
+/**
+ * Replaces the store with fresh page props (each Inertia visit or reload).
+ * Presence (online dots) and searched tasks survive the swap.
+ */
+export function hydrateChat(props: ChatProps): ChatState {
+    if (props === hydratedFrom) {
+        return state;
+    }
+
+    hydratedFrom = props;
+    currentChannelId = props.current?.channel_id ?? null;
+    const online = new Set(
+        state.people
+            .filter((person) => person.online)
+            .map((person) => person.id),
+    );
+
+    state = {
+        viewerId: props.viewer_id,
+        people: props.people.map((person) => ({
+            ...person,
+            online: person.online || online.has(person.id),
+        })),
+        channels: props.channels.map((channel) =>
+            channel.id === currentChannelId
+                ? { ...channel, unread_count: 0 }
+                : channel,
+        ),
+        messages: props.current?.messages ?? [],
+        tasks: mergeTasks(state.tasks, props.current?.tasks ?? []),
+        driveFiles: [],
+        typing: {},
+        hasMore: props.current?.has_more ?? false,
+    };
+
+    return state;
+}
+
+/** Page hook: the store, re-hydrated whenever Inertia sends new props. */
+export function useChatStore(props: ChatProps): ChatState {
+    const snapshot = useSyncExternalStore(
+        subscribe,
+        getChatState,
+        getChatState,
+    );
+
+    return props === hydratedFrom ? snapshot : hydrateChat(props);
+}
+
+/** For components that only read (the page passes `state` down). */
+export function useChatState(): ChatState {
+    return useSyncExternalStore(subscribe, getChatState, getChatState);
+}
+
+function fail(error: unknown, fallback: string): void {
+    toast.error(
+        error instanceof Error && error.message ? error.message : fallback,
+    );
+}
+
+function upsertMessage(message: Message, replacing?: string): Message[] {
+    const id = replacing ?? message.id;
+    const index = state.messages.findIndex(
+        (item) => item.id === id || item.id === message.id,
+    );
+
+    if (index === -1) {
+        return [...state.messages, message];
+    }
+
+    const next = [...state.messages];
+    next[index] = message;
+
+    return next.filter(
+        (item, position) => position === index || item.id !== message.id,
+    );
 }
 
 function updateChannel(
     channelId: string,
     update: (channel: Channel) => Channel,
-): void {
-    emit({
-        ...state,
-        channels: state.channels.map((channel) =>
-            channel.id === channelId ? update(channel) : channel,
-        ),
-    });
+): Channel[] {
+    return state.channels.map((channel) =>
+        channel.id === channelId ? update(channel) : channel,
+    );
 }
 
 function updateMember(
     channelId: string,
     userId: string,
     update: (member: ChannelMember) => ChannelMember,
-): void {
-    updateChannel(channelId, (channel) => ({
+): Channel[] {
+    return updateChannel(channelId, (channel) => ({
         ...channel,
         members: channel.members.map((member) =>
             member.user_id === userId ? update(member) : member,
@@ -75,76 +167,75 @@ function updateMember(
     }));
 }
 
-function setTyping(key: string, userIds: string[]): void {
-    emit({ ...state, typing: { ...state.typing, [key]: userIds } });
-}
+function withPreview(channels: Channel[], message: Message): Channel[] {
+    if (message.parent_id !== null) {
+        return channels;
+    }
 
-function latestTopLevelId(channelId: string): string | null {
-    return (
-        state.messages
-            .filter(
-                (message) =>
-                    message.channel_id === channelId &&
-                    message.parent_id === null,
-            )
-            .sort((a, b) => a.created_at.localeCompare(b.created_at))
-            .at(-1)?.id ?? null
+    return channels.map((channel) =>
+        channel.id === message.channel_id
+            ? {
+                  ...channel,
+                  last_message: {
+                      id: message.id,
+                      user_id: message.user_id,
+                      body_text: message.body_text,
+                      created_at: message.created_at,
+                      deleted: message.deleted_at !== null,
+                  },
+              }
+            : channel,
     );
 }
 
-/** The viewer has seen everything in the channel. */
-export function markRead(channelId: string): void {
-    const latest = latestTopLevelId(channelId);
-    const member = state.channels
-        .find((channel) => channel.id === channelId)
-        ?.members.find((item) => item.user_id === state.viewerId);
+/** ULIDs sort by time; temporary ids ("tmp-…") are never a read pointer. */
+function newer(id: string, than: string | null): boolean {
+    return !id.startsWith('tmp-') && (than === null || id > than);
+}
 
-    if (!latest || !member || member.last_read_message_id === latest) {
+/** The viewer has seen everything loaded in the open channel. */
+export function markRead(channelId: string): void {
+    const latest = state.messages
+        .filter(
+            (message) =>
+                message.channel_id === channelId &&
+                !message.id.startsWith('tmp-'),
+        )
+        .map((message) => message.id)
+        .sort()
+        .at(-1);
+    const channel = state.channels.find((item) => item.id === channelId);
+    const member = channel?.members.find(
+        (item) => item.user_id === state.viewerId,
+    );
+
+    if (!latest || !member || !newer(latest, member.last_read_message_id)) {
         return;
     }
 
-    updateMember(channelId, state.viewerId, (item) => ({
-        ...item,
-        last_read_message_id: latest,
-    }));
-}
+    emit({
+        ...state,
+        channels: updateMember(channelId, state.viewerId, (item) => ({
+            ...item,
+            last_read_message_id: latest,
+        })).map((item) =>
+            item.id === channelId ? { ...item, unread_count: 0 } : item,
+        ),
+    });
 
-function postAs(
-    userId: string,
-    channelId: string,
-    text: string,
-    attachments: MessageAttachment[] = [],
-    parentId: string | null = null,
-): Message {
-    const message: Message = {
-        id: nextId('m'),
-        channel_id: channelId,
-        user_id: userId,
-        parent_id: parentId,
-        body: parseMessage(text, state.people, state.tasks),
-        body_text: text.trim(),
-        created_at: prototypeNow().toISOString(),
-        edited_at: null,
-        deleted_at: null,
-        reactions: [],
-        attachments,
-    };
-
-    emit({ ...state, messages: [...state.messages, message] });
-
-    if (parentId === null) {
-        updateMember(channelId, userId, (member) => ({
-            ...member,
-            last_read_message_id: message.id,
-        }));
-    }
-
-    return message;
+    window.clearTimeout(readTimers.get(channelId));
+    readTimers.set(
+        channelId,
+        window.setTimeout(() => {
+            readTimers.delete(channelId);
+            void chatApi.read(channelId).catch(() => {});
+        }, 600),
+    );
 }
 
 /**
- * Sends a message (optimistic, like the real page would before the server
- * confirms), then simulates: other members read it, and someone replies.
+ * Sends a message (shown at once, replaced by the server copy). Returns the
+ * optimistic message so the composer can clear and scroll.
  */
 export function sendMessage(
     channelId: string,
@@ -152,111 +243,228 @@ export function sendMessage(
     attachments: MessageAttachment[] = [],
     parentId: string | null = null,
 ): Message {
-    const message = postAs(
-        state.viewerId,
-        channelId,
-        text,
+    sequence += 1;
+    const body =
+        text.trim() === ''
+            ? null
+            : parseMessage(text, state.people, state.tasks);
+    const temp: Message = {
+        id: `tmp-${Date.now().toString(36)}-${sequence}`,
+        channel_id: channelId,
+        user_id: state.viewerId,
+        parent_id: parentId,
+        body,
+        body_text: text.trim(),
+        created_at: new Date().toISOString(),
+        edited_at: null,
+        deleted_at: null,
+        reactions: [],
         attachments,
-        parentId,
-    );
-    const channel = state.channels.find((item) => item.id === channelId);
-    const others =
-        channel?.members.filter(
-            (member) => member.user_id !== state.viewerId,
-        ) ?? [];
-    const online = others.filter(
-        (member) =>
-            state.people.find((person) => person.id === member.user_id)?.online,
-    );
+    };
 
-    // Online members read it shortly after.
-    window.setTimeout(() => {
-        for (const member of online) {
-            if (parentId === null) {
-                updateMember(channelId, member.user_id, (item) => ({
-                    ...item,
-                    last_read_message_id: message.id,
-                }));
-            }
-        }
-    }, 1500);
+    emit({
+        ...state,
+        messages: [...state.messages, temp],
+        channels: withPreview(state.channels, temp),
+    });
 
-    const reply = AUTO_REPLIES[channelId];
-    const typingKey = parentId ? `thread:${parentId}` : channelId;
+    chatApi
+        .send(
+            channelId,
+            body,
+            attachments.map((file) => file.id),
+            parentId,
+        )
+        .then(({ message, tasks }) => {
+            emit({
+                ...state,
+                messages: upsertMessage(message, temp.id),
+                tasks: mergeTasks(state.tasks, tasks),
+                channels: withPreview(
+                    updateMember(channelId, state.viewerId, (member) =>
+                        newer(message.id, member.last_read_message_id)
+                            ? { ...member, last_read_message_id: message.id }
+                            : member,
+                    ),
+                    message,
+                ),
+            });
+        })
+        .catch((error: ApiError) => {
+            emit({
+                ...state,
+                messages: state.messages.filter((item) => item.id !== temp.id),
+            });
+            fail(error, 'Pesan gagal terkirim. Coba lagi.');
+        });
 
-    if (reply && others.some((member) => member.user_id === reply.userId)) {
-        window.setTimeout(() => setTyping(typingKey, [reply.userId]), 1800);
-        window.setTimeout(() => {
-            setTyping(typingKey, []);
-            postAs(reply.userId, channelId, reply.text, [], parentId);
+    return temp;
+}
 
-            if (parentId === null) {
-                // The viewer is looking at the channel when the reply lands.
-                markRead(channelId);
-            }
-        }, 4200);
+/** Optimistic change of one message, rolled back when the request fails. */
+function mutateMessage(
+    messageId: string,
+    change: (message: Message) => Message,
+    request: () => Promise<{ message: Message; tasks: ChatTask[] }>,
+    failure: string,
+): void {
+    const previous = state.messages.find((message) => message.id === messageId);
+
+    if (!previous || messageId.startsWith('tmp-')) {
+        return;
     }
 
-    return message;
+    emit({ ...state, messages: upsertMessage(change(previous)) });
+
+    request()
+        .then(({ message, tasks }) =>
+            emit({
+                ...state,
+                messages: upsertMessage(message),
+                tasks: mergeTasks(state.tasks, tasks),
+                channels: withPreview(state.channels, message),
+            }),
+        )
+        .catch((error: ApiError) => {
+            emit({ ...state, messages: upsertMessage(previous) });
+            fail(error, failure);
+        });
 }
 
 export function editMessage(messageId: string, text: string): void {
-    emit({
-        ...state,
-        messages: state.messages.map((message) =>
-            message.id === messageId
-                ? {
-                      ...message,
-                      body: parseMessage(text, state.people, state.tasks),
-                      body_text: text.trim(),
-                      edited_at: prototypeNow().toISOString(),
-                  }
-                : message,
-        ),
-    });
+    const body = parseMessage(text, state.people, state.tasks);
+
+    mutateMessage(
+        messageId,
+        (message) => ({
+            ...message,
+            body,
+            body_text: text.trim(),
+            edited_at: new Date().toISOString(),
+        }),
+        () => chatApi.edit(messageId, body),
+        'Perubahan pesan gagal disimpan.',
+    );
 }
 
 export function deleteMessage(messageId: string): void {
-    emit({
-        ...state,
-        messages: state.messages.map((message) =>
-            message.id === messageId
-                ? {
-                      ...message,
-                      body: null,
-                      body_text: '',
-                      attachments: [],
-                      reactions: [],
-                      deleted_at: prototypeNow().toISOString(),
-                  }
-                : message,
-        ),
-    });
+    mutateMessage(
+        messageId,
+        (message) => ({
+            ...message,
+            body: null,
+            body_text: '',
+            attachments: [],
+            reactions: [],
+            deleted_at: new Date().toISOString(),
+        }),
+        () => chatApi.destroy(messageId),
+        'Pesan gagal dihapus.',
+    );
 }
 
 export function reactToMessage(messageId: string, emoji: string): void {
-    emit({
-        ...state,
-        messages: state.messages.map((message) =>
-            message.id === messageId
-                ? {
-                      ...message,
-                      reactions: toggleReaction(
-                          message.reactions,
-                          emoji,
-                          state.viewerId,
-                      ),
-                  }
-                : message,
-        ),
-    });
+    mutateMessage(
+        messageId,
+        (message) => ({
+            ...message,
+            reactions: toggleReaction(message.reactions, emoji, state.viewerId),
+        }),
+        () => chatApi.react(messageId, emoji),
+        'Reaksi gagal disimpan.',
+    );
 }
 
 export function setMuted(channelId: string, muted: boolean): void {
-    updateMember(channelId, state.viewerId, (member) => ({
-        ...member,
-        muted,
-    }));
+    const previous = state.channels;
+    const isMember = state.channels
+        .find((channel) => channel.id === channelId)
+        ?.members.some((member) => member.user_id === state.viewerId);
+
+    emit({
+        ...state,
+        channels: isMember
+            ? updateMember(channelId, state.viewerId, (member) => ({
+                  ...member,
+                  muted,
+              }))
+            : updateChannel(channelId, (channel) => ({
+                  ...channel,
+                  members: [
+                      ...channel.members,
+                      {
+                          user_id: state.viewerId,
+                          last_read_message_id: null,
+                          muted,
+                          role: 'member',
+                      },
+                  ],
+              })),
+    });
+
+    chatApi.mute(channelId, muted).catch((error: ApiError) => {
+        emit({ ...state, channels: previous });
+        fail(error, 'Pengaturan bisu gagal disimpan.');
+    });
+}
+
+/** Older page of the open channel ("Muat pesan sebelumnya"). */
+export async function loadOlder(): Promise<void> {
+    const channelId = currentChannelId;
+    const oldest = state.messages
+        .filter(
+            (message) =>
+                message.channel_id === channelId &&
+                message.parent_id === null &&
+                !message.id.startsWith('tmp-'),
+        )
+        .map((message) => message.id)
+        .sort()[0];
+
+    if (!channelId || !oldest) {
+        return;
+    }
+
+    try {
+        const page = await chatApi.older(channelId, oldest);
+        const known = new Set(state.messages.map((message) => message.id));
+
+        emit({
+            ...state,
+            messages: [
+                ...page.messages.filter((message) => !known.has(message.id)),
+                ...state.messages,
+            ],
+            tasks: mergeTasks(state.tasks, page.tasks),
+            hasMore: page.has_more,
+        });
+    } catch (error) {
+        fail(error, 'Pesan sebelumnya gagal dimuat.');
+    }
+}
+
+/** Drive picker: files every reader of the channel can open. */
+export async function loadDriveFiles(query = ''): Promise<void> {
+    if (!currentChannelId) {
+        return;
+    }
+
+    try {
+        const { files } = await chatApi.driveFiles(currentChannelId, query);
+        emit({ ...state, driveFiles: files });
+    } catch (error) {
+        fail(error, 'Daftar file Drive gagal dimuat.');
+    }
+}
+
+/** "#" suggestions: tasks the viewer can see, merged into `tasks`. */
+export async function searchTasks(query: string): Promise<void> {
+    try {
+        const { tasks } = await chatApi.tasks(query);
+        emit({ ...state, tasks: mergeTasks(state.tasks, tasks) });
+    } catch {
+        // Suggestions are optional; typing goes on.
+    }
 }
 
 export type NewChannelInput = {
@@ -266,7 +474,7 @@ export type NewChannelInput = {
     memberIds: string[];
 };
 
-/** Lower-case, dashes, max 40 characters ("Acara Q4" → "acara-q4"). */
+/** Lower-case, dashes, max 40 characters ("Acara Q4" → "acara-q4"); same rule as CreateChannel. */
 export function slugifyChannelName(name: string): string {
     return name
         .toLowerCase()
@@ -276,91 +484,102 @@ export function slugifyChannelName(name: string): string {
         .slice(0, 40);
 }
 
-export function createChannel(input: NewChannelInput): string {
-    const id = nextId('c');
-    const channel: Channel = {
-        id,
-        workspace_id: null,
-        workspace: null,
-        type: input.isPrivate ? 'private' : 'public',
-        name: slugifyChannelName(input.name),
+/** Creates a channel; resolves with its id (throws ApiError with an Indonesian message). */
+export async function createChannel(input: NewChannelInput): Promise<string> {
+    const { id } = await chatApi.createChannel({
+        name: input.name,
         topic: input.topic.trim() || null,
-        created_by: state.viewerId,
-        created_at: prototypeNow().toISOString(),
-        archived_at: null,
-        members: [state.viewerId, ...input.memberIds].map((userId, index) => ({
-            user_id: userId,
-            last_read_message_id: null,
-            muted: false,
-            role: index === 0 ? 'owner' : 'member',
-        })),
-    };
-
-    emit({ ...state, channels: [...state.channels, channel] });
+        private: input.isPrivate,
+        member_ids: input.memberIds,
+    });
 
     return id;
 }
 
-/** Existing DM/group with exactly these people, or a new one. */
-export function openDirect(userIds: string[]): string {
-    const wanted = [...new Set([state.viewerId, ...userIds])].sort();
-    const existing = state.channels.find(
-        (channel) =>
-            (channel.type === 'dm' || channel.type === 'group') &&
-            channel.members
-                .map((member) => member.user_id)
-                .sort()
-                .join() === wanted.join(),
-    );
+/** Existing DM/group with exactly these people, or a new one; resolves with its id. */
+export async function openDirect(userIds: string[]): Promise<string> {
+    const { id } = await chatApi.openDirect(userIds);
 
-    if (existing) {
-        return existing.id;
+    return id;
+}
+
+/* ---- Realtime (realtime.ts) -------------------------------------------- */
+
+/** A message of the open channel changed on the server: fetch and merge it. */
+export async function refreshMessage(messageId: string): Promise<void> {
+    try {
+        const { message, tasks } = await chatApi.message(messageId);
+
+        if (message.channel_id !== currentChannelId) {
+            return;
+        }
+
+        emit({
+            ...state,
+            messages: upsertMessage(message),
+            tasks: mergeTasks(state.tasks, tasks),
+            channels: withPreview(state.channels, message),
+            typing: {
+                ...state.typing,
+                [message.parent_id
+                    ? `thread:${message.parent_id}`
+                    : message.channel_id]: [],
+            },
+        });
+    } catch {
+        // Gone or no longer visible (404): the next reload drops it.
     }
-
-    const id = nextId('dm');
-    const channel: Channel = {
-        id,
-        workspace_id: null,
-        workspace: null,
-        type: wanted.length > 2 ? 'group' : 'dm',
-        name: null,
-        topic: null,
-        created_by: state.viewerId,
-        created_at: prototypeNow().toISOString(),
-        archived_at: null,
-        members: wanted.map((userId) => ({
-            user_id: userId,
-            last_read_message_id: null,
-            muted: false,
-            role: userId === state.viewerId ? 'owner' : 'member',
-        })),
-    };
-
-    emit({ ...state, channels: [...state.channels, channel] });
-
-    return id;
 }
 
-/** One-off ambient activity: Rizky finishes typing in the project channel. */
-function startDemo(): void {
-    if (demoStarted || typeof window === 'undefined') {
+export function applyRead(
+    channelId: string,
+    userId: string,
+    pointer: string | null,
+): void {
+    if (!pointer) {
         return;
     }
 
-    demoStarted = true;
-    window.setTimeout(() => {
-        setTyping('plq', []);
-        postAs(
-            'u-rizky',
-            'plq',
-            'Sudah saya update di PLQ-21: 200 kursi, vendor konfirmasi besok pagi.',
-        );
-    }, 7000);
+    emit({
+        ...state,
+        channels: updateMember(channelId, userId, (member) =>
+            newer(pointer, member.last_read_message_id)
+                ? { ...member, last_read_message_id: pointer }
+                : member,
+        ),
+    });
 }
 
-/** Tests: back to the samples. */
-export function resetChatState(): void {
-    state = initialChatState();
-    demoStarted = true;
+export function setTyping(key: string, userIds: string[]): void {
+    emit({ ...state, typing: { ...state.typing, [key]: userIds } });
+}
+
+export function setOnline(userIds: Set<string>): void {
+    emit({
+        ...state,
+        people: state.people.map((person) => ({
+            ...person,
+            online: userIds.has(person.id),
+        })),
+    });
+}
+
+/** Another channel changed (unread badge, preview): reload the sidebar props, debounced. */
+export function reloadInbox(): void {
+    if (inboxTimer !== null) {
+        window.clearTimeout(inboxTimer);
+    }
+
+    inboxTimer = window.setTimeout(() => {
+        inboxTimer = null;
+        router.reload({ only: ['chat'] });
+    }, 800);
+}
+
+/** Tests: empty store. */
+export function resetChatState(next: ChatState = EMPTY): void {
+    state = next;
+    hydratedFrom = null;
+    currentChannelId = null;
     listeners.forEach((listener) => listener());
 }

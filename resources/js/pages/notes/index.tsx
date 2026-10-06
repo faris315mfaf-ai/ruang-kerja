@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { usePreviewState } from '@/features/chat/preview-state';
+import { usePreviewState } from '@/features/notes/preview-state';
 import { NotesIndex } from '@/features/notes/notes-index';
 import { useNotesState } from '@/features/notes/store';
 import { useBreakpoint } from '@/hooks/use-breakpoint';

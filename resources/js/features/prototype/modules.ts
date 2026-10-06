@@ -2,7 +2,6 @@ import type { LucideIcon } from 'lucide-react';
 import {
     CalendarDays,
     Fingerprint,
-    MessagesSquare,
     NotebookPen,
     Smartphone,
     Target,
@@ -27,17 +26,6 @@ export type PrototypeModule = {
 
 /** Every Fase 2 & 3 preview, in the order of docs/PROMPTS.md. */
 export const PROTOTYPE_MODULES: PrototypeModule[] = [
-    {
-        key: 'chat',
-        phase: 'Fase 2',
-        sprint: 'F2-1',
-        title: 'Obrolan',
-        description:
-            'Channel per workspace, DM, grup kecil, thread, mention, reaksi dan lampiran Drive.',
-        icon: MessagesSquare,
-        gradient: 'bg-grad-merek',
-        screens: [{ label: 'Semua obrolan', href: '/obrolan' }],
-    },
     {
         key: 'notes',
         phase: 'Fase 2',

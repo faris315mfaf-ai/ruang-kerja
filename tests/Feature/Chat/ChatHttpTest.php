@@ -43,7 +43,7 @@ it('renders the chat index with channels, unread counts and people', function ()
             ->has('chat.people'));
 
     $this->actingAs($this->dimas)->get('/')->assertRedirect();
-    expect($this->actingAs($this->dimas)->get('/menu')->inertiaProps('chat.unread'))->toBe(1);
+    expect($this->actingAs($this->dimas)->get('/menu')->inertiaProps('chatUnread'))->toBe(1);
 });
 
 it('opens a channel, marks it read and sends the timeline', function () {
@@ -125,7 +125,7 @@ it('answers 404 everywhere while the chat flag is off', function () {
 
     $this->actingAs($this->dimas)->get('/obrolan')->assertNotFound();
     $this->actingAs($this->dimas)->get('/obrolan/'.$this->dm->id)->assertNotFound();
-    expect($this->actingAs($this->dimas)->get('/menu')->inertiaProps('chat'))->toBeNull();
+    expect($this->actingAs($this->dimas)->get('/menu')->inertiaProps('chatUnread'))->toBeNull();
 });
 
 it('sends guests to login', function () {

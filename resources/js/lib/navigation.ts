@@ -13,6 +13,7 @@ import {
     Home,
     Inbox,
     MapPin,
+    MessagesSquare,
     ListChecks,
     Menu,
     Network,
@@ -31,7 +32,7 @@ export type AppNavItem = {
     /** Match nested routes too (e.g. /pengajuan/123). */
     matchPrefix?: boolean;
     /** Shared-prop counter shown as a badge. */
-    badge?: 'approvals';
+    badge?: 'approvals' | 'chat';
     /** Hidden from the mobile Menu tab (docs/PLATFORM.md §3, "—" on mobile). */
     desktopOnly?: boolean;
 };
@@ -164,6 +165,18 @@ export function mainNavItemsFor(roles: readonly string[]): AppNavItem[] {
         ...mainNavItems.slice(index + 1),
     ];
 }
+
+/**
+ * "Obrolan" (/obrolan, F2-1): shown while the `chat` feature flag is on
+ * (shared prop `features.chat`); badge = channels with unread messages.
+ */
+export const chatNavItem: AppNavItem = {
+    title: 'Obrolan',
+    href: '/obrolan',
+    icon: MessagesSquare,
+    matchPrefix: true,
+    badge: 'chat',
+};
 
 /**
  * "Pratinjau" (/pratinjau): Fase 2 & 3 front-end previews, shown only while

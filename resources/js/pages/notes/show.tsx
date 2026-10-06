@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { usePreviewState } from '@/features/chat/preview-state';
+import { usePreviewState } from '@/features/notes/preview-state';
 import { NoteDesktop } from '@/features/notes/note.desktop';
 import { NoteAppBarActions, NoteMobile } from '@/features/notes/note.mobile';
 import { getNotesState, useNotesState } from '@/features/notes/store';

@@ -28,7 +28,6 @@ import { channelSubtitle, channelTitle } from './lib';
 import { MessageList, TypingIndicator } from './message-list';
 import { NewChatDialog } from './new-chat-dialog';
 import type { PreviewState } from './preview-state';
-import { PreviewBar } from './preview-state';
 import { sendMessage } from './store';
 import { ThreadPanel } from './thread-panel';
 import type { ChatState } from './types';
@@ -322,7 +321,6 @@ export function ChatDesktop({ state, channelId, preview, isTablet }: Props) {
 
     return (
         <div className="flex flex-col gap-4">
-            <PreviewBar />
             <div
                 className={cn(
                     'flex min-h-[560px] overflow-hidden rounded-panel border border-border bg-surface shadow-card',

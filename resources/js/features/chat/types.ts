@@ -2,9 +2,9 @@ import type { DriveFileKind } from '@/features/drive/types';
 import type { RichDoc, TaskReferenceInfo } from '@/features/tasks/editor/types';
 
 /**
- * Chat (Fase 2, F2-1) props. Shapes follow docs/DATABASE.md §7 (`channels`,
- * `channel_members`, `messages`) so the backend can later send the same
- * props; fields marked "derived" are computed server side.
+ * Obrolan (Fase 2, F2-1) props, sent by App\Http\Resources\Chat\ChatPresenter.
+ * Shapes follow docs/DATABASE.md §7 (`channels`, `channel_members`,
+ * `messages`); fields marked "derived" are computed server side.
  */
 
 export type ChatPerson = {
@@ -42,6 +42,22 @@ export type Channel = {
     created_at: string;
     archived_at: string | null;
     members: ChannelMember[];
+    /** Derived: top-level messages of others after the viewer's read pointer. */
+    unread_count?: number;
+    /** Derived: newest top-level message (sidebar preview). */
+    last_message?: ChannelPreview | null;
+    /** Derived: the viewer may send / moderate here (ChannelPolicy). */
+    can_post?: boolean;
+    can_manage?: boolean;
+};
+
+/** Newest top-level message of a channel, without its body. */
+export type ChannelPreview = {
+    id: string;
+    user_id: string | null;
+    body_text: string;
+    created_at: string | null;
+    deleted: boolean;
 };
 
 /** Attachment of a message (attachments → drive_files, source = drive). */
@@ -88,4 +104,21 @@ export type ChatState = {
     driveFiles: MessageAttachment[];
     /** channel id (or `thread:<message id>`) → people typing. */
     typing: Record<string, string[]>;
+    /** Older messages exist for the open channel ("Muat pesan sebelumnya"). */
+    hasMore?: boolean;
+};
+
+/** Inertia props of /obrolan and /obrolan/{channel} (ChatController). */
+export type ChatProps = {
+    viewer_id: string;
+    people: ChatPerson[];
+    channels: Channel[];
+    current: {
+        channel_id: string;
+        messages: Message[];
+        tasks: ChatTask[];
+        has_more: boolean;
+        can_post: boolean;
+        can_manage: boolean;
+    } | null;
 };
