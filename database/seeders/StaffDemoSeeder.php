@@ -66,7 +66,7 @@ class StaffDemoSeeder extends Seeder
     }
 
     /**
-     * @param  list<Task>  $tasks
+     * @param  array<int, Task>  $tasks
      */
     private function report(User $user, CarbonImmutable $day, array $tasks, bool $sent, int $variant): void
     {
