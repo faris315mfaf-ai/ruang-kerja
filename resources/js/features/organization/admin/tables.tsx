@@ -300,6 +300,11 @@ export function PositionTable({
                 >
                     <TableCell className={cn(CELL, 'font-semibold text-text')}>
                         {row.name}
+                        {row.dashboardRoleLabel && (
+                            <span className="block text-meta font-normal text-text-muted">
+                                Dashboard {row.dashboardRoleLabel}
+                            </span>
+                        )}
                     </TableCell>
                     <TableCell className={CELL}>
                         <span className="tnum">{row.level}</span>

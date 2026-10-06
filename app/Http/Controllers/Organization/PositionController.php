@@ -37,6 +37,8 @@ class PositionController extends OrganizationAdminController
                 'name' => $position->name,
                 'level' => $position->level,
                 'levelLabel' => PositionLevel::tryFrom($position->level)?->label() ?? (string) $position->level,
+                'dashboardRole' => $position->dashboard_role?->value,
+                'dashboardRoleLabel' => $position->dashboard_role?->label(),
                 'usersCount' => (int) $position->getAttribute('users_count'),
                 'deletedAt' => $position->deleted_at?->toIso8601String(),
             ])->all(),

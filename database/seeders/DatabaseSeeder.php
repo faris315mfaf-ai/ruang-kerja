@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         if (app()->environment(['local', 'testing'])) {
             $this->call(DemoUserSeeder::class);
             $this->call(OrganizationSeeder::class);
+            $this->call(RoleDashboardDemoSeeder::class);
             $this->call(WorkspaceSeeder::class);
             $this->call(ProjectSeeder::class);
             $this->call(TaskCollaborationSeeder::class);

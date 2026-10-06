@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Organization;
 
 use App\Domain\Organization\Enums\PositionLevel;
+use App\Domain\RoleDashboards\Enums\DashboardRole;
 use App\Http\Controllers\Controller;
 use App\Models\Division;
 use App\Models\Position;
@@ -53,6 +54,8 @@ abstract class OrganizationAdminController extends Controller
                         'avatar' => $user->avatar_url,
                     ])->all(),
                 'levels' => PositionLevel::options(),
+                // Dashboard per jabatan (F3): field hidden while FEATURE_ROLE_DASHBOARDS is off.
+                'dashboardRoles' => config('features.role_dashboards') ? DashboardRole::options() : [],
             ],
             ...$props,
         ]);
