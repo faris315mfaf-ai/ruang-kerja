@@ -1,34 +1,33 @@
 # Sesi claude
 
-**Terakhir diperbarui:** 6 Okt 2026 · Claude Code
+**Terakhir diperbarui:** 6 Okt 2026 · Claude Code (integrator)
 
 ## Tugas berjalan
-Tugas #1 `docs/PEMBAGIAN-TUGAS.md`: F2-1 Obrolan — backend nyata menggantikan data contoh di `resources/js/features/chat`. Rencana disetujui pengguna: `docs/fitur/obrolan.md` §6–7 + keputusan di bawah.
+Integrator dua gelombang agen paralel. Rencana: `docs/PEMBAGIAN-TUGAS.md` + keputusan pemilik di bawah.
 
 ## Worktree / branch
-`.claude/worktrees/project-overview-status-ebff38` · `claude/f2-obrolan` (di atas `claude/kerja-paralel`, PR #2) · https://ruangkerja-claude.test · DB `ruangkerja_claude` / test `ruangkerja_testing_claude`
+`.claude/worktrees/project-overview-status-ebff38` · branch integrasi `claude/integrasi-f2` (dari `claude/shell-mobile` = `main` + Obrolan PR #3 + shell mobile-first) · https://ruangkerja-claude.test
 
-## Sudah selesai
-- `29c5dc7` klaim tugas · `c95b06a` skema + model · `5a33af2` Policy + matriks · `8815a27` Action/notifikasi/event/sinkron workspace · `f49cac2` halaman & endpoint di balik FEATURE_CHAT · `d62f672` data demo + anti-N+1 · `9b16466` frontend server + realtime · (commit ini) dokumentasi.
-- Verifikasi: Pest 2.163, Vitest 514, typecheck/lint/Larastan bersih; Playwright kirim/muat ulang/reaksi/DM baru tanpa galat; ui-shots 1440/834/390 terang & malam bersih.
+## Sudah selesai di `claude/integrasi-f2`
+- Shell ponsel mobile-first (`ad89015`), papan tugas (`ab19be2`), panduan pratinjau `/pratinjau/panduan` (merge `895d2e5`), skema laporan progres harian (`5b64553`).
+
+## Agen yang berjalan (branch → status)
+- Gelombang 1 (dari `claude/shell-mobile`): `claude/f2-rapat`, `claude/f2-catatan` (+ folder catatan workspace pribadi), `claude/f2-otomasi`, `claude/f3-okr`, `claude/f3-peran` → dikerjakan.
+- Gelombang 2 (dari `claude/integrasi-f2`, permintaan pemilik "kerjakan dulu, tanpa bug"): `claude/akun-sandi`, `claude/staf`, `claude/hiring`, `claude/pimpinan` → dikerjakan.
 
 ## Langkah berikutnya
-1. Buka PR `claude/f2-obrolan` → `main` (setelah PR #2 masuk) dan tunggu review/CI.
-2. (Sudah selesai, catatan rencana awal:) Migrasi `channels`, `channel_members`, `messages` + model/enum/factory + `docs/DATABASE.md` §7.
-2. `ChannelPolicy`/`MessagePolicy` + matriks test.
-3. Actions (`CreateChannel`, `OpenDirectConversation`, `PostMessage`, `EditMessage`, `DeleteMessage`, `ToggleMessageReaction`, `MarkChannelRead`, `SetChannelMuted`, `AttachMessageFiles`, `SyncWorkspaceChannel`) + test.
-4. Queries (`ChatInbox`, `ChannelTimeline`, `AttachableDriveFiles`), controller, `routes/chat.php`, flag `FEATURE_CHAT`.
-5. Broadcast `chat.{channel}`, presence `chat-online.{company}`, notifikasi `chat.message` + mention.
-6. `ChatDemoSeeder`. 7. Frontend store bersumber server + navigasi. 8. Verifikasi + docs → PR.
+1. Gabung tiap branch yang selesai ke `claude/integrasi-f2` (gelombang 2 didahulukan), selesaikan konflik berkas bersama, test penuh setelah tiap gabungan.
+2. Perbarui CHANGELOG, HANDOFF (langkah rilis per flag, layanan collab, webhook hiring), PANDUAN-PRATINJAU (status Nyata), PLATFORM §6.
+3. Laporan ke pemilik; push/PR hanya dengan izin.
 
-## Keputusan pengguna yang berlaku
-- DM/grup/channel privat hanya dibaca anggota (Super Admin/HR/Direksi pun tidak). Channel workspace ikut akses workspace; publik = karyawan aktif satu perusahaan.
-- Lampiran Drive boleh di DM/grup bila setiap anggota bisa melihat workspace pemilik file.
-- Notifikasi hanya DM/grup + @mention; channel dibisukan hanya saat disebut.
-- Obrolan keluar dari Pratinjau: flag `FEATURE_CHAT` (lokal nyala, produksi mati) + tile Dock/Rail + Menu ponsel.
+## Keputusan pemilik yang berlaku (6 Okt 2026)
+- DITAHAN: login Google, Google Drive/Docs/Calendar/Meet, WhatsApp + provider, aplikasi ponsel (biometrik, integritas, offline, widget, wajah, perangkat), mesin fingerprint, fitur yang belum ada sama sekali.
+- Login email + sandi untuk semua karyawan; Super Admin wajib 2FA; lupa sandi lewat persetujuan HR; HR bisa atur sandi.
+- Staf (hanya peran anggota): saldo cuti disembunyikan, struktur organisasi tidak ada; cuti & lembur dikunci (SOP belum ada); pengajuan barang (atasan → Direksi).
+- Laporan progres harian (Beranda) + pengumuman (banner dashboard, bisa ditutup, tetap di Inbox).
+- Hiring: penyetuju akhir Faris & Dio (akun karyawan, bisa diatur), pewawancara = karyawan non-HR, Google Form via webhook Apps Script.
+- Dashboard Direksi: monitoring harian/mingguan/per proyek + catatan tindakan + akses cepat workspace; metrik kehadiran/penyelesaian pindah ke modul Absensi; beban kerja ke `/manajemen`. Direksi + HR melihat semua workspace tim (baca saja).
+- Catatan: tabel `note_shares` + Hocuspocus; dashboard jabatan melengkapi dashboard per peran.
 
 ## Butuh dari integrator / agen lain
-- (Claude juga integrator) Navigasi `lib/navigation.ts`, `HandleInertiaRequests` (prop `chat.unread`), `NotificationType`/`NotificationEvent` diubah di branch ini — beri tahu Codex agar tidak menyentuhnya di #2.
-
-## Verifikasi
-composer test · composer lint · npm run typecheck · npm run lint · npm test
+- Chip "rapat 5 menit lagi" di MenuBar (agen Rapat). CI image `collab` + `npm --prefix collab ci` di `agen-mulai.sh` (agen Catatan). Tautan "Kinerja saya" dari Beranda (agen Otomasi).
