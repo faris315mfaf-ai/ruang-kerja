@@ -17,6 +17,7 @@ enum NotificationEvent: string
     case TaskCommented = 'task.commented';
     case TaskDueSoon = 'task.due_soon';
     case TaskOverdue = 'task.overdue';
+    case ChatMessage = 'chat.message';
     case RequestPending = 'request.pending';
     case RequestDecided = 'request.decided';
     case CheckInReminder = 'attendance.check_in_reminder';
@@ -33,6 +34,7 @@ enum NotificationEvent: string
             self::TaskCommented => 'Komentar di tugas yang saya amati',
             self::TaskDueSoon => 'Tenggat besok',
             self::TaskOverdue => 'Tenggat terlewat',
+            self::ChatMessage => 'Pesan langsung & grup obrolan',
             self::RequestPending => 'Pengajuan menunggu persetujuan saya',
             self::RequestDecided => 'Pengajuan saya diputus',
             self::CheckInReminder => 'Pengingat lupa check-in',
@@ -47,7 +49,7 @@ enum NotificationEvent: string
     {
         return match ($this) {
             self::TaskAssigned, self::Mention, self::TaskCommented, self::TaskDueSoon, self::TaskOverdue,
-            self::ProjectActivity => NotificationCategory::Task,
+            self::ProjectActivity, self::ChatMessage => NotificationCategory::Task,
             self::RequestPending, self::RequestDecided => NotificationCategory::Request,
             self::CheckInReminder, self::CheckOutReminder => NotificationCategory::Attendance,
             self::System, self::DailyDigest => NotificationCategory::System,

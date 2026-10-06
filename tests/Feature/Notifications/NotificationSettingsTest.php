@@ -31,8 +31,10 @@ it('renders the matrix with defaults, locks and the WhatsApp placeholder', funct
             ->where('matrix.0.channels.in_app', ['enabled' => true, 'configurable' => true, 'supported' => true])
             ->where('matrix.0.channels.email', ['enabled' => true, 'configurable' => true, 'supported' => true])
             ->where('matrix.0.channels.whatsapp', ['enabled' => false, 'configurable' => false, 'supported' => true])
-            ->where('matrix.5.event', 'request.pending')
-            ->where('matrix.5.channels.in_app.configurable', false)
+            ->where('matrix.5.event', 'chat.message')
+            ->where('matrix.5.channels.email.enabled', false)
+            ->where('matrix.6.event', 'request.pending')
+            ->where('matrix.6.channels.in_app.configurable', false)
             ->where('settings', [
                 'digest_enabled' => true,
                 'digest_time' => '07:30',

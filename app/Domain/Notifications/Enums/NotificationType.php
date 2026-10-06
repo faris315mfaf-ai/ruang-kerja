@@ -16,6 +16,8 @@ enum NotificationType: string
     case TaskDueSoon = 'task.due_soon';
     case TaskOverdue = 'task.overdue';
 
+    // Obrolan (F2-1): new message in a DM / group (mentions use Mention)
+    case ChatMessage = 'chat.message';
     // Requests & approvals (Sprint 4)
     case RequestSubmitted = 'request.submitted';
     case RequestApproved = 'request.approved';
@@ -48,6 +50,7 @@ enum NotificationType: string
             self::TaskCommented => 'Komentar',
             self::TaskDueSoon => 'Tenggat besok',
             self::TaskOverdue => 'Tenggat terlewat',
+            self::ChatMessage => 'Pesan baru',
             self::RequestSubmitted => 'Pengajuan baru',
             self::RequestApproved => 'Pengajuan disetujui',
             self::RequestRejected => 'Pengajuan ditolak',
@@ -77,6 +80,7 @@ enum NotificationType: string
             self::TaskCommented => NotificationEvent::TaskCommented,
             self::TaskDueSoon => NotificationEvent::TaskDueSoon,
             self::TaskOverdue => NotificationEvent::TaskOverdue,
+            self::ChatMessage => NotificationEvent::ChatMessage,
             self::RequestSubmitted, self::RequestCanceled => NotificationEvent::RequestPending,
             self::RequestApproved, self::RequestRejected, self::RequestRevisionRequested => NotificationEvent::RequestDecided,
             self::CheckInReminder => NotificationEvent::CheckInReminder,
@@ -102,7 +106,7 @@ enum NotificationType: string
         return match ($this) {
             self::TaskAssigned => 'plus',
             self::Mention => 'at-sign',
-            self::TaskCommented => 'message',
+            self::TaskCommented, self::ChatMessage => 'message',
             self::TaskDueSoon => 'calendar-clock',
             self::TaskOverdue => 'alert',
             self::RequestSubmitted => 'check-check',
@@ -135,7 +139,7 @@ enum NotificationType: string
             self::TaskOverdue, self::RequestRejected => 'danger',
             self::ProjectDirection, self::ProjectDecisionNeeded => 'info',
             self::ProjectDecisionResolved => 'success',
-            self::TaskAssigned, self::TaskCommented, self::RequestCanceled => 'neutral',
+            self::TaskAssigned, self::TaskCommented, self::RequestCanceled, self::ChatMessage => 'neutral',
         };
     }
 
