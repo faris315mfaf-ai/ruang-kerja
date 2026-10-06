@@ -96,27 +96,31 @@ export function TrendChart({
                     );
                 })}
             </div>
-            <table className="sr-only">
-                <caption>{description}</caption>
-                <thead>
-                    <tr>
-                        <th scope="col">Minggu</th>
-                        <th scope="col">Nilai</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {points.map((point) => (
-                        <tr key={point.week_start}>
-                            <th scope="row">{point.label}</th>
-                            <td>
-                                {point.value === null
-                                    ? 'Belum ada data'
-                                    : `${formatPercent(point.value, 0)} (${point.numerator} ${numeratorLabel} dari ${point.denominator} ${denominatorLabel})`}
-                            </td>
+            {/* Tables ignore sr-only's 1px box; the wrapper keeps them from
+                widening the page on narrow screens. */}
+            <div className="sr-only">
+                <table>
+                    <caption>{description}</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Minggu</th>
+                            <th scope="col">Nilai</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {points.map((point) => (
+                            <tr key={point.week_start}>
+                                <th scope="row">{point.label}</th>
+                                <td>
+                                    {point.value === null
+                                        ? 'Belum ada data'
+                                        : `${formatPercent(point.value, 0)} (${point.numerator} ${numeratorLabel} dari ${point.denominator} ${denominatorLabel})`}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </figure>
     );
 }

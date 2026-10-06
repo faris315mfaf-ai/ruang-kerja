@@ -39,6 +39,7 @@ export default defineConfig({
     test: {
         include: ['resources/js/**/*.test.{ts,tsx}'],
         environment: 'jsdom',
+        setupFiles: ['resources/js/test/vitest.setup.ts'],
     },
     lint: {
         ignorePatterns: [
@@ -70,6 +71,7 @@ export default defineConfig({
             '.claude/**',
             'compose.yml',
             'compose.prod.yml',
+            'compose.shared.yml',
             'docs/**',
             'resources/css/tokens.css',
             '.github/**',
