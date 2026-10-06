@@ -1,85 +1,148 @@
 import { usePage } from '@inertiajs/react';
-import { useCallback, useMemo, useState } from 'react';
-import { useFakeMutation } from '@/features/prototype/use-fake-mutation';
-import { OKR_NOW, OKR_TODAY, OWNERS } from './fixtures';
+import { useState } from 'react';
+import okrRoutes from '@/routes/okr';
+import keyResultRoutes from '@/routes/okr/key-results';
+import keyResultTaskRoutes from '@/routes/okr/key-results/tasks';
+import type { FormErrors } from './api';
+import { submit } from './api';
 import type { KrDraft } from './lib';
-import { applyCheckin, applyKrDraft, summarizeObjective } from './lib';
-import type { KeyResult, Objective } from './types';
+import { applyCheckin, draftToPayload, summarizeObjective } from './lib';
+import type { KeyResult, Objective, ObjectiveDetailProps } from './types';
+
+export type ObjectivePayload = {
+    quarter: string;
+    title: string;
+    description: string;
+    owner_id: string;
+    status: 'draft' | 'active';
+};
 
 /**
- * Local state of one objective on the preview detail page: add/edit key
- * results and record check-ins (simulated save + toast). The real page will
- * post to the server and receive the updated objective as props.
+ * State of /okr/{objective}: the server props (re-synced after every visit)
+ * plus an optimistic check-in that rolls back when the server refuses it.
+ * Every mutation is an Inertia visit; the server flashes the success toast
+ * and sends the fresh objective as props.
  */
-export function useObjective(initial: Objective) {
-    const [objective, setObjective] = useState(initial);
-    const { processing, run } = useFakeMutation();
+export function useObjective(props: ObjectiveDetailProps) {
+    const [objective, setObjective] = useState<Objective>(props.objective);
+    const [synced, setSynced] = useState<Objective>(props.objective);
+    const [processing, setProcessing] = useState(false);
     const { auth } = usePage().props;
-    const me = useMemo(
-        () => ({ id: 'me', name: auth.user?.name ?? 'Anda' }),
-        [auth.user?.name],
-    );
-    const summary = summarizeObjective(objective, OKR_TODAY);
 
-    const replaceKr = useCallback((next: KeyResult) => {
-        setObjective((current) => {
-            const exists = current.key_results.some((kr) => kr.id === next.id);
+    // New props after a visit replace the local (optimistic) copy.
+    if (synced !== props.objective) {
+        setSynced(props.objective);
+        setObjective(props.objective);
+    }
 
-            return {
-                ...current,
-                updated_at: OKR_NOW,
-                key_results: exists
-                    ? current.key_results.map((kr) =>
-                          kr.id === next.id ? next : kr,
-                      )
-                    : [...current.key_results, next],
-            };
+    const summary = summarizeObjective(objective, props.today);
+    const busy = {
+        onStart: () => setProcessing(true),
+        onFinish: () => setProcessing(false),
+    };
+
+    const saveKr = (
+        draft: KrDraft,
+        base: KeyResult | null,
+        onErrors: (errors: FormErrors) => void,
+    ) =>
+        submit(
+            base
+                ? keyResultRoutes.update(base.id)
+                : keyResultRoutes.store(objective.id),
+            draftToPayload(draft),
+            { ...busy, onErrors },
+        );
+
+    const deleteKr = (kr: KeyResult) =>
+        submit(keyResultRoutes.destroy(kr.id), {}, busy);
+
+    const checkin = async (
+        kr: KeyResult,
+        value: number,
+        confidence: number | null,
+        note: string,
+        onErrors: (errors: FormErrors) => void,
+    ) => {
+        const previous = objective;
+
+        setObjective((current) => ({
+            ...current,
+            key_results: current.key_results.map((item) =>
+                item.id === kr.id
+                    ? applyCheckin(item, {
+                          id: `optimistic-${Date.now()}`,
+                          date: props.today,
+                          value,
+                          confidence,
+                          note: note.trim() || null,
+                          author: {
+                              id: auth.user?.id ?? '',
+                              name: auth.user?.name ?? 'Anda',
+                          },
+                      })
+                    : item,
+            ),
+        }));
+
+        const saved = await submit(
+            keyResultRoutes.checkin(kr.id),
+            { value, confidence, note: note.trim() || null },
+            { ...busy, onErrors },
+        );
+
+        if (!saved) {
+            setObjective(previous);
+        }
+
+        return saved;
+    };
+
+    const saveObjective = (
+        payload: ObjectivePayload,
+        onErrors: (errors: FormErrors) => void,
+    ) =>
+        submit(okrRoutes.update(objective.id), payload, {
+            ...busy,
+            onErrors,
         });
-    }, []);
 
-    const saveKr = useCallback(
-        (draft: KrDraft, base: KeyResult | null) =>
-            run(
-                () =>
-                    replaceKr(
-                        applyKrDraft(draft, base, {
-                            objectiveId: objective.id,
-                            owners: OWNERS,
-                            id: `kr-baru-${Date.now()}`,
-                        }),
-                    ),
-                {
-                    success: base
-                        ? 'Key result diperbarui'
-                        : 'Key result ditambahkan',
-                },
-            ),
-        [objective.id, replaceKr, run],
-    );
+    const reopen = () =>
+        submit(
+            okrRoutes.update(objective.id),
+            {
+                quarter: objective.quarter,
+                title: objective.title,
+                description: objective.description ?? '',
+                owner_id: objective.owner.id,
+                status: 'active',
+            },
+            busy,
+        );
 
-    const checkin = useCallback(
-        (
-            kr: KeyResult,
-            value: number,
-            confidence: number | null,
-            note: string,
-        ) =>
-            run(
-                () =>
-                    replaceKr(
-                        applyCheckin(kr, {
-                            id: `${kr.id}-c${kr.checkins.length + 1}-${Date.now()}`,
-                            date: OKR_TODAY,
-                            value,
-                            confidence,
-                            note: note.trim() || null,
-                            author: me,
-                        }),
-                    ),
-                { success: 'Check-in tersimpan' },
-            ),
-        [me, replaceKr, run],
-    );
+    const close = () => submit(okrRoutes.close(objective.id), {}, busy);
 
-    return { objective, summary, processing, saveKr, checkin, me };
+    const linkTask = (kr: KeyResult, taskId: string) =>
+        submit(keyResultTaskRoutes.store(kr.id), { task_id: taskId }, busy);
+
+    const unlinkTask = (kr: KeyResult, taskId: string) =>
+        submit(
+            keyResultTaskRoutes.destroy({ keyResult: kr.id, task: taskId }),
+            {},
+            busy,
+        );
+
+    return {
+        objective,
+        summary,
+        processing,
+        saveKr,
+        deleteKr,
+        checkin,
+        saveObjective,
+        reopen,
+        close,
+        linkTask,
+        unlinkTask,
+    };
 }

@@ -16,6 +16,7 @@ import {
     chatNavItem,
     mainNavItemsFor,
     organizationNavItems,
+    okrNavItem,
     prototypeNavItem,
 } from '@/lib/navigation';
 import { paletteGradient } from '@/lib/palette';
@@ -40,6 +41,7 @@ const MOTIONS: Record<string, GlyphMotion> = {
     '/absensi': { name: 'dock-drop', duration: '1.4s' },
     '/pengajuan': { name: 'dock-tilt', duration: '1.8s' },
     '/persetujuan': { name: 'dock-nudge', duration: '1.5s' },
+    '/okr': { name: 'dock-pulse', duration: '1.5s' },
     '/organisasi/struktur': { name: 'dock-breathe', duration: '2.2s' },
 };
 
@@ -207,10 +209,12 @@ export function useShellNavigation(): ShellNavigation {
               item.href === '/inbox' ? [item, chatNavItem] : [item],
           )
         : main;
+    // OKR after the daily work destinations (F3-3).
+    const withOkr = features?.okr ? [...withChat, okrNavItem] : withChat;
     const tiles = [
         ...(organizationItems.length > 1
-            ? withChat
-            : [...withChat, ...organizationItems]),
+            ? withOkr
+            : [...withOkr, ...organizationItems]),
         ...(features?.prototype ? [prototypeNavItem] : []),
     ].map(toTile);
 

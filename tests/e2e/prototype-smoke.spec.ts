@@ -152,10 +152,7 @@ test('tautan tak dikenal menampilkan keadaan "tidak ditemukan"', async ({
 }) => {
     const errors = collectErrors(page);
 
-    for (const path of [
-        '/catatan/tidak-ada',
-        '/rapat/tidak-ada',
-    ]) {
+    for (const path of ['/catatan/tidak-ada', '/rapat/tidak-ada']) {
         await expectRendered(page, path);
         await expect(
             page.getByText(/tidak ditemukan/i).first(),

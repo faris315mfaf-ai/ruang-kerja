@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useEffect, useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -10,11 +11,11 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
-import { OWNERS } from './fixtures';
+import type { FormErrors } from './api';
 import type { KrDraft, KrDraftErrors } from './lib';
 import { draftFromKr, validateKrDraft } from './lib';
 import { Field, formIdFor, ResponsiveFormDialog } from './parts';
-import type { KeyResult, KrUnit } from './types';
+import type { KeyResult, KrUnit, PersonRef } from './types';
 
 const UNITS: { value: KrUnit; label: string }[] = [
     { value: 'number', label: 'Angka' },
@@ -30,8 +31,10 @@ export function KrFormDialog({
     mobile,
     keyResult,
     defaultOwner,
+    owners,
     processing,
     onSave,
+    onDelete,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -39,20 +42,34 @@ export function KrFormDialog({
     /** null = new key result. */
     keyResult: KeyResult | null;
     defaultOwner: string;
+    /** Active employees and the head of the division. */
+    owners: PersonRef[];
     processing: boolean;
-    onSave: (draft: KrDraft) => Promise<boolean>;
+    onSave: (
+        draft: KrDraft,
+        onErrors: (errors: FormErrors) => void,
+    ) => Promise<boolean>;
+    /** Present when the viewer may remove the key result. */
+    onDelete?: () => Promise<boolean>;
 }) {
     const id = useId();
     const [draft, setDraft] = useState<KrDraft>(() =>
         draftFromKr(keyResult, defaultOwner),
     );
     const [errors, setErrors] = useState<KrDraftErrors>({});
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    // Keep a current owner who left the division selectable (shown as is).
+    const ownerOptions =
+        keyResult && !owners.some((owner) => owner.id === keyResult.owner.id)
+            ? [...owners, keyResult.owner]
+            : owners;
     const title = keyResult ? 'Ubah key result' : 'Tambah key result';
 
     useEffect(() => {
         if (open) {
             setDraft(draftFromKr(keyResult, defaultOwner));
             setErrors({});
+            setConfirmDelete(false);
         }
     }, [open, keyResult, defaultOwner]);
 
@@ -75,7 +92,24 @@ export function KrFormDialog({
             return;
         }
 
-        if (await onSave(draft)) {
+        const saved = await onSave(draft, (server) => {
+            const mapped: KrDraftErrors = {};
+
+            for (const [key, message] of Object.entries(server)) {
+                if (key in draft) {
+                    mapped[key as keyof KrDraft] = message;
+                }
+            }
+
+            setErrors(mapped);
+            const first = Object.keys(mapped)[0];
+
+            if (first) {
+                document.getElementById(`${id}-${first}`)?.focus();
+            }
+        });
+
+        if (saved) {
             onOpenChange(false);
         }
     };
@@ -110,6 +144,28 @@ export function KrFormDialog({
             onSubmit={submit}
             actions={
                 <>
+                    {keyResult && onDelete && (
+                        <Button
+                            type="button"
+                            variant={confirmDelete ? 'destructive' : 'ghost'}
+                            className="sm:mr-auto"
+                            disabled={processing}
+                            onClick={async () => {
+                                if (!confirmDelete) {
+                                    setConfirmDelete(true);
+
+                                    return;
+                                }
+
+                                if (await onDelete()) {
+                                    onOpenChange(false);
+                                }
+                            }}
+                        >
+                            <Trash2 aria-hidden />
+                            {confirmDelete ? 'Ya, hapus' : 'Hapus'}
+                        </Button>
+                    )}
                     <Button
                         type="button"
                         variant="outline"
@@ -211,7 +267,7 @@ export function KrFormDialog({
                             <SelectValue placeholder="Pilih pemilik" />
                         </SelectTrigger>
                         <SelectContent>
-                            {OWNERS.map((owner) => (
+                            {ownerOptions.map((owner) => (
                                 <SelectItem key={owner.id} value={owner.id}>
                                     {owner.name}
                                 </SelectItem>

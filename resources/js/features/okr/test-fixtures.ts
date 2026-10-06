@@ -10,7 +10,9 @@ import type {
     QuarterKey,
 } from './types';
 
-// Sample OKR data. "Today" = Mon, 5 Oct 2026 (week 1 of Q4 2026).
+// Sample OKR data for the Vitest suites (the pages get real props from the
+// server; demo rows come from database/seeders/OkrDemoSeeder.php).
+// "Today" = Mon, 5 Oct 2026 (week 1 of Q4 2026).
 
 export const OKR_TODAY = '2026-10-05';
 
@@ -157,6 +159,7 @@ function objective(
         title,
         description,
         owner,
+        status: quarter === '2026-Q4' ? 'active' : 'closed',
         created_at:
             quarter === '2026-Q4'
                 ? '2026-09-28T02:00:00Z'
@@ -680,8 +683,10 @@ export const OKR_INDEX: OkrIndexProps = {
     today: OKR_TODAY,
     quarters: ['2026-Q4', '2026-Q3'],
     current_quarter: '2026-Q4',
+    filters: { quarter: '2026-Q4', division: 'all' },
     divisions: DIVISIONS,
     objectives: OBJECTIVES,
+    create: null,
 };
 
 export function findObjective(id: string): Objective | null {

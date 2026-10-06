@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import type { FormErrors } from './api';
 import { formatKrValue, parseKrNumber } from './lib';
 import { Field, formIdFor, ResponsiveFormDialog } from './parts';
 import type { KeyResult } from './types';
@@ -35,6 +36,7 @@ export function CheckinDialog({
         value: number,
         confidence: number | null,
         note: string,
+        onErrors: (errors: FormErrors) => void,
     ) => Promise<boolean>;
 }) {
     const id = useId();
@@ -70,7 +72,20 @@ export function CheckinDialog({
             return;
         }
 
-        if (await onSave(parsed, Number(confidence), note)) {
+        const saved = await onSave(
+            parsed,
+            Number(confidence),
+            note,
+            (errors) => {
+                const message =
+                    errors.value ?? errors.confidence ?? errors.note;
+
+                setError(message ?? 'Check-in gagal disimpan.');
+                document.getElementById(`${id}-value`)?.focus();
+            },
+        );
+
+        if (saved) {
             onOpenChange(false);
         }
     };
