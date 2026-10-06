@@ -224,3 +224,12 @@ it('notifies HR in-app with the position in the text', function () {
         ->and($notification->data['title'])->toBe('Galih Pratama melamar Staf Programmer')
         ->and($notification->data['url'])->toStartWith('/hiring/kandidat/');
 });
+
+it('accepts the ASCII-escaped JSON the Apps Script sends', function () {
+    // Exactly what the script in docs/fitur/hiring.md produces for "Nádia".
+    $body = '{"response_id":"resp-esc","answers":[{"question":"Nama lengkap","answer":"Nádia Putri"}],"files":[]}';
+
+    hiringPost($this->position, $body)->assertCreated();
+
+    expect(Candidate::query()->where('external_response_id', 'resp-esc')->sole()->full_name)->toBe('Nádia Putri');
+});
