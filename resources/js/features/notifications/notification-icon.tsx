@@ -11,6 +11,8 @@ import {
     Plus,
     RotateCcw,
     ShieldAlert,
+    UserCheck,
+    UserPlus,
     X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -30,6 +32,8 @@ const ICONS: Record<string, LucideIcon> = {
     megaphone: Megaphone,
     bell: Bell,
     shield: ShieldAlert,
+    'user-plus': UserPlus,
+    'user-check': UserCheck,
 };
 
 export const toneClasses: Record<NotificationTone, string> = {

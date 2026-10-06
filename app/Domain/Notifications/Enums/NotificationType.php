@@ -38,6 +38,11 @@ enum NotificationType: string
     case ProjectDecisionNeeded = 'project.decision_needed';
     case ProjectDecisionResolved = 'project.decision_resolved';
 
+    // Hiring (owner decision 6 Oct 2026, docs/fitur/hiring.md)
+    case HiringCandidateReceived = 'hiring.candidate_received';
+    case HiringDecisionNeeded = 'hiring.decision_needed';
+    case HiringCandidateDecided = 'hiring.candidate_decided';
+
     // System (Sprint 8)
     case SystemAnnouncement = 'system.announcement';
     case SystemTest = 'system.test';
@@ -64,6 +69,9 @@ enum NotificationType: string
             self::ProjectDirection => 'Arahan Direksi',
             self::ProjectDecisionNeeded => 'Butuh keputusan',
             self::ProjectDecisionResolved => 'Keputusan diberikan',
+            self::HiringCandidateReceived => 'Kandidat baru',
+            self::HiringDecisionNeeded => 'Keputusan kandidat',
+            self::HiringCandidateDecided => 'Kandidat diputus',
             self::SystemAnnouncement => 'Pengumuman',
             self::SystemTest => 'Notifikasi uji',
         };
@@ -89,6 +97,7 @@ enum NotificationType: string
             self::ConsentRevoked => NotificationEvent::System,
             self::ProjectUpdateReminder, self::ProjectUpdateRequested, self::ProjectDirection,
             self::ProjectDecisionNeeded, self::ProjectDecisionResolved => NotificationEvent::ProjectActivity,
+            self::HiringCandidateReceived, self::HiringDecisionNeeded, self::HiringCandidateDecided => NotificationEvent::HiringActivity,
             self::SystemAnnouncement, self::SystemTest => NotificationEvent::System,
         };
     }
@@ -120,6 +129,9 @@ enum NotificationType: string
             self::ProjectDirection => 'message',
             self::ProjectDecisionNeeded => 'alert',
             self::ProjectDecisionResolved => 'check-check',
+            self::HiringCandidateReceived => 'user-plus',
+            self::HiringDecisionNeeded => 'check-check',
+            self::HiringCandidateDecided => 'user-check',
             self::SystemAnnouncement => 'megaphone',
             self::SystemTest => 'bell',
         };
@@ -139,6 +151,7 @@ enum NotificationType: string
             self::TaskOverdue, self::RequestRejected => 'danger',
             self::ProjectDirection, self::ProjectDecisionNeeded => 'info',
             self::ProjectDecisionResolved => 'success',
+            self::HiringCandidateReceived, self::HiringDecisionNeeded, self::HiringCandidateDecided => 'info',
             self::TaskAssigned, self::TaskCommented, self::RequestCanceled, self::ChatMessage => 'neutral',
         };
     }
@@ -151,7 +164,7 @@ enum NotificationType: string
     {
         return match ($this) {
             self::TaskOverdue, self::RequestSubmitted, self::RequestRevisionRequested,
-            self::ProjectUpdateRequested, self::ProjectDecisionNeeded => true,
+            self::ProjectUpdateRequested, self::ProjectDecisionNeeded, self::HiringDecisionNeeded => true,
             default => false,
         };
     }
