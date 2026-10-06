@@ -4,6 +4,8 @@
 >
 > Dibaca di aplikasi: **Pratinjau › Panduan pratinjau** (`/pratinjau/panduan`, gambar ikut tampil). Rincian teknis per modul ada di dokumen modul (tautan di tiap seksi).
 
+> **Pembaruan 6 Okt 2026 (malam):** semua modul "Akan dibangun" sudah **Nyata** dengan backend, data tersimpan, dan flag sendiri (nyala lokal, mati produksi): Catatan bersama (`FEATURE_NOTES`, server kolaborasi `collab/`), Rapat, notulen & kalender (`FEATURE_MEETINGS`), Otomasi + Kinerja saya (`FEATURE_AUTOMATION`), OKR (`FEATURE_OKR`), Dashboard per jabatan (`FEATURE_ROLE_DASHBOARDS`). Cara pakai terbaru ada di dokumen modulnya ([catatan](catatan.md), [rapat-kalender](rapat-kalender.md), [otomasi-whatsapp](otomasi-whatsapp.md), [okr](okr.md), [dashboard-peran](dashboard-peran.md)); seksi §4 di bawah masih menggambarkan masa pratinjau. Yang tetap pratinjau & **ditahan**: WhatsApp, aplikasi ponsel, mesin fingerprint. Fitur baru permintaan pemilik (tanpa flag): [laporan harian](laporan-harian.md), [pengumuman](pengumuman.md), [hiring](hiring.md), [akun & kata sandi](akun-kata-sandi.md), [dashboard pimpinan](dashboard-pimpinan.md), [staf: pengajuan & workspace](staf-pengajuan-workspace.md).
+
 ## 1. Ringkasan status
 
 Tiga label dipakai di seluruh dokumen ini:
@@ -20,13 +22,13 @@ Tiga label dipakai di seluruh dokumen ini:
 | Modul | Status | Rute utama | Dokumen modul |
 |---|---|---|---|
 | Obrolan (channel, DM, grup, thread) | **Nyata** (flag `FEATURE_CHAT`) | `/obrolan` | [obrolan.md](obrolan.md) |
-| Catatan bersama | Pratinjau · **Akan dibangun** | `/catatan` | [catatan.md](catatan.md) |
-| Rapat & notulen | Pratinjau · **Akan dibangun** | `/rapat` | [rapat-kalender.md](rapat-kalender.md) |
-| Kalender & jadwal manajemen | Pratinjau · **Akan dibangun** | `/kalender`, `/manajemen/jadwal` | [rapat-kalender.md](rapat-kalender.md) |
-| Otomasi: aturan, tugas berulang, template | Pratinjau · **Akan dibangun** | `/otomasi` | [otomasi-whatsapp.md](otomasi-whatsapp.md) |
-| Kinerja saya | Pratinjau · **Akan dibangun** | `/kinerja` | [otomasi-whatsapp.md](otomasi-whatsapp.md) |
-| OKR divisi | Pratinjau · **Akan dibangun** | `/okr` | [okr.md](okr.md) |
-| Dashboard per peran | Pratinjau · **Akan dibangun** | `/peran/{peran}` | [dashboard-peran.md](dashboard-peran.md) |
+| Catatan bersama | **Nyata** | `/catatan` | [catatan.md](catatan.md) |
+| Rapat & notulen | **Nyata** | `/rapat` | [rapat-kalender.md](rapat-kalender.md) |
+| Kalender & jadwal manajemen | **Nyata** | `/kalender`, `/manajemen/jadwal` | [rapat-kalender.md](rapat-kalender.md) |
+| Otomasi: aturan, tugas berulang, template | **Nyata** | `/otomasi` | [otomasi-whatsapp.md](otomasi-whatsapp.md) |
+| Kinerja saya | **Nyata** | `/kinerja` | [otomasi-whatsapp.md](otomasi-whatsapp.md) |
+| OKR divisi | **Nyata** | `/okr` | [okr.md](okr.md) |
+| Dashboard per peran | **Nyata** | `/peran/{peran}` | [dashboard-peran.md](dashboard-peran.md) |
 | Notifikasi WhatsApp + pemilihan provider | Pratinjau · **Ditahan** | `/pengaturan/whatsapp` | [otomasi-whatsapp.md](otomasi-whatsapp.md) |
 | Aplikasi ponsel (login biometrik, integritas, offline, widget, check-in wajah, perangkat saya) | Pratinjau · **Ditahan** | `/pratinjau/ponsel` | [aplikasi-ponsel.md](aplikasi-ponsel.md) |
 | Mesin fingerprint (ZKTeco ADMS) | Pratinjau · **Ditahan** | `/admin/mesin-absensi` | [mesin-fingerprint.md](mesin-fingerprint.md) |
@@ -41,20 +43,20 @@ Kolom **Desktop/Ponsel**: ✓ penuh · ◐ terbatas · — tidak ada. **Akun** =
 | `/pratinjau` | Hub pratinjau | — (navigasi) | ✓ | ✓ | siapa pun |
 | `/pratinjau/panduan` | Panduan ini (+ dokumen modul di `/pratinjau/panduan/{dokumen}`) | — (dokumentasi) | ✓ | ✓ | siapa pun |
 | `/obrolan`, `/obrolan/{id}` | Daftar obrolan, percakapan | Nyata | ✓ | ✓ | `kadiv@demo.test` |
-| `/catatan` | Daftar catatan | Akan dibangun | ✓ | ✓ | `kadiv@demo.test` |
-| `/catatan/{id}` | Editor catatan, riwayat versi, bagikan | Akan dibangun | ✓ | ✓ (tanpa pohon) | `kadiv@demo.test` |
-| `/rapat` | Agenda rapat | Akan dibangun | ✓ | ◐ (tanpa tampilan "Minggu ini") | `kadiv@demo.test` |
-| `/rapat/baru` | Jadwalkan rapat | Akan dibangun | ✓ | ✓ | `kadiv@demo.test` |
-| `/rapat/{id}` | Detail rapat & RSVP | Akan dibangun | ✓ | ◐ (info ringkas) | `kadiv@demo.test` |
-| `/rapat/{id}/notulen` | Notulen & tindak lanjut | Akan dibangun | ✓ | ◐ (ubah butir/PIC/tenggat di desktop) | `kadiv@demo.test` |
-| `/kalender` | Kalender rapat, tenggat, cuti, libur | Akan dibangun | ✓ | ◐ (strip minggu + agenda) | `kadiv@demo.test` |
-| `/manajemen/jadwal` | Jadwal & notulensi pimpinan | Akan dibangun | ✓ | ✓ | `direksi@demo.test` |
-| `/otomasi` | Aturan otomasi | Akan dibangun | ✓ | ✓ | `kadiv@demo.test` |
-| `/otomasi/berulang` | Tugas berulang | Akan dibangun | ✓ | ✓ | `kadiv@demo.test` |
-| `/otomasi/template` | Template tugas & workspace | Akan dibangun | ✓ | ✓ | `kadiv@demo.test` |
-| `/kinerja` | Kinerja saya | Akan dibangun | ✓ | ◐ (tanpa panel per workspace & kehadiran) | siapa pun |
-| `/okr`, `/okr/{id}` | OKR divisi, detail objective | Akan dibangun | ✓ | ✓ | `kadiv@demo.test` |
-| `/peran/{dirut,direktur,hr,corsec,marketing,programming,implementer,analis}` | Dashboard per peran | Akan dibangun | ✓ | ✓ | `direksi@`, `hr@`, `programmer@demo.test` |
+| `/catatan` | Daftar catatan | **Nyata** | ✓ | ✓ | `kadiv@demo.test` |
+| `/catatan/{id}` | Editor catatan, riwayat versi, bagikan | **Nyata** | ✓ | ✓ (tanpa pohon) | `kadiv@demo.test` |
+| `/rapat` | Agenda rapat | **Nyata** | ✓ | ◐ (tanpa tampilan "Minggu ini") | `kadiv@demo.test` |
+| `/rapat/baru` | Jadwalkan rapat | **Nyata** | ✓ | ✓ | `kadiv@demo.test` |
+| `/rapat/{id}` | Detail rapat & RSVP | **Nyata** | ✓ | ◐ (info ringkas) | `kadiv@demo.test` |
+| `/rapat/{id}/notulen` | Notulen & tindak lanjut | **Nyata** | ✓ | ◐ (ubah butir/PIC/tenggat di desktop) | `kadiv@demo.test` |
+| `/kalender` | Kalender rapat, tenggat, cuti, libur | **Nyata** | ✓ | ◐ (strip minggu + agenda) | `kadiv@demo.test` |
+| `/manajemen/jadwal` | Jadwal & notulensi pimpinan | **Nyata** | ✓ | ✓ | `direksi@demo.test` |
+| `/otomasi` | Aturan otomasi | **Nyata** | ✓ | ✓ | `kadiv@demo.test` |
+| `/otomasi/berulang` | Tugas berulang | **Nyata** | ✓ | ✓ | `kadiv@demo.test` |
+| `/otomasi/template` | Template tugas & workspace | **Nyata** | ✓ | ✓ | `kadiv@demo.test` |
+| `/kinerja` | Kinerja saya | **Nyata** | ✓ | ◐ (tanpa panel per workspace & kehadiran) | siapa pun |
+| `/okr`, `/okr/{id}` | OKR divisi, detail objective | **Nyata** | ✓ | ✓ | `kadiv@demo.test` |
+| `/peran/{dirut,direktur,hr,corsec,marketing,programming,implementer,analis}` | Dashboard per peran | **Nyata** | ✓ | ✓ | `direksi@`, `hr@`, `programmer@demo.test` |
 | `/pengaturan/whatsapp` | Pengaturan WhatsApp | Ditahan | ✓ | ✓ | siapa pun |
 | `/pratinjau/ponsel` | Ringkasan aplikasi ponsel | Ditahan | ✓ | ✓ | siapa pun |
 | `/pratinjau/ponsel/masuk` | Masuk biometrik | Ditahan | ✓ (bingkai ponsel) | ✓ (layar penuh) | siapa pun |
@@ -206,7 +208,7 @@ Pencarian pesan di ⌘K dan pencarian server di dalam channel; unggah file langs
 
 Sudah nyata. Produksi: jalankan migrasi, `php artisan chat:sync-workspace-channels` sekali, lalu `FEATURE_CHAT=true`. Data demo: `database/seeders/ChatDemoSeeder.php`.
 
-## 4. Modul Akan dibangun
+## 4. Modul yang kini Nyata (uraian di bawah = keadaan pratinjau sebelumnya)
 
 ### 4.1 Catatan bersama · `/catatan`
 

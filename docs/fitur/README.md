@@ -6,6 +6,8 @@
 
 Folder ini menjelaskan **alur frontend Fase 2 dan Fase 3** RuangKerja yang sudah bisa dicoba di browser sebagai **pratinjau** (prototipe). Setiap layar memakai **data contoh** di frontend dan tidak menyimpan apa pun ke server. Backend Fase 2/3 (migrasi, Action, Policy, job, integrasi Google/WhatsApp/Hocuspocus/ADMS) **belum dibangun**. Setiap dokumen modul menutup dengan checklist pekerjaan backend agar tim tinggal mengirim props yang bentuknya sama dengan data contoh.
 
+> **Pembaruan 6 Okt 2026 (malam):** semua modul "Akan dibangun" sudah **Nyata** dengan backend, data tersimpan, dan flag sendiri (nyala lokal, mati produksi): Catatan bersama (`FEATURE_NOTES`, server kolaborasi `collab/`), Rapat, notulen & kalender (`FEATURE_MEETINGS`), Otomasi + Kinerja saya (`FEATURE_AUTOMATION`), OKR (`FEATURE_OKR`), Dashboard per jabatan (`FEATURE_ROLE_DASHBOARDS`). Cara pakai terbaru ada di dokumen modulnya ([catatan](catatan.md), [rapat-kalender](rapat-kalender.md), [otomasi-whatsapp](otomasi-whatsapp.md), [okr](okr.md), [dashboard-peran](dashboard-peran.md)); seksi §4 di bawah masih menggambarkan masa pratinjau. Yang tetap pratinjau & **ditahan**: WhatsApp, aplikasi ponsel, mesin fingerprint. Fitur baru permintaan pemilik (tanpa flag): [laporan harian](laporan-harian.md), [pengumuman](pengumuman.md), [hiring](hiring.md), [akun & kata sandi](akun-kata-sandi.md), [dashboard pimpinan](dashboard-pimpinan.md), [staf: pengajuan & workspace](staf-pengajuan-workspace.md).
+
 ## 1. Apa itu pratinjau
 
 | Hal | Keputusan |

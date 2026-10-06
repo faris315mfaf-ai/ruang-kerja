@@ -114,6 +114,8 @@ composer install --no-interaction --quiet
 
 log "npm ci"
 npm ci --no-audit --no-fund --loglevel=error
+# Collaboration server for Catatan bersama (collab/, Hocuspocus).
+[ -f collab/package-lock.json ] && npm --prefix collab ci --no-audit --no-fund --loglevel=error
 
 php artisan config:clear --quiet
 if [ "$SEED" = 1 ]; then

@@ -6,6 +6,18 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 
 ## [Belum dirilis]
 
+### Ditambahkan (6 Okt 2026, keputusan pemilik)
+- **Login email + kata sandi untuk semua karyawan** (login Google ditahan): HR bisa mengatur sandi karyawan (opsi wajib ganti), karyawan ganti sandi sendiri di Pengaturan › Keamanan, **Lupa kata sandi** menunggu persetujuan HR lalu halaman tunggu otomatis pindah ke isi sandi baru (anti-enumerasi, token sekali pakai). Super Admin tetap wajib 2FA. `docs/fitur/akun-kata-sandi.md`.
+- **Staf**: saldo cuti tidak dikirim/ditampilkan untuk staf; struktur organisasi 404 untuk staf; **cuti & lembur dikunci** (`leave_types.locked_reason`, HR bisa membuka); **pengajuan barang** (kategori `procurement`, alur atasan → Direksi); workspace dikelompokkan Pribadi · Divisi & tim · Proyek dengan chip filter berwarna (halaman, Menu, Dock/Rail).
+- **Laporan progres harian** (`/laporan`, kartu di Beranda, pengingat 16.30) dan **pengumuman** (`/pengumuman`, banner di semua dashboard, bisa ditutup tetapi tetap di Inbox).
+- **Hiring** (`/hiring`, HR): lowongan, kandidat dari Google Form lewat webhook Apps Script (HMAC), checklist per pemeriksa, pertanyaan & jawaban wawancara, poin per pewawancara, notulensi, keputusan akhir oleh penyetuju (bawaan Faris & Dio). `docs/fitur/hiring.md`.
+- **Dashboard Direksi** (`/dashboard/direksi`): monitoring kerja harian, mingguan, per proyek dari laporan harian, catatan tindakan (`management_notes`), akses cepat workspace (baca saja). **Absensi bertab** Hari ini · Rekap · Kedisiplinan (`/absensi/kedisiplinan`: kedisiplinan, tren, penyelesaian, lead time, rata-rata terlambat); Dashboard HR diringkas; beban kerja pindah ke `/manajemen`; HR + Direksi melihat semua workspace tim **baca saja**; panel "Laporan tim hari ini" untuk Kepala Divisi.
+- Modul pratinjau menjadi **nyata** (flag sendiri, nyala lokal, mati produksi): **Catatan bersama** dengan folder & kolaborasi Hocuspocus (`FEATURE_NOTES`, layanan `collab/`), **Rapat, notulen & kalender** (`FEATURE_MEETINGS`; Google Calendar/Meet ditahan), **Otomasi, tugas berulang, template, Kinerja saya** (`FEATURE_AUTOMATION`), **OKR divisi** (`FEATURE_OKR`), **Dashboard per jabatan** (`FEATURE_ROLE_DASHBOARDS`, `positions.dashboard_role`). Panduan `/pratinjau/panduan`.
+
+### Diubah (6 Okt 2026)
+- Shell ponsel mobile-first: tombol Absen menonjol di tengah tab bar kini ikut dihitung di `--tab-bar-height` (bilah aksi bawah tidak tertutup).
+- Ditahan pemilik: login Google, Google Drive/Docs/Calendar/Meet, WhatsApp + provider, aplikasi ponsel, mesin fingerprint.
+
 ### Ditambahkan
 - **Obrolan nyata (F2-1)** di balik `FEATURE_CHAT` (nyala lokal, mati produksi): channel otomatis per workspace, channel publik/privat, DM & grup (dipakai ulang untuk orang yang sama), thread, @mention, #rujukan tugas, reaksi, lampiran Drive yang bisa dibuka semua anggota, tanda baca, bisukan, "Muat pesan sebelumnya", realtime Reverb (pesan, dibaca, mengetik, online) dengan polling cadangan. DM/grup/privat hanya bisa dibaca anggotanya. Notifikasi DM/grup ("Pesan langsung & grup obrolan", in-app) dan mention. Tile Obrolan di Dock/Rail + Menu dengan badge. Command `chat:sync-workspace-channels`. Middleware `EnsureFeatureEnabled:<flag>` menggantikan `EnsurePrototypeEnabled`.
 - **Ruang saya** di Beranda (Dashboard Saya, desktop & ponsel): tugas baru yang diberikan orang lain (terima ke Hari ini / Minggu ini), lajur Hari ini · Minggu ini · Nanti dengan penempatan otomatis per tenggat dan penanda "terbawa dari kemarin", catatan pribadi cepat, tandai selesai (lewat Review bila kolom itu ada), progres "selesai hari ini". Rencana bersifat pribadi (`task_plans`). Seeder demo `PlannerDemoSeeder`.
