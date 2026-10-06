@@ -29,6 +29,7 @@ import {
     managementNavItem,
     organizationNavItems,
     chatNavItem,
+    hiringNavItem,
     portfolioNavItem,
     prototypeNavItem,
 } from '@/lib/navigation';
@@ -172,6 +173,15 @@ export default function Menu() {
 
                 <Section title="Workspace">
                     <MenuWorkspaceGrid />
+                    {features?.hiring && (
+                        <Group>
+                            <Row
+                                icon={hiringNavItem.icon}
+                                label="Hiring · rekrutmen"
+                                href={hiringNavItem.href}
+                            />
+                        </Group>
+                    )}
                 </Section>
 
                 <Section title="Pekerjaan">

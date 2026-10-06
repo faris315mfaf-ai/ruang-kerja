@@ -16,18 +16,18 @@ class InterviewScorePolicy
 
     public function view(User $user, InterviewScore $score): Response
     {
-        if (! $this->candidates->canView($user, $score->candidate)) {
+        if (! $this->candidates->canView($user, $score->loadMissing('candidate.hiringPosition')->candidate)) {
             return Response::denyAsNotFound();
         }
 
-        return $score->interviewer_id === $user->id || $this->candidates->canSeeAllScores($user, $score->candidate)
+        return $score->interviewer_id === $user->id || $this->candidates->canSeeAllScores($user, $score->loadMissing('candidate.hiringPosition')->candidate)
             ? Response::allow()
             : Response::denyAsNotFound();
     }
 
     public function update(User $user, InterviewScore $score): Response
     {
-        $allowed = $this->candidates->score($user, $score->candidate);
+        $allowed = $this->candidates->score($user, $score->loadMissing('candidate.hiringPosition')->candidate);
 
         if ($allowed->denied()) {
             return $allowed;

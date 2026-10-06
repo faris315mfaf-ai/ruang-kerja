@@ -16,6 +16,6 @@ class CandidateDecisionPolicy
 
     public function view(User $user, CandidateDecision $decision): Response
     {
-        return $this->candidates->view($user, $decision->candidate);
+        return $this->candidates->view($user, $decision->loadMissing('candidate.hiringPosition')->candidate);
     }
 }

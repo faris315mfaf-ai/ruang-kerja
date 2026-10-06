@@ -3,6 +3,7 @@
 namespace App\Domain\Hiring\Queries;
 
 use App\Domain\Hiring\Enums\ReviewerRole;
+use App\Domain\Hiring\Services\CandidateChecklist;
 use App\Domain\Hiring\Services\HiringAccess;
 use App\Models\Candidate;
 use App\Models\CandidateChecklistItem;
@@ -57,6 +58,11 @@ final class CandidateProfile
             ...$candidate->notes->pluck('author_id')->all(),
             ...$candidate->decisions->pluck('approver_id')->all(),
         ], fn (?string $id): bool => $id !== null)));
+
+        $activeInterviewers = array_values(array_filter(
+            $position->interviewer_ids,
+            fn (string $id): bool => $people->get($id)?->isActive() === true,
+        ));
 
         $person = function (?string $id) use ($people): ?array {
             $user = $id !== null ? $people->get($id) : null;
@@ -162,7 +168,7 @@ final class CandidateProfile
             'blockers' => [
                 // Required HR & interviewer items still open (needed before "Keputusan akhir").
                 'before_final' => $candidate->checklistItems
-                    ->filter(fn (CandidateChecklistItem $item): bool => $item->is_required && ! $item->isChecked() && $item->role !== ReviewerRole::Approver)
+                    ->filter(fn (CandidateChecklistItem $item): bool => CandidateChecklist::blocksFinal($item, $activeInterviewers))
                     ->count(),
                 // The viewer's own required approver items still open (needed before approving).
                 'my_approval' => $candidate->checklistItems

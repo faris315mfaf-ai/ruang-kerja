@@ -16,7 +16,7 @@ class CandidateNotePolicy
 
     public function view(User $user, CandidateNote $note): Response
     {
-        return $this->candidates->view($user, $note->candidate);
+        return $this->candidates->view($user, $note->loadMissing('candidate.hiringPosition')->candidate);
     }
 
     public function update(User $user, CandidateNote $note): Response
@@ -31,7 +31,7 @@ class CandidateNotePolicy
 
     private function own(User $user, CandidateNote $note): Response
     {
-        if (! $this->candidates->canView($user, $note->candidate)) {
+        if (! $this->candidates->canView($user, $note->loadMissing('candidate.hiringPosition')->candidate)) {
             return Response::denyAsNotFound();
         }
 

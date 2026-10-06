@@ -44,7 +44,7 @@ final class HiringPeople
         return User::query()
             ->whereIn('id', array_values(array_unique($ids)))
             ->with('position:id,name')
-            ->get(['id', 'name', 'avatar_url', 'position_id'])
+            ->get(['id', 'name', 'avatar_url', 'position_id', 'status'])
             ->keyBy('id');
     }
 

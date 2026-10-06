@@ -4,10 +4,13 @@ namespace App\Domain\Hiring\Services;
 
 use App\Domain\Hiring\Enums\CandidateStage;
 use App\Domain\Hiring\Enums\ReviewerRole;
+use App\Domain\Organization\Enums\UserStatus;
 use App\Models\Candidate;
 use App\Models\CandidateChecklistItem;
 use App\Models\HiringPosition;
 use App\Models\HiringSetting;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Generates the per-reviewer checklist of a candidate from the company
@@ -52,11 +55,33 @@ final class CandidateChecklist
      */
     public function openRequiredBeforeFinal(Candidate $candidate): int
     {
+        // Items of interviewers who left the position or were deactivated no longer block.
+        $interviewers = User::query()
+            ->whereIn('id', $candidate->hiringPosition->interviewer_ids)
+            ->where('status', UserStatus::Active)
+            ->pluck('id')
+            ->all();
+
         return $candidate->checklistItems()
             ->where('is_required', true)
             ->whereNull('checked_at')
-            ->whereIn('role', [ReviewerRole::Hr->value, ReviewerRole::Interviewer->value])
+            ->where(function (Builder $scope) use ($interviewers): void {
+                $scope->where('role', ReviewerRole::Hr->value)
+                    ->orWhere(fn (Builder $own) => $own->where('role', ReviewerRole::Interviewer->value)->whereIn('reviewer_id', $interviewers));
+            })
             ->count();
+    }
+
+    /**
+     * Same rule as openRequiredBeforeFinal() on an already loaded checklist.
+     *
+     * @param  list<string>  $activeInterviewerIds
+     */
+    public static function blocksFinal(CandidateChecklistItem $item, array $activeInterviewerIds): bool
+    {
+        return $item->is_required && ! $item->isChecked()
+            && ($item->role === ReviewerRole::Hr
+                || ($item->role === ReviewerRole::Interviewer && in_array($item->reviewer_id, $activeInterviewerIds, true)));
     }
 
     /**

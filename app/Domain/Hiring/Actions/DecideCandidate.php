@@ -10,6 +10,7 @@ use App\Domain\Hiring\Services\CandidateChecklist;
 use App\Domain\Hiring\Services\HiringAccess;
 use App\Domain\Notifications\Actions\ResolveNotificationsForSubject;
 use App\Domain\Notifications\Enums\NotificationType;
+use App\Domain\Organization\Enums\UserStatus;
 use App\Domain\Organization\Services\AuditLogger;
 use App\Models\Candidate;
 use App\Models\CandidateDecision;
@@ -103,7 +104,12 @@ final class DecideCandidate
      */
     private function outcome(Candidate $candidate): ?CandidateStage
     {
-        $approverIds = $candidate->hiringPosition->final_approver_ids;
+        // Deactivated approvers no longer hold the decision up.
+        $approverIds = User::query()
+            ->whereIn('id', $candidate->hiringPosition->final_approver_ids)
+            ->where('status', UserStatus::Active)
+            ->pluck('id')
+            ->all();
         $decisions = $candidate->decisions()->whereIn('approver_id', $approverIds)->get();
 
         if ($decisions->contains(fn (CandidateDecision $row): bool => $row->decision === DecisionValue::Reject)) {

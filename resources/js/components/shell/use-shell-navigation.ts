@@ -14,6 +14,7 @@ import {
     attendanceNavItems,
     isActivePath,
     chatNavItem,
+    hiringNavItem,
     mainNavItemsFor,
     organizationNavItems,
     prototypeNavItem,
@@ -188,6 +189,17 @@ export function useShellNavigation(): ShellNavigation {
             gradient: workspaceGradient(workspace.type, workspace.color),
         };
     });
+    // The Hiring space sits with the workspaces (it is styled like one).
+    if (features?.hiring) {
+        workspaceEntries.push({
+            key: 'hiring',
+            label: hiringNavItem.title,
+            href: hiringNavItem.href,
+            active: isActivePath(hiringNavItem, currentUrl),
+            icon: hiringNavItem.icon,
+            gradient: 'bg-grad-indigo',
+        });
+    }
     workspaceEntries.push({
         key: 'all-workspaces',
         label: 'Semua workspace',

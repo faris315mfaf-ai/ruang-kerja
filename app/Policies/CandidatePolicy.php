@@ -44,7 +44,7 @@ class CandidatePolicy
             return Response::denyAsNotFound();
         }
 
-        if (! $candidate->hiringPosition->isInterviewer($user)) {
+        if (! $candidate->loadMissing('hiringPosition')->hiringPosition->isInterviewer($user)) {
             return Response::deny('Hanya pewawancara lowongan ini yang dapat memberi poin.');
         }
 
@@ -66,7 +66,7 @@ class CandidatePolicy
             return Response::denyAsNotFound();
         }
 
-        if (! $candidate->hiringPosition->isApprover($user)) {
+        if (! $candidate->loadMissing('hiringPosition')->hiringPosition->isApprover($user)) {
             return Response::deny('Hanya penyetuju akhir lowongan ini yang dapat memutus.');
         }
 
@@ -81,13 +81,13 @@ class CandidatePolicy
             return false;
         }
 
-        return $this->access->isManager($user) || $candidate->hiringPosition->isReviewer($user);
+        return $this->access->isManager($user) || $candidate->loadMissing('hiringPosition')->hiringPosition->isReviewer($user);
     }
 
     /** HR and final approvers see every interviewer's points; interviewers only their own. */
     public function canSeeAllScores(User $user, Candidate $candidate): bool
     {
         return $this->canView($user, $candidate)
-            && ($this->access->isManager($user) || $candidate->hiringPosition->isApprover($user));
+            && ($this->access->isManager($user) || $candidate->loadMissing('hiringPosition')->hiringPosition->isApprover($user));
     }
 }

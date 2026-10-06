@@ -16,17 +16,17 @@ class HiringQuestionPolicy
 
     public function view(User $user, HiringQuestion $question): Response
     {
-        return $this->positions->view($user, $question->hiringPosition);
+        return $this->positions->view($user, $question->loadMissing('hiringPosition')->hiringPosition);
     }
 
     public function update(User $user, HiringQuestion $question): Response
     {
-        return $this->positions->update($user, $question->hiringPosition);
+        return $this->positions->update($user, $question->loadMissing('hiringPosition')->hiringPosition);
     }
 
     public function delete(User $user, HiringQuestion $question): Response
     {
-        $allowed = $this->positions->update($user, $question->hiringPosition);
+        $allowed = $this->positions->update($user, $question->loadMissing('hiringPosition')->hiringPosition);
 
         if ($allowed->denied()) {
             return $allowed;

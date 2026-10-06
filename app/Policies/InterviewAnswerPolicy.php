@@ -16,11 +16,11 @@ class InterviewAnswerPolicy
 
     public function view(User $user, InterviewAnswer $answer): Response
     {
-        return $this->candidates->view($user, $answer->candidate);
+        return $this->candidates->view($user, $answer->loadMissing('candidate.hiringPosition')->candidate);
     }
 
     public function update(User $user, InterviewAnswer $answer): Response
     {
-        return $this->candidates->manage($user, $answer->candidate);
+        return $this->candidates->manage($user, $answer->loadMissing('candidate.hiringPosition')->candidate);
     }
 }
