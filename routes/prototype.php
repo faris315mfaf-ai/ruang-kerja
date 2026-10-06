@@ -15,10 +15,7 @@ Route::middleware([EnsureFeatureEnabled::class.':prototype', 'auth', 'verified']
 
     // F2-1 · Obrolan has its own backend now: routes/chat.php (FEATURE_CHAT).
 
-    // F2-2 · Realtime notes
-    Route::inertia('catatan', 'notes/index')->name('notes.index');
-    Route::get('catatan/{note}', fn (string $note) => inertia('notes/show', ['noteId' => $note]))
-        ->where('note', '[a-z0-9-]+')->name('notes.show');
+    // F2-2 · Catatan bersama has its own backend now: routes/notes.php (FEATURE_NOTES).
 
     // F2-3 · Meetings, minutes & calendar
     Route::inertia('rapat', 'meetings/index')->name('meetings.index');

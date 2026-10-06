@@ -1,0 +1,76 @@
+<?php
+
+namespace App\Domain\Notes\Services;
+
+use App\Domain\Tasks\Services\MentionParser;
+use App\Domain\Tasks\Services\RichText;
+use App\Models\Note;
+use App\Models\User;
+
+/**
+ * Note document (Tiptap JSON from the collab server or the fallback save) →
+ * sanitized snapshot. Same whitelist as task descriptions and comments
+ * (RichText::sanitize); `@mentions` survive only for people who can open the
+ * note (NoteAudience), everything else becomes plain text. Notes are longer
+ * than comments, so the size limits are wider than RichText::violation().
+ */
+final class NoteContent
+{
+    public const int MAX_JSON_BYTES = 1_000_000;
+
+    public const int MAX_TEXT_LENGTH = 200_000;
+
+    public function __construct(
+        private readonly MentionParser $parser,
+        private readonly NoteAudience $audience,
+    ) {}
+
+    /**
+     * Validation message when the document is not acceptable, null when it is.
+     */
+    public static function violation(mixed $document): ?string
+    {
+        if ($document === null) {
+            return null;
+        }
+
+        if (! is_array($document) || ($document['type'] ?? null) !== 'doc') {
+            return 'Format catatan tidak valid.';
+        }
+
+        $json = json_encode($document);
+
+        if ($json === false || strlen($json) > self::MAX_JSON_BYTES) {
+            return 'Catatan terlalu panjang.';
+        }
+
+        if (mb_strlen(RichText::toText($document) ?? '') > self::MAX_TEXT_LENGTH) {
+            return 'Catatan maksimal '.number_format(self::MAX_TEXT_LENGTH, 0, ',', '.').' karakter.';
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<mixed>|null  $document
+     * @return array{document: array<string, mixed>|null, text: string, mentioned_ids: list<string>}
+     */
+    public function prepare(Note $note, ?array $document): array
+    {
+        if ($document === null) {
+            return ['document' => null, 'text' => '', 'mentioned_ids' => []];
+        }
+
+        $people = $this->audience->withAccess($note, $this->parser->userIds($document))
+            ->mapWithKeys(fn (User $user): array => [$user->id => $user->name])
+            ->all();
+
+        $clean = RichText::sanitize($document, $people);
+
+        return [
+            'document' => $clean,
+            'text' => RichText::toText($clean) ?? '',
+            'mentioned_ids' => $this->parser->userIds($clean),
+        ];
+    }
+}

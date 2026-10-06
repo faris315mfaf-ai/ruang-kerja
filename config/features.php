@@ -18,4 +18,8 @@ return [
     // Obrolan (Fase 2, F2-1) with a real backend: /obrolan, Dock tile.
     // Off in production until the release is decided.
     'chat' => (bool) env('FEATURE_CHAT', env('APP_ENV', 'production') !== 'production'),
+
+    // Catatan bersama (Fase 2, F2-2) with a real backend: /catatan, Dock tile,
+    // collab server in collab/ (COLLAB_*). Off in production until decided.
+    'notes' => (bool) env('FEATURE_NOTES', env('APP_ENV', 'production') !== 'production'),
 ];
