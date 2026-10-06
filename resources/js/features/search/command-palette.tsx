@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { ArrowUpRight, CornerDownLeft } from 'lucide-react';
 import type { KeyboardEvent } from 'react';
@@ -19,6 +20,7 @@ import {
 } from '@/features/search/command-palette-store';
 import { HighlightedText } from '@/features/search/highlighted-text';
 import { resultTitle } from '@/features/search/result-title';
+import { startOrResumeMinutes } from '@/features/notes/minutes-navigation';
 import { runSearchResult } from '@/features/search/run-search-result';
 import { searchIcon } from '@/features/search/search-icon';
 import type { SearchGroup, SearchResult } from '@/features/search/types';
@@ -136,6 +138,7 @@ export function CommandPalette() {
     const [selected, setSelected] = useState('');
     const { groups, loading, error } = useSearch(query, null, open);
     const { resolvedAppearance, updateAppearance } = useAppearance();
+    const userId = usePage().props.auth.user?.id;
     const total = groups.reduce((sum, group) => sum + group.items.length, 0);
 
     const close = () => {
@@ -151,6 +154,11 @@ export function CommandPalette() {
                     updateAppearance(
                         resolvedAppearance === 'dark' ? 'light' : 'dark',
                     );
+                }
+
+                // "Mulai notulensi" (Catatan): resume or start minutes.
+                if (action === 'notes.minutes') {
+                    startOrResumeMinutes(userId);
                 }
             },
         });

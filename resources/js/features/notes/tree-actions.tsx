@@ -286,12 +286,17 @@ export function DeleteDialog({
     note,
     mobile,
     backToWorkspace,
+    backToParent = false,
     onClose,
+    onDeleted,
 }: {
     note: Note | null;
     mobile: boolean;
     backToWorkspace: boolean;
+    /** A document tab: back to the note above it (?kembali=induk). */
+    backToParent?: boolean;
     onClose: () => void;
+    onDeleted?: (note: Note) => void;
 }) {
     const [processing, setProcessing] = useState(false);
 
@@ -302,13 +307,20 @@ export function DeleteDialog({
 
         router.delete(
             notesRoutes.destroy.url(note.id, {
-                query: backToWorkspace ? { kembali: 'workspace' } : undefined,
+                query: backToParent
+                    ? { kembali: 'induk' }
+                    : backToWorkspace
+                      ? { kembali: 'workspace' }
+                      : undefined,
             }),
             {
                 preserveScroll: true,
                 onStart: () => setProcessing(true),
                 onFinish: () => setProcessing(false),
-                onSuccess: onClose,
+                onSuccess: () => {
+                    onDeleted?.(note);
+                    onClose();
+                },
                 onError: () => toast.error('Gagal menghapus. Coba lagi.'),
             },
         );

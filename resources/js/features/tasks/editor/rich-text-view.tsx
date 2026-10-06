@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { StatusIcon } from '@/components/status-icon';
+import { isPaletteColor } from '@/lib/palette';
 import { cn } from '@/lib/utils';
 import type { StatusCategory } from '../types';
 import type { RichMark, RichNode, TaskReferenceInfo } from './types';
@@ -42,6 +43,29 @@ function withMarks(text: ReactNode, marks: RichMark[] = [], key: string) {
                 return <u key={k}>{child}</u>;
             case 'code':
                 return <code key={k}>{child}</code>;
+            // Notes only (palette name; colours in rich-text.css).
+            case 'textColor': {
+                const color = attr(mark, 'color');
+
+                return isPaletteColor(color) ? (
+                    <span key={k} className="rk-color" data-color={color}>
+                        {child}
+                    </span>
+                ) : (
+                    child
+                );
+            }
+            case 'highlight': {
+                const color = attr(mark, 'color');
+
+                return isPaletteColor(color) ? (
+                    <mark key={k} className="rk-highlight" data-color={color}>
+                        {child}
+                    </mark>
+                ) : (
+                    child
+                );
+            }
             case 'link': {
                 const href = attr(mark, 'href');
 

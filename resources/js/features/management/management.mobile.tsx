@@ -18,6 +18,7 @@ import { PANEL_ID, PeriodTabs, tabId } from './period-tabs';
 import { ProjectsList, ProjectsPanelSkeleton } from './projects-panel';
 import type { ManagementProps, PeriodBlock, PeriodKey } from './types';
 import { WorkChart, WorkChartSkeleton } from './work-chart';
+import { QuickMinutesButton } from '@/features/notes/quick-minutes-button';
 
 const TASK_CAPTION: Record<PeriodKey, string> = {
     harian: 'tugas hari ini selesai',
@@ -176,6 +177,7 @@ export function ManagementMobile({
                 </h1>
             </div>
 
+            <QuickMinutesButton mobile />
             <PeriodTabs
                 value={period}
                 onChange={onPeriodChange}

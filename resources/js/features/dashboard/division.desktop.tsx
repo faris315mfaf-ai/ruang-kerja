@@ -28,6 +28,7 @@ import { TeamReportsPanel } from './team-reports';
 import { TrendChart } from './trend-chart';
 import { ViewPicker } from './view-picker';
 import { WorkloadBars } from './workload-bars';
+import { QuickMinutesButton } from '@/features/notes/quick-minutes-button';
 
 /** "Divisi Operasional · 14 anggota · 5 menunggu Anda" (DBeranda). */
 export function divisionSubtitle(props: DivisionProps): string {
@@ -59,6 +60,7 @@ export function DivisionDesktop({
                 title={`${greeting()}, ${firstName}`}
                 subtitle={divisionSubtitle(props)}
             >
+                <QuickMinutesButton />
                 <FilterBar
                     filters={props.filters}
                     exportUrl={props.exportUrl}

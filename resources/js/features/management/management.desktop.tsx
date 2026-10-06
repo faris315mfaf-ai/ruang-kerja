@@ -15,6 +15,7 @@ import { ProjectsPanel, ProjectsPanelSkeleton } from './projects-panel';
 import type { ManagementProps, PeriodKey } from './types';
 import { WorkChart, WorkChartSkeleton } from './work-chart';
 import { WorkloadPanel } from './workload-panel';
+import { QuickMinutesButton } from '@/features/notes/quick-minutes-button';
 
 /**
  * Desktop & tablet (design MgDashboard): sections are flex-wrap rows, so on
@@ -50,7 +51,10 @@ export function ManagementDesktop({
                         · {periodNote(period, block)}
                     </p>
                 </div>
-                <PeriodTabs value={period} onChange={onPeriodChange} />
+                <div className="flex flex-wrap items-center gap-3">
+                    <QuickMinutesButton />
+                    <PeriodTabs value={period} onChange={onPeriodChange} />
+                </div>
             </section>
 
             <div

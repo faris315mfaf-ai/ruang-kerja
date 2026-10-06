@@ -28,12 +28,16 @@ export type NoteKind = 'note' | 'folder';
 
 export type NoteAccess = 'workspace' | 'restricted';
 
+/** Template a note was started from ("Notulensi cepat"); null = ordinary. */
+export type NotePreset = 'minutes';
+
 /** Tree row (no content). */
 export type Note = {
     id: string;
     workspace_id: string;
     parent_id: string | null;
     kind: NoteKind;
+    preset: NotePreset | null;
     title: string;
     access: NoteAccess;
     created_by: string | null;
@@ -112,4 +116,12 @@ export type NotePeer = {
     id: string;
     name: string;
     tone: number;
+};
+
+/** GET /catatan/notulensi */
+export type RecentMinutes = {
+    id: string;
+    title: string;
+    workspace_name: string | null;
+    updated_at: string | null;
 };

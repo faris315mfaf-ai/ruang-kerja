@@ -15,6 +15,7 @@ import type { PersonalProps } from './personal-types';
 import { RequestRows } from './request-rows';
 import { RuangSaya } from './ruang-saya/ruang-saya';
 import { ViewPicker } from './view-picker';
+import { QuickMinutesButton } from '@/features/notes/quick-minutes-button';
 
 /** Small phone KPI tile (MSBeranda "Saldo cuti", "Tepat waktu"). */
 const TILE = 'gap-0.5 rounded-card px-4 py-3.5 shadow-none';
@@ -34,6 +35,7 @@ export function PersonalMobile(props: PersonalProps) {
         <div className="flex flex-col gap-3.5 pb-24">
             <ViewPicker views={props.views} />
             <MyAttendanceCard compact />
+            <QuickMinutesButton mobile />
             <DailyReportCard
                 status={props.dailyReport}
                 prominent={staff}

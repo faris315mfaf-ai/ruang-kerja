@@ -23,6 +23,7 @@ import type { PersonalProps } from './personal-types';
 import { RequestRows } from './request-rows';
 import { RuangSaya } from './ruang-saya/ruang-saya';
 import { ViewPicker } from './view-picker';
+import { QuickMinutesButton } from '@/features/notes/quick-minutes-button';
 
 /** "Staf Data · atasan Dimas Pratama". */
 export function profileLine(profile: PersonalProps['live']['profile']): string {
@@ -52,6 +53,7 @@ export function PersonalDesktop(props: PersonalProps) {
                 title={`${greeting()}, ${firstName}`}
                 subtitle={profileLine(live.profile) || undefined}
             >
+                <QuickMinutesButton />
                 <ViewPicker views={props.views} />
             </PageHeader>
 

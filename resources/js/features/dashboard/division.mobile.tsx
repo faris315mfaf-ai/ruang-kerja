@@ -22,6 +22,7 @@ import { TrendChart } from './trend-chart';
 import { useDashboardFilters } from './use-dashboard-filters';
 import { ViewPicker } from './view-picker';
 import { WorkloadBars } from './workload-bars';
+import { QuickMinutesButton } from '@/features/notes/quick-minutes-button';
 
 /**
  * Dashboard Kepala Divisi on phones (MBeranda vocabulary: overline, gradient
@@ -46,6 +47,7 @@ export function DivisionMobile({
                 </p>
             </div>
             <ViewPicker views={props.views} />
+            <QuickMinutesButton mobile />
             <Segmented
                 label="Periode"
                 className="flex w-full"
