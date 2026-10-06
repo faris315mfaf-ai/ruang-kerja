@@ -15,6 +15,10 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 - Modul pratinjau menjadi **nyata** (flag sendiri, nyala lokal, mati produksi): **Catatan bersama** dengan folder & kolaborasi Hocuspocus (`FEATURE_NOTES`, layanan `collab/`), **Rapat, notulen & kalender** (`FEATURE_MEETINGS`; Google Calendar/Meet ditahan), **Otomasi, tugas berulang, template, Kinerja saya** (`FEATURE_AUTOMATION`), **OKR divisi** (`FEATURE_OKR`), **Dashboard per jabatan** (`FEATURE_ROLE_DASHBOARDS`, `positions.dashboard_role`). Panduan `/pratinjau/panduan`.
 
 ### Diubah (6 Okt 2026)
+- Semua isian tanggal memakai komponen `DateInput` berformat **"Hari, dd/mm/yyyy"** (mis. "Selasa, 06/10/2026") apa pun bahasa peramban; server tetap menerima `YYYY-MM-DD`.
+- `/manajemen`: kartu "Kehadiran hari ini" dan KPI "Tugas terlambat" dihapus.
+- Hiring: data pelamar dihapus permanen **30 hari** setelah keputusan, penghapusan, atau lowongan ditutup (`HIRING_RETENTION_DAYS`, job harian 02.30).
+- Akun demo: Reynandio Wira Prathama (Direktur Utama, `dio@`) dan M. Faris Ahlul Firdaus (Project Leader, `faris@`) masuk unit Direksi; Hendra kini Direktur Operasional.
 - Shell ponsel mobile-first: tombol Absen menonjol di tengah tab bar kini ikut dihitung di `--tab-bar-height` (bilah aksi bawah tidak tertutup).
 - Ditahan pemilik: login Google, Google Drive/Docs/Calendar/Meet, WhatsApp + provider, aplikasi ponsel, mesin fingerprint.
 
