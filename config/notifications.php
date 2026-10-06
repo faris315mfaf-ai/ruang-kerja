@@ -32,6 +32,8 @@ return [
         'attendance.check_in_reminder' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'attendance.check_out_reminder' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'project.activity' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
+        // Rapat (F2-3): invitations, reminders, final minutes and follow-ups.
+        'meeting' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
         'system' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'digest.daily' => ['email' => true],
     ],

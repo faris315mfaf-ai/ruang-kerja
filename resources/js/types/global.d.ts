@@ -16,7 +16,7 @@ declare module '@inertiajs/core' {
             /** Sidebar "Persetujuan" badge (requests waiting for the signed-in user). */
             approvals?: { pending: number } | null;
             /** Feature flags (config/features.php). `prototype` = Fase 2 & 3 previews at /pratinjau. */
-            features?: { prototype: boolean; chat: boolean };
+            features?: { prototype: boolean; chat: boolean; meetings: boolean };
             /** Obrolan: channels with unread messages; null when the feature is off. */
             chatUnread?: number | null;
             /** Local demo only: personas of the account switcher; null elsewhere. */

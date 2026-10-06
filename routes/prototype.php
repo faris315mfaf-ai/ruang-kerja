@@ -20,15 +20,7 @@ Route::middleware([EnsureFeatureEnabled::class.':prototype', 'auth', 'verified']
     Route::get('catatan/{note}', fn (string $note) => inertia('notes/show', ['noteId' => $note]))
         ->where('note', '[a-z0-9-]+')->name('notes.show');
 
-    // F2-3 · Meetings, minutes & calendar
-    Route::inertia('rapat', 'meetings/index')->name('meetings.index');
-    Route::inertia('rapat/baru', 'meetings/create')->name('meetings.create');
-    Route::get('rapat/{meeting}', fn (string $meeting) => inertia('meetings/show', ['meetingId' => $meeting]))
-        ->where('meeting', '[a-z0-9-]+')->name('meetings.show');
-    Route::get('rapat/{meeting}/notulen', fn (string $meeting) => inertia('meetings/minutes', ['meetingId' => $meeting]))
-        ->where('meeting', '[a-z0-9-]+')->name('meetings.minutes');
-    Route::inertia('kalender', 'meetings/calendar')->name('calendar');
-    Route::inertia('manajemen/jadwal', 'meetings/management-schedule')->name('management.schedule');
+    // F2-3 · Rapat & kalender has its own backend now: routes/meetings.php (FEATURE_MEETINGS).
 
     // F2-4 · WhatsApp, automation, recurring tasks, templates (+ Kinerja saya)
     Route::inertia('pengaturan/whatsapp', 'automation/whatsapp')->name('whatsapp');

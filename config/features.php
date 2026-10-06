@@ -18,4 +18,8 @@ return [
     // Obrolan (Fase 2, F2-1) with a real backend: /obrolan, Dock tile.
     // Off in production until the release is decided.
     'chat' => (bool) env('FEATURE_CHAT', env('APP_ENV', 'production') !== 'production'),
+
+    // Rapat, notulen & kalender (Fase 2, F2-3) with a real backend: /rapat, /kalender,
+    // /manajemen/jadwal, Dock tile. Google Calendar/Meet sync stays on hold.
+    'meetings' => (bool) env('FEATURE_MEETINGS', env('APP_ENV', 'production') !== 'production'),
 ];
