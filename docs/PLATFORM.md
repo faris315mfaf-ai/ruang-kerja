@@ -56,7 +56,9 @@ Butir 2–4 diterapkan modul masing-masing; shell (butir 1) sudah berlaku.
 | Pindai QR kiosk | ✓ | ✓ | |
 | Halaman kiosk QR | ✓ (tablet/TV) | — | Perangkat khusus di lobi |
 | Riwayat absensi saya | ✓ | ✓ | Kalender bulan kecil + daftar |
-| Pengajuan (buat, lihat, batalkan) | ✓ | ✓ | Lampiran bisa langsung dari kamera |
+| Pengajuan (buat, lihat, batalkan) | ✓ | ✓ | Lampiran bisa langsung dari kamera. Jenis terkunci (cuti & lembur, keputusan pemilik 6 Okt 2026) tidak jadi chip: tampil sebagai daftar bergembok di bawah chip; desktop: ubin bergembok. Pengajuan barang penuh di kedua platform |
+| Laporan progres harian (`/laporan`, `/laporan/hari-ini`) | ✓ | ✓ | Keputusan pemilik 6 Okt 2026. Form satu kolom, tombol Kirim di bilah kaca di atas tab bar; kartu "Laporan hari ini" di Beranda |
+| Pengumuman (`/pengumuman`) | ✓ | ✓ | Buat lewat FAB + bottom sheet (desktop: dialog). Spanduk di atas dashboard di kedua platform |
 | Persetujuan (setuju/tolak/revisi) | ✓ | ✓ | Tumpukan kartu + tombol di zona jempol (§2.1). Aksi massal hanya desktop |
 | Tugas saya, detail tugas, komentar | ✓ | ✓ | Kotak komentar menempel di bawah |
 | Buat tugas | ✓ | ✓ | Bottom sheet cepat |
@@ -69,7 +71,7 @@ Butir 2–4 diterapkan modul masing-masing; shell (butir 1) sudah berlaku.
 | Portofolio & detail proyek (Direksi) | ✓ | ✓ | Tabel proyek → kartu proyek; roadmap hanya desktop (mobile: milestone berikutnya per kartu); "Minta update" & "Beri arahan" di bilah aksi bawah |
 | Pengaturan notifikasi & tema | ✓ | ✓ | Matriks → daftar accordion |
 | Admin karyawan | ✓ | ◐ | Cari & lihat profil. Tambah/ubah/impor di desktop |
-| Struktur organisasi | ✓ | ◐ | Daftar bertingkat, bukan bagan |
+| Struktur organisasi | ✓ | ◐ | Daftar bertingkat, bukan bagan. **Tidak untuk staf** di kedua platform (404, keputusan pemilik 6 Okt 2026) |
 | Alur persetujuan, jenis cuti | ✓ | — | Banner "Buka di desktop" bila diakses |
 | Lokasi, shift, hari libur | ✓ | — | Sama |
 | Pengaturan workspace lanjutan | ✓ | ◐ | Anggota bisa dilihat. Kolom status & label di desktop |

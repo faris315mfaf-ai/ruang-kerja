@@ -24,6 +24,7 @@
 | Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_directions`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `task_plans`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
 | Google & file | `google_accounts`, `drive_files`, `attachments` |
 | Notifikasi | `notifications`*, `notification_preferences`, `notification_settings`, `notification_dispatch_logs` |
+| Pengumuman | `announcements`, `announcement_dismissals` |
 | Fase 2 | `channels`, `channel_members`, `messages`, `notes`, `note_versions`, `calendar_events` |
 | Fase 3 | `devices`, `face_templates`, `objectives`, `key_results` |
 
@@ -258,8 +259,9 @@ Implementasi (Sprint 2): versi dari `config('attendance.consent.version')` (`ATT
 > Diimplementasikan Sprint 4 (`docs/sprints/sprint-4/SUMMARY.md`). Model: `LeaveType`, `LeaveBalance`, `EmployeeRequest` (tabel `requests`), `ApprovalFlow`, `ApprovalFlowStep`, `RequestApproval`, `ApprovalDelegation`.
 
 ### leave_types
-`id`, `company_id`, `code`, `name`, `category` (`leave` · `permit` · `sick` · `overtime` · `correction` · `business_trip`), `annual_quota_days` numeric(5,1) null, `requires_attachment_after_days` smallint null (0 = selalu wajib), `is_paid`, `allow_half_day`, `carry_over_max_days` numeric(5,1) null, `approval_flow_id` FK null (null = alur "Default" perusahaan).
+`id`, `company_id`, `code`, `name`, `category` (`leave` · `permit` · `sick` · `overtime` · `correction` · `business_trip` · `procurement`), `annual_quota_days` numeric(5,1) null, `requires_attachment_after_days` smallint null (0 = selalu wajib), `is_paid`, `allow_half_day`, `carry_over_max_days` numeric(5,1) null, `approval_flow_id` FK null (null = alur "Default" perusahaan).
 Tambahan Sprint 4: `description` null, `max_backdate_days` null (koreksi absensi "maks. 7 hari lalu"), `min_service_months` null (cuti besar "Belum berhak"), `is_active`, `sort_order`, `deleted_at`.
+Tambahan keputusan pemilik 6 Okt 2026 (migrasi `2026_10_12_200100_add_locked_reason_to_leave_types`): `locked_reason` varchar(200) null — terisi = **jenis terkunci** (tampil bergembok, tidak bisa dibuat/disimpan sebagai draf/dikirim; pengajuan yang sudah ada tidak berubah). Migrasi mengunci semua jenis kategori `leave` dan `overtime` dengan alasan "Dikunci sampai SOP cuti/lembur ditetapkan."; HR membuka/mengunci di Admin › Jenis pengajuan. Kategori `procurement` (Pengajuan barang, kode bawaan `BRG`, alur bawaan "Pengajuan barang" = atasan langsung → peran `direksi`): periode = tanggal kirim, tanpa `days`/`minutes`, tanpa saldo, tumpang tindih, atau efek absensi.
 `code` = 2–10 huruf besar/angka (CHECK), **juga prefiks nomor** (`CUT`, `CBR`, `SKT`, `IZN`, `LBR`, `KOR`, `DNS`, `CML`, `CAP`, `CLT`). Unik `(company_id, code)` termasuk yang terhapus.
 Tambahan Fitur pengajuan (`docs/sprints/FITUR-PENGAJUAN.md`): `counts_calendar_days` bool default false (durasi dihitung hari kalender, mis. Cuti melahirkan; hari kerja tetap dipakai untuk efek absensi), `max_days_per_request` numeric(5,1) null (CHECK > 0; maks. per pengajuan, mis. 90 hari kalender melahirkan, 3 hari alasan penting), `is_provisional_default` bool default false (**"Bawaan sementara"**: jenis bawaan seeder yang belum ditinjau HR; otomatis false saat HR menyimpan jenis atau menetapkan alurnya; seeder tidak pernah menimpa jenis yang sudah ada). Cuti di luar tanggungan = `is_paid` false tanpa `annual_quota_days` (tidak memotong saldo).
 
@@ -282,7 +284,7 @@ Tambahan Fitur pengajuan: `opening_days` numeric(5,1) default 0 (**saldo awal**,
 | days | numeric(5,1) null | hari kerja terhitung (jadwal shift, tanpa libur); 0,5 = setengah hari |
 | minutes | int null | lembur / izin per jam |
 | reason | text | |
-| payload | jsonb | per jenis: `half_day`, `mode` (izin `hours`/`days`), `date`/`start_time`/`end_time` (lembur, izin jam), `check_in`/`check_out` (koreksi), `destination` (dinas) |
+| payload | jsonb | per jenis: `half_day`, `mode` (izin `hours`/`days`), `date`/`start_time`/`end_time` (lembur, izin jam), `check_in`/`check_out` (koreksi), `destination` (dinas), pengajuan barang: `item_name`, `quantity` (int ≥ 1), `unit`, `unit_price` (Rp, int ≥ 0), `total` (= quantity × unit_price), `reference_url` (http/https, null), `urgency` (`biasa` · `mendesak`) |
 | substitute_id | FK users null | **tambahan**: pengganti selama cuti |
 | status | varchar | `draft` · `pending` · `approved` · `rejected` · `revision_requested` · `canceled` |
 | round | smallint | **tambahan**: putaran; +1 setiap dikirim ulang setelah revisi |
@@ -422,6 +424,8 @@ Laporan progres kerja harian karyawan (Beranda staf) yang dibaca atasan langsung
 
 `daily_report_items`: `id` ulid, `daily_report_id` FK cascade, `task_id` FK null (nullOnDelete; null = pekerjaan di luar tugas), `task_key` varchar(30) null + `task_title` varchar(255) null (salinan saat lapor agar riwayat tetap terbaca), `progress_note` text, `status_category_after` varchar(20) null (CHECK kategori status; kategori tugas setelah laporan bila dipindah), `percent` smallint null (CHECK 0–100), `hours` numeric(5,2) null (CHECK > 0 dan ≤ 24), `position` smallint, timestamps. Indeks `(daily_report_id, position)`, `(task_id)`.
 
+Tambahan (keputusan pemilik 6 Okt 2026, migrasi `2026_10_12_200200_add_move_status_to_daily_report_items`): `daily_report_items.move_status_id` FK `task_statuses` null (nullOnDelete) = kolom "pindahkan ke …" yang dipilih di draf; diterapkan lewat `MoveTask` (Policy tugas `move`) saat laporan dikirim, lalu `status_category_after` diisi kategori kolom itu. Item diganti utuh setiap simpan (`SaveDailyReport`); laporan hanya bisa ditulis untuk tanggal kantor hari ini (sampai 23.59), `submitted_at` = kirim pertama. Pengingat `report.reminder` 16.30 WIB hari kerja (de-dup `notification_dispatch_logs`, subjek = user, cycle = tanggal). Query bersama `App\Domain\Reports\Queries\DailyReportFeed::forDate(company, date, viewer)`.
+
 Akses: pemilik (tulis selama hari itu), atasan langsung & Kepala Divisi divisinya (baca), Direksi/HR/Super Admin (baca, monitoring). Tidak pernah memakai `visibleTo` workspace untuk ringkasan, tetapi judul tugas hanya ditampilkan ke pembaca yang bisa melihat tugas itu; selain itu memakai salinan `task_key` saja.
 
 ### comments
@@ -498,11 +502,18 @@ Indeks: `(workspace_id, parent_google_id)`, `(workspace_id, kind)`.
   | created_at / updated_at | timestamptz | |
 
   Indeks: `(notifiable_type, notifiable_id)`, `(notifiable_id, created_at)`, `(subject_type, subject_id)`, indeks parsial `notifications_unread_index (notifiable_id) WHERE read_at IS NULL AND archived_at IS NULL` untuk hitungan lonceng. Retensi 30 hari (`notifications:prune`), kecuali yang masih perlu tindakan. Model baca: `App\Models\InboxNotification`.
-- `notification_preferences`: `id` ulid, `user_id`, `event` (`task.assigned`, `mention`, `task.commented`, `task.due_soon`, `task.overdue`, `request.pending`, `request.decided`, `attendance.check_in_reminder`, `attendance.check_out_reminder`, `system`, `digest.daily`), `channel` (`in_app` · `email` · `whatsapp`), `enabled`, timestamps. Unik `(user_id, event, channel)`. Baris tidak ada = pakai default di `config/notifications.php`. Daftar kejadian = enum `NotificationEvent`.
+- `notification_preferences`: `id` ulid, `user_id`, `event` (`task.assigned`, `mention`, `task.commented`, `task.due_soon`, `task.overdue`, `request.pending`, `request.decided`, `attendance.check_in_reminder`, `attendance.check_out_reminder`, `project.activity`, `report.reminder`, `system`, `digest.daily`), `channel` (`in_app` · `email` · `whatsapp`), `enabled`, timestamps. Unik `(user_id, event, channel)`. Baris tidak ada = pakai default di `config/notifications.php`. Daftar kejadian = enum `NotificationEvent`.
 - `notification_settings` (Sprint 8, 1:1 dengan `users`): `user_id` PK/FK, `digest_time` time (jam kirim ringkasan harian, zona kantor, default `07:30`), `quiet_hours` bool (default `true`: email di luar 07.00–17.30 & akhir pekan ditunda), `pause_while_on_leave` bool (tahan notifikasi saat cuti), `digest_last_run_on` date (idempotensi ringkasan harian), timestamps.
 - `notification_dispatch_logs` (review fix 3-9 #8): `id` ulid, `type` varchar(80) (`NotificationType`), `subject_type`/`subject_id` (ulid morph), `user_id` FK cascade, `cycle` varchar(40) (mis. tanggal tenggat), `created_at`. Unik `(type, subject_type, subject_id, user_id, cycle)`. Klaim atomik (`INSERT … ON CONFLICT DO NOTHING`) sebelum pengingat terjadwal dikirim (H-1, lewat tenggat) agar de-dup tidak bergantung pada kanal (penerima email-saja tidak lagi dapat email harian). Baris dihapus saat pengingat diselesaikan (`ResolveNotificationsForSubject`, `ResolveOverdueNotices`) dan saat subjeknya hilang (`notifications:prune`). Diakses lewat `App\Domain\Notifications\Services\NotificationDispatchLog` (tanpa model Eloquent).
 
 ---
+
+### announcements & announcement_dismissals (Pengumuman, keputusan pemilik 6 Okt 2026)
+Migrasi `2026_10_12_200300_create_announcements_tables`.
+
+`announcements`: `id` ulid, `company_id` FK restrict, `author_id` FK users null (nullOnDelete), `title` varchar(160), `body` text, `audience` varchar(20) (`all` · `division` · `team`, CHECK), `target_ids` jsonb default `[]` (id divisi/tim; `[]` untuk `all`; indeks GIN), `published_at` timestamptz, `expires_at` timestamptz null (CHECK > `published_at`; "tampil sampai" = akhir hari kantor), timestamps, `deleted_at` (soft delete oleh pembuat = hilang dari semua dashboard). Indeks `(company_id, published_at)`. Penerima: semua karyawan aktif perusahaan (`all`), anggota divisi target **beserta sub-divisinya** (`division`), atau anggota tim target (`team`). Penulis: Direksi/HR/Super Admin (semua, divisi, atau tim mana pun), Kepala Divisi (divisi yang dipimpin), Ketua Tim (`teams.lead_user_id`, timnya). Diterbitkan → notifikasi `system.announcement` ke penerima kecuali pembuat (job `SendAnnouncementNotifications`, per 200); audit `announcement.published` / `announcement.deleted`.
+
+`announcement_dismissals`: `announcement_id` FK cascade, `user_id` FK cascade (PK gabungan), `dismissed_at` timestamptz. Spanduk ditutup di dashboard orang itu; notifikasi Inbox tidak berubah.
 
 ## 7. Fase 2 (sebagian sudah dimigrasi)
 
