@@ -102,6 +102,10 @@ Aturan: pemohon tidak bisa menyetujui pengajuannya sendiri. Jika penyetuju = pem
 - **Unggah:** unggah resumable langsung dari server ke folder workspace (batas 100 MB per file di Fase 1).
 - Pratinjau di aplikasi memakai URL `…/preview` dalam iframe untuk file Google.
 
+### 3.7 Webhook Google Form (Hiring, keputusan pemilik 6 Okt 2026)
+- Google Apps Script di Form lowongan mengirim `POST /api/hiring/form/{token}` (rute di `routes/hiring.php`, **tanpa** middleware sesi/cookie/CSRF/Inertia; `throttle:60,1`). Badan JSON `{response_id, submitted_at, answers[], files[]}` ditandatangani `X-RuangKerja-Signature` = hex HMAC-SHA256 badan mentah dengan `hiring_positions.webhook_secret` (cast `encrypted`).
+- `FormWebhookController` → `WebhookSignature::verify` (401) → status lowongan (410 bila ditutup) → `ReceiveFormSubmission` (idempoten per `response_id` lewat indeks unik, pemetaan field `FormSubmissionMapper`, checklist awal, audit `hiring.candidate_received`, notifikasi in-app ke HR). Tidak ada panggilan Google API dari server.
+
 ## 4. Otorisasi
 
 | Lapisan | Mekanisme |

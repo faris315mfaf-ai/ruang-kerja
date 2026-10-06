@@ -22,6 +22,7 @@
 | Absensi | `office_locations`, `shifts`, `shift_assignments`, `holidays`, `attendance_days`, `attendance_logs`, `qr_tokens`, `kiosks`, `attendance_consents` |
 | Pengajuan | `leave_types`, `leave_balances`, `leave_balance_adjustments`, `requests`, `request_sequences`, `request_approvals`, `approval_flows`, `approval_flow_steps`, `approval_delegations` |
 | Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_directions`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `task_plans`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
+| Hiring (keputusan pemilik 6 Okt 2026) | `hiring_settings`, `hiring_positions`, `hiring_questions`, `candidates`, `candidate_checklist_items`, `interview_answers`, `interview_scores`, `candidate_notes`, `candidate_decisions` |
 | Google & file | `google_accounts`, `drive_files`, `attachments` |
 | Notifikasi | `notifications`*, `notification_preferences`, `notification_settings`, `notification_dispatch_logs` |
 | Fase 2 | `channels`, `channel_members`, `messages`, `notes`, `note_versions`, `calendar_events` |
@@ -446,6 +447,78 @@ Implementasi (Sprint 6): `emoji` varchar(16) dari daftar tetap `Reaction::EMOJI`
 `id`, `user_id`, `workspace_id` null (null = lintas workspace, mis. "Tugas saya"), `name`, `layout` (`board` · `list` · `calendar`), `filters` jsonb, `sort` jsonb, `is_shared`.
 
 Implementasi (Sprint 6): `name` varchar(60), CHECK `layout`, `filters` default `{}` dengan bentuk `{assignees[], priorities[], labels[], due, q}` (sama dengan filter query string; `assignees` boleh berisi `me` = penonton), `sort` null, timestamps, indeks `(workspace_id, is_shared)` & `(user_id, workspace_id)`. Pribadi hanya pemilik; dibagikan terlihat oleh semua yang bisa melihat workspace; membagikan butuh hak ubah tugas.
+
+---
+
+## 4b. Hiring (keputusan pemilik 6 Okt 2026)
+
+Ruang rekrutmen HR (`docs/fitur/hiring.md`), migrasi `2026_10_12_300100_create_hiring_tables`. Akses lewat Policy (HR & Super Admin penuh; pewawancara/penyetuju akhir lowongan sebagian; lainnya 404), daftar lewat `HiringPosition::visibleTo` / `Candidate::visibleTo`. Data pelamar = data pribadi: tidak ditulis ke log/audit (audit hanya id, tahap, jenis keputusan), tidak ada ekspor.
+
+### hiring_settings
+`id`, `company_id` FK **unik** (cascade), `default_final_approver_ids` jsonb default `[]` (id karyawan; disalin ke lowongan baru), `checklist_template` jsonb default `{}` — `{"hr":[{label,required}], "interviewer":[…], "approver":[…]}`; peran yang tidak ada memakai bawaan `ChecklistTemplate::defaults()`, daftar kosong = tanpa butir (maks. 12 per peran), timestamps.
+
+### hiring_positions
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | ulid PK | |
+| company_id | FK companies | restrict |
+| title | varchar(150) | |
+| division_id | FK divisions null | nullOnDelete |
+| description | text null | |
+| status | varchar(10) | `draft` · `open` · `closed` (CHECK). Draf & dibuka menerima webhook; ditutup → 410 |
+| opened_at / closed_at | timestamptz null | diisi saat pertama dibuka / saat ditutup (dikosongkan bila dibuka lagi) |
+| webhook_token | char(40) **unik** | bagian URL `/api/hiring/form/{token}` |
+| webhook_secret | text (cast `encrypted`) | kunci HMAC; hanya ditampilkan sekali saat dibuat ulang, disembunyikan dari serialisasi |
+| interviewer_ids | jsonb default `[]` | pewawancara ("tim luar"); indeks GIN `jsonb_path_ops` |
+| final_approver_ids | jsonb default `[]` | penyetuju akhir; indeks GIN `jsonb_path_ops` |
+| field_map | jsonb default `{}` | `{full_name, email, phone, cv_url}` → judul pertanyaan Form (kosong = tebakan bawaan `CandidateField::aliases()`) |
+| created_by | FK users null | nullOnDelete |
+| created_at / updated_at / deleted_at | timestamptz | soft delete (hanya lowongan tanpa kandidat) |
+
+Indeks `(company_id, status)`. Pewawancara/penyetuju hanya karyawan aktif satu perusahaan (`HiringAccess::activeEmployeeIds`).
+
+### hiring_questions
+`id`, `position_id` FK `hiring_positions` (cascade), `prompt` text, `guidance` text null (panduan pewawancara), `max_score` smallint default 5 (CHECK 1–10), `position` smallint (urutan), timestamps. Indeks `(position_id, position)`. Tidak bisa dihapus bila sudah dirujuk jawaban/poin (FK restrict + Policy); `max_score` tidak bisa diturunkan di bawah poin tertinggi yang sudah diberikan.
+
+### candidates
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | ulid PK | |
+| company_id | FK companies | restrict |
+| position_id | FK hiring_positions | restrict |
+| full_name | varchar(150) | "Pelamar tanpa nama" bila Form tidak memuatnya |
+| email | varchar(190) null | huruf kecil, hanya bila valid |
+| phone | varchar(40) null | |
+| cv_url | varchar(2000) null | hanya `http(s)`; dibuka di tab baru, file tidak disimpan |
+| attachments | jsonb default `[]` | `[{label, url}]` berkas unggahan Form (http/https saja) |
+| form_answers | jsonb default `[]` | `[{question, answer}]` semua jawaban Form (jawaban pilihan ganda digabung ", ") |
+| external_response_id | varchar(191) null | id respons Google Form; **unik parsial `(position_id, external_response_id)`** termasuk baris terhapus → webhook idempoten |
+| stage | varchar(20) | `applied` · `screening` · `interview` · `assessment` · `final_review` · `hired` · `rejected` (CHECK) |
+| rejected_reason | text null | |
+| source | varchar(20) | `google_form` · `manual` (CHECK) |
+| applied_at | timestamptz | `submitted_at` dari Form (masa depan → sekarang), atau waktu dibuat |
+| decided_at | timestamptz null | Diterima/Ditolak |
+| created_by | FK users null | kandidat manual |
+| created_at / updated_at / deleted_at | timestamptz | soft delete |
+
+Indeks `(company_id, stage)`, `(position_id, stage)`.
+
+### candidate_checklist_items
+`id`, `candidate_id` FK (cascade), `reviewer_id` FK users null (cascade; **null = butir HR**, dicentang HR mana pun), `role` varchar(12) `hr` · `interviewer` · `approver` (CHECK; `role = 'hr'` ⇔ `reviewer_id IS NULL`), `label` varchar(200), `is_required` bool default true, `position` smallint, `checked_at` timestamptz null, `checked_by` FK users null, `note` text null, `created_by` FK users null (butir tambahan HR), timestamps. Indeks `(candidate_id, reviewer_id)`. Dibuat dari templat saat kandidat dibuat (`CandidateChecklist::seed`); saat pewawancara/penyetuju lowongan berubah, kandidat yang masih berproses mendapat butir untuk pemeriksa baru dan kehilangan butir belum dicentang milik pemeriksa yang dikeluarkan. Syarat masuk Keputusan akhir: semua butir wajib HR dan pewawancara **aktif** sudah dicentang; penyetuju harus mencentang butir wajibnya sebelum menyetujui.
+
+### interview_answers
+`id`, `candidate_id` FK (cascade), `question_id` FK `hiring_questions` (restrict), `answer` text, `recorded_by` FK users null, timestamps. **Unik `(candidate_id, question_id)`**. Ditulis HR (simpan otomatis); jawaban kosong menghapus baris.
+
+### interview_scores
+`id`, `candidate_id` FK (cascade), `question_id` FK (restrict), `interviewer_id` FK users (cascade), `score` smallint (CHECK 1–10; aplikasi membatasi 1..`max_score`), `note` text null, timestamps. **Unik `(candidate_id, question_id, interviewer_id)`**. Hanya pewawancara lowongan menulis barisnya sendiri; pewawancara hanya melihat poinnya, HR & penyetuju akhir melihat semua.
+
+### candidate_notes
+`id`, `candidate_id` FK (cascade), `author_id` FK users null (nullOnDelete), `body` text (teks polos, maks. 20.000), `edited_at` timestamptz null, timestamps. Indeks `(candidate_id, created_at)`. Notulensi; diubah/dihapus penulisnya saja.
+
+### candidate_decisions
+`id`, `candidate_id` FK (cascade), `approver_id` FK users (cascade), `decision` varchar(10) `approve` · `reject` (CHECK), `note` text null (wajib bila menolak), `decided_at` timestamptz, timestamps. **Unik `(candidate_id, approver_id)`**. Hasil otomatis (`DecideCandidate`, row lock pada kandidat): satu tolak → `rejected`; semua penyetuju akhir **aktif** setuju → `hired`. Dihapus saat kandidat dipindah keluar dari Keputusan akhir atau dibuka kembali.
+
+Notifikasi baru: `hiring.candidate_received`, `hiring.decision_needed` (Perlu tindakan), `hiring.candidate_decided`; baris preferensi `hiring.activity` (bawaan in-app nyala, email mati).
 
 ---
 
