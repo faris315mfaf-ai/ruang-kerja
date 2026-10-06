@@ -2,7 +2,7 @@ import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
-import { fieldClasses } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import type { ProjectStatus } from '@/features/portfolio/types';
 import { cn } from '@/lib/utils';
 import { update } from '@/routes/projects/attributes';
@@ -29,8 +29,6 @@ type Props = {
     members: MemberDetail[];
     editable: boolean;
 };
-
-const input = cn(fieldClasses, 'h-11');
 
 /** Pengaturan › Proyek (PRD M10 atribut proyek, Sprint 9). */
 export function ProjectSection({
@@ -137,13 +135,14 @@ export function ProjectSection({
                         <span className="text-label text-text">
                             Tanggal mulai
                         </span>
-                        <input
-                            type="date"
-                            className={input}
+                        <DateInput
                             value={form.data.start_date}
                             disabled={!editable}
-                            onChange={(event) =>
-                                form.setData('start_date', event.target.value)
+                            onChange={(value) =>
+                                form.setData('start_date', value)
+                            }
+                            aria-invalid={
+                                Boolean(form.errors.start_date) || undefined
                             }
                         />
                         <InputError message={form.errors.start_date} />
@@ -152,13 +151,14 @@ export function ProjectSection({
                         <span className="text-label text-text">
                             Target selesai
                         </span>
-                        <input
-                            type="date"
-                            className={input}
+                        <DateInput
                             value={form.data.target_date}
                             disabled={!editable}
-                            onChange={(event) =>
-                                form.setData('target_date', event.target.value)
+                            onChange={(value) =>
+                                form.setData('target_date', value)
+                            }
+                            aria-invalid={
+                                Boolean(form.errors.target_date) || undefined
                             }
                         />
                         <InputError message={form.errors.target_date} />

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -338,27 +339,23 @@ export function QuickAddPanel({
                         <div className="grid grid-cols-2 gap-3">
                             <div className="flex flex-col gap-1.5">
                                 <Label htmlFor={`${id}-start`}>Mulai</Label>
-                                <Input
+                                <DateInput
                                     id={`${id}-start`}
-                                    type="date"
+                                    clearable={false}
                                     value={start}
-                                    onChange={(event) =>
-                                        setStart(event.target.value)
-                                    }
-                                    className="text-[17px] md:text-[16px]"
+                                    onChange={setStart}
+                                    inputClassName="text-[17px] md:text-[16px]"
                                 />
                             </div>
                             <div className="flex flex-col gap-1.5">
                                 <Label htmlFor={`${id}-end`}>Selesai</Label>
-                                <Input
+                                <DateInput
                                     id={`${id}-end`}
-                                    type="date"
+                                    clearable={false}
                                     value={end}
-                                    onChange={(event) =>
-                                        setEnd(event.target.value)
-                                    }
+                                    onChange={setEnd}
                                     aria-invalid={error ? true : undefined}
-                                    className="text-[17px] md:text-[16px]"
+                                    inputClassName="text-[17px] md:text-[16px]"
                                 />
                             </div>
                             <p className="col-span-2 text-[15px] font-semibold text-text">

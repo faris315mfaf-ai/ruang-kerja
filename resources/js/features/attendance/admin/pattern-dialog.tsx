@@ -9,7 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -221,12 +221,12 @@ export function PatternDialog({
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                             <Label htmlFor="pattern-from">Berlaku mulai</Label>
-                            <Input
+                            <DateInput
                                 id="pattern-from"
-                                type="date"
+                                clearable={false}
                                 value={form.data.valid_from}
-                                onChange={(e) =>
-                                    form.setData('valid_from', e.target.value)
+                                onChange={(value) =>
+                                    form.setData('valid_from', value)
                                 }
                             />
                             <InputError message={form.errors.valid_from} />
@@ -235,12 +235,11 @@ export function PatternDialog({
                             <Label htmlFor="pattern-until">
                                 Sampai (opsional)
                             </Label>
-                            <Input
+                            <DateInput
                                 id="pattern-until"
-                                type="date"
                                 value={form.data.valid_until}
-                                onChange={(e) =>
-                                    form.setData('valid_until', e.target.value)
+                                onChange={(value) =>
+                                    form.setData('valid_until', value)
                                 }
                             />
                             <InputError message={form.errors.valid_until} />

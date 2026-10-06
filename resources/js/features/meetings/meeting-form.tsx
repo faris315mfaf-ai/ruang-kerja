@@ -2,6 +2,7 @@ import { Check, Clock, Plus, Sparkles, Trash2 } from 'lucide-react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import { useId, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Panel } from '@/components/ui/panel';
@@ -191,15 +192,15 @@ export function MeetingFormFields({ form }: { form: MeetingForm }) {
                     error={errors.date}
                     errorId={err('date')}
                 >
-                    <Input
+                    <DateInput
                         id={fid('date')}
-                        type="date"
                         value={values.date}
                         min={form.editing ? undefined : form.today}
-                        onChange={(event) => set('date', event.target.value)}
+                        clearable={false}
+                        onChange={(value) => set('date', value)}
                         aria-invalid={Boolean(errors.date) || undefined}
                         aria-describedby={describe('date')}
-                        className="h-[50px]"
+                        inputClassName="h-[50px] max-md:h-[50px]"
                     />
                 </Field>
                 <Field
@@ -544,19 +545,16 @@ export function MeetingFormFields({ form }: { form: MeetingForm }) {
                     errorId={err('recurrenceUntil')}
                     className="sm:max-w-[260px]"
                 >
-                    <Input
+                    <DateInput
                         id={fid('until')}
-                        type="date"
                         value={values.recurrenceUntil}
-                        min={values.date}
-                        onChange={(event) =>
-                            set('recurrenceUntil', event.target.value)
-                        }
+                        min={values.date || undefined}
+                        onChange={(value) => set('recurrenceUntil', value)}
                         aria-invalid={
                             Boolean(errors.recurrenceUntil) || undefined
                         }
                         aria-describedby={describe('recurrenceUntil')}
-                        className="h-[50px]"
+                        inputClassName="h-[50px] max-md:h-[50px]"
                     />
                 </Field>
             )}

@@ -2,6 +2,7 @@ import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { DateInput } from '@/components/ui/date-input';
 import { fieldClasses } from '@/components/ui/input';
 import { HEALTH_TONES } from '@/features/portfolio/lib';
 import { ResponsiveSheet } from '@/features/portfolio/parts';
@@ -286,12 +287,14 @@ export function MilestoneDialog({
                         />
                     </Field>
                     <Field label="Target" error={form.errors.target_date}>
-                        <input
-                            type="date"
-                            className={cn(fieldClasses, 'h-11')}
+                        <DateInput
+                            clearable={false}
                             value={form.data.target_date}
-                            onChange={(event) =>
-                                form.setData('target_date', event.target.value)
+                            onChange={(value) =>
+                                form.setData('target_date', value)
+                            }
+                            aria-invalid={
+                                Boolean(form.errors.target_date) || undefined
                             }
                         />
                     </Field>

@@ -1,7 +1,7 @@
 import { Download } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import {
     Select,
     SelectContent,
@@ -132,13 +132,13 @@ export function FilterBar({
                     <label className="sr-only" htmlFor="dashboard-from">
                         Dari tanggal
                     </label>
-                    <Input
+                    <DateInput
                         id="dashboard-from"
-                        type="date"
                         value={from}
-                        max={to}
-                        onChange={(event) => setFrom(event.target.value)}
-                        className="h-11 w-40"
+                        max={to || undefined}
+                        clearable={false}
+                        onChange={setFrom}
+                        className="w-56"
                     />
                     <span aria-hidden className="text-text-muted">
                         –
@@ -146,13 +146,13 @@ export function FilterBar({
                     <label className="sr-only" htmlFor="dashboard-to">
                         Sampai tanggal
                     </label>
-                    <Input
+                    <DateInput
                         id="dashboard-to"
-                        type="date"
                         value={to}
-                        min={from}
-                        onChange={(event) => setTo(event.target.value)}
-                        className="h-11 w-40"
+                        min={from || undefined}
+                        clearable={false}
+                        onChange={setTo}
+                        className="w-56"
                     />
                     <Button type="submit" variant="outline">
                         Terapkan

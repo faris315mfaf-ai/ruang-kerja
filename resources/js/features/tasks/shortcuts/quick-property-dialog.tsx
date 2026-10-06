@@ -5,6 +5,7 @@ import {
     PriorityIcon,
 } from '@/components/priority-icon';
 import { StatusIcon } from '@/components/status-icon';
+import { DateInput } from '@/components/ui/date-input';
 import {
     Command,
     CommandEmpty,
@@ -163,20 +164,36 @@ export function QuickPropertyDialog({
                             )}
                         </CommandList>
                         {property === 'due' && (
-                            <label className="flex items-center gap-2 border-t border-border px-3 py-2 text-[15px] text-text-muted">
-                                Tanggal lain
-                                <input
-                                    type="date"
-                                    defaultValue={task.due_date ?? ''}
-                                    onChange={(event) => {
-                                        if (event.target.value) {
-                                            onDue(event.target.value);
+                            <div
+                                className="flex items-center gap-2 border-t border-border px-3 py-2 text-[15px] text-text-muted"
+                                // Typing a date must not drive the command list
+                                // (Escape still closes the dialog).
+                                onKeyDown={(event) => {
+                                    if (event.key !== 'Escape') {
+                                        event.stopPropagation();
+                                    }
+                                }}
+                            >
+                                <label
+                                    htmlFor="quick-due-other"
+                                    className="shrink-0"
+                                >
+                                    Tanggal lain
+                                </label>
+                                <DateInput
+                                    id="quick-due-other"
+                                    size="sm"
+                                    clearable={false}
+                                    value={task.due_date ?? ''}
+                                    onChange={(date) => {
+                                        if (date) {
+                                            onDue(date);
                                             close();
                                         }
                                     }}
-                                    className="h-8 flex-1 rounded-control border border-border bg-surface px-2 text-text"
+                                    className="flex-1"
                                 />
-                            </label>
+                            </div>
                         )}
                     </Command>
                 )}

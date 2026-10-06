@@ -9,6 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -79,13 +80,12 @@ export function CorrectionDialog({ target, today, reload, onClose }: Props) {
                 >
                     <div className="grid gap-1.5">
                         <Label htmlFor="correction-date">Tanggal kerja</Label>
-                        <Input
+                        <DateInput
                             id="correction-date"
-                            type="date"
                             max={today}
                             value={form.data.work_date}
-                            onChange={(event) =>
-                                form.setData('work_date', event.target.value)
+                            onChange={(value) =>
+                                form.setData('work_date', value)
                             }
                             required
                         />

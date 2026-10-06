@@ -4,6 +4,7 @@ import type { FormEvent } from 'react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { DatePickerTrigger } from '@/components/ui/date-input';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -258,23 +259,20 @@ export function TaskForm({
                                 </span>
                             </button>
                         ))}
-                        <label className="relative flex min-h-14 cursor-pointer items-center justify-center gap-1 rounded-control border border-dashed border-border-strong text-[15px] text-text-muted focus-within:ring-[3px] focus-within:ring-ring">
+                        <DatePickerTrigger
+                            value={form.data.due_date}
+                            onChange={(date) =>
+                                form.setData(
+                                    'due_date',
+                                    date === '' ? null : date,
+                                )
+                            }
+                            aria-label="Pilih tanggal tenggat"
+                            containerClassName="flex"
+                            className="flex min-h-14 w-full items-center justify-center gap-1 rounded-control border border-dashed border-border-strong text-[15px] text-text-muted focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
+                        >
                             Pilih…
-                            <input
-                                type="date"
-                                value={form.data.due_date ?? ''}
-                                onChange={(event) =>
-                                    form.setData(
-                                        'due_date',
-                                        event.target.value === ''
-                                            ? null
-                                            : event.target.value,
-                                    )
-                                }
-                                aria-label="Pilih tanggal tenggat"
-                                className="absolute inset-0 cursor-pointer opacity-0"
-                            />
-                        </label>
+                        </DatePickerTrigger>
                     </div>
                 </fieldset>
             )}

@@ -3,6 +3,7 @@ import { CalendarDays, Trash2, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -204,13 +205,13 @@ export function HolidaysSection({
                             className="mt-3 size-5 shrink-0 text-text-subtle"
                             aria-hidden
                         />
-                        <div className="w-40">
-                            <Input
-                                type="date"
+                        <div className="w-60">
+                            <DateInput
                                 aria-label="Tanggal"
+                                clearable={false}
                                 value={form.data.date}
-                                onChange={(e) =>
-                                    form.setData('date', e.target.value)
+                                onChange={(value) =>
+                                    form.setData('date', value)
                                 }
                             />
                             <InputError message={form.errors.date} />

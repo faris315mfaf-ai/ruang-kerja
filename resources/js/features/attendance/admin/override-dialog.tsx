@@ -9,7 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -80,13 +80,11 @@ export function OverrideDialog({
                 >
                     <div className="space-y-1.5">
                         <Label htmlFor="override-date">Tanggal</Label>
-                        <Input
+                        <DateInput
                             id="override-date"
-                            type="date"
+                            clearable={false}
                             value={form.data.date}
-                            onChange={(e) =>
-                                form.setData('date', e.target.value)
-                            }
+                            onChange={(value) => form.setData('date', value)}
                         />
                         <InputError message={form.errors.date} />
                     </div>
