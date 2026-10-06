@@ -1,0 +1,25 @@
+# S3 storage VPS (compose.storage.yml, docs/deploy/S3-SENDIRI.md): HTTPS in
+# front of the SeaweedFS S3 gateway. Only the RuangKerja server should reach
+# it (firewall), and every request is signed with an S3 key.
+{
+	email {$ACME_EMAIL}
+}
+
+{$S3_DOMAIN} {
+	request_body {
+		# Request attachments & selfies are small; backups are uploaded in parts.
+		max_size 5GB
+	}
+
+	header {
+		?Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	reverse_proxy seaweedfs:8333
+
+	log {
+		output stdout
+		format json
+	}
+}

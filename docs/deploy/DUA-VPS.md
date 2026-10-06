@@ -52,7 +52,7 @@ Ketiganya sebaiknya di **pusat data yang sama** (mis. Biznet Gio Jakarta) dan te
    - VPS data: **tidak ada port publik** selain SSH. Port 5432 dan 6379 hanya dari IP privat VPS web.
 3. **File privat wajib di Object Storage (S3)**. Volume `storage` tidak lagi dibagi antar-server:
    - `FILESYSTEM_DISK=s3`, `ATTENDANCE_SELFIE_DRIVER=s3`, `REQUEST_ATTACHMENT_DISK=s3`, isi `AWS_*` (bucket privat Biznet NEO);
-   - **paket `league/flysystem-aws-s3-v3` belum terpasang** di `composer.json`. Tanpa paket ini driver S3 gagal. Pasang dulu (`composer require league/flysystem-aws-s3-v3`, perlu persetujuan pemilik karena paket baru) sebelum memakai dua VPS;
+   - driver S3 memakai paket `league/flysystem-aws-s3-v3` (sudah terpasang). S3 bisa layanan Biznet NEO atau S3 sendiri (`docs/deploy/S3-SENDIRI.md`);
    - dengan cara ini selfie dan lampiran yang diunggah lewat VPS web bisa dibaca job di VPS data, dan sebaliknya.
 4. **Image sama** di kedua VPS (`APP_IMAGE:APP_TAG`), dan `.env` hampir sama (lihat §4). `APP_KEY` **harus identik**.
 
