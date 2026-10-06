@@ -495,11 +495,15 @@ Indeks: `(workspace_id, parent_google_id)`, `(workspace_id, kind)`.
 
 ---
 
-## 7. Fase 2 (disiapkan, belum dimigrasi di Fase 1)
+## 7. Fase 2 (sebagian sudah dimigrasi)
 
-- `channels`: `id`, `workspace_id` null, `type` (`workspace` · `public` · `private` · `dm` · `group`), `name`, `topic`, `created_by`, `archived_at`.
-- `channel_members`: `channel_id`, `user_id`, `last_read_message_id`, `muted`, `role`.
-- `messages`: `id`, `channel_id`, `user_id`, `parent_id` (thread), `body` jsonb, `body_text`, `edited_at`, soft delete. Indeks `(channel_id, id)`.
+**Obrolan (F2-1) — diimplementasikan** (migrasi `2026_10_10_100100_create_chat_tables`, tugas #1 `docs/PEMBAGIAN-TUGAS.md`):
+
+- `channels`: `id` ulid, **`company_id`** FK (restrict), `workspace_id` FK null (cascade), `type` (`workspace` · `public` · `private` · `dm` · `group`, CHECK), `name` varchar(80) (null **tepat** untuk dm/group, CHECK), `topic` varchar(250) null, **`direct_key`** char(64) null (SHA-256 id anggota terurut; terisi tepat untuk dm/group, CHECK; unik parsial `(company_id, direct_key)` → membuka orang yang sama memakai ulang percakapan), `created_by` FK users null (nullOnDelete), `archived_at`, timestamps. CHECK `(type = 'workspace') = (workspace_id IS NOT NULL)`; unik parsial `(workspace_id) WHERE type = 'workspace'` (satu channel otomatis per workspace non-pribadi, anggotanya disinkronkan dari `workspace_members`). Indeks `(company_id, type)`.
+- `channel_members`: PK `(channel_id, user_id)` (cascade keduanya), `role` (`owner` · `admin` · `member`, CHECK, default `member`), `muted` bool, `last_read_message_id` ulid null (tanpa FK; ULID urut waktu → belum dibaca = pesan induk orang lain dengan id lebih besar), `joined_at`, timestamps. Indeks `(user_id)`.
+- `messages`: `id` ulid (urutan timeline), `channel_id` FK cascade, `user_id` FK null (nullOnDelete), `parent_id` FK `messages` null (cascade; thread), `body` jsonb null (Tiptap tersanitasi, null setelah dihapus), `body_text` text default `''`, `edited_at`, timestamps, soft delete (pesan dihapus tetap di timeline "Pesan ini dihapus", balasan thread tetap), `search_vector` tsvector GENERATED STORED (`simple`, dari `body_text`) + GIN. Indeks `(channel_id, id)`, `(parent_id, id)`.
+- Reaksi, mention, dan lampiran Drive memakai tabel morph yang sudah ada (`reactions`, `mentions`, `attachments`, `attachable_type` = `App\Models\Message`). Lampiran di DM/grup hanya file Drive yang workspace-nya terlihat oleh setiap anggota channel.
+- Visibilitas (`Channel::visibleTo`, `ChannelPolicy`): workspace → mengikuti `Workspace::visibleTo`; publik → karyawan satu perusahaan; privat/dm/group → **hanya anggota** (Super Admin, HR, Direksi pun tidak).
 - `notes`: `id`, `workspace_id`, `parent_id`, `title`, `yjs_state` bytea, `content` jsonb (snapshot untuk render & cari), `created_by`, `updated_by`.
 - `note_versions`: `id`, `note_id`, `yjs_state` bytea, `created_by`, `created_at`.
 - `calendar_events`: `id`, `google_event_id`, `calendar_id`, `source_type`/`source_id` (task, request), `user_id`, `meet_link` null, `synced_at`.
