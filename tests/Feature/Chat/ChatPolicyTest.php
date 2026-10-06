@@ -74,7 +74,8 @@ it('applies the channel matrix', function (string $type, string $actor, string $
     'workspace · member' => ['workspace', 'member', 'allow', 'allow', 'deny'],
     'workspace · direksi' => ['workspace', 'direksi', 'allow', 'deny', 'deny'],
     'workspace · super admin' => ['workspace', 'super_admin', 'allow', 'deny', 'allow'],
-    'workspace · hr' => ['workspace', 'hr', 'hidden', 'hidden', 'hidden'],
+    // Keputusan pemilik 6 Okt 2026: HR reads every shared workspace (view only), like Direksi.
+    'workspace · hr' => ['workspace', 'hr', 'allow', 'deny', 'deny'],
     'workspace · outsider' => ['workspace', 'outsider', 'hidden', 'hidden', 'hidden'],
     'public · owner' => ['public', 'owner', 'allow', 'allow', 'allow'],
     'public · member' => ['public', 'member', 'allow', 'allow', 'deny'],

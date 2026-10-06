@@ -35,6 +35,7 @@ it('grants permissions through roles', function (Role $role, Permission $permiss
     'hr manages employees' => [Role::Hr, Permission::EmployeesManage, true],
     'hr manages organization' => [Role::Hr, Permission::OrganizationManage, true],
     'hr cannot view audit' => [Role::Hr, Permission::AuditView, false],
+    'hr reads all workspaces (keputusan pemilik 6 Okt 2026)' => [Role::Hr, Permission::WorkspacesViewAll, true],
     'direksi views all employees' => [Role::Direksi, Permission::EmployeesView, true],
     'direksi cannot manage employees' => [Role::Direksi, Permission::EmployeesManage, false],
     'kadiv has no global permission' => [Role::KepalaDivisi, Permission::EmployeesView, false],

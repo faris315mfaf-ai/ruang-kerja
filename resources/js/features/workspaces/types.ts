@@ -31,6 +31,11 @@ export type WorkspaceAbilities = {
     manage_members: boolean;
     archive: boolean;
     favorite: boolean;
+    /**
+     * Direksi / HR / Super Admin looking at a workspace they are not a member
+     * of: everything is read-only (keputusan pemilik 6 Okt 2026).
+     */
+    view_only: boolean;
 };
 
 /** Props every workspace tab receives (WorkspacePage::props). */

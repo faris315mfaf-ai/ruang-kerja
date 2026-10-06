@@ -52,6 +52,8 @@ final class WorkspacePage
             'manage_members' => $this->policy->manageMembers($user, $workspace)->allowed(),
             'archive' => $this->policy->archive($user, $workspace)->allowed(),
             'favorite' => $this->policy->favorite($user, $workspace)->allowed(),
+            // "Mode lihat saja" banner: management that is not a member (keputusan pemilik 6 Okt 2026).
+            'view_only' => $this->policy->isViewOnly($user, $workspace),
         ];
     }
 

@@ -58,9 +58,9 @@ $everyone = ['owner', 'admin', 'member', 'viewer', 'outsider', 'super_admin', 'd
 dataset('workspace matrix', [
     // [ability, workspace, actors allowed]
     ['view', 'personal', ['owner']],
-    ['view', 'private', [...$members, 'super_admin', 'direksi']],
+    ['view', 'private', [...$members, 'super_admin', 'direksi', 'hr']],
     ['view', 'internal', $everyone],
-    ['view', 'archived', [...$members, 'super_admin', 'direksi']],
+    ['view', 'archived', [...$members, 'super_admin', 'direksi', 'hr']],
     ['editTasks', 'personal', ['owner']],
     ['editTasks', 'private', ['owner', 'admin', 'member']],
     ['editTasks', 'internal', ['owner', 'admin', 'member']],
@@ -154,7 +154,7 @@ it('is auto-discovered for workspaces and tasks', function () {
 });
 
 dataset('task matrix', [
-    ['view', 'private', [...$members, 'super_admin', 'direksi']],
+    ['view', 'private', [...$members, 'super_admin', 'direksi', 'hr']],
     ['update', 'private', ['owner', 'admin', 'member']],
     ['move', 'private', ['owner', 'admin', 'member']],
     ['move', 'internal', ['owner', 'admin', 'member']],

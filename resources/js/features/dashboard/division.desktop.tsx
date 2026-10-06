@@ -24,6 +24,7 @@ import { greeting } from './lib';
 import { MetricInfo } from './metric-info';
 import { OverdueList } from './overdue-list';
 import { RequestRows } from './request-rows';
+import { TeamReportsPanel } from './team-reports';
 import { TrendChart } from './trend-chart';
 import { ViewPicker } from './view-picker';
 import { WorkloadBars } from './workload-bars';
@@ -195,6 +196,8 @@ export function DivisionDesktop({
                             </Button>
                         )}
                     </Panel>
+
+                    <TeamReportsPanel reports={props.reports} />
 
                     <Panel
                         title={

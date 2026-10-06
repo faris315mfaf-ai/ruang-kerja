@@ -170,41 +170,50 @@ export function TaskDetailMobile({ state, today }: Props) {
                     className="text-h1 font-extrabold tracking-[-0.02em]"
                     tapToEdit
                 />
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <button
-                            type="button"
-                            aria-label="Menu tugas"
-                            className={appBarIconButton}
-                        >
-                            <MoreHorizontal className="size-5" aria-hidden />
-                        </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-52">
-                        <DropdownMenuItem
-                            onSelect={() => void state.toggleWatch()}
-                        >
-                            {detail.watching ? (
-                                <EyeOff aria-hidden />
-                            ) : (
-                                <Eye aria-hidden />
-                            )}
-                            {detail.watching ? 'Berhenti amati' : 'Amati tugas'}
-                        </DropdownMenuItem>
-                        {can.delete && (
-                            <>
-                                <DropdownMenuSeparator />
+                {(can.watch || can.delete) && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                type="button"
+                                aria-label="Menu tugas"
+                                className={appBarIconButton}
+                            >
+                                <MoreHorizontal
+                                    className="size-5"
+                                    aria-hidden
+                                />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                            {detail.can.watch && (
                                 <DropdownMenuItem
-                                    variant="destructive"
-                                    onSelect={() => setConfirming(true)}
+                                    onSelect={() => void state.toggleWatch()}
                                 >
-                                    <Trash2 aria-hidden />
-                                    Hapus tugas
+                                    {detail.watching ? (
+                                        <EyeOff aria-hidden />
+                                    ) : (
+                                        <Eye aria-hidden />
+                                    )}
+                                    {detail.watching
+                                        ? 'Berhenti amati'
+                                        : 'Amati tugas'}
                                 </DropdownMenuItem>
-                            </>
-                        )}
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                            )}
+                            {can.delete && (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        variant="destructive"
+                                        onSelect={() => setConfirming(true)}
+                                    >
+                                        <Trash2 aria-hidden />
+                                        Hapus tugas
+                                    </DropdownMenuItem>
+                                </>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
             </div>
 
             {confirming && (

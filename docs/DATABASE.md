@@ -21,7 +21,7 @@
 | Organisasi & akses | `companies`, `divisions`, `teams`, `positions`, `users`, `employee_profiles`, `roles`*, `permissions`*, `model_has_roles`*, `audit_logs`, `password_reset_requests` |
 | Absensi | `office_locations`, `shifts`, `shift_assignments`, `holidays`, `attendance_days`, `attendance_logs`, `qr_tokens`, `kiosks`, `attendance_consents` |
 | Pengajuan | `leave_types`, `leave_balances`, `leave_balance_adjustments`, `requests`, `request_sequences`, `request_approvals`, `approval_flows`, `approval_flow_steps`, `approval_delegations` |
-| Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_directions`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `task_plans`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
+| Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_directions`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `task_plans`, `management_notes`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
 | Otomasi (F2-4) | `automation_rules`, `automation_runs`, `recurring_tasks`, `recurring_task_occurrences`, `task_templates`, `workspace_templates` |
 | Google & file | `google_accounts`, `drive_files`, `attachments` |
 | Notifikasi | `notifications`*, `notification_preferences`, `notification_settings`, `notification_dispatch_logs` |
@@ -120,12 +120,14 @@ Permission dasar (guard `web`; sumber kebenaran `App\Domain\Organization\Enums\R
 | `attendance.export` — ekspor rekap | ✓ | | ✓ | | |
 | `requests.view_all` — semua pengajuan | ✓ | ✓ | ✓ | | |
 | `requests.manage_flows` — alur approval & jenis cuti | ✓ | | ✓ | | |
-| `workspaces.view_all` — lihat workspace non-pribadi | | ✓ | | | |
+| `workspaces.view_all` — lihat workspace non-pribadi (baca saja bila bukan anggota; keputusan pemilik 6 Okt 2026) | | ✓ | ✓ | | |
 | `workspaces.manage` — kelola workspace non-pribadi | ✓ | | | | |
 | `dashboard.view_company` — dashboard seluruh perusahaan | ✓ | ✓ | ✓ | | |
 | `portfolio.view` — portofolio proyek (M10) | ✓ | ✓ | | | |
 
 Tidak ada `Gate::before` untuk Super Admin: workspace pribadi & selfie tetap tertutup baginya.
+
+**Mode lihat saja (keputusan pemilik 6 Okt 2026):** Direksi, HR (`workspaces.view_all`) dan Super Admin (`workspaces.manage`) melihat semua workspace tim/divisi/proyek, tetapi bila bukan anggota hanya membaca (`WorkspacePolicy::isViewOnly`): tidak membuat/mengubah/memindah tugas, tidak berkomentar/bereaksi/mengamati, tidak melampirkan file. Aksi pengarah proyek Direksi (Minta update, Beri arahan, Tandai keputusan selesai; PRD M10) tetap ada; pengaturan workspace oleh Super Admin (`workspaces.manage`) tetap ada.
 
 ### audit_logs
 | Kolom | Tipe | Keterangan |
@@ -456,6 +458,15 @@ Tambahan (keputusan pemilik 6 Okt 2026, migrasi `2026_10_12_200200_add_move_stat
 
 Akses: pemilik (tulis selama hari itu), atasan langsung & Kepala Divisi divisinya (baca), Direksi/HR/Super Admin (baca, monitoring). Tidak pernah memakai `visibleTo` workspace untuk ringkasan, tetapi judul tugas hanya ditampilkan ke pembaca yang bisa melihat tugas itu; selain itu memakai salinan `task_key` saja.
 
+### management_notes (Catatan tindakan Direksi/manajemen, keputusan pemilik 6 Okt 2026)
+Daftar hal yang perlu dilakukan Direktur/manajemen, **pribadi** per orang; tampil di Dashboard Direksi dan `/manajemen`. Migrasi `2026_10_12_400100_create_management_notes_table`.
+
+`id` ulid, `company_id` FK restrict, `user_id` FK cascade (pemilik), `body` varchar(500) (CHECK tidak kosong), `due_on` date null (tenggat, tanggal kantor), `done_at` timestamptz null (selesai), `position` varchar(100) `COLLATE "C"` (lexorank catatan terbuka; catatan baru di atas, dibuka lagi → paling bawah; diseimbangkan ulang bila kunci memanjang), timestamps. Indeks `(user_id, done_at)`, `(user_id, position)`. Maks. 200 catatan per orang.
+
+Akses (`ManagementNotePolicy`): membuat = pengguna aktif ber-`dashboard.view_company` (Direksi, HR, Super Admin); membaca/mengubah/menghapus = **hanya pemilik** (orang lain, termasuk Super Admin, mendapat 404). Daftar selalu `ManagementNote::ownedBy($user)`. Tidak diaudit (catatan pribadi, bukan data sensitif).
+
+Monitoring kerja (Dashboard Direksi, panel "Laporan tim hari ini" Kepala Divisi) membaca `daily_reports`/`daily_report_items` lewat `app/Domain/Monitoring/Queries/*` tanpa tabel baru: terjadwal = hari kerja menurut jadwal shift (`ScheduleResolver`), sudah lapor = `submitted_at` terisi, draf = belum dikirim, belum lapor = terjadwal tanpa laporan. Detail laporan (`GET /monitoring/laporan/{id}`, Gate `monitorDailyReport`): penulis, Direksi/HR/Super Admin perusahaan, atasan langsung, Kepala Divisi penulis; draf tidak pernah tampil. Judul tugas hanya untuk pembaca yang bisa melihat tugasnya (selain itu salinan `task_key` saja).
+
 ### comments
 `id`, `commentable_type`/`commentable_id` (morph: task, catatan F2), `user_id`, `body` jsonb, `body_text` text, `edited_at` null, soft delete.
 
@@ -750,6 +761,8 @@ GROUP BY w.id;
 
 Implementasi (Sprint 9, `app/Domain/Analytics/MetricDefinitions/*`, satu kelas per metrik): tanggal selesai dibandingkan dengan tenggat dalam **tanggal kantor** (`(completed_at AT TIME ZONE 'Asia/Jakarta')::date <= due_date`); pembilang kedisiplinan hadir juga dibatasi pada hari bershift (tidak pernah > 100%); tingkat penyelesaian tidak menghitung tugas `canceled`; tugas diatribusikan ke orang lewat `task_assignees` (satu tugas dihitung sekali per cakupan) dan hanya dari workspace yang terlihat oleh penonton (`Workspace::visibleTo`), workspace pribadi hanya di Dashboard Saya. Tidak ada tabel/kolom baru: dashboard memakai indeks yang ada (`tasks (workspace_id, status_category)`, `tasks (due_date) WHERE open`, `attendance_days (user_id, work_date)`). Dengan 50 karyawan × 6 bulan (±6.100 hari absensi, ±3.900 tugas) satu blok metrik dihitung < 100 ms dan di-cache 5 menit per penonton + filter.
 
-Dashboard Manajemen (`/manajemen`, `Queries/ManagementDashboard`): **tingkat kehadiran** (`AttendanceRate`) = hari-orang hadir (`present`, `late`, `early_leave`, `wfh`, atau `needs_correction` dengan check-in — aturan "Hadir" rekap bulanan) ÷ hari-orang terjadwal (definisi hari terjadwal sama dengan kedisiplinan hadir). "Tugas selesai dari rencana" = pembilang/penyebut tingkat penyelesaian (tugas bertenggat dalam periode). Mingguan = Senin–Jumat minggu kerja terakhir yang sudah lewat; bulanan = 4 minggu kerja tersebut, dijumlah per minggu sehingga kolom grafik = angka KPI. Tanpa tabel baru.
+Dashboard Manajemen (`/manajemen`, `Queries/ManagementDashboard`): **tingkat kehadiran** (`AttendanceRate`) = hari-orang hadir (`present`, `late`, `early_leave`, `wfh`, atau `needs_correction` dengan check-in — aturan "Hadir" rekap bulanan) ÷ hari-orang terjadwal (definisi hari terjadwal sama dengan kedisiplinan hadir). "Tugas selesai dari rencana" = pembilang/penyebut tingkat penyelesaian (tugas bertenggat dalam periode). Mingguan = Senin–Jumat minggu kerja terakhir yang sudah lewat; bulanan = 4 minggu kerja tersebut, dijumlah per minggu sehingga kolom grafik = angka KPI. Tanpa tabel baru. **Beban kerja** (keputusan pemilik 6 Okt 2026) = metrik `Workload` (tugas terbuka per orang, snapshot hari ini) dijumlah per divisi.
+
+Absensi › Kedisiplinan (`/absensi/kedisiplinan`, `Queries/AttendanceDisciplineReport`): rekap `HrDashboard::recap` (kedisiplinan hadir, rata-rata terlambat, hari alpha, hari terlambat, tren 8 minggu) + `CompletionRate` dan `LeadTimeMedian` untuk orang dalam cakupan absensi penonton (`AttendanceDay::visibleUserIds`) + tabel per orang (satu query berkelompok). Tanpa tabel baru.
 
 Untuk puluhan pengguna, query langsung sudah cukup cepat. Bila data tumbuh, tambahkan tabel ringkasan harian `daily_metrics` yang diisi job malam.

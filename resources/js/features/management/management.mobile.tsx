@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { ActionNotes } from '@/features/monitoring/action-notes';
 import { formatTime } from '@/lib/format';
 import { cn, focusRing } from '@/lib/utils';
 import { AttendancePanel, AttendancePanelSkeleton } from './attendance-panel';
@@ -12,6 +13,7 @@ import {
 } from './lib';
 import { AgendaPanel, NotesPanel } from './meetings-panels';
 import { MilestonesPanel, MilestonesPanelSkeleton } from './milestones-panel';
+import { WorkloadPanel } from './workload-panel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PANEL_ID, PeriodTabs, tabId } from './period-tabs';
 import { ProjectsList, ProjectsPanelSkeleton } from './projects-panel';
@@ -245,12 +247,15 @@ export function ManagementMobile({
                 <MilestonesPanelSkeleton />
             )}
 
+            <WorkloadPanel workload={props.workload} className="py-4" />
+            <ActionNotes notes={props.notes} today={props.today} compact />
+
             <AgendaPanel
                 agenda={props.agenda}
                 today={props.today}
                 className="py-4"
             />
-            <NotesPanel notes={props.notes} className="py-4" />
+            <NotesPanel notes={props.minutes} className="py-4" />
         </div>
     );
 }

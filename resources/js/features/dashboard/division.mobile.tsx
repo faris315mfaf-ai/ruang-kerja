@@ -16,6 +16,7 @@ import { DivisionKpis, KPI_TILE, useExpandable } from './division-parts';
 import type { DivisionProps } from './division-types';
 import { Segmented } from './filter-bar';
 import { LiveBadge } from './live-badge';
+import { TeamReportsPanel } from './team-reports';
 import { OverdueList } from './overdue-list';
 import { TrendChart } from './trend-chart';
 import { useDashboardFilters } from './use-dashboard-filters';
@@ -148,6 +149,8 @@ export function DivisionMobile({
                     </Button>
                 )}
             </Panel>
+
+            <TeamReportsPanel reports={props.reports} mobile />
 
             {metrics ? (
                 <>

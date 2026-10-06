@@ -191,11 +191,13 @@ describe('navigation', () => {
             'Struktur organisasi',
             'Karyawan',
             'Absensi hari ini',
+            'Kedisiplinan',
         ]);
         expect(mobile(['kepala_divisi'])).toEqual([
             'Struktur organisasi',
             'Anggota divisi',
             'Absensi hari ini',
+            'Kedisiplinan',
         ]);
         expect(mobile(['anggota'])).toEqual([]);
     });
@@ -204,12 +206,17 @@ describe('navigation', () => {
         const hrefs = (roles: string[]) =>
             attendanceNavItems(roles).map((item) => item.href);
 
-        expect(hrefs(['hr'])).toEqual(['/absensi/hari-ini', '/absensi/rekap']);
+        expect(hrefs(['hr'])).toEqual([
+            '/absensi/hari-ini',
+            '/absensi/rekap',
+            '/absensi/kedisiplinan',
+        ]);
         expect(hrefs(['kepala_divisi'])).toEqual([
             '/absensi/hari-ini',
             '/absensi/rekap',
+            '/absensi/kedisiplinan',
         ]);
-        expect(hrefs(['direksi'])).toHaveLength(2);
+        expect(hrefs(['direksi'])).toHaveLength(3);
         expect(hrefs(['anggota'])).toEqual([]);
         expect(
             attendanceNavItems(['hr']).find((item) => item.desktopOnly)?.href,

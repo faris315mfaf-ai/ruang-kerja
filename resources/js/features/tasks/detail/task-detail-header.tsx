@@ -208,16 +208,20 @@ export function TaskDetailHeader({
                         </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-52">
-                        <DropdownMenuItem
-                            onSelect={() => void state.toggleWatch()}
-                        >
-                            {detail.watching ? (
-                                <EyeOff aria-hidden />
-                            ) : (
-                                <Eye aria-hidden />
-                            )}
-                            {detail.watching ? 'Berhenti amati' : 'Amati tugas'}
-                        </DropdownMenuItem>
+                        {detail.can.watch && (
+                            <DropdownMenuItem
+                                onSelect={() => void state.toggleWatch()}
+                            >
+                                {detail.watching ? (
+                                    <EyeOff aria-hidden />
+                                ) : (
+                                    <Eye aria-hidden />
+                                )}
+                                {detail.watching
+                                    ? 'Berhenti amati'
+                                    : 'Amati tugas'}
+                            </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onSelect={copyLink}>
                             <Link2 aria-hidden />
                             Salin tautan

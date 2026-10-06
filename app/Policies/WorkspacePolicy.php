@@ -17,9 +17,12 @@ use Illuminate\Auth\Access\Response;
  *
  * - Personal: only the owner — not Super Admin, not Direksi.
  * - Shared: members by role (owner > admin > member > viewer); `internal` is
- *   readable by every employee; Direksi (workspaces.view_all) reads all;
+ *   readable by every employee; Direksi and HR (workspaces.view_all) read all;
  *   Super Admin (workspaces.manage) reads all and manages settings; Kepala
  *   Divisi reads projects with members from their division.
+ * - View only (keputusan pemilik 6 Okt 2026): Direksi, HR and Super Admin
+ *   who are not members only look — no tasks, comments, reactions, follows
+ *   or files (isViewOnly). Direksi keep their project steering actions.
  * - Not allowed to see it → 404 (existence is not revealed); allowed to see
  *   but not to change → 403. Archived workspaces are read-only.
  */
@@ -150,6 +153,19 @@ class WorkspacePolicy
         }
 
         return $workspace->type === WorkspaceType::Project && $this->involvesLedDivision($user, $workspace);
+    }
+
+    /**
+     * Management read-only access (keputusan pemilik 6 Okt 2026): a viewer who
+     * sees every shared workspace (Direksi, HR, Super Admin) but is not a member
+     * of this one may look, not change. Also when the workspace is `internal`.
+     */
+    public function isViewOnly(User $user, Workspace $workspace): bool
+    {
+        return ! $workspace->isPersonal()
+            && $workspace->company_id === $user->company_id
+            && Workspace::seesAllShared($user)
+            && $workspace->roleOf($user) === null;
     }
 
     public function canEditTasks(User $user, Workspace $workspace): bool

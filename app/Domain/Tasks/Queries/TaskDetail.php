@@ -118,6 +118,7 @@ final class TaskDetail
                 'edit' => $this->tasks->update($viewer, $task)->allowed(),
                 'delete' => $this->tasks->delete($viewer, $task)->allowed(),
                 'comment' => $this->tasks->comment($viewer, $task)->allowed(),
+                'watch' => $this->tasks->watch($viewer, $task)->allowed(),
                 'moderate' => $this->workspaces->canManage($viewer, $workspace) && ! $workspace->isArchived(),
             ],
         ];

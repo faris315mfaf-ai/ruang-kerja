@@ -64,8 +64,8 @@ Setiap karyawan punya satu **atasan langsung** (`manager_id`). Atasan langsung m
 | Peran | Cakupan |
 |---|---|
 | **Super Admin** | Semua pengaturan sistem, integrasi Google, master data, audit log |
-| **Direksi** | Lihat semua dashboard, absensi, dan workspace non-pribadi. Penyetuju akhir lembur di atas batas |
-| **HR** | Kelola karyawan, shift, lokasi, jenis cuti, hari libur. Lihat dan koreksi absensi semua orang. Ekspor payroll. Penyetuju kedua cuti |
+| **Direksi** | Dashboard Direksi (monitoring kerja), absensi, dan semua workspace non-pribadi (**baca saja** bila bukan anggota). Penyetuju akhir lembur di atas batas |
+| **HR** | Kelola karyawan, shift, lokasi, jenis cuti, hari libur. Lihat dan koreksi absensi semua orang. Ekspor payroll. Penyetuju kedua cuti. Lihat semua workspace non-pribadi (**baca saja** bila bukan anggota) |
 | **Kepala Divisi** | Lihat absensi dan kinerja divisinya. Penyetuju pertama untuk anggota divisi. Kelola workspace divisi |
 | **Anggota** | Absensi diri, pengajuan, workspace tempat ia menjadi anggota |
 
@@ -211,11 +211,13 @@ Catatan: selfie absensi **tidak** disimpan di Drive. Data biometrik/sensitif dis
 | Dashboard | Isi |
 |---|---|
 | **Saya** | Tugas hari ini & minggu ini, terlambat, status absensi hari ini, **kartu Laporan hari ini**, saldo cuti (**bukan untuk staf**, keputusan pemilik 6 Okt 2026), pengajuan saya |
-| **Kepala Divisi** | Siapa yang hadir/terlambat/cuti hari ini, beban kerja per anggota, task terlambat divisi, tren penyelesaian 8 minggu, antrean persetujuan |
-| **HR** | Kehadiran seluruh perusahaan hari ini, absensi mencurigakan, pengajuan tertunda, rekap bulanan |
-| **Direksi** | **Portofolio & tracking proyek** (lihat M10): KPI portofolio, tabel proyek (status kesehatan, progres aktual vs rencana, milestone berikutnya, target, tugas terlambat, umur update), roadmap/timeline, daftar "Butuh keputusan Anda", feed update PIC. Absensi hanya **satu widget kecil** (hadir / cuti / belum check-in hari ini) yang menaut ke Dashboard HR. Tidak ada metrik per divisi di halaman ini. |
+| **Kepala Divisi** | Siapa yang hadir/terlambat/cuti hari ini, beban kerja per anggota, task terlambat divisi, tren penyelesaian 8 minggu, antrean persetujuan, **laporan tim hari ini** (sudah/belum lapor + detail) |
+| **HR** | Pengajuan menunggu HR, ringkasan **Absensi hari ini** (angka + tautan ke modul Absensi, tanpa daftar orang), kartu **Hiring** (tautan ke modul hiring bila ada), slot pengumuman |
+| **Direksi** | Monitoring kerja **harian** (laporan progres harian per divisi: terjadwal, sudah lapor, draf, belum lapor; laporan terbaru dengan tugas, persen, hambatan), **mingguan** (Senin–Minggu: matriks orang × hari, tugas paling banyak dikerjakan, hambatan), **per proyek** (kesehatan, progres aktual vs rencana, milestone berikutnya, laporan & orang minggu ini), **catatan tindakan** pribadi Direksi/manajemen, dan **akses cepat** ke semua workspace tim/divisi/proyek (baca saja). Portofolio lengkap tetap di `/portofolio` (M10) |
 
-Semua dashboard bisa difilter periode, divisi, dan tim, serta diekspor.
+**Keputusan pemilik 6 Okt 2026.** (1) Kehadiran per divisi, belum check-in, lupa check-out, perlu ditinjau, rekap & tren kedisiplinan pindah ke **modul Absensi** (tab Hari ini · Rekap · Kedisiplinan). (2) Tingkat penyelesaian, lead time, kedisiplinan hadir, rata-rata terlambat ada di **Absensi › Kedisiplinan** (HR), bukan di dashboard Direksi; tren penyelesaian, kehadiran hari ini, dan tugas terlambat tidak ditampilkan di dashboard Direksi. (3) **Beban kerja** ada di Dashboard Manajemen (`/manajemen`, per divisi → per orang), bersama catatan tindakan. (4) Direksi tidak lagi mendapat tab Kepala Divisi/HR (kecuali juga memegang peran HR/Super Admin atau memimpin divisi operasional); Super Admin boleh memilih semua tampilan. (5) Direksi, HR, dan Super Admin melihat semua workspace tim/divisi/proyek; bila bukan anggota hanya **mode lihat saja** (tanpa ubah tugas, komentar, reaksi, amati, lampiran, pengaturan). Aksi pengarah proyek Direksi (Minta update, Beri arahan, keputusan) tetap ada.
+
+Dashboard Saya, Kepala Divisi, dan Absensi › Kedisiplinan bisa difilter periode, divisi, dan tim; Dashboard Direksi memakai pemilih tanggal & minggu. Semua dapat diekspor (Excel).
 
 **Laporan progres harian (keputusan pemilik 6 Okt 2026).** Setiap karyawan menulis laporan harian (`/laporan/hari-ini`): tugas yang dikerjakan (saran dari Ruang saya "Hari ini" dan tugas yang ditugaskan; cari tugas lain yang terlihat), per tugas catatan progres (wajib), persen dan jam (opsional), dan "pindahkan ke …" (dipindah saat dikirim, tunduk Policy tugas); pekerjaan di luar tugas; ringkasan; hambatan; catatan/notulensi bebas. Draf tersimpan otomatis; Kirim bisa diulang sampai 23.59 hari itu, lalu terkunci. Kartu "Laporan hari ini" ada di Beranda semua karyawan (paling menonjol untuk staf). Pembaca: pemilik, atasan langsung, Kepala Divisi divisinya, Direksi, HR, Super Admin (lainnya 404); judul tugas hanya untuk pembaca yang bisa melihat tugasnya. Pengingat in-app 16.30 WIB hari kerja bagi karyawan terjadwal yang belum mengirim.
 

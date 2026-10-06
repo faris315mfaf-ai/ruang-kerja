@@ -375,30 +375,37 @@ export function PropertiesPanel({ state, today }: Props) {
                                     size="md"
                                 />
                             )}
-                            <button
-                                type="button"
-                                onClick={() => void state.toggleWatch()}
-                                aria-pressed={detail.watching}
-                                aria-label={
-                                    detail.watching
-                                        ? 'Berhenti amati tugas ini'
-                                        : 'Amati tugas ini'
-                                }
-                                title={
-                                    detail.watching ? 'Berhenti amati' : 'Amati'
-                                }
-                                className={cn(
-                                    'flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border-strong text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none',
-                                    detail.watching &&
-                                        'border-solid border-primary/50 bg-link-soft text-link',
-                                )}
-                            >
-                                {detail.watching ? (
-                                    <EyeOff className="size-4" aria-hidden />
-                                ) : (
-                                    <Eye className="size-4" aria-hidden />
-                                )}
-                            </button>
+                            {detail.can.watch && (
+                                <button
+                                    type="button"
+                                    onClick={() => void state.toggleWatch()}
+                                    aria-pressed={detail.watching}
+                                    aria-label={
+                                        detail.watching
+                                            ? 'Berhenti amati tugas ini'
+                                            : 'Amati tugas ini'
+                                    }
+                                    title={
+                                        detail.watching
+                                            ? 'Berhenti amati'
+                                            : 'Amati'
+                                    }
+                                    className={cn(
+                                        'flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border-strong text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none',
+                                        detail.watching &&
+                                            'border-solid border-primary/50 bg-link-soft text-link',
+                                    )}
+                                >
+                                    {detail.watching ? (
+                                        <EyeOff
+                                            className="size-4"
+                                            aria-hidden
+                                        />
+                                    ) : (
+                                        <Eye className="size-4" aria-hidden />
+                                    )}
+                                </button>
+                            )}
                         </span>
                     </Row>
                     <Row label="Dibuat oleh">

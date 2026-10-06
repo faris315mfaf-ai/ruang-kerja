@@ -13,6 +13,8 @@ use Illuminate\Auth\Access\Response;
  */
 class TaskPolicy
 {
+    public const string VIEW_ONLY = 'Mode lihat saja: Anda bukan anggota workspace ini.';
+
     public function __construct(private readonly WorkspacePolicy $workspaces) {}
 
     /**
@@ -39,8 +41,10 @@ class TaskPolicy
     }
 
     /**
-     * Comment and react: everyone who can see the workspace (Direksi may give
-     * direction on read-only workspaces), while the workspace is not archived.
+     * Comment and react: everyone who can see the workspace while it is not
+     * archived — except management viewing a workspace they are not a member
+     * of (view only, keputusan pemilik 6 Okt 2026; Direksi steer projects
+     * through "Beri arahan" instead).
      */
     public function comment(User $user, Task $task): Response
     {
@@ -50,17 +54,30 @@ class TaskPolicy
             return Response::denyAsNotFound();
         }
 
-        return $workspace->isArchived()
-            ? Response::deny('Workspace diarsipkan: komentar tidak dapat ditambahkan.')
+        if ($workspace->isArchived()) {
+            return Response::deny('Workspace diarsipkan: komentar tidak dapat ditambahkan.');
+        }
+
+        return $this->workspaces->isViewOnly($user, $workspace)
+            ? Response::deny(self::VIEW_ONLY)
             : Response::allow();
     }
 
     /**
-     * Follow / unfollow (task_watchers): everyone who can see the task.
+     * Follow / unfollow (task_watchers): everyone who can see the task, except
+     * view-only management (watchers are listed on the task).
      */
     public function watch(User $user, Task $task): Response
     {
-        return $this->workspaces->view($user, $task->workspace);
+        $workspace = $task->workspace;
+
+        if (! $this->workspaces->canView($user, $workspace)) {
+            return Response::denyAsNotFound();
+        }
+
+        return $this->workspaces->isViewOnly($user, $workspace)
+            ? Response::deny(self::VIEW_ONLY)
+            : Response::allow();
     }
 
     /**

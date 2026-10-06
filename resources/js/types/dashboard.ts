@@ -7,7 +7,7 @@
 import type { AttendanceStatus } from '@/types/attendance';
 import type { RequestItem } from '@/types/requests';
 
-export type DashboardViewKey = 'saya' | 'divisi' | 'hr';
+export type DashboardViewKey = 'saya' | 'divisi' | 'hr' | 'direksi';
 
 export type PeriodPresetKey = 'minggu' | 'bulan' | 'kuartal' | 'kustom';
 
@@ -52,7 +52,7 @@ export type ComparedPeriods = {
 };
 
 export type PickerItem = {
-    key: DashboardViewKey | 'direksi';
+    key: DashboardViewKey;
     label: string;
     href: string;
     active: boolean;
@@ -237,56 +237,7 @@ export type ApprovalSummary = { count: number; items: RequestItem[] };
 
 /* ------------------------------------------------------------------- HR */
 
-export type DivisionAttendanceRow = {
-    id: string | null;
-    name: string;
-    scheduled: number;
-    present: number;
-    late: number;
-    away: number;
-    not_checked_in: number;
-    absent: number;
-};
-
-export type HrToday = TodayAttendance & { divisions: DivisionAttendanceRow[] };
-
-export type ReviewItem = {
-    id: string;
-    user: PersonRef & { division: string | null };
-    type: 'check_in' | 'check_out';
-    method_label: string;
-    occurred_at: string;
-    location: string | null;
-    accuracy_m: number | null;
-    distance_m: number | null;
-    flags: { key: string; label: string }[];
-    selfie_url: string | null;
-    /** HR may mark it reviewed (attendance.logs.review). */
-    can_review: boolean;
-};
-
-export type MissingCheckOut = {
-    date: string;
-    count: number;
-    items: {
-        id: string;
-        user: PersonRef;
-        shift: string | null;
-        check_in_at: string | null;
-        status: AttendanceStatus;
-        /** HR may fill in the check-out (attendance.corrections.store). */
-        can_correct: boolean;
-    }[];
-};
-
-export type HrRecap = {
-    period: PeriodInfo;
-    compared: ComparedPeriods;
-    kpis: {
-        attendance_discipline: ComparedMetric;
-        average_lateness: ComparedMetric;
-        absent_days: ComparedMetric;
-        late_days: ComparedMetric;
-    };
-    trend: TrendPoint[];
-};
+/*
+ * The HR dashboard types live in features/dashboard/hr-types.ts; the
+ * attendance lists moved to Absensi (keputusan pemilik 6 Okt 2026).
+ */

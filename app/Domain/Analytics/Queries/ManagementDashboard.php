@@ -10,6 +10,7 @@ use App\Domain\Analytics\MetricDefinitions\AttendanceRate;
 use App\Domain\Analytics\MetricDefinitions\CompletionRate;
 use App\Domain\Analytics\MetricDefinitions\OnTimeRate;
 use App\Domain\Analytics\MetricDefinitions\OverdueTasks;
+use App\Domain\Analytics\MetricDefinitions\Workload;
 use App\Domain\Analytics\Services\MetricCache;
 use App\Domain\Projects\Data\ProjectMetricsData;
 use App\Domain\Projects\Enums\MilestoneStatus;
@@ -159,6 +160,58 @@ final class ManagementDashboard
             'summary',
             ['today' => Period::officeDate($now)->toDateString(), 'scope' => $scope->fingerprint()],
             fn (): array => $this->computeSummary($scope, $people, $now),
+        );
+    }
+
+    /**
+     * Deferred + cached: "Beban kerja" (keputusan pemilik 6 Okt 2026, moved
+     * off the Direksi dashboard) — open tasks per person (Workload metric,
+     * snapshot today) grouped per division, busiest division first.
+     *
+     * @return array{total: array{open: int, overdue: int, people: int}, divisions: list<array<string, mixed>>}
+     */
+    public function workload(User $viewer, CarbonImmutable $now): array
+    {
+        $people = $this->people($viewer);
+        $scope = new MetricScope($viewer, array_values(array_map('strval', $people->modelKeys())));
+        $today = Period::officeDate($now);
+
+        return $this->cache->remember(
+            self::CACHE_KEY,
+            $viewer,
+            'workload',
+            ['today' => $today->toDateString(), 'scope' => $scope->fingerprint()],
+            function () use ($scope, $people, $today): array {
+                $workload = (new Workload)->compute($scope, $today);
+                $divisions = [];
+                $total = ['open' => 0, 'overdue' => 0, 'people' => 0];
+
+                foreach ($people as $user) {
+                    $row = $workload[$user->id] ?? ['open' => 0, 'overdue' => 0, 'estimate_hours' => null];
+                    $key = $user->division_id ?? 'none';
+                    $divisions[$key] ??= ['id' => $user->division_id, 'name' => $user->division->name ?? 'Tanpa divisi', 'open' => 0, 'overdue' => 0, 'estimate_hours' => null, 'people' => []];
+                    $divisions[$key]['open'] += $row['open'];
+                    $divisions[$key]['overdue'] += $row['overdue'];
+
+                    if ($row['estimate_hours'] !== null) {
+                        $divisions[$key]['estimate_hours'] = round(($divisions[$key]['estimate_hours'] ?? 0) + $row['estimate_hours'], 1);
+                    }
+
+                    $divisions[$key]['people'][] = ['user' => ['id' => $user->id, 'name' => $user->name, 'avatar' => $user->avatar_url], ...$row];
+                    $total['open'] += $row['open'];
+                    $total['overdue'] += $row['overdue'];
+                    $total['people'] += $row['open'] > 0 ? 1 : 0;
+                }
+
+                foreach ($divisions as &$division) {
+                    usort($division['people'], fn (array $a, array $b): int => [$b['open'], $b['overdue'], $a['user']['name']] <=> [$a['open'], $a['overdue'], $b['user']['name']]);
+                }
+
+                unset($division);
+                usort($divisions, fn (array $a, array $b): int => [$b['open'], $a['name']] <=> [$a['open'], $b['name']]);
+
+                return ['total' => $total, 'divisions' => $divisions];
+            },
         );
     }
 

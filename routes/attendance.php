@@ -10,6 +10,7 @@ use App\Http\Controllers\Attendance\AttendanceBoardController;
 use App\Http\Controllers\Attendance\AttendanceConsentController;
 use App\Http\Controllers\Attendance\AttendanceController;
 use App\Http\Controllers\Attendance\AttendanceCorrectionController;
+use App\Http\Controllers\Attendance\AttendanceDisciplineController;
 use App\Http\Controllers\Attendance\AttendanceLogController;
 use App\Http\Controllers\Attendance\AttendanceRecapController;
 use App\Http\Controllers\Attendance\AttendanceSelfieController;
@@ -43,6 +44,9 @@ Route::middleware(['auth', 'verified'])->group(function () use ($throttle) {
     Route::get('absensi/hari-ini', [AttendanceBoardController::class, 'index'])->name('attendance.board');
     Route::get('absensi/rekap', [AttendanceRecapController::class, 'index'])->name('attendance.recap');
     Route::get('absensi/rekap/ekspor/{format}', [AttendanceRecapController::class, 'export'])->whereIn('format', ['xlsx', 'pdf'])->name('attendance.recap.export');
+    // Keputusan pemilik 6 Okt 2026: discipline recap + completion & lead time moved here from the dashboards.
+    Route::get('absensi/kedisiplinan', [AttendanceDisciplineController::class, 'index'])->name('attendance.discipline');
+    Route::get('absensi/kedisiplinan/ekspor', [AttendanceDisciplineController::class, 'export'])->name('attendance.discipline.export');
     Route::get('absensi/log/{attendanceLog}/selfie-url', [AttendanceLogController::class, 'selfieUrl'])->name('attendance.logs.selfie-url');
     Route::post('absensi/log/{attendanceLog}/tinjau', [AttendanceLogController::class, 'review'])->name('attendance.logs.review');
     Route::post('absensi/koreksi', [AttendanceCorrectionController::class, 'store'])->name('attendance.corrections.store');

@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { Archive, Plus } from 'lucide-react';
+import { Archive, Eye, Plus } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { Button } from '@/components/ui/button';
@@ -86,6 +86,7 @@ function tabCount(
  */
 export function WorkspaceShell({
     workspace,
+    can,
     members,
     drive_counts,
     tab,
@@ -175,6 +176,20 @@ export function WorkspaceShell({
                 >
                     <Archive className="size-5" aria-hidden />
                     Workspace ini diarsipkan dan hanya bisa dibaca.
+                </div>
+            )}
+
+            {!workspace.archived && can.view_only && (
+                <div
+                    role="status"
+                    className="flex items-start gap-2.5 rounded-lg border border-info/30 bg-info-soft px-4 py-3 text-label font-medium text-info"
+                >
+                    <Eye className="mt-0.5 size-5 shrink-0" aria-hidden />
+                    <span>
+                        Mode lihat saja: Anda bukan anggota workspace ini, jadi
+                        tugas, komentar, file, dan pengaturan tidak dapat
+                        diubah.
+                    </span>
                 </div>
             )}
 

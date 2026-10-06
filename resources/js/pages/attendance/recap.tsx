@@ -33,6 +33,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { UserAvatar } from '@/components/shell/user-avatar';
+import { AttendanceTabs } from '@/features/attendance/board/attendance-tabs';
 import { FilterSelect } from '@/features/attendance/filter-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmployeeMonthPanel } from '@/features/attendance/recap/employee-month-panel';
@@ -198,6 +199,7 @@ export default function AttendanceRecap(props: Props) {
             <>
                 <Head title="Rekap absensi" />
                 <div className="flex flex-col gap-4">
+                    <AttendanceTabs active="recap" mobile />
                     <p className="text-overline text-link first-letter:uppercase">
                         {props.period.label}
                         {props.period.isRunning ? ' · berjalan' : ''}
@@ -251,6 +253,8 @@ export default function AttendanceRecap(props: Props) {
                         </div>
                     )}
                 </header>
+
+                <AttendanceTabs active="recap" />
 
                 <div className="flex flex-wrap items-center gap-3">
                     <Select
@@ -688,8 +692,8 @@ function RecapKpis({
 AttendanceRecap.layout = {
     width: 'wide',
     breadcrumbs: [
-        { title: 'Admin', href: '' },
-        { title: 'Rekap absensi', href: '/absensi/rekap' },
+        { title: 'Absensi', href: '/absensi/hari-ini' },
+        { title: 'Rekap', href: '/absensi/rekap' },
     ],
     title: 'Rekap absensi',
     back: '/menu',

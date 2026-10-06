@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\Channel;
+use App\Models\DailyReport;
+use App\Models\DailyReportItem;
 use App\Models\EmployeeRequest;
 use App\Models\Meeting;
 use App\Models\MeetingActionItem;
@@ -11,6 +13,7 @@ use App\Models\NoteShare;
 use App\Models\NoteVersion;
 use App\Models\Objective;
 use App\Models\PasswordResetRequest;
+use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
@@ -78,10 +81,86 @@ it('keeps the dashboards and the portfolio free of N+1', function () {
         '/dashboard' => ['anggota', 72],
         '/dashboard/saya' => ['kadiv', 68],
         '/ruang-saya' => ['anggota', 14],
-        '/dashboard/divisi' => ['kadiv', 80],
-        '/dashboard/hr' => ['hr', 76],
+        // +3: "Laporan tim hari ini" (schedules, reports, sent items) — keputusan pemilik 6 Okt 2026.
+        '/dashboard/divisi' => ['kadiv', 83],
+        // −26: attendance lists and the recap moved to Absensi (keputusan pemilik 6 Okt 2026).
+        '/dashboard/hr' => ['hr', 52],
         '/portofolio' => ['direksi', 41],
     ]);
+});
+
+/**
+ * Daily reports with items for $count more people this week (work
+ * monitoring), on project and personal tasks and free work.
+ */
+function growDailyReports(int $round): void
+{
+    $monday = CarbonImmutable::now('Asia/Jakarta')->startOfWeek();
+    $tasks = Task::query()->orderBy('id')->limit(30)->pluck('id')->all();
+    $people = User::query()->where('status', 'active')->orderBy('email')->offset(($round - 1) * 15)->limit(15)->get();
+
+    foreach ($people as $index => $user) {
+        foreach ([0, 1, 2] as $day) {
+            $report = DailyReport::query()->firstOrCreate(
+                ['user_id' => $user->id, 'report_date' => $monday->addDays($day)->toDateString()],
+                ['company_id' => $user->company_id, 'summary' => 'Laporan uji', 'blockers' => $index % 3 === 0 ? 'Menunggu data' : null, 'submitted_at' => $index % 4 === 0 ? null : now()],
+            );
+
+            foreach ([0, 1] as $position) {
+                DailyReportItem::query()->create([
+                    'daily_report_id' => $report->id,
+                    'task_id' => $tasks[($index + $day + $position) % max(1, count($tasks))] ?? null,
+                    'task_key' => 'UJI-'.($index + $position),
+                    'progress_note' => 'Progres',
+                    'percent' => 40,
+                    'hours' => 1.5,
+                    'position' => $position,
+                ]);
+            }
+        }
+    }
+}
+
+it('keeps the Direksi, HR and management dashboards and Absensi tabs free of N+1 (keputusan pemilik 6 Okt 2026)', function () {
+    $pages = [
+        '/dashboard' => ['direksi', 64],
+        '/dashboard/direksi?tanggal=2026-10-06' => ['direksi', 64],
+        '/dashboard/hr' => ['hr', 52],
+        '/dashboard/divisi' => ['kadiv', 85],
+        '/manajemen' => ['direksi', 69],
+        '/absensi/hari-ini' => ['hr', 55],
+        '/absensi/kedisiplinan' => ['hr', 55],
+    ];
+    growDailyReports(1);
+    $first = [];
+
+    foreach ($pages as $url => [$who]) {
+        P::queries($who, $url);
+        $first[$url] = P::queries($who, $url);
+    }
+
+    P::grow(2);
+    growDailyReports(2);
+    $failures = [];
+
+    foreach ($pages as $url => [$who, $budget]) {
+        $second = P::queries($who, $url);
+
+        if (getenv('QUERY_COUNTS')) {
+            fwrite(STDERR, sprintf("QUERIES %-8s %-50s %3d -> %3d (budget %d)\n", $who, $url, $first[$url], $second, $budget));
+        }
+
+        if ($second > $first[$url]) {
+            $failures[] = "{$who} {$url}: {$first[$url]} → {$second} queries after adding rows (N+1)";
+        }
+
+        if ($first[$url] > $budget) {
+            $failures[] = "{$who} {$url}: {$first[$url]} queries, budget {$budget}";
+        }
+    }
+
+    expect($failures)->toBe([])
+        ->and(DailyReport::query()->count())->toBeGreaterThan(60);
 });
 
 it('keeps the attendance pages free of N+1', function () {
