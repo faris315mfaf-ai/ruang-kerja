@@ -22,7 +22,7 @@ it('shares the seven switcher personas with the current one marked', function ()
     $this->actingAs($hr)
         ->get('/menu')
         ->assertInertia(fn (Assert $page) => $page
-            // Faris & Dio (final approvers of Hiring, 6 Oct 2026) close the list.
+            // Faris (Project Leader) & Reynandio (Direktur Utama), final approvers of Hiring, close the list.
             ->has('demoSwitcher', 7)
             ->where('demoSwitcher.0.email', 'programmer@demo.test')
             ->where('demoSwitcher.0.persona', 'Staf programmer')
@@ -33,7 +33,9 @@ it('shares the seven switcher personas with the current one marked', function ()
             ->where('demoSwitcher.4.persona', 'Direksi & manajemen')
             ->where('demoSwitcher.5.email', 'faris@demo.test')
             ->where('demoSwitcher.6.email', 'dio@demo.test')
-            ->where('demoSwitcher.6.persona', 'Penyetuju akhir hiring')
+            ->where('demoSwitcher.5.name', 'M. Faris Ahlul Firdaus')
+            ->where('demoSwitcher.6.name', 'Reynandio Wira Prathama')
+            ->where('demoSwitcher.6.persona', 'Direktur Utama · penyetuju akhir hiring')
             ->where('demoSwitcher.0.current', false));
 });
 

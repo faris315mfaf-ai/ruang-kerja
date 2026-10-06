@@ -36,9 +36,10 @@ final class DemoAccounts
             new DemoAccount('anggota@demo.test', 'Rizky Aditya', Role::Anggota),
             new DemoAccount('programmer@demo.test', 'Arif Nugroho', Role::Anggota, 'Staf programmer'),
             new DemoAccount('maya.lestari@demo.test', 'Maya Lestari', Role::Anggota, 'Staf sosial media, branding & marketing'),
-            // Hiring (6 Oct 2026): default final approvers of new positions (HiringDemoSeeder).
-            new DemoAccount('faris@demo.test', 'Faris', Role::Direksi, 'Penyetuju akhir hiring'),
-            new DemoAccount('dio@demo.test', 'Dio', Role::Direksi, 'Penyetuju akhir hiring'),
+            // Direksi (keputusan pemilik 6 Okt 2026), also the default final
+            // approvers of new hiring positions (HiringDemoSeeder).
+            new DemoAccount('faris@demo.test', 'M. Faris Ahlul Firdaus', Role::Direksi, 'Project Leader · penyetuju akhir hiring'),
+            new DemoAccount('dio@demo.test', 'Reynandio Wira Prathama', Role::Direksi, 'Direktur Utama · penyetuju akhir hiring'),
         ];
     }
 

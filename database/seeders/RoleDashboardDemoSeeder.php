@@ -13,7 +13,8 @@ use Illuminate\Database\Seeder;
  * no events. Corsec and Analis have no demo position; Direksi and Super Admin
  * still open them from the picker.
  *
- * direksi@ → Direktur Utama (dirut), lestari.anggraini@ → Direktur Keuangan
+ * dio@ → Direktur Utama (dirut); direksi@ (Direktur Operasional), faris@ (Project Leader),
+ * lestari.anggraini@ → Direktur Keuangan
  * (direktur), hr@ → Kepala Divisi SDM (hr), kadiv@ → Kepala Divisi
  * Operasional (implementer: field work at client sites), putri.ramadhani@ →
  * Kepala Divisi Pemasaran (marketing), yudi.hartono@ → Kepala Divisi
@@ -24,6 +25,8 @@ class RoleDashboardDemoSeeder extends Seeder
     /** @var array<string, DashboardRole> */
     public const array POSITIONS = [
         'Direktur Utama' => DashboardRole::Dirut,
+        'Project Leader' => DashboardRole::Direktur,
+        'Direktur Operasional' => DashboardRole::Direktur,
         'Direktur Keuangan' => DashboardRole::Direktur,
         'Kepala Divisi SDM' => DashboardRole::Hr,
         'Kepala Divisi Operasional' => DashboardRole::Implementer,

@@ -44,6 +44,8 @@ class OrganizationSeeder extends Seeder
      */
     private const array POSITIONS = [
         'Direktur Utama' => 1,
+        'Project Leader' => 1,
+        'Direktur Operasional' => 1,
         'Direktur Keuangan' => 1,
         'Kepala Divisi Keuangan' => 2,
         'Kepala Divisi Operasional' => 2,
@@ -80,7 +82,7 @@ class OrganizationSeeder extends Seeder
      * @var array<string, string>
      */
     private const array HEADS = [
-        'DIR' => 'direksi@demo.test',
+        'DIR' => 'dio@demo.test',
         'KEU' => 'agus.setiawan@demo.test',
         'OPS' => 'kadiv@demo.test',
         'PMS' => 'putri.ramadhani@demo.test',
@@ -96,8 +98,11 @@ class OrganizationSeeder extends Seeder
      */
     private const array EMPLOYEES = [
         // Direksi
-        'direksi@demo.test' => ['Hendra Wijaya', 'DIR', null, 'Direktur Utama', null, WorkMode::Office, UserStatus::Active, Role::Direksi, '2015-01-05'],
-        'lestari.anggraini@demo.test' => ['Lestari Anggraini', 'DIR', null, 'Direktur Keuangan', 'direksi@demo.test', WorkMode::Office, UserStatus::Active, Role::Direksi, '2016-03-01'],
+        // Keputusan pemilik 6 Okt 2026: Reynandio = Direktur Utama, Faris = Project Leader (setara direktur).
+        'dio@demo.test' => ['Reynandio Wira Prathama', 'DIR', null, 'Direktur Utama', null, WorkMode::Office, UserStatus::Active, Role::Direksi, '2014-01-02'],
+        'faris@demo.test' => ['M. Faris Ahlul Firdaus', 'DIR', null, 'Project Leader', 'dio@demo.test', WorkMode::Office, UserStatus::Active, Role::Direksi, '2015-01-05'],
+        'direksi@demo.test' => ['Hendra Wijaya', 'DIR', null, 'Direktur Operasional', 'dio@demo.test', WorkMode::Office, UserStatus::Active, Role::Direksi, '2015-01-05'],
+        'lestari.anggraini@demo.test' => ['Lestari Anggraini', 'DIR', null, 'Direktur Keuangan', 'dio@demo.test', WorkMode::Office, UserStatus::Active, Role::Direksi, '2016-03-01'],
         'admin@demo.test' => ['Admin Sistem', null, null, 'Administrator Sistem', null, WorkMode::Office, UserStatus::Active, Role::SuperAdmin, '2020-07-01'],
         // Operasional
         'kadiv@demo.test' => ['Dimas Pratama', 'OPS', null, 'Kepala Divisi Operasional', 'direksi@demo.test', WorkMode::Office, UserStatus::Active, Role::KepalaDivisi, '2018-02-12'],

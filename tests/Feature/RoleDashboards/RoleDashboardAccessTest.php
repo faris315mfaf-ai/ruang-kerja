@@ -190,7 +190,8 @@ describe('demo seeder', function () {
 
         expect(Position::query()->where('name', 'Direktur Utama')->value('dashboard_role'))->toBe(DashboardRole::Dirut)
             ->and(Position::query()->where('name', 'Kepala Divisi SDM')->value('dashboard_role'))->toBe(DashboardRole::Hr)
-            ->and(Position::query()->whereNotNull('dashboard_role')->count())->toBe(6);
+            ->and(Position::query()->where('name', 'Project Leader')->value('dashboard_role'))->toBe(DashboardRole::Direktur)
+            ->and(Position::query()->whereNotNull('dashboard_role')->count())->toBe(8);
 
         Position::query()->where('name', 'Kepala Divisi Operasional')->update(['dashboard_role' => 'analis']);
         $this->seed(RoleDashboardDemoSeeder::class);
