@@ -2,6 +2,8 @@
 
 use App\Domain\Attendance\Jobs\PurgeExpiredSelfiesJob;
 use App\Domain\Attendance\Jobs\SendCheckInReminders;
+use App\Domain\Meetings\Jobs\SendActionItemReminders;
+use App\Domain\Meetings\Jobs\SendMeetingReminders;
 use App\Domain\Projects\Jobs\SendProjectUpdateReminders;
 use App\Domain\Projects\Jobs\TakeProjectProgressSnapshots;
 use Illuminate\Foundation\Inspiring;
@@ -48,5 +50,5 @@ Schedule::job(TakeProjectProgressSnapshots::class)->dailyAt('23:55')->timezone(c
 Schedule::job(new SendProjectUpdateReminders)->weeklyOn(5, '15:00')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
 
 // F2-3 — meetings (FEATURE_MEETINGS): "rapat segera dimulai" every minute, follow-up reminders daily 07.05 office time.
-Schedule::job(new App\Domain\Meetings\Jobs\SendMeetingReminders)->everyMinute()->when(fn (): bool => (bool) config('features.meetings'))->withoutOverlapping()->onOneServer();
-Schedule::job(new App\Domain\Meetings\Jobs\SendActionItemReminders)->dailyAt('07:05')->timezone(config()->string('app.office_timezone'))->when(fn (): bool => (bool) config('features.meetings'))->withoutOverlapping()->onOneServer();
+Schedule::job(new SendMeetingReminders)->everyMinute()->when(fn (): bool => (bool) config('features.meetings'))->withoutOverlapping()->onOneServer();
+Schedule::job(new SendActionItemReminders)->dailyAt('07:05')->timezone(config()->string('app.office_timezone'))->when(fn (): bool => (bool) config('features.meetings'))->withoutOverlapping()->onOneServer();
