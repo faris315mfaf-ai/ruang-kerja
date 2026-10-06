@@ -20,8 +20,8 @@ class AutomationRuleFactory extends Factory
     public function definition(): array
     {
         return [
-            'company_id' => fn (array $attributes): string => Workspace::query()->findOrFail($attributes['workspace_id'])->company_id,
             'workspace_id' => Workspace::factory(),
+            'company_id' => fn (array $attributes): string => (string) Workspace::query()->whereKey((string) $attributes['workspace_id'])->value('company_id'),
             'name' => 'Aturan '.fake()->unique()->numberBetween(1, 9999),
             'trigger_type' => RuleTriggerType::TaskMoved,
             'trigger' => ['type' => 'task_moved', 'category' => 'review'],
