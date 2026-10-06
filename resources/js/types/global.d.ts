@@ -15,6 +15,8 @@ declare module '@inertiajs/core' {
             auth: Auth;
             /** Sidebar "Persetujuan" badge (requests waiting for the signed-in user). */
             approvals?: { pending: number } | null;
+            /** Feature flags (config/features.php). `prototype` = Fase 2 & 3 previews at /pratinjau. */
+            features?: { prototype: boolean };
             /** Sprint 2: once-prop, refreshed every 5 minutes and after a check-in/out. */
             attendanceStatus?: AttendanceStatusSummary | null;
             /** Unread Inbox count (Sprint 8); null for guests. */

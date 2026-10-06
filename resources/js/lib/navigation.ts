@@ -7,6 +7,7 @@ import {
     ClipboardCheck,
     CircleCheck,
     Clock,
+    FlaskConical,
     FolderKanban,
     Gauge,
     Home,
@@ -163,6 +164,17 @@ export function mainNavItemsFor(roles: readonly string[]): AppNavItem[] {
         ...mainNavItems.slice(index + 1),
     ];
 }
+
+/**
+ * "Pratinjau" (/pratinjau): Fase 2 & 3 front-end previews, shown only while
+ * the `prototype` feature flag is on (shared prop `features.prototype`).
+ */
+export const prototypeNavItem: AppNavItem = {
+    title: 'Pratinjau',
+    href: '/pratinjau',
+    icon: FlaskConical,
+    matchPrefix: true,
+};
 
 /** Mobile bottom tab bar: exactly five items (docs/PLATFORM.md §2). */
 export const tabNavItems: AppNavItem[] = [

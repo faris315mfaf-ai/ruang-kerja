@@ -82,6 +82,8 @@ class HandleInertiaRequests extends Middleware
             'workspaces' => fn (): array => $user === null ? [] : app(SidebarWorkspaces::class)->for($user),
             // Bell / Dock / tab badge. Closure: skipped on partial reloads that don't ask for it.
             'inbox' => fn (): ?array => $user !== null ? ['unread' => app(InboxQuery::class)->unreadCount($user)] : null,
+            // Fase 2 & 3 front-end previews (/pratinjau, config/features.php).
+            'features' => ['prototype' => (bool) config('features.prototype')],
         ];
     }
 

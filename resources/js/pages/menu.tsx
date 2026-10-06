@@ -27,6 +27,7 @@ import {
     managementNavItem,
     organizationNavItems,
     portfolioNavItem,
+    prototypeNavItem,
 } from '@/lib/navigation';
 import { primaryRoleLabel } from '@/lib/roles';
 import { cn, focusRing } from '@/lib/utils';
@@ -151,7 +152,7 @@ function ProfileCard() {
 
 /** Mobile "Menu" tab: profile, workspaces, work & settings (design MMenu). */
 export default function Menu() {
-    const { auth, approvals } = usePage().props;
+    const { auth, approvals, features } = usePage().props;
     const { appearance } = useAppearance();
     const pending = approvals?.pending ?? 0;
 
@@ -228,6 +229,18 @@ export default function Menu() {
                             ))}
                     </Group>
                 </Section>
+
+                {features?.prototype && (
+                    <Section title="Pratinjau">
+                        <Group>
+                            <Row
+                                icon={prototypeNavItem.icon}
+                                label="Fitur Fase 2 & 3"
+                                href={prototypeNavItem.href}
+                            />
+                        </Group>
+                    </Section>
+                )}
 
                 <Section title="Lainnya">
                     <Group>

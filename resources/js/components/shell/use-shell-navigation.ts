@@ -15,6 +15,7 @@ import {
     isActivePath,
     mainNavItemsFor,
     organizationNavItems,
+    prototypeNavItem,
 } from '@/lib/navigation';
 import { paletteGradient } from '@/lib/palette';
 
@@ -103,7 +104,7 @@ const ICON_GRADIENTS = ['bg-grad-merek', 'bg-grad-indigo'] as const;
  * Workspace stack (like the macOS Dock).
  */
 export function useShellNavigation(): ShellNavigation {
-    const { auth, approvals } = usePage().props;
+    const { auth, approvals, features } = usePage().props;
     const { currentUrl } = useCurrentUrl();
     const unread = useUnreadCount();
     const workspaces = useSidebarWorkspaces();
@@ -194,9 +195,12 @@ export function useShellNavigation(): ShellNavigation {
     // get it as a plain tile instead.
     const organizationItems = organizationNavItems(auth.roles);
     const main = mainNavItemsFor(auth.roles);
-    const tiles = (
-        organizationItems.length > 1 ? main : [...main, ...organizationItems]
-    ).map(toTile);
+    const tiles = [
+        ...(organizationItems.length > 1
+            ? main
+            : [...main, ...organizationItems]),
+        ...(features?.prototype ? [prototypeNavItem] : []),
+    ].map(toTile);
 
     const organizationEntries = toEntries(organizationItems);
     const organization: NavStack | null =
