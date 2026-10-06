@@ -1,6 +1,6 @@
 # Obrolan (F2-1)
 
-> Pratinjau Fase 2 · dibangun Agen A · rute `/obrolan`, `/obrolan/{channel}` · data contoh, tidak menyimpan apa pun. Indeks: [README](README.md).
+> **Fitur nyata sejak tugas #1 (6 Okt 2026)** · rute `/obrolan`, `/obrolan/{channel}` (`routes/chat.php`) di balik `FEATURE_CHAT` (nyala lokal, mati produksi sampai rilis) · data tersimpan di `channels`, `channel_members`, `messages`, realtime Reverb. Gambar di bawah berasal dari masa pratinjau; tata letaknya sama. Indeks: [README](README.md).
 
 ## 1. Tujuan & masalah
 
@@ -13,7 +13,7 @@ Saat ini koordinasi harian tim tersebar di grup WhatsApp, sehingga keputusan dan
 
 ## 2. Peran yang memakai
 
-Semua karyawan. Isi daftar mengikuti keanggotaan: channel workspace hanya untuk anggota workspace itu, channel privat dan DM hanya untuk anggotanya. Di pratinjau, semua sampel dilihat sebagai **Dimas Pratama (Kepala Divisi Operasional)**; pesan sendiri berlabel "(Anda)".
+Semua karyawan. Daftar berisi channel tempat pengguna menjadi anggota plus semua channel publik. Akses (`ChannelPolicy`, keputusan pengguna 6 Okt 2026): channel workspace mengikuti akses workspace (Direksi bukan anggota hanya membaca), channel publik untuk karyawan satu perusahaan, **channel privat, DM, dan grup hanya anggotanya — Super Admin, HR, dan Direksi pun tidak bisa membaca**. Tak terlihat = 404. Pesan sendiri berlabel "(Anda)".
 
 ## 3. Layar
 
@@ -141,17 +141,22 @@ sequenceDiagram
 | mention di `body` | `mentions` (morph ke `messages`) | Hanya orang yang punya akses |
 | `ChatTask` | `tasks` (yang terlihat penonton) | Untuk chip `#KEY-n` |
 
-## 7. Pekerjaan backend tersisa
+## 7. Status backend
 
-- [ ] Migrasi `channels`, `channel_members`, `messages` (+ indeks `(channel_id, id)`, GIN `tsvector` `body_text` untuk pencarian). Reaksi & lampiran memakai `reactions`/`attachments` morph.
-- [ ] Model + `ChannelPolicy` (lihat/kirim/kelola; privat hanya anggota; channel workspace mengikuti `WorkspacePolicy`; DM hanya anggotanya) dan `MessagePolicy` (sunting/hapus penulis, moderasi admin channel). Scope `Channel::visibleTo($user)`.
-- [ ] Actions: `CreateChannel`, `OpenDirectConversation` (pakai ulang DM/grup beranggota sama), `PostMessage` (sanitasi `RichText` + `MentionParser`; `#KEY-n` hanya untuk tugas yang terlihat), `EditMessage`, `DeleteMessage` (soft delete, balasan tetap), `ToggleReaction`, `MarkChannelRead`, `MuteChannel`, `LeaveChannel`.
-- [ ] Listener `SyncWorkspaceChannelMembers`: workspace baru → channel workspace otomatis; sinkron anggota mengikuti `workspace_members`.
-- [ ] Realtime Reverb: `private-channel.{id}` (`message.posted|updated|deleted`, `reaction.toggled`, `read.updated`), presence untuk online + whisper "mengetik". Antrean `realtime`; otorisasi `routes/channels.php` memakai Policy.
-- [ ] Controller Inertia yang mengirim `ChatState` (pagination kursor per channel), endpoint saran `@`/`#` (pakai ulang `/w/{key}/rujukan`), pencarian pesan.
-- [ ] Notifikasi `mention` & `chat.message` (DM) lewat Notification + `notification_preferences`; channel yang dibisukan tidak memberi notifikasi kecuali disebut.
-- [ ] Test Pest: matriks Policy channel/pesan, `PostMessage` (mention hanya yang berakses), hitungan belum dibaca, sinkron anggota channel workspace.
-- [ ] Perbarui `docs/DATABASE.md` §7 bila kolom berubah (mis. `channels.slug`).
+Selesai di tugas #1 (`docs/PEMBAGIAN-TUGAS.md`, branch `claude/f2-obrolan`):
+
+- [x] Migrasi `channels`, `channel_members`, `messages` (+ `search_vector` GIN) — `docs/DATABASE.md` §7. Reaksi, mention, lampiran memakai tabel morph yang ada.
+- [x] `ChannelPolicy` / `MessagePolicy` + `Channel::visibleTo` (test matriks, `tests/Feature/Chat/ChatPolicyTest.php`).
+- [x] Actions (`app/Domain/Chat/Actions`): `CreateChannel`, `OpenDirectConversation` (dipakai ulang lewat `direct_key`), `PostMessage`, `EditMessage`, `DeleteMessage` (moderasi diaudit), `ToggleMessageReaction`, `MarkChannelRead`, `SetChannelMuted`, `AttachMessageFiles` (file hanya bila setiap pembaca channel bisa membukanya), `SyncWorkspaceChannel` (+ listener `WorkspaceCreated`/`WorkspaceMembersChanged`, command `chat:sync-workspace-channels`).
+- [x] Queries `ChatInbox`, `ChannelTimeline` (halaman 50 pesan + "Muat pesan sebelumnya"), `AttachableDriveFiles`; controller tipis; FormRequest 404 sebelum validasi; limiter `messages`.
+- [x] Realtime: private `chat.{id}` (`message.posted|updated|deleted`, `read.updated`, event tipis), whisper "mengetik", presence `chat-online.{company}`, `chat.activity` ke kanal user; polling 30 dtk tanpa WebSocket.
+- [x] Notifikasi: `chat.message` (DM/grup, satu belum dibaca per obrolan, selesai saat dibaca; tidak untuk obrolan dibisukan) dan mention (juga di obrolan dibisukan). Preferensi "Pesan langsung & grup obrolan" (in-app saja secara default).
+- [x] Frontend memakai props server + mutasi optimistis (`store.ts`, `api.ts`, `realtime.ts`); tile Obrolan di Dock/Rail dan baris Menu dengan badge `chatUnread`.
+- [x] Data demo `ChatDemoSeeder`; uji anti-N+1 `/obrolan`, `/obrolan/{id}`, `/pesan`.
+
+Belum (di luar cakupan tugas #1): pencarian pesan di ⌘K dan pencarian server di dalam channel (sekarang mencari pesan yang sudah dimuat), unggah file langsung, ubah/arsip channel & tambah anggota setelah dibuat, uji dua pengguna dengan Reverb menyala di lingkungan agen.
+
+**Produksi:** setelah migrasi, jalankan sekali `php artisan chat:sync-workspace-channels` agar setiap workspace yang sudah ada mendapat channel otomatis; workspace baru mendapatkannya lewat listener. Nyalakan dengan `FEATURE_CHAT=true`.
 
 ## 8. Keadaan kosong/galat & aksesibilitas
 
@@ -160,7 +165,7 @@ sequenceDiagram
 - Ponsel: kotak tulis 44 px (perbaikan bug #7), input 17 px, aksi pesan lewat bottom sheet (tidak bergantung hover).
 - Animasi kecil: titik "mengetik" (`animate-pulse`), toolbar pesan muncul lewat opacity 120 ms `ease-brand`; berhenti dengan `prefers-reduced-motion`.
 
-## 9. Batasan prototipe
+## 9. Batasan (sejak masa pratinjau)
 
 - State hanya di klien; channel baru hilang saat muat ulang.
 - Tidak ada pin pesan, unggah file dari perangkat (hanya Picker Drive tiruan), notifikasi mention, atau tautan dari Inbox ke pesan.

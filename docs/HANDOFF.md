@@ -95,3 +95,8 @@ Setelah masuk, **pemilih akun demo** di bagian atas (pil "Demo · …" di menu b
 
 - Semua branch pembangunan (`feat/sprint-*`, `fix/*`) sudah digabung ke `main`; worktree paralel dan database per jalur sudah dibersihkan. Branch lama tetap ada sebagai jejak dan aman dihapus.
 - Postgres dev memakai `max_locks_per_transaction=256` (`compose.yml`) dan suite test memakai `memory_limit=512M` (`phpunit.xml`) agar test paralel stabil.
+
+## Obrolan (F2-1, tugas #1)
+
+Backend + frontend nyata di branch `claude/f2-obrolan` (detail: `docs/fitur/obrolan.md` §7). Di balik `FEATURE_CHAT` (default nyala di lokal, **mati di produksi**). Saat dirilis: deploy → `php artisan migrate` (otomatis lewat `deploy-remote.sh`) → **sekali** `docker compose exec app php artisan chat:sync-workspace-channels` → set `FEATURE_CHAT=true` di `.env` server → `docker compose up -d --force-recreate`. Akun demo: Obrolan berisi data `ChatDemoSeeder` (kadiv@ punya pesan belum dibaca).
+
