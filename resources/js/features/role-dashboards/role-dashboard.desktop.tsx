@@ -207,7 +207,7 @@ export function RoleDashboardDesktop({
                     </Panel>
                 </div>
 
-                <div className="grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-1">
+                <div className="grid min-w-0 items-start gap-5 md:grid-cols-2 xl:grid-cols-1">
                     {config.held && <HeldCard held={config.held} />}
 
                     <Panel
