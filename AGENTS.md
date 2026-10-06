@@ -78,10 +78,19 @@ PHP 8.4 · Laravel 13 · PostgreSQL 17 · Redis · Inertia.js 3 · React 19 + Ty
 
 Pengguna bisa berpindah agen di tengah pekerjaan (mis. kuota habis). Agen berikutnya tidak melihat percakapan sebelumnya, jadi keadaan kerja harus ada di repo:
 
-- **`docs/SESI-AKTIF.md`** memuat tugas yang sedang berjalan: tujuan, branch/worktree, langkah yang sudah selesai (dengan hash commit), langkah berikutnya, keputusan yang sudah diambil pengguna, perintah verifikasi, dan hal yang sengaja tidak disentuh. Perbarui setiap selesai satu langkah logis dan sebelum berhenti; kosongkan (kembalikan ke templat) bila tugas selesai.
+- **`docs/sesi/<agen>.md`** (`claude.md`, `codex.md`; hanya ditulis agen pemiliknya, templat di `docs/sesi/README.md`) memuat tugas yang sedang berjalan: tujuan, branch/worktree, langkah yang sudah selesai (dengan hash commit), langkah berikutnya, keputusan yang sudah diambil pengguna, perintah verifikasi, dan hal yang sengaja tidak disentuh. Perbarui setiap selesai satu langkah logis dan sebelum berhenti; kosongkan (kembalikan ke templat) bila tugas selesai.
 - Commit sering. Pekerjaan setengah jadi di-commit sebagai `wip(<modul>): …` di branch fitur, bukan dibiarkan tak ter-commit, dan jangan memakai `git stash` untuk menitipkan pekerjaan antar agen.
-- Agen yang melanjutkan: baca `docs/SESI-AKTIF.md`, `git log --oneline -15`, dan `git status` dulu; jangan mengulang pekerjaan yang sudah di-commit.
+- Agen yang melanjutkan: baca `docs/sesi/<agen>.md` milik agen sebelumnya, `git log --oneline -15`, dan `git status` dulu; jangan mengulang pekerjaan yang sudah di-commit.
 - Hal yang hanya ada di memori/percakapan satu agen (preferensi pengguna, keputusan) dipindah ke dokumen di `docs/` atau `AGENTS.md`.
+
+## Kerja paralel (Claude Code dan Codex bersamaan)
+
+- **Satu agen = satu worktree + branch + lingkungan sendiri.** Siapkan dengan `bash scripts/agen-mulai.sh <agen> [branch]` (mis. `codex codex/f2-rapat` → `../ruang-kerja-codex`, https://ruangkerja-codex.test). Untuk worktree yang dibuat Claude Code sendiri (`.claude/worktrees/*`): `bash scripts/agen-mulai.sh claude --di-sini`. Skrip memberi database dev `ruangkerja_<agen>`, database test `ruangkerja_testing_<agen>` (berkas `.testing-db`, dibaca `tests/bootstrap.php`), prefiks Redis/cache sendiri, dan situs Herd sendiri. **Jangan menjalankan `composer test` di worktree tanpa `.testing-db`** bila agen lain juga sedang menjalankan test. Bersihkan: `bash scripts/agen-selesai.sh <agen> [--hapus-db]`.
+- Checkout utama (`main`) hanya untuk integrasi. Jangan dua agen di satu folder.
+- **Klaim tugas** di `docs/PEMBAGIAN-TUGAS.md` sebelum mulai; satu modul = satu agen dari backend sampai frontend dan test. Tulis hanya di "folder milik" modul itu, migrasinya sendiri (timestamp penuh, unik), test-nya, dan seksi tabelnya di `docs/DATABASE.md`. Rute modul di berkas sendiri `routes/<modul>.php` (satu baris `require` di `routes/web.php`).
+- **Berkas bersama hanya diubah integrator:** `resources/js/components/**`, `resources/js/lib/**`, `resources/js/layouts/**`, `resources/js/types/global.d.ts`, `app/Http/Middleware/HandleInertiaRequests.php`, `bootstrap/app.php`, `composer.json`/`package.json` (paket baru), `docs/CHANGELOG.md`, `docs/HANDOFF.md`, `AGENTS.md`. Butuh perubahan di sana? Tulis di bagian "Butuh dari integrator" catatan sesi; komponen kecil yang dibutuhkan modul dibuat di folder fiturnya.
+- Tanpa dev server bersamaan (port Vite/Reverb sama): lihat UI dengan `npm run build` + `node scripts/ui-shots.mjs` (`E2E_BASE_URL=https://ruangkerja-<agen>.test`).
+- Sinkron: `git fetch && git rebase main` di branch agen setidaknya sekali sehari dan sebelum membuka PR; test harus hijau di worktree sendiri. Satu PR per tugas; integrator merge ke `main`.
 
 ## Gerak & animasi
 

@@ -28,6 +28,9 @@ yarn-error.log
 /.vscode
 /.zed
 
+# Database test per worktree agen (scripts/agen-mulai.sh, tests/bootstrap.php)
+/.testing-db
+
 # Rahasia
 /secrets/
 google-sa*.json
