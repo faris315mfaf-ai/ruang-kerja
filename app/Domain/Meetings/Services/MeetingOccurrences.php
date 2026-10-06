@@ -122,6 +122,30 @@ final class MeetingOccurrences
         return $this->first($meeting);
     }
 
+    /**
+     * The occurrence minutes open without a date: the requested one when
+     * valid, else the latest one that has started, else the first upcoming.
+     */
+    public function resolveForMinutes(Meeting $meeting, ?string $date, ?CarbonImmutable $now = null): Occurrence
+    {
+        if (! $meeting->isRecurring() || ($date !== null && $this->at($meeting, $date) !== null)) {
+            return $this->resolve($meeting, $date, $now);
+        }
+
+        $now ??= CarbonImmutable::now();
+        $day = $now->setTimezone($this->timezone())->startOfDay();
+
+        for ($i = 0; $i < 14; $i++, $day = $day->subDay()) {
+            $occurrence = $this->at($meeting, $day->toDateString());
+
+            if ($occurrence !== null && $occurrence->startsAt->lte($now)) {
+                return $occurrence;
+            }
+        }
+
+        return $this->resolve($meeting, null, $now);
+    }
+
     public function meetsOn(Meeting $meeting, string $date): bool
     {
         $first = $meeting->firstDate();

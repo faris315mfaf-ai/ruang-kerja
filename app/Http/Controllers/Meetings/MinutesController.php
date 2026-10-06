@@ -170,7 +170,7 @@ class MinutesController extends Controller
     {
         $meeting->loadMissing(['participants', 'workspace:id,key,name']);
 
-        return $this->occurrences->resolve($meeting, $request->occurrenceDate());
+        return $this->occurrences->resolveForMinutes($meeting, $request->occurrenceDate());
     }
 
     private function fresh(Occurrence $occurrence): ?MeetingMinutes

@@ -68,6 +68,18 @@ it('resolves the occurrence a link opens: requested date, else today or the next
     expect($occurrences->resolve($ended, null)->date)->toBe('2026-09-28');
 });
 
+it('opens the minutes of the latest occurrence that started when no date is given', function () {
+    $standup = Meeting::factory()->by($this->dimas)->at('2026-09-28 09:00', 30)->recurring(Recurrence::MonWedFri)->create();
+    $occurrences = app(MeetingOccurrences::class);
+
+    // Monday 08.00: today's stand-up has not started yet → last Friday.
+    expect($occurrences->resolveForMinutes($standup, null)->date)->toBe('2026-10-02')
+        ->and($occurrences->resolveForMinutes($standup, '2026-09-30')->date)->toBe('2026-09-30');
+
+    $this->travelTo(CarbonImmutable::parse('2026-10-06 12:00', 'Asia/Jakarta'));
+    expect($occurrences->resolveForMinutes($standup, null)->date)->toBe('2026-10-05');
+});
+
 it('reports conflicts of participants with their meetings and suggests a free slot', function () {
     Meeting::factory()->by($this->rizky)->at('2026-10-06 13:00')->withParticipants([$this->bayu])->create(['title' => 'Rapat gudang']);
     Meeting::factory()->by($this->rizky)->at('2026-10-06 14:00', 30)->withParticipants([$this->bayu], Rsvp::No)->create();
