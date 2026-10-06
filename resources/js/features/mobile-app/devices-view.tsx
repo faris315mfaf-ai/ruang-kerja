@@ -257,8 +257,13 @@ export function DevicesDesktop({
                                         <TableHead className="pl-7">
                                             Perangkat
                                         </TableHead>
-                                        <TableHead>Terakhir aktif</TableHead>
-                                        <TableHead>Integritas</TableHead>
+                                        {/* Tablet: last seen & integrity move under the device name (no sideways scroll). */}
+                                        <TableHead className="max-lg:hidden">
+                                            Terakhir aktif
+                                        </TableHead>
+                                        <TableHead className="max-lg:hidden">
+                                            Integritas
+                                        </TableHead>
                                         <TableHead>Masuk biometrik</TableHead>
                                         <TableHead className="pr-7 text-right">
                                             <span className="sr-only">
@@ -301,13 +306,27 @@ export function DevicesDesktop({
                                                             · aplikasi{' '}
                                                             {device.app_version}
                                                         </span>
+                                                        <span className="text-[14px] text-text-muted lg:hidden">
+                                                            {lastSeen(device)}
+                                                        </span>
+                                                        <span className="mt-1 flex flex-wrap items-center gap-2 lg:hidden">
+                                                            <IntegrityPill
+                                                                device={device}
+                                                            />
+                                                            {!device.is_trusted && (
+                                                                <span className="text-[13px] text-danger">
+                                                                    Tidak
+                                                                    tepercaya
+                                                                </span>
+                                                            )}
+                                                        </span>
                                                     </span>
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="text-text-muted">
+                                            <TableCell className="text-text-muted max-lg:hidden">
                                                 {lastSeen(device)}
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="max-lg:hidden">
                                                 <span className="flex flex-col items-start gap-1">
                                                     <IntegrityPill
                                                         device={device}

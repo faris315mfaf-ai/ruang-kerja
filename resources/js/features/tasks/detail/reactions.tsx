@@ -31,7 +31,7 @@ export function Reactions({
     }
 
     const chip = cn(
-        'inline-flex items-center gap-1.5 rounded-full border text-[14px] font-bold transition-colors duration-120 ease-brand focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none disabled:cursor-default',
+        'hit-area inline-flex items-center gap-1.5 rounded-full border text-[14px] font-bold transition-colors duration-120 ease-brand focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none disabled:cursor-default',
         mobile ? 'h-9 px-3' : 'h-8 px-2.5',
     );
 
