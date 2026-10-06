@@ -17,8 +17,8 @@ it('shows the org chart to every role', function (string $email, bool $manageEmp
         ->assertInertia(fn (Assert $page) => $page
             ->component('organization/structure')
             ->where('chart.board.code', 'DIR')
-            ->has('chart.divisions', 4)
-            ->where('chart.stats.people', 20)
+            ->has('chart.divisions', 5)
+            ->where('chart.stats.people', 22)
             ->where('chart.divisions.1.code', 'OPS')
             ->where('chart.divisions.1.teams.0.lead.name', 'Sari Wulandari')
             ->where('can.manageEmployees', $manageEmployees)

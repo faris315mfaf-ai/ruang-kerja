@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { AppBarProps } from '@/components/mobile/app-bar';
 import { AppBar } from '@/components/mobile/app-bar';
+import { DemoAccountStrip } from '@/components/shell/demo-account-switcher';
 import { TabBar } from '@/components/mobile/tab-bar';
 
 type Props = AppBarProps & {
@@ -17,6 +18,7 @@ export default function MobileLayout({
 }: Props) {
     return (
         <div className="flex min-h-svh flex-col">
+            <DemoAccountStrip className="pt-safe" />
             <AppBar {...appBar} />
             <main className="flex-1 px-4 pt-2 pb-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom)+24px)]">
                 {children}

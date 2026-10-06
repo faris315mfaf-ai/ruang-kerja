@@ -10,6 +10,8 @@ final readonly class DemoAccount
         public string $email,
         public string $name,
         public Role $role,
+        /** Persona in the account switcher of the shell; null = login page only. */
+        public ?string $persona = null,
     ) {}
 
     /**

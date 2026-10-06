@@ -70,6 +70,10 @@ Buka https://ruangkerja.test → "Masuk cepat (demo lokal)". Sandi semua akun de
 | hr@demo.test | HR | Dashboard HR, Lokasi & shift, rekap & ekspor, Admin Karyawan |
 | kadiv@demo.test | Kepala Divisi (Operasional) | Dashboard divisi, persetujuan, board `/w/PLQ` |
 | anggota@demo.test | Anggota | Check-in di ponsel, pengajuan, Tugas Saya |
+| programmer@demo.test | Anggota (Divisi Programming) | Tampilan staf programmer |
+| maya.lestari@demo.test | Anggota (Pemasaran, Tim Digital) | Tampilan staf sosial media, branding & marketing |
+
+Setelah masuk, **pemilih akun demo** di bagian atas (pil "Demo · …" di menu bar desktop, strip di atas konten tablet/ponsel) berpindah langsung antar lima persona: Staf programmer, Staf admin & HR, Staf sosial media/branding & marketing, Admin, Direksi & manajemen (`POST /demo/ganti-akun`, hanya `APP_ENV=local` + `DEMO_LOGIN_ENABLED`).
 
 ## Keputusan yang menunggu pemilik
 

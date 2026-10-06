@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\DemoLoginController;
+use App\Http\Controllers\Auth\DemoSwitchController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard')->name('home');
@@ -14,6 +15,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::post('login/demo', [DemoLoginController::class, 'store'])
     ->middleware(['guest', 'throttle:login'])
     ->name('login.demo');
+
+// Account switcher at the top of the shell (same local-only guard).
+Route::post('demo/ganti-akun', [DemoSwitchController::class, 'store'])
+    ->middleware(['auth', 'throttle:login'])
+    ->name('demo.switch');
 
 require __DIR__.'/auth.php';
 require __DIR__.'/settings.php';

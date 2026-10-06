@@ -17,11 +17,11 @@ it('seeds the five global roles idempotently', function () {
         ->toBe(array_column(Role::cases(), 'value'));
 });
 
-it('seeds one demo user per role in the testing environment, idempotently', function () {
+it('seeds the demo users in the testing environment, idempotently', function () {
     $this->seed(DatabaseSeeder::class);
     $this->seed(DatabaseSeeder::class);
 
-    expect(User::query()->count())->toBe(22)
+    expect(User::query()->count())->toBe(24)
         ->and(RoleModel::query()->count())->toBe(5);
 
     foreach (DemoAccounts::all() as $account) {

@@ -25,7 +25,7 @@ it('lists the demo accounts on the login page when enabled locally', function ()
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('auth/login')
-            ->has('demoAccounts', 5)
+            ->has('demoAccounts', 7)
             ->where('demoAccounts.0', [
                 'email' => 'admin@demo.test',
                 'name' => 'Admin Sistem',

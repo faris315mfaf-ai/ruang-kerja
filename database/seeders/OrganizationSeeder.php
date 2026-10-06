@@ -16,9 +16,9 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 
 /**
- * Demo organization (local/testing): 1 company, Direksi + 4 divisions, teams,
- * positions and 22 employees with a consistent reporting line
- * (Direksi → Kepala Divisi → anggota). The five demo accounts are placed in it.
+ * Demo organization (local/testing): 1 company, Direksi + 5 divisions, teams,
+ * positions and 24 employees with a consistent reporting line
+ * (Direksi → Kepala Divisi → anggota). The demo accounts (DemoAccounts) are placed in it.
  * Idempotent: upserts by natural keys (division code, position/team name, email).
  */
 class OrganizationSeeder extends Seeder
@@ -34,6 +34,7 @@ class OrganizationSeeder extends Seeder
         'OPS' => ['Operasional', false],
         'PMS' => ['Pemasaran', false],
         'SDM' => ['SDM', false],
+        'PRG' => ['Programming', false],
     ];
 
     /**
@@ -59,6 +60,8 @@ class OrganizationSeeder extends Seeder
         'Staf Administrasi SDM' => 5,
         'Staf Pelatihan' => 5,
         'Staf Hubungan Industrial' => 5,
+        'Kepala Divisi Programming' => 2,
+        'Staf Programmer' => 5,
     ];
 
     /**
@@ -82,6 +85,7 @@ class OrganizationSeeder extends Seeder
         'OPS' => 'kadiv@demo.test',
         'PMS' => 'putri.ramadhani@demo.test',
         'SDM' => 'hr@demo.test',
+        'PRG' => 'yudi.hartono@demo.test',
     ];
 
     /**
@@ -118,11 +122,14 @@ class OrganizationSeeder extends Seeder
         'rahmawati@demo.test' => ['Rahmawati', 'SDM', null, 'Staf Administrasi SDM', 'hr@demo.test', WorkMode::Hybrid, UserStatus::Active, Role::Anggota, '2023-03-20'],
         'bima.prakoso@demo.test' => ['Bima Prakoso', 'SDM', null, 'Staf Pelatihan', 'hr@demo.test', WorkMode::Office, UserStatus::Active, Role::Anggota, '2024-04-15'],
         'tiara.anjani@demo.test' => ['Tiara Anjani', 'SDM', null, 'Staf Hubungan Industrial', 'hr@demo.test', WorkMode::Office, UserStatus::Resigned, Role::Anggota, '2019-08-05'],
+        // Programming
+        'yudi.hartono@demo.test' => ['Yudi Hartono', 'PRG', null, 'Kepala Divisi Programming', 'direksi@demo.test', WorkMode::Hybrid, UserStatus::Active, Role::KepalaDivisi, '2019-11-04'],
+        'programmer@demo.test' => ['Arif Nugroho', 'PRG', null, 'Staf Programmer', 'yudi.hartono@demo.test', WorkMode::Hybrid, UserStatus::Active, Role::Anggota, '2024-02-05'],
     ];
 
     public function run(): void
     {
-        // Roles + the five demo accounts (with passwords) first.
+        // Roles + the demo accounts (with passwords) first.
         $this->call(DemoUserSeeder::class, silent: true);
 
         $company = DemoCompany::ensure();

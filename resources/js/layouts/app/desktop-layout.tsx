@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { CommandPaletteHost } from '@/components/shell/command-palette-host';
+import { DemoAccountStrip } from '@/components/shell/demo-account-switcher';
 import { Dock } from '@/components/shell/dock';
 import { MenuBar } from '@/components/shell/menu-bar';
 import { Rail } from '@/components/shell/rail';
@@ -44,6 +45,7 @@ export default function DesktopLayout({
         return (
             <div className="min-h-svh pl-(--rail-width)">
                 <Rail />
+                <DemoAccountStrip />
                 <main
                     className={cn(
                         'min-w-0',

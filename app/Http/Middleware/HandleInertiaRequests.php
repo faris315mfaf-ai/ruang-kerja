@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Domain\Notifications\Services\InboxQuery;
+use App\Domain\Organization\Demo\DemoAccounts;
 use App\Domain\Requests\Services\ApprovalQueue;
 use App\Domain\Workspaces\Queries\SidebarWorkspaces;
 use App\Http\Resources\Attendance\MyAttendance;
@@ -84,6 +85,8 @@ class HandleInertiaRequests extends Middleware
             'inbox' => fn (): ?array => $user !== null ? ['unread' => app(InboxQuery::class)->unreadCount($user)] : null,
             // Fase 2 & 3 front-end previews (/pratinjau, config/features.php).
             'features' => ['prototype' => (bool) config('features.prototype')],
+            // Local demo only: personas of the account switcher at the top of the shell.
+            'demoSwitcher' => fn (): ?array => $user !== null ? DemoAccounts::switcherProps($user->email) : null,
         ];
     }
 
