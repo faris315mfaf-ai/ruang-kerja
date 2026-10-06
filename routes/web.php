@@ -39,6 +39,7 @@ require __DIR__.'/chat.php';
 require __DIR__.'/roles.php';
 require __DIR__.'/okr.php';
 require __DIR__.'/automation.php';
+require __DIR__.'/notes.php';
 require __DIR__.'/management.php';
 require __DIR__.'/projects.php';
 require __DIR__.'/privacy.php';

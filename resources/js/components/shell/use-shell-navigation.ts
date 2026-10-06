@@ -16,6 +16,7 @@ import {
     isActivePath,
     chatNavItem,
     roleDashboardNavItem,
+    notesNavItem,
     mainNavItemsFor,
     organizationNavItems,
     okrNavItem,
@@ -211,12 +212,17 @@ export function useShellNavigation(): ShellNavigation {
             ? [item, roleDashboardNavItem]
             : [item],
     );
-    // Obrolan right after Inbox (messages next to notifications).
-    const withChat = features?.chat
-        ? main.flatMap((item) =>
-              item.href === '/inbox' ? [item, chatNavItem] : [item],
-          )
-        : main;
+    // Obrolan right after Inbox (messages next to notifications), Catatan after it.
+    const afterInbox = [
+        ...(features?.chat ? [chatNavItem] : []),
+        ...(features?.notes ? [notesNavItem] : []),
+    ];
+    const withChat =
+        afterInbox.length > 0
+            ? main.flatMap((item) =>
+                  item.href === '/inbox' ? [item, ...afterInbox] : [item],
+              )
+            : main;
     // Otomasi (F2-4) right after Tugas saya; Kinerja saya after Absensi.
     const withAutomation = features?.automation
         ? withChat.flatMap((item) => {

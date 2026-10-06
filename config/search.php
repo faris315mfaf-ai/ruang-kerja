@@ -2,6 +2,7 @@
 
 use App\Domain\Search\Providers\ActionsSearchProvider;
 use App\Domain\Search\Providers\DocumentSearchProvider;
+use App\Domain\Search\Providers\NoteSearchProvider;
 use App\Domain\Search\Providers\PeopleSearchProvider;
 use App\Domain\Search\Providers\RequestSearchProvider;
 use App\Domain\Search\Providers\TaskSearchProvider;
@@ -28,6 +29,8 @@ return [
         PeopleSearchProvider::class,
         WorkspaceSearchProvider::class,
         DocumentSearchProvider::class,
+        // Catatan (F2-2): only while FEATURE_NOTES is on (same default as config/features.php).
+        ...((bool) env('FEATURE_NOTES', env('APP_ENV', 'production') !== 'production') ? [NoteSearchProvider::class] : []),
         RequestSearchProvider::class,
     ],
 

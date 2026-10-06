@@ -44,6 +44,7 @@ export type WorkspaceTab =
     | 'tasks'
     | 'documents'
     | 'files'
+    | 'notes'
     | 'activity'
     | 'settings';
 

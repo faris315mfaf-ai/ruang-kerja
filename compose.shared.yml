@@ -29,6 +29,18 @@ services:
       default: {}
       edge:
         aliases: [ruangkerja-reverb]
+
+  # Catatan bersama: edge proxies wss://domain/collab here.
+  collab:
+    networks:
+      default: {}
+      edge:
+        aliases: [ruangkerja-collab]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256m
     deploy:
       resources:
         limits:

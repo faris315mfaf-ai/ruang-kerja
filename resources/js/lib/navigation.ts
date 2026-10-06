@@ -18,6 +18,7 @@ import {
     ListChecks,
     Menu,
     Network,
+    NotebookPen,
     ScrollText,
     SquareCheckBig,
     Target,
@@ -223,6 +224,17 @@ export const performanceNavItem: AppNavItem = {
     title: 'Kinerja saya',
     href: '/kinerja',
     icon: BarChart3,
+    matchPrefix: true,
+};
+
+/**
+ * "Catatan" (/catatan, F2-2): shared notes, shown while the `notes` feature
+ * flag is on (shared prop `features.notes`).
+ */
+export const notesNavItem: AppNavItem = {
+    title: 'Catatan',
+    href: '/catatan',
+    icon: NotebookPen,
     matchPrefix: true,
 };
 

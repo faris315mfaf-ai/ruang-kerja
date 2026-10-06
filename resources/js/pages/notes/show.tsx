@@ -1,23 +1,20 @@
 import { Head } from '@inertiajs/react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { usePreviewState } from '@/features/notes/preview-state';
 import { NoteDesktop } from '@/features/notes/note.desktop';
 import { NoteAppBarActions, NoteMobile } from '@/features/notes/note.mobile';
-import { getNotesState, useNotesState } from '@/features/notes/store';
+import type { NoteShowProps, NoteVersion } from '@/features/notes/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
+import { notes as workspaceNotes } from '@/routes/workspaces';
 
-type Props = { noteId: string };
+type Props = { note: NoteShowProps; versions?: NoteVersion[] };
 
-/** /catatan/{note} — shared note editor (Fase 2 preview, F2-2). */
-export default function NotesShowPage({ noteId }: Props) {
+/** /catatan/{note} — shared note editor (F2-2). */
+export default function NotesShowPage({ note, versions }: Props) {
     const breakpoint = useBreakpoint();
-    const state = useNotesState();
-    const preview = usePreviewState();
-    const note = state.notes.find((item) => item.id === noteId);
 
     return (
         <>
-            <Head title={`${note?.title ?? 'Catatan'} · Catatan`} />
+            <Head title={`${note.current.title} · Catatan`} />
             {breakpoint === null ? (
                 <div className="flex flex-col gap-4" aria-busy>
                     <Skeleton className="h-9 w-80" />
@@ -25,37 +22,43 @@ export default function NotesShowPage({ noteId }: Props) {
                 </div>
             ) : breakpoint === 'mobile' ? (
                 <NoteMobile
-                    key={noteId}
-                    state={state}
-                    noteId={noteId}
-                    preview={preview}
+                    key={note.current.id}
+                    props={note}
+                    versions={versions}
                 />
             ) : (
                 <NoteDesktop
-                    key={noteId}
-                    state={state}
-                    noteId={noteId}
-                    preview={preview}
+                    key={note.current.id}
+                    props={note}
+                    versions={versions}
                 />
             )}
         </>
     );
 }
 
-function titleFor(noteId: string): string {
-    return (
-        getNotesState().notes.find((item) => item.id === noteId)?.title ??
-        'Catatan'
+NotesShowPage.layout = (props: Props) => {
+    const workspace = props.note.workspaces.find(
+        (item) => item.id === props.note.current.workspace_id,
     );
-}
+    const back = props.note.current.workspace_key
+        ? workspaceNotes.url(props.note.current.workspace_key)
+        : '/catatan';
 
-NotesShowPage.layout = (props: Props) => ({
-    breadcrumbs: [
-        { title: 'Catatan', href: '/catatan' },
-        { title: titleFor(props.noteId), href: `/catatan/${props.noteId}` },
-    ],
-    title: titleFor(props.noteId),
-    back: '/catatan',
-    width: 'wide',
-    appBarActions: <NoteAppBarActions />,
-});
+    return {
+        breadcrumbs: [
+            { title: 'Catatan', href: '/catatan' },
+            ...(workspace ? [{ title: workspace.name, href: back }] : []),
+            {
+                title: props.note.current.title,
+                href: `/catatan/${props.note.current.id}`,
+            },
+        ],
+        title: props.note.current.title,
+        back,
+        width: 'wide' as const,
+        appBarActions: (
+            <NoteAppBarActions canShare={props.note.current.can_share} />
+        ),
+    };
+};

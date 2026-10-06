@@ -12,8 +12,6 @@ beforeEach(function () {
 
 dataset('prototype pages', [
     ['/pratinjau', 'prototype/hub'],
-    ['/catatan', 'notes/index'],
-    ['/catatan/sop-onboarding', 'notes/show'],
     ['/rapat', 'meetings/index'],
     ['/rapat/baru', 'meetings/create'],
     ['/rapat/standup-ops', 'meetings/show'],
@@ -59,7 +57,7 @@ it('answers 404 when the prototype flag is off', function (string $uri) {
     $user->assignRole(Role::Anggota->value);
 
     $this->actingAs($user)->get($uri)->assertNotFound();
-})->with(['/pratinjau', '/catatan', '/rapat']);
+})->with(['/pratinjau', '/rapat']);
 
 it('shares the flag as off with the shell', function () {
     config(['features.prototype' => false]);

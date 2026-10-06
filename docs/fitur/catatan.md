@@ -1,151 +1,97 @@
 # Catatan bersama (F2-2)
 
-> **Status:** **Akan dibangun** (keputusan pemilik 6 Okt 2026): backend nyata dikerjakan berikutnya; dokumen ini menjelaskan keadaan pratinjau saat ini. Panduan pemakaian: [PANDUAN-PRATINJAU.md](PANDUAN-PRATINJAU.md).
->
-> Pratinjau Fase 2 · dibangun Agen A · rute `/catatan`, `/catatan/{note}` · data contoh, tidak menyimpan apa pun. Indeks: [README](README.md).
+> **Status: Nyata** (Okt 2026) · flag `FEATURE_NOTES` (nyala lokal, mati produksi) · rute `/catatan`, `/catatan/{note}`, tab `/w/{key}/catatan` · server kolaborasi `collab/` (Hocuspocus + Yjs). Indeks: [README](README.md).
 
-## 1. Tujuan & masalah
+## 1. Tujuan
 
-SOP, wiki ringan, checklist onboarding, dan notulen singkat sekarang ditulis di Google Docs terpisah atau pesan WhatsApp, sehingga sulit dicari dari workspace. **Catatan bersama** adalah editor ringan di dalam workspace yang:
+SOP, wiki ringan, checklist onboarding, notulen singkat, dan catatan pribadi ditulis di dalam workspace, bisa **disunting bersamaan** (kursor penyunting lain terlihat), tersusun dalam **folder** dan sub-catatan, punya **riwayat versi**, dan pengaturan **berbagi**. Dokumen formal tetap Google Docs (ADR #6).
 
-- bisa **diedit bersamaan** (kursor dan avatar penyunting lain terlihat, Tiptap + Yjs + Hocuspocus di produksi);
-- tersusun sebagai **pohon induk/anak** per workspace;
-- menyimpan **riwayat versi** yang bisa dipratinjau dan dipulihkan;
-- punya pengaturan **berbagi** (seluruh workspace atau hanya orang yang diundang, peran Menyunting/Membaca).
+## 2. Siapa melihat apa
 
-Dokumen formal tetap Google Docs (ADR #6 di `docs/ARCHITECTURE.md`).
+| Catatan | Membaca | Menyunting | Mengatur akses / menghapus |
+|---|---|---|---|
+| Workspace **pribadi** | hanya pemilik | pemilik | pemilik (tanpa berbagi) |
+| `access = workspace` | semua yang bisa membuka workspace (anggota, workspace internal, Direksi) | anggota owner/admin/member | penulis atau admin/owner workspace |
+| `access = restricted` ("Hanya diundang") | penulis + orang yang diundang | penulis + undangan "Menyunting" | penulis atau admin/owner workspace yang bisa membukanya |
 
-## 2. Peran yang memakai
+- Undangan (`note_shares`) mengalahkan peran workspace untuk catatan itu (mis. anggota diturunkan ke "Membaca").
+- Direksi, HR, Super Admin **tidak** otomatis melihat catatan "Hanya diundang". Tidak terlihat = 404.
+- Workspace diarsipkan → baca saja. Mengubah akses dicatat di `audit_logs` (`note.share_updated`) dan memutus sesi penyuntingan yang sedang terbuka agar semua tersambung ulang dengan hak baru.
 
-Semua anggota workspace (membaca & menyunting sesuai akses). Pemilik/admin workspace mengatur berbagi. Di pratinjau penonton = Dimas Pratama.
+## 3. Layar & alur
 
-## 3. Layar
+### Catatan pribadi (alur paling sederhana)
+1. Buka workspace **Pribadi** (Dock › Workspace › Pribadi, atau Menu di ponsel) → tab **Catatan** (`/w/{key}/catatan`).
+2. **Folder baru** → judul → folder muncul di atas daftar (toast "Folder … dibuat").
+3. Menu "…" pada folder → **Catatan baru di sini** (atau tombol **Catatan baru**, pilih letak folder) → editor terbuka.
+4. Ketik → label "Menyimpan…" → "Tersimpan · baru saja". Muat ulang: isi tetap ada.
 
-### Daftar catatan · `/catatan`
+Ponsel: tombol bulat (FAB) membuka lembar bawah "Catatan baru" dengan pilihan Catatan/Folder; menu "…" per baris untuk folder/catatan.
 
-Panel per workspace dengan pohon induk/anak (bisa diciutkan), pencarian judul/isi (induk tetap tampil agar konteks tidak hilang), filter workspace (Select di desktop, chip di ponsel), panel "Sedang disunting" dan "Baru diubah".
+### Daftar `/catatan`
+Panel per workspace (judul panel menaut ke tab Catatan workspace itu) dengan pohon folder/catatan, pencarian judul + isi di server (`?q=`, full-text `simple` + judul), filter workspace (Select desktop, chip ponsel), "Baru diubah", tombol Folder baru / Catatan baru.
 
-![Daftar catatan per workspace, desktop terang](img/catatan/daftar-desktop.jpg)
+### Editor `/catatan/{note}`
+Pohon workspace di kiri (≥ 1280 px), lokasi `workspace › folder`, status simpan, "Tersambung · N orang" + avatar berbingkai warna kursor penyunting lain, toolbar format, judul (disimpan sendiri, ~0,7 dtk setelah berhenti mengetik), isi. Tombol **Riwayat**, **Bagikan** (bila boleh), menu "…" (Pindahkan, Hapus). Ponsel: app bar Riwayat/Bagikan/Aksi, toolbar menempel di atas tab bar/keyboard.
 
-![Daftar catatan, desktop Malam](img/catatan/daftar-desktop-malam.jpg)
+- **Riwayat**: daftar versi (dimuat saat panel dibuka) → pratinjau baca-saja → **Pulihkan versi ini**. Isi sekarang disimpan dulu sebagai versi, lalu versi berlabel "Dipulihkan dari versi …"; server kolaborasi mengganti isi dokumen yang terbuka sehingga semua penyunting langsung melihatnya.
+- **Bagikan**: akses umum (Workspace / Hanya diundang), undang orang, peran Menyunting/Membaca/Hapus akses, Salin tautan.
+- **@mention**: sebut orang workspace; hanya orang yang bisa membuka catatan yang mendapat mention + notifikasi (sekali per catatan).
+- **Mode tanpa kolaborasi**: bila server kolaborasi tidak diatur atau tidak tersinkron dalam 5 detik, banner muncul dan editor menyimpan langsung (`PATCH /catatan/{note}/isi`) dengan kunci `updated_at`; bila orang lain menyimpan lebih dulu → 409 + banner "Muat ulang".
+- ⌘K: grup **Catatan** (hanya catatan yang boleh dibuka).
 
-![Daftar catatan, ponsel](img/catatan/daftar-ponsel.jpg)
-
-"Catatan baru" meminta judul (wajib), workspace, dan induk opsional, lalu membuka editor.
-
-![Dialog catatan baru](img/catatan/catatan-baru-desktop.jpg)
-
-### Editor · `/catatan/{note}`
-
-Pohon workspace di kiri (≥ 1280 px), lokasi `workspace › induk`, avatar Hana & Dewi berbingkai warna kursornya, kursor "Hana" dan sorotan "Dewi" yang bergerak, status simpan otomatis ("Menyimpan…" → "Tersimpan · baru saja"), toolbar Urungkan/Ulangi/H2/H3/B/I/daftar/bernomor/checklist/kutipan/kode. Contoh id: `sop-onboarding`, `checklist-hari-pertama`, `akun-sistem`, `kebijakan-wfh`, `sop-penerimaan`, `format-surat-jalan`, `notulen-ops-28-sep`, `panduan-shift`, `brief-peluncuran`, `notulen-kickoff`.
-
-![Editor catatan dengan kursor kolaborator, desktop terang](img/catatan/editor-desktop.jpg)
-
-![Editor catatan, desktop Malam](img/catatan/editor-desktop-malam.jpg)
-
-Ponsel: editor layar penuh, app bar berisi Riwayat & Bagikan, toolbar format menempel di atas tab bar (atau di atas keyboard saat terbuka).
-
-![Editor catatan, ponsel](img/catatan/editor-ponsel.jpg)
-
-### Riwayat versi
-
-Daftar versi (terbaru berlabel "Versi saat ini") → pilih versi → pratinjau baca-saja → "Pulihkan versi ini" (dialog konfirmasi). Di ponsel berupa bottom sheet (daftar → pratinjau → Pulihkan / kembali ke Daftar).
-
-![Panel riwayat versi, desktop](img/catatan/riwayat-desktop.jpg)
-
-![Riwayat versi sebagai bottom sheet, ponsel](img/catatan/riwayat-ponsel.jpg)
-
-### Bagikan
-
-Akses umum (Workspace / Hanya diundang), peran per orang (Menyunting/Membaca/Hapus akses), undang orang, Salin tautan, Simpan akses.
-
-![Dialog bagikan catatan](img/catatan/bagikan-desktop.jpg)
-
-## 4. Alur langkah demi langkah
-
-1. `/catatan` → cari judul atau pilih workspace → buka catatan `sop-onboarding` (SOP onboarding).
-2. Ketik di isi → label berubah "Menyimpan…" → "Tersimpan · baru saja" → "Tersimpan · N dtk lalu". Enter di judul memindahkan fokus ke isi.
-3. Perhatikan kursor Hana dan sorotan Dewi bergerak tiap ±2 detik (diam bila `prefers-reduced-motion`).
-4. **Riwayat** → pilih "Kemarin 16.02" → pratinjau → **Pulihkan versi ini** → konfirmasi → isi diganti, versi baru "Dipulihkan dari versi sebelumnya" muncul + toast.
-5. **Bagikan** → ubah akses ke "Hanya diundang", ubah peran seseorang ke Membaca atau undang orang baru → **Simpan akses** (mutasi tiruan + toast).
-6. Kembali ke `/catatan` → **Catatan baru** → judul + workspace + induk → editor terbuka.
-
-```mermaid
-flowchart TD
-    I[/catatan/] -->|cari / filter workspace| I
-    I -->|klik catatan| E[/catatan/note/]
-    I -->|Catatan baru| N[Dialog: judul, workspace, induk] --> E
-    E -->|ketik| S[Menyimpan… → Tersimpan]
-    E -->|Riwayat| H[Daftar versi] --> P[Pratinjau baca-saja]
-    P -->|Pulihkan + konfirmasi| V[Versi baru 'Dipulihkan…'] --> E
-    E -->|Bagikan| B[Akses umum + peran per orang] -->|Simpan akses| E
-```
-
-Alur backend nanti (sunting bersama):
+## 4. Arsitektur
 
 ```mermaid
 sequenceDiagram
     actor A as Penyunting A
-    actor B as Penyunting B
-    participant W as Web (Tiptap + Yjs)
+    participant W as Browser (Tiptap + Yjs)
     participant L as Laravel
-    participant H as Hocuspocus (Node)
-    participant DB as PostgreSQL
-    A->>L: GET /catatan/{note}
-    L->>L: NotePolicy::view
-    L-->>W: props note + token Hocuspocus berumur pendek
-    W->>H: WebSocket (token)
-    H->>L: verifikasi token & hak sunting
-    H-->>W: yjs_state awal
+    participant H as collab/ (Hocuspocus)
+    A->>L: GET /catatan/{note} (NotePolicy::view)
+    W->>L: GET /catatan/{note}/token (2 menit, HMAC)
+    W->>H: WebSocket + token
+    H->>H: verifikasi token (note, user, edit)
+    H->>L: GET /internal/catatan/{note}/state (Bearer COLLAB_SECRET)
+    L-->>H: yjs_state (atau snapshot content)
     A->>H: update Yjs + awareness (kursor)
-    H-->>B: update + kursor A
-    H->>DB: notes.yjs_state + content snapshot (debounce)
-    H->>DB: note_versions tiap 5 menit idle / saat ditutup
+    H-->>W: update + kursor penyunting lain
+    H->>L: POST /internal/catatan/{note}/state (debounce 2 dtk)
+    L->>L: StoreNoteState: sanitasi, versi ≥ 5 mnt, mention
 ```
 
-## 5. Penjelasan kode
-
-| File | Peran |
+| Bagian | Berkas |
 |---|---|
-| `resources/js/pages/notes/index.tsx`, `pages/notes/show.tsx` | Halaman Inertia; `show` menerima prop `noteId`. |
-| `features/notes/types.ts` | `NotePerson`, `NoteWorkspace`, `Note` (`content` = snapshot JSON dokumen Yjs), `NoteVersion`, `NoteShare`, `NotesState` (+ `activeEditors` untuk presence). |
-| `features/notes/fixtures.ts` | `NOTE_PEOPLE`, `NOTE_WORKSPACES`, `NOTES` (10 catatan bertingkat), `NOTE_VERSIONS`, `NOTE_SHARES`, `initialNotesState()`. |
-| `features/notes/store.ts` | Store modul: `useNotesState`, `updateNote`, `snapshotVersion`, `restoreVersion`, `createNote`, `saveShare`, `shareFor`, `resetNotesState`. |
-| `features/notes/use-note-session.ts` | Hook bersama editor desktop & ponsel: catatan aktif, simpan otomatis (debounce), label simpan, penyunting aktif. |
-| `features/notes/lib.ts` (+ `lib.test.ts`, 11 test) | `buildTree`/`flattenTree` (pencarian menyertakan induk, induk hilang, ciutkan), `docText`/`wordCount`, `ancestors`, `savedLabel`, `canEdit`, `cursorAt`, `editorsLabel`. |
-| `features/notes/collab-cursors.ts` | Ekstensi ProseMirror `CollabCursors`: widget/inline decoration berwarna token (`fill-violet`, `accent-blue-strong`, `primary`). Posisinya diumpan timer dengan meta transaksi (`addToHistory: false`), siap diganti Yjs awareness. |
-| `features/notes/note-editor.tsx`, `note-parts.tsx` | Editor Tiptap + toolbar. Skala judul lewat utilitas varian Tailwind pada pembungkus (`NOTE_PROSE`/`NOTE_PROSE_VIEW`) tanpa mengubah `rich-text.css` bersama. Fokus ke isi lewat callback berbasis ref (React Compiler tidak membaca `editor.commands` saat render). |
-| `note-tree.tsx`, `notes-index.tsx` (satu komponen dengan prop `mobile`), `note.desktop.tsx`, `note.mobile.tsx`, `version-history.tsx`, `share-dialog.tsx`, `new-note-dialog.tsx` | Tampilan. Tombol app bar ponsel (Riwayat/Bagikan) memakai store mikro di `note.mobile.tsx`. |
+| Domain | `app/Domain/Notes/{Actions,Enums,Queries,Services,Notifications}` — `CreateNote`, `RenameNote`, `MoveNote`, `DeleteNote`, `UpdateNoteShare`, `StoreNoteState`, `SaveNoteContent`, `RestoreNoteVersion`, `SyncNoteMentions`; `CollabToken`, `CollabBridge`, `NoteContent`, `NoteAudience`; `NoteLibrary` |
+| HTTP | `routes/notes.php`, `NoteController`, `WorkspaceNotesController`, `CollabStateController` (di luar grup web, `VerifyCollabSecret`, throttle 600/mnt) |
+| Policy | `NotePolicy`, `NoteVersionPolicy`, `NoteSharePolicy` |
+| Frontend | `resources/js/features/notes/*` (`use-collab.ts` = HocuspocusProvider + awareness, `use-note-session.ts`, `note-editor.tsx` = Collaboration + CollaborationCaret, `tree-actions.tsx`, `workspace-notes.tsx`), `pages/notes/*`, `pages/workspaces/notes.tsx` |
+| Server kolaborasi | `collab/src/{server,notes-extension,token,laravel,prosemirror}.js`, `collab/Dockerfile` |
+| Seeder | `NoteDemoSeeder` (SOP SDM + riwayat, OPS + satu catatan "Hanya diundang" untuk HR, GDG, PLQ, PRG, folder "Ide & draf" di Pribadi Dimas) |
 
-Keadaan pratinjau memakai `features/notes/preview-state.tsx` (`PreviewBar`: Normal · Memuat · Kosong · Galat).
+Konfigurasi `config/collab.php`: `COLLAB_SECRET` (≥ 32 karakter, sama untuk Laravel & collab; kosong = mode tanpa kolaborasi), `COLLAB_PORT` (1234), `COLLAB_URL` (Laravel → collab, HTTP internal), `VITE_COLLAB_URL` (browser → collab, WebSocket; dibaca Laravel saat runtime dan dipakai juga di CSP `connect-src`).
 
-## 6. Bentuk data → tabel DATABASE.md
+## 5. Menjalankan server kolaborasi lokal
 
-| Tipe frontend | Tabel | Catatan |
-|---|---|---|
-| `Note` | `notes` (`workspace_id`, `parent_id`, `title`, `yjs_state` bytea, `content` jsonb snapshot, `created_by`, `updated_by`) | `yjs_state` tidak pernah dikirim ke klien Inertia |
-| `NoteVersion` | `note_versions` (`note_id`, `yjs_state`, `created_by`, `created_at`) | `title`/`content`/`label` diturunkan untuk pratinjau; **kolom `label` belum ada di DATABASE.md** |
-| `NoteShare` | **belum ada**: usul `notes.access` (`workspace`/`restricted`) + `note_shares` (`note_id`, `user_id`, `role` edit/view) | Perlu diputuskan & ditulis di DATABASE.md |
-| `activeEditors` | awareness Hocuspocus (tidak disimpan) | |
+1. Sekali: `npm --prefix collab ci`.
+2. Isi di `.env` (oleh pengguna sendiri): `COLLAB_SECRET=<acak ≥ 32 karakter>` (mis. `php -r "echo bin2hex(random_bytes(32));"`), `COLLAB_PORT=1234`, `COLLAB_URL=http://127.0.0.1:1234`, `VITE_COLLAB_URL=ws://127.0.0.1:1234`, lalu `php artisan config:clear`.
+3. `composer run dev` (atau `dev:win`) sudah menjalankan `node --env-file-if-exists=.env collab/src/server.js`. Sendiri: `node --env-file-if-exists=.env collab/src/server.js`. Server membaca `APP_URL` untuk memanggil Laravel dan otomatis memercayai CA Herd untuk `https://*.test` (atau `COLLAB_CA_FILE`). Tanpa secret/paket ia hanya memberi peringatan dan diam (catatan tetap jalan dalam mode simpan biasa).
+4. Cek: `curl http://127.0.0.1:1234/health` → `{"ok":true,…}`.
+5. Docker (opsional): `docker compose --profile collab up -d collab` (butuh `COLLAB_APP_URL` yang terjangkau dari container).
 
-## 7. Pekerjaan backend tersisa
+### Uji dua sesi
+- Buka catatan yang sama di dua jendela dengan akun berbeda (mis. jendela biasa `kadiv@demo.test` dan jendela penyamaran `anggota@demo.test` pada catatan OPS). Status menjadi "Tersambung · 2 orang", avatar penyunting lain berbingkai warna, kursor + label nama bergerak, ketikan muncul langsung di jendela lain, dan setelah ±2 detik tersimpan (muat ulang tetap ada).
+- `viewer` workspace atau undangan "Membaca": editor baca-saja; server menolak perubahan dari koneksi itu.
+- Otomatis: `node --test collab/test` (termasuk `integration.test.js`: server Hocuspocus nyata + Laravel tiruan + dua `HocuspocusProvider`, sinkron, baca-saja, token salah, endpoint ganti isi).
 
-- [ ] Migrasi `notes`, `note_versions` (§7) + keputusan berbagi (`notes.access`, `note_shares`), perbarui `docs/DATABASE.md`.
-- [ ] `NotePolicy` (anggota workspace; "hanya diundang" membaca `note_shares`; workspace pribadi hanya pemilik) + scope `visibleTo`.
-- [ ] Server **Hocuspocus** (Node) di `compose.prod.yml`: autentikasi token dari Laravel (endpoint token berumur pendek per catatan), persistensi Yjs ke `notes.yjs_state` + snapshot `content`/teks untuk pencarian, snapshot `note_versions` berkala (mis. 5 menit idle) dan saat ditutup, awareness untuk kursor (menggantikan `CollabCursors` versi timer).
-- [ ] Actions: `CreateNote`, `MoveNote` (ubah induk, cegah siklus), `RestoreNoteVersion` (tulis versi baru + broadcast ke Hocuspocus), `UpdateNoteShare` (+ `audit_logs`), `DeleteNote` (soft delete/arsip).
-- [ ] Pencarian catatan di command palette (⌘K).
-- [ ] Test Pest: matriks Policy, pemulihan versi, siklus induk ditolak, akses "hanya diundang".
+## 6. Produksi
 
-## 8. Keadaan kosong/galat & aksesibilitas
+Layanan `collab` di `compose.prod.yml` (profil `collab`, image `COLLAB_IMAGE` dari `collab/Dockerfile`), Caddy meneruskan `wss://domain/collab` ke layanan itu dan menolak `/internal/*` dari luar. Laravel ↔ collab lewat jaringan internal (`http://app:8000`, `http://collab:1234`).
 
-- `?keadaan=memuat|kosong|galat` lewat `PreviewBar`; catatan tak dikenal = "Catatan tidak ditemukan"; hasil pencarian kosong punya pesan sendiri.
-- Pohon memakai tombol ciutkan dengan `aria-expanded`; chevron 120 ms `ease-brand`.
-- Kursor kolaborator diam saat `prefers-reduced-motion`. Warna kursor dari token, dengan label nama (bukan warna saja).
-- Ponsel: toolbar format bergulir ke samping, target ≥ 44 px, judul catatan diperbesar (ukuran di-*override* inline karena aturan global input 17 px).
+## 7. Ditahan / belum
 
-## 9. Batasan prototipe
-
-- Kursor kolaborator hanya bergerak antarposisi; tidak ada simulasi orang lain mengetik.
-- Versi baru hanya dibuat saat memulihkan; menyunting biasa tidak menambah riwayat.
-- Tidak ada menu perintah `/`, tidak ada mention di catatan, catatan baru hilang saat muat ulang.
+- Sematan gambar, video, dan berkas di catatan (fase berikutnya; struktur `notes.kind` siap diperluas).
+- Presence di daftar `/catatan` ("Sedang disunting") — hanya di editor.
+- Judul tidak ikut Yjs: penyunting lain melihat judul baru setelah memuat ulang.
+- Memindah catatan antar-workspace.
+- Pencabutan akses memutus sesi yang terbuka; token yang sudah diterbitkan berlaku ≤ 2 menit hanya untuk tersambung, bukan sesudahnya.

@@ -2,7 +2,6 @@ import type { LucideIcon } from 'lucide-react';
 import {
     CalendarDays,
     Fingerprint,
-    NotebookPen,
     Smartphone,
     Workflow,
 } from 'lucide-react';
@@ -24,17 +23,6 @@ export type PrototypeModule = {
 
 /** Every Fase 2 & 3 preview, in the order of docs/PROMPTS.md. */
 export const PROTOTYPE_MODULES: PrototypeModule[] = [
-    {
-        key: 'notes',
-        phase: 'Fase 2',
-        sprint: 'F2-2',
-        title: 'Catatan bersama',
-        description:
-            'Wiki, SOP dan notulen ringan yang diedit bersamaan, dengan riwayat versi.',
-        icon: NotebookPen,
-        gradient: 'bg-grad-indigo',
-        screens: [{ label: 'Semua catatan', href: '/catatan' }],
-    },
     {
         key: 'meetings',
         phase: 'Fase 2',

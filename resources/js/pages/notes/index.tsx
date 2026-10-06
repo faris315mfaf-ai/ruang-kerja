@@ -1,18 +1,17 @@
 import { Head } from '@inertiajs/react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { usePreviewState } from '@/features/notes/preview-state';
 import { NotesIndex } from '@/features/notes/notes-index';
-import { useNotesState } from '@/features/notes/store';
+import type { NotesIndexProps } from '@/features/notes/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 
+type Props = { notes: NotesIndexProps };
+
 /**
- * /catatan — Catatan bersama (Fase 2 preview, F2-2): wiki, SOP and light
- * minutes per workspace. Sample data, client-only.
+ * /catatan — Catatan bersama (F2-2): wiki, SOP and light minutes per
+ * workspace, in folders, edited together (collab server, collab/).
  */
-export default function NotesIndexPage() {
+export default function NotesIndexPage({ notes }: Props) {
     const breakpoint = useBreakpoint();
-    const state = useNotesState();
-    const preview = usePreviewState();
 
     return (
         <>
@@ -23,11 +22,7 @@ export default function NotesIndexPage() {
                     <Skeleton className="h-96 w-full" />
                 </div>
             ) : (
-                <NotesIndex
-                    state={state}
-                    preview={preview}
-                    mobile={breakpoint === 'mobile'}
-                />
+                <NotesIndex props={notes} mobile={breakpoint === 'mobile'} />
             )}
         </>
     );

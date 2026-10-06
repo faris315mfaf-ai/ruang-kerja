@@ -12,9 +12,8 @@ import { expect, test, type Page } from '@playwright/test';
  */
 const routes = [
     '/pratinjau',
-    // F2-2 · Notes (F2-1 · Obrolan left the preview: real routes, routes/chat.php)
-    '/catatan',
-    '/catatan/sop-onboarding',
+    // F2-1 · Obrolan and F2-2 · Catatan left the preview: real routes
+    // (routes/chat.php, routes/notes.php).
     // F2-3 · Meetings, minutes & calendar
     '/rapat',
     '/rapat/baru',
@@ -45,7 +44,6 @@ const routes = [
 
 /** Preview-state switch (?keadaan=) on one route per module. */
 const stateRoutes = [
-    '/catatan',
     '/rapat',
     '/otomasi',
     '/pengaturan/perangkat',
@@ -140,7 +138,7 @@ test('tautan tak dikenal menampilkan keadaan "tidak ditemukan"', async ({
 }) => {
     const errors = collectErrors(page);
 
-    for (const path of ['/catatan/tidak-ada', '/rapat/tidak-ada']) {
+    for (const path of ['/rapat/tidak-ada']) {
         await expectRendered(page, path);
         await expect(
             page.getByText(/tidak ditemukan/i).first(),

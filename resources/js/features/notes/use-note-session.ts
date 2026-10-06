@@ -1,50 +1,82 @@
+import { router } from '@inertiajs/react';
 import type { Editor } from '@tiptap/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { useFakeMutation } from '@/features/prototype/use-fake-mutation';
+import { ApiError } from '@/features/tasks/lib/api';
 import type { RichDoc } from '@/features/tasks/editor/types';
-import { canEdit, savedLabel } from './lib';
-import { restoreVersion, shareFor, updateNote } from './store';
-import type { NotePerson, NotesState, NoteVersion } from './types';
+import { notesApi } from './api';
+import { connectedLabel, savedLabel } from './lib';
+import type { LiveDocument } from './note-editor';
+import type {
+    NoteDetail,
+    NotePerson,
+    NoteShare,
+    NoteShowProps,
+    NoteVersion,
+} from './types';
+import { useCollab } from './use-collab';
 
-/** Simulated autosave delay (Hocuspocus debounces about as long). */
-const SAVE_DELAY = 800;
+/** Save fallback: wait this long after the last keystroke. */
+const SAVE_DELAY = 1000;
+const TITLE_DELAY = 700;
+
+function errorMessage(error: unknown): string {
+    return error instanceof ApiError
+        ? error.message
+        : 'Terjadi kesalahan. Coba lagi sebentar lagi.';
+}
 
 /**
- * Everything the note screen needs on both layouts: the note, autosave
- * status, co-editors, version history (preview + restore) and sharing.
+ * Everything the note screen needs on both layouts: the live collab session
+ * (or the save fallback), title, save status, co-editors, version history
+ * (preview + restore), sharing, moving and deleting.
  */
-export function useNoteSession(state: NotesState, noteId: string) {
-    const note = state.notes.find((item) => item.id === noteId) ?? null;
-    const workspace = state.workspaces.find(
-        (item) => item.id === note?.workspace_id,
-    );
-    const share = shareFor(noteId);
-    const editable = canEdit(share, state.viewerId);
-    const versions = state.versions.filter(
-        (version) => version.note_id === noteId,
-    );
-    const latestVersionId = [...versions].sort((a, b) =>
-        b.created_at.localeCompare(a.created_at),
-    )[0]?.id;
-    const collaborators: NotePerson[] = (state.activeEditors[noteId] ?? [])
-        .filter((id) => id !== state.viewerId)
-        .map((id) => state.people.find((person) => person.id === id))
-        .filter((person): person is NotePerson => person !== undefined);
+export function useNoteSession(
+    props: NoteShowProps,
+    versionsProp: NoteVersion[] | undefined,
+) {
+    const [current, setCurrent] = useState<NoteDetail>(props.current);
+    const [title, setTitleState] = useState(props.current.title);
+    const [share, setShare] = useState<NoteShare | null>(props.share);
+    const me = props.people.find((person) => person.id === props.viewer_id) ?? {
+        id: props.viewer_id,
+        name: 'Saya',
+        avatar: null,
+        title: '',
+    };
+    const collab = useCollab({
+        noteId: current.id,
+        enabled: props.collab,
+        me: { id: me.id, name: me.name },
+    });
+    const live: LiveDocument | null =
+        collab.mode === 'live' && collab.doc && collab.provider
+            ? { doc: collab.doc, provider: collab.provider }
+            : null;
+    const mode = collab.mode;
+    const editable = current.can_edit && mode !== 'connecting';
 
     const [saving, setSaving] = useState(false);
-    const [savedAt, setSavedAt] = useState<number | null>(
-        () => Date.now() - 2000,
-    );
+    const [savedAt, setSavedAt] = useState<number | null>(null);
     const [now, setNow] = useState(() => Date.now());
+    const [conflict, setConflict] = useState(false);
     const [editorKey, setEditorKey] = useState(0);
     const [editor, setEditor] = useState<Editor | null>(null);
     const [historyOpen, setHistoryOpen] = useState(false);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [restoredVersions, setRestoredVersions] = useState<
+        NoteVersion[] | null
+    >(null);
     const [previewId, setPreviewId] = useState<string | null>(null);
     const [confirming, setConfirming] = useState<NoteVersion | null>(null);
+    const [restoring, setRestoring] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
+    const [moveOpen, setMoveOpen] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
     const saveTimer = useRef<number | undefined>(undefined);
-    const restore = useFakeMutation();
+    const titleTimer = useRef<number | undefined>(undefined);
+    const pending = useRef<RichDoc | null | undefined>(undefined);
+    const base = useRef(current.updated_at ?? '');
 
     useEffect(() => {
         const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -52,27 +84,102 @@ export function useNoteSession(state: NotesState, noteId: string) {
         return () => {
             window.clearInterval(timer);
             window.clearTimeout(saveTimer.current);
+            window.clearTimeout(titleTimer.current);
         };
     }, []);
 
-    const markSaving = () => {
+    // Live: "Menyimpan…" while the provider has changes the server has not confirmed.
+    useEffect(() => {
+        const provider = collab.provider;
+
+        if (!provider) {
+            return;
+        }
+
+        const onUnsynced = ({ number }: { number: number }) => {
+            setSaving(number > 0);
+
+            if (number === 0) {
+                setSavedAt(Date.now());
+            }
+        };
+        provider.on('unsyncedChanges', onUnsynced);
+
+        return () => {
+            provider.off('unsyncedChanges', onUnsynced);
+        };
+    }, [collab.provider]);
+
+    const flushContent = useCallback(async () => {
+        const doc = pending.current;
+
+        if (doc === undefined) {
+            return;
+        }
+
+        pending.current = undefined;
+        setSaving(true);
+
+        try {
+            const { note } = await notesApi.saveContent(
+                current.id,
+                doc,
+                base.current,
+            );
+            base.current = note.updated_at ?? base.current;
+            setCurrent((state) => ({
+                ...state,
+                content: note.content,
+                updated_at: note.updated_at,
+            }));
+            setSavedAt(Date.now());
+        } catch (error) {
+            if (error instanceof ApiError && error.status === 409) {
+                setConflict(true);
+            } else {
+                pending.current = pending.current ?? doc;
+                toast.error(`Catatan belum tersimpan. ${errorMessage(error)}`);
+            }
+        } finally {
+            setSaving(false);
+        }
+    }, [current.id]);
+
+    /** Local mode only: the live document saves itself on the collab server. */
+    const setContent = (doc: RichDoc | null) => {
+        if (mode !== 'offline' || conflict) {
+            return;
+        }
+
+        pending.current = doc;
         setSaving(true);
         window.clearTimeout(saveTimer.current);
-        saveTimer.current = window.setTimeout(() => {
-            setSaving(false);
-            setSavedAt(Date.now());
-            setNow(Date.now());
-        }, SAVE_DELAY);
+        saveTimer.current = window.setTimeout(
+            () => void flushContent(),
+            SAVE_DELAY,
+        );
     };
 
-    const setContent = (content: RichDoc | null) => {
-        updateNote(noteId, { content });
-        markSaving();
-    };
-
-    const setTitle = (title: string) => {
-        updateNote(noteId, { title });
-        markSaving();
+    const setTitle = (next: string) => {
+        setTitleState(next);
+        window.clearTimeout(titleTimer.current);
+        titleTimer.current = window.setTimeout(() => {
+            notesApi
+                .rename(current.id, next)
+                .then(({ note }) => {
+                    setCurrent((state) => ({
+                        ...state,
+                        title: note.title,
+                        updated_at: note.updated_at,
+                    }));
+                    base.current = note.updated_at ?? base.current;
+                    setSavedAt(Date.now());
+                })
+                .catch((error: unknown) => {
+                    setTitleState(current.title);
+                    toast.error(errorMessage(error));
+                });
+        }, TITLE_DELAY);
     };
 
     const editorRef = useRef<Editor | null>(null);
@@ -82,54 +189,116 @@ export function useNoteSession(state: NotesState, noteId: string) {
     }, []);
     /** Title → body (Enter in the title). */
     const focusBody = useCallback(() => {
-        const current = editorRef.current;
+        const instance = editorRef.current;
 
-        if (current && !current.isDestroyed) {
-            current.commands.focus('start');
+        if (instance && !instance.isDestroyed) {
+            instance.commands.focus('start');
         }
     }, []);
 
+    const versions = restoredVersions ?? versionsProp ?? null;
     const preview =
-        versions.find((version) => version.id === previewId) ?? null;
+        versions?.find((version) => version.id === previewId) ?? null;
 
-    const confirmRestore = async () => {
-        if (!confirming) {
-            return;
-        }
+    const openHistory = (open: boolean) => {
+        setHistoryOpen(open);
 
-        const version = confirming;
-        const ok = await restore.run(() => restoreVersion(noteId, version.id));
-
-        if (ok) {
-            toast.success(
-                'Versi dipulihkan. Semua penyunting melihat isi ini.',
-            );
-            setConfirming(null);
-            setPreviewId(null);
-            setEditorKey((key) => key + 1);
-            setSavedAt(Date.now());
+        if (open && versions === null && !historyLoading) {
+            setHistoryLoading(true);
+            router.reload({
+                only: ['versions'],
+                onFinish: () => setHistoryLoading(false),
+                onError: () => toast.error('Riwayat versi gagal dimuat.'),
+            });
         }
     };
 
+    const confirmRestore = async (): Promise<boolean> => {
+        if (!confirming) {
+            return false;
+        }
+
+        setRestoring(true);
+
+        try {
+            const response = await notesApi.restore(current.id, confirming.id);
+            setCurrent((state) => ({ ...state, ...response.note }));
+            setTitleState(response.note.title);
+            base.current = response.note.updated_at ?? base.current;
+            setRestoredVersions(response.versions);
+            setConfirming(null);
+            setPreviewId(null);
+            // Live: the collab server replaced the document for everyone.
+            if (mode !== 'live') {
+                setEditorKey((key) => key + 1);
+            }
+            setSavedAt(Date.now());
+            toast.success(
+                'Versi dipulihkan. Semua penyunting melihat isi ini.',
+            );
+
+            return true;
+        } catch (error) {
+            toast.error(errorMessage(error));
+
+            return false;
+        } finally {
+            setRestoring(false);
+        }
+    };
+
+    const peers = collab.peers;
+    const status =
+        mode === 'connecting'
+            ? 'Menyambung…'
+            : conflict
+              ? 'Belum tersimpan'
+              : savedLabel(savedAt, now, saving);
+    const presence =
+        mode === 'live'
+            ? collab.connected
+                ? connectedLabel(peers.length)
+                : 'Menyambung ulang…'
+            : null;
+    const collaborators: (NotePerson & { tone: number })[] = peers.map(
+        (peer) => ({
+            ...(props.people.find((person) => person.id === peer.id) ?? {
+                id: peer.id,
+                name: peer.name,
+                avatar: null,
+                title: '',
+            }),
+            tone: peer.tone,
+        }),
+    );
+
     return {
-        note,
-        workspace,
+        props,
+        me,
+        note: current,
+        title,
+        setTitle,
         share,
+        setShare,
         editable,
-        versions,
-        latestVersionId,
+        mode,
+        live,
+        conflict,
+        reload: () => router.reload(),
         collaborators,
-        status: savedLabel(savedAt, now, saving),
+        presence,
+        status,
         saving,
         setContent,
-        setTitle,
         editor,
         editorKey,
         onReady,
         focusBody,
         history: {
             open: historyOpen,
-            setOpen: setHistoryOpen,
+            setOpen: openHistory,
+            loading: historyLoading || (historyOpen && versions === null),
+            versions: versions ?? [],
             preview,
             select: (version: NoteVersion) => setPreviewId(version.id),
             clearPreview: () => setPreviewId(null),
@@ -137,10 +306,15 @@ export function useNoteSession(state: NotesState, noteId: string) {
             askRestore: (version: NoteVersion) => setConfirming(version),
             cancelRestore: () => setConfirming(null),
             confirmRestore,
-            processing: restore.processing,
+            processing: restoring,
         },
         shareOpen,
         setShareOpen,
+        moveOpen,
+        setMoveOpen,
+        deleteOpen,
+        setDeleteOpen,
+        setCurrent,
     };
 }
 

@@ -1,16 +1,9 @@
-import { router } from '@inertiajs/react';
-import {
-    AlertTriangle,
-    NotebookPen,
-    Plus,
-    Search,
-    SearchX,
-} from 'lucide-react';
-import { useState } from 'react';
+import { Link, router } from '@inertiajs/react';
+import { FolderPlus, NotebookPen, Plus, Search, SearchX } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { EmptyState } from '@/components/empty-state';
 import { ChipScroller } from '@/components/mobile/chip-scroller';
 import { Fab } from '@/components/mobile/fab';
-import { UserAvatar } from '@/components/shell/user-avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ListRow } from '@/components/ui/list-row';
@@ -22,19 +15,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { prototypeNow } from '@/features/chat/lib';
-import type { PreviewState } from '@/features/notes/preview-state';
-import { PreviewBar } from '@/features/notes/preview-state';
 import { formatRelative } from '@/lib/format';
 import { paletteGradient } from '@/lib/palette';
 import { cn } from '@/lib/utils';
-import { buildTree, editorsLabel } from './lib';
-import { NewNoteDialog } from './new-note-dialog';
+import notesRoutes from '@/routes/notes';
+import { notes as workspaceNotes } from '@/routes/workspaces';
+import { buildTree } from './lib';
 import { NoteTree } from './note-tree';
-import type { NotesState, NoteWorkspace } from './types';
+import { useTreeActions } from './tree-actions';
+import type { NotesIndexProps, NoteWorkspace } from './types';
 
 const ALL = 'semua';
+const SEARCH_DELAY = 300;
 
 function WorkspaceTile({ workspace }: { workspace: NoteWorkspace }) {
     return (
@@ -42,55 +34,63 @@ function WorkspaceTile({ workspace }: { workspace: NoteWorkspace }) {
             aria-hidden
             className={cn(
                 'flex size-9 shrink-0 items-center justify-center rounded-[10px] text-[12px] font-extrabold text-on-brand',
-                paletteGradient(workspace.color),
+                workspace.type === 'personal'
+                    ? 'bg-grad-slate'
+                    : paletteGradient(workspace.color),
             )}
         >
-            {workspace.key}
+            {workspace.type === 'personal' ? 'P' : workspace.key}
         </span>
     );
 }
 
-function IndexSkeleton() {
-    return (
-        <div
-            aria-busy
-            aria-label="Memuat catatan"
-            className="flex flex-col gap-5"
-        >
-            <Skeleton className="h-11 w-full max-w-md" />
-            {Array.from({ length: 2 }, (_, index) => (
-                <div
-                    key={index}
-                    className="flex flex-col gap-3 rounded-panel border border-border bg-surface p-6"
-                >
-                    <Skeleton className="h-7 w-48" />
-                    {Array.from({ length: 3 }, (__, row) => (
-                        <Skeleton key={row} className="h-12 w-full" />
-                    ))}
-                </div>
-            ))}
-        </div>
-    );
-}
-
-/** /catatan: notes per workspace as trees, search, workspace filter. */
+/**
+ * /catatan: folders and notes per workspace as trees, full-text search on
+ * the server (?q=), workspace filter, recently changed notes.
+ */
 export function NotesIndex({
-    state,
-    preview,
+    props,
     mobile,
 }: {
-    state: NotesState;
-    preview: PreviewState;
+    props: NotesIndexProps;
     mobile: boolean;
 }) {
-    const [query, setQuery] = useState('');
+    const [query, setQuery] = useState(props.query);
+    const [searching, setSearching] = useState(false);
     const [workspaceId, setWorkspaceId] = useState(ALL);
-    const [creating, setCreating] = useState(false);
-    const notes = preview === 'kosong' ? [] : state.notes;
-    const workspaces = state.workspaces.filter(
-        (workspace) => workspaceId === ALL || workspace.id === workspaceId,
-    );
-    const sections = workspaces
+    const timer = useRef<number | undefined>(undefined);
+    const actions = useTreeActions({
+        notes: props.notes,
+        workspaces: props.workspaces,
+        mobile,
+    });
+    const notes = actions.rows;
+    const matches = props.matches === null ? null : new Set(props.matches);
+    const writable = props.workspaces.filter((item) => item.can_create);
+
+    useEffect(() => () => window.clearTimeout(timer.current), []);
+
+    const search = (value: string) => {
+        setQuery(value);
+        window.clearTimeout(timer.current);
+        timer.current = window.setTimeout(() => {
+            router.get(
+                notesRoutes.index.url(),
+                value.trim() === '' ? {} : { q: value.trim() },
+                {
+                    only: ['notes'],
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                    onStart: () => setSearching(true),
+                    onFinish: () => setSearching(false),
+                },
+            );
+        }, SEARCH_DELAY);
+    };
+
+    const sections = props.workspaces
+        .filter((item) => workspaceId === ALL || item.id === workspaceId)
         .map((workspace) => ({
             workspace,
             notes: notes.filter((note) => note.workspace_id === workspace.id),
@@ -98,15 +98,17 @@ export function NotesIndex({
         .filter(
             (section) =>
                 section.notes.length > 0 &&
-                buildTree(section.notes, query).length > 0,
+                buildTree(section.notes, matches).length > 0,
         );
-    const recent = [...notes]
-        .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+    const recent = notes
+        .filter((note) => note.kind === 'note')
+        .sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''))
         .slice(0, 5);
-    const live = notes.filter(
-        (note) => (state.activeEditors[note.id] ?? []).length > 0,
-    );
-    const now = prototypeNow();
+    const now = new Date();
+    const defaultWorkspace =
+        workspaceId === ALL
+            ? undefined
+            : writable.find((item) => item.id === workspaceId)?.id;
 
     const searchBox = (
         <label className={cn('relative block', !mobile && 'w-full max-w-sm')}>
@@ -118,8 +120,9 @@ export function NotesIndex({
             <Input
                 type="search"
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) => search(event.target.value)}
                 placeholder="Cari judul atau isi catatan"
+                aria-busy={searching}
                 className={cn('pl-10', mobile && 'h-12 rounded-lg')}
             />
         </label>
@@ -127,35 +130,26 @@ export function NotesIndex({
 
     let content;
 
-    if (preview === 'memuat') {
-        content = <IndexSkeleton />;
-    } else if (preview === 'galat') {
-        content = (
-            <EmptyState
-                icon={AlertTriangle}
-                title="Catatan gagal dimuat"
-                description="Server catatan tidak menjawab. Perubahan yang sedang Anda tulis tetap aman di perangkat."
-                action={
-                    <Button
-                        variant="outline"
-                        onClick={() => router.visit('/catatan')}
-                    >
-                        Coba lagi
-                    </Button>
-                }
-            />
-        );
-    } else if (notes.length === 0) {
+    if (props.notes.length === 0) {
         content = (
             <EmptyState
                 icon={NotebookPen}
                 title="Belum ada catatan"
-                description="Tulis SOP, wiki tim, atau notulen ringan yang bisa diedit bersama."
+                description="Tulis SOP, wiki tim, atau notulen ringan yang bisa diedit bersama. Mulai dari workspace Pribadi untuk catatan Anda sendiri."
                 action={
-                    <Button onClick={() => setCreating(true)}>
-                        <Plus aria-hidden />
-                        Catatan baru
-                    </Button>
+                    writable.length > 0 ? (
+                        <Button
+                            onClick={() =>
+                                actions.openNew({
+                                    kind: 'note',
+                                    workspaceId: defaultWorkspace,
+                                })
+                            }
+                        >
+                            <Plus aria-hidden />
+                            Catatan baru
+                        </Button>
+                    ) : undefined
                 }
             />
         );
@@ -165,11 +159,17 @@ export function NotesIndex({
                 icon={SearchX}
                 size="sm"
                 title="Tidak ada catatan yang cocok"
-                description={`Tidak ada judul atau isi yang memuat “${query}”.`}
+                description={
+                    props.query
+                        ? `Tidak ada judul atau isi yang memuat “${props.query}”.`
+                        : 'Workspace ini belum punya catatan.'
+                }
                 action={
-                    <Button variant="outline" onClick={() => setQuery('')}>
-                        Hapus pencarian
-                    </Button>
+                    props.query ? (
+                        <Button variant="outline" onClick={() => search('')}>
+                            Hapus pencarian
+                        </Button>
+                    ) : undefined
                 }
             />
         );
@@ -181,24 +181,37 @@ export function NotesIndex({
                         key={workspace.id}
                         flush
                         title={
-                            <>
+                            <Link
+                                href={workspaceNotes.url(workspace.key)}
+                                className="flex min-w-0 items-center gap-3 hover:underline"
+                            >
                                 <WorkspaceTile workspace={workspace} />
-                                {workspace.name}
-                            </>
+                                <span className="truncate">
+                                    {workspace.name}
+                                </span>
+                            </Link>
                         }
                         action={
                             <span className="text-[15px] text-text-muted tnum">
-                                {items.length} catatan
+                                {
+                                    items.filter((item) => item.kind === 'note')
+                                        .length
+                                }{' '}
+                                catatan
                             </span>
                         }
                         bodyClassName={cn(mobile ? 'px-2' : 'px-4')}
                     >
                         <NoteTree
                             notes={items}
-                            query={query}
-                            people={state.people}
-                            activeEditors={state.activeEditors}
+                            matches={matches}
+                            people={props.people}
                             mobile={mobile}
+                            onAction={
+                                workspace.can_create
+                                    ? actions.onAction
+                                    : undefined
+                            }
                         />
                     </Panel>
                 ))}
@@ -206,11 +219,10 @@ export function NotesIndex({
         );
     }
 
-    const showAside = !mobile && preview === 'normal' && notes.length > 0;
+    const showAside = !mobile && recent.length > 0 && props.matches === null;
 
     return (
         <div className="flex flex-col gap-5">
-            <PreviewBar />
             {!mobile && (
                 <section className="flex flex-wrap items-end justify-between gap-4">
                     <div className="flex flex-col gap-2">
@@ -218,25 +230,47 @@ export function NotesIndex({
                             Catatan
                         </h1>
                         <p className="text-body-lg text-text-muted">
-                            Wiki, SOP, dan notulen ringan yang diedit bersama
-                            {preview === 'normal' && (
-                                <>
-                                    {' · '}
-                                    <span className="tnum">
-                                        {notes.length}
-                                    </span>{' '}
-                                    catatan
-                                </>
-                            )}
+                            Wiki, SOP, dan notulen ringan yang diedit bersama ·{' '}
+                            <span className="tnum">
+                                {
+                                    props.notes.filter(
+                                        (note) => note.kind === 'note',
+                                    ).length
+                                }
+                            </span>{' '}
+                            catatan
                         </p>
                     </div>
-                    <Button onClick={() => setCreating(true)}>
-                        <Plus aria-hidden />
-                        Catatan baru
-                    </Button>
+                    {writable.length > 0 && (
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() =>
+                                    actions.openNew({
+                                        kind: 'folder',
+                                        workspaceId: defaultWorkspace,
+                                    })
+                                }
+                            >
+                                <FolderPlus aria-hidden />
+                                Folder baru
+                            </Button>
+                            <Button
+                                onClick={() =>
+                                    actions.openNew({
+                                        kind: 'note',
+                                        workspaceId: defaultWorkspace,
+                                    })
+                                }
+                            >
+                                <Plus aria-hidden />
+                                Catatan baru
+                            </Button>
+                        </div>
+                    )}
                 </section>
             )}
-            {preview === 'normal' && notes.length > 0 && (
+            {props.notes.length > 0 && (
                 <div
                     className={cn(
                         'flex gap-3',
@@ -251,12 +285,17 @@ export function NotesIndex({
                             onChange={setWorkspaceId}
                             chips={[
                                 { value: ALL, label: 'Semua' },
-                                ...state.workspaces.map((workspace) => ({
+                                ...props.workspaces.map((workspace) => ({
                                     value: workspace.id,
-                                    label: workspace.key,
+                                    label:
+                                        workspace.type === 'personal'
+                                            ? 'Pribadi'
+                                            : workspace.key,
                                     count: notes.filter(
                                         (note) =>
-                                            note.workspace_id === workspace.id,
+                                            note.workspace_id ===
+                                                workspace.id &&
+                                            note.kind === 'note',
                                     ).length,
                                 })),
                             ]}
@@ -276,7 +315,7 @@ export function NotesIndex({
                                 <SelectItem value={ALL}>
                                     Semua workspace
                                 </SelectItem>
-                                {state.workspaces.map((workspace) => (
+                                {props.workspaces.map((workspace) => (
                                     <SelectItem
                                         key={workspace.id}
                                         value={workspace.id}
@@ -298,90 +337,40 @@ export function NotesIndex({
             >
                 <div className="min-w-0">{content}</div>
                 {showAside && (
-                    <div className="flex min-w-0 flex-col gap-5">
-                        {live.length > 0 && (
-                            <Panel title="Sedang disunting" flush>
-                                <ul className="divide-y divide-divider">
-                                    {live.map((note) => {
-                                        const names = (
-                                            state.activeEditors[note.id] ?? []
-                                        )
-                                            .map(
-                                                (id) =>
-                                                    state.people.find(
-                                                        (person) =>
-                                                            person.id === id,
-                                                    )?.name,
-                                            )
-                                            .filter(
-                                                (name): name is string =>
-                                                    name !== undefined,
-                                            );
+                    <Panel title="Baru diubah" flush>
+                        <ul className="divide-y divide-divider">
+                            {recent.map((note) => {
+                                const author = props.people.find(
+                                    (person) => person.id === note.updated_by,
+                                );
 
-                                        return (
-                                            <li key={note.id}>
-                                                <ListRow
-                                                    href={`/catatan/${note.id}`}
-                                                    leading={
-                                                        <span className="relative flex">
-                                                            <UserAvatar
-                                                                name={
-                                                                    names[0] ??
-                                                                    ''
-                                                                }
-                                                                className="size-10 text-[14px]"
-                                                            />
-                                                            <span
-                                                                aria-hidden
-                                                                className="absolute right-0 bottom-0 size-3 rounded-full bg-fill-teal ring-2 ring-surface"
-                                                            />
-                                                        </span>
-                                                    }
-                                                    title={note.title}
-                                                    meta={editorsLabel(names)}
-                                                />
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            </Panel>
-                        )}
-                        <Panel title="Baru diubah" flush>
-                            <ul className="divide-y divide-divider">
-                                {recent.map((note) => {
-                                    const author = state.people.find(
-                                        (person) =>
-                                            person.id === note.updated_by,
-                                    );
-
-                                    return (
-                                        <li key={note.id}>
-                                            <ListRow
-                                                href={`/catatan/${note.id}`}
-                                                title={note.title}
-                                                meta={`${author?.name.split(' ')[0] ?? ''} · ${formatRelative(note.updated_at, now)}`}
-                                            />
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </Panel>
-                    </div>
+                                return (
+                                    <li key={note.id}>
+                                        <ListRow
+                                            href={`/catatan/${note.id}`}
+                                            title={note.title}
+                                            meta={`${author?.name.split(' ')[0] ?? ''} · ${formatRelative(note.updated_at, now)}`}
+                                        />
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </Panel>
                 )}
             </div>
 
-            {mobile && (
-                <Fab label="Catatan baru" onClick={() => setCreating(true)} />
+            {mobile && writable.length > 0 && (
+                <Fab
+                    label="Catatan baru"
+                    onClick={() =>
+                        actions.openNew({
+                            kind: 'note',
+                            workspaceId: defaultWorkspace,
+                        })
+                    }
+                />
             )}
-            <NewNoteDialog
-                open={creating}
-                onOpenChange={setCreating}
-                state={state}
-                defaultWorkspaceId={
-                    workspaceId === ALL ? undefined : workspaceId
-                }
-                mobile={mobile}
-            />
+            {actions.dialogs}
         </div>
     );
 }

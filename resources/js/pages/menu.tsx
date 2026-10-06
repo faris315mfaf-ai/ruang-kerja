@@ -33,6 +33,7 @@ import {
     roleDashboardNavItem,
     okrNavItem,
     performanceNavItem,
+    notesNavItem,
     portfolioNavItem,
     prototypeNavItem,
 } from '@/lib/navigation';
@@ -228,6 +229,13 @@ export default function Menu() {
                                         </Badge>
                                     ) : undefined
                                 }
+                            />
+                        )}
+                        {features?.notes && (
+                            <Row
+                                icon={notesNavItem.icon}
+                                label={notesNavItem.title}
+                                href={notesNavItem.href}
                             />
                         )}
                         {features?.chat && (

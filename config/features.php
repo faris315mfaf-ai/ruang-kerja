@@ -28,4 +28,7 @@ return [
     // Otomasi (aturan, tugas berulang, template) + Kinerja saya (Fase 2,
     // F2-4) with a real backend: /otomasi*, /kinerja, Dock tile.
     'automation' => (bool) env('FEATURE_AUTOMATION', env('APP_ENV', 'production') !== 'production'),
+    // Catatan bersama (Fase 2, F2-2) with a real backend: /catatan, Dock tile,
+    // collab server in collab/ (COLLAB_*). Off in production until decided.
+    'notes' => (bool) env('FEATURE_NOTES', env('APP_ENV', 'production') !== 'production'),
 ];
