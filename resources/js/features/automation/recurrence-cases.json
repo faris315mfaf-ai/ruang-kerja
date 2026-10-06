@@ -1,0 +1,85 @@
+{
+    "_comment": "Shared fixture: recurrence.ts (Vitest) and App\\Domain\\Automation\\Services\\RecurrenceSchedule (Pest) must give the same answers. 5 Oct 2026 is a Monday.",
+    "occurrences": [
+        {
+            "name": "daily on working days skips the weekend",
+            "rule": { "pattern": { "kind": "daily", "weekdays_only": true }, "starts_on": "2026-10-01", "ends_on": null },
+            "from": "2026-10-08",
+            "count": 5,
+            "expected": ["2026-10-08", "2026-10-09", "2026-10-12", "2026-10-13", "2026-10-14"]
+        },
+        {
+            "name": "daily includes the weekend",
+            "rule": { "pattern": { "kind": "daily", "weekdays_only": false }, "starts_on": "2026-10-09", "ends_on": null },
+            "from": "2026-10-05",
+            "count": 3,
+            "expected": ["2026-10-09", "2026-10-10", "2026-10-11"]
+        },
+        {
+            "name": "weekly on chosen days",
+            "rule": { "pattern": { "kind": "weekly", "weekdays": [4, 1] }, "starts_on": "2026-09-01", "ends_on": null },
+            "from": "2026-10-05",
+            "count": 5,
+            "expected": ["2026-10-05", "2026-10-08", "2026-10-12", "2026-10-15", "2026-10-19"]
+        },
+        {
+            "name": "monthly clamps to the last day of short months",
+            "rule": { "pattern": { "kind": "monthly", "day_of_month": 31 }, "starts_on": "2026-10-01", "ends_on": null },
+            "from": "2026-10-05",
+            "count": 4,
+            "expected": ["2026-10-31", "2026-11-30", "2026-12-31", "2027-01-31"]
+        },
+        {
+            "name": "monthly on the 30th falls on 28 February",
+            "rule": { "pattern": { "kind": "monthly", "day_of_month": 30 }, "starts_on": "2027-01-01", "ends_on": null },
+            "from": "2027-01-01",
+            "count": 2,
+            "expected": ["2027-01-30", "2027-02-28"]
+        },
+        {
+            "name": "monthly on 29 in a leap year",
+            "rule": { "pattern": { "kind": "monthly", "day_of_month": 29 }, "starts_on": "2028-01-01", "ends_on": null },
+            "from": "2028-01-01",
+            "count": 3,
+            "expected": ["2028-01-29", "2028-02-29", "2028-03-29"]
+        },
+        {
+            "name": "every N weeks is anchored on the start week",
+            "rule": { "pattern": { "kind": "every_n_weeks", "interval": 2, "weekdays": [5] }, "starts_on": "2026-10-07", "ends_on": null },
+            "from": "2026-10-05",
+            "count": 3,
+            "expected": ["2026-10-09", "2026-10-23", "2026-11-06"]
+        },
+        {
+            "name": "every 3 weeks on two days across the year end",
+            "rule": { "pattern": { "kind": "every_n_weeks", "interval": 3, "weekdays": [2, 4] }, "starts_on": "2026-12-14", "ends_on": null },
+            "from": "2026-12-14",
+            "count": 4,
+            "expected": ["2026-12-15", "2026-12-17", "2027-01-05", "2027-01-07"]
+        },
+        {
+            "name": "never goes before the start or past the end",
+            "rule": { "pattern": { "kind": "weekly", "weekdays": [1] }, "starts_on": "2026-10-10", "ends_on": "2026-10-26" },
+            "from": "2026-10-05",
+            "count": 5,
+            "expected": ["2026-10-12", "2026-10-19", "2026-10-26"]
+        },
+        {
+            "name": "returns nothing for invalid dates",
+            "rule": { "pattern": { "kind": "daily", "weekdays_only": false }, "starts_on": "2026-02-30", "ends_on": null },
+            "from": "2026-10-05",
+            "count": 5,
+            "expected": []
+        }
+    ],
+    "descriptions": [
+        { "pattern": { "kind": "daily", "weekdays_only": true }, "expected": "Setiap hari kerja" },
+        { "pattern": { "kind": "daily", "weekdays_only": false }, "expected": "Setiap hari" },
+        { "pattern": { "kind": "weekly", "weekdays": [4, 1] }, "expected": "Setiap Senin dan Kamis" },
+        { "pattern": { "kind": "weekly", "weekdays": [1, 2, 3, 4, 5] }, "expected": "Setiap hari kerja" },
+        { "pattern": { "kind": "monthly", "day_of_month": 25 }, "expected": "Setiap bulan tanggal 25" },
+        { "pattern": { "kind": "monthly", "day_of_month": 31 }, "expected": "Setiap akhir bulan" },
+        { "pattern": { "kind": "every_n_weeks", "interval": 2, "weekdays": [1, 3, 5] }, "expected": "Setiap 2 minggu, hari Senin, Rabu dan Jumat" },
+        { "pattern": { "kind": "every_n_weeks", "interval": 1, "weekdays": [2] }, "expected": "Setiap minggu, hari Selasa" }
+    ]
+}

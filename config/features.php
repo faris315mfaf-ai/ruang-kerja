@@ -18,4 +18,8 @@ return [
     // Obrolan (Fase 2, F2-1) with a real backend: /obrolan, Dock tile.
     // Off in production until the release is decided.
     'chat' => (bool) env('FEATURE_CHAT', env('APP_ENV', 'production') !== 'production'),
+
+    // Otomasi (aturan, tugas berulang, template) + Kinerja saya (Fase 2,
+    // F2-4) with a real backend: /otomasi*, /kinerja, Dock tile.
+    'automation' => (bool) env('FEATURE_AUTOMATION', env('APP_ENV', 'production') !== 'production'),
 ];

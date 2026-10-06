@@ -18,6 +18,8 @@ enum NotificationType: string
 
     // Obrolan (F2-1): new message in a DM / group (mentions use Mention)
     case ChatMessage = 'chat.message';
+    // Otomasi (F2-4): "beri tahu" action of a workspace automation rule
+    case AutomationNotify = 'automation.notify';
     // Requests & approvals (Sprint 4)
     case RequestSubmitted = 'request.submitted';
     case RequestApproved = 'request.approved';
@@ -51,6 +53,7 @@ enum NotificationType: string
             self::TaskDueSoon => 'Tenggat besok',
             self::TaskOverdue => 'Tenggat terlewat',
             self::ChatMessage => 'Pesan baru',
+            self::AutomationNotify => 'Otomasi',
             self::RequestSubmitted => 'Pengajuan baru',
             self::RequestApproved => 'Pengajuan disetujui',
             self::RequestRejected => 'Pengajuan ditolak',
@@ -81,6 +84,7 @@ enum NotificationType: string
             self::TaskDueSoon => NotificationEvent::TaskDueSoon,
             self::TaskOverdue => NotificationEvent::TaskOverdue,
             self::ChatMessage => NotificationEvent::ChatMessage,
+            self::AutomationNotify => NotificationEvent::Automation,
             self::RequestSubmitted, self::RequestCanceled => NotificationEvent::RequestPending,
             self::RequestApproved, self::RequestRejected, self::RequestRevisionRequested => NotificationEvent::RequestDecided,
             self::CheckInReminder => NotificationEvent::CheckInReminder,
@@ -107,6 +111,7 @@ enum NotificationType: string
             self::TaskAssigned => 'plus',
             self::Mention => 'at-sign',
             self::TaskCommented, self::ChatMessage => 'message',
+            self::AutomationNotify => 'workflow',
             self::TaskDueSoon => 'calendar-clock',
             self::TaskOverdue => 'alert',
             self::RequestSubmitted => 'check-check',
@@ -140,6 +145,7 @@ enum NotificationType: string
             self::ProjectDirection, self::ProjectDecisionNeeded => 'info',
             self::ProjectDecisionResolved => 'success',
             self::TaskAssigned, self::TaskCommented, self::RequestCanceled, self::ChatMessage => 'neutral',
+            self::AutomationNotify => 'primary',
         };
     }
 

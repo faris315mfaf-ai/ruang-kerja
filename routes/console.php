@@ -2,6 +2,8 @@
 
 use App\Domain\Attendance\Jobs\PurgeExpiredSelfiesJob;
 use App\Domain\Attendance\Jobs\SendCheckInReminders;
+use App\Domain\Automation\Jobs\CreateRecurringTasks;
+use App\Domain\Automation\Jobs\RunOverdueAutomations;
 use App\Domain\Projects\Jobs\SendProjectUpdateReminders;
 use App\Domain\Projects\Jobs\TakeProjectProgressSnapshots;
 use Illuminate\Foundation\Inspiring;
@@ -46,3 +48,7 @@ Schedule::command('employee-imports:prune')->hourly()->withoutOverlapping();
 // Class name: the job (and its snapshot date) is built when the event fires, not when the schedule loads.
 Schedule::job(TakeProjectProgressSnapshots::class)->dailyAt('23:55')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
 Schedule::job(new SendProjectUpdateReminders)->weeklyOn(5, '15:00')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
+
+// F2-4 Otomasi (office timezone): recurring tasks 07.00, "lewat tenggat" rules 07.05 (after the deadline reminders).
+Schedule::job(CreateRecurringTasks::class)->dailyAt('07:00')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
+Schedule::job(RunOverdueAutomations::class)->dailyAt('07:05')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();

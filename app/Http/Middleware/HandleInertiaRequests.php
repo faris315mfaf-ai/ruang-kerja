@@ -85,7 +85,7 @@ class HandleInertiaRequests extends Middleware
             // Bell / Dock / tab badge. Closure: skipped on partial reloads that don't ask for it.
             'inbox' => fn (): ?array => $user !== null ? ['unread' => app(InboxQuery::class)->unreadCount($user)] : null,
             // Fase 2 & 3 front-end previews (/pratinjau, config/features.php).
-            'features' => ['prototype' => (bool) config('features.prototype'), 'chat' => (bool) config('features.chat')],
+            'features' => ['prototype' => (bool) config('features.prototype'), 'chat' => (bool) config('features.chat'), 'automation' => (bool) config('features.automation')],
             // Obrolan (F2-1): channels with unread messages (Dock tile / Menu badge). Closure: skipped on
             // partial reloads. Not named `chat`: that is the page prop of /obrolan.
             'chatUnread' => fn (): ?int => $user !== null && (bool) config('features.chat')

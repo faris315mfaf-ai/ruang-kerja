@@ -60,18 +60,15 @@ export const PROTOTYPE_MODULES: PrototypeModule[] = [
         key: 'automation',
         phase: 'Fase 2',
         sprint: 'F2-4',
-        title: 'Otomasi & WhatsApp',
+        // Otomasi, tugas berulang, template and Kinerja saya are real now
+        // (routes/automation.php, FEATURE_AUTOMATION). WhatsApp stays a
+        // preview: held by the owner until the provider is chosen.
+        title: 'Notifikasi WhatsApp (ditahan)',
         description:
-            'Notifikasi WhatsApp, tugas berulang, template, aturan otomatis, dan Kinerja saya.',
+            'Pratinjau saja: verifikasi nomor, opt-in per kejadian, dan template pesan. Ditahan sampai penyedia WhatsApp diputuskan.',
         icon: Workflow,
         gradient: 'bg-grad-indigo',
-        screens: [
-            { label: 'Aturan otomasi', href: '/otomasi' },
-            { label: 'Tugas berulang', href: '/otomasi/berulang' },
-            { label: 'Template', href: '/otomasi/template' },
-            { label: 'WhatsApp', href: '/pengaturan/whatsapp' },
-            { label: 'Kinerja saya', href: '/kinerja' },
-        ],
+        screens: [{ label: 'WhatsApp', href: '/pengaturan/whatsapp' }],
     },
     {
         key: 'mobile-app',

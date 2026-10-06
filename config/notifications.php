@@ -27,6 +27,8 @@ return [
         'task.overdue' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
         // Obrolan (F2-1): DM & group messages stay in the app (mentions use 'mention').
         'chat.message' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
+        // Otomasi (F2-4): "beri tahu" action of a workspace rule.
+        'automation.notify' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'request.pending' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
         'request.decided' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
         'attendance.check_in_reminder' => ['in_app' => true, 'email' => false, 'whatsapp' => false],

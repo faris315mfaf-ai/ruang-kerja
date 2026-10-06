@@ -30,12 +30,9 @@ Route::middleware([EnsureFeatureEnabled::class.':prototype', 'auth', 'verified']
     Route::inertia('kalender', 'meetings/calendar')->name('calendar');
     Route::inertia('manajemen/jadwal', 'meetings/management-schedule')->name('management.schedule');
 
-    // F2-4 · WhatsApp, automation, recurring tasks, templates (+ Kinerja saya)
+    // F2-4 · WhatsApp stays a preview (held by the owner until the provider is
+    // chosen). Otomasi, berulang, template and Kinerja saya: routes/automation.php.
     Route::inertia('pengaturan/whatsapp', 'automation/whatsapp')->name('whatsapp');
-    Route::inertia('otomasi', 'automation/rules')->name('automation.rules');
-    Route::inertia('otomasi/berulang', 'automation/recurring')->name('automation.recurring');
-    Route::inertia('otomasi/template', 'automation/templates')->name('automation.templates');
-    Route::inertia('kinerja', 'automation/performance')->name('performance');
 
     // F3-1, F3-2 · Mobile app: biometrics, face check-in, integrity, offline
     Route::inertia('pratinjau/ponsel', 'mobile-app/index')->name('mobile.index');
