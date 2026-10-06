@@ -1,8 +1,9 @@
 /**
- * Props for the F2-4 preview screens (WhatsApp, automation rules, recurring
- * tasks, templates, Kinerja saya). Field names follow docs/DATABASE.md
- * (snake_case, ULID ids, `YYYY-MM-DD` dates, UTC ISO timestamps) so a
- * controller can later pass the same shape as Inertia props.
+ * Props of the F2-4 screens. Otomasi, tugas berulang, template and Kinerja
+ * saya come from the controllers in app/Http/Controllers/Automation
+ * (App\Domain\Automation\Queries); WhatsApp is still a preview on
+ * sample data (held). Field names follow docs/DATABASE.md (snake_case, ULID
+ * ids, `YYYY-MM-DD` dates, UTC ISO timestamps).
  */
 import type { StatusCategory } from '@/features/tasks/types';
 import type { PaletteColor } from '@/lib/palette';
@@ -11,7 +12,7 @@ export type Person = {
     id: string;
     name: string;
     /** Position shown under the name ("Kepala Divisi Operasional"). */
-    title?: string;
+    title?: string | null;
 };
 
 export type WorkspaceRef = {
@@ -19,12 +20,21 @@ export type WorkspaceRef = {
     key: string;
     name: string;
     color: PaletteColor;
+    type?: 'personal' | 'team' | 'division' | 'project';
+    /** Owner/admin: may manage rules and workspace templates here. */
+    can_manage?: boolean;
+    /** Member (not viewer): may create tasks and recurring tasks here. */
+    can_edit_tasks?: boolean;
+    /** Active members (for assignee / notify pickers). */
+    member_ids?: string[];
 };
 
 export type LabelRef = {
     id: string;
     name: string;
     color: PaletteColor;
+    /** Workspace of a real label; absent on template labels (matched by name). */
+    workspace_id?: string;
 };
 
 /** Global roles (spatie) that can receive a rule notification. */
@@ -137,7 +147,9 @@ export type AutomationRule = {
     is_active: boolean;
     last_run_at: string | null;
     run_count: number;
-    created_by: string;
+    created_by: string | null;
+    /** Owner/admin of the rule's workspace. */
+    can_manage: boolean;
 };
 
 export type RunResult = 'success' | 'failed' | 'skipped';
@@ -148,6 +160,8 @@ export type RuleRun = {
     /** Task the rule ran on ("OPS-112"). */
     task_key: string;
     task_title: string;
+    /** null once the task was deleted. */
+    task_id?: string | null;
     result: RunResult;
     /** Short Indonesian summary of what happened. */
     detail: string;
@@ -156,10 +170,15 @@ export type RuleRun = {
 
 export type AutomationProps = {
     rules: AutomationRule[];
+    /** Runs of the last 7 days (newest first, capped). */
     runs: RuleRun[];
+    /** Counts over exactly the last 7 days. */
+    stats: { runs_7d: number; success_7d: number; failed_7d: number };
     workspaces: WorkspaceRef[];
     labels: LabelRef[];
     people: Person[];
+    /** Server time, ISO (relative times). */
+    now: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -191,12 +210,17 @@ export type RecurringTask = RecurrenceRule & {
     is_active: boolean;
     created_count: number;
     last_created_on: string | null;
+    /** Creator (still a member) or owner/admin of the workspace. */
+    can_manage: boolean;
 };
 
 export type RecurringProps = {
     recurring: RecurringTask[];
     workspaces: WorkspaceRef[];
+    labels: LabelRef[];
     people: Person[];
+    /** Office date today, YYYY-MM-DD. */
+    today: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -205,6 +229,8 @@ export type RecurringProps = {
 
 export type TaskTemplate = {
     id: string;
+    /** null = for every workspace of the company. */
+    workspace_id: string | null;
     name: string;
     description: string;
     title: string;
@@ -213,6 +239,7 @@ export type TaskTemplate = {
     checklist: string[];
     labels: LabelRef[];
     used_count: number;
+    can_manage: boolean;
 };
 
 export type TemplateStatus = {
@@ -229,12 +256,18 @@ export type WorkspaceTemplate = {
     statuses: TemplateStatus[];
     labels: LabelRef[];
     used_count: number;
+    /** May create a workspace of this type. */
+    can_use: boolean;
+    can_delete: boolean;
 };
 
 export type TemplatesProps = {
     task_templates: TaskTemplate[];
     workspace_templates: WorkspaceTemplate[];
     workspaces: WorkspaceRef[];
+    can_create_company_template: boolean;
+    /** Workspace types the user may create (team / project). */
+    workspace_types: ('team' | 'project')[];
 };
 
 // ---------------------------------------------------------------------------
@@ -243,7 +276,7 @@ export type TemplatesProps = {
 
 export type PeriodKey = '8w' | 'month' | 'quarter';
 
-/** Raw counts for one period; percentages are derived in performance.ts. */
+/** Counts of one period; percentages are derived in performance.ts. */
 export type PeriodCounts = {
     label: string;
     /** Tasks with a due date in the period (non-canceled). */
@@ -254,10 +287,11 @@ export type PeriodCounts = {
     done_with_due: number;
     /** …of which completed on or before the due date. */
     on_time: number;
-    /** Lead times (days) of tasks done in the period. */
-    lead_times: number[];
+    /** Median lead time in days (one decimal); null without done tasks. */
+    lead_time: number | null;
+    lead_time_samples: number;
     /** Division median lead time (days) for context. */
-    division_lead_time: number;
+    division_lead_time: number | null;
     /** Scheduled work days and on-time days. */
     scheduled_days: number;
     on_time_days: number;
@@ -271,16 +305,34 @@ export type WeekBucket = {
     late: number;
 };
 
-export type OverdueTask = { key: string; title: string; due_date: string };
+export type OverdueTask = {
+    key: string;
+    title: string;
+    due_date: string;
+    url?: string;
+};
 
 export type PerformanceProps = {
-    periods: Record<PeriodKey, PeriodCounts>;
+    person: {
+        id: string;
+        name: string;
+        title: string | null;
+        is_self: boolean;
+    };
+    period: PeriodKey;
+    /** "1–7 Okt 2026". */
+    period_label: string;
+    counts: PeriodCounts;
+    /** Monday weeks covering the period. */
     weeks: WeekBucket[];
     by_workspace: { workspace: WorkspaceRef; done: number }[];
+    /** Overdue tasks the viewer may open (max 10). */
     overdue: OverdueTask[];
+    /** All overdue tasks of the person (also hidden ones). */
+    overdue_count: number;
     attendance: {
-        month_label: string;
-        on_time_rate: number;
-        average_check_in: string;
+        label: string;
+        on_time_rate: number | null;
+        average_check_in: string | null;
     };
 };

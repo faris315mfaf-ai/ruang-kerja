@@ -1,4 +1,4 @@
-import { Clock, LayoutTemplate, ListChecks } from 'lucide-react';
+import { Clock, LayoutTemplate, ListChecks, Trash2 } from 'lucide-react';
 import { PRIORITY_LABELS, PriorityIcon } from '@/components/priority-icon';
 import { StatusIcon } from '@/components/status-icon';
 import { Badge } from '@/components/ui/badge';
@@ -67,10 +67,16 @@ function CardHead({
 
 export function TaskTemplateCard({
     template,
+    workspaceKey,
     onUse,
+    onDelete,
 }: {
     template: TaskTemplate;
-    onUse: () => void;
+    /** Key of the workspace a workspace-only template belongs to. */
+    workspaceKey?: string;
+    /** Null when the person cannot use it in any workspace. */
+    onUse: (() => void) | null;
+    onDelete?: () => void;
 }) {
     const shown = template.checklist.slice(0, 3);
     const rest = template.checklist.length - shown.length;
@@ -83,10 +89,15 @@ export function TaskTemplateCard({
                 used={template.used_count}
                 tile="bg-grad-merek"
             />
-            <p className="text-[15px] leading-[22px] text-text-muted">
-                {template.description}
-            </p>
+            {template.description && (
+                <p className="text-[15px] leading-[22px] text-text-muted">
+                    {template.description}
+                </p>
+            )}
             <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-meta text-text-muted">
+                <Badge variant="label">
+                    {workspaceKey ? `Hanya ${workspaceKey}` : 'Semua workspace'}
+                </Badge>
                 <span className="inline-flex items-center gap-1.5">
                     <PriorityIcon
                         priority={template.priority}
@@ -128,24 +139,68 @@ export function TaskTemplateCard({
                     ))}
                 </div>
             )}
-            <Button
-                variant="tonal"
-                onClick={onUse}
-                className="mt-auto h-12 self-stretch md:h-11 md:self-start"
-                aria-label={`Pakai template ${template.name}`}
-            >
-                Pakai template
-            </Button>
+            <CardActions
+                name={template.name}
+                onUse={onUse}
+                onDelete={onDelete}
+                blockedNote="Anda tidak bisa membuat tugas di workspace mana pun."
+            />
         </article>
+    );
+}
+
+/** "Pakai template" + delete, at the bottom of a card. */
+function CardActions({
+    name,
+    onUse,
+    onDelete,
+    blockedNote,
+}: {
+    name: string;
+    onUse: (() => void) | null;
+    onDelete?: () => void;
+    blockedNote: string;
+}) {
+    return (
+        <div className="mt-auto flex flex-wrap items-center gap-2">
+            {onUse ? (
+                <Button
+                    variant="tonal"
+                    onClick={onUse}
+                    className="h-12 flex-1 md:h-11 md:flex-none"
+                    aria-label={`Pakai template ${name}`}
+                >
+                    Pakai template
+                </Button>
+            ) : (
+                <p className="flex-1 text-meta text-text-muted">
+                    {blockedNote}
+                </p>
+            )}
+            {onDelete && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onDelete}
+                    aria-label={`Hapus template ${name}`}
+                    className="ml-auto"
+                >
+                    <Trash2 aria-hidden />
+                </Button>
+            )}
+        </div>
     );
 }
 
 export function WorkspaceTemplateCard({
     template,
     onUse,
+    onDelete,
 }: {
     template: WorkspaceTemplate;
-    onUse: () => void;
+    /** Null when the person may not create a workspace of this type. */
+    onUse: (() => void) | null;
+    onDelete?: () => void;
 }) {
     return (
         <article className={CARD}>
@@ -168,9 +223,11 @@ export function WorkspaceTemplateCard({
                     label
                 </span>
             </div>
-            <p className="text-[15px] leading-[22px] text-text-muted">
-                {template.description}
-            </p>
+            {template.description && (
+                <p className="text-[15px] leading-[22px] text-text-muted">
+                    {template.description}
+                </p>
+            )}
             <ol
                 aria-label="Kolom status"
                 className="flex flex-col gap-1 rounded-lg bg-surface-2 px-3.5 py-3"
@@ -193,14 +250,16 @@ export function WorkspaceTemplateCard({
                     <LabelChip key={label.id} label={label} />
                 ))}
             </div>
-            <Button
-                variant="tonal"
-                onClick={onUse}
-                className="mt-auto h-12 self-stretch md:h-11 md:self-start"
-                aria-label={`Pakai template ${template.name}`}
-            >
-                Pakai template
-            </Button>
+            <CardActions
+                name={template.name}
+                onUse={onUse}
+                onDelete={onDelete}
+                blockedNote={
+                    template.type === 'project'
+                        ? 'Proyek dibuat oleh Kepala Divisi, Ketua Tim, atau Direksi.'
+                        : 'Workspace tim dibuat oleh Kepala Divisi atau Ketua Tim.'
+                }
+            />
         </article>
     );
 }

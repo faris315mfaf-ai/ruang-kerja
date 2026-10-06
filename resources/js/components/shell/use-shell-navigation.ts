@@ -12,10 +12,12 @@ import type { AppNavItem } from '@/lib/navigation';
 import {
     adminNavItems,
     attendanceNavItems,
+    automationNavItem,
     isActivePath,
     chatNavItem,
     mainNavItemsFor,
     organizationNavItems,
+    performanceNavItem,
     prototypeNavItem,
 } from '@/lib/navigation';
 import { paletteGradient } from '@/lib/palette';
@@ -207,10 +209,22 @@ export function useShellNavigation(): ShellNavigation {
               item.href === '/inbox' ? [item, chatNavItem] : [item],
           )
         : main;
+    // Otomasi (F2-4) right after Tugas saya; Kinerja saya after Absensi.
+    const withAutomation = features?.automation
+        ? withChat.flatMap((item) => {
+              if (item.href === '/tugas') {
+                  return [item, automationNavItem];
+              }
+
+              return item.href === '/absensi'
+                  ? [item, performanceNavItem]
+                  : [item];
+          })
+        : withChat;
     const tiles = [
         ...(organizationItems.length > 1
-            ? withChat
-            : [...withChat, ...organizationItems]),
+            ? withAutomation
+            : [...withAutomation, ...organizationItems]),
         ...(features?.prototype ? [prototypeNavItem] : []),
     ].map(toTile);
 

@@ -1,28 +1,57 @@
 import { CalendarClock } from 'lucide-react';
 import { useId, useState } from 'react';
+import { PRIORITY_LABELS, PRIORITY_ORDER } from '@/components/priority-icon';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { SegmentedTabs } from '@/components/ui/tabs';
-import { TODAY } from '@/features/automation/fixtures';
 import { SelectField, TextField } from '@/features/automation/form-fields';
 import { FormSurface } from '@/features/automation/form-surface';
+import { mutate } from '@/features/automation/mutation';
 import {
     WEEKDAYS,
     describePattern,
     nextOccurrences,
     validateRecurring,
 } from '@/features/automation/recurrence';
-import type { RecurringForm as FormValues } from '@/features/automation/recurrence';
+import type {
+    RecurringForm as FormValues,
+    RecurringErrors,
+} from '@/features/automation/recurrence';
 import type {
     Person,
     RecurrencePattern,
     Weekday,
     WorkspaceRef,
 } from '@/features/automation/types';
-import { useFakeMutation } from '@/features/prototype/use-fake-mutation';
 import { formatDate } from '@/lib/format';
 import { cn, focusRing } from '@/lib/utils';
+import recurringRoutes from '@/routes/automation/recurring';
+
+/** Server keys (RecurringTaskRequest) → form fields. */
+function serverErrors(errors: Record<string, string>): RecurringErrors {
+    const result: RecurringErrors = {};
+
+    for (const [key, message] of Object.entries(errors)) {
+        const field = key.startsWith('pattern') ? 'pattern' : key;
+
+        if (
+            [
+                'title',
+                'workspace_id',
+                'assignee_id',
+                'priority',
+                'pattern',
+                'starts_on',
+                'ends_on',
+            ].includes(field)
+        ) {
+            result[field as keyof RecurringErrors] ??= message;
+        }
+    }
+
+    return result;
+}
 
 type Kind = RecurrencePattern['kind'];
 
@@ -106,52 +135,73 @@ export function RecurringFormSurface({
     open,
     onOpenChange,
     initial,
-    editing,
+    editingId,
     workspaces,
     people,
+    today,
     mobile,
-    onSaved,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     initial: FormValues;
-    editing: boolean;
+    /** Recurring task being edited; null = new. */
+    editingId: string | null;
+    /** Workspaces where the person may create tasks. */
     workspaces: WorkspaceRef[];
     people: Person[];
+    /** Office date today, YYYY-MM-DD (preview start). */
+    today: string;
     mobile: boolean;
-    onSaved: (values: FormValues) => void;
 }) {
     const [form, setForm] = useState<FormValues>(initial);
     const [submitted, setSubmitted] = useState(false);
-    const { processing, run } = useFakeMutation();
-    const errors = submitted ? validateRecurring(form) : {};
+    const [processing, setProcessing] = useState(false);
+    const [fromServer, setFromServer] = useState<RecurringErrors>({});
+    const errors = submitted
+        ? { ...fromServer, ...validateRecurring(form) }
+        : fromServer;
     const weekdaysOnlyId = useId();
     const { pattern } = form;
     const preview = nextOccurrences(
         { pattern, starts_on: form.starts_on, ends_on: form.ends_on || null },
-        TODAY,
+        today,
         5,
+    );
+    const workspace = workspaces.find((w) => w.id === form.workspace_id);
+    const members = people.filter(
+        (p) => !workspace?.member_ids || workspace.member_ids.includes(p.id),
     );
     const set = (patch: Partial<FormValues>) =>
         setForm((f) => ({ ...f, ...patch }));
     const setPattern = (next: RecurrencePattern) => set({ pattern: next });
 
-    const save = async () => {
+    const save = () => {
         setSubmitted(true);
+        setFromServer({});
 
         if (Object.keys(validateRecurring(form)).length > 0) {
             return;
         }
 
-        const ok = await run(() => onSaved(form), {
-            success: editing
-                ? 'Tugas berulang diperbarui'
-                : 'Tugas berulang dibuat',
-        });
-
-        if (ok) {
-            onOpenChange(false);
-        }
+        setProcessing(true);
+        mutate(
+            editingId ? 'put' : 'post',
+            editingId
+                ? recurringRoutes.update.url(editingId)
+                : recurringRoutes.store.url(),
+            {
+                ...form,
+                title: form.title.trim(),
+                assignee_id: form.assignee_id || null,
+                ends_on: form.ends_on || null,
+            },
+            {
+                only: ['recurring'],
+                onSuccess: () => onOpenChange(false),
+                onError: (server) => setFromServer(serverErrors(server)),
+                onFinish: () => setProcessing(false),
+            },
+        );
     };
 
     return (
@@ -160,7 +210,7 @@ export function RecurringFormSurface({
             onOpenChange={onOpenChange}
             mobile={mobile}
             wide
-            title={editing ? 'Ubah tugas berulang' : 'Tugas berulang baru'}
+            title={editingId ? 'Ubah tugas berulang' : 'Tugas berulang baru'}
             description="Tugas dibuat otomatis pukul 07.00 WIB pada setiap tanggal jadwal."
             footer={
                 <>
@@ -172,7 +222,7 @@ export function RecurringFormSurface({
                         Batal
                     </Button>
                     <Button
-                        onClick={() => void save()}
+                        onClick={save}
                         disabled={processing}
                         className="h-12 md:h-11"
                     >
@@ -207,10 +257,24 @@ export function RecurringFormSurface({
                     }
                     options={[
                         { value: 'none', label: 'Belum ditentukan' },
-                        ...people.map((p) => ({ value: p.id, label: p.name })),
+                        ...members.map((p) => ({ value: p.id, label: p.name })),
                     ]}
+                    error={errors.assignee_id}
                 />
             </div>
+            <SelectField
+                label="Prioritas"
+                value={String(form.priority)}
+                onChange={(value) =>
+                    set({ priority: Number(value) as FormValues['priority'] })
+                }
+                options={PRIORITY_ORDER.map((priority) => ({
+                    value: String(priority),
+                    label: PRIORITY_LABELS[priority],
+                }))}
+                error={errors.priority}
+                className="sm:max-w-[240px]"
+            />
 
             <fieldset className="flex min-w-0 flex-col gap-3 rounded-lg border border-border p-4">
                 <legend className="px-1 text-overline text-link">Pola</legend>
@@ -356,7 +420,7 @@ export function RecurringFormSurface({
                                 key={date}
                                 className="rounded-sm bg-surface px-2.5 py-1 text-[14px] font-semibold text-text tnum"
                             >
-                                {date === TODAY ? 'Hari ini' : formatDate(date)}
+                                {date === today ? 'Hari ini' : formatDate(date)}
                             </li>
                         ))}
                     </ol>

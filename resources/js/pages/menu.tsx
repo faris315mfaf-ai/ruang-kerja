@@ -24,11 +24,13 @@ import { useInitials } from '@/hooks/use-initials';
 import {
     adminNavItems,
     attendanceNavItems,
+    automationNavItem,
     canSeeManagement,
     canSeePortfolio,
     managementNavItem,
     organizationNavItems,
     chatNavItem,
+    performanceNavItem,
     portfolioNavItem,
     prototypeNavItem,
 } from '@/lib/navigation';
@@ -249,6 +251,20 @@ export default function Menu() {
                             label="Pengajuan saya"
                             href="/pengajuan"
                         />
+                        {features?.automation && (
+                            <Row
+                                icon={performanceNavItem.icon}
+                                label={performanceNavItem.title}
+                                href={performanceNavItem.href}
+                            />
+                        )}
+                        {features?.automation && (
+                            <Row
+                                icon={automationNavItem.icon}
+                                label="Otomasi & template"
+                                href={automationNavItem.href}
+                            />
+                        )}
                         <Row
                             icon={Calendar}
                             label="Riwayat absensi"

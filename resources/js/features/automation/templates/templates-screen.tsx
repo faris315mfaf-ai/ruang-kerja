@@ -5,13 +5,9 @@ import { Fab } from '@/components/mobile/fab';
 import { Button } from '@/components/ui/button';
 import { SegmentedTabs } from '@/components/ui/tabs';
 import { AutomationNav } from '@/features/automation/automation-nav';
-import {
-    PageHeading,
-    PreviewBar,
-    PreviewError,
-    PreviewSkeleton,
-} from '@/features/automation/preview-state';
-import type { PreviewState } from '@/features/automation/preview-state';
+import { ConfirmDelete } from '@/features/automation/confirm-delete';
+import { mutate } from '@/features/automation/mutation';
+import { PageHeading } from '@/features/automation/preview-state';
 import {
     NewTaskTemplate,
     UseTaskTemplate,
@@ -26,70 +22,111 @@ import type {
     TemplatesProps,
     WorkspaceTemplate,
 } from '@/features/automation/types';
+import taskTemplateRoutes from '@/routes/automation/templates/tasks';
+import workspaceTemplateRoutes from '@/routes/automation/templates/workspaces';
 
 type Tab = 'task' | 'workspace';
 
+type Deleting =
+    | { kind: 'task'; template: TaskTemplate }
+    | { kind: 'workspace'; template: WorkspaceTemplate };
+
+/**
+ * /otomasi/template — task templates (company-wide + the person's
+ * workspaces) and the company's workspace templates. "Pakai template"
+ * really creates the task / workspace on the server.
+ */
 export function TemplatesScreen({
     props,
-    state,
     mobile,
 }: {
     props: TemplatesProps;
-    state: PreviewState;
     mobile: boolean;
 }) {
     const [tab, setTab] = useState<Tab>('task');
-    const [taskTemplates, setTaskTemplates] = useState<TaskTemplate[]>(
-        state === 'empty' ? [] : props.task_templates,
-    );
-    const workspaceTemplates =
-        state === 'empty' ? [] : props.workspace_templates;
     const [usingTask, setUsingTask] = useState<TaskTemplate | null>(null);
     const [usingWorkspace, setUsingWorkspace] =
         useState<WorkspaceTemplate | null>(null);
     const [creating, setCreating] = useState(false);
+    const [deleting, setDeleting] = useState<Deleting | null>(null);
+    const [removing, setRemoving] = useState(false);
+    const taskTemplates = props.task_templates;
+    const workspaceTemplates = props.workspace_templates;
+    const canCreate =
+        props.can_create_company_template ||
+        props.workspaces.some((w) => w.can_manage);
+    const keyOf = (id: string | null) =>
+        props.workspaces.find((w) => w.id === id)?.key;
+    const canUseTask = (template: TaskTemplate) =>
+        props.workspaces.some(
+            (w) =>
+                w.can_edit_tasks &&
+                (template.workspace_id === null ||
+                    w.id === template.workspace_id),
+        );
 
-    const newButton = (
+    const remove = () => {
+        if (!deleting) {
+            return;
+        }
+
+        setRemoving(true);
+        mutate(
+            'delete',
+            deleting.kind === 'task'
+                ? taskTemplateRoutes.destroy.url(deleting.template.id)
+                : workspaceTemplateRoutes.destroy.url(deleting.template.id),
+            {},
+            {
+                only: ['templates'],
+                onSuccess: () => setDeleting(null),
+                onFinish: () => setRemoving(false),
+            },
+        );
+    };
+
+    const newButton = canCreate ? (
         <Button onClick={() => setCreating(true)}>
             <Plus aria-hidden />
             Template tugas baru
         </Button>
-    );
+    ) : undefined;
 
-    let body;
+    const list = tab === 'task' ? taskTemplates : workspaceTemplates;
 
-    if (state === 'loading') {
-        body = <PreviewSkeleton />;
-    } else if (state === 'error') {
-        body = <PreviewError what="Template" />;
-    } else {
-        const tabs = (
-            <SegmentedTabs
-                label="Jenis template"
-                value={tab}
-                onValueChange={setTab}
-                options={[
-                    {
-                        value: 'task',
-                        label: `Tugas · ${taskTemplates.length}`,
-                        id: 'tpl-tab-task',
-                        controls: 'tpl-panel',
-                    },
-                    {
-                        value: 'workspace',
-                        label: `Workspace · ${workspaceTemplates.length}`,
-                        id: 'tpl-tab-workspace',
-                        controls: 'tpl-panel',
-                    },
-                ]}
-                className="self-start"
+    return (
+        <div className="flex flex-col gap-5 md:gap-6">
+            <PageHeading
+                title="Template"
+                description="Mulai tugas dan workspace dari pola yang sudah terbukti."
+                actions={
+                    !mobile && tab === 'task' && taskTemplates.length > 0
+                        ? newButton
+                        : undefined
+                }
             />
-        );
-        const list = tab === 'task' ? taskTemplates : workspaceTemplates;
-
-        body = (
+            <AutomationNav />
             <div className="flex flex-col gap-5">
-                {tabs}
+                <SegmentedTabs
+                    label="Jenis template"
+                    value={tab}
+                    onValueChange={setTab}
+                    options={[
+                        {
+                            value: 'task',
+                            label: `Tugas · ${taskTemplates.length}`,
+                            id: 'tpl-tab-task',
+                            controls: 'tpl-panel',
+                        },
+                        {
+                            value: 'workspace',
+                            label: `Workspace · ${workspaceTemplates.length}`,
+                            id: 'tpl-tab-workspace',
+                            controls: 'tpl-panel',
+                        },
+                    ]}
+                    className="self-start"
+                />
                 <div
                     id="tpl-panel"
                     role="tabpanel"
@@ -119,61 +156,64 @@ export function TemplatesScreen({
                                       <TaskTemplateCard
                                           key={t.id}
                                           template={t}
-                                          onUse={() => setUsingTask(t)}
+                                          workspaceKey={
+                                              keyOf(t.workspace_id) ?? undefined
+                                          }
+                                          onUse={
+                                              canUseTask(t)
+                                                  ? () => setUsingTask(t)
+                                                  : null
+                                          }
+                                          onDelete={
+                                              t.can_manage
+                                                  ? () =>
+                                                        setDeleting({
+                                                            kind: 'task',
+                                                            template: t,
+                                                        })
+                                                  : undefined
+                                          }
                                       />
                                   ))
                                 : workspaceTemplates.map((t) => (
                                       <WorkspaceTemplateCard
                                           key={t.id}
                                           template={t}
-                                          onUse={() => setUsingWorkspace(t)}
+                                          onUse={
+                                              t.can_use
+                                                  ? () => setUsingWorkspace(t)
+                                                  : null
+                                          }
+                                          onDelete={
+                                              t.can_delete
+                                                  ? () =>
+                                                        setDeleting({
+                                                            kind: 'workspace',
+                                                            template: t,
+                                                        })
+                                                  : undefined
+                                          }
                                       />
                                   ))}
                         </div>
                     )}
                 </div>
-                {mobile && tab === 'task' && taskTemplates.length > 0 && (
-                    <Fab
-                        label="Template tugas baru"
-                        onClick={() => setCreating(true)}
-                    />
-                )}
-            </div>
-        );
-    }
-
-    return (
-        <div className="flex flex-col gap-5 md:gap-6">
-            <PreviewBar />
-            <PageHeading
-                title="Template"
-                description="Mulai tugas dan workspace dari pola yang sudah terbukti."
-                actions={
-                    !mobile &&
-                    state === 'ready' &&
+                {mobile &&
                     tab === 'task' &&
-                    taskTemplates.length > 0
-                        ? newButton
-                        : undefined
-                }
-            />
-            <AutomationNav />
-            {body}
+                    taskTemplates.length > 0 &&
+                    canCreate && (
+                        <Fab
+                            label="Template tugas baru"
+                            onClick={() => setCreating(true)}
+                        />
+                    )}
+            </div>
             {usingTask && (
                 <UseTaskTemplate
                     template={usingTask}
                     workspaces={props.workspaces}
                     mobile={mobile}
                     onOpenChange={(open) => !open && setUsingTask(null)}
-                    onUsed={() =>
-                        setTaskTemplates((list) =>
-                            list.map((t) =>
-                                t.id === usingTask.id
-                                    ? { ...t, used_count: t.used_count + 1 }
-                                    : t,
-                            ),
-                        )
-                    }
                 />
             )}
             {usingWorkspace && (
@@ -187,13 +227,24 @@ export function TemplatesScreen({
             {creating && (
                 <NewTaskTemplate
                     mobile={mobile}
+                    workspaces={props.workspaces}
+                    canCreateCompanyTemplate={props.can_create_company_template}
                     onOpenChange={setCreating}
-                    onCreated={(template) => {
-                        setTaskTemplates((list) => [template, ...list]);
-                        setTab('task');
-                    }}
                 />
             )}
+            <ConfirmDelete
+                open={deleting !== null}
+                onOpenChange={(open) => !open && setDeleting(null)}
+                title={`Hapus template "${deleting?.template.name ?? ''}"?`}
+                description={
+                    deleting?.kind === 'workspace'
+                        ? 'Workspace yang sudah dibuat dari template ini tetap ada.'
+                        : 'Tugas yang sudah dibuat dari template ini tetap ada.'
+                }
+                processing={removing}
+                mobile={mobile}
+                onConfirm={remove}
+            />
         </div>
     );
 }

@@ -1,22 +1,19 @@
 import { Head } from '@inertiajs/react';
-import { RECURRING } from '@/features/automation/fixtures';
-import {
-    PreviewSkeleton,
-    usePreviewState,
-} from '@/features/automation/preview-state';
+import { PreviewSkeleton } from '@/features/automation/preview-state';
 import { RecurringScreen } from '@/features/automation/recurring/recurring-screen';
 import type { RecurringProps } from '@/features/automation/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 
-/** /otomasi/berulang — recurring tasks (Fase 2 · F2-4, preview). */
+/**
+ * /otomasi/berulang — recurring tasks (Fase 2 · F2-4). Props from
+ * RecurringTaskController (App\Domain\Automation\Queries\RecurringPage).
+ */
 export default function AutomationRecurringPage({
-    recurring: data = RECURRING,
+    recurring,
 }: {
-    /** Same shape as the fixture; the controller passes it later. */
-    recurring?: RecurringProps;
+    recurring: RecurringProps;
 }) {
     const breakpoint = useBreakpoint();
-    const { state } = usePreviewState();
 
     return (
         <>
@@ -25,9 +22,7 @@ export default function AutomationRecurringPage({
                 <PreviewSkeleton />
             ) : (
                 <RecurringScreen
-                    key={state}
-                    props={data}
-                    state={state}
+                    props={recurring}
                     mobile={breakpoint === 'mobile'}
                 />
             )}

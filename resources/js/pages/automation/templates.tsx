@@ -1,22 +1,19 @@
 import { Head } from '@inertiajs/react';
-import { TEMPLATES } from '@/features/automation/fixtures';
-import {
-    PreviewSkeleton,
-    usePreviewState,
-} from '@/features/automation/preview-state';
+import { PreviewSkeleton } from '@/features/automation/preview-state';
 import { TemplatesScreen } from '@/features/automation/templates/templates-screen';
 import type { TemplatesProps } from '@/features/automation/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 
-/** /otomasi/template — task & workspace templates (Fase 2 · F2-4, preview). */
+/**
+ * /otomasi/template — task & workspace templates (Fase 2 · F2-4). Props
+ * from TaskTemplateController (App\Domain\Automation\Queries\TemplatesPage).
+ */
 export default function AutomationTemplatesPage({
-    templates: data = TEMPLATES,
+    templates,
 }: {
-    /** Same shape as the fixture; the controller passes it later. */
-    templates?: TemplatesProps;
+    templates: TemplatesProps;
 }) {
     const breakpoint = useBreakpoint();
-    const { state } = usePreviewState();
 
     return (
         <>
@@ -25,9 +22,7 @@ export default function AutomationTemplatesPage({
                 <PreviewSkeleton />
             ) : (
                 <TemplatesScreen
-                    key={state}
-                    props={data}
-                    state={state}
+                    props={templates}
                     mobile={breakpoint === 'mobile'}
                 />
             )}

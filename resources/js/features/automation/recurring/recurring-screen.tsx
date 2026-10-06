@@ -24,14 +24,9 @@ import {
 import { Panel } from '@/components/ui/panel';
 import { Switch } from '@/components/ui/switch';
 import { AutomationNav } from '@/features/automation/automation-nav';
-import { TODAY } from '@/features/automation/fixtures';
-import {
-    PageHeading,
-    PreviewBar,
-    PreviewError,
-    PreviewSkeleton,
-} from '@/features/automation/preview-state';
-import type { PreviewState } from '@/features/automation/preview-state';
+import { ConfirmDelete } from '@/features/automation/confirm-delete';
+import { mutate } from '@/features/automation/mutation';
+import { PageHeading } from '@/features/automation/preview-state';
 import {
     describePattern,
     nextOccurrences,
@@ -42,20 +37,23 @@ import type {
     RecurringProps,
     RecurringTask,
 } from '@/features/automation/types';
-import { useFakeMutation } from '@/features/prototype/use-fake-mutation';
 import { formatDate } from '@/lib/format';
 import { palette } from '@/lib/palette';
 import { cn } from '@/lib/utils';
+import recurringRoutes from '@/routes/automation/recurring';
+
+const ONLY = ['recurring'];
 
 function toForm(
     task: RecurringTask | null,
-    defaults: { workspace_id: string },
+    defaults: { workspace_id: string; today: string },
 ): RecurringForm {
     return task
         ? {
               title: task.title,
               workspace_id: task.workspace_id,
               assignee_id: task.assignee_id ?? '',
+              priority: task.priority,
               pattern: task.pattern,
               starts_on: task.starts_on,
               ends_on: task.ends_on ?? '',
@@ -64,32 +62,41 @@ function toForm(
               title: '',
               workspace_id: defaults.workspace_id,
               assignee_id: '',
+              priority: 3,
               pattern: { kind: 'weekly', weekdays: [1] },
-              starts_on: TODAY,
+              starts_on: defaults.today,
               ends_on: '',
           };
 }
 
-export function nextRun(task: RecurringTask): string | null {
-    return nextOccurrences(task, TODAY, 1)[0] ?? null;
+/** Next creation date from today (null when the schedule has ended). */
+export function nextRun(task: RecurringTask, today: string): string | null {
+    return nextOccurrences(task, today, 1)[0] ?? null;
 }
 
+/**
+ * /otomasi/berulang — recurring tasks of the person's workspaces. Members
+ * who may create tasks add them; the creator or an owner/admin changes,
+ * pauses, runs ("Buat sekarang") and deletes (RecurringTaskPolicy).
+ */
 export function RecurringScreen({
     props,
-    state,
     mobile,
 }: {
     props: RecurringProps;
-    state: PreviewState;
     mobile: boolean;
 }) {
-    const [items, setItems] = useState<RecurringTask[]>(
-        state === 'empty' ? [] : props.recurring,
+    const [pending, setPending] = useState<Record<string, boolean>>({});
+    const items = props.recurring.map((task) =>
+        task.id in pending ? { ...task, is_active: pending[task.id] } : task,
     );
     const [editing, setEditing] = useState<RecurringTask | null>(null);
     const [open, setOpen] = useState(false);
     const [formKey, setFormKey] = useState(0);
-    const { run } = useFakeMutation();
+    const [deleting, setDeleting] = useState<RecurringTask | null>(null);
+    const [removing, setRemoving] = useState(false);
+    const [running, setRunning] = useState<string | null>(null);
+    const creatable = props.workspaces.filter((w) => w.can_edit_tasks);
 
     const openForm = (task: RecurringTask | null) => {
         setEditing(task);
@@ -97,103 +104,69 @@ export function RecurringScreen({
         setOpen(true);
     };
 
-    const save = (values: RecurringForm) => {
-        const patch = {
-            title: values.title.trim(),
-            workspace_id: values.workspace_id,
-            assignee_id: values.assignee_id || null,
-            pattern: values.pattern,
-            starts_on: values.starts_on,
-            ends_on: values.ends_on || null,
-        };
-
-        setItems((list) =>
-            editing
-                ? list.map((t) =>
-                      t.id === editing.id ? { ...t, ...patch } : t,
-                  )
-                : [
-                      {
-                          ...patch,
-                          id: `new-${Date.now()}`,
-                          priority: 3,
-                          is_active: true,
-                          created_count: 0,
-                          last_created_on: null,
-                      },
-                      ...list,
-                  ],
-        );
-    };
-
-    const toggle = (task: RecurringTask, on: boolean) =>
-        void run(
-            () =>
-                setItems((list) =>
-                    list.map((t) =>
-                        t.id === task.id ? { ...t, is_active: on } : t,
-                    ),
-                ),
+    const toggle = (task: RecurringTask, on: boolean) => {
+        setPending((map) => ({ ...map, [task.id]: on }));
+        mutate(
+            'patch',
+            recurringRoutes.active.url(task.id),
+            { is_active: on },
             {
-                delay: 250,
-                success: on
-                    ? 'Dilanjutkan'
-                    : 'Dijeda. Tugas tidak dibuat sampai dilanjutkan.',
+                only: ONLY,
+                onFinish: () =>
+                    setPending((map) => {
+                        const next = { ...map };
+                        delete next[task.id];
+
+                        return next;
+                    }),
             },
         );
+    };
 
     const createNow = (task: RecurringTask) => {
-        const workspace = props.workspaces.find(
-            (w) => w.id === task.workspace_id,
+        setRunning(task.id);
+        mutate(
+            'post',
+            recurringRoutes.run.url(task.id),
+            {},
+            { only: ONLY, onFinish: () => setRunning(null) },
         );
+    };
 
-        void run(
-            () =>
-                setItems((list) =>
-                    list.map((t) =>
-                        t.id === task.id
-                            ? {
-                                  ...t,
-                                  created_count: t.created_count + 1,
-                                  last_created_on: TODAY,
-                              }
-                            : t,
-                    ),
-                ),
+    const remove = () => {
+        if (!deleting) {
+            return;
+        }
+
+        setRemoving(true);
+        mutate(
+            'delete',
+            recurringRoutes.destroy.url(deleting.id),
+            {},
             {
-                success: `Tugas ${workspace?.key ?? ''}-${130 + task.created_count} "${task.title}" dibuat`,
+                only: ONLY,
+                onSuccess: () => setDeleting(null),
+                onFinish: () => setRemoving(false),
             },
         );
     };
 
-    const remove = (task: RecurringTask) =>
-        void run(
-            () => setItems((list) => list.filter((t) => t.id !== task.id)),
-            {
-                delay: 300,
-                success: 'Dihapus. Tugas yang sudah dibuat tetap ada.',
-            },
-        );
-
-    const newButton = (
-        <Button onClick={() => openForm(null)}>
-            <Plus aria-hidden />
-            Tugas berulang baru
-        </Button>
-    );
+    const newButton =
+        creatable.length > 0 ? (
+            <Button onClick={() => openForm(null)}>
+                <Plus aria-hidden />
+                Tugas berulang baru
+            </Button>
+        ) : undefined;
 
     let body;
 
-    if (state === 'loading') {
-        body = <PreviewSkeleton />;
-    } else if (state === 'error') {
-        body = <PreviewError what="Tugas berulang" />;
-    } else if (items.length === 0) {
+    if (items.length === 0) {
         body = (
             <EmptyState
                 icon={Repeat}
                 title="Belum ada tugas berulang"
-                description="Buat sekali, misalnya rekap stok tiap Senin, lalu tugasnya muncul sendiri di board."
+                description="Buat sekali, misalnya rekap stok tiap Senin, lalu tugasnya muncul sendiri di board pukul 07.00."
                 action={newButton}
             />
         );
@@ -205,28 +178,23 @@ export function RecurringScreen({
                         key={task.id}
                         task={task}
                         props={props}
+                        running={running === task.id}
                         onToggle={(on) => toggle(task, on)}
                         onEdit={() => openForm(task)}
                         onCreateNow={() => createNow(task)}
-                        onDelete={() => remove(task)}
+                        onDelete={() => setDeleting(task)}
                     />
                 ))}
             </ul>
         );
 
         body = mobile ? (
-            <>
-                <section
-                    aria-label="Daftar tugas berulang"
-                    className="overflow-hidden rounded-[22px] border border-border bg-surface"
-                >
-                    {rows}
-                </section>
-                <Fab
-                    label="Tugas berulang baru"
-                    onClick={() => openForm(null)}
-                />
-            </>
+            <section
+                aria-label="Daftar tugas berulang"
+                className="overflow-hidden rounded-[22px] border border-border bg-surface"
+            >
+                {rows}
+            </section>
         ) : (
             <Panel
                 title="Tugas berulang"
@@ -243,32 +211,51 @@ export function RecurringScreen({
         );
     }
 
+    const formWorkspaces = editing
+        ? props.workspaces.filter(
+              (w) => w.can_edit_tasks || w.id === editing.workspace_id,
+          )
+        : creatable;
+
     return (
         <div className="flex flex-col gap-5 md:gap-6">
-            <PreviewBar />
             <PageHeading
                 title="Tugas berulang"
-                description="Tugas rutin yang dibuat otomatis sesuai jadwal."
-                actions={
-                    !mobile && state === 'ready' && items.length > 0
-                        ? newButton
-                        : undefined
-                }
+                description="Tugas rutin yang dibuat otomatis pukul 07.00 sesuai jadwal."
+                actions={!mobile && items.length > 0 ? newButton : undefined}
             />
             <AutomationNav />
             {body}
-            <RecurringFormSurface
-                key={formKey}
-                open={open}
-                onOpenChange={setOpen}
-                initial={toForm(editing, {
-                    workspace_id: props.workspaces[0]?.id ?? '',
-                })}
-                editing={editing !== null}
-                workspaces={props.workspaces}
-                people={props.people}
+            {mobile && items.length > 0 && creatable.length > 0 && (
+                <Fab
+                    label="Tugas berulang baru"
+                    onClick={() => openForm(null)}
+                />
+            )}
+            {open && (
+                <RecurringFormSurface
+                    key={formKey}
+                    open={open}
+                    onOpenChange={setOpen}
+                    initial={toForm(editing, {
+                        workspace_id: creatable[0]?.id ?? '',
+                        today: props.today,
+                    })}
+                    editingId={editing?.id ?? null}
+                    workspaces={formWorkspaces}
+                    people={props.people}
+                    today={props.today}
+                    mobile={mobile}
+                />
+            )}
+            <ConfirmDelete
+                open={deleting !== null}
+                onOpenChange={(next) => !next && setDeleting(null)}
+                title={`Hapus "${deleting?.title ?? ''}"?`}
+                description="Jadwalnya berhenti. Tugas yang sudah dibuat tetap ada di board."
+                processing={removing}
                 mobile={mobile}
-                onSaved={save}
+                onConfirm={remove}
             />
         </div>
     );
@@ -277,6 +264,7 @@ export function RecurringScreen({
 function RecurringRow({
     task,
     props,
+    running,
     onToggle,
     onEdit,
     onCreateNow,
@@ -284,6 +272,7 @@ function RecurringRow({
 }: {
     task: RecurringTask;
     props: RecurringProps;
+    running: boolean;
     onToggle: (on: boolean) => void;
     onEdit: () => void;
     onCreateNow: () => void;
@@ -291,7 +280,7 @@ function RecurringRow({
 }) {
     const workspace = props.workspaces.find((w) => w.id === task.workspace_id);
     const assignee = props.people.find((p) => p.id === task.assignee_id);
-    const next = task.is_active ? nextRun(task) : null;
+    const next = task.is_active ? nextRun(task, props.today) : null;
     const tone = palette(workspace?.color);
 
     return (
@@ -300,6 +289,7 @@ function RecurringRow({
                 size="md"
                 checked={task.is_active}
                 onCheckedChange={onToggle}
+                disabled={!task.can_manage}
                 aria-label={`Aktifkan ${task.title}`}
                 className="mt-0.5 lg:mt-0"
             />
@@ -312,7 +302,7 @@ function RecurringRow({
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                     <div className="flex flex-wrap items-center gap-2">
                         <PriorityIcon priority={task.priority} />
-                        <p className="text-[17px] leading-6 font-semibold text-text">
+                        <p className="min-w-0 text-[17px] leading-6 font-semibold break-words text-text">
                             {task.title}
                         </p>
                         {workspace && (
@@ -336,14 +326,16 @@ function RecurringRow({
                     </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-meta text-text-muted lg:w-[360px] lg:shrink-0 lg:justify-end">
-                    <span className="inline-flex items-center gap-2">
+                    <span className="inline-flex min-w-0 items-center gap-2">
                         {assignee ? (
                             <>
                                 <UserAvatar
                                     name={assignee.name}
                                     className="size-6 text-[11px]"
                                 />
-                                {assignee.name.split(' ')[0]}
+                                <span className="truncate">
+                                    {assignee.name.split(' ')[0]}
+                                </span>
                             </>
                         ) : (
                             'Belum ditugaskan'
@@ -353,7 +345,7 @@ function RecurringRow({
                         <CalendarClock aria-hidden className="size-4" />
                         {task.is_active
                             ? next
-                                ? next === TODAY
+                                ? next === props.today
                                     ? 'Hari ini'
                                     : formatDate(next)
                                 : 'Selesai'
@@ -362,33 +354,41 @@ function RecurringRow({
                     <span className="tnum">{task.created_count}× dibuat</span>
                 </div>
             </div>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Menu ${task.title}`}
-                        className="-mt-1 -mr-2 lg:mt-0"
-                    >
-                        <MoreHorizontal aria-hidden />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuItem onSelect={onEdit}>
-                        <Pencil aria-hidden />
-                        Ubah
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={onCreateNow}>
-                        <Play aria-hidden />
-                        Buat sekarang
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive" onSelect={onDelete}>
-                        <Trash2 aria-hidden />
-                        Hapus
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+            {task.can_manage && (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Menu ${task.title}`}
+                            className="-mt-1 -mr-2 lg:mt-0"
+                        >
+                            <MoreHorizontal aria-hidden />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={onEdit}>
+                            <Pencil aria-hidden />
+                            Ubah
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onSelect={onCreateNow}
+                            disabled={running}
+                        >
+                            <Play aria-hidden />
+                            {running ? 'Membuat…' : 'Buat sekarang'}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={onDelete}
+                        >
+                            <Trash2 aria-hidden />
+                            Hapus
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )}
         </li>
     );
 }

@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { PRIORITY_LABELS, PRIORITY_ORDER } from '@/components/priority-icon';
 import { StatusIcon } from '@/components/status-icon';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -14,14 +15,29 @@ import {
     suggestWorkspaceKey,
     validateWorkspaceKey,
 } from '@/features/automation/helpers';
+import { mutate } from '@/features/automation/mutation';
 import { LabelChip } from '@/features/automation/templates/template-parts';
 import type {
     TaskTemplate,
     WorkspaceRef,
     WorkspaceTemplate,
 } from '@/features/automation/types';
-import { useFakeMutation } from '@/features/prototype/use-fake-mutation';
 import { cn } from '@/lib/utils';
+import taskTemplateRoutes from '@/routes/automation/templates/tasks';
+import workspaceTemplateRoutes from '@/routes/automation/templates/workspaces';
+
+/** Estimate rule shared with TaskTemplateRequest (0,5–999 jam). */
+export function estimateError(value: string): string | undefined {
+    if (value.trim() === '') {
+        return undefined;
+    }
+
+    const number = Number(value.replace(',', '.'));
+
+    return Number.isFinite(number) && number >= 0.5 && number <= 999
+        ? undefined
+        : 'Estimasi 0,5–999 jam.';
+}
 
 function Footer({
     onCancel,
@@ -44,49 +60,66 @@ function Footer({
                 disabled={processing}
                 className="h-12 md:h-11"
             >
-                {processing ? 'Membuat…' : label}
+                {processing ? 'Menyimpan…' : label}
             </Button>
         </>
     );
 }
 
-/** "Pakai template" for a task template: pick workspace, adjust title. */
+/**
+ * "Pakai template" for a task template: workspace (only where the person
+ * may create tasks; a workspace template stays in its workspace), title and
+ * due date — all sent to the server.
+ */
 export function UseTaskTemplate({
     template,
     workspaces,
     mobile,
     onOpenChange,
-    onUsed,
 }: {
     template: TaskTemplate;
     workspaces: WorkspaceRef[];
     mobile: boolean;
     onOpenChange: (open: boolean) => void;
-    onUsed: () => void;
 }) {
-    const [workspaceId, setWorkspaceId] = useState(workspaces[0]?.id ?? '');
+    const targets = workspaces.filter(
+        (w) =>
+            w.can_edit_tasks &&
+            (template.workspace_id === null || w.id === template.workspace_id),
+    );
+    const [workspaceId, setWorkspaceId] = useState(targets[0]?.id ?? '');
     const [title, setTitle] = useState(template.title);
     const [due, setDue] = useState('');
     const [submitted, setSubmitted] = useState(false);
-    const { processing, run } = useFakeMutation();
+    const [processing, setProcessing] = useState(false);
+    const [server, setServer] = useState<Record<string, string>>({});
     const titleError =
-        submitted && title.trim() === '' ? 'Isi judul tugas.' : undefined;
-    const workspace = workspaces.find((w) => w.id === workspaceId);
+        submitted && title.trim() === '' ? 'Isi judul tugas.' : server.title;
 
-    const submit = async () => {
+    const submit = () => {
         setSubmitted(true);
+        setServer({});
 
-        if (title.trim() === '') {
+        if (title.trim() === '' || workspaceId === '') {
             return;
         }
 
-        const ok = await run(onUsed, {
-            success: `Tugas ${workspace?.key ?? ''}-131 dibuat dari template "${template.name}"`,
-        });
-
-        if (ok) {
-            onOpenChange(false);
-        }
+        setProcessing(true);
+        mutate(
+            'post',
+            taskTemplateRoutes.apply.url(template.id),
+            {
+                workspace_id: workspaceId,
+                title: title.trim(),
+                due_date: due || null,
+            },
+            {
+                only: ['templates'],
+                onSuccess: () => onOpenChange(false),
+                onError: setServer,
+                onFinish: () => setProcessing(false),
+            },
+        );
     };
 
     return (
@@ -99,7 +132,7 @@ export function UseTaskTemplate({
             footer={
                 <Footer
                     onCancel={() => onOpenChange(false)}
-                    onSubmit={() => void submit()}
+                    onSubmit={submit}
                     processing={processing}
                     label="Buat tugas"
                 />
@@ -109,10 +142,16 @@ export function UseTaskTemplate({
                 label="Workspace"
                 value={workspaceId}
                 onChange={setWorkspaceId}
-                options={workspaces.map((w) => ({
+                options={targets.map((w) => ({
                     value: w.id,
                     label: `${w.key} · ${w.name}`,
                 }))}
+                error={
+                    server.workspace_id ??
+                    (submitted && workspaceId === ''
+                        ? 'Pilih workspace.'
+                        : undefined)
+                }
             />
             <TextField
                 label="Judul"
@@ -126,33 +165,47 @@ export function UseTaskTemplate({
                 type="date"
                 value={due}
                 onChange={setDue}
+                error={server.due_date}
             />
-            <div className="flex flex-col gap-2 rounded-lg bg-surface-2 p-4">
-                <p className="text-label text-text">Ikut dibuat</p>
-                <ul className="flex flex-col gap-1 text-[15px] text-text">
-                    {template.checklist.map((item) => (
-                        <li key={item} className="flex gap-2">
-                            <span
-                                aria-hidden
-                                className="mt-2 size-1.5 shrink-0 rounded-full bg-text-subtle"
-                            />
-                            {item}
-                        </li>
-                    ))}
-                </ul>
-                {template.labels.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                        {template.labels.map((label) => (
-                            <LabelChip key={label.id} label={label} />
+            {(template.checklist.length > 0 || template.labels.length > 0) && (
+                <div className="flex flex-col gap-2 rounded-lg bg-surface-2 p-4">
+                    <p className="text-label text-text">Ikut dibuat</p>
+                    <ul className="flex flex-col gap-1 text-[15px] text-text">
+                        {template.checklist.map((item, index) => (
+                            <li key={`${index}-${item}`} className="flex gap-2">
+                                <span
+                                    aria-hidden
+                                    className="mt-2 size-1.5 shrink-0 rounded-full bg-text-subtle"
+                                />
+                                <span className="min-w-0 break-words">
+                                    {item}
+                                </span>
+                            </li>
                         ))}
-                    </div>
-                )}
-            </div>
+                    </ul>
+                    {template.labels.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                            {template.labels.map((label) => (
+                                <LabelChip key={label.id} label={label} />
+                            ))}
+                        </div>
+                    )}
+                    {template.labels.length > 0 && (
+                        <p className="text-meta text-text-muted">
+                            Label dicocokkan dengan nama di workspace tujuan;
+                            yang belum ada dibuat bila Anda admin workspace.
+                        </p>
+                    )}
+                </div>
+            )}
         </FormSurface>
     );
 }
 
-/** "Pakai template" for a workspace template: name, key, visibility. */
+/**
+ * "Pakai template" for a workspace template: name, key, visibility. The
+ * workspace is created on the server and opened.
+ */
 export function UseWorkspaceTemplate({
     template,
     takenKeys,
@@ -160,6 +213,7 @@ export function UseWorkspaceTemplate({
     onOpenChange,
 }: {
     template: WorkspaceTemplate;
+    /** Keys the person can see (early feedback; the server checks all keys). */
     takenKeys: string[];
     mobile: boolean;
     onOpenChange: (open: boolean) => void;
@@ -171,16 +225,19 @@ export function UseWorkspaceTemplate({
         'private',
     );
     const [submitted, setSubmitted] = useState(false);
-    const { processing, run } = useFakeMutation();
+    const [processing, setProcessing] = useState(false);
+    const [server, setServer] = useState<Record<string, string>>({});
     const effectiveKey = keyEdited ? key : suggestWorkspaceKey(name);
     const nameError =
-        submitted && name.trim() === '' ? 'Isi nama workspace.' : undefined;
-    const keyError = submitted
-        ? (validateWorkspaceKey(effectiveKey, takenKeys) ?? undefined)
-        : undefined;
+        submitted && name.trim() === '' ? 'Isi nama workspace.' : server.name;
+    const keyError =
+        (submitted
+            ? (validateWorkspaceKey(effectiveKey, takenKeys) ?? undefined)
+            : undefined) ?? server.key;
 
-    const submit = async () => {
+    const submit = () => {
         setSubmitted(true);
+        setServer({});
 
         if (
             name.trim() === '' ||
@@ -189,13 +246,17 @@ export function UseWorkspaceTemplate({
             return;
         }
 
-        const ok = await run(() => undefined, {
-            success: `Workspace ${effectiveKey} dibuat dengan ${template.statuses.length} kolom`,
-        });
-
-        if (ok) {
-            onOpenChange(false);
-        }
+        setProcessing(true);
+        mutate(
+            'post',
+            workspaceTemplateRoutes.apply.url(template.id),
+            { name: name.trim(), key: effectiveKey, visibility },
+            {
+                onSuccess: () => onOpenChange(false),
+                onError: setServer,
+                onFinish: () => setProcessing(false),
+            },
+        );
     };
 
     return (
@@ -208,7 +269,7 @@ export function UseWorkspaceTemplate({
             footer={
                 <Footer
                     onCancel={() => onOpenChange(false)}
-                    onSubmit={() => void submit()}
+                    onSubmit={submit}
                     processing={processing}
                     label="Buat workspace"
                 />
@@ -274,74 +335,97 @@ export function UseWorkspaceTemplate({
     );
 }
 
-/** "Template baru" (task): name, title, checklist lines, estimate. */
+const COMPANY = 'perusahaan';
+
+/**
+ * "Template tugas baru": scope (all workspaces when allowed, or one
+ * workspace the person manages), name, default title, priority, checklist,
+ * labels and estimate.
+ */
 export function NewTaskTemplate({
     mobile,
+    workspaces,
+    canCreateCompanyTemplate,
     onOpenChange,
-    onCreated,
 }: {
     mobile: boolean;
+    workspaces: WorkspaceRef[];
+    canCreateCompanyTemplate: boolean;
     onOpenChange: (open: boolean) => void;
-    onCreated: (template: TaskTemplate) => void;
 }) {
+    const manageable = workspaces.filter((w) => w.can_manage);
+    const [scope, setScope] = useState(
+        canCreateCompanyTemplate ? COMPANY : (manageable[0]?.id ?? ''),
+    );
     const [name, setName] = useState('');
     const [title, setTitle] = useState('');
+    const [priority, setPriority] = useState('0');
     const [checklist, setChecklist] = useState('');
+    const [labels, setLabels] = useState('');
     const [estimate, setEstimate] = useState('');
     const [submitted, setSubmitted] = useState(false);
-    const { processing, run } = useFakeMutation();
+    const [processing, setProcessing] = useState(false);
+    const [server, setServer] = useState<Record<string, string>>({});
     const checklistId = useId();
     const items = checklist
         .split('\n')
         .map((line) => line.trim())
         .filter(Boolean);
-    const estimateNumber = estimate === '' ? null : Number(estimate);
-    const errors = submitted
-        ? {
-              name: name.trim() === '' ? 'Beri nama template.' : undefined,
-              title:
-                  title.trim() === '' ? 'Isi judul tugas bawaan.' : undefined,
-              estimate:
-                  estimateNumber !== null &&
-                  (!Number.isFinite(estimateNumber) ||
-                      estimateNumber <= 0 ||
-                      estimateNumber > 999)
-                      ? 'Estimasi 0,5–999 jam.'
-                      : undefined,
-          }
-        : {};
+    const labelNames = [
+        ...new Set(
+            labels
+                .split(',')
+                .map((label) => label.trim())
+                .filter(Boolean),
+        ),
+    ];
+    const local = {
+        name: name.trim() === '' ? 'Beri nama template.' : undefined,
+        title: title.trim() === '' ? 'Isi judul tugas bawaan.' : undefined,
+        estimate_hours: estimateError(estimate),
+    };
+    const errors: Partial<typeof local> = submitted ? local : {};
+    const checklistError = Object.entries(server).find(([key]) =>
+        key.startsWith('checklist'),
+    )?.[1];
+    const labelsError = Object.entries(server).find(([key]) =>
+        key.startsWith('labels'),
+    )?.[1];
 
-    const submit = async () => {
+    const submit = () => {
         setSubmitted(true);
+        setServer({});
 
-        if (
-            name.trim() === '' ||
-            title.trim() === '' ||
-            (estimateNumber !== null &&
-                (estimateNumber <= 0 || estimateNumber > 999))
-        ) {
+        if (Object.values(local).some(Boolean) || scope === '') {
             return;
         }
 
-        const ok = await run(
-            () =>
-                onCreated({
-                    id: `new-${Date.now()}`,
-                    name: name.trim(),
-                    description: 'Template buatan Anda.',
-                    title: title.trim(),
-                    priority: 0,
-                    estimate_hours: estimateNumber,
-                    checklist: items,
-                    labels: [],
-                    used_count: 0,
-                }),
-            { success: 'Template disimpan' },
+        setProcessing(true);
+        mutate(
+            'post',
+            taskTemplateRoutes.store.url(),
+            {
+                workspace_id: scope === COMPANY ? null : scope,
+                name: name.trim(),
+                title: title.trim(),
+                priority: Number(priority),
+                estimate_hours:
+                    estimate.trim() === ''
+                        ? null
+                        : Number(estimate.replace(',', '.')),
+                checklist: items,
+                labels: labelNames.map((label) => ({
+                    name: label,
+                    color: 'gray',
+                })),
+            },
+            {
+                only: ['templates'],
+                onSuccess: () => onOpenChange(false),
+                onError: setServer,
+                onFinish: () => setProcessing(false),
+            },
         );
-
-        if (ok) {
-            onOpenChange(false);
-        }
     };
 
     return (
@@ -349,28 +433,55 @@ export function NewTaskTemplate({
             open
             onOpenChange={onOpenChange}
             mobile={mobile}
+            wide
             title="Template tugas baru"
             footer={
                 <Footer
                     onCancel={() => onOpenChange(false)}
-                    onSubmit={() => void submit()}
+                    onSubmit={submit}
                     processing={processing}
                     label="Simpan template"
                 />
             }
         >
-            <TextField
-                label="Nama template"
-                value={name}
-                onChange={setName}
-                error={errors.name}
+            <SelectField
+                label="Berlaku untuk"
+                value={scope}
+                onChange={setScope}
+                options={[
+                    ...(canCreateCompanyTemplate
+                        ? [{ value: COMPANY, label: 'Semua workspace' }]
+                        : []),
+                    ...manageable.map((w) => ({
+                        value: w.id,
+                        label: `Hanya ${w.key} · ${w.name}`,
+                    })),
+                ]}
+                error={server.workspace_id}
             />
+            <div className="grid gap-4 sm:grid-cols-2">
+                <TextField
+                    label="Nama template"
+                    value={name}
+                    onChange={setName}
+                    error={errors.name ?? server.name}
+                />
+                <SelectField
+                    label="Prioritas"
+                    value={priority}
+                    onChange={setPriority}
+                    options={PRIORITY_ORDER.map((value) => ({
+                        value: String(value),
+                        label: PRIORITY_LABELS[value],
+                    }))}
+                />
+            </div>
             <TextField
                 label="Judul tugas bawaan"
                 value={title}
                 placeholder="Mis. Kunjungan [klien]"
                 onChange={setTitle}
-                error={errors.title}
+                error={errors.title ?? server.title}
             />
             <div className="flex flex-col gap-1.5">
                 <Label htmlFor={checklistId}>Checklist (satu per baris)</Label>
@@ -379,22 +490,41 @@ export function NewTaskTemplate({
                     value={checklist}
                     rows={4}
                     onChange={(event) => setChecklist(event.target.value)}
+                    aria-invalid={checklistError ? true : undefined}
                     className={cn(FIELD_SIZE, 'h-auto min-h-28 md:h-auto')}
                 />
-                <p className="text-meta text-text-muted tnum">
-                    {items.length} butir
+                <p
+                    className={cn(
+                        'text-meta tnum',
+                        checklistError
+                            ? 'font-semibold text-danger'
+                            : 'text-text-muted',
+                    )}
+                    role={checklistError ? 'alert' : undefined}
+                >
+                    {checklistError ?? `${items.length} butir`}
                 </p>
             </div>
-            <TextField
-                label="Estimasi (jam, opsional)"
-                type="number"
-                min={0.5}
-                max={999}
-                value={estimate}
-                onChange={setEstimate}
-                error={errors.estimate}
-                inputClassName="w-32"
-            />
+            <div className="grid gap-4 sm:grid-cols-[1fr_160px]">
+                <TextField
+                    label="Label (opsional, pisahkan koma)"
+                    value={labels}
+                    placeholder="Mis. Klien, Lapangan"
+                    onChange={setLabels}
+                    error={labelsError}
+                    hint="Dicocokkan dengan nama label di workspace tujuan."
+                />
+                <TextField
+                    label="Estimasi (jam)"
+                    type="number"
+                    min={0.5}
+                    max={999}
+                    value={estimate}
+                    onChange={setEstimate}
+                    error={errors.estimate_hours ?? server.estimate_hours}
+                    hint="0,5–999 jam"
+                />
+            </div>
         </FormSurface>
     );
 }

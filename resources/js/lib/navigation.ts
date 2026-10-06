@@ -21,6 +21,7 @@ import {
     SquareCheckBig,
     Users,
     WalletCards,
+    Workflow,
 } from 'lucide-react';
 import type { RoleName } from '@/lib/roles';
 import { hasAnyRole } from '@/lib/roles';
@@ -176,6 +177,27 @@ export const chatNavItem: AppNavItem = {
     icon: MessagesSquare,
     matchPrefix: true,
     badge: 'chat',
+};
+
+/**
+ * "Otomasi" (/otomasi, F2-4): rules, recurring tasks and templates, shown
+ * to every employee while the `automation` flag is on (shared prop
+ * `features.automation`). Everyone may add recurring tasks and use
+ * templates; rules are managed by workspace owners/admins (Policy).
+ */
+export const automationNavItem: AppNavItem = {
+    title: 'Otomasi',
+    href: '/otomasi',
+    icon: Workflow,
+    matchPrefix: true,
+};
+
+/** "Kinerja saya" (/kinerja, F2-4), behind the same flag. */
+export const performanceNavItem: AppNavItem = {
+    title: 'Kinerja saya',
+    href: '/kinerja',
+    icon: BarChart3,
+    matchPrefix: true,
 };
 
 /**
