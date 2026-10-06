@@ -2,9 +2,9 @@
 
 use App\Domain\Attendance\Jobs\PurgeExpiredSelfiesJob;
 use App\Domain\Attendance\Jobs\SendCheckInReminders;
-use App\Domain\Okr\Jobs\SendKeyResultCheckinReminders;
 use App\Domain\Automation\Jobs\CreateRecurringTasks;
 use App\Domain\Automation\Jobs\RunOverdueAutomations;
+use App\Domain\Okr\Jobs\SendKeyResultCheckinReminders;
 use App\Domain\Projects\Jobs\SendProjectUpdateReminders;
 use App\Domain\Projects\Jobs\TakeProjectProgressSnapshots;
 use Illuminate\Foundation\Inspiring;

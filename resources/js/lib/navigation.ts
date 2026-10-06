@@ -202,6 +202,10 @@ export const okrNavItem: AppNavItem = {
     title: 'OKR',
     href: '/okr',
     icon: Target,
+    matchPrefix: true,
+};
+
+/**
  * "Otomasi" (/otomasi, F2-4): rules, recurring tasks and templates, shown
  * to every employee while the `automation` flag is on (shared prop
  * `features.automation`). Everyone may add recurring tasks and use
