@@ -68,6 +68,10 @@ jobs:
 
       - name: npm test (Vitest)
         run: npm test
+        env:
+          # Vitest boots Vite in serve mode; laravel-vite-plugin refuses that
+          # when CI=true unless told it is intentional.
+          LARAVEL_BYPASS_ENV_CHECK: '1'
 
   test:
     name: Pest
