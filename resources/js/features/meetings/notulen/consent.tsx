@@ -7,6 +7,21 @@ import { cn } from '@/lib/utils';
 import { notulenApi } from './api';
 import type { NotulenSummary } from './types';
 
+/**
+ * What happens to the audio, all from the contract props (lead decision):
+ * audio deleted after transcription · transcript N days, participants only
+ * · summary processed by <provider> outside Indonesia (when it is).
+ */
+export function consentLines(notulen: NotulenSummary): string[] {
+    return [
+        'Suara Anda ditranskrip setelah rapat; audio dihapus setelah transkripsi.',
+        `Transkrip disimpan ${notulen.retention_days} hari, hanya untuk peserta.`,
+        ...(notulen.llm.enabled && notulen.llm.outside_indonesia
+            ? [`Ringkasan diproses ${notulen.llm.provider} di luar Indonesia.`]
+            : []),
+    ];
+}
+
 /** Auto minutes are on for this meeting (consent card / chip shown). */
 export function autoMinutesOn(notulen: NotulenSummary | null | undefined) {
     return Boolean(notulen?.available && notulen.auto_minutes);
@@ -34,7 +49,7 @@ export function useConsent(
         setSaving(true);
 
         try {
-            const response = await notulenApi.consent(notulen.links, next);
+            const response = await notulenApi.setOptOut(notulen, next);
             setOptedOut(response.opted_out);
             onAttributes?.(response.attributes);
             toast.success(
@@ -91,12 +106,7 @@ export function ConsentCard({
                         Notulen otomatis aktif
                     </h2>
                     <p className="text-[12px] leading-[17px] text-text-muted">
-                        Suara Anda ditranskrip setelah rapat, audio langsung
-                        dihapus. Transkrip hanya untuk peserta,{' '}
-                        {notulen.retention_days} hari.
-                        {notulen.llm.enabled &&
-                            notulen.llm.outside_indonesia &&
-                            ` Ringkasan dibuat AI (${notulen.llm.provider ?? 'penyedia luar'}, server di luar Indonesia).`}
+                        {consentLines(notulen).join(' ')}
                     </p>
                 </div>
             </div>

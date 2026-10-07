@@ -1,11 +1,9 @@
 /**
- * Notulen otomatis (Video RuangKerja) — shapes of docs/fitur/notulen-
- * otomatis-kontrak.md (agent notulen): status + consent + AI draft
- * (`NotulenSummary`, prop `notulen` and GET …/status), transcript segments
- * (GET …/transkrip, audited, never in props) and the review page props.
- * Times are ISO strings (UTC), dates office "YYYY-MM-DD".
+ * Notulen otomatis — data shapes of docs/fitur/notulen-otomatis-kontrak.md
+ * (NotulenSummary §2.1, TranscriptSegments §2.2, page props §2.3). Times are
+ * ISO strings (UTC); `start_ms` counts from `transcript.started_at`.
  */
-import type { Person, PersonId, WorkspaceRef } from '../types';
+import type { Person, PersonId } from '../types';
 
 export type TranscriptStatus =
     | 'recording'
@@ -22,25 +20,20 @@ export type DraftStatus =
     | 'inserted'
     | 'discarded';
 
-export type TranscriptSpeaker = {
+export type Speaker = {
     identity: string;
     user_id: PersonId | null;
     name: string;
     seconds: number;
 };
 
-/** Index of a transcript line (`segments[].i`) + its start. */
 export type SourceRef = { i: number; start_ms: number };
 
 export type DraftPoint = { teks: string; sumber: SourceRef[] };
 
-export type DraftDecision = {
-    teks: string;
-    agenda: string | null;
-    sumber: SourceRef[];
-};
+export type DraftDecision = DraftPoint & { agenda: string | null };
 
-export type DraftFollowUp = {
+export type DraftAction = {
     id: string;
     judul: string;
     agenda: string | null;
@@ -54,6 +47,7 @@ export type DraftFollowUp = {
 
 export type NotulenDraft = {
     status: DraftStatus;
+    status_label: string;
     error: string | null;
     model: string | null;
     generated_at: string | null;
@@ -62,38 +56,25 @@ export type NotulenDraft = {
     ringkasan: string;
     agenda: { judul: string; poin: DraftPoint[] }[];
     keputusan: DraftDecision[];
-    tindak_lanjut: DraftFollowUp[];
+    tindak_lanjut: DraftAction[];
     perlu_dicek: string[];
 };
 
-export type NotulenTranscript = {
+export type TranscriptInfo = {
     id: string;
     status: TranscriptStatus;
     status_label: string;
     error: string | null;
-    language: string;
-    model: string;
-    duration_seconds: number;
+    language: string | null;
+    model: string | null;
+    duration_seconds: number | null;
     segment_count: number;
-    speakers: TranscriptSpeaker[];
-    started_at: string;
-    updated_at: string;
+    speakers: Speaker[];
+    started_at: string | null;
+    updated_at: string | null;
     purge_after: string | null;
 };
 
-export type NotulenLinks = {
-    page: string;
-    status: string;
-    transcript: string;
-    settings: string;
-    consent: string;
-    insert: string;
-    discard: string;
-    resummarize: string;
-    minutes: string;
-};
-
-/** contract §2.1 */
 export type NotulenSummary = {
     available: boolean;
     auto_minutes: boolean;
@@ -102,14 +83,22 @@ export type NotulenSummary = {
     can_view_transcript: boolean;
     notice: string | null;
     consent: { opted_out: boolean; can_change: boolean; attribute: string };
-    llm: {
-        enabled: boolean;
-        provider: string | null;
-        outside_indonesia: boolean;
-    };
+    llm: { enabled: boolean; provider: string; outside_indonesia: boolean };
     retention_days: number;
-    links: NotulenLinks;
-    transcript: NotulenTranscript | null;
+    links: {
+        page: string;
+        status: string;
+        transcript: string;
+        settings: string;
+        consent: string;
+        insert: string;
+        discard: string;
+        resummarize: string;
+        /** `{id}` = suggestion id ("tl-1"). */
+        task: string;
+        minutes: string;
+    };
+    transcript: TranscriptInfo | null;
     draft: NotulenDraft | null;
 };
 
@@ -123,17 +112,15 @@ export type TranscriptSegment = {
     text: string;
 };
 
-/** contract §2.2 — GET …/transkrip */
 export type TranscriptSegments = {
     transcript_id: string;
     status: TranscriptStatus;
-    language: string;
-    duration_seconds: number;
-    speakers: TranscriptSpeaker[];
+    language: string | null;
+    duration_seconds: number | null;
+    speakers: Speaker[];
     segments: TranscriptSegment[];
 };
 
-/** contract §2.3 — page meetings/notulen-otomatis */
 export type NotulenPageProps = {
     meeting: {
         id: string;
@@ -144,9 +131,9 @@ export type NotulenPageProps = {
         href: string;
         minutes_href: string;
         agenda: string[];
-        workspace: WorkspaceRef | null;
+        workspace: { id: string; key: string; name: string } | null;
     };
     people: Person[];
     notulen: NotulenSummary;
-    workspaces: WorkspaceRef[];
+    workspaces: { id: string; key: string; name: string }[];
 };
