@@ -70,3 +70,27 @@ it('does not touch accounts that sign in with their own password', function () {
     $this->assertAuthenticatedAs($this->employee);
     expect($this->employee->refresh()->password_change_required)->toBeFalse();
 });
+
+it('audits every reveal of the default password without its value (R-11)', function () {
+    $this->actingAs($this->hr)
+        ->getJson(route('admin.employees.password.default', $this->employee))
+        ->assertOk()
+        ->assertJsonPath('password', AUDIT_DEFAULT_PASSWORD);
+    $this->actingAs($this->hr)->getJson(route('admin.employees.password.default', $this->employee))->assertOk();
+
+    $rows = AuditLog::query()->where('action', 'user.default_password_revealed')->get();
+    expect($rows)->toHaveCount(2)
+        ->and($rows->first()->user_id)->toBe($this->hr->id)
+        ->and($rows->first()->auditable_id)->toBe($this->employee->id)
+        ->and(AuditLog::query()->get()->toJson())->not->toContain(AUDIT_DEFAULT_PASSWORD);
+});
+
+it('does not audit refused reveals', function () {
+    $other = User::factory()->forCompany($this->company)->withRole(Role::Anggota)->create();
+
+    $this->actingAs($other)->getJson(route('admin.employees.password.default', $this->employee))->assertForbidden();
+    config(['auth.employee_default_password' => null]);
+    $this->actingAs($this->hr)->getJson(route('admin.employees.password.default', $this->employee))->assertNotFound();
+
+    expect(AuditLog::query()->where('action', 'user.default_password_revealed')->count())->toBe(0);
+});
