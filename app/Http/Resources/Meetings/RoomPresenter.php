@@ -69,7 +69,7 @@ final class RoomPresenter
         // edits the text; otherwise the minute taker / organizer, last write wins.
         $collab = MinutesCollab::enabled();
         $canWrite = $this->policy->editMinutes($viewer, $meeting, $minutes)->allowed();
-        $canEdit = $collab ? $this->collab->canEdit($viewer, $meeting, $minutes) : $canWrite;
+        $canEdit = $collab ? $this->collab->canEdit($viewer, $meeting, $minutes, $occurrence->date) : $canWrite;
         $can = [
             'edit_minutes' => $canEdit,
             'choose_notes_source' => $canWrite && $minutes?->notes_source === null,
