@@ -6,6 +6,9 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 
 ## [Belum dirilis]
 
+### Ditambahkan (7 Okt 2026)
+- **Unduh PNG struktur organisasi** (`/organisasi/struktur`): bagan lengkap sesuai pencarian, header perusahaan + tanggal, selalu tema terang, 2x dengan batas piksel kanvas (peringatan bila diturunkan), font tertanam, `struktur-organisasi-YYYY-MM-DD.png`. Desktop: tombol di header tampilan Bagan; ponsel: menu "…" app bar. Dibuat di peramban dengan paket baru `modern-screenshot` (lazy). `docs/fitur/ekspor-struktur-organisasi.md`.
+
 ### Ditambahkan (6 Okt 2026, keputusan pemilik)
 - **Login email + kata sandi untuk semua karyawan** (login Google ditahan): HR bisa mengatur sandi karyawan (opsi wajib ganti), karyawan ganti sandi sendiri di Pengaturan › Keamanan, **Lupa kata sandi** menunggu persetujuan HR lalu halaman tunggu otomatis pindah ke isi sandi baru (anti-enumerasi, token sekali pakai). Super Admin tetap wajib 2FA. `docs/fitur/akun-kata-sandi.md`.
 - **Staf**: saldo cuti tidak dikirim/ditampilkan untuk staf; struktur organisasi 404 untuk staf; **cuti & lembur dikunci** (`leave_types.locked_reason`, HR bisa membuka); **pengajuan barang** (kategori `procurement`, alur atasan → Direksi); workspace dikelompokkan Pribadi · Divisi & tim · Proyek dengan chip filter berwarna (halaman, Menu, Dock/Rail).

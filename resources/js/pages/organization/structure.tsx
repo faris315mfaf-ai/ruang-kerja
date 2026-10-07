@@ -5,6 +5,11 @@ import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SegmentedTabs } from '@/components/ui/tabs';
+import {
+    ChartExportButton,
+    StructureAppBarActions,
+    useChartExport,
+} from '@/features/organization/chart/chart-export';
 import { OrgChartDesktop } from '@/features/organization/chart/org-chart-desktop';
 import { OrgTreeList } from '@/features/organization/chart/org-tree-list';
 import type { OrgChart } from '@/features/organization/chart/types';
@@ -102,6 +107,14 @@ export default function Structure({ chart, can }: Props) {
     ].join(' · ');
 
     const empty = isChartEmpty(chart);
+    const exportable = !empty && !isChartEmpty(filtered);
+    // PNG of the whole chart as filtered by the search (Bagan view; on phones
+    // from the app bar menu).
+    const chartExport = useChartExport({
+        chart: filtered,
+        query: deferredQuery,
+        enabled: exportable,
+    });
 
     const searchBox = (
         <div className="relative w-full md:w-72">
@@ -198,6 +211,13 @@ export default function Structure({ chart, can }: Props) {
                                         { value: 'list', label: 'Daftar' },
                                     ]}
                                 />
+                                {view === 'chart' && (
+                                    <ChartExportButton
+                                        busy={chartExport.busy}
+                                        disabled={!exportable}
+                                        onClick={() => void chartExport.run()}
+                                    />
+                                )}
                             </div>
                         )}
                     </header>
@@ -223,4 +243,5 @@ Structure.layout = {
     ],
     title: 'Struktur organisasi',
     back: '/menu',
+    appBarActions: <StructureAppBarActions />,
 };

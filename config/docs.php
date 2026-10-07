@@ -58,6 +58,7 @@ return [
         'fitur-akun-kata-sandi' => ['path' => 'docs/fitur/akun-kata-sandi.md', 'title' => 'Akun & kata sandi', 'group' => 'features'],
         'fitur-hiring' => ['path' => 'docs/fitur/hiring.md', 'title' => 'Hiring (rekrutmen)', 'group' => 'features'],
         'fitur-dashboard-pimpinan' => ['path' => 'docs/fitur/dashboard-pimpinan.md', 'title' => 'Dashboard pimpinan & Absensi', 'group' => 'features'],
+        'fitur-ekspor-struktur' => ['path' => 'docs/fitur/ekspor-struktur-organisasi.md', 'title' => 'Ekspor PNG struktur organisasi', 'group' => 'features'],
         'architecture' => ['path' => 'docs/ARCHITECTURE.md', 'title' => 'Arsitektur', 'group' => 'technical'],
         'database' => ['path' => 'docs/DATABASE.md', 'title' => 'Database', 'group' => 'technical'],
         'asvs-l1' => ['path' => 'docs/security/ASVS-L1.md', 'title' => 'OWASP ASVS L1', 'group' => 'security'],
