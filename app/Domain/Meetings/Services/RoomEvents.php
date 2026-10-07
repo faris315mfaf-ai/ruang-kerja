@@ -99,6 +99,23 @@ final class RoomEvents
     }
 
     /**
+     * "Izinkan masuk lagi": the person may get a video token again and edit the
+     * collaborative minutes; their client re-fetches both tokens (audit B-08).
+     */
+    public function participantReadmitted(Occurrence $occurrence, string $userId, string $by): void
+    {
+        if (! $this->isVideo($occurrence->meeting)) {
+            return;
+        }
+
+        $this->send($occurrence->meeting->id, 'participant.readmitted', [
+            'occurrence_date' => $occurrence->date,
+            'user_id' => $userId,
+            'readmitted_by' => $by,
+        ]);
+    }
+
+    /**
      * "X sedang menyunting" (minutes without collaboration); null = released.
      *
      * @param  array{user_id: string, name: string, since: string, expires_at: string}|null  $holder

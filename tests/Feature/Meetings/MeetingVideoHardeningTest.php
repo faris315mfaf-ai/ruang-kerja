@@ -1,10 +1,12 @@
 <?php
 
 use App\Domain\Meetings\Data\Occurrence;
+use App\Domain\Meetings\Events\MeetingRoomBroadcast;
 use App\Domain\Meetings\Jobs\RemoveUserFromVideoRooms;
 use App\Domain\Meetings\Services\LiveKitRoomService;
 use App\Domain\Meetings\Services\LiveKitTokens;
 use App\Domain\Meetings\Services\MeetingOccurrences;
+use App\Domain\Meetings\Services\MinutesStore;
 use App\Domain\Meetings\Services\VideoRooms;
 use App\Domain\Organization\Actions\DeactivateEmployee;
 use App\Domain\Organization\Enums\Role;
@@ -12,8 +14,10 @@ use App\Domain\Organization\Enums\UserStatus;
 use App\Models\AuditLog;
 use App\Models\Meeting;
 use App\Models\MeetingAttendance;
+use App\Models\MeetingMinutes;
 use App\Models\MeetingVideoRemoval;
 use App\Models\User;
+use App\Providers\MeetingsServiceProvider;
 use Carbon\CarbonImmutable;
 use Database\Seeders\RoleSeeder;
 use Firebase\JWT\JWT;
@@ -22,6 +26,7 @@ use Illuminate\Foundation\Http\Middleware\TrimStrings;
 use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
@@ -118,8 +123,11 @@ it('gives no token grant to change one\'s own name or metadata; the hand is rais
     $this->actingAs($outsider)->postJson("{$this->base}/video/tangan", ['raised' => true])->assertNotFound();
 
     // Whitelisted own attributes (section presence, opt-out mirror); never a name or anything else.
-    $this->actingAs($this->rizky)->postJson("{$this->base}/video/atribut", ['attributes' => ['rk_minutes_at' => 'section-2', 'rk_notulen_optout' => '1']])
-        ->assertOk()->assertJsonPath('attributes', ['rk_minutes_at' => 'section-2', 'rk_notulen_optout' => '1']);
+    $this->actingAs($this->rizky)->postJson("{$this->base}/video/atribut", ['attributes' => ['rk_minutes_at' => 'section-2']])
+        ->assertOk()->assertJsonPath('attributes', ['rk_minutes_at' => 'section-2']);
+    // The transcription opt-out stays server-side (an attribute would be public to the room).
+    $this->actingAs($this->rizky)->postJson("{$this->base}/video/atribut", ['attributes' => ['rk_notulen_optout' => '1']])
+        ->assertUnprocessable()->assertJsonPath('errors.attributes.0', 'Atribut rk_notulen_optout tidak diizinkan.');
     $this->actingAs($this->rizky)->postJson("{$this->base}/video/atribut", ['attributes' => ['name' => 'Direktur Utama']])->assertUnprocessable();
     $this->actingAs($this->rizky)->postJson("{$this->base}/video/atribut", ['attributes' => ['hand' => 'abc']])->assertUnprocessable();
     $this->actingAs($outsider)->postJson("{$this->base}/video/atribut", ['attributes' => ['hand' => '']])->assertNotFound();
@@ -210,4 +218,86 @@ it('computes the detail prop only on full visits, not on the video poll', functi
 function occurrenceOfHardening(Meeting $meeting): Occurrence
 {
     return app(MeetingOccurrences::class)->resolve($meeting->fresh() ?? $meeting, null);
+}
+
+describe('audit phase 2', function () {
+    it('limits the notulen machine endpoints before decoding and skips input cleaning there (B-05)', function () {
+        config(['notulen.transcriber.max_body_bytes' => 2048]);
+        $big = json_encode(['pad' => str_repeat('x', 70 * 1024)], JSON_THROW_ON_ERROR);
+        $medium = json_encode(['pad' => str_repeat('x', 4096)], JSON_THROW_ON_ERROR);
+
+        $this->call('POST', '/api/notulen/livekit', [], [], [], ['CONTENT_TYPE' => 'application/webhook+json'], $big)->assertStatus(413);
+        $this->call('POST', '/api/notulen/transcript', [], [], [], ['CONTENT_TYPE' => 'application/json'], $medium)->assertStatus(413);
+
+        foreach (MeetingsServiceProvider::MACHINE_PATHS as $path) {
+            $seen = null;
+            app(TrimStrings::class)->handle(
+                Request::create('/'.$path, 'POST', [], [], [], ['CONTENT_TYPE' => 'application/json'], '{"a":"  x  "}'),
+                function (Request $passed) use (&$seen) {
+                    $seen = $passed->json('a');
+
+                    return response('');
+                },
+            );
+            expect($seen)->toBe('  x  ');
+        }
+    });
+
+    it('creates the minutes row only for editors when issuing a collab token (B-06)', function () {
+        config(['features.notes' => true, 'collab.secret' => str_repeat('s', 40)]);
+        $observer = User::factory()->withRole(Role::Direksi)->create();
+        $this->meeting->forceFill(['leadership' => true])->save();
+
+        $this->actingAs($observer)->getJson("{$this->base}/notulen/kolaborasi")->assertNotFound();
+        expect(MeetingMinutes::query()->count())->toBe(0);
+
+        $this->actingAs($this->rizky)->getJson("{$this->base}/notulen/kolaborasi")->assertOk()->assertJsonPath('can_edit', true);
+        expect(MeetingMinutes::query()->count())->toBe(1);
+        $this->actingAs($observer)->getJson("{$this->base}/notulen/kolaborasi")->assertOk()->assertJsonPath('can_edit', false);
+    });
+
+    it('disconnects people taken off the invitation from the room and the collab document (B-07)', function () {
+        config(['features.notes' => true, 'collab.secret' => str_repeat('s', 40), 'collab.url' => 'http://collab.test']);
+        Http::fake(['livekit.internal:7880/*' => Http::response([]), 'collab.test/*' => Http::response(['loaded' => true])]);
+        $minutes = DB::transaction(fn () => app(MinutesStore::class)->open(occurrenceOfHardening($this->meeting)));
+        MeetingAttendance::query()->create([
+            'meeting_id' => $this->meeting->id, 'occurrence_date' => '2026-10-05', 'user_id' => $this->rizky->id,
+            'room' => $this->room, 'participant_sid' => 'PA_r', 'joined_at' => now()->subMinutes(3),
+        ]);
+        $other = User::factory()->withRole(Role::Anggota)->create();
+
+        $this->actingAs($this->dimas)->patch($this->base, meetingPayloadForHardening($this->meeting, [$other->id]))->assertRedirect();
+
+        Http::assertSent(fn (ClientRequest $request) => str_ends_with($request->url(), '/RemoveParticipant') && $request['identity'] === $this->rizky->id);
+        Http::assertSent(fn (ClientRequest $request) => str_ends_with($request->url(), '/internal/documents/meeting-minutes.'.$minutes->id.'/reconnect'));
+        $this->actingAs($this->rizky)->postJson("{$this->base}/video/token")->assertNotFound();
+    });
+
+    it('broadcasts the re-admission and reconnects the collab document (B-08)', function () {
+        config(['features.notes' => true, 'collab.secret' => str_repeat('s', 40), 'collab.url' => 'http://collab.test']);
+        Http::fake(['livekit.internal:7880/*' => Http::response([]), 'collab.test/*' => Http::response(['loaded' => true])]);
+        Event::fake([MeetingRoomBroadcast::class]);
+        $minutes = DB::transaction(fn () => app(MinutesStore::class)->open(occurrenceOfHardening($this->meeting)));
+
+        $this->actingAs($this->dimas)->deleteJson("{$this->base}/video/peserta/{$this->rizky->id}")->assertOk();
+        $this->actingAs($this->dimas)->deleteJson("{$this->base}/video/peserta/{$this->rizky->id}/larangan")->assertOk();
+
+        Event::assertDispatched(MeetingRoomBroadcast::class, fn (MeetingRoomBroadcast $event) => $event->name === 'participant.readmitted'
+            && $event->payload === ['occurrence_date' => '2026-10-05', 'user_id' => $this->rizky->id, 'readmitted_by' => $this->dimas->id]);
+        $reconnects = fn (): int => Http::recorded(fn (ClientRequest $request) => str_ends_with($request->url(), '/internal/documents/meeting-minutes.'.$minutes->id.'/reconnect'))->count();
+        expect($reconnects())->toBe(2); // once on removal (read-only), once on re-admission (edit again)
+    });
+});
+
+/**
+ * @param  list<string>  $participants
+ * @return array<string, mixed>
+ */
+function meetingPayloadForHardening(Meeting $meeting, array $participants): array
+{
+    return [
+        'title' => $meeting->title, 'date' => '2026-10-05', 'start' => '10:00', 'duration' => 60, 'platform' => 'video',
+        'join_url' => null, 'location' => null, 'participant_ids' => $participants, 'guest_emails' => [],
+        'agenda' => ['Pembukaan'], 'recurrence' => 'none', 'recurrence_until' => null, 'reminders' => [15], 'minute_taker_id' => null, 'workspace_id' => null,
+    ];
 }

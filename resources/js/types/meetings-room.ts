@@ -6,6 +6,7 @@
  * MeetingRoomController and App\Http\Resources\Meetings\RoomPresenter.
  * Times are ISO strings (UTC), dates are office dates "YYYY-MM-DD".
  */
+import type { NotulenSummary } from '@/features/meetings/notulen/types';
 import type {
     Minutes,
     Person,
@@ -240,12 +241,10 @@ export type RaiseHandResponse = { hand: string };
 /**
  * POST /rapat/{id}/video/atribut { attributes } → { attributes }: own LiveKit
  * attributes through the server (tokens cannot set them, audit R-05). Keys:
- * hand (ms or ""), rk_minutes_at (section key, ≤ 64 chars [A-Za-z0-9_.:-]),
- * rk_notulen_optout ("0" | "1"); "" removes. Other keys → 422.
+ * hand (ms or ""), rk_minutes_at (section key, ≤ 64 chars [A-Za-z0-9_.:-]);
+ * "" removes. Other keys → 422 (the transcription opt-out is never an attribute).
  */
-export type OwnAttributes = Partial<
-    Record<'hand' | 'rk_minutes_at' | 'rk_notulen_optout', string>
->;
+export type OwnAttributes = Partial<Record<'hand' | 'rk_minutes_at', string>>;
 
 /** GET /rapat/{id}/video/kehadiran. */
 export type RoomAttendance = {
@@ -346,12 +345,12 @@ export type RoomProps = {
 
 /**
  * Props of pages meetings/join and meetings/room. `notulen` = NotulenSummary
- * of docs/fitur/notulen-otomatis-kontrak.md §2.1 (null until that backend
- * is merged); typed loosely here, the notulen agent owns its shape.
+ * of docs/fitur/notulen-otomatis-kontrak.md §2.1 (shape owned by the notulen
+ * agent); null for meetings that are not on the video platform.
  */
 export type MeetingRoomPageProps = {
     room: RoomProps;
-    notulen: Record<string, unknown> | null;
+    notulen: NotulenSummary | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -379,6 +378,12 @@ export type MeetingRoomEvents = {
         saved_at: string | null;
         updated_by: PersonId | null;
         status: 'draft' | 'final';
+    };
+    /** Re-admitted after a removal: that person re-fetches the video and collab tokens. */
+    'participant.readmitted': {
+        occurrence_date: string;
+        user_id: PersonId;
+        readmitted_by: PersonId;
     };
     'minutes.editing': {
         occurrence_date: string;

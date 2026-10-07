@@ -87,7 +87,8 @@ class MinutesController extends Controller
 
     /**
      * GET /rapat/{meeting}/notulen/kolaborasi — token of the collaborative
-     * minutes document (MinutesCollab); 503 without collaboration.
+     * minutes document (MinutesCollab); 503 without collaboration. Creates
+     * the minutes row only for editors; viewers get 404 until it exists.
      */
     public function collabToken(OccurrenceRequest $request, Meeting $meeting, #[CurrentUser] User $user, MinutesCollab $collab): JsonResponse
     {
@@ -95,8 +96,15 @@ class MinutesController extends Controller
         abort_unless(MinutesCollab::enabled(), 503, 'Server kolaborasi belum diatur.');
 
         $occurrence = $this->occurrence($request, $meeting);
-        $minutes = DB::transaction(fn (): MeetingMinutes => $this->store->open($occurrence));
-        $canEdit = $collab->canEdit($user, $meeting, $minutes);
+        $minutes = $this->store->find($occurrence);
+        $canEdit = $collab->canEdit($user, $meeting, $minutes, $occurrence->date);
+
+        // Only editors start the minutes row; read-only viewers of minutes that do
+        // not exist yet get 404 (no side effect on GET, audit B-06).
+        if ($minutes === null) {
+            abort_unless($canEdit, 404, 'Notulen belum dimulai.');
+            $minutes = DB::transaction(fn (): MeetingMinutes => $this->store->open($occurrence));
+        }
 
         return response()->json([
             'document' => MinutesCollab::documentName($minutes),

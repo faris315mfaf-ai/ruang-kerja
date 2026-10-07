@@ -3,50 +3,30 @@
 namespace App\Domain\Meetings\Services;
 
 use App\Domain\Meetings\Data\Occurrence;
+use App\Domain\Meetings\Enums\MeetingPlatform;
+use App\Domain\Meetings\Transcripts\Queries\NotulenSummary;
 use App\Models\User;
-use Illuminate\Contracts\Support\Arrayable;
-use JsonSerializable;
 
 /**
- * Optional link to the automatic minutes backend (agent notulen,
- * docs/fitur/notulen-otomatis-kontrak.md §3): the `notulen` prop of the
- * pre-join and room pages is its NotulenSummary when that class exists in
- * this build, else null. Keeps the room working before that branch is
- * merged (and if it is ever removed).
+ * The `notulen` prop (automatic minutes summary, agent notulen,
+ * docs/fitur/notulen-otomatis-kontrak.md §2.1/§3) of the meeting detail,
+ * pre-join and room pages: NotulenSummary for video meetings, null for
+ * other platforms (no LiveKit room, nothing to transcribe).
  */
 final class NotulenBridge
 {
-    public const string SUMMARY_CLASS = 'App\\Domain\\Meetings\\Transcripts\\Queries\\NotulenSummary';
+    public function __construct(private readonly NotulenSummary $summary) {}
 
     /**
      * @return array<string, mixed>|null
      */
     public function summary(Occurrence $occurrence, User $viewer): ?array
     {
-        $class = self::SUMMARY_CLASS;
-
-        if (! class_exists($class)) {
+        if ($occurrence->meeting->platform !== MeetingPlatform::Video) {
             return null;
         }
 
-        $summary = app($class);
-
-        if (! is_object($summary) || ! method_exists($summary, 'for')) {
-            return null;
-        }
-
-        $result = $summary->for($occurrence, $viewer);
-
-        if ($result instanceof Arrayable) {
-            $result = $result->toArray();
-        } elseif ($result instanceof JsonSerializable) {
-            $result = $result->jsonSerialize();
-        }
-
-        /** @var array<string, mixed>|null $array */
-        $array = is_array($result) ? $result : null;
-
-        return $array;
+        return $this->summary->for($occurrence, $viewer);
     }
 
     /**

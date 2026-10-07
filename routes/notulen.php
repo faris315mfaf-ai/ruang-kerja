@@ -9,6 +9,7 @@ use App\Http\Middleware\EnsureFeatureEnabled;
 use App\Http\Middleware\EnsureTwoFactorForSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\LimitRequestBody;
 use App\Http\Middleware\RestrictCredentialRoutes;
 use App\Http\Middleware\RestrictKioskDevice;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -60,11 +61,11 @@ $serverToServer = [
 ];
 
 Route::post('api/notulen/transcript', TranscriptIngestController::class)
-    ->middleware([EnsureFeatureEnabled::class.':meetings', 'throttle:120,1'])
+    ->middleware([LimitRequestBody::class.':config:notulen.transcriber.max_body_bytes', EnsureFeatureEnabled::class.':meetings', 'throttle:120,1'])
     ->withoutMiddleware($serverToServer)
     ->name('meetings.notulen.ingest');
 
 Route::post('api/notulen/livekit', NotulenLiveKitWebhookController::class)
-    ->middleware([EnsureFeatureEnabled::class.':meetings', 'throttle:600,1'])
+    ->middleware([LimitRequestBody::class.':'.NotulenLiveKitWebhookController::MAX_BODY_BYTES, EnsureFeatureEnabled::class.':meetings', 'throttle:600,1'])
     ->withoutMiddleware($serverToServer)
     ->name('meetings.notulen.livekit');

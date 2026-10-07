@@ -5,6 +5,7 @@ namespace App\Http\Requests\Meetings;
 use App\Domain\Meetings\Enums\MeetingPlatform;
 use App\Domain\Meetings\Enums\Recurrence;
 use App\Domain\Meetings\Services\VideoRooms;
+use App\Domain\Meetings\Transcripts\Services\NotulenConfig;
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Organization\Enums\UserStatus;
 use App\Models\Meeting;
@@ -60,6 +61,7 @@ class SaveMeetingRequest extends MeetingRequest
             'minute_taker_id' => ['nullable', 'string', 'ulid', $activeEmployee],
             'workspace_id' => ['nullable', 'string', 'ulid'],
             'leadership' => ['sometimes', 'boolean'],
+            'auto_minutes' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -85,6 +87,7 @@ class SaveMeetingRequest extends MeetingRequest
             'recurrence_until' => 'tanggal akhir pengulangan',
             'minute_taker_id' => 'notulis',
             'workspace_id' => 'workspace',
+            'auto_minutes' => 'notulen otomatis',
         ];
     }
 
@@ -149,6 +152,16 @@ class SaveMeetingRequest extends MeetingRequest
                     $validator->errors()->add('platform', 'Video RuangKerja belum disiapkan di server ini. Pilih Google Meet atau Zoom.');
                 }
 
+                // "Notulen otomatis" (docs/fitur/notulen-otomatis-kontrak.md §6): video only, and
+                // switching it on needs the transcription server (an existing setting may stay).
+                if ($this->boolean('auto_minutes')) {
+                    if ($this->input('platform') !== MeetingPlatform::Video->value) {
+                        $validator->errors()->add('auto_minutes', 'Notulen otomatis hanya untuk rapat Video RuangKerja.');
+                    } elseif (! ($existing instanceof Meeting && $existing->auto_minutes) && ! app(NotulenConfig::class)->configured()) {
+                        $validator->errors()->add('auto_minutes', 'Notulen otomatis belum disiapkan admin di server ini.');
+                    }
+                }
+
                 $timeErrors = $validator->errors()->hasAny(['date', 'start', 'duration']);
 
                 if (! $timeErrors && $this->route('meeting') === null && $this->times()[0]->isPast()) {
@@ -166,7 +179,7 @@ class SaveMeetingRequest extends MeetingRequest
      *     platform: MeetingPlatform, location: string|null, join_url: string|null,
      *     minute_taker_id: string|null, workspace_id: string|null, agenda: list<string>,
      *     recurrence: Recurrence, recurrence_until: string|null, reminders: list<int>, leadership: bool,
-     *     participant_ids: list<string>, guest_emails: list<string>
+     *     auto_minutes: bool, participant_ids: list<string>, guest_emails: list<string>
      * }
      */
     public function toInput(): array
@@ -192,6 +205,8 @@ class SaveMeetingRequest extends MeetingRequest
             'reminders' => array_values(array_map(intval(...), (array) $this->input('reminders', []))),
             // Kept as it was when someone without the permission edits a leadership meeting.
             'leadership' => $canLead ? $this->boolean('leadership') : ($existing instanceof Meeting && $existing->leadership),
+            // Missing from the request (older form) = keep the current setting.
+            'auto_minutes' => $this->has('auto_minutes') ? $this->boolean('auto_minutes') : ($existing instanceof Meeting && $existing->auto_minutes),
             'participant_ids' => $this->stringList('participant_ids'),
             'guest_emails' => $this->stringList('guest_emails'),
         ];
