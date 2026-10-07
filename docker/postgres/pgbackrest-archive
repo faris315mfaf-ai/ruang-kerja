@@ -1,0 +1,15 @@
+#!/bin/sh
+# archive_command of the ruangkerja-postgres image: `pgbackrest-archive %p`.
+#
+# PITR_ENABLED=true  → pgbackrest archive-push (asynchronous, to the S3
+#                      repository). A failure makes PostgreSQL keep the segment
+#                      in pg_wal and retry; wal-check reports it.
+# anything else      → exit 0 without archiving, i.e. PostgreSQL recycles the
+#                      segment exactly as with archive_mode=off. Also used by
+#                      throwaway restored copies that must never write into the
+#                      production repository (docs/deploy/PITR.md §4).
+set -eu
+
+[ "${PITR_ENABLED:-false}" = "true" ] || exit 0
+
+exec pgbackrest archive-push "$1"

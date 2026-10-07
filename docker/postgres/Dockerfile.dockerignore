@@ -1,0 +1,6 @@
+# Build context filter for docker/postgres/Dockerfile (BuildKit).
+*
+!docker/postgres/pgbackrest-archive
+!scripts/pitr.sh
+!scripts/pitr-restore.sh
+!scripts/wal-check.sh

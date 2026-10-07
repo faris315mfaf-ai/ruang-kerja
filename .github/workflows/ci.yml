@@ -191,9 +191,23 @@ jobs:
           cache-from: type=gha,scope=backup
           cache-to: type=gha,mode=max,scope=backup
 
-      - name: Validate compose.prod.yml
-        run: docker compose -f compose.prod.yml --env-file .env.production.example config --quiet
+      # PostgreSQL 17 + pgBackRest (WAL archiving / PITR, docs/deploy/PITR.md).
+      - name: Build postgres image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/postgres/Dockerfile
+          push: false
+          cache-from: type=gha,scope=postgres
+          cache-to: type=gha,mode=max,scope=postgres
+
+      - name: Validate compose files
+        run: |
+          docker compose -f compose.prod.yml --env-file .env.production.example config --quiet
+          docker compose -f compose.prod.yml -f compose.shared.yml --env-file .env.production.example config --quiet
+          DATA_PRIVATE_IP=10.0.0.2 docker compose -f compose.data.yml --env-file .env.production.example config --quiet
+          WEB_PRIVATE_IP=10.0.0.1 docker compose -f compose.web.yml --env-file .env.production.example config --quiet
 
       # shellcheck is preinstalled on ubuntu-latest.
       - name: Check shell scripts
-        run: shellcheck scripts/backup.sh scripts/restore.sh scripts/deploy-remote.sh docker/app/entrypoint.sh docker/backup/entrypoint.sh
+        run: shellcheck scripts/backup.sh scripts/restore.sh scripts/deploy-remote.sh scripts/server-init-env.sh scripts/pitr.sh scripts/pitr-restore.sh scripts/wal-check.sh scripts/pitr-uji.sh docker/app/entrypoint.sh docker/backup/entrypoint.sh docker/postgres/pgbackrest-archive

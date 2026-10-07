@@ -1,7 +1,7 @@
 name: Deploy
 
-# Runs after CI is green on main (or manually). Builds the app + backup images,
-# pushes them to GHCR, waits for approval on the `production` environment
+# Runs after CI is green on main (or manually). Builds the app, backup, postgres
+# and collab images, pushes them to GHCR, waits for approval on the `production` environment
 # (Settings → Environments → production → Required reviewers), then deploys
 # over SSH with scripts/deploy-remote.sh.
 #
@@ -59,6 +59,7 @@ jobs:
             echo "app=ghcr.io/${owner}/ruangkerja"
             echo "backup=ghcr.io/${owner}/ruangkerja-backup"
             echo "collab=ghcr.io/${owner}/ruangkerja-collab"
+            echo "postgres=ghcr.io/${owner}/ruangkerja-postgres"
             echo "tag=$(git rev-parse HEAD)"
           } >> "$GITHUB_OUTPUT"
 
@@ -99,6 +100,26 @@ jobs:
             ${{ steps.meta.outputs.backup }}:latest
           cache-from: type=gha,scope=backup
           cache-to: type=gha,mode=max,scope=backup
+
+      # PostgreSQL 17 + pgBackRest (docs/deploy/PITR.md). The server pins the
+      # moving tag POSTGRES_TAG=17, not APP_TAG, and the build is reproducible
+      # (fixed timestamp, no provenance manifest), so an unchanged image keeps
+      # its digest and a deploy does not restart the database. A new
+      # postgres:17-alpine upstream release does (minor update, a few seconds).
+      - name: Build & push postgres image
+        uses: docker/build-push-action@v6
+        env:
+          SOURCE_DATE_EPOCH: 0
+        with:
+          context: .
+          file: docker/postgres/Dockerfile
+          push: true
+          provenance: false
+          tags: |
+            ${{ steps.meta.outputs.postgres }}:17
+            ${{ steps.meta.outputs.postgres }}:${{ steps.meta.outputs.tag }}
+          cache-from: type=gha,scope=postgres
+          cache-to: type=gha,mode=max,scope=postgres
 
       # Catatan bersama (FEATURE_NOTES): Hocuspocus/Yjs server, started on the
       # server with COMPOSE_PROFILES=collab (COLLAB_IMAGE in .env).

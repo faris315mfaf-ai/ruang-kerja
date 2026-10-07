@@ -9,7 +9,10 @@
 # the JS bundle) and must also be set as the GitHub variable REVERB_APP_KEY.
 # Refuses to overwrite an existing .env. Still to fill by hand afterwards:
 # SMTP, Google, object storage (AWS_*, BACKUP_*), company name, privacy contact.
-# BACKUP_REMOTE starts empty (local dumps only) until object storage exists.
+# BACKUP_REMOTE starts empty (local dumps only) and PITR_ENABLED=false until
+# object storage exists (docs/deploy/PITR.md).
+# PITR_CIPHER_PASS (pgBackRest repository encryption) is generated here: like
+# APP_KEY it must be copied to a password manager, never rotated.
 set -euo pipefail
 
 DOMAIN=${1:?usage: server-init-env.sh <domain> <ghcr-owner> <acme-email>}
@@ -31,7 +34,7 @@ awk \
     -v app_key="base64:$(openssl rand -base64 32)" \
     -v db="$(hex 24)" -v redis="$(hex 24)" \
     -v reverb_key="$reverb_key" -v reverb_secret="$(hex 32)" \
-    -v qr="$(hex 32)" -v collab="$(hex 32)" '
+    -v qr="$(hex 32)" -v collab="$(hex 32)" -v pitr="$(hex 32)" '
     /^APP_KEY=/              { print "APP_KEY=" app_key; next }
     /^DB_PASSWORD=/          { print "DB_PASSWORD=" db; next }
     /^REDIS_PASSWORD=/       { print "REDIS_PASSWORD=" redis; next }
@@ -42,6 +45,8 @@ awk \
     /^ACME_EMAIL=/           { print "ACME_EMAIL=" acme; next }
     /^BACKUP_REMOTE=/        { print "BACKUP_REMOTE="; next }
     /^COLLAB_SECRET=/        { print "COLLAB_SECRET=" collab; next }
+    /^PITR_CIPHER_PASS=/     { print "PITR_CIPHER_PASS=" pitr; next }
+    /^PITR_ENABLED=/         { print "PITR_ENABLED=false"; next }
     /^COLLAB_IMAGE=/         { print "COLLAB_IMAGE=ghcr.io/" owner "/ruangkerja-collab"; next }
     {
         gsub(/<absensi\.perusahaan\.co\.id>/, domain)
@@ -53,6 +58,8 @@ chmod 600 "$OUT"
 echo "[init-env] $OUT created for https://${DOMAIN} (images ghcr.io/${OWNER}/ruangkerja)."
 echo "[init-env] GitHub variable REVERB_APP_KEY=${reverb_key}"
 echo "[init-env] Back up APP_KEY outside this server (password manager): without it NIK, Google tokens and 2FA secrets cannot be decrypted."
+echo "[init-env] Back up PITR_CIPHER_PASS the same way: without it the point-in-time backups (pgBackRest) cannot be read."
 echo "[init-env] Remaining <...> placeholders:"
 grep -nE '^[A-Z0-9_]+=.*<[^>]*>' "$OUT" | cut -d= -f1 || true
 echo "[init-env] BACKUP_REMOTE is empty (dumps stay on this server). Set backup:<bucket>/postgres once object storage is ready."
+echo "[init-env] PITR_ENABLED=false (no WAL archiving yet). Set true once BACKUP_S3_* work (docs/deploy/PITR.md §2)."
