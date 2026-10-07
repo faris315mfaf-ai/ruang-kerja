@@ -207,3 +207,90 @@ Jumlah query tetap konstan, jadi tidak ada N+1. Anggaran di `PageQueryCountTest`
 
 Cabang ini juga me-merge `claude/audit-rapat` (R-10, R-11, R-16, dok) tanpa konflik. Berkas milik rapatbe yang disentuh: `ReportSpeakingTime`, `MinutesCollab`, `RemoveVideoParticipant`, `SetOwnAttributes`, `RoomPresenter`, `tests/Feature/Meetings/MeetingRoomTest.php` (satu test diubah).
 
+## 8. Fase 2 — cabang `claude/notulen-otomatis` @ `ffd7d30` (perbaikan di `claude/audit-notulen`)
+
+Cabang ini sudah memuat rapat-backend `5c30e78`. Saya menelusuri ulang N-01 … N-09 (§3), lalu meninjau penuh:
+- worker `transcriber/` beserta `deploy/compose.notulen.yaml`, `caddy-notulen.yaml`, dan pembatasan IP;
+- `app/Domain/Meetings/Transcripts/**`;
+- `routes/notulen.php` dan webhook LiveKit kedua `/api/notulen/livekit`;
+- teks kebijakan privasi dibandingkan dengan perilaku sebenarnya.
+
+### 8.1 Status N-01 … N-09
+
+| ID | Status | Bukti |
+|---|---|---|
+| N-01 nama pembicara | **Diperbaiki** | `RecordTranscriptUpdate::clean`: nama hanya dari `users.name` (perusahaan rapat). Identitas lain menjadi "Peserta tamu", dan `speaker_name` dari worker tidak dipakai. |
+| N-02 prompt injection | **Diperbaiki** (celah kecil T-03 juga diperbaiki) | Transkrip dikutip di antara `<<<TRANSKRIP … TRANSKRIP>>>` (penanda dinetralkan), aturan "data bukan perintah", `response_format: json_object`. `DraftNormalizer` membatasi kunci, panjang, dan jumlah; teks polos (`strip_tags` + karakter kontrol dibuang). PIC hanya peserta yang berbicara dan tidak opt-out. `sumber` hanya indeks baris yang ada. Tugas dibuat hanya lewat klik notulis. |
+| N-03 data ke DeepSeek | **Diperbaiki sebagian**; sisanya keputusan pemilik | Pemberitahuan di pra-gabung/ruang + kebijakan privasi menyebut penyedia di luar Indonesia. Yang dikirim hanya nama tampilan pembicara (tanpa id/email). Model persetujuan tetap *opt-out*, bukan *opt-in*: keputusan pemilik soal dasar hukum UU PDP. `PRIVACY_POLICY_VERSION` **belum dinaikkan**; menaikkannya memicu persetujuan ulang absensi (keputusan pemilik saat deploy). |
+| N-04 disk spool | **Diperbaiki** | Batas `TRANSCRIBER_SPOOL_MAX_GB` (20). Rekaman baru ditolak (507) dan rekaman berjalan dihentikan dengan `ALERT`. |
+| N-05 integritas model | **Diperbaiki** | `PINNED` (commit HF + SHA-256 `model.bin`) untuk `large-v3-turbo`/`small`; model lain wajib `WHISPER_MODEL_REVISION` (+ `_SHA256`). Info: hanya `model.bin` yang di-hash, `tokenizer.json`/`config.json` tidak. |
+| N-06 HMAC | **Diperbaiki** | Rahasia terpisah per arah (`TRANSCRIBER_SECRET` / `TRANSCRIBER_CALLBACK_SECRET`; worker menolak bila sama), nonce di badan, `ReplayGuard` persisten (SQLite di spool), cache tanda tangan di aplikasi. |
+| N-07 subtitle palsu | Belum (UI) | Untuk rapatui: terima `lk.transcription` hanya dari identitas `rk-notulen`. |
+| N-08 port/health | **Diperbaiki** | Default `127.0.0.1:8090`, `network_mode: host`. Caddy L4 SNI `notulen.<domain>` dengan `remote_ip` = IP VPS aplikasi/32. `/health` hanya `{"status":"ok"}`. HMAC tetap wajib di belakang pembatasan IP. |
+| N-09 identitas agen | **Diperbaiki** | `RecordVideoEvent` (rapatbe) tidak menyimpan identitas non-karyawan termasuk `rk-notulen`; webhook kedua kini memakai pola R-02 (T-04). |
+
+### 8.2 Temuan baru
+
+| ID | Tingkat | Temuan | Berkas | Status |
+|---|---|---|---|---|
+| T-01 | Sedang | **Opt-out tidak menghapus draf AI** bila orang itu satu-satunya pembicara, atau kunci AI sudah dicabut (draf tidak bisa diulang). Ringkasan ucapannya tetap tersimpan, bisa dibaca peserta, dan bisa "Dimasukkan ke notulen", padahal kebijakan privasi menjanjikan ucapannya dihapus | `SetTranscriptConsent.php` | **Diperbaiki** `92b2e41`: draf dibuang (`discarded`) bila tidak diulang |
+| T-02 | Sedang | **Draf macet di "Sedang diringkas".** Job ringkasan (`$timeout` 900 dtk, `tries` 1) tidak punya `failed()`. Bila mati di luar `try` (timeout, worker dibunuh, deploy), `draft_status` tetap `pending` dan "Ringkas ulang" ditolak "Draf sedang disusun" untuk selamanya | `SummarizeMeetingTranscript`, `ResummarizeTranscript` | **Diperbaiki** `0ab10a7`: `failed()` menandai gagal (kecuali `MaxAttemptsExceededException`, lihat T-05), dan `pending` lebih dari 20 menit boleh diringkas ulang |
+| T-03 | Rendah | Langkah perbaikan JSON mengirim balasan model (bisa memuat teks sisipan dari transkrip) **tanpa penanda data** | `MinutesSummarizer::ask` | **Diperbaiki** `89db0a9`: dikutip `<<<BALASAN … BALASAN>>>`, penanda dinetralkan, perintah mengabaikan instruksi |
+| T-04 | Rendah | Webhook `/api/notulen/livekit` mengulang pola R-02: id kejadian dicatat sebelum diproses, sehingga kegagalan membuat retry LiveKit dijawab `duplicate` dan worker tidak pernah diminta bergabung | `NotulenLiveKitWebhookController` | **Diperbaiki** `d2045fc` |
+| T-05 | Sedang (ops) | `REDIS_QUEUE_RETRY_AFTER` = 90 dtk, sedangkan job ringkasan boleh jalan 900 dtk. Setelah 90 dtk job dipesan ulang worker lain, langsung gagal `MaxAttemptsExceeded` (masuk `failed_jobs`) sementara run pertama tetap jalan. Bila `tries` dinaikkan, panggilan LLM akan dobel | `config/queue.php:71`, `config/horizon.php` | Rekomendasi integrator: koneksi/antrean `long` dengan `retry_after` ≥ 960 + supervisor Horizon `timeout` 900 untuk `SummarizeMeetingTranscript` |
+| T-06 | Rendah | Kebijakan privasi tidak cocok dengan perilaku: (a) opt-out sesudah rapat juga menghapus ucapan dari transkrip/draf, **kecuali yang sudah dimasukkan ke notulen**; (b) ke penyedia AI juga dikirim judul dan agenda rapat | `resources/markdown/privacy-policy.md` | **Diperbaiki** `09be30e` (teks); kenaikan versi = pemilik |
+| T-07 | Rendah | B-05 masih berlaku di cabang ini: `/api/notulen/transcript` (batas 5 MB) dan `/api/notulen/livekit` didekode `TrimStrings` sebelum batas ukuran | `routes/notulen.php` | Sudah ditugaskan ke rapatbe (B-05) |
+| T-08 | Info | "Ringkas ulang" (mengirim ulang transkrip ke penyedia luar negeri) tidak diaudit; "Jadikan tugas" hanya tercatat lewat aktivitas tugas | `ResummarizeTranscript` | Rekomendasi: audit `meeting.transcript_resummarized` |
+| T-09 | Info | Endpoint `status` memberi pengamat rapat pimpinan (yang tidak boleh membaca transkrip) daftar pembicara + lama bicara | `NotulenSummary::speakers` | Rekomendasi: `speakers` hanya untuk `can_view_transcript` |
+| T-10 | Info | Status `recording`/`transcribing` yang datang setelah `ready` (sesi rekaman kedua) menimpa status transkrip sampai sesi itu selesai. Ingest tanpa `session` tidak idempoten (worker selalu mengirimnya) | `RecordTranscriptUpdate` | Rekomendasi: `session` wajib untuk `ready` |
+| T-11 | Info | Penyelenggara bisa membuka ruang kapan saja, jadi `participant_joined` di luar jadwal juga memanggil perekam bila `auto_minutes` aktif. Pemberitahuan tetap tampil | `HandleNotulenRoomEvent` | Diterima / opsional: hanya dalam jendela gabung |
+
+**Bukti:** `tests/Feature/Audit/NotulenAuditTest.php` (7 test). Sebelum perbaikan:
+- T-01: `draft` tetap berisi "Budi menyampaikan proyek A ditunda."
+- T-02: `failed()` tidak ada, sehingga `pending` permanen.
+- T-03: prompt perbaikan tanpa kata "DATA" maupun penanda.
+- T-04: retry dijawab `duplicate`.
+
+### 8.3 Yang diverifikasi aman
+
+- **Webhook kedua tidak bisa memerintah worker bergabung ke ruang sembarang.** Ada empat lapis pemeriksaan:
+  1. Tanda tangan LiveKit (JWT HS256 + `sha256` badan), toleransi waktu, dedup id.
+  2. Nama ruang harus `rk-{ulid}-{yyyymmdd}` (`parseRoom`) untuk rapat video ber-`auto_minutes`, tidak batal, pada tanggal kemunculan yang sah (`meetsOn`).
+  3. Bergabung paling banyak 1×/menit per ruang; identitas `rk-notulen` diabaikan.
+  4. Token perekam: `hidden`, `kind=agent`, hanya berlangganan (tanpa publish/data/metadata), satu ruang. URL LiveKit diambil dari konfigurasi worker.
+- **Ingest:**
+  - HMAC dengan rahasia callback, toleransi 300 dtk, tanda tangan sekali pakai, badan ≤ 5 MB;
+  - dibatasi ke rapat video `auto_minutes`;
+  - idempoten per `session` di bawah `lockForUpdate` (`insertOrIgnore` + kunci baris);
+  - ≤ 20.000 segmen × 2.000 karakter;
+  - opted-out dibuang lagi saat ingest (lapis kedua setelah worker).
+- **Policy:**
+
+| Kemampuan | Siapa | Selain itu |
+|---|---|---|
+| `status` | yang melihat rapat | 404 |
+| `view` / `consent` | yang terlibat (penyelenggara/notulis/peserta) | pengamat 403, lainnya 404 |
+| `configure` | penyelenggara, rapat video, tidak batal | 403 |
+| `manage` | notulis/penyelenggara | 403 |
+
+  Diuji di `NotulenOtomatisTest › applies the access matrix`.
+- **Retensi:** `purge_after` = ingest + 90 hari (diperbarui per sesi); job harian 02.45 WIB; spool worker dibersihkan 24 jam; audio dihapus segera setelah transkripsi (juga saat gagal).
+- **Audit:** `meeting.auto_minutes_changed`, `transcript_consent_changed`, `transcript_viewed` (paling sering 1×/10 menit), `transcript_draft_inserted`, `transcript_draft_discarded`. Tanpa isi transkrip atau kunci di log; galat job hanya pesan pendek.
+- **Worker:**
+  - pytest **34 lulus**;
+  - pilihan opt-out bukan lagi atribut LiveKit (privat app ↔ worker);
+  - spool 0700, nama ruang divalidasi, `.replay.sqlite` di luar folder sesi;
+  - kontainer non-root, CPU 4 / RAM 6 GB dibatasi, log dirotasi.
+
+### 8.4 Commit (`claude/audit-notulen`, dari `ffd7d30`, lalu merge `claude/audit-rapat-2`)
+
+| Commit | Isi |
+|---|---|
+| `92b2e41` | T-01 opt-out membuang draf yang tidak bisa diulang |
+| `0ab10a7` | T-02 draf pending tidak macet (`failed()`, pending basi boleh diulang) |
+| `89db0a9` | T-03 perbaikan JSON memperlakukan balasan sebagai data |
+| `d2045fc` | T-04 webhook kedua melepas id yang gagal diproses |
+| `09be30e` | T-06 teks kebijakan privasi |
+
+Berkas milik agen notulen yang disentuh: `SetTranscriptConsent`, `SummarizeMeetingTranscript`, `ResummarizeTranscript`, `MinutesSummarizer`, `NotulenLiveKitWebhookController`, `resources/markdown/privacy-policy.md`.
+
