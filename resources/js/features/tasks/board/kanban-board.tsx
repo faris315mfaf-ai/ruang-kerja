@@ -26,6 +26,8 @@ import { memo, useState } from 'react';
 import { StatusIcon } from '@/components/status-icon';
 import { cn, focusRing } from '@/lib/utils';
 import { adjacentStatusId } from '../lib/board';
+import type { TaskPresence, TaskPresenceMap } from '../realtime/board-presence';
+import { presenceDescription } from '../realtime/card-presence';
 import { TaskCardContent, taskCardClass } from '../task-card';
 import type { Label, Person, Task, TaskStatus } from '../types';
 import type { MoveTarget } from '../use-task-board';
@@ -51,6 +53,8 @@ type Props = {
     ) => void;
     onOpen: (task: Task) => void;
     onCreate: (statusId: string) => void;
+    /** Who else has which task open (presence-workspace). */
+    presence?: TaskPresenceMap;
 };
 
 function resolve<T>(ids: string[], map: Record<string, T>): T[] {
@@ -63,6 +67,7 @@ type CardProps = {
     peopleById: Record<string, Person>;
     today: string;
     disabled: boolean;
+    presence: TaskPresence | undefined;
     onOpen: (task: Task) => void;
     onShift: (task: Task, direction: -1 | 1) => void;
 };
@@ -73,6 +78,7 @@ const SortableCard = memo(function SortableCard({
     peopleById,
     today,
     disabled,
+    presence,
     onOpen,
     onShift,
 }: CardProps) {
@@ -124,7 +130,7 @@ const SortableCard = memo(function SortableCard({
             onClick={() => onOpen(task)}
             data-task-id={task.id}
             aria-roledescription="Kartu tugas"
-            aria-label={`${task.key} ${task.title}`}
+            aria-label={`${task.key} ${task.title}${presenceDescription(presence)}`}
             className={cn(
                 taskCardClass(task, today),
                 'cursor-pointer transition-colors duration-120 ease-brand [contain-intrinsic-size:auto_132px] [content-visibility:auto] hover:border-border-strong focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none',
@@ -138,6 +144,7 @@ const SortableCard = memo(function SortableCard({
                 labels={resolve(task.label_ids, labelsById)}
                 assignees={resolve(task.assignee_ids, peopleById)}
                 today={today}
+                presence={presence}
             />
         </div>
     );
@@ -272,6 +279,7 @@ export function KanbanBoard({
     onMove,
     onOpen,
     onCreate,
+    presence,
 }: Props) {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [overColumn, setOverColumn] = useState<string | null>(null);
@@ -382,6 +390,7 @@ export function KanbanBoard({
                 peopleById={peopleById}
                 today={today}
                 disabled={!canEdit}
+                presence={presence?.get(task.id)}
                 onOpen={onOpen}
                 onShift={onShift}
             />

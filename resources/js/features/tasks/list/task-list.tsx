@@ -27,6 +27,12 @@ import { DueBadge } from '../due-badge';
 import { LabelPill } from '../label-pill';
 import { dueState } from '../lib/due-date';
 import { prioritySortWeight } from '../lib/priority';
+import type { TaskPresence, TaskPresenceMap } from '../realtime/board-presence';
+import {
+    TypingNote,
+    ViewerAvatars,
+    presenceDescription,
+} from '../realtime/card-presence';
 import { CompletionText } from '../task-card';
 import type { Label, Person, Task, TaskStatus } from '../types';
 
@@ -42,6 +48,8 @@ type Props = {
     peopleById: Record<string, Person>;
     today: string;
     onOpen: (task: Task) => void;
+    /** Who else has which task open (presence-workspace). */
+    presence?: TaskPresenceMap;
 };
 
 const features = tableFeatures({
@@ -105,11 +113,13 @@ function TaskRow({
     row,
     status,
     today,
+    presence,
     onOpen,
 }: {
     row: Row;
     status: TaskStatus;
     today: string;
+    presence: TaskPresence | undefined;
     onOpen: (task: Task) => void;
 }) {
     const closed = status.category === 'done' || status.category === 'canceled';
@@ -123,7 +133,7 @@ function TaskRow({
             role="row"
             data-task-id={row.id}
             tabIndex={0}
-            aria-label={`${row.key} ${row.title}`}
+            aria-label={`${row.key} ${row.title}${presenceDescription(presence)}`}
             onClick={() => onOpen(row)}
             onKeyDown={(event) => {
                 if (event.key === 'Enter') {
@@ -156,6 +166,8 @@ function TaskRow({
                 </span>
                 <span className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-[14px] text-text-muted">
                     <span className="font-mono font-semibold">{row.key}</span>
+                    <ViewerAvatars presence={presence} on="surface" />
+                    <TypingNote presence={presence} className="max-w-full" />
                     {row.parent_key && (
                         <span className="text-text-subtle">
                             ↳ {row.parent_key}
@@ -231,6 +243,7 @@ export function TaskList({
     peopleById,
     today,
     onOpen,
+    presence,
 }: Props) {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -388,6 +401,7 @@ export function TaskList({
                                         row={row}
                                         status={status}
                                         today={today}
+                                        presence={presence?.get(row.id)}
                                         onOpen={onOpen}
                                     />
                                 ))}

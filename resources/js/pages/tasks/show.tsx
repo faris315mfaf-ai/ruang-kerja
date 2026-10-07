@@ -7,6 +7,7 @@ import { SheetSkeleton } from '@/features/tasks/detail/task-sheet';
 import type { TaskDetail } from '@/features/tasks/detail/types';
 import { useTaskDetail } from '@/features/tasks/detail/use-task-detail';
 import { useTaskPresence } from '@/features/tasks/realtime/presence';
+import { usePublishTaskViewing } from '@/features/tasks/realtime/workspace-presence';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { EmptyState } from '@/components/empty-state';
 import { FileX } from 'lucide-react';
@@ -28,6 +29,13 @@ export default function TaskShow({ detail: initial, today }: Props) {
         onDeleted: () => router.visit(`/w/${initial.workspace.key}`),
     });
     const viewers = useTaskPresence(initial.task.id, state.viewer?.id);
+    // Board cards of the workspace show who has this task open.
+    usePublishTaskViewing(
+        initial.workspace.id,
+        initial.task.id,
+        state.viewer?.id,
+        initial.workspace.type !== 'personal' && !state.deleted,
+    );
     const detail = state.detail;
 
     if (state.deleted) {

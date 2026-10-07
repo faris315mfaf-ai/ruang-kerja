@@ -4,6 +4,7 @@ import { AttachmentsPanel } from '@/features/drive/attachments-panel';
 import type { Task } from '../types';
 import { ChecklistSection } from './checklist';
 import { CommentComposer } from './comment-composer';
+import { signalTaskTyping } from '../realtime/workspace-presence';
 import { DescriptionField } from './description-field';
 import { PropertiesPanel } from './properties';
 import { SubtasksSection } from './subtasks';
@@ -75,6 +76,7 @@ export function TaskDetailBody({
                     workspaceKey={detail.workspace.key}
                     editable={can.edit}
                     onSave={(description) => state.update({ description })}
+                    onTyping={() => signalTaskTyping(task.id, 'description')}
                     textClassName={
                         layout === 'page'
                             ? 'text-body-lg text-text-muted'
@@ -135,6 +137,7 @@ export function TaskDetailBody({
                         onSubmit={state.postComment}
                         drive={detail.attachments.drive}
                         onAttachmentsChange={state.refresh}
+                        onTyping={() => signalTaskTyping(task.id, 'comment')}
                     />
                 ) : (
                     <p className="text-[15px] text-text-muted">
