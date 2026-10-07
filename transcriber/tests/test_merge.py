@@ -18,7 +18,7 @@ def test_joins_consecutive_pieces_of_one_speaker_with_small_gaps():
 
 
 def test_does_not_join_when_too_long_and_drops_repeats_and_empties():
-    long = "x" * 595
+    long = "x" * 395
     out = merge([p("a", 0, 1000, long), p("a", 1100, 2000, "tambahan"), p("a", 2100, 2200, "  ")])
     assert len(out) == 2
     out = merge([p("a", 0, 1000, "oke"), p("a", 1100, 2000, "oke")])
