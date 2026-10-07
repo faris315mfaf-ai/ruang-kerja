@@ -434,7 +434,9 @@ it('keeps laporan harian and pengumuman free of N+1', function () {
         '/laporan/hari-ini' => ['anggota', 43],
         '/laporan/tugas?q=la' => ['anggota', 14],
         '/pengumuman' => ['hr', 36],
-        '/pengumuman/spanduk' => ['anggota', 10],
+        // Constant: count + items + author + division/team names (4 more when
+        // the demo seeder has active announcements for today, none when empty).
+        '/pengumuman/spanduk' => ['anggota', 14],
     ]);
 });
 

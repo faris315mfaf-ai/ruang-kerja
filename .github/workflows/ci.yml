@@ -77,9 +77,15 @@ jobs:
           LARAVEL_BYPASS_ENV_CHECK: '1'
 
   test:
-    name: Pest
+    # ~3.000 tests no longer fit one 20-minute job on a 4-core runner, so the
+    # suite is split into time-balanced shards that run side by side.
+    name: Pest (${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
 
     services:
       postgres:
@@ -150,8 +156,10 @@ jobs:
       - name: Build frontend assets
         run: npm ci && npm run build
 
-      - name: composer test (Pest)
-        run: composer test
+      - name: Pest (shard ${{ matrix.shard }}/3)
+        run: |
+          php artisan config:clear
+          vendor/bin/pest --parallel --shard=${{ matrix.shard }}/3
 
   build:
     name: Docker images
