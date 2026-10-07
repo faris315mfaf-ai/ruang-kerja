@@ -259,7 +259,11 @@ final class DraftNormalizer
             return '';
         }
 
-        $text = trim((string) preg_replace('/\s+/u', ' ', (string) $value));
+        // Plain text only (audit N-02): no tags, no control characters. The UI renders
+        // it as text and nothing becomes a task without a person clicking.
+        $plain = strip_tags((string) $value);
+        $plain = (string) preg_replace('/[\x{0000}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{007F}]/u', '', $plain);
+        $text = trim((string) preg_replace('/\s+/u', ' ', $plain));
 
         return mb_substr($text, 0, $max);
     }

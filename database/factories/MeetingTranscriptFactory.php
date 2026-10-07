@@ -36,6 +36,7 @@ class MeetingTranscriptFactory extends Factory
      * Ready transcript of the given lines: [identity, name, start seconds, text].
      *
      * @param  list<array{0: string, 1: string, 2: int, 3: string}>  $lines
+     * @param  array<string, mixed>|null  $draft
      */
     public function ready(array $lines = [], ?array $draft = null): static
     {

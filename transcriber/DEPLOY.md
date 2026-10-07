@@ -12,8 +12,8 @@ Rapat video ──(LiveKit, media)──▶ worker rk-notulen (tersembunyi, subs
 ## 1. Server rapat (103.125.181.244, `/opt/livekit`)
 
 1. DNS `notulen.spkd.store` → IP server rapat.
-2. Salin `deploy/compose.notulen.yaml` dan `deploy/notulen.env.example` (→ `notulen.env`, `chmod 600`, isi `TRANSCRIBER_SECRET` acak `openssl rand -hex 32` yang **sama** dengan aplikasi) ke `/opt/livekit/`. Image: bangun dari folder `transcriber/` (`docker build -t ruangkerja-transcriber transcriber/` lalu `TRANSCRIBER_IMAGE=ruangkerja-transcriber`) atau dari registry.
-3. `sudo docker compose -f compose.notulen.yaml --env-file notulen.env up -d` — `network_mode: host`, API hanya di `127.0.0.1:8090`, **CPU dibatasi 4** (`cpus`), RAM 6 GB, `restart: unless-stopped`, volume `notulen-models` (cache model, unduh ±1,6 GB saat start pertama) dan `notulen-spool` (audio sementara).
+2. Salin `deploy/compose.notulen.yaml` dan `deploy/notulen.env.example` (→ `notulen.env`, `chmod 600`, isi `TRANSCRIBER_SECRET` dan `TRANSCRIBER_CALLBACK_SECRET` — dua nilai acak **berbeda** `openssl rand -hex 32`, masing-masing **sama** dengan aplikasi) ke `/opt/livekit/`. Image: bangun dari folder `transcriber/` (`docker build -t ruangkerja-transcriber transcriber/` lalu `TRANSCRIBER_IMAGE=ruangkerja-transcriber`) atau dari registry.
+3. `sudo docker compose -f compose.notulen.yaml --env-file notulen.env up -d` — `network_mode: host`, API hanya di `127.0.0.1:8090`, **CPU dibatasi 4** (`cpus`), RAM 6 GB, `restart: unless-stopped`, volume `notulen-models` (cache model, unduh ±1,6 GB saat start pertama; commit Hugging Face + SHA-256 `model.bin` dipatok di `notulen/transcribe.py` `PINNED`, model lain wajib `WHISPER_MODEL_REVISION` + `WHISPER_MODEL_SHA256`) dan `notulen-spool` (audio sementara, batas `TRANSCRIBER_SPOOL_MAX_GB`=20: bila penuh worker menolak rekaman baru dan menghentikan rekaman berjalan dengan log `ALERT spool full`).
 4. Caddy: tambahkan rute di `deploy/caddy-notulen.yaml` ke `/opt/livekit/caddy.yaml` (SNI `notulen.spkd.store` → `127.0.0.1:8090`, hanya dari IP VPS aplikasi), restart `livekit-docker`. Tidak ada port firewall baru (tetap 443).
 5. `livekit.yaml` → webhook URL **kedua** (pasangan kunci yang sama):
    ```yaml
@@ -23,14 +23,15 @@ Rapat video ──(LiveKit, media)──▶ worker rk-notulen (tersembunyi, subs
        - https://spkd.store/api/livekit/webhook
        - https://spkd.store/api/notulen/livekit
    ```
-6. Uji: dari VPS aplikasi `curl -s https://notulen.spkd.store/health` → `{"status": "ok", …}`. Log: `sudo docker logs -f notulen-transcriber-1` (tidak pernah mencetak token, rahasia, atau isi transkrip).
+6. Uji: dari VPS aplikasi `curl -s https://notulen.spkd.store/health` → `{"status": "ok"}` (sengaja minimal; API hanya mendengar di 127.0.0.1). Log: `sudo docker logs -f notulen-transcriber-1` (tidak pernah mencetak token, rahasia, atau isi transkrip).
 
 ## 2. Aplikasi (`.env` produksi)
 
 | Kunci | Isi |
 |---|---|
 | `TRANSCRIBER_URL` | `https://notulen.spkd.store` |
-| `TRANSCRIBER_SECRET` | sama dengan worker (≥ 32 karakter) |
+| `TRANSCRIBER_SECRET` | aplikasi → worker, sama dengan worker (≥ 32 karakter) |
+| `TRANSCRIBER_CALLBACK_SECRET` | worker → aplikasi, sama dengan worker, **berbeda** dari `TRANSCRIBER_SECRET` |
 | `MINUTES_LLM_BASE_URL` | `https://api.deepseek.com` (bawaan; API OpenAI-compatible lain boleh, sampai sebelum `/chat/completions`) |
 | `MINUTES_LLM_API_KEY` | kunci penyedia; **kosong = tanpa draf AI** (transkrip tetap tersimpan) |
 | `MINUTES_LLM_MODEL` | `deepseek-chat` |
@@ -59,7 +60,12 @@ sudo docker run --rm --cpus 4 -v notulen_notulen-models:/models -v $PWD:/data ru
 
 Bila terlalu lambat: `WHISPER_MODEL=medium` atau `small` (lebih cepat, kurang akurat), atau tahap 2 (GPU).
 
-## 4. Privasi (UU PDP)
+## 4. Privasi & keamanan (UU PDP, audit rapat N-01…N-08)
+
+- Satu rahasia per arah (`TRANSCRIBER_SECRET`, `TRANSCRIBER_CALLBACK_SECRET`); tanda tangan yang sudah dipakai dicatat di `spool/.replay.sqlite` (tetap setelah restart) dan di cache aplikasi.
+- Nama pembicara diambil aplikasi dari `users.name` (nama peserta LiveKit bisa diubah sendiri, diabaikan); identitas lain = "Peserta tamu".
+- Transkrip dikirim ke AI sebagai data kutipan di antara penanda dengan perintah mengabaikan instruksi di dalamnya; keluaran divalidasi ke skema ketat, teks polos (tag dibuang), penanggung jawab hanya peserta yang berbicara dan tidak opt-out, tidak ada yang menjadi tugas tanpa klik notulis.
+- Restart di tengah rekaman: audio sesi itu dihapus dan aplikasi diberi status gagal; berkas yatim/sementara dibersihkan saat start.
 
 - Audio hanya di spool worker, dihapus segera setelah transkripsi (gagal pun dihapus); sisa apa pun dihapus setelah 24 jam.
 - Pilihan "Jangan transkrip suara saya" privat: aplikasi → worker (daftar `exclude`, HMAC), bukan atribut LiveKit. Worker tidak pernah berlangganan mikrofon orang itu; bila berubah di tengah rapat, audionya yang sudah terekam dihapus. Aplikasi juga membuang segmennya saat menerima transkrip.
@@ -68,12 +74,12 @@ Bila terlalu lambat: `WHISPER_MODEL=medium` atau `small` (lebih cepat, kurang ak
 
 ## 5. Lokal (macOS + Herd)
 
-1. `.env` aplikasi: `LIVEKIT_*` (lihat `.env.example`), `TRANSCRIBER_URL=http://127.0.0.1:8090`, `TRANSCRIBER_SECRET=<acak>`, opsional `MINUTES_LLM_BASE_URL` ke server palsu (jangan memakai kunci DeepSeek sungguhan untuk uji), `LIVEKIT_WEBHOOK_HOST=<situs Herd Anda>`.
+1. `.env` aplikasi: `LIVEKIT_*` (lihat `.env.example`), `TRANSCRIBER_URL=http://127.0.0.1:8090`, `TRANSCRIBER_SECRET=<acak>`, `TRANSCRIBER_CALLBACK_SECRET=<acak lain>`, opsional `MINUTES_LLM_BASE_URL` ke server palsu (jangan memakai kunci DeepSeek sungguhan untuk uji), `LIVEKIT_WEBHOOK_HOST=<situs Herd Anda>`.
 2. `docker compose --profile video up -d livekit` (+ `herd proxy livekit http://127.0.0.1:7880 --secure`). Compose sudah mengirim webhook ke `/api/livekit/webhook` **dan** `/api/notulen/livekit`.
 3. Worker — di macOS jalankan **native** (kandidat ICE LiveKit lokal = `127.0.0.1`, tidak terjangkau dari kontainer lain):
    ```bash
    cd transcriber && python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
-   TRANSCRIBER_SECRET=… TRANSCRIBER_APP_URL=https://<situs>.test \
+   TRANSCRIBER_SECRET=… TRANSCRIBER_CALLBACK_SECRET=… TRANSCRIBER_APP_URL=https://<situs>.test \
    TRANSCRIBER_CA_FILE="$HOME/Library/Application Support/Herd/config/valet/CA/LaravelValetCASelfSigned.pem" \
    LIVEKIT_URL=ws://127.0.0.1:7880 TRANSCRIBER_SPOOL_DIR=/tmp/notulen-spool TRANSCRIBER_HOST=127.0.0.1 \
    .venv/bin/python -m notulen

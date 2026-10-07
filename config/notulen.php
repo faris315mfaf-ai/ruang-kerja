@@ -9,8 +9,9 @@
 | `auto_minutes` (docs/fitur/notulen-otomatis-kontrak.md; deploy guide
 | docs/deploy/RAPAT-VIDEO.md §7–§8; worker files transcriber/DEPLOY.md).
 | The worker (transcriber/, Python) runs next to LiveKit on the meeting server; the app asks it to join a room and
-| receives the transcript back. Both directions are HMAC-signed with
-| TRANSCRIBER_SECRET (App\Domain\Meetings\Transcripts\Services\NotulenSignature).
+| receives the transcript back. Both directions are HMAC-signed, each with
+| its own secret: TRANSCRIBER_SECRET (app → worker) and
+| TRANSCRIBER_CALLBACK_SECRET (worker → app), see NotulenSignature.
 |
 | - transcriber.url empty → the feature is unavailable (toggle hidden).
 | - llm.api_key empty → transcripts are still stored, no AI draft is made.
@@ -23,7 +24,10 @@ return [
     'transcriber' => [
         // Base URL of the worker API, e.g. https://livekit.spkd.store/notulen
         'url' => rtrim((string) env('TRANSCRIBER_URL', ''), '/'),
+        // Signs app → worker requests.
         'secret' => (string) env('TRANSCRIBER_SECRET', ''),
+        // Verifies worker → app callbacks; must differ from `secret` (audit N-06).
+        'callback_secret' => (string) env('TRANSCRIBER_CALLBACK_SECRET', ''),
         'timeout' => (int) env('TRANSCRIBER_TIMEOUT', 10),
         // Signed requests older/newer than this (seconds) are refused.
         'tolerance' => (int) env('TRANSCRIBER_TOLERANCE', 300),

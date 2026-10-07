@@ -14,6 +14,9 @@ services:
         restart: unless-stopped
         environment:
             TRANSCRIBER_SECRET: ${TRANSCRIBER_SECRET:?set TRANSCRIBER_SECRET in notulen.env}
+            TRANSCRIBER_CALLBACK_SECRET: ${TRANSCRIBER_CALLBACK_SECRET:?set TRANSCRIBER_CALLBACK_SECRET in notulen.env}
+            # Audio spool disk cap: beyond it no new recording, running ones stop (ALERT in the log).
+            TRANSCRIBER_SPOOL_MAX_GB: ${TRANSCRIBER_SPOOL_MAX_GB:-20}
             TRANSCRIBER_APP_URL: ${TRANSCRIBER_APP_URL:?e.g. https://spkd.store}
             TRANSCRIBER_HOST: 127.0.0.1
             TRANSCRIBER_PORT: 8090

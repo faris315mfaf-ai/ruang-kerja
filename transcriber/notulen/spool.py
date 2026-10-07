@@ -146,6 +146,18 @@ class Spool:
         if parent != self.root and parent.is_dir() and not any(parent.iterdir()):
             parent.rmdir()
 
+    def usage_bytes(self) -> int:
+        if not self.root.is_dir():
+            return 0
+        return sum(p.stat().st_size for p in self.root.rglob("*") if p.is_file())
+
+    def remove_temp_files(self) -> int:
+        removed = 0
+        for path in self.root.rglob("*.tmp"):
+            path.unlink(missing_ok=True)
+            removed += 1
+        return removed
+
     def sessions(self) -> list[Path]:
         """Session folders on disk (room/session), oldest first."""
         if not self.root.is_dir():

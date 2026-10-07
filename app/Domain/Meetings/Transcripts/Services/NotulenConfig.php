@@ -16,7 +16,11 @@ final class NotulenConfig
 
     public function configured(): bool
     {
-        return $this->url() !== '' && strlen((string) config('notulen.transcriber.secret')) >= 32 && $this->rooms->configured();
+        $secret = (string) config('notulen.transcriber.secret');
+        $callback = (string) config('notulen.transcriber.callback_secret');
+
+        return $this->url() !== '' && strlen($secret) >= 32 && strlen($callback) >= 32 && $secret !== $callback
+            && $this->rooms->configured();
     }
 
     public function availableFor(Meeting $meeting): bool

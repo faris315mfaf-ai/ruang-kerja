@@ -31,6 +31,10 @@ log = logging.getLogger(__name__)
 ROOM_PATTERN = re.compile(r"^rk-[0-9a-hjkmnp-tv-z]{26}-\d{8}$")
 
 
+class SpoolFull(RuntimeError):
+    """The audio spool reached TRANSCRIBER_SPOOL_MAX_GB."""
+
+
 class Recorder(Protocol):
     async def start(self) -> None: ...
 
@@ -100,23 +104,41 @@ class Coordinator:
         await self.app.close()
 
     def recover(self) -> None:
-        """After a restart: forget old leftovers, finish what was interrupted."""
+        """After a restart: forget old leftovers, finish what was interrupted.
+
+        - sessions older than ``spool_max_age_hours`` are deleted;
+        - a finished recording (or an undelivered transcript) is processed again;
+        - a recording cut by the restart has no reliable manifest: its audio is
+          deleted (privacy first) and the app is told it failed;
+        - anything else (no manifest, temp files) is an orphan and removed.
+        """
         for directory in self.spool.purge_older_than(self.settings.spool_max_age_hours):
             log.info("purged stale spool %s", directory.name)
+        self.spool.remove_temp_files()
         for directory in self.spool.sessions():
-            if (directory / "result.json").is_file() or (directory / "manifest.json").is_file():
+            manifest = self.spool.read_json(directory / "manifest.json")
+            if (directory / "result.json").is_file() or (manifest and manifest.get("state") == "recorded"):
                 self.queue.put_nowait(directory)
+            elif manifest and manifest.get("room"):
+                log.warning("recording of %s was interrupted by a restart; audio deleted", manifest.get("room"))
+                self.spool.remove(directory)
+                self._spawn(
+                    self.app.post(
+                        {
+                            "room": manifest.get("room"),
+                            "session": manifest.get("session"),
+                            "started_at": manifest.get("started_at"),
+                            "status": "failed",
+                            "error": "Rekaman terputus karena server notulen dimulai ulang.",
+                        },
+                        attempts=3,
+                    )
+                )
             else:
                 self.spool.remove(directory)
 
-    def health(self) -> dict[str, Any]:
-        return {
-            "status": "ok",
-            "recording": sum(1 for s in self.sessions.values() if s.state == "recording"),
-            "queued": self.queue.qsize(),
-            "transcribing": self.busy,
-            "model": self.transcriber.name,
-        }
+    def spool_full(self) -> bool:
+        return self.spool.usage_bytes() >= self.settings.spool_max_gb * 1024**3
 
     # -- API -------------------------------------------------------------------
 
@@ -128,6 +150,9 @@ class Coordinator:
         current = self.sessions.get(room)
         if current is not None and current.state in ("joining", "recording"):
             return "already"
+        if self.spool_full():
+            log.critical("ALERT spool full (>= %.1f GB): refusing to record %s", self.settings.spool_max_gb, room)
+            raise SpoolFull(room)
         session_id = uuid.uuid4().hex
         session = Session(
             room=room,
@@ -251,7 +276,21 @@ class Coordinator:
         task.add_done_callback(self._tasks.discard)
 
     async def _housekeeping(self) -> None:
+        ticks = 0
         while True:
-            await asyncio.sleep(3600)
-            # Active recordings keep touching their files, so only leftovers age out.
-            self.spool.purge_older_than(self.settings.spool_max_age_hours)
+            await asyncio.sleep(10)
+            ticks += 1
+            await self.enforce_spool_cap()
+            if ticks % 360 == 0:
+                # Active recordings keep touching their files, so only leftovers age out.
+                self.spool.purge_older_than(self.settings.spool_max_age_hours)
+
+    async def enforce_spool_cap(self) -> None:
+        """Disk cap reached: stop every running recording (what exists is transcribed)."""
+        recording = [room for room, s in self.sessions.items() if s.state == "recording"]
+        if recording and self.spool_full():
+            log.critical(
+                "ALERT spool full (>= %.1f GB): stopping %d recording(s)", self.settings.spool_max_gb, len(recording)
+            )
+            for room in recording:
+                await self.finish(room, "spool_full")
