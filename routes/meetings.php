@@ -70,6 +70,7 @@ Route::middleware([EnsureFeatureEnabled::class.':meetings', 'auth', 'verified'])
         Route::delete('{meeting}/video/peserta/{identity}', [MeetingVideoController::class, 'remove'])->whereUlid(['meeting', 'identity'])->middleware('throttle:api')->name('video.remove');
         Route::delete('{meeting}/video/peserta/{identity}/larangan', [MeetingVideoController::class, 'readmit'])->whereUlid(['meeting', 'identity'])->middleware('throttle:api')->name('video.readmit');
         Route::post('{meeting}/video/tangan', [MeetingVideoController::class, 'hand'])->whereUlid('meeting')->middleware('throttle:30,1')->name('video.hand');
+        Route::post('{meeting}/video/atribut', [MeetingVideoController::class, 'attributes'])->whereUlid('meeting')->middleware('throttle:60,1')->name('video.attributes');
 
         // Ruang "Notulen Hidup" (docs/fitur/rapat-video-kontrak.md): notes source, speaking time, Kehadiran, Panggil.
         Route::post('{meeting}/video/sumber-notulen', [MeetingRoomController::class, 'notesSource'])->whereUlid('meeting')->middleware('throttle:api')->name('video.notes-source');

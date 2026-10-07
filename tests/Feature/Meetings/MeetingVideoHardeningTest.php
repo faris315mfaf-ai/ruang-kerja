@@ -116,6 +116,13 @@ it('gives no token grant to change one\'s own name or metadata; the hand is rais
 
     $outsider = User::factory()->withRole(Role::Anggota)->create();
     $this->actingAs($outsider)->postJson("{$this->base}/video/tangan", ['raised' => true])->assertNotFound();
+
+    // Whitelisted own attributes (section presence, opt-out mirror); never a name or anything else.
+    $this->actingAs($this->rizky)->postJson("{$this->base}/video/atribut", ['attributes' => ['rk_minutes_at' => 'section-2', 'rk_notulen_optout' => '1']])
+        ->assertOk()->assertJsonPath('attributes', ['rk_minutes_at' => 'section-2', 'rk_notulen_optout' => '1']);
+    $this->actingAs($this->rizky)->postJson("{$this->base}/video/atribut", ['attributes' => ['name' => 'Direktur Utama']])->assertUnprocessable();
+    $this->actingAs($this->rizky)->postJson("{$this->base}/video/atribut", ['attributes' => ['hand' => 'abc']])->assertUnprocessable();
+    $this->actingAs($outsider)->postJson("{$this->base}/video/atribut", ['attributes' => ['hand' => '']])->assertNotFound();
 });
 
 it('audits muting like removing (R-08)', function () {

@@ -6,6 +6,7 @@ use App\Domain\Meetings\Actions\IssueVideoToken;
 use App\Domain\Meetings\Actions\MuteVideoParticipant;
 use App\Domain\Meetings\Actions\ReadmitVideoParticipant;
 use App\Domain\Meetings\Actions\RemoveVideoParticipant;
+use App\Domain\Meetings\Actions\SetOwnAttributes;
 use App\Domain\Meetings\Actions\SetRaisedHand;
 use App\Domain\Meetings\Data\Occurrence;
 use App\Domain\Meetings\Services\MeetingOccurrences;
@@ -13,6 +14,7 @@ use App\Domain\Meetings\Services\NotulenBridge;
 use App\Domain\Meetings\Services\VideoRooms;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Meetings\OccurrenceRequest;
+use App\Http\Requests\Meetings\OwnAttributesRequest;
 use App\Http\Requests\Meetings\RaiseHandRequest;
 use App\Http\Requests\Meetings\VideoModerationRequest;
 use App\Http\Resources\Meetings\RoomPresenter;
@@ -85,6 +87,30 @@ class MeetingVideoController extends Controller
         Gate::authorize('moderateVideo', $meeting);
 
         return response()->json(['readmitted' => $readmit->handle($user, $this->occurrence($request, $meeting), $identity)]);
+    }
+
+    /** Own whitelisted LiveKit attributes, set server-side (audit R-05). */
+    public function attributes(OwnAttributesRequest $request, Meeting $meeting, #[CurrentUser] User $user, SetOwnAttributes $set): JsonResponse
+    {
+        $occurrence = $this->occurrence($request, $meeting);
+        Gate::authorize('joinVideo', [$meeting, $occurrence]);
+
+        if (! $this->rooms->configured()) {
+            return response()->json(['message' => 'Video RuangKerja belum disiapkan di server ini.'], 503);
+        }
+
+        /** @var array<string, mixed> $attributes */
+        $attributes = (array) $request->input('attributes', []);
+
+        try {
+            $applied = $set->handle($user, $occurrence, $attributes);
+        } catch (RuntimeException $exception) {
+            Log::warning('LiveKit attributes failed', ['meeting' => $meeting->id, 'error' => $exception->getMessage()]);
+
+            return response()->json(['message' => 'Server rapat tidak menjawab. Coba lagi.'], 502);
+        }
+
+        return response()->json(['attributes' => $applied]);
     }
 
     /** Raise / lower one's own hand: attribute `hand` set server-side (audit R-05). */

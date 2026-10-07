@@ -237,6 +237,16 @@ export type ReadmitResponse = { readmitted: boolean };
 /** POST /rapat/{id}/video/tangan { raised } → attribute `hand` set by the server (ms, "" = lowered). */
 export type RaiseHandResponse = { hand: string };
 
+/**
+ * POST /rapat/{id}/video/atribut { attributes } → { attributes }: own LiveKit
+ * attributes through the server (tokens cannot set them, audit R-05). Keys:
+ * hand (ms or ""), rk_minutes_at (section key, ≤ 64 chars [A-Za-z0-9_.:-]),
+ * rk_notulen_optout ("0" | "1"); "" removes. Other keys → 422.
+ */
+export type OwnAttributes = Partial<
+    Record<'hand' | 'rk_minutes_at' | 'rk_notulen_optout', string>
+>;
+
 /** GET /rapat/{id}/video/kehadiran. */
 export type RoomAttendance = {
     attendance: RoomAttendee[];
@@ -327,6 +337,8 @@ export type RoomProps = {
         /** Contains the placeholder "{user}" (organizer: "Izinkan masuk lagi"). */
         readmit: string;
         hand: string;
+        /** POST { attributes: OwnAttributes }. */
+        attributes: string;
         join: string;
         room: string;
     };

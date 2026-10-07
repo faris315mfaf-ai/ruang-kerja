@@ -83,6 +83,7 @@
     "call": "/rapat/01JAOPS00000000000000000AA/video/panggil/{user}?tanggal=2026-10-08",
     "readmit": "/rapat/01JAOPS00000000000000000AA/video/peserta/{user}/larangan?tanggal=2026-10-08",
     "hand": "/rapat/01JAOPS00000000000000000AA/video/tangan?tanggal=2026-10-08",
+    "attributes": "/rapat/01JAOPS00000000000000000AA/video/atribut?tanggal=2026-10-08",
     "join": "/rapat/01JAOPS00000000000000000AA/gabung?tanggal=2026-10-08",
     "room": "/rapat/01JAOPS00000000000000000AA/ruang?tanggal=2026-10-08"
   }
@@ -357,7 +358,7 @@ Efek: notifikasi in-app (Inbox + toast realtime di kanal pribadi orang itu; emai
 ### 4.3 Angkat tangan & token (audit R-05, R-08, R-09)
 
 - Token peserta **tidak** lagi punya `canUpdateOwnMetadata` (dan tidak pernah `roomAdmin`): klien tidak bisa `setName`, `setMetadata`, atau `setAttributes`. Nama/avatar di UI diambil dari `room.people`/`participants` menurut `participant.identity` (rapatui), bukan `participant.name`.
-- **Angkat tangan** `POST links.hand` `{"raised": true|false}` (`meetings.video.hand`, `joinVideo`, `throttle:30,1`) → `{"hand": "1759889400123"}` (waktu angkat dalam ms) atau `{"hand": ""}`. Server mengatur atribut LiveKit `hand` peserta itu (Room Service `UpdateParticipant`); klien lain melihatnya lewat `ParticipantAttributesChanged` seperti sebelumnya (urut menurut nilai). 502 bila LiveKit gagal, 503 bila belum diatur. Atribut `rk_notulen_optout` (agen notulen) juga harus diatur server (`LiveKitRoomService::updateAttributes`), bukan klien.
+- **Angkat tangan** `POST links.hand` `{"raised": true|false}` (`meetings.video.hand`, `joinVideo`, `throttle:30,1`) → `{"hand": "1759889400123"}` (waktu angkat dalam ms) atau `{"hand": ""}`. Server mengatur atribut LiveKit `hand` peserta itu (Room Service `UpdateParticipant`); klien lain melihatnya lewat `ParticipantAttributesChanged` seperti sebelumnya (urut menurut nilai). 502 bila LiveKit gagal, 503 bila belum diatur. - **Atribut sendiri lainnya** `POST links.attributes` `{"attributes": {"rk_minutes_at": "section-2"}}` (`meetings.video.attributes`, `joinVideo`, `throttle:60,1`) → `{"attributes": {…}}`. Hanya kunci: `hand` (ms atau ""), `rk_minutes_at` (bagian notulen yang sedang dilihat, untuk kehadiran kolaborator; ≤ 64 karakter `[A-Za-z0-9_.:-]`), `rk_notulen_optout` (`"0"`/`"1"`, cermin persetujuan; tabel persetujuan tetap sumber kebenaran). Nilai "" menghapus; kunci lain → 422. Ganti semua `localParticipant.setAttributes(...)` dengan endpoint ini (kirim dengan debounce untuk `rk_minutes_at`).
 - Bisukan (`POST …/video/peserta/{user}/bisukan`) kini diaudit `meeting.video_participant_muted`.
 - Rapat video **dibatalkan** → semua ruang LiveKit-nya yang mungkin hidup dihapus (`DeleteRoom`, job `CloseMeetingRooms`): klien menerima `Disconnected` (alasan `ROOM_DELETED`) → tampilkan "Rapat dibatalkan". Akun **dinonaktifkan** → tidak mendapat token dan dikeluarkan dari ruang yang sedang diikuti (job `RemoveUserFromVideoRooms`).
 
@@ -385,6 +386,7 @@ Tanpa realtime (`features.realtime` false atau WebSocket putus): polling `GET �
 | POST | `/rapat/{meeting}/notulen/menyunting` | `meetings.minutes.editing` | `editMinutes` | `throttle:api` |
 | DELETE | `/rapat/{meeting}/video/peserta/{user}/larangan` | `meetings.video.readmit` | `moderateVideo` | `throttle:api` |
 | POST | `/rapat/{meeting}/video/tangan` | `meetings.video.hand` | `joinVideo` | `throttle:30,1` |
+| POST | `/rapat/{meeting}/video/atribut` | `meetings.video.attributes` | `joinVideo` | `throttle:60,1` |
 | POST | `/rapat/{meeting}/video/sumber-notulen` | `meetings.video.notes-source` | `editMinutes` | `throttle:api` |
 | GET | `/rapat/{meeting}/video/bicara` | `meetings.video.speaking` | `openVideo` | `throttle:api` |
 | POST | `/rapat/{meeting}/video/bicara` | `meetings.video.speaking.report` | `joinVideo` | `throttle:20,1` |
@@ -399,4 +401,4 @@ Wayfinder: `@/routes/meetings` (mis. `meetings.video.speaking.report.url(id, {qu
 |---|---|
 | 7 Okt 2026 | Versi pertama (rapatbe). |
 | 7 Okt 2026 | Keputusan lead: notulen kolaboratif (`mode`, `collab`, token `…/notulen/kolaborasi`, `can_edit` per mode, `can_edit_attendance`, `attendance_only`), petunjuk menyunting (`editing`, `…/notulen/menyunting`, event `minutes.editing`), sumber waktu bicara & retensi, `template.key = agenda` + `template.label` (ganti `template.name`), kehadiran ≠ persetujuan transkrip. |
-| 7 Okt 2026 | Audit keamanan: `removed` + Izinkan masuk lagi (R-04), token tanpa `canUpdateOwnMetadata` + `POST …/video/tangan` (R-05), bisukan diaudit (R-08), ruang ditutup saat batal / akun nonaktif (R-09), `links.readmit`, `links.hand`. |
+| 7 Okt 2026 | Audit keamanan: `removed` + Izinkan masuk lagi (R-04), token tanpa `canUpdateOwnMetadata` + `POST …/video/tangan` dan `POST …/video/atribut` (R-05), bisukan diaudit (R-08), ruang ditutup saat batal / akun nonaktif (R-09), `links.readmit`, `links.hand`. |
