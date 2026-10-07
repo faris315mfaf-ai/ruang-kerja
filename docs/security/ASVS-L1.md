@@ -35,7 +35,7 @@ Tidak ada temuan tingkat tinggi yang terbuka untuk kode yang sudah ada di cabang
 ## V2 Autentikasi
 | Butir | Status | Catatan |
 |---|---|---|
-| 2.1.1 Sandi ≥ 12 karakter | Deviasi (keputusan pemilik 6 Okt 2026) | Semua karyawan kini memakai sandi: min **8** karakter + bukan alamat email (`PasswordValidationRules`), produksi `uncompromised()`. Tanpa aturan komposisi (sesuai ASVS 2.1.9). Super Admin tetap TOTP. |
+| 2.1.1 Sandi ≥ 12 karakter | Deviasi (keputusan pemilik 6 Okt 2026) | Keputusan pemilik 7 Okt 2026: karyawan **bebas** (tanpa panjang minimum, hanya bukan sandi bawaan `EMPLOYEE_DEFAULT_PASSWORD`); Super Admin min **8** + bukan alamat email, produksi `uncompromised()` (`PasswordPolicy`). Tanpa aturan komposisi (sesuai ASVS 2.1.9). Super Admin tetap TOTP. Mitigasi karyawan: rate limit login, login generik, wajib ganti setelah sandi bawaan. |
 | 2.1.7 Cek sandi bocor | OK | `uncompromised()` (HIBP k-anonymity) di produksi. |
 | 2.2.1 Anti brute force | OK | `throttle:login` 10/menit/IP + 5/menit/email+IP; `two-factor` 5/menit; demo login memakai `throttle:login`. |
 | 2.2.? 2FA admin | OK | Semua karyawan login dengan sandi (6 Okt 2026); Super Admin wajib TOTP sebelum fitur lain, juga setelah lupa sandi (tidak login otomatis bila TOTP aktif). Pesan galat login generik + timebox 200 ms. Login Google ditahan. |
