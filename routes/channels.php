@@ -7,6 +7,7 @@ use App\Models\Division;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Policies\WorkspacePolicy;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Gate;
 
@@ -20,9 +21,22 @@ Broadcast::channel('App.Models.User.{id}', function (User $user, string $id): bo
 });
 
 // Sprint 5/6: board & detail events (task.created/updated/moved/deleted, comment.posted/updated/deleted)
-// for everyone who may see the workspace.
-Broadcast::channel('workspace.{workspace}', function (User $user, Workspace $workspace): bool {
-    return Gate::forUser($user)->allows('view', $workspace);
+// on `private-workspace.{id}` for everyone who may see the workspace.
+// The same rule authorizes `presence-workspace.{id}` (board presence per card): members whisper
+// which task they have open and whether they are typing in it (client events only, nothing
+// stored). `read_only` (view-only management, archived workspace) lets clients ignore typing
+// hints from people who cannot edit or comment. Private channels ignore the returned array.
+Broadcast::channel('workspace.{workspace}', function (User $user, Workspace $workspace): array|false {
+    if (Gate::forUser($user)->denies('view', $workspace)) {
+        return false;
+    }
+
+    return [
+        'id' => $user->id,
+        'name' => $user->name,
+        'avatar' => $user->avatar_url,
+        'read_only' => $workspace->isArchived() || app(WorkspacePolicy::class)->isViewOnly($user, $workspace),
+    ];
 });
 
 // Sprint 6: presence "X sedang melihat tugas ini" — members are the people with the task open.
