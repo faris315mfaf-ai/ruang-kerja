@@ -100,6 +100,16 @@ class MeetingDemoSeeder extends Seeder
             'agenda' => ['Beban kerja Tim Gudang', 'Rencana cuti akhir tahun'],
         ], ['sari' => Rsvp::Yes]);
 
+        // Video RuangKerja (LiveKit): daily warehouse sync without a pasted link.
+        $this->meeting('dimas', [
+            'title' => 'Sinkron harian Tim Gudang',
+            'day' => 0, 'start' => '10:00', 'minutes' => 30,
+            'platform' => MeetingPlatform::Video,
+            'recurrence' => Recurrence::Weekdays,
+            'minute_taker' => 'bayu', 'workspace' => $ops,
+            'agenda' => ['Kiriman masuk & keluar hari ini', 'Kendala gudang'],
+        ], ['rizky' => Rsvp::Yes, 'bayu' => Rsvp::Yes, 'fitri' => Rsvp::Pending]);
+
         $this->board();
         $this->sprintReview();
     }

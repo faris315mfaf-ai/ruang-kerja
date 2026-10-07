@@ -21,8 +21,11 @@ export type Person = {
     avatar_url?: string | null;
 };
 
-/** Where the meeting happens. `client` = on site at a client (MgJadwal). */
-export type Platform = 'meet' | 'zoom' | 'room' | 'client';
+/**
+ * Where the meeting happens. `client` = on site at a client (MgJadwal);
+ * `video` = Video RuangKerja, the built-in LiveKit room (no pasted link).
+ */
+export type Platform = 'meet' | 'zoom' | 'room' | 'client' | 'video';
 
 export type Rsvp = 'yes' | 'maybe' | 'no' | 'pending';
 
@@ -189,6 +192,8 @@ export type MeetingFormProps = {
     can_lead: boolean;
     durations: number[];
     meeting: MeetingFormMeeting | null;
+    /** LiveKit configured: "Video RuangKerja" is offered (and the default). */
+    video_enabled: boolean;
 };
 
 export type MeetingDetailProps = {

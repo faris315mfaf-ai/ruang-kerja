@@ -42,6 +42,7 @@ const START_TIMES = Array.from({ length: 64 }, (_, index) => {
 type FormPlatform = MeetingFormValues['platform'];
 
 const PLATFORMS: { value: FormPlatform; hint: string }[] = [
+    { value: 'video', hint: 'ruang video bawaan, tanpa tautan' },
     { value: 'meet', hint: 'tempel tautan Meet' },
     { value: 'zoom', hint: 'tempel tautan Zoom' },
     { value: 'room', hint: 'isi ruangan' },
@@ -82,20 +83,31 @@ function Field({
     );
 }
 
-/** Three large radio cards: Google Meet · Zoom · Tatap muka. */
+/**
+ * Large radio cards: Video RuangKerja (when LiveKit is configured, full
+ * width) · Google Meet · Zoom · Tatap muka · Di klien.
+ */
 function PlatformPicker({
     value,
     onChange,
     labelId,
+    videoEnabled,
+    describedBy,
 }: {
     value: FormPlatform;
     onChange: (value: FormPlatform) => void;
     labelId: string;
+    videoEnabled: boolean;
+    describedBy?: string;
 }) {
     const refs = useRef<(HTMLButtonElement | null)[]>([]);
+    // An existing video meeting keeps its card even when the server is off.
+    const options = PLATFORMS.filter(
+        (p) => p.value !== 'video' || videoEnabled || value === 'video',
+    );
 
     const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-        const index = PLATFORMS.findIndex((p) => p.value === value);
+        const index = options.findIndex((p) => p.value === value);
         const next = nextTabIndex(
             index,
             event.key === 'ArrowDown'
@@ -103,7 +115,7 @@ function PlatformPicker({
                 : event.key === 'ArrowUp'
                   ? 'ArrowLeft'
                   : event.key,
-            PLATFORMS.length,
+            options.length,
         );
 
         if (next === null) {
@@ -111,7 +123,7 @@ function PlatformPicker({
         }
 
         event.preventDefault();
-        onChange(PLATFORMS[next].value);
+        onChange(options[next].value);
         refs.current[next]?.focus();
     };
 
@@ -119,9 +131,10 @@ function PlatformPicker({
         <div
             role="radiogroup"
             aria-labelledby={labelId}
+            aria-describedby={describedBy}
             className="grid grid-cols-2 gap-2.5 xl:grid-cols-4"
         >
-            {PLATFORMS.map((platform, index) => {
+            {options.map((platform, index) => {
                 const selected = platform.value === value;
 
                 return (
@@ -138,6 +151,8 @@ function PlatformPicker({
                         onKeyDown={onKeyDown}
                         className={cn(
                             'flex min-h-[60px] flex-col justify-center gap-0.5 rounded-[16px] px-4 py-3 text-left transition-[background-color,box-shadow] duration-120 ease-brand outline-none focus-visible:ring-[3px] focus-visible:ring-ring sm:min-h-[76px]',
+                            platform.value === 'video' &&
+                                'col-span-2 xl:col-span-4',
                             selected
                                 ? 'bg-grad-aksi text-on-brand shadow-glow'
                                 : 'border border-border bg-surface text-text hover:bg-surface-2',
@@ -272,7 +287,24 @@ export function MeetingFormFields({ form }: { form: MeetingForm }) {
                     value={values.platform}
                     onChange={(value) => set('platform', value)}
                     labelId={fid('platform')}
+                    videoEnabled={form.videoEnabled}
+                    describedBy={describe('platform')}
                 />
+                <FieldError id={err('platform')} message={errors.platform} />
+                {values.platform === 'video' && (
+                    <p className="text-[14px] text-text-muted">
+                        Peserta bergabung dari RuangKerja (tombol Gabung di
+                        detail rapat dan pengingat). Ruang dibuka 15 menit
+                        sebelum mulai; kehadiran tercatat otomatis untuk
+                        notulen.
+                    </p>
+                )}
+                {!form.videoEnabled && values.platform !== 'video' && (
+                    <p className="text-[14px] text-text-subtle">
+                        Video RuangKerja (rapat video bawaan) belum disiapkan
+                        admin di server ini.
+                    </p>
+                )}
                 {(values.platform === 'meet' || values.platform === 'zoom') && (
                     <Field
                         label={
@@ -748,11 +780,13 @@ export function MeetingSummary({ form }: { form: MeetingForm }) {
     const internal = values.participants.filter((p) => !isEmail(p));
     const guests = values.participants.filter(isEmail);
     const place =
-        values.platform === 'room' || values.platform === 'client'
-            ? `${PLATFORM_LABEL[values.platform]} · ${values.location.trim()}`
-            : values.joinUrl.trim()
-              ? `${PLATFORM_LABEL[values.platform]} · ${values.joinUrl.trim().replace(/^https:\/\//, '')}`
-              : `${PLATFORM_LABEL[values.platform]} (tautan belum diisi)`;
+        values.platform === 'video'
+            ? `${PLATFORM_LABEL.video} · tombol Gabung di RuangKerja`
+            : values.platform === 'room' || values.platform === 'client'
+              ? `${PLATFORM_LABEL[values.platform]} · ${values.location.trim()}`
+              : values.joinUrl.trim()
+                ? `${PLATFORM_LABEL[values.platform]} · ${values.joinUrl.trim().replace(/^https:\/\//, '')}`
+                : `${PLATFORM_LABEL[values.platform]} (tautan belum diisi)`;
     const rows: [string, string][] = [
         ['Judul', values.title.trim()],
         [

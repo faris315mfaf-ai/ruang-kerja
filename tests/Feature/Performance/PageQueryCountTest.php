@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Meetings\Services\MeetingOccurrences;
 use App\Models\Candidate;
 use App\Models\CandidateNote;
 use App\Models\Channel;
@@ -10,6 +11,7 @@ use App\Models\HiringPosition;
 use App\Models\InterviewScore;
 use App\Models\Meeting;
 use App\Models\MeetingActionItem;
+use App\Models\MeetingAttendance;
 use App\Models\MeetingMinutes;
 use App\Models\MeetingParticipant;
 use App\Models\Note;
@@ -375,17 +377,22 @@ it('keeps Rapat & Kalender free of N+1', function () {
     $kadiv = P::user('kadiv');
     $standup = Meeting::query()->where('title', 'Stand-up Divisi Operasional')->firstOrFail();
     $draft = MeetingMinutes::query()->where('meeting_id', $standup->id)->where('status', 'draft')->firstOrFail();
+    $video = Meeting::query()->where('title', 'Sinkron harian Tim Gudang')->firstOrFail();
     $pages = [
         '/rapat' => ['kadiv', 42],
         '/rapat/baru' => ['kadiv', 36],
         "/rapat/{$standup->id}" => ['kadiv', 38],
         "/rapat/{$standup->id}/notulen?tanggal={$draft->occurrence_date->toDateString()}" => ['kadiv', 39],
+        // Video RuangKerja: detail with attendance, pre-join and room pages.
+        "/rapat/{$video->id}" => ['kadiv', 39],
+        "/rapat/{$video->id}/gabung" => ['kadiv', 38],
+        "/rapat/{$video->id}/ruang" => ['kadiv', 38],
         '/kalender' => ['kadiv', 40],
         '/manajemen/jadwal' => ['direksi', 28],
     ];
 
     // Meetings are not part of P::grow(): add participants, meetings, minutes and follow-ups here.
-    $growMeetings = function () use ($kadiv, $standup, $draft): void {
+    $growMeetings = function () use ($kadiv, $standup, $draft, $video): void {
         $today = CarbonImmutable::now('Asia/Jakarta')->toDateString();
         $people = User::factory()->count(5)->create(['company_id' => $kadiv->company_id]);
         Meeting::factory()->count(4)->by($kadiv)->at($today.' 15:00')->withParticipants($people->all())->create();
@@ -393,6 +400,13 @@ it('keeps Rapat & Kalender free of N+1', function () {
 
         foreach ($people as $person) {
             MeetingParticipant::query()->create(['meeting_id' => $standup->id, 'user_id' => $person->id]);
+            MeetingParticipant::query()->create(['meeting_id' => $video->id, 'user_id' => $person->id]);
+            $joined = CarbonImmutable::now()->subMinutes(20);
+            MeetingAttendance::query()->create([
+                'meeting_id' => $video->id, 'occurrence_date' => app(MeetingOccurrences::class)->resolve($video, null)->date,
+                'user_id' => $person->id, 'room' => 'rk-test', 'participant_sid' => 'PA_'.$person->id,
+                'joined_at' => $joined, 'left_at' => $joined->addMinutes(5), 'duration_seconds' => 300,
+            ]);
             MeetingActionItem::query()->create(['minutes_id' => $draft->id, 'text' => 'Butir', 'assignee_id' => $person->id, 'due_date' => '2026-10-09']);
             MeetingActionItem::query()->create(['minutes_id' => $draft->id, 'text' => 'Butir saya', 'assignee_id' => $kadiv->id, 'due_date' => '2026-10-09']);
         }
