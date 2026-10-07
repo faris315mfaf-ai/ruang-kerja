@@ -13,7 +13,10 @@ type Props = {
     name: string | null;
     /** End of the 30-minute window after HR's approval. */
     expiresAt: string | null;
-    passwordRules: string;
+    /** Browser `passwordrules`: Super Admins only (employees: free choice). */
+    passwordRules: string | null;
+    /** Server-side rule summary for this account. */
+    passwordHint: string;
 };
 
 /**
@@ -26,6 +29,7 @@ export default function PasswordResetNew({
     name,
     expiresAt,
     passwordRules,
+    passwordHint,
 }: Props) {
     return (
         <>
@@ -81,8 +85,12 @@ export default function PasswordResetNew({
                                 required
                                 autoFocus
                                 autoComplete="new-password"
-                                placeholder="Minimal 8 karakter"
-                                passwordrules={passwordRules}
+                                placeholder={
+                                    passwordRules
+                                        ? 'Minimal 8 karakter'
+                                        : undefined
+                                }
+                                passwordrules={passwordRules ?? undefined}
                                 aria-invalid={
                                     errors.password ? true : undefined
                                 }
@@ -100,7 +108,7 @@ export default function PasswordResetNew({
                                 required
                                 autoComplete="new-password"
                                 placeholder="Ulangi kata sandi baru"
-                                passwordrules={passwordRules}
+                                passwordrules={passwordRules ?? undefined}
                             />
                             <InputError
                                 message={errors.password_confirmation}
@@ -108,8 +116,8 @@ export default function PasswordResetNew({
                         </div>
 
                         <p className="text-meta text-text-muted">
-                            Minimal 8 karakter dan tidak sama dengan alamat
-                            email. Semua perangkat lain akan dikeluarkan.
+                            {passwordHint} Semua perangkat lain akan
+                            dikeluarkan.
                         </p>
 
                         <Button

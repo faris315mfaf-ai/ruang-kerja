@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Domain\Auth\Actions\ChangeOwnPassword;
+use App\Domain\Auth\Services\PasswordPolicy;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\EnsureTwoFactorForSuperAdmin;
 use App\Http\Requests\Settings\PasswordUpdateRequest;
@@ -11,7 +12,6 @@ use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Fortify\Features;
@@ -22,7 +22,7 @@ use Laravel\Fortify\Features;
  */
 class SecurityController extends Controller
 {
-    public function edit(TwoFactorAuthenticationRequest $request, #[CurrentUser] User $user): Response
+    public function edit(TwoFactorAuthenticationRequest $request, #[CurrentUser] User $user, PasswordPolicy $passwords): Response
     {
         Gate::authorize('manageCredentials', $user);
 
@@ -30,7 +30,9 @@ class SecurityController extends Controller
 
         $props = [
             'canManageTwoFactor' => $canManageTwoFactor,
-            'passwordRules' => Password::defaults()->toPasswordRulesString(),
+            // Strength rules (browser `passwordrules` + hint) only for Super Admins.
+            'passwordRules' => $passwords->browserRules($user),
+            'passwordHint' => $passwords->hint($user),
             'twoFactorRequired' => EnsureTwoFactorForSuperAdmin::mustSetUp($request, $user),
             'passwordChangeRequired' => $user->password_change_required,
             'hasPassword' => $user->password !== null,

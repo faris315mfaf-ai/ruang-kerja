@@ -53,6 +53,8 @@ export type FormOptions = {
     teams: { id: string; name: string; division_id: string }[];
     positions: { id: string; name: string; level: number }[];
     managers: ManagerOption[];
+    /** New employees get the company default password (EMPLOYEE_DEFAULT_PASSWORD). */
+    defaultPassword: boolean;
 };
 
 export type EnumOptions = {
@@ -145,6 +147,8 @@ export type EmployeeShowProps = {
         update: boolean;
         deactivate: boolean;
         setPassword: boolean;
+        /** "Sandi bawaan" in Atur kata sandi (default configured, not a Super Admin). */
+        setDefaultPassword: boolean;
     };
     /** This employee's request awaiting a decision, if the viewer may decide it. */
     passwordReset: PasswordResetItem | null;

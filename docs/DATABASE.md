@@ -77,7 +77,7 @@ Tambahan Dashboard per jabatan (F3, migrasi `2026_10_11_500000_add_dashboard_rol
 | name | varchar(150) | |
 | email | varchar(190) unique | email Google Workspace |
 | password | varchar null | kata sandi login semua karyawan (keputusan pemilik 6 Okt 2026); null = belum diatur (HR mengatur atau karyawan memakai "Lupa kata sandi") |
-| password_change_required | bool | default false; true = HR mengatur sandi sementara dan karyawan wajib menggantinya sebelum memakai aplikasi |
+| password_change_required | bool | default false; true = akun memakai sandi bawaan (`EMPLOYEE_DEFAULT_PASSWORD`) atau sandi dari HR dan karyawan wajib menggantinya sebelum memakai aplikasi |
 | two_factor_secret | text null encrypted | |
 | google_id | varchar null unique | `sub` dari Google |
 | avatar_url | varchar null | |

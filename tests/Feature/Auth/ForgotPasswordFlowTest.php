@@ -6,6 +6,7 @@ use App\Domain\Auth\Data\PasswordResetSession;
 use App\Domain\Auth\Enums\LoginMethod;
 use App\Domain\Auth\Enums\PasswordResetStatus;
 use App\Domain\Auth\Notifications\PasswordResetRequestedNotification;
+use App\Domain\Auth\Rules\NotDefaultPassword;
 use App\Domain\Organization\Enums\Role;
 use App\Models\AuditLog;
 use App\Models\Company;
@@ -481,10 +482,49 @@ describe('HR decision', function () {
         expect($this->resetRequest->refresh()->status)->toBe(PasswordResetStatus::Approved);
         $this->assertGuest();
     })->with([
-        'too short' => ['pendek', 'pendek'],
+        'empty' => ['', ''],
         'not confirmed' => ['sandi-baru-1', 'sandi-baru-2'],
-        'email' => ['rizky@kantor.test', 'rizky@kantor.test'],
+        'too long' => [str_repeat('a', 256), str_repeat('a', 256)],
     ]);
+
+    it('uses the free employee rules: no strength hint, short ok, never the default password', function () {
+        config(['auth.employee_default_password' => 'ContohSandi123']);
+        decideReset($this->hr, $this->resetRequest, true);
+        resetStatus();
+
+        $this->get(route('password-reset.edit'))->assertInertia(fn (Assert $page) => $page
+            ->where('passwordRules', null)
+            ->where('passwordHint', 'Bebas, asal bukan kata sandi bawaan perusahaan.'));
+
+        $this->from(route('password-reset.edit'))->post(route('password-reset.update'), [
+            'password' => 'ContohSandi123',
+            'password_confirmation' => 'ContohSandi123',
+        ])->assertSessionHasErrors(['password' => NotDefaultPassword::MESSAGE]);
+        $this->assertGuest();
+
+        $this->post(route('password-reset.update'), [
+            'password' => 'kopi',
+            'password_confirmation' => 'kopi',
+        ])->assertSessionHasNoErrors()->assertRedirect(route('dashboard'));
+
+        expect(Hash::check('kopi', (string) $this->employee->refresh()->password))->toBeTrue();
+    });
+
+    it('keeps the strict rules for a Super Admin\'s new password', function () {
+        requestReset($this->admin->email);
+        $otherAdmin = User::factory()->forCompany($this->company)->withRole(Role::SuperAdmin)->create();
+        decideReset($otherAdmin, pendingRequestOf($this->admin), true);
+        resetStatus();
+
+        $this->get(route('password-reset.edit'))->assertInertia(fn (Assert $page) => $page
+            ->where('passwordRules', fn (?string $rules) => is_string($rules) && str_contains($rules, 'minlength'))
+            ->where('passwordHint', 'Minimal 8 karakter dan tidak sama dengan alamat email.'));
+
+        $this->from(route('password-reset.edit'))->post(route('password-reset.update'), [
+            'password' => 'kopi',
+            'password_confirmation' => 'kopi',
+        ])->assertSessionHasErrors('password');
+    });
 
     it('refuses the action when the request is no longer approved', function () {
         expect(fn () => app(CompletePasswordReset::class)->handle($this->resetRequest, 'sandi-baru-123'))

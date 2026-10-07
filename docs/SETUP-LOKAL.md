@@ -122,6 +122,7 @@ Keputusan pemilik 6 Okt 2026: semua karyawan masuk dengan **email + kata sandi**
 
 - **Sehari-hari:** login demo tetap ada (`DEMO_LOGIN_ENABLED=true`, hanya `APP_ENV=local`), atau isi form dengan akun demo + sandi `password`.
 - Karyawan seeder selain akun demo **tidak punya sandi** (mis. `bayu.saputra@demo.test`): pakai mereka untuk mencoba "Lupa kata sandi" (setujui dari `hr@demo.test` › Admin › Karyawan) atau "Atur kata sandi" di profilnya.
+- **Sandi bawaan karyawan:** isi `EMPLOYEE_DEFAULT_PASSWORD` di `.env` (contoh `ContohSandi123`) untuk mencoba pilihan "Sandi bawaan", akun baru yang langsung bisa login, dan `php artisan ruangkerja:reset-default-passwords --dry-run`. Kosong = fitur mati.
 - Email notifikasi (permintaan reset ke HR, "sandi diatur HR") terlihat di Mailpit.
 
 ### Login Google di lokal (ditahan)

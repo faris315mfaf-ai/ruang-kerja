@@ -39,4 +39,8 @@ Route::middleware(['auth', 'verified'])
         Route::post('{employee}/kata-sandi', [EmployeePasswordController::class, 'store'])
             ->middleware('throttle:20,1')
             ->name('password');
+        // "Sandi bawaan" shown to HR on demand in Atur kata sandi (owner decision 7 Oct 2026).
+        Route::get('{employee}/kata-sandi/bawaan', [EmployeePasswordController::class, 'defaultPassword'])
+            ->middleware('throttle:20,1')
+            ->name('password.default');
     });

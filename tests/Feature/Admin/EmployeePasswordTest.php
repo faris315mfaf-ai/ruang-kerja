@@ -63,48 +63,33 @@ it('lets HR type a new password, signs the employee out everywhere and audits wi
     $audit = AuditLog::query()->where('action', 'user.password_set_by_hr')->sole();
     expect($audit->user_id)->toBe($this->hr->id)
         ->and($audit->auditable_id)->toBe($employee->id)
-        ->and($audit->new_values)->toBe(['generated' => false, 'must_change' => false])
+        ->and($audit->new_values)->toBe(['mode' => 'manual', 'must_change' => false])
         ->and(json_encode([$audit->old_values, $audit->new_values]))->not->toContain('sandi-dari-hr-1')
         ->and(AuditLog::query()->where('action', 'user.updated')->count())->toBe(0);
 });
 
-it('generates a temporary password, shows it once and requires a change', function () {
-    $response = setPassword($this->hr, $this->employee, ['mode' => 'generate', 'must_change' => true]);
+it('no longer generates a random password (mode removed)', function () {
+    $this->actingAs($this->hr)
+        ->postJson(route('admin.employees.password', $this->employee), ['mode' => 'generate', 'must_change' => true])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('mode');
 
-    $response->assertSessionHasNoErrors()->assertInertiaFlash('toast.type', 'success');
-    $generated = session()->get(SessionKey::FLASH_DATA, [])['generatedPassword'] ?? null;
-
-    expect($generated)->toBeArray()
-        ->and($generated['password'])->toMatch('/^[A-Za-z2-9]{4}-[A-Za-z2-9]{4}-[A-Za-z2-9]{4}$/')
-        ->and($generated['mustChange'])->toBeTrue();
-
-    $employee = $this->employee->refresh();
-    expect(Hash::check($generated['password'], (string) $employee->password))->toBeTrue()
-        ->and($employee->password_change_required)->toBeTrue()
-        ->and(AuditLog::query()->where('action', 'user.password_set_by_hr')->sole()->new_values)
-        ->toBe(['generated' => true, 'must_change' => true]);
+    expect(Hash::check('password', (string) $this->employee->refresh()->password))->toBeTrue()
+        ->and(AuditLog::query()->where('action', 'user.password_set_by_hr')->exists())->toBeFalse()
+        ->and(session()->get(SessionKey::FLASH_DATA, []))->not->toHaveKey('generatedPassword');
 });
 
-it('generates different, readable passwords', function () {
-    $action = app(SetEmployeePassword::class);
-    $first = $action->handle($this->hr, $this->employee, null, true);
-    $second = $action->handle($this->hr, $this->employee, null, true);
-
-    expect($first)->not->toBe($second)
-        ->and($first)->toMatch('/^[a-km-zA-HJ-NP-Z2-9]{4}(-[a-km-zA-HJ-NP-Z2-9]{4}){2}$/');
-});
-
-it('validates a typed password (8+ characters, confirmed, not the email)', function (array $data, string $field) {
+it('validates a typed password (confirmed, a known mode)', function (array $data, string $field) {
     setPassword($this->hr, $this->employee, ['mode' => 'manual', 'must_change' => true, ...$data])
         ->assertSessionHasErrors($field);
 
     expect(Hash::check('password', (string) $this->employee->refresh()->password))->toBeTrue()
         ->and(AuditLog::query()->where('action', 'user.password_set_by_hr')->exists())->toBeFalse();
 })->with([
-    'too short' => [['password' => 'pendek', 'password_confirmation' => 'pendek'], 'password'],
+    'empty' => [['password' => '', 'password_confirmation' => ''], 'password'],
     'not confirmed' => [['password' => 'sandi-baru-1', 'password_confirmation' => 'beda-sandi-1'], 'password'],
-    'email' => [['password' => 'rizky@kantor.test', 'password_confirmation' => 'rizky@kantor.test'], 'password'],
     'no mode' => [['mode' => 'acak', 'password' => 'sandi-baru-1', 'password_confirmation' => 'sandi-baru-1'], 'mode'],
+    'default while off' => [['mode' => 'default'], 'mode'],
 ]);
 
 it('notifies the employee in-app and by email without the password', function () {
@@ -128,7 +113,7 @@ it('notifies the employee in-app and by email without the password', function ()
 });
 
 it('writes the in-app notification for the employee', function () {
-    setPassword($this->hr, $this->employee, ['mode' => 'generate', 'must_change' => true]);
+    setPassword($this->hr, $this->employee, ['mode' => 'manual', 'password' => 'sandi-dari-hr-1', 'password_confirmation' => 'sandi-dari-hr-1', 'must_change' => true]);
 
     expect(InboxNotification::query()->where('notifiable_id', $this->employee->id)->sole()->type)
         ->toBe('account.password_set_by_hr');
@@ -145,7 +130,7 @@ it('signs out the employee\'s existing sessions', function () {
     // The employee's browser is signed in (its session stores the password hash).
     $this->actingAs($this->employee)->get('/dashboard')->assertOk();
 
-    app(SetEmployeePassword::class)->handle($this->hr, $this->employee->fresh(), null, false);
+    app(SetEmployeePassword::class)->handle($this->hr, $this->employee->fresh(), 'sandi-dari-hr-1', false);
 
     // That browser's next request: the stored hash no longer matches.
     Auth::forgetGuards();
@@ -165,7 +150,7 @@ it('closes an open "Lupa kata sandi" request of the employee and resolves HR\'s 
         'expires_at' => CarbonImmutable::now()->addDay(),
     ]);
 
-    setPassword($this->hr, $this->employee, ['mode' => 'generate', 'must_change' => true]);
+    setPassword($this->hr, $this->employee, ['mode' => 'manual', 'password' => 'sandi-dari-hr-1', 'password_confirmation' => 'sandi-dari-hr-1', 'must_change' => true]);
 
     expect($request->refresh()->status)->toBe(PasswordResetStatus::Canceled);
 });
@@ -174,7 +159,7 @@ it('applies the authorization matrix over HTTP', function (Role $actorRole, Role
     $actor = User::factory()->forCompany($this->company)->withRole($actorRole)->create();
     $target = User::factory()->forCompany($this->company)->withRole($targetRole)->create();
 
-    $response = setPassword($actor, $target, ['mode' => 'generate', 'must_change' => true]);
+    $response = setPassword($actor, $target, ['mode' => 'manual', 'password' => 'sandi-dari-hr-1', 'password_confirmation' => 'sandi-dari-hr-1', 'must_change' => true]);
 
     $status === 302 ? $response->assertRedirect() : $response->assertStatus($status);
     expect(Hash::check('password', (string) $target->refresh()->password))->toBe($status !== 302);
@@ -190,13 +175,13 @@ it('applies the authorization matrix over HTTP', function (Role $actorRole, Role
 ]);
 
 it('does not let HR set their own password through this route', function () {
-    setPassword($this->hr, $this->hr, ['mode' => 'generate', 'must_change' => false])->assertForbidden();
+    setPassword($this->hr, $this->hr, ['mode' => 'manual', 'password' => 'sandi-dari-hr-1', 'password_confirmation' => 'sandi-dari-hr-1', 'must_change' => true])->assertForbidden();
 });
 
 it('does not let HR touch another company\'s employee', function () {
     $foreign = User::factory()->forCompany(Company::factory()->create())->withRole(Role::Anggota)->create();
 
-    setPassword($this->hr, $foreign, ['mode' => 'generate', 'must_change' => false])->assertForbidden();
+    setPassword($this->hr, $foreign, ['mode' => 'manual', 'password' => 'sandi-dari-hr-1', 'password_confirmation' => 'sandi-dari-hr-1', 'must_change' => true])->assertForbidden();
 });
 
 it('shows "Atur kata sandi" and whether a password is set on the profile to HR only', function () {
@@ -204,6 +189,7 @@ it('shows "Atur kata sandi" and whether a password is set on the profile to HR o
         ->get(route('admin.employees.show', $this->employee))
         ->assertInertia(fn (Assert $page) => $page
             ->where('can.setPassword', true)
+            ->where('can.setDefaultPassword', false)
             ->where('hasPassword', true)
             ->where('passwordReset', null),
         );
@@ -269,6 +255,6 @@ describe('wajib ganti saat login berikutnya', function () {
     });
 
     it('uses the documented message', function () {
-        expect(EnsurePasswordChanged::MESSAGE)->toContain('Ganti kata sandi sementara');
+        expect(EnsurePasswordChanged::MESSAGE)->toContain('Ganti kata sandi bawaan atau sementara');
     });
 });

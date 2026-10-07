@@ -37,5 +37,6 @@
         <env name="GOOGLE_FAKE" value="true"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="EMPLOYEE_DEFAULT_PASSWORD" value="" force="true"/>
     </php>
 </phpunit>

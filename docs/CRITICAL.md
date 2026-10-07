@@ -41,6 +41,7 @@ Pengetahuan operasional yang **tidak boleh hilang**: area sensitif keamanan, atu
 | `AWS_*` (bucket privat), `BACKUP_S3_*` (bucket backup) | Selfie, lampiran, dump database, dan repositori PITR (pgBackRest). Access key **terpisah** per bucket. | Bocor = data pribadi/backup terbuka; cabut key di penyedia storage. |
 | `PITR_CIPHER_PASS` | Enkripsi AES-256 repositori pgBackRest (WAL + base backup, `docs/deploy/PITR.md`). | **Hilang = backup PITR tidak bisa dibaca** (dump harian tetap bisa). Simpan di password manager bersama `APP_KEY`. Tidak bisa dirotasi tanpa repositori baru. |
 | `GOOGLE_CLIENT_SECRET`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_PICKER_API_KEY` | Login Google, Drive (domain-wide delegation), Picker. | Service account bocor = akses Drive perusahaan; cabut key di Google Cloud. |
+| `EMPLOYEE_DEFAULT_PASSWORD` | Kata sandi bawaan semua akun karyawan baru (wajib ganti saat login pertama; bukan Super Admin). Kosong = fitur mati. | Bocor = siapa pun bisa masuk ke akun yang belum mengganti sandi bawaan: ganti nilainya (akun lama tetap memakai hash lama), cari yang masih wajib ganti (`users.password_change_required`) dan reset bila perlu. Jangan kirim lewat grup obrolan/email massal. |
 | Akun Super Admin (sandi + TOTP) | Satu-satunya login non-Google. | Buat cadangan kode pemulihan TOTP; `php artisan ruangkerja:create-super-admin` untuk instalasi baru. |
 
 Aturan umum: `.env` tidak pernah di-commit; nilai acak dibuat dengan `openssl rand -hex 24`; setelah mengubah `.env` di server kontainer harus di-recreate (config di-cache saat start).

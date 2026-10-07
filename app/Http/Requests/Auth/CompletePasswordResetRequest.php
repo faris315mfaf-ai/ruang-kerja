@@ -5,12 +5,13 @@ namespace App\Http\Requests\Auth;
 use App\Concerns\PasswordValidationRules;
 use App\Domain\Auth\Data\PasswordResetSession;
 use App\Models\PasswordResetRequest;
+use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * "Lupa kata sandi" › Sandi baru. The same password policy as everywhere else,
- * including "not the account's email" (the address of the approved request).
+ * "Lupa kata sandi" › Sandi baru. The same password policy as everywhere else
+ * (PasswordPolicy), for the account of the approved request.
  */
 class CompletePasswordResetRequest extends FormRequest
 {
@@ -22,7 +23,7 @@ class CompletePasswordResetRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'password' => $this->passwordRules($this->accountEmail()),
+            'password' => $this->passwordRules($this->account()),
         ];
     }
 
@@ -34,7 +35,7 @@ class CompletePasswordResetRequest extends FormRequest
         return ['password' => 'kata sandi'];
     }
 
-    private function accountEmail(): ?string
+    private function account(): ?User
     {
         $token = PasswordResetSession::from($this->session())?->setupToken;
 
@@ -42,10 +43,9 @@ class CompletePasswordResetRequest extends FormRequest
             return null;
         }
 
-        $email = PasswordResetRequest::query()
+        return PasswordResetRequest::query()
             ->where('setup_token_hash', PasswordResetRequest::hashToken($token))
-            ->value('email');
-
-        return is_string($email) ? $email : null;
+            ->first()
+            ?->user;
     }
 }
