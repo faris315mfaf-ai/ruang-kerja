@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import notulenRoutes from '@/routes/meetings/notulen';
 import { cn } from '@/lib/utils';
+import { consentLines } from './consent';
 import { formatDuration, TRANSCRIPT_TONE } from './lib';
 import type { NotulenSummary } from './types';
 import { useNotulen } from './use-notulen';
@@ -13,8 +14,8 @@ import { useNotulen } from './use-notulen';
 /**
  * "Transkrip & notulen otomatis" on the meeting detail (video meetings):
  * status chip, the organizer's switch, the viewer's "Jangan transkrip suara
- * saya", and the link to the review page. Minimal functional UI; the arah C
- * design lives with the room/minutes screens.
+ * saya" (also after the meeting), the UU PDP notice points and the link to
+ * the review page (arah C "Notulen otomatis").
  */
 export function NotulenCard({
     meetingId,
@@ -52,12 +53,18 @@ export function NotulenCard({
                 className,
             )}
         >
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-3">
+                <span
+                    aria-hidden
+                    className="flex size-10 shrink-0 items-center justify-center rounded-control bg-info-soft text-info"
+                >
+                    <FileText className="size-5" />
+                </span>
                 <h2
                     id={`${autoId}-title`}
                     className="mr-auto text-[18px] font-bold md:text-[22px] md:leading-[30px]"
                 >
-                    Transkrip & notulen otomatis
+                    Notulen otomatis
                 </h2>
                 {transcript && (
                     <Badge
@@ -70,11 +77,21 @@ export function NotulenCard({
                 )}
             </div>
 
-            {summary.notice && (
-                <p className="flex items-start gap-2 rounded-control bg-info-soft px-3 py-2.5 text-[15px] leading-[22px] text-info">
-                    <Mic aria-hidden className="mt-0.5 size-4 shrink-0" />
-                    {summary.notice}
-                </p>
+            {summary.auto_minutes && consentLines(summary).length > 0 && (
+                <ul
+                    className="flex flex-col gap-1 rounded-control bg-info-soft px-4 py-3 text-[14px] leading-5 text-info"
+                    aria-label="Tentang transkrip"
+                >
+                    {consentLines(summary).map((line) => (
+                        <li key={line} className="flex items-start gap-2">
+                            <Mic
+                                aria-hidden
+                                className="mt-0.5 size-4 shrink-0"
+                            />
+                            {line}
+                        </li>
+                    ))}
+                </ul>
             )}
 
             {summary.can_configure && (
@@ -141,14 +158,20 @@ export function NotulenCard({
 
             {transcript && summary.can_view_transcript && (
                 <Button
-                    variant="outline"
+                    variant={
+                        summary.can_manage && summary.draft?.status === 'ready'
+                            ? 'default'
+                            : 'outline'
+                    }
                     size="lg"
                     className="self-start"
                     asChild
                 >
                     <Link href={summary.links.page}>
                         <FileText aria-hidden />
-                        Buka transkrip & draf
+                        {summary.can_manage && summary.draft?.status === 'ready'
+                            ? 'Periksa draf notulen'
+                            : 'Buka transkrip & draf'}
                     </Link>
                 </Button>
             )}
