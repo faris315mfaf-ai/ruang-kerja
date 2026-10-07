@@ -29,6 +29,11 @@ services:
       default: {}
       edge:
         aliases: [ruangkerja-reverb]
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512m
 
   # Catatan bersama: edge proxies wss://domain/collab here.
   collab:
@@ -41,11 +46,6 @@ services:
         limits:
           cpus: "0.5"
           memory: 256m
-    deploy:
-      resources:
-        limits:
-          cpus: "1"
-          memory: 512m
 
   queue:
     deploy:
@@ -74,6 +74,14 @@ services:
         limits:
           cpus: "0.5"
           memory: 768m
+
+  # pgBackRest base backups (process-max 2) and wal-check.
+  pitr:
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512m
 
   backup:
     deploy:

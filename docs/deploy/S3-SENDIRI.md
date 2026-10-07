@@ -5,7 +5,7 @@ S3 di RuangKerja **bukan database**. S3 menyimpan file, dan database PostgreSQL 
 | Bucket | Isi | Ditulis oleh |
 |---|---|---|
 | `ruangkerja-private` | foto selfie absensi (`selfies/…`), lampiran pengajuan (surat dokter, nota) | aplikasi (identitas `ruangkerja-app`) |
-| `ruangkerja-backup` | dump PostgreSQL harian (`postgres/…`) | kontainer `backup` (identitas `ruangkerja-backup`) |
+| `ruangkerja-backup` | dump PostgreSQL harian (`postgres/…`) dan repositori PITR terenkripsi (`pgbackrest/…`: WAL + base backup, `docs/deploy/PITR.md`) | kontainer `backup`, `postgres`, `pitr` (identitas `ruangkerja-backup`) |
 
 Alasannya: tanpa S3, file-file ini ada di disk server aplikasi dan **tidak ikut** di backup database. Bila server rusak, file hilang. Dengan S3 di VPS lain, file dan backup tetap selamat.
 

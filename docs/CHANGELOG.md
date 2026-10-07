@@ -7,7 +7,16 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 ## [Belum dirilis]
 
 ### Ditambahkan (7 Okt 2026)
+- **HR membatalkan pengajuan yang sudah disetujui** (`POST /persetujuan/{id}/batalkan`, permission `requests.cancel_approved` untuk HR & Super Admin, bukan pengajuan sendiri): alasan wajib 10–500 karakter (hanya tampil di aplikasi), saldo cuti dikembalikan, efek absensi dibatalkan (cuti/izin/sakit/dinas dihapus atau dilepas, lembur dihitung ulang, koreksi dipulihkan atau ditolak bila hari sudah berubah), tanggal lampau ditutup ulang, notifikasi `request.voided` ke pemohon + `request.canceled` ke penyetuju, audit tanpa isi alasan. Tab baru **Disetujui** di `/persetujuan` untuk HR. Deploy: jalankan `RoleSeeder`.
+- **Tanda baca komentar tugas**: "Dibaca oleh N" (nama + jam) dan "Belum dibaca: …" untuk yang di-mention, ditandai saat daftar komentar terlihat ±1,2 detik; membuka komentar juga menandai notifikasi Inbox komentar itu terbaca; jumlah komentar + titik belum dibaca di kartu board & baris list (komentar orang lain ≤ 14 hari). Tabel `task_comment_reads`, realtime lewat `presence-task.{id}`. Manajemen view-only tidak dicatat; tersembunyi di workspace pribadi.
+- **Kehadiran per kartu board**: avatar orang lain yang sedang membuka tugas (maks. 2 + "+N") dan petunjuk "mengetik…" di kartu board/ponsel, "sedang diedit oleh X" di baris list. Satu langganan `presence-workspace.{id}` per board (whisper `viewing`, `sync`); heartbeat 12 detik, kedaluwarsa 30 detik; tanpa Reverb tidak tampil apa pun.
 - **Unduh PNG struktur organisasi** (`/organisasi/struktur`): bagan lengkap sesuai pencarian, header perusahaan + tanggal, selalu tema terang, 2x dengan batas piksel kanvas (peringatan bila diturunkan), font tertanam, `struktur-organisasi-YYYY-MM-DD.png`. Desktop: tombol di header tampilan Bagan; ponsel: menu "…" app bar. Dibuat di peramban dengan paket baru `modern-screenshot` (lazy). `docs/fitur/ekspor-struktur-organisasi.md`.
+
+### Ditambahkan (7 Okt 2026, deploy)
+- **WAL archiving + pemulihan ke titik waktu (PITR)** dengan pgBackRest ke object storage S3 (Biznet NEO / SeaweedFS): image `ruangkerja-postgres` (postgres:17-alpine + pgBackRest, `archive_timeout` 60 detik → kehilangan data terburuk ±1 menit), layanan `pitr` di `compose.prod.yml` & `compose.data.yml` (full Minggu + diff harian 01.30 WIB, retensi 4 full + 7 diff = jendela ±4 minggu, repositori terenkripsi AES-256 `PITR_CIPHER_PASS`), `wal-check` tiap 10 menit (heartbeat, kontainer unhealthy bila gagal), `pitr-restore --time`. Dump harian tetap jalan. Runbook `docs/deploy/PITR.md`, uji lokal `scripts/pitr-uji.sh`.
+
+### Diperbaiki (7 Okt 2026, deploy)
+- `compose.shared.yml` gagal di-parse (kunci `deploy` ganda di `collab`; batas sumber daya milik `reverb`), sehingga `COMPOSE_FILE=compose.prod.yml:compose.shared.yml` tidak bisa dipakai. CI kini memvalidasi compose prod, shared, data, dan web.
 
 ### Ditambahkan (6 Okt 2026, keputusan pemilik)
 - **Login email + kata sandi untuk semua karyawan** (login Google ditahan): HR bisa mengatur sandi karyawan (opsi wajib ganti), karyawan ganti sandi sendiri di Pengaturan › Keamanan, **Lupa kata sandi** menunggu persetujuan HR lalu halaman tunggu otomatis pindah ke isi sandi baru (anti-enumerasi, token sekali pakai). Super Admin tetap wajib 2FA. `docs/fitur/akun-kata-sandi.md`.

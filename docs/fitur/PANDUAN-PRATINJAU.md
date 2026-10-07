@@ -78,7 +78,7 @@ Hal berikut sengaja tidak punya layar dan **tidak dikerjakan** sampai pemilik me
 - Notifikasi WhatsApp sungguhan dan pemilihan provider WhatsApp (Meta Cloud API resmi vs gateway; PRD §10 no. 2).
 - Aplikasi ponsel native (Expo): login biometrik, integritas perangkat, mode offline, widget, check-in wajah, perangkat saya.
 - Mesin fingerprint (endpoint ADMS `/iclock`).
-- Fitur yang sengaja ditunda: ekspor PNG struktur organisasi, tanda baca (*read receipt*) di komentar tugas, kehadiran (*presence*) per kartu board, folder Drive per tugas, UI membatalkan pengajuan yang sudah disetujui.
+- Fitur yang sengaja ditunda: folder Drive per tugas (bagian dari integrasi Google yang ditahan pemilik). Ekspor PNG struktur organisasi, tanda baca komentar, kehadiran per kartu board, dan pembatalan pengajuan yang sudah disetujui sudah tersedia sejak 7 Okt 2026.
 - Infrastruktur: WAL archiving (cadangan `pg_dump` harian tetap jalan).
 - Branding resmi SPKD (nama, logo, warna; PRD §10 no. 1).
 - Sisa keputusan mobile-first (`docs/PLATFORM.md` §2.1): cari di bawah, tumpukan kartu persetujuan, geser untuk check-in. Yang sudah diterapkan hanya shell (tab bawah dengan Absen di tengah).

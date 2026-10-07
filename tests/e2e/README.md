@@ -43,3 +43,7 @@ Prasyarat: Reverb hidup, worker antrean `realtime` (`php artisan queue:work --qu
 php artisan migrate:fresh --seed
 E2E_BASE_URL=https://ruangkerja.test node tests/e2e/realtime-two-users.mjs
 ```
+
+## Kehadiran per kartu board (dua pengguna, manual)
+
+`node tests/e2e/board-presence-two-users.mjs` membuka board `/w/PLQ` sebagai Dimas dan tugas PLQ-21 sebagai Rizky, lalu memeriksa avatar, petunjuk "mengetik…", dan hilangnya kehadiran saat sheet/tab ditutup. Butuh Reverb berjalan (`php artisan reverb:start`), tidak butuh queue worker.

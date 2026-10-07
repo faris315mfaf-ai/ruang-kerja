@@ -25,11 +25,11 @@ Prioritas dari atas. "Folder milik" = satu-satunya tempat agen itu menulis (sela
 | 6 | Dashboard per jabatan `/peran/{role}` (melengkapi dashboard per peran; `positions.dashboard_role`) | `app/Domain/RoleDashboards`, `routes/roles.php`, `resources/js/features/role-dashboards`, `resources/js/pages/roles` | Claude Code | `claude/f3-peran` | selesai (PR #5) |
 | 6a | Panduan pratinjau (`docs/fitur/PANDUAN-PRATINJAU.md` + `/pratinjau/panduan`) | `docs/fitur`, `app/Domain/Documentation`, `resources/js/pages/prototype`, `resources/js/features/docs` | Claude Code | `docs/panduan-pratinjau` | selesai (PR #5) |
 | 6b | Bug ringan dari `docs/sprints/fase-2-3-prototipe/BUG-REPORT.md` | sesuai temuan | Claude Code | `claude/bug-ringan` | selesai (PR #5) |
-| 8 | Pembatalan pengajuan yang sudah disetujui oleh HR (UI + Action; `AttendanceEffects::revert()`, saldo kembali) | `app/Domain/Requests`, `resources/js/features/requests`, `resources/js/features/approvals` | Claude Code | `claude/batal-pengajuan` | dikerjakan |
-| 9 | Ekspor PNG struktur organisasi | `resources/js/features/organization`, `resources/js/pages/organization` | Claude Code | `claude/ekspor-struktur` | dikerjakan |
-| 10 | Tanda baca (*read receipt*) komentar tugas | `app/Domain/Tasks` (komentar), `resources/js/features/tasks/detail` | Claude Code | `claude/tanda-baca` | dikerjakan |
-| 11 | Kehadiran (*presence*) per kartu board | `routes/channels.php` (kanal baru), `resources/js/features/tasks` (board) | Claude Code | `claude/presence-board` | dikerjakan |
-| 12 | WAL archiving Postgres + pemulihan ke titik waktu (PITR) | `compose.*.yml`, `docker/`, `scripts/`, `docs/deploy` | Claude Code | `claude/wal-archiving` | dikerjakan |
+| 8 | Pembatalan pengajuan yang sudah disetujui oleh HR (UI + Action; `AttendanceEffects::revert()`, saldo kembali) | `app/Domain/Requests`, `resources/js/features/requests`, `resources/js/features/approvals` | Claude Code | `claude/batal-pengajuan` | review (PR integrasi backlog) |
+| 9 | Ekspor PNG struktur organisasi | `resources/js/features/organization`, `resources/js/pages/organization` | Claude Code | `claude/ekspor-struktur` | review (PR integrasi backlog) |
+| 10 | Tanda baca (*read receipt*) komentar tugas | `app/Domain/Tasks` (komentar), `resources/js/features/tasks/detail` | Claude Code | `claude/tanda-baca` | review (PR integrasi backlog) |
+| 11 | Kehadiran (*presence*) per kartu board | `routes/channels.php` (kanal baru), `resources/js/features/tasks` (board) | Claude Code | `claude/presence-board` | review (PR integrasi backlog) |
+| 12 | WAL archiving Postgres + pemulihan ke titik waktu (PITR) | `compose.*.yml`, `docker/`, `scripts/`, `docs/deploy` | Claude Code | `claude/wal-archiving` | review (PR integrasi backlog) |
 | 7 | Tinjau PR agen lain (`$tinjau` / `/tinjau`) | — (hanya laporan) | agen yang menganggur | — | berulang |
 
 **Ditahan oleh pemilik (6 Okt 2026), jangan dikerjakan:** login Google, Google Drive & Docs, notifikasi WhatsApp + provider, aplikasi ponsel (biometrik, integritas, offline, widget, check-in wajah, perangkat), mesin fingerprint, dan fitur yang belum ada sama sekali (lihat `docs/fitur/PANDUAN-PRATINJAU.md`).
