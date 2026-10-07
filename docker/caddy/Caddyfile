@@ -51,6 +51,15 @@
 		reverse_proxy reverb:8080
 	}
 
+	# Halaman depan SPKD (statis, docker/caddy/landing): hanya akar "/", dengan tombol LIHAT DEMO ke
+	# demo.spkd.store. Rute aplikasi lain (/dashboard, /login, …) tetap ke Laravel.
+	@landing path /
+	handle @landing {
+		root * /srv/landing
+		rewrite * /index.html
+		file_server
+	}
+
 	handle {
 		reverse_proxy app:8000
 	}
