@@ -118,8 +118,11 @@ it('gives no token grant to change one\'s own name or metadata; the hand is rais
     $this->actingAs($outsider)->postJson("{$this->base}/video/tangan", ['raised' => true])->assertNotFound();
 
     // Whitelisted own attributes (section presence, opt-out mirror); never a name or anything else.
-    $this->actingAs($this->rizky)->postJson("{$this->base}/video/atribut", ['attributes' => ['rk_minutes_at' => 'section-2', 'rk_notulen_optout' => '1']])
-        ->assertOk()->assertJsonPath('attributes', ['rk_minutes_at' => 'section-2', 'rk_notulen_optout' => '1']);
+    $this->actingAs($this->rizky)->postJson("{$this->base}/video/atribut", ['attributes' => ['rk_minutes_at' => 'section-2']])
+        ->assertOk()->assertJsonPath('attributes', ['rk_minutes_at' => 'section-2']);
+    // The transcription opt-out stays server-side (an attribute would be public to the room).
+    $this->actingAs($this->rizky)->postJson("{$this->base}/video/atribut", ['attributes' => ['rk_notulen_optout' => '1']])
+        ->assertUnprocessable()->assertJsonPath('errors.attributes.0', 'Atribut rk_notulen_optout tidak diizinkan.');
     $this->actingAs($this->rizky)->postJson("{$this->base}/video/atribut", ['attributes' => ['name' => 'Direktur Utama']])->assertUnprocessable();
     $this->actingAs($this->rizky)->postJson("{$this->base}/video/atribut", ['attributes' => ['hand' => 'abc']])->assertUnprocessable();
     $this->actingAs($outsider)->postJson("{$this->base}/video/atribut", ['attributes' => ['hand' => '']])->assertNotFound();

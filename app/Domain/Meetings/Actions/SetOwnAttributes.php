@@ -12,9 +12,9 @@ use Illuminate\Validation\ValidationException;
  * Sets whitelisted LiveKit attributes of one's own participant through the
  * server, since tokens no longer carry canUpdateOwnMetadata (audit R-05: a
  * client could rename itself). Allowed keys and values (ATTRIBUTES): raised
- * hand, the minutes section one is looking at (collaborator presence), and
- * the transcription opt-out mirror (the consent table stays the source of
- * truth). Empty value = remove. Throws RuntimeException when LiveKit fails.
+ * hand and the minutes section one is looking at (collaborator presence).
+ * The transcription opt-out is never an attribute (it would be visible to
+ * everyone in the room); it stays server-side. Empty value = remove. Throws RuntimeException when LiveKit fails.
  */
 final class SetOwnAttributes
 {
@@ -22,7 +22,6 @@ final class SetOwnAttributes
     public const array ATTRIBUTES = [
         'hand' => '/^\d{10,16}$/',
         'rk_minutes_at' => '/^[A-Za-z0-9_.:-]{1,64}$/',
-        'rk_notulen_optout' => '/^[01]$/',
     ];
 
     public function __construct(

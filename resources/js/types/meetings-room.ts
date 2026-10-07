@@ -241,12 +241,10 @@ export type RaiseHandResponse = { hand: string };
 /**
  * POST /rapat/{id}/video/atribut { attributes } → { attributes }: own LiveKit
  * attributes through the server (tokens cannot set them, audit R-05). Keys:
- * hand (ms or ""), rk_minutes_at (section key, ≤ 64 chars [A-Za-z0-9_.:-]),
- * rk_notulen_optout ("0" | "1"); "" removes. Other keys → 422.
+ * hand (ms or ""), rk_minutes_at (section key, ≤ 64 chars [A-Za-z0-9_.:-]);
+ * "" removes. Other keys → 422 (the transcription opt-out is never an attribute).
  */
-export type OwnAttributes = Partial<
-    Record<'hand' | 'rk_minutes_at' | 'rk_notulen_optout', string>
->;
+export type OwnAttributes = Partial<Record<'hand' | 'rk_minutes_at', string>>;
 
 /** GET /rapat/{id}/video/kehadiran. */
 export type RoomAttendance = {
