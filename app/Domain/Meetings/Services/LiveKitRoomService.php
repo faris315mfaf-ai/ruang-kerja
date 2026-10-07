@@ -36,6 +36,23 @@ final class LiveKitRoomService
     }
 
     /**
+     * Sets participant attributes server-side (clients have no
+     * canUpdateOwnMetadata, audit R-05). An empty value deletes the key.
+     *
+     * @param  array<string, string>  $attributes
+     */
+    public function updateAttributes(string $room, string $identity, array $attributes): void
+    {
+        $this->call('UpdateParticipant', $room, ['room' => $room, 'identity' => $identity, 'attributes' => $attributes]);
+    }
+
+    /** Ends the room for everyone (meeting canceled, audit R-09). */
+    public function deleteRoom(string $room): void
+    {
+        $this->call('DeleteRoom', $room, ['room' => $room]);
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     public function listParticipants(string $room): array

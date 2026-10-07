@@ -396,14 +396,17 @@ describe('webhook', function () {
         expect(MeetingAttendance::query()->sole()->left_at)->toBeNull();
     });
 
-    it('ignores unknown rooms, other meetings and foreign identities', function () {
+    it('ignores unknown rooms, other meetings, foreign identities and the transcription agent', function () {
         postLiveKitWebhook(liveKitEvent('participant_joined', 'some-room', $this->rizky->id, 'PA_1'))->assertJsonPath('status', 'ignored');
         postLiveKitWebhook(liveKitEvent('participant_joined', 'rk-'.$this->meeting->id.'-20261006', $this->rizky->id, 'PA_2'))->assertJsonPath('status', 'ignored');
         $meet = Meeting::factory()->by($this->dimas)->at('2026-10-05 10:00')->create();
         postLiveKitWebhook(liveKitEvent('participant_joined', 'rk-'.$meet->id.'-20261005', $this->rizky->id, 'PA_3'))->assertJsonPath('status', 'ignored');
 
-        postLiveKitWebhook(liveKitEvent('participant_joined', $this->room, $this->foreign->id, 'PA_4'))->assertJsonPath('status', 'recorded');
-        expect(MeetingAttendance::query()->sole()->user_id)->toBeNull();
+        // Not an employee of the meeting's company, the transcription agent, a guest: no attendance row.
+        postLiveKitWebhook(liveKitEvent('participant_joined', $this->room, $this->foreign->id, 'PA_4'))->assertJsonPath('status', 'ignored');
+        postLiveKitWebhook(liveKitEvent('participant_joined', $this->room, 'rk-notulen', 'PA_5'))->assertJsonPath('status', 'ignored');
+        postLiveKitWebhook(liveKitEvent('participant_joined', $this->room, 'tamu@contoh.id', 'PA_6'))->assertJsonPath('status', 'ignored');
+        expect(MeetingAttendance::query()->count())->toBe(0);
     });
 
     it('is not reachable when LiveKit is not configured or the feature is off', function () {

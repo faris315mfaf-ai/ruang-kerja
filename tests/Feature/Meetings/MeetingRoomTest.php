@@ -7,8 +7,11 @@ use App\Domain\Meetings\Actions\SaveMinutes;
 use App\Domain\Meetings\Enums\MinutesSource;
 use App\Domain\Meetings\Enums\Recurrence;
 use App\Domain\Meetings\Events\MeetingRoomBroadcast;
+use App\Domain\Meetings\Jobs\PruneSpeakingTimes;
 use App\Domain\Meetings\Notifications\MeetingCalledNotification;
 use App\Domain\Meetings\Queries\VideoAttendance;
+use App\Domain\Meetings\Services\MinutesDocument;
+use App\Domain\Meetings\Services\MinutesStore;
 use App\Domain\Organization\Enums\Role;
 use App\Http\Resources\Meetings\RoomPresenter;
 use App\Models\AuditLog;
@@ -24,6 +27,7 @@ use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -44,6 +48,7 @@ beforeEach(function () {
         'livekit.url' => 'wss://rapat.example.test',
         'livekit.api_key' => 'devkey',
         'livekit.api_secret' => 'test-secret-that-is-at-least-32-characters',
+        'collab.secret' => '', // autosave mode unless a test turns collaboration on
     ]);
     $this->travelTo(CarbonImmutable::parse('2026-10-12 09:05', 'Asia/Jakarta'));
     $this->dimas = User::factory()->withRole(Role::KepalaDivisi)->create(['name' => 'Dimas Pratama']);
@@ -122,6 +127,10 @@ describe('room props', function () {
                 ->where('room.notes_source.open_follow_ups.0.text', 'Kirim jadwal servis ke vendor')
                 ->where('room.notes_source.open_follow_ups.0.overdue', true)
                 ->where('room.notes_source.template.sections', ['Rekap stok', 'Perawatan kendaraan'])
+                ->where('room.notes_source.template.key', 'agenda')
+                ->where('room.notes_source.template.label', 'Templat Rapat mingguan')
+                ->where('room.minutes.editing', null)
+                ->where('room.minutes.can_edit_attendance', true)
                 ->where('room.speaking.total_ms', 0)
                 ->where('room.speaking.mine_ms', 0)
                 ->where('room.speaking.silent', [$this->dimas->id, $this->nadia->id])
@@ -257,7 +266,10 @@ describe('notes source', function () {
         $single = Meeting::factory()->by($this->dimas)->video()->at('2026-10-12 09:00')->create();
 
         $this->actingAs($this->dimas)->get("/rapat/{$single->id}/gabung")
-            ->assertInertia(fn (Assert $page) => $page->where('room.notes_source.previous', null)->where('room.notes_source.suggested', 'template'));
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('room.notes_source.previous', null)
+                ->where('room.notes_source.suggested', 'template')
+                ->where('room.notes_source.template.label', 'Templat '.$single->title));
         $this->actingAs($this->dimas)->postJson("/rapat/{$single->id}/video/sumber-notulen", ['source' => 'continue'])
             ->assertOk()->assertJsonPath('applied', true)->assertJsonPath('minutes.sections', [['title' => 'Pembukaan', 'body' => ''], ['title' => 'Pembahasan', 'body' => '']]);
     });
@@ -505,5 +517,156 @@ describe('policy, channel and broadcasts', function () {
 
         Event::assertDispatched(MeetingRoomBroadcast::class, fn (MeetingRoomBroadcast $event) => $event->name === 'attendance.updated'
             && $event->payload === ['occurrence_date' => '2026-10-12', 'user_id' => $this->nadia->id, 'event' => 'joined']);
+    });
+});
+
+describe('collaborative minutes', function () {
+    beforeEach(function () {
+        config(['features.notes' => true, 'collab.secret' => str_repeat('s', 40), 'collab.url' => 'http://collab.test', 'collab.public_url' => 'wss://collab.test']);
+    });
+
+    it('lets every invited person edit the room minutes, read-only for observers and final minutes', function () {
+        $observer = User::factory()->withRole(Role::Direksi)->create();
+        $this->meeting->forceFill(['leadership' => true])->save();
+
+        $this->actingAs($this->nadia)->get("{$this->base}/ruang{$this->q}")
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('room.features.collab_minutes', true)
+                ->where('room.minutes.mode', 'collab')
+                ->where('room.minutes.collab.token_url', "{$this->base}/notulen/kolaborasi{$this->q}")
+                ->where('room.minutes.collab.url', 'wss://collab.test')
+                ->where('room.minutes.can_edit', true)
+                ->where('room.minutes.can_edit_attendance', false)
+                ->where('room.can.edit_minutes', true)
+                ->where('room.can.choose_notes_source', false));
+
+        $response = $this->actingAs($this->nadia)->getJson("{$this->base}/notulen/kolaborasi{$this->q}")
+            ->assertOk()->assertJsonPath('can_edit', true)->assertJsonPath('url', 'wss://collab.test');
+        $minutes = MeetingMinutes::query()->where('meeting_id', $this->meeting->id)->whereDate('occurrence_date', '2026-10-12')->sole();
+        expect($response->json('document'))->toBe('meeting-minutes.'.$minutes->id);
+
+        // Same format as the notes tokens (collab/src/token.js), document name as `note`.
+        [$body, $signature] = explode('.', (string) $response->json('token'));
+        $payload = json_decode((string) base64_decode(strtr($body, '-_', '+/')), true);
+        expect($signature)->toBe(rtrim(strtr(base64_encode(hash_hmac('sha256', $body, str_repeat('s', 40), true)), '+/', '-_'), '='))
+            ->and($payload)->toMatchArray(['note' => 'meeting-minutes.'.$minutes->id, 'user' => $this->nadia->id, 'edit' => true]);
+
+        $this->actingAs($observer)->getJson("{$this->base}/notulen/kolaborasi{$this->q}")->assertOk()->assertJsonPath('can_edit', false);
+        $this->actingAs($this->outsider)->getJson("{$this->base}/notulen/kolaborasi{$this->q}")->assertNotFound();
+
+        $minutes->forceFill(['status' => 'final', 'finalized_at' => now()])->save();
+        $this->actingAs($this->sari)->getJson("{$this->base}/notulen/kolaborasi{$this->q}")->assertJsonPath('can_edit', false);
+    });
+
+    it('is 503 without a collab server', function () {
+        config(['collab.secret' => '']);
+
+        $this->actingAs($this->nadia)->getJson("{$this->base}/notulen/kolaborasi{$this->q}")->assertStatus(503);
+    });
+
+    it('loads and stores the document through the internal endpoints, mirroring the text', function () {
+        Event::fake([MeetingRoomBroadcast::class]);
+        $minutes = DB::transaction(fn () => app(MinutesStore::class)->open(occurrenceOf($this->meeting, '2026-10-12')));
+        $secret = ['Authorization' => 'Bearer '.str_repeat('s', 40)];
+
+        $this->getJson("/internal/rapat/notulen/{$minutes->id}/state", $secret)
+            ->assertOk()
+            ->assertJsonPath('yjs_state', null)
+            ->assertJsonPath('content.content.0', ['type' => 'heading', 'attrs' => ['level' => 2], 'content' => [['type' => 'text', 'text' => 'Rekap stok']]]);
+        $this->getJson("/internal/rapat/notulen/{$minutes->id}/state")->assertUnauthorized();
+
+        $doc = ['type' => 'doc', 'content' => [
+            ['type' => 'heading', 'attrs' => ['level' => 2], 'content' => [['type' => 'text', 'text' => 'Rekap stok']]],
+            ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Selisih 0,8%']]],
+            ['type' => 'bulletList', 'content' => [['type' => 'listItem', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Palet lambat']]]]]]],
+            ['type' => 'heading', 'attrs' => ['level' => 2], 'content' => [['type' => 'text', 'text' => 'Keputusan']]],
+            ['type' => 'bulletList', 'content' => [['type' => 'listItem', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Servis AC dipindah']]]]]]],
+        ]];
+
+        $this->postJson("/internal/rapat/notulen/{$minutes->id}/state", [
+            'yjs_state' => base64_encode('yjs-bytes'), 'body' => $doc, 'editor_ids' => [$this->nadia->id],
+        ], $secret)->assertOk()->assertJsonPath('changed', true);
+
+        $fresh = $minutes->fresh();
+        expect($fresh->sections)->toEqual([['title' => 'Rekap stok', 'body' => "Selisih 0,8%\n• Palet lambat"]])
+            ->and($fresh->decisions)->toBe(['Servis AC dipindah'])
+            ->and($fresh->doc_state)->toBe('yjs-bytes')
+            ->and($fresh->updated_by)->toBe($this->nadia->id)
+            ->and($fresh->version)->toBe(1);
+        Event::assertDispatched(MeetingRoomBroadcast::class, fn (MeetingRoomBroadcast $event) => $event->name === 'minutes.updated' && $event->payload['updated_by'] === $this->nadia->id);
+
+        // Final minutes: accepted, nothing changes.
+        $fresh->forceFill(['status' => 'final', 'finalized_at' => now()])->save();
+        $this->postJson("/internal/rapat/notulen/{$minutes->id}/state", ['yjs_state' => base64_encode('x'), 'body' => ['type' => 'doc', 'content' => []], 'editor_ids' => []], $secret)
+            ->assertOk()->assertJsonPath('changed', false);
+        expect($minutes->fresh()->decisions)->toBe(['Servis AC dipindah']);
+    });
+
+    it('replaces the live document when the text is saved outside it, not for attendance only', function () {
+        Http::fake(['collab.test/*' => Http::response(['loaded' => true])]);
+        $occurrence = occurrenceOf($this->meeting, '2026-10-12');
+
+        $this->actingAs($this->sari)->putJson("{$this->base}/notulen{$this->q}", [
+            'attendance' => [['user_id' => $this->nadia->id, 'present' => true]],
+            'sections' => [['title' => 'Rekap stok', 'body' => 'Baru']],
+            'decisions' => [],
+        ])->assertOk();
+
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/internal/documents/meeting-minutes.'.app(MinutesStore::class)->find($occurrence)?->id.'/replace')
+            && $request['content']['content'][0]['content'][0]['text'] === 'Rekap stok');
+
+        // Attendance only (room checklist while the text lives in Yjs): sections untouched, no replace.
+        $this->actingAs($this->sari)->putJson("{$this->base}/notulen{$this->q}", [
+            'attendance_only' => true,
+            'attendance' => [['user_id' => $this->nadia->id, 'present' => false, 'reason' => 'sakit']],
+        ])->assertOk()->assertJsonPath('minutes.sections.0.body', 'Baru')->assertJsonPath('minutes.attendance.0.reason', 'sakit');
+        Http::assertSentCount(1);
+    });
+});
+
+describe('editing hint and retention', function () {
+    it('shows who is editing without collaboration and never blocks', function () {
+        Event::fake([MeetingRoomBroadcast::class]);
+
+        $this->actingAs($this->sari)->postJson("{$this->base}/notulen/menyunting{$this->q}", ['active' => true])
+            ->assertOk()->assertJsonPath('editing.user_id', $this->sari->id)->assertJsonPath('editing.expires_at', '2026-10-12T02:05:30Z');
+        $this->actingAs($this->dimas)->postJson("{$this->base}/notulen/menyunting{$this->q}", ['active' => true])
+            ->assertOk()->assertJsonPath('editing.user_id', $this->sari->id);
+        $this->actingAs($this->nadia)->postJson("{$this->base}/notulen/menyunting{$this->q}", ['active' => true])->assertForbidden();
+
+        $this->actingAs($this->nadia)->get("{$this->base}/ruang{$this->q}")
+            ->assertInertia(fn (Assert $page) => $page->where('room.minutes.editing.name', 'Sari Notulis'));
+
+        // Expires 30 s after the last heartbeat; releasing hands it over at once.
+        $this->actingAs($this->sari)->postJson("{$this->base}/notulen/menyunting{$this->q}", ['active' => false])->assertOk()->assertJsonPath('editing', null);
+        $this->actingAs($this->dimas)->postJson("{$this->base}/notulen/menyunting{$this->q}", ['active' => true])->assertJsonPath('editing.user_id', $this->dimas->id);
+        $this->travel(31)->seconds();
+        $this->actingAs($this->sari)->postJson("{$this->base}/notulen/menyunting{$this->q}", ['active' => true])->assertJsonPath('editing.user_id', $this->sari->id);
+
+        Event::assertDispatched(MeetingRoomBroadcast::class, fn (MeetingRoomBroadcast $event) => $event->name === 'minutes.editing' && $event->payload['editing'] === null);
+    });
+
+    it('purges speaking time with the transcript retention', function () {
+        config(['livekit.speaking_retention_days' => 90]);
+        MeetingSpeakingTime::query()->create(['meeting_id' => $this->meeting->id, 'occurrence_date' => '2026-07-13', 'user_id' => $this->nadia->id, 'ms_spoken' => 10]);
+        MeetingSpeakingTime::query()->create(['meeting_id' => $this->meeting->id, 'occurrence_date' => '2026-07-14', 'user_id' => $this->nadia->id, 'ms_spoken' => 10]);
+
+        expect((new PruneSpeakingTimes)->handle())->toBe(1)
+            ->and(MeetingSpeakingTime::query()->sole()->occurrence_date->toDateString())->toBe('2026-07-14');
+    });
+});
+
+describe('minutes document', function () {
+    it('round-trips sections and decisions through the collaborative document', function () {
+        $sections = [['title' => 'Rekap stok', 'body' => "Baris satu\n\n• poin"], ['title' => 'Kosong', 'body' => '']];
+        $decisions = ['Keputusan A', 'Keputusan B'];
+
+        expect(MinutesDocument::fromDoc(MinutesDocument::toDoc($sections, $decisions)))
+            ->toBe(['sections' => $sections, 'decisions' => $decisions]);
+
+        // Text before any heading is kept as "Catatan"; empty documents have nothing.
+        expect(MinutesDocument::fromDoc(['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Bebas']]]]]))
+            ->toBe(['sections' => [['title' => 'Catatan', 'body' => 'Bebas']], 'decisions' => []])
+            ->and(MinutesDocument::fromDoc(null))->toBe(['sections' => [], 'decisions' => []]);
     });
 });

@@ -9,6 +9,7 @@ use App\Domain\Organization\Enums\Permission;
 use App\Models\Meeting;
 use App\Models\MeetingActionItem;
 use App\Models\MeetingMinutes;
+use App\Models\MeetingVideoRemoval;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\Response;
@@ -159,7 +160,11 @@ class MeetingPolicy
             : Response::deny('Anda tidak diundang ke rapat ini.');
     }
 
-    /** A LiveKit token for one occurrence: openVideo + inside the join window. */
+    /**
+     * A LiveKit token for one occurrence: openVideo + inside the join window
+     * + not removed from that occurrence's room by the organizer (R-04).
+     * Deactivated accounts fail canView (isActive) and get nothing.
+     */
     public function joinVideo(User $user, Meeting $meeting, ?Occurrence $occurrence = null, ?CarbonImmutable $now = null): Response
     {
         $open = $this->openVideo($user, $meeting);
@@ -170,6 +175,16 @@ class MeetingPolicy
 
         if ($occurrence === null) {
             return Response::deny('Pilih tanggal rapat.');
+        }
+
+        $removed = MeetingVideoRemoval::query()
+            ->where('meeting_id', $meeting->id)
+            ->where('occurrence_date', $occurrence->date)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if ($removed) {
+            return Response::deny('Penyelenggara mengeluarkan Anda dari rapat ini.');
         }
 
         $rooms = app(VideoRooms::class);

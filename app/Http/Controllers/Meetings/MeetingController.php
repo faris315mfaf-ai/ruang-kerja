@@ -88,12 +88,12 @@ class MeetingController extends Controller
 
         $meeting->load(['participants', 'workspace:id,key,name']);
         $occurrence = $occurrences->resolve($meeting, $request->occurrenceDate());
-        $minutes = $store->find($occurrence);
 
         return Inertia::render('meetings/show', [
-            'detail' => [
+            // Lazy: the 30 s `only: ['video']` poll skips it (audit 2026-10 §4).
+            'detail' => fn (): array => [
                 'viewer_id' => $user->id,
-                'meeting' => $presenter->meeting($occurrence, $minutes),
+                'meeting' => $presenter->meeting($occurrence, $store->find($occurrence)),
                 'people' => $feed->people([$occurrence], [], [$user->id]),
                 'can' => [
                     'update' => $policy->update($user, $meeting)->allowed(),

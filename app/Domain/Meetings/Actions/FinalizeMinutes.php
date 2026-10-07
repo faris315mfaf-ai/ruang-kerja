@@ -5,6 +5,7 @@ namespace App\Domain\Meetings\Actions;
 use App\Domain\Meetings\Data\Occurrence;
 use App\Domain\Meetings\Enums\MinutesStatus;
 use App\Domain\Meetings\Notifications\MinutesFinalizedNotification;
+use App\Domain\Meetings\Services\MinutesCollab;
 use App\Domain\Meetings\Services\MinutesStore;
 use App\Domain\Meetings\Services\RoomEvents;
 use App\Domain\Organization\Services\AuditLogger;
@@ -27,6 +28,7 @@ final class FinalizeMinutes
         private readonly SaveMinutes $save,
         private readonly AuditLogger $audit,
         private readonly RoomEvents $events,
+        private readonly MinutesCollab $collab,
     ) {}
 
     public function handle(Occurrence $occurrence, User $actor): MeetingMinutes
@@ -69,6 +71,7 @@ final class FinalizeMinutes
 
         if ($finalized) {
             $this->events->minutesChanged($minutes, $occurrence->meeting);
+            $this->collab->reconnect($minutes);
             $this->notifyParticipants($occurrence, $minutes, $actor);
         }
 

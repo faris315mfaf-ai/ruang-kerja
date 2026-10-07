@@ -6,6 +6,7 @@ use App\Domain\Meetings\Data\Occurrence;
 use App\Domain\Meetings\Queries\VideoAttendance;
 use App\Domain\Meetings\Services\MeetingCalls;
 use App\Domain\Meetings\Services\VideoRooms;
+use App\Models\MeetingVideoRemoval;
 use App\Models\User;
 use App\Policies\MeetingPolicy;
 use Carbon\CarbonImmutable;
@@ -54,7 +55,7 @@ final class VideoPresenter
      * Kehadiran panel (GET /rapat/{id}/video/kehadiran and the `video` prop).
      *
      * @param  array{attendance: list<array<string, mixed>>, not_joined: list<array{user_id: string, rsvp: string, optional: bool}>, in_room: int}  $roster
-     * @return array{attendance: list<array<string, mixed>>, in_room: int, not_joined: list<array<string, mixed>>, late_grace_minutes: int}
+     * @return array{attendance: list<array<string, mixed>>, in_room: int, not_joined: list<array<string, mixed>>, late_grace_minutes: int, removed: list<array<string, mixed>>}
      */
     public function attendance(Occurrence $occurrence, array $roster): array
     {
@@ -68,6 +69,18 @@ final class VideoPresenter
                 'called_at' => $called[$person['user_id']] ?? null,
             ], $roster['not_joined']),
             'late_grace_minutes' => VideoAttendance::LATE_GRACE_MINUTES,
+            // Removed by the organizer: no new token until "Izinkan masuk lagi" (audit R-04).
+            'removed' => array_values(MeetingVideoRemoval::query()
+                ->where('meeting_id', $occurrence->meeting->id)
+                ->where('occurrence_date', $occurrence->date)
+                ->orderBy('created_at')
+                ->get(['user_id', 'removed_by', 'created_at'])
+                ->map(fn (MeetingVideoRemoval $removal): array => [
+                    'user_id' => $removal->user_id,
+                    'removed_by' => $removal->removed_by,
+                    'removed_at' => $removal->created_at?->toIso8601ZuluString(),
+                ])
+                ->all()),
         ];
     }
 }

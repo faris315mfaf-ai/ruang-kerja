@@ -4,9 +4,12 @@ namespace App\Domain\Meetings\Actions;
 
 use App\Domain\Meetings\Data\Occurrence;
 use App\Domain\Meetings\Enums\MinutesSource;
+use App\Domain\Meetings\Enums\Recurrence;
 use App\Domain\Meetings\Queries\PreviousMinutes;
+use App\Domain\Meetings\Services\MinutesCollab;
 use App\Domain\Meetings\Services\MinutesStore;
 use App\Domain\Meetings\Services\RoomEvents;
+use App\Models\Meeting;
 use App\Models\MeetingActionItem;
 use App\Models\MeetingMinutes;
 use App\Models\User;
@@ -19,7 +22,8 @@ use Illuminate\Validation\ValidationException;
  *
  * - continue: a "Tindak lanjut rapat lalu" section listing the open
  *   follow-ups of the previous minutes of the same meeting/series;
- * - template: "Rapat mingguan" = one section per agenda item (Keputusan and
+ * - template: the meeting's own template (label from its type/title, e.g.
+ *   "Templat Rapat mingguan") = one section per agenda item (Keputusan and
  *   Tindak lanjut are the minutes' fixed blocks);
  * - blank: no sections, only while nothing was written yet.
  *
@@ -31,8 +35,6 @@ final class ChooseMinutesSource
 {
     public const string CARRY_OVER_TITLE = 'Tindak lanjut rapat lalu';
 
-    public const string TEMPLATE_NAME = 'Rapat mingguan';
-
     public const string EMPTY_AGENDA_TITLE = 'Agenda';
 
     private const array MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -42,6 +44,7 @@ final class ChooseMinutesSource
         private readonly SaveMinutes $save,
         private readonly PreviousMinutes $previous,
         private readonly RoomEvents $events,
+        private readonly MinutesCollab $collab,
     ) {}
 
     /**
@@ -78,6 +81,7 @@ final class ChooseMinutesSource
 
             if ($changed) {
                 $this->save->snapshot($minutes, $actor, force: false);
+                $this->collab->replaceLive($minutes);
             }
 
             return ['minutes' => $minutes, 'applied' => true];
@@ -89,6 +93,21 @@ final class ChooseMinutesSource
         }
 
         return $result;
+    }
+
+    /**
+     * Label of the template option: the series type ("Templat Rapat
+     * mingguan", "Templat Rapat harian", "Templat Rapat Sen–Rab–Jum") or the
+     * title of a one-off meeting ("Templat Review vendor logistik").
+     */
+    public static function templateLabel(Meeting $meeting): string
+    {
+        return 'Templat '.match ($meeting->recurrence) {
+            Recurrence::Weekly => 'Rapat mingguan',
+            Recurrence::Weekdays => 'Rapat harian',
+            Recurrence::MonWedFri => 'Rapat Sen–Rab–Jum',
+            Recurrence::None => $meeting->title,
+        };
     }
 
     /**

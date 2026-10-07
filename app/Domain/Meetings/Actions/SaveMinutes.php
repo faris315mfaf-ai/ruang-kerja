@@ -3,6 +3,7 @@
 namespace App\Domain\Meetings\Actions;
 
 use App\Domain\Meetings\Data\Occurrence;
+use App\Domain\Meetings\Services\MinutesCollab;
 use App\Domain\Meetings\Services\MinutesStore;
 use App\Domain\Meetings\Services\RoomEvents;
 use App\Models\MeetingMinutes;
@@ -25,6 +26,7 @@ final class SaveMinutes
     public function __construct(
         private readonly MinutesStore $store,
         private readonly RoomEvents $events,
+        private readonly MinutesCollab $collab,
     ) {}
 
     /**
@@ -46,8 +48,14 @@ final class SaveMinutes
                 return $minutes;
             }
 
+            $textChanged = $normalized['sections'] != $minutes->sections || $normalized['decisions'] != $minutes->decisions;
             $minutes->fill([...$normalized, 'updated_by' => $actor->id])->save();
             $this->snapshot($minutes, $actor, force: false);
+
+            if ($textChanged) {
+                // Collaborative room document: replaced by what was saved here (last write wins).
+                $this->collab->replaceLive($minutes);
+            }
             // Video room "Notulen Hidup": others refetch (sent after commit).
             $this->events->minutesChanged($minutes, $occurrence->meeting);
 

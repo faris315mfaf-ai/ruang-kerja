@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Casts\PostgresBytea;
 use App\Domain\Meetings\Enums\MinutesSource;
 use App\Domain\Meetings\Enums\MinutesStatus;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
@@ -18,7 +20,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * in meeting_action_items and snapshots in meeting_minute_versions. Access
  * follows the meeting (MeetingPolicy); final = locked until reopened.
  * `notes_source` = how the notes were started on the video pre-join screen
- * (ChooseMinutesSource, once per occurrence).
+ * (ChooseMinutesSource, once per occurrence). `doc_state`/`doc_content` =
+ * the collaborative document of the video room (MinutesCollab) whose text
+ * is mirrored into `sections`/`decisions` on every store.
  *
  * @property string $id
  * @property string $meeting_id
@@ -34,13 +38,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property MinutesSource|null $notes_source
  * @property string|null $notes_source_by
  * @property CarbonImmutable|null $notes_source_at
+ * @property string|null $doc_state Yjs state of the collaborative room document (never sent to browsers)
+ * @property array<mixed>|null $doc_content ProseMirror snapshot of that document
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read Meeting $meeting
  * @property-read Collection<int, MeetingActionItem> $actionItems
  * @property-read Collection<int, MeetingMinuteVersion> $versions
  */
-#[Fillable(['meeting_id', 'occurrence_date', 'status', 'attendance', 'sections', 'decisions', 'version', 'updated_by', 'finalized_at', 'finalized_by', 'notes_source', 'notes_source_by', 'notes_source_at'])]
+#[Fillable(['meeting_id', 'occurrence_date', 'status', 'attendance', 'sections', 'decisions', 'version', 'updated_by', 'finalized_at', 'finalized_by', 'notes_source', 'notes_source_by', 'notes_source_at', 'doc_state', 'doc_content'])]
+#[Hidden(['doc_state', 'doc_content'])]
 class MeetingMinutes extends Model
 {
     use HasUlids;
@@ -71,6 +78,8 @@ class MeetingMinutes extends Model
             'finalized_at' => 'datetime',
             'notes_source' => MinutesSource::class,
             'notes_source_at' => 'datetime',
+            'doc_state' => PostgresBytea::class,
+            'doc_content' => 'array',
         ];
     }
 

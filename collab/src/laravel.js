@@ -1,6 +1,24 @@
 /**
- * Collab server → Laravel internal endpoints (routes/notes.php,
- * VerifyCollabSecret): load and store the state of a note document.
+ * Meeting minutes of the video room ("Notulen Hidup",
+ * docs/fitur/rapat-video-kontrak.md §1.4): document "meeting-minutes.{ulid}"
+ * is stored by routes/meetings.php instead of the notes endpoints.
+ */
+export const MINUTES_DOCUMENT =
+    /^meeting-minutes\.([0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26})$/;
+
+/** Laravel path of the state of a document (note id or meeting-minutes.{id}). */
+export function statePath(documentName) {
+    const minutes = MINUTES_DOCUMENT.exec(documentName);
+
+    return minutes
+        ? `/internal/rapat/notulen/${minutes[1]}/state`
+        : `/internal/catatan/${encodeURIComponent(documentName)}/state`;
+}
+
+/**
+ * Collab server → Laravel internal endpoints (routes/notes.php and
+ * routes/meetings.php, VerifyCollabSecret): load and store the state of a
+ * note or meeting-minutes document.
  */
 export function createLaravelClient({
     baseUrl,
@@ -44,24 +62,17 @@ export function createLaravelClient({
 
     return {
         /** { id, title, yjs_state: base64|null, content: ProseMirror JSON|null } */
-        loadState(noteId) {
-            return call(
-                'GET',
-                `/internal/catatan/${encodeURIComponent(noteId)}/state`,
-            );
+        loadState(documentName) {
+            return call('GET', statePath(documentName));
         },
 
         /** state: Uint8Array (Y.encodeStateAsUpdate), content: ProseMirror JSON|null */
-        storeState(noteId, { state, content, editorIds }) {
-            return call(
-                'POST',
-                `/internal/catatan/${encodeURIComponent(noteId)}/state`,
-                {
-                    yjs_state: Buffer.from(state).toString('base64'),
-                    body: content,
-                    editor_ids: editorIds,
-                },
-            );
+        storeState(documentName, { state, content, editorIds }) {
+            return call('POST', statePath(documentName), {
+                yjs_state: Buffer.from(state).toString('base64'),
+                body: content,
+                editor_ids: editorIds,
+            });
         },
     };
 }
