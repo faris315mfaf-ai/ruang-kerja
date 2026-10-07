@@ -58,12 +58,22 @@ if [ "$shared" = 1 ]; then
     log "publishing $domain on the shared edge proxy ($site)"
     [ -f "$site" ] && cp "$site" "$site.prev"
     sed "s/__APP_DOMAIN__/${domain}/g" docker/caddy/site.caddy.template > "$site"
+    # Landing page at "/" (same as the standalone Caddyfile): static files next to
+    # the site file, inside the sites/ folder edge-caddy already mounts.
+    landing="$EDGE_PATH/sites/ruangkerja-landing"
+    rm -rf "$landing.new" "$landing.prev"
+    cp -R docker/caddy/landing "$landing.new"
+    if [ -d "$landing" ]; then mv "$landing" "$landing.prev"; fi
+    mv "$landing.new" "$landing"
     if docker exec edge-caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile > /dev/null 2>&1; then
         docker exec edge-caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
         rm -f "$site.prev"
+        rm -rf "$landing.prev"
     else
         echo "[deploy] edge config invalid, restoring the previous site file" >&2
         if [ -f "$site.prev" ]; then mv "$site.prev" "$site"; else rm -f "$site"; fi
+        rm -rf "$landing"
+        if [ -d "$landing.prev" ]; then mv "$landing.prev" "$landing"; fi
         exit 1
     fi
 fi
