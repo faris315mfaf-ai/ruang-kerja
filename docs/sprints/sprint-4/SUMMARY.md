@@ -69,6 +69,6 @@ Tidak ada (memakai yang sudah terpasang). `composer install`/`npm install` hanya
 ## Sisa pekerjaan / risiko
 
 - Test konkurensi nomor berjalan sekuensial (RefreshDatabase satu koneksi); keamanan race bergantung pada upsert atomik Postgres.
-- Pembatalan pengajuan yang **sudah disetujui** (oleh HR) belum ada UI; `AttendanceEffects::revert()` sudah tersedia.
+- ~~Pembatalan pengajuan yang **sudah disetujui** (oleh HR) belum ada UI~~ — selesai backlog 7 Okt 2026 (`CancelApprovedRequest`, permission `requests.cancel_approved`, tab Persetujuan "Disetujui", `AttendanceEffects::revertPlan()/revert()` kini juga mengembalikan koreksi absensi; lihat PRD M2 dan DATABASE.md §3).
 - Lembur yang disetujui untuk hari tanpa baris absensi baru tercatat saat baris itu ada (check-in/tutup hari).
 - ~~Pencarian ⌘K untuk pengajuan~~ — selesai Sprint 10B (`RequestSearchProvider`).
