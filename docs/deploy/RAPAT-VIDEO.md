@@ -8,7 +8,7 @@ Browser ──HTTPS──▶ spkd.store (RuangKerja)  ── token JWT (POST /ra
    │ WSS (sinyal)           │ webhook kehadiran (POST /api/livekit/webhook, bertanda tangan)
    ▼                        │
 livekit.spkd.store ─────────┘    VPS rapat: Caddy (443, TLS otomatis) → LiveKit :7880
-   ▲ media WebRTC: UDP 50000–60000 (utama) · TCP 7881 · TURN/UDP 3478 · TURN/TLS turn.spkd.store:443 (cadangan)
+   ▲ media WebRTC: UDP 50000–60000 (utama) · TCP 7881 · TURN/UDP 3478 + relay 30000–40000 · TURN/TLS turn.spkd.store:443 (cadangan)
 ```
 
 ## 1. Kebutuhan
@@ -17,7 +17,9 @@ livekit.spkd.store ─────────┘    VPS rapat: Caddy (443, TLS 
 |---|---|
 | VPS | 4 vCPU **eksklusif**, 8 GB RAM, 40 GB SSD, IPv4 statis, port 1 Gbps tanpa kuota trafik (rapat 20 orang 720p ±60 Mbps keluar). Rekaman (Egress) **tidak** dipasang. |
 | DNS | `livekit.spkd.store` (sinyal/WSS) dan `turn.spkd.store` (TURN/TLS) → A record ke IP VPS rapat. Pasang **sebelum** menjalankan server agar Caddy mendapat sertifikat. |
-| Firewall (Security Group Biznet + `ufw`) | masuk **80/tcp** (ACME), **443/tcp** (WSS + TURN/TLS), **7881/tcp** (WebRTC lewat TCP), **3478/udp** (TURN/UDP), **50000–60000/udp** (media). Port 7880 **tidak** dibuka (hanya Caddy lokal). SSH dibatasi ke IP admin. |
+| Firewall (Security Group Biznet + `ufw`) | masuk **80/tcp** (ACME), **443/tcp** (WSS + TURN/TLS), **7881/tcp** (WebRTC lewat TCP), **3478/udp** (TURN/UDP), **50000–60000/udp** (media), **30000–40000/udp** (relay TURN; tanpa ini peserta yang memakai TURN tidak mendapat media). Port 7880 **tidak** dibuka (hanya Caddy lokal). SSH dibatasi ke IP admin. |
+
+> **Terpasang 7 Okt 2026** di server rapat `103.125.181.244` (Ubuntu 24.04, 8 vCPU, 15 GB): `/opt/livekit` (Caddy L4 + LiveKit 1.13.8, tanpa Redis karena satu node), service `livekit-docker`, `ufw` + Security Group membuka port di atas, `net.core.rmem_max/wmem_max=16777216`. Uji `lk load-test` dari Mac (1 publisher, 2 subscriber, 20 detik): 1,2 Mbps per subscriber, packet loss 0%.
 | Jam | NTP aktif di kedua VPS (`timedatectl` → `System clock synchronized: yes`). Webhook ditolak bila selisih jam > 5 menit. |
 
 ## 2. Pasang LiveKit (sekali)
