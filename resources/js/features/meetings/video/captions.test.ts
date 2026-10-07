@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CaptionLine } from './captions';
 import {
+    acceptCaptionStream,
     applyCaption,
     CAPTION_HOLD_MS,
     readCaptionAttributes,
@@ -15,6 +16,15 @@ const update = (
     at: number,
     final = false,
 ) => ({ segmentId, speaker, text, at, final });
+
+describe('acceptCaptionStream', () => {
+    it('accepts captions only from the auto-minutes worker (audit N-07)', () => {
+        expect(acceptCaptionStream('rk-notulen')).toBe(true);
+        expect(acceptCaptionStream('01HZSARI0000000000000000AA')).toBe(false);
+        expect(acceptCaptionStream('rk-notulen-palsu')).toBe(false);
+        expect(acceptCaptionStream('')).toBe(false);
+    });
+});
 
 describe('readCaptionAttributes', () => {
     it('reads the LiveKit Agents transcription attributes', () => {

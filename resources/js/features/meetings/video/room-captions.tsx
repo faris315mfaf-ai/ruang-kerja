@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { CaptionLine } from './captions';
 import {
+    acceptCaptionStream,
     applyCaption,
     CAPTION_HOLD_MS,
     CAPTION_TOPIC,
@@ -44,6 +45,10 @@ export function useCaptions(room: Room) {
             room.registerTextStreamHandler(
                 CAPTION_TOPIC,
                 (reader, participantInfo) => {
+                    if (!acceptCaptionStream(participantInfo.identity)) {
+                        return; // Not the auto-minutes worker (audit N-07).
+                    }
+
                     const info = readCaptionAttributes(
                         reader.info.attributes,
                         reader.info.id,

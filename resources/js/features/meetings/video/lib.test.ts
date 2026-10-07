@@ -6,7 +6,6 @@ import {
     isMacPlatform,
     joinWindow,
     namesSummary,
-    parseMeta,
     raisedHandOrder,
     shortcutAction,
     shortcutLabel,
@@ -151,20 +150,6 @@ describe('shortcuts', () => {
 });
 
 describe('participants', () => {
-    it('parses token metadata defensively', () => {
-        expect(
-            parseMeta('{"avatar_url":"https://x/y.png","organizer":true}'),
-        ).toEqual({ avatar_url: 'https://x/y.png', organizer: true });
-        expect(parseMeta('not json')).toEqual({
-            avatar_url: null,
-            organizer: false,
-        });
-        expect(parseMeta(undefined)).toEqual({
-            avatar_url: null,
-            organizer: false,
-        });
-    });
-
     it('orders raised hands by the time they were raised', () => {
         expect(
             raisedHandOrder(

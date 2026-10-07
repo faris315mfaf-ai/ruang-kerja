@@ -1,6 +1,6 @@
 import type { Room as LiveRoom } from 'livekit-client';
 import type { MutableRefObject, ReactNode } from 'react';
-import { useEffect, useMemo, useRef } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 import { MeetingsProvider } from '../meetings-context';
 import type { Minutes } from '../types';
 import type { MinutesData } from '../use-minutes';
@@ -12,7 +12,19 @@ import type { MinutesCollab } from './use-minutes-collab';
 import { useMinutesCollab } from './use-minutes-collab';
 import { nudgeMinutes } from './use-room-live';
 
-type Sync = MutableRefObject<((minutes: Minutes) => void) | null>;
+export type MinutesSync = MutableRefObject<((minutes: Minutes) => void) | null>;
+
+type Value = { data: MinutesData | null; collab: MinutesCollab };
+
+const MinutesContext = createContext<Value>({
+    data: null,
+    collab: { mode: 'off' },
+});
+
+/** The room's minutes (only the document, navigator and quick add read it). */
+export function useRoomMinutes(): Value {
+    return useContext(MinutesContext);
+}
 
 /** What other people need to refetch for (content saves are covered by saved_at). */
 function itemsSignature(minutes: Minutes): string {
@@ -34,8 +46,8 @@ function Host({
     room: Room;
     minutes: RoomMinutes;
     live: LiveRoom;
-    syncRef: Sync;
-    children: (data: MinutesData, collab: MinutesCollab) => ReactNode;
+    syncRef: MinutesSync;
+    children: ReactNode;
 }) {
     // useMinutes reads its props once (initial state); identity is enough.
     const props = useMemo(
@@ -74,17 +86,20 @@ function Host({
 
     return (
         <MeetingsProvider people={room.people} me={room.viewer.id}>
-            {children(data, collab)}
+            <MinutesContext.Provider value={{ data, collab }}>
+                {children}
+            </MinutesContext.Provider>
         </MeetingsProvider>
     );
 }
 
 /**
  * Provides the room's minutes through the existing minutes editor hook
- * (features/meetings/use-minutes) to the layout; `null` when the server
- * does not send minutes for the room (older backend).
+ * (features/meetings/use-minutes) as context: typing re-renders only the
+ * consumers (document, navigator), not the video around them. `data` is
+ * null when the server sends no minutes for the room (older backend).
  */
-export function MinutesHost({
+export function MinutesProvider({
     room,
     live,
     syncRef,
@@ -92,11 +107,11 @@ export function MinutesHost({
 }: {
     room: Room;
     live: LiveRoom;
-    syncRef: Sync;
-    children: (data: MinutesData | null, collab: MinutesCollab) => ReactNode;
+    syncRef: MinutesSync;
+    children: ReactNode;
 }) {
     if (!room.minutes) {
-        return <>{children(null, { mode: 'off' })}</>;
+        return <>{children}</>;
     }
 
     return (

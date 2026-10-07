@@ -1,6 +1,6 @@
 import type { Participant, Room } from 'livekit-client';
 import { RoomEvent } from 'livekit-client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { postKeepalive, videoApi } from './api';
 import { speakingTotals } from './contract';
 import type { TalkState, TalkTotals } from './talk-time';
@@ -8,63 +8,106 @@ import { mergeTotals, recordSpeakers, startTalk, totalsAt } from './talk-time';
 import type { SpeakingTotals } from './types';
 
 /**
- * "Waktu bicara" of the room. This browser counts everyone it hears from
- * LiveKit's active-speaker events (live bars), reports only its own total to
- * the server (contract §3.2, every `interval_seconds` and once on leave) and
- * shows the larger of the server's and its own count per person, so people
- * who spoke before this browser joined are not shown as silent.
+ * "Waktu bicara" outside React state, so speaker events and server totals do
+ * not re-render the room (audit §4): this browser counts everyone it hears
+ * from LiveKit's active-speaker events, the server totals arrive from the
+ * report response / realtime / polling, and only the panel that shows the
+ * bars subscribes (useTalkTotals).
  */
-export function useTalkTime({
+export class TalkStore {
+    private state: TalkState;
+    private server: TalkTotals;
+    private base: number;
+    private listeners = new Set<() => void>();
+    silent: string[];
+    version = 0;
+
+    constructor(
+        private readonly me: string,
+        initial: SpeakingTotals | null,
+    ) {
+        this.state = startTalk(Date.now());
+        this.server = speakingTotals(initial);
+        this.base = initial?.mine_ms ?? 0;
+        this.silent = initial?.silent ?? [];
+    }
+
+    subscribe = (listener: () => void) => {
+        this.listeners.add(listener);
+
+        return () => this.listeners.delete(listener);
+    };
+
+    snapshot = () => this.version;
+
+    private emit() {
+        this.version += 1;
+        this.listeners.forEach((listener) => listener());
+    }
+
+    record(speakers: string[], now: number) {
+        this.state = recordSpeakers(this.state, speakers, now);
+        this.emit();
+    }
+
+    apply = (totals: SpeakingTotals) => {
+        this.server = speakingTotals(totals);
+        this.silent = totals.silent;
+        this.emit();
+    };
+
+    /** My own total: stored value + what this browser counted since joining. */
+    mine(now: number): number {
+        return this.base + (totalsAt(this.state, now)[this.me] ?? 0);
+    }
+
+    /** Server and local counts merged (largest per person). */
+    totals(now: number): TalkTotals {
+        return mergeTotals(this.server, {
+            ...totalsAt(this.state, now),
+            [this.me]: this.mine(now),
+        });
+    }
+
+    /** Someone is speaking right now (the bars move). */
+    get live(): boolean {
+        return this.state.speaking.length > 0;
+    }
+}
+
+/**
+ * Feeds the store from LiveKit and reports my own total to the server
+ * (contract §3.2: every `interval_seconds` and once on leave).
+ */
+export function useTalkReporting({
+    store,
     room,
-    me,
-    initial,
     reportUrl,
     canReport,
     connected,
+    intervalSeconds,
 }: {
+    store: TalkStore;
     room: Room;
-    me: string;
-    initial: SpeakingTotals | null;
     reportUrl: string | null;
     canReport: boolean;
     connected: boolean;
+    intervalSeconds: number;
 }) {
-    const state = useRef<TalkState>(startTalk(Date.now()));
-    const base = useRef(initial?.mine_ms ?? 0);
-    const [server, setServer] = useState<TalkTotals>(() =>
-        speakingTotals(initial),
-    );
-    const [silent, setSilent] = useState<string[]>(initial?.silent ?? []);
-    const [now, setNow] = useState(() => Date.now());
-    const interval = Math.max(10, initial?.interval_seconds ?? 15) * 1000;
-
-    const mine = (at: number) =>
-        base.current + (totalsAt(state.current, at)[me] ?? 0);
-
-    const apply = (totals: SpeakingTotals) => {
-        setServer(speakingTotals(totals));
-        setSilent(totals.silent);
-    };
-
     useEffect(() => {
-        const onSpeakers = (speakers: Participant[]) => {
-            state.current = recordSpeakers(
-                state.current,
+        const onSpeakers = (speakers: Participant[]) =>
+            store.record(
                 speakers.map((participant) => participant.identity),
                 Date.now(),
             );
-        };
 
         room.on(RoomEvent.ActiveSpeakersChanged, onSpeakers);
-        const tick = window.setInterval(() => setNow(Date.now()), 1000);
 
         return () => {
             room.off(RoomEvent.ActiveSpeakersChanged, onSpeakers);
-            window.clearInterval(tick);
         };
-    }, [room]);
+    }, [room, store]);
 
-    // Report my own total while connected, and once more when leaving.
     useEffect(() => {
         if (!connected || !reportUrl || !canReport) {
             return;
@@ -72,14 +115,19 @@ export function useTalkTime({
 
         const report = () =>
             videoApi
-                .reportSpeaking(reportUrl, mine(Date.now()))
-                .then(apply)
+                .reportSpeaking(reportUrl, store.mine(Date.now()))
+                .then(store.apply)
                 .catch(() => undefined);
 
         void report();
-        const id = window.setInterval(() => void report(), interval);
+        const id = window.setInterval(
+            () => void report(),
+            Math.max(10, intervalSeconds) * 1000,
+        );
         const onHide = () =>
-            void postKeepalive(reportUrl, { ms: Math.round(mine(Date.now())) });
+            void postKeepalive(reportUrl, {
+                ms: Math.round(store.mine(Date.now())),
+            });
 
         window.addEventListener('pagehide', onHide);
 
@@ -88,15 +136,32 @@ export function useTalkTime({
             window.removeEventListener('pagehide', onHide);
             onHide();
         };
-        // `mine` reads refs only.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [connected, reportUrl, canReport, interval]);
+    }, [connected, reportUrl, canReport, intervalSeconds, store]);
+}
 
-    const local = totalsAt(state.current, now);
-    const totals = mergeTotals(server, {
-        ...local,
-        [me]: mine(now),
-    });
+/**
+ * Totals for display, refreshed when the store changes and once a second
+ * while someone is speaking (throttled bars instead of per-event renders).
+ */
+export function useTalkTotals(store: TalkStore): {
+    totals: TalkTotals;
+    silent: string[];
+} {
+    useSyncExternalStore(store.subscribe, store.snapshot);
+    const [now, setNow] = useState(() => Date.now());
 
-    return { totals, silent, apply };
+    useEffect(() => {
+        const id = window.setInterval(() => {
+            if (store.live) {
+                setNow(Date.now());
+            }
+        }, 1000);
+
+        return () => window.clearInterval(id);
+    }, [store]);
+
+    return {
+        totals: store.totals(Math.max(now, Date.now())),
+        silent: store.silent,
+    };
 }

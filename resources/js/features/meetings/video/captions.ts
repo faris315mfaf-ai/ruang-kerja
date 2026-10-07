@@ -10,6 +10,18 @@
 
 export const CAPTION_TOPIC = 'lk.transcription';
 
+/**
+ * The only identity allowed to publish captions: the hidden auto-minutes
+ * worker. Every participant may publish data, so a stream from anyone else
+ * could fake captions in someone's name (audit N-07); user identities are
+ * ULIDs and can never be "rk-notulen".
+ */
+export const CAPTION_SOURCE = 'rk-notulen';
+
+export function acceptCaptionStream(identity: string): boolean {
+    return identity === CAPTION_SOURCE;
+}
+
 /** How long the last line stays after the speaker stops (ms). */
 export const CAPTION_HOLD_MS = 6000;
 

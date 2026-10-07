@@ -1,9 +1,9 @@
 /**
  * Pure helpers of Video RuangKerja (no React, no LiveKit): join window and
  * countdown, room clock, keyboard shortcuts (Google Meet style), durations
- * and participant metadata. Tested in lib.test.ts.
+ * and participant lists. Tested in lib.test.ts.
  */
-import type { ParticipantMeta, VideoSummary } from './types';
+import type { VideoSummary } from './types';
 
 // ---------------------------------------------------------------------------
 // Join window
@@ -181,27 +181,6 @@ export function isMacPlatform(platform: string): boolean {
 // ---------------------------------------------------------------------------
 // Participants
 // ---------------------------------------------------------------------------
-
-/** Metadata JSON from the access token; tolerant of anything else. */
-export function parseMeta(
-    metadata: string | undefined | null,
-): ParticipantMeta {
-    if (!metadata) {
-        return { avatar_url: null, organizer: false };
-    }
-
-    try {
-        const value = JSON.parse(metadata) as Partial<ParticipantMeta> | null;
-
-        return {
-            avatar_url:
-                typeof value?.avatar_url === 'string' ? value.avatar_url : null,
-            organizer: value?.organizer === true,
-        };
-    } catch {
-        return { avatar_url: null, organizer: false };
-    }
-}
 
 /** Raised hands, oldest first (attribute `hand` = epoch ms when raised). */
 export function raisedHandOrder<T>(

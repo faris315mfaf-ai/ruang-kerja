@@ -3,16 +3,16 @@ import {
     useConnectionQualityIndicator,
     useIsSpeaking,
     useParticipantAttribute,
-    useParticipantInfo,
     useTrackMutedIndicator,
     VideoTrack,
 } from '@livekit/components-react';
 import { ConnectionQuality, Track } from 'livekit-client';
-import { Hand, MicOff, MonitorUp, WifiOff } from 'lucide-react';
+import { Hand, MicOff, MonitorUp, ShieldAlert, WifiOff } from 'lucide-react';
 import type { CSSProperties } from 'react';
+import { memo } from 'react';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { cn } from '@/lib/utils';
-import { parseMeta } from './lib';
+import { useRoomPerson } from './room-people';
 
 /** A camera/screen track or a placeholder for a participant without one. */
 export type TileRef = NonNullable<Parameters<typeof useTrackMutedIndicator>[0]>;
@@ -37,7 +37,7 @@ function SpeakingBars() {
  * camera-off tone, a name pill with the mic state and speaking bars, a teal
  * ring while speaking, raised hand and weak-connection badges.
  */
-export function ParticipantTile({
+export const ParticipantTile = memo(function ParticipantTile({
     trackRef,
     fullName = false,
     className,
@@ -50,12 +50,9 @@ export function ParticipantTile({
     style?: CSSProperties;
 }) {
     const participant = trackRef.participant;
-    const { name, metadata } = useParticipantInfo({ participant });
-    const meta = parseMeta(metadata);
-    const displayName = name || participant.identity;
-    const shortName = fullName
-        ? displayName
-        : (displayName.split(' ')[0] ?? displayName);
+    const person = useRoomPerson(participant.identity);
+    const displayName = person.name;
+    const shortName = fullName ? person.name : person.first_name;
     const speaking = useIsSpeaking(participant);
     const { quality } = useConnectionQualityIndicator({ participant });
     const { isMuted: micMuted } = useTrackMutedIndicator({
@@ -90,7 +87,7 @@ export function ParticipantTile({
             ) : (
                 <UserAvatar
                     name={displayName}
-                    src={meta.avatar_url}
+                    src={person.avatar_url}
                     className="size-[42%] max-h-24 min-h-10 max-w-24 min-w-10 text-[clamp(14px,2.2vw,28px)]"
                 />
             )}
@@ -111,6 +108,16 @@ export function ParticipantTile({
                     <span className="sr-only">
                         {displayName} mengangkat tangan
                     </span>
+                </span>
+            )}
+
+            {!person.known && (
+                <span
+                    className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-warning-soft px-2 py-0.5 text-[12px] font-bold text-warning"
+                    data-testid="unknown-guest"
+                >
+                    <ShieldAlert aria-hidden className="size-3.5" />
+                    Tidak diundang
                 </span>
             )}
 
@@ -140,7 +147,7 @@ export function ParticipantTile({
             </span>
         </div>
     );
-}
+});
 
 /**
  * Filmstrip on top of the room: everyone's camera, the active speaker wider
@@ -184,7 +191,7 @@ export function Filmstrip({
 /** Shared screen in Presentasi mode (dark frame, picture contained). */
 export function ScreenShare({ trackRef }: { trackRef: TileRef }) {
     const participant = trackRef.participant;
-    const name = participant.name || participant.identity;
+    const name = useRoomPerson(participant.identity).first_name;
     const mine = participant.isLocal;
 
     return (

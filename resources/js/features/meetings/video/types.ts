@@ -201,9 +201,3 @@ export type VideoToken = {
     name: string;
     expires_at: string;
 };
-
-/** Participant metadata set by the server in the access token. */
-export type ParticipantMeta = {
-    avatar_url: string | null;
-    organizer: boolean;
-};

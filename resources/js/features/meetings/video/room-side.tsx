@@ -1,5 +1,6 @@
 import type { Participant } from 'livekit-client';
-import { Track } from 'livekit-client';
+import { RoomEvent, Track } from 'livekit-client';
+import { useParticipants } from '@livekit/components-react';
 import { Hand, MicOff, MoreHorizontal, UserMinus } from 'lucide-react';
 import { useState } from 'react';
 import { UserAvatar } from '@/components/shell/user-avatar';
@@ -23,9 +24,11 @@ import { formatTime } from '@/lib/format';
 import { cn, focusRing } from '@/lib/utils';
 import type { AttendanceRow } from './contract';
 import { docAnchor } from './room-doc';
+import { raisedHandOrder } from './lib';
+import { resolvePerson, useRoomPeople } from './room-people';
 import type { TalkRow } from './talk-time';
 import { talkMinutes } from './talk-time';
-import type { AgendaSection, RoomParticipant } from './types';
+import type { AgendaSection } from './types';
 
 /** "Bagian": jumps to a section of the minutes document. */
 export function SectionNav({
@@ -84,13 +87,12 @@ export function SectionNav({
 /** "Waktu bicara": bars per person, minutes, who dominates, who is silent. */
 export function TalkTimePanel({
     rows,
-    people,
     summary,
 }: {
     rows: TalkRow[];
-    people: Map<string, RoomParticipant>;
     summary: string | null;
 }) {
+    const people = useRoomPeople();
     return (
         <section
             aria-labelledby="talk-time-title"
@@ -160,9 +162,6 @@ export function TalkTimePanel({
     );
 }
 
-/** Live participant by identity (for mute/remove from the attendance list). */
-export type LiveLookup = (identity: string) => Participant | undefined;
-
 /**
  * "Kehadiran": who joined when (from the LiveKit webhook attendance), late
  * badges, raised hands, who has not joined with **Panggil** (minute taker /
@@ -170,9 +169,6 @@ export type LiveLookup = (identity: string) => Participant | undefined;
  */
 export function AttendancePanel({
     rows,
-    people,
-    live,
-    hands,
     canCall,
     calling,
     onCall,
@@ -181,10 +177,6 @@ export function AttendancePanel({
     onRemove,
 }: {
     rows: AttendanceRow[];
-    people: Map<string, RoomParticipant>;
-    live: LiveLookup;
-    hands: Participant[];
-    /** null: the call endpoint is not available on this server. */
     canCall: boolean;
     calling: Set<string>;
     onCall: (userId: string) => void;
@@ -192,6 +184,22 @@ export function AttendancePanel({
     onMute: (participant: Participant, trackSid: string) => void;
     onRemove: (participant: Participant) => Promise<void>;
 }) {
+    const people = useRoomPeople();
+    // Leaf subscription: joins, leaves, mute and hand changes only.
+    const participants = useParticipants({
+        updateOnlyOn: [
+            RoomEvent.ParticipantConnected,
+            RoomEvent.ParticipantDisconnected,
+            RoomEvent.ParticipantAttributesChanged,
+            RoomEvent.TrackMuted,
+            RoomEvent.TrackUnmuted,
+            RoomEvent.TrackPublished,
+            RoomEvent.TrackUnpublished,
+        ],
+    });
+    const live = (identity: string) =>
+        participants.find((p) => p.identity === identity);
+    const hands = raisedHandOrder(participants, (p) => p.attributes.hand);
     const [removing, setRemoving] = useState<Participant | null>(null);
     const [busy, setBusy] = useState(false);
     const joined = rows.filter((row) => row.kind === 'joined');
@@ -221,7 +229,8 @@ export function AttendancePanel({
                                 {index + 1}.{' '}
                                 {p.isLocal
                                     ? 'Anda'
-                                    : (p.name || p.identity).split(' ')[0]}
+                                    : resolvePerson(people, p.identity)
+                                          .first_name}
                             </li>
                         ))}
                     </ol>
@@ -370,7 +379,11 @@ export function AttendancePanel({
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>
-                            Keluarkan {removing?.name || 'peserta'}?
+                            Keluarkan{' '}
+                            {removing
+                                ? resolvePerson(people, removing.identity).name
+                                : 'peserta'}
+                            ?
                         </DialogTitle>
                         <DialogDescription>
                             Ia keluar dari ruang rapat sekarang. Selama rapat

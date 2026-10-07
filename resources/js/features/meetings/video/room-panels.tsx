@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { resolvePerson, useRoomPeople } from './room-people';
 import { emitRoomNotice } from './room-notices';
 
 export type PanelKind = 'attendance' | 'chat' | 'settings' | 'talk';
@@ -81,6 +82,7 @@ export function ChatPanel({
     autoFocus: boolean;
 }) {
     const [draft, setDraft] = useState('');
+    const people = useRoomPeople();
     const list = useRef<HTMLOListElement>(null);
     const count = chat.chatMessages.length;
 
@@ -130,9 +132,10 @@ export function ChatPanel({
                                     <span className="text-[14px] font-bold">
                                         {message.from?.isLocal
                                             ? 'Anda'
-                                            : message.from?.name ||
-                                              message.from?.identity ||
-                                              'Peserta'}
+                                            : resolvePerson(
+                                                  people,
+                                                  message.from?.identity ?? '',
+                                              ).name}
                                     </span>
                                     <span className="text-[13px] text-text-subtle">
                                         {formatTime(
