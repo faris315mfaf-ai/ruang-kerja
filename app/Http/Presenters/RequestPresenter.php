@@ -6,6 +6,7 @@ use App\Domain\Organization\Enums\Role;
 use App\Domain\Requests\Data\PlannedStep;
 use App\Domain\Requests\Enums\ApprovalStatus;
 use App\Domain\Requests\Enums\RequestStatus;
+use App\Domain\Requests\Services\ApprovedCancellationPreview;
 use App\Domain\Requests\Services\BalanceLedger;
 use App\Domain\Requests\Services\ColleagueAbsences;
 use App\Models\Attachment;
@@ -24,6 +25,7 @@ final class RequestPresenter
     public function __construct(
         private readonly BalanceLedger $ledger,
         private readonly ColleagueAbsences $colleagues,
+        private readonly ApprovedCancellationPreview $cancellation,
     ) {}
 
     /**
@@ -119,7 +121,7 @@ final class RequestPresenter
      */
     public function detail(EmployeeRequest $request, User $viewer): array
     {
-        $request->loadMissing(['attachments', 'approvals.approver', 'approvals.delegatedFrom', 'substitute', 'user.position', 'user.division', 'leaveType']);
+        $request->loadMissing(['attachments', 'approvals.approver', 'approvals.delegatedFrom', 'substitute', 'user.position', 'user.division', 'leaveType', 'canceledBy']);
 
         $colleagues = $request->leaveType->category->isAbsence() && $request->status !== RequestStatus::Canceled
             ? $this->colleagues->around($request->user, $request->start_at, $request->end_at, $request->id)
@@ -128,6 +130,7 @@ final class RequestPresenter
         // Substitute approvers of a sick request: dates, duration and status only.
         $health = Gate::forUser($viewer)->allows('viewHealthDetails', $request);
         $item = $this->item($request);
+        $cancelApproved = Gate::forUser($viewer)->allows('cancelApproved', $request);
 
         if (! $health && is_array($item['decision_note'])) {
             $item['decision_note']['note'] = null;
@@ -149,10 +152,20 @@ final class RequestPresenter
             // Staff never see an annual leave balance (keputusan pemilik 6 Okt 2026).
             'balance' => $viewer->isStaffOnly() ? null : $this->balanceImpact($request),
             'colleagues' => $colleagues === null || $colleagues['people'] === [] ? null : $colleagues,
+            'cancellation' => $request->status !== RequestStatus::Canceled ? null : [
+                'by' => $request->canceledBy === null ? null : self::person($request->canceledBy),
+                'by_requester' => $request->canceled_by_id !== null && $request->canceled_by_id === $request->user_id,
+                'at' => $request->canceled_at?->toIso8601String(),
+                // HR's note may describe the illness of a sick request: same rule as decision notes.
+                'reason' => $health ? $request->cancel_reason : null,
+                'after_approval' => $request->wasCanceledAfterApproval(),
+            ],
+            'cancel_preview' => $cancelApproved ? $this->cancellation->for($request) : null,
             'can' => [
                 'edit' => Gate::forUser($viewer)->allows('update', $request),
                 'cancel' => Gate::forUser($viewer)->allows('cancel', $request),
                 'decide' => Gate::forUser($viewer)->allows('decide', $request),
+                'cancel_approved' => $cancelApproved,
             ],
         ];
     }

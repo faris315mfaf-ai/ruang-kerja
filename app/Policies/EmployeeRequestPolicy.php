@@ -3,9 +3,11 @@
 namespace App\Policies;
 
 use App\Domain\Organization\Enums\Permission;
+use App\Domain\Requests\Actions\CancelApprovedRequest;
 use App\Domain\Requests\Enums\ApprovalStatus;
 use App\Domain\Requests\Enums\ApproverType;
 use App\Domain\Requests\Enums\RequestCategory;
+use App\Domain\Requests\Enums\RequestStatus;
 use App\Domain\Requests\Services\ApprovalQueue;
 use App\Models\EmployeeRequest;
 use App\Models\RequestApproval;
@@ -64,6 +66,15 @@ class EmployeeRequestPolicy
     public function cancel(User $actor, EmployeeRequest $request): bool
     {
         return $request->user_id === $actor->id && $request->status->isCancelable();
+    }
+
+    /**
+     * HR / Super Admin (requests.cancel_approved) void an approved request of
+     * someone else in their company (CancelApprovedRequest).
+     */
+    public function cancelApproved(User $actor, EmployeeRequest $request): bool
+    {
+        return $request->status === RequestStatus::Approved && CancelApprovedRequest::allowedFor($actor, $request);
     }
 
     /**

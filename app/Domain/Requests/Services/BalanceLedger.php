@@ -17,6 +17,7 @@ use Illuminate\Validation\ValidationException;
  *   submit   → reserve  (pending += days)
  *   approve  → consume  (pending -= days, used += days)
  *   reject / revision / cancel → release (pending -= days)
+ *   approved request voided by HR → refund (used -= days)
  */
 final class BalanceLedger
 {
@@ -115,6 +116,26 @@ final class BalanceLedger
         $balance->pending_days = max(0, round($balance->pending_days - $days, 1));
         $balance->used_days = round($balance->used_days + $days, 1);
         $balance->save();
+    }
+
+    /**
+     * Gives back the days an approved request used (CancelApprovedRequest).
+     * Returns the refunded days (0 for a type without a quota).
+     */
+    public function refund(EmployeeRequest $request): float
+    {
+        $balance = $this->lockedBalance($request);
+        $days = (float) ($request->days ?? 0);
+
+        if ($balance === null || $days <= 0) {
+            return 0.0;
+        }
+
+        $refunded = min($days, (float) $balance->used_days);
+        $balance->used_days = max(0, round($balance->used_days - $days, 1));
+        $balance->save();
+
+        return round($refunded, 1);
     }
 
     public static function yearOf(EmployeeRequest $request): int

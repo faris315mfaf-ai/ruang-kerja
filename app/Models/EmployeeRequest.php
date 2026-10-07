@@ -46,17 +46,22 @@ use Illuminate\Support\Carbon;
  * @property int|null $current_step
  * @property Carbon|null $submitted_at
  * @property Carbon|null $decided_at
+ * @property Carbon|null $canceled_at
+ * @property string|null $canceled_by_id
+ * @property string|null $cancel_reason
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read User $user
  * @property-read LeaveType $leaveType
  * @property-read User|null $substitute
+ * @property-read User|null $canceledBy
  * @property-read Collection<int, RequestApproval> $approvals
  * @property-read Collection<int, Attachment> $attachments
  */
 #[Fillable([
     'number', 'user_id', 'leave_type_id', 'start_at', 'end_at', 'days', 'minutes', 'reason',
     'payload', 'substitute_id', 'status', 'round', 'current_step', 'submitted_at', 'decided_at',
+    'canceled_at', 'canceled_by_id', 'cancel_reason',
 ])]
 class EmployeeRequest extends Model
 {
@@ -88,6 +93,7 @@ class EmployeeRequest extends Model
             'current_step' => 'integer',
             'submitted_at' => 'datetime',
             'decided_at' => 'datetime',
+            'canceled_at' => 'datetime',
         ];
     }
 
@@ -193,6 +199,24 @@ class EmployeeRequest extends Model
     public function substitute(): BelongsTo
     {
         return $this->belongsTo(User::class, 'substitute_id');
+    }
+
+    /**
+     * Who canceled the request (the requester, or HR voiding an approved one).
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function canceledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'canceled_by_id');
+    }
+
+    /**
+     * Canceled after it had been approved (HR, CancelApprovedRequest).
+     */
+    public function wasCanceledAfterApproval(): bool
+    {
+        return $this->status === RequestStatus::Canceled && $this->cancel_reason !== null;
     }
 
     /**

@@ -15,7 +15,8 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Cancellation by the requester before the final decision. A pending request
- * gives its reserved days back (pending_days).
+ * gives its reserved days back (pending_days). An approved request is voided
+ * by HR instead (CancelApprovedRequest).
  */
 final class CancelRequest
 {
@@ -50,7 +51,12 @@ final class CancelRequest
             }
 
             StopFlow::skipRemaining($request, 'Dibatalkan oleh pemohon.');
-            $request->forceFill(['status' => RequestStatus::Canceled, 'current_step' => null])->save();
+            $request->forceFill([
+                'status' => RequestStatus::Canceled,
+                'current_step' => null,
+                'canceled_at' => now(),
+                'canceled_by_id' => $actor->id,
+            ])->save();
 
             $this->audit->log('request.canceled', $request, ['status' => $previous->value], ['status' => RequestStatus::Canceled->value], $actor);
 
