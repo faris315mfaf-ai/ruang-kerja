@@ -38,6 +38,24 @@ it('seeds the demo organization idempotently', function () {
         ->and(User::query()->where('status', UserStatus::Resigned)->count())->toBe(1);
 });
 
+it('re-seeds a database whose employee numbers were assigned in an older list order', function () {
+    $this->seed(OrganizationSeeder::class);
+
+    // Inserting an account into the list shifts every later RK-#### number;
+    // swap two numbers to reproduce a database seeded before such a change.
+    [$first, $second] = EmployeeProfile::query()->orderBy('employee_number')->take(2)->get()->all();
+    [$a, $b] = [$first->employee_number, $second->employee_number];
+    $first->forceFill(['employee_number' => 'RK-TEMP'])->save();
+    $second->forceFill(['employee_number' => $a])->save();
+    $first->forceFill(['employee_number' => $b])->save();
+
+    $this->seed(OrganizationSeeder::class);
+
+    expect($first->refresh()->employee_number)->toBe($a)
+        ->and($second->refresh()->employee_number)->toBe($b)
+        ->and(EmployeeProfile::query()->distinct()->count('employee_number'))->toBe(26);
+});
+
 it('places the demo accounts in the organization', function () {
     $this->seed(OrganizationSeeder::class);
 

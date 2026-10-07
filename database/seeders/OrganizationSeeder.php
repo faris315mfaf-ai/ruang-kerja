@@ -213,6 +213,13 @@ class OrganizationSeeder extends Seeder
         $users = [];
         $number = 0;
 
+        // RK-#### follows list order, so adding an account shifts the numbers
+        // of everyone after it. Release the seeded numbers first; otherwise a
+        // re-seed hits the unique index while two profiles trade numbers.
+        EmployeeProfile::query()
+            ->whereIn('user_id', User::query()->whereIn('email', array_keys(self::EMPLOYEES))->select('id'))
+            ->update(['employee_number' => null]);
+
         foreach (self::EMPLOYEES as $email => [$name, $divisionCode, , $position, , $workMode, $status, $role, $joinedAt]) {
             $number++;
             $isDemo = isset($demoEmails[$email]);
