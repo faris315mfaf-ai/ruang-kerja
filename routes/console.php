@@ -8,6 +8,7 @@ use App\Domain\Automation\Jobs\RunOverdueAutomations;
 use App\Domain\Hiring\Jobs\PurgeExpiredApplicantData;
 use App\Domain\Meetings\Jobs\SendActionItemReminders;
 use App\Domain\Meetings\Jobs\SendMeetingReminders;
+use App\Domain\Meetings\Transcripts\Jobs\PurgeExpiredMeetingTranscripts;
 use App\Domain\Okr\Jobs\SendKeyResultCheckinReminders;
 use App\Domain\Projects\Jobs\SendProjectUpdateReminders;
 use App\Domain\Projects\Jobs\TakeProjectProgressSnapshots;
@@ -69,3 +70,5 @@ Schedule::job(new ExpirePasswordResetRequests)->hourly()->withoutOverlapping()->
 Schedule::job(new PurgeExpiredApplicantData)->dailyAt('02:30')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
 // Laporan progres harian (keputusan pemilik 6 Okt 2026): reminder 16.30 WIB on weekdays.
 Schedule::job(new SendDailyReportReminders)->weekdays()->dailyAt('16:30')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
+// Notulen otomatis (7 Okt 2026): meeting transcripts deleted after MINUTES_TRANSCRIPT_RETENTION_DAYS (UU PDP).
+Schedule::job(new PurgeExpiredMeetingTranscripts)->dailyAt('02:45')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
