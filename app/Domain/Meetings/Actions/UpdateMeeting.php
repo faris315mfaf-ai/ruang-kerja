@@ -3,6 +3,7 @@
 namespace App\Domain\Meetings\Actions;
 
 use App\Domain\Meetings\Enums\Rsvp;
+use App\Domain\Meetings\Jobs\DisconnectUninvited;
 use App\Domain\Meetings\Notifications\MeetingInvitedNotification;
 use App\Domain\Meetings\Services\MeetingParticipants;
 use App\Domain\Organization\Services\AuditLogger;
@@ -32,6 +33,7 @@ final class UpdateMeeting
     {
         $added = [];
         $moved = false;
+        $before = self::involvedIds($meeting);
 
         DB::transaction(function () use ($meeting, $actor, $input, &$added, &$moved): void {
             $attributes = ScheduleMeeting::attributes($input);
@@ -62,6 +64,14 @@ final class UpdateMeeting
         });
 
         $meeting->load('participants.user');
+
+        // Taken off the invitation: out of the video rooms and the collaborative minutes (audit B-07).
+        $uninvited = array_values(array_diff($before, self::involvedIds($meeting)));
+
+        if ($uninvited !== []) {
+            DisconnectUninvited::dispatch($meeting->id, $uninvited);
+        }
+
         $addedIds = array_map(fn (User $user): string => $user->id, $added);
 
         foreach ($added as $user) {
@@ -79,5 +89,20 @@ final class UpdateMeeting
         }
 
         return $meeting;
+    }
+
+    /**
+     * Employees involved in the meeting: organizer, minute taker, internal participants.
+     *
+     * @return list<string>
+     */
+    private static function involvedIds(Meeting $meeting): array
+    {
+        $ids = MeetingParticipant::query()->where('meeting_id', $meeting->id)->whereNotNull('user_id')->pluck('user_id')->all();
+
+        return array_values(array_unique(array_filter(
+            [$meeting->organizer_id, $meeting->minute_taker_id, ...array_map(strval(...), $ids)],
+            fn (?string $id): bool => $id !== null && $id !== '',
+        )));
     }
 }
