@@ -1,6 +1,6 @@
 # Rapat, notulen & kalender (F2-3)
 
-> **Fitur nyata sejak Okt 2026** (branch `claude/f2-rapat`) · rute `/rapat`, `/rapat/baru`, `/rapat/{meeting}`, `/rapat/{meeting}/ubah`, `/rapat/{meeting}/notulen`, `/kalender`, `/manajemen/jadwal` (`routes/meetings.php`) di balik `FEATURE_MEETINGS` (nyala lokal, mati produksi sampai rilis) · data tersimpan di `meetings`, `meeting_participants`, `meeting_minutes`, `meeting_minute_versions`, `meeting_action_items` (`docs/DATABASE.md` §7). **Integrasi Google Calendar/Meet dan WhatsApp ditahan pemilik.** Gambar di bawah berasal dari masa pratinjau; tata letaknya sama, kontrol Google kini berlabel "Ditahan". Indeks: [README](README.md).
+> **Fitur nyata sejak Okt 2026** (branch `claude/f2-rapat`) · rute `/rapat`, `/rapat/baru`, `/rapat/{meeting}`, `/rapat/{meeting}/ubah`, `/rapat/{meeting}/notulen`, `/kalender`, `/manajemen/jadwal` (`routes/meetings.php`) di balik `FEATURE_MEETINGS` (nyala lokal, mati produksi sampai rilis) · data tersimpan di `meetings`, `meeting_participants`, `meeting_minutes`, `meeting_minute_versions`, `meeting_action_items` (`docs/DATABASE.md` §7). **Integrasi Google Calendar/Meet dan WhatsApp ditahan pemilik.** **Video RuangKerja** (rapat video bawaan di server LiveKit sendiri, §6a) dibangun 7 Okt 2026: `/rapat/{id}/gabung`, `/rapat/{id}/ruang`, tabel `meeting_attendances`, aktif bila `LIVEKIT_*` diisi. Gambar di bawah berasal dari masa pratinjau; tata letaknya sama, kontrol Google kini berlabel "Ditahan". Indeks: [README](README.md).
 
 ## 1. Tujuan & masalah
 
@@ -47,7 +47,7 @@ Kartu gradien "Rapat berikutnya" (Gabung membuka tautan di tab baru, Salin tauta
 
 ### Jadwalkan / ubah rapat · `/rapat/baru`, `/rapat/{id}/ubah`
 
-Judul, tanggal, jam mulai (pilihan 24 jam per 15 menit, tidak mengikuti locale browser), durasi, tempat (**Google Meet** / Zoom: tempel tautan; Tatap muka / Di klien: ruangan atau alamat), peserta (combobox ARIA, tamu lewat email), agenda, notulis, ulangi + "berulang sampai", workspace (dipakai "Jadikan tugas"), pengingat (30/15/5 menit), dan sakelar **Rapat pimpinan** untuk Direksi/HR. Kartu **bentrok** + "Pakai 14.30" diperbarui langsung dari `GET /rapat/bentrok`. Galat per isian (klien + server) dan fokus pindah ke galat pertama; ringkasan sebelum kirim (dialog di desktop, sheet di ponsel). Setelah tersimpan, halaman pindah ke detail rapat dengan toast "Undangan rapat terkirim ke N peserta".
+Judul, tanggal, jam mulai (pilihan 24 jam per 15 menit, tidak mengikuti locale browser), durasi, tempat (**Video RuangKerja**: ruang video bawaan tanpa tautan, pilihan bawaan bila server LiveKit sudah diatur; **Google Meet** / Zoom: tempel tautan; Tatap muka / Di klien: ruangan atau alamat), peserta (combobox ARIA, tamu lewat email), agenda, notulis, ulangi + "berulang sampai", workspace (dipakai "Jadikan tugas"), pengingat (30/15/5 menit), dan sakelar **Rapat pimpinan** untuk Direksi/HR. Kartu **bentrok** + "Pakai 14.30" diperbarui langsung dari `GET /rapat/bentrok`. Galat per isian (klien + server) dan fokus pindah ke galat pertama; ringkasan sebelum kirim (dialog di desktop, sheet di ponsel). Setelah tersimpan, halaman pindah ke detail rapat dengan toast "Undangan rapat terkirim ke N peserta".
 
 ![Form jadwalkan rapat terisi contoh dengan kartu bentrok, desktop](img/rapat-kalender/jadwalkan-desktop.jpg)
 
@@ -64,6 +64,12 @@ Status (hitung mundur / berlangsung / selesai / **Dibatalkan**), kartu tautan ra
 ![Detail rapat, desktop terang](img/rapat-kalender/detail-desktop.jpg)
 
 ![Detail rapat dengan bilah aksi "Gabung lewat Google Meet", ponsel](img/rapat-kalender/detail-ponsel.jpg)
+
+Rapat **Video RuangKerja**: kartu gabung menggantikan kartu tautan — "N orang di ruang rapat" (diperbarui tiap 30 detik selama ruang terbuka), hitung mundur "Dibuka dalam 12 menit" sebelum jendela gabung, tombol **Gabung rapat video**, Salin tautan; panel **Hadir di rapat video** (jam masuk–keluar, durasi, "Di ruang"). Server belum diatur → catatan ramah, tanpa tombol.
+
+### Gabung & ruang rapat video · `/rapat/{meeting}/gabung`, `/rapat/{meeting}/ruang`
+
+Layar penuh tanpa Dock/menu bar, mirip Google Meet. **Pra-gabung**: pratinjau kamera (cermin) dengan tombol mikrofon/kamera, level mikrofon, pilih mikrofon & kamera (diingat per browser), judul & jam, siapa sudah di ruang, status jendela gabung, **Gabung sekarang**; izin ditolak / perangkat tidak ada / dipakai aplikasi lain / browser tidak didukung → pesan jelas, tetap bisa bergabung tanpa kamera. **Ruang** (selalu tema gelap): petak otomatis (16 ubin desktop, 6 ponsel, "+N lainnya"), dua orang = layar lawan + jendela kecil diri sendiri, **sorotan** untuk layar dibagikan / ubin disematkan / pembicara aktif dengan strip peserta; pilihan Tata letak (Otomatis · Petak · Sorotan); berbagi layar (+ audio tab); chat (data channel LiveKit, tidak disimpan); angkat tangan (urutan); daftar **Orang** dengan status mikrofon, bicara, tangan, dan yang diundang tetapi belum bergabung; penyelenggara bisa **Bisukan** & **Keluarkan**; ikon koneksi lemah; "Menyambungkan ulang…" + sambung ulang otomatis dengan token baru; setelan perangkat (termasuk speaker bila browser mendukung); pintasan ⌘/Ctrl+D mikrofon, ⌘/Ctrl+E kamera, ⌘/Ctrl+Alt+C chat, +P orang, +H tangan. Ponsel: bilah kontrol 5 tombol, chat/orang layar penuh. Keluar → "Anda keluar dari rapat" (Gabung lagi · detail · notulen).
 
 ### Notulen · `/rapat/{meeting}/notulen`
 
@@ -114,7 +120,8 @@ Grid minggu jam 08–17 dengan garis "sekarang", panel Notulensi (Semua/Draf/Tin
 | Notifikasi & jadwal | `MeetingInvitedNotification` (undangan/berubah/dibatalkan), `MeetingStartingNotification`, `MinutesFinalizedNotification`, `ActionItemDueNotification`; job `SendMeetingReminders` (tiap menit) dan `SendActionItemReminders` (07.05) di `routes/console.php` |
 | HTTP | `App\Http\Controllers\Meetings\{MeetingController,MinutesController,CalendarController,ManagementScheduleController}`, FormRequest `App\Http\Requests\Meetings\*` (rapat tak terlihat → 404 sebelum validasi), `MeetingPresenter` |
 | Frontend | `pages/meetings/*`; `features/meetings/{types,api,meetings-context,lib}.ts(x)`; hook `use-agenda`, `use-meeting-form`, `use-minutes`, `use-calendar`, `useMeetingDetail`, `useSchedule`; tampilan desktop/tablet/ponsel seperti masa pratinjau |
-| Uji | `tests/Feature/Meetings/*` (policy, action, seri & bentrok, pengingat, HTTP, seeder), blok Rapat di `PageQueryCountTest`, `features/meetings/lib.test.ts` |
+| Video RuangKerja | `config/livekit.php`; `App\Domain\Meetings\Services\{VideoRooms,LiveKitTokens,LiveKitRoomService}`, Actions `IssueVideoToken`, `RecordVideoEvent`, `MuteVideoParticipant`, `RemoveVideoParticipant`, Query `VideoAttendance`; `MeetingVideoController`, `LiveKitWebhookController`, `VideoPresenter`, model `MeetingAttendance`; frontend `features/meetings/video/*` (`prejoin`, `room`, `room-stage`, `room-panels`, `room-notices`, `use-video-room`, `video-join-card`, `lib`), halaman `pages/meetings/{join,room}.tsx` |
+| Uji | `tests/Feature/Meetings/*` (policy, action, seri & bentrok, pengingat, HTTP, seeder, **`MeetingVideoTest`**: token & klaim JWT, jendela, webhook valid/invalid/replay, kehadiran, moderasi dengan `Http::fake`), blok Rapat di `PageQueryCountTest` (termasuk halaman video), `features/meetings/lib.test.ts`, `features/meetings/video/lib.test.ts`; manual dua pengguna `tests/e2e/rapat-video-two-users.mjs` |
 
 ## 6. Ditahan (tidak dibangun)
 
@@ -122,9 +129,26 @@ Grid minggu jam 08–17 dengan garis "sekarang", panel Notulensi (Semua/Draf/Tin
 - Pengingat **WhatsApp**: baris "WhatsApp · Ditahan".
 - Belum ada: pembatalan satu kemunculan saja (pembatalan berlaku untuk seluruh seri), lampiran Drive di rapat, ko-editor realtime notulen, "Kabari terlambat". Chip "rapat 5 menit lagi" di MenuBar **tidak dibangun** (keputusan pemilik 6 Okt 2026); pengingat cukup lewat notifikasi `meeting.starting`.
 
-## 6a. Rencana: video rapat sendiri pengganti Google Meet (uji coba, keputusan pemilik 6 Okt 2026)
+## 6a. Video rapat sendiri pengganti Google Meet (keputusan pemilik 6–7 Okt 2026)
 
-Tujuan: rapat video yang semirip mungkin dengan Google Meet dan serealtime mungkin, berjalan di server sendiri tanpa kuota bandwidth dan tanpa biaya per menit. **Belum dibangun.** Diuji dulu, lalu diputuskan.
+Tujuan: rapat video yang semirip mungkin dengan Google Meet dan serealtime mungkin, berjalan di server sendiri tanpa kuota bandwidth dan tanpa biaya per menit.
+
+**Status (7 Okt 2026): dibangun sebagai "Video RuangKerja"** — pemilik memilih alternatif *layar rapat sendiri di RuangKerja dengan `@livekit/components-react`* (bukan La Suite Meet). Server: VPS rapat Biznet Gio NEO Lite Pro dengan LiveKit dari generator resmi (`livekit.spkd.store`, TURN `turn.spkd.store`), panduan `docs/deploy/RAPAT-VIDEO.md`; lokal `docs/SETUP-LOKAL.md` › "Rapat video". Ringkasan teknis:
+
+| Bagian | Isi |
+|---|---|
+| Platform | `MeetingPlatform::Video` (`video`, "Video RuangKerja"), tanpa tautan; ditawarkan & jadi bawaan rapat baru bila `LIVEKIT_URL/KEY/SECRET` terisi (`config/livekit.php`, `VideoRooms::configured`) |
+| Ruang | satu ruang LiveKit per kemunculan: `rk-{meeting}-{yyyymmdd}` (seri = ruang baru tiap tanggal) |
+| Akses | `MeetingPolicy::openVideo` (penyelenggara, notulis, peserta internal; rapat dibatalkan 403; pengamat rapat pimpinan yang tidak diundang 403; lainnya 404), `joinVideo` = + **jendela gabung 15 menit sebelum mulai s.d. 2 jam sesudah selesai** (penyelenggara kapan saja), `moderateVideo` = penyelenggara |
+| Token | `POST /rapat/{id}/video/token` (30/menit): JWT HS256 dibuat sendiri dengan `firebase/php-jwt` — `iss` kunci API, `sub` id pengguna, `name`, `nbf/exp` (10 menit; server LiveKit memperbarui token selama tersambung, klien minta token baru saat sambung ulang), grant `video` {room, roomJoin, canPublish, canSubscribe, canPublishData, canUpdateOwnMetadata, roomAdmin untuk penyelenggara}, `metadata` {avatar_url, organizer}. Jawaban `{url, token, room, identity, name, expires_at}`; 503 bila server belum diatur |
+| Moderasi | `POST /rapat/{id}/video/peserta/{user}/bisukan` (track SID mikrofon) dan `DELETE /rapat/{id}/video/peserta/{user}` → Room Service API (Twirp HTTP, token admin 60 detik); keluarkan diaudit `meeting.video_participant_removed`. Belum ada larangan masuk ulang |
+| Kehadiran | `POST /api/livekit/webhook` (tanpa sesi/CSRF, tanda tangan JWT + sha256 badan, anti-replay) → `meeting_attendances` per sesi → "Hadir di rapat video", jumlah di ruang, **isian awal kehadiran notulen** (peserta ditandai hadir bila pernah masuk ruang) |
+| Notifikasi | `meeting.starting` rapat video: tombol utama **Gabung** → pra-gabung, sekunder "Lihat detail" |
+| Klien | `livekit-client` + `@livekit/components-react` (hook saja, gaya Arus — tanpa `@livekit/components-styles`); adaptiveStream, dynacast, simulcast VP8 180/360/720p, berbagi layar 1080p/15 + lapisan 720p/5, Opus DTX + RED, peredam gema/bising |
+
+**Sisa / berikutnya:** uji coba nyata 1–2 minggu di VPS rapat (≤ 20 orang, 4G, CPU & trafik — `RAPAT-VIDEO.md` §6); ruang tunggu/izin masuk (tamu eksternal belum didukung, semua peserta karyawan internal); larangan masuk ulang setelah dikeluarkan; reaksi emoji; latar blur; rekaman (Egress) & transkrip otomatis ke notulen (§ di bawah, perlu pemberitahuan rekaman).
+
+Catatan pilihan awal (6 Okt 2026), untuk riwayat:
 
 **Pilihan teknologi**
 - **La Suite Meet** (`suitenumerique/meet`, lisensi MIT) di atas **LiveKit** (SFU WebRTC, Apache-2.0). Tampilan mirip Meet: ruang tunggu, grid, sorotan pembicara, chat, beberapa layar dibagikan, 100+ peserta, rekaman lewat LiveKit Egress (beta), transkrip & ringkasan (beta, tidak bersamaan dengan rekaman). Dipasang dengan Docker Compose.

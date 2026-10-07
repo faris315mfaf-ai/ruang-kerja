@@ -2,11 +2,15 @@
 
 namespace App\Policies;
 
+use App\Domain\Meetings\Data\Occurrence;
+use App\Domain\Meetings\Enums\MeetingPlatform;
+use App\Domain\Meetings\Services\VideoRooms;
 use App\Domain\Organization\Enums\Permission;
 use App\Models\Meeting;
 use App\Models\MeetingActionItem;
 use App\Models\MeetingMinutes;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\Response;
 
 /**
@@ -21,6 +25,10 @@ use Illuminate\Auth\Access\Response;
  * - Write minutes (draft only), finalize, follow-ups → tasks, remind owners:
  *   minute taker or organizer.
  * - Tick a follow-up off: its assignee or the minute taker / organizer.
+ * - Video room (platform `video`): organizer, minute taker and internal
+ *   participants open the pre-join/room pages; a token is issued only inside
+ *   the join window (VideoRooms; organizer any time). Leadership observers
+ *   who were not invited do not join. Mute / remove others: organizer.
  * No Gate::before: Super Admin has no extra rights here.
  */
 class MeetingPolicy
@@ -130,6 +138,58 @@ class MeetingPolicy
         return $item->assignee_id === $user->id || $this->canWriteMinutes($user, $meeting)
             ? Response::allow()
             : Response::deny('Hanya penanggung jawab, notulis, atau penyelenggara yang dapat menandai tindak lanjut.');
+    }
+
+    /** Pre-join and room pages of the built-in video room (any time). */
+    public function openVideo(User $user, Meeting $meeting): Response
+    {
+        if (! $this->canView($user, $meeting) || $meeting->platform !== MeetingPlatform::Video) {
+            return Response::denyAsNotFound();
+        }
+
+        if ($meeting->isCanceled()) {
+            return Response::deny('Rapat ini sudah dibatalkan.');
+        }
+
+        return $meeting->involves($user)
+            ? Response::allow()
+            : Response::deny('Anda tidak diundang ke rapat ini.');
+    }
+
+    /** A LiveKit token for one occurrence: openVideo + inside the join window. */
+    public function joinVideo(User $user, Meeting $meeting, ?Occurrence $occurrence = null, ?CarbonImmutable $now = null): Response
+    {
+        $open = $this->openVideo($user, $meeting);
+
+        if ($open->denied() || $this->isOrganizer($user, $meeting)) {
+            return $open;
+        }
+
+        if ($occurrence === null) {
+            return Response::deny('Pilih tanggal rapat.');
+        }
+
+        $rooms = app(VideoRooms::class);
+
+        return match ($rooms->windowState($occurrence, $now)) {
+            'early' => Response::deny('Ruang rapat dibuka pukul '.$rooms->opensAt($occurrence)->setTimezone(config()->string('app.office_timezone'))->format('H.i').'.'),
+            'closed' => Response::deny('Rapat sudah selesai. Ruang rapat sudah ditutup.'),
+            default => Response::allow(),
+        };
+    }
+
+    /** Mute or remove someone in the video room. */
+    public function moderateVideo(User $user, Meeting $meeting): Response
+    {
+        $open = $this->openVideo($user, $meeting);
+
+        if ($open->denied()) {
+            return $open;
+        }
+
+        return $this->isOrganizer($user, $meeting)
+            ? Response::allow()
+            : Response::deny('Hanya penyelenggara yang dapat mengatur peserta rapat.');
     }
 
     public function canView(User $user, Meeting $meeting): bool

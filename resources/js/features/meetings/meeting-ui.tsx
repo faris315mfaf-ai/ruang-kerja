@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { joinLink, personById, PLATFORM_LABEL } from './lib';
+import { isInternalLink, joinLink, personById, PLATFORM_LABEL } from './lib';
 import { useMeetingsContext } from './meetings-context';
 import type {
     Meeting,
@@ -24,6 +24,7 @@ const PLATFORM_TONE: Record<Platform, string> = {
     zoom: 'bg-info-soft text-info',
     room: 'bg-surface-2 text-text-muted',
     client: 'bg-warning-soft text-warning',
+    video: 'bg-link-soft text-link',
 };
 
 /** Fill for the 4px edge of agenda rows per platform. */
@@ -32,6 +33,7 @@ export const PLATFORM_EDGE: Record<Platform, string> = {
     zoom: 'bg-accent-blue-strong',
     room: 'bg-text-subtle',
     client: 'bg-fill-warning',
+    video: 'bg-primary',
 };
 
 export function PlatformBadge({
@@ -225,12 +227,21 @@ export function ListSkeleton({
     );
 }
 
-/** Join (opens the pasted Meet/Zoom link in a new tab) + copy the link. */
+/**
+ * Join + copy the link: a pasted Meet/Zoom link opens in a new tab; Video
+ * RuangKerja opens the in-app pre-join screen (/rapat/{id}/gabung) in this
+ * tab and copies its full URL.
+ */
 export function useMeetingActions(meeting: Meeting | null) {
     const [joined, setJoined] = useState(false);
     const [copied, setCopied] = useState(false);
     const link = meeting ? joinLink(meeting) : null;
-    const app = meeting?.platform === 'zoom' ? 'Zoom' : 'Google Meet';
+    const video = meeting?.platform === 'video';
+    const app = video
+        ? 'Video RuangKerja'
+        : meeting?.platform === 'zoom'
+          ? 'Zoom'
+          : 'Google Meet';
 
     const join = () => {
         if (!link) {
@@ -238,6 +249,12 @@ export function useMeetingActions(meeting: Meeting | null) {
                 description:
                     'Minta penyelenggara menempelkan tautan Meet atau Zoom di rapat ini.',
             });
+
+            return;
+        }
+
+        if (isInternalLink(link)) {
+            router.visit(link);
 
             return;
         }
@@ -251,14 +268,18 @@ export function useMeetingActions(meeting: Meeting | null) {
             return;
         }
 
+        const absolute = isInternalLink(link)
+            ? `${window.location.origin}${link}`
+            : link;
+
         try {
-            await navigator.clipboard?.writeText(link);
+            await navigator.clipboard?.writeText(absolute);
         } catch {
             // Clipboard may be blocked (permissions, insecure context): the toast still shows the link.
         }
 
         setCopied(true);
-        toast.success('Tautan rapat disalin', { description: link });
+        toast.success('Tautan rapat disalin', { description: absolute });
     };
 
     return { joined, copied, link, app, join, copy };

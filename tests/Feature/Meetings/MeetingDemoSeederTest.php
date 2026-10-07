@@ -19,10 +19,11 @@ it('seeds demo meetings once, with draft and final minutes and a follow-up turne
     $kadiv = User::query()->where('email', 'kadiv@demo.test')->firstOrFail();
     $direksi = User::query()->where('email', 'direksi@demo.test')->firstOrFail();
 
-    expect(Meeting::query()->count())->toBe(6)
+    expect(Meeting::query()->count())->toBe(7)
         ->and(MeetingMinutes::query()->where('status', MinutesStatus::Final->value)->count())->toBe(2)
         ->and(MeetingMinutes::query()->where('status', MinutesStatus::Draft->value)->count())->toBe(1)
         ->and(MeetingActionItem::query()->whereNotNull('task_id')->count())->toBe(1)
+        ->and(Meeting::query()->where('platform', 'video')->count())->toBe(1)
         ->and(count(app(AgendaQuery::class)->forUser($kadiv)['meetings']))->toBeGreaterThanOrEqual(6)
         ->and(count(app(ManagementSchedule::class)->forUser($direksi)['minutes']))->toBe(1);
 });

@@ -58,6 +58,12 @@ class MeetingFactory extends Factory
         return $this->state(fn (): array => ['recurrence' => $recurrence, 'recurrence_until' => $until]);
     }
 
+    /** Video RuangKerja (LiveKit room, no pasted link). */
+    public function video(): static
+    {
+        return $this->state(fn (): array => ['platform' => MeetingPlatform::Video, 'join_url' => null]);
+    }
+
     public function leadership(): static
     {
         return $this->state(fn (): array => ['leadership' => true]);

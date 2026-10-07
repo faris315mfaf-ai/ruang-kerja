@@ -25,6 +25,9 @@ void createInertiaApp({
             // Lobby kiosk: full screen, no navigation (Sprint 3).
             case name.startsWith('kiosk/'):
                 return [];
+            // Video RuangKerja pre-join & call: full screen like Google Meet.
+            case name === 'meetings/join' || name === 'meetings/room':
+                return [];
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):

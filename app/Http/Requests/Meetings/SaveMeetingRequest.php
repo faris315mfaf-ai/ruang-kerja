@@ -4,6 +4,7 @@ namespace App\Http\Requests\Meetings;
 
 use App\Domain\Meetings\Enums\MeetingPlatform;
 use App\Domain\Meetings\Enums\Recurrence;
+use App\Domain\Meetings\Services\VideoRooms;
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Organization\Enums\UserStatus;
 use App\Models\Meeting;
@@ -137,6 +138,15 @@ class SaveMeetingRequest extends MeetingRequest
                     if ($workspace === null || ! app(WorkspacePolicy::class)->canEditTasks($user, $workspace)) {
                         $validator->errors()->add('workspace_id', 'Pilih workspace tempat Anda dapat membuat tugas.');
                     }
+                }
+
+                // Video RuangKerja needs a configured LiveKit server (an existing
+                // video meeting may keep its platform while the server is down).
+                $existing = $this->route('meeting');
+                $keepsVideo = $existing instanceof Meeting && $existing->platform === MeetingPlatform::Video;
+
+                if ($this->input('platform') === MeetingPlatform::Video->value && ! $keepsVideo && ! app(VideoRooms::class)->configured()) {
+                    $validator->errors()->add('platform', 'Video RuangKerja belum disiapkan di server ini. Pilih Google Meet atau Zoom.');
                 }
 
                 $timeErrors = $validator->errors()->hasAny(['date', 'start', 'duration']);

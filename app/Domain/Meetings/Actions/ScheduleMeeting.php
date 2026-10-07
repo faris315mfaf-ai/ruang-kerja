@@ -81,7 +81,8 @@ final class ScheduleMeeting
             'ends_at' => $input['ends_at']->utc(),
             'platform' => $platform,
             'location' => $platform->isOnline() ? null : (trim((string) ($input['location'] ?? '')) ?: null),
-            'join_url' => $platform->isOnline() ? (trim((string) ($input['join_url'] ?? '')) ?: null) : null,
+            // The built-in video room needs no pasted link.
+            'join_url' => $platform->isOnline() && $platform !== MeetingPlatform::Video ? (trim((string) ($input['join_url'] ?? '')) ?: null) : null,
             'minute_taker_id' => $input['minute_taker_id'] ?? null,
             'workspace_id' => $input['workspace_id'] ?? null,
             'agenda' => array_values(array_filter(array_map(trim(...), $input['agenda']), fn (string $item): bool => $item !== '')),

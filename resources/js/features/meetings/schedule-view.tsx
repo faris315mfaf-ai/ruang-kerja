@@ -59,6 +59,12 @@ const PLACE: Record<
         chip: 'bg-warning-soft text-warning',
         edge: 'border-l-fill-warning',
     },
+    video: {
+        label: 'Video RuangKerja',
+        tone: 'bg-link-soft',
+        chip: 'bg-link-soft text-link',
+        edge: 'border-l-primary',
+    },
     deadline: {
         label: 'Tenggat',
         tone: 'bg-danger-soft',

@@ -7,11 +7,18 @@ import {
 } from '@/features/meetings/meeting-detail';
 import { MeetingsProvider } from '@/features/meetings/meetings-context';
 import type { MeetingDetailProps } from '@/features/meetings/types';
+import type { VideoSummary } from '@/features/meetings/video/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 
-function MeetingScreen({ detail }: { detail: MeetingDetailProps }) {
+function MeetingScreen({
+    detail,
+    video,
+}: {
+    detail: MeetingDetailProps;
+    video: VideoSummary | null;
+}) {
     const breakpoint = useBreakpoint();
-    const data = useMeetingDetail(detail);
+    const data = useMeetingDetail(detail, video);
 
     if (breakpoint === null) {
         return (
@@ -36,13 +43,20 @@ function MeetingScreen({ detail }: { detail: MeetingDetailProps }) {
  */
 export default function MeetingsShowPage({
     detail,
+    video = null,
 }: {
     detail: MeetingDetailProps;
+    /** Video RuangKerja summary (platform `video` only). */
+    video?: VideoSummary | null;
 }) {
     return (
         <MeetingsProvider people={detail.people} me={detail.viewer_id}>
             <Head title={detail.meeting.title} />
-            <MeetingScreen key={detail.meeting.key} detail={detail} />
+            <MeetingScreen
+                key={detail.meeting.key}
+                detail={detail}
+                video={video}
+            />
         </MeetingsProvider>
     );
 }

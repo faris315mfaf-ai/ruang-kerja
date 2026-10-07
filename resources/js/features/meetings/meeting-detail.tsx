@@ -39,6 +39,13 @@ import {
     PlatformBadge,
     useMeetingActions,
 } from './meeting-ui';
+import type { VideoSummary } from './video/types';
+import {
+    useVideoPresencePoll,
+    VideoAttendancePanel,
+    VideoJoinCard,
+    videoJoinable,
+} from './video/video-join-card';
 import type {
     Meeting,
     MeetingDetailProps,
@@ -48,8 +55,14 @@ import type {
     Rsvp,
 } from './types';
 
-/** Shared data of /rapat/{id}: RSVP (optimistic + rollback), cancel. */
-export function useMeetingDetail(props: MeetingDetailProps) {
+/**
+ * Shared data of /rapat/{id}: RSVP (optimistic + rollback), cancel, and the
+ * Video RuangKerja summary (`video`, polled while the room is open).
+ */
+export function useMeetingDetail(
+    props: MeetingDetailProps,
+    video: VideoSummary | null = null,
+) {
     const now = useNow();
     const meeting = props.meeting;
     const mine = meeting.participants.find(
@@ -59,6 +72,7 @@ export function useMeetingDetail(props: MeetingDetailProps) {
     const [saving, setSaving] = useState(false);
     const [cancelOpen, setCancelOpen] = useState(false);
     const actions = useMeetingActions(meeting);
+    useVideoPresencePoll(meeting, video, now);
 
     const answer = (value: Rsvp) => {
         if (value === 'pending' || value === rsvp || saving) {
@@ -103,6 +117,7 @@ export function useMeetingDetail(props: MeetingDetailProps) {
         cancelOpen,
         setCancelOpen,
         actions,
+        video,
     };
 }
 
@@ -291,8 +306,28 @@ function phaseTone(
             : 'link';
 }
 
-function canJoin(meeting: Meeting): boolean {
-    return Boolean(joinLink(meeting)) && !meeting.canceled;
+function canJoin(data: MeetingDetailData): boolean {
+    const { meeting, video, now } = data;
+
+    if (meeting.platform === 'video') {
+        return videoJoinable(meeting, video, now);
+    }
+
+    return (
+        Boolean(joinLink(meeting)) &&
+        !meeting.canceled &&
+        meetingPhase(meeting, now) !== 'done'
+    );
+}
+
+function joinLabel(data: MeetingDetailData): string {
+    if (data.meeting.platform === 'video') {
+        return 'Gabung rapat video';
+    }
+
+    return data.actions.joined
+        ? `Buka lagi ${data.actions.app}`
+        : `Gabung lewat ${data.actions.app}`;
 }
 
 /** Organizer tools: edit and cancel (with confirmation). */
@@ -403,21 +438,32 @@ export function MeetingDetailDesktop({
                                 : 'Buka notulen'}
                         </Link>
                     </Button>
-                    {canJoin(meeting) &&
-                        meetingPhase(meeting, now) !== 'done' && (
-                            <Button size="lg" onClick={actions.join}>
-                                <Video aria-hidden />
-                                {actions.joined
-                                    ? `Buka lagi ${actions.app}`
-                                    : `Gabung lewat ${actions.app}`}
-                            </Button>
-                        )}
+                    {/* Video RuangKerja joins from its card below (one gradient per area). */}
+                    {meeting.platform !== 'video' && canJoin(data) && (
+                        <Button size="lg" onClick={actions.join}>
+                            <Video aria-hidden />
+                            {joinLabel(data)}
+                        </Button>
+                    )}
                 </div>
             </section>
 
             <section className="flex flex-wrap items-start gap-5">
                 <div className="flex min-w-0 flex-[2_1_600px] flex-col gap-5">
-                    <JoinCard meeting={meeting} actions={actions} />
+                    {meeting.platform === 'video' ? (
+                        <>
+                            <VideoJoinCard
+                                meeting={meeting}
+                                video={data.video}
+                                now={now}
+                                onCopy={actions.copy}
+                                copied={actions.copied}
+                            />
+                            <VideoAttendancePanel video={data.video} />
+                        </>
+                    ) : (
+                        <JoinCard meeting={meeting} actions={actions} />
+                    )}
                     {meeting.description && (
                         <Panel title="Keterangan">
                             <p className="text-[16px] leading-6 whitespace-pre-line">
@@ -587,7 +633,7 @@ export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
     const [allPeople, setAllPeople] = useState(false);
     const counts = rsvpCounts({ ...meeting, participants: data.participants });
     const taker = personById(people, meeting.minute_taker_id);
-    const joinable = canJoin(meeting) && meetingPhase(meeting, now) !== 'done';
+    const joinable = canJoin(data);
 
     return (
         <div className={cn('flex flex-col gap-3.5', joinable && 'pb-28')}>
@@ -634,6 +680,15 @@ export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
                         </div>
                     ))}
             </dl>
+            {meeting.platform === 'video' && (
+                <VideoJoinCard
+                    meeting={meeting}
+                    video={data.video}
+                    now={now}
+                    onCopy={actions.copy}
+                    copied={actions.copied}
+                />
+            )}
             {data.can.respond && (
                 <section
                     aria-label="Kehadiran Anda"
@@ -667,6 +722,7 @@ export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
                     ))}
                 </ol>
             </section>
+            <VideoAttendancePanel video={data.video} />
             <section
                 aria-label="Peserta"
                 className="flex flex-col gap-2 rounded-[22px] border border-border bg-surface p-4"
@@ -706,7 +762,7 @@ export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
                     </Link>
                 </Button>
                 <OrganizerActions data={data} compact />
-                {joinLink(meeting) && (
+                {joinLink(meeting) && meeting.platform !== 'video' && (
                     <Button
                         variant="outline"
                         size="lg"
@@ -728,12 +784,12 @@ export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
                         className="w-full font-extrabold"
                         onClick={actions.join}
                     >
-                        {actions.joined
-                            ? `Buka lagi ${actions.app}`
-                            : `Gabung lewat ${actions.app}`}
+                        {joinLabel(data)}
                     </Button>
                     <span className="text-center text-[13px] text-text-muted">
-                        Membuka aplikasi {actions.app} bila terpasang
+                        {meeting.platform === 'video'
+                            ? 'Kamera & mikrofon dicek dulu sebelum masuk'
+                            : `Membuka aplikasi ${actions.app} bila terpasang`}
                     </span>
                 </div>
             )}

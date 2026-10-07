@@ -362,6 +362,7 @@ export const PLATFORM_LABEL: Record<Platform, string> = {
     zoom: 'Zoom',
     room: 'Tatap muka',
     client: 'Di klien',
+    video: 'Video RuangKerja',
 };
 
 export const RSVP_LABEL: Record<Rsvp, string> = {
@@ -378,11 +379,34 @@ export const RECURRENCE_LABEL: Record<Recurrence, string> = {
     mon_wed_fri: 'Senin, Rabu, Jumat',
 };
 
-/** Link a participant opens to join (pasted by the organizer). */
+/**
+ * Link a participant opens to join: the pasted Meet/Zoom link, or the
+ * in-app pre-join screen of Video RuangKerja (/rapat/{id}/gabung).
+ */
 export function joinLink(meeting: Meeting): string | null {
+    if (meeting.platform === 'video') {
+        return videoJoinHref(meeting);
+    }
+
     return meeting.platform === 'meet' || meeting.platform === 'zoom'
         ? meeting.join_url || null
         : null;
+}
+
+/** /rapat/{id}/gabung (+ ?tanggal= for one occurrence of a series). */
+export function videoJoinHref(
+    meeting: Pick<Meeting, 'id' | 'recurrence' | 'occurrence_date'>,
+): string {
+    const path = `/rapat/${meeting.id}/gabung`;
+
+    return meeting.recurrence === 'none'
+        ? path
+        : `${path}?tanggal=${meeting.occurrence_date}`;
+}
+
+/** A link opened inside RuangKerja (not a new tab). */
+export function isInternalLink(link: string): boolean {
+    return link.startsWith('/') && !link.startsWith('//');
 }
 
 /** "meet.google.com/abc-defg-hij" without the scheme. */
@@ -400,7 +424,7 @@ export type MeetingFormValues = {
     start: string;
     duration: number;
     platform: Platform;
-    /** Meet or Zoom link (pasted; Google Meet links are not created yet). */
+    /** Meet or Zoom link (pasted; Google Meet links are not created yet; none for `video`). */
     joinUrl: string;
     /** Room or client address for `room` / `client`. */
     location: string;
@@ -417,6 +441,7 @@ export type MeetingFormValues = {
 };
 
 export type MeetingFormField =
+    | 'platform'
     | 'title'
     | 'date'
     | 'start'

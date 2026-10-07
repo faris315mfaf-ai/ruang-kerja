@@ -26,13 +26,15 @@ function blank(
     today: string,
     me: string,
     workspace: string,
+    videoEnabled: boolean,
 ): MeetingFormValues {
     return {
         title: '',
         date: addDays(today, 1),
         start: '09:00',
         duration: 60,
-        platform: 'meet',
+        // Video RuangKerja is the default online place once LiveKit is set up.
+        platform: videoEnabled ? 'video' : 'meet',
         joinUrl: '',
         location: '',
         participants: [me],
@@ -79,6 +81,7 @@ function fromMeeting(
 
 /** Server field names → form fields (422 from POST/PATCH /rapat). */
 const SERVER_FIELDS: Record<string, MeetingFormField> = {
+    platform: 'platform',
     title: 'title',
     date: 'date',
     start: 'start',
@@ -104,7 +107,12 @@ export function useMeetingForm(props: MeetingFormProps) {
     const [values, setValues] = useState<MeetingFormValues>(
         () =>
             fromMeeting(props, me) ??
-            blank(today, me, props.workspaces[0]?.id ?? 'none'),
+            blank(
+                today,
+                me,
+                props.workspaces[0]?.id ?? 'none',
+                props.video_enabled,
+            ),
     );
     const [submitted, setSubmitted] = useState(false);
     const [summaryOpen, setSummaryOpen] = useState(false);
@@ -304,6 +312,7 @@ export function useMeetingForm(props: MeetingFormProps) {
         me,
         editing,
         canLead: props.can_lead,
+        videoEnabled: props.video_enabled,
         durations: props.durations,
         workspaces: props.workspaces,
         people: props.people,
