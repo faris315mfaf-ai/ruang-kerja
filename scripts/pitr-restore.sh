@@ -63,8 +63,9 @@ done
     || fail "$PGDATA/postmaster.pid exists: stop PostgreSQL first (docker compose stop postgres)"
 
 if [ -n "$(ls -A "$PGDATA" 2> /dev/null)" ]; then
-    [ "$delta" -eq 1 ] && [ "$yes" -eq 1 ] \
-        || fail "$PGDATA is not empty: pass --delta --yes to overwrite it (the current database is replaced)"
+    if [ "$delta" -ne 1 ] || [ "$yes" -ne 1 ]; then
+        fail "$PGDATA is not empty: pass --delta --yes to overwrite it (the current database is replaced)"
+    fi
 fi
 
 set -- --log-level-console=info restore

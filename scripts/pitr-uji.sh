@@ -62,7 +62,9 @@ cleanup() {
     fi
     echo "[pitr-uji] tearing down project $PROJECT (containers + volumes)"
     docker rm -f "${PROJECT}-pulih" > /dev/null 2>&1 || true
-    [ -f "$work/env" ] && compose down -v --remove-orphans > /dev/null 2>&1 || true
+    if [ -f "$work/env" ]; then
+        compose down -v --remove-orphans > /dev/null 2>&1 || true
+    fi
     docker volume rm "${PROJECT}_pulih" > /dev/null 2>&1 || true
     docker image rm "ruangkerja-postgres:$TAG" > /dev/null 2>&1 || true
     rm -rf "$work"
