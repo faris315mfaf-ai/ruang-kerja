@@ -186,7 +186,47 @@ export type RequestDetail = RequestItem & {
         summary: BalanceSummary;
     } | null;
     colleagues: ColleagueAbsence | null;
-    can: { edit: boolean; cancel: boolean; decide: boolean };
+    /** Set when the status is `canceled`. */
+    cancellation?: RequestCancellation | null;
+    /** What canceling this approved request changes (HR with `can.cancel_approved` only). */
+    cancel_preview?: CancelPreview | null;
+    can: {
+        edit: boolean;
+        cancel: boolean;
+        decide: boolean;
+        /** HR / Super Admin may void this approved request. */
+        cancel_approved?: boolean;
+    };
+};
+
+export type RequestCancellation = {
+    by: Person | null;
+    by_requester: boolean;
+    at: string | null;
+    /** HR's reason (null when canceled by the requester or hidden for health privacy). */
+    reason: string | null;
+    after_approval: boolean;
+};
+
+export type CancelPreview = {
+    /** Days given back to the leave balance (null: type without a quota). */
+    refund_days: number | null;
+    balance_year: number | null;
+    attendance: {
+        /** Absence rows without a check-in that are removed (Y-m-d). */
+        removed_dates: string[];
+        /** Days worked anyway: kept as ordinary attendance. */
+        unlinked_dates: string[];
+        overtime_date: string | null;
+        correction_date: string | null;
+        blocker: string | null;
+    };
+    /** Touched dates that already passed (closed again: no check-in = Alpha). */
+    past_dates: string[];
+    /** Why the cancel would be refused (corrected day changed since). */
+    blocker: string | null;
+    reason_min: number;
+    reason_max: number;
 };
 
 export type PlannedStep = {

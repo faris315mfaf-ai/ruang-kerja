@@ -25,7 +25,11 @@ import {
 import { cn, focusRing } from '@/lib/utils';
 import { index, show } from '@/routes/approvals';
 import type { RequestItem } from '@/types/requests';
-import type { ApprovalTab, ApprovalsProps } from './approvals-types';
+import {
+    approvalTabs,
+    type ApprovalTab,
+    type ApprovalsProps,
+} from './approvals-types';
 import { DecisionNote } from './decision-controls';
 import { DelegationDialog } from './delegation-dialog';
 import type { ApprovalSelection } from './use-approval-selection';
@@ -106,7 +110,9 @@ function QueueCardContent({
                 <span className="text-meta text-text-muted">
                     {waiting
                         ? `Diajukan ${formatRelative(item.submitted_at)}${progress ? ` · langkah ${progress}` : ''}`
-                        : `Diputus ${formatRelative(item.my_decision?.decided_at ?? null)}`}
+                        : item.my_decision
+                          ? `Diputus ${formatRelative(item.my_decision.decided_at ?? null)}`
+                          : `Disetujui ${formatRelative(item.decided_at)}`}
                 </span>
             </span>
             {waiting && warning && (
@@ -282,6 +288,7 @@ export function ApprovalsMobile({
     counts,
     items,
     delegations,
+    can_cancel_approved: canCancelApproved,
 }: ApprovalsProps) {
     const [rejecting, setRejecting] = useState<RequestItem | null>(null);
     const waiting = tab === 'menunggu';
@@ -304,16 +311,20 @@ export function ApprovalsMobile({
                         { replace: true },
                     );
                 }}
-                options={[
-                    {
-                        value: 'menunggu',
-                        label:
-                            counts.menunggu > 0
+                options={approvalTabs(canCancelApproved).map((value) => ({
+                    value,
+                    label:
+                        value === 'menunggu'
+                            ? counts.menunggu > 0
                                 ? `Menunggu · ${counts.menunggu}`
-                                : 'Menunggu',
-                    },
-                    { value: 'diputus', label: 'Sudah diputus' },
-                ]}
+                                : 'Menunggu'
+                            : value === 'diputus'
+                              ? // Three tabs share 358px: the short label fits.
+                                canCancelApproved
+                                  ? 'Diputus'
+                                  : 'Sudah diputus'
+                              : 'Disetujui',
+                }))}
                 className="flex w-full [&>button]:h-11 [&>button]:flex-1 [&>button]:text-[16px] [&>button]:font-bold"
             />
 
@@ -357,11 +368,19 @@ export function ApprovalsMobile({
             {items.length === 0 ? (
                 <EmptyState
                     icon={CheckCheck}
-                    title={waiting ? 'Semua beres' : 'Belum ada keputusan'}
+                    title={
+                        waiting
+                            ? 'Semua beres'
+                            : tab === 'disetujui'
+                              ? 'Belum ada yang disetujui'
+                              : 'Belum ada keputusan'
+                    }
                     description={
                         waiting
                             ? 'Tidak ada pengajuan yang menunggu Anda.'
-                            : undefined
+                            : tab === 'disetujui'
+                              ? 'Pengajuan yang sudah disetujui bisa dibatalkan dari detailnya.'
+                              : undefined
                     }
                 />
             ) : (
