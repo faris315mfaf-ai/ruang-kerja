@@ -92,6 +92,7 @@ Setelah masuk, **pemilih akun demo** di bagian atas (pil "Demo · …" di menu b
 2. **Deploy ke VPS** (dua VPS, `docs/deploy/DUA-VPS.md`; penyimpanan file = Biznet Gio NEO Object Storage): alamat kedua VPS, domain/DNS, email Let's Encrypt, kredensial object storage, dan secret GitHub Actions. Sampai secret diisi, job Deploy di `main` gagal di langkah SSH ("Upload compose stack files", exit 255) — itu yang diharapkan.
 3. **Rahasia produksi**: `ATTENDANCE_QR_SECRET` wajib diisi (bila kosong diturunkan dari APP_KEY), `SESSION_SECURE_COOKIE=true`, `TRUSTED_PROXIES` sesuai jaringan Caddy.
 4. **Branding resmi SPKD**: ganti `--brand-*` di `resources/css/tokens.css`, `config/branding.php`, lalu `php scripts/generate-icons.php`.
+5. **Rapat video & notulen otomatis** (panduan `fitur/rapat-video.md`, privasi `fitur/rapat-video-privasi.md`, operasional + runbook `deploy/RAPAT-VIDEO.md`): sebelum notulen otomatis dinyalakan di produksi, putuskan dasar pengiriman teks transkrip ke penyedia AI di luar Indonesia (UU PDP Pasal 56), retensi kehadiran rapat video, dan naikkan `PRIVACY_POLICY_VERSION`/`DATE` (kebijakan privasi kini menyebut rapat video; kenaikan versi juga meminta persetujuan ulang lokasi & selfie absensi).
 
 ## Yang belum diuji / keterbatasan
 

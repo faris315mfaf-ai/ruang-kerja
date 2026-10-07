@@ -47,6 +47,8 @@ return [
         'fitur-obrolan' => ['path' => 'docs/fitur/obrolan.md', 'title' => 'Obrolan (F2-1)', 'group' => 'features'],
         'fitur-catatan' => ['path' => 'docs/fitur/catatan.md', 'title' => 'Catatan bersama (F2-2)', 'group' => 'features'],
         'fitur-rapat-kalender' => ['path' => 'docs/fitur/rapat-kalender.md', 'title' => 'Rapat, notulen & kalender (F2-3)', 'group' => 'features'],
+        'fitur-rapat-video' => ['path' => 'docs/fitur/rapat-video.md', 'title' => 'Rapat video & notulen otomatis', 'group' => 'features'],
+        'fitur-rapat-video-privasi' => ['path' => 'docs/fitur/rapat-video-privasi.md', 'title' => 'Rapat video: privasi & UU PDP', 'group' => 'features'],
         'fitur-otomasi-whatsapp' => ['path' => 'docs/fitur/otomasi-whatsapp.md', 'title' => 'Otomasi, WhatsApp & Kinerja (F2-4)', 'group' => 'features'],
         'fitur-aplikasi-ponsel' => ['path' => 'docs/fitur/aplikasi-ponsel.md', 'title' => 'Aplikasi ponsel (F3-1, F3-2)', 'group' => 'features'],
         'fitur-okr' => ['path' => 'docs/fitur/okr.md', 'title' => 'OKR divisi (F3-3)', 'group' => 'features'],
@@ -61,6 +63,7 @@ return [
         'fitur-ekspor-struktur' => ['path' => 'docs/fitur/ekspor-struktur-organisasi.md', 'title' => 'Ekspor PNG struktur organisasi', 'group' => 'features'],
         'architecture' => ['path' => 'docs/ARCHITECTURE.md', 'title' => 'Arsitektur', 'group' => 'technical'],
         'database' => ['path' => 'docs/DATABASE.md', 'title' => 'Database', 'group' => 'technical'],
+        'deploy-rapat-video' => ['path' => 'docs/deploy/RAPAT-VIDEO.md', 'title' => 'Operasional rapat video', 'group' => 'technical'],
         'asvs-l1' => ['path' => 'docs/security/ASVS-L1.md', 'title' => 'OWASP ASVS L1', 'group' => 'security'],
     ],
 

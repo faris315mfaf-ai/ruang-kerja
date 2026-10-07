@@ -61,6 +61,16 @@ Catatan: persona di data contoh **tetap** (mis. Obrolan selalu dilihat sebagai D
 | Mesin fingerprint ZKTeco (ADMS) · **Ditahan** | F3-3 | `/admin/mesin-absensi` | [mesin-fingerprint.md](mesin-fingerprint.md) |
 | Dashboard per jabatan SPKD · **Nyata** (`FEATURE_ROLE_DASHBOARDS`) | SPKD | `/peran/{dirut,direktur,hr,corsec,marketing,programming,implementer,analis}` | [dashboard-peran.md](dashboard-peran.md) |
 
+### Peta dokumentasi rapat
+
+| Untuk | Dokumen | Isi |
+|---|---|---|
+| Karyawan, notulis, penyelenggara, HR & pimpinan | [rapat-video.md](rapat-video.md) | Panduan Video RuangKerja arah C "Notulen Hidup": gabung rapat, perangkat, subtitle, menolak transkrip, notulen hidup, waktu bicara, periksa draf notulen otomatis, jadwalkan & moderasi, kehadiran, FAQ, mengatasi masalah |
+| Karyawan, HR, pengelola data | [rapat-video-privasi.md](rapat-video-privasi.md) | Privasi & UU PDP: data yang direkam/ditranskrip, retensi, siapa yang melihat, penyedia AI di luar Indonesia, menolak, permintaan hapus, daftar periksa sebelum produksi |
+| Pengembang & semua peran | [rapat-kalender.md](rapat-kalender.md) | Jadwal, notulen, kalender, dan ringkasan teknis Video RuangKerja (§6a) |
+| Admin server | `docs/deploy/RAPAT-VIDEO.md` (Admin › Dokumentasi › "Operasional rapat video") | Server LiveKit, webhook, worker transkripsi, kunci `.env`, LLM, tahap 2 GPU, runbook |
+| Pengembang (kontrak) | `docs/fitur/rapat-video-kontrak.md`, `docs/fitur/notulen-otomatis-kontrak.md` | Props & endpoint ruang rapat dan notulen otomatis (dibuat agen backend; menyusul) |
+
 Gambar di setiap dokumen ada di `docs/fitur/img/<modul>/` dengan pola `<layar>-desktop.jpg` (1440×900 terang), `<layar>-desktop-malam.jpg` (1440×900 Malam), dan `<layar>-ponsel.jpg` (390×844, skala 2). Semua dibuat ulang dengan:
 
 ```bash

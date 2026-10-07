@@ -23,6 +23,7 @@ Pengendali data adalah {{perusahaan}} selaku pemberi kerja. Pertanyaan dan permi
 - **Absensi:** jam masuk dan pulang, status harian, metode check-in, **lokasi GPS dan akurasinya hanya pada saat Anda menekan check-in/check-out**, foto selfie pada saat itu, alamat IP, jenis browser, penanda acak perangkat yang dibuat aplikasi, serta catatan lokasi/aktivitas saat WFH atau dinas.
 - **Pengajuan & persetujuan:** pengajuan cuti, izin, sakit, lembur, koreksi absensi, dan dinas beserta alasan dan lampirannya; keputusan yang Anda berikan sebagai penyetuju.
 - **Pekerjaan:** tugas, komentar, berkas dan dokumen yang Anda buat atau lampirkan di workspace.
+- **Rapat & rapat video:** undangan, jawaban kehadiran, notulen dan tindak lanjut rapat; untuk rapat video, nama dan foto profil yang tampil kepada peserta lain serta **jam masuk dan keluar ruang rapat video**. Gambar, suara, layar yang dibagikan, dan chat di dalam rapat video **tidak direkam**: semuanya hanya diteruskan server rapat perusahaan di Indonesia selama rapat berlangsung.
 - **Akun:** riwayat login, pengaturan notifikasi dan tampilan, serta tautan akun Google Workspace kantor Anda.
 - **Log audit:** catatan perubahan data penting dan akses ke data sensitif (misalnya siapa yang membuka selfie).
 
@@ -31,6 +32,7 @@ Pengendali data adalah {{perusahaan}} selaku pemberi kerja. Pertanyaan dan permi
 - Mencatat kehadiran sesuai jadwal kerja dan menyusun rekap untuk penggajian (pelaksanaan perjanjian kerja dan kewajiban hukum ketenagakerjaan).
 - Memastikan check-in dilakukan sendiri di lokasi yang benar. Lokasi dan selfie diproses **berdasarkan persetujuan eksplisit** Anda, yang diminta sebelum check-in pertama dan setiap kali versi kebijakan ini berubah.
 - Memproses pengajuan dan persetujuan, mengelola pekerjaan tim, dan mengirim notifikasi yang Anda atur.
+- Menjalankan rapat kerja (termasuk rapat video) dan mencatat kehadiran rapat untuk notulen. Kehadiran rapat tidak mengubah absensi harian Anda.
 - Menjaga keamanan sistem dan menelusuri penyalahgunaan (log audit).
 
 Data **tidak** dipakai untuk menilai produktivitas dari aktivitas di luar hasil kerja, tidak dijual, dan tidak dibagikan ke pihak lain di luar penyedia layanan yang disebut di bawah.
@@ -45,12 +47,13 @@ Data **tidak** dipakai untuk menilai produktivitas dari aktivitas di luar hasil 
 
 Selfie hanya dibuka lewat tautan sementara (berlaku 5 menit) oleh Anda, atasan langsung, dan HR; setiap akses oleh orang lain tercatat di log audit.
 
-Penyedia layanan yang memproses data atas nama {{perusahaan}}: penyedia server dan penyimpanan objek di Indonesia (aplikasi, basis data, selfie, lampiran, cadangan) dan Google Workspace (login, Drive, dokumen).
+Penyedia layanan yang memproses data atas nama {{perusahaan}}: penyedia server dan penyimpanan objek di Indonesia (aplikasi, basis data, selfie, lampiran, cadangan, server rapat video) dan Google Workspace (login, Drive, dokumen).
 
 ## 6. Penyimpanan dan retensi
 
 - **Selfie** disimpan di penyimpanan privat dan **dihapus otomatis setelah {{retensi_selfie_bulan}} bulan**.
 - **Catatan kehadiran, pengajuan, dan data kepegawaian** disimpan selama hubungan kerja dan sesudahnya sepanjang diwajibkan peraturan ketenagakerjaan dan perpajakan.
+- **Data rapat** (notulen, tindak lanjut, kehadiran rapat video) disimpan bersama rapatnya dan hanya dapat dilihat penyelenggara, notulis, dan peserta rapat itu; rapat pimpinan juga dapat dibaca Direksi, HR, dan Super Admin.
 - **Cadangan basis data** disimpan terenkripsi selama 30 hari.
 - **Log audit** disimpan untuk keperluan keamanan dan pemeriksaan.
 
