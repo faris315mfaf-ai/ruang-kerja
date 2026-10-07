@@ -14,18 +14,18 @@ Tingkat: **Kritis** · **Tinggi** · **Sedang** · **Rendah** · **Info**. Statu
 | R-01 | **Tinggi** | "Sandi bawaan" bisa diberikan HR **tanpa** "wajib ganti" → akun tetap memakai sandi yang diketahui semua karyawan, tanpa batas waktu | `app/Domain/Auth/Actions/SetEmployeePassword.php:37-49`, `SetEmployeePasswordRequest.php:43`, `set-password-dialog.tsx:197-210` | **Diperbaiki** `c81f372` |
 | R-02 | Sedang | Webhook LiveKit menandai id kejadian "sudah diproses" **sebelum** diproses; bila gagal, percobaan ulang LiveKit dijawab `duplicate` → baris kehadiran terbuka selamanya | `app/Http/Controllers/Meetings/LiveKitWebhookController.php:58-64` | **Diperbaiki** `a744384` |
 | R-03 | Sedang | Token browser penyelenggara membawa grant `roomAdmin` → bisa memanggil Room Service API LiveKit langsung (keluarkan, ganti nama/izin peserta lain, bisukan, kirim data) tanpa Policy & audit | `app/Domain/Meetings/Actions/IssueVideoToken.php:45-47` | **Diperbaiki** `9f6d292` |
-| R-04 | Sedang | "Keluarkan peserta" tidak efektif: orang yang dikeluarkan langsung minta token baru dan masuk lagi (tidak ada daftar larangan) | `RemoveVideoParticipant.php:14-16,32`, `MeetingPolicy::joinVideo` | Rekomendasi (agen rapatbe) + keputusan pemilik |
-| R-05 | Sedang | `canUpdateOwnMetadata` mengizinkan peserta mengganti **nama tampilan** & metadata sendiri (`setName`, `setMetadata`) → menyamar ("Direktur Utama") di chat, daftar peserta, dan — di notulen otomatis — **nama pembicara transkrip** | `IssueVideoToken.php:42`, `room-panels.tsx:146-150,209`, `room-stage.tsx:66`, `transcriber/notulen/recorder.py:132-137` | Rekomendasi (agen rapatui, notulen, rapatbe) |
+| R-04 | Sedang | "Keluarkan peserta" tidak efektif: orang yang dikeluarkan langsung minta token baru dan masuk lagi (tidak ada daftar larangan) | `RemoveVideoParticipant.php:14-16,32`, `MeetingPolicy::joinVideo` | **Diperbaiki** rapatbe `d78cc2e` (+ celah notulen kolaboratif B-02 `3040689`) |
+| R-05 | Sedang | `canUpdateOwnMetadata` mengizinkan peserta mengganti **nama tampilan** & metadata sendiri (`setName`, `setMetadata`) → menyamar ("Direktur Utama") di chat, daftar peserta, dan — di notulen otomatis — **nama pembicara transkrip** | `IssueVideoToken.php:42`, `room-panels.tsx:146-150,209`, `room-stage.tsx:66`, `transcriber/notulen/recorder.py:132-137` | Backend **diperbaiki** rapatbe `d78cc2e`/`5c30e78` (tanpa `canUpdateOwnMetadata`, atribut lewat server); UI & worker: rapatui/notulen |
 | R-06 | Sedang | HR bisa mengatur sandi akun **Direksi/HR lain** (mode "Ketik sendiri", tanpa wajib ganti) lalu masuk sebagai mereka; padahal hanya Super Admin yang boleh memberi peran direksi/hr | `app/Policies/UserPolicy.php:112-115` | Keputusan pemilik |
-| R-07 | Rendah | Badan JSON besar didekode middleware global (`TrimStrings` → `$request->json()`) **sebelum** batas 64 KB di webhook; batas efektif = `post_max_size`/Caddy 110 MB untuk semua endpoint tanpa autentikasi | `LiveKitWebhookController.php:35-39`, `bootstrap/app.php:41`, `docker/caddy/Caddyfile:20-23` | Rekomendasi (ops) |
-| R-08 | Rendah | Bisukan peserta tidak diaudit (keluarkan diaudit) | `MuteVideoParticipant.php:29` | Rekomendasi (rapatbe) |
-| R-09 | Rendah | Sesi video tetap hidup setelah rapat dibatalkan / akun dinonaktifkan / jendela gabung tutup (LiveKit memperbarui token selama tersambung) | `IssueVideoToken`, `CancelMeeting`, `DeactivateEmployee` | Rekomendasi (rapatbe): `DeleteRoom`/`RemoveParticipant` saat batal/nonaktif |
+| R-07 | Rendah | Badan JSON besar didekode middleware global (`TrimStrings` → `$request->json()`) **sebelum** batas 64 KB di webhook; batas efektif = `post_max_size`/Caddy 110 MB untuk semua endpoint tanpa autentikasi | `LiveKitWebhookController.php:35-39`, `bootstrap/app.php:41`, `docker/caddy/Caddyfile:20-23` | Webhook **diperbaiki** rapatbe `d78cc2e` (`LimitRequestBody`, TrimStrings dilewati); batas global: ops |
+| R-08 | Rendah | Bisukan peserta tidak diaudit (keluarkan diaudit) | `MuteVideoParticipant.php:29` | **Diperbaiki** rapatbe `d78cc2e` |
+| R-09 | Rendah | Sesi video tetap hidup setelah rapat dibatalkan / akun dinonaktifkan / jendela gabung tutup (LiveKit memperbarui token selama tersambung) | `IssueVideoToken`, `CancelMeeting`, `DeactivateEmployee` | **Diperbaiki** rapatbe `d78cc2e` (`CloseMeetingRooms`, `RemoveUserFromVideoRooms`) |
 | R-10 | Rendah | Orang yang masuk dengan sandi bawaan (belum ganti) masih bisa membaca `inbox.feed` (judul notifikasi korban) tanpa jejak selain login | `EnsurePasswordChanged.php:44`, `HandleInertiaRequests.php` | **Diperbaiki** `ad1f230` |
 | R-11 | Rendah | Membuka nilai sandi bawaan (`GET …/kata-sandi/bawaan`) tidak diaudit | `EmployeePasswordController.php:42-50` | **Diperbaiki** `4a1af5c` |
 | R-12 | Rendah | Balapan `participant_joined` + `participant_left` bersamaan untuk SID yang sama → `UniqueConstraintViolation` (500). Setelah R-02, percobaan ulang LiveKit memulihkannya | `RecordVideoEvent.php:72-80` | Mitigasi lewat R-02; rekomendasi `createOrFirst` |
-| R-13 | Info | `room_finished` mencari `meeting_attendances.room` tanpa indeks (Seq Scan) | `RecordVideoEvent.php:98` | Rekomendasi (lihat §4) |
+| R-13 | Info | `room_finished` mencari `meeting_attendances.room` tanpa indeks (Seq Scan) | `RecordVideoEvent.php:98` | **Diperbaiki** rapatbe `d78cc2e` (indeks parsial `meeting_attendances_open_room_index`) |
 | R-14 | Info | `Permissions-Policy` `microphone=(self), display-capture=(self)` berlaku di **semua** halaman, bukan hanya `/rapat/*/gabung|ruang` | `config/security.php:111` | Diterima, terdokumentasi (lihat R-14 di §2) |
-| R-15 | Info | Token admin server memakai `roomList` (tidak terikat ruang) padahal hanya butuh `roomAdmin` | `LiveKitTokens.php:72` | Rekomendasi |
+| R-15 | Info | Token admin server memakai `roomList` (tidak terikat ruang) padahal hanya butuh `roomAdmin` | `LiveKitTokens.php:72` | **Diperbaiki** rapatbe `d78cc2e` |
 | R-16 | Info | `docker/caddy/site.caddy.template` (edge bersama) tidak punya rute landing `/` seperti `docker/caddy/Caddyfile`, padahal komentarnya "keep them in sync"; landing statis tanpa CSP | `docker/caddy/site.caddy.template`, `docker/caddy/Caddyfile:54-61` | **Diperbaiki** `f4ca9fb` |
 | R-17 | Info | IP publik server rapat tercantum di `docs/deploy/RAPAT-VIDEO.md:22` (repo publik) | dok | Diterima (sudah terungkap lewat DNS) |
 | R-18 | Info | Risiko bawaan fitur sandi bawaan: akun yang belum pernah login bisa diambil alih rekan yang tahu sandi bawaan (login → ganti sandi → pemilik terkunci) | desain PR #11 | Diterima pemilik; saran: kedaluwarsa sandi bawaan (mis. 7 hari) + notifikasi email saat sandi bawaan diganti |
@@ -138,3 +138,72 @@ Berkas milik agen lain yang tersentuh (perubahan keamanan minimal): `app/Http/Co
 - **dok:** selesai di cabang ini (`rapat-kalender.md:143`, ASVS-L1, CHANGELOG); `docs/deploy/VPS-BERSAMA.md` boleh menyebut folder `sites/ruangkerja-landing`.
 - **Pemilik:** R-06 (HR vs akun Direksi/HR), R-04 (perilaku "izinkan lagi"), R-18 (kedaluwarsa sandi bawaan), N-03 (DeepSeek & UU PDP).
 - **Ops/integrator:** R-07 (batas badan per jalur).
+
+## 7. Fase 2 — cabang `claude/rapat-backend` @ `5c30e78` (perbaikan di `claude/audit-rapat-2`)
+
+Ditinjau: endpoint ruang baru (`video/sumber-notulen`, `video/bicara`, `video/kehadiran`, `video/panggil/{target}`, `video/peserta/{id}/larangan`, `video/tangan`, `video/atribut`, `notulen/data`, `notulen/kolaborasi`, `notulen/menyunting`), jalur kolaborasi (`collab/src/laravel.js`, `notes-extension.js`, `/internal/rapat/notulen/{id}/state`), kanal privat `meeting.{id}`, batas waktu bicara, larangan masuk lagi (R-04), `LimitRequestBody` + `MeetingsServiceProvider`, dan anggaran query. Kontrak: `docs/fitur/rapat-video-kontrak.md`.
+
+### 7.1 Temuan
+
+| ID | Tingkat | Temuan | Berkas | Status |
+|---|---|---|---|---|
+| B-01 | Sedang | **Waktu bicara bisa digelembungkan.** Batasnya hanya "waktu sejak join pertama + 5 dtk" dan "tersimpan + selang + 5 dtk". Tanpa data webhook (orang tidak pernah masuk ruang LiveKit) batas kedua saja yang berlaku: laporan maksimum tiap 3 dtk (batas rute 20/menit) mendapat +8 dtk per 3 dtk. Orang yang sudah keluar tetap bertambah karena hitungannya dari join pertama. Dampak: "Waktu bicara", persentase, dan "X belum bicara" tidak bisa dipercaya | `ReportSpeakingTime.php:76-91` | **Diperbaiki** `4e17ca7` |
+| B-02 | Sedang | **Larangan R-04 bocor lewat notulen kolaboratif.** Orang yang dikeluarkan tidak mendapat token LiveKit, tetapi `GET notulen/kolaborasi` tetap memberi `can_edit: true`, dan koneksi Yjs yang sudah terbuka tetap menyunting notulen rapat yang ia tinggalkan | `MinutesCollab::canEdit`, `RemoveVideoParticipant` | **Diperbaiki** `3040689` |
+| B-03 | Rendah | `POST video/atribut` menerima nilai `hand` dari klien (`^\d{10,16}$`). Dengan `hand=1000000000000`, peserta selalu berada paling depan di antrean tangan | `SetOwnAttributes.php:22-49` | **Diperbaiki** `1fa3519` |
+| B-04 | Rendah (bug) | Menghapus atribut (`""`) lewat `video/atribut` selalu ditolak 422 karena `ConvertEmptyStringsToNull` mengubah `""` menjadi `null` | `SetOwnAttributes.php:42` | **Diperbaiki** `1fa3519` |
+| B-05 | Rendah | Webhook notulen kedua (`/api/notulen/livekit`) dan `/api/notulen/transcript` (cabang notulen) butuh perlakuan yang sama dengan R-07: `LimitRequestBody` dan pengecualian TrimStrings/ConvertEmptyStringsToNull. Saat ini `MeetingsServiceProvider::WEBHOOK_PATH` hanya satu jalur | `MeetingsServiceProvider.php:18-25` | Rekomendasi (notulen/rapatbe) |
+| B-06 | Info | `GET notulen/kolaborasi` membuat baris notulen (`MinutesStore::open`) untuk setiap orang yang boleh melihat, termasuk pengamat rapat pimpinan. GET jadi punya efek samping | `MinutesController::collabToken` | Rekomendasi: `open` hanya bila `canEdit`, selain itu `find` |
+| B-07 | Info | Peserta yang dihapus dari undangan (`UpdateMeeting`) tetap tersambung ke dokumen kolaboratif dan ruang LiveKit sampai koneksinya putus sendiri. Token kolaborasi hanya 120 dtk, tetapi koneksi yang sudah terbuka bertahan | `UpdateMeeting` | Rekomendasi: `MinutesCollab::reconnect` + `RemoveParticipant` untuk orang yang dikeluarkan dari daftar |
+| B-08 | Info | "Izinkan masuk lagi" tidak memicu reconnect dokumen, jadi orang yang diizinkan lagi tetap baca-saja sampai memuat ulang ruang | `ReadmitVideoParticipant` | Rekomendasi (rapatbe/rapatui) |
+
+**Bukti:** `tests/Feature/Audit/RapatBackendAuditTest.php` (5 test). Sebelum perbaikan, test ini merah:
+- B-01: **860 dtk diterima dalam 5 menit** tanpa pernah masuk ruang. Setelah 1 menit di ruang lalu 10 menit di luar, **725 dtk diterima**.
+- B-02: setelah dikeluarkan, `can_edit` tetap `true`.
+- B-03: `hand` tetap `1000000000000`.
+- B-04: penghapusan atribut dijawab 422.
+
+**Perbaikan:**
+- **B-01:** batas = total sesi di ruang menurut webhook (sesi terbuka dihitung sampai sekarang, sesi tumpang tindih dipotong jam dinding sejak join pertama) + 5 dtk. Tanpa pernah terlihat di ruang, paling banyak 60 dtk total. Test kontrak `MeetingRoomTest › accepts each participant's own monotonic total` saya sesuaikan: tanpa data webhook nilainya tetap 60.000 ms, bukan 80.000.
+- **B-02:** `canEdit` menolak orang yang dikeluarkan dari kemunculan itu. Pengeluaran memanggil `MinutesCollab::reconnect`, sehingga semua editor mengambil token baru. Setelah diizinkan lagi, orang itu bisa menyunting kembali.
+- **B-03/B-04:** `hand` yang tidak kosong selalu memakai jam server; `null` berarti hapus.
+
+### 7.2 Yang diverifikasi aman
+
+- **Internal state** (`/internal/rapat/notulen/{id}/state`):
+  - di luar grup `web` (tanpa sesi/CSRF; pengecualian grup `web` di-resolve Laravel);
+  - `VerifyCollabSecret` (`hash_equals`; 404 bila rahasia kosong);
+  - di edge sudah diblokir oleh `@internal path /internal/*` (404);
+  - `yjs_state` maks. 8 MB, `editor_ids` maks. 50 ULID yang difilter ke karyawan aktif perusahaan rapat;
+  - notulen **final** tidak bisa diubah (store diterima tetapi tidak mengubah apa pun, di bawah `lockForUpdate`).
+- **Pemalsuan id dokumen:** token kolaborasi = HMAC atas `{note: "meeting-minutes.{id}", user, edit, exp}` dan dicek `payload.note === documentName` di `onAuthenticate`. Token Catatan bersama tidak bisa membuka notulen, dan sebaliknya. `statePath` hanya memetakan `meeting-minutes.{ulid}`; huruf besar menghasilkan 404 di Laravel. Endpoint replace/reconnect memakai Bearer + `timingSafeEqual`.
+- **Kanal `meeting.{id}`:** `openVideo` (diundang, perusahaan sama, bukan batal, platform video). Pengamat pimpinan dan orang luar ditolak. Payload tipis (id, waktu, status; tanpa isi notulen).
+- **R-04:** blok per `(meeting_id, occurrence_date, user_id)` disimpan sebelum panggilan LiveKit, dicek di `joinVideo` (token, `bicara`, `tangan`, `atribut`). `tanggal` lain pada seri adalah kemunculan lain (sesuai desain). Mengubah tanggal rapat tunggal menghapus efek blok, tetapi itu tindakan penyelenggara sendiri. Tidak ditemukan nama ruang alternatif: nama ruang diturunkan dari kemunculan yang divalidasi `meetsOn`.
+- **Panggil:** target harus diundang, perusahaan sama, aktif, belum di ruang, dan jendela terbuka. Dibatasi 1×/menit per orang, diaudit. Binding `{target}` hanya ULID.
+- **R-07:** `LimitRequestBody` memeriksa `Content-Length` lalu panjang sebenarnya. `TrimStrings`/`ConvertEmptyStringsToNull` di-`skipWhen` untuk `api/livekit/webhook` (dibuktikan test `MeetingVideoHardeningTest`).
+- **R-05 (backend):** token tanpa `canUpdateOwnMetadata`; atribut hanya lewat server, dengan whitelist kunci dan pola nilai.
+- **R-08, R-09, R-13, R-15:** sesuai temuan, diuji di `MeetingVideoHardeningTest`.
+
+### 7.3 Anggaran query (cabang ini, Pest, 3 → 30 peserta + 30 baris kehadiran)
+
+| Endpoint | Query | Waktu (mesin sibuk, indikatif) |
+|---|---|---|
+| `GET /rapat/{id}` | 23 → 23 | 145–164 ms |
+| `GET /rapat/{id}/gabung` · `/ruang` | 28 → 28 | 87–218 ms |
+| Polling detail `only: ['video']` | **8** → 8 (sebelumnya 9; `detail` sekarang lazy) | 26–78 ms |
+| `GET video/bicara` | 9 → 9 | 31–70 ms |
+| `POST video/bicara` (tiap 15 dtk per peserta) | 15 → 15 (+1 query sesi untuk B-01) | 85–112 ms |
+| `GET video/kehadiran` | 9 → 9 | 33–69 ms |
+| `GET notulen/data` | 8 → 8 | 24–55 ms |
+
+Jumlah query tetap konstan, jadi tidak ada N+1. Anggaran di `PageQueryCountTest` (`/gabung`, `/ruang` ≤ 38; detail ≤ 39) masih punya ruang. Beban `POST video/bicara` untuk 20 peserta = 1,3 req/dtk × 15 query, wajar.
+
+### 7.4 Commit fase 2 (`claude/audit-rapat-2`)
+
+| Commit | Isi |
+|---|---|
+| `4e17ca7` | fix(rapat): waktu bicara dibatasi waktu di ruang (B-01). Commit ini sudah membawa seluruh `RapatBackendAuditTest.php`, jadi test B-02/B-03 baru hijau di dua commit berikutnya. |
+| `3040689` | fix(rapat): peserta yang dikeluarkan hanya membaca notulen kolaboratif (B-02) |
+| `1fa3519` | fix(rapat): tangan diangkat memakai jam server, atribut kosong bisa dihapus (B-03, B-04) |
+
+Cabang ini juga me-merge `claude/audit-rapat` (R-10, R-11, R-16, dok) tanpa konflik. Berkas milik rapatbe yang disentuh: `ReportSpeakingTime`, `MinutesCollab`, `RemoveVideoParticipant`, `SetOwnAttributes`, `RoomPresenter`, `tests/Feature/Meetings/MeetingRoomTest.php` (satu test diubah).
+
