@@ -1,7 +1,7 @@
 /**
  * Pure helpers of Video RuangKerja (no React, no LiveKit): join window and
- * countdown, stage layout, grid shape, keyboard shortcuts (Google Meet
- * style), durations and participant metadata. Tested in lib.test.ts.
+ * countdown, room clock, keyboard shortcuts (Google Meet style), durations
+ * and participant metadata. Tested in lib.test.ts.
  */
 import type { ParticipantMeta, VideoSummary } from './types';
 
@@ -85,93 +85,15 @@ export function durationShort(seconds: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// Stage layout
+// Room clock
 // ---------------------------------------------------------------------------
 
-/** User's choice in "Tata letak" (Meet: Otomatis · Petak · Sorotan). */
-export type LayoutPreference = 'auto' | 'grid' | 'spotlight';
+/** "00:18:42" — time since the meeting started (or since joining). */
+export function elapsedClock(ms: number): string {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const pad = (value: number) => String(value).padStart(2, '0');
 
-/**
- * - `solo`: only me → my tile fills the stage.
- * - `pip`: me + one other, nothing shared → the other fills the stage, me in
- *   a small floating tile (Google Meet).
- * - `grid`: equal tiles (up to `maxTiles`, the rest summarized).
- * - `spotlight`: one big tile (screen share, pinned or active speaker) and a
- *   filmstrip of the others.
- */
-export type StageMode = 'solo' | 'pip' | 'grid' | 'spotlight';
-
-export type StageDecision = { mode: StageMode; maxTiles: number };
-
-export function stageLayout(input: {
-    participants: number;
-    screenShares: number;
-    pinned: boolean;
-    preference: LayoutPreference;
-    mobile: boolean;
-}): StageDecision {
-    const { participants, screenShares, pinned, preference, mobile } = input;
-    const maxTiles = mobile ? 6 : 16;
-
-    if (screenShares > 0 || pinned || preference === 'spotlight') {
-        return {
-            mode: participants + screenShares <= 1 ? 'solo' : 'spotlight',
-            maxTiles: mobile ? 3 : 6,
-        };
-    }
-
-    if (participants <= 1) {
-        return { mode: 'solo', maxTiles: 1 };
-    }
-
-    if (participants === 2 && preference === 'auto') {
-        return { mode: 'pip', maxTiles: 2 };
-    }
-
-    if (participants > maxTiles && preference === 'auto') {
-        return { mode: 'spotlight', maxTiles: mobile ? 3 : 6 };
-    }
-
-    return { mode: 'grid', maxTiles };
-}
-
-/**
- * Columns × rows that give the largest tiles of `aspect` (width / height;
- * 16:9 on desktop, 3:4 on phones where tiles are cropped like Meet) for
- * `count` tiles in a `width` × `height` box (gaps included). On a landscape
- * stage a wider shape wins when its tiles are at most 6% smaller, so two
- * people sit side by side.
- */
-export function gridShape(
-    count: number,
-    width: number,
-    height: number,
-    options: { gap?: number; aspect?: number } = {},
-): { cols: number; rows: number } {
-    const gap = options.gap ?? 8;
-    const aspect = options.aspect ?? 16 / 9;
-    const n = Math.max(1, count);
-    const landscape = width >= height;
-    let best = { cols: 1, rows: n };
-    let largest = -1;
-
-    for (let cols = 1; cols <= n; cols++) {
-        const rows = Math.ceil(n / cols);
-        const cellWidth = (width - gap * (cols - 1)) / cols;
-        const cellHeight = (height - gap * (rows - 1)) / rows;
-        const fittedWidth = Math.min(cellWidth, cellHeight * aspect);
-        const better = landscape
-            ? fittedWidth >= largest * 0.94
-            : fittedWidth > largest + 0.5;
-
-        if (better) {
-            best = { cols, rows };
-        }
-
-        largest = Math.max(largest, fittedWidth);
-    }
-
-    return { cols: best.cols, rows: best.rows };
+    return `${pad(Math.floor(total / 3600))}:${pad(Math.floor(total / 60) % 60)}:${pad(total % 60)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -183,7 +105,8 @@ export type ShortcutAction =
     | 'toggle-camera'
     | 'toggle-chat'
     | 'toggle-people'
-    | 'toggle-hand';
+    | 'toggle-hand'
+    | 'toggle-captions';
 
 type KeyInput = {
     key: string;
@@ -196,7 +119,8 @@ type KeyInput = {
 
 /**
  * ⌘/Ctrl + D mic · ⌘/Ctrl + E camera · ⌘/Ctrl + Alt + C chat ·
- * ⌘/Ctrl + Alt + P people · ⌘/Ctrl + Alt + H raise hand. On macOS the
+ * ⌘/Ctrl + Alt + P people (Kehadiran) · ⌘/Ctrl + Alt + H raise hand ·
+ * ⌘/Ctrl + Alt + S subtitles. On macOS the
  * modifier is ⌘, elsewhere Ctrl. Option-letters on macOS produce other
  * characters, so the physical key (`code`) is used when present.
  */
@@ -228,7 +152,9 @@ export function shortcutAction(
           ? 'toggle-people'
           : letter === 'h'
             ? 'toggle-hand'
-            : null;
+            : letter === 's'
+              ? 'toggle-captions'
+              : null;
 }
 
 /** "⌘ D" on macOS, "Ctrl + D" elsewhere (tooltips, shortcut list). */
@@ -242,6 +168,7 @@ export function shortcutLabel(action: ShortcutAction, isMac: boolean): string {
         'toggle-chat': [mod, alt, 'C'],
         'toggle-people': [mod, alt, 'P'],
         'toggle-hand': [mod, alt, 'H'],
+        'toggle-captions': [mod, alt, 'S'],
     };
 
     return keys[action].join(join);
@@ -277,12 +204,13 @@ export function parseMeta(
 }
 
 /** Raised hands, oldest first (attribute `hand` = epoch ms when raised). */
-export function raisedHandOrder<T extends { id: string; hand?: string }>(
+export function raisedHandOrder<T>(
     people: T[],
+    handOf: (person: T) => string | undefined,
 ): T[] {
     return people
-        .filter((person) => person.hand && Number(person.hand) > 0)
-        .sort((a, b) => Number(a.hand) - Number(b.hand));
+        .filter((person) => Number(handOf(person)) > 0)
+        .sort((a, b) => Number(handOf(a)) - Number(handOf(b)));
 }
 
 /** "Rizky", "Rizky dan Sari", "Rizky, Sari, dan 3 lainnya". */

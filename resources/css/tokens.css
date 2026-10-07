@@ -130,6 +130,20 @@
   --preview-light: #F3F6FA;
   --preview-dark: #070B14;
 
+  /* Video RuangKerja "Notulen Hidup" (arah C): desk behind the paper, the
+     compact dark control bar, camera-off tiles and live captions. */
+  --room-desk: #ECEFF3;
+  --room-bar: #0B1A2B;
+  --room-key: #172131;
+  --on-room-bar: #EAF1F8;
+  --tile-off: #DDE4EC;
+  --caption: rgb(7 11 20 / 0.78);
+  --on-caption: #FFFFFF;
+  --caption-muted: #A6B4C6;
+  --caption-name-a: #5AD6C8;
+  --caption-name-b: #A9C2FF;
+  --caption-name-c: #F6B95C;
+
   /* Glass chrome (menu bar, rail, app bar) and stronger glass (popovers,
      Dock stacks, dialogs, sheets). */
   --glass-bg: rgb(255 255 255 / 0.72);
@@ -260,6 +274,12 @@
 
   --glass-bg: rgb(15 22 34 / 0.72);
   --glass-strong-bg: rgb(23 33 49 / 0.88);
+  --room-desk: #070B14;
+  --room-bar: #1A2537;
+  --room-key: #26344A;
+  --tile-off: #172131;
+  --caption: rgb(15 22 34 / 0.92);
+
   --glass-border: rgb(255 255 255 / 0.1);
   color-scheme: dark;
 }

@@ -111,6 +111,17 @@
     --color-qr-paper: var(--qr-paper);
     --color-preview-light: var(--preview-light);
     --color-preview-dark: var(--preview-dark);
+    --color-room-desk: var(--room-desk);
+    --color-room-bar: var(--room-bar);
+    --color-room-key: var(--room-key);
+    --color-on-room-bar: var(--on-room-bar);
+    --color-tile-off: var(--tile-off);
+    --color-caption: var(--caption);
+    --color-on-caption: var(--on-caption);
+    --color-caption-muted: var(--caption-muted);
+    --color-caption-name-a: var(--caption-name-a);
+    --color-caption-name-b: var(--caption-name-b);
+    --color-caption-name-c: var(--caption-name-c);
 
     /* Semantic radius: rounded-control (12) · card (20) · panel (24) · sheet (28). */
     --radius-control: var(--radius-md);
