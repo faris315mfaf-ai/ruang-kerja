@@ -4,6 +4,7 @@ use App\Http\Controllers\Meetings\CalendarController;
 use App\Http\Controllers\Meetings\LiveKitWebhookController;
 use App\Http\Controllers\Meetings\ManagementScheduleController;
 use App\Http\Controllers\Meetings\MeetingController;
+use App\Http\Controllers\Meetings\MeetingRoomController;
 use App\Http\Controllers\Meetings\MeetingVideoController;
 use App\Http\Controllers\Meetings\MinutesController;
 use App\Http\Middleware\AuthenticateSession;
@@ -28,7 +29,9 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
  * Authorization: MeetingPolicy (invisible meeting → 404), /manajemen/jadwal =
  * Gate viewManagementDashboard. Google Calendar/Meet sync is on hold.
  * Video RuangKerja (LiveKit, §6a): /gabung (pre-join), /ruang (room), token,
- * moderation, and the signed LiveKit webhook (no session/CSRF).
+ * moderation, the "Notulen Hidup" room endpoints (notes source, speaking
+ * time, attendance, call; docs/fitur/rapat-video-kontrak.md) and the signed
+ * LiveKit webhook (no session/CSRF).
  */
 Route::middleware([EnsureFeatureEnabled::class.':meetings', 'auth', 'verified'])->group(function () {
     Route::prefix('rapat')->name('meetings.')->group(function () {
@@ -44,6 +47,7 @@ Route::middleware([EnsureFeatureEnabled::class.':meetings', 'auth', 'verified'])
         Route::post('{meeting}/kehadiran', [MeetingController::class, 'rsvp'])->whereUlid('meeting')->middleware('throttle:api')->name('rsvp');
 
         Route::get('{meeting}/notulen', [MinutesController::class, 'show'])->whereUlid('meeting')->name('minutes.show');
+        Route::get('{meeting}/notulen/data', [MinutesController::class, 'data'])->whereUlid('meeting')->middleware('throttle:api')->name('minutes.data');
         Route::put('{meeting}/notulen', [MinutesController::class, 'save'])->whereUlid('meeting')->middleware('throttle:api')->name('minutes.save');
         Route::post('{meeting}/notulen/final', [MinutesController::class, 'finalize'])->whereUlid('meeting')->name('minutes.finalize');
         Route::post('{meeting}/notulen/buka', [MinutesController::class, 'reopen'])->whereUlid('meeting')->name('minutes.reopen');
@@ -59,6 +63,13 @@ Route::middleware([EnsureFeatureEnabled::class.':meetings', 'auth', 'verified'])
         Route::post('{meeting}/video/token', [MeetingVideoController::class, 'token'])->whereUlid('meeting')->middleware('throttle:30,1')->name('video.token');
         Route::post('{meeting}/video/peserta/{identity}/bisukan', [MeetingVideoController::class, 'mute'])->whereUlid(['meeting', 'identity'])->middleware('throttle:api')->name('video.mute');
         Route::delete('{meeting}/video/peserta/{identity}', [MeetingVideoController::class, 'remove'])->whereUlid(['meeting', 'identity'])->middleware('throttle:api')->name('video.remove');
+
+        // Ruang "Notulen Hidup" (docs/fitur/rapat-video-kontrak.md): notes source, speaking time, Kehadiran, Panggil.
+        Route::post('{meeting}/video/sumber-notulen', [MeetingRoomController::class, 'notesSource'])->whereUlid('meeting')->middleware('throttle:api')->name('video.notes-source');
+        Route::get('{meeting}/video/bicara', [MeetingRoomController::class, 'speaking'])->whereUlid('meeting')->middleware('throttle:api')->name('video.speaking');
+        Route::post('{meeting}/video/bicara', [MeetingRoomController::class, 'reportSpeaking'])->whereUlid('meeting')->middleware('throttle:20,1')->name('video.speaking.report');
+        Route::get('{meeting}/video/kehadiran', [MeetingRoomController::class, 'attendance'])->whereUlid('meeting')->middleware('throttle:api')->name('video.attendance');
+        Route::post('{meeting}/video/panggil/{target}', [MeetingRoomController::class, 'call'])->whereUlid(['meeting', 'target'])->middleware('throttle:api')->name('video.call');
     });
 
     Route::get('kalender', CalendarController::class)->name('calendar');

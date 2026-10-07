@@ -4,6 +4,7 @@ namespace App\Domain\Meetings\Actions;
 
 use App\Domain\Meetings\Enums\MeetingPlatform;
 use App\Domain\Meetings\Services\MeetingOccurrences;
+use App\Domain\Meetings\Services\RoomEvents;
 use App\Domain\Meetings\Services\VideoRooms;
 use App\Models\Meeting;
 use App\Models\MeetingAttendance;
@@ -21,13 +22,20 @@ use Illuminate\Support\Facades\DB;
  *
  * Rooms that do not map to a video meeting occurrence ("rk-{id}-{yyyymmdd}")
  * and identities that are not employees of the meeting's company are
- * ignored. Returns whether anything was recorded.
+ * ignored, and so is the hidden transcription agent (identity
+ * AGENT_IDENTITY, docs/fitur/notulen-otomatis-kontrak.md §3). Returns whether
+ * anything was recorded; recorded events are broadcast as
+ * `attendance.updated` on `meeting.{id}` (the Kehadiran panel refetches).
  */
 final class RecordVideoEvent
 {
+    /** LiveKit identity of the automatic minutes worker (not a person). */
+    public const string AGENT_IDENTITY = 'rk-notulen';
+
     public function __construct(
         private readonly VideoRooms $rooms,
         private readonly MeetingOccurrences $occurrences,
+        private readonly RoomEvents $events,
     ) {}
 
     /**
@@ -53,10 +61,20 @@ final class RecordVideoEvent
         $at = self::timestamp($event['createdAt'] ?? $event['created_at'] ?? null) ?? CarbonImmutable::now();
 
         if ($type === 'room_finished') {
-            return $this->finishRoom($roomName, $at) > 0;
+            $finished = $this->finishRoom($roomName, $at) > 0;
+
+            if ($finished) {
+                $this->events->attendanceUpdated($meeting, $target['date'], null, 'finished');
+            }
+
+            return $finished;
         }
 
         $participant = self::map($event['participant'] ?? null);
+
+        if (($participant['identity'] ?? null) === self::AGENT_IDENTITY) {
+            return false;
+        }
         $sid = is_string($participant['sid'] ?? null) ? $participant['sid'] : '';
 
         if ($sid === '' || strlen($sid) > 64) {
@@ -68,7 +86,7 @@ final class RecordVideoEvent
             ?? $at;
         $userId = $this->userId($meeting, $participant['identity'] ?? null);
 
-        return DB::transaction(function () use ($type, $meeting, $target, $roomName, $sid, $joinedAt, $userId, $at): bool {
+        DB::transaction(function () use ($type, $meeting, $target, $roomName, $sid, $joinedAt, $userId, $at): void {
             $row = MeetingAttendance::query()->where('participant_sid', $sid)->lockForUpdate()->first()
                 ?? MeetingAttendance::query()->create([
                     'meeting_id' => $meeting->id,
@@ -87,8 +105,11 @@ final class RecordVideoEvent
                 ])->save();
             }
 
-            return true;
         });
+
+        $this->events->attendanceUpdated($meeting, $target['date'], $userId, $type === 'participant_left' ? 'left' : 'joined');
+
+        return true;
     }
 
     private function finishRoom(string $room, CarbonImmutable $at): int

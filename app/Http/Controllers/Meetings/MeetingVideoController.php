@@ -6,13 +6,13 @@ use App\Domain\Meetings\Actions\IssueVideoToken;
 use App\Domain\Meetings\Actions\MuteVideoParticipant;
 use App\Domain\Meetings\Actions\RemoveVideoParticipant;
 use App\Domain\Meetings\Data\Occurrence;
-use App\Domain\Meetings\Queries\MeetingFeed;
 use App\Domain\Meetings\Services\MeetingOccurrences;
+use App\Domain\Meetings\Services\NotulenBridge;
 use App\Domain\Meetings\Services\VideoRooms;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Meetings\OccurrenceRequest;
 use App\Http\Requests\Meetings\VideoModerationRequest;
-use App\Http\Resources\Meetings\VideoPresenter;
+use App\Http\Resources\Meetings\RoomPresenter;
 use App\Models\Meeting;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -29,7 +29,10 @@ use RuntimeException;
  * /rapat/{id}/gabung, full-screen room /rapat/{id}/ruang, LiveKit token,
  * and the organizer's mute / remove. Abilities: MeetingPolicy::openVideo,
  * joinVideo (join window), moderateVideo. When LiveKit is not configured
- * the pages still render (with a note) and the API answers 503.
+ * the pages still render (with a note) and the API answers 503. Both pages
+ * get the "Notulen Hidup" room props (RoomPresenter) and the automatic
+ * minutes summary (`notulen`, NotulenBridge) — contract in
+ * docs/fitur/rapat-video-kontrak.md.
  */
 class MeetingVideoController extends Controller
 {
@@ -38,12 +41,12 @@ class MeetingVideoController extends Controller
         private readonly VideoRooms $rooms,
     ) {}
 
-    public function join(OccurrenceRequest $request, Meeting $meeting, #[CurrentUser] User $user, VideoPresenter $presenter): Response
+    public function join(OccurrenceRequest $request, Meeting $meeting, #[CurrentUser] User $user, RoomPresenter $presenter): Response
     {
         return $this->page('meetings/join', $request, $meeting, $user, $presenter);
     }
 
-    public function room(OccurrenceRequest $request, Meeting $meeting, #[CurrentUser] User $user, VideoPresenter $presenter): Response
+    public function room(OccurrenceRequest $request, Meeting $meeting, #[CurrentUser] User $user, RoomPresenter $presenter): Response
     {
         return $this->page('meetings/room', $request, $meeting, $user, $presenter);
     }
@@ -97,29 +100,17 @@ class MeetingVideoController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    private function page(string $component, OccurrenceRequest $request, Meeting $meeting, User $user, VideoPresenter $presenter): Response
+    private function page(string $component, OccurrenceRequest $request, Meeting $meeting, User $user, RoomPresenter $presenter): Response
     {
         Gate::authorize('openVideo', $meeting);
 
         $meeting->load(['participants', 'workspace:id,key,name']);
         $occurrence = $this->occurrence($request, $meeting);
+        $notulen = app(NotulenBridge::class)->summary($occurrence, $user);
 
         return Inertia::render($component, [
-            'room' => [
-                'viewer' => ['id' => $user->id, 'name' => $user->name, 'avatar_url' => $user->getAttribute('avatar_url')],
-                'meeting' => [
-                    'id' => $meeting->id,
-                    'title' => $meeting->title,
-                    'occurrence_date' => $occurrence->date,
-                    'starts_at' => $occurrence->startsAt->toIso8601ZuluString(),
-                    'ends_at' => $occurrence->endsAt->toIso8601ZuluString(),
-                    'href' => $occurrence->url(),
-                    'minutes_href' => $occurrence->url('/notulen'),
-                    'organizer_id' => $meeting->organizer_id,
-                ],
-                'people' => app(MeetingFeed::class)->people([$occurrence], [], [$user->id]),
-                'video' => $presenter->summary($occurrence, $user),
-            ],
+            'room' => $presenter->room($occurrence, $user, $notulen),
+            'notulen' => $notulen,
         ]);
     }
 

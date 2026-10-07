@@ -34,6 +34,11 @@ return [
     'join_before_minutes' => (int) env('LIVEKIT_JOIN_BEFORE_MINUTES', 15),
     'join_after_minutes' => (int) env('LIVEKIT_JOIN_AFTER_MINUTES', 120),
 
+    // Live subtitles in the room (stage 2: GPU transcription worker sends
+    // LiveKit text streams on topic `lk.transcription`). Only a flag for the
+    // UI (docs/fitur/rapat-video-kontrak.md §1.1 features.subtitles).
+    'subtitles' => (bool) env('LIVEKIT_SUBTITLES', false),
+
     // Webhooks older than this (event createdAt / token nbf) are rejected.
     'webhook_tolerance' => (int) env('LIVEKIT_WEBHOOK_TOLERANCE', 300),
 ];

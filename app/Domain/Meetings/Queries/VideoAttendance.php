@@ -3,64 +3,92 @@
 namespace App\Domain\Meetings\Queries;
 
 use App\Domain\Meetings\Data\Occurrence;
+use App\Domain\Meetings\Services\MeetingParticipants;
 use App\Models\MeetingAttendance;
 use Carbon\CarbonImmutable;
 
 /**
- * "Hadir di rapat video" of one occurrence (meeting_attendances, one query):
- * per person the first join, the last leave (null while still in the room),
- * the total time over all sessions (an open session counts until now) and
- * whether they are in the room right now.
+ * "Kehadiran" of one occurrence's video room (meeting_attendances) in ONE
+ * query aggregated per person: first join, last leave (null while still in
+ * the room), total time over all sessions (an open session counts until
+ * now), whether they are in the room now, and how late the first join was.
+ * Invited employees who never joined come from the meeting's loaded
+ * participants (MeetingParticipants::invited, no extra query).
  */
 final class VideoAttendance
 {
+    /** A first join up to this many whole minutes after the start counts as on time. */
+    public const int LATE_GRACE_MINUTES = 2;
+
+    public function __construct(private readonly MeetingParticipants $participants) {}
+
     /**
-     * @return list<array{user_id: string, joined_at: string, left_at: string|null, duration_seconds: int, in_room: bool, sessions: int}>
+     * @return list<array{user_id: string, joined_at: string, left_at: string|null, duration_seconds: int, in_room: bool, sessions: int, late_minutes: int, late: bool}>
      */
     public function forOccurrence(Occurrence $occurrence, ?CarbonImmutable $now = null): array
     {
+        return $this->roster($occurrence, $now)['attendance'];
+    }
+
+    /**
+     * Who joined (ordered by first join) and which invited employees did not.
+     *
+     * @return array{attendance: list<array{user_id: string, joined_at: string, left_at: string|null, duration_seconds: int, in_room: bool, sessions: int, late_minutes: int, late: bool}>, not_joined: list<array{user_id: string, rsvp: string, optional: bool}>, in_room: int}
+     */
+    public function roster(Occurrence $occurrence, ?CarbonImmutable $now = null): array
+    {
         $now ??= CarbonImmutable::now();
-        $people = [];
+        $start = $occurrence->startsAt;
 
         $rows = MeetingAttendance::query()
+            ->toBase()
             ->where('meeting_id', $occurrence->meeting->id)
-            ->whereDate('occurrence_date', $occurrence->date)
+            ->where('occurrence_date', $occurrence->date)
             ->whereNotNull('user_id')
-            ->orderBy('joined_at')
-            ->get(['user_id', 'joined_at', 'left_at', 'duration_seconds']);
+            ->groupBy('user_id')
+            // Ties (same second): the session recorded first (ULIDs sort by time).
+            ->orderByRaw('min(joined_at), min(id)')
+            ->select('user_id')
+            ->selectRaw('min(joined_at) as first_joined_at')
+            ->selectRaw('max(left_at) as last_left_at')
+            ->selectRaw('count(*) as sessions')
+            ->selectRaw('count(*) filter (where left_at is null) as open_sessions')
+            ->selectRaw('coalesce(sum(duration_seconds) filter (where left_at is not null), 0) as closed_seconds')
+            ->selectRaw('coalesce(sum(greatest(0, floor(extract(epoch from (?::timestamptz - joined_at))))) filter (where left_at is null), 0) as open_seconds', [$now->toIso8601ZuluString()])
+            ->get();
+
+        $attendance = [];
+        $joined = [];
 
         foreach ($rows as $row) {
             $id = (string) $row->user_id;
-            $open = $row->left_at === null;
-            $seconds = $open ? max(0, (int) $row->joined_at->diffInSeconds($now)) : (int) $row->duration_seconds;
-            $person = $people[$id] ?? [
+            $firstJoined = CarbonImmutable::parse((string) $row->first_joined_at)->utc();
+            $inRoom = (int) $row->open_sessions > 0;
+            $late = $firstJoined->gt($start) ? intdiv((int) $start->diffInSeconds($firstJoined), 60) : 0;
+            $joined[$id] = true;
+
+            $attendance[] = [
                 'user_id' => $id,
-                'joined_at' => $row->joined_at->toIso8601ZuluString(),
-                'left_at' => null,
-                'duration_seconds' => 0,
-                'in_room' => false,
-                'sessions' => 0,
-                'last_left' => null,
+                'joined_at' => $firstJoined->toIso8601ZuluString(),
+                'left_at' => $inRoom || $row->last_left_at === null ? null : CarbonImmutable::parse((string) $row->last_left_at)->utc()->toIso8601ZuluString(),
+                'duration_seconds' => (int) $row->closed_seconds + (int) $row->open_seconds,
+                'in_room' => $inRoom,
+                'sessions' => (int) $row->sessions,
+                'late_minutes' => $late,
+                'late' => $late > self::LATE_GRACE_MINUTES,
             ];
-
-            $person['duration_seconds'] += $seconds;
-            $person['sessions']++;
-            $person['in_room'] = $person['in_room'] || $open;
-
-            if (! $open && ($person['last_left'] === null || $row->left_at->gt($person['last_left']))) {
-                $person['last_left'] = $row->left_at;
-            }
-
-            $people[$id] = $person;
         }
 
-        return array_values(array_map(function (array $person): array {
-            $last = $person['last_left'];
-            unset($person['last_left']);
-            $person['left_at'] = $person['in_room'] || ! $last instanceof CarbonImmutable ? null : $last->toIso8601ZuluString();
+        $notJoined = array_values(array_filter(
+            $this->participants->invited($occurrence->meeting),
+            fn (array $invited): bool => ! isset($joined[$invited['user_id']]),
+        ));
 
-            return $person;
-        }, $people));
+        return [
+            'attendance' => $attendance,
+            'not_joined' => $notJoined,
+            'in_room' => count(array_filter($attendance, fn (array $person): bool => $person['in_room'])),
+        ];
     }
 
     /**
@@ -72,7 +100,7 @@ final class VideoAttendance
     {
         $ids = MeetingAttendance::query()
             ->where('meeting_id', $occurrence->meeting->id)
-            ->whereDate('occurrence_date', $occurrence->date)
+            ->where('occurrence_date', $occurrence->date)
             ->whereNotNull('user_id')
             ->distinct()
             ->pluck('user_id')
