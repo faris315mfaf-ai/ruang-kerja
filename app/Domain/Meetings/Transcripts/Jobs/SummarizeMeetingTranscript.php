@@ -19,7 +19,8 @@ use Throwable;
  * AI draft minutes for a ready transcript (MinutesSummarizer). The HTTP
  * client retries itself; a failure leaves the transcript readable with
  * draft_status `failed` ("Ringkas ulang" tries again). A draft that was
- * inserted or discarded meanwhile is never overwritten.
+ * inserted or discarded meanwhile is never overwritten. Runs on the `long`
+ * queue (connection redis-long, retry_after 960 s > timeout 900 s).
  */
 class SummarizeMeetingTranscript implements ShouldQueue
 {
@@ -29,7 +30,16 @@ class SummarizeMeetingTranscript implements ShouldQueue
 
     public int $timeout = 900;
 
-    public function __construct(public string $meetingId, public string $date) {}
+    public function __construct(public string $meetingId, public string $date)
+    {
+        // Audit T-05: up to 900 s, so never on the default connection (retry_after 90 s).
+        // `long` = Horizon supervisor-long; redis-long retry_after 960 s (config/queue.php).
+        if (config('queue.default') === 'redis') {
+            $this->onConnection('redis-long');
+        }
+
+        $this->onQueue('long');
+    }
 
     public function handle(MinutesSummarizer $summarizer, NotulenConfig $config): void
     {

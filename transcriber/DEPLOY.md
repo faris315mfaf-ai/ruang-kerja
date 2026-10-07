@@ -38,7 +38,7 @@ Rapat video ──(LiveKit, media)──▶ worker rk-notulen (tersembunyi, subs
 | `MINUTES_TRANSCRIPT_RETENTION_DAYS` | `90` |
 | opsional | `MINUTES_LLM_PROVIDER` (nama di pemberitahuan), `MINUTES_LLM_OUTSIDE_INDONESIA=true`, `MINUTES_LLM_TIMEOUT=120`, `MINUTES_LLM_CHUNK_CHARS=40000`, `TRANSCRIBER_TIMEOUT=10` |
 
-Lalu deploy ulang (config di-cache). Antrean (Horizon) harus jalan: job `StartMeetingRecorder`, `FinishMeetingRecorder`, `RelayTranscriptConsent`, `SummarizeMeetingTranscript` (timeout 900 dtk); scheduler menjalankan `PurgeExpiredMeetingTranscripts` 02.45 WIB.
+Lalu deploy ulang (config di-cache). Antrean (Horizon) harus jalan: `StartMeetingRecorder`, `FinishMeetingRecorder`, `RelayTranscriptConsent` di antrean `default`; **`SummarizeMeetingTranscript` (timeout 900 dtk) di antrean `long`** pada koneksi `redis-long` (`retry_after` 960 dtk, `REDIS_LONG_QUEUE_RETRY_AFTER`) dengan supervisor Horizon **`supervisor-long`** (1 proses, timeout 900) — sudah di `config/queue.php` dan `config/horizon.php`, cukup `php artisan horizon:terminate` setelah deploy. Tanpa Horizon: `php artisan queue:work redis-long --queue=long --timeout=900`. Scheduler menjalankan `PurgeExpiredMeetingTranscripts` 02.45 WIB.
 
 ## 3. Kapasitas (diukur, jujur)
 

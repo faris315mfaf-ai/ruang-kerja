@@ -7,7 +7,9 @@ use App\Domain\Meetings\Transcripts\Enums\TranscriptStatus;
 use App\Domain\Meetings\Transcripts\Exceptions\TranscriptConflict;
 use App\Domain\Meetings\Transcripts\Jobs\SummarizeMeetingTranscript;
 use App\Domain\Meetings\Transcripts\Services\NotulenConfig;
+use App\Domain\Organization\Services\AuditLogger;
 use App\Models\MeetingTranscript;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -21,15 +23,21 @@ final class ResummarizeTranscript
     /** SummarizeMeetingTranscript::$timeout (900 s) + margin. */
     public const int STALE_PENDING_SECONDS = 1200;
 
-    public function __construct(private readonly NotulenConfig $config) {}
+    public function __construct(
+        private readonly NotulenConfig $config,
+        private readonly AuditLogger $audit,
+    ) {}
 
-    public function handle(MeetingTranscript $transcript): MeetingTranscript
+    /**
+     * Audited (audit T-08): every run sends the transcript to the AI provider again.
+     */
+    public function handle(MeetingTranscript $transcript, ?User $actor = null): MeetingTranscript
     {
         if (! $this->config->llmEnabled()) {
             throw new TranscriptConflict('Ringkasan AI belum diaktifkan admin (MINUTES_LLM_API_KEY).');
         }
 
-        $locked = DB::transaction(function () use ($transcript): MeetingTranscript {
+        $locked = DB::transaction(function () use ($transcript, $actor): MeetingTranscript {
             $locked = MeetingTranscript::query()->whereKey($transcript->id)->lockForUpdate()->firstOrFail();
 
             // A "pending" draft older than the job may run is stale (worker killed,
@@ -56,6 +64,11 @@ final class ResummarizeTranscript
                 'discarded_at' => null,
                 'status' => TranscriptStatus::Summarizing,
             ])->save();
+
+            $this->audit->log('meeting.transcript_resummarized', $locked, null, [
+                'provider' => (string) config('notulen.llm.provider'),
+                'outside_indonesia' => (bool) config('notulen.llm.outside_indonesia'),
+            ], $actor);
 
             return $locked;
         });
