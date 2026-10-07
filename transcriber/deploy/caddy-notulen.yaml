@@ -6,18 +6,18 @@
 # 3) apps.layer4.servers.main.routes: add this route BEFORE the LiveKit route.
 #    remote_ip limits it to the app server (replace with the app VPS public IP).
 - match:
-    - tls:
-        sni:
-          - "notulen.spkd.store"
-      remote_ip:
-        ranges:
-          - "<IP-VPS-APLIKASI>/32"
+      - tls:
+            sni:
+                - 'notulen.spkd.store'
+        remote_ip:
+            ranges:
+                - '<IP-VPS-APLIKASI>/32'
   handle:
-    - handler: tls
-      connection_policies:
-        - alpn: ["http/1.1"]
-    - handler: proxy
-      upstreams:
-        - dial: ["127.0.0.1:8090"]
+      - handler: tls
+        connection_policies:
+            - alpn: ['http/1.1']
+      - handler: proxy
+        upstreams:
+            - dial: ['127.0.0.1:8090']
 # Then: sudo systemctl restart livekit-docker  (or docker compose restart caddy)
 # Check from the app VPS: curl -s https://notulen.spkd.store/health
