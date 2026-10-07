@@ -65,6 +65,6 @@ class AppClient:
                 connector=aiohttp.TCPConnector(ssl=context),
             )
         # Signed right before sending: retries get a fresh timestamp.
-        async with self._session.post(url, data=body, headers=sign(self.settings.secret, body)) as response:
+        async with self._session.post(url, data=body, headers=sign(self.settings.callback_secret, body)) as response:
             await response.read()
             return response.status

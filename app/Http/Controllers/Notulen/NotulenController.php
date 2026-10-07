@@ -14,7 +14,6 @@ use App\Domain\Meetings\Transcripts\Actions\SetAutoMinutes;
 use App\Domain\Meetings\Transcripts\Actions\SetTranscriptConsent;
 use App\Domain\Meetings\Transcripts\Exceptions\TranscriptConflict;
 use App\Domain\Meetings\Transcripts\Queries\NotulenSummary;
-use App\Domain\Meetings\Transcripts\Services\TranscriptConsents;
 use App\Domain\Organization\Services\AuditLogger;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Meetings\OccurrenceRequest;
@@ -112,7 +111,7 @@ class NotulenController extends Controller
 
         $optedOut = $set->handle($meeting, $user, $request->boolean('opted_out'));
 
-        return response()->json(['opted_out' => $optedOut, 'attributes' => TranscriptConsents::attributes($optedOut)]);
+        return response()->json(['opted_out' => $optedOut]);
     }
 
     public function insert(OccurrenceRequest $request, Meeting $meeting, #[CurrentUser] User $user, InsertTranscriptDraft $insert): JsonResponse

@@ -98,3 +98,29 @@ def test_room_names_follow_the_app_pattern():
     assert Coordinator.valid_room(ROOM)
     assert not Coordinator.valid_room("rk-../../etc-20261007")
     assert not Coordinator.valid_room("uji-koneksi")
+
+
+async def test_spool_cap_stops_running_recordings(coordinator, settings, caplog):
+    await coordinator.join(ROOM, "jwt")
+    object.__setattr__(settings, "spool_max_gb", 1 / 1024**3)
+    with caplog.at_level("CRITICAL"):
+        await coordinator.enforce_spool_cap()
+    assert ROOM not in coordinator.sessions
+    assert coordinator.queue.qsize() == 1  # what was recorded is still transcribed
+    assert "ALERT spool full" in caplog.text
+
+
+async def test_restart_cleans_orphans_and_interrupted_recordings(settings, fakes):
+    _, app = fakes
+    first = Coordinator(settings, FakeTranscriber(), app, FakeRecorder)
+    await first.join(ROOM, "jwt")  # crash while recording: manifest state "recording"
+    orphan = first.spool.session_dir("rk-01hzx3k9q2w8e7r6t5y4v3m2n9-20261007", "x")
+    (orphan / "s001-0001.wav").write_bytes(b"x")
+    (settings.spool_dir / "left.json.tmp").write_text("{}")
+
+    restarted = Coordinator(settings, FakeTranscriber(), app, FakeRecorder)
+    restarted.recover()
+    await asyncio.sleep(0)
+    assert restarted.queue.empty()
+    assert not list(settings.spool_dir.rglob("*.wav")) and not list(settings.spool_dir.rglob("*.tmp"))
+    assert app.posts[-1]["status"] == "failed" and app.posts[-1]["room"] == ROOM

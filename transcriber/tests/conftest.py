@@ -13,6 +13,7 @@ from notulen.spool import SAMPLE_RATE, SpeakerTrack
 from notulen.transcribe import Recognized
 
 SECRET = "t" * 40
+CALLBACK_SECRET = "c" * 40
 ROOM = "rk-01hzx3k9q2w8e7r6t5y4v3m2n1-20261007"
 
 
@@ -85,7 +86,12 @@ class FakeRecorder:
 @pytest.fixture
 def settings(tmp_path: Path) -> Settings:
     return replace(
-        Settings(secret=SECRET, app_url="https://app.test", livekit_url="ws://127.0.0.1:7880"),
+        Settings(
+            secret=SECRET,
+            callback_secret=CALLBACK_SECRET,
+            app_url="https://app.test",
+            livekit_url="ws://127.0.0.1:7880",
+        ),
         spool_dir=tmp_path / "spool",
     )
 

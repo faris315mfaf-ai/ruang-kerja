@@ -1,6 +1,6 @@
 """Small authenticated HTTP API used by the app (TRANSCRIBER_URL).
 
-    GET  /health                 liveness + queue (no secrets, no room names)
+    GET  /health                 liveness only ({"status": "ok"}); the API listens on 127.0.0.1
     POST /rooms/{room}/join      {"action": "join", "room", "token", "exclude": [identities]}
     POST /rooms/{room}/exclude   {"action": "exclude", "room", "identity", "excluded": true}
     POST /rooms/{room}/finish    {"action": "finish", "room"}
@@ -20,7 +20,7 @@ from typing import Any
 from aiohttp import web
 
 from .config import Settings
-from .jobs import Coordinator
+from .jobs import Coordinator, SpoolFull
 from .signing import SIGNATURE_HEADER, TIMESTAMP_HEADER, ReplayGuard, verify
 
 log = logging.getLogger(__name__)
@@ -65,7 +65,8 @@ async def _signed_body(request: web.Request, action: str) -> dict[str, Any] | we
 
 
 async def health(request: web.Request) -> web.Response:
-    return web.json_response(request.app[COORDINATOR].health())
+    # Minimal on purpose: no model, version, path or room names.
+    return web.json_response({"status": "ok"})
 
 
 async def join(request: web.Request) -> web.Response:
@@ -78,6 +79,8 @@ async def join(request: web.Request) -> web.Response:
         return _error(422, "token required")
     try:
         status = await request.app[COORDINATOR].join(data["room"], token, [str(x) for x in exclude][:500])
+    except SpoolFull:
+        return _error(507, "spool full")
     except Exception:
         return _error(502, "could not join the room")
     return web.json_response({"status": status}, status=200 if status == "already" else 202)
@@ -108,7 +111,8 @@ def create_app(settings: Settings, coordinator: Coordinator) -> web.Application:
     app = web.Application(client_max_size=MAX_BODY)
     app[SETTINGS] = settings
     app[COORDINATOR] = coordinator
-    app[GUARD] = ReplayGuard(settings.tolerance_seconds * 2)
+    # Persistent: a restart must not reopen the replay window.
+    app[GUARD] = ReplayGuard(settings.tolerance_seconds * 2, path=settings.spool_dir / ".replay.sqlite")
     app.router.add_get("/health", health)
     app.router.add_post("/rooms/{room}/join", join)
     app.router.add_post("/rooms/{room}/exclude", exclude)

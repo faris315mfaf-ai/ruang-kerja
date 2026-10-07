@@ -23,7 +23,7 @@ Berkas `routes/notulen.php`, nama rute berawalan `meetings.notulen.`. Semua mene
 | GET | `/rapat/{meeting}/notulen-otomatis/status` | `meetings.notulen.status` | siapa pun yang melihat rapat | — | `NotulenSummary` (§2.1) |
 | GET | `/rapat/{meeting}/notulen-otomatis/transkrip` | `meetings.notulen.transcript` | peserta + penyelenggara + notulis | — | `TranscriptSegments` (§2.2); **diaudit** `meeting.transcript_viewed` |
 | PUT | `/rapat/{meeting}/notulen-otomatis/pengaturan` | `meetings.notulen.settings` | penyelenggara | `{"auto_minutes": true}` | `NotulenSummary` |
-| PUT | `/rapat/{meeting}/notulen-otomatis/persetujuan` | `meetings.notulen.consent` | peserta internal (termasuk penyelenggara/notulis) | `{"opted_out": true}` | `{"opted_out": true, "attributes": {"rk_notulen_optout": "1"}}` |
+| PUT | `/rapat/{meeting}/notulen-otomatis/persetujuan` | `meetings.notulen.consent` | peserta internal (termasuk penyelenggara/notulis) | `{"opted_out": true}` | `{"opted_out": true}` |
 | POST | `/rapat/{meeting}/notulen-otomatis/masukkan` | `meetings.notulen.insert` | notulis / penyelenggara | — | `{"minutes_href": "/rapat/…/notulen?tanggal=…", "inserted_at": "…", "action_item_ids": ["…"]}`; 409 bila sudah dimasukkan/dibuang atau notulen final |
 | DELETE | `/rapat/{meeting}/notulen-otomatis/draf` | `meetings.notulen.discard` | notulis / penyelenggara | — | `NotulenSummary` (draf `discarded`); transkrip tetap |
 | POST | `/rapat/{meeting}/notulen-otomatis/ringkas-ulang` | `meetings.notulen.resummarize` | notulis / penyelenggara | — | `NotulenSummary` (draf `pending`); 409 bila belum ada transkrip `ready` atau draf sudah dimasukkan |
@@ -46,12 +46,18 @@ Dipakai: `GET …/status`, jawaban `PUT …/pengaturan`, `DELETE …/draf`, `POS
   "can_configure": true,
   "can_manage": true,
   "can_view_transcript": true,
-  "notice": "Notulen otomatis aktif — suara Anda ditranskrip setelah rapat",
+  "notice": "Notulen otomatis aktif — suara Anda ditranskrip setelah rapat. Audio dihapus segera setelah transkripsi. Transkrip disimpan 90 hari dan hanya bisa dibuka peserta rapat. Ringkasan diproses oleh DeepSeek di luar Indonesia. Anda bisa memilih \"Jangan transkrip suara saya\".",
+  "notice_points": [
+    "Audio dihapus segera setelah transkripsi.",
+    "Transkrip disimpan 90 hari dan hanya bisa dibuka peserta rapat.",
+    "Ringkasan diproses oleh DeepSeek di luar Indonesia.",
+    "Anda bisa memilih \"Jangan transkrip suara saya\"."
+  ],
   "consent": {
     "opted_out": false,
-    "can_change": true,
-    "attribute": "rk_notulen_optout"
+    "can_change": true
   },
+  "optout_count": 1,
   "llm": { "enabled": true, "provider": "DeepSeek", "outside_indonesia": true },
   "retention_days": 90,
   "links": {
@@ -126,9 +132,12 @@ Dipakai: `GET …/status`, jawaban `PUT …/pengaturan`, `DELETE …/draf`, `POS
 Aturan:
 
 - `available` = server notulen diatur (`TRANSCRIBER_URL` + `TRANSCRIBER_SECRET`) **dan** rapat `platform = video` **dan** LiveKit diatur. `false` → sembunyikan semua kontrol notulen otomatis (atau tampilkan "belum disiapkan admin" untuk penyelenggara).
-- `notice` hanya terisi bila `auto_minutes` aktif; teks ini **wajib tampil** di pra-gabung dan di ruang (UU PDP).
-- `consent.opted_out` = pilihan orang yang sedang melihat untuk rapat/seri ini; `consent.can_change` = dia peserta internal rapat. Atribut LiveKit pilihannya = `attribute` (`"1"` / `"0"`), lihat §3.
+- `notice` (satu paragraf) dan `notice_points` (kalimat yang sama sebagai daftar) hanya terisi bila `auto_minutes` aktif; **wajib tampil** di pra-gabung dan di ruang (UU PDP). Isinya: audio dihapus segera setelah transkripsi; transkrip disimpan N hari (`retention_days`, dari `MINUTES_TRANSCRIPT_RETENTION_DAYS`) dan hanya untuk peserta; bila ringkasan AI aktif dan `llm.outside_indonesia`: "Ringkasan diproses oleh <provider> di luar Indonesia." Kosong: `null` / `[]`.
+- `consent.opted_out` = pilihan **orang yang sedang melihat** untuk rapat/seri ini; `consent.can_change` = dia peserta internal rapat. Pilihan ini **privat**: hanya server yang meneruskannya ke worker (daftar `exclude` bertanda tangan), **tidak pernah** lewat atribut/metadata peserta LiveKit (yang diterima semua klien di ruang). Klien tidak perlu dan tidak boleh mengirimnya ke LiveKit.
+- `optout_count` = jumlah orang yang memilih tidak ditranskrip untuk rapat ini (hanya angka, tanpa nama) — untuk kepala layar "Notulen otomatis".
 - `transcript` = `null` sampai worker mulai merekam kemunculan ini. `status`: `recording` ("Merekam"), `transcribing` ("Mentranskrip"), `summarizing` ("Meringkas"), `ready` ("Siap"), `failed` ("Gagal", `error` terisi dalam Bahasa Indonesia).
+- Nama pembicara (`speaker_name`, `speakers[].name`) selalu dari `users.name` di aplikasi (nama peserta LiveKit bisa diubah sendiri, tidak dipercaya); identitas yang bukan karyawan perusahaan = `"Peserta tamu"`.
+- Semua teks draf AI = **teks polos** (tag dibuang di server); render sebagai teks, jangan sebagai HTML/Markdown. Usulan tindak lanjut tidak pernah menjadi tugas tanpa klik "Jadikan tugas".
 - `links.task`: ganti `{id}` dengan id usulan (`tl-1`). `transcript.speakers[].user_id` = null bila identitas tidak dikenal (bukan karyawan perusahaan). `seconds` = total lama bicara (dasar "Waktu bicara").
 - `draft` = `null` bila belum ada transkrip `ready`. `draft.status`: `pending` (sedang diringkas), `ready`, `failed` (`error`), `disabled` (tanpa `MINUTES_LLM_API_KEY` — transkrip tetap ada, draf tidak dibuat), `inserted` (sudah dimasukkan, `inserted_at`), `discarded` ("Buang draf", `discarded_at`). Isi (`ringkasan`, `agenda`, …) hanya ada pada `ready`/`inserted`; pada status lain berupa string kosong/array kosong.
 - `sumber[].i` = indeks baris di `TranscriptSegments.segments[].i`; `start_ms` sama dengan baris itu (tautan "lompat ke transkrip" / sorot baris sumber).
@@ -186,10 +195,14 @@ Segmen **tidak** ikut props (diaudit, diambil lewat `GET …/transkrip` saat hal
 
 - **Prop Inertia `notulen`** (`NotulenSummary`, atau `null` bila rapat bukan video) pada `meetings/show`, `meetings/join`, `meetings/room`: dibuat dengan `app(\App\Domain\Meetings\Transcripts\Queries\NotulenSummary::class)->for($occurrence, $user)`. Sampai rapatbe menambahkannya, UI boleh memanggil `GET …/status`.
 - **Kartu persetujuan pra-gabung** ("Notulen otomatis aktif", toggle "Jangan transkrip suara saya"): tampil bila `available && auto_minutes`. Toggle → `PUT …/persetujuan {opted_out}` **sebelum** meminta token; aplikasi meneruskannya ke worker (worker langsung berhenti merekam orang itu dan menghapus audionya bila sudah terlanjur).
-- **Di ruang**: chip "Notulen otomatis aktif" (+ "· Subtitle ID" di tahap 2) dan toggle yang sama (menu/panel). Setelah `PUT …/persetujuan` berhasil, klien sebaiknya juga memanggil `room.localParticipant.setAttributes(response.attributes)` (atribut `rk_notulen_optout`, token sudah memberi `canUpdateOwnMetadata`); worker juga membaca atribut ini. Sumber kebenaran tetap tabel persetujuan di server.
-- **Token (rapatbe, `IssueVideoToken`)**: sebaiknya menambah atribut `{"rk_notulen_optout": "1"|"0"}` dari `TranscriptConsents::optedOut($meeting, $user)` dan `metadata.auto_minutes` — opsional (lapisan kedua), tidak wajib untuk berfungsi.
-- **Peserta tersembunyi**: worker bergabung dengan identitas `rk-notulen`, `hidden`, `kind=agent`; ia tidak muncul di daftar peserta LiveKit klien. Webhook kehadiran (`RecordVideoEvent`, rapatbe) sebaiknya mengabaikan identitas `rk-notulen` (barisnya ber-`user_id` null sehingga tidak dihitung, tetapi tidak perlu disimpan).
-- **Subtitle (tahap 2, belum dibangun)**: teks langsung akan datang lewat LiveKit text stream topik `lk.transcription` dengan atribut `lk.transcribed_track_id`, `lk.segment_id`, `lk.transcription_final` (konvensi LiveKit Agents) dari identitas `rk-notulen`; UI menampilkan kotak subtitle hanya bila stream itu datang.
+- **Di ruang**: chip "Notulen otomatis aktif" (+ "· Subtitle ID" di tahap 2) dan toggle yang sama (menu/panel) → `PUT …/persetujuan`. Tidak ada langkah LiveKit di klien; server langsung memberi tahu worker (worker berhenti merekam orang itu dan menghapus audionya).
+- **Token peserta (rapatbe, `IssueVideoToken`)**: **jangan** menaruh pilihan opt-out di atribut/metadata token (privat). `metadata.auto_minutes` boleh (sama untuk semua orang).
+- **Peserta tersembunyi**: worker bergabung dengan identitas **`rk-notulen`** (persis string ini, `config('notulen.transcriber.identity')`), `hidden`, `kind=agent`, subscribe saja; ia tidak muncul di daftar peserta LiveKit klien. Webhook kehadiran (`RecordVideoEvent`, rapatbe) **mengabaikan** identitas `rk-notulen` (tidak membuat baris `meeting_attendances`).
+- **Subtitle (tahap 2, belum dibangun)**: teks langsung akan datang lewat LiveKit text stream topik `lk.transcription` dengan atribut `lk.transcribed_track_id`, `lk.segment_id`, `lk.transcription_final` (konvensi LiveKit Agents). **Wajib (audit N-07):** UI hanya menerima stream itu bila `participantInfo.identity === 'rk-notulen'`; stream bertopik sama dari peserta lain diabaikan (siapa pun dengan `canPublishData` bisa memalsukannya). Kotak subtitle tampil hanya bila stream sah itu datang; teks dirender sebagai teks polos.
+
+## 3a. Data yang dikirim ke penyedia ringkasan AI (minimalisasi)
+
+Hanya: judul rapat, tanggal, judul agenda, baris transkrip bernomor `[i] mm:ss Nama: teks`, dan **nama tampilan** peserta yang **berbicara** di transkrip dan **tidak** memilih opt-out (segmen orang yang opt-out sudah dibuang sebelumnya). Tidak pernah: email, id/ULID, jabatan, daftar undangan lain. Penanggung jawab hanya bisa dicocokkan ke orang dalam daftar itu.
 
 ## 4. Otorisasi (`App\Policies\MeetingTranscriptPolicy`)
 
@@ -205,7 +218,7 @@ Rapat dibatalkan: `configure`/`consent` 403. "Jadikan tugas" juga butuh `Workspa
 
 ## 5. Server ke server (untuk referensi; UI tidak memanggil)
 
-**Tanda tangan HMAC** (dua arah): `X-Notulen-Timestamp: <unix detik>`, `X-Notulen-Signature: v1=<hex HMAC-SHA256(TRANSCRIBER_SECRET, "<timestamp>.<badan mentah>")>`; ditolak bila selisih jam > 300 detik atau tanda tangan sudah pernah dipakai. Badan menyebut `room` dan `action` + `nonce` acak.
+**Tanda tangan HMAC** (dua arah, **rahasia berbeda per arah**): `X-Notulen-Timestamp: <unix detik>`, `X-Notulen-Signature: v1=<hex HMAC-SHA256(rahasia, "<timestamp>.<badan mentah>")>` — aplikasi → worker memakai `TRANSCRIBER_SECRET`, worker → aplikasi memakai `TRANSCRIBER_CALLBACK_SECRET`. Ditolak bila selisih jam > 300 detik atau tanda tangan sudah pernah dipakai (aplikasi: cache; worker: SQLite di spool, tetap setelah restart). Badan menyebut `room` dan `action` + `nonce` acak. Worker mendengar di `127.0.0.1` (Caddy menerbitkannya); `GET /health` hanya `{"status":"ok"}`.
 
 - Aplikasi → worker (`TRANSCRIBER_URL`): `POST /rooms/{room}/join` `{"action":"join","room":"rk-…","token":"<JWT LiveKit rk-notulen, hidden, subscribe saja, 10 menit>","exclude":["<user id yang menolak>"],"nonce":"…"}` · `POST /rooms/{room}/exclude` `{"action":"exclude","room","identity","excluded":true,"nonce"}` · `POST /rooms/{room}/finish` `{"action":"finish","room","nonce"}` · `GET /health`.
 - Worker → aplikasi: `POST /api/notulen/transcript` `{"room","session","status":"recording|transcribing|ready|failed","started_at","ended_at","language","model","duration_ms","segments":[{"speaker_identity","speaker_name","start_ms","end_ms","text"}],"error"}` → `200 {"status":"recorded"|"ignored"}`, `401` tanda tangan, `404` tidak diatur, `413`, `422`.

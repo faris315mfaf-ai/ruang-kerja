@@ -35,6 +35,8 @@ final class RecordTranscriptUpdate
 {
     public const int MAX_SEGMENTS = 20000;
 
+    public const string GUEST_NAME = 'Peserta tamu';
+
     public function __construct(
         private readonly VideoRooms $rooms,
         private readonly MeetingOccurrences $occurrences,
@@ -197,12 +199,14 @@ final class RecordTranscriptUpdate
 
             $start = max(0, (int) $segment['start_ms']) + $offset;
             $end = max($start, (is_numeric($segment['end_ms'] ?? null) ? (int) $segment['end_ms'] : 0) + $offset);
-            $name = $userId !== null ? (string) $names[$userId] : (is_string($segment['speaker_name'] ?? null) ? $segment['speaker_name'] : '');
+            // Display names come from users.name only: a LiveKit participant can rename
+            // themselves, so the worker's speaker_name is never trusted (audit N-01).
+            $name = $userId !== null ? (string) $names[$userId] : self::GUEST_NAME;
 
             $clean[] = [
                 'speaker_identity' => $identity,
                 'user_id' => $userId,
-                'speaker_name' => mb_substr(trim($name) !== '' ? trim($name) : 'Peserta', 0, 120),
+                'speaker_name' => mb_substr($name, 0, 120),
                 'start_ms' => $start,
                 'end_ms' => $end,
                 'text' => mb_substr($text, 0, 2000),

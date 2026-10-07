@@ -56,7 +56,7 @@ def is_noise(text: str, duration_ms: int, no_speech_prob: float = 0.0) -> bool:
     return cleaned.rstrip("!.") in {h.rstrip("!.") for h in HALLUCINATIONS} and duration_ms < 4_000
 
 
-def merge(pieces: Iterable[Piece], join_gap_ms: int = 1_500, max_chars: int = 600) -> list[dict[str, object]]:
+def merge(pieces: Iterable[Piece], join_gap_ms: int = 1_500, max_chars: int = 400) -> list[dict[str, object]]:
     """Order by start time and join consecutive pieces of the same speaker."""
     ordered = sorted(
         (p for p in pieces if clean_text(p.text)),
