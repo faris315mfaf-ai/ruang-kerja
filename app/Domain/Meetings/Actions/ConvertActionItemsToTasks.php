@@ -4,6 +4,7 @@ namespace App\Domain\Meetings\Actions;
 
 use App\Domain\Meetings\Data\Occurrence;
 use App\Domain\Meetings\Services\MinutesStore;
+use App\Domain\Meetings\Services\RoomEvents;
 use App\Domain\Notifications\Actions\ResolveNotificationsForSubject;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Tasks\Actions\CreateTask;
@@ -29,6 +30,7 @@ final class ConvertActionItemsToTasks
         private readonly MinutesStore $store,
         private readonly CreateTask $createTask,
         private readonly ResolveNotificationsForSubject $resolve,
+        private readonly RoomEvents $events,
     ) {}
 
     /**
@@ -84,6 +86,10 @@ final class ConvertActionItemsToTasks
 
         foreach ($created as [$item]) {
             $this->resolve->handle($item, NotificationType::ActionItemDue);
+        }
+
+        if ($created !== []) {
+            $this->events->minutesChanged($minutes, $occurrence->meeting);
         }
 
         return array_map(fn (array $pair): Task => $pair[1], $created);

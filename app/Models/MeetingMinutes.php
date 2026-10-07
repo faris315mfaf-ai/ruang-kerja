@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Meetings\Enums\MinutesSource;
 use App\Domain\Meetings\Enums\MinutesStatus;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -16,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Structured (attendance, notes per agenda item, decisions) with follow-ups
  * in meeting_action_items and snapshots in meeting_minute_versions. Access
  * follows the meeting (MeetingPolicy); final = locked until reopened.
+ * `notes_source` = how the notes were started on the video pre-join screen
+ * (ChooseMinutesSource, once per occurrence).
  *
  * @property string $id
  * @property string $meeting_id
@@ -28,13 +31,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $updated_by
  * @property CarbonImmutable|null $finalized_at
  * @property string|null $finalized_by
+ * @property MinutesSource|null $notes_source
+ * @property string|null $notes_source_by
+ * @property CarbonImmutable|null $notes_source_at
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read Meeting $meeting
  * @property-read Collection<int, MeetingActionItem> $actionItems
  * @property-read Collection<int, MeetingMinuteVersion> $versions
  */
-#[Fillable(['meeting_id', 'occurrence_date', 'status', 'attendance', 'sections', 'decisions', 'version', 'updated_by', 'finalized_at', 'finalized_by'])]
+#[Fillable(['meeting_id', 'occurrence_date', 'status', 'attendance', 'sections', 'decisions', 'version', 'updated_by', 'finalized_at', 'finalized_by', 'notes_source', 'notes_source_by', 'notes_source_at'])]
 class MeetingMinutes extends Model
 {
     use HasUlids;
@@ -63,6 +69,8 @@ class MeetingMinutes extends Model
             'decisions' => 'array',
             'version' => 'integer',
             'finalized_at' => 'datetime',
+            'notes_source' => MinutesSource::class,
+            'notes_source_at' => 'datetime',
         ];
     }
 

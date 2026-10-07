@@ -14,6 +14,7 @@ use App\Models\MeetingActionItem;
 use App\Models\MeetingAttendance;
 use App\Models\MeetingMinutes;
 use App\Models\MeetingParticipant;
+use App\Models\MeetingSpeakingTime;
 use App\Models\Note;
 use App\Models\NoteShare;
 use App\Models\NoteVersion;
@@ -383,7 +384,8 @@ it('keeps Rapat & Kalender free of N+1', function () {
         '/rapat/baru' => ['kadiv', 36],
         "/rapat/{$standup->id}" => ['kadiv', 38],
         "/rapat/{$standup->id}/notulen?tanggal={$draft->occurrence_date->toDateString()}" => ['kadiv', 39],
-        // Video RuangKerja: detail with attendance, pre-join and room pages.
+        // Video RuangKerja: detail with attendance, pre-join and room pages
+        // ("Notulen Hidup" props: participants, minutes, previous follow-ups, speaking time).
         "/rapat/{$video->id}" => ['kadiv', 39],
         "/rapat/{$video->id}/gabung" => ['kadiv', 38],
         "/rapat/{$video->id}/ruang" => ['kadiv', 38],
@@ -392,9 +394,15 @@ it('keeps Rapat & Kalender free of N+1', function () {
     ];
 
     // Meetings are not part of P::grow(): add participants, meetings, minutes and follow-ups here.
+    // Previous minutes of the video meeting with one open follow-up (pre-join "Lanjutkan").
+    $previousVideo = MeetingMinutes::query()->create(['meeting_id' => $video->id, 'occurrence_date' => '2026-09-30']);
+    MeetingActionItem::query()->create(['minutes_id' => $previousVideo->id, 'text' => 'Butir lalu', 'assignee_id' => $kadiv->id, 'due_date' => '2026-10-02']);
+
     $growMeetings = function () use ($kadiv, $standup, $draft, $video): void {
         $today = CarbonImmutable::now('Asia/Jakarta')->toDateString();
         $people = User::factory()->count(5)->create(['company_id' => $kadiv->company_id]);
+        $videoDate = app(MeetingOccurrences::class)->resolve($video, null)->date;
+        $previousVideo = MeetingMinutes::query()->where('meeting_id', $video->id)->where('occurrence_date', '2026-09-30')->sole();
         Meeting::factory()->count(4)->by($kadiv)->at($today.' 15:00')->withParticipants($people->all())->create();
         Meeting::factory()->count(2)->by(P::user('direksi'))->leadership()->at($today.' 08:00')->withParticipants($people->all())->create();
 
@@ -409,6 +417,9 @@ it('keeps Rapat & Kalender free of N+1', function () {
             ]);
             MeetingActionItem::query()->create(['minutes_id' => $draft->id, 'text' => 'Butir', 'assignee_id' => $person->id, 'due_date' => '2026-10-09']);
             MeetingActionItem::query()->create(['minutes_id' => $draft->id, 'text' => 'Butir saya', 'assignee_id' => $kadiv->id, 'due_date' => '2026-10-09']);
+            // "Notulen Hidup" room: speaking time and open follow-ups of the previous minutes.
+            MeetingSpeakingTime::query()->create(['meeting_id' => $video->id, 'occurrence_date' => $videoDate, 'user_id' => $person->id, 'ms_spoken' => 1000]);
+            MeetingActionItem::query()->create(['minutes_id' => $previousVideo->id, 'text' => 'Butir lalu', 'assignee_id' => $person->id, 'due_date' => '2026-10-02']);
         }
     };
 

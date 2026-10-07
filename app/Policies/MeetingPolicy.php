@@ -29,6 +29,9 @@ use Illuminate\Auth\Access\Response;
  *   participants open the pre-join/room pages; a token is issued only inside
  *   the join window (VideoRooms; organizer any time). Leadership observers
  *   who were not invited do not join. Mute / remove others: organizer.
+ *   "Panggil" a missing participant: organizer or minute taker. Speaking
+ *   time is reported inside the join window (joinVideo) and read by anyone
+ *   who may open the room (openVideo).
  * No Gate::before: Super Admin has no extra rights here.
  */
 class MeetingPolicy
@@ -176,6 +179,23 @@ class MeetingPolicy
             'closed' => Response::deny('Rapat sudah selesai. Ruang rapat sudah ditutup.'),
             default => Response::allow(),
         };
+    }
+
+    /**
+     * "Panggil" an invited person who is not in the video room yet, and
+     * choose how the notes start (pre-join): organizer or minute taker.
+     */
+    public function callParticipant(User $user, Meeting $meeting): Response
+    {
+        $open = $this->openVideo($user, $meeting);
+
+        if ($open->denied()) {
+            return $open;
+        }
+
+        return $this->canWriteMinutes($user, $meeting)
+            ? Response::allow()
+            : Response::deny('Hanya notulis atau penyelenggara yang dapat memanggil peserta.');
     }
 
     /** Mute or remove someone in the video room. */

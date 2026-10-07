@@ -72,6 +72,14 @@ class MinutesController extends Controller
         ]);
     }
 
+    /** GET /rapat/{meeting}/notulen/data: fresh minutes (video room refetch after minutes.updated). */
+    public function data(OccurrenceRequest $request, Meeting $meeting): JsonResponse
+    {
+        Gate::authorize('view', $meeting);
+
+        return $this->minutesResponse($this->occurrence($request, $meeting))->header('Cache-Control', 'no-store');
+    }
+
     public function save(SaveMinutesRequest $request, Meeting $meeting, #[CurrentUser] User $user, SaveMinutes $save): JsonResponse
     {
         $occurrence = $this->occurrence($request, $meeting);

@@ -3,6 +3,7 @@
 namespace App\Domain\Meetings\Actions;
 
 use App\Domain\Meetings\Enums\MinutesStatus;
+use App\Domain\Meetings\Services\RoomEvents;
 use App\Domain\Organization\Services\AuditLogger;
 use App\Models\MeetingMinutes;
 use App\Models\User;
@@ -14,7 +15,10 @@ use Illuminate\Support\Facades\DB;
  */
 final class ReopenMinutes
 {
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(
+        private readonly AuditLogger $audit,
+        private readonly RoomEvents $events,
+    ) {}
 
     public function handle(MeetingMinutes $minutes, User $actor): MeetingMinutes
     {
@@ -38,6 +42,7 @@ final class ReopenMinutes
                 'status' => MinutesStatus::Final->value,
                 'finalized_at' => $finalizedAt,
             ], ['status' => MinutesStatus::Draft->value], $actor);
+            $this->events->minutesChanged($locked);
 
             return $locked;
         });
