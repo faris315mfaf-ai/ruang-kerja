@@ -4,6 +4,7 @@ namespace App\Domain\Tasks\Queries;
 
 use App\Domain\Tasks\Enums\TaskStatusCategory;
 use App\Models\Task;
+use App\Models\User;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,28 +19,72 @@ final class BoardTasks
 {
     public const int CLOSED_DAYS = 30;
 
+    /** Comments older than this never light the "unread" dot of a card. */
+    public const int UNREAD_COMMENT_DAYS = 14;
+
     /**
+     * With a $viewer the cards also carry their comment badge (`comments_count`
+     * and `has_unread_comments`, see self::withCommentState()).
+     *
      * @return Builder<Task>
      */
-    public static function query(): Builder
+    public static function query(?User $viewer = null): Builder
     {
-        return Task::query()
+        $query = Task::query()
             ->with(['workspace:id,key', 'assignees:id', 'labels:id', 'parent:id,number'])
             ->withCount([
                 'checklistItems',
                 'checklistItems as checklist_done_count' => fn (Builder $query) => $query->where('is_done', true),
             ]);
+
+        return $viewer !== null ? self::withCommentState($query, $viewer) : $query;
+    }
+
+    /**
+     * Comment badge of a card, as subqueries of the same SELECT (no extra
+     * query per card): `comments_count` (not deleted) and `has_unread_comments`
+     * — the viewer follows the task (watcher) or is assigned to it, and someone
+     * else commented in the last UNREAD_COMMENT_DAYS days after the viewer's
+     * read pointer (task_comment_reads; no pointer = nothing read yet).
+     *
+     * @param  Builder<Task>  $query
+     * @return Builder<Task>
+     */
+    public static function withCommentState(Builder $query, User $viewer): Builder
+    {
+        $morph = (new Task)->getMorphClass();
+
+        return $query
+            ->withCount('comments')
+            ->selectRaw(
+                '(
+                    (EXISTS (SELECT 1 FROM task_watchers w WHERE w.task_id = tasks.id AND w.user_id = ?)
+                        OR EXISTS (SELECT 1 FROM task_assignees a WHERE a.task_id = tasks.id AND a.user_id = ?))
+                    AND EXISTS (
+                        SELECT 1 FROM comments c
+                        WHERE c.commentable_type = ? AND c.commentable_id = tasks.id
+                          AND c.deleted_at IS NULL AND c.user_id <> ? AND c.created_at >= ?
+                          AND NOT EXISTS (
+                              SELECT 1 FROM task_comment_reads r
+                              WHERE r.task_id = tasks.id AND r.user_id = ?
+                                AND (r.last_read_at, r.last_read_comment_id) >= (c.created_at, c.id)
+                          )
+                    )
+                ) AS has_unread_comments',
+                [$viewer->id, $viewer->id, $morph, $viewer->id, now()->subDays(self::UNREAD_COMMENT_DAYS), $viewer->id],
+            );
     }
 
     /**
      * @param  array{0: CarbonImmutable, 1: CarbonImmutable}|null  $dueRange
+     * @param  User|null  $viewer  adds the comment badge (self::withCommentState())
      * @return Collection<int, Task>
      */
-    public function for(Workspace $workspace, ?array $dueRange = null): Collection
+    public function for(Workspace $workspace, ?array $dueRange = null, ?User $viewer = null): Collection
     {
         $since = now()->subDays(self::CLOSED_DAYS);
 
-        return self::query()
+        return self::query($viewer)
             ->where('workspace_id', $workspace->id)
             ->where(function (Builder $query) use ($since, $dueRange): void {
                 $query->whereNotIn('status_category', TaskStatusCategory::closedValues())

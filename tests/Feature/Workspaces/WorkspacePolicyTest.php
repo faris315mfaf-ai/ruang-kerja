@@ -160,6 +160,11 @@ dataset('task matrix', [
     ['move', 'internal', ['owner', 'admin', 'member']],
     ['move', 'archived', []],
     ['delete', 'private', ['owner', 'admin', 'member']],
+    // Comment read pointer ("Dibaca oleh"): everyone who can see the task except view-only management.
+    ['trackCommentReads', 'personal', ['owner']],
+    ['trackCommentReads', 'private', $members],
+    ['trackCommentReads', 'internal', [...$members, 'outsider', 'kadiv']],
+    ['trackCommentReads', 'archived', $members],
 ]);
 
 it('applies the task role matrix', function (string $ability, string $workspace, array $allowed) {

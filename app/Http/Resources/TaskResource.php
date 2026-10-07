@@ -10,6 +10,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * Task for board/list/calendar (resources/js/features/tasks/types.ts `Task`).
  * Eager-load `workspace:id,key`, `assignees:id`, `labels:id`, `parent:id,number`
  * and the checklist counts (see BoardTasks::query()) to avoid N+1 queries.
+ * `comments` (count + unread dot) is present only when the query was built
+ * for a viewer (BoardTasks::query($viewer)).
  *
  * @mixin Task
  */
@@ -49,6 +51,11 @@ class TaskResource extends JsonResource
             'created_by' => $task->created_by,
             'created_at' => $task->created_at?->toIso8601String(),
             'completed_at' => $task->completed_at?->toIso8601String(),
+            // Comment badge, only when queried for a viewer (BoardTasks::withCommentState()).
+            'comments' => $this->when(array_key_exists('comments_count', $attributes), fn (): array => [
+                'count' => (int) ($attributes['comments_count'] ?? 0),
+                'unread' => (bool) ($attributes['has_unread_comments'] ?? false),
+            ]),
         ];
     }
 }
