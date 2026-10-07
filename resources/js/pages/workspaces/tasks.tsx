@@ -25,6 +25,7 @@ import {
 } from '@/features/tasks/realtime/connection';
 import { ConnectionIndicator } from '@/features/tasks/realtime/connection-indicator';
 import { createCardRefresher } from '@/features/tasks/realtime/task-card';
+import { useCommentsReadSignal } from '@/features/tasks/realtime/comment-reads';
 import { useWorkspaceEvents } from '@/features/tasks/realtime/workspace-channel';
 import { toggleAssignee } from '@/features/tasks/shortcuts/keys';
 import { QuickPropertyDialog } from '@/features/tasks/shortcuts/quick-property-dialog';
@@ -195,7 +196,13 @@ function TasksView(props: Props) {
         'task.updated': ({ task }) => cards.schedule(task.id),
         'task.moved': ({ task }) => cards.schedule(task.id),
         'task.deleted': ({ task }) => removeTask(task.id),
+        // Comment badge (count + unread dot) of the card.
+        'comment.posted': ({ task_id }) => cards.schedule(task_id),
+        'comment.deleted': ({ task_id }) => cards.schedule(task_id),
     });
+
+    // The viewer read a task's comments in the sheet: clear its dot.
+    useCommentsReadSignal(board.markCommentsRead);
 
     // WebSocket down: refresh the tasks every 30 s.
     usePolling(connection === 'polling', () =>

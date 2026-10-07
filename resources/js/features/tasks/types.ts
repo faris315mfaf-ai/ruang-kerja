@@ -77,6 +77,14 @@ export type Task = {
     created_by: string | null;
     created_at: string;
     completed_at: string | null;
+    /** Comment badge for the viewer (board/list cards only; absent elsewhere). */
+    comments?: TaskCommentBadge;
+};
+
+/** Comments on a card: count (not deleted) + new comments since the viewer read them. */
+export type TaskCommentBadge = {
+    count: number;
+    unread: boolean;
 };
 
 /** A task on cross-workspace screens (Tugas saya) with resolved relations. */

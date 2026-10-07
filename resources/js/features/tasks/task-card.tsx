@@ -3,6 +3,7 @@ import { memo } from 'react';
 import { PriorityIcon } from '@/components/priority-icon';
 import { cn } from '@/lib/utils';
 import { AvatarStack } from './avatar-stack';
+import { CommentBadge } from './comment-badge';
 import { DueBadge } from './due-badge';
 import { dueState, formatCompletion } from './lib/due-date';
 import { LabelPill } from './label-pill';
@@ -81,6 +82,7 @@ export const TaskCardContent = memo(function TaskCardContent({
         task.due_date !== null ||
         task.completed_at !== null ||
         assignees.length > 0 ||
+        (task.comments?.count ?? 0) > 0 ||
         action !== undefined;
 
     return (
@@ -154,6 +156,7 @@ export const TaskCardContent = memo(function TaskCardContent({
                                 />
                             )
                         )}
+                        <CommentBadge comments={task.comments} />
                     </div>
                     {assignees.length > 0 && (
                         <AvatarStack people={assignees} size="lg" />

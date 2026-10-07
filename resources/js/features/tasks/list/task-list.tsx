@@ -23,6 +23,7 @@ import { StatusIcon } from '@/components/status-icon';
 import { Badge } from '@/components/ui/badge';
 import { cn, focusRing } from '@/lib/utils';
 import { AvatarStack } from '../avatar-stack';
+import { CommentBadge } from '../comment-badge';
 import { DueBadge } from '../due-badge';
 import { LabelPill } from '../label-pill';
 import { dueState } from '../lib/due-date';
@@ -168,6 +169,7 @@ function TaskRow({
                             {row.checklist.done}/{row.checklist.total}
                         </span>
                     )}
+                    <CommentBadge comments={row.comments} />
                     {row.assignees[0] && (
                         <span className="truncate md:hidden">
                             {row.assignees[0].name.split(' ')[0]}

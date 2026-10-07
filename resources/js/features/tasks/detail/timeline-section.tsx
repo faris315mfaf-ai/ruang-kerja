@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ActivityRow } from './activity-row';
 import { CommentItem } from './comment-item';
+import { receiptCommentIds } from './comment-reads';
+import { ReadReceipt } from './read-receipt';
 import { commentCount } from './timeline';
+import { useCommentReads } from './use-comment-reads';
 import type { TaskDetailState } from './use-task-detail';
 import type { TaskDetail } from './types';
 
@@ -22,6 +25,13 @@ export function TimelineSection({ state, mobile = false }: Props) {
             ? detail.timeline
             : detail.timeline.filter((item) => item.kind === 'comment');
     const comments = commentCount(detail.timeline);
+    const section = useRef<HTMLElement>(null);
+    // "Dibaca oleh": marks the comments read while this list is on screen.
+    useCommentReads(state, section);
+    const receipts =
+        detail.workspace.type === 'personal'
+            ? new Set<string>()
+            : receiptCommentIds(detail.timeline, viewer?.id);
 
     // Deep link "#komentar-{id}" (notifications): scroll to it and highlight.
     useEffect(() => {
@@ -44,7 +54,11 @@ export function TimelineSection({ state, mobile = false }: Props) {
     }, [detail.task.id]);
 
     return (
-        <section aria-labelledby="task-activity" className="space-y-4">
+        <section
+            ref={section}
+            aria-labelledby="task-activity"
+            className="space-y-4"
+        >
             <header className="flex flex-wrap items-center gap-2">
                 <h2
                     id="task-activity"
@@ -117,6 +131,15 @@ export function TimelineSection({ state, mobile = false }: Props) {
                                     onAttachmentsChange={state.refresh}
                                 />
                             )}
+                            {item.kind === 'comment' &&
+                                receipts.has(item.id) && (
+                                    <ReadReceipt
+                                        comment={item}
+                                        reads={detail.comment_reads}
+                                        viewerId={viewer?.id}
+                                        mobile={mobile}
+                                    />
+                                )}
                         </li>
                     ))}
                 </ol>
