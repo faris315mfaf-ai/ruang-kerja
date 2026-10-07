@@ -379,6 +379,12 @@ export type MeetingRoomEvents = {
         updated_by: PersonId | null;
         status: 'draft' | 'final';
     };
+    /** Re-admitted after a removal: that person re-fetches the video and collab tokens. */
+    'participant.readmitted': {
+        occurrence_date: string;
+        user_id: PersonId;
+        readmitted_by: PersonId;
+    };
     'minutes.editing': {
         occurrence_date: string;
         editing: MinutesEditingHolder | null;

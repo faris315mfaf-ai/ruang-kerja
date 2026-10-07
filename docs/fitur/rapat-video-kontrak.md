@@ -192,7 +192,7 @@ Notulen = notulen terstruktur yang sudah ada (`meeting_minutes`: kehadiran, cata
 
 - `doc` = bentuk `Minutes` yang sudah ada (`features/meetings/types.ts`) + `source` (`continue|template|blank|null`, §2). Notulen yang belum pernah disimpan: `id` null, isi = draf kosong (bagian = agenda).
 - **Kehadiran di notulen ≠ persetujuan transkrip.** `doc.attendance` adalah daftar hadir rapat (siapa hadir/izin, isian awal dari siapa yang masuk ruang video menurut webhook) dan diatur notulis/penyelenggara. Pilihan "Jangan transkrip suara saya" (notulen otomatis, kontrak agen notulen §3) **tidak** mengubah kehadiran: orang yang menolak transkrip tetap tercatat hadir, dan orang yang tidak hadir tidak perlu menolak apa pun.
-- **Mode collab — token** `GET collab.token_url` (`meetings.minutes.collab`, siapa pun yang melihat rapat; 503 bila kolaborasi mati; `Cache-Control: no-store`; membuat baris notulen bila belum ada):
+- **Mode collab — token** `GET collab.token_url` (`meetings.minutes.collab`, siapa pun yang melihat rapat; 503 bila kolaborasi mati; `Cache-Control: no-store`). Baris notulen dibuat hanya untuk penyunting; pembaca (mis. pengamat rapat pimpinan) mendapat **404** "Notulen belum dimulai." selama notulen belum ada — tampilkan "Notulen belum dimulai" dan coba lagi setelah `minutes.updated`. Orang yang dikeluarkan dari ruang mendapat `can_edit: false` sampai diizinkan lagi:
 
   ```json
   { "document": "meeting-minutes.01JBMXN0000000000000000AAA", "token": "eyJub3Rl…", "url": "wss://kantor.example/collab", "can_edit": true, "expires_in": 120 }
@@ -367,6 +367,7 @@ Efek: notifikasi in-app (Inbox + toast realtime di kanal pribadi orang itu; emai
 - **Angkat tangan** `POST links.hand` `{"raised": true|false}` (`meetings.video.hand`, `joinVideo`, `throttle:30,1`) → `{"hand": "1759889400123"}` (waktu angkat dalam ms) atau `{"hand": ""}`. Server mengatur atribut LiveKit `hand` peserta itu (Room Service `UpdateParticipant`); klien lain melihatnya lewat `ParticipantAttributesChanged` seperti sebelumnya (urut menurut nilai). 502 bila LiveKit gagal, 503 bila belum diatur.
 - **Atribut sendiri lainnya** `POST links.attributes` `{"attributes": {"rk_minutes_at": "section-2"}}` (`meetings.video.attributes`, `joinVideo`, `throttle:60,1`) → `{"attributes": {…}}`. Hanya kunci: `hand` (ms atau "") dan `rk_minutes_at` (bagian notulen yang sedang dilihat, untuk kehadiran kolaborator; ≤ 64 karakter `[A-Za-z0-9_.:-]`). Nilai "" menghapus; kunci lain → 422. **Penolakan transkrip tidak pernah menjadi atribut LiveKit** (akan terlihat semua orang di ruang): cukup `PUT …/notulen-otomatis/persetujuan`, server meneruskannya ke worker. Ganti semua `localParticipant.setAttributes(...)` dengan endpoint ini (debounce untuk `rk_minutes_at`).
 - Bisukan (`POST …/video/peserta/{user}/bisukan`) kini diaudit `meeting.video_participant_muted`.
+- Orang yang **dihapus dari daftar undangan** (ubah rapat) dikeluarkan dari ruang video rapat itu dan semua dokumen notulen kolaboratif draf rapat itu tersambung ulang (job `DisconnectUninvited`); token baru ditolak (404).
 - Rapat video **dibatalkan** → semua ruang LiveKit-nya yang mungkin hidup dihapus (`DeleteRoom`, job `CloseMeetingRooms`): klien menerima `Disconnected` (alasan `ROOM_DELETED`) → tampilkan "Rapat dibatalkan". Akun **dinonaktifkan** → tidak mendapat token dan dikeluarkan dari ruang yang sedang diikuti (job `RemoveUserFromVideoRooms`).
 
 ## 5. Realtime (Reverb)
@@ -379,6 +380,7 @@ Kanal privat **`meeting.{meetingId}`** (`Echo.private('meeting.' + id)`; otorisa
 | `participant.called` | `{occurrence_date, user_id, called_by, called_at}` | Panggil berhasil | "Dipanggil 09.12" di baris belum masuk |
 | `minutes.source_chosen` | `{occurrence_date, source, chosen_by, chosen_at}` | sumber notulen dipilih | pra-gabung orang lain: ganti kartu pilihan |
 | `minutes.updated` | `{occurrence_date, minutes_id, version, saved_at, updated_by, status}` | notulen disimpan/difinalkan/dibuka kembali, tindak lanjut berubah, sumber dipilih | debounce 1 detik → `GET minutes.links.data` (abaikan bila `updated_by` = diri sendiri dan tidak ada perubahan status) |
+| `participant.readmitted` | `{occurrence_date, user_id, readmitted_by}` | penyelenggara menekan Izinkan masuk lagi | bila `user_id` = diri sendiri: minta token video **dan** token kolaborasi baru (server juga memutus sambungan dokumen supaya provider tersambung ulang dengan hak sunting); semua klien: hapus dari daftar `removed` |
 | `minutes.editing` | `{occurrence_date, editing: {user_id, name, since, expires_at} \| null}` | mode autosave: pemegang petunjuk menyunting berganti / dilepas | tampilkan/hapus "X sedang menyunting" |
 | `attendance.updated` | `{occurrence_date, user_id, event: "joined" \| "left" \| "finished"}` | webhook LiveKit tercatat | ambil ulang `GET …/video/kehadiran` (debounce 2 detik) |
 
@@ -408,6 +410,7 @@ Wayfinder: `@/routes/meetings` (mis. `meetings.video.speaking.report.url(id, {qu
 |---|---|
 | 7 Okt 2026 | Versi pertama (rapatbe). |
 | 7 Okt 2026 | Keputusan lead: notulen kolaboratif (`mode`, `collab`, token `…/notulen/kolaborasi`, `can_edit` per mode, `can_edit_attendance`, `attendance_only`), petunjuk menyunting (`editing`, `…/notulen/menyunting`, event `minutes.editing`), sumber waktu bicara & retensi, `template.key = agenda` + `template.label` (ganti `template.name`), kehadiran ≠ persetujuan transkrip. |
+| 7 Okt 2026 | Audit fase 2: token kolaborasi 404 untuk pembaca sebelum notulen ada (B-06), dikeluarkan dari undangan → keluar ruang & dokumen (B-07), event `participant.readmitted` (B-08), batas badan endpoint mesin notulen (B-05). |
 | 7 Okt 2026 | `rk_notulen_optout` dihapus dari `POST …/video/atribut` (penolakan transkrip tetap di server); `notulen` null bila tidak tersedia & mati. |
 | 7 Okt 2026 | Gabung cabang notulen: `notulen` = `NotulenSummary` sungguhan (juga di detail, lazy), `auto_minutes` di form jadwal (§1.5). |
 | 7 Okt 2026 | Audit keamanan: `removed` + Izinkan masuk lagi (R-04), token tanpa `canUpdateOwnMetadata` + `POST …/video/tangan` dan `POST …/video/atribut` (R-05), bisukan diaudit (R-08), ruang ditutup saat batal / akun nonaktif (R-09), `links.readmit`, `links.hand`. |
