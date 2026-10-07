@@ -196,7 +196,10 @@ function SetPasswordForm({
 
             <label className="flex items-start gap-2 text-[15px]">
                 <Checkbox
-                    checked={form.data.must_change}
+                    checked={
+                        form.data.mode === 'default' || form.data.must_change
+                    }
+                    disabled={form.data.mode === 'default'}
                     onCheckedChange={(checked) =>
                         form.setData('must_change', checked === true)
                     }
@@ -205,7 +208,9 @@ function SetPasswordForm({
                 <span>
                     Wajib ganti kata sandi saat login berikutnya
                     <span className="block text-meta text-text-muted">
-                        Disarankan: hanya {target.name} yang tahu kata sandinya.
+                        {form.data.mode === 'default'
+                            ? 'Selalu untuk sandi bawaan: semua karyawan mengetahuinya.'
+                            : `Disarankan: hanya ${target.name} yang tahu kata sandinya.`}
                     </span>
                 </span>
             </label>

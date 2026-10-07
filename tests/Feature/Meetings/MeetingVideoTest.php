@@ -165,12 +165,14 @@ describe('token endpoint', function () {
             ->and(json_decode($claims->metadata, true))->toMatchArray(['organizer' => false]);
     });
 
-    it('gives the organizer roomAdmin', function () {
+    it('marks the organizer in metadata without a roomAdmin grant (moderation goes through the app)', function () {
         $token = $this->actingAs($this->dimas)->postJson("/rapat/{$this->meeting->id}/video/token")->json('token');
 
         $claims = decodeLiveKitJwt($token);
 
-        expect($claims->video->roomAdmin)->toBeTrue()
+        // Audit rapat 2026-10 R-03: a browser token with roomAdmin could call the
+        // Room Service API directly (remove, rename, mute) without audit.
+        expect(property_exists($claims->video, 'roomAdmin'))->toBeFalse()
             ->and(json_decode($claims->metadata, true)['organizer'])->toBeTrue();
     });
 

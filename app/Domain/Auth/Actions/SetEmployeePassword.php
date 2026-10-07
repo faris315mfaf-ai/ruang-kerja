@@ -16,7 +16,8 @@ use LogicException;
  * company default password ("Sandi bawaan", EMPLOYEE_DEFAULT_PASSWORD; never
  * for a Super Admin) or types a new one. In one transaction: the password and
  * "wajib ganti saat login berikutnya" are saved, every existing sign-in of the
- * employee ends, open "Lupa kata sandi" requests are closed and
+ * employee ends (the default password always with "wajib ganti"), open
+ * "Lupa kata sandi" requests are closed and
  * `user.password_set_by_hr` is audited with the mode, never the value. The
  * employee is told in-app and by email (after commit).
  */
@@ -41,6 +42,10 @@ final readonly class SetEmployeePassword
         if ($toDefault && ! $this->defaultPassword->appliesTo($employee)) {
             throw new LogicException('The default password is off or not allowed for this account.');
         }
+
+        // The default password is shared company-wide: an account may never keep
+        // it without "wajib ganti" (audit rapat 2026-10, R-01).
+        $mustChange = $mustChange || $toDefault;
 
         DB::transaction(function () use ($actor, $employee, $password, $mustChange, $toDefault): void {
             $employee->forceFill([
