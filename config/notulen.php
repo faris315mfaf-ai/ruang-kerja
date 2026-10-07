@@ -6,9 +6,9 @@
 |--------------------------------------------------------------------------
 |
 | After-meeting transcription + AI draft minutes for meetings with
-| `auto_minutes` (docs/fitur/notulen-otomatis-kontrak.md, deploy guide
-| docs/deploy/NOTULEN-OTOMATIS.md). The worker (transcriber/, Python) runs
-| next to LiveKit on the meeting server; the app asks it to join a room and
+| `auto_minutes` (docs/fitur/notulen-otomatis-kontrak.md; deploy guide
+| docs/deploy/RAPAT-VIDEO.md §7–§8; worker files transcriber/DEPLOY.md).
+| The worker (transcriber/, Python) runs next to LiveKit on the meeting server; the app asks it to join a room and
 | receives the transcript back. Both directions are HMAC-signed with
 | TRANSCRIBER_SECRET (App\Domain\Meetings\Transcripts\Services\NotulenSignature).
 |

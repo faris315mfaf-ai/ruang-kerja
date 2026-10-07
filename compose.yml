@@ -104,7 +104,7 @@ services:
       - "127.0.0.1:50000-50100:50000-50100/udp"
 
   # Notulen otomatis: worker yang merekam ruang LiveKit sebagai peserta tersembunyi lalu
-  # mentranskrip setelah rapat (transcriber/, docs/deploy/NOTULEN-OTOMATIS.md §7 Lokal).
+  # mentranskrip setelah rapat (transcriber/, docs/deploy/RAPAT-VIDEO.md §7–§8, transcriber/DEPLOY.md "Lokal").
   # Butuh profil video: docker compose --profile video --profile notulen up -d livekit transcriber
   # TRANSCRIBER_SECRET dibaca dari .env aplikasi (sama dengan Laravel). Model Whisper diunduh
   # sekali ke volume notulen-models (large-v3-turbo ±1,6 GB; WHISPER_MODEL=small untuk uji cepat).

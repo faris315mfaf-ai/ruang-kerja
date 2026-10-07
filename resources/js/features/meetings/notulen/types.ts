@@ -81,8 +81,14 @@ export type NotulenSummary = {
     can_configure: boolean;
     can_manage: boolean;
     can_view_transcript: boolean;
+    /** Full privacy notice (pre-join + room) when auto_minutes is on. */
     notice: string | null;
-    consent: { opted_out: boolean; can_change: boolean; attribute: string };
+    /** The same notice as separate sentences (for a list layout). */
+    notice_points: string[];
+    /** Private choice: the server tells the worker, never a LiveKit attribute. */
+    consent: { opted_out: boolean; can_change: boolean };
+    /** People who chose "Jangan transkrip suara saya" for this meeting. */
+    optout_count: number;
     llm: { enabled: boolean; provider: string; outside_indonesia: boolean };
     retention_days: number;
     links: {

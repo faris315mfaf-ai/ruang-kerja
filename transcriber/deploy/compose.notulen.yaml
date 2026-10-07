@@ -1,0 +1,40 @@
+# Notulen otomatis worker on the meeting server, next to LiveKit (/opt/livekit).
+# Copy to /opt/livekit/compose.notulen.yaml and start it as a second project:
+#   cd /opt/livekit && sudo docker compose -f compose.notulen.yaml --env-file notulen.env up -d
+# LiveKit from livekit/generate runs with network_mode host, so the worker does too:
+# it reaches LiveKit at ws://127.0.0.1:7880 and listens only on 127.0.0.1:8090
+# (Caddy publishes it as https://notulen.<domain>, see caddy-notulen.yaml).
+name: notulen
+
+services:
+  transcriber:
+    image: ${TRANSCRIBER_IMAGE:-ghcr.io/OWNER/ruangkerja-transcriber:latest}
+    # Or build on the server: `build: ./transcriber` with the repo's transcriber/ folder copied next to this file.
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      TRANSCRIBER_SECRET: ${TRANSCRIBER_SECRET:?set TRANSCRIBER_SECRET in notulen.env}
+      TRANSCRIBER_APP_URL: ${TRANSCRIBER_APP_URL:?e.g. https://spkd.store}
+      TRANSCRIBER_HOST: 127.0.0.1
+      TRANSCRIBER_PORT: 8090
+      LIVEKIT_URL: ws://127.0.0.1:7880
+      WHISPER_MODEL: ${WHISPER_MODEL:-large-v3-turbo}
+      WHISPER_COMPUTE_TYPE: int8
+      # Threads per transcription; keep <= the CPU limit below.
+      WHISPER_CPU_THREADS: ${WHISPER_CPU_THREADS:-4}
+      TRANSCRIBE_CONCURRENCY: ${TRANSCRIBE_CONCURRENCY:-1}
+    # 8 vCPU server: LiveKit keeps at least half the machine.
+    cpus: ${TRANSCRIBER_CPUS:-4}
+    mem_limit: ${TRANSCRIBER_MEMORY:-6g}
+    volumes:
+      # Whisper model cache (large-v3-turbo ±1.6 GB, downloaded on first start).
+      - notulen-models:/models
+      # Audio spool: deleted right after transcription (leftovers after 24 h).
+      - notulen-spool:/var/spool/notulen
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+volumes:
+  notulen-models:
+  notulen-spool:

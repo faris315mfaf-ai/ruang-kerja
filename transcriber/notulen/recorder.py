@@ -2,8 +2,9 @@
 
 The worker subscribes manually (``auto_subscribe=False``): a track is subscribed only
 when its owner may be recorded (``optout.may_record``), so audio of people who opted
-out never reaches this process. When someone opts out during the meeting, their
-subscription ends and everything already recorded for them is deleted.
+out never reaches this process. When the app relays an opt-out during the meeting
+(``set_excluded``), the subscription ends and everything already recorded for that
+person is deleted. Participant attributes are ignored on purpose (they are public).
 """
 
 from __future__ import annotations
@@ -58,7 +59,6 @@ class LiveKitRecorder:
         room.on("track_published", self._on_published)
         room.on("track_subscribed", self._on_subscribed)
         room.on("track_unsubscribed", self._on_unsubscribed)
-        room.on("participant_attributes_changed", self._on_attributes)
         room.on("participant_disconnected", self._on_participant_left)
         room.on("disconnected", self._on_disconnected)
         await room.connect(self.settings.livekit_url, self.token, rtc.RoomOptions(auto_subscribe=False))
@@ -95,7 +95,6 @@ class LiveKitRecorder:
     def _allowed(self, participant: rtc.RemoteParticipant) -> bool:
         return may_record(
             participant.identity,
-            dict(participant.attributes),
             own_identity=self.settings.identity,
             excluded=self.excluded,
             is_standard=participant.kind in HUMAN_KINDS,
@@ -161,10 +160,6 @@ class LiveKitRecorder:
             speaker = self.speakers.pop(identity, None)
             if speaker is not None:
                 speaker.drop()
-
-    def _on_attributes(self, changed: dict[str, str], participant: rtc.Participant) -> None:
-        if isinstance(participant, rtc.RemoteParticipant):
-            self._reevaluate(participant)
 
     def _reevaluate(self, participant: rtc.RemoteParticipant) -> None:
         if not self._allowed(participant):

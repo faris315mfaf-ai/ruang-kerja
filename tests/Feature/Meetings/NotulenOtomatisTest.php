@@ -329,7 +329,7 @@ describe('policy and settings', function () {
         $this->meeting->forceFill(['auto_minutes' => false])->save();
 
         $this->actingAs($this->dimas)->putJson($this->base.'/pengaturan', ['auto_minutes' => true])
-            ->assertOk()->assertJsonPath('auto_minutes', true)->assertJsonPath('notice', 'Notulen otomatis aktif — suara Anda ditranskrip setelah rapat');
+            ->assertOk()->assertJsonPath('auto_minutes', true)->assertJsonPath('notice_points.0', 'Audio dihapus segera setelah transkripsi.');
         expect(AuditLog::query()->where('action', 'meeting.auto_minutes_changed')->count())->toBe(1);
         $this->actingAs($this->rina)->putJson($this->base.'/pengaturan', ['auto_minutes' => false])->assertForbidden();
 
@@ -342,13 +342,31 @@ describe('policy and settings', function () {
     });
 });
 
+it('states retention, participant-only access, audio deletion and the AI provider in the notice', function () {
+    config(['notulen.retention_days' => 30, 'notulen.llm.provider' => 'DeepSeek', 'notulen.llm.outside_indonesia' => true]);
+
+    $summary = $this->actingAs($this->rina)->getJson($this->base.'/status')->assertOk()->json();
+
+    expect($summary['notice'])->toStartWith('Notulen otomatis aktif — suara Anda ditranskrip setelah rapat.')
+        ->toContain('Audio dihapus segera setelah transkripsi.')
+        ->toContain('Transkrip disimpan 30 hari dan hanya bisa dibuka peserta rapat.')
+        ->toContain('Ringkasan diproses oleh DeepSeek di luar Indonesia.')
+        ->and($summary['notice_points'])->toHaveCount(4)
+        ->and($summary['optout_count'])->toBe(0);
+
+    notulenConfigure(llm: false);
+    expect($this->actingAs($this->rina)->getJson($this->base.'/status')->json('notice'))->not->toContain('DeepSeek');
+    $this->meeting->forceFill(['auto_minutes' => false])->save();
+    $this->actingAs($this->rina)->getJson($this->base.'/status')->assertJsonPath('notice', null)->assertJsonPath('notice_points', []);
+});
+
 describe('consent ("Jangan transkrip suara saya")', function () {
-    it('stores the choice, returns the LiveKit attribute and tells a recording worker', function () {
+    it('stores the choice privately and tells a recording worker (never a LiveKit attribute)', function () {
         MeetingTranscript::factory()->create(['meeting_id' => $this->meeting->id, 'status' => TranscriptStatus::Recording]);
         Http::fake(['worker.test:8090/*' => Http::response(['status' => 'applied'])]);
 
         $this->actingAs($this->budi)->putJson($this->base.'/persetujuan', ['opted_out' => true])
-            ->assertOk()->assertExactJson(['opted_out' => true, 'attributes' => ['rk_notulen_optout' => '1']]);
+            ->assertOk()->assertExactJson(['opted_out' => true]);
 
         expect(MeetingTranscriptConsent::query()->where('user_id', $this->budi->id)->value('opted_out'))->toBeTrue()
             ->and(AuditLog::query()->where('action', 'meeting.transcript_consent_changed')->count())->toBe(1);
@@ -358,8 +376,13 @@ describe('consent ("Jangan transkrip suara saya")', function () {
             return str_ends_with($r->url(), '/rooms/'.$this->room.'/exclude') && $data['identity'] === $this->budi->id && $data['excluded'] === true;
         });
 
-        $this->actingAs($this->budi)->getJson($this->base.'/status')->assertJsonPath('consent.opted_out', true);
-        $this->actingAs($this->budi)->putJson($this->base.'/persetujuan', ['opted_out' => false])->assertJsonPath('attributes.rk_notulen_optout', '0');
+        $this->actingAs($this->budi)->getJson($this->base.'/status')
+            ->assertJsonPath('consent', ['opted_out' => true, 'can_change' => true])
+            ->assertJsonPath('optout_count', 1);
+        // Other people only see the count, never who opted out.
+        $rina = $this->actingAs($this->rina)->getJson($this->base.'/status')->assertJsonPath('consent.opted_out', false);
+        expect($rina->getContent())->not->toContain($this->budi->id)->not->toContain('rk_notulen_optout');
+        $this->actingAs($this->budi)->putJson($this->base.'/persetujuan', ['opted_out' => false])->assertExactJson(['opted_out' => false]);
         $this->actingAs($this->outsider)->putJson($this->base.'/persetujuan', ['opted_out' => true])->assertNotFound();
     });
 
@@ -438,6 +461,28 @@ describe('AI summary', function () {
                 && str_contains($prompt, '[1] 00:10 Budi Santoso: Pengiriman terlambat tiga hari.')
                 && str_contains($prompt, '- Rina Wulandari') && str_contains($prompt, 'Senin');
         });
+    });
+
+    it('sends only names of speaking participants who did not opt out — no ids, no e-mails', function () {
+        MeetingTranscriptConsent::query()->create(['meeting_id' => $this->meeting->id, 'user_id' => $this->rina->id, 'opted_out' => true]);
+        Http::fake(['llm.test/*' => Http::response(notulenLlmReply(['ringkasan' => 'x', 'agenda' => [[
+            'judul' => 'A', 'poin' => [], 'tindak_lanjut' => [['judul' => 'Tugas', 'penanggung_jawab' => 'Rina Wulandari']],
+        ]]]))]);
+
+        dispatch_sync(new SummarizeMeetingTranscript($this->meeting->id, '2026-10-05'));
+
+        Http::assertSent(function (ClientRequest $r): bool {
+            $body = json_encode($r->data(), JSON_UNESCAPED_UNICODE);
+            $people = str($r['messages'][1]['content'])->after('DAFTAR PESERTA:')->before('TRANSKRIP:')->toString();
+
+            return str_contains($people, '- Dimas Pratama') && str_contains($people, '- Budi Santoso')
+                && ! str_contains($people, 'Rina Wulandari')      // opted out
+                && ! str_contains($people, 'Sari Notulis')        // did not speak
+                && ! str_contains($body, $this->rina->id) && ! str_contains($body, $this->budi->id)
+                && ! str_contains($body, (string) $this->budi->email) && ! str_contains($body, (string) $this->taker->email);
+        });
+        // The opted-out person can never become an assignee.
+        expect($this->transcript->refresh()->draft['tindak_lanjut'][0]['penanggung_jawab'])->toBeNull();
     });
 
     it('repairs fenced JSON with trailing commas locally, and asks the model once for broken output', function () {
@@ -660,6 +705,6 @@ it('keeps the status endpoint and review page within a query budget as the trans
     $big = [$count($base.'/status?tanggal=2026-10-05'), $count($base.'?tanggal=2026-10-05')];
 
     expect($big)->toBe($small)
-        ->and($small[0])->toBeLessThanOrEqual(14)
+        ->and($small[0])->toBeLessThanOrEqual(15)
         ->and($small[1])->toBeLessThanOrEqual(26);
 });

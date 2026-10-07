@@ -516,6 +516,9 @@ export function NotulenReview({
                         <span className="text-[14px] text-text-muted">
                             {transcript.speakers.length} pembicara ·{' '}
                             {formatDuration(transcript.duration_seconds)}
+                            {summary.optout_count > 0
+                                ? ` · ${summary.optout_count} orang memilih tidak ditranskrip`
+                                : ''}
                         </span>
                     )}
                 </div>

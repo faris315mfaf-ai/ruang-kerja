@@ -80,11 +80,9 @@ export const notulenApi = {
         }),
 
     setOptOut: (summary: NotulenSummary, optedOut: boolean) =>
-        request<{ opted_out: boolean; attributes: Record<string, string> }>(
-            'put',
-            summary.links.consent,
-            { opted_out: optedOut },
-        ),
+        request<{ opted_out: boolean }>('put', summary.links.consent, {
+            opted_out: optedOut,
+        }),
 
     insert: (summary: NotulenSummary) =>
         request<{

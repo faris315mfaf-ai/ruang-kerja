@@ -107,7 +107,7 @@ export function useNotulen(
                 'Pengaturan gagal disimpan. Coba lagi.',
             ),
 
-        /** Returns the LiveKit attributes to set in a connected room. */
+        /** Private opt-out: the server relays it to the recorder. */
         setOptOut: (optedOut: boolean) =>
             run(
                 'consent',
@@ -123,7 +123,7 @@ export function useNotulen(
                             : 'Suara Anda ikut ditranskrip.',
                     );
 
-                    return result.attributes;
+                    return result.opted_out;
                 },
                 'Pilihan gagal disimpan. Coba lagi.',
             ),

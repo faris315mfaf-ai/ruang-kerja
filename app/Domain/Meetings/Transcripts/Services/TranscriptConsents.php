@@ -7,12 +7,12 @@ use App\Models\MeetingTranscriptConsent;
 use App\Models\User;
 
 /**
- * "Jangan transkrip suara saya" choices per meeting (series).
+ * "Jangan transkrip suara saya" choices per meeting (series). Private: they
+ * travel only app → worker (signed exclude list), never as a LiveKit
+ * participant attribute that every client in the room would receive.
  */
 final class TranscriptConsents
 {
-    public const string ATTRIBUTE = 'rk_notulen_optout';
-
     public function optedOut(Meeting $meeting, User $user): bool
     {
         return MeetingTranscriptConsent::query()
@@ -33,13 +33,8 @@ final class TranscriptConsents
         ));
     }
 
-    /**
-     * LiveKit participant attribute for the person's choice.
-     *
-     * @return array<string, string>
-     */
-    public static function attributes(bool $optedOut): array
+    public function optedOutCount(Meeting $meeting): int
     {
-        return [self::ATTRIBUTE => $optedOut ? '1' : '0'];
+        return MeetingTranscriptConsent::query()->where('meeting_id', $meeting->id)->where('opted_out', true)->count();
     }
 }

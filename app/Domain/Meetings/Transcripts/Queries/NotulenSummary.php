@@ -41,12 +41,13 @@ final class NotulenSummary
             'can_configure' => $this->policy->configure($viewer, $meeting)->allowed(),
             'can_manage' => $this->policy->manage($viewer, $meeting)->allowed(),
             'can_view_transcript' => $canView,
-            'notice' => $auto ? 'Notulen otomatis aktif — suara Anda ditranskrip setelah rapat' : null,
+            'notice' => $auto ? $this->notice() : null,
+            'notice_points' => $auto ? $this->noticePoints() : [],
             'consent' => [
                 'opted_out' => $canView && $this->consents->optedOut($meeting, $viewer),
                 'can_change' => $this->policy->consent($viewer, $meeting)->allowed(),
-                'attribute' => TranscriptConsents::ATTRIBUTE,
             ],
+            'optout_count' => $this->consents->optedOutCount($meeting),
             'llm' => [
                 'enabled' => $this->config->llmEnabled(),
                 'provider' => (string) config('notulen.llm.provider'),
@@ -69,6 +70,33 @@ final class NotulenSummary
             'transcript' => $transcript !== null ? self::transcript($transcript) : null,
             'draft' => $transcript !== null && $canView ? self::draft($transcript) : null,
         ];
+    }
+
+    /**
+     * The privacy notice shown in the pre-join screen and the room (UU PDP).
+     */
+    public function notice(): string
+    {
+        return 'Notulen otomatis aktif — suara Anda ditranskrip setelah rapat. '.implode(' ', $this->noticePoints());
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function noticePoints(): array
+    {
+        $points = [
+            'Audio dihapus segera setelah transkripsi.',
+            'Transkrip disimpan '.$this->config->retentionDays().' hari dan hanya bisa dibuka peserta rapat.',
+        ];
+
+        if ($this->config->llmEnabled() && (bool) config('notulen.llm.outside_indonesia')) {
+            $points[] = 'Ringkasan diproses oleh '.config('notulen.llm.provider').' di luar Indonesia.';
+        }
+
+        $points[] = 'Anda bisa memilih "Jangan transkrip suara saya".';
+
+        return $points;
     }
 
     /**

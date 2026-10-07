@@ -29,12 +29,14 @@ final class MinutesSummarizer
     /** @var list<array{user_id: string, name: string}> */
     private array $participants = [];
 
+    public function __construct(private readonly TranscriptConsents $consents) {}
+
     /**
      * @return array{draft: array<string, mixed>, model: string, calls: int}
      */
     public function summarize(MeetingTranscript $transcript, Meeting $meeting): array
     {
-        $this->participants = $this->participantsOf($meeting);
+        $this->participants = $this->participantsOf($meeting, $transcript);
         $lines = $this->lines($transcript);
         $chunks = self::chunk($lines, max(2000, (int) config('notulen.llm.chunk_chars', 40000)));
         $calls = 0;
@@ -142,7 +144,7 @@ final class MinutesSummarizer
         Aturan:
         - Hanya isi yang benar-benar diucapkan di transkrip. Jangan mengarang.
         - "sumber" berisi nomor dalam kurung siku di awal baris transkrip, mis. [12].
-        - Penanggung jawab HANYA orang di DAFTAR PESERTA. Bila orangnya tidak jelas atau tidak ada di daftar, isi null dan tulis di "perlu_dicek".
+        - Penanggung jawab HANYA orang di DAFTAR PESERTA (yang berbicara di rapat). Bila orangnya tidak jelas atau tidak ada di daftar, isi null dan tulis di "perlu_dicek".
         - Tenggat relatif ("Jumat ini", "minggu depan") diubah ke tanggal berdasarkan TANGGAL RAPAT; bila tidak pasti isi null dan tulis di "perlu_dicek".
         - Keputusan = hal yang disepakati, bukan sekadar usulan.
         PROMPT;
@@ -161,16 +163,24 @@ final class MinutesSummarizer
     }
 
     /**
+     * People the model may name (data minimisation): meeting participants who
+     * actually speak in the transcript and did not opt out. Only their
+     * display names are sent; ids stay here for matching, e-mails never leave.
+     *
      * @return list<array{user_id: string, name: string}>
      */
-    private function participantsOf(Meeting $meeting): array
+    private function participantsOf(Meeting $meeting, MeetingTranscript $transcript): array
     {
         $meeting->loadMissing('participants.user:id,name');
+        $speaking = array_flip(array_filter(array_map(fn (array $s): ?string => $s['user_id'], $transcript->segments)));
+        $optedOut = array_flip($this->consents->optedOutIds($meeting));
         $people = [];
 
         foreach ($meeting->participants as $participant) {
-            if ($participant->user_id !== null && $participant->user !== null) {
-                $people[$participant->user_id] = ['user_id' => (string) $participant->user_id, 'name' => $participant->user->name];
+            $id = (string) $participant->user_id;
+
+            if ($participant->user !== null && isset($speaking[$id]) && ! isset($optedOut[$id])) {
+                $people[$id] = ['user_id' => $id, 'name' => $participant->user->name];
             }
         }
 

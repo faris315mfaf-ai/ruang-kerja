@@ -1,0 +1,23 @@
+# Additions to /opt/livekit/caddy.yaml (Caddy L4 from livekit/generate) so the app
+# can reach the worker API over TLS: https://notulen.spkd.store → 127.0.0.1:8090.
+# 1) DNS: A record notulen.spkd.store → meeting server IP (before reloading Caddy).
+# 2) apps.tls.certificates.automate: add the host next to the LiveKit/TURN hosts:
+#      - notulen.spkd.store
+# 3) apps.layer4.servers.main.routes: add this route BEFORE the LiveKit route.
+#    remote_ip limits it to the app server (replace with the app VPS public IP).
+- match:
+    - tls:
+        sni:
+          - "notulen.spkd.store"
+      remote_ip:
+        ranges:
+          - "<IP-VPS-APLIKASI>/32"
+  handle:
+    - handler: tls
+      connection_policies:
+        - alpn: ["http/1.1"]
+    - handler: proxy
+      upstreams:
+        - dial: ["127.0.0.1:8090"]
+# Then: sudo systemctl restart livekit-docker  (or docker compose restart caddy)
+# Check from the app VPS: curl -s https://notulen.spkd.store/health
