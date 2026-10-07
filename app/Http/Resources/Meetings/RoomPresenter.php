@@ -138,6 +138,8 @@ final class RoomPresenter
                 'speaking' => $occurrence->url('/video/bicara'),
                 'attendance' => $occurrence->url('/video/kehadiran'),
                 'call' => $occurrence->url('/video/panggil/{user}'),
+                'readmit' => $occurrence->url('/video/peserta/{user}/larangan'),
+                'hand' => $occurrence->url('/video/tangan'),
                 'join' => $occurrence->url('/gabung'),
                 'room' => $occurrence->url('/ruang'),
             ],

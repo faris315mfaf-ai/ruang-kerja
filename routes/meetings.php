@@ -14,6 +14,7 @@ use App\Http\Middleware\EnsureFeatureEnabled;
 use App\Http\Middleware\EnsureTwoFactorForSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\LimitRequestBody;
 use App\Http\Middleware\RestrictCredentialRoutes;
 use App\Http\Middleware\RestrictKioskDevice;
 use App\Http\Middleware\VerifyCollabSecret;
@@ -67,6 +68,8 @@ Route::middleware([EnsureFeatureEnabled::class.':meetings', 'auth', 'verified'])
         Route::post('{meeting}/video/token', [MeetingVideoController::class, 'token'])->whereUlid('meeting')->middleware('throttle:30,1')->name('video.token');
         Route::post('{meeting}/video/peserta/{identity}/bisukan', [MeetingVideoController::class, 'mute'])->whereUlid(['meeting', 'identity'])->middleware('throttle:api')->name('video.mute');
         Route::delete('{meeting}/video/peserta/{identity}', [MeetingVideoController::class, 'remove'])->whereUlid(['meeting', 'identity'])->middleware('throttle:api')->name('video.remove');
+        Route::delete('{meeting}/video/peserta/{identity}/larangan', [MeetingVideoController::class, 'readmit'])->whereUlid(['meeting', 'identity'])->middleware('throttle:api')->name('video.readmit');
+        Route::post('{meeting}/video/tangan', [MeetingVideoController::class, 'hand'])->whereUlid('meeting')->middleware('throttle:30,1')->name('video.hand');
 
         // Ruang "Notulen Hidup" (docs/fitur/rapat-video-kontrak.md): notes source, speaking time, Kehadiran, Panggil.
         Route::post('{meeting}/video/sumber-notulen', [MeetingRoomController::class, 'notesSource'])->whereUlid('meeting')->middleware('throttle:api')->name('video.notes-source');
@@ -95,7 +98,7 @@ Route::withoutMiddleware('web')
 // LiveKit → app webhook (attendance): signed with the API key pair instead
 // of a session, so no cookies/CSRF/Inertia; rate limited per IP.
 Route::post('api/livekit/webhook', LiveKitWebhookController::class)
-    ->middleware([EnsureFeatureEnabled::class.':meetings', 'throttle:600,1'])
+    ->middleware([LimitRequestBody::class.':'.LiveKitWebhookController::MAX_BODY_BYTES, EnsureFeatureEnabled::class.':meetings', 'throttle:600,1'])
     ->withoutMiddleware([
         EncryptCookies::class,
         AddQueuedCookiesToResponse::class,

@@ -224,12 +224,26 @@ export type NotJoined = {
     called_at: string | null;
 };
 
+/** Removed by the organizer: no token for this occurrence until re-admitted (audit R-04). */
+export type RemovedParticipant = {
+    user_id: PersonId;
+    removed_by: PersonId | null;
+    removed_at: string | null;
+};
+
+/** DELETE /rapat/{id}/video/peserta/{user}/larangan (organizer). */
+export type ReadmitResponse = { readmitted: boolean };
+
+/** POST /rapat/{id}/video/tangan { raised } → attribute `hand` set by the server (ms, "" = lowered). */
+export type RaiseHandResponse = { hand: string };
+
 /** GET /rapat/{id}/video/kehadiran. */
 export type RoomAttendance = {
     attendance: RoomAttendee[];
     in_room: number;
     not_joined: NotJoined[];
     late_grace_minutes: number;
+    removed: RemovedParticipant[];
 };
 
 /** POST /rapat/{id}/video/panggil/{user}; 429 adds retry_after (seconds). */
@@ -310,6 +324,9 @@ export type RoomProps = {
         attendance: string;
         /** Contains the placeholder "{user}". */
         call: string;
+        /** Contains the placeholder "{user}" (organizer: "Izinkan masuk lagi"). */
+        readmit: string;
+        hand: string;
         join: string;
         room: string;
     };

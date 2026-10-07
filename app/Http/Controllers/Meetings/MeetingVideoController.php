@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Meetings;
 
 use App\Domain\Meetings\Actions\IssueVideoToken;
 use App\Domain\Meetings\Actions\MuteVideoParticipant;
+use App\Domain\Meetings\Actions\ReadmitVideoParticipant;
 use App\Domain\Meetings\Actions\RemoveVideoParticipant;
+use App\Domain\Meetings\Actions\SetRaisedHand;
 use App\Domain\Meetings\Data\Occurrence;
 use App\Domain\Meetings\Services\MeetingOccurrences;
 use App\Domain\Meetings\Services\NotulenBridge;
 use App\Domain\Meetings\Services\VideoRooms;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Meetings\OccurrenceRequest;
+use App\Http\Requests\Meetings\RaiseHandRequest;
 use App\Http\Requests\Meetings\VideoModerationRequest;
 use App\Http\Resources\Meetings\RoomPresenter;
 use App\Models\Meeting;
@@ -74,6 +77,35 @@ class MeetingVideoController extends Controller
     public function remove(VideoModerationRequest $request, Meeting $meeting, string $identity, #[CurrentUser] User $user, RemoveVideoParticipant $remove): JsonResponse
     {
         return $this->moderate($request, $meeting, $user, fn (Occurrence $occurrence) => $remove->handle($user, $occurrence, $identity));
+    }
+
+    /** "Izinkan masuk lagi" after a removal (organizer, audit R-04). */
+    public function readmit(OccurrenceRequest $request, Meeting $meeting, string $identity, #[CurrentUser] User $user, ReadmitVideoParticipant $readmit): JsonResponse
+    {
+        Gate::authorize('moderateVideo', $meeting);
+
+        return response()->json(['readmitted' => $readmit->handle($user, $this->occurrence($request, $meeting), $identity)]);
+    }
+
+    /** Raise / lower one's own hand: attribute `hand` set server-side (audit R-05). */
+    public function hand(RaiseHandRequest $request, Meeting $meeting, #[CurrentUser] User $user, SetRaisedHand $hand): JsonResponse
+    {
+        $occurrence = $this->occurrence($request, $meeting);
+        Gate::authorize('joinVideo', [$meeting, $occurrence]);
+
+        if (! $this->rooms->configured()) {
+            return response()->json(['message' => 'Video RuangKerja belum disiapkan di server ini.'], 503);
+        }
+
+        try {
+            $value = $hand->handle($user, $occurrence, $request->boolean('raised'));
+        } catch (RuntimeException $exception) {
+            Log::warning('LiveKit raise hand failed', ['meeting' => $meeting->id, 'error' => $exception->getMessage()]);
+
+            return response()->json(['message' => 'Server rapat tidak menjawab. Coba lagi.'], 502);
+        }
+
+        return response()->json(['hand' => $value]);
     }
 
     /**

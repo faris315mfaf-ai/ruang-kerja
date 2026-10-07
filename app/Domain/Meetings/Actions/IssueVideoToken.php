@@ -16,7 +16,9 @@ use Carbon\CarbonImmutable;
  * a client could call the Room Service API directly (remove, rename, mute)
  * without MeetingPolicy or audit; the organizer moderates through the app
  * (LiveKitRoomService, server-side admin token). Everyone may publish camera,
- * mic, screen and data (chat) and update their own attributes (raised hand).
+ * mic, screen and data (chat). No `canUpdateOwnMetadata` (audit R-05): it
+ * would let a client rename itself ("Direktur Utama") or change its
+ * metadata; the raised hand is set by the server (SetRaisedHand).
  */
 final class IssueVideoToken
 {
@@ -42,7 +44,6 @@ final class IssueVideoToken
             'canPublish' => true,
             'canSubscribe' => true,
             'canPublishData' => true,
-            'canUpdateOwnMetadata' => true,
         ];
 
         $token = $this->tokens->accessToken(

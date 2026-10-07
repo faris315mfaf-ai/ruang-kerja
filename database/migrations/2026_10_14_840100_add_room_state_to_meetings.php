@@ -16,6 +16,10 @@ use Illuminate\Support\Facades\Schema;
  *   snapshot) when FEATURE_NOTES and the collab server are available.
  * - meeting_speaking_times: each participant's own accumulated speaking
  *   time per occurrence (monotonic, capped server-side).
+ * - meeting_video_removals: people the organizer removed from the room of an
+ *   occurrence; they get no new token until re-admitted (audit R-04).
+ * - meeting_attendances: partial index on open rows per room for
+ *   room_finished (audit R-13).
  */
 return new class extends Migration
 {
@@ -47,10 +51,25 @@ return new class extends Migration
         });
 
         DB::statement('ALTER TABLE meeting_speaking_times ADD CONSTRAINT meeting_speaking_times_ms_check CHECK (ms_spoken >= 0)');
+
+        Schema::create('meeting_video_removals', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+            $table->foreignUlid('meeting_id')->constrained()->cascadeOnDelete();
+            $table->date('occurrence_date');
+            $table->foreignUlid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('removed_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestampsTz();
+
+            $table->unique(['meeting_id', 'occurrence_date', 'user_id']);
+        });
+
+        DB::statement('CREATE INDEX meeting_attendances_open_room_index ON meeting_attendances (room) WHERE left_at IS NULL');
     }
 
     public function down(): void
     {
+        DB::statement('DROP INDEX IF EXISTS meeting_attendances_open_room_index');
+        Schema::dropIfExists('meeting_video_removals');
         Schema::dropIfExists('meeting_speaking_times');
 
         DB::statement('ALTER TABLE meeting_minutes DROP CONSTRAINT IF EXISTS meeting_minutes_notes_source_at_check');
