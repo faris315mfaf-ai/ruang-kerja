@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Analytics\Queries\HrDashboard;
 use App\Domain\Attendance\Enums\AttendanceStatus;
 use App\Domain\Attendance\Enums\LogFlag;
 use App\Domain\Attendance\Models\AttendanceDay;
@@ -15,6 +16,7 @@ use App\Models\RequestApproval;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Database\Eloquent\Collection;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\Support\AnalyticsFixtures as F;
 
@@ -41,7 +43,13 @@ beforeEach(function () {
     F::day($org['budi'], '2026-10-05', AttendanceStatus::Absent, ['shift_id' => $regular->id]);
 });
 
-it('summarizes company attendance today per division', function () {
+/** People in the HR dashboard scope (as DashboardContextResolver loads them). */
+function hrPeople(): Collection
+{
+    return User::query()->active()->with('division:id,name')->orderBy('name')->get();
+}
+
+it('shows requests waiting for HR and today\'s attendance numbers only (keputusan pemilik 6 Okt 2026)', function () {
     $this->actingAs($this->org['hr'])->get('/dashboard/hr')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
@@ -54,13 +62,24 @@ it('summarizes company attendance today per division', function () {
             ->where('attendance.counts.sick', 1)
             ->where('attendance.counts.not_checked_in', 2)
             ->where('attendance.shifts', [['name' => 'Reguler', 'count' => 4], ['name' => 'Gudang Pagi', 'count' => 1]])
-            ->where('attendance.divisions', [
-                ['id' => $this->org['keu']->id, 'name' => 'Keuangan', 'scheduled' => 2, 'present' => 0, 'late' => 0, 'away' => 1, 'not_checked_in' => 1, 'absent' => 0],
-                ['id' => $this->org['ops']->id, 'name' => 'Operasional', 'scheduled' => 3, 'present' => 2, 'late' => 1, 'away' => 0, 'not_checked_in' => 1, 'absent' => 0],
-            ])
-            ->where('missingCheckOut.count', 1)
-            ->where('missingCheckOut.items.0.user.name', 'Sari Wulandari')
-            ->where('missingCheckOut.items.0.shift', 'Gudang Pagi'));
+            ->where('attendance.missing_check_out_count', 1)
+            ->where('attendance.review_count', 0)
+            ->missing('attendance.people')
+            ->missing('attendance.divisions')
+            ->missing('review')
+            ->missing('missingCheckOut')
+            ->missing('recap')
+            ->has('pending')
+            ->where('hiring', '/hiring'));
+});
+
+it('summarizes company attendance today per division (Dashboard Manajemen and role dashboards)', function () {
+    $today = app(HrDashboard::class)->today(hrPeople(), CarbonImmutable::now());
+
+    expect($today['divisions'])->toBe([
+        ['id' => $this->org['keu']->id, 'name' => 'Keuangan', 'scheduled' => 2, 'present' => 0, 'late' => 0, 'away' => 1, 'not_checked_in' => 1, 'absent' => 0],
+        ['id' => $this->org['ops']->id, 'name' => 'Operasional', 'scheduled' => 3, 'present' => 2, 'late' => 1, 'away' => 0, 'not_checked_in' => 1, 'absent' => 0],
+    ]);
 });
 
 it('does not list night-shift workers still inside their check-out window as missing a check-out', function () {
@@ -78,20 +97,21 @@ it('does not list night-shift workers still inside their check-out window as mis
     // Sari's 06.00–14.00 shift of yesterday closed long ago: listed.
     AttendanceDay::query()->where('user_id', $this->org['sari']->id)->whereDate('work_date', '2026-10-06')
         ->update(['scheduled_start' => F::at('2026-10-06 06:00'), 'scheduled_end' => F::at('2026-10-06 14:00')]);
+    $ids = hrPeople()->modelKeys();
+    $query = app(HrDashboard::class);
 
+    $missing = $query->missingCheckOut($this->org['hr'], $ids, CarbonImmutable::now());
+    expect($missing['count'])->toBe(1)->and($missing['items'][0]['user']['name'])->toBe('Sari Wulandari');
     $this->actingAs($this->org['hr'])->get('/dashboard/hr')->assertInertia(fn (Assert $page) => $page
-        ->where('missingCheckOut.count', 1)
-        ->has('missingCheckOut.items', 1)
-        ->where('missingCheckOut.items.0.user.name', 'Sari Wulandari'));
+        ->where('attendance.missing_check_out_count', 1));
 
     // Once the window closes (06.00 + grace) the night shift is missing too.
     $this->travelTo(F::at('2026-10-07 12:00'));
-    $this->actingAs($this->org['hr'])->get('/dashboard/hr')->assertInertia(fn (Assert $page) => $page
-        ->where('missingCheckOut.count', 2)
-        ->where('missingCheckOut.items.1.user.name', 'Rudi Malam'));
+    $missing = $query->missingCheckOut($this->org['hr'], $ids, CarbonImmutable::now());
+    expect($missing['count'])->toBe(2)->and($missing['items'][1]['user']['name'])->toBe('Rudi Malam');
 });
 
-it('lists unreviewed suspicious check-ins with the selfie link only for those allowed', function () {
+it('counts unreviewed suspicious check-ins and lists them with the selfie link only for those allowed', function () {
     AttendanceLog::factory()->forDay($this->rizkyDay)->create([
         'is_suspicious' => true,
         'flags' => [LogFlag::LowAccuracy, LogFlag::NewIp],
@@ -103,15 +123,19 @@ it('lists unreviewed suspicious check-ins with the selfie link only for those al
     AttendanceLog::factory()->forDay($this->rizkyDay)->create(['is_suspicious' => true, 'occurred_at' => now()->subDays(9)]);
 
     $this->actingAs($this->org['hr'])->get('/dashboard/hr')
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('review.count', 1)
-            ->where('review.items.0.flags', [['key' => 'low_accuracy', 'label' => 'Akurasi GPS rendah']])
-            ->where('review.items.0.selfie_url', fn ($url) => is_string($url) && str_contains($url, 'signature=')));
+        ->assertInertia(fn (Assert $page) => $page->where('attendance.review_count', 1));
 
-    // Direksi sees the HR dashboard but not selfies.
-    $this->actingAs($this->org['direksi'])->get('/dashboard/hr')
-        ->assertInertia(fn (Assert $page) => $page->where('review.items.0.selfie_url', null));
+    $ids = hrPeople()->modelKeys();
+    $review = app(HrDashboard::class)->review($this->org['hr'], $ids, CarbonImmutable::now());
+    expect($review['count'])->toBe(1)
+        ->and($review['items'][0]['flags'])->toBe([['key' => 'low_accuracy', 'label' => 'Akurasi GPS rendah']])
+        ->and($review['items'][0]['selfie_url'])->toContain('signature=')
+        ->and($review['items'][0]['can_review'])->toBeTrue();
+
+    // Direksi may not open selfies nor mark reviews.
+    $asDireksi = app(HrDashboard::class)->review($this->org['direksi'], $ids, CarbonImmutable::now());
+    expect($asDireksi['items'][0]['selfie_url'])->toBeNull()
+        ->and($asDireksi['items'][0]['can_review'])->toBeFalse();
 });
 
 it('lists requests waiting for HR', function () {
@@ -127,16 +151,16 @@ it('lists requests waiting for HR', function () {
             ->where('pending.items.0.id', $waiting->id));
 });
 
-it('recaps discipline for the period with an 8-week trend', function () {
+it('recaps discipline for the period with an 8-week trend (now in Absensi › Kedisiplinan)', function () {
     // Month to date (1–7 Oct) rows: Rizky late + present, Sari present + needs correction, Budi absent (sick excused).
-    $this->actingAs($this->org['hr'])->get('/dashboard/hr')
+    $this->actingAs($this->org['hr'])->get('/absensi/kedisiplinan')
         ->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload
-            ->where('recap.kpis.attendance_discipline', ['value' => 40, 'numerator' => 2, 'denominator' => 5, 'previous' => null, 'delta' => null])
-            ->where('recap.kpis.average_lateness.value', 12)
-            ->where('recap.kpis.absent_days.value', 1)
-            ->where('recap.kpis.late_days.value', 1)
-            ->has('recap.trend', 8)
-            ->where('recap.trend.7.denominator', 5)));
+            ->where('report.kpis.attendance_discipline', ['value' => 40, 'numerator' => 2, 'denominator' => 5, 'previous' => null, 'delta' => null])
+            ->where('report.kpis.average_lateness.value', 12)
+            ->where('report.kpis.absent_days.value', 1)
+            ->where('report.kpis.late_days.value', 1)
+            ->has('report.trend', 8)
+            ->where('report.trend.7.denominator', 5)));
 });
 
 it('filters the HR dashboard by division', function () {
@@ -144,7 +168,7 @@ it('filters the HR dashboard by division', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->where('scope.label', 'Keuangan')
             ->where('attendance.counts.scheduled', 2)
-            ->where('missingCheckOut.count', 0));
+            ->where('attendance.missing_check_out_count', 0));
 });
 
 it('counts a half-day leave or business trip with a check-in as present (as the Absensi board)', function () {
@@ -160,29 +184,29 @@ it('counts a half-day leave or business trip with a check-in as present (as the 
         ->where('attendance.counts.not_checked_in', 0));
 });
 
-it('offers "Tandai ditinjau" and "Koreksi" only to those allowed, and both actions work from the dashboard', function () {
+it('offers "Koreksi" only to those allowed, and review + correction clear the HR card', function () {
     $log = AttendanceLog::factory()->forDay($this->rizkyDay)->create(['is_suspicious' => true, 'occurred_at' => now()->subHour()]);
+    $ids = hrPeople()->modelKeys();
 
-    $this->actingAs($this->org['hr'])->get('/dashboard/hr')->assertInertia(fn (Assert $page) => $page
-        ->where('review.items.0.can_review', true)
-        ->where('missingCheckOut.items.0.can_correct', true));
+    expect(app(HrDashboard::class)->missingCheckOut($this->org['hr'], $ids, CarbonImmutable::now())['items'][0]['can_correct'])->toBeTrue()
+        ->and(app(HrDashboard::class)->missingCheckOut($this->org['direksi'], $ids, CarbonImmutable::now())['items'][0]['can_correct'])->toBeFalse();
 
-    // Direksi sees the HR dashboard read-only.
-    $this->actingAs($this->org['direksi'])->get('/dashboard/hr')->assertInertia(fn (Assert $page) => $page
-        ->where('review.items.0.can_review', false)
-        ->where('missingCheckOut.items.0.can_correct', false));
-
-    $this->actingAs($this->org['hr'])->from('/dashboard/hr')
+    $this->actingAs($this->org['hr'])->from('/absensi/hari-ini')
         ->post(route('attendance.logs.review', $log))
-        ->assertRedirect('/dashboard/hr');
+        ->assertRedirect('/absensi/hari-ini');
     expect($log->refresh()->reviewed_at)->not->toBeNull();
 
-    $this->actingAs($this->org['hr'])->from('/dashboard/hr')
+    $this->actingAs($this->org['hr'])->from('/absensi/hari-ini')
         ->post(route('attendance.corrections.store'), ['user_id' => $this->org['sari']->id, 'work_date' => '2026-10-06', 'check_out' => '14:05', 'reason' => 'Lupa check-out, dikonfirmasi atasan'])
-        ->assertRedirect('/dashboard/hr')
+        ->assertRedirect('/absensi/hari-ini')
         ->assertSessionHasNoErrors();
 
     $this->actingAs($this->org['hr'])->get('/dashboard/hr')->assertInertia(fn (Assert $page) => $page
-        ->where('review.count', 0)
-        ->where('missingCheckOut.count', 0));
+        ->where('attendance.review_count', 0)
+        ->where('attendance.missing_check_out_count', 0));
+});
+
+it('links the Hiring card to the Hiring module', function () {
+    $this->actingAs($this->org['hr'])->get('/dashboard/hr')
+        ->assertInertia(fn (Assert $page) => $page->where('hiring', '/hiring'));
 });

@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Attendance\Models\AttendanceDay;
+use App\Models\Channel;
 use App\Models\Company;
 use App\Models\Division;
 use App\Models\Task;
@@ -43,4 +44,17 @@ Broadcast::channel('company.{company}.attendance', function (User $user, Company
 
 Broadcast::channel('division.{division}.attendance', function (User $user, Division $division): bool {
     return $user->can('viewDivisionFeed', [AttendanceDay::class, $division]);
+});
+
+// Obrolan (F2-1): message/reaction/read events of one channel (ChannelPolicy::view);
+// clients also whisper "typing" here.
+Broadcast::channel('chat.{channel}', function (User $user, Channel $channel): bool {
+    return Gate::forUser($user)->allows('view', $channel);
+});
+
+// Obrolan presence: who is online among the employees of the company (green dots).
+Broadcast::channel('chat-online.{company}', function (User $user, Company $company): array|false {
+    return $user->company_id === $company->id
+        ? ['id' => $user->id, 'name' => $user->name, 'avatar' => $user->avatar_url]
+        : false;
 });

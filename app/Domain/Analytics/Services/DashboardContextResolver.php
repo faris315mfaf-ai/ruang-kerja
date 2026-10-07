@@ -60,7 +60,7 @@ final class DashboardContextResolver
         $people = $this->access->people($viewer, $view, $divisions, $filters->division, $filters->team)
             ->with('division:id,name')
             ->orderBy('users.name')
-            ->get(['users.id', 'users.name', 'users.avatar_url', 'users.division_id', 'users.team_id', 'users.company_id']);
+            ->get(['users.id', 'users.name', 'users.avatar_url', 'users.division_id', 'users.team_id', 'users.company_id', 'users.work_mode']);
 
         return new DashboardContext($viewer, $view, $filters, $divisions, $teams, $people);
     }

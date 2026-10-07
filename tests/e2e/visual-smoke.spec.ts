@@ -16,7 +16,8 @@ const pages = [
  */
 const IGNORED_ERRORS = [
     /WebSocket connection to .* failed/,
-    /status of 429 \(Too Many Requests\)/,
+    // HTTP/2 sends no status text: "status of 429 ()".
+    /status of 429\b/,
 ];
 
 function collectErrors(page: Page): string[] {

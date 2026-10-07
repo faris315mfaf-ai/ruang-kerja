@@ -1,7 +1,8 @@
-import { Camera, CircleAlert, Paperclip, Upload, X } from 'lucide-react';
+import { Camera, CircleAlert, Lock, Paperclip, Upload, X } from 'lucide-react';
 import { useRef } from 'react';
 import InputError from '@/components/input-error';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DateInput } from '@/components/ui/date-input';
 import { Input, fieldClasses } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -10,6 +11,7 @@ import { formatNumber } from '@/lib/format';
 import { dayUnit, formatDays } from '@/lib/requests';
 import { cn } from '@/lib/utils';
 import type { FormLeaveType } from '@/types/requests';
+import { ProcurementFields } from './procurement-fields';
 import type { RequestFormState } from './use-request-form';
 
 type Props = {
@@ -51,6 +53,36 @@ export function LeaveTypeHint({ type }: { type: FormLeaveType | undefined }) {
             {type.is_provisional_default && <ProvisionalBadge />}
             {type.description && <p>{type.description}</p>}
             {rules.length > 0 && <p>{rules.join(' · ')}</p>}
+        </div>
+    );
+}
+
+/**
+ * The chosen type is locked (an older draft of cuti/lembur, keputusan
+ * pemilik 6 Okt 2026): it can no longer be saved or sent, only canceled.
+ */
+export function LockedTypeNotice({
+    type,
+}: {
+    type: FormLeaveType | undefined;
+}) {
+    if (!type?.locked) {
+        return null;
+    }
+
+    return (
+        <div
+            role="alert"
+            className="flex gap-3 rounded-lg bg-warning-soft px-4 py-3 text-[15px] leading-[22px] text-text"
+        >
+            <Lock className="mt-0.5 size-5 shrink-0 text-warning" aria-hidden />
+            <p>
+                <strong className="font-bold">
+                    {type.name} belum bisa diajukan.
+                </strong>{' '}
+                {type.locked_reason} Draf ini tidak bisa dikirim; batalkan dari
+                Pengajuan saya bila tidak diperlukan.
+            </p>
         </div>
     );
 }
@@ -114,10 +146,14 @@ export function CategoryFields({
                             <option
                                 key={option.id}
                                 value={option.id}
-                                disabled={!option.eligible}
+                                disabled={!option.eligible || option.locked}
                             >
                                 {option.name}
-                                {option.eligible ? '' : ' (belum berhak)'}
+                                {option.locked
+                                    ? ' (dikunci)'
+                                    : option.eligible
+                                      ? ''
+                                      : ' (belum berhak)'}
                             </option>
                         ))}
                     </select>
@@ -132,6 +168,7 @@ export function CategoryFields({
             )}
 
             <LeaveTypeHint type={type} />
+            <LockedTypeNotice type={type} />
 
             {category === 'permit' && (
                 <div className="grid gap-2">
@@ -163,15 +200,18 @@ export function CategoryFields({
                 </div>
             )}
 
-            {category === 'correction' ? (
+            {category === 'procurement' ? (
+                <ProcurementFields state={state} mobile={mobile} />
+            ) : category === 'correction' ? (
                 <div className="grid gap-4 md:grid-cols-3">
                     <Field id="date" label="Tanggal" error={error('date')}>
-                        <Input
+                        <DateInput
                             id="date"
-                            type="date"
-                            className={control}
+                            clearable={false}
+                            inputClassName={control}
                             value={data.date}
-                            onChange={(e) => setData('date', e.target.value)}
+                            onChange={(value) => setData('date', value)}
+                            aria-invalid={Boolean(error('date')) || undefined}
                         />
                     </Field>
                     <Field
@@ -220,12 +260,13 @@ export function CategoryFields({
                         error={error('date')}
                         className="col-span-2 md:col-span-1"
                     >
-                        <Input
+                        <DateInput
                             id="date"
-                            type="date"
-                            className={control}
+                            clearable={false}
+                            inputClassName={control}
                             value={data.date}
-                            onChange={(e) => setData('date', e.target.value)}
+                            onChange={(value) => setData('date', value)}
+                            aria-invalid={Boolean(error('date')) || undefined}
                         />
                     </Field>
                     <Field
@@ -267,19 +308,21 @@ export function CategoryFields({
                 </div>
             ) : (
                 <>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <Field
                             id="start_date"
                             label="Tanggal mulai"
                             error={error('start_date')}
                         >
-                            <Input
+                            <DateInput
                                 id="start_date"
-                                type="date"
-                                className={control}
+                                clearable={false}
+                                inputClassName={control}
                                 value={data.start_date}
-                                onChange={(e) => {
-                                    const value = e.target.value;
+                                aria-invalid={
+                                    Boolean(error('start_date')) || undefined
+                                }
+                                onChange={(value) => {
                                     setData((d) => ({
                                         ...d,
                                         start_date: value,
@@ -296,15 +339,16 @@ export function CategoryFields({
                             label="Tanggal selesai"
                             error={error('end_date')}
                         >
-                            <Input
+                            <DateInput
                                 id="end_date"
-                                type="date"
-                                className={control}
+                                clearable={false}
+                                inputClassName={control}
                                 value={data.end_date}
-                                min={data.start_date}
-                                onChange={(e) =>
-                                    setData('end_date', e.target.value)
+                                min={data.start_date || undefined}
+                                aria-invalid={
+                                    Boolean(error('end_date')) || undefined
                                 }
+                                onChange={(value) => setData('end_date', value)}
                             />
                         </Field>
                     </div>
@@ -366,7 +410,11 @@ export function CategoryFields({
             )}
 
             <div className="grid gap-2">
-                <Label htmlFor="reason">Alasan</Label>
+                <Label htmlFor="reason">
+                    {category === 'procurement'
+                        ? 'Alasan / kebutuhan'
+                        : 'Alasan'}
+                </Label>
                 <Textarea
                     id="reason"
                     rows={3}
@@ -376,7 +424,9 @@ export function CategoryFields({
                     placeholder={
                         category === 'overtime'
                             ? 'Pekerjaan yang diselesaikan saat lembur'
-                            : 'Mis. acara keluarga di luar kota'
+                            : category === 'procurement'
+                              ? 'Untuk apa barang ini dibutuhkan'
+                              : 'Mis. acara keluarga di luar kota'
                     }
                     onChange={(e) => setData('reason', e.target.value)}
                 />

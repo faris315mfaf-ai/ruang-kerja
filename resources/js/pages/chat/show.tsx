@@ -1,29 +1,30 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChatDesktop } from '@/features/chat/chat.desktop';
 import { ChatConversationMobile } from '@/features/chat/chat.mobile';
-import {
-    CHAT_CHANNELS,
-    CHAT_PEOPLE,
-    VIEWER_ID,
-} from '@/features/chat/fixtures';
 import { channelTitle } from '@/features/chat/lib';
 import { ConversationAppBarActions } from '@/features/chat/mobile-ui';
-import { usePreviewState } from '@/features/chat/preview-state';
-import { getChatState, useChatState } from '@/features/chat/store';
+import { screenState } from '@/features/chat/preview-state';
+import { useChatRealtime } from '@/features/chat/realtime';
+import { useChatStore } from '@/features/chat/store';
+import type { ChatProps } from '@/features/chat/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 
-type Props = { channelId: string };
+type Props = { chat: ChatProps };
 
-/** /obrolan/{channel} — one conversation (Fase 2 preview, F2-1). */
-export default function ChatShowPage({ channelId }: Props) {
+/** /obrolan/{channel} — one conversation (ChatController@show; opening marks it read). */
+export default function ChatShowPage({ chat }: Props) {
     const breakpoint = useBreakpoint();
-    const state = useChatState();
-    const preview = usePreviewState();
+    const state = useChatStore(chat);
+    const companyId = usePage().props.auth.user?.company?.id ?? null;
+    const channelId = chat.current?.channel_id ?? '';
     const channel = state.channels.find((item) => item.id === channelId);
     const title = channel
         ? channelTitle(channel, state.people, state.viewerId)
         : 'Obrolan';
+    const screen = screenState(state.channels.length);
+
+    useChatRealtime(state.viewerId, companyId, channelId || null);
 
     return (
         <>
@@ -38,13 +39,13 @@ export default function ChatShowPage({ channelId }: Props) {
                     key={channelId}
                     state={state}
                     channelId={channelId}
-                    preview={preview}
+                    preview={screen}
                 />
             ) : (
                 <ChatDesktop
                     state={state}
                     channelId={channelId}
-                    preview={preview}
+                    preview={screen}
                     isTablet={breakpoint === 'tablet'}
                 />
             )}
@@ -52,25 +53,25 @@ export default function ChatShowPage({ channelId }: Props) {
     );
 }
 
-function titleFor(channelId: string): string {
-    // The store also knows channels created in this session.
-    const state = getChatState();
-    const channel =
-        state.channels.find((item) => item.id === channelId) ??
-        CHAT_CHANNELS.find((item) => item.id === channelId);
+function titleFor(chat: ChatProps): string {
+    const channel = chat.channels.find(
+        (item) => item.id === chat.current?.channel_id,
+    );
 
-    return channel ? channelTitle(channel, CHAT_PEOPLE, VIEWER_ID) : 'Obrolan';
+    return channel
+        ? channelTitle(channel, chat.people, chat.viewer_id)
+        : 'Obrolan';
 }
 
 ChatShowPage.layout = (props: Props) => ({
     breadcrumbs: [
         { title: 'Obrolan', href: '/obrolan' },
         {
-            title: titleFor(props.channelId),
-            href: `/obrolan/${props.channelId}`,
+            title: titleFor(props.chat),
+            href: `/obrolan/${props.chat.current?.channel_id ?? ''}`,
         },
     ],
-    title: titleFor(props.channelId),
+    title: titleFor(props.chat),
     back: '/obrolan',
     width: 'wide',
     appBarActions: <ConversationAppBarActions />,

@@ -6,28 +6,18 @@ import { Button } from '@/components/ui/button';
 import { SegmentedTabs } from '@/components/ui/tabs';
 import { formatTime } from '@/lib/format';
 import {
+    AgendaRow,
     FollowUpsPanel,
     NextMeetingHero,
     RemindersPanel,
-    AgendaRow,
 } from './agenda-parts';
 import { DayTabs } from './day-tabs';
 import { longDate, meetingsOn, shortDate } from './lib';
 import { LiveMeetingBanner, MeetingStartNotice } from './meeting-notice';
-import {
-    ErrorState,
-    ListSkeleton,
-    PreviewBar,
-    SyncChip,
-    useMeetingActions,
-} from './meeting-ui';
+import { HeldChip, useMeetingActions } from './meeting-ui';
 import type { AgendaData } from './use-agenda';
 
 type View = 'day' | 'week';
-
-export const AGENDA_PREVIEWS = [
-    { label: 'Rapat berlangsung', query: 'jam=10.42' },
-];
 
 /** /rapat on desktop & tablet (design DRapat). */
 export function AgendaDesktop({
@@ -43,8 +33,6 @@ export function AgendaDesktop({
 
     return (
         <div className="flex flex-col gap-6">
-            <PreviewBar extra={AGENDA_PREVIEWS} />
-
             <section className="flex flex-wrap items-end justify-between gap-4">
                 <div className="flex flex-col gap-2">
                     <span className="text-overline text-link">
@@ -52,13 +40,12 @@ export function AgendaDesktop({
                     </span>
                     <h1 className="text-display">Rapat</h1>
                     <span className="text-[18px] text-text-muted">
-                        {data.state === 'normal' || data.state === 'kosong'
-                            ? `${todayCount} rapat hari ini · ${data.pendingMinutes} notulen menunggu Anda`
-                            : 'Memuat jadwal rapat…'}
+                        {todayCount} rapat hari ini · {data.pendingMinutes}{' '}
+                        notulen menunggu Anda
                     </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                    <SyncChip sync={data.sync} now={data.now} />
+                    {!isTablet && <HeldChip />}
                     <Button variant="outline" size="lg" asChild>
                         <Link href="/kalender">
                             <CalendarDays aria-hidden />
@@ -74,21 +61,11 @@ export function AgendaDesktop({
                 </div>
             </section>
 
-            {data.state === 'memuat' ? (
-                <>
-                    <ListSkeleton rows={1} className="[&>div]:h-48" />
-                    <ListSkeleton rows={4} />
-                </>
-            ) : data.state === 'galat' ? (
-                <ErrorState
-                    title="Jadwal rapat gagal dimuat"
-                    description="Google Calendar tidak menjawab. Data yang tersimpan tetap aman; coba muat ulang sebentar lagi."
-                />
-            ) : data.meetings.length === 0 ? (
+            {data.meetings.length === 0 ? (
                 <EmptyState
                     icon={CalendarPlus}
                     title="Belum ada rapat minggu ini"
-                    description="Rapat yang Anda adakan atau ikuti akan tampil di sini, lengkap dengan tautan Google Meet."
+                    description="Rapat yang Anda adakan atau ikuti akan tampil di sini, lengkap dengan tautan Meet atau Zoom-nya."
                     action={
                         <Button asChild>
                             <Link href="/rapat/baru">Jadwalkan rapat</Link>
@@ -178,13 +155,7 @@ export function AgendaDesktop({
                                 items={data.followUps}
                                 today={data.today}
                             />
-                            <RemindersPanel
-                                onPreview={
-                                    data.next
-                                        ? () => data.setNoticeOpen(true)
-                                        : undefined
-                                }
-                            />
+                            <RemindersPanel />
                         </aside>
                     </section>
                 </>
@@ -194,8 +165,6 @@ export function AgendaDesktop({
                 <MeetingStartNotice
                     meeting={data.next}
                     now={data.now}
-                    open={data.noticeOpen}
-                    onOpenChange={data.setNoticeOpen}
                     variant={isTablet ? 'tablet' : 'desktop'}
                 />
             )}
@@ -226,7 +195,7 @@ function AgendaCard({
     return (
         <ul className="overflow-hidden rounded-panel border border-border bg-surface shadow-card">
             {meetings.map((meeting) => (
-                <AgendaRow key={meeting.id} meeting={meeting} now={now} />
+                <AgendaRow key={meeting.key} meeting={meeting} now={now} />
             ))}
         </ul>
     );

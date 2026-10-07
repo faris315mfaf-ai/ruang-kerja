@@ -68,7 +68,7 @@ export const METRIC_DEFINITIONS: Record<MetricKey, string> = {
 export function computeMetrics(counts: PeriodCounts): Metric[] {
     const completion = rate(counts.done_of_due, counts.due);
     const onTime = rate(counts.on_time, counts.done_with_due);
-    const lead = median(counts.lead_times);
+    const lead = counts.lead_time;
     const attendance = rate(counts.on_time_days, counts.scheduled_days);
     const pct = (value: number | null) => (value === null ? '–' : `${value}%`);
 
@@ -100,7 +100,10 @@ export function computeMetrics(counts: PeriodCounts): Metric[] {
             label: 'Median lead time',
             value: formatDays(lead),
             raw: lead,
-            note: `divisi ${formatDays(counts.division_lead_time).replace(' hr', ' hari')}`,
+            note:
+                counts.division_lead_time === null
+                    ? `${counts.lead_time_samples} tugas selesai`
+                    : `divisi ${formatDays(counts.division_lead_time).replace(' hr', ' hari')}`,
             definition: METRIC_DEFINITIONS.lead_time,
         },
         {
@@ -160,7 +163,8 @@ export function isEmptyPerformance(
     return (
         counts.due === 0 &&
         counts.done_with_due === 0 &&
-        counts.lead_times.length === 0 &&
+        counts.lead_time_samples === 0 &&
+        counts.scheduled_days === 0 &&
         weeks.every((w) => w.on_time + w.late === 0)
     );
 }

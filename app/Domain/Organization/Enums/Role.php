@@ -25,6 +25,17 @@ enum Role: string
     }
 
     /**
+     * Roles that make an employee more than "staf" (keputusan pemilik 6 Okt
+     * 2026): someone holding none of these is staff (User::isStaffOnly()).
+     *
+     * @return list<self>
+     */
+    public static function aboveStaff(): array
+    {
+        return [self::SuperAdmin, self::Direksi, self::Hr, self::KepalaDivisi];
+    }
+
+    /**
      * Roles only a Super Admin may grant or revoke (HR may handle kepala_divisi/anggota).
      */
     public function onlySuperAdminAssigns(): bool
@@ -77,6 +88,8 @@ enum Role: string
                 Permission::AttendanceExport,
                 Permission::RequestsViewAll,
                 Permission::RequestsManageFlows,
+                // Read-only access to every shared workspace (keputusan pemilik 6 Okt 2026).
+                Permission::WorkspacesViewAll,
                 Permission::DashboardViewCompany,
             ],
             self::KepalaDivisi, self::Anggota => [],

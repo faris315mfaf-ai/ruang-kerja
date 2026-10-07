@@ -34,6 +34,9 @@ export type PositionRow = {
     name: string;
     level: number;
     levelLabel: string;
+    /** Job dashboard (/peran/{role}) of the position, set by HR. */
+    dashboardRole: string | null;
+    dashboardRoleLabel: string | null;
     usersCount: number;
     deletedAt: string | null;
 };
@@ -58,6 +61,8 @@ export type OrganizationOptions = {
     divisions: DivisionOption[];
     users: UserOption[];
     levels: LevelOption[];
+    /** Job dashboards; empty while FEATURE_ROLE_DASHBOARDS is off (field hidden). */
+    dashboardRoles: { value: string; label: string }[];
 };
 
 export type OrganizationAdminProps = {

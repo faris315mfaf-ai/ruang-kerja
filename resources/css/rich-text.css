@@ -173,6 +173,73 @@
         border-color: var(--border-strong);
     }
 
+    /*
+     * Notes: text colour & highlight ("stabilo", keputusan pemilik 6 Okt
+     * 2026). data-color = palette name; the tone comes from --tag-* so it
+     * follows light/dark mode. Text is mixed toward --text for contrast,
+     * the highlight is a soft tint behind unchanged text.
+     */
+    .rich-text :is(.rk-color, .rk-highlight)[data-color='gray'] {
+        --rk-tone: var(--tag-gray);
+    }
+
+    .rich-text :is(.rk-color, .rk-highlight)[data-color='slate'] {
+        --rk-tone: var(--tag-slate);
+    }
+
+    .rich-text :is(.rk-color, .rk-highlight)[data-color='teal'] {
+        --rk-tone: var(--tag-teal);
+    }
+
+    .rich-text :is(.rk-color, .rk-highlight)[data-color='blue'] {
+        --rk-tone: var(--tag-blue);
+    }
+
+    .rich-text :is(.rk-color, .rk-highlight)[data-color='green'] {
+        --rk-tone: var(--tag-green);
+    }
+
+    .rich-text :is(.rk-color, .rk-highlight)[data-color='amber'] {
+        --rk-tone: var(--tag-amber);
+    }
+
+    .rich-text :is(.rk-color, .rk-highlight)[data-color='orange'] {
+        --rk-tone: var(--tag-orange);
+    }
+
+    .rich-text :is(.rk-color, .rk-highlight)[data-color='red'] {
+        --rk-tone: var(--tag-red);
+    }
+
+    .rich-text :is(.rk-color, .rk-highlight)[data-color='violet'] {
+        --rk-tone: var(--tag-violet);
+    }
+
+    .rich-text :is(.rk-color, .rk-highlight)[data-color='pink'] {
+        --rk-tone: var(--tag-pink);
+    }
+
+    .rich-text .rk-color {
+        color: color-mix(
+            in oklab,
+            var(--rk-tone, currentColor) 80%,
+            var(--text)
+        );
+    }
+
+    .rich-text .rk-highlight {
+        color: inherit;
+        background-color: color-mix(
+            in oklab,
+            var(--rk-tone, var(--tag-amber)) 26%,
+            transparent
+        );
+        border-radius: 3px;
+        padding: 0 1px;
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
+    }
+
     /* Placeholder of an empty editor (Tiptap Placeholder extension). */
     .rich-text p.is-editor-empty:first-child::before {
         content: attr(data-placeholder);

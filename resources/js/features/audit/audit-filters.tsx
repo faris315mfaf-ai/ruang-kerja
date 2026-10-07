@@ -1,7 +1,7 @@
 import { RotateCcw } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -123,15 +123,12 @@ export function AuditFilterBar({ filters, options, onChange }: Props) {
                 >
                     Dari tanggal
                 </Label>
-                <Input
+                <DateInput
                     id="filter-from"
-                    type="date"
                     value={filters.dari ?? ''}
                     max={filters.sampai ?? undefined}
-                    onChange={(event) =>
-                        set({ dari: event.target.value || null })
-                    }
-                    className="w-44"
+                    onChange={(value) => set({ dari: value || null })}
+                    className="w-60"
                 />
             </div>
 
@@ -142,15 +139,12 @@ export function AuditFilterBar({ filters, options, onChange }: Props) {
                 >
                     Sampai tanggal
                 </Label>
-                <Input
+                <DateInput
                     id="filter-to"
-                    type="date"
                     value={filters.sampai ?? ''}
                     min={filters.dari ?? undefined}
-                    onChange={(event) =>
-                        set({ sampai: event.target.value || null })
-                    }
-                    className="w-44"
+                    onChange={(value) => set({ sampai: value || null })}
+                    className="w-60"
                 />
             </div>
 

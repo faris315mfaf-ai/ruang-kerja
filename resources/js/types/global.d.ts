@@ -15,8 +15,23 @@ declare module '@inertiajs/core' {
             auth: Auth;
             /** Sidebar "Persetujuan" badge (requests waiting for the signed-in user). */
             approvals?: { pending: number } | null;
-            /** Feature flags (config/features.php). `prototype` = Fase 2 & 3 previews at /pratinjau. */
-            features?: { prototype: boolean };
+            /**
+             * Feature flags (config/features.php). `prototype` = Fase 2 & 3 previews at /pratinjau.
+             * `role_dashboards` = flag on AND the user has a job dashboard (/peran).
+             */
+            features?: {
+                prototype: boolean;
+                chat: boolean;
+                okr: boolean;
+                automation: boolean;
+                notes: boolean;
+                meetings: boolean;
+                /** The signed-in user may open /hiring (HR, Super Admin, assigned reviewers). */
+                hiring?: boolean;
+                role_dashboards: boolean;
+            };
+            /** Obrolan: channels with unread messages; null when the feature is off. */
+            chatUnread?: number | null;
             /** Local demo only: personas of the account switcher; null elsewhere. */
             demoSwitcher?: DemoSwitcherAccount[] | null;
             /** Sprint 2: once-prop, refreshed every 5 minutes and after a check-in/out. */

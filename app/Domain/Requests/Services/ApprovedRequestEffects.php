@@ -25,6 +25,8 @@ final class ApprovedRequestEffects
         match (true) {
             $category === RequestCategory::Overtime => $this->attendance->applyOvertime($request),
             $category === RequestCategory::Correction => $this->attendance->applyCorrection($request),
+            // Pengajuan barang: no attendance effect.
+            $category === RequestCategory::Procurement => null,
             $category === RequestCategory::Permit && ($request->payload['mode'] ?? 'days') === 'hours' => null,
             default => $this->attendance->applyAbsence($request, $this->workDates($request)),
         };

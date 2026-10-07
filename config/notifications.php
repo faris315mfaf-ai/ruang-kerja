@@ -25,11 +25,24 @@ return [
         'task.commented' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'task.due_soon' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'task.overdue' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
+        // Obrolan (F2-1): DM & group messages stay in the app (mentions use 'mention').
+        'chat.message' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
+        // Otomasi (F2-4): "beri tahu" action of a workspace rule.
+        'automation.notify' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'request.pending' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
         'request.decided' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
         'attendance.check_in_reminder' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'attendance.check_out_reminder' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'project.activity' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
+        'okr.activity' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
+        // Rapat (F2-3): invitations, reminders, final minutes and follow-ups.
+        'meeting' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
+        // Password reset requests (→ HR) and "HR set your password" (locked on).
+        'account.security' => ['in_app' => true, 'email' => true, 'whatsapp' => false],
+        // Laporan progres harian (keputusan pemilik 6 Okt 2026): in-app only by default.
+        'report.reminder' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
+        // Hiring: applicant data stays in the app (email off by default, text without names).
+        'hiring.activity' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'system' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'digest.daily' => ['email' => true],
     ],

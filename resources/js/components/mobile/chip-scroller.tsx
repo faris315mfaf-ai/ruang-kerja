@@ -45,7 +45,7 @@ export function ChipScroller<T extends string>({
                         aria-checked={active}
                         onClick={() => onChange(chip.value)}
                         className={cn(
-                            'flex h-[42px] shrink-0 snap-start items-center gap-1.5 rounded-full px-4 text-[16px] font-bold transition-colors duration-120 ease-brand outline-none focus-visible:ring-[3px] focus-visible:ring-ring',
+                            'hit-area flex h-[42px] shrink-0 snap-start items-center gap-1.5 rounded-full px-4 text-[16px] font-bold transition-colors duration-120 ease-brand outline-none focus-visible:ring-[3px] focus-visible:ring-ring',
                             active
                                 ? 'bg-primary bg-grad-aksi text-on-brand'
                                 : 'border border-border-strong bg-surface text-text',

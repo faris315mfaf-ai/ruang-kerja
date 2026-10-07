@@ -200,29 +200,80 @@ export function lastMessage(
     return sortedTopLevel(channelId, messages).at(-1) ?? null;
 }
 
-function createdAtOf(id: string | null, messages: Message[]): string | null {
-    if (!id) {
-        return null;
+/**
+ * Whether a read pointer (last read message id) covers `message`. Pointers of
+ * loaded messages compare by time; otherwise by id (server ids are ULIDs,
+ * which sort by time). Optimistic messages ("tmp-…") are never covered.
+ */
+export function covers(
+    pointer: string | null,
+    message: Message,
+    messages: Message[],
+): boolean {
+    if (!pointer || message.id.startsWith('tmp-')) {
+        return false;
     }
 
-    return messages.find((message) => message.id === id)?.created_at ?? null;
+    const readAt = messages.find((item) => item.id === pointer)?.created_at;
+
+    return readAt !== undefined
+        ? readAt >= message.created_at
+        : pointer >= message.id;
 }
 
-/** Top-level messages from others after the viewer's last read message. */
+/**
+ * Top-level messages from others after the viewer's last read message: the
+ * server count when present (sidebar), otherwise counted from `messages`.
+ */
 export function unreadCount(
     channel: Channel,
     messages: Message[],
     viewerId: string,
 ): number {
+    if (typeof channel.unread_count === 'number') {
+        return channel.unread_count;
+    }
+
     const member = channel.members.find((item) => item.user_id === viewerId);
-    const readAt = createdAtOf(member?.last_read_message_id ?? null, messages);
+    const pointer = member?.last_read_message_id ?? null;
 
     return sortedTopLevel(channel.id, messages).filter(
         (message) =>
             message.user_id !== viewerId &&
             message.deleted_at === null &&
-            (readAt === null || message.created_at > readAt),
+            !covers(pointer, message, messages),
     ).length;
+}
+
+/**
+ * Newest top-level message for the sidebar: loaded messages first (the open
+ * channel), else the server preview (`last_message`).
+ */
+export function channelLastMessage(
+    channel: Channel,
+    messages: Message[],
+): Message | null {
+    const loaded = lastMessage(channel.id, messages);
+
+    if (loaded || !channel.last_message) {
+        return loaded;
+    }
+
+    const preview = channel.last_message;
+
+    return {
+        id: preview.id,
+        channel_id: channel.id,
+        user_id: preview.user_id ?? '',
+        parent_id: null,
+        body: null,
+        body_text: preview.body_text,
+        created_at: preview.created_at ?? channel.created_at,
+        edited_at: null,
+        deleted_at: preview.deleted ? (preview.created_at ?? '') : null,
+        reactions: [],
+        attachments: [],
+    };
 }
 
 /** Members (not the author) whose last read message is at/after `message`. */
@@ -234,11 +285,9 @@ export function readers(
 ): ChatPerson[] {
     return channel.members
         .filter((member) => member.user_id !== message.user_id)
-        .filter((member) => {
-            const readAt = createdAtOf(member.last_read_message_id, messages);
-
-            return readAt !== null && readAt >= message.created_at;
-        })
+        .filter((member) =>
+            covers(member.last_read_message_id, message, messages),
+        )
         .map((member) => personById(people, member.user_id))
         .filter((person): person is ChatPerson => person !== undefined);
 }

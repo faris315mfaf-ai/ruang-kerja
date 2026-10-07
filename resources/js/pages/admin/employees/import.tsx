@@ -61,7 +61,7 @@ EmployeeImport.layout = {
 
 const COLUMN_HELP: Record<string, string> = {
     nama: 'Nama lengkap.',
-    email: 'Email Google kantor. Menjadi kunci: email yang sudah terdaftar akan diperbarui.',
+    email: 'Email kantor (dipakai untuk masuk). Menjadi kunci: email yang sudah terdaftar akan diperbarui.',
     nomor_karyawan: 'Nomor induk karyawan (unik).',
     divisi: 'Kode atau nama divisi, mis. OPS.',
     tim: 'Nama atau kode tim di divisi tersebut.',

@@ -1,9 +1,11 @@
+import { Link } from '@inertiajs/react';
 import {
     CheckCircle2,
     CircleSlash,
     Copy,
     History,
     MoreHorizontal,
+    Pencil,
     Plus,
     Trash2,
     Workflow,
@@ -25,30 +27,25 @@ import { KpiCard } from '@/components/ui/kpi-card';
 import { Panel } from '@/components/ui/panel';
 import { Switch } from '@/components/ui/switch';
 import { AutomationNav } from '@/features/automation/automation-nav';
+import { ConfirmDelete } from '@/features/automation/confirm-delete';
 import { SelectField } from '@/features/automation/form-fields';
-import {
-    PageHeading,
-    PreviewBar,
-    PreviewError,
-    PreviewSkeleton,
-} from '@/features/automation/preview-state';
-import type { PreviewState } from '@/features/automation/preview-state';
+import { mutate } from '@/features/automation/mutation';
+import { PageHeading } from '@/features/automation/preview-state';
 import { RuleBuilder } from '@/features/automation/rules/rule-builder';
 import { describeRule } from '@/features/automation/rules';
-import type { RuleContext, RuleDraft } from '@/features/automation/rules';
+import type { RuleContext } from '@/features/automation/rules';
 import type {
     AutomationProps,
     AutomationRule,
     RuleRun,
     RunResult,
 } from '@/features/automation/types';
-import { useFakeMutation } from '@/features/prototype/use-fake-mutation';
 import { formatDateTime, formatRelative } from '@/lib/format';
 import { palette } from '@/lib/palette';
 import { cn } from '@/lib/utils';
+import rulesRoutes from '@/routes/automation/rules';
 
-/** Reference "now" of the sample data: Mon 5 Oct 2026, 12.00 WIB. */
-const NOW = '2026-10-05T05:00:00Z';
+const ONLY = ['automation'];
 
 const RESULT: Record<
     RunResult,
@@ -63,89 +60,95 @@ const RESULT: Record<
     skipped: { label: 'Dilewati', tone: 'neutral', icon: CircleSlash },
 };
 
+/** "OPS-112" → /w/OPS/tasks/112 (keys never contain "-"). */
+function taskUrl(key: string): string {
+    const [workspace, number] = key.split('-');
+
+    return `/w/${workspace}/tasks/${number}`;
+}
+
+/**
+ * /otomasi — rules of the workspaces the person belongs to, the run log of
+ * the last 7 days and its counts. Only owners/admins of a workspace get the
+ * switch, "Ubah", "Duplikat" and "Hapus" (AutomationRulePolicy).
+ */
 export function RulesScreen({
     props,
-    state,
     mobile,
 }: {
     props: AutomationProps;
-    state: PreviewState;
     mobile: boolean;
 }) {
-    const [rules, setRules] = useState<AutomationRule[]>(
-        state === 'empty' ? [] : props.rules,
+    // Optimistic switch state until the reloaded props arrive (rolled back on error).
+    const [pending, setPending] = useState<Record<string, boolean>>({});
+    const rules = props.rules.map((rule) =>
+        rule.id in pending ? { ...rule, is_active: pending[rule.id] } : rule,
     );
-    const runs = state === 'empty' ? [] : props.runs;
+    const runs = props.runs;
     const [builderOpen, setBuilderOpen] = useState(false);
     const [builderKey, setBuilderKey] = useState(0);
+    const [editing, setEditing] = useState<AutomationRule | null>(null);
+    const [deleting, setDeleting] = useState<AutomationRule | null>(null);
+    const [removing, setRemoving] = useState(false);
     const [logRule, setLogRule] = useState<string>('all');
-    const { run } = useFakeMutation();
+    const manageable = props.workspaces.filter((w) => w.can_manage);
     const ctx: RuleContext = {
         workspaces: props.workspaces,
         labels: props.labels,
         people: props.people,
     };
+    const builderCtx: RuleContext = { ...ctx, workspaces: manageable };
 
-    const openBuilder = () => {
+    const openBuilder = (rule: AutomationRule | null = null) => {
+        setEditing(rule);
         setBuilderKey((k) => k + 1);
         setBuilderOpen(true);
     };
 
-    const toggle = (rule: AutomationRule, on: boolean) =>
-        void run(
-            () =>
-                setRules((list) =>
-                    list.map((r) =>
-                        r.id === rule.id ? { ...r, is_active: on } : r,
-                    ),
-                ),
+    const toggle = (rule: AutomationRule, on: boolean) => {
+        setPending((map) => ({ ...map, [rule.id]: on }));
+        mutate(
+            'patch',
+            rulesRoutes.active.url(rule.id),
+            { is_active: on },
             {
-                delay: 250,
-                success: on ? `"${rule.name}" aktif` : `"${rule.name}" dijeda`,
+                only: ONLY,
+                onFinish: () =>
+                    setPending((map) => {
+                        const next = { ...map };
+                        delete next[rule.id];
+
+                        return next;
+                    }),
             },
         );
+    };
 
     const duplicate = (rule: AutomationRule) =>
-        void run(
-            () =>
-                setRules((list) => [
-                    ...list,
-                    {
-                        ...rule,
-                        id: `copy-${Date.now()}`,
-                        name: `${rule.name} (salinan)`,
-                        is_active: false,
-                        run_count: 0,
-                        last_run_at: null,
-                    },
-                ]),
-            { delay: 300, success: 'Salinan dibuat (nonaktif)' },
-        );
+        mutate('post', rulesRoutes.duplicate.url(rule.id), {}, { only: ONLY });
 
-    const remove = (rule: AutomationRule) =>
-        void run(
-            () => setRules((list) => list.filter((r) => r.id !== rule.id)),
+    const remove = () => {
+        if (!deleting) {
+            return;
+        }
+
+        setRemoving(true);
+        mutate(
+            'delete',
+            rulesRoutes.destroy.url(deleting.id),
+            {},
             {
-                delay: 300,
-                success: `"${rule.name}" dihapus`,
+                only: ONLY,
+                onSuccess: () => {
+                    setDeleting(null);
+                    setLogRule('all');
+                },
+                onFinish: () => setRemoving(false),
             },
         );
-
-    const save = (draft: RuleDraft) =>
-        setRules((list) => [
-            {
-                ...draft,
-                id: `new-${Date.now()}`,
-                is_active: true,
-                last_run_at: null,
-                run_count: 0,
-                created_by: props.people[0].id,
-            },
-            ...list,
-        ]);
+    };
 
     const active = rules.filter((r) => r.is_active).length;
-    const failed = runs.filter((r) => r.result === 'failed').length;
     const visibleRuns = useMemo(
         () =>
             logRule === 'all'
@@ -154,25 +157,26 @@ export function RulesScreen({
         [logRule, runs],
     );
 
-    const newButton = (
-        <Button onClick={openBuilder}>
-            <Plus aria-hidden />
-            Aturan baru
-        </Button>
-    );
+    const newButton =
+        manageable.length > 0 ? (
+            <Button onClick={() => openBuilder()}>
+                <Plus aria-hidden />
+                Aturan baru
+            </Button>
+        ) : undefined;
 
     let body;
 
-    if (state === 'loading') {
-        body = <PreviewSkeleton kpis={mobile ? 0 : 3} />;
-    } else if (state === 'error') {
-        body = <PreviewError what="Aturan otomasi" />;
-    } else if (rules.length === 0) {
+    if (rules.length === 0) {
         body = (
             <EmptyState
                 icon={Workflow}
                 title="Belum ada aturan otomasi"
-                description="Contoh: saat tugas pindah ke Selesai, beri tahu Kepala Divisi dan tambah label Ditinjau."
+                description={
+                    manageable.length > 0
+                        ? 'Contoh: saat tugas pindah ke Selesai, beri tahu Kepala Divisi dan tambah label Ditinjau.'
+                        : 'Aturan dibuat oleh owner atau admin workspace. Aturan di workspace Anda akan tampil di sini.'
+                }
                 action={newButton}
             />
         );
@@ -184,10 +188,12 @@ export function RulesScreen({
                         key={rule.id}
                         rule={rule}
                         ctx={ctx}
+                        now={props.now}
                         onToggle={(on) => toggle(rule, on)}
                         onLog={() => setLogRule(rule.id)}
+                        onEdit={() => openBuilder(rule)}
                         onDuplicate={() => duplicate(rule)}
-                        onDelete={() => remove(rule)}
+                        onDelete={() => setDeleting(rule)}
                     />
                 ))}
             </ul>
@@ -197,6 +203,7 @@ export function RulesScreen({
                 runs={visibleRuns}
                 rules={rules}
                 filter={logRule}
+                now={props.now}
                 onFilter={setLogRule}
             />
         );
@@ -204,8 +211,8 @@ export function RulesScreen({
         body = mobile ? (
             <div className="flex flex-col gap-4">
                 <p className="px-1 text-[15px] text-text-muted tnum">
-                    {active} aktif dari {rules.length} · {runs.length} eksekusi
-                    7 hari · {failed} gagal
+                    {active} aktif dari {rules.length} · {props.stats.runs_7d}{' '}
+                    eksekusi 7 hari · {props.stats.failed_7d} gagal
                 </p>
                 <section
                     aria-label="Daftar aturan"
@@ -214,7 +221,6 @@ export function RulesScreen({
                     {list}
                 </section>
                 {log}
-                <Fab label="Aturan baru" onClick={openBuilder} />
             </div>
         ) : (
             <div className="flex flex-col gap-5">
@@ -227,15 +233,21 @@ export function RulesScreen({
                     />
                     <KpiCard
                         label="Eksekusi 7 hari"
-                        value={runs.length}
-                        note={`${runs.filter((r) => r.result === 'success').length} berhasil`}
+                        value={props.stats.runs_7d}
+                        note={`${props.stats.success_7d} berhasil`}
                     />
                     <KpiCard
-                        label="Gagal"
-                        value={failed}
-                        valueClassName={failed > 0 ? 'text-danger' : undefined}
+                        label="Gagal 7 hari"
+                        value={props.stats.failed_7d}
+                        valueClassName={
+                            props.stats.failed_7d > 0
+                                ? 'text-danger'
+                                : undefined
+                        }
                         note={
-                            failed > 0 ? 'Periksa log eksekusi' : 'Semua lancar'
+                            props.stats.failed_7d > 0
+                                ? 'Periksa log eksekusi'
+                                : 'Semua lancar'
                         }
                     />
                 </div>
@@ -260,27 +272,36 @@ export function RulesScreen({
 
     return (
         <div className="flex flex-col gap-5 md:gap-6">
-            <PreviewBar />
             <PageHeading
                 title="Otomasi"
                 description={
                     'Aturan "jika … maka …" yang bekerja sendiri di workspace Anda.'
                 }
-                actions={
-                    !mobile && state === 'ready' && rules.length > 0
-                        ? newButton
-                        : undefined
-                }
+                actions={!mobile && rules.length > 0 ? newButton : undefined}
             />
             <AutomationNav />
             {body}
-            <RuleBuilder
-                key={builderKey}
-                open={builderOpen}
-                onOpenChange={setBuilderOpen}
-                ctx={ctx}
+            {mobile && rules.length > 0 && manageable.length > 0 && (
+                <Fab label="Aturan baru" onClick={() => openBuilder()} />
+            )}
+            {builderOpen && (
+                <RuleBuilder
+                    key={builderKey}
+                    open={builderOpen}
+                    onOpenChange={setBuilderOpen}
+                    ctx={builderCtx}
+                    mobile={mobile}
+                    rule={editing}
+                />
+            )}
+            <ConfirmDelete
+                open={deleting !== null}
+                onOpenChange={(open) => !open && setDeleting(null)}
+                title={`Hapus aturan "${deleting?.name ?? ''}"?`}
+                description="Aturan dan log eksekusinya dihapus. Perubahan yang sudah dibuat aturan ini pada tugas tetap ada."
+                processing={removing}
                 mobile={mobile}
-                onSaved={save}
+                onConfirm={remove}
             />
         </div>
     );
@@ -289,15 +310,19 @@ export function RulesScreen({
 function RuleRow({
     rule,
     ctx,
+    now,
     onToggle,
     onLog,
+    onEdit,
     onDuplicate,
     onDelete,
 }: {
     rule: AutomationRule;
     ctx: RuleContext;
+    now: string;
     onToggle: (on: boolean) => void;
     onLog: () => void;
+    onEdit: () => void;
     onDuplicate: () => void;
     onDelete: () => void;
 }) {
@@ -310,6 +335,7 @@ function RuleRow({
                 size="md"
                 checked={rule.is_active}
                 onCheckedChange={onToggle}
+                disabled={!rule.can_manage}
                 aria-label={`Aktifkan aturan ${rule.name}`}
                 className="mt-0.5"
             />
@@ -320,7 +346,7 @@ function RuleRow({
                 )}
             >
                 <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-[17px] leading-6 font-semibold text-text">
+                    <p className="min-w-0 text-[17px] leading-6 font-semibold break-words text-text">
                         {rule.name}
                     </p>
                     {workspace && (
@@ -355,7 +381,7 @@ function RuleRow({
                             title={formatDateTime(rule.last_run_at)}
                         >
                             Terakhir berjalan{' '}
-                            {formatRelative(rule.last_run_at, NOW)}
+                            {formatRelative(rule.last_run_at, now)}
                         </time>
                     ) : (
                         'Belum pernah berjalan'
@@ -379,15 +405,26 @@ function RuleRow({
                         <History aria-hidden />
                         Lihat log
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={onDuplicate}>
-                        <Copy aria-hidden />
-                        Duplikat
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive" onSelect={onDelete}>
-                        <Trash2 aria-hidden />
-                        Hapus
-                    </DropdownMenuItem>
+                    {rule.can_manage && (
+                        <>
+                            <DropdownMenuItem onSelect={onEdit}>
+                                <Pencil aria-hidden />
+                                Ubah
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={onDuplicate}>
+                                <Copy aria-hidden />
+                                Duplikat
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                variant="destructive"
+                                onSelect={onDelete}
+                            >
+                                <Trash2 aria-hidden />
+                                Hapus
+                            </DropdownMenuItem>
+                        </>
+                    )}
                 </DropdownMenuContent>
             </DropdownMenu>
         </li>
@@ -398,15 +435,17 @@ function RunLog({
     runs,
     rules,
     filter,
+    now,
     onFilter,
 }: {
     runs: RuleRun[];
     rules: AutomationRule[];
     filter: string;
+    now: string;
     onFilter: (value: string) => void;
 }) {
     return (
-        <Panel title="Log eksekusi" bodyClassName="gap-3" flush>
+        <Panel title="Log eksekusi · 7 hari" bodyClassName="gap-3" flush>
             <div className="px-5 md:px-6">
                 <SelectField
                     label="Tampilkan log untuk"
@@ -424,7 +463,7 @@ function RunLog({
                     size="sm"
                     icon={History}
                     title="Belum ada eksekusi"
-                    description="Log muncul setelah aturan berjalan pertama kali."
+                    description="Log muncul setelah aturan berjalan."
                     className="mx-5 md:mx-6"
                 />
             ) : (
@@ -452,14 +491,23 @@ function RunLog({
                                 />
                                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                                     <p className="flex flex-wrap items-baseline gap-x-2 text-[15px] leading-[22px]">
-                                        <span className="font-mono text-[14px] font-semibold text-text">
-                                            {entry.task_key}
-                                        </span>
+                                        {entry.task_id ? (
+                                            <Link
+                                                href={taskUrl(entry.task_key)}
+                                                className="font-mono text-[14px] font-semibold text-link hover:underline"
+                                            >
+                                                {entry.task_key}
+                                            </Link>
+                                        ) : (
+                                            <span className="font-mono text-[14px] font-semibold text-text">
+                                                {entry.task_key}
+                                            </span>
+                                        )}
                                         <span className="min-w-0 truncate font-semibold text-text">
                                             {entry.task_title}
                                         </span>
                                     </p>
-                                    <p className="text-meta text-text-muted">
+                                    <p className="text-meta break-words text-text-muted">
                                         <span
                                             className={cn(
                                                 'font-semibold',
@@ -478,7 +526,7 @@ function RunLog({
                                     title={formatDateTime(entry.ran_at)}
                                     className="shrink-0 text-meta text-text-muted"
                                 >
-                                    {formatRelative(entry.ran_at, NOW)}
+                                    {formatRelative(entry.ran_at, now)}
                                 </time>
                             </li>
                         );

@@ -69,7 +69,7 @@ final class ActionsSearchProvider implements SearchProvider
     {
         $builtIn = [
             ['id' => 'check-in', 'title' => 'Check-in', 'icon' => 'log-in', 'url' => '/absensi', 'subtitle' => 'Buka halaman absensi', 'keywords' => ['absen', 'hadir', 'check-out', 'masuk', 'pulang'], 'quick' => true],
-            ['id' => 'leave', 'title' => 'Ajukan cuti', 'icon' => 'calendar', 'url' => '/pengajuan', 'keywords' => ['cuti', 'izin', 'sakit', 'lembur', 'pengajuan'], 'quick' => true],
+            ['id' => 'leave', 'title' => 'Buat pengajuan', 'icon' => 'calendar', 'url' => '/pengajuan/baru', 'keywords' => ['cuti', 'izin', 'sakit', 'lembur', 'pengajuan', 'barang', 'pembelian'], 'quick' => true],
             ['id' => 'new-task', 'title' => 'Buat tugas baru', 'icon' => 'plus', 'url' => '/tugas', 'shortcut' => 'C', 'keywords' => ['task', 'tugas'], 'quick' => true],
             ['id' => 'theme', 'title' => 'Ganti tema', 'icon' => 'sun-moon', 'action' => 'theme.toggle', 'keywords' => ['tema', 'gelap', 'terang', 'dark', 'light', 'mode'], 'quick' => true],
             ['id' => 'inbox', 'title' => 'Buka Inbox', 'icon' => 'inbox', 'url' => '/inbox', 'keywords' => ['notifikasi', 'pesan']],
@@ -78,12 +78,22 @@ final class ActionsSearchProvider implements SearchProvider
             ['id' => 'attendance', 'title' => 'Absensi', 'icon' => 'map-pin', 'url' => '/absensi', 'keywords' => ['riwayat', 'kehadiran']],
             ['id' => 'requests', 'title' => 'Pengajuan saya', 'icon' => 'file-text', 'url' => '/pengajuan', 'keywords' => ['cuti', 'izin']],
             ['id' => 'approvals', 'title' => 'Persetujuan', 'icon' => 'check-check', 'url' => '/persetujuan', 'keywords' => ['approval', 'setujui']],
+            // Keputusan pemilik 6 Okt 2026: laporan progres harian & pengumuman.
+            ['id' => 'daily-report', 'title' => 'Tulis laporan hari ini', 'icon' => 'file-text', 'url' => '/laporan/hari-ini', 'keywords' => ['laporan', 'progres', 'harian', 'notulen', 'notulensi']],
+            ['id' => 'reports', 'title' => 'Laporan harian', 'icon' => 'file-text', 'url' => '/laporan', 'keywords' => ['laporan', 'riwayat', 'tim']],
+            ['id' => 'announcements', 'title' => 'Pengumuman', 'icon' => 'bell', 'url' => '/pengumuman', 'keywords' => ['info', 'kabar', 'berita']],
             ['id' => 'workspace', 'title' => 'Workspace', 'icon' => 'folder', 'url' => '/workspace', 'keywords' => ['proyek', 'tim', 'divisi']],
             ['id' => 'notification-settings', 'title' => 'Pengaturan notifikasi', 'icon' => 'bell', 'url' => '/pengaturan/notifikasi', 'keywords' => ['email', 'ringkasan', 'jam tenang']],
             ['id' => 'profile', 'title' => 'Profil saya', 'icon' => 'user', 'url' => '/settings/profile', 'keywords' => ['akun', 'nama', 'sandi']],
             ['id' => 'employees', 'title' => 'Karyawan', 'icon' => 'users', 'url' => '/admin/karyawan', 'keywords' => ['pegawai', 'admin'], 'roles' => [Role::SuperAdmin->value, Role::Hr->value]],
             ['id' => 'division-members', 'title' => 'Anggota divisi', 'icon' => 'users', 'url' => '/admin/karyawan', 'keywords' => ['tim', 'anggota'], 'roles' => [Role::KepalaDivisi->value]],
         ];
+
+        // Notulensi cepat (keputusan pemilik 6 Okt 2026): the client posts to
+        // /catatan/notulensi, or returns to the minutes being taken.
+        if ((bool) config('features.notes')) {
+            array_splice($builtIn, 3, 0, [['id' => 'quick-minutes', 'title' => 'Mulai notulensi', 'icon' => 'file-text', 'action' => 'notes.minutes', 'subtitle' => 'Catatan baru di workspace pribadi', 'keywords' => ['notulen', 'notulensi', 'catatan', 'rapat', 'minutes'], 'quick' => true]]);
+        }
 
         /** @var list<array{id: string, title: string, icon: string, url?: string, action?: string, subtitle?: string, shortcut?: string, keywords?: list<string>, roles?: list<string>, quick?: bool}> $extra */
         $extra = config('search.actions', []);

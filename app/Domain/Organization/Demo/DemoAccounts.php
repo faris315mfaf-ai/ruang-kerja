@@ -36,6 +36,10 @@ final class DemoAccounts
             new DemoAccount('anggota@demo.test', 'Rizky Aditya', Role::Anggota),
             new DemoAccount('programmer@demo.test', 'Arif Nugroho', Role::Anggota, 'Staf programmer'),
             new DemoAccount('maya.lestari@demo.test', 'Maya Lestari', Role::Anggota, 'Staf sosial media, branding & marketing'),
+            // Direksi (keputusan pemilik 6 Okt 2026), also the default final
+            // approvers of new hiring positions (HiringDemoSeeder).
+            new DemoAccount('faris@demo.test', 'M. Faris Ahlul Firdaus', Role::Direksi, 'Project Leader · penyetuju akhir hiring'),
+            new DemoAccount('dio@demo.test', 'Reynandio Wira Prathama', Role::Direksi, 'Direktur Utama · penyetuju akhir hiring'),
         ];
     }
 
@@ -54,7 +58,7 @@ final class DemoAccounts
      */
     public static function switcher(): array
     {
-        $order = ['programmer@demo.test', 'hr@demo.test', 'maya.lestari@demo.test', 'admin@demo.test', 'direksi@demo.test'];
+        $order = ['programmer@demo.test', 'hr@demo.test', 'maya.lestari@demo.test', 'admin@demo.test', 'direksi@demo.test', 'faris@demo.test', 'dio@demo.test'];
         $accounts = array_column(array_map(fn (DemoAccount $account): array => [$account->email, $account], self::all()), 1, 0);
 
         return array_map(fn (string $email): DemoAccount => $accounts[$email], $order);

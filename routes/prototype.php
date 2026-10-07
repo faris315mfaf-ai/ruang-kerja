@@ -1,6 +1,8 @@
 <?php
 
-use App\Http\Middleware\EnsurePrototypeEnabled;
+use App\Domain\Documentation\Services\PrototypeGuideLinks;
+use App\Http\Controllers\Prototype\PrototypeGuideController;
+use App\Http\Middleware\EnsureFeatureEnabled;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -10,35 +12,27 @@ use Illuminate\Support\Facades\Route;
  * backend lands, swap Route::inertia for a controller that passes the same
  * props shape (resources/js/features/<module>/types.ts). Flag off = 404.
  */
-Route::middleware([EnsurePrototypeEnabled::class, 'auth', 'verified'])->name('prototype.')->group(function () {
+Route::middleware([EnsureFeatureEnabled::class.':prototype', 'auth', 'verified'])->name('prototype.')->group(function () {
     Route::inertia('pratinjau', 'prototype/hub')->name('hub');
 
-    // F2-1 · Chat
-    Route::inertia('obrolan', 'chat/index')->name('chat.index');
-    Route::get('obrolan/{channel}', fn (string $channel) => inertia('chat/show', ['channelId' => $channel]))
-        ->where('channel', '[a-z0-9-]+')->name('chat.show');
+    // Panduan pratinjau: docs/fitur/PANDUAN-PRATINJAU.md + module docs of
+    // docs/fitur (config/docs.php group `features`) and their screenshots.
+    Route::get('pratinjau/panduan', [PrototypeGuideController::class, 'index'])->name('guide');
+    Route::get('pratinjau/panduan/gambar/{folder}/{file}', [PrototypeGuideController::class, 'image'])
+        ->where(['folder' => PrototypeGuideLinks::FOLDER_PATTERN, 'file' => PrototypeGuideLinks::FILE_PATTERN])
+        ->name('guide.image');
+    Route::get('pratinjau/panduan/{slug}', [PrototypeGuideController::class, 'show'])
+        ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')->name('guide.show');
 
-    // F2-2 · Realtime notes
-    Route::inertia('catatan', 'notes/index')->name('notes.index');
-    Route::get('catatan/{note}', fn (string $note) => inertia('notes/show', ['noteId' => $note]))
-        ->where('note', '[a-z0-9-]+')->name('notes.show');
+    // F2-1 · Obrolan has its own backend now: routes/chat.php (FEATURE_CHAT).
 
-    // F2-3 · Meetings, minutes & calendar
-    Route::inertia('rapat', 'meetings/index')->name('meetings.index');
-    Route::inertia('rapat/baru', 'meetings/create')->name('meetings.create');
-    Route::get('rapat/{meeting}', fn (string $meeting) => inertia('meetings/show', ['meetingId' => $meeting]))
-        ->where('meeting', '[a-z0-9-]+')->name('meetings.show');
-    Route::get('rapat/{meeting}/notulen', fn (string $meeting) => inertia('meetings/minutes', ['meetingId' => $meeting]))
-        ->where('meeting', '[a-z0-9-]+')->name('meetings.minutes');
-    Route::inertia('kalender', 'meetings/calendar')->name('calendar');
-    Route::inertia('manajemen/jadwal', 'meetings/management-schedule')->name('management.schedule');
+    // F2-2 · Catatan bersama has its own backend now: routes/notes.php (FEATURE_NOTES).
 
-    // F2-4 · WhatsApp, automation, recurring tasks, templates (+ Kinerja saya)
+    // F2-3 · Rapat & kalender has its own backend now: routes/meetings.php (FEATURE_MEETINGS).
+
+    // F2-4 · WhatsApp stays a preview (held by the owner until the provider is
+    // chosen). Otomasi, berulang, template and Kinerja saya: routes/automation.php.
     Route::inertia('pengaturan/whatsapp', 'automation/whatsapp')->name('whatsapp');
-    Route::inertia('otomasi', 'automation/rules')->name('automation.rules');
-    Route::inertia('otomasi/berulang', 'automation/recurring')->name('automation.recurring');
-    Route::inertia('otomasi/template', 'automation/templates')->name('automation.templates');
-    Route::inertia('kinerja', 'automation/performance')->name('performance');
 
     // F3-1, F3-2 · Mobile app: biometrics, face check-in, integrity, offline
     Route::inertia('pratinjau/ponsel', 'mobile-app/index')->name('mobile.index');
@@ -51,12 +45,6 @@ Route::middleware([EnsurePrototypeEnabled::class, 'auth', 'verified'])->name('pr
     Route::inertia('absensi/wajah', 'mobile-app/face-check-in')->name('mobile.face');
     Route::inertia('pengaturan/perangkat', 'mobile-app/devices')->name('mobile.devices');
 
-    // F3-3 · OKR, fingerprint devices, role dashboards (SPKD)
-    Route::inertia('okr', 'okr/index')->name('okr.index');
-    Route::get('okr/{objective}', fn (string $objective) => inertia('okr/show', ['objectiveId' => $objective]))
-        ->where('objective', '[a-z0-9-]+')->name('okr.show');
+    // F3-3 · fingerprint devices. OKR (routes/okr.php) and Dashboard per jabatan (routes/roles.php) have real backends.
     Route::inertia('admin/mesin-absensi', 'okr/fingerprint-devices')->name('fingerprint');
-    Route::get('peran/{role}', fn (string $role) => inertia('okr/role-dashboard', ['role' => $role]))
-        ->whereIn('role', ['dirut', 'direktur', 'hr', 'corsec', 'marketing', 'programming', 'implementer', 'analis'])
-        ->name('roles.show');
 });

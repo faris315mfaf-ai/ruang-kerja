@@ -1,5 +1,5 @@
+import { ActionNotes } from '@/features/monitoring/action-notes';
 import { formatLongDate, formatTime } from '@/lib/format';
-import { AttendancePanel, AttendancePanelSkeleton } from './attendance-panel';
 import { KpiCardSkeleton, KpiCardView } from './kpi-cards';
 import {
     attendanceCard,
@@ -14,6 +14,8 @@ import { PANEL_ID, PeriodTabs, tabId } from './period-tabs';
 import { ProjectsPanel, ProjectsPanelSkeleton } from './projects-panel';
 import type { ManagementProps, PeriodKey } from './types';
 import { WorkChart, WorkChartSkeleton } from './work-chart';
+import { WorkloadPanel } from './workload-panel';
+import { QuickMinutesButton } from '@/features/notes/quick-minutes-button';
 
 /**
  * Desktop & tablet (design MgDashboard): sections are flex-wrap rows, so on
@@ -49,7 +51,10 @@ export function ManagementDesktop({
                         · {periodNote(period, block)}
                     </p>
                 </div>
-                <PeriodTabs value={period} onChange={onPeriodChange} />
+                <div className="flex flex-wrap items-center gap-3">
+                    <QuickMinutesButton />
+                    <PeriodTabs value={period} onChange={onPeriodChange} />
+                </div>
             </section>
 
             <div
@@ -64,9 +69,19 @@ export function ManagementDesktop({
                 >
                     {block ? (
                         <>
-                            <KpiCardView card={attendanceCard(block)} />
-                            <KpiCardView card={tasksCard(period, block)} />
-                            <KpiCardView card={thirdCard(period, block)} />
+                            {[
+                                attendanceCard(block),
+                                tasksCard(period, block),
+                                thirdCard(period, block),
+                            ].map(
+                                (card) =>
+                                    card && (
+                                        <KpiCardView
+                                            key={card.key}
+                                            card={card}
+                                        />
+                                    ),
+                            )}
                         </>
                     ) : (
                         <>
@@ -93,10 +108,6 @@ export function ManagementDesktop({
                                 generatedAt={summary.generated_at}
                                 className="flex-[2_1_620px] px-1"
                             />
-                            <AttendancePanel
-                                attendance={summary.attendance}
-                                className="flex-[1_1_360px]"
-                            />
                         </>
                     ) : (
                         <>
@@ -104,7 +115,6 @@ export function ManagementDesktop({
                                 period={period}
                                 className="flex-[2_1_620px]"
                             />
-                            <AttendancePanelSkeleton className="flex-[1_1_360px]" />
                         </>
                     )}
                 </section>
@@ -132,13 +142,28 @@ export function ManagementDesktop({
                 )}
             </section>
 
+            <section className="flex flex-wrap items-start gap-5">
+                <WorkloadPanel
+                    workload={props.workload}
+                    className="flex-[2_1_620px]"
+                />
+                <ActionNotes
+                    notes={props.notes}
+                    today={props.today}
+                    className="flex-[1_1_360px]"
+                />
+            </section>
+
             <section className="flex flex-wrap items-stretch gap-5">
                 <AgendaPanel
                     agenda={props.agenda}
                     today={props.today}
                     className="flex-[1_1_420px]"
                 />
-                <NotesPanel notes={props.notes} className="flex-[1_1_420px]" />
+                <NotesPanel
+                    notes={props.minutes}
+                    className="flex-[1_1_420px]"
+                />
             </section>
         </div>
     );

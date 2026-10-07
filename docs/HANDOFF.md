@@ -45,6 +45,17 @@ Alur **frontend** semua modul Fase 2 dan 3 sudah bisa dicoba sebagai pratinjau d
 
 **Keputusan yang dibutuhkan sebelum backend Fase 2/3:** provider WhatsApp, tabel berbagi catatan (`note_shares`), tabel rapat & peserta di samping `calendar_events`, kolom tambahan `devices`, dan apakah dashboard per jabatan SPKD menggantikan atau melengkapi dashboard per peran akses (lihat checklist di tiap dokumen `fitur/`).
 
+## Rilis gelombang 6 Okt 2026 (branch `claude/integrasi-f2`)
+
+Langkah setelah deploy (selain `migrate` otomatis):
+1. `php artisan db:seed --class=RoleSeeder --force` (HR mendapat `workspaces.view_all`) dan `--class=RequestSeeder` (jenis "Pengajuan barang" + alurnya; cuti & lembur terkunci lewat migrasi).
+2. Karyawan login dengan sandi: HR mengatur sandi awal di Admin › Karyawan › "Atur kata sandi" (sandi sementara + wajib ganti), atau karyawan memakai **Lupa kata sandi** yang disetujui HR.
+3. Flag per modul (default mati di produksi): `FEATURE_CHAT`, `FEATURE_NOTES` (+ layanan `collab`: `COMPOSE_PROFILES=collab`, `COLLAB_SECRET`, `COLLAB_URL`, `VITE_COLLAB_URL`, image dari `collab/Dockerfile` di CI), `FEATURE_MEETINGS`, `FEATURE_AUTOMATION`, `FEATURE_OKR`, `FEATURE_ROLE_DASHBOARDS`. Obrolan juga butuh `php artisan chat:sync-workspace-channels` sekali.
+4. Hiring: HR membuat lowongan, menyalin URL + secret webhook ke skrip Apps Script Google Form (`docs/fitur/hiring.md`), memilih penyetuju akhir di `/hiring/pengaturan`.
+5. Jadwal baru (scheduler): pengingat laporan harian 16.30, tugas berulang 07.00, aturan lewat tenggat 07.05, pengingat rapat tiap menit, tindak lanjut 07.05, check-in OKR Jumat 15.00, kedaluwarsa permintaan reset sandi tiap jam.
+
+Catatan pengujian lokal: `composer test` sekarang ±2.900 test; di mesin sibuk bisa melewati batas 300 detik composer — jalankan `COMPOSER_PROCESS_TIMEOUT=0 composer test`. Rute Wayfinder (`resources/js/routes`) dibuat saat build/`php artisan wayfinder:generate --with-form`.
+
 ## Kualitas saat serah terima
 
 - Pest ±2.020 test hijau (paralel), Vitest ±370 test hijau.
@@ -95,3 +106,8 @@ Setelah masuk, **pemilih akun demo** di bagian atas (pil "Demo · …" di menu b
 
 - Semua branch pembangunan (`feat/sprint-*`, `fix/*`) sudah digabung ke `main`; worktree paralel dan database per jalur sudah dibersihkan. Branch lama tetap ada sebagai jejak dan aman dihapus.
 - Postgres dev memakai `max_locks_per_transaction=256` (`compose.yml`) dan suite test memakai `memory_limit=512M` (`phpunit.xml`) agar test paralel stabil.
+
+## Obrolan (F2-1, tugas #1)
+
+Backend + frontend nyata di branch `claude/f2-obrolan` (detail: `docs/fitur/obrolan.md` §7). Di balik `FEATURE_CHAT` (default nyala di lokal, **mati di produksi**). Saat dirilis: deploy → `php artisan migrate` (otomatis lewat `deploy-remote.sh`) → **sekali** `docker compose exec app php artisan chat:sync-workspace-channels` → set `FEATURE_CHAT=true` di `.env` server → `docker compose up -d --force-recreate`. Akun demo: Obrolan berisi data `ChatDemoSeeder` (kadiv@ punya pesan belum dibaca).
+

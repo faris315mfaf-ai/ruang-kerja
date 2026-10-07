@@ -1,14 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import {
-    CalendarDays,
-    Fingerprint,
-    MessagesSquare,
-    NotebookPen,
-    Smartphone,
-    Target,
-    UsersRound,
-    Workflow,
-} from 'lucide-react';
+import { Fingerprint, Smartphone, Workflow } from 'lucide-react';
 
 export type PrototypeScreen = { label: string; href: string };
 
@@ -28,62 +19,18 @@ export type PrototypeModule = {
 /** Every Fase 2 & 3 preview, in the order of docs/PROMPTS.md. */
 export const PROTOTYPE_MODULES: PrototypeModule[] = [
     {
-        key: 'chat',
-        phase: 'Fase 2',
-        sprint: 'F2-1',
-        title: 'Obrolan',
-        description:
-            'Channel per workspace, DM, grup kecil, thread, mention, reaksi dan lampiran Drive.',
-        icon: MessagesSquare,
-        gradient: 'bg-grad-merek',
-        screens: [{ label: 'Semua obrolan', href: '/obrolan' }],
-    },
-    {
-        key: 'notes',
-        phase: 'Fase 2',
-        sprint: 'F2-2',
-        title: 'Catatan bersama',
-        description:
-            'Wiki, SOP dan notulen ringan yang diedit bersamaan, dengan riwayat versi.',
-        icon: NotebookPen,
-        gradient: 'bg-grad-indigo',
-        screens: [{ label: 'Semua catatan', href: '/catatan' }],
-    },
-    {
-        key: 'meetings',
-        phase: 'Fase 2',
-        sprint: 'F2-3',
-        title: 'Rapat & kalender',
-        description:
-            'Jadwalkan rapat dengan Google Meet, notulen dengan tindak lanjut, dan kalender tenggat & cuti.',
-        icon: CalendarDays,
-        gradient: 'bg-grad-merek',
-        screens: [
-            { label: 'Rapat', href: '/rapat' },
-            { label: 'Jadwalkan rapat', href: '/rapat/baru' },
-            { label: 'Kalender', href: '/kalender' },
-            {
-                label: 'Jadwal & notulensi (manajemen)',
-                href: '/manajemen/jadwal',
-            },
-        ],
-    },
-    {
         key: 'automation',
         phase: 'Fase 2',
         sprint: 'F2-4',
-        title: 'Otomasi & WhatsApp',
+        // Otomasi, tugas berulang, template and Kinerja saya are real now
+        // (routes/automation.php, FEATURE_AUTOMATION). WhatsApp stays a
+        // preview: held by the owner until the provider is chosen.
+        title: 'Notifikasi WhatsApp (ditahan)',
         description:
-            'Notifikasi WhatsApp, tugas berulang, template, aturan otomatis, dan Kinerja saya.',
+            'Pratinjau saja: verifikasi nomor, opt-in per kejadian, dan template pesan. Ditahan sampai penyedia WhatsApp diputuskan.',
         icon: Workflow,
         gradient: 'bg-grad-indigo',
-        screens: [
-            { label: 'Aturan otomasi', href: '/otomasi' },
-            { label: 'Tugas berulang', href: '/otomasi/berulang' },
-            { label: 'Template', href: '/otomasi/template' },
-            { label: 'WhatsApp', href: '/pengaturan/whatsapp' },
-            { label: 'Kinerja saya', href: '/kinerja' },
-        ],
+        screens: [{ label: 'WhatsApp', href: '/pengaturan/whatsapp' }],
     },
     {
         key: 'mobile-app',
@@ -101,17 +48,6 @@ export const PROTOTYPE_MODULES: PrototypeModule[] = [
         ],
     },
     {
-        key: 'okr',
-        phase: 'Fase 3',
-        sprint: 'F3-3',
-        title: 'OKR divisi',
-        description:
-            'Objective per kuartal dengan key result yang ditautkan ke tugas.',
-        icon: Target,
-        gradient: 'bg-grad-indigo',
-        screens: [{ label: 'OKR', href: '/okr' }],
-    },
-    {
         key: 'fingerprint',
         phase: 'Fase 3',
         sprint: 'F3-3',
@@ -121,25 +57,5 @@ export const PROTOTYPE_MODULES: PrototypeModule[] = [
         icon: Fingerprint,
         gradient: 'bg-grad-slate',
         screens: [{ label: 'Mesin absensi', href: '/admin/mesin-absensi' }],
-    },
-    {
-        key: 'roles',
-        phase: 'Fase 3',
-        sprint: 'SPKD',
-        title: 'Dashboard per peran',
-        description:
-            'Beranda khusus Direktur Utama, Direktur, HR, Sekretaris, dan divisi SPKD.',
-        icon: UsersRound,
-        gradient: 'bg-grad-merek',
-        screens: [
-            { label: 'Direktur Utama', href: '/peran/dirut' },
-            { label: 'Direktur', href: '/peran/direktur' },
-            { label: 'HR', href: '/peran/hr' },
-            { label: 'Sekretaris Perusahaan', href: '/peran/corsec' },
-            { label: 'Branding & Marketing', href: '/peran/marketing' },
-            { label: 'Programming', href: '/peran/programming' },
-            { label: 'Implementer', href: '/peran/implementer' },
-            { label: 'Analis', href: '/peran/analis' },
-        ],
     },
 ];

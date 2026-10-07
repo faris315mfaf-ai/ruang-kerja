@@ -1,96 +1,134 @@
-import { useMemo, useState } from 'react';
+import { router } from '@inertiajs/react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { useFakeMutation } from '@/features/prototype/use-fake-mutation';
-import { BUSY, ME, MEETINGS, PEOPLE } from './fixtures';
-import type { MeetingFormErrors, MeetingFormValues } from './lib';
+import meetingRoutes from '@/routes/meetings';
+import { meetingsApi } from './api';
+import type {
+    MeetingFormErrors,
+    MeetingFormField,
+    MeetingFormValues,
+} from './lib';
 import {
     addDays,
-    findConflicts,
     isEmail,
     officeDate,
-    officeInstant,
     parseClock,
-    suggestFreeSlot,
     validateMeetingForm,
 } from './lib';
-import { useDemoClock, usePreviewState } from './use-preview';
-
-export const DURATIONS = [15, 30, 45, 60, 90, 120];
-
-export const WORKSPACES = [
-    { key: 'OPS', name: 'Divisi Operasional' },
-    { key: 'PLQ', name: 'Peluncuran Q4' },
-    { key: 'none', name: 'Tanpa workspace' },
-];
+import { useNow } from './meetings-context';
+import type { Conflict, MeetingFormProps } from './types';
 
 export const REMINDER_OPTIONS = [30, 15, 5];
 
-function blank(today: string): MeetingFormValues {
+const CONFLICT_DEBOUNCE_MS = 400;
+
+function blank(
+    today: string,
+    me: string,
+    workspace: string,
+): MeetingFormValues {
     return {
         title: '',
         date: addDays(today, 1),
-        start: '15:00',
+        start: '09:00',
         duration: 60,
         platform: 'meet',
-        zoomUrl: '',
-        zoomPasscode: '',
-        room: '',
-        participants: [ME],
+        joinUrl: '',
+        location: '',
+        participants: [me],
         agenda: [''],
         recurrence: 'none',
+        recurrenceUntil: '',
         reminders: [15, 5],
-        minuteTakerId: ME,
-        workspace: 'OPS',
+        minuteTakerId: me,
+        workspace,
+        leadership: false,
     };
 }
 
-/** Filled sample (DRapatBaru) that shows a schedule conflict with Bayu. */
-function sample(today: string): MeetingFormValues {
+function fromMeeting(
+    props: MeetingFormProps,
+    me: string,
+): MeetingFormValues | null {
+    const meeting = props.meeting;
+
+    if (!meeting) {
+        return null;
+    }
+
+    const organizer = meeting.participants.includes(me) ? [] : [me];
+
     return {
-        ...blank(today),
-        title: 'Review vendor logistik',
-        start: '13:30',
-        participants: [
-            ME,
-            'bayu',
-            'rizky',
-            'fitri',
-            'logistik@sinarlogistik.co.id',
-        ],
-        agenda: [
-            'Evaluasi ketepatan pengiriman September',
-            'Penawaran harga kuartal IV',
-            'SLA klaim barang rusak',
-        ],
-        minuteTakerId: 'fitri',
+        title: meeting.title,
+        date: meeting.date,
+        start: meeting.start,
+        duration: meeting.duration,
+        platform: meeting.platform,
+        joinUrl: meeting.join_url ?? '',
+        location: meeting.location ?? '',
+        participants: [...organizer, ...meeting.participants],
+        agenda: meeting.agenda.length > 0 ? meeting.agenda : [''],
+        recurrence: meeting.recurrence,
+        recurrenceUntil: meeting.recurrence_until ?? '',
+        reminders: meeting.reminders,
+        minuteTakerId: meeting.minute_taker_id ?? me,
+        workspace: meeting.workspace_id ?? 'none',
+        leadership: meeting.leadership,
     };
 }
+
+/** Server field names → form fields (422 from POST/PATCH /rapat). */
+const SERVER_FIELDS: Record<string, MeetingFormField> = {
+    title: 'title',
+    date: 'date',
+    start: 'start',
+    join_url: 'joinUrl',
+    location: 'location',
+    participant_ids: 'participants',
+    guest_emails: 'participants',
+    agenda: 'agenda',
+    recurrence_until: 'recurrenceUntil',
+};
 
 /**
- * State of /rapat/baru shared by the desktop and phone layouts: values,
- * validation (shown after the first submit), conflicts with the
- * participants' calendars, a free-slot suggestion and the fake save.
+ * State of /rapat/baru and /rapat/{id}/ubah shared by the desktop and phone
+ * layouts: values, validation (shown after the first submit, server errors
+ * mapped onto the same fields), live conflict check with the participants'
+ * RuangKerja meetings (GET /rapat/bentrok) and the save (Inertia POST/PATCH).
  */
-export function useMeetingForm() {
-    const now = useDemoClock();
+export function useMeetingForm(props: MeetingFormProps) {
+    const now = useNow(60_000);
     const today = officeDate(now);
-    const { state } = usePreviewState();
-    const [values, setValues] = useState<MeetingFormValues>(() => blank(today));
+    const me = props.viewer_id;
+    const editing = props.meeting !== null;
+    const [values, setValues] = useState<MeetingFormValues>(
+        () =>
+            fromMeeting(props, me) ??
+            blank(today, me, props.workspaces[0]?.id ?? 'none'),
+    );
     const [submitted, setSubmitted] = useState(false);
     const [summaryOpen, setSummaryOpen] = useState(false);
-    const [saved, setSaved] = useState<MeetingFormValues | null>(null);
-    const mutation = useFakeMutation();
+    const [processing, setProcessing] = useState(false);
+    const [serverErrors, setServerErrors] = useState<MeetingFormErrors>({});
+    const [conflicts, setConflicts] = useState<Conflict[]>([]);
+    const [suggestion, setSuggestion] = useState<string | null>(null);
+    const [checking, setChecking] = useState(false);
 
     const set = <K extends keyof MeetingFormValues>(
         key: K,
         value: MeetingFormValues[K],
-    ) => setValues((current) => ({ ...current, [key]: value }));
+    ) => {
+        setValues((current) => ({ ...current, [key]: value }));
+        setServerErrors({});
+    };
 
     const errors: MeetingFormErrors = useMemo(
-        () => validateMeetingForm(values, now, ME),
-        [values, now],
+        () => validateMeetingForm(values, now, me, editing),
+        [values, now, me, editing],
     );
-    const visibleErrors: MeetingFormErrors = submitted ? errors : {};
+    const visibleErrors: MeetingFormErrors = submitted
+        ? { ...errors, ...serverErrors }
+        : serverErrors;
     const valid = Object.keys(errors).length === 0;
 
     const internal = useMemo(
@@ -100,45 +138,60 @@ export function useMeetingForm() {
     const timeOk =
         parseClock(values.start) !== null &&
         /^\d{4}-\d{2}-\d{2}$/.test(values.date);
-    const startsAt = timeOk ? officeInstant(values.date, values.start) : null;
-    const endsAt = startsAt
-        ? new Date(
-              Date.parse(startsAt) + values.duration * 60_000,
-          ).toISOString()
-        : null;
 
-    const conflicts = useMemo(
-        () =>
-            startsAt && endsAt
-                ? findConflicts(internal, startsAt, endsAt, MEETINGS, BUSY)
-                : [],
-        [internal, startsAt, endsAt],
-    );
-    const hasConflicts = conflicts.length > 0;
-    const suggestion = useMemo(
-        () =>
-            hasConflicts && timeOk
-                ? suggestFreeSlot(
-                      internal,
-                      values.date,
-                      values.start,
-                      values.duration,
-                      MEETINGS,
-                      BUSY,
-                  )
-                : null,
-        [
-            hasConflicts,
-            timeOk,
-            internal,
-            values.date,
-            values.start,
-            values.duration,
-        ],
-    );
+    // Conflicts with the participants' other meetings (debounced).
+    useEffect(() => {
+        if (!timeOk || internal.length === 0) {
+            setConflicts([]);
+            setSuggestion(null);
+
+            return;
+        }
+
+        let stale = false;
+        const handle = window.setTimeout(() => {
+            setChecking(true);
+            meetingsApi
+                .conflicts({
+                    participants: internal,
+                    date: values.date,
+                    start: values.start,
+                    duration: values.duration,
+                    ignore: props.meeting?.id,
+                })
+                .then((result) => {
+                    if (!stale) {
+                        setConflicts(result.conflicts);
+                        setSuggestion(result.suggestion);
+                    }
+                })
+                .catch(() => {
+                    // Advisory only: the form still works without the check.
+                    if (!stale) {
+                        setConflicts([]);
+                        setSuggestion(null);
+                    }
+                })
+                .finally(() => !stale && setChecking(false));
+        }, CONFLICT_DEBOUNCE_MS);
+
+        return () => {
+            stale = true;
+            window.clearTimeout(handle);
+        };
+    }, [
+        internal,
+        timeOk,
+        values.date,
+        values.start,
+        values.duration,
+        props.meeting?.id,
+    ]);
 
     const addParticipant = (idOrEmail: string) => {
-        const value = idOrEmail.trim().toLowerCase();
+        const value = isEmail(idOrEmail)
+            ? idOrEmail.trim().toLowerCase()
+            : idOrEmail.trim();
 
         if (!value || values.participants.includes(value)) {
             return;
@@ -148,7 +201,7 @@ export function useMeetingForm() {
     };
 
     const removeParticipant = (idOrEmail: string) => {
-        if (idOrEmail === ME) {
+        if (idOrEmail === me) {
             return;
         }
 
@@ -159,7 +212,7 @@ export function useMeetingForm() {
             ),
             minuteTakerId:
                 current.minuteTakerId === idOrEmail
-                    ? ME
+                    ? me
                     : current.minuteTakerId,
         }));
     };
@@ -179,54 +232,101 @@ export function useMeetingForm() {
         return true;
     };
 
-    const send = () =>
-        mutation.run(
-            () => {
-                setSaved(values);
-                setSummaryOpen(false);
-            },
-            {
-                success: 'Undangan rapat terkirim',
-                fail: state === 'galat',
-                error: 'Google Calendar menolak undangan. Coba lagi sebentar.',
-            },
-        );
+    const payload = () => ({
+        title: values.title.trim(),
+        date: values.date,
+        start: values.start.replace('.', ':'),
+        duration: values.duration,
+        platform: values.platform,
+        join_url:
+            values.platform === 'meet' || values.platform === 'zoom'
+                ? values.joinUrl.trim() || null
+                : null,
+        location:
+            values.platform === 'room' || values.platform === 'client'
+                ? values.location.trim()
+                : null,
+        participant_ids: values.participants.filter((id) => !isEmail(id)),
+        guest_emails: values.participants.filter(isEmail),
+        agenda: values.agenda,
+        recurrence: values.recurrence,
+        recurrence_until:
+            values.recurrence === 'none'
+                ? null
+                : values.recurrenceUntil || null,
+        reminders: values.reminders,
+        minute_taker_id: values.minuteTakerId || null,
+        workspace_id: values.workspace === 'none' ? null : values.workspace,
+        leadership: props.can_lead ? values.leadership : undefined,
+    });
 
-    const reset = () => {
-        setValues(blank(today));
-        setSubmitted(false);
-        setSaved(null);
+    const send = () => {
+        const route = props.meeting
+            ? meetingRoutes.update(props.meeting.id)
+            : meetingRoutes.store();
+        const options = {
+            preserveScroll: true,
+            onStart: () => setProcessing(true),
+            onFinish: () => setProcessing(false),
+            onError: (errorBag: Record<string, string>) => {
+                setSummaryOpen(false);
+                setSubmitted(true);
+                const mapped: MeetingFormErrors = {};
+
+                for (const [key, message] of Object.entries(errorBag)) {
+                    const field =
+                        SERVER_FIELDS[key] ??
+                        SERVER_FIELDS[key.split('.')[0] ?? ''];
+
+                    if (field && !mapped[field]) {
+                        mapped[field] = message;
+                    }
+                }
+
+                setServerErrors(mapped);
+                toast.error(
+                    Object.values(errorBag)[0] ??
+                        'Undangan gagal dikirim. Periksa isian lalu coba lagi.',
+                );
+            },
+        };
+
+        if (props.meeting) {
+            router.patch(route.url, payload(), options);
+        } else {
+            router.post(route.url, payload(), options);
+        }
     };
 
     return {
         now,
         today,
-        state,
+        me,
+        editing,
+        canLead: props.can_lead,
+        durations: props.durations,
+        workspaces: props.workspaces,
+        people: props.people,
         values,
         set,
         setValues,
-        fillSample: () => {
-            setValues(sample(today));
-            setSubmitted(false);
-        },
         errors: visibleErrors,
         valid,
         conflicts,
         suggestion,
+        checking,
         applySuggestion: () => suggestion && set('start', suggestion),
         addParticipant,
         removeParticipant,
-        internalPeople: PEOPLE.filter((person) => internal.includes(person.id)),
+        internalPeople: props.people.filter((person) =>
+            internal.includes(person.id),
+        ),
         guests: values.participants.filter(isEmail),
         review,
         summaryOpen,
         setSummaryOpen,
         send,
-        processing: mutation.processing,
-        saved,
-        reset,
-        startsAt,
-        endsAt,
+        processing,
     };
 }
 

@@ -1,16 +1,20 @@
-import { Link, router } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import {
-    AlertTriangle,
-    Eye,
-    FileQuestion,
     History,
+    MoreHorizontal,
+    PanelLeft,
     Plus,
     Share2,
     X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { EmptyState } from '@/components/empty-state';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
     Sheet,
     SheetContent,
@@ -18,20 +22,28 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { PreviewState } from '@/features/chat/preview-state';
-import { PreviewBar } from '@/features/chat/preview-state';
+import { SegmentedTabs } from '@/components/ui/tabs';
 import { cn, focusRing } from '@/lib/utils';
+import { DocumentTabsPanel, useDocumentTabs } from './document-tabs';
+import { handleScaleShortcut } from './editor/toolbar-extras';
+import {
+    MinutesModeBar,
+    StartModeButton,
+    useMinutesMode,
+} from './minutes-mode';
 import { NewNoteDialog } from './new-note-dialog';
 import { EditorToolbar, NoteEditor } from './note-editor';
 import {
     EditorsPresence,
+    NoteBanners,
     NotePath,
     SaveStatus,
     TitleField,
 } from './note-parts';
 import { NoteTree } from './note-tree';
 import { ShareDialog } from './share-dialog';
-import type { NotesState } from './types';
+import { DeleteDialog, MoveDialog } from './tree-actions';
+import type { NoteShowProps, NoteVersion } from './types';
 import { useNoteSession } from './use-note-session';
 import {
     RestoreVersionDialog,
@@ -56,94 +68,59 @@ function useMinWidth(px: number): boolean {
     return matches;
 }
 
-function EditorSkeleton() {
-    return (
-        <div
-            aria-busy
-            aria-label="Memuat catatan"
-            className="flex flex-col gap-4 rounded-panel border border-border bg-surface p-10"
-        >
-            <Skeleton className="h-5 w-56" />
-            <Skeleton className="h-11 w-2/3" />
-            {Array.from({ length: 6 }, (_, index) => (
-                <Skeleton key={index} className="h-5 w-full" />
-            ))}
-        </div>
-    );
-}
-
 /**
- * Note editor on desktop & tablet: workspace tree (≥ 1280px), the editor
- * card with live co-editors, and version history (third column ≥ 1280px,
- * sheet below).
+ * Note editor on desktop & tablet: left panel with the document tabs
+ * (≥ 1024px; collapsible on tablets) and the workspace tree (≥ 1280px, own
+ * tab), the editor card with live co-editors and note-taking mode, and
+ * version history (third column ≥ 1280px, sheet below).
  */
 export function NoteDesktop({
-    state,
-    noteId,
-    preview,
+    props,
+    versions,
 }: {
-    state: NotesState;
-    noteId: string;
-    preview: PreviewState;
+    props: NoteShowProps;
+    versions: NoteVersion[] | undefined;
 }) {
-    const session = useNoteSession(state, noteId);
+    const session = useNoteSession(props, versions);
     const wide = useMinWidth(1280);
+    const desktop = useMinWidth(1024);
     const [creating, setCreating] = useState(false);
     const { note, history } = session;
-
-    if (preview === 'memuat') {
-        return (
-            <div className="flex flex-col gap-4">
-                <PreviewBar />
-                <EditorSkeleton />
-            </div>
-        );
-    }
-
-    if (preview === 'galat') {
-        return (
-            <div className="flex flex-col gap-4">
-                <PreviewBar />
-                <EmptyState
-                    icon={AlertTriangle}
-                    title="Catatan gagal dimuat"
-                    description="Tidak dapat tersambung ke server penyuntingan bersama. Coba lagi sebentar."
-                    action={
-                        <Button
-                            variant="outline"
-                            onClick={() => router.visit(`/catatan/${noteId}`)}
-                        >
-                            Coba lagi
-                        </Button>
-                    }
-                />
-            </div>
-        );
-    }
-
-    if (!note) {
-        return (
-            <div className="flex flex-col gap-4">
-                <PreviewBar />
-                <EmptyState
-                    icon={FileQuestion}
-                    title="Catatan tidak ditemukan"
-                    description="Catatan ini sudah dihapus atau Anda tidak punya akses."
-                    action={
-                        <Button variant="outline" asChild>
-                            <Link href="/catatan">Kembali ke catatan</Link>
-                        </Button>
-                    }
-                />
-            </div>
-        );
-    }
-
-    const workspaceNotes = state.notes.filter(
-        (item) => item.workspace_id === note.workspace_id,
+    const workspace = props.workspaces.find(
+        (item) => item.id === note.workspace_id,
     );
-    const empty = preview === 'kosong';
+    const mode = useMinutesMode(session);
+    const tabs = useDocumentTabs({
+        notes: props.notes,
+        current: note,
+        rootId: mode.rootId,
+        canCreate: workspace?.can_create ?? false,
+        mobile: false,
+    });
+    // Tablet: the panel folds away; until toggled it is open when the
+    // document has tabs or note-taking mode is on.
+    const [panelToggled, setPanelOpen] = useState<boolean | null>(null);
+    const panelOpen = panelToggled ?? (tabs.tabs.length > 1 || mode.active);
+    const [panelTab, setPanelTab] = useState<'document' | 'workspace'>(
+        'document',
+    );
+    const showPanel = desktop || panelOpen;
+
+    // Ctrl/⌘ + Alt + = / − / 0: text size of the note body.
+    useEffect(() => {
+        const onKeyDown = (event: KeyboardEvent) => {
+            handleScaleShortcut(event);
+        };
+        window.addEventListener('keydown', onKeyDown);
+
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, []);
     const previewVersion = history.preview;
+    const newDefaults = useMemo(
+        () => ({ kind: 'note' as const, workspaceId: note.workspace_id }),
+        [note.workspace_id],
+    );
+
     const historyPanel = (
         <div className="flex h-full min-h-0 flex-col">
             <header className="flex items-center gap-2 border-b border-divider px-5 py-3">
@@ -164,75 +141,143 @@ export function NoteDesktop({
             </header>
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
                 <p className="px-3 pb-2 text-[14px] text-text-muted">
-                    Disimpan otomatis tiap ada jeda menyunting. Pilih versi
-                    untuk melihat isinya.
+                    Versi disimpan otomatis paling sering tiap 5 menit
+                    menyunting. Pilih versi untuk melihat isinya.
                 </p>
-                <VersionList
-                    versions={session.versions}
-                    people={state.people}
-                    selectedId={history.preview?.id ?? null}
-                    onSelect={(version) => {
-                        history.select(version);
+                {history.loading ? (
+                    <div className="flex flex-col gap-2 p-3" aria-busy>
+                        {Array.from({ length: 4 }, (_, index) => (
+                            <Skeleton key={index} className="h-12 w-full" />
+                        ))}
+                    </div>
+                ) : (
+                    <VersionList
+                        versions={history.versions}
+                        people={props.people}
+                        selectedId={previewVersion?.id ?? null}
+                        onSelect={(version) => {
+                            history.select(version);
 
-                        if (!wide) {
-                            history.setOpen(false);
-                        }
-                    }}
-                />
+                            if (!wide) {
+                                history.setOpen(false);
+                            }
+                        }}
+                    />
+                )}
             </div>
         </div>
     );
 
     return (
         <div className="flex flex-col gap-4">
-            <PreviewBar />
             <div
                 className={cn(
                     'grid items-start gap-5',
-                    wide &&
-                        (history.open
+                    showPanel &&
+                        (wide && history.open
                             ? 'grid-cols-[240px_minmax(0,1fr)_340px]'
-                            : 'grid-cols-[240px_minmax(0,1fr)]'),
+                            : desktop
+                              ? 'grid-cols-[240px_minmax(0,1fr)]'
+                              : 'grid-cols-[220px_minmax(0,1fr)]'),
                 )}
             >
-                {wide && (
+                {showPanel && (
                     <aside
-                        aria-label={`Catatan ${session.workspace?.name ?? ''}`}
-                        className="sticky top-[calc(var(--menu-bar-height)+24px)] flex flex-col gap-2 rounded-panel border border-border bg-surface p-3 shadow-card"
+                        aria-label="Panel catatan"
+                        className="sticky top-[calc(var(--menu-bar-height)+24px)] flex max-h-[calc(100svh-var(--menu-bar-height)-var(--dock-space)-48px)] flex-col gap-3 overflow-y-auto rounded-panel border border-border bg-surface p-3 shadow-card max-lg:top-6 max-lg:max-h-[calc(100svh-48px)]"
                     >
-                        <div className="flex items-center justify-between gap-2 px-2 pt-1">
-                            <p className="truncate text-[13px] font-bold tracking-[.06em] text-text-muted uppercase">
-                                {session.workspace?.name}
-                            </p>
-                            <Button
-                                size="icon-sm"
-                                variant="ghost"
-                                aria-label="Catatan baru"
-                                title="Catatan baru"
-                                onClick={() => setCreating(true)}
-                            >
-                                <Plus aria-hidden />
-                            </Button>
+                        {wide && (
+                            <SegmentedTabs
+                                label="Isi panel"
+                                value={panelTab}
+                                onValueChange={setPanelTab}
+                                options={[
+                                    {
+                                        value: 'document',
+                                        label: 'Tab dokumen',
+                                        id: 'note-panel-document',
+                                        controls: 'note-panel',
+                                    },
+                                    {
+                                        value: 'workspace',
+                                        label: 'Workspace',
+                                        id: 'note-panel-workspace',
+                                        controls: 'note-panel',
+                                    },
+                                ]}
+                                className="flex w-full [&>button]:flex-1 [&>button]:px-2"
+                            />
+                        )}
+                        <div
+                            id="note-panel"
+                            role={wide ? 'tabpanel' : undefined}
+                            aria-labelledby={
+                                wide ? `note-panel-${panelTab}` : undefined
+                            }
+                        >
+                            {wide && panelTab === 'workspace' ? (
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center justify-between gap-2 px-2 pt-1">
+                                        <p className="truncate text-[13px] font-bold tracking-[.06em] text-text-muted uppercase">
+                                            {workspace?.name}
+                                        </p>
+                                        {workspace?.can_create && (
+                                            <Button
+                                                size="icon-sm"
+                                                variant="ghost"
+                                                aria-label="Catatan baru"
+                                                title="Catatan baru"
+                                                onClick={() =>
+                                                    setCreating(true)
+                                                }
+                                            >
+                                                <Plus aria-hidden />
+                                            </Button>
+                                        )}
+                                    </div>
+                                    <NoteTree
+                                        notes={props.notes}
+                                        activeId={note.id}
+                                        people={props.people}
+                                        compact
+                                    />
+                                </div>
+                            ) : (
+                                <DocumentTabsPanel
+                                    state={tabs}
+                                    current={note}
+                                />
+                            )}
                         </div>
-                        <NoteTree
-                            notes={workspaceNotes}
-                            activeId={note.id}
-                            people={state.people}
-                            activeEditors={state.activeEditors}
-                            compact
-                        />
                     </aside>
                 )}
 
                 <article className="min-w-0 rounded-panel border border-border bg-surface shadow-card">
                     <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-divider px-6 py-4 lg:px-8">
                         <div className="flex min-w-0 flex-1 flex-col gap-1">
-                            <NotePath session={session} state={state} />
+                            <NotePath session={session} />
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                                 <SaveStatus session={session} />
                                 <EditorsPresence session={session} />
                             </div>
                         </div>
+                        {!desktop && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label={
+                                    panelOpen
+                                        ? 'Sembunyikan tab dokumen'
+                                        : 'Tampilkan tab dokumen'
+                                }
+                                title="Tab dokumen"
+                                aria-pressed={panelOpen}
+                                onClick={() => setPanelOpen(!panelOpen)}
+                            >
+                                <PanelLeft aria-hidden />
+                            </Button>
+                        )}
+                        <StartModeButton mode={mode} />
                         <Button
                             variant="outline"
                             aria-pressed={history.open}
@@ -241,23 +286,58 @@ export function NoteDesktop({
                             <History aria-hidden />
                             Riwayat
                         </Button>
-                        <Button onClick={() => session.setShareOpen(true)}>
-                            <Share2 aria-hidden />
-                            Bagikan
-                        </Button>
+                        {note.can_share && (
+                            <Button onClick={() => session.setShareOpen(true)}>
+                                <Share2 aria-hidden />
+                                Bagikan
+                            </Button>
+                        )}
+                        {(note.can_edit || note.can_delete) && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        aria-label="Aksi catatan"
+                                    >
+                                        <MoreHorizontal aria-hidden />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    {note.can_edit && (
+                                        <DropdownMenuItem
+                                            onSelect={() =>
+                                                session.setMoveOpen(true)
+                                            }
+                                        >
+                                            Pindahkan
+                                        </DropdownMenuItem>
+                                    )}
+                                    {note.can_delete && (
+                                        <DropdownMenuItem
+                                            className="text-danger"
+                                            onSelect={() =>
+                                                session.setDeleteOpen(true)
+                                            }
+                                        >
+                                            Hapus
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </header>
 
                     {previewVersion ? (
                         <div className="px-6 py-8 lg:px-12">
                             <VersionPreview
                                 version={previewVersion}
-                                people={state.people}
-                                isCurrent={
-                                    previewVersion.id ===
-                                    session.latestVersionId
-                                }
-                                onRestore={() =>
-                                    history.askRestore(previewVersion)
+                                people={props.people}
+                                onRestore={
+                                    note.can_edit
+                                        ? () =>
+                                              history.askRestore(previewVersion)
+                                        : undefined
                                 }
                                 onClose={history.clearPreview}
                             />
@@ -269,32 +349,18 @@ export function NoteDesktop({
                                     <EditorToolbar editor={session.editor} />
                                 </div>
                             )}
-                            {!session.editable && (
-                                <p className="mx-6 mt-4 flex items-center gap-2 rounded-lg bg-surface-2 px-4 py-3 text-[15px] text-text-muted">
-                                    <Eye className="size-5" aria-hidden />
-                                    Anda hanya dapat membaca catatan ini.
-                                </p>
-                            )}
                             <div className="flex flex-col gap-4 px-6 pt-8 pb-12 lg:px-12">
+                                <MinutesModeBar mode={mode} />
+                                <NoteBanners session={session} />
                                 <TitleField session={session} size={34} />
-                                {empty && (
-                                    <p className="text-[15px] text-text-muted">
-                                        Catatan masih kosong. Mulai menulis di
-                                        bawah judul; perubahan tersimpan
-                                        otomatis dan langsung terlihat oleh
-                                        penyunting lain.
-                                    </p>
-                                )}
                                 <NoteEditor
-                                    key={`${note.id}-${session.editorKey}-${preview}`}
-                                    initial={empty ? null : note.content}
+                                    key={`${note.id}-${session.editorKey}-${session.mode}`}
+                                    live={session.live}
+                                    initial={note.content}
                                     editable={session.editable}
-                                    collaborators={
-                                        empty ? [] : session.collaborators
-                                    }
-                                    onChange={(content) =>
-                                        !empty && session.setContent(content)
-                                    }
+                                    me={session.me}
+                                    workspaceKey={note.workspace_key}
+                                    onChange={session.setContent}
                                     onReady={session.onReady}
                                 />
                             </div>
@@ -335,20 +401,40 @@ export function NoteDesktop({
                 onOpenChange={(open) => !open && history.cancelRestore()}
                 onConfirm={() => void history.confirmRestore()}
             />
-            <ShareDialog
-                open={session.shareOpen}
-                onOpenChange={session.setShareOpen}
-                note={note}
-                workspace={session.workspace}
-                share={session.share}
-                state={state}
+            {session.share && (
+                <ShareDialog
+                    open={session.shareOpen}
+                    onOpenChange={session.setShareOpen}
+                    note={note}
+                    workspace={workspace}
+                    share={session.share}
+                    people={props.people}
+                    viewerId={props.viewer_id}
+                    onSaved={session.setShare}
+                />
+            )}
+            <MoveDialog
+                note={session.moveOpen ? note : null}
+                notes={props.notes}
+                mobile={false}
+                onClose={() => session.setMoveOpen(false)}
+                onMoved={() => router.reload({ only: ['note'] })}
             />
-            <NewNoteDialog
-                open={creating}
-                onOpenChange={setCreating}
-                state={state}
-                defaultWorkspaceId={note.workspace_id}
+            <DeleteDialog
+                note={session.deleteOpen ? note : null}
+                mobile={false}
+                backToWorkspace
+                onClose={() => session.setDeleteOpen(false)}
             />
+            {workspace && (
+                <NewNoteDialog
+                    open={creating}
+                    onOpenChange={setCreating}
+                    workspaces={[workspace]}
+                    notes={props.notes}
+                    defaults={newDefaults}
+                />
+            )}
         </div>
     );
 }

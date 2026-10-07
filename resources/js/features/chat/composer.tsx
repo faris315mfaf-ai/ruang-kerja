@@ -1,6 +1,6 @@
 import { AtSign, Paperclip, SendHorizontal } from 'lucide-react';
 import type { KeyboardEvent, Ref } from 'react';
-import { useId, useImperativeHandle, useRef, useState } from 'react';
+import { useEffect, useId, useImperativeHandle, useRef, useState } from 'react';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { StatusIcon } from '@/components/status-icon';
 import type { StatusCategory } from '@/features/tasks/types';
@@ -9,6 +9,8 @@ import { AttachmentCard } from './attachment-card';
 import { DrivePicker } from './drive-picker';
 import { applySuggestion, findTrigger, matchPeople, matchTasks } from './lib';
 import type { Trigger } from './lib';
+import { whisperTyping } from './realtime';
+import { currentChannel, loadDriveFiles, searchTasks } from './store';
 import type { ChatState, MessageAttachment } from './types';
 
 export type ComposerHandle = { focus: () => void };
@@ -21,6 +23,8 @@ type Props = {
     /** Shorter box (thread panel). */
     compact?: boolean;
     autoFocus?: boolean;
+    /** Thread root when replying in a thread (typing hint goes to the thread). */
+    threadId?: string | null;
     ref?: Ref<ComposerHandle>;
 };
 
@@ -83,6 +87,7 @@ export function Composer({
     variant,
     compact = false,
     autoFocus = false,
+    threadId = null,
     ref,
 }: Props) {
     const mobile = variant === 'mobile';
@@ -111,7 +116,35 @@ export function Composer({
         setText(value);
         setCaret(position);
         setHighlight(0);
+
+        const channelId = currentChannel();
+
+        if (channelId && value.trim() !== '') {
+            whisperTyping(channelId, threadId);
+        }
     };
+
+    // "#" suggestions come from the server (tasks the viewer can see).
+    const taskQuery = trigger?.char === '#' ? trigger.query : null;
+
+    useEffect(() => {
+        if (taskQuery === null) {
+            return;
+        }
+
+        const timer = window.setTimeout(() => void searchTasks(taskQuery), 250);
+
+        return () => window.clearTimeout(timer);
+    }, [taskQuery]);
+
+    // Drive files any reader of the channel can open, fetched when the picker opens.
+    useEffect(() => {
+        if (picking) {
+            void loadDriveFiles();
+        }
+    }, [picking]);
+
+    const channel = state.channels.find((item) => item.id === currentChannel());
 
     const choose = (suggestion: Suggestion) => {
         if (!trigger) {
@@ -198,6 +231,19 @@ export function Composer({
         mobile ? 'size-11' : 'size-9',
         focusRing,
     );
+
+    if (channel && channel.can_post === false) {
+        return (
+            <p
+                role="note"
+                className="rounded-control border border-border bg-surface-2 px-4 py-3 text-[15px] text-text-muted"
+            >
+                {channel.archived_at
+                    ? 'Obrolan ini sudah diarsipkan dan hanya bisa dibaca.'
+                    : 'Anda dapat membaca obrolan ini, tetapi hanya anggotanya yang dapat mengirim pesan.'}
+            </p>
+        );
+    }
 
     return (
         <div className="relative">

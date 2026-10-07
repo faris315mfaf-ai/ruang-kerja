@@ -7,9 +7,17 @@ const DOCS_PREFIX = '/admin/dokumentasi/';
 
 /**
  * The rendered document. Links to other docs (rewritten server-side to
- * /admin/dokumentasi/…) navigate inside the app instead of reloading.
+ * /admin/dokumentasi/… or, in the preview guide, /pratinjau/panduan…)
+ * navigate inside the app instead of reloading.
  */
-export function DocArticle({ document }: { document: DocDetail }) {
+export function DocArticle({
+    document,
+    linkPrefix = DOCS_PREFIX,
+}: {
+    document: DocDetail;
+    /** Path prefix of in-app document links. */
+    linkPrefix?: string;
+}) {
     const onClick = (event: MouseEvent<HTMLDivElement>) => {
         if (
             event.defaultPrevented ||
@@ -25,7 +33,7 @@ export function DocArticle({ document }: { document: DocDetail }) {
         const anchor = (event.target as HTMLElement).closest('a');
         const href = anchor?.getAttribute('href');
 
-        if (href?.startsWith(DOCS_PREFIX)) {
+        if (href?.startsWith(linkPrefix)) {
             event.preventDefault();
             router.visit(href);
         }

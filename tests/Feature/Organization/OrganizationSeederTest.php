@@ -31,9 +31,9 @@ it('seeds the demo organization idempotently', function () {
         ->and(Division::query()->orderBy('code')->pluck('code')->all())->toBe(['DIR', 'KEU', 'OPS', 'PMS', 'PRG', 'SDM'])
         ->and(Division::query()->where('is_board', true)->pluck('code')->all())->toBe(['DIR'])
         ->and(Team::query()->count())->toBe(2)
-        ->and(Position::query()->count())->toBe(19)
-        ->and(User::query()->count())->toBe(24)
-        ->and(EmployeeProfile::query()->count())->toBe(24)
+        ->and(Position::query()->count())->toBe(21) // + Project Leader, Direktur Operasional (6 Okt 2026)
+        ->and(User::query()->count())->toBe(26) // incl. Reynandio (Direktur Utama) & Faris (Project Leader)
+        ->and(EmployeeProfile::query()->count())->toBe(26)
         ->and(User::query()->where('status', UserStatus::Inactive)->count())->toBe(1)
         ->and(User::query()->where('status', UserStatus::Resigned)->count())->toBe(1);
 });
@@ -58,9 +58,12 @@ it('places the demo accounts in the organization', function () {
         ->and($hr->name)->toBe('Hana Pratiwi')
         ->and($hr->division?->code)->toBe('SDM')
         ->and($direksi->name)->toBe('Hendra Wijaya')
-        ->and($direksi->position?->name)->toBe('Direktur Utama')
+        ->and($direksi->position?->name)->toBe('Direktur Operasional')
         ->and($direksi->division?->is_board)->toBeTrue()
-        ->and($direksi->manager_id)->toBeNull()
+        ->and($direksi->manager?->email)->toBe('dio@demo.test')
+        ->and(demoUser('dio@demo.test')->position?->name)->toBe('Direktur Utama')
+        ->and(demoUser('dio@demo.test')->manager_id)->toBeNull()
+        ->and(demoUser('faris@demo.test')->position?->name)->toBe('Project Leader')
         ->and($admin->hasRole(Role::SuperAdmin))->toBeTrue()
         ->and(demoUser('nadia.putri@demo.test')->team?->name)->toBe('Tim Gudang');
 });
@@ -83,9 +86,9 @@ it('builds a consistent reporting line without cycles', function () {
     foreach ($users as $user) {
         $chain = $hierarchy->chainOf($user);
 
-        // Everybody except the Direktur Utama and the system admin ends at the Direktur Utama.
+        // Everybody except the Direktur Utama (Reynandio) and the system admin ends at the Direktur Utama.
         if ($user->manager_id !== null) {
-            expect(end($chain)->email)->toBe('direksi@demo.test');
+            expect(end($chain)->email)->toBe('dio@demo.test');
         }
 
         expect($user->company_id)->toBe(Company::query()->value('id'));
@@ -100,5 +103,5 @@ it('writes no audit rows when run through DatabaseSeeder', function () {
     $this->seed(DatabaseSeeder::class);
 
     expect(AuditLog::query()->count())->toBe(0)
-        ->and(User::query()->count())->toBe(24);
+        ->and(User::query()->count())->toBe(26); // + Faris & Dio (Hiring)
 });

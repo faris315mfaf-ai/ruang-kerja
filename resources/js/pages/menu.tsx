@@ -5,8 +5,11 @@ import {
     Calendar,
     CheckCheck,
     ChevronRight,
+    ClipboardPen,
     CloudCog,
     FileText,
+    Inbox,
+    KeyRound,
     LayoutGrid,
     LogOut,
     Moon,
@@ -16,16 +19,26 @@ import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ListRow } from '@/components/ui/list-row';
+import { useUnreadCount } from '@/features/notifications/unread-store';
 import { MenuWorkspaceGrid } from '@/features/workspaces/menu-workspace-grid';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useInitials } from '@/hooks/use-initials';
 import {
     adminNavItems,
+    announcementsNavItem,
     attendanceNavItems,
+    automationNavItem,
     canSeeManagement,
     canSeePortfolio,
     managementNavItem,
     organizationNavItems,
+    chatNavItem,
+    roleDashboardNavItem,
+    okrNavItem,
+    performanceNavItem,
+    notesNavItem,
+    meetingsNavItem,
+    hiringNavItem,
     portfolioNavItem,
     prototypeNavItem,
 } from '@/lib/navigation';
@@ -34,6 +47,7 @@ import { cn, focusRing } from '@/lib/utils';
 import { logout } from '@/routes';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
+import { edit as editSecurity } from '@/routes/security';
 import { google as googleSettings } from '@/routes/settings';
 
 const APPEARANCE_LABELS = {
@@ -150,21 +164,34 @@ function ProfileCard() {
     );
 }
 
-/** Mobile "Menu" tab: profile, workspaces, work & settings (design MMenu). */
+/**
+ * Mobile "Lainnya" tab (/menu): profile, workspaces, work & settings
+ * (mobile-first canvas › Menu). Holds Inbox too while Obrolan has its tab.
+ */
 export default function Menu() {
-    const { auth, approvals, features } = usePage().props;
+    const { auth, approvals, features, chatUnread } = usePage().props;
     const { appearance } = useAppearance();
     const pending = approvals?.pending ?? 0;
+    const unread = useUnreadCount();
 
     return (
         <>
-            <Head title="Menu" />
+            <Head title="Lainnya" />
             <div className="mx-auto flex max-w-xl flex-col gap-4 pb-2">
-                <h1 className="hidden md:sr-only md:block">Menu</h1>
+                <h1 className="hidden md:sr-only md:block">Lainnya</h1>
                 <ProfileCard />
 
                 <Section title="Workspace">
                     <MenuWorkspaceGrid />
+                    {features?.hiring && (
+                        <Group>
+                            <Row
+                                icon={hiringNavItem.icon}
+                                label="Hiring · rekrutmen"
+                                href={hiringNavItem.href}
+                            />
+                        </Group>
+                    )}
                 </Section>
 
                 <Section title="Pekerjaan">
@@ -174,6 +201,13 @@ export default function Menu() {
                             label="Dashboard"
                             href="/dashboard"
                         />
+                        {features?.role_dashboards && (
+                            <Row
+                                icon={roleDashboardNavItem.icon}
+                                label={roleDashboardNavItem.title}
+                                href={roleDashboardNavItem.href}
+                            />
+                        )}
                         {canSeePortfolio(auth.roles) && (
                             <Row
                                 icon={portfolioNavItem.icon}
@@ -186,6 +220,61 @@ export default function Menu() {
                                 icon={managementNavItem.icon}
                                 label="Ringkasan manajemen"
                                 href={managementNavItem.href}
+                            />
+                        )}
+                        {features?.okr && (
+                            <Row
+                                icon={okrNavItem.icon}
+                                label="OKR divisi"
+                                href={okrNavItem.href}
+                            />
+                        )}
+                        {features?.chat && (
+                            <Row
+                                icon={chatNavItem.icon}
+                                label={chatNavItem.title}
+                                href={chatNavItem.href}
+                                trailing={
+                                    (chatUnread ?? 0) > 0 ? (
+                                        <Badge
+                                            variant="count"
+                                            aria-label={`${chatUnread ?? 0} obrolan belum dibaca`}
+                                        >
+                                            {chatUnread}
+                                        </Badge>
+                                    ) : undefined
+                                }
+                            />
+                        )}
+                        {features?.notes && (
+                            <Row
+                                icon={notesNavItem.icon}
+                                label={notesNavItem.title}
+                                href={notesNavItem.href}
+                            />
+                        )}
+                        {features?.meetings && (
+                            <Row
+                                icon={meetingsNavItem.icon}
+                                label="Kalender & rapat"
+                                href={meetingsNavItem.href}
+                            />
+                        )}
+                        {features?.chat && (
+                            <Row
+                                icon={Inbox}
+                                label="Inbox"
+                                href="/inbox"
+                                trailing={
+                                    unread > 0 ? (
+                                        <Badge
+                                            variant="count"
+                                            aria-label={`${unread} notifikasi belum dibaca`}
+                                        >
+                                            {unread > 99 ? '99+' : unread}
+                                        </Badge>
+                                    ) : undefined
+                                }
                             />
                         )}
                         <Row
@@ -204,10 +293,34 @@ export default function Menu() {
                             }
                         />
                         <Row
+                            icon={ClipboardPen}
+                            label="Laporan harian"
+                            href="/laporan"
+                        />
+                        <Row
+                            icon={announcementsNavItem.icon}
+                            label={announcementsNavItem.title}
+                            href={announcementsNavItem.href}
+                        />
+                        <Row
                             icon={FileText}
                             label="Pengajuan saya"
                             href="/pengajuan"
                         />
+                        {features?.automation && (
+                            <Row
+                                icon={performanceNavItem.icon}
+                                label={performanceNavItem.title}
+                                href={performanceNavItem.href}
+                            />
+                        )}
+                        {features?.automation && (
+                            <Row
+                                icon={automationNavItem.icon}
+                                label="Otomasi & template"
+                                href={automationNavItem.href}
+                            />
+                        )}
                         <Row
                             icon={Calendar}
                             label="Riwayat absensi"
@@ -256,6 +369,11 @@ export default function Menu() {
                             trailing={APPEARANCE_LABELS[appearance]}
                         />
                         <Row
+                            icon={KeyRound}
+                            label="Kata sandi & keamanan"
+                            href={editSecurity().url}
+                        />
+                        <Row
                             icon={ShieldCheck}
                             label="Privasi & data saya"
                             href="/privasi"
@@ -287,5 +405,5 @@ export default function Menu() {
 }
 
 Menu.layout = {
-    breadcrumbs: [{ title: 'Menu', href: '/menu' }],
+    breadcrumbs: [{ title: 'Lainnya', href: '/menu' }],
 };

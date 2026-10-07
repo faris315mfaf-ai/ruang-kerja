@@ -105,16 +105,18 @@ it('narrows to a team of the division', function () {
                 ->has('metrics.workload', 1)));
 });
 
-it('lets Direksi pick any division, defaulting to the whole company', function () {
+it('lets Super Admin pick any division, defaulting to the whole company (Direksi no longer get this tab)', function () {
     $org = $this->org;
 
-    $this->actingAs($org['direksi'])->get('/dashboard/divisi')
+    $this->actingAs($org['direksi'])->get('/dashboard/divisi')->assertForbidden();
+
+    $this->actingAs($org['admin'])->get('/dashboard/divisi')
         ->assertInertia(fn (Assert $page) => $page
             ->where('scope.label', 'Semua divisi')
-            ->where('channels', ["company.{$org['direksi']->company_id}.attendance"])
+            ->where('channels', ["company.{$org['admin']->company_id}.attendance"])
             ->has('filters.divisions', 2));
 
-    $this->actingAs($org['direksi'])->get('/dashboard/divisi?divisi='.$org['keu']->id)
+    $this->actingAs($org['admin'])->get('/dashboard/divisi?divisi='.$org['keu']->id)
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('scope', ['label' => 'Keuangan', 'member_count' => 2])

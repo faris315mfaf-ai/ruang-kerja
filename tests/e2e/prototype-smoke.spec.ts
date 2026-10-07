@@ -10,34 +10,10 @@ import { expect, test, type Page } from '@playwright/test';
  * (static assets then answer 502 and lazy chunks fail to load):
  *   E2E_BASE_URL=https://ruangkerja-proto.test npx playwright test tests/e2e/prototype-smoke.spec.ts --workers=2 --retries=1
  */
-const roles = [
-    'dirut',
-    'direktur',
-    'hr',
-    'corsec',
-    'marketing',
-    'programming',
-    'implementer',
-    'analis',
-] as const;
-
 const routes = [
     '/pratinjau',
-    // F2-1 · Chat, F2-2 · Notes
-    '/obrolan',
-    '/obrolan/umum',
-    '/obrolan/plq',
-    '/obrolan/dm-sari',
-    '/catatan',
-    '/catatan/sop-onboarding',
-    // F2-3 · Meetings, minutes & calendar
-    '/rapat',
-    '/rapat/baru',
-    '/rapat/koordinasi-q4',
-    '/rapat/standup-ops',
-    '/rapat/standup-ops/notulen',
-    '/kalender',
-    '/manajemen/jadwal',
+    // F2-1 Obrolan, F2-2 Catatan, F2-3 Rapat & kalender left the preview: real routes
+    // (routes/chat.php, routes/notes.php, routes/meetings.php).
     // F2-4 · WhatsApp, automation, Kinerja saya
     '/pengaturan/whatsapp',
     '/otomasi',
@@ -54,22 +30,12 @@ const routes = [
     '/pratinjau/ponsel/aksi-cepat',
     '/absensi/wajah',
     '/pengaturan/perangkat',
-    // F3-3 · OKR, fingerprint devices, role dashboards
-    '/okr',
-    '/okr/q4-ops-1',
+    // F3-3 · fingerprint devices (OKR and Dashboard per jabatan are real: /okr, /peran)
     '/admin/mesin-absensi',
-    ...roles.map((role) => `/peran/${role}`),
 ] as const;
 
 /** Preview-state switch (?keadaan=) on one route per module. */
-const stateRoutes = [
-    '/obrolan',
-    '/catatan',
-    '/rapat',
-    '/otomasi',
-    '/pengaturan/perangkat',
-    '/okr',
-] as const;
+const stateRoutes = ['/pengaturan/whatsapp', '/pengaturan/perangkat'] as const;
 
 /**
  * Environment noise that is not a page defect: Reverb not running locally, and
@@ -154,24 +120,3 @@ for (const path of stateRoutes) {
         });
     }
 }
-
-test('tautan tak dikenal menampilkan keadaan "tidak ditemukan"', async ({
-    page,
-}) => {
-    const errors = collectErrors(page);
-
-    for (const path of [
-        '/obrolan/tidak-ada',
-        '/catatan/tidak-ada',
-        '/rapat/tidak-ada',
-        '/okr/tidak-ada',
-    ]) {
-        await expectRendered(page, path);
-        await expect(
-            page.getByText(/tidak ditemukan/i).first(),
-            path,
-        ).toBeVisible();
-    }
-
-    expect(errors, 'console tidak boleh berisi galat').toEqual([]);
-});

@@ -3,14 +3,16 @@
 namespace App\Domain\Analytics\Enums;
 
 /**
- * Dashboards of this module (PRD M7). The Direksi dashboard is the project
- * portfolio (`/portofolio`, Sprint 9 part B) and is only linked from the picker.
+ * Dashboards of this module (PRD M7). Direksi (keputusan pemilik 6 Okt 2026):
+ * daily, weekly and per-project work monitoring, action notes and quick
+ * access to every workspace; the portfolio stays at `/portofolio`.
  */
 enum DashboardView: string
 {
     case Personal = 'saya';
     case Division = 'divisi';
     case Hr = 'hr';
+    case Direksi = 'direksi';
 
     public function label(): string
     {
@@ -18,6 +20,7 @@ enum DashboardView: string
             self::Personal => 'Saya',
             self::Division => 'Kepala Divisi',
             self::Hr => 'HR',
+            self::Direksi => 'Direksi',
         };
     }
 

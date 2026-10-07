@@ -7,6 +7,8 @@ import {
     formatLongDateRange,
     formatRequestDuration,
     formatRequestPeriod,
+    formatRupiah,
+    formatShortDate,
 } from '@/lib/requests';
 import { formatNumber } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -39,7 +41,67 @@ export function RequestFields({
     const category = request.type.category;
     const rows: { label: string; value: React.ReactNode }[] = [];
 
-    if (!withPeriod) {
+    if (category === 'procurement') {
+        // Pengajuan barang (keputusan pemilik 6 Okt 2026).
+        const p = request.payload;
+
+        if (withPeriod) {
+            rows.push({
+                label: 'Tanggal kirim',
+                value: formatShortDate(
+                    request.submitted_at ?? request.start_at,
+                ),
+            });
+        }
+
+        rows.push({ label: 'Barang', value: p.item_name ?? '–' });
+        rows.push({
+            label: 'Jumlah',
+            value: `${formatNumber(p.quantity ?? null)} ${p.unit ?? 'unit'}`,
+        });
+        rows.push({
+            label: 'Harga satuan',
+            value: (
+                <span className="tnum">
+                    {formatRupiah(p.unit_price)}{' '}
+                    <span className="text-text-muted">(perkiraan)</span>
+                </span>
+            ),
+        });
+        rows.push({
+            label: 'Total',
+            value: (
+                <strong className="font-semibold tnum">
+                    {formatRupiah(p.total)}
+                </strong>
+            ),
+        });
+        rows.push({
+            label: 'Kebutuhan',
+            value:
+                p.urgency === 'mendesak' ? (
+                    <span className="font-semibold text-danger">Mendesak</span>
+                ) : (
+                    'Biasa'
+                ),
+        });
+
+        if (p.reference_url && /^https?:\/\//i.test(p.reference_url)) {
+            rows.push({
+                label: 'Referensi',
+                value: (
+                    <a
+                        href={p.reference_url}
+                        target="_blank"
+                        rel="noopener noreferrer nofollow"
+                        className="font-semibold break-all text-link underline-offset-4 hover:underline"
+                    >
+                        {p.reference_url}
+                    </a>
+                ),
+            });
+        }
+    } else if (!withPeriod) {
         // Period rows are shown by the caller.
     } else if (category === 'correction') {
         rows.push({

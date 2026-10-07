@@ -1,10 +1,11 @@
-import { Link, router } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import {
-    AlertTriangle,
+    ALargeSmall,
     ArrowLeft,
-    Eye,
-    FileQuestion,
     History,
+    MoreHorizontal,
+    NotebookPen,
+    Plus,
     RotateCcw,
     Share2,
 } from 'lucide-react';
@@ -15,25 +16,26 @@ import {
     useState,
     useSyncExternalStore,
 } from 'react';
-import { EmptyState } from '@/components/empty-state';
 import { appBarIconButton } from '@/components/mobile/app-bar';
 import { BottomSheet } from '@/components/mobile/bottom-sheet';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { PreviewState } from '@/features/chat/preview-state';
-import { PreviewBar } from '@/features/chat/preview-state';
 import { useKeyboardInset, useKeyboardOpen } from '@/hooks/use-keyboard-open';
 import { cn } from '@/lib/utils';
+import { DocumentTabStrip, useDocumentTabs } from './document-tabs';
+import { TextSizeControl } from './editor/toolbar-extras';
+import { MinutesModeBar, useMinutesMode } from './minutes-mode';
 import { EditorToolbar, NoteEditor } from './note-editor';
 import {
     EditorsPresence,
+    NoteBanners,
     NotePath,
     SaveStatus,
     TitleField,
 } from './note-parts';
 import { ShareDialog } from './share-dialog';
-import type { NotesState } from './types';
+import { DeleteDialog, MoveDialog } from './tree-actions';
+import type { NoteShowProps, NoteVersion } from './types';
 import { useNoteSession } from './use-note-session';
 import {
     RestoreVersionDialog,
@@ -42,9 +44,9 @@ import {
 } from './version-history';
 
 /** Bridge for the phone app bar buttons (rendered by the layout). */
-type NoteUi = { history: boolean; share: boolean };
+type NoteUi = { history: boolean; share: boolean; more: boolean };
 
-let ui: NoteUi = { history: false, share: false };
+let ui: NoteUi = { history: false, share: false, more: false };
 const listeners = new Set<() => void>();
 
 function setNoteUi(next: Partial<NoteUi>): void {
@@ -64,8 +66,8 @@ function useNoteUi(): NoteUi {
     );
 }
 
-/** App bar actions of /catatan/{note} on phones: history + share. */
-export function NoteAppBarActions() {
+/** App bar actions of /catatan/{note} on phones: history, share, more. */
+export function NoteAppBarActions({ canShare }: { canShare: boolean }) {
     return (
         <>
             <button
@@ -76,13 +78,27 @@ export function NoteAppBarActions() {
             >
                 <History className="size-5" strokeWidth={2} aria-hidden />
             </button>
+            {canShare && (
+                <button
+                    type="button"
+                    className={cn(appBarIconButton, 'size-11')}
+                    aria-label="Bagikan"
+                    onClick={() => setNoteUi({ share: true })}
+                >
+                    <Share2 className="size-5" strokeWidth={2} aria-hidden />
+                </button>
+            )}
             <button
                 type="button"
                 className={cn(appBarIconButton, 'size-11')}
-                aria-label="Bagikan"
-                onClick={() => setNoteUi({ share: true })}
+                aria-label="Aksi catatan"
+                onClick={() => setNoteUi({ more: true })}
             >
-                <Share2 className="size-5" strokeWidth={2} aria-hidden />
+                <MoreHorizontal
+                    className="size-5"
+                    strokeWidth={2}
+                    aria-hidden
+                />
             </button>
         </>
     );
@@ -90,24 +106,36 @@ export function NoteAppBarActions() {
 
 /**
  * Note on phones: full-screen editor, formatting bar pinned above the tab
- * bar (or right above the keyboard), history and sharing in bottom sheets.
+ * bar (or right above the keyboard), history, sharing and actions in
+ * bottom sheets.
  */
 export function NoteMobile({
-    state,
-    noteId,
-    preview,
+    props,
+    versions,
 }: {
-    state: NotesState;
-    noteId: string;
-    preview: PreviewState;
+    props: NoteShowProps;
+    versions: NoteVersion[] | undefined;
 }) {
-    const session = useNoteSession(state, noteId);
+    const session = useNoteSession(props, versions);
     const current = useNoteUi();
     const keyboardOpen = useKeyboardOpen();
     const keyboardInset = useKeyboardInset();
     const toolbarBox = useRef<HTMLDivElement>(null);
     const [toolbarHeight, setToolbarHeight] = useState(64);
     const { note, history } = session;
+    const workspace = props.workspaces.find(
+        (item) => item.id === note.workspace_id,
+    );
+    const mode = useMinutesMode(session);
+    const tabs = useDocumentTabs({
+        notes: props.notes,
+        current: note,
+        rootId: mode.rootId,
+        canCreate: workspace?.can_create ?? false,
+        mobile: true,
+    });
+    const [textSizeOpen, setTextSizeOpen] = useState(false);
+    const showTabs = tabs.tabs.length > 1 || mode.active;
 
     // App bar → session.
     useEffect(() => {
@@ -120,7 +148,10 @@ export function NoteMobile({
         // oxlint-disable-next-line react-hooks/exhaustive-deps
     }, [current.share]);
 
-    useEffect(() => () => setNoteUi({ history: false, share: false }), []);
+    useEffect(
+        () => () => setNoteUi({ history: false, share: false, more: false }),
+        [],
+    );
 
     useLayoutEffect(() => {
         const element = toolbarBox.current;
@@ -137,93 +168,27 @@ export function NoteMobile({
         return () => observer.disconnect();
     }, [session.editor]);
 
-    if (preview === 'memuat') {
-        return (
-            <div
-                className="flex flex-col gap-4"
-                aria-busy
-                aria-label="Memuat catatan"
-            >
-                <PreviewBar />
-                <Skeleton className="h-5 w-40" />
-                <Skeleton className="h-9 w-3/4" />
-                {Array.from({ length: 6 }, (_, index) => (
-                    <Skeleton key={index} className="h-5 w-full" />
-                ))}
-            </div>
-        );
-    }
-
-    if (preview === 'galat') {
-        return (
-            <div className="flex flex-col gap-4">
-                <PreviewBar />
-                <EmptyState
-                    icon={AlertTriangle}
-                    title="Catatan gagal dimuat"
-                    description="Periksa koneksi internet Anda, lalu coba lagi."
-                    action={
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            onClick={() => router.visit(`/catatan/${noteId}`)}
-                        >
-                            Coba lagi
-                        </Button>
-                    }
-                />
-            </div>
-        );
-    }
-
-    if (!note) {
-        return (
-            <div className="flex flex-col gap-4">
-                <PreviewBar />
-                <EmptyState
-                    icon={FileQuestion}
-                    title="Catatan tidak ditemukan"
-                    description="Catatan ini sudah dihapus atau Anda tidak punya akses."
-                    action={
-                        <Button variant="outline" size="lg" asChild>
-                            <Link href="/catatan">Kembali ke catatan</Link>
-                        </Button>
-                    }
-                />
-            </div>
-        );
-    }
-
-    const empty = preview === 'kosong';
     const previewing = history.preview;
 
     return (
         <div className="flex flex-col gap-3">
-            <PreviewBar />
-            <NotePath session={session} state={state} />
+            {showTabs && <DocumentTabStrip state={tabs} current={note} />}
+            <MinutesModeBar mode={mode} mobile />
+            <NotePath session={session} />
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <SaveStatus session={session} />
                 <EditorsPresence session={session} compact />
             </div>
-            {!session.editable && (
-                <p className="flex items-center gap-2 rounded-lg bg-surface-2 px-4 py-3 text-[15px] text-text-muted">
-                    <Eye className="size-5" aria-hidden />
-                    Anda hanya dapat membaca catatan ini.
-                </p>
-            )}
+            <NoteBanners session={session} />
             <TitleField session={session} size={26} className="pt-1" />
-            {empty && (
-                <p className="text-[15px] text-text-muted">
-                    Catatan masih kosong. Mulai menulis di bawah; perubahan
-                    tersimpan otomatis.
-                </p>
-            )}
             <NoteEditor
-                key={`${note.id}-${session.editorKey}-${preview}`}
-                initial={empty ? null : note.content}
+                key={`${note.id}-${session.editorKey}-${session.mode}`}
+                live={session.live}
+                initial={note.content}
                 editable={session.editable}
-                collaborators={empty ? [] : session.collaborators}
-                onChange={(content) => !empty && session.setContent(content)}
+                me={session.me}
+                workspaceKey={note.workspace_key}
+                onChange={session.setContent}
                 onReady={session.onReady}
             />
             <div aria-hidden style={{ height: toolbarHeight }} />
@@ -238,7 +203,11 @@ export function NoteMobile({
                     )}
                     style={keyboardOpen ? { bottom: keyboardInset } : undefined}
                 >
-                    <EditorToolbar editor={session.editor} mobile />
+                    <EditorToolbar
+                        editor={session.editor}
+                        mobile
+                        onTextSize={() => setTextSizeOpen(true)}
+                    />
                 </div>
             )}
 
@@ -268,7 +237,7 @@ export function NoteMobile({
                                 <ArrowLeft aria-hidden />
                                 Daftar
                             </Button>
-                            {previewing.id !== session.latestVersionId && (
+                            {note.can_edit && (
                                 <Button
                                     size="lg"
                                     className="flex-1"
@@ -287,26 +256,114 @@ export function NoteMobile({
                 {previewing ? (
                     <VersionPreview
                         version={previewing}
-                        people={state.people}
-                        isCurrent={previewing.id === session.latestVersionId}
+                        people={props.people}
                     />
+                ) : history.loading ? (
+                    <div className="flex flex-col gap-2" aria-busy>
+                        {Array.from({ length: 4 }, (_, index) => (
+                            <Skeleton key={index} className="h-14 w-full" />
+                        ))}
+                    </div>
                 ) : (
                     <VersionList
-                        versions={session.versions}
-                        people={state.people}
+                        versions={history.versions}
+                        people={props.people}
                         selectedId={null}
                         onSelect={history.select}
                         mobile
                     />
                 )}
-                {session.versions.length > 0 && !previewing && (
-                    <p className="pt-3 text-center text-[14px] text-text-muted">
-                        <Badge variant="label" className="mr-1">
-                            {session.versions.length}
-                        </Badge>
-                        versi tersimpan
-                    </p>
-                )}
+            </BottomSheet>
+
+            <BottomSheet
+                open={current.more}
+                onOpenChange={(open) => setNoteUi({ more: open })}
+                title="Aksi catatan"
+            >
+                <div className="flex flex-col gap-2">
+                    {mode.canStart && (
+                        <Button
+                            variant="tonal"
+                            size="lg"
+                            onClick={() => {
+                                setNoteUi({ more: false });
+                                mode.start();
+                            }}
+                        >
+                            <NotebookPen aria-hidden />
+                            Mode catat
+                        </Button>
+                    )}
+                    {tabs.canCreate && (
+                        <Button
+                            variant="outline"
+                            size="lg"
+                            disabled={tabs.adding}
+                            onClick={() => {
+                                setNoteUi({ more: false });
+                                tabs.add(tabs.rootId);
+                            }}
+                        >
+                            <Plus aria-hidden />
+                            Tambah tab
+                        </Button>
+                    )}
+                    <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={() => {
+                            setNoteUi({ more: false });
+                            setTextSizeOpen(true);
+                        }}
+                    >
+                        <ALargeSmall aria-hidden />
+                        Ukuran huruf
+                    </Button>
+                    {note.can_edit && (
+                        <Button
+                            variant="outline"
+                            size="lg"
+                            onClick={() => {
+                                setNoteUi({ more: false });
+                                session.setMoveOpen(true);
+                            }}
+                        >
+                            Pindahkan
+                        </Button>
+                    )}
+                    {note.can_delete && (
+                        <Button
+                            variant="outline"
+                            size="lg"
+                            className="text-danger"
+                            onClick={() => {
+                                setNoteUi({ more: false });
+                                session.setDeleteOpen(true);
+                            }}
+                        >
+                            Hapus catatan
+                        </Button>
+                    )}
+                    {!note.can_edit && !note.can_delete && (
+                        <p className="text-[15px] text-text-muted">
+                            Anda hanya dapat membaca catatan ini.
+                        </p>
+                    )}
+                </div>
+            </BottomSheet>
+
+            <BottomSheet
+                open={textSizeOpen}
+                onOpenChange={setTextSizeOpen}
+                title="Tampilan teks"
+                description="Ukuran huruf isi catatan, diingat di perangkat ini"
+            >
+                <div className="flex justify-center py-2">
+                    <TextSizeControl
+                        large
+                        buttonClassName="flex size-13 items-center justify-center rounded-full border border-border-strong bg-surface text-text transition-colors duration-120 ease-brand disabled:opacity-40 focus-visible:ring-[3px] focus-visible:ring-ring outline-none"
+                    />
+                </div>
             </BottomSheet>
 
             <RestoreVersionDialog
@@ -314,19 +371,38 @@ export function NoteMobile({
                 processing={history.processing}
                 onOpenChange={(open) => !open && history.cancelRestore()}
                 onConfirm={() => {
-                    void history
-                        .confirmRestore()
-                        .then(() => setNoteUi({ history: false }));
+                    void history.confirmRestore().then((ok) => {
+                        if (ok) {
+                            setNoteUi({ history: false });
+                        }
+                    });
                 }}
             />
-            <ShareDialog
-                open={session.shareOpen}
-                onOpenChange={(open) => setNoteUi({ share: open })}
-                note={note}
-                workspace={session.workspace}
-                share={session.share}
-                state={state}
+            {session.share && (
+                <ShareDialog
+                    open={session.shareOpen}
+                    onOpenChange={(open) => setNoteUi({ share: open })}
+                    note={note}
+                    workspace={workspace}
+                    share={session.share}
+                    people={props.people}
+                    viewerId={props.viewer_id}
+                    onSaved={session.setShare}
+                    mobile
+                />
+            )}
+            <MoveDialog
+                note={session.moveOpen ? note : null}
+                notes={props.notes}
                 mobile
+                onClose={() => session.setMoveOpen(false)}
+                onMoved={() => router.reload({ only: ['note'] })}
+            />
+            <DeleteDialog
+                note={session.deleteOpen ? note : null}
+                mobile
+                backToWorkspace
+                onClose={() => session.setDeleteOpen(false)}
             />
         </div>
     );

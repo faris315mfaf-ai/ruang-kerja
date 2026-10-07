@@ -48,6 +48,11 @@ final class RequestScenario
 
     public LeaveType $trip;
 
+    /** Pengajuan barang (BRG): atasan langsung → Direksi. */
+    public LeaveType $procurement;
+
+    public ApprovalFlow $procurementFlow;
+
     public static function make(): self
     {
         $scenario = new self;
@@ -76,6 +81,11 @@ final class RequestScenario
         $scenario->overtime = $make(RequestCategory::Overtime, 'LBR', 'Lembur');
         $scenario->correction = $make(RequestCategory::Correction, 'KOR', 'Koreksi absensi', ['max_backdate_days' => 7]);
         $scenario->trip = $make(RequestCategory::BusinessTrip, 'DNS', 'Dinas luar');
+        $scenario->procurementFlow = ApprovalFlow::factory()
+            ->withSteps([[ApproverType::DirectManager], [ApproverType::Role, Role::Direksi]])
+            ->create(['name' => 'Pengajuan barang']);
+        $scenario->procurement = LeaveType::factory()->procurement()->withFlow($scenario->procurementFlow)
+            ->create(['code' => 'BRG', 'name' => 'Pengajuan barang']);
 
         return $scenario;
     }

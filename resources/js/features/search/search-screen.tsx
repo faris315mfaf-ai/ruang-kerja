@@ -1,4 +1,4 @@
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { ArrowUpRight, ChevronRight, Clock, Search, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
@@ -15,6 +15,7 @@ import {
     rememberSearch,
 } from '@/features/search/recent-searches';
 import { resultTitle } from '@/features/search/result-title';
+import { startOrResumeMinutes } from '@/features/notes/minutes-navigation';
 import { runSearchResult } from '@/features/search/run-search-result';
 import { searchIcon } from '@/features/search/search-icon';
 import type {
@@ -156,6 +157,7 @@ export function SearchScreen({ initialQuery, groups: providers }: Props) {
         chip === ALL ? null : chip,
     );
     const { resolvedAppearance, updateAppearance } = useAppearance();
+    const userId = usePage().props.auth.user?.id;
     const term = query.trim();
     const total = groups.reduce((sum, group) => sum + group.items.length, 0);
 
@@ -189,6 +191,11 @@ export function SearchScreen({ initialQuery, groups: providers }: Props) {
                     updateAppearance(
                         resolvedAppearance === 'dark' ? 'light' : 'dark',
                     );
+                }
+
+                // "Mulai notulensi" (Catatan): resume or start minutes.
+                if (action === 'notes.minutes') {
+                    startOrResumeMinutes(userId);
                 }
             },
         });

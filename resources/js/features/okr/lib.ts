@@ -358,7 +358,7 @@ export function krChartSeries(
     });
 }
 
-// ---- Mutations (pure; the preview keeps them in local state) ----
+// ---- Forms & optimistic updates (pure) ----
 
 export type KrDraft = {
     title: string;
@@ -494,6 +494,23 @@ export function applyKrDraft(
         owner,
         tasks: base?.tasks ?? [],
         checkins: base?.checkins ?? [],
+    };
+}
+
+/**
+ * Request body of the add/edit key result form (validated draft; numbers
+ * parsed from Indonesian notation, label only for the number unit).
+ */
+export function draftToPayload(draft: KrDraft) {
+    return {
+        title: draft.title.trim(),
+        unit: draft.unit,
+        unit_label: draft.unit === 'number' ? draft.unit_label.trim() : '',
+        start_value: parseNumber(draft.start_value),
+        target_value: parseNumber(draft.target_value),
+        current_value: parseNumber(draft.current_value),
+        weight: parseNumber(draft.weight),
+        owner_id: draft.owner_id,
     };
 }
 

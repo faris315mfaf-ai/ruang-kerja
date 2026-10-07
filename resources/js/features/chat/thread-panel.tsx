@@ -121,6 +121,7 @@ export function ThreadPanel({
                 <Composer
                     key={root.id}
                     state={state}
+                    threadId={root.id}
                     variant="desktop"
                     compact
                     autoFocus
@@ -158,6 +159,7 @@ export function ThreadSheet({
                     <Composer
                         key={root.id}
                         state={state}
+                        threadId={root.id}
                         variant="mobile"
                         compact
                         placeholder="Balas di thread…"

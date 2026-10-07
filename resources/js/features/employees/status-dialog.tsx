@@ -219,7 +219,7 @@ function ReactivateForm({
             <DialogHeader>
                 <DialogTitle>Aktifkan kembali {target.name}?</DialogTitle>
                 <DialogDescription>
-                    Karyawan bisa masuk lagi dengan akun Google kantornya.
+                    Karyawan bisa masuk lagi dengan email dan kata sandinya.
                 </DialogDescription>
             </DialogHeader>
             <div className="space-y-2">

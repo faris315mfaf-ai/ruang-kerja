@@ -25,13 +25,16 @@ import {
 } from '@/features/automation/rules';
 import type { RuleContext, RuleDraft } from '@/features/automation/rules';
 import type {
+    AutomationRule,
     RoleKey,
     RuleAction,
     RuleCondition,
     RuleTrigger,
 } from '@/features/automation/types';
 import type { StatusCategory } from '@/features/tasks/types';
-import { useFakeMutation } from '@/features/prototype/use-fake-mutation';
+import { mutate } from '@/features/automation/mutation';
+import type { RuleErrors } from '@/features/automation/rules';
+import rulesRoutes from '@/routes/automation/rules';
 
 const CATEGORY_OPTIONS: Option[] = CATEGORY_ORDER.map((c) => ({
     value: c,
@@ -52,39 +55,93 @@ function Step({ label, children }: { label: string; children: ReactNode }) {
     );
 }
 
-/** "Aturan baru" — Jika (trigger) · Dan (optional condition) · Maka (1–3 actions). */
+/** Server validation keys (AutomationRuleRequest) → form errors. */
+export function ruleErrorsFromServer(
+    errors: Record<string, string>,
+): RuleErrors {
+    const result: RuleErrors = {};
+    const actions: Record<number, string> = {};
+
+    for (const [key, message] of Object.entries(errors)) {
+        const action = /^actions\.(\d+)/.exec(key);
+
+        if (key === 'name' || key === 'workspace_id') {
+            result[key] = message;
+        } else if (key.startsWith('trigger')) {
+            result.trigger = message;
+        } else if (key.startsWith('condition')) {
+            result.condition = message;
+        } else if (action) {
+            actions[Number(action[1])] = message;
+        } else if (key === 'actions') {
+            result.actionsList = message;
+        }
+    }
+
+    if (Object.keys(actions).length > 0) {
+        result.actions = actions;
+    }
+
+    return result;
+}
+
+/**
+ * "Aturan baru" / "Ubah aturan" — Jika (trigger) · Dan (optional condition)
+ * · Maka (1–3 actions). `ctx.workspaces` = the workspaces the person
+ * manages; people and labels are narrowed to the chosen workspace.
+ */
 export function RuleBuilder({
     open,
     onOpenChange,
     ctx,
     mobile,
-    onSaved,
+    rule = null,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     ctx: RuleContext;
     mobile: boolean;
-    onSaved: (draft: RuleDraft) => void;
+    /** Rule to edit; null = new rule. */
+    rule?: AutomationRule | null;
 }) {
-    const [draft, setDraft] = useState<RuleDraft>({
-        name: '',
-        workspace_id: ctx.workspaces[0]?.id ?? '',
-        trigger: { type: 'task_moved', category: 'done' },
-        condition: null,
-        actions: [{ type: 'notify', target: null }],
-    });
+    const [draft, setDraft] = useState<RuleDraft>(
+        rule
+            ? {
+                  name: rule.name,
+                  workspace_id: rule.workspace_id,
+                  trigger: rule.trigger,
+                  condition: rule.condition,
+                  actions: rule.actions,
+              }
+            : {
+                  name: '',
+                  workspace_id: ctx.workspaces[0]?.id ?? '',
+                  trigger: { type: 'task_moved', category: 'done' },
+                  condition: null,
+                  actions: [{ type: 'notify', target: null }],
+              },
+    );
     const [submitted, setSubmitted] = useState(false);
-    const { processing, run } = useFakeMutation();
-    const errors = submitted ? validateRule(draft) : {};
+    const [processing, setProcessing] = useState(false);
+    const [serverErrors, setServerErrors] = useState<RuleErrors>({});
+    const errors = submitted
+        ? { ...serverErrors, ...validateRule(draft) }
+        : serverErrors;
+    const workspace = ctx.workspaces.find((w) => w.id === draft.workspace_id);
+    const members = ctx.people.filter(
+        (p) => !workspace?.member_ids || workspace.member_ids.includes(p.id),
+    );
 
-    const peopleOptions: Option[] = ctx.people.map((p) => ({
+    const peopleOptions: Option[] = members.map((p) => ({
         value: p.id,
         label: p.name,
     }));
-    const labelOptions: Option[] = ctx.labels.map((l) => ({
-        value: l.id,
-        label: l.name,
-    }));
+    const labelOptions: Option[] = ctx.labels
+        .filter((l) => !l.workspace_id || l.workspace_id === draft.workspace_id)
+        .map((l) => ({
+            value: l.id,
+            label: l.name,
+        }));
     const targetOptions: Option[] = [
         {
             value: 'assignees',
@@ -97,7 +154,7 @@ export function RuleBuilder({
             label: ROLE_LABELS[role].replace(/^semua /, 'Semua '),
             group: 'Peran',
         })),
-        ...ctx.people.map((p) => ({
+        ...members.map((p) => ({
             value: `user:${p.id}`,
             label: p.name,
             group: 'Orang',
@@ -114,20 +171,27 @@ export function RuleBuilder({
             actions: d.actions.map((a, i) => (i === index ? action : a)),
         }));
 
-    const save = async () => {
+    const save = () => {
         setSubmitted(true);
+        setServerErrors({});
 
         if (hasErrors(validateRule(draft))) {
             return;
         }
 
-        const ok = await run(() => onSaved(draft), {
-            success: 'Aturan disimpan dan langsung aktif',
-        });
-
-        if (ok) {
-            onOpenChange(false);
-        }
+        setProcessing(true);
+        mutate(
+            rule ? 'put' : 'post',
+            rule ? rulesRoutes.update.url(rule.id) : rulesRoutes.store.url(),
+            draft,
+            {
+                only: ['automation'],
+                onSuccess: () => onOpenChange(false),
+                onError: (server) =>
+                    setServerErrors(ruleErrorsFromServer(server)),
+                onFinish: () => setProcessing(false),
+            },
+        );
     };
 
     return (
@@ -136,7 +200,7 @@ export function RuleBuilder({
             onOpenChange={onOpenChange}
             mobile={mobile}
             wide
-            title="Aturan baru"
+            title={rule ? 'Ubah aturan' : 'Aturan baru'}
             description="Pilih pemicu, kondisi bila perlu, lalu apa yang dilakukan."
             footer={
                 <>
@@ -148,7 +212,7 @@ export function RuleBuilder({
                         Batal
                     </Button>
                     <Button
-                        onClick={() => void save()}
+                        onClick={save}
                         disabled={processing}
                         className="h-12 md:h-11"
                     >

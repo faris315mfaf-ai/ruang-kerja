@@ -1,3 +1,4 @@
+import { AnnouncementBanner } from '@/features/announcements/announcement-banner';
 import { Head } from '@inertiajs/react';
 import { PersonalDesktop } from '@/features/dashboard/personal.desktop';
 import { PersonalMobile } from '@/features/dashboard/personal.mobile';
@@ -11,6 +12,8 @@ export default function PersonalDashboard(props: PersonalProps) {
     return (
         <>
             <Head title="Dashboard Saya" />
+            {/* Pengumuman (keputusan pemilik 6 Okt 2026), loaded apart from the page. */}
+            <AnnouncementBanner className="mb-5" />
             <TaskComposerProvider today={props.today} canCreate>
                 {breakpoint === 'mobile' ? (
                     <PersonalMobile {...props} />

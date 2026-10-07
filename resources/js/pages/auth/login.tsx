@@ -1,25 +1,20 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useState } from 'react';
 import { DemoLoginSection } from '@/features/auth/demo-login';
-import {
-    GoogleSignInButton,
-    LoginErrorCard,
-} from '@/features/auth/google-sign-in';
+import { LoginErrorCard } from '@/features/auth/google-sign-in';
 import { LoginBrandPanel } from '@/features/auth/login-brand-panel';
 import {
     LoginMobileHero,
     MOBILE_LOGIN_BACKGROUND,
 } from '@/features/auth/login-mobile-hero';
 import { AuthStatus, authLinkClass } from '@/features/auth/parts';
-import { SuperAdminLogin } from '@/features/auth/super-admin-login';
-import type { DemoAccount, GoogleLoginState } from '@/features/auth/types';
+import { PasswordLogin } from '@/features/auth/password-login';
+import type { DemoAccount } from '@/features/auth/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
+import { cn } from '@/lib/utils';
 import { policy as privacy } from '@/routes/privacy';
 
 type Props = {
     status?: string;
-    canResetPassword: boolean;
-    google: GoogleLoginState;
     /** Name of the company (companies.name); null before seeding. */
     companyName: string | null;
     /** Only filled when APP_ENV=local and DEMO_LOGIN_ENABLED=true. */
@@ -30,13 +25,14 @@ type Props = {
  * Login (designs DLogin / DLoginMalam desktop & tablet, MLogin phone).
  * Rendered without the shared auth layout (see app.tsx): desktop is a
  * gradient brand panel + the sign-in column, the phone a night aurora with
- * the actions in the thumb zone. Biometric sign-in (MLogin) is Phase 3, so
- * the phone gets the same Google + demo actions.
+ * the form in the thumb zone.
+ *
+ * Owner decision 6 Oct 2026: every employee signs in with email + password
+ * ("Lupa kata sandi" goes through HR). Google sign-in is on hold — its button
+ * (features/auth/google-sign-in.tsx) and routes stay in the code, unused here.
  */
 export default function Login({
     status,
-    canResetPassword,
-    google,
     companyName,
     demoAccounts = [],
 }: Props) {
@@ -44,28 +40,15 @@ export default function Login({
     const company = companyName ?? branding.companyName ?? 'perusahaan';
     const phone = useBreakpoint() === 'mobile';
 
-    // <Form> submissions preserve state, so the emergency form stays open after
-    // a failed attempt and shows Fortify's `email` errors in place.
-    const [superAdminOpen, setSuperAdminOpen] = useState(false);
-
-    const googleError = errors.google;
-    // `email` errors on a fresh page load come from EnsureActiveEmployee (signed
-    // out because the account was deactivated): show them in the error card.
-    const generalError =
-        googleError ?? (superAdminOpen ? undefined : errors.email);
-
     const actions = (
         <>
-            <GoogleSignInButton google={google} />
+            {status && <AuthStatus>{status}</AuthStatus>}
 
-            {generalError && (
-                <LoginErrorCard
-                    message={generalError}
-                    email={googleError ? google.rejectedEmail : null}
-                />
+            {errors.google && (
+                <LoginErrorCard message={errors.google} email={null} />
             )}
 
-            {status && <AuthStatus>{status}</AuthStatus>}
+            <PasswordLogin />
 
             {demoAccounts.length > 0 && (
                 <>
@@ -81,16 +64,9 @@ export default function Login({
                 </>
             )}
 
-            <SuperAdminLogin
-                open={superAdminOpen}
-                onOpenChange={setSuperAdminOpen}
-                canResetPassword={canResetPassword}
-                aside={
-                    <Link href={privacy()} className={authLinkClass}>
-                        Kebijakan privasi
-                    </Link>
-                }
-            />
+            <Link href={privacy()} className={cn(authLinkClass, 'self-center')}>
+                Kebijakan privasi
+            </Link>
         </>
     );
 
@@ -135,19 +111,12 @@ export default function Login({
                                 Masuk
                             </h1>
                             <p className="text-[17px] leading-[26px] text-text-muted">
-                                Gunakan akun Google kantor
-                                {google.domain ? (
-                                    <>
-                                        {' '}
-                                        dengan domain{' '}
-                                        <span className="font-semibold text-text">
-                                            @{google.domain}
-                                        </span>
-                                    </>
-                                ) : (
-                                    ' Anda'
-                                )}
-                                .
+                                Gunakan email kantor dan kata sandi Anda. Belum
+                                punya kata sandi? Pilih{' '}
+                                <span className="font-semibold text-text">
+                                    Lupa kata sandi
+                                </span>{' '}
+                                atau hubungi HR.
                             </p>
                         </div>
                         {actions}

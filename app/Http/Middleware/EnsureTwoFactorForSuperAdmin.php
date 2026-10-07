@@ -28,6 +28,7 @@ class EnsureTwoFactorForSuperAdmin
      */
     public const array ALLOWED_ROUTES = [
         'security.edit',
+        'user-password.update',
         'password.confirm',
         'password.confirm.store',
         'password.confirmation',

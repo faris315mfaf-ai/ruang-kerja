@@ -16,11 +16,13 @@ import { DivisionKpis, KPI_TILE, useExpandable } from './division-parts';
 import type { DivisionProps } from './division-types';
 import { Segmented } from './filter-bar';
 import { LiveBadge } from './live-badge';
+import { TeamReportsPanel } from './team-reports';
 import { OverdueList } from './overdue-list';
 import { TrendChart } from './trend-chart';
 import { useDashboardFilters } from './use-dashboard-filters';
 import { ViewPicker } from './view-picker';
 import { WorkloadBars } from './workload-bars';
+import { QuickMinutesButton } from '@/features/notes/quick-minutes-button';
 
 /**
  * Dashboard Kepala Divisi on phones (MBeranda vocabulary: overline, gradient
@@ -45,6 +47,7 @@ export function DivisionMobile({
                 </p>
             </div>
             <ViewPicker views={props.views} />
+            <QuickMinutesButton mobile />
             <Segmented
                 label="Periode"
                 className="flex w-full"
@@ -148,6 +151,8 @@ export function DivisionMobile({
                     </Button>
                 )}
             </Panel>
+
+            <TeamReportsPanel reports={props.reports} mobile />
 
             {metrics ? (
                 <>

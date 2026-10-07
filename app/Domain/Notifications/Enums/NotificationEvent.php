@@ -17,11 +17,18 @@ enum NotificationEvent: string
     case TaskCommented = 'task.commented';
     case TaskDueSoon = 'task.due_soon';
     case TaskOverdue = 'task.overdue';
+    case ChatMessage = 'chat.message';
     case RequestPending = 'request.pending';
     case RequestDecided = 'request.decided';
     case CheckInReminder = 'attendance.check_in_reminder';
     case CheckOutReminder = 'attendance.check_out_reminder';
     case ProjectActivity = 'project.activity';
+    case OkrActivity = 'okr.activity';
+    case Automation = 'automation.notify';
+    case Meeting = 'meeting';
+    case AccountSecurity = 'account.security';
+    case ReportReminder = 'report.reminder';
+    case HiringActivity = 'hiring.activity';
     case System = 'system';
     case DailyDigest = 'digest.daily';
 
@@ -33,11 +40,18 @@ enum NotificationEvent: string
             self::TaskCommented => 'Komentar di tugas yang saya amati',
             self::TaskDueSoon => 'Tenggat besok',
             self::TaskOverdue => 'Tenggat terlewat',
+            self::ChatMessage => 'Pesan langsung & grup obrolan',
+            self::Automation => 'Otomasi workspace (aturan "beri tahu")',
             self::RequestPending => 'Pengajuan menunggu persetujuan saya',
             self::RequestDecided => 'Pengajuan saya diputus',
             self::CheckInReminder => 'Pengingat lupa check-in',
             self::CheckOutReminder => 'Pengingat lupa check-out',
             self::ProjectActivity => 'Proyek: pengingat update, arahan & keputusan',
+            self::OkrActivity => 'OKR: pengingat check-in & objective berisiko',
+            self::Meeting => 'Rapat: undangan, pengingat, notulen & tindak lanjut',
+            self::AccountSecurity => 'Keamanan akun: kata sandi',
+            self::ReportReminder => 'Pengingat laporan harian (16.30)',
+            self::HiringActivity => 'Hiring: kandidat baru & keputusan akhir',
             self::System => 'Pengumuman & info sistem',
             self::DailyDigest => 'Ringkasan harian',
         };
@@ -47,10 +61,10 @@ enum NotificationEvent: string
     {
         return match ($this) {
             self::TaskAssigned, self::Mention, self::TaskCommented, self::TaskDueSoon, self::TaskOverdue,
-            self::ProjectActivity => NotificationCategory::Task,
-            self::RequestPending, self::RequestDecided => NotificationCategory::Request,
+            self::ProjectActivity, self::ChatMessage, self::OkrActivity, self::Automation, self::Meeting, self::ReportReminder => NotificationCategory::Task,
+            self::RequestPending, self::RequestDecided, self::HiringActivity => NotificationCategory::Request,
             self::CheckInReminder, self::CheckOutReminder => NotificationCategory::Attendance,
-            self::System, self::DailyDigest => NotificationCategory::System,
+            self::AccountSecurity, self::System, self::DailyDigest => NotificationCategory::System,
         };
     }
 
@@ -78,6 +92,8 @@ enum NotificationEvent: string
     {
         return match ($this) {
             self::RequestPending, self::System => [NotificationChannel::InApp],
+            // Password notices cannot be switched off (security, ASVS V2.2).
+            self::AccountSecurity => [NotificationChannel::InApp, NotificationChannel::Email],
             default => [],
         };
     }

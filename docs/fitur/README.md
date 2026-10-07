@@ -1,8 +1,12 @@
 # Fitur & pratinjau Fase 2 dan 3
 
+> **Status per 6 Okt 2026 (keputusan pemilik):** Obrolan **Nyata** (`FEATURE_CHAT`). **Akan dibangun** dengan backend nyata: Rapat & notulen, Kalender & jadwal manajemen, Catatan bersama, Otomasi (aturan, tugas berulang, template), Kinerja saya, OKR divisi. **Nyata** juga: Dashboard per jabatan (`FEATURE_ROLE_DASHBOARDS`). **Ditahan** (tidak dikerjakan sampai pemilik membuka lagi): notifikasi WhatsApp + pemilihan provider, Aplikasi ponsel, Mesin fingerprint, login Google, Google Drive & Docs, serta semua hal yang belum ada sama sekali. Panduan pemakaian lengkap (apa yang sudah ada, apa yang belum, cara memakai, kebutuhan): **[PANDUAN-PRATINJAU.md](PANDUAN-PRATINJAU.md)**, juga dibaca di aplikasi lewat **Pratinjau › Panduan pratinjau** (`/pratinjau/panduan`, dengan gambar).
+
 > Status per 6 Okt 2026 · worktree `claude/project-overview-status-ebff38` · dibangun lima agen frontend (A–E), diperiksa Agen Cek Bug (`docs/sprints/fase-2-3-prototipe/BUG-REPORT.md`).
 
 Folder ini menjelaskan **alur frontend Fase 2 dan Fase 3** RuangKerja yang sudah bisa dicoba di browser sebagai **pratinjau** (prototipe). Setiap layar memakai **data contoh** di frontend dan tidak menyimpan apa pun ke server. Backend Fase 2/3 (migrasi, Action, Policy, job, integrasi Google/WhatsApp/Hocuspocus/ADMS) **belum dibangun**. Setiap dokumen modul menutup dengan checklist pekerjaan backend agar tim tinggal mengirim props yang bentuknya sama dengan data contoh.
+
+> **Pembaruan 6 Okt 2026 (malam):** semua modul "Akan dibangun" sudah **Nyata** dengan backend, data tersimpan, dan flag sendiri (nyala lokal, mati produksi): Catatan bersama (`FEATURE_NOTES`, server kolaborasi `collab/`), Rapat, notulen & kalender (`FEATURE_MEETINGS`), Otomasi + Kinerja saya (`FEATURE_AUTOMATION`), OKR (`FEATURE_OKR`), Dashboard per jabatan (`FEATURE_ROLE_DASHBOARDS`). Cara pakai terbaru ada di dokumen modulnya ([catatan](catatan.md), [rapat-kalender](rapat-kalender.md), [otomasi-whatsapp](otomasi-whatsapp.md), [okr](okr.md), [dashboard-peran](dashboard-peran.md)); seksi §4 di bawah masih menggambarkan masa pratinjau. Yang tetap pratinjau & **ditahan**: WhatsApp, aplikasi ponsel, mesin fingerprint. Fitur baru permintaan pemilik (tanpa flag): [laporan harian](laporan-harian.md), [pengumuman](pengumuman.md), [hiring](hiring.md), [akun & kata sandi](akun-kata-sandi.md), [dashboard pimpinan](dashboard-pimpinan.md), [staf: pengajuan & workspace](staf-pengajuan-workspace.md).
 
 ## 1. Apa itu pratinjau
 
@@ -48,14 +52,14 @@ Catatan: persona di data contoh **tetap** (mis. Obrolan selalu dilihat sebagai D
 
 | Modul | Sprint | Rute | Dokumen |
 |---|---|---|---|
-| Obrolan (channel, DM, grup, thread) | F2-1 | `/obrolan`, `/obrolan/{channel}` | [obrolan.md](obrolan.md) |
-| Catatan bersama (Tiptap + Yjs) | F2-2 | `/catatan`, `/catatan/{note}` | [catatan.md](catatan.md) |
-| Rapat, notulen & kalender (Google Calendar & Meet) | F2-3 | `/rapat`, `/rapat/baru`, `/rapat/{id}`, `/rapat/{id}/notulen`, `/kalender`, `/manajemen/jadwal` | [rapat-kalender.md](rapat-kalender.md) |
-| Otomasi, WhatsApp, tugas berulang, template, Kinerja saya | F2-4 | `/pengaturan/whatsapp`, `/otomasi`, `/otomasi/berulang`, `/otomasi/template`, `/kinerja` | [otomasi-whatsapp.md](otomasi-whatsapp.md) |
-| Aplikasi ponsel (biometrik, wajah, integritas, offline, widget) | F3-1 · F3-2 | `/pratinjau/ponsel/*`, `/absensi/wajah`, `/pengaturan/perangkat` | [aplikasi-ponsel.md](aplikasi-ponsel.md) |
-| OKR divisi | F3-3 | `/okr`, `/okr/{objective}` | [okr.md](okr.md) |
-| Mesin fingerprint ZKTeco (ADMS) | F3-3 | `/admin/mesin-absensi` | [mesin-fingerprint.md](mesin-fingerprint.md) |
-| Dashboard per peran SPKD | SPKD | `/peran/{dirut,direktur,hr,corsec,marketing,programming,implementer,analis}` | [dashboard-peran.md](dashboard-peran.md) |
+| Obrolan (channel, DM, grup, thread) · **Nyata** | F2-1 | `/obrolan`, `/obrolan/{channel}` | [obrolan.md](obrolan.md) |
+| Catatan bersama (Tiptap + Yjs) · **Akan dibangun** | F2-2 | `/catatan`, `/catatan/{note}` | [catatan.md](catatan.md) |
+| Rapat, notulen & kalender (Google Calendar & Meet) · **Akan dibangun** | F2-3 | `/rapat`, `/rapat/baru`, `/rapat/{id}`, `/rapat/{id}/notulen`, `/kalender`, `/manajemen/jadwal` | [rapat-kalender.md](rapat-kalender.md) |
+| Otomasi, tugas berulang, template, Kinerja saya · **Akan dibangun**; WhatsApp · **Ditahan** | F2-4 | `/pengaturan/whatsapp`, `/otomasi`, `/otomasi/berulang`, `/otomasi/template`, `/kinerja` | [otomasi-whatsapp.md](otomasi-whatsapp.md) |
+| Aplikasi ponsel (biometrik, wajah, integritas, offline, widget) · **Ditahan** | F3-1 · F3-2 | `/pratinjau/ponsel/*`, `/absensi/wajah`, `/pengaturan/perangkat` | [aplikasi-ponsel.md](aplikasi-ponsel.md) |
+| OKR divisi · **Akan dibangun** | F3-3 | `/okr`, `/okr/{objective}` | [okr.md](okr.md) |
+| Mesin fingerprint ZKTeco (ADMS) · **Ditahan** | F3-3 | `/admin/mesin-absensi` | [mesin-fingerprint.md](mesin-fingerprint.md) |
+| Dashboard per jabatan SPKD · **Nyata** (`FEATURE_ROLE_DASHBOARDS`) | SPKD | `/peran/{dirut,direktur,hr,corsec,marketing,programming,implementer,analis}` | [dashboard-peran.md](dashboard-peran.md) |
 
 Gambar di setiap dokumen ada di `docs/fitur/img/<modul>/` dengan pola `<layar>-desktop.jpg` (1440×900 terang), `<layar>-desktop-malam.jpg` (1440×900 Malam), dan `<layar>-ponsel.jpg` (390×844, skala 2). Semua dibuat ulang dengan:
 
@@ -125,7 +129,7 @@ Tidak ada paket npm baru untuk pratinjau: Tiptap, Radix, recharts, sonner, lucid
 - **Tidak ada realtime sungguhan.** "Sedang mengetik", balasan otomatis, kursor kolaborator, dan "ikut mengedit" disimulasikan dengan timer.
 - **Tidak ada integrasi eksternal.** Google Meet/Calendar, Picker Drive, WhatsApp, kamera wajah (hanya bila izin kamera diberikan), Play Integrity, dan mesin ZKTeco semuanya tiruan.
 - **Persona tetap** per modul (lihat tabel akun). Hak akses per peran belum ditegakkan; semua karyawan yang masuk bisa membuka semua rute pratinjau.
-- Rute pratinjau **tidak** masuk Admin › Dokumentasi sebagai tautan aktif; gambar di dokumen ini tampil sebagai teks alt di aplikasi (lihat catatan di bawah).
+- Rute pratinjau **tidak** masuk Admin › Dokumentasi sebagai tautan aktif; di Admin › Dokumentasi gambar tampil sebagai teks alt (lihat catatan di bawah). Di **Pratinjau › Panduan pratinjau** (`/pratinjau/panduan/fitur`) dokumen yang sama tampil dengan gambar.
 - Bug terbuka yang diketahui: `docs/sprints/fase-2-3-prototipe/BUG-REPORT.md` §3.
 
-> **Catatan Admin › Dokumentasi.** `DocumentRenderer` sengaja mengganti gambar dengan teks alt-nya (gambar repo tidak disajikan dan tidak ada permintaan ke host lain) dan menampilkan diagram Mermaid sebagai blok kode. Untuk melihat gambar dan diagram, buka dokumen ini di GitHub/editor Markdown.
+> **Catatan Admin › Dokumentasi.** `DocumentRenderer` sengaja mengganti gambar dengan teks alt-nya (gambar repo tidak disajikan dan tidak ada permintaan ke host lain) dan menampilkan diagram Mermaid sebagai blok kode. Untuk melihat gambar, buka dokumen ini lewat `/pratinjau/panduan` (semua karyawan, flag `prototype` nyala; gambar `docs/fitur/img` disajikan rute `prototype.guide.image` yang memvalidasi path). Diagram Mermaid hanya tampil di GitHub/editor Markdown.

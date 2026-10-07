@@ -2,6 +2,8 @@
 
 namespace App\Domain\Tasks\Services;
 
+use App\Domain\Tasks\Enums\PaletteColor;
+
 /**
  * Server-side guard for Tiptap/ProseMirror JSON (task descriptions and
  * comments). The client editor is never trusted:
@@ -12,7 +14,9 @@ namespace App\Domain\Tasks\Services;
  * - `mention` labels are replaced with the real name of the person (or the
  *   node becomes plain text when the person may not be mentioned);
  * - `taskReference` (#KEY-n) keeps only references the author may see;
- * - size, depth and text length are bounded (see violation()).
+ * - size, depth and text length are bounded (see violation());
+ * - colour marks (textColor, highlight with a palette name) only when the
+ *   caller opts in (notes, `$colors`).
  *
  * The frontend renders the same node set (features/tasks/editor/rich-text-view.tsx).
  */
@@ -30,6 +34,13 @@ final class RichText
     private const array CONTAINERS = ['doc', 'paragraph', 'blockquote', 'bulletList', 'orderedList', 'listItem', 'taskList', 'taskItem', 'heading', 'codeBlock'];
 
     private const array MARKS = ['bold', 'italic', 'strike', 'code', 'underline', 'link'];
+
+    /**
+     * Opt-in marks for notes only (NoteContent): text colour and highlight,
+     * attr `color` = palette name (PaletteColor). Tasks and comments never
+     * keep them.
+     */
+    private const array COLOR_MARKS = ['textColor', 'highlight'];
 
     /** Nodes followed by a line break in the plain-text version. */
     private const array BLOCKS = ['paragraph', 'heading', 'codeBlock', 'horizontalRule', 'taskItem', 'listItem'];
@@ -68,11 +79,12 @@ final class RichText
      * @param  array<mixed>  $document
      * @param  array<string, string>  $people  mentionable user id => display name
      * @param  array<string, string>  $tasks  referenceable task id => "KEY-n"
+     * @param  bool  $colors  keep palette text colour / highlight marks (notes only)
      * @return array<string, mixed>|null
      */
-    public static function sanitize(array $document, array $people = [], array $tasks = []): ?array
+    public static function sanitize(array $document, array $people = [], array $tasks = [], bool $colors = false): ?array
     {
-        $clean = self::node($document, $people, $tasks, 0);
+        $clean = self::node($document, $people, $tasks, 0, $colors);
 
         if ($clean === null || ($clean['type'] ?? null) !== 'doc') {
             return null;
@@ -157,7 +169,7 @@ final class RichText
      * @param  array<string, string>  $tasks
      * @return array<string, mixed>|null
      */
-    private static function node(array $node, array $people, array $tasks, int $depth): ?array
+    private static function node(array $node, array $people, array $tasks, int $depth, bool $colors = false): ?array
     {
         $type = $node['type'] ?? null;
 
@@ -173,7 +185,7 @@ final class RichText
             }
 
             $clean = ['type' => 'text', 'text' => $text];
-            $marks = self::marks($node['marks'] ?? null);
+            $marks = self::marks($node['marks'] ?? null, $colors);
 
             return $marks === [] ? $clean : [...$clean, 'marks' => $marks];
         }
@@ -230,7 +242,7 @@ final class RichText
                 continue;
             }
 
-            $sanitized = self::node($child, $people, $tasks, $depth + 1);
+            $sanitized = self::node($child, $people, $tasks, $depth + 1, $colors);
 
             if ($sanitized !== null) {
                 if ($type === 'codeBlock') {
@@ -274,7 +286,7 @@ final class RichText
     /**
      * @return list<array<string, mixed>>
      */
-    private static function marks(mixed $marks): array
+    private static function marks(mixed $marks, bool $colors = false): array
     {
         if (! is_array($marks)) {
             return [];
@@ -286,7 +298,25 @@ final class RichText
         foreach ($marks as $mark) {
             $type = is_array($mark) ? ($mark['type'] ?? null) : null;
 
-            if (! is_string($type) || ! in_array($type, self::MARKS, true) || isset($seen[$type])) {
+            if (! is_string($type) || isset($seen[$type])) {
+                continue;
+            }
+
+            if (in_array($type, self::COLOR_MARKS, true)) {
+                $color = is_array($mark['attrs'] ?? null) ? ($mark['attrs']['color'] ?? null) : null;
+
+                // Only palette names: never a raw CSS value from the client.
+                if (! $colors || ! is_string($color) || PaletteColor::tryFrom($color) === null) {
+                    continue;
+                }
+
+                $clean[] = ['type' => $type, 'attrs' => ['color' => $color]];
+                $seen[$type] = true;
+
+                continue;
+            }
+
+            if (! in_array($type, self::MARKS, true)) {
                 continue;
             }
 

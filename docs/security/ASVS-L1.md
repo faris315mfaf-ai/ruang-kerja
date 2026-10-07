@@ -15,7 +15,7 @@ Status: **OK** = terpenuhi · **Diperbaiki** = ditemukan & diperbaiki di sprint 
 | F5 | Sedang | Reverb `allowed_origins = ['*']`: situs lain bisa membuka WebSocket (channel privat tetap butuh auth). | **Diperbaiki** (`REVERB_ALLOWED_ORIGINS`, diuji: origin asing ditolak 4009) |
 | F6 | Sedang | Gate Horizon kosong (hanya email terdaftar), Pulse hanya `local`. | **Diperbaiki** (super_admin saja, test matriks peran) |
 | F7 | Sedang | Redis tanpa sandi di rancangan produksi. | **Diperbaiki** (`--requirepass` wajib di `compose.prod.yml`) |
-| F8 | Rendah | Lupa sandi membedakan "email tidak ditemukan" (enumerasi akun). Login sandi hanya untuk Super Admin (lainnya Google), dan dibatasi 60 dtk/email. | Terbuka — ganti `passwords.user` menjadi pesan netral dan kembalikan status sukses yang sama |
+| F8 | Rendah | Lupa sandi membedakan "email tidak ditemukan" (enumerasi akun). | Ditutup (6 Okt 2026): alur tautan email Fortify dihapus; "Lupa kata sandi" dengan persetujuan HR menjawab sama persis (respons, halaman tunggu, status, timebox 400 ms) untuk email tak dikenal/nonaktif |
 | F9 | Rendah | `style-src 'unsafe-inline'` (dibutuhkan Radix/sonner/progress Inertia). `script-src` tetap ketat (nonce). | Diterima |
 | F10 | Rendah | `/horizon` & `/pulse` memakai CSP longgar (`unsafe-inline`/`unsafe-eval`) karena front-end bawaan paket. | Diterima (hanya super_admin) |
 | F11 | Rendah | `/health` menampilkan `version` (SHA git). Tidak ada rahasia/host. | Diterima |
@@ -35,12 +35,12 @@ Tidak ada temuan tingkat tinggi yang terbuka untuk kode yang sudah ada di cabang
 ## V2 Autentikasi
 | Butir | Status | Catatan |
 |---|---|---|
-| 2.1.1 Sandi ≥ 12 karakter | OK | `Password::defaults()` produksi: min 12, huruf besar/kecil, angka, simbol, `uncompromised()`. |
+| 2.1.1 Sandi ≥ 12 karakter | Deviasi (keputusan pemilik 6 Okt 2026) | Semua karyawan kini memakai sandi: min **8** karakter + bukan alamat email (`PasswordValidationRules`), produksi `uncompromised()`. Tanpa aturan komposisi (sesuai ASVS 2.1.9). Super Admin tetap TOTP. |
 | 2.1.7 Cek sandi bocor | OK | `uncompromised()` (HIBP k-anonymity) di produksi. |
 | 2.2.1 Anti brute force | OK | `throttle:login` 10/menit/IP + 5/menit/email+IP; `two-factor` 5/menit; demo login memakai `throttle:login`. |
-| 2.2.? 2FA admin | OK | Login sandi hanya Super Admin dan TOTP wajib sebelum fitur lain (Sprint 1 login). Karyawan lain login Google (domain terbatas, `throttle:google-login`). |
+| 2.2.? 2FA admin | OK | Semua karyawan login dengan sandi (6 Okt 2026); Super Admin wajib TOTP sebelum fitur lain, juga setelah lupa sandi (tidak login otomatis bila TOTP aktif). Pesan galat login generik + timebox 200 ms. Login Google ditahan. |
 | 2.4.1 Hash sandi | OK | bcrypt, `BCRYPT_ROUNDS=12`. |
-| 2.5.? Reset sandi | Terbuka (F8) | Token kedaluwarsa 60 menit, throttle 60 dtk; pesan membedakan email tak dikenal. |
+| 2.5.? Reset sandi | OK | Persetujuan HR (6 Okt 2026): token permintaan & setup acak 64 karakter, DB hanya hash SHA-256, setup token sekali pakai 30 menit terikat sesi peminta, permintaan 24 jam, satu aktif per karyawan, throttle IP + email, semua sesi lain keluar, audit tiap langkah tanpa nilai sandi. HR mengatur sandi: audit + notifikasi email ke karyawan. |
 | 2.5.4 Tidak ada akun bawaan | OK | Registrasi publik nonaktif (`RegistrationDisabledTest`); akun demo hanya `APP_ENV=local` + `DEMO_LOGIN_ENABLED=true` (dicek per request); Super Admin pertama dibuat dengan `ruangkerja:create-super-admin`. |
 
 ## V3 Sesi

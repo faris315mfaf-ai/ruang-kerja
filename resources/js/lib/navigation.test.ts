@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
     activeTabIndex,
+    tabNavItems,
     adminNavItems,
     attendanceNavItems,
     canSeeManagement,
@@ -25,12 +26,15 @@ const desktopHrefs = (roles: string[]) => [
 ];
 
 describe('navigation', () => {
-    it('shows the org chart to everyone, in the organization group only', () => {
-        for (const role of ROLES) {
+    it('shows the org chart to everyone but staff, in the organization group only', () => {
+        for (const role of ROLES.filter((r) => r !== 'anggota')) {
             expect(organizationNavItems([role])[0]?.href).toBe(
                 '/organisasi/struktur',
             );
         }
+
+        // Keputusan pemilik 6 Okt 2026: no org chart for staff.
+        expect(organizationNavItems(['anggota'])).toEqual([]);
 
         expect(
             mainNavItems.some((item) => item.href === '/organisasi/struktur'),
@@ -63,7 +67,7 @@ describe('navigation', () => {
             'Anggota divisi',
         ]);
         expect(orgTitles(['direksi'])).toEqual(['Struktur organisasi']);
-        expect(orgTitles(['anggota'])).toEqual(['Struktur organisasi']);
+        expect(orgTitles(['anggota'])).toEqual([]);
     });
 
     it('gives HR the attendance and request admin but not the audit log', () => {
@@ -162,7 +166,8 @@ describe('navigation', () => {
                 '/manajemen',
                 '/absensi/hari-ini',
             ],
-            anggota: ['/organisasi/struktur'],
+            // Keputusan pemilik 6 Okt 2026: staff lose the org chart.
+            anggota: [],
         };
 
         for (const [role, hrefs] of Object.entries(before)) {
@@ -186,25 +191,32 @@ describe('navigation', () => {
             'Struktur organisasi',
             'Karyawan',
             'Absensi hari ini',
+            'Kedisiplinan',
         ]);
         expect(mobile(['kepala_divisi'])).toEqual([
             'Struktur organisasi',
             'Anggota divisi',
             'Absensi hari ini',
+            'Kedisiplinan',
         ]);
-        expect(mobile(['anggota'])).toEqual(['Struktur organisasi']);
+        expect(mobile(['anggota'])).toEqual([]);
     });
 
     it('shows the attendance board to team leads and HR, the recap on desktop only', () => {
         const hrefs = (roles: string[]) =>
             attendanceNavItems(roles).map((item) => item.href);
 
-        expect(hrefs(['hr'])).toEqual(['/absensi/hari-ini', '/absensi/rekap']);
+        expect(hrefs(['hr'])).toEqual([
+            '/absensi/hari-ini',
+            '/absensi/rekap',
+            '/absensi/kedisiplinan',
+        ]);
         expect(hrefs(['kepala_divisi'])).toEqual([
             '/absensi/hari-ini',
             '/absensi/rekap',
+            '/absensi/kedisiplinan',
         ]);
-        expect(hrefs(['direksi'])).toHaveLength(2);
+        expect(hrefs(['direksi'])).toHaveLength(3);
         expect(hrefs(['anggota'])).toEqual([]);
         expect(
             attendanceNavItems(['hr']).find((item) => item.desktopOnly)?.href,
@@ -235,6 +247,7 @@ describe('navigation', () => {
             '/manajemen',
             '/inbox',
             '/tugas',
+            '/laporan',
             '/absensi',
             '/pengajuan',
             '/persetujuan',
@@ -264,12 +277,26 @@ describe('navigation', () => {
     });
 
     it('finds the tab that owns the current page for the sliding pill', () => {
-        expect(activeTabIndex('/dashboard')).toBe(0);
-        expect(activeTabIndex('/absensi/riwayat')).toBe(1);
-        expect(activeTabIndex('/tugas')).toBe(2);
-        expect(activeTabIndex('/inbox')).toBe(3);
-        expect(activeTabIndex('/menu')).toBe(4);
-        expect(activeTabIndex('/persetujuan')).toBe(-1);
-        expect(activeTabIndex('/menu/lain')).toBe(-1);
+        expect(activeTabIndex('/dashboard', true)).toBe(0);
+        expect(activeTabIndex('/tugas', true)).toBe(1);
+        expect(activeTabIndex('/absensi/riwayat', true)).toBe(2);
+        expect(activeTabIndex('/obrolan/abc', true)).toBe(3);
+        expect(activeTabIndex('/menu', true)).toBe(4);
+        expect(activeTabIndex('/inbox', true)).toBe(-1);
+        expect(activeTabIndex('/persetujuan', true)).toBe(-1);
+        expect(activeTabIndex('/menu/lain', true)).toBe(-1);
+    });
+
+    it('gives the fourth tab back to Inbox when Obrolan is off', () => {
+        expect(tabNavItems(false).map((item) => item.title)).toEqual([
+            'Beranda',
+            'Tugas',
+            'Absen',
+            'Inbox',
+            'Lainnya',
+        ]);
+        expect(activeTabIndex('/inbox', false)).toBe(3);
+        expect(activeTabIndex('/obrolan', false)).toBe(-1);
+        expect(tabNavItems(true).filter((item) => item.center)).toHaveLength(1);
     });
 });

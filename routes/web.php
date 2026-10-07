@@ -22,6 +22,7 @@ Route::post('demo/ganti-akun', [DemoSwitchController::class, 'store'])
     ->name('demo.switch');
 
 require __DIR__.'/auth.php';
+require __DIR__.'/password-reset.php';
 require __DIR__.'/settings.php';
 require __DIR__.'/requests.php';
 require __DIR__.'/attendance.php';
@@ -34,7 +35,16 @@ require __DIR__.'/workspaces.php';
 require __DIR__.'/drive.php';
 require __DIR__.'/dashboard.php';
 require __DIR__.'/planner.php';
+require __DIR__.'/reports.php';
+require __DIR__.'/announcements.php';
 require __DIR__.'/prototype.php';
+require __DIR__.'/chat.php';
+require __DIR__.'/roles.php';
+require __DIR__.'/okr.php';
+require __DIR__.'/automation.php';
+require __DIR__.'/notes.php';
+require __DIR__.'/meetings.php';
+require __DIR__.'/hiring.php';
 require __DIR__.'/management.php';
 require __DIR__.'/projects.php';
 require __DIR__.'/privacy.php';

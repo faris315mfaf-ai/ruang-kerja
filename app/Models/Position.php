@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\RoleDashboards\Enums\DashboardRole;
 use App\Models\Concerns\Auditable;
 use Database\Factories\PositionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -19,12 +20,13 @@ use Illuminate\Support\Carbon;
  * @property string $company_id
  * @property string $name
  * @property int $level 1 = Direksi … 5 = Staf
+ * @property DashboardRole|null $dashboard_role job dashboard (/peran/{role}), set by HR
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
  * @property-read Company $company
  */
-#[Fillable(['company_id', 'name', 'level'])]
+#[Fillable(['company_id', 'name', 'level', 'dashboard_role'])]
 class Position extends Model
 {
     /** @use HasFactory<PositionFactory> */
@@ -46,6 +48,7 @@ class Position extends Model
     {
         return [
             'level' => 'integer',
+            'dashboard_role' => DashboardRole::class,
         ];
     }
 

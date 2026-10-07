@@ -6,12 +6,11 @@ import { Input } from '@/components/ui/input';
 import { cn, focusRing } from '@/lib/utils';
 import { ChannelAvatar } from './channel-avatar';
 import {
+    channelLastMessage,
     channelTitle,
     groupChannels,
-    lastMessage,
     listTime,
     previewText,
-    prototypeNow,
     unreadCount,
 } from './lib';
 import type { Channel, ChatState } from './types';
@@ -24,10 +23,9 @@ type Props = {
 
 function sortByActivity(channels: Channel[], state: ChatState): Channel[] {
     return [...channels].sort((a, b) => {
-        const left =
-            lastMessage(a.id, state.messages)?.created_at ?? a.created_at;
-        const right =
-            lastMessage(b.id, state.messages)?.created_at ?? b.created_at;
+        // Channels without messages go last.
+        const left = channelLastMessage(a, state.messages)?.created_at ?? '';
+        const right = channelLastMessage(b, state.messages)?.created_at ?? '';
 
         return right.localeCompare(left);
     });
@@ -39,7 +37,7 @@ function sortByActivity(channels: Channel[], state: ChatState): Channel[] {
  */
 export function ChannelList({ state, activeId, variant }: Props) {
     const [query, setQuery] = useState('');
-    const now = prototypeNow();
+    const now = new Date();
     const mobile = variant === 'mobile';
 
     const sections = useMemo(() => {
@@ -111,8 +109,8 @@ export function ChannelList({ state, activeId, variant }: Props) {
                                 state.messages,
                                 state.viewerId,
                             );
-                            const last = lastMessage(
-                                channel.id,
+                            const last = channelLastMessage(
+                                channel,
                                 state.messages,
                             );
                             const direct =

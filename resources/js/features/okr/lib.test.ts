@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { OBJECTIVES, OKR_TODAY, OWNERS } from './fixtures';
+import { OBJECTIVES, OKR_TODAY, OWNERS } from './test-fixtures';
 import {
     aggregate,
     applyCheckin,

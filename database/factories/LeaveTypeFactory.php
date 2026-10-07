@@ -42,6 +42,18 @@ class LeaveTypeFactory extends Factory
         ]);
     }
 
+    /** Pengajuan barang (keputusan pemilik 6 Okt 2026). */
+    public function procurement(): static
+    {
+        return $this->category(RequestCategory::Procurement)->state(fn (): array => ['name' => 'Pengajuan barang', 'allow_half_day' => false]);
+    }
+
+    /** Locked: visible, cannot be requested (cuti & lembur until the SOP exists). */
+    public function locked(?string $reason = null): static
+    {
+        return $this->state(fn (): array => ['locked_reason' => $reason ?? LeaveType::SOP_LOCK_REASON]);
+    }
+
     public function withoutQuota(): static
     {
         return $this->state(fn (): array => ['annual_quota_days' => null]);

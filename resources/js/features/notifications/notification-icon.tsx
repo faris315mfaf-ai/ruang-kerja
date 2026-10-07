@@ -6,11 +6,19 @@ import {
     CalendarClock,
     CheckCheck,
     CircleAlert,
+    KeyRound,
+    ClipboardPen,
     Megaphone,
     MessageSquare,
+    NotebookPen,
     Plus,
     RotateCcw,
     ShieldAlert,
+    Target,
+    Workflow,
+    Video,
+    UserCheck,
+    UserPlus,
     X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -30,6 +38,14 @@ const ICONS: Record<string, LucideIcon> = {
     megaphone: Megaphone,
     bell: Bell,
     shield: ShieldAlert,
+    target: Target,
+    workflow: Workflow,
+    video: Video,
+    notebook: NotebookPen,
+    key: KeyRound,
+    clipboard: ClipboardPen,
+    'user-plus': UserPlus,
+    'user-check': UserCheck,
 };
 
 export const toneClasses: Record<NotificationTone, string> = {

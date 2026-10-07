@@ -2,6 +2,8 @@ import { Link, usePage } from '@inertiajs/react';
 import { CalendarDays, Plus, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Panel, PanelLink } from '@/components/ui/panel';
+import { DailyReportCard } from '@/features/reports/daily-report-card';
+import { isStaffOnly } from '@/features/staff/roles';
 import { useTaskComposer } from '@/features/tasks/form/task-composer';
 import { formatLongDate, formatNumber } from '@/lib/format';
 import { formatShortDate } from '@/lib/requests';
@@ -21,6 +23,7 @@ import type { PersonalProps } from './personal-types';
 import { RequestRows } from './request-rows';
 import { RuangSaya } from './ruang-saya/ruang-saya';
 import { ViewPicker } from './view-picker';
+import { QuickMinutesButton } from '@/features/notes/quick-minutes-button';
 
 /** "Staf Data · atasan Dimas Pratama". */
 export function profileLine(profile: PersonalProps['live']['profile']): string {
@@ -40,6 +43,8 @@ export function PersonalDesktop(props: PersonalProps) {
     const previous = props.filters.period.previous_label;
     const firstName = auth.user?.name.split(' ')[0] ?? '';
     const open = metrics?.kpis.open_tasks;
+    // Staff do not see the annual leave balance (keputusan pemilik 6 Okt 2026).
+    const staff = isStaffOnly(auth.roles);
 
     return (
         <div className="flex flex-col gap-6">
@@ -48,6 +53,7 @@ export function PersonalDesktop(props: PersonalProps) {
                 title={`${greeting()}, ${firstName}`}
                 subtitle={profileLine(live.profile) || undefined}
             >
+                <QuickMinutesButton />
                 <ViewPicker views={props.views} />
             </PageHeader>
 
@@ -56,28 +62,38 @@ export function PersonalDesktop(props: PersonalProps) {
                 className="flex flex-wrap items-stretch gap-5"
             >
                 <MyAttendanceCard className="flex-[1.4_1_420px]" />
-                <MetricKpi
-                    href="/pengajuan"
-                    linkLabel={
-                        live.leave_balance
-                            ? `Saldo cuti ${formatNumber(live.leave_balance.remaining)} hari, buka pengajuan saya`
-                            : 'Saldo cuti belum ada, buka pengajuan saya'
+                {/* Laporan harian: most prominent for staff (keputusan pemilik 6 Okt 2026). */}
+                <DailyReportCard
+                    status={props.dailyReport}
+                    prominent={staff}
+                    className={
+                        staff ? 'flex-[1.2_1_320px]' : 'flex-[1_1_260px]'
                     }
-                    label="Saldo cuti tahunan"
-                    definition="Sisa cuti tahunan setelah cuti yang disetujui."
-                    value={
-                        live.leave_balance
-                            ? formatNumber(live.leave_balance.remaining)
-                            : '–'
-                    }
-                    suffix={live.leave_balance ? 'hari' : undefined}
-                    note={
-                        live.leave_balance
-                            ? `${live.leave_balance.type.toLowerCase()} · berlaku s.d. 31 Des ${live.leave_balance.year}`
-                            : 'belum ada saldo'
-                    }
-                    className="flex-[1_1_220px]"
                 />
+                {!staff && (
+                    <MetricKpi
+                        href="/pengajuan"
+                        linkLabel={
+                            live.leave_balance
+                                ? `Saldo cuti ${formatNumber(live.leave_balance.remaining)} hari, buka pengajuan saya`
+                                : 'Saldo cuti belum ada, buka pengajuan saya'
+                        }
+                        label="Saldo cuti tahunan"
+                        definition="Sisa cuti tahunan setelah cuti yang disetujui."
+                        value={
+                            live.leave_balance
+                                ? formatNumber(live.leave_balance.remaining)
+                                : '–'
+                        }
+                        suffix={live.leave_balance ? 'hari' : undefined}
+                        note={
+                            live.leave_balance
+                                ? `${live.leave_balance.type.toLowerCase()} · berlaku s.d. 31 Des ${live.leave_balance.year}`
+                                : 'belum ada saldo'
+                        }
+                        className="flex-[1_1_220px]"
+                    />
+                )}
                 {open ? (
                     <MetricKpi
                         href="/tugas"
@@ -114,9 +130,9 @@ export function PersonalDesktop(props: PersonalProps) {
                 />
                 <div className="flex flex-wrap gap-2">
                     <Button asChild variant="outline">
-                        <Link href="/pengajuan/baru?kategori=leave">
+                        <Link href="/pengajuan/baru">
                             <CalendarDays aria-hidden />
-                            Ajukan cuti
+                            Buat pengajuan
                         </Link>
                     </Button>
                     <Button onClick={() => composer.openCreate()}>

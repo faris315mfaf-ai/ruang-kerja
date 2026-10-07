@@ -61,13 +61,22 @@ describe('Rail (tablet)', () => {
     });
 
     it('keeps the org chart as a plain tile when it is the only entry', () => {
-        renderFor(['anggota']);
+        renderFor(['direksi']);
 
         expect(
             screen
                 .getByRole('link', { name: 'Struktur organisasi' })
                 .getAttribute('href'),
         ).toBe('/organisasi/struktur');
+        expect(screen.queryByRole('button', { name: 'Organisasi' })).toBeNull();
+    });
+
+    it('hides the org chart from staff (keputusan pemilik 6 Okt 2026)', () => {
+        renderFor(['anggota']);
+
+        expect(
+            screen.queryByRole('link', { name: 'Struktur organisasi' }),
+        ).toBeNull();
         expect(screen.queryByRole('button', { name: 'Organisasi' })).toBeNull();
         expect(screen.queryByRole('button', { name: 'Admin' })).toBeNull();
     });

@@ -2,9 +2,12 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Chat\Queries\ChatInbox;
+use App\Domain\Hiring\Services\HiringAccess;
 use App\Domain\Notifications\Services\InboxQuery;
 use App\Domain\Organization\Demo\DemoAccounts;
 use App\Domain\Requests\Services\ApprovalQueue;
+use App\Domain\RoleDashboards\Services\RoleDashboardAccess;
 use App\Domain\Workspaces\Queries\SidebarWorkspaces;
 use App\Http\Resources\Attendance\MyAttendance;
 use App\Models\Company;
@@ -55,7 +58,7 @@ class HandleInertiaRequests extends Middleware
         // relations would leak into controllers/actions (e.g. company.google_domain).
         $company = $user !== null ? Company::query()->whereKey($user->company_id)->first(['id', 'name']) : null;
         $division = $user?->division_id !== null ? Division::query()->whereKey($user->division_id)->first(['id', 'name', 'code']) : null;
-        $position = $user?->position_id !== null ? Position::query()->whereKey($user->position_id)->first(['id', 'name', 'level']) : null;
+        $position = $user?->position_id !== null ? Position::query()->whereKey($user->position_id)->first(['id', 'name', 'level', 'dashboard_role']) : null;
 
         return [
             ...parent::share($request),
@@ -84,7 +87,23 @@ class HandleInertiaRequests extends Middleware
             // Bell / Dock / tab badge. Closure: skipped on partial reloads that don't ask for it.
             'inbox' => fn (): ?array => $user !== null ? ['unread' => app(InboxQuery::class)->unreadCount($user)] : null,
             // Fase 2 & 3 front-end previews (/pratinjau, config/features.php).
-            'features' => ['prototype' => (bool) config('features.prototype')],
+            // role_dashboards: flag on AND this user has a job dashboard (Dock/Rail/Menu entry).
+            'features' => [
+                'prototype' => (bool) config('features.prototype'),
+                'chat' => (bool) config('features.chat'),
+                'okr' => (bool) config('features.okr'),
+                'automation' => (bool) config('features.automation'),
+                'notes' => (bool) config('features.notes'),
+                'meetings' => (bool) config('features.meetings'),
+                // `hiring`: may open /hiring (HR, Super Admin, assigned reviewers; one EXISTS query for the others).
+                'hiring' => $user !== null && app(HiringAccess::class)->canEnter($user),
+                'role_dashboards' => $user !== null && (bool) config('features.role_dashboards') && app(RoleDashboardAccess::class)->hasAny($user, $position?->dashboard_role),
+            ],
+            // Obrolan (F2-1): channels with unread messages (Dock tile / Menu badge). Closure: skipped on
+            // partial reloads. Not named `chat`: that is the page prop of /obrolan.
+            'chatUnread' => fn (): ?int => $user !== null && (bool) config('features.chat')
+                ? app(ChatInbox::class)->unreadChannels($user)
+                : null,
             // Local demo only: personas of the account switcher at the top of the shell.
             'demoSwitcher' => fn (): ?array => $user !== null ? DemoAccounts::switcherProps($user->email) : null,
         ];

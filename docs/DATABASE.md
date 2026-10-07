@@ -18,14 +18,17 @@
 
 | Domain | Tabel |
 |---|---|
-| Organisasi & akses | `companies`, `divisions`, `teams`, `positions`, `users`, `employee_profiles`, `roles`*, `permissions`*, `model_has_roles`*, `audit_logs` |
+| Organisasi & akses | `companies`, `divisions`, `teams`, `positions`, `users`, `employee_profiles`, `roles`*, `permissions`*, `model_has_roles`*, `audit_logs`, `password_reset_requests` |
 | Absensi | `office_locations`, `shifts`, `shift_assignments`, `holidays`, `attendance_days`, `attendance_logs`, `qr_tokens`, `kiosks`, `attendance_consents` |
 | Pengajuan | `leave_types`, `leave_balances`, `leave_balance_adjustments`, `requests`, `request_sequences`, `request_approvals`, `approval_flows`, `approval_flow_steps`, `approval_delegations` |
-| Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_directions`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `task_plans`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
+| Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_directions`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `task_plans`, `management_notes`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
+| Otomasi (F2-4) | `automation_rules`, `automation_runs`, `recurring_tasks`, `recurring_task_occurrences`, `task_templates`, `workspace_templates` |
+| Hiring (keputusan pemilik 6 Okt 2026) | `hiring_settings`, `hiring_positions`, `hiring_questions`, `candidates`, `candidate_checklist_items`, `interview_answers`, `interview_scores`, `candidate_notes`, `candidate_decisions` |
 | Google & file | `google_accounts`, `drive_files`, `attachments` |
 | Notifikasi | `notifications`*, `notification_preferences`, `notification_settings`, `notification_dispatch_logs` |
-| Fase 2 | `channels`, `channel_members`, `messages`, `notes`, `note_versions`, `calendar_events` |
-| Fase 3 | `devices`, `face_templates`, `objectives`, `key_results` |
+| Pengumuman | `announcements`, `announcement_dismissals` |
+| Fase 2 | `channels`, `channel_members`, `messages`, `notes`, `note_versions`, `note_shares`, `meetings`, `meeting_participants`, `meeting_minutes`, `meeting_minute_versions`, `meeting_action_items`, `calendar_events` |
+| Fase 3 | `devices`, `face_templates`, `objectives`, `key_results`, `key_result_checkins`, `key_result_tasks` (OKR sudah dimigrasi, F3-3) |
 
 \* tabel bawaan paket (spatie/laravel-permission, Laravel notifications).
 
@@ -64,6 +67,8 @@ Indeks unik parsial `teams_division_code_unique (division_id, code) WHERE code I
 ### positions
 `id`, `company_id`, `name` (mis. "Staf Keuangan"), `level` smallint (1 = Direksi … 5 = Staf).
 
+Tambahan Dashboard per jabatan (F3, migrasi `2026_10_11_500000_add_dashboard_role_to_positions`, `docs/fitur/dashboard-peran.md`): `dashboard_role` varchar(20) null — dashboard jabatan SPKD pemegang jabatan ini (`dirut` · `direktur` · `hr` · `corsec` · `marketing` · `programming` · `implementer` · `analis`, CHECK `positions_dashboard_role_check`; enum `App\Domain\RoleDashboards\Enums\DashboardRole`). Diisi HR di Admin › Organisasi › Jabatan; tidak unik (Kepala Divisi dan staf boleh berbagi). Null = tanpa dashboard jabatan. Akses `/peran/{kunci}`: pemegang jabatan dengan kunci itu, plus Direksi & Super Admin untuk semua kunci (Gate `viewRoleDashboard`). Tanpa tabel baru: dashboard memakai data portofolio, persetujuan, tugas, dan absensi yang sudah ada.
+
 ### users
 | Kolom | Tipe | Keterangan |
 |---|---|---|
@@ -71,7 +76,8 @@ Indeks unik parsial `teams_division_code_unique (division_id, code) WHERE code I
 | company_id | FK | |
 | name | varchar(150) | |
 | email | varchar(190) unique | email Google Workspace |
-| password | varchar null | hanya Super Admin darurat |
+| password | varchar null | kata sandi login semua karyawan (keputusan pemilik 6 Okt 2026); null = belum diatur (HR mengatur atau karyawan memakai "Lupa kata sandi") |
+| password_change_required | bool | default false; true = HR mengatur sandi sementara dan karyawan wajib menggantinya sebelum memakai aplikasi |
 | two_factor_secret | text null encrypted | |
 | google_id | varchar null unique | `sub` dari Google |
 | avatar_url | varchar null | |
@@ -89,6 +95,8 @@ Indeks unik parsial `teams_division_code_unique (division_id, code) WHERE code I
 Indeks: `(company_id, status)`, `(division_id)`, `(manager_id)`, `(team_id)`, `(position_id)`.
 
 Implementasi (Sprint 1): kolom organisasi ditambahkan lewat migrasi `2026_10_05_000500_add_organization_columns_to_users_table` (bukan menulis ulang migrasi Sprint 0). `password` nullable. `two_factor_recovery_codes` & `two_factor_confirmed_at` (Fortify) dan `email_verified_at`, `remember_token` tetap ada. `work_mode` default `office`, `status` default `active`, `joined_at` nullable. FK `division_id`/`team_id`/`position_id`/`manager_id` = `nullOnDelete`.
+
+Tambahan akun & kata sandi (6 Okt 2026, migrasi `2026_10_12_100100_add_password_change_required_to_users`): `password_change_required` boolean default false. Diisi `SetEmployeePassword` (opsi HR), dikosongkan saat karyawan mengganti sandinya sendiri atau lewat "Lupa kata sandi". Perubahan sandi memakai `saveQuietly()` + baris audit eksplisit (`user.password_changed`, `user.password_set_by_hr`, `user.password_reset_completed`; tidak pernah berisi nilai sandi), bukan `user.updated`.
 
 Tambahan perbaikan review Sprint 3–9 (#11): `deactivated_at` timestamptz null (migrasi `2026_10_07_300100_add_deactivated_at_to_users`), diisi `DeactivateEmployee` (nilai pertama dipertahankan saat berpindah inactive ↔ resigned), dikosongkan `ReactivateEmployee`; backfill dari audit `user.deactivated` terakhir, fallback `updated_at`. Rekap bulanan/ekspor payroll hanya menghitung tanggal `joined_at` … tanggal kantor `deactivated_at` (inklusif).
 
@@ -113,12 +121,14 @@ Permission dasar (guard `web`; sumber kebenaran `App\Domain\Organization\Enums\R
 | `attendance.export` — ekspor rekap | ✓ | | ✓ | | |
 | `requests.view_all` — semua pengajuan | ✓ | ✓ | ✓ | | |
 | `requests.manage_flows` — alur approval & jenis cuti | ✓ | | ✓ | | |
-| `workspaces.view_all` — lihat workspace non-pribadi | | ✓ | | | |
+| `workspaces.view_all` — lihat workspace non-pribadi (baca saja bila bukan anggota; keputusan pemilik 6 Okt 2026) | | ✓ | ✓ | | |
 | `workspaces.manage` — kelola workspace non-pribadi | ✓ | | | | |
 | `dashboard.view_company` — dashboard seluruh perusahaan | ✓ | ✓ | ✓ | | |
 | `portfolio.view` — portofolio proyek (M10) | ✓ | ✓ | | | |
 
 Tidak ada `Gate::before` untuk Super Admin: workspace pribadi & selfie tetap tertutup baginya.
+
+**Mode lihat saja (keputusan pemilik 6 Okt 2026):** Direksi, HR (`workspaces.view_all`) dan Super Admin (`workspaces.manage`) melihat semua workspace tim/divisi/proyek, tetapi bila bukan anggota hanya membaca (`WorkspacePolicy::isViewOnly`): tidak membuat/mengubah/memindah tugas, tidak berkomentar/bereaksi/mengamati, tidak melampirkan file. Aksi pengarah proyek Direksi (Minta update, Beri arahan, Tandai keputusan selesai; PRD M10) tetap ada; pengaturan workspace oleh Super Admin (`workspaces.manage`) tetap ada.
 
 ### audit_logs
 | Kolom | Tipe | Keterangan |
@@ -133,6 +143,28 @@ Tidak ada `Gate::before` untuk Super Admin: workspace pribadi & selfie tetap ter
 | created_at | timestamptz | append-only, tanpa update (model menolak update) |
 
 Indeks: `(auditable_type, auditable_id)`, `(action)`, `(created_at)`, `(user_id, created_at)`. `auditable_type` berisi nama kelas model (tanpa morph map).
+
+### password_reset_requests (akun & kata sandi, 6 Okt 2026)
+"Lupa kata sandi" dengan persetujuan HR (migrasi `2026_10_12_100200_create_password_reset_requests_table`, model `PasswordResetRequest`, Policy `PasswordResetRequestPolicy`).
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | ulid PK | |
+| company_id | FK companies null | nullOnDelete |
+| user_id | FK users null | karyawan; nullOnDelete. Baris **hanya** dibuat untuk karyawan aktif — email tak dikenal/nonaktif tidak menulis apa pun (halaman tunggu dari sesi saja) |
+| email | varchar(190) | email akun (huruf kecil) |
+| request_token_hash | char(64) unik | SHA-256 token permintaan acak; token asli hanya di sesi peramban peminta |
+| setup_token_hash | char(64) null unik | SHA-256 setup token sekali pakai, diterbitkan ke sesi yang sama setelah disetujui; dikosongkan saat dipakai/kedaluwarsa/dibatalkan |
+| status | varchar(10) | `pending` · `approved` · `rejected` · `used` · `expired` · `canceled` (CHECK). `canceled` = digantikan permintaan baru atau dijawab HR lewat "Atur kata sandi" |
+| decided_by | FK users null | HR/Super Admin yang memutus; nullOnDelete |
+| decided_at | timestamptz null | awal jendela 30 menit untuk membuat sandi baru |
+| reject_reason | varchar(500) null | wajib saat `rejected` (CHECK); ditampilkan di halaman tunggu |
+| expires_at | timestamptz | dibuat + 24 jam (batas keputusan HR) |
+| ip | inet null | |
+| user_agent | varchar(512) null | |
+| created_at / updated_at | timestamptz | |
+
+Indeks: `(company_id, status)`, `(user_id, status)`, unik parsial `password_reset_requests_one_pending (user_id) WHERE status = 'pending'` (satu permintaan menunggu per karyawan; `RequestPasswordReset` membatalkan yang lama di bawah row lock `users`). Visibilitas (`visibleTo`): `employees.manage` di perusahaan yang sama, bukan permintaan sendiri, permintaan Super Admin hanya untuk Super Admin lain. Job `ExpirePasswordResetRequests` (tiap jam) menandai `expired` (pending > 24 jam, approved > 30 menit tanpa sandi baru) dan menghapus baris tertutup > 90 hari. Fortify `password_reset_tokens` tidak dipakai lagi (fitur `resetPasswords` dimatikan).
 
 ---
 
@@ -258,8 +290,9 @@ Implementasi (Sprint 2): versi dari `config('attendance.consent.version')` (`ATT
 > Diimplementasikan Sprint 4 (`docs/sprints/sprint-4/SUMMARY.md`). Model: `LeaveType`, `LeaveBalance`, `EmployeeRequest` (tabel `requests`), `ApprovalFlow`, `ApprovalFlowStep`, `RequestApproval`, `ApprovalDelegation`.
 
 ### leave_types
-`id`, `company_id`, `code`, `name`, `category` (`leave` · `permit` · `sick` · `overtime` · `correction` · `business_trip`), `annual_quota_days` numeric(5,1) null, `requires_attachment_after_days` smallint null (0 = selalu wajib), `is_paid`, `allow_half_day`, `carry_over_max_days` numeric(5,1) null, `approval_flow_id` FK null (null = alur "Default" perusahaan).
+`id`, `company_id`, `code`, `name`, `category` (`leave` · `permit` · `sick` · `overtime` · `correction` · `business_trip` · `procurement`), `annual_quota_days` numeric(5,1) null, `requires_attachment_after_days` smallint null (0 = selalu wajib), `is_paid`, `allow_half_day`, `carry_over_max_days` numeric(5,1) null, `approval_flow_id` FK null (null = alur "Default" perusahaan).
 Tambahan Sprint 4: `description` null, `max_backdate_days` null (koreksi absensi "maks. 7 hari lalu"), `min_service_months` null (cuti besar "Belum berhak"), `is_active`, `sort_order`, `deleted_at`.
+Tambahan keputusan pemilik 6 Okt 2026 (migrasi `2026_10_12_200100_add_locked_reason_to_leave_types`): `locked_reason` varchar(200) null — terisi = **jenis terkunci** (tampil bergembok, tidak bisa dibuat/disimpan sebagai draf/dikirim; pengajuan yang sudah ada tidak berubah). Migrasi mengunci semua jenis kategori `leave` dan `overtime` dengan alasan "Dikunci sampai SOP cuti/lembur ditetapkan."; HR membuka/mengunci di Admin › Jenis pengajuan. Kategori `procurement` (Pengajuan barang, kode bawaan `BRG`, alur bawaan "Pengajuan barang" = atasan langsung → peran `direksi`): periode = tanggal kirim, tanpa `days`/`minutes`, tanpa saldo, tumpang tindih, atau efek absensi.
 `code` = 2–10 huruf besar/angka (CHECK), **juga prefiks nomor** (`CUT`, `CBR`, `SKT`, `IZN`, `LBR`, `KOR`, `DNS`, `CML`, `CAP`, `CLT`). Unik `(company_id, code)` termasuk yang terhapus.
 Tambahan Fitur pengajuan (`docs/sprints/FITUR-PENGAJUAN.md`): `counts_calendar_days` bool default false (durasi dihitung hari kalender, mis. Cuti melahirkan; hari kerja tetap dipakai untuk efek absensi), `max_days_per_request` numeric(5,1) null (CHECK > 0; maks. per pengajuan, mis. 90 hari kalender melahirkan, 3 hari alasan penting), `is_provisional_default` bool default false (**"Bawaan sementara"**: jenis bawaan seeder yang belum ditinjau HR; otomatis false saat HR menyimpan jenis atau menetapkan alurnya; seeder tidak pernah menimpa jenis yang sudah ada). Cuti di luar tanggungan = `is_paid` false tanpa `annual_quota_days` (tidak memotong saldo).
 
@@ -282,7 +315,7 @@ Tambahan Fitur pengajuan: `opening_days` numeric(5,1) default 0 (**saldo awal**,
 | days | numeric(5,1) null | hari kerja terhitung (jadwal shift, tanpa libur); 0,5 = setengah hari |
 | minutes | int null | lembur / izin per jam |
 | reason | text | |
-| payload | jsonb | per jenis: `half_day`, `mode` (izin `hours`/`days`), `date`/`start_time`/`end_time` (lembur, izin jam), `check_in`/`check_out` (koreksi), `destination` (dinas) |
+| payload | jsonb | per jenis: `half_day`, `mode` (izin `hours`/`days`), `date`/`start_time`/`end_time` (lembur, izin jam), `check_in`/`check_out` (koreksi), `destination` (dinas), pengajuan barang: `item_name`, `quantity` (int ≥ 1), `unit`, `unit_price` (Rp, int ≥ 0), `total` (= quantity × unit_price), `reference_url` (http/https, null), `urgency` (`biasa` · `mendesak`) |
 | substitute_id | FK users null | **tambahan**: pengganti selama cuti |
 | status | varchar | `draft` · `pending` · `approved` · `rejected` · `revision_requested` · `canceled` |
 | round | smallint | **tambahan**: putaran; +1 setiap dikirim ulang setelah revisi |
@@ -415,6 +448,26 @@ Rencana **pribadi** seorang pengguna atas sebuah tugas di Beranda ("Ruang saya":
 
 Unik `(user_id, task_id)`, indeks `(user_id, bucket, position)` dan `(task_id)`. **Privat**: hanya pemilik yang membaca/mengubah (`TaskPlanPolicy`, juga tidak untuk Direksi/HR/Super Admin); daftar selalu `TaskPlan::ownedBy($user)`. Merencanakan butuh `TaskPolicy::plan` (tugas terlihat, workspace tidak diarsipkan, dan ditugaskan kepada pengguna **atau** berada di workspace pribadinya). Tugas tanpa baris (atau `bucket` null) ditempatkan otomatis tanpa menulis baris: lewat tenggat/hari ini → Hari ini, sampai Minggu ISO berjalan → Minggu ini, selain itu/tanpa tenggat → Nanti. "Tugas baru" = tugas terbuka yang ditugaskan orang lain (`task_assignees.assigned_by` ≠ pengguna) dalam 14 hari terakhir dan belum punya `seen_at` (`App\Domain\Planner\Queries\PersonalPlanner`).
 
+### daily_reports & daily_report_items (Laporan progres harian, Okt 2026)
+Laporan progres kerja harian karyawan (Beranda staf) yang dibaca atasan langsung dan monitoring kerja Direksi.
+
+`daily_reports`: `id` ulid, `company_id` FK restrict, `user_id` FK cascade, `report_date` date (tanggal kantor), `summary` text null, `blockers` text null (hambatan), `notes` text null (catatan/notulensi bebas), `submitted_at` timestamptz null (null = draf), timestamps. Unik `(user_id, report_date)`, indeks `(company_id, report_date)`.
+
+`daily_report_items`: `id` ulid, `daily_report_id` FK cascade, `task_id` FK null (nullOnDelete; null = pekerjaan di luar tugas), `task_key` varchar(30) null + `task_title` varchar(255) null (salinan saat lapor agar riwayat tetap terbaca), `progress_note` text, `status_category_after` varchar(20) null (CHECK kategori status; kategori tugas setelah laporan bila dipindah), `percent` smallint null (CHECK 0–100), `hours` numeric(5,2) null (CHECK > 0 dan ≤ 24), `position` smallint, timestamps. Indeks `(daily_report_id, position)`, `(task_id)`.
+
+Tambahan (keputusan pemilik 6 Okt 2026, migrasi `2026_10_12_200200_add_move_status_to_daily_report_items`): `daily_report_items.move_status_id` FK `task_statuses` null (nullOnDelete) = kolom "pindahkan ke …" yang dipilih di draf; diterapkan lewat `MoveTask` (Policy tugas `move`) saat laporan dikirim, lalu `status_category_after` diisi kategori kolom itu. Item diganti utuh setiap simpan (`SaveDailyReport`); laporan hanya bisa ditulis untuk tanggal kantor hari ini (sampai 23.59), `submitted_at` = kirim pertama. Pengingat `report.reminder` 16.30 WIB hari kerja (de-dup `notification_dispatch_logs`, subjek = user, cycle = tanggal). Query bersama `App\Domain\Reports\Queries\DailyReportFeed::forDate(company, date, viewer)`.
+
+Akses: pemilik (tulis selama hari itu), atasan langsung & Kepala Divisi divisinya (baca), Direksi/HR/Super Admin (baca, monitoring). Tidak pernah memakai `visibleTo` workspace untuk ringkasan, tetapi judul tugas hanya ditampilkan ke pembaca yang bisa melihat tugas itu; selain itu memakai salinan `task_key` saja.
+
+### management_notes (Catatan tindakan Direksi/manajemen, keputusan pemilik 6 Okt 2026)
+Daftar hal yang perlu dilakukan Direktur/manajemen, **pribadi** per orang; tampil di Dashboard Direksi dan `/manajemen`. Migrasi `2026_10_12_400100_create_management_notes_table`.
+
+`id` ulid, `company_id` FK restrict, `user_id` FK cascade (pemilik), `body` varchar(500) (CHECK tidak kosong), `due_on` date null (tenggat, tanggal kantor), `done_at` timestamptz null (selesai), `position` varchar(100) `COLLATE "C"` (lexorank catatan terbuka; catatan baru di atas, dibuka lagi → paling bawah; diseimbangkan ulang bila kunci memanjang), timestamps. Indeks `(user_id, done_at)`, `(user_id, position)`. Maks. 200 catatan per orang.
+
+Akses (`ManagementNotePolicy`): membuat = pengguna aktif ber-`dashboard.view_company` (Direksi, HR, Super Admin); membaca/mengubah/menghapus = **hanya pemilik** (orang lain, termasuk Super Admin, mendapat 404). Daftar selalu `ManagementNote::ownedBy($user)`. Tidak diaudit (catatan pribadi, bukan data sensitif).
+
+Monitoring kerja (Dashboard Direksi, panel "Laporan tim hari ini" Kepala Divisi) membaca `daily_reports`/`daily_report_items` lewat `app/Domain/Monitoring/Queries/*` tanpa tabel baru: terjadwal = hari kerja menurut jadwal shift (`ScheduleResolver`), sudah lapor = `submitted_at` terisi, draf = belum dikirim, belum lapor = terjadwal tanpa laporan. Detail laporan (`GET /monitoring/laporan/{id}`, Gate `monitorDailyReport`): penulis, Direksi/HR/Super Admin perusahaan, atasan langsung, Kepala Divisi penulis; draf tidak pernah tampil. Judul tugas hanya untuk pembaca yang bisa melihat tugasnya (selain itu salinan `task_key` saja).
+
 ### comments
 `id`, `commentable_type`/`commentable_id` (morph: task, catatan F2), `user_id`, `body` jsonb, `body_text` text, `edited_at` null, soft delete.
 
@@ -437,6 +490,116 @@ Implementasi (Sprint 6): `emoji` varchar(16) dari daftar tetap `Reaction::EMOJI`
 `id`, `user_id`, `workspace_id` null (null = lintas workspace, mis. "Tugas saya"), `name`, `layout` (`board` · `list` · `calendar`), `filters` jsonb, `sort` jsonb, `is_shared`.
 
 Implementasi (Sprint 6): `name` varchar(60), CHECK `layout`, `filters` default `{}` dengan bentuk `{assignees[], priorities[], labels[], due, q}` (sama dengan filter query string; `assignees` boleh berisi `me` = penonton), `sort` null, timestamps, indeks `(workspace_id, is_shared)` & `(user_id, workspace_id)`. Pribadi hanya pemilik; dibagikan terlihat oleh semua yang bisa melihat workspace; membagikan butuh hak ubah tugas.
+
+### Otomasi (F2-4, Fase 2)
+
+Migrasi `2026_10_11_300100_create_automation_tables` (bisa di-rollback). Model `AutomationRule`, `AutomationRun`, `RecurringTask`, `TaskTemplate`, `WorkspaceTemplate`; logika di `app/Domain/Automation`. Di balik `FEATURE_AUTOMATION`.
+
+#### automation_rules — aturan "jika … maka …" per workspace
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | ulid PK | |
+| company_id | FK companies | restrict |
+| workspace_id | FK workspaces | cascade |
+| name | varchar(80) | |
+| trigger_type | varchar(30) | denormalisasi `trigger->type` (CHECK `task_moved` · `task_overdue` · `task_created_with_label`) untuk mencari aturan lewat indeks |
+| trigger | jsonb | `{type: task_moved, category}` · `{type: task_overdue}` · `{type: task_created_with_label, label_id}` — **kategori** kolom, bukan nama |
+| condition | jsonb null | `{type: priority, priority 1–4}` · `{type: assignee, user_id}` |
+| actions | jsonb | 1–3 aksi (CHECK): `{type: notify, target: {kind: user, id} \| {kind: role, role: kepala_divisi\|hr\|direksi\|anggota} \| {kind: assignees} \| {kind: watchers}}` · `{type: assign, user_id}` · `{type: add_label, label_id}` · `{type: move_status, category}`. Tanpa aksi WhatsApp (ditahan) |
+| is_active | bool | default true; dijeda = tidak berjalan |
+| run_count / last_run_at | int / timestamptz null | dihitung dari setiap run yang dicatat |
+| created_by | FK users null | nullOnDelete; aksi dijalankan sebagai pembuat (atau owner workspace bila pembuat kehilangan akses) |
+
+Indeks `(workspace_id, trigger_type, is_active)`, `(trigger_type, is_active)`. Penjaga loop: validasi `move_status` ≠ kategori pemicu, satu aturan tidak berjalan dua kali dalam satu rantai, rantai berhenti setelah 3 aturan (`AutomationContext`).
+
+#### automation_runs — log eksekusi (append-only)
+`id` ulid, `rule_id` FK cascade, `task_id` FK tasks null (nullOnDelete), `task_key` varchar(20) + `task_title` varchar(255) (salinan agar log tetap terbaca), `result` (`success` · `failed` · `skipped`, CHECK), `detail` varchar(255), `depth` smallint (0 = dipicu orang/job), `cycle` varchar(40) null (kunci de-dup pemicu berulang: `overdue:<tenggat>`), `ran_at` timestamptz. Indeks `(rule_id, ran_at)`, `(ran_at)`, unik parsial `(rule_id, task_id, cycle) WHERE cycle IS NOT NULL` (aturan "lewat tenggat" sekali per tugas per tenggat). Kondisi "Dan" yang tidak terpenuhi tidak dicatat.
+
+#### recurring_tasks — tugas berulang
+`id`, `company_id`, `workspace_id` FK cascade, `title` varchar(255), `assignee_id` FK users null, `priority` smallint 0–4 (CHECK), `pattern` jsonb (`{kind: daily, weekdays_only}` · `{kind: weekly, weekdays[1–7]}` · `{kind: monthly, day_of_month 1–31}` (31 = akhir bulan) · `{kind: every_n_weeks, interval 1–12, weekdays}` dijangkar pada minggu `starts_on`), `starts_on` date, `ends_on` date null (CHECK ≥ starts_on), `is_active`, `created_count`, `last_created_on` date null, `created_by` FK users null, timestamps. Indeks `(is_active, starts_on)`, `(workspace_id)`. Jadwal dihitung `RecurrenceSchedule` (port `recurrence.ts`, diuji dengan fixture bersama `resources/js/features/automation/recurrence-cases.json`).
+
+#### recurring_task_occurrences
+`recurring_task_id` FK cascade + `occurs_on` date (PK gabungan), `task_id` FK tasks null, `created_at`. Diklaim lebih dulu oleh job 07.00 WIB (`CreateRecurringTasks`) sehingga satu tanggal hanya membuat satu tugas walau job berjalan dua kali. "Buat sekarang" tidak menulis baris di sini (tugas tambahan, di luar jadwal). Tugas terjadwal bertenggat pada tanggal jadwalnya.
+
+#### task_templates
+`id`, `company_id`, `workspace_id` FK null (cascade; **null = semua workspace** perusahaan), `name` varchar(80), `description` varchar(255) null, `title` varchar(255), `priority` smallint 0–4, `estimate_hours` numeric(6,2) null (CHECK 0,5–999), `checklist` jsonb (string), `labels` jsonb (`[{name, color}]`, dicocokkan dengan nama label di workspace tujuan; yang belum ada dibuat bila pemakai admin workspace, selain itu dilewati), `used_count`, `created_by`, timestamps. Indeks `(company_id, workspace_id)`.
+
+#### workspace_templates
+`id`, `company_id`, `name` varchar(80), `description` varchar(255) null, `type` (`team` · `project`, CHECK), `statuses` jsonb (`[{name, category, color}]` urut papan, minimal 1), `labels` jsonb (`[{name, color}]`), `used_count`, `source_workspace_id` FK workspaces null (nullOnDelete), `created_by`, timestamps. Dibuat dari Pengaturan workspace ("Simpan sebagai template"); "Pakai template" membuat workspace lewat `CreateWorkspace` lalu mengganti 5 kolom bawaan dengan kolom template. Key workspace divalidasi `^[A-Z][A-Z0-9]{1,9}$` dan unik termasuk `previous_keys`.
+
+Notifikasi: tipe `automation.notify` (event preferensi `automation.notify`, default in-app saja). Kinerja saya (`/kinerja`) tidak menambah tabel: memakai `MetricDefinitions` Analytics.
+
+---
+
+## 4b. Hiring (keputusan pemilik 6 Okt 2026)
+
+Ruang rekrutmen HR (`docs/fitur/hiring.md`), migrasi `2026_10_12_300100_create_hiring_tables`. Akses lewat Policy (HR & Super Admin penuh; pewawancara/penyetuju akhir lowongan sebagian; lainnya 404), daftar lewat `HiringPosition::visibleTo` / `Candidate::visibleTo`. Data pelamar = data pribadi: tidak ditulis ke log/audit (audit hanya id, tahap, jenis keputusan), tidak ada ekspor.
+
+### hiring_settings
+`id`, `company_id` FK **unik** (cascade), `default_final_approver_ids` jsonb default `[]` (id karyawan; disalin ke lowongan baru), `checklist_template` jsonb default `{}` — `{"hr":[{label,required}], "interviewer":[…], "approver":[…]}`; peran yang tidak ada memakai bawaan `ChecklistTemplate::defaults()`, daftar kosong = tanpa butir (maks. 12 per peran), timestamps.
+
+### hiring_positions
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | ulid PK | |
+| company_id | FK companies | restrict |
+| title | varchar(150) | |
+| division_id | FK divisions null | nullOnDelete |
+| description | text null | |
+| status | varchar(10) | `draft` · `open` · `closed` (CHECK). Draf & dibuka menerima webhook; ditutup → 410 |
+| opened_at / closed_at | timestamptz null | diisi saat pertama dibuka / saat ditutup (dikosongkan bila dibuka lagi) |
+| webhook_token | char(40) **unik** | bagian URL `/api/hiring/form/{token}` |
+| webhook_secret | text (cast `encrypted`) | kunci HMAC; hanya ditampilkan sekali saat dibuat ulang, disembunyikan dari serialisasi |
+| interviewer_ids | jsonb default `[]` | pewawancara ("tim luar"); indeks GIN `jsonb_path_ops` |
+| final_approver_ids | jsonb default `[]` | penyetuju akhir; indeks GIN `jsonb_path_ops` |
+| field_map | jsonb default `{}` | `{full_name, email, phone, cv_url}` → judul pertanyaan Form (kosong = tebakan bawaan `CandidateField::aliases()`) |
+| created_by | FK users null | nullOnDelete |
+| created_at / updated_at / deleted_at | timestamptz | soft delete (hanya lowongan tanpa kandidat) |
+
+Indeks `(company_id, status)`. Pewawancara/penyetuju hanya karyawan aktif satu perusahaan (`HiringAccess::activeEmployeeIds`).
+
+### hiring_questions
+`id`, `position_id` FK `hiring_positions` (cascade), `prompt` text, `guidance` text null (panduan pewawancara), `max_score` smallint default 5 (CHECK 1–10), `position` smallint (urutan), timestamps. Indeks `(position_id, position)`. Tidak bisa dihapus bila sudah dirujuk jawaban/poin (FK restrict + Policy); `max_score` tidak bisa diturunkan di bawah poin tertinggi yang sudah diberikan.
+
+### candidates
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | ulid PK | |
+| company_id | FK companies | restrict |
+| position_id | FK hiring_positions | restrict |
+| full_name | varchar(150) | "Pelamar tanpa nama" bila Form tidak memuatnya |
+| email | varchar(190) null | huruf kecil, hanya bila valid |
+| phone | varchar(40) null | |
+| cv_url | varchar(2000) null | hanya `http(s)`; dibuka di tab baru, file tidak disimpan |
+| attachments | jsonb default `[]` | `[{label, url}]` berkas unggahan Form (http/https saja) |
+| form_answers | jsonb default `[]` | `[{question, answer}]` semua jawaban Form (jawaban pilihan ganda digabung ", ") |
+| external_response_id | varchar(191) null | id respons Google Form; **unik parsial `(position_id, external_response_id)`** termasuk baris terhapus → webhook idempoten |
+| stage | varchar(20) | `applied` · `screening` · `interview` · `assessment` · `final_review` · `hired` · `rejected` (CHECK) |
+| rejected_reason | text null | |
+| source | varchar(20) | `google_form` · `manual` (CHECK) |
+| applied_at | timestamptz | `submitted_at` dari Form (masa depan → sekarang), atau waktu dibuat |
+| decided_at | timestamptz null | Diterima/Ditolak |
+| created_by | FK users null | kandidat manual |
+| created_at / updated_at / deleted_at | timestamptz | soft delete |
+
+Indeks `(company_id, stage)`, `(position_id, stage)`.
+
+### candidate_checklist_items
+`id`, `candidate_id` FK (cascade), `reviewer_id` FK users null (cascade; **null = butir HR**, dicentang HR mana pun), `role` varchar(12) `hr` · `interviewer` · `approver` (CHECK; `role = 'hr'` ⇔ `reviewer_id IS NULL`), `label` varchar(200), `is_required` bool default true, `position` smallint, `checked_at` timestamptz null, `checked_by` FK users null, `note` text null, `created_by` FK users null (butir tambahan HR), timestamps. Indeks `(candidate_id, reviewer_id)`. Dibuat dari templat saat kandidat dibuat (`CandidateChecklist::seed`); saat pewawancara/penyetuju lowongan berubah, kandidat yang masih berproses mendapat butir untuk pemeriksa baru dan kehilangan butir belum dicentang milik pemeriksa yang dikeluarkan. Syarat masuk Keputusan akhir: semua butir wajib HR dan pewawancara **aktif** sudah dicentang; penyetuju harus mencentang butir wajibnya sebelum menyetujui.
+
+### interview_answers
+`id`, `candidate_id` FK (cascade), `question_id` FK `hiring_questions` (restrict), `answer` text, `recorded_by` FK users null, timestamps. **Unik `(candidate_id, question_id)`**. Ditulis HR (simpan otomatis); jawaban kosong menghapus baris.
+
+### interview_scores
+`id`, `candidate_id` FK (cascade), `question_id` FK (restrict), `interviewer_id` FK users (cascade), `score` smallint (CHECK 1–10; aplikasi membatasi 1..`max_score`), `note` text null, timestamps. **Unik `(candidate_id, question_id, interviewer_id)`**. Hanya pewawancara lowongan menulis barisnya sendiri; pewawancara hanya melihat poinnya, HR & penyetuju akhir melihat semua.
+
+### candidate_notes
+`id`, `candidate_id` FK (cascade), `author_id` FK users null (nullOnDelete), `body` text (teks polos, maks. 20.000), `edited_at` timestamptz null, timestamps. Indeks `(candidate_id, created_at)`. Notulensi; diubah/dihapus penulisnya saja.
+
+### candidate_decisions
+`id`, `candidate_id` FK (cascade), `approver_id` FK users (cascade), `decision` varchar(10) `approve` · `reject` (CHECK), `note` text null (wajib bila menolak), `decided_at` timestamptz, timestamps. **Unik `(candidate_id, approver_id)`**. Hasil otomatis (`DecideCandidate`, row lock pada kandidat): satu tolak → `rejected`; semua penyetuju akhir **aktif** setuju → `hired`. Dihapus saat kandidat dipindah keluar dari Keputusan akhir atau dibuka kembali.
+
+Notifikasi baru: `hiring.candidate_received`, `hiring.decision_needed` (Perlu tindakan), `hiring.candidate_decided`; baris preferensi `hiring.activity` (bawaan in-app nyala, email mati).
 
 ---
 
@@ -489,26 +652,97 @@ Indeks: `(workspace_id, parent_google_id)`, `(workspace_id, kind)`.
   | created_at / updated_at | timestamptz | |
 
   Indeks: `(notifiable_type, notifiable_id)`, `(notifiable_id, created_at)`, `(subject_type, subject_id)`, indeks parsial `notifications_unread_index (notifiable_id) WHERE read_at IS NULL AND archived_at IS NULL` untuk hitungan lonceng. Retensi 30 hari (`notifications:prune`), kecuali yang masih perlu tindakan. Model baca: `App\Models\InboxNotification`.
-- `notification_preferences`: `id` ulid, `user_id`, `event` (`task.assigned`, `mention`, `task.commented`, `task.due_soon`, `task.overdue`, `request.pending`, `request.decided`, `attendance.check_in_reminder`, `attendance.check_out_reminder`, `system`, `digest.daily`), `channel` (`in_app` · `email` · `whatsapp`), `enabled`, timestamps. Unik `(user_id, event, channel)`. Baris tidak ada = pakai default di `config/notifications.php`. Daftar kejadian = enum `NotificationEvent`.
+- `notification_preferences`: `id` ulid, `user_id`, `event` (`task.assigned`, `mention`, `task.commented`, `task.due_soon`, `task.overdue`, `request.pending`, `request.decided`, `attendance.check_in_reminder`, `attendance.check_out_reminder`, `project.activity`, `report.reminder` (laporan harian 16.30), `okr.activity`, `automation.notify`, `meeting`, `account.security` (6 Okt 2026: permintaan reset sandi ke HR & "sandi diatur HR"; in-app + email terkunci), `system`, `digest.daily`), `channel` (`in_app` · `email` · `whatsapp`), `enabled`, timestamps. Unik `(user_id, event, channel)`. Baris tidak ada = pakai default di `config/notifications.php`. Daftar kejadian = enum `NotificationEvent`.
 - `notification_settings` (Sprint 8, 1:1 dengan `users`): `user_id` PK/FK, `digest_time` time (jam kirim ringkasan harian, zona kantor, default `07:30`), `quiet_hours` bool (default `true`: email di luar 07.00–17.30 & akhir pekan ditunda), `pause_while_on_leave` bool (tahan notifikasi saat cuti), `digest_last_run_on` date (idempotensi ringkasan harian), timestamps.
 - `notification_dispatch_logs` (review fix 3-9 #8): `id` ulid, `type` varchar(80) (`NotificationType`), `subject_type`/`subject_id` (ulid morph), `user_id` FK cascade, `cycle` varchar(40) (mis. tanggal tenggat), `created_at`. Unik `(type, subject_type, subject_id, user_id, cycle)`. Klaim atomik (`INSERT … ON CONFLICT DO NOTHING`) sebelum pengingat terjadwal dikirim (H-1, lewat tenggat) agar de-dup tidak bergantung pada kanal (penerima email-saja tidak lagi dapat email harian). Baris dihapus saat pengingat diselesaikan (`ResolveNotificationsForSubject`, `ResolveOverdueNotices`) dan saat subjeknya hilang (`notifications:prune`). Diakses lewat `App\Domain\Notifications\Services\NotificationDispatchLog` (tanpa model Eloquent).
 
 ---
 
-## 7. Fase 2 (disiapkan, belum dimigrasi di Fase 1)
+### announcements & announcement_dismissals (Pengumuman, keputusan pemilik 6 Okt 2026)
+Migrasi `2026_10_12_200300_create_announcements_tables`.
 
-- `channels`: `id`, `workspace_id` null, `type` (`workspace` · `public` · `private` · `dm` · `group`), `name`, `topic`, `created_by`, `archived_at`.
-- `channel_members`: `channel_id`, `user_id`, `last_read_message_id`, `muted`, `role`.
-- `messages`: `id`, `channel_id`, `user_id`, `parent_id` (thread), `body` jsonb, `body_text`, `edited_at`, soft delete. Indeks `(channel_id, id)`.
-- `notes`: `id`, `workspace_id`, `parent_id`, `title`, `yjs_state` bytea, `content` jsonb (snapshot untuk render & cari), `created_by`, `updated_by`.
-- `note_versions`: `id`, `note_id`, `yjs_state` bytea, `created_by`, `created_at`.
+`announcements`: `id` ulid, `company_id` FK restrict, `author_id` FK users null (nullOnDelete), `title` varchar(160), `body` text, `audience` varchar(20) (`all` · `division` · `team`, CHECK), `target_ids` jsonb default `[]` (id divisi/tim; `[]` untuk `all`; indeks GIN), `published_at` timestamptz, `expires_at` timestamptz null (CHECK > `published_at`; "tampil sampai" = akhir hari kantor), timestamps, `deleted_at` (soft delete oleh pembuat = hilang dari semua dashboard). Indeks `(company_id, published_at)`. Penerima: semua karyawan aktif perusahaan (`all`), anggota divisi target **beserta sub-divisinya** (`division`), atau anggota tim target (`team`). Penulis: Direksi/HR/Super Admin (semua, divisi, atau tim mana pun), Kepala Divisi (divisi yang dipimpin), Ketua Tim (`teams.lead_user_id`, timnya). Diterbitkan → notifikasi `system.announcement` ke penerima kecuali pembuat (job `SendAnnouncementNotifications`, per 200); audit `announcement.published` / `announcement.deleted`.
+
+`announcement_dismissals`: `announcement_id` FK cascade, `user_id` FK cascade (PK gabungan), `dismissed_at` timestamptz. Spanduk ditutup di dashboard orang itu; notifikasi Inbox tidak berubah.
+
+## 7. Fase 2 (sebagian sudah dimigrasi)
+
+**Obrolan (F2-1) — diimplementasikan** (migrasi `2026_10_10_100100_create_chat_tables`, tugas #1 `docs/PEMBAGIAN-TUGAS.md`):
+
+- `channels`: `id` ulid, **`company_id`** FK (restrict), `workspace_id` FK null (cascade), `type` (`workspace` · `public` · `private` · `dm` · `group`, CHECK), `name` varchar(80) (null **tepat** untuk dm/group, CHECK), `topic` varchar(250) null, **`direct_key`** char(64) null (SHA-256 id anggota terurut; terisi tepat untuk dm/group, CHECK; unik parsial `(company_id, direct_key)` → membuka orang yang sama memakai ulang percakapan), `created_by` FK users null (nullOnDelete), `archived_at`, timestamps. CHECK `(type = 'workspace') = (workspace_id IS NOT NULL)`; unik parsial `(workspace_id) WHERE type = 'workspace'` (satu channel otomatis per workspace non-pribadi, anggotanya disinkronkan dari `workspace_members`). Indeks `(company_id, type)`.
+- `channel_members`: PK `(channel_id, user_id)` (cascade keduanya), `role` (`owner` · `admin` · `member`, CHECK, default `member`), `muted` bool, `last_read_message_id` ulid null (tanpa FK; ULID urut waktu → belum dibaca = pesan induk orang lain dengan id lebih besar), `joined_at`, timestamps. Indeks `(user_id)`.
+- `messages`: `id` ulid (urutan timeline), `channel_id` FK cascade, `user_id` FK null (nullOnDelete), `parent_id` FK `messages` null (cascade; thread), `body` jsonb null (Tiptap tersanitasi, null setelah dihapus), `body_text` text default `''`, `edited_at`, timestamps, soft delete (pesan dihapus tetap di timeline "Pesan ini dihapus", balasan thread tetap), `search_vector` tsvector GENERATED STORED (`simple`, dari `body_text`) + GIN. Indeks `(channel_id, id)`, `(parent_id, id)`.
+- Reaksi, mention, dan lampiran Drive memakai tabel morph yang sudah ada (`reactions`, `mentions`, `attachments`, `attachable_type` = `App\Models\Message`). Lampiran di DM/grup hanya file Drive yang workspace-nya terlihat oleh setiap anggota channel.
+- Visibilitas (`Channel::visibleTo`, `ChannelPolicy`): workspace → mengikuti `Workspace::visibleTo`; publik → karyawan satu perusahaan; privat/dm/group → **hanya anggota** (Super Admin, HR, Direksi pun tidak).
+**Catatan bersama (F2-2) — diimplementasikan** (migrasi `2026_10_11_200100_create_notes_tables`, `docs/fitur/catatan.md`):
+
+- `notes`: `id` ulid, **`company_id`** FK (restrict), `workspace_id` FK (cascade), `parent_id` FK `notes` null (**nullOnDelete**; CHECK `parent_id <> id`), **`kind`** varchar(10) (`note` · `folder`, CHECK, default `note`; jenis lain seperti sematan gambar/berkas ditambah lewat CHECK ini di fase berikutnya), `title` varchar(200), **`access`** varchar(12) (`workspace` · `restricted`, CHECK, default `workspace`), `yjs_state` bytea null (state Yjs dari server kolaborasi, **tidak pernah** dikirim ke browser; null = dibangun ulang dari `content` saat dokumen dibuka), `content` jsonb null (snapshot ProseMirror tersanitasi `RichText::sanitize`), `content_text` text default `''`, `created_by`/`updated_by` FK users null (nullOnDelete), `position` varchar(100) `COLLATE "C"` (lexorank di antara saudara), timestamps, soft delete, `search_vector` tsvector GENERATED STORED (`simple`: `title` bobot A + `content_text` bobot B) + GIN. CHECK `kind = 'note' OR (yjs_state IS NULL AND content IS NULL)` (folder tanpa isi). Indeks `(workspace_id, parent_id, position)`, `(company_id, updated_at)`, `(created_by)`. Aturan pohon (`CreateNote`, `MoveNote`): folder hanya di akar atau di dalam folder; catatan di bawah folder atau catatan (sub-halaman); tidak boleh siklus (dicek di bawah kunci workspace). Menghapus memindah anak ke induk yang dihapus.
+  Tambahan Notulensi (keputusan pemilik 6 Okt 2026, migrasi `2026_10_12_500100_add_preset_to_notes`): **`preset`** varchar(20) null (CHECK `preset IS NULL OR preset IN ('minutes')`; enum `NotePreset`) = templat asal catatan; `minutes` = "Notulensi cepat" dari dashboard (`StartQuickMinutes`: workspace pribadi, judul `Notulensi · Selasa, 06/10/2026 14.05` waktu kantor, templat Peserta/Agenda/Pembahasan/Keputusan/Tindak lanjut). Indeks parsial `(created_by, created_at) WHERE preset IS NOT NULL AND deleted_at IS NULL`. **Tab dokumen** = catatan anak (tab) dan cucu (sub-tab) memakai `parent_id` yang sama, tanpa kolom baru. `content` catatan boleh memuat mark **`textColor`** dan **`highlight`** dengan `attrs.color` = nama palet (`PaletteColor`); hanya catatan (`RichText::sanitize(..., colors: true)` lewat `NoteContent`), tugas & komentar tetap membuangnya.
+- `note_versions`: `id` ulid, `note_id` FK cascade, `yjs_state` bytea null, `content` jsonb null, `title` varchar(200), `label` varchar(120) null (mis. "Dipulihkan dari versi 5 Okt 2026 10.12"), `created_by` FK users null, `created_at` (waktu state itu tercapai). Hanya ditambah: `StoreNoteState` menyimpan state **sebelumnya** bila versi terakhir > 5 menit; `RestoreNoteVersion` menyimpan state sekarang lalu versi berlabel. Indeks `(note_id, created_at)`.
+- `note_shares`: `id` ulid, `note_id` FK cascade, `user_id` FK cascade, `role` (`edit` · `view`, CHECK), timestamps. Unik `(note_id, user_id)`, indeks `(user_id)`. Peran undangan mengalahkan peran workspace untuk catatan itu; diubah lewat `UpdateNoteShare` (audit `note.share_updated`).
+- Visibilitas (`Note::visibleTo`, `NotePolicy`): workspace pribadi → hanya pemilik (tanpa berbagi); diundang (`note_shares`) → sesuai peran; `access = workspace` → semua yang melihat workspace (`Workspace::visibleTo`; menyunting = peran workspace owner/admin/member); `access = restricted` → hanya penulis + undangan (Direksi/HR/Super Admin **tidak** otomatis). Workspace diarsipkan → baca saja. Mention (`mentions`, morph `App\Models\Note`) hanya untuk orang yang bisa membuka catatan.
 - `calendar_events`: `id`, `google_event_id`, `calendar_id`, `source_type`/`source_id` (task, request), `user_id`, `meet_link` null, `synced_at`.
+
+**Rapat, notulen & kalender (F2-3) — diimplementasikan** (migrasi `2026_10_11_100100_create_meetings_tables`, `docs/fitur/rapat-kalender.md`, flag `FEATURE_MEETINGS`):
+
+- `meetings`: satu baris per rapat **atau seri**. `id` ulid, `company_id` FK (restrict), `workspace_id` FK null (nullOnDelete; target "Jadikan tugas"), `title` varchar(160), `description` text null, `starts_at`/`ends_at` timestamptz (kemunculan pertama, UTC; CHECK `ends_at > starts_at`), `platform` varchar(10) CHECK `meet|zoom|room|client`, `location` varchar(200) null (ruangan/alamat; hanya room/client), `join_url` varchar(500) null (tautan Meet/Zoom **ditempel penyelenggara**, https), `organizer_id` FK users (restrict), `minute_taker_id` FK users null (nullOnDelete), `agenda` jsonb (daftar judul butir, default `[]`), `recurrence` varchar(12) CHECK `none|weekdays|weekly|mon_wed_fri` (default `none`), `recurrence_until` date null (tanggal kantor terakhir seri, inklusif; null = tanpa akhir), `reminders` smallint[] default `{15,5}` (menit sebelum mulai; CHECK ⊆ `{0,5,10,15,30,60}`), `leadership` bool (rapat pimpinan → `/manajemen/jadwal`), `canceled_at` timestamptz null (rapat/seri dibatalkan, tetap bisa dibaca), timestamps, soft delete. Indeks `(company_id, starts_at)`, `(organizer_id, starts_at)`, `(minute_taker_id)`, parsial `(company_id, starts_at) WHERE leadership AND deleted_at IS NULL`.
+  Seri **dikembangkan saat dibaca** (`App\Domain\Meetings\Services\MeetingOccurrences`): jam & durasi kemunculan pertama (waktu kantor) diulang pada hari ISO yang cocok (`weekdays` Sen–Jum, `weekly` hari yang sama, `mon_wed_fri`) sampai `recurrence_until`. Tidak ada baris per kemunculan; RSVP dan pembatalan berlaku untuk seluruh seri.
+- `meeting_participants`: `id` ulid, `meeting_id` FK cascade, `user_id` FK null (cascade) **atau** `email` varchar(190) null (tamu eksternal, huruf kecil; CHECK tepat satu terisi), `rsvp` varchar(10) CHECK `pending|yes|maybe|no` (default `pending`), `optional` bool, `responded_at` null, timestamps. Unik parsial `(meeting_id, user_id) WHERE user_id IS NOT NULL` dan `(meeting_id, email) WHERE email IS NOT NULL`; indeks `(user_id)`. Penyelenggara selalu peserta `yes`; notulis ikut diundang. Tamu belum menerima email (undangan kalender Google ditahan) dan tidak pernah melihat apa pun di aplikasi.
+- `meeting_minutes`: notulen **per kemunculan**. `id` ulid, `meeting_id` FK cascade, `occurrence_date` date (tanggal kantor kemunculan; = tanggal rapat bila tidak berulang), `status` CHECK `draft|final`, `attendance` jsonb `[{user_id, present, reason?}]`, `sections` jsonb `[{title, body}]` (catatan per butir agenda), `decisions` jsonb `[string]`, `version` int (jumlah baris versi), `updated_by` FK null, `finalized_at` + `finalized_by` FK null (CHECK `(status = 'final') = (finalized_at IS NOT NULL)`), timestamps. Unik `(meeting_id, occurrence_date)`. Dibuat saat pertama disimpan (draf kosong = agenda → seksi kosong, kehadiran = peserta internal yang tidak menolak). Sengaja bukan tabel `notes` (milik Catatan bersama).
+- `meeting_minute_versions`: `id` ulid, `minutes_id` FK cascade, `content` jsonb (snapshot `{attendance, sections, decisions}`), `created_by` FK null, timestamps. `SaveMinutes`: simpan yang mengubah isi menambah versi, kecuali versi terakhir milik penulis yang sama dan berumur < 5 menit (versi itu diperbarui) → maksimal satu versi per orang per 5 menit; `FinalizeMinutes` selalu menambah versi. Indeks `(minutes_id, created_at)`.
+- `meeting_action_items`: tindak lanjut. `id` ulid, `minutes_id` FK cascade, `position` smallint, `text` varchar(300), `assignee_id` FK users null (nullOnDelete), `due_date` date null, `task_id` FK tasks null (nullOnDelete; diisi "Jadikan tugas" lewat `CreateTask`, idempoten dengan row lock), `done_at` null, timestamps. Selesai = `done_at` terisi atau tugasnya berkategori `done`. Indeks `(minutes_id, position)`, `(assignee_id, done_at)`, `(task_id)`.
+- Akses (`Meeting::visibleTo` = `MeetingPolicy::canView`): penyelenggara, notulis, peserta internal (akun aktif, perusahaan sama); rapat `leadership` juga pemegang `dashboard.view_company` (Direksi, HR, Super Admin) — baca saja. Tidak terlihat = 404. Ubah/batal & buka kembali notulen final = penyelenggara; tulis/finalkan notulen, jadikan tugas, ingatkan PIC = notulis atau penyelenggara; centang tindak lanjut = penanggung jawabnya juga. Finalisasi & buka kembali dicatat di `audit_logs` (`meeting.minutes_finalized`, `meeting.minutes_reopened`).
+- Notifikasi: `meeting.invited` (undangan; juga jadwal berubah/dibatalkan), `meeting.starting` (job tiap menit, klaim `notification_dispatch_logs` per peserta + kemunculan + menit), `minutes.finalized`, `action_item.due` (H-1 & lewat tenggat harian 07.05, "Ingatkan PIC" maks. sekali sehari; "Perlu tindakan" sampai dicentang/jadi tugas). Semua di bawah event preferensi `meeting` (default in-app + email).
 
 ## 8. Fase 3
 
 - `devices`: `id`, `user_id`, `platform`, `device_id_hash`, `push_token`, `integrity_verdict` jsonb, `last_seen_at`, `is_trusted`.
 - `face_templates`: `id`, `user_id`, `template` bytea (dienkripsi), `model_version`, `consent_id` FK attendance_consents, `created_at`. Dihapus otomatis bila persetujuan dicabut.
-- `objectives` / `key_results`: OKR per divisi per kuartal, `key_results` dapat ditautkan ke `tasks`.
+
+### OKR divisi (F3-3, sudah dimigrasi)
+
+Migrasi `2026_10_11_400100_create_okr_tables`, di balik flag `FEATURE_OKR` (`config/features.php` `okr`). Model `Objective`, `KeyResult`, `KeyResultCheckin`; rumus di `app/Domain/Analytics/Okr` (`docs/fitur/okr.md`).
+
+#### objectives
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | ulid PK | |
+| company_id | FK companies | restrict |
+| division_id | FK divisions | restrict; divisi pemilik objective |
+| quarter | varchar(7) | `YYYY-Qn`, CHECK `quarter ~ '^[0-9]{4}-Q[1-4]$'`; kuartal kalender tanggal kantor |
+| title | varchar(200) | |
+| description | text null | |
+| owner_id | FK users | restrict; pemilik/PIC objective (karyawan aktif atau kepala divisi itu) |
+| status | varchar(10) | `draft` · `active` · `closed` (CHECK, default `active`); `closed` = hanya baca |
+| closed_at | timestamptz null | CHECK `(status = 'closed') = (closed_at IS NOT NULL)` |
+| created_at / updated_at / deleted_at | timestamptz | soft delete; `updated_at` disentuh setiap KR/check-in berubah |
+
+Indeks `(company_id, quarter)`, `(division_id, quarter)`. Visibilitas (`Objective::visibleTo` = `ObjectivePolicy::view`): pemegang `dashboard.view_company` (Direksi, HR, Super Admin), karyawan divisi itu, Kepala Divisi (`ledDivisionIds`, termasuk sub-divisi), pemilik objective, dan pemilik salah satu KR-nya. Buat/ubah/tutup: Kepala Divisi divisi itu dan Direksi.
+
+#### key_results
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | ulid PK | |
+| objective_id | FK objectives | cascade |
+| title | varchar(160) | |
+| unit | varchar(10) | `number` · `percent` · `currency` · `days` (CHECK) |
+| unit_label | varchar(20) | default `''`; hanya untuk `number` ("skenario", "bug") |
+| start_value / target_value / current_value | numeric(14,2) | CHECK `target_value <> start_value`; target boleh lebih kecil dari awal ("makin kecil makin baik") |
+| weight | numeric(5,2) | default 1, CHECK `0 < weight <= 100` (form: bilangan bulat 1–100) |
+| owner_id | FK users | restrict |
+| position | smallint | urutan dalam objective (ditambah di akhir, row lock objective) |
+| created_at / updated_at | timestamptz | |
+
+Indeks `(objective_id, position)`, `(owner_id)`. Tambah/hapus KR: pemilik objective dan Kepala Divisi; ubah, check-in, tautkan tugas: pemilik KR, pemilik objective, Kepala Divisi. Objective `closed` menolak semuanya (403).
+
+#### key_result_checkins (append-only)
+`id` ulid, `key_result_id` FK cascade, `value` numeric(14,2), `confidence` smallint null (CHECK 1–10), `note` text null, `author_id` FK users null (nullOnDelete), `checked_on` date (tanggal kantor), `created_at`. Indeks `(key_result_id, checked_on)`. Model menolak update. `RecordKeyResultCheckin` menulis baris ini dan `key_results.current_value` dalam satu transaksi (row lock KR).
+
+#### key_result_tasks
+`key_result_id` FK cascade, `task_id` FK tasks cascade (PK gabungan = unik), `linked_by` FK users null, `created_at`. Indeks `(task_id)`. Hanya tugas yang terlihat oleh penaut **dan** berada di workspace divisi objective (workspace divisi, workspace tim divisi itu, atau proyek dengan `division_id` = divisi utama; bukan pribadi/diarsipkan) — `LinkableTasks`. Detail objective hanya menampilkan tugas tertaut yang terlihat oleh penonton.
+
+Notifikasi: `okr.checkin_reminder` (Jumat 15.00 WIB, satu per pemilik KR per minggu bila belum ada check-in sejak Senin, de-dup `notification_dispatch_logs` dengan cycle = tanggal Senin) dan `okr.objective_at_risk` (status objective aktif memburuk; ke pemilik objective + Kepala Divisi, bukan pelaku; sekali per tingkat status per kuartal, dilepas saat kembali sesuai jalur/ditutup). Baris preferensi `okr.activity`.
+
 
 ---
 
@@ -601,6 +835,8 @@ GROUP BY w.id;
 
 Implementasi (Sprint 9, `app/Domain/Analytics/MetricDefinitions/*`, satu kelas per metrik): tanggal selesai dibandingkan dengan tenggat dalam **tanggal kantor** (`(completed_at AT TIME ZONE 'Asia/Jakarta')::date <= due_date`); pembilang kedisiplinan hadir juga dibatasi pada hari bershift (tidak pernah > 100%); tingkat penyelesaian tidak menghitung tugas `canceled`; tugas diatribusikan ke orang lewat `task_assignees` (satu tugas dihitung sekali per cakupan) dan hanya dari workspace yang terlihat oleh penonton (`Workspace::visibleTo`), workspace pribadi hanya di Dashboard Saya. Tidak ada tabel/kolom baru: dashboard memakai indeks yang ada (`tasks (workspace_id, status_category)`, `tasks (due_date) WHERE open`, `attendance_days (user_id, work_date)`). Dengan 50 karyawan × 6 bulan (±6.100 hari absensi, ±3.900 tugas) satu blok metrik dihitung < 100 ms dan di-cache 5 menit per penonton + filter.
 
-Dashboard Manajemen (`/manajemen`, `Queries/ManagementDashboard`): **tingkat kehadiran** (`AttendanceRate`) = hari-orang hadir (`present`, `late`, `early_leave`, `wfh`, atau `needs_correction` dengan check-in — aturan "Hadir" rekap bulanan) ÷ hari-orang terjadwal (definisi hari terjadwal sama dengan kedisiplinan hadir). "Tugas selesai dari rencana" = pembilang/penyebut tingkat penyelesaian (tugas bertenggat dalam periode). Mingguan = Senin–Jumat minggu kerja terakhir yang sudah lewat; bulanan = 4 minggu kerja tersebut, dijumlah per minggu sehingga kolom grafik = angka KPI. Tanpa tabel baru.
+Dashboard Manajemen (`/manajemen`, `Queries/ManagementDashboard`): **tingkat kehadiran** (`AttendanceRate`) = hari-orang hadir (`present`, `late`, `early_leave`, `wfh`, atau `needs_correction` dengan check-in — aturan "Hadir" rekap bulanan) ÷ hari-orang terjadwal (definisi hari terjadwal sama dengan kedisiplinan hadir). "Tugas selesai dari rencana" = pembilang/penyebut tingkat penyelesaian (tugas bertenggat dalam periode). Mingguan = Senin–Jumat minggu kerja terakhir yang sudah lewat; bulanan = 4 minggu kerja tersebut, dijumlah per minggu sehingga kolom grafik = angka KPI. Tanpa tabel baru. **Beban kerja** (keputusan pemilik 6 Okt 2026) = metrik `Workload` (tugas terbuka per orang, snapshot hari ini) dijumlah per divisi.
+
+Absensi › Kedisiplinan (`/absensi/kedisiplinan`, `Queries/AttendanceDisciplineReport`): rekap `HrDashboard::recap` (kedisiplinan hadir, rata-rata terlambat, hari alpha, hari terlambat, tren 8 minggu) + `CompletionRate` dan `LeadTimeMedian` untuk orang dalam cakupan absensi penonton (`AttendanceDay::visibleUserIds`) + tabel per orang (satu query berkelompok). Tanpa tabel baru.
 
 Untuk puluhan pengguna, query langsung sudah cukup cepat. Bila data tumbuh, tambahkan tabel ringkasan harian `daily_metrics` yang diisi job malam.

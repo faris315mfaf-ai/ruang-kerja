@@ -15,6 +15,7 @@ use App\Models\User;
  * - Only a Super Admin may edit a Super Admin or grant/revoke super_admin, direksi
  *   or hr; HR may grant/revoke kepala_divisi and anggota. Nobody changes their own roles.
  * - Employees are never hard-deleted: deactivate instead.
+ * - Everyone changes their own password; HR/Super Admin set others' (setPassword).
  */
 class UserPolicy
 {
@@ -86,11 +87,30 @@ class UserPolicy
     }
 
     /**
-     * Own password / two-factor settings (settings/security, Fortify 2FA routes).
-     * Only Super Admins have password sign-in; everyone else uses Google.
+     * Own password (Pengaturan › Keamanan): every employee signs in with a
+     * password (owner decision 6 Oct 2026), so everyone manages their own.
      */
     public function manageCredentials(User $actor, User $target): bool
     {
+        return $actor->is($target) && $actor->isActive();
+    }
+
+    /**
+     * Own two-factor settings (Fortify 2FA routes, password confirmation):
+     * TOTP is required for — and only offered to — Super Admins.
+     */
+    public function manageTwoFactor(User $actor, User $target): bool
+    {
         return $actor->is($target) && $actor->isSuperAdmin();
+    }
+
+    /**
+     * HR sets another employee's password (Admin › Karyawan › Atur kata sandi).
+     * Never one's own (that is Pengaturan › Keamanan, with the current password);
+     * a Super Admin's password only by another Super Admin.
+     */
+    public function setPassword(User $actor, User $target): bool
+    {
+        return ! $actor->is($target) && $this->update($actor, $target);
     }
 }

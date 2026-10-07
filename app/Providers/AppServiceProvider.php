@@ -52,14 +52,12 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
-        Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
-                ->mixedCase()
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
-            : null,
+        // Every employee signs in with a password (owner decision 6 Oct 2026):
+        // at least 8 characters; production also rejects known-breached passwords.
+        // "Not the email address" is added by App\Concerns\PasswordValidationRules.
+        Password::defaults(fn (): Password => app()->isProduction()
+            ? Password::min(8)->uncompromised()
+            : Password::min(8),
         );
     }
 
@@ -103,6 +101,10 @@ class AppServiceProvider extends ServiceProvider
         // Task comments (post/edit): generous for humans, stops scripted floods of mention notifications.
         RateLimiter::for('comments', fn (Request $request): Limit => Limit::perMinute(30)
             ->by('comments|'.$this->userOrIpKey($request)));
+
+        // Obrolan (F2-1): sending, editing and reacting to messages.
+        RateLimiter::for('messages', fn (Request $request): Limit => Limit::perMinute(60)
+            ->by('messages|'.$this->userOrIpKey($request)));
 
         // Opening chunked Drive upload sessions (each reserves disk space until finished).
         // The upload client shows `message` as is: Indonesian instead of "Too Many Attempts.".

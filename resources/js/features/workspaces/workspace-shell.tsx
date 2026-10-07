@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { Archive, Plus } from 'lucide-react';
+import { Archive, Eye, Plus } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import {
     activity,
     documents,
     files,
+    notes,
     settings,
     show,
 } from '@/routes/workspaces';
@@ -34,6 +35,8 @@ const TABS: { tab: WorkspaceTab; label: string }[] = [
     { tab: 'tasks', label: 'Tugas' },
     { tab: 'documents', label: 'Dokumen' },
     { tab: 'files', label: 'File' },
+    // Catatan bersama (F2-2): only while FEATURE_NOTES is on.
+    { tab: 'notes', label: 'Catatan' },
     { tab: 'activity', label: 'Aktivitas' },
     { tab: 'settings', label: 'Pengaturan' },
 ];
@@ -44,6 +47,8 @@ function tabHref(tab: WorkspaceTab, key: string): string {
             return documents.url(key);
         case 'files':
             return files.url(key);
+        case 'notes':
+            return notes.url(key);
         case 'activity':
             return activity.url(key);
         case 'settings':
@@ -81,6 +86,7 @@ function tabCount(
  */
 export function WorkspaceShell({
     workspace,
+    can,
     members,
     drive_counts,
     tab,
@@ -90,11 +96,13 @@ export function WorkspaceShell({
     tabsAside,
 }: Props) {
     const breakpoint = useBreakpoint();
-    const { auth } = usePage().props;
+    const { auth, features } = usePage().props;
     const mobile = breakpoint === 'mobile';
     const title = workspace.type === 'personal' ? 'Pribadi' : workspace.name;
     const tabs = TABS.filter(
-        (item) => item.tab !== 'summary' || workspace.type === 'project',
+        (item) =>
+            (item.tab !== 'summary' || workspace.type === 'project') &&
+            (item.tab !== 'notes' || features?.notes === true),
     ).map((item) => ({
         href: tabHref(item.tab, workspace.key),
         label: item.label,
@@ -168,6 +176,20 @@ export function WorkspaceShell({
                 >
                     <Archive className="size-5" aria-hidden />
                     Workspace ini diarsipkan dan hanya bisa dibaca.
+                </div>
+            )}
+
+            {!workspace.archived && can.view_only && (
+                <div
+                    role="status"
+                    className="flex items-start gap-2.5 rounded-lg border border-info/30 bg-info-soft px-4 py-3 text-label font-medium text-info"
+                >
+                    <Eye className="mt-0.5 size-5 shrink-0" aria-hidden />
+                    <span>
+                        Mode lihat saja: Anda bukan anggota workspace ini, jadi
+                        tugas, komentar, file, dan pengaturan tidak dapat
+                        diubah.
+                    </span>
                 </div>
             )}
 

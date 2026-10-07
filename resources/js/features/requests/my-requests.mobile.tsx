@@ -129,7 +129,7 @@ export function MyRequestsMobile({
                 <EmptyState
                     icon={FileText}
                     title="Belum ada pengajuan"
-                    description="Ketuk Ajukan untuk mengajukan cuti, izin, sakit, atau lembur."
+                    description="Ketuk Ajukan untuk mengajukan izin, sakit, koreksi, atau barang."
                 />
             ) : (
                 <ul className="flex flex-col gap-2.5">

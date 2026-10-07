@@ -1,4 +1,5 @@
 import type { DriveAccessMember } from '@/features/drive/types';
+import type { WorkspaceGroupKey } from '@/features/workspaces/groups';
 import type {
     Label,
     TaskStatus,
@@ -10,6 +11,8 @@ import type {
 /** Shared Inertia prop `workspaces` (sidebar + mobile Menu). */
 export type SidebarWorkspace = WorkspaceRef & {
     favorite: boolean;
+    /** Pribadi · Divisi & tim · Proyek (SidebarWorkspaces, keputusan pemilik 6 Okt 2026). */
+    group?: WorkspaceGroupKey;
 };
 
 export type WorkspaceDetail = WorkspaceRef & {
@@ -28,6 +31,11 @@ export type WorkspaceAbilities = {
     manage_members: boolean;
     archive: boolean;
     favorite: boolean;
+    /**
+     * Direksi / HR / Super Admin looking at a workspace they are not a member
+     * of: everything is read-only (keputusan pemilik 6 Okt 2026).
+     */
+    view_only: boolean;
 };
 
 /** Props every workspace tab receives (WorkspacePage::props). */
@@ -44,6 +52,7 @@ export type WorkspaceTab =
     | 'tasks'
     | 'documents'
     | 'files'
+    | 'notes'
     | 'activity'
     | 'settings';
 

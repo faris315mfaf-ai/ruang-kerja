@@ -1,8 +1,9 @@
 /**
- * SPKD role dashboards (design RoleDesk / RolePhone + Peran*, PeranM*, P*).
- * One data-driven template: every role is a {@link RoleDashboard} config.
- * When the backend lands, a controller sends the same shape as page props.
+ * Dashboard per jabatan (F3, /peran/{role}; design RoleDesk / RolePhone).
+ * One data-driven template filled by App\Domain\RoleDashboards\Queries\RoleDashboardPresenter.
+ * Values are raw (numbers, ISO dates) and formatted with lib/format.ts.
  */
+import type { RequestDetail, RequestItem } from '@/types/requests';
 
 export const ROLE_KEYS = [
     'dirut',
@@ -24,192 +25,159 @@ export type KpiTone = 'highlight' | 'warm' | 'plain';
 
 export type RoleKpi = {
     label: string;
-    value: string;
+    /** null = not measurable yet (no data). */
+    value: number | null;
+    /** "25 / 47": shown as a suffix when set. */
+    total: number | null;
+    unit: 'count' | 'percent';
     note: string;
     tone: KpiTone;
 };
 
-/** Row of the main list ("Butuh keputusan Anda", "Tiket klien"). */
+/** Row of the main list ("Butuh keputusan Anda", "Tugas terlambat"). */
 export type RoleRow = {
-    /** Short code shown in the leading tile ("DEP", "P1", "LBR"). */
+    id: string;
+    /** Short code in the leading tile ("DEP", "CUT"). */
     tag: string;
     title: string;
     meta: string;
     badge: string;
     tone: Tone;
+    /** Link of the row (task, project), when it has no flow. */
+    href: string | null;
+    /** The row opens the job's task flow for this item. */
+    flow: boolean;
+    /** Date appended to the meta: relative ("2 hari lalu") or a date. */
+    at: { value: string; style: 'relative' | 'date' } | null;
 };
 
-/** Horizontal bar ("Portofolio proyek", "Kapasitas divisi"). */
+/** Horizontal bar ("Portofolio proyek", "Beban kerja tim"). */
 export type RoleBar = {
+    id: string;
     name: string;
     sub: string;
     /** 0–100. */
     value: number;
-    /** Planned position 0–100, null when the bar has no plan marker. */
+    /** Planned position 0–100, null without a plan marker. */
     plan: number | null;
     note: string;
     tone: Exclude<Tone, 'info'>;
+    href: string | null;
 };
 
-export type MeetingPlace = 'Meet' | 'Zoom' | 'Ruang' | 'Klien' | 'Tenggat';
+export type ScheduleKind = 'task' | 'milestone' | 'leave';
 
 export type RoleScheduleItem = {
-    time: string;
-    day: string;
+    id: string;
+    /** "Y-m-d" (office date). */
+    date: string;
     title: string;
-    place: MeetingPlace;
+    kind: ScheduleKind;
     meta: string;
+    href: string | null;
 };
 
-/** Primary interactive flow of a role (one P* screen each). */
-export type RoleFlowKey =
-    | 'decision'
-    | 'approvals'
-    | 'leave-review'
-    | 'disposition'
-    | 'material-review'
-    | 'bug-progress'
-    | 'ticket-update'
-    | 'uat-run';
+export type RoleLink = { label: string; href: string };
+
+/** Primary/secondary action: a link, or (flow = true) the job's task flow. */
+export type RoleAction = { label: string; href: string | null; flow: boolean };
+
+export type RoleFlowKey = 'decision' | 'approvals' | 'leave-review';
+
+export type RoleSideItem = { title: string; meta: string; href: string | null };
 
 export type RoleDashboard = {
-    key: RoleKey;
-    /** Picker label ("Direktur Utama"). */
+    role: RoleKey;
+    /** Job label ("Direktur Utama"). */
     label: string;
-    /** Short picker label for phones ("Dirut"). */
-    shortLabel: string;
-    person: string;
+    /** The viewer's own position name. */
+    position: string | null;
+    /** Division / unit on screen ("Direksi", "Programming"). */
     unit: string;
-    title: string;
-    greeting: string;
-    /** Phone greeting ("Pagi, Pak Hendra"). */
-    greetingShort: string;
     subtitle: string;
-    /** Attendance chip in the menu bar ("Masuk 07.55"). */
-    status: string;
-    primaryAction: string;
-    secondaryAction: string;
-    flow: RoleFlowKey;
-    /** Index of the list row that opens the flow (same item), if any. */
-    flowRow?: number;
+    flow: RoleFlowKey | null;
+    primary: RoleAction | null;
+    secondary: RoleAction | null;
     kpis: RoleKpi[];
-    list: { title: string; link: string; rows: RoleRow[] };
-    bars: { title: string; note: string; items: RoleBar[] };
-    schedule: RoleScheduleItem[];
+    list: {
+        title: string;
+        link: RoleAction | null;
+        empty: string;
+        rows: RoleRow[];
+    };
+    bars: { title: string; note: string; empty: string; items: RoleBar[] };
+    schedule: {
+        title: string;
+        link: RoleAction | null;
+        empty: string;
+        items: RoleScheduleItem[];
+    };
     side: {
         title: string;
         warm: boolean;
-        items: { title: string; meta: string }[];
+        empty: string;
+        items: RoleSideItem[];
     };
-    phone: {
-        hero: { label: string; value: string; note: string };
-        tiles: { label: string; value: string; note: string; tone: Tone }[];
-        /** [primary flow label, secondary label]. */
-        actions: [string, string];
-        listTitle: string;
-        rows: RoleRow[];
-        next: RoleScheduleItem;
+    /** The job's design flow that waits for a new module ("Ditahan"). */
+    held: { title: string; description: string } | null;
+};
+
+export type RoleOption = { value: RoleKey; label: string; short: string };
+
+export type DivisionOption = { value: string; label: string };
+
+// ---- Flow data (live closure `flow`) ----
+
+export type DecisionItem = {
+    id: string;
+    project: {
+        key: string;
+        name: string;
+        url: string;
+        health: 'on_track' | 'at_risk' | 'off_track' | null;
+        health_label: string | null;
+        actual: number | null;
+        planned: number | null;
+        target_date: string | null;
     };
+    decision: string;
+    summary: string;
+    blockers: string | null;
+    author: { id: string; name: string; avatar: string | null } | null;
+    created_at: string;
+    can_resolve: boolean;
 };
 
-// ---- Flow data (P* screens) ----
-
-export type DecisionOption = { id: string; title: string; detail: string };
-
-export type DecisionFlow = {
-    position: string;
-    title: string;
-    requester: string;
-    submitted: string;
-    actual: number;
-    planned: number;
-    context: string;
-    options: DecisionOption[];
-};
-
-export type ApprovalItem = {
-    id: string;
-    tag: string;
-    title: string;
-    meta: string;
-    tone: Tone;
-};
-
-export type LeaveCheck = { title: string; meta: string; ok: boolean };
-
-export type LeaveReviewFlow = {
-    employee: string;
-    role: string;
-    month: string;
-    /** ISO dates (Mon–Sun weeks) shown in the mini calendar. */
-    days: string[];
-    leaveDays: string[];
-    highlight: string;
-    range: string;
-    checks: LeaveCheck[];
-};
-
-export type DispositionFlow = {
-    number: string;
-    title: string;
-    received: string;
-    deadline: string;
-    recipients: string[];
-    instructions: string[];
-    defaultRecipients: number[];
-    defaultInstructions: number[];
-    note: string;
-};
-
-export type ReviewComment = {
-    id: string;
-    text: string;
-    author: string;
-    /** Pin position over the preview, % of width/height. */
-    x: number;
-    y: number;
-};
-
-export type MaterialReviewFlow = {
-    title: string;
-    version: string;
-    eyebrow: string;
-    headline: string;
-    comments: ReviewComment[];
-};
-
-export type BugStep = { title: string; meta: string };
-
-export type BugFlow = {
-    key: string;
-    severity: string;
-    title: string;
-    steps: BugStep[];
-    buttons: string[];
-    footers: string[];
-    start: number;
-    facts: { label: string; value: string; danger?: boolean }[];
-};
-
-export type TicketFlow = {
-    priority: string;
-    number: string;
-    title: string;
-    meta: string;
-    statuses: string[];
-    start: number;
-    photos: string[];
-    log: { time: string; text: string }[];
-};
-
-export type UatScenario = { title: string; steps: string[]; expected: string };
-
-export type UatFlow = {
-    title: string;
-    meta: string;
+export type DecisionFlowData = {
+    kind: 'decision';
     total: number;
-    passed: number;
-    failed: number;
-    target: number;
-    scenarios: UatScenario[];
+    items: DecisionItem[];
+};
+
+export type ApprovalsFlowData = {
+    kind: 'approvals';
+    total: number;
+    items: RequestItem[];
+};
+
+export type LeaveReviewFlowData = {
+    kind: 'leave-review';
+    total: number;
+    selected: RequestDetail | null;
+    items: RequestItem[];
+};
+
+export type RoleFlowData =
+    | DecisionFlowData
+    | ApprovalsFlowData
+    | LeaveReviewFlowData;
+
+export type RoleDashboardPageProps = {
+    role: RoleKey;
+    roles: RoleOption[];
+    divisions: DivisionOption[];
+    division: string | null;
+    /** Deferred: undefined while loading. */
+    dashboard?: RoleDashboard;
+    flow: RoleFlowData | null;
 };

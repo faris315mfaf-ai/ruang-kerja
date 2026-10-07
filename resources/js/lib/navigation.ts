@@ -2,10 +2,13 @@ import type { LucideIcon } from 'lucide-react';
 import {
     BarChart3,
     BookOpen,
+    BriefcaseBusiness,
     Calendar,
+    CalendarClock,
     Building2,
     ClipboardCheck,
     CircleCheck,
+    ClipboardPen,
     Clock,
     FlaskConical,
     FolderKanban,
@@ -13,14 +16,21 @@ import {
     Home,
     Inbox,
     MapPin,
+    Megaphone,
+    MessagesSquare,
     ListChecks,
     Menu,
     Network,
+    NotebookPen,
     ScrollText,
     SquareCheckBig,
+    Target,
+    UserRoundSearch,
     Users,
     WalletCards,
+    Workflow,
 } from 'lucide-react';
+import { isStaffOnly } from '@/features/staff/roles';
 import type { RoleName } from '@/lib/roles';
 import { hasAnyRole } from '@/lib/roles';
 
@@ -31,7 +41,7 @@ export type AppNavItem = {
     /** Match nested routes too (e.g. /pengajuan/123). */
     matchPrefix?: boolean;
     /** Shared-prop counter shown as a badge. */
-    badge?: 'approvals';
+    badge?: 'approvals' | 'chat';
     /** Hidden from the mobile Menu tab (docs/PLATFORM.md §3, "—" on mobile). */
     desktopOnly?: boolean;
 };
@@ -54,6 +64,13 @@ export const mainNavItems: AppNavItem[] = [
         icon: SquareCheckBig,
         matchPrefix: true,
     },
+    // Laporan progres harian (keputusan pemilik 6 Okt 2026).
+    {
+        title: 'Laporan harian',
+        href: '/laporan',
+        icon: ClipboardPen,
+        matchPrefix: true,
+    },
     { title: 'Absensi', href: '/absensi', icon: MapPin, matchPrefix: true },
     {
         title: 'Pengajuan',
@@ -70,7 +87,11 @@ export const mainNavItems: AppNavItem[] = [
     },
 ];
 
-/** Org chart: every role (mobile Menu row, first entry of the Dock "Organisasi" stack). */
+/**
+ * Org chart (mobile Menu row, first entry of the Dock "Organisasi" stack):
+ * every role except staff (keputusan pemilik 6 Okt 2026; the route is a 404
+ * for them, DivisionPolicy::viewChart).
+ */
 export const orgChartNavItem: AppNavItem = {
     title: 'Struktur organisasi',
     href: '/organisasi/struktur',
@@ -85,7 +106,7 @@ export const orgChartNavItem: AppNavItem = {
  * destination lives here only, never in {@link adminNavItems} as well.
  */
 export function organizationNavItems(roles: readonly string[]): AppNavItem[] {
-    const items: AppNavItem[] = [orgChartNavItem];
+    const items: AppNavItem[] = isStaffOnly(roles) ? [] : [orgChartNavItem];
 
     if (hasAnyRole(roles, 'super_admin', 'hr')) {
         items.push(
@@ -166,6 +187,110 @@ export function mainNavItemsFor(roles: readonly string[]): AppNavItem[] {
 }
 
 /**
+ * Pengumuman (/pengumuman, keputusan pemilik 6 Okt 2026): mobile Menu row and
+ * command palette; the dashboards show the latest ones as banners.
+ */
+export const announcementsNavItem: AppNavItem = {
+    title: 'Pengumuman',
+    href: '/pengumuman',
+    icon: Megaphone,
+    matchPrefix: true,
+};
+
+/**
+ * "Obrolan" (/obrolan, F2-1): shown while the `chat` feature flag is on
+ * (shared prop `features.chat`); badge = channels with unread messages.
+ */
+export const chatNavItem: AppNavItem = {
+    title: 'Obrolan',
+    href: '/obrolan',
+    icon: MessagesSquare,
+    matchPrefix: true,
+    badge: 'chat',
+};
+
+/**
+ * "Dashboard jabatan" (/peran, F3): the job dashboard of the user's position
+ * (Direksi & Super Admin: every job). Shown only when the shared prop
+ * `features.role_dashboards` is true (flag on AND the user has access).
+ */
+export const roleDashboardNavItem: AppNavItem = {
+    title: 'Dashboard jabatan',
+    href: '/peran',
+    icon: BriefcaseBusiness,
+    matchPrefix: true,
+};
+
+/**
+ * "Hiring" (/hiring): the recruitment space, shown as a special entry of the
+ * Workspace stack / mobile Menu for HR, Super Admin and the people assigned
+ * as interviewer or final approver (shared prop `features.hiring`).
+ */
+export const hiringNavItem: AppNavItem = {
+    title: 'Hiring',
+    href: '/hiring',
+    icon: UserRoundSearch,
+    matchPrefix: true,
+};
+
+/**
+ * "OKR" (/okr, F3-3): division objectives & key results, shown while the
+ * `okr` feature flag is on (shared prop `features.okr`). Every employee
+ * sees the OKR of their division.
+ */
+export const okrNavItem: AppNavItem = {
+    title: 'OKR',
+    href: '/okr',
+    icon: Target,
+    matchPrefix: true,
+};
+
+/**
+ * "Otomasi" (/otomasi, F2-4): rules, recurring tasks and templates, shown
+ * to every employee while the `automation` flag is on (shared prop
+ * `features.automation`). Everyone may add recurring tasks and use
+ * templates; rules are managed by workspace owners/admins (Policy).
+ */
+export const automationNavItem: AppNavItem = {
+    title: 'Otomasi',
+    href: '/otomasi',
+    icon: Workflow,
+    matchPrefix: true,
+};
+
+/** "Kinerja saya" (/kinerja, F2-4), behind the same flag. */
+export const performanceNavItem: AppNavItem = {
+    title: 'Kinerja saya',
+    href: '/kinerja',
+    icon: BarChart3,
+    matchPrefix: true,
+};
+
+/**
+ * "Catatan" (/catatan, F2-2): shared notes, shown while the `notes` feature
+ * flag is on (shared prop `features.notes`).
+ */
+export const notesNavItem: AppNavItem = {
+    title: 'Catatan',
+    href: '/catatan',
+    icon: NotebookPen,
+    matchPrefix: true,
+};
+
+/**
+ * "Rapat" (/rapat, F2-3): meetings, minutes & calendar, shown while the
+ * `meetings` feature flag is on (shared prop `features.meetings`). Also
+ * matches /kalender via the Rapat page links; the Menu row reads "Kalender &
+ * rapat".
+ */
+export const meetingsNavItem: AppNavItem = {
+    title: 'Rapat',
+    href: '/rapat',
+    icon: CalendarClock,
+    matchPrefix: true,
+};
+
+/**
  * "Pratinjau" (/pratinjau): Fase 2 & 3 front-end previews, shown only while
  * the `prototype` feature flag is on (shared prop `features.prototype`).
  */
@@ -176,23 +301,57 @@ export const prototypeNavItem: AppNavItem = {
     matchPrefix: true,
 };
 
-/** Mobile bottom tab bar: exactly five items (docs/PLATFORM.md §2). */
-export const tabNavItems: AppNavItem[] = [
-    { title: 'Beranda', href: '/dashboard', icon: Home, matchPrefix: true },
-    { title: 'Absen', href: '/absensi', icon: MapPin, matchPrefix: true },
-    { title: 'Tugas', href: '/tugas', icon: SquareCheckBig, matchPrefix: true },
-    { title: 'Inbox', href: '/inbox', icon: Inbox, matchPrefix: true },
-    { title: 'Menu', href: '/menu', icon: Menu },
-];
+export type TabNavItem = AppNavItem & {
+    /** Raised round action in the middle of the capsule (Absen). */
+    center?: boolean;
+};
+
+/**
+ * Mobile bottom tab bar, five items (docs/PLATFORM.md §2.1): Beranda ·
+ * Tugas · Absen (raised centre action) · Obrolan · Lainnya. Inbox lives
+ * behind the app bar bell; it takes the fourth slot back when Obrolan is
+ * switched off (FEATURE_CHAT).
+ */
+export function tabNavItems(chat: boolean): TabNavItem[] {
+    return [
+        { title: 'Beranda', href: '/dashboard', icon: Home, matchPrefix: true },
+        {
+            title: 'Tugas',
+            href: '/tugas',
+            icon: SquareCheckBig,
+            matchPrefix: true,
+        },
+        {
+            title: 'Absen',
+            href: '/absensi',
+            icon: MapPin,
+            matchPrefix: true,
+            center: true,
+        },
+        chat
+            ? chatNavItem
+            : {
+                  title: 'Inbox',
+                  href: '/inbox',
+                  icon: Inbox,
+                  matchPrefix: true,
+              },
+        { title: 'Lainnya', href: '/menu', icon: Menu },
+    ];
+}
 
 /** Index of the tab owning the current URL, or -1 (e.g. /persetujuan). */
-export function activeTabIndex(currentPath: string): number {
-    return tabNavItems.findIndex((item) => isActivePath(item, currentPath));
+export function activeTabIndex(currentPath: string, chat: boolean): number {
+    return tabNavItems(chat).findIndex((item) =>
+        isActivePath(item, currentPath),
+    );
 }
 
 /**
  * Team attendance (Sprint 3): live board for HR, Direksi, Super Admin and
- * Kepala Divisi; the monthly recap & export is desktop only.
+ * Kepala Divisi; the monthly recap & export is desktop only. Kedisiplinan
+ * (keputusan pemilik 6 Okt 2026) holds the discipline recap, completion and
+ * lead time that left the dashboards.
  */
 export function attendanceNavItems(roles: readonly string[]): AppNavItem[] {
     if (!hasAnyRole(roles, 'super_admin', 'hr', 'direksi', 'kepala_divisi')) {
@@ -210,6 +369,11 @@ export function attendanceNavItems(roles: readonly string[]): AppNavItem[] {
             href: '/absensi/rekap',
             icon: BarChart3,
             desktopOnly: true,
+        },
+        {
+            title: 'Kedisiplinan',
+            href: '/absensi/kedisiplinan',
+            icon: Gauge,
         },
     ];
 }

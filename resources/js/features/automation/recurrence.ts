@@ -180,6 +180,8 @@ export type RecurringForm = {
     title: string;
     workspace_id: string;
     assignee_id: string;
+    /** 0 tanpa · 1 urgent · 2 tinggi · 3 sedang · 4 rendah. */
+    priority: 0 | 1 | 2 | 3 | 4;
     pattern: RecurrencePattern;
     starts_on: string;
     ends_on: string;
@@ -187,7 +189,13 @@ export type RecurringForm = {
 
 export type RecurringErrors = Partial<
     Record<
-        'title' | 'workspace_id' | 'pattern' | 'starts_on' | 'ends_on',
+        | 'title'
+        | 'workspace_id'
+        | 'assignee_id'
+        | 'priority'
+        | 'pattern'
+        | 'starts_on'
+        | 'ends_on',
         string
     >
 >;

@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import type { ReactNode } from 'react';
 import { AppShellSkeleton } from '@/components/shell/app-shell-skeleton';
+import { MinutesReturnPill } from '@/features/notes/minutes-return-pill';
 import { NotificationListener } from '@/features/notifications/notification-listener';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import type { PageWidth } from '@/layouts/app/desktop-layout';
@@ -64,6 +65,8 @@ export default function AppLayout({
                 actions={appBarActions}
             >
                 <NotificationListener />
+                {/* "Kembali ke notulensi" while note-taking mode is on (Catatan). */}
+                <MinutesReturnPill />
                 {children}
             </MobileLayout>
         );
@@ -77,6 +80,7 @@ export default function AppLayout({
                 width={width}
             >
                 <NotificationListener />
+                <MinutesReturnPill />
                 {children}
             </DesktopLayout>
         </Suspense>

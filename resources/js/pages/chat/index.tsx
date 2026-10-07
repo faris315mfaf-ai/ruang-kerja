@@ -1,19 +1,24 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChatDesktop } from '@/features/chat/chat.desktop';
 import { ChatListMobile } from '@/features/chat/chat.mobile';
-import { usePreviewState } from '@/features/chat/preview-state';
-import { useChatState } from '@/features/chat/store';
+import { screenState } from '@/features/chat/preview-state';
+import { useChatRealtime } from '@/features/chat/realtime';
+import { useChatStore } from '@/features/chat/store';
+import type { ChatProps } from '@/features/chat/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 
 /**
- * /obrolan — Obrolan (Fase 2 preview, F2-1): channels per workspace, public
- * and private channels, DMs and small groups. Sample data, client-only.
+ * /obrolan — Obrolan (Fase 2, F2-1): channels per workspace, public and
+ * private channels, DMs and small groups (ChatController@index).
  */
-export default function ChatIndexPage() {
+export default function ChatIndexPage({ chat }: { chat: ChatProps }) {
     const breakpoint = useBreakpoint();
-    const state = useChatState();
-    const preview = usePreviewState();
+    const state = useChatStore(chat);
+    const companyId = usePage().props.auth.user?.company?.id ?? null;
+    const screen = screenState(state.channels.length);
+
+    useChatRealtime(state.viewerId, companyId, null);
 
     return (
         <>
@@ -24,12 +29,12 @@ export default function ChatIndexPage() {
                     <Skeleton className="h-[560px] w-full" />
                 </div>
             ) : breakpoint === 'mobile' ? (
-                <ChatListMobile state={state} preview={preview} />
+                <ChatListMobile state={state} preview={screen} />
             ) : (
                 <ChatDesktop
                     state={state}
                     channelId={null}
-                    preview={preview}
+                    preview={screen}
                     isTablet={breakpoint === 'tablet'}
                 />
             )}

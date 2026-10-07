@@ -17,9 +17,10 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { SegmentedTabs } from '@/components/ui/tabs';
-import { useFakeMutation } from '@/features/prototype/use-fake-mutation';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { PresenceDot } from './channel-avatar';
+import { chatUrl } from './api';
 import { createChannel, openDirect, slugifyChannelName } from './store';
 import type { ChatState } from './types';
 
@@ -127,7 +128,7 @@ export function NewChatDialog({
     const [isPrivate, setIsPrivate] = useState(false);
     const [selected, setSelected] = useState<string[]>([]);
     const [touched, setTouched] = useState(false);
-    const { processing, run } = useFakeMutation();
+    const [processing, setProcessing] = useState(false);
     const nameError = channelNameError(name);
 
     const reset = () => {
@@ -153,23 +154,27 @@ export function NewChatDialog({
                 return;
             }
 
-            let id = '';
-            const ok = await run(
-                () => {
-                    id = createChannel({
-                        name,
-                        topic,
-                        isPrivate,
-                        memberIds: selected,
-                    });
-                },
-                { success: `Channel #${slugifyChannelName(name)} dibuat.` },
-            );
+            setProcessing(true);
 
-            if (ok) {
+            try {
+                const id = await createChannel({
+                    name,
+                    topic,
+                    isPrivate,
+                    memberIds: selected,
+                });
+                toast.success(`Channel #${slugifyChannelName(name)} dibuat.`);
                 reset();
                 onOpenChange(false);
-                router.visit(`/obrolan/${id}`);
+                router.visit(chatUrl(id));
+            } catch (error) {
+                toast.error(
+                    error instanceof Error
+                        ? error.message
+                        : 'Channel gagal dibuat.',
+                );
+            } finally {
+                setProcessing(false);
             }
 
             return;
@@ -179,10 +184,22 @@ export function NewChatDialog({
             return;
         }
 
-        const id = openDirect(selected);
-        reset();
-        onOpenChange(false);
-        router.visit(`/obrolan/${id}`);
+        setProcessing(true);
+
+        try {
+            const id = await openDirect(selected);
+            reset();
+            onOpenChange(false);
+            router.visit(chatUrl(id));
+        } catch (error) {
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : 'Obrolan gagal dibuka.',
+            );
+        } finally {
+            setProcessing(false);
+        }
     };
 
     const body = (

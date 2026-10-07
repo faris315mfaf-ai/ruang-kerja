@@ -1,5 +1,7 @@
 # Mesin fingerprint ZKTeco · ADMS (F3-3)
 
+> **Status:** **Ditahan** (keputusan pemilik 6 Okt 2026): tidak dikerjakan sampai pemilik membuka lagi; layar pratinjau tetap bisa dicoba. Panduan pemakaian: [PANDUAN-PRATINJAU.md](PANDUAN-PRATINJAU.md).
+>
 > Pratinjau Fase 3 · dibangun Agen E · rute `/admin/mesin-absensi` · data contoh, tidak menyimpan apa pun. Indeks: [README](README.md).
 
 ## 1. Tujuan & masalah
@@ -86,7 +88,7 @@ sequenceDiagram
 | `features/fingerprint/types.ts` | `FingerprintDevice`, `DevicePunch` (`verify_type`, `punch_state`), `PinMapping`, `OfficeLocationRef`, `DeviceTimezone`, `FingerprintPageProps`. |
 | `features/fingerprint/fixtures.ts` | `FINGERPRINT_NOW` (Sen 5 Okt 08.45 WIB), `EMPLOYEES`, `LOCATIONS`, `DEVICES`, `PUNCHES`, `MAPPINGS`, `FINGERPRINT_PAGE`. |
 | `features/fingerprint/lib.ts` (+ `lib.test.ts`) | `deviceStatus` (online bila ≤ 5 menit), `admsSettings(appUrl)` (alamat/port/URL iclock dari `window.location.origin`), `normalizeSerial`, `validateDeviceDraft`, `unmappedCount`, `punchesToday`, `mapPin`. |
-| `use-fingerprint.ts` | State halaman: tambah mesin, uji koneksi, pemetaan PIN (lewat `useFakeMutation`). |
+| `use-fingerprint.ts` | State halaman: tambah mesin (lewat `useFakeMutation`), uji koneksi (jeda 1,2 detik), pemetaan PIN (langsung + toast). |
 | `fingerprint.desktop.tsx`, `fingerprint.mobile.tsx`, `device-sheet.tsx`, `add-device-dialog.tsx` (+ `AdmsInstructions`), `parts.tsx` | Tampilan. |
 
 Keadaan pratinjau memakai `features/okr/preview.ts` + `preview-state.tsx`.

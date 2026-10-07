@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { PRIORITY_LABELS, PriorityIcon } from '@/components/priority-icon';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { StatusIcon } from '@/components/status-icon';
+import { DatePickerTrigger } from '@/components/ui/date-input';
+import { formatDayDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { AvatarStack } from '../avatar-stack';
 import { DueBadge } from '../due-badge';
@@ -39,7 +41,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
     );
 }
 
-/** Start date: native date input in a pill (no due-style wording). */
+/** Start date: a pill that opens the OS date picker (no due-style wording). */
 export function DateField({
     value,
     onChange,
@@ -52,21 +54,19 @@ export function DateField({
     size?: Size;
 }) {
     return (
-        <label className={pillClass(size, 'relative cursor-pointer')}>
+        <DatePickerTrigger
+            value={value}
+            onChange={(date) => onChange(date === '' ? null : date)}
+            aria-label={
+                value
+                    ? `${label}: ${formatDayDate(value)}`
+                    : `Pilih ${label.toLowerCase()}`
+            }
+            className={pillClass(size)}
+        >
             <CalendarDays className="size-4" strokeWidth={1.75} aria-hidden />
             <span>{value ? formatShortDate(value) : 'Pilih tanggal'}</span>
-            <input
-                type="date"
-                aria-label={label}
-                value={value ?? ''}
-                onChange={(event) =>
-                    onChange(
-                        event.target.value === '' ? null : event.target.value,
-                    )
-                }
-                className="absolute inset-0 cursor-pointer opacity-0"
-            />
-        </label>
+        </DatePickerTrigger>
     );
 }
 
@@ -375,30 +375,37 @@ export function PropertiesPanel({ state, today }: Props) {
                                     size="md"
                                 />
                             )}
-                            <button
-                                type="button"
-                                onClick={() => void state.toggleWatch()}
-                                aria-pressed={detail.watching}
-                                aria-label={
-                                    detail.watching
-                                        ? 'Berhenti amati tugas ini'
-                                        : 'Amati tugas ini'
-                                }
-                                title={
-                                    detail.watching ? 'Berhenti amati' : 'Amati'
-                                }
-                                className={cn(
-                                    'flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border-strong text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none',
-                                    detail.watching &&
-                                        'border-solid border-primary/50 bg-link-soft text-link',
-                                )}
-                            >
-                                {detail.watching ? (
-                                    <EyeOff className="size-4" aria-hidden />
-                                ) : (
-                                    <Eye className="size-4" aria-hidden />
-                                )}
-                            </button>
+                            {detail.can.watch && (
+                                <button
+                                    type="button"
+                                    onClick={() => void state.toggleWatch()}
+                                    aria-pressed={detail.watching}
+                                    aria-label={
+                                        detail.watching
+                                            ? 'Berhenti amati tugas ini'
+                                            : 'Amati tugas ini'
+                                    }
+                                    title={
+                                        detail.watching
+                                            ? 'Berhenti amati'
+                                            : 'Amati'
+                                    }
+                                    className={cn(
+                                        'flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border-strong text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none',
+                                        detail.watching &&
+                                            'border-solid border-primary/50 bg-link-soft text-link',
+                                    )}
+                                >
+                                    {detail.watching ? (
+                                        <EyeOff
+                                            className="size-4"
+                                            aria-hidden
+                                        />
+                                    ) : (
+                                        <Eye className="size-4" aria-hidden />
+                                    )}
+                                </button>
+                            )}
                         </span>
                     </Row>
                     <Row label="Dibuat oleh">

@@ -63,11 +63,11 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c blue,magenta,yellow,green --names=server,horizon,reverb,vite --kill-others \"php artisan serve\" \"php artisan horizon\" \"php artisan reverb:start\" \"npm run dev\""
+            "npx concurrently -c blue,magenta,yellow,green,cyan --names=server,horizon,reverb,vite,collab --kill-others \"php artisan serve\" \"php artisan horizon\" \"php artisan reverb:start\" \"npm run dev\" \"node --env-file-if-exists=.env collab/src/server.js\""
         ],
         "dev:win": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c green,yellow,magenta,blue,cyan --names=vite,reverb,queue,realtime,schedule --kill-others \"npm run dev\" \"php artisan reverb:start\" \"php artisan queue:work --tries=3\" \"php artisan queue:work --queue=realtime --sleep=0 --tries=1\" \"php artisan schedule:work\""
+            "npx concurrently -c green,yellow,magenta,blue,cyan,gray --names=vite,reverb,queue,realtime,schedule,collab --kill-others \"npm run dev\" \"php artisan reverb:start\" \"php artisan queue:work --tries=3\" \"php artisan queue:work --queue=realtime --sleep=0 --tries=1\" \"php artisan schedule:work\" \"node --env-file-if-exists=.env collab/src/server.js\""
         ],
         "lint": [
             "pint --test",

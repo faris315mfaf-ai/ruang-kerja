@@ -133,7 +133,7 @@ export function SegmentedTabs<T extends string>({
                         onClick={() => onValueChange(option.value)}
                         onKeyDown={onKeyDown}
                         className={cn(
-                            'whitespace-nowrap transition-[color,background-color,box-shadow] duration-120 ease-brand outline-none focus-visible:ring-[3px] focus-visible:ring-ring',
+                            'hit-area whitespace-nowrap transition-[color,background-color,box-shadow] duration-120 ease-brand outline-none focus-visible:ring-[3px] focus-visible:ring-ring',
                             style.base,
                             selected ? style.on : style.off,
                         )}

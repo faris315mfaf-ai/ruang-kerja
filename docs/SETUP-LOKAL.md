@@ -116,7 +116,15 @@ Catatan Windows: **Horizon tidak berjalan di Windows** (butuh ekstensi `pcntl`).
   3. Buka URL tunnel di HP. Matikan tunnel setelah selesai karena data lokal ikut terbuka.
 - Untuk Reverb di HP via tunnel, realtime boleh dimatikan sementara (aplikasi jatuh ke polling 30 detik).
 
-## 6. Login Google di lokal
+## 6. Login di lokal
+
+Keputusan pemilik 6 Okt 2026: semua karyawan masuk dengan **email + kata sandi**; login Google ditahan (tombolnya tidak tampil).
+
+- **Sehari-hari:** login demo tetap ada (`DEMO_LOGIN_ENABLED=true`, hanya `APP_ENV=local`), atau isi form dengan akun demo + sandi `password`.
+- Karyawan seeder selain akun demo **tidak punya sandi** (mis. `bayu.saputra@demo.test`): pakai mereka untuk mencoba "Lupa kata sandi" (setujui dari `hr@demo.test` › Admin › Karyawan) atau "Atur kata sandi" di profilnya.
+- Email notifikasi (permintaan reset ke HR, "sandi diatur HR") terlihat di Mailpit.
+
+### Login Google di lokal (ditahan)
 
 Google OAuth **tidak menerima** redirect ke domain `.test`. Kecuali `localhost`, alamat redirect harus memakai TLD publik. Pilihan:
 - **Sehari-hari:** pakai login demo (`DEMO_LOGIN_ENABLED=true`, hanya `APP_ENV=local`).

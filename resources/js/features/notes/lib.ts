@@ -1,9 +1,9 @@
 import type { RichNode } from '@/features/tasks/editor/types';
-import type { Note, NoteShare } from './types';
+import type { Note, NoteKind } from './types';
 
 export type TreeNode = { note: Note; depth: number; children: TreeNode[] };
 
-/** Plain text of a Tiptap document (search, word count). */
+/** Plain text of a Tiptap document (word count). */
 export function docText(node: RichNode | null | undefined): string {
     if (!node) {
         return '';
@@ -30,38 +30,49 @@ export function wordCount(node: RichNode | null | undefined): number {
     return docText(node).split(/\s+/).filter(Boolean).length;
 }
 
-function byTitle(a: Note, b: Note): number {
-    return a.title.localeCompare(b.title, 'id');
+/** Folders above notes, then the manual order (lexorank `position`). */
+export function compareNotes(a: Note, b: Note): number {
+    if (a.kind !== b.kind) {
+        return a.kind === 'folder' ? -1 : 1;
+    }
+
+    if (a.position !== b.position) {
+        return a.position < b.position ? -1 : 1;
+    }
+
+    return a.id < b.id ? -1 : 1;
 }
 
 /**
- * Parent/child tree of a workspace's notes (alphabetical). With a query,
- * keeps notes whose title or text contains every word plus their
- * ancestors, so a match is never shown without its path.
+ * Parent/child tree of a workspace's notes and folders. With `matches`
+ * (server search results), keeps the matching rows plus their ancestors, so
+ * a match is never shown without its path. A row whose parent is not
+ * visible sits at the root.
  */
-export function buildTree(notes: Note[], query = ''): TreeNode[] {
-    const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+export function buildTree(
+    notes: Note[],
+    matches: ReadonlySet<string> | null = null,
+): TreeNode[] {
     const byId = new Map(notes.map((note) => [note.id, note]));
     let keep: Set<string>;
 
-    if (words.length === 0) {
+    if (matches === null) {
         keep = new Set(notes.map((note) => note.id));
     } else {
         keep = new Set();
 
         for (const note of notes) {
-            const haystack =
-                `${note.title}\n${docText(note.content)}`.toLowerCase();
+            if (!matches.has(note.id)) {
+                continue;
+            }
 
-            if (words.every((word) => haystack.includes(word))) {
-                let current: Note | undefined = note;
+            let current: Note | undefined = note;
 
-                while (current && !keep.has(current.id)) {
-                    keep.add(current.id);
-                    current = current.parent_id
-                        ? byId.get(current.parent_id)
-                        : undefined;
-                }
+            while (current && !keep.has(current.id)) {
+                keep.add(current.id);
+                current = current.parent_id
+                    ? byId.get(current.parent_id)
+                    : undefined;
             }
         }
     }
@@ -72,25 +83,24 @@ export function buildTree(notes: Note[], query = ''): TreeNode[] {
                 (note) =>
                     keep.has(note.id) &&
                     (note.parent_id === parentId ||
-                        // Orphans (parent missing) sit at the root.
                         (parentId === null &&
                             note.parent_id !== null &&
                             !byId.has(note.parent_id))),
             )
-            .sort(byTitle)
+            .sort(compareNotes)
             .map((note) => ({
                 note,
                 depth,
-                children: build(note.id, depth + 1),
+                children: depth > 30 ? [] : build(note.id, depth + 1),
             }));
 
     return build(null, 0);
 }
 
-/** Depth-first list of the tree, skipping children of collapsed notes. */
+/** Depth-first list of the tree, skipping children of collapsed rows. */
 export function flattenTree(
     tree: TreeNode[],
-    collapsed: Set<string> = new Set(),
+    collapsed: ReadonlySet<string> = new Set(),
 ): TreeNode[] {
     return tree.flatMap((node) => [
         node,
@@ -117,6 +127,63 @@ export function ancestors(notes: Note[], id: string): Note[] {
     }
 
     return path;
+}
+
+/** The row and everything below it (it can never become its own parent). */
+export function subtreeIds(notes: Note[], id: string): Set<string> {
+    const ids = new Set([id]);
+    let grew = true;
+
+    while (grew) {
+        grew = false;
+
+        for (const note of notes) {
+            if (
+                note.parent_id &&
+                ids.has(note.parent_id) &&
+                !ids.has(note.id)
+            ) {
+                ids.add(note.id);
+                grew = true;
+            }
+        }
+    }
+
+    return ids;
+}
+
+/**
+ * Possible parents for a row of `kind` (MoveNote / CreateNote rules):
+ * folders only inside folders, notes inside folders or notes; never the row
+ * itself or one of its descendants.
+ */
+export function parentOptions(
+    notes: Note[],
+    kind: NoteKind,
+    movingId: string | null = null,
+): Note[] {
+    const excluded = movingId ? subtreeIds(notes, movingId) : new Set();
+
+    return flattenTree(buildTree(notes))
+        .map((node) => node.note)
+        .filter(
+            (note) =>
+                !excluded.has(note.id) &&
+                (kind === 'note' || note.kind === 'folder'),
+        );
+}
+
+/** Children count per row id (folder badges). */
+export function childCounts(notes: Note[]): Map<string, number> {
+    const counts = new Map<string, number>();
+
+    for (const note of notes) {
+        if (note.parent_id) {
+            counts.set(note.parent_id, (counts.get(note.parent_id) ?? 0) + 1);
+        }
+    }
+
+    return counts;
 }
 
 /** "Menyimpan…", "Tersimpan · baru saja", "Tersimpan · 2 dtk lalu", "· 3 mnt lalu". */
@@ -152,41 +219,6 @@ export function savedLabel(
     return `Tersimpan · ${Math.floor(minutes / 60)} jam lalu`;
 }
 
-/** Can the viewer edit? Restricted notes need an "edit" invitation. */
-export function canEdit(share: NoteShare | undefined, userId: string): boolean {
-    if (!share) {
-        return true;
-    }
-
-    const person = share.people.find((item) => item.user_id === userId);
-
-    if (share.access === 'restricted') {
-        return person?.role === 'edit';
-    }
-
-    return person?.role !== 'view';
-}
-
-/**
- * Position of a simulated collaborator caret: walks the text blocks of the
- * document (`blocks` = [start, end] positions) with a per-person offset.
- */
-export function cursorAt(
-    blocks: [number, number][],
-    tick: number,
-    seat: number,
-): number | null {
-    if (blocks.length === 0) {
-        return null;
-    }
-
-    const [start, end] = blocks[(tick + seat * 3) % blocks.length];
-    const length = Math.max(0, end - start);
-    const offset = length === 0 ? 0 : ((tick * 7 + seat * 13) % length) + 1;
-
-    return Math.min(end, start + offset);
-}
-
 /** "Hana dan Dewi sedang menyunting" / "3 orang sedang menyunting". */
 export function editorsLabel(names: string[]): string | null {
     const first = names.map((name) => name.split(' ')[0]);
@@ -204,4 +236,100 @@ export function editorsLabel(names: string[]): string | null {
     }
 
     return `${first.length} orang sedang menyunting`;
+}
+
+/** "Tersambung · 3 orang" (the viewer included). */
+export function connectedLabel(peers: number): string {
+    return `Tersambung · ${peers + 1} orang`;
+}
+
+/** Stable colour seat of a person (index into CURSOR_TONES). */
+export function toneFor(id: string, tones: number): number {
+    let hash = 0;
+
+    for (let index = 0; index < id.length; index++) {
+        hash = (hash * 31 + id.charCodeAt(index)) >>> 0;
+    }
+
+    return tones > 0 ? hash % tones : 0;
+}
+
+/**
+ * Top note of the document a note belongs to (Notulensi tabs, keputusan
+ * pemilik 6 Okt 2026): walks up through parent NOTES and stops below a
+ * folder or a parent that is not visible. A note without a note parent is
+ * its own document.
+ */
+export function documentRoot(notes: Note[], id: string): Note | undefined {
+    const byId = new Map(notes.map((note) => [note.id, note]));
+    let current = byId.get(id);
+    const seen = new Set<string>();
+
+    while (current?.parent_id && !seen.has(current.id)) {
+        seen.add(current.id);
+        const parent = byId.get(current.parent_id);
+
+        if (!parent || parent.kind !== 'note') {
+            break;
+        }
+
+        current = parent;
+    }
+
+    return current;
+}
+
+export type DocumentTab = {
+    note: Note;
+    /** 0 = the document and its tabs, 1 = sub-tabs. */
+    level: 0 | 1;
+    /** The level-0 row it sits under (itself for level 0). */
+    tabId: string;
+};
+
+/**
+ * Google Docs-like tab list of a document: the document itself first, its
+ * child notes as tabs, their children as sub-tabs. Deeper pages and
+ * folders are not tabs (they stay in the workspace tree).
+ */
+export function documentTabs(notes: Note[], rootId: string): DocumentTab[] {
+    const root = notes.find((note) => note.id === rootId);
+
+    if (!root) {
+        return [];
+    }
+
+    const childrenOf = (id: string) =>
+        notes
+            .filter((note) => note.parent_id === id && note.kind === 'note')
+            .sort(compareNotes);
+
+    return [
+        { note: root, level: 0, tabId: root.id },
+        ...childrenOf(root.id).flatMap((tab): DocumentTab[] => [
+            { note: tab, level: 0, tabId: tab.id },
+            ...childrenOf(tab.id).map((sub): DocumentTab => ({
+                note: sub,
+                level: 1,
+                tabId: tab.id,
+            })),
+        ]),
+    ];
+}
+
+/** "Tab 3" / "Sub-tab 2": default title of a new tab under `parentId`. */
+export function nextTabTitle(
+    tabs: DocumentTab[],
+    parentId: string,
+    rootId: string,
+): string {
+    if (parentId === rootId) {
+        return `Tab ${tabs.filter((tab) => tab.level === 0).length + 1}`;
+    }
+
+    const siblings = tabs.filter(
+        (tab) => tab.level === 1 && tab.tabId === parentId,
+    ).length;
+
+    return `Sub-tab ${siblings + 1}`;
 }

@@ -1,41 +1,35 @@
 import { Head } from '@inertiajs/react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { OKR_INDEX } from '@/features/okr/fixtures';
 import { OkrList } from '@/features/okr/okr-list';
-import { PreviewHeader, usePreviewState } from '@/features/okr/preview-state';
+import type { OkrIndexProps } from '@/features/okr/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 
 /**
- * /okr — division OKR per quarter (Fase 3 preview, sample data from
- * features/okr/fixtures.ts; a controller will later send OkrIndexProps).
+ * /okr — division OKR per quarter (F3-3). Props: App\Domain\Okr\Queries\OkrIndex.
  */
-export default function OkrIndexPage() {
+export default function OkrIndexPage(props: OkrIndexProps) {
     const breakpoint = useBreakpoint();
-    const state = usePreviewState();
 
     return (
         <>
             <Head title="OKR divisi" />
-            <div className="flex flex-col gap-5">
-                <PreviewHeader />
-                {breakpoint === null ? (
-                    <div
-                        className="flex flex-col gap-4"
-                        aria-busy
-                        aria-label="Memuat"
-                    >
-                        <Skeleton className="h-12 w-72" />
-                        <Skeleton className="h-36 w-full" />
-                        <Skeleton className="h-72 w-full" />
+            {breakpoint === null ? (
+                <div
+                    className="flex flex-col gap-4"
+                    aria-busy
+                    aria-label="Memuat"
+                >
+                    <Skeleton className="h-12 w-72" />
+                    <div className="grid grid-cols-2 gap-3 md:gap-5 xl:grid-cols-4">
+                        {[0, 1, 2, 3].map((key) => (
+                            <Skeleton key={key} className="h-32 rounded-card" />
+                        ))}
                     </div>
-                ) : (
-                    <OkrList
-                        props={OKR_INDEX}
-                        mobile={breakpoint === 'mobile'}
-                        state={state}
-                    />
-                )}
-            </div>
+                    <Skeleton className="h-72 w-full rounded-panel" />
+                </div>
+            ) : (
+                <OkrList props={props} mobile={breakpoint === 'mobile'} />
+            )}
         </>
     );
 }

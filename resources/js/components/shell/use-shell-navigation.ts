@@ -2,6 +2,7 @@ import { usePage } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
 import { Layers, LayoutGrid, ShieldCheck, Users } from 'lucide-react';
 import { useUnreadCount } from '@/features/notifications/unread-store';
+import { groupWorkspaces } from '@/features/workspaces/groups';
 import { workspaceInitial } from '@/features/workspaces/lib';
 import {
     useSidebarWorkspaces,
@@ -12,9 +13,17 @@ import type { AppNavItem } from '@/lib/navigation';
 import {
     adminNavItems,
     attendanceNavItems,
+    automationNavItem,
     isActivePath,
+    chatNavItem,
+    roleDashboardNavItem,
+    notesNavItem,
+    meetingsNavItem,
+    hiringNavItem,
     mainNavItemsFor,
     organizationNavItems,
+    okrNavItem,
+    performanceNavItem,
     prototypeNavItem,
 } from '@/lib/navigation';
 import { paletteGradient } from '@/lib/palette';
@@ -34,10 +43,14 @@ const MOTIONS: Record<string, GlyphMotion> = {
     '/portofolio': { name: 'dock-tilt', duration: '1.8s' },
     '/manajemen': { name: 'dock-lift', duration: '1.6s' },
     '/inbox': { name: 'dock-drop', duration: '1.4s' },
+    '/obrolan': { name: 'dock-nudge', duration: '1.5s' },
+    '/rapat': { name: 'dock-tilt', duration: '1.8s' },
     '/tugas': { name: 'dock-pulse', duration: '1.5s' },
+    '/laporan': { name: 'dock-tilt', duration: '1.8s' },
     '/absensi': { name: 'dock-drop', duration: '1.4s' },
     '/pengajuan': { name: 'dock-tilt', duration: '1.8s' },
     '/persetujuan': { name: 'dock-nudge', duration: '1.5s' },
+    '/okr': { name: 'dock-pulse', duration: '1.5s' },
     '/organisasi/struktur': { name: 'dock-breathe', duration: '2.2s' },
 };
 
@@ -74,12 +87,26 @@ export type NavStackEntry = {
     gradient: string;
 };
 
+/** Titled group of a stack (Workspace: Pribadi · Divisi & tim · Proyek). */
+export type NavStackSection = {
+    key: string;
+    /** null = untitled (the "Semua workspace" link at the end). */
+    label: string | null;
+    /** Dot colour utility of the group. */
+    dot?: string;
+    entries: NavStackEntry[];
+    /** Shown when the group has no entries. */
+    empty?: string;
+};
+
 export type NavStack = {
     id: string;
     label: string;
     icon: LucideIcon;
     motion: GlyphMotion;
     entries: NavStackEntry[];
+    /** Render the entries in these titled groups instead of one grid. */
+    sections?: NavStackSection[];
     active: boolean;
     /** "Lihat semua" link in the stack header. */
     allHref?: string;
@@ -104,7 +131,7 @@ const ICON_GRADIENTS = ['bg-grad-merek', 'bg-grad-indigo'] as const;
  * Workspace stack (like the macOS Dock).
  */
 export function useShellNavigation(): ShellNavigation {
-    const { auth, approvals, features } = usePage().props;
+    const { auth, approvals, features, chatUnread } = usePage().props;
     const { currentUrl } = useCurrentUrl();
     const unread = useUnreadCount();
     const workspaces = useSidebarWorkspaces();
@@ -112,6 +139,10 @@ export function useShellNavigation(): ShellNavigation {
     const badgeFor = (item: AppNavItem): number | undefined => {
         if (item.href === '/inbox') {
             return unread;
+        }
+
+        if (item.badge === 'chat') {
+            return chatUnread ?? 0;
         }
 
         return item.badge === 'approvals'
@@ -182,23 +213,98 @@ export function useShellNavigation(): ShellNavigation {
             gradient: workspaceGradient(workspace.type, workspace.color),
         };
     });
-    workspaceEntries.push({
+    // The Hiring space sits with the workspaces (it is styled like one).
+    const hiringEntry: NavStackEntry | null = features?.hiring
+        ? {
+              key: 'hiring',
+              label: hiringNavItem.title,
+              href: hiringNavItem.href,
+              active: isActivePath(hiringNavItem, currentUrl),
+              icon: hiringNavItem.icon,
+              gradient: 'bg-grad-indigo',
+          }
+        : null;
+    const allWorkspaces: NavStackEntry = {
         key: 'all-workspaces',
         label: 'Semua workspace',
         href: '/workspace',
         active: currentUrl === '/workspace',
         icon: Layers,
         gradient: 'bg-grad-slate',
-    });
+    };
+    // Groups Pribadi · Divisi & tim · Proyek yang diikuti (keputusan pemilik 6 Okt 2026).
+    const workspaceSections: NavStackSection[] = [
+        ...groupWorkspaces(workspaces).map(({ group, items }) => ({
+            key: group.key,
+            label: group.label,
+            dot: group.dot,
+            empty: group.empty,
+            entries: items.flatMap(
+                (workspace) =>
+                    workspaceEntries.find(
+                        (entry) => entry.key === workspace.id,
+                    ) ?? [],
+            ),
+        })),
+        {
+            key: 'all',
+            label: null,
+            entries: hiringEntry
+                ? [hiringEntry, allWorkspaces]
+                : [allWorkspaces],
+        },
+    ];
+    if (hiringEntry) {
+        workspaceEntries.push(hiringEntry);
+    }
+    workspaceEntries.push(allWorkspaces);
 
     // A one-item stack is just a detour: roles that only see the org chart
     // get it as a plain tile instead.
     const organizationItems = organizationNavItems(auth.roles);
-    const main = mainNavItemsFor(auth.roles);
+    // Dashboard jabatan right after Dashboard (F3, FEATURE_ROLE_DASHBOARDS).
+    const main = mainNavItemsFor(auth.roles).flatMap((item) =>
+        item.href === '/dashboard' && features?.role_dashboards
+            ? [item, roleDashboardNavItem]
+            : [item],
+    );
+    // Obrolan right after Inbox (messages next to notifications), Catatan after it.
+    const afterInbox = [
+        ...(features?.chat ? [chatNavItem] : []),
+        ...(features?.notes ? [notesNavItem] : []),
+    ];
+    const withChat =
+        afterInbox.length > 0
+            ? main.flatMap((item) =>
+                  item.href === '/inbox' ? [item, ...afterInbox] : [item],
+              )
+            : main;
+    // Otomasi (F2-4) right after Tugas saya; Kinerja saya after Absensi.
+    const withAutomation = features?.automation
+        ? withChat.flatMap((item) => {
+              if (item.href === '/tugas') {
+                  return [item, automationNavItem];
+              }
+
+              return item.href === '/absensi'
+                  ? [item, performanceNavItem]
+                  : [item];
+          })
+        : withChat;
+    // Rapat right after Tugas saya (work planning next to tasks).
+    const withMeetings = features?.meetings
+        ? withAutomation.flatMap((item) =>
+              item.href === '/tugas' ? [item, meetingsNavItem] : [item],
+          )
+        : withAutomation;
+    // OKR after the daily work destinations (F3-3).
+    const withOkr = features?.okr
+        ? [...withMeetings, okrNavItem]
+        : withMeetings;
     const tiles = [
         ...(organizationItems.length > 1
-            ? main
-            : [...main, ...organizationItems]),
+            ? withOkr
+            : [...withOkr, ...organizationItems]),
         ...(features?.prototype ? [prototypeNavItem] : []),
     ].map(toTile);
 
@@ -245,6 +351,7 @@ export function useShellNavigation(): ShellNavigation {
             icon: LayoutGrid,
             motion: { name: 'dock-lift' },
             entries: workspaceEntries,
+            sections: workspaceSections,
             // A favourite tile already marks the open workspace.
             active:
                 workspaceEntries.some((entry) => entry.active) &&

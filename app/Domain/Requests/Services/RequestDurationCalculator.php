@@ -27,6 +27,7 @@ final class RequestDurationCalculator
         return match ($input->leaveType->category) {
             RequestCategory::Overtime => $this->timeRange($input, true),
             RequestCategory::Correction => $this->correction($user, $input),
+            RequestCategory::Procurement => $this->procurement($input),
             RequestCategory::Permit => $input->startTime !== null || $input->endTime !== null
                 ? $this->timeRange($input, false)
                 : $this->dayRange($user, $input),
@@ -183,6 +184,53 @@ final class RequestDurationCalculator
             days: null,
             minutes: null,
             payload: ['date' => $date->toDateString(), 'check_in' => $checkIn, 'check_out' => $checkOut],
+            workDates: [],
+        );
+    }
+
+    /**
+     * Pengajuan barang: dated on the (office) day it is sent; the payload holds
+     * the item, quantity, estimated unit price and the computed total.
+     */
+    private function procurement(RequestInput $input): RequestPeriod
+    {
+        $name = trim((string) $input->itemName);
+
+        if ($name === '') {
+            throw ValidationException::withMessages(['item_name' => 'Nama barang wajib diisi.']);
+        }
+
+        if ($input->quantity === null || $input->quantity < 1) {
+            throw ValidationException::withMessages(['quantity' => 'Jumlah minimal 1.']);
+        }
+
+        if ($input->unitPrice === null || $input->unitPrice < 0) {
+            throw ValidationException::withMessages(['unit_price' => 'Isi perkiraan harga satuan (Rp).']);
+        }
+
+        $url = $input->referenceUrl === null ? null : trim($input->referenceUrl);
+
+        if ($url !== null && $url !== '' && preg_match('#^https?://#i', $url) !== 1) {
+            throw ValidationException::withMessages(['reference_url' => 'Tautan harus diawali http:// atau https://.']);
+        }
+
+        $today = OfficeTime::todayString();
+        $unit = trim((string) $input->unit);
+
+        return new RequestPeriod(
+            startAt: OfficeTime::startOfDay($today),
+            endAt: OfficeTime::endOfDay($today),
+            days: null,
+            minutes: null,
+            payload: [
+                'item_name' => mb_substr($name, 0, 160),
+                'quantity' => $input->quantity,
+                'unit' => $unit === '' ? 'unit' : mb_substr($unit, 0, 30),
+                'unit_price' => $input->unitPrice,
+                'total' => $input->quantity * $input->unitPrice,
+                'reference_url' => $url === '' ? null : $url,
+                'urgency' => $input->urgency === 'mendesak' ? 'mendesak' : 'biasa',
+            ],
             workDates: [],
         );
     }

@@ -1,19 +1,11 @@
 import { Link } from '@inertiajs/react';
-import {
-    BellRing,
-    CalendarCheck,
-    ChevronRight,
-    Plus,
-    Video,
-} from 'lucide-react';
+import { CalendarCheck, ChevronRight, Plus, Video } from 'lucide-react';
 import { EmptyState } from '@/components/empty-state';
 import { appBarIconButton } from '@/components/mobile/app-bar';
 import { Button } from '@/components/ui/button';
-import { Panel, PanelLink } from '@/components/ui/panel';
+import { Panel } from '@/components/ui/panel';
 import { formatTime } from '@/lib/format';
 import { cn, focusRing } from '@/lib/utils';
-import { ME, MEETINGS, PEOPLE } from './fixtures';
-import type { OwnedAction } from './lib';
 import {
     displayLink,
     dueLabel,
@@ -26,6 +18,7 @@ import {
     shortDate,
     timeRange,
 } from './lib';
+import { useMeetingsContext } from './meetings-context';
 import {
     AvatarStack,
     MinutesBadge,
@@ -33,7 +26,7 @@ import {
     PlatformBadge,
     useMeetingActions,
 } from './meeting-ui';
-import type { Meeting } from './types';
+import type { FollowUp, Meeting, Person, PersonId } from './types';
 
 /** Round gradient "+" in the phone app bar (MRapat). */
 export function NewMeetingAction() {
@@ -51,14 +44,14 @@ export function NewMeetingAction() {
     );
 }
 
-export function meetingMeta(meeting: Meeting): string {
-    if (meeting.note) {
-        return meeting.note;
-    }
-
-    const organizer = personById(PEOPLE, meeting.organizer_id);
+export function meetingMeta(
+    meeting: Meeting,
+    people: Person[],
+    me: PersonId,
+): string {
+    const organizer = personById(people, meeting.organizer_id);
     const who =
-        meeting.organizer_id === ME
+        meeting.organizer_id === me
             ? 'Anda penyelenggara'
             : (organizer?.name ?? 'Penyelenggara');
 
@@ -71,21 +64,21 @@ type RowAction = {
     tone: 'join' | 'minutes' | 'plain';
 };
 
-function rowAction(meeting: Meeting, now: number): RowAction {
+function rowAction(meeting: Meeting, now: number, me: PersonId): RowAction {
     const phase = meetingPhase(meeting, now);
 
-    if (phase === 'soon' || phase === 'live') {
+    if ((phase === 'soon' || phase === 'live') && joinLink(meeting)) {
         return { label: 'Gabung', tone: 'join' };
     }
 
     if (
         phase === 'done' &&
         meeting.minutes_status === 'draft' &&
-        meeting.minute_taker_id === ME
+        meeting.minute_taker_id === me
     ) {
         return {
             label: 'Lengkapi notulen',
-            href: `/rapat/${meeting.id}/notulen`,
+            href: meeting.minutes_href,
             tone: 'minutes',
         };
     }
@@ -93,19 +86,20 @@ function rowAction(meeting: Meeting, now: number): RowAction {
     if (meeting.minutes_status !== 'none') {
         return {
             label: 'Lihat notulen',
-            href: `/rapat/${meeting.id}/notulen`,
+            href: meeting.minutes_href,
             tone: 'plain',
         };
     }
 
-    return { label: 'Detail', href: `/rapat/${meeting.id}`, tone: 'plain' };
+    return { label: 'Detail', href: meeting.href, tone: 'plain' };
 }
 
 /** One meeting row of the agenda card (DRapat list). */
 export function AgendaRow({ meeting, now }: { meeting: Meeting; now: number }) {
     const phase = meetingPhase(meeting, now);
+    const { people, me } = useMeetingsContext();
     const highlight = phase === 'soon' || phase === 'live';
-    const action = rowAction(meeting, now);
+    const action = rowAction(meeting, now, me);
     const actions = useMeetingActions(meeting);
 
     return (
@@ -134,7 +128,7 @@ export function AgendaRow({ meeting, now }: { meeting: Meeting; now: number }) {
             />
             <span className="flex min-w-0 flex-[1_1_240px] flex-col gap-1.5">
                 <Link
-                    href={`/rapat/${meeting.id}`}
+                    href={meeting.href}
                     className={cn(
                         'w-fit rounded-sm text-[18px] leading-6 font-bold hover:underline',
                         phase === 'done' ? 'text-text-muted' : 'text-text',
@@ -145,7 +139,7 @@ export function AgendaRow({ meeting, now }: { meeting: Meeting; now: number }) {
                 </Link>
                 <span className="flex flex-wrap items-center gap-2 text-[14px] text-text-muted">
                     <PlatformBadge platform={meeting.platform} />
-                    <span>{meetingMeta(meeting)}</span>
+                    <span>{meetingMeta(meeting, people, me)}</span>
                 </span>
             </span>
             <span className="ml-auto flex items-center gap-3">
@@ -190,17 +184,18 @@ export function AgendaRowCompact({
     meeting: Meeting;
     now: number;
 }) {
+    const { me } = useMeetingsContext();
     const phase = meetingPhase(meeting, now);
     const href =
         meeting.minutes_status !== 'none' && phase === 'done'
-            ? `/rapat/${meeting.id}/notulen`
-            : `/rapat/${meeting.id}`;
+            ? meeting.minutes_href
+            : meeting.href;
     const note =
         meeting.minutes_status === 'final'
             ? 'Notulen final'
             : meeting.minutes_status === 'draft'
               ? 'Notulen draf'
-              : meeting.organizer_id === ME
+              : meeting.organizer_id === me
                 ? 'Anda penyelenggara'
                 : 'Anda diundang';
 
@@ -271,15 +266,16 @@ export function NextMeetingHero({
     actions?: ReturnType<typeof useMeetingActions>;
     className?: string;
 }) {
+    const { people } = useMeetingsContext();
     const own = useMeetingActions(meeting);
     const actions = shared ?? own;
     const phase = meetingPhase(meeting, now);
-    const organizer = personById(PEOPLE, meeting.organizer_id);
+    const organizer = personById(people, meeting.organizer_id);
     const counts = rsvpCounts(meeting);
     const optional = meeting.participants.filter((p) => p.optional).length;
     const link = joinLink(meeting);
     const badge = actions.joined
-        ? `Anda sudah bergabung · ${formatTime(now)}`
+        ? `Tautan dibuka · ${formatTime(now)}`
         : phase === 'live'
           ? 'Sedang berlangsung'
           : phase === 'soon'
@@ -301,7 +297,7 @@ export function NextMeetingHero({
                     {badge}
                 </span>
                 <Link
-                    href={`/rapat/${meeting.id}`}
+                    href={meeting.href}
                     className={cn(
                         'rounded-sm text-[21px] leading-[27px] font-extrabold',
                         focusRing,
@@ -314,14 +310,13 @@ export function NextMeetingHero({
                     {PLATFORM_LABEL[meeting.platform]} ·{' '}
                     {meeting.participants.length} peserta
                 </span>
-                {(meeting.platform === 'meet' ||
-                    meeting.platform === 'zoom') && (
+                {link && (
                     <Button
                         size="lg"
                         className="bg-on-brand bg-none font-extrabold text-brand-800 shadow-none hover:bg-on-brand/90"
                         onClick={actions.join}
                     >
-                        {actions.joined ? `Membuka ${actions.app}…` : 'Gabung'}
+                        {actions.joined ? `Buka lagi ${actions.app}` : 'Gabung'}
                     </Button>
                 )}
             </section>
@@ -345,7 +340,7 @@ export function NextMeetingHero({
                     {badge}
                 </span>
                 <Link
-                    href={`/rapat/${meeting.id}`}
+                    href={meeting.href}
                     className={cn(
                         'rounded-sm text-[28px] leading-9 font-extrabold tracking-[-0.02em] hover:underline md:text-[32px] md:leading-10',
                         focusRing,
@@ -366,14 +361,12 @@ export function NextMeetingHero({
                         participants={meeting.participants}
                         ringClassName="ring-accent-blue-strong"
                     />
-                    {meeting.participants.length} peserta · {counts.accepted}{' '}
-                    hadir
+                    {meeting.participants.length} peserta · {counts.yes} hadir
                     {optional > 0 ? ` · ${optional} opsional` : ''}
                 </span>
             </div>
             <div className="flex min-w-0 flex-[0_1_360px] flex-col gap-2.5">
-                {(meeting.platform === 'meet' ||
-                    meeting.platform === 'zoom') && (
+                {link && (
                     <Button
                         size="xl"
                         className="bg-on-brand bg-none font-extrabold text-brand-800 shadow-none hover:bg-on-brand/90"
@@ -400,9 +393,7 @@ export function NextMeetingHero({
                         variant="outline"
                         className="h-[46px] flex-1 border-on-brand/45 bg-on-brand/12 font-bold text-on-brand hover:bg-on-brand/20"
                     >
-                        <Link href={`/rapat/${meeting.id}/notulen`}>
-                            Buka notulen
-                        </Link>
+                        <Link href={meeting.minutes_href}>Buka notulen</Link>
                     </Button>
                 </div>
                 {link && (
@@ -421,7 +412,7 @@ export function FollowUpsPanel({
     today,
     className,
 }: {
-    items: OwnedAction[];
+    items: FollowUp[];
     today: string;
     className?: string;
 }) {
@@ -439,18 +430,16 @@ export function FollowUpsPanel({
             ) : (
                 <ul className="flex flex-col">
                     {items.map((item) => {
-                        const meeting = MEETINGS.find(
-                            (m) => m.id === item.meeting_id,
-                        );
-                        const late = item.due_date < today;
+                        const late =
+                            item.due_date !== null && item.due_date < today;
 
                         return (
                             <li
-                                key={`${item.meeting_id}-${item.id}`}
+                                key={item.id}
                                 className="border-t border-divider first:border-t-0"
                             >
                                 <Link
-                                    href={`/rapat/${item.meeting_id}/notulen`}
+                                    href={item.minutes_href}
                                     className={cn(
                                         'flex flex-col gap-1 rounded-sm py-3 transition-opacity duration-120 ease-brand hover:opacity-80',
                                         focusRing,
@@ -460,10 +449,7 @@ export function FollowUpsPanel({
                                         {item.text}
                                     </span>
                                     <span className="text-[14px] text-text-muted">
-                                        {meeting
-                                            ? `${meeting.title} ${shortDate(officeDate(meeting.starts_at)).split(', ')[1]}`
-                                            : 'Rapat'}{' '}
-                                        ·{' '}
+                                        {item.meeting_title} ·{' '}
                                         <b
                                             className={
                                                 late
@@ -490,17 +476,12 @@ export function FollowUpsPanel({
     );
 }
 
-/** "Pengingat rapat" settings summary + sample notice trigger. */
-export function RemindersPanel({
-    onPreview,
-    className,
-}: {
-    onPreview?: () => void;
-    className?: string;
-}) {
-    const rows = [
-        ['Waktu', '15 dan 5 menit sebelum'],
-        ['Kanal', 'Aplikasi, email'],
+/** "Pengingat rapat": how meeting reminders reach the viewer. */
+export function RemindersPanel({ className }: { className?: string }) {
+    const rows: [string, string][] = [
+        ['Waktu', 'Sesuai pengaturan tiap rapat'],
+        ['Kanal', 'Aplikasi & email'],
+        ['WhatsApp', 'Ditahan'],
     ];
 
     return (
@@ -512,28 +493,17 @@ export function RemindersPanel({
                         className="flex justify-between gap-3 text-[16px]"
                     >
                         <dt className="text-text-muted">{key}</dt>
-                        <dd className="text-right font-bold">{value}</dd>
+                        <dd
+                            className={cn(
+                                'text-right font-bold',
+                                value === 'Ditahan' && 'text-text-muted',
+                            )}
+                        >
+                            {value}
+                        </dd>
                     </div>
                 ))}
-                <div className="flex justify-between gap-3 text-[16px]">
-                    <dt className="text-text-muted">WhatsApp</dt>
-                    <dd className="text-right">
-                        <PanelLink href="/pengaturan/whatsapp">
-                            Atur WhatsApp
-                        </PanelLink>
-                    </dd>
-                </div>
             </dl>
-            {onPreview && (
-                <Button
-                    variant="tonal"
-                    className="mt-3 self-start"
-                    onClick={onPreview}
-                >
-                    <BellRing aria-hidden />
-                    Lihat contoh pemberitahuan
-                </Button>
-            )}
         </Panel>
     );
 }

@@ -19,8 +19,9 @@ it('shows the specific reason of an app 403 on the Arus error page', function ()
     $user = User::factory()->create();
     $user->assignRole(Role::Anggota->value);
 
+    // Two-factor management (and its password confirmation) is Super Admin only.
     $this->actingAs($user)
-        ->get('/settings/security')
+        ->get(route('password.confirm'))
         ->assertForbidden()
         ->assertSee('Akses ditolak')
         ->assertSee('Galat 403')

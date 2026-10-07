@@ -3,7 +3,7 @@
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use App\Http\Controllers\Settings\ThemeController;
-use Illuminate\Auth\Middleware\RequirePassword;
+use App\Http\Middleware\RequirePasswordForSuperAdmin;
 use Illuminate\Support\Facades\Route;
 
 // Employee data is managed by HR (Admin › Karyawan): no self-service profile
@@ -17,9 +17,10 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Super Admin only (UserPolicy::manageCredentials + RestrictCredentialRoutes).
+    // Own password: every employee (UserPolicy::manageCredentials); the TOTP
+    // section and its password confirmation: Super Admin only.
     Route::get('settings/security', [SecurityController::class, 'edit'])
-        ->middleware(RequirePassword::class)
+        ->middleware(RequirePasswordForSuperAdmin::class)
         ->name('security.edit');
 
     Route::put('settings/password', [SecurityController::class, 'update'])

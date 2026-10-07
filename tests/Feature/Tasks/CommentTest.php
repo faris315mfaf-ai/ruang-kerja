@@ -151,13 +151,14 @@ it('toggles emoji reactions, unique per user and emoji', function () {
     Event::assertDispatched(CommentUpdated::class);
 });
 
-it('lets viewers and Direksi comment but nobody on an archived workspace', function () {
+it('lets viewers comment, Direksi outside the workspace only read, and nobody comment on an archived workspace', function () {
     Notification::fake();
     $viewer = memberWithRole($this->workspace, WorkspaceRole::Viewer);
     $direksi = User::factory()->withRole(Role::Direksi)->create();
 
     $this->actingAs($viewer)->postJson("/tugas/{$this->task->id}/komentar", ['body' => richDoc('Catatan viewer')])->assertCreated();
-    $this->actingAs($direksi)->postJson("/tugas/{$this->task->id}/komentar", ['body' => richDoc('Arahan direksi')])->assertCreated();
+    // Keputusan pemilik 6 Okt 2026: view only for management that is not a member.
+    $this->actingAs($direksi)->postJson("/tugas/{$this->task->id}/komentar", ['body' => richDoc('Arahan direksi')])->assertForbidden();
     $this->actingAs(User::factory()->create())->postJson("/tugas/{$this->task->id}/komentar", ['body' => richDoc('Orang luar')])->assertNotFound();
 
     $this->workspace->forceFill(['archived_at' => now()])->save();

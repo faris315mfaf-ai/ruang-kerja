@@ -4,6 +4,7 @@ import {
     Clock,
     DoorOpen,
     FilePen,
+    Package,
     Stethoscope,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -32,6 +33,10 @@ export const CATEGORY_STYLE: Record<
         tile: 'bg-fill-violet/12 text-fill-violet',
     },
     business_trip: { icon: Briefcase, tile: 'bg-success-soft text-success' },
+    procurement: {
+        icon: Package,
+        tile: 'bg-avatar-amber text-avatar-amber-fg',
+    },
 };
 
 /** 48px rounded tile with the category icon (list rows, detail headers). */

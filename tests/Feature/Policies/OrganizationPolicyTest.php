@@ -47,6 +47,34 @@ it('lets everyone in the company view org units', function (Closure $make, Role 
         ->and($gate->allows('view', $unit))->toBeTrue();
 })->with('org units')->with(Role::cases());
 
+it('shows the org chart to everyone but staff (keputusan pemilik 6 Okt 2026)', function (Role $role, bool $expected) {
+    $actor = User::factory()->withRole($role)->create();
+
+    expect(Gate::forUser($actor)->allows('viewChart', Division::class))->toBe($expected)
+        ->and($actor->isStaffOnly())->toBe(! $expected);
+})->with([
+    'super_admin' => [Role::SuperAdmin, true],
+    'direksi' => [Role::Direksi, true],
+    'hr' => [Role::Hr, true],
+    'kepala_divisi' => [Role::KepalaDivisi, true],
+    'anggota' => [Role::Anggota, false],
+]);
+
+it('keeps the org chart hidden from a staff team lead and inactive employees', function () {
+    $lead = User::factory()->withRole(Role::Anggota)->create();
+    Team::factory()->create(['lead_user_id' => $lead->id]);
+    $inactive = User::factory()->withRole(Role::Direksi)->inactive()->create();
+
+    expect(Gate::forUser($lead)->allows('viewChart', Division::class))->toBeFalse()
+        ->and(Gate::forUser($inactive)->allows('viewChart', Division::class))->toBeFalse();
+});
+
+it('counts someone holding an extra role as more than staff', function () {
+    $user = User::factory()->withRole(Role::Anggota, Role::KepalaDivisi)->create();
+
+    expect($user->isStaffOnly())->toBeFalse();
+});
+
 it('lets only HR and Super Admin manage org units', function (Closure $make, Role $role, bool $expected) {
     $unit = $make();
     $actor = User::factory()->withRole($role)->create();

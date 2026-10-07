@@ -5,6 +5,7 @@ import InputError from '@/components/input-error';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -265,7 +266,7 @@ function EmployeeForm({
 
                 <Field
                     id="email"
-                    label="Email Google"
+                    label="Email kantor"
                     error={errors.email}
                     hint={
                         editing?.email_locked
@@ -423,13 +424,10 @@ function EmployeeForm({
                     label="Tanggal bergabung"
                     error={errors.joined_at}
                 >
-                    <Input
+                    <DateInput
                         id="joined_at"
-                        type="date"
                         value={data.joined_at}
-                        onChange={(event) =>
-                            setData('joined_at', event.target.value)
-                        }
+                        onChange={(value) => setData('joined_at', value)}
                         aria-invalid={Boolean(errors.joined_at) || undefined}
                     />
                 </Field>
@@ -553,8 +551,9 @@ function EmployeeForm({
                 {!isEdit && (
                     <p className="flex gap-2.5 rounded-control bg-info-soft px-4 py-3 text-meta text-info">
                         <Info aria-hidden className="mt-0.5 size-4 shrink-0" />
-                        Karyawan masuk memakai akun Google kantornya; tidak ada
-                        sandi yang perlu dibuat.
+                        Karyawan masuk dengan email ini dan kata sandi. Setelah
+                        disimpan, buka profilnya lalu pilih Atur kata sandi,
+                        atau minta karyawan memakai Lupa kata sandi.
                     </p>
                 )}
             </div>

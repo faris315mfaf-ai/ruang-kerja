@@ -1,3 +1,6 @@
+import { usePage } from '@inertiajs/react';
+import { DailyReportCard } from '@/features/reports/daily-report-card';
+import { isStaffOnly } from '@/features/staff/roles';
 import { formatNumber } from '@/lib/format';
 import { formatShortDate } from '@/lib/requests';
 import {
@@ -12,6 +15,7 @@ import type { PersonalProps } from './personal-types';
 import { RequestRows } from './request-rows';
 import { RuangSaya } from './ruang-saya/ruang-saya';
 import { ViewPicker } from './view-picker';
+import { QuickMinutesButton } from '@/features/notes/quick-minutes-button';
 
 /** Small phone KPI tile (MSBeranda "Saldo cuti", "Tepat waktu"). */
 const TILE = 'gap-0.5 rounded-card px-4 py-3.5 shadow-none';
@@ -23,11 +27,20 @@ const TILE = 'gap-0.5 rounded-card px-4 py-3.5 shadow-none';
 export function PersonalMobile(props: PersonalProps) {
     const { metrics, live, definitions } = props;
     const previous = props.filters.period.previous_label;
+    // Staff do not see the annual leave balance (keputusan pemilik 6 Okt 2026):
+    // their first tile is attendance discipline instead.
+    const staff = isStaffOnly(usePage().props.auth.roles);
 
     return (
         <div className="flex flex-col gap-3.5 pb-24">
             <ViewPicker views={props.views} />
             <MyAttendanceCard compact />
+            <QuickMinutesButton mobile />
+            <DailyReportCard
+                status={props.dailyReport}
+                prominent={staff}
+                compact
+            />
 
             <RuangSaya planner={props.planner} variant="mobile" />
 
@@ -35,23 +48,40 @@ export function PersonalMobile(props: PersonalProps) {
                 aria-label="Ringkasan"
                 className="grid grid-cols-2 gap-2.5"
             >
-                <MetricKpi
-                    href="/pengajuan"
-                    linkLabel={
-                        live.leave_balance
-                            ? `Saldo cuti ${formatNumber(live.leave_balance.remaining)} hari, buka pengajuan saya`
-                            : 'Saldo cuti belum ada, buka pengajuan saya'
-                    }
-                    label="Saldo cuti"
-                    value={
-                        live.leave_balance
-                            ? formatNumber(live.leave_balance.remaining)
-                            : '–'
-                    }
-                    suffix={live.leave_balance ? 'hari' : undefined}
-                    note={live.leave_balance?.type ?? 'belum ada saldo'}
-                    cardClassName={TILE}
-                />
+                {staff ? (
+                    metrics ? (
+                        <MetricKpi
+                            label="Disiplin hadir"
+                            definition={definitions.attendance_discipline}
+                            value={formatMetric(
+                                metrics.attendance.attendance_discipline.value,
+                                'percent',
+                            )}
+                            note={periodNoun(props.filters.period.preset)}
+                            cardClassName={TILE}
+                        />
+                    ) : (
+                        <KpiSkeleton className={TILE} />
+                    )
+                ) : (
+                    <MetricKpi
+                        href="/pengajuan"
+                        linkLabel={
+                            live.leave_balance
+                                ? `Saldo cuti ${formatNumber(live.leave_balance.remaining)} hari, buka pengajuan saya`
+                                : 'Saldo cuti belum ada, buka pengajuan saya'
+                        }
+                        label="Saldo cuti"
+                        value={
+                            live.leave_balance
+                                ? formatNumber(live.leave_balance.remaining)
+                                : '–'
+                        }
+                        suffix={live.leave_balance ? 'hari' : undefined}
+                        note={live.leave_balance?.type ?? 'belum ada saldo'}
+                        cardClassName={TILE}
+                    />
+                )}
                 {metrics ? (
                     <>
                         <MetricKpi

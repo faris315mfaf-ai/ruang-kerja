@@ -168,30 +168,15 @@ function pct(value: number | null): string {
     return formatPercent(value, 0);
 }
 
-/** First KPI: today's presence, or the average attendance of the period. */
-export function attendanceCard(block: PeriodBlock): KpiCard {
+/**
+ * First KPI: the average attendance of the week/month. Today's presence lives
+ * in the Absensi module, not here (keputusan pemilik 6 Okt 2026): null.
+ */
+export function attendanceCard(block: PeriodBlock): KpiCard | null {
     const attendance = block.attendance;
 
     if (attendance.kind === 'today') {
-        const notes = [
-            pct(attendance.rate),
-            `${attendance.late} terlambat`,
-            `${attendance.not_checked_in} belum check-in`,
-        ];
-
-        return {
-            key: 'attendance',
-            label: 'Kehadiran',
-            value:
-                attendance.scheduled === 0
-                    ? '–'
-                    : `${attendance.present}/${attendance.scheduled}`,
-            note:
-                attendance.scheduled === 0
-                    ? 'Tidak ada karyawan terjadwal hari ini'
-                    : notes.join(' · '),
-            tone: 'highlight',
-        };
+        return null;
     }
 
     return {
@@ -222,34 +207,27 @@ export function tasksCard(period: PeriodKey, block: PeriodBlock): KpiCard {
     };
 }
 
-/** Third KPI: overdue tasks (harian) or on-time rate with delta. */
-export function thirdCard(period: PeriodKey, block: PeriodBlock): KpiCard {
-    if (block.overdue) {
-        const top = block.overdue.top_division;
-
-        return {
-            key: 'overdue',
-            label: 'Tugas terlambat',
-            value: block.overdue.count.toLocaleString('id-ID'),
-            note:
-                block.overdue.count === 0
-                    ? 'Tidak ada tugas lewat tenggat'
-                    : top
-                      ? `${top.count.toLocaleString('id-ID')} di ${top.name}`
-                      : 'lewat tenggat, belum selesai',
-            tone: 'plain',
-            alert: block.overdue.count > 0,
-        };
-    }
-
+/**
+ * Third KPI: on-time rate with delta. No "Tugas terlambat" card on the
+ * management dashboard (keputusan pemilik 6 Okt 2026): null when the period
+ * has no on-time figure (harian).
+ */
+export function thirdCard(
+    period: PeriodKey,
+    block: PeriodBlock,
+): KpiCard | null {
     const onTime = block.on_time;
+
+    if (onTime === null) {
+        return null;
+    }
 
     return {
         key: 'on_time',
         label: 'Tepat waktu',
-        value: pct(onTime?.value ?? null),
+        value: pct(onTime.value),
         note:
-            onTime === null || onTime.value === null
+            onTime.value === null
                 ? 'Belum ada tugas bertenggat yang selesai'
                 : deltaPhrase(onTime.delta, onTime.previous, period),
         tone: 'plain',

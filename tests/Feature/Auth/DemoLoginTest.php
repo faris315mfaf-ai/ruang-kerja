@@ -25,7 +25,8 @@ it('lists the demo accounts on the login page when enabled locally', function ()
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('auth/login')
-            ->has('demoAccounts', 7)
+            // + Faris & Dio, final approvers of Hiring (6 Oct 2026).
+            ->has('demoAccounts', 9)
             ->where('demoAccounts.0', [
                 'email' => 'admin@demo.test',
                 'name' => 'Admin Sistem',

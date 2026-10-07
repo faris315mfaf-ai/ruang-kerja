@@ -1,3 +1,4 @@
+import { AnnouncementBanner } from '@/features/announcements/announcement-banner';
 import { Head } from '@inertiajs/react';
 import { DivisionDesktop } from '@/features/dashboard/division.desktop';
 import { DivisionMobile } from '@/features/dashboard/division.mobile';
@@ -13,6 +14,8 @@ export default function DivisionDashboard(props: DivisionProps) {
     return (
         <>
             <Head title="Dashboard Divisi" />
+            {/* Pengumuman (keputusan pemilik 6 Okt 2026), loaded apart from the page. */}
+            <AnnouncementBanner className="mb-5" />
             {breakpoint === 'mobile' ? (
                 <DivisionMobile {...props} live={live} />
             ) : (

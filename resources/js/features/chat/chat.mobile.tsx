@@ -27,7 +27,6 @@ import { DeleteMessageDialog, EditBox } from './message-run';
 import { setMobileUi, useMobileUi } from './mobile-ui';
 import { NewChatDialog } from './new-chat-dialog';
 import type { PreviewState } from './preview-state';
-import { PreviewBar } from './preview-state';
 import { reactToMessage, sendMessage } from './store';
 import { ThreadSheet } from './thread-panel';
 import type { ChatState, Message } from './types';
@@ -85,7 +84,6 @@ export function ChatListMobile({
 
     return (
         <div className="flex flex-col gap-4">
-            <PreviewBar />
             {preview === 'memuat' ? (
                 <ListSkeleton />
             ) : preview === 'galat' ? (
@@ -294,7 +292,6 @@ export function ChatConversationMobile({
     if (preview === 'memuat') {
         return (
             <div className="flex flex-col gap-5">
-                <PreviewBar />
                 {Array.from({ length: 4 }, (_, index) => (
                     <div key={index} className="flex gap-3">
                         <Skeleton className="size-9 rounded-full" />
@@ -311,7 +308,6 @@ export function ChatConversationMobile({
     if (preview === 'galat') {
         return (
             <div className="flex flex-col gap-5">
-                <PreviewBar />
                 <ErrorState href={`/obrolan/${channelId}`} />
             </div>
         );
@@ -320,7 +316,6 @@ export function ChatConversationMobile({
     if (!channel) {
         return (
             <div className="flex flex-col gap-5">
-                <PreviewBar />
                 <EmptyState
                     icon={SearchX}
                     title="Obrolan tidak ditemukan"
@@ -344,7 +339,6 @@ export function ChatConversationMobile({
 
     return (
         <div className="flex flex-col">
-            <PreviewBar className="pb-2" />
             <p className="pb-2 text-[15px] leading-[22px] text-text-muted">
                 {channelSubtitle(channel, state.people, state.viewerId)}
             </p>

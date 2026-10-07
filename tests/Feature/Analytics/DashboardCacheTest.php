@@ -57,9 +57,9 @@ it('keys the cache by viewer and scope, never leaking between users', function (
     expect(overdueFor($this, 'kadiv'))->toBe(1)
         ->and(overdueFor($this, 'kadivKeu'))->toBe(2)
         ->and(overdueFor($this, 'kadiv'))->toBe(1)
-        // Direksi: whole company, then one division — separate entries.
-        ->and(overdueFor($this, 'direksi'))->toBe(3)
-        ->and(overdueFor($this, 'direksi', '?divisi='.$this->org['ops']->id))->toBe(1);
+        // HR: whole company, then one division — separate entries.
+        ->and(overdueFor($this, 'hr'))->toBe(3)
+        ->and(overdueFor($this, 'hr', '?divisi='.$this->org['ops']->id))->toBe(1);
 });
 
 it('builds keys from view, viewer, block and filter', function () {

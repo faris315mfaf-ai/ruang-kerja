@@ -208,13 +208,20 @@
     /* Mobile app bar (title row) and the floating tab bar capsule
        (TabBar.dc.html: 70px tall, 12px from the sides, 14px above the safe
        area). --tab-bar-height is the space it reserves above the safe area
-       (lift + capsule + 8px breathing room), so anything offset by it
-       (content padding, FAB, sticky action bars, toasts) clears the capsule. */
+       (lift + capsule + raised Absen button + 8px breathing room), so
+       anything offset by it (content padding, FAB, sticky action bars,
+       toasts) clears the capsule and the centre button above it. */
     --app-bar-height: 56px;
     --tab-bar-capsule: 70px;
     --tab-bar-inset: 12px;
     --tab-bar-lift: 14px;
-    --tab-bar-height: calc(var(--tab-bar-capsule) + var(--tab-bar-lift) + 8px);
+    /* How far the centre Absen button (54px, -26px margin, 4px ring) rises
+       above the capsule's top edge (docs/PLATFORM.md §2.1). */
+    --tab-bar-raise: 16px;
+    --tab-bar-height: calc(
+        var(--tab-bar-capsule) + var(--tab-bar-lift) + var(--tab-bar-raise) +
+            8px
+    );
 
     /* Desktop shell (MenuBar.dc.html + Dock.dc.html): 64px glass menu bar,
        content column max 1280px with 40px padding, floating Dock. */
@@ -273,6 +280,26 @@
     --field-bg: rgb(23 33 49 / 0.9);
 }
 
+/* Note editor body (Catatan, keputusan pemilik 6 Okt 2026): base size per
+   device × the A−/A+ choice (--note-scale, 0.9–1.6, set on the element).
+   Headings use em (NOTE_PROSE) so they grow with it. */
+:root {
+    --note-base: 17px;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    :root {
+        --note-base: 18px;
+    }
+}
+
+@layer components {
+    .note-body {
+        font-size: calc(var(--note-base) * var(--note-scale, 1));
+        line-height: 1.65;
+    }
+}
+
 /* Toasts clear the floating chrome at the bottom: the desktop Dock (its
    reserved --dock-space) and the mobile tab bar capsule. */
 :root:has(nav[data-dock]) {
@@ -311,6 +338,26 @@
         textarea {
             font-size: 17px !important;
         }
+    }
+}
+
+/*
+ * Invisible touch target of at least 44×44 around a smaller control (switch
+ * 52×32, chips 36–42px, segmented tabs 38px; docs/DESIGN.md §9), so the Arus
+ * sizes stay while fingers still hit it. Uses ::before: do not combine with
+ * other before: utilities on the same element.
+ */
+@utility hit-area {
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: max(100%, 44px);
+        height: max(100%, 44px);
+        transform: translate(-50%, -50%);
     }
 }
 
@@ -647,6 +694,22 @@
     .doc-prose blockquote {
         border-left: 3px solid var(--border-strong);
         padding-left: 0.9rem;
+    }
+
+    /* Screenshots (only served by the preview guide, /pratinjau/panduan). */
+    .doc-prose img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 0.75rem 0;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--surface-2);
+    }
+
+    /* Phone screenshots (390 px wide at 2x) stay phone-sized. */
+    .doc-prose img[src*='-ponsel'] {
+        width: 300px;
     }
 
     .doc-prose hr {

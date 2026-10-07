@@ -16,6 +16,10 @@ enum NotificationType: string
     case TaskDueSoon = 'task.due_soon';
     case TaskOverdue = 'task.overdue';
 
+    // Obrolan (F2-1): new message in a DM / group (mentions use Mention)
+    case ChatMessage = 'chat.message';
+    // Otomasi (F2-4): "beri tahu" action of a workspace automation rule
+    case AutomationNotify = 'automation.notify';
     // Requests & approvals (Sprint 4)
     case RequestSubmitted = 'request.submitted';
     case RequestApproved = 'request.approved';
@@ -36,6 +40,25 @@ enum NotificationType: string
     case ProjectDecisionNeeded = 'project.decision_needed';
     case ProjectDecisionResolved = 'project.decision_resolved';
 
+    // OKR divisi (F3-3): weekly check-in reminder, objective status dropped
+    case OkrCheckinReminder = 'okr.checkin_reminder';
+    case OkrObjectiveAtRisk = 'okr.objective_at_risk';
+    // Rapat (F2-3)
+    case MeetingInvited = 'meeting.invited';
+    case MeetingStarting = 'meeting.starting';
+    case MinutesFinalized = 'minutes.finalized';
+    case ActionItemDue = 'action_item.due';
+    // Account security (owner decision 6 Oct 2026): "Lupa kata sandi" → HR,
+    // and the employee is told when HR set their password.
+    case PasswordResetRequested = 'account.password_reset_requested';
+    case PasswordSetByHr = 'account.password_set_by_hr';
+    // Laporan progres harian (keputusan pemilik 6 Okt 2026): 16.30 reminder.
+    case ReportReminder = 'report.reminder';
+    // Hiring (owner decision 6 Oct 2026, docs/fitur/hiring.md)
+    case HiringCandidateReceived = 'hiring.candidate_received';
+    case HiringDecisionNeeded = 'hiring.decision_needed';
+    case HiringCandidateDecided = 'hiring.candidate_decided';
+
     // System (Sprint 8)
     case SystemAnnouncement = 'system.announcement';
     case SystemTest = 'system.test';
@@ -48,6 +71,8 @@ enum NotificationType: string
             self::TaskCommented => 'Komentar',
             self::TaskDueSoon => 'Tenggat besok',
             self::TaskOverdue => 'Tenggat terlewat',
+            self::ChatMessage => 'Pesan baru',
+            self::AutomationNotify => 'Otomasi',
             self::RequestSubmitted => 'Pengajuan baru',
             self::RequestApproved => 'Pengajuan disetujui',
             self::RequestRejected => 'Pengajuan ditolak',
@@ -61,6 +86,18 @@ enum NotificationType: string
             self::ProjectDirection => 'Arahan Direksi',
             self::ProjectDecisionNeeded => 'Butuh keputusan',
             self::ProjectDecisionResolved => 'Keputusan diberikan',
+            self::OkrCheckinReminder => 'Pengingat check-in OKR',
+            self::OkrObjectiveAtRisk => 'Objective berisiko',
+            self::MeetingInvited => 'Undangan rapat',
+            self::MeetingStarting => 'Rapat segera dimulai',
+            self::MinutesFinalized => 'Notulen rapat',
+            self::ActionItemDue => 'Tindak lanjut rapat',
+            self::PasswordResetRequested => 'Permintaan reset kata sandi',
+            self::PasswordSetByHr => 'Kata sandi diatur ulang',
+            self::ReportReminder => 'Pengingat laporan harian',
+            self::HiringCandidateReceived => 'Kandidat baru',
+            self::HiringDecisionNeeded => 'Keputusan kandidat',
+            self::HiringCandidateDecided => 'Kandidat diputus',
             self::SystemAnnouncement => 'Pengumuman',
             self::SystemTest => 'Notifikasi uji',
         };
@@ -77,6 +114,8 @@ enum NotificationType: string
             self::TaskCommented => NotificationEvent::TaskCommented,
             self::TaskDueSoon => NotificationEvent::TaskDueSoon,
             self::TaskOverdue => NotificationEvent::TaskOverdue,
+            self::ChatMessage => NotificationEvent::ChatMessage,
+            self::AutomationNotify => NotificationEvent::Automation,
             self::RequestSubmitted, self::RequestCanceled => NotificationEvent::RequestPending,
             self::RequestApproved, self::RequestRejected, self::RequestRevisionRequested => NotificationEvent::RequestDecided,
             self::CheckInReminder => NotificationEvent::CheckInReminder,
@@ -85,6 +124,11 @@ enum NotificationType: string
             self::ConsentRevoked => NotificationEvent::System,
             self::ProjectUpdateReminder, self::ProjectUpdateRequested, self::ProjectDirection,
             self::ProjectDecisionNeeded, self::ProjectDecisionResolved => NotificationEvent::ProjectActivity,
+            self::OkrCheckinReminder, self::OkrObjectiveAtRisk => NotificationEvent::OkrActivity,
+            self::MeetingInvited, self::MeetingStarting, self::MinutesFinalized, self::ActionItemDue => NotificationEvent::Meeting,
+            self::PasswordResetRequested, self::PasswordSetByHr => NotificationEvent::AccountSecurity,
+            self::ReportReminder => NotificationEvent::ReportReminder,
+            self::HiringCandidateReceived, self::HiringDecisionNeeded, self::HiringCandidateDecided => NotificationEvent::HiringActivity,
             self::SystemAnnouncement, self::SystemTest => NotificationEvent::System,
         };
     }
@@ -102,7 +146,8 @@ enum NotificationType: string
         return match ($this) {
             self::TaskAssigned => 'plus',
             self::Mention => 'at-sign',
-            self::TaskCommented => 'message',
+            self::TaskCommented, self::ChatMessage => 'message',
+            self::AutomationNotify => 'workflow',
             self::TaskDueSoon => 'calendar-clock',
             self::TaskOverdue => 'alert',
             self::RequestSubmitted => 'check-check',
@@ -116,6 +161,16 @@ enum NotificationType: string
             self::ProjectDirection => 'message',
             self::ProjectDecisionNeeded => 'alert',
             self::ProjectDecisionResolved => 'check-check',
+            self::OkrCheckinReminder => 'alarm',
+            self::OkrObjectiveAtRisk => 'target',
+            self::MeetingInvited, self::MeetingStarting => 'video',
+            self::MinutesFinalized => 'notebook',
+            self::ActionItemDue => 'calendar-clock',
+            self::PasswordResetRequested, self::PasswordSetByHr => 'key',
+            self::ReportReminder => 'clipboard',
+            self::HiringCandidateReceived => 'user-plus',
+            self::HiringDecisionNeeded => 'check-check',
+            self::HiringCandidateDecided => 'user-check',
             self::SystemAnnouncement => 'megaphone',
             self::SystemTest => 'bell',
         };
@@ -131,11 +186,16 @@ enum NotificationType: string
             self::RequestSubmitted, self::SystemAnnouncement => 'info',
             self::RequestApproved => 'success',
             self::TaskDueSoon, self::RequestRevisionRequested, self::CheckInReminder, self::CheckOutReminder, self::ConsentRevoked,
-            self::ProjectUpdateReminder, self::ProjectUpdateRequested => 'warning',
+            self::ProjectUpdateReminder, self::ProjectUpdateRequested, self::OkrCheckinReminder, self::OkrObjectiveAtRisk, self::PasswordResetRequested, self::ReportReminder => 'warning',
+            self::PasswordSetByHr => 'info',
             self::TaskOverdue, self::RequestRejected => 'danger',
             self::ProjectDirection, self::ProjectDecisionNeeded => 'info',
             self::ProjectDecisionResolved => 'success',
-            self::TaskAssigned, self::TaskCommented, self::RequestCanceled => 'neutral',
+            self::MeetingInvited, self::MinutesFinalized => 'info',
+            self::MeetingStarting, self::ActionItemDue => 'warning',
+            self::HiringCandidateReceived, self::HiringDecisionNeeded, self::HiringCandidateDecided => 'info',
+            self::TaskAssigned, self::TaskCommented, self::RequestCanceled, self::ChatMessage => 'neutral',
+            self::AutomationNotify => 'primary',
         };
     }
 
@@ -147,7 +207,7 @@ enum NotificationType: string
     {
         return match ($this) {
             self::TaskOverdue, self::RequestSubmitted, self::RequestRevisionRequested,
-            self::ProjectUpdateRequested, self::ProjectDecisionNeeded => true,
+            self::ProjectUpdateRequested, self::ProjectDecisionNeeded, self::ActionItemDue, self::PasswordResetRequested, self::HiringDecisionNeeded => true,
             default => false,
         };
     }

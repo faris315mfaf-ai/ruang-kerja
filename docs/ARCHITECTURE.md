@@ -102,13 +102,17 @@ Aturan: pemohon tidak bisa menyetujui pengajuannya sendiri. Jika penyetuju = pem
 - **Unggah:** unggah resumable langsung dari server ke folder workspace (batas 100 MB per file di Fase 1).
 - Pratinjau di aplikasi memakai URL `…/preview` dalam iframe untuk file Google.
 
+### 3.7 Webhook Google Form (Hiring, keputusan pemilik 6 Okt 2026)
+- Google Apps Script di Form lowongan mengirim `POST /api/hiring/form/{token}` (rute di `routes/hiring.php`, **tanpa** middleware sesi/cookie/CSRF/Inertia; `throttle:60,1`). Badan JSON `{response_id, submitted_at, answers[], files[]}` ditandatangani `X-RuangKerja-Signature` = hex HMAC-SHA256 badan mentah dengan `hiring_positions.webhook_secret` (cast `encrypted`).
+- `FormWebhookController` → `WebhookSignature::verify` (401) → status lowongan (410 bila ditutup) → `ReceiveFormSubmission` (idempoten per `response_id` lewat indeks unik, pemetaan field `FormSubmissionMapper`, checklist awal, audit `hiring.candidate_received`, notifikasi in-app ke HR). Tidak ada panggilan Google API dari server.
+
 ## 4. Otorisasi
 
 | Lapisan | Mekanisme |
 |---|---|
 | Peran global | `spatie/laravel-permission` (`super_admin`, `direksi`, `hr`, `kepala_divisi`, `anggota`) |
 | Cakupan data | Policy + query scope: `Attendance::visibleTo($user)` → diri sendiri; bawahan langsung; divisi bila Kadiv; semua bila HR/Direksi/Super Admin |
-| Workspace | `WorkspacePolicy` membaca `workspace_members.role` + aturan visibilitas. Direksi: lihat semua non-pribadi. Workspace pribadi hanya pemilik (bahkan Super Admin tidak bisa membaca isi) |
+| Workspace | `WorkspacePolicy` membaca `workspace_members.role` + aturan visibilitas. Direksi, HR (`workspaces.view_all`) dan Super Admin: lihat semua non-pribadi; bila bukan anggota **mode lihat saja** (`WorkspacePolicy::isViewOnly`, keputusan pemilik 6 Okt 2026). Workspace pribadi hanya pemilik (bahkan Super Admin tidak bisa membaca isi) |
 | Data sensitif | Melihat selfie membutuhkan izin `attendance.view_selfie` (HR & atasan langsung) dan **selalu** dicatat `audit_logs` |
 | Broadcast | `routes/channels.php` memakai Policy yang sama |
 
@@ -117,8 +121,11 @@ Uji wajib: setiap Policy punya test matriks peran × aksi.
 ## 5. Keamanan & privasi
 
 - Sesi cookie `HttpOnly`, `Secure`, `SameSite=Lax`. CSRF untuk semua POST.
-- Rate limit: login kata sandi 10/menit/IP (+5/menit per email+IP); callback login Google 60/menit/IP + 10/menit per sesi (puluhan karyawan berbagi NAT kantor); check-in 6/menit/user, API umum 120/menit. IP klien dibaca di belakang proxy tepercaya (`TRUSTED_PROXIES`, default rentang privat).
-- Sesi: cookie `SESSION_SECURE_COOKIE=true` (wajib di produksi, HTTPS). Middleware `AuthenticateSession` aktif; mengganti kata sandi (Super Admin) memanggil `logoutOtherDevices` sehingga perangkat lain keluar pada request berikutnya.
+- **Login (keputusan pemilik 6 Okt 2026):** semua karyawan aktif masuk dengan email + kata sandi lewat Fortify (`AuthenticateEmployee`): satu pesan galat generik + timebox 200 ms untuk semua kegagalan (email tak dikenal, sandi salah/belum diatur, akun nonaktif), audit `user.login_failed` untuk akun yang dikenal. TOTP wajib hanya untuk Super Admin (`EnsureTwoFactorForSuperAdmin`; rute 2FA & konfirmasi sandi hanya Super Admin lewat `RestrictCredentialRoutes` + `UserPolicy::manageTwoFactor`). Login Google ditahan (rute `auth.google.*` & kode tetap, tidak ditampilkan).
+- **Kata sandi:** aturan `PasswordValidationRules` (min 8 + bukan email; produksi `uncompromised()`). Ganti sendiri (`ChangeOwnPassword`, audit `user.password_changed`). HR mengatur (`SetEmployeePassword`, Policy `UserPolicy::setPassword`, audit `user.password_set_by_hr` tanpa nilai, notifikasi `account.password_set_by_hr`); opsi `users.password_change_required` → `EnsurePasswordChanged` mengarahkan semua halaman ke Pengaturan › Keamanan sampai diganti.
+- **Lupa kata sandi dengan persetujuan HR** (`routes/password-reset.php`, `/lupa-sandi`): `RequestPasswordReset` (timebox 400 ms, baris `password_reset_requests` hanya untuk karyawan aktif, token permintaan acak di sesi — DB menyimpan hash SHA-256, permintaan lama dibatalkan) → notifikasi "Perlu tindakan" `account.password_reset_requested` ke HR (permintaan Super Admin ke Super Admin lain; tanpa HR aktif → Super Admin) → halaman tunggu mem-polling `GET /lupa-sandi/status` (`{status}` saja; email tak dikenal & permintaan yang digantikan selalu `pending` lalu `expired` setelah 24 jam) → `DecidePasswordReset` (HR, alasan wajib saat menolak, audit, notifikasi diselesaikan) → status `approved` menerbitkan setup token sekali pakai ke sesi yang sama (30 menit) → `CompletePasswordReset` (sandi baru, semua sesi lain keluar, audit `user.password_reset_completed`) → login otomatis (Super Admin ber-TOTP diarahkan ke login agar kode tetap diminta). Job `ExpirePasswordResetRequests` (tiap jam) mengedaluwarsakan permintaan & menghapus yang selesai > 90 hari. Alur reset tautan email Fortify dihapus.
+- Rate limit: login kata sandi 10/menit/IP (+5/menit per email+IP); lupa sandi 5/menit/IP + 5/jam per email, cek status 30/menit per permintaan, simpan sandi baru 6/menit/IP; ubah sandi sendiri 6/menit; HR atur sandi 20/menit; callback login Google (ditahan) 60/menit/IP + 10/menit per sesi; check-in 6/menit/user, API umum 120/menit. IP klien dibaca di belakang proxy tepercaya (`TRUSTED_PROXIES`, default rentang privat).
+- Sesi: cookie `SESSION_SECURE_COOKIE=true` (wajib di produksi, HTTPS). Middleware `AuthenticateSession` aktif: sesi menyimpan hash sandi, jadi setiap penggantian sandi (sendiri, oleh HR, atau lupa sandi) mengeluarkan perangkat lain pada request berikutnya; ganti sendiri memanggil `logoutOtherDevices` (perangkat ini tetap masuk), HR & lupa sandi juga merotasi `remember_token` (`SessionTerminator`).
 - Header keamanan dipasang **aplikasi** (`SecurityHeaders`, `config/security.php`) agar berlaku di balik proxy apa pun: HSTS (produksi), CSP ketat dengan nonce (izinkan domain Google untuk Picker, OAuth, pratinjau Drive, avatar), `Permissions-Policy` hanya `geolocation=(self), camera=(self)`. Caddy menambah header dasar hanya bila belum ada. Checklist: `docs/security/ASVS-L1.md`.
 - Selfie: disk privat, URL bertanda tangan 5 menit, job bulanan menghapus selfie lebih lama dari retensi.
 - Token Google: cast `encrypted`. `APP_KEY` dirotasi dengan `APP_PREVIOUS_KEYS`.
