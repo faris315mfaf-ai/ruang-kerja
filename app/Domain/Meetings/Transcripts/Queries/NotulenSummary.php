@@ -24,9 +24,29 @@ final class NotulenSummary
     ) {}
 
     /**
+     * Room / pre-join / detail prop (NotulenBridge): null when the meeting
+     * cannot use notulen otomatis right now — not a video meeting, or the
+     * worker is not configured and the switch is off. No queries then.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function for(Occurrence $occurrence, User $viewer): ?array
+    {
+        $meeting = $occurrence->meeting;
+
+        if (! $this->config->availableFor($meeting) && ! NotulenConfig::autoMinutes($meeting)) {
+            return null;
+        }
+
+        return $this->summary($occurrence, $viewer);
+    }
+
+    /**
+     * Always the full summary (status endpoint, review page, actions).
+     *
      * @return array<string, mixed>
      */
-    public function for(Occurrence $occurrence, User $viewer, ?MeetingTranscript $transcript = null): array
+    public function summary(Occurrence $occurrence, User $viewer, ?MeetingTranscript $transcript = null): array
     {
         $meeting = $occurrence->meeting;
         $transcript ??= MeetingTranscript::query()->forOccurrence($meeting->id, $occurrence->date)->first();
