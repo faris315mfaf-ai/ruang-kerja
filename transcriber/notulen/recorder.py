@@ -148,9 +148,25 @@ class LiveKitRecorder:
         if speaker is not None:
             speaker.close()
 
+    def set_excluded(self, identity: str, excluded: bool) -> None:
+        """The app relays a consent change ("Jangan transkrip suara saya")."""
+        if excluded:
+            self.excluded.add(identity)
+        else:
+            self.excluded.discard(identity)
+        participant = self.room.remote_participants.get(identity) if self.room else None
+        if participant is not None:
+            self._reevaluate(participant)
+        elif excluded:
+            speaker = self.speakers.pop(identity, None)
+            if speaker is not None:
+                speaker.drop()
+
     def _on_attributes(self, changed: dict[str, str], participant: rtc.Participant) -> None:
-        if not isinstance(participant, rtc.RemoteParticipant):
-            return
+        if isinstance(participant, rtc.RemoteParticipant):
+            self._reevaluate(participant)
+
+    def _reevaluate(self, participant: rtc.RemoteParticipant) -> None:
         if not self._allowed(participant):
             for sid, publication in participant.track_publications.items():
                 task = self.readers.pop(sid, None)

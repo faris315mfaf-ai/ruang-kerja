@@ -72,6 +72,12 @@ class FakeRecorder:
         for track in self.speakers.values():
             track.close()
 
+    def set_excluded(self, identity: str, excluded: bool) -> None:
+        if excluded:
+            track = self.speakers.pop(identity, None)
+            if track is not None:
+                track.drop()
+
     def manifest_speakers(self) -> dict:
         return {identity: t.to_manifest() for identity, t in self.speakers.items()}
 

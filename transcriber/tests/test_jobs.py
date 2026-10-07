@@ -45,6 +45,17 @@ async def test_excluded_people_are_never_recorded(coordinator, fakes):
     assert {s["speaker_identity"] for s in app.posts[-1]["segments"]} == {"01HZA"}
 
 
+async def test_opt_out_during_the_meeting_deletes_that_persons_audio(coordinator, fakes, settings):
+    _, app = fakes
+    await coordinator.join(ROOM, "jwt")
+    assert coordinator.exclude(ROOM, "01HZA", True) == "applied"
+    assert coordinator.exclude("rk-01hzx3k9q2w8e7r6t5y4v3m2n9-20261007", "01HZA", True) == "unknown"
+    assert len(list(settings.spool_dir.rglob("*.wav"))) == 1
+    await coordinator.finish(ROOM)
+    await drain(coordinator)
+    assert {s["speaker_identity"] for s in app.posts[-1]["segments"]} == {"01HZB"}
+
+
 async def test_failed_transcription_reports_and_still_deletes_audio(settings):
     app = FakeApp()
     coordinator = Coordinator(settings, FakeTranscriber(fail=True), app, FakeRecorder)

@@ -2,6 +2,7 @@
 
     GET  /health                 liveness + queue (no secrets, no room names)
     POST /rooms/{room}/join      {"action": "join", "room", "token", "exclude": [identities]}
+    POST /rooms/{room}/exclude   {"action": "exclude", "room", "identity", "excluded": true}
     POST /rooms/{room}/finish    {"action": "finish", "room"}
 
 Both POSTs are HMAC-signed (``signing``); the body must name the same room and action
@@ -82,6 +83,19 @@ async def join(request: web.Request) -> web.Response:
     return web.json_response({"status": status}, status=200 if status == "already" else 202)
 
 
+async def exclude(request: web.Request) -> web.Response:
+    data = await _signed_body(request, "exclude")
+    if isinstance(data, web.Response):
+        return data
+    identity = data.get("identity")
+    excluded = data.get("excluded")
+    if not isinstance(identity, str) or not identity or not isinstance(excluded, bool):
+        return _error(422, "identity and excluded required")
+    status = request.app[COORDINATOR].exclude(data["room"], identity, excluded)
+    # Not recording this room right now: nothing to do (the next join carries the list).
+    return web.json_response({"status": status}, status=200)
+
+
 async def finish(request: web.Request) -> web.Response:
     data = await _signed_body(request, "finish")
     if isinstance(data, web.Response):
@@ -97,6 +111,7 @@ def create_app(settings: Settings, coordinator: Coordinator) -> web.Application:
     app[GUARD] = ReplayGuard(settings.tolerance_seconds * 2)
     app.router.add_get("/health", health)
     app.router.add_post("/rooms/{room}/join", join)
+    app.router.add_post("/rooms/{room}/exclude", exclude)
     app.router.add_post("/rooms/{room}/finish", finish)
 
     async def on_startup(_: web.Application) -> None:

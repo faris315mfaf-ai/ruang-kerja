@@ -38,6 +38,8 @@ class Recorder(Protocol):
 
     def manifest_speakers(self) -> dict[str, Any]: ...
 
+    def set_excluded(self, identity: str, excluded: bool) -> None: ...
+
 
 RecorderFactory = Callable[[Settings, str, str, Path, Iterable[str], Callable[[str], None]], Recorder]
 
@@ -149,6 +151,13 @@ class Coordinator:
         session.state = "recording"
         self._spawn(self.app.post(self._status(session, "recording"), attempts=2))
         return "joining"
+
+    def exclude(self, room: str, identity: str, excluded: bool) -> str:
+        session = self.sessions.get(room)
+        if session is None or session.recorder is None or session.state not in ("joining", "recording"):
+            return "unknown"
+        session.recorder.set_excluded(identity, excluded)
+        return "applied"
 
     async def finish(self, room: str, reason: str = "app") -> str:
         session = self.sessions.get(room)

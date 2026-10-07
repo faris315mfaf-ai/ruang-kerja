@@ -32,6 +32,13 @@ async def test_join_and_finish_with_a_valid_signature(client):
     response = await client.post(f"/rooms/{ROOM}/join", data=body, headers=headers)
     assert response.status == 202 and (await response.json())["status"] == "joining"
 
+    body, headers = signed({"action": "exclude", "room": ROOM, "identity": "01HZA", "excluded": True})
+    response = await client.post(f"/rooms/{ROOM}/exclude", data=body, headers=headers)
+    assert response.status == 200 and (await response.json())["status"] == "applied"
+
+    body, headers = signed({"action": "exclude", "room": ROOM, "identity": "01HZA"})
+    assert (await client.post(f"/rooms/{ROOM}/exclude", data=body, headers=headers)).status == 422
+
     body, headers = signed({"action": "finish", "room": ROOM})
     response = await client.post(f"/rooms/{ROOM}/finish", data=body, headers=headers)
     assert response.status == 202
