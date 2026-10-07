@@ -31,12 +31,9 @@ type Channel = {
     leaving(callback: (member: PresenceMember) => void): Channel;
     listenForWhisper(
         event: string,
-        callback: (
-            payload: ViewingWhisper,
-            meta?: { user_id?: string },
-        ) => void,
+        callback: (payload: never, meta?: { user_id?: string }) => void,
     ): Channel;
-    whisper(event: string, payload: ViewingWhisper): Channel;
+    whisper(event: string, payload: object): Channel;
 };
 
 type Publisher = {
@@ -57,11 +54,19 @@ type Store = {
     channel: Channel | null;
     subscribed: boolean;
     publishers: Set<Publisher>;
+    /** Pending answer to a `sync` whisper. */
+    syncTimer: number | undefined;
     expiry: number | undefined;
     stopConnection: (() => void) | undefined;
 };
 
 const WHISPER = 'viewing';
+/**
+ * Sent by a fresh subscriber: everyone with a task open answers with their
+ * `viewing` whisper. Covers a second tab of someone already in the channel,
+ * for whom the presence `joining` event does not fire.
+ */
+const SYNC = 'sync';
 const stores = new Map<string, Store>();
 
 function emit(store: Store): void {
@@ -137,18 +142,30 @@ function subscribe(store: Store, workspaceId: string): void {
                 store.subscribed = true;
                 dispatch(store, { type: 'here', members, now: Date.now() });
                 republishAll(store);
+
+                try {
+                    channel.whisper(SYNC, {});
+                } catch {
+                    // Heartbeats fill the board in within HEARTBEAT_MS.
+                }
             })
-            .joining((member) => {
-                dispatch(store, { type: 'joining', member });
-                // Tell the newcomer what is open here (small jitter so a
-                // whole board does not answer in the same millisecond).
-                window.setTimeout(
-                    () => republishAll(store),
-                    200 + Math.random() * 600,
+            .joining((member) => dispatch(store, { type: 'joining', member }))
+            .leaving((member) => dispatch(store, { type: 'leaving', member }))
+            .listenForWhisper(SYNC, () => {
+                if (store.publishers.size === 0 || store.syncTimer) {
+                    return;
+                }
+
+                // Small jitter so a whole board does not answer at once.
+                store.syncTimer = window.setTimeout(
+                    () => {
+                        store.syncTimer = undefined;
+                        republishAll(store);
+                    },
+                    100 + Math.random() * 400,
                 );
             })
-            .leaving((member) => dispatch(store, { type: 'leaving', member }))
-            .listenForWhisper(WHISPER, (payload, meta) =>
+            .listenForWhisper(WHISPER, (payload: ViewingWhisper, meta) =>
                 dispatch(store, {
                     type: 'whisper',
                     userId:
@@ -187,6 +204,7 @@ function acquire(workspaceId: string): Store {
             channel: null,
             subscribed: false,
             publishers: new Set(),
+            syncTimer: undefined,
             expiry: undefined,
             stopConnection: undefined,
         };
@@ -208,6 +226,7 @@ function release(workspaceId: string, store: Store): void {
 
     stores.delete(workspaceId);
     window.clearTimeout(store.expiry);
+    window.clearTimeout(store.syncTimer);
     store.stopConnection?.();
 
     try {

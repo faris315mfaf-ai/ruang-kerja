@@ -91,7 +91,7 @@ export const TaskCardContent = memo(function TaskCardContent({
     return (
         <div className={cn('flex flex-col gap-3', className)}>
             <div className="flex items-center gap-2">
-                <span className="font-mono text-[14px] font-semibold text-text-muted">
+                <span className="shrink-0 font-mono text-[14px] font-semibold whitespace-nowrap text-text-muted">
                     {task.key}
                 </span>
                 {note ? (
@@ -99,7 +99,7 @@ export const TaskCardContent = memo(function TaskCardContent({
                         · {note}
                     </span>
                 ) : (
-                    <TypingNote presence={presence} />
+                    <TypingNote presence={presence} short />
                 )}
                 <span className="ml-auto flex shrink-0 items-center gap-2">
                     <ViewerAvatars presence={presence} />

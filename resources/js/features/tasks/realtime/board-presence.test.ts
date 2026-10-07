@@ -8,6 +8,7 @@ import {
     nextExpiry,
     presenceReducer,
     selectTaskPresence,
+    typingInCommentOnly,
     typingLabel,
     viewersLabel,
 } from './board-presence';
@@ -370,5 +371,57 @@ describe('labels', () => {
                 ],
             }),
         ).toBe('sedang diedit oleh Sari +1');
+    });
+
+    it('tells comment typing from description editing', () => {
+        expect(typingInCommentOnly(undefined)).toBe(false);
+        expect(
+            typingInCommentOnly({
+                viewers: [sari],
+                typing: [{ member: sari, field: 'comment' }],
+            }),
+        ).toBe(true);
+        expect(
+            typingInCommentOnly({
+                viewers: [rizky, sari],
+                typing: [
+                    { member: rizky, field: 'comment' },
+                    { member: sari, field: 'description' },
+                ],
+            }),
+        ).toBe(false);
+    });
+
+    it('has a short variant for narrow board cards', () => {
+        expect(
+            typingLabel(
+                {
+                    viewers: [sari],
+                    typing: [{ member: sari, field: 'description' }],
+                },
+                'short',
+            ),
+        ).toBe('mengetik…');
+        expect(
+            typingLabel(
+                {
+                    viewers: [sari],
+                    typing: [{ member: sari, field: 'comment' }],
+                },
+                'short',
+            ),
+        ).toBe('mengetik…');
+        expect(
+            typingLabel(
+                {
+                    viewers: [rizky, sari],
+                    typing: [
+                        { member: rizky, field: 'comment' },
+                        { member: sari, field: 'comment' },
+                    ],
+                },
+                'short',
+            ),
+        ).toBe('mengetik…');
     });
 });

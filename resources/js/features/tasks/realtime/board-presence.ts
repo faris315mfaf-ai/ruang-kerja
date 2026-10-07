@@ -383,11 +383,28 @@ export function viewersLabel(viewers: PresenceMember[]): string | null {
 }
 
 /**
- * Typing hint of a card: "sedang diedit oleh Sari" (description, or several
- * people: "sedang diedit oleh Sari +1"); "Sari sedang berkomentar" when the
- * only typist writes a comment.
+ * Typing hint. Full (list rows, tooltips, aria-labels): "sedang diedit oleh
+ * Sari" (description, or several people: "sedang diedit oleh Sari +1"),
+ * "Sari sedang berkomentar" when the only typist writes a comment. Short
+ * (narrow board cards, next to the typist's avatar; the icon tells
+ * description from comment): "mengetik…".
  */
-export function typingLabel(presence: TaskPresence | undefined): string | null {
+/** True when everyone typing in this task writes a comment (not the description). */
+export function typingInCommentOnly(
+    presence: TaskPresence | undefined,
+): boolean {
+    const typists = presence?.typing ?? [];
+
+    return (
+        typists.length > 0 &&
+        typists.every((entry) => entry.field === 'comment')
+    );
+}
+
+export function typingLabel(
+    presence: TaskPresence | undefined,
+    variant: 'full' | 'short' = 'full',
+): string | null {
     const typists = presence?.typing ?? [];
 
     if (typists.length === 0) {
@@ -397,12 +414,14 @@ export function typingLabel(presence: TaskPresence | undefined): string | null {
     const editor =
         typists.find((entry) => entry.field === 'description') ?? typists[0];
     const first = firstName(editor.member.name);
+    const commentOnly = typists.length === 1 && editor.field === 'comment';
+    const others = typists.length > 1 ? ` +${typists.length - 1}` : '';
 
-    if (typists.length === 1 && editor.field === 'comment') {
-        return `${first} sedang berkomentar`;
+    if (variant === 'short') {
+        return 'mengetik…';
     }
 
-    return typists.length === 1
-        ? `sedang diedit oleh ${first}`
-        : `sedang diedit oleh ${first} +${typists.length - 1}`;
+    return commentOnly
+        ? `${first} sedang berkomentar`
+        : `sedang diedit oleh ${first}${others}`;
 }

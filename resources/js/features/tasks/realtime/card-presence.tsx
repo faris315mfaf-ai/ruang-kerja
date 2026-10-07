@@ -1,8 +1,12 @@
-import { Pencil } from 'lucide-react';
+import { MessageSquare, Pencil } from 'lucide-react';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { cn } from '@/lib/utils';
 import type { TaskPresence } from './board-presence';
-import { typingLabel, viewersLabel } from './board-presence';
+import {
+    typingInCommentOnly,
+    typingLabel,
+    viewersLabel,
+} from './board-presence';
 
 /**
  * Who else has this task open (board card, list row): at most two 20px
@@ -26,7 +30,14 @@ export function ViewerAvatars({
         return null;
     }
 
-    const shown = viewers.slice(0, 2);
+    // Typists first: on cards their avatar names who "mengedit…".
+    const typists = new Set(
+        (presence?.typing ?? []).map((entry) => entry.member.id),
+    );
+    const shown = [
+        ...viewers.filter((person) => typists.has(person.id)),
+        ...viewers.filter((person) => !typists.has(person.id)),
+    ].slice(0, 2);
     const rest = viewers.length - shown.length;
     const ring =
         on === 'card'
@@ -71,35 +82,53 @@ export function ViewerAvatars({
     );
 }
 
-/** "· sedang diedit oleh Sari" next to the task key (pencil pulses unless reduced motion). */
+/**
+ * Typing hint next to the task key. Board cards are narrow: "mengetik…"
+ * next to the typist's avatar, pencil = description, speech bubble =
+ * comment; list rows say "sedang diedit oleh Sari" (short on phones with
+ * `short="mobile"`). The icon pulses unless reduced motion; the full
+ * sentence is in the tooltip and aria-label.
+ */
 export function TypingNote({
     presence,
+    short = false,
     className,
 }: {
     presence: TaskPresence | undefined;
+    short?: boolean | 'mobile';
     className?: string;
 }) {
-    const label = typingLabel(presence);
+    const full = typingLabel(presence);
+    const compact = typingLabel(presence, 'short');
 
-    if (!label) {
+    if (!full || !compact) {
         return null;
     }
+
+    const Icon = typingInCommentOnly(presence) ? MessageSquare : Pencil;
 
     return (
         <span
             aria-hidden
-            title={label}
+            title={full}
             data-presence="typing"
             className={cn(
                 'inline-flex min-w-0 animate-in items-center gap-1 text-meta font-medium text-primary duration-180 ease-brand fade-in-0',
                 className,
             )}
         >
-            <Pencil
+            <Icon
                 className="size-3.5 shrink-0 motion-safe:animate-pulse"
                 aria-hidden
             />
-            <span className="truncate">{label}</span>
+            {short === 'mobile' ? (
+                <>
+                    <span className="truncate md:hidden">{compact}</span>
+                    <span className="hidden truncate md:inline">{full}</span>
+                </>
+            ) : (
+                <span className="truncate">{short ? compact : full}</span>
+            )}
         </span>
     );
 }
@@ -108,8 +137,9 @@ export function TypingNote({
 export function presenceDescription(
     presence: TaskPresence | undefined,
 ): string {
+    const viewers = viewersLabel(presence?.viewers ?? []);
     const parts = [
-        viewersLabel(presence?.viewers ?? [])?.toLowerCase(),
+        viewers && viewers.charAt(0).toLowerCase() + viewers.slice(1),
         typingLabel(presence),
     ].filter((part): part is string => Boolean(part));
 

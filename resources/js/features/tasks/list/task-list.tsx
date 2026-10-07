@@ -167,7 +167,11 @@ function TaskRow({
                 <span className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-[14px] text-text-muted">
                     <span className="font-mono font-semibold">{row.key}</span>
                     <ViewerAvatars presence={presence} on="surface" />
-                    <TypingNote presence={presence} className="max-w-full" />
+                    <TypingNote
+                        presence={presence}
+                        short="mobile"
+                        className="max-w-full"
+                    />
                     {row.parent_key && (
                         <span className="text-text-subtle">
                             ↳ {row.parent_key}
