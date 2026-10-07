@@ -61,6 +61,46 @@ services:
     ports:
       - "${COLLAB_PORT:-1234}:1234"
 
+  # Video RuangKerja: LiveKit SFU untuk rapat video (docs/SETUP-LOKAL.md "Rapat video").
+  # Opsional. Jalankan: docker compose --profile video up -d livekit
+  # Browser: wss://livekit.test lewat `herd proxy livekit http://127.0.0.1:7880 --secure`.
+  # Kunci & rahasia dibaca dari .env aplikasi (LIVEKIT_API_KEY/SECRET, sama dengan Laravel).
+  # Webhook kehadiran → https://${LIVEKIT_WEBHOOK_HOST}/api/livekit/webhook (situs Herd; sertifikat
+  # Herd dipercaya lewat folder CA Herd yang di-mount, HERD_CA_DIR).
+  livekit:
+    image: livekit/livekit-server:v1.13.8
+    profiles: ["video"]
+    restart: unless-stopped
+    environment:
+      SSL_CERT_DIR: /herd-ca:/etc/ssl/certs
+      LIVEKIT_CONFIG: |
+        port: 7880
+        bind_addresses: ["0.0.0.0"]
+        log_level: info
+        rtc:
+          tcp_port: 7881
+          port_range_start: 50000
+          port_range_end: 50100
+          use_external_ip: false
+          node_ip: 127.0.0.1
+        keys:
+          ${LIVEKIT_API_KEY:-devkey}: ${LIVEKIT_API_SECRET:-ruangkerja-livekit-dev-secret-0123456789}
+        room:
+          empty_timeout: 300
+          departure_timeout: 20
+        webhook:
+          api_key: ${LIVEKIT_API_KEY:-devkey}
+          urls:
+            - https://${LIVEKIT_WEBHOOK_HOST:-ruangkerja.test}/api/livekit/webhook
+    extra_hosts:
+      - "${LIVEKIT_WEBHOOK_HOST:-ruangkerja.test}:host-gateway"
+    volumes:
+      - "${HERD_CA_DIR:-${HOME}/Library/Application Support/Herd/config/valet/CA}:/herd-ca:ro"
+    ports:
+      - "127.0.0.1:${LIVEKIT_PORT:-7880}:7880"
+      - "127.0.0.1:7881:7881"
+      - "127.0.0.1:50000-50100:50000-50100/udp"
+
 volumes:
   pgdata:
   redisdata:

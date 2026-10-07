@@ -199,6 +199,29 @@ Aplikasi disajikan di `https://ruangkerja.test`, dan browser selalu memaksa `wss
 - Setelah mengubah nilai `REVERB_*`, jalankan `php artisan config:clear` dan build ulang aset (`npm run build`) atau restart `npm run dev`, karena nilai `VITE_REVERB_*` dibaca saat build.
 - Cek cepat tanpa browser: `curl --http1.1 -H "Connection: Upgrade" -H "Upgrade: websocket" -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" "https://ruangkerja.test:8081/app/<REVERB_APP_KEY>?protocol=7"` harus menjawab `101`.
 
+### Rapat video (Video RuangKerja, LiveKit lokal)
+
+Opsional; tanpa langkah ini pilihan "Video RuangKerja" di formulir rapat tersembunyi dan rapat video menampilkan catatan "belum disiapkan". Fitur: `docs/fitur/rapat-kalender.md` §6a; produksi: `docs/deploy/RAPAT-VIDEO.md`.
+
+1. **Server LiveKit** (Docker, profil `video`, image `livekit/livekit-server:v1.13.8`; konfigurasi di `compose.yml` › `livekit`): `docker compose --profile video up -d livekit`. Port hanya di 127.0.0.1: 7880 (WebSocket/HTTP), 7881/tcp, 50000–50100/udp (media). Agen paralel: pakai nama proyek sendiri agar stack bersama tidak tersentuh, mis. `docker compose -p ruangkerja-<agen>-video --profile video up -d livekit` (hanya satu LiveKit lokal bisa memegang port 7880).
+2. **WSS untuk browser** (halaman `https://*.test` hanya boleh membuka `wss://`): `herd proxy livekit http://127.0.0.1:7880 --secure` → `wss://livekit.test`. Proxy Herd (nginx) meneruskan header `Upgrade`, jadi WebSocket jalan (sudah diuji). Cek: `curl -s https://livekit.test` → `OK`.
+3. **`.env`** (lalu `php artisan config:clear`):
+
+```dotenv
+LIVEKIT_URL=wss://livekit.test
+LIVEKIT_API_URL=http://127.0.0.1:7880
+LIVEKIT_API_KEY=devkey
+LIVEKIT_API_SECRET=ruangkerja-livekit-dev-secret-0123456789
+# Situs Herd yang menerima webhook kehadiran (worktree agen: ruangkerja-<agen>.test)
+LIVEKIT_WEBHOOK_HOST=ruangkerja.test
+```
+
+   `compose.yml` membaca `.env` yang sama, jadi kunci LiveKit dan Laravel selalu cocok. Setelah mengubah `LIVEKIT_*`, jalankan ulang `docker compose --profile video up -d livekit`.
+4. **Webhook kehadiran** (LiveKit → `https://<LIVEKIT_WEBHOOK_HOST>/api/livekit/webhook`): container menjangkau Herd lewat `extra_hosts: <host>:host-gateway`, dan sertifikat Herd dipercaya dengan me-mount folder CA Herd (`HERD_CA_DIR`, bawaan `~/Library/Application Support/Herd/config/valet/CA`, dibaca lewat `SSL_CERT_DIR`). Sudah diuji di macOS + OrbStack: detail rapat menampilkan "2 orang di ruang rapat". Di Windows isi `HERD_CA_DIR` dengan folder CA Herd Windows; bila webhook tetap gagal, kehadiran tidak tercatat lokal (rapat tetap jalan) dan handler-nya tetap teruji lewat Pest (`tests/Feature/Meetings/MeetingVideoTest.php`, payload bertanda tangan).
+5. **Coba**: `php artisan db:seed --class=MeetingDemoSeeder` membuat seri video "Sinkron harian Tim Gudang" (Sen–Jum 10.00, penyelenggara `kadiv@demo.test` — penyelenggara bisa masuk kapan saja; peserta 09.45–12.30). Buka detail rapat → **Gabung rapat video** → izinkan kamera/mikrofon → **Gabung sekarang**. Dua orang: jendela biasa + jendela samaran dengan akun `anggota@demo.test`.
+6. **Uji otomatis dua pengguna** (kamera/mikrofon palsu Chromium): `E2E_BASE_URL=https://ruangkerja.test E2E_MEETING=<id rapat video yang sedang terbuka> node tests/e2e/rapat-video-two-users.mjs` → JSON hasil + screenshot di `storage/app/ui-shots/rapat-video/`.
+7. **Selesai**: `docker compose --profile video stop livekit` (atau `-p ruangkerja-<agen>-video down`) dan `herd unproxy livekit` bila tidak dipakai lagi.
+
 ## 11. Bergantian dengan Codex
 
 Repo ini siap dikerjakan Claude Code dan Codex bergantian (mis. saat kuota salah satu habis). Aturan bersama ada di `AGENTS.md` (dibaca Codex langsung; Claude Code lewat `CLAUDE.md`).

@@ -47,3 +47,8 @@ E2E_BASE_URL=https://ruangkerja.test node tests/e2e/realtime-two-users.mjs
 ## Kehadiran per kartu board (dua pengguna, manual)
 
 `node tests/e2e/board-presence-two-users.mjs` membuka board `/w/PLQ` sebagai Dimas dan tugas PLQ-21 sebagai Rizky, lalu memeriksa avatar, petunjuk "mengetik…", dan hilangnya kehadiran saat sheet/tab ditutup. Butuh Reverb berjalan (`php artisan reverb:start`), tidak butuh queue worker.
+
+## Skrip manual dua pengguna
+
+- `realtime-two-users.mjs`, `board-presence-two-users.mjs`: realtime tugas (butuh Reverb).
+- `rapat-video-two-users.mjs`: Video RuangKerja — Dimas (desktop, terang) dan Rizky (ponsel, malam) bergabung ke ruang LiveKit yang sama dengan kamera/mikrofon palsu Chromium; memeriksa ubin peserta lain, video jarak jauh berputar, angkat tangan, chat, bisukan oleh penyelenggara, jumlah di ruang dari webhook, keluar. Butuh LiveKit lokal (`docs/SETUP-LOKAL.md` › "Rapat video") dan `E2E_MEETING` = rapat video yang sedang dalam jendela gabung.
