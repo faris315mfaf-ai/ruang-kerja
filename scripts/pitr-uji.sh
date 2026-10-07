@@ -13,7 +13,10 @@
 #   1. first full backup (pitr service on start)    5. note T, then batch C + delete half of A
 #   2. table pitr_uji + batch A (100 rows)          6. wal-check --deep (WAL reaches S3)
 #   3. differential backup                          7. pitr-restore --time T into postgres-restore
-#   4. batch B (100 rows)                           8. row set == row set at T  → PASS
+#   4. batch B (100 rows)                           8. row set == row set at T
+#   9. the restored copy wrote nothing to the repository
+#  10. S3 down → wal-check ALERT + `pitr health` unhealthy; S3 back → ok
+#  11. side copy with `docker run` + pitr-restore --latest == current database → PASS
 #
 # Everything (containers, volumes incl. the S3 data, image, temp folder) is
 # removed at the end; --keep leaves the stack running for inspection
@@ -56,7 +59,9 @@ cleanup() {
         compose logs --no-color --tail 40 postgres pitr postgres-restore >&2 2> /dev/null || true
     fi
     echo "[pitr-uji] tearing down project $PROJECT (containers + volumes)"
+    docker rm -f "${PROJECT}-pulih" > /dev/null 2>&1 || true
     [ -f "$work/env" ] && compose down -v --remove-orphans > /dev/null 2>&1 || true
+    docker volume rm "${PROJECT}_pulih" > /dev/null 2>&1 || true
     docker image rm "ruangkerja-postgres:$TAG" > /dev/null 2>&1 || true
     rm -rf "$work"
     exit "$status"
@@ -219,5 +224,24 @@ done
 [ "$recovered" -eq 1 ] || { cat "$work/check.log" >&2; fail "wal-check did not recover after S3 came back"; }
 compose exec -T pitr pitr health > /dev/null 2>&1 || fail "pitr health still unhealthy after a good check"
 echo "    S3 back: wal-check ok, pitr health ok"
+
+# --- 11. Side copy with plain `docker run` (PITR.md §5c), replay to the end ----------
+log "11. side copy (docs/deploy/PITR.md §5c): docker run + pitr-restore --latest"
+compose exec -T pitr wal-check --deep > /dev/null 2>&1 || fail "wal-check --deep failed before the side copy"
+latest=$(pg -c "$rowset")
+compose exec -T pitr env | grep '^PGBACKREST_' > "$work/pitr.env"
+image="ruangkerja-postgres:$TAG"
+side=(--network "${PROJECT}_default" --env-file "$work/pitr.env" -e PITR_ENABLED=false -v "$work/tls:/tls:ro" -v "${PROJECT}_pulih:/var/lib/postgresql/data")
+docker run --rm "${side[@]}" "$image" pitr-restore --latest 2>&1 | grep -E 'restore backup set|restore command end' | sed 's/^/    /'
+docker run -d --name "${PROJECT}-pulih" "${side[@]}" -e POSTGRES_PASSWORD=unused "$image" > /dev/null
+side_rows=""
+for _ in $(seq 1 90); do
+    side_rows=$(docker exec "${PROJECT}-pulih" psql -U ruangkerja -d ruangkerja -XAtq -c "select case when pg_is_in_recovery() then 'recovering' else ($rowset) end" 2> /dev/null || true)
+    case "$side_rows" in *rows*) break ;; esac
+    sleep 2
+done
+echo "    original now : $latest"
+echo "    side copy    : $side_rows"
+[ "$side_rows" = "$latest" ] || fail "side copy (--latest) differs from the current database"
 
 log "PASS: point-in-time restore to $target reproduced the exact row set ($got)"
