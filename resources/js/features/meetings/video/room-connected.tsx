@@ -63,6 +63,7 @@ import {
     shortcutAction,
     shortcutLabel,
 } from './lib';
+import { CAPTION_SOURCE } from './captions';
 import { BarKey, ControlBar, LeaveKey } from './room-bar';
 import { CaptionBox, useCaptions } from './room-captions';
 import type { DocPresence } from './room-doc';
@@ -93,6 +94,9 @@ const NoteEditor = lazy(() =>
         default: module.NoteEditor,
     })),
 );
+
+/** The auto-minutes worker is not a person: no tile, notice or bar. */
+const isAgent = (identity: string) => identity === CAPTION_SOURCE;
 
 /** LiveKit attribute: which part of the minutes this person is typing in. */
 const PRESENCE_ATTRIBUTE = 'rk_minutes_at';
@@ -190,20 +194,25 @@ function useCameras(): { cameras: TileRef[]; activeKey: string | null } {
     const speakers = useSpeakingParticipants();
     const last = useRef<string | null>(null);
 
-    if (speakers[0]) {
-        last.current = speakers[0].identity;
+    // Like Meet: the widest tile is the last *other* person who spoke.
+    const speaker = speakers.find((p) => !p.isLocal && !isAgent(p.identity));
+
+    if (speaker) {
+        last.current = speaker.identity;
     }
 
     const cameras = useMemo(
         () =>
-            [...tracks].sort(
-                (a, b) =>
-                    (people.get(a.participant.identity)?.seat ?? 99) -
-                        (people.get(b.participant.identity)?.seat ?? 99) ||
-                    a.participant.identity.localeCompare(
-                        b.participant.identity,
-                    ),
-            ),
+            tracks
+                .filter((ref) => !isAgent(ref.participant.identity))
+                .sort(
+                    (a, b) =>
+                        (people.get(a.participant.identity)?.seat ?? 99) -
+                            (people.get(b.participant.identity)?.seat ?? 99) ||
+                        a.participant.identity.localeCompare(
+                            b.participant.identity,
+                        ),
+                ),
         [tracks, people],
     );
     const active =
@@ -268,8 +277,12 @@ function NotesAvatarsLive() {
             RoomEvent.ActiveSpeakersChanged,
         ],
     });
-    const speaking = participants.find((p) => p.isSpeaking);
-    const present = participants.map((p) => resolvePerson(people, p.identity));
+    const speaking = participants.find(
+        (p) => p.isSpeaking && !isAgent(p.identity),
+    );
+    const present = participants
+        .filter((p) => !isAgent(p.identity))
+        .map((p) => resolvePerson(people, p.identity));
 
     return (
         <div className="flex shrink-0 items-center gap-1.5 px-4 pt-3 pb-3">
@@ -323,7 +336,7 @@ function TalkLive({
             ...roster.attendance.map((row) => row.user_id),
             ...silent,
         ]),
-    ];
+    ].filter((id) => !isAgent(id));
     const rows = talkRows(totals, ids);
 
     return (
@@ -946,8 +959,9 @@ export function ConnectedRoom({
     useEffect(() => {
         const name = (p: Participant) => resolvePerson(people, p.identity).name;
         const onJoin = (p: Participant) =>
-            emitRoomNotice(`${name(p)} bergabung`);
-        const onLeft = (p: Participant) => emitRoomNotice(`${name(p)} keluar`);
+            !isAgent(p.identity) && emitRoomNotice(`${name(p)} bergabung`);
+        const onLeft = (p: Participant) =>
+            !isAgent(p.identity) && emitRoomNotice(`${name(p)} keluar`);
         const onAttributes = (
             changed: Record<string, string>,
             p: Participant,
@@ -1154,6 +1168,13 @@ export function ConnectedRoom({
             onTab={setTab}
             notesUnseen={notesUnseen}
             stage={<MobileStageLive screen={screen} />}
+            chip={
+                <LiveChip
+                    autoMinutes={autoMinutes}
+                    subtitles={captionsAvailable}
+                    className="mx-4 mt-2 self-start"
+                />
+            }
             doc={<DocLive room={room} variant="sheet" />}
             captions={
                 <CaptionsLive
@@ -1252,7 +1273,10 @@ function DesktopRoom({
                 <div className="min-w-0 flex-1">
                     <StripLive compact={presenting} />
                 </div>
-                {clock}
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                    {clock}
+                    {!wide && !presenting && chip}
+                </div>
             </header>
 
             {presenting ? (
@@ -1261,8 +1285,10 @@ function DesktopRoom({
                         <ScreenShare trackRef={screen} />
                     </div>
                     <div className="flex min-h-0 flex-col gap-2">
-                        <span className="flex items-center justify-between gap-2 pl-2.5 text-[13px] font-semibold text-text-muted">
-                            Notulen tetap bisa diketik
+                        <span className="flex flex-wrap items-center justify-between gap-2 pl-2.5 text-[13px] font-semibold text-text-muted">
+                            <span className="whitespace-nowrap">
+                                Notulen tetap bisa diketik
+                            </span>
                             {chip}
                         </span>
                         {paper}
@@ -1326,6 +1352,7 @@ function MobileRoom({
     onTab,
     notesUnseen,
     stage,
+    chip,
     doc,
     captions,
     bar,
@@ -1336,6 +1363,7 @@ function MobileRoom({
     onTab: (tab: 'video' | 'notes') => void;
     notesUnseen: boolean;
     stage: ReactNode;
+    chip: ReactNode;
     doc: ReactNode;
     captions: ReactNode;
     bar: ReactNode;
@@ -1375,6 +1403,7 @@ function MobileRoom({
                     </button>
                 ))}
             </div>
+            {chip}
 
             {tab === 'video' ? (
                 <div

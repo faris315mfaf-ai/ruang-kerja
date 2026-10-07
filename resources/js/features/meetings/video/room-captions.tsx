@@ -166,7 +166,7 @@ export function CaptionBox({
     return (
         <div
             className={cn(
-                'pointer-events-none flex flex-col gap-1 rounded-lg bg-caption px-[18px] py-3 text-on-caption shadow-float',
+                'pointer-events-none flex flex-col gap-1 rounded-lg bg-caption px-[18px] py-3 text-on-caption shadow-float backdrop-blur-md',
                 lines.length === 0 && 'invisible',
                 className,
             )}

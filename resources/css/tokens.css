@@ -137,7 +137,7 @@
   --room-key: #172131;
   --on-room-bar: #EAF1F8;
   --tile-off: #DDE4EC;
-  --caption: rgb(7 11 20 / 0.78);
+  --caption: rgb(7 11 20 / 0.86);
   --on-caption: #FFFFFF;
   --caption-muted: #A6B4C6;
   --caption-name-a: #5AD6C8;
@@ -278,7 +278,7 @@
   --room-bar: #1A2537;
   --room-key: #26344A;
   --tile-off: #172131;
-  --caption: rgb(15 22 34 / 0.92);
+  --caption: rgb(35 50 71 / 0.94);
 
   --glass-border: rgb(255 255 255 / 0.1);
   color-scheme: dark;
