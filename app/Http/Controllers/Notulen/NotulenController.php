@@ -66,7 +66,7 @@ class NotulenController extends Controller
                     : null,
             ],
             'people' => $feed->people([$occurrence], [], [$user->id]),
-            'notulen' => $this->summary->for($occurrence, $user),
+            'notulen' => $this->summary->summary($occurrence, $user),
             'workspaces' => fn (): array => $meeting->workspace_id === null ? $workspaces->for($user) : [],
         ]);
     }
@@ -195,7 +195,7 @@ class NotulenController extends Controller
 
     private function summaryResponse(Occurrence $occurrence, User $user, ?MeetingTranscript $transcript = null): JsonResponse
     {
-        return response()->json($this->summary->for($occurrence, $user, $transcript))->header('Cache-Control', 'no-store');
+        return response()->json($this->summary->summary($occurrence, $user, $transcript))->header('Cache-Control', 'no-store');
     }
 
     /**

@@ -193,7 +193,7 @@ Segmen **tidak** ikut props (diaudit, diambil lewat `GET …/transkrip` saat hal
 
 ## 3. Pra-gabung & ruang (UI rapatui, backend rapatbe)
 
-- **Prop Inertia `notulen`** (`NotulenSummary`, atau `null` bila rapat bukan video) pada `meetings/show`, `meetings/join`, `meetings/room`: dibuat dengan `app(\App\Domain\Meetings\Transcripts\Queries\NotulenSummary::class)->for($occurrence, $user)`. Sampai rapatbe menambahkannya, UI boleh memanggil `GET …/status`.
+- **Prop Inertia `notulen`** pada `meetings/join` dan `meetings/room` (lewat `NotulenBridge` milik rapatbe, sudah tergabung): `NotulenSummary::for($occurrence, $user)` → `NotulenSummary` §2.1, atau **`null`** bila rapat bukan video, atau server notulen belum diatur **dan** `auto_minutes` mati (tanpa query DB). `room.features.auto_minutes` = `available && auto_minutes`. Detail rapat dan halaman `notulen-otomatis` memakai `GET …/status` / prop halaman (selalu objek penuh, `NotulenSummary::summary()`).
 - **Kartu persetujuan pra-gabung** ("Notulen otomatis aktif", toggle "Jangan transkrip suara saya"): tampil bila `available && auto_minutes`. Toggle → `PUT …/persetujuan {opted_out}` **sebelum** meminta token; aplikasi meneruskannya ke worker (worker langsung berhenti merekam orang itu dan menghapus audionya bila sudah terlanjur).
 - **Di ruang**: chip "Notulen otomatis aktif" (+ "· Subtitle ID" di tahap 2) dan toggle yang sama (menu/panel) → `PUT …/persetujuan`. Tidak ada langkah LiveKit di klien; server langsung memberi tahu worker (worker berhenti merekam orang itu dan menghapus audionya).
 - **Token peserta (rapatbe, `IssueVideoToken`)**: **jangan** menaruh pilihan opt-out di atribut/metadata token (privat). `metadata.auto_minutes` boleh (sama untuk semua orang).
@@ -214,7 +214,9 @@ Hanya: judul rapat, tanggal, judul agenda, baris transkrip bernomor `[i] mm:ss N
 | `consent` (opt-out sendiri) | ✓ | ✓ | ✓ | 403 | 404 |
 | `manage` (masukkan, buang, ringkas ulang, jadikan tugas) | ✓ | ✓ | 403 | 403 | 404 |
 
-Rapat dibatalkan: `configure`/`consent` 403. "Jadikan tugas" juga butuh `WorkspacePolicy::editTasks` di workspace tujuan.
+Rapat dibatalkan: `configure`/`consent` 403.
+
+**Notulen live**: "Masukkan ke notulen" menyimpan lewat `SaveMinutes` (rapatbe), yang memanggil `MinutesCollab::replaceLive()` (editor kolaboratif yang sedang terbuka menerima isi baru) dan `RoomEvents::minutesChanged()` (event `minutes.updated` di kanal `meeting.{id}`); tiap tindak lanjut yang ditambahkan juga memicu `minutes.updated`. **Atribut `rk_notulen_optout`** di whitelist `SetOwnAttributes` (rapatbe) **tidak dipakai** dan sebaiknya dihapus: pilihan opt-out privat (server → worker). "Jadikan tugas" juga butuh `WorkspacePolicy::editTasks` di workspace tujuan.
 
 ## 5. Server ke server (untuk referensi; UI tidak memanggil)
 
