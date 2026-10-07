@@ -69,7 +69,7 @@ Catatan: persona di data contoh **tetap** (mis. Obrolan selalu dilihat sebagai D
 | Karyawan, HR, pengelola data | [rapat-video-privasi.md](rapat-video-privasi.md) | Privasi & UU PDP: data yang direkam/ditranskrip, retensi, siapa yang melihat, penyedia AI di luar Indonesia, menolak, permintaan hapus, daftar periksa sebelum produksi |
 | Pengembang & semua peran | [rapat-kalender.md](rapat-kalender.md) | Jadwal, notulen, kalender, dan ringkasan teknis Video RuangKerja (§6a) |
 | Admin server | `docs/deploy/RAPAT-VIDEO.md` (Admin › Dokumentasi › "Operasional rapat video") | Server LiveKit, webhook, worker transkripsi, kunci `.env`, LLM, tahap 2 GPU, runbook |
-| Pengembang (kontrak) | `docs/fitur/rapat-video-kontrak.md`, `docs/fitur/notulen-otomatis-kontrak.md` | Props & endpoint ruang rapat dan notulen otomatis (dibuat agen backend; menyusul) |
+| Pengembang (kontrak) | `docs/fitur/rapat-video-kontrak.md`, `docs/fitur/notulen-otomatis-kontrak.md` | Props, endpoint, dan event ruang rapat arah C serta notulen otomatis (pemilik: agen backend; saat ini di branch `claude/rapat-backend` dan `claude/notulen-otomatis`) |
 
 Gambar di setiap dokumen ada di `docs/fitur/img/<modul>/` dengan pola `<layar>-desktop.jpg` (1440×900 terang), `<layar>-desktop-malam.jpg` (1440×900 Malam), dan `<layar>-ponsel.jpg` (390×844, skala 2). Semua dibuat ulang dengan:
 
