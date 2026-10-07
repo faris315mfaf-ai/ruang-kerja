@@ -228,7 +228,15 @@ export function minutesPropsFor(room: Room, minutes: RoomMinutes) {
         minutes: minutes.doc,
         people: room.people,
         workspaces: room.meeting.workspace ? [room.meeting.workspace] : [],
-        can: { edit: minutes.can_edit, reopen: false },
+        // Structured parts (follow-ups → tasks) stay with the minute taker and
+        // organizer; in collab mode `can_edit` only means "may type text".
+        can: {
+            edit:
+                minutes.mode === 'collab'
+                    ? (minutes.can_edit_attendance ?? minutes.can_finalize)
+                    : minutes.can_edit,
+            reopen: false,
+        },
     };
 }
 

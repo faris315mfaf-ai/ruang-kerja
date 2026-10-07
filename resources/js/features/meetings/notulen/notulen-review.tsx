@@ -698,6 +698,16 @@ export function NotulenReview({
                 )}
                 {canAct ? (
                     <>
+                        {summary.llm.enabled && (
+                            <Button
+                                variant="quiet"
+                                disabled={state.busy !== null}
+                                onClick={() => void state.resummarize()}
+                            >
+                                <RefreshCw aria-hidden />
+                                Ringkas ulang
+                            </Button>
+                        )}
                         <Button
                             variant="outline"
                             disabled={state.busy !== null}

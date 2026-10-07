@@ -1,6 +1,6 @@
 /**
- * Video RuangKerja — two people join the same LiveKit room with fake camera &
- * microphone (manual check, needs the local LiveKit: docs/SETUP-LOKAL.md
+ * Video RuangKerja "Notulen Hidup" (arah C) — two people join the same
+ * LiveKit room with fake camera & microphone (manual check, needs the local LiveKit: docs/SETUP-LOKAL.md
  * "Rapat video"). Prints a JSON result and writes screenshots.
  *
  *   E2E_BASE_URL=https://ruangkerja-rapat.test E2E_MEETING=<ulid> \
@@ -140,34 +140,67 @@ await a.waitForTimeout(1500);
 await a.screenshot({ path: `${OUT}/dimas-desktop-room.png` });
 await b.screenshot({ path: `${OUT}/rizky-mobile-room.png` });
 
-// Raise hand (Rizky) → Dimas sees the hand on the tile.
+// Arah C: the live minutes are in the centre for both, with the navigator
+// and "Waktu bicara" on desktop and the Video | Notulen tabs on the phone.
+await a.getByTestId('minutes-doc').waitFor({ timeout: 10000 });
+await a.getByRole('navigation', { name: 'Bagian notulen' }).waitFor();
+await a.getByTestId('talk-time').waitFor();
+await b.getByRole('tab', { name: /Notulen/ }).click();
+await b.getByTestId('minutes-doc').waitFor({ timeout: 10000 });
+results.minutesInRoom = true;
+await b.screenshot({ path: `${OUT}/rizky-mobile-notulen.png` });
+await b.getByRole('tab', { name: /Video/ }).click();
+
+// The organizer types in the minutes → Rizky sees it after the autosave
+// (LiveKit nudge / minutes.updated → GET …/notulen/data).
+const marker = `Uji e2e ${Date.now()}`;
+const field = a.getByRole('textbox', { name: /^Catatan / }).first();
+
+if (await field.count()) {
+    await field.click();
+    await field.press('End');
+    await field.type(` ${marker}`);
+    await b.getByRole('tab', { name: /Notulen/ }).click();
+    await b.getByText(marker, { exact: false }).waitFor({ timeout: 15000 });
+    results.minutesLive = true;
+    await b.getByRole('tab', { name: /Video/ }).click();
+}
+
+// Raise hand (Rizky, through the server: POST …/video/tangan) → Dimas sees
+// the hand badge on the tile.
 await b.getByRole('button', { name: 'Angkat tangan' }).click();
 await a
-    .getByText('Angkat tangan', { exact: true })
+    .getByText(/mengangkat tangan/)
     .first()
-    .waitFor({ timeout: 5000 });
+    .waitFor({ timeout: 8000 });
 results.handRaised = true;
 
-// Chat from Dimas → Rizky opens chat through "Opsi lainnya".
-await a.getByRole('button', { name: 'Chat' }).click();
+// Chat from Dimas → Rizky opens "Obrolan" from the bar.
+await a.getByRole('button', { name: 'Obrolan' }).click();
 await a.getByLabel('Kirim pesan ke semua orang').fill('Halo dari Dimas');
 await a.getByRole('button', { name: 'Kirim pesan' }).click();
-await b.getByRole('button', { name: 'Opsi lainnya' }).click();
-await b.getByRole('menuitem', { name: /Chat/ }).click();
+await b.getByRole('button', { name: 'Obrolan' }).click();
 await b.getByText('Halo dari Dimas').waitFor({ timeout: 5000 });
 results.chatDelivered = true;
 await b.screenshot({ path: `${OUT}/rizky-mobile-chat.png` });
-await b.getByRole('button', { name: /Tutup chat/ }).click();
+await b.getByRole('button', { name: /Tutup obrolan/ }).click();
+await a.getByRole('button', { name: /Tutup obrolan/ }).click();
 
-// People panel + organizer mutes Rizky.
-await a.getByRole('button', { name: 'Orang' }).click();
+// Kehadiran panel + organizer mutes Rizky.
+await a.getByRole('button', { name: 'Kehadiran' }).click();
+await a.getByTestId('attendance').waitFor();
 await a.waitForTimeout(500);
-await a.screenshot({ path: `${OUT}/dimas-desktop-people.png` });
-await a.getByRole('button', { name: /^Bisukan / }).click();
-await b
-    .getByRole('button', { name: 'Nyalakan mikrofon' })
-    .waitFor({ timeout: 5000 });
-results.organizerMuted = true;
+await a.screenshot({ path: `${OUT}/dimas-desktop-kehadiran.png` });
+const moderate = a.getByRole('button', { name: /^Moderasi / }).first();
+
+if (await moderate.count()) {
+    await moderate.click();
+    await a.getByRole('menuitem', { name: /^Bisukan / }).click();
+    await b
+        .getByRole('button', { name: 'Nyalakan mikrofon' })
+        .waitFor({ timeout: 8000 });
+    results.organizerMuted = true;
+}
 
 // Detail page shows people in the room (LiveKit webhook → attendance).
 const detail = await browser.newContext({ ignoreHTTPSErrors: true });

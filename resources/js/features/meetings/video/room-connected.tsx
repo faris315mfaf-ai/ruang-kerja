@@ -55,7 +55,7 @@ import { cn } from '@/lib/utils';
 import { useNow } from '../meetings-context';
 import { ConsentCard, LiveChip, useConsent } from '../notulen/consent';
 import type { AttendanceRoster } from './api';
-import { videoApi } from './api';
+import { RoomApiError, videoApi } from './api';
 import type { Room } from './contract';
 import { attendanceRows, navigatorSections } from './contract';
 import {
@@ -983,15 +983,9 @@ export function ConnectedRoom({
         intervalSeconds: room.speaking?.interval_seconds ?? 15,
     });
 
-    const consent = useConsent(room.notulen, (optedOut) =>
-        room.links.attributes
-            ? void videoApi
-                  .attributes(room.links.attributes, {
-                      rk_notulen_optout: optedOut ? '1' : '0',
-                  })
-                  .catch(() => undefined)
-            : undefined,
-    );
+    // The choice is private: only the server tells the worker (contract
+    // notulen §2.1), never a LiveKit attribute everyone in the room can read.
+    const consent = useConsent(room.notulen);
     const [editingHolder, setEditingHolder] =
         useState<MinutesEditingHolder | null>(room.minutes?.editing ?? null);
     const autoMinutes = room.features.auto_minutes;
@@ -1082,14 +1076,22 @@ export function ConnectedRoom({
                     ),
                 }));
             })
-            .catch((error: unknown) =>
+            .catch((error: unknown) => {
                 emitRoomNotice(
                     error instanceof ApiError
                         ? error.message
                         : 'Panggilan gagal. Coba lagi.',
                     'error',
-                ),
-            )
+                );
+
+                // 429: "Lukman baru saja dipanggil" — keep the button off
+                // for the cooldown the server gives.
+                return error instanceof RoomApiError && error.retryAfter
+                    ? new Promise((resolve) =>
+                          window.setTimeout(resolve, error.retryAfter! * 1000),
+                      )
+                    : undefined;
+            })
             .finally(() =>
                 setCalling((set) => {
                     const next = new Set(set);

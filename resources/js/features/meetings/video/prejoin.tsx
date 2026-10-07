@@ -1,4 +1,5 @@
 import { Link, router } from '@inertiajs/react';
+import { echo, echoIsConfigured } from '@laravel/echo-react';
 import {
     useMediaDevices,
     usePersistentUserChoices,
@@ -453,6 +454,38 @@ export function PreJoinScreen({
             setError(null);
         }
     }, [tracks]);
+
+    // Someone else picked the notes source: show their choice (contract §5).
+    const channel = room.features.realtime ? room.channel : null;
+    const date = meeting.occurrence_date;
+
+    useEffect(() => {
+        if (!channel) {
+            return;
+        }
+
+        try {
+            if (!echoIsConfigured()) {
+                return;
+            }
+
+            const instance = echo();
+            instance
+                .private(channel)
+                .listen(
+                    '.minutes.source_chosen',
+                    (event: { occurrence_date?: string }) => {
+                        if (event.occurrence_date === date) {
+                            router.reload({ only: ['room'] });
+                        }
+                    },
+                );
+
+            return () => instance.leave(channel);
+        } catch {
+            return undefined;
+        }
+    }, [channel, date]);
 
     const toggleMic = () => saveAudioInputEnabled(!userChoices.audioEnabled);
     const toggleCamera = () => saveVideoInputEnabled(!userChoices.videoEnabled);

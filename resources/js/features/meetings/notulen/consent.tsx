@@ -8,11 +8,16 @@ import { notulenApi } from './api';
 import type { NotulenSummary } from './types';
 
 /**
- * What happens to the audio, all from the contract props (lead decision):
- * audio deleted after transcription · transcript N days, participants only
- * · summary processed by <provider> outside Indonesia (when it is).
+ * What happens to the audio (UU PDP notice): the server's `notice_points`;
+ * built from the props when an older server sends none — audio deleted after
+ * transcription · transcript N days, participants only · summary processed
+ * by <provider> outside Indonesia (when it is).
  */
 export function consentLines(notulen: NotulenSummary): string[] {
+    if (notulen.notice_points?.length) {
+        return notulen.notice_points;
+    }
+
     return [
         'Suara Anda ditranskrip setelah rapat; audio dihapus setelah transkripsi.',
         `Transkrip disimpan ${notulen.retention_days} hari, hanya untuk peserta.`,
@@ -105,9 +110,11 @@ export function ConsentCard({
                     <h2 id={`${id}-title`} className="text-[14px] font-bold">
                         Notulen otomatis aktif
                     </h2>
-                    <p className="text-[12px] leading-[17px] text-text-muted">
-                        {consentLines(notulen).join(' ')}
-                    </p>
+                    <ul className="text-[12px] leading-[17px] text-text-muted">
+                        {consentLines(notulen).map((line) => (
+                            <li key={line}>{line}</li>
+                        ))}
+                    </ul>
                 </div>
             </div>
             {notulen.consent.can_change && (

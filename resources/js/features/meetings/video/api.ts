@@ -43,6 +43,18 @@ function parse(data: unknown): Record<string, unknown> | null {
     }
 }
 
+/** ApiError + `retry_after` (seconds) of a 429 (Panggil cooldown). */
+export class RoomApiError extends ApiError {
+    constructor(
+        message: string,
+        status: number,
+        errors: Record<string, string[]>,
+        public readonly retryAfter: number | null,
+    ) {
+        super(message, status, errors);
+    }
+}
+
 function failure(status: number, data: unknown): ApiError {
     const body = parse(data);
     const errors = (body?.errors ?? {}) as Record<string, string[]>;
@@ -54,7 +66,14 @@ function failure(status: number, data: unknown): ApiError {
         FALLBACK[status] ??
         'Terjadi kesalahan. Coba lagi sebentar lagi.';
 
-    return new ApiError(message, status, errors);
+    const retry = Number(body?.retry_after);
+
+    return new RoomApiError(
+        message,
+        status,
+        errors,
+        Number.isFinite(retry) && retry > 0 ? retry : null,
+    );
 }
 
 /**

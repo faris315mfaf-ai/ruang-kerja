@@ -719,9 +719,11 @@ export function MinutesDoc({
             </section>
             {quickAdd && !data.readOnly && (
                 <QuickAdd
-                    onDecision={() => decisionInput.current?.focus()}
+                    onDecision={
+                        collabBody ? null : () => decisionInput.current?.focus()
+                    }
                     onTask={data.addItem}
-                    onPoint={addPoint}
+                    onPoint={collabBody ? null : addPoint}
                 />
             )}
         </article>
@@ -734,15 +736,22 @@ function QuickAdd({
     onTask,
     onPoint,
 }: {
-    onDecision: () => void;
+    /** null in collab mode: decisions and points are typed in the text. */
+    onDecision: (() => void) | null;
     onTask: () => void;
-    onPoint: () => void;
+    onPoint: (() => void) | null;
 }) {
-    const keys: [string, () => void][] = [
-        ['Keputusan', onDecision],
-        ['Tugas', onTask],
-        ['Poin', onPoint],
-    ];
+    const keys: [string, () => void][] = [];
+
+    if (onDecision) {
+        keys.push(['Keputusan', onDecision]);
+    }
+
+    keys.push(['Tugas', onTask]);
+
+    if (onPoint) {
+        keys.push(['Poin', onPoint]);
+    }
 
     return (
         <div className="flex gap-2 pt-2">

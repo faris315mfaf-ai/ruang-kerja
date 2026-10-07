@@ -95,27 +95,30 @@ function StatusScreen({
                     body={room.meeting.title}
                 />
             );
-        case 'left':
-        case 'ended':
+        case 'canceled':
             return (
                 <RoomMessage
                     icon={<PhoneOff />}
-                    title={
-                        status.kind === 'left'
-                            ? 'Anda keluar dari rapat'
-                            : 'Rapat sudah diakhiri'
-                    }
+                    title="Rapat dibatalkan"
+                    body="Penyelenggara membatalkan rapat ini, ruang video sudah ditutup."
+                >
+                    {back}
+                </RoomMessage>
+            );
+        case 'left':
+            return (
+                <RoomMessage
+                    icon={<PhoneOff />}
+                    title="Anda keluar dari rapat"
                     body={
                         autoMinutesOn(notulen)
                             ? 'Notulen otomatis disiapkan setelah rapat selesai. Notulis memeriksa drafnya sebelum masuk ke notulen.'
                             : room.meeting.title
                     }
                 >
-                    {status.kind === 'left' && (
-                        <Button size="lg" onClick={onRetry}>
-                            Gabung lagi
-                        </Button>
-                    )}
+                    <Button size="lg" onClick={onRetry}>
+                        Gabung lagi
+                    </Button>
                     <Button variant="outline" size="lg" asChild>
                         <Link href={room.meeting.minutes_href}>
                             Buka notulen

@@ -19,7 +19,8 @@ export type RoomStatus =
     | { kind: 'error'; message: string; canRetry: boolean }
     | { kind: 'left' }
     | { kind: 'removed' }
-    | { kind: 'ended' }
+    /** Room deleted by the server: the meeting was canceled (contract). */
+    | { kind: 'canceled' }
     | { kind: 'unsupported' };
 
 export type MediaChoices = {
@@ -187,7 +188,7 @@ export function useVideoRoom(
             }
 
             if (reason === DisconnectReason.ROOM_DELETED) {
-                setStatus({ kind: 'ended' });
+                setStatus({ kind: 'canceled' });
 
                 return;
             }
