@@ -125,8 +125,8 @@ it('lets every role change their own password and audits it without the value', 
         ->and(AuditLog::query()->where('action', 'user.updated')->count())->toBe(0);
 })->with([Role::SuperAdmin, Role::Direksi, Role::Hr, Role::KepalaDivisi, Role::Anggota]);
 
-it('enforces the password rules: at least 8 characters, confirmed, not the email, different from the current one', function (string $password, string $confirmation, string $field) {
-    $user = User::factory()->withRole(Role::Anggota)->create(['email' => 'rizky.aditya@kantor.test']);
+it('keeps the strict rules for a Super Admin: at least 8 characters, confirmed, not the email, different from the current one', function (string $password, string $confirmation, string $field) {
+    $user = User::factory()->withRole(Role::SuperAdmin)->create(['email' => 'rizky.aditya@kantor.test']);
 
     $this->actingAs($user)
         ->from(route('security.edit'))
@@ -146,8 +146,8 @@ it('enforces the password rules: at least 8 characters, confirmed, not the email
     'same as current' => ['password', 'password', 'password'],
 ]);
 
-it('explains why the email cannot be the password', function () {
-    $user = User::factory()->withRole(Role::Anggota)->create(['email' => 'rizky.aditya@kantor.test']);
+it('explains why the email cannot be the password (Super Admin)', function () {
+    $user = User::factory()->withRole(Role::SuperAdmin)->create(['email' => 'rizky.aditya@kantor.test']);
 
     $this->actingAs($user)
         ->from(route('security.edit'))

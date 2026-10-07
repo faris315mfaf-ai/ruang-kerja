@@ -128,4 +128,17 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Employee Default Password
+    |--------------------------------------------------------------------------
+    |
+    | Company-wide password new employee accounts receive (owner decision
+    | 7 Oct 2026), always with "change at first login". Empty = feature off.
+    | Never given to Super Admins. See App\Domain\Auth\Services\DefaultPassword.
+    |
+    */
+
+    'employee_default_password' => env('EMPLOYEE_DEFAULT_PASSWORD', ''),
+
 ];

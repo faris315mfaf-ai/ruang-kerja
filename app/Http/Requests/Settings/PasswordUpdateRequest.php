@@ -19,10 +19,9 @@ class PasswordUpdateRequest extends FormRequest
     public function rules(): array
     {
         $user = $this->user();
-        $email = $user instanceof User ? $user->email : null;
 
         $rules = [
-            'password' => [...$this->passwordRules($email), 'different:current_password'],
+            'password' => [...$this->passwordRules($user instanceof User ? $user : null), 'different:current_password'],
         ];
 
         // An account without a password yet (e.g. created by HR, signed in with

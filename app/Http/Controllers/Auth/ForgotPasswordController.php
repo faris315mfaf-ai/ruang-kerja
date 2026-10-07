@@ -8,6 +8,7 @@ use App\Domain\Auth\Actions\RequestPasswordReset;
 use App\Domain\Auth\Data\PasswordResetSession;
 use App\Domain\Auth\Enums\LoginMethod;
 use App\Domain\Auth\Enums\PasswordResetStatus;
+use App\Domain\Auth\Services\PasswordPolicy;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\CompletePasswordResetRequest;
 use App\Http\Requests\Auth\ForgotPasswordRequest;
@@ -17,7 +18,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -88,7 +88,7 @@ class ForgotPasswordController extends Controller
         return response()->json(['status' => $result['status']]);
     }
 
-    public function edit(Request $request): Response|RedirectResponse
+    public function edit(Request $request, PasswordPolicy $passwords): Response|RedirectResponse
     {
         $resetRequest = $this->approvedRequest($request);
 
@@ -100,7 +100,8 @@ class ForgotPasswordController extends Controller
             'email' => $resetRequest->user->email ?? $resetRequest->email,
             'name' => $resetRequest->user?->name,
             'expiresAt' => $resetRequest->setupExpiresAt()?->toIso8601String(),
-            'passwordRules' => Password::defaults()->toPasswordRulesString(),
+            'passwordRules' => $passwords->browserRules($resetRequest->user),
+            'passwordHint' => $passwords->hint($resetRequest->user),
         ]);
     }
 

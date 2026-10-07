@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Domain\Auth\Actions\DecidePasswordReset;
 use App\Domain\Auth\Actions\SetEmployeePassword;
+use App\Domain\Auth\Services\DefaultPassword;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\RejectPasswordResetRequest;
 use App\Http\Requests\Admin\SetEmployeePasswordRequest;
 use App\Models\PasswordResetRequest;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -25,17 +27,26 @@ class EmployeePasswordController extends Controller
     {
         Gate::authorize('setPassword', $employee);
 
-        $mustChange = $request->boolean('must_change');
-        $password = $setPassword->handle($user, $employee, $request->password(), $mustChange);
-
-        if ($request->password() === null) {
-            // Shown once in the dialog; never stored in plain text.
-            Inertia::flash('generatedPassword', ['employee' => $employee->name, 'password' => $password, 'mustChange' => $mustChange]);
-        }
+        $setPassword->handle($user, $employee, $request->password(), $request->boolean('must_change'));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Kata sandi {$employee->name} diperbarui. Semua perangkatnya sudah dikeluarkan."]);
 
         return back();
+    }
+
+    /**
+     * The company default password for the "Sandi bawaan" option of the dialog,
+     * fetched only when HR reveals it (never in page props, never cached).
+     * 404 while EMPLOYEE_DEFAULT_PASSWORD is empty or for a Super Admin.
+     */
+    public function defaultPassword(User $employee, DefaultPassword $defaultPassword): JsonResponse
+    {
+        Gate::authorize('setPassword', $employee);
+        abort_unless($defaultPassword->appliesTo($employee), 404);
+
+        return response()
+            ->json(['password' => $defaultPassword->value()])
+            ->header('Cache-Control', 'no-store, private');
     }
 
     public function approve(string $passwordResetRequest, #[CurrentUser] User $user, DecidePasswordReset $decide): RedirectResponse

@@ -9,14 +9,15 @@ use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * HR set a temporary password with "wajib ganti saat login berikutnya"
- * (users.password_change_required): every page redirects to Pengaturan ›
- * Keamanan until the employee chooses their own password. Only that page,
+ * The account still uses the company default password or a password HR set
+ * with "wajib ganti saat login berikutnya" (users.password_change_required):
+ * every page redirects to Pengaturan › Keamanan until the employee chooses
+ * their own password (never the default one, NotDefaultPassword). Only that page,
  * the password update, logout and theme stay reachable.
  */
 class EnsurePasswordChanged
 {
-    public const string MESSAGE = 'Ganti kata sandi sementara dari HR dengan kata sandi Anda sendiri untuk melanjutkan.';
+    public const string MESSAGE = 'Ganti kata sandi bawaan atau sementara dari HR dengan kata sandi Anda sendiri untuk melanjutkan.';
 
     /**
      * @var list<string>

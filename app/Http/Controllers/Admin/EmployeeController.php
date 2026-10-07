@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domain\Auth\Services\DefaultPassword;
 use App\Domain\Organization\Actions\CreateEmployee;
 use App\Domain\Organization\Actions\DeactivateEmployee;
 use App\Domain\Organization\Actions\ReactivateEmployee;
@@ -138,6 +139,8 @@ class EmployeeController extends Controller
                 'update' => Gate::allows('update', $employee),
                 'deactivate' => Gate::allows('deactivate', $employee),
                 'setPassword' => Gate::allows('setPassword', $employee),
+                // "Sandi bawaan" option of Atur kata sandi (EMPLOYEE_DEFAULT_PASSWORD set, not a Super Admin).
+                'setDefaultPassword' => Gate::allows('setPassword', $employee) && app(DefaultPassword::class)->appliesTo($employee),
             ],
             'passwordReset' => fn (): ?array => $this->passwordResets($user, $employee)[0] ?? null,
             'hasPassword' => $canManage ? $employee->password !== null : null,
@@ -276,6 +279,8 @@ class EmployeeController extends Controller
             'managers' => User::query()->visibleTo($user)->active()->with('position:id,name')->orderBy('name')
                 ->get(['id', 'name', 'avatar_url', 'position_id'])
                 ->map(fn (User $manager): array => EmployeePresenter::managerOption($manager))->all(),
+            // New employees get the company default password (never Super Admins).
+            'defaultPassword' => app(DefaultPassword::class)->enabled(),
         ];
     }
 

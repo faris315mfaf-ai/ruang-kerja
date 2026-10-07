@@ -2,25 +2,28 @@
 
 namespace App\Concerns;
 
-use App\Domain\Auth\Rules\NotSameAsEmail;
+use App\Domain\Auth\Services\PasswordPolicy;
+use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rules\Password;
 
 /**
- * One password policy for every way a password is set (own change, HR, forgot
- * password): Password::defaults() (min 8; production also rejects breached
- * passwords) and never the account's email address.
+ * One password policy for every way a password is chosen (own change, HR,
+ * forgot password). The rules depend on the account (PasswordPolicy):
+ * employees get "aturan bebas" (not the default password), Super Admins the
+ * strict rules (Password::defaults(), not the email, not the default password).
  */
 trait PasswordValidationRules
 {
     /**
      * Get the validation rules used to validate passwords.
      *
+     * @param  User|null  $user  the account whose password is set
      * @return array<int, Password|ValidationRule|array<mixed>|string>
      */
-    protected function passwordRules(?string $email = null): array
+    protected function passwordRules(?User $user): array
     {
-        return ['required', 'string', 'max:255', Password::default(), new NotSameAsEmail($email), 'confirmed'];
+        return app(PasswordPolicy::class)->rules($user);
     }
 
     /**
