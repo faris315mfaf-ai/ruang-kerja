@@ -11,54 +11,58 @@
 name: ruangkerja-storage
 
 x-logging: &logging
-  driver: json-file
-  options:
-    max-size: "10m"
-    max-file: "5"
+    driver: json-file
+    options:
+        max-size: '10m'
+        max-file: '5'
 
 services:
-  seaweedfs:
-    image: chrislusf/seaweedfs:${SEAWEEDFS_TAG:-4.48}
-    restart: unless-stopped
-    command:
-      - server
-      - -dir=/data
-      - -ip.bind=0.0.0.0
-      - -volume.max=0
-      - -master.volumeSizeLimitMB=1024
-      - -s3
-      - -s3.port=8333
-      - -s3.config=/etc/seaweedfs/s3.json
-    volumes:
-      - seaweed:/data
-      - ./docker/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9333/cluster/status > /dev/null || exit 1"]
-      interval: 30s
-      timeout: 5s
-      start_period: 20s
-      retries: 3
-    logging: *logging
+    seaweedfs:
+        image: chrislusf/seaweedfs:${SEAWEEDFS_TAG:-4.48}
+        restart: unless-stopped
+        command:
+            - server
+            - -dir=/data
+            - -ip.bind=0.0.0.0
+            - -volume.max=0
+            - -master.volumeSizeLimitMB=1024
+            - -s3
+            - -s3.port=8333
+            - -s3.config=/etc/seaweedfs/s3.json
+        volumes:
+            - seaweed:/data
+            - ./docker/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'wget -qO- http://127.0.0.1:9333/cluster/status > /dev/null || exit 1',
+                ]
+            interval: 30s
+            timeout: 5s
+            start_period: 20s
+            retries: 3
+        logging: *logging
 
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      S3_DOMAIN: ${S3_DOMAIN:?set S3_DOMAIN in .env}
-      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in .env}
-    volumes:
-      - ./docker/caddy/Caddyfile.storage:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      seaweedfs:
-        condition: service_healthy
-    logging: *logging
+    caddy:
+        image: caddy:2-alpine
+        restart: unless-stopped
+        ports:
+            - '80:80'
+            - '443:443'
+        environment:
+            S3_DOMAIN: ${S3_DOMAIN:?set S3_DOMAIN in .env}
+            ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in .env}
+        volumes:
+            - ./docker/caddy/Caddyfile.storage:/etc/caddy/Caddyfile:ro
+            - caddy_data:/data
+            - caddy_config:/config
+        depends_on:
+            seaweedfs:
+                condition: service_healthy
+        logging: *logging
 
 volumes:
-  seaweed:
-  caddy_data:
-  caddy_config:
+    seaweed:
+    caddy_data:
+    caddy_config:

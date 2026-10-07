@@ -1,27 +1,33 @@
 {
-  "identities": [
-    {
-      "name": "ruangkerja-app",
-      "credentials": [
-        { "accessKey": "<APP_ACCESS_KEY>", "secretKey": "<APP_SECRET_KEY>" }
-      ],
-      "actions": [
-        "Read:ruangkerja-private",
-        "Write:ruangkerja-private",
-        "List:ruangkerja-private",
-        "Tagging:ruangkerja-private"
-      ]
-    },
-    {
-      "name": "ruangkerja-backup",
-      "credentials": [
-        { "accessKey": "<BACKUP_ACCESS_KEY>", "secretKey": "<BACKUP_SECRET_KEY>" }
-      ],
-      "actions": [
-        "Read:ruangkerja-backup",
-        "Write:ruangkerja-backup",
-        "List:ruangkerja-backup"
-      ]
-    }
-  ]
+    "identities": [
+        {
+            "name": "ruangkerja-app",
+            "credentials": [
+                {
+                    "accessKey": "<APP_ACCESS_KEY>",
+                    "secretKey": "<APP_SECRET_KEY>"
+                }
+            ],
+            "actions": [
+                "Read:ruangkerja-private",
+                "Write:ruangkerja-private",
+                "List:ruangkerja-private",
+                "Tagging:ruangkerja-private"
+            ]
+        },
+        {
+            "name": "ruangkerja-backup",
+            "credentials": [
+                {
+                    "accessKey": "<BACKUP_ACCESS_KEY>",
+                    "secretKey": "<BACKUP_SECRET_KEY>"
+                }
+            ],
+            "actions": [
+                "Read:ruangkerja-backup",
+                "Write:ruangkerja-backup",
+                "List:ruangkerja-backup"
+            ]
+        }
+    ]
 }
