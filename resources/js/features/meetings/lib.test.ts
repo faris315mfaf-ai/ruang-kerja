@@ -157,6 +157,7 @@ describe('scheduling form', () => {
         minuteTakerId: ME,
         workspace: 'none',
         leadership: false,
+        autoMinutes: false,
     };
 
     it('accepts a complete form', () => {

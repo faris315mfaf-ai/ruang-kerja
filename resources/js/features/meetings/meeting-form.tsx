@@ -595,6 +595,34 @@ export function MeetingFormFields({ form }: { form: MeetingForm }) {
                 Workspace dipakai saat tindak lanjut notulen dijadikan tugas.
             </p>
 
+            {values.platform === 'video' &&
+                (form.autoMinutesEnabled || values.autoMinutes) && (
+                    <div className="flex min-h-12 items-center justify-between gap-3 rounded-[16px] border border-border px-4 py-2">
+                        <span className="flex flex-col">
+                            <span
+                                id={fid('auto-minutes')}
+                                className="text-[16px] font-bold"
+                            >
+                                Notulen otomatis
+                            </span>
+                            <span className="text-[14px] text-text-muted">
+                                Suara peserta ditranskrip setelah rapat, lalu AI
+                                menyusun draf notulen untuk diperiksa notulis.
+                                Peserta bisa menolak. Transkrip dihapus otomatis
+                                setelah 90 hari.
+                            </span>
+                        </span>
+                        <Switch
+                            size="md"
+                            checked={values.autoMinutes}
+                            onCheckedChange={(checked) =>
+                                set('autoMinutes', checked)
+                            }
+                            aria-labelledby={fid('auto-minutes')}
+                        />
+                    </div>
+                )}
+
             {form.canLead && (
                 <div className="flex min-h-12 items-center justify-between gap-3 rounded-[16px] border border-border px-4 py-2">
                     <span className="flex flex-col">

@@ -438,6 +438,8 @@ export type MeetingFormValues = {
     /** Workspace id, or 'none'. */
     workspace: string;
     leadership: boolean;
+    /** "Notulen otomatis" (video meetings, transcription server set). */
+    autoMinutes: boolean;
 };
 
 export type MeetingFormField =
