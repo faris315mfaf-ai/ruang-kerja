@@ -106,6 +106,12 @@ const isAgent = (identity: string) => identity === CAPTION_SOURCE;
 /** LiveKit attribute: which part of the minutes this person is typing in. */
 const PRESENCE_ATTRIBUTE = 'rk_minutes_at';
 
+/**
+ * "Not typing". The contract clears with "", but Laravel turns "" into null
+ * and the server answers 422, so a neutral value is sent instead.
+ */
+const PRESENCE_OFF = 'off';
+
 const SHORTCUTS = [
     ['toggle-mic', 'Nyalakan/matikan mikrofon'],
     ['toggle-camera', 'Nyalakan/matikan kamera'],
@@ -486,7 +492,7 @@ function DocLive({
         const at = participant.attributes[PRESENCE_ATTRIBUTE];
         const person = people.get(participant.identity);
 
-        if (!at || !person) {
+        if (!at || at === PRESENCE_OFF || !person) {
             continue;
         }
 
@@ -499,11 +505,18 @@ function DocLive({
 
     // Where I am typing: LiveKit attribute (debounced) for the name flags,
     // plus the autosave "X sedang menyunting" heartbeat every 15 s.
+    const sent = useRef<string | null>(null);
+
     useEffect(() => {
-        const id = window.setTimeout(
-            () => void setOwn({ [PRESENCE_ATTRIBUTE]: focused ?? '' }),
-            400,
-        );
+        // Nothing to clear before I first typed somewhere.
+        if (focused === sent.current) {
+            return;
+        }
+
+        const id = window.setTimeout(() => {
+            sent.current = focused;
+            void setOwn({ [PRESENCE_ATTRIBUTE]: focused ?? PRESENCE_OFF });
+        }, 400);
 
         return () => window.clearTimeout(id);
     }, [focused, setOwn]);

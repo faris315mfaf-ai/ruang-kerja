@@ -8,7 +8,11 @@
  *
  * E2E_MEETING = a `video` meeting organized by kadiv@demo.test (Dimas) with
  * anggota@demo.test (Rizky) invited, inside the join window (now between 15
- * minutes before the start and 2 hours after the end).
+ * minutes before the start and 2 hours after the end). E2E_OBSERVER = a third
+ * invited demo account that opens the detail page (default maya.lestari@).
+ * Checks the arah C room: minutes in the centre (desktop) and in the phone's
+ * Notulen tab, live minutes after the organizer types, raised hand through
+ * the server, chat, Kehadiran + mute, attendance on the detail page, leave.
  */
 import { mkdirSync } from 'node:fs';
 import { chromium } from '@playwright/test';
@@ -205,7 +209,7 @@ if (await moderate.count()) {
 // Detail page shows people in the room (LiveKit webhook → attendance).
 const detail = await browser.newContext({ ignoreHTTPSErrors: true });
 const c = await detail.newPage();
-await signIn(c, 'maya.lestari@demo.test');
+await signIn(c, process.env.E2E_OBSERVER ?? 'maya.lestari@demo.test');
 await c.goto(`${BASE}/rapat/${MEETING}`);
 results.detailHeadline = await c
     .getByTestId('video-headline')
