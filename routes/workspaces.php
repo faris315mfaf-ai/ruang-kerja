@@ -71,6 +71,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('checklist/{item}', [ChecklistController::class, 'update'])->name('checklist.update');
     Route::delete('checklist/{item}', [ChecklistController::class, 'destroy'])->name('checklist.destroy');
     Route::post('tugas/{task}/komentar', [CommentController::class, 'store'])->middleware('throttle:comments')->name('comments.store');
+    // Read pointer of the comments ("Dibaca oleh"); the client debounces, the limit only stops runaway tabs.
+    Route::post('tugas/{task}/komentar/dibaca', [CommentController::class, 'read'])->middleware('throttle:120,1')->name('comments.read');
     Route::patch('komentar/{comment}', [CommentController::class, 'update'])->middleware('throttle:comments')->name('comments.update');
     Route::delete('komentar/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
     Route::post('komentar/{comment}/reaksi', [CommentController::class, 'react'])->middleware('throttle:comments')->name('comments.react');

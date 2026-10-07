@@ -9,6 +9,7 @@ use App\Models\Mention;
 use App\Models\Reaction;
 use App\Models\SavedView;
 use App\Models\Task;
+use App\Models\TaskCommentRead;
 use App\Models\User;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
@@ -102,6 +103,19 @@ class TaskCollaborationSeeder extends Seeder
             $text(' mohon cek teks versi ponsel, ada dua baris yang terpotong. Formulir demo masih menunggu akses API CRM di '), $ref($crm), $text('.'),
         ], now()->subDay(), edited: true);
         $this->mention($second, $maya, $rizky);
+
+        // "Dibaca oleh": Maya and Sari have read the latest comment, Rizky the
+        // first one; Dimas has not opened the discussion yet (unread dot on the card).
+        foreach ([[$rizky, $first, 20], [$maya, $second, 3], [$sari, $second, 2]] as [$reader, $upTo, $hoursAgo]) {
+            TaskCommentRead::query()->insertOrIgnore([
+                'task_id' => $task->id,
+                'user_id' => $reader->id,
+                'last_read_comment_id' => $upTo->id,
+                'last_read_at' => $upTo->created_at,
+                'created_at' => now()->subHours($hoursAgo),
+                'updated_at' => now()->subHours($hoursAgo),
+            ]);
+        }
 
         foreach ([$kadiv, $rizky, $maya, $sari] as $watcher) {
             $task->watchers()->newPivotStatement()->insertOrIgnore([

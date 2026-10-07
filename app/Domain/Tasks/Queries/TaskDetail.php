@@ -41,6 +41,7 @@ final class TaskDetail
         private readonly WorkspacePolicy $workspaces,
         private readonly MentionParser $parser,
         private readonly AttachmentList $attachments,
+        private readonly CommentReads $reads,
     ) {}
 
     /**
@@ -49,7 +50,7 @@ final class TaskDetail
     public function for(Task $task, User $viewer): array
     {
         /** @var Task $task */
-        $task = BoardTasks::query()
+        $task = BoardTasks::query($viewer)
             ->with([
                 'workspace',
                 'status',
@@ -76,6 +77,7 @@ final class TaskDetail
         $timeline = $this->timeline($task, $comments);
         $references = $this->references($task, $viewer, $comments, $timeline);
         $attachments = $this->attachments->for($task, $viewer);
+        $members = $this->page->members($workspace);
 
         return [
             'task' => [
@@ -89,7 +91,7 @@ final class TaskDetail
             'workspace' => WorkspaceResource::reference($workspace),
             'statuses' => TaskStatusResource::collection($workspace->statuses()->get())->resolve(),
             'labels' => LabelResource::collection($workspace->labels()->get())->resolve(),
-            'members' => $this->page->members($workspace),
+            'members' => $members,
             'creator' => $task->creator !== null ? PersonResource::from($task->creator) : null,
             'assignees' => $task->assignees->map(fn (User $user): array => PersonResource::from($user))->values()->all(),
             'watchers' => $task->watchers->map(fn (User $user): array => PersonResource::from($user))->values()->all(),
@@ -114,12 +116,15 @@ final class TaskDetail
             'timeline' => $timeline,
             'references' => $references,
             'reactions' => Reaction::EMOJI,
+            // "Dibaca oleh": read pointers of the people taking part (CommentReads).
+            'comment_reads' => $this->reads->forTask($task, $workspace, array_column($members, 'id')),
             'can' => [
                 'edit' => $this->tasks->update($viewer, $task)->allowed(),
                 'delete' => $this->tasks->delete($viewer, $task)->allowed(),
                 'comment' => $this->tasks->comment($viewer, $task)->allowed(),
                 'watch' => $this->tasks->watch($viewer, $task)->allowed(),
                 'moderate' => $this->workspaces->canManage($viewer, $workspace) && ! $workspace->isArchived(),
+                'track_reads' => $this->tasks->trackCommentReads($viewer, $task)->allowed(),
             ],
         ];
     }

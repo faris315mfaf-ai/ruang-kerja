@@ -5,7 +5,12 @@ import taskChecklist from '@/routes/tasks/checklist';
 import { requestJson } from '../lib/api';
 import type { RichDoc } from '../editor/types';
 import type { Task } from '../types';
-import type { ChecklistEntry, TaskComment, TaskDetail } from './types';
+import type {
+    ChecklistEntry,
+    CommentRead,
+    TaskComment,
+    TaskDetail,
+} from './types';
 
 export type TaskChanges = Partial<{
     title: string;
@@ -57,6 +62,11 @@ export const taskApi = {
         }),
     deleteComment: (commentId: string) =>
         requestJson<{ comment: TaskComment }>(comments.destroy(commentId)),
+    /** Read pointer up to `commentId` (POST /tugas/{id}/komentar/dibaca). */
+    markRead: (taskId: string, commentId: string) =>
+        requestJson<{ read: CommentRead | null }>(comments.read(taskId), {
+            comment_id: commentId,
+        }),
     react: (commentId: string, emoji: string) =>
         requestJson<{ added: boolean; comment: TaskComment }>(
             comments.react(commentId),

@@ -33,7 +33,7 @@ class TaskController extends Controller
         $task = $createTask->handle($workspace, $user, [...$payload, 'title' => $payload['title'] ?? '']);
 
         if ($request->expectsJson()) {
-            return response()->json(['task' => $this->present($task)], 201);
+            return response()->json(['task' => $this->present($task, $user)], 201);
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Tugas {$task->displayKey()} dibuat."]);
@@ -48,7 +48,7 @@ class TaskController extends Controller
         $task = $updateTask->handle($task, $user, $request->payload());
 
         if ($request->expectsJson()) {
-            return response()->json(['task' => $this->present($task)]);
+            return response()->json(['task' => $this->present($task, $user)]);
         }
 
         return back();
@@ -73,9 +73,9 @@ class TaskController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function present(Task $task): array
+    private function present(Task $task, User $viewer): array
     {
-        $fresh = BoardTasks::query()->whereKey($task->id)->firstOrFail();
+        $fresh = BoardTasks::query($viewer)->whereKey($task->id)->firstOrFail();
 
         return (new TaskResource($fresh))->resolve();
     }

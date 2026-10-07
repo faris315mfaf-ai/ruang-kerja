@@ -93,6 +93,7 @@ Aturan: pemohon tidak bisa menyetujui pengajuannya sendiri. Jika penyetuju = pem
 - Penomoran task: `UPDATE workspaces SET task_sequence = task_sequence + 1 … RETURNING` di dalam transaksi.
 - Komentar: simpan JSON Tiptap → `MentionParser` mengambil node mention → `mentions` + notifikasi.
 - Implementasi Sprint 6: event `task.created|updated|moved|deleted` dan `comment.posted|updated|deleted` di `private-workspace.{id}`, presence `presence-task.{id}` ("X sedang melihat"). Broadcast memakai antrean `realtime` dengan worker Horizon sendiri (`supervisor-realtime`) agar tidak menunggu job email. Klien (`features/tasks/realtime`) berbagi satu langganan per channel; bila WebSocket tidak tersambung, board/detail di-polling tiap 30 detik dengan indikator kecil. Mention hanya untuk orang yang bisa melihat workspace (`TaskAudience`).
+- Tanda baca komentar (backlog Sprint 6): penunjuk baca per orang per tugas (`task_comment_reads`, `MarkCommentsRead`) maju saat bagian komentar detail terlihat (debounce), sekaligus menandai notifikasi komentar/mention tugas itu dibaca; event `comment.read` di presence `presence-task.{id}` memperbarui "Dibaca oleh" tanpa memuat ulang. Kartu board/list membawa `comments {count, unread}` dari subquery `BoardTasks::query($viewer)`; board memuat ulang kartu setelah `comment.posted|deleted`.
 
 ### 3.6 Google Drive
 - **Folder workspace:** saat workspace dibuat, job `CreateDriveFolder` (service account, impersonasi admin) membuat folder di Shared Drive, simpan `drive_folder_id`.

@@ -31,7 +31,7 @@ class TaskDetailController extends Controller
         Gate::authorize('view', $task);
 
         if ($request->query('view') === 'card') {
-            return response()->json(['task' => (new TaskResource(BoardTasks::query()->findOrFail($task->id)))->resolve()]);
+            return response()->json(['task' => (new TaskResource(BoardTasks::query($user)->findOrFail($task->id)))->resolve()]);
         }
 
         return response()->json($detail->for($task, $user));

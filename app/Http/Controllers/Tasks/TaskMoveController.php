@@ -35,7 +35,7 @@ class TaskMoveController extends Controller
             return back();
         }
 
-        $fresh = BoardTasks::query()->whereKey($moved->id)->firstOrFail();
+        $fresh = BoardTasks::query($user)->whereKey($moved->id)->firstOrFail();
 
         return response()->json(['task' => (new TaskResource($fresh))->resolve()]);
     }

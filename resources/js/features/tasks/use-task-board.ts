@@ -201,12 +201,45 @@ export function useTaskBoard(tasks: Task[], statuses: TaskStatus[]) {
         moveTaskRef.current = moveTask;
     }, [moveTask]);
 
-    /** A task from the server (broadcast, sheet edit, shortcut). */
+    /**
+     * A task from the server (broadcast, sheet edit, shortcut). Payloads
+     * without the comment badge (e.g. a new sub-task) keep the known one.
+     */
     const upsertTask = useCallback((task: Task) => {
-        setState((prev) => ({
-            byId: { ...prev.byId, [task.id]: task },
-            columns: upsertInColumns(prev.columns, prev.byId, task),
-        }));
+        setState((prev) => {
+            const known = prev.byId[task.id]?.comments;
+            const next =
+                task.comments === undefined && known !== undefined
+                    ? { ...task, comments: known }
+                    : task;
+
+            return {
+                byId: { ...prev.byId, [task.id]: next },
+                columns: upsertInColumns(prev.columns, prev.byId, next),
+            };
+        });
+    }, []);
+
+    /** The viewer read the comments of a task (open sheet): clear the dot. */
+    const markCommentsRead = useCallback((taskId: string) => {
+        setState((prev) => {
+            const task = prev.byId[taskId];
+
+            if (!task?.comments?.unread) {
+                return prev;
+            }
+
+            return {
+                ...prev,
+                byId: {
+                    ...prev.byId,
+                    [taskId]: {
+                        ...task,
+                        comments: { ...task.comments, unread: false },
+                    },
+                },
+            };
+        });
     }, []);
 
     const removeTask = useCallback((taskId: string) => {
@@ -229,5 +262,6 @@ export function useTaskBoard(tasks: Task[], statuses: TaskStatus[]) {
         moveTask,
         upsertTask,
         removeTask,
+        markCommentsRead,
     };
 }

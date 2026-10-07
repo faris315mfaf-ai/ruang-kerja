@@ -8,8 +8,9 @@ import { useWorkspaceEvents } from '../realtime/workspace-channel';
 import type { Task } from '../types';
 import type { TaskChanges } from './api';
 import { taskApi } from './api';
+import { upsertRead } from './comment-reads';
 import { toggleReaction, upsertComment } from './timeline';
-import type { TaskComment, TaskDetail } from './types';
+import type { CommentRead, TaskComment, TaskDetail } from './types';
 
 type Options = {
     /** Server-rendered detail (full-screen page); otherwise fetched. */
@@ -220,6 +221,20 @@ export function useTaskDetail(taskId: string | null, options: Options = {}) {
         reload: () => (taskId ? load(taskId) : Promise.resolve()),
         /** Debounced background reload (e.g. after attachments changed). */
         refresh,
+
+        /** A read pointer moved (own request or `comment.read` event). */
+        applyRead: (read: CommentRead) =>
+            setDetail((current) => {
+                if (!current) {
+                    return current;
+                }
+
+                const reads = upsertRead(current.comment_reads, read);
+
+                return reads === current.comment_reads
+                    ? current
+                    : { ...current, comment_reads: reads };
+            }),
 
         toggleWatch: async () => {
             if (!detail || !viewer) {
