@@ -107,10 +107,12 @@ const isAgent = (identity: string) => identity === CAPTION_SOURCE;
 const PRESENCE_ATTRIBUTE = 'rk_minutes_at';
 
 /**
- * "Not typing". The contract clears with "", but Laravel turns "" into null
- * and the server answers 422, so a neutral value is sent instead.
+ * "Not typing": "" removes the attribute (contract; accepted since audit
+ * B-04, 1fa3519). "off" is still ignored when read, for rooms where an older
+ * client set it.
  */
-const PRESENCE_OFF = 'off';
+const PRESENCE_OFF = '';
+const PRESENCE_LEGACY_OFF = 'off';
 
 const SHORTCUTS = [
     ['toggle-mic', 'Nyalakan/matikan mikrofon'],
@@ -492,7 +494,7 @@ function DocLive({
         const at = participant.attributes[PRESENCE_ATTRIBUTE];
         const person = people.get(participant.identity);
 
-        if (!at || at === PRESENCE_OFF || !person) {
+        if (!at || at === PRESENCE_LEGACY_OFF || !person) {
             continue;
         }
 
