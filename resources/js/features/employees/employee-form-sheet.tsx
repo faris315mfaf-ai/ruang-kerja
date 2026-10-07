@@ -23,6 +23,7 @@ import { store, update } from '@/routes/admin/employees';
 import type { WorkMode } from '@/types/auth';
 import { NativeSelect } from '@/features/admin/native-select';
 import { ManagerCombobox } from './manager-combobox';
+import { newAccountPasswordNote } from './new-account-password-note';
 import type {
     DivisionOption,
     EmployeeFormValues,
@@ -551,9 +552,10 @@ function EmployeeForm({
                 {!isEdit && (
                     <p className="flex gap-2.5 rounded-control bg-info-soft px-4 py-3 text-meta text-info">
                         <Info aria-hidden className="mt-0.5 size-4 shrink-0" />
-                        Karyawan masuk dengan email ini dan kata sandi. Setelah
-                        disimpan, buka profilnya lalu pilih Atur kata sandi,
-                        atau minta karyawan memakai Lupa kata sandi.
+                        {newAccountPasswordNote(
+                            formOptions.defaultPassword,
+                            data.roles,
+                        )}
                     </p>
                 )}
             </div>

@@ -14,10 +14,13 @@ import type { Props as ManageTwoFactorProps } from '@/components/manage-two-fact
 import ManageTwoFactor from '@/components/manage-two-factor';
 
 type Props = {
-    passwordRules: string;
+    /** Browser `passwordrules`: Super Admins only (employees: free choice). */
+    passwordRules: string | null;
+    /** Server-side rule summary for this account. */
+    passwordHint: string;
     /** Super Admin signed in with a password but has no confirmed TOTP yet. */
     twoFactorRequired: boolean;
-    /** HR set a temporary password: choose your own before continuing. */
+    /** Default password or one set by HR: choose your own before continuing. */
     passwordChangeRequired: boolean;
     /** false = no password yet (first one is set without the current one). */
     hasPassword: boolean;
@@ -45,12 +48,12 @@ export default function Security(props: Props) {
                     />
                     <div className="flex flex-col gap-0.5">
                         <p className="text-body font-bold text-warning">
-                            Ganti kata sandi sementara Anda
+                            Buat kata sandi Anda sendiri
                         </p>
                         <p className="text-label font-normal text-text">
-                            HR mengatur kata sandi sementara untuk akun Anda.
-                            Buat kata sandi Anda sendiri di bawah untuk
-                            melanjutkan ke aplikasi.
+                            Akun Anda masih memakai kata sandi bawaan atau kata
+                            sandi dari HR. Buat kata sandi Anda sendiri di bawah
+                            untuk melanjutkan ke aplikasi.
                         </p>
                     </div>
                 </div>
@@ -86,8 +89,8 @@ export default function Security(props: Props) {
 
             <Panel title="Ubah kata sandi" bodyClassName="gap-5">
                 <p className="text-label font-normal text-text-muted">
-                    Minimal 8 karakter dan tidak sama dengan alamat email.
-                    Setelah disimpan, semua perangkat lain otomatis keluar.
+                    {props.passwordHint} Setelah disimpan, semua perangkat lain
+                    otomatis keluar.
                 </p>
 
                 <Form
@@ -118,7 +121,7 @@ export default function Security(props: Props) {
                                 <div className="flex flex-col gap-2">
                                     <Label htmlFor="current_password">
                                         {props.passwordChangeRequired
-                                            ? 'Kata sandi sementara dari HR'
+                                            ? 'Kata sandi saat ini (dari HR)'
                                             : 'Kata sandi saat ini'}
                                     </Label>
 
@@ -154,7 +157,9 @@ export default function Security(props: Props) {
                                     autoComplete="new-password"
                                     required
                                     placeholder="Kata sandi baru"
-                                    passwordrules={props.passwordRules}
+                                    passwordrules={
+                                        props.passwordRules ?? undefined
+                                    }
                                     aria-invalid={
                                         errors.password ? true : undefined
                                     }
@@ -173,7 +178,9 @@ export default function Security(props: Props) {
                                     name="password_confirmation"
                                     autoComplete="new-password"
                                     placeholder="Ulangi kata sandi baru"
-                                    passwordrules={props.passwordRules}
+                                    passwordrules={
+                                        props.passwordRules ?? undefined
+                                    }
                                 />
 
                                 <InputError

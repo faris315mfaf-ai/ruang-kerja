@@ -21,6 +21,7 @@ const AUDIT_ACTIONS: Record<string, string> = {
     'user.reactivated': 'Diaktifkan kembali',
     'employee_profile.updated': 'Data pribadi diubah',
     'user.password_set_by_hr': 'Kata sandi diatur HR',
+    'user.password_reset_to_default': 'Kata sandi dikembalikan ke sandi bawaan',
     'user.password_changed': 'Kata sandi diganti sendiri',
     'user.password_reset_approved': 'Reset kata sandi disetujui',
     'user.password_reset_rejected': 'Reset kata sandi ditolak',

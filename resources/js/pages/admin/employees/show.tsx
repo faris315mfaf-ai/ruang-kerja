@@ -30,6 +30,7 @@ const STATUS_ACTIONS = [
     'user.deactivated',
     'user.reactivated',
     'user.password_set_by_hr',
+    'user.password_reset_to_default',
     'user.password_changed',
     'user.password_reset_approved',
     'user.password_reset_rejected',
@@ -123,6 +124,11 @@ export default function EmployeeShow({
                                         id: employee.id,
                                         name: employee.name,
                                         email: employee.email,
+                                        defaultAvailable:
+                                            can.setDefaultPassword,
+                                        strict: employee.roles.includes(
+                                            'super_admin',
+                                        ),
                                     })
                                 }
                                 data-test="set-password-button"
