@@ -31,7 +31,7 @@ awk \
     -v app_key="base64:$(openssl rand -base64 32)" \
     -v db="$(hex 24)" -v redis="$(hex 24)" \
     -v reverb_key="$reverb_key" -v reverb_secret="$(hex 32)" \
-    -v qr="$(hex 32)" '
+    -v qr="$(hex 32)" -v collab="$(hex 32)" '
     /^APP_KEY=/              { print "APP_KEY=" app_key; next }
     /^DB_PASSWORD=/          { print "DB_PASSWORD=" db; next }
     /^REDIS_PASSWORD=/       { print "REDIS_PASSWORD=" redis; next }
@@ -41,6 +41,8 @@ awk \
     /^ATTENDANCE_QR_SECRET=/ { print "ATTENDANCE_QR_SECRET=" qr; next }
     /^ACME_EMAIL=/           { print "ACME_EMAIL=" acme; next }
     /^BACKUP_REMOTE=/        { print "BACKUP_REMOTE="; next }
+    /^COLLAB_SECRET=/        { print "COLLAB_SECRET=" collab; next }
+    /^COLLAB_IMAGE=/         { print "COLLAB_IMAGE=ghcr.io/" owner "/ruangkerja-collab"; next }
     {
         gsub(/<absensi\.perusahaan\.co\.id>/, domain)
         gsub(/<org>/, owner)

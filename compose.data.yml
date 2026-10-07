@@ -1,0 +1,130 @@
+# RuangKerja — VPS "data" (two-server split, docs/deploy/DUA-VPS.md).
+#
+# Database, cache/queue and all background work: Postgres, Redis, Horizon
+# (notifications, exports, Drive jobs, broadcasts), the scheduler (close day,
+# reminders, retention) and backups. Nothing here is published on a public
+# IP: Postgres and Redis listen on the private IP for the web VPS only.
+#
+#   .env: COMPOSE_FILE=compose.data.yml, DATA_PRIVATE_IP=<private IP of this VPS>,
+#         DB_HOST=postgres, REDIS_HOST=redis,
+#         REVERB_HOST=<web VPS private IP>, COLLAB_URL=http://<web VPS private IP>:1234
+name: ruangkerja
+
+x-app: &app
+    image: ${APP_IMAGE:?set APP_IMAGE in .env}:${APP_TAG:-latest}
+    restart: unless-stopped
+    volumes:
+        - ./.env:/app/.env:ro
+        - storage:/app/storage
+    depends_on:
+        postgres:
+            condition: service_healthy
+        redis:
+            condition: service_healthy
+    logging: &logging
+        driver: json-file
+        options:
+            max-size: '10m'
+            max-file: '5'
+
+services:
+    queue:
+        <<: *app
+        command: ['php', 'artisan', 'horizon']
+        stop_grace_period: 90s
+        healthcheck:
+            test: ['CMD', 'php', 'artisan', 'horizon:status']
+            interval: 60s
+            timeout: 10s
+            start_period: 30s
+            retries: 3
+
+    scheduler:
+        <<: *app
+        command: ['php', 'artisan', 'schedule:work']
+        healthcheck:
+            disable: true
+
+    postgres:
+        image: postgres:17-alpine
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: ${DB_DATABASE:?set DB_DATABASE in .env}
+            POSTGRES_USER: ${DB_USERNAME:?set DB_USERNAME in .env}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+            TZ: UTC
+        ports:
+            - '${DATA_PRIVATE_IP:?set DATA_PRIVATE_IP in .env}:5432:5432'
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        shm_size: 256mb
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}',
+                ]
+            interval: 5s
+            timeout: 3s
+            retries: 20
+        logging: *logging
+
+    redis:
+        image: redis:7-alpine
+        restart: unless-stopped
+        command:
+            [
+                'redis-server',
+                '--appendonly',
+                'yes',
+                '--requirepass',
+                '${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}',
+            ]
+        environment:
+            REDISCLI_AUTH: ${REDIS_PASSWORD}
+        ports:
+            - '${DATA_PRIVATE_IP}:6379:6379'
+        volumes:
+            - redisdata:/data
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
+            interval: 5s
+            timeout: 3s
+            retries: 20
+        logging: *logging
+
+    backup:
+        image: ${BACKUP_IMAGE:?set BACKUP_IMAGE in .env}:${APP_TAG:-latest}
+        restart: unless-stopped
+        environment:
+            TZ: Asia/Jakarta
+            BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-0 2 * * *}
+            BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+            BACKUP_LOCAL_KEEP_DAYS: ${BACKUP_LOCAL_KEEP_DAYS:-7}
+            BACKUP_HEARTBEAT_URL: ${BACKUP_HEARTBEAT_URL:-}
+            BACKUP_REMOTE: ${BACKUP_REMOTE:-}
+            PGHOST: postgres
+            PGPORT: '5432'
+            PGDATABASE: ${DB_DATABASE}
+            PGUSER: ${DB_USERNAME}
+            PGPASSWORD: ${DB_PASSWORD}
+            RCLONE_CONFIG_BACKUP_TYPE: s3
+            RCLONE_CONFIG_BACKUP_PROVIDER: ${BACKUP_S3_PROVIDER:-Other}
+            RCLONE_CONFIG_BACKUP_ENDPOINT: ${BACKUP_S3_ENDPOINT:-}
+            RCLONE_CONFIG_BACKUP_REGION: ${BACKUP_S3_REGION:-us-east-1}
+            RCLONE_CONFIG_BACKUP_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID:-}
+            RCLONE_CONFIG_BACKUP_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY:-}
+            RCLONE_CONFIG_BACKUP_FORCE_PATH_STYLE: 'true'
+            RCLONE_CONFIG_BACKUP_NO_CHECK_BUCKET: 'true'
+        volumes:
+            - backups:/backups
+        depends_on:
+            postgres:
+                condition: service_healthy
+        logging: *logging
+
+volumes:
+    storage:
+    pgdata:
+    redisdata:
+    backups:

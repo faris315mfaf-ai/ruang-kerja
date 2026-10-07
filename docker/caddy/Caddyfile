@@ -9,7 +9,12 @@
 	email {$ACME_EMAIL}
 }
 
-{$APP_DOMAIN} {
+# APP_ALIASES (optional, space-separated, e.g. "www.spkd.store") get their own
+# certificate and are redirected permanently to APP_DOMAIN.
+{$APP_DOMAIN} {$APP_ALIASES} {
+	@alias not host {$APP_DOMAIN}
+	redir @alias https://{$APP_DOMAIN}{uri} permanent
+
 	encode zstd gzip
 
 	request_body {

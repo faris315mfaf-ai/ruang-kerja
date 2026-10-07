@@ -48,3 +48,6 @@ google-sa*.json
 
 # Playwright: screenshot acuan lokal & sesi login
 /tests/e2e/__screenshots__
+
+# S3 storage VPS keys (compose.storage.yml)
+/docker/seaweedfs/s3.json
