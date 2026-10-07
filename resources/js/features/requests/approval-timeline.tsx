@@ -1,4 +1,4 @@
-import { Check, CornerUpLeft, Minus, X } from 'lucide-react';
+import { Ban, Check, CornerUpLeft, Minus, X } from 'lucide-react';
 import { formatDateTime, formatRelative } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { RequestDetail, TimelineStep } from '@/types/requests';
@@ -176,6 +176,37 @@ export function ApprovalTimeline({
             note: step.status === 'skipped' ? null : step.note,
         });
     });
+
+    const canceled = request.cancellation;
+
+    if (request.status === 'canceled' && canceled) {
+        const by = canceled.by
+            ? `${canceled.by.name}${canceled.by.id === viewerId ? ' (Anda)' : ''}`
+            : null;
+
+        rows.push({
+            key: 'canceled',
+            icon: (
+                <span className="relative z-10 flex size-[30px] shrink-0 items-center justify-center rounded-full bg-danger text-on-danger">
+                    <Ban className="size-4" strokeWidth={2.5} aria-hidden />
+                </span>
+            ),
+            title: canceled.by_requester
+                ? isSelf
+                    ? 'Dibatalkan oleh Anda'
+                    : `Dibatalkan oleh ${request.user.name}`
+                : by
+                  ? `Dibatalkan oleh ${by}`
+                  : 'Dibatalkan',
+            detail: [
+                canceled.at ? formatDateTime(canceled.at) : null,
+                canceled.after_approval ? 'setelah disetujui' : null,
+            ]
+                .filter(Boolean)
+                .join(' · '),
+            note: canceled.reason,
+        });
+    }
 
     return (
         <ol className="relative" aria-label="Alur persetujuan">

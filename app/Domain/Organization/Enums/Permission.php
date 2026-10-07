@@ -22,6 +22,7 @@ enum Permission: string
     case AttendanceExport = 'attendance.export';
     case RequestsViewAll = 'requests.view_all';
     case RequestsManageFlows = 'requests.manage_flows';
+    case RequestsCancelApproved = 'requests.cancel_approved';
     case WorkspacesViewAll = 'workspaces.view_all';
     case WorkspacesManage = 'workspaces.manage';
     case DashboardViewCompany = 'dashboard.view_company';
@@ -41,6 +42,7 @@ enum Permission: string
             self::AttendanceExport => 'Ekspor rekap absensi',
             self::RequestsViewAll => 'Lihat semua pengajuan',
             self::RequestsManageFlows => 'Kelola alur persetujuan dan jenis cuti',
+            self::RequestsCancelApproved => 'Batalkan pengajuan yang sudah disetujui',
             self::WorkspacesViewAll => 'Lihat semua workspace non-pribadi',
             self::WorkspacesManage => 'Kelola semua workspace non-pribadi',
             self::DashboardViewCompany => 'Lihat dashboard seluruh perusahaan',

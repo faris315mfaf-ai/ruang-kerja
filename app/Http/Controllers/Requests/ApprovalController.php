@@ -5,14 +5,17 @@ namespace App\Http\Controllers\Requests;
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Requests\Actions\ApproveStep;
 use App\Domain\Requests\Actions\BulkApprove;
+use App\Domain\Requests\Actions\CancelApprovedRequest;
 use App\Domain\Requests\Actions\RejectStep;
 use App\Domain\Requests\Actions\RequestRevision;
+use App\Domain\Requests\Enums\RequestStatus;
 use App\Domain\Requests\Services\ApprovalQueue;
 use App\Domain\Requests\Services\ColleagueAbsences;
 use App\Domain\Requests\Support\OfficeTime;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\RequestPresenter;
 use App\Http\Requests\Requests\BulkApproveRequest;
+use App\Http\Requests\Requests\CancelApprovedRequestRequest;
 use App\Http\Requests\Requests\DecideRequestRequest;
 use App\Models\ApprovalDelegation;
 use App\Models\EmployeeRequest;
@@ -43,11 +46,18 @@ class ApprovalController extends Controller
     {
         Gate::authorize('viewAny', EmployeeRequest::class);
 
-        $tab = $http->query('tab') === 'diputus' ? 'diputus' : 'menunggu';
+        // HR / Super Admin also get "Disetujui": approved requests of the company they may cancel.
+        $canCancelApproved = $user->hasPermission(Permission::RequestsCancelApproved);
+        $tab = match ($http->query('tab')) {
+            'diputus' => 'diputus',
+            'disetujui' => $canCancelApproved ? 'disetujui' : 'menunggu',
+            default => 'menunggu',
+        };
 
-        $items = $tab === 'menunggu'
-            ? $this->queueItems($this->waitingSteps($user))
-            : $this->queue->decidedBy($user)->with(self::RELATIONS)->limit(50)->get()->map(fn (RequestApproval $step): array => [
+        $items = match ($tab) {
+            'menunggu' => $this->queueItems($this->waitingSteps($user)),
+            'disetujui' => $this->approvedItems($user),
+            default => $this->queue->decidedBy($user)->with(self::RELATIONS)->limit(50)->get()->map(fn (RequestApproval $step): array => [
                 ...$this->presenter->item($step->request),
                 'my_decision' => [
                     'status' => $step->status->value,
@@ -55,7 +65,8 @@ class ApprovalController extends Controller
                     'note' => $step->note,
                     'decided_at' => $step->decided_at?->toIso8601String(),
                 ],
-            ]);
+            ]),
+        };
 
         $selectedId = $http->query('pilih');
         $selected = is_string($selectedId) ? EmployeeRequest::query()->find($selectedId) : null;
@@ -71,6 +82,7 @@ class ApprovalController extends Controller
             'items' => $items->values()->all(),
             'selected' => $selected !== null && Gate::allows('view', $selected) ? $this->presenter->detail($selected, $user) : null,
             'scope' => $this->scopeDescription($user),
+            'can_cancel_approved' => $canCancelApproved,
             'delegations' => $this->delegations($user),
         ]);
     }
@@ -122,6 +134,20 @@ class ApprovalController extends Controller
         return $this->afterDecision($form, $user);
     }
 
+    /**
+     * HR voids an approved request (saldo & absensi dikembalikan). Back to the page it came from.
+     */
+    public function cancelApproved(CancelApprovedRequestRequest $form, #[CurrentUser] User $user, EmployeeRequest $employeeRequest, CancelApprovedRequest $cancel): RedirectResponse
+    {
+        Gate::authorize('view', $employeeRequest);
+        // Permission, company and "not your own" are checked by the action under the
+        // row lock; a request canceled meanwhile gets a validation message, not a 403.
+        $request = $cancel->handle($user, $employeeRequest, $form->reason());
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Pengajuan {$request->number} dibatalkan."]);
+
+        return back();
+    }
+
     public function bulk(BulkApproveRequest $form, #[CurrentUser] User $user, BulkApprove $bulk): RedirectResponse
     {
         Gate::authorize('viewAny', EmployeeRequest::class);
@@ -135,6 +161,27 @@ class ApprovalController extends Controller
             : ['type' => 'warning', 'message' => "{$approved} pengajuan disetujui, {$failed} gagal (sudah diputus atau bukan giliran Anda)."]);
 
         return to_route('approvals.index');
+    }
+
+    /**
+     * Approved requests of other people in the viewer's scope, most recently
+     * approved first (tab "Disetujui", HR / Super Admin).
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function approvedItems(User $user): Collection
+    {
+        return EmployeeRequest::query()
+            ->visibleTo($user)
+            ->where('requests.status', RequestStatus::Approved->value)
+            ->where('requests.user_id', '!=', $user->id)
+            ->with(['leaveType', 'user.position', 'user.division', 'approvals.approver'])
+            ->orderByDesc('decided_at')
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get()
+            ->toBase()
+            ->map(fn (EmployeeRequest $request): array => $this->presenter->item($request));
     }
 
     /**

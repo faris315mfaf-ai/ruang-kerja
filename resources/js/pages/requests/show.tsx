@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CancelApprovedAction } from '@/features/requests/cancel-approved-action';
 import { RequestActions } from '@/features/requests/request-actions';
 import { RequestDetailCard } from '@/features/requests/request-detail-card';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
@@ -9,7 +10,10 @@ import type { RequestDetail } from '@/types/requests';
 
 export default function RequestShow({ request }: { request: RequestDetail }) {
     const mobile = useBreakpoint() === 'mobile';
-    const actionable = request.can.cancel || request.can.edit;
+    const own = request.can.cancel || request.can.edit;
+    // HR opening someone else's approved request (notification, search).
+    const voidable = !own && request.can.cancel_approved === true;
+    const actionable = own || voidable;
 
     return (
         <>
@@ -19,7 +23,14 @@ export default function RequestShow({ request }: { request: RequestDetail }) {
                     <RequestDetailCard request={request} />
                     {actionable && (
                         <div className="glass fixed inset-x-0 bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom))] z-30 border-x-0 border-b-0 px-4 py-3">
-                            <RequestActions request={request} mobile />
+                            {voidable ? (
+                                <CancelApprovedAction
+                                    request={request}
+                                    mobile
+                                />
+                            ) : (
+                                <RequestActions request={request} mobile />
+                            )}
                         </div>
                     )}
                 </div>
@@ -37,7 +48,9 @@ export default function RequestShow({ request }: { request: RequestDetail }) {
                     <RequestDetailCard
                         request={request}
                         footer={
-                            actionable ? (
+                            voidable ? (
+                                <CancelApprovedAction request={request} />
+                            ) : own ? (
                                 <RequestActions request={request} />
                             ) : undefined
                         }

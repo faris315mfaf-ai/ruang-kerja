@@ -4,10 +4,12 @@ namespace App\Domain\Requests\Services;
 
 use App\Domain\Notifications\Actions\ResolveNotificationsForSubject;
 use App\Domain\Notifications\Enums\NotificationType;
+use App\Domain\Requests\Enums\ApprovalStatus;
 use App\Domain\Requests\Enums\ApproverType;
 use App\Domain\Requests\Notifications\RequestApproved;
 use App\Domain\Requests\Notifications\RequestAwaitingApproval;
 use App\Domain\Requests\Notifications\RequestCanceled;
+use App\Domain\Requests\Notifications\RequestCanceledAfterApproval;
 use App\Domain\Requests\Notifications\RequestRejected;
 use App\Domain\Requests\Notifications\RequestRevisionRequested;
 use App\Domain\Requests\Notifications\RequestStepApproved;
@@ -77,6 +79,34 @@ final class RequestNotifier
 
         if ($waitingStep !== null) {
             Notification::send($this->approversOf($request, $waitingStep), new RequestCanceled($request));
+        }
+    }
+
+    /**
+     * HR voided an approved request: the requester, everyone who approved a
+     * step (and the delegator it was approved for) and the substitute are told.
+     */
+    public function canceledAfterApproval(EmployeeRequest $request, User $canceledBy): void
+    {
+        self::prepare($request);
+        $request->loadMissing('approvals.approver', 'approvals.delegatedFrom');
+
+        if ($request->user->isActive()) {
+            $request->user->notify(new RequestCanceledAfterApproval($request, $canceledBy, toRequester: true));
+        }
+
+        $others = $request->approvals
+            ->filter(fn (RequestApproval $step): bool => $step->status === ApprovalStatus::Approved)
+            ->flatMap(fn (RequestApproval $step): array => array_filter([$step->approver, $step->delegatedFrom]))
+            ->merge(array_filter([$request->substitute]))
+            ->filter(fn (User $user): bool => $user->isActive()
+                && $user->id !== $canceledBy->id
+                && $user->id !== $request->user_id)
+            ->unique('id')
+            ->values();
+
+        if ($others->isNotEmpty()) {
+            Notification::send($others, new RequestCanceledAfterApproval($request, $canceledBy, toRequester: false));
         }
     }
 

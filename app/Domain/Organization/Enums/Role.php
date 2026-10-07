@@ -66,6 +66,7 @@ enum Role: string
                 Permission::AttendanceExport,
                 Permission::RequestsViewAll,
                 Permission::RequestsManageFlows,
+                Permission::RequestsCancelApproved,
                 Permission::WorkspacesManage,
                 Permission::DashboardViewCompany,
                 Permission::PortfolioView,
@@ -88,6 +89,7 @@ enum Role: string
                 Permission::AttendanceExport,
                 Permission::RequestsViewAll,
                 Permission::RequestsManageFlows,
+                Permission::RequestsCancelApproved,
                 // Read-only access to every shared workspace (keputusan pemilik 6 Okt 2026).
                 Permission::WorkspacesViewAll,
                 Permission::DashboardViewCompany,

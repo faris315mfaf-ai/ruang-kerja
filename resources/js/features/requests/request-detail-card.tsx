@@ -9,6 +9,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { RequestDetail } from '@/types/requests';
 import { ApprovalTimeline } from './approval-timeline';
+import { CancellationNotice } from './cancel-approved-action';
 import { StatusBadge } from './badges';
 import { ColleagueWarning, RequestFields } from './request-parts';
 
@@ -65,6 +66,8 @@ export function RequestDetailCard({ request, footer, className }: Props) {
                         className="h-[34px] px-3.5"
                     />
                 </header>
+
+                <CancellationNotice request={request} />
 
                 <RequestFields request={request} />
 

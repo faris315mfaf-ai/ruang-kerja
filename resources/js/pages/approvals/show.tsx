@@ -13,6 +13,10 @@ import {
 import { useDecision } from '@/features/approvals/use-decision';
 import { ApprovalTimeline } from '@/features/requests/approval-timeline';
 import {
+    CancelApprovedAction,
+    CancellationNotice,
+} from '@/features/requests/cancel-approved-action';
+import {
     ColleagueWarning,
     RequestFields,
 } from '@/features/requests/request-parts';
@@ -31,6 +35,7 @@ export default function ApprovalShow({ request, queue }: Props) {
     const decision = useDecision(request.id, 'next');
     const viewerId = usePage().props.auth.user?.id;
     const decide = request.can.decide;
+    const voidable = !decide && request.can.cancel_approved === true;
     const position = queue.position
         ? `${queue.position} dari ${queue.total}`
         : null;
@@ -67,7 +72,9 @@ export default function ApprovalShow({ request, queue }: Props) {
             <Head title={`${request.number ?? ''} · Persetujuan`} />
             <div
                 className={
-                    decide ? 'flex flex-col gap-5 pb-24' : 'flex flex-col gap-5'
+                    decide || voidable
+                        ? 'flex flex-col gap-5 pb-24'
+                        : 'flex flex-col gap-5'
                 }
             >
                 {position && (
@@ -75,6 +82,8 @@ export default function ApprovalShow({ request, queue }: Props) {
                         Antrean {position}
                     </p>
                 )}
+                <CancellationNotice request={request} />
+
                 <section className="flex flex-col gap-5 rounded-[22px] border border-border bg-surface p-4 shadow-card">
                     <RequesterHeader
                         request={request}
@@ -105,6 +114,12 @@ export default function ApprovalShow({ request, queue }: Props) {
             {decide && (
                 <div className="glass fixed inset-x-0 bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom))] z-30 border-x-0 border-b-0 px-4 py-3">
                     <DecisionButtons decision={decision} mobile />
+                </div>
+            )}
+
+            {voidable && (
+                <div className="glass fixed inset-x-0 bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom))] z-30 border-x-0 border-b-0 px-4 py-3">
+                    <CancelApprovedAction request={request} mobile />
                 </div>
             )}
         </>

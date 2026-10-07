@@ -26,6 +26,8 @@ enum NotificationType: string
     case RequestRejected = 'request.rejected';
     case RequestRevisionRequested = 'request.revision_requested';
     case RequestCanceled = 'request.canceled';
+    // An approved request voided by HR (to the requester)
+    case RequestVoided = 'request.voided';
 
     // Attendance (Sprint 2)
     case CheckInReminder = 'attendance.check_in_reminder';
@@ -78,6 +80,7 @@ enum NotificationType: string
             self::RequestRejected => 'Pengajuan ditolak',
             self::RequestRevisionRequested => 'Perlu revisi',
             self::RequestCanceled => 'Pengajuan dibatalkan',
+            self::RequestVoided => 'Pengajuan disetujui dibatalkan',
             self::CheckInReminder => 'Pengingat check-in',
             self::CheckOutReminder => 'Pengingat check-out',
             self::ConsentRevoked => 'Persetujuan data dicabut',
@@ -117,7 +120,7 @@ enum NotificationType: string
             self::ChatMessage => NotificationEvent::ChatMessage,
             self::AutomationNotify => NotificationEvent::Automation,
             self::RequestSubmitted, self::RequestCanceled => NotificationEvent::RequestPending,
-            self::RequestApproved, self::RequestRejected, self::RequestRevisionRequested => NotificationEvent::RequestDecided,
+            self::RequestApproved, self::RequestRejected, self::RequestRevisionRequested, self::RequestVoided => NotificationEvent::RequestDecided,
             self::CheckInReminder => NotificationEvent::CheckInReminder,
             self::CheckOutReminder => NotificationEvent::CheckOutReminder,
             // Compliance notice for HR: in-app is locked on (cannot be switched off).
@@ -152,7 +155,7 @@ enum NotificationType: string
             self::TaskOverdue => 'alert',
             self::RequestSubmitted => 'check-check',
             self::RequestApproved => 'check-check',
-            self::RequestRejected, self::RequestCanceled => 'x',
+            self::RequestRejected, self::RequestCanceled, self::RequestVoided => 'x',
             self::RequestRevisionRequested => 'rotate',
             self::CheckInReminder, self::CheckOutReminder => 'alarm',
             self::ConsentRevoked => 'shield',
@@ -188,7 +191,7 @@ enum NotificationType: string
             self::TaskDueSoon, self::RequestRevisionRequested, self::CheckInReminder, self::CheckOutReminder, self::ConsentRevoked,
             self::ProjectUpdateReminder, self::ProjectUpdateRequested, self::OkrCheckinReminder, self::OkrObjectiveAtRisk, self::PasswordResetRequested, self::ReportReminder => 'warning',
             self::PasswordSetByHr => 'info',
-            self::TaskOverdue, self::RequestRejected => 'danger',
+            self::TaskOverdue, self::RequestRejected, self::RequestVoided => 'danger',
             self::ProjectDirection, self::ProjectDecisionNeeded => 'info',
             self::ProjectDecisionResolved => 'success',
             self::MeetingInvited, self::MinutesFinalized => 'info',

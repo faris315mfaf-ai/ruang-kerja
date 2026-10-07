@@ -121,6 +121,7 @@ Permission dasar (guard `web`; sumber kebenaran `App\Domain\Organization\Enums\R
 | `attendance.export` — ekspor rekap | ✓ | | ✓ | | |
 | `requests.view_all` — semua pengajuan | ✓ | ✓ | ✓ | | |
 | `requests.manage_flows` — alur approval & jenis cuti | ✓ | | ✓ | | |
+| `requests.cancel_approved` — batalkan pengajuan yang sudah disetujui (saldo & absensi dikembalikan; bukan pengajuan sendiri) | ✓ | | ✓ | | |
 | `workspaces.view_all` — lihat workspace non-pribadi (baca saja bila bukan anggota; keputusan pemilik 6 Okt 2026) | | ✓ | ✓ | | |
 | `workspaces.manage` — kelola workspace non-pribadi | ✓ | | | | |
 | `dashboard.view_company` — dashboard seluruh perusahaan | ✓ | ✓ | ✓ | | |
@@ -322,6 +323,9 @@ Tambahan Fitur pengajuan: `opening_days` numeric(5,1) default 0 (**saldo awal**,
 | current_step | smallint null | langkah yang sedang menunggu |
 | submitted_at | timestamptz null | **tambahan** |
 | decided_at | timestamptz null | |
+| canceled_at | timestamptz null | **tambahan** (migrasi `2026_10_13_610100_add_cancellation_to_requests`): kapan dibatalkan |
+| canceled_by_id | FK users null (nullOnDelete) | **tambahan**: pemohon (batal sebelum diputus, `CancelRequest`) atau HR (`CancelApprovedRequest`) |
+| cancel_reason | text null | **tambahan**: alasan wajib (min. 10 karakter) saat HR membatalkan pengajuan yang **sudah disetujui**; null bila dibatalkan pemohon. Tampil in-app saja (email/WA tidak memuat isinya), disembunyikan dari penyetuju pengganti untuk pengajuan sakit |
 
 ### request_sequences (tambahan Sprint 4)
 `id`, `key` unik (mis. `CUT-2026-10`), `last_number`. Nomor diambil dengan satu `INSERT … ON CONFLICT (key) DO UPDATE SET last_number = last_number + 1 RETURNING` (atomik, aman dari race condition). Periode = bulan pengiriman (waktu kantor).
@@ -340,6 +344,8 @@ Indeks: `(request_id, round, step_order)` unique, `(approver_id, status)`, `(sta
 Lampiran pengajuan (surat dokter, dll.) memakai tabel `attachments` (morph ke `requests`, `source = storage`), disimpan di disk privat (`config/requests.php`), **bukan** Drive; diunduh lewat `/pengajuan/{id}/lampiran/{attachment}` (policy + audit `request.attachment_viewed`).
 
 `attendance_days.request_id` mendapat FK ke `requests` (nullOnDelete) di migrasi Sprint 4.
+
+**Pembatalan pengajuan yang sudah disetujui** (`CancelApprovedRequest`, permission `requests.cancel_approved`, HR & Super Admin, bukan pengajuan sendiri): di bawah row lock `requests` → status `canceled` + `canceled_*`; `leave_balances.used_days −= days` (`BalanceLedger::refund`); `AttendanceEffects::revert()` — baris `attendance_days` cuti/izin/sakit/dinas tanpa check-in dihapus lalu tanggal yang sudah lewat ditutup ulang (tanpa check-in = Alpha), hari yang tetap masuk dilepas dari pengajuan (`request_id` null, status Hadir/Terlambat), `overtime_minutes` lembur dihitung ulang, koreksi absensi dikembalikan ke jam sebelum koreksi dari audit `attendance_day.corrected` (audit `attendance_day.correction_reverted`; ditolak bila hari itu sudah berubah setelah koreksi). Audit `request.canceled_approved` (jumlah hari & tanggal, tanpa isi alasan).
 
 ---
 

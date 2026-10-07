@@ -11,9 +11,13 @@ use App\Domain\Attendance\Services\ScheduleResolver;
 use App\Domain\Organization\Enums\WorkMode;
 use App\Domain\Organization\Services\AuditLogger;
 use App\Domain\Requests\Contracts\AttendanceEffects;
+use App\Domain\Requests\Data\AttendanceRevertPlan;
+use App\Domain\Requests\Enums\RequestCategory;
 use App\Domain\Requests\Support\OfficeTime;
+use App\Models\AuditLog;
 use App\Models\EmployeeRequest;
 use Carbon\CarbonImmutable;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Writes approved requests into attendance_days (ARCHITECTURE §3.4).
@@ -28,6 +32,12 @@ use Carbon\CarbonImmutable;
  *   closed (CloseAttendanceDay).
  * - Correction: applies the requested check-in/out times, recomputes status,
  *   late/early minutes and work minutes; audited as `attendance_day.corrected`.
+ *
+ * revert() undoes the above when HR cancels an approved request: absence rows
+ * without a check-in are deleted (close-day re-evaluates the date), worked days
+ * are unlinked, overtime is recalculated, and a correction gets its original
+ * times back from the audit row (`attendance_day.correction_reverted`) unless
+ * the day changed since — then the cancel is refused.
  */
 final class AttendanceDayEffects implements AttendanceEffects
 {
@@ -140,20 +150,50 @@ final class AttendanceDayEffects implements AttendanceEffects
         $this->audit->log('attendance_day.corrected', $day, $before, [...self::snapshot($day), 'request_id' => $request->id]);
     }
 
-    public function revert(EmployeeRequest $request): void
+    public function revertPlan(EmployeeRequest $request): AttendanceRevertPlan
     {
         $request->loadMissing('leaveType');
+        $category = $request->leaveType->category;
 
-        if ($request->leaveType->category->isProcurement()) {
-            return;
+        if ($category->isProcurement()) {
+            return new AttendanceRevertPlan;
+        }
+
+        if ($category->isAbsence()) {
+            $days = AttendanceDay::query()->where('request_id', $request->id)->orderBy('work_date')->get(['id', 'work_date', 'check_in_at']);
+            $dates = fn (bool $worked): array => array_values($days
+                ->filter(fn (AttendanceDay $day): bool => ($day->check_in_at !== null) === $worked)
+                ->map(fn (AttendanceDay $day): string => $day->work_date->toDateString())
+                ->all());
+
+            return new AttendanceRevertPlan(removedDates: $dates(false), unlinkedDates: $dates(true));
+        }
+
+        $date = is_string($request->payload['date'] ?? null) ? $request->payload['date'] : null;
+
+        if ($category === RequestCategory::Overtime) {
+            return new AttendanceRevertPlan(overtimeDate: $date);
+        }
+
+        [, , $blocker] = $this->appliedCorrection($request);
+
+        return new AttendanceRevertPlan(correctionDate: $date, blocker: $blocker);
+    }
+
+    public function revert(EmployeeRequest $request): AttendanceRevertPlan
+    {
+        $plan = $this->revertPlan($request);
+
+        if ($plan->blocker !== null) {
+            throw ValidationException::withMessages(['reason' => $plan->blocker]);
         }
 
         if ($request->leaveType->category->isAbsence()) {
-            // Rows written for the request return to "not closed yet"; the next close-day run re-evaluates them.
+            // Rows written for the request return to "not closed yet"; close-day re-evaluates them.
             AttendanceDay::query()->where('request_id', $request->id)->whereNull('check_in_at')->delete();
 
             // Days worked anyway (half day, business trip) become ordinary attendance.
-            AttendanceDay::query()->where('request_id', $request->id)->get()->each(function (AttendanceDay $day): void {
+            AttendanceDay::query()->where('request_id', $request->id)->lockForUpdate()->get()->each(function (AttendanceDay $day): void {
                 $day->fill([
                     'request_id' => null,
                     'request_portion' => null,
@@ -163,16 +203,101 @@ final class AttendanceDayEffects implements AttendanceEffects
                 ])->save();
             });
 
+            return $plan;
+        }
+
+        if ($plan->overtimeDate !== null) {
+            $this->syncOvertime($request->user_id, $plan->overtimeDate);
+        }
+
+        if ($plan->correctionDate !== null) {
+            $this->restoreCorrection($request);
+        }
+
+        return $plan;
+    }
+
+    /**
+     * Puts back the times an approved correction replaced (from its
+     * `attendance_day.corrected` audit row). A day the correction created is
+     * removed again; close-day re-evaluates it.
+     */
+    private function restoreCorrection(EmployeeRequest $request): void
+    {
+        [$day, $audit] = $this->appliedCorrection($request, lock: true);
+
+        if ($day === null || $audit === null) {
+            return; // Nothing was applied (or the row is gone): nothing to undo.
+        }
+
+        $current = self::snapshot($day);
+        /** @var array<string, mixed>|null $before */
+        $before = $audit->old_values;
+
+        if ($before === null) {
+            $day->delete();
+            $this->audit->log('attendance_day.correction_reverted', $day, $current, ['deleted' => true, 'request_id' => $request->id]);
+
             return;
         }
 
-        $date = $request->payload['date'] ?? null;
+        $inAt = is_string($before['check_in_at'] ?? null) ? CarbonImmutable::parse($before['check_in_at']) : null;
+        $outAt = is_string($before['check_out_at'] ?? null) ? CarbonImmutable::parse($before['check_out_at']) : null;
+        $prefix = 'Dikoreksi lewat '.($request->number ?? 'pengajuan').'.';
+        $note = $day->note !== null && str_starts_with($day->note, $prefix) ? trim(substr($day->note, strlen($prefix))) : $day->note;
 
-        if (is_string($date) && $request->minutes !== null) {
-            $this->syncOvertime($request->user_id, $date);
+        $day->fill([
+            'check_in_at' => $inAt,
+            'check_out_at' => $outAt,
+            'late_minutes' => (int) ($before['late_minutes'] ?? 0),
+            'early_leave_minutes' => (int) ($before['early_leave_minutes'] ?? 0),
+            'status' => AttendanceStatus::tryFrom((string) ($before['status'] ?? '')) ?? $day->status,
+            'note' => $note === '' ? null : $note,
+        ]);
+        $day->work_minutes = $outAt !== null ? CheckOut::workMinutes($day, $outAt) : 0;
+        $day->save();
+
+        $this->audit->log('attendance_day.correction_reverted', $day, $current, [...self::snapshot($day), 'request_id' => $request->id]);
+    }
+
+    /**
+     * The attendance row an approved correction changed and its audit row, or
+     * a blocker when the row changed after the correction (a later check-out,
+     * an HR correction, another approved correction): undoing it would wipe
+     * that change, so HR fixes the day by hand instead.
+     *
+     * @return array{0: AttendanceDay|null, 1: AuditLog|null, 2: string|null}
+     */
+    private function appliedCorrection(EmployeeRequest $request, bool $lock = false): array
+    {
+        $audit = AuditLog::query()
+            ->where('action', 'attendance_day.corrected')
+            ->where('auditable_type', (new AttendanceDay)->getMorphClass())
+            ->where('new_values->request_id', $request->id)
+            ->latest('created_at')
+            ->latest('id')
+            ->first();
+
+        if ($audit === null || $audit->auditable_id === null) {
+            return [null, null, null];
         }
 
-        // Corrections cannot be undone automatically (the original times are in the audit log).
+        $day = AttendanceDay::query()->whereKey($audit->auditable_id)->when($lock, fn ($query) => $query->lockForUpdate())->first();
+
+        if ($day === null) {
+            return [null, null, null];
+        }
+
+        $after = $audit->new_values ?? [];
+        $current = self::snapshot($day);
+
+        foreach (['status', 'check_in_at', 'check_out_at'] as $key) {
+            if (($after[$key] ?? null) !== $current[$key]) {
+                return [$day, $audit, 'Absensi tanggal '.$day->work_date->toDateString().' sudah berubah setelah koreksi diterapkan. Perbaiki lewat Koreksi absensi HR, lalu batalkan pengajuan ini.'];
+            }
+        }
+
+        return [$day, $audit, null];
     }
 
     /**
