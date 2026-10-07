@@ -11,7 +11,8 @@ use App\Models\User;
 /**
  * Adds and removes participants. Only active employees of the meeting's
  * company are added (ids from other companies are ignored); guests are
- * stored by lower-case e-mail.
+ * stored by lower-case e-mail. `invited()` lists the employees of a meeting
+ * (organizer, minute taker, internal participants) from loaded relations.
  */
 final class MeetingParticipants
 {
@@ -81,5 +82,41 @@ final class MeetingParticipants
         $meeting->unsetRelation('participants');
 
         return $added;
+    }
+
+    /**
+     * Invited employees: organizer, minute taker, then internal participants
+     * in their stored order (guests by e-mail are not included). Uses the
+     * loaded `participants` relation; no query when it is loaded.
+     *
+     * @return list<array{user_id: string, rsvp: string, optional: bool}>
+     */
+    public function invited(Meeting $meeting): array
+    {
+        $result = [];
+        $byUser = [];
+
+        foreach ($meeting->participants as $participant) {
+            if ($participant->user_id !== null) {
+                $byUser[(string) $participant->user_id] = $participant;
+            }
+        }
+
+        $ids = array_values(array_unique(array_filter([
+            $meeting->organizer_id,
+            $meeting->minute_taker_id,
+            ...array_keys($byUser),
+        ], fn (?string $id): bool => $id !== null && $id !== '')));
+
+        foreach ($ids as $id) {
+            $participant = $byUser[$id] ?? null;
+            $result[] = [
+                'user_id' => $id,
+                'rsvp' => $participant !== null ? $participant->rsvp->value : ($id === $meeting->organizer_id ? Rsvp::Yes->value : Rsvp::Pending->value),
+                'optional' => $participant !== null && $participant->optional,
+            ];
+        }
+
+        return $result;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Domain\Meetings\Actions;
 
+use App\Domain\Meetings\Services\RoomEvents;
 use App\Domain\Notifications\Actions\ResolveNotificationsForSubject;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Models\MeetingActionItem;
@@ -12,7 +13,10 @@ use Illuminate\Validation\ValidationException;
  */
 final class RemoveActionItem
 {
-    public function __construct(private readonly ResolveNotificationsForSubject $resolve) {}
+    public function __construct(
+        private readonly ResolveNotificationsForSubject $resolve,
+        private readonly RoomEvents $events,
+    ) {}
 
     public function handle(MeetingActionItem $item): void
     {
@@ -22,5 +26,6 @@ final class RemoveActionItem
 
         $this->resolve->handle($item, NotificationType::ActionItemDue);
         $item->delete();
+        $this->events->minutesChanged($item->minutes);
     }
 }

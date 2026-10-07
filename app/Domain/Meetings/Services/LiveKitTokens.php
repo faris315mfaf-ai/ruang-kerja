@@ -60,7 +60,7 @@ final class LiveKitTokens
         return JWT::encode($claims, $this->rooms->apiSecret(), self::ALGORITHM);
     }
 
-    /** Room Service API token for one room (mute, remove, list participants). */
+    /** Room Service API token for one room (mute, remove, attributes, delete; no roomList, audit R-15). */
     public function adminToken(string $room, ?CarbonImmutable $now = null): string
     {
         $now ??= CarbonImmutable::now();
@@ -69,7 +69,7 @@ final class LiveKitTokens
             'iss' => $this->rooms->apiKey(),
             'nbf' => $now->getTimestamp() - 10,
             'exp' => $now->getTimestamp() + 60,
-            'video' => ['room' => $room, 'roomAdmin' => true, 'roomList' => true],
+            'video' => ['room' => $room, 'roomAdmin' => true],
         ], $this->rooms->apiSecret(), self::ALGORITHM);
     }
 

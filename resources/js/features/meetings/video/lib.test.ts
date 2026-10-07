@@ -2,15 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
     countdownLabel,
     durationShort,
-    gridShape,
+    elapsedClock,
     isMacPlatform,
     joinWindow,
     namesSummary,
-    parseMeta,
     raisedHandOrder,
     shortcutAction,
     shortcutLabel,
-    stageLayout,
 } from './lib';
 
 const video = {
@@ -90,87 +88,12 @@ describe('durationShort', () => {
     });
 });
 
-describe('stageLayout', () => {
-    const base = {
-        participants: 1,
-        screenShares: 0,
-        pinned: false,
-        preference: 'auto' as const,
-        mobile: false,
-    };
-
-    it('fills the stage with my own tile when alone', () => {
-        expect(stageLayout(base).mode).toBe('solo');
-    });
-
-    it('uses a floating self view for two people, like Meet', () => {
-        expect(stageLayout({ ...base, participants: 2 }).mode).toBe('pip');
-        expect(
-            stageLayout({ ...base, participants: 2, preference: 'grid' }).mode,
-        ).toBe('grid');
-    });
-
-    it('uses a grid for small groups and spotlight above the tile limit', () => {
-        expect(stageLayout({ ...base, participants: 9 })).toEqual({
-            mode: 'grid',
-            maxTiles: 16,
-        });
-        expect(stageLayout({ ...base, participants: 17 }).mode).toBe(
-            'spotlight',
-        );
-        expect(
-            stageLayout({ ...base, participants: 17, preference: 'grid' }),
-        ).toEqual({ mode: 'grid', maxTiles: 16 });
-        expect(
-            stageLayout({ ...base, participants: 7, mobile: true }).mode,
-        ).toBe('spotlight');
-    });
-
-    it('puts screen shares and pinned tiles in the spotlight', () => {
-        expect(
-            stageLayout({ ...base, participants: 3, screenShares: 1 }),
-        ).toEqual({ mode: 'spotlight', maxTiles: 6 });
-        expect(
-            stageLayout({
-                ...base,
-                participants: 3,
-                pinned: true,
-                mobile: true,
-            }),
-        ).toEqual({ mode: 'spotlight', maxTiles: 3 });
-        expect(
-            stageLayout({ ...base, participants: 4, preference: 'spotlight' })
-                .mode,
-        ).toBe('spotlight');
-    });
-});
-
-describe('gridShape', () => {
-    it('picks the shape with the largest 16:9 tiles', () => {
-        expect(gridShape(1, 1200, 700)).toEqual({ cols: 1, rows: 1 });
-        expect(gridShape(2, 1200, 700)).toEqual({ cols: 2, rows: 1 });
-        expect(gridShape(4, 1200, 700)).toEqual({ cols: 2, rows: 2 });
-        expect(gridShape(6, 1200, 700)).toEqual({ cols: 3, rows: 2 });
-        expect(gridShape(9, 1200, 700)).toEqual({ cols: 3, rows: 3 });
-    });
-
-    it('stacks tiles on a tall phone screen', () => {
-        expect(gridShape(2, 360, 640, { aspect: 3 / 4 })).toEqual({
-            cols: 1,
-            rows: 2,
-        });
-        expect(gridShape(4, 360, 640, { aspect: 3 / 4 })).toEqual({
-            cols: 2,
-            rows: 2,
-        });
-        expect(gridShape(5, 360, 640, { aspect: 3 / 4 })).toEqual({
-            cols: 2,
-            rows: 3,
-        });
-    });
-
-    it('treats zero as one tile', () => {
-        expect(gridShape(0, 800, 600)).toEqual({ cols: 1, rows: 1 });
+describe('elapsedClock', () => {
+    it('formats hours, minutes and seconds with leading zeros', () => {
+        expect(elapsedClock(0)).toBe('00:00:00');
+        expect(elapsedClock((18 * 60 + 42) * 1000 + 900)).toBe('00:18:42');
+        expect(elapsedClock((2 * 3600 + 5) * 1000)).toBe('02:00:05');
+        expect(elapsedClock(-5000)).toBe('00:00:00');
     });
 });
 
@@ -201,6 +124,9 @@ describe('shortcuts', () => {
         expect(
             shortcutAction(key('h', { ctrlKey: true, altKey: true }), false),
         ).toBe('toggle-hand');
+        expect(
+            shortcutAction(key('s', { ctrlKey: true, altKey: true }), false),
+        ).toBe('toggle-captions');
     });
 
     it('ignores other combinations', () => {
@@ -217,34 +143,24 @@ describe('shortcuts', () => {
     it('labels shortcuts per platform', () => {
         expect(shortcutLabel('toggle-mic', true)).toBe('⌘ D');
         expect(shortcutLabel('toggle-chat', false)).toBe('Ctrl + Alt + C');
+        expect(shortcutLabel('toggle-captions', true)).toBe('⌘ ⌥ S');
         expect(isMacPlatform('MacIntel')).toBe(true);
         expect(isMacPlatform('Win32')).toBe(false);
     });
 });
 
 describe('participants', () => {
-    it('parses token metadata defensively', () => {
-        expect(
-            parseMeta('{"avatar_url":"https://x/y.png","organizer":true}'),
-        ).toEqual({ avatar_url: 'https://x/y.png', organizer: true });
-        expect(parseMeta('not json')).toEqual({
-            avatar_url: null,
-            organizer: false,
-        });
-        expect(parseMeta(undefined)).toEqual({
-            avatar_url: null,
-            organizer: false,
-        });
-    });
-
     it('orders raised hands by the time they were raised', () => {
         expect(
-            raisedHandOrder([
-                { id: 'a', hand: '300' },
-                { id: 'b' },
-                { id: 'c', hand: '100' },
-                { id: 'd', hand: '' },
-            ]).map((p) => p.id),
+            raisedHandOrder(
+                [
+                    { id: 'a', hand: '300' },
+                    { id: 'b' },
+                    { id: 'c', hand: '100' },
+                    { id: 'd', hand: '' },
+                ],
+                (p) => p.hand,
+            ).map((p) => p.id),
         ).toEqual(['c', 'a']);
     });
 

@@ -73,6 +73,8 @@ export type Meeting = {
     reminders: number[];
     /** Leadership/cross-division agenda (Jadwal & notulensi manajemen). */
     leadership?: boolean;
+    /** "Notulen otomatis" switched on (video meetings only). */
+    auto_minutes?: boolean;
     canceled?: boolean;
     minutes_status: MinutesStatus;
 };
@@ -183,6 +185,8 @@ export type MeetingFormMeeting = {
     minute_taker_id: PersonId | null;
     workspace_id: string | null;
     leadership: boolean;
+    /** "Notulen otomatis" (only kept for platform `video`). */
+    auto_minutes?: boolean;
 };
 
 export type MeetingFormProps = {
@@ -194,6 +198,8 @@ export type MeetingFormProps = {
     meeting: MeetingFormMeeting | null;
     /** LiveKit configured: "Video RuangKerja" is offered (and the default). */
     video_enabled: boolean;
+    /** Transcription server configured: offer the "Notulen otomatis" toggle for video meetings. */
+    auto_minutes_enabled?: boolean;
 };
 
 export type MeetingDetailProps = {
