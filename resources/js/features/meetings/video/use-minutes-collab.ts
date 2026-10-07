@@ -78,18 +78,36 @@ export function useMinutesCollab(
                 }
 
                 let initial: string | null = first.token;
+                // Edit right of the latest token: the server forces a reconnect
+                // when it changes (minutes finalized, participant removed or
+                // re-admitted), and the editor must follow it — otherwise typing
+                // in a read-only connection is silently dropped (audit U-02).
+                let canEdit = first.can_edit;
                 const current = new HocuspocusProvider({
                     url: first.url || collab?.url || '',
                     name: first.document,
                     document: doc,
                     // Fresh short-lived token on every (re)connect.
                     token: async () => {
-                        const token =
-                            initial ??
-                            (await videoApi.collabToken(tokenUrl)).token;
-                        initial = null;
+                        if (initial !== null) {
+                            const token = initial;
+                            initial = null;
 
-                        return token;
+                            return token;
+                        }
+
+                        const fresh = await videoApi.collabToken(tokenUrl);
+                        canEdit = fresh.can_edit;
+
+                        if (!cancelled) {
+                            setState((value) =>
+                                value.mode === 'live'
+                                    ? { ...value, canEdit }
+                                    : value,
+                            );
+                        }
+
+                        return fresh.token;
                     },
                 });
                 provider = current;
@@ -108,7 +126,7 @@ export function useMinutesCollab(
                         mode: 'live',
                         live: { doc, provider: current },
                         connected: true,
-                        canEdit: first.can_edit,
+                        canEdit,
                     });
                 });
                 current.on('status', ({ status }: { status: string }) => {
