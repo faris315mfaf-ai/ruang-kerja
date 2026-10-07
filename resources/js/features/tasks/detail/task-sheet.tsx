@@ -3,6 +3,7 @@ import { usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTaskPresence } from '../realtime/presence';
+import { usePublishTaskViewing } from '../realtime/workspace-presence';
 import type { Task } from '../types';
 import { TaskDetailBody } from './task-detail-body';
 import type { DetailNavigation } from './task-detail-header';
@@ -60,6 +61,15 @@ export function TaskSheet({
     const { auth } = usePage().props;
     const state = useTaskDetail(taskId, { onTaskChange, onDeleted: onClose });
     const viewers = useTaskPresence(taskId, auth.user?.id);
+    // Board cards of the workspace show who has this task open.
+    const loaded =
+        state.detail && state.detail.task.id === taskId ? state.detail : null;
+    usePublishTaskViewing(
+        loaded?.workspace.id,
+        taskId,
+        auth.user?.id,
+        loaded?.workspace.type !== 'personal',
+    );
     const index = taskId ? navigationIds.indexOf(taskId) : -1;
     const navigation: DetailNavigation | null =
         index >= 0

@@ -41,6 +41,8 @@ type Props = {
     /** Hint under the box, e.g. "Balasan juga muncul di PLQ-15". */
     hint?: string;
     placeholder?: string;
+    /** Every edit (board presence "sedang berkomentar"). */
+    onTyping?: () => void;
 };
 
 const toolButton =
@@ -60,6 +62,7 @@ export function CommentComposer({
     placeholder = 'Tulis komentar… ketik @ untuk menyebut rekan',
     drive = null,
     onAttachmentsChange,
+    onTyping,
 }: Props) {
     const [api, setApi] = useState<RichTextEditorApi | null>(null);
     const [empty, setEmpty] = useState(true);
@@ -106,7 +109,13 @@ export function CommentComposer({
             placeholder={
                 waiting ? 'Tulis komentar untuk lampiran ini…' : placeholder
             }
-            onChange={(doc) => setEmpty(doc === null)}
+            onChange={(doc) => {
+                setEmpty(doc === null);
+
+                if (doc !== null) {
+                    onTyping?.();
+                }
+            }}
             onSubmit={() => void send()}
             onReady={onReady}
             className={

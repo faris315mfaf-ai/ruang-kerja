@@ -12,6 +12,8 @@ type Props = {
     workspaceKey: string;
     editable: boolean;
     onSave: (doc: RichDoc | null) => Promise<boolean>;
+    /** Every edit while the editor is open (board presence "sedang diedit"). */
+    onTyping?: () => void;
     className?: string;
     /** Type size of the read-only text (page: body-lg, DTugas). */
     textClassName?: string;
@@ -27,6 +29,7 @@ export function DescriptionField({
     workspaceKey,
     editable,
     onSave,
+    onTyping,
     className,
     textClassName,
 }: Props) {
@@ -66,7 +69,10 @@ export function DescriptionField({
                         workspaceKey={workspaceKey}
                         ariaLabel="Deskripsi tugas"
                         placeholder="Tulis deskripsi… ketik @ untuk menyebut rekan, # untuk merujuk tugas"
-                        onChange={setDraft}
+                        onChange={(doc) => {
+                            setDraft(doc);
+                            onTyping?.();
+                        }}
                         onSubmit={() => void save()}
                         autoFocus
                         className="min-h-28"
