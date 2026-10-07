@@ -8,6 +8,8 @@ import { useMinutes } from '../use-minutes';
 import type { Room } from './contract';
 import { minutesPropsFor } from './contract';
 import type { RoomMinutes } from './types';
+import type { MinutesCollab } from './use-minutes-collab';
+import { useMinutesCollab } from './use-minutes-collab';
 import { nudgeMinutes } from './use-room-live';
 
 type Sync = MutableRefObject<((minutes: Minutes) => void) | null>;
@@ -33,7 +35,7 @@ function Host({
     minutes: RoomMinutes;
     live: LiveRoom;
     syncRef: Sync;
-    children: (data: MinutesData) => ReactNode;
+    children: (data: MinutesData, collab: MinutesCollab) => ReactNode;
 }) {
     // useMinutes reads its props once (initial state); identity is enough.
     const props = useMemo(
@@ -42,6 +44,13 @@ function Host({
         [minutes.doc.meeting_key],
     );
     const data = useMinutes(props);
+    const me = room.participants.find((p) => p.id === room.viewer.id);
+    const collab = useMinutesCollab(
+        room.features.collab_minutes && minutes.mode === 'collab'
+            ? minutes.collab
+            : null,
+        { id: room.viewer.id, name: room.viewer.name, seat: me?.seat ?? 0 },
+    );
     const fromServer = useRef<string | null>(null);
     const date = room.meeting.occurrence_date;
 
@@ -65,7 +74,7 @@ function Host({
 
     return (
         <MeetingsProvider people={room.people} me={room.viewer.id}>
-            {children(data)}
+            {children(data, collab)}
         </MeetingsProvider>
     );
 }
@@ -84,10 +93,10 @@ export function MinutesHost({
     room: Room;
     live: LiveRoom;
     syncRef: Sync;
-    children: (data: MinutesData | null) => ReactNode;
+    children: (data: MinutesData | null, collab: MinutesCollab) => ReactNode;
 }) {
     if (!room.minutes) {
-        return <>{children(null)}</>;
+        return <>{children(null, { mode: 'off' })}</>;
     }
 
     return (

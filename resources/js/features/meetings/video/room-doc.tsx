@@ -10,7 +10,7 @@ import {
     Trash2,
     X,
 } from 'lucide-react';
-import type { FormEvent, RefObject } from 'react';
+import type { FormEvent, ReactNode, RefObject } from 'react';
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { cursorTone } from '@/features/notes/cursor-tones';
 import { UserAvatar } from '@/components/shell/user-avatar';
@@ -352,6 +352,8 @@ export function MinutesDoc({
     onFocusPart,
     variant = 'page',
     quickAdd = false,
+    collabBody,
+    viewerId,
 }: {
     data: MinutesData;
     title: string;
@@ -364,6 +366,9 @@ export function MinutesDoc({
     variant?: DocVariant;
     /** Phone: "+ Keputusan · + Tugas · + Poin" under the document. */
     quickAdd?: boolean;
+    /** Collaborative text (Yjs) replacing the section fields for everyone. */
+    collabBody?: ReactNode;
+    viewerId: string;
 }) {
     const { minutes } = data;
     const [editingItem, setEditingItem] = useState<string | null>(null);
@@ -377,6 +382,7 @@ export function MinutesDoc({
         .map((mark) => nameOf(mark.user_id));
     const taker = participants.find((p) => p.roles.includes('minute_taker'));
     const compact = variant !== 'page';
+    const typing = editors.filter((person) => person.id !== viewerId);
     const lastItem = minutes.action_items.at(-1);
 
     // A follow-up added with "+ Tugas" opens for editing.
@@ -494,64 +500,89 @@ export function MinutesDoc({
                 </>
             )}
 
-            {minutes.sections.length === 0 && data.readOnly && (
+            {data.readOnly && !collabBody && typing.length > 0 && (
+                <p
+                    role="status"
+                    className="flex items-center gap-2 text-[14px] font-semibold text-link"
+                    data-testid="editing-hint"
+                >
+                    <Pencil aria-hidden className="size-4" />
+                    {typing
+                        .map((person) => person.first_name)
+                        .join(' dan ')}{' '}
+                    sedang menyunting
+                </p>
+            )}
+
+            {collabBody && (
+                <section
+                    id={docAnchor('section-0')}
+                    aria-label="Catatan rapat bersama"
+                    className="flex scroll-mt-4 flex-col"
+                >
+                    {collabBody}
+                </section>
+            )}
+
+            {!collabBody && minutes.sections.length === 0 && data.readOnly && (
                 <p className="text-[16px] text-text-subtle">
                     Notulis belum menulis apa pun.
                 </p>
             )}
 
-            {minutes.sections.map((section, index) => {
-                const key = `section-${index}`;
+            {!collabBody &&
+                minutes.sections.map((section, index) => {
+                    const key = `section-${index}`;
 
-                return (
-                    <section
-                        key={`${section.title}-${index}`}
-                        id={docAnchor(key)}
-                        aria-labelledby={`${docAnchor(key)}-title`}
-                        className="relative flex scroll-mt-4 flex-col gap-1.5"
-                    >
-                        <h3
-                            id={`${docAnchor(key)}-title`}
-                            className={cn(
-                                'mt-1.5 font-bold',
-                                compact
-                                    ? 'text-[17px] leading-6'
-                                    : 'text-[19px] leading-7',
-                            )}
+                    return (
+                        <section
+                            key={`${section.title}-${index}`}
+                            id={docAnchor(key)}
+                            aria-labelledby={`${docAnchor(key)}-title`}
+                            className="relative flex scroll-mt-4 flex-col gap-1.5"
                         >
-                            {index + 1}. {section.title}
-                        </h3>
-                        <PresenceFlags people={presence[key]} />
-                        {data.readOnly ? (
-                            <p className="text-[16px] leading-7 whitespace-pre-line">
-                                {section.body || (
-                                    <span className="text-text-subtle">
-                                        Belum ada catatan.
-                                    </span>
+                            <h3
+                                id={`${docAnchor(key)}-title`}
+                                className={cn(
+                                    'mt-1.5 font-bold',
+                                    compact
+                                        ? 'text-[17px] leading-6'
+                                        : 'text-[19px] leading-7',
                                 )}
-                            </p>
-                        ) : (
-                            <GrowingText
-                                value={section.body}
-                                label={`Catatan ${section.title}`}
-                                placeholder="Ketik poin pembahasan…"
-                                onChange={(body) =>
-                                    data.updateSection(index, body)
-                                }
-                                onFocus={() => {
-                                    setLastSection(index);
-                                    onFocusPart(key);
-                                }}
-                                onBlur={() => onFocusPart(null)}
-                                textRef={(element) => {
-                                    sectionRefs.current[index] = element;
-                                }}
-                                className="text-[16px] leading-7"
-                            />
-                        )}
-                    </section>
-                );
-            })}
+                            >
+                                {index + 1}. {section.title}
+                            </h3>
+                            <PresenceFlags people={presence[key]} />
+                            {data.readOnly ? (
+                                <p className="text-[16px] leading-7 whitespace-pre-line">
+                                    {section.body || (
+                                        <span className="text-text-subtle">
+                                            Belum ada catatan.
+                                        </span>
+                                    )}
+                                </p>
+                            ) : (
+                                <GrowingText
+                                    value={section.body}
+                                    label={`Catatan ${section.title}`}
+                                    placeholder="Ketik poin pembahasan…"
+                                    onChange={(body) =>
+                                        data.updateSection(index, body)
+                                    }
+                                    onFocus={() => {
+                                        setLastSection(index);
+                                        onFocusPart(key);
+                                    }}
+                                    onBlur={() => onFocusPart(null)}
+                                    textRef={(element) => {
+                                        sectionRefs.current[index] = element;
+                                    }}
+                                    className="text-[16px] leading-7"
+                                />
+                            )}
+                        </section>
+                    );
+                })}
 
             <section
                 id={docAnchor('decisions')}

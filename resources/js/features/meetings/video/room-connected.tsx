@@ -23,7 +23,7 @@ import {
     VideoOff,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import {
     Dialog,
@@ -74,6 +74,13 @@ import { useRoomLive } from './use-room-live';
 import { useTalkTime } from './use-talk-time';
 import type { RoomStatus } from './use-video-room';
 import { mediaErrorMessage } from './use-video-room';
+
+/** Tiptap + Yjs only load when the minutes are collaborative. */
+const NoteEditor = lazy(() =>
+    import('@/features/notes/note-editor').then((module) => ({
+        default: module.NoteEditor,
+    })),
+);
 
 /** LiveKit attribute: which part of the minutes this person is typing in. */
 const PRESENCE_ATTRIBUTE = 'rk_minutes_at';
@@ -747,7 +754,7 @@ export function ConnectedRoom({
 
     return (
         <MinutesHost room={room} live={live} syncRef={minutesSync}>
-            {(minutes) => {
+            {(minutes, collab) => {
                 const sections = navigatorSections(
                     minutes?.minutes ?? null,
                     room.meeting.agenda ?? [],
@@ -764,6 +771,28 @@ export function ConnectedRoom({
                             onFocusPart={focusPart}
                             variant={variant}
                             quickAdd={variant === 'sheet'}
+                            viewerId={room.viewer.id}
+                            collabBody={
+                                collab.mode === 'live' ? (
+                                    <Suspense fallback={<Spinner />}>
+                                        {' '}
+                                        <NoteEditor
+                                            live={collab.live}
+                                            initial={null}
+                                            editable
+                                            me={{
+                                                id: room.viewer.id,
+                                                name: room.viewer.name,
+                                            }}
+                                            workspaceKey={
+                                                room.meeting.workspace?.key ??
+                                                null
+                                            }
+                                            onReady={() => undefined}
+                                        />
+                                    </Suspense>
+                                ) : undefined
+                            }
                         />
                     ) : (
                         <div className="flex flex-col gap-2 px-6 py-10 text-center text-text-muted">
