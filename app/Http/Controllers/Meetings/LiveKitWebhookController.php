@@ -10,6 +10,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 /**
  * POST /api/livekit/webhook: LiveKit room events (livekit.yaml `webhook`).
@@ -19,7 +20,8 @@ use Illuminate\Support\Facades\Cache;
  *
  * Replays: the JWT expires after 5 minutes, events older than
  * `livekit.webhook_tolerance` seconds are refused, and an event id is
- * processed once (cache). 404 not configured · 413 too large · 401 bad
+ * processed once (cache; forgotten again when processing fails, so LiveKit's
+ * retry is not taken for a duplicate). 404 not configured · 413 too large · 401 bad
  * signature · 422 not JSON / stale · 200 recorded, ignored or duplicate.
  */
 class LiveKitWebhookController extends Controller
@@ -56,11 +58,23 @@ class LiveKitWebhookController extends Controller
         }
 
         $id = is_string($event['id'] ?? null) ? $event['id'] : '';
+        $key = 'livekit:webhook:'.hash('sha256', $id);
 
-        if ($id !== '' && ! Cache::add('livekit:webhook:'.hash('sha256', $id), true, $tolerance * 2)) {
+        if ($id !== '' && ! Cache::add($key, true, $tolerance * 2)) {
             return response()->json(['status' => 'duplicate']);
         }
 
-        return response()->json(['status' => $record->handle($event) ? 'recorded' : 'ignored']);
+        try {
+            $recorded = $record->handle($event);
+        } catch (Throwable $exception) {
+            // Not processed: LiveKit's retry must not count as a duplicate.
+            if ($id !== '') {
+                Cache::forget($key);
+            }
+
+            throw $exception;
+        }
+
+        return response()->json(['status' => $recorded ? 'recorded' : 'ignored']);
     }
 }

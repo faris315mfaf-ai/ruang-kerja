@@ -11,9 +11,12 @@ use Carbon\CarbonImmutable;
 /**
  * LiveKit access token for one person in the room of one occurrence
  * (POST /rapat/{meeting}/video/token). Authorization (MeetingPolicy::joinVideo)
- * happens before. Identity = user ULID, so webhooks map back to the person;
- * the organizer also gets `roomAdmin`. Everyone may publish camera, mic,
- * screen and data (chat) and update their own attributes (raised hand).
+ * happens before. Identity = user ULID, so webhooks map back to the person.
+ * Nobody gets `roomAdmin` in the browser (audit rapat 2026-10, R-03): with it
+ * a client could call the Room Service API directly (remove, rename, mute)
+ * without MeetingPolicy or audit; the organizer moderates through the app
+ * (LiveKitRoomService, server-side admin token). Everyone may publish camera,
+ * mic, screen and data (chat) and update their own attributes (raised hand).
  */
 final class IssueVideoToken
 {
@@ -41,10 +44,6 @@ final class IssueVideoToken
             'canPublishData' => true,
             'canUpdateOwnMetadata' => true,
         ];
-
-        if ($organizer) {
-            $grant['roomAdmin'] = true;
-        }
 
         $token = $this->tokens->accessToken(
             identity: $user->id,
