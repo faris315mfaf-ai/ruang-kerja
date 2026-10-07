@@ -225,7 +225,8 @@ final class MinutesSummarizer
                     'temperature' => 0.2,
                     'max_tokens' => max(500, (int) config('notulen.llm.max_tokens', 4000)),
                     'response_format' => ['type' => 'json_object'],
-                ]);
+                ])
+                ->throw();
         } catch (ConnectionException|RequestException $exception) {
             $status = $exception instanceof RequestException ? 'HTTP '.$exception->response->status() : 'tidak terjangkau';
 

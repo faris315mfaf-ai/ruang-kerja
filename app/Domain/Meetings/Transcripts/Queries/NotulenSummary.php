@@ -159,7 +159,15 @@ final class NotulenSummary
             'duration_seconds' => $transcript->duration_seconds,
             'speakers' => self::speakers($transcript),
             'segments' => $ready ? array_map(
-                fn (array $segment, int $index): array => ['i' => $index, ...$segment],
+                fn (array $segment, int $index): array => [
+                    'i' => $index,
+                    'speaker_identity' => $segment['speaker_identity'],
+                    'user_id' => $segment['user_id'],
+                    'speaker_name' => $segment['speaker_name'],
+                    'start_ms' => $segment['start_ms'],
+                    'end_ms' => $segment['end_ms'],
+                    'text' => $segment['text'],
+                ],
                 $transcript->segments,
                 array_keys($transcript->segments),
             ) : [],
