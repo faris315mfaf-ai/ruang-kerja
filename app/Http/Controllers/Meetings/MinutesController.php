@@ -14,11 +14,15 @@ use App\Domain\Meetings\Data\Occurrence;
 use App\Domain\Meetings\Queries\EditableWorkspaces;
 use App\Domain\Meetings\Queries\MeetingFeed;
 use App\Domain\Meetings\Services\MeetingOccurrences;
+use App\Domain\Meetings\Services\MinutesCollab;
+use App\Domain\Meetings\Services\MinutesEditing;
 use App\Domain\Meetings\Services\MinutesStore;
+use App\Domain\Notes\Services\CollabToken;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Meetings\ActionItemRequest;
 use App\Http\Requests\Meetings\ConvertActionItemsRequest;
 use App\Http\Requests\Meetings\MeetingRequest;
+use App\Http\Requests\Meetings\MinutesEditingRequest;
 use App\Http\Requests\Meetings\OccurrenceRequest;
 use App\Http\Requests\Meetings\SaveMinutesRequest;
 use App\Http\Resources\Meetings\MeetingPresenter;
@@ -30,6 +34,7 @@ use App\Models\Workspace;
 use App\Policies\MeetingPolicy;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -72,12 +77,58 @@ class MinutesController extends Controller
         ]);
     }
 
+    /** GET /rapat/{meeting}/notulen/data: fresh minutes (video room refetch after minutes.updated). */
+    public function data(OccurrenceRequest $request, Meeting $meeting): JsonResponse
+    {
+        Gate::authorize('view', $meeting);
+
+        return $this->minutesResponse($this->occurrence($request, $meeting))->header('Cache-Control', 'no-store');
+    }
+
+    /**
+     * GET /rapat/{meeting}/notulen/kolaborasi — token of the collaborative
+     * minutes document (MinutesCollab); 503 without collaboration.
+     */
+    public function collabToken(OccurrenceRequest $request, Meeting $meeting, #[CurrentUser] User $user, MinutesCollab $collab): JsonResponse
+    {
+        Gate::authorize('view', $meeting);
+        abort_unless(MinutesCollab::enabled(), 503, 'Server kolaborasi belum diatur.');
+
+        $occurrence = $this->occurrence($request, $meeting);
+        $minutes = DB::transaction(fn (): MeetingMinutes => $this->store->open($occurrence));
+        $canEdit = $collab->canEdit($user, $meeting, $minutes);
+
+        return response()->json([
+            'document' => MinutesCollab::documentName($minutes),
+            'token' => $collab->issue($minutes, $user, $canEdit),
+            'url' => (string) config('collab.public_url'),
+            'can_edit' => $canEdit,
+            'expires_in' => CollabToken::ttl(),
+        ])->header('Cache-Control', 'no-store');
+    }
+
+    /** POST /rapat/{meeting}/notulen/menyunting {active} — "X sedang menyunting" heartbeat. */
+    public function editing(MinutesEditingRequest $request, Meeting $meeting, #[CurrentUser] User $user, MinutesEditing $editing): JsonResponse
+    {
+        $occurrence = $this->occurrence($request, $meeting);
+        Gate::authorize('editMinutes', [$meeting, $this->store->find($occurrence)]);
+
+        return response()->json(['editing' => $editing->heartbeat($occurrence, $user, $request->boolean('active'))]);
+    }
+
     public function save(SaveMinutesRequest $request, Meeting $meeting, #[CurrentUser] User $user, SaveMinutes $save): JsonResponse
     {
         $occurrence = $this->occurrence($request, $meeting);
         Gate::authorize('editMinutes', [$meeting, $this->store->find($occurrence)]);
 
-        $save->handle($occurrence, $user, $request->content());
+        $content = $request->content();
+
+        if ($request->attendanceOnly()) {
+            $current = $this->store->find($occurrence)?->content() ?? $this->store->blank($occurrence);
+            $content = ['attendance' => $content['attendance'], 'sections' => $current['sections'], 'decisions' => $current['decisions']];
+        }
+
+        $save->handle($occurrence, $user, $content);
 
         return $this->minutesResponse($occurrence);
     }

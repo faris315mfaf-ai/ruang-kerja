@@ -2,6 +2,7 @@
 
 namespace App\Domain\Meetings\Actions;
 
+use App\Domain\Meetings\Services\RoomEvents;
 use App\Domain\Notifications\Actions\ResolveNotificationsForSubject;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Models\MeetingActionItem;
@@ -16,7 +17,10 @@ use Illuminate\Validation\ValidationException;
  */
 final class UpdateActionItem
 {
-    public function __construct(private readonly ResolveNotificationsForSubject $resolve) {}
+    public function __construct(
+        private readonly ResolveNotificationsForSubject $resolve,
+        private readonly RoomEvents $events,
+    ) {}
 
     /**
      * @param  array{text?: string|null, assignee_id?: string|null, due_date?: string|null, done?: bool}  $input
@@ -45,6 +49,7 @@ final class UpdateActionItem
             }
 
             $item->save();
+            $this->events->minutesChanged($item->minutes);
 
             return $item;
         });

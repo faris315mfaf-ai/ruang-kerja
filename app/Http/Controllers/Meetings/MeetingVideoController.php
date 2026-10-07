@@ -4,15 +4,20 @@ namespace App\Http\Controllers\Meetings;
 
 use App\Domain\Meetings\Actions\IssueVideoToken;
 use App\Domain\Meetings\Actions\MuteVideoParticipant;
+use App\Domain\Meetings\Actions\ReadmitVideoParticipant;
 use App\Domain\Meetings\Actions\RemoveVideoParticipant;
+use App\Domain\Meetings\Actions\SetOwnAttributes;
+use App\Domain\Meetings\Actions\SetRaisedHand;
 use App\Domain\Meetings\Data\Occurrence;
-use App\Domain\Meetings\Queries\MeetingFeed;
 use App\Domain\Meetings\Services\MeetingOccurrences;
+use App\Domain\Meetings\Services\NotulenBridge;
 use App\Domain\Meetings\Services\VideoRooms;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Meetings\OccurrenceRequest;
+use App\Http\Requests\Meetings\OwnAttributesRequest;
+use App\Http\Requests\Meetings\RaiseHandRequest;
 use App\Http\Requests\Meetings\VideoModerationRequest;
-use App\Http\Resources\Meetings\VideoPresenter;
+use App\Http\Resources\Meetings\RoomPresenter;
 use App\Models\Meeting;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -29,7 +34,10 @@ use RuntimeException;
  * /rapat/{id}/gabung, full-screen room /rapat/{id}/ruang, LiveKit token,
  * and the organizer's mute / remove. Abilities: MeetingPolicy::openVideo,
  * joinVideo (join window), moderateVideo. When LiveKit is not configured
- * the pages still render (with a note) and the API answers 503.
+ * the pages still render (with a note) and the API answers 503. Both pages
+ * get the "Notulen Hidup" room props (RoomPresenter) and the automatic
+ * minutes summary (`notulen`, NotulenBridge) — contract in
+ * docs/fitur/rapat-video-kontrak.md.
  */
 class MeetingVideoController extends Controller
 {
@@ -38,12 +46,12 @@ class MeetingVideoController extends Controller
         private readonly VideoRooms $rooms,
     ) {}
 
-    public function join(OccurrenceRequest $request, Meeting $meeting, #[CurrentUser] User $user, VideoPresenter $presenter): Response
+    public function join(OccurrenceRequest $request, Meeting $meeting, #[CurrentUser] User $user, RoomPresenter $presenter): Response
     {
         return $this->page('meetings/join', $request, $meeting, $user, $presenter);
     }
 
-    public function room(OccurrenceRequest $request, Meeting $meeting, #[CurrentUser] User $user, VideoPresenter $presenter): Response
+    public function room(OccurrenceRequest $request, Meeting $meeting, #[CurrentUser] User $user, RoomPresenter $presenter): Response
     {
         return $this->page('meetings/room', $request, $meeting, $user, $presenter);
     }
@@ -73,6 +81,59 @@ class MeetingVideoController extends Controller
         return $this->moderate($request, $meeting, $user, fn (Occurrence $occurrence) => $remove->handle($user, $occurrence, $identity));
     }
 
+    /** "Izinkan masuk lagi" after a removal (organizer, audit R-04). */
+    public function readmit(OccurrenceRequest $request, Meeting $meeting, string $identity, #[CurrentUser] User $user, ReadmitVideoParticipant $readmit): JsonResponse
+    {
+        Gate::authorize('moderateVideo', $meeting);
+
+        return response()->json(['readmitted' => $readmit->handle($user, $this->occurrence($request, $meeting), $identity)]);
+    }
+
+    /** Own whitelisted LiveKit attributes, set server-side (audit R-05). */
+    public function attributes(OwnAttributesRequest $request, Meeting $meeting, #[CurrentUser] User $user, SetOwnAttributes $set): JsonResponse
+    {
+        $occurrence = $this->occurrence($request, $meeting);
+        Gate::authorize('joinVideo', [$meeting, $occurrence]);
+
+        if (! $this->rooms->configured()) {
+            return response()->json(['message' => 'Video RuangKerja belum disiapkan di server ini.'], 503);
+        }
+
+        /** @var array<string, mixed> $attributes */
+        $attributes = (array) $request->input('attributes', []);
+
+        try {
+            $applied = $set->handle($user, $occurrence, $attributes);
+        } catch (RuntimeException $exception) {
+            Log::warning('LiveKit attributes failed', ['meeting' => $meeting->id, 'error' => $exception->getMessage()]);
+
+            return response()->json(['message' => 'Server rapat tidak menjawab. Coba lagi.'], 502);
+        }
+
+        return response()->json(['attributes' => $applied]);
+    }
+
+    /** Raise / lower one's own hand: attribute `hand` set server-side (audit R-05). */
+    public function hand(RaiseHandRequest $request, Meeting $meeting, #[CurrentUser] User $user, SetRaisedHand $hand): JsonResponse
+    {
+        $occurrence = $this->occurrence($request, $meeting);
+        Gate::authorize('joinVideo', [$meeting, $occurrence]);
+
+        if (! $this->rooms->configured()) {
+            return response()->json(['message' => 'Video RuangKerja belum disiapkan di server ini.'], 503);
+        }
+
+        try {
+            $value = $hand->handle($user, $occurrence, $request->boolean('raised'));
+        } catch (RuntimeException $exception) {
+            Log::warning('LiveKit raise hand failed', ['meeting' => $meeting->id, 'error' => $exception->getMessage()]);
+
+            return response()->json(['message' => 'Server rapat tidak menjawab. Coba lagi.'], 502);
+        }
+
+        return response()->json(['hand' => $value]);
+    }
+
     /**
      * @param  callable(Occurrence): void  $action
      */
@@ -97,29 +158,17 @@ class MeetingVideoController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    private function page(string $component, OccurrenceRequest $request, Meeting $meeting, User $user, VideoPresenter $presenter): Response
+    private function page(string $component, OccurrenceRequest $request, Meeting $meeting, User $user, RoomPresenter $presenter): Response
     {
         Gate::authorize('openVideo', $meeting);
 
         $meeting->load(['participants', 'workspace:id,key,name']);
         $occurrence = $this->occurrence($request, $meeting);
+        $notulen = app(NotulenBridge::class)->summary($occurrence, $user);
 
         return Inertia::render($component, [
-            'room' => [
-                'viewer' => ['id' => $user->id, 'name' => $user->name, 'avatar_url' => $user->getAttribute('avatar_url')],
-                'meeting' => [
-                    'id' => $meeting->id,
-                    'title' => $meeting->title,
-                    'occurrence_date' => $occurrence->date,
-                    'starts_at' => $occurrence->startsAt->toIso8601ZuluString(),
-                    'ends_at' => $occurrence->endsAt->toIso8601ZuluString(),
-                    'href' => $occurrence->url(),
-                    'minutes_href' => $occurrence->url('/notulen'),
-                    'organizer_id' => $meeting->organizer_id,
-                ],
-                'people' => app(MeetingFeed::class)->people([$occurrence], [], [$user->id]),
-                'video' => $presenter->summary($occurrence, $user),
-            ],
+            'room' => $presenter->room($occurrence, $user, $notulen),
+            'notulen' => $notulen,
         ]);
     }
 

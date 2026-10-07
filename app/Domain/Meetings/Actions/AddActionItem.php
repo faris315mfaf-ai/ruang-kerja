@@ -4,6 +4,7 @@ namespace App\Domain\Meetings\Actions;
 
 use App\Domain\Meetings\Data\Occurrence;
 use App\Domain\Meetings\Services\MinutesStore;
+use App\Domain\Meetings\Services\RoomEvents;
 use App\Models\MeetingActionItem;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,10 @@ use Illuminate\Validation\ValidationException;
  */
 final class AddActionItem
 {
-    public function __construct(private readonly MinutesStore $store) {}
+    public function __construct(
+        private readonly MinutesStore $store,
+        private readonly RoomEvents $events,
+    ) {}
 
     /**
      * @param  array{text?: string|null, assignee_id?: string|null, due_date?: string|null}  $input
@@ -30,6 +34,7 @@ final class AddActionItem
 
             $position = (int) MeetingActionItem::query()->where('minutes_id', $minutes->id)->max('position') + 1;
             $minutes->forceFill(['updated_by' => $actor->id])->save();
+            $this->events->minutesChanged($minutes, $occurrence->meeting);
 
             return MeetingActionItem::query()->create([
                 'minutes_id' => $minutes->id,

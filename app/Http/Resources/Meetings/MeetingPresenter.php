@@ -119,9 +119,12 @@ final class MeetingPresenter
                 'present' => (bool) $mark['present'],
                 'reason' => $mark['reason'] ?? null,
             ], $content['attendance']),
-            'sections' => $content['sections'],
+            // jsonb returns keys in its own order: keep {title, body} stable for clients.
+            'sections' => array_map(fn (array $section): array => ['title' => (string) $section['title'], 'body' => (string) $section['body']], $content['sections']),
             'decisions' => $content['decisions'],
             'action_items' => $items->map(fn (MeetingActionItem $item): array => self::actionItem($item))->values()->all(),
+            // How the notes were started on the video pre-join screen (ChooseMinutesSource).
+            'source' => $minutes?->notes_source?->value,
         ];
     }
 

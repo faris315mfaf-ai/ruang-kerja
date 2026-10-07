@@ -4,6 +4,7 @@ namespace App\Domain\Organization\Actions;
 
 use App\Domain\Google\Actions\DisconnectGoogleAccount;
 use App\Domain\Google\Actions\SyncUserDriveAccess;
+use App\Domain\Meetings\Jobs\RemoveUserFromVideoRooms;
 use App\Domain\Organization\Enums\UserStatus;
 use App\Domain\Organization\Services\AuditLogger;
 use App\Domain\Organization\Services\LeadershipReleaser;
@@ -73,6 +74,9 @@ final readonly class DeactivateEmployee
             // saveQuietly() fires no model events, so nothing else re-syncs the
             // workspace folders: revoke their Drive access (queued after commit).
             $this->driveAccess->handle($employee);
+
+            // Video RuangKerja: leave every room they are still in (audit R-09).
+            RemoveUserFromVideoRooms::dispatch($employee->id)->afterCommit();
 
             if (! $reassignReports) {
                 return 0;

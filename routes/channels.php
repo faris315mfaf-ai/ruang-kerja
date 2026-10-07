@@ -4,6 +4,7 @@ use App\Domain\Attendance\Models\AttendanceDay;
 use App\Models\Channel;
 use App\Models\Company;
 use App\Models\Division;
+use App\Models\Meeting;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
@@ -71,4 +72,11 @@ Broadcast::channel('chat-online.{company}', function (User $user, Company $compa
     return $user->company_id === $company->id
         ? ['id' => $user->id, 'name' => $user->name, 'avatar' => $user->avatar_url]
         : false;
+});
+
+// Video RuangKerja "Notulen Hidup": room events of a meeting/series (speaking.updated,
+// participant.called, minutes.source_chosen, minutes.updated, attendance.updated;
+// docs/fitur/rapat-video-kontrak.md §5) for invited people (MeetingPolicy::openVideo).
+Broadcast::channel('meeting.{meeting}', function (User $user, Meeting $meeting): bool {
+    return Gate::forUser($user)->allows('openVideo', $meeting);
 });
