@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Meetings\Enums\Recurrence;
+use App\Domain\Meetings\Events\MeetingRoomBroadcast;
 use App\Domain\Meetings\Transcripts\Enums\DraftStatus;
 use App\Domain\Meetings\Transcripts\Enums\TranscriptStatus;
 use App\Domain\Meetings\Transcripts\Jobs\PurgeExpiredMeetingTranscripts;
@@ -24,6 +25,7 @@ use Firebase\JWT\Key;
 use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 
@@ -383,6 +385,27 @@ it('states retention, participant-only access, audio deletion and the AI provide
     $this->actingAs($this->rina)->getJson($this->base.'/status')->assertJsonPath('notice', null)->assertJsonPath('notice_points', []);
 });
 
+it('gives the pre-join and room pages the contract summary (null when unavailable)', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-10-05 09:55', 'Asia/Jakarta'));
+
+    foreach (['gabung', 'ruang'] as $page) {
+        $this->actingAs($this->rina)->get('/rapat/'.$this->meeting->id.'/'.$page)->assertOk()
+            ->assertInertia(fn ($inertia) => $inertia
+                ->where('notulen.available', true)
+                ->where('notulen.auto_minutes', true)
+                ->where('notulen.consent', ['opted_out' => false, 'can_change' => true])
+                ->where('notulen.optout_count', 0)
+                ->has('notulen.notice_points', 4)
+                ->where('room.features.auto_minutes', true)
+                ->etc());
+    }
+
+    $this->meeting->forceFill(['auto_minutes' => false])->save();
+    config(['notulen.transcriber.url' => '']);
+    $this->actingAs($this->rina)->get('/rapat/'.$this->meeting->id.'/gabung')
+        ->assertInertia(fn ($inertia) => $inertia->where('notulen', null)->where('room.features.auto_minutes', false)->etc());
+});
+
 describe('consent ("Jangan transkrip suara saya")', function () {
     it('stores the choice privately and tells a recording worker (never a LiveKit attribute)', function () {
         MeetingTranscript::factory()->create(['meeting_id' => $this->meeting->id, 'status' => TranscriptStatus::Recording]);
@@ -657,6 +680,20 @@ describe('draft actions', function () {
 
         $this->actingAs($this->taker)->postJson($this->base.'/masukkan')->assertStatus(409);
         $this->actingAs($this->rina)->postJson($this->base.'/masukkan')->assertForbidden();
+    });
+
+    it('pushes the inserted draft to live collaborative editors and the video room', function () {
+        Event::fake([MeetingRoomBroadcast::class]);
+        config(['features.notes' => true, 'collab.secret' => str_repeat('s', 40), 'collab.url' => 'http://collab.test']);
+        Http::fake(['collab.test/*' => Http::response(['ok' => true])]);
+
+        $this->actingAs($this->taker)->postJson($this->base.'/masukkan')->assertOk();
+
+        Http::assertSent(fn (ClientRequest $r): bool => str_starts_with($r->url(), 'http://collab.test/internal/documents/meeting-minutes.')
+            && str_ends_with($r->url(), '/replace')
+            && str_contains(json_encode($r->data(), JSON_UNESCAPED_UNICODE), 'Draf otomatis — periksa sebelum final'));
+        Event::assertDispatched(MeetingRoomBroadcast::class, fn (MeetingRoomBroadcast $e): bool => $e->name === 'minutes.updated');
+        expect(MeetingMinutes::query()->sole()->doc_state)->toBeNull();
     });
 
     it('refuses to insert into final minutes', function () {
