@@ -296,11 +296,17 @@ describe('speaking time', function () {
         $this->travel(2)->seconds();
         expect($report->handle($occurrence, $this->sari, 61_000))->toBe(60_000);
 
-        // Later: at most stored + elapsed + 5 s slack; decreases are ignored.
+        // Never seen in the room (no webhook data): never more than 60 s in total
+        // (audit rapat 2026-10 B-01); decreases are ignored.
         $this->travel(13)->seconds();
-        expect($report->handle($occurrence, $this->sari, 999_000))->toBe(60_000 + 15_000 + 5_000);
+        expect($report->handle($occurrence, $this->sari, 999_000))->toBe(60_000);
         $this->travel(15)->seconds();
-        expect($report->handle($occurrence, $this->sari, 10_000))->toBe(80_000);
+        expect($report->handle($occurrence, $this->sari, 10_000))->toBe(60_000);
+
+        // In the room: at most stored + elapsed + 5 s slack, and the time spent in the room + 5 s.
+        roomJoin($this->sari, 2);
+        $this->travel(15)->seconds();
+        expect($report->handle($occurrence, $this->sari, 999_000))->toBe(60_000 + 15_000 + 5_000);
 
         // With the webhook join time: at most time since joining + 5 s.
         roomJoin($this->nadia, 2);
