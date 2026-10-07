@@ -20,17 +20,17 @@ Tingkat: **Kritis** · **Tinggi** · **Sedang** · **Rendah** · **Info**. Statu
 | R-07 | Rendah | Badan JSON besar didekode middleware global (`TrimStrings` → `$request->json()`) **sebelum** batas 64 KB di webhook; batas efektif = `post_max_size`/Caddy 110 MB untuk semua endpoint tanpa autentikasi | `LiveKitWebhookController.php:35-39`, `bootstrap/app.php:41`, `docker/caddy/Caddyfile:20-23` | Rekomendasi (ops) |
 | R-08 | Rendah | Bisukan peserta tidak diaudit (keluarkan diaudit) | `MuteVideoParticipant.php:29` | Rekomendasi (rapatbe) |
 | R-09 | Rendah | Sesi video tetap hidup setelah rapat dibatalkan / akun dinonaktifkan / jendela gabung tutup (LiveKit memperbarui token selama tersambung) | `IssueVideoToken`, `CancelMeeting`, `DeactivateEmployee` | Rekomendasi (rapatbe): `DeleteRoom`/`RemoveParticipant` saat batal/nonaktif |
-| R-10 | Rendah | Orang yang masuk dengan sandi bawaan (belum ganti) masih bisa membaca `inbox.feed` (judul notifikasi korban) tanpa jejak selain login | `EnsurePasswordChanged.php:44` | Rekomendasi |
-| R-11 | Rendah | Membuka nilai sandi bawaan (`GET …/kata-sandi/bawaan`) tidak diaudit | `EmployeePasswordController.php:42-50` | Rekomendasi |
+| R-10 | Rendah | Orang yang masuk dengan sandi bawaan (belum ganti) masih bisa membaca `inbox.feed` (judul notifikasi korban) tanpa jejak selain login | `EnsurePasswordChanged.php:44`, `HandleInertiaRequests.php` | **Diperbaiki** `ad1f230` |
+| R-11 | Rendah | Membuka nilai sandi bawaan (`GET …/kata-sandi/bawaan`) tidak diaudit | `EmployeePasswordController.php:42-50` | **Diperbaiki** `4a1af5c` |
 | R-12 | Rendah | Balapan `participant_joined` + `participant_left` bersamaan untuk SID yang sama → `UniqueConstraintViolation` (500). Setelah R-02, percobaan ulang LiveKit memulihkannya | `RecordVideoEvent.php:72-80` | Mitigasi lewat R-02; rekomendasi `createOrFirst` |
 | R-13 | Info | `room_finished` mencari `meeting_attendances.room` tanpa indeks (Seq Scan) | `RecordVideoEvent.php:98` | Rekomendasi (lihat §4) |
-| R-14 | Info | `Permissions-Policy` `microphone=(self), display-capture=(self)` berlaku di **semua** halaman, bukan hanya `/rapat/*/gabung|ruang` | `config/security.php:111` | Diterima / opsional |
+| R-14 | Info | `Permissions-Policy` `microphone=(self), display-capture=(self)` berlaku di **semua** halaman, bukan hanya `/rapat/*/gabung|ruang` | `config/security.php:111` | Diterima, terdokumentasi (lihat R-14 di §2) |
 | R-15 | Info | Token admin server memakai `roomList` (tidak terikat ruang) padahal hanya butuh `roomAdmin` | `LiveKitTokens.php:72` | Rekomendasi |
-| R-16 | Info | `docker/caddy/site.caddy.template` (edge bersama) tidak punya rute landing `/` seperti `docker/caddy/Caddyfile`, padahal komentarnya "keep them in sync"; landing statis tanpa CSP | `docker/caddy/site.caddy.template`, `docker/caddy/Caddyfile:54-61` | Rekomendasi (ops) |
+| R-16 | Info | `docker/caddy/site.caddy.template` (edge bersama) tidak punya rute landing `/` seperti `docker/caddy/Caddyfile`, padahal komentarnya "keep them in sync"; landing statis tanpa CSP | `docker/caddy/site.caddy.template`, `docker/caddy/Caddyfile:54-61` | **Diperbaiki** `f4ca9fb` |
 | R-17 | Info | IP publik server rapat tercantum di `docs/deploy/RAPAT-VIDEO.md:22` (repo publik) | dok | Diterima (sudah terungkap lewat DNS) |
 | R-18 | Info | Risiko bawaan fitur sandi bawaan: akun yang belum pernah login bisa diambil alih rekan yang tahu sandi bawaan (login → ganti sandi → pemilik terkunci) | desain PR #11 | Diterima pemilik; saran: kedaluwarsa sandi bawaan (mis. 7 hari) + notifikasi email saat sandi bawaan diganti |
 
-Tidak ada temuan **Kritis**. Satu-satunya temuan **Tinggi** (R-01) sudah diperbaiki.
+Tidak ada temuan **Kritis**. Satu-satunya temuan **Tinggi** (R-01) sudah diperbaiki. Diperbaiki di cabang ini: R-01, R-02, R-03, R-10, R-11, R-16.
 
 Hal yang diperiksa dan **aman**: verifikasi webhook (JWT HS256 dengan `Key` → tidak ada kebingungan algoritme, `iss` dicek, klaim `sha256` mengikat badan, `hash_equals`, toleransi waktu, dedup id); nama ruang `rk-{ulid}-{yyyymmdd}` divalidasi regex + `checkdate`, tanggal kemunculan seri divalidasi `meetsOn`; matriks `MeetingPolicy` (perusahaan lain/bukan undangan 404, rapat batal 403, pengamat rapat pimpinan tidak bisa gabung, organizer kapan saja); token 10 menit, identitas = ULID pengguna; `Cache-Control: no-store` untuk token dan nilai sandi bawaan; `DefaultPassword::matches` `hash_equals`; `NotDefaultPassword` di semua jalur penggantian sandi; `EnsurePasswordChanged` memblokir rute JSON (403) termasuk token video & `/broadcasting/auth`; React meng-escape nama/chat (tidak ada `dangerouslySetInnerHTML` di modul rapat); CSP `connect-src` hanya origin LiveKit dari konfigurasi; skrip PITR/deploy tidak mencetak rahasia.
 
@@ -70,13 +70,13 @@ Middleware global `TrimStrings` memanggil `$request->json()` untuk `Content-Type
 ### R-08 … R-18
 - **R-08:** tambahkan `meeting.video_participant_muted` di `MuteVideoParticipant` (rapatbe).
 - **R-09:** saat `CancelMeeting` → `RoomService.DeleteRoom` untuk kemunculan aktif; saat karyawan dinonaktifkan → `RemoveParticipant` di ruang yang sedang dihadiri (dari `meeting_attendances` yang `left_at` null). Pertimbangkan juga menutup ruang setelah `closes_at`.
-- **R-10:** keluarkan `inbox.feed` dari `ALLOWED_ROUTES` (atau kembalikan daftar kosong) selama `password_change_required`.
-- **R-11:** audit `user.default_password_revealed` (tanpa nilai) di `EmployeePasswordController::defaultPassword`.
+- **R-10 (Diperbaiki `ad1f230`):** `inbox.feed` keluar dari `EnsurePasswordChanged::ALLOWED_ROUTES` (JSON → 403; klien polling diam saja), dan `HandleInertiaRequests` menahan prop data shell (`approvals`, `inbox`, `workspaces`, `chatUnread`, `hiring`, `role_dashboards`, `attendanceStatus` — kunci once-prop berganti agar `null` tidak tertahan setelah sandi diganti) selama `password_change_required`. Test: `tests/Feature/Audit/PasswordChangeLockdownAuditTest.php` (daftar rute yang diizinkan dikunci persis, feed 403, prop kosong, kembali normal setelah ganti).
+- **R-11 (Diperbaiki `4a1af5c`):** `EmployeePasswordController::defaultPassword` menulis `user.default_password_revealed` (pelaku, karyawan; tanpa nilai) hanya untuk tampilan yang diizinkan; label di riwayat profil karyawan. Test di `DefaultPasswordAuditTest.php` (2).
 - **R-12:** `MeetingAttendance::query()->createOrFirst(['participant_sid' => $sid], […])` di dalam transaksi (savepoint Postgres) lalu kunci baris; R-02 sudah membuat kasus ini pulih lewat retry.
 - **R-13:** `finishRoom` cukup memfilter `meeting_id` + `occurrence_date` (sudah ada dari `parseRoom`) memakai indeks `meeting_attendances_meeting_id_occurrence_date_index`, atau tambah indeks parsial `(room) WHERE left_at IS NULL`.
-- **R-14:** opsional: header `Permissions-Policy` khusus rute `meetings.video.*`.
+- **R-14 (Diterima, tidak diubah):** `Permissions-Policy` berlaku per **dokumen**, sedangkan Inertia berpindah halaman tanpa memuat ulang dokumen (`router.visit(video.join_href)` di `video-join-card.tsx:162`, `prejoin.tsx:290`). Membatasi `microphone`/`display-capture` ke rute rapat berarti memaksa muat ulang penuh ke `/gabung` dan `/ruang` (mis. `Inertia::location()` untuk request `X-Inertia`). Itu mengubah UX dan alur pra-gabung → ruang yang sedang dibangun ulang agen rapatui, jadi terlalu invasif sekarang. Risiko sisa kecil: `(self)` hanya untuk skrip origin sendiri (CSP nonce), dan browser tetap meminta izin. Bila nanti diinginkan: header per rute di `SecurityHeaders` + muat ulang penuh untuk rute `meetings.video.*`.
 - **R-15:** `adminToken` cukup `['room' => $room, 'roomAdmin' => true]`.
-- **R-16:** salin blok `@landing` ke `site.caddy.template` (atau putuskan landing hanya untuk stack mandiri) dan beri CSP ketat untuk landing (`default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:`).
+- **R-16 (Diperbaiki `f4ca9fb`):** `site.caddy.template` mendapat blok `@landing` yang sama; `deploy-remote.sh` menyalin `docker/caddy/landing` ke `/opt/edge/sites/ruangkerja-landing` (folder `sites/` sudah di-mount read-only ke `edge-caddy`, tidak perlu mengubah stack edge) dan memulihkannya bersama berkas situs bila `caddy validate` gagal. Kedua Caddyfile memberi landing CSP `default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`. Bukti: `caddy validate` (edge + mandiri) di `caddy:2-alpine` → *Valid configuration*; kontainer edge dengan situs hasil render: `GET /` → 200 landing + CSP, `GET /login` → diteruskan ke upstream aplikasi; `shellcheck` bersih.
 - **R-18:** lihat tabel; keputusan pemilik 7 Okt 2026 menerima risikonya.
 
 ## 3. Tinjauan **awal** cabang lain (fase 2 menyusul)
@@ -124,14 +124,17 @@ Lingkungan: Mac dev, Postgres 17 lokal, Pest (`RefreshDatabase`), waktu = satu r
 | `c81f372` | fix(akun): sandi bawaan selalu wajib ganti (R-01) | `tests/Feature/Audit/DefaultPasswordAuditTest.php` (4) |
 | `a744384` | fix(rapat): webhook LiveKit yang gagal diproses tidak dianggap duplikat (R-02) | `tests/Feature/Audit/LiveKitWebhookAuditTest.php` (1) |
 | `9f6d292` | fix(rapat): token browser penyelenggara tanpa roomAdmin (R-03) | `tests/Feature/Meetings/MeetingVideoTest.php` (test diubah) |
+| `ad1f230` | fix(akun): tanpa data akun selama wajib ganti sandi (R-10) | `tests/Feature/Audit/PasswordChangeLockdownAuditTest.php` (4), `EmployeePasswordTest.php` (diubah) |
+| `4a1af5c` | fix(akun): audit setiap kali sandi bawaan ditampilkan (R-11) | `DefaultPasswordAuditTest.php` (+2) |
+| `f4ca9fb` | fix(deploy): landing juga di edge bersama + CSP ketat (R-16) | `caddy validate` + uji curl di kontainer, shellcheck |
 
-Berkas milik agen lain yang tersentuh (perubahan keamanan minimal): `app/Http/Controllers/Meetings/LiveKitWebhookController.php`, `app/Domain/Meetings/Actions/IssueVideoToken.php`, `tests/Feature/Meetings/MeetingVideoTest.php` (rapatbe).
+Berkas milik agen lain yang tersentuh (perubahan keamanan minimal): `app/Http/Controllers/Meetings/LiveKitWebhookController.php`, `app/Domain/Meetings/Actions/IssueVideoToken.php`, `tests/Feature/Meetings/MeetingVideoTest.php` (rapatbe). Berkas bersama (atas permintaan integrator): `app/Http/Middleware/HandleInertiaRequests.php`, `docs/CHANGELOG.md`, `docs/security/ASVS-L1.md`, `docs/fitur/rapat-kalender.md` (baris token, milik dok).
 
 ## 6. Butuh dari agen lain / pemilik
 
-- **rapatbe:** R-04 (larangan masuk lagi), R-08, R-09, R-12, R-13, polling `detail` lazy (§4), abaikan `rk-notulen` di `RecordVideoEvent` (N-09), terapkan pola R-02 di webhook notulen.
+- **rapatbe:** R-04 (larangan masuk lagi), R-07, R-08, R-09, R-12, R-13, R-15, polling `detail` lazy (§4), abaikan `rk-notulen` di `RecordVideoEvent` (N-09), terapkan pola R-02 di webhook notulen.
 - **rapatui:** R-05 (nama/avatar dari `people` per identitas), N-07 (subtitle hanya dari `rk-notulen`), render ulang ruang (§4).
 - **notulen:** N-01 … N-06, N-08.
-- **dok:** `docs/fitur/rapat-kalender.md:143` (hapus "roomAdmin untuk penyelenggara"), rujukan audit ini di `docs/security/ASVS-L1.md` + changelog.
+- **dok:** selesai di cabang ini (`rapat-kalender.md:143`, ASVS-L1, CHANGELOG); `docs/deploy/VPS-BERSAMA.md` boleh menyebut folder `sites/ruangkerja-landing`.
 - **Pemilik:** R-06 (HR vs akun Direksi/HR), R-04 (perilaku "izinkan lagi"), R-18 (kedaluwarsa sandi bawaan), N-03 (DeepSeek & UU PDP).
-- **Ops/integrator:** R-07 (batas badan per jalur), R-16 (landing di edge bersama).
+- **Ops/integrator:** R-07 (batas badan per jalur).

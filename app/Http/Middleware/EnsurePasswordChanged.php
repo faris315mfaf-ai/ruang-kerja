@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
  * with "wajib ganti saat login berikutnya" (users.password_change_required):
  * every page redirects to Pengaturan › Keamanan until the employee chooses
  * their own password (never the default one, NotDefaultPassword). Only that page,
- * the password update, logout and theme stay reachable.
+ * the password update, logout and theme stay reachable (JSON requests: 403).
  */
 class EnsurePasswordChanged
 {
@@ -40,8 +40,10 @@ class EnsurePasswordChanged
         'verification.verify',
         'verification.send',
         'theme.update',
-        // The shell's unread badge keeps polling on the security page.
-        'inbox.feed',
+        // Nothing else: no feed or data endpoint (audit rapat 2026-10, R-10) —
+        // whoever signed in with a default/temporary password sees no account
+        // data before choosing their own. HandleInertiaRequests also withholds
+        // the shell's data props meanwhile.
         'logout',
     ];
 

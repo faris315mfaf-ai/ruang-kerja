@@ -31,6 +31,7 @@ const STATUS_ACTIONS = [
     'user.reactivated',
     'user.password_set_by_hr',
     'user.password_reset_to_default',
+    'user.default_password_revealed',
     'user.password_changed',
     'user.password_reset_approved',
     'user.password_reset_rejected',
