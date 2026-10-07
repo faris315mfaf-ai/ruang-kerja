@@ -1,6 +1,6 @@
 # Serah terima — RuangKerja Fase 1
 
-Status per 6 Okt 2026 (termasuk migrasi UI Arus). Semua sprint Fase 1 (0–10) dibangun di Mac mulai 5 Okt 2026 dengan banyak agen paralel, lalu digabung ke `main` lokal. **Belum di-push ke GitHub** (repo masih public).
+Status per 7 Okt 2026. Semua sprint Fase 1 (0–10) dibangun di Mac mulai 5 Okt 2026 dengan banyak agen paralel. Repo GitHub **private**; `main` sudah berisi PR #1–#7 (terakhir: integrasi Fase 2/3 #5, perbaikan seeder #6, deploy dua VPS #7) dan CI hijau.
 
 ## Status sprint
 
@@ -58,7 +58,7 @@ Catatan pengujian lokal: `composer test` sekarang ±2.900 test; di mesin sibuk b
 
 ## Kualitas saat serah terima
 
-- Pest ±2.020 test hijau (paralel), Vitest ±370 test hijau.
+- Pest ±2.940 test hijau (paralel), Vitest ±665 test hijau. Di CI, Pest dibagi 3 shard berimbang waktu (`tests/.pest/shards.json`; perbarui dengan `vendor/bin/pest --parallel --update-shards` setelah banyak test baru — tanpa `--processes`).
 - Pint + Larastan level 8 tanpa ignore/baseline, `tsc --noEmit`, `vp check` bersih.
 - Mode strict model aktif di luar produksi (tidak ada lazy loading); 40 halaman utama punya test jumlah query (anti N+1).
 - Lighthouse halaman Absensi di ponsel: 98 (HTTPS + HTTP/2, mirip produksi).
@@ -88,11 +88,10 @@ Setelah masuk, **pemilih akun demo** di bagian atas (pil "Demo · …" di menu b
 
 ## Keputusan yang menunggu pemilik
 
-1. **Repo GitHub masih public.** Ubah ke private, baru push: `gh repo edit faris315mfaf-ai/ruang-kerja --visibility private --accept-visibility-change-consequences`, lalu `git push -u origin main`.
-2. **Kredensial Google Cloud** (login OAuth, service account + domain-wide delegation, Shared Drive, Picker API key). Langkah: `sprints/sprint-1/LOGIN-SUMMARY.md` §7 dan `sprints/sprint-7/GOOGLE-API.md`. Setelah diisi: `php artisan ruangkerja:google-check --write`.
-3. **Deploy ke VPS** (Biznet Gio): server, domain/DNS, bucket S3-compatible untuk selfie & backup, secret GitHub Actions. Langkah: `README.md` bagian Deploy.
-4. **Rahasia produksi**: `ATTENDANCE_QR_SECRET` wajib diisi (bila kosong diturunkan dari APP_KEY), `SESSION_SECURE_COOKIE=true`, `TRUSTED_PROXIES` sesuai jaringan Caddy.
-5. **Branding resmi SPKD**: ganti `--brand-*` di `resources/css/tokens.css`, `config/branding.php`, lalu `php scripts/generate-icons.php`.
+1. **Kredensial Google Cloud** (login OAuth, service account + domain-wide delegation, Shared Drive, Picker API key). Langkah: `sprints/sprint-1/LOGIN-SUMMARY.md` §7 dan `sprints/sprint-7/GOOGLE-API.md`. Setelah diisi: `php artisan ruangkerja:google-check --write`.
+2. **Deploy ke VPS** (dua VPS, `docs/deploy/DUA-VPS.md`; penyimpanan file = Biznet Gio NEO Object Storage): alamat kedua VPS, domain/DNS, email Let's Encrypt, kredensial object storage, dan secret GitHub Actions. Sampai secret diisi, job Deploy di `main` gagal di langkah SSH ("Upload compose stack files", exit 255) — itu yang diharapkan.
+3. **Rahasia produksi**: `ATTENDANCE_QR_SECRET` wajib diisi (bila kosong diturunkan dari APP_KEY), `SESSION_SECURE_COOKIE=true`, `TRUSTED_PROXIES` sesuai jaringan Caddy.
+4. **Branding resmi SPKD**: ganti `--brand-*` di `resources/css/tokens.css`, `config/branding.php`, lalu `php scripts/generate-icons.php`.
 
 ## Yang belum diuji / keterbatasan
 
