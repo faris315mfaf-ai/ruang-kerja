@@ -139,8 +139,12 @@ function StatusScreen({
                 <RoomMessage
                     icon={<PhoneOff />}
                     title="Penyelenggara mengeluarkan Anda dari rapat"
-                    body="Hubungi penyelenggara bila ini keliru."
+                    body="Hubungi penyelenggara bila ini keliru. Setelah penyelenggara mengizinkan masuk lagi, Anda bisa bergabung kembali."
                 >
+                    <Button size="lg" variant="outline" onClick={onRetry}>
+                        <RefreshCw aria-hidden />
+                        Coba masuk lagi
+                    </Button>
                     {back}
                 </RoomMessage>
             );
