@@ -29,6 +29,7 @@ import {
     timeRange,
 } from './lib';
 import { MeetingStartNotice } from './meeting-notice';
+import { NotulenCard } from './notulen/notulen-card';
 import { useMeetingsContext, useNow } from './meetings-context';
 import {
     AvatarStack,
@@ -460,6 +461,10 @@ export function MeetingDetailDesktop({
                                 copied={actions.copied}
                             />
                             <VideoAttendancePanel video={data.video} />
+                            <NotulenCard
+                                meetingId={meeting.id}
+                                date={meeting.occurrence_date}
+                            />
                         </>
                     ) : (
                         <JoinCard meeting={meeting} actions={actions} />
@@ -723,6 +728,12 @@ export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
                 </ol>
             </section>
             <VideoAttendancePanel video={data.video} />
+            {meeting.platform === 'video' && (
+                <NotulenCard
+                    meetingId={meeting.id}
+                    date={meeting.occurrence_date}
+                />
+            )}
             <section
                 aria-label="Peserta"
                 className="flex flex-col gap-2 rounded-[22px] border border-border bg-surface p-4"

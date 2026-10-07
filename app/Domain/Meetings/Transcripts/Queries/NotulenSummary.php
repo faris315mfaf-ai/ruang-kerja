@@ -62,6 +62,8 @@ final class NotulenSummary
                 'insert' => $base.'/masukkan'.$query,
                 'discard' => $base.'/draf'.$query,
                 'resummarize' => $base.'/ringkas-ulang'.$query,
+                // Replace {id} with a suggestion id ("tl-1").
+                'task' => $base.'/tindak-lanjut/{id}/tugas'.$query,
                 'minutes' => '/rapat/'.$meeting->id.'/notulen'.$query,
             ],
             'transcript' => $transcript !== null ? self::transcript($transcript) : null,

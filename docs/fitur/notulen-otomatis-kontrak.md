@@ -63,6 +63,7 @@ Dipakai: `GET …/status`, jawaban `PUT …/pengaturan`, `DELETE …/draf`, `POS
     "insert": "/rapat/01JA…/notulen-otomatis/masukkan?tanggal=2026-10-07",
     "discard": "/rapat/01JA…/notulen-otomatis/draf?tanggal=2026-10-07",
     "resummarize": "/rapat/01JA…/notulen-otomatis/ringkas-ulang?tanggal=2026-10-07",
+    "task": "/rapat/01JA…/notulen-otomatis/tindak-lanjut/{id}/tugas?tanggal=2026-10-07",
     "minutes": "/rapat/01JA…/notulen?tanggal=2026-10-07"
   },
   "transcript": {
@@ -84,6 +85,7 @@ Dipakai: `GET …/status`, jawaban `PUT …/pengaturan`, `DELETE …/draf`, `POS
   },
   "draft": {
     "status": "ready",
+    "status_label": "Draf siap diperiksa",
     "error": null,
     "model": "deepseek-chat",
     "generated_at": "2026-10-07T03:02:40.000Z",
@@ -127,7 +129,7 @@ Aturan:
 - `notice` hanya terisi bila `auto_minutes` aktif; teks ini **wajib tampil** di pra-gabung dan di ruang (UU PDP).
 - `consent.opted_out` = pilihan orang yang sedang melihat untuk rapat/seri ini; `consent.can_change` = dia peserta internal rapat. Atribut LiveKit pilihannya = `attribute` (`"1"` / `"0"`), lihat §3.
 - `transcript` = `null` sampai worker mulai merekam kemunculan ini. `status`: `recording` ("Merekam"), `transcribing` ("Mentranskrip"), `summarizing` ("Meringkas"), `ready` ("Siap"), `failed` ("Gagal", `error` terisi dalam Bahasa Indonesia).
-- `transcript.speakers[].user_id` = null bila identitas tidak dikenal (bukan karyawan perusahaan). `seconds` = total lama bicara (dasar "Waktu bicara").
+- `links.task`: ganti `{id}` dengan id usulan (`tl-1`). `transcript.speakers[].user_id` = null bila identitas tidak dikenal (bukan karyawan perusahaan). `seconds` = total lama bicara (dasar "Waktu bicara").
 - `draft` = `null` bila belum ada transkrip `ready`. `draft.status`: `pending` (sedang diringkas), `ready`, `failed` (`error`), `disabled` (tanpa `MINUTES_LLM_API_KEY` — transkrip tetap ada, draf tidak dibuat), `inserted` (sudah dimasukkan, `inserted_at`), `discarded` ("Buang draf", `discarded_at`). Isi (`ringkasan`, `agenda`, …) hanya ada pada `ready`/`inserted`; pada status lain berupa string kosong/array kosong.
 - `sumber[].i` = indeks baris di `TranscriptSegments.segments[].i`; `start_ms` sama dengan baris itu (tautan "lompat ke transkrip" / sorot baris sumber).
 - `tindak_lanjut[].penanggung_jawab` hanya diisi bila cocok dengan **peserta rapat** (tidak pernah orang di luar daftar); bila AI menyebut nama yang tidak cocok → `null`, nama aslinya di `penanggung_jawab_teks`, dan muncul satu baris di `perlu_dicek`. `tenggat` = `YYYY-MM-DD` atau `null`. `action_item_id` terisi setelah usulan masuk ke tabel tindak lanjut notulen; `task` = `{id, key: "OPS-157", href: "/tugas/01…"}` setelah "Jadikan tugas".
@@ -153,7 +155,7 @@ Header `Cache-Control: no-store`. Setiap pemanggilan dicatat ke `audit_logs` (`m
 }
 ```
 
-`start_ms`/`end_ms` = milidetik sejak `transcript.started_at` (tampilkan `mm:ss` atau `j:mm:ss`). Status selain `ready` → `segments: []`. Pencarian dilakukan di klien.
+`start_ms`/`end_ms` = milidetik sejak `transcript.started_at` (tampilkan `mm:ss` atau `j:mm:ss`). Status selain `ready`/`summarizing` → `segments: []`. Pencarian dilakukan di klien.
 
 ### 2.3 Halaman `meetings/notulen-otomatis` (layar "Notulen otomatis" sesudah rapat)
 
