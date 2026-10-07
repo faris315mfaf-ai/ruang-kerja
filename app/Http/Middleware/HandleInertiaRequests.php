@@ -52,6 +52,10 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
         $user = $user instanceof User ? $user : null;
+        // "Wajib ganti kata sandi" (EnsurePasswordChanged): the shell gets no account
+        // data (counts, workspaces, attendance) until the employee chose their own
+        // password — it may be someone using the shared default password (audit R-10).
+        $data = $user !== null && ! $user->password_change_required ? $user : null;
 
         // Small PK lookups; gives the shell the user's place in the organization.
         // Separate queries on purpose: loading partial columns into the user's own
@@ -81,11 +85,11 @@ class HandleInertiaRequests extends Middleware
                 'roles' => $user?->getRoleNames()->values()->all() ?? [],
             ],
             // Dock/Rail "Persetujuan" badge. Closure: one count query, skipped on partial reloads that don't ask for it.
-            'approvals' => fn (): ?array => $user !== null ? ['pending' => app(ApprovalQueue::class)->count($user)] : null,
+            'approvals' => fn (): ?array => $data !== null ? ['pending' => app(ApprovalQueue::class)->count($data)] : null,
             // Dock/Rail "Workspace" stack & mobile Menu grid (Sprint 5); lazy, skipped on partial reloads.
-            'workspaces' => fn (): array => $user === null ? [] : app(SidebarWorkspaces::class)->for($user),
+            'workspaces' => fn (): array => $data === null ? [] : app(SidebarWorkspaces::class)->for($data),
             // Bell / Dock / tab badge. Closure: skipped on partial reloads that don't ask for it.
-            'inbox' => fn (): ?array => $user !== null ? ['unread' => app(InboxQuery::class)->unreadCount($user)] : null,
+            'inbox' => fn (): ?array => $data !== null ? ['unread' => app(InboxQuery::class)->unreadCount($data)] : null,
             // Fase 2 & 3 front-end previews (/pratinjau, config/features.php).
             // role_dashboards: flag on AND this user has a job dashboard (Dock/Rail/Menu entry).
             'features' => [
@@ -96,13 +100,13 @@ class HandleInertiaRequests extends Middleware
                 'notes' => (bool) config('features.notes'),
                 'meetings' => (bool) config('features.meetings'),
                 // `hiring`: may open /hiring (HR, Super Admin, assigned reviewers; one EXISTS query for the others).
-                'hiring' => $user !== null && app(HiringAccess::class)->canEnter($user),
-                'role_dashboards' => $user !== null && (bool) config('features.role_dashboards') && app(RoleDashboardAccess::class)->hasAny($user, $position?->dashboard_role),
+                'hiring' => $data !== null && app(HiringAccess::class)->canEnter($data),
+                'role_dashboards' => $data !== null && (bool) config('features.role_dashboards') && app(RoleDashboardAccess::class)->hasAny($data, $position?->dashboard_role),
             ],
             // Obrolan (F2-1): channels with unread messages (Dock tile / Menu badge). Closure: skipped on
             // partial reloads. Not named `chat`: that is the page prop of /obrolan.
-            'chatUnread' => fn (): ?int => $user !== null && (bool) config('features.chat')
-                ? app(ChatInbox::class)->unreadChannels($user)
+            'chatUnread' => fn (): ?int => $data !== null && (bool) config('features.chat')
+                ? app(ChatInbox::class)->unreadChannels($data)
                 : null,
             // Local demo only: personas of the account switcher at the top of the shell.
             'demoSwitcher' => fn (): ?array => $user !== null ? DemoAccounts::switcherProps($user->email) : null,
@@ -117,6 +121,9 @@ class HandleInertiaRequests extends Middleware
     public function shareOnce(Request $request): array
     {
         $user = $request->user();
+        // Withheld while a password change is required (see share()); the key
+        // changes with it, so the client does not keep the withheld `null`.
+        $locked = $user instanceof User && $user->password_change_required;
 
         return [
             ...parent::shareOnce($request),
@@ -126,8 +133,8 @@ class HandleInertiaRequests extends Middleware
             // login page (or another account's status) is never reused after
             // signing in, because the client only skips once-props by key.
             'attendanceStatus' => Inertia::once(
-                fn (): ?array => $user instanceof User ? app(MyAttendance::class)->status($user, CarbonImmutable::now()) : null,
-            )->as('attendanceStatus:'.($user instanceof User ? $user->getAuthIdentifier() : 'guest'))->until(300),
+                fn (): ?array => $user instanceof User && ! $locked ? app(MyAttendance::class)->status($user, CarbonImmutable::now()) : null,
+            )->as('attendanceStatus:'.($user instanceof User ? $user->getAuthIdentifier() : 'guest').($locked ? ':locked' : ''))->until(300),
         ];
     }
 }

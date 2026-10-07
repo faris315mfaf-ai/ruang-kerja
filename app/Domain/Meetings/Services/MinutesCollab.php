@@ -5,6 +5,7 @@ namespace App\Domain\Meetings\Services;
 use App\Domain\Notes\Services\CollabToken;
 use App\Models\Meeting;
 use App\Models\MeetingMinutes;
+use App\Models\MeetingVideoRemoval;
 use App\Models\User;
 use App\Policies\MeetingPolicy;
 use Illuminate\Http\Client\ConnectionException;
@@ -41,13 +42,24 @@ final class MinutesCollab
         return self::DOCUMENT_PREFIX.$minutes->id;
     }
 
-    /** Collab mode: invited people edit a draft; others (and final minutes) read. */
-    public function canEdit(User $user, Meeting $meeting, ?MeetingMinutes $minutes): bool
+    /**
+     * Collab mode: invited people edit a draft; others (and final minutes)
+     * read. Someone the organizer removed from the occurrence's video room
+     * only reads until re-admitted (audit rapat 2026-10, B-02).
+     */
+    public function canEdit(User $user, Meeting $meeting, ?MeetingMinutes $minutes, ?string $occurrenceDate = null): bool
     {
+        $date = $minutes?->occurrence_date->toDateString() ?? $occurrenceDate;
+
         return $this->policy->canView($user, $meeting)
             && ! $meeting->isCanceled()
             && $meeting->involves($user)
-            && $minutes?->isFinal() !== true;
+            && $minutes?->isFinal() !== true
+            && ($date === null || ! MeetingVideoRemoval::query()
+                ->where('meeting_id', $meeting->id)
+                ->where('occurrence_date', $date)
+                ->where('user_id', $user->id)
+                ->exists());
     }
 
     /**

@@ -375,6 +375,12 @@ it('keeps Catatan free of N+1', function () {
 
 it('keeps Rapat & Kalender free of N+1', function () {
     config(['features.meetings' => true]);
+    // LiveKit + transcription worker configured: the video pages build the full `notulen` prop.
+    config([
+        'livekit.url' => 'wss://rapat.example.test', 'livekit.api_key' => 'devkey', 'livekit.api_secret' => str_repeat('k', 40),
+        'notulen.transcriber.url' => 'http://worker.test:8090',
+        'notulen.transcriber.secret' => str_repeat('a', 40), 'notulen.transcriber.callback_secret' => str_repeat('b', 40),
+    ]);
     $kadiv = P::user('kadiv');
     $standup = Meeting::query()->where('title', 'Stand-up Divisi Operasional')->firstOrFail();
     $draft = MeetingMinutes::query()->where('meeting_id', $standup->id)->where('status', 'draft')->firstOrFail();
@@ -387,8 +393,9 @@ it('keeps Rapat & Kalender free of N+1', function () {
         // Video RuangKerja: detail with attendance, pre-join and room pages
         // ("Notulen Hidup" props: participants, minutes, previous follow-ups, speaking time).
         "/rapat/{$video->id}" => ['kadiv', 39],
-        "/rapat/{$video->id}/gabung" => ['kadiv', 38],
-        "/rapat/{$video->id}/ruang" => ['kadiv', 38],
+        // + 4 constant queries for the `notulen` prop (NotulenSummary: transcript, consent, opt-out count).
+        "/rapat/{$video->id}/gabung" => ['kadiv', 43],
+        "/rapat/{$video->id}/ruang" => ['kadiv', 43],
         '/kalender' => ['kadiv', 40],
         '/manajemen/jadwal' => ['direksi', 28],
     ];

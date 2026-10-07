@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Domain\Auth\Actions\DecidePasswordReset;
 use App\Domain\Auth\Actions\SetEmployeePassword;
 use App\Domain\Auth\Services\DefaultPassword;
+use App\Domain\Organization\Services\AuditLogger;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\RejectPasswordResetRequest;
 use App\Http\Requests\Admin\SetEmployeePasswordRequest;
@@ -37,12 +38,16 @@ class EmployeePasswordController extends Controller
     /**
      * The company default password for the "Sandi bawaan" option of the dialog,
      * fetched only when HR reveals it (never in page props, never cached).
-     * 404 while EMPLOYEE_DEFAULT_PASSWORD is empty or for a Super Admin.
+     * 404 while EMPLOYEE_DEFAULT_PASSWORD is empty or for a Super Admin. Every
+     * reveal is audited (`user.default_password_revealed`, never the value;
+     * audit rapat 2026-10, R-11).
      */
-    public function defaultPassword(User $employee, DefaultPassword $defaultPassword): JsonResponse
+    public function defaultPassword(User $employee, DefaultPassword $defaultPassword, AuditLogger $audit): JsonResponse
     {
         Gate::authorize('setPassword', $employee);
         abort_unless($defaultPassword->appliesTo($employee), 404);
+
+        $audit->log('user.default_password_revealed', $employee);
 
         return response()
             ->json(['password' => $defaultPassword->value()])

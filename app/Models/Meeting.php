@@ -44,6 +44,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  * @property CarbonImmutable|null $recurrence_until
  * @property list<int> $reminders
  * @property bool $leadership
+ * @property bool $auto_minutes "Notulen otomatis" (transcript + AI draft; only platform video, docs/fitur/notulen-otomatis-kontrak.md §6)
  * @property CarbonImmutable|null $canceled_at
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
@@ -57,7 +58,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 #[Fillable([
     'company_id', 'workspace_id', 'title', 'description', 'starts_at', 'ends_at', 'platform', 'location',
     'join_url', 'organizer_id', 'minute_taker_id', 'agenda', 'recurrence', 'recurrence_until', 'reminders',
-    'leadership', 'canceled_at',
+    'leadership', 'canceled_at', 'auto_minutes',
 ])]
 class Meeting extends Model
 {
@@ -70,6 +71,7 @@ class Meeting extends Model
         'recurrence' => 'none',
         'reminders' => '{15,5}',
         'leadership' => false,
+        'auto_minutes' => false,
     ];
 
     /**
@@ -86,6 +88,7 @@ class Meeting extends Model
             'recurrence_until' => 'date',
             'reminders' => PostgresIntArray::class,
             'leadership' => 'boolean',
+            'auto_minutes' => 'boolean',
             'canceled_at' => 'datetime',
         ];
     }

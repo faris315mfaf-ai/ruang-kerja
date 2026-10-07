@@ -17,7 +17,8 @@
 | Angkat tangan | `POST …/video/tangan` (atribut `hand` diatur server; token tidak bisa mengubah nama/metadata/atribut sendiri) |
 | Keluarkan / izinkan masuk lagi | `DELETE …/video/peserta/{user}` (lama) + `DELETE …/video/peserta/{user}/larangan`, `room.video.removed` |
 | Bendera fitur (subtitle, notulen otomatis, notulen kolaboratif), izin pengguna | prop `room.features`, `room.can` |
-| Notulen otomatis (persetujuan, status) | prop `notulen` (kontrak agen notulen §2.1), `null` sampai backend notulen ada |
+| Notulen otomatis (persetujuan, status) | prop `notulen` (kontrak agen notulen §2.1) di `meetings/show`, `meetings/join`, `meetings/room` |
+| Sakelar "Notulen otomatis" di form jadwal | `POST /rapat` & `PATCH /rapat/{id}` menerima `auto_minutes` (bool, hanya `platform = video`, §1.5); props form `auto_minutes_enabled`, `meeting.auto_minutes` |
 
 ## 1. Halaman Inertia
 
@@ -30,7 +31,7 @@
 }
 ```
 
-`notulen` = `NotulenSummary` milik agen notulen (`App\Domain\Meetings\Transcripts\Queries\NotulenSummary::for($occurrence, $user)`) bila kelas itu sudah ada di branch, selain itu `null` (UI boleh memanggil `GET /rapat/{id}/notulen-otomatis/status`).
+`notulen` = `NotulenSummary` milik agen notulen (`App\Domain\Meetings\Transcripts\Queries\NotulenSummary::for($occurrence, $user)` lewat `NotulenBridge`, bentuk di kontrak notulen §2.1; tipe `NotulenSummary` dari `features/meetings/notulen/types.ts`), `null` untuk rapat bukan video **dan** bila server transkripsi belum diatur sementara sakelar mati (sembunyikan semua kontrol notulen otomatis). Detail rapat `meetings/show` juga memberi prop `notulen` (lazy: tidak dihitung pada polling `only: ['video']`).
 
 ### 1.1 `RoomProps` (`room`)
 
@@ -203,6 +204,11 @@ Notulen = notulen terstruktur yang sudah ada (`meeting_minutes`: kehadiran, cata
 - Endpoint lama (tidak berubah): `PUT links.save` → `{minutes}`; `POST links.finalize` → `{minutes}`; `POST links.items` `{text, assignee_id, due_date}` → 201 `{item}`; `PATCH/DELETE /rapat/{id}/tindak-lanjut/{item}`; `POST links.tasks` `{item_ids, workspace_id?}` → `{created, minutes}`. Bagian boleh judul bebas (maks. 40 bagian, judul ≤ 200, isi ≤ 20.000 karakter teks biasa). **Baru** `attendance_only` di `PUT links.save`.
 - `GET links.data` → `{"minutes": Minutes}` (`meetings.minutes.data`, siapa pun yang melihat rapat; `no-store`) — ambil ulang setelah `minutes.updated`.
 
+### 1.5 Form jadwal: `auto_minutes`
+
+- `POST /rapat` dan `PATCH /rapat/{id}` (form yang ada) menerima `auto_minutes` (boolean, opsional). `true` hanya untuk `platform = video` → selain itu 422 `auto_minutes: "Notulen otomatis hanya untuk rapat Video RuangKerja."`; menyalakan butuh server transkripsi (`TRANSCRIBER_*`) → 422 `"Notulen otomatis belum disiapkan admin di server ini."` (nilai yang sudah menyala boleh tetap). Kunci tidak dikirim saat ubah = nilai sekarang dipertahankan; pindah dari platform video selalu mematikannya. Perubahan lewat form diaudit `meeting.auto_minutes_changed` (sama dengan `PUT …/notulen-otomatis/pengaturan`).
+- Props form (`meetings/create`, `meetings/edit`): `form.auto_minutes_enabled` (server transkripsi diatur → tampilkan sakelar untuk platform video) dan `form.meeting.auto_minutes`. Detail rapat: `detail.meeting.auto_minutes`. Teks penjelas sakelar: kontrak notulen §6.
+
 ## 2. Sumber notulen di pra-gabung
 
 ### 2.1 `NotesSource` (`room.notes_source`)
@@ -358,7 +364,8 @@ Efek: notifikasi in-app (Inbox + toast realtime di kanal pribadi orang itu; emai
 ### 4.3 Angkat tangan & token (audit R-05, R-08, R-09)
 
 - Token peserta **tidak** lagi punya `canUpdateOwnMetadata` (dan tidak pernah `roomAdmin`): klien tidak bisa `setName`, `setMetadata`, atau `setAttributes`. Nama/avatar di UI diambil dari `room.people`/`participants` menurut `participant.identity` (rapatui), bukan `participant.name`.
-- **Angkat tangan** `POST links.hand` `{"raised": true|false}` (`meetings.video.hand`, `joinVideo`, `throttle:30,1`) → `{"hand": "1759889400123"}` (waktu angkat dalam ms) atau `{"hand": ""}`. Server mengatur atribut LiveKit `hand` peserta itu (Room Service `UpdateParticipant`); klien lain melihatnya lewat `ParticipantAttributesChanged` seperti sebelumnya (urut menurut nilai). 502 bila LiveKit gagal, 503 bila belum diatur. - **Atribut sendiri lainnya** `POST links.attributes` `{"attributes": {"rk_minutes_at": "section-2"}}` (`meetings.video.attributes`, `joinVideo`, `throttle:60,1`) → `{"attributes": {…}}`. Hanya kunci: `hand` (ms atau ""), `rk_minutes_at` (bagian notulen yang sedang dilihat, untuk kehadiran kolaborator; ≤ 64 karakter `[A-Za-z0-9_.:-]`), `rk_notulen_optout` (`"0"`/`"1"`, cermin persetujuan; tabel persetujuan tetap sumber kebenaran). Nilai "" menghapus; kunci lain → 422. Ganti semua `localParticipant.setAttributes(...)` dengan endpoint ini (kirim dengan debounce untuk `rk_minutes_at`).
+- **Angkat tangan** `POST links.hand` `{"raised": true|false}` (`meetings.video.hand`, `joinVideo`, `throttle:30,1`) → `{"hand": "1759889400123"}` (waktu angkat dalam ms) atau `{"hand": ""}`. Server mengatur atribut LiveKit `hand` peserta itu (Room Service `UpdateParticipant`); klien lain melihatnya lewat `ParticipantAttributesChanged` seperti sebelumnya (urut menurut nilai). 502 bila LiveKit gagal, 503 bila belum diatur.
+- **Atribut sendiri lainnya** `POST links.attributes` `{"attributes": {"rk_minutes_at": "section-2"}}` (`meetings.video.attributes`, `joinVideo`, `throttle:60,1`) → `{"attributes": {…}}`. Hanya kunci: `hand` (ms atau "") dan `rk_minutes_at` (bagian notulen yang sedang dilihat, untuk kehadiran kolaborator; ≤ 64 karakter `[A-Za-z0-9_.:-]`). Nilai "" menghapus; kunci lain → 422. **Penolakan transkrip tidak pernah menjadi atribut LiveKit** (akan terlihat semua orang di ruang): cukup `PUT …/notulen-otomatis/persetujuan`, server meneruskannya ke worker. Ganti semua `localParticipant.setAttributes(...)` dengan endpoint ini (debounce untuk `rk_minutes_at`).
 - Bisukan (`POST …/video/peserta/{user}/bisukan`) kini diaudit `meeting.video_participant_muted`.
 - Rapat video **dibatalkan** → semua ruang LiveKit-nya yang mungkin hidup dihapus (`DeleteRoom`, job `CloseMeetingRooms`): klien menerima `Disconnected` (alasan `ROOM_DELETED`) → tampilkan "Rapat dibatalkan". Akun **dinonaktifkan** → tidak mendapat token dan dikeluarkan dari ruang yang sedang diikuti (job `RemoveUserFromVideoRooms`).
 
@@ -401,4 +408,6 @@ Wayfinder: `@/routes/meetings` (mis. `meetings.video.speaking.report.url(id, {qu
 |---|---|
 | 7 Okt 2026 | Versi pertama (rapatbe). |
 | 7 Okt 2026 | Keputusan lead: notulen kolaboratif (`mode`, `collab`, token `…/notulen/kolaborasi`, `can_edit` per mode, `can_edit_attendance`, `attendance_only`), petunjuk menyunting (`editing`, `…/notulen/menyunting`, event `minutes.editing`), sumber waktu bicara & retensi, `template.key = agenda` + `template.label` (ganti `template.name`), kehadiran ≠ persetujuan transkrip. |
+| 7 Okt 2026 | `rk_notulen_optout` dihapus dari `POST …/video/atribut` (penolakan transkrip tetap di server); `notulen` null bila tidak tersedia & mati. |
+| 7 Okt 2026 | Gabung cabang notulen: `notulen` = `NotulenSummary` sungguhan (juga di detail, lazy), `auto_minutes` di form jadwal (§1.5). |
 | 7 Okt 2026 | Audit keamanan: `removed` + Izinkan masuk lagi (R-04), token tanpa `canUpdateOwnMetadata` + `POST …/video/tangan` dan `POST …/video/atribut` (R-05), bisukan diaudit (R-08), ruang ditutup saat batal / akun nonaktif (R-09), `links.readmit`, `links.hand`. |

@@ -25,6 +25,8 @@ Status: **OK** = terpenuhi · **Diperbaiki** = ditemukan & diperbaiki di sprint 
 
 Tidak ada temuan tingkat tinggi yang terbuka untuk kode yang sudah ada di cabang ini.
 
+**Audit lanjutan:** rapat video (LiveKit), sandi bawaan, dan deploy — `docs/security/AUDIT-RAPAT-2026-10.md` (7 Okt 2026, `main` b690875): R-01 (Tinggi, sandi bawaan tanpa wajib ganti), R-02, R-03, R-10, R-11, R-16 diperbaiki; R-04 (keluarkan peserta bisa masuk lagi), R-05 (ganti nama tampilan di ruang), R-06 (HR mengatur sandi Direksi/HR — keputusan pemilik) dan lainnya terbuka di sana.
+
 ## V1 Arsitektur
 | Butir | Status | Catatan |
 |---|---|---|
@@ -41,6 +43,7 @@ Tidak ada temuan tingkat tinggi yang terbuka untuk kode yang sudah ada di cabang
 | 2.2.? 2FA admin | OK | Semua karyawan login dengan sandi (6 Okt 2026); Super Admin wajib TOTP sebelum fitur lain, juga setelah lupa sandi (tidak login otomatis bila TOTP aktif). Pesan galat login generik + timebox 200 ms. Login Google ditahan. |
 | 2.4.1 Hash sandi | OK | bcrypt, `BCRYPT_ROUNDS=12`. |
 | 2.5.? Reset sandi | OK | Persetujuan HR (6 Okt 2026): token permintaan & setup acak 64 karakter, DB hanya hash SHA-256, setup token sekali pakai 30 menit terikat sesi peminta, permintaan 24 jam, satu aktif per karyawan, throttle IP + email, semua sesi lain keluar, audit tiap langkah tanpa nilai sandi. HR mengatur sandi: audit + notifikasi email ke karyawan. |
+| 2.5.? Sandi bawaan karyawan | OK (audit 2026-10) | `EMPLOYEE_DEFAULT_PASSWORD` selalu dengan wajib ganti (juga dipaksa saat login), selama wajib ganti hanya halaman Keamanan/logout yang terbuka tanpa data akun, setiap tampilan nilai oleh HR diaudit. Lihat `AUDIT-RAPAT-2026-10.md` R-01/R-10/R-11/R-18. |
 | 2.5.4 Tidak ada akun bawaan | OK | Registrasi publik nonaktif (`RegistrationDisabledTest`); akun demo hanya `APP_ENV=local` + `DEMO_LOGIN_ENABLED=true` (dicek per request); Super Admin pertama dibuat dengan `ruangkerja:create-super-admin`. |
 
 ## V3 Sesi

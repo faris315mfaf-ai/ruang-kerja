@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\DB;
  *     title: string, description?: string|null, starts_at: CarbonImmutable, ends_at: CarbonImmutable,
  *     platform: MeetingPlatform, location?: string|null, join_url?: string|null,
  *     minute_taker_id?: string|null, workspace_id?: string|null, agenda: list<string>,
- *     recurrence: Recurrence, recurrence_until?: string|null, reminders: list<int>, leadership?: bool,
+ *     recurrence: Recurrence, recurrence_until?: string|null, reminders: list<int>, leadership?: bool, auto_minutes?: bool,
  *     participant_ids: list<string>, guest_emails?: list<string>
  * }
  */
@@ -90,6 +90,8 @@ final class ScheduleMeeting
             'recurrence_until' => $recurrence === Recurrence::None ? null : ($input['recurrence_until'] ?? null),
             'reminders' => array_values(array_unique($input['reminders'])),
             'leadership' => (bool) ($input['leadership'] ?? false),
+            // "Notulen otomatis" exists only for the built-in video room.
+            'auto_minutes' => $platform === MeetingPlatform::Video && (bool) ($input['auto_minutes'] ?? false),
         ];
     }
 }
