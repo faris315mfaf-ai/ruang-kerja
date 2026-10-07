@@ -173,7 +173,7 @@ export function StructureAppBarActions() {
                     )}
                 </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-60">
+            <DropdownMenuContent align="end" className="w-72">
                 <DropdownMenuItem
                     className="min-h-11"
                     onSelect={() => runner?.()}

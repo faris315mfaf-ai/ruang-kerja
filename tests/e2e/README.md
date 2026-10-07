@@ -25,6 +25,14 @@ npx playwright show-report          # laporan HTML (playwright-report/)
 - Buat acuan dengan `npm run test:e2e:baseline` sebelum mengubah UI, lalu `npm run test:e2e` setelahnya untuk melihat selisih (laporan HTML menampilkan expected/actual/diff). Tanpa acuan, `test:e2e` gagal sekali sambil menulis acuan.
 - Perubahan tampilan yang memang disengaja: jalankan ulang `npm run test:e2e:baseline`.
 
+## Ekspor PNG struktur organisasi
+
+`tests/e2e/org-chart-export.spec.ts` masuk sendiri sebagai `kadiv@demo.test` (staf mendapat 404; ganti dengan `E2E_CHART_EMAIL`), menekan **Unduh PNG** (ponsel: menu "…" app bar) dan memeriksa unduhan berupa PNG bernama `struktur-organisasi-YYYY-MM-DD.png`. Tanpa screenshot acuan.
+
+```bash
+E2E_BASE_URL=https://ruangkerja-<agen>.test npx playwright test tests/e2e/org-chart-export.spec.ts --workers=2
+```
+
 ## Realtime dua pengguna (Sprint 6, manual)
 
 `tests/e2e/realtime-two-users.mjs` membuka dua sesi (Dimas & Rizky): presence "Rizky sedang melihat", komentar dengan mention, reaksi, dan pindah status dari sheet B ke board A — mencetak latensi (ms, harus < 1000) dan screenshot (detail layar penuh terang/gelap, mobile, tablet).
