@@ -38,7 +38,8 @@ Pengetahuan operasional yang **tidak boleh hilang**: area sensitif keamanan, atu
 | `APP_KEY` | Enkripsi sesi & cookie, NIK, token Google, rahasia TOTP; kunci HMAC kode aktivasi kiosk; turunan rahasia QR bila `ATTENDANCE_QR_SECRET` kosong. | **Hilang = NIK, token Google, dan TOTP Super Admin tidak bisa didekripsi.** Simpan di password manager di luar server. Rotasi: kunci lama ke `APP_PREVIOUS_KEYS`, lalu buat ulang tautan/kode kiosk yang belum dipakai. |
 | `ATTENDANCE_QR_SECRET` | Tanda tangan QR dinamis kiosk. **Wajib diisi di produksi** agar rotasi `APP_KEY` tidak memengaruhi QR. | Bocor = QR bisa dipalsukan; ganti nilainya (QR lama hanya hidup ±60 detik). |
 | `DB_PASSWORD`, `REDIS_PASSWORD`, `REVERB_APP_SECRET` | Layanan internal compose. | Ganti di `.env` server lalu `docker compose -f compose.prod.yml up -d --force-recreate`. |
-| `AWS_*` (bucket privat), `BACKUP_S3_*` (bucket backup) | Selfie, lampiran, dan dump database. Access key **terpisah** per bucket. | Bocor = data pribadi/backup terbuka; cabut key di penyedia storage. |
+| `AWS_*` (bucket privat), `BACKUP_S3_*` (bucket backup) | Selfie, lampiran, dump database, dan repositori PITR (pgBackRest). Access key **terpisah** per bucket. | Bocor = data pribadi/backup terbuka; cabut key di penyedia storage. |
+| `PITR_CIPHER_PASS` | Enkripsi AES-256 repositori pgBackRest (WAL + base backup, `docs/deploy/PITR.md`). | **Hilang = backup PITR tidak bisa dibaca** (dump harian tetap bisa). Simpan di password manager bersama `APP_KEY`. Tidak bisa dirotasi tanpa repositori baru. |
 | `GOOGLE_CLIENT_SECRET`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `GOOGLE_PICKER_API_KEY` | Login Google, Drive (domain-wide delegation), Picker. | Service account bocor = akses Drive perusahaan; cabut key di Google Cloud. |
 | Akun Super Admin (sandi + TOTP) | Satu-satunya login non-Google. | Buat cadangan kode pemulihan TOTP; `php artisan ruangkerja:create-super-admin` untuk instalasi baru. |
 
@@ -48,7 +49,8 @@ Aturan umum: `.env` tidak pernah di-commit; nilai acak dibuat dengan `openssl ra
 
 - Kontainer `backup`: `pg_dump` harian **02.00 WIB** → verifikasi `pg_restore --list` → unggah ke bucket backup (rclone) → simpan remote 30 hari, lokal 7 hari. Isi `BACKUP_HEARTBEAT_URL` agar kegagalan terdeteksi.
 - **Uji pemulihan bulanan wajib** (PRD §8): `restore.sh --latest --target ruangkerja_restore_test --create --compare ruangkerja --drop-after`, catat hasilnya di log operasional.
-- Keterbatasan: belum ada WAL archiving → potensi kehilangan data ≤ 24 jam. Selfie & lampiran ada di bucket privat (bukan di dump) — pastikan bucket punya versioning/lifecycle sesuai kebijakan.
+- Kontainer `pitr` (pgBackRest, `docs/deploy/PITR.md`): WAL dikirim ke bucket backup tiap ≤ 60 detik + full Minggu / diff harian → database bisa dipulihkan ke detik mana pun dalam ±4 minggu (kehilangan data terburuk ±1 menit). `wal-check` tiap 10 menit; kontainer unhealthy (dan deploy berhenti) bila pengarsipan/backup bermasalah. Isi `PITR_HEARTBEAT_URL`.
+- Selfie & lampiran ada di bucket privat (bukan di dump/PITR) — pastikan bucket punya versioning/lifecycle sesuai kebijakan.
 - `APP_KEY` harus ikut dicadangkan (terpisah dari dump): dump tanpa kunci yang sama tidak bisa membaca kolom terenkripsi.
 - Langkah lengkap: `README.md` › Backup & pemulihan.
 
@@ -65,6 +67,7 @@ Diturunkan dari `docs/HANDOFF.md` (keputusan yang menunggu pemilik) dan `README.
 - [ ] Deploy pertama + migrasi; buat Super Admin (`ruangkerja:create-super-admin`) dan aktifkan TOTP; simpan kode pemulihan.
 - [ ] Verifikasi: `GET /health` → `ok`, `/horizon` (Super Admin) memproses antrean, scheduler jalan (close-day 00.30, backup 02.00), Reverb tersambung lewat wss.
 - [ ] **Uji restore pertama** dari backup dan catat hasilnya; heartbeat backup aktif.
+- [ ] PITR aktif: `PITR_ENABLED=true`, `PITR_CIPHER_PASS` dicadangkan, `docker compose exec pitr wal-check --deep` → `ok`, `PITR_HEARTBEAT_URL` terisi (`docs/deploy/PITR.md` §3).
 - [ ] Data master: perusahaan + domain Google, divisi/tim/jabatan, impor karyawan, lokasi kantor & radius, shift + penugasan, hari libur, jenis pengajuan, kuota & saldo, alur persetujuan.
 - [ ] Kebijakan privasi diisi (`resources/markdown/privacy-policy.md`, `PRIVACY_POLICY_VERSION`/`DATE`/`CONTACT`), retensi selfie disepakati.
 - [ ] Kiosk: buat kiosk per lokasi, pasangkan perangkat lobi dengan tautan atau kode aktivasi; uji pindai QR dengan kamera ponsel sungguhan (belum pernah dicoba di perangkat fisik).

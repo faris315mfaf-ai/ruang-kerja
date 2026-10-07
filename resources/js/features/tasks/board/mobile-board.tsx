@@ -21,6 +21,8 @@ import { cn, focusRing } from '@/lib/utils';
 import { prioritySortWeight } from '../lib/priority';
 import { compareTasks } from '../lib/board';
 import { toolbarControl } from '../lib/toolbar';
+import type { TaskPresenceMap } from '../realtime/board-presence';
+import { presenceDescription } from '../realtime/card-presence';
 import { TaskCardContent, taskCardClass } from '../task-card';
 import type { Label, Person, Task, TaskStatus } from '../types';
 import type { MoveTarget } from '../use-task-board';
@@ -42,6 +44,8 @@ type Props = {
     onCreate: (statusId: string) => void;
     /** Reports the visible column (FAB creates there). */
     onColumnChange?: (statusId: string) => void;
+    /** Who else has which task open (presence-workspace). */
+    presence?: TaskPresenceMap;
 };
 
 function resolve<T>(ids: string[], map: Record<string, T>): T[] {
@@ -81,6 +85,7 @@ export function MobileBoard({
     onOpen,
     onCreate,
     onColumnChange,
+    presence,
 }: Props) {
     const [activeId, setActiveId] = useState(() =>
         initialColumn(statuses, columns),
@@ -236,7 +241,7 @@ export function MobileBoard({
                                 'block w-full rounded-control text-left',
                                 focusRing,
                             )}
-                            aria-label={`Buka ${task.key} ${task.title}`}
+                            aria-label={`Buka ${task.key} ${task.title}${presenceDescription(presence?.get(task.id))}`}
                         >
                             <TaskCardContent
                                 task={task}
@@ -246,6 +251,7 @@ export function MobileBoard({
                                     peopleById,
                                 )}
                                 today={today}
+                                presence={presence?.get(task.id)}
                             />
                         </button>
                         {canEdit && (

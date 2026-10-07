@@ -93,6 +93,8 @@ Aturan: pemohon tidak bisa menyetujui pengajuannya sendiri. Jika penyetuju = pem
 - Penomoran task: `UPDATE workspaces SET task_sequence = task_sequence + 1 … RETURNING` di dalam transaksi.
 - Komentar: simpan JSON Tiptap → `MentionParser` mengambil node mention → `mentions` + notifikasi.
 - Implementasi Sprint 6: event `task.created|updated|moved|deleted` dan `comment.posted|updated|deleted` di `private-workspace.{id}`, presence `presence-task.{id}` ("X sedang melihat"). Broadcast memakai antrean `realtime` dengan worker Horizon sendiri (`supervisor-realtime`) agar tidak menunggu job email. Klien (`features/tasks/realtime`) berbagi satu langganan per channel; bila WebSocket tidak tersambung, board/detail di-polling tiap 30 detik dengan indikator kecil. Mention hanya untuk orang yang bisa melihat workspace (`TaskAudience`).
+- Tanda baca komentar (backlog Sprint 6): penunjuk baca per orang per tugas (`task_comment_reads`, `MarkCommentsRead`) maju saat bagian komentar detail terlihat (debounce), sekaligus menandai notifikasi komentar/mention tugas itu dibaca; event `comment.read` di presence `presence-task.{id}` memperbarui "Dibaca oleh" tanpa memuat ulang. Kartu board/list membawa `comments {count, unread}` dari subquery `BoardTasks::query($viewer)`; board memuat ulang kartu setelah `comment.posted|deleted`.
+- Kehadiran per kartu board (backlog Sprint 6): callback kanal `workspace.{workspace}` kini mengembalikan `{id, name, avatar, read_only}` sehingga juga mengotorisasi presence `presence-workspace.{id}` (kanal private mengabaikan array itu). Satu langganan per tab; klien mengirim whisper `viewing` (tugas yang dibuka/diketik, heartbeat 12 detik, kedaluwarsa 30 detik) dan `sync` (tab baru minta diumumkan ulang). Workspace pribadi tidak bergabung. Logika murni di `features/tasks/realtime/board-presence.ts`.
 
 ### 3.6 Google Drive
 - **Folder workspace:** saat workspace dibuat, job `CreateDriveFolder` (service account, impersonasi admin) membuat folder di Shared Drive, simpan `drive_folder_id`.
@@ -144,8 +146,9 @@ Uji wajib: setiap Policy punya test matriks peran × aksi.
 | `queue` | image aplikasi | `php artisan horizon` |
 | `scheduler` | image aplikasi | `php artisan schedule:work` |
 | `reverb` | image aplikasi | `php artisan reverb:start --host=0.0.0.0 --port=8080` |
-| `postgres` | postgres:17 | volume persisten, tidak diekspos ke publik |
+| `postgres` | `docker/postgres/Dockerfile` (postgres:17-alpine + pgBackRest) | volume persisten, tidak diekspos ke publik; `archive_mode=on`, `archive_timeout=60` → WAL ke object storage bila `PITR_ENABLED=true` |
 | `redis` | redis:7 | `appendonly yes` |
+| `pitr` | image `postgres` yang sama | pgBackRest: full Minggu / diff harian 01:30 WIB, retensi 4 full + 7 diff, `wal-check` tiap 10 menit (`scripts/pitr.sh`, `wal-check.sh`, `pitr-restore.sh`, `docs/deploy/PITR.md`) |
 | `backup` | `docker/backup/Dockerfile` (postgres:17-alpine + rclone + supercronic) | 02:00 WIB, unggah ke object storage, retensi 30 hari (`scripts/backup.sh`, `scripts/restore.sh`) |
 
 ### Ukuran VPS
@@ -158,7 +161,7 @@ Puluhan pengguna: **4 vCPU / 8 GB RAM / 80–100 GB SSD** sudah lega. Pantau den
 4. `deploy` (`.github/workflows/deploy.yml`, setelah CI hijau di `main`, approval environment `production`) → SSH ke VPS → `scripts/deploy-remote.sh`: `docker compose pull && up -d --wait` → `php artisan migrate --force` → `db:seed` (peran) → `php artisan horizon:terminate` → cek `/health`
 
 ### Runbook singkat
-- **Pulihkan DB:** `docker compose -f compose.prod.yml exec backup restore.sh --latest --yes` (setelah menghentikan app/queue/scheduler/reverb). Uji bulanan: `restore.sh --latest --target ruangkerja_restore_test --create --compare ruangkerja --drop-after` (README §Backup).
+- **Pulihkan DB ke titik waktu (RPO ±1 menit):** `pitr-restore --time "...+07"`, langkah di `docs/deploy/PITR.md` §5. Dari dump harian: `docker compose -f compose.prod.yml exec backup restore.sh --latest --yes` (setelah menghentikan app/queue/scheduler/reverb). Uji bulanan: `restore.sh --latest --target ruangkerja_restore_test --create --compare ruangkerja --drop-after` (README §Backup).
 - **Reverb mati:** aplikasi tetap jalan (polling fallback 30 detik di board). Restart layanan `reverb`.
 - **Google API error 403 rate limit:** job otomatis retry. Cek kuota di Cloud Console.
 

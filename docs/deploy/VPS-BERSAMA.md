@@ -76,7 +76,7 @@ ssh deploy@187.77.118.216 'cd /opt/ruangkerja && bash server-init-env.sh rk.doma
 ssh deploy@187.77.118.216 'nano /opt/ruangkerja/.env'
 ```
 
-Yang masih harus diisi manual: SMTP (`MAIL_*`), Google (`GOOGLE_*`, lihat `docs/sprints/sprint-7/GOOGLE-API.md`), `BRANDING_COMPANY_NAME`, `PRIVACY_CONTACT`, dan bila ada object storage `AWS_*` + `ATTENDANCE_SELFIE_DRIVER=s3` + `BACKUP_REMOTE=backup:<bucket>/postgres` + `BACKUP_S3_*`.
+Yang masih harus diisi manual: SMTP (`MAIL_*`), Google (`GOOGLE_*`, lihat `docs/sprints/sprint-7/GOOGLE-API.md`), `BRANDING_COMPANY_NAME`, `PRIVACY_CONTACT`, dan bila ada object storage `AWS_*` + `ATTENDANCE_SELFIE_DRIVER=s3` + `BACKUP_REMOTE=backup:<bucket>/postgres` + `BACKUP_S3_*`, lalu `PITR_ENABLED=true` (WAL archiving, `docs/deploy/PITR.md` §3; `PITR_CIPHER_PASS` sudah dibuat skrip dan wajib disalin ke password manager).
 
 > **Simpan `APP_KEY` di password manager** (salin dari `.env` server). Tanpa kunci itu NIK, token Google, dan TOTP Super Admin tidak bisa dibaca, termasuk dari backup.
 

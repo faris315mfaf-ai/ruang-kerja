@@ -46,6 +46,18 @@ export type TaskActivity = {
 
 export type TimelineItem = TaskComment | TaskActivity;
 
+/**
+ * Read pointer of one person (task_comment_reads): they have seen every
+ * comment up to (last_read_at, last_read_comment_id); `read_at` = when the
+ * pointer last moved. Also the payload of the `comment.read` event.
+ */
+export type CommentRead = {
+    user: Person;
+    last_read_comment_id: string;
+    last_read_at: string;
+    read_at: string;
+};
+
 export type ChecklistEntry = {
     id: string;
     title: string;
@@ -87,6 +99,8 @@ export type TaskDetail = {
     timeline: TimelineItem[];
     references: Record<string, TaskReferenceInfo>;
     reactions: string[];
+    /** "Dibaca oleh": pointers of the people taking part in the task. */
+    comment_reads: CommentRead[];
     can: {
         edit: boolean;
         delete: boolean;
@@ -94,5 +108,7 @@ export type TaskDetail = {
         /** Follow / unfollow; false for view-only management (keputusan pemilik 6 Okt 2026). */
         watch: boolean;
         moderate: boolean;
+        /** The viewer's reading is recorded (false for view-only management). */
+        track_reads: boolean;
     };
 };

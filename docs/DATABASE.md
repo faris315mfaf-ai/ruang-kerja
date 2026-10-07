@@ -21,7 +21,7 @@
 | Organisasi & akses | `companies`, `divisions`, `teams`, `positions`, `users`, `employee_profiles`, `roles`*, `permissions`*, `model_has_roles`*, `audit_logs`, `password_reset_requests` |
 | Absensi | `office_locations`, `shifts`, `shift_assignments`, `holidays`, `attendance_days`, `attendance_logs`, `qr_tokens`, `kiosks`, `attendance_consents` |
 | Pengajuan | `leave_types`, `leave_balances`, `leave_balance_adjustments`, `requests`, `request_sequences`, `request_approvals`, `approval_flows`, `approval_flow_steps`, `approval_delegations` |
-| Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_directions`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `task_plans`, `management_notes`, `comments`, `mentions`, `reactions`, `activities`, `saved_views` |
+| Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_directions`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `task_plans`, `management_notes`, `comments`, `task_comment_reads`, `mentions`, `reactions`, `activities`, `saved_views` |
 | Otomasi (F2-4) | `automation_rules`, `automation_runs`, `recurring_tasks`, `recurring_task_occurrences`, `task_templates`, `workspace_templates` |
 | Hiring (keputusan pemilik 6 Okt 2026) | `hiring_settings`, `hiring_positions`, `hiring_questions`, `candidates`, `candidate_checklist_items`, `interview_answers`, `interview_scores`, `candidate_notes`, `candidate_decisions` |
 | Google & file | `google_accounts`, `drive_files`, `attachments` |
@@ -121,6 +121,7 @@ Permission dasar (guard `web`; sumber kebenaran `App\Domain\Organization\Enums\R
 | `attendance.export` — ekspor rekap | ✓ | | ✓ | | |
 | `requests.view_all` — semua pengajuan | ✓ | ✓ | ✓ | | |
 | `requests.manage_flows` — alur approval & jenis cuti | ✓ | | ✓ | | |
+| `requests.cancel_approved` — batalkan pengajuan yang sudah disetujui (saldo & absensi dikembalikan; bukan pengajuan sendiri) | ✓ | | ✓ | | |
 | `workspaces.view_all` — lihat workspace non-pribadi (baca saja bila bukan anggota; keputusan pemilik 6 Okt 2026) | | ✓ | ✓ | | |
 | `workspaces.manage` — kelola workspace non-pribadi | ✓ | | | | |
 | `dashboard.view_company` — dashboard seluruh perusahaan | ✓ | ✓ | ✓ | | |
@@ -322,6 +323,9 @@ Tambahan Fitur pengajuan: `opening_days` numeric(5,1) default 0 (**saldo awal**,
 | current_step | smallint null | langkah yang sedang menunggu |
 | submitted_at | timestamptz null | **tambahan** |
 | decided_at | timestamptz null | |
+| canceled_at | timestamptz null | **tambahan** (migrasi `2026_10_13_610100_add_cancellation_to_requests`): kapan dibatalkan |
+| canceled_by_id | FK users null (nullOnDelete) | **tambahan**: pemohon (batal sebelum diputus, `CancelRequest`) atau HR (`CancelApprovedRequest`) |
+| cancel_reason | text null | **tambahan**: alasan wajib (min. 10 karakter) saat HR membatalkan pengajuan yang **sudah disetujui**; null bila dibatalkan pemohon. Tampil in-app saja (email/WA tidak memuat isinya), disembunyikan dari penyetuju pengganti untuk pengajuan sakit |
 
 ### request_sequences (tambahan Sprint 4)
 `id`, `key` unik (mis. `CUT-2026-10`), `last_number`. Nomor diambil dengan satu `INSERT … ON CONFLICT (key) DO UPDATE SET last_number = last_number + 1 RETURNING` (atomik, aman dari race condition). Periode = bulan pengiriman (waktu kantor).
@@ -340,6 +344,8 @@ Indeks: `(request_id, round, step_order)` unique, `(approver_id, status)`, `(sta
 Lampiran pengajuan (surat dokter, dll.) memakai tabel `attachments` (morph ke `requests`, `source = storage`), disimpan di disk privat (`config/requests.php`), **bukan** Drive; diunduh lewat `/pengajuan/{id}/lampiran/{attachment}` (policy + audit `request.attachment_viewed`).
 
 `attendance_days.request_id` mendapat FK ke `requests` (nullOnDelete) di migrasi Sprint 4.
+
+**Pembatalan pengajuan yang sudah disetujui** (`CancelApprovedRequest`, permission `requests.cancel_approved`, HR & Super Admin, bukan pengajuan sendiri): di bawah row lock `requests` → status `canceled` + `canceled_*`; `leave_balances.used_days −= days` (`BalanceLedger::refund`); `AttendanceEffects::revert()` — baris `attendance_days` cuti/izin/sakit/dinas tanpa check-in dihapus lalu tanggal yang sudah lewat ditutup ulang (tanpa check-in = Alpha), hari yang tetap masuk dilepas dari pengajuan (`request_id` null, status Hadir/Terlambat), `overtime_minutes` lembur dihitung ulang, koreksi absensi dikembalikan ke jam sebelum koreksi dari audit `attendance_day.corrected` (audit `attendance_day.correction_reverted`; ditolak bila hari itu sudah berubah setelah koreksi). Audit `request.canceled_approved` (jumlah hari & tanggal, tanpa isi alasan).
 
 ---
 
@@ -472,6 +478,25 @@ Monitoring kerja (Dashboard Direksi, panel "Laporan tim hari ini" Kepala Divisi)
 `id`, `commentable_type`/`commentable_id` (morph: task, catatan F2), `user_id`, `body` jsonb, `body_text` text, `edited_at` null, soft delete.
 
 Implementasi (Sprint 6): `timestampsTz` + `softDeletesTz`, indeks `(commentable_type, commentable_id, created_at)`. `body` selalu lolos `App\Domain\Tasks\Services\RichText::sanitize` (whitelist node/mark, tautan http/https/mailto, label mention = nama asli). Komentar terhapus tetap di timeline sebagai "Komentar dihapus" (isi tidak dikirim); mention & reaksinya dihapus.
+
+### task_comment_reads (tanda baca komentar, backlog Sprint 6, Okt 2026)
+Satu **penunjuk baca** per orang per tugas (bukan satu baris per komentar). Migrasi `2026_10_13_610100_create_task_comment_reads_table`.
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| task_id | FK tasks (cascade) | PK gabungan `(task_id, user_id)` |
+| user_id | FK users (cascade) | indeks `(user_id)` |
+| last_read_comment_id | ulid | komentar terbaru yang sudah terlihat (tanpa FK: komentar soft delete, kolom hanya untuk urutan) |
+| last_read_at | timestamptz | `created_at` komentar itu = batas baca |
+| created_at / updated_at | timestamptz | `updated_at` = kapan penunjuk terakhir maju ("dibaca pukul …") |
+
+Komentar C **sudah dibaca** oleh X bila `(C.created_at, C.id) <= (last_read_at, last_read_comment_id)` milik X — urutan yang sama dengan timeline (`created_at` presisi detik, seri diputus ULID). Ditulis hanya oleh `App\Domain\Tasks\Actions\MarkCommentsRead` (`POST /tugas/{task}/komentar/dibaca`, opsional `comment_id`; klien memanggilnya dengan debounce saat bagian komentar detail tugas terlihat): upsert `ON CONFLICT … WHERE` lama < baru sehingga penunjuk **tidak pernah mundur**, lalu notifikasi Inbox `task.commented`/`mention` milik orang itu untuk komentar yang tercakup ditandai dibaca, lalu event `comment.read` di presence `task.{id}` (identitas + penunjuk, tanpa isi komentar) bila penunjuk maju.
+
+Akses (`TaskPolicy::trackCommentReads`): semua yang bisa melihat tugas (juga workspace diarsipkan) **kecuali** manajemen mode lihat saja (Direksi/HR/Super Admin bukan anggota) — bacaan mereka tidak dicatat dan tidak ditampilkan. Daftar "Dibaca oleh" di detail tugas (`App\Domain\Tasks\Queries\CommentReads`, 2 query; +3 bila ada pembaca non-anggota) hanya memuat karyawan aktif yang masih ikut di tugas itu (anggota workspace, atau non-anggota workspace `internal`/Kepala Divisi terlibat yang lolos `WorkspacePolicy::canView`); baris orang yang kehilangan akses tetap ada tetapi tidak tampil. Penulis komentar & penonton sendiri tidak ditampilkan di bawah komentar (klien).
+
+Titik "belum dibaca" di kartu board/list (`BoardTasks::query($viewer)` → `TaskResource.comments {count, unread}`, subquery dalam SELECT yang sama, tanpa query tambahan): penonton mengamati (`task_watchers`) atau ditugaskan, dan ada komentar orang lain yang tidak dihapus dalam **14 hari** terakhir (`BoardTasks::UNREAD_COMMENT_DAYS`) setelah penunjuknya (tanpa baris = belum membaca apa pun).
+
+Privasi: tanpa pengaturan pengguna untuk menyembunyikan tanda baca (keputusan backlog, sederhana); yang terlihat hanya nama + waktu baca terakhir orang yang ikut di tugas, bagi orang yang bisa melihat tugas itu.
 
 ### mentions
 `id`, `mentionable_type`/`mentionable_id` (comment, task, message), `mentioned_user_id`, `created_by`. Diisi ulang setiap komentar disimpan (parse node mention dari JSON).

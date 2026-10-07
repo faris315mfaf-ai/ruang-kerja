@@ -9,6 +9,7 @@ use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Notifications\MissingCheckOutNotification;
 use App\Domain\Attendance\Services\OpenDayLocator;
 use App\Domain\Attendance\Services\ScheduleResolver;
+use App\Domain\Organization\Enums\UserStatus;
 use App\Domain\Requests\Services\ApprovedOvertime;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -50,6 +51,23 @@ final class CloseAttendanceDay
             ->each(function (User $user) use ($date, $now, $report): void {
                 $this->closeFor($user, $date, $now, $report);
             });
+
+        return $report;
+    }
+
+    /**
+     * Closes one employee's work date again (e.g. after HR canceled an approved
+     * leave of a past date, CancelApprovedRequest). Same rules as handle().
+     */
+    public function handleFor(User $user, CarbonImmutable $workDate, ?CarbonImmutable $now = null): CloseDayReport
+    {
+        $now ??= CarbonImmutable::now();
+        $date = ScheduleResolver::officeDate($workDate);
+        $report = new CloseDayReport($date->toDateString());
+
+        if ($user->status === UserStatus::Active && ($user->joined_at === null || $user->joined_at->toDateString() <= $date->toDateString())) {
+            $this->closeFor($user, $date, $now, $report);
+        }
 
         return $report;
     }

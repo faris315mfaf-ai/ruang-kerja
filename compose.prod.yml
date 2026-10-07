@@ -26,6 +26,25 @@ x-app: &app
       max-size: "10m"
       max-file: "5"
 
+# PITR (docs/deploy/PITR.md): pgBackRest settings shared by `postgres` (WAL
+# archiving via archive_command) and `pitr` (base backups, checks). Fixed
+# defaults live in docker/postgres/Dockerfile. Same object storage identity as
+# the daily dump (BACKUP_S3_*), own prefix /pgbackrest in PITR_S3_BUCKET.
+x-pitr-env: &pitr-env
+  PITR_ENABLED: ${PITR_ENABLED:-false}
+  PGBACKREST_REPO1_S3_ENDPOINT: ${PITR_S3_ENDPOINT:-nos.wjv-1.neo.id}
+  PGBACKREST_REPO1_S3_BUCKET: ${PITR_S3_BUCKET:-ruangkerja-backup}
+  PGBACKREST_REPO1_S3_REGION: ${BACKUP_S3_REGION:-us-east-1}
+  PGBACKREST_REPO1_S3_URI_STYLE: ${PITR_S3_URI_STYLE:-path}
+  PGBACKREST_REPO1_S3_KEY: ${BACKUP_S3_ACCESS_KEY_ID:-}
+  PGBACKREST_REPO1_S3_KEY_SECRET: ${BACKUP_S3_SECRET_ACCESS_KEY:-}
+  PGBACKREST_REPO1_CIPHER_PASS: ${PITR_CIPHER_PASS:-}
+  PGBACKREST_REPO1_RETENTION_FULL: ${PITR_RETENTION_FULL:-4}
+  PGBACKREST_REPO1_RETENTION_DIFF: ${PITR_RETENTION_DIFF:-7}
+  # Object storage down for long: drop WAL instead of filling the disk (PITR
+  # then has a gap until the next backup; wal-check --deep alerts).
+  PGBACKREST_ARCHIVE_PUSH_QUEUE_MAX: ${PITR_ARCHIVE_QUEUE_MAX:-4GiB}
+
 services:
   caddy:
     image: caddy:2-alpine
@@ -100,17 +119,23 @@ services:
         condition: service_healthy
     logging: *logging
 
+  # postgres:17-alpine + pgBackRest (docker/postgres/Dockerfile): archive_mode=on,
+  # archive_timeout=60s; WAL goes to object storage when PITR_ENABLED=true.
+  # POSTGRES_TAG is not APP_TAG, so a deploy does not restart the database.
   postgres:
-    image: postgres:17-alpine
+    image: ${POSTGRES_IMAGE:?set POSTGRES_IMAGE in .env}:${POSTGRES_TAG:-17}
     restart: unless-stopped
     environment:
+      <<: *pitr-env
       POSTGRES_DB: ${DB_DATABASE:?set DB_DATABASE in .env}
       POSTGRES_USER: ${DB_USERNAME:?set DB_USERNAME in .env}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      PGBACKREST_PG1_USER: ${DB_USERNAME}
       TZ: UTC
     # Not published: reachable only from the containers on this network.
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - pgsocket:/var/run/postgresql
     shm_size: 256mb
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
@@ -132,6 +157,41 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    logging: *logging
+
+  # PITR sidecar (docs/deploy/PITR.md): stanza + first full backup on start,
+  # weekly full / daily diff backups (01:30 WIB), wal-check every 10 minutes
+  # (hourly --deep). Reads the data directory and talks to PostgreSQL over the
+  # shared Unix socket. Unhealthy after PITR_ALERT_AFTER failed checks in a row.
+  pitr:
+    image: ${POSTGRES_IMAGE}:${POSTGRES_TAG:-17}
+    restart: unless-stopped
+    command: ["pitr", "schedule"]
+    user: postgres
+    environment:
+      <<: *pitr-env
+      TZ: Asia/Jakarta
+      PGHOST: /var/run/postgresql
+      PGUSER: ${DB_USERNAME}
+      PGDATABASE: ${DB_DATABASE}
+      PGBACKREST_PG1_USER: ${DB_USERNAME}
+      PITR_FULL_SCHEDULE: ${PITR_FULL_SCHEDULE:-30 1 * * 0}
+      PITR_DIFF_SCHEDULE: ${PITR_DIFF_SCHEDULE:-30 1 * * 1-6}
+      PITR_MAX_BACKUP_AGE_HOURS: ${PITR_MAX_BACKUP_AGE_HOURS:-30}
+      PITR_ALERT_AFTER: ${PITR_ALERT_AFTER:-2}
+      PITR_HEARTBEAT_URL: ${PITR_HEARTBEAT_URL:-}
+    volumes:
+      - pgdata:/var/lib/postgresql/data:ro
+      - pgsocket:/var/run/postgresql
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "pitr", "health"]
+      interval: 60s
+      timeout: 10s
+      start_period: 30s
+      retries: 1
     logging: *logging
 
   backup:
@@ -170,6 +230,7 @@ services:
 volumes:
   storage:
   pgdata:
+  pgsocket:
   redisdata:
   backups:
   caddy_data:

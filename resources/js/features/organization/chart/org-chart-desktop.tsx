@@ -19,6 +19,8 @@ type Context = {
     viewerDivisionId: string | null;
     /** Search active: open everything that is left after filtering. */
     expandAll: boolean;
+    /** PNG export: everything open, no toggles (pair with expandAll). */
+    printable?: boolean;
 };
 
 type Props = Context & {
@@ -64,89 +66,7 @@ export function OrgChartDesktop({ chart, footer, ...context }: Props) {
                 className="overflow-auto bg-[radial-gradient(var(--border)_1px,transparent_1px)] [background-size:16px_16px] p-6"
             >
                 <div ref={content} className="mx-auto w-max" style={{ zoom }}>
-                    {chart.board && (
-                        <BoardCard board={chart.board} {...context} />
-                    )}
-                    {chart.board && chart.divisions.length > 0 && (
-                        <span
-                            aria-hidden
-                            className={cn(
-                                'mx-auto block h-6 w-0 border-l',
-                                LINE,
-                            )}
-                        />
-                    )}
-
-                    {chart.divisions.length > 0 && (
-                        <div className="flex justify-center">
-                            {chart.divisions.map((division, index) => (
-                                <div
-                                    key={division.id}
-                                    className={cn(
-                                        'relative px-2',
-                                        chart.board && 'pt-8',
-                                    )}
-                                >
-                                    {chart.board && (
-                                        <>
-                                            {index > 0 && (
-                                                <span
-                                                    aria-hidden
-                                                    className={cn(
-                                                        'absolute top-0 left-0 w-1/2 border-t',
-                                                        LINE,
-                                                    )}
-                                                />
-                                            )}
-                                            {index <
-                                                chart.divisions.length - 1 && (
-                                                <span
-                                                    aria-hidden
-                                                    className={cn(
-                                                        'absolute top-0 right-0 w-1/2 border-t',
-                                                        LINE,
-                                                    )}
-                                                />
-                                            )}
-                                            <span
-                                                aria-hidden
-                                                className={cn(
-                                                    'absolute top-0 left-1/2 h-8 border-l',
-                                                    LINE,
-                                                )}
-                                            />
-                                        </>
-                                    )}
-                                    <DivisionColumn
-                                        division={division}
-                                        tone={divisionTone(index)}
-                                        {...context}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {chart.unassigned.length > 0 && (
-                        <section
-                            aria-label="Tanpa divisi"
-                            className="mx-auto mt-10 w-[248px] rounded-lg border border-dashed border-border-strong bg-surface p-3"
-                        >
-                            <h3 className="mb-2 text-meta font-semibold text-text-muted">
-                                Tanpa divisi · {chart.unassigned.length} orang
-                            </h3>
-                            <div className="space-y-2">
-                                {chart.unassigned.map((person) => (
-                                    <PersonRow
-                                        key={person.id}
-                                        person={person}
-                                        size="sm"
-                                        isYou={person.id === context.viewerId}
-                                    />
-                                ))}
-                            </div>
-                        </section>
-                    )}
+                    <OrgChartCanvas chart={chart} {...context} />
                 </div>
             </div>
 
@@ -207,13 +127,106 @@ export function OrgChartDesktop({ chart, footer, ...context }: Props) {
     );
 }
 
+/**
+ * The chart itself (Direksi, division columns, people without a division),
+ * shared by the zoomable view and the PNG export (`printable`).
+ */
+export function OrgChartCanvas({
+    chart,
+    ...context
+}: Context & { chart: OrgChart }) {
+    return (
+        <>
+            {chart.board && <BoardCard board={chart.board} {...context} />}
+            {chart.board && chart.divisions.length > 0 && (
+                <span
+                    aria-hidden
+                    className={cn('mx-auto block h-6 w-0 border-l', LINE)}
+                />
+            )}
+
+            {chart.divisions.length > 0 && (
+                <div className="flex justify-center">
+                    {chart.divisions.map((division, index) => (
+                        <div
+                            key={division.id}
+                            className={cn(
+                                'relative px-2',
+                                chart.board && 'pt-8',
+                            )}
+                        >
+                            {chart.board && (
+                                <>
+                                    {index > 0 && (
+                                        <span
+                                            aria-hidden
+                                            className={cn(
+                                                'absolute top-0 left-0 w-1/2 border-t',
+                                                LINE,
+                                            )}
+                                        />
+                                    )}
+                                    {index < chart.divisions.length - 1 && (
+                                        <span
+                                            aria-hidden
+                                            className={cn(
+                                                'absolute top-0 right-0 w-1/2 border-t',
+                                                LINE,
+                                            )}
+                                        />
+                                    )}
+                                    <span
+                                        aria-hidden
+                                        className={cn(
+                                            'absolute top-0 left-1/2 h-8 border-l',
+                                            LINE,
+                                        )}
+                                    />
+                                </>
+                            )}
+                            <DivisionColumn
+                                division={division}
+                                tone={divisionTone(index)}
+                                {...context}
+                            />
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {chart.unassigned.length > 0 && (
+                <section
+                    aria-label="Tanpa divisi"
+                    className="mx-auto mt-10 w-[248px] rounded-lg border border-dashed border-border-strong bg-surface p-3"
+                >
+                    <h3 className="mb-2 text-meta font-semibold text-text-muted">
+                        Tanpa divisi · {chart.unassigned.length} orang
+                    </h3>
+                    <div className="space-y-2">
+                        {chart.unassigned.map((person) => (
+                            <PersonRow
+                                key={person.id}
+                                person={person}
+                                size="sm"
+                                isYou={person.id === context.viewerId}
+                            />
+                        ))}
+                    </div>
+                </section>
+            )}
+        </>
+    );
+}
+
 function BoardCard({
     board,
     viewerId,
+    printable = false,
 }: Context & {
     board: OrgDivision;
 }) {
-    const [showAll, setShowAll] = useState(false);
+    const [expanded, setShowAll] = useState(false);
+    const showAll = expanded || printable;
     const people = [
         ...(board.head ? [board.head] : []),
         ...board.members,
@@ -237,18 +250,28 @@ function BoardCard({
                         {board.size} orang
                     </span>
                 </h2>
-                {(hidden > 0 || showAll) && people.length > BOARD_VISIBLE && (
-                    <button
-                        type="button"
-                        onClick={() => setShowAll((value) => !value)}
-                        className="rounded text-meta text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
-                    >
-                        {showAll ? 'Ringkas' : `+${hidden} lainnya`}
-                    </button>
-                )}
+                {!printable &&
+                    (hidden > 0 || showAll) &&
+                    people.length > BOARD_VISIBLE && (
+                        <button
+                            type="button"
+                            onClick={() => setShowAll((value) => !value)}
+                            className="rounded text-meta text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
+                        >
+                            {showAll ? 'Ringkas' : `+${hidden} lainnya`}
+                        </button>
+                    )}
             </header>
             {visible.length > 0 ? (
-                <div className="grid auto-cols-fr grid-flow-col divide-x divide-divider">
+                <div
+                    className={cn(
+                        'grid',
+                        printable && visible.length > BOARD_VISIBLE
+                            ? // Three per row so a long Direksi stays inside the card.
+                              'grid-cols-3 [&>*]:border-divider [&>*:not(:nth-child(3n+1))]:border-l [&>*:nth-child(n+4)]:border-t'
+                            : 'auto-cols-fr grid-flow-col divide-x divide-divider',
+                    )}
+                >
                     {visible.map((person) => (
                         <PersonRow
                             key={person.id}
@@ -323,6 +346,7 @@ function DivisionColumn({
                     onToggle={() => setMembersOpen((value) => !value)}
                     viewerId={context.viewerId}
                     inline={hasTeams}
+                    printable={context.printable}
                 />,
             );
         } else {
@@ -419,7 +443,8 @@ function TeamCard({
     team,
     viewerId,
     expandAll,
-}: Pick<Context, 'viewerId' | 'expandAll'> & { team: OrgTeam }) {
+    printable = false,
+}: Pick<Context, 'viewerId' | 'expandAll' | 'printable'> & { team: OrgTeam }) {
     const containsViewer =
         team.lead?.id === viewerId ||
         team.members.some((member) => member.id === viewerId);
@@ -468,7 +493,7 @@ function TeamCard({
             >
                 <AvatarStack people={everyone} total={team.size} />
                 <span className="flex-1">{team.size} orang</span>
-                {team.members.length > 0 && (
+                {team.members.length > 0 && !printable && (
                     <ChevronDown
                         aria-hidden
                         className={cn(
@@ -501,6 +526,7 @@ function MembersSummary({
     onToggle,
     viewerId,
     inline,
+    printable = false,
 }: {
     members: OrgPerson[];
     label: string;
@@ -509,6 +535,8 @@ function MembersSummary({
     viewerId: string | null;
     /** Expand inside the card (division with teams) instead of as cards. */
     inline: boolean;
+    /** PNG export: the people are listed below, no avatar preview. */
+    printable?: boolean;
 }) {
     return (
         <div className="rounded-lg border border-dashed border-border-strong bg-surface">
@@ -518,7 +546,7 @@ function MembersSummary({
                 onClick={onToggle}
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[14px] whitespace-nowrap text-text-muted hover:text-text focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
             >
-                <AvatarStack people={members} />
+                {!printable && <AvatarStack people={members} />}
                 <span className="flex-1 text-text">{label}</span>
                 {inline ? (
                     <span className="tabular-nums">{members.length}</span>

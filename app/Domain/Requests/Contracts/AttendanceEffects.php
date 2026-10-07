@@ -2,7 +2,9 @@
 
 namespace App\Domain\Requests\Contracts;
 
+use App\Domain\Requests\Data\AttendanceRevertPlan;
 use App\Models\EmployeeRequest;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Side effects of an approved request on attendance (ARCHITECTURE §3.4).
@@ -30,7 +32,16 @@ interface AttendanceEffects
     public function applyCorrection(EmployeeRequest $request): void;
 
     /**
-     * Undo what apply* wrote for this request (e.g. an approved request voided by HR).
+     * What revert() would change, without changing anything.
      */
-    public function revert(EmployeeRequest $request): void;
+    public function revertPlan(EmployeeRequest $request): AttendanceRevertPlan;
+
+    /**
+     * Undo what apply* wrote for this request (an approved request voided by
+     * HR). Call after the request left the approved status (overtime is
+     * recalculated from approved requests).
+     *
+     * @throws ValidationException when the plan is blocked
+     */
+    public function revert(EmployeeRequest $request): AttendanceRevertPlan;
 }

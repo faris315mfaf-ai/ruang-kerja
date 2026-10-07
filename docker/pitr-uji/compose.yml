@@ -1,0 +1,70 @@
+# TEST ONLY — override for scripts/pitr-uji.sh (local PITR drill, never on a
+# server). Layered on compose.prod.yml so the real `postgres` and `pitr`
+# definitions are exercised; adds a throwaway SeaweedFS S3 with a self-signed
+# certificate (pgBackRest only speaks HTTPS to S3) and a `postgres-restore`
+# instance (profile `restore`) on its own volume. Nothing is published on the
+# host. PITR_UJI_DIR = temporary folder with s3.json and tls/ from the script.
+services:
+    seaweedfs:
+        image: chrislusf/seaweedfs:${SEAWEEDFS_TAG:-4.48}
+        command:
+            - server
+            - -dir=/data
+            - -ip.bind=0.0.0.0
+            - -volume.max=0
+            - -master.volumeSizeLimitMB=64
+            - -s3
+            - -s3.port=8333
+            - -s3.port.https=8443
+            - -s3.cert.file=/tls/s3.crt
+            - -s3.key.file=/tls/s3.key
+            - -s3.config=/etc/seaweedfs/s3.json
+        volumes:
+            - seaweed:/data
+            - ${PITR_UJI_DIR:?set by scripts/pitr-uji.sh}/s3.json:/etc/seaweedfs/s3.json:ro
+            - ${PITR_UJI_DIR}/tls:/tls:ro
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'wget -qO- http://127.0.0.1:9333/cluster/status > /dev/null || exit 1',
+                ]
+            interval: 3s
+            timeout: 5s
+            start_period: 10s
+            retries: 20
+
+    postgres:
+        environment: &pitr-uji-s3
+            PGBACKREST_REPO1_STORAGE_PORT: '8443'
+            PGBACKREST_REPO1_STORAGE_CA_FILE: /tls/s3.crt
+        volumes:
+            - ${PITR_UJI_DIR}/tls:/tls:ro
+
+    pitr:
+        environment:
+            <<: *pitr-uji-s3
+            PITR_DIFF_SCHEDULE: '0 0 1 1 *'
+            PITR_FULL_SCHEDULE: '0 0 1 1 *'
+        volumes:
+            - ${PITR_UJI_DIR}/tls:/tls:ro
+
+    # Restored copy: same image and repository, archiving OFF so the new
+    # timeline never lands in the repository the original still writes to.
+    postgres-restore:
+        extends:
+            file: compose.prod.yml
+            service: postgres
+        profiles: ['restore']
+        environment:
+            <<: *pitr-uji-s3
+            PITR_ENABLED: 'false'
+        volumes:
+            - pgdata_restore:/var/lib/postgresql/data
+            - pgsocket_restore:/var/run/postgresql
+            - ${PITR_UJI_DIR}/tls:/tls:ro
+
+volumes:
+    seaweed:
+    pgdata_restore:
+    pgsocket_restore:

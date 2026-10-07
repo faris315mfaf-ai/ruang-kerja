@@ -114,7 +114,9 @@ export function useWorkspaceEvents(
 
                 if (left <= 0) {
                     subscribers.delete(name);
-                    echo().leave(name);
+                    // Only the private channel: echo().leave() would also
+                    // drop presence-workspace.{id} (board presence per card).
+                    echo().leaveChannel(`private-${name}`);
                 } else {
                     subscribers.set(name, left);
                 }

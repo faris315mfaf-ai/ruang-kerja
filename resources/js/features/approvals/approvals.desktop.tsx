@@ -23,7 +23,11 @@ import type {
     RequestItem,
 } from '@/types/requests';
 import { ApprovalDetailCard } from './approval-detail';
-import type { ApprovalTab, ApprovalsProps } from './approvals-types';
+import {
+    APPROVAL_TAB_LABELS,
+    approvalTabs,
+    type ApprovalsProps,
+} from './approvals-types';
 import { DelegationDialog } from './delegation-dialog';
 import { useDecision } from './use-decision';
 
@@ -117,6 +121,18 @@ function QueueCard({
                             {progress ? `Langkah ${progress} · ` : ''}
                             {formatRelative(item.submitted_at)}
                         </span>
+                    ) : !item.my_decision ? (
+                        <span className="flex items-center gap-2">
+                            <span className="text-[14px] font-semibold text-text-muted">
+                                {formatRelative(item.decided_at)}
+                            </span>
+                            <TonePill
+                                tone="success"
+                                className="h-7 px-2.5 text-[14px]"
+                            >
+                                {item.status_label}
+                            </TonePill>
+                        </span>
                     ) : item.my_decision ? (
                         <span className="flex items-center gap-2">
                             <span className="text-[14px] font-semibold text-text-muted">
@@ -145,6 +161,7 @@ export function ApprovalsDesktop({
     selected,
     scope,
     delegations,
+    can_cancel_approved: canCancelApproved,
 }: ApprovalsProps) {
     const [checked, setChecked] = useState<string[]>([]);
     const [processing, setProcessing] = useState(false);
@@ -164,7 +181,7 @@ export function ApprovalsDesktop({
     const select = (id: string) =>
         router.get(
             index.url({
-                query: { tab: waiting ? undefined : 'diputus', pilih: id },
+                query: { tab: waiting ? undefined : tab, pilih: id },
             }),
             {},
             {
@@ -231,20 +248,17 @@ export function ApprovalsDesktop({
             <TabNav
                 preserveScroll
                 label="Tab persetujuan"
-                items={(['menunggu', 'diputus'] as ApprovalTab[]).map(
-                    (value) => ({
-                        href: index.url({
-                            query: value === 'menunggu' ? {} : { tab: value },
-                        }),
-                        label:
-                            value === 'menunggu' ? 'Menunggu' : 'Sudah diputus',
-                        active: tab === value,
-                        count:
-                            value === 'menunggu' && counts.menunggu > 0
-                                ? counts.menunggu
-                                : undefined,
+                items={approvalTabs(canCancelApproved).map((value) => ({
+                    href: index.url({
+                        query: value === 'menunggu' ? {} : { tab: value },
                     }),
-                )}
+                    label: APPROVAL_TAB_LABELS[value],
+                    active: tab === value,
+                    count:
+                        value === 'menunggu' && counts.menunggu > 0
+                            ? counts.menunggu
+                            : undefined,
+                }))}
             />
 
             {filters.length > 1 && (
@@ -292,12 +306,16 @@ export function ApprovalsDesktop({
                             title={
                                 waiting
                                     ? 'Tidak ada yang menunggu keputusan Anda'
-                                    : 'Belum ada keputusan'
+                                    : tab === 'disetujui'
+                                      ? 'Belum ada pengajuan yang disetujui'
+                                      : 'Belum ada keputusan'
                             }
                             description={
                                 waiting
                                     ? 'Pengajuan baru dari tim Anda akan muncul di sini.'
-                                    : 'Pengajuan yang Anda setujui atau tolak tampil di sini.'
+                                    : tab === 'disetujui'
+                                      ? 'Pengajuan karyawan yang sudah disetujui tampil di sini dan bisa dibatalkan bila perlu.'
+                                      : 'Pengajuan yang Anda setujui atau tolak tampil di sini.'
                             }
                         />
                     ) : (

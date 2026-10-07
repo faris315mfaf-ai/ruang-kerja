@@ -3,9 +3,12 @@ import { memo } from 'react';
 import { PriorityIcon } from '@/components/priority-icon';
 import { cn } from '@/lib/utils';
 import { AvatarStack } from './avatar-stack';
+import { CommentBadge } from './comment-badge';
 import { DueBadge } from './due-badge';
 import { dueState, formatCompletion } from './lib/due-date';
 import { LabelPill } from './label-pill';
+import type { TaskPresence } from './realtime/board-presence';
+import { TypingNote, ViewerAvatars } from './realtime/card-presence';
 import type { Label, Person, Task } from './types';
 
 type Props = {
@@ -17,6 +20,8 @@ type Props = {
     action?: ReactNode;
     /** Small note next to the key, e.g. "sedang dipindahkan". */
     note?: string;
+    /** Other people with this task open / typing in it (board presence). */
+    presence?: TaskPresence;
     className?: string;
 };
 
@@ -72,6 +77,7 @@ export const TaskCardContent = memo(function TaskCardContent({
     today,
     action,
     note,
+    presence,
     className,
 }: Props) {
     const closed =
@@ -81,20 +87,26 @@ export const TaskCardContent = memo(function TaskCardContent({
         task.due_date !== null ||
         task.completed_at !== null ||
         assignees.length > 0 ||
+        (task.comments?.count ?? 0) > 0 ||
         action !== undefined;
 
     return (
         <div className={cn('flex flex-col gap-3', className)}>
             <div className="flex items-center gap-2">
-                <span className="font-mono text-[14px] font-semibold text-text-muted">
+                <span className="shrink-0 font-mono text-[14px] font-semibold whitespace-nowrap text-text-muted">
                     {task.key}
                 </span>
-                {note && (
+                {note ? (
                     <span className="truncate text-meta text-text-muted">
                         · {note}
                     </span>
+                ) : (
+                    <TypingNote presence={presence} short />
                 )}
-                <PriorityIcon priority={task.priority} className="ml-auto" />
+                <span className="ml-auto flex shrink-0 items-center gap-2">
+                    <ViewerAvatars presence={presence} />
+                    <PriorityIcon priority={task.priority} />
+                </span>
             </div>
 
             <p
@@ -154,6 +166,7 @@ export const TaskCardContent = memo(function TaskCardContent({
                                 />
                             )
                         )}
+                        <CommentBadge comments={task.comments} />
                     </div>
                     {assignees.length > 0 && (
                         <AvatarStack people={assignees} size="lg" />

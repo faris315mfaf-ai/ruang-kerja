@@ -2,8 +2,10 @@
 #
 # Database, cache/queue and all background work: Postgres, Redis, Horizon
 # (notifications, exports, Drive jobs, broadcasts), the scheduler (close day,
-# reminders, retention) and backups. Nothing here is published on a public
-# IP: Postgres and Redis listen on the private IP for the web VPS only.
+# reminders, retention) and backups (daily pg_dump + continuous WAL archiving
+# for point-in-time recovery, docs/deploy/PITR.md). Nothing here is published
+# on a public IP: Postgres and Redis listen on the private IP for the web VPS
+# only.
 #
 #   .env: COMPOSE_FILE=compose.data.yml, DATA_PRIVATE_IP=<private IP of this VPS>,
 #         DB_HOST=postgres, REDIS_HOST=redis,
@@ -27,6 +29,21 @@ x-app: &app
             max-size: '10m'
             max-file: '5'
 
+# PITR (docs/deploy/PITR.md): pgBackRest settings shared by `postgres` (WAL
+# archiving) and `pitr` (base backups, checks); same as compose.prod.yml.
+x-pitr-env: &pitr-env
+    PITR_ENABLED: ${PITR_ENABLED:-false}
+    PGBACKREST_REPO1_S3_ENDPOINT: ${PITR_S3_ENDPOINT:-nos.wjv-1.neo.id}
+    PGBACKREST_REPO1_S3_BUCKET: ${PITR_S3_BUCKET:-ruangkerja-backup}
+    PGBACKREST_REPO1_S3_REGION: ${BACKUP_S3_REGION:-us-east-1}
+    PGBACKREST_REPO1_S3_URI_STYLE: ${PITR_S3_URI_STYLE:-path}
+    PGBACKREST_REPO1_S3_KEY: ${BACKUP_S3_ACCESS_KEY_ID:-}
+    PGBACKREST_REPO1_S3_KEY_SECRET: ${BACKUP_S3_SECRET_ACCESS_KEY:-}
+    PGBACKREST_REPO1_CIPHER_PASS: ${PITR_CIPHER_PASS:-}
+    PGBACKREST_REPO1_RETENTION_FULL: ${PITR_RETENTION_FULL:-4}
+    PGBACKREST_REPO1_RETENTION_DIFF: ${PITR_RETENTION_DIFF:-7}
+    PGBACKREST_ARCHIVE_PUSH_QUEUE_MAX: ${PITR_ARCHIVE_QUEUE_MAX:-4GiB}
+
 services:
     queue:
         <<: *app
@@ -45,18 +62,22 @@ services:
         healthcheck:
             disable: true
 
+    # postgres:17-alpine + pgBackRest (docker/postgres/Dockerfile).
     postgres:
-        image: postgres:17-alpine
+        image: ${POSTGRES_IMAGE:?set POSTGRES_IMAGE in .env}:${POSTGRES_TAG:-17}
         restart: unless-stopped
         environment:
+            <<: *pitr-env
             POSTGRES_DB: ${DB_DATABASE:?set DB_DATABASE in .env}
             POSTGRES_USER: ${DB_USERNAME:?set DB_USERNAME in .env}
             POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+            PGBACKREST_PG1_USER: ${DB_USERNAME}
             TZ: UTC
         ports:
             - '${DATA_PRIVATE_IP:?set DATA_PRIVATE_IP in .env}:5432:5432'
         volumes:
             - pgdata:/var/lib/postgresql/data
+            - pgsocket:/var/run/postgresql
         shm_size: 256mb
         healthcheck:
             test:
@@ -93,6 +114,38 @@ services:
             retries: 20
         logging: *logging
 
+    # PITR sidecar: weekly full / daily diff backups, wal-check (docs/deploy/PITR.md).
+    pitr:
+        image: ${POSTGRES_IMAGE}:${POSTGRES_TAG:-17}
+        restart: unless-stopped
+        command: ['pitr', 'schedule']
+        user: postgres
+        environment:
+            <<: *pitr-env
+            TZ: Asia/Jakarta
+            PGHOST: /var/run/postgresql
+            PGUSER: ${DB_USERNAME}
+            PGDATABASE: ${DB_DATABASE}
+            PGBACKREST_PG1_USER: ${DB_USERNAME}
+            PITR_FULL_SCHEDULE: ${PITR_FULL_SCHEDULE:-30 1 * * 0}
+            PITR_DIFF_SCHEDULE: ${PITR_DIFF_SCHEDULE:-30 1 * * 1-6}
+            PITR_MAX_BACKUP_AGE_HOURS: ${PITR_MAX_BACKUP_AGE_HOURS:-30}
+            PITR_ALERT_AFTER: ${PITR_ALERT_AFTER:-2}
+            PITR_HEARTBEAT_URL: ${PITR_HEARTBEAT_URL:-}
+        volumes:
+            - pgdata:/var/lib/postgresql/data:ro
+            - pgsocket:/var/run/postgresql
+        depends_on:
+            postgres:
+                condition: service_healthy
+        healthcheck:
+            test: ['CMD', 'pitr', 'health']
+            interval: 60s
+            timeout: 10s
+            start_period: 30s
+            retries: 1
+        logging: *logging
+
     backup:
         image: ${BACKUP_IMAGE:?set BACKUP_IMAGE in .env}:${APP_TAG:-latest}
         restart: unless-stopped
@@ -126,5 +179,6 @@ services:
 volumes:
     storage:
     pgdata:
+    pgsocket:
     redisdata:
     backups:

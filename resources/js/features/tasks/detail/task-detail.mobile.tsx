@@ -30,6 +30,7 @@ import {
 import { StatusPill } from '../status-pill';
 import { ChecklistSection } from './checklist';
 import { CommentComposer } from './comment-composer';
+import { signalTaskTyping } from '../realtime/workspace-presence';
 import { DescriptionField } from './description-field';
 import { PropertiesPanel } from './properties';
 import { SubtasksSection } from './subtasks';
@@ -324,6 +325,7 @@ export function TaskDetailMobile({ state, today }: Props) {
                     workspaceKey={detail.workspace.key}
                     editable={can.edit}
                     onSave={(description) => state.update({ description })}
+                    onTyping={() => signalTaskTyping(task.id, 'description')}
                 />
             </section>
 
@@ -392,6 +394,7 @@ export function TaskDetailMobile({ state, today }: Props) {
                         onSubmit={state.postComment}
                         drive={detail.attachments.drive}
                         onAttachmentsChange={state.refresh}
+                        onTyping={() => signalTaskTyping(task.id, 'comment')}
                         placeholder="Tulis komentar…"
                     />
                 </div>

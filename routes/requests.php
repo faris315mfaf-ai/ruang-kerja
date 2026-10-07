@@ -39,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('{employeeRequest}/setujui', [ApprovalController::class, 'approve'])->name('approve');
         Route::post('{employeeRequest}/tolak', [ApprovalController::class, 'reject'])->name('reject');
         Route::post('{employeeRequest}/revisi', [ApprovalController::class, 'revise'])->name('revise');
+        Route::post('{employeeRequest}/batalkan', [ApprovalController::class, 'cancelApproved'])->middleware('throttle:30,1')->name('cancel-approved');
     });
 
     Route::prefix('admin')->name('admin.')->group(function () {

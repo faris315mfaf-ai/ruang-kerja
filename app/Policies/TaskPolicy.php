@@ -81,6 +81,25 @@ class TaskPolicy
     }
 
     /**
+     * Comment read pointer (task_comment_reads, "Dibaca oleh"): everyone who
+     * can see the task — also in an archived workspace — except view-only
+     * management, whose reading is neither recorded nor shown (they do not
+     * take part in the discussion; same rule as watch()).
+     */
+    public function trackCommentReads(User $user, Task $task): Response
+    {
+        $workspace = $task->workspace;
+
+        if (! $this->workspaces->canView($user, $workspace)) {
+            return Response::denyAsNotFound();
+        }
+
+        return $this->workspaces->isViewOnly($user, $workspace)
+            ? Response::deny(self::VIEW_ONLY)
+            : Response::allow();
+    }
+
+    /**
      * "Ruang saya" (Beranda): plan, accept and quick-complete — only tasks
      * assigned to the user or living in their own personal workspace, in a
      * workspace they can see and that is not archived. Completing also needs

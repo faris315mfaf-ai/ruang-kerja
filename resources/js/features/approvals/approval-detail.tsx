@@ -3,6 +3,10 @@ import { UserAvatar } from '@/components/shell/user-avatar';
 import { StatusBadge } from '@/features/requests/badges';
 import { ApprovalTimeline } from '@/features/requests/approval-timeline';
 import {
+    CancelApprovedAction,
+    CancellationNotice,
+} from '@/features/requests/cancel-approved-action';
+import {
     ColleagueWarning,
     RequestFields,
 } from '@/features/requests/request-parts';
@@ -133,6 +137,7 @@ export function ApprovalDetailCard({
                     request={request}
                     statusLabel={decide ? 'Menunggu Anda' : undefined}
                 />
+                <CancellationNotice request={request} />
                 <RequestTiles request={request} />
                 <RequestFields request={request} withPeriod={false} />
                 <ColleagueWarning colleagues={request.colleagues} />
@@ -150,6 +155,11 @@ export function ApprovalDetailCard({
                         requesterName={request.user.name}
                     />
                     <DecisionButtons decision={decision} />
+                </div>
+            )}
+            {!decide && request.can.cancel_approved && (
+                <div className="border-t border-border bg-background px-5 py-5 md:px-7">
+                    <CancelApprovedAction request={request} />
                 </div>
             )}
         </article>

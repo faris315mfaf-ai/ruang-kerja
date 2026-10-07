@@ -77,7 +77,7 @@ Butir 2–4 diterapkan modul masing-masing; shell (butir 1) sudah berlaku.
 | Hiring (`/hiring`, keputusan pemilik 6 Okt 2026) | ✓ | ✓ | Papan per tahap → chip tahap + daftar kartu; profil kandidat satu kolom (Ringkasan di tab Profil); pindah tahap lewat menu (tanpa seret); FAB tambah kandidat/lowongan. Hanya HR, Super Admin, dan pewawancara/penyetuju yang ditugaskan |
 | Admin karyawan | ✓ | ◐ | Cari & lihat profil. Tambah/ubah/impor dan "Atur kata sandi" di desktop |
 | Permintaan reset kata sandi (HR) | ✓ | ✓ | Panel di Admin › Karyawan & profil; Setujui / Tolak juga di ponsel karena karyawan menunggu |
-| Struktur organisasi | ✓ | ◐ | Daftar bertingkat, bukan bagan. **Tidak untuk staf** di kedua platform (404, keputusan pemilik 6 Okt 2026) |
+| Struktur organisasi | ✓ | ◐ | Daftar bertingkat, bukan bagan. **Tidak untuk staf** di kedua platform (404, keputusan pemilik 6 Okt 2026). **Unduh PNG** bagan lengkap: desktop tombol header (tampilan Bagan), ponsel menu "…" app bar (`docs/fitur/ekspor-struktur-organisasi.md`) |
 | Alur persetujuan, jenis cuti | ✓ | — | Banner "Buka di desktop" bila diakses |
 | Lokasi, shift, hari libur | ✓ | — | Sama |
 | Pengaturan workspace lanjutan | ✓ | ◐ | Anggota bisa dilihat. Kolom status & label di desktop |
