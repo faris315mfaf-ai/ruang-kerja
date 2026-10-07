@@ -3,14 +3,17 @@
 namespace App\Domain\Meetings\Services;
 
 use App\Domain\Meetings\Data\Occurrence;
+use App\Domain\Meetings\Enums\MeetingPlatform;
 use App\Domain\Meetings\Enums\Rsvp;
+use App\Domain\Meetings\Queries\VideoAttendance;
 use App\Models\MeetingMinutes;
 
 /**
  * Minutes of one occurrence: read without creating, or open (create the row
  * with a blank draft — agenda items as empty sections, attendance from the
  * participants who did not decline — and lock it for the caller's
- * transaction).
+ * transaction). For a video meeting whose room was used, the blank draft's
+ * attendance comes from who actually joined (meeting_attendances).
  */
 final class MinutesStore
 {
@@ -37,13 +40,15 @@ final class MinutesStore
             return $minutes;
         }
 
+        $blank = $this->blank($occurrence);
+
         MeetingMinutes::query()->insertOrIgnore([
             'id' => (string) str()->ulid(),
             'meeting_id' => $occurrence->meeting->id,
             'occurrence_date' => $occurrence->date,
             'status' => 'draft',
-            'attendance' => json_encode($this->blank($occurrence)['attendance'], JSON_THROW_ON_ERROR),
-            'sections' => json_encode($this->blank($occurrence)['sections'], JSON_THROW_ON_ERROR),
+            'attendance' => json_encode($blank['attendance'], JSON_THROW_ON_ERROR),
+            'sections' => json_encode($blank['sections'], JSON_THROW_ON_ERROR),
             'decisions' => '[]',
             'version' => 0,
             'created_at' => now(),
@@ -67,6 +72,18 @@ final class MinutesStore
             ->filter(fn ($participant): bool => $participant->user_id !== null && $participant->rsvp !== Rsvp::No)
             ->map(fn ($participant): array => ['user_id' => (string) $participant->user_id, 'present' => true])
             ->all());
+
+        $joined = $meeting->platform === MeetingPlatform::Video
+            ? app(VideoAttendance::class)->attendedUserIds($occurrence)
+            : [];
+
+        if ($joined !== []) {
+            // Everyone invited, marked present when they were in the video room.
+            $attendance = array_values($meeting->participants
+                ->filter(fn ($participant): bool => $participant->user_id !== null)
+                ->map(fn ($participant): array => ['user_id' => (string) $participant->user_id, 'present' => in_array((string) $participant->user_id, $joined, true)])
+                ->all());
+        }
 
         $sections = array_map(fn (string $title): array => ['title' => $title, 'body' => ''], $meeting->agenda);
 

@@ -67,6 +67,7 @@ return [
                 'https://accounts.google.com',
                 // Catatan bersama: collab server WebSocket (config/collab.php, e.g. ws://127.0.0.1:1234 locally).
                 ...array_filter([$origin(env('VITE_COLLAB_URL', env('APP_ENV') === 'local' ? 'ws://127.0.0.1:'.env('COLLAB_PORT', 1234) : null))]),
+                // Video RuangKerja (LiveKit) origins are added by SecurityHeaders from config/livekit.php.
             ],
             'img-src' => array_values(array_filter([
                 'https://*.googleusercontent.com',
@@ -106,7 +107,8 @@ return [
         'include_subdomains' => (bool) env('HSTS_INCLUDE_SUBDOMAINS', true),
     ],
 
-    'permissions_policy' => 'camera=(self), geolocation=(self), microphone=(), payment=(), usb=(), browsing-topics=()',
+    // Microphone & screen sharing: Video RuangKerja (/rapat/{id}/gabung, /ruang).
+    'permissions_policy' => 'camera=(self), geolocation=(self), microphone=(self), display-capture=(self), payment=(), usb=(), browsing-topics=()',
 
     'referrer_policy' => 'strict-origin-when-cross-origin',
 

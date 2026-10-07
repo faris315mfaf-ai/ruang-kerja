@@ -93,6 +93,10 @@ class SecurityHeaders
             $directives['connect-src'][] = $reverb;
         }
 
+        foreach ($this->liveKitOrigins() as $liveKit) {
+            $directives['connect-src'][] = $liveKit;
+        }
+
         if ($vite = $this->viteDevServerOrigin()) {
             foreach (['script-src', 'style-src', 'img-src', 'font-src'] as $directive) {
                 $directives[$directive][] = $vite;
@@ -127,6 +131,32 @@ class SecurityHeaders
         }
 
         return false;
+    }
+
+    /**
+     * Video RuangKerja: the LiveKit signalling WebSocket (wss://…) and its
+     * HTTP twin (the client calls /rtc/validate after a failed connect).
+     *
+     * @return list<string>
+     */
+    private function liveKitOrigins(): array
+    {
+        $url = config('livekit.url');
+
+        if (! is_string($url) || $url === '') {
+            return [];
+        }
+
+        $parts = parse_url($url);
+
+        if (! is_array($parts) || ! isset($parts['scheme'], $parts['host']) || ! in_array($parts['scheme'], ['ws', 'wss'], true)) {
+            return [];
+        }
+
+        $hostPort = $parts['host'].(isset($parts['port']) ? ':'.$parts['port'] : '');
+        $http = $parts['scheme'] === 'wss' ? 'https' : 'http';
+
+        return [$parts['scheme'].'://'.$hostPort, $http.'://'.$hostPort];
     }
 
     /**

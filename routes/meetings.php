@@ -1,17 +1,34 @@
 <?php
 
 use App\Http\Controllers\Meetings\CalendarController;
+use App\Http\Controllers\Meetings\LiveKitWebhookController;
 use App\Http\Controllers\Meetings\ManagementScheduleController;
 use App\Http\Controllers\Meetings\MeetingController;
+use App\Http\Controllers\Meetings\MeetingVideoController;
 use App\Http\Controllers\Meetings\MinutesController;
+use App\Http\Middleware\AuthenticateSession;
+use App\Http\Middleware\EnsureActiveEmployee;
 use App\Http\Middleware\EnsureFeatureEnabled;
+use App\Http\Middleware\EnsureTwoFactorForSuperAdmin;
+use App\Http\Middleware\HandleAppearance;
+use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RestrictCredentialRoutes;
+use App\Http\Middleware\RestrictKioskDevice;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /*
  * Rapat, notulen & kalender (Fase 2, F2-3; docs/fitur/rapat-kalender.md).
  * Behind FEATURE_MEETINGS (config/features.php): 404 while off.
  * Authorization: MeetingPolicy (invisible meeting → 404), /manajemen/jadwal =
  * Gate viewManagementDashboard. Google Calendar/Meet sync is on hold.
+ * Video RuangKerja (LiveKit, §6a): /gabung (pre-join), /ruang (room), token,
+ * moderation, and the signed LiveKit webhook (no session/CSRF).
  */
 Route::middleware([EnsureFeatureEnabled::class.':meetings', 'auth', 'verified'])->group(function () {
     Route::prefix('rapat')->name('meetings.')->group(function () {
@@ -36,8 +53,36 @@ Route::middleware([EnsureFeatureEnabled::class.':meetings', 'auth', 'verified'])
         Route::post('{meeting}/tindak-lanjut', [MinutesController::class, 'storeItem'])->whereUlid('meeting')->middleware('throttle:api')->name('items.store');
         Route::patch('{meeting}/tindak-lanjut/{item}', [MinutesController::class, 'updateItem'])->whereUlid(['meeting', 'item'])->middleware('throttle:api')->name('items.update');
         Route::delete('{meeting}/tindak-lanjut/{item}', [MinutesController::class, 'destroyItem'])->whereUlid(['meeting', 'item'])->name('items.destroy');
+
+        Route::get('{meeting}/gabung', [MeetingVideoController::class, 'join'])->whereUlid('meeting')->name('video.join');
+        Route::get('{meeting}/ruang', [MeetingVideoController::class, 'room'])->whereUlid('meeting')->name('video.room');
+        Route::post('{meeting}/video/token', [MeetingVideoController::class, 'token'])->whereUlid('meeting')->middleware('throttle:30,1')->name('video.token');
+        Route::post('{meeting}/video/peserta/{identity}/bisukan', [MeetingVideoController::class, 'mute'])->whereUlid(['meeting', 'identity'])->middleware('throttle:api')->name('video.mute');
+        Route::delete('{meeting}/video/peserta/{identity}', [MeetingVideoController::class, 'remove'])->whereUlid(['meeting', 'identity'])->middleware('throttle:api')->name('video.remove');
     });
 
     Route::get('kalender', CalendarController::class)->name('calendar');
     Route::get('manajemen/jadwal', ManagementScheduleController::class)->name('management.schedule');
 });
+
+// LiveKit → app webhook (attendance): signed with the API key pair instead
+// of a session, so no cookies/CSRF/Inertia; rate limited per IP.
+Route::post('api/livekit/webhook', LiveKitWebhookController::class)
+    ->middleware([EnsureFeatureEnabled::class.':meetings', 'throttle:600,1'])
+    ->withoutMiddleware([
+        EncryptCookies::class,
+        AddQueuedCookiesToResponse::class,
+        StartSession::class,
+        ShareErrorsFromSession::class,
+        PreventRequestForgery::class,
+        'auth.session',
+        AuthenticateSession::class,
+        EnsureActiveEmployee::class,
+        RestrictKioskDevice::class,
+        RestrictCredentialRoutes::class,
+        EnsureTwoFactorForSuperAdmin::class,
+        HandleAppearance::class,
+        HandleInertiaRequests::class,
+        AddLinkHeadersForPreloadedAssets::class,
+    ])
+    ->name('meetings.video.webhook');

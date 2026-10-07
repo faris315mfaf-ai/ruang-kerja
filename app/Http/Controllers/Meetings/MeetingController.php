@@ -6,12 +6,14 @@ use App\Domain\Meetings\Actions\CancelMeeting;
 use App\Domain\Meetings\Actions\ScheduleMeeting;
 use App\Domain\Meetings\Actions\UpdateMeeting;
 use App\Domain\Meetings\Actions\UpdateRsvp;
+use App\Domain\Meetings\Enums\MeetingPlatform;
 use App\Domain\Meetings\Queries\AgendaQuery;
 use App\Domain\Meetings\Queries\EditableWorkspaces;
 use App\Domain\Meetings\Queries\FindConflicts;
 use App\Domain\Meetings\Queries\MeetingFeed;
 use App\Domain\Meetings\Services\MeetingOccurrences;
 use App\Domain\Meetings\Services\MinutesStore;
+use App\Domain\Meetings\Services\VideoRooms;
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Organization\Enums\UserStatus;
 use App\Http\Controllers\Controller;
@@ -20,6 +22,7 @@ use App\Http\Requests\Meetings\OccurrenceRequest;
 use App\Http\Requests\Meetings\RsvpRequest;
 use App\Http\Requests\Meetings\SaveMeetingRequest;
 use App\Http\Resources\Meetings\MeetingPresenter;
+use App\Http\Resources\Meetings\VideoPresenter;
 use App\Models\Meeting;
 use App\Models\User;
 use App\Policies\MeetingPolicy;
@@ -98,6 +101,10 @@ class MeetingController extends Controller
                     'write_minutes' => $policy->canWriteMinutes($user, $meeting),
                 ],
             ],
+            // Video RuangKerja: join window, live count (partial reloads poll this).
+            'video' => $meeting->platform === MeetingPlatform::Video
+                ? fn (): array => app(VideoPresenter::class)->summary($occurrence, $user)
+                : null,
         ]);
     }
 
@@ -174,6 +181,8 @@ class MeetingController extends Controller
             'workspaces' => $workspaces,
             'can_lead' => $user->hasPermission(Permission::DashboardViewCompany),
             'durations' => SaveMeetingRequest::DURATIONS,
+            // "Video RuangKerja" is offered only when LiveKit is configured.
+            'video_enabled' => app(VideoRooms::class)->configured(),
             'meeting' => $meeting !== null ? $this->values($meeting) : null,
         ];
     }

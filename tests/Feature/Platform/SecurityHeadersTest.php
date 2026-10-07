@@ -31,7 +31,8 @@ it('sends the baseline security headers on every response', function (string $ur
 
     expect($permissions)->toContain('geolocation=(self)')
         ->toContain('camera=(self)')
-        ->toContain('microphone=()');
+        ->toContain('microphone=(self)')
+        ->toContain('display-capture=(self)');
 })->with(['/login', '/up', '/health', '/does-not-exist']);
 
 it('uses a strict CSP with a per-request nonce shared with the page', function () {
@@ -80,6 +81,17 @@ it('allows the browser-facing Reverb WebSocket endpoint', function () {
 
     $csp = cspDirectives((string) $this->get('/login')->headers->get('Content-Security-Policy'));
     expect($csp['connect-src'])->toContain('ws://ruangkerja.example.com:8080');
+});
+
+it('allows the LiveKit server of Video RuangKerja only when configured', function () {
+    config(['livekit.url' => null]);
+    $csp = cspDirectives((string) $this->get('/login')->headers->get('Content-Security-Policy'));
+    expect($csp['connect-src'])->not->toContain('rapat.example.com');
+
+    config(['livekit.url' => 'wss://rapat.example.com']);
+    $csp = cspDirectives((string) $this->get('/login')->headers->get('Content-Security-Policy'));
+    expect($csp['connect-src'])->toContain('wss://rapat.example.com')
+        ->toContain('https://rapat.example.com');
 });
 
 it('also allows wss for a plain-ws Reverb, because pusher-js forces TLS on HTTPS pages', function () {
