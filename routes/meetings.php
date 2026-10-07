@@ -6,6 +6,7 @@ use App\Http\Controllers\Meetings\ManagementScheduleController;
 use App\Http\Controllers\Meetings\MeetingController;
 use App\Http\Controllers\Meetings\MeetingRoomController;
 use App\Http\Controllers\Meetings\MeetingVideoController;
+use App\Http\Controllers\Meetings\MinutesCollabStateController;
 use App\Http\Controllers\Meetings\MinutesController;
 use App\Http\Middleware\AuthenticateSession;
 use App\Http\Middleware\EnsureActiveEmployee;
@@ -15,6 +16,7 @@ use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RestrictCredentialRoutes;
 use App\Http\Middleware\RestrictKioskDevice;
+use App\Http\Middleware\VerifyCollabSecret;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -48,6 +50,8 @@ Route::middleware([EnsureFeatureEnabled::class.':meetings', 'auth', 'verified'])
 
         Route::get('{meeting}/notulen', [MinutesController::class, 'show'])->whereUlid('meeting')->name('minutes.show');
         Route::get('{meeting}/notulen/data', [MinutesController::class, 'data'])->whereUlid('meeting')->middleware('throttle:api')->name('minutes.data');
+        Route::get('{meeting}/notulen/kolaborasi', [MinutesController::class, 'collabToken'])->whereUlid('meeting')->middleware('throttle:60,1')->name('minutes.collab');
+        Route::post('{meeting}/notulen/menyunting', [MinutesController::class, 'editing'])->whereUlid('meeting')->middleware('throttle:api')->name('minutes.editing');
         Route::put('{meeting}/notulen', [MinutesController::class, 'save'])->whereUlid('meeting')->middleware('throttle:api')->name('minutes.save');
         Route::post('{meeting}/notulen/final', [MinutesController::class, 'finalize'])->whereUlid('meeting')->name('minutes.finalize');
         Route::post('{meeting}/notulen/buka', [MinutesController::class, 'reopen'])->whereUlid('meeting')->name('minutes.reopen');
@@ -75,6 +79,18 @@ Route::middleware([EnsureFeatureEnabled::class.':meetings', 'auth', 'verified'])
     Route::get('kalender', CalendarController::class)->name('calendar');
     Route::get('manajemen/jadwal', ManagementScheduleController::class)->name('management.schedule');
 });
+
+// Collab server → app: state of the collaborative room minutes (document
+// "meeting-minutes.{id}", MinutesCollab). Outside the web group like the
+// notes endpoints (no session/CSRF); VerifyCollabSecret checks the secret.
+Route::withoutMiddleware('web')
+    ->middleware([EnsureFeatureEnabled::class.':meetings', EnsureFeatureEnabled::class.':notes', VerifyCollabSecret::class, 'throttle:600,1'])
+    ->prefix('internal/rapat/notulen')
+    ->name('meetings.minutes.internal.')
+    ->group(function () {
+        Route::get('{minutes}/state', [MinutesCollabStateController::class, 'show'])->whereUlid('minutes')->name('state.show');
+        Route::post('{minutes}/state', [MinutesCollabStateController::class, 'store'])->whereUlid('minutes')->name('state.store');
+    });
 
 // LiveKit → app webhook (attendance): signed with the API key pair instead
 // of a session, so no cookies/CSRF/Inertia; rate limited per IP.

@@ -21,9 +21,9 @@ use Illuminate\Support\Facades\DB;
  * - room_finished → closes every open row of the room.
  *
  * Rooms that do not map to a video meeting occurrence ("rk-{id}-{yyyymmdd}")
- * and identities that are not employees of the meeting's company are
- * ignored, and so is the hidden transcription agent (identity
- * AGENT_IDENTITY, docs/fitur/notulen-otomatis-kontrak.md §3). Returns whether
+ * are ignored, and so is every identity that is not the ULID of an employee
+ * of the meeting's company — including the hidden transcription agent
+ * (AGENT_IDENTITY, docs/fitur/notulen-otomatis-kontrak.md §3): no row. Returns whether
  * anything was recorded; recorded events are broadcast as
  * `attendance.updated` on `meeting.{id}` (the Kehadiran panel refetches).
  */
@@ -72,9 +72,6 @@ final class RecordVideoEvent
 
         $participant = self::map($event['participant'] ?? null);
 
-        if (($participant['identity'] ?? null) === self::AGENT_IDENTITY) {
-            return false;
-        }
         $sid = is_string($participant['sid'] ?? null) ? $participant['sid'] : '';
 
         if ($sid === '' || strlen($sid) > 64) {
@@ -85,6 +82,12 @@ final class RecordVideoEvent
             ?? self::timestamp($participant['joinedAt'] ?? $participant['joined_at'] ?? null)
             ?? $at;
         $userId = $this->userId($meeting, $participant['identity'] ?? null);
+
+        // Only employees of the meeting's company are attendance: the hidden
+        // transcription agent (AGENT_IDENTITY), guests and foreign ids are not stored.
+        if ($userId === null) {
+            return false;
+        }
 
         DB::transaction(function () use ($type, $meeting, $target, $roomName, $sid, $joinedAt, $userId, $at): void {
             $row = MeetingAttendance::query()->where('participant_sid', $sid)->lockForUpdate()->first()

@@ -10,6 +10,8 @@ use App\Domain\Meetings\Queries\PreviousMinutes;
 use App\Domain\Meetings\Queries\SpeakingTimes;
 use App\Domain\Meetings\Queries\VideoAttendance;
 use App\Domain\Meetings\Services\MeetingParticipants;
+use App\Domain\Meetings\Services\MinutesCollab;
+use App\Domain\Meetings\Services\MinutesEditing;
 use App\Domain\Meetings\Services\MinutesStore;
 use App\Domain\Meetings\Services\NotulenBridge;
 use App\Domain\Meetings\Services\RoomEvents;
@@ -44,6 +46,8 @@ final class RoomPresenter
         private readonly MeetingParticipants $participants,
         private readonly MeetingPolicy $policy,
         private readonly VideoRooms $rooms,
+        private readonly MinutesCollab $collab,
+        private readonly MinutesEditing $editing,
     ) {}
 
     /**
@@ -61,10 +65,14 @@ final class RoomPresenter
         $doc = $this->meetings->minutes($occurrence, $minutes);
         $people = $this->feed->people([$occurrence], array_filter([$minutes, $previous]), [$viewer->id]);
 
-        $canEdit = $this->policy->editMinutes($viewer, $meeting, $minutes)->allowed();
+        // Collaborative (FEATURE_NOTES + collab server): every invited person
+        // edits the text; otherwise the minute taker / organizer, last write wins.
+        $collab = MinutesCollab::enabled();
+        $canWrite = $this->policy->editMinutes($viewer, $meeting, $minutes)->allowed();
+        $canEdit = $collab ? $this->collab->canEdit($viewer, $meeting, $minutes) : $canWrite;
         $can = [
             'edit_minutes' => $canEdit,
-            'choose_notes_source' => $canEdit && $minutes?->notes_source === null,
+            'choose_notes_source' => $canWrite && $minutes?->notes_source === null,
             'moderate' => $this->policy->moderateVideo($viewer, $meeting)->allowed(),
             'call_participants' => $this->policy->callParticipant($viewer, $meeting)->allowed(),
             'report_speaking' => $this->policy->joinVideo($viewer, $meeting, $occurrence, $now)->allowed(),
@@ -92,11 +100,16 @@ final class RoomPresenter
             'participants' => $this->participants($occurrence, $people),
             'agenda' => self::agenda($meeting->agenda, $doc),
             'minutes' => [
-                'mode' => 'autosave',
-                'collab' => null,
+                'mode' => $collab ? 'collab' : 'autosave',
+                'collab' => $collab ? [
+                    'token_url' => $occurrence->url('/notulen/kolaborasi'),
+                    'url' => (string) config('collab.public_url'),
+                ] : null,
                 'doc' => $doc,
                 'can_edit' => $canEdit,
-                'can_finalize' => $canEdit,
+                'can_edit_attendance' => $canWrite,
+                'can_finalize' => $canWrite,
+                'editing' => $collab ? null : $this->editing->current($occurrence, $now),
                 'links' => [
                     'page' => $occurrence->url('/notulen'),
                     'data' => $occurrence->url('/notulen/data'),
@@ -104,6 +117,7 @@ final class RoomPresenter
                     'finalize' => $occurrence->url('/notulen/final'),
                     'items' => $occurrence->url('/tindak-lanjut'),
                     'tasks' => $occurrence->url('/notulen/tugas'),
+                    'editing' => $occurrence->url('/notulen/menyunting'),
                 ],
             ],
             'notes_source' => $this->notesSource($occurrence, $minutes, $previous, $can['choose_notes_source']),
@@ -114,7 +128,7 @@ final class RoomPresenter
                 'realtime' => RoomEvents::realtime(),
                 'subtitles' => (bool) config('livekit.subtitles', false),
                 'auto_minutes' => NotulenBridge::autoMinutes($notulen),
-                'collab_minutes' => false,
+                'collab_minutes' => $collab,
             ],
             'can' => $can,
             'channel' => 'meeting.'.$meeting->id,
@@ -157,8 +171,8 @@ final class RoomPresenter
                 'overdue' => $item->due_date !== null && $item->due_date->toDateString() < $occurrence->date,
             ], $open),
             'template' => [
-                'key' => 'weekly',
-                'name' => ChooseMinutesSource::TEMPLATE_NAME,
+                'key' => 'agenda',
+                'label' => ChooseMinutesSource::templateLabel($occurrence->meeting),
                 'sections' => array_column($template, 'title'),
                 'blocks' => ['Keputusan', 'Tindak lanjut'],
             ],

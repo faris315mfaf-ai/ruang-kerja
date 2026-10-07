@@ -67,14 +67,30 @@ export type MinutesSource = 'continue' | 'template' | 'blank';
 /** Minutes of the occurrence + how its notes were started (pre-join choice). */
 export type RoomMinutesDoc = Minutes & { source: MinutesSource | null };
 
+/** "X sedang menyunting" (autosave mode only). */
+export type MinutesEditingHolder = {
+    user_id: PersonId;
+    name: string;
+    since: string;
+    expires_at: string;
+};
+
 export type RoomMinutes = {
-    /** Structured minutes saved by autosave (no Yjs yet). */
-    mode: 'autosave';
-    /** Reserved for a future Yjs mode; always null while mode = autosave. */
-    collab: null;
+    /**
+     * collab = Yjs document on the collab server (FEATURE_NOTES + COLLAB_SECRET),
+     * every invited person edits; autosave = minute taker/organizer, last write wins.
+     */
+    mode: 'collab' | 'autosave';
+    /** collab mode: GET token_url → MinutesCollabToken; null in autosave mode. */
+    collab: { token_url: string; url: string } | null;
     doc: RoomMinutesDoc;
+    /** Text editing (per mode). */
     can_edit: boolean;
+    /** Attendance + finalize: minute taker / organizer on a draft. */
+    can_edit_attendance: boolean;
     can_finalize: boolean;
+    /** autosave mode: who is typing (hint, never blocks); always null in collab mode. */
+    editing: MinutesEditingHolder | null;
     links: {
         page: string;
         /** GET → { minutes } (refetch after minutes.updated). */
@@ -86,7 +102,19 @@ export type RoomMinutes = {
         items: string;
         /** POST { item_ids, workspace_id? } → { created, minutes }. */
         tasks: string;
+        /** POST { active } → { editing } (heartbeat every 15 s while focused). */
+        editing: string;
     };
+};
+
+/** GET /rapat/{id}/notulen/kolaborasi (collab mode). */
+export type MinutesCollabToken = {
+    /** Yjs document name: "meeting-minutes.{minutes id}". */
+    document: string;
+    token: string;
+    url: string;
+    can_edit: boolean;
+    expires_in: number;
 };
 
 /** GET /rapat/{id}/notulen/data. */
@@ -124,8 +152,9 @@ export type NotesSource = {
     } | null;
     open_follow_ups: OpenFollowUp[];
     template: {
-        key: 'weekly';
-        name: string;
+        key: 'agenda';
+        /** "Templat Rapat mingguan" / "Templat {judul rapat}". */
+        label: string;
         sections: string[];
         blocks: string[];
     };
@@ -234,7 +263,7 @@ export type RoomFeatures = {
     /** Live subtitles (stage 2). Captions may still render when lk.transcription streams arrive. */
     subtitles: boolean;
     auto_minutes: boolean;
-    collab_minutes: false;
+    collab_minutes: boolean;
 };
 
 export type RoomAbilities = {
@@ -321,6 +350,10 @@ export type MeetingRoomEvents = {
         saved_at: string | null;
         updated_by: PersonId | null;
         status: 'draft' | 'final';
+    };
+    'minutes.editing': {
+        occurrence_date: string;
+        editing: MinutesEditingHolder | null;
     };
     'attendance.updated': {
         occurrence_date: string;

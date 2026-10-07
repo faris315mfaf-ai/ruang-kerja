@@ -10,7 +10,7 @@ enum MinutesSource: string
 {
     /** "Lanjutkan notulen rapat lalu": open follow-ups of the previous minutes as a section. */
     case Continue = 'continue';
-    /** "Templat Rapat mingguan": one section per agenda item (+ Keputusan, Tindak lanjut blocks). */
+    /** The meeting's template (ChooseMinutesSource::templateLabel): one section per agenda item (+ Keputusan, Tindak lanjut blocks). */
     case Template = 'template';
     /** "Dokumen kosong". */
     case Blank = 'blank';
@@ -19,7 +19,7 @@ enum MinutesSource: string
     {
         return match ($this) {
             self::Continue => 'Lanjutkan notulen rapat lalu',
-            self::Template => 'Templat Rapat mingguan',
+            self::Template => 'Templat agenda rapat',
             self::Blank => 'Dokumen kosong',
         };
     }

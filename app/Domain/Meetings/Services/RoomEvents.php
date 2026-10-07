@@ -99,6 +99,23 @@ final class RoomEvents
     }
 
     /**
+     * "X sedang menyunting" (minutes without collaboration); null = released.
+     *
+     * @param  array{user_id: string, name: string, since: string, expires_at: string}|null  $holder
+     */
+    public function minutesEditing(Occurrence $occurrence, ?array $holder): void
+    {
+        if (! $this->isVideo($occurrence->meeting)) {
+            return;
+        }
+
+        $this->send($occurrence->meeting->id, 'minutes.editing', [
+            'occurrence_date' => $occurrence->date,
+            'editing' => $holder,
+        ]);
+    }
+
+    /**
      * @param  'joined'|'left'|'finished'  $event
      */
     public function attendanceUpdated(Meeting $meeting, string $date, ?string $userId, string $event): void
