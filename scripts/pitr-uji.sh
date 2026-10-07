@@ -16,7 +16,9 @@
 #   4. batch B (100 rows)                           8. row set == row set at T
 #   9. the restored copy wrote nothing to the repository
 #  10. S3 down → wal-check ALERT + `pitr health` unhealthy; S3 back → ok
-#  11. side copy with `docker run` + pitr-restore --latest == current database → PASS
+#  11. side copy with `docker run` + pitr-restore --latest == current database
+#  12. in-place restore of the live database to T (--delta), new timeline archives,
+#      full backup + wal-check --deep ok → PASS
 #
 # Everything (containers, volumes incl. the S3 data, image, temp folder) is
 # removed at the end; --keep leaves the stack running for inspection
@@ -243,5 +245,25 @@ done
 echo "    original now : $latest"
 echo "    side copy    : $side_rows"
 [ "$side_rows" = "$latest" ] || fail "side copy (--latest) differs from the current database"
+
+# --- 12. In-place restore of the live database (PITR.md §5b) -------------------------
+log "12. in-place restore (docs/deploy/PITR.md §5b): stop, pitr-restore --time T --delta --yes, start"
+compose stop pitr postgres > /dev/null 2>&1
+compose run --rm --no-deps -T postgres pitr-restore --time "$target" --delta --yes 2>&1 \
+    | grep -E 'restore backup set|restore command end' | sed 's/^/    /'
+compose up -d --wait postgres pitr > /dev/null 2>&1
+promoted=""
+for _ in $(seq 1 90); do
+    promoted=$(pg -c "select not pg_is_in_recovery()" 2> /dev/null || true)
+    [ "$promoted" = "t" ] && break
+    sleep 2
+done
+[ "$promoted" = "t" ] || fail "live database did not finish recovery"
+live=$(pg -c "$rowset")
+echo "    live database now: $live (expected $expected)"
+[ "$live" = "$expected" ] || fail "in-place restore differs from the row set at T"
+compose exec -T pitr pitr backup full 2>&1 | grep -E 'new backup label|\[pitr\]' | sed 's/^/    /'
+compose exec -T pitr wal-check --deep 2>&1 | grep -E 'repository|check ok|ALERT' | sed 's/^/    /'
+compose exec -T pitr wal-check --deep > /dev/null 2>&1 || fail "wal-check --deep failed on the new timeline"
 
 log "PASS: point-in-time restore to $target reproduced the exact row set ($got)"

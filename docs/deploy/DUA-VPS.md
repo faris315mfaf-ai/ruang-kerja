@@ -21,11 +21,12 @@ flowchart LR
         C --> K[collab · Catatan realtime, opsional]
     end
     subgraph DATA["VPS data · compose.data.yml"]
-        P[(postgres 17)]
+        P[(postgres 17 + pgBackRest)]
         D[(redis 7)]
         Q[queue · Horizon]
         S[scheduler]
         B[backup]
+        T[pitr]
     end
     A -- "jaringan privat 5432 / 6379" --> P & D
     Q -- "siaran ke reverb :8080 (privat)" --> R
@@ -33,13 +34,15 @@ flowchart LR
     S --> D
     A & Q -- "file privat" --> O[(Object Storage S3<br/>Biznet NEO)]
     B -- "dump harian" --> O
+    P -- "WAL tiap ≤ 60 dtk" --> O
+    T -- "full/diff backup, cek" --> O
     U -. "rapat video" .-> M[VPS rapat · LiveKit<br/>docs/fitur/rapat-kalender.md §6a]
 ```
 
 | VPS | Isi | Beban | Spesifikasi awal (±20–100 karyawan) |
 |---|---|---|---|
 | **web** | `caddy`, `app` (halaman + aset React/CSS), `reverb`, `collab` (bila `FEATURE_NOTES`) | Setiap klik dan WebSocket | 2–4 vCPU, 4 GB RAM, 40 GB SSD |
-| **data** | `postgres`, `redis`, `queue` (Horizon: notifikasi, email, ekspor Excel/PDF, siaran), `scheduler` (tutup hari, pengingat, retensi), `backup` | Database dan pekerjaan latar | 4 vCPU, 8 GB RAM, 80–100 GB SSD |
+| **data** | `postgres`, `redis`, `queue` (Horizon: notifikasi, email, ekspor Excel/PDF, siaran), `scheduler` (tutup hari, pengingat, retensi), `backup` (dump harian), `pitr` (WAL archiving + base backup, `PITR.md`) | Database dan pekerjaan latar | 4 vCPU, 8 GB RAM, 80–100 GB SSD |
 | **rapat** (opsional) | LiveKit + La Suite Meet | Video | 4 vCPU eksklusif, 8 GB, trafik tanpa kuota |
 
 Ketiganya sebaiknya di **pusat data yang sama** (mis. Biznet Gio Jakarta) dan terhubung lewat **jaringan privat (VPC)**, supaya lalu lintas database tidak melewati internet.
@@ -71,6 +74,7 @@ Mulai dari `.env.production.example`, lalu ubah:
 | `COLLAB_URL` | `http://collab:1234` | `http://<IP privat web>:1234` |
 | `COMPOSE_PROFILES` | `collab` bila Catatan dinyalakan | kosong |
 | `BACKUP_*` | tidak dipakai | isi (S3) |
+| `POSTGRES_IMAGE` / `POSTGRES_TAG`, `PITR_*` | tidak dipakai | isi (`docs/deploy/PITR.md` §3; `PITR_CIPHER_PASS` dicadangkan di password manager) |
 
 Kunci lain (`APP_KEY`, `APP_URL`, `DB_*` kredensial, `REDIS_PASSWORD`, `REVERB_APP_*`, `MAIL_*`, `AWS_*`, flag fitur) **sama** di kedua server.
 
@@ -105,6 +109,6 @@ Workflow GitHub `deploy.yml` saat ini menyasar satu server. Untuk dua server, ja
 ## 7. Catatan
 
 - **Aset React/CSS** sudah di-*cache* lama oleh browser (nama file berhash Vite) dan dikompres Caddy (zstd/gzip). CDN tidak diperlukan untuk puluhan karyawan. Bila nanti perlu, isi `ASSET_URL` ke bucket/CDN.
-- **Backup**: kontainer `backup` di VPS data mengirim dump harian ke S3. Uji pemulihan (`scripts/restore.sh`) tetap dari VPS data.
+- **Backup**: kontainer `backup` di VPS data mengirim dump harian ke S3, dan `postgres` + `pitr` mengirim WAL (≤ 60 detik) serta base backup mingguan/harian ke bucket yang sama (prefiks `pgbackrest/`). Pemulihan ke titik waktu: `docs/deploy/PITR.md` §5, dijalankan di VPS data (VPS web cukup `docker compose stop app reverb` selama pemulihan). Uji pemulihan dump (`scripts/restore.sh`) tetap dari VPS data.
 - **Kapan naik kelas**: CPU VPS web rata-rata > 60% → tambah vCPU web. Antrean Horizon sering menumpuk atau Postgres lambat → tambah RAM/vCPU data.
 - **Satu server tetap boleh**: `compose.prod.yml` tidak diubah.

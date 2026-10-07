@@ -98,7 +98,7 @@ Setelah masuk, **pemilih akun demo** di bagian atas (pil "Demo · …" di menu b
 
 - Belum pernah dicoba dengan Google sungguhan (semua test memakai fake client), belum deploy ke VPS sungguhan (stack produksi & backup-restore sudah diuji di Docker lokal).
 - Pindai QR dengan kamera fisik belum dicoba (sisi server ditutup test).
-- WAL archiving Postgres belum ada (backup harian → potensi kehilangan ≤ 24 jam data).
+- WAL archiving + PITR (pgBackRest, `deploy/PITR.md`) sudah ada: RPO ±1 menit, jendela ±4 minggu, diuji ujung-ke-ujung di Docker lokal (`scripts/pitr-uji.sh`, SeaweedFS HTTPS). **Belum diuji ke Biznet NEO sungguhan**; nyalakan dengan `PITR_ENABLED=true` setelah bucket backup jalan dan cadangkan `PITR_CIPHER_PASS`.
 - Fitur yang sengaja ditunda: ekspor PNG struktur organisasi, read receipts komentar, presence per kartu di board, folder Drive per tugas, UI pembatalan pengajuan yang sudah disetujui (fungsi backend ada).
 - Browser bawaan Claude memblokir port non-standar (Vite 5173, Reverb 8081) dan service worker; verifikasi visual lokal memakai `npm run build`.
 

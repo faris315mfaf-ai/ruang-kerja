@@ -37,7 +37,7 @@ Super Admin juga bisa membaca dokumen-dokumen ini di aplikasi: **Admin › Dokum
 | Realtime / antrean | Laravel Reverb + Echo · Horizon (Redis) · Scheduler |
 | Penyimpanan | S3-compatible (Biznet Gio NEO Object Storage) untuk file privat & backup; Google Drive untuk file kerja |
 | Kualitas | Pest 4, Larastan level 8, Pint, Vite+ (`vp`: oxlint + oxfmt + Vitest), Playwright (uji visual) |
-| Produksi | Docker Compose: Caddy (HTTPS otomatis) + FrankenPHP, Horizon, Scheduler, Reverb, Postgres, Redis, backup (pg_dump + rclone) |
+| Produksi | Docker Compose: Caddy (HTTPS otomatis) + FrankenPHP, Horizon, Scheduler, Reverb, Postgres (+ pgBackRest), Redis, backup (pg_dump + rclone), pitr (WAL archiving, pemulihan ke titik waktu) |
 | Observabilitas | Laravel Pulse, Horizon, Sentry (opsional), `/up` & `/health` |
 
 ## Pengembangan lokal
@@ -140,7 +140,7 @@ timedatectl set-timezone UTC
 
 ### 2. Siapkan object storage
 
-Di Biznet Gio NEO Object Storage buat **dua bucket**: `ruangkerja-private` (selfie/lampiran aplikasi) dan `ruangkerja-backup` (dump database), masing-masing dengan access key sendiri. Catat endpoint S3-nya.
+Di Biznet Gio NEO Object Storage buat **dua bucket**: `ruangkerja-private` (selfie/lampiran aplikasi) dan `ruangkerja-backup` (dump database + WAL/base backup PITR), masing-masing dengan access key sendiri. Catat endpoint S3-nya.
 
 ### 3. Siapkan GitHub
 
@@ -148,7 +148,7 @@ Di Biznet Gio NEO Object Storage buat **dua bucket**: `ruangkerja-private` (self
    - `DEPLOY_SSH_KEY`: private key ed25519 khusus deploy (public key-nya di `/home/deploy/.ssh/authorized_keys`).
    - `DEPLOY_KNOWN_HOSTS`: hasil `ssh-keyscan -p 22 <ip-vps>`.
 2. *Settings → Secrets and variables → Actions → Variables*: `APP_DOMAIN`, `REVERB_APP_KEY` (sama dengan `.env` server), `DEPLOY_HOST`, `DEPLOY_USER` (`deploy`), opsional `DEPLOY_PORT`, `DEPLOY_PATH` (`/opt/ruangkerja`), `APP_NAME`.
-3. Image dipush ke GHCR (`ghcr.io/<org>/ruangkerja` dan `ruangkerja-backup`). Workflow deploy login ke GHCR di server memakai token job yang berumur pendek, jadi package boleh tetap privat.
+3. Image dipush ke GHCR (`ghcr.io/<org>/ruangkerja`, `ruangkerja-backup`, `ruangkerja-postgres`, `ruangkerja-collab`). Workflow deploy login ke GHCR di server memakai token job yang berumur pendek, jadi package boleh tetap privat.
 
 ### 4. Isi `.env` produksi di server
 
@@ -160,7 +160,7 @@ scp docker/caddy/Caddyfile deploy@<ip-vps>:/opt/ruangkerja/docker/caddy/
 cd /opt/ruangkerja && cp .env.production.example .env && chmod 600 .env && nano .env
 ```
 
-Isi setiap `<...>`: `APP_IMAGE`/`BACKUP_IMAGE` (huruf kecil), `APP_DOMAIN`, `ACME_EMAIL`, `APP_URL`, sandi acak (`openssl rand -hex 24`) untuk `DB_PASSWORD`, `REDIS_PASSWORD`, `REVERB_APP_SECRET`, `ATTENDANCE_QR_SECRET`, kredensial `AWS_*` dan `BACKUP_S3_*`, SMTP, Google. `APP_KEY` dibuat setelah image tersedia (langkah 5). Nilai berisi spasi wajib diberi tanda kutip ganda.
+Isi setiap `<...>`: `APP_IMAGE`/`BACKUP_IMAGE`/`POSTGRES_IMAGE` (huruf kecil), `APP_DOMAIN`, `ACME_EMAIL`, `APP_URL`, sandi acak (`openssl rand -hex 24`) untuk `DB_PASSWORD`, `REDIS_PASSWORD`, `REVERB_APP_SECRET`, `ATTENDANCE_QR_SECRET`, kredensial `AWS_*` dan `BACKUP_S3_*`, `PITR_CIPHER_PASS` (`openssl rand -hex 32`, simpan di password manager), SMTP, Google. `scripts/server-init-env.sh` membuat semua sandi acak ini otomatis. `APP_KEY` dibuat setelah image tersedia (langkah 5). Nilai berisi spasi wajib diberi tanda kutip ganda.
 
 ### 5. Deploy pertama
 
@@ -193,7 +193,8 @@ Deploy manual tanpa GitHub (mis. staging): di server, `DEPLOY_PATH=/opt/ruangker
 ## Backup & pemulihan
 
 - Kontainer `backup` menjalankan `scripts/backup.sh` setiap hari **02.00 WIB** (`BACKUP_SCHEDULE`): `pg_dump` format custom → cek `pg_restore --list` → unggah ke `BACKUP_REMOTE` (`backup:<bucket>/<prefix>`, kosong = hanya lokal) lewat rclone → hapus dump remote > **30 hari** (`BACKUP_RETENTION_DAYS`) dan lokal > 7 hari. `BACKUP_HEARTBEAT_URL` (opsional, mis. healthchecks.io) dipanggil saat sukses dan `/fail` saat gagal.
-- Backup manual: `docker compose -f compose.prod.yml exec backup backup.sh`
+- **PITR** (`docs/deploy/PITR.md`): image `ruangkerja-postgres` mengirim WAL ke bucket backup tiap ≤ 60 detik, kontainer `pitr` (pgBackRest) membuat full backup Minggu + diff harian 01.30 WIB (retensi 4 full + 7 diff) dan menjalankan `wal-check` tiap 10 menit. Database bisa dipulihkan ke detik mana pun dalam ±4 minggu: `pitr-restore --time "2026-10-07 10:14:00+07"`. Uji lokal: `bash scripts/pitr-uji.sh`.
+- Backup manual: `docker compose -f compose.prod.yml exec backup backup.sh` (dump) · `... exec pitr pitr backup full` (PITR) · status: `... exec pitr wal-check --deep`
 - Daftar dump: `docker compose -f compose.prod.yml exec backup rclone lsl backup:<bucket>/postgres`
 
 ### Uji pemulihan bulanan (wajib, PRD §8)
@@ -218,6 +219,8 @@ docker compose -f compose.prod.yml start app queue scheduler reverb
 ```
 
 Server baru dari nol: ikuti bagian 6 langkah 1–5 (tanpa membuat Super Admin), lalu jalankan perintah di atas.
+
+Dengan PITR aktif, pemulihan dari WAL lebih baru (kehilangan data ±1 menit, bukan sejak 02.00): ikuti `docs/deploy/PITR.md` §5a (server baru) atau §5b (kembali ke sesaat sebelum kesalahan data). Dump harian tetap dipakai untuk mengambil satu tabel, pindah versi PostgreSQL, atau bila repositori PITR tidak bisa dibaca.
 
 ## Observabilitas & keamanan
 
@@ -255,6 +258,7 @@ Server baru dari nol: ikuti bagian 6 langkah 1–5 (tanpa membuat Super Admin), 
 | Server: `/health` 503 | Lihat `checks`: `database` → `logs postgres`; `redis` → `logs redis`, cek `REDIS_PASSWORD` |
 | Server: job tidak diproses | `exec queue php artisan horizon:status`, buka `/horizon`, `logs queue` |
 | Server: backup tidak jalan | `logs backup` (jadwal & rclone), uji manual `exec backup backup.sh` |
+| Server: kontainer `pitr` unhealthy / deploy berhenti di `pitr` | `logs pitr` (baris `ALERT`), `exec pitr wal-check --deep`; `docs/deploy/PITR.md` §4 |
 
 ## Skill Claude Code untuk desain & animasi
 

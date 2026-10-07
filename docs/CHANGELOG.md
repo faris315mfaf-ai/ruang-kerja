@@ -6,6 +6,12 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 
 ## [Belum dirilis]
 
+### Ditambahkan (7 Okt 2026, deploy)
+- **WAL archiving + pemulihan ke titik waktu (PITR)** dengan pgBackRest ke object storage S3 (Biznet NEO / SeaweedFS): image `ruangkerja-postgres` (postgres:17-alpine + pgBackRest, `archive_timeout` 60 detik → kehilangan data terburuk ±1 menit), layanan `pitr` di `compose.prod.yml` & `compose.data.yml` (full Minggu + diff harian 01.30 WIB, retensi 4 full + 7 diff = jendela ±4 minggu, repositori terenkripsi AES-256 `PITR_CIPHER_PASS`), `wal-check` tiap 10 menit (heartbeat, kontainer unhealthy bila gagal), `pitr-restore --time`. Dump harian tetap jalan. Runbook `docs/deploy/PITR.md`, uji lokal `scripts/pitr-uji.sh`.
+
+### Diperbaiki (7 Okt 2026, deploy)
+- `compose.shared.yml` gagal di-parse (kunci `deploy` ganda di `collab`; batas sumber daya milik `reverb`), sehingga `COMPOSE_FILE=compose.prod.yml:compose.shared.yml` tidak bisa dipakai. CI kini memvalidasi compose prod, shared, data, dan web.
+
 ### Ditambahkan (6 Okt 2026, keputusan pemilik)
 - **Login email + kata sandi untuk semua karyawan** (login Google ditahan): HR bisa mengatur sandi karyawan (opsi wajib ganti), karyawan ganti sandi sendiri di Pengaturan › Keamanan, **Lupa kata sandi** menunggu persetujuan HR lalu halaman tunggu otomatis pindah ke isi sandi baru (anti-enumerasi, token sekali pakai). Super Admin tetap wajib 2FA. `docs/fitur/akun-kata-sandi.md`.
 - **Staf**: saldo cuti tidak dikirim/ditampilkan untuk staf; struktur organisasi 404 untuk staf; **cuti & lembur dikunci** (`leave_types.locked_reason`, HR bisa membuka); **pengajuan barang** (kategori `procurement`, alur atasan → Direksi); workspace dikelompokkan Pribadi · Divisi & tim · Proyek dengan chip filter berwarna (halaman, Menu, Dock/Rail).
