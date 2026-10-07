@@ -265,7 +265,7 @@ function NotesChoice({
 
     const previous = notes.previous;
     const templateName = notes.template
-        ? `Templat ${notes.template.name}`
+        ? notes.template.label
         : 'Templat agenda rapat';
     const followUps = notes.open_follow_ups;
 

@@ -29,11 +29,11 @@ export function autoMinutesOn(notulen: NotulenSummary | null | undefined) {
 
 /**
  * "Jangan transkrip suara saya" (contract §3): saved on the server before
- * joining; in the room the LiveKit attribute follows (`onAttributes`).
+ * joining; in the room the LiveKit attribute follows (`onChanged`).
  */
 export function useConsent(
     notulen: NotulenSummary | null | undefined,
-    onAttributes?: (attributes: Record<string, string>) => void,
+    onChanged?: (optedOut: boolean) => void,
 ) {
     const [optedOut, setOptedOut] = useState(
         notulen?.consent.opted_out ?? false,
@@ -51,7 +51,7 @@ export function useConsent(
         try {
             const response = await notulenApi.setOptOut(notulen, next);
             setOptedOut(response.opted_out);
-            onAttributes?.(response.attributes);
+            onChanged?.(response.opted_out);
             toast.success(
                 response.opted_out
                     ? 'Suara Anda tidak akan ditranskrip'

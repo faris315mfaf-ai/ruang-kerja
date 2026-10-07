@@ -3,9 +3,13 @@ import { ApiError } from '@/features/tasks/lib/api';
 import videoRoutes from '@/routes/meetings/video';
 import type { Minutes } from '../types';
 import type {
+    MinutesCollabToken,
+    MinutesEditingHolder,
+    OwnAttributes,
     NotesSource,
     NotesSourceKind,
     NotJoined,
+    RemovedParticipant,
     SpeakingTotals,
     VideoAttendee,
     VideoToken,
@@ -120,6 +124,7 @@ export type AttendanceRoster = {
     in_room: number;
     not_joined: NotJoined[];
     late_grace_minutes: number;
+    removed?: RemovedParticipant[];
 };
 
 /**
@@ -174,6 +179,30 @@ export const videoApi = {
 
     /** contract §4.1 */
     attendance: (url: string) => request<AttendanceRoster>('get', url),
+
+    /** Raise/lower my hand; the server sets the LiveKit attribute (R-05). */
+    hand: (url: string, raised: boolean) =>
+        request<{ hand: string }>('post', url, { raised }),
+
+    /** Own LiveKit attributes through the server (tokens cannot set them). */
+    attributes: (url: string, attributes: OwnAttributes) =>
+        request<{ attributes: OwnAttributes }>('post', url, { attributes }),
+
+    /** Organizer: let a removed person join again. */
+    readmit: (template: string, userId: string) =>
+        request<{ readmitted: boolean }>(
+            'delete',
+            template.replace('{user}', encodeURIComponent(userId)),
+        ),
+
+    /** autosave mode: "X sedang menyunting" heartbeat. */
+    editing: (url: string, active: boolean) =>
+        request<{ editing: MinutesEditingHolder | null }>('post', url, {
+            active,
+        }),
+
+    /** collab mode: token for the Yjs document of the minutes. */
+    collabToken: (url: string) => request<MinutesCollabToken>('get', url),
 
     /** contract §4.2 — `{user}` in the link is replaced by the person's id. */
     call: (template: string, userId: string) =>

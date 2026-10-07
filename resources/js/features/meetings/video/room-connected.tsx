@@ -1,6 +1,7 @@
 import {
     useChat,
     useLocalParticipant,
+    useRoomContext,
     useParticipants,
     useSpeakingParticipants,
     useTracks,
@@ -82,7 +83,11 @@ import { AttendancePanel, SectionNav, TalkTimePanel } from './room-side';
 import type { TileRef } from './room-tiles';
 import { Filmstrip, ParticipantTile, ScreenShare, tileKey } from './room-tiles';
 import { talkRows, talkSummary } from './talk-time';
-import type { RoomParticipant } from './types';
+import type {
+    MinutesEditingHolder,
+    OwnAttributes,
+    RoomParticipant,
+} from './types';
 import { useRoomLive } from './use-room-live';
 import { TalkStore, useTalkReporting, useTalkTotals } from './use-talk-time';
 import type { RoomStatus } from './use-video-room';
@@ -129,6 +134,26 @@ const useIsMac = () =>
             isMacPlatform(navigator.platform || navigator.userAgent),
         [],
     );
+
+/**
+ * Own LiveKit attributes go through the server (`POST links.attributes`,
+ * tokens cannot set them — audit R-05). Older backends: set them directly.
+ */
+function useSetOwnAttributes(room: Room) {
+    const { localParticipant } = useRoomContext();
+    const url = room.links.attributes;
+
+    return useCallback(
+        (attributes: OwnAttributes) =>
+            (url
+                ? videoApi.attributes(url, attributes)
+                : localParticipant.setAttributes(
+                      attributes as Record<string, string>,
+                  )
+            ).catch(() => undefined),
+        [url, localParticipant],
+    );
+}
 
 // ---------------------------------------------------------------------------
 // Leaves: each subscribes to what it shows, so the room does not re-render
@@ -406,7 +431,15 @@ function NavLive({
     }, [container, keys]);
 
     const jump = (key: string) => {
-        const target = document.getElementById(docAnchor(key));
+        // Collaborative minutes: sections are headings inside the editor.
+        const title = sections.find((section) => section.key === key)?.title;
+        const target =
+            document.getElementById(docAnchor(key)) ??
+            [
+                ...document.querySelectorAll<HTMLElement>(
+                    '[data-testid="minutes-doc"] h2, [data-testid="minutes-doc"] h3',
+                ),
+            ].find((heading) => heading.textContent?.trim() === title);
 
         if (!target) {
             return;
@@ -431,14 +464,21 @@ function NavLive({
 function DocLive({
     room,
     variant,
+    editingHolder,
 }: {
     room: Room;
     variant: 'page' | 'column' | 'sheet';
+    editingHolder: MinutesEditingHolder | null;
 }) {
     const { data, collab } = useRoomMinutes();
     const people = useRoomPeople();
     const participants = useParticipants({ updateOnlyOn: PRESENCE_EVENTS });
-    const { localParticipant } = useLocalParticipant();
+    const setOwn = useSetOwnAttributes(room);
+    const editingUrl =
+        room.minutes?.mode === 'autosave'
+            ? (room.minutes.links.editing ?? null)
+            : null;
+    const [focused, setFocused] = useState<string | null>(null);
     const presence: DocPresence = {};
     const editors: RoomParticipant[] = [];
 
@@ -457,13 +497,36 @@ function DocLive({
         }
     }
 
-    const focusPart = useCallback(
-        (key: string | null) =>
-            void localParticipant
-                .setAttributes({ [PRESENCE_ATTRIBUTE]: key ?? '' })
-                .catch(() => undefined),
-        [localParticipant],
-    );
+    // Where I am typing: LiveKit attribute (debounced) for the name flags,
+    // plus the autosave "X sedang menyunting" heartbeat every 15 s.
+    useEffect(() => {
+        const id = window.setTimeout(
+            () => void setOwn({ [PRESENCE_ATTRIBUTE]: focused ?? '' }),
+            400,
+        );
+
+        return () => window.clearTimeout(id);
+    }, [focused, setOwn]);
+
+    const typing = focused !== null;
+
+    useEffect(() => {
+        if (!editingUrl || !typing) {
+            return;
+        }
+
+        const beat = () =>
+            void videoApi.editing(editingUrl, true).catch(() => undefined);
+        beat();
+        const id = window.setInterval(beat, 15_000);
+
+        return () => {
+            window.clearInterval(id);
+            void videoApi.editing(editingUrl, false).catch(() => undefined);
+        };
+    }, [editingUrl, typing]);
+
+    const focusPart = useCallback((key: string | null) => setFocused(key), []);
 
     if (!data) {
         return (
@@ -495,13 +558,18 @@ function DocLive({
             variant={variant}
             quickAdd={variant === 'sheet'}
             viewerId={room.viewer.id}
+            editingName={
+                editingHolder && editingHolder.user_id !== room.viewer.id
+                    ? resolvePerson(people, editingHolder.user_id).first_name
+                    : null
+            }
             collabBody={
                 collab.mode === 'live' ? (
                     <Suspense fallback={<Spinner />}>
                         <NoteEditor
                             live={collab.live}
                             initial={null}
-                            editable
+                            editable={collab.canEdit}
                             me={{ id: room.viewer.id, name: room.viewer.name }}
                             workspaceKey={room.meeting.workspace?.key ?? null}
                             onReady={() => undefined}
@@ -566,6 +634,8 @@ type BarProps = {
     tablet: boolean;
     onShortcuts: () => void;
     onLeave: () => void;
+    /** POST { raised } — the server sets the `hand` attribute (R-05). */
+    handUrl: string | null;
 };
 
 /** Control bar + keyboard shortcuts (local participant state lives here). */
@@ -581,6 +651,7 @@ function BarLive({
     tablet,
     onShortcuts,
     onLeave,
+    handUrl,
 }: BarProps) {
     const isMac = useIsMac();
     const mobile = size === 'lg';
@@ -625,11 +696,15 @@ function BarLive({
                 );
             });
     const toggleHand = () =>
-        void localParticipant
-            .setAttributes({ hand: hand ? '' : String(Date.now()) })
-            .catch(() =>
-                emitRoomNotice('Tangan gagal diangkat. Coba lagi.', 'error'),
-            );
+        void (
+            handUrl
+                ? videoApi.hand(handUrl, !hand)
+                : localParticipant.setAttributes({
+                      hand: hand ? '' : String(Date.now()),
+                  })
+        ).catch(() =>
+            emitRoomNotice('Tangan gagal diangkat. Coba lagi.', 'error'),
+        );
     const toggle = (kind: PanelKind) =>
         setPanel((open) => (open === kind ? null : kind));
 
@@ -874,6 +949,7 @@ export function ConnectedRoom({
         in_room: room.video.in_room,
         not_joined: room.video.not_joined ?? [],
         late_grace_minutes: room.video.late_grace_minutes ?? 2,
+        removed: room.video.removed ?? [],
     }));
     const [calling, setCalling] = useState<Set<string>>(new Set());
     const minutesSync: MinutesSync = useRef(null);
@@ -907,13 +983,17 @@ export function ConnectedRoom({
         intervalSeconds: room.speaking?.interval_seconds ?? 15,
     });
 
-    const consent = useConsent(
-        room.notulen,
-        (attributes) =>
-            void live.localParticipant
-                .setAttributes(attributes)
-                .catch(() => undefined),
+    const consent = useConsent(room.notulen, (optedOut) =>
+        room.links.attributes
+            ? void videoApi
+                  .attributes(room.links.attributes, {
+                      rk_notulen_optout: optedOut ? '1' : '0',
+                  })
+                  .catch(() => undefined)
+            : undefined,
     );
+    const [editingHolder, setEditingHolder] =
+        useState<MinutesEditingHolder | null>(room.minutes?.editing ?? null);
     const autoMinutes = room.features.auto_minutes;
 
     useRoomLive({
@@ -936,6 +1016,7 @@ export function ConnectedRoom({
             },
             onAttendance: setRoster,
             onSpeaking: talk.apply,
+            onEditing: setEditingHolder,
         },
     });
 
@@ -1046,6 +1127,25 @@ export function ConnectedRoom({
             )
             .catch((error: Error) => emitRoomNotice(error.message, 'error'));
 
+    const readmit = (userId: string) => {
+        if (!room.links.readmit) {
+            return;
+        }
+
+        videoApi
+            .readmit(room.links.readmit, userId)
+            .then(() => {
+                emitRoomNotice(`${nameOf(userId)} boleh masuk lagi`);
+                setRoster((current) => ({
+                    ...current,
+                    removed: (current.removed ?? []).filter(
+                        (row) => row.user_id !== userId,
+                    ),
+                }));
+            })
+            .catch((error: Error) => emitRoomNotice(error.message, 'error'));
+    };
+
     const attendance = attendanceRows({
         meeting: room.meeting,
         participants: room.participants,
@@ -1054,6 +1154,7 @@ export function ConnectedRoom({
             attendance: roster.attendance,
             not_joined: room.video.not_joined ? roster.not_joined : undefined,
             late_grace_minutes: roster.late_grace_minutes,
+            removed: roster.removed ?? room.video.removed,
         },
     });
 
@@ -1076,6 +1177,7 @@ export function ConnectedRoom({
                     canModerate={room.can.moderate}
                     onMute={mute}
                     onRemove={remove}
+                    onReadmit={room.links.readmit ? readmit : null}
                 />
             </div>
         ) : kind === 'chat' ? (
@@ -1120,6 +1222,7 @@ export function ConnectedRoom({
             tablet={breakpoint === 'tablet'}
             onShortcuts={() => setShortcutsOpen(true)}
             onLeave={onLeave}
+            handUrl={room.links.hand}
         />
     );
     const overlay = (
@@ -1175,7 +1278,13 @@ export function ConnectedRoom({
                     className="mx-4 mt-2 self-start"
                 />
             }
-            doc={<DocLive room={room} variant="sheet" />}
+            doc={
+                <DocLive
+                    room={room}
+                    variant="sheet"
+                    editingHolder={editingHolder}
+                />
+            }
             captions={
                 <CaptionsLive
                     live={live}
@@ -1195,7 +1304,13 @@ export function ConnectedRoom({
             screen={screen}
             clock={<RoomClock startsAt={room.meeting.starts_at} />}
             paperRef={setPaper}
-            doc={<DocLive room={room} variant={screen ? 'column' : 'page'} />}
+            doc={
+                <DocLive
+                    room={room}
+                    variant={screen ? 'column' : 'page'}
+                    editingHolder={editingHolder}
+                />
+            }
             nav={
                 <NavLive agenda={room.meeting.agenda ?? []} container={paper} />
             }

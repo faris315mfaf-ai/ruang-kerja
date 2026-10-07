@@ -38,6 +38,9 @@ export type Room = {
         speaking: string | null;
         attendance: string | null;
         call: string | null;
+        readmit: string | null;
+        hand: string | null;
+        attributes: string | null;
     };
 };
 
@@ -142,6 +145,9 @@ export function normalizeRoom(
             speaking: room.links?.speaking ?? null,
             attendance: room.links?.attendance ?? null,
             call: room.links?.call ?? null,
+            readmit: room.links?.readmit ?? null,
+            hand: room.links?.hand ?? null,
+            attributes: room.links?.attributes ?? null,
         },
     };
 }
@@ -241,11 +247,13 @@ export type AttendanceRow =
           userId: PersonId;
           rsvp: NotJoined['rsvp'];
           calledAt: string | null;
-      };
+      }
+    | { kind: 'removed'; userId: PersonId; removedAt: string | null };
 
 /**
  * Joined people by join time (late when more than `grace` minutes after the
- * start, contract §4.1), then invitees who have not entered. Uses the
+ * start, contract §4.1), then invitees who have not entered, then people the
+ * organizer removed (audit R-04, "Izinkan masuk lagi"). Uses the
  * backend's `late_minutes` / `not_joined` when present, otherwise computes
  * them from the attendance and the participant list.
  */
@@ -273,6 +281,8 @@ export function attendanceRows(
                 late: row.late ?? late > grace,
             };
         });
+    const removed = room.video.removed ?? [];
+    const banned = new Set(removed.map((row) => row.user_id));
     const present = new Set(room.video.attendance.map((row) => row.user_id));
     const absent: AttendanceRow[] = (
         room.video.not_joined ??
@@ -284,14 +294,24 @@ export function attendanceRows(
                 optional: person.optional,
                 called_at: null,
             }))
-    ).map((row) => ({
-        kind: 'absent',
-        userId: row.user_id,
-        rsvp: row.rsvp,
-        calledAt: row.called_at,
-    }));
+    )
+        .filter((row) => !banned.has(row.user_id))
+        .map((row) => ({
+            kind: 'absent',
+            userId: row.user_id,
+            rsvp: row.rsvp,
+            calledAt: row.called_at,
+        }));
 
-    return [...joined, ...absent];
+    return [
+        ...joined.filter((row) => !banned.has(row.userId)),
+        ...absent,
+        ...removed.map((row): AttendanceRow => ({
+            kind: 'removed',
+            userId: row.user_id,
+            removedAt: row.removed_at,
+        })),
+    ];
 }
 
 /** Server totals (contract §3.1) as identity → ms. */

@@ -175,6 +175,7 @@ export function AttendancePanel({
     canModerate,
     onMute,
     onRemove,
+    onReadmit,
 }: {
     rows: AttendanceRow[];
     canCall: boolean;
@@ -183,6 +184,8 @@ export function AttendancePanel({
     canModerate: boolean;
     onMute: (participant: Participant, trackSid: string) => void;
     onRemove: (participant: Participant) => Promise<void>;
+    /** Organizer: lift the removal (null when the server has no endpoint). */
+    onReadmit: ((userId: string) => void) | null;
 }) {
     const people = useRoomPeople();
     // Leaf subscription: joins, leaves, mute and hand changes only.
@@ -204,6 +207,7 @@ export function AttendancePanel({
     const [busy, setBusy] = useState(false);
     const joined = rows.filter((row) => row.kind === 'joined');
     const absent = rows.filter((row) => row.kind === 'absent');
+    const removed = rows.filter((row) => row.kind === 'removed');
     const nameOf = (id: string) => people.get(id)?.first_name ?? 'Peserta';
 
     return (
@@ -369,6 +373,38 @@ export function AttendancePanel({
                             </li>
                         );
                     })}
+                </ul>
+            )}
+
+            {removed.length > 0 && (
+                <ul
+                    aria-label="Dikeluarkan"
+                    className="flex flex-col gap-2 border-t border-border pt-2.5"
+                >
+                    {removed.map((row) => (
+                        <li
+                            key={row.userId}
+                            className="flex min-h-9 items-center gap-2.5 text-[14px] text-text-muted"
+                        >
+                            <UserAvatar
+                                name={resolvePerson(people, row.userId).name}
+                                className="size-7 text-[11px] opacity-60"
+                            />
+                            <span className="min-w-0 flex-1 truncate">
+                                {nameOf(row.userId)} · dikeluarkan
+                            </span>
+                            {canModerate && onReadmit && (
+                                <Button
+                                    variant="quiet"
+                                    size="sm"
+                                    className="h-9 px-2 text-[13px]"
+                                    onClick={() => onReadmit(row.userId)}
+                                >
+                                    Izinkan masuk lagi
+                                </Button>
+                            )}
+                        </li>
+                    ))}
                 </ul>
             )}
 

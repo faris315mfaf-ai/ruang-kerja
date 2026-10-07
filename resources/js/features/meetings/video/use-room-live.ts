@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 import type { Minutes } from '../types';
 import type { AttendanceRoster } from './api';
 import { videoApi } from './api';
-import type { SpeakingTotals } from './types';
+import type { MinutesEditingHolder, SpeakingTotals } from './types';
 
 /** LiveKit data topic: "I just saved the minutes" (instant refresh). */
 export const MINUTES_TOPIC = 'rk.minutes';
@@ -24,6 +24,7 @@ export function nudgeMinutes(room: Room, date: string): void {
 
 type Handlers = {
     onMinutes: (minutes: Minutes) => void;
+    onEditing: (holder: MinutesEditingHolder | null) => void;
     onAttendance: (roster: AttendanceRoster) => void;
     onSpeaking: (totals: SpeakingTotals) => void;
 };
@@ -31,7 +32,8 @@ type Handlers = {
 /**
  * Keeps the room's shared data fresh (contract §5): Reverb events on the
  * private channel `meeting.{id}` (minutes.updated, attendance.updated,
- * participant.called, speaking.updated — filtered by occurrence), LiveKit
+ * participant.called, speaking.updated, minutes.editing — filtered by
+ * occurrence), LiveKit
  * nudges from the person who just saved, people joining/leaving, and
  * polling when there is no realtime connection.
  */
@@ -164,6 +166,15 @@ export function useRoomLive({
                                     loadMinutes();
                                 }
                             }),
+                        )
+                        .listen(
+                            '.minutes.editing',
+                            mine<{
+                                occurrence_date: string;
+                                editing: MinutesEditingHolder | null;
+                            }>((event) =>
+                                latest.current.onEditing(event.editing),
+                            ),
                         )
                         .listen(
                             '.attendance.updated',

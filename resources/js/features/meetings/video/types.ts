@@ -48,7 +48,37 @@ export type VideoSummary = {
     in_room: number;
     not_joined?: NotJoined[];
     late_grace_minutes?: number;
+    /** Removed by the organizer, no token until re-admitted (audit R-04). */
+    removed?: RemovedParticipant[];
 };
+
+export type RemovedParticipant = {
+    user_id: PersonId;
+    removed_by: PersonId | null;
+    removed_at: string | null;
+};
+
+/** "X sedang menyunting" (autosave mode). */
+export type MinutesEditingHolder = {
+    user_id: PersonId;
+    name: string;
+    since: string;
+    expires_at: string;
+};
+
+/** GET minutes.collab.token_url (collab mode). */
+export type MinutesCollabToken = {
+    document: string;
+    token: string;
+    url: string;
+    can_edit: boolean;
+    expires_in: number;
+};
+
+/** POST links.attributes — own LiveKit attributes through the server (R-05). */
+export type OwnAttributes = Partial<
+    Record<'hand' | 'rk_minutes_at' | 'rk_notulen_optout', string>
+>;
 
 export type RoomMeeting = {
     id: string;
@@ -91,11 +121,15 @@ export type NotesSourceKind = 'continue' | 'template' | 'blank';
 
 /** contract §1.4 — the minutes document in the centre. */
 export type RoomMinutes = {
+    /** collab = Yjs (every invited person edits); autosave = one editor. */
     mode: 'autosave' | 'collab';
-    collab: null | { document: string; token_url: string; ws_url: string };
+    collab: null | { token_url: string; url: string };
     doc: Minutes & { source?: NotesSourceKind | null };
     can_edit: boolean;
     can_finalize: boolean;
+    can_edit_attendance?: boolean;
+    /** autosave: who is typing (hint only). */
+    editing?: MinutesEditingHolder | null;
     links: {
         page: string;
         data: string;
@@ -103,6 +137,8 @@ export type RoomMinutes = {
         finalize: string;
         items: string;
         tasks: string;
+        /** autosave: POST { active } heartbeat while the editor has focus. */
+        editing?: string;
     };
 };
 
@@ -125,7 +161,8 @@ export type NotesSource = {
     open_follow_ups: OpenFollowUp[];
     template: {
         key: string;
-        name: string;
+        /** "Templat Rapat mingguan" / "Templat {judul rapat}". */
+        label: string;
         sections: string[];
         blocks: string[];
     } | null;
@@ -165,6 +202,12 @@ export type RoomLinks = {
     attendance: string;
     /** Contains the placeholder `{user}`. */
     call: string;
+    /** Contains `{user}`: organizer's "Izinkan masuk lagi". */
+    readmit?: string;
+    /** POST { raised } → { hand }. */
+    hand?: string;
+    /** POST { attributes: OwnAttributes } → { attributes }. */
+    attributes?: string;
     join: string;
     room: string;
 };

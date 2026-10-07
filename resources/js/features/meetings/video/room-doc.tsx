@@ -354,6 +354,7 @@ export function MinutesDoc({
     quickAdd = false,
     collabBody,
     viewerId,
+    editingName = null,
 }: {
     data: MinutesData;
     title: string;
@@ -369,6 +370,8 @@ export function MinutesDoc({
     /** Collaborative text (Yjs) replacing the section fields for everyone. */
     collabBody?: ReactNode;
     viewerId: string;
+    /** autosave mode: the server's "X sedang menyunting" holder. */
+    editingName?: string | null;
 }) {
     const { minutes } = data;
     const [editingItem, setEditingItem] = useState<string | null>(null);
@@ -382,7 +385,14 @@ export function MinutesDoc({
         .map((mark) => nameOf(mark.user_id));
     const taker = participants.find((p) => p.roles.includes('minute_taker'));
     const compact = variant !== 'page';
-    const typing = editors.filter((person) => person.id !== viewerId);
+    const typing = [
+        ...new Set([
+            ...editors
+                .filter((person) => person.id !== viewerId)
+                .map((person) => person.first_name),
+            ...(editingName ? [editingName] : []),
+        ]),
+    ];
     const lastItem = minutes.action_items.at(-1);
 
     // A follow-up added with "+ Tugas" opens for editing.
@@ -507,10 +517,7 @@ export function MinutesDoc({
                     data-testid="editing-hint"
                 >
                     <Pencil aria-hidden className="size-4" />
-                    {typing
-                        .map((person) => person.first_name)
-                        .join(' dan ')}{' '}
-                    sedang menyunting
+                    {typing.join(' dan ')} sedang menyunting
                 </p>
             )}
 
@@ -584,72 +591,76 @@ export function MinutesDoc({
                     );
                 })}
 
-            <section
-                id={docAnchor('decisions')}
-                aria-labelledby={`${docAnchor('decisions')}-title`}
-                className="relative flex scroll-mt-4 flex-col gap-2"
-            >
-                <h3
-                    id={`${docAnchor('decisions')}-title`}
-                    className={cn(
-                        'mt-1.5 font-bold',
-                        compact ? 'text-[17px]' : 'text-[19px]',
-                    )}
+            {!collabBody && (
+                <section
+                    id={docAnchor('decisions')}
+                    aria-labelledby={`${docAnchor('decisions')}-title`}
+                    className="relative flex scroll-mt-4 flex-col gap-2"
                 >
-                    Keputusan
-                </h3>
-                <PresenceFlags people={presence.decisions} />
-                {minutes.decisions.length === 0 && (
-                    <p className="text-[15px] text-text-subtle">
-                        Belum ada keputusan.
-                    </p>
-                )}
-                <ul className="flex flex-col gap-2">
-                    {minutes.decisions.map((decision, index) => (
-                        <li
-                            key={`${decision}-${index}`}
-                            className="group flex items-start gap-2.5 rounded-[10px] bg-success-soft px-3.5 py-2.5 text-[16px] leading-6 text-success"
-                        >
-                            <Flag
-                                aria-hidden
-                                className="mt-0.5 size-[18px] shrink-0"
-                            />
-                            <span className="min-w-0 flex-1 text-text">
-                                <b className="font-bold text-success">
-                                    Keputusan:
-                                </b>{' '}
-                                {decision}
-                            </span>
-                            {!data.readOnly && (
-                                <button
-                                    type="button"
-                                    aria-label={`Hapus keputusan ${index + 1}`}
-                                    onClick={() => data.removeDecision(index)}
-                                    className={cn(
-                                        'hit-area -my-1 rounded-sm p-1 text-text-muted opacity-60 hover:opacity-100',
-                                        focusRing,
-                                    )}
-                                >
-                                    <X aria-hidden className="size-4" />
-                                </button>
-                            )}
-                        </li>
-                    ))}
-                </ul>
-                {!data.readOnly && (
-                    <span
-                        onFocus={() => onFocusPart('decisions')}
-                        onBlur={() => onFocusPart(null)}
+                    <h3
+                        id={`${docAnchor('decisions')}-title`}
+                        className={cn(
+                            'mt-1.5 font-bold',
+                            compact ? 'text-[17px]' : 'text-[19px]',
+                        )}
                     >
-                        <AddLine
-                            label="Keputusan"
-                            placeholder="Tulis keputusan rapat"
-                            onAdd={data.addDecision}
-                            inputRef={decisionInput}
-                        />
-                    </span>
-                )}
-            </section>
+                        Keputusan
+                    </h3>
+                    <PresenceFlags people={presence.decisions} />
+                    {minutes.decisions.length === 0 && (
+                        <p className="text-[15px] text-text-subtle">
+                            Belum ada keputusan.
+                        </p>
+                    )}
+                    <ul className="flex flex-col gap-2">
+                        {minutes.decisions.map((decision, index) => (
+                            <li
+                                key={`${decision}-${index}`}
+                                className="group flex items-start gap-2.5 rounded-[10px] bg-success-soft px-3.5 py-2.5 text-[16px] leading-6 text-success"
+                            >
+                                <Flag
+                                    aria-hidden
+                                    className="mt-0.5 size-[18px] shrink-0"
+                                />
+                                <span className="min-w-0 flex-1 text-text">
+                                    <b className="font-bold text-success">
+                                        Keputusan:
+                                    </b>{' '}
+                                    {decision}
+                                </span>
+                                {!data.readOnly && (
+                                    <button
+                                        type="button"
+                                        aria-label={`Hapus keputusan ${index + 1}`}
+                                        onClick={() =>
+                                            data.removeDecision(index)
+                                        }
+                                        className={cn(
+                                            'hit-area -my-1 rounded-sm p-1 text-text-muted opacity-60 hover:opacity-100',
+                                            focusRing,
+                                        )}
+                                    >
+                                        <X aria-hidden className="size-4" />
+                                    </button>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                    {!data.readOnly && (
+                        <span
+                            onFocus={() => onFocusPart('decisions')}
+                            onBlur={() => onFocusPart(null)}
+                        >
+                            <AddLine
+                                label="Keputusan"
+                                placeholder="Tulis keputusan rapat"
+                                onAdd={data.addDecision}
+                                inputRef={decisionInput}
+                            />
+                        </span>
+                    )}
+                </section>
+            )}
 
             <section
                 id={docAnchor('action-items')}

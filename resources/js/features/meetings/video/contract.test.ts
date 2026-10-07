@@ -88,6 +88,9 @@ describe('normalizeRoom', () => {
             speaking: null,
             attendance: null,
             call: null,
+            readmit: null,
+            hand: null,
+            attributes: null,
         });
         expect(normalized.can.call_participants).toBe(false);
         expect(normalized.features.video_configured).toBe(true);
@@ -198,6 +201,33 @@ describe('attendanceRows', () => {
                 rsvp: 'no',
                 calledAt: '2026-10-08T02:12:00Z',
             }),
+        ]);
+    });
+});
+
+describe('attendanceRows › removed', () => {
+    it('lists removed people last and never as joined or absent', () => {
+        const rows = attendanceRows(
+            normalizeRoom({
+                ...room,
+                video: {
+                    ...room.video,
+                    removed: [
+                        {
+                            user_id: 'yoga',
+                            removed_by: 'dimas',
+                            removed_at: '2026-10-08T02:20:00Z',
+                        },
+                    ],
+                },
+            }),
+        );
+
+        expect(rows.map((row) => [row.kind, row.userId])).toEqual([
+            ['joined', 'dimas'],
+            ['joined', 'sari'],
+            ['absent', 'lukman'],
+            ['removed', 'yoga'],
         ]);
     });
 });
