@@ -6,6 +6,14 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 
 ## [Belum dirilis]
 
+### Keamanan (7 Okt 2026, audit rapat video & sandi bawaan — `docs/security/AUDIT-RAPAT-2026-10.md`)
+- **Sandi bawaan selalu wajib ganti** (R-01, Tinggi): "Sandi bawaan" dari HR tidak bisa lagi disimpan tanpa "wajib ganti" (centang dikunci, server memaksa), dan login dengan sandi bawaan selalu menyalakan wajib ganti untuk akun lama yang terlanjur.
+- **Webhook LiveKit** (R-02): kejadian yang gagal diproses tidak lagi dianggap duplikat saat LiveKit mengirim ulang (kehadiran tidak tertinggal "masih di ruang").
+- **Token video penyelenggara tanpa `roomAdmin`** (R-03): moderasi (bisukan, keluarkan) hanya lewat aplikasi dengan Policy + audit.
+- **Selama wajib ganti sandi** (R-10): `inbox/feed` ditolak (403) dan shell tidak menerima data akun (jumlah persetujuan/notifikasi, workspace, status absensi) sampai sandi sendiri dipilih.
+- **Audit tampil sandi bawaan** (R-11): setiap kali HR menampilkan sandi bawaan dicatat `user.default_password_revealed` (tanpa nilai).
+- **Landing di edge bersama** (R-16): `site.caddy.template` + `deploy-remote.sh` menyajikan halaman depan `/` seperti stack mandiri; landing mendapat CSP ketat sendiri.
+
 ### Diubah (7 Okt 2026, keputusan pemilik — sandi bawaan)
 - **Kata sandi bawaan karyawan** (`EMPLOYEE_DEFAULT_PASSWORD`, kosong = mati): karyawan baru dari Admin › Karyawan › Tambah karyawan dan impor CSV/XLSX langsung bisa login dengan sandi bawaan dan wajib menggantinya saat login pertama. Super Admin tidak pernah mendapatkannya.
 - **Atur kata sandi**: pilihan "Sandi bawaan" (pertama, terpilih otomatis bila dikonfigurasi; nilai tersamar dengan tombol tampilkan/salin, diambil saat diminta) dan "Ketik sendiri". Generator "Buat sandi sementara" dihapus. Audit `user.password_set_by_hr` kini mencatat `mode` (`default`/`manual`), tidak pernah nilai.

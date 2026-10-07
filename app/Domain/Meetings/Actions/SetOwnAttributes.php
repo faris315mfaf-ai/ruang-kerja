@@ -6,6 +6,7 @@ use App\Domain\Meetings\Data\Occurrence;
 use App\Domain\Meetings\Services\LiveKitRoomService;
 use App\Domain\Meetings\Services\VideoRooms;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -39,11 +40,18 @@ final class SetOwnAttributes
         $clean = [];
 
         foreach ($attributes as $key => $value) {
-            $value = is_scalar($value) ? (string) $value : null;
+            // "" arrives as null (ConvertEmptyStringsToNull): it means "remove".
+            $value = $value === null ? '' : (is_scalar($value) ? (string) $value : null);
             $pattern = self::ATTRIBUTES[$key] ?? null;
 
             if ($pattern === null || $value === null || ($value !== '' && preg_match($pattern, $value) !== 1)) {
                 throw ValidationException::withMessages(['attributes' => "Atribut {$key} tidak diizinkan."]);
+            }
+
+            // The raise time orders the hands: always the server's clock, never the
+            // client's (audit rapat 2026-10, B-03), like SetRaisedHand.
+            if ($key === 'hand' && $value !== '') {
+                $value = (string) CarbonImmutable::now()->getTimestampMs();
             }
 
             $clean[(string) $key] = $value;
