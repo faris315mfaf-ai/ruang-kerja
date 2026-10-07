@@ -62,6 +62,7 @@ function Host({
             ? minutes.collab
             : null,
         { id: room.viewer.id, name: room.viewer.name, seat: me?.seat ?? 0 },
+        data.minutes.saved_at,
     );
     const fromServer = useRef<string | null>(null);
     const date = room.meeting.occurrence_date;

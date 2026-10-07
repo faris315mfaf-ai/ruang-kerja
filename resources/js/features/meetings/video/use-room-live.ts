@@ -25,6 +25,7 @@ export function nudgeMinutes(room: Room, date: string): void {
 type Handlers = {
     onMinutes: (minutes: Minutes) => void;
     onEditing: (holder: MinutesEditingHolder | null) => void;
+    onReadmitted: (userId: string) => void;
     onAttendance: (roster: AttendanceRoster) => void;
     onSpeaking: (totals: SpeakingTotals) => void;
 };
@@ -174,6 +175,15 @@ export function useRoomLive({
                                 editing: MinutesEditingHolder | null;
                             }>((event) =>
                                 latest.current.onEditing(event.editing),
+                            ),
+                        )
+                        .listen(
+                            '.participant.readmitted',
+                            mine<{ occurrence_date: string; user_id: string }>(
+                                (event) => {
+                                    latest.current.onReadmitted(event.user_id);
+                                    loadAttendance(0);
+                                },
                             ),
                         )
                         .listen(

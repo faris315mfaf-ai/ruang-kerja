@@ -2,6 +2,7 @@ import { HocuspocusProvider } from '@hocuspocus/provider';
 import { useEffect, useState } from 'react';
 import * as Y from 'yjs';
 import type { LiveDocument } from '@/features/notes/note-editor';
+import { ApiError } from '@/features/tasks/lib/api';
 import { videoApi } from './api';
 import type { RoomMinutes } from './types';
 
@@ -13,6 +14,8 @@ type Collab = NonNullable<RoomMinutes['collab']>;
 export type MinutesCollab =
     | { mode: 'off' }
     | { mode: 'connecting' }
+    /** Readers before anyone started the minutes (token 404, audit B-06). */
+    | { mode: 'waiting' }
     | {
           mode: 'live';
           live: LiveDocument;
@@ -31,11 +34,24 @@ export type MinutesCollab =
 export function useMinutesCollab(
     collab: Collab | null,
     me: { id: string; name: string; seat: number },
+    /** Changes when the minutes were saved (minutes.updated): retry a 404. */
+    retryKey: string | null = null,
 ): MinutesCollab {
     const [state, setState] = useState<MinutesCollab>(
         collab ? { mode: 'connecting' } : { mode: 'off' },
     );
     const tokenUrl = collab?.token_url ?? null;
+    const [attempt, setAttempt] = useState(0);
+    const waiting = state.mode === 'waiting';
+
+    // "Notulen belum dimulai": try again once someone saved the minutes.
+    useEffect(() => {
+        if (waiting) {
+            setAttempt((value) => value + 1);
+        }
+        // Only a new save is a reason to retry.
+        // oxlint-disable-next-line react-hooks/exhaustive-deps
+    }, [retryKey]);
 
     useEffect(() => {
         if (!tokenUrl) {
@@ -109,7 +125,17 @@ export function useMinutesCollab(
                 });
                 current.on('authenticationFailed', off);
             })
-            .catch(off);
+            .catch((error: unknown) => {
+                if (error instanceof ApiError && error.status === 404) {
+                    window.clearTimeout(timer);
+                    cancelled = true;
+                    setState({ mode: 'waiting' });
+
+                    return;
+                }
+
+                off();
+            });
 
         return () => {
             cancelled = true;
@@ -119,7 +145,7 @@ export function useMinutesCollab(
         };
         // One session per document; `me` is stable for the page.
         // oxlint-disable-next-line react-hooks/exhaustive-deps
-    }, [tokenUrl]);
+    }, [tokenUrl, attempt]);
 
     return state;
 }

@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { echo, echoIsConfigured } from '@laravel/echo-react';
 import {
     RoomAudioRenderer,
     RoomContext,
@@ -14,6 +15,7 @@ import {
     WifiOff,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { autoMinutesOn } from '../notulen/consent';
@@ -218,6 +220,43 @@ export function VideoRoomScreen({
     } = useVideoRoom(room.meeting.id, room.meeting.occurrence_date, choices);
     const connected =
         status.kind === 'connected' || status.kind === 'reconnecting';
+    const removed = status.kind === 'removed';
+    const channel = room.features.realtime ? room.channel : null;
+    const me = room.viewer.id;
+    const date = room.meeting.occurrence_date;
+
+    // "Izinkan masuk lagi" (participant.readmitted, audit B-08): back in with
+    // a fresh video token; the room remounts and asks a new collab token.
+    useEffect(() => {
+        if (!removed || !channel) {
+            return;
+        }
+
+        try {
+            if (!echoIsConfigured()) {
+                return;
+            }
+
+            const instance = echo();
+            instance
+                .private(channel)
+                .listen(
+                    '.participant.readmitted',
+                    (event: { occurrence_date?: string; user_id?: string }) => {
+                        if (
+                            event.occurrence_date === date &&
+                            event.user_id === me
+                        ) {
+                            void connect();
+                        }
+                    },
+                );
+
+            return () => instance.leave(channel);
+        } catch {
+            return undefined;
+        }
+    }, [removed, channel, date, me, connect]);
 
     if (!room.video.configured) {
         return (

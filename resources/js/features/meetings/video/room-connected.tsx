@@ -588,6 +588,14 @@ function DocLive({
                             onReady={() => undefined}
                         />
                     </Suspense>
+                ) : collab.mode === 'waiting' ? (
+                    <p
+                        role="status"
+                        className="rounded-control bg-surface-2 px-4 py-3 text-[15px] text-text-muted"
+                    >
+                        Notulen belum dimulai. Halaman ini terbuka sendiri
+                        begitu notulis mulai menulis.
+                    </p>
                 ) : undefined
             }
         />
@@ -1024,6 +1032,13 @@ export function ConnectedRoom({
             onAttendance: setRoster,
             onSpeaking: talk.apply,
             onEditing: setEditingHolder,
+            onReadmitted: (userId) =>
+                setRoster((current) => ({
+                    ...current,
+                    removed: (current.removed ?? []).filter(
+                        (row) => row.user_id !== userId,
+                    ),
+                })),
         },
     });
 
