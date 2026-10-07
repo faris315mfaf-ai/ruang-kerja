@@ -89,6 +89,7 @@ final class MeetingPresenter
             'recurrence_until' => $meeting->recurrence_until?->toDateString(),
             'reminders' => $meeting->reminders,
             'leadership' => $meeting->leadership,
+            'auto_minutes' => $meeting->auto_minutes,
             'canceled' => $meeting->isCanceled(),
             'minutes_status' => $minutes?->status->value ?? 'none',
         ];

@@ -387,8 +387,9 @@ it('keeps Rapat & Kalender free of N+1', function () {
         // Video RuangKerja: detail with attendance, pre-join and room pages
         // ("Notulen Hidup" props: participants, minutes, previous follow-ups, speaking time).
         "/rapat/{$video->id}" => ['kadiv', 39],
-        "/rapat/{$video->id}/gabung" => ['kadiv', 38],
-        "/rapat/{$video->id}/ruang" => ['kadiv', 38],
+        // + 4 constant queries for the `notulen` prop (NotulenSummary: transcript, consent, opt-out count).
+        "/rapat/{$video->id}/gabung" => ['kadiv', 43],
+        "/rapat/{$video->id}/ruang" => ['kadiv', 43],
         '/kalender' => ['kadiv', 40],
         '/manajemen/jadwal' => ['direksi', 28],
     ];

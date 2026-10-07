@@ -6,6 +6,7 @@
  * MeetingRoomController and App\Http\Resources\Meetings\RoomPresenter.
  * Times are ISO strings (UTC), dates are office dates "YYYY-MM-DD".
  */
+import type { NotulenSummary } from '@/features/meetings/notulen/types';
 import type {
     Minutes,
     Person,
@@ -346,12 +347,12 @@ export type RoomProps = {
 
 /**
  * Props of pages meetings/join and meetings/room. `notulen` = NotulenSummary
- * of docs/fitur/notulen-otomatis-kontrak.md §2.1 (null until that backend
- * is merged); typed loosely here, the notulen agent owns its shape.
+ * of docs/fitur/notulen-otomatis-kontrak.md §2.1 (shape owned by the notulen
+ * agent); null for meetings that are not on the video platform.
  */
 export type MeetingRoomPageProps = {
     room: RoomProps;
-    notulen: Record<string, unknown> | null;
+    notulen: NotulenSummary | null;
 };
 
 // ---------------------------------------------------------------------------

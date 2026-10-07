@@ -91,7 +91,7 @@ describe('room props', function () {
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component($component)
-                ->where('notulen', null)
+                ->where('notulen.available', false)
                 ->where('room.meeting.minute_taker_id', $this->sari->id)
                 ->where('room.meeting.is_recurring', true)
                 ->where('room.meeting.agenda', ['Rekap stok', 'Perawatan kendaraan'])
