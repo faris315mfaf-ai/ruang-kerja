@@ -21,7 +21,7 @@ import {
     endMinutesSession,
     startMinutesSession,
 } from '@/features/notes/minutes-session';
-import NotesIndexPage from './index';
+import NotesIndexPage from '@/pages/notes/index';
 
 function props(query = ''): { notes: NotesIndexProps } {
     return {

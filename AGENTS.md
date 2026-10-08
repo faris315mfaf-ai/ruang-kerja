@@ -6,7 +6,7 @@ Berlaku untuk **Claude Code, Codex, Z-AI**, dan agent lain. Baca file ini sebelu
 |---|---|---|---|
 | Codex | `AGENTS.md` | `.agents/skills/` (`$sprint`, `$cek-ui`, `$cek-lokal`, `$tinjau`) | `.codex/config.toml` (sandbox workspace-write + jaringan lokal; proyek harus *trusted*) |
 | Claude Code | `CLAUDE.md` → `@AGENTS.md` | `.claude/skills/` (`/sprint`, `/cek-ui`, `/cek-lokal`, `/tinjau`) | `.claude/settings.json` |
-| Z-AI / lainnya | `AGENTS.md` | — | — |
+| Z-AI / ZCode (GLM) / lainnya | `AGENTS.md`, lalu `docs/SERAH-TERIMA-GLM.md` | — | — |
 
 Skill proyek ditulis sekali di `.agents/skills/`, lalu `node scripts/sync-agent-skills.mjs` menyalinnya ke `.claude/skills/` (CI memeriksa keduanya sama). Jangan mengedit `.claude/skills/` langsung.
 

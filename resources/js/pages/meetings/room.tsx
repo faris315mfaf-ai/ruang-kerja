@@ -1,15 +1,16 @@
 import { Head } from '@inertiajs/react';
 import { usePersistentUserChoices } from '@livekit/components-react';
 import { VideoRoomScreen } from '@/features/meetings/video/room';
-import type { VideoRoomProps } from '@/features/meetings/video/types';
+import type { RoomPageProps } from '@/features/meetings/video/types';
 
 /**
- * /rapat/{meeting}/ruang — the Video RuangKerja call (LiveKit), full screen
- * without the app shell (resources/js/app.tsx). Microphone/camera choices
- * come from the pre-join screen (remembered per browser); opening this page
- * directly joins with the last choices. Props from MeetingVideoController@room.
+ * /rapat/{meeting}/ruang — Video RuangKerja "Notulen Hidup" (arah C): the
+ * live minutes in the centre, faces on top. Full screen without the app
+ * shell (resources/js/app.tsx). Microphone/camera choices come from the
+ * pre-join screen (remembered per browser); opening this page directly
+ * joins with the last choices. Props: docs/fitur/rapat-video-kontrak.md.
  */
-export default function MeetingRoomPage({ room }: { room: VideoRoomProps }) {
+export default function MeetingRoomPage(props: RoomPageProps) {
     const { userChoices } = usePersistentUserChoices({
         preventSave: true,
         defaults: { audioEnabled: true, videoEnabled: true },
@@ -17,9 +18,9 @@ export default function MeetingRoomPage({ room }: { room: VideoRoomProps }) {
 
     return (
         <>
-            <Head title={`Rapat · ${room.meeting.title}`} />
+            <Head title={`Rapat · ${props.room.meeting.title}`} />
             <VideoRoomScreen
-                props={room}
+                page={props}
                 choices={{
                     audioEnabled: userChoices.audioEnabled,
                     videoEnabled: userChoices.videoEnabled,

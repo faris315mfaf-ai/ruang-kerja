@@ -95,11 +95,13 @@ final class MeetingFeed
     public function people(iterable $occurrences, iterable $minutes = [], array $extra = []): array
     {
         $ids = $extra;
+        $companies = [];
 
         foreach ($occurrences as $occurrence) {
             $meeting = $occurrence->meeting;
             $ids[] = $meeting->organizer_id;
             $ids[] = $meeting->minute_taker_id;
+            $companies[] = $meeting->company_id;
 
             foreach ($meeting->participants as $participant) {
                 $ids[] = $participant->user_id;
@@ -119,14 +121,15 @@ final class MeetingFeed
             }
         }
 
-        return self::loadPeople($ids);
+        return self::loadPeople($ids, array_values(array_unique($companies)));
     }
 
     /**
      * @param  list<string|null>  $ids
+     * @param  list<string>  $companyIds  companies whose people may be rendered
      * @return list<array<string, mixed>>
      */
-    public static function loadPeople(array $ids): array
+    public static function loadPeople(array $ids, array $companyIds = []): array
     {
         $ids = array_values(array_unique(array_filter($ids, fn (?string $id): bool => $id !== null && $id !== '')));
 
@@ -136,6 +139,9 @@ final class MeetingFeed
 
         return MeetingPresenter::people(User::query()
             ->whereIn('id', $ids)
+            // Attendance ids come from stored minutes: keep names of another
+            // company out even if a foreign id slipped into older data.
+            ->when($companyIds !== [], fn (Builder $users) => $users->whereIn('company_id', $companyIds))
             ->with(['position:id,name', 'division:id,name'])
             ->orderBy('name')
             ->get(['id', 'name', 'avatar_url', 'position_id', 'division_id']));

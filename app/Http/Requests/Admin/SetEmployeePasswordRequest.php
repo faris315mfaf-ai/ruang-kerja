@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\Gate;
 
 /**
  * Admin › Karyawan › Atur kata sandi: `mode` default (the company default
- * password, only while EMPLOYEE_DEFAULT_PASSWORD is set and never for a Super
- * Admin) or manual (HR types it twice). The former random generator was
- * removed (owner decision 7 Oct 2026).
+ * password, only while EMPLOYEE_DEFAULT_PASSWORD is set and never for a
+ * super_admin/direksi/hr account, audit R-06) or manual (HR types it twice).
+ * The former random generator was removed (owner decision 7 Oct 2026).
  */
 class SetEmployeePasswordRequest extends FormRequest
 {

@@ -44,6 +44,7 @@ require __DIR__.'/okr.php';
 require __DIR__.'/automation.php';
 require __DIR__.'/notes.php';
 require __DIR__.'/meetings.php';
+require __DIR__.'/notulen.php';
 require __DIR__.'/hiring.php';
 require __DIR__.'/management.php';
 require __DIR__.'/projects.php';

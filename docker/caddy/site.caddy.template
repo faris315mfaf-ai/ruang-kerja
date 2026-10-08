@@ -42,6 +42,18 @@ __APP_DOMAIN__ {
 		reverse_proxy ruangkerja-reverb:8080
 	}
 
+	# Halaman depan SPKD (statis, docker/caddy/landing): hanya akar "/", sama dengan
+	# docker/caddy/Caddyfile. scripts/deploy-remote.sh menyalin foldernya ke
+	# /opt/edge/sites/ruangkerja-landing (folder sites/ sudah di-mount ke edge-caddy).
+	@landing path /
+	handle @landing {
+		root * /etc/caddy/sites/ruangkerja-landing
+		rewrite * /index.html
+		# Static page, no script: a strict CSP of its own (Laravel's never runs here).
+		header Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+		file_server
+	}
+
 	handle {
 		reverse_proxy ruangkerja-app:8000
 	}

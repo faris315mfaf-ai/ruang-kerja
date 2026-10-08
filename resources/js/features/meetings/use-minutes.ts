@@ -43,6 +43,7 @@ export function useMinutes(props: MinutesProps) {
     const latest = useRef(minutes);
     const timer = useRef<number | null>(null);
     const inflight = useRef<Promise<void> | null>(null);
+    const savingNow = useRef(false);
     const itemTimers = useRef(new Map<string, number>());
     const itemPatches = useRef(new Map<string, ItemPatch>());
 
@@ -66,6 +67,7 @@ export function useMinutes(props: MinutesProps) {
     const saveContent = (): Promise<void> => {
         const current = latest.current;
         setSaving(true);
+        savingNow.current = true;
 
         const request = meetingsApi
             .saveMinutes(meeting.id, date, {
@@ -91,7 +93,10 @@ export function useMinutes(props: MinutesProps) {
                     ),
                 );
             })
-            .finally(() => setSaving(false));
+            .finally(() => {
+                savingNow.current = false;
+                setSaving(false);
+            });
 
         inflight.current = request;
 
@@ -389,6 +394,26 @@ export function useMinutes(props: MinutesProps) {
         }
     };
 
+    /**
+     * Someone else saved (video room "Notulen hidup": realtime event or a
+     * LiveKit nudge → GET …/notulen/data). Content typed here and not yet
+     * saved wins; everything else follows the server.
+     */
+    const syncFromServer = (next: Minutes) => {
+        const dirty = timer.current !== null || savingNow.current;
+
+        setMinutes((current) =>
+            dirty
+                ? {
+                      ...next,
+                      attendance: current.attendance,
+                      sections: current.sections,
+                      decisions: current.decisions,
+                  }
+                : next,
+        );
+    };
+
     const openOwners = [
         ...new Set(
             minutes.action_items
@@ -494,6 +519,7 @@ export function useMinutes(props: MinutesProps) {
         openOwners,
         remind: () => void remind(),
         reminded,
+        syncFromServer,
     };
 }
 

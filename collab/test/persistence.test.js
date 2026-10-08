@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 import { test } from 'node:test';
 import * as Y from 'yjs';
-import { createLaravelClient } from '../src/laravel.js';
+import { createLaravelClient, statePath } from '../src/laravel.js';
 import { createNotesExtension } from '../src/notes-extension.js';
 import { docToJson, replaceDoc } from '../src/prosemirror.js';
 
@@ -215,4 +215,38 @@ void test('keeps the editors when Laravel refuses the store', async () => {
     );
 
     assert.deepEqual(calls[1].body.editor_ids, [USER]);
+});
+
+void test('routes meeting-minutes documents to the meetings endpoints', async () => {
+    const minutesId = '01JBMXN0000000000000000AAA';
+    const name = `meeting-minutes.${minutesId}`;
+    const { fetch, calls } = fakeFetch({
+        [`GET /internal/rapat/notulen/${minutesId}/state`]: {
+            body: { id: minutesId, yjs_state: null, content: sample },
+        },
+        [`POST /internal/rapat/notulen/${minutesId}/state`]: {
+            body: { stored: true },
+        },
+    });
+    const laravel = createLaravelClient({
+        baseUrl: 'https://app.test',
+        secret: SECRET,
+        fetch,
+    });
+    const extension = createNotesExtension({ laravel, secret: SECRET });
+    const document = new Y.Doc();
+
+    await extension.onLoadDocument({ document, documentName: name });
+    await extension.onStoreDocument({ document, documentName: name });
+
+    assert.deepEqual(docToJson(document), sample);
+    assert.equal(
+        calls[0].url,
+        `https://app.test/internal/rapat/notulen/${minutesId}/state`,
+    );
+    assert.equal(calls[1].method, 'POST');
+    assert.equal(
+        statePath('not a minutes doc'),
+        '/internal/catatan/not%20a%20minutes%20doc/state',
+    );
 });

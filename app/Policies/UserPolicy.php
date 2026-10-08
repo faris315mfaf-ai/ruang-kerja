@@ -15,7 +15,9 @@ use App\Models\User;
  * - Only a Super Admin may edit a Super Admin or grant/revoke super_admin, direksi
  *   or hr; HR may grant/revoke kepala_divisi and anggota. Nobody changes their own roles.
  * - Employees are never hard-deleted: deactivate instead.
- * - Everyone changes their own password; HR/Super Admin set others' (setPassword).
+ * - Everyone changes their own password; HR/Super Admin set others' (setPassword),
+ *   but only a Super Admin sets the password of super_admin/direksi/hr accounts
+ *   (audit R-06).
  */
 class UserPolicy
 {
@@ -106,11 +108,16 @@ class UserPolicy
 
     /**
      * HR sets another employee's password (Admin › Karyawan › Atur kata sandi).
-     * Never one's own (that is Pengaturan › Keamanan, with the current password);
-     * a Super Admin's password only by another Super Admin.
+     * Never one's own (that is Pengaturan › Keamanan, with the current password).
+     * Audit R-06: a password is a way in, so accounts holding a role only a
+     * Super Admin may grant (super_admin, direksi, hr) get theirs set by a
+     * Super Admin only. HR keeps approving "Lupa kata sandi" — there the
+     * account owner types the new password themselves.
      */
     public function setPassword(User $actor, User $target): bool
     {
-        return ! $actor->is($target) && $this->update($actor, $target);
+        return ! $actor->is($target)
+            && $this->update($actor, $target)
+            && (! $target->hasAnyRole(Role::superAdminSetsPassword()) || $actor->isSuperAdmin());
     }
 }

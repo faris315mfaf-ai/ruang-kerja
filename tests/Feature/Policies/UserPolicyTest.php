@@ -124,7 +124,7 @@ it('denies own password management to an inactive account', function () {
     expect(Gate::forUser($actor)->allows('manageCredentials', $actor))->toBeFalse();
 });
 
-it('applies the set-password matrix (HR sets others, Super Admin targets only by a Super Admin)', function (Role $actorRole, Role $targetRole, bool $expected) {
+it('applies the set-password matrix (HR sets anggota and kadiv passwords; super_admin/direksi/hr only by a Super Admin)', function (Role $actorRole, Role $targetRole, bool $expected) {
     $actor = User::factory()->withRole($actorRole)->create();
     $target = User::factory()->withRole($targetRole)->create();
 
@@ -133,10 +133,12 @@ it('applies the set-password matrix (HR sets others, Super Admin targets only by
 })->with([
     'hr → anggota' => [Role::Hr, Role::Anggota, true],
     'hr → kadiv' => [Role::Hr, Role::KepalaDivisi, true],
-    'hr → direksi' => [Role::Hr, Role::Direksi, true],
-    'hr → hr' => [Role::Hr, Role::Hr, true],
+    'hr → direksi' => [Role::Hr, Role::Direksi, false],
+    'hr → hr' => [Role::Hr, Role::Hr, false],
     'hr → super admin' => [Role::Hr, Role::SuperAdmin, false],
     'super admin → anggota' => [Role::SuperAdmin, Role::Anggota, true],
+    'super admin → direksi' => [Role::SuperAdmin, Role::Direksi, true],
+    'super admin → hr' => [Role::SuperAdmin, Role::Hr, true],
     'super admin → super admin' => [Role::SuperAdmin, Role::SuperAdmin, true],
     'direksi → anggota' => [Role::Direksi, Role::Anggota, false],
     'kadiv → anggota' => [Role::KepalaDivisi, Role::Anggota, false],

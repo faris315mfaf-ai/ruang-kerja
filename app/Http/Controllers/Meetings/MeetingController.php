@@ -13,7 +13,9 @@ use App\Domain\Meetings\Queries\FindConflicts;
 use App\Domain\Meetings\Queries\MeetingFeed;
 use App\Domain\Meetings\Services\MeetingOccurrences;
 use App\Domain\Meetings\Services\MinutesStore;
+use App\Domain\Meetings\Services\NotulenBridge;
 use App\Domain\Meetings\Services\VideoRooms;
+use App\Domain\Meetings\Transcripts\Services\NotulenConfig;
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Organization\Enums\UserStatus;
 use App\Http\Controllers\Controller;
@@ -88,12 +90,12 @@ class MeetingController extends Controller
 
         $meeting->load(['participants', 'workspace:id,key,name']);
         $occurrence = $occurrences->resolve($meeting, $request->occurrenceDate());
-        $minutes = $store->find($occurrence);
 
         return Inertia::render('meetings/show', [
-            'detail' => [
+            // Lazy: the 30 s `only: ['video']` poll skips it (audit 2026-10 §4).
+            'detail' => fn (): array => [
                 'viewer_id' => $user->id,
-                'meeting' => $presenter->meeting($occurrence, $minutes),
+                'meeting' => $presenter->meeting($occurrence, $store->find($occurrence)),
                 'people' => $feed->people([$occurrence], [], [$user->id]),
                 'can' => [
                     'update' => $policy->update($user, $meeting)->allowed(),
@@ -105,6 +107,9 @@ class MeetingController extends Controller
             'video' => $meeting->platform === MeetingPlatform::Video
                 ? fn (): array => app(VideoPresenter::class)->summary($occurrence, $user)
                 : null,
+            // Notulen otomatis summary (docs/fitur/notulen-otomatis-kontrak.md §2.1); lazy
+            // like `detail`, so the `only: ['video']` poll does not compute it.
+            'notulen' => fn (): ?array => app(NotulenBridge::class)->summary($occurrence, $user),
         ]);
     }
 
@@ -183,6 +188,8 @@ class MeetingController extends Controller
             'durations' => SaveMeetingRequest::DURATIONS,
             // "Video RuangKerja" is offered only when LiveKit is configured.
             'video_enabled' => app(VideoRooms::class)->configured(),
+            // "Notulen otomatis" toggle (video only) is offered when the transcription server is set.
+            'auto_minutes_enabled' => app(NotulenConfig::class)->configured(),
             'meeting' => $meeting !== null ? $this->values($meeting) : null,
         ];
     }
@@ -217,6 +224,7 @@ class MeetingController extends Controller
             'minute_taker_id' => $meeting->minute_taker_id,
             'workspace_id' => $meeting->workspace_id,
             'leadership' => $meeting->leadership,
+            'auto_minutes' => $meeting->auto_minutes,
         ];
     }
 }

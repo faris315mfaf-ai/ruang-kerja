@@ -45,6 +45,7 @@ function blank(
         minuteTakerId: me,
         workspace,
         leadership: false,
+        autoMinutes: false,
     };
 }
 
@@ -76,6 +77,7 @@ function fromMeeting(
         minuteTakerId: meeting.minute_taker_id ?? me,
         workspace: meeting.workspace_id ?? 'none',
         leadership: meeting.leadership,
+        autoMinutes: meeting.auto_minutes ?? false,
     };
 }
 
@@ -91,6 +93,7 @@ const SERVER_FIELDS: Record<string, MeetingFormField> = {
     guest_emails: 'participants',
     agenda: 'agenda',
     recurrence_until: 'recurrenceUntil',
+    auto_minutes: 'platform',
 };
 
 /**
@@ -266,6 +269,11 @@ export function useMeetingForm(props: MeetingFormProps) {
         minute_taker_id: values.minuteTakerId || null,
         workspace_id: values.workspace === 'none' ? null : values.workspace,
         leadership: props.can_lead ? values.leadership : undefined,
+        // Contract rapat §1.5: only for video; leaving video turns it off.
+        auto_minutes:
+            props.auto_minutes_enabled || props.meeting?.auto_minutes
+                ? values.platform === 'video' && values.autoMinutes
+                : undefined,
     });
 
     const send = () => {
@@ -313,6 +321,7 @@ export function useMeetingForm(props: MeetingFormProps) {
         editing,
         canLead: props.can_lead,
         videoEnabled: props.video_enabled,
+        autoMinutesEnabled: Boolean(props.auto_minutes_enabled),
         durations: props.durations,
         workspaces: props.workspaces,
         people: props.people,

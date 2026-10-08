@@ -3,6 +3,7 @@
 namespace App\Domain\Auth\Actions;
 
 use App\Domain\Auth\Enums\LoginMethod;
+use App\Domain\Auth\Services\DefaultPassword;
 use App\Domain\Organization\Services\AuditLogger;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -21,7 +22,8 @@ use Laravel\Fortify\LoginRateLimiter;
  * never reveals whether an address belongs to someone. Failures of known
  * accounts are audited (`user.login_failed`) and count towards the `login`
  * limiter. Super Admins then pass Fortify's TOTP challenge (or the forced setup,
- * EnsureTwoFactorForSuperAdmin); nobody else needs 2FA.
+ * EnsureTwoFactorForSuperAdmin); nobody else needs 2FA. Signing in with the
+ * company default password always sets "wajib ganti" (EnsurePasswordChanged).
  */
 final class AuthenticateEmployee
 {
@@ -35,6 +37,7 @@ final class AuthenticateEmployee
     public function __construct(
         private readonly AuditLogger $audit,
         private readonly LoginRateLimiter $limiter,
+        private readonly DefaultPassword $defaultPassword,
     ) {}
 
     /**
@@ -69,6 +72,8 @@ final class AuthenticateEmployee
             throw ValidationException::withMessages(['email' => self::INVALID_CREDENTIALS]);
         }
 
+        $this->requireChangeOfDefaultPassword($user, $password);
+
         $request->attributes->set(self::REQUEST_CACHE_KEY, $user);
         LoginMethod::Password->declareFor($request);
 
@@ -101,6 +106,20 @@ final class AuthenticateEmployee
         }
 
         return [$user, null];
+    }
+
+    /**
+     * Safety net (audit rapat 2026-10, R-01): whoever signs in with the
+     * company-wide default password must replace it (EnsurePasswordChanged),
+     * even when the account lost its "wajib ganti" flag somehow.
+     */
+    private function requireChangeOfDefaultPassword(User $user, #[\SensitiveParameter] string $password): void
+    {
+        if ($user->password_change_required || ! $this->defaultPassword->appliesTo($user) || ! $this->defaultPassword->matches($password)) {
+            return;
+        }
+
+        $user->forceFill(['password_change_required' => true])->saveQuietly();
     }
 
     private static function dummyHash(): string

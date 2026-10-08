@@ -19,7 +19,8 @@ export type RoomStatus =
     | { kind: 'error'; message: string; canRetry: boolean }
     | { kind: 'left' }
     | { kind: 'removed' }
-    | { kind: 'ended' }
+    /** Room deleted by the server: the meeting was canceled (contract). */
+    | { kind: 'canceled' }
     | { kind: 'unsupported' };
 
 export type MediaChoices = {
@@ -105,6 +106,7 @@ export function useVideoRoom(
     );
     const leaving = useRef(false);
     const autoRetried = useRef(false);
+    const retryTimer = useRef<number | null>(null);
     const choicesRef = useRef(choices);
     choicesRef.current = choices;
 
@@ -187,7 +189,7 @@ export function useVideoRoom(
             }
 
             if (reason === DisconnectReason.ROOM_DELETED) {
-                setStatus({ kind: 'ended' });
+                setStatus({ kind: 'canceled' });
 
                 return;
             }
@@ -208,7 +210,13 @@ export function useVideoRoom(
             if (!autoRetried.current) {
                 autoRetried.current = true;
                 setStatus({ kind: 'reconnecting' });
-                window.setTimeout(() => void connect(), 1500);
+                // The timer must never outlive the page: a reconnect after
+                // the user left would turn the mic/camera back on with no UI.
+                retryTimer.current = window.setTimeout(() => {
+                    if (!leaving.current) {
+                        void connect();
+                    }
+                }, 1500);
 
                 return;
             }
@@ -250,6 +258,11 @@ export function useVideoRoom(
 
         return () => {
             leaving.current = true;
+
+            if (retryTimer.current !== null) {
+                window.clearTimeout(retryTimer.current);
+            }
+
             void room.disconnect();
         };
     }, [room, connect]);

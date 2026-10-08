@@ -1,5 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
 import * as Y from 'yjs';
+import { MINUTES_DOCUMENT } from './laravel.js';
 import { docToJson, replaceDoc } from './prosemirror.js';
 import { verifyToken } from './token.js';
 
@@ -64,7 +65,8 @@ function send(response, status, body) {
  * - onChange / onStoreDocument: remembers who edited and pushes state +
  *   snapshot to Laravel (debounced by the server configuration).
  * - onRequest: GET /health and the internal Laravel → collab endpoints
- *   POST /internal/documents/{id}/replace|reconnect (Bearer secret).
+ *   POST /internal/documents/{id}/replace|reconnect (Bearer secret); {id}
+ *   = note id or meeting-minutes.{id} (video room minutes).
  */
 export function createNotesExtension({
     laravel,
@@ -184,7 +186,7 @@ export function createNotesExtension({
                 throw null;
             }
 
-            if (!NOTE_ID.test(id)) {
+            if (!NOTE_ID.test(id) && !MINUTES_DOCUMENT.test(id)) {
                 send(response, 404, { message: 'unknown document' });
                 throw null;
             }

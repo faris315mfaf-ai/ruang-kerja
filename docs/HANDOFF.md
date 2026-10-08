@@ -1,5 +1,7 @@
 # Serah terima — RuangKerja Fase 1
 
+> **8 Okt 2026:** pekerjaan dilanjutkan di ZCode (GLM). Mulai dari [`SERAH-TERIMA-GLM.md`](SERAH-TERIMA-GLM.md): status terkini, server, prosedur deploy, dan daftar tugas berikutnya.
+
 Status per 7 Okt 2026. Semua sprint Fase 1 (0–10) dibangun di Mac mulai 5 Okt 2026 dengan banyak agen paralel. Repo GitHub **private**; `main` sudah berisi PR #1–#7 (terakhir: integrasi Fase 2/3 #5, perbaikan seeder #6, deploy dua VPS #7) dan CI hijau.
 
 ## Status sprint
@@ -92,6 +94,7 @@ Setelah masuk, **pemilih akun demo** di bagian atas (pil "Demo · …" di menu b
 2. **Deploy ke VPS** (dua VPS, `docs/deploy/DUA-VPS.md`; penyimpanan file = Biznet Gio NEO Object Storage): alamat kedua VPS, domain/DNS, email Let's Encrypt, kredensial object storage, dan secret GitHub Actions. Sampai secret diisi, job Deploy di `main` gagal di langkah SSH ("Upload compose stack files", exit 255) — itu yang diharapkan.
 3. **Rahasia produksi**: `ATTENDANCE_QR_SECRET` wajib diisi (bila kosong diturunkan dari APP_KEY), `SESSION_SECURE_COOKIE=true`, `TRUSTED_PROXIES` sesuai jaringan Caddy.
 4. **Branding resmi SPKD**: ganti `--brand-*` di `resources/css/tokens.css`, `config/branding.php`, lalu `php scripts/generate-icons.php`.
+5. **Rapat video & notulen otomatis** (panduan bergambar `fitur/rapat-video.md`, privasi `fitur/rapat-video-privasi.md`, operasional + runbook `deploy/RAPAT-VIDEO.md` + `transcriber/DEPLOY.md`, audit `security/AUDIT-RAPAT-2026-10.md`): sebelum notulen otomatis dinyalakan di produksi pemilik memutuskan **opt-out atau opt-in** transkrip, dasar pengiriman teks transkrip ke DeepSeek di luar Indonesia (UU PDP Pasal 56), **kenaikan `PRIVACY_POLICY_VERSION`/`DATE`** (memicu persetujuan ulang lokasi & selfie), **retensi kehadiran rapat video**, dan **ekspor Data Saya** untuk data rapat; terpisah: HR boleh mengatur sandi Direksi/HR atau tidak (audit R-06) — sudah diputuskan 8 Okt 2026: hanya Super Admin. Deploy: pasang worker di VPS rapat, webhook kedua, Horizon `supervisor-long` (antrean `long`).
 
 ## Yang belum diuji / keterbatasan
 

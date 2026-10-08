@@ -76,6 +76,36 @@ jobs:
           # when CI=true unless told it is intentional.
           LARAVEL_BYPASS_ENV_CHECK: '1'
 
+  transcriber:
+    # Notulen otomatis worker (transcriber/, Python): unit tests with a fake
+    # recognizer — the Whisper model is never downloaded in CI.
+    name: Notulen worker (pytest + ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: transcriber
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: transcriber/requirements*.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: ruff
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: pytest
+        run: pytest -q
+
   test:
     # ~3.000 tests no longer fit one 20-minute job on a 4-core runner, so the
     # suite is split into time-balanced shards that run side by side.
@@ -200,6 +230,14 @@ jobs:
           push: false
           cache-from: type=gha,scope=postgres
           cache-to: type=gha,mode=max,scope=postgres
+
+      - name: Build transcriber image
+        uses: docker/build-push-action@v6
+        with:
+          context: transcriber
+          push: false
+          cache-from: type=gha,scope=transcriber
+          cache-to: type=gha,mode=max,scope=transcriber
 
       - name: Validate compose files
         run: |

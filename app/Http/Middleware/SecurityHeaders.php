@@ -27,7 +27,13 @@ class SecurityHeaders
         $headers->set('X-Content-Type-Options', 'nosniff');
         $headers->set('X-Frame-Options', 'DENY');
         $headers->set('Referrer-Policy', (string) config('security.referrer_policy'));
-        $headers->set('Permissions-Policy', (string) config('security.permissions_policy'));
+        // Audit R-14: the grants are per document — the video pages get the
+        // microphone/screen capture, every other document denies them.
+        $headers->set('Permissions-Policy', (string) config(
+            $request->routeIs('meetings.video.join', 'meetings.video.room')
+                ? 'security.permissions_policy_meetings'
+                : 'security.permissions_policy',
+        ));
         // Google Picker / OAuth popups need to keep a reference to their opener.
         $headers->set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
         $headers->remove('X-Powered-By');

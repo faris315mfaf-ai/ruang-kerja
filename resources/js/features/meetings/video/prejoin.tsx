@@ -1,4 +1,5 @@
 import { Link, router } from '@inertiajs/react';
+import { echo, echoIsConfigured } from '@laravel/echo-react';
 import {
     useMediaDevices,
     usePersistentUserChoices,
@@ -10,17 +11,27 @@ import { isBrowserSupported, MediaDeviceFailure, Track } from 'livekit-client';
 import {
     AlertTriangle,
     ArrowLeft,
-    Clock,
+    FileText,
     Mic,
     MicOff,
+    Settings2,
     Video,
     VideoOff,
 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { UserAvatar } from '@/components/shell/user-avatar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Radio } from '@/components/ui/radio';
 import {
     Select,
     SelectContent,
@@ -28,10 +39,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
+import { ApiError } from '@/features/tasks/lib/api';
 import { cn, focusRing } from '@/lib/utils';
-import { shortDate, timeRange, officeDate } from '../lib';
+import { dueLabel, officeDate, shortDate, timeRange } from '../lib';
 import { useNow } from '../meetings-context';
-import type { Person } from '../types';
+import { autoMinutesOn, ConsentCard, useConsent } from '../notulen/consent';
+import { videoApi } from './api';
+import type { Room } from './contract';
+import { normalizeRoom } from './contract';
 import {
     countdownLabel,
     isMacPlatform,
@@ -40,7 +56,7 @@ import {
     shortcutAction,
     shortcutLabel,
 } from './lib';
-import type { VideoRoomProps } from './types';
+import type { NotesSourceKind, RoomPageProps } from './types';
 
 type PreviewError = 'denied' | 'missing' | 'busy' | 'other' | null;
 
@@ -69,7 +85,7 @@ const ERROR_TEXT: Record<Exclude<PreviewError, null>, string> = {
     other: 'Kamera atau mikrofon tidak bisa dinyalakan. Periksa perangkat dan izin browser; Anda tetap bisa bergabung.',
 };
 
-/** Microphone level as three bars (Meet's green dots). */
+/** Microphone level as three bars over the preview. */
 function MicLevel({ track }: { track: LocalAudioTrack }) {
     const volume = useTrackVolume(track);
 
@@ -110,9 +126,7 @@ function DevicePicker({
 
     return (
         <div className="flex min-w-0 flex-col gap-1.5">
-            <Label htmlFor={id} className="text-[14px] text-text-muted">
-                {label}
-            </Label>
+            <Label htmlFor={id}>{label}</Label>
             <Select
                 value={selected}
                 onValueChange={onChange}
@@ -136,57 +150,238 @@ function DevicePicker({
     );
 }
 
-function PreviewToggle({
-    on,
-    labelOn,
-    labelOff,
-    shortcut,
+/** White 46px key under the preview (mockup: mic · cam · settings). */
+function DeviceKey({
+    label,
+    off = false,
     onClick,
-    iconOn,
-    iconOff,
+    children,
 }: {
-    on: boolean;
-    labelOn: string;
-    labelOff: string;
-    shortcut: string;
+    label: string;
+    off?: boolean;
     onClick: () => void;
-    iconOn: React.ReactNode;
-    iconOff: React.ReactNode;
+    children: ReactNode;
 }) {
     return (
         <button
             type="button"
             onClick={onClick}
-            aria-pressed={!on}
-            aria-label={on ? labelOn : labelOff}
-            title={`${on ? labelOn : labelOff} (${shortcut})`}
+            aria-label={label}
+            title={label}
+            aria-pressed={off || undefined}
             className={cn(
-                'inline-flex size-14 items-center justify-center rounded-full border transition-[background-color,color] duration-120 ease-brand motion-reduce:transition-none [&_svg]:size-6',
-                on
-                    ? 'border-on-brand/50 bg-preview-dark/40 text-on-brand hover:bg-preview-dark/60'
-                    : 'border-transparent bg-danger text-on-danger hover:opacity-90',
+                'inline-flex size-[46px] items-center justify-center rounded-control border transition-colors duration-120 ease-brand [&_svg]:size-5',
+                off
+                    ? 'border-transparent bg-danger text-on-danger'
+                    : 'border-border bg-surface text-text hover:bg-surface-2',
                 focusRing,
             )}
         >
-            {on ? iconOn : iconOff}
+            {children}
         </button>
     );
 }
 
+/** One "Pilih notulen" card (radio). */
+function SourceCard({
+    value,
+    title,
+    detail,
+    checked,
+    disabled,
+    onSelect,
+}: {
+    value: NotesSourceKind;
+    title: string;
+    detail?: string;
+    checked: boolean;
+    disabled?: boolean;
+    onSelect: (value: NotesSourceKind) => void;
+}) {
+    return (
+        <label
+            className={cn(
+                'flex cursor-pointer items-center gap-3.5 rounded-lg bg-surface p-4 transition-shadow duration-120 ease-brand has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring',
+                checked
+                    ? 'shadow-[inset_0_0_0_2px_var(--primary)]'
+                    : 'border border-border',
+                disabled && 'cursor-not-allowed opacity-60',
+            )}
+            data-testid={`source-${value}`}
+        >
+            <span
+                aria-hidden
+                className={cn(
+                    'flex h-14 w-11 shrink-0 items-center justify-center rounded-[6px]',
+                    checked
+                        ? 'bg-link-soft text-link'
+                        : 'bg-surface-2 text-text-subtle',
+                )}
+            >
+                <FileText className="size-5" />
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col">
+                <span className="text-[16px] font-bold">{title}</span>
+                {detail && (
+                    <span className="text-[14px] text-text-muted">
+                        {detail}
+                    </span>
+                )}
+            </span>
+            <Radio
+                name="notes-source"
+                value={value}
+                checked={checked}
+                disabled={disabled}
+                onChange={() => onSelect(value)}
+                className="size-5 checked:border-[6px]"
+            />
+        </label>
+    );
+}
+
+const SOURCE_LABEL: Record<NotesSourceKind, string> = {
+    continue: 'Lanjutkan notulen rapat lalu',
+    template: 'Templat',
+    blank: 'Dokumen kosong',
+};
+
+/** Which minutes to open + follow-ups of the last meeting (contract §2). */
+function NotesChoice({
+    room,
+    source,
+    onSource,
+}: {
+    room: Room;
+    source: NotesSourceKind;
+    onSource: (value: NotesSourceKind) => void;
+}) {
+    const notes = room.notesSource;
+    const people = new Map(room.participants.map((p) => [p.id, p]));
+    const today = room.meeting.occurrence_date;
+
+    if (!notes) {
+        return null;
+    }
+
+    const previous = notes.previous;
+    const templateName = notes.template
+        ? notes.template.label
+        : 'Templat agenda rapat';
+    const followUps = notes.open_follow_ups;
+
+    return (
+        <>
+            {notes.chosen ? (
+                <p
+                    className="rounded-lg border border-border bg-surface px-4 py-3.5 text-[15px] text-text-muted"
+                    data-testid="source-chosen"
+                >
+                    Notulen memakai{' '}
+                    <b className="text-text">
+                        {notes.chosen === 'template'
+                            ? templateName
+                            : SOURCE_LABEL[notes.chosen]}
+                    </b>
+                    {notes.chosen_by &&
+                        ` · dipilih ${people.get(notes.chosen_by)?.first_name ?? 'notulis'}`}
+                    .
+                </p>
+            ) : notes.can_choose ? (
+                <fieldset className="flex flex-col gap-3">
+                    <legend className="sr-only">Notulen yang dipakai</legend>
+                    <SourceCard
+                        value="continue"
+                        title={SOURCE_LABEL.continue}
+                        detail={
+                            previous
+                                ? `${shortDate(previous.occurrence_date)} · ${
+                                      previous.open_count > 0
+                                          ? `${previous.open_count} tindak lanjut masih terbuka`
+                                          : 'semua tindak lanjut selesai'
+                                  }`
+                                : 'Belum ada notulen rapat sebelumnya'
+                        }
+                        checked={source === 'continue'}
+                        disabled={!previous}
+                        onSelect={onSource}
+                    />
+                    <SourceCard
+                        value="template"
+                        title={templateName}
+                        detail={
+                            notes.template
+                                ? ['Agenda', ...notes.template.blocks]
+                                      .join(', ')
+                                      .toLowerCase()
+                                      .replace(/^./, (c) => c.toUpperCase())
+                                : 'Satu bagian per butir agenda'
+                        }
+                        checked={source === 'template'}
+                        onSelect={onSource}
+                    />
+                    <SourceCard
+                        value="blank"
+                        title={SOURCE_LABEL.blank}
+                        checked={source === 'blank'}
+                        onSelect={onSource}
+                    />
+                </fieldset>
+            ) : (
+                <p className="rounded-lg border border-border bg-surface px-4 py-3.5 text-[15px] text-text-muted">
+                    Notulis memilih notulen yang dipakai. Anda bisa membacanya
+                    selama rapat.
+                </p>
+            )}
+            {previous && followUps.length > 0 && (
+                <section
+                    aria-labelledby="open-follow-ups"
+                    className="flex flex-col gap-1.5 rounded-[14px] bg-warning-soft px-4 py-3.5 text-[14px] text-warning"
+                    data-testid="open-follow-ups"
+                >
+                    <h2 id="open-follow-ups" className="font-bold">
+                        Tindak lanjut terbuka dari{' '}
+                        {shortDate(previous.occurrence_date)}
+                    </h2>
+                    <ul className="flex flex-col gap-1">
+                        {followUps.slice(0, 5).map((item) => (
+                            <li key={item.id}>
+                                {item.task_key && (
+                                    <span className="font-mono">
+                                        {item.task_key}{' '}
+                                    </span>
+                                )}
+                                {item.text} ·{' '}
+                                {people.get(item.assignee_id ?? '')
+                                    ?.first_name ?? 'Tanpa PIC'}{' '}
+                                · {dueLabel(item.due_date, today).toLowerCase()}
+                            </li>
+                        ))}
+                    </ul>
+                    {followUps.length > 5 && (
+                        <span>dan {followUps.length - 5} lainnya</span>
+                    )}
+                </section>
+            )}
+        </>
+    );
+}
+
 /**
- * /rapat/{id}/gabung — Google Meet-like pre-join: camera/mic preview with
- * toggles and device pickers, who is already in the room, the join window
- * (countdown) and "Gabung sekarang". Choices are remembered per browser
- * (LiveKit `usePersistentUserChoices`) and read by the room page.
+ * /rapat/{id}/gabung — "Notulen Hidup" pre-join: camera preview with
+ * device keys, which minutes to open, open follow-ups of the last meeting,
+ * the auto-minutes consent card, then "Masuk dan buka notulen". Device
+ * choices are remembered per browser (read by the room page).
  */
 export function PreJoinScreen({
-    props,
+    page,
     mobile,
 }: {
-    props: VideoRoomProps;
+    page: RoomPageProps;
     mobile: boolean;
 }) {
-    const { meeting, video, viewer } = props;
+    const room = normalizeRoom(page.room, page.notulen ?? null);
+    const { meeting, video, viewer } = room;
     // Every second: the countdown and the button follow the join window live.
     const now = useNow(1000);
     const isMac = useMemo(
@@ -205,6 +400,15 @@ export function PreJoinScreen({
         defaults: { audioEnabled: true, videoEnabled: true },
     });
     const [error, setError] = useState<PreviewError>(null);
+    const [devicesOpen, setDevicesOpen] = useState(false);
+    const [joining, setJoining] = useState(false);
+    const notes = room.notesSource;
+    const [source, setSource] = useState<NotesSourceKind>(() =>
+        notes?.suggested === 'continue' && !notes.previous
+            ? 'template'
+            : (notes?.suggested ?? 'template'),
+    );
+    const consent = useConsent(room.notulen);
     const supported = useMemo(() => isBrowserSupported(), []);
     const options = useMemo(
         () => ({
@@ -251,6 +455,38 @@ export function PreJoinScreen({
         }
     }, [tracks]);
 
+    // Someone else picked the notes source: show their choice (contract §5).
+    const channel = room.features.realtime ? room.channel : null;
+    const date = meeting.occurrence_date;
+
+    useEffect(() => {
+        if (!channel) {
+            return;
+        }
+
+        try {
+            if (!echoIsConfigured()) {
+                return;
+            }
+
+            const instance = echo();
+            instance
+                .private(channel)
+                .listen(
+                    '.minutes.source_chosen',
+                    (event: { occurrence_date?: string }) => {
+                        if (event.occurrence_date === date) {
+                            router.reload({ only: ['room'] });
+                        }
+                    },
+                );
+
+            return () => instance.leave(channel);
+        } catch {
+            return undefined;
+        }
+    }, [channel, date]);
+
     const toggleMic = () => saveAudioInputEnabled(!userChoices.audioEnabled);
     const toggleCamera = () => saveVideoInputEnabled(!userChoices.videoEnabled);
 
@@ -271,20 +507,42 @@ export function PreJoinScreen({
 
     const windowState = joinWindow(video, now);
     const inRoom = video.attendance.filter((person) => person.in_room);
-    const inRoomNames = inRoom
-        .map(
-            (person) =>
-                props.people.find((p: Person) => p.id === person.user_id)
-                    ?.name ?? 'Peserta',
-        )
-        .filter(Boolean);
+    const nameOf = (id: string) =>
+        room.participants.find((p) => p.id === id)?.name ?? 'Peserta';
     const canJoin =
         video.configured &&
         video.can_join &&
         windowState.state === 'open' &&
         supported;
+    const choosing = Boolean(
+        notes && notes.can_choose && !notes.chosen && room.links.notesSource,
+    );
 
-    const join = () => {
+    const join = async () => {
+        if (joining) {
+            return;
+        }
+
+        setJoining(true);
+
+        if (choosing && room.links.notesSource) {
+            try {
+                await videoApi.chooseNotesSource(
+                    room.links.notesSource,
+                    source,
+                );
+            } catch (failure) {
+                setJoining(false);
+                toast.error(
+                    failure instanceof ApiError
+                        ? failure.message
+                        : 'Pilihan notulen belum tersimpan. Coba lagi.',
+                );
+
+                return;
+            }
+        }
+
         // Stop the preview so the room can open the devices itself.
         tracks?.forEach((track) => track.stop());
         router.visit(video.room_href);
@@ -301,7 +559,12 @@ export function PreJoinScreen({
               : null;
 
     const preview = (
-        <div className="relative isolate aspect-video w-full overflow-hidden rounded-panel border border-border bg-preview-dark shadow-card max-md:aspect-auto max-md:h-[min(50dvh,440px)]">
+        <div
+            className={cn(
+                'relative isolate w-full overflow-hidden rounded-card bg-preview-dark',
+                mobile ? 'aspect-[4/3]' : 'aspect-[520/330]',
+            )}
+        >
             {videoTrack && userChoices.videoEnabled ? (
                 <video
                     ref={videoEl}
@@ -312,7 +575,7 @@ export function PreJoinScreen({
                     className="size-full -scale-x-100 object-cover"
                 />
             ) : (
-                <span className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-on-brand">
+                <span className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-on-caption">
                     <UserAvatar
                         name={viewer.name}
                         src={viewer.avatar_url}
@@ -327,85 +590,177 @@ export function PreJoinScreen({
                     </span>
                 </span>
             )}
-            <span className="absolute top-3 left-3 inline-flex max-w-[70%] items-center rounded-sm bg-preview-dark/70 px-2.5 py-1 text-[14px] font-semibold text-on-brand">
-                <span className="truncate">{viewer.name}</span>
-            </span>
             {audioTrack && userChoices.audioEnabled && (
-                <span className="absolute bottom-4 left-4">
+                <span className="absolute bottom-3 left-3">
                     <MicLevel track={audioTrack} />
                 </span>
             )}
-            <span className="absolute inset-x-0 bottom-4 flex justify-center gap-4">
-                <PreviewToggle
-                    on={userChoices.audioEnabled}
-                    labelOn="Matikan mikrofon"
-                    labelOff="Nyalakan mikrofon"
-                    shortcut={shortcutLabel('toggle-mic', isMac)}
-                    onClick={toggleMic}
-                    iconOn={<Mic aria-hidden />}
-                    iconOff={<MicOff aria-hidden />}
-                />
-                <PreviewToggle
-                    on={userChoices.videoEnabled}
-                    labelOn="Matikan kamera"
-                    labelOff="Nyalakan kamera"
-                    shortcut={shortcutLabel('toggle-camera', isMac)}
-                    onClick={toggleCamera}
-                    iconOn={<Video aria-hidden />}
-                    iconOff={<VideoOff aria-hidden />}
-                />
-            </span>
+        </div>
+    );
+
+    const keys = (
+        <div className="flex gap-2.5">
+            <DeviceKey
+                label={
+                    userChoices.audioEnabled
+                        ? `Matikan mikrofon (${shortcutLabel('toggle-mic', isMac)})`
+                        : `Nyalakan mikrofon (${shortcutLabel('toggle-mic', isMac)})`
+                }
+                off={!userChoices.audioEnabled}
+                onClick={toggleMic}
+            >
+                {userChoices.audioEnabled ? (
+                    <Mic aria-hidden />
+                ) : (
+                    <MicOff aria-hidden />
+                )}
+            </DeviceKey>
+            <DeviceKey
+                label={
+                    userChoices.videoEnabled
+                        ? `Matikan kamera (${shortcutLabel('toggle-camera', isMac)})`
+                        : `Nyalakan kamera (${shortcutLabel('toggle-camera', isMac)})`
+                }
+                off={!userChoices.videoEnabled}
+                onClick={toggleCamera}
+            >
+                {userChoices.videoEnabled ? (
+                    <Video aria-hidden />
+                ) : (
+                    <VideoOff aria-hidden />
+                )}
+            </DeviceKey>
+            <DeviceKey
+                label="Pilih mikrofon & kamera"
+                onClick={() => setDevicesOpen(true)}
+            >
+                <Settings2 aria-hidden />
+            </DeviceKey>
         </div>
     );
 
     const joinButton = (
         <Button
             size="xl"
-            className="w-full font-extrabold md:w-auto md:min-w-60"
-            disabled={!canJoin}
-            onClick={join}
+            className="h-14 w-full rounded-lg text-[17px] font-bold"
+            disabled={!canJoin || joining}
+            onClick={() => void join()}
             data-testid="join-now"
         >
+            {joining && <Spinner />}
             {windowState.state === 'early' && video.can_join && video.configured
                 ? countdownLabel(windowState.msUntilOpen)
-                : 'Gabung sekarang'}
+                : 'Masuk dan buka notulen'}
         </Button>
     );
 
+    const consentCard = autoMinutesOn(room.notulen) && room.notulen && (
+        <ConsentCard notulen={room.notulen} consent={consent} />
+    );
+
     return (
-        <div className="flex min-h-dvh flex-col bg-background text-text">
-            <header className="flex h-16 shrink-0 items-center px-2 md:px-6">
-                <Button variant="ghost" size="lg" className="px-3" asChild>
+        <div className="min-h-dvh bg-room-desk text-text">
+            <div
+                className={cn(
+                    'mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-4 pt-4 md:px-10 lg:px-20 lg:pt-10',
+                    mobile ? 'pb-32' : 'pb-12',
+                )}
+            >
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="-ml-2 self-start"
+                    asChild
+                >
                     <Link href={meeting.href}>
                         <ArrowLeft aria-hidden />
                         Detail rapat
                     </Link>
                 </Button>
-            </header>
-            <main
-                className={cn(
-                    'mx-auto grid w-full max-w-[1240px] flex-1 content-center gap-6 px-4 pb-8 md:px-8 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,1fr)] lg:items-center lg:gap-14',
-                    mobile && 'content-start pb-36',
-                )}
-            >
-                <section
-                    aria-label="Pratinjau"
-                    className="flex min-w-0 flex-col gap-4"
-                >
-                    {preview}
-                    {error && (
-                        <p
-                            role="alert"
-                            className="flex items-start gap-2.5 rounded-control bg-warning-soft px-4 py-3 text-[15px] leading-[22px] text-warning"
-                        >
-                            <AlertTriangle
-                                aria-hidden
-                                className="mt-0.5 size-5 shrink-0"
-                            />
-                            {ERROR_TEXT[error]}
-                        </p>
-                    )}
-                    <div className="grid gap-3 md:grid-cols-2">
+                <header className="flex flex-col gap-1">
+                    <h1 className="text-[26px] leading-[32px] font-extrabold tracking-[-0.02em] md:text-[30px] md:leading-[38px]">
+                        {meeting.title}
+                    </h1>
+                    <p className="text-[16px] text-text-muted">
+                        {notes?.can_choose && !notes.chosen
+                            ? 'Pilih notulen yang dipakai, lalu masuk.'
+                            : 'Periksa kamera dan mikrofon, lalu masuk.'}
+                    </p>
+                    <p
+                        className="text-[14px] text-text-muted"
+                        data-testid="in-room"
+                    >
+                        {shortDate(officeDate(meeting.starts_at))} ·{' '}
+                        {timeRange(meeting.starts_at, meeting.ends_at)} ·{' '}
+                        {inRoom.length > 0
+                            ? `${namesSummary(inRoom.map((p) => nameOf(p.user_id)))} sudah di ruang`
+                            : 'Belum ada yang bergabung'}
+                    </p>
+                </header>
+
+                <main className="grid gap-6 lg:grid-cols-[minmax(0,520px)_minmax(0,560px)] lg:justify-between lg:gap-10">
+                    <section
+                        aria-label="Kamera dan mikrofon"
+                        className="flex min-w-0 flex-col gap-5"
+                    >
+                        {preview}
+                        {keys}
+                        {error && (
+                            <p
+                                role="alert"
+                                className="flex items-start gap-2.5 rounded-control bg-warning-soft px-4 py-3 text-[15px] leading-[22px] text-warning"
+                            >
+                                <AlertTriangle
+                                    aria-hidden
+                                    className="mt-0.5 size-5 shrink-0"
+                                />
+                                {ERROR_TEXT[error]}
+                            </p>
+                        )}
+                    </section>
+                    <section
+                        aria-label="Notulen"
+                        className="flex min-w-0 flex-col gap-3"
+                    >
+                        {/* In the flow of the notes column (never floating over it):
+                            with the AI provider notice it grows to 4+ lines (audit U-09). */}
+                        {consentCard}
+                        <NotesChoice
+                            room={room}
+                            source={source}
+                            onSource={setSource}
+                        />
+                        {notice ? (
+                            <p
+                                role="status"
+                                className="rounded-control bg-surface-2 px-4 py-3 text-[15px] leading-[22px] text-text-muted"
+                            >
+                                {notice}
+                            </p>
+                        ) : windowState.state === 'early' ? (
+                            <p className="text-[15px] text-text-muted">
+                                Ruang rapat dibuka 15 menit sebelum mulai.
+                            </p>
+                        ) : null}
+                        {!mobile && joinButton}
+                    </section>
+                </main>
+            </div>
+            {mobile && (
+                <div className="glass fixed inset-x-0 bottom-0 z-30 border-x-0 border-b-0 px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+                    {joinButton}
+                </div>
+            )}
+
+            <Dialog open={devicesOpen} onOpenChange={setDevicesOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Mikrofon & kamera</DialogTitle>
+                        <DialogDescription>
+                            Pilihan diingat di browser ini.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col gap-4">
                         <DevicePicker
                             kind="audioinput"
                             label="Mikrofon"
@@ -419,90 +774,8 @@ export function PreJoinScreen({
                             onChange={saveVideoInputDeviceId}
                         />
                     </div>
-                </section>
-
-                <section
-                    aria-label="Gabung rapat"
-                    className={cn(
-                        'flex min-w-0 flex-col gap-4 lg:items-start lg:text-left',
-                        mobile
-                            ? 'order-first items-start gap-2.5'
-                            : 'items-center text-center',
-                    )}
-                >
-                    {!mobile && (
-                        <Badge variant="label" tone="info">
-                            Video RuangKerja
-                        </Badge>
-                    )}
-                    <h1 className="text-[24px] leading-[30px] font-extrabold tracking-[-0.02em] md:text-[34px] md:leading-[42px]">
-                        {meeting.title}
-                    </h1>
-                    <p className="flex items-center gap-2 text-[16px] text-text-muted md:text-[17px]">
-                        <Clock aria-hidden className="size-5" />
-                        {shortDate(officeDate(meeting.starts_at))} ·{' '}
-                        {timeRange(meeting.starts_at, meeting.ends_at)}
-                    </p>
-                    <p
-                        className="flex items-center gap-3 text-[16px]"
-                        data-testid="in-room"
-                    >
-                        {inRoom.length > 0 ? (
-                            <>
-                                <span className="flex -space-x-2">
-                                    {inRoom.slice(0, 3).map((person) => {
-                                        const known = props.people.find(
-                                            (p) => p.id === person.user_id,
-                                        );
-
-                                        return (
-                                            <UserAvatar
-                                                key={person.user_id}
-                                                name={known?.name ?? 'Peserta'}
-                                                src={known?.avatar_url}
-                                                className="size-8 ring-2 ring-background"
-                                            />
-                                        );
-                                    })}
-                                </span>
-                                <span>
-                                    {namesSummary(inRoomNames)} sudah di ruang
-                                </span>
-                            </>
-                        ) : (
-                            <span className="text-text-muted">
-                                Belum ada yang bergabung
-                            </span>
-                        )}
-                    </p>
-                    {notice ? (
-                        <p
-                            role="status"
-                            className="rounded-control bg-surface-2 px-4 py-3 text-[15px] leading-[22px] text-text-muted"
-                        >
-                            {notice}
-                        </p>
-                    ) : windowState.state === 'early' ? (
-                        <p className="text-[15px] text-text-muted">
-                            Ruang rapat dibuka 15 menit sebelum mulai.
-                        </p>
-                    ) : null}
-                    {!mobile && (
-                        <>
-                            {joinButton}
-                            <p className="text-[14px] text-text-subtle">
-                                {shortcutLabel('toggle-mic', isMac)} mikrofon ·{' '}
-                                {shortcutLabel('toggle-camera', isMac)} kamera
-                            </p>
-                        </>
-                    )}
-                </section>
-            </main>
-            {mobile && (
-                <div className="glass fixed inset-x-0 bottom-0 z-30 flex flex-col gap-1.5 border-x-0 border-b-0 px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
-                    {joinButton}
-                </div>
-            )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

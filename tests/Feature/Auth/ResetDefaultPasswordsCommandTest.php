@@ -29,7 +29,7 @@ beforeEach(function () {
     $this->company = Company::factory()->create();
     $this->active = User::factory()->forCompany($this->company)->withRole(Role::Anggota)->create(['email' => 'aktif@kantor.test']);
     $this->noPassword = User::factory()->forCompany($this->company)->withRole(Role::KepalaDivisi)->create(['email' => 'tanpa-sandi@kantor.test', 'password' => null]);
-    $this->inactive = User::factory()->forCompany($this->company)->withRole(Role::Hr)->create(['email' => 'nonaktif@kantor.test', 'status' => UserStatus::Inactive]);
+    $this->inactive = User::factory()->forCompany($this->company)->withRole(Role::Anggota)->create(['email' => 'nonaktif@kantor.test', 'status' => UserStatus::Inactive]);
     $this->resigned = User::factory()->forCompany($this->company)->withRole(Role::Anggota)->create(['email' => 'keluar@kantor.test', 'status' => UserStatus::Resigned]);
     $this->admin = User::factory()->forCompany($this->company)->withRole(Role::SuperAdmin)->create(['email' => 'admin@kantor.test']);
 });
@@ -54,6 +54,18 @@ it('resets every active and inactive employee, skipping Super Admins and resigne
         ->and(Hash::check('password', (string) $this->admin->refresh()->password))->toBeTrue()
         ->and($this->admin->password_change_required)->toBeFalse();
 });
+
+it('skips direksi and hr accounts: their password is Super Admin only (R-06)', function (Role $role) {
+    $guarded = User::factory()->forCompany($this->company)->withRole($role)->create(['email' => 'dijaga@kantor.test']);
+
+    $this->artisan('ruangkerja:reset-default-passwords', ['--force' => true])
+        ->expectsOutputToContain('3 akun karyawan direset ke sandi bawaan')
+        ->assertSuccessful();
+
+    expect(Hash::check('password', (string) $guarded->refresh()->password))->toBeTrue()
+        ->and($guarded->password_change_required)->toBeFalse()
+        ->and(AuditLog::query()->where('auditable_id', $guarded->id)->where('action', 'user.password_reset_to_default')->doesntExist())->toBeTrue();
+})->with([Role::Direksi, Role::Hr]);
 
 it('audits one row per account without the value', function () {
     $this->artisan('ruangkerja:reset-default-passwords', ['--force' => true])->assertSuccessful();

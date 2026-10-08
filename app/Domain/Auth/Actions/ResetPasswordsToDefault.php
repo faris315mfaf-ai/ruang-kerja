@@ -18,13 +18,14 @@ use LogicException;
 /**
  * `php artisan ruangkerja:reset-default-passwords` (owner decision 7 Oct 2026):
  * returns employee accounts to the company default password with "wajib ganti
- * saat login berikutnya". Eligible: every non-Super-Admin account that is
- * active or inactive (an inactive one may be reactivated later); resigned
- * accounts are skipped. Per account: remember token rotated, stored sessions
- * deleted (the new hash also ends AuthenticateSession sessions), open "Lupa
- * kata sandi" requests closed and one `user.password_reset_to_default` audit
- * row (never the value). Chunked, one transaction per chunk; notifications
- * (in-app + email) only on request, after each chunk commits.
+ * saat login berikutnya". Eligible: every account without a
+ * super_admin/direksi/hr role (audit R-06) that is active or inactive (an
+ * inactive one may be reactivated later); resigned accounts are skipped. Per
+ * account: remember token rotated, stored sessions deleted (the new hash also
+ * ends AuthenticateSession sessions), open "Lupa kata sandi" requests closed
+ * and one `user.password_reset_to_default` audit row (never the value).
+ * Chunked, one transaction per chunk; notifications (in-app + email) only on
+ * request, after each chunk commits.
  */
 final readonly class ResetPasswordsToDefault
 {
@@ -44,7 +45,12 @@ final readonly class ResetPasswordsToDefault
     {
         return User::query()
             ->whereIn('status', [UserStatus::Active->value, UserStatus::Inactive->value])
-            ->whereDoesntHave('roles', fn (Builder $roles) => $roles->where('name', Role::SuperAdmin->value))
+            // R-06: super_admin/direksi/hr passwords are Super Admin only,
+            // never the shared default.
+            ->whereDoesntHave('roles', fn (Builder $roles) => $roles->whereIn('name', array_map(
+                fn (Role $role): string => $role->value,
+                Role::superAdminSetsPassword(),
+            )))
             ->when($onlyWithoutPassword, fn (Builder $query) => $query->whereNull('password'));
     }
 

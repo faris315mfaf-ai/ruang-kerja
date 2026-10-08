@@ -1,5 +1,9 @@
 <?php
 
+use App\Domain\Organization\Enums\Role;
+use App\Models\Meeting;
+use App\Models\User;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Vite;
 
 /**
@@ -29,11 +33,33 @@ it('sends the baseline security headers on every response', function (string $ur
 
     $permissions = (string) $response->headers->get('Permissions-Policy');
 
+    // Audit R-14: the microphone and screen capture are denied on the baseline
+    // documents and granted only on the video pages (test below).
     expect($permissions)->toContain('geolocation=(self)')
         ->toContain('camera=(self)')
-        ->toContain('microphone=(self)')
-        ->toContain('display-capture=(self)');
+        ->toContain('microphone=()')
+        ->toContain('display-capture=()');
 })->with(['/login', '/up', '/health', '/does-not-exist']);
+
+it('grants the microphone and screen capture only on the video pages', function (string $path) {
+    config(['features.meetings' => true]);
+    $this->seed(RoleSeeder::class);
+
+    // The pages render with a note even when LiveKit is not configured.
+    config(['livekit.url' => null]);
+
+    $organizer = User::factory()->withRole(Role::KepalaDivisi)->create();
+    $meeting = Meeting::factory()->by($organizer)->video()->create();
+
+    $response = $this->actingAs($organizer)->get("/rapat/{$meeting->id}/{$path}");
+
+    $response->assertOk();
+
+    $permissions = (string) $response->headers->get('Permissions-Policy');
+
+    expect($permissions)->toContain('microphone=(self)')
+        ->toContain('display-capture=(self)');
+})->with(['pre-join' => ['gabung'], 'room' => ['ruang']]);
 
 it('uses a strict CSP with a per-request nonce shared with the page', function () {
     $response = $this->get('/login')->assertOk();

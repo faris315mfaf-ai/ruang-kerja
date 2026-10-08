@@ -34,6 +34,16 @@ return [
     'join_before_minutes' => (int) env('LIVEKIT_JOIN_BEFORE_MINUTES', 15),
     'join_after_minutes' => (int) env('LIVEKIT_JOIN_AFTER_MINUTES', 120),
 
+    // Live subtitles in the room (stage 2: GPU transcription worker sends
+    // LiveKit text streams on topic `lk.transcription`). Only a flag for the
+    // UI (docs/fitur/rapat-video-kontrak.md §1.1 features.subtitles).
+    'subtitles' => (bool) env('LIVEKIT_SUBTITLES', false),
+
+    // "Waktu bicara" (meeting_speaking_times) is deleted together with the
+    // transcripts of the automatic minutes: same retention, in days
+    // (PruneSpeakingTimes, daily). meeting_attendances are kept.
+    'speaking_retention_days' => (int) env('MINUTES_TRANSCRIPT_RETENTION_DAYS', 90),
+
     // Webhooks older than this (event createdAt / token nbf) are rejected.
     'webhook_tolerance' => (int) env('LIVEKIT_WEBHOOK_TOLERANCE', 300),
 ];

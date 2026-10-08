@@ -25,11 +25,16 @@ Prioritas dari atas. "Folder milik" = satu-satunya tempat agen itu menulis (sela
 | 6 | Dashboard per jabatan `/peran/{role}` (melengkapi dashboard per peran; `positions.dashboard_role`) | `app/Domain/RoleDashboards`, `routes/roles.php`, `resources/js/features/role-dashboards`, `resources/js/pages/roles` | Claude Code | `claude/f3-peran` | selesai (PR #5) |
 | 6a | Panduan pratinjau (`docs/fitur/PANDUAN-PRATINJAU.md` + `/pratinjau/panduan`) | `docs/fitur`, `app/Domain/Documentation`, `resources/js/pages/prototype`, `resources/js/features/docs` | Claude Code | `docs/panduan-pratinjau` | selesai (PR #5) |
 | 6b | Bug ringan dari `docs/sprints/fase-2-3-prototipe/BUG-REPORT.md` | sesuai temuan | Claude Code | `claude/bug-ringan` | selesai (PR #5) |
-| 8 | Pembatalan pengajuan yang sudah disetujui oleh HR (UI + Action; `AttendanceEffects::revert()`, saldo kembali) | `app/Domain/Requests`, `resources/js/features/requests`, `resources/js/features/approvals` | Claude Code | `claude/batal-pengajuan` | review (PR integrasi backlog) |
-| 9 | Ekspor PNG struktur organisasi | `resources/js/features/organization`, `resources/js/pages/organization` | Claude Code | `claude/ekspor-struktur` | review (PR integrasi backlog) |
-| 10 | Tanda baca (*read receipt*) komentar tugas | `app/Domain/Tasks` (komentar), `resources/js/features/tasks/detail` | Claude Code | `claude/tanda-baca` | review (PR integrasi backlog) |
-| 11 | Kehadiran (*presence*) per kartu board | `routes/channels.php` (kanal baru), `resources/js/features/tasks` (board) | Claude Code | `claude/presence-board` | review (PR integrasi backlog) |
-| 12 | WAL archiving Postgres + pemulihan ke titik waktu (PITR) | `compose.*.yml`, `docker/`, `scripts/`, `docs/deploy` | Claude Code | `claude/wal-archiving` | review (PR integrasi backlog) |
+| 8 | Pembatalan pengajuan yang sudah disetujui oleh HR (UI + Action; `AttendanceEffects::revert()`, saldo kembali) | `app/Domain/Requests`, `resources/js/features/requests`, `resources/js/features/approvals` | Claude Code | `claude/batal-pengajuan` | selesai (PR #8) |
+| 9 | Ekspor PNG struktur organisasi | `resources/js/features/organization`, `resources/js/pages/organization` | Claude Code | `claude/ekspor-struktur` | selesai (PR #8) |
+| 10 | Tanda baca (*read receipt*) komentar tugas | `app/Domain/Tasks` (komentar), `resources/js/features/tasks/detail` | Claude Code | `claude/tanda-baca` | selesai (PR #8) |
+| 11 | Kehadiran (*presence*) per kartu board | `routes/channels.php` (kanal baru), `resources/js/features/tasks` (board) | Claude Code | `claude/presence-board` | selesai (PR #8) |
+| 12 | WAL archiving Postgres + pemulihan ke titik waktu (PITR) | `compose.*.yml`, `docker/`, `scripts/`, `docs/deploy` | Claude Code | `claude/wal-archiving` | selesai (PR #8) |
+| 13 | Ruang rapat arah C "Notulen Hidup" (UI) | `resources/js/features/meetings/video`, `resources/js/pages/meetings/{join,room}.tsx` | Claude Code | `claude/rapat-ui` → `claude/integrasi-rapat` | review (belum di-PR) |
+| 14 | Backend rapat (notulen bersama, waktu bicara, Panggil, kehadiran, larangan masuk) | `app/Domain/Meetings` | Claude Code | `claude/rapat-backend` → `claude/integrasi-rapat` | review (belum di-PR) |
+| 15 | Notulen otomatis tahap 1 (worker transkripsi + ringkasan LLM) | `transcriber/`, `app/Domain/Meetings/Transcripts` | Claude Code | `claude/notulen-otomatis` → `claude/integrasi-rapat` | review (belum di-PR); worker belum dipasang |
+| 16 | Audit keamanan rapat (4 putaran) | `docs/security/AUDIT-RAPAT-2026-10.md` | Claude Code | `claude/audit-*` → `claude/integrasi-rapat` | review (belum di-PR) |
+| 17 | Lanjutan setelah serah terima: merge, deploy, worker notulen, reset sandi | lihat `docs/SERAH-TERIMA-GLM.md` §6 | ZCode (GLM) | — | bebas |
 | 7 | Tinjau PR agen lain (`$tinjau` / `/tinjau`) | — (hanya laporan) | agen yang menganggur | — | berulang |
 
 **Ditahan oleh pemilik (6 Okt 2026), jangan dikerjakan:** login Google, Google Drive & Docs, notifikasi WhatsApp + provider, aplikasi ponsel (biometrik, integritas, offline, widget, check-in wajah, perangkat), mesin fingerprint, dan fitur yang belum ada sama sekali (lihat `docs/fitur/PANDUAN-PRATINJAU.md`).

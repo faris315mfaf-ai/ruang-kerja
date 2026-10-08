@@ -98,6 +98,7 @@ return [
 
     'waits' => [
         'redis:default' => 60,
+        'redis-long:long' => 600,
     ],
 
     /*
@@ -226,6 +227,21 @@ return [
             'memory' => 128,
             'tries' => 1,
             'timeout' => 30,
+            'nice' => 0,
+        ],
+
+        // Notulen otomatis (audit T-05): AI summaries (SummarizeMeetingTranscript, up to
+        // 900 s) on the `long` queue of the redis-long connection (retry_after 960 s).
+        'supervisor-long' => [
+            'connection' => 'redis-long',
+            'queue' => ['long'],
+            'balance' => 'simple',
+            'maxProcesses' => 1,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 256,
+            'tries' => 1,
+            'timeout' => 900,
             'nice' => 0,
         ],
     ],

@@ -38,5 +38,16 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="EMPLOYEE_DEFAULT_PASSWORD" value="" force="true"/>
+        <!-- Video RuangKerja, notulen otomatis, collab: never from a developer's .env (tests configure them explicitly). -->
+        <env name="LIVEKIT_URL" value="" force="true"/>
+        <env name="LIVEKIT_API_URL" value="" force="true"/>
+        <env name="LIVEKIT_API_KEY" value="" force="true"/>
+        <env name="LIVEKIT_API_SECRET" value="" force="true"/>
+        <env name="LIVEKIT_SUBTITLES" value="false" force="true"/>
+        <env name="TRANSCRIBER_URL" value="" force="true"/>
+        <env name="TRANSCRIBER_SECRET" value="" force="true"/>
+        <env name="TRANSCRIBER_CALLBACK_SECRET" value="" force="true"/>
+        <env name="MINUTES_LLM_API_KEY" value="" force="true"/>
+        <env name="COLLAB_SECRET" value="" force="true"/>
     </php>
 </phpunit>
