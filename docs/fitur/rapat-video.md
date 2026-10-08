@@ -30,7 +30,7 @@
 1. Buka rapat dari **Rapat**, **Kalender**, notifikasi **"Rapat dimulai"** (tombol **Gabung**), notifikasi **"Rapat sudah dimulai — Gabung"** bila Anda dipanggil (§4.3), atau Inbox.
 2. Di detail rapat, kartu video menampilkan "N orang di ruang rapat". Tekan **Gabung rapat video**. Ruang dibuka **15 menit sebelum** mulai sampai **2 jam sesudah** selesai (sebelumnya: *"Ruang dibuka 08.45"* + hitung mundur). Penyelenggara bisa masuk kapan saja. Hanya orang yang diundang yang bisa masuk.
 3. **Pra-gabung**: izinkan kamera dan mikrofon, periksa pratinjau, nyalakan/matikan mikrofon dan kamera, pilih perangkat (tombol setelan). Pilihan perangkat diingat di browser itu.
-4. Bila notulen otomatis aktif, kartu **"Notulen otomatis aktif"** di kanan atas menjelaskan: audio dihapus segera setelah transkripsi; transkrip disimpan 90 hari dan hanya bisa dibuka peserta rapat; ringkasan diproses oleh penyedia AI (disebut namanya bila di luar Indonesia); Anda bisa memilih **Jangan transkrip suara saya** (§2.5).
+4. Bila notulen otomatis aktif, kartu **"Notulen otomatis aktif"** di bagian atas kolom kanan (di atas pilihan notulen; di ponsel di bawah pratinjau kamera) menjelaskan: audio dihapus segera setelah transkripsi; transkrip disimpan 90 hari dan hanya bisa dibuka peserta rapat; ringkasan diproses oleh penyedia AI (disebut namanya bila di luar Indonesia); Anda bisa memilih **Jangan transkrip suara saya** (§2.5).
 5. Kartu kanan menunjukkan notulen yang dipakai (*"Notulen memakai Lanjutkan notulen rapat lalu · dipilih Sari."*) dan **Tindak lanjut terbuka** dari rapat sebelumnya. Tekan **Masuk dan buka notulen**.
 
 ![Pra-gabung: kamera, kartu notulen otomatis, notulen yang dipakai, tindak lanjut terbuka](img/rapat-video/pra-gabung-desktop.jpg)
