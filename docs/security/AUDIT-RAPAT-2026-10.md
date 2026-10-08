@@ -294,3 +294,85 @@ Cabang ini sudah memuat rapat-backend `5c30e78`. Saya menelusuri ulang N-01 … 
 
 Berkas milik agen notulen yang disentuh: `SetTranscriptConsent`, `SummarizeMeetingTranscript`, `ResummarizeTranscript`, `MinutesSummarizer`, `NotulenLiveKitWebhookController`, `resources/markdown/privacy-policy.md`.
 
+## 9. Fase 2 — cabang `claude/rapat-ui` @ `d464840` (perbaikan di `claude/audit-rapatui`)
+
+Cabang ini memuat rapat-backend `3800fe2`, notulen `ffd7d30`, dan audit-rapat. Saya juga me-merge `claude/audit-notulen` (§8) tanpa konflik. Yang ditinjau: UI ruang arah C (`resources/js/features/meetings/video/**`), notulen otomatis (`features/meetings/notulen/**`), halaman `meetings/{join,room,notulen-otomatis}`, dan token warna baru.
+
+Pemeriksaan visual memakai LiveKit lokal sendiri (kontainer `audit-livekit`, port 7898) dengan dua peserta kamera palsu (Playwright). `.env` worktree audit diisi nilai pengembangan.
+
+### 9.1 Temuan dan status
+
+| ID | Tingkat | Temuan | Status |
+|---|---|---|---|
+| N-07 | — | Subtitle `lk.transcription` hanya diterima dari identitas `rk-notulen` (`captions.ts acceptCaptionStream`, `room-captions.tsx`) | **Terverifikasi diperbaiki** |
+| R-05 (UI) | — | Nama, avatar, dan kursi diambil dari prop `participants` server berdasarkan identitas (`room-people.tsx resolvePerson`). Identitas tak dikenal tampil sebagai "Tamu tak dikenal". `participant.name` dan metadata tidak dipakai, termasuk di obrolan | **Terverifikasi diperbaiki** |
+| U-01 | Rendah | Klaim agen UI soal `rk_minutes_at: ""` **benar**: sejak B-04 (`1fa3519`) server menerima `""` dan meneruskannya sebagai penghapusan atribut. Klien masih mengirim `"off"`, yang tertinggal di atribut LiveKit semua orang | **Diperbaiki** `0942a48`: klien kembali ke `""`; `"off"` lama tetap diabaikan saat dibaca. Test server `RapatUiAuditTest` |
+| U-02 | Sedang | **Notulen kolaboratif: hak sunting hanya dari token pertama.** Setelah server memaksa sambung ulang (notulen final, peserta dikeluarkan atau diizinkan lagi), editor tetap bisa diketik padahal koneksinya baca-saja. Ketikan hilang diam-diam; sebaliknya, orang yang diizinkan lagi tetap baca-saja | **Diperbaiki** `d6bc1b3`: setiap token sambung ulang memperbarui `canEdit`. Vitest `use-minutes-collab.test.ts` (merah sebelum perbaikan) |
+| U-03 | Sedang (bug UI) | **Bilah kontrol mengambang menutupi bagian bawah kertas notulen** ("Tulis keputusan…", "+ Keputusan"). Kertas tidak menyisakan ruang di bawah, dan field yang difokus bisa tetap di bawah bilah | **Diperbaiki** `34a5338`, rincian di bawah tabel |
+| U-04 | Rendah (a11y) | 15 teks yang harus dibaca memakai `text-subtle`: **2,7:1 di meja ruang terang**, 3,1:1 di kertas. Contoh: ringkasan waktu bicara, jam masuk, "Dipanggil", "Belum ada keputusan/tindak lanjut", baris meta notulen, jam transkrip, cap waktu obrolan, judul seksi review. DESIGN.md membatasi `text-subtle` untuk placeholder, ikon, dan elemen nonaktif | **Diperbaiki** `b504387`: diganti `text-muted` (6,4:1). Vitest `room-contrast.test.ts` memindai berkas ruang |
+| U-05 | Rendah (test) | `MeetingRoomTest` bergantung pada `.env` lokal. Dengan `TRANSCRIBER_URL` terisi, 2 test gagal (prop `notulen.available` menjadi `true`) | **Diperbaiki** `e170f72`: `phpunit.xml` memaksa `LIVEKIT_URL`, `LIVEKIT_API_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_SUBTITLES=false`, `TRANSCRIBER_URL`, `TRANSCRIBER_SECRET`, `TRANSCRIBER_CALLBACK_SECRET`, `MINUTES_LLM_API_KEY`, `COLLAB_SECRET` kosong. Diuji dengan `.env` terisi: Meetings + Audit + Notes 308 lulus, suite penuh lihat §9.4 |
+| U-06 | Info | Hocuspocus + Yjs (111 KB / 32 KB gzip) diimpor statis oleh halaman ruang walau mode kolaborasi mati | Rekomendasi rapatui: `import()` di `useMinutesCollab` |
+| U-07 | Info | `resources/js/pages/notes/index.test.tsx` ikut glob halaman, jadi dibangun sebagai chunk 426 KB. Chunk ini tidak pernah dimuat. Sudah ada di `main` | Rekomendasi integrator: kecualikan `*.test.tsx` dari glob halaman |
+| U-08 | Info | Pembaca notulen kolaboratif ("Notulen belum dimulai", token 404 B-06) hanya mencoba lagi setelah `minutes.updated`. Bila editor membuka dokumen tanpa menyimpan, pembaca tetap menunggu sampai simpanan pertama | Diterima |
+
+**Rincian perbaikan U-03:**
+- Ukuran bilah menjadi variabel CSS: `--room-bar-h` / `--room-bar-bottom`. Desktop 60/18 px; ponsel 68 px / `max(16px, safe-area)`.
+- Kertas notulen (desktop, Presentasi, tab Notulen ponsel) mendapat `padding-bottom` dan `scroll-padding-bottom` = bilah + jarak. Panel dan subtitle memakai variabel yang sama.
+- Field yang difokus digulir ke atas bilah (`room-scroll.ts keepFocusAboveBar`; Vitest `room-scroll.test.ts`).
+- Diukur dengan Playwright:
+
+| Tampilan | Field "Tulis keputusan" sebelum digulir | Setelah fokus | Digulir ke akhir: field & tombol tertutup? |
+|---|---|---|---|
+| 1440 terang & Malam | **tertutup bilah** (kasus laporan) | tidak tertutup, jarak 258 px | tidak |
+| 834 | tidak tertutup | tidak tertutup, jarak 130 px | tidak |
+| 390 | tidak tertutup | tidak tertutup, jarak 34 px | tidak |
+| Presentasi 1440 (berbagi layar aktif) | — | tidak tertutup | — |
+
+### 9.2 Diverifikasi aman
+
+- **XSS / teks polos:** tidak ada `dangerouslySetInnerHTML`/`innerHTML` di modul rapat. Obrolan, subtitle, transkrip, dan draf AI dirender sebagai teks React; tidak ada Markdown atau tautan otomatis dari draf. Semua `href` berasal dari server (Wayfinder/props). Editor kolaboratif memakai `NoteEditor` Catatan (Tiptap Link `protocols` http/https/mailto, `isAllowedUri`, `openOnClick: false`).
+- **Token:**
+  - Token LiveKit dan kolaborasi hanya disimpan di memori (tidak ada `localStorage`/`sessionStorage`, tidak di-log).
+  - Token LiveKit baru diambil saat sambung ulang otomatis dan saat "Coba lagi".
+  - `participant.readmitted` untuk diri sendiri menyambung ulang otomatis bila realtime aktif (`room.tsx`); tanpa realtime, orangnya menekan "Coba lagi".
+  - Token kolaborasi baru diambil setiap sambung ulang (`token: async () => …`) dan kini juga membawa hak sunting (U-02).
+- **Klien Yjs:**
+  - nama dokumen dari server (`MinutesCollab::documentName`) dan dicek collab server terhadap token;
+  - baca-saja = `editable={canEdit}` + `connectionConfig.readOnly` di server;
+  - token 404 → mode `waiting` ("Notulen belum dimulai"), coba lagi saat `minutes.updated`;
+  - tidak tersinkron dalam 5 dtk → mode simpan otomatis.
+- **Kontras token baru** (WCAG):
+
+| Pasangan | Terang | Malam |
+|---|---|---|
+| teks bilah / bilah (`on-room-bar` / `room-bar`) | 15,4:1 | 13,5:1 |
+| teks bilah / tombol (`on-room-bar` / `room-key`) | 14,2:1 | 11,0:1 |
+| subtitle putih di atas video terang–gelap | 13,8–19,9:1 | 10,8–13,5:1 |
+| `caption-muted` di atas video | ≥ 6,5:1 | ≥ 5,1:1 |
+| nama pembicara subtitle a/b/c | ≥ 7,8:1 | ≥ 6,1:1 |
+
+  Info: batas tombol `room-key` vs `room-bar` hanya 1,1–1,2:1. Tombol tetap dikenali dari ikonnya (≥ 11:1); bilah di Malam vs meja 1,3:1 dibantu bayangan.
+- **Render ulang** (diukur, dua peserta, 30 dtk diam): **60 mutasi DOM pada 2 node** (jam rapat), **0 long task**, heap JS 14 MB. Langganan dipisah ke komponen daun (`StripLive`, `TalkLive`, `DocLive` dengan `useParticipants({ updateOnlyOn })`, `ParticipantTile` di-`memo`). Masalah `useClock`/`useParticipants` di akar (§4) sudah tidak ada.
+- **Bundle:**
+
+| Halaman | JS statis mentah | gzip | Chunk |
+|---|---|---|---|
+| ruang | 1.566 KB (sebelumnya 1.346) | 463 KB | 59 |
+| pra-gabung | 1.342 KB | 397 KB | 46 |
+| detail rapat | 801 KB | 253 KB | 48 (tanpa LiveKit) |
+| notulen otomatis | 749 KB | 239 KB | 39 |
+
+  LiveKit tetap satu chunk 572 KB / 150 KB gzip, hanya di pra-gabung dan ruang. `NoteEditor` dimuat lazy.
+
+### 9.3 Commit (`claude/audit-rapatui`)
+
+| Commit | Isi |
+|---|---|
+| `e170f72` | test: `phpunit.xml` mengunci env LiveKit, transcriber, LLM, collab (U-05) |
+| `0942a48` | fix(rapat-ui): `rk_minutes_at` dikosongkan dengan `""` (U-01) |
+| `d6bc1b3` | fix(rapat-ui): editor kolaboratif mengikuti hak sunting token terbaru (U-02) |
+| `34a5338` | fix(rapat-ui): bilah kontrol tidak menutupi kertas notulen (U-03) |
+| `b504387` | fix(rapat-ui): teks yang harus dibaca tidak memakai `text-subtle` (U-04) |
+
+Berkas milik rapatui yang disentuh: `room-connected.tsx`, `room-doc.tsx`, `room-side.tsx`, `room-panels.tsx`, `use-minutes-collab.ts`, `notulen/notulen-review.tsx`. Berkas baru: `room-scroll.ts`, tiga test Vitest, dan `tests/Feature/Audit/RapatUiAuditTest.php`.
+
