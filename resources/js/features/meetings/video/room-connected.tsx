@@ -1431,7 +1431,7 @@ function DesktopRoom({
             </header>
 
             {presenting ? (
-                <main className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_360px] gap-5 px-5 pt-3">
+                <main className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_360px] gap-5 px-6 pt-3">
                     <div className="min-h-0 pb-[calc(var(--room-bar-h)+var(--room-bar-bottom)+12px)]">
                         <ScreenShare trackRef={screen} />
                     </div>
