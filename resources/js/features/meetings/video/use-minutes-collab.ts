@@ -64,7 +64,14 @@ export function useMinutesCollab(
         const off = () => {
             if (!cancelled) {
                 cancelled = true;
-                provider?.destroy();
+
+                if (provider) {
+                    provider.destroy();
+                    // destroy() is not idempotent: null the ref so the
+                    // unmount cleanup cannot call it a second time.
+                    provider = null;
+                }
+
                 setState({ mode: 'off' });
             }
         };
@@ -74,9 +81,11 @@ export function useMinutesCollab(
             .collabToken(tokenUrl)
             // Hocuspocus + Yjs (111 KB) load only once a document exists to
             // join, so rooms without collab minutes never download them
-            // (audit U-06). The timer restarts after the load so the chunk
-            // download does not eat into the connect budget.
+            // (audit U-06). The connect budget is not spent on the token
+            // fetch or the chunk download: the timer restarts after each.
             .then(async (first) => {
+                window.clearTimeout(timer);
+
                 const [{ HocuspocusProvider }, yjs] = await Promise.all([
                     import('@hocuspocus/provider'),
                     import('yjs'),
@@ -161,6 +170,12 @@ export function useMinutesCollab(
                 current.on('authenticationFailed', off);
             })
             .catch((error: unknown) => {
+                // A late 404 from a superseded attempt must not overwrite the
+                // state of the attempt that replaced it.
+                if (cancelled) {
+                    return;
+                }
+
                 if (error instanceof ApiError && error.status === 404) {
                     window.clearTimeout(timer);
                     cancelled = true;

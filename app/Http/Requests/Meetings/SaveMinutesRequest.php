@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Meetings;
 
+use App\Models\Meeting;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Validation\Rule;
 
 /**
  * Autosave of draft minutes (PUT /rapat/{meeting}/notulen). With
@@ -16,10 +18,15 @@ class SaveMinutesRequest extends MeetingRequest
      */
     public function rules(): array
     {
+        $meeting = $this->route('meeting');
+
         return [
             'tanggal' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
             'attendance' => ['present', 'array', 'max:200'],
-            'attendance.*.user_id' => ['required', 'string', 'ulid'],
+            // Same company as the meeting: attendance names are rendered to
+            // everyone invited, so a foreign ULID must not slip through.
+            'attendance.*.user_id' => ['required', 'string', 'ulid', Rule::exists('users', 'id')
+                ->where('company_id', $meeting instanceof Meeting ? $meeting->company_id : null)],
             'attendance.*.present' => ['required', 'boolean'],
             'attendance.*.reason' => ['nullable', 'string', 'max:60'],
             'attendance_only' => ['sometimes', 'boolean'],
