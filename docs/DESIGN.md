@@ -49,6 +49,22 @@ Semua nilai dari `docs/ruangkerja-design/README.md` + `screens/Main.dc.html`. Na
 
 Isian grafik & titik (bukan teks): `bg-fill-teal` (#14B8A6), `bg-fill-warning` (#E08A00), `bg-fill-danger`, `bg-fill-violet` (#6D4AE0), penanda rencana `bg-marker`. Badge angka notifikasi: `bg-badge text-on-badge` (merah, sama di dua tema). Chip inverse (label Dock, toast): `bg-inverse text-on-inverse`. Avatar inisial: `bg-avatar-{blue|teal|amber|neutral}` + `text-avatar-*-fg` (pilih lewat `avatarTone(name)`). Warna tetap di dua tema: `qr-ink`/`qr-paper` (QR kiosk) dan `preview-light`/`preview-dark` (contoh tema di Pengaturan › Tampilan).
 
+### Ruang rapat video (arah C "Notulen Hidup")
+Hanya untuk `features/meetings/video/**` dan `pages/meetings/{join,room}.tsx` (`resources/css/tokens.css`, utilitas di `app.css`). Panduan & gambar: `docs/fitur/rapat-video.md`.
+
+| Token | Terang | Malam | Utilitas | Pakai |
+|---|---|---|---|---|
+| `--room-desk` | `#ECEFF3` | `#070B14` | `bg-room-desk` | "meja" di belakang kertas notulen dan pita video (pra-gabung, ruang) |
+| `--room-bar` | `#0B1A2B` | `#1A2537` | `bg-room-bar` | bilah kontrol ringkas yang selalu gelap |
+| `--room-key` | `#172131` | `#26344A` | `bg-room-key` | tombol di bilah kontrol (mikrofon, kamera, layar, tangan, subtitle, obrolan, kehadiran, ⋯) |
+| `--on-room-bar` | `#EAF1F8` | sama | `text-on-room-bar` | ikon & teks di atas `room-bar`/`room-key` |
+| `--tile-off` | `#DDE4EC` | `#172131` | `bg-tile-off` | ubin peserta dengan kamera mati (avatar inisial di tengah) |
+| `--caption` | `rgb(7 11 20 / .86)` | `rgb(35 50 71 / .94)` | `bg-caption` | kotak subtitle di atas bilah kontrol |
+| `--on-caption` / `--caption-muted` | `#FFFFFF` / `#A6B4C6` | sama | `text-on-caption`, `text-caption-muted` | teks subtitle terbaru / baris sebelumnya |
+| `--caption-name-a/b/c` | `#5AD6C8` / `#A9C2FF` / `#F6B95C` | sama | `text-caption-name-{a,b,c}` | nama pembicara di subtitle, bergiliran per pembicara |
+
+Tombol **Keluar** memakai `bg-danger`; ubin yang sedang bicara diberi cincin `primary`. Jangan memakai token ini di luar layar rapat video.
+
 ### Gradien
 | Token | Nilai | Utilitas | Pakai |
 |---|---|---|---|
