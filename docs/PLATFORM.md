@@ -18,7 +18,7 @@
 
 | Elemen | Desktop (≥ 1024) | Tablet (768–1023) | Mobile (< 768) |
 |---|---|---|---|
-| Navigasi utama | **Dock ala macOS** mengambang di bawah (ubin 52px membesar mengikuti kursor dengan pegas, stack Workspace, Organisasi & Admin) | **Rail** kaca 96px di kiri: merek, Cari, tujuan yang sama dengan Dock, stack membuka ke kanan, avatar = menu akun | **Tab bawah 5 item** sebagai kapsul mengambang 70px: Beranda · Tugas · **Absen** (tombol bulat di tengah) · Obrolan · Lainnya. Bila Obrolan mati (`FEATURE_CHAT=false`), slot ke-4 = Inbox |
+| Navigasi utama | **Dock ala macOS** mengambang di bawah (ubin 52px membesar mengikuti kursor dengan pegas, stack Workspace, Organisasi & Admin) | **Rail** kaca 96px di kiri: merek, Cari, tujuan yang sama dengan Dock, stack membuka ke kanan, avatar = menu akun | **Tab bawah 5 item** sebagai kapsul mengambang 70px: Beranda · Tugas · **tombol tengah kontekstual** (Absen / Workspace, lihat §3 baris 1) · Obrolan · Lainnya. Bila Obrolan mati (`FEATURE_CHAT=false`), slot ke-4 = Inbox |
 | Workspace & admin | Stack di Dock | Stack di Rail | Di tab **Lainnya** (`/menu`) |
 | Topbar | **Menu bar kaca 64px** (MenuBar.dc.html): merek, breadcrumb, chip status absensi + pil Check-in, cari ⌘K/Ctrl K, lonceng berangka, avatar. Konten di kolom 1280px (lebar 1480px untuk board/tabel) padding 40px | Tidak ada (Rail memuat cari & akun); padding konten 24px | **Judul besar 32/40** + tombol bulat 48px (cari, lonceng berbadge = **pintu Inbox**); Beranda: tanggal + sapaan + cari + lonceng (profil lewat Lainnya); layar turunan: bar 56px lengket + tombol kembali bulat |
 | Cari | Command palette (modal kaca) | Sama (tombol Cari di Rail, ⌘K) | Layar cari penuh, **kolom cari di bawah** (zona jempol) |
@@ -36,7 +36,7 @@ Ponsel dirancang untuk dipakai satu tangan: aksi yang sering ada di zona jempol 
 
 | # | Keputusan | Berlaku di |
 |---|---|---|
-| 1 | Tab bawah: Beranda · Tugas · **Absen** · Obrolan · Lainnya. Absen = tombol bulat gradien 54px yang menonjol di tengah kapsul (aksi harian terpenting). Inbox pindah ke **lonceng berbadge di app bar** setiap layar akar tab, dan tetap ada di Lainnya. Tanpa Obrolan, slot ke-4 kembali Inbox | Shell (`TabBar`, `AppBar`) |
+| 1 | Tab bawah: Beranda · Tugas · **tombol tengah** · Obrolan · Lainnya. Tombol tengah gradien 54px (aksi harian): **Absen** sebelum absen masuk dan mulai 1 jam sebelum akhir shift (sampai absen pulang), **Workspace** (ikon LayoutGrid, membuka bottom sheet pilihan workspace Pribadi · Tim · Proyek, keputusan pemilik 9 Okt 2026) setelah absen masuk / absen pulang / tidak tersedia; status tak dikenal tetap Absen. Inbox pindah ke **lonceng berbadge di app bar** setiap layar akar tab, dan tetap ada di Lainnya. Tanpa Obrolan, slot ke-4 kembali Inbox | Shell (`TabBar`, `AppBar`) |
 | 2 | Layar Cari: kolom cari menempel di bawah layar, hasil di atasnya | `/cari` |
 | 3 | Persetujuan: **tumpukan kartu** (geser kanan = setujui, kiri = tolak) dengan tombol Tolak · Minta revisi · Setujui di zona jempol; detail lewat tautan kartu | `/persetujuan` |
 | 4 | Check-in: **geser untuk check-in** (bukan sekali ketuk) supaya tidak absen tanpa sengaja; pilihan metode (GPS + selfie · QR · WFH) sebagai segmented di atas peta | `/absensi` |
@@ -52,13 +52,13 @@ Butir 2–4 diterapkan modul masing-masing; shell (butir 1) sudah berlaku.
 |---|---|---|---|
 | Login email + kata sandi (keputusan pemilik 6 Okt 2026; login Google ditahan) | ✓ | ✓ | Form di zona jempol; "Lupa kata sandi" → halaman tunggu persetujuan HR |
 | Ganti kata sandi sendiri (Pengaturan › Keamanan) | ✓ | ✓ | Juga di tab Menu › "Kata sandi & keamanan" |
-| Beranda / Dashboard Saya | ✓ | ✓ | Kartu check-in di atas |
+| Beranda / Dashboard Saya | ✓ | ✓ | Kartu check-in di atas; kartu utama "Tugas hari ini" dengan segmen Pribadi · Tim · Semua (keputusan pemilik 9 Okt 2026) menggantikan kartu Ruang saya, kartu laporan harian, KPI saldo cuti/tugas terbuka/tepat waktu, dan kartu pengajuan |
 | Check-in/out GPS + selfie | ✓ | ✓ | **Prioritas ponsel**, tab tengah. Geser untuk check-in, kamera depan, akurasi tinggi |
 | Pindai QR kiosk | ✓ | ✓ | |
 | Halaman kiosk QR | ✓ (tablet/TV) | — | Perangkat khusus di lobi |
 | Riwayat absensi saya | ✓ | ✓ | Kalender bulan kecil + daftar |
 | Pengajuan (buat, lihat, batalkan) | ✓ | ✓ | Lampiran bisa langsung dari kamera. Jenis terkunci (cuti & lembur, keputusan pemilik 6 Okt 2026) tidak jadi chip: tampil sebagai daftar bergembok di bawah chip; desktop: ubin bergembok. Pengajuan barang penuh di kedua platform |
-| Laporan progres harian (`/laporan`, `/laporan/hari-ini`) | ✓ | ✓ | Keputusan pemilik 6 Okt 2026. Form satu kolom, tombol Kirim di bilah kaca di atas tab bar; kartu "Laporan hari ini" di Beranda |
+| Laporan progres harian (`/laporan`, `/laporan/hari-ini`) | ✓ | ✓ | Keputusan pemilik 6 Okt 2026. Form satu kolom, tombol Kirim di bilah kaca di atas tab bar; kartu "Laporan hari ini" dicabut dari Beranda (keputusan pemilik 9 Okt 2026, digantikan kartu "Tugas hari ini") |
 | Pengumuman (`/pengumuman`) | ✓ | ✓ | Buat lewat FAB + bottom sheet (desktop: dialog). Spanduk di atas dashboard di kedua platform |
 | Catatan & notulensi (`/catatan`, keputusan pemilik 6 Okt 2026) | ✓ | ✓ | "Mulai notulensi" 52px di dashboard (desktop: tombol di header + menu "Notulensi terakhir"). Tab dokumen: desktop panel kiri ≥ 1024 (tablet bisa diciutkan), ponsel strip chip di bawah app bar + bottom sheet "Tab dokumen" (sub-tab). Warna teks & stabilo di toolbar; ukuran huruf A−/A+ (90–160%, per perangkat) di toolbar desktop, ponsel lewat lembar "Tampilan teks". Mode catat: pil "Kembali ke notulensi" di semua halaman (desktop di atas Dock, tablet kanan bawah, ponsel di atas tab bar), keluar hanya lewat "Selesai mencatat" |
 | Persetujuan (setuju/tolak/revisi) | ✓ | ✓ | Tumpukan kartu + tombol di zona jempol (§2.1). Aksi massal hanya desktop |
@@ -92,7 +92,7 @@ Fitur ◐ dan — di mobile tetap punya rute. Rute itu menampilkan versi baca-sa
 - **Input `font-size: 17px`** (Tipografi "Ponsel"; mencegah zoom otomatis iOS). Tinggi input 44–48 px.
 - Padding samping 16 px. Teks dasar 17 px (`text-body`), judul layar 32/40 (`text-display`), judul bar layar turunan 17 px.
 - Hormati *safe area* (`env(safe-area-inset-*)`) untuk tab bawah dan bilah aksi.
-- Tab bawah = **kapsul** (TabBar.dc.html): kaca (`.tab-bar-surface`), `rounded-full`, 12px dari tepi kiri/kanan (`--tab-bar-inset`), melayang 14px di atas safe area (`--tab-bar-lift`), tinggi 70px (`--tab-bar-capsule`), lebar maks 420px di tengah. Tab aktif = pil **gradien aksi** (malam: gradien terang + tinta gelap, `--grad-active`) dengan label putih yang bergeser (transform 180ms `ease-brand`, instan dengan `prefers-reduced-motion`); label 12px tebal, ikon 24px, badge merah di Obrolan (pesan belum dibaca) atau Inbox (bila slot ke-4 = Inbox). Tab tengah **Absen** tidak memakai pil: tombol bulat 54px gradien aksi, naik 26px di atas kapsul dengan cincin 4px warna permukaan; saat aktif labelnya tebal berwarna teks utama. Semua elemen yang menempel di atas tab bar (padding konten, FAB, bilah aksi, toast) memakai `--tab-bar-height`, jangan angka tetap.
+- Tab bawah = **kapsul** (TabBar.dc.html): kaca (`.tab-bar-surface`), `rounded-full`, 12px dari tepi kiri/kanan (`--tab-bar-inset`), melayang 14px di atas safe area (`--tab-bar-lift`), tinggi 70px (`--tab-bar-capsule`), lebar maks 420px di tengah. Tab aktif = pil **gradien aksi** (malam: gradien terang + tinta gelap, `--grad-active`) dengan label putih yang bergeser (transform 180ms `ease-brand`, instan dengan `prefers-reduced-motion`); label 12px tebal, ikon 24px, badge merah di Obrolan (pesan belum dibaca) atau Inbox (bila slot ke-4 = Inbox). Tab tengah (Absen / Workspace, kontekstual — lihat §3 baris 1) tidak memakai pil: tombol bulat 54px gradien aksi, naik 26px di atas kapsul dengan cincin 4px warna permukaan; saat aktif labelnya tebal berwarna teks utama. Semua elemen yang menempel di atas tab bar (padding konten, FAB, bilah aksi, toast) memakai `--tab-bar-height`, jangan angka tetap.
 - Keyboard: saat input fokus, bilah aksi bawah ikut naik (pakai `visualViewport`), tab bawah disembunyikan.
 - Glass hanya untuk app bar (saat menggulir), tab bawah, bottom sheet, toast.
 - Tidak ada interaksi yang hanya mengandalkan hover. Pintasan keyboard hanya desktop.

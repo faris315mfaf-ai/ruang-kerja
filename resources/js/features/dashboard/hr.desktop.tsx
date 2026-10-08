@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { CalendarRange, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { BriefingCard } from '@/features/briefings/briefing-card';
 import { formatLongDate } from '@/lib/format';
 import { PageHeader } from './dashboard-ui';
 import {
@@ -56,6 +57,10 @@ export function HrDesktop({ live, ...props }: HrProps & { live: boolean }) {
                 </Button>
             </PageHeader>
             <ViewPicker views={props.views} />
+
+            {/* Kartu "Catat briefing" (keputusan pemilik 9 Okt 2026): HR
+                mendarat di view ini; null untuk non-pencatat. */}
+            <BriefingCard briefing={props.briefing} variant="desktop" />
 
             <section className="flex flex-wrap items-start gap-5">
                 <div className="flex min-w-0 flex-[1.4_1_560px] flex-col gap-5">
