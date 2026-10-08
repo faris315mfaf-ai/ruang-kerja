@@ -257,7 +257,7 @@ export function NoteMobile({
                 <div
                     ref={toolbarBox}
                     className={cn(
-                        'glass fixed inset-x-0 z-30 border-x-0 border-b-0 px-2 py-1.5 transition-[transform,opacity,visibility] duration-180 ease-brand',
+                        'glass fixed inset-x-0 z-30 border-x-0 border-b-0 px-2 py-1.5 transition-[bottom,transform,opacity,visibility] duration-180 ease-brand',
                         toolbarVisible
                             ? 'visible translate-y-0 opacity-100'
                             : 'pointer-events-none invisible translate-y-full opacity-0',

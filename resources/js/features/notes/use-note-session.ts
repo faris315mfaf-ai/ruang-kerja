@@ -4,9 +4,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ApiError } from '@/features/tasks/lib/api';
 import type { RichDoc } from '@/features/tasks/editor/types';
-import { notesApi } from './api';
+import { notesApi, saveUnsentKeepalive } from './api';
 import { connectedLabel, savedLabel } from './lib';
 import type { LiveDocument } from './note-editor';
+import {
+    handoffUnsavedChanges,
+    readUnsavedFor,
+    takeUnsavedFor,
+    type UnsavedNote,
+} from './unsaved-store';
 import type {
     NoteDetail,
     NotePerson,
@@ -35,8 +41,21 @@ export function useNoteSession(
     props: NoteShowProps,
     versionsProp: NoteVersion[] | undefined,
 ) {
-    const [current, setCurrent] = useState<NoteDetail>(props.current);
-    const [title, setTitleState] = useState(props.current.title);
+    // Stuck changes from a previous visit (the page was left before the
+    // debounced saves fired): open with them, "saved"/"conflict" landed on
+    // the server already. The mount effect below re-arms the auto-save.
+    const adopted = readUnsavedFor(props.current.id);
+    const adoptable =
+        adopted !== null &&
+        (adopted.phase === 'saving' || adopted.phase === 'offline');
+    const [current, setCurrent] = useState<NoteDetail>(
+        adoptable && adopted.body !== undefined
+            ? { ...props.current, content: adopted.body }
+            : props.current,
+    );
+    const [title, setTitleState] = useState(
+        adoptable ? adopted.title : props.current.title,
+    );
     const [share, setShare] = useState<NoteShare | null>(props.share);
     const me = props.people.find((person) => person.id === props.viewer_id) ?? {
         id: props.viewer_id,
@@ -76,7 +95,48 @@ export function useNoteSession(
     const saveTimer = useRef<number | undefined>(undefined);
     const titleTimer = useRef<number | undefined>(undefined);
     const pending = useRef<RichDoc | null | undefined>(undefined);
+    /** Body of the save currently in flight (kept for the unload handoff). */
+    const inFlight = useRef<RichDoc | null | undefined>(undefined);
     const base = useRef(current.updated_at ?? '');
+    // Latest id/title for the unload handoff (the unmount cleanup and the
+    // pagehide listener must not read a stale first-render closure).
+    const latest = useRef({
+        noteId: current.id,
+        title,
+        noteTitle: current.title,
+    });
+
+    useEffect(() => {
+        latest.current = {
+            noteId: current.id,
+            title,
+            noteTitle: current.title,
+        };
+    });
+
+    /** Changes that would be lost when the page goes away right now. */
+    const stuckChanges = (): UnsavedNote | null => {
+        const snapshot = latest.current;
+        const pendingTitle =
+            titleTimer.current !== undefined &&
+            snapshot.title !== snapshot.noteTitle
+                ? snapshot.title
+                : null;
+        // A save in flight may still fail after the page is gone — hand
+        // its body over too, so the pill can retry it.
+        const body =
+            pending.current !== undefined ? pending.current : inFlight.current;
+
+        return pendingTitle !== null || body !== undefined
+            ? {
+                  noteId: snapshot.noteId,
+                  title: snapshot.title,
+                  pendingTitle,
+                  body,
+                  baseUpdatedAt: base.current,
+              }
+            : null;
+    };
 
     useEffect(() => {
         const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -85,7 +145,36 @@ export function useNoteSession(
             window.clearInterval(timer);
             window.clearTimeout(saveTimer.current);
             window.clearTimeout(titleTimer.current);
+            // Leaving with unflushed changes (keputusan pemilik 9 Okt
+            // 2026): hand them to the unsaved pill — the save continues in
+            // the background instead of being dropped.
+            const stuck = stuckChanges();
+            pending.current = undefined;
+            titleTimer.current = undefined;
+
+            if (stuck) {
+                handoffUnsavedChanges(stuck);
+            }
         };
+        // The refs it reads are always current.
+        // oxlint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Real unload (close/reload): no cleanup runs there, so fire the last
+    // save as a keepalive fetch that outlives the document.
+    useEffect(() => {
+        const onPageHide = () => {
+            const stuck = stuckChanges();
+
+            if (stuck) {
+                saveUnsentKeepalive(stuck);
+            }
+        };
+
+        window.addEventListener('pagehide', onPageHide);
+
+        return () => window.removeEventListener('pagehide', onPageHide);
+        // oxlint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Live: "Menyimpan…" while the provider has changes the server has not confirmed.
@@ -118,6 +207,7 @@ export function useNoteSession(
         }
 
         pending.current = undefined;
+        inFlight.current = doc;
         setSaving(true);
 
         try {
@@ -141,6 +231,7 @@ export function useNoteSession(
                 toast.error(`Catatan belum tersimpan. ${errorMessage(error)}`);
             }
         } finally {
+            inFlight.current = undefined;
             setSaving(false);
         }
     }, [current.id]);
@@ -229,6 +320,32 @@ export function useNoteSession(
                 });
         }, TITLE_DELAY);
     };
+
+    // Reclaimed stuck changes: the state above opens with them, and the
+    // auto-save re-arms so the page owns the retry again. "Saved"/"conflict"
+    // landed on the server — nothing to re-save.
+    useEffect(() => {
+        const stuck = takeUnsavedFor(props.current.id);
+
+        if (!stuck || stuck.phase === 'saved' || stuck.phase === 'conflict') {
+            return;
+        }
+
+        if (stuck.body !== undefined) {
+            pending.current = stuck.body;
+            setSaving(true);
+            saveTimer.current = window.setTimeout(
+                () => void flushContent(),
+                SAVE_DELAY,
+            );
+        }
+
+        if (stuck.pendingTitle !== null) {
+            setTitle(stuck.pendingTitle);
+        }
+        // Runs once per opened note.
+        // oxlint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const editorRef = useRef<Editor | null>(null);
     const onReady = useCallback((instance: Editor | null) => {

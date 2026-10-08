@@ -299,4 +299,35 @@ describe('navigation', () => {
         expect(activeTabIndex('/obrolan', false)).toBe(-1);
         expect(tabNavItems(true).filter((item) => item.center)).toHaveLength(1);
     });
+
+    it('swaps the raised centre button for Workspace after the check-in', () => {
+        const items = tabNavItems(true, 'workspace');
+
+        expect(items.map((item) => item.title)).toEqual([
+            'Beranda',
+            'Tugas',
+            'Workspace',
+            'Obrolan',
+            'Lainnya',
+        ]);
+        expect(items[2]?.sheet).toBe('workspace');
+        // The Workspace centre owns the workspace pages (/w/KEY) and /workspace.
+        expect(activeTabIndex('/w/OPS', true, 'workspace')).toBe(2);
+        expect(activeTabIndex('/workspace', true, 'workspace')).toBe(2);
+        expect(activeTabIndex('/absensi', true, 'workspace')).toBe(-1);
+        // Absen is no longer on the bar while Workspace holds the centre.
+        expect(
+            tabNavItems(true, 'workspace').some(
+                (item) => item.href === '/absensi',
+            ),
+        ).toBe(false);
+    });
+
+    it('can drop the raised centre button entirely (null)', () => {
+        const items = tabNavItems(true, null);
+
+        expect(items).toHaveLength(4);
+        expect(items.some((item) => item.center)).toBe(false);
+        expect(activeTabIndex('/menu', true, null)).toBe(3);
+    });
 });

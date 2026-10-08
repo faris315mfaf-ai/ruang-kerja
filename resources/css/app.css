@@ -323,6 +323,40 @@
     );
 }
 
+/* Mode catat (Catatan, keputusan pemilik 9 Okt 2026): while note-taking
+   runs on the open document, the phone tab bar slides out of the screen and
+   the page reclaims the reserved space (keyboard analogy: --tab-bar-height
+   → 0, so content padding, the editor toolbar and toasts follow along).
+   Transform + visibility only, 180ms ease-brand, instant with reduced
+   motion. The `minutes-mode` class is set on <html> by features/notes/
+   minutes-mode.tsx; desktop/tablet never render the tab bar. */
+:root.minutes-mode {
+    --tab-bar-height: 0px;
+}
+
+nav[data-tab-bar] {
+    transition:
+        transform 180ms var(--ease),
+        visibility 180ms;
+}
+
+/* Visibility flips at the end of the slide-out (and instantly on the way
+   back), so the hidden bar leaves the tab order and the accessibility tree
+   only once it is off screen. */
+:root.minutes-mode nav[data-tab-bar] {
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(
+        calc(100% + var(--tab-bar-lift) + env(safe-area-inset-bottom) + 12px)
+    );
+}
+
+@media (prefers-reduced-motion: reduce) {
+    nav[data-tab-bar] {
+        transition: none;
+    }
+}
+
 @layer base {
     * {
         @apply border-border outline-ring/50;

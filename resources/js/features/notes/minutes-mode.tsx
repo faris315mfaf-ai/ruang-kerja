@@ -28,6 +28,19 @@ export const MODE_PARAM = 'mode';
 export const MODE_VALUE = 'catat';
 
 /**
+ * Class on <html> while note-taking mode runs on the open document
+ * (keputusan pemilik 9 Okt 2026): the phone tab bar slides off screen and
+ * the page reclaims the reserved space — the rules live in app.css
+ * (`--tab-bar-height` → 0 + `nav[data-tab-bar]` transform). Desktop/tablet
+ * never render the tab bar, so the class is inert there.
+ */
+export const MINUTES_MODE_CLASS = 'minutes-mode';
+
+export function setMinutesModeClass(active: boolean): void {
+    document.documentElement.classList.toggle(MINUTES_MODE_CLASS, active);
+}
+
+/**
  * Note-taking mode of the open document (keputusan pemilik 6 Okt 2026):
  * active while the running session belongs to this document (any of its
  * tabs). Starts from `?mode=catat` or the "Mode catat" button; ends only
@@ -76,6 +89,14 @@ export function useMinutesMode(session: NoteSession) {
             updateMinutesSession({ noteId: note.id, title: rootTitle });
         }
     }, [active, note.id, rootTitle]);
+
+    // Hide the phone tab bar for the whole time the mode runs on this
+    // document (also on unmount/navigating away, which restores the bar).
+    useEffect(() => {
+        setMinutesModeClass(active);
+
+        return () => setMinutesModeClass(false);
+    }, [active]);
 
     const start = () => {
         startMinutesSession({

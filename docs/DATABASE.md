@@ -27,6 +27,7 @@
 | Google & file | `google_accounts`, `drive_files`, `attachments` |
 | Notifikasi | `notifications`*, `notification_preferences`, `notification_settings`, `notification_dispatch_logs` |
 | Pengumuman | `announcements`, `announcement_dismissals` |
+| Briefing (pagi & sore) | `briefings`, `briefing_delegations` |
 | Fase 2 | `channels`, `channel_members`, `messages`, `notes`, `note_versions`, `note_shares`, `meetings`, `meeting_participants`, `meeting_minutes`, `meeting_minute_versions`, `meeting_action_items`, `calendar_events` |
 | Fase 3 | `devices`, `face_templates`, `objectives`, `key_results`, `key_result_checkins`, `key_result_tasks` (OKR sudah dimigrasi, F3-3) |
 
@@ -219,7 +220,7 @@ Implementasi: `weekdays` = `smallint[]` NOT NULL default `{}` (CHECK nilai 1–7
 | request_portion | varchar(10) null | `full` · `half_day` (CHECK) — porsi tanggal yang ditutup pengajuan yang disetujui. Setengah hari dan dinas luar (`business_trip`) tetap boleh check-in: status & `request_id` dipertahankan, dinas boleh check-in di luar geofence dengan catatan |
 | is_suspicious | bool | ada log yang ditandai |
 | note | text null | |
-| work_plan | jsonb null | `list<string>` poin rencana kerja hari ini (maks 8 × 300 karakter), diisi saat check-in (8–9 Okt 2026); ikut dikirim ke grup manajemen (docs/fitur/absensi-whatsapp.md) |
+| work_plan | jsonb null | `list<string>` poin rencana kerja hari ini (maks 8 × 300 karakter), diisi saat check-in (8–9 Okt 2026); ikut dikirim ke grup manajemen (docs/fitur/absensi-whatsapp.md). Tiap poin otomatis menjadi tugas di workspace pribadi karyawan untuk `work_date` yang sama (`CreateWorkPlanTasks`: judul = poin, assignee = karyawan, `tasks.source='attendance'`, `source_id` = id hari; dalam transaksi check-in yang sama, idempoten) |
 
 Indeks: `(work_date, status)`, `(user_id, work_date)` unique.
 
@@ -424,12 +425,14 @@ Indeks unik parsial: `workspaces (owner_id) WHERE type = 'personal'` (satu works
 | due_date | date null | |
 | estimate_hours | numeric(6,2) null | |
 | created_by | FK users | |
+| source | varchar(20) default `manual` | asal tugas: `manual` · `attendance` (CHECK). `attendance` = dibuat otomatis dari poin rencana kerja saat check-in (keputusan pemilik 9 Okt 2026) |
+| source_id | FK attendance_days null | hari absensi yang memunculkan tugas itu (null bila `manual`; nullOnDelete) |
 | started_at | timestamptz null | pertama kali masuk `in_progress` |
 | completed_at | timestamptz null | masuk kategori `done` |
 | canceled_at | timestamptz null | |
 | search_vector | tsvector | kolom GENERATED STORED: `setweight(to_tsvector('simple', title),'A') || setweight(to_tsvector('simple', description_text),'B')`, indeks GIN. Konfigurasi `simple` karena PostgreSQL tidak punya stemmer Indonesia |
 
-Indeks: `(workspace_id, number)` unique, `(workspace_id, status_id, position)`, `(status_id, position)` (Sprint 10: kartu satu kolom tanpa filter workspace — pindah kartu, ubah/hapus kolom), `(workspace_id, status_category)`, `(due_date) where status_category not in ('done','canceled')`, GIN `search_vector`. CHECK `priority BETWEEN 0 AND 4`, `number > 0`.
+Indeks: `(workspace_id, number)` unique, `(workspace_id, status_id, position)`, `(status_id, position)` (Sprint 10: kartu satu kolom tanpa filter workspace — pindah kartu, ubah/hapus kolom), `(workspace_id, status_category)`, `(due_date) where status_category not in ('done','canceled')`, GIN `search_vector`, `(source_id)`. CHECK `priority BETWEEN 0 AND 4`, `number > 0`.
 
 Kolom `position` (tasks, task_statuses, checklist_items) bertipe `varchar(100) COLLATE "C"` agar urutan lexorank = urutan byte (`App\Domain\Tasks\Services\Lexorank`, base-62, kolom diseimbangkan ulang bila kunci > 40 karakter). Lifecycle: `started_at` diisi saat pertama kali masuk kategori `in_progress` **atau `review`**; `completed_at` diisi saat masuk `done` dan dikosongkan saat keluar; `canceled_at` sama untuk `canceled`. Mengubah kategori sebuah kolom menyinkronkan semua tugas di kolom itu.
 
@@ -736,6 +739,12 @@ Migrasi `2026_10_12_200300_create_announcements_tables`.
 
 - `devices`: `id`, `user_id`, `platform`, `device_id_hash`, `push_token`, `integrity_verdict` jsonb, `last_seen_at`, `is_trusted`.
 - `face_templates`: `id`, `user_id`, `template` bytea (dienkripsi), `model_version`, `consent_id` FK attendance_consents, `created_at`. Dihapus otomatis bila persetujuan dicabut.
+
+### briefings & briefing_delegations (Briefing pagi & sore, keputusan pemilik 9 Okt 2026)
+Migrasi `2026_10_17_100100_create_briefings_tables`. Jendela catat: pagi 08.00–11.00, sore 16.00–18.00 zona kantor (enum `BriefingPeriod`, bukan kolom). Pencatat: HR & Super Admin, bisa didelegasikan per tanggal+periode.
+
+- **`briefings`**: `id` ulid, `company_id` FK restrict, `period` varchar(5) CHECK `pagi|sore`, `briefing_date` date (tanggal kantor), `content` text (notulensi polos multi-baris, CHECK tidak kosong), `created_by` FK users restrict (pencatat/delegasi yang menyimpan), `delegated_from` FK users null (terisi bila delegasi yang menyimpan), timestamps. **Unik `(company_id, briefing_date, period)`** (kunci upsert `SaveBriefing`); indeks `(company_id, period, briefing_date)`. Penyimpanan pertama → notifikasi `briefing.posted` (kategori Informatif, isi lengkap) ke semua pengguna aktif perusahaan termasuk penyimpan; audit `briefing.saved`.
+- **`briefing_delegations`**: `id` ulid, `company_id` FK, `briefing_date` date, `period` CHECK, `delegated_to`/`delegated_by` FK users restrict, timestamps. Unik `(company_id, briefing_date, period)`; indeks `(delegated_to, briefing_date)`. Audit `briefing.delegated`; notifikasi in-app ke terdelegasi.
 
 ### OKR divisi (F3-3, sudah dimigrasi)
 
