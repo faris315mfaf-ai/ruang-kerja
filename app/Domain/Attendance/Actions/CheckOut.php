@@ -17,6 +17,8 @@ use App\Domain\Attendance\Services\OpenDayLocator;
 use App\Domain\Attendance\Services\PresenceVerifier;
 use App\Domain\Attendance\Services\ScheduleResolver;
 use App\Domain\Attendance\Services\SelfieStorage;
+use App\Domain\Notifications\Jobs\SendAttendanceWhatsApp;
+use App\Domain\Notifications\Services\EvolutionWhatsApp;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -40,6 +42,7 @@ final class CheckOut
         private readonly SelfieStorage $selfies,
         private readonly AttendanceLogWriter $logs,
         private readonly OpenDayLocator $openDays,
+        private readonly EvolutionWhatsApp $whatsapp,
     ) {}
 
     public function handle(User $user, CheckInData|QrCheckInData $data): AttendanceResult
@@ -102,6 +105,11 @@ final class CheckOut
         }
 
         AttendanceRecorded::dispatch($day, $log);
+
+        // Afternoon copy to the management group: duration, not the plan.
+        if ($this->whatsapp->enabled() && (string) config('notifications.channels.whatsapp.group_jid') !== '') {
+            SendAttendanceWhatsApp::dispatch($day->id, AttendanceLogType::CheckOut);
+        }
 
         return new AttendanceResult($day, $log, $schedule, $location);
     }
