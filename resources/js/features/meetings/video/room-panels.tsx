@@ -137,7 +137,7 @@ export function ChatPanel({
                                                   message.from?.identity ?? '',
                                               ).name}
                                     </span>
-                                    <span className="text-[13px] text-text-subtle">
+                                    <span className="text-[13px] text-text-muted">
                                         {formatTime(
                                             new Date(message.timestamp),
                                         )}

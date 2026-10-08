@@ -77,7 +77,7 @@ function speakerOf(
 
 function Overline({ children }: { children: ReactNode }) {
     return (
-        <h3 className="text-[12px] font-bold tracking-[0.1em] text-text-subtle uppercase">
+        <h3 className="text-[12px] font-bold tracking-[0.1em] text-text-muted uppercase">
             {children}
         </h3>
     );
@@ -147,7 +147,7 @@ function TranscriptCard({
                 <h2 id="transkrip-title" className="text-[16px] font-bold">
                     Transkrip
                 </h2>
-                <span className="text-[12px] text-text-subtle">
+                <span className="text-[12px] text-text-muted">
                     {transcript?.model?.includes('turbo')
                         ? 'Whisper turbo'
                         : 'Whisper'}{' '}
@@ -222,7 +222,7 @@ function TranscriptCard({
                                             'ring-2 ring-primary',
                                     )}
                                 >
-                                    <span className="w-10 shrink-0 pt-[3px] font-mono text-[12px] text-text-subtle tnum">
+                                    <span className="w-10 shrink-0 pt-[3px] font-mono text-[12px] text-text-muted tnum">
                                         {clock(segment.start_ms)}
                                     </span>
                                     <UserAvatar
@@ -249,7 +249,7 @@ function TranscriptCard({
                     </ol>
                 )}
             </div>
-            <p className="mt-auto text-[12px] text-text-subtle">
+            <p className="mt-auto text-[12px] text-text-muted">
                 Audio sudah dihapus setelah transkripsi. Transkrip hanya bisa
                 dibuka peserta, disimpan {summary.retention_days} hari.
             </p>
@@ -299,7 +299,7 @@ function SuggestionRow({
             )}
             <span className="flex min-w-0 flex-1 flex-col">
                 <span>{action.judul}</span>
-                <span className="text-[12px] text-text-subtle">
+                <span className="text-[12px] text-text-muted">
                     {owner
                         ? owner.first
                         : action.penanggung_jawab_teks
@@ -371,7 +371,7 @@ function DraftCard({
     const head = (
         <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-[16px] font-bold">Draf notulen</h2>
-            <span className="inline-flex items-center gap-1.5 text-[12px] text-text-subtle">
+            <span className="inline-flex items-center gap-1.5 text-[12px] text-text-muted">
                 <Sparkles aria-hidden className="size-3.5" />
                 Diringkas AI · periksa sebelum final
             </span>

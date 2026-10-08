@@ -154,7 +154,7 @@ export function TalkTimePanel({
                 </ul>
             )}
             {summary && (
-                <p className="text-[12px] leading-[17px] text-text-subtle">
+                <p className="text-[12px] leading-[17px] text-text-muted">
                     {summary}
                 </p>
             )}
@@ -273,7 +273,7 @@ export function AttendancePanel({
                                 <span className="truncate font-semibold">
                                     {nameOf(row.userId)}
                                 </span>
-                                <span className="font-mono text-[12px] text-text-subtle">
+                                <span className="font-mono text-[12px] text-text-muted">
                                     masuk {formatTime(row.joinedAt)}
                                     {!row.inRoom && ' · keluar'}
                                 </span>
@@ -354,7 +354,7 @@ export function AttendancePanel({
                                         ? 'menolak undangan'
                                         : 'belum masuk'}
                                     {row.calledAt && (
-                                        <span className="block text-[12px] text-text-subtle">
+                                        <span className="block text-[12px] text-text-muted">
                                             Dipanggil {formatTime(row.calledAt)}
                                         </span>
                                     )}
