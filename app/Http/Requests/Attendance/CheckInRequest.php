@@ -7,6 +7,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 use LogicException;
 use Throwable;
 
@@ -35,7 +36,8 @@ class CheckInRequest extends FormRequest
             'selfie' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:'.config()->integer('attendance.selfie.max_kilobytes')],
             'device_id' => ['nullable', 'string', 'max:128'],
             'note' => ['nullable', 'string', 'max:500'],
-            'work_plan' => ['nullable', 'string', 'max:2000'],
+            'work_plan' => ['nullable', 'array', 'max:8'],
+            'work_plan.*' => ['nullable', 'string', 'max:300'],
         ];
     }
 
@@ -54,7 +56,8 @@ class CheckInRequest extends FormRequest
             'selfie.max' => 'Ukuran selfie terlalu besar. Coba ambil ulang.',
             'selfie.*' => 'Selfie tidak valid. Coba ambil ulang.',
             'note.max' => 'Catatan maksimal 500 karakter.',
-            'work_plan.max' => 'Rencana kerja maksimal 2000 karakter.',
+            'work_plan.max' => 'Maksimal 8 poin rencana kerja.',
+            'work_plan.*.max' => 'Tiap poin maksimal 300 karakter.',
         ];
     }
 
@@ -81,7 +84,11 @@ class CheckInRequest extends FormRequest
             ipAddress: $this->ip(),
             userAgent: $this->userAgent(),
             note: $this->filled('note') ? $this->string('note')->toString() : null,
-            workPlan: $this->filled('work_plan') ? $this->string('work_plan')->toString() : null,
+            workPlan: array_values($this->collect('work_plan')
+                ->filter(fn ($point): bool => trim((string) $point) !== '')
+                ->map(fn ($point): string => Str::limit(trim((string) $point), 300, ''))
+                ->values()
+                ->all()) ?: null,
         );
     }
 }

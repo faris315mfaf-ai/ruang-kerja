@@ -18,7 +18,7 @@ use App\Domain\Attendance\Services\AttendanceLogWriter;
 use App\Domain\Attendance\Services\PresenceVerifier;
 use App\Domain\Attendance\Services\ScheduleResolver;
 use App\Domain\Attendance\Services\SelfieStorage;
-use App\Domain\Notifications\Jobs\SendCheckInWhatsApp;
+use App\Domain\Notifications\Jobs\SendAttendanceWhatsApp;
 use App\Domain\Notifications\Services\EvolutionWhatsApp;
 use App\Domain\Organization\Enums\WorkMode;
 use App\Models\User;
@@ -82,7 +82,7 @@ final class CheckIn
                 $lateMinutes = $fromRequest ? 0 : self::lateMinutes($schedule, $now);
 
                 $day->fill([
-                    'work_plan' => $data instanceof CheckInData && $data->workPlan !== null && trim($data->workPlan) !== '' ? trim($data->workPlan) : null,
+                    'work_plan' => $data instanceof CheckInData && $data->workPlan !== [] ? $data->workPlan : null,
                     'shift_id' => $schedule->isWorkday() ? $schedule->shift?->id : null,
                     'scheduled_start' => $schedule->scheduledStart,
                     'scheduled_end' => $schedule->scheduledEnd,
@@ -117,7 +117,7 @@ final class CheckIn
         // Best-effort copy to the management WhatsApp group (Evolution API);
         // queued only while the channel is on, never blocks the check-in.
         if ($this->whatsapp->enabled() && (string) config('notifications.channels.whatsapp.group_jid') !== '') {
-            SendCheckInWhatsApp::dispatch($day->id);
+            SendAttendanceWhatsApp::dispatch($day->id, AttendanceLogType::CheckIn);
         }
 
         return new AttendanceResult($day, $log, $schedule, $location);

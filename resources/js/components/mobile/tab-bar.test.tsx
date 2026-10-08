@@ -8,6 +8,7 @@ const state = vi.hoisted(() => ({
     chat: true,
     chatUnread: 0,
     keyboardOpen: false,
+    attendanceStatus: null as null | Record<string, unknown>,
     finish: [] as Array<() => void>,
 }));
 
@@ -17,6 +18,7 @@ vi.mock('@inertiajs/react', () => ({
         props: {
             features: { prototype: false, chat: state.chat },
             chatUnread: state.chatUnread,
+            attendanceStatus: state.attendanceStatus,
         },
     }),
     router: {
@@ -72,6 +74,7 @@ describe('TabBar (dock capsule)', () => {
         state.chat = true;
         state.chatUnread = 0;
         state.keyboardOpen = false;
+        state.attendanceStatus = null;
     });
 
     it('orders the tabs mobile-first with Absen raised in the middle', () => {
@@ -155,5 +158,54 @@ describe('TabBar (dock capsule)', () => {
         render(<TabBar />);
 
         expect(screen.queryByRole('navigation')).toBeNull();
+    });
+});
+
+describe('TabBar tombol Absen kontekstual', () => {
+    afterEach(() => {
+        cleanup();
+        state.url = '/dashboard';
+        state.attendanceStatus = null;
+    });
+
+    it('keeps Absen before the morning check-in', () => {
+        state.attendanceStatus = {
+            action: 'check_in',
+            end: null,
+        };
+        render(<TabBar />);
+
+        expect(
+            screen.getAllByRole('link').map((link) => link.textContent),
+        ).toEqual(['Beranda', 'Tugas', 'Absen', 'Obrolan', 'Lainnya']);
+    });
+
+    it('shrinks to four tabs after the check-in until one hour before the shift ends', () => {
+        state.attendanceStatus = {
+            action: 'check_out',
+            end: new Date(Date.now() + 3 * 60 * 60_000).toISOString(),
+        };
+        render(<TabBar />);
+
+        expect(
+            screen.getAllByRole('link').map((link) => link.textContent),
+        ).toEqual(['Beranda', 'Tugas', 'Obrolan', 'Lainnya']);
+    });
+
+    it('brings Absen back an hour before the shift ends', () => {
+        state.attendanceStatus = {
+            action: 'check_out',
+            end: new Date(Date.now() + 30 * 60_000).toISOString(),
+        };
+        render(<TabBar />);
+
+        expect(screen.getByRole('link', { name: 'Absen' })).toBeTruthy();
+    });
+
+    it('stays four tabs after the check-out', () => {
+        state.attendanceStatus = { action: 'done', end: null };
+        render(<TabBar />);
+
+        expect(screen.queryByRole('link', { name: 'Absen' })).toBeNull();
     });
 });

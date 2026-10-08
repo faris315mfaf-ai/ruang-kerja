@@ -20,6 +20,8 @@ final readonly class CheckInData
         public ?string $ipAddress = null,
         public ?string $userAgent = null,
         public ?string $note = null,
-        public ?string $workPlan = null,
+
+        /** @var list<string>|null */
+        public ?array $workPlan = null,
     ) {}
 }

@@ -41,7 +41,7 @@ use Illuminate\Support\Carbon;
  * @property RequestPortion|null $request_portion
  * @property bool $is_suspicious
  * @property string|null $note
- * @property string|null $work_plan
+ * @property list<string>|null $work_plan
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read User $user
@@ -87,6 +87,7 @@ class AttendanceDay extends Model
             'work_minutes' => 'integer',
             'overtime_minutes' => 'integer',
             'is_suspicious' => 'boolean',
+            'work_plan' => 'array',
         ];
     }
 

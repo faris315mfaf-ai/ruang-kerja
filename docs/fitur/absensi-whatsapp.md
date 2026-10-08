@@ -30,8 +30,8 @@ Catatan jalur lain: absen lewat **QR/kiosk** tidak melewati form rencana — pes
 | Data | `app/Domain/Attendance/Data/CheckInData.php` (+`CheckInRequest`) | `work_plan` nullable, maks 2.000, pesan Indonesia |
 | Action | `app/Domain/Attendance/Actions/CheckIn.php` | simpan trim ke hari; dispatch job setelah sukses |
 | Service | `app/Domain/Notifications/Services/EvolutionWhatsApp.php` | klien REST Evolution (`POST /message/sendText/{instance}`, header `apikey`, `delay` 800 ms); `enabled()` = URL+key+flag |
-| Job | `app/Domain/Notifications/Jobs/SendCheckInWhatsApp.php` | antrean, 5 percobaan, backoff `[60,300,900,1800]`, `failed()` = log warning |
-| UI | `resources/js/features/attendance/flow/selfie-review.tsx` + `use-check-flow.ts` | textarea wajib (check-in saja), dipakai shell ponsel & desktop |
+| Job | `app/Domain/Notifications/Jobs/SendAttendanceWhatsApp.php` (masuk + pulang) | antrean, 5 percobaan, backoff `[60,300,900,1800]`, `failed()` = log warning |
+| UI | `flow/selfie-review.tsx` + `use-check-flow.ts` | daftar poin bernomor + tombol + (wajib, check-in saja), dipakai shell ponsel & desktop |
 | Presenter | `AttendancePresenter::day()` | `workPlan` ikut payload detail (HR/manajemen) |
 
 ## 3. Konfigurasi
@@ -60,8 +60,8 @@ Catatan jalur lain: absen lewat **QR/kiosk** tidak melewati form rencana — pes
 
 ## 6. Test
 
-- Pest `tests/Feature/Attendance/CheckInWorkPlanTest.php`: rencana tersimpan di hari; opsional di API (QR/kiosk); >2.000 karakter ditolak.
-- Pest `tests/Feature/Notifications/CheckInWhatsAppTest.php`: dispatch saat kanal nyala; tidak saat mati; payload Evolution benar (URL/instance/apikey/jid/isi pesan); 500 → lempar untuk dicoba ulang; check-out tidak mengirim.
+- Pest `tests/Feature/Attendance/CheckInWorkPlanTest.php`: poin tersimpan di hari (jsonb); baris kosong dibuang; opsional di API (QR/kiosk); >8 poin atau poin >300 karakter ditolak.
+- Pest `tests/Feature/Notifications/AttendanceWhatsAppTest.php`: dispatch masuk & pulang saat kanal nyala; tidak saat mati; payload Evolution benar (URL/instance/apikey/jid/format pesan/tanggal Indonesia/lokasi deskriptif/durasi); 500 → lempar untuk dicoba ulang.
 - Vitest `use-check-flow.test.ts`: rencana kosong memblokir kirim check-in; terisi → ikut `FormData`.
 
 ## 7. Yang menyusul (belum)

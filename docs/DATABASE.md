@@ -219,7 +219,7 @@ Implementasi: `weekdays` = `smallint[]` NOT NULL default `{}` (CHECK nilai 1–7
 | request_portion | varchar(10) null | `full` · `half_day` (CHECK) — porsi tanggal yang ditutup pengajuan yang disetujui. Setengah hari dan dinas luar (`business_trip`) tetap boleh check-in: status & `request_id` dipertahankan, dinas boleh check-in di luar geofence dengan catatan |
 | is_suspicious | bool | ada log yang ditandai |
 | note | text null | |
-| work_plan | text null | rencana kerja hari ini, diisi saat check-in (8 Okt 2026); ikut dikirim ke grup manajemen (docs/fitur/absensi-whatsapp.md) |
+| work_plan | jsonb null | `list<string>` poin rencana kerja hari ini (maks 8 × 300 karakter), diisi saat check-in (8–9 Okt 2026); ikut dikirim ke grup manajemen (docs/fitur/absensi-whatsapp.md) |
 
 Indeks: `(work_date, status)`, `(user_id, work_date)` unique.
 

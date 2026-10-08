@@ -1,5 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { useUnreadCount } from '@/features/notifications/unread-store';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useKeyboardOpen } from '@/hooks/use-keyboard-open';
@@ -22,9 +23,34 @@ export function TabBar() {
     const { currentUrl } = useCurrentUrl();
     const keyboardOpen = useKeyboardOpen();
     const unread = useUnreadCount();
-    const { features, chatUnread } = usePage().props;
+    const { features, chatUnread, attendanceStatus } = usePage().props;
     const chat = features?.chat ?? false;
-    const items = tabNavItems(chat);
+
+    /**
+     * Owner decision 9 Oct 2026: the daily Absen button disappears once the
+     * morning check-in is done and returns one hour before the shift ends
+     * (until the check-out), keeping the bar free of clutter. Unknown status
+     * keeps the button: attendance must stay reachable.
+     */
+    const absen = useMemo(() => {
+        if (!attendanceStatus) {
+            return true;
+        }
+
+        if (attendanceStatus.action === 'check_in') {
+            return true;
+        }
+
+        if (attendanceStatus.action === 'check_out') {
+            return attendanceStatus.end === null
+                ? true
+                : Date.now() >= Date.parse(attendanceStatus.end) - 60 * 60_000;
+        }
+
+        return false;
+    }, [attendanceStatus]);
+
+    const items = tabNavItems(chat, absen);
     // Tab tapped while its page is still loading; dropped once the visit ends.
     const [pending, setPending] = useState<number | null>(null);
 
@@ -34,7 +60,7 @@ export function TabBar() {
         return null;
     }
 
-    const current = activeTabIndex(currentUrl, chat);
+    const current = activeTabIndex(currentUrl, chat, absen);
     const shown = pending ?? current;
     // The centre button is its own highlight; the pill only serves side tabs.
     const pillHidden = shown < 0 || items[shown]?.center === true;
@@ -45,17 +71,25 @@ export function TabBar() {
             data-tab-bar
             className="fixed inset-x-(--tab-bar-inset) bottom-[calc(env(safe-area-inset-bottom)+var(--tab-bar-lift))] z-40 mx-auto max-w-[420px]"
         >
-            <ul className="tab-bar-surface relative grid h-(--tab-bar-capsule) grid-cols-5 rounded-full p-1.5">
+            <ul
+                className={cn(
+                    'tab-bar-surface relative grid h-(--tab-bar-capsule) rounded-full p-1.5',
+                    items.length === 5 ? 'grid-cols-5' : 'grid-cols-4',
+                )}
+            >
                 <li
                     aria-hidden
                     data-testid="tab-pill"
                     className={cn(
-                        'pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc((100%-12px)/5)] transition-[transform,opacity] duration-180 ease-brand motion-reduce:transition-none',
+                        'pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc((100%-12px)/var(--tab-count))] transition-[transform,opacity] duration-180 ease-brand motion-reduce:transition-none',
                         pillHidden && 'opacity-0',
                     )}
-                    style={{
-                        transform: `translateX(${Math.max(shown, 0) * 100}%)`,
-                    }}
+                    style={
+                        {
+                            transform: `translateX(${Math.max(shown, 0) * 100}%)`,
+                            '--tab-count': items.length,
+                        } as CSSProperties
+                    }
                 >
                     <span className="block size-full rounded-full bg-grad-active shadow-button" />
                 </li>
