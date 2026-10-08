@@ -203,7 +203,7 @@ Lalu hapus branch lokal yang sudah ter-merge (`git branch -d …`).
 ### F. Rekomendasi audit yang belum dikerjakan (kecil)
 | ID | Isi | Pemilik berkas |
 |---|---|---|
-| U-06 | Muat Hocuspocus/Yjs (111 KB) secara dinamis hanya saat mode kolaborasi | `features/meetings/video/use-minutes-collab.ts` |
+| ~~U-06~~ | ~~Muat Hocuspocus/Yjs (111 KB) secara dinamis hanya saat mode kolaborasi~~ **Selesai** `b7401d1` (8 Okt 2026, GLM): `import()` di `useMinutesCollab`, chunk `room` tidak lagi mengimpor statis | `features/meetings/video/use-minutes-collab.ts` |
 | R-14 | Batasi Permissions-Policy mikrofon ke rute rapat (butuh muat ulang penuh ke `/gabung`) | `SecurityHeaders` |
 | R-06 | **Keputusan pemilik:** HR boleh mengatur sandi Direksi/HR lain? Usulan: hanya Super Admin | `UserPolicy::setPassword` |
 | B-06..B-08, T-08..T-10 | Sudah diperbaiki — tidak ada tindakan | — |
