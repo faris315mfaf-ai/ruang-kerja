@@ -41,6 +41,7 @@ use Illuminate\Support\Carbon;
  * @property RequestPortion|null $request_portion
  * @property bool $is_suspicious
  * @property string|null $note
+ * @property string|null $work_plan
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read User $user
@@ -51,7 +52,7 @@ use Illuminate\Support\Carbon;
 #[Fillable([
     'user_id', 'work_date', 'shift_id', 'scheduled_start', 'scheduled_end', 'check_in_at', 'check_out_at',
     'check_in_log_id', 'check_out_log_id', 'status', 'late_minutes', 'early_leave_minutes', 'work_minutes',
-    'overtime_minutes', 'request_id', 'request_portion', 'is_suspicious', 'note',
+    'overtime_minutes', 'request_id', 'request_portion', 'is_suspicious', 'note', 'work_plan',
 ])]
 #[UseFactory(AttendanceDayFactory::class)]
 class AttendanceDay extends Model

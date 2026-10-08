@@ -12,7 +12,7 @@ use Throwable;
 
 /**
  * Multipart check-in/out: lat, lng, accuracy, client_time, selfie, device id,
- * note (docs/ARCHITECTURE.md §3.1). Authorization: AttendanceDayPolicy::checkIn
+ * note and work_plan (docs/ARCHITECTURE.md §3.1). Authorization: AttendanceDayPolicy::checkIn
  * in the controller.
  */
 class CheckInRequest extends FormRequest
@@ -35,6 +35,7 @@ class CheckInRequest extends FormRequest
             'selfie' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:'.config()->integer('attendance.selfie.max_kilobytes')],
             'device_id' => ['nullable', 'string', 'max:128'],
             'note' => ['nullable', 'string', 'max:500'],
+            'work_plan' => ['nullable', 'string', 'max:2000'],
         ];
     }
 
@@ -53,6 +54,7 @@ class CheckInRequest extends FormRequest
             'selfie.max' => 'Ukuran selfie terlalu besar. Coba ambil ulang.',
             'selfie.*' => 'Selfie tidak valid. Coba ambil ulang.',
             'note.max' => 'Catatan maksimal 500 karakter.',
+            'work_plan.max' => 'Rencana kerja maksimal 2000 karakter.',
         ];
     }
 
@@ -79,6 +81,7 @@ class CheckInRequest extends FormRequest
             ipAddress: $this->ip(),
             userAgent: $this->userAgent(),
             note: $this->filled('note') ? $this->string('note')->toString() : null,
+            workPlan: $this->filled('work_plan') ? $this->string('work_plan')->toString() : null,
         );
     }
 }

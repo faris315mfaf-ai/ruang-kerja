@@ -149,6 +149,20 @@ export function rejectionFromError(error: unknown): CheckRejection {
 }
 
 /**
+ * The day's work plan is required at check-in (owner decision 8 Oct 2026):
+ * it rides to the management WhatsApp group with the check-in copy.
+ */
+export function planRejection(type: CheckType, plan: string): string | null {
+    if (type !== 'in') {
+        return null;
+    }
+
+    return plan.trim() === ''
+        ? 'Tulis rencana kerja hari ini dulu — ikut terkirim ke grup manajemen.'
+        : null;
+}
+
+/**
  * Shared check-in/out state machine for the mobile screens and the desktop
  * dialog (docs/PLATFORM.md §5 rule 2): consent → selfie → review → submit →
  * success/failure. Location is read in parallel with the camera.
@@ -164,6 +178,8 @@ export function useCheckFlow(
     const [photo, setPhoto] = useState<CapturedPhoto | null>(null);
     const [note, setNote] = useState('');
     const [noteError, setNoteError] = useState<string | null>(null);
+    const [plan, setPlan] = useState('');
+    const [planError, setPlanError] = useState<string | null>(null);
     const [result, setResult] = useState<CheckResult | null>(null);
     const [rejection, setRejection] = useState<CheckRejection | null>(null);
     const [progress, setProgress] = useState(0);
@@ -307,6 +323,14 @@ export function useCheckFlow(
             return;
         }
 
+        const planProblem = planRejection(type, plan);
+
+        if (planProblem) {
+            setPlanError(planProblem);
+
+            return;
+        }
+
         if (isRemote && note.trim() === '') {
             setNoteError(
                 'Tulis catatan lokasi atau aktivitas untuk check-in di luar kantor.',
@@ -315,6 +339,7 @@ export function useCheckFlow(
             return;
         }
 
+        setPlanError(null);
         setNoteError(null);
         setStep('submitting');
         setProgress(0);
@@ -346,6 +371,10 @@ export function useCheckFlow(
 
         if (note.trim() !== '') {
             form.append('note', note.trim());
+        }
+
+        if (type === 'in' && plan.trim() !== '') {
+            form.append('work_plan', plan.trim());
         }
 
         try {
@@ -380,7 +409,7 @@ export function useCheckFlow(
             setRejection(next);
             setStep('failure');
         }
-    }, [geo, isRemote, note, photo, type]);
+    }, [geo, isRemote, note, photo, plan, type]);
 
     /** A kiosk code was read: send it with the GPS position when available. */
     const submitQr = useCallback(
@@ -473,6 +502,9 @@ export function useCheckFlow(
         note,
         setNote,
         noteError,
+        plan,
+        setPlan,
+        planError,
         result,
         rejection,
         progress,
