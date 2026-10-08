@@ -337,6 +337,8 @@ export function useNoteSession(
         presence,
         status,
         saving,
+        /** WebSocket of the live session currently open (for the status icon). */
+        connected: collab.connected,
         setContent,
         flushNow,
         editor,

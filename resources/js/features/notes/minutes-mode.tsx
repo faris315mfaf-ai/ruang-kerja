@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/react';
-import { CircleStop, NotebookPen } from 'lucide-react';
+import { NotebookPen } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { BottomSheet } from '@/components/mobile/bottom-sheet';
@@ -128,60 +128,55 @@ export function useMinutesMode(session: NoteSession) {
 
 export type MinutesMode = ReturnType<typeof useMinutesMode>;
 
-/** Ribbon above the editor while note-taking mode is on. */
-export function MinutesModeBar({
+/**
+ * Icon-only "Mode catat" toggle for the slim note headers: pressed (tonal)
+ * while the mode runs on this document, tap to start or to confirm finishing.
+ * The confirmation dialog/sheet comes along with the button.
+ */
+export function MinutesModeIconButton({
     mode,
     mobile = false,
     className,
+    buttonClassName,
 }: {
     mode: MinutesMode;
+    /** Phones render the confirm step as a bottom sheet. */
     mobile?: boolean;
     className?: string;
+    buttonClassName?: string;
 }) {
-    if (!mode.active) {
-        return null;
-    }
+    const enabled = mode.active || mode.canStart;
 
     return (
-        <div
-            role="status"
-            className={cn(
-                'flex items-center gap-3 rounded-[16px] border border-link/25 bg-link-soft px-4 py-2.5',
-                className,
-            )}
-        >
-            {!mobile && (
-                <NotebookPen
-                    aria-hidden
-                    className="size-5 shrink-0 text-link"
-                />
-            )}
-            <div className="flex min-w-0 flex-1 flex-col">
-                <p className="truncate text-[15px] font-bold text-link">
-                    Mode catat aktif
-                </p>
-                {!mobile && (
-                    <p className="truncate text-[14px] text-text-muted">
-                        Pindah ke modul lain kapan saja; pil &ldquo;Kembali ke
-                        notulensi&rdquo; membawa Anda ke sini.
-                    </p>
+        <div className={cn('flex items-center', className)}>
+            <button
+                type="button"
+                aria-pressed={mode.active}
+                aria-label={
+                    mode.active
+                        ? 'Mode catat aktif, selesai mencatat'
+                        : 'Mode catat'
+                }
+                title={mode.active ? 'Selesai mencatat' : 'Mulai mode catat'}
+                disabled={!enabled}
+                onClick={() => (mode.active ? mode.askFinish() : mode.start())}
+                className={cn(
+                    'flex size-11 shrink-0 items-center justify-center rounded-full transition-colors duration-120 ease-brand disabled:opacity-40',
+                    mode.active
+                        ? 'bg-link-soft text-link'
+                        : 'text-text hover:bg-surface-2 hover:text-text',
+                    buttonClassName,
                 )}
-            </div>
-            <Button
-                variant="outline"
-                size={mobile ? 'default' : 'sm'}
-                className="shrink-0"
-                onClick={mode.askFinish}
             >
-                <CircleStop aria-hidden />
-                Selesai mencatat
-            </Button>
+                <NotebookPen className="size-5" aria-hidden />
+            </button>
             <FinishDialog mode={mode} mobile={mobile} />
         </div>
     );
 }
 
-function FinishDialog({
+/** "Selesai mencatat?" confirmation: bottom sheet on phones, dialog on desktop. */
+export function FinishDialog({
     mode,
     mobile,
 }: {
@@ -235,32 +230,5 @@ function FinishDialog({
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-    );
-}
-
-/** "Mode catat" button (start note-taking on this document). */
-export function StartModeButton({
-    mode,
-    className,
-    size,
-}: {
-    mode: MinutesMode;
-    className?: string;
-    size?: 'default' | 'lg';
-}) {
-    if (!mode.canStart) {
-        return null;
-    }
-
-    return (
-        <Button
-            variant="tonal"
-            size={size}
-            className={className}
-            onClick={mode.start}
-        >
-            <NotebookPen aria-hidden />
-            Mode catat
-        </Button>
     );
 }

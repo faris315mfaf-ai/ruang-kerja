@@ -3,91 +3,214 @@ import {
     AlertTriangle,
     Check,
     ChevronRight,
+    Cloud,
+    CloudCog,
     CloudOff,
     Eye,
-    Loader2,
-    Radio,
+    X,
 } from 'lucide-react';
-import { useLayoutEffect, useRef } from 'react';
+import {
+    useEffect,
+    useLayoutEffect,
+    useRef,
+    useState,
+    type ReactNode,
+} from 'react';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { Button } from '@/components/ui/button';
 import { cn, focusRing } from '@/lib/utils';
 import { notes as workspaceNotes } from '@/routes/workspaces';
 import { cursorTone } from './cursor-tones';
-import { ancestors, editorsLabel } from './lib';
+import { ancestors, savePhase, type SavePhase } from './lib';
+import type { NotePerson } from './types';
 import type { NoteSession } from './use-note-session';
 
-/** Co-editors with a ring in their caret colour + "Tersambung · 3 orang". */
-export function EditorsPresence({
-    session,
-    compact = false,
-}: {
-    session: NoteSession;
-    compact?: boolean;
-}) {
-    const people = session.collaborators;
+/** Everything the combined save/Presence icon and its detail popover need. */
+export type SaveStatusState = {
+    phase: SavePhase;
+    /** "Tersimpan · 2 dtk lalu · Tersambung · 3 orang". */
+    label: string;
+    status: string;
+    presence: string | null;
+    conflict: boolean;
+    editors: (NotePerson & { tone: number })[];
+};
 
-    if (session.presence === null) {
-        return null;
+/** Derive the icon state from the session (labels come from the session). */
+export function saveStatusState(session: NoteSession): SaveStatusState {
+    return {
+        phase: savePhase({
+            conflict: session.conflict,
+            mode: session.mode,
+            saving: session.saving,
+            connected: session.connected,
+        }),
+        label: [session.status, session.presence].filter(Boolean).join(' · '),
+        status: session.status,
+        presence: session.presence,
+        conflict: session.conflict,
+        editors: session.collaborators,
+    };
+}
+
+/**
+ * One compact save/Presence icon (keputusan pemilik 9 Okt 2026): spinning
+ * cloud while saving/connecting, green check-cloud once saved on a live
+ * connection, warning triangle for offline mode and conflicts.
+ */
+export function SaveStatusIcon({
+    phase,
+    className,
+}: {
+    phase: SavePhase;
+    className?: string;
+}) {
+    if (phase === 'conflict' || phase === 'offline') {
+        return (
+            <AlertTriangle
+                aria-hidden
+                className={cn(
+                    'size-5 shrink-0',
+                    phase === 'conflict' ? 'text-warning' : 'text-text-muted',
+                    className,
+                )}
+            />
+        );
     }
 
-    const names = editorsLabel(people.map((person) => person.name));
+    if (phase === 'syncing') {
+        return (
+            <CloudCog
+                aria-hidden
+                className={cn(
+                    'size-5 shrink-0 animate-spin text-text-muted motion-reduce:animate-none',
+                    className,
+                )}
+            />
+        );
+    }
 
     return (
-        <div className="flex min-w-0 items-center gap-2">
-            {people.length > 0 && (
-                <span className="flex shrink-0 items-center -space-x-1.5">
-                    {people.slice(0, 4).map((person) => (
-                        <UserAvatar
-                            key={person.id}
-                            name={person.name}
-                            src={person.avatar}
-                            className={cn(
-                                'size-8 text-[12px] ring-2 ring-offset-2 ring-offset-surface',
-                                cursorTone(person.tone).ring,
-                            )}
-                        />
-                    ))}
-                </span>
+        <span
+            aria-hidden
+            className={cn(
+                'relative flex shrink-0 items-center justify-center',
+                className,
             )}
-            <span
-                className={cn(
-                    'flex items-center gap-1.5 truncate text-[14px] text-text-muted',
-                    compact && people.length > 0 && 'sr-only',
-                )}
-                aria-live="polite"
-            >
-                <Radio aria-hidden className="size-4 shrink-0 text-success" />
-                {session.presence}
-                {names && <span className="sr-only">, {names}</span>}
-            </span>
+        >
+            <Cloud className="size-5 text-success" />
+            <Check className="absolute right-[-3px] bottom-[-2px] size-3 stroke-[3.5] text-success" />
+        </span>
+    );
+}
+
+/**
+ * Body of the status detail (phone bottom sheet / desktop popover): the full
+ * save line, the connection line and the co-editors with their caret colour.
+ * `reloadAction` is the caller's "Muat ulang" control, shown on a conflict.
+ */
+export function SaveStatusDetail({
+    state,
+    reloadAction,
+}: {
+    state: SaveStatusState;
+    reloadAction?: ReactNode;
+}) {
+    return (
+        <div role="status" className="flex flex-col gap-3">
+            <p className="flex items-center gap-2 text-[15px] font-semibold text-text">
+                <SaveStatusIcon phase={state.phase} />
+                {state.status}
+            </p>
+            {state.presence && (
+                <p className="text-[14px] text-text-muted">{state.presence}</p>
+            )}
+            {state.phase === 'offline' && (
+                <p className="text-[14px] text-text-muted">
+                    Penyuntingan bersama tidak aktif; perubahan tetap disimpan
+                    otomatis.
+                </p>
+            )}
+            {state.editors.length > 0 && (
+                <div>
+                    <p className="pb-1.5 text-[13px] font-bold tracking-[.06em] text-text-muted uppercase">
+                        Penyunting lain
+                    </p>
+                    <ul className="flex flex-col gap-2">
+                        {state.editors.map((person) => (
+                            <li
+                                key={person.id}
+                                className="flex items-center gap-2.5 text-[15px] text-text"
+                            >
+                                <UserAvatar
+                                    name={person.name}
+                                    src={person.avatar}
+                                    className={cn(
+                                        'size-8 text-[12px] ring-2 ring-offset-2 ring-offset-surface',
+                                        cursorTone(person.tone).ring,
+                                    )}
+                                />
+                                <span className="truncate">{person.name}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+            {state.conflict && reloadAction}
         </div>
     );
 }
 
-/** "Tersimpan · 2 dtk lalu" with a check (spinner while saving). */
-export function SaveStatus({ session }: { session: NoteSession }) {
+/** One dismissible slim banner row: icon + short text (+ action). */
+function SlimBanner({
+    tone,
+    icon,
+    children,
+    onClose,
+    role,
+}: {
+    tone: 'muted' | 'info' | 'warning';
+    icon: ReactNode;
+    children: ReactNode;
+    onClose: () => void;
+    role?: 'status' | 'alert';
+}) {
     return (
-        <p
-            aria-live="polite"
-            className="flex items-center gap-1.5 text-[14px] whitespace-nowrap text-text-muted tnum"
-        >
-            {session.saving || session.mode === 'connecting' ? (
-                <Loader2
-                    aria-hidden
-                    className="size-4 animate-spin motion-reduce:animate-none"
-                />
-            ) : session.conflict ? (
-                <AlertTriangle aria-hidden className="size-4 text-warning" />
-            ) : (
-                <Check aria-hidden className="size-4 text-success" />
+        <div
+            role={role}
+            className={cn(
+                'flex items-center gap-2 rounded-lg px-3 py-2 text-[13px]',
+                tone === 'muted' && 'bg-surface-2 text-text-muted',
+                tone === 'info' && 'bg-info-soft text-info',
+                tone === 'warning' && 'bg-warning-soft text-warning',
             )}
-            {session.status}
-        </p>
+        >
+            <span
+                aria-hidden
+                className="flex size-5 shrink-0 items-center justify-center"
+            >
+                {icon}
+            </span>
+            <span className="min-w-0 flex-1">{children}</span>
+            <button
+                type="button"
+                aria-label="Tutup pemberitahuan"
+                onClick={onClose}
+                className={cn(
+                    '-my-2 flex size-11 shrink-0 items-center justify-center rounded-full transition-opacity duration-120 ease-brand hover:opacity-60',
+                    focusRing,
+                )}
+            >
+                <X className="size-4" aria-hidden />
+            </button>
+        </div>
     );
 }
 
-/** Banners under the header: read-only, save without collaboration, conflict. */
+/**
+ * Slim one-line banners above the editor (read-only, save without
+ * collaboration, conflict). Each can be dismissed for this visit.
+ */
 export function NoteBanners({
     session,
     className,
@@ -95,56 +218,83 @@ export function NoteBanners({
     session: NoteSession;
     className?: string;
 }) {
+    const [closed, setClosed] = useState({
+        read: false,
+        offline: false,
+        conflict: false,
+    });
+
+    // A conflict banner dismissed earlier returns with the next conflict.
+    useEffect(() => {
+        if (!session.conflict) {
+            setClosed((state) =>
+                state.conflict ? { ...state, conflict: false } : state,
+            );
+        }
+    }, [session.conflict]);
+
     const items = [];
 
-    if (!session.note.can_edit) {
+    if (!session.note.can_edit && !closed.read) {
         items.push(
-            <p
+            <SlimBanner
                 key="read"
-                className="flex items-center gap-2 rounded-lg bg-surface-2 px-4 py-3 text-[15px] text-text-muted"
-            >
-                <Eye className="size-5 shrink-0" aria-hidden />
-                Anda hanya dapat membaca catatan ini.
-            </p>,
-        );
-    }
-
-    if (session.mode === 'offline' && session.note.can_edit) {
-        items.push(
-            <p
-                key="offline"
+                tone="muted"
                 role="status"
-                className="flex items-start gap-2 rounded-lg bg-info-soft px-4 py-3 text-[15px] text-info"
+                icon={<Eye className="size-4" />}
+                onClose={() => setClosed((state) => ({ ...state, read: true }))}
             >
-                <CloudOff className="mt-0.5 size-5 shrink-0" aria-hidden />
-                <span>
-                    <strong className="font-semibold">
-                        Mode tanpa kolaborasi.
-                    </strong>{' '}
-                    {session.props.collab
-                        ? 'Server penyuntingan bersama tidak terjangkau; perubahan Anda tetap disimpan otomatis, tetapi orang lain baru melihatnya setelah memuat ulang.'
-                        : 'Penyuntingan bersama belum diaktifkan di server ini; perubahan Anda tetap disimpan otomatis.'}
-                </span>
-            </p>,
+                Baca-saja — Anda tidak dapat mengubah catatan ini.
+            </SlimBanner>,
         );
     }
 
-    if (session.conflict) {
+    if (
+        session.mode === 'offline' &&
+        session.note.can_edit &&
+        !closed.offline
+    ) {
         items.push(
-            <div
-                key="conflict"
-                role="alert"
-                className="flex flex-wrap items-center gap-3 rounded-lg bg-warning-soft px-4 py-3 text-[15px] text-warning"
+            <SlimBanner
+                key="offline"
+                tone="info"
+                role="status"
+                icon={<CloudOff className="size-4" />}
+                onClose={() =>
+                    setClosed((state) => ({ ...state, offline: true }))
+                }
             >
-                <AlertTriangle className="size-5 shrink-0" aria-hidden />
-                <span className="min-w-0 flex-1">
-                    Catatan ini baru diubah orang lain. Muat ulang untuk melihat
-                    versi terbaru; salin dulu tulisan Anda bila perlu.
+                Mode tanpa kolaborasi — perubahan tetap tersimpan otomatis.
+            </SlimBanner>,
+        );
+    }
+
+    if (session.conflict && !closed.conflict) {
+        items.push(
+            <SlimBanner
+                key="conflict"
+                tone="warning"
+                role="alert"
+                icon={<AlertTriangle className="size-4" />}
+                onClose={() =>
+                    setClosed((state) => ({ ...state, conflict: true }))
+                }
+            >
+                <span className="flex min-w-0 flex-wrap items-center gap-2">
+                    <span className="min-w-0 flex-1">
+                        Catatan diubah orang lain — muat ulang untuk versi
+                        terbaru.
+                    </span>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 px-3"
+                        onClick={session.reload}
+                    >
+                        Muat ulang
+                    </Button>
                 </span>
-                <Button size="sm" variant="outline" onClick={session.reload}>
-                    Muat ulang
-                </Button>
-            </div>,
+            </SlimBanner>,
         );
     }
 
@@ -153,24 +303,53 @@ export function NoteBanners({
     ) : null;
 }
 
-/** Workspace › parent folders/notes. */
-export function NotePath({ session }: { session: NoteSession }) {
-    const path = ancestors(session.props.notes, session.note.id);
+/** Workspace › parent folders/notes. `compact`: one short line for headers. */
+export function NotePath({
+    session,
+    compact = false,
+    className,
+}: {
+    session: NoteSession;
+    compact?: boolean;
+    className?: string;
+}) {
+    const full = ancestors(session.props.notes, session.note.id);
+    const path = compact ? full.slice(-1) : full;
     const workspace = session.props.workspaces.find(
         (item) => item.id === session.note.workspace_id,
     );
 
     return (
-        <nav aria-label="Lokasi catatan" className="min-w-0">
-            <ol className="flex min-w-0 items-center gap-1 text-[14px] text-text-muted">
-                <li className="shrink-0 font-semibold">
+        <nav
+            aria-label="Lokasi catatan"
+            className={cn('min-w-0', className)}
+            title={
+                compact
+                    ? [
+                          workspace?.name ?? 'Catatan',
+                          ...full.map((item) => item.title),
+                      ].join(' › ')
+                    : undefined
+            }
+        >
+            <ol
+                className={cn(
+                    'flex min-w-0 items-center gap-1 text-[14px] text-text-muted',
+                    compact && 'text-[13px]',
+                )}
+            >
+                <li className="min-w-0 shrink-0">
                     <Link
                         href={
                             session.note.workspace_key
                                 ? workspaceNotes.url(session.note.workspace_key)
                                 : '/catatan'
                         }
-                        className={cn('rounded-xs hover:text-text', focusRing)}
+                        className={cn(
+                            'block truncate rounded-xs hover:text-text',
+                            focusRing,
+                            compact && 'max-w-[160px]',
+                        )}
                     >
                         {workspace?.name ?? 'Catatan'}
                     </Link>

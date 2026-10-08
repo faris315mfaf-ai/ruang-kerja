@@ -2,10 +2,10 @@ import { router } from '@inertiajs/react';
 import {
     ALargeSmall,
     ArrowLeft,
+    Cloud,
     History,
-    MoreHorizontal,
+    List,
     NotebookPen,
-    Plus,
     RotateCcw,
     Share2,
 } from 'lucide-react';
@@ -22,16 +22,18 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useKeyboardInset, useKeyboardOpen } from '@/hooks/use-keyboard-open';
 import { cn } from '@/lib/utils';
-import { DocumentTabStrip, useDocumentTabs } from './document-tabs';
+import type { SavePhase } from './lib';
+import { DocumentTabsSheet, useDocumentTabs } from './document-tabs';
 import { TextSizeControl } from './editor/toolbar-extras';
-import { MinutesModeBar, useMinutesMode } from './minutes-mode';
+import { useToolbarVisibility } from './editor/toolbar-visibility';
+import { FinishDialog, useMinutesMode } from './minutes-mode';
 import { EditorToolbar, NoteEditor } from './note-editor';
 import {
-    EditorsPresence,
     NoteBanners,
-    NotePath,
-    SaveStatus,
+    SaveStatusDetail,
+    SaveStatusIcon,
     TitleField,
+    saveStatusState,
 } from './note-parts';
 import { ShareDialog } from './share-dialog';
 import { DeleteDialog, MoveDialog } from './tree-actions';
@@ -43,10 +45,33 @@ import {
     VersionPreview,
 } from './version-history';
 
-/** Bridge for the phone app bar buttons (rendered by the layout). */
-type NoteUi = { history: boolean; share: boolean; more: boolean };
+/**
+ * Bridge for the phone app bar (rendered by the layout): the three icons
+ * read the live session summary, taps open the status/tab sheets or call
+ * the session action registered by <NoteMobile> after mount. Only
+ * primitives, so publishing never loops.
+ */
+type NoteUi = {
+    status: boolean;
+    tabs: boolean;
+    statusPhase: SavePhase | null;
+    statusLabel: string | null;
+    modeActive: boolean;
+    modeEnabled: boolean;
+    toggleMode: () => void;
+};
 
-let ui: NoteUi = { history: false, share: false, more: false };
+const EMPTY_UI: NoteUi = {
+    status: false,
+    tabs: false,
+    statusPhase: null,
+    statusLabel: null,
+    modeActive: false,
+    modeEnabled: false,
+    toggleMode: () => {},
+};
+
+let ui: NoteUi = EMPTY_UI;
 const listeners = new Set<() => void>();
 
 function setNoteUi(next: Partial<NoteUi>): void {
@@ -66,48 +91,66 @@ function useNoteUi(): NoteUi {
     );
 }
 
-/** App bar actions of /catatan/{note} on phones: history, share, more. */
-export function NoteAppBarActions({ canShare }: { canShare: boolean }) {
+/**
+ * App bar actions of /catatan/{note} on phones (keputusan pemilik 9 Okt
+ * 2026): combined save/Presence status, document tabs and note-taking
+ * mode — everything else lives in the sheets.
+ */
+export function NoteAppBarActions() {
+    const current = useNoteUi();
+    const statusReady = current.statusPhase !== null;
+
     return (
         <>
             <button
                 type="button"
                 className={cn(appBarIconButton, 'size-11')}
-                aria-label="Riwayat versi"
-                onClick={() => setNoteUi({ history: true })}
+                aria-label={current.statusLabel ?? 'Status simpanan catatan'}
+                title={current.statusLabel ?? 'Status simpanan catatan'}
+                onClick={() => setNoteUi({ status: true })}
             >
-                <History className="size-5" strokeWidth={2} aria-hidden />
+                {statusReady && current.statusPhase ? (
+                    <SaveStatusIcon phase={current.statusPhase} />
+                ) : (
+                    <Cloud className="size-5" strokeWidth={2} aria-hidden />
+                )}
             </button>
-            {canShare && (
-                <button
-                    type="button"
-                    className={cn(appBarIconButton, 'size-11')}
-                    aria-label="Bagikan"
-                    onClick={() => setNoteUi({ share: true })}
-                >
-                    <Share2 className="size-5" strokeWidth={2} aria-hidden />
-                </button>
-            )}
             <button
                 type="button"
                 className={cn(appBarIconButton, 'size-11')}
-                aria-label="Aksi catatan"
-                onClick={() => setNoteUi({ more: true })}
+                aria-label="Tab dokumen"
+                onClick={() => setNoteUi({ tabs: true })}
             >
-                <MoreHorizontal
-                    className="size-5"
-                    strokeWidth={2}
-                    aria-hidden
-                />
+                <List className="size-5" strokeWidth={2} aria-hidden />
+            </button>
+            <button
+                type="button"
+                className={cn(
+                    appBarIconButton,
+                    'size-11',
+                    current.modeActive &&
+                        'border-link bg-link-soft text-link hover:bg-link-soft',
+                )}
+                aria-pressed={current.modeActive}
+                aria-label={
+                    current.modeActive
+                        ? 'Mode catat aktif, selesai mencatat'
+                        : 'Mode catat'
+                }
+                disabled={!current.modeEnabled}
+                onClick={current.toggleMode}
+            >
+                <NotebookPen className="size-5" strokeWidth={2} aria-hidden />
             </button>
         </>
     );
 }
 
 /**
- * Note on phones: full-screen editor, formatting bar pinned above the tab
- * bar (or right above the keyboard), history, sharing and actions in
- * bottom sheets.
+ * Note on phones: a full-screen editor with room to write (keputusan
+ * pemilik 9 Okt 2026) — title, banners, text and an auto-hiding formatting
+ * bar above the tab bar/keyboard. Tabs, status detail and note actions
+ * live in bottom sheets opened from the app bar.
  */
 export function NoteMobile({
     props,
@@ -135,21 +178,31 @@ export function NoteMobile({
         mobile: true,
     });
     const [textSizeOpen, setTextSizeOpen] = useState(false);
-    const showTabs = tabs.tabs.length > 1 || mode.active;
+    const statusState = saveStatusState(session);
+    const modeEnabled = mode.active || mode.canStart;
+    const toolbarMounted = session.editable && session.editor !== null;
+    const toolbarVisible = useToolbarVisibility(
+        toolbarMounted ? session.editor : null,
+    );
 
-    // App bar → session.
+    // Session → app bar icons (live summary + the mode toggle).
     useEffect(() => {
-        history.setOpen(current.history);
+        setNoteUi({
+            statusPhase: statusState.phase,
+            statusLabel: statusState.label,
+            modeActive: mode.active,
+            modeEnabled,
+            toggleMode: () => (mode.active ? mode.askFinish() : mode.start()),
+        });
+        // Primitives only: re-publishing identical values must not loop.
         // oxlint-disable-next-line react-hooks/exhaustive-deps
-    }, [current.history]);
-
-    useEffect(() => {
-        session.setShareOpen(current.share);
-        // oxlint-disable-next-line react-hooks/exhaustive-deps
-    }, [current.share]);
+    }, [statusState.phase, statusState.label, mode.active, modeEnabled]);
 
     useEffect(
-        () => () => setNoteUi({ history: false, share: false, more: false }),
+        () => () => {
+            ui = EMPTY_UI;
+            listeners.forEach((listener) => listener());
+        },
         [],
     );
 
@@ -169,16 +222,13 @@ export function NoteMobile({
     }, [session.editor]);
 
     const previewing = history.preview;
+    const openTabActions = (open: () => void) => () => {
+        setNoteUi({ tabs: false });
+        open();
+    };
 
     return (
         <div className="flex flex-col gap-3">
-            {showTabs && <DocumentTabStrip state={tabs} current={note} />}
-            <MinutesModeBar mode={mode} mobile />
-            <NotePath session={session} />
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <SaveStatus session={session} />
-                <EditorsPresence session={session} compact />
-            </div>
             <NoteBanners session={session} />
             <TitleField session={session} size={26} className="pt-1" />
             <NoteEditor
@@ -191,13 +241,26 @@ export function NoteMobile({
                 onChange={session.setContent}
                 onReady={session.onReady}
             />
-            <div aria-hidden style={{ height: toolbarHeight }} />
+
+            {/* Spacer so the fixed bar never covers the caret; only as tall
+                as the bar itself, and gone once the bar hides. */}
+            <div
+                aria-hidden
+                className="transition-[height] duration-180 ease-brand"
+                style={{
+                    height:
+                        toolbarMounted && toolbarVisible ? toolbarHeight : 0,
+                }}
+            />
 
             {session.editable && session.editor && (
                 <div
                     ref={toolbarBox}
                     className={cn(
-                        'glass fixed inset-x-0 z-30 border-x-0 border-b-0 px-2 py-1.5',
+                        'glass fixed inset-x-0 z-30 border-x-0 border-b-0 px-2 py-1.5 transition-[transform,opacity,visibility] duration-180 ease-brand',
+                        toolbarVisible
+                            ? 'visible translate-y-0 opacity-100'
+                            : 'pointer-events-none invisible translate-y-full opacity-0',
                         !keyboardOpen &&
                             'bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom))]',
                     )}
@@ -214,7 +277,7 @@ export function NoteMobile({
             <BottomSheet
                 open={history.open}
                 onOpenChange={(open) => {
-                    setNoteUi({ history: open });
+                    history.setOpen(open);
 
                     if (!open) {
                         history.clearPreview();
@@ -275,80 +338,93 @@ export function NoteMobile({
                 )}
             </BottomSheet>
 
+            <DocumentTabsSheet
+                open={current.tabs}
+                onOpenChange={(open) => setNoteUi({ tabs: open })}
+                state={tabs}
+                current={note}
+                actions={
+                    <div className="flex flex-col gap-2">
+                        <Button
+                            variant="outline"
+                            size="lg"
+                            onClick={openTabActions(() =>
+                                history.setOpen(true),
+                            )}
+                        >
+                            <History aria-hidden />
+                            Riwayat versi
+                        </Button>
+                        {note.can_share && (
+                            <Button
+                                variant="outline"
+                                size="lg"
+                                onClick={openTabActions(() =>
+                                    session.setShareOpen(true),
+                                )}
+                            >
+                                <Share2 aria-hidden />
+                                Bagikan
+                            </Button>
+                        )}
+                        <Button
+                            variant="outline"
+                            size="lg"
+                            onClick={openTabActions(() =>
+                                setTextSizeOpen(true),
+                            )}
+                        >
+                            <ALargeSmall aria-hidden />
+                            Ukuran huruf
+                        </Button>
+                        {note.can_edit && (
+                            <Button
+                                variant="outline"
+                                size="lg"
+                                onClick={openTabActions(() =>
+                                    session.setMoveOpen(true),
+                                )}
+                            >
+                                Pindahkan
+                            </Button>
+                        )}
+                        {note.can_delete && (
+                            <Button
+                                variant="outline"
+                                size="lg"
+                                className="text-danger"
+                                onClick={openTabActions(() =>
+                                    session.setDeleteOpen(true),
+                                )}
+                            >
+                                Hapus catatan
+                            </Button>
+                        )}
+                    </div>
+                }
+            />
+
             <BottomSheet
-                open={current.more}
-                onOpenChange={(open) => setNoteUi({ more: open })}
-                title="Aksi catatan"
+                open={current.status}
+                onOpenChange={(open) => setNoteUi({ status: open })}
+                title="Status catatan"
+                description={note.title}
             >
-                <div className="flex flex-col gap-2">
-                    {mode.canStart && (
-                        <Button
-                            variant="tonal"
-                            size="lg"
-                            onClick={() => {
-                                setNoteUi({ more: false });
-                                mode.start();
-                            }}
-                        >
-                            <NotebookPen aria-hidden />
-                            Mode catat
-                        </Button>
-                    )}
-                    {tabs.canCreate && (
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            disabled={tabs.adding}
-                            onClick={() => {
-                                setNoteUi({ more: false });
-                                tabs.add(tabs.rootId);
-                            }}
-                        >
-                            <Plus aria-hidden />
-                            Tambah tab
-                        </Button>
-                    )}
-                    <Button
-                        variant="outline"
-                        size="lg"
-                        onClick={() => {
-                            setNoteUi({ more: false });
-                            setTextSizeOpen(true);
-                        }}
-                    >
-                        <ALargeSmall aria-hidden />
-                        Ukuran huruf
-                    </Button>
-                    {note.can_edit && (
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            onClick={() => {
-                                setNoteUi({ more: false });
-                                session.setMoveOpen(true);
-                            }}
-                        >
-                            Pindahkan
-                        </Button>
-                    )}
-                    {note.can_delete && (
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            className="text-danger"
-                            onClick={() => {
-                                setNoteUi({ more: false });
-                                session.setDeleteOpen(true);
-                            }}
-                        >
-                            Hapus catatan
-                        </Button>
-                    )}
-                    {!note.can_edit && !note.can_delete && (
-                        <p className="text-[15px] text-text-muted">
-                            Anda hanya dapat membaca catatan ini.
-                        </p>
-                    )}
+                <div className="py-1">
+                    <SaveStatusDetail
+                        state={statusState}
+                        reloadAction={
+                            statusState.conflict && (
+                                <Button
+                                    variant="outline"
+                                    className="self-start"
+                                    onClick={session.reload}
+                                >
+                                    Muat ulang
+                                </Button>
+                            )
+                        }
+                    />
                 </div>
             </BottomSheet>
 
@@ -366,6 +442,8 @@ export function NoteMobile({
                 </div>
             </BottomSheet>
 
+            <FinishDialog mode={mode} mobile />
+
             <RestoreVersionDialog
                 version={history.confirming}
                 processing={history.processing}
@@ -373,7 +451,7 @@ export function NoteMobile({
                 onConfirm={() => {
                     void history.confirmRestore().then((ok) => {
                         if (ok) {
-                            setNoteUi({ history: false });
+                            history.setOpen(false);
                         }
                     });
                 }}
@@ -381,7 +459,7 @@ export function NoteMobile({
             {session.share && (
                 <ShareDialog
                     open={session.shareOpen}
-                    onOpenChange={(open) => setNoteUi({ share: open })}
+                    onOpenChange={session.setShareOpen}
                     note={note}
                     workspace={workspace}
                     share={session.share}
