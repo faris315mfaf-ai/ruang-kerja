@@ -662,7 +662,7 @@ export function PreJoinScreen({
         <div className="min-h-dvh bg-room-desk text-text">
             <div
                 className={cn(
-                    'relative mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-4 pt-4 md:px-10 lg:px-20 lg:pt-10',
+                    'mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-4 pt-4 md:px-10 lg:px-20 lg:pt-10',
                     mobile ? 'pb-32' : 'pb-12',
                 )}
             >
@@ -677,7 +677,7 @@ export function PreJoinScreen({
                         Detail rapat
                     </Link>
                 </Button>
-                <header className="flex flex-col gap-1 lg:pr-[380px]">
+                <header className="flex flex-col gap-1">
                     <h1 className="text-[26px] leading-[32px] font-extrabold tracking-[-0.02em] md:text-[30px] md:leading-[38px]">
                         {meeting.title}
                     </h1>
@@ -697,12 +697,6 @@ export function PreJoinScreen({
                             : 'Belum ada yang bergabung'}
                     </p>
                 </header>
-
-                {consentCard && !mobile && (
-                    <div className="absolute top-10 right-4 w-[340px] md:right-10 lg:right-20">
-                        {consentCard}
-                    </div>
-                )}
 
                 <main className="grid gap-6 lg:grid-cols-[minmax(0,520px)_minmax(0,560px)] lg:justify-between lg:gap-10">
                     <section
@@ -728,7 +722,9 @@ export function PreJoinScreen({
                         aria-label="Notulen"
                         className="flex min-w-0 flex-col gap-3"
                     >
-                        {consentCard && mobile && consentCard}
+                        {/* In the flow of the notes column (never floating over it):
+                            with the AI provider notice it grows to 4+ lines (audit U-09). */}
+                        {consentCard}
                         <NotesChoice
                             room={room}
                             source={source}
