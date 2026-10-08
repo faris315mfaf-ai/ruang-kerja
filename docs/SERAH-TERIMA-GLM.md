@@ -212,7 +212,7 @@ Lalu hapus branch lokal yang sudah ter-merge (`git branch -d …`).
 Server GPU terpisah (NVIDIA L4/T4 16–24 GB). Model **Qwen3-ASR-1.7B** (Apache-2.0, WER Indonesia ±5%) lewat vLLM streaming; worker kirim teks ke LiveKit topik `lk.transcription` sebagai **peserta agen yang tidak tersembunyi** (peserta hidden tidak sampai ke browser di LiveKit 1.13.8). UI sudah siap (hanya menerima dari identitas `rk-notulen`). Rincian: `docs/deploy/RAPAT-VIDEO.md` §10.
 
 ### H. Aplikasi Android (belum dimulai, menunggu pemilik)
-Jalur bertahap: (1) TWA/Bubblewrap 1–2 hari → (2) Capacitor 2–4 minggu untuk push FCM, biometrik, anti GPS palsu. Butuh: akun Google Play Console (US$25), nama paket (usulan `store.spkd.ruangkerja`), keystore, Firebase, `assetlinks.json` di spkd.store, kebijakan privasi publik.
+**Rencana lengkap siap (8 Okt 2026): `docs/fitur/aplikasi-ponsel-rencana.md`** — jalur bertahap M0 (fondasi backend `devices`/`face_templates`/`routes/api.php`) → M1 TWA/Bubblewrap 1–2 hari → M2 Capacitor 1,5–2 minggu (push FCM, biometrik, kamera) → M3 fitur asli per nilai → M4 rilis. Checklist pemilik: akun Play Console (US$25), nama paket (`store.spkd.ruangkerja`?), keystore, Firebase, `assetlinks.json`, kebijakan privasi publik, keputusan jalur §2 & UU PDP §10 dokumen itu.
 
 ---
 

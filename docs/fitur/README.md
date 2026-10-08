@@ -56,7 +56,7 @@ Catatan: persona di data contoh **tetap** (mis. Obrolan selalu dilihat sebagai D
 | Catatan bersama (Tiptap + Yjs) · **Akan dibangun** | F2-2 | `/catatan`, `/catatan/{note}` | [catatan.md](catatan.md) |
 | Rapat, notulen & kalender (Google Calendar & Meet) · **Akan dibangun** | F2-3 | `/rapat`, `/rapat/baru`, `/rapat/{id}`, `/rapat/{id}/notulen`, `/kalender`, `/manajemen/jadwal` | [rapat-kalender.md](rapat-kalender.md) |
 | Otomasi, tugas berulang, template, Kinerja saya · **Akan dibangun**; WhatsApp · **Ditahan** | F2-4 | `/pengaturan/whatsapp`, `/otomasi`, `/otomasi/berulang`, `/otomasi/template`, `/kinerja` | [otomasi-whatsapp.md](otomasi-whatsapp.md) |
-| Aplikasi ponsel (biometrik, wajah, integritas, offline, widget) · **Ditahan** | F3-1 · F3-2 | `/pratinjau/ponsel/*`, `/absensi/wajah`, `/pengaturan/perangkat` | [aplikasi-ponsel.md](aplikasi-ponsel.md) |
+| Aplikasi ponsel (biometrik, wajah, integritas, offline, widget) · **Ditahan** — [rencana M0–M4 siap](aplikasi-ponsel-rencana.md) | F3-1 · F3-2 | `/pratinjau/ponsel/*`, `/absensi/wajah`, `/pengaturan/perangkat` | [aplikasi-ponsel.md](aplikasi-ponsel.md) |
 | OKR divisi · **Akan dibangun** | F3-3 | `/okr`, `/okr/{objective}` | [okr.md](okr.md) |
 | Mesin fingerprint ZKTeco (ADMS) · **Ditahan** | F3-3 | `/admin/mesin-absensi` | [mesin-fingerprint.md](mesin-fingerprint.md) |
 | Dashboard per jabatan SPKD · **Nyata** (`FEATURE_ROLE_DASHBOARDS`) | SPKD | `/peran/{dirut,direktur,hr,corsec,marketing,programming,implementer,analis}` | [dashboard-peran.md](dashboard-peran.md) |

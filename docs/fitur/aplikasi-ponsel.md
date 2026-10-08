@@ -1,6 +1,6 @@
 # Aplikasi ponsel lanjutan (F3-1 · F3-2)
 
-> **Status:** **Ditahan** (keputusan pemilik 6 Okt 2026): tidak dikerjakan sampai pemilik membuka lagi; layar pratinjau tetap bisa dicoba. Berlaku untuk login biometrik, integritas, offline, widget, check-in wajah, dan perangkat saya. Panduan pemakaian: [PANDUAN-PRATINJAU.md](PANDUAN-PRATINJAU.md).
+> **Status:** **Ditahan** (keputusan pemilik 6 Okt 2026): tidak dikerjakan sampai pemilik membuka lagi; layar pratinjau tetap bisa dicoba. Berlaku untuk login biometrik, integritas, offline, widget, check-in wajah, dan perangkat saya. Panduan pemakaian: [PANDUAN-PRATINJAU.md](PANDUAN-PRATINJAU.md). **Rencana pembangunan** (jalur TWA→Capacitor, fase M0–M4, checklist pemilik): [aplikasi-ponsel-rencana.md](aplikasi-ponsel-rencana.md).
 >
 > Pratinjau Fase 3 · dibangun Agen D · rute `/pratinjau/ponsel`, `/pratinjau/ponsel/{masuk,kunci,widget,integritas,offline,aksi-cepat}`, `/absensi/wajah`, `/pengaturan/perangkat` · data contoh, tidak menyimpan apa pun. Indeks: [README](README.md).
 

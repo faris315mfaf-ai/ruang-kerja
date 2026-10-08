@@ -1,40 +1,34 @@
 # Sesi glm
 
-**Terakhir diperbarui:** 8 Okt 2026 (sesi 2, sore) · ZCode (GLM)
+**Terakhir diperbarui:** 8 Okt 2026 (sesi 3, sore) · ZCode (GLM)
 
 ## Tugas berjalan
-§6.A sebagian + §6.B **selesai**: branch ter-push, PR #12 terbuka (menunggu CI), **deploy produksi sukses**. Tersisa: merge PR setelah CI hijau → pull main → §6.E bersih-bersih.
+Tidak ada tugas kode berjalan. §6 serah terima **tuntas** (A–F selesai; C/D menunggu rahasia pemilik; G menunggu GPU). Terakhir: menyusun **rencana aplikasi ponsel** (§6.H) — dokumen, bukan kode.
 
 ## Worktree / branch
-`/Users/godam/PROYEK/rk-integrasi-rapat` · `claude/integrasi-rapat` · PR #12
+`/Users/godam/PROYEK/ruang-kerja` · `main` (`2d724e1` + commit rencana) — worktree integrasi rapat sudah dibersihkan.
 
-## Sudah selesai (sesi 2)
-- `4ae50a2245fb` **ter-deploy ke https://spkd.store** (8 Okt 2026, 12.34 WIB): backup DB `pre-4ae50a2245fb.dump` (valid PGDMP) → archive+scp → build-images di server → deploy-remote (migrasi 830100 & 840100 Ran, RoleSeeder+RequestSeeder, Horizon restart). Verifikasi: `/`, `/login`, `/health` = 200; health JSON `version 4ae50a2245fb`, database & redis ok; Horizon berjalan dengan **supervisor-long** (antrean `long`) aktif.
-- `4ae50a2` fix(rapat): webhook kehadiran createOrFirst (audit R-12) — memperbaiki test retry R-02 yang pecah oleh insertOrIgnore (tidak memicu event Eloquent).
-- `49bf129` feat(akun): R-06 — sandi akun Direksi/HR hanya diatur Super Admin; sandi bawaan & reset massal mengecualikan direksi/hr (`Role::superAdminSetsPassword()`); matriks test diperbarui.
-- `959ea0c` feat(rapat): R-14 — mikrofon & display-capture hanya di dokumen `/gabung`+`/ruang`; middleware baru `EnsureFullPageLoad` (409 + X-Inertia-Location untuk navigasi Inertia, partial lolos); throttle:api untuk final/buka/hapus tindak lanjut/batalkan.
-- `945ecf4` fix(rapat): perbaikan bug-hunt — timer sambung ulang video dibersihkan (kamera hantu), race di use-minutes-collab (timer/404/double destroy), webhook kehadiran idempoten, validasi `attendance.*.user_id` se-perusahaan + filter `loadPeople`.
-- `cb5946a` docs(audit): status R-14/R-06, klaim terkait diperbarui di 11 dokumen.
-- (sesi 1) `b7401d1` U-06 dynamic import, `927e72e` docs.
-- Verifikasi penuh: Pest 3.220 lulus (exit 0, 2 kegagalan pertama: 1 flake paralel NotePolicyTest — hijau saat sendiri, 1 diperbaiki `4ae50a2`), pint+phpstan, tsc, vp check, Vitest 779, build OK.
+## Sudah selesai (sesi 3)
+- Rencana aplikasi ponsel Android lengkap: `docs/fitur/aplikasi-ponsel-rencana.md` (fase M0–M4, jalur TWA→Capacitor vs Expo, checklist pemilik, tabel backend B1–B9, arsitektur/keamanan/UU PDP, risiko, estimasi 4–7 minggu). Ditautkan dari `docs/fitur/aplikasi-ponsel.md`, `docs/fitur/README.md`, `docs/SERAH-TERIMA-GLM.md` §6.H. Commit lokal di `main`, **belum push** (menunggu perintah pemilik).
 
-## Temuan bug-hunt yang DITUNDA (3 agen, laporan lengkap di percakapan; masukkan ke backlog)
-- **video**: retry/backoff saat fetch token kolaborasi gagal transien (mode off permanen); flush edit notulen tertunda saat keluar ruang (postKeepalive); guard konkurensi connect(); prejoin tidak bereaksi pembatalan rapat; polling kehadiran penyelenggara berhenti setelah closes_at; a11y Suspense fallback.
-- **backend**: race `attendance_only` (merge di luar transaksi SaveMinutes); "Jadikan tugas" menghilangkan PIC non-anggota tanpa umpan balik; `MeetingOccurrences::resolve` seri berakhir >14 hari jatuh ke kemunculan pertama; enumerasi ruang serangkaian saat cancel.
-- **keamanan**: persetujuan "Lupa kata sandi" akun direksi/hr masih oleh HR (pemohon yang mengetik sandi — keputusan produk; usul: diputus Super Admin atau konfirmasi pemilik akun).
+## Sudah selesai (sesi 2 — ringkas; rincian di git log)
+- PR #12 (`claude/integrasi-rapat`) **ter-merge** ke `main` (`2d724e1`) setelah CI hijau 6/6; deploy produksi **4ae50a2245fb** di https://spkd.store (backup DB valid, migrasi 830100/840100 Ran, supervisor-long aktif, `/`+`/login`+`/health` 200).
+- Isi PR: ruang rapat Notulen Hidup, backend video LiveKit, notulen otomatis tahap 1, 4 putaran audit, U-06/R-14/R-06, perbaikan bug-hunt (timer kamera hantu, race notulen, webhook createOrFirst R-12, validasi kehadiran lintas perusahaan, throttle).
+- §6.E bersih: 7 worktree + DB dev + branch ter-merge + proxy livekit; `ruang-kerja-codex` utuh.
+- Verifikasi akhir: Pest 3.220 lulus, Vitest 779, pint+phpstan, tsc, vp check, build OK.
 
 ## Langkah berikutnya
-1. Tunggu CI PR #12 hijau → merge → `git pull --ff-only` + `composer install` + `npm ci` + `php artisan migrate` + `db:seed --class=RoleSeeder` + `npm run build` di checkout main `/Users/godam/PROYEK/ruang-kerja`.
-2. §6.E bersih-bersih: `for a in rapatui rapatbe notulen dok audit sandi; do bash scripts/agen-selesai.sh $a --hapus-db; done`, `git worktree remove ../rk-integrasi-rapat`, hapus branch ter-merge. Jangan sentuh `ruang-kerja-codex` (milik Codex).
-3. §6.C/D menunggu pemilik (rahasia & DNS); §6.G (GPU) & §6.H (Android) menunggu keputusan; memo §7 ada di laporan sesi.
+1. Push commit rencana aplikasi ponsel (menunggu perintah).
+2. Bila pemilik membuka §6.H: mulai dari `docs/fitur/aplikasi-ponsel-rencana.md` §3 M0 (keputusan paket+jalur → backend B1–B6); klaim baris papan `docs/PEMBAGIAN-TUGAS.md`.
+3. §6.C/D tetap menunggu rahasia/DNS pemilik (lihat SERAH-TERIMA §6.C–D).
 
 ## Keputusan pengguna yang berlaku
-- 8 Okt 2026: "kerjakan butir 6 sampai 7 semuanya" + "lanjutkan seluruhnya dengan 10 agent" — mengizinkan push/PR/merge/deploy §6.A–B dan menetapkan R-06 (hanya Super Admin).
-- Tanpa izin spesifik: tidak menyentuh server selain prosedur §5.1/§6.B, tidak menjalankan migrasi ulang DB produksi di luar deploy.
+- 8 Okt: push/PR/merge/deploy §6 diizinkan dan sudah dilakukan; kembali ke aturan standar (izin per tindakan).
+- 8 Okt: "siapkan untuk pembuatan ke arah mobile" → dokumen rencana (bukan pembangunan).
 
 ## Butuh dari pemilik / agen lain
-- Rahasia & DNS (§6.C/D) diisi pemilik sendiri.
-- CHANGELOG diperbarui integrator saat merge (butir bersama).
+- Rencana ponsel §10: 6 keputusan (jalur, nama paket, opt-in wajah, retensi, Sentry, iOS).
+- Rahasia §6.C/D; keputusan §7 lain (opt-in notulen otomatis, Pasal 56, PRIVACY_POLICY_VERSION, retensi kehadiran, Data Saya, R-04).
 
-## Verifikasi terakhir (final sesi 2)
-Sesi 2 terarget: Pest Auth+Policies+Admin+Platform+Meetings 358 test lulus; typecheck/lint/vitest video 46 lulus. Verifikasi penuh (agen 9) berjalan saat catatan ini ditulis.
+## Verifikasi terakhir
+Sesi 3: dokumen saja (tidak ada kode). Sesi 2: Pest 3.220 · lint · typecheck · vp · Vitest 779 · build — hijau.
