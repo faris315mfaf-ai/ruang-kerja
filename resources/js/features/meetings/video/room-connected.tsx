@@ -79,6 +79,7 @@ import {
     RoomPeopleProvider,
     useRoomPeople,
 } from './room-people';
+import { keepFocusAboveBar } from './room-scroll';
 import { AttendancePanel, SectionNav, TalkTimePanel } from './room-side';
 import type { TileRef } from './room-tiles';
 import { Filmstrip, ParticipantTile, ScreenShare, tileKey } from './room-tiles';
@@ -1322,7 +1323,7 @@ export function ConnectedRoom({
                     live={live}
                     show={captionsOn && tab === 'video'}
                     onAvailable={onCaptionsAvailable}
-                    className="pointer-events-none absolute inset-x-4 bottom-[100px] z-10"
+                    className="pointer-events-none absolute inset-x-4 bottom-[calc(var(--room-bar-h)+var(--room-bar-bottom)+16px)] z-10"
                     boxClassName="px-3.5 py-2.5"
                 />
             }
@@ -1359,7 +1360,7 @@ export function ConnectedRoom({
                     live={live}
                     show={captionsOn}
                     onAvailable={onCaptionsAvailable}
-                    className="pointer-events-none absolute inset-x-0 bottom-[86px] z-10 mx-auto w-[min(700px,calc(100%-32px))]"
+                    className="pointer-events-none absolute inset-x-0 bottom-[calc(var(--room-bar-h)+var(--room-bar-bottom)+8px)] z-10 mx-auto w-[min(700px,calc(100%-32px))]"
                 />
             }
             bar={bar}
@@ -1408,14 +1409,17 @@ function DesktopRoom({
         <div
             ref={paperRef}
             tabIndex={-1}
-            className="min-h-0 [scrollbar-gutter:stable] overflow-y-auto rounded-t-[6px] bg-surface shadow-card outline-none"
+            onFocus={keepFocusAboveBar}
+            className="min-h-0 scroll-pb-[calc(var(--room-bar-h)+var(--room-bar-bottom)+18px)] [scrollbar-gutter:stable] overflow-y-auto rounded-t-[6px] bg-surface pb-[calc(var(--room-bar-h)+var(--room-bar-bottom)+18px)] shadow-card outline-none"
         >
             {doc}
         </div>
     );
 
     return (
-        <div className="relative flex min-h-0 flex-1 flex-col">
+        // Bar size as CSS variables: everything that must stay clear of the
+        // floating control bar reserves the same space (audit U-03).
+        <div className="relative flex min-h-0 flex-1 flex-col [--room-bar-bottom:18px] [--room-bar-h:60px]">
             <header className="flex shrink-0 items-start gap-4 px-5 pt-5">
                 <div className="min-w-0 flex-1">
                     <StripLive compact={presenting} />
@@ -1428,7 +1432,7 @@ function DesktopRoom({
 
             {presenting ? (
                 <main className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_360px] gap-5 px-5 pt-3">
-                    <div className="min-h-0 pb-[90px]">
+                    <div className="min-h-0 pb-[calc(var(--room-bar-h)+var(--room-bar-bottom)+12px)]">
                         <ScreenShare trackRef={screen} />
                     </div>
                     <div className="flex min-h-0 flex-col gap-2">
@@ -1441,7 +1445,7 @@ function DesktopRoom({
                         {paper}
                     </div>
                     {panel && (
-                        <div className="absolute top-[150px] right-5 bottom-[90px] z-20 w-[300px]">
+                        <div className="absolute top-[150px] right-5 bottom-[calc(var(--room-bar-h)+var(--room-bar-bottom)+12px)] z-20 w-[300px]">
                             {panel}
                         </div>
                     )}
@@ -1468,7 +1472,7 @@ function DesktopRoom({
                         {paper}
                     </div>
                     {wide && (
-                        <div className="flex min-h-0 flex-col gap-4 overflow-y-auto pb-[90px]">
+                        <div className="flex min-h-0 flex-col gap-4 overflow-y-auto pb-[calc(var(--room-bar-h)+var(--room-bar-bottom)+12px)]">
                             {panel ?? (
                                 <div className="flex flex-col gap-4 pt-1">
                                     {chip}
@@ -1478,7 +1482,7 @@ function DesktopRoom({
                         </div>
                     )}
                     {!wide && panel && (
-                        <div className="absolute top-[170px] right-5 bottom-[90px] z-20 w-[320px]">
+                        <div className="absolute top-[170px] right-5 bottom-[calc(var(--room-bar-h)+var(--room-bar-bottom)+12px)] z-20 w-[320px]">
                             {panel}
                         </div>
                     )}
@@ -1486,7 +1490,7 @@ function DesktopRoom({
             )}
 
             {captions}
-            <div className="absolute bottom-[18px] left-1/2 z-20 -translate-x-1/2">
+            <div className="absolute bottom-[var(--room-bar-bottom)] left-1/2 z-20 -translate-x-1/2">
                 {bar}
             </div>
             {overlay}
@@ -1518,7 +1522,7 @@ function MobileRoom({
     overlay: ReactNode;
 }) {
     return (
-        <div className="relative flex min-h-0 flex-1 flex-col">
+        <div className="relative flex min-h-0 flex-1 flex-col [--room-bar-bottom:max(16px,env(safe-area-inset-bottom))] [--room-bar-h:68px]">
             <div
                 role="tablist"
                 aria-label="Tampilan ruang rapat"
@@ -1569,14 +1573,17 @@ function MobileRoom({
                     className="flex min-h-0 flex-1 flex-col"
                 >
                     <NotesAvatarsLive />
-                    <div className="min-h-0 flex-1 overflow-y-auto rounded-t-[24px] bg-surface pb-[110px]">
+                    <div
+                        onFocus={keepFocusAboveBar}
+                        className="min-h-0 flex-1 scroll-pb-[calc(var(--room-bar-h)+var(--room-bar-bottom)+18px)] overflow-y-auto rounded-t-[24px] bg-surface pb-[calc(var(--room-bar-h)+var(--room-bar-bottom)+18px)]"
+                    >
                         {doc}
                     </div>
                 </div>
             )}
 
             {captions}
-            <div className="absolute inset-x-4 bottom-[max(16px,env(safe-area-inset-bottom))] z-20">
+            <div className="absolute inset-x-4 bottom-[var(--room-bar-bottom)] z-20">
                 {bar}
             </div>
             {panel}
