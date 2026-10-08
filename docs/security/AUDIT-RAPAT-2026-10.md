@@ -311,6 +311,8 @@ Pemeriksaan visual memakai LiveKit lokal sendiri (kontainer `audit-livekit`, por
 | U-03 | Sedang (bug UI) | **Bilah kontrol mengambang menutupi bagian bawah kertas notulen** ("Tulis keputusan…", "+ Keputusan"). Kertas tidak menyisakan ruang di bawah, dan field yang difokus bisa tetap di bawah bilah | **Diperbaiki** `34a5338`, rincian di bawah tabel |
 | U-04 | Rendah (a11y) | 15 teks yang harus dibaca memakai `text-subtle`: **2,7:1 di meja ruang terang**, 3,1:1 di kertas. Contoh: ringkasan waktu bicara, jam masuk, "Dipanggil", "Belum ada keputusan/tindak lanjut", baris meta notulen, jam transkrip, cap waktu obrolan, judul seksi review. DESIGN.md membatasi `text-subtle` untuk placeholder, ikon, dan elemen nonaktif | **Diperbaiki** `b504387`: diganti `text-muted` (6,4:1). Vitest `room-contrast.test.ts` memindai berkas ruang |
 | U-05 | Rendah (test) | `MeetingRoomTest` bergantung pada `.env` lokal. Dengan `TRANSCRIBER_URL` terisi, 2 test gagal (prop `notulen.available` menjadi `true`) | **Diperbaiki** `e170f72`: `phpunit.xml` memaksa `LIVEKIT_URL`, `LIVEKIT_API_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_SUBTITLES=false`, `TRANSCRIBER_URL`, `TRANSCRIBER_SECRET`, `TRANSCRIBER_CALLBACK_SECRET`, `MINUTES_LLM_API_KEY`, `COLLAB_SECRET` kosong. Diuji dengan `.env` terisi: Meetings + Audit + Notes 308 lulus, suite penuh lihat §9.4 |
+| U-09 | Sedang (bug UI) | **Kartu persetujuan pra-gabung menutupi kolom notulen.** Kartu memakai `absolute top-10 … w-[340px]` (`prejoin.tsx:701-705`). Dengan pemberitahuan ringkasan AI (4 poin) kartu memanjang dan menutupi "Notulen memakai…" / pilihan sumber notulen pertama di 1440 dan 1280, juga judul di 834 | **Diperbaiki** `ec14526`: kartu di alur normal, paling atas kolom Notulen (semua lebar); padding header untuk kartu dihapus. Diukur di 1440/1280/1024/834 terang & Malam: kartu tidak menutupi isi kolom maupun judul, tanpa gulir horizontal |
+| U-10 | Rendah (bug UI) | **Presentasi:** kolom notulen memakai gutter `px-5` (ruang lain `px-6`), dan "Disimpan 07.2…" di kepala kertas terpotong. Penyebabnya, status dan avatar penyunting ikut menyusut di kolom 360 px | **Diperbaiki** `0ba89c6`: gutter `px-6`, status/penyunting `shrink-0 whitespace-nowrap` sehingga judul yang dipotong. Diukur: jarak kertas ke tepi kanan 24 px, "Disimpan" 48 px dari tepi |
 | U-06 | Info | Hocuspocus + Yjs (111 KB / 32 KB gzip) diimpor statis oleh halaman ruang walau mode kolaborasi mati | Rekomendasi rapatui: `import()` di `useMinutesCollab` |
 | U-07 | Info | `resources/js/pages/notes/index.test.tsx` ikut glob halaman, jadi dibangun sebagai chunk 426 KB. Chunk ini tidak pernah dimuat. Sudah ada di `main` | Rekomendasi integrator: kecualikan `*.test.tsx` dari glob halaman |
 | U-08 | Info | Pembaca notulen kolaboratif ("Notulen belum dimulai", token 404 B-06) hanya mencoba lagi setelah `minutes.updated`. Bila editor membuka dokumen tanpa menyimpan, pembaca tetap menunggu sampai simpanan pertama | Diterima |
@@ -327,6 +329,13 @@ Pemeriksaan visual memakai LiveKit lokal sendiri (kontainer `audit-livekit`, por
 | 834 | tidak tertutup | tidak tertutup, jarak 130 px | tidak |
 | 390 | tidak tertutup | tidak tertutup, jarak 34 px | tidak |
 | Presentasi 1440 (berbagi layar aktif) | — | tidak tertutup | — |
+
+**Tangkapan layar sebelum/sesudah** (worktree audit, `storage/app/ui-shots/audit-rapatui/`, diabaikan git):
+- `sebelum/ruang-bilah-1440-light.png` (laporan, dari worktree rapatui), `sebelum/ruang-1440-light-sebelum-fokus.png`;
+- `sebelum/pra-gabung-1440-light.png`, `sebelum/pra-gabung-834-light.png`, `sebelum/presentasi-1440-light.png`;
+- `sesudah/ruang-{1440,834,390}-*-{top-focus,focus,end}.png`, `sesudah/pra-gabung-{1440,1280,1024,834}-{light,dark}.png` (keadaan "pilih notulen"), `sesudah/presentasi-1440-light(-focus).png`.
+
+Pemeriksaan bisa diulang dengan `tests/e2e/audit-bar-check.mjs` dan `tests/e2e/audit-prejoin-shots.mjs` (LiveKit lokal). Agen dok perlu mengambil ulang `pra-gabung-desktop.jpg`, `pra-gabung-pilih-notulen-desktop.jpg`, dan `presentasi-desktop.jpg`.
 
 ### 9.2 Diverifikasi aman
 
@@ -373,6 +382,9 @@ Pemeriksaan visual memakai LiveKit lokal sendiri (kontainer `audit-livekit`, por
 | `d6bc1b3` | fix(rapat-ui): editor kolaboratif mengikuti hak sunting token terbaru (U-02) |
 | `34a5338` | fix(rapat-ui): bilah kontrol tidak menutupi kertas notulen (U-03) |
 | `b504387` | fix(rapat-ui): teks yang harus dibaca tidak memakai `text-subtle` (U-04) |
+| `ec14526` | fix(rapat-ui): kartu persetujuan dalam alur kolom Notulen (U-09) |
+| `0ba89c6` | fix(rapat-ui): gutter Presentasi + "Disimpan" tidak terpotong (U-10) |
+| `e52a834` | test(e2e): pemeriksaan tata letak U-03/U-09/U-10 (manual) |
 
-Berkas milik rapatui yang disentuh: `room-connected.tsx`, `room-doc.tsx`, `room-side.tsx`, `room-panels.tsx`, `use-minutes-collab.ts`, `notulen/notulen-review.tsx`. Berkas baru: `room-scroll.ts`, tiga test Vitest, dan `tests/Feature/Audit/RapatUiAuditTest.php`.
+Berkas milik rapatui yang disentuh: `prejoin.tsx`, `room-connected.tsx`, `room-doc.tsx`, `room-side.tsx`, `room-panels.tsx`, `use-minutes-collab.ts`, `notulen/notulen-review.tsx`. Berkas baru: `room-scroll.ts`, tiga test Vitest, `tests/Feature/Audit/RapatUiAuditTest.php`, dan dua pemeriksaan manual `tests/e2e/audit-*.mjs`.
 
