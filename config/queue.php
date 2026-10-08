@@ -75,6 +75,18 @@ return [
             'after_commit' => false,
         ],
 
+        // Notulen otomatis (audit T-05): AI summaries may run up to 900 s, so their queue
+        // `long` lives on a connection whose retry_after (960 s) exceeds the job timeout;
+        // otherwise Redis would hand the same job to a second worker mid-run.
+        'redis-long' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => 'long',
+            'retry_after' => (int) env('REDIS_LONG_QUEUE_RETRY_AFTER', 960),
+            'block_for' => (int) env('REDIS_QUEUE_BLOCK_FOR', 5),
+            'after_commit' => false,
+        ],
+
         'deferred' => [
             'driver' => 'deferred',
         ],

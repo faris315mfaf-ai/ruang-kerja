@@ -261,6 +261,79 @@ describe('ingestion from the worker', function () {
     });
 });
 
+describe('audit fase 2 (T-05, T-08, T-09, T-10)', function () {
+    it('never lets a late progress message undo a finished transcript (T-10)', function () {
+        Bus::fake([SummarizeMeetingTranscript::class]);
+        notulenIngest(readyPayload($this->room, [['speaker_identity' => $this->rina->id, 'speaker_name' => 'R', 'start_ms' => 0, 'end_ms' => 900, 'text' => 'Halo']]))->assertOk();
+        notulenIngest(['room' => $this->room, 'session' => 'sess-1', 'status' => 'transcribing'])->assertOk();
+        notulenIngest(['room' => $this->room, 'session' => 'sess-late', 'status' => 'recording'])->assertOk();
+
+        expect(MeetingTranscript::query()->sole()->status)->toBe(TranscriptStatus::Summarizing);
+
+        MeetingTranscript::query()->update(['status' => 'failed', 'error' => 'x']);
+        notulenIngest(['room' => $this->room, 'status' => 'transcribing'])->assertOk();
+        expect(MeetingTranscript::query()->sole()->status)->toBe(TranscriptStatus::Failed);
+    });
+
+    it('treats a resent transcript without session id as the same part (T-10)', function () {
+        Bus::fake([SummarizeMeetingTranscript::class]);
+        $payload = readyPayload($this->room, [['speaker_identity' => $this->rina->id, 'speaker_name' => 'R', 'start_ms' => 0, 'end_ms' => 900, 'text' => 'Halo']]);
+        unset($payload['session']);
+
+        notulenIngest($payload)->assertOk();
+        notulenIngest($payload, timestamp: now()->getTimestamp() + 1)->assertOk();
+
+        $transcript = MeetingTranscript::query()->sole();
+        expect($transcript->segments)->toHaveCount(1)
+            ->and($transcript->sessions)->toHaveCount(1)
+            ->and($transcript->sessions[0])->toStartWith('h-');
+    });
+
+    it('shows leadership observers the status only — no speakers, durations or counts (T-09)', function () {
+        MeetingTranscript::factory()->ready([[$this->rina->id, 'Rina Wulandari', 1, 'Halo'], [$this->budi->id, 'Budi', 9, 'Ya']])
+            ->create(['meeting_id' => $this->meeting->id]);
+        MeetingTranscriptConsent::query()->create(['meeting_id' => $this->meeting->id, 'user_id' => $this->budi->id, 'opted_out' => true]);
+        $direksi = User::factory()->withRole(Role::Direksi)->create();
+        $this->meeting->forceFill(['leadership' => true])->save();
+
+        $json = $this->actingAs($direksi)->getJson($this->base.'/status')->assertOk()
+            ->assertJsonPath('transcript.status', 'ready')
+            ->assertJsonPath('transcript.speakers', [])
+            ->assertJsonPath('transcript.segment_count', 0)
+            ->assertJsonPath('transcript.duration_seconds', null)
+            ->assertJsonPath('optout_count', 0)
+            ->assertJsonPath('draft', null)
+            ->getContent();
+        expect($json)->not->toContain('Rina Wulandari')->not->toContain($this->rina->id);
+
+        $this->actingAs($this->rina)->getJson($this->base.'/status')->assertJsonCount(2, 'transcript.speakers')->assertJsonPath('optout_count', 1);
+    });
+
+    it('audits every "Ringkas ulang" because the transcript goes to the provider again (T-08)', function () {
+        Bus::fake([SummarizeMeetingTranscript::class]);
+        MeetingTranscript::factory()->ready([[$this->rina->id, 'Rina', 1, 'Halo']])
+            ->create(['meeting_id' => $this->meeting->id, 'draft_status' => DraftStatus::Failed]);
+
+        $this->actingAs($this->taker)->postJson($this->base.'/ringkas-ulang')->assertOk();
+
+        $log = AuditLog::query()->where('action', 'meeting.transcript_resummarized')->sole();
+        expect($log->user_id)->toBe($this->taker->id)
+            ->and($log->new_values)->toMatchArray(['provider' => 'DeepSeek', 'outside_indonesia' => true]);
+    });
+
+    it('runs the summary on the long queue with retry_after above the job timeout (T-05)', function () {
+        Bus::fake([SummarizeMeetingTranscript::class]);
+        config(['queue.default' => 'redis']);
+
+        $job = new SummarizeMeetingTranscript($this->meeting->id, '2026-10-05');
+
+        expect($job->queue)->toBe('long')
+            ->and($job->connection)->toBe('redis-long')
+            ->and(config('queue.connections.redis-long.retry_after'))->toBeGreaterThanOrEqual($job->timeout + 60)
+            ->and(config('horizon.defaults.supervisor-long'))->toMatchArray(['connection' => 'redis-long', 'queue' => ['long'], 'timeout' => 900]);
+    });
+});
+
 describe('LiveKit webhook → worker', function () {
     it('asks the worker to join with a hidden subscribe-only token and the opted-out people', function () {
         MeetingTranscriptConsent::query()->create(['meeting_id' => $this->meeting->id, 'user_id' => $this->budi->id, 'opted_out' => true]);

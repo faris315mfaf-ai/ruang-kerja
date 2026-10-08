@@ -62,6 +62,11 @@ final class RecordTranscriptUpdate
 
         $session = is_string($payload['session'] ?? null) ? mb_substr($payload['session'], 0, 64) : '';
         $startedAt = self::time($payload['started_at'] ?? null);
+
+        if ($session === '' && $status === TranscriptStatus::Ready) {
+            // No session id: a deterministic key of the content keeps a resend idempotent (audit T-10).
+            $session = 'h-'.substr(hash('sha256', (string) json_encode([$room, $payload['started_at'] ?? null, $payload['segments'] ?? []])), 0, 40);
+        }
         $summarize = false;
 
         DB::transaction(function () use ($meeting, $target, $room, $status, $payload, $session, $startedAt, &$summarize): void {
@@ -87,10 +92,14 @@ final class RecordTranscriptUpdate
                 return; // this part was merged already
             }
 
+            // Progress messages never undo a finished transcript (late or reordered
+            // retries, audit T-10); a new part still merges when its "ready" arrives.
+            $terminal = in_array($transcript->status, [TranscriptStatus::Ready, TranscriptStatus::Summarizing, TranscriptStatus::Failed], true);
+
             match ($status) {
                 TranscriptStatus::Ready => $summarize = $this->merge($transcript, $meeting, $payload, $session, $startedAt),
                 TranscriptStatus::Failed => $this->fail($transcript, $payload),
-                default => $transcript->forceFill(['status' => $status, 'error' => null])->save(),
+                default => $terminal ? null : $transcript->forceFill(['status' => $status, 'error' => null])->save(),
             };
         });
 
