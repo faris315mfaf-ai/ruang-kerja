@@ -2,7 +2,7 @@
 
 Panduan operasional untuk **rapat video bawaan RuangKerja**, **notulen otomatis** (transkrip setelah rapat + draf notulen dari AI), dan rencana **subtitle langsung** (tahap 2, GPU). Untuk admin server dan pengembang. Panduan pemakai: [`docs/fitur/rapat-video.md`](../fitur/rapat-video.md); privasi & UU PDP: [`docs/fitur/rapat-video-privasi.md`](../fitur/rapat-video-privasi.md); fitur & kode: [`docs/fitur/rapat-kalender.md`](../fitur/rapat-kalender.md) §6a.
 
-> **Status 7 Okt 2026.** **Nyata di `main`:** server LiveKit di VPS rapat (§1–§6), token, webhook kehadiran, bisukan/keluarkan. **Dibangun, belum digabung:** notulen otomatis di branch `claude/notulen-otomatis` (worker `transcriber/`, `config/notulen.php`, webhook kedua, transkrip, draf AI, retensi; kontrak `docs/fitur/notulen-otomatis-kontrak.md`) dan endpoint ruang arah C di `claude/rapat-backend` (kontrak `docs/fitur/rapat-video-kontrak.md`); tampilan arah C di `claude/rapat-ui`. Worker **belum dipasang** di VPS rapat. Yang belum ada kodenya/langkah resminya diberi tanda **Menunggu**. **Rencana:** subtitle langsung di server GPU (§10).
+> **Status 8 Okt 2026.** Kode **selesai** di branch `claude/dok-rapat` (gabungan `claude/rapat-ui`, `claude/rapat-backend`, `claude/notulen-otomatis`, audit): ruang arah C "Notulen Hidup", notulen otomatis (worker `transcriber/`, transkrip, draf AI, retensi), kontrak `docs/fitur/rapat-video-kontrak.md` dan `docs/fitur/notulen-otomatis-kontrak.md`, audit `docs/security/AUDIT-RAPAT-2026-10.md`. **Sudah di server:** LiveKit di VPS rapat (§1–§6). **Belum di server:** worker transkripsi (§7.5) dan webhook kedua (§3). **Rencana:** subtitle langsung di server GPU (§10).
 
 ```
                     ┌─────────────────────────── VPS aplikasi (spkd.store) ───────────────────────────┐
@@ -16,7 +16,7 @@ Browser ──HTTPS──▶  │ RuangKerja (Laravel)                          
    │ WSS (sinyal)                          │ webhook / transkrip      │ minta worker bergabung (HMAC)
    ▼                                       │                          ▼
 livekit.spkd.store ── VPS rapat 103.125.181.244: Caddy (443, TLS otomatis) → LiveKit :7880
-   ▲                                     └─ worker transkripsi "rk-notulen" (:8090, Menunggu: belum terpasang)
+   ▲                                     └─ worker transkripsi "rk-notulen" (127.0.0.1:8090 ← notulen.spkd.store)
    │ media WebRTC: UDP 50000–60000 (utama) · TCP 7881 · TURN/UDP 3478 + relay 30000–40000 · TURN/TLS turn.spkd.store:443 (cadangan)
 ```
 
@@ -86,7 +86,7 @@ webhook:
   api_key: <API_KEY>
   urls:
     - https://spkd.store/api/livekit/webhook   # kehadiran (main)
-    - https://spkd.store/api/notulen/livekit   # notulen otomatis (branch notulen; tambahkan saat fitur dirilis)
+    - https://spkd.store/api/notulen/livekit   # notulen otomatis (tambahkan saat fitur dirilis)
 ```
 
 LiveKit mengirim **semua** kejadian ke setiap URL; masing-masing endpoint memilih yang dibutuhkannya.
@@ -127,7 +127,7 @@ LIVEKIT_API_SECRET=<API_SECRET dari generator>
 Lalu deploy ulang / `php artisan optimize` (konfigurasi di-cache). Tidak ada perubahan lain:
 
 - CSP `connect-src` otomatis menambah `wss://livekit.spkd.store` dan `https://livekit.spkd.store` dari `LIVEKIT_URL`; `Permissions-Policy` sudah mengizinkan kamera, mikrofon & berbagi layar untuk situs sendiri.
-- Kunci untuk notulen otomatis dan ringkasan AI: §7.3 dan §8. Subtitle tahap 2: `LIVEKIT_SUBTITLES=true` (kontrak rapat; **Menunggu** di `config/livekit.php`).
+- Kunci untuk notulen otomatis dan ringkasan AI: §7.3 dan §8. Subtitle tahap 2: `LIVEKIT_SUBTITLES` (`config/livekit.php`, bawaan `false`, §10).
 
 ## 5. Uji
 
@@ -151,7 +151,7 @@ Lalu deploy ulang / `php artisan optimize` (konfigurasi di-cache). Tidak ada per
 4. Detail rapat (orang ketiga atau tab lain) memperlihatkan "2 orang di ruang rapat" dalam ≤ 30 detik → **webhook jalan**. Bila tetap "Ruang rapat terbuka": runbook R1 (§12).
 5. Moderasi: penyelenggara **Bisukan** peserta (mikrofonnya mati) → **Keluarkan** (peserta melihat "Penyelenggara mengeluarkan Anda dari rapat").
 6. Berbagi layar dari Chrome desktop; chat; angkat tangan; putuskan Wi-Fi 10 detik → "Menyambungkan ulang…" lalu kembali.
-7. **Notulen otomatis** (setelah worker terpasang, §7.6): nyalakan notulen otomatis di rapat uji → masuk ruang → log worker `recording room rk-…` → semua keluar → ±90 detik kemudian `GET /health` menunjukkan `queued`/`transcribing` → halaman `/rapat/{id}/notulen-otomatis` berstatus Mentranskrip → Meringkas → Siap. Satu peserta menyalakan "Jangan transkrip suara saya" → kalimatnya tidak ada di transkrip.
+7. **Notulen otomatis** (setelah worker terpasang, §7.5): nyalakan notulen otomatis di rapat uji → masuk ruang → log worker `recording room rk-…` → semua keluar → ±90 detik kemudian log worker `finishing rk-…` lalu `transcribed …` → halaman `/rapat/{id}/notulen-otomatis` berstatus Mentranskrip → Meringkas → Siap. Satu peserta menyalakan "Jangan transkrip suara saya" → kalimatnya tidak ada di transkrip.
 
 Uji manual dua pengguna di lokal: `tests/e2e/rapat-video-two-users.mjs`.
 
@@ -161,116 +161,106 @@ Jeda suara (rasa), putus-sambung, CPU (`docker stats`, target < 60% untuk 20 ora
 
 ## 7. Notulen otomatis: worker transkripsi (tahap 1, CPU)
 
-Kode: `transcriber/` (Python 3.12, branch `claude/notulen-otomatis`). Satu proses, satu kontainer, dijalankan **di VPS rapat** di samping LiveKit.
+Kode: `transcriber/` (Python 3.12). Satu proses, satu kontainer, dijalankan **di VPS rapat** di samping LiveKit. Langkah pasang lengkap, angka kapasitas yang sudah diukur, dan uji lokal ada di **`transcriber/DEPLOY.md`** (berkas `transcriber/deploy/compose.notulen.yaml`, `notulen.env.example`, `caddy-notulen.yaml`); bagian ini meringkasnya untuk admin.
 
 ### 7.1 Cara kerja
 
-1. Orang pertama masuk ruang rapat ber-notulen-otomatis → webhook kedua (§3) → job `StartMeetingRecorder` (4 percobaan, jeda 5/15/45 detik) meminta worker bergabung ke ruang `rk-{meeting}-{yyyymmdd}` (`POST /rooms/{room}/join`, HMAC) dengan token LiveKit buatan aplikasi (`TRANSCRIBER_TOKEN_TTL`, bawaan 10 menit): identitas **`rk-notulen`**, tersembunyi, hanya berlangganan (tidak bisa bicara/tampil), plus daftar id karyawan yang menolak. Beberapa detik pertama sebelum worker masuk tidak terekam.
-2. Worker hanya berlangganan **trek mikrofon** peserta manusia yang **tidak** menolak. Peserta yang menyalakan "Jangan transkrip suara saya" (atribut LiveKit `rk_notulen_optout`) atau yang dikecualikan aplikasi tidak pernah dilanggani, jadi suaranya tidak sampai ke worker. Menolak di tengah rapat → langganan berhenti dan rekaman orang itu yang sudah ada **dihapus**. Audio berbagi layar tidak direkam.
-3. Audio per pembicara ditulis ke spool lokal (`TRANSCRIBER_SPOOL_DIR`, WAV 16 kHz mono 16-bit, berkas baru setelah jeda 2 detik/bisu atau tiap 10 menit; nama berkas tanpa identitas). Rekaman berhenti saat aplikasi memanggil `POST /rooms/{room}/finish`, saat ruang kosong dari manusia selama `TRANSCRIBER_EMPTY_GRACE` detik, atau setelah `TRANSCRIBER_MAX_MINUTES`.
-4. Antrean transkripsi (konkurensi `TRANSCRIBE_CONCURRENCY`, bawaan 1): faster-whisper (bahasa Indonesia, VAD, int8) per berkas, potongan diberi waktu sesuai jam dinding, frasa halusinasi umum Whisper ("terima kasih telah menonton", dll.) dibuang, semua pembicara digabung menurut waktu. Nama pembicara langsung dari trek LiveKit (tanpa model diarisasi).
-5. **Audio dihapus segera setelah transkripsi** (berhasil atau gagal), lalu transkrip dikirim ke aplikasi `POST {TRANSCRIBER_APP_URL}/api/notulen/transcript` (HMAC, hingga 6 percobaan dengan jeda 2→60 detik). Bila aplikasi tidak menjawab, `result.json` (teks transkrip) tertahan di spool dan **dihapus otomatis setelah `TRANSCRIBER_SPOOL_MAX_AGE_HOURS`** (bawaan 24 jam). Setelah restart, sesi yang belum selesai diproses ulang.
-
-Status yang dikirim worker: `recording` → `transcribing` → `ready` | `failed` (dengan `error` singkat, mis. "Transkripsi gagal (RuntimeError)."). Aplikasi menyimpan transkrip per kemunculan (`meeting_transcripts`, kiriman ulang idempoten per sesi worker, beberapa sesi digabung menurut jam dinding), membuang kalimat orang yang menolak, lalu bila kunci LLM ada menandai `summarizing` dan menjalankan job ringkasan (§8) sebelum `ready`. Menolak di tengah rapat → job `RelayTranscriptConsent` memanggil `POST /rooms/{room}/exclude`.
+1. Orang pertama masuk ruang rapat ber-notulen-otomatis → webhook kedua (§3) → job `StartMeetingRecorder` (antrean `default`, 4 percobaan, jeda 5/15/45 detik) meminta worker bergabung ke ruang `rk-{meeting}-{yyyymmdd}` (`POST /rooms/{room}/join`, HMAC) dengan token LiveKit buatan aplikasi (`TRANSCRIBER_TOKEN_TTL`, bawaan 10 menit): identitas **`rk-notulen`**, tersembunyi, hanya berlangganan, plus daftar id karyawan yang menolak transkrip. Beberapa detik pertama sebelum worker masuk tidak terekam.
+2. Worker hanya berlangganan **trek mikrofon** peserta manusia yang **tidak** menolak, jadi suara orang yang menolak tidak pernah sampai ke worker. Pilihan menolak bersifat **privat**: dikirim aplikasi ke worker (`POST /rooms/{room}/exclude`, job `RelayTranscriptConsent`), **tidak pernah** sebagai atribut LiveKit (yang terlihat semua klien). Menolak di tengah rapat → langganan berhenti dan audio orang itu yang sudah terekam **dihapus**. Audio berbagi layar tidak direkam.
+3. Audio per pembicara ditulis ke spool (`TRANSCRIBER_SPOOL_DIR`, WAV 16 kHz mono 16-bit, berkas baru setelah jeda 2 detik atau tiap 10 menit, nama berkas tanpa identitas; batas `TRANSCRIBER_SPOOL_MAX_GB`, bawaan 20 GB: bila penuh worker menolak rekaman baru, menghentikan rekaman berjalan, dan menulis `ALERT spool full` di log). Rekaman berhenti saat `room_finished` (job `FinishMeetingRecorder`), saat ruang tanpa manusia selama `TRANSCRIBER_EMPTY_GRACE` detik (bawaan 90), atau setelah `TRANSCRIBER_MAX_MINUTES`.
+4. Antrean transkripsi worker (bawaan satu sekaligus): faster-whisper `large-v3-turbo` (revisi + SHA-256 model dipatok), bahasa Indonesia, VAD, int8; frasa halusinasi umum Whisper dibuang; semua pembicara digabung menurut waktu. Pembicara dikenali dari trek LiveKit (tanpa diarisasi); **nama diambil aplikasi dari `users.name`**, identitas lain menjadi "Peserta tamu".
+5. **Audio dihapus segera setelah transkripsi** (berhasil atau gagal). Transkrip dikirim ke `POST {TRANSCRIBER_APP_URL}/api/notulen/transcript` (HMAC dengan `TRANSCRIBER_CALLBACK_SECRET`, hingga 6 percobaan dengan jeda 2→60 detik). Bila aplikasi tidak menjawab, transkrip tertahan di spool dan **dihapus setelah `TRANSCRIBER_SPOOL_MAX_AGE_HOURS`** (24 jam). Worker restart di tengah rekaman: audio sesi itu dihapus dan aplikasi diberi status gagal.
+6. Aplikasi menyimpan transkrip per kemunculan (`meeting_transcripts`, kiriman ulang idempoten), membuang kalimat orang yang menolak, lalu bila kunci LLM ada menandai `summarizing` dan menjalankan ringkasan (§8). Status: `recording` → `transcribing` → `summarizing` → `ready` | `failed`; status lama yang datang terlambat tidak menimpa keadaan akhir.
 
 ### 7.2 API worker
 
+Worker hanya mendengar di **`127.0.0.1:8090`**; Caddy di VPS rapat menerbitkannya sebagai `https://notulen.spkd.store` (SNI, hanya dari IP VPS aplikasi, tetap port 443).
+
 | Rute | Isi |
 |---|---|
-| `GET /health` | `{"status":"ok","recording":N,"queued":N,"transcribing":N,"model":"large-v3-turbo"}`; tanpa rahasia & nama ruang. Dipakai `HEALTHCHECK` Docker |
-| `POST /rooms/{room}/join` | badan `{"action":"join","room":…,"token":…,"exclude":[identitas…]}` → `202 {"status":"joining"}` atau `200 {"status":"already"}`; `502` gagal masuk ruang |
-| `POST /rooms/{room}/exclude` | badan `{"action":"exclude","room":…,"identity":…,"excluded":true\|false}` → `200`; worker berhenti/mulai melanggani orang itu dan menghapus audionya bila dikecualikan |
-| `POST /rooms/{room}/finish` | badan `{"action":"finish","room":…}` → `202` atau `404 {"status":"unknown"}` |
+| `GET /health` | `{"status":"ok"}` (sengaja minimal: tanpa model, antrean, atau nama ruang). Dipakai `HEALTHCHECK` Docker |
+| `POST /rooms/{room}/join` | `{"action":"join","room","token","exclude":[id…],"nonce"}` → `202 {"status":"joining"}` / `200 {"status":"already"}`; `502` gagal masuk ruang |
+| `POST /rooms/{room}/exclude` | `{"action":"exclude","room","identity","excluded":true\|false,"nonce"}` → `200` |
+| `POST /rooms/{room}/finish` | `{"action":"finish","room","nonce"}` → `202` atau `404 {"status":"unknown"}` (sudah keluar sendiri; dianggap wajar) |
 
-Tanda tangan dua arah (aplikasi → worker, worker → aplikasi): header `X-Notulen-Timestamp: <unix detik>` dan `X-Notulen-Signature: v1=<hex HMAC-SHA256(TRANSCRIBER_SECRET, "<timestamp>.<badan mentah>")>`. Ditolak `401` bila timestamp di luar `TRANSCRIBER_TOLERANCE` (bawaan 300 detik) atau tanda tangan pernah dipakai (anti-replay). Badan wajib menyebut `action` dan `room` yang sama dengan URL (`422` bila tidak), plus `nonce` acak dari aplikasi; maks. 64 KB di worker (`413`), transkrip ke aplikasi maks. `TRANSCRIBER_MAX_BODY` (5 MB). URL LiveKit diambil dari konfigurasi worker, tidak pernah dari permintaan. Pasangan PHP: `App\Domain\Meetings\Transcripts\Services\NotulenSignature`; klien `TranscriberClient` (hanya dari job antrean, batas waktu `TRANSCRIBER_TIMEOUT`). Jawaban `POST /api/notulen/transcript`: `200 {"status":"recorded"|"ignored"}` · `401` tanda tangan · `404` belum diatur · `413` · `422`.
+Tanda tangan dengan **rahasia berbeda per arah**: header `X-Notulen-Timestamp: <unix detik>` dan `X-Notulen-Signature: v1=<hex HMAC-SHA256(rahasia, "<timestamp>.<badan mentah>")>`; aplikasi → worker memakai `TRANSCRIBER_SECRET`, worker → aplikasi `TRANSCRIBER_CALLBACK_SECRET`. Ditolak `401` bila selisih jam > 300 detik atau tanda tangan pernah dipakai (worker mencatatnya di `spool/.replay.sqlite`, tetap setelah restart; aplikasi di cache). Badan wajib menyebut `action` dan `room` yang sama dengan URL (`422`), maks. 64 KB di worker; transkrip ke aplikasi maks. `TRANSCRIBER_MAX_BODY` (5 MB). Jawaban `POST /api/notulen/transcript`: `200 {"status":"recorded"|"ignored"}` · `401` · `404` belum diatur · `413` · `422`.
 
 ### 7.3 Kunci lingkungan
 
-**Worker** (`transcriber/notulen/config.py`; worker menolak mulai bila tiga kunci pertama salah):
+**Worker** (`transcriber/notulen/config.py`, contoh `transcriber/deploy/notulen.env.example`; berkas `notulen.env` `chmod 600`, tidak di-commit):
 
 | Kunci | Bawaan | Arti |
 |---|---|---|
-| `TRANSCRIBER_SECRET` | — (wajib, ≥ 32 karakter) | rahasia HMAC bersama aplikasi; nilai sama di `.env` aplikasi |
-| `TRANSCRIBER_APP_URL` | — (wajib) | URL dasar aplikasi, `https://spkd.store` |
-| `LIVEKIT_URL` | `ws://127.0.0.1:7880` | LiveKit dilihat dari worker (lokal di VPS rapat, tanpa TLS) |
-| `TRANSCRIBER_HOST` / `TRANSCRIBER_PORT` | `0.0.0.0` / `8090` | alamat API worker; port hanya dipublikasikan ke localhost/Caddy |
-| `TRANSCRIBER_SPOOL_DIR` | `/var/spool/notulen` | audio sementara (izin 700, pengguna `notulen` uid 10001) |
-| `WHISPER_MODEL` | `large-v3-turbo` | nama/path model faster-whisper (§7.4) |
-| `WHISPER_COMPUTE_TYPE` | `int8` | presisi CTranslate2 |
-| `WHISPER_CPU_THREADS` | `4` | thread per transkripsi |
-| `WHISPER_BEAM_SIZE` | `1` | beam search (lebih besar = sedikit lebih akurat, lebih lambat) |
-| `WHISPER_LANGUAGE` | `id` | bahasa transkrip |
-| `WHISPER_MODEL_DIR` | `/models` (Dockerfile) | lokasi unduhan model; pasang volume agar tidak mengunduh ulang |
+| `TRANSCRIBER_SECRET` | wajib, ≥ 32 karakter | aplikasi → worker; sama dengan aplikasi |
+| `TRANSCRIBER_CALLBACK_SECRET` | wajib, ≥ 32 karakter, **berbeda** | worker → aplikasi; sama dengan aplikasi |
+| `TRANSCRIBER_APP_URL` | wajib | `https://spkd.store` |
+| `LIVEKIT_URL` | `ws://127.0.0.1:7880` | LiveKit dilihat dari worker |
+| `TRANSCRIBER_HOST` / `TRANSCRIBER_PORT` | `127.0.0.1` / `8090` | alamat API |
+| `TRANSCRIBER_SPOOL_DIR` / `TRANSCRIBER_SPOOL_MAX_GB` | `/var/spool/notulen` / `20` | audio sementara (izin 700, pengguna non-root) |
+| `WHISPER_MODEL` | `large-v3-turbo` | model lain wajib `WHISPER_MODEL_REVISION` + `WHISPER_MODEL_SHA256` |
+| `WHISPER_COMPUTE_TYPE` / `WHISPER_CPU_THREADS` / `WHISPER_BEAM_SIZE` / `WHISPER_LANGUAGE` | `int8` / `4` / `1` / `id` | |
+| `WHISPER_MODEL_DIR` | `/models` | volume `notulen-models` (unduhan ±1,6 GB sekali) |
 | `TRANSCRIBE_CONCURRENCY` | `1` | transkripsi bersamaan |
-| `TRANSCRIBER_TOLERANCE` | `300` | jendela anti-replay tanda tangan (detik, min 30) |
-| `TRANSCRIBER_EMPTY_GRACE` | `90` | keluar dari ruang setelah tanpa manusia selama N detik |
-| `TRANSCRIBER_MAX_MINUTES` | `240` | batas satu sesi rekaman |
-| `TRANSCRIBER_MAX_SEGMENT_SECONDS` | `600` | potong berkas audio setiap N detik |
-| `TRANSCRIBER_SPOOL_MAX_AGE_HOURS` | `24` | sisa audio/transkrip di spool dihapus setelah N jam |
-| `TRANSCRIBER_CA_FILE` | kosong | CA tambahan untuk `TRANSCRIBER_APP_URL` (lokal: CA Herd) |
+| `TRANSCRIBER_TOLERANCE`, `TRANSCRIBER_EMPTY_GRACE`, `TRANSCRIBER_MAX_MINUTES`, `TRANSCRIBER_MAX_SEGMENT_SECONDS`, `TRANSCRIBER_SPOOL_MAX_AGE_HOURS` | `300`, `90`, `240`, `600`, `24` | |
+| `TRANSCRIBER_CA_FILE` | kosong | CA tambahan (lokal: CA Herd) |
 
-**Aplikasi** (`config/notulen.php` › `transcriber`; fitur tersedia bila `TRANSCRIBER_URL` + `TRANSCRIBER_SECRET` terisi, rapat `video`, dan LiveKit diatur; tanpa itu sakelar notulen otomatis tersembunyi):
+**Aplikasi** (`config/notulen.php`, juga di `.env.example` dan `.env.production.example`). Fitur tersedia bila `TRANSCRIBER_URL` dan kedua rahasia terisi, rapat `video`, dan LiveKit diatur; selain itu sakelar notulen otomatis tidak muncul.
 
 | Kunci | Bawaan | Arti |
 |---|---|---|
-| `TRANSCRIBER_URL` | kosong | URL dasar API worker dilihat dari VPS aplikasi, mis. `https://livekit.spkd.store/notulen` (rute Caddy di VPS rapat yang membuang prefiks `/notulen` dan meneruskan ke `:8090`) |
-| `TRANSCRIBER_SECRET` | kosong | sama persis dengan worker (≥ 32 karakter) |
+| `TRANSCRIBER_URL` | kosong | `https://notulen.spkd.store` |
+| `TRANSCRIBER_SECRET` / `TRANSCRIBER_CALLBACK_SECRET` | kosong | sama persis dengan worker |
 | `TRANSCRIBER_TIMEOUT` | 10 | batas waktu panggilan ke worker (detik) |
-| `TRANSCRIBER_TOLERANCE` | 300 | jendela anti-replay kiriman worker (detik) |
-| `TRANSCRIBER_MAX_BODY` | 5242880 | ukuran maksimum kiriman transkrip (byte) |
-| `TRANSCRIBER_TOKEN_TTL` | 600 | umur token LiveKit perekam (detik) |
-| `MINUTES_TRANSCRIPT_RETENTION_DAYS` | 90 | transkrip + draf dihapus N hari setelah rapat (§9) |
+| `TRANSCRIBER_TOLERANCE` / `TRANSCRIBER_MAX_BODY` / `TRANSCRIBER_TOKEN_TTL` | 300 / 5242880 / 600 | |
+| `MINUTES_TRANSCRIPT_RETENTION_DAYS` | 90 | transkrip + draf + waktu bicara dihapus N hari setelah rapat (§9) |
+| `REDIS_LONG_QUEUE_RETRY_AFTER` | 960 | `retry_after` koneksi antrean `redis-long` (§8.1) |
 
-> **Menunggu (`claude/notulen-otomatis`):** kunci di atas dan `MINUTES_LLM_*` belum ada di `.env.example`/`.env.production.example`; rute Caddy `/notulen` di VPS rapat belum ditulis (lihat §7.6).
+### 7.4 Pilihan model & kapasitas
 
-### 7.4 Pilihan model
+| `WHISPER_MODEL` | Kapan |
+|---|---|
+| `large-v3-turbo` (bawaan) | kualitas terbaik yang masih wajar di CPU |
+| `medium` / `small` | antrean menumpuk; lebih cepat, lebih banyak salah dengar |
 
-| `WHISPER_MODEL` | Kapan | Catatan |
-|---|---|---|
-| `large-v3-turbo` (bawaan) | kualitas terbaik yang masih wajar di CPU | unduhan ±1,6 GB; pilihan rancangan ("Whisper turbo · bahasa Indonesia") |
-| `medium` | CPU sempit, antrean menumpuk | lebih cepat, lebih banyak salah dengar istilah |
-| `small` | darurat / uji | cepat, kualitas Bahasa Indonesia jelas turun |
+Angka terukur (Mac M5 Max, sampel 74 detik, `transcriber/DEPLOY.md` §3): RTF 0,14 native, 0,30 di Docker dengan 4 CPU. **Belum diukur di server rapat**; perkiraan untuk `cpus: 4` RTF 0,6–1,0, jadi rapat 1 jam dengan ±40 menit total ucapan selesai ±25–40 menit setelah rapat. Biaya ≈ total waktu bicara (hening dilewati VAD). Ukur sebelum produksi dengan rekaman uji yang disetujui pembicaranya: `python -m notulen.bench contoh.wav --threads 4` (perintah lengkap di `DEPLOY.md`).
 
-Ukur di server sendiri sebelum memilih (model diunduh pada percobaan pertama, tidak ikut dihitung):
+Batas yang sudah ada di `compose.notulen.yaml`: `cpus: 4`, RAM 6 GB, satu transkripsi sekaligus, agar LiveKit di mesin 8 vCPU tetap punya ruang. Jangan menaikkan `WHISPER_CPU_THREADS` melebihi `cpus`.
 
-```bash
-docker run --rm -v notulen-models:/models -v $PWD:/data <image-transcriber> \
-  python -m notulen.bench /data/contoh-rapat.wav --model large-v3-turbo --threads 4
-# → audio=…s transcribe=…s RTF=… (RTF 0,25 = empat kali lebih cepat dari waktu nyata)
-```
+### 7.5 Pasang (ringkas)
 
-Gunakan rekaman uji yang **disetujui** pembicaranya (bukan rekaman rapat nyata). Waktu transkripsi ≈ RTF × total durasi bicara semua peserta (bagian hening dilewati VAD).
+Lengkapnya `transcriber/DEPLOY.md` §1–§2:
 
-### 7.5 Ukuran & batas CPU
-
-- Worker berbagi mesin dengan LiveKit. Rekaman ringan (dekode Opus beberapa pembicara); **transkripsi berat** dan berjalan setelah rapat, bisa bersamaan dengan rapat lain. Karena itu bawaannya satu transkripsi (`TRANSCRIBE_CONCURRENCY=1`) × 4 thread.
-- Batasi kontainer worker agar LiveKit selalu punya ruang: di server 8 vCPU, `cpus: "4"` dan batas memori ±6 GB (model turbo int8 + satu berkas 10 menit). Jangan menaikkan `WHISPER_CPU_THREADS` melebihi batas `cpus`. Angka ini perkiraan awal; sesuaikan dari pengukuran §6.
-- Disk spool: ±115 MB per jam bicara per pembicara (16 kHz × 16-bit), dihapus setelah transkripsi. Sediakan ruang untuk rapat terpanjang × jumlah pembicara aktif (mis. 4 jam × 8 orang ≈ 3,7 GB) + model ±1,6 GB.
-- Bila antrean (`queued` di `/health`) sering > 0 lebih dari satu jam setelah rapat: pakai model lebih kecil, tambah vCPU, atau pindah ke tahap 2 (GPU).
-
-### 7.6 Pasang
-
-> **Menunggu (`claude/notulen-otomatis`):** layanan compose/systemd resmi untuk worker belum ada di repo; yang sudah ada `transcriber/Dockerfile` (python:3.12-slim, pengguna non-root `notulen`, `EXPOSE 8090`, `HEALTHCHECK` ke `/health`, model diunduh ke `/models` saat mulai pertama; `av==15.1.0` dikunci agar cocok dengan faster-whisper 1.2.1). Setelah cara pasangnya ditetapkan, isi langkah di sini: build/tarik image, volume `/models` dan spool, `env_file` berisi kunci worker §7.3 (izin 600, tidak di-commit), jaringan yang bisa menjangkau `127.0.0.1:7880`, batas `cpus`/`mem_limit` (§7.5), dan rute Caddy `livekit.spkd.store/notulen/*` → `127.0.0.1:8090` (buang prefiks), sebaiknya dibatasi ke IP VPS aplikasi (tanda tangan HMAC tetap lapisan utama).
-
-Cek setelah terpasang: `curl -s http://127.0.0.1:8090/health` di VPS rapat → `"status":"ok"`; log worker `notulen worker on 0.0.0.0:8090, Settings(app_url=…, livekit_url=…, model=…)` (rahasia tidak pernah dicetak).
+1. DNS `notulen.spkd.store` → IP VPS rapat.
+2. Salin `transcriber/deploy/compose.notulen.yaml` dan `notulen.env` ke `/opt/livekit/`, `sudo docker compose -f compose.notulen.yaml --env-file notulen.env up -d` (`network_mode: host`, `restart: unless-stopped`, volume `notulen-models` dan `notulen-spool`).
+3. Rute Caddy dari `transcriber/deploy/caddy-notulen.yaml` ke `/opt/livekit/caddy.yaml` (SNI `notulen.spkd.store` → `127.0.0.1:8090`, hanya IP VPS aplikasi), restart `livekit-docker` di luar jam rapat. Tidak ada port firewall baru.
+4. URL webhook kedua di `livekit.yaml` (§3).
+5. `.env` aplikasi (§7.3, §8), deploy, `php artisan horizon:terminate`.
+6. Uji dari VPS aplikasi: `curl -s https://notulen.spkd.store/health` → `{"status":"ok"}`; log `sudo docker logs -f notulen-transcriber-1` (tidak pernah mencetak token, rahasia, atau isi transkrip).
 
 ## 8. Ringkasan AI (LLM)
 
-Setelah transkrip diterima, job **`SummarizeMeetingTranscript`** (antrean, 1 percobaan, batas 900 detik) membuat **draf notulen** lewat `MinutesSummarizer`: ringkasan, pembahasan per agenda, keputusan, usulan tindak lanjut, dan "perlu dicek", masing-masing dengan nomor baris sumber di transkrip. `DraftNormalizer` hanya mengisi penanggung jawab yang cocok dengan peserta rapat dan tenggat yang valid; sisanya masuk "perlu dicek". Penyedia = **API chat completions kompatibel OpenAI** (`POST {base_url}/chat/completions`, `response_format: json_object`, `temperature 0.2`); bawaan **DeepSeek**, di luar Indonesia.
+Setelah transkrip diterima, job **`SummarizeMeetingTranscript`** membuat **draf notulen** lewat `MinutesSummarizer`: ringkasan, pembahasan per agenda, keputusan, usulan tindak lanjut, dan "perlu dicek", masing-masing dengan nomor baris sumber. Penyedia = **API chat completions kompatibel OpenAI** (`POST {base_url}/chat/completions`, `response_format: json_object`); bawaan **DeepSeek**, di luar Indonesia. Transkrip dikirim sebagai data kutipan di antara penanda dengan perintah mengabaikan instruksi di dalamnya; keluaran divalidasi ke skema ketat dan dijadikan teks polos; penanggung jawab hanya peserta yang berbicara dan tidak menolak; tidak ada yang menjadi tugas tanpa klik notulis.
 
 | Kunci (`config/notulen.php` › `llm`) | Bawaan | Arti |
 |---|---|---|
-| `MINUTES_LLM_BASE_URL` | `https://api.deepseek.com` | URL dasar API |
-| `MINUTES_LLM_API_KEY` | kosong | kosong = transkrip tetap disimpan, **draf tidak dibuat** (status draf `disabled`), tidak ada yang dikirim ke luar |
-| `MINUTES_LLM_MODEL` | `deepseek-chat` | nama model |
-| `MINUTES_LLM_PROVIDER` | `DeepSeek` | nama penyedia yang ditampilkan di UI & teks privasi |
-| `MINUTES_LLM_OUTSIDE_INDONESIA` | `true` | tanda penyedia di luar Indonesia (ditampilkan) |
-| `MINUTES_LLM_TIMEOUT` | 120 | batas waktu per permintaan (detik) |
-| `MINUTES_LLM_RETRIES` | 2 | ulangi otomatis untuk koneksi gagal, `429`, `5xx` (jeda 2 detik) |
-| `MINUTES_LLM_CHUNK_CHARS` | 40000 | transkrip lebih panjang diringkas per potongan lalu digabung (map-reduce) |
-| `MINUTES_LLM_MAX_TOKENS` | 4000 | batas token jawaban |
+| `MINUTES_LLM_BASE_URL` | `https://api.deepseek.com` | URL dasar sampai sebelum `/chat/completions` |
+| `MINUTES_LLM_API_KEY` | kosong | kosong = transkrip tetap disimpan, **draf tidak dibuat**, tidak ada yang dikirim ke luar |
+| `MINUTES_LLM_MODEL` | `deepseek-chat` | |
+| `MINUTES_LLM_PROVIDER` / `MINUTES_LLM_OUTSIDE_INDONESIA` | `DeepSeek` / `true` | nama dan tanda "di luar Indonesia" yang **tampil di pemberitahuan** pra-gabung dan detail rapat |
+| `MINUTES_LLM_TIMEOUT` / `MINUTES_LLM_RETRIES` | 120 / 2 | per permintaan; ulang untuk koneksi gagal, `429`, `5xx` |
+| `MINUTES_LLM_CHUNK_CHARS` / `MINUTES_LLM_MAX_TOKENS` | 40000 / 4000 | transkrip panjang diringkas per potongan lalu digabung |
 
-Yang dikirim: judul, tanggal, agenda, nama semua peserta yang diundang, dan transkrip bernomor (`[i] mm:ss Nama: teks`); **bukan** audio, email, atau id. JSON yang rusak diperbaiki lokal, lalu sekali oleh model; setelah itu draf `failed`. Kunci API dan isi transkrip tidak pernah ditulis ke log (`Meeting transcript summary failed` hanya mencatat id transkrip dan pesan galat). Notulis bisa **Ringkas ulang** (`POST …/notulen-otomatis/ringkas-ulang`) selama draf belum dimasukkan. Privasi & Pasal 56: `docs/fitur/rapat-video-privasi.md` §6.
+Yang dikirim: judul, tanggal, judul agenda, transkrip bernomor (`[i] mm:ss Nama: teks`), dan nama tampilan peserta yang **berbicara dan tidak menolak**; tidak pernah audio, email, id, atau jabatan. Kunci API dan isi transkrip tidak pernah ditulis ke log. Notulis bisa **Ringkas ulang** selama draf belum dimasukkan; setiap ringkas ulang dicatat di log audit (`meeting.transcript_resummarized`, dengan penyedia) karena transkrip dikirim lagi ke penyedia. Privasi & Pasal 56: `docs/fitur/rapat-video-privasi.md` §6.
+
+### 8.1 Antrean & Horizon
+
+| Job | Antrean | Catatan |
+|---|---|---|
+| `StartMeetingRecorder`, `FinishMeetingRecorder`, `RelayTranscriptConsent` | `default` (`supervisor-1`) | panggilan singkat ke worker |
+| `SummarizeMeetingTranscript` | **`long`** pada koneksi **`redis-long`** (`supervisor-long`: 1 proses, timeout 900 detik, 1 percobaan) | bisa berjalan sampai 900 detik; `retry_after` koneksi ini 960 detik (`REDIS_LONG_QUEUE_RETRY_AFTER`) agar Redis tidak menyerahkan job yang sama ke worker kedua di tengah jalan. Job yang mati di luar `handle()` (timeout, worker dibunuh) menandai draf gagal, tidak macet "sedang disusun" |
+| `PurgeExpiredMeetingTranscripts` (02.45 WIB), `PruneSpeakingTimes` (03.20 WIB) | scheduler harian | retensi (§9) |
+
+Semua sudah di `config/queue.php` dan `config/horizon.php`; setelah deploy cukup `php artisan horizon:terminate`. Tanpa Horizon (mis. Windows): tambahkan `php artisan queue:work redis-long --queue=long --timeout=900` di samping worker antrean biasa. Bila `REDIS_LONG_QUEUE_RETRY_AFTER` diubah, nilainya harus tetap lebih besar dari 900.
 
 ## 9. Retensi data rapat (ringkas)
 
@@ -279,10 +269,11 @@ Yang dikirim: judul, tanggal, agenda, nama semua peserta yang diundang, dan tran
 | Audio & video rapat | tidak disimpan (tanpa Egress) | — |
 | Chat dalam rapat | tidak disimpan (data channel LiveKit) | — |
 | Audio untuk transkrip | spool worker di VPS rapat | dihapus segera setelah transkripsi; sisa (crash) ≤ 24 jam |
-| Transkrip tertunda kirim | spool worker (`result.json`) | sampai terkirim, maks. 24 jam |
+| Transkrip tertunda kirim | spool worker | sampai terkirim, maks. 24 jam |
 | Transkrip + draf AI (`meeting_transcripts`) | basis data aplikasi | **90 hari** setelah rapat (`MINUTES_TRANSCRIPT_RETENTION_DAYS`, kolom `purge_after`); job `PurgeExpiredMeetingTranscripts` tiap hari 02.45 WIB (`routes/console.php`, butuh scheduler) |
 | Teks yang sudah "Masukkan ke notulen", notulen final | basis data aplikasi | seperti notulen biasa (belum ada retensi otomatis) |
-| Kehadiran video (`meeting_attendances`), waktu bicara (`meeting_speaking_times`), pilihan menolak (`meeting_transcript_consents`) | basis data aplikasi | belum ada retensi otomatis |
+| Waktu bicara (`meeting_speaking_times`) | basis data aplikasi | sama dengan transkrip (`MINUTES_TRANSCRIPT_RETENTION_DAYS`); job `PruneSpeakingTimes` tiap hari 03.20 WIB |
+| Kehadiran video (`meeting_attendances`), pilihan menolak (`meeting_transcript_consents`), larangan masuk (`meeting_video_removals`) | basis data aplikasi | belum ada retensi otomatis (**keputusan pemilik**) |
 | Log LiveKit/Caddy (identitas peserta, IP) | log Docker VPS rapat | atur rotasi log Docker (`max-size`/`max-file`) |
 
 Detail hak & persetujuan: [`docs/fitur/rapat-video-privasi.md`](../fitur/rapat-video-privasi.md).
@@ -295,9 +286,13 @@ Tujuan: subtitle Bahasa Indonesia **selama rapat** (bukan hanya transkrip sesuda
 |---|---|
 | Model | **Qwen3-ASR-1.7B** disajikan **vLLM** dengan mode streaming |
 | Tempat | server GPU terpisah (atau GPU sewaan per jam kerja); VPS rapat tetap CPU |
-| Alur | worker ikut ruang sebagai `rk-notulen`, mengalirkan audio tiap pembicara (yang tidak menolak) ke vLLM, lalu mengirim teks sementara/final ke ruang lewat **LiveKit text streams** dengan topik **`lk.transcription`** (dengan identitas pembicara), dan menyimpan hasil final sebagai transkrip seperti tahap 1 |
+| Tempat (contoh) | GPU kelas L4 24 GB (`transcriber/DEPLOY.md` §6); ukur dulu |
+| Alur | worker ikut ruang sebagai `rk-notulen`, mengalirkan audio tiap pembicara yang tidak menolak (potongan 0,5–1 detik + VAD) ke vLLM, lalu mengirim teks sementara/final ke ruang lewat **LiveKit text streams** topik **`lk.transcription`** dengan atribut `lk.transcribed_track_id`, `lk.segment_id`, `lk.transcription_final`; segmen final sekaligus menjadi transkrip akhir |
+| **Wajib: peserta agen yang tidak tersembunyi** | Untuk subtitle, worker harus bergabung sebagai peserta **agen yang TIDAK `hidden`** (token `hidden: false`, `canPublishData: true`, tetap tanpa `canPublish` audio/video). Di LiveKit 1.13.8 text stream dari peserta `hidden` **tidak sampai ke browser** (diuji saat membangun UI: bot `rk-notulen` dengan `hidden: false` tampil, versi tersembunyi tidak). Perekam tahap 1 boleh tetap tersembunyi; worker subtitle tidak. UI menyaring peserta agen ini dari pita video dan daftar orang |
+| Keamanan (audit N-07) | UI hanya menerima stream `lk.transcription` dari identitas persis `rk-notulen`; stream bertopik sama dari peserta lain diabaikan; teks dirender sebagai teks polos |
+| Bendera | `LIVEKIT_SUBTITLES=true` (`config/livekit.php`, bawaan `false`) menandai fitur di props ruang; UI tetap menampilkan subtitle bila stream sah datang |
 | Kode | `transcriber/notulen/transcribe.py` sudah memisahkan antarmuka `Transcriber`; backend GPU ditambah tanpa mengubah perekam & pipeline |
-| Tampilan | ruang rapat menampilkan kotak subtitle (nama pembicara + teks) di atas bilah kontrol **hanya bila** ruang menerima text stream `lk.transcription`, dan chip "Notulen otomatis aktif · Subtitle ID"; tanpa stream, kotak tidak tampil |
+| Tampilan (sudah dibangun) | kotak subtitle (nama pembicara + teks) di atas bilah kontrol **hanya bila** stream sah datang, chip "Notulen otomatis aktif · Subtitle ID", tombol subtitle di bilah kontrol (⌘/Ctrl+Alt+S; ponsel: menu ⋯ › Tampilkan/Sembunyikan subtitle); tanpa stream tidak ada yang tampil |
 | Privasi | sama dengan tahap 1: peserta yang menolak tidak dilanggani, sehingga tidak ada subtitle dari suaranya |
 
 Yang harus diputuskan sebelum tahap 2: spesifikasi & biaya GPU (VRAM cukup untuk model + beberapa aliran bersamaan; ukur dengan rapat 20 orang), lokasi server (Indonesia agar audio tidak keluar negeri), latensi target (< 1–2 detik), dan apakah tahap 1 (CPU) tetap menjadi cadangan.
@@ -307,7 +302,7 @@ Yang harus diputuskan sebelum tahap 2: spesifikasi & biaya GPU (VRAM cukup untuk
 ### 11.1 Pembaruan
 
 - **LiveKit**: ubah tag image di `/opt/livekit/docker-compose.yaml` → `sudo systemctl restart livekit-docker` **di luar jam rapat** (semua ruang terputus). Baca catatan rilis dulu; samakan versi lokal di `compose.yml`.
-- **Worker**: build ulang image dari `transcriber/` (versi paket terkunci di `requirements.txt`), restart kontainer setelah antrean kosong (`/health` → `queued: 0, transcribing: 0`). Sesi yang terputus diproses ulang setelah restart.
+- **Worker**: build ulang image dari `transcriber/` (versi paket terkunci di `requirements.txt`), restart kontainer **di luar jam rapat dan setelah transkripsi selesai** (log `transcribed … segments`): rekaman yang terputus restart dihapus dan rapat itu berstatus gagal (tanpa transkrip).
 
 ### 11.2 Ganti kunci API LiveKit (rotasi)
 
@@ -319,9 +314,9 @@ LiveKit menerima beberapa pasangan di `keys:`; aplikasi hanya memakai satu (`LIV
 4. Uji §5 langkah 3–5. Setelah token lama kedaluwarsa (≥ `LIVEKIT_TOKEN_TTL`), **hapus** pasangan lama dari `keys:` → restart.
 5. Bila rahasia bocor: lakukan segera walau ada rapat (memutus rapat lebih kecil risikonya).
 
-### 11.3 Ganti `TRANSCRIBER_SECRET`
+### 11.3 Ganti `TRANSCRIBER_SECRET` / `TRANSCRIBER_CALLBACK_SECRET`
 
-Tidak ada masa tumpang tindih (satu rahasia di tiap sisi). Tunggu antrean worker kosong, ubah rahasia di `env_file` worker dan `.env` aplikasi, restart worker, deploy aplikasi. Kiriman worker yang gagal di antaranya diulang (retry) setelah keduanya sama.
+Tidak ada masa tumpang tindih (satu rahasia per arah). Di luar jam rapat dan setelah transkripsi terakhir selesai: buat dua nilai baru yang **berbeda** (`openssl rand -hex 32`), ubah di `notulen.env` worker dan `.env` aplikasi, restart worker, deploy aplikasi (`php artisan horizon:terminate`). Kiriman worker yang gagal di antaranya diulang (retry) setelah keduanya sama.
 
 ### 11.4 Pemantauan
 
@@ -331,7 +326,7 @@ Tidak ada masa tumpang tindih (satu rahasia di tiap sisi). Tunggu antrean worker
 | Sertifikat | `echo \| openssl s_client -connect livekit.spkd.store:443 -servername livekit.spkd.store 2>/dev/null \| openssl x509 -noout -enddate` (juga `turn.spkd.store`) | < 14 hari dan tidak diperbarui Caddy |
 | CPU/RAM | `docker stats` di VPS rapat | LiveKit > 60% saat rapat; worker merebut CPU saat rapat berlangsung |
 | Webhook | log Laravel + `docker logs` LiveKit `grep webhook` | `401`/`422` berulang |
-| Worker | `curl -s http://127.0.0.1:8090/health`; `docker ps` (status `healthy`) | `unhealthy`, `queued` naik terus |
+| Worker | `curl -s https://notulen.spkd.store/health` dari VPS aplikasi; `docker ps` (status `healthy`); log `recording room` / `transcribed` / `ALERT spool full` | `unhealthy`, `ALERT spool full`, `not delivered` |
 | Spool | `du -sh` folder spool worker | tumbuh terus = transkrip gagal terkirim |
 | Uji koneksi | https://livekit.io/connection-test tiap bulan dari 4G & Wi-Fi kantor | TURN/TLS merah |
 | Kapasitas | `lk load-test` (§5) setelah pembaruan besar | packet loss > 1% |
@@ -355,9 +350,9 @@ Gejala: pra-gabung berhasil, tetapi ruang menampilkan "Tidak bisa tersambung ke 
 Gejala: rapat dengan notulen otomatis sudah selesai > 1 jam, halaman notulen belum menampilkan transkrip/draf.
 
 1. Status di halaman **Notulen otomatis** (`GET /rapat/{id}/notulen-otomatis/status`): tidak ada transkrip sama sekali → langkah 2–3 (worker tidak pernah merekam); **Merekam** lama setelah rapat → worker belum keluar (ruang belum kosong ±90 detik, atau `room_finished` tidak sampai) → langkah 3; **Mentranskrip** → langkah 4; **Gagal** → langkah 6. Pastikan juga rapat memang ber-`auto_minutes` dan `TRANSCRIBER_URL`/`SECRET` terisi (`php artisan config:show notulen.transcriber.url`).
-2. Worker hidup? `curl -s http://127.0.0.1:8090/health` di VPS rapat. Mati → `docker logs --tail 200 <worker>`; galat `config: …` = kunci §7.3 salah.
+2. Worker hidup? `curl -s https://notulen.spkd.store/health` dari VPS aplikasi (dan `curl -s http://127.0.0.1:8090/health` di VPS rapat untuk memisahkan masalah Caddy). Mati → `docker logs --tail 200 <worker>`; galat `config: …` = kunci §7.3 salah.
 3. Worker pernah diminta bergabung? Log worker `recording room rk-…`. Tidak ada → cek berurutan: URL webhook kedua `https://spkd.store/api/notulen/livekit` ada di `livekit.yaml` (§3); job `StartMeetingRecorder` gagal di Horizon/`failed_jobs` (`Transcriber join unreachable: …` = jaringan/DNS/rute Caddy `/notulen`; `Transcriber join answered HTTP 401` = rahasia beda atau jam meleset; `HTTP 502` = worker tidak bisa masuk ruang: `LIVEKIT_URL` worker salah atau token ditolak).
-4. Antrean: `queued`/`transcribing` > 0 → masih diproses; perkirakan dari RTF (§7.4). Antrean macet lama → restart worker (sesi dilanjutkan).
+4. Masih diproses? Log `finishing rk-…` tanpa `transcribed …` → transkripsi berjalan; perkirakan dari RTF (§7.4). Log `recording of … was interrupted by a restart; audio deleted` → worker restart di tengah rapat, transkrip rapat itu tidak bisa dibuat. `ALERT spool full` → kosongkan/naikkan `TRANSCRIBER_SPOOL_MAX_GB`.
 5. Terkirim? Log worker `app refused … HTTP 4xx` = aplikasi menolak (rahasia/format, cek log Laravel); `app unreachable` = jaringan/DNS/TLS (lokal: `TRANSCRIBER_CA_FILE`); `transcript for … not delivered; kept until the spool purge` = perbaiki penyebabnya lalu restart worker **sebelum 24 jam** (dikirim ulang); setelah itu transkrip terhapus.
 6. Gagal dengan "Transkripsi gagal (…)": lihat traceback di log worker (model gagal diunduh → `WHISPER_MODEL_DIR` & ruang disk; kehabisan memori → model/threads lebih kecil, naikkan batas memori).
 7. Transkrip ada tetapi seseorang tidak muncul: dia menyalakan "Jangan transkrip suara saya", mikrofonnya mati, atau suaranya hanya lewat audio berbagi layar (tidak direkam). Ini perilaku yang benar.
@@ -366,7 +361,7 @@ Gejala: rapat dengan notulen otomatis sudah selesai > 1 jam, halaman notulen bel
 
 Gejala: transkrip ada, tetapi draf notulen AI kosong/galat.
 
-Status draf (`GET …/notulen-otomatis/status` › `draft`): `disabled` = `MINUTES_LLM_API_KEY` kosong (bukan galat); `failed` dengan `error`; `pending` lama = job tidak jalan (cek antrean/Horizon).
+Status draf (`GET …/notulen-otomatis/status` › `draft`): `disabled` = `MINUTES_LLM_API_KEY` kosong (bukan galat); `failed` dengan `error`; `pending` lama = supervisor `supervisor-long` tidak jalan (Horizon › antrean `long`, §8.1).
 
 1. Baca `draft.error` atau log Laravel `Meeting transcript summary failed` (berisi id transkrip + pesan, tanpa isi transkrip).
 2. *"Layanan ringkasan AI HTTP 401."* / `403` / `402` → kunci API salah/kedaluwarsa/saldo habis: perbarui `MINUTES_LLM_API_KEY`, `php artisan optimize` + `php artisan horizon:terminate` (atau deploy ulang; job berjalan di worker antrean yang menyimpan konfigurasi lama sampai di-restart), lalu notulis menekan **Ringkas ulang**.
@@ -387,4 +382,4 @@ Alasan: biaya, kualitas, atau keputusan privasi (mis. pindah ke penyedia/server 
 
 ## 13. Lokal
 
-LiveKit: `docs/SETUP-LOKAL.md` › "Rapat video" (`compose.yml` profil `video`, `herd proxy livekit … --secure` untuk `wss://livekit.test`). Worker transkripsi: uji dengan `cd transcriber && pip install -r requirements-dev.txt && pytest`; menjalankan worker ke situs Herd butuh `TRANSCRIBER_APP_URL=https://ruangkerja.test`, `TRANSCRIBER_CA_FILE=<CA Herd>`, `LIVEKIT_URL=ws://127.0.0.1:7880` (Menunggu: langkah resmi di `docs/SETUP-LOKAL.md`).
+LiveKit: `docs/SETUP-LOKAL.md` › "Rapat video" (`compose.yml` profil `video`, `herd proxy livekit … --secure` untuk `wss://livekit.test`). Worker transkripsi lokal: `transcriber/DEPLOY.md` §5 (di macOS jalankan **native**, bukan di kontainer, karena kandidat ICE LiveKit lokal = 127.0.0.1; uji dua peserta `tests/e2e/notulen-otomatis.mjs`; uji unit `pytest` + `ruff`). Untuk sekadar melihat tampilan notulen otomatis tanpa worker: isi `TRANSCRIBER_URL` + kedua rahasia dengan nilai lokal apa pun, lalu buat data contoh transkrip (mis. skenario gambar dokumentasi). Jangan memakai kunci DeepSeek sungguhan untuk uji.
