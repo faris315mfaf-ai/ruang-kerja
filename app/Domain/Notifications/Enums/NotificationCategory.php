@@ -11,6 +11,7 @@ enum NotificationCategory: string
     case Request = 'request';
     case Attendance = 'attendance';
     case System = 'system';
+    case Info = 'info';
 
     public function label(): string
     {
@@ -19,6 +20,7 @@ enum NotificationCategory: string
             self::Request => 'Pengajuan',
             self::Attendance => 'Absensi',
             self::System => 'Sistem',
+            self::Info => 'Informatif',
         };
     }
 

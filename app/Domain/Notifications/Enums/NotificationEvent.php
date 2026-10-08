@@ -31,6 +31,9 @@ enum NotificationEvent: string
     case HiringActivity = 'hiring.activity';
     case System = 'system';
     case DailyDigest = 'digest.daily';
+    // Briefing pagi & sore (keputusan pemilik 9 Okt 2026). Appended last so
+    // the matrix row order (and index-based tests) stay stable.
+    case BriefingPosted = 'briefing.posted';
 
     public function label(): string
     {
@@ -54,6 +57,7 @@ enum NotificationEvent: string
             self::HiringActivity => 'Hiring: kandidat baru & keputusan akhir',
             self::System => 'Pengumuman & info sistem',
             self::DailyDigest => 'Ringkasan harian',
+            self::BriefingPosted => 'Briefing pagi & sore tersimpan',
         };
     }
 
@@ -65,6 +69,7 @@ enum NotificationEvent: string
             self::RequestPending, self::RequestDecided, self::HiringActivity => NotificationCategory::Request,
             self::CheckInReminder, self::CheckOutReminder => NotificationCategory::Attendance,
             self::AccountSecurity, self::System, self::DailyDigest => NotificationCategory::System,
+            self::BriefingPosted => NotificationCategory::Info,
         };
     }
 
@@ -143,9 +148,10 @@ enum NotificationEvent: string
      */
     public static function matrix(): array
     {
-        return array_filter(
+        // array_values: filtering DailyDigest out of the middle leaves a key gap.
+        return array_values(array_filter(
             self::cases(),
             fn (self $event): bool => $event !== self::DailyDigest,
-        );
+        ));
     }
 }
