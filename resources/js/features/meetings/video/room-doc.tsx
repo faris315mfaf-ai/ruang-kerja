@@ -465,12 +465,12 @@ export function MinutesDoc({
                 variant === 'sheet' && 'gap-3 px-5 pt-5 pb-6',
             )}
         >
-            <div className="flex items-center gap-2 text-[13px] text-text-subtle">
+            <div className="flex items-center gap-2 text-[13px] text-text-muted">
                 <FileText aria-hidden className="size-4 shrink-0" />
                 <span className="min-w-0 truncate">
                     Notulen · {title} · {shortDate(officeDate(date))}
                 </span>
-                <span className="ml-auto flex items-center gap-2">
+                <span className="ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap">
                     {!data.readOnly && <SaveState data={data} />}
                     {editors.length > 0 && (
                         <span
@@ -532,7 +532,7 @@ export function MinutesDoc({
             )}
 
             {!collabBody && minutes.sections.length === 0 && data.readOnly && (
-                <p className="text-[16px] text-text-subtle">
+                <p className="text-[16px] text-text-muted">
                     Notulis belum menulis apa pun.
                 </p>
             )}
@@ -563,7 +563,7 @@ export function MinutesDoc({
                             {data.readOnly ? (
                                 <p className="text-[16px] leading-7 whitespace-pre-line">
                                     {section.body || (
-                                        <span className="text-text-subtle">
+                                        <span className="text-text-muted">
                                             Belum ada catatan.
                                         </span>
                                     )}
@@ -608,7 +608,7 @@ export function MinutesDoc({
                     </h3>
                     <PresenceFlags people={presence.decisions} />
                     {minutes.decisions.length === 0 && (
-                        <p className="text-[15px] text-text-subtle">
+                        <p className="text-[15px] text-text-muted">
                             Belum ada keputusan.
                         </p>
                     )}
@@ -678,7 +678,7 @@ export function MinutesDoc({
                 </h3>
                 <PresenceFlags people={presence['action-items']} />
                 {minutes.action_items.length === 0 && (
-                    <p className="text-[15px] text-text-subtle">
+                    <p className="text-[15px] text-text-muted">
                         Belum ada tindak lanjut.
                     </p>
                 )}
