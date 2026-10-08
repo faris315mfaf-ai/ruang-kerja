@@ -135,7 +135,7 @@ services:
       AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:?set EVOLUTION_API_KEY in .env}
       DATABASE_ENABLED: "true"
       DATABASE_PROVIDER: postgresql
-      DATABASE_CONNECTION_URI: postgresql://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/evolution
+      DATABASE_CONNECTION_URI: postgresql://${DB_USERNAME:?set DB_USERNAME in .env}:${DB_PASSWORD:?set DB_PASSWORD in .env}@postgres:5432/evolution
       DATABASE_CONNECTION_DB_PREFIX_NAME: ev_
       CACHE_REDIS_ENABLED: "true"
       CACHE_REDIS_URI: redis://:${REDIS_PASSWORD:?}@redis:6379
