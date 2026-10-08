@@ -47,6 +47,20 @@ enum Role: string
     }
 
     /**
+     * Roles whose password only a Super Admin may set (audit R-06): the same
+     * set `onlySuperAdminAssigns()` guards — a password is a way in.
+     *
+     * @return list<self>
+     */
+    public static function superAdminSetsPassword(): array
+    {
+        return array_values(array_filter(
+            self::cases(),
+            fn (self $role): bool => $role->onlySuperAdminAssigns(),
+        ));
+    }
+
+    /**
      * Permission matrix (single source of truth, synced by RoleSeeder and
      * documented in docs/sprints/sprint-1/CORE.md).
      *

@@ -126,6 +126,19 @@ describe('Tambah karyawan', function () {
             ->and($bayu->password_change_required)->toBeFalse();
     });
 
+    it('never gives a new Direksi or HR account the default password (R-06)', function (string $role) {
+        useDefaultPassword();
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.employees.store'), defaultPwEmployeePayload(['roles' => [$role]]))
+            ->assertSessionHasNoErrors();
+
+        $bayu = User::query()->where('email', 'bayu@kantor.test')->sole();
+        expect($bayu->hasRole($role))->toBeTrue()
+            ->and($bayu->password)->toBeNull()
+            ->and($bayu->password_change_required)->toBeFalse();
+    })->with([Role::Direksi->value, Role::Hr->value]);
+
     it('sets no password while the feature is off (previous behaviour)', function () {
         $this->actingAs($this->hr)
             ->post(route('admin.employees.store'), defaultPwEmployeePayload())
@@ -227,6 +240,16 @@ describe('Atur kata sandi', function () {
         expect(Hash::check('password', (string) $otherAdmin->refresh()->password))->toBeTrue();
     });
 
+    it('rejects "Sandi bawaan" for a Direksi account even from a Super Admin (R-06)', function () {
+        useDefaultPassword();
+        $direksi = User::factory()->forCompany($this->company)->withRole(Role::Direksi)->create();
+
+        defaultPwSetPassword($this->admin, $direksi, ['mode' => 'default', 'must_change' => true])
+            ->assertSessionHasErrors('mode');
+
+        expect(Hash::check('password', (string) $direksi->refresh()->password))->toBeTrue();
+    });
+
     it('offers "Sandi bawaan" on the profile only when configured and not for a Super Admin', function () {
         $page = fn (User $actor, User $target, bool $expected) => $this->actingAs($actor)
             ->get(route('admin.employees.show', $target))
@@ -238,6 +261,10 @@ describe('Atur kata sandi', function () {
         $page($this->hr, $this->employee, true);
         $otherAdmin = User::factory()->forCompany($this->company)->withRole(Role::SuperAdmin)->create();
         $page($this->admin, $otherAdmin, false);
+
+        // R-06: direksi/hr accounts are Super Admin only, never the shared value.
+        $direksi = User::factory()->forCompany($this->company)->withRole(Role::Direksi)->create();
+        $page($this->admin, $direksi, false);
     });
 
     it('reveals the default password to HR on demand, never cached', function () {

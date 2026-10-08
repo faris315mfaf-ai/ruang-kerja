@@ -2,6 +2,7 @@
 
 namespace App\Domain\Auth\Services;
 
+use App\Domain\Organization\Enums\Role;
 use App\Models\User;
 use Illuminate\Container\Attributes\Scoped;
 use Illuminate\Support\Facades\Hash;
@@ -12,8 +13,11 @@ use LogicException;
  * 7 Oct 2026, `EMPLOYEE_DEFAULT_PASSWORD`, config `auth.employee_default_password`).
  * Empty = feature off. New employees (form, import), HR's "Sandi bawaan" and
  * `ruangkerja:reset-default-passwords` set it, always with "wajib ganti saat
- * login berikutnya". Never for Super Admins. The value is never logged or
- * audited; employees may not choose it as their own password.
+ * login berikutnya". Never for accounts holding super_admin/direksi/hr
+ * (audit R-06, owner decision 8 Oct 2026): the shared value is known to every
+ * employee, so it must not guard those accounts — their password is set by a
+ * Super Admin or by the owner through "Lupa kata sandi". The value is never
+ * logged or audited; employees may not choose it as their own password.
  *
  * Scoped: the bcrypt hash is computed once per request / job / command, so an
  * import or a mass reset does not pay the hashing cost per account. The value
@@ -45,7 +49,7 @@ final class DefaultPassword
      */
     public function appliesTo(User $user): bool
     {
-        return $this->enabled() && ! $user->isSuperAdmin();
+        return $this->enabled() && ! $user->hasAnyRole(Role::superAdminSetsPassword());
     }
 
     /**

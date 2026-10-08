@@ -165,9 +165,12 @@ it('applies the authorization matrix over HTTP', function (Role $actorRole, Role
     expect(Hash::check('password', (string) $target->refresh()->password))->toBe($status !== 302);
 })->with([
     'hr → anggota' => [Role::Hr, Role::Anggota, 302],
-    'hr → direksi' => [Role::Hr, Role::Direksi, 302],
+    'hr → direksi' => [Role::Hr, Role::Direksi, 403],
+    'hr → hr' => [Role::Hr, Role::Hr, 403],
     'hr → super admin' => [Role::Hr, Role::SuperAdmin, 403],
     'super admin → super admin' => [Role::SuperAdmin, Role::SuperAdmin, 302],
+    'super admin → direksi' => [Role::SuperAdmin, Role::Direksi, 302],
+    'super admin → hr' => [Role::SuperAdmin, Role::Hr, 302],
     'super admin → anggota' => [Role::SuperAdmin, Role::Anggota, 302],
     'direksi → anggota' => [Role::Direksi, Role::Anggota, 403],
     'kadiv → anggota' => [Role::KepalaDivisi, Role::Anggota, 403],
@@ -202,6 +205,16 @@ it('shows "Atur kata sandi" and whether a password is set on the profile to HR o
         ->assertInertia(fn (Assert $page) => $page
             ->where('can.setPassword', false)
             ->where('hasPassword', null),
+        );
+
+    // Audit R-06: HR sees a direksi profile but cannot set their password there.
+    $direksi = User::factory()->forCompany($this->company)->withRole(Role::Direksi)->create();
+
+    $this->actingAs($this->hr)
+        ->get(route('admin.employees.show', $direksi))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('can.setPassword', false)
+            ->where('can.setDefaultPassword', false),
         );
 });
 

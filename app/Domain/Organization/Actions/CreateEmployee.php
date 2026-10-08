@@ -16,9 +16,10 @@ use Illuminate\Support\Facades\DB;
  * Registers a new employee in the actor's company (form and import). With the
  * company default password configured (EMPLOYEE_DEFAULT_PASSWORD, owner
  * decision 7 Oct 2026) the account gets it with "wajib ganti saat login
- * berikutnya"; otherwise — and always for a Super Admin — no password is set
- * (HR uses Atur kata sandi, or the employee Lupa kata sandi). Audited via the
- * Auditable trait (`user.created`, the password masked) and SyncUserRoles
+ * berikutnya"; otherwise — and always for super_admin/direksi/hr accounts
+ * (audit R-06) — no password is set (a Super Admin uses Atur kata sandi, or
+ * the employee Lupa kata sandi). Audited via the Auditable trait
+ * (`user.created`, the password masked) and SyncUserRoles
  * (`user.roles_changed`). Input must already be validated.
  */
 final readonly class CreateEmployee
@@ -34,7 +35,12 @@ final readonly class CreateEmployee
     public function handle(User $actor, EmployeeData $data): User
     {
         $roles = $data->roles === [] ? [Role::Anggota] : $data->roles;
-        $withDefault = $this->defaultPassword->enabled() && ! in_array(Role::SuperAdmin, $roles, true);
+        // R-06: direksi/hr/super_admin accounts never start on the shared
+        // default password; a Super Admin sets theirs, or they use the
+        // "Lupa kata sandi" flow.
+        $guarded = array_map(fn (Role $role): string => $role->value, Role::superAdminSetsPassword());
+        $withDefault = $this->defaultPassword->enabled()
+            && ! array_intersect(array_map(fn (Role $role): string => $role->value, $roles), $guarded);
 
         return DB::transaction(function () use ($actor, $data, $roles, $withDefault): User {
             $employee = User::query()->create([
