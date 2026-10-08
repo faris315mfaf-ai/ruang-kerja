@@ -312,8 +312,11 @@ export type TabNavItem = AppNavItem & {
  * behind the app bar bell; it takes the fourth slot back when Obrolan is
  * switched off (FEATURE_CHAT).
  */
-export function tabNavItems(chat: boolean): TabNavItem[] {
-    return [
+/** Owner decision 9 Oct 2026: the Absen centre button hides after the morning
+ * check-in and returns one hour before the shift ends, so the bar stays
+ * clean; `absen=false` renders the four side tabs full width. */
+export function tabNavItems(chat: boolean, absen = true): TabNavItem[] {
+    const items = [
         { title: 'Beranda', href: '/dashboard', icon: Home, matchPrefix: true },
         {
             title: 'Tugas',
@@ -338,11 +341,19 @@ export function tabNavItems(chat: boolean): TabNavItem[] {
               },
         { title: 'Lainnya', href: '/menu', icon: Menu },
     ];
+
+    return absen
+        ? items
+        : items.filter((item) => !('center' in item && item.center));
 }
 
 /** Index of the tab owning the current URL, or -1 (e.g. /persetujuan). */
-export function activeTabIndex(currentPath: string, chat: boolean): number {
-    return tabNavItems(chat).findIndex((item) =>
+export function activeTabIndex(
+    currentPath: string,
+    chat: boolean,
+    absen = true,
+): number {
+    return tabNavItems(chat, absen).findIndex((item) =>
         isActivePath(item, currentPath),
     );
 }

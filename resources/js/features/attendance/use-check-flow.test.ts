@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 import {
+    planPoints,
     planRejection,
     rejectionFromError,
     toRejection,
@@ -55,13 +56,22 @@ describe('rejectionFromError', () => {
 });
 
 describe('planRejection', () => {
-    it('requires the work plan for a check-in', () => {
-        expect(planRejection('in', '')).toContain('rencana kerja');
-        expect(planRejection('in', '   ')).toContain('rencana kerja');
-        expect(planRejection('in', '1) Laporan mingguan')).toBeNull();
+    it('requires at least one point for a check-in', () => {
+        expect(planRejection('in', [''])).toContain('rencana kerja');
+        expect(planRejection('in', ['   ', ''])).toContain('rencana kerja');
+        expect(planRejection('in', ['', 'Laporan mingguan'])).toBeNull();
     });
 
     it('never blocks a check-out', () => {
-        expect(planRejection('out', '')).toBeNull();
+        expect(planRejection('out', [''])).toBeNull();
+    });
+});
+
+describe('planPoints', () => {
+    it('trims and drops blank rows', () => {
+        expect(planPoints(['  ', 'Satu', '', ' Dua '])).toEqual([
+            'Satu',
+            'Dua',
+        ]);
     });
 });

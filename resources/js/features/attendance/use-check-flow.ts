@@ -152,14 +152,19 @@ export function rejectionFromError(error: unknown): CheckRejection {
  * The day's work plan is required at check-in (owner decision 8 Oct 2026):
  * it rides to the management WhatsApp group with the check-in copy.
  */
-export function planRejection(type: CheckType, plan: string): string | null {
+export function planRejection(type: CheckType, plan: string[]): string | null {
     if (type !== 'in') {
         return null;
     }
 
-    return plan.trim() === ''
-        ? 'Tulis rencana kerja hari ini dulu — ikut terkirim ke grup manajemen.'
+    return plan.every((point) => point.trim() === '')
+        ? 'Tulis minimal satu poin rencana kerja hari ini — ikut terkirim ke grup manajemen.'
         : null;
+}
+
+/** Only trimmed, non-empty points are sent (blank rows are dropped). */
+export function planPoints(plan: readonly string[]): string[] {
+    return plan.map((point) => point.trim()).filter((point) => point !== '');
 }
 
 /**
@@ -178,7 +183,7 @@ export function useCheckFlow(
     const [photo, setPhoto] = useState<CapturedPhoto | null>(null);
     const [note, setNote] = useState('');
     const [noteError, setNoteError] = useState<string | null>(null);
-    const [plan, setPlan] = useState('');
+    const [plan, setPlan] = useState<string[]>(['']);
     const [planError, setPlanError] = useState<string | null>(null);
     const [result, setResult] = useState<CheckResult | null>(null);
     const [rejection, setRejection] = useState<CheckRejection | null>(null);
@@ -373,8 +378,8 @@ export function useCheckFlow(
             form.append('note', note.trim());
         }
 
-        if (type === 'in' && plan.trim() !== '') {
-            form.append('work_plan', plan.trim());
+        for (const point of planPoints(plan)) {
+            form.append('work_plan[]', point);
         }
 
         try {
