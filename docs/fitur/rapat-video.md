@@ -65,6 +65,12 @@
 
 ![Ponsel: tab Notulen](img/rapat-video/notulen-ponsel.jpg)
 
+![Ponsel Malam: tab Video](img/rapat-video/ruang-ponsel-malam.jpg)
+
+![Ponsel Malam: tab Notulen](img/rapat-video/notulen-ponsel-malam.jpg)
+
+![Tablet 834 px](img/rapat-video/ruang-tablet.jpg)
+
 Pintasan keyboard (⋯ › Pintasan keyboard): ⌘/Ctrl+D mikrofon, ⌘/Ctrl+E kamera, ⌘/Ctrl+Alt+C obrolan, ⌘/Ctrl+Alt+P kehadiran, ⌘/Ctrl+Alt+H angkat tangan, ⌘/Ctrl+Alt+S subtitle.
 
 ### 2.4 Subtitle
@@ -105,6 +111,8 @@ Di pra-gabung, notulis memilih sumber notulen **sekali untuk tiap tanggal rapat*
 Kartu kuning **"Tindak lanjut terbuka dari …"** menampilkan hingga 20 tindak lanjut rapat lalu yang belum selesai.
 
 ![Notulis memilih sumber notulen di pra-gabung](img/rapat-video/pra-gabung-pilih-notulen-desktop.jpg)
+
+![Pilihan sumber notulen di ponsel](img/rapat-video/pra-gabung-pilih-notulen-ponsel.jpg)
 
 ### 3.2 Menulis notulen hidup
 
