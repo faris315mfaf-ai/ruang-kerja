@@ -10,10 +10,21 @@ use Illuminate\Auth\Access\Response;
 /**
  * Tasks follow their workspace (WorkspacePolicy): invisible workspace → 404,
  * viewer or archived → 403. Deleting needs the creator or a workspace admin.
+ *
+ * Sunting/hapus (keputusan pemilik 9 Okt 2026):
+ * - tugas pribadi buatan sendiri — termasuk hasil rencana kerja absensi —
+ *   boleh diedit/dihapus pembuatnya (workspace pribadi hanya pemilik);
+ * - tugas yang DITUGASKAN orang lain kepada karyawan hanya boleh diubah atau
+ *   dihapus oleh pembuatnya atau atasannya (admin/owner workspace atau
+ *   manajer langsung salah satu penerima tugas); si penerima tetap bisa
+ *   mengerjakan tugasnya (move, comment, plan);
+ * - tugas tim lainnya mengikuti kebijakan workspace (editTasks).
  */
 class TaskPolicy
 {
     public const string VIEW_ONLY = 'Mode lihat saja: Anda bukan anggota workspace ini.';
+
+    public const string ASSIGNED_BY_OTHER = 'Tugas yang ditugaskan orang lain hanya dapat diubah atau dihapus oleh pembuatnya atau atasan.';
 
     public function __construct(private readonly WorkspacePolicy $workspaces) {}
 
@@ -32,7 +43,8 @@ class TaskPolicy
 
     public function update(User $user, Task $task): Response
     {
-        return $this->workspaces->editTasks($user, $task->workspace);
+        return $this->guardAssignedByOther($user, $task)
+            ?? $this->workspaces->editTasks($user, $task->workspace);
     }
 
     public function move(User $user, Task $task): Response
@@ -118,7 +130,7 @@ class TaskPolicy
         }
 
         $own = ($workspace->isPersonal() && $workspace->owner_id === $user->id)
-            || $task->assignees()->where('users.id', $user->id)->exists();
+            || $this->hasAssignee($user, $task);
 
         return $own
             ? Response::allow()
@@ -127,10 +139,15 @@ class TaskPolicy
 
     public function delete(User $user, Task $task): Response
     {
+        if ($denied = $this->guardAssignedByOther($user, $task)) {
+            return $denied;
+        }
+
         $workspace = $task->workspace;
         $allowed = $this->workspaces->canEditTasks($user, $workspace)
             && ($task->created_by === $user->id
                 || $workspace->isPersonal()
+                || $this->managesAssignee($user, $task)
                 || ($workspace->roleOf($user)?->atLeast(WorkspaceRole::Admin) ?? false));
 
         if ($allowed) {
@@ -140,5 +157,60 @@ class TaskPolicy
         return $this->workspaces->canView($user, $workspace)
             ? Response::deny('Hanya pembuat tugas atau admin workspace yang dapat menghapus.')
             : Response::denyAsNotFound();
+    }
+
+    /**
+     * Tasks someone else assigned to the employee belong to their creator
+     * (keputusan pemilik 9 Okt 2026): the assignee works on the task (move,
+     * comment, plan) but only the creator or a superior — a workspace
+     * admin/owner or the direct manager of one of the assignees — may edit
+     * or delete it, in any workspace, teams included. Own tasks (including
+     * the personal ones generated from a work plan) and tasks the actor was
+     * not assigned are not restricted here.
+     */
+    private function guardAssignedByOther(User $user, Task $task): ?Response
+    {
+        $workspace = $task->workspace;
+
+        if (! $this->workspaces->canView($user, $workspace)) {
+            return Response::denyAsNotFound();
+        }
+
+        // Own ground: the actor's own personal workspace (personal notes and
+        // work-plan tasks live there) and tasks the actor created themselves
+        // are never restricted here, nor are tasks the actor was not assigned.
+        // Everyone else — an assignee in any workspace, teams included — may
+        // only edit a task someone else assigned to them as a superior.
+        if ($workspace->isPersonal()
+            || $task->created_by === $user->id
+            || ! $this->hasAssignee($user, $task)) {
+            return null;
+        }
+
+        $superior = ($workspace->roleOf($user)?->atLeast(WorkspaceRole::Admin) ?? false)
+            || $this->managesAssignee($user, $task);
+
+        return $superior ? null : Response::deny(self::ASSIGNED_BY_OTHER);
+    }
+
+    /**
+     * Is $user one of the assignees? Reuses an eager-loaded `assignees`
+     * relation (the detail presenter loads it) instead of a fresh query.
+     */
+    private function hasAssignee(User $user, Task $task): bool
+    {
+        if ($task->relationLoaded('assignees')) {
+            return $task->assignees->contains('id', $user->id);
+        }
+
+        return $task->assignees()->where('users.id', $user->id)->exists();
+    }
+
+    /**
+     * Is $user the direct manager (users.manager_id) of one of the assignees?
+     */
+    private function managesAssignee(User $user, Task $task): bool
+    {
+        return $task->assignees()->where('users.manager_id', $user->id)->exists();
     }
 }
