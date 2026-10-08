@@ -20,7 +20,8 @@ use Illuminate\Support\Facades\DB;
  * - tells the worker right away when it is recording a room of this meeting
  *   (it unsubscribes and deletes that person's audio),
  * - removes the person's lines from transcripts of this meeting that were
- *   not moved into the minutes yet, and re-runs an open AI draft.
+ *   not moved into the minutes yet, and re-runs an open AI draft — or drops
+ *   it when it cannot be re-run (they were the only speaker, no AI key).
  */
 final class SetTranscriptConsent
 {
@@ -58,11 +59,18 @@ final class SetTranscriptConsent
 
                 $rerun = $this->config->llmEnabled() && $kept !== []
                     && in_array($transcript->draft_status, [DraftStatus::Ready, DraftStatus::Pending, DraftStatus::Failed], true);
+                // A draft built from the person's words never outlives the opt-out: re-run
+                // it when possible, otherwise drop it (only speaker, AI key removed, …;
+                // audit rapat 2026-10 T-01).
+                $drop = ! $rerun && in_array($transcript->draft_status, [DraftStatus::Ready, DraftStatus::Pending, DraftStatus::Failed], true);
+
                 $transcript->forceFill([
                     'segments' => $kept,
-                    'draft' => $rerun ? null : $transcript->draft,
-                    'draft_status' => $rerun ? DraftStatus::Pending : $transcript->draft_status,
-                    'status' => $rerun && $transcript->status === TranscriptStatus::Ready ? TranscriptStatus::Summarizing : $transcript->status,
+                    'draft' => $rerun || $drop ? null : $transcript->draft,
+                    'draft_status' => $rerun ? DraftStatus::Pending : ($drop ? DraftStatus::Discarded : $transcript->draft_status),
+                    'discarded_at' => $drop ? now() : $transcript->discarded_at,
+                    'status' => $rerun && $transcript->status === TranscriptStatus::Ready ? TranscriptStatus::Summarizing
+                        : ($drop && $transcript->status === TranscriptStatus::Summarizing ? TranscriptStatus::Ready : $transcript->status),
                 ])->save();
 
                 if ($rerun) {

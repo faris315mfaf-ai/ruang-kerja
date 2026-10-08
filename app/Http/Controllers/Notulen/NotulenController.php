@@ -151,7 +151,7 @@ class NotulenController extends Controller
         $occurrence = $this->occurrence($request, $meeting);
 
         return $this->guard(function () use ($occurrence, $user, $resummarize): JsonResponse {
-            $resummarize->handle($this->findOrFail($occurrence));
+            $resummarize->handle($this->findOrFail($occurrence), $user);
 
             return $this->summaryResponse($occurrence, $user);
         });

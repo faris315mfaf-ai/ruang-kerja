@@ -67,7 +67,8 @@ final class NotulenSummary
                 'opted_out' => $canView && $this->consents->optedOut($meeting, $viewer),
                 'can_change' => $this->policy->consent($viewer, $meeting)->allowed(),
             ],
-            'optout_count' => $this->consents->optedOutCount($meeting),
+            // Leadership observers who were not invited see the status only (audit T-09).
+            'optout_count' => $canView ? $this->consents->optedOutCount($meeting) : 0,
             'llm' => [
                 'enabled' => $this->config->llmEnabled(),
                 'provider' => (string) config('notulen.llm.provider'),
@@ -87,7 +88,7 @@ final class NotulenSummary
                 'task' => $base.'/tindak-lanjut/{id}/tugas'.$query,
                 'minutes' => '/rapat/'.$meeting->id.'/notulen'.$query,
             ],
-            'transcript' => $transcript !== null ? self::transcript($transcript) : null,
+            'transcript' => $transcript === null ? null : ($canView ? self::transcript($transcript) : self::statusOnly($transcript)),
             'draft' => $transcript !== null && $canView ? self::draft($transcript) : null,
         ];
     }
@@ -137,6 +138,29 @@ final class NotulenSummary
             'started_at' => $transcript->started_at?->toIso8601ZuluString('millisecond'),
             'updated_at' => $transcript->updated_at?->toIso8601ZuluString('millisecond'),
             'purge_after' => $transcript->purge_after?->toIso8601ZuluString('millisecond'),
+        ];
+    }
+
+    /**
+     * Status without who spoke, how long or how many lines (non-participants).
+     *
+     * @return array<string, mixed>
+     */
+    public static function statusOnly(MeetingTranscript $transcript): array
+    {
+        return [
+            'id' => $transcript->id,
+            'status' => $transcript->status->value,
+            'status_label' => $transcript->status->label(),
+            'error' => null,
+            'language' => null,
+            'model' => null,
+            'duration_seconds' => null,
+            'segment_count' => 0,
+            'speakers' => [],
+            'started_at' => null,
+            'updated_at' => $transcript->updated_at?->toIso8601ZuluString('millisecond'),
+            'purge_after' => null,
         ];
     }
 

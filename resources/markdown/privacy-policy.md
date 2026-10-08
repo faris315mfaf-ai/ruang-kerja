@@ -24,7 +24,7 @@ Pengendali data adalah {{perusahaan}} selaku pemberi kerja. Pertanyaan dan permi
 - **Pengajuan & persetujuan:** pengajuan cuti, izin, sakit, lembur, koreksi absensi, dan dinas beserta alasan dan lampirannya; keputusan yang Anda berikan sebagai penyetuju.
 - **Pekerjaan:** tugas, komentar, berkas dan dokumen yang Anda buat atau lampirkan di workspace.
 - **Rapat & rapat video:** undangan, jawaban kehadiran, notulen dan tindak lanjut rapat; untuk rapat video, nama dan foto profil yang tampil kepada peserta lain serta **jam masuk dan keluar ruang rapat video**. Gambar, suara, layar yang dibagikan, dan chat di dalam rapat video **tidak direkam**: semuanya hanya diteruskan server rapat perusahaan di Indonesia selama rapat berlangsung.
-- **Rapat video dengan notulen otomatis** (hanya bila penyelenggara menyalakannya): suara Anda di rapat itu direkam sementara per peserta untuk dibuat transkrip, lalu **audionya dihapus segera setelah transkripsi**. Transkrip dan draf notulen buatan AI disimpan untuk notulis. Anda dapat memilih **"Jangan transkrip suara saya"** sebelum atau selama rapat; suara Anda lalu tidak direkam dan rekaman yang terlanjur ada dihapus.
+- **Rapat video dengan notulen otomatis** (hanya bila penyelenggara menyalakannya): suara Anda di rapat itu direkam sementara per peserta untuk dibuat transkrip, lalu **audionya dihapus segera setelah transkripsi**. Transkrip dan draf notulen buatan AI disimpan untuk notulis. Anda dapat memilih **"Jangan transkrip suara saya"** sebelum, selama, atau sesudah rapat; suara Anda lalu tidak direkam, rekaman yang terlanjur ada dihapus, dan ucapan Anda dihapus dari transkrip serta draf AI — kecuali bagian yang sudah dimasukkan notulis ke notulen rapat.
 - **Akun:** riwayat login, pengaturan notifikasi dan tampilan, serta tautan akun Google Workspace kantor Anda.
 - **Log audit:** catatan perubahan data penting dan akses ke data sensitif (misalnya siapa yang membuka selfie).
 
@@ -48,7 +48,7 @@ Data **tidak** dipakai untuk menilai produktivitas dari aktivitas di luar hasil 
 
 Selfie hanya dibuka lewat tautan sementara (berlaku 5 menit) oleh Anda, atasan langsung, dan HR; setiap akses oleh orang lain tercatat di log audit.
 
-Penyedia layanan yang memproses data atas nama {{perusahaan}}: penyedia server dan penyimpanan objek di Indonesia (aplikasi, basis data, selfie, lampiran, cadangan, server rapat video) dan Google Workspace (login, Drive, dokumen). Bila ringkasan AI notulen otomatis diaktifkan admin, teks transkrip rapat beserta nama tampilan pembicara (tanpa email atau nomor identitas) dikirim ke penyedia AI yang ditetapkan (bawaan: DeepSeek) yang **memproses data di luar Indonesia**, hanya untuk menyusun draf notulen.
+Penyedia layanan yang memproses data atas nama {{perusahaan}}: penyedia server dan penyimpanan objek di Indonesia (aplikasi, basis data, selfie, lampiran, cadangan, server rapat video) dan Google Workspace (login, Drive, dokumen). Bila ringkasan AI notulen otomatis diaktifkan admin, teks transkrip rapat beserta nama tampilan pembicara, judul, dan agenda rapat (tanpa email atau nomor identitas) dikirim ke penyedia AI yang ditetapkan (bawaan: DeepSeek) yang **memproses data di luar Indonesia**, hanya untuk menyusun draf notulen.
 
 ## 6. Penyimpanan dan retensi
 

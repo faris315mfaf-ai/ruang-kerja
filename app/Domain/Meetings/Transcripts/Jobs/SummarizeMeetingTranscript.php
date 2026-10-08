@@ -10,6 +10,7 @@ use App\Models\MeetingTranscript;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\MaxAttemptsExceededException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -18,7 +19,8 @@ use Throwable;
  * AI draft minutes for a ready transcript (MinutesSummarizer). The HTTP
  * client retries itself; a failure leaves the transcript readable with
  * draft_status `failed` ("Ringkas ulang" tries again). A draft that was
- * inserted or discarded meanwhile is never overwritten.
+ * inserted or discarded meanwhile is never overwritten. Runs on the `long`
+ * queue (connection redis-long, retry_after 960 s > timeout 900 s).
  */
 class SummarizeMeetingTranscript implements ShouldQueue
 {
@@ -28,7 +30,16 @@ class SummarizeMeetingTranscript implements ShouldQueue
 
     public int $timeout = 900;
 
-    public function __construct(public string $meetingId, public string $date) {}
+    public function __construct(public string $meetingId, public string $date)
+    {
+        // Audit T-05: up to 900 s, so never on the default connection (retry_after 90 s).
+        // `long` = Horizon supervisor-long; redis-long retry_after 960 s (config/queue.php).
+        if (config('queue.default') === 'redis') {
+            $this->onConnection('redis-long');
+        }
+
+        $this->onQueue('long');
+    }
 
     public function handle(MinutesSummarizer $summarizer, NotulenConfig $config): void
     {
@@ -61,6 +72,40 @@ class SummarizeMeetingTranscript implements ShouldQueue
                 'draft_error' => mb_substr($exception instanceof \RuntimeException ? $exception->getMessage() : 'Ringkasan AI gagal dibuat.', 0, 300),
             ]);
         }
+    }
+
+    /**
+     * The job died outside handle()'s try (timeout, worker killed): the draft
+     * must not stay "pending" forever, which would also block "Ringkas ulang"
+     * (audit rapat 2026-10 T-02). Never stores the exception text.
+     */
+    public function failed(?Throwable $exception): void
+    {
+        // Re-reserved after the queue's retry_after while the first run may still be
+        // working: leave it to that run (a stale "pending" can be re-run, ResummarizeTranscript).
+        if ($exception instanceof MaxAttemptsExceededException) {
+            return;
+        }
+
+        $transcript = MeetingTranscript::query()->forOccurrence($this->meetingId, $this->date)->first();
+
+        if ($transcript === null) {
+            return;
+        }
+
+        DB::transaction(function () use ($transcript): void {
+            $fresh = MeetingTranscript::query()->whereKey($transcript->id)->lockForUpdate()->first();
+
+            if ($fresh === null || $fresh->draft_status !== DraftStatus::Pending) {
+                return;
+            }
+
+            $fresh->forceFill([
+                'draft_status' => DraftStatus::Failed,
+                'draft_error' => 'Ringkasan AI terlalu lama atau terhenti. Coba "Ringkas ulang".',
+                'status' => $fresh->status === TranscriptStatus::Summarizing ? TranscriptStatus::Ready : $fresh->status,
+            ])->save();
+        });
     }
 
     /**

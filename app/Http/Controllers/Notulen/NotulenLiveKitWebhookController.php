@@ -10,6 +10,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 /**
  * POST /api/notulen/livekit: a second LiveKit webhook URL (livekit.yaml
@@ -53,10 +54,23 @@ class NotulenLiveKitWebhookController extends Controller
 
         $id = is_string($event['id'] ?? null) ? $event['id'] : '';
 
-        if ($id !== '' && ! Cache::add('notulen:livekit:'.hash('sha256', $id), true, $tolerance * 2)) {
+        $key = 'notulen:livekit:'.hash('sha256', $id);
+
+        if ($id !== '' && ! Cache::add($key, true, $tolerance * 2)) {
             return response()->json(['status' => 'duplicate']);
         }
 
-        return response()->json(['status' => $handle->handle($event)]);
+        try {
+            $status = $handle->handle($event);
+        } catch (Throwable $exception) {
+            // Not handled: LiveKit's retry must not count as a duplicate (audit R-02 / T-04).
+            if ($id !== '') {
+                Cache::forget($key);
+            }
+
+            throw $exception;
+        }
+
+        return response()->json(['status' => $status]);
     }
 }
