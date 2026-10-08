@@ -69,9 +69,7 @@ Rapat **Video RuangKerja**: kartu gabung menggantikan kartu tautan — "N orang 
 
 ### Gabung & ruang rapat video · `/rapat/{meeting}/gabung`, `/rapat/{meeting}/ruang`
 
-> Tampilan di bawah (mirip Google Meet) sedang diganti arah C "Notulen Hidup" (pemilik, 7 Okt 2026): [rapat-video](rapat-video.md). Menunggu branch `claude/rapat-ui`.
-
-Layar penuh tanpa Dock/menu bar, mirip Google Meet. **Pra-gabung**: pratinjau kamera (cermin) dengan tombol mikrofon/kamera, level mikrofon, pilih mikrofon & kamera (diingat per browser), judul & jam, siapa sudah di ruang, status jendela gabung, **Gabung sekarang**; izin ditolak / perangkat tidak ada / dipakai aplikasi lain / browser tidak didukung → pesan jelas, tetap bisa bergabung tanpa kamera. **Ruang** (selalu tema gelap): petak otomatis (16 ubin desktop, 6 ponsel, "+N lainnya"), dua orang = layar lawan + jendela kecil diri sendiri, **sorotan** untuk layar dibagikan / ubin disematkan / pembicara aktif dengan strip peserta; pilihan Tata letak (Otomatis · Petak · Sorotan); berbagi layar (+ audio tab); chat (data channel LiveKit, tidak disimpan); angkat tangan (urutan); daftar **Orang** dengan status mikrofon, bicara, tangan, dan yang diundang tetapi belum bergabung; penyelenggara bisa **Bisukan** & **Keluarkan**; ikon koneksi lemah; "Menyambungkan ulang…" + sambung ulang otomatis dengan token baru; setelan perangkat (termasuk speaker bila browser mendukung); pintasan ⌘/Ctrl+D mikrofon, ⌘/Ctrl+E kamera, ⌘/Ctrl+Alt+C chat, +P orang, +H tangan. Ponsel: bilah kontrol 5 tombol, chat/orang layar penuh. Keluar → "Anda keluar dari rapat" (Gabung lagi · detail · notulen).
+Layar penuh tanpa Dock/menu bar, arah desain **C "Notulen Hidup"** (pemilik, 7 Okt 2026; menggantikan tampilan mirip Google Meet): pra-gabung dengan pilihan sumber notulen, tindak lanjut terbuka, dan kartu persetujuan notulen otomatis; ruang dengan pita video di atas, notulen hidup di tengah (kolaboratif bila Catatan bersama + server kolaborasi aktif), Bagian di kiri, Waktu bicara/Kehadiran di kanan, bilah kontrol gelap ringkas; ponsel tab Video | Notulen. Panduan bergambar: [rapat-video](rapat-video.md); kontrak data: `docs/fitur/rapat-video-kontrak.md`.
 
 ### Notulen · `/rapat/{meeting}/notulen`
 
@@ -148,7 +146,7 @@ Tujuan: rapat video yang semirip mungkin dengan Google Meet dan serealtime mungk
 | Notifikasi | `meeting.starting` rapat video: tombol utama **Gabung** → pra-gabung, sekunder "Lihat detail" |
 | Klien | `livekit-client` + `@livekit/components-react` (hook saja, gaya Arus — tanpa `@livekit/components-styles`); adaptiveStream, dynacast, simulcast VP8 180/360/720p, berbagi layar 1080p/15 + lapisan 720p/5, Opus DTX + RED, peredam gema/bising |
 
-**Sisa / berikutnya:** uji coba nyata 1–2 minggu di VPS rapat (≤ 20 orang, 4G, CPU & trafik — `RAPAT-VIDEO.md` §6); ruang tunggu/izin masuk (tamu eksternal belum didukung, semua peserta karyawan internal); larangan masuk ulang setelah dikeluarkan; reaksi emoji; latar blur; rekaman (Egress). Transkrip otomatis ke notulen sedang dibangun sebagai **notulen otomatis** (worker `transcriber/`, ringkasan AI, menolak per orang): [rapat-video](rapat-video.md) §3.4, [rapat-video-privasi](rapat-video-privasi.md), `docs/deploy/RAPAT-VIDEO.md` §7–§10.
+**Sisa / berikutnya:** uji coba nyata 1–2 minggu di VPS rapat (≤ 20 orang, 4G, CPU & trafik — `RAPAT-VIDEO.md` §6); ruang tunggu/izin masuk (tamu eksternal belum didukung, semua peserta karyawan internal); larangan masuk ulang setelah dikeluarkan; reaksi emoji; latar blur; rekaman (Egress). Transkrip otomatis ke notulen dibangun sebagai **notulen otomatis** (worker `transcriber/`, ringkasan AI, menolak per orang; kontrak `docs/fitur/notulen-otomatis-kontrak.md`): [rapat-video](rapat-video.md) §3.4, [rapat-video-privasi](rapat-video-privasi.md), `docs/deploy/RAPAT-VIDEO.md` §7–§10.
 
 Catatan pilihan awal (6 Okt 2026), untuk riwayat:
 

@@ -65,6 +65,7 @@ return [
         'database' => ['path' => 'docs/DATABASE.md', 'title' => 'Database', 'group' => 'technical'],
         'deploy-rapat-video' => ['path' => 'docs/deploy/RAPAT-VIDEO.md', 'title' => 'Operasional rapat video', 'group' => 'technical'],
         'asvs-l1' => ['path' => 'docs/security/ASVS-L1.md', 'title' => 'OWASP ASVS L1', 'group' => 'security'],
+        'audit-rapat' => ['path' => 'docs/security/AUDIT-RAPAT-2026-10.md', 'title' => 'Audit rapat video 2026-10', 'group' => 'security'],
     ],
 
     'patterns' => [
