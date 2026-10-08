@@ -1,6 +1,6 @@
-import { HocuspocusProvider } from '@hocuspocus/provider';
+import type { HocuspocusProvider } from '@hocuspocus/provider';
 import { useEffect, useState } from 'react';
-import * as Y from 'yjs';
+import type * as Y from 'yjs';
 import type { LiveDocument } from '@/features/notes/note-editor';
 import { ApiError } from '@/features/tasks/lib/api';
 import { videoApi } from './api';
@@ -60,7 +60,7 @@ export function useMinutesCollab(
 
         let cancelled = false;
         let provider: HocuspocusProvider | null = null;
-        const doc = new Y.Doc();
+        let doc: Y.Doc | null = null;
         const off = () => {
             if (!cancelled) {
                 cancelled = true;
@@ -68,14 +68,31 @@ export function useMinutesCollab(
                 setState({ mode: 'off' });
             }
         };
-        const timer = window.setTimeout(off, CONNECT_TIMEOUT);
+        let timer = window.setTimeout(off, CONNECT_TIMEOUT);
 
         void videoApi
             .collabToken(tokenUrl)
-            .then((first) => {
+            // Hocuspocus + Yjs (111 KB) load only once a document exists to
+            // join, so rooms without collab minutes never download them
+            // (audit U-06). The timer restarts after the load so the chunk
+            // download does not eat into the connect budget.
+            .then(async (first) => {
+                const [{ HocuspocusProvider }, yjs] = await Promise.all([
+                    import('@hocuspocus/provider'),
+                    import('yjs'),
+                ]);
+
+                return { first, HocuspocusProvider, yjs } as const;
+            })
+            .then(({ first, HocuspocusProvider, yjs }) => {
                 if (cancelled) {
                     return;
                 }
+
+                const ydoc = new yjs.Doc();
+                doc = ydoc;
+                window.clearTimeout(timer);
+                timer = window.setTimeout(off, CONNECT_TIMEOUT);
 
                 let initial: string | null = first.token;
                 // Edit right of the latest token: the server forces a reconnect
@@ -86,7 +103,7 @@ export function useMinutesCollab(
                 const current = new HocuspocusProvider({
                     url: first.url || collab?.url || '',
                     name: first.document,
-                    document: doc,
+                    document: ydoc,
                     // Fresh short-lived token on every (re)connect.
                     token: async () => {
                         if (initial !== null) {
@@ -124,7 +141,7 @@ export function useMinutesCollab(
                     window.clearTimeout(timer);
                     setState({
                         mode: 'live',
-                        live: { doc, provider: current },
+                        live: { doc: ydoc, provider: current },
                         connected: true,
                         canEdit,
                     });
@@ -159,7 +176,7 @@ export function useMinutesCollab(
             cancelled = true;
             window.clearTimeout(timer);
             provider?.destroy();
-            doc.destroy();
+            doc?.destroy();
         };
         // One session per document; `me` is stable for the page.
         // oxlint-disable-next-line react-hooks/exhaustive-deps

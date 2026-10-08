@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import { ApiError } from '@/features/tasks/lib/api';
 
 type Options = {
     token: () => Promise<string>;
@@ -29,7 +30,15 @@ class FakeProvider {
     destroy() {}
 }
 
-vi.mock('@hocuspocus/provider', () => ({ HocuspocusProvider: FakeProvider }));
+// Set by the mock factory: proves the collab stack only loads when the hook
+// actually needs it (audit U-06).
+const stack = vi.hoisted(() => ({ loaded: false }));
+
+vi.mock('@hocuspocus/provider', () => {
+    stack.loaded = true;
+
+    return { HocuspocusProvider: FakeProvider };
+});
 
 const collabToken = vi.fn();
 
@@ -56,6 +65,19 @@ describe('useMinutesCollab (audit U-02)', () => {
     afterEach(() => {
         providers.length = 0;
         collabToken.mockReset();
+        stack.loaded = false;
+    });
+
+    it('never loads the collab stack without a document (U-06)', async () => {
+        collabToken.mockRejectedValueOnce(new ApiError('tidak ada', 404));
+        const { result } = renderHook(() =>
+            useMinutesCollab(COLLAB as never, ME),
+        );
+
+        await waitFor(() =>
+            expect(result.current).toMatchObject({ mode: 'waiting' }),
+        );
+        expect(stack.loaded).toBe(false);
     });
 
     it('follows the edit right of every reconnect token', async () => {
