@@ -100,7 +100,7 @@ Yang dicatat aplikasi: `participant_joined` / `participant_left` / `room_finishe
 
 Jawaban endpoint: `200` tercatat/diabaikan/duplikat · `401` tanda tangan salah (kunci/rahasia tidak cocok) · `404` aplikasi belum diisi `LIVEKIT_*` atau `FEATURE_MEETINGS=false` · `413` badan terlalu besar · `422` bukan JSON atau kejadian kedaluwarsa (cek jam).
 
-**Webhook kedua `/api/notulen/livekit`** (verifikasi JWT yang sama): `participant_joined` seseorang (bukan `rk-notulen`) di ruang rapat ber-`auto_minutes` → job `StartMeetingRecorder` (maks. sekali per menit per ruang) meminta worker bergabung; `room_finished` → job `FinishMeetingRecorder` meminta worker berhenti dan mentranskrip. Rapat tanpa notulen otomatis, dibatalkan, atau server notulen belum diatur → `ignored`. Worker yang tersembunyi tetap memicu `participant_joined` di webhook kehadiran (baris `meeting_attendances` dengan `user_id` null, tidak dihitung).
+**Webhook kedua `/api/notulen/livekit`** (verifikasi JWT yang sama): `participant_joined` seseorang (bukan `rk-notulen`) di ruang rapat ber-`auto_minutes` → job `StartMeetingRecorder` (maks. sekali per menit per ruang) meminta worker bergabung; `room_finished` → job `FinishMeetingRecorder` meminta worker berhenti dan mentranskrip. Rapat tanpa notulen otomatis, dibatalkan, atau server notulen belum diatur → `ignored`. Webhook kehadiran mengabaikan identitas `rk-notulen` (tidak membuat baris `meeting_attendances`).
 
 ## 4. Konfigurasi aplikasi (VPS aplikasi)
 
