@@ -1,5 +1,7 @@
 # Serah terima — RuangKerja Fase 1
 
+> **8 Okt 2026:** pekerjaan dilanjutkan di ZCode (GLM). Mulai dari [`SERAH-TERIMA-GLM.md`](SERAH-TERIMA-GLM.md): status terkini, server, prosedur deploy, dan daftar tugas berikutnya.
+
 Status per 7 Okt 2026. Semua sprint Fase 1 (0–10) dibangun di Mac mulai 5 Okt 2026 dengan banyak agen paralel. Repo GitHub **private**; `main` sudah berisi PR #1–#7 (terakhir: integrasi Fase 2/3 #5, perbaikan seeder #6, deploy dua VPS #7) dan CI hijau.
 
 ## Status sprint
