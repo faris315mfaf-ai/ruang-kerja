@@ -90,20 +90,19 @@ final class RecordVideoEvent
         }
 
         DB::transaction(function () use ($type, $meeting, $target, $roomName, $sid, $joinedAt, $userId, $at): void {
-            // insertOrIgnore + refetch (MinutesStore::open pattern): two
-            // concurrent "joined" webhooks with the same SID would otherwise
-            // race past a lock on a row that does not exist yet.
-            MeetingAttendance::query()->insertOrIgnore([
-                'id' => (string) str()->ulid(),
-                'meeting_id' => $meeting->id,
-                'occurrence_date' => $target['date'],
-                'user_id' => $userId,
-                'room' => $roomName,
-                'participant_sid' => $sid,
-                'joined_at' => $joinedAt,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // createOrFirst + row lock (audit R-12): two concurrent "joined"
+            // webhooks with the same SID would otherwise race past a lock on
+            // a row that does not exist yet.
+            MeetingAttendance::query()->createOrFirst(
+                ['participant_sid' => $sid],
+                [
+                    'meeting_id' => $meeting->id,
+                    'occurrence_date' => $target['date'],
+                    'user_id' => $userId,
+                    'room' => $roomName,
+                    'joined_at' => $joinedAt,
+                ],
+            );
 
             $row = MeetingAttendance::query()->where('participant_sid', $sid)->lockForUpdate()->firstOrFail();
 
