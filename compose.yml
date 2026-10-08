@@ -61,6 +61,29 @@ services:
     ports:
       - "${COLLAB_PORT:-1234}:1234"
 
+  # WhatsApp grup manajemen via Evolution API (docs/fitur/absensi-whatsapp.md).
+  # Opsional. Jalankan: docker compose --profile whatsapp up -d evolution
+  # Buat database gateway sekali: docker compose exec postgres createdb -U ruangkerja evolution
+  # Pasang nomor gateway lewat dashboard http://localhost:8082 (QR), lalu isi
+  # EVOLUTION_URL=http://localhost:8082 + EVOLUTION_API_KEY + WHATSAPP_GROUP_JID di .env.
+  evolution:
+    image: evoapicloud/evolution-api:latest
+    profiles: ["whatsapp"]
+    restart: unless-stopped
+    depends_on: [postgres, redis]
+    environment:
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:-devkey-ruangkerja}
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://${DB_USERNAME:-ruangkerja}:${DB_PASSWORD:-secret}@postgres:5432/evolution
+      DATABASE_CONNECTION_DB_PREFIX_NAME: ev_
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: redis://redis:6380
+      CACHE_REDIS_PREFIX_KEY: ev_
+      CACHE_LOCAL_ENABLED: "true"
+    ports:
+      - "${EVOLUTION_PORT:-8082}:8080"
+
   # Video RuangKerja: LiveKit SFU untuk rapat video (docs/SETUP-LOKAL.md "Rapat video").
   # Opsional. Jalankan: docker compose --profile video up -d livekit
   # Browser: wss://livekit.test lewat `herd proxy livekit http://127.0.0.1:7880 --secure`.

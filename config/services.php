@@ -42,4 +42,13 @@ return [
         ],
     ],
 
+    // Self-hosted Evolution API gateway (WhatsApp Web over REST;
+    // docs/fitur/absensi-whatsapp.md). Used only while
+    // NOTIFICATIONS_WHATSAPP_ENABLED=true.
+    'evolution' => [
+        'url' => env('EVOLUTION_URL'),
+        'api_key' => env('EVOLUTION_API_KEY'),
+        'instance' => env('EVOLUTION_INSTANCE', 'ruangkerja'),
+    ],
+
 ];

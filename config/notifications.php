@@ -61,6 +61,10 @@ return [
     'channels' => [
         'whatsapp' => [
             'enabled' => (bool) env('NOTIFICATIONS_WHATSAPP_ENABLED', false),
+            // Management group receiving check-in plans (jid "…@g.us" of the
+            // gateway number's group; find it via the gateway's
+            // GET /group/fetchAllGroups endpoint).
+            'group_jid' => env('WHATSAPP_GROUP_JID'),
         ],
     ],
 

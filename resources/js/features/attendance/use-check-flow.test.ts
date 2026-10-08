@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { rejectionFromError, toRejection } from './use-check-flow';
+import {
+    planRejection,
+    rejectionFromError,
+    toRejection,
+} from './use-check-flow';
 
 describe('toRejection', () => {
     it('passes through business rejections from the server', () => {
@@ -47,5 +51,17 @@ describe('rejectionFromError', () => {
             'network',
         );
         expect(rejectionFromError('boom').reason).toBe('server');
+    });
+});
+
+describe('planRejection', () => {
+    it('requires the work plan for a check-in', () => {
+        expect(planRejection('in', '')).toContain('rencana kerja');
+        expect(planRejection('in', '   ')).toContain('rencana kerja');
+        expect(planRejection('in', '1) Laporan mingguan')).toBeNull();
+    });
+
+    it('never blocks a check-out', () => {
+        expect(planRejection('out', '')).toBeNull();
     });
 });

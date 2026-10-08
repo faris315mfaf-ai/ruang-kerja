@@ -40,6 +40,10 @@
         <env name="EMPLOYEE_DEFAULT_PASSWORD" value="" force="true"/>
         <!-- Video RuangKerja, notulen otomatis, collab: never from a developer's .env (tests configure them explicitly). -->
         <env name="LIVEKIT_URL" value="" force="true"/>
+        <env name="EVOLUTION_URL" value="" force="true"/>
+        <env name="EVOLUTION_API_KEY" value="" force="true"/>
+        <env name="NOTIFICATIONS_WHATSAPP_ENABLED" value="" force="true"/>
+        <env name="WHATSAPP_GROUP_JID" value="" force="true"/>
         <env name="LIVEKIT_API_URL" value="" force="true"/>
         <env name="LIVEKIT_API_KEY" value="" force="true"/>
         <env name="LIVEKIT_API_SECRET" value="" force="true"/>

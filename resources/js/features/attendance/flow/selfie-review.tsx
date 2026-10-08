@@ -46,6 +46,38 @@ export function SelfieReview({
                 )}
             </div>
 
+            {flow.type === 'in' && (
+                <div className="space-y-1.5">
+                    <Label htmlFor="check-plan" className="text-text">
+                        Rencana kerja hari ini{' '}
+                        <span className="text-text-muted">
+                            (wajib, terkirim ke grup manajemen)
+                        </span>
+                    </Label>
+                    <Textarea
+                        id="check-plan"
+                        value={flow.plan}
+                        onChange={(event) => flow.setPlan(event.target.value)}
+                        maxLength={2000}
+                        rows={3}
+                        placeholder="Mis. 1) Selesaikan laporan mingguan 2) Meeting klien 14.00"
+                        aria-invalid={flow.planError ? true : undefined}
+                        aria-describedby={
+                            flow.planError ? 'check-plan-error' : undefined
+                        }
+                        className="min-h-12"
+                    />
+                    {flow.planError && (
+                        <p
+                            id="check-plan-error"
+                            className="text-[15px] text-danger"
+                        >
+                            {flow.planError}
+                        </p>
+                    )}
+                </div>
+            )}
+
             {(flow.isRemote || flow.noteError) && (
                 <div className="space-y-1.5">
                     <Label htmlFor="check-note" className="text-text">
