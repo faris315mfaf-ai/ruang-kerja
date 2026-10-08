@@ -204,8 +204,8 @@ Lalu hapus branch lokal yang sudah ter-merge (`git branch -d …`).
 | ID | Isi | Pemilik berkas |
 |---|---|---|
 | ~~U-06~~ | ~~Muat Hocuspocus/Yjs (111 KB) secara dinamis hanya saat mode kolaborasi~~ **Selesai** `b7401d1` (8 Okt 2026, GLM): `import()` di `useMinutesCollab`, chunk `room` tidak lagi mengimpor statis | `features/meetings/video/use-minutes-collab.ts` |
-| R-14 | Batasi Permissions-Policy mikrofon ke rute rapat (butuh muat ulang penuh ke `/gabung`) | `SecurityHeaders` |
-| R-06 | **Keputusan pemilik:** HR boleh mengatur sandi Direksi/HR lain? Usulan: hanya Super Admin | `UserPolicy::setPassword` |
+| ~~R-14~~ | ~~Batasi Permissions-Policy mikrofon ke rute rapat (butuh muat ulang penuh ke `/gabung`)~~ **Selesai** `959ea0c` (8 Okt 2026, GLM): mikrofon & display-capture ditolak di kebijakan dasar, hanya diberikan di dokumen `/rapat/{id}/gabung` & `/rapat/{id}/ruang` (`config permissions_policy_meetings`, kamera tetap global untuk selfie absensi); middleware baru `EnsureFullPageLoad` memaksa navigasi Inertia ke dua rute itu jadi muat ulang penuh | `SecurityHeaders`, `config/security.php`, `EnsureFullPageLoad` |
+| ~~R-06~~ | ~~**Keputusan pemilik:** HR boleh mengatur sandi Direksi/HR lain? Usulan: hanya Super Admin~~ **Selesai** `49bf129` (8 Okt 2026, GLM): diputuskan pemilik 8 Okt 2026 — hanya Super Admin boleh mengatur sandi akun super_admin/direksi/hr (`Role::superAdminSetsPassword()`); HR tetap mengatur sandi anggota/kadiv dan tetap menyetujui "Lupa kata sandi" milik siapa pun (sandi barunya diketik pemilik akun sendiri) | `UserPolicy::setPassword` |
 | B-06..B-08, T-08..T-10 | Sudah diperbaiki — tidak ada tindakan | — |
 
 ### G. Tahap 2 — subtitle realtime (butuh GPU)
@@ -223,7 +223,7 @@ Jalur bertahap: (1) TWA/Bubblewrap 1–2 hari → (2) Capacitor 2–4 minggu unt
 3. **Kenaikan `PRIVACY_POLICY_VERSION`** (memaksa semua karyawan setuju ulang sebelum absen).
 4. **Retensi `meeting_attendances`** (waktu bicara & transkrip sudah 90 hari).
 5. **Data rapat di ekspor "Data Saya"** atau tidak.
-6. **R-06:** reset sandi Direksi/HR hanya oleh Super Admin?
+6. **R-06:** Sudah diputuskan 8 Okt 2026: hanya Super Admin (implementasi `49bf129`).
 7. **R-04:** perilaku "izinkan masuk lagi" setelah dikeluarkan (sekarang per kemunculan, penyelenggara bisa mengizinkan).
 8. Belum ada: kredensial Google Cloud, secret GitHub Actions, branding resmi SPKD, `ATTENDANCE_QR_SECRET` produksi, object storage NEO + PITR aktif.
 

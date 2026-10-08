@@ -25,7 +25,7 @@ Status: **OK** = terpenuhi · **Diperbaiki** = ditemukan & diperbaiki di sprint 
 
 Tidak ada temuan tingkat tinggi yang terbuka untuk kode yang sudah ada di cabang ini.
 
-**Audit lanjutan:** rapat video (LiveKit), sandi bawaan, dan deploy — `docs/security/AUDIT-RAPAT-2026-10.md` (7 Okt 2026, `main` b690875): R-01 (Tinggi, sandi bawaan tanpa wajib ganti), R-02, R-03, R-10, R-11, R-16 diperbaiki; R-04 (keluarkan peserta bisa masuk lagi), R-05 (ganti nama tampilan di ruang), R-06 (HR mengatur sandi Direksi/HR — keputusan pemilik) dan lainnya terbuka di sana.
+**Audit lanjutan:** rapat video (LiveKit), sandi bawaan, dan deploy — `docs/security/AUDIT-RAPAT-2026-10.md` (7 Okt 2026, `main` b690875): R-01 (Tinggi, sandi bawaan tanpa wajib ganti), R-02, R-03, R-10, R-11, R-16 diperbaiki; R-04 (keluarkan peserta bisa masuk lagi) dan R-05 (ganti nama tampilan di ruang) terbuka di sana; R-06 (HR mengatur sandi Direksi/HR) sudah diputuskan 8 Okt 2026 — hanya Super Admin (49bf129).
 
 ## V1 Arsitektur
 | Butir | Status | Catatan |

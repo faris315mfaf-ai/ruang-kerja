@@ -126,7 +126,7 @@ LIVEKIT_API_SECRET=<API_SECRET dari generator>
 
 Lalu deploy ulang / `php artisan optimize` (konfigurasi di-cache). Tidak ada perubahan lain:
 
-- CSP `connect-src` otomatis menambah `wss://livekit.spkd.store` dan `https://livekit.spkd.store` dari `LIVEKIT_URL`; `Permissions-Policy` sudah mengizinkan kamera, mikrofon & berbagi layar untuk situs sendiri.
+- CSP `connect-src` otomatis menambah `wss://livekit.spkd.store` dan `https://livekit.spkd.store` dari `LIVEKIT_URL`; `Permissions-Policy` mengizinkan kamera, mikrofon & berbagi layar untuk situs sendiri **hanya di dokumen `/rapat/{id}/gabung` dan `/rapat/{id}/ruang`** (audit R-14; dokumen lain menolak mikrofon & berbagi layar, kamera tetap boleh untuk selfie absensi).
 - Kunci untuk notulen otomatis dan ringkasan AI: §7.3 dan §8. Subtitle tahap 2: `LIVEKIT_SUBTITLES` (`config/livekit.php`, bawaan `false`, §10).
 
 ## 5. Uji

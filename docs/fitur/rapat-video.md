@@ -261,6 +261,6 @@ Keputusan yang masih ditunggu dari pemilik (rincian di [rapat-video-privasi](rap
 3. **Retensi kehadiran rapat video** (`meeting_attendances`), pilihan menolak, dan larangan masuk: belum ada penghapusan otomatis.
 4. **Ekspor Data Saya** belum memuat data rapat.
 5. Dasar transfer teks transkrip ke **DeepSeek di luar Indonesia** (UU PDP Pasal 56), atau ganti penyedia.
-6. (Audit, di luar rapat) **HR mengatur sandi Direksi/HR**: `docs/security/AUDIT-RAPAT-2026-10.md` R-06.
+6. (Audit, di luar rapat) **HR mengatur sandi Direksi/HR** — sudah diputuskan 8 Okt 2026: hanya Super Admin. `docs/security/AUDIT-RAPAT-2026-10.md` R-06.
 
 Audit keamanan lengkap fitur ini: `docs/security/AUDIT-RAPAT-2026-10.md`.
