@@ -11,6 +11,7 @@ use App\Http\Controllers\Meetings\MinutesController;
 use App\Http\Middleware\AuthenticateSession;
 use App\Http\Middleware\EnsureActiveEmployee;
 use App\Http\Middleware\EnsureFeatureEnabled;
+use App\Http\Middleware\EnsureFullPageLoad;
 use App\Http\Middleware\EnsureTwoFactorForSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -46,7 +47,7 @@ Route::middleware([EnsureFeatureEnabled::class.':meetings', 'auth', 'verified'])
         Route::get('{meeting}', [MeetingController::class, 'show'])->whereUlid('meeting')->name('show');
         Route::get('{meeting}/ubah', [MeetingController::class, 'edit'])->whereUlid('meeting')->name('edit');
         Route::patch('{meeting}', [MeetingController::class, 'update'])->whereUlid('meeting')->middleware('throttle:api')->name('update');
-        Route::delete('{meeting}', [MeetingController::class, 'destroy'])->whereUlid('meeting')->name('cancel');
+        Route::delete('{meeting}', [MeetingController::class, 'destroy'])->whereUlid('meeting')->middleware('throttle:api')->name('cancel');
         Route::post('{meeting}/kehadiran', [MeetingController::class, 'rsvp'])->whereUlid('meeting')->middleware('throttle:api')->name('rsvp');
 
         Route::get('{meeting}/notulen', [MinutesController::class, 'show'])->whereUlid('meeting')->name('minutes.show');
@@ -54,17 +55,20 @@ Route::middleware([EnsureFeatureEnabled::class.':meetings', 'auth', 'verified'])
         Route::get('{meeting}/notulen/kolaborasi', [MinutesController::class, 'collabToken'])->whereUlid('meeting')->middleware('throttle:60,1')->name('minutes.collab');
         Route::post('{meeting}/notulen/menyunting', [MinutesController::class, 'editing'])->whereUlid('meeting')->middleware('throttle:api')->name('minutes.editing');
         Route::put('{meeting}/notulen', [MinutesController::class, 'save'])->whereUlid('meeting')->middleware('throttle:api')->name('minutes.save');
-        Route::post('{meeting}/notulen/final', [MinutesController::class, 'finalize'])->whereUlid('meeting')->name('minutes.finalize');
-        Route::post('{meeting}/notulen/buka', [MinutesController::class, 'reopen'])->whereUlid('meeting')->name('minutes.reopen');
+        Route::post('{meeting}/notulen/final', [MinutesController::class, 'finalize'])->whereUlid('meeting')->middleware('throttle:api')->name('minutes.finalize');
+        Route::post('{meeting}/notulen/buka', [MinutesController::class, 'reopen'])->whereUlid('meeting')->middleware('throttle:api')->name('minutes.reopen');
         Route::post('{meeting}/notulen/tugas', [MinutesController::class, 'convert'])->whereUlid('meeting')->middleware('throttle:api')->name('minutes.tasks');
         Route::post('{meeting}/notulen/ingatkan', [MinutesController::class, 'remind'])->whereUlid('meeting')->middleware('throttle:api')->name('minutes.remind');
 
         Route::post('{meeting}/tindak-lanjut', [MinutesController::class, 'storeItem'])->whereUlid('meeting')->middleware('throttle:api')->name('items.store');
         Route::patch('{meeting}/tindak-lanjut/{item}', [MinutesController::class, 'updateItem'])->whereUlid(['meeting', 'item'])->middleware('throttle:api')->name('items.update');
-        Route::delete('{meeting}/tindak-lanjut/{item}', [MinutesController::class, 'destroyItem'])->whereUlid(['meeting', 'item'])->name('items.destroy');
+        Route::delete('{meeting}/tindak-lanjut/{item}', [MinutesController::class, 'destroyItem'])->whereUlid(['meeting', 'item'])->middleware('throttle:api')->name('items.destroy');
 
-        Route::get('{meeting}/gabung', [MeetingVideoController::class, 'join'])->whereUlid('meeting')->name('video.join');
-        Route::get('{meeting}/ruang', [MeetingVideoController::class, 'room'])->whereUlid('meeting')->name('video.room');
+        // Audit R-14: the video documents carry the microphone/screen capture
+        // grants, so an Inertia navigation into them must be a full load
+        // (EnsureFullPageLoad → X-Inertia-Location) to pick the header up.
+        Route::get('{meeting}/gabung', [MeetingVideoController::class, 'join'])->whereUlid('meeting')->middleware(EnsureFullPageLoad::class)->name('video.join');
+        Route::get('{meeting}/ruang', [MeetingVideoController::class, 'room'])->whereUlid('meeting')->middleware(EnsureFullPageLoad::class)->name('video.room');
         Route::post('{meeting}/video/token', [MeetingVideoController::class, 'token'])->whereUlid('meeting')->middleware('throttle:30,1')->name('video.token');
         Route::post('{meeting}/video/peserta/{identity}/bisukan', [MeetingVideoController::class, 'mute'])->whereUlid(['meeting', 'identity'])->middleware('throttle:api')->name('video.mute');
         Route::delete('{meeting}/video/peserta/{identity}', [MeetingVideoController::class, 'remove'])->whereUlid(['meeting', 'identity'])->middleware('throttle:api')->name('video.remove');
