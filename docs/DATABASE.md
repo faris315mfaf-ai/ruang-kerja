@@ -28,7 +28,7 @@
 | Notifikasi | `notifications`*, `notification_preferences`, `notification_settings`, `notification_dispatch_logs` |
 | Pengumuman | `announcements`, `announcement_dismissals` |
 | Fase 2 | `channels`, `channel_members`, `messages`, `notes`, `note_versions`, `note_shares`, `meetings`, `meeting_participants`, `meeting_minutes`, `meeting_minute_versions`, `meeting_action_items`, `calendar_events` |
-| Fase 3 | `devices`, `face_templates`, `objectives`, `key_results`, `key_result_checkins`, `key_result_tasks` (OKR sudah dimigrasi, F3-3) |
+| Fase 3 | `devices`, `face_templates`, `objectives`, `key_results`, `key_result_checkins`, `key_result_tasks` (OKR F3-3 dan `devices` sudah dimigrasi; `face_templates` menyusul) |
 
 \* tabel bawaan paket (spatie/laravel-permission, Laravel notifications).
 
@@ -734,8 +734,12 @@ Migrasi `2026_10_12_200300_create_announcements_tables`.
 
 ## 8. Fase 3
 
-- `devices`: `id`, `user_id`, `platform`, `device_id_hash`, `push_token`, `integrity_verdict` jsonb, `last_seen_at`, `is_trusted`.
-- `face_templates`: `id`, `user_id`, `template` bytea (dienkripsi), `model_version`, `consent_id` FK attendance_consents, `created_at`. Dihapus otomatis bila persetujuan dicabut.
+**Perangkat (F3-1/F3-2) — `devices` diimplementasikan** (migrasi `2026_10_17_100000_create_devices_table`, fondasi API ponsel; belum ada rute HTTP — Sanctum menyusul Tahap 1):
+
+- `devices`: satu baris per instalasi aplikasi yang pernah masuk. `id` ulid, `user_id` FK users **cascade**, `company_id` FK companies (restrict), `platform` varchar(10) CHECK `android|ios|web` (enum `DevicePlatform`), **`device_id_hash`** varchar(64) (SHA-256 — **identitas mentah perangkat tidak pernah disimpan**), `name` varchar(120) null (nama model yang dilaporkan aplikasi), `os_version` varchar(40) null, `app_version` varchar(40) null, **`push_token`** varchar(255) null **unik** (token FCM; null bila izin push ditolak/dicabut), `integrity_verdict` jsonb null (hasil Play Integrity apa adanya — integritas **menandai, bukan memblokir**), `last_seen_at` timestamptz null, `biometric_login` bool default false, `is_trusted` bool default false, timestamps. **Unik `(user_id, device_id_hash)`** (satu baris per instalasi per pengguna), indeks `(user_id, last_seen_at)`.
+- Actions (`app/Domain/Devices/Actions/`): `RegisterDevice` (upsert per user+hash di bawah advisory lock `devices.register:<user_id>`; memperbarui token/nama/OS/versi aplikasi/`last_seen_at` — kolom null dari klien **tidak** menghapus nilai lama; **maks 5 perangkat per pengguna**, lebihnya ditolak "Maksimal 5 perangkat dapat didaftarkan per akun…"), `UpdateDevicePushToken` (set/hapus token; token yang sama di perangkat lain dilepas dulu — satu token milik tepat satu instalasi), `RevokeDevice` (hapus baris + audit `device.revoked`).
+- Akses (`DevicePolicy`, `Device::scopeVisibleTo`): **hanya pemilik** melihat/mengubah/mencabut perangkatnya (HR & Super Admin sengaja tidak dapat apa pun — privasi UU PDP; metadata perangkat membocorkan kapan & di mana seseorang bekerja). `viewAny` untuk pengguna aktif, daftar selalu terbatas pada baris milik aktor.
+- `face_templates` (belum dimigrasi): `id`, `user_id`, `template` bytea (dienkripsi), `model_version`, `consent_id` FK attendance_consents, `created_at`. Dihapus otomatis bila persetujuan dicabut.
 
 ### OKR divisi (F3-3, sudah dimigrasi)
 
