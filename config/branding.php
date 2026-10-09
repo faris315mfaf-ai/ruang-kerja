@@ -34,4 +34,11 @@ return [
         ],
     ],
 
+    // Android app identity, served via /.well-known/assetlinks.json. While
+    // cert_sha256 is empty the endpoint returns [] instead of a full statement.
+    'android' => [
+        'package' => env('ANDROID_PACKAGE', 'store.spkd.ruangkerja'),
+        'cert_sha256' => env('ANDROID_CERT_SHA256', ''),
+    ],
+
 ];

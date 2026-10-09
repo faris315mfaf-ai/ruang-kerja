@@ -49,5 +49,6 @@ require __DIR__.'/hiring.php';
 require __DIR__.'/management.php';
 require __DIR__.'/projects.php';
 require __DIR__.'/privacy.php';
+require __DIR__.'/android.php';
 require __DIR__.'/docs.php';
 require __DIR__.'/dev.php';
