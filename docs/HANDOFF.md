@@ -41,6 +41,8 @@ Alur **frontend** semua modul Fase 2 dan 3 sudah bisa dicoba sebagai pratinjau d
 | Mesin fingerprint (ADMS) | F3-3 | `/admin/mesin-absensi` | `fitur/mesin-fingerprint.md` |
 | Dashboard per peran SPKD | SPKD | `/peran/dirut` … | `fitur/dashboard-peran.md` |
 
+**Aplikasi Android native (Expo) dimulai 9 Okt 2026** — Tahap 0 selesai (identitas paket, `assetlinks.json`, kebijakan privasi publik, fondasi `devices`), branch `glm/ponsel-api`; rencana lengkap di [`fitur/aplikasi-ponsel-rencana.md`](fitur/aplikasi-ponsel-rencana.md), runbook akun di [`deploy/ANDROID-AKUN.md`](deploy/ANDROID-AKUN.md).
+
 **Cara mencoba:** flag `FEATURE_PROTOTYPE` (`config/features.php`) menyala otomatis di luar produksi dan **mati di produksi** (rute 404, ubin Dock/baris Menu tersembunyi). Buka https://ruangkerja-proto.test/pratinjau (worktree pratinjau) atau https://ruangkerja.test/pratinjau setelah digabung, masuk dengan `kadiv@demo.test` (sebagian besar modul), `direksi@demo.test` (`/manajemen/jadwal`, peran Dirut/Direktur) atau `hr@demo.test` (mesin absensi, peran HR). Setiap layar menerima `?keadaan=memuat|kosong|galat`.
 
 **Kualitas:** Vitest per modul (logika murni), typecheck & lint bersih, smoke e2e `tests/e2e/prototype-smoke.spec.ts` (36 rute × 375/834/1440 × terang/malam; jalankan `--workers=2 --retries=1`). Laporan cek bug: `sprints/fase-2-3-prototipe/BUG-REPORT.md`. Bug Beranda anggota (`/dashboard` crash karena `live.focus`/`live.week` pindah ke prop `planner`) sudah diperbaiki: Beranda kini menampilkan **Ruang saya** (tugas baru, lajur Hari ini · Minggu ini · Nanti, catatan cepat, tandai selesai).

@@ -1,6 +1,6 @@
 # Rencana Pembangunan Aplikasi Ponsel (Android) — RuangKerja
 
-> **Status:** Rencana (disiapkan 8 Okt 2026 oleh GLM/ZCode atas permintaan pemilik). Belum ada kode yang dikerjakan — dokumen ini adalah pintu masuk saat pemilik membuka §6.H.
+> **Status:** Dikerjakan (branch `glm/ponsel-api`, mulai 9 Okt 2026) — **Tahap 0 selesai kecuali butir akun pemilik; Tahap 1 (API v1) siap mulai** (rincian butir di §9; catatan sesi `docs/sesi/ponsel.md`). Disiapkan 8 Okt 2026 oleh GLM/ZCode atas permintaan pemilik. **Keputusan 9 Okt:** jalur **Expo native penuh** — TWA/Bubblewrap dan Capacitor digugurkan (usulan §2 tidak dipakai; PRD §28 sudah menulis Expo), Android diprioritaskan.
 > **Acuan:** [aplikasi-ponsel.md](aplikasi-ponsel.md) (spesifikasi hidup F3-1/F3-2), `docs/PLATFORM.md` (shell mobile-first), `docs/PRD.md` (§28 platform, §M/fase 3), `docs/SERAH-TERIMA-GLM.md` §6.H, `docs/DATABASE.md` §8.
 > **Keputusan tunggal yang menahan semuanya:** pemilik membuka kembali fitur "aplikasi ponsel" yang ditahan 6 Okt 2026, dan memilih jalur M1–M3 di §2.
 
@@ -105,7 +105,7 @@ PRD §28 menulis "Mobile React Native di Fase 3". Rekomendasi terbaru (serah ter
 
 ## 4. Checklist prasyarat pemilik (isi sebelum M1)
 
-- [ ] Keputusan jalur §2 (TWA→Capacitor vs Expo) + perbarui PRD §28 bila berubah
+- [x] Keputusan jalur §2 (TWA→Capacitor vs Expo) + perbarui PRD §28 bila berubah — **diputuskan 9 Okt: Expo native penuh; PRD §28 sudah Expo, tidak perlu diubah**
 - [ ] Nama paket Android: `store.spkd.ruangkerja`? (final, tak bisa diubah)
 - [ ] Akun Google Play Console (US$25) + akses developer diberikan
 - [ ] Proyek Firebase: FCM aktif; (M3) Play Integrity aktif; `google-services.json` untuk aplikasi Android
@@ -161,9 +161,16 @@ PRD §28 menulis "Mobile React Native di Fase 3". Rekomendasi terbaru (serah ter
 1. M0.1 keputusan paket+jalur → 2. M0 backend B1–B6 (3–5 hari, test penuh) → 3. M1 TWA rilis internal (1–2 hari) → 4. evaluasi internal 3–5 hari → 5. M2 Capacitor → 6. M3 urut nilai → 7. M4 rilis.
    Klaim papan `docs/PEMBAGIAN-TUGAS.md` baris baru "F3-1/F3-2 Aplikasi ponsel (jalur M0–M4)" sebelum mulai; catatan sesi di `docs/sesi/<agen>.md`.
 
+> **Status 9 Okt:** Tahap 0 selesai kecuali butir akun pemilik; Tahap 1 siap mulai.
+> - **0.4 ✅** klaim papan (baris 18 `docs/PEMBAGIAN-TUGAS.md`, branch `glm/ponsel-api`).
+> - **0.3 ✅ koding** halaman publik `/kebijakan-privasi` (commit `bc1b1d2`); konten masih draf — menunggu persetujuan pemilik + isi `BRANDING_COMPANY_NAME` & `PRIVACY_CONTACT`.
+> - **0.1 parsial** config identitas (`config/branding.php`) + endpoint `assetlinks.json` siap (`12210cc`); nama paket default `store.spkd.ruangkerja` menunggu konfirmasi final.
+> - **0.2** tetap pemilik — akun Play Console/Firebase/Expo + keystore (runbook `docs/deploy/ANDROID-AKUN.md`, panduan `docs/deploy/ANDROID-IDENTITAS.md`).
+> - **Tahap 1.1 (`assetlinks.json`) terlantik lebih awal — selesai.** Fondasi `devices` (migrasi, model, Action, Policy) juga sudah masuk (`4d2ce6f`). Urutan M1 TWA/M2 Capacitor di atas tidak berlaku lagi (keputusan 9 Okt: Expo native penuh).
+
 ## 10. Keputusan menunggu pemilik (ringkas)
 
-1. Jalur §2 (rekomendasi: TWA→Capacitor; ubah PRD §28 bila disetujui).
+1. ~~Jalur §2 (rekomendasi: TWA→Capacitor; ubah PRD §28 bila disetujui).~~ — **diputuskan 9 Okt: Expo native penuh; TWA/Capacitor digugurkan.**
 2. Nama paket final (`store.spkd.ruangkerja`?).
 3. Biometrik wajah **opt-in** (rekomendasi) vs opt-out.
 4. Retensi template wajah (usulan: aktif + 30 hari).
