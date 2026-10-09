@@ -156,10 +156,63 @@ PRD §28 menulis "Mobile React Native di Fase 3". Rekomendasi terbaru (serah ter
 | Dua jalur (web + APK) terpisah perilakunya | bug ganda | satu fasad `native.ts`; fitur asli selalu `native.isAvailable()` dulu |
 | Scope melebar ke iOS | waktu | rencana ini Android dulu; Capacitor membuat port iOS murah nanti, keputusan terpisah |
 
-## 9. Urutan kerja yang disarankan (bila pemilik bilang "mulai")
+## 9. Tahapan eksekusi lengkap (urut, siap dikerjakan)
 
-1. M0.1 keputusan paket+jalur → 2. M0 backend B1–B6 (3–5 hari, test penuh) → 3. M1 TWA rilis internal (1–2 hari) → 4. evaluasi internal 3–5 hari → 5. M2 Capacitor → 6. M3 urut nilai → 7. M4 rilis.
-   Klaim papan `docs/PEMBAGIAN-TUGAS.md` baris baru "F3-1/F3-2 Aplikasi ponsel (jalur M0–M4)" sebelum mulai; catatan sesi di `docs/sesi/<agen>.md`.
+Legenda: **[A]** dikerjakan agen (branch + PR + CI), **[P]** dikerjakan/diputuskan pemilik sendiri (akun, rahasia, keputusan). Setiap tahap punya syarat keluar; tahap berikutnya baru mulai bila syaratnya terpenuhi.
+
+### Tahap 0 — Keputusan & akun (0,5–1 hari kerja pemilik, paralel dengan Tahap 1)
+| # | Pengerja | Isi | Keluaran |
+|---|---|---|---|
+| 0.1 | **[P]** | Putuskan jalur §2 (rekomendasi TWA→Capacitor) + **nama paket final** `store.spkd.ruangkerja` (tidak bisa diubah) | keputusan tercatat di dokumen ini; PRD §28 disesuaikan |
+| 0.2 | **[P]** | Akun Google Play Console (US$25, verifikasi identitas 1–3 hari), proyek Firebase (FCM; Play Integrity menyusul), keystore upload (Play App Signing) | kredensial di password manager; `google-services.json` |
+| 0.3 | **[P]** | Kebijakan privasi publik di spkd.store/privasi (muat biometrik & lokasi) | halaman live |
+| 0.4 | [A] | Klaim papan `docs/PEMBAGIAN-TUGAS.md` baris Aplikasi ponsel; cabang `glm/ponsel-m0` | papan terklaim |
+
+### Tahap 1 — Fondasi web untuk TWA (2 hari agen)
+| # | Isi | Syarat keluar |
+|---|---|---|
+| 1.1 | Endpoint `GET /.well-known/assetlinks.json` (route + config `branding.android.package` + SHA-256 cert — SHA diisi [P] setelah keystore dibuat) | curl https://spkd.store/.well-known/assetlinks.json 200 + test Pest |
+| 1.2 | Audit manifest PWA (nama, ikon maskable 512, theme_color, `display: standalone`, `start_url`) + splash/belakang layar sesuai token Arus | Lighthouse PWA installable 100 |
+| 1.3 | Halaman `/pengaturan/perangkat` versi web minimal: daftar sesi aktif (fondasi Perangkat saya M3) | halaman + test |
+| 1.4 | Deploy ke spkd.store (branch → PR → CI → merge → deploy §5.1) | versi baru live |
+
+### Tahap 2 — TWA / APK internal (1–2 hari agen + review Play)
+| # | Isi | Syarat keluar |
+|---|---|---|
+| 2.1 | [A] Proyek Bubblewrap (`android/` atau repo terpisah), ikon & splash dari branding, `--manifest` spkd.store | `bubblewrap build` AAB sukses |
+| 2.2 | [P] Buat aplikasi di Play Console → **Internal testing** → unggah AAB, isi Data safety minimum, undang 5–20 penguat (karyawan) | track internal aktif |
+| 2.3 | [P+A] Uji lapangan: pasang dari Play, ikon layar utama, tanpa URL bar, absen penuh (GPS+selfie), push web | checklist lulus; catat temuan |
+
+### Tahap 3 — Capacitor shell (1,5–2 minggu agen)
+| # | Isi | Syarat keluar |
+|---|---|---|
+| 3.1 | Proyek `mobile/` (Capacitor 7, nama paket dari 0.1), bundle build web + `Server` konfigurasi; splash/status bar | APK debug terpasang |
+| 3.2 | Push FCM: `@capacitor/push-notifications` + kanal notifikasi `fcm` di Laravel (token per perangkat → tabel `devices` B1 dimajukan bila perlu); deep link ke rute | push diterima saat app dimatikan |
+| 3.3 | Biometrik masuk (plugin biometric + fallback Google) sesuai pratinjau F3-1; kunci setelah 3 gagal | alur pratinjau bekerja nyata |
+| 3.4 | Kamera & lokasi native; sertifikat signing di GitHub Actions secret; job CI `mobile` build AAB | AAB dari CI |
+| 3.5 | Ganti track internal ke build Capacitor; evaluasi 3–5 hari | lulus checklist 2.3 + push + biometrik |
+
+### Tahap 4 — Fitur asli per nilai (2–4 minggu agen, urut)
+| Urut | Fitur | Syarat keluar |
+|---|---|---|
+| 4.1 | **Perangkat saya**: daftar/cabut perangkat (backend B1–B3 dari §3) + sakelar biometrik | halaman + Policy + test |
+| 4.2 | **Integritas perangkat**: Play Integrity verifikasi server; penolakan ramah + "Ajukan koreksi" (KOR) | flags masuk attendance_logs; alur KOR jalan |
+| 4.3 | **Offline antrean**: SyncItem lokal (logic.ts dipakai ulang), kirim idempoten `client_id`, konflik 409 + alasan | pesan tersimpan saat offline lalu terkirim |
+| 4.4 | **Check-in wajah**: persetujuan berversi + liveness on-device + template terenkripsi (B2–B5); opt-in | check-in wajah jalan; HR tak pernah lihat template |
+| 4.5 | **Widget 4×2/2×2 + aksi cepat**: endpoint snapshot + WorkManager update | widget update otomatis |
+| 4.6 | **Layar kunci beraksi**: approve/snooze via kategori notifikasi | setujui cuti dari layar kunci |
+
+### Tahap 5 — Rilis produksi (2–3 hari, gabungan)
+1. [A] QA final: regresi penuh (Pest/Vitest/e2e), uji Android 10/13/15 nyata, baterai & kuota.
+2. [P] Data safety lengkap + screenshot + deskripsi listing → kirim review Google (1–7 hari).
+3. [P] Rilis terbuka (production track) bertahap 10% → 100%.
+4. [A] Post-rilis: monitoring galat (keputusan §10.5), kanal umpan balik, roadmap iterasi (iOS menyusul).
+
+### Aturan main antar tahap
+- Satu PR per butir [A]; CI hijau sebelum merge; deploy sesuai §5.1.
+- Semua env rahasia (keystore, FCM key, integrity) diisi [P] di server/GitHub secret — tidak pernah lewat chat.
+- Setiap fitur M3 tetap mematuhi AGENTS.md (Policy+test, migrasi rollbackable, token Arus, ponsel+desktop).
+- Bila review Google menolak (paling umum: Data safety biometrik), perbaiki form → kirim ulang; TWA (Tahap 2) tetap bisa dipakai karyawan selama menunggu.
 
 ## 10. Keputusan menunggu pemilik (ringkas)
 
