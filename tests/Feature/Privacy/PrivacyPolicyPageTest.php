@@ -7,28 +7,30 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 /*
  * Versioned privacy policy: config version + Markdown in resources/markdown.
+ * Guests get the standalone public Blade page (no account, no Inertia shell);
+ * signed-in employees get the in-app Inertia page.
  */
 
-it('is public and shows the configured version and the rendered Markdown', function () {
+it('is public without login and renders the standalone Blade page', function () {
     config(['privacy.policy.version' => '1.2', 'privacy.policy.effective_date' => '2026-11-01', 'attendance.selfie.retention_months' => 9]);
 
-    $this->get('/kebijakan-privasi')->assertOk()->assertInertia(fn (Assert $page) => $page
-        ->component('privacy/policy')
-        ->where('version', '1.2')
-        ->where('effective_date', '2026-11-01')
-        ->where('signedIn', false)
-        ->where('html', fn (string $html): bool => str_contains($html, '<h2>1. Ringkasan</h2>')
-            && str_contains($html, 'dihapus otomatis setelah 9 bulan')
-            && str_contains($html, 'UU PDP')
-            // Editor comments and unfilled placeholders never reach the page.
-            && ! str_contains($html, 'Placeholder yang tersedia')
-            && ! str_contains($html, '{{')));
+    $this->get('/kebijakan-privasi')
+        ->assertOk()
+        ->assertViewIs('privacy.public')
+        ->assertSee('Kebijakan Privasi')
+        ->assertSee('biometrik', false)
+        ->assertSee('Versi 1.2')
+        ->assertSee('dihapus otomatis setelah 9 bulan')
+        ->assertSee('UU PDP')
+        // The draft status stays out of the page (owner decision lives in comments only).
+        ->assertDontSee('menunggu persetujuan pemilik');
 });
 
-it('fills in the signed-in user\'s company and shows the app shell', function () {
+it('shows the in-app Inertia page with the company name when signed in', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)->get('/kebijakan-privasi')->assertInertia(fn (Assert $page) => $page
+        ->component('privacy/policy')
         ->where('signedIn', true)
         ->where('html', fn (string $html): bool => str_contains($html, e($user->company->name))));
 });
