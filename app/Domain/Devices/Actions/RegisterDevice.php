@@ -21,7 +21,7 @@ final class RegisterDevice
     public const int MAX_DEVICES_PER_USER = 5;
 
     /**
-     * @throws ValidationException when the user already registered the maximum number of devices
+     * @throws ValidationException when the hash is malformed or the user already registered the maximum number of devices
      */
     public function handle(
         User $user,
@@ -32,6 +32,16 @@ final class RegisterDevice
         ?string $appVersion = null,
         ?string $pushToken = null,
     ): Device {
+        $deviceIdHash = strtolower(trim($deviceIdHash));
+
+        if (preg_match('/^[0-9a-f]{64}$/', $deviceIdHash) !== 1) {
+            throw ValidationException::withMessages([
+                'device' => 'Identitas perangkat tidak valid.',
+            ]);
+        }
+
+        $pushToken = $pushToken === null ? null : trim($pushToken);
+
         return DB::transaction(function () use ($user, $platform, $deviceIdHash, $name, $osVersion, $appVersion, $pushToken): Device {
             // Serialize registrations of the same user (advisory lock releases with the transaction).
             DB::select('select pg_advisory_xact_lock(hashtextextended(?, 0))', ['devices.register:'.$user->id]);
@@ -54,6 +64,15 @@ final class RegisterDevice
                 $device->fill($attributes);
                 $device->last_seen_at = now();
                 $device->save();
+
+                if ($pushToken !== null) {
+                    // The FCM token identifies one installation: a reinstall can
+                    // rotate the device hash while keeping the token, so the row
+                    // still holding it must release it first (unique index).
+                    app(UpdateDevicePushToken::class)->handle($device->refresh(), $pushToken);
+
+                    return $device->refresh();
+                }
 
                 return $device;
             }

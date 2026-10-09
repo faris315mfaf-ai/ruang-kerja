@@ -28,12 +28,29 @@ it('returns an empty array while no certificate fingerprint is configured', func
         ->assertExactJson([]);
 });
 
-it('lists every comma-separated certificate fingerprint', function () {
-    config(['branding.android.cert_sha256' => ' AA:11 , BB:22 ,,']);
+it('lists every comma-separated certificate fingerprint, uppercased', function () {
+    $a = 'aa:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff';
+    $b = 'BB:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF';
+    config(['branding.android.cert_sha256' => " {$a} , {$b} ,,"]);
+
+    Log::spy();
 
     $this->getJson('/.well-known/assetlinks.json')
         ->assertOk()
-        ->assertJsonPath('0.target.sha256_cert_fingerprints', ['AA:11', 'BB:22']);
+        ->assertJsonPath('0.target.sha256_cert_fingerprints', [strtoupper($a), $b]);
+
+    Log::assertNotLogged('android.assetlinks invalid fingerprint');
+});
+
+it('drops malformed fingerprints and logs a warning instead of serving them', function () {
+    config(['branding.android.cert_sha256' => 'AA:11, BB:22']);
+    Log::spy();
+
+    $this->getJson('/.well-known/assetlinks.json')
+        ->assertOk()
+        ->assertExactJson([]);
+
+    Log::assertLogged('android.assetlinks invalid fingerprint');
 });
 
 it('stays reachable for guests without authentication', function () {

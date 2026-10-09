@@ -192,7 +192,7 @@
                 bukan penilaian kinerja). Gambar, suara, layar yang dibagikan, dan obrolan di dalam
                 rapat video <strong>tidak direkam</strong>. Bila penyelenggara rapat menyalakan
                 notulen otomatis, suara direkam sementara untuk dibuat transkrip lalu audionya
-                dihapus; transkrip dan draf ringkasan AI disimpan paling lama 90 hari dan hanya bisa
+                dihapus; transkrip dan draf ringkasan AI disimpan paling lama {{ $transcriptRetentionDays }} hari (dapat diatur administrator) dan hanya bisa
                 dibuka peserta rapat. Anda dapat menolak transkripsi suara Anda sebelum, selama, atau
                 sesudah rapat sebagaimana dijelaskan pada persetujuan di dalam aplikasi.
             </li>
@@ -277,7 +277,7 @@
             <li><strong>Selfie absensi</strong> dihapus otomatis setelah {{ $selfieRetentionMonths }} bulan.</li>
             <li>
                 <strong>Audio rapat untuk transkrip</strong> dihapus segera setelah transkripsi;
-                <strong>transkrip dan draf ringkasan AI</strong> dihapus otomatis setelah 90 hari
+                <strong>transkrip dan draf ringkasan AI</strong> dihapus otomatis setelah {{ $transcriptRetentionDays }} hari (dapat diatur administrator)
                 (teks yang sudah dimasukkan ke notulen tetap menjadi bagian notulen).
             </li>
             <li>

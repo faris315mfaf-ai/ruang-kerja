@@ -15,6 +15,8 @@ final class UpdateDevicePushToken
 {
     public function handle(Device $device, ?string $pushToken): Device
     {
+        $pushToken = $pushToken === null || trim($pushToken) === '' ? null : trim($pushToken);
+
         return DB::transaction(function () use ($device, $pushToken): Device {
             if ($pushToken !== null) {
                 Device::query()
