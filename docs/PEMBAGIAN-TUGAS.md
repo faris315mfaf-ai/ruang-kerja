@@ -35,8 +35,9 @@ Prioritas dari atas. "Folder milik" = satu-satunya tempat agen itu menulis (sela
 | 15 | Notulen otomatis tahap 1 (worker transkripsi + ringkasan LLM) | `transcriber/`, `app/Domain/Meetings/Transcripts` | Claude Code | `claude/notulen-otomatis` → `claude/integrasi-rapat` | review (belum di-PR); worker belum dipasang |
 | 16 | Audit keamanan rapat (4 putaran) | `docs/security/AUDIT-RAPAT-2026-10.md` | Claude Code | `claude/audit-*` → `claude/integrasi-rapat` | review (belum di-PR) |
 | 17 | Lanjutan setelah serah terima: merge, deploy, worker notulen, reset sandi | lihat `docs/SERAH-TERIMA-GLM.md` §6 | ZCode (GLM) | — | bebas |
+| 18 | Aplikasi ponsel Android (Expo) — fondasi identitas & API (keputusan pemilik 9 Okt) | `apps/mobile` (nanti), `app/Http/Controllers/Android`, `routes/android.php` dsb | GLM | `glm/ponsel-api` | dikerjakan |
 | 7 | Tinjau PR agen lain (`$tinjau` / `/tinjau`) | — (hanya laporan) | agen yang menganggur | — | berulang |
 
-**Ditahan oleh pemilik (6 Okt 2026), jangan dikerjakan:** login Google, Google Drive & Docs, notifikasi WhatsApp + provider, aplikasi ponsel (biometrik, integritas, offline, widget, check-in wajah, perangkat), mesin fingerprint, dan fitur yang belum ada sama sekali (lihat `docs/fitur/PANDUAN-PRATINJAU.md`).
+**Ditahan oleh pemilik (6 Okt 2026), jangan dikerjakan:** login Google, Google Drive & Docs, notifikasi WhatsApp + provider, aplikasi ponsel (biometrik, integritas, offline, widget, check-in wajah, perangkat — fondasi identitas & API dibuka 9 Okt, lihat baris 18), mesin fingerprint, dan fitur yang belum ada sama sekali (lihat `docs/fitur/PANDUAN-PRATINJAU.md`).
 
 Tugas Fase 2/3 backend wajib mengikuti `docs/PRD.md` §6–7 dan `docs/DATABASE.md` §7–8; bila sebuah keputusan produk belum ada (mis. provider WhatsApp, Hocuspocus), tulis pertanyaannya di catatan sesi dan tanyakan pengguna.
