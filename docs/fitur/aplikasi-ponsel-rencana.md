@@ -47,7 +47,7 @@ PRD §28 menulis "Mobile React Native di Fase 3". Rekomendasi terbaru (serah ter
 | Risiko | Peramban custom-tab; "dihapus Chrome" di beberapa perangkat | WebView versi mengikuti System WebView | Dua basis kode selamanya; tim kecil |
 | Kecocokan dengan pratinjau F3 | — | Desain & komponen React yang sama persis | Pratinjau = spesifikasi desain (tetap berguna) |
 
-**Keputusan yang perlu dicatat pemilik:** (a) jalur bertahap M1→M3 dijalankan (TWA sebagai jembatan rilis cepat, Capacitor sebagai tujuan), atau (b) tetap Expo sesuai PRD. Bila (a): perbarui satu baris `docs/PRD.md` §28 di commit pertama M0. Dokumen ini disusun untuk jalur (a).
+**Keputusan pemilik 9 Okt 2026:** **jalur (b) — Expo/React Native, UI native penuh** sesuai PRD §28. TWA dan Capacitor digugurkan (UI tidak boleh WebView). Konsekuensi yang disetujui: seluruh layar mobile-first (43) ditulis ulang di React Native; web (spkd.store) tetap jalan dan tetap dirawat; backend/API menjadi satu sumber yang dipakai keduanya. Estimasi total 8–12 minggu.
 
 ## 3. Peta fase terperinci
 
@@ -156,67 +156,73 @@ PRD §28 menulis "Mobile React Native di Fase 3". Rekomendasi terbaru (serah ter
 | Dua jalur (web + APK) terpisah perilakunya | bug ganda | satu fasad `native.ts`; fitur asli selalu `native.isAvailable()` dulu |
 | Scope melebar ke iOS | waktu | rencana ini Android dulu; Capacitor membuat port iOS murah nanti, keputusan terpisah |
 
-## 9. Tahapan eksekusi lengkap (urut, siap dikerjakan)
+## 9. Tahapan eksekusi lengkap — jalur Expo (urut, siap dikerjakan)
 
-Legenda: **[A]** dikerjakan agen (branch + PR + CI), **[P]** dikerjakan/diputuskan pemilik sendiri (akun, rahasia, keputusan). Setiap tahap punya syarat keluar; tahap berikutnya baru mulai bila syaratnya terpenuhi.
+Legenda: **[A]** dikerjakan agen (branch + PR + CI), **[P]** pemilik (akun, rahasia, keputusan). Stack: **Expo SDK (managed) + expo-router + TypeScript**, API Laravel (Sanctum, prefix `/api/v1`), tema diturunkan dari token Arus, semua teks Indonesia. Aplikasi di folder `apps/mobile` repo yang sama. Estimasi total **8–12 minggu**; APK uji internal hadir mulai minggu ke-2.
 
-### Tahap 0 — Keputusan & akun (0,5–1 hari kerja pemilik, paralel dengan Tahap 1)
-| # | Pengerja | Isi | Keluaran |
-|---|---|---|---|
-| 0.1 | **[P]** | Putuskan jalur §2 (rekomendasi TWA→Capacitor) + **nama paket final** `store.spkd.ruangkerja` (tidak bisa diubah) | keputusan tercatat di dokumen ini; PRD §28 disesuaikan |
-| 0.2 | **[P]** | Akun Google Play Console (US$25, verifikasi identitas 1–3 hari), proyek Firebase (FCM; Play Integrity menyusul), keystore upload (Play App Signing) | kredensial di password manager; `google-services.json` |
-| 0.3 | **[P]** | Kebijakan privasi publik di spkd.store/privasi (muat biometrik & lokasi) | halaman live |
-| 0.4 | [A] | Klaim papan `docs/PEMBAGIAN-TUGAS.md` baris Aplikasi ponsel; cabang `glm/ponsel-m0` | papan terklaim |
+### Tahap 0 — Keputusan & akun (0,5–1 hari pemilik, paralel dengan Tahap 1)
+| # | Pengerja | Isi |
+|---|---|---|
+| 0.1 | **[P]** | Nama paket final `store.spkd.ruangkerja` (tidak bisa diubah) · nama tampilan "RuangKerja" · branding resmi (--brand-* bila sudah) |
+| 0.2 | **[P]** | Akun Expo (EAS Build free tier) · Play Console (US$25) · Firebase proyek + FCM · keystore dikelola EAS |
+| 0.3 | **[P]** | Kebijakan privasi publik spkd.store/privasi (biometrik, lokasi, kamera) |
+| 0.4 | [A] | Klaim papan `docs/PEMBAGIAN-TUGAS.md` "F3 aplikasi ponsel (Expo)"; cabang `glm/ponsel-api` |
 
-### Tahap 1 — Fondasi web untuk TWA (2 hari agen)
+### Tahap 1 — Fondasi backend API v1 (3–5 hari agen) — tanpa ini aplikasi native tidak punya sumber data
 | # | Isi | Syarat keluar |
 |---|---|---|
-| 1.1 | Endpoint `GET /.well-known/assetlinks.json` (route + config `branding.android.package` + SHA-256 cert — SHA diisi [P] setelah keystore dibuat) | curl https://spkd.store/.well-known/assetlinks.json 200 + test Pest |
-| 1.2 | Audit manifest PWA (nama, ikon maskable 512, theme_color, `display: standalone`, `start_url`) + splash/belakang layar sesuai token Arus | Lighthouse PWA installable 100 |
-| 1.3 | Halaman `/pengaturan/perangkat` versi web minimal: daftar sesi aktif (fondasi Perangkat saya M3) | halaman + test |
-| 1.4 | Deploy ke spkd.store (branch → PR → CI → merge → deploy §5.1) | versi baru live |
+| 1.1 | Pasang **Sanctum** (token per perangkat) + `routes/api.php` prefix `v1` (rate limit khusus) | login token + revoke teruji |
+| 1.2 | Endpoint auth: login email+sandi (Fortify guard token), profil saya, ganti sandi | test matriks + 2FA SA tetap web-only sementara |
+| 1.3 | Endpoint absensi: status hari ini, check-in/check-out (multipart selfie+GPS+`work_plan[]`, client_id idempoten), riwayat | test alur + flags |
+| 1.4 | Endpoint tugas: TugasHariIni (segmen), tugas saya (list+detail+ubah status), penugasan atasan→pribadi | test + Policy sama dengan web |
+| 1.5 | Endpoint pendukung: inbox feed, daftar workspace (Pribadi/Tim/Proyek), pengajuan (list+buat), perangkat (daftar/cabut/push-token) | test |
+| 1.6 | `docs/DATABASE.md` + `docs/ARCHITECTURE.md` diperbarui; kalibrasi PageQueryCountTest endpoint baru | lint+pest hijau |
 
-### Tahap 2 — TWA / APK internal (1–2 hari agen + review Play)
+### Tahap 2 — Fondasi aplikasi Expo (1 minggu agen)
 | # | Isi | Syarat keluar |
 |---|---|---|
-| 2.1 | [A] Proyek Bubblewrap (`android/` atau repo terpisah), ikon & splash dari branding, `--manifest` spkd.store | `bubblewrap build` AAB sukses |
-| 2.2 | [P] Buat aplikasi di Play Console → **Internal testing** → unggah AAB, isi Data safety minimum, undang 5–20 penguat (karyawan) | track internal aktif |
-| 2.3 | [P+A] Uji lapangan: pasang dari Play, ikon layar utama, tanpa URL bar, absen penuh (GPS+selfie), push web | checklist lulus; catat temuan |
+| 2.1 | Scaffold `apps/mobile` (Expo SDK terbaru, expo-router, TypeScript strict), tema Arus (warna token → TS, terang/malam, font system), lingua id | app berjalan di Expo Go |
+| 2.2 | Kerangka: API client (token SecureStore, refresh/revoke), pola layar (loading skeleton/kosong/galat), komponen dasar (Button, Card, Input, Chip, BottomSheet) setara Arus | styleguide internal layar |
+| 2.3 | EAS Build (profile development + preview APK) + distribusi internal (link install / Play internal) | APK uji terpasang |
+| 2.4 | CI: lint/tsc/test aplikasi + EAS build di GitHub Actions | build hijau dari CI |
 
-### Tahap 3 — Capacitor shell (1,5–2 minggu agen)
-| # | Isi | Syarat keluar |
+### Tahap 3 — Alur inti karyawan (2–3 minggu agen) — nilai pertama yang dipakai harian
+| # | Layar/alur | Syarat keluar |
 |---|---|---|
-| 3.1 | Proyek `mobile/` (Capacitor 7, nama paket dari 0.1), bundle build web + `Server` konfigurasi; splash/status bar | APK debug terpasang |
-| 3.2 | Push FCM: `@capacitor/push-notifications` + kanal notifikasi `fcm` di Laravel (token per perangkat → tabel `devices` B1 dimajukan bila perlu); deep link ke rute | push diterima saat app dimatikan |
-| 3.3 | Biometrik masuk (plugin biometric + fallback Google) sesuai pratinjau F3-1; kunci setelah 3 gagal | alur pratinjau bekerja nyata |
-| 3.4 | Kamera & lokasi native; sertifikat signing di GitHub Actions secret; job CI `mobile` build AAB | AAB dari CI |
-| 3.5 | Ganti track internal ke build Capacitor; evaluasi 3–5 hari | lulus checklist 2.3 + push + biometrik |
+| 3.1 | Login (email+sandi; galat Indonesia; sesi aman) + splash | login→beranda |
+| 3.2 | **Beranda**: sapaan+tanggal, kartu status absensi, **Tugas hari ini (Pribadi·Tim·Semua)**, briefing terakhir, navigasi tab (Beranda·Tugas·**Absen**·Obrolan·Lainnya — tombol tengah kontekstual seperti web) | layar utama lengkap |
+| 3.3 | **Absensi penuh**: cek lokasi GPS+geofence, kamera selfie, form rencana kerja poin (+/hapus), check-in/out, riwayat | check-in nyata sukses |
+| 3.4 | **Tugas**: daftar saya+detail+ubah status; tugas hasil absen tampil; penugasan atasan (buat ke bawahan) | aturan sunting ditegakkan |
+| 3.5 | **Pengajuan** (list+buat cuti/izin/lembur) + **Inbox** (feed) | alur pengajuan jalan |
+| 3.6 | **Push FCM** (expo-notifications): absensi diterima/tugas ditugaskan/briefing; deep link ke layar | push saat app dimatikan |
+| 3.7 | Uji internal gelombang 1: 5–10 karyawan pakai harian; kumpulkan temuan | checklist lulus |
 
-### Tahap 4 — Fitur asli per nilai (2–4 minggu agen, urut)
+### Tahap 4 — Fitur asli & lanjutan (2–3 minggu agen, urut nilai)
 | Urut | Fitur | Syarat keluar |
 |---|---|---|
-| 4.1 | **Perangkat saya**: daftar/cabut perangkat (backend B1–B3 dari §3) + sakelar biometrik | halaman + Policy + test |
-| 4.2 | **Integritas perangkat**: Play Integrity verifikasi server; penolakan ramah + "Ajukan koreksi" (KOR) | flags masuk attendance_logs; alur KOR jalan |
-| 4.3 | **Offline antrean**: SyncItem lokal (logic.ts dipakai ulang), kirim idempoten `client_id`, konflik 409 + alasan | pesan tersimpan saat offline lalu terkirim |
-| 4.4 | **Check-in wajah**: persetujuan berversi + liveness on-device + template terenkripsi (B2–B5); opt-in | check-in wajah jalan; HR tak pernah lihat template |
-| 4.5 | **Widget 4×2/2×2 + aksi cepat**: endpoint snapshot + WorkManager update | widget update otomatis |
-| 4.6 | **Layar kunci beraksi**: approve/snooze via kategori notifikasi | setujui cuti dari layar kunci |
+| 4.1 | **Masuk biometrik** (expo-local-authentication; 3 gagal=kunci, fallback Google) | alur F3-1 nyata |
+| 4.2 | **Perangkat saya**: daftar/cabut perangkat+push token (backend `devices`) | kelola perangkat jalan |
+| 4.3 | **Integritas perangkat**: Play Integrity verifikasi server; penolakan ramah + Ajukan koreksi (KOR); flags | mock GPS tertandai |
+| 4.4 | **Offline antrean**: MMKV/SQLite queue, kirim idempoten `client_id`, konflik 409 + alasan | absen offline tersinkron |
+| 4.5 | **Check-in wajah**: persetujuan berversi (UU PDP), liveness on-device, template terenkripsi server, **opt-in** | check-in wajah jalan |
+| 4.6 | **Widget absensi/tugas** (expo-widget/nilai asli) + aksi cepat FAB | widget update otomatis |
+| 4.7 | Realtime (opsional): obrolan & presence via Reverb (pusher-react-native) atau tunda ke fase berikut | — |
 
-### Tahap 5 — Rilis produksi (2–3 hari, gabungan)
-1. [A] QA final: regresi penuh (Pest/Vitest/e2e), uji Android 10/13/15 nyata, baterai & kuota.
-2. [P] Data safety lengkap + screenshot + deskripsi listing → kirim review Google (1–7 hari).
-3. [P] Rilis terbuka (production track) bertahap 10% → 100%.
-4. [A] Post-rilis: monitoring galat (keputusan §10.5), kanal umpan balik, roadmap iterasi (iOS menyusul).
+### Tahap 5 — QA & rilis produksi (1 minggu + review Google 1–7 hari)
+1. [A] Regresi penuh (unit + e2e Maestro/Detox minimal alur inti), uji perangkat nyata Android 10/13/15, kuota & baterai.
+2. [P] Listing Play (screenshot, deskripsi, Data safety biometrik/lokasi) → kirim review.
+3. [P] Production track bertahap 10% → 50% → 100%.
+4. [A] Monitoring galat (Sentry bila disetujui §10.5), kanal umpan balik, backlog iterasi.
 
 ### Aturan main antar tahap
-- Satu PR per butir [A]; CI hijau sebelum merge; deploy sesuai §5.1.
-- Semua env rahasia (keystore, FCM key, integrity) diisi [P] di server/GitHub secret — tidak pernah lewat chat.
-- Setiap fitur M3 tetap mematuhi AGENTS.md (Policy+test, migrasi rollbackable, token Arus, ponsel+desktop).
-- Bila review Google menolak (paling umum: Data safety biometrik), perbaiki form → kirim ulang; TWA (Tahap 2) tetap bisa dipakai karyawan selama menunggu.
+- Satu PR per butir [A]; CI hijau; tidak ada rahasia di repo/chat (EAS secrets/server env diisi [P]).
+- API v1 adalah kontrak: versi diubah hanya dengan rencana kompatibilitas (web & app memakai sama).
+- Setiap endpoint baru: Policy + test (AGENTS.md); layar aplikasi wajib keadaan loading/kosong/galat + Bahasa Indonesia.
+- Web spkd.store tidak berhenti dikembangkan; layar yang sudah ada di web TIDAK dihapus, aplikasi mengejar paritas bertahap (43 layar mockup = peta).
 
 ## 10. Keputusan menunggu pemilik (ringkas)
 
-1. Jalur §2 (rekomendasi: TWA→Capacitor; ubah PRD §28 bila disetujui).
+1. ~~Jalur~~ **Diputuskan 9 Okt 2026: Expo/React Native UI native penuh** (PRD §28 tetap).
 2. Nama paket final (`store.spkd.ruangkerja`?).
 3. Biometrik wajah **opt-in** (rekomendasi) vs opt-out.
 4. Retensi template wajah (usulan: aktif + 30 hari).
