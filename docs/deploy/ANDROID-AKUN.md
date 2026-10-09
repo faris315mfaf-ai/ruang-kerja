@@ -86,7 +86,7 @@ keytool -list -v -keystore ruangkerja-upload.keystore -alias upload
 # kunci signing produksi Play App Signing: Play Console → Setup → App signing (salin SHA-256 dari sana)
 ```
 
-Salin baris `SHA-256: XX:YY:…` untuk diisi di config `assetlinks` (endpoint dibuat di M0; nilainya dimasukkan lewat config/env oleh developer, bukan di-commit).
+Salin baris `SHA-256: XX:YY:…` untuk diisi di config `assetlinks` (endpoint dibuat di M0; nilainya dimasukkan lewat config/env oleh developer, bukan di-commit). Cara mengisi di server sudah disiapkan developer di [`docs/deploy/ANDROID-IDENTITAS.md`](ANDROID-IDENTITAS.md) (endpoint `/.well-known/assetlinks.json`, env `ANDROID_PACKAGE`/`ANDROID_CERT_SHA256`).
 
 ## 5. Checklist kesiapan Tahap 0
 
