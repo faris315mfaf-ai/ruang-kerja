@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Attendance\CheckOutController;
 use App\Http\Controllers\Api\Attendance\MyAttendanceController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Briefings\LatestBriefingController;
+use App\Http\Controllers\Api\Chat\ChannelController as ChatChannelController;
+use App\Http\Controllers\Api\Chat\MessageController as ChatMessageController;
 use App\Http\Controllers\Api\Devices\DeviceController;
 use App\Http\Controllers\Api\Inbox\InboxController;
 use App\Http\Controllers\Api\Notes\NoteController;
@@ -91,6 +93,19 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::post('workspace/{workspace}/catatan', [WorkspaceNotesController::class, 'store'])->name('workspaces.notes.store');
             Route::get('catatan/{note}', [NoteController::class, 'show'])->whereUlid('note')->name('notes.show');
             Route::patch('catatan/{note}', [NoteController::class, 'update'])->whereUlid('note')->name('notes.update');
+        });
+
+        // obrolan — di balik flag `chat` seperti web (404 saat mati). Kanal
+        // ChatInbox web (jumlah belum dibaca, pratinjau terakhir), timeline
+        // 30 pesan dengan ?sebelum= untuk scroll balik, dan kirim teks polos
+        // lewat PostMessage web (broadcast Reverb untuk pengguna web tetap
+        // jalan; aplikasi v1 memakai polling).
+        Route::middleware(EnsureFeatureEnabled::class.':chat')->group(function (): void {
+            Route::get('obrolan/kanal', ChatChannelController::class)->name('chat.channels.index');
+            Route::get('obrolan/kanal/{channel}/pesan', [ChatMessageController::class, 'index'])
+                ->whereUlid('channel')->name('chat.messages.index');
+            Route::post('obrolan/kanal/{channel}/pesan', [ChatMessageController::class, 'store'])
+                ->whereUlid('channel')->middleware('throttle:messages')->name('chat.messages.store');
         });
 
         // inbox — feed notifikasi aktif pemilik token (presenter web

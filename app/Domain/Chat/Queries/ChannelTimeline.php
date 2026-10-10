@@ -22,20 +22,23 @@ final class ChannelTimeline
     public function __construct(private readonly MentionParser $parser) {}
 
     /**
+     * @param  int  $limit  page size (web board 50; the mobile API asks 30)
      * @return array{messages: list<array<string, mixed>>, tasks: list<array<string, mixed>>, has_more: bool}
      */
-    public function page(Channel $channel, User $viewer, ?string $before = null): array
+    public function page(Channel $channel, User $viewer, ?string $before = null, int $limit = self::PAGE): array
     {
+        $limit = max(1, $limit);
+
         $roots = Message::withTrashed()
             ->where('channel_id', $channel->id)
             ->whereNull('parent_id')
             ->when($before !== null, fn ($query) => $query->where('id', '<', $before))
             ->orderByDesc('id')
-            ->limit(self::PAGE + 1)
+            ->limit($limit + 1)
             ->get();
 
-        $hasMore = $roots->count() > self::PAGE;
-        $roots = $roots->take(self::PAGE);
+        $hasMore = $roots->count() > $limit;
+        $roots = $roots->take($limit);
 
         $replies = $roots->isEmpty() ? new Collection : Message::withTrashed()
             ->whereIn('parent_id', $roots->pluck('id'))
