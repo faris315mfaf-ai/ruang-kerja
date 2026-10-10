@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Attendance\CheckOutController;
 use App\Http\Controllers\Api\Attendance\MyAttendanceController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Devices\DeviceController;
+use App\Http\Controllers\Api\Task\TaskController;
+use App\Http\Controllers\Api\Task\TaskStatusController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -48,6 +50,13 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             ->middleware('throttle:check-in')->name('attendance.check-in');
         Route::post('absensi/check-out', CheckOutController::class)
             ->middleware('throttle:check-in')->name('attendance.check-out');
+
+        // tugas — baca + pindah status saja (Tahap 1): membuat, menyunting
+        // dan menghapus tugas tetap lewat web (penugasan atasan = alur web).
+        Route::get('tugas/hari-ini', [TaskController::class, 'today'])->name('tasks.today');
+        Route::get('tugas', [TaskController::class, 'index'])->name('tasks.index');
+        Route::get('tugas/{task}', [TaskController::class, 'show'])->whereUlid('task')->name('tasks.show');
+        Route::patch('tugas/{task}/status', TaskStatusController::class)->whereUlid('task')->name('tasks.status');
 
         // inbox, workspace, pengajuan, briefing
     });
