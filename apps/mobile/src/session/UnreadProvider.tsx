@@ -8,6 +8,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { AppState } from 'react-native';
 
 import { inbox } from '@/api/endpoints';
+import { useSession } from '@/session/SessionProvider';
 
 interface UnreadValue {
   jumlah: number;
@@ -20,6 +21,7 @@ const UnreadContext = createContext<UnreadValue | null>(null);
 export function UnreadProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [jumlah, setJumlah] = useState(0);
   const hidup = useRef(true);
+  const { status } = useSession();
 
   const muatUlang = useCallback(async (): Promise<void> => {
     try {
@@ -34,7 +36,14 @@ export function UnreadProvider({ children }: { children: React.ReactNode }): Rea
 
   useEffect(() => {
     hidup.current = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- pemuatan data saat mount
+  }, []);
+
+  // Hanya memuat jumlah saat benar-benar ada sesi (provider kini selalu
+  // terpasang, termasuk sebelum login).
+  useEffect(() => {
+    if (status !== 'masuk') {
+      return;
+    }
     void muatUlang();
 
     const langganan = AppState.addEventListener('change', (state) => {

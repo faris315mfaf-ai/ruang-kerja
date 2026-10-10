@@ -69,9 +69,11 @@ function RootNavigator(): React.JSX.Element {
     </>
   );
 
-  // UnreadProvider hanya hidup saat sesi masuk: layar Inbox (stack) dan
-  // lencana tab Lainnya berbagi jumlah yang sama.
-  return status === 'masuk' ? <UnreadProvider>{isi}</UnreadProvider> : isi;
+  // UnreadProvider SELALU membungkus navigator: rute (tabs) sempat dirender
+  // saat status masih memuat/keluar (sebelum Redirect ke /masuk), dan
+  // TabBarKita memanggil useUnread() — di luar provider itu fatal di rilis
+  // (force close saat dibuka). Provider sendiri diam saat belum ada sesi.
+  return <UnreadProvider>{isi}</UnreadProvider>;
 }
 
 export default function RootLayout(): React.JSX.Element {
