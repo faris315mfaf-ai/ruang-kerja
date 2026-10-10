@@ -31,6 +31,7 @@ class PrivacyPolicyController extends Controller
                 'companyName' => config()->string('branding.company_name', '[Nama Perusahaan]'),
                 'contact' => config()->string('privacy.policy.contact'),
                 'selfieRetentionMonths' => config()->integer('attendance.selfie.retention_months'),
+                'transcriptRetentionDays' => config()->integer('notulen.retention_days', 90),
             ]);
         }
 
