@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "RuangKerja",
+    "slug": "ruangkerja",
+    "version": "1.0.0",
+    "scheme": "ruangkerja",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": ["android"],
+    "icon": "./assets/icon.png",
+    "backgroundColor": "#F3F6FA",
+    "android": {
+      "package": "store.spkd.ruangkerja",
+      "edgeToEdgeEnabled": true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0B7F86"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "RuangKerja memakai kamera untuk mengambil selfie saat absen masuk dan pulang."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "RuangKerja memakai lokasi Anda untuk memastikan absen dilakukan dari lokasi kerja yang diizinkan.",
+          "locationWhenInUsePermission": "RuangKerja memakai lokasi Anda untuk memastikan absen dilakukan dari lokasi kerja yang diizinkan."
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "tsconfigPaths": true
+    }
+  }
+}
