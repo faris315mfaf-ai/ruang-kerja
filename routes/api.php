@@ -9,8 +9,10 @@ use App\Http\Controllers\Api\Briefings\LatestBriefingController;
 use App\Http\Controllers\Api\Devices\DeviceController;
 use App\Http\Controllers\Api\Inbox\InboxController;
 use App\Http\Controllers\Api\Requests\RequestController;
+use App\Http\Controllers\Api\Task\TaskCommentController;
 use App\Http\Controllers\Api\Task\TaskController;
 use App\Http\Controllers\Api\Task\TaskStatusController;
+use App\Http\Controllers\Api\Workspaces\WorkspaceBoardController;
 use App\Http\Controllers\Api\Workspaces\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
@@ -55,12 +57,26 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('absensi/check-out', CheckOutController::class)
             ->middleware('throttle:check-in')->name('attendance.check-out');
 
-        // tugas — baca + pindah status saja (Tahap 1): membuat, menyunting
-        // dan menghapus tugas tetap lewat web (penugasan atasan = alur web).
+        // tugas — Action, presenter dan Policy web dipakai ulang. Tulis
+        // (Tahap 2 paritas fitur): buat = editTasks workspace target (404
+        // bila tak terlihat, 403 bila hanya bisa melihat), sunting/hapus =
+        // aturan 9 Okt (tugas titipan orang lain hanya pembuat/atasan);
+        // komentar teks polos menjadi dokumen Tiptap yang sama dengan web,
+        // jadi notifikasi mention/pengikut tetap jalan.
         Route::get('tugas/hari-ini', [TaskController::class, 'today'])->name('tasks.today');
         Route::get('tugas', [TaskController::class, 'index'])->name('tasks.index');
+        Route::post('tugas', [TaskController::class, 'store'])->name('tasks.store');
         Route::get('tugas/{task}', [TaskController::class, 'show'])->whereUlid('task')->name('tasks.show');
+        Route::patch('tugas/{task}', [TaskController::class, 'update'])->whereUlid('task')->name('tasks.update');
+        Route::delete('tugas/{task}', [TaskController::class, 'destroy'])->whereUlid('task')->name('tasks.destroy');
         Route::patch('tugas/{task}/status', TaskStatusController::class)->whereUlid('task')->name('tasks.status');
+        Route::get('tugas/{task}/komentar', [TaskCommentController::class, 'index'])->whereUlid('task')->name('tasks.comments.index');
+        Route::post('tugas/{task}/komentar', [TaskCommentController::class, 'store'])->whereUlid('task')->name('tasks.comments.store');
+
+        // papan workspace — kolom (statuses) + kartu query BoardTasks web
+        // (tugas terbuka + yang ditutup ≤30 hari, tanpa N+1); "{workspace}"
+        // binding web (key/ULID, 404 bila tak terlihat) dipakai ulang.
+        Route::get('workspace/{workspace}/papan', WorkspaceBoardController::class)->name('workspaces.board');
 
         // inbox — feed notifikasi aktif pemilik token (presenter web
         // InboxNotificationResource; ?belum-dibaca=1 menyaring) dan tandai

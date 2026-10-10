@@ -2,7 +2,6 @@
 
 use App\Domain\Tasks\Actions\CreateTask;
 use App\Domain\Workspaces\Actions\EnsurePersonalWorkspace;
-use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
@@ -14,8 +13,8 @@ require_once __DIR__.'/../../Support/workspace-helpers.php';
 | API v1 — read-only task list/detail plus the single write of Tahap 1:
 | PATCH status (web MoveTask Action behind TaskPolicy::move, so an assignee
 | may complete their task). Lists run through Task::visibleTo; invisible
-| tasks answer 404. No create/edit/delete route exists on purpose —
-| assignment by superiors stays a web flow for now.
+| tasks answer 404. Writes (create/edit/delete/comment) moved to
+| TaskWriteApiTest (Tahap 2, paritas fitur ponsel).
 */
 
 if (! defined('HASH_PONSEL')) {
@@ -219,18 +218,6 @@ test('moving needs the workspace edit rights and invisibility stays a 404', func
 
     expect($this->internalTask->fresh()->status_category->value)->toBe('todo')
         ->and($this->invisibleTask->fresh()->status_category->value)->toBe('todo');
-});
-
-test('no edit, delete or create route exists for tasks on the API', function () {
-    $token = masukTugas('viewer@kantor.test');
-    $id = $this->teamTask->id;
-
-    $this->withToken($token)->patchJson("/api/v1/tugas/{$id}", ['title' => 'Ubah'])->assertMethodNotAllowed();
-    $this->withToken($token)->deleteJson("/api/v1/tugas/{$id}")->assertMethodNotAllowed();
-    $this->withToken($token)->postJson('/api/v1/tugas', ['title' => 'Baru'])->assertMethodNotAllowed();
-
-    expect($this->teamTask->fresh()->title)->toBe('Deploy rilis')
-        ->and(Task::query()->count())->toBe(5);
 });
 
 test('task endpoints reject requests without a token', function () {
