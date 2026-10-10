@@ -12,7 +12,6 @@
     "backgroundColor": "#F3F6FA",
     "android": {
       "package": "store.spkd.ruangkerja",
-      "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B7F86"
@@ -20,6 +19,12 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-system-ui",
+        {
+          "userInterfaceStyle": "automatic"
+        }
+      ],
       [
         "expo-camera",
         {

@@ -1,9 +1,26 @@
 # Sesi ponsel
 
-**Terakhir diperbarui:** 10 Okt 2026 (Tahap 1 — seluruh fondasi API selesai) · ZCode (GLM)
+**Terakhir diperbarui:** 10 Okt 2026 (Tahap 1 lanjutan — aplikasi Expo v1 jadi) · ZCode (GLM)
 
 ## Tugas berjalan
-**Tahap 1 — API v1 aplikasi Android (Expo)** — **fondasi API lengkap (auth, perangkat, absensi, tugas, inbox, workspace, pengajuan, briefing), belum push** (menunggu perintah pemilik). Tugas #18 di `docs/PEMBAGIAN-TUGAS.md`; rencana induk `docs/fitur/aplikasi-ponsel-rencana.md`. Slot penanda di `routes/api.php` sudah terisi semua — agen backend berikutnya tinggal menambah modul baru bila Tahap 2 meminta.
+**Tahap 1 — API v1 + aplikasi Android (Expo)** — **fondasi API lengkap DAN aplikasi Expo v1 fungsional selesai, belum push** (menunggu perintah pemilik). Tugas #18 di `docs/PEMBAGIAN-TUGAS.md`; rencana induk `docs/fitur/aplikasi-ponsel-rencana.md`.
+
+## Aplikasi Expo v1 (`apps/mobile/`, 10 Okt)
+Repo monorepo sederhana — folder sendiri, `package.json` + `node_modules` sendiri, TANPA workspace manager (root `pnpm-workspace.yaml` hanya paket `.` sehingga tidak tersentuh). **Expo SDK 57** (RN 0.86, React 19.2) + expo-router + TypeScript strict (`noUncheckedIndexedAccess`). Package `store.spkd.ruangkerja`, scheme `ruangkerja`, nama "RuangKerja", mode gelap otomatis (expo-system-ui). Ikon dibuat `scripts/ikon.py` (tanda Arus: rute titik teal → biru; regenerasi: `python3 scripts/ikon.py`).
+
+Struktur: `src/api/` (client fetch Bearer + multipart + 401→sesi bersih; endpoints satu fungsi per rute; types kontrak dari presenter), `src/lib/` (tema Arus light/dark dari `resources/css/tokens.css`, format id-ID Asia/Jakarta, identitas perangkat sha256, lokasi GPS), `src/session/` (SecureStore token+profil, validasi `/auth/saya` saat dibuka, unread inbox global), `src/components/` (ui dasar, kamera selfie terkompresi ≤200KB, baris tugas), `app/` (expo-router: `masuk`, `(tabs)` Beranda/Tugas/Absen-tengah-menonjol/Inbox/Lainnya, `tugas/[id]`, `pengajuan/baru`).
+
+Cara jalankan dev: `cd apps/mobile && EXPO_PUBLIC_API_URL=https://ruangkerja-ponsel.test/api/v1 npx expo start` (Expo Go di Android; default produksi `https://spkd.store/api/v1`). Build APK: `npx expo prebuild -p android` lalu gradle (`cd android && ./gradlew assembleRelease`) — prebuild sudah teruji jalan, folder `android/` tidak di-commit. Verifikasi: `npx tsc --noEmit` bersih, `npx eslint .` bersih, `npx expo export -p android` sukses (Hermes 3.2 MB).
+
+Keputusan aplikasi:
+- Dependensi tambahan di luar daftar task (semua `npx expo install`, versi SDK): `expo-crypto` (sha256 identitas perangkat — tidak ada crypto JS bawaan RN), `expo-device` (nama/versi OS untuk registrasi login), `expo-file-system` (cek ukuran selfie untuk target ±200 KB), `expo-system-ui` (mode gelap mengikuti sistem), `@expo/vector-icons` (ikon). AsyncStorage tidak jadi dipakai (SecureStore cukup). `.npmrc` `legacy-peer-deps=true` (standar template Expo+npm). ESLint 9 (eslint-config-expo belum kompatibel ESLint 10).
+- Identitas perangkat: `Application.getAndroidId()` → sha256 (expo-crypto); null → UUID acak tersimpan SecureStore (stabil per instalasi). Hash yang sama dikirim sebagai `device_id` check-in/out.
+- Selfie: CameraView depan → manipulator resize 1080 + JPEG turun bertahap (0.7→0.28) sampai ≤200 KB.
+- Absen: form rencana kerja poin bernomor 1–8 (hapus per baris, wajib ≥1), catatan opsional, tombol aktif hanya bila selfie+GPS+rencana siap; penolakan server ditampilkan apa adanya (`message`), data form dipertahankan. Layar hasil memakai `{result}` AttendancePresenter.
+- Pengajuan v1: field per kategori (hari: start/end+setengah-hari+tujuan dinas; lembur: tanggal+ jam; koreksi: tanggal+jam masuk/pulang; barang: nama/jumlah/satuan/harga/referensi/urgensi) + alasan wajib; validasi klien meniru pesan server; lampiran/pengganti/draf tetap web. Izin per jam (`permit` jam) lewat web di v1.
+- Beranda memakai `Promise.allSettled` (kartu tampil parsial bila sebagian gagal); briefing 204 → kartu disembunyikan.
+- Endpoint `GET /workspace` sudah ada klien+tipenya tapi belum ada UI-nya (tidak diminta sprint ini) — siap dipakai Tahap 2.
+- Tidak ada test JS di aplikasi (belum ada harness vitest di `apps/mobile`; alur API tercakup 50 test Pest `tests/Feature/Api/`).
 
 Endpoint live (prefix `/api/v1`, token Sanctum per perangkat):
 - `POST /auth/login` {email, password, device{platform, device_id_hash(64-hex), name?, os_version?, app_version?}} → `{token, user}` ringkas (id/nama/email/jabatan/divisi/work_mode). 403 ber-`code`: `password_change_required`, `two_factor_required` (Super Admin — TOTP belum didukung aplikasi). Kredensial lewat `AuthenticateEmployee` (pesan generik 422). Login ulang perangkat sama mengganti token lama.
@@ -19,6 +36,9 @@ Endpoint live (prefix `/api/v1`, token Sanctum per perangkat):
 
 ## Worktree / branch
 `/Users/godam/PROYEK/ruang-kerja-ponsel` · `glm/ponsel-api` · https://ruangkerja-ponsel.test · DB dev `ruangkerja_ponsel`, DB test `ruangkerja_testing_ponsel`
+
+## Sudah selesai (Tahap 1 lanjutan — aplikasi Expo, 10 Okt)
+- `e1d7dfd` `feat(mobile): layar inti v1 — masuk, beranda, absen penuh, tugas, inbox, lainnya` + `ea9b910` klien API/sesi/tema/layar + `0835392` scaffold — lihat seksi "Aplikasi Expo v1" di atas.
 
 ## Sudah selesai (Tahap 1, 10 Okt)
 - `389a87e` endpoint inbox, workspace, pengajuan dan briefing ponsel: `Api/Inbox/InboxController`, `Api/Workspaces/WorkspaceController`, `Api/Requests/RequestController` + FormRequest `Api/SubmitEmployeeRequestRequest`, `Api/Briefings/LatestBriefingController`; slot komentar `routes/api.php` terisi penuh; test `tests/Feature/Api/{Inbox,Workspace,Pengajuan,Briefing}ApiTest.php` (18 test)
@@ -44,11 +64,12 @@ Endpoint live (prefix `/api/v1`, token Sanctum per perangkat):
 **Belum push** — menunggu perintah pemilik.
 
 ## Langkah berikutnya
-1. **Tahap 1 backend selesai** — semua endpoint fondasi live (lihat daftar di atas). Bila Tahap 2 butuh endpoint baru, ikuti pola `routes/api.php` (auth:sanctum + throttle:api-v1 + Policy + presenter/Action web dipakai ulang) dan perbarui daftar endpoint di atas.
-2. **Tahap 1 lanjutan (aplikasi Expo):** layar masuk memakai `POST /api/v1/auth/login`; simpan token aman di perangkat; handle 403 `password_change_required`/`two_factor_required`; 429 `code throttled`/`login_throttled`; layar absensi (hari-ini → check-in/out dengan selfie & work_plan, tampilkan `reason` penolakan), tugas (hari-ini, daftar `saya=1`, tombol selesai `done:true`), inbox (feed `belum-dibaca`, badge `unread`, tombol baca), workspace (tab grup `jenis`), pengajuan (list + buat dari `jenis`), briefing terakhir di beranda.
-3. Input pemilik yang menahan: SHA-256 sertifikat (`ANDROID_CERT_SHA256`), `BRANDING_COMPANY_NAME`, `PRIVACY_CONTACT`, dan keputusan final nama paket (default `store.spkd.ruangkerja` — sekali terbit di Play Store tidak bisa diubah).
-4. Konten `/kebijakan-privasi` masih **draf**: menunggu persetujuan pemilik + pengisian `BRANDING_COMPANY_NAME` dan kontak.
-5. Push + PR setelah izin pemilik.
+1. **Tahap 1 backend + aplikasi selesai.** Bila Tahap 2 butuh endpoint baru, ikuti pola `routes/api.php` (auth:sanctum + throttle:api-v1 + Policy + presenter/Action web dipakai ulang) dan perbarui daftar endpoint di atas.
+2. **Pemilik mem-build APK**: `cd apps/mobile && npx expo prebuild -p android && cd android && ./gradlew assembleRelease` (prebuild sudah teruji; gradle sengaja tidak dijalankan agen). Uji manual alur: masuk → absen masuk (rencana+selfie+GPS) → tugas → inbox → pengajuan → cabut perangkat.
+3. Calon Tahap 2 aplikasi: push notification (FCM + `PUT /perangkat/{device}/push-token`), biometrik, UI workspace (`GET /workspace` sudah siap), izin per jam, lampiran pengajuan, kalender riwayat penuh.
+4. Input pemilik yang menahan: SHA-256 sertifikat (`ANDROID_CERT_SHA256`), `BRANDING_COMPANY_NAME`, `PRIVACY_CONTACT`, dan keputusan final nama paket (default `store.spkd.ruangkerja` — sekali terbit di Play Store tidak bisa diubah).
+5. Konten `/kebijakan-privasi` masih **draf**: menunggu persetujuan pemilik + pengisian `BRANDING_COMPANY_NAME` dan kontak.
+6. Push + PR setelah izin pemilik.
 
 ## Keputusan yang diambil (implementasi Tahap 1)
 - **Super Admin ditolak di API login** (403 `two_factor_required`): TOTP challenge belum diimplementasikan di API; menerima kata sandi saja akan menurunkan keamanan dibanding web. Buka kembali bila API mendukung tantangan TOTP.
@@ -77,6 +98,7 @@ Endpoint live (prefix `/api/v1`, token Sanctum per perangkat):
 - **Integrator:** isi `docs/CHANGELOG.md` saat merge.
 
 ## Verifikasi
+- **10 Okt (Tahap 1 lanjutan — aplikasi Expo):** di `apps/mobile` — `npx tsc --noEmit` **bersih**; `npx eslint .` **bersih**; `npx expo export -p android` **sukses** (bundle Hermes 3.2 MB); `npx expo prebuild -p android --no-install` **sukses** dua kali (permission CAMERA + lokasi ada di manifest; folder `android/` tidak di-commit). Gradle build sengaja tidak dijalankan (punya pemilik).
 - **10 Okt (Tahap 1 — inbox/workspace/pengajuan/briefing API):** `vendor/bin/pest tests/Feature/Api/` **50 lulus** (18 baru: Inbox 6 + Workspace 3 + Pengajuan 5 + Briefing 4); `vendor/bin/phpstan analyse --memory-limit=1G` (level 8, seluruh path konfigurasi) **tanpa galat**; `vendor/bin/pint` pada 10 berkas baru/ubah bersih. Suite penuh tidak dijalankan (DB test dipakai terbatas per koordinator). Catatan: warning `Constant HASH_PONSEL already defined` saat menjalankan folder Api adalah pola lama (tiap berkas test mendeklarasikan konstanta yang sama, nilai identik, tidak berdampak) — sudah ada sebelum commit ini.
 - **10 Okt (Tahap 1 — absensi & tugas API):** `vendor/bin/pest tests/Feature/Api/` **32 lulus** (16 baru: `AttendanceApiTest.php` 8 + `TaskApiTest.php` 8); `vendor/bin/phpstan analyse --memory-limit=1G` (level 8, seluruh path konfigurasi) **tanpa galat** (termasuk perbaikan `config/sanctum.php`); `vendor/bin/pint` pada 18 berkas terkait bersih. Suite penuh tidak dijalankan (DB test dipakai terbatas per koordinator).
 - **10 Okt (Tahap 1 — fondasi):** `vendor/bin/pest tests/Feature/Api/ tests/Feature/Devices/DeviceTest.php` **27 lulus** (16 baru); `vendor/bin/pint --test` (15 berkas terkait) PASS; `vendor/bin/phpstan analyse` (rute/controller/request/Domain Devices/AppServiceProvider/bootstrap/migrasi, level 8) **tanpa galat**. Migrasi dijalankan di DB dev `ruangkerja_ponsel` (`php artisan migrate --force`); suite penuh tidak dijalankan (DB test dipakai terbatas per koordinator).
