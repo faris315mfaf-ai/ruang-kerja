@@ -1,6 +1,7 @@
 /**
- * Lainnya — profil, riwayat absensi bulan ini (ringkas), pengajuan saya
- * (daftar + buat baru), perangkat (cabut), dan keluar.
+ * Lainnya — navigasi Inbox (pindah dari tab, dengan lencana belum-dibaca),
+ * Rapat, Kalender, dan Workspace; lalu profil, riwayat absensi bulan ini
+ * (ringkas), pengajuan saya (daftar + buat baru), perangkat (cabut), keluar.
  */
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
@@ -14,6 +15,7 @@ import { Badge, Button, Card, CardTitle, Divider, Loading, Meta, Row, Screen } f
 import { durasiMenit, inisial, jam, tanggalPendek, tanggalTanpaTahun } from '@/lib/format';
 import { radius, useTheme } from '@/lib/theme';
 import { useSession } from '@/session/SessionProvider';
+import { useUnread } from '@/session/UnreadProvider';
 
 function LencanaStatusPengajuan({ row }: { row: EmployeeRequestRow }): React.JSX.Element {
   const tone =
@@ -32,6 +34,7 @@ function LencanaStatusPengajuan({ row }: { row: EmployeeRequestRow }): React.JSX
 export default function LayarLainnya(): React.JSX.Element {
   const { colors } = useTheme();
   const { user, keluar, perbaruiProfil } = useSession();
+  const { jumlah: belumBaca } = useUnread();
 
   const [profil, setProfil] = useState<UserProfile | null>(user);
   const [riwayat, setRiwayat] = useState<AttendanceHistory | null>(null);
@@ -134,13 +137,48 @@ export default function LayarLainnya(): React.JSX.Element {
             </View>
           </Card>
 
-          {/* Workspace (papan · catatan · tugas) */}
+          {/* Navigasi: Workspace · Inbox · Rapat · Kalender */}
           <Card style={{ paddingVertical: 4, paddingHorizontal: 12 }}>
             <Row
               title="Workspace"
               subtitle="Papan, catatan, dan tugas per workspace"
               onPress={() => router.push('/workspace')}
               accessibilityLabel="Buka daftar workspace"
+              right={<Ionicons name="chevron-forward" size={18} color={colors.subtle} />}
+            />
+            <Divider />
+            <Row
+              title="Inbox"
+              subtitle="Notifikasi Anda"
+              onPress={() => router.push('/inbox')}
+              accessibilityLabel={`Buka inbox${belumBaca > 0 ? `, ${belumBaca} belum dibaca` : ''}`}
+              right={
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  {belumBaca > 0 ? (
+                    <View style={[gaya.lencana, { backgroundColor: colors.badge }]}>
+                      <Text style={[gaya.lencanaTeks, { color: colors.onBadge }]}>
+                        {belumBaca > 99 ? '99+' : belumBaca}
+                      </Text>
+                    </View>
+                  ) : null}
+                  <Ionicons name="chevron-forward" size={18} color={colors.subtle} />
+                </View>
+              }
+            />
+            <Divider />
+            <Row
+              title="Rapat"
+              subtitle="Agenda, RSVP, dan notulen"
+              onPress={() => router.push('/rapat')}
+              accessibilityLabel="Buka agenda rapat"
+              right={<Ionicons name="chevron-forward" size={18} color={colors.subtle} />}
+            />
+            <Divider />
+            <Row
+              title="Kalender"
+              subtitle="Rapat, tenggat, cuti, dan libur bulan ini"
+              onPress={() => router.push('/kalender')}
+              accessibilityLabel="Buka kalender bulan ini"
               right={<Ionicons name="chevron-forward" size={18} color={colors.subtle} />}
             />
           </Card>
@@ -273,6 +311,15 @@ export default function LayarLainnya(): React.JSX.Element {
 
 const gaya = StyleSheet.create({
   judul: { fontSize: 26, fontWeight: '800', marginBottom: 2 },
+  lencana: {
+    minWidth: 22,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lencanaTeks: { fontSize: 12, fontWeight: '700' },
   profil: { flexDirection: 'row', gap: 12, alignItems: 'center' },
   avatar: { width: 56, height: 56, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center' },
   avatarTeks: { fontSize: 20, fontWeight: '800' },

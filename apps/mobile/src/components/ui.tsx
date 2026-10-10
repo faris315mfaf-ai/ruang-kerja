@@ -103,9 +103,21 @@ export function Body({
   return <Text style={[styles.body, { color: muted ? colors.muted : colors.text }, style]}>{children}</Text>;
 }
 
-export function Meta({ children, style }: { children: React.ReactNode; style?: StyleProp<TextStyle> }): React.JSX.Element {
+export function Meta({
+  children,
+  style,
+  numberOfLines,
+}: {
+  children: React.ReactNode;
+  style?: StyleProp<TextStyle>;
+  numberOfLines?: number;
+}): React.JSX.Element {
   const { colors } = useTheme();
-  return <Text style={[styles.meta, { color: colors.subtle }, style]}>{children}</Text>;
+  return (
+    <Text style={[styles.meta, { color: colors.subtle }, style]} numberOfLines={numberOfLines}>
+      {children}
+    </Text>
+  );
 }
 
 export function Label({ children }: { children: React.ReactNode }): React.JSX.Element {

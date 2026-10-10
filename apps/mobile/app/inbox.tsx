@@ -1,10 +1,13 @@
 /**
- * Layar Inbox — feed notifikasi: saring Semua/Belum dibaca, titik penanda
- * belum dibaca, tekan menandai dibaca (unread global ikut diperbarui).
+ * Layar Inbox (dibuka dari Lainnya) — feed notifikasi: saring Semua/Belum
+ * dibaca, titik penanda belum dibaca, tekan menandai dibaca (unread global
+ * ikut diperbarui).
  */
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError } from '@/api/client';
 import { inbox, tandaiBaca } from '@/api/endpoints';
@@ -69,6 +72,7 @@ function BarisInbox({ item, onTekan }: { item: InboxItem; onTekan: (item: InboxI
 
 export default function LayarInbox(): React.JSX.Element {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { perbarui } = useUnread();
 
   const [saringan, setSaringan] = useState<Saringan>('semua');
@@ -129,9 +133,19 @@ export default function LayarInbox(): React.JSX.Element {
   const masihAda = halaman < halamanAkhir;
 
   return (
-    <Screen>
-      <Text style={[gaya.judulLayar, { color: colors.text }]}>Inbox</Text>
-      <Segmented<Saringan>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <Pressable
+        onPress={() => router.back()}
+        accessibilityRole="button"
+        accessibilityLabel="Kembali"
+        style={[gaya.punggung, { paddingTop: insets.top + 10 }]}
+        hitSlop={8}
+      >
+        <Ionicons name="arrow-back" size={24} color={colors.text} />
+        <Text style={[gaya.judulLayar, { color: colors.text }]}>Inbox</Text>
+      </Pressable>
+      <Screen>
+        <Segmented<Saringan>
         value={saringan}
         onChange={(nilai) => {
           setSaringan(nilai);
@@ -180,12 +194,14 @@ export default function LayarInbox(): React.JSX.Element {
           )}
         </>
       )}
-    </Screen>
+      </Screen>
+    </View>
   );
 }
 
 const gaya = StyleSheet.create({
-  judulLayar: { fontSize: 26, fontWeight: '800', marginBottom: 2 },
+  punggung: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 10 },
+  judulLayar: { fontSize: 18, fontWeight: '800' },
   kartu: { padding: 14 },
   kepala: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
   ikon: { width: 38, height: 38, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },

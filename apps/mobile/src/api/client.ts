@@ -6,6 +6,15 @@
 
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://spkd.store/api/v1';
 
+/**
+ * Asal aplikasi web (https://host) diturunkan dari EXPO_PUBLIC_API_URL
+ * (https://host/api/v1) — dipakai Linking untuk tautan yang menuntut sesi
+ * web: gabung rapat video (`/rapat/{id}/gabung`) dsb.
+ */
+export function webBase(): string {
+  return API_URL.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
+}
+
 /** Galat API: pesan siap tampil, status HTTP, kode (403), errors (422). */
 export class ApiError extends Error {
   readonly status: number;

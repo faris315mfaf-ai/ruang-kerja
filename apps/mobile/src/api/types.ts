@@ -493,6 +493,214 @@ export interface RequestPage {
   meta: PageMeta;
 }
 
+// ── Obrolan (Tahap 2, di balik flag features.chat — 404 saat mati) ───────────
+
+export type ChannelType = 'workspace' | 'public' | 'private' | 'dm' | 'group';
+
+export interface ChatChannelMember {
+  user_id: string;
+  last_read_message_id: string | null;
+  muted: boolean;
+  role: string;
+}
+
+/** ChatPresenter::channel + state unread/preview/izin dari ChatInbox. */
+export interface ChatChannel {
+  id: string;
+  workspace_id: string | null;
+  workspace: { key: string; name: string; color: string } | null;
+  type: ChannelType;
+  name: string | null;
+  topic: string | null;
+  created_by: string;
+  created_at: string | null;
+  archived_at: string | null;
+  members: ChatChannelMember[];
+  unread_count: number;
+  last_message: {
+    id: string;
+    user_id: string | null;
+    body_text: string;
+    created_at: string | null;
+    deleted: boolean;
+  } | null;
+  can_post: boolean;
+  can_manage: boolean;
+}
+
+/** ChatPresenter::message — body = dokumen Tiptap; aplikasi hanya memakai body_text. */
+export interface ChatMessage {
+  id: string;
+  channel_id: string;
+  user_id: string;
+  parent_id: string | null;
+  body: Record<string, unknown> | null;
+  body_text: string;
+  created_at: string | null;
+  edited_at: string | null;
+  deleted_at: string | null;
+  reactions: { emoji: string; user_ids: string[] }[];
+  attachments: unknown[];
+}
+
+/** Tugas yang direferensikan pesan (#KEY-n) yang terlihat pemilik. */
+export interface ChatTaskRef {
+  id: string;
+  key: string;
+  title: string;
+  status_category: BoardTaskCategory;
+  url: string;
+}
+
+/**
+ * Satu halaman timeline: pesan utama tua→baru lalu balasan runtutannya
+ * (parent_id terisi); `has_more` = masih ada pesan lebih tua (scroll balik
+ * pakai id pesan utama tertua lewat ?sebelum=).
+ */
+export interface ChatTimeline {
+  messages: ChatMessage[];
+  tasks: ChatTaskRef[];
+  has_more: boolean;
+}
+
+// ── Rapat (Tahap 2, di balik flag features.meetings — 404 saat mati) ────────
+
+export type RsvpValue = 'yes' | 'maybe' | 'no' | 'pending';
+export type RentangRapat = 'hari-ini' | 'minggu-ini' | 'akan-datang';
+
+/** Satu baris agenda (MeetingSummary::agenda) — waktu ISO UTC, aplikasi memformat WIB. */
+export interface MeetingItem {
+  id: string;
+  key: string;
+  occurrence_date: string;
+  title: string;
+  starts_at: string;
+  ends_at: string;
+  platform: string;
+  platform_label: string;
+  location: string | null;
+  join_url: string | null;
+  organizer: { id: string; name: string | null };
+  workspace: { id: string; key: string; name: string } | null;
+  peserta_count: number;
+  rsvp_saya: RsvpValue | null;
+  terjadi_hari_ini: boolean;
+  dapat_diedit: boolean;
+  recurrence: string;
+  recurrence_until: string | null;
+  canceled: boolean;
+  minutes_status: 'none' | 'draft' | 'final';
+}
+
+export interface MeetingAgenda {
+  rentang: string;
+  from: string;
+  to: string;
+  hari_ini: string;
+  server_time: string;
+  items: MeetingItem[];
+}
+
+export interface MeetingParticipantRow {
+  user_id: string | null;
+  email: string | null;
+  nama: string | null;
+  rsvp: RsvpValue;
+  optional: boolean;
+}
+
+/** Detail satu kemunculan (MeetingSummary::detail). */
+export interface MeetingDetailData extends MeetingItem {
+  description: string | null;
+  agenda_items: string[];
+  reminders: unknown[];
+  minute_taker: { id: string; name: string | null } | null;
+  leadership: boolean;
+  auto_minutes: boolean;
+  participants: MeetingParticipantRow[];
+  notulen: { status: 'none' | 'draft' | 'final'; ada_isi: boolean };
+}
+
+/** Ringkasan ruang video platform `video` — tautan gabung = halaman web, tanpa token Livekit. */
+export interface MeetingVideoRoom {
+  configured: boolean;
+  join_href: string;
+  opens_at: string;
+  closes_at: string;
+  can_join: boolean;
+  denied_reason: string | null;
+}
+
+export interface MeetingDetailResponse {
+  meeting: MeetingDetailData;
+  can: { rsvp: boolean; edit: boolean; join_video: boolean };
+  video: MeetingVideoRoom | null;
+}
+
+export interface MinutesPerson {
+  id: string;
+  name: string;
+  title: string;
+  division: string;
+  avatar_url: string | null;
+}
+
+/** MeetingPresenter::minutes — id null = belum ditulis (draf kosong dari agenda). */
+export interface MeetingMinutesData {
+  id: string | null;
+  meeting_id: string;
+  meeting_key: string;
+  href: string;
+  status: 'draft' | 'final';
+  saved_at: string | null;
+  version_count: number;
+  finalized_at: string | null;
+  co_editor_id: null;
+  attendance: { user_id: string; present: boolean; reason: string | null }[];
+  sections: { title: string; body: string }[];
+  decisions: string[];
+  action_items: {
+    id: string;
+    text: string;
+    assignee_id: string | null;
+    due_date: string | null;
+    task_key: string | null;
+    task_url: string | null;
+    done: boolean;
+  }[];
+  source: string | null;
+}
+
+export interface MeetingMinutesResponse {
+  meeting: MeetingDetailData;
+  notulen: MeetingMinutesData;
+  people: MinutesPerson[];
+}
+
+// ── Kalender (Tahap 2, flag meetings) ───────────────────────────────────────
+
+export type CalendarLayer = 'meetings' | 'tasks' | 'leave' | 'holidays';
+
+/** Entri flat CalendarFeed — aplikasi mengelompokkan per `date` sendiri. */
+export interface CalendarEntry {
+  id: string;
+  layer: CalendarLayer;
+  date: string;
+  title: string;
+  meta: string;
+  href?: string;
+  end_date?: string;
+  overdue?: boolean;
+}
+
+export interface CalendarMonth {
+  year: number;
+  month: number;
+  from: string;
+  to: string;
+  entries: CalendarEntry[];
+}
+
 // ── Perangkat ────────────────────────────────────────────────────────────────
 
 export interface DeviceRow {

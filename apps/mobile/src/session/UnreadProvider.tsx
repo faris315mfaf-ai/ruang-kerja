@@ -1,6 +1,8 @@
 /**
- * Jumlah inbox belum dibaca — dipakai lencana tab Inbox dan layar Inbox;
- * diperbarui saat aplikasi kembali aktif dan setelah menandai dibaca.
+ * Jumlah inbox belum dibaca — dipakai lencana tab Lainnya dan baris Inbox
+ * di layar Lainnya; diperbarui saat aplikasi kembali aktif dan setelah
+ * menandai dibaca. Dipasang di _layout akar supaya layar Inbox di stack
+ * (di luar tabs) juga bisa memakai konteks ini.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';

@@ -1,7 +1,9 @@
 /**
  * Beranda — sapaan + tanggal, kartu status absensi hari ini (dengan tombol
- * menuju tab Absen), tugas hari ini bersegmen Pribadi/Tim/Semua, dan kartu
- * briefing terakhir (tersembunyi bila 204). Tarik untuk menyegarkan.
+ * menuju tab Absen), kartu rapat berikutnya (hari-ini yang belum selesai /
+ * akan datang terdekat; tersembunyi bila kosong atau fitur rapat mati),
+ * tugas hari ini bersegmen Pribadi/Tim/Semua, dan kartu briefing terakhir
+ * (tersembunyi bila 204). Tarik untuk menyegarkan.
  */
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -9,11 +11,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
-import { absensiHariIni, briefingTerakhir, tugasHariIni } from '@/api/endpoints';
-import type { Briefing, TodayAttendance, TodayTasks } from '@/api/types';
+import { absensiHariIni, briefingTerakhir, rapatBerikutnya, tugasHariIni } from '@/api/endpoints';
+import type { Briefing, MeetingItem, TodayAttendance, TodayTasks } from '@/api/types';
 import { Badge, Button, Card, CardTitle, EmptyState, ErrorState, Loading, Meta, Screen, Segmented } from '@/components/ui';
 import { TugasItem } from '@/components/TugasItem';
-import { jam, sapaan, tanggalPanjang, tanggalPendek } from '@/lib/format';
+import { jam, sapaan, tanggalPanjang, tanggalPendek, tanggalTanpaTahun } from '@/lib/format';
 import { radius, useTheme } from '@/lib/theme';
 import { useSession } from '@/session/SessionProvider';
 
@@ -117,6 +119,37 @@ function KartuTugas({ data }: { data: TodayTasks | null }): React.JSX.Element {
   );
 }
 
+/** Kartu "Rapat berikutnya" — kemunculan hari-ini yang belum selesai atau akan datang terdekat. */
+function KartuRapat({ item, berlangsung }: { item: MeetingItem; berlangsung: boolean }): React.JSX.Element {
+  const { colors } = useTheme();
+  return (
+    <Card
+      onPress={() =>
+        router.push({
+          pathname: '/rapat/[id]/index',
+          params: { id: item.id, tanggal: item.occurrence_date, judul: item.title },
+        })
+      }
+      accessibilityLabel={`Rapat berikutnya: ${item.title}, ${jam(item.starts_at)} WIB`}
+    >
+      <View style={kartu.kepala}>
+        <CardTitle>Rapat berikutnya</CardTitle>
+        <Badge tone={berlangsung ? 'success' : 'primary'}>
+          {berlangsung ? 'Berlangsung' : `${jam(item.starts_at)} WIB`}
+        </Badge>
+      </View>
+      <Text style={[kartu.judulRapat, { color: colors.text }]} numberOfLines={2}>
+        {item.title}
+      </Text>
+      <Meta numberOfLines={1}>
+        {`${tanggalTanpaTahun(item.starts_at)} · ${jam(item.starts_at)}–${jam(item.ends_at)} WIB · ${item.platform_label}${
+          item.location ? ` · ${item.location}` : ''
+        }`}
+      </Meta>
+    </Card>
+  );
+}
+
 function KartuBriefing({ briefing }: { briefing: Briefing }): React.JSX.Element {
   const { colors } = useTheme();
   return (
@@ -142,6 +175,7 @@ export default function LayarBeranda(): React.JSX.Element {
   const [absensi, setAbsensi] = useState<TodayAttendance | null>(null);
   const [tugas, setTugas] = useState<TodayTasks | null>(null);
   const [briefing, setBriefing] = useState<Briefing | null>(null);
+  const [rapat, setRapat] = useState<{ item: MeetingItem; berlangsung: boolean } | null>(null);
   const [galat, setGalat] = useState<string | null>(null);
   const [memuat, setMemuat] = useState(true);
   const [menyegarkan, setMenyegarkan] = useState(false);
@@ -152,10 +186,11 @@ export default function LayarBeranda(): React.JSX.Element {
       setMemuat(true);
     }
 
-    const [hasilAbsensi, hasilTugas, hasilBriefing] = await Promise.allSettled([
+    const [hasilAbsensi, hasilTugas, hasilBriefing, hasilRapat] = await Promise.allSettled([
       absensiHariIni(),
       tugasHariIni(),
       briefingTerakhir(),
+      rapatBerikutnya(),
     ]);
 
     if (hasilAbsensi.status === 'fulfilled') {
@@ -170,6 +205,16 @@ export default function LayarBeranda(): React.JSX.Element {
     }
     // Briefing 204 → null (kartu disembunyikan); galat diabaikan.
     setBriefing(hasilBriefing.status === 'fulfilled' ? hasilBriefing.value : null);
+    // Rapat berikutnya: kartu disembunyikan bila kosong/fitur mati (galat diabaikan).
+    setRapat(
+      hasilRapat.status === 'fulfilled' && hasilRapat.value !== null
+        ? {
+            item: hasilRapat.value,
+            // Dihitung saat muat (bukan saat render) — aturan kemurnian React.
+            berlangsung: new Date(hasilRapat.value.starts_at).getTime() <= Date.now(),
+          }
+        : null,
+    );
 
     const gagal = [hasilAbsensi, hasilTugas].find((h) => h.status === 'rejected');
     if (gagal && gagal.status === 'rejected') {
@@ -226,6 +271,7 @@ export default function LayarBeranda(): React.JSX.Element {
               <Meta>{galat} — tarik ke bawah untuk mencoba lagi.</Meta>
             </Card>
           ) : null}
+          {rapat ? <KartuRapat item={rapat.item} berlangsung={rapat.berlangsung} /> : null}
           {tugas ? <KartuTugas data={tugas} /> : null}
           {briefing ? <KartuBriefing briefing={briefing} /> : null}
         </>
@@ -238,6 +284,7 @@ const kartu = StyleSheet.create({
   kepala: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   baris: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   isi: { fontSize: 14, lineHeight: 21 },
+  judulRapat: { fontSize: 16, fontWeight: '700', lineHeight: 21 },
 });
 
 const beranda = StyleSheet.create({

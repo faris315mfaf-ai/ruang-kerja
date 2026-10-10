@@ -58,13 +58,20 @@ export function tanggalDariYMD(value: string | null | undefined): string {
 
 /** Hari ini dalam YYYY-MM-DD (zona Jakarta). */
 export function ymdHariIni(): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
+  return ymdJakarta(new Date());
+}
+
+/** Kunci tanggal YYYY-MM-DD (zona Jakarta) dari suatu waktu — pengelompokan per hari. */
+export function ymdJakarta(value: string | Date | null | undefined): string {
+  if (value === null || value === undefined || value === '') {
+    return '';
+  }
+  return new Intl.DateTimeFormat('en-CA', {
     timeZone: JAKARTA,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  }).format(new Date());
-  return parts;
+  }).format(typeof value === 'string' ? new Date(value) : value);
 }
 
 /** "3 jam 20 menit" dari menit. */

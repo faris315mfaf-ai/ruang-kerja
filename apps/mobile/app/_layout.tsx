@@ -11,6 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ThemeProvider, useTheme } from '@/lib/theme';
 import { SessionProvider, useSession } from '@/session/SessionProvider';
+import { UnreadProvider } from '@/session/UnreadProvider';
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   // Sudah tersembunyi — abaikan.
@@ -39,7 +40,7 @@ function RootNavigator(): React.JSX.Element {
     return <Splash />;
   }
 
-  return (
+  const isi = (
     <>
       <StatusBar style={dark ? 'light' : 'dark'} />
       <Stack
@@ -57,10 +58,20 @@ function RootNavigator(): React.JSX.Element {
         <Stack.Screen name="workspace/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="catatan/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="pengajuan/baru" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="inbox" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="obrolan/[id]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="rapat/index" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="rapat/[id]/index" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="rapat/[id]/notulen" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="kalender" options={{ animation: 'slide_from_right' }} />
       </Stack>
       {status === 'keluar' ? <Redirect href="/masuk" /> : null}
     </>
   );
+
+  // UnreadProvider hanya hidup saat sesi masuk: layar Inbox (stack) dan
+  // lencana tab Lainnya berbagi jumlah yang sama.
+  return status === 'masuk' ? <UnreadProvider>{isi}</UnreadProvider> : isi;
 }
 
 export default function RootLayout(): React.JSX.Element {

@@ -1,7 +1,7 @@
 /**
- * Tab bawah: Beranda · Tugas · Absen (tengah menonjol) · Inbox · Lainnya.
- * Tab Absen memakai tombol bundar utama bergaya Arus; tab Inbox membawa
- * lencana jumlah belum dibaca.
+ * Tab bawah: Beranda · Tugas · Absen (tengah menonjol) · Obrolan · Lainnya.
+ * Tab Absen memakai tombol bundar utama bergaya Arus; Inbox pindah ke layar
+ * Lainnya, jadi lencana belum-dibaca inbox terpasang di tab Lainnya.
  */
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
@@ -10,7 +10,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { radius, useTheme } from '@/lib/theme';
-import { UnreadProvider, useUnread } from '@/session/UnreadProvider';
+import { useUnread } from '@/session/UnreadProvider';
 
 type Ikon = keyof typeof Ionicons.glyphMap;
 
@@ -60,8 +60,8 @@ function TabBarKita({ state, navigation }: BottomTabBarProps): React.JSX.Element
     { nama: 'index', label: 'Beranda', icon: 'home-outline' },
     { nama: 'tugas', label: 'Tugas', icon: 'checkbox-outline' },
     { nama: 'absen', label: 'Absen', icon: 'finger-print' },
-    { nama: 'inbox', label: 'Inbox', icon: 'notifications-outline', lencana: jumlah },
-    { nama: 'lainnya', label: 'Lainnya', icon: 'menu-outline' },
+    { nama: 'obrolan', label: 'Obrolan', icon: 'chatbubbles-outline' },
+    { nama: 'lainnya', label: 'Lainnya', icon: 'menu-outline', lencana: jumlah },
   ];
 
   const ke = (indeks: number, nama: string): void => {
@@ -129,15 +129,13 @@ function TabBarKita({ state, navigation }: BottomTabBarProps): React.JSX.Element
 
 export default function TabsLayout(): React.JSX.Element {
   return (
-    <UnreadProvider>
-      <Tabs tabBar={(props) => <TabBarKita {...props} />} screenOptions={{ headerShown: false }}>
-        <Tabs.Screen name="index" options={{ title: 'Beranda' }} />
-        <Tabs.Screen name="tugas" options={{ title: 'Tugas' }} />
-        <Tabs.Screen name="absen" options={{ title: 'Absen' }} />
-        <Tabs.Screen name="inbox" options={{ title: 'Inbox' }} />
-        <Tabs.Screen name="lainnya" options={{ title: 'Lainnya' }} />
-      </Tabs>
-    </UnreadProvider>
+    <Tabs tabBar={(props) => <TabBarKita {...props} />} screenOptions={{ headerShown: false }}>
+      <Tabs.Screen name="index" options={{ title: 'Beranda' }} />
+      <Tabs.Screen name="tugas" options={{ title: 'Tugas' }} />
+      <Tabs.Screen name="absen" options={{ title: 'Absen' }} />
+      <Tabs.Screen name="obrolan" options={{ title: 'Obrolan' }} />
+      <Tabs.Screen name="lainnya" options={{ title: 'Lainnya' }} />
+    </Tabs>
   );
 }
 

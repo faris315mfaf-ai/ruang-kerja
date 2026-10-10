@@ -6,14 +6,25 @@ import type {
   AttendanceHistory,
   AttendanceResult,
   Briefing,
+  CalendarMonth,
+  ChatChannel,
+  ChatMessage,
+  ChatTaskRef,
+  ChatTimeline,
   CommentPage,
   DeviceInfo,
   DeviceRow,
   InboxPage,
   LoginResponse,
+  MeetingAgenda,
+  MeetingDetailResponse,
+  MeetingMinutesResponse,
+  MeetingItem,
   NoteDetailData,
   RequestPage,
   RequestTypes,
+  RentangRapat,
+  RsvpValue,
   TaskComment,
   TaskDetail,
   TaskListItem,
@@ -252,6 +263,101 @@ export function kirimPengajuan(
     method: 'POST',
     json: body,
   }).then((r) => wajib(r).request);
+}
+
+// ── Obrolan (di balik flag features.chat — 404 saat mati) ───────────────────
+
+/** GET /obrolan/kanal — daftar kanal ChatInbox web (unread, pratinjau, izin). */
+export function daftarKanal(): Promise<{ channels: ChatChannel[] }> {
+  return apiRequest<{ channels: ChatChannel[] }>('obrolan/kanal') as Promise<{
+    channels: ChatChannel[];
+  }>;
+}
+
+/** GET /obrolan/kanal/{channel}/pesan — halaman 30 pesan; `sebelum` = id pesan utama tertua. */
+export function pesanKanal(channelId: string, sebelum?: string | null): Promise<ChatTimeline> {
+  return apiRequest<ChatTimeline>(`obrolan/kanal/${channelId}/pesan`, {
+    query: { sebelum: sebelum ?? null },
+  }) as Promise<ChatTimeline>;
+}
+
+/** POST /obrolan/kanal/{channel}/pesan — teks polos, 201; limiter 60/menit → 429. */
+export async function kirimPesan(
+  channelId: string,
+  body: string,
+): Promise<{ message: ChatMessage; tasks: ChatTaskRef[] }> {
+  const hasil = await apiRequest<{ message: ChatMessage; tasks: ChatTaskRef[] }>(
+    `obrolan/kanal/${channelId}/pesan`,
+    { method: 'POST', json: { body } },
+  );
+  return wajib(hasil);
+}
+
+// ── Rapat (di balik flag features.meetings — 404 saat mati) ─────────────────
+
+/** GET /rapat?rentang= — agenda "rapat saya" tiga rentang. */
+export function agendaRapat(rentang: RentangRapat): Promise<MeetingAgenda> {
+  return apiRequest<MeetingAgenda>('rapat', {
+    query: { rentang },
+  }) as Promise<MeetingAgenda>;
+}
+
+/** GET /rapat/{meeting}?tanggal=Y-m-d — detail satu kemunculan + izin + ruang video. */
+export function detailRapat(
+  meetingId: string,
+  tanggal?: string | null,
+): Promise<MeetingDetailResponse> {
+  return apiRequest<MeetingDetailResponse>(`rapat/${meetingId}`, {
+    query: { tanggal: tanggal ?? null },
+  }) as Promise<MeetingDetailResponse>;
+}
+
+/** POST /rapat/{meeting}/kehadiran {rsvp: yes|maybe|no} — berlaku seluruh seri. */
+export async function rsvpRapat(meetingId: string, rsvp: Exclude<RsvpValue, 'pending'>): Promise<RsvpValue> {
+  const hasil = await apiRequest<{ rsvp: RsvpValue }>(`rapat/${meetingId}/kehadiran`, {
+    method: 'POST',
+    json: { rsvp },
+  });
+  return wajib(hasil).rsvp;
+}
+
+/** GET /rapat/{meeting}/notulen — notulen baca-saja satu kemunculan. */
+export function notulenRapat(
+  meetingId: string,
+  tanggal?: string | null,
+): Promise<MeetingMinutesResponse> {
+  return apiRequest<MeetingMinutesResponse>(`rapat/${meetingId}/notulen`, {
+    query: { tanggal: tanggal ?? null },
+  }) as Promise<MeetingMinutesResponse>;
+}
+
+/** Baris agenda pertama yang belum selesai — kartu "Rapat berikutnya" Beranda. */
+export async function rapatBerikutnya(): Promise<MeetingItem | null> {
+  const [hariIni, akanDatang] = await Promise.allSettled([
+    agendaRapat('hari-ini'),
+    agendaRapat('akan-datang'),
+  ]);
+  const sekarang = Date.now();
+  const kandidat: MeetingItem[] = [];
+  if (hariIni.status === 'fulfilled') {
+    kandidat.push(
+      ...hariIni.value.items.filter((item) => new Date(item.ends_at).getTime() > sekarang),
+    );
+  }
+  if (akanDatang.status === 'fulfilled') {
+    kandidat.push(...akanDatang.value.items);
+  }
+  kandidat.sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  return kandidat[0] ?? null;
+}
+
+// ── Kalender ────────────────────────────────────────────────────────────────
+
+/** GET /kalender?bulan=YYYY-MM — entri flat pekan-pekan penutup bulan; null = bulan berjalan. */
+export function kalenderBulan(bulan?: string | null): Promise<CalendarMonth> {
+  return apiRequest<CalendarMonth>('kalender', {
+    query: { bulan: bulan ?? null },
+  }) as Promise<CalendarMonth>;
 }
 
 // ── Perangkat ────────────────────────────────────────────────────────────────
