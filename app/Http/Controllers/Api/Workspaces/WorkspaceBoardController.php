@@ -50,6 +50,27 @@ class WorkspaceBoardController extends Controller
             ->values()
             ->all();
 
+        // The app card shows assignee names; TaskResource only carries ids.
+        $names = User::query()
+            ->whereIn('id', collect($columns)
+                ->flatMap(fn (array $column): array => array_column($column['tasks'], 'assignee_ids'))
+                ->flatten()
+                ->filter()
+                ->unique()
+                ->values()
+                ->all())
+            ->pluck('name', 'id');
+
+        foreach ($columns as &$column) {
+            foreach ($column['tasks'] as &$card) {
+                $card['assignees'] = array_map(
+                    fn ($id): array => ['id' => $id, 'nama' => $names[$id] ?? null],
+                    $card['assignee_ids'] ?? [],
+                );
+            }
+        }
+        unset($column, $card);
+
         return response()->json([
             'workspace' => ['id' => $workspace->id, 'key' => $workspace->key, 'name' => $workspace->name],
             'columns' => $columns,

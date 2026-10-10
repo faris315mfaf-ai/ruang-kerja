@@ -306,3 +306,22 @@ test('task write endpoints reject requests without a token', function () {
     $this->getJson("/api/v1/tugas/{$this->assigned->id}/komentar")->assertUnauthorized();
     $this->getJson('/api/v1/workspace/TMS/papan')->assertUnauthorized();
 });
+it('exposes assignee names on board cards, workspace members, and can flags on the detail', function () {
+    $token = masukTulis('viewer@kantor.test');
+    $workspace = $this->team;
+    $task = app(CreateTask::class)->handle($workspace, $this->lead, ['title' => 'Kartu uji', 'assignee_ids' => [$this->colleague->id]]);
+
+    $papan = sebagaiTokenTulis($token)->getJson('/api/v1/workspace/'.$workspace->id.'/papan')->assertOk()->json('columns');
+    $kartu = collect($papan)->flatMap(fn ($c) => $c['tasks'])->firstWhere('id', $task->id);
+    expect($kartu['assignees'])->toBe([['id' => $this->colleague->id, 'nama' => 'Sari Rekan']]);
+
+    sebagaiTokenTulis($token)->getJson('/api/v1/workspace/'.$workspace->id.'/anggota')
+        ->assertOk()
+        ->assertJsonStructure(['anggota' => [['id', 'name', 'role']]]);
+
+    // Viewer only receives this task (created by the lead): can work, cannot edit.
+    $tokenViewer = masukTulis('viewer@kantor.test');
+    sebagaiTokenTulis($tokenViewer)->getJson('/api/v1/tugas/'.$task->id)
+        ->assertOk()
+        ->assertJsonPath('task.can.comment', true);
+});

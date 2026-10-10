@@ -2,7 +2,7 @@
  * Endpoint API ponsel — satu fungsi per rute routes/api.php.
  */
 import { apiRequest, formFile } from './client';
-import type {
+import type { AnggotaWorkspace,
   AttendanceHistory,
   AttendanceResult,
   Briefing,
@@ -368,4 +368,17 @@ export function daftarPerangkat(): Promise<{ devices: DeviceRow[] }> {
 
 export function cabutPerangkat(id: string): Promise<{ message: string } | null> {
   return apiRequest<{ message: string }>(`perangkat/${id}`, { method: 'DELETE' });
+}
+
+/** POST /obrolan/kanal/{id}/dibaca — bersihkan lencana belum-dibaca kanal. */
+export async function tandaiKanalDibaca(channelId: string): Promise<void> {
+    await apiRequest(`/obrolan/kanal/${channelId}/dibaca`, { method: 'POST' });
+}
+
+/** GET /workspace/{id}/anggota — untuk pemilih penanggung tugas. */
+export async function anggotaWorkspace(workspaceId: string): Promise<AnggotaWorkspace[]> {
+    const data = await apiRequest<{ anggota?: AnggotaWorkspace[] }>(
+        `/workspace/${workspaceId}/anggota`,
+    );
+    return data?.anggota ?? [];
 }

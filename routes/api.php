@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Attendance\MyAttendanceController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Briefings\LatestBriefingController;
 use App\Http\Controllers\Api\Chat\ChannelController as ChatChannelController;
+use App\Http\Controllers\Api\Chat\ChannelReadController;
 use App\Http\Controllers\Api\Chat\MessageController as ChatMessageController;
 use App\Http\Controllers\Api\Devices\DeviceController;
 use App\Http\Controllers\Api\Inbox\InboxController;
@@ -23,6 +24,7 @@ use App\Http\Controllers\Api\Task\TaskController;
 use App\Http\Controllers\Api\Task\TaskStatusController;
 use App\Http\Controllers\Api\Workspaces\WorkspaceBoardController;
 use App\Http\Controllers\Api\Workspaces\WorkspaceController;
+use App\Http\Controllers\Api\Workspaces\WorkspaceMemberController;
 use App\Http\Middleware\EnsureFeatureEnabled;
 use Illuminate\Support\Facades\Route;
 
@@ -107,6 +109,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         // jalan; aplikasi v1 memakai polling).
         Route::middleware(EnsureFeatureEnabled::class.':chat')->group(function (): void {
             Route::get('obrolan/kanal', ChatChannelController::class)->name('chat.channels.index');
+            Route::post('obrolan/kanal/{channel}/dibaca', ChannelReadController::class)->name('chat.channels.read');
             Route::get('obrolan/kanal/{channel}/pesan', [ChatMessageController::class, 'index'])
                 ->whereUlid('channel')->name('chat.messages.index');
             Route::post('obrolan/kanal/{channel}/pesan', [ChatMessageController::class, 'store'])
@@ -141,6 +144,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         // workspace — semua yang terlihat pemilik (Workspace::visibleTo),
         // digroup seperti direktori web: pribadi · divisi · proyek · lainnya.
         Route::get('workspace', WorkspaceController::class)->name('workspaces.index');
+        Route::get('workspace/{workspace}/anggota', WorkspaceMemberController::class)->name('workspaces.members');
 
         // pengajuan — "Pengajuan saya" pemilik (presenter web), jenis yang
         // bisa diajukan (LeaveType terlihat+aktif, tanpa yang terkunci/

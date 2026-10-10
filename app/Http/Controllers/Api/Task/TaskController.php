@@ -90,7 +90,25 @@ class TaskController extends Controller
     {
         Gate::authorize('view', $task);
 
-        return response()->json(['task' => TaskSummary::detail($this->load($task))]);
+        $detail = TaskSummary::detail($this->load($task));
+        $detail['can'] = self::can($user, $task);
+
+        return response()->json(['task' => $detail]);
+    }
+
+    /**
+     * The app hides actions the caller may not take instead of learning it
+     * from a 403 after the tap.
+     *
+     * @return array{edit: bool, delete: bool, comment: bool}
+     */
+    private static function can(User $user, Task $task): array
+    {
+        return [
+            'edit' => Gate::forUser($user)->allows('update', $task),
+            'delete' => Gate::forUser($user)->allows('delete', $task),
+            'comment' => Gate::forUser($user)->allows('comment', $task),
+        ];
     }
 
     /**

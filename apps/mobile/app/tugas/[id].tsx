@@ -300,7 +300,7 @@ export default function LayarDetailTugas(): React.JSX.Element {
         </Text>
         {tugas ? (
           <View style={{ flexDirection: 'row', gap: 4 }}>
-            {!menyunting ? (
+            {!menyunting && tugas.can?.edit !== false ? (
               <Pressable
                 onPress={mulaiSunting}
                 accessibilityRole="button"
@@ -311,6 +311,7 @@ export default function LayarDetailTugas(): React.JSX.Element {
                 <Ionicons name="create-outline" size={22} color={colors.link} />
               </Pressable>
             ) : null}
+            {tugas.can?.delete !== false ? (
             <Pressable
               onPress={konfirmasiHapus}
               accessibilityRole="button"
@@ -320,6 +321,7 @@ export default function LayarDetailTugas(): React.JSX.Element {
             >
               <Ionicons name="trash-outline" size={22} color={colors.danger} />
             </Pressable>
+            ) : null}
           </View>
         ) : null}
       </Pressable>

@@ -185,3 +185,22 @@ test('chat endpoints reject requests without a token', function () {
     $this->getJson("/api/v1/obrolan/kanal/{$this->dm->id}/pesan")->assertUnauthorized();
     $this->postJson("/api/v1/obrolan/kanal/{$this->dm->id}/pesan", ['body' => 'Halo'])->assertUnauthorized();
 });
+
+it('includes the author name on every message and clears unread via the read endpoint', function () {
+    $tokenDimas = masukObrolan('dimas@kantor.test');
+
+    sebagaiTokenObrolan($tokenDimas)
+        ->postJson('/api/v1/obrolan/kanal/'.$this->dm->id.'/pesan', ['body' => 'Halo dengan nama'])
+        ->assertCreated();
+
+    $tokenSari = masukObrolan($this->sari->email);
+    sebagaiTokenObrolan($tokenSari)
+        ->getJson('/api/v1/obrolan/kanal/'.$this->dm->id.'/pesan')
+        ->assertOk()
+        ->assertJsonPath('messages.0.penulis.nama', 'Dimas Pratama');
+
+    sebagaiTokenObrolan($tokenSari)
+        ->postJson('/api/v1/obrolan/kanal/'.$this->dm->id.'/dibaca')
+        ->assertOk()
+        ->assertJsonPath('dibaca', true);
+});

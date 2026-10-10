@@ -220,6 +220,8 @@ export interface TaskListItem {
   source: TaskSource;
 }
 
+export type AnggotaWorkspace = { id: string; name: string; avatar: string | null; role: string };
+
 export interface TaskDetail extends TaskListItem {
   description_text: string | null;
   start_date: string | null;
@@ -227,6 +229,7 @@ export interface TaskDetail extends TaskListItem {
   url: string;
   created_at: string | null;
   completed_at: string | null;
+  can?: { edit: boolean; delete: boolean; comment: boolean };
 }
 
 export interface PageMeta {
@@ -312,6 +315,7 @@ export interface BoardTask {
   parent_id: string | null;
   parent_key: string | null;
   assignee_ids: string[];
+  assignees?: { id: string; nama: string | null }[];
   label_ids: string[];
   checklist: { done: number; total: number } | null;
   created_by: string;
@@ -530,6 +534,7 @@ export interface ChatChannel {
 
 /** ChatPresenter::message — body = dokumen Tiptap; aplikasi hanya memakai body_text. */
 export interface ChatMessage {
+  penulis?: { id: string; nama: string | null };
   id: string;
   channel_id: string;
   user_id: string;

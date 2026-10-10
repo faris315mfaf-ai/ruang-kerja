@@ -34,9 +34,10 @@ class MessageController extends Controller
 
         $before = $request->query('sebelum');
 
-        return response()->json(
-            $timeline->page($channel, $user, is_string($before) && $before !== '' ? $before : null, self::PAGE),
-        );
+        $payload = $timeline->page($channel, $user, is_string($before) && $before !== '' ? $before : null, self::PAGE);
+        $payload['messages'] = self::withAuthors($payload['messages']);
+
+        return response()->json($payload);
     }
 
     public function store(ChatMessageRequest $request, Channel $channel, #[CurrentUser] User $user, PostMessage $post, ChannelTimeline $timeline): JsonResponse
@@ -45,6 +46,29 @@ class MessageController extends Controller
 
         $message = $post->handle($channel, $user, RichText::fromText($request->string('body')->toString()));
 
-        return response()->json($timeline->one($message->fresh() ?? $message, $user), 201);
+        $payload = $timeline->one($message->fresh() ?? $message, $user);
+        $payload['message'] = self::withAuthors([$payload['message']])[0];
+
+        return response()->json($payload, 201);
+    }
+
+    /**
+     * The web presenter only carries user ids; the app shows the author's
+     * name on every bubble, so resolve it once per page.
+     *
+     * @param  list<array<string, mixed>>  $messages
+     * @return list<array<string, mixed>>
+     */
+    private static function withAuthors(array $messages): array
+    {
+        $names = User::query()
+            ->whereIn('id', collect($messages)->pluck('user_id')->filter()->unique()->values()->all())
+            ->pluck('name', 'id');
+
+        foreach ($messages as $index => $message) {
+            $messages[$index]['penulis'] = ['id' => $message['user_id'], 'nama' => $names[$message['user_id']] ?? null];
+        }
+
+        return $messages;
     }
 }

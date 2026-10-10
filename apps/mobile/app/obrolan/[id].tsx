@@ -20,7 +20,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError } from '@/api/client';
-import { kirimPesan, pesanKanal } from '@/api/endpoints';
+import { kirimPesan, pesanKanal, tandaiKanalDibaca } from '@/api/endpoints';
 import type { ChatMessage } from '@/api/types';
 import { Badge, Button, EmptyState, ErrorState, Input, Loading, Meta } from '@/components/ui';
 import { jam, tanggalDariYMD, ymdJakarta } from '@/lib/format';
@@ -66,6 +66,11 @@ function GelembungPesan({ pesan, milikSaya }: { pesan: ChatMessage; milikSaya: b
             : { backgroundColor: colors.surface, borderTopLeftRadius: radius.sm - 4 },
         ]}
       >
+        {!milikSaya && pesan.penulis?.nama ? (
+          <Text style={{ fontSize: 11, color: colors.muted, marginBottom: 2 }}>
+            {pesan.penulis.nama}
+          </Text>
+        ) : null}
         {terhapus ? (
           <Text style={[pesanGaya.teks, { color: milikSaya ? colors.primaryFg : colors.subtle, fontStyle: 'italic' }]}>
             Pesan dihapus
@@ -207,6 +212,9 @@ export default function LayarKanal(): React.JSX.Element {
     useCallback(() => {
       hidup.current = true;
       void muatTerbaru(false);
+      if (typeof id === 'string') {
+        void tandaiKanalDibaca(id).catch(() => undefined);
+      }
       const pewaktu = setInterval(() => {
         void muatTerbaru(true);
       }, 15_000);
@@ -214,7 +222,7 @@ export default function LayarKanal(): React.JSX.Element {
         hidup.current = false;
         clearInterval(pewaktu);
       };
-    }, [muatTerbaru]),
+    }, [id, muatTerbaru]),
   );
 
   useEffect(() => {

@@ -45,7 +45,11 @@ export function KartuPapan({ tugas, onPress }: { tugas: BoardTask; onPress: () =
         <View style={[gaya.chip, { backgroundColor: colors.surface2 }]}>
           <Ionicons name="person-outline" size={12} color={colors.muted} />
           <Text style={[gaya.chipTeks, { color: colors.muted }]}>
-            {tugas.assignee_ids.length > 0 ? tugas.assignee_ids.length : '—'}
+            {tugas.assignees && tugas.assignees.length > 0
+              ? tugas.assignees.map((a) => a.nama ?? '·').join(', ')
+              : tugas.assignee_ids.length > 0
+                ? `${tugas.assignee_ids.length} orang`
+                : '—'}
           </Text>
         </View>
         {tugas.checklist ? (
