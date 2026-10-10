@@ -5,9 +5,13 @@ use App\Http\Controllers\Api\Attendance\CheckInController;
 use App\Http\Controllers\Api\Attendance\CheckOutController;
 use App\Http\Controllers\Api\Attendance\MyAttendanceController;
 use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\Briefings\LatestBriefingController;
 use App\Http\Controllers\Api\Devices\DeviceController;
+use App\Http\Controllers\Api\Inbox\InboxController;
+use App\Http\Controllers\Api\Requests\RequestController;
 use App\Http\Controllers\Api\Task\TaskController;
 use App\Http\Controllers\Api\Task\TaskStatusController;
+use App\Http\Controllers\Api\Workspaces\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -58,6 +62,28 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::get('tugas/{task}', [TaskController::class, 'show'])->whereUlid('task')->name('tasks.show');
         Route::patch('tugas/{task}/status', TaskStatusController::class)->whereUlid('task')->name('tasks.status');
 
-        // inbox, workspace, pengajuan, briefing
+        // inbox — feed notifikasi aktif pemilik token (presenter web
+        // InboxNotificationResource; ?belum-dibaca=1 menyaring) dan tandai
+        // satu dibaca lewat Action web. Notifikasi orang lain tidak pernah
+        // ter-resolve (scope visibleTo → 404); "{notification}" = UUID.
+        Route::get('inbox', [InboxController::class, 'index'])->name('inbox.index');
+        Route::post('inbox/{notification}/baca', [InboxController::class, 'read'])
+            ->whereUuid('notification')->name('inbox.read');
+
+        // workspace — semua yang terlihat pemilik (Workspace::visibleTo),
+        // digroup seperti direktori web: pribadi · divisi · proyek · lainnya.
+        Route::get('workspace', WorkspaceController::class)->name('workspaces.index');
+
+        // pengajuan — "Pengajuan saya" pemilik (presenter web), jenis yang
+        // bisa diajukan (LeaveType terlihat+aktif, tanpa yang terkunci/
+        // belum eligible), dan kirim pengajuan baru lewat Action SubmitRequest
+        // web (alur approval + notifikasinya sama; draf tetap alur web).
+        Route::get('pengajuan/jenis', [RequestController::class, 'types'])->name('requests.types');
+        Route::get('pengajuan', [RequestController::class, 'index'])->name('requests.index');
+        Route::post('pengajuan', [RequestController::class, 'store'])->name('requests.store');
+
+        // briefing — catatan terakhir perusahaan pemilik (baca saja);
+        // 204 bila belum ada. Mencatat & delegasi tetap di web.
+        Route::get('briefing/terakhir', LatestBriefingController::class)->name('briefing.latest');
     });
 });
