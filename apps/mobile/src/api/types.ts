@@ -214,7 +214,7 @@ export interface TaskListItem {
   title: string;
   workspace: { key: string; name: string };
   status: TaskStatusInfo;
-  priority: { value: string; label: string };
+  priority: { value: number; label: string };
   due_date: string | null;
   assignees: string[];
   source: TaskSource;
@@ -241,6 +241,136 @@ export interface PageMeta {
 export interface TaskPage {
   tasks: TaskListItem[];
   meta: PageMeta;
+}
+
+// ── Tugas tulis (Tahap 2) ────────────────────────────────────────────────────
+
+/** POST /tugas — tanpa penanggung (kontrak belum mengirim daftar anggota). */
+export interface TaskStoreBody {
+  workspace_id: string;
+  title: string;
+  description?: string | null;
+  due_date?: string | null;
+  priority?: number;
+}
+
+/** PATCH /tugas/{task} — sebagian; assignee_ids tak dipakai aplikasi v1. */
+export interface TaskUpdateBody {
+  title?: string;
+  description?: string | null;
+  due_date?: string | null;
+  priority?: number;
+}
+
+// ── Komentar tugas (Tahap 2) ─────────────────────────────────────────────────
+
+export interface TaskCommentAuthor {
+  id: string;
+  name: string;
+  avatar: string | null;
+}
+
+/** CommentResource web — body/body_text null bila komentar dihapus. */
+export interface TaskComment {
+  kind: 'comment';
+  id: string;
+  task_id: string;
+  author: TaskCommentAuthor | null;
+  body: string | null;
+  body_text: string | null;
+  created_at: string | null;
+  edited_at: string | null;
+  deleted: boolean;
+  reactions: { emoji: string; count: number; user_ids: string[]; names: string[] }[];
+  attachments: unknown[];
+}
+
+export interface CommentPage {
+  comments: TaskComment[];
+  meta: PageMeta;
+}
+
+// ── Papan workspace (Tahap 2) ────────────────────────────────────────────────
+
+export type BoardTaskCategory = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done' | 'canceled';
+
+/** TaskResource web (kartu papan) — assignee hanya id, bukan nama. */
+export interface BoardTask {
+  id: string;
+  workspace_id: string;
+  number: number;
+  key: string;
+  title: string;
+  description_text: string | null;
+  status_id: string;
+  status_category: BoardTaskCategory;
+  priority: number;
+  position: number;
+  start_date: string | null;
+  due_date: string | null;
+  estimate_hours: number | null;
+  parent_id: string | null;
+  parent_key: string | null;
+  assignee_ids: string[];
+  label_ids: string[];
+  checklist: { done: number; total: number } | null;
+  created_by: string;
+  created_at: string | null;
+  completed_at: string | null;
+  comments?: { count: number; unread: boolean };
+}
+
+/** Kolom papan — `color` nama palet (gray…pink, lihat lib/palette). */
+export interface BoardColumn {
+  id: string;
+  name: string;
+  kategori: BoardTaskCategory;
+  color: string;
+  posisi: number;
+  tasks: BoardTask[];
+}
+
+export interface WorkspaceBoard {
+  workspace: { id: string; key: string; name: string };
+  columns: BoardColumn[];
+  hidden_closed_count: number;
+}
+
+// ── Catatan (Tahap 2) ────────────────────────────────────────────────────────
+
+/** Baris NoteLibrary web + nama penulis/penyunting dari endpoint ponsel. */
+export interface NoteRow {
+  id: string;
+  workspace_id: string;
+  parent_id: string | null;
+  kind: 'note' | 'folder';
+  preset: string | null;
+  title: string;
+  access: string;
+  created_by: string | null;
+  updated_by: string | null;
+  position: number;
+  created_at: string | null;
+  updated_at: string | null;
+  penulis: string | null;
+  penyunting: string | null;
+}
+
+export interface WorkspaceNotes {
+  workspace: { id: string; key: string; name: string };
+  can_create: boolean;
+  notes: NoteRow[];
+}
+
+/** NoteDetail — folder menjawab body_html/body_text null. */
+export interface NoteDetailData extends NoteRow {
+  workspace_key: string | null;
+  workspace_type: string | null;
+  can_edit: boolean;
+  can_share: boolean;
+  can_delete: boolean;
+  body_html: string | null;
+  body_text: string | null;
 }
 
 // ── Inbox ────────────────────────────────────────────────────────────────────

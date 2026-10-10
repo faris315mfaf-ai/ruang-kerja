@@ -134,6 +134,17 @@ export default function LayarLainnya(): React.JSX.Element {
             </View>
           </Card>
 
+          {/* Workspace (papan · catatan · tugas) */}
+          <Card style={{ paddingVertical: 4, paddingHorizontal: 12 }}>
+            <Row
+              title="Workspace"
+              subtitle="Papan, catatan, dan tugas per workspace"
+              onPress={() => router.push('/workspace')}
+              accessibilityLabel="Buka daftar workspace"
+              right={<Ionicons name="chevron-forward" size={18} color={colors.subtle} />}
+            />
+          </Card>
+
           {/* Riwayat absensi bulan ini */}
           <Card>
             <View style={gaya.kepala}>

@@ -25,12 +25,13 @@ export function TugasItem({
   const { colors } = useTheme();
   const selesai = tugas.status.is_done;
   const prioritas = tugas.priority?.label ?? '';
+  const nilai = tugas.priority?.value;
   const prioritasTone =
-    tugas.priority?.value === 'urgent'
+    nilai === 1
       ? 'danger'
-      : tugas.priority?.value === 'high'
+      : nilai === 2
         ? 'warning'
-        : tugas.priority?.value === 'low'
+        : nilai === 4
           ? 'neutral'
           : 'info';
 

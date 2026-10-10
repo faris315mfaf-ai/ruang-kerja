@@ -52,6 +52,10 @@ function RootNavigator(): React.JSX.Element {
         <Stack.Screen name="masuk" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="tugas/[id]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="tugas/baru" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="workspace/index" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="workspace/[id]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="catatan/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="pengajuan/baru" options={{ animation: 'slide_from_bottom' }} />
       </Stack>
       {status === 'keluar' ? <Redirect href="/masuk" /> : null}

@@ -105,7 +105,7 @@ function KartuTugas({ data }: { data: TodayTasks | null }): React.JSX.Element {
               key={tugas.id}
               tugas={{
                 ...tugas,
-                priority: { value: 'normal', label: tugas.priority },
+                priority: { value: 3, label: tugas.priority },
                 due_date: data?.today ?? null,
               }}
               onPress={() => router.push(`/tugas/${tugas.id}`)}

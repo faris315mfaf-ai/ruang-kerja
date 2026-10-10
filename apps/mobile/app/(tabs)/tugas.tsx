@@ -5,7 +5,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { daftarTugas } from '@/api/endpoints';
@@ -62,7 +62,19 @@ export default function LayarTugas(): React.JSX.Element {
 
   return (
     <Screen>
-      <Text style={[gaya.judul, { color: colors.text }]}>Tugas</Text>
+      <View style={gaya.kepala}>
+        <Text style={[gaya.judul, { color: colors.text }]}>Tugas</Text>
+        <Pressable
+          onPress={() => router.push('/tugas/baru')}
+          accessibilityRole="button"
+          accessibilityLabel="Buat tugas baru"
+          accessibilityHint="Membuka form tugas baru"
+          style={({ pressed }) => [gaya.tombolBaru, { borderColor: colors.primary, opacity: pressed ? 0.7 : 1 }]}
+        >
+          <Ionicons name="add" size={20} color={colors.primary} />
+          <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14 }}>Tugas</Text>
+        </Pressable>
+      </View>
       <Segmented<Lingkup>
         value={lingkup}
         onChange={(nilai) => {
@@ -84,7 +96,7 @@ export default function LayarTugas(): React.JSX.Element {
         <EmptyState
           icon="checkbox-outline"
           title={lingkup === 'saya' ? 'Belum ada tugas untuk Anda' : 'Belum ada tugas'}
-          description="Membuat tugas baru belum didukung aplikasi — lakukan lewat RuangKerja web."
+          description="Ketuk tombol + Tugas di atas untuk membuat tugas baru."
         />
       ) : (
         <>
@@ -129,6 +141,16 @@ export default function LayarTugas(): React.JSX.Element {
 }
 
 const gaya = StyleSheet.create({
-  judul: { fontSize: 26, fontWeight: '800', marginBottom: 2 },
+  kepala: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 2 },
+  judul: { fontSize: 26, fontWeight: '800' },
+  tombolBaru: {
+    minHeight: 44,
+    borderRadius: 999,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 14,
+  },
   tamat: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 8 },
 });
