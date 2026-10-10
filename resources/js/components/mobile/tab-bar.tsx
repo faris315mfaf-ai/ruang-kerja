@@ -5,7 +5,9 @@ import { useUnreadCount } from '@/features/notifications/unread-store';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useKeyboardOpen } from '@/hooks/use-keyboard-open';
 import { activeTabIndex, tabNavItems } from '@/lib/navigation';
+import type { CenterAction } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
+import { WorkspaceSheet } from './workspace-sheet';
 
 /**
  * Bottom tab bar as a floating capsule (mobile-first canvas › TabBar):
@@ -13,8 +15,8 @@ import { cn } from '@/lib/utils';
  * Glass, 12px from the sides, 14px above the safe area, 70px tall; hidden
  * while the keyboard is open (docs/PLATFORM.md §2.1, §4).
  *
- * Absen, the daily action, is a raised 54px gradient button in the middle.
- * The other active tab sits on a gradient pill (aksi; brighter with dark ink
+ * The raised 54px gradient button in the middle is the day's action. The
+ * other active tab sits on a gradient pill (aksi; brighter with dark ink
  * at night) that slides between tabs (transform only, 180ms ease-brand;
  * instant with prefers-reduced-motion). It moves on tap, before the next
  * page arrives, so the bar answers immediately; icons shrink on press.
@@ -27,32 +29,35 @@ export function TabBar() {
     const chat = features?.chat ?? false;
 
     /**
-     * Owner decision 9 Oct 2026: the daily Absen button disappears once the
-     * morning check-in is done and returns one hour before the shift ends
-     * (until the check-out), keeping the bar free of clutter. Unknown status
-     * keeps the button: attendance must stay reachable.
+     * Owner decision 9 Oct 2026: the raised button is Absen before the
+     * morning check-in and from one hour before the shift ends (until the
+     * check-out); once the user is checked in — and after the check-out —
+     * it becomes Workspace, opening the workspace picker sheet. Unknown
+     * status keeps Absen: attendance must stay reachable.
      */
-    const absen = useMemo(() => {
+    const center = useMemo<CenterAction>(() => {
         if (!attendanceStatus) {
-            return true;
+            return 'absen';
         }
 
         if (attendanceStatus.action === 'check_in') {
-            return true;
+            return 'absen';
         }
 
         if (attendanceStatus.action === 'check_out') {
-            return attendanceStatus.end === null
-                ? true
-                : Date.now() >= Date.parse(attendanceStatus.end) - 60 * 60_000;
+            return attendanceStatus.end !== null &&
+                Date.now() < Date.parse(attendanceStatus.end) - 60 * 60_000
+                ? 'workspace'
+                : 'absen';
         }
 
-        return false;
+        return 'workspace';
     }, [attendanceStatus]);
 
-    const items = tabNavItems(chat, absen);
+    const items = tabNavItems(chat, center);
     // Tab tapped while its page is still loading; dropped once the visit ends.
     const [pending, setPending] = useState<number | null>(null);
+    const [sheetOpen, setSheetOpen] = useState(false);
 
     useEffect(() => router.on('finish', () => setPending(null)), []);
 
@@ -60,7 +65,7 @@ export function TabBar() {
         return null;
     }
 
-    const current = activeTabIndex(currentUrl, chat, absen);
+    const current = activeTabIndex(currentUrl, chat, center);
     const shown = pending ?? current;
     // The centre button is its own highlight; the pill only serves side tabs.
     const pillHidden = shown < 0 || items[shown]?.center === true;
@@ -104,6 +109,41 @@ export function TabBar() {
                               : 0;
 
                     if (item.center) {
+                        // Workspace opens the picker sheet instead of a page.
+                        if (item.sheet === 'workspace') {
+                            return (
+                                <li
+                                    key={item.href}
+                                    className="relative min-w-0"
+                                >
+                                    <button
+                                        type="button"
+                                        aria-haspopup="dialog"
+                                        aria-expanded={sheetOpen}
+                                        data-tab-center
+                                        onClick={() => setSheetOpen(true)}
+                                        className={cn(
+                                            'group flex h-full min-h-11 flex-col items-center justify-end gap-0.5 rounded-full pb-[7px] text-[12px] leading-4 outline-none select-none [-webkit-touch-callout:none] focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:ring-inset',
+                                            highlighted
+                                                ? 'font-extrabold text-text'
+                                                : 'font-bold text-text-muted',
+                                        )}
+                                    >
+                                        <span className="-mt-[26px] flex size-[54px] items-center justify-center rounded-full bg-grad-active text-on-active shadow-button ring-4 ring-surface transition-transform duration-120 ease-brand group-focus-visible:ring-ring group-active:scale-90 motion-reduce:transition-none">
+                                            <item.icon
+                                                className="size-[26px]"
+                                                strokeWidth={2.2}
+                                                aria-hidden
+                                            />
+                                        </span>
+                                        <span className="max-w-full truncate px-0.5">
+                                            {item.title}
+                                        </span>
+                                    </button>
+                                </li>
+                            );
+                        }
+
                         return (
                             <li key={item.href} className="relative min-w-0">
                                 <Link
@@ -174,6 +214,7 @@ export function TabBar() {
                     );
                 })}
             </ul>
+            <WorkspaceSheet open={sheetOpen} onOpenChange={setSheetOpen} />
         </nav>
     );
 }

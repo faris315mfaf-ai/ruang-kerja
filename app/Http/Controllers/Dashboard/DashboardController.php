@@ -14,6 +14,7 @@ use App\Domain\Analytics\Queries\PersonalDashboard;
 use App\Domain\Analytics\Services\DashboardAccess;
 use App\Domain\Analytics\Services\DashboardContextResolver;
 use App\Domain\Attendance\Events\AttendanceRecorded;
+use App\Domain\Briefings\Queries\BriefingWindow;
 use App\Domain\Monitoring\Queries\DailyWorkMonitor;
 use App\Domain\Monitoring\Queries\ManagementNotes;
 use App\Domain\Monitoring\Queries\ProjectWorkMonitor;
@@ -21,8 +22,7 @@ use App\Domain\Monitoring\Queries\WeeklyWorkMonitor;
 use App\Domain\Monitoring\Queries\WorkspaceDirectory;
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Organization\Services\AuditLogger;
-use App\Domain\Planner\Queries\PersonalPlanner;
-use App\Domain\Reports\Queries\MyDailyReports;
+use App\Domain\Tasks\Queries\TugasHariIni;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -59,12 +59,13 @@ class DashboardController extends Controller
         private readonly PersonalDashboard $personalQueries,
         private readonly DivisionDashboard $divisionQueries,
         private readonly HrDashboard $hrQueries,
-        private readonly PersonalPlanner $planner,
         private readonly DailyWorkMonitor $daily,
         private readonly WeeklyWorkMonitor $weekly,
         private readonly ProjectWorkMonitor $projects,
         private readonly ManagementNotes $notes,
         private readonly WorkspaceDirectory $workspaces,
+        private readonly BriefingWindow $briefingWindow,
+        private readonly TugasHariIni $tugasHariIni,
     ) {}
 
     public function index(Request $request, #[CurrentUser] User $user): Response
@@ -116,6 +117,9 @@ class DashboardController extends Controller
             'definitions' => MetricCatalog::definitions(),
             'today' => CarbonImmutable::now(config()->string('app.office_timezone'))->toDateString(),
             'exportUrl' => '/dashboard/'.$view->value.'/ekspor',
+            // Kartu "Catat briefing" (keputusan pemilik 9 Okt 2026): null for
+            // employees who are neither HR / Super Admin nor a delegate today.
+            'briefing' => fn (): ?array => $this->briefingWindow->card($user, $now),
         ];
 
         return match ($view) {
@@ -132,15 +136,14 @@ class DashboardController extends Controller
     private function personal(DashboardContext $context, CarbonImmutable $now, array $shared): Response
     {
         $queries = $this->personalQueries;
-        $planner = $this->planner;
 
         return Inertia::render('dashboard/personal', [
             ...$shared,
             'live' => fn (): array => $queries->live($context->viewer, $now),
-            // "Ruang saya": the viewer's own plan, never cached (reloads alone with `only`).
-            'planner' => fn (): array => $planner->for($context->viewer, $now),
-            // Kartu "Laporan hari ini" (keputusan pemilik 6 Okt 2026): one query.
-            'dailyReport' => fn (): array => app(MyDailyReports::class)->status($context->viewer, $now),
+            // Kartu "Tugas hari ini" (keputusan pemilik 9 Okt 2026): pribadi /
+            // tim / semua — replaces "Ruang saya" (planner) and the "Laporan
+            // hari ini" card on this page.
+            'tugasHariIni' => fn (): array => $this->tugasHariIni->for($context->viewer, $now),
             'metrics' => Inertia::defer(fn (): array => $queries->metrics($context->viewer, $context->filters, $now)),
         ]);
     }

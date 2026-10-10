@@ -17,10 +17,12 @@ use App\Models\Comment;
 use App\Models\Reaction;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\Workspace;
 use App\Policies\TaskPolicy;
 use App\Policies\WorkspacePolicy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
  * Everything the task detail (TaskSheet, full-screen page, mobile
@@ -52,7 +54,13 @@ final class TaskDetail
         /** @var Task $task */
         $task = BoardTasks::query($viewer)
             ->with([
-                'workspace',
+                // withMembershipOf: roleOf($viewer) below (abilities, guard)
+                // reads the eager-loaded row instead of one query per check.
+                'workspace' => function (Relation $relation) use ($viewer): void {
+                    /** @var Builder<Workspace> $query */
+                    $query = $relation->getQuery();
+                    $query->withMembershipOf($viewer);
+                },
                 'status',
                 'creator:id,name,avatar_url',
                 'assignees:id,name,avatar_url',

@@ -1,9 +1,9 @@
 import { Link, usePage } from '@inertiajs/react';
 import { CalendarDays, Plus, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Panel, PanelLink } from '@/components/ui/panel';
-import { DailyReportCard } from '@/features/reports/daily-report-card';
-import { isStaffOnly } from '@/features/staff/roles';
+import { Panel } from '@/components/ui/panel';
+import { BriefingCard } from '@/features/briefings/briefing-card';
+import { LatestBriefingCard } from '@/features/briefings/latest-briefing-card';
 import { useTaskComposer } from '@/features/tasks/form/task-composer';
 import { formatLongDate, formatNumber } from '@/lib/format';
 import { formatShortDate } from '@/lib/requests';
@@ -20,8 +20,7 @@ import { compared, formatMetric, greeting, periodNoun } from './lib';
 import { MyAttendanceCard } from './my-attendance-card';
 import { AttendanceStrip } from './personal-parts';
 import type { PersonalProps } from './personal-types';
-import { RequestRows } from './request-rows';
-import { RuangSaya } from './ruang-saya/ruang-saya';
+import { TugasHariIniCard } from './tugas-hari-ini/tugas-hari-ini';
 import { ViewPicker } from './view-picker';
 import { QuickMinutesButton } from '@/features/notes/quick-minutes-button';
 
@@ -35,16 +34,18 @@ export function profileLine(profile: PersonalProps['live']['profile']): string {
         .join(' · ');
 }
 
-/** Dashboard Saya, desktop & tablet (design SBeranda). */
+/**
+ * Dashboard Saya, desktop & tablet (design SBeranda). Kartu utama: absensi
+ * hari ini dan "Tugas hari ini" pribadi · tim · semua (keputusan pemilik
+ * 9 Okt 2026 — kartu laporan harian, KPI saldo cuti/tugas terbuka/tepat
+ * waktu dan kartu pengajuan digantikan kartu tersebut).
+ */
 export function PersonalDesktop(props: PersonalProps) {
     const { auth } = usePage().props;
     const composer = useTaskComposer();
     const { metrics, live, definitions, filters } = props;
     const previous = props.filters.period.previous_label;
     const firstName = auth.user?.name.split(' ')[0] ?? '';
-    const open = metrics?.kpis.open_tasks;
-    // Staff do not see the annual leave balance (keputusan pemilik 6 Okt 2026).
-    const staff = isStaffOnly(auth.roles);
 
     return (
         <div className="flex flex-col gap-6">
@@ -62,62 +63,16 @@ export function PersonalDesktop(props: PersonalProps) {
                 className="flex flex-wrap items-stretch gap-5"
             >
                 <MyAttendanceCard className="flex-[1.4_1_420px]" />
-                {/* Laporan harian: most prominent for staff (keputusan pemilik 6 Okt 2026). */}
-                <DailyReportCard
-                    status={props.dailyReport}
-                    prominent={staff}
-                    className={
-                        staff ? 'flex-[1.2_1_320px]' : 'flex-[1_1_260px]'
-                    }
-                />
-                {!staff && (
-                    <MetricKpi
-                        href="/pengajuan"
-                        linkLabel={
-                            live.leave_balance
-                                ? `Saldo cuti ${formatNumber(live.leave_balance.remaining)} hari, buka pengajuan saya`
-                                : 'Saldo cuti belum ada, buka pengajuan saya'
-                        }
-                        label="Saldo cuti tahunan"
-                        definition="Sisa cuti tahunan setelah cuti yang disetujui."
-                        value={
-                            live.leave_balance
-                                ? formatNumber(live.leave_balance.remaining)
-                                : '–'
-                        }
-                        suffix={live.leave_balance ? 'hari' : undefined}
-                        note={
-                            live.leave_balance
-                                ? `${live.leave_balance.type.toLowerCase()} · berlaku s.d. 31 Des ${live.leave_balance.year}`
-                                : 'belum ada saldo'
-                        }
-                        className="flex-[1_1_220px]"
-                    />
-                )}
-                {open ? (
-                    <MetricKpi
-                        href="/tugas"
-                        linkLabel={`${formatNumber(open.value)} tugas terbuka${open.overdue > 0 ? `, ${open.overdue} terlambat` : ''}, buka tugas saya`}
-                        label="Tugas terbuka"
-                        definition="Tugas Anda yang belum Selesai atau Dibatalkan."
-                        value={formatNumber(open.value)}
-                        note={
-                            open.overdue > 0 ? (
-                                <b className="text-danger">
-                                    {open.overdue} terlambat
-                                </b>
-                            ) : (
-                                'tidak ada yang terlambat'
-                            )
-                        }
-                        className="flex-[1_1_220px]"
-                    />
-                ) : (
-                    <KpiSkeleton className="flex-[1_1_220px]" />
-                )}
             </section>
 
-            <RuangSaya planner={props.planner} variant="desktop" />
+            {/* Kartu "Catat briefing" (keputusan pemilik 9 Okt 2026): hanya
+                untuk pencatat (HR/Super Admin/delegasi) selama jendela aktif. */}
+            <BriefingCard briefing={props.briefing} variant="desktop" />
+
+            <TugasHariIniCard tugas={props.tugasHariIni} variant="desktop" />
+
+            {/* Cuplikan briefing terakhir untuk semua penampil dashboard. */}
+            <LatestBriefingCard briefing={props.briefing} variant="desktop" />
 
             <section
                 aria-label="Filter periode"
@@ -146,7 +101,7 @@ export function PersonalDesktop(props: PersonalProps) {
                 aria-label="Kinerja periode"
                 className="flex flex-col gap-3"
             >
-                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                     {metrics ? (
                         <>
                             <MetricKpi
@@ -161,24 +116,6 @@ export function PersonalDesktop(props: PersonalProps) {
                                     previous,
                                 )}
                                 note={`sejak ${formatShortDate(metrics.compared.current.from)}`}
-                            />
-                            <MetricKpi
-                                label="Ketepatan waktu saya"
-                                definition={definitions.on_time_rate}
-                                value={formatMetric(
-                                    metrics.kpis.on_time_rate.value,
-                                    'percent',
-                                )}
-                                delta={compared(
-                                    metrics.kpis.on_time_rate,
-                                    'percent',
-                                    previous,
-                                )}
-                                note={
-                                    metrics.kpis.on_time_rate.denominator > 0
-                                        ? `${metrics.kpis.on_time_rate.numerator} dari ${metrics.kpis.on_time_rate.denominator} tepat tenggat`
-                                        : 'belum ada tugas bertenggat yang selesai'
-                                }
                             />
                             <MetricKpi
                                 label="Kedisiplinan hadir"
@@ -210,7 +147,7 @@ export function PersonalDesktop(props: PersonalProps) {
                             />
                         </>
                     ) : (
-                        Array.from({ length: 4 }, (_, index) => (
+                        Array.from({ length: 3 }, (_, index) => (
                             <KpiSkeleton key={index} />
                         ))
                     )}
@@ -219,21 +156,6 @@ export function PersonalDesktop(props: PersonalProps) {
             </section>
 
             <section className="flex flex-wrap items-start gap-5">
-                <Panel
-                    title="Pengajuan saya"
-                    action={
-                        <PanelLink href="/pengajuan/baru">Ajukan</PanelLink>
-                    }
-                    flush
-                    className="min-w-0 flex-[1_1_420px] pb-3"
-                >
-                    <RequestRows items={live.requests} />
-                    <div className="border-t border-divider px-6 pt-3 md:px-7">
-                        <PanelLink href="/pengajuan">
-                            Riwayat pengajuan
-                        </PanelLink>
-                    </div>
-                </Panel>
                 {metrics ? (
                     <Panel
                         title={`Kehadiran ${metrics.compared.current.label}`}
@@ -258,7 +180,6 @@ export function PersonalDesktop(props: PersonalProps) {
             <p className="flex items-center gap-2 text-meta text-text-muted">
                 <ShieldCheck className="size-4 shrink-0" aria-hidden />
                 Data ini hanya terlihat oleh Anda, atasan langsung, dan HR.
-                Rencana di Ruang saya hanya terlihat oleh Anda.
             </p>
         </div>
     );

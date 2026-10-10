@@ -4,6 +4,7 @@
  * App\Domain\Analytics\Queries\*. Percentages are 0–100, dates "YYYY-MM-DD"
  * (office calendar), instants ISO-8601 UTC.
  */
+import type { BriefingCardData } from '@/features/briefings/types';
 import type { AttendanceStatus } from '@/types/attendance';
 import type { RequestItem } from '@/types/requests';
 
@@ -78,6 +79,11 @@ export type DashboardSharedProps = {
     definitions: MetricDefinitions;
     today: string;
     exportUrl: string;
+    /**
+     * Kartu "Catat briefing" (keputusan pemilik 9 Okt 2026): null for
+     * employees who are neither HR / Super Admin nor a delegate today.
+     */
+    briefing?: BriefingCardData | null;
 };
 
 export type PersonRef = {

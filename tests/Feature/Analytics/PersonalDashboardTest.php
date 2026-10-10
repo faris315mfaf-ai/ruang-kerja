@@ -12,6 +12,8 @@ use Database\Seeders\RoleSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\Support\AnalyticsFixtures as F;
 
+require_once __DIR__.'/../../Support/workspace-helpers.php';
+
 /*
  * Wednesday 7 Oct 2026 10.00 WIB, default period "Bulan ini" to date
  * (1–7 Oct) compared with 1–7 Sep.
@@ -41,24 +43,33 @@ beforeEach(function () {
 });
 
 it('shows only my own numbers', function () {
+    // "Tugas hari ini" (9 Okt 2026) only counts tasks due TODAY and only in
+    // workspaces Rizky is a member of; Ruang saya and its planner are gone.
+    addMember(Workspace::query()->where('key', 'PRJ')->firstOrFail(), $this->me);
+
     $this->actingAs($this->me)->get('/dashboard')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('dashboard/personal')
             ->where('filters.periode', 'bulan')
             ->where('live.profile', ['position' => null, 'manager' => 'Dimas Pratama'])
-            // Ruang saya (automatic lanes, Wed 7 Oct): overdue + due today → today,
-            // Fri → this week, undated personal note → later; done & others' tasks absent.
-            ->where('planner.today', '2026-10-07')
-            ->where('planner.counts', ['incoming' => 0, 'today' => 2, 'week' => 1, 'later' => 1])
-            ->where('planner.lanes.today.0.title', 'Rekap stok')
-            ->where('planner.lanes.today.0.days_late', 5)
-            ->where('planner.lanes.today.0.url', '/w/PRJ/tasks/1')
-            ->where('planner.lanes.today.1.title', 'Hari ini')
-            ->where('planner.lanes.week.0.title', 'Landing page')
-            ->where('planner.lanes.later.0.title', 'Catatan pribadi')
-            ->where('planner.lanes.later.0.is_personal', true)
-            ->where('planner.progress', ['done' => 0, 'total' => 2])
+            // Staff sees no briefing card: briefings arrive in their Inbox.
+            ->where('briefing', null)
+            ->missing('planner')
+            ->missing('dailyReport')
+            // Segments: personal note has no due date, only "Hari ini" (due
+            // 7 Oct, in_progress) is due today; overdue "Rekap stok" (2 Oct)
+            // and Friday's "Landing page" are not part of the card.
+            ->where('tugasHariIni.today', '2026-10-07')
+            ->where('tugasHariIni.counts', ['pribadi' => 0, 'tim' => 1, 'semua' => 1])
+            ->where('tugasHariIni.pribadi', [])
+            ->where('tugasHariIni.tim.0.title', 'Hari ini')
+            ->where('tugasHariIni.tim.0.key', 'PRJ-3')
+            ->where('tugasHariIni.tim.0.workspace.key', 'PRJ')
+            ->where('tugasHariIni.tim.0.status.category', 'in_progress')
+            ->where('tugasHariIni.tim.0.status.is_done', false)
+            ->where('tugasHariIni.tim.0.assignees', ['Rizky Aditya'])
+            ->where('tugasHariIni.semua.0.title', 'Hari ini')
             ->missing('live.focus')
             ->missing('live.week')
             ->loadDeferredProps(fn (Assert $reload) => $reload
@@ -74,17 +85,27 @@ it('shows only my own numbers', function () {
                 ->where('metrics.attendance.average_lateness.value', 24)));
 });
 
-it('shows a task assigned a minute ago in Ruang saya right away', function () {
-    // Warm the 5-minute metric cache.
+it('shows a task assigned a minute ago among today\'s tasks right away', function () {
+    // Warm the 5-minute metric cache — "Tugas hari ini" is a live prop.
     $this->actingAs($this->me)->get('/dashboard')->assertInertia(fn (Assert $page) => $page->loadDeferredProps(fn (Assert $reload) => $reload->has('metrics')));
 
     $ws = Workspace::query()->where('key', 'PRJ')->firstOrFail();
-    F::task($ws, Cat::Todo, [$this->me], ['due_date' => '2026-10-08', 'title' => 'Baru ditugaskan']);
+    addMember($ws, $this->me);
+    F::task($ws, Cat::Todo, [$this->me], ['due_date' => '2026-10-07', 'title' => 'Baru ditugaskan']);
     $this->travel(1)->minutes();
 
     $this->actingAs($this->me)->get('/dashboard')->assertInertia(fn (Assert $page) => $page
-        ->where('planner.counts.week', 2)
-        ->where('planner.lanes.week.0.title', 'Baru ditugaskan'));
+        ->where('tugasHariIni.counts.semua', 2)
+        ->where('tugasHariIni.tim.1.title', 'Baru ditugaskan'));
+});
+
+it('shows the briefing card to HR, with the open period of 10.00 WIB', function () {
+    $this->actingAs($this->org['hr'])->get('/dashboard/saya')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('briefing.date', '2026-10-07')
+            ->where('briefing.is_recorder', true)
+            ->where('briefing.current', 'pagi')
+            ->where('briefing.urls.store', '/briefing'));
 });
 
 it('shows my leave balance and latest requests', function () {

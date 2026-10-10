@@ -263,17 +263,20 @@ it('builds the shared team feed for a reader', function () {
             ->loadDeferredProps(fn (Assert $reload) => $reload->where('team.counts.submitted', 1)));
 });
 
-it('shows today\'s report status on Beranda', function () {
+it('keeps Beranda free of the report card since the 9 Oct 2026 dashboard', function () {
+    // "Laporan hari ini" moved off Beranda; "Tugas hari ini" replaced it.
     $this->actingAs($this->me)->get('/dashboard/saya')
-        ->assertInertia(fn (Assert $page) => $page->where('dailyReport.status', 'missing')->where('dailyReport.date', '2026-10-07'));
+        ->assertInertia(fn (Assert $page) => $page
+            ->missing('dailyReport')
+            ->where('tugasHariIni.today', '2026-10-07')
+            ->where('briefing', null));
 
     $this->actingAs($this->me)->postJson('/laporan/hari-ini/kirim', reportPayload(['items' => [['progress_note' => 'Rapat vendor']]]))->assertOk();
 
+    // Sending the report still works; Beranda stays as it was.
     $this->actingAs($this->me)->get('/dashboard/saya')
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('dailyReport.status', 'submitted')
-            ->where('dailyReport.items_count', 1)
-            ->where('dailyReport.submitted_at', fn ($at) => is_string($at)));
+        ->assertInertia(fn (Assert $page) => $page->missing('dailyReport'));
+    expect(DailyReport::query()->where('user_id', $this->me->id)->where('report_date', '2026-10-07')->count())->toBe(1);
 });
 
 it('reminds scheduled employees at 16.30 once, not those who sent, are off or on leave', function () {

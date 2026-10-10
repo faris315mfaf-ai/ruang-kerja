@@ -21,6 +21,7 @@ use App\Domain\Attendance\Services\SelfieStorage;
 use App\Domain\Notifications\Jobs\SendAttendanceWhatsApp;
 use App\Domain\Notifications\Services\EvolutionWhatsApp;
 use App\Domain\Organization\Enums\WorkMode;
+use App\Domain\Tasks\Actions\CreateWorkPlanTasks;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -40,6 +41,7 @@ final class CheckIn
         private readonly SelfieStorage $selfies,
         private readonly AttendanceLogWriter $logs,
         private readonly EvolutionWhatsApp $whatsapp,
+        private readonly CreateWorkPlanTasks $workPlanTasks,
     ) {}
 
     public function handle(User $user, CheckInData|QrCheckInData $data): AttendanceResult
@@ -97,6 +99,11 @@ final class CheckIn
                 $day->check_in_log_id = $log->id;
                 $day->is_suspicious = $day->is_suspicious || $log->is_suspicious;
                 $day->save();
+
+                // "Rencana kerja jadi tugas otomatis" (keputusan pemilik 9 Okt
+                // 2026): one task per work-plan point in the employee's personal
+                // workspace, inside this transaction (all-or-nothing, idempotent).
+                $this->workPlanTasks->handle($day);
 
                 return [$day, $log];
             });
