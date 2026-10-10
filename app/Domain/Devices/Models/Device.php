@@ -62,6 +62,17 @@ class Device extends Model
     use HasFactory, HasUlids;
 
     /**
+     * Name every Sanctum token of this installation carries ("device:{id}").
+     * The API login names its token this way, so a re-login can replace the
+     * previous token of the same installation and revoking the device can
+     * drop all of its tokens without extra schema.
+     */
+    public static function sanctumTokenName(string $deviceId): string
+    {
+        return 'device:'.$deviceId;
+    }
+
+    /**
      * Column defaults for new instances (synced with the migration), so fresh
      * in-memory models report false instead of null before being saved.
      *
