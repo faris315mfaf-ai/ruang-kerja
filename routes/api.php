@@ -8,12 +8,15 @@ use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Briefings\LatestBriefingController;
 use App\Http\Controllers\Api\Devices\DeviceController;
 use App\Http\Controllers\Api\Inbox\InboxController;
+use App\Http\Controllers\Api\Notes\NoteController;
+use App\Http\Controllers\Api\Notes\WorkspaceNotesController;
 use App\Http\Controllers\Api\Requests\RequestController;
 use App\Http\Controllers\Api\Task\TaskCommentController;
 use App\Http\Controllers\Api\Task\TaskController;
 use App\Http\Controllers\Api\Task\TaskStatusController;
 use App\Http\Controllers\Api\Workspaces\WorkspaceBoardController;
 use App\Http\Controllers\Api\Workspaces\WorkspaceController;
+use App\Http\Middleware\EnsureFeatureEnabled;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -77,6 +80,18 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         // (tugas terbuka + yang ditutup ≤30 hari, tanpa N+1); "{workspace}"
         // binding web (key/ULID, 404 bila tak terlihat) dipakai ulang.
         Route::get('workspace/{workspace}/papan', WorkspaceBoardController::class)->name('workspaces.board');
+
+        // catatan — di balik flag `notes` seperti web (404 saat mati). Daftar
+        // + buat per workspace (NoteLibrary/CreateNote web), detail dengan
+        // isi versi terakhir sebagai body_html (NoteHtml), simpan =
+        // fallback tanpa kolaborasi web (SaveNoteContent; konflik 409 bila
+        // updated_at dasarnya lebih tua). Kolaborasi realtime Yjs tetap web.
+        Route::middleware(EnsureFeatureEnabled::class.':notes')->group(function (): void {
+            Route::get('workspace/{workspace}/catatan', [WorkspaceNotesController::class, 'index'])->name('workspaces.notes');
+            Route::post('workspace/{workspace}/catatan', [WorkspaceNotesController::class, 'store'])->name('workspaces.notes.store');
+            Route::get('catatan/{note}', [NoteController::class, 'show'])->whereUlid('note')->name('notes.show');
+            Route::patch('catatan/{note}', [NoteController::class, 'update'])->whereUlid('note')->name('notes.update');
+        });
 
         // inbox — feed notifikasi aktif pemilik token (presenter web
         // InboxNotificationResource; ?belum-dibaca=1 menyaring) dan tandai
