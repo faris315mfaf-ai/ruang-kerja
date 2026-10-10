@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\Attendance\AttendanceHistoryController;
+use App\Http\Controllers\Api\Attendance\CheckInController;
+use App\Http\Controllers\Api\Attendance\CheckOutController;
+use App\Http\Controllers\Api\Attendance\MyAttendanceController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Devices\DeviceController;
 use Illuminate\Support\Facades\Route;
@@ -34,7 +38,16 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::delete('perangkat/{device}', [DeviceController::class, 'destroy'])->name('devices.destroy');
         Route::put('perangkat/{device}/push-token', [DeviceController::class, 'updatePushToken'])->name('devices.push-token');
 
-        // absensi & tugas
+        // absensi & tugas — pemilik token sendiri; Action, presenter dan Policy
+        // web dipakai ulang. Check-in/out memakai limiter `check-in` yang sama
+        // dengan web (6/menit per user); penolakan bisnis berbody identik
+        // ({message, reason, context} 422).
+        Route::get('absensi/hari-ini', [MyAttendanceController::class, 'today'])->name('attendance.today');
+        Route::get('absensi/riwayat', AttendanceHistoryController::class)->name('attendance.history');
+        Route::post('absensi/check-in', CheckInController::class)
+            ->middleware('throttle:check-in')->name('attendance.check-in');
+        Route::post('absensi/check-out', CheckOutController::class)
+            ->middleware('throttle:check-in')->name('attendance.check-out');
 
         // inbox, workspace, pengajuan, briefing
     });
