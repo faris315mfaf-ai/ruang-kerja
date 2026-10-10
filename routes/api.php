@@ -10,6 +10,11 @@ use App\Http\Controllers\Api\Chat\ChannelController as ChatChannelController;
 use App\Http\Controllers\Api\Chat\MessageController as ChatMessageController;
 use App\Http\Controllers\Api\Devices\DeviceController;
 use App\Http\Controllers\Api\Inbox\InboxController;
+use App\Http\Controllers\Api\Meetings\AgendaController as MeetingAgendaController;
+use App\Http\Controllers\Api\Meetings\CalendarController as MeetingCalendarController;
+use App\Http\Controllers\Api\Meetings\MeetingController as MeetingApiController;
+use App\Http\Controllers\Api\Meetings\MinutesController as MeetingMinutesController;
+use App\Http\Controllers\Api\Meetings\RsvpController as MeetingRsvpController;
 use App\Http\Controllers\Api\Notes\NoteController;
 use App\Http\Controllers\Api\Notes\WorkspaceNotesController;
 use App\Http\Controllers\Api\Requests\RequestController;
@@ -106,6 +111,23 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 ->whereUlid('channel')->name('chat.messages.index');
             Route::post('obrolan/kanal/{channel}/pesan', [ChatMessageController::class, 'store'])
                 ->whereUlid('channel')->middleware('throttle:messages')->name('chat.messages.store');
+        });
+
+        // rapat & kalender — di balik flag `meetings` seperti web (404 saat
+        // mati). Agenda/detail/notulen/RSVP ponsel memakai query, presenter,
+        // Action dan Policy web rapat: kemunculan seri diperluas
+        // (MeetingFeed/MeetingOccurrences, tanpa N+1), notulen dibaca dari
+        // MinutesStore + MeetingPresenter, RSVP lewat UpdateRsvp (berlaku
+        // untuk seluruh seri), kalender = CalendarFeed web. Rapat tak
+        // terlihat → 404 (denyAsNotFound), isi tidak pernah bocor. Ruang
+        // video v1 dibuka di browser: detail menyertakan join_href web,
+        // tanpa token LiveKit lewat API.
+        Route::middleware(EnsureFeatureEnabled::class.':meetings')->group(function (): void {
+            Route::get('rapat', MeetingAgendaController::class)->name('meetings.index');
+            Route::get('rapat/{meeting}', [MeetingApiController::class, 'show'])->whereUlid('meeting')->name('meetings.show');
+            Route::post('rapat/{meeting}/kehadiran', [MeetingRsvpController::class, 'store'])->whereUlid('meeting')->name('meetings.rsvp');
+            Route::get('rapat/{meeting}/notulen', [MeetingMinutesController::class, 'show'])->whereUlid('meeting')->name('meetings.minutes.show');
+            Route::get('kalender', MeetingCalendarController::class)->name('meetings.calendar');
         });
 
         // inbox — feed notifikasi aktif pemilik token (presenter web
