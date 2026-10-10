@@ -10,6 +10,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RestrictCredentialRoutes;
 use App\Http\Middleware\RestrictKioskDevice;
 use App\Http\Middleware\SecurityHeaders;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -22,6 +23,7 @@ use Sentry\Laravel\Integration;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
@@ -68,6 +70,13 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
+
+        // API ponsel (Sanctum): the same active-employee rule as `web`. Appended
+        // to the `api` group, and pinned right after `auth` in the priority list
+        // (group middleware would otherwise run before `auth:sanctum`, when the
+        // token user is not resolved yet and the check would be a silent no-op).
+        $middleware->api(append: [EnsureActiveEmployee::class]);
+        $middleware->appendToPriorityList(after: Authenticate::class, append: EnsureActiveEmployee::class);
 
         // Must run before `auth`, which Laravel's priority list would otherwise move ahead of it.
         $middleware->prependToPriorityList(before: AuthenticatesRequests::class, prepend: RestrictKioskDevice::class);

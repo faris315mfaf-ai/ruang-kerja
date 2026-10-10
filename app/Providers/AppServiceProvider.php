@@ -77,6 +77,8 @@ class AppServiceProvider extends ServiceProvider
      *   plus 5/min per email+IP so one account cannot be brute-forced from an IP.
      * - `check-in`: attendance check-in/out routes. 6/min per user.
      * - `api`: JSON API (Phase 3, Sanctum). 120/min per user, or per IP for guests.
+     * - `api-v1`: mobile app API v1 (Tahap 1). 60/min per user, Indonesian 429 body.
+     * - `api-login`: mobile app login, 10/min per IP (credential failures also hit `login`).
      * - `comments`: posting/editing task comments, 30/min per user.
      * - `drive-uploads`: starting a chunked Drive upload, google.upload.starts_per_minute
      *   per user; 429 body is Indonesian JSON (`code` drive_upload_throttled).
@@ -97,6 +99,26 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('api', fn (Request $request): Limit => Limit::perMinute(120)
             ->by($this->userOrIpKey($request)));
+
+        // API ponsel v1 (Tahap 1): protected endpoints, 60/min per user (per IP
+        // before the token is resolved). The 429 body is Indonesian JSON so the
+        // app can show it as is.
+        RateLimiter::for('api-v1', fn (Request $request): Limit => Limit::perMinute(60)
+            ->by('api-v1|'.$this->userOrIpKey($request))
+            ->response(fn (Request $request, array $headers): JsonResponse => response()->json([
+                'message' => 'Terlalu banyak permintaan. Coba lagi beberapa saat lagi.',
+                'code' => 'throttled',
+            ], 429, $headers)));
+
+        // API login (POST /api/v1/auth/login): per IP, before any user exists —
+        // brute-force guard for the password check. Credential failures also
+        // count towards Fortify's `login` limiter (AuthenticateEmployee).
+        RateLimiter::for('api-login', fn (Request $request): Limit => Limit::perMinute(10)
+            ->by('api-login|'.$request->ip())
+            ->response(fn (Request $request, array $headers): JsonResponse => response()->json([
+                'message' => 'Terlalu banyak percobaan masuk. Coba lagi dalam satu menit.',
+                'code' => 'login_throttled',
+            ], 429, $headers)));
 
         // Task comments (post/edit): generous for humans, stops scripted floods of mention notifications.
         RateLimiter::for('comments', fn (Request $request): Limit => Limit::perMinute(30)
