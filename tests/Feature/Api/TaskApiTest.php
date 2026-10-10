@@ -18,7 +18,9 @@ require_once __DIR__.'/../../Support/workspace-helpers.php';
 | assignment by superiors stays a web flow for now.
 */
 
-const HASH_PONSEL = 'abababababababababababababababababababababababababababababababab'; // 64 hex (SHA-256)
+if (! defined('HASH_PONSEL')) {
+    define('HASH_PONSEL', 'abababababababababababababababababababababababababababababababab');
+} // 64 hex (SHA-256)
 
 beforeEach(function () {
     $this->seed(RoleSeeder::class);

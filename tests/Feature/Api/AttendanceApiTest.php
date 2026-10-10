@@ -22,7 +22,9 @@ use Tests\Support\AttendanceFixtures as F;
 | with the user's Sanctum device token (POST /api/v1/auth/login).
 */
 
-const HASH_PONSEL = 'abababababababababababababababababababababababababababababababab'; // 64 hex (SHA-256)
+if (! defined('HASH_PONSEL')) {
+    define('HASH_PONSEL', 'abababababababababababababababababababababababababababababababab');
+} // 64 hex (SHA-256)
 
 /**
  * Signs the employee in through the real endpoint and returns the token.

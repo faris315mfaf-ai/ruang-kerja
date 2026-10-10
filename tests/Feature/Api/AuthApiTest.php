@@ -21,8 +21,12 @@ use Tests\TestCase;
 | receives a Sanctum token named after its device (Device::sanctumTokenName).
 */
 
-const HASH_PONSEL = 'abababababababababababababababababababababababababababababababab'; // 64 hex (SHA-256)
-const HASH_PONSEL_LAIN = 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd';
+if (! defined('HASH_PONSEL')) {
+    define('HASH_PONSEL', 'abababababababababababababababababababababababababababababababab');
+} // 64 hex (SHA-256)
+if (! defined('HASH_PONSEL_LAIN')) {
+    define('HASH_PONSEL_LAIN', 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd');
+}
 
 beforeEach(function () {
     $this->seed(RoleSeeder::class);

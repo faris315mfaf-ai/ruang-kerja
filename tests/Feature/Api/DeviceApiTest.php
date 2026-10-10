@@ -15,7 +15,9 @@ use Tests\TestCase;
 | from the presented token (Device::sanctumTokenName).
 */
 
-const HASH_PONSEL = 'abababababababababababababababababababababababababababababababab'; // 64 hex (SHA-256)
+if (! defined('HASH_PONSEL')) {
+    define('HASH_PONSEL', 'abababababababababababababababababababababababababababababababab');
+} // 64 hex (SHA-256)
 const HASH_TABLET = 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd';
 const FCM_TOKEN = 'fcm-token-1-abcdefghijklmnopqrstuvwxyz0123456789';
 

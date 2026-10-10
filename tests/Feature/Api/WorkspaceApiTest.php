@@ -16,7 +16,9 @@ require_once __DIR__.'/../../Support/workspace-helpers.php';
 | else's personal workspace never appears.
 */
 
-const HASH_PONSEL = 'abababababababababababababababababababababababababababababababab'; // 64 hex (SHA-256)
+if (! defined('HASH_PONSEL')) {
+    define('HASH_PONSEL', 'abababababababababababababababababababababababababababababababab');
+} // 64 hex (SHA-256)
 
 beforeEach(function () {
     $this->seed(RoleSeeder::class);

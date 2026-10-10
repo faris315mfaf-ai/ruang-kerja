@@ -18,7 +18,9 @@ use Tests\TestCase;
 | action — approval flow, numbering and the approver notification included.
 */
 
-const HASH_PONSEL = 'abababababababababababababababababababababababababababababababab'; // 64 hex (SHA-256)
+if (! defined('HASH_PONSEL')) {
+    define('HASH_PONSEL', 'abababababababababababababababababababababababababababababababab');
+} // 64 hex (SHA-256)
 
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
