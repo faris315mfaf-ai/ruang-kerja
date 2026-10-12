@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Daftar obrolan keadaan · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+<style>
+.ob-sec{padding:6px 6px 0;font-size:13px;line-height:18px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+.ob-sec .n{font-weight:600;letter-spacing:0;text-transform:none}
+.ob-row{display:flex;gap:12px;padding:10px 16px;min-height:72px;align-items:center;position:relative}
+.ob-row+.ob-row{border-top:1px solid var(--divider)}
+.ob-row.un:before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:0 4px 4px 0;background:var(--primary)}
+.ob-row .tt{font-size:17px;line-height:24px;font-weight:600;display:flex;align-items:center;gap:6px;min-width:0}
+.ob-row.un .tt{font-weight:800}
+.ob-row .tt span.x{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ob-row .pv{font-size:15px;line-height:20px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ob-row.un .pv{color:var(--text);font-weight:500}
+.ob-row .pv b{font-weight:700;color:var(--text)}
+.ob-row .rt{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none;min-width:44px}
+.ob-row .tm{font-size:13px;line-height:18px;color:var(--text-muted);font-weight:500}
+.ob-row.un .tm{color:var(--link);font-weight:700}
+.ob-bd{min-width:22px;height:22px;border-radius:11px;background:#E5484D;color:#fff;font-size:13px;line-height:22px;font-weight:700;text-align:center;padding:0 6px}
+.ob-bd.mute{background:var(--border-strong);color:var(--text)}
+.ob-tile{width:48px;height:48px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;letter-spacing:.02em;flex:none;position:relative}
+.ob-tile.sm{width:40px;height:40px;border-radius:13px;font-size:12px}
+.ob-tile.g1{background:var(--grad-merek)}.ob-tile.g2{background:var(--grad-indigo)}.ob-tile.g3{background:var(--grad-aksi)}.ob-tile.g4{background:var(--grad-hangat)}.ob-tile.g5{background:var(--grad-slate)}
+.ob-tile.pub{background:var(--link-soft);color:var(--link)}.ob-tile.prv{background:var(--surface-2);color:var(--text-muted)}
+.ob-tile.grp{background:var(--info-soft);color:var(--info)}
+.ob-pr{position:absolute;right:-1px;bottom:-1px;width:14px;height:14px;border-radius:7px;background:var(--fill-teal);border:3px solid var(--surface)}
+.ob-pr.off{background:var(--border-strong)}
+.ob-av{position:relative;flex:none;display:inline-flex}
+.ob-stack{display:flex;flex:none}.ob-stack .avatar{border:2px solid var(--surface);margin-left:-10px}.ob-stack .avatar:first-child{margin-left:0}
+.ob-chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 10px 0 6px;border-radius:18px;background:var(--link-soft);color:var(--link);font-size:15px;font-weight:700;flex:none}
+.ob-chip .avatar{width:26px;height:26px;font-size:11px}
+.ob-chip i{--s:16px}
+.ob-col{display:flex;flex-direction:column}
+.ob-hd{height:60px;flex:none;display:flex;align-items:center;gap:6px;padding:0 4px;background:var(--glass);backdrop-filter:blur(24px);border-bottom:1px solid var(--border)}
+.ob-hd .ibtn{border:0;box-shadow:none;background:transparent;width:44px;height:48px;border-radius:24px}
+.ob-hd .nm{font-size:17px;line-height:22px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ob-hd .sb2{font-size:13px;line-height:17px;color:var(--text-muted);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ob-hd .sb2.ty{color:var(--link);font-weight:700}
+.ob-msgs{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:3px;padding:8px 12px 10px;position:relative}
+.ob-day{align-self:center;height:28px;padding:0 12px;border-radius:14px;background:var(--surface-2);color:var(--text-muted);font-size:13px;font-weight:700;display:inline-flex;align-items:center;margin:10px 0 6px;flex:none}
+.ob-new{align-self:stretch;display:flex;align-items:center;gap:10px;margin:10px 0 6px;color:var(--bad);font-size:13px;font-weight:700;flex:none}
+.ob-new:before,.ob-new:after{content:"";height:1px;background:currentColor;opacity:.5;flex:1}
+.ob-m{display:flex;gap:8px;align-items:flex-end;flex:none}
+.ob-m.me{justify-content:flex-end}
+.ob-m.first{margin-top:8px}
+.ob-m .sp{width:32px;flex:none}
+.ob-m .avatar{width:32px;height:32px;font-size:12px}
+.ob-w{display:flex;flex-direction:column;gap:4px;max-width:80%;min-width:0}
+.ob-m.me .ob-w{align-items:flex-end}
+.ob-b{padding:8px 13px 6px;border-radius:18px 18px 18px 6px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-card);position:relative}
+.ob-m.mid .ob-b{border-radius:6px 18px 18px 6px}
+.ob-m.me .ob-b{background:var(--grad-aksi);color:#fff;border:0;border-radius:18px 18px 6px 18px;box-shadow:var(--shadow-btn)}
+.ob-b.hl{outline:3px solid var(--ring)}
+.ob-b.del{background:transparent;border:1.5px dashed var(--border-strong);box-shadow:none;color:var(--text-subtle);font-style:italic}
+.ob-m.me .ob-b.del{background:transparent;color:var(--text-muted);border:1.5px dashed var(--border-strong);box-shadow:none}
+.ob-who{font-size:13px;line-height:18px;font-weight:700;color:var(--link);margin-bottom:1px}
+.ob-who .rl{color:var(--text-muted);font-weight:500;margin-left:6px}
+.ob-t{font-size:16px;line-height:23px;word-break:break-word}
+.ob-ft{display:flex;justify-content:flex-end;align-items:center;gap:6px;font-size:13px;line-height:16px;color:var(--text-subtle);margin-top:2px}
+.ob-m.me .ob-ft{color:rgba(255,255,255,.85)}
+.ob-ft i{--s:15px}
+.ob-ft .rd{color:#9DF3E8;display:inline-flex}
+.ob-mn{background:var(--link-soft);color:var(--link);border-radius:6px;padding:0 4px;font-weight:700}
+.ob-m.me .ob-mn{background:rgba(255,255,255,.22);color:#fff}
+.ob-tk{display:inline-flex;align-items:center;gap:5px;height:24px;vertical-align:1px;padding:0 7px;border-radius:7px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600}
+.ob-tk:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--fill-teal)}
+.ob-tk.todo:before{background:var(--border-strong)}.ob-tk.done:before{background:var(--ok)}
+.ob-m.me .ob-tk{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.35);color:#fff}
+.ob-rx{display:flex;gap:6px;flex-wrap:wrap}
+.ob-rx span{height:32px;padding:0 10px;border-radius:16px;border:1px solid var(--border);background:var(--surface);display:inline-flex;align-items:center;gap:5px;font-size:16px;font-weight:700}
+.ob-rx span b{font-size:14px;color:var(--text-muted);font-weight:700}
+.ob-rx span.me{background:var(--link-soft);border-color:var(--primary)}.ob-rx span.me b{color:var(--link)}
+.ob-th{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 4px;color:var(--link);font-size:14px;font-weight:700}
+.ob-th .ob-stack .avatar{width:22px;height:22px;font-size:9px;margin-left:-6px}
+.ob-th .ob-stack .avatar:first-child{margin-left:0}
+.ob-th i{--s:16px}
+.ob-th span.m{color:var(--text-muted);font-weight:500}
+.ob-att{display:flex;align-items:center;gap:10px;margin-top:6px;padding:8px 10px;border-radius:14px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);min-width:230px}
+.ob-m.me .ob-att{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3);color:#fff}
+.ob-att .fi{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:var(--info-soft);color:var(--info);flex:none}
+.ob-att .fi.sh{background:var(--ok-soft);color:var(--ok)}.ob-att .fi.pd{background:var(--bad-soft);color:var(--bad)}.ob-att .fi.im{background:var(--warn-soft);color:var(--warn)}
+.ob-att .n{font-size:15px;line-height:20px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ob-att .s{font-size:13px;line-height:17px;opacity:.8}
+.ob-ty{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--link);font-weight:600;padding:2px 4px 0 44px;flex:none}
+.ob-ty .d{display:inline-flex;gap:3px}.ob-ty .d i{width:6px;height:6px;border-radius:3px;background:currentColor;opacity:.75}.ob-ty .d i:nth-child(2){opacity:.5}.ob-ty .d i:nth-child(3){opacity:.3}
+.ob-pill{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;height:44px;padding:0 18px;border-radius:22px;background:var(--grad-aksi);color:#fff;display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:700;box-shadow:var(--shadow-btn);z-index:5;white-space:nowrap}
+.ob-jmp{position:absolute;right:14px;bottom:12px;width:44px;height:44px;border-radius:22px;background:var(--surface);border:1px solid var(--border-strong);box-shadow:var(--shadow-float);display:flex;align-items:center;justify-content:center;z-index:5}
+.ob-comp{flex:none;padding:8px 8px 10px;background:var(--glass);backdrop-filter:blur(24px);border-top:1px solid var(--border);display:flex;align-items:flex-end;gap:6px}
+.ob-in{flex:1;min-height:48px;border-radius:24px;border:1px solid var(--border-strong);background:var(--surface);padding:11px 16px;font-size:17px;line-height:24px;display:flex;align-items:center;gap:8px;min-width:0}
+.ob-in .ph{color:var(--text-subtle)}
+.ob-in.foc{border-color:var(--primary);box-shadow:0 0 0 4px var(--ring)}
+.ob-in.dis{background:var(--surface-2);color:var(--text-muted);border-style:dashed}
+.ob-in .cr{display:inline-block;width:2px;height:22px;background:var(--primary);margin-left:1px;vertical-align:-5px}
+.ob-ib{width:48px;height:48px;border-radius:24px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--text-muted);border:0;background:transparent}
+.ob-send{width:48px;height:48px;border-radius:24px;background:var(--grad-aksi);color:#fff;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:var(--shadow-btn);border:0}
+.ob-send.off{background:var(--surface-2);color:var(--text-subtle);box-shadow:none}
+.ob-ctx{flex:none;display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--link-soft);color:var(--link);border-top:1px solid var(--border);font-size:14px;line-height:20px;font-weight:600}
+.ob-ctx .tx{flex:1;min-width:0}.ob-ctx .tx div:last-child{color:var(--text-muted);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ob-ctx i{--s:20px}
+.ob-pend{display:flex;gap:8px;overflow:hidden;padding:8px 10px 0;flex:none;background:var(--glass);border-top:1px solid var(--border)}
+.ob-pc{display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 6px 0 10px;border-radius:14px;background:var(--surface);border:1px solid var(--border-strong);font-size:14px;font-weight:600;max-width:216px;flex:none}
+.ob-pc .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ob-pc i{--s:18px}
+.ob-pc .x{width:32px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:var(--text-muted)}
+.ob-net{flex:none;display:flex;align-items:center;gap:10px;padding:9px 16px;font-size:14px;line-height:19px;font-weight:600;background:var(--warn-soft);color:var(--warn)}
+.ob-net.bad{background:var(--bad-soft);color:var(--bad)}.ob-net.ok{background:var(--ok-soft);color:var(--ok)}.ob-net.info{background:var(--info-soft);color:var(--info)}
+.ob-net i{--s:18px;flex:none}
+.ob-net .sp2{width:16px;height:16px;border-radius:50%;border:2.5px solid currentColor;border-right-color:transparent;flex:none}
+.ob-net a{margin-left:auto;color:inherit;text-decoration:underline;font-weight:700;white-space:nowrap}
+.ob-act{display:flex;align-items:center;gap:14px;min-height:52px;padding:0 6px;font-size:17px;font-weight:600;border-radius:14px}
+.ob-act i{--s:22px;color:var(--text-muted)}
+.ob-act.bad{color:var(--bad)}.ob-act.bad i{color:var(--bad)}
+.ob-act .m{font-size:13px;color:var(--text-muted);font-weight:500;margin-left:auto}
+.ob-act.dim{color:var(--text-subtle)}.ob-act.dim i{color:var(--text-subtle)}
+.ob-act2{display:flex;align-items:center;gap:14px;padding:10px 6px;border-radius:14px}
+.ob-act2 .ic{width:44px;height:44px;border-radius:14px;background:var(--link-soft);color:var(--link);display:flex;align-items:center;justify-content:center;flex:none}
+.ob-act2 .t{font-size:17px;line-height:23px;font-weight:700}.ob-act2 .m{font-size:14px;line-height:19px;color:var(--text-muted)}
+.ob-emo{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;padding:4px 0}
+.ob-emo span{height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:25px}
+.ob-emo span.me{background:var(--link-soft);box-shadow:inset 0 0 0 2px var(--primary)}
+.ob-prev{border-radius:16px;background:var(--surface);border:1px solid var(--border);padding:10px 14px}
+.ob-prev .a{font-size:13px;font-weight:700;color:var(--link)}.ob-prev .t{font-size:15px;line-height:21px;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ob-sheet-h{display:flex;align-items:center;justify-content:space-between}
+.ob-sheet-h h3{margin:0;font-size:20px;line-height:26px;font-weight:700}
+.ob-ppl{display:flex;align-items:center;gap:12px;min-height:64px;padding:6px}
+.ob-ppl+.ob-ppl{border-top:1px solid var(--divider)}
+.ob-ppl .t{font-size:17px;line-height:22px;font-weight:600}.ob-ppl .m{font-size:14px;line-height:19px;color:var(--text-muted)}
+.ob-search{height:48px;border-radius:24px;background:var(--surface);border:1px solid var(--border-strong);display:flex;align-items:center;gap:10px;padding:0 6px 0 16px;font-size:17px;flex:1;min-width:0}
+.ob-search.foc{border-color:var(--primary);box-shadow:0 0 0 4px var(--ring)}
+.ob-search .ph{color:var(--text-subtle)}
+.ob-search .x{width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);margin-left:auto}
+.ob-hl{background:var(--warn-soft);color:var(--warn);border-radius:4px;padding:0 2px;font-weight:800;box-shadow:0 0 0 1px var(--warn)}
+.ob-m.me .ob-hl{background:#FFE6B8;color:#7A4600;box-shadow:none}
+.ob-kb{position:absolute;left:0;right:0;bottom:24px;height:290px;background:var(--surface-2);border-top:1px solid var(--border);padding:6px 4px;display:flex;flex-direction:column;gap:7px;z-index:25}
+.ob-kb .st{height:38px;display:flex;align-items:center;justify-content:space-around;font-size:17px;font-weight:500;color:var(--text);border-bottom:1px solid var(--border)}
+.ob-kb .r{display:flex;gap:5px;justify-content:center;flex:1}
+.ob-kb .r b{flex:1;max-width:38px;border-radius:9px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:500;box-shadow:0 1px 0 var(--border-strong)}
+.ob-kb .r b.w{max-width:54px;background:var(--surface-2);font-size:15px;white-space:nowrap}.ob-kb .r b.sp{max-width:none;flex:5}.ob-kb .r b.go{max-width:60px;background:var(--primary);color:var(--primary-fg);border-color:transparent}
+.ob-kb .r b i{--s:20px}
+.ob-note{position:absolute;z-index:60;background:#FFF4C2;color:#5C4A00;border:1px solid #E7CF6A;border-radius:10px;padding:6px 9px;font-size:11px;line-height:15px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.18);pointer-events:none;max-width:190px}
+.ob-pop{position:absolute;left:10px;right:10px;z-index:26;background:var(--glass);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-float);padding:6px;display:flex;flex-direction:column}
+.ob-pop .it{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 10px;border-radius:14px}
+.ob-pop .it.on{background:var(--link-soft)}
+.ob-pop .it .t{font-size:16px;line-height:21px;font-weight:600}.ob-pop .it .m{font-size:13px;line-height:17px;color:var(--text-muted)}
+.ob-pop .hd{padding:8px 10px 4px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
+.ob-skl{display:flex;align-items:center;gap:12px;padding:12px 16px;min-height:72px}
+</style>
+</head>
+<body>
+<div class="stage">
+<div class="phone" style="--h:915px">
+<div class="body" style="">
+<div class="appbar" style="padding-top:20px"><h1 class="t-display">Obrolan</h1><div class="acts"><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div></div><div class="pad stack" style="margin-top:8px;gap:12px"><div class="seg"><span class="on">Semua</span><span>Belum dibaca</span></div><div class="skel" style="height:16px;width:120px"></div><div class="card flush"><div class="ob-skl"><div class="skel" style="width:48px;height:48px;border-radius:16px"></div><div class="grow stack" style="gap:8px"><div class="skel" style="height:16px;width:50%"></div><div class="skel" style="height:14px;width:70%"></div></div><div class="skel" style="width:36px;height:14px"></div></div><div class="ob-skl"><div class="skel" style="width:48px;height:48px;border-radius:16px"></div><div class="grow stack" style="gap:8px"><div class="skel" style="height:16px;width:63%"></div><div class="skel" style="height:14px;width:63%"></div></div><div class="skel" style="width:36px;height:14px"></div></div><div class="ob-skl"><div class="skel" style="width:48px;height:48px;border-radius:16px"></div><div class="grow stack" style="gap:8px"><div class="skel" style="height:16px;width:76%"></div><div class="skel" style="height:14px;width:56%"></div></div><div class="skel" style="width:36px;height:14px"></div></div><div class="ob-skl"><div class="skel" style="width:48px;height:48px;border-radius:16px"></div><div class="grow stack" style="gap:8px"><div class="skel" style="height:16px;width:59%"></div><div class="skel" style="height:14px;width:69%"></div></div><div class="skel" style="width:36px;height:14px"></div></div><div class="ob-skl"><div class="skel" style="width:48px;height:48px;border-radius:16px"></div><div class="grow stack" style="gap:8px"><div class="skel" style="height:16px;width:72%"></div><div class="skel" style="height:14px;width:62%"></div></div><div class="skel" style="width:36px;height:14px"></div></div><div class="ob-skl"><div class="skel" style="width:48px;height:48px;border-radius:16px"></div><div class="grow stack" style="gap:8px"><div class="skel" style="height:16px;width:55%"></div><div class="skel" style="height:14px;width:55%"></div></div><div class="skel" style="width:36px;height:14px"></div></div><div class="ob-skl"><div class="skel" style="width:48px;height:48px;border-radius:16px"></div><div class="grow stack" style="gap:8px"><div class="skel" style="height:16px;width:68%"></div><div class="skel" style="height:14px;width:68%"></div></div><div class="skel" style="width:36px;height:14px"></div></div></div></div>
+</div>
+<nav class="tabbar">
+<a class="tab"><i data-i="house"></i>Beranda</a>
+<a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+<a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+<a class="tab on"><i data-i="message-circle"></i>Obrolan</a>
+<a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+</nav>
+</div>
+<div class="phone" style="--h:915px">
+<div class="body" style="">
+<div class="appbar" style="padding-top:20px"><h1 class="t-display">Obrolan</h1><div class="acts"><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div></div><div class="pad stack" style="margin-top:8px"><div class="empty" style="margin-top:40px"><div class="ic"><i data-i="message-circle" data-s="30"></i></div><div class="t-h3">Belum ada obrolan</div><div class="hint" style="font-size:15px;line-height:21px">Kanal workspace muncul otomatis saat Anda bergabung. Mulai pesan langsung dengan tombol di bawah.</div><button class="btn primary"><i data-i="message-square-plus"></i>Pesan baru</button></div></div>
+</div>
+<nav class="tabbar">
+<a class="tab"><i data-i="house"></i>Beranda</a>
+<a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+<a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+<a class="tab on"><i data-i="message-circle"></i>Obrolan</a>
+<a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+</nav><button class="fab" aria-label="Obrolan baru"><i data-i="message-square-plus" data-s="26"></i></button>
+</div>
+<div class="phone" style="--h:915px">
+<div class="body" style="">
+<div class="appbar" style="padding-top:20px"><h1 class="t-display">Obrolan</h1><div class="acts"><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div></div><div class="pad stack" style="margin-top:8px"><div class="empty" style="margin-top:40px;border-color:var(--bad)"><div class="ic" style="background:var(--bad-soft);color:var(--bad)"><i data-i="triangle-alert" data-s="30"></i></div><div class="t-h3">Obrolan gagal dimuat</div><div class="hint" style="font-size:15px;line-height:21px">Periksa koneksi internet Anda, lalu coba lagi.</div><button class="btn outline"><i data-i="refresh-cw"></i>Coba lagi</button></div></div>
+</div>
+<nav class="tabbar">
+<a class="tab"><i data-i="house"></i>Beranda</a>
+<a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+<a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+<a class="tab on"><i data-i="message-circle"></i>Obrolan</a>
+<a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+</nav>
+</div>
+<div class="phone" style="--h:915px">
+<div class="body" style="">
+<div class="appbar" style="padding-top:20px"><h1 class="t-display">Obrolan</h1><div class="acts"><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div></div><div class="ob-net" style="margin:4px 16px 0;border-radius:14px"><i data-i="wifi-off"></i><span>Offline · menampilkan daftar terakhir dimuat 07.58. Pesan baru belum masuk.</span></div><div class="pad stack" style="margin-top:12px;gap:12px"><div class="seg"><span class="on">Semua · 11</span><span class="">Belum dibaca · 4</span></div><div class="ob-sec"><span>Workspace</span><span class="n">3</span></div><div class="card flush"><div class="ob-row un"><span class="ob-tile g1">PLQ</span><div class="grow"><div class="tt"><span class="x">Peluncuran Produk Q4</span></div><div class="pv"><b>Rizky:</b> Mockup halaman checkout sudah saya unggah</div></div><div class="rt"><span class="tm">07.42</span><span class="ob-bd">3</span></div></div><div class="ob-row"><span class="ob-tile g2">GDG</span><div class="grow"><div class="tt"><span class="x">Tim Gudang</span></div><div class="pv"><b>Dimas:</b> Stok opname Kamis jam 13.00 ya</div></div><div class="rt"><span class="tm">07.15</span><span style="height:22px"></span></div></div><div class="ob-row"><span class="ob-tile g3">PRG</span><div class="grow"><div class="tt"><span class="x">Program Operasional</span></div><div class="pv"><b>Anda:</b> Laporan stok sudah masuk, tolong dicek</div></div><div class="rt"><span class="tm">Kemarin</span><span style="height:22px"></span></div></div></div><div class="ob-sec"><span>Pesan langsung</span><span class="n">3</span></div><div class="card flush"><div class="ob-row un"><span class="ob-av"><span class="avatar teal ">ML</span><span class="ob-pr"></span></span><div class="grow"><div class="tt"><span class="x">Maya Lestari</span></div><div class="pv">Bisa review PRG-24 sebentar?</div></div><div class="rt"><span class="tm">07.51</span><span class="ob-bd">2</span></div></div><div class="ob-row"><span class="ob-av"><span class="avatar amber ">DP</span><span class="ob-pr"></span></span><div class="grow"><div class="tt"><span class="x">Dimas Pratama</span></div><div class="pv"><b>Anda:</b> Baik, terima kasih Pak</div></div><div class="rt"><span class="tm">Kemarin</span><span style="height:22px"></span></div></div></div></div>
+</div>
+<nav class="tabbar">
+<a class="tab"><i data-i="house"></i>Beranda</a>
+<a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+<a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+<a class="tab on"><i data-i="message-circle"></i>Obrolan<span class="badge-n">4</span></a>
+<a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+</nav><button class="fab" style="background:var(--surface-2);color:var(--text-subtle);box-shadow:none" aria-label="Pesan baru (nonaktif offline)"><i data-i="message-square-plus" data-s="26"></i></button>
+</div>
+<div class="phone" style="--h:915px">
+<div class="body" style="">
+<div class="appbar" style="padding-top:20px"><h1 class="t-display">Obrolan</h1><div class="acts"><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div></div><div class="pad stack" style="margin-top:8px"><div class="empty" style="margin-top:40px"><div class="ic"><i data-i="cloud-off" data-s="30"></i></div><div class="t-h3">Obrolan belum diaktifkan</div><div class="hint" style="font-size:15px;line-height:21px">Fitur obrolan sedang tidak tersedia di server. Silakan gunakan RuangKerja web atau hubungi admin.</div><button class="btn tonal"><i data-i="refresh-cw"></i>Periksa lagi</button></div></div>
+</div>
+<nav class="tabbar">
+<a class="tab"><i data-i="house"></i>Beranda</a>
+<a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+<a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+<a class="tab on"><i data-i="message-circle"></i>Obrolan</a>
+<a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+</nav>
+</div>
+</div>
+</body>
+</html>
