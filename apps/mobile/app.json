@@ -39,6 +39,7 @@
         }
       ],
       "expo-secure-store",
+      "expo-local-authentication",
       "expo-font"
     ],
     "experiments": {

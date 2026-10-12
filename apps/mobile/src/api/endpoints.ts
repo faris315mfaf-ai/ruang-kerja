@@ -368,6 +368,14 @@ export function daftarPerangkat(): Promise<{ devices: DeviceRow[] }> {
   return apiRequest<{ devices: DeviceRow[] }>('perangkat') as Promise<{ devices: DeviceRow[] }>;
 }
 
+/** PATCH /perangkat/{id}/biometrik — penanda "buka dengan sidik jari" per perangkat (B2). */
+export function setBiometrikPerangkat(id: string, enabled: boolean): Promise<{ message: string; device_id: string; biometric_login: boolean } | null> {
+  return apiRequest<{ message: string; device_id: string; biometric_login: boolean }>(`perangkat/${id}/biometrik`, {
+    method: 'PATCH',
+    json: { enabled },
+  });
+}
+
 export function cabutPerangkat(id: string): Promise<{ message: string } | null> {
   return apiRequest<{ message: string }>(`perangkat/${id}`, { method: 'DELETE' });
 }
