@@ -4,7 +4,7 @@
  * Di balik flag features.chat: 404 dari server → layar kosong ramah
  * "Obrolan belum diaktifkan", bukan galat.
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';

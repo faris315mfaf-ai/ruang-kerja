@@ -4,7 +4,7 @@
  * Kontrak papan hanya mengirim `assignee_ids` (tanpa nama) sehingga
  * penanggung tampil sebagai jumlah.
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { BoardTask } from '@/api/types';

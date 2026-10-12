@@ -3,7 +3,7 @@
  * Rapat, Kalender, dan Workspace; lalu profil, riwayat absensi bulan ini
  * (ringkas), pengajuan saya (daftar + buat baru), perangkat (cabut), keluar.
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';

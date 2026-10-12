@@ -5,7 +5,7 @@
  * Penanggung jawab belum bisa diisi: kontrak API tidak menyediakan daftar
  * anggota workspace (catat di laporan paritas).
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';

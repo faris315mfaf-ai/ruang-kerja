@@ -3,7 +3,7 @@
  * 403 (password_change_required / two_factor_required) menampilkan pesan
  * server dan arahan ke web.
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 

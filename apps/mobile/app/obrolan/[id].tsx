@@ -6,7 +6,7 @@
  * 15 detik HANYA saat layar aktif (dihentikan saat blur) + tarik-untuk-
  * menyegarkan. Kanal yang tak terlihat / fitur mati → 404 ramah.
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {

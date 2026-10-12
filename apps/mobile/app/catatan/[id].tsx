@@ -6,7 +6,7 @@
  * versi (409) menawarkan "Muat ulang" dari server. Tombol kembali
  * menyiram simpanan tertunda dulu (flush), termasuk tombol fisik Android.
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';

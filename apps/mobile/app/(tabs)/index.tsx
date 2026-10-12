@@ -5,7 +5,7 @@
  * tugas hari ini bersegmen Pribadi/Tim/Semua, dan kartu briefing terakhir
  * (tersembunyi bila 204). Tarik untuk menyegarkan.
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';

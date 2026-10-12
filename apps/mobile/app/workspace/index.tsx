@@ -3,7 +3,7 @@
  * tim, proyek, lainnya; keempat grup selalu ada). Ketuk baris → layar
  * workspace (Papan · Catatan · Tugas).
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';

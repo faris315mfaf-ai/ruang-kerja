@@ -5,7 +5,7 @@
  *  done     : ringkasan hari (jam, durasi, keterlambatan, rencana).
  * Penolakan server (422 {message}) ditampilkan ramah, data form dipertahankan.
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BackHandler, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';

@@ -4,7 +4,7 @@
  * keputusan, dan tindak lanjut dengan status + kunci tugas. id null =
  * belum ditulis → draf kosong dari agenda. Menulis/finalisasi tetap di web.
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';

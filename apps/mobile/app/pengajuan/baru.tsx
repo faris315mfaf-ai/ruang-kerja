@@ -3,7 +3,7 @@
  * sederhana sesuai kategori (tanggal/jam/jumlah/teks) + alasan wajib.
  * Lampiran, draf, dan pengganti tetap lewat web.
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';

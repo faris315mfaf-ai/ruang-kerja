@@ -2,7 +2,7 @@
  * Baris tugas untuk daftar (Beranda "tugas hari ini" & layar Tugas).
  * Sumber `attendance` diberi penanda "dari absen".
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import { StyleSheet, View } from 'react-native';
 
 import { Badge, Row } from '@/components/ui';

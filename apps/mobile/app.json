@@ -38,7 +38,8 @@
           "locationWhenInUsePermission": "RuangKerja memakai lokasi Anda untuk memastikan absen dilakukan dari lokasi kerja yang diizinkan."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,

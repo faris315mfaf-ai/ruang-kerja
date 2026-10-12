@@ -6,7 +6,7 @@
  * halaman prabergabung web di browser — tanpa token Livekit di API), dan
  * tombol ke notulen baca. 404 = rapat tak terlihat / fitur mati.
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';

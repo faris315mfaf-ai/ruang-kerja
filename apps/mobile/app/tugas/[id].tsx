@@ -4,7 +4,7 @@
  * tenggat, prioritas — 403 ditolak server dengan pesan), hapus (konfirmasi;
  * hanya pembuat/atasan), dan tombol Selesai/Buka (PATCH status).
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Pressable, StyleSheet, Text, View } from 'react-native';

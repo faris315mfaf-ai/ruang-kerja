@@ -2,7 +2,7 @@
  * Layar Tugas — daftar "Saya"/"Semua" dengan halaman sederhana ("Muat lagi"),
  * item menuju detail. Tugas hasil absen diberi penanda "dari absen".
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';

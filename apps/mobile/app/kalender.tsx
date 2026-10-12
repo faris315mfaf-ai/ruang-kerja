@@ -5,7 +5,7 @@
  * tugas. Navigasi bulan sebelumnya/berikutnya; flag meetings mati (404)
  * → layar kosong ramah.
  */
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/ui/Ionicons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';

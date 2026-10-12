@@ -10,7 +10,8 @@ import { Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui';
-import { ThemeProvider, useTheme } from '@/lib/theme';
+import { ThemeProvider, useAppFonts, useTheme } from '@/theme';
+import { UIProvider } from '@/ui';
 import { SessionProvider, useSession } from '@/session/SessionProvider';
 import { UnreadProvider } from '@/session/UnreadProvider';
 
@@ -69,15 +70,17 @@ function LayarBlokir(): React.JSX.Element {
 
 function RootNavigator(): React.JSX.Element {
   const { status, user, blokir } = useSession();
-  const { colors, dark } = useTheme();
+  const { colors, dark, ready } = useTheme();
+  const fontSiap = useAppFonts();
+  const siap = status !== 'memuat' && ready && fontSiap;
 
   useEffect(() => {
-    if (status !== 'memuat') {
+    if (siap) {
       SplashScreen.hideAsync().catch(() => undefined);
     }
-  }, [status]);
+  }, [siap]);
 
-  if (status === 'memuat') {
+  if (!siap) {
     return <Splash />;
   }
 
@@ -133,9 +136,11 @@ export default function RootLayout(): React.JSX.Element {
   return (
     <ThemeProvider>
       <SafeAreaProvider>
-        <SessionProvider>
-          <RootNavigator />
-        </SessionProvider>
+        <UIProvider>
+          <SessionProvider>
+            <RootNavigator />
+          </SessionProvider>
+        </UIProvider>
       </SafeAreaProvider>
     </ThemeProvider>
   );
