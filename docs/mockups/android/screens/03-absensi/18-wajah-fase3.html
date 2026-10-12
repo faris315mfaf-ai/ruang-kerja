@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Absen · check-in wajah (Fase 3) · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<link rel="stylesheet" href="_abs.css">
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+  <!-- Persetujuan biometrik v1.0 -->
+  <div class="phone" data-fit="1" style="--h:845px">
+    <div class="body">
+
+      <div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Daftarkan wajah</span></div><div class="pad stack" style="margin-top:8px;padding-bottom:150px">
+      <span class="empty" style="border:0;padding:0;align-items:flex-start"><span class="ic"><i data-i="scan-face" data-s="30"></i></span></span>
+      <h2 class="t-h2">Persetujuan data biometrik</h2><p class="t-body muted" style="margin:0">Wajah adalah data pribadi spesifik (UU PDP). Pendaftaran bersifat opsional; GPS + selfie tetap tersedia.</p>
+      <ul class="card flush" style="list-style:none;margin:0;padding:0"><li class="abs-ci"><span class="ic teal"><i data-i="lock" data-s="20"></i></span><div><b>Template terenkripsi</b><p>Disimpan terenkripsi di server, tidak pernah dikirim ke ponsel lagi. HR tidak bisa membacanya.</p></div></li><li class="abs-ci"><span class="ic"><i data-i="trash-2" data-s="20"></i></span><div><b>Hapus kapan saja</b><p>Satu ketuk di Perangkat saya; persetujuan ikut dicabut.</p></div></li></ul>
+      <div class="row-h" style="min-height:48px"><span class="check on"><i data-i="check"></i></span><span style="font-size:16px">Saya menyetujui pemrosesan data wajah untuk absensi (v1.0)</span></div>
+      <div class="row-h" style="min-height:48px"><span class="check on"><i data-i="check"></i></span><span style="font-size:16px">Saya mengerti template bisa dihapus kapan saja</span></div></div>
+    </div>    <div class="bottom-bar"><span class="btn primary block" style="height:56px">Setuju &amp; daftarkan wajah</span></div>    <div class="abs-fase">FASE 3 · ditahan</div>
+  </div>
+  <!-- Pemindaian — posisi wajah -->
+  <div class="phone abs-dark" data-fit="0" style="--h:915px">
+    <div class="abs-camwrap"><div class="abs-camtop"><button class="ibtn"><i data-i="arrow-left"></i></button><div class="t"><div style="font-weight:700;font-size:17px">Daftarkan wajah</div><div style="font-size:13px;opacity:.7">Langkah 1 dari 3 · Posisi wajah</div></div><span style="width:56px"></span></div><div class="abs-view"><div class="abs-sil-b"></div><div class="abs-sil-n"></div><div class="abs-sil-h"></div><div class="abs-oval "></div><div class="abs-tip"><i data-i="scan-face" data-s="22"></i><span>Posisikan wajah di dalam oval. Cukup cahaya, tanpa masker.</span></div></div><div class="abs-meter" style="padding:0 16px 8px"><b class="on"></b><b class=""></b><b class=""></b></div><div class="abs-ctrls" style="height:120px"><div class="abs-dbtn">Batal</div></div></div>    <div class="abs-fase">FASE 3 · ditahan</div>
+  </div>
+  <!-- Liveness — kedip -->
+  <div class="phone abs-dark" data-fit="0" style="--h:915px">
+    <div class="abs-camwrap"><div class="abs-camtop"><button class="ibtn"><i data-i="arrow-left"></i></button><div class="t"><div style="font-weight:700;font-size:17px">Daftarkan wajah</div><div style="font-size:13px;opacity:.7">Langkah 2 dari 3 · Kedip</div></div><span style="width:56px"></span></div><div class="abs-view"><div class="abs-sil-b"></div><div class="abs-sil-n"></div><div class="abs-sil-h"></div><div class="abs-oval good"></div><div class="abs-tip"><i data-i="eye" data-s="22"></i><span><b>Kedipkan mata dua kali.</b> Pemeriksaan hidup (liveness) memastikan Anda bukan foto.</span></div></div><div class="abs-meter" style="padding:0 16px 8px"><b class="on"></b><b class="on"></b><b class=""></b></div><div class="abs-ctrls" style="height:120px"><div class="abs-dbtn">Batal</div></div></div>    <div class="abs-fase">FASE 3 · ditahan</div>
+  </div>
+  <!-- Liveness — toleh kiri -->
+  <div class="phone abs-dark" data-fit="0" style="--h:915px">
+    <div class="abs-camwrap"><div class="abs-camtop"><button class="ibtn"><i data-i="arrow-left"></i></button><div class="t"><div style="font-weight:700;font-size:17px">Daftarkan wajah</div><div style="font-size:13px;opacity:.7">Langkah 3 dari 3 · Toleh</div></div><span style="width:56px"></span></div><div class="abs-view"><div class="abs-sil-b"></div><div class="abs-sil-n"></div><div class="abs-sil-h"></div><div class="abs-oval good"></div><div class="abs-tip"><i data-i="arrow-left" data-s="22"></i><span><b>Tolehkan kepala perlahan ke kiri.</b></span></div></div><div class="abs-meter" style="padding:0 16px 8px"><b class="on"></b><b class="on"></b><b class="on"></b></div><div class="abs-ctrls" style="height:120px"><div class="abs-dbtn">Batal</div></div></div>    <div class="abs-fase">FASE 3 · ditahan</div>
+  </div>
+  <!-- Wajah terdaftar -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Daftarkan wajah</span></div><div class="pad stack" style="margin-top:8px;">
+      <div class="empty" style="border:0;margin-top:30px"><div class="ic" style="background:var(--ok-soft);color:var(--ok);width:84px;height:84px;border-radius:42px"><i data-i="badge-check" data-s="44"></i></div><div class="t-h2">Wajah terdaftar</div><div class="t-body muted">Mulai sekarang Anda bisa check-in dengan wajah. Ambang kemiripan 85%, maksimal 3 percobaan per hari.</div></div>
+      <div class="btn primary block" style="height:56px">Lanjut ke check-in</div><div class="btn quiet block">Nanti saja</div></div>
+    </div>    <div class="abs-fase">FASE 3 · ditahan</div>
+  </div>
+  <!-- Check-in wajah — cocok 98% -->
+  <div class="phone abs-dark" data-fit="0" style="--h:915px">
+    <div class="abs-camwrap"><div class="abs-camtop"><button class="ibtn"><i data-i="arrow-left"></i></button><div class="t"><div style="font-weight:700;font-size:17px">Check-in dengan wajah</div><div style="font-size:13px;opacity:.7">Kantor Pusat · 38 m</div></div><span style="width:56px"></span></div><div class="abs-view"><div class="abs-sil-b"></div><div class="abs-sil-n"></div><div class="abs-sil-h"></div><div class="abs-oval good"></div><div class="abs-chip"><span class="abs-dot" style="color:#4ADE9B"></span>Wajah cocok <b style="font-family:'JetBrains Mono',monospace">98%</b> · liveness lolos</div><div class="abs-tip"><i data-i="circle-check" data-s="22"></i><span><b>Cocok.</b> Check-in dikirim tanpa selfie tambahan, tetap dengan lokasi dan rencana kerja.</span></div></div><div class="abs-ctrls" style="height:120px"><div class="abs-dbtn pri"><i data-i="check"></i>Kirim check-in</div></div></div>    <div class="abs-fase">FASE 3 · ditahan</div>
+  </div>
+  <!-- Check-in wajah — tidak cocok 62% -->
+  <div class="phone abs-dark" data-fit="0" style="--h:915px">
+    <div class="abs-camwrap"><div class="abs-camtop"><button class="ibtn"><i data-i="arrow-left"></i></button><div class="t"><div style="font-weight:700;font-size:17px">Check-in dengan wajah</div><div style="font-size:13px;opacity:.7">Percobaan 2 dari 3</div></div><span style="width:56px"></span></div><div class="abs-view"><div class="abs-sil-b"></div><div class="abs-sil-n"></div><div class="abs-sil-h"></div><div class="abs-oval bad"></div><div class="abs-chip"><span class="abs-dot" style="color:#FF7A8A"></span>Kemiripan <b style="font-family:'JetBrains Mono',monospace">62%</b> · batas 85%</div><div class="abs-tip"><i data-i="circle-alert" data-s="22"></i><span><b>Wajah belum cocok.</b> Coba lagi di tempat lebih terang. Setelah 3 kali gagal, pakai GPS + selfie.</span></div></div><div class="abs-ctrls" style="height:120px"><div class="abs-dbtn"><i data-i="camera"></i>GPS + selfie</div><div class="abs-dbtn pri"><i data-i="rotate-ccw"></i>Coba lagi</div></div></div>    <div class="abs-fase">FASE 3 · ditahan</div>
+  </div>
+  <!-- Hapus data wajah (Perangkat saya) -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Perangkat saya</span></div><div class="pad stack" style="margin-top:8px;">
+      <div class="card stack" style="gap:6px"><div class="row-h sp"><span class="t-title">Pixel 8 · Android 15</span><span class="badge ok">Perangkat ini</span></div><div class="t-meta">Versi aplikasi 2.1 · aktif sekarang</div><div class="abs-kv"><span>Masuk biometrik</span><span class="switch on"></span></div></div>
+      <div class="card stack" style="gap:6px"><div class="t-title">Data wajah</div><div class="t-meta">Terdaftar 13 Okt 2026 · persetujuan v1.0</div><div class="btn outline block" style="color:var(--bad)"><i data-i="trash-2"></i>Hapus data wajah</div></div></div>
+    </div>    <div class="scrim"></div>    <div class="dialog"><div class="t-h3">Hapus data wajah?</div><div class="t-body muted">Template wajah dihapus dari server dan persetujuan biometrik dicabut. Check-in kembali memakai GPS + selfie.</div><div class="acts"><span class="btn quiet">Batal</span><span class="btn danger">Hapus</span></div></div>    <div class="abs-fase">FASE 3 · ditahan</div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Absen · pindai QR · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<link rel="stylesheet" href="_abs.css">
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+  <!-- Pemindai QR — mencari kode -->
+  <div class="phone abs-dark" data-fit="0" style="--h:915px">
+    <div class="abs-camwrap"><div class="abs-camtop"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="t"><div style="font-weight:700;font-size:17px">Pindai QR check-in</div><div style="font-size:13px;opacity:.7">Arahkan kamera ke layar kiosk</div></div><span style="font-family:'JetBrains Mono',monospace;font-weight:600;width:56px;text-align:right">07.52</span></div>
+      <div class="abs-view" style="background:linear-gradient(170deg,#1c2b3a,#0a1018)"><div class="abs-qrbox "><i class="a"></i><i class="b"></i><div class="abs-qrfake"></div></div><div class="abs-scan"></div><div class="abs-tip" style=""><i data-i="qr-code" data-s="20"></i><span>Arahkan kamera ke kode QR di layar kiosk. Kode berganti tiap 30 detik.</span></div></div>
+      <div class="abs-ctrls"><div class="abs-ctrl"><span><i data-i="flashlight" data-s="26"></i></span>Senter</div><div class="abs-ctrl"><span><i data-i="camera" data-s="26"></i></span>GPS + selfie</div></div></div>
+  </div>
+  <!-- Bukan kode kiosk -->
+  <div class="phone abs-dark" data-fit="0" style="--h:915px">
+    <div class="abs-camwrap"><div class="abs-camtop"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="t"><div style="font-weight:700;font-size:17px">Pindai QR check-in</div><div style="font-size:13px;opacity:.7">Arahkan kamera ke layar kiosk</div></div><span style="font-family:'JetBrains Mono',monospace;font-weight:600;width:56px;text-align:right">07.52</span></div>
+      <div class="abs-view" style="background:linear-gradient(170deg,#1c2b3a,#0a1018)"><div class="abs-qrbox bad"><i class="a"></i><i class="b"></i><div class="abs-qrfake"></div></div><div class="abs-tip" style="background:rgba(58,21,32,.92);border-color:#FF7A8A"><i data-i="circle-alert" data-s="20"></i><span>Ini bukan kode kiosk RuangKerja. Arahkan kamera ke kode di layar kiosk.</span></div></div>
+      <div class="abs-ctrls"><div class="abs-ctrl"><span><i data-i="flashlight" data-s="26"></i></span>Senter</div><div class="abs-ctrl"><span><i data-i="camera" data-s="26"></i></span>GPS + selfie</div></div></div>
+  </div>
+  <!-- Kode dikenali — mengirim -->
+  <div class="phone abs-dark" data-fit="0" style="--h:915px">
+    <div class="abs-camwrap"><div class="abs-camtop"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="t"><div style="font-weight:700;font-size:17px">Pindai QR check-in</div><div style="font-size:13px;opacity:.7">Arahkan kamera ke layar kiosk</div></div><span style="font-family:'JetBrains Mono',monospace;font-weight:600;width:56px;text-align:right">07.52</span></div>
+      <div class="abs-view" style="background:linear-gradient(170deg,#1c2b3a,#0a1018)"><div class="abs-qrbox good"><i class="a"></i><i class="b"></i><div class="abs-qrfake"></div></div><div style="position:absolute;inset:0;background:rgba(5,8,13,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#fff;font-weight:600"><i data-i="loader" data-s="36"></i>Mengirim…</div><div class="abs-tip" style=""><i data-i="check" data-s="20"></i><span>Kode dikenali · Kiosk Lobi. Lokasi GPS ikut dikirim.</span></div></div>
+      <div class="abs-ctrls"><div class="abs-ctrl"><span><i data-i="flashlight" data-s="26"></i></span>Senter</div><div class="abs-ctrl"><span><i data-i="camera" data-s="26"></i></span>GPS + selfie</div></div></div>
+  </div>
+</div>
+</body>
+</html>

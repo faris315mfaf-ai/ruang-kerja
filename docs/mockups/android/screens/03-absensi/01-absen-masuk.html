@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Absen · form check-in · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<link rel="stylesheet" href="_abs.css">
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+  <!-- Check-in — awal, tombol geser terkunci -->
+  <div class="phone" data-fit="1" style="--h:1750px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;padding-bottom:260px">
+        
+        <div class="card stack" style="gap:6px">
+          <div class="row-h sp"><span class="t-meta">Jam sekarang</span><span class="badge ">Belum check-in</span></div>
+          <div class="abs-clock">07.52</div>
+          <div class="t-body muted">Shift Reguler · masuk 08.00 · pulang 17.00</div>
+          <div class="t-label abs-green abs-row" style="gap:6px"><i data-i="clock" data-s="18"></i>8 menit sebelum jam masuk · batas terlambat 08.10</div>
+        </div>
+        
+        <div class="card flush">
+          <div class="map abs-map" style="width:378px;height:170px">
+      <div class="abs-ring" style="left:127px;top:23px;width:124px;height:124px"></div>
+      <div class="abs-office" style="left:189px;top:85px"></div>
+      <span class="abs-tag" style="left:155px;top:-3px">Kantor Pusat</span>
+      <div class="abs-acc" style="left:204px;top:82px;width:44px;height:44px;"></div>
+      
+      <div class="abs-me" style="left:226px;top:104px"></div>
+      <span class="abs-maptop abs-green"><span class="abs-dot"></span><span style="color:var(--text)">GPS akurat · 12 m</span></span>
+    </div>
+          <div class="row-h" style="padding:12px 16px"><span class="li"><span class="ico teal" style="width:40px;height:40px"><i data-i="map-pin"></i></span></span><div class="grow"><div class="t-title">Kantor Pusat</div><div class="t-meta abs-green" style="font-size:14px">38 m dari titik · dalam radius 100 m</div></div><div class="t-meta" style="text-align:right">Akurasi ±12 m</div><button class="ibtn" aria-label="Perbarui lokasi" style="width:44px;height:44px;box-shadow:none"><i data-i="refresh-cw" data-s="20"></i></button></div>
+        </div>
+        
+        <div class="seg" role="tablist" aria-label="Metode absensi">
+          <span class="on" style="gap:6px"><i data-i="camera" data-s="18"></i>GPS + selfie</span>
+          <span class="" style="gap:6px"><i data-i="qr-code" data-s="18"></i>QR</span>
+          <span class="" style="gap:6px;"><i data-i="house" data-s="18"></i>WFH</span>
+        </div>
+        
+        
+        <div class="card stack" style="gap:12px">
+          <div class="row-h sp"><div><div class="t-title">Rencana kerja hari ini</div><div class="t-meta">Wajib · 1–8 poin, maks. 300 karakter</div></div><span class="badge warn nodot">Wajib</span></div>
+          <div class="abs-plan">
+        <div class="abs-pr"><span class="abs-pn">1</span><div class="input"><span class="ph">Mis. Selesaikan laporan mingguan</span></div></div>
+        <div class="abs-add"><i data-i="plus" data-s="20"></i>Tambah poin</div>
+        
+      </div>
+          <div class="abs-row" style="gap:8px;color:var(--text-muted);font-size:14px;line-height:20px"><i data-i="message-circle" data-s="18"></i><span>Terkirim ke grup WhatsApp manajemen. Tiap poin juga menjadi tugas pribadi hari ini.</span></div>
+          <div class="t-label abs-teal abs-row" style="gap:6px;min-height:36px"><i data-i="eye" data-s="18"></i>Lihat pesan yang akan dikirim</div>
+        </div>
+        
+        <div class="abs-selfie">
+          <div class="abs-ph"><i data-i="camera" data-s="30"></i></div>
+          <div class="grow"><div class="t-title">Selfie check-in</div>
+          <div class="t-meta">Wajib · kamera depan terbuka saat Anda mengetuk</div></div>
+          <span class="btn sm tonal" style="padding:0 12px">Ambil</span>
+        </div>
+        
+        <div class="field"><label>Catatan (opsional)</label>
+          <div class="input area" style="min-height:72px"><span class="ph">Catatan untuk HR, maks. 500 karakter</span></div>
+          <div class="hint" style="text-align:right">0/500</div></div>
+        <div class="card stack" style="gap:2px;padding:14px 16px">
+          <div class="t-label" style="margin-bottom:4px">Prasyarat check-in</div>
+          <div class="abs-pre ok"><span class="st"><i data-i="check"></i></span><span>Persetujuan lokasi & selfie (v1.0)</span></div><div class="abs-pre ok"><span class="st"><i data-i="check"></i></span><span>Lokasi terkunci · ±12 m · dalam radius</span></div><div class="abs-pre bad"><span class="st"><i data-i="x"></i></span><span>Rencana kerja: tulis minimal satu poin</span></div><div class="abs-pre "><span class="st"><i data-i="circle"></i></span><span>Selfie: belum diambil</span></div>
+        </div></div>
+    </div>    <div class="abs-dock "><div class="abs-swipe off" role="slider" aria-label="Lengkapi dulu 2 langkah" style="--x:0px"><span class="fill"></span><span class="knob"><i data-i="lock"></i></span><span class="lbl">Lengkapi dulu 2 langkah</span></div><div class="hint">Tombol aktif setelah rencana kerja & selfie siap.</div></div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+  <!-- Check-in — siap kirim -->
+  <div class="phone" data-fit="1" style="--h:1862px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;padding-bottom:260px">
+        
+        <div class="card stack" style="gap:6px">
+          <div class="row-h sp"><span class="t-meta">Jam sekarang</span><span class="badge ">Belum check-in</span></div>
+          <div class="abs-clock">07.52</div>
+          <div class="t-body muted">Shift Reguler · masuk 08.00 · pulang 17.00</div>
+          <div class="t-label abs-green abs-row" style="gap:6px"><i data-i="clock" data-s="18"></i>8 menit sebelum jam masuk · batas terlambat 08.10</div>
+        </div>
+        
+        <div class="card flush">
+          <div class="map abs-map" style="width:378px;height:170px">
+      <div class="abs-ring" style="left:127px;top:23px;width:124px;height:124px"></div>
+      <div class="abs-office" style="left:189px;top:85px"></div>
+      <span class="abs-tag" style="left:155px;top:-3px">Kantor Pusat</span>
+      <div class="abs-acc" style="left:204px;top:82px;width:44px;height:44px;"></div>
+      
+      <div class="abs-me" style="left:226px;top:104px"></div>
+      <span class="abs-maptop abs-green"><span class="abs-dot"></span><span style="color:var(--text)">GPS akurat · 12 m</span></span>
+    </div>
+          <div class="row-h" style="padding:12px 16px"><span class="li"><span class="ico teal" style="width:40px;height:40px"><i data-i="map-pin"></i></span></span><div class="grow"><div class="t-title">Kantor Pusat</div><div class="t-meta abs-green" style="font-size:14px">38 m dari titik · dalam radius 100 m</div></div><div class="t-meta" style="text-align:right">Akurasi ±12 m</div><button class="ibtn" aria-label="Perbarui lokasi" style="width:44px;height:44px;box-shadow:none"><i data-i="refresh-cw" data-s="20"></i></button></div>
+        </div>
+        
+        <div class="seg" role="tablist" aria-label="Metode absensi">
+          <span class="on" style="gap:6px"><i data-i="camera" data-s="18"></i>GPS + selfie</span>
+          <span class="" style="gap:6px"><i data-i="qr-code" data-s="18"></i>QR</span>
+          <span class="" style="gap:6px;"><i data-i="house" data-s="18"></i>WFH</span>
+        </div>
+        
+        
+        <div class="card stack" style="gap:12px">
+          <div class="row-h sp"><div><div class="t-title">Rencana kerja hari ini</div><div class="t-meta">Wajib · 1–8 poin, maks. 300 karakter</div></div><span class="badge warn nodot">Wajib</span></div>
+          <div class="abs-plan">
+        <div class="abs-pr"><span class="abs-pn">1</span><div class="input"><span>Selesaikan laporan stok gudang</span></div><span class="abs-px" aria-label="Hapus poin 1"><i data-i="circle-x" data-s="24"></i></span></div>
+        <div class="abs-pr"><span class="abs-pn">2</span><div class="input"><span>Cek kiriman supplier jam 10.00</span></div><span class="abs-px" aria-label="Hapus poin 2"><i data-i="circle-x" data-s="24"></i></span></div>
+        <div class="abs-pr"><span class="abs-pn">3</span><div class="input"><span>Rapikan folder dokumen tim</span></div><span class="abs-px" aria-label="Hapus poin 3"><i data-i="circle-x" data-s="24"></i></span></div>
+        <div class="abs-add"><i data-i="plus" data-s="20"></i>Tambah poin</div>
+        
+      </div>
+          <div class="abs-row" style="gap:8px;color:var(--text-muted);font-size:14px;line-height:20px"><i data-i="message-circle" data-s="18"></i><span>Terkirim ke grup WhatsApp manajemen. Tiap poin juga menjadi tugas pribadi hari ini.</span></div>
+          <div class="t-label abs-teal abs-row" style="gap:6px;min-height:36px"><i data-i="eye" data-s="18"></i>Lihat pesan yang akan dikirim</div>
+        </div>
+        
+        <div class="abs-selfie done">
+          <div class="abs-ph photo"></div>
+          <div class="grow"><div class="t-title">Selfie siap dikirim</div>
+          <div class="t-meta">Diambil 07.52 · ±180 KB · kamera depan</div></div>
+          <span class="btn sm outline" style="padding:0 12px">Ulangi</span>
+        </div>
+        
+        <div class="field"><label>Catatan (opsional)</label>
+          <div class="input area" style="min-height:72px"><span class="ph">Catatan untuk HR, maks. 500 karakter</span></div>
+          <div class="hint" style="text-align:right">0/500</div></div>
+        <div class="card stack" style="gap:2px;padding:14px 16px">
+          <div class="t-label" style="margin-bottom:4px">Prasyarat check-in</div>
+          <div class="abs-pre ok"><span class="st"><i data-i="check"></i></span><span>Persetujuan lokasi & selfie (v1.0)</span></div><div class="abs-pre ok"><span class="st"><i data-i="check"></i></span><span>Lokasi terkunci · ±12 m · dalam radius</span></div><div class="abs-pre ok"><span class="st"><i data-i="check"></i></span><span>Rencana kerja: 3 poin</span></div><div class="abs-pre ok"><span class="st"><i data-i="check"></i></span><span>Selfie siap dikirim</span></div>
+        </div></div>
+    </div>    <div class="abs-dock "><div class="abs-swipe" role="slider" aria-label="Geser untuk check-in" style="--x:0px"><span class="fill"></span><span class="knob"><i data-i="chevrons-right"></i></span><span class="lbl">Geser untuk check-in<i data-i="chevron-right"></i><i data-i="chevron-right"></i></span></div><div class="hint">Lokasi dan foto hanya direkam saat check-in dan check-out · <a>Privasi</a></div></div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+  <!-- Check-in — sedang digeser -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;">
+        
+        <div class="card stack" style="gap:6px">
+          <div class="row-h sp"><span class="t-meta">Jam sekarang</span><span class="badge ">Belum check-in</span></div>
+          <div class="abs-clock">07.52</div>
+          <div class="t-body muted">Shift Reguler · masuk 08.00 · pulang 17.00</div>
+          <div class="t-label abs-green abs-row" style="gap:6px"><i data-i="clock" data-s="18"></i>8 menit sebelum jam masuk · batas terlambat 08.10</div>
+        </div>
+        
+        <div class="card flush">
+          <div class="map abs-map" style="width:378px;height:170px">
+      <div class="abs-ring" style="left:127px;top:23px;width:124px;height:124px"></div>
+      <div class="abs-office" style="left:189px;top:85px"></div>
+      <span class="abs-tag" style="left:155px;top:-3px">Kantor Pusat</span>
+      <div class="abs-acc" style="left:204px;top:82px;width:44px;height:44px;"></div>
+      
+      <div class="abs-me" style="left:226px;top:104px"></div>
+      <span class="abs-maptop abs-green"><span class="abs-dot"></span><span style="color:var(--text)">GPS akurat · 12 m</span></span>
+    </div>
+          <div class="row-h" style="padding:12px 16px"><span class="li"><span class="ico teal" style="width:40px;height:40px"><i data-i="map-pin"></i></span></span><div class="grow"><div class="t-title">Kantor Pusat</div><div class="t-meta abs-green" style="font-size:14px">38 m dari titik · dalam radius 100 m</div></div><div class="t-meta" style="text-align:right">Akurasi ±12 m</div><button class="ibtn" aria-label="Perbarui lokasi" style="width:44px;height:44px;box-shadow:none"><i data-i="refresh-cw" data-s="20"></i></button></div>
+        </div>
+        
+        <div class="seg" role="tablist" aria-label="Metode absensi">
+          <span class="on" style="gap:6px"><i data-i="camera" data-s="18"></i>GPS + selfie</span>
+          <span class="" style="gap:6px"><i data-i="qr-code" data-s="18"></i>QR</span>
+          <span class="" style="gap:6px;"><i data-i="house" data-s="18"></i>WFH</span>
+        </div>
+        
+        <div class="card stack" style="gap:12px">
+          <div class="row-h sp"><div><div class="t-title">Rencana kerja hari ini</div><div class="t-meta">Wajib · 1–8 poin, maks. 300 karakter</div></div><span class="badge warn nodot">Wajib</span></div>
+          <div class="abs-plan">
+        <div class="abs-pr"><span class="abs-pn">1</span><div class="input"><span>Selesaikan laporan stok gudang</span></div><span class="abs-px" aria-label="Hapus poin 1"><i data-i="circle-x" data-s="24"></i></span></div>
+        <div class="abs-pr"><span class="abs-pn">2</span><div class="input"><span>Cek kiriman supplier jam 10.00</span></div><span class="abs-px" aria-label="Hapus poin 2"><i data-i="circle-x" data-s="24"></i></span></div>
+        <div class="abs-pr"><span class="abs-pn">3</span><div class="input"><span>Rapikan folder dokumen tim</span></div><span class="abs-px" aria-label="Hapus poin 3"><i data-i="circle-x" data-s="24"></i></span></div>
+        <div class="abs-add"><i data-i="plus" data-s="20"></i>Tambah poin</div>
+        
+      </div>
+          <div class="abs-row" style="gap:8px;color:var(--text-muted);font-size:14px;line-height:20px"><i data-i="message-circle" data-s="18"></i><span>Terkirim ke grup WhatsApp manajemen. Tiap poin juga menjadi tugas pribadi hari ini.</span></div>
+          <div class="t-label abs-teal abs-row" style="gap:6px;min-height:36px"><i data-i="eye" data-s="18"></i>Lihat pesan yang akan dikirim</div>
+        </div>
+        </div>
+    </div>    <div class="abs-dock "><div class="abs-swipe drag" role="slider" aria-label="Geser untuk check-in" style="--x:190px"><span class="fill"></span><span class="knob"><i data-i="chevrons-right"></i></span><span class="lbl"></span></div><div class="hint">Lepas di ujung kanan untuk mengirim</div></div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+  <!-- Check-in — mengirim (form terkunci) -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;">
+        
+        <div class="card stack" style="gap:6px">
+          <div class="row-h sp"><span class="t-meta">Jam sekarang</span><span class="badge ">Belum check-in</span></div>
+          <div class="abs-clock">07.52</div>
+          <div class="t-body muted">Shift Reguler · masuk 08.00 · pulang 17.00</div>
+          <div class="t-label abs-green abs-row" style="gap:6px"><i data-i="clock" data-s="18"></i>8 menit sebelum jam masuk · batas terlambat 08.10</div>
+        </div>
+        
+        <div class="card flush">
+          <div class="map abs-map" style="width:378px;height:170px">
+      <div class="abs-ring" style="left:127px;top:23px;width:124px;height:124px"></div>
+      <div class="abs-office" style="left:189px;top:85px"></div>
+      <span class="abs-tag" style="left:155px;top:-3px">Kantor Pusat</span>
+      <div class="abs-acc" style="left:204px;top:82px;width:44px;height:44px;"></div>
+      
+      <div class="abs-me" style="left:226px;top:104px"></div>
+      <span class="abs-maptop abs-green"><span class="abs-dot"></span><span style="color:var(--text)">GPS akurat · 12 m</span></span>
+    </div>
+          <div class="row-h" style="padding:12px 16px"><span class="li"><span class="ico teal" style="width:40px;height:40px"><i data-i="map-pin"></i></span></span><div class="grow"><div class="t-title">Kantor Pusat</div><div class="t-meta abs-green" style="font-size:14px">38 m dari titik · dalam radius 100 m</div></div><div class="t-meta" style="text-align:right">Akurasi ±12 m</div><button class="ibtn" aria-label="Perbarui lokasi" style="width:44px;height:44px;box-shadow:none"><i data-i="refresh-cw" data-s="20"></i></button></div>
+        </div>
+        
+        <div class="seg" role="tablist" aria-label="Metode absensi">
+          <span class="on" style="gap:6px"><i data-i="camera" data-s="18"></i>GPS + selfie</span>
+          <span class="" style="gap:6px"><i data-i="qr-code" data-s="18"></i>QR</span>
+          <span class="" style="gap:6px;"><i data-i="house" data-s="18"></i>WFH</span>
+        </div>
+        
+        <div class="card stack" style="gap:12px">
+          <div class="row-h sp"><div><div class="t-title">Rencana kerja hari ini</div><div class="t-meta">Wajib · 1–8 poin, maks. 300 karakter</div></div><span class="badge warn nodot">Wajib</span></div>
+          <div class="abs-plan">
+        <div class="abs-pr"><span class="abs-pn">1</span><div class="input"><span>Selesaikan laporan stok gudang</span></div><span class="abs-px" aria-label="Hapus poin 1"><i data-i="circle-x" data-s="24"></i></span></div>
+        <div class="abs-pr"><span class="abs-pn">2</span><div class="input"><span>Cek kiriman supplier jam 10.00</span></div><span class="abs-px" aria-label="Hapus poin 2"><i data-i="circle-x" data-s="24"></i></span></div>
+        <div class="abs-pr"><span class="abs-pn">3</span><div class="input"><span>Rapikan folder dokumen tim</span></div><span class="abs-px" aria-label="Hapus poin 3"><i data-i="circle-x" data-s="24"></i></span></div>
+        <div class="abs-add"><i data-i="plus" data-s="20"></i>Tambah poin</div>
+        
+      </div>
+          <div class="abs-row" style="gap:8px;color:var(--text-muted);font-size:14px;line-height:20px"><i data-i="message-circle" data-s="18"></i><span>Terkirim ke grup WhatsApp manajemen. Tiap poin juga menjadi tugas pribadi hari ini.</span></div>
+          <div class="t-label abs-teal abs-row" style="gap:6px;min-height:36px"><i data-i="eye" data-s="18"></i>Lihat pesan yang akan dikirim</div>
+        </div>
+        </div>
+    </div><div class="scrim" style="background:rgba(7,11,20,.25)"></div>    <div class="abs-dock z"><div class="abs-swipe busy" role="slider" aria-label="Mengirim… 64%" style="--x:0px"><span class="fill"></span><span class="knob"><i data-i="loader"></i></span><span class="lbl">Mengirim… 64%</span></div><div class="hint">Jangan tutup aplikasi · foto ±180 KB dikirim lewat koneksi seluler</div></div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+  <!-- Mengetik poin rencana — papan ketik (tab bar disembunyikan, Enter = poin berikutnya) -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;">
+        
+        <div class="card stack" style="gap:12px">
+          <div class="row-h sp"><div><div class="t-title">Rencana kerja hari ini</div><div class="t-meta">Wajib · 1–8 poin, maks. 300 karakter</div></div><span class="badge warn nodot">Wajib</span></div>
+          <div class="abs-plan">
+        <div class="abs-pr"><span class="abs-pn">1</span><div class="input"><span>Selesaikan laporan stok gudang</span></div><span class="abs-px" aria-label="Hapus poin 1"><i data-i="circle-x" data-s="24"></i></span></div>
+        <div class="abs-pr"><span class="abs-pn">2</span><div class="input focus multi"><span>Cek kiriman supplier jam 10.00 dan</span></div><span class="abs-px" aria-label="Hapus poin 2"><i data-i="circle-x" data-s="24"></i></span></div>
+        <div class="abs-add"><i data-i="plus" data-s="20"></i>Tambah poin</div>
+        
+      </div>
+          <div class="abs-row" style="gap:8px;color:var(--text-muted);font-size:14px;line-height:20px"><i data-i="message-circle" data-s="18"></i><span>Terkirim ke grup WhatsApp manajemen. Tiap poin juga menjadi tugas pribadi hari ini.</span></div>
+          <div class="t-label abs-teal abs-row" style="gap:6px;min-height:36px"><i data-i="eye" data-s="18"></i>Lihat pesan yang akan dikirim</div>
+        </div></div>
+    </div>    <div class="abs-dock" style="bottom:316px"><div class="abs-swipe off" role="slider" aria-label="Lengkapi dulu" style="--x:0px"><span class="fill"></span><span class="knob"><i data-i="lock"></i></span><span class="lbl">Lengkapi dulu</span></div><div class="hint">Papan ketik terbuka: tab bawah disembunyikan, tombol geser naik di atas papan ketik.</div></div>    <div class="abs-kbd"><div class="r"><span class="k">q</span><span class="k">w</span><span class="k">e</span><span class="k">r</span><span class="k">t</span><span class="k">y</span><span class="k">u</span><span class="k">i</span><span class="k">o</span><span class="k">p</span></div><div class="r"><span class="k">a</span><span class="k">s</span><span class="k">d</span><span class="k">f</span><span class="k">g</span><span class="k">h</span><span class="k">j</span><span class="k">k</span><span class="k">l</span></div><div class="r"><span class="k w">⇧</span><span class="k">z</span><span class="k">x</span><span class="k">c</span><span class="k">v</span><span class="k">b</span><span class="k">n</span><span class="k">m</span><span class="k w">⌫</span></div><div class="r"><span class="k w">?123</span><span class="k w">,</span><span class="k sp"></span><span class="k w">.</span><span class="k go">→</span></div></div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Absen · keadaan hari & memuat · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<link rel="stylesheet" href="_abs.css">
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+  <!-- Memuat status hari ini (skeleton) -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;">
+        <div class="card stack" style="gap:12px"><div class="skel" style="width:90px;height:14px;"></div><div class="skel" style="width:150px;height:46px;"></div><div class="skel" style="width:78%;height:16px;"></div><div class="skel" style="width:52%;height:14px;"></div></div>
+        <div class="card flush"><div class="skel" style="width:100%;height:170px;border-radius:0"></div><div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px"><div class="skel" style="width:60%;height:18px;"></div><div class="skel" style="width:40%;height:14px;"></div></div></div>
+        <div class="skel" style="width:100%;height:48px;border-radius:16px"></div>
+        <div class="card stack" style="gap:12px"><div class="skel" style="width:50%;height:18px;"></div><div class="skel" style="width:100%;height:48px;"></div><div class="skel" style="width:100%;height:48px;"></div></div></div>
+    </div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+  <!-- Galat memuat (ErrorState) -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;">
+        <div class="empty" style="margin-top:40px"><div class="ic" style="background:var(--bad-soft);color:var(--bad)"><i data-i="cloud-off" data-s="30"></i></div>
+          <div class="t-h3">Tidak dapat memuat status absensi</div>
+          <div class="t-body muted">Periksa koneksi internet Anda lalu coba lagi. Data absen Anda aman di server.</div>
+          <div class="btn primary" style="margin-top:6px"><i data-i="refresh-cw"></i>Coba lagi</div></div></div>
+    </div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+  <!-- Terlalu pagi (too_early) -->
+  <div class="phone" data-fit="1" style="--h:1375px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;padding-bottom:260px">
+        
+        <div class="card stack" style="gap:6px">
+          <div class="row-h sp"><span class="t-meta">Jam sekarang</span><span class="badge ">Belum dibuka</span></div>
+          <div class="abs-clock">05.41</div>
+          <div class="t-body muted">Shift Reguler · masuk 08.00 · pulang 17.00</div>
+          <div class="t-label abs-amber abs-row" style="gap:6px"><i data-i="hourglass" data-s="18"></i>Check-in dibuka pukul 06.00 (2 jam sebelum masuk)</div>
+        </div>
+        
+        <div class="card flush">
+          <div class="map abs-map" style="width:378px;height:170px">
+      <div class="abs-ring" style="left:127px;top:23px;width:124px;height:124px"></div>
+      <div class="abs-office" style="left:189px;top:85px"></div>
+      <span class="abs-tag" style="left:155px;top:-3px">Kantor Pusat</span>
+      <div class="abs-acc" style="left:204px;top:82px;width:44px;height:44px;"></div>
+      
+      <div class="abs-me" style="left:226px;top:104px"></div>
+      <span class="abs-maptop abs-green"><span class="abs-dot"></span><span style="color:var(--text)">GPS akurat · 14 m</span></span>
+    </div>
+          <div class="row-h" style="padding:12px 16px"><span class="li"><span class="ico teal" style="width:40px;height:40px"><i data-i="map-pin"></i></span></span><div class="grow"><div class="t-title">Kantor Pusat</div><div class="t-meta abs-green" style="font-size:14px">41 m dari titik · dalam radius 100 m</div></div><div class="t-meta" style="text-align:right">Akurasi ±12 m</div><button class="ibtn" aria-label="Perbarui lokasi" style="width:44px;height:44px;box-shadow:none"><i data-i="refresh-cw" data-s="20"></i></button></div>
+        </div>
+        
+        <div class="seg" role="tablist" aria-label="Metode absensi">
+          <span class="on" style="gap:6px"><i data-i="camera" data-s="18"></i>GPS + selfie</span>
+          <span class="" style="gap:6px"><i data-i="qr-code" data-s="18"></i>QR</span>
+          <span class="" style="gap:6px;"><i data-i="house" data-s="18"></i>WFH</span>
+        </div>
+        <div class="banner warn"><i data-i="clock"></i><span>Check-in untuk shift Reguler baru dibuka pukul <b>06.00</b>. Anda bisa menyiapkan rencana kerja lebih dulu.</span></div>
+        
+        <div class="card stack" style="gap:12px">
+          <div class="row-h sp"><div><div class="t-title">Rencana kerja hari ini</div><div class="t-meta">Wajib · 1–8 poin, maks. 300 karakter</div></div><span class="badge warn nodot">Wajib</span></div>
+          <div class="abs-plan">
+        <div class="abs-pr"><span class="abs-pn">1</span><div class="input"><span>Selesaikan laporan stok gudang</span></div></div>
+        <div class="abs-add"><i data-i="plus" data-s="20"></i>Tambah poin</div>
+        
+      </div>
+          <div class="abs-row" style="gap:8px;color:var(--text-muted);font-size:14px;line-height:20px"><i data-i="message-circle" data-s="18"></i><span>Terkirim ke grup WhatsApp manajemen. Tiap poin juga menjadi tugas pribadi hari ini.</span></div>
+          <div class="t-label abs-teal abs-row" style="gap:6px;min-height:36px"><i data-i="eye" data-s="18"></i>Lihat pesan yang akan dikirim</div>
+        </div></div>
+    </div>    <div class="abs-dock "><div class="abs-swipe off" role="slider" aria-label="Dibuka pukul 06.00" style="--x:0px"><span class="fill"></span><span class="knob"><i data-i="lock"></i></span><span class="lbl">Dibuka pukul 06.00</span></div><div class="hint">Check-in belum bisa dikirim.</div></div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+  <!-- Tidak tersedia — bukan hari kerja (libur/akhir pekan) -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Sabtu, 17 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;">
+        <div class="card stack" style="gap:8px">
+          <div class="row-h sp"><span class="t-title">Absen tidak tersedia</span><i data-i="ban" data-s="22"></i></div>
+          <div class="t-body muted">Hari ini bukan hari kerja — akhir pekan. Tidak perlu check-in.</div>
+          <div class="abs-sep" style="margin:6px 0"></div>
+          <div class="abs-kv"><span>Jadwal Anda</span><b>Sen–Jum · 08.00–17.00</b></div>
+          <div class="abs-kv"><span>Hari kerja berikutnya</span><b>Senin, 19 Okt</b></div>
+        </div>
+        <div class="card flush list"><div class="li"><span class="ico"><i data-i="calendar-days"></i></span><div class="grow"><div class="t">Lihat riwayat absensi</div></div><i data-i="chevron-right"></i></div></div></div>
+    </div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Workspace" style="background:var(--grad-aksi)"><i data-i="layout-grid" data-s="26"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+  <!-- Tidak tersedia — hari tercatat dari pengajuan (day_has_request) -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;">
+        <div class="card stack" style="gap:10px">
+          <div class="row-h sp"><span class="t-title">Hari ini tercatat Izin</span><span class="badge info">Izin</span></div>
+          <div class="t-body muted">Dari pengajuan yang disetujui (IZN-2026-10-0004). Hubungi HR bila Anda tetap masuk kerja.</div>
+          <div class="abs-row"><span class="btn tonal sm"><i data-i="file-text" data-s="18"></i>Lihat pengajuan</span><span class="btn quiet sm">Hubungi HR</span></div>
+        </div>
+        <div class="card stack" style="gap:6px"><div class="t-label">Catatan hari ini</div><div class="abs-kv"><span>Status</span><b>Izin · sehari penuh</b></div><div class="abs-kv"><span>Check-in</span><b class="subtle">Tidak diperlukan</b></div></div></div>
+    </div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Workspace" style="background:var(--grad-aksi)"><i data-i="layout-grid" data-s="26"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+  <!-- Tanpa lokasi kantor aktif (no_office_location) -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;">
+        
+        <div class="card stack" style="gap:6px">
+          <div class="row-h sp"><span class="t-meta">Jam sekarang</span><span class="badge ">Belum check-in</span></div>
+          <div class="abs-clock">07.52</div>
+          <div class="t-body muted">Shift Reguler · masuk 08.00 · pulang 17.00</div>
+          <div class="t-label abs-green abs-row" style="gap:6px"><i data-i="clock" data-s="18"></i>8 menit sebelum jam masuk · batas terlambat 08.10</div>
+        </div>
+        <div class="banner bad"><i data-i="triangle-alert"></i><span><b>Lokasi kantor belum diatur.</b> Belum ada lokasi kantor aktif untuk check-in GPS. Hubungi HR untuk mengatur lokasi kantor.</span></div>
+        
+        <div class="seg" role="tablist" aria-label="Metode absensi">
+          <span class="" style="gap:6px"><i data-i="camera" data-s="18"></i>GPS + selfie</span>
+          <span class="on" style="gap:6px"><i data-i="qr-code" data-s="18"></i>QR</span>
+          <span class="" style="gap:6px;"><i data-i="house" data-s="18"></i>WFH</span>
+        </div>
+        <div class="card stack" style="gap:6px"><div class="t-label">Yang masih bisa dilakukan</div>
+          <div class="abs-pre ok"><span class="st"><i data-i="check"></i></span>Pindai QR di kiosk lobi</div>
+          <div class="abs-pre ok"><span class="st"><i data-i="check"></i></span>Ajukan koreksi absensi ke HR</div>
+        </div>
+        <div class="btn outline block"><i data-i="mail"></i>Hubungi HR</div></div>
+    </div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+</div>
+</body>
+</html>

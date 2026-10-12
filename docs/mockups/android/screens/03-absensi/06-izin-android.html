@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Absen · izin runtime Android · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<link rel="stylesheet" href="_abs.css">
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+  <!-- Penjelasan sebelum izin lokasi (rationale in-app) -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;padding-bottom:260px">
+        
+        <div class="card stack" style="gap:6px">
+          <div class="row-h sp"><span class="t-meta">Jam sekarang</span><span class="badge ">Belum check-in</span></div>
+          <div class="abs-clock">07.52</div>
+          <div class="t-body muted">Shift Reguler · masuk 08.00 · pulang 17.00</div>
+          <div class="t-label abs-green abs-row" style="gap:6px"><i data-i="clock" data-s="18"></i>8 menit sebelum jam masuk · batas terlambat 08.10</div>
+        </div>
+        
+        
+        <div class="card flush">
+          <div class="map abs-map" style="width:378px;height:170px">
+      <div class="abs-ring" style="left:127px;top:23px;width:124px;height:124px"></div>
+      <div class="abs-office" style="left:189px;top:85px"></div>
+      <span class="abs-tag" style="left:155px;top:-3px">Kantor Pusat</span>
+      <div class="abs-acc" style="left:-51px;top:-51px;width:2px;height:2px;"></div>
+      
+      <div class="abs-me" style="left:-50px;top:-50px"></div>
+      
+    </div>
+          <div class="row-h" style="padding:12px 16px"><span class="li"><span class="ico teal" style="width:40px;height:40px"><i data-i="map-pin"></i></span></span><div class="grow"><div class="t-title">Kantor Pusat</div><div class="t-meta abs-blue" style="font-size:14px">Mencari lokasi…</div></div><div class="t-meta" style="text-align:right"></div><button class="ibtn" aria-label="Perbarui lokasi" style="width:44px;height:44px;box-shadow:none"><i data-i="refresh-cw" data-s="20"></i></button></div>
+        </div>
+        
+        <div class="seg" role="tablist" aria-label="Metode absensi">
+          <span class="on" style="gap:6px"><i data-i="camera" data-s="18"></i>GPS + selfie</span>
+          <span class="" style="gap:6px"><i data-i="qr-code" data-s="18"></i>QR</span>
+          <span class="" style="gap:6px;"><i data-i="house" data-s="18"></i>WFH</span>
+        </div>
+        
+        </div>
+    </div>    <div class="scrim"></div>    <div class="sheet"><div class="row-h"><span class="ico teal li" style="min-height:0"><span class="ico teal" style="width:52px;height:52px;border-radius:18px"><i data-i="map-pin" data-s="26"></i></span></span><div class="grow"><div class="t-h3">Izinkan lokasi saat absen</div></div></div>
+      <div class="t-body muted">RuangKerja membaca lokasi <b>hanya saat Anda check-in atau check-out</b>, untuk memastikan Anda berada di area kantor. Lokasi tidak dilacak di latar belakang.</div>
+      <div class="abs-pre ok"><span class="st"><i data-i="check"></i></span><span>Pilih <b>Tepat</b> agar akurasi di bawah 50 m</span></div>
+      <div class="abs-pre ok"><span class="st"><i data-i="check"></i></span><span>Pilih <b>Saat aplikasi sedang digunakan</b></span></div>
+      <div class="btn primary block" style="height:56px">Lanjut</div><div class="btn quiet block">Nanti saja</div></div>
+  </div>
+  <!-- Dialog sistem lokasi — Tepat dipilih -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;padding-bottom:260px">
+        
+        <div class="card stack" style="gap:6px">
+          <div class="row-h sp"><span class="t-meta">Jam sekarang</span><span class="badge ">Belum check-in</span></div>
+          <div class="abs-clock">07.52</div>
+          <div class="t-body muted">Shift Reguler · masuk 08.00 · pulang 17.00</div>
+          <div class="t-label abs-green abs-row" style="gap:6px"><i data-i="clock" data-s="18"></i>8 menit sebelum jam masuk · batas terlambat 08.10</div>
+        </div>
+        
+        
+        <div class="card flush">
+          <div class="map abs-map" style="width:378px;height:170px">
+      <div class="abs-ring" style="left:127px;top:23px;width:124px;height:124px"></div>
+      <div class="abs-office" style="left:189px;top:85px"></div>
+      <span class="abs-tag" style="left:155px;top:-3px">Kantor Pusat</span>
+      <div class="abs-acc" style="left:-51px;top:-51px;width:2px;height:2px;"></div>
+      
+      <div class="abs-me" style="left:-50px;top:-50px"></div>
+      
+    </div>
+          <div class="row-h" style="padding:12px 16px"><span class="li"><span class="ico teal" style="width:40px;height:40px"><i data-i="map-pin"></i></span></span><div class="grow"><div class="t-title">Kantor Pusat</div><div class="t-meta abs-blue" style="font-size:14px">Mencari lokasi…</div></div><div class="t-meta" style="text-align:right"></div><button class="ibtn" aria-label="Perbarui lokasi" style="width:44px;height:44px;box-shadow:none"><i data-i="refresh-cw" data-s="20"></i></button></div>
+        </div>
+        
+        <div class="seg" role="tablist" aria-label="Metode absensi">
+          <span class="on" style="gap:6px"><i data-i="camera" data-s="18"></i>GPS + selfie</span>
+          <span class="" style="gap:6px"><i data-i="qr-code" data-s="18"></i>QR</span>
+          <span class="" style="gap:6px;"><i data-i="house" data-s="18"></i>WFH</span>
+        </div>
+        
+        </div>
+    </div>    <div class="scrim"></div>    <div class="abs-perm"><span class="ic"><i data-i="map-pin" data-s="40"></i></span>
+      <div class="q">Izinkan RuangKerja mengakses lokasi perangkat ini?</div>
+      <div class="opts"><div class="opt on"><div class="mp" style="--pd:10px;--pr:6px"></div>Tepat</div><div class="opt"><div class="mp" style="--pd:14px;--pr:26px"></div>Perkiraan</div></div>
+      <div class="btns"><span class="pri">Saat aplikasi sedang digunakan</span><span>Hanya kali ini</span><span>Jangan izinkan</span></div></div>
+  </div>
+  <!-- Dialog sistem lokasi — Perkiraan dipilih -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;padding-bottom:260px">
+        
+        <div class="card stack" style="gap:6px">
+          <div class="row-h sp"><span class="t-meta">Jam sekarang</span><span class="badge ">Belum check-in</span></div>
+          <div class="abs-clock">07.52</div>
+          <div class="t-body muted">Shift Reguler · masuk 08.00 · pulang 17.00</div>
+          <div class="t-label abs-green abs-row" style="gap:6px"><i data-i="clock" data-s="18"></i>8 menit sebelum jam masuk · batas terlambat 08.10</div>
+        </div>
+        
+        
+        <div class="card flush">
+          <div class="map abs-map" style="width:378px;height:170px">
+      <div class="abs-ring" style="left:127px;top:23px;width:124px;height:124px"></div>
+      <div class="abs-office" style="left:189px;top:85px"></div>
+      <span class="abs-tag" style="left:155px;top:-3px">Kantor Pusat</span>
+      <div class="abs-acc" style="left:-51px;top:-51px;width:2px;height:2px;"></div>
+      
+      <div class="abs-me" style="left:-50px;top:-50px"></div>
+      
+    </div>
+          <div class="row-h" style="padding:12px 16px"><span class="li"><span class="ico teal" style="width:40px;height:40px"><i data-i="map-pin"></i></span></span><div class="grow"><div class="t-title">Kantor Pusat</div><div class="t-meta abs-blue" style="font-size:14px">Mencari lokasi…</div></div><div class="t-meta" style="text-align:right"></div><button class="ibtn" aria-label="Perbarui lokasi" style="width:44px;height:44px;box-shadow:none"><i data-i="refresh-cw" data-s="20"></i></button></div>
+        </div>
+        
+        <div class="seg" role="tablist" aria-label="Metode absensi">
+          <span class="on" style="gap:6px"><i data-i="camera" data-s="18"></i>GPS + selfie</span>
+          <span class="" style="gap:6px"><i data-i="qr-code" data-s="18"></i>QR</span>
+          <span class="" style="gap:6px;"><i data-i="house" data-s="18"></i>WFH</span>
+        </div>
+        
+        </div>
+    </div>    <div class="scrim"></div>    <div class="abs-perm"><span class="ic"><i data-i="map-pin" data-s="40"></i></span>
+      <div class="q">Izinkan RuangKerja mengakses lokasi perangkat ini?</div>
+      <div class="opts"><div class="opt"><div class="mp" style="--pd:10px;--pr:6px"></div>Tepat</div><div class="opt on"><div class="mp" style="--pd:14px;--pr:26px"></div>Perkiraan</div></div>
+      <div class="btns"><span class="pri">Saat aplikasi sedang digunakan</span><span>Hanya kali ini</span><span>Jangan izinkan</span></div></div>
+  </div>
+  <!-- Lokasi perkiraan — minta ubah ke Tepat -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;padding-bottom:260px">
+        
+        <div class="card stack" style="gap:6px">
+          <div class="row-h sp"><span class="t-meta">Jam sekarang</span><span class="badge ">Belum check-in</span></div>
+          <div class="abs-clock">07.52</div>
+          <div class="t-body muted">Shift Reguler · masuk 08.00 · pulang 17.00</div>
+          <div class="t-label abs-green abs-row" style="gap:6px"><i data-i="clock" data-s="18"></i>8 menit sebelum jam masuk · batas terlambat 08.10</div>
+        </div>
+        <div class="banner warn"><i data-i="triangle-alert"></i><span><b>Lokasi perkiraan.</b> Akurasi ±1.800 m terlalu kasar untuk absen. Ubah izin ke <b>Lokasi tepat</b>.<br><b class="abs-teal">Buka pengaturan</b></span></div>
+        
+        <div class="card flush">
+          <div class="map abs-map" style="width:378px;height:170px">
+      <div class="abs-ring" style="left:127px;top:23px;width:124px;height:124px"></div>
+      <div class="abs-office" style="left:189px;top:85px"></div>
+      <span class="abs-tag" style="left:155px;top:-3px">Kantor Pusat</span>
+      <div class="abs-acc" style="left:194px;top:54px;width:132px;height:132px;background:rgba(229,72,77,.18)"></div>
+      
+      <div class="abs-me" style="left:260px;top:120px"></div>
+      
+    </div>
+          <div class="row-h" style="padding:12px 16px"><span class="li"><span class="ico warn" style="width:40px;height:40px"><i data-i="locate"></i></span></span><div class="grow"><div class="t-title">Kantor Pusat</div><div class="t-meta abs-amber" style="font-size:14px">Akurasi ±1.800 m · perkiraan</div></div><div class="t-meta" style="text-align:right">±1.800 m</div><button class="ibtn" aria-label="Perbarui lokasi" style="width:44px;height:44px;box-shadow:none"><i data-i="refresh-cw" data-s="20"></i></button></div>
+        </div>
+        
+        <div class="seg" role="tablist" aria-label="Metode absensi">
+          <span class="on" style="gap:6px"><i data-i="camera" data-s="18"></i>GPS + selfie</span>
+          <span class="" style="gap:6px"><i data-i="qr-code" data-s="18"></i>QR</span>
+          <span class="" style="gap:6px;"><i data-i="house" data-s="18"></i>WFH</span>
+        </div>
+        
+        </div>
+    </div>    <div class="abs-dock "><div class="abs-swipe off" role="slider" aria-label="Butuh lokasi tepat" style="--x:0px"><span class="fill"></span><span class="knob"><i data-i="lock"></i></span><span class="lbl">Butuh lokasi tepat</span></div><div class="hint">Check-in dikirim setelah lokasi tepat terbaca.</div></div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+  <!-- Dialog sistem kamera -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;padding-bottom:260px">
+        
+        <div class="card stack" style="gap:6px">
+          <div class="row-h sp"><span class="t-meta">Jam sekarang</span><span class="badge ">Belum check-in</span></div>
+          <div class="abs-clock">07.52</div>
+          <div class="t-body muted">Shift Reguler · masuk 08.00 · pulang 17.00</div>
+          <div class="t-label abs-green abs-row" style="gap:6px"><i data-i="clock" data-s="18"></i>8 menit sebelum jam masuk · batas terlambat 08.10</div>
+        </div>
+        
+        
+        <div class="card flush">
+          <div class="map abs-map" style="width:378px;height:170px">
+      <div class="abs-ring" style="left:127px;top:23px;width:124px;height:124px"></div>
+      <div class="abs-office" style="left:189px;top:85px"></div>
+      <span class="abs-tag" style="left:155px;top:-3px">Kantor Pusat</span>
+      <div class="abs-acc" style="left:-51px;top:-51px;width:2px;height:2px;"></div>
+      
+      <div class="abs-me" style="left:-50px;top:-50px"></div>
+      
+    </div>
+          <div class="row-h" style="padding:12px 16px"><span class="li"><span class="ico teal" style="width:40px;height:40px"><i data-i="map-pin"></i></span></span><div class="grow"><div class="t-title">Kantor Pusat</div><div class="t-meta abs-blue" style="font-size:14px">Mencari lokasi…</div></div><div class="t-meta" style="text-align:right"></div><button class="ibtn" aria-label="Perbarui lokasi" style="width:44px;height:44px;box-shadow:none"><i data-i="refresh-cw" data-s="20"></i></button></div>
+        </div>
+        
+        <div class="seg" role="tablist" aria-label="Metode absensi">
+          <span class="on" style="gap:6px"><i data-i="camera" data-s="18"></i>GPS + selfie</span>
+          <span class="" style="gap:6px"><i data-i="qr-code" data-s="18"></i>QR</span>
+          <span class="" style="gap:6px;"><i data-i="house" data-s="18"></i>WFH</span>
+        </div>
+        
+        </div>
+    </div>    <div class="scrim"></div>    <div class="abs-perm"><span class="ic"><i data-i="camera" data-s="40"></i></span>
+      <div class="q">Izinkan RuangKerja mengambil gambar dan merekam video?</div>
+      <div class="btns"><span class="pri">Saat aplikasi sedang digunakan</span><span>Hanya kali ini</span><span>Jangan izinkan</span></div></div>
+  </div>
+  <!-- Izin lokasi ditolak permanen -->
+  <div class="phone" data-fit="1" style="--h:1078px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;padding-bottom:150px">
+        
+        <div class="card stack" style="gap:6px">
+          <div class="row-h sp"><span class="t-meta">Jam sekarang</span><span class="badge ">Belum check-in</span></div>
+          <div class="abs-clock">07.52</div>
+          <div class="t-body muted">Shift Reguler · masuk 08.00 · pulang 17.00</div>
+          <div class="t-label abs-green abs-row" style="gap:6px"><i data-i="clock" data-s="18"></i>8 menit sebelum jam masuk · batas terlambat 08.10</div>
+        </div>
+        <div class="card stack" style="gap:12px;border-color:var(--bad)">
+          <div class="abs-row" style="align-items:flex-start;gap:12px"><span class="ico bad li" style="min-height:0"><span class="ico bad"><i data-i="map-pin-off"></i></span></span><div><div class="t-title">Izin lokasi ditolak</div><div class="t-body muted">Izinkan dari pengaturan ponsel lalu coba lagi. Android tidak menampilkan dialog izin lagi setelah ditolak dua kali.</div></div></div>
+          <div class="abs-pre ok"><span class="st">1</span>Buka pengaturan RuangKerja</div>
+          <div class="abs-pre ok"><span class="st">2</span>Izin → Lokasi</div>
+          <div class="abs-pre ok"><span class="st">3</span><span>Pilih <b>Izinkan hanya saat aplikasi digunakan</b> + <b>Gunakan lokasi tepat</b></span></div>
+          <div class="btn primary block"><i data-i="settings"></i>Buka pengaturan</div>
+          <div class="btn outline block"><i data-i="refresh-cw"></i>Coba baca lokasi</div>
+        </div>
+        
+        <div class="seg" role="tablist" aria-label="Metode absensi">
+          <span class="" style="gap:6px"><i data-i="camera" data-s="18"></i>GPS + selfie</span>
+          <span class="on" style="gap:6px"><i data-i="qr-code" data-s="18"></i>QR</span>
+          <span class="" style="gap:6px;"><i data-i="house" data-s="18"></i>WFH</span>
+        </div>
+        <div class="hint" style="text-align:center">Tanpa izin lokasi Anda masih bisa memindai QR kiosk.</div></div>
+    </div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+  <!-- Izin kamera ditolak permanen (layar KameraSelfie) -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:28px">
+        <div class="empty" style="border:0"><div class="ic" style="width:80px;height:80px;border-radius:26px"><i data-i="camera-off" data-s="38"></i></div></div>
+        <h2 class="t-h2" style="text-align:center">Izinkan kamera</h2>
+        <p class="t-body muted" style="text-align:center;margin:0">Selfie diperlukan sebagai bukti kehadiran saat absen.</p>
+        <div class="banner bad" role="alert"><i data-i="circle-alert"></i><span>Akses kamera ditolak. Izinkan dari pengaturan ponsel lalu coba lagi.</span></div>
+        <div class="btn primary block" style="height:56px"><i data-i="settings"></i>Buka pengaturan</div>
+        <div class="btn quiet block">Batal</div>
+      </div>
+    </div>
+  </div>
+  <!-- Layanan lokasi perangkat mati — dialog "Aktifkan lokasi" -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;padding-bottom:260px">
+        
+        <div class="card stack" style="gap:6px">
+          <div class="row-h sp"><span class="t-meta">Jam sekarang</span><span class="badge ">Belum check-in</span></div>
+          <div class="abs-clock">07.52</div>
+          <div class="t-body muted">Shift Reguler · masuk 08.00 · pulang 17.00</div>
+          <div class="t-label abs-green abs-row" style="gap:6px"><i data-i="clock" data-s="18"></i>8 menit sebelum jam masuk · batas terlambat 08.10</div>
+        </div>
+        
+        
+        <div class="card flush">
+          <div class="map abs-map" style="width:378px;height:170px">
+      <div class="abs-ring" style="left:127px;top:23px;width:124px;height:124px"></div>
+      <div class="abs-office" style="left:189px;top:85px"></div>
+      <span class="abs-tag" style="left:155px;top:-3px">Kantor Pusat</span>
+      <div class="abs-acc" style="left:-51px;top:-51px;width:2px;height:2px;"></div>
+      
+      <div class="abs-me" style="left:-50px;top:-50px"></div>
+      
+    </div>
+          <div class="row-h" style="padding:12px 16px"><span class="li"><span class="ico teal" style="width:40px;height:40px"><i data-i="map-pin"></i></span></span><div class="grow"><div class="t-title">Kantor Pusat</div><div class="t-meta abs-blue" style="font-size:14px">Mencari lokasi…</div></div><div class="t-meta" style="text-align:right"></div><button class="ibtn" aria-label="Perbarui lokasi" style="width:44px;height:44px;box-shadow:none"><i data-i="refresh-cw" data-s="20"></i></button></div>
+        </div>
+        
+        <div class="seg" role="tablist" aria-label="Metode absensi">
+          <span class="on" style="gap:6px"><i data-i="camera" data-s="18"></i>GPS + selfie</span>
+          <span class="" style="gap:6px"><i data-i="qr-code" data-s="18"></i>QR</span>
+          <span class="" style="gap:6px;"><i data-i="house" data-s="18"></i>WFH</span>
+        </div>
+        
+        </div>
+    </div>    <div class="scrim"></div>    <div class="abs-perm"><span class="ic"><i data-i="locate-fixed" data-s="40"></i></span>
+      <div class="q">Untuk melanjutkan, aktifkan lokasi perangkat</div>
+      <div class="t-meta" style="font-size:14px">Layanan lokasi mati. RuangKerja memerlukannya untuk memeriksa Anda berada di area kantor.</div>
+      <div class="btns"><span class="pri">Aktifkan</span><span>Tidak, terima kasih</span></div></div>
+  </div>
+</div>
+</body>
+</html>
