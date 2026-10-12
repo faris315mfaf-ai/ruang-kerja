@@ -35,7 +35,23 @@ final class DelegateBriefing
             throw ValidationException::withMessages(['user_id' => 'Pilih karyawan aktif di perusahaan Anda.']);
         }
 
+        if ($period->hasEndedAt($now)) {
+            throw ValidationException::withMessages([
+                'period' => sprintf(
+                    '%s hari ini sudah lewat (pukul %s–%s). Pilih briefing yang belum berakhir.',
+                    $period->label(),
+                    $period->startsAt(),
+                    $period->endsAt(),
+                ),
+            ]);
+        }
+
         $delegation = DB::transaction(function () use ($actor, $delegate, $period, $date): BriefingDelegation {
+            // Advisory lock: the first delegation of the day has no row to
+            // lock yet; two appointments at once must not race into the
+            // unique index (500).
+            DB::select('select pg_advisory_xact_lock(hashtext(?))', [sprintf('briefing-delegation:%s:%s:%s', $actor->company_id, $date->toDateString(), $period->value)]);
+
             $delegation = BriefingDelegation::query()
                 ->where('company_id', $actor->company_id)
                 ->whereDate('briefing_date', $date->toDateString())

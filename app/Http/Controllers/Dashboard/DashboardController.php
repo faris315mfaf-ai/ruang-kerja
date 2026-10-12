@@ -15,6 +15,7 @@ use App\Domain\Analytics\Services\DashboardAccess;
 use App\Domain\Analytics\Services\DashboardContextResolver;
 use App\Domain\Attendance\Events\AttendanceRecorded;
 use App\Domain\Briefings\Queries\BriefingWindow;
+use App\Domain\Briefings\Queries\LatestBriefing;
 use App\Domain\Monitoring\Queries\DailyWorkMonitor;
 use App\Domain\Monitoring\Queries\ManagementNotes;
 use App\Domain\Monitoring\Queries\ProjectWorkMonitor;
@@ -66,6 +67,7 @@ class DashboardController extends Controller
         private readonly WorkspaceDirectory $workspaces,
         private readonly BriefingWindow $briefingWindow,
         private readonly TugasHariIni $tugasHariIni,
+        private readonly LatestBriefing $latestBriefing,
     ) {}
 
     public function index(Request $request, #[CurrentUser] User $user): Response
@@ -144,6 +146,9 @@ class DashboardController extends Controller
             // tim / semua — replaces "Ruang saya" (planner) and the "Laporan
             // hari ini" card on this page.
             'tugasHariIni' => fn (): array => $this->tugasHariIni->for($context->viewer, $now),
+            // "Briefing terakhir" for every viewer (keputusan pemilik 9 Okt
+            // 2026): same shape as GET /api/v1/briefing/terakhir's `briefing`.
+            'latestBriefing' => fn (): ?array => $this->latestBriefing->for($context->viewer),
             'metrics' => Inertia::defer(fn (): array => $queries->metrics($context->viewer, $context->filters, $now)),
         ]);
     }

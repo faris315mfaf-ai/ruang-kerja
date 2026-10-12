@@ -53,7 +53,12 @@ final class SaveBriefing
         $content = trim(str_replace("\r\n", "\n", $content));
 
         [$briefing, $created] = DB::transaction(function () use ($actor, $period, $content, $date): array {
-            // Row lock: two recorders saving the same period at once keep one row.
+            // Advisory lock on company + date + period: a row lock cannot
+            // guard the very first save (no row yet), so two recorders saving
+            // at once would race into the unique index (500). The second one
+            // waits here, then updates the row the first one created.
+            DB::select('select pg_advisory_xact_lock(hashtext(?))', [sprintf('briefing:%s:%s:%s', $actor->company_id, $date, $period->value)]);
+
             $existing = Briefing::query()
                 ->forCompanyDate((string) $actor->company_id, $date)
                 ->where('period', $period->value)

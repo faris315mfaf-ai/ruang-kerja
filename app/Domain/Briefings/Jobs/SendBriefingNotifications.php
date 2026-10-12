@@ -3,6 +3,8 @@
 namespace App\Domain\Briefings\Jobs;
 
 use App\Domain\Briefings\Notifications\BriefingPosted;
+use App\Domain\Notifications\Enums\NotificationType;
+use App\Domain\Notifications\Services\NotificationDispatchLog;
 use App\Models\Briefing;
 use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -13,7 +15,9 @@ use Illuminate\Support\Facades\Notification;
 /**
  * Notifies every active user of the company — including the recorder — that
  * briefing minutes were saved, in chunks of 200 like company-wide
- * announcements.
+ * announcements. Idempotent: each recipient is claimed in
+ * notification_dispatch_logs first, so a retry after a failure halfway
+ * never notifies the earlier chunks twice.
  */
 final class SendBriefingNotifications implements ShouldQueue
 {
@@ -23,7 +27,7 @@ final class SendBriefingNotifications implements ShouldQueue
 
     public function __construct(public readonly string $briefingId) {}
 
-    public function handle(): void
+    public function handle(NotificationDispatchLog $dispatchLog): void
     {
         $briefing = Briefing::query()->with('creator')->find($this->briefingId);
 
@@ -34,8 +38,14 @@ final class SendBriefingNotifications implements ShouldQueue
         User::query()
             ->active()
             ->where('company_id', $briefing->company_id)
-            ->chunkById(200, function (Collection $users) use ($briefing): void {
-                Notification::send($users, new BriefingPosted($briefing));
+            ->chunkById(200, function (Collection $users) use ($briefing, $dispatchLog): void {
+                $unclaimed = $users->filter(
+                    fn (User $user): bool => $dispatchLog->claim($user, NotificationType::BriefingPosted, $briefing, 'posted'),
+                );
+
+                if ($unclaimed->isNotEmpty()) {
+                    Notification::send($unclaimed, new BriefingPosted($briefing));
+                }
             });
     }
 }

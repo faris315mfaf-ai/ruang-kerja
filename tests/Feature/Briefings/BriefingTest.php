@@ -1,8 +1,11 @@
 <?php
 
 use App\Domain\Briefings\Enums\BriefingPeriod;
+use App\Domain\Briefings\Jobs\SendBriefingNotifications;
 use App\Domain\Briefings\Queries\BriefingWindow;
+use App\Domain\Briefings\Queries\LatestBriefing;
 use App\Domain\Notifications\Enums\NotificationType;
+use App\Domain\Notifications\Services\NotificationDispatchLog;
 use App\Domain\Organization\Enums\Role;
 use App\Models\Briefing;
 use App\Models\BriefingDelegation;
@@ -42,10 +45,14 @@ it('opens the pagi window in the morning and the sore window in the afternoon on
     'sebelum pagi' => ['07:59', null],
     'awal pagi' => ['08:00', 'pagi'],
     'tengah pagi' => ['09:00', 'pagi'],
-    'akhir jendela pagi' => ['11:00', 'pagi'],
+    'menit terakhir pagi' => ['10:59', 'pagi'],
+    // End exclusive: 11.00 sharp is already closed.
+    'jendela pagi tutup' => ['11:00', null],
     'siang' => ['12:00', null],
     'awal sore' => ['16:00', 'sore'],
     'sore' => ['16:30', 'sore'],
+    'menit terakhir sore' => ['17:59', 'sore'],
+    'jendela sore tutup' => ['18:00', null],
     'setelah sore' => ['18:01', null],
 ]);
 
@@ -310,4 +317,74 @@ it('validates the form', function () {
 
     expect(Briefing::query()->count())->toBe(0)
         ->and(inboxFor($this->org['rizky'])->count())->toBe(0);
+});
+
+it('refuses to delegate a period whose window already closed today', function () {
+    $this->travelTo(F::at('2026-10-09 12:00'));
+
+    $this->actingAs($this->org['hr'])
+        ->post('/briefing/delegasi', ['user_id' => $this->org['rizky']->id, 'period' => 'pagi'])
+        ->assertSessionHasErrors(['period' => 'Briefing pagi hari ini sudah lewat (pukul 08:00–11:00). Pilih briefing yang belum berakhir.']);
+
+    expect(BriefingDelegation::query()->count())->toBe(0)
+        ->and(inboxFor($this->org['rizky'], NotificationType::SystemAnnouncement)->count())->toBe(0);
+
+    // Sore is still ahead: allowed.
+    $this->actingAs($this->org['hr'])
+        ->post('/briefing/delegasi', ['user_id' => $this->org['rizky']->id, 'period' => 'sore'])
+        ->assertSessionHasNoErrors();
+
+    expect(BriefingDelegation::query()->count())->toBe(1);
+});
+
+it('does not notify anyone twice when the notification job runs again', function () {
+    $briefing = Briefing::query()->create([
+        'company_id' => $this->org['hr']->company_id,
+        'period' => BriefingPeriod::Pagi,
+        'briefing_date' => '2026-10-09',
+        'content' => 'Isi briefing',
+        'created_by' => $this->org['hr']->id,
+    ]);
+
+    // A retry after a failure halfway re-runs the whole job.
+    (new SendBriefingNotifications($briefing->id))->handle(app(NotificationDispatchLog::class));
+    (new SendBriefingNotifications($briefing->id))->handle(app(NotificationDispatchLog::class));
+
+    expect(inboxFor($this->org['rizky'])->count())->toBe(1)
+        ->and(inboxFor($this->org['hr'])->count())->toBe(1);
+});
+
+it('gives every viewer the latest briefing on the personal dashboard', function () {
+    $this->travelTo(F::at('2026-10-09 12:00'));
+
+    // No briefing yet: null.
+    $this->actingAs($this->org['rizky'])->get('/dashboard')
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('dashboard/personal')
+            ->where('latestBriefing', null));
+
+    foreach ([['2026-10-08', BriefingPeriod::Sore, 'Sore kemarin'], ['2026-10-09', BriefingPeriod::Pagi, 'Pagi ini']] as [$date, $period, $content]) {
+        Briefing::query()->create([
+            'company_id' => $this->org['hr']->company_id,
+            'period' => $period,
+            'briefing_date' => $date,
+            'content' => $content,
+            'created_by' => $this->org['hr']->id,
+        ]);
+    }
+
+    // A plain employee (no recorder card) still sees "Briefing terakhir",
+    // with the same shape as GET /api/v1/briefing/terakhir.
+    $this->actingAs($this->org['rizky'])->get('/dashboard')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('briefing', null)
+            ->where('latestBriefing.period', 'pagi')
+            ->where('latestBriefing.label', 'Briefing pagi')
+            ->where('latestBriefing.date', '2026-10-09')
+            ->where('latestBriefing.content', 'Pagi ini')
+            ->where('latestBriefing.oleh', $this->org['hr']->name)
+            ->has('latestBriefing.updated_at'));
+
+    // Another company never leaks in.
+    expect(app(LatestBriefing::class)->for($this->outsider))->toBeNull();
 });

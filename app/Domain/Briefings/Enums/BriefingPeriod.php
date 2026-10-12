@@ -50,7 +50,17 @@ enum BriefingPeriod: string
     {
         $now = $now->setTimezone(config()->string('app.office_timezone'));
 
-        return $now->format('H:i') >= $this->startsAt() && $now->format('H:i') <= $this->endsAt();
+        // End exclusive: the window closes at JJ:00 sharp (11:00:00 is
+        // already closed, 10:59:59 still open).
+        return $now->format('H:i') >= $this->startsAt() && $now->format('H:i') < $this->endsAt();
+    }
+
+    /**
+     * Whether today's window (office date of $now) has already closed.
+     */
+    public function hasEndedAt(CarbonImmutable $now): bool
+    {
+        return $now->setTimezone(config()->string('app.office_timezone'))->format('H:i') >= $this->endsAt();
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Briefings;
 
+use App\Domain\Briefings\Queries\LatestBriefing;
 use App\Http\Controllers\Controller;
 use App\Models\Briefing;
 use App\Models\User;
@@ -18,17 +19,11 @@ use Illuminate\Support\Facades\Gate;
  */
 class LatestBriefingController extends Controller
 {
-    public function __invoke(#[CurrentUser] User $user): JsonResponse|Response
+    public function __invoke(#[CurrentUser] User $user, LatestBriefing $latest): JsonResponse|Response
     {
         Gate::authorize('viewAny', Briefing::class);
 
-        // 'sore' sorts after 'pagi', so the same-date tie-break picks the
-        // later period (one row per company + date + period).
-        $briefing = Briefing::query()
-            ->where('company_id', $user->company_id)
-            ->orderByDesc('briefing_date')
-            ->orderByRaw('period desc')
-            ->first();
+        $briefing = $latest->find($user);
 
         if ($briefing === null) {
             return response()->noContent();
@@ -36,15 +31,6 @@ class LatestBriefingController extends Controller
 
         Gate::authorize('view', $briefing);
 
-        return response()->json([
-            'briefing' => [
-                'period' => $briefing->period->value,
-                'label' => $briefing->period->label(),
-                'date' => $briefing->briefing_date->toDateString(),
-                'content' => $briefing->content,
-                'oleh' => $briefing->creator->name,
-                'updated_at' => $briefing->updated_at?->toIso8601String(),
-            ],
-        ]);
+        return response()->json(['briefing' => LatestBriefing::present($briefing)]);
     }
 }

@@ -92,8 +92,10 @@ it('keeps the dashboards and the portfolio free of N+1', function () {
         // "Tugas hari ini" (9 Okt 2026) swaps "Ruang saya" for TugasHariIni:
         // +6 (personal + team workspace ids, tasks, status, assignees) −5
         // (planner) −1 (daily report card) = net 0.
-        '/dashboard' => ['anggota', 74],
-        '/dashboard/saya' => ['kadiv', 71],
+        // +1: "Briefing terakhir" (latestBriefing) for every viewer — the
+        // newest briefing of the company (creator eager load only when one exists).
+        '/dashboard' => ['anggota', 75],
+        '/dashboard/saya' => ['kadiv', 72],
         '/ruang-saya' => ['anggota', 14],
         // +3: "Laporan tim hari ini" (schedules, reports, sent items) — keputusan pemilik 6 Okt 2026.
         // +2 (est. +1, spare 1) since Briefing (9 Okt 2026): delegation check.
