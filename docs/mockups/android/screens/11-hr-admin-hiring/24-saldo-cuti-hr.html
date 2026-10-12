@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Saldo cuti · tampilan HR baca saja · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<style>
+.hr-flow{display:flow-root}
+.hr-tabnav{display:flex;border-bottom:1px solid var(--border);gap:4px;overflow:hidden}
+.hr-tabnav span{padding:12px 12px 11px;font-size:15px;font-weight:700;color:var(--text-muted);border-bottom:3px solid transparent;white-space:nowrap;margin-bottom:-1px}
+.hr-tabnav span.on{color:var(--link);border-bottom-color:var(--primary)}
+.hr-tabnav .n{display:inline-flex;min-width:20px;height:20px;border-radius:10px;background:var(--surface-2);color:var(--text-muted);font-size:12px;align-items:center;justify-content:center;padding:0 6px;margin-left:6px}
+.hr-tile{width:56px;height:56px;border-radius:18px;background:var(--grad-indigo);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-btn);flex:none}
+.hr-chip-n{font-size:13px;opacity:.75;font-weight:600}
+.chip.on .hr-chip-n{opacity:.9}
+.hr-score{display:flex;gap:8px}
+.hr-score span{width:48px;height:48px;border-radius:14px;border:1.5px solid var(--border-strong);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700}
+.hr-score span.on{background:var(--grad-aksi);border-color:transparent;color:#fff}
+.hr-bar{height:14px;border-radius:7px;background:var(--surface-2);overflow:hidden;display:flex}
+.hr-bar b{display:block;height:100%}
+.hr-seg-ok{background:var(--ok)}.hr-seg-warn{background:var(--fill-warn)}.hr-seg-info{background:var(--blue-strong)}.hr-seg-off{background:var(--border-strong)}
+.hr-trend{display:flex;align-items:flex-end;gap:8px;height:130px;padding-top:8px}
+.hr-trend div{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.hr-trend b{display:block;width:100%;border-radius:8px 8px 4px 4px;background:var(--grad-merek)}
+.hr-trend span{font-size:12px;color:var(--text-muted);font-weight:600}
+.hr-dl{display:grid;grid-template-columns:128px 1fr;gap:6px 12px;align-items:center}
+.hr-dl>div{padding:11px 0;border-top:1px solid var(--divider);min-height:44px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hr-dl>div{min-width:0;overflow-wrap:anywhere}
+.hr-dl>div.k{color:var(--text-muted);font-size:15px}
+.hr-dl>div:nth-child(-n+2){border-top:0}
+.hr-tree .lv{display:flex;align-items:center;gap:12px;min-height:64px;padding:8px 14px;border-top:1px solid var(--divider)}
+.hr-tree .lv:first-child{border-top:0}
+.hr-tree .l2{padding-left:40px}.hr-tree .l3{padding-left:66px}
+.hr-tree .bar{width:4px;height:34px;border-radius:2px;flex:none}
+.hr-mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:14px;font-weight:600}
+.hr-desk{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:22px 18px;border-radius:24px;background:var(--surface);border:1px solid var(--border)}
+.hr-desk .ic{width:52px;height:52px;border-radius:50%;background:var(--link-soft);color:var(--link);display:flex;align-items:center;justify-content:center}
+.hr-rowbtns{display:flex;gap:8px}
+.hr-rowbtns .btn{flex:1}
+.hr-check-row{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--divider)}
+.hr-check-row:first-child{border-top:0}
+.hr-tag-lock{height:26px;padding:0 9px;border-radius:8px;display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;background:var(--surface-2);color:var(--text-muted)}
+.hr-opt{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 14px;border-radius:16px;border:1px solid var(--border);background:var(--surface)}
+.hr-opt.on{border-color:var(--primary);background:var(--link-soft)}
+.hr-pill-dot{width:10px;height:10px;border-radius:50%;flex:none}
+.hr-li{display:flex;align-items:center;gap:12px;min-height:56px}
+.card:not(.list) .hr-li{padding:8px 0}
+.card:not(.list) .hr-li+.hr-li{border-top:1px solid var(--divider)}
+.hr-line{height:1px;background:var(--divider)}
+.hr-sec{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin:6px 4px -6px}
+.hr-sign{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text-muted)}
+.hr-ring{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--primary) var(--p,70%),var(--surface-2) 0);flex:none}
+.hr-ring span{width:64px;height:64px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px}
+</style>
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+  <div class="phone" data-auto="24" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Saldo cuti</span><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button></div><div class="pad" style="padding-top:10px"><div class="row-h" style="gap:8px"><span class="chip on">Cuti tahunan <i data-i="chevron-down" data-s="16"></i></span><span class="chip">2026 <i data-i="chevron-down" data-s="16"></i></span></div></div><div class="pad stack" style="gap:12px;padding-top:12px"><div class="t-meta">Hanya HR dan Super Admin yang melihat saldo semua karyawan. Staf tidak melihat saldo cuti tahunan.</div><div class="card flush"><div class="li" style="display:flex;align-items:center;gap:12px;min-height:76px;padding:10px 16px;border-top:1px solid var(--divider)"><span class="avatar amber sm">SW</span><div class="grow"><div class="t-label trunc">Sari Wulandari</div><div class="t-meta trunc">Jatah 12 · bawaan 2 · terpakai 3,5 · menunggu 1</div></div><div style="text-align:right"><div class="t-kpi" style="font-size:22px;line-height:28px">9,5</div><div class="t-meta">sisa hari</div></div></div><div class="li" style="display:flex;align-items:center;gap:12px;min-height:76px;padding:10px 16px;border-top:1px solid var(--divider)"><span class="avatar  sm">BS</span><div class="grow"><div class="t-label trunc">Bayu Saputra</div><div class="t-meta trunc">Jatah 12 · bawaan 0 · terpakai 5</div></div><div style="text-align:right"><div class="t-kpi" style="font-size:22px;line-height:28px">7</div><div class="t-meta">sisa hari</div></div></div><div class="li" style="display:flex;align-items:center;gap:12px;min-height:76px;padding:10px 16px;border-top:1px solid var(--divider)"><span class="avatar  sm">ML</span><div class="grow"><div class="t-label trunc">Maya Lestari</div><div class="t-meta trunc">Jatah 12 · bawaan 1 · terpakai 12</div></div><div style="text-align:right"><div class="t-kpi" style="font-size:22px;line-height:28px">1</div><div class="t-meta">sisa hari</div></div></div><div class="li" style="display:flex;align-items:center;gap:12px;min-height:76px;padding:10px 16px;border-top:1px solid var(--divider)"><span class="avatar teal sm">DW</span><div class="grow"><div class="t-label trunc">Dewi Lestari <span class="tag">Prorata</span></div><div class="t-meta trunc">Jatah 3 (masuk 15 Sep)</div></div><div style="text-align:right"><div class="t-kpi" style="font-size:22px;line-height:28px">3</div><div class="t-meta">sisa hari</div></div></div><div class="li" style="display:flex;align-items:center;gap:12px;min-height:76px;padding:10px 16px;border-top:1px solid var(--divider)"><span class="avatar  sm">NP</span><div class="grow"><div class="t-label trunc">Nadia Pratiwi</div><div class="t-meta trunc">Masuk 1 Okt 2026</div></div><div style="text-align:right"><span class="t-meta">Belum berhak</span></div></div></div><div class="banner"><i data-i="monitor"></i><div>Mengubah jatah, penyesuaian saldo, buat saldo tahun baru, dan impor tersedia di desktop.<div style="margin-top:8px;font-weight:700"><i data-i="mail" data-s="18"></i> Kirim tautan ke email saya</div></div></div></div></div></div>
+    
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Saldo cuti</span><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button></div><div class="pad" style="padding-top:10px"><div class="row-h" style="gap:8px"><span class="chip on">Cuti tahunan <i data-i="chevron-down" data-s="16"></i></span><span class="chip">2026 <i data-i="chevron-down" data-s="16"></i></span></div></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="card flush"><div class="li" style="display:flex;align-items:center;gap:12px;min-height:76px;padding:10px 16px;border-top:1px solid var(--divider)"><span class="avatar amber sm">SW</span><div class="grow"><div class="t-label trunc">Sari Wulandari</div><div class="t-meta trunc">Jatah 12 · bawaan 2 · terpakai 3,5 · menunggu 1</div></div><div style="text-align:right"><div class="t-kpi" style="font-size:22px;line-height:28px">9,5</div><div class="t-meta">sisa hari</div></div></div><div class="li" style="display:flex;align-items:center;gap:12px;min-height:76px;padding:10px 16px;border-top:1px solid var(--divider)"><span class="avatar  sm">BS</span><div class="grow"><div class="t-label trunc">Bayu Saputra</div><div class="t-meta trunc">Jatah 12 · bawaan 0 · terpakai 5</div></div><div style="text-align:right"><div class="t-kpi" style="font-size:22px;line-height:28px">7</div><div class="t-meta">sisa hari</div></div></div><div class="li" style="display:flex;align-items:center;gap:12px;min-height:76px;padding:10px 16px;border-top:1px solid var(--divider)"><span class="avatar  sm">ML</span><div class="grow"><div class="t-label trunc">Maya Lestari</div><div class="t-meta trunc">Jatah 12 · bawaan 1 · terpakai 12</div></div><div style="text-align:right"><div class="t-kpi" style="font-size:22px;line-height:28px">1</div><div class="t-meta">sisa hari</div></div></div><div class="li" style="display:flex;align-items:center;gap:12px;min-height:76px;padding:10px 16px;border-top:1px solid var(--divider)"><span class="avatar teal sm">DW</span><div class="grow"><div class="t-label trunc">Dewi Lestari <span class="tag">Prorata</span></div><div class="t-meta trunc">Jatah 3 (masuk 15 Sep)</div></div><div style="text-align:right"><div class="t-kpi" style="font-size:22px;line-height:28px">3</div><div class="t-meta">sisa hari</div></div></div><div class="li" style="display:flex;align-items:center;gap:12px;min-height:76px;padding:10px 16px;border-top:1px solid var(--divider)"><span class="avatar  sm">NP</span><div class="grow"><div class="t-label trunc">Nadia Pratiwi</div><div class="t-meta trunc">Masuk 1 Okt 2026</div></div><div style="text-align:right"><span class="t-meta">Belum berhak</span></div></div></div></div></div></div>
+    <div class="scrim"></div><div class="sheet"><div class="row-h sp"><div class="t-h3">Saldo Sari Wulandari</div><button class="ibtn" style="border:0;box-shadow:none;background:var(--surface-2);width:40px;height:40px" aria-label="Tutup"><i data-i="x"></i></button></div><div class="grid2"><div class="kpi"><div class="v" style="">12</div><div class="l">Jatah</div></div><div class="kpi"><div class="v" style="">2</div><div class="l">Bawaan</div></div><div class="kpi"><div class="v" style="">3,5</div><div class="l">Terpakai</div></div><div class="kpi"><div class="v" style="">1</div><div class="l">Menunggu</div></div></div><div class="t-label">Riwayat penyesuaian</div><div class="li hr-li"><span class="ico ok"><i data-i="plus"></i></span><div class="grow"><div class="t trunc">+1,0 hari · bonus lembur akhir pekan</div><div class="m trunc">Hana Kusuma · 18 Agu 2026</div></div></div><div class="li hr-li"><span class="ico bad"><i data-i="minus"></i></span><div class="grow"><div class="t trunc">−0,5 hari · koreksi pencatatan</div><div class="m trunc">Hana Kusuma · 2 Mar 2026</div></div></div><div class="t-meta">Saldo tidak pernah minus; jatah tidak boleh kurang dari terpakai + menunggu.</div></div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Saldo cuti</span><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button></div><div class="pad" style="padding-top:10px"><div class="row-h" style="gap:8px"><span class="chip on">Cuti tahunan <i data-i="chevron-down" data-s="16"></i></span><span class="chip">2026 <i data-i="chevron-down" data-s="16"></i></span></div></div><div class="pad stack" style="gap:12px;padding-top:12px"><div class="card tight" style="display:flex;gap:12px;align-items:center"><div class="skel" style="width:32px;height:32px;border-radius:16px"></div><div class="grow" style="display:flex;flex-direction:column;gap:8px"><div class="skel" style="width:50%;height:16px;border-radius:12px"></div><div class="skel" style="width:80%;height:12px;border-radius:12px"></div></div><div class="skel" style="width:44px;height:28px;border-radius:12px"></div></div><div class="card tight" style="display:flex;gap:12px;align-items:center"><div class="skel" style="width:32px;height:32px;border-radius:16px"></div><div class="grow" style="display:flex;flex-direction:column;gap:8px"><div class="skel" style="width:50%;height:16px;border-radius:12px"></div><div class="skel" style="width:80%;height:12px;border-radius:12px"></div></div><div class="skel" style="width:44px;height:28px;border-radius:12px"></div></div><div class="card tight" style="display:flex;gap:12px;align-items:center"><div class="skel" style="width:32px;height:32px;border-radius:16px"></div><div class="grow" style="display:flex;flex-direction:column;gap:8px"><div class="skel" style="width:50%;height:16px;border-radius:12px"></div><div class="skel" style="width:80%;height:12px;border-radius:12px"></div></div><div class="skel" style="width:44px;height:28px;border-radius:12px"></div></div><div class="card tight" style="display:flex;gap:12px;align-items:center"><div class="skel" style="width:32px;height:32px;border-radius:16px"></div><div class="grow" style="display:flex;flex-direction:column;gap:8px"><div class="skel" style="width:50%;height:16px;border-radius:12px"></div><div class="skel" style="width:80%;height:12px;border-radius:12px"></div></div><div class="skel" style="width:44px;height:28px;border-radius:12px"></div></div></div></div></div>
+    
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Saldo cuti</span><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button></div><div class="pad" style="padding-top:10px"><div class="row-h" style="gap:8px"><span class="chip on">Cuti tahunan <i data-i="chevron-down" data-s="16"></i></span><span class="chip">2026 <i data-i="chevron-down" data-s="16"></i></span></div></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="empty"><div class="ic"><i data-i="wallet-cards" data-s="30"></i></div><div class="t-h3">Saldo 2026 belum dibuat</div><div class="muted" style="font-size:15px;line-height:22px">Saldo dibuat otomatis tiap 1 Januari atau saat pertama dipakai.</div><div class="t-meta">Buat saldo tahun ini di desktop.</div></div></div></div></div>
+    
+  </div>
+</div>
+<script>
+(function(){function fit(){document.querySelectorAll('.phone[data-auto]').forEach(function(p){var f=p.querySelector('.hr-flow');if(!f)return;var pb=parseInt(p.dataset.auto,10)||24;var h=Math.max(915,f.offsetHeight+56+pb);p.style.setProperty('--h',h+'px');});}
+if(document.fonts&&document.fonts.ready){document.fonts.ready.then(fit);}window.addEventListener('load',fit);fit();})();
+</script>
+</body>
+</html>
