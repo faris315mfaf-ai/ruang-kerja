@@ -100,7 +100,12 @@ function RootNavigator(): React.JSX.Element {
             <Stack.Screen name="rapat/[id]/index" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="rapat/[id]/notulen" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="kalender" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="profil" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="pengaturan" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="segera" options={{ animation: 'slide_from_right' }} />
           </Stack.Protected>
+          {/* Privasi: Data Saya butuh sesi (API menolak tanpa token); Kebijakan privasi publik. */}
+          <Stack.Screen name="privasi" options={{ animation: 'slide_from_right' }} />
         </Stack>
       </>
     );
