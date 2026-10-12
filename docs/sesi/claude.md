@@ -33,3 +33,11 @@ Lihat `docs/SERAH-TERIMA-CLAUDE.md` §2. Push, merge, dan deploy hanya setelah p
 
 ## Jangan disentuh tanpa izin
 `.env`, `secrets/`, server VPS, pengaturan repo GitHub, worktree `ruang-kerja-codex`.
+
+## Android — pembangunan dari mockup (13 Okt 2026)
+Rencana 5 bagian: `docs/fitur/aplikasi-ponsel-bagian.md`. Mockup: `docs/mockups/android/` (INDEX.md, spec/PERTANYAAN-PEMILIK.md), kanvas Artifact https://claude.ai/artifact/RqRTnjQXebU8bRRoYhW1Mj.
+- **Bagian 1 (Fondasi & akun) selesai di branch `claude/android-bagian-1`** (bercabang dari `glm/ponsel-api`; belum di-push): B1 `d0c3480` (auth/TOTP/lupa sandi/konfigurasi), B2 `f3fca2b` (privasi/perangkat), F1 `052032d` `05bf499` (fondasi UI + paket disetujui), S1a `3ecc5fe` `a487d97` `3bf8043` (alur masuk, kunci biometrik; paket `expo-local-authentication`), S1b `0687453` `f96ffe4` `e44b059` `3d9c81c` `ffd9e9b` (profil/pengaturan/privasi).
+- Verifikasi: Pest 3.472/3.474 (2 gagal pra-ada, lihat bawah) · lint hijau · app tsc/eslint/expo export hijau · APK release dibangun · cold-start emulator ×2 tanpa FATAL, layar Masuk tampil benar.
+- **Gagal pra-ada, bukan dari Bagian 1:** `PageQueryCountTest` — `/manajemen` 71 query (anggaran 69) dan `/peran/direktur` 66 (anggaran 65); gagal sama di `120b309` dan `3488a33` (sebelum Bagian 1) padahal run penuh 12 Okt hijau; sebab belum ditemukan (bukan N+1: tes pertumbuhan lolos).
+- **Belum diverifikasi:** layar setelah masuk (tab bar kapsul, Beranda, Lainnya, Pengaturan) di emulator — butuh API terjangkau dari emulator (build uji dengan `EXPO_PUBLIC_API_URL` + cleartext).
+- Bagian 2 dan 3 (paralel) berikutnya; Bagian 2 wajib membungkus dialog izin dengan `useAppLock().tahanKunci(...)`.
