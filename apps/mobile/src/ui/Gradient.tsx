@@ -1,4 +1,6 @@
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import type { RefObject } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
@@ -87,6 +89,12 @@ const styles = StyleSheet.create({
 export interface GlassProps {
   /** Varian kuat (sheet, dialog, popover) vs bar/kapsul. */
   strong?: boolean;
+  /**
+   * Ref `BlurTargetView` (expo-blur) yang membungkus konten di belakang
+   * kaca. Bila diberikan, latar benar-benar diburamkan; tanpa itu (bawaan)
+   * kaca hanya latar tembus yang lebih pekat.
+   */
+  blurTarget?: RefObject<View | null>;
   style?: StyleProp<ViewStyle>;
   children?: React.ReactNode;
 }
@@ -96,8 +104,8 @@ export interface GlassProps {
  * blur latar murah tanpa `BlurTargetView`, jadi kaca dibuat lebih pekat
  * (0,82–0,94) agar teks tetap terbaca di atas konten apa pun.
  */
-export function Glass({ strong = false, style, children }: GlassProps): React.JSX.Element {
-  const { colors } = useTheme();
+export function Glass({ strong = false, blurTarget, style, children }: GlassProps): React.JSX.Element {
+  const { colors, dark } = useTheme();
   return (
     <View
       style={[
@@ -105,6 +113,15 @@ export function Glass({ strong = false, style, children }: GlassProps): React.JS
         style,
       ]}
     >
+      {blurTarget ? (
+        <BlurView
+          blurTarget={blurTarget}
+          blurMethod="dimezisBlurViewSdk31Plus"
+          intensity={strong ? 70 : 50}
+          tint={dark ? 'dark' : 'light'}
+          style={StyleSheet.absoluteFill}
+        />
+      ) : null}
       {children}
     </View>
   );
