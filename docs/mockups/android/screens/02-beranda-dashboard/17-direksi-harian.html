@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Dashboard Direksi — Harian · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+<style>
+.b-multi{display:flex;flex-wrap:wrap;gap:28px 24px;padding:24px;align-items:flex-start}
+.b-multi figure{margin:0;display:flex;flex-direction:column;gap:8px}
+.b-multi figcaption{font:600 14px/20px Figtree,system-ui,sans-serif;color:#1c2b3a;max-width:412px}
+[data-tema="malam"] .b-multi figcaption{color:#cfd9e6}
+.b-padb{padding-bottom:118px}
+.b-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+.b-tag{height:24px;padding:0 8px;border-radius:8px;display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;background:var(--surface-2);color:var(--text-muted);white-space:nowrap}
+.b-tag i{--s:14px}
+.b-tag.info{background:var(--info-soft);color:var(--info)}.b-tag.warn{background:var(--warn-soft);color:var(--warn)}
+.b-tag.bad{background:var(--bad-soft);color:var(--bad)}.b-tag.ok{background:var(--ok-soft);color:var(--ok)}.b-tag.link{background:var(--link-soft);color:var(--link)}
+.b-t2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.b-t3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.b-ann{display:flex;gap:12px;align-items:flex-start;padding:12px 4px 12px 14px;border-radius:20px;background:var(--info-soft);border:1px solid color-mix(in srgb,var(--info) 28%,transparent)}
+.b-ann .ic{width:38px;height:38px;border-radius:12px;background:var(--surface);color:var(--info);display:flex;align-items:center;justify-content:center;flex:none;margin-top:2px}
+.b-ann .tt{font-size:16px;line-height:22px;font-weight:700;color:var(--text)}
+.b-ann .bd{font-size:15px;line-height:21px;color:var(--text);margin-top:2px}
+.b-ann .mt{font-size:13px;line-height:18px;color:var(--text-muted);margin-top:4px}
+.b-ann .x{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);background:transparent;border:0;flex:none;margin-top:-4px}
+.b-link{display:inline-flex;align-items:center;min-height:44px;font-size:15px;font-weight:700;color:var(--link)}
+.b-stat{background:var(--surface-2);border-radius:16px;padding:10px 14px}
+.b-stat .l{font-size:13px;line-height:18px;color:var(--text-muted);font-weight:500}
+.b-stat .v{font-size:28px;line-height:34px;font-weight:700}
+.b-quick{height:52px;border-radius:16px;background:var(--link-soft);color:var(--link);font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent}
+.b-hs{display:flex;gap:10px;overflow:hidden;margin:0 -16px;padding:0 16px}
+.b-hs>.kpi{flex:none;width:164px}
+.b-row2{display:flex;align-items:center;gap:12px}
+.b-bar{height:10px;border-radius:5px;background:var(--surface-2);position:relative;overflow:visible}
+.b-bar>b{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--grad-merek)}
+.b-bar>b.late{background:var(--fill-bad)}.b-bar>b.warn{background:var(--fill-warn)}.b-bar>b.ok{background:var(--fill-teal)}
+.b-bar>i.m{position:absolute;top:-4px;bottom:-4px;width:3px;border-radius:2px;background:var(--text);opacity:.85}
+.b-seg5{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;background:var(--surface-2)}
+.b-seg5>span{display:block;height:100%}
+.b-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.b-leg{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;font-size:14px;line-height:20px;color:var(--text-muted)}
+.b-leg span{display:inline-flex;align-items:center;gap:8px}
+.b-cell{width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex:none}
+.b-cell.ok{background:var(--ok-soft);color:var(--ok)}.b-cell.warn{background:var(--warn-soft);color:var(--warn)}.b-cell.bad{background:var(--bad-soft);color:var(--bad)}
+.b-cell.off{background:var(--surface-2);color:var(--text-subtle)}.b-cell.fut{border:1.5px dashed var(--border-strong);color:var(--text-subtle)}
+.b-pill{height:34px;padding:0 12px;border-radius:17px;background:var(--surface-2);display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--text)}
+.b-fsheet{position:absolute;left:0;right:0;bottom:0;top:84px;z-index:40;border-radius:28px 28px 0 0;background:var(--surface);border:1px solid var(--border);border-bottom:0;box-shadow:var(--shadow-float);display:flex;flex-direction:column}
+.b-fsheet:before{content:"";width:36px;height:4px;border-radius:2px;background:var(--border-strong);align-self:center;margin:10px 0 2px;flex:none}
+.b-fsheet .hd{display:flex;align-items:flex-start;gap:8px;padding:6px 8px 10px 20px;flex:none}
+.b-fsheet .hd .x{width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);border:0;background:var(--surface-2);flex:none}
+.b-fsheet .bd{flex:1;overflow:hidden;padding:4px 20px 16px;display:flex;flex-direction:column;gap:14px}
+.b-fsheet .ft{flex:none;padding:12px 20px 38px;border-top:1px solid var(--border);background:var(--glass);display:flex;flex-direction:column;gap:8px}
+.b-sub{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:14px 16px}
+.b-row-sel{border:2px solid var(--primary);background:var(--link-soft)}
+.b-sw{display:flex;align-items:center;gap:12px;min-height:56px;padding:6px 8px;border-radius:14px}
+.b-wst{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:17px;flex:none}
+.b-offline{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:var(--surface-2);color:var(--text-muted);font-size:14px;line-height:20px;font-weight:600}
+.b-held{border:1.5px dashed var(--border-strong);border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+.b-mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:600}
+.b-day{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:13px;color:var(--text-muted);font-weight:600;width:34px}
+.b-avatar-sm{width:36px;height:36px;font-size:13px}
+.b-underline{display:flex;gap:0;border-bottom:1px solid var(--border);margin:0 -16px;padding:0 16px}
+.b-underline>span{flex:1;height:48px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:var(--text-muted);border-bottom:3px solid transparent;margin-bottom:-1px}
+.b-underline>span.on{color:var(--link);border-bottom-color:var(--primary)}
+.b-step{display:flex;align-items:center;gap:8px}
+.b-step .ibtn{width:44px;height:44px;box-shadow:none}
+.b-step .mid{flex:1;height:44px;border-radius:14px;border:1px solid var(--border-strong);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600}
+.phone .sheet{background:color-mix(in srgb,var(--surface) 95%,transparent)}
+.b-sticky{position:absolute;left:0;right:0;bottom:24px;z-index:20;padding:12px 16px;background:var(--glass);backdrop-filter:blur(24px);border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+</style>
+</head>
+<body>
+<div class="b-multi" style="width:896px">
+<figure>
+<figcaption>Tab Harian (bawaan, hari ini): terjadwal / sudah lapor / draf / belum lapor, progres per divisi, yang belum lapor, laporan terbaru dengan hambatan disorot. Ketuk laporan → sheet detail. Ekspor hanya di desktop.</figcaption>
+<div class="phone" style="--h:1705px" data-jam="16.55">
+<div class="body"><div class="b-padb">
+<div class="appbar" style="padding-top:20px">
+  <div class="gap8" style="gap:2px;min-width:0"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-h1" style="font-size:28px;line-height:34px;font-weight:800">Monitoring kerja</h1></div>
+  <div class="acts">
+    <button class="ibtn" aria-label="Cari"><i data-i="search"></i></button>
+    <button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button>
+  </div>
+</div><div class="pad stack" style="margin-top:8px;gap:12px"><div class="t-meta" style="margin-top:-6px;font-size:14px">Semua divisi · 48 karyawan aktif</div><div class="chips" style="margin:0 -16px;padding:0 16px;"><span class="chip">Saya</span><span class="chip on">Direksi</span></div><div class="b-quick"><i data-i="notebook-pen"></i>Mulai notulensi</div><div class="seg"><span class="on">Harian</span><span>Mingguan</span><span>Proyek</span><span>Catatan</span></div></div><div class="pad stack" style="margin-top:8px;"><div class="card" style="display:flex;flex-direction:column;gap:14px;">
+  <div class="row-h sp" style=""><div class="t-h3" style="font-size:19px;line-height:25px;display:flex;align-items:center;gap:8px">Laporan harian</div></div>
+  <div class="b-step"><button class="ibtn" aria-label="Hari sebelumnya"><i data-i="chevron-left"></i></button><div class="mid">Hari ini · Sel, 13/10/2026</div><button class="ibtn" aria-label="Hari berikutnya" style="opacity:.4"><i data-i="chevron-right"></i></button></div>
+  <div class="t-meta" style="font-size:14px">Hari ini · Selasa, 13 Okt 2026 · 48 karyawan aktif</div>
+  <div class="grid2"><div class="b-stat"><div class="l">Terjadwal</div><div class="v" >43</div></div><div class="b-stat"><div class="l">Sudah lapor</div><div class="v" style="color:var(--ok)">30</div></div><div class="b-stat"><div class="l">Draf</div><div class="v" style="color:var(--warn)">4</div></div><div class="b-stat"><div class="l">Belum lapor</div><div class="v" style="color:var(--bad)">9</div></div></div>
+  <div class="t-label" style="font-weight:700">Per divisi</div>
+  <div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Operasional</span><span class="t-meta"><b style="color:var(--text)">9</b>/14 lapor · 2 draf<span style="color:var(--bad)"> · 3 belum</span></span></div><div style="margin-top:6px"><div class="b-bar"><b class="ok" style="width:64%"></b></div></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Programming</span><span class="t-meta"><b style="color:var(--text)">8</b>/11 lapor · 1 draf<span style="color:var(--bad)"> · 2 belum</span></span></div><div style="margin-top:6px"><div class="b-bar"><b class="ok" style="width:73%"></b></div></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Branding & Marketing</span><span class="t-meta"><b style="color:var(--text)">5</b>/6 lapor<span style="color:var(--bad)"> · 1 belum</span></span></div><div style="margin-top:6px"><div class="b-bar"><b class="ok" style="width:83%"></b></div></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Keuangan</span><span class="t-meta"><b style="color:var(--text)">3</b>/5 lapor · 1 draf<span style="color:var(--bad)"> · 1 belum</span></span></div><div style="margin-top:6px"><div class="b-bar"><b class="ok" style="width:60%"></b></div></div></div>
+  <div class="t-label" style="font-weight:700">Belum lapor (9)</div>
+  <div class="b-tags" style="margin-top:-6px"><span class="b-pill">Yoga P.</span><span class="b-pill">Fitri A.</span><span class="b-pill">Dani R.</span><span class="b-pill" style="background:var(--warn-soft);color:var(--warn)">Hendri (draf)</span><span class="b-pill">+5</span></div>
+  <div class="t-label" style="font-weight:700">Laporan terbaru</div>
+  <div style="display:flex;flex-direction:column;gap:6px;padding:12px 0;border-top:1px solid var(--divider)">
+  <div class="row-h"><span class="avatar  sm">SW</span><div class="grow"><div class="t" style="font-size:16px;font-weight:600">Sari Wulandari</div><div class="t-meta" style="font-size:13px">Operasional</div></div><span class="t-meta" style="display:inline-flex;align-items:center;gap:4px"><i data-i="clock" data-s="14"></i>16.48</span></div>
+  <div class="b-t2" style="font-size:15px;line-height:22px">Opname stok gudang selesai 92%, selisih 3 SKU dicatat.</div><div class="b-tags"><span class="b-tag" style="height:28px"><span class="b-mono" style="font-size:13px">PRG-24</span>Laporan stok<b style="color:var(--info)">80%</b></span><span class="b-tag" style="height:28px"><span class="b-mono" style="font-size:13px">GDG-9</span>Folder dokumen<b style="color:var(--info)">40%</b></span></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px;padding:12px 0;border-top:1px solid var(--divider)">
+  <div class="row-h"><span class="avatar amber sm">AN</span><div class="grow"><div class="t" style="font-size:16px;font-weight:600">Arif Nugroho</div><div class="t-meta" style="font-size:13px">Programming</div></div><span class="t-meta" style="display:inline-flex;align-items:center;gap:4px"><i data-i="clock" data-s="14"></i>16.31</span></div>
+  <div class="b-t2" style="font-size:15px;line-height:22px">Integrasi API Pemda tertahan, sprint 6 berjalan 62%.</div><div class="b-tags"><span class="b-tag" style="height:28px"><span class="b-mono" style="font-size:13px">DEP-7</span>API Pemda<b style="color:var(--info)">35%</b></span></div>
+  <div style="display:flex;gap:8px;background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:8px 12px;font-size:15px;line-height:21px"><i data-i="triangle-alert" data-s="18"></i><span><b>Hambatan:</b> Dokumen API dari Pemda belum diterima, 12 hari.</span></div></div>
+  <a class="b-link">Lihat semua 30 laporan</a>
+</div></div></div></div>
+<nav class="tabbar">
+  <a class="tab on"><i data-i="house"></i>Beranda</a>
+  <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+  <a class="tab center" aria-label="Workspace"><i data-i="layout-grid" data-s="28"></i></a>
+  <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+  <a class="tab"><i data-i="menu"></i>Lainnya</a>
+</nav>
+</div>
+</figure>
+<figure>
+<figcaption>Tanggal lampau (‹ Senin, 12/10/2026): penyetel tanggal tidak bisa maju melewati hari ini (tombol › nonaktif). Memuat ulang panel saja (opasitas 60% + aria-busy), tab dan header tetap.</figcaption>
+<div class="phone" style="--h:1705px" data-jam="16.55">
+<div class="body"><div class="b-padb">
+<div class="appbar" style="padding-top:20px">
+  <div class="gap8" style="gap:2px;min-width:0"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-h1" style="font-size:28px;line-height:34px;font-weight:800">Monitoring kerja</h1></div>
+  <div class="acts">
+    <button class="ibtn" aria-label="Cari"><i data-i="search"></i></button>
+    <button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button>
+  </div>
+</div><div class="pad stack" style="margin-top:8px;gap:12px"><div class="t-meta" style="margin-top:-6px;font-size:14px">Semua divisi · 48 karyawan aktif</div><div class="chips" style="margin:0 -16px;padding:0 16px;"><span class="chip">Saya</span><span class="chip on">Direksi</span></div><div class="b-quick"><i data-i="notebook-pen"></i>Mulai notulensi</div><div class="seg"><span class="on">Harian</span><span>Mingguan</span><span>Proyek</span><span>Catatan</span></div></div><div class="pad stack" style="margin-top:8px;"><div class="card" style="display:flex;flex-direction:column;gap:14px;">
+  <div class="row-h sp" style=""><div class="t-h3" style="font-size:19px;line-height:25px;display:flex;align-items:center;gap:8px">Laporan harian</div></div>
+  <div class="b-step"><button class="ibtn" aria-label="Hari sebelumnya"><i data-i="chevron-left"></i></button><div class="mid">Sen, 12/10/2026</div><button class="ibtn" aria-label="Hari berikutnya" ><i data-i="chevron-right"></i></button></div>
+  <div class="t-meta" style="font-size:14px">Senin, 12 Okt 2026 · 48 karyawan aktif</div>
+  <div class="grid2"><div class="b-stat"><div class="l">Terjadwal</div><div class="v" >44</div></div><div class="b-stat"><div class="l">Sudah lapor</div><div class="v" style="color:var(--ok)">41</div></div><div class="b-stat"><div class="l">Draf</div><div class="v" style="color:var(--warn)">0</div></div><div class="b-stat"><div class="l">Belum lapor</div><div class="v" style="color:var(--bad)">3</div></div></div>
+  <div class="t-label" style="font-weight:700">Per divisi</div>
+  <div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Operasional</span><span class="t-meta"><b style="color:var(--text)">9</b>/14 lapor · 2 draf<span style="color:var(--bad)"> · 3 belum</span></span></div><div style="margin-top:6px"><div class="b-bar"><b class="ok" style="width:64%"></b></div></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Programming</span><span class="t-meta"><b style="color:var(--text)">8</b>/11 lapor · 1 draf<span style="color:var(--bad)"> · 2 belum</span></span></div><div style="margin-top:6px"><div class="b-bar"><b class="ok" style="width:73%"></b></div></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Branding & Marketing</span><span class="t-meta"><b style="color:var(--text)">5</b>/6 lapor<span style="color:var(--bad)"> · 1 belum</span></span></div><div style="margin-top:6px"><div class="b-bar"><b class="ok" style="width:83%"></b></div></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Keuangan</span><span class="t-meta"><b style="color:var(--text)">3</b>/5 lapor · 1 draf<span style="color:var(--bad)"> · 1 belum</span></span></div><div style="margin-top:6px"><div class="b-bar"><b class="ok" style="width:60%"></b></div></div></div>
+  <div class="t-label" style="font-weight:700">Belum lapor (9)</div>
+  <div class="b-tags" style="margin-top:-6px"><span class="b-pill">Yoga P.</span><span class="b-pill">Fitri A.</span><span class="b-pill">Dani R.</span><span class="b-pill" style="background:var(--warn-soft);color:var(--warn)">Hendri (draf)</span><span class="b-pill">+5</span></div>
+  <div class="t-label" style="font-weight:700">Laporan terbaru</div>
+  <div style="display:flex;flex-direction:column;gap:6px;padding:12px 0;border-top:1px solid var(--divider)">
+  <div class="row-h"><span class="avatar  sm">SW</span><div class="grow"><div class="t" style="font-size:16px;font-weight:600">Sari Wulandari</div><div class="t-meta" style="font-size:13px">Operasional</div></div><span class="t-meta" style="display:inline-flex;align-items:center;gap:4px"><i data-i="clock" data-s="14"></i>16.48</span></div>
+  <div class="b-t2" style="font-size:15px;line-height:22px">Opname stok gudang selesai 92%, selisih 3 SKU dicatat.</div><div class="b-tags"><span class="b-tag" style="height:28px"><span class="b-mono" style="font-size:13px">PRG-24</span>Laporan stok<b style="color:var(--info)">80%</b></span><span class="b-tag" style="height:28px"><span class="b-mono" style="font-size:13px">GDG-9</span>Folder dokumen<b style="color:var(--info)">40%</b></span></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px;padding:12px 0;border-top:1px solid var(--divider)">
+  <div class="row-h"><span class="avatar amber sm">AN</span><div class="grow"><div class="t" style="font-size:16px;font-weight:600">Arif Nugroho</div><div class="t-meta" style="font-size:13px">Programming</div></div><span class="t-meta" style="display:inline-flex;align-items:center;gap:4px"><i data-i="clock" data-s="14"></i>16.31</span></div>
+  <div class="b-t2" style="font-size:15px;line-height:22px">Integrasi API Pemda tertahan, sprint 6 berjalan 62%.</div><div class="b-tags"><span class="b-tag" style="height:28px"><span class="b-mono" style="font-size:13px">DEP-7</span>API Pemda<b style="color:var(--info)">35%</b></span></div>
+  <div style="display:flex;gap:8px;background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:8px 12px;font-size:15px;line-height:21px"><i data-i="triangle-alert" data-s="18"></i><span><b>Hambatan:</b> Dokumen API dari Pemda belum diterima, 12 hari.</span></div></div>
+  <a class="b-link">Lihat semua 30 laporan</a>
+</div></div></div></div>
+<nav class="tabbar">
+  <a class="tab on"><i data-i="house"></i>Beranda</a>
+  <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+  <a class="tab center" aria-label="Workspace"><i data-i="layout-grid" data-s="28"></i></a>
+  <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+  <a class="tab"><i data-i="menu"></i>Lainnya</a>
+</nav>
+</div>
+</figure>
+<figure>
+<figcaption>Hari libur / akhir pekan: tidak ada yang terjadwal — angka 0 dan teks "Belum ada laporan hari ini" di EmptyState, bukan daftar kosong.</figcaption>
+<div class="phone" style="--h:1015px" data-jam="16.55">
+<div class="body"><div class="b-padb">
+<div class="appbar" style="padding-top:20px">
+  <div class="gap8" style="gap:2px;min-width:0"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-h1" style="font-size:28px;line-height:34px;font-weight:800">Monitoring kerja</h1></div>
+  <div class="acts">
+    <button class="ibtn" aria-label="Cari"><i data-i="search"></i></button>
+    <button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button>
+  </div>
+</div><div class="pad stack" style="margin-top:8px;gap:12px"><div class="t-meta" style="margin-top:-6px;font-size:14px">Semua divisi · 48 karyawan aktif</div><div class="chips" style="margin:0 -16px;padding:0 16px;"><span class="chip">Saya</span><span class="chip on">Direksi</span></div><div class="b-quick"><i data-i="notebook-pen"></i>Mulai notulensi</div><div class="seg"><span class="on">Harian</span><span>Mingguan</span><span>Proyek</span><span>Catatan</span></div></div><div class="pad stack" style="margin-top:8px;"><div class="card" style="display:flex;flex-direction:column;gap:14px;">
+  <div class="row-h sp" style=""><div class="t-h3" style="font-size:19px;line-height:25px;display:flex;align-items:center;gap:8px">Laporan harian</div></div>
+  <div class="b-step"><button class="ibtn" aria-label="Hari sebelumnya"><i data-i="chevron-left"></i></button><div class="mid">Min, 11/10/2026</div><button class="ibtn" aria-label="Hari berikutnya" ><i data-i="chevron-right"></i></button></div><div class="t-meta">Minggu, 11 Okt 2026 · 48 karyawan aktif</div><div class="grid2"><div class="b-stat"><div class="l">Terjadwal</div><div class="v" >0</div></div><div class="b-stat"><div class="l">Sudah lapor</div><div class="v" style="color:var(--ok)">0</div></div><div class="b-stat"><div class="l">Draf</div><div class="v" style="color:var(--warn)">0</div></div><div class="b-stat"><div class="l">Belum lapor</div><div class="v" style="color:var(--bad)">0</div></div></div>
+<div class="empty">
+  <span class="ic"><i data-i="clipboard-list" data-s="30"></i></span>
+  <div class="t-title">Belum ada laporan hari ini</div>
+  <div class="t-meta" style="font-size:15px;line-height:21px">Tidak ada karyawan terjadwal pada tanggal ini.</div>
+  
+</div>
+</div></div></div></div>
+<nav class="tabbar">
+  <a class="tab on"><i data-i="house"></i>Beranda</a>
+  <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+  <a class="tab center" aria-label="Workspace"><i data-i="layout-grid" data-s="28"></i></a>
+  <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+  <a class="tab"><i data-i="menu"></i>Lainnya</a>
+</nav>
+</div>
+</figure>
+<figure>
+<figcaption>Memuat saat berpindah tanggal/awal: kerangka dua blok; galat memuat: kartu "Coba lagi" di dalam panel.</figcaption>
+<div class="phone" style="--h:855px" data-jam="16.55">
+<div class="body"><div class="b-padb">
+<div class="appbar" style="padding-top:20px">
+  <div class="gap8" style="gap:2px;min-width:0"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-h1" style="font-size:28px;line-height:34px;font-weight:800">Monitoring kerja</h1></div>
+  <div class="acts">
+    <button class="ibtn" aria-label="Cari"><i data-i="search"></i></button>
+    <button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button>
+  </div>
+</div><div class="pad stack" style="margin-top:8px;gap:12px"><div class="t-meta" style="margin-top:-6px;font-size:14px">Semua divisi · 48 karyawan aktif</div><div class="chips" style="margin:0 -16px;padding:0 16px;"><span class="chip">Saya</span><span class="chip on">Direksi</span></div><div class="b-quick"><i data-i="notebook-pen"></i>Mulai notulensi</div><div class="seg"><span class="on">Harian</span><span>Mingguan</span><span>Proyek</span><span>Catatan</span></div></div><div class="pad stack" style="margin-top:8px;"><div class="card" style="display:flex;flex-direction:column;gap:14px;">
+  <div class="row-h sp" style=""><div class="t-h3" style="font-size:19px;line-height:25px;display:flex;align-items:center;gap:8px">Laporan harian</div></div>
+  <div class="b-step"><button class="ibtn" aria-label="Hari sebelumnya"><i data-i="chevron-left"></i></button><div class="mid">Hari ini · Sel, 13/10/2026</div><button class="ibtn" aria-label="Hari berikutnya" style="opacity:.4"><i data-i="chevron-right"></i></button></div><div class="skel" style="height:96px"></div><div class="skel" style="height:140px"></div>
+</div></div></div></div>
+<nav class="tabbar">
+  <a class="tab on"><i data-i="house"></i>Beranda</a>
+  <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+  <a class="tab center" aria-label="Workspace"><i data-i="layout-grid" data-s="28"></i></a>
+  <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+  <a class="tab"><i data-i="menu"></i>Lainnya</a>
+</nav>
+</div>
+</figure>
+</div>
+</body>
+</html>

@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>HR — alur Tinjau pengajuan · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+<style>
+.b-multi{display:flex;flex-wrap:wrap;gap:28px 24px;padding:24px;align-items:flex-start}
+.b-multi figure{margin:0;display:flex;flex-direction:column;gap:8px}
+.b-multi figcaption{font:600 14px/20px Figtree,system-ui,sans-serif;color:#1c2b3a;max-width:412px}
+[data-tema="malam"] .b-multi figcaption{color:#cfd9e6}
+.b-padb{padding-bottom:118px}
+.b-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+.b-tag{height:24px;padding:0 8px;border-radius:8px;display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;background:var(--surface-2);color:var(--text-muted);white-space:nowrap}
+.b-tag i{--s:14px}
+.b-tag.info{background:var(--info-soft);color:var(--info)}.b-tag.warn{background:var(--warn-soft);color:var(--warn)}
+.b-tag.bad{background:var(--bad-soft);color:var(--bad)}.b-tag.ok{background:var(--ok-soft);color:var(--ok)}.b-tag.link{background:var(--link-soft);color:var(--link)}
+.b-t2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.b-t3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.b-ann{display:flex;gap:12px;align-items:flex-start;padding:12px 4px 12px 14px;border-radius:20px;background:var(--info-soft);border:1px solid color-mix(in srgb,var(--info) 28%,transparent)}
+.b-ann .ic{width:38px;height:38px;border-radius:12px;background:var(--surface);color:var(--info);display:flex;align-items:center;justify-content:center;flex:none;margin-top:2px}
+.b-ann .tt{font-size:16px;line-height:22px;font-weight:700;color:var(--text)}
+.b-ann .bd{font-size:15px;line-height:21px;color:var(--text);margin-top:2px}
+.b-ann .mt{font-size:13px;line-height:18px;color:var(--text-muted);margin-top:4px}
+.b-ann .x{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);background:transparent;border:0;flex:none;margin-top:-4px}
+.b-link{display:inline-flex;align-items:center;min-height:44px;font-size:15px;font-weight:700;color:var(--link)}
+.b-stat{background:var(--surface-2);border-radius:16px;padding:10px 14px}
+.b-stat .l{font-size:13px;line-height:18px;color:var(--text-muted);font-weight:500}
+.b-stat .v{font-size:28px;line-height:34px;font-weight:700}
+.b-quick{height:52px;border-radius:16px;background:var(--link-soft);color:var(--link);font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent}
+.b-hs{display:flex;gap:10px;overflow:hidden;margin:0 -16px;padding:0 16px}
+.b-hs>.kpi{flex:none;width:164px}
+.b-row2{display:flex;align-items:center;gap:12px}
+.b-bar{height:10px;border-radius:5px;background:var(--surface-2);position:relative;overflow:visible}
+.b-bar>b{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--grad-merek)}
+.b-bar>b.late{background:var(--fill-bad)}.b-bar>b.warn{background:var(--fill-warn)}.b-bar>b.ok{background:var(--fill-teal)}
+.b-bar>i.m{position:absolute;top:-4px;bottom:-4px;width:3px;border-radius:2px;background:var(--text);opacity:.85}
+.b-seg5{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;background:var(--surface-2)}
+.b-seg5>span{display:block;height:100%}
+.b-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.b-leg{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;font-size:14px;line-height:20px;color:var(--text-muted)}
+.b-leg span{display:inline-flex;align-items:center;gap:8px}
+.b-cell{width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex:none}
+.b-cell.ok{background:var(--ok-soft);color:var(--ok)}.b-cell.warn{background:var(--warn-soft);color:var(--warn)}.b-cell.bad{background:var(--bad-soft);color:var(--bad)}
+.b-cell.off{background:var(--surface-2);color:var(--text-subtle)}.b-cell.fut{border:1.5px dashed var(--border-strong);color:var(--text-subtle)}
+.b-pill{height:34px;padding:0 12px;border-radius:17px;background:var(--surface-2);display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--text)}
+.b-fsheet{position:absolute;left:0;right:0;bottom:0;top:84px;z-index:40;border-radius:28px 28px 0 0;background:var(--surface);border:1px solid var(--border);border-bottom:0;box-shadow:var(--shadow-float);display:flex;flex-direction:column}
+.b-fsheet:before{content:"";width:36px;height:4px;border-radius:2px;background:var(--border-strong);align-self:center;margin:10px 0 2px;flex:none}
+.b-fsheet .hd{display:flex;align-items:flex-start;gap:8px;padding:6px 8px 10px 20px;flex:none}
+.b-fsheet .hd .x{width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);border:0;background:var(--surface-2);flex:none}
+.b-fsheet .bd{flex:1;overflow:hidden;padding:4px 20px 16px;display:flex;flex-direction:column;gap:14px}
+.b-fsheet .ft{flex:none;padding:12px 20px 38px;border-top:1px solid var(--border);background:var(--glass);display:flex;flex-direction:column;gap:8px}
+.b-sub{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:14px 16px}
+.b-row-sel{border:2px solid var(--primary);background:var(--link-soft)}
+.b-sw{display:flex;align-items:center;gap:12px;min-height:56px;padding:6px 8px;border-radius:14px}
+.b-wst{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:17px;flex:none}
+.b-offline{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:var(--surface-2);color:var(--text-muted);font-size:14px;line-height:20px;font-weight:600}
+.b-held{border:1.5px dashed var(--border-strong);border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+.b-mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:600}
+.b-day{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:13px;color:var(--text-muted);font-weight:600;width:34px}
+.b-avatar-sm{width:36px;height:36px;font-size:13px}
+.b-underline{display:flex;gap:0;border-bottom:1px solid var(--border);margin:0 -16px;padding:0 16px}
+.b-underline>span{flex:1;height:48px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:var(--text-muted);border-bottom:3px solid transparent;margin-bottom:-1px}
+.b-underline>span.on{color:var(--link);border-bottom-color:var(--primary)}
+.b-step{display:flex;align-items:center;gap:8px}
+.b-step .ibtn{width:44px;height:44px;box-shadow:none}
+.b-step .mid{flex:1;height:44px;border-radius:14px;border:1px solid var(--border-strong);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600}
+.phone .sheet{background:color-mix(in srgb,var(--surface) 95%,transparent)}
+.b-sticky{position:absolute;left:0;right:0;bottom:24px;z-index:20;padding:12px 16px;background:var(--glass);backdrop-filter:blur(24px);border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+</style>
+</head>
+<body>
+<div class="b-multi" style="width:1332px">
+<figure>
+<figcaption>Sheet "Tinjau pengajuan": chip memilih pengajuan; detail lengkap (periode, durasi, saldo cuti — HR non-staf melihat saldo —, pengganti, rekan yang absen, jejak persetujuan); catatan untuk pemohon; Revisi · Tolak · Setujui di zona jempol.</figcaption>
+<div class="phone" style="--h:915px" data-jam="08.32"><div class="body"><div>
+<div class="appbar" style="padding-top:20px">
+  <div class="gap8" style="gap:2px;min-width:0"><span class="t-over" style="font-size:14px">HR</span><h1 class="t-h1" style="font-size:28px;line-height:34px;font-weight:800">Pagi, Hana</h1></div>
+  <div class="acts"><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+</div>
+<div class="pad stack" style="margin-top:8px">
+  
+  
+  <div class="t-meta" style="font-size:14px;margin-top:-4px">Semua divisi · 48 karyawan aktif</div>
+  <div class="hero" style="padding:18px;border-radius:26px"><div style="font-size:15px;font-weight:700">Menunggu keputusan Anda</div><div style="font-size:42px;line-height:48px;font-weight:800;letter-spacing:-.02em">5</div><div style="font-size:15px;line-height:21px">cuti & izin lebih dulu</div></div>
+  <div class="b-hs"><div class="kpi"><div class="l">Menunggu langkah HR</div><div class="v" style="color:var(--warn)">7</div><div class="l" style="margin-top:2px">di seluruh HR</div></div><div class="kpi"><div class="l">Cuti disetujui</div><div class="v" >4</div><div class="l" style="margin-top:2px">14 hari ke depan</div></div><div class="kpi"><div class="l">Diputus Anda</div><div class="v" >23</div><div class="l" style="margin-top:2px">bulan ini</div></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <button class="btn" style="height:52px;background:var(--inverse);color:var(--on-inverse);font-weight:800;line-height:18px">Tinjau 5 pengajuan</button>
+    <button class="btn outline" style="height:52px;font-weight:800;line-height:18px">Kehadiran hari ini</button>
+  </div>
+  
+  <div class="card tight b-row2" style="min-height:68px"><span style="width:88px;font-size:14px;font-weight:800;flex:none">Hari ini</span><div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Wawancara kandidat programmer</div><div class="row-h" style="gap:6px;margin-top:3px"><span class="b-tag link">Tugas</span><span class="t-meta" style="font-size:13px">HIR-8 · 10.00</span></div></div><i data-i="chevron-right"></i></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Menunggu keputusan Anda</div><span class="t-meta" style="font-size:14px;font-weight:600">4 item</span></div><div style="margin-top:-6px"><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">CUT</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Cuti tahunan · Sari Wulandari</div><div class="trunc t-meta" style="font-size:14px">26–27 Okt · disetujui atasan</div></div>
+  <span class="badge warn" style="flex:none">Cuti</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">SKT</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Sakit · Bayu Saputra</div><div class="trunc t-meta" style="font-size:14px">12–13 Okt · surat dokter terlampir</div></div>
+  <span class="badge warn" style="flex:none">Sakit</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--info-soft);color:var(--info);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">IZN</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Izin · Yoga Pratama</div><div class="trunc t-meta" style="font-size:14px">14 Okt · urusan keluarga</div></div>
+  <span class="badge info" style="flex:none">Izin</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--surface-2);color:var(--text-muted);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">KOR</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Koreksi absensi · Rizky Ananda</div><div class="trunc t-meta" style="font-size:14px">Lupa check-out 2 Okt</div></div>
+  <span class="badge " style="flex:none">Koreksi</span></div></div></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Antrean per jenis</div><span class="t-meta" style="font-size:13px">pengajuan yang menunggu Anda</span></div><div class="stack" style="gap:14px"><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Cuti</span><span class="t-meta" style="font-size:14px;">2</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px">cuti tahunan & lainnya</div><div class="b-bar"><b class="warn" style="width:40%"></b></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Sakit & izin</span><span class="t-meta" style="font-size:14px;">2</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px"></div><div class="b-bar"><b class="ok" style="width:40%"></b></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Koreksi absensi</span><span class="t-meta" style="font-size:14px;">1</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px"></div><div class="b-bar"><b class="ok" style="width:20%"></b></div></div></div></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Cuti mendatang</div></div><div style="border-top:1px solid var(--divider);padding-top:10px"><div style="font-size:16px;font-weight:600;line-height:22px">Sari Wulandari · 26–27 Okt</div><div class="t-meta" style="font-size:14px">Cuti tahunan · Operasional</div></div><div style="border-top:1px solid var(--divider);padding-top:10px"><div style="font-size:16px;font-weight:600;line-height:22px">Fitri Andini · 29–30 Okt</div><div class="t-meta" style="font-size:14px">Cuti tahunan · Marketing</div></div></div>
+</div></div></div>
+<div class="scrim"></div>
+<div class="b-fsheet" style="top:70px">
+  <div class="hd"><div class="grow" style="padding-top:6px"><div class="t-h3">Tinjau pengajuan</div><div class="t-meta" style="font-size:14px;line-height:20px;margin-top:2px">5 pengajuan menunggu · cuti, izin, dan sakit lebih dulu</div></div><button class="x" aria-label="Tutup"><i data-i="x"></i></button></div>
+  <div class="bd"><div class="row-h" style="flex-wrap:wrap;gap:8px"><span class="chip on" style="height:44px">Sari · cuti</span><span class="chip" style="height:44px">Bayu · sakit</span><span class="chip" style="height:44px">Yoga · izin</span><span class="chip" style="height:44px">+2</span></div><div class="b-sub" style="display:flex;flex-direction:column;gap:12px;padding:16px">
+  <div class="row-h"><span class="avatar  ">SW</span><div class="grow"><div class="t-title" style="font-size:18px">Cuti tahunan</div><div class="t-meta" style="font-size:14px">CUT-2026-10-0012 · Sari Wulandari</div></div><span class="badge warn">Menunggu HR</span></div>
+  <div class="grid2" style="gap:10px"><div class="b-stat"><div class="l">Periode</div><div style="font-size:16px;font-weight:700;line-height:22px">Senin, 26 – Selasa, 27 Okt 2026</div></div><div class="b-stat"><div class="l">Durasi</div><div style="font-size:16px;font-weight:700;line-height:22px">2 hari kerja</div></div></div>
+  <div class="grid2" style="gap:10px"><div class="b-stat"><div class="l">Saldo cuti tahunan</div><div style="font-size:16px;font-weight:700;line-height:22px">8,5 → 6,5 hari</div></div><div class="b-stat"><div class="l">Pengganti</div><div style="font-size:16px;font-weight:700;line-height:22px">Maya Lestari</div></div></div>
+  <div><div class="t-label" style="font-weight:700;margin-bottom:6px">Rekan yang juga absen</div><div class="b-tags" style="margin-top:0"><span class="b-pill">Fitri A. · 26 Okt</span><span class="b-pill">Hendri S. · 27 Okt</span></div></div>
+  <div><div class="t-label" style="font-weight:700;margin-bottom:6px">Jejak persetujuan</div><div style="display:flex;flex-direction:column;gap:6px;font-size:15px"><span style="display:flex;gap:8px;align-items:center;color:var(--ok)"><i data-i="circle-check" data-s="18"></i>Dimas Pratama · disetujui 12 Okt 15.22</span><span style="display:flex;gap:8px;align-items:center;color:var(--warn)"><i data-i="clock" data-s="18"></i>HR · menunggu keputusan Anda</span></div></div>
+</div><div class="field"><label>Catatan untuk pemohon</label><div class="input area" style="min-height:84px;line-height:24px"><span class="ph">Wajib diisi bila menolak atau meminta revisi</span></div><div class="hint" style="font-size:14px">Catatan wajib diisi saat meminta revisi.</div></div></div>
+  <div class="ft"><div style="display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px"><button class="btn outline " style="height:52px;padding:0 6px">Revisi</button><button class="btn outline " style="height:52px;padding:0 6px;color:var(--bad)">Tolak</button><button class="btn primary" style="height:52px;padding:0 6px">Setujui</button></div></div>
+</div></div>
+</figure>
+<figure>
+<figcaption>Tolak/Revisi tanpa catatan: bidang bergaris merah + "Catatan wajib diisi saat meminta revisi." / "Alasan wajib diisi bila menolak"; tombol tetap menjawab tapi server memvalidasi (422).</figcaption>
+<div class="phone" style="--h:915px" data-jam="08.32"><div class="body"><div>
+<div class="appbar" style="padding-top:20px">
+  <div class="gap8" style="gap:2px;min-width:0"><span class="t-over" style="font-size:14px">HR</span><h1 class="t-h1" style="font-size:28px;line-height:34px;font-weight:800">Pagi, Hana</h1></div>
+  <div class="acts"><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+</div>
+<div class="pad stack" style="margin-top:8px">
+  
+  
+  <div class="t-meta" style="font-size:14px;margin-top:-4px">Semua divisi · 48 karyawan aktif</div>
+  <div class="hero" style="padding:18px;border-radius:26px"><div style="font-size:15px;font-weight:700">Menunggu keputusan Anda</div><div style="font-size:42px;line-height:48px;font-weight:800;letter-spacing:-.02em">5</div><div style="font-size:15px;line-height:21px">cuti & izin lebih dulu</div></div>
+  <div class="b-hs"><div class="kpi"><div class="l">Menunggu langkah HR</div><div class="v" style="color:var(--warn)">7</div><div class="l" style="margin-top:2px">di seluruh HR</div></div><div class="kpi"><div class="l">Cuti disetujui</div><div class="v" >4</div><div class="l" style="margin-top:2px">14 hari ke depan</div></div><div class="kpi"><div class="l">Diputus Anda</div><div class="v" >23</div><div class="l" style="margin-top:2px">bulan ini</div></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <button class="btn" style="height:52px;background:var(--inverse);color:var(--on-inverse);font-weight:800;line-height:18px">Tinjau 5 pengajuan</button>
+    <button class="btn outline" style="height:52px;font-weight:800;line-height:18px">Kehadiran hari ini</button>
+  </div>
+  
+  <div class="card tight b-row2" style="min-height:68px"><span style="width:88px;font-size:14px;font-weight:800;flex:none">Hari ini</span><div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Wawancara kandidat programmer</div><div class="row-h" style="gap:6px;margin-top:3px"><span class="b-tag link">Tugas</span><span class="t-meta" style="font-size:13px">HIR-8 · 10.00</span></div></div><i data-i="chevron-right"></i></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Menunggu keputusan Anda</div><span class="t-meta" style="font-size:14px;font-weight:600">4 item</span></div><div style="margin-top:-6px"><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">CUT</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Cuti tahunan · Sari Wulandari</div><div class="trunc t-meta" style="font-size:14px">26–27 Okt · disetujui atasan</div></div>
+  <span class="badge warn" style="flex:none">Cuti</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">SKT</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Sakit · Bayu Saputra</div><div class="trunc t-meta" style="font-size:14px">12–13 Okt · surat dokter terlampir</div></div>
+  <span class="badge warn" style="flex:none">Sakit</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--info-soft);color:var(--info);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">IZN</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Izin · Yoga Pratama</div><div class="trunc t-meta" style="font-size:14px">14 Okt · urusan keluarga</div></div>
+  <span class="badge info" style="flex:none">Izin</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--surface-2);color:var(--text-muted);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">KOR</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Koreksi absensi · Rizky Ananda</div><div class="trunc t-meta" style="font-size:14px">Lupa check-out 2 Okt</div></div>
+  <span class="badge " style="flex:none">Koreksi</span></div></div></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Antrean per jenis</div><span class="t-meta" style="font-size:13px">pengajuan yang menunggu Anda</span></div><div class="stack" style="gap:14px"><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Cuti</span><span class="t-meta" style="font-size:14px;">2</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px">cuti tahunan & lainnya</div><div class="b-bar"><b class="warn" style="width:40%"></b></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Sakit & izin</span><span class="t-meta" style="font-size:14px;">2</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px"></div><div class="b-bar"><b class="ok" style="width:40%"></b></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Koreksi absensi</span><span class="t-meta" style="font-size:14px;">1</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px"></div><div class="b-bar"><b class="ok" style="width:20%"></b></div></div></div></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Cuti mendatang</div></div><div style="border-top:1px solid var(--divider);padding-top:10px"><div style="font-size:16px;font-weight:600;line-height:22px">Sari Wulandari · 26–27 Okt</div><div class="t-meta" style="font-size:14px">Cuti tahunan · Operasional</div></div><div style="border-top:1px solid var(--divider);padding-top:10px"><div style="font-size:16px;font-weight:600;line-height:22px">Fitri Andini · 29–30 Okt</div><div class="t-meta" style="font-size:14px">Cuti tahunan · Marketing</div></div></div>
+</div></div></div>
+<div class="scrim"></div>
+<div class="b-fsheet" style="top:70px">
+  <div class="hd"><div class="grow" style="padding-top:6px"><div class="t-h3">Tinjau pengajuan</div><div class="t-meta" style="font-size:14px;line-height:20px;margin-top:2px">5 pengajuan menunggu · cuti, izin, dan sakit lebih dulu</div></div><button class="x" aria-label="Tutup"><i data-i="x"></i></button></div>
+  <div class="bd"><div class="row-h" style="flex-wrap:wrap;gap:8px"><span class="chip on" style="height:44px">Sari · cuti</span><span class="chip" style="height:44px">Bayu · sakit</span><span class="chip" style="height:44px">Yoga · izin</span><span class="chip" style="height:44px">+2</span></div><div class="b-sub" style="display:flex;flex-direction:column;gap:12px;padding:16px">
+  <div class="row-h"><span class="avatar  ">SW</span><div class="grow"><div class="t-title" style="font-size:18px">Cuti tahunan</div><div class="t-meta" style="font-size:14px">CUT-2026-10-0012 · Sari Wulandari</div></div><span class="badge warn">Menunggu HR</span></div>
+  <div class="grid2" style="gap:10px"><div class="b-stat"><div class="l">Periode</div><div style="font-size:16px;font-weight:700;line-height:22px">Senin, 26 – Selasa, 27 Okt 2026</div></div><div class="b-stat"><div class="l">Durasi</div><div style="font-size:16px;font-weight:700;line-height:22px">2 hari kerja</div></div></div>
+  <div class="grid2" style="gap:10px"><div class="b-stat"><div class="l">Saldo cuti tahunan</div><div style="font-size:16px;font-weight:700;line-height:22px">8,5 → 6,5 hari</div></div><div class="b-stat"><div class="l">Pengganti</div><div style="font-size:16px;font-weight:700;line-height:22px">Maya Lestari</div></div></div>
+  <div><div class="t-label" style="font-weight:700;margin-bottom:6px">Rekan yang juga absen</div><div class="b-tags" style="margin-top:0"><span class="b-pill">Fitri A. · 26 Okt</span><span class="b-pill">Hendri S. · 27 Okt</span></div></div>
+  <div><div class="t-label" style="font-weight:700;margin-bottom:6px">Jejak persetujuan</div><div style="display:flex;flex-direction:column;gap:6px;font-size:15px"><span style="display:flex;gap:8px;align-items:center;color:var(--ok)"><i data-i="circle-check" data-s="18"></i>Dimas Pratama · disetujui 12 Okt 15.22</span><span style="display:flex;gap:8px;align-items:center;color:var(--warn)"><i data-i="clock" data-s="18"></i>HR · menunggu keputusan Anda</span></div></div>
+</div><div class="field"><label>Catatan untuk pemohon</label><div class="input area err" style="min-height:84px;line-height:24px"><span class="ph">Wajib diisi bila menolak atau meminta revisi</span></div><div class="hint err" style="font-size:14px">Catatan wajib diisi bila menolak atau meminta revisi.</div></div></div>
+  <div class="ft"><div style="display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px"><button class="btn outline " style="height:52px;padding:0 6px">Revisi</button><button class="btn outline " style="height:52px;padding:0 6px;color:var(--bad)">Tolak</button><button class="btn primary" style="height:52px;padding:0 6px">Setujui</button></div></div>
+</div></div>
+</figure>
+<figure>
+<figcaption>Meminta revisi dengan catatan: tombol Revisi aktif, pemohon menerima status "Perlu revisi" + catatan; saldo yang dicadangkan dilepas sementara.</figcaption>
+<div class="phone" style="--h:915px" data-jam="08.32"><div class="body"><div>
+<div class="appbar" style="padding-top:20px">
+  <div class="gap8" style="gap:2px;min-width:0"><span class="t-over" style="font-size:14px">HR</span><h1 class="t-h1" style="font-size:28px;line-height:34px;font-weight:800">Pagi, Hana</h1></div>
+  <div class="acts"><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+</div>
+<div class="pad stack" style="margin-top:8px">
+  
+  
+  <div class="t-meta" style="font-size:14px;margin-top:-4px">Semua divisi · 48 karyawan aktif</div>
+  <div class="hero" style="padding:18px;border-radius:26px"><div style="font-size:15px;font-weight:700">Menunggu keputusan Anda</div><div style="font-size:42px;line-height:48px;font-weight:800;letter-spacing:-.02em">5</div><div style="font-size:15px;line-height:21px">cuti & izin lebih dulu</div></div>
+  <div class="b-hs"><div class="kpi"><div class="l">Menunggu langkah HR</div><div class="v" style="color:var(--warn)">7</div><div class="l" style="margin-top:2px">di seluruh HR</div></div><div class="kpi"><div class="l">Cuti disetujui</div><div class="v" >4</div><div class="l" style="margin-top:2px">14 hari ke depan</div></div><div class="kpi"><div class="l">Diputus Anda</div><div class="v" >23</div><div class="l" style="margin-top:2px">bulan ini</div></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <button class="btn" style="height:52px;background:var(--inverse);color:var(--on-inverse);font-weight:800;line-height:18px">Tinjau 5 pengajuan</button>
+    <button class="btn outline" style="height:52px;font-weight:800;line-height:18px">Kehadiran hari ini</button>
+  </div>
+  
+  <div class="card tight b-row2" style="min-height:68px"><span style="width:88px;font-size:14px;font-weight:800;flex:none">Hari ini</span><div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Wawancara kandidat programmer</div><div class="row-h" style="gap:6px;margin-top:3px"><span class="b-tag link">Tugas</span><span class="t-meta" style="font-size:13px">HIR-8 · 10.00</span></div></div><i data-i="chevron-right"></i></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Menunggu keputusan Anda</div><span class="t-meta" style="font-size:14px;font-weight:600">4 item</span></div><div style="margin-top:-6px"><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">CUT</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Cuti tahunan · Sari Wulandari</div><div class="trunc t-meta" style="font-size:14px">26–27 Okt · disetujui atasan</div></div>
+  <span class="badge warn" style="flex:none">Cuti</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">SKT</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Sakit · Bayu Saputra</div><div class="trunc t-meta" style="font-size:14px">12–13 Okt · surat dokter terlampir</div></div>
+  <span class="badge warn" style="flex:none">Sakit</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--info-soft);color:var(--info);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">IZN</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Izin · Yoga Pratama</div><div class="trunc t-meta" style="font-size:14px">14 Okt · urusan keluarga</div></div>
+  <span class="badge info" style="flex:none">Izin</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--surface-2);color:var(--text-muted);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">KOR</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Koreksi absensi · Rizky Ananda</div><div class="trunc t-meta" style="font-size:14px">Lupa check-out 2 Okt</div></div>
+  <span class="badge " style="flex:none">Koreksi</span></div></div></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Antrean per jenis</div><span class="t-meta" style="font-size:13px">pengajuan yang menunggu Anda</span></div><div class="stack" style="gap:14px"><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Cuti</span><span class="t-meta" style="font-size:14px;">2</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px">cuti tahunan & lainnya</div><div class="b-bar"><b class="warn" style="width:40%"></b></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Sakit & izin</span><span class="t-meta" style="font-size:14px;">2</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px"></div><div class="b-bar"><b class="ok" style="width:40%"></b></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Koreksi absensi</span><span class="t-meta" style="font-size:14px;">1</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px"></div><div class="b-bar"><b class="ok" style="width:20%"></b></div></div></div></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Cuti mendatang</div></div><div style="border-top:1px solid var(--divider);padding-top:10px"><div style="font-size:16px;font-weight:600;line-height:22px">Sari Wulandari · 26–27 Okt</div><div class="t-meta" style="font-size:14px">Cuti tahunan · Operasional</div></div><div style="border-top:1px solid var(--divider);padding-top:10px"><div style="font-size:16px;font-weight:600;line-height:22px">Fitri Andini · 29–30 Okt</div><div class="t-meta" style="font-size:14px">Cuti tahunan · Marketing</div></div></div>
+</div></div></div>
+<div class="scrim"></div>
+<div class="b-fsheet" style="top:70px">
+  <div class="hd"><div class="grow" style="padding-top:6px"><div class="t-h3">Tinjau pengajuan</div><div class="t-meta" style="font-size:14px;line-height:20px;margin-top:2px">5 pengajuan menunggu · cuti, izin, dan sakit lebih dulu</div></div><button class="x" aria-label="Tutup"><i data-i="x"></i></button></div>
+  <div class="bd"><div class="row-h" style="flex-wrap:wrap;gap:8px"><span class="chip on" style="height:44px">Sari · cuti</span><span class="chip" style="height:44px">Bayu · sakit</span><span class="chip" style="height:44px">Yoga · izin</span><span class="chip" style="height:44px">+2</span></div><div class="b-sub" style="display:flex;flex-direction:column;gap:12px;padding:16px">
+  <div class="row-h"><span class="avatar  ">SW</span><div class="grow"><div class="t-title" style="font-size:18px">Cuti tahunan</div><div class="t-meta" style="font-size:14px">CUT-2026-10-0012 · Sari Wulandari</div></div><span class="badge warn">Menunggu HR</span></div>
+  <div class="grid2" style="gap:10px"><div class="b-stat"><div class="l">Periode</div><div style="font-size:16px;font-weight:700;line-height:22px">Senin, 26 – Selasa, 27 Okt 2026</div></div><div class="b-stat"><div class="l">Durasi</div><div style="font-size:16px;font-weight:700;line-height:22px">2 hari kerja</div></div></div>
+  <div class="grid2" style="gap:10px"><div class="b-stat"><div class="l">Saldo cuti tahunan</div><div style="font-size:16px;font-weight:700;line-height:22px">8,5 → 6,5 hari</div></div><div class="b-stat"><div class="l">Pengganti</div><div style="font-size:16px;font-weight:700;line-height:22px">Maya Lestari</div></div></div>
+  <div><div class="t-label" style="font-weight:700;margin-bottom:6px">Rekan yang juga absen</div><div class="b-tags" style="margin-top:0"><span class="b-pill">Fitri A. · 26 Okt</span><span class="b-pill">Hendri S. · 27 Okt</span></div></div>
+  <div><div class="t-label" style="font-weight:700;margin-bottom:6px">Jejak persetujuan</div><div style="display:flex;flex-direction:column;gap:6px;font-size:15px"><span style="display:flex;gap:8px;align-items:center;color:var(--ok)"><i data-i="circle-check" data-s="18"></i>Dimas Pratama · disetujui 12 Okt 15.22</span><span style="display:flex;gap:8px;align-items:center;color:var(--warn)"><i data-i="clock" data-s="18"></i>HR · menunggu keputusan Anda</span></div></div>
+</div><div class="field"><label>Catatan untuk pemohon</label><div class="input area focus" style="min-height:84px;line-height:24px">Mohon lampirkan nama pengganti selama 26–27 Okt dan konfirmasi serah terima ke Maya.</div><div class="hint" style="font-size:14px">Dikirim ke pemohon bersama status revisi.</div></div></div>
+  <div class="ft"><div style="display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px"><button class="btn outline " style="height:52px;padding:0 6px">Revisi</button><button class="btn outline " style="height:52px;padding:0 6px;color:var(--bad)">Tolak</button><button class="btn primary" style="height:52px;padding:0 6px">Setujui</button></div></div>
+</div></div>
+</figure>
+<figure>
+<figcaption>Setelah memutuskan: pengajuan hilang dari daftar, detail berikutnya dimuat (partial reload ?pilih=), snackbar hasil. Memuat detail: kerangka kartu detail.</figcaption>
+<div class="phone" style="--h:915px" data-jam="08.32"><div class="body"><div>
+<div class="appbar" style="padding-top:20px">
+  <div class="gap8" style="gap:2px;min-width:0"><span class="t-over" style="font-size:14px">HR</span><h1 class="t-h1" style="font-size:28px;line-height:34px;font-weight:800">Pagi, Hana</h1></div>
+  <div class="acts"><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+</div>
+<div class="pad stack" style="margin-top:8px">
+  
+  
+  <div class="t-meta" style="font-size:14px;margin-top:-4px">Semua divisi · 48 karyawan aktif</div>
+  <div class="hero" style="padding:18px;border-radius:26px"><div style="font-size:15px;font-weight:700">Menunggu keputusan Anda</div><div style="font-size:42px;line-height:48px;font-weight:800;letter-spacing:-.02em">5</div><div style="font-size:15px;line-height:21px">cuti & izin lebih dulu</div></div>
+  <div class="b-hs"><div class="kpi"><div class="l">Menunggu langkah HR</div><div class="v" style="color:var(--warn)">7</div><div class="l" style="margin-top:2px">di seluruh HR</div></div><div class="kpi"><div class="l">Cuti disetujui</div><div class="v" >4</div><div class="l" style="margin-top:2px">14 hari ke depan</div></div><div class="kpi"><div class="l">Diputus Anda</div><div class="v" >23</div><div class="l" style="margin-top:2px">bulan ini</div></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <button class="btn" style="height:52px;background:var(--inverse);color:var(--on-inverse);font-weight:800;line-height:18px">Tinjau 5 pengajuan</button>
+    <button class="btn outline" style="height:52px;font-weight:800;line-height:18px">Kehadiran hari ini</button>
+  </div>
+  
+  <div class="card tight b-row2" style="min-height:68px"><span style="width:88px;font-size:14px;font-weight:800;flex:none">Hari ini</span><div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Wawancara kandidat programmer</div><div class="row-h" style="gap:6px;margin-top:3px"><span class="b-tag link">Tugas</span><span class="t-meta" style="font-size:13px">HIR-8 · 10.00</span></div></div><i data-i="chevron-right"></i></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Menunggu keputusan Anda</div><span class="t-meta" style="font-size:14px;font-weight:600">4 item</span></div><div style="margin-top:-6px"><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">CUT</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Cuti tahunan · Sari Wulandari</div><div class="trunc t-meta" style="font-size:14px">26–27 Okt · disetujui atasan</div></div>
+  <span class="badge warn" style="flex:none">Cuti</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">SKT</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Sakit · Bayu Saputra</div><div class="trunc t-meta" style="font-size:14px">12–13 Okt · surat dokter terlampir</div></div>
+  <span class="badge warn" style="flex:none">Sakit</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--info-soft);color:var(--info);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">IZN</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Izin · Yoga Pratama</div><div class="trunc t-meta" style="font-size:14px">14 Okt · urusan keluarga</div></div>
+  <span class="badge info" style="flex:none">Izin</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--surface-2);color:var(--text-muted);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">KOR</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Koreksi absensi · Rizky Ananda</div><div class="trunc t-meta" style="font-size:14px">Lupa check-out 2 Okt</div></div>
+  <span class="badge " style="flex:none">Koreksi</span></div></div></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Antrean per jenis</div><span class="t-meta" style="font-size:13px">pengajuan yang menunggu Anda</span></div><div class="stack" style="gap:14px"><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Cuti</span><span class="t-meta" style="font-size:14px;">2</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px">cuti tahunan & lainnya</div><div class="b-bar"><b class="warn" style="width:40%"></b></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Sakit & izin</span><span class="t-meta" style="font-size:14px;">2</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px"></div><div class="b-bar"><b class="ok" style="width:40%"></b></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Koreksi absensi</span><span class="t-meta" style="font-size:14px;">1</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px"></div><div class="b-bar"><b class="ok" style="width:20%"></b></div></div></div></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Cuti mendatang</div></div><div style="border-top:1px solid var(--divider);padding-top:10px"><div style="font-size:16px;font-weight:600;line-height:22px">Sari Wulandari · 26–27 Okt</div><div class="t-meta" style="font-size:14px">Cuti tahunan · Operasional</div></div><div style="border-top:1px solid var(--divider);padding-top:10px"><div style="font-size:16px;font-weight:600;line-height:22px">Fitri Andini · 29–30 Okt</div><div class="t-meta" style="font-size:14px">Cuti tahunan · Marketing</div></div></div>
+</div></div></div>
+<div class="scrim"></div>
+<div class="b-fsheet" style="top:70px">
+  <div class="hd"><div class="grow" style="padding-top:6px"><div class="t-h3">Tinjau pengajuan</div><div class="t-meta" style="font-size:14px;line-height:20px;margin-top:2px">5 pengajuan menunggu · cuti, izin, dan sakit lebih dulu</div></div><button class="x" aria-label="Tutup"><i data-i="x"></i></button></div>
+  <div class="bd"><div class="row-h" style="flex-wrap:wrap;gap:8px"><span class="chip on" style="height:44px">Sari · cuti</span><span class="chip" style="height:44px">Bayu · sakit</span><span class="chip" style="height:44px">Yoga · izin</span><span class="chip" style="height:44px">+2</span></div><div class="skel" style="height:360px;border-radius:20px"></div><div class="field"><label>Catatan untuk pemohon</label><div class="input area" style="min-height:84px;line-height:24px"><span class="ph">Wajib diisi bila menolak atau meminta revisi</span></div><div class="hint" style="font-size:14px">Catatan wajib diisi saat meminta revisi.</div></div></div>
+  <div class="ft"><div style="display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px"><button class="btn outline off" style="height:52px;padding:0 6px">Revisi</button><button class="btn outline off" style="height:52px;padding:0 6px;color:">Tolak</button><button class="btn off" style="height:52px;padding:0 6px">Setujui</button></div></div>
+</div><div class="snack"><i data-i="circle-check"></i>Cuti Sari Wulandari disetujui.</div></div>
+</figure>
+<figure>
+<figcaption>Kosong: "Tidak ada yang menunggu". Dashboard di belakang: tombol utama "Buka persetujuan".</figcaption>
+<div class="phone" style="--h:915px" data-jam="08.32"><div class="body"><div>
+<div class="appbar" style="padding-top:20px">
+  <div class="gap8" style="gap:2px;min-width:0"><span class="t-over" style="font-size:14px">HR</span><h1 class="t-h1" style="font-size:28px;line-height:34px;font-weight:800">Pagi, Hana</h1></div>
+  <div class="acts"><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+</div>
+<div class="pad stack" style="margin-top:8px">
+  
+  
+  <div class="t-meta" style="font-size:14px;margin-top:-4px">Semua divisi · 48 karyawan aktif</div>
+  <div class="hero" style="padding:18px;border-radius:26px"><div style="font-size:15px;font-weight:700">Menunggu keputusan Anda</div><div style="font-size:42px;line-height:48px;font-weight:800;letter-spacing:-.02em">5</div><div style="font-size:15px;line-height:21px">cuti & izin lebih dulu</div></div>
+  <div class="b-hs"><div class="kpi"><div class="l">Menunggu langkah HR</div><div class="v" style="color:var(--warn)">7</div><div class="l" style="margin-top:2px">di seluruh HR</div></div><div class="kpi"><div class="l">Cuti disetujui</div><div class="v" >4</div><div class="l" style="margin-top:2px">14 hari ke depan</div></div><div class="kpi"><div class="l">Diputus Anda</div><div class="v" >23</div><div class="l" style="margin-top:2px">bulan ini</div></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <button class="btn" style="height:52px;background:var(--inverse);color:var(--on-inverse);font-weight:800;line-height:18px">Tinjau 5 pengajuan</button>
+    <button class="btn outline" style="height:52px;font-weight:800;line-height:18px">Kehadiran hari ini</button>
+  </div>
+  
+  <div class="card tight b-row2" style="min-height:68px"><span style="width:88px;font-size:14px;font-weight:800;flex:none">Hari ini</span><div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Wawancara kandidat programmer</div><div class="row-h" style="gap:6px;margin-top:3px"><span class="b-tag link">Tugas</span><span class="t-meta" style="font-size:13px">HIR-8 · 10.00</span></div></div><i data-i="chevron-right"></i></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Menunggu keputusan Anda</div><span class="t-meta" style="font-size:14px;font-weight:600">4 item</span></div><div style="margin-top:-6px"><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">CUT</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Cuti tahunan · Sari Wulandari</div><div class="trunc t-meta" style="font-size:14px">26–27 Okt · disetujui atasan</div></div>
+  <span class="badge warn" style="flex:none">Cuti</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">SKT</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Sakit · Bayu Saputra</div><div class="trunc t-meta" style="font-size:14px">12–13 Okt · surat dokter terlampir</div></div>
+  <span class="badge warn" style="flex:none">Sakit</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--info-soft);color:var(--info);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">IZN</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Izin · Yoga Pratama</div><div class="trunc t-meta" style="font-size:14px">14 Okt · urusan keluarga</div></div>
+  <span class="badge info" style="flex:none">Izin</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--surface-2);color:var(--text-muted);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">KOR</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Koreksi absensi · Rizky Ananda</div><div class="trunc t-meta" style="font-size:14px">Lupa check-out 2 Okt</div></div>
+  <span class="badge " style="flex:none">Koreksi</span></div></div></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Antrean per jenis</div><span class="t-meta" style="font-size:13px">pengajuan yang menunggu Anda</span></div><div class="stack" style="gap:14px"><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Cuti</span><span class="t-meta" style="font-size:14px;">2</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px">cuti tahunan & lainnya</div><div class="b-bar"><b class="warn" style="width:40%"></b></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Sakit & izin</span><span class="t-meta" style="font-size:14px;">2</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px"></div><div class="b-bar"><b class="ok" style="width:40%"></b></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Koreksi absensi</span><span class="t-meta" style="font-size:14px;">1</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px"></div><div class="b-bar"><b class="ok" style="width:20%"></b></div></div></div></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Cuti mendatang</div></div><div style="border-top:1px solid var(--divider);padding-top:10px"><div style="font-size:16px;font-weight:600;line-height:22px">Sari Wulandari · 26–27 Okt</div><div class="t-meta" style="font-size:14px">Cuti tahunan · Operasional</div></div><div style="border-top:1px solid var(--divider);padding-top:10px"><div style="font-size:16px;font-weight:600;line-height:22px">Fitri Andini · 29–30 Okt</div><div class="t-meta" style="font-size:14px">Cuti tahunan · Marketing</div></div></div>
+</div></div></div>
+<div class="scrim"></div>
+<div class="b-fsheet" style="top:330px">
+  <div class="hd"><div class="grow" style="padding-top:6px"><div class="t-h3">Tinjau pengajuan</div><div class="t-meta" style="font-size:14px;line-height:20px;margin-top:2px">Semua pengajuan sudah diputus.</div></div><button class="x" aria-label="Tutup"><i data-i="x"></i></button></div>
+  <div class="bd">
+<div class="empty">
+  <span class="ic"><i data-i="circle-check" data-s="30"></i></span>
+  <div class="t-title">Tidak ada yang menunggu</div>
+  <div class="t-meta" style="font-size:15px;line-height:21px">Pengajuan yang butuh keputusan HR muncul di sini.</div>
+  
+</div></div>
+  
+</div></div>
+</figure>
+<figure>
+<figcaption>Pengajuan non-cuti (koreksi absensi): detail memuat jam sebelum → sesudah dan alasan; tidak ada saldo; menyetujui menerapkan koreksi, ditolak bila hari itu sudah berubah.</figcaption>
+<div class="phone" style="--h:915px" data-jam="08.32"><div class="body"><div>
+<div class="appbar" style="padding-top:20px">
+  <div class="gap8" style="gap:2px;min-width:0"><span class="t-over" style="font-size:14px">HR</span><h1 class="t-h1" style="font-size:28px;line-height:34px;font-weight:800">Pagi, Hana</h1></div>
+  <div class="acts"><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+</div>
+<div class="pad stack" style="margin-top:8px">
+  
+  
+  <div class="t-meta" style="font-size:14px;margin-top:-4px">Semua divisi · 48 karyawan aktif</div>
+  <div class="hero" style="padding:18px;border-radius:26px"><div style="font-size:15px;font-weight:700">Menunggu keputusan Anda</div><div style="font-size:42px;line-height:48px;font-weight:800;letter-spacing:-.02em">5</div><div style="font-size:15px;line-height:21px">cuti & izin lebih dulu</div></div>
+  <div class="b-hs"><div class="kpi"><div class="l">Menunggu langkah HR</div><div class="v" style="color:var(--warn)">7</div><div class="l" style="margin-top:2px">di seluruh HR</div></div><div class="kpi"><div class="l">Cuti disetujui</div><div class="v" >4</div><div class="l" style="margin-top:2px">14 hari ke depan</div></div><div class="kpi"><div class="l">Diputus Anda</div><div class="v" >23</div><div class="l" style="margin-top:2px">bulan ini</div></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <button class="btn" style="height:52px;background:var(--inverse);color:var(--on-inverse);font-weight:800;line-height:18px">Tinjau 5 pengajuan</button>
+    <button class="btn outline" style="height:52px;font-weight:800;line-height:18px">Kehadiran hari ini</button>
+  </div>
+  
+  <div class="card tight b-row2" style="min-height:68px"><span style="width:88px;font-size:14px;font-weight:800;flex:none">Hari ini</span><div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Wawancara kandidat programmer</div><div class="row-h" style="gap:6px;margin-top:3px"><span class="b-tag link">Tugas</span><span class="t-meta" style="font-size:13px">HIR-8 · 10.00</span></div></div><i data-i="chevron-right"></i></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Menunggu keputusan Anda</div><span class="t-meta" style="font-size:14px;font-weight:600">4 item</span></div><div style="margin-top:-6px"><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">CUT</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Cuti tahunan · Sari Wulandari</div><div class="trunc t-meta" style="font-size:14px">26–27 Okt · disetujui atasan</div></div>
+  <span class="badge warn" style="flex:none">Cuti</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">SKT</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Sakit · Bayu Saputra</div><div class="trunc t-meta" style="font-size:14px">12–13 Okt · surat dokter terlampir</div></div>
+  <span class="badge warn" style="flex:none">Sakit</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--info-soft);color:var(--info);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">IZN</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Izin · Yoga Pratama</div><div class="trunc t-meta" style="font-size:14px">14 Okt · urusan keluarga</div></div>
+  <span class="badge info" style="flex:none">Izin</span></div><div style="display:flex;align-items:center;gap:12px;min-height:64px;border-top:1px solid var(--divider)">
+  <span style="width:40px;height:40px;border-radius:12px;background:var(--surface-2);color:var(--text-muted);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">KOR</span>
+  <div class="grow"><div class="trunc" style="font-size:16px;font-weight:700">Koreksi absensi · Rizky Ananda</div><div class="trunc t-meta" style="font-size:14px">Lupa check-out 2 Okt</div></div>
+  <span class="badge " style="flex:none">Koreksi</span></div></div></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Antrean per jenis</div><span class="t-meta" style="font-size:13px">pengajuan yang menunggu Anda</span></div><div class="stack" style="gap:14px"><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Cuti</span><span class="t-meta" style="font-size:14px;">2</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px">cuti tahunan & lainnya</div><div class="b-bar"><b class="warn" style="width:40%"></b></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Sakit & izin</span><span class="t-meta" style="font-size:14px;">2</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px"></div><div class="b-bar"><b class="ok" style="width:40%"></b></div></div><div><div class="row-h sp"><span class="trunc" style="font-size:16px;font-weight:600">Koreksi absensi</span><span class="t-meta" style="font-size:14px;">1</span></div><div class="t-meta" style="font-size:13px;margin:2px 0 6px"></div><div class="b-bar"><b class="ok" style="width:20%"></b></div></div></div></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;"><div class="row-h sp"><div class="t-h3" style="font-size:18px;line-height:24px">Cuti mendatang</div></div><div style="border-top:1px solid var(--divider);padding-top:10px"><div style="font-size:16px;font-weight:600;line-height:22px">Sari Wulandari · 26–27 Okt</div><div class="t-meta" style="font-size:14px">Cuti tahunan · Operasional</div></div><div style="border-top:1px solid var(--divider);padding-top:10px"><div style="font-size:16px;font-weight:600;line-height:22px">Fitri Andini · 29–30 Okt</div><div class="t-meta" style="font-size:14px">Cuti tahunan · Marketing</div></div></div>
+</div></div></div>
+<div class="scrim"></div>
+<div class="b-fsheet" style="top:70px">
+  <div class="hd"><div class="grow" style="padding-top:6px"><div class="t-h3">Tinjau pengajuan</div><div class="t-meta" style="font-size:14px;line-height:20px;margin-top:2px">5 pengajuan menunggu · cuti, izin, dan sakit lebih dulu</div></div><button class="x" aria-label="Tutup"><i data-i="x"></i></button></div>
+  <div class="bd"><div class="row-h" style="flex-wrap:wrap;gap:8px"><span class="chip" style="height:44px">Sari · cuti</span><span class="chip" style="height:44px">Bayu · sakit</span><span class="chip" style="height:44px">Yoga · izin</span><span class="chip" style="height:44px">+2</span></div><div class="b-sub" style="display:flex;flex-direction:column;gap:10px;padding:16px"><div class="row-h"><span class="avatar teal ">RA</span><div class="grow"><div class="t-title" style="font-size:18px">Koreksi absensi</div><div class="t-meta" style="font-size:14px">KOR-2026-10-0003 · Rizky Ananda</div></div></div><div class="grid2" style="gap:10px"><div class="b-stat"><div class="l">Tanggal</div><div style="font-size:16px;font-weight:700">Jum, 2 Okt</div></div><div class="b-stat"><div class="l">Check-out</div><div style="font-size:16px;font-weight:700">— → 17.10</div></div></div><div style="font-size:15px;line-height:22px">Lupa check-out karena rapat klien berlangsung hingga sore.</div></div><div class="field"><label>Catatan untuk pemohon</label><div class="input area" style="min-height:84px;line-height:24px"><span class="ph">Wajib diisi bila menolak atau meminta revisi</span></div><div class="hint" style="font-size:14px">Catatan wajib diisi saat meminta revisi.</div></div></div>
+  <div class="ft"><div style="display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px"><button class="btn outline " style="height:52px;padding:0 6px">Revisi</button><button class="btn outline " style="height:52px;padding:0 6px;color:var(--bad)">Tolak</button><button class="btn primary" style="height:52px;padding:0 6px">Setujui</button></div></div>
+</div></div>
+</figure>
+</div>
+</body>
+</html>
