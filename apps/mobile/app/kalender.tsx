@@ -7,7 +7,7 @@
  */
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -93,13 +93,24 @@ export default function LayarKalender(): React.JSX.Element {
   const [galat, setGalat] = useState<string | null>(null);
   const [mati, setMati] = useState(false);
 
+  // Request id: a slower response for an earlier month must not override a newer one.
+  const permintaan = useRef(0);
+
   const muat = useCallback(async (pilih: string): Promise<void> => {
+    const idMuat = ++permintaan.current;
     setMemuat(true);
     setGalat(null);
     try {
-      setData(await kalenderBulan(pilih));
+      const hasil = await kalenderBulan(pilih);
+      if (idMuat !== permintaan.current) {
+        return;
+      }
+      setData(hasil);
       setMati(false);
     } catch (err) {
+      if (idMuat !== permintaan.current) {
+        return;
+      }
       if (err instanceof ApiError && err.status === 404) {
         setMati(true);
         setData(null);
@@ -107,7 +118,9 @@ export default function LayarKalender(): React.JSX.Element {
         setGalat(err instanceof ApiError ? err.message : 'Tidak dapat memuat kalender.');
       }
     } finally {
-      setMemuat(false);
+      if (idMuat === permintaan.current) {
+        setMemuat(false);
+      }
     }
   }, []);
 

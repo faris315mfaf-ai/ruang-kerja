@@ -3,10 +3,11 @@
  * ±200 KB lewat expo-image-manipulator + cek ukuran expo-file-system.
  */
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import * as FileSystem from 'expo-file-system';
+// Legacy API: the root `getInfoAsync` is a throwing stub since SDK 54.
+import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui';
@@ -83,7 +84,11 @@ export function KameraSelfie({
             {galat}
           </Text>
         ) : null}
-        <Button title="Izinkan kamera" onPress={() => void mintaIzin()} />
+        {izinDitolak ? (
+          <Button title="Buka pengaturan" icon="settings-outline" onPress={() => void Linking.openSettings()} />
+        ) : (
+          <Button title="Izinkan kamera" onPress={() => void mintaIzin()} />
+        )}
         <Button title="Batal" variant="ghost" onPress={onBatal} />
       </View>
     );

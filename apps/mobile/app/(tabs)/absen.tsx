@@ -7,8 +7,8 @@
  */
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { BackHandler, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { absensiHariIni, checkIn, checkOut } from '@/api/endpoints';
@@ -17,7 +17,7 @@ import { Badge, Body, Button, Card, CardTitle, Divider, ErrorState, Field, Input
 import { KameraSelfie } from '@/components/KameraSelfie';
 import { deviceIdHash } from '@/lib/device';
 import { durasiMenit, jam, jarakMeter, sapaan } from '@/lib/format';
-import { useLokasi, type TitikLokasi } from '@/lib/lokasi';
+import { lokasiSegar, useLokasi, type TitikLokasi } from '@/lib/lokasi';
 import { radius, useTheme } from '@/lib/theme';
 
 // ── Bagian kecil ─────────────────────────────────────────────────────────────
@@ -148,6 +148,9 @@ function BagianLokasi({ status, ambil }: { status: ReturnType<typeof useLokasi>[
             <Ionicons name="warning-outline" size={18} color={colors.danger} />
             <Text style={{ color: colors.danger, fontSize: 13, flex: 1 }}>{status.pesan}</Text>
           </View>
+          {status.bukaPengaturan ? (
+            <Button title="Buka pengaturan" variant="secondary" icon="settings-outline" onPress={() => void Linking.openSettings()} />
+          ) : null}
           <Button title="Coba baca lokasi" variant="secondary" icon="refresh" onPress={ambil} />
         </View>
       ) : (
@@ -239,7 +242,7 @@ function RingkasanHari({ data }: { data: TodayAttendance }): React.JSX.Element {
 
 export default function LayarAbsen(): React.JSX.Element {
   const { colors } = useTheme();
-  const { status: statusLokasi, ambil: ambilLokasi } = useLokasi();
+  const { status: statusLokasi, ambil: ambilLokasi, reset: resetLokasi } = useLokasi();
 
   const [data, setData] = useState<TodayAttendance | null>(null);
   const [memuat, setMemuat] = useState(true);
@@ -254,6 +257,8 @@ export default function LayarAbsen(): React.JSX.Element {
   const [mengirim, setMengirim] = useState(false);
   const [galatKirim, setGalatKirim] = useState<string | null>(null);
   const [hasil, setHasil] = useState<AttendanceResult | null>(null);
+  // Synchronous lock: state updates are async, so a fast double tap could submit twice.
+  const kunciKirim = useRef(false);
 
   const titik: TitikLokasi | null = statusLokasi.keadaan === 'siap' ? statusLokasi.titik : null;
 
@@ -277,8 +282,22 @@ export default function LayarAbsen(): React.JSX.Element {
   useFocusEffect(
     useCallback(() => {
       void muat();
+      // Release the camera when the tab loses focus (the tab stays mounted).
+      return () => setKameraBuka(false);
     }, [muat]),
   );
+
+  // Hardware back while the camera is open closes the camera, not the tab.
+  useEffect(() => {
+    if (!kameraBuka) {
+      return;
+    }
+    const langganan = BackHandler.addEventListener('hardwareBackPress', () => {
+      setKameraBuka(false);
+      return true;
+    });
+    return () => langganan.remove();
+  }, [kameraBuka]);
 
   const aksi = data?.today.action;
 
@@ -287,27 +306,34 @@ export default function LayarAbsen(): React.JSX.Element {
     !mengirim && selfie !== null && titik !== null && (aksi !== 'check_in' || poinValid.length >= 1);
 
   async function kirim(): Promise<void> {
-    if (!bisaKirim || !titik) {
+    if (!bisaKirim || !titik || kunciKirim.current) {
       return;
     }
+    kunciKirim.current = true;
     setMengirim(true);
     setGalatKirim(null);
     try {
+      // The tab stays mounted, so a fix read long ago (e.g. at check-in) must not be reused.
+      const lokasi = lokasiSegar(titik) ? titik : await ambilLokasi();
+      if (!lokasi) {
+        setGalatKirim('Lokasi perlu dibaca ulang sebelum dikirim. Coba baca lokasi lagi.');
+        return;
+      }
       const hasilKirim =
         aksi === 'check_in'
           ? await checkIn({
-              latitude: titik.latitude,
-              longitude: titik.longitude,
-              accuracy: titik.accuracy,
+              latitude: lokasi.latitude,
+              longitude: lokasi.longitude,
+              accuracy: lokasi.accuracy,
               selfieUri: selfie ?? '',
               deviceIdHash: await deviceIdHash(),
               note: catatan,
               workPlan: poinValid,
             })
           : await checkOut({
-              latitude: titik.latitude,
-              longitude: titik.longitude,
-              accuracy: titik.accuracy,
+              latitude: lokasi.latitude,
+              longitude: lokasi.longitude,
+              accuracy: lokasi.accuracy,
               selfieUri: selfie ?? '',
               deviceIdHash: await deviceIdHash(),
               note: catatan,
@@ -315,6 +341,7 @@ export default function LayarAbsen(): React.JSX.Element {
 
       setHasil(hasilKirim);
       setSelfie(null);
+      resetLokasi();
       setPoin(['']);
       setCatatan('');
     } catch (err) {
@@ -324,6 +351,7 @@ export default function LayarAbsen(): React.JSX.Element {
         setGalatKirim('Gagal mengirim. Periksa koneksi Anda lalu coba lagi.');
       }
     } finally {
+      kunciKirim.current = false;
       setMengirim(false);
     }
   }

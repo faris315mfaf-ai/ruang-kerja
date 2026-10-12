@@ -42,6 +42,7 @@ export default function LayarLainnya(): React.JSX.Element {
   const [perangkat, setPerangkat] = useState<DeviceRow[]>([]);
   const [memuat, setMemuat] = useState(true);
   const [galat, setGalat] = useState<string | null>(null);
+  const [galatRiwayat, setGalatRiwayat] = useState<string | null>(null);
 
   const muat = useCallback(async (): Promise<void> => {
     setMemuat(true);
@@ -60,6 +61,10 @@ export default function LayarLainnya(): React.JSX.Element {
     }
     if (hasilRiwayat.status === 'fulfilled') {
       setRiwayat(hasilRiwayat.value);
+      setGalatRiwayat(null);
+    } else {
+      const err: unknown = hasilRiwayat.reason;
+      setGalatRiwayat(err instanceof ApiError ? err.message : 'Rekap absensi gagal dimuat.');
     }
     if (hasilPengajuan.status === 'fulfilled') {
       setPengajuan(hasilPengajuan.value.requests);
@@ -229,6 +234,13 @@ export default function LayarLainnya(): React.JSX.Element {
                   <Meta>Belum ada catatan absensi bulan ini.</Meta>
                 )}
               </>
+            ) : galatRiwayat && !memuat ? (
+              <View style={{ gap: 10 }}>
+                <Text style={{ color: colors.danger, fontSize: 13 }} accessibilityRole="alert">
+                  {galatRiwayat}
+                </Text>
+                <Button title="Coba lagi" variant="secondary" icon="refresh" onPress={() => void muat()} />
+              </View>
             ) : (
               <Loading label="Memuat rekap…" />
             )}

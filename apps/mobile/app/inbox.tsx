@@ -5,7 +5,7 @@
  */
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -83,7 +83,11 @@ export default function LayarInbox(): React.JSX.Element {
   const [memuatLagi, setMemuatLagi] = useState(false);
   const [galat, setGalat] = useState<string | null>(null);
 
+  // Request id: a slower response for an earlier filter must not override a newer one.
+  const permintaan = useRef(0);
+
   const muat = useCallback(async (saring: Saringan, hal: number, tambah: boolean): Promise<void> => {
+    const idMuat = ++permintaan.current;
     if (tambah) {
       setMemuatLagi(true);
     } else {
@@ -92,17 +96,32 @@ export default function LayarInbox(): React.JSX.Element {
     setGalat(null);
     try {
       const hasil = await inbox(hal, saring === 'belum');
+      if (idMuat !== permintaan.current) {
+        return;
+      }
+      setHalaman(hal); // only advance the page once it actually loaded
       setHalamanAkhir(hasil.meta.last_page);
       perbarui(hasil.unread);
-      setItems((lama) => (tambah ? [...lama, ...hasil.items] : hasil.items));
+      setItems((lama) => {
+        if (!tambah) {
+          return hasil.items;
+        }
+        const sudah = new Set(lama.map((satu) => satu.id));
+        return [...lama, ...hasil.items.filter((satu) => !sudah.has(satu.id))];
+      });
     } catch (err) {
+      if (idMuat !== permintaan.current) {
+        return;
+      }
       setGalat(err instanceof ApiError ? err.message : 'Tidak dapat memuat inbox.');
       if (!tambah) {
         setItems([]);
       }
     } finally {
-      setMemuat(false);
-      setMemuatLagi(false);
+      if (idMuat === permintaan.current) {
+        setMemuat(false);
+        setMemuatLagi(false);
+      }
     }
   }, [perbarui]);
 
@@ -149,7 +168,6 @@ export default function LayarInbox(): React.JSX.Element {
         value={saringan}
         onChange={(nilai) => {
           setSaringan(nilai);
-          setHalaman(1);
         }}
         options={[
           { value: 'semua', label: 'Semua' },
@@ -184,9 +202,7 @@ export default function LayarInbox(): React.JSX.Element {
               disabled={memuatLagi}
               loading={memuatLagi}
               onPress={() => {
-                const berikut = halaman + 1;
-                setHalaman(berikut);
-                void muat(saringan, berikut, true);
+                void muat(saringan, halaman + 1, true);
               }}
             />
           ) : (

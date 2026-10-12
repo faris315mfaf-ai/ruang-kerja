@@ -7,7 +7,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError } from '@/api/client';
@@ -19,9 +19,9 @@ import {
   suntingTugas,
   ubahStatusTugas,
 } from '@/api/endpoints';
-import type { PageMeta, TaskComment, TaskDetail } from '@/api/types';
+import type { PageMeta, TaskComment, TaskDetail, TaskUpdateBody } from '@/api/types';
 import { Badge, Body, Button, Card, CardTitle, Divider, ErrorState, Field, Input, Loading, Meta, Screen } from '@/components/ui';
-import { tanggalDariYMD, waktuRelatif } from '@/lib/format';
+import { tanggalDariYMD, waktuRelatif, ymdJakarta } from '@/lib/format';
 import { warnaPrioritas } from '@/lib/palette';
 import { radius, useTheme } from '@/lib/theme';
 
@@ -151,8 +151,17 @@ export default function LayarDetailTugas(): React.JSX.Element {
         const hasil = await komentarTugas(id, halaman);
         setMetaKomentar(hasil.meta);
         setHalamanKomentar(hasil.meta.current_page);
-        // Server: terbaru dulu → balik supaya urut lama→baru.
-        setKomentar((lama) => [...hasil.comments.slice().reverse(), ...lama]);
+        // Server: terbaru dulu → balik supaya urut lama→baru. Komentar baru
+        // yang masuk sejak halaman 1 menggeser halaman berikutnya, jadi
+        // halaman lama bisa memuat komentar yang sudah tampil → dedupe per id.
+        const halamanIni = hasil.comments.slice().reverse();
+        setKomentar((lama) => {
+          if (!tambah) {
+            return halamanIni;
+          }
+          const sudah = new Set(lama.map((k) => k.id));
+          return [...halamanIni.filter((k) => !sudah.has(k.id)), ...lama];
+        });
       } catch (err) {
         setGalatKomentar(err instanceof ApiError ? err.message : 'Tidak dapat memuat komentar.');
       } finally {
@@ -196,7 +205,7 @@ export default function LayarDetailTugas(): React.JSX.Element {
     setGalatKomentar(null);
     try {
       const baru = await kirimKomentar(id, isi);
-      setKomentar((lama) => [...lama, baru]);
+      setKomentar((lama) => (lama.some((k) => k.id === baru.id) ? lama : [...lama, baru]));
       setTeksKomentar('');
       if (metaKomentar) {
         setMetaKomentar({ ...metaKomentar, total: metaKomentar.total + 1 });
@@ -237,16 +246,38 @@ export default function LayarDetailTugas(): React.JSX.Element {
     if (menyimpan || typeof id !== 'string' || !periksaSuntingan()) {
       return;
     }
+    if (tugas === null) {
+      return;
+    }
+    // Kirim hanya field yang benar-benar berubah: mengirim `description`
+    // dari teks polos setiap kali akan meratakan deskripsi berformat dari web.
+    const ubahan: TaskUpdateBody = {};
+    const judulBaru = judul.trim();
+    const deskripsiBaru = deskripsi.trim() === '' ? null : deskripsi.trim();
+    const deskripsiLama = (tugas.description_text ?? '').trim() === '' ? null : (tugas.description_text ?? '').trim();
+    const tenggatBaru = tenggat.trim() === '' ? null : tenggat.trim();
+    if (judulBaru !== tugas.title) {
+      ubahan.title = judulBaru;
+    }
+    if (deskripsiBaru !== deskripsiLama) {
+      ubahan.description = deskripsiBaru;
+    }
+    if (tenggatBaru !== (tugas.due_date ?? null)) {
+      ubahan.due_date = tenggatBaru;
+    }
+    if (prioritas !== tugas.priority.value) {
+      ubahan.priority = prioritas;
+    }
+    if (Object.keys(ubahan).length === 0) {
+      setMenyunting(false);
+      return;
+    }
     setMenyimpan(true);
     setGalatAksi(null);
     try {
-      const hasil = await suntingTugas(id, {
-        title: judul.trim(),
-        description: deskripsi.trim() === '' ? null : deskripsi.trim(),
-        due_date: tenggat.trim() === '' ? null : tenggat.trim(),
-        priority: prioritas,
-      });
-      setTugas(hasil);
+      const hasil = await suntingTugas(id, ubahan);
+      // Respons PATCH tidak membawa `can`; pertahankan izin sebelumnya.
+      setTugas((lama) => ({ ...hasil, can: hasil.can ?? lama?.can }));
       setMenyunting(false);
     } catch (err) {
       // Kontrak tidak membawa izin sunting — 403 dari server ditampilkan.
@@ -286,7 +317,7 @@ export default function LayarDetailTugas(): React.JSX.Element {
   const masihKomentarLama = metaKomentar !== null && halamanKomentar < metaKomentar.last_page;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior="padding">
       <Pressable
         onPress={() => router.back()}
         accessibilityRole="button"
@@ -331,7 +362,7 @@ export default function LayarDetailTugas(): React.JSX.Element {
       ) : galat && !tugas ? (
         <ErrorState message={galat} onRetry={() => void muat()} />
       ) : tugas ? (
-        <Screen contentStyle={{ paddingBottom: 140 }}>
+        <Screen contentStyle={{ paddingBottom: 24 }}>
           <View style={{ gap: 6 }}>
             <View style={detail.lencanaBaris}>
               <Badge tone={tugas.status.is_done ? 'success' : 'primary'}>{tugas.status.name}</Badge>
@@ -434,7 +465,7 @@ export default function LayarDetailTugas(): React.JSX.Element {
                 </Field>
                 {tugas.completed_at ? (
                   <Field label="Selesai pada">
-                    <Body muted>{tanggalDariYMD(tugas.completed_at.slice(0, 10))}</Body>
+                    <Body muted>{tanggalDariYMD(ymdJakarta(tugas.completed_at))}</Body>
                   </Field>
                 ) : null}
               </Card>
@@ -589,7 +620,7 @@ export default function LayarDetailTugas(): React.JSX.Element {
           )}
         </View>
       ) : null}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -649,5 +680,6 @@ const detail = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  aksiBar: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 10, gap: 8 },
+  // In normal flow (not absolute) so KeyboardAvoidingView lifts it above the keyboard.
+  aksiBar: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 10, gap: 8 },
 });

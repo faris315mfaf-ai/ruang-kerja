@@ -14,7 +14,7 @@ import { ApiError } from '@/api/client';
 import { notulenRapat } from '@/api/endpoints';
 import type { MeetingMinutesResponse } from '@/api/types';
 import { Badge, Body, Card, CardTitle, Divider, EmptyState, ErrorState, Loading, Meta, Screen } from '@/components/ui';
-import { jam, tanggalDariYMD } from '@/lib/format';
+import { jam, tanggalDariYMD, ymdJakarta } from '@/lib/format';
 import { useTheme } from '@/lib/theme';
 
 export default function LayarNotulenRapat(): React.JSX.Element {
@@ -87,7 +87,7 @@ export default function LayarNotulenRapat(): React.JSX.Element {
             <Meta>
               {tanggalDariYMD(data.meeting.occurrence_date)} · {jam(data.meeting.starts_at)}–
               {jam(data.meeting.ends_at)} WIB
-              {data.notulen.saved_at ? ` · disimpan ${tanggalDariYMD(data.notulen.saved_at.slice(0, 10))}` : ''}
+              {data.notulen.saved_at ? ` · disimpan ${tanggalDariYMD(ymdJakarta(data.notulen.saved_at))}` : ''}
             </Meta>
           </View>
 

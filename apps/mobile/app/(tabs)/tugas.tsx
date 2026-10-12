@@ -4,7 +4,7 @@
  */
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
@@ -27,8 +27,12 @@ export default function LayarTugas(): React.JSX.Element {
   const [memuatLagi, setMemuatLagi] = useState(false);
   const [galat, setGalat] = useState<string | null>(null);
 
+  // Request id: a slower response for an earlier scope must not override a newer one.
+  const permintaan = useRef(0);
+
   const muat = useCallback(
     async (lingkupBaru: Lingkup, halamanBaru: number, tambah: boolean): Promise<void> => {
+      const idMuat = ++permintaan.current;
       if (tambah) {
         setMemuatLagi(true);
       } else {
@@ -37,17 +41,32 @@ export default function LayarTugas(): React.JSX.Element {
       setGalat(null);
       try {
         const hasil = await daftarTugas(halamanBaru, lingkupBaru === 'saya');
+        if (idMuat !== permintaan.current) {
+          return;
+        }
+        setHalaman(halamanBaru); // only advance the page once it actually loaded
         setHalamanAkhir(hasil.meta.last_page);
         setTotal(hasil.meta.total);
-        setTugas((lama) => (tambah ? [...lama, ...hasil.tasks] : hasil.tasks));
+        setTugas((lama) => {
+          if (!tambah) {
+            return hasil.tasks;
+          }
+          const sudah = new Set(lama.map((satu) => satu.id));
+          return [...lama, ...hasil.tasks.filter((satu) => !sudah.has(satu.id))];
+        });
       } catch (err) {
+        if (idMuat !== permintaan.current) {
+          return;
+        }
         setGalat(err instanceof ApiError ? err.message : 'Tidak dapat memuat tugas.');
         if (!tambah) {
           setTugas([]);
         }
       } finally {
-        setMemuat(false);
-        setMemuatLagi(false);
+        if (idMuat === permintaan.current) {
+          setMemuat(false);
+          setMemuatLagi(false);
+        }
       }
     },
     [],
@@ -79,7 +98,6 @@ export default function LayarTugas(): React.JSX.Element {
         value={lingkup}
         onChange={(nilai) => {
           setLingkup(nilai);
-          setHalaman(1);
         }}
         options={[
           { value: 'saya', label: 'Saya' },
@@ -123,9 +141,7 @@ export default function LayarTugas(): React.JSX.Element {
               disabled={memuatLagi}
               loading={memuatLagi}
               onPress={() => {
-                const berikut = halaman + 1;
-                setHalaman(berikut);
-                void muat(lingkup, berikut, true);
+                void muat(lingkup, halaman + 1, true);
               }}
             />
           ) : (

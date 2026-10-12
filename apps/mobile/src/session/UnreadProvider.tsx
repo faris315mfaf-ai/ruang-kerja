@@ -34,16 +34,16 @@ export function UnreadProvider({ children }: { children: React.ReactNode }): Rea
     }
   }, []);
 
-  useEffect(() => {
-    hidup.current = true;
-  }, []);
-
   // Hanya memuat jumlah saat benar-benar ada sesi (provider kini selalu
-  // terpasang, termasuk sebelum login).
+  // terpasang, termasuk sebelum login). Bergantung pada `status` supaya
+  // lencana dimuat setelah login dan dikosongkan saat keluar.
   useEffect(() => {
     if (status !== 'masuk') {
+      hidup.current = false;
       return;
     }
+    hidup.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- memuat jumlah saat sesi aktif
     void muatUlang();
 
     const langganan = AppState.addEventListener('change', (state) => {
@@ -55,12 +55,14 @@ export function UnreadProvider({ children }: { children: React.ReactNode }): Rea
     return () => {
       hidup.current = false;
       langganan.remove();
+      // Keluar / ganti akun: jangan bawa lencana pengguna sebelumnya.
+      setJumlah(0);
     };
-  }, [muatUlang]);
+  }, [status, muatUlang]);
 
   const value = useMemo<UnreadValue>(
-    () => ({ jumlah, perbarui: setJumlah, muatUlang }),
-    [jumlah, muatUlang],
+    () => ({ jumlah: status === 'masuk' ? jumlah : 0, perbarui: setJumlah, muatUlang }),
+    [status, jumlah, muatUlang],
   );
 
   return <UnreadContext.Provider value={value}>{children}</UnreadContext.Provider>;

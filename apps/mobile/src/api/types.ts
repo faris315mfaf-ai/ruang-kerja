@@ -375,6 +375,8 @@ export interface NoteDetailData extends NoteRow {
   can_delete: boolean;
   body_html: string | null;
   body_text: string | null;
+  /** False for rich notes the plain-text editor would flatten; missing on older servers = editable. */
+  mobile_editable?: boolean;
 }
 
 // ── Inbox ────────────────────────────────────────────────────────────────────

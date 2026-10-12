@@ -198,8 +198,10 @@ export function tandaiBaca(id: string): Promise<number> {
 // ── Briefing & workspace ─────────────────────────────────────────────────────
 
 /** 204 = belum ada briefing → null. */
-export function briefingTerakhir(): Promise<Briefing | null> {
-  return apiRequest<Briefing>('briefing/terakhir');
+export async function briefingTerakhir(): Promise<Briefing | null> {
+  // The server wraps the payload: {briefing: {...}}.
+  const hasil = await apiRequest<{ briefing: Briefing }>('briefing/terakhir');
+  return hasil?.briefing ?? null;
 }
 
 export function daftarWorkspace(): Promise<WorkspaceGroups> {

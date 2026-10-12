@@ -4,7 +4,6 @@
  * server dan arahan ke web.
  */
 import { Ionicons } from '@expo/vector-icons';
-import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -15,16 +14,12 @@ import { useSession } from '@/session/SessionProvider';
 
 export default function LayarMasuk(): React.JSX.Element {
   const { colors } = useTheme();
-  const { status, masuk } = useSession();
+  const { masuk } = useSession();
   const [email, setEmail] = useState('');
   const [sandi, setSandi] = useState('');
   const [lihatSandi, setLihatSandi] = useState(false);
   const [galat, setGalat] = useState<string | null>(null);
   const [sibuk, setSibuk] = useState(false);
-
-  if (status === 'masuk') {
-    return <Redirect href="/" />;
-  }
 
   async function kirim(): Promise<void> {
     if (sibuk) {
@@ -38,8 +33,8 @@ export default function LayarMasuk(): React.JSX.Element {
     setGalat(null);
     setSibuk(true);
     try {
+      // Stack.Protected di _layout membawa ke beranda begitu sesi aktif.
       await masuk(email.trim(), sandi);
-      router.replace('/');
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.code === 'password_change_required') {

@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  KeyboardAvoidingView,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -35,20 +36,65 @@ const LABEL_JENIS: Record<string, string> = {
   group: 'Grup',
 };
 
+/** Id of the top-level message a message belongs to. */
+function akarDari(m: ChatMessage): string {
+  return m.parent_id ?? m.id;
+}
+
+/**
+ * Display order for a channel: the server sends a page as roots (old→new)
+ * followed by all their thread replies, so a flat list would show replies
+ * at the bottom. Dedupe by id (later entries win), sort roots by id (ULID =
+ * time) and put each root's replies right under it. A reply whose root is
+ * not loaded is placed by its own id.
+ */
+function urutkanTimeline(daftar: ChatMessage[]): ChatMessage[] {
+  const perId = new Map<string, ChatMessage>();
+  for (const m of daftar) {
+    perId.set(m.id, m);
+  }
+  const balasan = new Map<string, ChatMessage[]>();
+  const akar: ChatMessage[] = [];
+  for (const m of perId.values()) {
+    if (m.parent_id !== null && perId.has(m.parent_id)) {
+      const grup = balasan.get(m.parent_id) ?? [];
+      grup.push(m);
+      balasan.set(m.parent_id, grup);
+    } else {
+      akar.push(m);
+    }
+  }
+  const banding = (a: ChatMessage, b: ChatMessage): number => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  akar.sort(banding);
+  const hasil: ChatMessage[] = [];
+  for (const m of akar) {
+    hasil.push(m);
+    const grup = balasan.get(m.id);
+    if (grup) {
+      hasil.push(...grup.sort(banding));
+    }
+  }
+  return hasil;
+}
+
 /**
  * Gabungkan halaman terbaru (tanpa `sebelum`) ke daftar yang sudah dimuat:
- * pesan lebih tua dari akar tertama halaman baru dipertahankan, ekor
- * diganti dengan halaman baru (pesan diedit/dihapus ikut segar).
+ * thread yang akarnya lebih tua dari akar tertua halaman baru dipertahankan
+ * (termasuk balasannya), sisanya diganti halaman baru (pesan diedit/dihapus
+ * ikut segar).
  */
 function gabungTimeline(lama: ChatMessage[], halaman: ChatMessage[]): ChatMessage[] {
   if (halaman.length === 0) {
     return lama;
   }
-  const idBaru = new Set(halaman.map((m) => m.id));
-  const akarTerlama = halaman.find((m) => m.parent_id === null)?.id ?? halaman[0]?.id ?? '';
-  const lebihTua = lama.filter((m) => !idBaru.has(m.id) && m.id < akarTerlama);
-  return [...lebihTua, ...halaman];
+  const akarHalaman = halaman.filter((m) => m.parent_id === null).map((m) => m.id).sort();
+  const akarTerlama = akarHalaman[0] ?? halaman[0]?.id ?? '';
+  const lebihTua = lama.filter((m) => akarDari(m) < akarTerlama);
+  return urutkanTimeline([...lebihTua, ...halaman]);
 }
+
+/** Pixels from the bottom within which new messages still auto-scroll. */
+const AMBANG_BAWAH = 160;
 
 function GelembungPesan({ pesan, milikSaya }: { pesan: ChatMessage; milikSaya: boolean }): React.JSX.Element {
   const { colors } = useTheme();
@@ -135,7 +181,12 @@ export default function LayarKanal(): React.JSX.Element {
   const jagaGulir = useRef(false);
   const posisiGulir = useRef(0);
   const tinggiIsi = useRef(0);
+  const tinggiLayar = useRef(0);
   const hidup = useRef(true);
+
+  /** Only follow new messages when the reader is already near the bottom. */
+  const dekatBawah = (): boolean =>
+    tinggiIsi.current - (posisiGulir.current + tinggiLayar.current) < AMBANG_BAWAH;
 
   const bolehPost = bolehKirim !== '0';
 
@@ -156,11 +207,15 @@ export default function LayarKanal(): React.JSX.Element {
         }
         setAdaLagi(hasil.has_more);
         setPesan((lama) => {
+          if (lama.length === 0) {
+            lompatBawah.current = true;
+            return urutkanTimeline(hasil.messages);
+          }
           const adaBaru = hasil.messages.some((m) => !lama.some((n) => n.id === m.id));
-          if (adaBaru) {
+          if (adaBaru && dekatBawah()) {
             lompatBawah.current = true;
           }
-          return lama.length === 0 ? hasil.messages : gabungTimeline(lama, hasil.messages);
+          return gabungTimeline(lama, hasil.messages);
         });
       } catch (err) {
         if (!hidup.current) {
@@ -195,7 +250,7 @@ export default function LayarKanal(): React.JSX.Element {
       }
       setAdaLagi(hasil.has_more);
       jagaGulir.current = true; // pertahankan posisi baca saat konten bertambah di atas.
-      setPesan((lama) => [...hasil.messages, ...lama]);
+      setPesan((lama) => urutkanTimeline([...hasil.messages, ...lama]));
     } catch (err) {
       if (hidup.current) {
         setGalat(err instanceof ApiError ? err.message : 'Tidak dapat memuat pesan lebih lama.');
@@ -245,7 +300,7 @@ export default function LayarKanal(): React.JSX.Element {
     try {
       const hasil = await kirimPesan(id, isi);
       lompatBawah.current = true;
-      setPesan((lama) => [...lama, hasil.message]);
+      setPesan((lama) => urutkanTimeline([...lama, hasil.message]));
       setTeks('');
     } catch (err) {
       if (err instanceof ApiError) {
@@ -267,19 +322,21 @@ export default function LayarKanal(): React.JSX.Element {
   const milikSaya = (pesanSatu: ChatMessage): boolean => pesanSatu.user_id === (user?.id ?? '');
 
   // Pengelompokan hari: kunci Y-M-D Jakarta, pemisah saat hari berganti.
+  // Hanya pesan utama yang memicu pemisah (balasan tetap di bawah akarnya
+  // walau beda hari); kunci memakai id pesan agar selalu unik.
   const baris: { jenis: 'hari' | 'pesan'; kunci: string; hari?: string; pesan?: ChatMessage }[] = [];
   let hariSebelumnya = '';
   for (const satu of pesan) {
-    const hari = ymdJakarta(satu.created_at);
+    const hari = satu.parent_id === null ? ymdJakarta(satu.created_at) : '';
     if (hari !== '' && hari !== hariSebelumnya) {
-      baris.push({ jenis: 'hari', kunci: `hari-${hari}`, hari });
+      baris.push({ jenis: 'hari', kunci: `hari-${satu.id}`, hari });
       hariSebelumnya = hari;
     }
     baris.push({ jenis: 'pesan', kunci: satu.id, pesan: satu });
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior="padding">
       <Pressable
         onPress={() => router.back()}
         accessibilityRole="button"
@@ -309,6 +366,10 @@ export default function LayarKanal(): React.JSX.Element {
         <ScrollView
           ref={gulirRef}
           contentContainerStyle={kanal.isi}
+          scrollEventThrottle={64}
+          onLayout={(e) => {
+            tinggiLayar.current = e.nativeEvent.layout.height;
+          }}
           onScroll={(e) => {
             posisiGulir.current = e.nativeEvent.contentOffset.y;
           }}
@@ -425,7 +486,7 @@ export default function LayarKanal(): React.JSX.Element {
           <Meta>Anda tidak dapat mengirim pesan di kanal ini (hanya anggota).</Meta>
         )}
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

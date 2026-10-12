@@ -7,7 +7,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import * as SecureStore from 'expo-secure-store';
 
 import { login as apiLogin, logout as apiLogout, saya } from '@/api/endpoints';
-import { ApiError, setTokenGetter, setUnauthorizedHandler } from '@/api/client';
+import { ApiError, setAccountBlockedHandler, setTokenGetter, setUnauthorizedHandler, type BlokirAkun } from '@/api/client';
 import type { UserProfile } from '@/api/types';
 import { deviceInfo } from '@/lib/device';
 
@@ -23,6 +23,10 @@ interface SesiTersimpan {
 interface SessionValue {
   status: StatusSesi;
   user: UserProfile | null;
+  /** Set when the server refuses this session until the user acts on the web (403 code). */
+  blokir: BlokirAkun | null;
+  /** Clears the block and re-checks the session (GET /auth/saya). */
+  periksaUlang: () => Promise<void>;
   masuk: (email: string, password: string) => Promise<void>;
   keluar: () => Promise<void>;
   perbaruiProfil: (user: UserProfile) => void;
@@ -70,10 +74,12 @@ export async function masukDenganKredensial(email: string, password: string): Pr
 export function SessionProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [status, setStatus] = useState<StatusSesi>('memuat');
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [blokir, setBlokir] = useState<BlokirAkun | null>(null);
   const tokenRef = useRef<string | null>(null);
 
   const bersihkan = useCallback(async (): Promise<void> => {
     tokenRef.current = null;
+    setBlokir(null);
     setUser(null);
     setStatus('keluar');
     await simpanSesi(null);
@@ -85,9 +91,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
     setUnauthorizedHandler(() => {
       void bersihkan();
     });
+    // Only meaningful with an active session; a blocked login is shown by the login screen.
+    setAccountBlockedHandler((info) => {
+      if (tokenRef.current !== null) {
+        setBlokir((lama) => (lama?.code === info.code && lama.message === info.message ? lama : info));
+      }
+    });
     return () => {
       setTokenGetter(null);
       setUnauthorizedHandler(null);
+      setAccountBlockedHandler(null);
     };
   }, [bersihkan]);
 
@@ -127,9 +140,26 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
   const masuk = useCallback(async (email: string, password: string) => {
     const sesi = await masukDenganKredensial(email, password);
     tokenRef.current = sesi.token;
+    setBlokir(null);
     setUser(sesi.user);
     setStatus('masuk');
     await simpanSesi(sesi);
+  }, []);
+
+  const periksaUlang = useCallback(async (): Promise<void> => {
+    const token = tokenRef.current;
+    if (token === null) {
+      return;
+    }
+    try {
+      // A 403 block re-sets `blokir` through the handler before this throws.
+      const profil = await saya();
+      setBlokir(null);
+      setUser(profil);
+      await simpanSesi({ token, user: profil });
+    } catch {
+      // Still blocked, offline, or 401 (handled by bersihkan).
+    }
   }, []);
 
   const keluar = useCallback(async () => {
@@ -149,8 +179,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
   }, []);
 
   const value = useMemo<SessionValue>(
-    () => ({ status, user, masuk, keluar, perbaruiProfil }),
-    [status, user, masuk, keluar, perbaruiProfil],
+    () => ({ status, user, blokir, periksaUlang, masuk, keluar, perbaruiProfil }),
+    [status, user, blokir, periksaUlang, masuk, keluar, perbaruiProfil],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

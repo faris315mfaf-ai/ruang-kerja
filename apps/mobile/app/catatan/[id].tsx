@@ -52,17 +52,22 @@ export default function LayarCatatan(): React.JSX.Element {
   const [tersimpanPada, setTersimpanPada] = useState<Date | null>(null);
   const [galatJudul, setGalatJudul] = useState<string | null>(null);
 
+  const [kaya, setKaya] = useState(false);
+
   const siap = catatan !== null;
   const boleh = catatan?.can_edit === true;
+  // Catatan berformat lengkap: isi hanya-baca di ponsel (judul tetap boleh diubah).
+  const bolehIsi = boleh && !kaya;
 
   // Ref: isi/dasar versi terakhir yang diketahui tersimpan di server.
   const teksRef = useRef('');
   const teksTersimpanRef = useRef('');
   const dasarRef = useRef<string | null>(null);
-  const kotorRef = useRef(false);
   const konflikRef = useRef(false);
   const sedangRef = useRef<Promise<boolean> | null>(null);
-  const inginRef = useRef(false);
+  const judulInginRef = useRef<string | null>(null);
+  const keluarRef = useRef(false);
+  const kayaRef = useRef(false);
   const judulTersimpanRef = useRef('');
   const bolehRef = useRef(false);
   const muatRef = useRef<() => void>(() => undefined);
@@ -89,8 +94,10 @@ export default function LayarCatatan(): React.JSX.Element {
       teksTersimpanRef.current = hasil.body_text ?? '';
       judulTersimpanRef.current = hasil.title;
       dasarRef.current = hasil.updated_at;
-      kotorRef.current = false;
+      judulInginRef.current = null;
       konflikRef.current = false;
+      kayaRef.current = hasil.mobile_editable === false;
+      setKaya(kayaRef.current);
       setStatus('idle');
       setGalatJudul(null);
     } catch (err) {
@@ -122,34 +129,68 @@ export default function LayarCatatan(): React.JSX.Element {
     );
   }
 
-  /** Satu antrean simpan isi — mencegah PATCH tumpang tindih. */
-  const simpanIsi = useCallback((): Promise<boolean> => {
+  /**
+   * Satu antrean simpan untuk judul DAN isi — mencegah PATCH tumpang tindih.
+   * RenameNote ikut menaikkan `updated_at`, jadi judul harus lewat antrean
+   * yang sama dan dasar versi diperbarui dari setiap respons; kalau tidak,
+   * PATCH isi berikutnya memakai dasar lama dan mendapat 409 palsu.
+   * Isi dikirim sebagai snapshot: teks yang diketik selama permintaan
+   * berjalan tetap dianggap belum tersimpan dan dikirim pada putaran berikutnya.
+   */
+  const simpan = useCallback((): Promise<boolean> => {
     if (typeof id !== 'string' || !bolehRef.current) {
       return Promise.resolve(true);
     }
     if (sedangRef.current) {
-      inginRef.current = true;
       return sedangRef.current;
     }
     const janji = (async (): Promise<boolean> => {
+      let berhasil = true;
       try {
-        let ulang = true;
-        while (ulang) {
-          inginRef.current = false;
+        for (;;) {
+          const judulIngin = judulInginRef.current;
+          if (judulIngin !== null) {
+            judulInginRef.current = null;
+            setStatus('menyimpan');
+            try {
+              const hasil = await simpanCatatan(id, { title: judulIngin });
+              judulTersimpanRef.current = hasil.title;
+              dasarRef.current = hasil.updated_at;
+              setCatatan((lama) => (lama === null ? hasil : { ...lama, ...hasil, body_text: lama.body_text }));
+              setGalatJudul(null);
+            } catch (err) {
+              berhasil = false;
+              setGalatJudul(
+                err instanceof ApiError ? (err.firstValidationError ?? err.message) : 'Gagal menyimpan judul.',
+              );
+            }
+            continue;
+          }
+
+          if (konflikRef.current || kayaRef.current || teksRef.current === teksTersimpanRef.current) {
+            break;
+          }
+
+          const snapshot = teksRef.current;
           setStatus('menyimpan');
           try {
             const hasil = await simpanCatatan(id, {
-              body_html: teksKeHtml(teksRef.current),
+              body_html: teksKeHtml(snapshot),
               updated_at: dasarRef.current ?? '',
             });
             dasarRef.current = hasil.updated_at;
-            teksTersimpanRef.current = teksRef.current;
+            teksTersimpanRef.current = snapshot;
             judulTersimpanRef.current = hasil.title;
-            setCatatan((lama) => (lama === null ? hasil : { ...lama, ...hasil, body_text: teksRef.current }));
-            kotorRef.current = inginRef.current;
-            ulang = inginRef.current;
+            setCatatan((lama) => (lama === null ? hasil : { ...lama, ...hasil, body_text: snapshot }));
           } catch (err) {
-            kotorRef.current = true;
+            if (err instanceof ApiError && err.status === 409 && err.code === 'rich_note') {
+              // Server menolak menyunting isi berformat lengkap — bukan konflik versi.
+              kayaRef.current = true;
+              setKaya(true);
+              teksRef.current = teksTersimpanRef.current;
+              setTeks(teksTersimpanRef.current);
+              continue;
+            }
             if (err instanceof ApiError && err.status === 409) {
               konflikRef.current = true;
               setStatus('konflik');
@@ -160,7 +201,14 @@ export default function LayarCatatan(): React.JSX.Element {
             return false;
           }
         }
-        konflikRef.current = false;
+        if (konflikRef.current) {
+          setStatus('konflik');
+          return false;
+        }
+        if (!berhasil) {
+          setStatus('gagal');
+          return false;
+        }
         setStatus('tersimpan');
         setTersimpanPada(new Date());
         return true;
@@ -174,52 +222,66 @@ export default function LayarCatatan(): React.JSX.Element {
 
   /** Autosave debounce 1,5 detik setelah isi berubah. */
   useEffect(() => {
-    if (!siap || !boleh || konflikRef.current) {
+    if (!siap || !bolehIsi || konflikRef.current) {
       return undefined;
     }
     if (teks === teksTersimpanRef.current) {
       return undefined;
     }
-    kotorRef.current = true;
     const timer = setTimeout(() => {
-      void simpanIsi();
+      void simpan();
     }, 1500);
     return () => {
       clearTimeout(timer);
     };
-  }, [teks, siap, boleh, simpanIsi]);
+  }, [teks, siap, bolehIsi, simpan]);
 
-  /** Simpan judul (PATCH {title} — maksud terpisah dari isi). */
-  const simpanJudul = useCallback(async (): Promise<void> => {
-    if (typeof id !== 'string' || catatan === null || !boleh) {
-      return;
+  /** Antrekan judul baru (PATCH {title} — maksud terpisah dari isi). */
+  const antreJudul = useCallback((): boolean => {
+    if (catatan === null || !boleh) {
+      return false;
     }
     const baru = judul.trim();
     if (baru === judulTersimpanRef.current || baru === '') {
       setJudul(judulTersimpanRef.current);
-      return;
+      return false;
     }
-    try {
-      const hasil = await simpanCatatan(id, { title: baru });
-      judulTersimpanRef.current = hasil.title;
-      dasarRef.current = hasil.updated_at;
-      setCatatan((lama) => (lama === null ? hasil : { ...lama, ...hasil }));
-      setGalatJudul(null);
-    } catch (err) {
-      setGalatJudul(err instanceof ApiError ? (err.firstValidationError ?? err.message) : 'Gagal menyimpan judul.');
+    judulInginRef.current = baru;
+    return true;
+  }, [catatan, judul, boleh]);
+
+  const simpanJudul = useCallback((): void => {
+    if (antreJudul()) {
+      void simpan();
     }
-  }, [id, catatan, judul, boleh]);
+  }, [antreJudul, simpan]);
 
   const kembali = useCallback((): void => {
+    if (keluarRef.current) {
+      return;
+    }
+    keluarRef.current = true;
     void (async () => {
       // Flush: judul lalu isi — keduanya tersimpan sebelum layar ditutup.
-      await simpanJudul();
-      if (kotorRef.current && bolehRef.current && !konflikRef.current) {
-        await simpanIsi();
+      antreJudul();
+      const aman = bolehRef.current ? await simpan() : true;
+      if (aman) {
+        router.back();
+        return;
       }
-      router.back();
+      Alert.alert(
+        'Perubahan belum tersimpan',
+        konflikRef.current
+          ? 'Catatan ini diubah orang lain. Bila keluar sekarang, suntingan Anda yang belum tersimpan akan hilang.'
+          : 'Sebagian perubahan gagal disimpan. Bila keluar sekarang, perubahan itu akan hilang.',
+        [
+          { text: 'Tetap di sini', style: 'cancel', onPress: () => { keluarRef.current = false; } },
+          { text: 'Buang & keluar', style: 'destructive', onPress: () => router.back() },
+        ],
+        { cancelable: true, onDismiss: () => { keluarRef.current = false; } },
+      );
     })();
-  }, [simpanJudul, simpanIsi]);
+  }, [antreJudul, simpan]);
 
   /** Tombol kembali fisik Android ikut menyiram simpanan. */
   useEffect(() => {
@@ -300,7 +362,7 @@ export default function LayarCatatan(): React.JSX.Element {
               <Input
                 value={judul}
                 onChangeText={setJudul}
-                onEndEditing={() => void simpanJudul()}
+                onEndEditing={simpanJudul}
                 maxLength={200}
                 accessibilityLabel="Judul catatan"
                 editable={boleh}
@@ -316,7 +378,18 @@ export default function LayarCatatan(): React.JSX.Element {
             </View>
           </Card>
 
-          {boleh ? (
+          {boleh && kaya ? (
+            <Card style={[gaya.editorKartu, { backgroundColor: colors.infoSoft, borderColor: colors.infoSoft }]}>
+              <View style={gaya.metaBaris}>
+                <Ionicons name="information-circle-outline" size={18} color={colors.info} />
+                <Text style={{ color: colors.info, fontSize: 14, fontWeight: '600', flex: 1 }}>
+                  Catatan ini berformat lengkap. Sunting di web.
+                </Text>
+              </View>
+            </Card>
+          ) : null}
+
+          {bolehIsi ? (
             <Card style={gaya.editorKartu}>
               <Label>Isi catatan</Label>
               <Input

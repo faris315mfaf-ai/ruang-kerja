@@ -5,7 +5,7 @@
  * Flag features.meetings mati (404) → layar kosong ramah.
  */
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
@@ -62,17 +62,27 @@ export default function LayarAgendaRapat(): React.JSX.Element {
   const [galat, setGalat] = useState<string | null>(null);
   const [mati, setMati] = useState(false);
 
+  // Request id: a slower response for an earlier range must not override a newer one.
+  const permintaan = useRef(0);
+
   const muat = useCallback(
     async (pilih: RentangRapat, diam: boolean): Promise<void> => {
+      const idMuat = ++permintaan.current;
       if (!diam) {
         setMemuat(true);
       }
       setGalat(null);
       try {
         const hasil = await agendaRapat(pilih);
+        if (idMuat !== permintaan.current) {
+          return;
+        }
         setItems(hasil.items);
         setMati(false);
       } catch (err) {
+        if (idMuat !== permintaan.current) {
+          return;
+        }
         if (err instanceof ApiError && err.status === 404) {
           setMati(true);
           setItems([]);
@@ -83,8 +93,10 @@ export default function LayarAgendaRapat(): React.JSX.Element {
           }
         }
       } finally {
-        setMemuat(false);
-        setMenyegarkan(false);
+        if (idMuat === permintaan.current) {
+          setMemuat(false);
+          setMenyegarkan(false);
+        }
       }
     },
     [],

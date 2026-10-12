@@ -54,6 +54,23 @@ export function setUnauthorizedHandler(handler: (() => void) | null): void {
   onUnauthorized = handler;
 }
 
+/** Account-level blocks the server may answer any authenticated call with (403). */
+export type KodeBlokirAkun = 'password_change_required' | 'two_factor_required';
+
+export interface BlokirAkun {
+  code: KodeBlokirAkun;
+  message: string;
+}
+
+const KODE_BLOKIR: readonly string[] = ['password_change_required', 'two_factor_required'];
+
+/** Called when an authenticated request is refused with an account block — used by SessionProvider. */
+let onAccountBlocked: ((blokir: BlokirAkun) => void) | null = null;
+
+export function setAccountBlockedHandler(handler: ((blokir: BlokirAkun) => void) | null): void {
+  onAccountBlocked = handler;
+}
+
 let tokenGetter: (() => string | null) | null = null;
 
 export function setTokenGetter(getter: (() => string | null) | null): void {
@@ -146,6 +163,12 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       context?: Record<string, unknown>;
       errors?: Record<string, string[]>;
     };
+    if (response.status === 403 && token && data.code !== undefined && KODE_BLOKIR.includes(data.code)) {
+      onAccountBlocked?.({
+        code: data.code as KodeBlokirAkun,
+        message: data.message ?? 'Akun Anda perlu tindakan di RuangKerja web sebelum aplikasi bisa dipakai.',
+      });
+    }
     throw new ApiError({
       status: response.status,
       message:
