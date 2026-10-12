@@ -115,3 +115,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
 export function useTheme(): ThemeValue {
   return useContext(ThemeContext);
 }
+
+/**
+ * Memaksa subpohon ke tema malam (mis. layar Masuk beraurora, yang selalu
+ * gelap seperti MLogin web). Komponen `@/ui` di dalamnya membaca token malam.
+ */
+export function DarkScope({ children }: { children: React.ReactNode }): React.JSX.Element {
+  const induk = useTheme();
+  const value = useMemo<ThemeValue>(
+    () => ({ ...induk, colors: darkColors, gradients: darkGradients, shadows: darkShadows, dark: true }),
+    [induk],
+  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+}

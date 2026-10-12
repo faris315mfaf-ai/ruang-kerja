@@ -4,6 +4,8 @@
  * (callback terdaftar oleh SessionProvider memaksa keluar).
  */
 
+import Constants from 'expo-constants';
+
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://spkd.store/api/v1';
 
 /**
@@ -15,6 +17,9 @@ export function webBase(): string {
   return API_URL.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
 }
 
+/** Versi aplikasi yang dikirim di header `X-App-Version` pada setiap permintaan. */
+export const APP_VERSION: string = Constants.expoConfig?.version ?? '1.0.0';
+
 /** Galat API: pesan siap tampil, status HTTP, kode (403), errors (422). */
 export class ApiError extends Error {
   readonly status: number;
@@ -22,6 +27,8 @@ export class ApiError extends Error {
   readonly reason: string | null;
   readonly context: Record<string, unknown> | null;
   readonly errors: Record<string, string[]>;
+  /** Detik tunggu dari header Retry-After (429/503), bila ada. */
+  readonly retryAfter: number | null;
 
   constructor(init: {
     status: number;
@@ -30,6 +37,7 @@ export class ApiError extends Error {
     reason?: string | null;
     context?: Record<string, unknown> | null;
     errors?: Record<string, string[]>;
+    retryAfter?: number | null;
   }) {
     super(init.message);
     this.name = 'ApiError';
@@ -38,6 +46,7 @@ export class ApiError extends Error {
     this.reason = init.reason ?? null;
     this.context = init.context ?? null;
     this.errors = init.errors ?? {};
+    this.retryAfter = init.retryAfter ?? null;
   }
 
   /** Pesan validasi pertama (422 Laravel) bila ada. */
@@ -47,22 +56,33 @@ export class ApiError extends Error {
   }
 }
 
-/** Terpanggil sekali saat server menjawab 401 — dipakai SessionProvider. */
-let onUnauthorized: (() => void) | null = null;
+/** Terpanggil saat server menjawab 401 untuk permintaan bertoken — dipakai SessionProvider. `message` = pesan server (mis. akun tidak aktif). */
+let onUnauthorized: ((message: string | null) => void) | null = null;
 
-export function setUnauthorizedHandler(handler: (() => void) | null): void {
+export function setUnauthorizedHandler(handler: ((message: string | null) => void) | null): void {
   onUnauthorized = handler;
 }
 
+/** Status tingkat-aplikasi dari server: aplikasi terlalu lama (426) atau pemeliharaan (503). */
+export type StatusAplikasi =
+  | { kind: 'update_required'; message: string; minVersion: string | null }
+  | { kind: 'maintenance'; message: string };
+
+let onAppStatus: ((status: StatusAplikasi) => void) | null = null;
+
+export function setAppStatusHandler(handler: ((status: StatusAplikasi) => void) | null): void {
+  onAppStatus = handler;
+}
+
 /** Account-level blocks the server may answer any authenticated call with (403). */
-export type KodeBlokirAkun = 'password_change_required' | 'two_factor_required';
+export type KodeBlokirAkun = 'password_change_required' | 'two_factor_setup_required';
 
 export interface BlokirAkun {
   code: KodeBlokirAkun;
   message: string;
 }
 
-const KODE_BLOKIR: readonly string[] = ['password_change_required', 'two_factor_required'];
+const KODE_BLOKIR: readonly string[] = ['password_change_required', 'two_factor_setup_required'];
 
 /** Called when an authenticated request is refused with an account block — used by SessionProvider. */
 let onAccountBlocked: ((blokir: BlokirAkun) => void) | null = null;
@@ -88,6 +108,8 @@ export interface RequestOptions {
   query?: Record<string, QueryValue>;
   /** Batas waktu permintaan (ms). */
   timeoutMs?: number;
+  /** Header tambahan (mis. X-Reset-Token). */
+  headers?: Record<string, string>;
 }
 
 /**
@@ -96,7 +118,7 @@ export interface RequestOptions {
  * atau null untuk 204.
  */
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T | null> {
-  const { method = 'GET', json, form, query, timeoutMs = 30_000 } = options;
+  const { method = 'GET', json, form, query, timeoutMs = 30_000, headers: extraHeaders } = options;
 
   const url = new URL(path.startsWith('http') ? path : `${API_URL}/${path.replace(/^\//, '')}`);
   if (query) {
@@ -107,7 +129,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     }
   }
 
-  const headers: Record<string, string> = { Accept: 'application/json' };
+  const headers: Record<string, string> = { Accept: 'application/json', 'X-App-Version': APP_VERSION, ...extraHeaders };
   const token = tokenGetter?.();
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -137,8 +159,18 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (response.status === 401) {
-    onUnauthorized?.();
-    throw new ApiError({ status: 401, message: 'Sesi berakhir. Silakan masuk kembali.' });
+    let pesan401: string | null = null;
+    try {
+      const b401 = (await response.json()) as { message?: string };
+      // Hanya pesan khusus akun (nonaktif) yang dipakai; "Unauthenticated." bawaan Laravel dibuang.
+      pesan401 = typeof b401.message === 'string' && /tidak aktif|nonaktif/i.test(b401.message) ? b401.message : null;
+    } catch {
+      pesan401 = null;
+    }
+    if (token) {
+      onUnauthorized?.(pesan401);
+    }
+    throw new ApiError({ status: 401, message: pesan401 ?? 'Sesi berakhir. Silakan masuk kembali.' });
   }
 
   if (response.status === 204) {
@@ -163,6 +195,19 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       context?: Record<string, unknown>;
       errors?: Record<string, string[]>;
     };
+    if (response.status === 426 && data.code === 'update_required') {
+      onAppStatus?.({
+        kind: 'update_required',
+        message: data.message ?? 'Versi aplikasi ini tidak lagi didukung. Perbarui RuangKerja untuk melanjutkan.',
+        minVersion: (data as { min_app_version?: string }).min_app_version ?? null,
+      });
+    }
+    if (response.status === 503 && data.code === 'maintenance') {
+      onAppStatus?.({
+        kind: 'maintenance',
+        message: data.message ?? 'RuangKerja sedang dalam pemeliharaan. Coba lagi beberapa saat lagi.',
+      });
+    }
     if (response.status === 403 && token && data.code !== undefined && KODE_BLOKIR.includes(data.code)) {
       onAccountBlocked?.({
         code: data.code as KodeBlokirAkun,
@@ -180,6 +225,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       reason: data.reason ?? null,
       context: data.context ?? null,
       errors: data.errors ?? {},
+      retryAfter: Number.isFinite(Number(response.headers.get('Retry-After'))) && response.headers.get('Retry-After') !== null ? Number(response.headers.get('Retry-After')) : null,
     });
   }
 

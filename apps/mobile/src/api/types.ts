@@ -10,7 +10,8 @@ export interface WorkMode {
   label: string;
 }
 
-export interface UserProfile {
+/** Profil ringkas yang dikembalikan login / dua-faktor / lupa-sandi selesai. */
+export interface UserSummary {
   id: string;
   name: string;
   email: string;
@@ -19,9 +20,96 @@ export interface UserProfile {
   work_mode: WorkMode;
 }
 
-export interface LoginResponse {
+export interface NamedRef {
+  id: string;
+  name: string;
+}
+
+export interface FiturServer {
+  chat: boolean;
+  notes: boolean;
+  meetings: boolean;
+  okr: boolean;
+  automation: boolean;
+  role_dashboards: boolean;
+}
+
+/** Profil lengkap (GET /auth/saya, B1). Bidang tambahan pada sesi lama diisi bawaan lewat `normalisasiProfil`. */
+export interface UserProfile extends UserSummary {
+  roles: string[];
+  is_staff_only: boolean;
+  features: FiturServer;
+  position: NamedRef | null;
+  division: NamedRef | null;
+  team: NamedRef | null;
+  manager: NamedRef | null;
+  employee_number: string | null;
+  joined_at: string | null;
+  led_division_ids: string[];
+  two_factor_enabled: boolean;
+  password_change_required: boolean;
+  password_hint: string | null;
+}
+
+const FITUR_BAWAAN: FiturServer = { chat: true, notes: true, meetings: true, okr: false, automation: false, role_dashboards: false };
+
+/** Lengkapi profil (ringkas / tersimpan dari versi lama) dengan nilai bawaan aman. */
+export function normalisasiProfil(p: UserSummary & Partial<UserProfile>): UserProfile {
+  return {
+    ...p,
+    roles: p.roles ?? ['anggota'],
+    is_staff_only: p.is_staff_only ?? true,
+    features: { ...FITUR_BAWAAN, ...(p.features ?? {}) },
+    position: p.position ?? null,
+    division: p.division ?? null,
+    team: p.team ?? null,
+    manager: p.manager ?? null,
+    employee_number: p.employee_number ?? null,
+    joined_at: p.joined_at ?? null,
+    led_division_ids: p.led_division_ids ?? [],
+    two_factor_enabled: p.two_factor_enabled ?? false,
+    password_change_required: p.password_change_required ?? false,
+    password_hint: p.password_hint ?? null,
+  };
+}
+
+/** Respons "sesi dibuka": login, dua-faktor, lupa-sandi/selesai. */
+export interface SesiDibuka {
   token: string;
-  user: UserProfile;
+  user: UserSummary;
+  password_change_required: boolean;
+}
+
+/** Tantangan TOTP (status 200 tanpa token). */
+export interface TantanganDuaFaktor {
+  two_factor_required: true;
+  challenge_token: string;
+  expires_in: number;
+}
+
+export type LoginResponse = SesiDibuka | TantanganDuaFaktor;
+
+export function adalahTantangan(r: LoginResponse): r is TantanganDuaFaktor {
+  return (r as TantanganDuaFaktor).two_factor_required === true;
+}
+
+export interface LupaSandiMinta {
+  request_token: string;
+  expires_at: string;
+  message: string;
+}
+
+export type LupaSandiStatus =
+  | { status: 'pending'; expires_at?: string }
+  | { status: 'approved'; setup_token: string; setup_expires_at: string; password_hint: string | null }
+  | { status: 'rejected'; reject_reason: string | null }
+  | { status: 'expired' };
+
+export interface KonfigurasiApp {
+  min_app_version: string;
+  latest_app_version: string;
+  maintenance: { active: boolean; message: string };
+  server_time?: string;
 }
 
 export interface DeviceInfo {

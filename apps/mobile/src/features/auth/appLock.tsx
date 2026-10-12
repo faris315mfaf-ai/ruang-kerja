@@ -154,11 +154,14 @@ export function AppLockProvider({ children }: { children: React.ReactNode }): Re
 
   const sibukRef = useRef(0); // >0 = dialog sistem sedang tampil: abaikan perubahan AppState
   const keLatarRef = useRef<number | null>(null);
-  const statusSebelumnya = useRef(status);
+  const [statusSebelumnya, setStatusSebelumnya] = useState(status);
   const enabledRef = useRef(enabled);
   const lockAfterRef = useRef(lockAfter);
-  enabledRef.current = enabled;
-  lockAfterRef.current = lockAfter;
+
+  useEffect(() => {
+    enabledRef.current = enabled;
+    lockAfterRef.current = lockAfter;
+  }, [enabled, lockAfter]);
 
   // Baca pengaturan tersimpan + dukungan perangkat.
   useEffect(() => {
@@ -186,20 +189,23 @@ export function AppLockProvider({ children }: { children: React.ReactNode }): Re
   }, []);
 
   // Masuk baru (bukan buka dingin) → tidak perlu dikunci; keluar → bersihkan pengaturan perangkat.
-  useEffect(() => {
-    const sebelum = statusSebelumnya.current;
-    statusSebelumnya.current = status;
-    if (status === 'masuk' && sebelum === 'keluar') {
+  // Disesuaikan saat render (pola React) alih-alih setState di dalam efek.
+  if (status !== statusSebelumnya) {
+    setStatusSebelumnya(status);
+    if (status === 'masuk' && statusSebelumnya === 'keluar') {
       setKunciTertutup(false);
     }
     if (status === 'keluar') {
       setKunciTertutup(true);
-      if (sebelum !== 'keluar') {
-        setEnabledState(false);
-        setLockAfterState(LOCK_AFTER_DEFAULT);
-        setOffered(false);
-        void hapusPengaturan();
-      }
+      setEnabledState(false);
+      setLockAfterState(LOCK_AFTER_DEFAULT);
+      setOffered(false);
+    }
+  }
+
+  useEffect(() => {
+    if (status === 'keluar') {
+      void hapusPengaturan();
     }
   }, [status]);
 

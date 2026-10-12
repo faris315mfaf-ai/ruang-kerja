@@ -15,7 +15,11 @@ import type { AnggotaWorkspace,
   DeviceInfo,
   DeviceRow,
   InboxPage,
+  KonfigurasiApp,
   LoginResponse,
+  LupaSandiMinta,
+  LupaSandiStatus,
+  SesiDibuka,
   MeetingAgenda,
   MeetingDetailResponse,
   MeetingMinutesResponse,
@@ -52,8 +56,66 @@ function wajib<T>(nilai: T | null): T {
 export function login(email: string, password: string, device: DeviceInfo): Promise<LoginResponse> {
   return apiRequest<LoginResponse>('auth/login', {
     method: 'POST',
-    json: { email, password, device },
-  }) as Promise<LoginResponse>;
+    // supports_password_change: aplikasi sanggup menjalankan "wajib ganti sandi" sendiri (POST /auth/sandi).
+    json: { email, password, device, supports_password_change: true },
+  }).then(wajib);
+}
+
+/** POST /auth/dua-faktor — selesaikan tantangan TOTP dengan kode 6 digit atau kode pemulihan. */
+export function duaFaktor(challengeToken: string, input: { code?: string; recoveryCode?: string }): Promise<SesiDibuka> {
+  return apiRequest<SesiDibuka>('auth/dua-faktor', {
+    method: 'POST',
+    json: {
+      challenge_token: challengeToken,
+      ...(input.code !== undefined ? { code: input.code } : {}),
+      ...(input.recoveryCode !== undefined ? { recovery_code: input.recoveryCode } : {}),
+    },
+  }).then(wajib);
+}
+
+/** POST /auth/sandi — ganti kata sandi sendiri (juga untuk "wajib ganti"). Mengembalikan profil lengkap. */
+export function gantiSandi(input: { currentPassword: string; password: string; passwordConfirmation: string }): Promise<{ message: string; password_change_required: boolean; user: UserProfile }> {
+  return apiRequest<{ message: string; password_change_required: boolean; user: UserProfile }>('auth/sandi', {
+    method: 'POST',
+    json: {
+      current_password: input.currentPassword,
+      password: input.password,
+      password_confirmation: input.passwordConfirmation,
+    },
+  }).then(wajib);
+}
+
+/** POST /auth/lupa-sandi — minta reset ke HR. Respons identik untuk email terdaftar atau tidak. */
+export function lupaSandiMinta(email: string): Promise<LupaSandiMinta> {
+  return apiRequest<LupaSandiMinta>('auth/lupa-sandi', { method: 'POST', json: { email } }).then(wajib);
+}
+
+/** GET /auth/lupa-sandi/status — token permintaan lewat header X-Reset-Token. */
+export async function lupaSandiStatus(requestToken: string): Promise<LupaSandiStatus> {
+  return apiRequest<LupaSandiStatus>('auth/lupa-sandi/status', { headers: { 'X-Reset-Token': requestToken } }).then(wajib);
+}
+
+/** POST /auth/lupa-sandi/selesai — sandi baru dengan setup token; hasil: sesi dibuka atau tantangan TOTP. */
+export function lupaSandiSelesai(input: { setupToken: string; password: string; passwordConfirmation: string; device: DeviceInfo }): Promise<LoginResponse> {
+  return apiRequest<LoginResponse>('auth/lupa-sandi/selesai', {
+    method: 'POST',
+    json: {
+      setup_token: input.setupToken,
+      password: input.password,
+      password_confirmation: input.passwordConfirmation,
+      device: input.device,
+    },
+  }).then(wajib);
+}
+
+/** GET /konfigurasi — publik: versi minimal/terbaru + pemeliharaan. */
+export function konfigurasi(): Promise<KonfigurasiApp> {
+  return apiRequest<KonfigurasiApp>('konfigurasi', { timeoutMs: 8_000 }).then(wajib);
+}
+
+/** POST /tautan-desktop — kirim tautan halaman web ke email pemilik akun (B2). */
+export function kirimTautanDesktop(path: string): Promise<{ message: string; email: string }> {
+  return apiRequest<{ message: string; email: string }>('tautan-desktop', { method: 'POST', json: { path } }).then(wajib);
 }
 
 export function logout(): Promise<{ message: string } | null> {
