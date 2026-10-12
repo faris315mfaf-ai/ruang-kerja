@@ -13,6 +13,7 @@ use App\Models\Meeting;
 use App\Models\User;
 use App\Policies\MeetingPolicy;
 use Carbon\CarbonImmutable;
+use DateTimeImmutable;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
@@ -94,6 +95,14 @@ class MeetingController extends Controller
     {
         $date = $request->query('tanggal');
 
-        return is_string($date) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) === 1 ? $date : null;
+        if (! is_string($date) || preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) !== 1) {
+            return null;
+        }
+
+        // Strict calendar date: 2026-02-30 or 2026-99-99 must not overflow
+        // into another day (or throw) — treat them like a missing date.
+        $parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+
+        return $parsed !== false && $parsed->format('Y-m-d') === $date ? $date : null;
     }
 }

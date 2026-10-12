@@ -119,3 +119,11 @@ test('every workspace list stays scoped to its owner', function () {
 test('workspace endpoints reject requests without a token', function () {
     test()->getJson('/api/v1/workspace')->assertUnauthorized();
 });
+
+test('a lower-case key resolves on the API instead of looping on a canonical redirect', function () {
+    $token = masukWorkspace('viewer@kantor.test');
+
+    // The web binder redirects /w/tms → /w/TMS; the API path has no /w/
+    // segment, so it must use the resolved workspace (no 301 to itself).
+    $this->withToken($token)->getJson('/api/v1/workspace/tms/anggota')->assertOk();
+});

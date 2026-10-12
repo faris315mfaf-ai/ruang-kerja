@@ -359,3 +359,13 @@ test('meeting endpoints reject requests without a token', function () {
     $this->getJson('/api/v1/rapat/'.$this->koordinasi->id.'/notulen')->assertUnauthorized();
     $this->getJson('/api/v1/kalender')->assertUnauthorized();
 });
+
+test('an impossible ?tanggal falls back like a missing date instead of failing', function (string $tanggal) {
+    $token = masukRapat($this->rizky->email);
+
+    $this->withToken($token)->getJson('/api/v1/rapat/'.$this->standup->id.'?tanggal='.$tanggal)->assertOk();
+    $this->withToken($token)->getJson('/api/v1/rapat/'.$this->standup->id.'/notulen?tanggal='.$tanggal)->assertOk();
+})->with([
+    'bulan & hari di luar rentang' => '2026-99-99',
+    'tanggal yang tidak ada' => '2026-02-30',
+]);

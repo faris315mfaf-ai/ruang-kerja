@@ -83,7 +83,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::delete('tugas/{task}', [TaskController::class, 'destroy'])->whereUlid('task')->name('tasks.destroy');
         Route::patch('tugas/{task}/status', TaskStatusController::class)->whereUlid('task')->name('tasks.status');
         Route::get('tugas/{task}/komentar', [TaskCommentController::class, 'index'])->whereUlid('task')->name('tasks.comments.index');
-        Route::post('tugas/{task}/komentar', [TaskCommentController::class, 'store'])->whereUlid('task')->name('tasks.comments.store');
+        Route::post('tugas/{task}/komentar', [TaskCommentController::class, 'store'])->whereUlid('task')
+            ->middleware('throttle:comments')->name('tasks.comments.store');
 
         // papan workspace — kolom (statuses) + kartu query BoardTasks web
         // (tugas terbuka + yang ditutup ≤30 hari, tanpa N+1); "{workspace}"
@@ -152,7 +153,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         // web (alur approval + notifikasinya sama; draf tetap alur web).
         Route::get('pengajuan/jenis', [RequestController::class, 'types'])->name('requests.types');
         Route::get('pengajuan', [RequestController::class, 'index'])->name('requests.index');
-        Route::post('pengajuan', [RequestController::class, 'store'])->name('requests.store');
+        // Same limit as the web form (routes/requests.php: 30/menit).
+        Route::post('pengajuan', [RequestController::class, 'store'])->middleware('throttle:30,1')->name('requests.store');
 
         // briefing — catatan terakhir perusahaan pemilik (baca saja);
         // 204 bila belum ada. Mencatat & delegasi tetap di web.
