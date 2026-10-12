@@ -209,6 +209,41 @@ describe('TabBar tombol tengah kontekstual', () => {
         expect(screen.getByRole('link', { name: 'Absen' })).toBeTruthy();
     });
 
+    it('flips back to Absen at end − 60 min without a prop change', () => {
+        vi.useFakeTimers();
+
+        try {
+            state.attendanceStatus = {
+                action: 'check_out',
+                end: new Date(Date.now() + 61 * 60_000).toISOString(),
+            };
+            render(<TabBar />);
+            expect(
+                screen.getByRole('button', { name: 'Workspace' }),
+            ).toBeTruthy();
+
+            act(() => {
+                vi.advanceTimersByTime(61_000);
+            });
+
+            expect(screen.getByRole('link', { name: 'Absen' })).toBeTruthy();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('marks the Workspace button current on workspace pages', () => {
+        state.url = '/w/OPS';
+        state.attendanceStatus = { action: 'done', end: null };
+        render(<TabBar />);
+
+        expect(
+            screen
+                .getByRole('button', { name: 'Workspace' })
+                .getAttribute('aria-current'),
+        ).toBe('page');
+    });
+
     it('stays Workspace after the check-out', () => {
         state.attendanceStatus = { action: 'done', end: null };
         render(<TabBar />);

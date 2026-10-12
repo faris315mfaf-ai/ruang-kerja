@@ -1,4 +1,5 @@
 import { Loader2, Plus, RotateCcw, Send, X } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type { CheckFlow } from '../use-check-flow';
 import { LocationChip } from './location-chip';
+import { resizeRowIds } from './plan-row-ids';
 
 /** Photo preview, WFH/field note and submit. */
 export function SelfieReview({
@@ -17,6 +19,16 @@ export function SelfieReview({
 }) {
     const submitting = flow.step === 'submitting';
     const label = flow.type === 'in' ? 'Kirim check-in' : 'Kirim check-out';
+    // Stable row keys: removing a point must not move focus/IME state onto
+    // the next input (index keys would).
+    const [rowIds, setRowIds] = useState<string[]>(() =>
+        resizeRowIds([], flow.plan.length),
+    );
+
+    if (rowIds.length !== flow.plan.length) {
+        // Plan reset from outside (new attempt): adjust during render.
+        setRowIds(resizeRowIds(rowIds, flow.plan.length));
+    }
 
     return (
         <div className={cn('flex min-h-0 flex-1 flex-col gap-4', className)}>
@@ -58,7 +70,7 @@ export function SelfieReview({
                     <ul className="space-y-1.5">
                         {flow.plan.map((point, index) => (
                             <li
-                                key={index}
+                                key={rowIds[index] ?? index}
                                 className="flex items-center gap-1.5"
                             >
                                 <span
@@ -101,13 +113,18 @@ export function SelfieReview({
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        onClick={() =>
+                                        onClick={() => {
+                                            setRowIds(
+                                                rowIds.filter(
+                                                    (_, i) => i !== index,
+                                                ),
+                                            );
                                             flow.setPlan(
                                                 flow.plan.filter(
                                                     (_, i) => i !== index,
                                                 ),
-                                            )
-                                        }
+                                            );
+                                        }}
                                         disabled={submitting}
                                         aria-label={`Hapus poin ${index + 1}`}
                                         className="size-11 shrink-0 text-text-muted"

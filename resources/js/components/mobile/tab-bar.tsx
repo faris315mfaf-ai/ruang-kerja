@@ -1,12 +1,12 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useUnreadCount } from '@/features/notifications/unread-store';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useKeyboardOpen } from '@/hooks/use-keyboard-open';
 import { activeTabIndex, tabNavItems } from '@/lib/navigation';
-import type { CenterAction } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
+import { centerAction, msUntilCenterFlip } from './tab-bar-center';
 import { WorkspaceSheet } from './workspace-sheet';
 
 /**
@@ -28,31 +28,39 @@ export function TabBar() {
     const { features, chatUnread, attendanceStatus } = usePage().props;
     const chat = features?.chat ?? false;
 
-    /**
-     * Owner decision 9 Oct 2026: the raised button is Absen before the
-     * morning check-in and from one hour before the shift ends (until the
-     * check-out); once the user is checked in — and after the check-out —
-     * it becomes Workspace, opening the workspace picker sheet. Unknown
-     * status keeps Absen: attendance must stay reachable.
-     */
-    const center = useMemo<CenterAction>(() => {
-        if (!attendanceStatus) {
-            return 'absen';
+    // Re-render exactly when Absen comes back (end − 60 min): the status
+    // prop does not change at that moment.
+    const [now, setNow] = useState(() => Date.now());
+
+    useEffect(() => {
+        const current = Date.now();
+
+        // `now` is from an earlier render: catch up if the flip already passed.
+        if (
+            centerAction(attendanceStatus, current) !==
+            centerAction(attendanceStatus, now)
+        ) {
+            setNow(current);
+
+            return;
         }
 
-        if (attendanceStatus.action === 'check_in') {
-            return 'absen';
+        const delay = msUntilCenterFlip(attendanceStatus, current);
+
+        if (delay === null) {
+            return;
         }
 
-        if (attendanceStatus.action === 'check_out') {
-            return attendanceStatus.end !== null &&
-                Date.now() < Date.parse(attendanceStatus.end) - 60 * 60_000
-                ? 'workspace'
-                : 'absen';
-        }
+        // setTimeout caps at ~24.8 days; shifts are hours away.
+        const timer = window.setTimeout(
+            () => setNow(Date.now()),
+            Math.min(delay + 50, 2_147_000_000),
+        );
 
-        return 'workspace';
-    }, [attendanceStatus]);
+        return () => window.clearTimeout(timer);
+    }, [attendanceStatus, now]);
+
+    const center = centerAction(attendanceStatus, now);
 
     const items = tabNavItems(chat, center);
     // Tab tapped while its page is still loading; dropped once the visit ends.
@@ -120,6 +128,9 @@ export function TabBar() {
                                         type="button"
                                         aria-haspopup="dialog"
                                         aria-expanded={sheetOpen}
+                                        aria-current={
+                                            active ? 'page' : undefined
+                                        }
                                         data-tab-center
                                         onClick={() => setSheetOpen(true)}
                                         className={cn(
