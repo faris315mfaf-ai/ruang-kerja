@@ -13,7 +13,9 @@ const HTTP_MESSAGES: Record<number, string> = {
  * POST /briefing or /briefing/delegasi: the server answers with a redirect
  * back (fresh `briefing` prop, success toast from the flash). Resolves true
  * on success; a validation error (e.g. the window just closed), an HTTP or
- * a network failure is toasted and resolves false.
+ * a network failure is toasted and resolves false. A cancelled/interrupted
+ * visit also resolves false (`onFinish` settles whatever is left), so the
+ * caller's button never stays busy.
  */
 export function submitBriefingForm(
     route: RouteDefinition<'post'>,
@@ -22,21 +24,29 @@ export function submitBriefingForm(
     onStart?: () => void,
 ): Promise<boolean> {
     return new Promise((resolve) => {
+        let settled = false;
+        const settle = (ok: boolean) => {
+            if (!settled) {
+                settled = true;
+                resolve(ok);
+            }
+        };
+
         router.visit(route, {
             data,
             preserveScroll: true,
             preserveState: true,
             onStart: () => onStart?.(),
-            onSuccess: () => resolve(true),
+            onSuccess: () => settle(true),
             onError: (errors) => {
                 const first = Object.values(errors)[0];
 
                 toast.error(typeof first === 'string' ? first : failure);
-                resolve(false);
+                settle(false);
             },
             onHttpException: (response) => {
                 toast.error(HTTP_MESSAGES[response.status] ?? failure);
-                resolve(false);
+                settle(false);
 
                 return false;
             },
@@ -44,10 +54,12 @@ export function submitBriefingForm(
                 toast.error(
                     'Koneksi terputus. Periksa jaringan Anda lalu coba lagi.',
                 );
-                resolve(false);
+                settle(false);
 
                 return false;
             },
+            onCancel: () => settle(false),
+            onFinish: () => settle(false),
         });
     });
 }

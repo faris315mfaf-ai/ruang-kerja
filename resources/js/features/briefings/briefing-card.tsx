@@ -52,8 +52,16 @@ export function BriefingCard({
         return null;
     }
 
+    // Keyed per date + period: the draft state (initialised once from the
+    // device draft or the server note) must not carry over when the open
+    // window flips from pagi to sore or the day changes on an open tab.
     return (
-        <RecorderCard briefing={briefing} period={period} variant={variant} />
+        <RecorderCard
+            key={`${briefing.date}-${period.value}`}
+            briefing={briefing}
+            period={period}
+            variant={variant}
+        />
     );
 }
 

@@ -36,7 +36,11 @@ export function PersonalMobile(props: PersonalProps) {
             <TugasHariIniCard tugas={props.tugasHariIni} variant="mobile" />
 
             {/* Cuplikan briefing terakhir untuk semua penampil dashboard. */}
-            <LatestBriefingCard briefing={props.briefing} variant="mobile" />
+            <LatestBriefingCard
+                latest={props.latestBriefing}
+                briefing={props.briefing}
+                variant="mobile"
+            />
 
             <section
                 aria-label="Ringkasan"

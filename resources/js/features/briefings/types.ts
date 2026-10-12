@@ -58,3 +58,20 @@ export type BriefingCardData = {
     latest: Partial<Record<BriefingPeriodValue, BriefingNote | null>>;
     urls: { store: string; delegate: string };
 };
+
+/**
+ * "Briefing terakhir" for every dashboard viewer (dashboard personal prop
+ * `latestBriefing`, same shape as GET /api/briefing/terakhir —
+ * App\Domain\Briefings\Queries\LatestBriefing::present). null = none yet.
+ */
+export type LatestBriefingData = {
+    period: BriefingPeriodValue;
+    /** "Briefing pagi" / "Briefing sore". */
+    label: string;
+    /** "YYYY-MM-DD" (office calendar). */
+    date: string;
+    content: string;
+    /** Name of who recorded it. */
+    oleh: string;
+    updated_at: string | null;
+};

@@ -4,6 +4,7 @@ import type {
     BriefingPeriodInfo,
     BriefingPeriodValue,
     BriefingNote,
+    LatestBriefingData,
 } from './types';
 
 /** Mirrors SaveBriefingRequest's max length. */
@@ -88,6 +89,25 @@ export function latestBriefing(
             best === null || noteRank(note) > noteRank(best) ? note : best,
         null,
     );
+}
+
+const DAY_MONTH_YEAR = new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+});
+
+/**
+ * Title of a note from the `latestBriefing` payload, same as the server's
+ * Briefing::title(): "Briefing pagi 9 Oktober 2026" (pure date, no zone shift).
+ */
+export function latestBriefingTitle(latest: LatestBriefingData): string {
+    const date = new Date(`${latest.date}T00:00:00Z`);
+
+    return Number.isNaN(date.getTime())
+        ? latest.label
+        : `${latest.label} ${DAY_MONTH_YEAR.format(date)}`;
 }
 
 /** Client mirror of SaveBriefingRequest's content rules. */

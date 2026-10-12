@@ -72,7 +72,11 @@ export function PersonalDesktop(props: PersonalProps) {
             <TugasHariIniCard tugas={props.tugasHariIni} variant="desktop" />
 
             {/* Cuplikan briefing terakhir untuk semua penampil dashboard. */}
-            <LatestBriefingCard briefing={props.briefing} variant="desktop" />
+            <LatestBriefingCard
+                latest={props.latestBriefing}
+                briefing={props.briefing}
+                variant="desktop"
+            />
 
             <section
                 aria-label="Filter periode"

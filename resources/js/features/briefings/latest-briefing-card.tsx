@@ -9,26 +9,50 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { latestBriefing } from './briefing-state';
-import type { BriefingCardData, BriefingNote } from './types';
+import { latestBriefing, latestBriefingTitle } from './briefing-state';
+import type { BriefingCardData, LatestBriefingData } from './types';
+
+/** What the card shows, from either payload. */
+type LatestNote = { title: string; content: string; recordedBy: string };
 
 /**
  * Kartu kecil "Briefing terakhir" (keputusan pemilik 9 Okt 2026) for every
- * viewer of the dashboard: the newest note on screen — today's saved one, or
- * the previous day's — with a 3-line snippet; tapping it opens the full
- * minutes in a read-only dialog. Renders null while no briefing exists yet.
+ * viewer of the dashboard: the newest note of the company with a 3-line
+ * snippet; tapping it opens the full minutes in a read-only dialog. Reads
+ * the `latestBriefing` prop sent to every viewer; `briefing` (recorder
+ * card payload, null for regular employees) is only a fallback while the
+ * server does not send it. Renders null while no briefing exists yet.
  */
 export function LatestBriefingCard({
+    latest,
     briefing,
     variant = 'desktop',
 }: {
-    briefing: BriefingCardData | null | undefined;
+    latest?: LatestBriefingData | null;
+    briefing?: BriefingCardData | null;
     variant?: 'desktop' | 'mobile';
 }) {
-    const note =
-        briefing === null || briefing === undefined
-            ? null
-            : latestBriefing(briefing);
+    let note: LatestNote | null = null;
+
+    if (latest !== undefined) {
+        note =
+            latest === null
+                ? null
+                : {
+                      title: latestBriefingTitle(latest),
+                      content: latest.content,
+                      recordedBy: latest.oleh,
+                  };
+    } else if (briefing) {
+        const saved = latestBriefing(briefing);
+        note = saved
+            ? {
+                  title: saved.title,
+                  content: saved.content,
+                  recordedBy: saved.saved_by.name,
+              }
+            : null;
+    }
 
     if (note === null) {
         return null;
@@ -41,11 +65,11 @@ function LatestCard({
     note,
     variant,
 }: {
-    note: BriefingNote;
+    note: LatestNote;
     variant: 'desktop' | 'mobile';
 }) {
     const [open, setOpen] = useState(false);
-    const byline = `Dicatat oleh ${note.saved_by.name}`;
+    const byline = `Dicatat oleh ${note.recordedBy}`;
 
     const reader =
         variant === 'mobile' ? (
