@@ -1,354 +1,182 @@
 /**
- * Lainnya — navigasi Inbox (pindah dari tab, dengan lencana belum-dibaca),
- * Rapat, Kalender, dan Workspace; lalu profil, riwayat absensi bulan ini
- * (ringkas), pengajuan saya (daftar + buat baru), perangkat (cabut), keluar.
+ * Lainnya — pintu ke semua modul, disusun per peran (staf · Kepala Divisi ·
+ * HR · Direksi/Super Admin): kartu identitas → Workspace → Pekerjaan →
+ * Organisasi (bukan staf) → Akun & pengaturan.
+ * Mockup: docs/mockups/android/screens/13-fondasi-desain/14-lainnya-per-peran,
+ * screens/01-akses-akun/12-lainnya (memuat, offline).
  */
-import { Ionicons } from '@/ui/Ionicons';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
-import { absensiRiwayat, cabutPerangkat, daftarPengajuan, daftarPerangkat, saya } from '@/api/endpoints';
-import type { AttendanceHistory, DeviceRow, EmployeeRequestRow, UserProfile } from '@/api/types';
-import { Badge, Button, Card, CardTitle, Divider, Loading, Meta, Row, Screen } from '@/components/ui';
-import { durasiMenit, inisial, jam, tanggalPendek, tanggalTanpaTahun } from '@/lib/format';
-import { radius, useTheme } from '@/lib/theme';
-import { useSession } from '@/session/SessionProvider';
+import { daftarWorkspace } from '@/api/endpoints';
+import type { WorkspaceItem } from '@/api/types';
+import { bukaSegera } from '@/features/settings/ComingSoon';
+import { menuOrganisasi, menuPekerjaan } from '@/features/settings/menuLainnya';
+import { DaftarMenu, GroupLabel, KartuIdentitas, type ItemMenu } from '@/features/settings/parts';
+import { barisJabatan } from '@/features/settings/profile';
+import { useKeluar } from '@/features/settings/useKeluar';
+import { useProfilLengkap } from '@/features/settings/useProfilLengkap';
 import { useUnread } from '@/session/UnreadProvider';
+import { useTheme } from '@/theme';
+import { AppBar, Card, Gradient, OfflineBanner, Pressable, Screen, Skeleton, Text } from '@/ui';
 
-function LencanaStatusPengajuan({ row }: { row: EmployeeRequestRow }): React.JSX.Element {
-  const tone =
-    row.status === 'approved'
-      ? 'success'
-      : row.status === 'rejected'
-        ? 'danger'
-        : row.status === 'revision_requested'
-          ? 'warning'
-          : row.status === 'canceled'
-            ? 'neutral'
-            : 'primary';
-  return <Badge tone={tone as 'success' | 'danger' | 'warning' | 'neutral' | 'primary'}>{row.status_label}</Badge>;
+interface RuangKartu extends WorkspaceItem {
+  pribadi: boolean;
+}
+
+const GRADIEN_KARTU = ['merek', 'indigo', 'aksi', 'hangat'] as const;
+
+function labelTema(mode: string): string {
+  return mode === 'light' ? 'Terang' : mode === 'dark' ? 'Gelap' : 'Ikuti sistem';
+}
+
+function KartuWorkspace({ ruang, indeks }: { ruang: RuangKartu; indeks: number }): React.JSX.Element {
+  const { colors, shadows } = useTheme();
+  const nama = ruang.pribadi ? 'Ruang saya' : ruang.name;
+  return (
+    <Pressable
+      onPress={() => router.push(`/workspace/${ruang.id}`)}
+      accessibilityRole="button"
+      accessibilityLabel={`Buka workspace ${nama}`}
+      style={[s.kartuWs, { backgroundColor: colors.surface, borderColor: colors.border, boxShadow: shadows.card }]}
+    >
+      <Gradient name={ruang.pribadi ? 'slate' : (GRADIEN_KARTU[indeks % GRADIEN_KARTU.length] ?? 'merek')} style={s.ubinWs}>
+        <Text variant="title" weight={800} tone="onPrimary">
+          {nama.slice(0, 1).toUpperCase()}
+        </Text>
+      </Gradient>
+      <View style={{ gap: 2 }}>
+        <Text variant="title" numberOfLines={2}>
+          {nama}
+        </Text>
+        <Text variant="meta" numberOfLines={1}>
+          {ruang.pribadi ? 'Pribadi' : ruang.key}
+        </Text>
+      </View>
+    </Pressable>
+  );
 }
 
 export default function LayarLainnya(): React.JSX.Element {
-  const { colors } = useTheme();
-  const { user, keluar, perbaruiProfil } = useSession();
+  const { colors, mode } = useTheme();
   const { jumlah: belumBaca } = useUnread();
+  const { profil, peran, memuat, offline, muatUlang } = useProfilLengkap();
+  const { keluarDenganKonfirmasi } = useKeluar();
 
-  const [profil, setProfil] = useState<UserProfile | null>(user);
-  const [riwayat, setRiwayat] = useState<AttendanceHistory | null>(null);
-  const [pengajuan, setPengajuan] = useState<EmployeeRequestRow[]>([]);
-  const [perangkat, setPerangkat] = useState<DeviceRow[]>([]);
-  const [memuat, setMemuat] = useState(true);
-  const [galat, setGalat] = useState<string | null>(null);
-  const [galatRiwayat, setGalatRiwayat] = useState<string | null>(null);
+  const [ruang, setRuang] = useState<RuangKartu[] | null>(null);
+  const [galatRuang, setGalatRuang] = useState(false);
+  const [offlineRuang, setOfflineRuang] = useState(false);
 
-  const muat = useCallback(async (): Promise<void> => {
-    setMemuat(true);
-    setGalat(null);
-
-    const [hasilProfil, hasilRiwayat, hasilPengajuan, hasilPerangkat] = await Promise.allSettled([
-      saya(),
-      absensiRiwayat(),
-      daftarPengajuan(1),
-      daftarPerangkat(),
-    ]);
-
-    if (hasilProfil.status === 'fulfilled') {
-      setProfil(hasilProfil.value);
-      perbaruiProfil(hasilProfil.value);
+  const muatRuang = useCallback(async (): Promise<void> => {
+    try {
+      const hasil = await daftarWorkspace();
+      const semua: RuangKartu[] = hasil.groups.flatMap((g) =>
+        g.items.filter((i) => !i.arsip).map((i) => ({ ...i, pribadi: g.jenis === 'personal' || g.jenis === 'pribadi' })),
+      );
+      setRuang(semua);
+      setGalatRuang(false);
+      setOfflineRuang(false);
+    } catch (err) {
+      setGalatRuang(true);
+      setOfflineRuang(err instanceof ApiError && err.status === 0);
     }
-    if (hasilRiwayat.status === 'fulfilled') {
-      setRiwayat(hasilRiwayat.value);
-      setGalatRiwayat(null);
-    } else {
-      const err: unknown = hasilRiwayat.reason;
-      setGalatRiwayat(err instanceof ApiError ? err.message : 'Rekap absensi gagal dimuat.');
-    }
-    if (hasilPengajuan.status === 'fulfilled') {
-      setPengajuan(hasilPengajuan.value.requests);
-    }
-    if (hasilPerangkat.status === 'fulfilled') {
-      setPerangkat(hasilPerangkat.value.devices);
-    }
-
-    const gagal = [hasilProfil, hasilRiwayat, hasilPengajuan, hasilPerangkat].find((h) => h.status === 'rejected');
-    if (gagal && gagal.status === 'rejected') {
-      const err = gagal.reason;
-      setGalat(err instanceof ApiError ? err.message : 'Sebagian data gagal dimuat.');
-    }
-    setMemuat(false);
-  }, [perbaruiProfil]);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      void muat();
-    }, [muat]),
+      void muatRuang();
+    }, [muatRuang]),
   );
 
-  function konfirmasiCabut(perangkatRow: DeviceRow): void {
-    Alert.alert('Cabut perangkat?', `${perangkatRow.name ?? 'Perangkat'} akan dikeluarkan dari akun Anda.`, [
-      { text: 'Batal', style: 'cancel' },
-      {
-        text: 'Cabut',
-        style: 'destructive',
-        onPress: () => {
-          void (async () => {
-            try {
-              await cabutPerangkat(perangkatRow.id);
-            } finally {
-              // Bila yang dicabut perangkat ini, 401 berikutnya membersihkan sesi.
-              await muat();
-            }
-          })();
-        },
-      },
-    ]);
-  }
+  const muatSemua = useCallback(async (): Promise<void> => {
+    await Promise.all([muatUlang(), muatRuang()]);
+  }, [muatUlang, muatRuang]);
 
-  const ringkas = riwayat?.recap;
-  const hariDicatat = (riwayat?.recap.days ?? []).filter((hari) => hari.dayId !== null).slice(-14).reverse();
+  const konteks = useMemo(() => ({ profil, peran, belumBaca, warnaChevron: colors.muted }), [profil, peran, belumBaca, colors.muted]);
+  const pekerjaan = useMemo(() => menuPekerjaan(konteks), [konteks]);
+  const organisasi = useMemo(() => menuOrganisasi(konteks), [konteks]);
+
+  const akun: ItemMenu[] = [
+    { kunci: 'notifikasi', judul: 'Notifikasi', ikon: 'bell', onPress: () => router.push('/pengaturan/notifikasi-izin' as never) },
+    { kunci: 'tampilan', judul: 'Tampilan', subjudul: labelTema(mode), ikon: 'moon', onPress: () => router.push('/pengaturan/tampilan' as never) },
+    { kunci: 'keamanan', judul: 'Keamanan & perangkat saya', ikon: 'shield-check', onPress: () => router.push('/pengaturan/keamanan' as never) },
+    { kunci: 'privasi', judul: 'Privasi & Data Saya', ikon: 'lock', onPress: () => router.push('/privasi' as never) },
+    { kunci: 'keluar', judul: 'Keluar', ikon: 'log-out', nada: 'bad', onPress: () => void keluarDenganKonfirmasi() },
+  ];
+
+  const tampilRuang = (ruang ?? []).slice(0, 4);
+  const adaWorkspaceLain = (ruang ?? []).length > 4;
 
   return (
-    <Screen onRefresh={() => void muat()} refreshing={memuat && riwayat !== null}>
-      <Text style={[gaya.judul, { color: colors.text }]}>Lainnya</Text>
+    <Screen refreshing={memuat && ruang !== null} onRefresh={() => void muatSemua()}>
+      <AppBar
+        title="Lainnya"
+        actions={[
+          { icon: 'search', label: 'Cari', onPress: () => bukaSegera({ judul: 'Cari', ikon: 'search' }) },
+          { icon: 'bell', label: belumBaca > 0 ? `Inbox, ${belumBaca} belum dibaca` : 'Inbox', onPress: () => router.push('/inbox'), badge: belumBaca > 0 ? belumBaca : undefined },
+          { icon: 'settings', label: 'Pengaturan', onPress: () => router.push('/pengaturan' as never) },
+        ]}
+      />
 
-      {memuat && !riwayat && pengajuan.length === 0 ? (
-        <Loading label="Memuat…" />
-      ) : (
-        <>
-          {galat ? (
-            <Card>
-              <Text style={{ color: colors.danger, fontSize: 13 }}>{galat}</Text>
-            </Card>
-          ) : null}
+      {offline || offlineRuang ? <OfflineBanner /> : null}
 
-          {/* Profil */}
-          <Card>
-            <View style={gaya.profil}>
-              <View style={[gaya.avatar, { backgroundColor: colors.linkSoft }]}>
-                <Text style={[gaya.avatarTeks, { color: colors.link }]}>{inisial(profil?.name ?? 'RK')}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[gaya.nama, { color: colors.text }]}>{profil?.name ?? '…'}</Text>
-                <Meta>{profil?.email ?? ''}</Meta>
-                <View style={gaya.profilBaris}>
-                  {profil?.jabatan ? <Badge tone="neutral">{profil.jabatan}</Badge> : null}
-                  {profil?.divisi ? <Badge tone="neutral">{profil.divisi}</Badge> : null}
-                  {profil?.work_mode ? <Badge tone="primary">{profil.work_mode.label}</Badge> : null}
-                </View>
-              </View>
-            </View>
-          </Card>
+      <KartuIdentitas nama={profil.name} baris={barisJabatan(profil)} onPress={() => router.push('/profil' as never)} />
 
-          {/* Navigasi: Workspace · Inbox · Rapat · Kalender */}
-          <Card style={{ paddingVertical: 4, paddingHorizontal: 12 }}>
-            <Row
-              title="Workspace"
-              subtitle="Papan, catatan, dan tugas per workspace"
-              onPress={() => router.push('/workspace')}
-              accessibilityLabel="Buka daftar workspace"
-              right={<Ionicons name="chevron-forward" size={18} color={colors.subtle} />}
-            />
-            <Divider />
-            <Row
-              title="Inbox"
-              subtitle="Notifikasi Anda"
-              onPress={() => router.push('/inbox')}
-              accessibilityLabel={`Buka inbox${belumBaca > 0 ? `, ${belumBaca} belum dibaca` : ''}`}
-              right={
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  {belumBaca > 0 ? (
-                    <View style={[gaya.lencana, { backgroundColor: colors.badge }]}>
-                      <Text style={[gaya.lencanaTeks, { color: colors.onBadge }]}>
-                        {belumBaca > 99 ? '99+' : belumBaca}
-                      </Text>
-                    </View>
-                  ) : null}
-                  <Ionicons name="chevron-forward" size={18} color={colors.subtle} />
-                </View>
-              }
-            />
-            <Divider />
-            <Row
-              title="Rapat"
-              subtitle="Agenda, RSVP, dan notulen"
-              onPress={() => router.push('/rapat')}
-              accessibilityLabel="Buka agenda rapat"
-              right={<Ionicons name="chevron-forward" size={18} color={colors.subtle} />}
-            />
-            <Divider />
-            <Row
-              title="Kalender"
-              subtitle="Rapat, tenggat, cuti, dan libur bulan ini"
-              onPress={() => router.push('/kalender')}
-              accessibilityLabel="Buka kalender bulan ini"
-              right={<Ionicons name="chevron-forward" size={18} color={colors.subtle} />}
-            />
-          </Card>
-
-          {/* Riwayat absensi bulan ini */}
-          <Card>
-            <View style={gaya.kepala}>
-              <CardTitle>Absensi bulan ini</CardTitle>
-              {riwayat ? <Meta>{riwayat.period.label}</Meta> : null}
-            </View>
-            {ringkas ? (
-              <>
-                <View style={gaya.statistik}>
-                  <View style={[gaya.statKotak, { backgroundColor: colors.linkSoft }]}>
-                    <Text style={[gaya.angka, { color: colors.link }]}>{ringkas.presentDays}</Text>
-                    <Meta>Hadir</Meta>
-                  </View>
-                  <View style={[gaya.statKotak, { backgroundColor: colors.warningSoft }]}>
-                    <Text style={[gaya.angka, { color: colors.warning }]}>{ringkas.lateCount}</Text>
-                    <Meta>Terlambat</Meta>
-                  </View>
-                  <View style={[gaya.statKotak, { backgroundColor: colors.infoSoft }]}>
-                    <Text style={[gaya.angka, { color: colors.info }]}>{ringkas.leaveDays + ringkas.permitDays}</Text>
-                    <Meta>Cuti/izin</Meta>
-                  </View>
-                </View>
-
-                {hariDicatat.length > 0 ? (
-                  <View style={{ gap: 0 }}>
-                    {hariDicatat.map((hari, indeks) => (
-                      <View key={hari.date}>
-                        {indeks > 0 ? <Divider /> : null}
-                        <Row
-                          title={`${tanggalTanpaTahun(hari.date)} · ${hari.statusLabel ?? '—'}`}
-                          subtitle={`${jam(hari.checkIn?.occurredAt ?? null)} → ${jam(hari.checkOut?.occurredAt ?? null)} · ${durasiMenit(hari.workMinutes || null)}`}
-                          right={
-                            hari.lateMinutes > 0 ? (
-                              <Badge tone="warning">+{durasiMenit(hari.lateMinutes)}</Badge>
-                            ) : (
-                              <Ionicons name="checkmark" size={16} color={colors.success} />
-                            )
-                          }
-                        />
-                      </View>
-                    ))}
-                  </View>
-                ) : (
-                  <Meta>Belum ada catatan absensi bulan ini.</Meta>
-                )}
-              </>
-            ) : galatRiwayat && !memuat ? (
-              <View style={{ gap: 10 }}>
-                <Text style={{ color: colors.danger, fontSize: 13 }} accessibilityRole="alert">
-                  {galatRiwayat}
-                </Text>
-                <Button title="Coba lagi" variant="secondary" icon="refresh" onPress={() => void muat()} />
-              </View>
-            ) : (
-              <Loading label="Memuat rekap…" />
-            )}
-          </Card>
-
-          {/* Pengajuan */}
-          <Card>
-            <Pressable
-              onPress={() => router.push('/pengajuan/baru')}
-              accessibilityRole="button"
-              accessibilityLabel="Buat pengajuan baru"
-              style={({ pressed }) => [gaya.tombolBaru, { borderColor: colors.primary, opacity: pressed ? 0.7 : 1 }]}
-            >
-              <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
-              <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 14 }}>Ajukan pengajuan baru</Text>
+      <View style={s.kelompok}>
+        <GroupLabel action={adaWorkspaceLain || peran.manajemen ? 'Semua' : undefined} onAction={() => router.push('/workspace')}>
+          Workspace
+        </GroupLabel>
+        {ruang === null && !galatRuang ? (
+          <View style={s.grid}>
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} height={132} width="48%" />
+            ))}
+          </View>
+        ) : galatRuang && ruang === null ? (
+          <Card variant="tight">
+            <Text variant="body" tone="muted" style={{ fontSize: 15 }}>
+              {offlineRuang ? 'Tidak ada koneksi, daftar workspace belum termuat.' : 'Daftar workspace belum termuat.'}
+            </Text>
+            <Pressable onPress={() => void muatRuang()} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
+              <Text variant="label" tone="link">
+                Coba lagi
+              </Text>
             </Pressable>
-
-            <CardTitle>Pengajuan saya</CardTitle>
-            {pengajuan.length === 0 ? (
-              <Meta>Belum ada pengajuan.</Meta>
-            ) : (
-              <View style={{ gap: 0 }}>
-                {pengajuan.slice(0, 5).map((row, indeks) => (
-                  <View key={row.id}>
-                    {indeks > 0 ? <Divider /> : null}
-                    <Row
-                      title={`${row.number} · ${row.type.name}`}
-                      subtitle={`${tanggalPendek(row.start_at)} – ${tanggalPendek(row.end_at)}${
-                        row.days !== null ? ` · ${row.days} ${row.type.day_unit}` : row.minutes !== null ? ` · ${durasiMenit(row.minutes)}` : ''
-                      }`}
-                      right={<LencanaStatusPengajuan row={row} />}
-                    />
-                  </View>
-                ))}
-              </View>
-            )}
           </Card>
+        ) : (
+          <View style={s.grid}>
+            {tampilRuang.map((r, i) => (
+              <KartuWorkspace key={r.id} ruang={r} indeks={i} />
+            ))}
+          </View>
+        )}
+      </View>
 
-          {/* Perangkat */}
-          <Card>
-            <CardTitle>Perangkat saya</CardTitle>
-            {perangkat.length === 0 ? (
-              <Meta>Belum ada perangkat terdaftar.</Meta>
-            ) : (
-              <View style={{ gap: 0 }}>
-                {perangkat.map((perangkatRow, indeks) => (
-                  <View key={perangkatRow.id}>
-                    {indeks > 0 ? <Divider /> : null}
-                    <Row
-                      title={`${perangkatRow.name ?? 'Perangkat'} · ${perangkatRow.platform_label}`}
-                      subtitle={`Versi aplikasi ${perangkatRow.app_version ?? '—'} · terakhir aktif ${tanggalPendek(perangkatRow.last_seen_at)}`}
-                      right={
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          {perangkatRow.is_current ? <Badge tone="primary">Perangkat ini</Badge> : null}
-                          <Pressable
-                            onPress={() => konfirmasiCabut(perangkatRow)}
-                            accessibilityRole="button"
-                            accessibilityLabel={`Cabut perangkat ${perangkatRow.name ?? ''}`}
-                            hitSlop={8}
-                            style={gaya.cabut}
-                          >
-                            <Ionicons name="trash-outline" size={18} color={colors.danger} />
-                          </Pressable>
-                        </View>
-                      }
-                    />
-                  </View>
-                ))}
-              </View>
-            )}
-          </Card>
+      <View style={s.kelompok}>
+        <GroupLabel>Pekerjaan</GroupLabel>
+        <DaftarMenu items={pekerjaan} />
+      </View>
 
-          <Button title="Keluar" variant="danger" icon="log-out-outline" onPress={() => void keluar()} />
-          <Meta style={{ textAlign: 'center' }}>RuangKerja ponsel v1.0</Meta>
-        </>
-      )}
+      {organisasi.length > 0 ? (
+        <View style={s.kelompok}>
+          <GroupLabel>Organisasi</GroupLabel>
+          <DaftarMenu items={organisasi} />
+        </View>
+      ) : null}
+
+      <View style={s.kelompok}>
+        <GroupLabel>Akun & pengaturan</GroupLabel>
+        <DaftarMenu items={akun} />
+      </View>
     </Screen>
   );
 }
 
-const gaya = StyleSheet.create({
-  judul: { fontSize: 26, fontWeight: '800', marginBottom: 2 },
-  lencana: {
-    minWidth: 22,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  lencanaTeks: { fontSize: 12, fontWeight: '700' },
-  profil: { flexDirection: 'row', gap: 12, alignItems: 'center' },
-  avatar: { width: 56, height: 56, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center' },
-  avatarTeks: { fontSize: 20, fontWeight: '800' },
-  nama: { fontSize: 17, fontWeight: '700' },
-  profilBaris: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
-  kepala: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  statistik: { flexDirection: 'row', gap: 8 },
-  statKotak: { flex: 1, borderRadius: radius.md, padding: 12, alignItems: 'center', gap: 2 },
-  angka: { fontSize: 22, fontWeight: '800' },
-  tombolBaru: {
-    minHeight: 48,
-    borderRadius: radius.sm + 2,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  cabut: { width: 40, height: 44, alignItems: 'center', justifyContent: 'center' },
+const s = StyleSheet.create({
+  kelompok: { gap: 8 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
+  kartuWs: { width: '48%', borderRadius: 24, borderWidth: 1, padding: 16, gap: 14, minHeight: 132 },
+  ubinWs: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
 });
