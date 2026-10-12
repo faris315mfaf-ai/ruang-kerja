@@ -18,8 +18,11 @@ import {
     readUnsavedFor,
     SAVED_SHOWN_MS,
     takeUnsavedFor,
+    settleUnsavedChanges,
     useUnsavedNote,
+    useUnsavedNotes,
 } from './unsaved-store';
+import { readUnsent } from './unsent-stash';
 import type { UnsavedNote } from './unsaved-store';
 
 const NOTE = '01k6x0000000000000000aa';
@@ -156,5 +159,93 @@ describe('unsaved store', () => {
         const claimed = takeUnsavedFor(NOTE);
         expect(claimed?.body).toBe(DOC);
         expect(readUnsavedFor(NOTE)).toBeNull();
+    });
+
+    it('keeps one entry per note: leaving a second note does not drop the first', async () => {
+        saveContent.mockRejectedValue(new ApiError('Koneksi terputus.', 0));
+
+        const { result } = renderHook(() => useUnsavedNotes());
+
+        act(() => {
+            handoffUnsavedChanges({ ...stuck, pendingTitle: null });
+            handoffUnsavedChanges({
+                ...stuck,
+                noteId: OTHER,
+                title: 'Catatan lain',
+                pendingTitle: null,
+            });
+        });
+        await act(async () => {
+            await drain();
+        });
+
+        expect(result.current.map((entry) => entry.noteId)).toEqual([
+            NOTE,
+            OTHER,
+        ]);
+        expect(readUnsavedFor(NOTE)?.phase).toBe('offline');
+        expect(readUnsavedFor(OTHER)?.phase).toBe('offline');
+        // Failed entries survive a closed tab.
+        expect(readUnsent(NOTE)?.body).toEqual(DOC);
+        saveContent.mockReset();
+    });
+
+    it('waits for the page save in flight and locks against its updated_at', async () => {
+        saveContent.mockResolvedValue({
+            note: { updated_at: '2026-10-09T02:00:09Z' },
+        } as never);
+        let landed!: (value: {
+            baseUpdatedAt: string;
+            bodySaved: boolean;
+        }) => void;
+        const settle = new Promise<{
+            baseUpdatedAt: string;
+            bodySaved: boolean;
+        }>((resolve) => {
+            landed = resolve;
+        });
+
+        act(() => {
+            handoffUnsavedChanges({ ...stuck, pendingTitle: null, settle });
+        });
+        await act(async () => {
+            await drain();
+        });
+        expect(saveContent).not.toHaveBeenCalled();
+
+        await act(async () => {
+            landed({ baseUpdatedAt: '2026-10-09T02:00:05Z', bodySaved: false });
+            await settleUnsavedChanges(NOTE);
+        });
+
+        expect(saveContent).toHaveBeenCalledWith(
+            NOTE,
+            DOC,
+            '2026-10-09T02:00:05Z',
+        );
+        // The reopening page adopts the base the background save produced.
+        expect(readUnsavedFor(NOTE)?.phase).toBe('saved');
+        expect(readUnsavedFor(NOTE)?.baseUpdatedAt).toBe(
+            '2026-10-09T02:00:09Z',
+        );
+    });
+
+    it('does not resend a body the page save already landed', async () => {
+        act(() => {
+            handoffUnsavedChanges({
+                ...stuck,
+                pendingTitle: null,
+                settle: Promise.resolve({
+                    baseUpdatedAt: '2026-10-09T02:00:05Z',
+                    bodySaved: true,
+                }),
+            });
+        });
+        await act(async () => {
+            await settleUnsavedChanges();
+        });
+
+        expect(saveContent).not.toHaveBeenCalled();
+        expect(readUnsavedFor(NOTE)?.phase).toBe('saved');
     });
 });

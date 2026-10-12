@@ -17,8 +17,19 @@ const page = vi.hoisted(() => ({
 const visit = vi.hoisted(() => vi.fn());
 const store = vi.hoisted(() => ({
     state: null as import('./unsaved-store').UnsavedState | null,
-    flush: vi.fn(() => Promise.resolve(true)),
-    settle: vi.fn(() => Promise.resolve()),
+    flush: vi.fn((_noteId?: string) => Promise.resolve(true)),
+    settle: vi.fn((_noteId?: string) => Promise.resolve()),
+    cache: { for: null as unknown, list: [] as unknown[] },
+    list(): import('./unsaved-store').UnsavedState[] {
+        if (this.cache.for !== this.state) {
+            this.cache = {
+                for: this.state,
+                list: this.state ? [this.state] : [],
+            };
+        }
+
+        return this.cache.list as import('./unsaved-store').UnsavedState[];
+    },
 }));
 
 vi.mock('@inertiajs/react', () => ({
@@ -29,7 +40,9 @@ vi.mock('@/hooks/use-breakpoint', () => ({ useBreakpoint: () => 'desktop' }));
 vi.mock('./unsaved-store', () => ({
     flushUnsavedChanges: store.flush,
     settleUnsavedChanges: store.settle,
-    useUnsavedNote: () => store.state,
+    // Stable per state, like the real store snapshot (a fresh array every
+    // render would re-trigger the pill's effect forever).
+    useUnsavedNotes: () => store.list(),
 }));
 
 import { unsavedPillState, UnsavedNotePill } from './unsaved-pill';
@@ -158,7 +171,7 @@ describe('UnsavedNotePill', () => {
         await act(async () => {
             fireEvent.click(screen.getByRole('button', { name: 'Coba lagi' }));
         });
-        expect(store.flush).toHaveBeenCalledTimes(1);
+        expect(store.flush).toHaveBeenCalledWith(NOTE);
         expect(visit).not.toHaveBeenCalled();
 
         await act(async () => {
@@ -168,7 +181,7 @@ describe('UnsavedNotePill', () => {
                 }),
             );
         });
-        expect(store.settle).toHaveBeenCalledTimes(1);
+        expect(store.settle).toHaveBeenCalledWith(NOTE);
         expect(visit).toHaveBeenCalledWith(`/catatan/${NOTE}`);
     });
 

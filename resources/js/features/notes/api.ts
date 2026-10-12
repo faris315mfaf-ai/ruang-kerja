@@ -53,20 +53,27 @@ function xsrfToken(): string {
     return match ? decodeURIComponent(match[1]) : '';
 }
 
+/** Browsers reject keepalive bodies above 64 KiB in total; stay under it. */
+export const KEEPALIVE_MAX_BYTES = 60_000;
+
 /**
  * Last-resort save while the page really unloads (`pagehide`, keputusan
  * pemilik 9 Okt 2026): `fetch` with `keepalive` — the request outlives the
  * document; `sendBeacon` cannot carry the CSRF header (same pattern as
- * features/meetings/video/api.ts). Fire-and-forget: the body save goes
- * first because the rename bumps the `updated_at` it locks against.
+ * features/meetings/video/api.ts). Fire-and-forget, so at most ONE request
+ * is sent: a rename racing the body save would bump the `updated_at` the
+ * body locks against (false 409). The body wins; a pending title (and a
+ * body too large for keepalive) is left to the localStorage stash the
+ * caller writes (unsent-stash.ts) and recovered on the next open.
+ * Returns which part was sent.
  */
 export function saveUnsentKeepalive(note: {
     noteId: string;
     body: RichDoc | null | undefined;
     pendingTitle: string | null;
     baseUpdatedAt: string;
-}): void {
-    const send = (route: { url: string }, data: Record<string, unknown>) => {
+}): 'body' | 'title' | null {
+    const send = (route: { url: string }, json: string) => {
         void fetch(route.url, {
             method: 'PATCH',
             keepalive: true,
@@ -77,18 +84,36 @@ export function saveUnsentKeepalive(note: {
                 'X-XSRF-TOKEN': xsrfToken(),
                 'X-Requested-With': 'XMLHttpRequest',
             },
-            body: JSON.stringify(data),
+            body: json,
         }).catch(() => undefined);
     };
 
     if (note.body !== undefined) {
-        send(notes.content(note.noteId), {
+        const json = JSON.stringify({
             body: note.body,
             updated_at: note.baseUpdatedAt,
         });
+
+        if (new TextEncoder().encode(json).length > KEEPALIVE_MAX_BYTES) {
+            // Too large: the browser would drop it silently. The stash
+            // keeps it; sending the title alone would bump `updated_at`
+            // and make the stashed body unrecoverable.
+            return null;
+        }
+
+        send(notes.content(note.noteId), json);
+
+        return 'body';
     }
 
     if (note.pendingTitle !== null) {
-        send(notes.update(note.noteId), { title: note.pendingTitle });
+        send(
+            notes.update(note.noteId),
+            JSON.stringify({ title: note.pendingTitle }),
+        );
+
+        return 'title';
     }
+
+    return null;
 }

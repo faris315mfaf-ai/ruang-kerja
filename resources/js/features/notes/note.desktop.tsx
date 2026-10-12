@@ -104,6 +104,7 @@ export function NoteDesktop({
     const [toolbarHeight, setToolbarHeight] = useState(52);
     const toolbarVisible = useToolbarVisibility(
         session.editable ? session.editor : null,
+        toolbarBox,
     );
 
     useLayoutEffect(() => {
@@ -465,19 +466,20 @@ export function NoteDesktop({
                     ) : (
                         <>
                             {session.editable && session.editor && (
-                                <div className="sticky top-0 z-10 lg:top-(--menu-bar-height)">
+                                <div
+                                    className="pointer-events-none sticky top-0 z-10 lg:top-(--menu-bar-height)"
+                                    // The bar's room stays reserved: showing
+                                    // or hiding it never moves the text.
+                                    style={{ minHeight: toolbarHeight }}
+                                >
                                     <div
                                         aria-hidden={!toolbarVisible}
-                                        className="overflow-hidden transition-[height,opacity,visibility] duration-180 ease-brand"
-                                        style={{
-                                            height: toolbarVisible
-                                                ? toolbarHeight
-                                                : 0,
-                                            opacity: toolbarVisible ? 1 : 0,
-                                            visibility: toolbarVisible
-                                                ? 'visible'
-                                                : 'hidden',
-                                        }}
+                                        className={cn(
+                                            'transition-[opacity,transform,visibility] duration-180 ease-brand motion-reduce:transition-none',
+                                            toolbarVisible
+                                                ? 'pointer-events-auto visible translate-y-0 opacity-100'
+                                                : 'invisible -translate-y-1 opacity-0',
+                                        )}
                                     >
                                         <div
                                             ref={toolbarBox}

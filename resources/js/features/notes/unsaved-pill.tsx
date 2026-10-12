@@ -7,7 +7,7 @@ import { cn, focusRing } from '@/lib/utils';
 import {
     flushUnsavedChanges,
     settleUnsavedChanges,
-    useUnsavedNote,
+    useUnsavedNotes,
     type UnsavedState,
 } from './unsaved-store';
 import type { NoteShowProps } from './types';
@@ -81,11 +81,18 @@ export function UnsavedNotePill() {
     const page = usePage<{ note?: NoteShowProps }>();
     const { features } = page.props;
     const breakpoint = useBreakpoint();
-    const unsaved = useUnsavedNote();
-    const onNote =
-        page.component === 'notes/show' &&
-        unsaved !== null &&
-        page.props.note?.current.id === unsaved.noteId;
+    const openNoteId =
+        page.component === 'notes/show'
+            ? page.props.note?.current.id
+            : undefined;
+    // One pill: the most recent stuck note other than the one open (its
+    // own status UI covers it); the rest are counted.
+    const others = useUnsavedNotes().filter(
+        (entry) => entry.noteId !== openNoteId,
+    );
+    const unsaved = others.at(-1) ?? null;
+    const more = Math.max(0, others.length - 1);
+    const onNote = false;
     const view = unsavedPillState({
         unsaved,
         onNote,
@@ -97,12 +104,13 @@ export function UnsavedNotePill() {
     const [rendered, setRendered] = useState<{
         unsaved: UnsavedState;
         view: UnsavedPillView;
-    } | null>(shown && unsaved && view ? { unsaved, view } : null);
+        more: number;
+    } | null>(shown && unsaved && view ? { unsaved, view, more } : null);
     const [closing, setClosing] = useState(false);
 
     useEffect(() => {
         if (shown && unsaved && view) {
-            setRendered({ unsaved, view });
+            setRendered({ unsaved, view, more });
             setClosing(false);
 
             return;
@@ -115,20 +123,20 @@ export function UnsavedNotePill() {
         }, EXIT_MS);
 
         return () => window.clearTimeout(timer);
-    }, [shown, unsaved, view]);
+    }, [shown, unsaved, view, more]);
 
     if (!rendered || breakpoint === null) {
         return null;
     }
 
-    const { unsaved: stuck, view: pill } = rendered;
+    const { unsaved: stuck, view: pill, more: extra } = rendered;
     const busy = stuck.phase === 'saving';
     const title = stuck.title || 'Tanpa judul';
 
     // Body tap: let the running save finish, then open the note with the
     // saved content (a conflict reloads the same way).
     const openNote = () => {
-        void settleUnsavedChanges().then(() => {
+        void settleUnsavedChanges(stuck.noteId).then(() => {
             router.visit(`/catatan/${stuck.noteId}`);
         });
     };
@@ -149,7 +157,7 @@ export function UnsavedNotePill() {
                     'glass-strong pointer-events-auto flex min-w-0 items-center gap-1 rounded-full pr-1.5 pl-1.5 shadow-float',
                     'data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-2',
                     'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2',
-                    'animation-duration-180',
+                    'animation-duration-180 motion-reduce:animate-none',
                 )}
             >
                 <button
@@ -195,6 +203,7 @@ export function UnsavedNotePill() {
                         </span>
                         <span className="max-w-[220px] truncate text-[12px] font-semibold text-text-muted">
                             {title}
+                            {extra > 0 && ` · +${extra} catatan lain`}
                         </span>
                     </span>
                 </button>
@@ -203,7 +212,7 @@ export function UnsavedNotePill() {
                         type="button"
                         onClick={
                             pill.action.kind === 'save'
-                                ? () => void flushUnsavedChanges()
+                                ? () => void flushUnsavedChanges(stuck.noteId)
                                 : openNote
                         }
                         disabled={busy}

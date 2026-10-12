@@ -1,5 +1,5 @@
 import type { Editor } from '@tiptap/react';
-import { useEffect, useRef, useState } from 'react';
+import { type RefObject, useEffect, useRef, useState } from 'react';
 
 /** Hide the formatting bar this long after the last keystroke / caret move. */
 export const TOOLBAR_IDLE_MS = 1800;
@@ -9,6 +9,7 @@ export const TOOLBAR_IDLE_MS = 1800;
  * only shows while the user is actually working on the text — a non-empty
  * selection keeps it, plain focus or typing shows it for the idle window —
  * and it hides again on blur (keyboard closed) or once the user goes idle.
+ * Focus inside the bar itself (Tab into it, an open colour menu) pins it.
  */
 export function shouldShowToolbar(
     /** Timestamp of the last keystroke/caret move/focus, null = never. */
@@ -17,7 +18,13 @@ export function shouldShowToolbar(
     focused: boolean,
     now: number,
     idleMs = TOOLBAR_IDLE_MS,
+    /** Focus is inside the bar or one of its open menus. */
+    pinned = false,
 ): boolean {
+    if (pinned) {
+        return true;
+    }
+
     if (!focused) {
         return false;
     }
@@ -29,9 +36,35 @@ export function shouldShowToolbar(
     return lastInteraction !== null && now - lastInteraction < idleMs;
 }
 
+/**
+ * Is this focus target part of the formatting bar: inside it, or inside a
+ * menu (Radix portal content) opened from one of its buttons — followed
+ * through `aria-labelledby` to the trigger, nested menus included.
+ */
+export function belongsToToolbar(
+    target: EventTarget | null,
+    toolbar: HTMLElement | null,
+    depth = 0,
+): boolean {
+    if (!toolbar || !(target instanceof Element) || depth > 4) {
+        return false;
+    }
+
+    if (toolbar.contains(target)) {
+        return true;
+    }
+
+    const menu = target.closest('[role="menu"], [role="listbox"]');
+    const owner = menu?.getAttribute('aria-labelledby');
+    const trigger = owner ? target.ownerDocument.getElementById(owner) : null;
+
+    return trigger !== null && belongsToToolbar(trigger, toolbar, depth + 1);
+}
+
 type Activity = {
     hasSelection: boolean;
     focused: boolean;
+    pinned: boolean;
     last: number | null;
 };
 
@@ -40,11 +73,16 @@ type Activity = {
  * for the auto-hiding formatting bar. Attaches to the editor instance the
  * session already owns, so `note-editor.tsx` stays untouched.
  */
-export function useToolbarVisibility(editor: Editor | null): boolean {
+export function useToolbarVisibility(
+    editor: Editor | null,
+    /** The bar's wrapper: focus inside it (or its menus) keeps it shown. */
+    toolbar?: RefObject<HTMLElement | null>,
+): boolean {
     const [visible, setVisible] = useState(false);
     const activity = useRef<Activity>({
         hasSelection: false,
         focused: false,
+        pinned: false,
         last: null,
     });
     const timer = useRef<number | undefined>(undefined);
@@ -73,6 +111,8 @@ export function useToolbarVisibility(editor: Editor | null): boolean {
                 activity.current.hasSelection,
                 activity.current.focused,
                 now,
+                TOOLBAR_IDLE_MS,
+                activity.current.pinned,
             );
             setVisible(next);
 
@@ -80,7 +120,11 @@ export function useToolbarVisibility(editor: Editor | null): boolean {
             // bar until it collapses or the editor blurs, so no timer then).
             window.clearTimeout(timer.current);
 
-            if (next && !activity.current.hasSelection) {
+            if (
+                next &&
+                !activity.current.hasSelection &&
+                !activity.current.pinned
+            ) {
                 timer.current = window.setTimeout(
                     () => evaluate(false),
                     TOOLBAR_IDLE_MS,
@@ -89,10 +133,43 @@ export function useToolbarVisibility(editor: Editor | null): boolean {
         };
         const onFocus = () => {
             activity.current.focused = true;
+            activity.current.pinned = false;
             evaluate(true);
         };
-        const onBlur = () => {
+        const onBlur = ({ event }: { event: FocusEvent }) => {
             activity.current.focused = false;
+            // Tab into the bar / a colour menu opening: not a real blur.
+            activity.current.pinned = belongsToToolbar(
+                event.relatedTarget,
+                toolbar?.current ?? null,
+            );
+            evaluate(false);
+        };
+        // While pinned, follow focus moving around the bar and its menus.
+        const onFocusIn = (event: FocusEvent) => {
+            if (activity.current.focused) {
+                return;
+            }
+
+            const pinned = belongsToToolbar(
+                event.target,
+                toolbar?.current ?? null,
+            );
+
+            if (pinned !== activity.current.pinned) {
+                activity.current.pinned = pinned;
+                evaluate(false);
+            }
+        };
+        const onFocusOut = (event: FocusEvent) => {
+            if (
+                !activity.current.pinned ||
+                belongsToToolbar(event.relatedTarget, toolbar?.current ?? null)
+            ) {
+                return;
+            }
+
+            activity.current.pinned = false;
             evaluate(false);
         };
         const onSelection = () => evaluate(true);
@@ -102,14 +179,20 @@ export function useToolbarVisibility(editor: Editor | null): boolean {
         editor.on('blur', onBlur);
         editor.on('selectionUpdate', onSelection);
         editor.on('update', onUpdate);
+        document.addEventListener('focusin', onFocusIn);
+        document.addEventListener('focusout', onFocusOut);
 
         return () => {
+            document.removeEventListener('focusin', onFocusIn);
+            document.removeEventListener('focusout', onFocusOut);
             editor.off('focus', onFocus);
             editor.off('blur', onBlur);
             editor.off('selectionUpdate', onSelection);
             editor.off('update', onUpdate);
             window.clearTimeout(timer.current);
         };
+        // The ref object is stable.
+        // oxlint-disable-next-line react-hooks/exhaustive-deps
     }, [editor]);
 
     return visible;
