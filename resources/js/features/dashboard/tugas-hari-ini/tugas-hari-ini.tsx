@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { ClipboardCheck } from 'lucide-react';
 import { useState } from 'react';
 import { EmptyState } from '@/components/empty-state';
@@ -56,20 +56,17 @@ function priorityTone(priority: string) {
  * saat absen masuk (source `attendance`), "penugasan atasan" untuk tugas tim
  * yang ditugaskan ke pengguna.
  */
-function sourceMarker(
+export function sourceMarker(
     item: TugasHariIniItem,
     inTim: boolean,
-    viewerName: string | undefined,
 ): { label: string; tone: 'info' } | null {
     if (item.source === 'attendance') {
         return { label: 'dari absen', tone: 'info' };
     }
 
-    if (
-        inTim &&
-        viewerName !== undefined &&
-        item.assignees.includes(viewerName)
-    ) {
+    // Server flag (penanggung jawab = penonton, ditugaskan orang lain);
+    // dulu dicocokkan lewat nama, yang salah untuk nama kembar.
+    if (inTim && item.assigned_by_other === true) {
         return { label: 'penugasan atasan', tone: 'info' };
     }
 
@@ -83,8 +80,7 @@ function MetaChips({
     item: TugasHariIniItem;
     inTim: boolean;
 }) {
-    const viewerName = usePage().props.auth.user?.name;
-    const marker = sourceMarker(item, inTim, viewerName);
+    const marker = sourceMarker(item, inTim);
     const priority = item.priority === 'Tanpa' ? null : item.priority;
 
     return (

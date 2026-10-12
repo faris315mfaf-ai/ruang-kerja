@@ -16,6 +16,11 @@ export type TugasHariIniItem = {
     assignees: string[];
     /** `attendance` = dibuat dari rencana kerja saat absen masuk. */
     source: 'manual' | 'attendance';
+    /**
+     * Ditugaskan ke penonton oleh orang lain (badge "penugasan atasan").
+     * Opsional sampai semua server mengirimnya.
+     */
+    assigned_by_other?: boolean;
     /** /w/{KEY}/tasks/{n}. */
     url: string;
 };

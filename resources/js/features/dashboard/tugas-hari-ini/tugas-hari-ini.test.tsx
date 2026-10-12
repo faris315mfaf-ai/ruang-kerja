@@ -53,7 +53,21 @@ const timTasks: TugasHariIniItem[] = [
         priority: 'Tanpa',
         assignees: ['Andi Pratama', 'Budi'],
         source: 'manual',
+        assigned_by_other: true,
         url: '/w/TMH/tasks/3',
+    },
+    {
+        id: 't3',
+        key: 'TMH-4',
+        title: 'Tugas rekan bernama sama',
+        workspace: { key: 'TMH', name: 'Tim Produk' },
+        status: { name: 'Todo', category: 'todo', is_done: false },
+        priority: 'Tanpa',
+        // Same display name as the viewer, but not assigned to them.
+        assignees: ['Andi Pratama'],
+        source: 'manual',
+        assigned_by_other: false,
+        url: '/w/TMH/tasks/4',
     },
 ];
 
@@ -89,10 +103,12 @@ describe('TugasHariIniCard', () => {
     it('switches to Tim and marks tasks assigned by the lead', () => {
         render(<TugasHariIniCard tugas={payload} variant="desktop" />);
 
-        fireEvent.click(screen.getByRole('tab', { name: /Tim 1/ }));
+        fireEvent.click(screen.getByRole('tab', { name: /Tim 2/ }));
 
         expect(screen.getByText('Rilis fitur absensi')).toBeTruthy();
-        expect(screen.getByText('penugasan atasan')).toBeTruthy();
+        expect(screen.getByText('Tugas rekan bernama sama')).toBeTruthy();
+        // From the server flag, not a name match: exactly one badge.
+        expect(screen.getAllByText('penugasan atasan')).toHaveLength(1);
         // "Tanpa" priority never becomes a chip.
         expect(screen.queryByText('Tanpa')).toBeNull();
     });
