@@ -7,6 +7,7 @@ use App\Models\Note;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\DB;
 
 /**
  * "Mode tanpa kolaborasi": when the collab server cannot be reached the
@@ -30,14 +31,22 @@ final class SaveNoteContent
     {
         $base = CarbonImmutable::parse($baseUpdatedAt);
 
-        if ($note->updated_at !== null && $note->updated_at->getTimestamp() !== $base->getTimestamp()) {
-            throw new HttpResponseException(response()->json([
-                'message' => 'Catatan ini baru saja diubah orang lain. Muat ulang untuk melihat versi terbaru sebelum menyimpan.',
-                'updated_at' => $note->updated_at->toIso8601String(),
-            ], 409));
-        }
+        // Compare and store under the row lock: checking updated_at before
+        // the transaction let two saves on the same base both pass.
+        DB::transaction(function () use ($note, $editor, $document, $base): void {
+            /** @var Note $locked */
+            $locked = Note::query()->whereKey($note->id)->lockForUpdate()->firstOrFail();
 
-        $this->store->handle($note, null, $document, $editor);
+            if ($locked->updated_at !== null && $locked->updated_at->getTimestamp() !== $base->getTimestamp()) {
+                throw new HttpResponseException(response()->json([
+                    'message' => 'Catatan ini baru saja diubah orang lain. Muat ulang untuk melihat versi terbaru sebelum menyimpan.',
+                    'updated_at' => $locked->updated_at->toIso8601String(),
+                ], 409));
+            }
+
+            $this->store->handle($note, null, $document, $editor);
+        });
+
         $this->collab->replace($note, $note->content);
 
         return $note;

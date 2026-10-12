@@ -62,6 +62,42 @@ final class NoteHtml
         return $blocks === [] ? null : ['type' => 'doc', 'content' => $blocks];
     }
 
+    /**
+     * Whether the mobile app may replace the document from plain text
+     * without losing anything: empty, or only paragraphs of unmarked text
+     * and hard breaks. Headings, lists, marks, mentions, task references or
+     * any other node make the note "rich" — the app edits it read-only and
+     * the API refuses a body save (409 `rich_note`).
+     *
+     * @param  array<string, mixed>|null  $document
+     */
+    public static function isMobileEditable(?array $document): bool
+    {
+        foreach (is_array($document) ? ($document['content'] ?? []) : [] as $block) {
+            if (! is_array($block) || ($block['type'] ?? null) !== 'paragraph') {
+                return false;
+            }
+
+            foreach (is_array($block['content'] ?? null) ? $block['content'] : [] as $inline) {
+                if (! is_array($inline)) {
+                    return false;
+                }
+
+                $type = $inline['type'] ?? null;
+
+                if ($type === 'hardBreak') {
+                    continue;
+                }
+
+                if ($type !== 'text' || ! empty($inline['marks'])) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     /*
      * Rendering: Tiptap JSON → HTML.
      */
@@ -87,9 +123,9 @@ final class NoteHtml
             'taskItem' => sprintf(
                 '<li data-type="taskItem" data-checked="%s">%s</li>',
                 ($node['attrs']['checked'] ?? false) === true ? 'true' : 'false',
-                self::renderInline($content),
+                self::renderItemContent($content),
             ),
-            'listItem' => '<li>'.self::renderInline($content).'</li>',
+            'listItem' => '<li>'.self::renderItemContent($content).'</li>',
             'codeBlock' => sprintf(
                 '<pre%1$s><code>%2$s</code></pre>',
                 is_string($node['attrs']['language'] ?? null) ? ' data-language="'.self::escape($node['attrs']['language']).'"' : '',
@@ -112,6 +148,53 @@ final class NoteHtml
         }
 
         return $html;
+    }
+
+    /**
+     * Content of a list/task item: paragraphs and nested lists (Tiptap
+     * `paragraph block*`), rendered as blocks so marks and nested lists
+     * survive. Older documents stored inline nodes straight in the item;
+     * such runs are wrapped into a paragraph instead of being dropped.
+     *
+     * @param  array<int, mixed>  $nodes
+     */
+    private static function renderItemContent(array $nodes): string
+    {
+        $html = '';
+        $inline = [];
+
+        foreach ($nodes as $node) {
+            if (! is_array($node)) {
+                continue;
+            }
+
+            if (self::isInlineNode($node)) {
+                $inline[] = $node;
+
+                continue;
+            }
+
+            if ($inline !== []) {
+                $html .= '<p>'.self::renderInline($inline).'</p>';
+                $inline = [];
+            }
+
+            $html .= self::renderBlock($node);
+        }
+
+        if ($inline !== []) {
+            $html .= '<p>'.self::renderInline($inline).'</p>';
+        }
+
+        return $html;
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     */
+    private static function isInlineNode(array $node): bool
+    {
+        return in_array($node['type'] ?? null, ['text', 'hardBreak', 'mention', 'taskReference'], true);
     }
 
     /**
@@ -204,7 +287,7 @@ final class NoteHtml
         $loose = [];
 
         $flush = function () use (&$loose, &$blocks): void {
-            $inline = self::parseInline($loose);
+            $inline = self::parseInline(self::withoutTrailingSpace($loose));
 
             if ($inline !== []) {
                 $blocks[] = ['type' => 'paragraph', 'content' => $inline];
@@ -217,6 +300,10 @@ final class NoteHtml
             if (! $child instanceof \DOMElement) {
                 if ($child instanceof \DOMText && trim($child->wholeText ?? $child->textContent) !== '') {
                     $loose[] = $child;
+                } elseif ($child instanceof \DOMText && $loose !== []) {
+                    // A space between two inline elements ("<b>a</b> <i>b</i>")
+                    // is content; source-formatting newlines are not breaks.
+                    $loose[] = new \DOMText(' ');
                 }
 
                 continue;
@@ -239,6 +326,22 @@ final class NoteHtml
         $flush();
 
         return $blocks;
+    }
+
+    /**
+     * Whitespace kept between inline elements is not content at the end of
+     * a run.
+     *
+     * @param  list<\DOMNode>  $nodes
+     * @return list<\DOMNode>
+     */
+    private static function withoutTrailingSpace(array $nodes): array
+    {
+        while ($nodes !== [] && $nodes[count($nodes) - 1] instanceof \DOMText && trim($nodes[count($nodes) - 1]->textContent) === '') {
+            array_pop($nodes);
+        }
+
+        return $nodes;
     }
 
     /**
@@ -283,7 +386,7 @@ final class NoteHtml
 
             foreach ($element->childNodes as $child) {
                 if ($child instanceof \DOMElement && strtolower($child->nodeName) === 'li') {
-                    $items[] = ['type' => 'taskItem', 'attrs' => ['checked' => $child->getAttribute('data-checked') === 'true'], 'content' => self::parseInline(self::children($child))];
+                    $items[] = ['type' => 'taskItem', 'attrs' => ['checked' => $child->getAttribute('data-checked') === 'true'], 'content' => self::parseItemContent($child)];
                 }
             }
 
@@ -295,7 +398,7 @@ final class NoteHtml
 
             foreach ($element->childNodes as $child) {
                 if ($child instanceof \DOMElement && strtolower($child->nodeName) === 'li') {
-                    $items[] = ['type' => 'listItem', 'content' => self::parseInline(self::children($child))];
+                    $items[] = ['type' => 'listItem', 'content' => self::parseItemContent($child)];
                 }
             }
 
@@ -315,6 +418,25 @@ final class NoteHtml
         // p, div and anything unknown: transparent — children join the level
         // above (a div around paragraphs must not eat them).
         return self::parseBlocks($element->childNodes);
+    }
+
+    /**
+     * An <li> as Tiptap item content (`paragraph block*`): loose inline runs
+     * become paragraphs, nested <ul>/<ol> stay lists, and an item that does
+     * not start with a paragraph (empty, or only a nested list) gets an
+     * empty one first so the editor schema accepts it.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private static function parseItemContent(\DOMElement $item): array
+    {
+        $blocks = self::parseBlocks($item->childNodes);
+
+        if ($blocks === [] || ($blocks[0]['type'] ?? null) !== 'paragraph') {
+            array_unshift($blocks, ['type' => 'paragraph']);
+        }
+
+        return $blocks;
     }
 
     /**

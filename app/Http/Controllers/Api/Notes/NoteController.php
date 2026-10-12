@@ -14,6 +14,7 @@ use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 /**
  * One note of the mobile app (API v1). GET answers the web detail (title,
@@ -25,6 +26,10 @@ use Illuminate\Support\Facades\Gate;
  * with the same 409 body as the web. Live Yjs collaboration is not part of
  * this API: the web keeps editing through the collab server, the app
  * autosaves over REST and reloads on 409.
+ *
+ * The app edits plain text only: `mobile_editable` (detail) is true when the
+ * document holds nothing but unmarked paragraphs; a body save on any other
+ * note is refused with 409 {code: 'rich_note'} (rename still works).
  */
 class NoteController extends Controller
 {
@@ -36,7 +41,7 @@ class NoteController extends Controller
     {
         Gate::authorize('view', $note);
 
-        return response()->json(['note' => NoteDetail::make($note, $user, $this->library)]);
+        return response()->json(['note' => $this->detail($note, $user)]);
     }
 
     public function update(NoteUpdateRequest $request, Note $note, #[CurrentUser] User $user, RenameNote $rename, SaveNoteContent $save): JsonResponse
@@ -44,16 +49,48 @@ class NoteController extends Controller
         Gate::authorize('update', $note);
 
         if ($request->has('body_html')) {
+            // The app edits plain text and replaces the whole document: a
+            // rich note (headings, lists, marks, mentions) would be flattened.
+            if (! self::mobileEditable($note)) {
+                return response()->json([
+                    'code' => 'rich_note',
+                    'message' => 'Catatan ini berformat lengkap. Sunting di web.',
+                ], 409);
+            }
+
             $save->handle(
                 $note,
                 $user,
                 NoteHtml::documentFromHtml($request->string('body_html')->toString()),
                 $request->string('updated_at')->toString(),
             );
-        } else {
+        } elseif ($request->has('title')) {
             $rename->handle($note, $user, (string) $request->input('title', ''));
+        } else {
+            throw ValidationException::withMessages([
+                'title' => 'Kirim title atau body_html.',
+            ]);
         }
 
-        return response()->json(['note' => NoteDetail::make($note->refresh(), $user, $this->library)]);
+        return response()->json(['note' => $this->detail($note->refresh(), $user)]);
+    }
+
+    /**
+     * NoteDetail plus `mobile_editable`: whether the app may edit the body
+     * (NoteHtml::isMobileEditable — plain paragraphs only). Folders: false.
+     *
+     * @return array<string, mixed>
+     */
+    private function detail(Note $note, User $user): array
+    {
+        return [
+            ...NoteDetail::make($note, $user, $this->library),
+            'mobile_editable' => self::mobileEditable($note),
+        ];
+    }
+
+    private static function mobileEditable(Note $note): bool
+    {
+        return ! $note->isFolder() && NoteHtml::isMobileEditable(is_array($note->content) ? $note->content : null);
     }
 }

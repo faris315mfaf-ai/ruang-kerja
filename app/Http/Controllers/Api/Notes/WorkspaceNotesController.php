@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Notes;
 
 use App\Domain\Notes\Actions\CreateNote;
 use App\Domain\Notes\Queries\NoteLibrary;
+use App\Domain\Notes\Services\NoteHtml;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\WorkspaceNoteStoreRequest;
 use App\Http\Resources\Api\NoteDetail;
@@ -43,7 +44,11 @@ class WorkspaceNotesController extends Controller
 
         $note = $create->handle($user, $workspace, ['title' => $request->string('title')->toString()]);
 
-        return response()->json(['note' => NoteDetail::make($note, $user, $library)], 201);
+        return response()->json(['note' => [
+            ...NoteDetail::make($note, $user, $library),
+            // Same field as GET /catatan/{note} (NoteController).
+            'mobile_editable' => ! $note->isFolder() && NoteHtml::isMobileEditable(is_array($note->content) ? $note->content : null),
+        ]], 201);
     }
 
     /**

@@ -121,7 +121,8 @@ test('a member creates an empty note through the web action', function () {
         ->assertJsonPath('note.title', 'Daftar tugas divisi')
         ->assertJsonPath('note.body_html', '')
         ->assertJsonPath('note.body_text', '')
-        ->assertJsonPath('note.can_edit', true);
+        ->assertJsonPath('note.can_edit', true)
+        ->assertJsonPath('note.mobile_editable', true);
 
     expect(Note::query()->where('workspace_id', $this->workspace->id)->count())->toBe(4);
 
@@ -185,11 +186,71 @@ test('body_html saves a new version and keeps the previous one', function () {
     expect($version)->not->toBeNull()
         ->and($version->content['content'][0]['content'][0]['text'] ?? null)->toBe('Cocokkan surat jalan');
 
-    // HTML asing (iframe/script) terdegradasi jadi teks, bukan node asing.
-    $this->withToken($token)->patchJson("/api/v1/catatan/{$this->note->id}", [
+    // HTML asing (iframe/script) terdegradasi jadi teks, bukan node asing
+    // (catatan polos lain: catatan di atas kini berformat lengkap).
+    $plain = Note::factory()->in($this->workspace)->by($this->member)->create([
+        'title' => 'Polos',
+        'content' => dokumenCatatan('Teks polos'),
+        'content_text' => 'Teks polos',
+    ]);
+
+    $this->withToken($token)->patchJson("/api/v1/catatan/{$plain->id}", [
         'body_html' => '<p>Aman</p><script>alert(1)</script><iframe src="https://jaha.t"></iframe>',
-        'updated_at' => $fresh->updated_at->toIso8601String(),
+        'updated_at' => $plain->updated_at->toIso8601String(),
     ])->assertOk()->assertJsonPath('note.body_html', '<p>Aman</p>');
+});
+
+test('a rich note is read-only for the app body: 409 rich_note, rename still works', function () {
+    $token = masukCatatan($this->member->email);
+
+    // Plain paragraphs (and empty notes) are editable from the app.
+    $this->withToken($token)->getJson("/api/v1/catatan/{$this->note->id}")
+        ->assertOk()
+        ->assertJsonPath('note.mobile_editable', true);
+
+    $rich = Note::factory()->in($this->workspace)->by($this->member)->create([
+        'title' => 'Berformat',
+        'content' => ['type' => 'doc', 'content' => [
+            ['type' => 'heading', 'attrs' => ['level' => 2], 'content' => [['type' => 'text', 'text' => 'Judul']]],
+            ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Isi']]],
+        ]],
+        'content_text' => "Judul\nIsi",
+    ]);
+    $marked = Note::factory()->in($this->workspace)->by($this->member)->create([
+        'title' => 'Bertanda',
+        'content' => ['type' => 'doc', 'content' => [
+            ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Tebal', 'marks' => [['type' => 'bold']]]]],
+        ]],
+        'content_text' => 'Tebal',
+    ]);
+
+    $this->withToken($token)->getJson("/api/v1/catatan/{$rich->id}")->assertJsonPath('note.mobile_editable', false);
+    $this->withToken($token)->getJson("/api/v1/catatan/{$marked->id}")->assertJsonPath('note.mobile_editable', false);
+    $this->withToken($token)->getJson("/api/v1/catatan/{$this->folder->id}")->assertJsonPath('note.mobile_editable', false);
+
+    $this->withToken($token)->patchJson("/api/v1/catatan/{$rich->id}", [
+        'body_html' => '<p>Teks datar</p>',
+        'updated_at' => $rich->updated_at->toIso8601String(),
+    ])->assertStatus(409)
+        ->assertExactJson(['code' => 'rich_note', 'message' => 'Catatan ini berformat lengkap. Sunting di web.']);
+
+    expect($rich->fresh()->content['content'][0]['type'])->toBe('heading');
+
+    // Renaming is still allowed.
+    $this->withToken($token)->patchJson("/api/v1/catatan/{$rich->id}", ['title' => 'Berformat baru'])
+        ->assertOk()
+        ->assertJsonPath('note.title', 'Berformat baru')
+        ->assertJsonPath('note.mobile_editable', false);
+});
+
+test('an empty PATCH is a validation error, not a rename to "Tanpa judul"', function () {
+    $token = masukCatatan($this->member->email);
+
+    $this->withToken($token)->patchJson("/api/v1/catatan/{$this->note->id}", [])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.title.0', 'Kirim title atau body_html.');
+
+    expect($this->note->fresh()->title)->toBe('SOP penerimaan');
 });
 
 test('a save on an older version conflicts with the same 409 body as the web', function () {
