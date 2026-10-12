@@ -21,7 +21,9 @@ const UnreadContext = createContext<UnreadValue | null>(null);
 export function UnreadProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [jumlah, setJumlah] = useState(0);
   const hidup = useRef(true);
-  const { status } = useSession();
+  const { status, blokir } = useSession();
+  // Selama server menolak sesi (wajib ganti sandi / setup 2FA) tidak ada yang dimuat.
+  const terblokir = blokir !== null;
 
   const muatUlang = useCallback(async (): Promise<void> => {
     try {
@@ -38,7 +40,7 @@ export function UnreadProvider({ children }: { children: React.ReactNode }): Rea
   // terpasang, termasuk sebelum login). Bergantung pada `status` supaya
   // lencana dimuat setelah login dan dikosongkan saat keluar.
   useEffect(() => {
-    if (status !== 'masuk') {
+    if (status !== 'masuk' || terblokir) {
       hidup.current = false;
       return;
     }
@@ -58,7 +60,7 @@ export function UnreadProvider({ children }: { children: React.ReactNode }): Rea
       // Keluar / ganti akun: jangan bawa lencana pengguna sebelumnya.
       setJumlah(0);
     };
-  }, [status, muatUlang]);
+  }, [status, terblokir, muatUlang]);
 
   const value = useMemo<UnreadValue>(
     () => ({ jumlah: status === 'masuk' ? jumlah : 0, perbarui: setJumlah, muatUlang }),
