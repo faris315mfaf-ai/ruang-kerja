@@ -82,7 +82,7 @@ i[data-i] svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:
 .appbar{padding:12px 16px 4px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .appbar .acts{display:flex;gap:8px}
 .ibtn{width:48px;height:48px;border-radius:24px;border:1px solid var(--border);background:var(--surface);display:inline-flex;align-items:center;justify-content:center;box-shadow:var(--shadow-card);position:relative}
-.ibtn .dot{position:absolute;top:8px;right:9px;min-width:18px;height:18px;border-radius:9px;background:#E5484D;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;padding:0 5px;border:2px solid var(--surface)}
+.ibtn .dot{position:absolute;top:8px;right:9px;min-width:18px;height:18px;border-radius:9px;background:#C42137;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;padding:0 5px;border:2px solid var(--surface)}
 .bar-sub{height:56px;display:flex;align-items:center;gap:8px;padding:0 8px 0 8px;background:var(--glass);backdrop-filter:blur(24px);border-bottom:1px solid var(--border)}
 .bar-sub .ttl{flex:1;font-size:17px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bar-sub .ibtn{border:0;box-shadow:none;background:transparent}
@@ -92,7 +92,7 @@ i[data-i] svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:
 .tab{flex:1;height:54px;border-radius:27px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;font-weight:700;color:var(--text-muted);position:relative}
 .tab i{--s:24px}
 .tab.on{background:var(--grad-active);color:var(--on-active)}
-.tab .badge-n{position:absolute;top:2px;right:10px;min-width:18px;height:18px;border-radius:9px;background:#E5484D;color:#fff;font-size:11px;line-height:18px;text-align:center;padding:0 5px}
+.tab .badge-n{position:absolute;top:2px;right:10px;min-width:18px;height:18px;border-radius:9px;background:#C42137;color:#fff;font-size:11px;line-height:18px;text-align:center;padding:0 5px}
 .tab.center{flex:none;width:54px;height:54px;margin-top:-26px;border-radius:27px;background:var(--grad-aksi);color:#fff;box-shadow:0 0 0 4px var(--surface),var(--shadow-btn);font-size:11px}
 .tab.center span{display:none}
 .tab-center-label{position:absolute}
@@ -131,6 +131,7 @@ i[data-i] svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:
 .btn.tonal{background:var(--link-soft);color:var(--link)}
 .btn.quiet{background:transparent;color:var(--link)}
 .btn.danger{background:var(--bad);color:#fff}
+[data-tema="malam"] .btn.danger{color:#2A0C14}
 .btn.sm{height:40px;padding:0 14px;font-size:14px;border-radius:12px}
 .btn.block{width:100%}
 .btn.off{background:var(--surface-2);color:var(--text-subtle);box-shadow:none}
