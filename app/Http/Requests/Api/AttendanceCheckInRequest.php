@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Api;
 
 use App\Domain\Attendance\Data\CheckInData;
+use App\Domain\Devices\Models\Device;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -14,8 +16,11 @@ use Throwable;
 /**
  * Multipart check-in of the mobile app (POST /api/v1/absensi/check-in).
  * Mirrors the web App\Http\Requests\Attendance\CheckInRequest — same rules
- * and Indonesian messages — except `device_id`, which the app always sends
- * as the SHA-256 hash of the raw device identifier (64 hex, like the login).
+ * and Indonesian messages — except the device fingerprint: it is never
+ * taken from the client (`device_id` is still validated for compatibility but
+ * ignored) but from the installation that owns the Sanctum token
+ * (Device::forAccessToken), i.e. the hash registered at login. A token that
+ * is not tied to a device yields no fingerprint.
  */
 class AttendanceCheckInRequest extends FormRequest
 {
@@ -107,12 +112,20 @@ class AttendanceCheckInRequest extends FormRequest
             accuracyM: $this->filled('accuracy') ? (float) $this->input('accuracy') : null,
             clientTime: $clientTime,
             selfie: $selfie instanceof UploadedFile ? $selfie : throw new LogicException('Selfie divalidasi sebelumnya.'),
-            deviceFingerprint: $this->filled('device_id') ? strtolower($this->string('device_id')->toString()) : null,
+            deviceFingerprint: $this->deviceFingerprint(),
             ipAddress: $this->ip(),
             userAgent: $this->userAgent(),
             note: $this->filled('note') ? $this->string('note')->toString() : null,
             workPlan: $this->workPlan(),
         );
+    }
+
+    /** The device hash registered with the caller's token, never client input. */
+    private function deviceFingerprint(): ?string
+    {
+        $user = $this->user();
+
+        return $user instanceof User ? Device::forAccessToken($user)?->device_id_hash : null;
     }
 
     /**

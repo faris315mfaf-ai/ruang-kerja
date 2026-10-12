@@ -2,14 +2,17 @@
 
 use App\Domain\Attendance\Enums\AttendanceMethod;
 use App\Domain\Attendance\Events\AttendanceRecorded;
+use App\Domain\Attendance\Jobs\CreateWorkPlanTasksForDay;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Organization\Enums\WorkMode;
+use App\Domain\Tasks\Actions\CreateWorkPlanTasks;
 use App\Domain\Tasks\Enums\TaskSource;
 use App\Domain\Workspaces\Enums\WorkspaceType;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -237,4 +240,42 @@ test('attendance endpoints reject requests without a token', function () {
     $this->getJson('/api/v1/absensi/riwayat')->assertUnauthorized();
     $this->post('/api/v1/absensi/check-in', [])->assertUnauthorized();
     $this->post('/api/v1/absensi/check-out', [])->assertUnauthorized();
+});
+
+test('the work-plan tasks are created after the check-in commits, never inside it', function () {
+    Queue::fake([CreateWorkPlanTasksForDay::class]);
+    $user = F::employee();
+    $this->travelTo(F::at('2026-10-05 07:52'));
+    $token = tokenAbsensi($user);
+
+    checkAbsensi($token, ['work_plan' => ['Selesaikan laporan mingguan']])->assertCreated();
+
+    // The check-in stands on its own; the task chain runs as a separate job.
+    $day = AttendanceDay::query()->sole();
+    expect($day->check_in_at)->not->toBeNull()
+        ->and(Task::query()->count())->toBe(0);
+
+    Queue::assertPushed(CreateWorkPlanTasksForDay::class, fn (CreateWorkPlanTasksForDay $job): bool => $job->attendanceDayId === $day->id);
+});
+
+test('the work-plan job is idempotent per day', function () {
+    $user = F::employee();
+    $this->travelTo(F::at('2026-10-05 07:52'));
+
+    checkAbsensi(tokenAbsensi($user), ['work_plan' => ['Satu', 'Dua']])->assertCreated();
+    $day = AttendanceDay::query()->sole();
+
+    (new CreateWorkPlanTasksForDay($day->id))->handle(app(CreateWorkPlanTasks::class));
+
+    expect(Task::query()->where('source_id', $day->id)->count())->toBe(2);
+});
+
+test('the check-in fingerprint is the device registered with the token, not client input', function () {
+    $user = F::employee();
+    $this->travelTo(F::at('2026-10-05 07:52'));
+    $token = tokenAbsensi($user);
+
+    checkAbsensi($token, ['device_id' => str_repeat('ef', 32)])->assertCreated();
+
+    expect(AttendanceDay::query()->sole()->checkInLog->device_fingerprint)->toBe(HASH_PONSEL);
 });

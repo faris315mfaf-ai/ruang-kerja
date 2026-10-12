@@ -12,6 +12,7 @@ use App\Domain\Attendance\Enums\AttendanceMethod;
 use App\Domain\Attendance\Enums\AttendanceStatus;
 use App\Domain\Attendance\Events\AttendanceRecorded;
 use App\Domain\Attendance\Exceptions\AttendanceException;
+use App\Domain\Attendance\Jobs\CreateWorkPlanTasksForDay;
 use App\Domain\Attendance\Models\AttendanceConsent;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Services\AttendanceLogWriter;
@@ -21,7 +22,6 @@ use App\Domain\Attendance\Services\SelfieStorage;
 use App\Domain\Notifications\Jobs\SendAttendanceWhatsApp;
 use App\Domain\Notifications\Services\EvolutionWhatsApp;
 use App\Domain\Organization\Enums\WorkMode;
-use App\Domain\Tasks\Actions\CreateWorkPlanTasks;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -35,13 +35,15 @@ use Throwable;
  */
 final class CheckIn
 {
+    /** Unique index of attendance_days (user_id, work_date): a parallel check-in won the race. */
+    private const string DAY_UNIQUE_INDEX = 'attendance_days_user_id_work_date_unique';
+
     public function __construct(
         private readonly ScheduleResolver $schedules,
         private readonly PresenceVerifier $presence,
         private readonly SelfieStorage $selfies,
         private readonly AttendanceLogWriter $logs,
         private readonly EvolutionWhatsApp $whatsapp,
-        private readonly CreateWorkPlanTasks $workPlanTasks,
     ) {}
 
     public function handle(User $user, CheckInData|QrCheckInData $data): AttendanceResult
@@ -100,16 +102,16 @@ final class CheckIn
                 $day->is_suspicious = $day->is_suspicious || $log->is_suspicious;
                 $day->save();
 
-                // "Rencana kerja jadi tugas otomatis" (keputusan pemilik 9 Okt
-                // 2026): one task per work-plan point in the employee's personal
-                // workspace, inside this transaction (all-or-nothing, idempotent).
-                $this->workPlanTasks->handle($day);
-
                 return [$day, $log];
             });
-        } catch (UniqueConstraintViolationException) {
-            // A parallel request created the day first.
+        } catch (UniqueConstraintViolationException $exception) {
             $this->deleteSelfie($selfiePath);
+
+            if (! str_contains($exception->getMessage(), self::DAY_UNIQUE_INDEX)) {
+                throw $exception;
+            }
+
+            // A parallel request created the day first.
             $existing = AttendanceDay::query()->where('user_id', $user->id)->whereDate('work_date', $schedule->workDateString())->first();
 
             throw AttendanceException::alreadyCheckedIn($existing->check_in_at ?? $now);
@@ -120,6 +122,20 @@ final class CheckIn
         }
 
         AttendanceRecorded::dispatch($day, $log);
+
+        // "Rencana kerja jadi tugas otomatis" (keputusan pemilik 9 Okt 2026):
+        // one task per work-plan point in the personal workspace. Runs after
+        // the check-in committed (queued, idempotent per day) so a failure in
+        // the task chain never undoes the check-in.
+        if ($day->work_plan !== null && $day->work_plan !== []) {
+            try {
+                CreateWorkPlanTasksForDay::dispatch($day->id)->afterCommit();
+            } catch (Throwable $exception) {
+                // The check-in is committed; a failing task chain (or queue)
+                // is reported, never turned into a failed check-in.
+                report($exception);
+            }
+        }
 
         // Best-effort copy to the management WhatsApp group (Evolution API);
         // queued only while the channel is on, never blocks the check-in.
