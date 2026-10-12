@@ -5,6 +5,7 @@
  */
 import { StyleSheet, View } from 'react-native';
 
+import { useTheme } from '@/theme';
 import { Avatar, Card, Hero, Icon, ListRow, Pressable, Text, type AnyIconName, type IconTileTone } from '@/ui';
 
 export function GroupLabel({ children, action, onAction }: { children: string; action?: string; onAction?: () => void }): React.JSX.Element {
@@ -104,8 +105,9 @@ export function LencanaPeran({ children, ikon }: { children: string; ikon?: AnyI
 
 /** Baris label (kiri, muted) – nilai (kanan, tebal). */
 export function BarisNilai({ label, nilai, sub, divider = true }: { label: string; nilai: string; sub?: string | null; divider?: boolean }): React.JSX.Element {
+  const { colors } = useTheme();
   return (
-    <View style={[s.nilai, divider ? s.garis : null]}>
+    <View style={[s.nilai, divider ? [s.garis, { borderBottomColor: colors.divider }] : null]}>
       <Text variant="body" tone="muted" style={{ fontSize: 16, flexShrink: 0 }}>
         {label}
       </Text>
@@ -139,5 +141,5 @@ const s = StyleSheet.create({
     marginTop: 6,
   },
   nilai: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, paddingVertical: 14 },
-  garis: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(132,149,168,0.35)' },
+  garis: { borderBottomWidth: StyleSheet.hairlineWidth },
 });

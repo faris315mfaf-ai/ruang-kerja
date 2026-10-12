@@ -254,7 +254,7 @@ function pesanUnduh(galat: unknown): GalatUnduh {
  * GET /privasi/ekspor?format=… dengan Bearer → berkas di cache aplikasi.
  * Nama tetap per format sehingga unduhan baru menimpa yang lama.
  */
-export async function unduhEkspor(format: FormatEkspor, onProgress?: (bagian: number | null) => void): Promise<File> {
+export async function unduhEkspor(format: FormatEkspor, signal?: AbortSignal): Promise<File> {
   const token = await tokenSesi();
   if (token === null) {
     throw new GalatUnduh('Sesi berakhir. Silakan masuk kembali.', 401);
@@ -268,9 +268,12 @@ export async function unduhEkspor(format: FormatEkspor, onProgress?: (bagian: nu
     return await File.downloadFileAsync(`${API_URL}/privasi/ekspor?format=${format}`, tujuan, {
       headers: { Authorization: `Bearer ${token}`, Accept: format === 'pdf' ? 'application/pdf' : 'application/octet-stream' },
       idempotent: true,
-      onProgress: (p) => onProgress?.(p.totalBytes > 0 ? p.bytesWritten / p.totalBytes : null),
+      signal,
     });
   } catch (galat) {
+    if (signal?.aborted) {
+      throw new GalatUnduh('Unduhan dibatalkan.');
+    }
     throw pesanUnduh(galat);
   }
 }

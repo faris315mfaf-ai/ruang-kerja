@@ -19,14 +19,20 @@ import { barisJabatan } from '@/features/settings/profile';
 import { useKeluar } from '@/features/settings/useKeluar';
 import { useProfilLengkap } from '@/features/settings/useProfilLengkap';
 import { useUnread } from '@/session/UnreadProvider';
-import { useTheme } from '@/theme';
-import { AppBar, Card, Gradient, OfflineBanner, Pressable, Screen, Skeleton, Text } from '@/ui';
+import { useTheme, type ThemeMode } from '@/theme';
+import { AppBar, BottomSheet, Card, Gradient, OfflineBanner, Pressable, Radio, Screen, Skeleton, Text } from '@/ui';
 
 interface RuangKartu extends WorkspaceItem {
   pribadi: boolean;
 }
 
 const GRADIEN_KARTU = ['merek', 'indigo', 'aksi', 'hangat'] as const;
+
+const PILIHAN_TEMA: { nilai: ThemeMode; label: string }[] = [
+  { nilai: 'light', label: 'Terang' },
+  { nilai: 'dark', label: 'Gelap' },
+  { nilai: 'system', label: 'Ikuti sistem' },
+];
 
 function labelTema(mode: string): string {
   return mode === 'light' ? 'Terang' : mode === 'dark' ? 'Gelap' : 'Ikuti sistem';
@@ -60,7 +66,8 @@ function KartuWorkspace({ ruang, indeks }: { ruang: RuangKartu; indeks: number }
 }
 
 export default function LayarLainnya(): React.JSX.Element {
-  const { colors, mode } = useTheme();
+  const { colors, mode, setMode, dark } = useTheme();
+  const [sheetTema, setSheetTema] = useState(false);
   const { jumlah: belumBaca } = useUnread();
   const { profil, peran, memuat, offline, muatUlang } = useProfilLengkap();
   const { keluarDenganKonfirmasi } = useKeluar();
@@ -100,7 +107,7 @@ export default function LayarLainnya(): React.JSX.Element {
 
   const akun: ItemMenu[] = [
     { kunci: 'notifikasi', judul: 'Notifikasi', ikon: 'bell', onPress: () => router.push('/pengaturan/notifikasi-izin' as never) },
-    { kunci: 'tampilan', judul: 'Tampilan', subjudul: labelTema(mode), ikon: 'moon', onPress: () => router.push('/pengaturan/tampilan' as never) },
+    { kunci: 'tampilan', judul: 'Tampilan', subjudul: labelTema(mode), ikon: 'moon', onPress: () => setSheetTema(true) },
     { kunci: 'keamanan', judul: 'Keamanan & perangkat saya', ikon: 'shield-check', onPress: () => router.push('/pengaturan/keamanan' as never) },
     { kunci: 'privasi', judul: 'Privasi & Data Saya', ikon: 'lock', onPress: () => router.push('/privasi' as never) },
     { kunci: 'keluar', judul: 'Keluar', ikon: 'log-out', nada: 'bad', onPress: () => void keluarDenganKonfirmasi() },
@@ -170,6 +177,25 @@ export default function LayarLainnya(): React.JSX.Element {
         <GroupLabel>Akun & pengaturan</GroupLabel>
         <DaftarMenu items={akun} />
       </View>
+
+      <BottomSheet visible={sheetTema} onClose={() => setSheetTema(false)} title="Tampilan">
+        <View style={{ gap: 2, paddingBottom: 8 }}>
+          {PILIHAN_TEMA.map((p) => (
+            <Radio
+              key={p.nilai}
+              selected={mode === p.nilai}
+              label={p.label}
+              onSelect={() => {
+                setMode(p.nilai);
+                setSheetTema(false);
+              }}
+            />
+          ))}
+          <Text variant="meta" style={{ paddingTop: 8 }}>
+            {`Sekarang: ${dark ? 'gelap' : 'terang'}`}
+          </Text>
+        </View>
+      </BottomSheet>
     </Screen>
   );
 }

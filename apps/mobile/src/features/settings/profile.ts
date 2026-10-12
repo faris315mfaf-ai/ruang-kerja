@@ -120,9 +120,14 @@ export function labelPeran(kode: string): string {
   return kode in LABEL_PERAN ? LABEL_PERAN[kode as KodePeran] : kode;
 }
 
+/** Label peran terurut dari yang paling berwenang (untuk kode peran mentah). */
+export function labelDariKode(roles: readonly string[]): string[] {
+  return URUTAN_PERAN.filter((k) => roles.includes(k)).map(labelPeran);
+}
+
 /** Peran untuk lencana profil, terurut dari yang paling berwenang. */
 export function daftarLabelPeran(profil: ProfilLengkap): string[] {
-  return URUTAN_PERAN.filter((k) => profil.roles.includes(k)).map(labelPeran);
+  return labelDariKode(profil.roles);
 }
 
 /** Flag server: bawaan `bawaan` bila server belum mengirim flag itu. */
