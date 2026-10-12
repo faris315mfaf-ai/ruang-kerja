@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Domain\Auth\Actions\AuthenticateEmployee;
-use App\Domain\Devices\Actions\RegisterDevice;
+use App\Domain\Devices\Actions\SignInDevice;
 use App\Domain\Devices\Models\Device;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\LoginRequest;
@@ -11,6 +11,8 @@ use App\Models\User;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
+use Laravel\Fortify\LoginRateLimiter;
 
 /**
  * Authentication for the mobile app (POST /api/v1/auth/*). Credentials are
@@ -23,7 +25,8 @@ class AuthController extends Controller
 {
     public function __construct(
         private readonly AuthenticateEmployee $authenticate,
-        private readonly RegisterDevice $registerDevice,
+        private readonly SignInDevice $signInDevice,
+        private readonly LoginRateLimiter $limiter,
     ) {}
 
     /**
@@ -35,6 +38,14 @@ class AuthController extends Controller
      */
     public function store(LoginRequest $request): JsonResponse
     {
+        // Same per-email+IP lockout as the web login (Fortify's limiter, which
+        // AuthenticateEmployee increments on every failed attempt).
+        if ($this->limiter->tooManyAttempts($request)) {
+            return response()->json([
+                'message' => sprintf('Terlalu banyak percobaan masuk. Coba lagi dalam %d detik.', max(1, $this->limiter->availableIn($request))),
+            ], 429);
+        }
+
         $user = $this->authenticate->handle($request);
 
         if ($user->password_change_required) {
@@ -45,7 +56,7 @@ class AuthController extends Controller
             return $this->blocked('two_factor_required', 'Akun Super Admin harus masuk lewat web untuk saat ini (autentikasi dua faktor belum didukung aplikasi).');
         }
 
-        $device = $this->registerDevice->handle(
+        ['token' => $token] = $this->signInDevice->handle(
             $user,
             $request->platform(),
             $request->deviceIdHash(),
@@ -54,9 +65,7 @@ class AuthController extends Controller
             appVersion: $request->appVersion(),
         );
 
-        $tokenName = Device::sanctumTokenName($device->id);
-        $user->tokens()->where('name', $tokenName)->delete();
-        $token = $user->createToken($tokenName)->plainTextToken;
+        $this->limiter->clear($request);
 
         // Same bookkeeping as the web login (Listeners\RecordLogin): stamps
         // last_login_at; super admins never reach this point.
@@ -68,10 +77,19 @@ class AuthController extends Controller
         ]);
     }
 
-    /** Signs out only the token used for this call (other devices stay signed in). */
+    /**
+     * Signs out only this installation (other devices stay signed in): its
+     * token is revoked and its push token cleared, so the signed-out phone
+     * stops receiving notifications and its slot can be reused (RegisterDevice).
+     */
     public function destroy(#[CurrentUser] User $user): JsonResponse
     {
-        $user->currentAccessToken()->delete();
+        $device = Device::forAccessToken($user);
+
+        DB::transaction(function () use ($user, $device): void {
+            $device?->forceFill(['push_token' => null])->save();
+            $user->currentAccessToken()->delete();
+        });
 
         return response()->json(['message' => 'Berhasil keluar.']);
     }

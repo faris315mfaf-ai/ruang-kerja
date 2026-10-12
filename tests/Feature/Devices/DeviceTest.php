@@ -75,9 +75,10 @@ test('registering the same device again refreshes it instead of duplicating', fu
         ->and($refreshed->last_seen_at !== null && $refreshed->last_seen_at->greaterThanOrEqualTo($seenFirst))->toBeTrue();
 });
 
-test('a user cannot register more than five devices', function () {
+test('a user cannot register more than five signed-in devices', function () {
     $user = User::factory()->create();
-    Device::factory()->count(5)->for($user)->create();
+    Device::factory()->count(5)->for($user)->create()
+        ->each(fn (Device $device) => $user->createToken(Device::sanctumTokenName($device->id)));
 
     $exception = null;
 
@@ -189,4 +190,40 @@ test('the list scope returns only the viewer devices, newest first', function ()
     expect($ids)->toHaveCount(2)
         ->and($ids)->toContain($older->id)
         ->and($ids->first())->toBe($newest->id);
+});
+
+test('at the limit the least recently seen signed-out device makes room', function () {
+    $user = User::factory()->create();
+    $oldest = Device::factory()->for($user)->create(['last_seen_at' => now()->subDays(30)]);
+    $signedInButOld = Device::factory()->for($user)->create(['last_seen_at' => now()->subDays(60)]);
+    $user->createToken(Device::sanctumTokenName($signedInButOld->id));
+    Device::factory()->count(3)->for($user)->create(['last_seen_at' => now()->subDay()])
+        ->each(fn (Device $device) => $user->createToken(Device::sanctumTokenName($device->id)));
+
+    $new = deviceRegister($user, DevicePlatform::Android, DEVICE_HASH_A);
+
+    expect(Device::query()->where('user_id', $user->id)->count())->toBe(5)
+        ->and(Device::query()->whereKey($oldest->id)->exists())->toBeFalse()
+        ->and(Device::query()->whereKey($signedInButOld->id)->exists())->toBeTrue()
+        ->and(Device::query()->whereKey($new->id)->exists())->toBeTrue();
+});
+
+test('registering takes over a push token another account still holds on the same phone', function () {
+    $previous = User::factory()->create();
+    $held = Device::factory()->for($previous)->create(['push_token' => 'fcm-token-phone']);
+    $user = User::factory()->create();
+
+    // New device row (create path).
+    $device = deviceRegister($user, DevicePlatform::Android, DEVICE_HASH_A, ['push_token' => 'fcm-token-phone']);
+
+    expect($device->fresh()?->push_token)->toBe('fcm-token-phone')
+        ->and($held->fresh()?->push_token)->toBeNull();
+
+    // Existing device row (refresh path).
+    $held->forceFill(['push_token' => 'fcm-token-other'])->save();
+    $again = deviceRegister($user, DevicePlatform::Android, DEVICE_HASH_A, ['push_token' => 'fcm-token-other']);
+
+    expect($again->id)->toBe($device->id)
+        ->and($again->fresh()?->push_token)->toBe('fcm-token-other')
+        ->and($held->fresh()?->push_token)->toBeNull();
 });

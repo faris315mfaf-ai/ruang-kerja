@@ -47,6 +47,7 @@ final readonly class CompletePasswordReset
             // One explicit audit row instead of a generic user.updated.
             $user->saveQuietly();
             $this->sessions->deleteStoredSessions($user);
+            $this->sessions->revokeApiTokens($user);
 
             $locked->forceFill(['status' => PasswordResetStatus::Used, 'setup_token_hash' => null])->save();
 

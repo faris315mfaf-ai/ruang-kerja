@@ -61,6 +61,8 @@ class Device extends Model
     /** @use HasFactory<DeviceFactory> */
     use HasFactory, HasUlids;
 
+    private const string TOKEN_PREFIX = 'device:';
+
     /**
      * Name every Sanctum token of this installation carries ("device:{id}").
      * The API login names its token this way, so a re-login can replace the
@@ -69,7 +71,27 @@ class Device extends Model
      */
     public static function sanctumTokenName(string $deviceId): string
     {
-        return 'device:'.$deviceId;
+        return self::TOKEN_PREFIX.$deviceId;
+    }
+
+    /**
+     * The installation behind a Sanctum token named by sanctumTokenName(), or
+     * null for any other token (or none). Always scoped to the token owner.
+     */
+    public static function forAccessToken(User $user): ?self
+    {
+        // At runtime the "current token" may be absent (session request) or a
+        // TransientToken without a name, whatever the PHPDoc promises.
+        $name = data_get($user->currentAccessToken(), 'name');
+
+        if (! is_string($name) || ! str_starts_with($name, self::TOKEN_PREFIX)) {
+            return null;
+        }
+
+        return self::query()
+            ->where('user_id', $user->id)
+            ->whereKey(substr($name, strlen(self::TOKEN_PREFIX)))
+            ->first();
     }
 
     /**

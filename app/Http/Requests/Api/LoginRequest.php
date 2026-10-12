@@ -32,7 +32,7 @@ class LoginRequest extends FormRequest
             'device.platform' => ['required', Rule::enum(DevicePlatform::class)],
             'device.device_id_hash' => ['required', 'string', 'regex:/^[0-9a-fA-F]{64}$/'],
             'device.name' => ['nullable', 'string', 'max:100'],
-            'device.os_version' => ['nullable', 'string', 'max:50'],
+            'device.os_version' => ['nullable', 'string', 'max:40'],
             'device.app_version' => ['nullable', 'string', 'max:30'],
         ];
     }
@@ -53,7 +53,7 @@ class LoginRequest extends FormRequest
             'device.device_id_hash.required' => 'Identitas perangkat wajib dikirim.',
             'device.device_id_hash.regex' => 'Identitas perangkat tidak valid.',
             'device.name.max' => 'Nama perangkat maksimal 100 karakter.',
-            'device.os_version.max' => 'Versi sistem operasi maksimal 50 karakter.',
+            'device.os_version.max' => 'Versi sistem operasi maksimal 40 karakter.',
             'device.app_version.max' => 'Versi aplikasi maksimal 30 karakter.',
         ];
     }
@@ -78,7 +78,7 @@ class LoginRequest extends FormRequest
 
     public function osVersion(): ?string
     {
-        return $this->optionalString('device.os_version', 50);
+        return $this->optionalString('device.os_version', 40);
     }
 
     public function appVersion(): ?string

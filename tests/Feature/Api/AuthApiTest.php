@@ -1,6 +1,9 @@
 <?php
 
 use App\Domain\Auth\Actions\AuthenticateEmployee;
+use App\Domain\Auth\Actions\ChangeOwnPassword;
+use App\Domain\Auth\Actions\ResetPasswordsToDefault;
+use App\Domain\Auth\Actions\SetEmployeePassword;
 use App\Domain\Devices\Models\Device;
 use App\Domain\Organization\Enums\Role;
 use App\Domain\Organization\Enums\UserStatus;
@@ -11,6 +14,7 @@ use App\Models\Position;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Contracts\Auth\Factory;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\PersonalAccessToken;
 use Tests\TestCase;
@@ -193,4 +197,101 @@ test('protected endpoints reject requests without a token', function () {
     $this->getJson('/api/v1/auth/saya')->assertUnauthorized();
     $this->postJson('/api/v1/auth/logout')->assertUnauthorized();
     $this->getJson('/api/v1/perangkat')->assertUnauthorized();
+});
+
+test('a password change revokes every API token and clears push tokens', function (Closure $change) {
+    Notification::fake();
+    $token = apiLogin()->json('token');
+    Device::query()->where('user_id', $this->user->id)->update(['push_token' => 'fcm-token-sebelum-ganti-sandi']);
+
+    $change($this->user);
+
+    expect(PersonalAccessToken::query()->where('tokenable_id', $this->user->id)->count())->toBe(0)
+        ->and(Device::query()->where('user_id', $this->user->id)->whereNotNull('push_token')->exists())->toBeFalse();
+
+    sebagaiToken($token)->getJson('/api/v1/auth/saya')->assertUnauthorized();
+})->with([
+    'ganti sendiri' => fn () => function (User $user): void {
+        app(ChangeOwnPassword::class)->handle($user, 'SandiBaruSaya123');
+    },
+    'diatur HR' => fn () => function (User $user): void {
+        $hr = User::factory()->forCompany($user->company)->withRole(Role::Hr)->create();
+        app(SetEmployeePassword::class)->handle($hr, $user, 'SandiDariHr123', false);
+    },
+    'reset ke sandi bawaan' => fn () => function (User $user): void {
+        config(['auth.employee_default_password' => 'ContohSandi123']);
+        app(ResetPasswordsToDefault::class)->handle();
+    },
+]);
+
+test('an existing token is blocked with a 403 code once a password change is required', function () {
+    $token = apiLogin()->json('token');
+
+    $this->user->forceFill(['password_change_required' => true])->save();
+
+    sebagaiToken($token)->getJson('/api/v1/auth/saya')
+        ->assertForbidden()
+        ->assertJsonPath('code', 'password_change_required');
+
+    // Logout stays reachable so the app can drop the token.
+    sebagaiToken($token)->postJson('/api/v1/auth/logout')->assertOk();
+});
+
+test('a token whose owner became Super Admin is blocked with two_factor_required', function () {
+    $token = apiLogin()->json('token');
+
+    $this->user->assignRole(Role::SuperAdmin->value);
+
+    sebagaiToken($token)->getJson('/api/v1/perangkat')
+        ->assertForbidden()
+        ->assertJsonPath('code', 'two_factor_required');
+});
+
+test('an inactive employee gets a 401 JSON even without an Accept header', function () {
+    $token = apiLogin()->json('token');
+    $this->user->forceFill(['status' => UserStatus::Inactive])->save();
+
+    app(Factory::class)->forgetGuards();
+    $response = $this->withToken($token)->get('/api/v1/auth/saya');
+
+    $response->assertUnauthorized();
+    expect($response->headers->get('Content-Type'))->toContain('application/json');
+});
+
+test('the per-email login lockout of the web also guards the API', function () {
+    foreach (range(1, 5) as $ignored) {
+        apiLogin(password: 'sandisalah')->assertUnprocessable();
+    }
+
+    // Even the right password is refused while locked out.
+    apiLogin()->assertStatus(429)->assertJsonPath('message', fn (string $message): bool => str_starts_with($message, 'Terlalu banyak percobaan masuk.'));
+
+    expect(PersonalAccessToken::query()->count())->toBe(0);
+});
+
+test('device metadata longer than its column is rejected', function () {
+    apiLogin(device: ['os_version' => str_repeat('9', 41)])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors', fn (array $errors): bool => isset($errors['device.os_version']));
+});
+
+test('API use refreshes last_seen_at of the device at most every five minutes', function () {
+    $token = apiLogin()->json('token');
+    $device = Device::query()->where('user_id', $this->user->id)->sole();
+    $loginSeen = $device->last_seen_at;
+
+    $this->travel(2)->minutes();
+    sebagaiToken($token)->getJson('/api/v1/auth/saya')->assertOk();
+    expect($device->refresh()->last_seen_at?->equalTo($loginSeen))->toBeTrue();
+
+    $this->travel(4)->minutes();
+    sebagaiToken($token)->getJson('/api/v1/auth/saya')->assertOk();
+    expect($device->refresh()->last_seen_at?->gt($loginSeen))->toBeTrue();
+});
+
+test('task comments and requests use the same throttles as the web', function () {
+    $routes = app('router')->getRoutes();
+
+    expect($routes->getByName('api.v1.tasks.comments.store')?->gatherMiddleware())->toContain('throttle:comments')
+        ->and($routes->getByName('api.v1.requests.store')?->gatherMiddleware())->toContain('throttle:30,1');
 });

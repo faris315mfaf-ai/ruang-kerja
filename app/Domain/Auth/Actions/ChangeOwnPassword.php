@@ -34,6 +34,7 @@ final readonly class ChangeOwnPassword
             $this->sessions->rotateRememberToken($user);
             // One explicit audit row instead of a generic user.updated.
             $user->saveQuietly();
+            $this->sessions->revokeApiTokens($user);
 
             $this->audit->log('user.password_changed', $user, null, [
                 'required_change' => $wasRequired,

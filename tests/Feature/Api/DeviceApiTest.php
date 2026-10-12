@@ -156,3 +156,24 @@ test('device endpoints reject requests without a token', function () {
 
     expect(Device::query()->whereKey($device->id)->exists())->toBeTrue();
 });
+
+test('push-token rejects values longer than the column holds', function () {
+    $token = masukPonsel('rizky@kantor.test', HASH_PONSEL);
+    $device = Device::query()->where('user_id', $this->rizky->id)->firstOrFail();
+
+    $this->withToken($token)
+        ->putJson("/api/v1/perangkat/{$device->id}/push-token", ['token' => str_repeat('a', 256)])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.token.0', 'Token push maksimal 255 karakter.');
+});
+
+test('logout clears the push token of the signed-out device and frees its slot', function () {
+    $token = masukPonsel('rizky@kantor.test', HASH_PONSEL);
+    $device = Device::query()->where('user_id', $this->rizky->id)->firstOrFail();
+    $device->forceFill(['push_token' => FCM_TOKEN])->save();
+
+    pakaiToken($token)->postJson('/api/v1/auth/logout')->assertOk();
+
+    expect($device->refresh()->push_token)->toBeNull()
+        ->and(PersonalAccessToken::query()->where('tokenable_id', $this->rizky->id)->count())->toBe(0);
+});

@@ -12,8 +12,9 @@ use Symfony\Component\HttpFoundation\Response;
  * Signs out any authenticated user whose status is no longer `active`
  * (inactive / resigned), immediately on their next request.
  *
- * Registered in the `web` group (bootstrap/app.php), so it covers every
- * authenticated web route; it is a no-op for guests.
+ * Registered in the `web` and `api` groups (bootstrap/app.php), so it covers
+ * every authenticated route; it is a no-op for guests. API requests get a 401
+ * JSON body instead of the login redirect.
  */
 class EnsureActiveEmployee
 {
@@ -34,7 +35,8 @@ class EnsureActiveEmployee
             $request->session()->regenerateToken();
         }
 
-        if ($request->expectsJson()) {
+        // The mobile API (/api/*) always answers JSON, whatever Accept it sent.
+        if ($request->expectsJson() || $request->is('api/*')) {
             abort(Response::HTTP_UNAUTHORIZED, self::MESSAGE);
         }
 
