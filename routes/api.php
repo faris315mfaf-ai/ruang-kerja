@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Account\DesktopLinkController;
 use App\Http\Controllers\Api\Attendance\AttendanceHistoryController;
 use App\Http\Controllers\Api\Attendance\CheckInController;
 use App\Http\Controllers\Api\Attendance\CheckOutController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\Api\Briefings\LatestBriefingController;
 use App\Http\Controllers\Api\Chat\ChannelController as ChatChannelController;
 use App\Http\Controllers\Api\Chat\ChannelReadController;
 use App\Http\Controllers\Api\Chat\MessageController as ChatMessageController;
+use App\Http\Controllers\Api\Devices\DeviceBiometricController;
 use App\Http\Controllers\Api\Devices\DeviceController;
 use App\Http\Controllers\Api\Inbox\InboxController;
 use App\Http\Controllers\Api\Meetings\AgendaController as MeetingAgendaController;
@@ -18,6 +20,9 @@ use App\Http\Controllers\Api\Meetings\MinutesController as MeetingMinutesControl
 use App\Http\Controllers\Api\Meetings\RsvpController as MeetingRsvpController;
 use App\Http\Controllers\Api\Notes\NoteController;
 use App\Http\Controllers\Api\Notes\WorkspaceNotesController;
+use App\Http\Controllers\Api\Privacy\ConsentController as PrivacyConsentController;
+use App\Http\Controllers\Api\Privacy\MyDataController;
+use App\Http\Controllers\Api\Privacy\PrivacyPolicyController as ApiPrivacyPolicyController;
 use App\Http\Controllers\Api\Requests\RequestController;
 use App\Http\Controllers\Api\Task\TaskCommentController;
 use App\Http\Controllers\Api\Task\TaskController;
@@ -47,6 +52,13 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::post('auth/login', [AuthController::class, 'store'])
         ->middleware('throttle:api-login')
         ->name('auth.login');
+
+    // --- B2 privasi (publik) ---
+    // Kebijakan privasi JSON tanpa sesi (layar Masuk & peninjau Play Store);
+    // sumber Markdown yang sama dengan halaman web.
+    Route::get('kebijakan-privasi', ApiPrivacyPolicyController::class)
+        ->middleware('throttle:api-v1')->name('privacy.policy');
+    // --- /B2 ---
 
     Route::middleware(['auth:sanctum', 'throttle:api-v1'])->group(function (): void {
         Route::post('auth/logout', [AuthController::class, 'destroy'])->name('auth.logout');
@@ -159,5 +171,26 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         // briefing — catatan terakhir perusahaan pemilik (baca saja);
         // 204 bila belum ada. Mencatat & delegasi tetap di web.
         Route::get('briefing/terakhir', LatestBriefingController::class)->name('briefing.latest');
+
+        // --- B2 privasi ---
+        // Data Saya (hanya data pemilik token; NIK selalu tersamar) + ekspor
+        // berkas yang sama dengan web lewat Bearer (diaudit, 10/menit);
+        // persetujuan lokasi+selfie (Action web dipakai ulang, HR diberi
+        // tahu saat dicabut); sakelar biometrik per perangkat (DevicePolicy:
+        // hanya perangkat sendiri); tautan desktop ke email pemilik token
+        // (allowlist config/api_app_links.php, 3/menit).
+        Route::get('privasi/data-saya', [MyDataController::class, 'show'])->name('privacy.my-data');
+        Route::get('privasi/ekspor', [MyDataController::class, 'export'])
+            ->middleware('throttle:10,1')->name('privacy.export');
+        Route::get('persetujuan', [PrivacyConsentController::class, 'show'])->name('consent.show');
+        Route::post('persetujuan', [PrivacyConsentController::class, 'store'])
+            ->middleware('throttle:20,1')->name('consent.store');
+        Route::delete('persetujuan', [PrivacyConsentController::class, 'destroy'])
+            ->middleware('throttle:20,1')->name('consent.destroy');
+        Route::match(['PATCH', 'PUT'], 'perangkat/{device}/biometrik', DeviceBiometricController::class)
+            ->whereUlid('device')->name('devices.biometric');
+        Route::post('tautan-desktop', DesktopLinkController::class)
+            ->middleware('throttle:3,1')->name('desktop-link');
+        // --- /B2 ---
     });
 });
