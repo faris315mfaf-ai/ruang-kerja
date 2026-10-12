@@ -32,3 +32,23 @@ export function bandingVersi(a: string, b: string): number {
   }
   return 0;
 }
+
+/** "Sen, 12 Okt 2026, 17.40" (zona Asia/Jakarta) untuk "terakhir aktif". */
+export function tglJamLengkap(iso: string | null | undefined): string {
+  if (!iso) {
+    return '—';
+  }
+  const tanggal = new Date(iso);
+  if (Number.isNaN(tanggal.getTime())) {
+    return iso;
+  }
+  return new Intl.DateTimeFormat('id-ID', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Jakarta',
+  }).format(tanggal);
+}
