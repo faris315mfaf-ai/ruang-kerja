@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\HealthController;
 use App\Http\Middleware\AuthenticateSession;
+use App\Http\Middleware\EnforceApiAppStatus;
 use App\Http\Middleware\EnsureActiveEmployee;
 use App\Http\Middleware\EnsureApiAccountUsable;
 use App\Http\Middleware\EnsurePasswordChanged;
@@ -80,7 +81,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // EnsureApiAccountUsable: API counterpart of EnsurePasswordChanged /
         // EnsureTwoFactorForSuperAdmin (403 JSON with `code`). TouchDeviceLastSeen
         // stamps the token's installation (at most every 5 minutes).
-        $middleware->api(append: [EnsureActiveEmployee::class, EnsureApiAccountUsable::class, TouchDeviceLastSeen::class]);
+        $middleware->api(
+            prepend: [EnforceApiAppStatus::class],
+            append: [EnsureActiveEmployee::class, EnsureApiAccountUsable::class, TouchDeviceLastSeen::class],
+        );
         $middleware->appendToPriorityList(after: Authenticate::class, append: EnsureActiveEmployee::class);
         $middleware->appendToPriorityList(after: EnsureActiveEmployee::class, append: EnsureApiAccountUsable::class);
 

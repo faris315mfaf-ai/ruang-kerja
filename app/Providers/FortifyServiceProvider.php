@@ -7,6 +7,7 @@ use App\Domain\Auth\Data\PasswordResetSession;
 use App\Domain\Organization\Demo\DemoAccounts;
 use App\Models\Company;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -99,6 +100,44 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('password-reset-setup', fn (Request $request) => Limit::perMinute(6)->by('password-reset-setup|'.$request->ip()));
+
+        // Mobile app (POST /api/v1/auth/...): the same limits for the same
+        // guest flows, with Indonesian JSON 429 bodies and keys that do not
+        // need a session — the app sends the tokens itself.
+        // - TOTP challenge: 5/min per challenge token + IP (and 20/min per IP);
+        // - "Lupa kata sandi" request: 5/min per IP, 5/hour per address;
+        // - status polling (every ~5 s): 30/min per request token, or per IP;
+        // - new password after approval: 6/min per IP.
+        $apiThrottled = static fn (string $message, string $code) => static fn (Request $request, array $headers): JsonResponse => response()->json([
+            'message' => $message,
+            'code' => $code,
+        ], 429, $headers);
+
+        RateLimiter::for('api-two-factor', fn (Request $request) => [
+            Limit::perMinute(5)->by('api-2fa|'.hash('sha256', $request->string('challenge_token')->toString()).'|'.$request->ip())
+                ->response($apiThrottled('Terlalu banyak percobaan kode. Tunggu satu menit lalu coba lagi.', 'two_factor_throttled')),
+            Limit::perMinute(20)->by('api-2fa-ip|'.$request->ip())
+                ->response($apiThrottled('Terlalu banyak percobaan kode. Tunggu satu menit lalu coba lagi.', 'two_factor_throttled')),
+        ]);
+
+        RateLimiter::for('api-password-reset', fn (Request $request) => [
+            Limit::perMinute(5)->by('api-password-reset-ip|'.$request->ip())
+                ->response($apiThrottled('Terlalu banyak permintaan. Coba lagi dalam satu menit.', 'throttled')),
+            Limit::perHour(5)->by('api-password-reset-email|'.Str::lower(trim($request->string('email')->toString())))
+                ->response($apiThrottled('Terlalu banyak permintaan untuk alamat ini. Coba lagi nanti.', 'throttled')),
+        ]);
+
+        RateLimiter::for('api-password-reset-status', function (Request $request) use ($apiThrottled) {
+            $token = $request->header('X-Reset-Token') ?? $request->query('request_token');
+
+            return Limit::perMinute(30)
+                ->by('api-password-reset-status|'.(is_string($token) && $token !== '' ? hash('sha256', $token) : $request->ip()))
+                ->response($apiThrottled('Terlalu sering memeriksa status. Coba lagi sebentar lagi.', 'throttled'));
+        });
+
+        RateLimiter::for('api-password-reset-setup', fn (Request $request) => Limit::perMinute(6)
+            ->by('api-password-reset-setup|'.$request->ip())
+            ->response($apiThrottled('Terlalu banyak percobaan. Coba lagi dalam satu menit.', 'throttled')));
 
         // Google callback only (sign-in on hold, routes kept): 60/min per client IP
         // (dozens of employees share the office NAT at 08:00) and 10/min per browser

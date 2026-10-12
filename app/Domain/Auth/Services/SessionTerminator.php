@@ -45,14 +45,21 @@ final class SessionTerminator
      * the login screen) and clears the push tokens of their installations, so
      * a signed-out phone no longer receives notifications. The device rows stay
      * ("Perangkat saya"); signing in again refreshes them.
+     *
+     * With `$except` (the installation that just changed its own password
+     * through the app) that installation keeps its token and push token.
      */
-    public function revokeApiTokens(User $user): void
+    public function revokeApiTokens(User $user, ?Device $except = null): void
     {
-        $user->tokens()->delete();
+        $tokens = $user->tokens();
+        $devices = Device::query()->where('user_id', $user->id)->whereNotNull('push_token');
 
-        Device::query()
-            ->where('user_id', $user->id)
-            ->whereNotNull('push_token')
-            ->update(['push_token' => null]);
+        if ($except !== null) {
+            $tokens->where('name', '!=', Device::sanctumTokenName($except->id));
+            $devices->whereKeyNot($except->id);
+        }
+
+        $tokens->delete();
+        $devices->update(['push_token' => null]);
     }
 }

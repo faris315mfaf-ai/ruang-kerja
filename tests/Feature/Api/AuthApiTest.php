@@ -166,11 +166,11 @@ test('an account that must change its password is rejected with a 403 code', fun
         ->and(Device::query()->count())->toBe(0);
 });
 
-test('a Super Admin is rejected: TOTP is not supported by the app yet', function () {
+test('a Super Admin without confirmed TOTP is refused: enable it on the web first', function () {
     $admin = User::factory()->forCompany($this->company)->withRole(Role::SuperAdmin)->create(['email' => 'admin@kantor.test']);
 
     apiLogin(email: $admin->email)->assertStatus(403)
-        ->assertJsonPath('code', 'two_factor_required');
+        ->assertJsonPath('code', 'two_factor_setup_required');
 
     expect(PersonalAccessToken::query()->count())->toBe(0);
 });
@@ -231,22 +231,23 @@ test('an existing token is blocked with a 403 code once a password change is req
 
     $this->user->forceFill(['password_change_required' => true])->save();
 
-    sebagaiToken($token)->getJson('/api/v1/auth/saya')
+    sebagaiToken($token)->getJson('/api/v1/perangkat')
         ->assertForbidden()
         ->assertJsonPath('code', 'password_change_required');
 
-    // Logout stays reachable so the app can drop the token.
+    // The profile (flags) and logout stay reachable; so does POST /auth/sandi.
+    sebagaiToken($token)->getJson('/api/v1/auth/saya')->assertOk()->assertJsonPath('user.password_change_required', true);
     sebagaiToken($token)->postJson('/api/v1/auth/logout')->assertOk();
 });
 
-test('a token whose owner became Super Admin is blocked with two_factor_required', function () {
+test('a token whose owner became Super Admin without TOTP is blocked with two_factor_setup_required', function () {
     $token = apiLogin()->json('token');
 
     $this->user->assignRole(Role::SuperAdmin->value);
 
     sebagaiToken($token)->getJson('/api/v1/perangkat')
         ->assertForbidden()
-        ->assertJsonPath('code', 'two_factor_required');
+        ->assertJsonPath('code', 'two_factor_setup_required');
 });
 
 test('an inactive employee gets a 401 JSON even without an Accept header', function () {

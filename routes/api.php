@@ -6,10 +6,14 @@ use App\Http\Controllers\Api\Attendance\CheckInController;
 use App\Http\Controllers\Api\Attendance\CheckOutController;
 use App\Http\Controllers\Api\Attendance\MyAttendanceController;
 use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\Auth\PasswordController;
+use App\Http\Controllers\Api\Auth\PasswordResetController;
+use App\Http\Controllers\Api\Auth\TwoFactorController;
 use App\Http\Controllers\Api\Briefings\LatestBriefingController;
 use App\Http\Controllers\Api\Chat\ChannelController as ChatChannelController;
 use App\Http\Controllers\Api\Chat\ChannelReadController;
 use App\Http\Controllers\Api\Chat\MessageController as ChatMessageController;
+use App\Http\Controllers\Api\Config\AppConfigController;
 use App\Http\Controllers\Api\Devices\DeviceBiometricController;
 use App\Http\Controllers\Api\Devices\DeviceController;
 use App\Http\Controllers\Api\Inbox\InboxController;
@@ -52,6 +56,29 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::post('auth/login', [AuthController::class, 'store'])
         ->middleware('throttle:api-login')
         ->name('auth.login');
+
+    // --- B1 auth ---
+    // Bagian 1 (Fondasi & akun): konfigurasi publik, tantangan TOTP, lupa
+    // sandi berpersetujuan HR, ganti sandi sendiri. Dokumen: docs/sesi/ponsel-b1-auth.md.
+    Route::get('konfigurasi', AppConfigController::class)
+        ->middleware('throttle:60,1')->name('config');
+
+    Route::post('auth/dua-faktor', TwoFactorController::class)
+        ->middleware('throttle:api-two-factor')->name('auth.two-factor');
+
+    Route::prefix('auth/lupa-sandi')->name('auth.password-reset.')
+        ->controller(PasswordResetController::class)
+        ->group(function (): void {
+            Route::post('/', 'store')->middleware('throttle:api-password-reset')->name('store');
+            Route::get('status', 'status')->middleware('throttle:api-password-reset-status')->name('status');
+            Route::post('selesai', 'complete')->middleware('throttle:api-password-reset-setup')->name('complete');
+        });
+
+    // Ganti sandi sendiri: tetap terjangkau saat "wajib ganti" memblokir API
+    // lain (EnsureApiAccountUsable::ALLOWED_ROUTES); 6/menit seperti web.
+    Route::post('auth/sandi', [PasswordController::class, 'update'])
+        ->middleware(['auth:sanctum', 'throttle:6,1'])->name('auth.password');
+    // --- /B1 ---
 
     // --- B2 privasi (publik) ---
     // Kebijakan privasi JSON tanpa sesi (layar Masuk & peninjau Play Store);

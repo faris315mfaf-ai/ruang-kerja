@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
+use App\Domain\Auth\Actions\ApiSignIn;
 use App\Domain\Auth\Actions\AuthenticateEmployee;
-use App\Domain\Devices\Actions\SignInDevice;
 use App\Domain\Devices\Models\Device;
 use App\Http\Controllers\Controller;
+use App\Http\Presenters\ApiUserPresenter;
 use App\Http\Requests\Api\LoginRequest;
 use App\Models\User;
-use Illuminate\Auth\Events\Login;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -17,24 +17,31 @@ use Laravel\Fortify\LoginRateLimiter;
 /**
  * Authentication for the mobile app (POST /api/v1/auth/*). Credentials are
  * verified by the web mechanism (AuthenticateEmployee: constant-time check,
- * generic error, audited failures), then the installation is registered and
- * receives a Sanctum token — one active token per installation
- * (Device::sanctumTokenName): re-login replaces the previous token.
+ * generic error, audited failures); ApiSignIn then decides between a device
+ * token (one active token per installation, Device::sanctumTokenName:
+ * re-login replaces the previous token), a TOTP challenge and a refusal.
+ * Rest of the flows: TwoFactorController, PasswordController,
+ * PasswordResetController.
  */
 class AuthController extends Controller
 {
     public function __construct(
         private readonly AuthenticateEmployee $authenticate,
-        private readonly SignInDevice $signInDevice,
+        private readonly ApiSignIn $signIn,
         private readonly LoginRateLimiter $limiter,
+        private readonly ApiUserPresenter $presenter,
     ) {}
 
     /**
-     * Sign in and issue the device token.
+     * Sign in. Answers one of:
      *
-     * Blocked accounts answer 403 with a machine-readable `code`:
-     * `password_change_required` (temporary HR password — change it on the web)
-     * and `two_factor_required` (Super Admin needs TOTP, not yet supported here).
+     * - 200 `{token, user, password_change_required}` — device token;
+     * - 200 `{two_factor_required: true, challenge_token, expires_in}` — the
+     *   account has confirmed TOTP, finish with POST /auth/dua-faktor;
+     * - 403 `{code, message}` — `password_change_required` (temporary HR
+     *   password; only when the app did not send `supports_password_change`)
+     *   or `two_factor_setup_required` (Super Admin without confirmed TOTP:
+     *   enable it on the web first).
      */
     public function store(LoginRequest $request): JsonResponse
     {
@@ -48,33 +55,13 @@ class AuthController extends Controller
 
         $user = $this->authenticate->handle($request);
 
-        if ($user->password_change_required) {
-            return $this->blocked('password_change_required', 'Ganti kata sandi lewat web terlebih dahulu.');
+        $outcome = $this->signIn->begin($user, $request->devicePayload(), $request->supportsPasswordChange());
+
+        if ($outcome['status'] === 200) {
+            $this->limiter->clear($request);
         }
 
-        if ($user->isSuperAdmin()) {
-            return $this->blocked('two_factor_required', 'Akun Super Admin harus masuk lewat web untuk saat ini (autentikasi dua faktor belum didukung aplikasi).');
-        }
-
-        ['token' => $token] = $this->signInDevice->handle(
-            $user,
-            $request->platform(),
-            $request->deviceIdHash(),
-            name: $request->deviceName(),
-            osVersion: $request->osVersion(),
-            appVersion: $request->appVersion(),
-        );
-
-        $this->limiter->clear($request);
-
-        // Same bookkeeping as the web login (Listeners\RecordLogin): stamps
-        // last_login_at; super admins never reach this point.
-        event(new Login('web', $user, false));
-
-        return response()->json([
-            'token' => $token,
-            'user' => $this->conciseUser($user),
-        ]);
+        return response()->json($outcome['body'], $outcome['status']);
     }
 
     /**
@@ -94,40 +81,9 @@ class AuthController extends Controller
         return response()->json(['message' => 'Berhasil keluar.']);
     }
 
-    /** The caller's concise profile. */
+    /** The caller's profile (ApiUserPresenter::profile). */
     public function show(#[CurrentUser] User $user): JsonResponse
     {
-        return response()->json(['user' => $this->conciseUser($user)]);
-    }
-
-    /**
-     * 403 with a `code` the app can switch on, plus a ready-to-show message.
-     */
-    private function blocked(string $code, string $message): JsonResponse
-    {
-        return response()->json([
-            'code' => $code,
-            'message' => $message,
-        ], 403);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function conciseUser(User $user): array
-    {
-        $user->loadMissing(['division', 'position']);
-
-        return [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'jabatan' => $user->position?->name,
-            'divisi' => $user->division?->name,
-            'work_mode' => [
-                'value' => $user->work_mode->value,
-                'label' => $user->work_mode->label(),
-            ],
-        ];
+        return response()->json(['user' => $this->presenter->profile($user)]);
     }
 }
