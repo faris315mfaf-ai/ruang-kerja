@@ -199,30 +199,32 @@ test('protected endpoints reject requests without a token', function () {
     $this->getJson('/api/v1/perangkat')->assertUnauthorized();
 });
 
-test('a password change revokes every API token and clears push tokens', function (Closure $change) {
+test('a password change revokes every API token and clears push tokens', function (string $change) {
     Notification::fake();
     $token = apiLogin()->json('token');
     Device::query()->where('user_id', $this->user->id)->update(['push_token' => 'fcm-token-sebelum-ganti-sandi']);
 
-    $change($this->user);
+    $user = $this->user;
+
+    match ($change) {
+        'ganti sendiri' => app(ChangeOwnPassword::class)->handle($user, 'SandiBaruSaya123'),
+        'diatur HR' => app(SetEmployeePassword::class)->handle(
+            User::factory()->forCompany($user->company)->withRole(Role::Hr)->create(),
+            $user,
+            'SandiDariHr123',
+            false,
+        ),
+        'reset ke sandi bawaan' => (function () {
+            config(['auth.employee_default_password' => 'ContohSandi123']);
+            app(ResetPasswordsToDefault::class)->handle();
+        })(),
+    };
 
     expect(PersonalAccessToken::query()->where('tokenable_id', $this->user->id)->count())->toBe(0)
         ->and(Device::query()->where('user_id', $this->user->id)->whereNotNull('push_token')->exists())->toBeFalse();
 
     sebagaiToken($token)->getJson('/api/v1/auth/saya')->assertUnauthorized();
-})->with([
-    'ganti sendiri' => fn () => function (User $user): void {
-        app(ChangeOwnPassword::class)->handle($user, 'SandiBaruSaya123');
-    },
-    'diatur HR' => fn () => function (User $user): void {
-        $hr = User::factory()->forCompany($user->company)->withRole(Role::Hr)->create();
-        app(SetEmployeePassword::class)->handle($hr, $user, 'SandiDariHr123', false);
-    },
-    'reset ke sandi bawaan' => fn () => function (User $user): void {
-        config(['auth.employee_default_password' => 'ContohSandi123']);
-        app(ResetPasswordsToDefault::class)->handle();
-    },
-]);
+})->with(['ganti sendiri', 'diatur HR', 'reset ke sandi bawaan']);
 
 test('an existing token is blocked with a 403 code once a password change is required', function () {
     $token = apiLogin()->json('token');

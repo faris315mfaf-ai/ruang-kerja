@@ -13,8 +13,8 @@ use App\Models\Task;
  * personal workspace for that work date — title = the point, assignee =
  * the employee, due = work_date, source = attendance + source_id = the day.
  *
- * Called from CheckIn inside its transaction, so a check-in and its tasks
- * commit (or roll back) together. Idempotent: a replay only creates tasks
+ * Run by the CreateWorkPlanTasksForDay job after the check-in commits, so a
+ * failure here never rolls back attendance. Idempotent: a replay only creates tasks
  * for points that do not have one yet (multiset of titles), so a retried
  * check-in or a re-dispatch never duplicates tasks.
  */
