@@ -16,9 +16,10 @@ use Illuminate\Auth\Access\Response;
  *   boleh diedit/dihapus pembuatnya (workspace pribadi hanya pemilik);
  * - tugas yang DITUGASKAN orang lain kepada karyawan hanya boleh diubah atau
  *   dihapus oleh pembuatnya atau atasannya (admin/owner workspace atau
- *   manajer langsung salah satu penerima tugas); si penerima tetap bisa
- *   mengerjakan tugasnya (move, comment, plan);
- * - tugas tim lainnya mengikuti kebijakan workspace (editTasks).
+ *   manajer langsung salah satu penerima tugas) — anggota lain yang bukan
+ *   pembuat/atasan juga tidak; si penerima tetap bisa mengerjakan tugasnya
+ *   (move, comment, plan, work: checklist & lampiran);
+ * - tugas tim lainnya (tanpa penerima) mengikuti kebijakan workspace (editTasks).
  */
 class TaskPolicy
 {
@@ -45,6 +46,17 @@ class TaskPolicy
     {
         return $this->guardAssignedByOther($user, $task)
             ?? $this->workspaces->editTasks($user, $task->workspace);
+    }
+
+    /**
+     * Doing the work on a task — ticking/adding checklist lines, attaching
+     * deliverables: the workspace editTasks rule without the "assigned by
+     * someone else" guard, so the assignee can work on a task they may not
+     * edit (keputusan pemilik 9 Okt 2026).
+     */
+    public function work(User $user, Task $task): Response
+    {
+        return $this->workspaces->editTasks($user, $task->workspace);
     }
 
     public function move(User $user, Task $task): Response
@@ -160,13 +172,15 @@ class TaskPolicy
     }
 
     /**
-     * Tasks someone else assigned to the employee belong to their creator
-     * (keputusan pemilik 9 Okt 2026): the assignee works on the task (move,
-     * comment, plan) but only the creator or a superior — a workspace
-     * admin/owner or the direct manager of one of the assignees — may edit
-     * or delete it, in any workspace, teams included. Own tasks (including
-     * the personal ones generated from a work plan) and tasks the actor was
-     * not assigned are not restricted here.
+     * Tasks someone else assigned belong to their creator (keputusan pemilik
+     * 9 Okt 2026): once a task has at least one assignee, only its creator
+     * or a superior — a workspace admin/owner, or the direct manager of one
+     * of the assignees (who is not an assignee themselves) — may edit or
+     * delete it, in any workspace, teams included. Assignees and bystander
+     * members still work on it (move, comment, plan, work) but cannot edit.
+     * Own tasks (created_by self, including the personal ones generated from
+     * a work plan), the actor's personal workspace and unassigned tasks are
+     * not restricted here.
      */
     private function guardAssignedByOther(User $user, Task $task): ?Response
     {
@@ -176,14 +190,9 @@ class TaskPolicy
             return Response::denyAsNotFound();
         }
 
-        // Own ground: the actor's own personal workspace (personal notes and
-        // work-plan tasks live there) and tasks the actor created themselves
-        // are never restricted here, nor are tasks the actor was not assigned.
-        // Everyone else — an assignee in any workspace, teams included — may
-        // only edit a task someone else assigned to them as a superior.
         if ($workspace->isPersonal()
             || $task->created_by === $user->id
-            || ! $this->hasAssignee($user, $task)) {
+            || ! $this->hasAnyAssignee($task)) {
             return null;
         }
 
@@ -191,6 +200,15 @@ class TaskPolicy
             || $this->managesAssignee($user, $task);
 
         return $superior ? null : Response::deny(self::ASSIGNED_BY_OTHER);
+    }
+
+    private function hasAnyAssignee(Task $task): bool
+    {
+        if ($task->relationLoaded('assignees')) {
+            return $task->assignees->isNotEmpty();
+        }
+
+        return $task->assignees()->exists();
     }
 
     /**
@@ -208,9 +226,17 @@ class TaskPolicy
 
     /**
      * Is $user the direct manager (users.manager_id) of one of the assignees?
+     * An assignee never qualifies this way — managing a co-assignee must not
+     * unlock the task they were given themselves (a workspace admin/owner
+     * role still does).
      */
     private function managesAssignee(User $user, Task $task): bool
     {
+        if ($this->hasAssignee($user, $task)) {
+            return false;
+        }
+
+        // Always a query: eager-loaded assignees are often partial (id, name).
         return $task->assignees()->where('users.manager_id', $user->id)->exists();
     }
 }

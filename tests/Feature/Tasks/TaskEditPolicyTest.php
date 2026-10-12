@@ -1,9 +1,11 @@
 <?php
 
 use App\Domain\Organization\Enums\Role;
+use App\Domain\Tasks\Actions\AddChecklistItem;
 use App\Domain\Tasks\Actions\CreateTask;
 use App\Domain\Workspaces\Actions\EnsurePersonalWorkspace;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
+use App\Models\Attachment;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
@@ -108,13 +110,63 @@ test('team tasks keep the workspace editTasks policy', function () {
         ->and(taskVerdict($member, 'delete', $unassigned))->toBe('deny')
         ->and(taskVerdict($this->lead, 'delete', $unassigned))->toBe('allow');
 
-    // A member who is not the assignee may still edit a colleague's task.
+    // A bystander member (not creator, superior or assignee) may NOT edit a
+    // task the lead assigned to a colleague — the owner rule covers the whole
+    // workspace, not only the assignee.
     $assigned = app(CreateTask::class)->handle($this->team, $this->lead, [
-        'title' => 'Untanggota lain',
+        'title' => 'Untuk anggota lain',
         'assignee_ids' => [$this->worker->id],
     ]);
 
-    expect(taskVerdict($member, 'update', $assigned))->toBe('allow');
+    expect(taskVerdict($member, 'update', $assigned))->toBe('deny')
+        ->and(taskVerdict($member, 'delete', $assigned))->toBe('deny')
+        ->and(taskVerdict($member, 'move', $assigned))->toBe('allow')
+        ->and(taskVerdict($member, 'comment', $assigned))->toBe('allow');
+});
+
+test('the assignee of an assigned task still does the work: checklist and attachments', function () {
+    $assigned = app(CreateTask::class)->handle($this->team, $this->lead, [
+        'title' => 'Tugas dari atasan',
+        'assignee_ids' => [$this->worker->id],
+    ]);
+    $item = app(AddChecklistItem::class)->handle($assigned, 'Langkah 1');
+    $viewer = memberWithRole($this->team, WorkspaceRole::Viewer);
+
+    expect(taskVerdict($this->worker, 'update', $assigned))->toBe('deny')
+        ->and(taskVerdict($this->worker, 'work', $assigned))->toBe('allow')
+        ->and(Gate::forUser($this->worker)->allows('update', $item))->toBeTrue()
+        ->and(Gate::forUser($this->worker)->allows('delete', $item))->toBeTrue()
+        ->and(Gate::forUser($this->worker)->allows('create', [Attachment::class, $assigned]))->toBeTrue()
+        // A workspace viewer never does the work.
+        ->and(taskVerdict($viewer, 'work', $assigned))->toBe('deny')
+        ->and(Gate::forUser($viewer)->allows('update', $item))->toBeFalse();
+
+    // Over HTTP: the assignee ticks and adds checklist lines.
+    $this->actingAs($this->worker)->patchJson("/checklist/{$item->id}", ['is_done' => true])->assertOk();
+    $this->actingAs($this->worker)->postJson("/tugas/{$assigned->id}/checklist", ['title' => 'Langkah 2'])->assertCreated();
+});
+
+test('an assignee who manages a co-assignee is not a superior of the task', function () {
+    $manager = addMember($this->team, User::factory()->create());
+    $report = addMember($this->team, User::factory()->managedBy($manager)->create());
+
+    $assigned = app(CreateTask::class)->handle($this->team, $this->lead, [
+        'title' => 'Berdua dengan bawahan',
+        'assignee_ids' => [$manager->id, $report->id],
+    ]);
+
+    // Managing the co-assignee does not unlock the manager's own assignment.
+    expect(taskVerdict($manager, 'update', $assigned))->toBe('deny')
+        ->and(taskVerdict($manager, 'delete', $assigned))->toBe('deny');
+
+    // A workspace admin among the assignees still qualifies through the role.
+    $admin = memberWithRole($this->team, WorkspaceRole::Admin);
+    $withAdmin = app(CreateTask::class)->handle($this->team, $this->lead, [
+        'title' => 'Admin ikut',
+        'assignee_ids' => [$admin->id],
+    ]);
+
+    expect(taskVerdict($admin, 'update', $withAdmin))->toBe('allow');
 });
 
 test('an archived workspace is read-only for everyone', function () {

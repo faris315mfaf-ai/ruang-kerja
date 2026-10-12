@@ -155,9 +155,10 @@ it('adds, ticks, renames and removes checklist lines', function () {
 
     $this->actingAs($this->viewer)->postJson("/tugas/{$this->task->id}/checklist", ['title' => 'Tidak boleh'])->assertForbidden();
     $this->actingAs($this->viewer)->patchJson("/checklist/{$first['id']}", ['is_done' => false])->assertForbidden();
-    // The assignee may not edit the checklist either: the task was assigned
-    // to them by the owner (keputusan pemilik 9 Okt 2026).
-    $this->actingAs($this->member)->postJson("/tugas/{$this->task->id}/checklist", ['title' => 'Dari penerima'])->assertForbidden();
+    // The assignee may not edit the task (assigned by the owner, keputusan
+    // pemilik 9 Okt 2026) but still does the work: checklist lines.
+    $this->actingAs($this->member)->postJson("/tugas/{$this->task->id}/checklist", ['title' => 'Dari penerima'])->assertCreated();
+    $this->actingAs($this->member)->patchJson("/checklist/{$first['id']}", ['is_done' => false])->assertOk();
     $this->actingAs($this->owner)->postJson("/tugas/{$this->task->id}/checklist", ['title' => '   '])->assertUnprocessable();
 
     Event::assertDispatched(TaskUpdated::class);

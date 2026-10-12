@@ -8,6 +8,8 @@ use Illuminate\Auth\Access\Response;
 
 /**
  * Checklist lines follow their task (edited from the task detail in Sprint 6).
+ * Ticking and editing lines is doing the work (TaskPolicy::work): the
+ * assignee of a task someone else assigned may still tick its checklist.
  */
 class ChecklistItemPolicy
 {
@@ -24,7 +26,7 @@ class ChecklistItemPolicy
     {
         $task = $item->task;
 
-        return $task === null ? Response::denyAsNotFound() : $this->tasks->update($user, $task);
+        return $task === null ? Response::denyAsNotFound() : $this->tasks->work($user, $task);
     }
 
     public function delete(User $user, ChecklistItem $item): Response

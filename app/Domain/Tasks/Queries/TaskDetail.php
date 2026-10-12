@@ -128,6 +128,9 @@ final class TaskDetail
             'comment_reads' => $this->reads->forTask($task, $workspace, array_column($members, 'id')),
             'can' => [
                 'edit' => $this->tasks->update($viewer, $task)->allowed(),
+                // Checklist & attachments (TaskPolicy::work): also the assignee
+                // of a task someone else assigned, who may not edit it.
+                'work' => $this->tasks->work($viewer, $task)->allowed(),
                 'delete' => $this->tasks->delete($viewer, $task)->allowed(),
                 'comment' => $this->tasks->comment($viewer, $task)->allowed(),
                 'watch' => $this->tasks->watch($viewer, $task)->allowed(),
