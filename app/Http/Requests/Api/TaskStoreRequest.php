@@ -21,7 +21,8 @@ class TaskStoreRequest extends FormRequest
      */
     public function rules(): array
     {
-        $workspaceId = $this->string('workspace_id')->toString();
+        // ULIDs are stored lowercase; the app may send the uppercase form.
+        $workspaceId = strtolower($this->string('workspace_id')->toString());
 
         return [
             'workspace_id' => ['required', 'string', 'size:26'],

@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Attendance\Models\AttendanceDay;
+use App\Domain\Tasks\Actions\CreateTask;
 use App\Domain\Tasks\Actions\CreateWorkPlanTasks;
 use App\Domain\Tasks\Enums\TaskSource;
 use App\Domain\Workspaces\Actions\EnsurePersonalWorkspace;
@@ -112,4 +113,27 @@ test('a trashed personal workspace is restored to hold the work-plan tasks', fun
 
     expect($personal->fresh()->trashed())->toBeFalse()
         ->and($personal->tasks()->count())->toBe(1);
+});
+
+test('CreateTask keeps source_id when the source arrives as its string value', function () {
+    $user = F::employee();
+    $this->travelTo(F::at('2026-10-05 07:52'));
+    F::checkIn($user, ['work_plan' => ['Satu poin']])->assertCreated();
+    $day = AttendanceDay::query()->sole();
+    $personal = app(EnsurePersonalWorkspace::class)->handle($user);
+
+    $task = app(CreateTask::class)->handle($personal, $user, [
+        'title' => 'Dari string',
+        'source' => 'attendance',
+        'source_id' => $day->id,
+    ]);
+
+    expect($task->source)->toBe(TaskSource::Attendance)
+        ->and($task->source_id)->toBe($day->id);
+
+    // A manual task never keeps a source_id.
+    $manual = app(CreateTask::class)->handle($personal, $user, ['title' => 'Manual', 'source' => 'manual', 'source_id' => $day->id]);
+
+    expect($manual->source)->toBe(TaskSource::Manual)
+        ->and($manual->source_id)->toBeNull();
 });

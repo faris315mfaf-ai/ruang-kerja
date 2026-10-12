@@ -9,6 +9,8 @@ use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
 
 /**
@@ -18,9 +20,16 @@ use Illuminate\Support\Collection;
  *
  * - `pribadi`: tasks in the viewer's own personal workspace (including the
  *   ones generated from a check-in work plan);
- * - `tim`: tasks in the non-personal workspaces the viewer is a member of
- *   (team, division, project) and may see — not archived, like MyTasks;
+ * - `tim`: tasks ASSIGNED TO THE VIEWER in the non-personal workspaces they
+ *   are a member of (team, division, project) and may see — not archived,
+ *   like MyTasks; colleagues' tasks due today are not the viewer's to do;
  * - `semua`: both combined, in the same order.
+ *
+ * Each item carries `assigned_by_other`: the viewer is an assignee and the
+ * assignment was made by someone else (task_assignees.assigned_by ≠ viewer),
+ * for the "Dari atasan" badge — such a task is closed to edits for the
+ * viewer (TaskPolicy). Order: open first, then urgent → low with "tanpa
+ * prioritas" last, then number.
  *
  * A fixed number of queries whatever the task count (workspace ids, tasks,
  * eager loads) — no N+1.
@@ -47,16 +56,31 @@ final class TugasHariIni
             ->whereHas('memberships', fn ($member) => $member->where('user_id', $viewer->id))
             ->pluck('id');
 
-        $workspaceIds = $teamIds->push($personalId)->filter()->all();
         $closed = TaskStatusCategory::closedValues();
 
+        $assignedToViewer = fn (QueryBuilder $sub): QueryBuilder => $sub->selectRaw('1')
+            ->from('task_assignees')
+            ->whereColumn('task_assignees.task_id', 'tasks.id')
+            ->where('task_assignees.user_id', $viewer->id);
+
         $tasks = Task::query()
+            ->select('tasks.*')
+            ->selectRaw(
+                'exists (select 1 from task_assignees ta where ta.task_id = tasks.id and ta.user_id = ? and ta.assigned_by is not null and ta.assigned_by <> ?) as assigned_by_other',
+                [$viewer->id, $viewer->id],
+            )
             ->visibleTo($viewer)
-            ->whereIn('tasks.workspace_id', $workspaceIds)
+            ->where(fn (Builder $scope): Builder => $scope
+                ->when($personalId !== null, fn (Builder $own): Builder => $own->orWhere('tasks.workspace_id', $personalId))
+                ->orWhere(fn (Builder $team): Builder => $team
+                    ->whereIn('tasks.workspace_id', $teamIds->all())
+                    ->whereExists($assignedToViewer)))
             ->whereDate('tasks.due_date', $today)
             ->with(['workspace:id,key,name', 'status:id,name,category', 'assignees:id,name'])
-            // Open tasks first, then urgent → low, oldest first.
+            // Open tasks first, then urgent → low with "tanpa prioritas" (0)
+            // last, oldest first.
             ->orderByRaw('CASE WHEN tasks.status_category IN ('.implode(',', array_fill(0, count($closed), '?')).') THEN 1 ELSE 0 END', $closed)
+            ->orderByRaw('CASE WHEN tasks.priority = 0 THEN 1 ELSE 0 END')
             ->orderBy('tasks.priority')
             ->orderBy('tasks.number')
             ->get();
@@ -102,6 +126,8 @@ final class TugasHariIni
             'priority' => $task->priority->label(),
             'assignees' => $task->assignees->map(fn (User $user): string => $user->name)->all(),
             'source' => $task->source->value,
+            // The viewer was assigned this task by someone else ("Dari atasan").
+            'assigned_by_other' => (bool) $task->getAttribute('assigned_by_other'),
             'url' => $task->url(),
         ];
     }

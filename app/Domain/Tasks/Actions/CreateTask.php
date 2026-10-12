@@ -55,6 +55,8 @@ final class CreateTask
             $priority = $input['priority'] ?? TaskPriority::None;
             $parentId = $input['parent_id'] ?? null;
             $source = $input['source'] ?? TaskSource::Manual;
+            // Normalize first: callers may pass the enum or its string value.
+            $source = $source instanceof TaskSource ? $source : TaskSource::from($source);
             $sourceId = $source === TaskSource::Attendance ? ($input['source_id'] ?? null) : null;
 
             $task = new Task([
@@ -70,7 +72,7 @@ final class CreateTask
                 'due_date' => $input['due_date'] ?? null,
                 'estimate_hours' => $input['estimate_hours'] ?? null,
                 'created_by' => $actor->id,
-                'source' => $source instanceof TaskSource ? $source : TaskSource::from($source),
+                'source' => $source,
                 'source_id' => $sourceId,
             ]);
 

@@ -2,6 +2,7 @@
 
 use App\Domain\Tasks\Actions\CreateTask;
 use App\Domain\Tasks\Actions\PostComment;
+use App\Domain\Tasks\Actions\UpdateTask;
 use App\Domain\Tasks\Notifications\TaskCommentedNotification;
 use App\Domain\Workspaces\Actions\EnsurePersonalWorkspace;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
@@ -151,7 +152,7 @@ test('create refuses an invisible workspace (404), a viewer (403) and a non-memb
     expect($this->team->fresh()->tasks()->count())->toBe(2);
 });
 
-test('the 9 Oct edit matrix: creator, superiors and uninvolved members may edit; the assignee may not', function () {
+test('the 9 Oct edit matrix: creator and superiors may edit; the assignee and bystanders may not', function () {
     // Pembuat (lead) boleh.
     $lead = masukTulis($this->lead->email);
     sebagaiTokenTulis($lead)->patchJson("/api/v1/tugas/{$this->assigned->id}", ['title' => 'Revisi lead'])
@@ -168,10 +169,12 @@ test('the 9 Oct edit matrix: creator, superiors and uninvolved members may edit;
         ->assertForbidden()
         ->assertJsonPath('message', 'Tugas yang ditugaskan orang lain hanya dapat diubah atau dihapus oleh pembuatnya atau atasan.');
 
-    // Anggota lain yang tidak menerima tugas mengikuti kebijakan workspace.
+    // Anggota lain (bukan pembuat/atasan/penerima) juga tidak boleh: tugas
+    // titipan milik pembuatnya.
     $colleague = masukTulis($this->colleague->email);
     sebagaiTokenTulis($colleague)->patchJson("/api/v1/tugas/{$this->assigned->id}", ['title' => 'Revisi rekan'])
-        ->assertOk();
+        ->assertForbidden()
+        ->assertJsonPath('message', 'Tugas yang ditugaskan orang lain hanya dapat diubah atau dihapus oleh pembuatnya atau atasan.');
 
     // Pribadi sendiri bebas; tugas orang luar tidak pernah terungkap.
     sebagaiTokenTulis($viewer)->patchJson("/api/v1/tugas/{$this->ownPersonal->id}", ['title' => 'Pribadi baru'])
@@ -203,6 +206,11 @@ test('the 9 Oct delete matrix', function () {
 
     // Anggota biasa bukan pembuat juga tidak.
     sebagaiTokenTulis($colleague)->deleteJson("/api/v1/tugas/{$this->assigned->id}")
+        ->assertForbidden()
+        ->assertJsonPath('message', 'Tugas yang ditugaskan orang lain hanya dapat diubah atau dihapus oleh pembuatnya atau atasan.');
+
+    // Tanpa penerima: tetap aturan hapus lama (pembuat/admin).
+    sebagaiTokenTulis($colleague)->deleteJson("/api/v1/tugas/{$this->ownTeam->id}")
         ->assertForbidden()
         ->assertJsonPath('message', 'Hanya pembuat tugas atau admin workspace yang dapat menghapus.');
 
@@ -324,4 +332,80 @@ it('exposes assignee names on board cards, workspace members, and can flags on t
     sebagaiTokenTulis($tokenViewer)->getJson('/api/v1/tugas/'.$task->id)
         ->assertOk()
         ->assertJsonPath('task.can.comment', true);
+});
+
+test('PATCH answers the same can flags as the detail', function () {
+    $lead = masukTulis($this->lead->email);
+
+    sebagaiTokenTulis($lead)->patchJson("/api/v1/tugas/{$this->assigned->id}", ['title' => 'Revisi'])
+        ->assertOk()
+        ->assertJsonPath('task.can', ['edit' => true, 'work' => true, 'delete' => true, 'comment' => true]);
+
+    // Assigning a colleague to the viewer's own team task keeps it editable
+    // for its creator, and the flags follow the new assignment.
+    $viewer = masukTulis('viewer@kantor.test');
+    sebagaiTokenTulis($viewer)->patchJson("/api/v1/tugas/{$this->ownTeam->id}", ['assignee_ids' => [$this->colleague->id]])
+        ->assertOk()
+        ->assertJsonPath('task.can.edit', true)
+        ->assertJsonPath('task.can.delete', true);
+
+    // The detail of the assigned task: the assignee works but cannot edit.
+    sebagaiTokenTulis($viewer)->getJson("/api/v1/tugas/{$this->assigned->id}")
+        ->assertOk()
+        ->assertJsonPath('task.can', ['edit' => false, 'work' => true, 'delete' => false, 'comment' => true]);
+});
+
+test('create accepts the canonical uppercase workspace ULID', function () {
+    $token = masukTulis('viewer@kantor.test');
+
+    $this->withToken($token)->postJson('/api/v1/tugas', [
+        'workspace_id' => strtoupper($this->team->id),
+        'title' => 'Dari ULID kapital',
+        'assignee_ids' => [$this->colleague->id],
+    ])->assertCreated()
+        ->assertJsonPath('task.workspace.key', 'TMS')
+        ->assertJsonPath('task.assignees.0', 'Sari Rekan');
+});
+
+test('a PATCH with the unchanged plain text keeps a rich description', function () {
+    $lead = masukTulis($this->lead->email);
+    $rich = ['type' => 'doc', 'content' => [
+        ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Penting', 'marks' => [['type' => 'bold']]]]],
+        ['type' => 'bulletList', 'content' => [['type' => 'listItem', 'content' => [
+            ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Poin satu']]],
+        ]]]],
+    ]];
+    app(UpdateTask::class)->handle($this->assigned, $this->lead, ['description' => $rich]);
+    $text = $this->assigned->fresh()->description_text;
+    $document = $this->assigned->fresh()->description;
+
+    sebagaiTokenTulis($lead)->patchJson("/api/v1/tugas/{$this->assigned->id}", ['title' => 'Judul baru', 'description' => $text])
+        ->assertOk();
+
+    expect($this->assigned->fresh()->description)->toBe($document);
+
+    // A real change of the text still rebuilds the document from plain text.
+    sebagaiTokenTulis($lead)->patchJson("/api/v1/tugas/{$this->assigned->id}", ['description' => 'Teks baru'])
+        ->assertOk()
+        ->assertJsonPath('task.description_text', 'Teks baru');
+});
+
+test('the task list holds open and recently completed tasks with a stable order', function () {
+    $token = masukTulis('viewer@kantor.test');
+
+    // Completed long ago: not in the list; completed this week: still listed.
+    $old = app(CreateTask::class)->handle($this->team, $this->viewer, ['title' => 'Selesai lama', 'assignee_ids' => [$this->viewer->id]]);
+    $old->forceFill(['status_category' => 'done', 'completed_at' => now()->subWeeks(3)])->save();
+    $recent = app(CreateTask::class)->handle($this->team, $this->viewer, ['title' => 'Selesai minggu ini', 'assignee_ids' => [$this->viewer->id]]);
+    $recent->forceFill(['status_category' => 'done', 'completed_at' => now()->subHour()])->save();
+
+    $all = collect($this->withToken($token)->getJson('/api/v1/tugas')->assertOk()->json('tasks'))->pluck('id');
+    $mine = collect($this->withToken($token)->getJson('/api/v1/tugas?saya=1')->assertOk()->json('tasks'))->pluck('id');
+
+    expect($all)->not->toContain($old->id)
+        ->and($all)->toContain($recent->id)
+        ->and($mine)->not->toContain($old->id)
+        ->and($mine)->toContain($recent->id)
+        ->and($mine)->toContain($this->assigned->id)
+        ->and($mine)->not->toContain($this->ownTeam->id);
 });

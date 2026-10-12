@@ -24,8 +24,7 @@ final class MyTasks
      */
     public function for(User $user, string $tab, CarbonImmutable $weekStart): Collection
     {
-        return $this->scoped($user, $tab)
-            ->where(fn (Builder $query) => $query->open()->orWhere('completed_at', '>=', $weekStart))
+        return $this->query($user, $tab, $weekStart)
             ->with(['workspace.statuses', 'status', 'labels', 'assignees:id,name,avatar_url', 'parent:id,number'])
             ->withCount([
                 'checklistItems',
@@ -35,6 +34,19 @@ final class MyTasks
             ->orderBy('priority')
             ->orderBy('number')
             ->get();
+    }
+
+    /**
+     * The rows of a tab without eager loads or order (also the mobile API
+     * list): open tasks plus tasks completed since $weekStart, in visible,
+     * non-archived workspaces.
+     *
+     * @return Builder<Task>
+     */
+    public function query(User $user, string $tab, CarbonImmutable $weekStart): Builder
+    {
+        return $this->scoped($user, $tab)
+            ->where(fn (Builder $query) => $query->open()->orWhere('tasks.completed_at', '>=', $weekStart));
     }
 
     /**

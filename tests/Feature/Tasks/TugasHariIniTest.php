@@ -73,3 +73,24 @@ test('workspaces the viewer is not a member of, archived ones and other personal
     expect(array_column($payload['semua'], 'title'))->toBe(['Pribadi A', 'Pribadi B', 'Tim hari ini'])
         ->and($payload['counts'])->toBe(['pribadi' => 2, 'tim' => 1, 'semua' => 3]);
 });
+
+test('tim lists only tasks assigned to the viewer, flags assignments by others, and puts "tanpa prioritas" last', function () {
+    // A colleague's task due today in the same team: not the viewer's to do.
+    $colleague = addMember($this->team, User::factory()->create());
+    app(CreateTask::class)->handle($this->team, $this->lead, ['title' => 'Tugas rekan', 'due_date' => '2026-10-06', 'assignee_ids' => [$colleague->id]]);
+    // Unassigned team task due today: not listed either.
+    app(CreateTask::class)->handle($this->team, $this->lead, ['title' => 'Tanpa penerima', 'due_date' => '2026-10-06']);
+    // The viewer's own team task, self-assigned, urgent (1) → before "tanpa" (0).
+    app(CreateTask::class)->handle($this->team, $this->viewer, ['title' => 'Inisiatif sendiri', 'due_date' => '2026-10-06', 'priority' => 1, 'assignee_ids' => [$this->viewer->id]]);
+    // Personal: low priority (4) before "tanpa prioritas" (0).
+    app(CreateTask::class)->handle($this->personal, $this->viewer, ['title' => 'Pribadi rendah', 'due_date' => '2026-10-06', 'priority' => 4]);
+
+    $payload = app(TugasHariIni::class)->for($this->viewer);
+    $byTitle = collect($payload['semua'])->keyBy('title');
+
+    expect(array_column($payload['tim'], 'title'))->toBe(['Inisiatif sendiri', 'Tim hari ini'])
+        ->and(array_column($payload['pribadi'], 'title'))->toBe(['Pribadi rendah', 'Pribadi A', 'Pribadi B'])
+        ->and($byTitle['Tim hari ini']['assigned_by_other'])->toBeTrue()
+        ->and($byTitle['Inisiatif sendiri']['assigned_by_other'])->toBeFalse()
+        ->and($byTitle['Pribadi A']['assigned_by_other'])->toBeFalse();
+});

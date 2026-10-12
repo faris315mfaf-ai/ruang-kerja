@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Task;
 use App\Domain\Tasks\Actions\CreateTask;
 use App\Domain\Tasks\Actions\DeleteTask;
 use App\Domain\Tasks\Actions\UpdateTask;
+use App\Domain\Tasks\Queries\MyTasks;
 use App\Domain\Tasks\Queries\TugasHariIni;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\TaskStoreRequest;
@@ -13,9 +14,9 @@ use App\Http\Resources\Api\TaskSummary;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
+use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Contracts\Database\Eloquent\Builder;
-use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -46,25 +47,33 @@ class TaskController extends Controller
 
     /**
      * Task list, 20 per page: everything the caller may see, or with
-     * `saya=1` only the tasks assigned to them. Due date first (nulls last),
-     * then priority and number — the same order as "Tugas saya" on the web.
+     * `saya=1` only the tasks assigned to them (the web "Tugas saya" query,
+     * MyTasks). Both lists hold open tasks plus tasks completed since Monday
+     * (office week), like "Tugas saya". Due date first (nulls last), then
+     * priority and number, then id — a unique tiebreak so pages never
+     * repeat or skip a row.
      */
-    public function index(Request $request, #[CurrentUser] User $user): JsonResponse
+    public function index(Request $request, #[CurrentUser] User $user, MyTasks $myTasks): JsonResponse
     {
         Gate::authorize('viewAny', Task::class);
 
-        $tasks = Task::query()
-            ->visibleTo($user)
-            ->when($request->boolean('saya'), fn (Builder $query): Builder => $query->whereExists(
-                fn (QueryBuilder $assigned): QueryBuilder => $assigned->selectRaw('1')
-                    ->from('task_assignees')
-                    ->whereColumn('task_assignees.task_id', 'tasks.id')
-                    ->where('task_assignees.user_id', $user->id),
-            ))
+        $weekStart = CarbonImmutable::now(config()->string('app.office_timezone'))
+            ->startOfDay()
+            ->startOfWeek(CarbonImmutable::MONDAY)
+            ->utc();
+
+        $query = $request->boolean('saya')
+            ? $myTasks->query($user, 'assigned', $weekStart)
+            : Task::query()
+                ->visibleTo($user)
+                ->where(fn (Builder $query): Builder => $query->open()->orWhere('tasks.completed_at', '>=', $weekStart));
+
+        $tasks = $query
             ->with(['workspace:id,key,name', 'status:id,name,category', 'assignees:id,name'])
-            ->orderByRaw('due_date asc nulls last')
-            ->orderBy('priority')
-            ->orderBy('number')
+            ->orderByRaw('tasks.due_date asc nulls last')
+            ->orderBy('tasks.priority')
+            ->orderBy('tasks.number')
+            ->orderBy('tasks.id')
             ->paginate(20);
 
         return response()->json([
@@ -100,12 +109,14 @@ class TaskController extends Controller
      * The app hides actions the caller may not take instead of learning it
      * from a 403 after the tap.
      *
-     * @return array{edit: bool, delete: bool, comment: bool}
+     * @return array{edit: bool, delete: bool, comment: bool, work: bool}
      */
     private static function can(User $user, Task $task): array
     {
         return [
             'edit' => Gate::forUser($user)->allows('update', $task),
+            // Checklist & attachments (TaskPolicy::work).
+            'work' => Gate::forUser($user)->allows('work', $task),
             'delete' => Gate::forUser($user)->allows('delete', $task),
             'comment' => Gate::forUser($user)->allows('comment', $task),
         ];
@@ -119,7 +130,8 @@ class TaskController extends Controller
      */
     public function store(TaskStoreRequest $request, #[CurrentUser] User $user, CreateTask $createTask): JsonResponse
     {
-        $workspace = Workspace::query()->find($request->string('workspace_id')->toString());
+        // ULIDs are stored lowercase; the app may send the canonical uppercase form.
+        $workspace = Workspace::query()->find(strtolower($request->string('workspace_id')->toString()));
 
         abort_if($workspace === null, 404);
 
@@ -140,7 +152,12 @@ class TaskController extends Controller
 
         $task = $updateTask->handle($task, $user, $request->payload());
 
-        return response()->json(['task' => TaskSummary::detail($this->load($task))]);
+        // Same shape as the detail: the rights may change with the update
+        // (e.g. assigning someone else closes the task to bystanders).
+        $detail = TaskSummary::detail($this->load($task));
+        $detail['can'] = self::can($user, $task->unsetRelation('assignees'));
+
+        return response()->json(['task' => $detail]);
     }
 
     /**
