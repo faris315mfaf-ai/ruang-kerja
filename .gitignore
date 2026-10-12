@@ -51,3 +51,6 @@ google-sa*.json
 
 # S3 storage VPS keys (compose.storage.yml)
 /docker/seaweedfs/s3.json
+
+# Android mockup PNG render output (regenerate: node docs/mockups/android/_kit/render.mjs)
+/docs/mockups/android/png
