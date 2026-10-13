@@ -50,3 +50,14 @@ Rencana 5 bagian: `docs/fitur/aplikasi-ponsel-bagian.md`. Mockup: `docs/mockups/
 - Sisa kecil: sorotan fokus persegi pada tombol bundar saat navigasi keyboard; celah antara dock Absen dan tab bar menampilkan isi di belakang.
 - Menunggu pemilik: Firebase (push), kredensial Google Drive (lampiran/dokumen), editor catatan berformat + templat notulensi di ponsel, cakupan `GET /orang` untuk staf (DM ke sembarang rekan), realtime obrolan (Bearer di /broadcasting/auth), deploy backend sebelum APK bisa dipakai di produksi.
 - Berikutnya: Bagian 4 (Persetujuan & rapat) dari branch ini.
+
+## Bagian 4 (13 Okt 2026) — selesai di `claude/android-bagian-4`
+- Worktree `../ruang-kerja-bagian4` (branch `claude/android-bagian-4`, basis `c4487f9` = Bagian 1–3). Belum di-push.
+- Keputusan pemilik (`05c9124`, `docs/fitur/aplikasi-ponsel-bagian.md`): video rapat LiveKit native; geser kanan = setujui setelah 6 detik tanpa "Urungkan", geser kiri = sheet Tolak; notulensi dari ponsel = templat paragraf polos (`StartQuickMinutes` `plain`, API `polos: true`, `43b464a`).
+- Backend: B4-A pengajuan/persetujuan/delegasi/batal-disetujui `fc6d37b` (daftar = `GET /persetujuan/daftar`, karena `/persetujuan` = persetujuan privasi), B4-B rapat/notulen/tindak lanjut/video token/moderasi/notulen otomatis/jadwal manajemen `3e4a978`, B4-C laporan harian/riwayat/tim/monitoring `b612a92`. Kontrak `docs/sesi/ponsel-b4a…b4c-*.md`.
+- Aplikasi: Laporan (`2faf71b`…`f9dc061`), Rapat+kalender+notulen (`198e06a`…`911efc7`), Video native (`30fbac1`…`bbe5e94`), Pengajuan (`0623744`…`b5c897c`), Persetujuan (`c49c24b`…`6e574aa`), integrasi (`ac565bc`, `d26da8a`).
+- Paket baru: `@livekit/react-native`, `@livekit/react-native-webrtc`, `livekit-client`, `@livekit/react-native-expo-plugin`, `@config-plugins/react-native-webrtc`, `expo-image-picker`, `expo-document-picker`.
+- Verifikasi: Pest 3.752/3.754 (2 gagal = anggaran query pra-ada) · lint hijau · tsc/eslint app hijau · APK uji ke server lokal (Kadiv): Beranda, tumpukan persetujuan + geser setujui + Urungkan (tidak ada POST, kartu kembali) + kirim otomatis 6 detik, detail persetujuan, pengajuan saya, agenda & detail rapat, form laporan — tampil benar.
+- **Belum diverifikasi:** ruang video live (tanpa LiveKit lokal saat uji; layar menampilkan "belum disiapkan"); notulen otomatis end-to-end.
+- Butuh izin pemilik: `expo-screen-orientation` (lanskap video), `expo-keep-awake`, layanan latar kamera/mikrofon; PiP Android belum ada. APK 173–181 MB → sarankan split ABI / AAB.
+- Berikutnya: Bagian 5 (Manajemen & rilis) bila diminta; push/deploy menunggu izin.
