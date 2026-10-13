@@ -169,7 +169,7 @@ Hasil uji manual (emulator 5568, akun maya.lestari, server lokal dengan migrasi 
 
 ## 7. Belum / diketahui
 
-- Tidak ada pengiriman di latar belakang saat aplikasi tak aktif (tanpa `expo-background-task`): sinkron berjalan saat aplikasi di latar depan.
+- ~~Tidak ada pengiriman di latar belakang~~ — kini ada (lihat bagian "Sinkron latar belakang" di bawah); mesin foreground tetap hanya berjalan saat aplikasi aktif.
 - Jalur 401 saat sesi berjalan (antrean dijeda → masuk ulang → lanjut) dikodekan tetapi belum diuji live.
 - Cold start offline di build debug tak teruji (lihat catatan); jalur kode sama dengan kembali dari latar belakang.
 - Bug yang ditemukan & diperbaiki saat uji: pemantauan jaringan sempat ikut dilepas saat keluar akun sehingga status "offline" basi membuat login gagal cepat → kini `PemantauJaringan` seumur aplikasi.
@@ -250,3 +250,55 @@ Data uji (tugas ML-4/ML-5, 2 catatan) dihapus; laporan hari ini (13 Okt) milik m
 - Catatan yang diubah orang lain tanpa konflik 409 (mis. mereka menyunting lewat web setelah dasar, sebelum sinkron) tertangkap server (`updated_at` usang → 409), bukan klien.
 - Celah sempit: proses mati tepat sesudah `POST` tugas/catatan sukses dan sebelum item di belakangnya ditulis ulang → item itu 404 "belum dibuat" (konflik aman, tidak pernah kirim ke id salah).
 - Notulensi cepat offline tidak membawa `preset` templat web (sama dengan mode polos online); `CatatanDetail.penulis` kosong sampai sinkron.
+
+---
+
+# Sinkron latar belakang (15 Okt 2026)
+
+Kode: `apps/mobile/src/offline/{latar,latarKerja,latarMeta}.ts`, `src/session/tokenTersimpan.ts`; perubahan kecil di `antrean.ts`, `jaringan.ts`, `api/client.ts`, `sesi.ts`, `index.ts`, `LayarPenyimpananOffline.tsx`. Paket `expo-background-task` + `expo-task-manager` (config plugin `expo-background-task` di `app.json` hanya mengubah Info.plist iOS; Android tidak menambah izin/manifest).
+
+## Cara kerja
+
+- **Pendaftaran.** `TaskManager.defineTask('ruangkerja-sinkron-antrean', …)` ada di `latar.ts`, diimpor dari `apps/mobile/index.ts` **sebelum** `expo-router/entry` — wajib di scope modul karena saat sistem menghidupkan aplikasi headless (proses sudah dimatikan) tidak ada komponen yang dirender. Isi task dimuat malas (`import('./latarKerja')`) agar buka dingin biasa tidak memuat mesin antrean lebih awal. `mulaiSesiOffline` mendaftarkan task (`registerTaskAsync`, `minimumInterval: 15` menit, idempoten, dilewati di Expo Go); `akhiriSesiOffline` (keluar, akun nonaktif, 401) membatalkannya. Daftar/batal diserialisasi.
+- **Penjadwalan Android.** WorkManager (`OneTimeWorkRequest` berantai dengan `initialDelay` 15 menit, syarat `NetworkType.CONNECTED`; Android < 8 memakai periodik). Interval hanya **minimum**; sistem menggabungkan/menunda (Doze, App Standby bucket, penghemat baterai, vendor agresif seperti MIUI/ColorOS) — **bisa tertunda berjam-jam dan tidak ada jaminan waktu**. Expo hanya menjalankan task bila aplikasi tidak di latar depan. Setelah satu putaran selesai, jadwal berikutnya dibuat otomatis.
+- **Isi task (`jalankanSinkronLatar`, anggaran 25 dtk, pengaman keras 28 dtk → `Failed`).** Pemeriksaan murah → mahal, berhenti di langkah pertama yang gagal dengan hasil `Success` (tanpa menyentuh jaringan sampai langkah 4):
+  1. sesi tersimpan (`SecureStore` `rk.sesi`, dibaca tanpa React lewat `session/tokenTersimpan.ts`) — tanpa sesi → keluar;
+  2. penanda "server menolak sesi" (`meta.latar_ditolak:<uid>`) tidak ada;
+  3. ada item `menunggu` yang bisa dikirim (satu query SQL: item yang tidak tertahan `konflik`/`gagal` lebih awal pada `urutan_kunci` sama) — tidak ada → keluar;
+  4. jaringan (`segarkanJaringan()`: baca keadaan OS + probe bila perlu).
+  Lalu `sinkronkanLatar(uid, sisaWaktu)` di `antrean.ts`: memuat antrean (`mulaiAntrean`), mengabaikan masa backoff, dan memakai **mesin kirim yang sama** (FIFO per `urutanKunci`, `Idempotency-Key`, penangan fitur `penanganFitur.ts`, maks. 2 paralel). Selama jendela latar, item dikirim dengan batas waktu 20 dtk per permintaan dan **tidak ada item baru dimulai setelah anggaran habis**; yang masih berjalan boleh selesai/diulang kemudian (kunci idempotensi sama → server memutar ulang, tidak ganda). Waktu putaran terakhir + jumlah terkirim disimpan di `meta.latar_terakhir:<uid>`.
+- **Kunci/instance ganda.** Mesin adalah singleton per proses JS dan satu mutex DB (`denganDb`), jadi latar depan dan latar belakang di proses yang sama tidak pernah mengirim bersamaan (`sedangJalan`, `latarJalan`). Bila proses hidup di latar, task memakai antrean di memori yang sama; bila proses mati, task membuka DB sendiri (kunci SQLCipher dari Keystore — jalur ini tidak butuh React). Proses ketiga tidak ada (WorkManager menjalankan di proses aplikasi); seandainya dua runtime berbagi berkas DB, WAL + kunci idempotensi menjaga tidak ada data ganda.
+- **Token.** Bila ada getter sesi React (proses hidup), itu dipakai. Bila tidak (headless), token dari SecureStore dipasang sebagai `setTokenSementara` di `api/client.ts` selama task (getter sesi React selalu didahulukan, tidak pernah ditimpa) lalu dicabut.
+- **401 / blokir akun / versi lama dari latar belakang.** Permintaan latar memakai `senyap: true` (penangan 401/403-blokir/426/503 di `client.ts` tidak dipanggil → sesi **tidak dihapus** dan tidak ada dialog dari proses tanpa layar). Mesin berhenti, item tetap `menunggu` (tidak jadi `konflik`, tidak dihitung percobaan), dan untuk 401 ditulis `meta.latar_ditolak:<uid>` sehingga task berikutnya melewati. Saat aplikasi dibuka, `mulaiSesiOffline` menghapus penanda, validasi sesi (`GET /auth/saya`) menangani 401 seperti biasa (dialog "Sesi berakhir"/keluar) lalu antrean dikirim normal. 5xx/429/jaringan: backoff seperti biasa, dicoba lagi pada putaran berikutnya.
+- **Pengaturan › Penyimpanan offline**: baris "Sinkron latar belakang" — "Aktif · terakhir HH.mm" / "Aktif · belum pernah berjalan" / "Tidak tersedia" (Expo Go, dibatasi sistem, belum terdaftar) + catatan bahwa waktunya diatur sistem.
+
+## Batasan yang harus dipahami (jangan dijanjikan ke pengguna)
+
+- Tidak ada jaminan waktu: bisa 15 menit, bisa berjam-jam; perangkat yang mati/Doze dalam/baterai sangat rendah/"force stop" tidak menjalankannya. **Force stop** (Pengaturan › Hentikan paksa) membatalkan semua job aplikasi sampai aplikasi dibuka lagi.
+- Batas 25 dtk per putaran → antrean besar (selfie 5 MB, banyak item) dikirim bertahap lintas putaran.
+- Absen offline tetap dibatasi **72 jam** (`kedaluwarsaJam`): sinkron latar membantu mengirimnya sebelum hangus, tetapi kalau perangkat tak pernah mendapat jendela, item tetap jadi `konflik` "kedaluwarsa".
+- Snackbar hasil sinkron hanya muncul bila aplikasi aktif; sinkron latar berjalan senyap (tanpa notifikasi). Pengguna melihat hasilnya di strip status/antrean saat membuka aplikasi.
+- Peta id sementara → id asli (tugas/catatan) sudah disimpan di `meta`, jadi item yang bergantung tetap benar walau item induk terkirim dari latar belakang; status memori-saja (mis. `catatTersinkron` absen) hilang bersama prosesnya, layar memuat ulang dari server saat dibuka.
+
+## Cara menguji di emulator/perangkat (build rilis atau debug, bukan Expo Go)
+
+```bash
+D=emulator-xxxx
+PKG=store.spkd.ruangkerja
+# 1. Buat antrean: airplane on → lakukan perubahan (mis. komentar/absen) → airplane OFF tetapi JANGAN buka aplikasi:
+adb -s $D shell cmd connectivity airplane-mode enable
+#   ...lakukan aksi di aplikasi → antrean berisi item → tekan Home...
+adb -s $D shell cmd connectivity airplane-mode disable
+# 2. Pastikan job terdaftar dan catat jobId (WorkManager = SystemJobService):
+adb -s $D shell dumpsys jobscheduler | grep -B3 -A14 "$PKG"      # cari "androidx.work.impl.background.systemjob.SystemJobService", angka setelah "JOB #<uid>/<jobId>"
+# 3. Matikan proses (BUKAN force-stop — itu membatalkan job): swipe aplikasi dari Recents, atau
+adb -s $D shell am kill $PKG                                      # hanya bila proses di latar
+adb -s $D shell pidof $PKG                                        # harus kosong
+# 4. Paksa job jalan sekarang (abaikan delay 15 menit & constraint):
+adb -s $D shell cmd jobscheduler run -f $PKG <jobId>
+# 5. Amati:
+adb -s $D logcat -s BackgroundTaskWork:V BackgroundTaskScheduler:V ReactNativeJS:V | head -60
+```
+
+Yang diverifikasi: `doWork: Running worker` muncul; server menerima item (tepat satu per kunci); buka aplikasi → antrean kosong dan "Sinkron latar belakang · terakhir HH.mm" terisi. Skenario tambahan: (a) tanpa item → log menunjukkan task selesai cepat tanpa permintaan jaringan (cek `adb logcat`/Mailpit/log server tidak ada request); (b) proses hidup di latar (Home, jangan matikan) lalu `run -f`; (c) token dibuat kedaluwarsa di server → item tetap `menunggu`, sesi tidak hilang, setelah aplikasi dibuka muncul dialog "Sesi berakhir"; (d) keluar akun → `dumpsys jobscheduler` tidak lagi memuat job paket; (e) masuk lagi → job muncul kembali. Di build **debug**, `BackgroundTask.triggerTaskWorkerForTestingAsync()` bisa memicu worker dari kode (hanya `__DEV__`).
+
