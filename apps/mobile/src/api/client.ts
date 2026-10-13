@@ -98,6 +98,11 @@ export function setTokenGetter(getter: (() => string | null) | null): void {
   tokenGetter = getter;
 }
 
+/** Token sesi saat ini (untuk sumber gambar RN yang butuh header Authorization, mis. ubin peta). */
+export function tokenSaatIni(): string | null {
+  return tokenGetter?.() ?? null;
+}
+
 type QueryValue = string | number | boolean | null | undefined;
 
 export interface RequestOptions {

@@ -8,7 +8,8 @@
     "android": "expo run:android",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test:center": "node scripts/cek-center-action.mjs"
+    "test:center": "node scripts/cek-center-action.mjs",
+    "test:peta": "node scripts/cek-peta.mjs"
   },
   "dependencies": {
     "@config-plugins/react-native-webrtc": "^15.0.2",

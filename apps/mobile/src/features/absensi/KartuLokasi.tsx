@@ -1,103 +1,18 @@
 /**
- * Kartu lokasi: sketsa SVG geofence (tanpa ubin peta — ringan di 4G, CSP web
- * juga tidak mengizinkan ubin pihak ketiga) + baris status GPS: jarak ke titik
+ * Kartu lokasi: peta riil (ubin OpenStreetMap lewat proxy server, geofence
+ * kantor, posisi pengguna; lihat PetaRiil) + baris status GPS: jarak ke titik
  * kantor, akurasi, tombol perbarui.
  */
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Svg, { Circle, Line, Rect } from 'react-native-svg';
 
 import type { OfficeLocation } from '@/api/types';
 import { jarakMeter } from '@/lib/format';
-import { radius, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 import { Badge, Card, IconButton, IconTile, Skeleton, Text, type Tone } from '@/ui';
 
-import { AKURASI_PERINGATAN_M, AKURASI_TANDAI_M, type StatusGps, type TitikGps } from './useLokasiAbsen';
-
-const TINGGI = 168;
-const R_PX = 54;
-
-function vektorMeter(titik: TitikGps, kantor: OfficeLocation): { dx: number; dy: number } {
-  const dx = (titik.longitude - kantor.longitude) * Math.cos((kantor.latitude * Math.PI) / 180) * 111_320;
-  const dy = (titik.latitude - kantor.latitude) * 110_540;
-  return { dx, dy };
-}
-
-export function Sketsa({ kantor, titik }: { kantor: OfficeLocation | null; titik: TitikGps | null }): React.JSX.Element {
-  const { colors } = useTheme();
-  const [lebar, setLebar] = useState(0);
-  const cx = lebar / 2;
-  const cy = TINGGI / 2 + 6;
-  const skala = kantor ? R_PX / Math.max(kantor.radiusM, 1) : 1;
-
-  let ux = cx;
-  let uy = cy;
-  let halo = 0;
-  if (kantor && titik) {
-    const { dx, dy } = vektorMeter(titik, kantor);
-    let px = dx * skala;
-    let py = -dy * skala;
-    const mag = Math.hypot(px, py);
-    const batas = Math.min(lebar / 2 - 14, TINGGI / 2 - 14);
-    if (mag > batas) {
-      px = (px / mag) * batas;
-      py = (py / mag) * batas;
-    }
-    ux = cx + px;
-    uy = cy + py;
-    halo = Math.min(26, Math.max(10, (titik.accuracy ?? 20) * skala));
-  }
-
-  const garis: number[] = [];
-  for (let g = 0; g <= lebar; g += 28) garis.push(g);
-  const garisH: number[] = [];
-  for (let g = 0; g <= TINGGI; g += 28) garisH.push(g);
-
-  return (
-    <View
-      onLayout={(e) => setLebar(e.nativeEvent.layout.width)}
-      style={[s.peta, { backgroundColor: colors.linkSoft }]}
-      accessible
-      accessibilityLabel={kantor && titik ? `Sketsa peta: posisi Anda ${jarakMeter(vektorJarak(titik, kantor))} dari ${kantor.name}` : 'Sketsa peta lokasi kantor'}
-    >
-      {lebar > 0 ? (
-        <Svg width={lebar} height={TINGGI}>
-          <Rect x={0} y={0} width={lebar} height={TINGGI} fill={colors.linkSoft} />
-          {garis.map((g) => (
-            <Line key={`v${g}`} x1={g} y1={0} x2={g} y2={TINGGI} stroke={colors.border} strokeWidth={1} opacity={0.7} />
-          ))}
-          {garisH.map((g) => (
-            <Line key={`h${g}`} x1={0} y1={g} x2={lebar} y2={g} stroke={colors.border} strokeWidth={1} opacity={0.7} />
-          ))}
-          {kantor ? (
-            <>
-              <Circle cx={cx} cy={cy} r={R_PX} fill={colors.fill.teal} fillOpacity={0.16} stroke={colors.primary} strokeWidth={1.6} strokeDasharray="5 4" />
-              <Rect x={cx - 9} y={cy - 9} width={18} height={18} rx={6} fill={colors.primary} stroke={colors.surface} strokeWidth={2} />
-            </>
-          ) : null}
-          {titik ? (
-            <>
-              <Circle cx={ux} cy={uy} r={halo} fill={colors.accentBlue} fillOpacity={0.18} />
-              <Circle cx={ux} cy={uy} r={7} fill={colors.accentBlueStrong} stroke={colors.surface} strokeWidth={2.5} />
-            </>
-          ) : null}
-        </Svg>
-      ) : null}
-      {kantor ? (
-        <View style={[s.namaKantor, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text variant="meta" weight={700} style={{ color: colors.text }} numberOfLines={1}>
-            {kantor.name}
-          </Text>
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
-function vektorJarak(titik: TitikGps, kantor: OfficeLocation): number {
-  const { dx, dy } = vektorMeter(titik, kantor);
-  return Math.hypot(dx, dy);
-}
+import { PetaRiil } from './PetaRiil';
+import { AKURASI_PERINGATAN_M, AKURASI_TANDAI_M, type StatusGps } from './useLokasiAbsen';
 
 export interface KartuLokasiProps {
   status: StatusGps;
@@ -113,6 +28,7 @@ export function KartuLokasi({ status, kantor, jarakM, dalam, jarakJauh, onRefres
   const { colors } = useTheme();
   const titik = status.keadaan === 'siap' ? status.titik : status.keadaan === 'galat' ? status.titik : null;
   const akurasi = titik?.accuracy ?? null;
+  const [kunciCoba, setKunciCoba] = useState(0);
 
   let chipTone: Tone = 'neutral';
   let chipTeks = 'Mencari lokasi…';
@@ -151,7 +67,7 @@ export function KartuLokasi({ status, kantor, jarakM, dalam, jarakJauh, onRefres
   return (
     <Card variant="flat">
       <View>
-        <Sketsa kantor={kantor} titik={titik} />
+        <PetaRiil kantor={kantor} titik={titik} kunciCoba={kunciCoba} />
         <View style={s.chipPos}>
           <Badge tone={chipTone}>{chipTeks}</Badge>
         </View>
@@ -173,15 +89,13 @@ export function KartuLokasi({ status, kantor, jarakM, dalam, jarakJauh, onRefres
             Akurasi ±{Math.round(akurasi)} m
           </Text>
         ) : null}
-        <IconButton icon="refresh-cw" label="Perbarui lokasi" variant="outline" size={44} onPress={onRefresh} disabled={status.keadaan === 'memuat'} />
+        <IconButton icon="refresh-cw" label="Perbarui lokasi" variant="outline" size={44} onPress={() => { setKunciCoba((n) => n + 1); onRefresh(); }} disabled={status.keadaan === 'memuat'} />
       </View>
     </Card>
   );
 }
 
 const s = StyleSheet.create({
-  peta: { height: TINGGI, overflow: 'hidden' },
-  namaKantor: { position: 'absolute', bottom: 8, alignSelf: 'center', paddingHorizontal: 10, paddingVertical: 3, borderRadius: radius.sm, borderWidth: StyleSheet.hairlineWidth },
   chipPos: { position: 'absolute', top: 10, left: 10 },
   bawah: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
 });
