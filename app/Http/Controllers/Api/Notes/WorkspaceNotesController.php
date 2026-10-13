@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Notes;
 
 use App\Domain\Notes\Actions\CreateNote;
 use App\Domain\Notes\Queries\NoteLibrary;
+use App\Domain\Notes\Queries\NoteTree;
 use App\Domain\Notes\Services\NoteHtml;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\WorkspaceNoteStoreRequest;
@@ -19,22 +20,30 @@ use Illuminate\Support\Facades\Gate;
 /**
  * Tab "Catatan" of a workspace for the mobile app (API v1): the note list of
  * that workspace (the web NoteLibrary rows — title, diperbarui, penulis —
- * enriched with names, folders above notes) and "Catatan baru" through the
+ * enriched with names, folders above notes; plus the nested `tree`) and "Catatan baru" through the
  * web CreateNote behind NotePolicy::create. Only workspaces visible to the
  * caller resolve (the {workspace} binder answers 404 first).
  */
 class WorkspaceNotesController extends Controller
 {
-    public function index(Workspace $workspace, #[CurrentUser] User $user, NoteLibrary $library): JsonResponse
+    public function index(Workspace $workspace, #[CurrentUser] User $user, NoteLibrary $library, NoteTree $tree): JsonResponse
     {
         Gate::authorize('view', $workspace);
 
-        $notes = $library->notes($user, $workspace->id);
+        $notes = $this->withNames($library->notes($user, $workspace->id));
 
         return response()->json([
-            'workspace' => ['id' => $workspace->id, 'key' => $workspace->key, 'name' => $workspace->name],
+            'workspace' => [
+                'id' => $workspace->id,
+                'key' => $workspace->key,
+                'name' => $workspace->name,
+                'archived' => $workspace->isArchived(),
+            ],
             'can_create' => app(NotePolicy::class)->canCreateIn($user, $workspace),
-            'notes' => $this->withNames($notes),
+            // Flat rows (the original shape) and the same rows nested for
+            // the tree view (B3-B): folders, notes, sub-pages, my_role.
+            'notes' => $notes,
+            'tree' => $tree->build($user, $workspace, $notes),
         ]);
     }
 

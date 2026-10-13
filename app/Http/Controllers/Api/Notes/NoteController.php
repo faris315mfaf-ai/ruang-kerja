@@ -27,9 +27,10 @@ use Illuminate\Validation\ValidationException;
  * this API: the web keeps editing through the collab server, the app
  * autosaves over REST and reloads on 409.
  *
- * The app edits plain text only: `mobile_editable` (detail) is true when the
- * document holds nothing but unmarked paragraphs; a body save on any other
- * note is refused with 409 {code: 'rich_note'} (rename still works).
+ * The plain-text editor edits plain text only: `mobile_editable` (detail) is
+ * true when the document holds nothing but unmarked paragraphs; a body save
+ * on any other note is refused with 409 {code: 'rich_note'} (rename still
+ * works) unless the request carries `rich: true` (rich editor, B3-B).
  */
 class NoteController extends Controller
 {
@@ -49,9 +50,11 @@ class NoteController extends Controller
         Gate::authorize('update', $note);
 
         if ($request->has('body_html')) {
-            // The app edits plain text and replaces the whole document: a
-            // rich note (headings, lists, marks, mentions) would be flattened.
-            if (! self::mobileEditable($note)) {
+            // The plain-text editor replaces the whole document: a rich note
+            // (headings, lists, marks, mentions) would be flattened. An app
+            // with a rich editor opts in with `rich: true` (B3-B) and sends
+            // the whole formatted HTML back, so nothing is flattened.
+            if (! $request->boolean('rich') && ! self::mobileEditable($note)) {
                 return response()->json([
                     'code' => 'rich_note',
                     'message' => 'Catatan ini berformat lengkap. Sunting di web.',

@@ -26,6 +26,8 @@ class NoteUpdateRequest extends NoteRequest
             'title' => ['sometimes', 'nullable', 'string', 'max:200', Rule::prohibitedIf($this->filled('body_html'))],
             'body_html' => ['sometimes', 'nullable', 'string', 'max:1000000'],
             'updated_at' => ['required_with:body_html', 'nullable', 'date'],
+            // Rich editor opt-in: save the formatted HTML on a rich note too.
+            'rich' => ['sometimes', 'boolean'],
         ];
     }
 
