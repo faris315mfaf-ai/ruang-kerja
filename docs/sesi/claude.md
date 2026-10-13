@@ -61,3 +61,14 @@ Rencana 5 bagian: `docs/fitur/aplikasi-ponsel-bagian.md`. Mockup: `docs/mockups/
 - **Belum diverifikasi:** ruang video live (tanpa LiveKit lokal saat uji; layar menampilkan "belum disiapkan"); notulen otomatis end-to-end.
 - Butuh izin pemilik: `expo-screen-orientation` (lanskap video), `expo-keep-awake`, layanan latar kamera/mikrofon; PiP Android belum ada. APK 173–181 MB → sarankan split ABI / AAB.
 - Berikutnya: Bagian 5 (Manajemen & rilis) bila diminta; push/deploy menunggu izin.
+
+### Bagian 4 — lanjutan (13 Okt 2026, siang)
+- Keputusan pemilik: pasang `expo-keep-awake` (layar menyala di ruang rapat); `expo-screen-orientation` & layanan latar **tidak**; APK ±181 MB **dibiarkan**; perbaiki sisa UI tab bar.
+- Uji ruang video live: LiveKit lokal (docker `livekit/livekit-server:v1.13.8`, config sendiri, node_ip 127.0.0.1 + `adb reverse tcp:7880/7881`), server API `php -S` di `public/` dengan env `LIVEKIT_*` (artisan serve membuang env non-passthrough), peserta kedua = Playwright web (kamera palsu). Pra-gabung, masuk, video dua arah, tangan, obrolan (ponsel → web), kehadiran, menu ⋯, tab Notulen, keluar → "Anda keluar dari rapat" — berfungsi.
+- Bug ditemukan & diperbaiki:
+  - `ae9e6d4` **semua lembar bawah (gorhom) tidak pernah tampil** sejak fondasi: wrapper memanggil `dismiss()` saat dipasang → status modal macet `DISMISSING` → `present()` diabaikan. Juga `keyboardShouldPersistTaps="handled"` (Kirim tak tertelan saat keyboard terbuka).
+  - `9555968` ruang video: ubin kolaps tinggi 0; `useChat({ room })` objek baru tiap render → render tanpa henti (JS 100%); kamera gagal menyala lagi (`OverconstrainedError` deviceId `default`) → track baru; tombol kembali menutup panel dulu; keep-awake.
+  - `a56af98` sorotan fokus persegi Android dimatikan (plugin `withNoFocusHighlight`), cincin outline bundar di `Pressable`; cincin Absen = warna kapsul (mode gelap).
+  - label TalkBack lonceng ganda.
+- Catatan: emulator `rk-uji` sempat dipakai sesi lain (aplikasi Monitor Karya muncul, emulator dimatikan dari luar) — hati-hati saat paralel.
+- Belum: notulen otomatis end-to-end (butuh worker transkrip), mikrofon (emulator -no-audio), uji perangkat fisik.
