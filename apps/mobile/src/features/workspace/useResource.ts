@@ -38,12 +38,29 @@ export interface HasilResource<T> {
   ubah: (fn: (lama: T) => T) => void;
 }
 
+/**
+ * Segarkan diam-diam saat layar kembali fokus (mis. setelah mengubah tugas di
+ * layar lain). Hanya untuk layar (butuh konteks navigasi) — bukan untuk
+ * komponen di luar layar seperti sheet tombol-tengah.
+ */
+export function useSegarkanSaatFokus(muat: () => Promise<void>): void {
+  const pertama = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (pertama.current) {
+        pertama.current = false;
+        return;
+      }
+      void muat();
+    }, [muat]),
+  );
+}
+
 export function bentukGalat(err: unknown, cadangan: string): ApiError {
   return err instanceof ApiError ? err : new ApiError({ status: 0, message: cadangan });
 }
 
-export function useResource<T>(key: string | null, fetcher: () => Promise<T>, opsi: { fokus?: boolean } = {}): HasilResource<T> {
-  const { fokus = true } = opsi;
+export function useResource<T>(key: string | null, fetcher: () => Promise<T>): HasilResource<T> {
   const awal = key !== null ? (cache.get(key) as Entri | undefined) : undefined;
   const [data, setData] = useState<T | null>((awal?.data as T | undefined) ?? null);
   const [galat, setGalat] = useState<ApiError | null>(null);
@@ -111,19 +128,6 @@ export function useResource<T>(key: string | null, fetcher: () => Promise<T>, op
     /* eslint-enable react-hooks/set-state-in-effect */
     void muat();
   }, [key, muat]);
-
-  const pertama = useRef(true);
-  useFocusEffect(
-    useCallback(() => {
-      if (pertama.current) {
-        pertama.current = false;
-        return;
-      }
-      if (fokus && adaData.current) {
-        void muat();
-      }
-    }, [fokus, muat]),
-  );
 
   const ubah = useCallback((fn: (lama: T) => T): void => {
     setData((lama) => {

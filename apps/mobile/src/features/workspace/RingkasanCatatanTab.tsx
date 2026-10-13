@@ -14,11 +14,11 @@ import type { DetailWorkspace } from '@/api/workspace';
 import { useKirimTautan } from '@/features/settings/useKirimTautan';
 import { tanggalDariYMD, waktuRelatif, ymdHariIni } from '@/lib/format';
 import { useTheme } from '@/theme';
-import { Badge, Banner, Card, Dialog, EmptyState, Fab, Field, Icon, IconTile, Input, KpiCard, Loading, Pressable, Text, useSnackbar, type Tone } from '@/ui';
+import { Badge, Banner, Card, Dialog, EmptyState, Fab, Field, Icon, IconTile, Input, KpiCard, ListRow, Loading, Pressable, Text, useSnackbar, type Tone } from '@/ui';
 
 import { GalatMuat, PitaOffline, TabScroll } from './bagian';
 import { selisihHari } from './util';
-import { useResource } from './useResource';
+import { useResource, useSegarkanSaatFokus } from './useResource';
 
 const NADA_KESEHATAN: Record<string, Tone> = { on_track: 'success', at_risk: 'warning', off_track: 'danger' };
 
@@ -92,6 +92,7 @@ export function CatatanTab({ detail }: { detail: DetailWorkspace }): React.JSX.E
   const snackbar = useSnackbar();
   const ws = detail.workspace.id;
   const cat = useResource<WorkspaceNotes>(`catatan:${ws}`, () => catatanWorkspace(ws));
+  useSegarkanSaatFokus(cat.muat);
   const [dialog, setDialog] = useState(false);
   const [judul, setJudul] = useState('');
   const [galat, setGalat] = useState<string | null>(null);
@@ -142,6 +143,9 @@ export function CatatanTab({ detail }: { detail: DetailWorkspace }): React.JSX.E
     <View style={{ flex: 1 }}>
       <TabScroll onRefresh={cat.muat} ruangFab={data.can_create}>
         {cat.offline ? <PitaOffline diperbarui={cat.diperbarui} objek="daftar" /> : null}
+        <Card variant="flat">
+          <ListRow icon="notebook-pen" iconTone="teal" title="Buka di Catatan" subtitle="Pohon folder, editor, notulensi, dan berbagi" onPress={() => router.push({ pathname: '/catatan', params: { workspace: ws } } as never)} />
+        </Card>
         {data.notes.length === 0 ? (
           <EmptyState icon="notebook-pen" title="Belum ada catatan" description={data.can_create ? 'Ketuk “Catatan baru” untuk memulai.' : 'Anda hanya dapat membaca catatan workspace ini.'} />
         ) : (

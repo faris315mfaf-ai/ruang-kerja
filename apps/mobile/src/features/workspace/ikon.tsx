@@ -10,9 +10,9 @@ import { warnaPalet, warnaPrioritas } from '@/lib/palette';
 import { useTheme } from '@/theme';
 import { Text } from '@/ui';
 
-export function IkonStatus({ kategori, warna, ukuran = 22 }: { kategori: BoardTaskCategory; warna?: string; ukuran?: number }): React.JSX.Element {
+export function IkonStatus({ kategori, warna, hex, ukuran = 22 }: { kategori: BoardTaskCategory; warna?: string; hex?: string; ukuran?: number }): React.JSX.Element {
   const { colors, dark } = useTheme();
-  const w = warna !== undefined ? warnaPalet(warna, dark) : colors.muted;
+  const w = hex ?? (warna !== undefined ? warnaPalet(warna, dark) : colors.muted);
   const c = ukuran / 2;
   const r = c - 2;
   const sapuan = 2;

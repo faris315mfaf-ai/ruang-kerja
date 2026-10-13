@@ -5,7 +5,7 @@
  */
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import type { FilterTugas, KartuWorkspace, PapanData } from '@/api/workspace';
@@ -96,7 +96,7 @@ export function PapanView({
           {papan.offline ? <PitaOffline diperbarui={papan.diperbarui} objek="papan" /> : null}
           {papan.offline && boleh ? <Banner tone="info" message="Perubahan menunggu sambungan: pindah kartu butuh koneksi." /> : null}
 
-          <View accessibilityRole="tablist" style={s.kolomBaris}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="tablist" style={s.kolomGulir} contentContainerStyle={s.kolomBaris}>
             {kolom.map((c) => {
               const dipilih = c.id === idAktif;
               const n = (terlihat.get(c.id) ?? []).length;
@@ -111,7 +111,7 @@ export function PapanView({
                   style={[s.chip, { borderColor: dipilih ? 'transparent' : colors.border, backgroundColor: dipilih ? 'transparent' : colors.surface }]}
                 >
                   {dipilih ? <Gradient name="aksi" style={[StyleSheet.absoluteFill, { borderRadius: 22 }]} /> : null}
-                  <IkonStatus kategori={c.kategori} warna={dipilih ? undefined : c.color} ukuran={20} />
+                  <IkonStatus kategori={c.kategori} warna={c.color} hex={dipilih ? '#FFFFFF' : undefined} ukuran={20} />
                   <Text variant="label" style={{ color: dipilih ? '#FFFFFF' : colors.text }} numberOfLines={1}>
                     {c.name}
                   </Text>
@@ -121,7 +121,7 @@ export function PapanView({
                 </Pressable>
               );
             })}
-          </View>
+          </ScrollView>
 
           {k ? (
             <View style={s.judulKolom}>
@@ -185,7 +185,8 @@ export function PapanView({
 }
 
 const s = StyleSheet.create({
-  kolomBaris: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  kolomGulir: { flexGrow: 0, marginHorizontal: -16 },
+  kolomBaris: { gap: 8, paddingHorizontal: 16 },
   chip: { minHeight: 44, borderRadius: 22, borderWidth: 1, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 8, overflow: 'hidden' },
   judulKolom: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
   titikKolom: { width: 10, height: 10, borderRadius: 5 },

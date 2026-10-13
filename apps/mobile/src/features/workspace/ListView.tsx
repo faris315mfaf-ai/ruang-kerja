@@ -135,14 +135,29 @@ export function ListView({
     void muat(1);
   }, [muat, kunciFilter, versi]);
 
-  // Pencarian inline → filter.q (debounce 350 ms).
-  useEffect(() => {
-    if (cari === filterRef.current.q) {
-      return undefined;
+  // Pencarian inline → filter.q (debounce 350 ms). Perubahan filter dari luar
+  // (sheet, hapus filter) menyalin kembali ke kolom cari.
+  const [qTerlihat, setQTerlihat] = useState(filter.q);
+  if (filter.q !== qTerlihat) {
+    setQTerlihat(filter.q);
+    setCari(filter.q);
+  }
+  const timerCari = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ubahCari = (nilai: string): void => {
+    setCari(nilai);
+    if (timerCari.current) {
+      clearTimeout(timerCari.current);
     }
-    const t = setTimeout(() => onFilter({ ...filterRef.current, q: cari }), 350);
-    return () => clearTimeout(t);
-  }, [cari, onFilter]);
+    timerCari.current = setTimeout(() => onFilter({ ...filterRef.current, q: nilai }), 350);
+  };
+  useEffect(
+    () => () => {
+      if (timerCari.current) {
+        clearTimeout(timerCari.current);
+      }
+    },
+    [],
+  );
 
   const nFilter = jumlahFilterAktif(filter);
   const terlambat = useMemo(() => k.tugas.filter((t) => labelTenggat(t.due_date, !tugasTerbuka(t))?.terlambat).length, [k.tugas]);
@@ -175,7 +190,7 @@ export function ListView({
     <TabScroll onRefresh={() => muat(1)} ruangFab={boleh}>
       <BannerBacaSaja info={k.bacaSaja} />
       {k.offline ? <PitaOffline diperbarui={k.diperbarui} objek="daftar" /> : null}
-      <SearchInput value={cari} onChangeText={setCari} placeholder="Cari judul, ID, atau deskripsi" />
+      <SearchInput value={cari} onChangeText={ubahCari} placeholder="Cari judul, ID, atau deskripsi" />
       <SegmentedTabs
         value={kelompok}
         onChange={setKelompok}
@@ -188,7 +203,7 @@ export function ListView({
         <Text variant="meta" style={{ flex: 1 }}>
           {`${k.meta?.total ?? k.tugas.length} tugas${terlambat > 0 ? ` · ${terlambat} terlambat` : ''}${nFilter > 0 ? ' · difilter' : ''}`}
         </Text>
-        {nFilter > 0 ? <Button title="Hapus filter" variant="quiet" size="sm" onPress={() => { setCari(''); onFilter({ ...filter, q: '', assignee: '', prioritas: [], label: [], tenggat: '' }); }} /> : null}
+        {nFilter > 0 ? <Button title="Hapus filter" variant="quiet" size="sm" onPress={() => onFilter({ ...filter, q: '', assignee: '', prioritas: [], label: [], tenggat: '' })} /> : null}
       </View>
 
       {grup.length === 0 ? (

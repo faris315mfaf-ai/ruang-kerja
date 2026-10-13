@@ -17,7 +17,7 @@ import { DokumenTab, FileTab } from '@/features/workspace/DokumenFileTab';
 import { KepalaWorkspace } from '@/features/workspace/KepalaWorkspace';
 import { CatatanTab, RingkasanTab } from '@/features/workspace/RingkasanCatatanTab';
 import { TugasTab } from '@/features/workspace/TugasTab';
-import { useResource } from '@/features/workspace/useResource';
+import { useResource, useSegarkanSaatFokus } from '@/features/workspace/useResource';
 import { useSession } from '@/session/SessionProvider';
 import { BottomSheet, EmptyState, Loading, PageGlow, SheetAction, TabNav, useSnackbar } from '@/ui';
 import { useTheme } from '@/theme';
@@ -39,6 +39,7 @@ export default function LayarWorkspace(): React.JSX.Element {
   const snackbar = useSnackbar();
   const ws = typeof id === 'string' ? id : '';
   const detail = useResource<DetailWorkspace>(ws !== '' ? `ws:${ws}` : null, () => ambilDetailWorkspace(ws));
+  useSegarkanSaatFokus(detail.muat);
   const [tabPilih, setTabPilih] = useState<TabTampil | null>(bacaTab(tabParam));
   const [dikunjungi, setDikunjungi] = useState<Set<TabTampil>>(new Set());
   const [menu, setMenu] = useState(false);

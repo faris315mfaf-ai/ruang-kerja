@@ -24,8 +24,8 @@ export default function LayarWorkspaceBaru(): React.JSX.Element {
   const { user } = useSession();
   const otomasi = user?.features.automation === true;
 
-  const daftar = useResource<DaftarWorkspace>('workspace:daftar', ambilDaftarWorkspace, { fokus: false });
-  const templat = useResource<TemplatWorkspace[]>(otomasi ? 'workspace:templat' : null, ambilTemplatWorkspace, { fokus: false });
+  const daftar = useResource<DaftarWorkspace>('workspace:daftar', ambilDaftarWorkspace);
+  const templat = useResource<TemplatWorkspace[]>(otomasi ? 'workspace:templat' : null, ambilTemplatWorkspace);
 
   const [jenis, setJenis] = useState<'team' | 'project'>('team');
   const [nama, setNama] = useState('');

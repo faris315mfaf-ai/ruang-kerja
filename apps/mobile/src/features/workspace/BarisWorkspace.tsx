@@ -18,6 +18,9 @@ export function subjudulWorkspace(w: WorkspaceItem): string {
   } else {
     bagian.push(w.type_label);
     bagian.push(`${w.members_count} anggota`);
+    if (w.open_tasks_count > 0) {
+      bagian.push(`${w.open_tasks_count} terbuka`);
+    }
   }
   return bagian.join(' · ');
 }

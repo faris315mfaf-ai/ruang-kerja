@@ -26,7 +26,7 @@ import { KalenderView } from './KalenderView';
 import { ListView } from './ListView';
 import { PapanView } from './PapanView';
 import { PindahkanSheet } from './PindahkanSheet';
-import { useResource } from './useResource';
+import { useResource, useSegarkanSaatFokus } from './useResource';
 import { jumlahFilterAktif, lolosFilter } from './util';
 
 type Mode = 'board' | 'list' | 'kalender';
@@ -43,7 +43,9 @@ export function TugasTab({ detail, meId }: { detail: DetailWorkspace; meId: stri
   const [anggotaDibuka, setAnggotaDibuka] = useState(false);
 
   const papan = useResource<PapanData>(`papan:${ws}`, () => ambilPapan(ws));
-  const anggota = useResource(anggotaDibuka ? `anggota:${ws}` : null, () => ambilAnggotaWorkspace(ws), { fokus: false });
+  const anggota = useResource(anggotaDibuka ? `anggota:${ws}` : null, () => ambilAnggotaWorkspace(ws));
+
+  useSegarkanSaatFokus(papan.muat);
 
   const boleh = detail.can.edit_tasks && !detail.read_only.read_only;
   const bolehPindah = papan.data ? papan.data.can.move && !papan.data.read_only.read_only : boleh;

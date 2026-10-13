@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ambilDaftarWorkspace, setFavorit, type DaftarWorkspace, type JenisKelompok, type WorkspaceItem } from '@/api/workspace';
 import { BarisWorkspace } from '@/features/workspace/BarisWorkspace';
 import { GalatMuat, PitaOffline, TabScroll } from '@/features/workspace/bagian';
-import { useResource } from '@/features/workspace/useResource';
+import { useResource, useSegarkanSaatFokus } from '@/features/workspace/useResource';
 import { useTheme } from '@/theme';
 import { Card, Chip, ChipScroller, EmptyState, Fab, Loading, Screen, SubAppBar, Text, useSnackbar } from '@/ui';
 
@@ -30,6 +30,7 @@ export default function LayarDaftarWorkspace(): React.JSX.Element {
   const insets = useSafeAreaInsets();
   const snackbar = useSnackbar();
   const daftar = useResource<DaftarWorkspace>('workspace:daftar', ambilDaftarWorkspace);
+  useSegarkanSaatFokus(daftar.muat);
   const [saring, setSaring] = useState<Saring>('semua');
 
   const data = daftar.data;

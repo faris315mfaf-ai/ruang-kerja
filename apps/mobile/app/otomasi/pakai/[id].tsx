@@ -16,8 +16,8 @@ import { BottomSheet, Button, DateInput, EmptyState, Field, Input, Loading, Radi
 function Isi(): React.JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
   const snackbar = useSnackbar();
-  const templat = useResource<TemplatTugas[]>('otomasi:templat-tugas', ambilTemplatTugas, { fokus: false });
-  const daftar = useResource<DaftarWorkspace>('workspace:daftar', ambilDaftarWorkspace, { fokus: false });
+  const templat = useResource<TemplatTugas[]>('otomasi:templat-tugas', ambilTemplatTugas);
+  const daftar = useResource<DaftarWorkspace>('workspace:daftar', ambilDaftarWorkspace);
   const t = templat.data?.find((x) => x.id === id) ?? null;
 
   const [judul, setJudul] = useState<string | null>(null);

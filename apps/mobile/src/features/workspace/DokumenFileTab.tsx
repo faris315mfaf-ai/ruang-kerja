@@ -13,7 +13,7 @@ import { Button, Card, Chip, ChipScroller, EmptyState, Fab, Loading, Text, useSn
 
 import { PitaOffline, TabScroll, GalatMuat } from './bagian';
 import { AksiBerkasSheet, BarisBerkas, bukaBerkas, DriveBelumAktif, TambahDriveSheet, teksAkses } from './drive';
-import { useResource } from './useResource';
+import { useResource, useSegarkanSaatFokus } from './useResource';
 
 type FilterDokumen = 'semua' | 'doc' | 'sheet' | 'slide';
 
@@ -29,6 +29,7 @@ export function DokumenTab({ detail }: { detail: DetailWorkspace }): React.JSX.E
   const snackbar = useSnackbar();
   const ws = detail.workspace.id;
   const dok = useResource<DokumenData>(`dokumen:${ws}`, () => ambilDokumen(ws));
+  useSegarkanSaatFokus(dok.muat);
   const [filter, setFilter] = useState<FilterDokumen>('semua');
   const [aksi, setAksi] = useState<BerkasDrive | null>(null);
   const [tambah, setTambah] = useState(false);
@@ -107,6 +108,7 @@ export function FileTab({ detail }: { detail: DetailWorkspace }): React.JSX.Elem
   const ws = detail.workspace.id;
   const [folder, setFolder] = useState<string | null>(null);
   const files = useResource<FileData>(`file:${ws}:${folder ?? ''}`, () => ambilFile(ws, folder));
+  useSegarkanSaatFokus(files.muat);
   const [filter, setFilter] = useState<string>('semua');
   const [aksi, setAksi] = useState<BerkasDrive | null>(null);
   const [tambah, setTambah] = useState(false);

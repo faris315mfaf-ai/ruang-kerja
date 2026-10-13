@@ -4,12 +4,11 @@
  * workspace. Dimuat saat sheet dibuka.
  */
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ApiError } from '@/api/client';
 import { ambilDaftarWorkspace, type DaftarWorkspace } from '@/api/workspace';
 import { gradienUbin } from '@/features/workspace/bagian';
+import { useResource } from '@/features/workspace/useResource';
 import { radius, useTheme } from '@/theme';
 
 import { BottomSheet } from './BottomSheet';
@@ -23,28 +22,12 @@ import { Text } from './Text';
 
 export function WorkspaceSheet({ visible, onClose }: { visible: boolean; onClose: () => void }): React.JSX.Element {
   const { colors } = useTheme();
-  const [data, setData] = useState<DaftarWorkspace | null>(null);
-  const [galat, setGalat] = useState<string | null>(null);
-  const [memuat, setMemuat] = useState(false);
-
-  const muat = useCallback(async (): Promise<void> => {
-    setMemuat(true);
-    setGalat(null);
-    try {
-      setData(await ambilDaftarWorkspace());
-    } catch (err) {
-      setGalat(err instanceof ApiError ? err.message : 'Tidak dapat memuat workspace.');
-    } finally {
-      setMemuat(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (visible) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- memuat saat sheet dibuka
-      void muat();
-    }
-  }, [visible, muat]);
+  // Cache bersama dengan daftar /workspace; hanya dimuat saat sheet terbuka.
+  const daftar = useResource<DaftarWorkspace>(visible ? 'workspace:daftar' : null, ambilDaftarWorkspace);
+  const data = daftar.data;
+  const memuat = daftar.memuat;
+  const galat = daftar.galat?.message ?? null;
+  const muat = daftar.muat;
 
   const buka = (id: string): void => {
     onClose();
