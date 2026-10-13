@@ -11,4 +11,8 @@
 import '@/features/absensi/offline';
 import '@/features/pengajuan/offline';
 
+import '@/offline/fitur/tugas';
+import '@/offline/fitur/catatan';
+import '@/offline/fitur/laporan';
+
 export {};

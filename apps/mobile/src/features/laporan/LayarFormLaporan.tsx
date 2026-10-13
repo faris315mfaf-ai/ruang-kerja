@@ -9,6 +9,10 @@ import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native
 
 import type { HasilPindah, OpsiTugas } from '@/api/laporan';
 import { jam } from '@/lib/format';
+import { useOnline } from '@/offline';
+import { ChipMenunggu } from '@/offline/ChipMenunggu';
+import { CATATAN_OFFLINE_LAPORAN } from '@/offline/fitur/laporan';
+import { PESAN_DISIMPAN_HP } from '@/offline/fitur/umum';
 import { useTheme } from '@/theme';
 import {
   Badge,
@@ -75,6 +79,7 @@ export function LayarFormLaporan(): React.JSX.Element {
   const { colors } = useTheme();
   const snackbar = useSnackbar();
   const f = useFormLaporan();
+  const online = useOnline();
   const { data, laporan, isian, galat, statusSimpan, opsi } = f;
   const [terbuka, setTerbuka] = useState<Set<string>>(new Set());
   const [pilihTugas, setPilihTugas] = useState(false);
@@ -148,6 +153,10 @@ export function LayarFormLaporan(): React.JSX.Element {
   const kirim = async (): Promise<void> => {
     const r = await f.kirim();
     setKonfirmasi(false);
+    if (r.ok && r.antre) {
+      snackbar.show({ message: `${PESAN_DISIMPAN_HP} · laporan terkunci pukul 23.59`, variant: 'info', duration: 6000 });
+      return;
+    }
     if (r.ok) {
       setHasilPindah(r.hasil.move_results);
       const pindah = r.hasil.move_results.filter((m) => m.moved && m.to);
@@ -184,8 +193,9 @@ export function LayarFormLaporan(): React.JSX.Element {
   }
 
   const batasJam = jam(data.deadline);
-  const lencana =
-    laporan.status === 'submitted' ? (
+  const lencana = f.menungguKirim ? (
+    <Badge tone="info">Menunggu kirim</Badge>
+  ) : laporan.status === 'submitted' ? (
       <Badge tone="success">{`Terkirim ${jam(laporan.submitted_at)}`}</Badge>
     ) : laporan.status === 'draft' || isian.items.length > 0 ? (
       <Badge tone="warning">Draf</Badge>
@@ -200,6 +210,8 @@ export function LayarFormLaporan(): React.JSX.Element {
         Gagal menyimpan
       </Text>
     );
+  } else if (statusSimpan === 'di_hp' || (f.diAntrean && statusSimpan !== 'gagal' && statusSimpan !== 'menyimpan' && statusSimpan !== 'menunggu')) {
+    statusTeks = <ChipMenunggu teks="Tersimpan di HP · menunggu sinkron" />;
   } else if (statusSimpan === 'offline' || statusSimpan === 'gagal') {
     statusTeks = (
       <Pressable onPress={f.simpanSekarang} accessibilityRole="button" accessibilityLabel={`${f.pesanSimpan ?? 'Gagal menyimpan'}. Coba simpan lagi`} style={s.statusTombol} scaleTo={1}>
@@ -247,11 +259,13 @@ export function LayarFormLaporan(): React.JSX.Element {
   } else if (bacaSaja) {
     footer = null;
   } else {
-    const offline = statusSimpan === 'offline';
+    const offline = !online;
     const kosong = isian.items.length === 0;
-    const teks = offline
-      ? 'Offline — isian aman di perangkat, dikirim ke server saat tersambung'
-      : kosong
+    const teks = f.menungguKirim
+      ? CATATAN_OFFLINE_LAPORAN
+      : offline
+        ? CATATAN_OFFLINE_LAPORAN
+        : kosong
         ? 'Tambahkan satu pekerjaan dulu'
         : terkirim
           ? `Terkirim ${tanggalSingkat(laporan.date).split(' ')[0]} ${jam(laporan.submitted_at)} — Anda bisa memperbaiki sampai ${batasJam}`
@@ -262,11 +276,11 @@ export function LayarFormLaporan(): React.JSX.Element {
           {teks}
         </Text>
         <Button
-          title={offline ? 'Kirim saat online' : terkirim ? 'Kirim ulang perubahan' : 'Kirim laporan'}
-          icon="send"
+          title={f.menungguKirim ? 'Menunggu internet untuk mengirim' : terkirim ? 'Kirim ulang perubahan' : offline ? 'Kirim (antre, terkirim saat online)' : 'Kirim laporan'}
+          icon={f.menungguKirim ? 'cloud-upload' : 'send'}
           onPress={() => void mulaiKirim()}
-          disabled={offline || kosong || data.can.submit === false}
-          disabledReason={offline ? 'Kirim butuh koneksi internet' : kosong ? 'Tambahkan satu pekerjaan dulu' : data.can.submit === false ? 'Anda tidak bisa mengirim laporan ini' : undefined}
+          disabled={f.menungguKirim || kosong || data.can.submit === false}
+          disabledReason={f.menungguKirim ? 'Laporan sudah antre dan terkirim otomatis saat online' : kosong ? 'Tambahkan satu pekerjaan dulu' : data.can.submit === false ? 'Anda tidak bisa mengirim laporan ini' : undefined}
           loading={f.mengirim}
           loadingTitle="Mengirim…"
         />
@@ -315,7 +329,8 @@ export function LayarFormLaporan(): React.JSX.Element {
               message={data.holiday ? `Hari ini ${data.holiday}. Laporan tetap boleh ditulis bila Anda bekerja.` : 'Hari ini tidak terjadwal kerja. Laporan tetap boleh ditulis bila Anda bekerja.'}
             />
           ) : null}
-          {f.dipulihkan && !terkunci ? <Banner tone="info" icon="cloud-off" message="Isian yang belum tersimpan dipulihkan dari perangkat ini." /> : null}
+          {f.dipulihkan && !terkunci ? <Banner tone="info" icon="cloud-off" message="Isian yang belum terkirim dipulihkan dari antrean di perangkat ini." /> : null}
+          {!online && !terkunci ? <Banner tone="warn" icon="cloud-off" message="Offline · isian tersimpan di HP dan dikirim otomatis saat online." /> : null}
           {hasilPindah && !terkunci ? <BannerHasil hasil={hasilPindah} /> : null}
           {galat.umum ? <Banner tone="bad" message={galat.umum} /> : null}
 

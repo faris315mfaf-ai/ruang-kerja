@@ -3,7 +3,7 @@
  * Formulir hari ini (autosave + kirim), riwayat bulanan, detail, dan sisi
  * pembaca (laporan tim, riwayat satu orang, detail monitoring).
  */
-import { apiRequest } from './client';
+import { apiRequest, type HasilPermintaan } from './client';
 
 export type StatusLaporan = 'missing' | 'draft' | 'submitted';
 export type KategoriStatus = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done' | 'canceled';
@@ -233,8 +233,8 @@ function wajib<T>(nilai: T | null): T {
   return nilai;
 }
 
-export function laporanHariIni(): Promise<LaporanHariIniData> {
-  return apiRequest<LaporanHariIniData>('laporan/hari-ini').then(wajib);
+export function laporanHariIni(hasil?: HasilPermintaan): Promise<LaporanHariIniData> {
+  return apiRequest<LaporanHariIniData>('laporan/hari-ini', { hasil }).then(wajib);
 }
 
 export function simpanLaporan(body: BodyLaporan): Promise<Laporan> {

@@ -8,11 +8,9 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { ApiError } from '@/api/client';
+import { ApiError, type HasilPermintaan } from '@/api/client';
 import {
-  kirimLaporan,
   laporanHariIni,
-  simpanLaporan,
   type BodyLaporan,
   type HasilKirim,
   type ItemLaporan,
@@ -20,9 +18,9 @@ import {
   type LaporanHariIniData,
   type OpsiTugas,
 } from '@/api/laporan';
-import { useSession } from '@/session/SessionProvider';
-
-import { bacaDrafLokal, hapusDrafLokal, tulisDrafLokal } from './drafLokal';
+import { hapusItem as hapusItemAntrean, useAntrean } from '@/offline';
+import { bacaAntreanLaporan, kirimLaporanAman, simpanDrafLaporan } from '@/offline/fitur/laporan';
+import { tanggalKantor } from '@/offline/fitur/umum';
 
 export const JEDA_SIMPAN_MS = 1200;
 const JEDA_ULANG_OFFLINE_MS = 15_000;
@@ -45,12 +43,13 @@ export interface IsianForm {
   items: ItemForm[];
 }
 
-export type StatusSimpan = 'bersih' | 'menunggu' | 'menyimpan' | 'tersimpan' | 'offline' | 'gagal' | 'terkunci';
+/** `di_hp` = tersimpan di antrean HP, menunggu sinkron (offline). */
+export type StatusSimpan = 'bersih' | 'menunggu' | 'menyimpan' | 'tersimpan' | 'di_hp' | 'offline' | 'gagal' | 'terkunci';
 
 /** Galat per isian: `summary` · `blockers` · `notes` · `items` · `umum` · `item:<kunci>:<field>`. */
 export type GalatForm = Record<string, string>;
 
-export type HasilKirimForm = { ok: true; hasil: HasilKirim } | { ok: false; alasan: 'validasi' | 'offline' | 'terkunci' | 'galat'; pesan: string };
+export type HasilKirimForm = { ok: true; hasil: HasilKirim; antre?: boolean } | { ok: false; alasan: 'validasi' | 'offline' | 'terkunci' | 'galat'; pesan: string };
 
 let urutKunci = 0;
 function kunciBaru(): string {
@@ -154,6 +153,22 @@ function terkunciDari(err: unknown): boolean {
   return err instanceof ApiError && err.status === 403 && err.code === 'laporan_terkunci';
 }
 
+/** Laporan kosong untuk `tanggal` (dipakai saat hanya ada salinan offline dari hari lain). Batas pukul 23.59 WIB. */
+function laporanKosong(tanggal: string, dasar: LaporanHariIniData): LaporanHariIniData {
+  return {
+    date: tanggal,
+    deadline: new Date(`${tanggal}T23:59:59+07:00`).toISOString(),
+    locked: false,
+    scheduled: true,
+    holiday: null,
+    can: { edit: true, submit: true },
+    report: { id: null, date: tanggal, status: 'missing', submitted_at: null, updated_at: null, editable: true, locked: false, summary: null, blockers: null, notes: null, items_count: 0, hours: null, items: [] },
+    suggestions: dasar.suggestions,
+    chosen: [],
+    limits: dasar.limits,
+  };
+}
+
 export interface FormLaporan {
   muat: { status: 'memuat' | 'galat' | 'siap'; pesan: string | null; kode: number | null };
   data: LaporanHariIniData | null;
@@ -169,6 +184,10 @@ export interface FormLaporan {
   /** Draf diambil dari cadangan perangkat saat dibuka. */
   dipulihkan: boolean;
   mengirim: boolean;
+  /** Ada draf/kirim laporan hari ini di antrean offline yang belum diterima server. */
+  diAntrean: boolean;
+  /** Ada permintaan "Kirim" yang menunggu internet. */
+  menungguKirim: boolean;
   /** Bertambah setiap kali data dimuat ulang (kunci item lokal dibuat baru). */
   muatKe: number;
   muatUlang: () => Promise<void>;
@@ -185,8 +204,6 @@ export interface FormLaporan {
 const KOSONG: IsianForm = { ringkasan: '', hambatan: '', catatan: '', items: [] };
 
 export function useFormLaporan(): FormLaporan {
-  const { user } = useSession();
-  const userId = user?.id ?? '';
   const [muat, setMuat] = useState<FormLaporan['muat']>({ status: 'memuat', pesan: null, kode: null });
   const [data, setData] = useState<LaporanHariIniData | null>(null);
   const [laporan, setLaporan] = useState<Laporan | null>(null);
@@ -210,25 +227,14 @@ export function useFormLaporan(): FormLaporan {
   const terpasangRef = useRef(true);
   const batasRef = useRef<number>(30);
 
-  const userIdRef = useRef(userId);
-  useEffect(() => {
-    userIdRef.current = userId;
-  }, [userId]);
-
   useEffect(() => {
     terpasangRef.current = true;
     return () => {
       terpasangRef.current = false;
       if (timerRef.current) clearTimeout(timerRef.current);
-      // Keluar dari layar sebelum jeda simpan habis: kirim isian terakhir (tanpa menunggu).
+      // Keluar dari layar sebelum jeda simpan habis: kirim isian terakhir (tanpa menunggu); offline → antrean.
       if (versiRef.current !== versiTersimpanRef.current && !terkunciRef.current && tanggalRef.current) {
-        const body = buatBody(tanggalRef.current, isianRef.current);
-        const pemilik = userIdRef.current;
-        simpanLaporan(body)
-          .then(() => hapusDrafLokal())
-          .catch((err: unknown) => {
-            if (!terkunciDari(err)) tulisDrafLokal({ userId: pemilik, body, savedAt: new Date().toISOString() });
-          });
+        void simpanDrafLaporan(buatBody(tanggalRef.current, isianRef.current)).catch(() => undefined);
       }
     };
   }, []);
@@ -257,42 +263,43 @@ export function useFormLaporan(): FormLaporan {
     setPesanSimpan(null);
     let ulangOffline = false;
     try {
-      const r = await simpanLaporan(body);
+      const hasil = await simpanDrafLaporan(body);
       if (!terpasangRef.current) return;
       versiTersimpanRef.current = Math.max(versiTersimpanRef.current, versi);
-      terapkanMeta(r);
-      setGalat((g) => {
-        // Galat server untuk isian yang sudah diterima dihapus; galat validasi kirim (klien) dibiarkan.
-        const sisa: GalatForm = {};
-        for (const [k, v] of Object.entries(g)) {
-          if (k.endsWith(':progress_note') || k === 'items') sisa[k] = v;
-        }
-        return sisa;
-      });
-      if (versi === versiRef.current) {
-        hapusDrafLokal();
-        setStatusSimpan('tersimpan');
+      if (hasil.antre) {
+        // Offline (atau masih ada antrean tanggal ini): isian aman di antrean HP, dikirim otomatis nanti.
+        setGalat((g) => {
+          const sisa: GalatForm = {};
+          for (const [k, v] of Object.entries(g)) {
+            if (k.endsWith(':progress_note') || k === 'items') sisa[k] = v;
+          }
+          return sisa;
+        });
+        setStatusSimpan(versi === versiRef.current ? 'di_hp' : 'menunggu');
+        setPesanSimpan(null);
       } else {
-        setStatusSimpan('menunggu');
+        terapkanMeta(hasil.nilai);
+        setGalat((g) => {
+          // Galat server untuk isian yang sudah diterima dihapus; galat validasi kirim (klien) dibiarkan.
+          const sisa: GalatForm = {};
+          for (const [k, v] of Object.entries(g)) {
+            if (k.endsWith(':progress_note') || k === 'items') sisa[k] = v;
+          }
+          return sisa;
+        });
+        setStatusSimpan(versi === versiRef.current ? 'tersimpan' : 'menunggu');
       }
     } catch (err) {
       if (!terpasangRef.current) return;
       if (terkunciDari(err)) {
         terkunciRef.current = true;
-        hapusDrafLokal();
         setStatusSimpan('terkunci');
         setPesanSimpan(err instanceof ApiError ? err.message : null);
-      } else if (err instanceof ApiError && err.status === 0) {
-        tulisDrafLokal({ userId, body, savedAt: new Date().toISOString() });
-        setStatusSimpan('offline');
-        setPesanSimpan('Draf belum tersimpan');
-        ulangOffline = true;
       } else if (err instanceof ApiError && err.status === 422) {
         setGalat((g) => ({ ...g, ...petakanGalat(err, terkirim.items) }));
         setStatusSimpan('gagal');
         setPesanSimpan(err.firstValidationError ?? err.message);
       } else {
-        tulisDrafLokal({ userId, body, savedAt: new Date().toISOString() });
         setStatusSimpan('gagal');
         setPesanSimpan(err instanceof ApiError ? err.message : 'Gagal menyimpan draf.');
         ulangOffline = err instanceof ApiError && (err.status === 429 || err.status >= 500);
@@ -306,7 +313,7 @@ export function useFormLaporan(): FormLaporan {
     } else if (versiRef.current !== versiTersimpanRef.current && !sedangSimpanRef.current) {
       timerRef.current = setTimeout(() => void jalankanSimpan(), JEDA_SIMPAN_MS);
     }
-  }, [terapkanMeta, userId]);
+  }, [terapkanMeta]);
 
   const tandaiBerubah = useCallback(
     (baru: IsianForm) => {
@@ -328,8 +335,14 @@ export function useFormLaporan(): FormLaporan {
     }
     setMuat((m) => ({ ...m, status: 'memuat' }));
     try {
-      const d = await laporanHariIni();
+      const infoCache: HasilPermintaan = {};
+      let d = await laporanHariIni(infoCache);
       if (!terpasangRef.current) return;
+      const hariIni = tanggalKantor();
+      if (d.date !== hariIni) {
+        // Salinan offline dari hari lain: jangan menulis ke tanggal lama — buka laporan kosong untuk hari ini.
+        d = laporanKosong(hariIni, d);
+      }
       const peta: Record<string, OpsiTugas> = {};
       for (const o of [...d.suggestions, ...d.chosen]) peta[o.id] = o;
       tanggalRef.current = d.date;
@@ -339,12 +352,17 @@ export function useFormLaporan(): FormLaporan {
       versiTersimpanRef.current = 0;
       let awal = isianDariLaporan(d.report, peta);
       let pulih = false;
-      const lokal = userId ? bacaDrafLokal(userId, d.date) : null;
-      if (lokal && (d.report.updated_at === null || new Date(lokal.savedAt).getTime() > new Date(d.report.updated_at).getTime())) {
-        awal = isianDariBody(lokal.body, peta, d.report);
+      let ambilAlih = false;
+      // Isian yang menunggu di antrean offline lebih baru daripada salinan server/cache: pakai itu.
+      const antri = bacaAntreanLaporan(d.date);
+      if (antri) {
+        awal = isianDariBody(antri.body, peta, d.report);
         pulih = true;
-      } else if (lokal) {
-        hapusDrafLokal();
+        if (antri.bermasalah.length > 0) {
+          // Item yang ditolak server diambil alih form: dikirim ulang dari sini dengan isian terbaru.
+          ambilAlih = true;
+          for (const i of antri.bermasalah) void hapusItemAntrean(i.id);
+        }
       }
       isianRef.current = awal;
       setData(d);
@@ -353,12 +371,12 @@ export function useFormLaporan(): FormLaporan {
       setIsian(awal);
       setGalat({});
       setTersimpanPada(d.report.updated_at);
-      setStatusSimpan(d.report.id ? 'tersimpan' : 'bersih');
+      setStatusSimpan(antri && !ambilAlih ? 'di_hp' : d.report.id ? 'tersimpan' : 'bersih');
       setPesanSimpan(null);
-      setDipulihkan(pulih);
+      setDipulihkan(pulih && ambilAlih);
       setMuat({ status: 'siap', pesan: null, kode: null });
       setMuatKe((n) => n + 1);
-      if (pulih) {
+      if (ambilAlih) {
         versiRef.current = 1;
         setStatusSimpan('menunggu');
         timerRef.current = setTimeout(() => void jalankanSimpan(), 300);
@@ -371,7 +389,7 @@ export function useFormLaporan(): FormLaporan {
         kode: err instanceof ApiError ? err.status : null,
       });
     }
-  }, [jalankanSimpan, userId]);
+  }, [jalankanSimpan]);
 
   useEffect(() => {
     void muatUlang();
@@ -504,7 +522,23 @@ export function useFormLaporan(): FormLaporan {
     const body = buatBody(tanggalRef.current, terkirim);
     setMengirim(true);
     try {
-      const hasil = await kirimLaporan(body);
+      const kirimHasil = await kirimLaporanAman(body);
+      if (kirimHasil.antre) {
+        // Offline: kirim mengantre di belakang draf terbaru dan terkirim otomatis saat online.
+        if (terpasangRef.current) {
+          versiTersimpanRef.current = Math.max(versiTersimpanRef.current, versi);
+          setGalat({});
+          if (versi === versiRef.current) {
+            setStatusSimpan('di_hp');
+            setPesanSimpan(null);
+          } else {
+            timerRef.current = setTimeout(() => void jalankanSimpan(), JEDA_SIMPAN_MS);
+          }
+        }
+        const sementara: Laporan = laporan ?? { id: null, date: body.report_date, status: 'draft', submitted_at: null, updated_at: null, editable: true, locked: false, summary: null, blockers: null, notes: null, items_count: body.items.length, hours: null, items: [] };
+        return { ok: true, antre: true, hasil: { report: sementara, move_results: [], message: 'Laporan disimpan di HP · terkirim otomatis saat online' } };
+      }
+      const hasil = kirimHasil.nilai;
       if (terpasangRef.current) {
         versiTersimpanRef.current = Math.max(versiTersimpanRef.current, versi);
         terapkanMeta(hasil.report);
@@ -519,7 +553,6 @@ export function useFormLaporan(): FormLaporan {
           return baru;
         });
         if (versi === versiRef.current) {
-          hapusDrafLokal();
           setStatusSimpan('tersimpan');
           setPesanSimpan(null);
         } else {
@@ -530,16 +563,11 @@ export function useFormLaporan(): FormLaporan {
     } catch (err) {
       if (terkunciDari(err)) {
         terkunciRef.current = true;
-        hapusDrafLokal();
         if (terpasangRef.current) {
           setStatusSimpan('terkunci');
           setPesanSimpan(err instanceof ApiError ? err.message : null);
         }
         return { ok: false, alasan: 'terkunci', pesan: err instanceof ApiError ? err.message : 'Laporan sudah terkunci.' };
-      }
-      if (err instanceof ApiError && err.status === 0) {
-        tulisDrafLokal({ userId, body, savedAt: new Date().toISOString() });
-        return { ok: false, alasan: 'offline', pesan: 'Tidak ada koneksi. Laporan belum terkirim; isian aman di perangkat.' };
       }
       if (err instanceof ApiError && err.status === 422) {
         if (terpasangRef.current) setGalat((g) => ({ ...g, ...petakanGalat(err, terkirim.items) }));
@@ -549,7 +577,38 @@ export function useFormLaporan(): FormLaporan {
     } finally {
       if (terpasangRef.current) setMengirim(false);
     }
-  }, [jalankanSimpan, terapkanMeta, userId, validasiKirim]);
+  }, [jalankanSimpan, terapkanMeta, validasiKirim, laporan]);
+
+  // Status antrean offline untuk tanggal form (selector bernilai primitif → render ulang seperlunya).
+  const tanggalForm = data?.date ?? null;
+  const diAntrean = useAntrean((st) => tanggalForm !== null && st.items.some((i) => i.jenis.startsWith('laporan.') && (i.meta as { tanggal?: string }).tanggal === tanggalForm));
+  const menungguKirim = useAntrean(
+    (st) =>
+      tanggalForm !== null &&
+      st.items.some((i) => i.jenis === 'laporan.kirim' && (i.meta as { tanggal?: string }).tanggal === tanggalForm && i.status !== 'konflik' && i.status !== 'gagal'),
+  );
+
+  // Antrean tanggal ini baru saja kosong (terkirim): segarkan metadata (status, waktu kirim) tanpa menyentuh isian.
+  const pernahAntre = useRef(false);
+  useEffect(() => {
+    if (diAntrean) {
+      pernahAntre.current = true;
+      return;
+    }
+    if (!pernahAntre.current) {
+      return;
+    }
+    pernahAntre.current = false;
+    void laporanHariIni()
+      .then((d) => {
+        if (terpasangRef.current && d.date === tanggalRef.current) {
+          setLaporan(d.report);
+          if (d.report.updated_at) setTersimpanPada(d.report.updated_at);
+          setStatusSimpan((st) => (st === 'di_hp' ? 'tersimpan' : st));
+        }
+      })
+      .catch(() => undefined);
+  }, [diAntrean]);
 
   return useMemo(
     () => ({
@@ -564,6 +623,8 @@ export function useFormLaporan(): FormLaporan {
       tersimpanPada,
       dipulihkan,
       mengirim,
+      diAntrean,
+      menungguKirim,
       muatKe,
       muatUlang,
       ubahTeks,
@@ -575,6 +636,6 @@ export function useFormLaporan(): FormLaporan {
       kirim,
       validasiKirim,
     }),
-    [muat, data, laporan, opsi, isian, galat, statusSimpan, pesanSimpan, tersimpanPada, dipulihkan, mengirim, muatKe, muatUlang, ubahTeks, ubahItem, tambahTugas, tambahDiLuar, hapusItem, simpanSekarang, kirim, validasiKirim],
+    [muat, data, laporan, opsi, isian, galat, statusSimpan, pesanSimpan, tersimpanPada, dipulihkan, mengirim, diAntrean, menungguKirim, muatKe, muatUlang, ubahTeks, ubahItem, tambahTugas, tambahDiLuar, hapusItem, simpanSekarang, kirim, validasiKirim],
   );
 }
