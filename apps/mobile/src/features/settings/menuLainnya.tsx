@@ -10,6 +10,7 @@ import type { AksesHiring } from '@/api/hiring';
 import { LencanaHiring } from '@/features/hiring/akses';
 import { bolehLaporanTimProfil } from '@/features/laporan/akses';
 import { LencanaPersetujuan } from '@/features/persetujuan/LencanaPersetujuan';
+import { LencanaAntrean } from '@/offline/LencanaAntrean';
 import { CountBadge, Icon, type AnyIconName } from '@/ui';
 
 import { bukaSegera, type ParamSegera } from './ComingSoon';
@@ -83,6 +84,13 @@ export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron, hiring }
   } else {
     daftar.push(inbox);
   }
+
+  daftar.push(
+    rute('sinkron', 'Antrean sinkron', 'refresh-cw', '/sinkron', {
+      subjudul: 'Perubahan yang dibuat saat offline',
+      kanan: <LencanaAntrean warnaChevron={warnaChevron} />,
+    }),
+  );
 
   daftar.push(rute('buat-cepat', 'Buat cepat', 'plus', '/buat-cepat', { subjudul: 'Tugas, check-in, pengajuan, catatan' }));
 

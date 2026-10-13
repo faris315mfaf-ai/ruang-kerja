@@ -81,6 +81,7 @@ export default function LayarPengaturan(): React.JSX.Element {
       onPress: ke('/pengaturan/notifikasi'),
     },
     { kunci: 'tampilan', judul: 'Tampilan', subjudul: labelTema(mode), ikon: 'moon', onPress: ke('/pengaturan/tampilan') },
+    { kunci: 'offline', judul: 'Penyimpanan offline', subjudul: 'Data tersimpan di perangkat & sinkron', ikon: 'hard-drive', onPress: ke('/pengaturan/penyimpanan-offline') },
     { kunci: 'bahasa', judul: 'Bahasa', subjudul: 'Bahasa Indonesia', ikon: 'languages' },
   ];
 

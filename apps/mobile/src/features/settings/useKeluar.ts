@@ -5,16 +5,13 @@
  */
 import { useCallback, useState } from 'react';
 
+import { jumlahTertunda } from '@/offline/antrean';
 import { useSession } from '@/session/SessionProvider';
 import { useDialog, useSnackbar } from '@/ui';
 
-/**
- * Titik sambung antrean offline (Bagian 2+): mengembalikan jumlah perubahan
- * yang dibuat saat offline dan belum terkirim. Antrean belum ada di aplikasi,
- * jadi selalu 0 — dialog keluar sudah siap menampilkan peringatannya.
- */
+/** Jumlah perubahan yang dibuat saat offline dan belum terkirim (antrean offline, `src/offline`). */
 export function jumlahAntreanTertunda(): { jumlah: number; rincian: string } {
-  return { jumlah: 0, rincian: '' };
+  return { jumlah: jumlahTertunda(), rincian: '' };
 }
 
 export function useKeluar(): { keluarDenganKonfirmasi: () => Promise<void>; keluarLangsung: () => Promise<void>; keluar: boolean } {

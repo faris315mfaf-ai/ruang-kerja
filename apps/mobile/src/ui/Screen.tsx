@@ -3,6 +3,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { layout, useTheme } from '@/theme';
 
+import { ChipDataBasi } from '@/offline/ChipDataBasi';
+
 import { useTabBarSpace } from './chrome';
 import { AppBar, SubAppBar } from './AppBar';
 import { Glass, PageGlow } from './Gradient';
@@ -37,10 +39,14 @@ export function Screen({ children, refreshing = false, onRefresh, contentStyle, 
       contentContainerStyle={[{ paddingHorizontal: layout.gutter, paddingTop: 4, paddingBottom: bawah, gap: 16 }, contentStyle]}
       refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} /> : undefined}
     >
+      <ChipDataBasi onMuatUlang={onRefresh} />
       {children}
     </ScrollView>
   ) : (
-    <View style={[{ flex: 1, paddingHorizontal: layout.gutter }, contentStyle]}>{children}</View>
+    <View style={[{ flex: 1, paddingHorizontal: layout.gutter }, contentStyle]}>
+      <ChipDataBasi onMuatUlang={onRefresh} />
+      {children}
+    </View>
   );
 
   return (

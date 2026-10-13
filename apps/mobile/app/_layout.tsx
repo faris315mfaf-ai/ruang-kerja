@@ -22,6 +22,8 @@ import { UIProvider, useKebijakanOrientasi } from '@/ui';
 import { AppStatusProvider, useAppStatus } from '@/session/AppStatusProvider';
 import { SessionProvider, useSession } from '@/session/SessionProvider';
 import { UnreadProvider } from '@/session/UnreadProvider';
+import { OfflineMonitor, PemantauJaringan } from '@/offline/OfflineMonitor';
+import { KerangkaOffline } from '@/offline/StatusOffline';
 
 // WebRTC + polyfill LiveKit (ruang rapat video native) — sekali saat aplikasi mulai.
 registerGlobals();
@@ -56,6 +58,8 @@ function RootNavigator(): React.JSX.Element {
   if (!siap) {
     return <Splash />;
   }
+
+  const bersesi = status === 'masuk' && blokirApp === null && blokir === null;
 
   let isi: React.JSX.Element;
   if (blokirApp !== null) {
@@ -106,6 +110,7 @@ function RootNavigator(): React.JSX.Element {
             <Stack.Screen name="otomasi/berulang" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="otomasi/templat" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="otomasi/pakai/[id]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="sinkron" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="tugas/aktivitas" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="catatan/index" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="catatan/cari" options={{ animation: 'slide_from_right' }} />
@@ -167,8 +172,6 @@ function RootNavigator(): React.JSX.Element {
     );
   }
 
-  const bersesi = status === 'masuk' && blokirApp === null && blokir === null;
-
   // UnreadProvider SELALU membungkus navigator: rute (tabs) sempat dirender
   // saat status masih memuat/keluar (sebelum guard Stack.Protected berlaku), dan
   // TabBarKita memanggil useUnread() — di luar provider itu fatal di rilis
@@ -184,7 +187,8 @@ function RootNavigator(): React.JSX.Element {
       <View style={{ flex: 1 }}>
         <View style={{ flex: 1 }} importantForAccessibility={locked ? 'no-hide-descendants' : 'auto'} accessibilityElementsHidden={locked}>
           <BottomSheetModalProvider>
-            {isi}
+            <KerangkaOffline aktif={bersesi}>{isi}</KerangkaOffline>
+            {bersesi ? <OfflineMonitor /> : null}
             {bersesi ? <KartuUpdateTersedia /> : null}
             {bersesi ? <TawaranBiometrik /> : null}
             {bersesi ? <ModeCatatPill /> : null}
@@ -207,6 +211,7 @@ export default function RootLayout(): React.JSX.Element {
           <AppStatusProvider>
             <SessionProvider>
               <AppLockProvider>
+                <PemantauJaringan />
                 <RootNavigator />
               </AppLockProvider>
             </SessionProvider>

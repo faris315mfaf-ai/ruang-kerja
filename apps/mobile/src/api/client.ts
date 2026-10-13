@@ -4,10 +4,14 @@
  * (callback terdaftar oleh SessionProvider memaksa keluar).
  */
 
-import Constants from 'expo-constants';
 import { File } from 'expo-file-system';
 
-export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://spkd.store/api/v1';
+import { API_URL, APP_VERSION } from '@/api/config';
+import { bersihBasi, catatBasi } from '@/offline/basi';
+import { bacaCache, bolehCache, cacheAktif, kunciCache, tulisCache } from '@/offline/cache';
+import { gagalCepat, laporBerhasil, laporGagal, periksaSegera, timeoutEfektif } from '@/offline/jaringan';
+
+export { API_URL, APP_VERSION };
 
 /**
  * Asal aplikasi web (https://host) diturunkan dari EXPO_PUBLIC_API_URL
@@ -18,9 +22,6 @@ export function webBase(): string {
   return API_URL.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
 }
 
-/** Versi aplikasi yang dikirim di header `X-App-Version` pada setiap permintaan. */
-export const APP_VERSION: string = Constants.expoConfig?.version ?? '1.0.0';
-
 /** Galat API: pesan siap tampil, status HTTP, kode (403), errors (422). */
 export class ApiError extends Error {
   readonly status: number;
@@ -30,6 +31,8 @@ export class ApiError extends Error {
   readonly errors: Record<string, string[]>;
   /** Detik tunggu dari header Retry-After (429/503), bila ada. */
   readonly retryAfter: number | null;
+  /** `true` bila galat status 0 berasal dari jaringan/server tak terjangkau (bukan galat server). */
+  readonly offline: boolean;
 
   constructor(init: {
     status: number;
@@ -39,6 +42,7 @@ export class ApiError extends Error {
     context?: Record<string, unknown> | null;
     errors?: Record<string, string[]>;
     retryAfter?: number | null;
+    offline?: boolean;
   }) {
     super(init.message);
     this.name = 'ApiError';
@@ -48,6 +52,7 @@ export class ApiError extends Error {
     this.context = init.context ?? null;
     this.errors = init.errors ?? {};
     this.retryAfter = init.retryAfter ?? null;
+    this.offline = init.offline ?? init.status === 0;
   }
 
   /** Pesan validasi pertama (422 Laravel) bila ada. */
@@ -116,6 +121,31 @@ export interface RequestOptions {
   timeoutMs?: number;
   /** Header tambahan (mis. X-Reset-Token). */
   headers?: Record<string, string>;
+  /** `false` = lewati cache baca untuk permintaan GET ini (tidak membaca/menulis). Bawaan: ikut daftar putih `src/offline/cache.ts`. */
+  cache?: boolean;
+  /** Dikirim sebagai header `Idempotency-Key` (dipakai antrean offline: id klien item). */
+  idempotencyKey?: string;
+  /** Diisi klien: info tambahan tentang jawaban (mis. `dariCache`, `replayed`). */
+  hasil?: HasilPermintaan;
+}
+
+/** Keluaran tambahan `apiRequest` lewat `options.hasil`. */
+export interface HasilPermintaan {
+  /** Jawaban berasal dari cache karena jaringan gagal. */
+  dariCache?: boolean;
+  /** Epoch ms data cache disimpan (bila `dariCache`). */
+  cachedAt?: number;
+  /** Server membalas ulang hasil idempoten (header `Idempotent-Replayed: true`). */
+  replayed?: boolean;
+  /** Kode status HTTP sukses. */
+  status?: number;
+}
+
+const PESAN_OFFLINE = 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda lalu coba lagi.';
+const AWALAN_API = new URL(API_URL).pathname.replace(/\/+$/, '');
+
+function galatOffline(): ApiError {
+  return new ApiError({ status: 0, message: PESAN_OFFLINE, offline: true });
 }
 
 /**
@@ -124,7 +154,7 @@ export interface RequestOptions {
  * atau null untuk 204.
  */
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T | null> {
-  const { method = 'GET', json, form, query, timeoutMs = 30_000, headers: extraHeaders } = options;
+  const { method = 'GET', json, form, query, timeoutMs = 30_000, headers: extraHeaders, cache: pakaiCache, idempotencyKey, hasil } = options;
 
   const url = new URL(path.startsWith('http') ? path : `${API_URL}/${path.replace(/^\//, '')}`);
   if (query) {
@@ -135,6 +165,41 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     }
   }
 
+  // Cache baca (stale-while-revalidate): hanya GET pada path daftar putih, hanya bila ada pengguna aktif.
+  const relatif = url.pathname.startsWith(AWALAN_API) ? url.pathname.slice(AWALAN_API.length) : url.pathname;
+  const kunci = method === 'GET' && pakaiCache !== false && cacheAktif() && bolehCache(relatif) ? kunciCache(relatif, url.searchParams) : null;
+
+  const sajikanDariCache = async <R,>(): Promise<R | null | undefined> => {
+    if (kunci === null) {
+      return undefined;
+    }
+    const entri = await bacaCache(kunci);
+    if (entri === null) {
+      return undefined;
+    }
+    try {
+      const data = JSON.parse(entri.body) as R;
+      catatBasi(kunci, entri.ts);
+      if (hasil) {
+        hasil.dariCache = true;
+        hasil.cachedAt = entri.ts;
+      }
+      return data;
+    } catch {
+      return undefined;
+    }
+  };
+
+  // Jaringan sudah diketahui mati: jangan menggantung — salinan cache bila ada, selain itu gagal cepat.
+  if (gagalCepat()) {
+    void periksaSegera();
+    const basi = await sajikanDariCache<T>();
+    if (basi !== undefined) {
+      return basi;
+    }
+    throw galatOffline();
+  }
+
   const headers: Record<string, string> = { Accept: 'application/json', 'X-App-Version': APP_VERSION, ...extraHeaders };
   const token = tokenGetter?.();
   if (token) {
@@ -143,9 +208,12 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   if (json !== undefined) {
     headers['Content-Type'] = 'application/json';
   }
+  if (idempotencyKey) {
+    headers['Idempotency-Key'] = idempotencyKey;
+  }
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const timer = setTimeout(() => controller.abort(), timeoutEfektif(timeoutMs));
 
   let response: Response;
   try {
@@ -156,12 +224,19 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       signal: controller.signal,
     });
   } catch {
-    throw new ApiError({
-      status: 0,
-      message: 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda lalu coba lagi.',
-    });
+    laporGagal();
+    const basi = await sajikanDariCache<T>();
+    if (basi !== undefined) {
+      return basi;
+    }
+    throw galatOffline();
   } finally {
     clearTimeout(timer);
+  }
+  laporBerhasil();
+  if (hasil) {
+    hasil.status = response.status;
+    hasil.replayed = response.headers.get('Idempotent-Replayed') === 'true';
   }
 
   if (response.status === 401) {
@@ -233,6 +308,11 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       errors: data.errors ?? {},
       retryAfter: Number.isFinite(Number(response.headers.get('Retry-After'))) && response.headers.get('Retry-After') !== null ? Number(response.headers.get('Retry-After')) : null,
     });
+  }
+
+  if (kunci !== null && text !== '' && body !== null) {
+    tulisCache(kunci, text);
+    bersihBasi(kunci);
   }
 
   return (body ?? null) as T | null;

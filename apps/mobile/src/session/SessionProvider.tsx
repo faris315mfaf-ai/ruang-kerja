@@ -21,6 +21,7 @@ import {
 import { setAccountBlockedHandler, setTokenGetter, setUnauthorizedHandler, type BlokirAkun } from '@/api/client';
 import { adalahTantangan, normalisasiProfil, type SesiDibuka, type UserProfile } from '@/api/types';
 import { deviceInfo } from '@/lib/device';
+import { akhiriSesiOffline, mulaiSesiOffline } from '@/offline/sesi';
 
 const SESI_KEY = 'rk.sesi';
 
@@ -112,6 +113,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
   const cooldownSampai = useRef(0);
 
   const bersihkan = useCallback(async (alasan: AlasanKeluar | null = null): Promise<void> => {
+    // Data offline: keluar/akun nonaktif = hapus semua; sesi berakhir (401) = hanya cache baca, antrean tulis dipertahankan.
+    void akhiriSesiOffline(alasan === null ? 'keluar' : alasan.jenis === 'akun_nonaktif' ? 'akun_nonaktif' : 'sesi_berakhir');
     tokenRef.current = null;
     setBlokir(null);
     setUser(null);
@@ -163,6 +166,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
       }
 
       tokenRef.current = tersimpan.token;
+      mulaiSesiOffline(tersimpan.user.id);
       setUser(tersimpan.user);
       if (tersimpan.user.password_change_required) {
         setBlokir({ code: 'password_change_required', message: PESAN_SANDI_WAJIB });
@@ -203,6 +207,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
     } catch {
       // Pakai profil ringkas; layar akan mengambil ulang.
     }
+    mulaiSesiOffline(profil.id);
     const wajibGanti = sesi.password_change_required || profil.password_change_required;
     setBlokir(wajibGanti ? { code: 'password_change_required', message: PESAN_SANDI_WAJIB } : null);
     setUser(profil);
