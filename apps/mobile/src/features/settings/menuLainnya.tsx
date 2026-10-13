@@ -96,13 +96,15 @@ export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron, hiring }
     daftar.push(barisHiring(warnaChevron));
   }
   if (peran.direksi || peran.admin) {
-    daftar.push(segera('portofolio', 'Portofolio proyek', 'briefcase-business', 'Kesehatan & progres proyek', { tautan: '/portofolio' }));
+    daftar.push(rute('portofolio', 'Portofolio proyek', 'briefcase-business', '/portofolio', { subjudul: 'Kesehatan & progres proyek' }));
+  } else if (peran.kadiv) {
+    daftar.push(rute('portofolio', 'Proyek divisi', 'briefcase-business', '/portofolio', { subjudul: 'Proyek yang melibatkan divisi Anda' }));
   }
 
   if (pimpinan) {
     daftar.push(
       rute('absensi-tim', 'Absensi tim', 'clipboard-check', '/absensi-tim', { subjudul: 'Hari ini · Rekap · Kedisiplinan' }),
-      segera('ringkasan', 'Ringkasan manajemen', 'chart-no-axes-column', 'Direksi/HR/SA', { tautan: '/manajemen' }),
+      rute('ringkasan', 'Dashboard Manajemen', 'chart-no-axes-column', '/manajemen', { subjudul: 'Kehadiran, tugas, proyek, beban kerja' }),
     );
     if (fiturAktif(profil, 'role_dashboards', false)) {
       daftar.push(segera('dashboard-jabatan', 'Dashboard jabatan', 'briefcase'));
@@ -137,7 +139,7 @@ export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron, hiring }
     daftar.push(rute('otomasi', 'Otomasi & berulang', 'workflow', '/otomasi', { subjudul: 'Aturan, tugas berulang, template' }));
   }
   if (fiturAktif(profil, 'okr', false)) {
-    daftar.push(segera('okr', 'OKR divisi', 'target'));
+    daftar.push(rute('okr', 'OKR divisi', 'target', '/okr', { subjudul: 'Objective & key result per kuartal' }));
   }
   daftar.push(
     rute('pengumuman', 'Pengumuman', 'megaphone', '/pengumuman', { subjudul: pimpinan ? 'Tulis ke semua' : peran.kadiv ? 'Tulis ke divisi' : undefined }),
