@@ -68,6 +68,10 @@ function Pegangan(_: BottomSheetHandleProps): React.JSX.Element {
 export function BottomSheet({ visible, onClose, title, showClose = false, scrollable = false, snapPoints, children }: BottomSheetProps): React.JSX.Element {
   const ref = useRef<BottomSheetModal>(null);
   const tampil = useRef(visible);
+  // Sudah di-present dan belum ditutup. `dismiss()` pada modal yang belum
+  // pernah terbuka membuat status gorhom macet di DISMISSING, lalu setiap
+  // `present()` berikutnya diabaikan (lembar tidak pernah tampil).
+  const terbuka = useRef(false);
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const { dark } = useTheme();
@@ -75,8 +79,10 @@ export function BottomSheet({ visible, onClose, title, showClose = false, scroll
   useEffect(() => {
     tampil.current = visible;
     if (visible) {
+      terbuka.current = true;
       ref.current?.present();
-    } else {
+    } else if (terbuka.current) {
+      terbuka.current = false;
       ref.current?.dismiss();
     }
   }, [visible]);
@@ -129,6 +135,7 @@ export function BottomSheet({ visible, onClose, title, showClose = false, scroll
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
       onDismiss={() => {
+        terbuka.current = false;
         // Dismiss programatik (visible → false) sudah diketahui induk.
         if (tampil.current) {
           onClose();
@@ -136,7 +143,7 @@ export function BottomSheet({ visible, onClose, title, showClose = false, scroll
       }}
     >
       {scrollable ? (
-        <BottomSheetScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 24, gap: 12 }}>{isi}</BottomSheetScrollView>
+        <BottomSheetScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 24, gap: 12 }}>{isi}</BottomSheetScrollView>
       ) : (
         <BottomSheetView style={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 24, gap: 12 }}>{isi}</BottomSheetView>
       )}
