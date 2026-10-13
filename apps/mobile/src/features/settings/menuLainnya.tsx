@@ -119,6 +119,9 @@ export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron }: Kontek
   );
   if (fiturAktif(profil, 'meetings', true)) {
     daftar.push(rute('rapat', 'Rapat', 'calendar-check', '/rapat', { subjudul: 'Agenda, RSVP, dan notulen' }));
+    if (pimpinan) {
+      daftar.push(rute('jadwal-manajemen', 'Jadwal manajemen', 'calendar-days', '/manajemen/jadwal', { subjudul: 'Rapat pimpinan, notulen, tindak lanjut' }));
+    }
   }
   if (fiturAktif(profil, 'notes', true)) {
     daftar.push(rute('catatan', 'Catatan & notulensi', 'notebook-pen', '/catatan'));
