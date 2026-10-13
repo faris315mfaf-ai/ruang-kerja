@@ -277,8 +277,16 @@ export function SheetLabel({
   // Hanya label workspace ini (pilihan dari workspace lain/terhapus dibuang saat disimpan).
   const sah = draf.filter((id) => label.some((l) => l.id === id));
   const sama = sah.length === terpilih.length && sah.every((id) => terpilih.includes(id));
+  // Sama dengan pemilih penanggung jawab: menutup lembar (×, seret, ketuk luar, kembali)
+  // ikut menyimpan, supaya centang label tidak hilang diam-diam.
+  const simpanTutup = (): void => {
+    if (!sama && label.length > 0) {
+      onSimpan(sah);
+    }
+    onClose();
+  };
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Label" showClose scrollable>
+    <BottomSheet visible={visible} onClose={simpanTutup} title="Label" showClose scrollable>
       {label.length > 0 ? <Text variant="meta">{`${label.length} label workspace · boleh lebih dari satu`}</Text> : null}
       {label.length === 0 ? (
         <Text variant="body" tone="muted" accessibilityLiveRegion="polite">
@@ -315,12 +323,7 @@ export function SheetLabel({
           <View style={{ flex: 1.4 }}>
             <Button
               title={sah.length === 0 ? 'Simpan · tanpa label' : `Simpan · ${sah.length} label`}
-              onPress={() => {
-                if (!sama) {
-                  onSimpan(sah);
-                }
-                onClose();
-              }}
+              onPress={simpanTutup}
             />
           </View>
         </View>
