@@ -6,12 +6,14 @@
  * hapus draf, revisi & kirim ulang, pembatalan HR), 404/403.
  */
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { batalkanPengajuan, detailPengajuan, hapusDraf, type DetailPengajuan } from '@/api/pengajuan';
 import { BatalDisetujuiSheet, ringkasEfek } from '@/features/pengajuan/BatalDisetujuiSheet';
+import { DetailAntre } from '@/features/pengajuan/DetailAntre';
+import { idAsli, usePengajuanAntreById } from '@/features/pengajuan/offline';
 import { useBukaLampiran } from '@/features/pengajuan/Lampiran';
 import { PeringatanRekan } from '@/features/pengajuan/Ringkasan';
 import { TimelineAlur } from '@/features/pengajuan/Timeline';
@@ -33,9 +35,10 @@ import {
   ymdKantor,
 } from '@/features/pengajuan/format';
 import { tandaiDaftarBerubah } from '@/features/pengajuan/simpanan';
+import { useOnline } from '@/offline';
 import { useSession } from '@/session/SessionProvider';
 import { radius, useTheme } from '@/theme';
-import { Badge, Banner, BottomSheet, Button, Card, ErrorState, Icon, IconTile, Loading, Pressable, Screen, SheetAction, Skeleton, SubAppBar, Text, errorKindFromStatus, useDialog, useSnackbar } from '@/ui';
+import { Badge, Banner, BottomSheet, Button, Card, EmptyState, ErrorState, Icon, IconTile, Loading, Pressable, Screen, SheetAction, Skeleton, SubAppBar, Text, errorKindFromStatus, useDialog, useSnackbar } from '@/ui';
 
 function BarisInfo({ label, nilai, mono = false, terakhir = false }: { label: string; nilai: React.ReactNode; mono?: boolean; terakhir?: boolean }): React.JSX.Element {
   const { colors } = useTheme();
@@ -107,8 +110,50 @@ function barisIsian(d: DetailPengajuan, staf: boolean): { label: string; nilai: 
   return hasil;
 }
 
+/**
+ * Pengajuan yang masih di antrean HP (id sementara / draf yang sedang dikirim) memakai salinan lokal;
+ * begitu tersinkron, id sementara berpindah ke detail asli. Selain itu detail server.
+ */
 export default function LayarDetailPengajuan(): React.JSX.Element {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { item } = usePengajuanAntreById(id);
+  const asli = id ? idAsli(id) : null;
+  const [pernahAntre, setPernahAntre] = useState(false);
+  useEffect(() => {
+    if (item) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- mengingat bahwa layar ini pernah menampilkan item antrean
+      setPernahAntre(true);
+    }
+  }, [item]);
+  useEffect(() => {
+    if (!item && asli) {
+      router.replace(`/pengajuan/${asli}`);
+    }
+  }, [item, asli]);
+
+  if (item) {
+    return <DetailAntre item={item} />;
+  }
+  if (asli) {
+    return (
+      <Screen header={<SubAppBar title="Pengajuan" />}>
+        <Loading rows={4} />
+      </Screen>
+    );
+  }
+  if (pernahAntre) {
+    return (
+      <Screen header={<SubAppBar title="Pengajuan" />}>
+        <EmptyState icon="circle-check" title="Pengajuan sudah diproses" description="Pengajuan ini sudah terkirim atau dihapus dari antrean. Lihat daftar Pengajuan saya." actionLabel="Pengajuan saya" onAction={() => router.replace('/pengajuan')} />
+      </Screen>
+    );
+  }
+  return <DetailServer />;
+}
+
+function DetailServer(): React.JSX.Element {
   const { colors } = useTheme();
+  const online = useOnline();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useSession();
   const staf = user?.is_staff_only ?? true;
@@ -277,6 +322,11 @@ export default function LayarDetailPengajuan(): React.JSX.Element {
     footer = <Button title="Batalkan pengajuan" variant="outline" icon="x" style={{ flex: 1 }} loading={sibuk} onPress={() => void batalkan()} />;
   } else if (d.status === 'approved' && d.can.cancel_approved) {
     footer = <Button title="Batalkan pengajuan" variant="outline" icon="ban" style={{ flex: 1 }} onPress={() => setSheetHr(true)} />;
+  }
+
+  // Batal, ubah, hapus draf, kirim ulang revisi, dan pembatalan HR hanya online (tidak pernah diantre).
+  if (!online && footer !== null) {
+    footer = <Banner tone="info" icon="wifi-off" title="Butuh koneksi" message="Membatalkan, mengubah, atau mengirim ulang pengajuan yang sudah di server hanya bisa saat online." />;
   }
 
   return (

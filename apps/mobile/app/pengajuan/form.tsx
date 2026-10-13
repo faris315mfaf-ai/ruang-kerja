@@ -18,8 +18,10 @@ import { PemilihPengganti } from '@/features/pengajuan/PemilihPengganti';
 import { KartuRingkasan, teksAlur } from '@/features/pengajuan/Ringkasan';
 import { META_KATEGORI, hariTanggalSingkat, isoDariYmd, rupiah, ribuan } from '@/features/pengajuan/format';
 import { isianAktif } from '@/features/pengajuan/nilaiForm';
+import { catatanCutoff } from '@/features/pengajuan/offline';
 import { setTerkirim, tandaiDaftarBerubah } from '@/features/pengajuan/simpanan';
 import { useFormPengajuan, type ParamForm } from '@/features/pengajuan/useFormPengajuan';
+import { useOnline } from '@/offline';
 import { layout, radius, useTheme } from '@/theme';
 import {
   Banner,
@@ -85,9 +87,10 @@ export default function LayarFormPengajuan(): React.JSX.Element {
   const dialog = useDialog();
   const snackbar = useSnackbar();
   const navigation = useNavigation();
-  const raw = useLocalSearchParams<{ tipe?: string; jenis?: string; tanggal?: string; id?: string; asal?: string }>();
+  const online = useOnline();
+  const raw = useLocalSearchParams<{ tipe?: string; jenis?: string; tanggal?: string; id?: string; asal?: string; antre?: string }>();
   const param = useMemo<ParamForm>(
-    () => ({ tipe: raw.tipe || undefined, jenis: raw.jenis || undefined, tanggal: raw.tanggal || undefined, id: raw.id || undefined }),
+    () => ({ tipe: raw.tipe || undefined, jenis: raw.jenis || undefined, tanggal: raw.tanggal || undefined, id: raw.id || undefined, antre: raw.antre || undefined }),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- parameter rute tetap selama layar hidup
     [],
   );
@@ -138,7 +141,7 @@ export default function LayarFormPengajuan(): React.JSX.Element {
     if (hasil.ok) {
       lewati.current = true;
       setTerkirim(hasil.item);
-      router.replace({ pathname: '/pengajuan/terkirim', params: { id: hasil.item.id } });
+      router.replace({ pathname: '/pengajuan/terkirim', params: hasil.antre ? { id: hasil.item.id, antre: '1' } : { id: hasil.item.id } });
     }
   };
 
@@ -219,7 +222,10 @@ export default function LayarFormPengajuan(): React.JSX.Element {
   const tglBatas = aktif.has('start_date') ? n.start_date : aktif.has('date') ? n.date : '';
   const labelBatas = jenis.submit_cutoff_label ?? null;
   const tutupHariIni = labelBatas !== null && jenis.submit_closed_today === true && tglBatas === hariIni && !mati;
-  const bisaKirim = !f.terkunci && !tidakBerhak && !f.luring && !tutupHariIni;
+  // Offline: pengajuan baru/draf diantre di HP; kirim ulang revisi (mengubah pengajuan terkirim) tetap butuh koneksi.
+  const revisiOffline = f.revisi && !online;
+  const catatanOffline = !online && !f.revisi ? catatanCutoff(jenis.category === 'sick' || jenis.category === 'permit' ? (jenis.submit_cutoff_time ?? null) : null) : null;
+  const bisaKirim = !f.terkunci && !tidakBerhak && !tutupHariIni && !revisiOffline;
 
   const kanan = f.revisi ? (
     <Text variant="meta" weight={600} style={{ paddingRight: 8 }}>
@@ -233,7 +239,7 @@ export default function LayarFormPengajuan(): React.JSX.Element {
     <StatusSimpan teks={`Draf tersimpan ${f.disimpanPada}`} />
   ) : null;
 
-  const tombolKirim = f.revisi ? 'Kirim ulang' : 'Kirim pengajuan';
+  const tombolKirim = f.revisi ? 'Kirim ulang' : online ? 'Kirim pengajuan' : 'Simpan & kirim nanti';
 
   const footer = (
     <View style={{ flex: 1, gap: 8 }}>
@@ -255,7 +261,7 @@ export default function LayarFormPengajuan(): React.JSX.Element {
             loading={f.mengirim}
             loadingTitle="Mengirim…"
             disabled={!bisaKirim || f.menyimpan}
-            disabledReason={f.luring ? 'Pengiriman butuh koneksi internet' : mati ? alasanKunci : tutupHariIni ? 'Batas pengajuan hari ini sudah lewat' : undefined}
+            disabledReason={revisiOffline ? 'Kirim ulang revisi butuh koneksi internet' : mati ? alasanKunci : tutupHariIni ? 'Batas pengajuan hari ini sudah lewat' : undefined}
             onPress={() => void kirim()}
           />
         </View>
@@ -266,8 +272,13 @@ export default function LayarFormPengajuan(): React.JSX.Element {
   return (
     <Screen header={<KepalaForm judul={judul} kanan={kanan} onTutup={tutup} />} footer={footer}>
       {f.banner ? <Banner tone={f.banner.tone} title={f.banner.judul} message={f.banner.pesan} /> : null}
-      {!f.banner && f.luring ? (
-        <Banner tone="warn" icon="wifi-off" title="Anda sedang offline." message="Draf tetap tersimpan di perangkat. Pengiriman butuh koneksi." actionLabel="Coba lagi" onAction={() => void f.segarkanPratinjau()} />
+      {!online ? (
+        <Banner
+          tone="info"
+          icon="wifi-off"
+          title="Anda sedang offline."
+          message={f.revisi ? 'Kirim ulang revisi butuh koneksi. Isian Anda tetap di layar; simpan draf lalu kirim saat online.' : `Pengajuan disimpan di HP dan dikirim otomatis saat online. Ringkasan alur & saldo muncul saat terhubung.${catatanOffline ? ` ${catatanOffline}.` : ''}`}
+        />
       ) : null}
       {f.dipulihkan ? (
         <Banner tone="info" icon="history" title="Draf dipulihkan dari perangkat ini." message="Isian terakhir Anda dikembalikan." actionLabel="Buang draf" onAction={() => void f.buangDrafPerangkat()} />

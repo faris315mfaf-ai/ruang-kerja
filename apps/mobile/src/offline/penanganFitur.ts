@@ -9,5 +9,6 @@
  * Jangan daftarkan penangan di dalam komponen React (tidak terpasang saat buka dingin).
  */
 import '@/features/absensi/offline';
+import '@/features/pengajuan/offline';
 
 export {};

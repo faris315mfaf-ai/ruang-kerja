@@ -10,6 +10,7 @@ import type { ItemPengajuan } from '@/api/pengajuan';
 import { radius, useTheme } from '@/theme';
 import { Badge, Card, Icon, Tag, Text } from '@/ui';
 
+import { ChipSinkron } from './ChipSinkron';
 import { META_KATEGORI, META_STATUS, durasiItem, jamKantor, judulPeriode, namaDepan, sejak, tanggalTanpaTahun } from './format';
 
 function Jalur({ item }: { item: ItemPengajuan }): React.JSX.Element | null {
@@ -40,7 +41,18 @@ function Jalur({ item }: { item: ItemPengajuan }): React.JSX.Element | null {
   );
 }
 
-export function KartuPengajuan({ item, onPress, ringkas = false }: { item: ItemPengajuan; onPress?: () => void; ringkas?: boolean }): React.JSX.Element {
+export function KartuPengajuan({
+  item,
+  onPress,
+  ringkas = false,
+  sinkron,
+}: {
+  item: ItemPengajuan;
+  onPress?: () => void;
+  ringkas?: boolean;
+  /** Pengajuan yang masih di antrean HP (offline): chip menggantikan status server, tanpa nomor. */
+  sinkron?: { status: 'menunggu' | 'gagal'; pesan: string | null };
+}): React.JSX.Element {
   const { colors } = useTheme();
   const status = META_STATUS[item.status];
   const kategori = META_KATEGORI[item.type.category];
@@ -60,14 +72,22 @@ export function KartuPengajuan({ item, onPress, ringkas = false }: { item: ItemP
   }
 
   return (
-    <Card onPress={onPress} accessibilityLabel={`${item.number ?? 'Belum bernomor'}, ${item.type.name}, ${status.label}. ${judulPeriode(item)}`} style={{ gap: 10 }}>
+    <Card
+      onPress={onPress}
+      accessibilityLabel={`${item.number ?? 'Belum bernomor'}, ${item.type.name}, ${sinkron ? (sinkron.status === 'gagal' ? 'gagal sinkron' : 'menunggu sinkron') : status.label}. ${judulPeriode(item)}`}
+      style={{ gap: 10 }}
+    >
       <View style={s.atas}>
         <Text variant="mono" tone={item.number ? 'muted' : 'subtle'} style={{ flex: 1 }} numberOfLines={1}>
           {item.number ?? 'Belum bernomor'}
         </Text>
-        <Badge tone={status.tone} dot>
-          {status.label}
-        </Badge>
+        {sinkron ? (
+          <ChipSinkron status={sinkron.status} />
+        ) : (
+          <Badge tone={status.tone} dot>
+            {status.label}
+          </Badge>
+        )}
       </View>
       <View style={s.judul}>
         <Tag tone={kategori.tag}>{item.type.category === 'procurement' ? 'Barang' : item.type.name}</Tag>
@@ -84,7 +104,11 @@ export function KartuPengajuan({ item, onPress, ringkas = false }: { item: ItemP
           </Text>
         </View>
       ) : null}
-      {item.status === 'pending' ? (
+      {sinkron ? (
+        <Text variant="meta" style={sinkron.status === 'gagal' ? { color: colors.danger } : undefined}>
+          {sinkron.status === 'gagal' ? (sinkron.pesan ?? 'Server menolak pengajuan ini.') : 'Tersimpan di HP · akan dikirim otomatis saat online'}
+        </Text>
+      ) : item.status === 'pending' ? (
         <View style={[s.kaki, { borderTopColor: colors.divider }]}>
           <View style={{ flex: 1 }}>
             <Jalur item={item} />

@@ -334,15 +334,18 @@ function keFormData(isian: IsianKirim, berkas: BerkasLokal[]): FormData {
   return fd;
 }
 
-function kirimIsian(path: string, isian: IsianKirim, berkas: BerkasLokal[]): Promise<{ request: DetailPengajuan } | null> {
+function kirimIsian(path: string, isian: IsianKirim, berkas: BerkasLokal[], idempotencyKey?: string): Promise<{ request: DetailPengajuan } | null> {
   return berkas.length > 0
-    ? apiRequest<{ request: DetailPengajuan }>(path, { method: 'POST', form: keFormData(isian, berkas), timeoutMs: 120_000 })
-    : apiRequest<{ request: DetailPengajuan }>(path, { method: 'POST', json: isian });
+    ? apiRequest<{ request: DetailPengajuan }>(path, { method: 'POST', form: keFormData(isian, berkas), timeoutMs: 120_000, idempotencyKey })
+    : apiRequest<{ request: DetailPengajuan }>(path, { method: 'POST', json: isian, idempotencyKey });
 }
 
-/** POST /pengajuan — kirim baru (201 `{request: item}`). */
-export function kirimBaru(isian: IsianKirim, berkas: BerkasLokal[]): Promise<ItemPengajuan> {
-  return kirimIsian('pengajuan', isian, berkas).then((r) => wajib(r).request);
+/**
+ * POST /pengajuan — kirim baru (201 `{request: item}`). `idempotencyKey` (opsional) dipakai ulang
+ * oleh antrean offline bila pengiriman gagal tanpa jawaban, supaya pengajuan tidak terbuat dua kali.
+ */
+export function kirimBaru(isian: IsianKirim, berkas: BerkasLokal[], idempotencyKey?: string): Promise<ItemPengajuan> {
+  return kirimIsian('pengajuan', isian, berkas, idempotencyKey).then((r) => wajib(r).request);
 }
 
 /** POST /pengajuan/draf — simpan draf baru (201 `{request: detail}`). */
@@ -356,8 +359,8 @@ export function ubahPengajuan(id: string, isian: IsianKirim): Promise<DetailPeng
 }
 
 /** POST /pengajuan/{id}/kirim — kirim draf. */
-export function kirimDraf(id: string, isian: IsianKirim): Promise<DetailPengajuan> {
-  return apiRequest<{ request: DetailPengajuan }>(`pengajuan/${id}/kirim`, { method: 'POST', json: isian }).then((r) => wajib(r).request);
+export function kirimDraf(id: string, isian: IsianKirim, idempotencyKey?: string): Promise<DetailPengajuan> {
+  return apiRequest<{ request: DetailPengajuan }>(`pengajuan/${id}/kirim`, { method: 'POST', json: isian, idempotencyKey }).then((r) => wajib(r).request);
 }
 
 /** POST /pengajuan/{id}/kirim-ulang — revisi & kirim ulang (putaran + 1). */

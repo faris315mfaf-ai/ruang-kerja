@@ -5,13 +5,14 @@
  * kosong, galat, dan offline (tembolok terakhir + FAB nonaktif).
  */
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError } from '@/api/client';
 import { daftarPengajuanSaya, type FilterStatus, type HalamanPengajuan, type ItemPengajuan, type KartuSaldo } from '@/api/pengajuan';
 import { KartuPengajuan } from '@/features/pengajuan/KartuPengajuan';
+import { onPengajuanBerubah, usePengajuanAntre } from '@/features/pengajuan/offline';
 import { angkaHari, jamKantor } from '@/features/pengajuan/format';
 import { bacaTembolok, tulisTembolok, versiDaftarSekarang } from '@/features/pengajuan/simpanan';
 import { useSession } from '@/session/SessionProvider';
@@ -123,6 +124,7 @@ export default function LayarPengajuanSaya(): React.JSX.Element {
   const [galat, setGalat] = useState<ApiError | null>(null);
   const [luring, setLuring] = useState<string | null>(null);
   const [sheetTahun, setSheetTahun] = useState(false);
+  const antreSemua = usePengajuanAntre();
   const versi = useRef(-1);
   const filter = useRef<{ status: FilterStatus; tahun: number | null }>({ status: 'semua', tahun: null });
 
@@ -177,6 +179,9 @@ export default function LayarPengajuanSaya(): React.JSX.Element {
     }, [muat]),
   );
 
+  // Pengajuan dari antrean tersinkron / ditolak server: muat ulang daftar.
+  useEffect(() => onPengajuanBerubah(() => void muat({ ...filter.current, segarkan: true })), [muat]);
+
   const pilihStatus = (v: FilterStatus): void => {
     if (luring) {
       return;
@@ -209,6 +214,10 @@ export default function LayarPengajuanSaya(): React.JSX.Element {
     }
   };
 
+  // Pengajuan yang masih di HP tampil di atas (Semua/Menunggu); draf server yang sedang dikirim diganti kartunya.
+  const antreTampil = status === 'semua' || status === 'menunggu' ? antreSemua : [];
+  const idAntre = new Set(antreSemua.map((a) => a.id));
+  const daftarServer = daftar.filter((r) => !idAntre.has(r.id));
   const saldo = data?.balances ?? [];
   const saldoUtama = saldo.find((k) => k.kind === 'balance' && !k.type.locked) ?? saldo.find((k) => k.kind === 'balance') ?? null;
   const cutiDikunci = saldo.find((k) => k.type.category === 'leave' && k.type.locked);
@@ -236,7 +245,7 @@ export default function LayarPengajuanSaya(): React.JSX.Element {
         />
       );
     }
-    if (daftar.length === 0) {
+    if (daftarServer.length === 0 && antreTampil.length === 0) {
       return status === 'semua' && tahun === null ? (
         <EmptyState
           icon="file-text"
@@ -251,7 +260,15 @@ export default function LayarPengajuanSaya(): React.JSX.Element {
     }
     return (
       <>
-        {daftar.map((item) => (
+        {antreTampil.map((a) => (
+          <KartuPengajuan
+            key={a.itemId}
+            item={a.semu}
+            sinkron={{ status: a.status === 'konflik' || a.status === 'gagal' ? 'gagal' : 'menunggu', pesan: a.galat }}
+            onPress={() => router.push(`/pengajuan/${a.id}`)}
+          />
+        ))}
+        {daftarServer.map((item) => (
           <KartuPengajuan key={item.id} item={item} onPress={() => router.push(`/pengajuan/${item.id}`)} />
         ))}
         {data && data.meta.current_page < data.meta.last_page ? (
@@ -268,12 +285,12 @@ export default function LayarPengajuanSaya(): React.JSX.Element {
   return (
     <View style={{ flex: 1 }}>
       <Screen
-        header={<SubAppBar title="Pengajuan saya" actions={[{ icon: 'plus', label: 'Ajukan', onPress: ajukan, disabled: !!luring }]} />}
+        header={<SubAppBar title="Pengajuan saya" actions={[{ icon: 'plus', label: 'Ajukan', onPress: ajukan }]} />}
         refreshing={menyegarkan}
         onRefresh={() => void muat({ status, tahun, segarkan: true })}
         contentStyle={{ paddingBottom: insets.bottom + 110 }}
       >
-        {luring ? <Banner tone="warn" icon="wifi-off" title={`Offline. Menampilkan data terakhir (${luring}).`} message="Ajukan baru butuh koneksi." /> : null}
+        {luring ? <Banner tone="warn" icon="wifi-off" title={`Offline. Menampilkan data terakhir (${luring}).`} message="Ajukan baru tetap bisa: disimpan di HP dan dikirim otomatis saat online." /> : null}
         {revisi > 0 && status !== 'revisi' ? (
           <Banner
             tone="info"
@@ -315,7 +332,7 @@ export default function LayarPengajuanSaya(): React.JSX.Element {
         {isiDaftar()}
       </Screen>
 
-      <View style={[s.fab, { bottom: insets.bottom + 20, opacity: luring ? 0.45 : 1 }]} pointerEvents={luring ? 'none' : 'auto'}>
+      <View style={[s.fab, { bottom: insets.bottom + 20 }]}>
         <Fab icon="plus" label="Ajukan" extended onPress={ajukan} />
       </View>
 

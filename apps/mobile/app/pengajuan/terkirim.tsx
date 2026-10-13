@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { detailPengajuan, type ItemPengajuan } from '@/api/pengajuan';
 import { KartuPengajuan } from '@/features/pengajuan/KartuPengajuan';
+import { catatanCutoff, usePengajuanAntreById } from '@/features/pengajuan/offline';
 import { ambilTerkirim } from '@/features/pengajuan/simpanan';
 import { layout, useTheme } from '@/theme';
 import { Banner, Button, Gradient, Icon, IconButton, PageGlow, Text } from '@/ui';
@@ -17,16 +18,18 @@ import { Banner, Button, Gradient, Icon, IconButton, PageGlow, Text } from '@/ui
 export default function LayarTerkirim(): React.JSX.Element {
   const { colors, shadows } = useTheme();
   const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, antre } = useLocalSearchParams<{ id: string; antre?: string }>();
+  const diAntre = antre === '1';
+  const { item: antrean } = usePengajuanAntreById(id);
   const [item, setItem] = useState<ItemPengajuan | null>(() => ambilTerkirim(id ?? ''));
 
   useEffect(() => {
-    if (!item && id) {
+    if (!item && id && !diAntre) {
       detailPengajuan(id)
         .then(setItem)
         .catch(() => undefined);
     }
-  }, [id, item]);
+  }, [id, item, diAntre]);
 
   const penyetuju = item?.waiting?.approver?.name;
   const selesai = (): void => router.replace('/pengajuan');
@@ -37,25 +40,32 @@ export default function LayarTerkirim(): React.JSX.Element {
       <View style={[s.kepala, { paddingTop: insets.top, height: layout.appBar + insets.top }]}>
         <IconButton icon="x" label="Tutup" variant="ghost" onPress={selesai} />
         <Text variant="title" weight={700} accessibilityRole="header">
-          {item && item.round > 1 ? 'Pengajuan terkirim ulang' : 'Pengajuan terkirim'}
+          {diAntre ? 'Pengajuan tersimpan' : item && item.round > 1 ? 'Pengajuan terkirim ulang' : 'Pengajuan terkirim'}
         </Text>
       </View>
       <View style={s.isi}>
         <View style={[s.ikon, { boxShadow: shadows.glow }]}>
           <Gradient name="aksi" style={[StyleSheet.absoluteFill, { borderRadius: 26 }]} />
-          <Icon name="send" size={40} color={colors.primaryFg} />
+          <Icon name={diAntre ? 'cloud-upload' : 'send'} size={40} color={colors.primaryFg} />
         </View>
         <Text variant="h2" weight={800} align="center">
-          {item && item.round > 1 ? 'Pengajuan terkirim ulang' : 'Pengajuan terkirim'}
+          {diAntre ? 'Tersimpan di HP' : item && item.round > 1 ? 'Pengajuan terkirim ulang' : 'Pengajuan terkirim'}
         </Text>
         <Text variant="body" tone="muted" align="center">
-          {penyetuju ? `${penyetuju} sudah diberi tahu.` : 'Penyetuju sudah diberi tahu.'}
+          {diAntre ? 'Akan dikirim otomatis saat online. Penyetuju diberi tahu setelah pengajuan terkirim.' : penyetuju ? `${penyetuju} sudah diberi tahu.` : 'Penyetuju sudah diberi tahu.'}
         </Text>
-        {item ? <KartuPengajuan item={item} ringkas /> : null}
-        <Banner tone="info" icon="bell" message="Anda akan mendapat notifikasi saat pengajuan diputuskan." />
+        {item ? <KartuPengajuan item={item} ringkas sinkron={diAntre ? { status: antrean && (antrean.status === 'konflik' || antrean.status === 'gagal') ? 'gagal' : 'menunggu', pesan: antrean?.galat ?? null } : undefined} /> : null}
+        {diAntre ? (
+          <>
+            <Banner tone="info" icon="cloud-upload" message="Status pengajuan ini “Menunggu sinkron” sampai server menerimanya. Lihat di Antrean sinkron." />
+            {catatanCutoff(antrean?.cutoff ?? null) ? <Banner tone="warn" icon="clock" message={catatanCutoff(antrean?.cutoff ?? null) as string} /> : null}
+          </>
+        ) : (
+          <Banner tone="info" icon="bell" message="Anda akan mendapat notifikasi saat pengajuan diputuskan." />
+        )}
       </View>
       <View style={[s.bawah, { paddingBottom: insets.bottom + 12, borderTopColor: colors.border }]}>
-        <Button title="Lihat pengajuan" onPress={() => (item ? router.replace(`/pengajuan/${item.id}`) : selesai())} />
+        <Button title={diAntre ? 'Lihat pengajuan saya' : 'Lihat pengajuan'} onPress={() => (item && !diAntre ? router.replace(`/pengajuan/${item.id}`) : selesai())} />
         <Button title="Selesai" variant="quiet" onPress={selesai} />
       </View>
     </View>

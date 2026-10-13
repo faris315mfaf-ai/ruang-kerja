@@ -324,7 +324,7 @@ export default function DetailPersetujuanLayar(): React.JSX.Element {
       ? { tone: nadaLangkah(data.my_decision.status), label: `Anda: ${data.my_decision.status_label}` }
       : { tone: r.status === 'approved' ? ('success' as const) : r.status === 'rejected' ? ('danger' as const) : r.status === 'pending' ? ('warning' as const) : ('neutral' as const), label: r.status_label };
   const sub = [r.user.position, `diajukan ${tanggalBerhari(r.submitted_at ?? r.created_at)}`].filter(Boolean).join(' · ');
-  const alasanOff = offline ? 'Tidak ada koneksi' : undefined;
+  const alasanOff = offline ? 'Butuh koneksi' : undefined;
 
   const footer = giliran ? (
     <>
@@ -337,7 +337,7 @@ export default function DetailPersetujuanLayar(): React.JSX.Element {
   return (
     <Screen header={<SubAppBar title={judulBar} onBack={() => router.back()} />} onRefresh={() => void detail.muatUlang()} refreshing={false} footer={footer}>
       {offline ? (
-        <Banner tone="warn" icon="cloud-off" title="Offline." message="Menampilkan data terakhir. Menyetujui dan menolak dimatikan sampai tersambung." actionLabel="Coba lagi" onAction={() => void detail.muatUlang()} />
+        <Banner tone="warn" icon="cloud-off" title="Butuh koneksi." message="Menampilkan data terakhir. Menyetujui, menolak, dan meminta revisi hanya bisa saat online; keputusan tidak disimpan untuk dikirim nanti." actionLabel="Coba lagi" onAction={() => void detail.muatUlang()} />
       ) : null}
       <View style={{ gap: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

@@ -5,6 +5,7 @@
  * lampiran (lokal sebelum ada id, langsung ke server sesudahnya), galat 422
  * per isian, jenis yang dikunci saat mengisi, dan keadaan offline.
  */
+import { File, Paths } from 'expo-file-system';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ApiError } from '@/api/client';
@@ -27,11 +28,13 @@ import {
   type KategoriPengajuan,
   type Pratinjau,
 } from '@/api/pengajuan';
+import { adalahOnline, ambilItem, bacaBerkasItem, buatUlid, hapusItem } from '@/offline';
 import { useSession } from '@/session/SessionProvider';
 
 import { jamKantor, kategoriDariSlug } from './format';
 import type { ItemLampiran } from './Lampiran';
 import { adaIsian, galatServer, keIsianServer, nilaiDariServer, nilaiKosong, periksaNilai, siapPratinjau, type NilaiForm } from './nilaiForm';
+import { antreKirimBaru, antreKirimDraf, sesuaikanJenisLokal } from './offline';
 import { bacaDrafPerangkat, hapusDrafPerangkat, tandaiDaftarBerubah, tulisDrafPerangkat } from './simpanan';
 
 export interface ParamForm {
@@ -43,9 +46,12 @@ export interface ParamForm {
   tanggal?: string;
   /** Pengajuan yang diubah (draf / perlu revisi). */
   id?: string;
+  /** Item antrean offline yang diubah (id item = id sementara pengajuan). */
+  antre?: string;
 }
 
-export type HasilKirim = { ok: true; item: ItemPengajuan } | { ok: false };
+/** `antre` = disimpan di HP (offline), akan dikirim otomatis; `item` = salinan lokal untuk layar hasil. */
+export type HasilKirim = { ok: true; item: ItemPengajuan; antre?: boolean } | { ok: false };
 
 let kunciLokal = 0;
 const kunciBaru = (): string => `lokal-${Date.now()}-${(kunciLokal += 1)}`;
@@ -74,6 +80,7 @@ function lampiranServer(detail: DetailPengajuan): ItemLampiran[] {
 export function useFormPengajuan(param: ParamForm) {
   const { user } = useSession();
   const userId = user?.id ?? 'anon';
+  const namaUser = user?.name ?? '';
   const staf = user?.is_staff_only ?? true;
 
   const [dataJenis, setDataJenis] = useState<DaftarJenis | null>(null);
@@ -85,6 +92,8 @@ export function useFormPengajuan(param: ParamForm) {
   const [lampiran, setLampiran] = useState<ItemLampiran[]>([]);
   const [memuat, setMemuat] = useState(true);
   const tanggalAwal = useRef(param.tanggal ?? '');
+  /** Item antrean offline yang sedang diubah: diganti saat dikirim/diantre ulang. */
+  const antreLama = useRef<string | null>(null);
   const [galatMuat, setGalatMuat] = useState<ApiError | null>(null);
 
   const [pratinjau, setPratinjau] = useState<Pratinjau | null>(null);
@@ -110,9 +119,30 @@ export function useFormPengajuan(param: ParamForm) {
     setMemuat(true);
     setGalatMuat(null);
     try {
-      const data = await daftarJenis();
+      const data = sesuaikanJenisLokal(await daftarJenis());
       setDataJenis(data);
-      if (param.id) {
+      if (param.antre) {
+        const item = ambilItem(param.antre);
+        const meta = item?.meta ?? {};
+        const tipe = data.categories.flatMap((c) => c.types).find((t) => t.id === meta.typeId) ?? null;
+        if (!item || !tipe || typeof meta.nilai !== 'object' || meta.nilai === null) {
+          throw new ApiError({ status: 404, message: 'Perubahan di antrean tidak ditemukan. Mungkin sudah terkirim atau dihapus.' });
+        }
+        antreLama.current = item.id;
+        setJenis(tipe);
+        tanggalAwal.current = data.today;
+        setAwal(nilaiKosong(data.today));
+        setNilai({ ...nilaiKosong(data.today), ...(meta.nilai as Partial<NilaiForm>) });
+        // Lampiran dari BLOB antrean → berkas sementara di cache agar bisa dibuka/diganti/dikirim ulang.
+        const blob = await bacaBerkasItem(item.id);
+        const baru: ItemLampiran[] = blob.map((b, n) => {
+          const f = new File(Paths.cache, `antre-${Date.now()}-${n}-${b.nama.replace(/[^A-Za-z0-9._-]+/g, '-')}`);
+          f.create({ overwrite: true });
+          f.write(b.data);
+          return { jenis: 'lokal' as const, kunci: kunciBaru(), berkas: { uri: f.uri, name: b.nama, mime: b.mime, size: b.ukuran } };
+        });
+        setLampiran(baru);
+      } else if (param.id) {
         const d = await detailPengajuan(param.id);
         setDetail(d);
         const tipe = data.categories.flatMap((c) => c.types).find((t) => t.id === d.type.id) ?? null;
@@ -427,14 +457,48 @@ export function useFormPengajuan(param: ParamForm) {
       return { ok: false };
     }
     setMengirim(true);
+    const isian = keIsianServer(jenis, nilai);
+    // Satu kunci per aksi: sama untuk percobaan online dan item antrean, jadi server tidak membuat dua pengajuan.
+    const kunci = buatUlid();
+    // Kirim ulang revisi tetap butuh koneksi (mengubah pengajuan yang sudah terkirim); sisanya boleh diantre.
+    const bisaAntre = !revisi && user !== null;
+    let sudahUnggah = false;
+    const antre = async (): Promise<HasilKirim> => {
+      if (!user) {
+        return { ok: false };
+      }
+      try {
+        const dasar = { uid: user.id, namaPengguna: namaUser, jenis, isian, nilai, berkas: sudahUnggah ? [] : lampiranLokal, kunci };
+        if (antreLama.current) {
+          await hapusItem(antreLama.current);
+          antreLama.current = null;
+        }
+        const semu = requestId ? await antreKirimDraf({ ...dasar, requestId }) : await antreKirimBaru(dasar);
+        await hapusDrafPerangkat(userId, jenis.category);
+        tandaiDaftarBerubah();
+        setAwal(nilai);
+        setLampiran((l) => l.filter((x) => x.jenis === 'server'));
+        return { ok: true, item: semu, antre: true };
+      } catch (err) {
+        setBanner({ tone: 'bad', judul: 'Tidak bisa disimpan di HP.', pesan: err instanceof Error ? err.message : 'Pengajuan gagal disimpan. Coba lagi.' });
+        return { ok: false };
+      }
+    };
     try {
-      const isian = keIsianServer(jenis, nilai);
+      if (bisaAntre && !adalahOnline()) {
+        return await antre();
+      }
       let item: ItemPengajuan;
       if (requestId) {
         await unggahTertunda(requestId);
-        item = revisi ? await kirimUlang(requestId, isian) : await kirimDraf(requestId, isian);
+        sudahUnggah = true;
+        item = revisi ? await kirimUlang(requestId, isian) : await kirimDraf(requestId, isian, kunci);
       } else {
-        item = await kirimBaru(isian, lampiranLokal);
+        item = await kirimBaru(isian, lampiranLokal, kunci);
+      }
+      if (antreLama.current) {
+        await hapusItem(antreLama.current).catch(() => false);
+        antreLama.current = null;
       }
       await hapusDrafPerangkat(userId, jenis.category);
       tandaiDaftarBerubah();
@@ -442,12 +506,15 @@ export function useFormPengajuan(param: ParamForm) {
       setLampiran((l) => l.filter((x) => x.jenis === 'server'));
       return { ok: true, item };
     } catch (err) {
+      if (bisaAntre && err instanceof ApiError && err.status === 0) {
+        return await antre();
+      }
       await tanganiGalat(err, 'kirim');
       return { ok: false };
     } finally {
       setMengirim(false);
     }
-  }, [jenis, dataJenis, mengirim, terkunci, nilai, pratinjau, lampiran.length, requestId, revisi, unggahTertunda, lampiranLokal, userId, tanganiGalat]);
+  }, [jenis, dataJenis, mengirim, terkunci, nilai, pratinjau, lampiran.length, requestId, revisi, unggahTertunda, lampiranLokal, userId, tanganiGalat, user, namaUser]);
 
   const pilihanTipe = useMemo(() => (dataJenis && kategori ? (dataJenis.categories.find((c) => c.value === kategori)?.types ?? []) : []), [dataJenis, kategori]);
 
