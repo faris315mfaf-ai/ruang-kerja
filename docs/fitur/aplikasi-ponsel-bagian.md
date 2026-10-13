@@ -28,3 +28,9 @@ Urutan: 1 → (2 ∥ 3) → 4 → 5. Bagian 2–5 hanya boleh dimulai setelah Ba
 - **Integrasi**: Pest penuh, lint, tsc/eslint app, `expo export`, build APK, cold-start emulator ×2.
 
 Kontrak endpoint ditulis per agen: `docs/sesi/ponsel-b1-auth.md`, `docs/sesi/ponsel-b2-privasi.md` (digabung ke `docs/sesi/ponsel.md` oleh integrator).
+
+## Keputusan pemilik untuk Bagian 4 (13 Okt 2026)
+- **Ruang rapat video native** (LiveKit React Native: `@livekit/react-native` + `@livekit/react-native-webrtc`, izin kamera/mikrofon) sesuai mockup 08 — bukan membuka browser.
+- **Persetujuan: geser kanan = setujui, kiri = form tolak (alasan wajib); keputusan dikirim setelah 6 detik tanpa "Urungkan"** (urungkan sepenuhnya di sisi aplikasi, server tidak berubah).
+- **Notulensi cepat dari ponsel memakai templat paragraf polos** (Peserta/Agenda/Pembahasan/Keputusan/Tindak lanjut sebagai paragraf) sehingga langsung bisa disunting di editor teks polos ponsel; templat web tetap berformat.
+- Bagian 4 = modul 04 (pengajuan + persetujuan + delegasi + pembatalan HR + **form koreksi absensi** yang ditunda dari Bagian 2), modul 08 (rapat, kalender, notulen, tindak lanjut, video, notulen otomatis, jadwal manajemen), laporan progres harian (tulis, riwayat, pembaca).
