@@ -9,6 +9,7 @@ import { StyleSheet, View } from 'react-native';
 
 import type { KartuWorkspace, LabelRef } from '@/api/workspace';
 import { IkonPrioritas } from '@/features/workspace/ikon';
+import { ChipMenunggu } from '@/offline/ChipMenunggu';
 import { hariSingkat, labelTenggat, LABEL_PRIORITAS } from '@/features/workspace/util';
 import { warnaPalet } from '@/lib/palette';
 import { useTheme } from '@/theme';
@@ -42,7 +43,7 @@ export function KartuPapan({
     <Card
       onPress={onPress}
       variant="tight"
-      accessibilityLabel={`${tugas.key}, ${tugas.title}. Prioritas ${prioritas}${tenggat ? `. ${tenggat.teks}` : ''}`}
+      accessibilityLabel={`${tugas.key}, ${tugas.title}. Prioritas ${prioritas}${tenggat ? `. ${tenggat.teks}` : ''}${tugas.sinkron === 'menunggu' ? '. Menunggu sinkron' : tugas.sinkron === 'gagal' ? '. Gagal sinkron' : ''}`}
       style={s.kartu}
     >
       <View style={s.atas}>
@@ -54,6 +55,7 @@ export function KartuPapan({
       <Text variant="title" numberOfLines={3} style={{ marginTop: 2 }}>
         {tugas.title}
       </Text>
+      {tugas.sinkron ? <ChipMenunggu status={tugas.sinkron} /> : null}
       {tugas.checklist && tugas.checklist.total > 0 ? (
         <View style={{ gap: 6, marginTop: 4 }}>
           <View style={s.baris}>

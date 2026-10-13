@@ -9,6 +9,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { ambilListTugas, type FilterTugas, type KartuWorkspace, type ListTugasData } from '@/api/workspace';
+import { ChipMenunggu } from '@/offline/ChipMenunggu';
+import { terapkanDaftarKartu, useOverlayTugas } from '@/offline/fitur/tugasOverlay';
 import { useTheme } from '@/theme';
 import { Avatar, Banner, Button, Card, EmptyState, Icon, Loading, Pressable, SearchInput, SegmentedTabs, Text } from '@/ui';
 
@@ -55,6 +57,7 @@ export function BarisTugas({ tugas, onPindah, tampilkanStatus = false, statusNam
             {meta.join(' · ')}
             {tampilkanStatus && statusNama ? ` · ${statusNama}` : ''}
           </Text>
+          {tugas.sinkron ? <ChipMenunggu status={tugas.sinkron} /> : null}
         </View>
         <IkonPrioritas nilai={tugas.priority} />
         {nama ? <Avatar name={nama} size="sm" /> : null}
@@ -160,18 +163,21 @@ export function ListView({
   );
 
   const nFilter = jumlahFilterAktif(filter);
-  const terlambat = useMemo(() => k.tugas.filter((t) => labelTenggat(t.due_date, !tugasTerbuka(t))?.terlambat).length, [k.tugas]);
+  // Perubahan yang menunggu sinkron (buat/ubah/pindah) diterapkan di atas daftar dari server.
+  const ov = useOverlayTugas();
+  const tugasTampil = useMemo(() => terapkanDaftarKartu(k.tugas, ov, ws, nFilter === 0 && filter.q.trim() === ''), [k.tugas, ov, ws, nFilter, filter.q]);
+  const terlambat = useMemo(() => tugasTampil.filter((t) => labelTenggat(t.due_date, !tugasTerbuka(t))?.terlambat).length, [tugasTampil]);
 
   const grup = useMemo(() => {
     if (kelompok === 'status') {
       return k.statuses
-        .map((st) => ({ kunci: st.id, judul: st.name, kategori: st.kategori, warna: st.color, tugas: k.tugas.filter((t) => t.status_id === st.id) }))
+        .map((st) => ({ kunci: st.id, judul: st.name, kategori: st.kategori, warna: st.color, tugas: tugasTampil.filter((t) => t.status_id === st.id) }))
         .filter((g) => g.tugas.length > 0);
     }
     return [1, 2, 3, 4, 0]
-      .map((p) => ({ kunci: `p${p}`, judul: p === 1 ? 'Urgent' : LABEL_PRIORITAS[p] ?? '', prioritas: p, tugas: k.tugas.filter((t) => t.priority === p) }))
+      .map((p) => ({ kunci: `p${p}`, judul: p === 1 ? 'Urgent' : LABEL_PRIORITAS[p] ?? '', prioritas: p, tugas: tugasTampil.filter((t) => t.priority === p) }))
       .filter((g) => g.tugas.length > 0);
-  }, [k.statuses, k.tugas, kelompok]);
+  }, [k.statuses, tugasTampil, kelompok]);
 
   const namaStatus = (id: string): string | undefined => k.statuses.find((x) => x.id === id)?.name;
 

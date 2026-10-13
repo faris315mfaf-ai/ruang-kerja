@@ -4,7 +4,7 @@
  * polling 30 dtk saat layar fokus, dan penandaan baca (debounce).
  */
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ApiError } from '@/api/client';
 import {
@@ -17,6 +17,11 @@ import {
   type KomentarTugas,
   type PembacaKomentar,
 } from '@/api/tugas';
+
+import { onAntrean } from '@/offline';
+import type { StatusSinkronUi } from '@/offline/ChipMenunggu';
+import { eIdSementara, tugasIdItem } from '@/offline/fitur/tugasBersama';
+import { detailDariBuat, komentarLokalKeTugas, terapkanDetail, useOverlayTugas } from '@/offline/fitur/tugasOverlay';
 
 import { pesanGalat } from './util';
 
@@ -61,6 +66,11 @@ export function useDetailTugas(id: string | undefined): {
   muatPembaca: () => Promise<void>;
   masihAdaLama: boolean;
   memuatLama: boolean;
+  /** Tugas sementara (dibuat offline, belum ada di server). */
+  sementara: boolean;
+  /** Perubahan di HP untuk tugas ini belum diterima server. */
+  sinkron: StatusSinkronUi | null;
+  pesanGagal: string | null;
 } {
   const [t, setT] = useState<DetailTugasPenuh | null>(null);
   const [memuat, setMemuat] = useState(true);
@@ -78,6 +88,10 @@ export function useDetailTugas(id: string | undefined): {
   const [melacak, setMelacak] = useState(false);
   const sudahDitandai = useRef<string | null>(null);
   const sudahMuat = useRef(false);
+  const tmp = eIdSementara(id);
+  const ov = useOverlayTugas();
+  const entri = id ? ov.per[id] : undefined;
+  const itemBuat = tmp && id ? ov.buat.find((b) => b.tmpId === id) : undefined;
 
   const terapkan = useCallback((baru: DetailTugasPenuh): void => {
     setT((lama) => ({
@@ -95,6 +109,11 @@ export function useDetailTugas(id: string | undefined): {
   const muat = useCallback(async (): Promise<void> => {
     if (!id) {
       setGalat({ pesan: 'Tugas tidak ditemukan.', status: 404 });
+      setMemuat(false);
+      return;
+    }
+    if (tmp) {
+      // Tugas baru dari HP belum ada di server: tampilan berasal dari antrean.
       setMemuat(false);
       return;
     }
@@ -120,10 +139,14 @@ export function useDetailTugas(id: string | undefined): {
     } finally {
       setMemuat(false);
     }
-  }, [id, terapkan]);
+  }, [id, tmp, terapkan]);
 
   const muatKomentarBaru = useCallback(async (): Promise<void> => {
     if (!id) {
+      return;
+    }
+    if (tmp) {
+      setMemuatKomentar(false);
       return;
     }
     try {
@@ -138,7 +161,7 @@ export function useDetailTugas(id: string | undefined): {
       setMemuatKomentar(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- komentar.length hanya untuk keputusan pesan galat
-  }, [id]);
+  }, [id, tmp]);
 
   const muatKomentarLama = useCallback(async (): Promise<void> => {
     if (!id || memuatLama) {
@@ -157,7 +180,7 @@ export function useDetailTugas(id: string | undefined): {
   }, [id, halamanLama, memuatLama]);
 
   const muatPembaca = useCallback(async (): Promise<void> => {
-    if (!id) {
+    if (!id || tmp) {
       return;
     }
     try {
@@ -167,7 +190,7 @@ export function useDetailTugas(id: string | undefined): {
     } catch {
       // Pembaca hanya pelengkap tampilan.
     }
-  }, [id]);
+  }, [id, tmp]);
 
   useEffect(() => {
     void muat();
@@ -175,20 +198,55 @@ export function useDetailTugas(id: string | undefined): {
     void muatPembaca();
   }, [muat, muatKomentarBaru, muatPembaca]);
 
+  // Item antrean untuk tugas ini berhasil terkirim: sisipkan komentar asli lalu muat ulang senyap.
+  useEffect(() => {
+    if (!id || tmp) {
+      return undefined;
+    }
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const lepas = onAntrean((p) => {
+      if (p.tipe !== 'sukses' || !p.item.jenis.startsWith('tugas.') || tugasIdItem(p.item) !== id) {
+        return;
+      }
+      if (p.item.jenis === 'tugas.komentar') {
+        const c = (p.respons as { comment?: KomentarTugas } | null)?.comment;
+        if (c) {
+          setKomentar((lama) => gabungKomentar(lama, [c]));
+        }
+      }
+      if (timer) {
+        clearTimeout(timer);
+      }
+      timer = setTimeout(() => {
+        void muat();
+        void muatKomentarBaru();
+      }, 250);
+    });
+    return () => {
+      lepas();
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [id, tmp, muat, muatKomentarBaru]);
+
   // Polling 30 detik saat layar fokus.
   useFocusEffect(
     useCallback(() => {
+      if (tmp) {
+        return undefined;
+      }
       const timer = setInterval(() => {
         void muat();
         void muatKomentarBaru();
         void muatPembaca();
       }, 30_000);
       return () => clearInterval(timer);
-    }, [muat, muatKomentarBaru, muatPembaca]),
+    }, [tmp, muat, muatKomentarBaru, muatPembaca]),
   );
 
   // Tandai baca (debounce 1,5 dtk) bila komentar terbaru belum dicatat.
-  const bolehLacak = t?.can.track_reads === true;
+  const bolehLacak = !tmp && t?.can.track_reads === true;
   const terbaru = komentar.length > 0 ? (komentar[komentar.length - 1] as KomentarTugas).id : null;
   useEffect(() => {
     if (!id || !bolehLacak || !terbaru || sudahDitandai.current === terbaru) {
@@ -205,16 +263,27 @@ export function useDetailTugas(id: string | undefined): {
     return () => clearTimeout(timer);
   }, [id, bolehLacak, terbaru, muatPembaca]);
 
+  const tTampil = useMemo(() => {
+    if (tmp) {
+      return itemBuat ? detailDariBuat(itemBuat, entri) : null;
+    }
+    return t ? terapkanDetail(t, entri) : null;
+  }, [tmp, itemBuat, entri, t]);
+  const komentarLokal = useMemo(() => (entri?.komentar ?? []).map((k) => komentarLokalKeTugas(k, entri?.komentarSinkron ?? 'menunggu')), [entri]);
+  const komentarTampil = useMemo(() => (komentarLokal.length > 0 ? [...komentar, ...komentarLokal] : komentar), [komentar, komentarLokal]);
+  const sinkron: StatusSinkronUi | null = itemBuat?.sinkron === 'gagal' || entri?.sinkron === 'gagal' ? 'gagal' : (itemBuat?.sinkron ?? entri?.sinkron ?? null);
+  const galatTampil: GalatDetail | null = tmp && !tTampil ? { pesan: 'Tugas baru ini sudah dikirim atau dibuang dari antrean.', status: 404 } : galat;
+
   return {
-    t,
+    t: tTampil,
     terapkan,
     ubahLokal,
-    memuat,
-    galat,
+    memuat: tmp ? false : memuat,
+    galat: galatTampil,
     hilang,
     basi,
     muat,
-    komentar,
+    komentar: komentarTampil,
     setKomentar,
     metaKomentar: meta,
     bisaKomentar,
@@ -227,5 +296,8 @@ export function useDetailTugas(id: string | undefined): {
     muatPembaca,
     masihAdaLama: meta !== null && halamanLama < meta.last_page,
     memuatLama,
+    sementara: tmp,
+    sinkron,
+    pesanGagal: itemBuat?.pesanGagal ?? entri?.pesanGagal ?? null,
   };
 }

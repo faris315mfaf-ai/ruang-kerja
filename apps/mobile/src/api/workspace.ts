@@ -174,6 +174,8 @@ export interface KartuWorkspace extends BoardTask {
   status?: { id: string; name: string; kategori: BoardTaskCategory; color: string };
   can?: { move: boolean };
   overdue?: boolean;
+  /** Hanya klien: perubahan di HP belum diterima server (overlay offline). */
+  sinkron?: 'menunggu' | 'gagal';
 }
 
 export interface KolomPapan {

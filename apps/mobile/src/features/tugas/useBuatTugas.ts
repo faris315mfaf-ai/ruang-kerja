@@ -8,16 +8,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ApiError } from '@/api/client';
 import {
   anggotaUntukTugas,
-  buatTugasBaru,
   konteksWorkspace,
-  tambahButir,
   workspaceUntukTugas,
-  type DetailTugasPenuh,
+  type BodyBuatTugas,
   type KelompokWorkspaceTugas,
   type KonteksWorkspace,
   type OpsiWorkspace,
   type Orang,
 } from '@/api/tugas';
+import { tulisBuatTugas, type HasilBuat } from '@/offline/fitur/tugas';
 import { useSession } from '@/session/SessionProvider';
 
 import { galatPerField, pesanGalat } from './util';
@@ -87,7 +86,8 @@ export function useBuatTugas(awal: { workspace?: string; judul?: string; isi?: I
   memuatKonteks: boolean;
   galatKonteks: string | null;
   muatUlangKonteks: () => void;
-  kirim: () => Promise<DetailTugasPenuh | null>;
+  /** Buat tugas: langsung ke server, atau — saat offline — disimpan di antrean (`antre: true`). */
+  kirim: (tambahan?: Pick<BodyBuatTugas, 'parent_id'>) => Promise<HasilBuat | null>;
   mengirim: boolean;
   galat: Record<string, string>;
   galatUmum: string | null;
@@ -254,7 +254,7 @@ export function useBuatTugas(awal: { workspace?: string; judul?: string; isi?: I
     setGalatUmum(null);
   }, []);
 
-  const kirim = useCallback(async (): Promise<DetailTugasPenuh | null> => {
+  const kirim = useCallback(async (tambahan?: Pick<BodyBuatTugas, 'parent_id'>): Promise<HasilBuat | null> => {
     const g: Record<string, string> = {};
     if (!draf.workspace) {
       g.workspace = 'Pilih workspace lebih dulu.';
@@ -280,25 +280,29 @@ export function useBuatTugas(awal: { workspace?: string; judul?: string; isi?: I
     setGalat({});
     setGalatUmum(null);
     try {
-      const tugas = await buatTugasBaru({
-        workspace_id: draf.workspace.id,
-        title: judul,
-        description: draf.description.trim() === '' ? undefined : draf.description.trim(),
-        assignee_ids: draf.assignees.length > 0 ? draf.assignees : undefined,
-        due_date: draf.due ?? undefined,
-        priority: draf.priority,
-        status_id: draf.statusId ?? undefined,
-        label_ids: draf.labels.length > 0 ? draf.labels : undefined,
-        start_date: draf.start ?? undefined,
-        estimate_hours: est ?? undefined,
-      });
-      for (const butir of draf.checklist) {
-        try {
-          await tambahButir(tugas.id, butir);
-        } catch {
-          // Checklist awal bersifat pelengkap; sisanya bisa ditambah dari detail.
-        }
-      }
+      const tugas = await tulisBuatTugas(
+        {
+          workspace_id: draf.workspace.id,
+          title: judul,
+          description: draf.description.trim() === '' ? undefined : draf.description.trim(),
+          assignee_ids: draf.assignees.length > 0 ? draf.assignees : undefined,
+          due_date: draf.due ?? undefined,
+          priority: draf.priority,
+          status_id: draf.statusId ?? undefined,
+          label_ids: draf.labels.length > 0 ? draf.labels : undefined,
+          start_date: draf.start ?? undefined,
+          estimate_hours: est ?? undefined,
+          ...(tambahan?.parent_id ? { parent_id: tambahan.parent_id } : {}),
+        },
+        {
+          workspace: { id: draf.workspace.id, key: draf.workspace.key, name: draf.workspace.name, type: draf.workspace.type },
+          statuses: konteks?.statuses ?? [],
+          labels: konteks?.labels ?? [],
+          orang: [...anggota, ...(user ? [{ id: user.id, name: user.name, avatar: null }] : [])],
+          creator: user ? { id: user.id, name: user.name, avatar: null } : null,
+          checklist: draf.checklist,
+        },
+      );
       return tugas;
     } catch (err) {
       if (err instanceof ApiError && Object.keys(err.errors).length > 0) {
@@ -314,7 +318,7 @@ export function useBuatTugas(awal: { workspace?: string; judul?: string; isi?: I
     } finally {
       setMengirim(false);
     }
-  }, [draf]);
+  }, [draf, konteks, anggota, user]);
 
   const bersih = useCallback((): void => {
     setDraf((d) => ({ ...DRAF_AWAL, workspace: d.workspace, statusId: statusBawaan(konteks), assignees: idSaya ? [idSaya] : [] }));

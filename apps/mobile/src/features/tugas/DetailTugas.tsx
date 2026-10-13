@@ -5,7 +5,7 @@
  * Semantik simpan: hanya kirim field yang berubah; izin `can` segar dari server
  * dipakai apa adanya (tidak ditebak di klien).
  */
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Share, StyleSheet, View } from 'react-native';
 
@@ -16,15 +16,12 @@ import {
   hapusButir,
   hapusKomentar,
   hapusTugasPenuh,
-  kirimKomentarKaya,
   lepasLampiran,
-  pindahStatus,
   setReaksi,
   setRencana,
   suntingKomentar,
   tambahButir,
   ubahButir,
-  ubahTugas,
   type BodyKomentar,
   type BodyUbahTugas,
   type ButirChecklist,
@@ -46,6 +43,10 @@ import { StatusTrack } from '@/features/tugas/StatusTrack';
 import { gabungKomentar, useDetailTugas } from '@/features/tugas/useDetailTugas';
 import { LABEL_PRIORITAS, PESAN_TITIPAN, hariSingkat, pesanGalat, tanggalRingkas, tanpaKoneksi } from '@/features/tugas/util';
 import { waktuRelatif } from '@/lib/format';
+import { useOnline } from '@/offline';
+import { ChipMenunggu } from '@/offline/ChipMenunggu';
+import { PESAN_DISIMPAN_HP, buangPerubahanTugas, kirimUlangTugas, tulisKomentar, tulisPindahStatus, tulisUbahTugas } from '@/offline/fitur/tugas';
+import { useIdNyata } from '@/offline/fitur/tugasBersama';
 import { warnaPalet } from '@/lib/palette';
 import { useSession } from '@/session/SessionProvider';
 import { radius, useTheme } from '@/theme';
@@ -89,6 +90,20 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
   const kembali = useKembali();
   const d = useDetailTugas(id);
   const { t } = d;
+  const online = useOnline();
+  const pathname = usePathname();
+  // Tugas dibuat offline: begitu terkirim, pindah ke id asli (rute / parameter panel).
+  const idNyata = useIdNyata(d.sementara ? id : undefined);
+  useEffect(() => {
+    if (!idNyata) {
+      return;
+    }
+    if (pathname.startsWith('/tugas/')) {
+      router.replace(`/tugas/${idNyata}` as never);
+    } else {
+      router.setParams({ tugas: idNyata });
+    }
+  }, [idNyata, pathname]);
   const hariIni = tanggal.hariIniIso();
 
   const [pilih, setPilih] = useState<Pilih>(null);
@@ -128,6 +143,15 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
     snackbar.show({ message: 'Tidak ada koneksi. Perubahan belum terkirim.', variant: 'offline' });
   }
 
+  /** Aksi yang hanya bisa lewat server: saat offline tampilkan "Butuh koneksi" alih-alih permintaan yang pasti gagal. */
+  function perluOnline(aksi: string): boolean {
+    if (online) {
+      return true;
+    }
+    snackbar.show({ message: `Butuh koneksi — ${aksi} tidak bisa dilakukan saat offline.`, variant: 'offline' });
+    return false;
+  }
+
   function galatTulis(err: unknown, cadangan: string): void {
     if (tanpaKoneksi(err)) {
       pesanOffline();
@@ -144,15 +168,25 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
     snackbar.show({ message: t?.locked_reason?.[kunci] ?? t?.banner?.message ?? PESAN_TITIPAN, variant: 'warn', duration: 6000 });
   }
 
-  /** Kirim hanya field yang berubah; respons segar menimpa tugas. */
+  /** Kirim hanya field yang berubah; respons segar menimpa tugas. Offline → antrean + overlay lokal. */
   async function simpan(body: BodyUbahTugas): Promise<boolean> {
-    if (!id || Object.keys(body).length === 0) {
+    if (!id || !t || Object.keys(body).length === 0) {
       return true;
     }
     setMenyimpan(true);
     setGalatField({});
     try {
-      d.terapkan(await ubahTugas(id, body));
+      const hasil = await tulisUbahTugas({ id, key: t.key }, body, {
+        statuses: t.statuses,
+        orang: [...(anggotaWs ?? []), ...t.assignee_people, ...(user ? [{ id: user.id, name: user.name, avatar: null }] : [])],
+        labels: t.workspace_labels,
+        sumber: t,
+      });
+      if (hasil.antre) {
+        snackbar.show({ message: PESAN_DISIMPAN_HP, variant: 'info' });
+      } else {
+        d.terapkan(hasil.nilai);
+      }
       return true;
     } catch (err) {
       if (err instanceof ApiError && err.status === 422) {
@@ -173,6 +207,26 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
     }
   }
 
+  async function buangPerubahan(): Promise<void> {
+    if (!id) {
+      return;
+    }
+    const ok = await dialog.confirm({
+      title: 'Buang perubahan di HP?',
+      message: d.sementara ? 'Tugas baru ini tidak akan dibuat di server.' : 'Perubahan yang gagal terkirim dibuang dan tugas kembali ke data server.',
+      confirmLabel: 'Buang',
+      destructive: true,
+    });
+    if (ok) {
+      await buangPerubahanTugas(id);
+      if (d.sementara) {
+        kembali();
+      } else {
+        void d.muat();
+      }
+    }
+  }
+
   async function segarkan(): Promise<void> {
     setMenyegarkan(true);
     await Promise.all([d.muat(), d.muatKomentarBaru(), d.muatPembaca()]);
@@ -184,7 +238,11 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
       return;
     }
     try {
-      await pindahStatus(id, { status_id: statusId });
+      const hasil = await tulisPindahStatus({ id, key: t.key }, { status_id: statusId }, { statuses: t.statuses, statusSekarangId: t.status_id, jenisWorkspace: t.workspace.type });
+      if (hasil.antre) {
+        snackbar.show({ message: PESAN_DISIMPAN_HP, variant: 'info' });
+        return;
+      }
       await d.muat();
     } catch (err) {
       galatTulis(err, 'Gagal memindahkan tugas.');
@@ -206,20 +264,28 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
       }
     }
     try {
-      const hasil = await pindahStatus(id, { done: true });
+      const hasil = await tulisPindahStatus({ id, key: t.key }, { done: true }, { statuses: t.statuses, statusSekarangId: t.status_id, jenisWorkspace: t.workspace.type });
+      if (hasil.antre) {
+        snackbar.show({ message: PESAN_DISIMPAN_HP, variant: 'info' });
+        return;
+      }
       await d.muat();
-      snackbar.show({ message: hasil.status.is_done ? `${t.key} ditandai selesai` : `${t.key} dikirim ke ${hasil.status.name}`, variant: 'ok' });
+      snackbar.show({ message: hasil.nilai.status.is_done ? `${t.key} ditandai selesai` : `${t.key} dikirim ke ${hasil.nilai.status.name}`, variant: 'ok' });
     } catch (err) {
       galatTulis(err, 'Gagal menyelesaikan tugas.');
     }
   }
 
   async function bukaKembali(): Promise<void> {
-    if (!id) {
+    if (!id || !t) {
       return;
     }
     try {
-      await pindahStatus(id, { done: false });
+      const hasil = await tulisPindahStatus({ id, key: t.key }, { done: false }, { statuses: t.statuses, statusSekarangId: t.status_id, jenisWorkspace: t.workspace.type });
+      if (hasil.antre) {
+        snackbar.show({ message: PESAN_DISIMPAN_HP, variant: 'info' });
+        return;
+      }
       await d.muat();
     } catch (err) {
       galatTulis(err, 'Gagal membuka kembali tugas.');
@@ -227,7 +293,7 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
   }
 
   async function ubahRencana(l: LajurRencana | null): Promise<void> {
-    if (!id || !t) {
+    if (!id || !t || !perluOnline('mengatur rencana hari')) {
       return;
     }
     try {
@@ -240,7 +306,7 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
   }
 
   async function toggleAmati(): Promise<void> {
-    if (!id || !t) {
+    if (!id || !t || !perluOnline('mengamati tugas')) {
       return;
     }
     const target = !t.am_watching;
@@ -254,7 +320,7 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
   }
 
   async function hapus(): Promise<void> {
-    if (!id || !t) {
+    if (!id || !t || !perluOnline('menghapus tugas')) {
       return;
     }
     const ok = await dialog.confirm({
@@ -280,7 +346,7 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
     d.ubahLokal((x) => ({ ...x, checklist_items: h.items, checklist: h.checklist }));
   }
   async function centang(b: ButirChecklist, nilai: boolean): Promise<void> {
-    if (!id) {
+    if (!id || !perluOnline('mengubah checklist')) {
       return;
     }
     d.ubahLokal((x) => ({ ...x, checklist_items: x.checklist_items.map((i) => (i.id === b.id ? { ...i, is_done: nilai } : i)) }));
@@ -292,7 +358,7 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
     }
   }
   async function tambahButirBaru(judul: string): Promise<boolean> {
-    if (!id) {
+    if (!id || !perluOnline('mengubah checklist')) {
       return false;
     }
     try {
@@ -304,7 +370,7 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
     }
   }
   async function ubahJudulButir(b: ButirChecklist, judul: string): Promise<boolean> {
-    if (!id) {
+    if (!id || !perluOnline('mengubah checklist')) {
       return false;
     }
     try {
@@ -316,7 +382,7 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
     }
   }
   async function hapusSatuButir(b: ButirChecklist): Promise<void> {
-    if (!id) {
+    if (!id || !perluOnline('mengubah checklist')) {
       return;
     }
     try {
@@ -326,7 +392,7 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
     }
   }
   async function geserButir(b: ButirChecklist, arah: 'naik' | 'turun'): Promise<void> {
-    if (!id || !t) {
+    if (!id || !t || !perluOnline('mengubah checklist')) {
       return;
     }
     const daftar = t.checklist_items;
@@ -344,7 +410,7 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
 
   // ── Lampiran ──
   async function lepas(l: Lampiran): Promise<void> {
-    if (!id) {
+    if (!id || !perluOnline('melepas lampiran')) {
       return;
     }
     const ok = await dialog.confirm({ title: 'Lepas lampiran?', message: `${l.name} dilepas dari ${t?.key ?? 'tugas'}. Filenya tetap ada di Google Drive.`, confirmLabel: 'Lepas', destructive: true });
@@ -361,29 +427,36 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
 
   // ── Komentar ──
   async function kirimKomentar(body: BodyKomentar, mode: ModeSunting | null): Promise<string | null> {
-    if (!id) {
+    if (!id || !t) {
       return 'Tugas tidak ditemukan.';
     }
     try {
       if (mode) {
+        if (!online) {
+          return 'Butuh koneksi — komentar yang sudah terkirim tidak bisa disunting saat offline.';
+        }
         const baru = await suntingKomentar(mode.id, body);
         d.setKomentar((lama) => gabungKomentar(lama, [baru]));
         setSunting(null);
       } else {
-        const baru = await kirimKomentarKaya(id, body);
-        d.setKomentar((lama) => gabungKomentar(lama, [baru]));
-        d.ubahLokal((x) => ({ ...x, comments: { ...x.comments, count: x.comments.count + 1 } }));
+        const hasil = await tulisKomentar({ id, key: t.key }, body, user ? { id: user.id, name: user.name, avatar: null } : null);
+        if (hasil.antre) {
+          snackbar.show({ message: PESAN_DISIMPAN_HP, variant: 'info' });
+        } else {
+          d.setKomentar((lama) => gabungKomentar(lama, [hasil.nilai]));
+          d.ubahLokal((x) => ({ ...x, comments: { ...x.comments, count: x.comments.count + 1 } }));
+        }
         setTabAkt('komentar');
       }
       return null;
     } catch (err) {
-      if (tanpaKoneksi(err)) {
-        return 'Tidak ada koneksi. Komentar belum terkirim — coba lagi saat tersambung.';
-      }
       return pesanGalat(err, 'Gagal mengirim komentar.');
     }
   }
   async function reaksi(k: KomentarTugas, emoji: string): Promise<void> {
+    if (!perluOnline('memberi reaksi')) {
+      return;
+    }
     const aktif = !k.my_reactions.includes(emoji);
     try {
       const baru = await setReaksi(k.id, emoji, aktif);
@@ -393,6 +466,9 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
     }
   }
   async function hapusSatuKomentar(k: KomentarTugas): Promise<void> {
+    if (!perluOnline('menghapus komentar')) {
+      return;
+    }
     const ok = await dialog.confirm({ title: 'Hapus komentar?', message: 'Komentar ini akan ditandai dihapus untuk semua orang.', confirmLabel: 'Hapus', destructive: true });
     if (!ok) {
       return;
@@ -488,7 +564,23 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
           )
         }
       >
-        {d.basi ? <Banner tone="warn" icon="cloud-off" message="Offline · menampilkan data terakhir. Perubahan butuh sambungan internet." /> : null}
+        {!online || d.basi ? (
+          <Banner
+            tone="warn"
+            icon="cloud-off"
+            message="Offline · status, prioritas, tenggat, penanggung jawab, label, deskripsi, dan komentar disimpan di HP lalu dikirim otomatis. Checklist, lampiran, dan hapus butuh koneksi."
+          />
+        ) : null}
+        {d.sementara && d.sinkron !== 'gagal' ? <Banner tone="info" icon="cloud-upload" message="Tugas baru ini belum terkirim ke server. Ia dikirim otomatis saat online, lengkap dengan perubahan di bawah." /> : null}
+        {d.sinkron === 'gagal' ? (
+          <View style={{ gap: 8 }}>
+            <Banner tone="bad" icon="triangle-alert" title="Perubahan gagal sinkron" message={d.pesanGagal ?? 'Server menolak perubahan yang Anda buat di HP.'} />
+            <View style={s.aksiKecil}>
+              <Button title="Buang perubahan HP" variant="outline" size="sm" icon="trash-2" onPress={() => void buangPerubahan()} />
+              <Button title="Kirim ulang" size="sm" icon="refresh-cw" onPress={() => void kirimUlangTugas(t.id)} />
+            </View>
+          </View>
+        ) : null}
         {d.hilang ? (
           <Banner tone="bad" icon="trash-2" message="Tugas ini dihapus orang lain." actionLabel="Kembali" onAction={kembali} />
         ) : null}
@@ -501,6 +593,7 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
               {t.workspace.type === 'personal' ? 'Pribadi' : t.workspace.name}
             </Text>
             {t.source === 'attendance' ? <Text variant="meta" tone="link" weight={700}>· dari absen</Text> : null}
+            {d.sinkron ? <ChipMenunggu status={d.sinkron} /> : null}
           </View>
           {punyaInduk && t.parent ? (
             <Pressable onPress={() => router.push(`/tugas/${t.parent?.id ?? ''}`)} accessibilityRole="button" accessibilityLabel={`Sub-tugas dari ${t.parent.key}`} style={s.ws}>
@@ -689,8 +782,8 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
 
         <ChecklistBagian
           butir={t.checklist_items}
-          boleh={can?.work === true}
-          alasanTerkunci={t.locked_reason?.work ?? t.banner?.message ?? null}
+          boleh={can?.work === true && online}
+          alasanTerkunci={can?.work === true && !online ? 'Butuh koneksi — checklist tidak bisa diubah saat offline.' : (t.locked_reason?.work ?? t.banner?.message ?? null)}
           onCentang={(b, v) => void centang(b, v)}
           onTambah={tambahButirBaru}
           onUbah={ubahJudulButir}
@@ -751,7 +844,7 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
           <Text variant="meta">Sub-tugas tidak punya sub-tugas lagi (maks. satu tingkat).</Text>
         )}
 
-        <LampiranBagian lampiran={t.attachments} drive={t.drive} bolehUbah={can?.work === true && t.attachments_can_edit} alasanTerkunci={t.locked_reason?.work ?? null} onAksi={setLampiranSheet} />
+        <LampiranBagian lampiran={t.attachments} drive={t.drive} bolehUbah={can?.work === true && t.attachments_can_edit && online} alasanTerkunci={can?.work === true && !online ? 'Butuh koneksi — lampiran tidak bisa diubah saat offline.' : (t.locked_reason?.work ?? null)} onAksi={setLampiranSheet} />
 
         {/* Pengamat */}
         <View style={s.kepala}>

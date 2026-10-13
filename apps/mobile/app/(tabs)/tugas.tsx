@@ -6,7 +6,7 @@
  */
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Share, StyleSheet, View } from 'react-native';
+import { InteractionManager, Share, StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import {
@@ -22,6 +22,7 @@ import {
   type TampilanTersimpan,
   type TugasBaruMasuk,
 } from '@/api/tugas';
+import { hangatkanFormTugas } from '@/features/tugas/hangat';
 import { daftarChip, dariTampilan, jumlahFilter, keTampilan, FILTER_KOSONG, type KelompokPer } from '@/features/tugas/filter';
 import { PriorityBars, StatusRing, UbinWorkspace } from '@/features/tugas/ikon';
 import { RencanaView } from '@/features/tugas/RencanaView';
@@ -46,6 +47,12 @@ import {
   stempelWaktu,
   tanpaKoneksi,
 } from '@/features/tugas/util';
+import { adalahOnline } from '@/offline';
+import { PESAN_DISIMPAN_HP, tulisPindahStatus, tulisUbahTugas } from '@/offline/fitur/tugas';
+import { eIdSementara } from '@/offline/fitur/tugasBersama';
+import { terapkanDaftarBaris, useOverlayTugas } from '@/offline/fitur/tugasOverlay';
+import { useSetelahSinkron } from '@/offline/fitur/useSetelahSinkron';
+import { useSession } from '@/session/SessionProvider';
 import { useTheme } from '@/theme';
 import {
   AppBar,
@@ -151,6 +158,9 @@ export default function LayarTugasSaya(): React.JSX.Element {
   const snackbar = useSnackbar();
   const ruangTab = useTabBarSpace();
   const d = useTugasSaya();
+  const { user } = useSession();
+  const ov = useOverlayTugas();
+  useSetelahSinkron(d.segarkanSenyap);
   // Tablet (jendela ≥ 720 dp, mockup 12/17): daftar + detail berdampingan; tugas
   // terpilih disimpan di parameter `?tugas=` supaya bertahan saat diputar.
   const tata = useTataLetak();
@@ -176,6 +186,22 @@ export default function LayarTugasSaya(): React.JSX.Element {
   const [terkunci, setTerkunci] = useState<ReadonlySet<string>>(new Set());
 
   const hariIni = d.meta?.today ?? d.perencana?.today ?? tanggal.hariIniIso();
+
+  // Form "Tugas baru" harus bisa dipakai offline: pemanasan cache workspace Pribadi (sekali per proses).
+  useEffect(() => {
+    const tugasHangat = InteractionManager.runAfterInteractions(() => {
+      void hangatkanFormTugas();
+    });
+    return () => tugasHangat.cancel();
+  }, []);
+
+  // Perubahan yang masih menunggu sinkron (buat/ubah/status) diterapkan di atas data server.
+  const idSaya = user?.id ?? null;
+  const tanpaFilter = d.aktifFilter === 0 && d.filter.q.trim() === '';
+  const tasksTampil = useMemo(
+    () => terapkanDaftarBaris(d.tasks, ov, { hariIni, sertakanBuat: tanpaFilter && d.mode === 'daftar', idSaya, lingkup: d.lingkup, tampilSelesai: d.tampilSelesai }),
+    [d.tasks, ov, hariIni, tanpaFilter, d.mode, idSaya, d.lingkup, d.tampilSelesai],
+  );
 
   // Muat ulang senyap saat layar kembali fokus (kecuali kali pertama).
   const pertama = useRef(true);
@@ -262,10 +288,16 @@ export default function LayarTugasSaya(): React.JSX.Element {
       }
     }
     try {
-      const hasil = await pindahStatus(b.id, { done: true });
-      d.ubahLokal(b.id, (x) => (hasil.status.is_done && !d.tampilSelesai ? null : { ...x, status: { ...x.status, ...hasil.status, id: hasil.status.id ?? x.status.id } }));
+      const baris = d.tasks.find((t) => t.id === b.id);
+      const hasil = await tulisPindahStatus({ id: b.id, key: b.key }, { done: true }, { jenisWorkspace: b.workspaceType as 'personal' | 'team' | 'division' | 'project', statusSekarangId: baris?.status.id ?? null });
+      if (hasil.antre) {
+        snackbar.show({ message: PESAN_DISIMPAN_HP, variant: 'info' });
+        return;
+      }
+      const st = hasil.nilai.status;
+      d.ubahLokal(b.id, (x) => (st.is_done && !d.tampilSelesai ? null : { ...x, status: { ...x.status, ...st, id: st.id ?? x.status.id } }));
       snackbar.show({
-        message: hasil.status.is_done ? `${b.key} ditandai selesai` : `${b.key} dikirim ke ${hasil.status.name}`,
+        message: st.is_done ? `${b.key} ditandai selesai` : `${b.key} dikirim ke ${st.name}`,
         variant: 'ok',
         actionLabel: 'Urungkan',
         onAction: () => {
@@ -290,7 +322,11 @@ export default function LayarTugasSaya(): React.JSX.Element {
     }
     const t = tunda;
     try {
-      await ubahTugas(t.id, { due_date: iso });
+      const hasil = await tulisUbahTugas({ id: t.id, key: t.key }, { due_date: iso }, { sumber: { due_date: t.due } });
+      if (hasil.antre) {
+        snackbar.show({ message: PESAN_DISIMPAN_HP, variant: 'info' });
+        return;
+      }
       d.ubahLokal(t.id, (x) => ({ ...x, due_date: iso }));
       snackbar.show({
         message: iso ? `Tenggat ${t.key} ditunda ke ${hariSingkat(iso)}` : `Tenggat ${t.key} dihapus`,
@@ -320,6 +356,10 @@ export default function LayarTugasSaya(): React.JSX.Element {
       return;
     }
     const r = rencanakan;
+    if (!adalahOnline() || eIdSementara(r.id)) {
+      snackbar.show({ message: 'Butuh koneksi — rencana hari belum bisa diatur saat offline.', variant: 'offline' });
+      return;
+    }
     try {
       const p = await setRencana(r.id, l);
       d.setPerencana(p);
@@ -382,7 +422,7 @@ export default function LayarTugasSaya(): React.JSX.Element {
     setMenu({ id: b.id, key: b.key, title: b.title, type: b.workspace.type, lajur: b.plan.bucket, selesai: b.status.is_done });
   }
 
-  function kartu(b: BarisTugas): React.JSX.Element {
+  function kartu(b: BarisTugas & { sinkron?: 'menunggu' | 'gagal' }): React.JSX.Element {
     const selesai = b.status.is_done || b.status.category === 'canceled';
     const aksi: AksiGeser[] = [];
     if (!selesai && !terkunci.has(b.id)) {
@@ -393,12 +433,12 @@ export default function LayarTugasSaya(): React.JSX.Element {
     }
     return (
       <SwipeRow key={b.id} aksi={aksi}>
-        <TugasKartu baris={b} hariIni={hariIni} terpilih={dipilih === b.id} onPress={() => bukaDetail(b.id)} onLongPress={() => bukaMenu(b)} tampilkanWorkspace={d.kelompok !== 'workspace'} />
+        <TugasKartu baris={b} sinkron={'sinkron' in b ? b.sinkron : undefined} hariIni={hariIni} terpilih={dipilih === b.id} onPress={() => bukaDetail(b.id)} onLongPress={() => bukaMenu(b)} tampilkanWorkspace={d.kelompok !== 'workspace'} />
       </SwipeRow>
     );
   }
 
-  const seksi = d.mode === 'daftar' ? susunSeksi(d.tasks, d.kelompok, hariIni) : [];
+  const seksi = d.mode === 'daftar' ? susunSeksi(tasksTampil, d.kelompok, hariIni) : [];
   const adaFilter = d.aktifFilter > 0;
   const labelKelompok = d.kelompok === 'tenggat' ? 'Tenggat' : d.kelompok === 'workspace' ? 'Workspace' : d.kelompok === 'prioritas' ? 'Prioritas' : 'Status';
 
@@ -518,7 +558,7 @@ export default function LayarTugasSaya(): React.JSX.Element {
 
           {d.memuat ? (
             <Loading rows={5} />
-          ) : d.galat && (d.mode === 'rencana' ? d.perencana === null : d.tasks.length === 0) ? (
+          ) : d.galat && (d.mode === 'rencana' ? d.perencana === null : tasksTampil.length === 0) ? (
             <ErrorState message={d.galat.pesan} kind={errorKindFromStatus(d.galat.status)} onRetry={d.segarkan} />
           ) : d.mode === 'rencana' && d.perencana ? (
             <RencanaView
@@ -529,7 +569,7 @@ export default function LayarTugasSaya(): React.JSX.Element {
               onSelesai={(i: ItemRencana) => void selesaikan({ id: i.id, key: i.key, title: i.title, workspaceType: i.workspace.type, status: { is_done: i.done } })}
               onMenu={(i) => setMenu({ id: i.id, key: i.key, title: i.title, type: i.workspace.type, lajur: i.auto ? null : i.lane, selesai: i.done })}
             />
-          ) : d.tasks.length === 0 ? (
+          ) : tasksTampil.length === 0 ? (
             adaFilter ? (
               <EmptyState
                 icon="search-x"
@@ -729,7 +769,7 @@ export default function LayarTugasSaya(): React.JSX.Element {
         onDibuat={(t) => {
           setBaruSheet(false);
           d.segarkanSenyap();
-          snackbar.show({ message: `${t.key} dibuat`, variant: 'ok', actionLabel: 'Buka', onAction: () => bukaDetail(t.id) });
+          snackbar.show({ message: t.antre ? PESAN_DISIMPAN_HP : `${t.key} dibuat`, variant: t.antre ? 'info' : 'ok', actionLabel: 'Buka', onAction: () => bukaDetail(t.id) });
         }}
       />
     </View>

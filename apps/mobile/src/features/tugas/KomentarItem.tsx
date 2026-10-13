@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { EMOJI_REAKSI, type KomentarTugas, type PembacaKomentar } from '@/api/tugas';
 import { jam, waktuRelatif } from '@/lib/format';
+import { ChipMenunggu, type StatusSinkronUi } from '@/offline/ChipMenunggu';
 import { radius, useTheme } from '@/theme';
 import { Avatar, AvatarStack, BottomSheet, Icon, Pressable, SheetAction, Text } from '@/ui';
 
@@ -31,6 +32,8 @@ export function KomentarItem({
   onPembaca: (k: KomentarTugas) => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  // Komentar yang ditulis offline dan belum diterima server (overlay antrean).
+  const sinkron = (k as { sinkron?: StatusSinkronUi }).sinkron;
   if (k.deleted) {
     return (
       <View style={[s.kartu, { backgroundColor: colors.surface2, borderColor: colors.border }]}>
@@ -57,12 +60,16 @@ export function KomentarItem({
             {k.edited_at ? ' (diedit)' : ''}
           </Text>
         </View>
-        <Pressable onPress={() => onAksi(k)} accessibilityRole="button" accessibilityLabel="Aksi komentar" hitSlop={8} style={s.ikon}>
-          <Icon name="ellipsis" size={22} color={colors.muted} />
-        </Pressable>
+        {sinkron ? (
+          <ChipMenunggu status={sinkron} />
+        ) : (
+          <Pressable onPress={() => onAksi(k)} accessibilityRole="button" accessibilityLabel="Aksi komentar" hitSlop={8} style={s.ikon}>
+            <Icon name="ellipsis" size={22} color={colors.muted} />
+          </Pressable>
+        )}
       </View>
       <HtmlText html={k.body_html} fallback={k.body_text} />
-      <View style={s.reaksi}>
+      {sinkron ? null : <View style={s.reaksi}>
         {k.reactions.map((r) => {
           const aktif = k.my_reactions.includes(r.emoji);
           return (
@@ -99,7 +106,7 @@ export function KomentarItem({
             <AvatarStack names={pembaca.map((p) => p.user.name)} max={3} size="sm" />
           </Pressable>
         ) : null}
-      </View>
+      </View>}
     </View>
   );
 }

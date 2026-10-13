@@ -5,6 +5,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import type { BarisTugas } from '@/api/tugas';
+import { ChipMenunggu, type StatusSinkronUi } from '@/offline/ChipMenunggu';
 import { radius, useTheme } from '@/theme';
 import { Icon, Pressable, Tag, Text } from '@/ui';
 
@@ -18,6 +19,7 @@ export function TugasKartu({
   onLongPress,
   tampilkanWorkspace = true,
   menunggu = false,
+  sinkron,
   catatan,
   terpilih = false,
 }: {
@@ -27,6 +29,8 @@ export function TugasKartu({
   onLongPress?: () => void;
   tampilkanWorkspace?: boolean;
   menunggu?: boolean;
+  /** Perubahan di HP belum diterima server (overlay offline): chip "Menunggu sinkron" / "Gagal sinkron". */
+  sinkron?: StatusSinkronUi;
   /** Baris tambahan di bawah meta (mis. "Terbawa dari kemarin"). */
   catatan?: React.ReactNode;
   /** Sedang terbuka di panel detail (tablet dua panel). */
@@ -43,6 +47,7 @@ export function TugasKartu({
     baris.status.name,
     tenggat?.text,
     baris.priority.value > 0 ? `prioritas ${LABEL_PRIORITAS[baris.priority.value] ?? ''}` : null,
+    sinkron === 'menunggu' ? 'menunggu sinkron' : sinkron === 'gagal' ? 'gagal sinkron' : null,
   ]
     .filter(Boolean)
     .join(', ');
@@ -110,7 +115,8 @@ export function TugasKartu({
             </Text>
           </View>
         ) : null}
-        {menunggu ? (
+        {sinkron ? <ChipMenunggu status={sinkron} /> : null}
+        {menunggu && !sinkron ? (
           <View style={s.ws}>
             <Icon name="cloud-upload" size={15} color={colors.link} />
             <Text variant="meta" weight={600} tone="link">

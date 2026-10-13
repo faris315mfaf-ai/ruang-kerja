@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 
-import type { DetailTugasPenuh } from '@/api/tugas';
+import type { HasilBuat } from '@/offline/fitur/tugas';
 import { Avatar, Banner, BottomSheet, Button, Field, Icon, IconButton, Pressable, Text, tanggal, useSnackbar } from '@/ui';
 import { radius, useTheme } from '@/theme';
 
@@ -20,7 +20,7 @@ import { useSession } from '@/session/SessionProvider';
 
 type Pilih = 'status' | 'prioritas' | 'orang' | 'tenggat' | 'label' | 'workspace' | null;
 
-function Isi({ onDibuat, onClose }: { onDibuat: (t: DetailTugasPenuh) => void; onClose: () => void }): React.JSX.Element {
+function Isi({ onDibuat, onClose }: { onDibuat: (t: HasilBuat) => void; onClose: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { user } = useSession();
   const snackbar = useSnackbar();
@@ -174,7 +174,7 @@ function Isi({ onDibuat, onClose }: { onDibuat: (t: DetailTugasPenuh) => void; o
   );
 }
 
-export function TugasBaruSheet({ visible, onClose, onDibuat }: { visible: boolean; onClose: () => void; onDibuat: (t: DetailTugasPenuh) => void }): React.JSX.Element {
+export function TugasBaruSheet({ visible, onClose, onDibuat }: { visible: boolean; onClose: () => void; onDibuat: (t: HasilBuat) => void }): React.JSX.Element {
   const [pernah, setPernah] = useState(false);
   if (visible && !pernah) {
     setPernah(true);

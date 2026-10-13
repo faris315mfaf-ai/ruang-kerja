@@ -8,11 +8,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
-import { buatTugasBaru, detailTugasPenuh, type BarisTugas } from '@/api/tugas';
+import { detailTugasPenuh, type BarisTugas } from '@/api/tugas';
+import { PESAN_DISIMPAN_HP } from '@/offline/fitur/tugas';
 import { PriorityBars, StatusRing, UbinWorkspace } from '@/features/tugas/ikon';
 import { PropChip } from '@/features/tugas/PropChip';
 import { SheetLabel, SheetOrang, SheetPrioritas, SheetStatus, SheetTenggat, SheetWorkspace } from '@/features/tugas/Pilihan';
-import { parseEstimasi, statusBawaan, useBuatTugas, type IsiBawaan } from '@/features/tugas/useBuatTugas';
+import { statusBawaan, useBuatTugas, type IsiBawaan } from '@/features/tugas/useBuatTugas';
 import { LABEL_PRIORITAS, galatPerField, hariSingkat, pesanGalat, ringkasLabel } from '@/features/tugas/util';
 import { useSession } from '@/session/SessionProvider';
 import { radius, useTheme } from '@/theme';
@@ -126,23 +127,12 @@ export default function LayarTugasBaru(): React.JSX.Element {
       }
       setMengirimSub(true);
       try {
-        const est = parseEstimasi(draf.estimate);
-        const t = await buatTugasBaru({
-          workspace_id: draf.workspace.id,
-          title: judul,
-          description: draf.description.trim() || undefined,
-          assignee_ids: draf.assignees.length > 0 ? draf.assignees : undefined,
-          due_date: draf.due ?? undefined,
-          priority: draf.priority,
-          status_id: statusDipilih?.id ?? undefined,
-          label_ids: draf.labels.length > 0 ? draf.labels : undefined,
-          start_date: draf.start ?? undefined,
-          estimate_hours: est !== null && !Number.isNaN(est) ? est : undefined,
-          parent_id: parentId,
-        });
-        lewati.current = true;
-        snackbar.show({ message: `${t.key} dibuat`, variant: 'ok' });
-        router.back();
+        const t = await f.kirim({ parent_id: parentId });
+        if (t) {
+          lewati.current = true;
+          snackbar.show({ message: t.antre ? PESAN_DISIMPAN_HP : `${t.key} dibuat`, variant: t.antre ? 'info' : 'ok' });
+          router.back();
+        }
       } catch (err) {
         setGalatSub({ ...galatPerField(err, { due_date: 'due' }), umum: err instanceof ApiError && Object.keys(err.errors).length === 0 ? err.message : '' });
       } finally {
@@ -153,13 +143,13 @@ export default function LayarTugasBaru(): React.JSX.Element {
     const t = await f.kirim();
     if (t) {
       lewati.current = true;
-      snackbar.show({ message: `${t.key} dibuat`, variant: 'ok' });
+      snackbar.show({ message: t.antre ? PESAN_DISIMPAN_HP : `${t.key} dibuat`, variant: t.antre ? 'info' : 'ok' });
       router.replace(`/tugas/${t.id}`);
     }
   }
 
-  const g = parentId ? galatSub : f.galat;
-  const umum = parentId ? galatSub.umum : f.galatUmum;
+  const g = parentId ? { ...f.galat, ...galatSub } : f.galat;
+  const umum = parentId ? (galatSub.umum || f.galatUmum) : f.galatUmum;
   const sibuk = f.mengirim || mengirimSub;
   const tambahButir = (): void => {
     const t = butirBaru.trim();

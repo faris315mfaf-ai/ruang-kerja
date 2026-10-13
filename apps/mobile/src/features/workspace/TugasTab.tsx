@@ -19,6 +19,11 @@ import {
   type KartuWorkspace,
   type PapanData,
 } from '@/api/workspace';
+import { adalahOnline } from '@/offline';
+import { PESAN_DISIMPAN_HP, tulisPindahStatus } from '@/offline/fitur/tugas';
+import { adaTertunda } from '@/offline/fitur/tugasBersama';
+import { terapkanPapan, useOverlayTugas } from '@/offline/fitur/tugasOverlay';
+import { useSetelahSinkron } from '@/offline/fitur/useSetelahSinkron';
 import { Fab, IconButton, SegmentedTabs, useSnackbar } from '@/ui';
 
 import { FilterSheet } from './FilterSheet';
@@ -46,6 +51,14 @@ export function TugasTab({ detail, meId }: { detail: DetailWorkspace; meId: stri
   const anggota = useResource(anggotaDibuka ? `anggota:${ws}` : null, () => ambilAnggotaWorkspace(ws));
 
   useSegarkanSaatFokus(papan.muat);
+  const ov = useOverlayTugas();
+  useSetelahSinkron(() => {
+    void papan.muat();
+    setVersi((v) => v + 1);
+  });
+  // Perubahan yang menunggu sinkron (tugas baru, pindah kolom, ubah isian) tampil di atas data server.
+  const papanData = papan.data;
+  const papanTampil = useMemo(() => ({ ...papan, data: papanData ? terapkanPapan(papanData, ov, ws) : null }), [papan, papanData, ov, ws]);
 
   const boleh = detail.can.edit_tasks && !detail.read_only.read_only;
   const bolehPindah = papan.data ? papan.data.can.move && !papan.data.read_only.read_only : boleh;
@@ -61,10 +74,29 @@ export function TugasTab({ detail, meId }: { detail: DetailWorkspace; meId: stri
 
   const hapusFilter = useCallback((): void => setFilter((f) => ({ ...FILTER_KOSONG, urut: f.urut, selesai: f.selesai })), []);
 
+  async function antrePindah(tugas: KartuWorkspace, kolomId: string): Promise<void> {
+    const kolom = papan.data?.columns ?? [];
+    try {
+      await tulisPindahStatus(
+        { id: tugas.id, key: tugas.key },
+        { status_id: kolomId },
+        { statuses: kolom.map((c) => ({ id: c.id, name: c.name, category: c.kategori })), statusSekarangId: tugas.status_id, jenisWorkspace: detail.workspace.type },
+      );
+      snackbar.show({ message: PESAN_DISIMPAN_HP, variant: 'info' });
+    } catch (err) {
+      snackbar.show({ message: err instanceof ApiError ? (err.firstValidationError ?? err.message) : 'Tugas gagal dipindah.', variant: 'bad' });
+    }
+  }
+
   async function pindah(tugas: KartuWorkspace, kolomId: string): Promise<void> {
     setPindahTugas(null);
     const tujuan = papan.data?.columns.find((c) => c.id === kolomId);
     if (!tujuan) {
+      return;
+    }
+    // Offline (atau tugas ini masih punya perubahan di antrean): simpan di HP, kirim otomatis.
+    if (!adalahOnline() || adaTertunda(tugas.id)) {
+      await antrePindah(tugas, kolomId);
       return;
     }
     papan.ubah((lama) => ({
@@ -81,9 +113,13 @@ export function TugasTab({ detail, meId }: { detail: DetailWorkspace; meId: stri
       snackbar.show({ message: hasil.message, variant: 'ok' });
     } catch (err) {
       void papan.muat();
+      if (err instanceof ApiError && err.status === 0) {
+        await antrePindah(tugas, kolomId);
+        return;
+      }
       snackbar.show({
         message: err instanceof ApiError ? (err.firstValidationError ?? err.message) : 'Tugas gagal dipindah.',
-        variant: err instanceof ApiError && err.status === 0 ? 'offline' : 'bad',
+        variant: 'bad',
       });
     }
   }
@@ -119,7 +155,7 @@ export function TugasTab({ detail, meId }: { detail: DetailWorkspace; meId: stri
 
       <View style={{ flex: 1 }}>
         {mode === 'board' ? (
-          <PapanView papan={papan} filter={filter} meId={meId} boleh={bolehPindah} onHapusFilter={hapusFilter} onPindah={setPindahTugas} onTugasBaru={tugasBaru} />
+          <PapanView papan={papanTampil} filter={filter} meId={meId} boleh={bolehPindah} onHapusFilter={hapusFilter} onPindah={setPindahTugas} onTugasBaru={tugasBaru} />
         ) : mode === 'list' ? (
           <ListView ws={ws} filter={filter} onFilter={setFilter} versi={versi} boleh={bolehPindah} onPindah={setPindahTugas} onTugasBaru={tugasBaru} />
         ) : (

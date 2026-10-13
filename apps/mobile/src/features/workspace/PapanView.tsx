@@ -94,7 +94,7 @@ export function PapanView({
         <TabScroll onRefresh={papan.muat} ruangFab={boleh}>
           <BannerBacaSaja info={data.read_only} />
           {papan.offline ? <PitaOffline diperbarui={papan.diperbarui} objek="papan" /> : null}
-          {papan.offline && boleh ? <Banner tone="info" message="Perubahan menunggu sambungan: pindah kartu butuh koneksi." /> : null}
+          {papan.offline && boleh ? <Banner tone="info" icon="cloud-upload" message="Offline · pindah kartu dan perubahan lain disimpan di HP, lalu dikirim otomatis saat tersambung." /> : null}
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="tablist" style={s.kolomGulir} contentContainerStyle={s.kolomBaris}>
             {kolom.map((c) => {
