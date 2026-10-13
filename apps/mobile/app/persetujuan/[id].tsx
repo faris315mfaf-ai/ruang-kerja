@@ -328,9 +328,9 @@ export default function DetailPersetujuanLayar(): React.JSX.Element {
 
   const footer = giliran ? (
     <>
-      <Button title="Minta revisi" variant="quiet" style={{ flex: 1 }} disabled={offline || mengirim} disabledReason={alasanOff} onPress={() => setSheet('revisi')} />
-      <Button title="Tolak" variant="outline" style={{ flex: 1 }} disabled={offline || mengirim} disabledReason={alasanOff} onPress={() => setSheet('tolak')} />
-      <Button title="Setujui" icon="check" style={{ flex: 1.2 }} loading={mengirim} loadingTitle="Mengirim…" disabled={offline} disabledReason={alasanOff} onPress={() => void setujui()} />
+      <Button title="Minta revisi" variant="quiet" style={{ flex: 1.3, paddingHorizontal: 8 }} disabled={offline || mengirim} disabledReason={alasanOff} onPress={() => setSheet('revisi')} />
+      <Button title="Tolak" variant="outline" style={{ flex: 1, paddingHorizontal: 8 }} disabled={offline || mengirim} disabledReason={alasanOff} onPress={() => setSheet('tolak')} />
+      <Button title="Setujui" icon="check" style={{ flex: 1.2, paddingHorizontal: 8 }} loading={mengirim} loadingTitle="Mengirim…" disabled={offline} disabledReason={alasanOff} onPress={() => void setujui()} />
     </>
   ) : undefined;
 

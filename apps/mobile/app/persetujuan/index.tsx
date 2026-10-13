@@ -379,9 +379,9 @@ export default function LayarPersetujuan(): React.JSX.Element {
                 </View>
               ) : null}
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                <Button title="Tolak" icon="x" variant="outline" style={{ flex: 1 }} disabled={offline} disabledReason="Tidak ada koneksi" onPress={() => setSheet({ jenis: 'tolak', item: atas })} />
-                <Button title="Minta revisi" variant="outline" style={{ flex: 1.15 }} disabled={offline} disabledReason="Tidak ada koneksi" onPress={() => setSheet({ jenis: 'revisi', item: atas })} />
-                <Button title="Setujui" icon="check" style={{ flex: 1.2 }} disabled={offline} disabledReason="Tidak ada koneksi" onPress={() => setujui(atas)} />
+                <Button title="Tolak" icon="x" variant="outline" style={{ flex: 1, paddingHorizontal: 8 }} disabled={offline} disabledReason="Tidak ada koneksi" onPress={() => setSheet({ jenis: 'tolak', item: atas })} />
+                <Button title="Minta revisi" variant="outline" style={{ flex: 1.3, paddingHorizontal: 8 }} disabled={offline} disabledReason="Tidak ada koneksi" onPress={() => setSheet({ jenis: 'revisi', item: atas })} />
+                <Button title="Setujui" icon="check" style={{ flex: 1.2, paddingHorizontal: 8 }} disabled={offline} disabledReason="Tidak ada koneksi" onPress={() => setujui(atas)} />
               </View>
             </>
           ) : null}
