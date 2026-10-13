@@ -7,6 +7,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { MilestoneDetail } from '@/api/proyek';
 import { hariTanggal, LABEL_MILESTONE, nadaMilestone } from '@/features/proyek/format';
@@ -18,6 +19,7 @@ import { useTheme } from '@/theme';
 import { Badge, Banner, BottomSheet, Card, EmptyState, ErrorState, Fab, Icon, IconButton, Loading, Pressable, Screen, SheetAction, SubAppBar, Text, errorKindFromStatus } from '@/ui';
 
 export default function LayarMilestone(): React.JSX.Element {
+  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { key: param } = useLocalSearchParams<{ key: string }>();
   const key = typeof param === 'string' ? param : '';
@@ -95,7 +97,7 @@ export default function LayarMilestone(): React.JSX.Element {
           </>
         )}
       </Screen>
-      {boleh ? <Fab label="Milestone baru" extended onPress={() => router.push(`${base}/form` as never)} style={{ position: 'absolute', right: 16, bottom: 32 }} /> : null}
+      {boleh ? <Fab label="Milestone baru" extended onPress={() => router.push(`${base}/form` as never)} style={{ position: 'absolute', right: 16, bottom: insets.bottom + 16 }} /> : null}
       <BottomSheet visible={menu !== null} onClose={() => setMenu(null)} title={menu?.name}>
         {menu ? (
           <>

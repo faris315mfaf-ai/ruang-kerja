@@ -17,12 +17,12 @@ import { CatatanTindakanDaftar } from '@/features/manajemen/CatatanTindakan';
 import { angka, hariTanggal, labelKesehatan, persen, poin, tglBulan } from '@/features/proyek/format';
 import { bukaProyek, GrafikKolom, LencanaKesehatan, PetakAngka } from '@/features/proyek/komponen';
 import { bukaDetail } from '@/features/rapat/navigasi';
+import { useKirimTautan } from '@/features/settings/useKirimTautan';
 import { PitaOffline } from '@/features/workspace/bagian';
 import { useResource, useSegarkanSaatFokus } from '@/features/workspace/useResource';
 import { jam } from '@/lib/format';
 import { useSession } from '@/session/SessionProvider';
-import { useTheme } from '@/theme';
-import { Badge, Banner, ErrorState, Hero, ListRow, LockedState, Panel, Progress, Screen, SegmentedTabs, Skeleton, SubAppBar, Text, errorKindFromStatus } from '@/ui';
+import { Badge, Banner, DesktopOnlyBanner, ErrorState, Hero, ListRow, LockedState, Panel, Progress, Screen, SegmentedTabs, Skeleton, SubAppBar, Text, errorKindFromStatus } from '@/ui';
 
 type Periode = 'harian' | 'mingguan' | 'bulanan';
 
@@ -31,8 +31,8 @@ function GalatBlok({ pesan, onUlang }: { pesan: string; onUlang: () => void }): 
 }
 
 export default function LayarManajemen(): React.JSX.Element {
-  const { colors } = useTheme();
   const { user } = useSession();
+  const { kirim, mengirim } = useKirimTautan();
   const [periode, setPeriode] = useState<Periode>('mingguan');
   const [tarikan, setTarikan] = useState(false);
   const inti = useResource<ManajemenInti>('manajemen:inti', useCallback(() => manajemen(), []));
@@ -249,9 +249,7 @@ export default function LayarManajemen(): React.JSX.Element {
               )}
             </Panel>
           ) : null}
-          <Text variant="meta" style={{ color: colors.muted }}>
-            Metrik ditampilkan berdampingan tanpa skor gabungan. Ekspor tersedia di desktop.
-          </Text>
+          <DesktopOnlyBanner message="Ekspor Excel dashboard tersedia di desktop. Metrik ditampilkan berdampingan tanpa skor gabungan." onSendLink={mengirim ? undefined : () => void kirim('/manajemen')} />
         </>
       )}
     </Screen>

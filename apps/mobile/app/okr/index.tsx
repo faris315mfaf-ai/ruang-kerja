@@ -7,6 +7,7 @@
 import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { daftarOkr, type DaftarOkr, type Objective } from '@/api/okr';
 import { labelKuartal, pecahanPersen } from '@/features/okr/format';
@@ -18,6 +19,7 @@ import { useResource, useSegarkanSaatFokus } from '@/features/workspace/useResou
 import { Card, Chip, ChipScroller, EmptyState, ErrorState, Fab, LockedState, Progress, Screen, SegmentedTabs, Skeleton, SubAppBar, Text, errorKindFromStatus } from '@/ui';
 
 export default function LayarOkr(): React.JSX.Element {
+  const insets = useSafeAreaInsets();
   const [kuartal, setKuartal] = useState<string | undefined>(undefined);
   const [divisi, setDivisi] = useState<string | null>(null);
   const ambil = useCallback(() => daftarOkr(kuartal, divisi), [kuartal, divisi]);
@@ -119,7 +121,7 @@ export default function LayarOkr(): React.JSX.Element {
           </>
         )}
       </Screen>
-      {d?.can.create && !r.offline ? <Fab label="Objective baru" extended onPress={() => router.push(`/okr/form?kuartal=${d.filters.quarter}` as never)} style={{ position: 'absolute', right: 16, bottom: 32 }} /> : null}
+      {d?.can.create && !r.offline ? <Fab label="Objective baru" extended onPress={() => router.push(`/okr/form?kuartal=${d.filters.quarter}` as never)} style={{ position: 'absolute', right: 16, bottom: insets.bottom + 16 }} /> : null}
     </View>
   );
 }
