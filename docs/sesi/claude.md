@@ -41,3 +41,12 @@ Rencana 5 bagian: `docs/fitur/aplikasi-ponsel-bagian.md`. Mockup: `docs/mockups/
 - **Gagal pra-ada, bukan dari Bagian 1:** `PageQueryCountTest` — `/manajemen` 71 query (anggaran 69) dan `/peran/direktur` 66 (anggaran 65); gagal sama di `120b309` dan `3488a33` (sebelum Bagian 1) padahal run penuh 12 Okt hijau; sebab belum ditemukan (bukan N+1: tes pertumbuhan lolos).
 - **Belum diverifikasi:** layar setelah masuk (tab bar kapsul, Beranda, Lainnya, Pengaturan) di emulator — butuh API terjangkau dari emulator (build uji dengan `EXPO_PUBLIC_API_URL` + cleartext).
 - Bagian 2 dan 3 (paralel) berikutnya; Bagian 2 wajib membungkus dialog izin dengan `useAppLock().tahanKunci(...)`.
+
+## Bagian 2 + 3 (13 Okt 2026) — selesai, digabung di `claude/android-bagian-2`
+- Worktree: `../ruang-kerja-bagian2` (branch `claude/android-bagian-2`, berisi merge Bagian 3 `0cfdcad`) dan `../ruang-kerja-bagian3` (`claude/android-bagian-3`). Basis: `claude/android-bagian-1`. Belum di-push.
+- Backend: B2-A absensi `b1c986a`, B2-B beranda/briefing/pengumuman/kinerja `5363323`, B2-C inbox/cari/notifikasi/FCM `86bd928`, B3-A1 tugas `403ed04`, B3-A2 workspace/otomasi `bf65902`, B3-B catatan `5e34b0c`, B3-C obrolan `4fc5b86`. Kontrak: `docs/sesi/ponsel-b2a…b3c-*.md`. Rute per paket di `routes/api/auth/*.php` (dimuat glob di routes/api.php, `b126575`).
+- Aplikasi: Absensi, Beranda+dashboard Kadiv/HR+briefing+kinerja, Inbox/pengumuman/cari/buat cepat/pengaturan notifikasi, Tugas, Workspace+otomasi, Catatan (teks polos; berformat = baca-saja), Obrolan.
+- Verifikasi gabungan: Pest 3.700/3.702 (2 gagal = anggaran query `/manajemen` & `/peran/direktur`, pra-ada sejak sebelum Bagian 1) · lint hijau · tsc/eslint app hijau · APK release + cold-start ×2 · **APK uji ke server lokal**: login staf & Kadiv, Beranda, Tugas, detail tugas titipan, Absen, Obrolan, Workspace board, Catatan, Inbox, Pengaturan, Lainnya, mode gelap — tampil benar; perbaikan dari verifikasi: kaca buram penuh di Android + label kantor (`d0e0f94`).
+- Sisa kecil: sorotan fokus persegi pada tombol bundar saat navigasi keyboard; celah antara dock Absen dan tab bar menampilkan isi di belakang.
+- Menunggu pemilik: Firebase (push), kredensial Google Drive (lampiran/dokumen), editor catatan berformat + templat notulensi di ponsel, cakupan `GET /orang` untuk staf (DM ke sembarang rekan), realtime obrolan (Bearer di /broadcasting/auth), deploy backend sebelum APK bisa dipakai di produksi.
+- Berikutnya: Bagian 4 (Persetujuan & rapat) dari branch ini.
