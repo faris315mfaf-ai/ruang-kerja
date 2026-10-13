@@ -1,8 +1,9 @@
 /**
  * Beranda — satu `GET /beranda` (tarik untuk menyegarkan, bagian gagal
  * ditoleransi per bagian) + pemilih tampilan per peran (Saya · Kepala Divisi
- * · HR · Direksi segera). Tampilan terakhir diingat per perangkat. Dashboard
- * Kepala Divisi/HR memuat endpointnya sendiri. Spec: docs/mockups/android/
+ * · HR · Direksi). Tampilan terakhir diingat per perangkat. Dashboard
+ * Kepala Divisi/HR memuat endpointnya sendiri; Direksi = monitoring kerja
+ * (modul 06 › 35–39, `features/monitoring`). Spec: docs/mockups/android/
  * spec/02-beranda-dashboard.md.
  */
 import { router, useLocalSearchParams } from 'expo-router';
@@ -12,6 +13,7 @@ import { beranda, type BerandaSaya, type KunciTampilan } from '@/api/beranda';
 import { BerandaSayaIsi } from '@/features/beranda/BerandaSayaIsi';
 import { DasborDivisi } from '@/features/beranda/DasborDivisi';
 import { DasborHr } from '@/features/beranda/DasborHr';
+import { DasborDireksi } from '@/features/monitoring/DasborDireksi';
 import { namaDepan, overlineTanggal } from '@/features/beranda/format';
 import { bukaCari } from '@/features/beranda/nav';
 import { PemilihTampilan } from '@/features/beranda/PemilihTampilan';
@@ -69,7 +71,9 @@ export default function LayarBeranda(): React.JSX.Element {
   }, [paramKunci]);
 
   const data = h.data;
-  const tersedia = data?.tampilan.tersedia ?? [];
+  // `GET /beranda` masih menandai Direksi `tersedia: false` (dibuat sebelum API monitoring B5-A);
+  // bila server mencantumkannya, pengguna berhak → aplikasi kini melayaninya.
+  const tersedia = (data?.tampilan.tersedia ?? []).map((t) => (t.key === 'direksi' ? { ...t, tersedia: true } : t));
   const boleh = (k: KunciTampilan | null | undefined): k is KunciTampilan => k !== null && k !== undefined && tersedia.some((t) => t.key === k && t.tersedia);
   const aktif: KunciTampilan =
     data === null || tersimpan === undefined
@@ -116,6 +120,8 @@ export default function LayarBeranda(): React.JSX.Element {
         <DasborDivisi kepala={kepalaDasbor} registrasiMuat={registrasi} />
       ) : aktif === 'hr' ? (
         <DasborHr kepala={kepalaDasbor} registrasiMuat={registrasi} />
+      ) : aktif === 'direksi' ? (
+        <DasborDireksi kepala={kepalaDasbor} registrasiMuat={registrasi} />
       ) : (
         <>
           <AppBar overline={overlineTanggal()} title={`Halo, ${nama || 'RuangKerja'}`} actions={aksi} />
