@@ -2,6 +2,7 @@
  * Tata letak akar: tema Arus (terang/gelap mengikuti sistem), sesi, dan
  * Stack utama. Saat sesi masih divalidasi, splash tetap tampil.
  */
+import { registerGlobals } from '@livekit/react-native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -20,6 +21,9 @@ import { UIProvider } from '@/ui';
 import { AppStatusProvider, useAppStatus } from '@/session/AppStatusProvider';
 import { SessionProvider, useSession } from '@/session/SessionProvider';
 import { UnreadProvider } from '@/session/UnreadProvider';
+
+// WebRTC + polyfill LiveKit (ruang rapat video native) — sekali saat aplikasi mulai.
+registerGlobals();
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   // Sudah tersembunyi — abaikan.
@@ -123,6 +127,8 @@ function RootNavigator(): React.JSX.Element {
             <Stack.Screen name="rapat/index" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="rapat/[id]/index" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="rapat/[id]/notulen" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="rapat/[id]/video/pra-gabung" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="rapat/[id]/video/ruang" options={{ animation: 'fade', gestureEnabled: false }} />
             <Stack.Screen name="kalender" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="kinerja" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="absensi" options={{ animation: 'slide_from_right' }} />

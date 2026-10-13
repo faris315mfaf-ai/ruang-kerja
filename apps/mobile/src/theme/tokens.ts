@@ -57,6 +57,20 @@ export interface Colors {
   fill: { teal: string; warning: string; danger: string; violet: string };
   inverseStatus: { success: string; danger: string; warning: string; info: string };
   avatar: { blue: AvatarTone; teal: AvatarTone; amber: AvatarTone; neutral: AvatarTone };
+  /**
+   * Ruang rapat video ("Notulen Hidup", docs/DESIGN.md › Ruang rapat video) —
+   * hanya untuk src/features/video/** dan app/rapat/[id]/video/**.
+   */
+  roomDesk: string;
+  roomBar: string;
+  roomKey: string;
+  roomOnBar: string;
+  roomTileOff: string;
+  roomCaption: string;
+  roomOnCaption: string;
+  roomCaptionMuted: string;
+  /** Nama pembicara subtitle, bergiliran per pembicara (`--caption-name-a/b/c`). */
+  roomCaptionNames: readonly [string, string, string];
 }
 
 /** Pasangan warna gradien + sudut (CSS 135° = kiri-atas → kanan-bawah). */
@@ -129,6 +143,15 @@ export const lightColors: Colors = {
     amber: { bg: '#FFF1DC', fg: '#9A5800' },
     neutral: { bg: '#EEF2F7', fg: '#46576B' },
   },
+  roomDesk: '#ECEFF3',
+  roomBar: '#0B1A2B',
+  roomKey: '#172131',
+  roomOnBar: '#EAF1F8',
+  roomTileOff: '#DDE4EC',
+  roomCaption: 'rgba(7,11,20,0.86)',
+  roomOnCaption: '#FFFFFF',
+  roomCaptionMuted: '#A6B4C6',
+  roomCaptionNames: ['#5AD6C8', '#A9C2FF', '#F6B95C'],
 };
 
 export const darkColors: Colors = {
@@ -179,6 +202,15 @@ export const darkColors: Colors = {
     amber: { bg: '#2E2210', fg: '#F6B95C' },
     neutral: { bg: '#172131', fg: '#A6B4C6' },
   },
+  roomDesk: '#070B14',
+  roomBar: '#1A2537',
+  roomKey: '#26344A',
+  roomOnBar: '#EAF1F8',
+  roomTileOff: '#172131',
+  roomCaption: 'rgba(35,50,71,0.94)',
+  roomOnCaption: '#FFFFFF',
+  roomCaptionMuted: '#A6B4C6',
+  roomCaptionNames: ['#5AD6C8', '#A9C2FF', '#F6B95C'],
 };
 
 const sharedGradients = {
