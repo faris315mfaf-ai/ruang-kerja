@@ -19,6 +19,7 @@ export function Subtitle({ lines, nama }: { lines: CaptionLine[]; nama: (identit
     if (terakhir === 0) {
       return;
     }
+// eslint-disable-next-line react-hooks/set-state-in-effect -- mulai jam tampil saat baris baru tiba
     setNow(Date.now());
     const t = setInterval(() => setNow(Date.now()), 1000);
     const stop = setTimeout(() => clearInterval(t), CAPTION_HOLD_MS + 1000);

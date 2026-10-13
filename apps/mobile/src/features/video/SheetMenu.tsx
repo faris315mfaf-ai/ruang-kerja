@@ -209,6 +209,7 @@ export function SheetWaktuBicara({
     if (!visible) {
       return;
     }
+// eslint-disable-next-line react-hooks/set-state-in-effect -- segarkan saat sheet dibuka
     setNow(Date.now());
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);

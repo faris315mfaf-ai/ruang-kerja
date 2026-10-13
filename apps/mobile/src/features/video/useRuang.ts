@@ -143,25 +143,27 @@ export function useRuang(id: string, tanggal: string | null, people: OrangVideo[
   const masukPada = useRef(0);
   const talkRef = useRef<TalkStore | null>(null);
   const kameraSebelumLatar = useRef(false);
-  const peopleRef = useRef<OrangVideo[]>(people);
-  const tokenRef = useRef<TokenVideo | null>(null);
-  peopleRef.current = tokenRef.current?.people && tokenRef.current.people.length > 0 ? tokenRef.current.people : people;
-
-  const orang = useCallback((identity: string): OrangVideo | null => peopleRef.current.find((p) => p.id === identity) ?? people.find((p) => p.id === identity) ?? null, [people]);
-  // Stabil (hanya membaca ref) supaya pendaftaran event LiveKit tidak diulang.
-  const namaRef = useRef<(identity: string) => string>(() => 'Peserta');
-  namaRef.current = (identity: string): string => {
-    const o = orang(identity);
-    if (o) {
-      return o.name;
-    }
-    if (identity === room.localParticipant.identity) {
-      return tokenRef.current?.name ?? 'Anda';
-    }
-    // Jangan percaya nama dari LiveKit (kontrak §4) — kecuali tidak ada data server.
-    return room.remoteParticipants.get(identity)?.name || 'Peserta';
-  };
-  const nama = useCallback((identity: string): string => namaRef.current(identity), []);
+  const daftarOrang = useMemo(() => (token?.people && token.people.length > 0 ? token.people : people), [token, people]);
+  const orang = useCallback((identity: string): OrangVideo | null => daftarOrang.find((p) => p.id === identity) ?? null, [daftarOrang]);
+  const nama = useCallback(
+    (identity: string): string => {
+      const o = orang(identity);
+      if (o) {
+        return o.name;
+      }
+      if (identity === room.localParticipant.identity) {
+        return token?.name ?? 'Anda';
+      }
+      // Jangan percaya nama dari LiveKit (kontrak §4) — kecuali tidak ada data server.
+      return room.remoteParticipants.get(identity)?.name || 'Peserta';
+    },
+    [orang, room, token],
+  );
+  // Dibaca handler event LiveKit supaya pendaftaran event tidak diulang tiap nama berubah.
+  const namaRef = useRef(nama);
+  useEffect(() => {
+    namaRef.current = nama;
+  }, [nama]);
 
   const beritahu = useCallback((teks: string, jenis: Pemberitahuan['jenis']) => {
     setPemberitahuan({ id: Date.now(), teks, jenis });
@@ -193,7 +195,7 @@ export function useRuang(id: string, tanggal: string | null, people: OrangVideo[
     const onAttr = (changed: Record<string, string>, p: Participant) => {
       segarkanTangan();
       if (!p.isLocal && 'hand' in changed && Number(changed.hand) > 0) {
-        beritahu(`${nama(p.identity)} mengangkat tangan`, 'tangan');
+        beritahu(`${namaRef.current(p.identity)} mengangkat tangan`, 'tangan');
       }
     };
     const onSpeakers = (speakers: Participant[]) => {
@@ -219,7 +221,7 @@ export function useRuang(id: string, tanggal: string | null, people: OrangVideo[
       naik();
       segarkanTangan();
       if (p.identity !== IDENTITAS_NOTULEN && masukPada.current > 0 && Date.now() - masukPada.current > 5000) {
-        beritahu(`${nama(p.identity)} masuk`, 'info');
+        beritahu(`${namaRef.current(p.identity)} masuk`, 'info');
       }
     };
     const onSubscribed = (_t: unknown, pub: RemoteTrackPublication) => {
@@ -349,7 +351,7 @@ export function useRuang(id: string, tanggal: string | null, people: OrangVideo[
         // abaikan
       }
     };
-  }, [room, id, tanggal, beritahu, nama, pilihan.hematData]);
+  }, [room, id, tanggal, beritahu, pilihan.hematData]);
 
   // ── Sambung ──────────────────────────────────────────────────────────────
   const sambung = useCallback(() => {
@@ -375,7 +377,6 @@ export function useRuang(id: string, tanggal: string | null, people: OrangVideo[
         }
         return;
       }
-      tokenRef.current = t;
       setToken(t);
       try {
         await AudioSession.startAudioSession();
