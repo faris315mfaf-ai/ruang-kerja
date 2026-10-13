@@ -7,7 +7,9 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "platforms": ["android"],
+    "platforms": [
+      "android"
+    ],
     "icon": "./assets/icon.png",
     "backgroundColor": "#F3F6FA",
     "android": {
@@ -22,7 +24,9 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"
       ],
-      "blockedPermissions": ["android.permission.SYSTEM_ALERT_WINDOW"],
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-foreground.png",
         "backgroundImage": "./assets/adaptive-background.png",
@@ -91,7 +95,8 @@
         {
           "useSQLCipher": true
         }
-      ]
+      ],
+      "expo-background-task"
     ],
     "experiments": {
       "typedRoutes": true,
