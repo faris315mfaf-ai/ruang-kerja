@@ -192,7 +192,9 @@ export default function LayarPersetujuan(): React.JSX.Element {
   };
 
   const halaman = state.halaman;
-  const tabs = (halaman?.tabs ?? ['menunggu', 'diputus']).map((t) => ({ value: t, label: LABEL_TAB[t], badge: t === 'menunggu' && menunggu > 0 ? menunggu : null }));
+  // Yang sedang dalam jendela urungkan belum terkirim, tetapi sudah keluar dari antrean di layar.
+  const total = Math.max(menunggu - (tertunda.tertunda ? 1 : 0), items.length);
+  const tabs = (halaman?.tabs ?? ['menunggu', 'diputus']).map((t) => ({ value: t, label: LABEL_TAB[t], badge: t === 'menunggu' && total > 0 ? total : null }));
   const terlama = lamaSejak(items[0]?.step?.since ?? items[0]?.waiting?.since ?? null);
   const delegasiAktif = halaman?.delegation.active ?? null;
   const tanpaAkses = staf && tab === 'menunggu' && state.status === 'ok' && items.length === 0 && (halaman?.delegation.representing.length ?? 0) === 0 && !tertunda.tertunda;
@@ -249,7 +251,7 @@ export default function LayarPersetujuan(): React.JSX.Element {
         {kepala}
         <View style={s.barisInfo}>
           <Text variant="title" weight={700} style={{ fontSize: 18 }}>
-            {konflik ? 'Sudah diputuskan' : `1 dari ${Math.max(menunggu, items.length)}`}
+            {konflik ? 'Sudah diputuskan' : `1 dari ${total}`}
           </Text>
           {terlama && !konflik ? <Text variant="body" tone="muted" style={{ fontSize: 15 }}>{`terlama menunggu ${terlama}`}</Text> : null}
         </View>
@@ -308,7 +310,7 @@ export default function LayarPersetujuan(): React.JSX.Element {
           ) : tab === 'menunggu' && items.length > 0 ? (
             <View style={{ gap: 6, paddingTop: 4 }}>
               <Text variant="meta" align="center" style={{ fontSize: 14 }}>
-                {`${Math.max(menunggu, items.length)} pengajuan${terlama ? ` · terlama menunggu ${terlama}` : ''}`}
+                {`${total} pengajuan${terlama ? ` · terlama menunggu ${terlama}` : ''}`}
               </Text>
               {delegasiAktif ? (
                 <Text variant="meta" align="center" style={{ fontSize: 14 }}>
