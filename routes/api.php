@@ -219,5 +219,17 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('tautan-desktop', DesktopLinkController::class)
             ->middleware('throttle:3,1')->name('desktop-link');
         // --- /B2 ---
+
+        // Bagian 2–5 (aplikasi Android): satu berkas rute per paket kerja di
+        // routes/api/auth/*.php (butuh token Sanctum), supaya cabang paralel
+        // tidak bentrok di berkas ini.
+        foreach (glob(base_path('routes/api/auth/*.php')) ?: [] as $file) {
+            require $file;
+        }
     });
+
+    // Rute publik (tanpa token) dari paket kerja: routes/api/publik/*.php.
+    foreach (glob(base_path('routes/api/publik/*.php')) ?: [] as $file) {
+        require $file;
+    }
 });
