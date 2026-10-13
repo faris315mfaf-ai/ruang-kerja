@@ -110,6 +110,7 @@ export function Button({
     <Pressable
       onPress={onPress}
       disabled={mati}
+      focusRing={false}
       onFocus={() => setFokus(true)}
       onBlur={() => setFokus(false)}
       accessibilityRole="button"

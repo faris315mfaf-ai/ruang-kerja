@@ -60,7 +60,8 @@
           }
         }
       ],
-      "@config-plugins/react-native-webrtc"
+      "@config-plugins/react-native-webrtc",
+      "./plugins/withNoFocusHighlight"
     ],
     "experiments": {
       "typedRoutes": true,

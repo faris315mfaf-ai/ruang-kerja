@@ -172,7 +172,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
           accessibilityState={{ selected: absen && diAbsen }}
           style={s.tengah}
         >
-          <View style={[s.bundar, { boxShadow: `0 0 0 4px ${colors.surface}, ${shadows.button}` }]}>
+          <View style={[s.bundar, { boxShadow: `0 0 0 4px ${colors.glassStrong}, ${shadows.button}` }]}>
             <Gradient name="aksi" style={[StyleSheet.absoluteFill, { borderRadius: radius.full }]} />
             <Icon name={absen ? 'fingerprint' : 'layout-grid'} size={26} color="#FFFFFF" />
             {absen && badge ? (
