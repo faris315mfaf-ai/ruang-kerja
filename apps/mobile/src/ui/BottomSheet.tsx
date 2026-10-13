@@ -124,6 +124,10 @@ export function BottomSheet({ visible, onClose, title, showClose = false, scroll
   return (
     <BottomSheetModal
       ref={ref}
+      // Lembar di dalam lembar (pemilih status/tanggal/workspace di "Tugas baru"):
+      // 'push' meminimalkan induk lalu mengembalikannya; bawaan 'replace' menutup
+      // induk sehingga pemilih (anak di dalam isi induk) ikut hilang.
+      stackBehavior="push"
       snapPoints={snapPoints}
       enableDynamicSizing={!snapPoints}
       maxDynamicContentSize={Math.round(height * 0.9)}

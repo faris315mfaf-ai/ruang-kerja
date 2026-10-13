@@ -137,7 +137,8 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
         {...rest}
         {...penangan}
         style={[
-          kotak,
+          // expo/types (expo-env.d.ts) membuat ViewStyle & TextStyle tidak saling cocok.
+          kotak as TextStyle,
           teks,
           { paddingHorizontal: 14 },
           multiline ? { paddingTop: 12, paddingBottom: 12, textAlignVertical: 'top' } : null,
