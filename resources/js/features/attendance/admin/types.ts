@@ -52,6 +52,11 @@ export type AdminKiosk = {
     url: string;
 };
 
+export type AttendanceWindowPair = {
+    from: string | null;
+    until: string | null;
+};
+
 export type AttendanceSettingsProps = {
     locations: AdminLocation[];
     shifts: AdminShift[];
@@ -62,6 +67,8 @@ export type AttendanceSettingsProps = {
     holidayTypes: Option[];
     geofence: { defaultRadius: number; minRadius: number; maxRadius: number };
     shiftDefaults: { lateToleranceMin: number; checkInWindowBeforeMin: number };
+    /** Company-wide "jam absen" (HH:MM, office time); null bound = no limit. */
+    windows: { checkIn: AttendanceWindowPair; checkOut: AttendanceWindowPair };
 };
 
 export type AssignmentPattern = {
