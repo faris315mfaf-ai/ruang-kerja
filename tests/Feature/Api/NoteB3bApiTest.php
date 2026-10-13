@@ -623,3 +623,16 @@ test('every B3-B endpoint answers 404 with the notes flag off and 401 without a 
         test()->withToken($token)->{$method}($path, $payload)->assertNotFound();
     }
 });
+
+test('quick minutes with polos are plain paragraphs the phone editor can edit', function () {
+    $response = pakaiB3b($this->member)->postJson('/api/v1/catatan/notulensi', ['polos' => true])
+        ->assertCreated()
+        ->assertJsonPath('note.preset', 'minutes')
+        ->assertJsonPath('note.mobile_editable', true);
+
+    expect($response->json('note.body_text'))
+        ->toContain('Tanggal & jam: Selasa, 13/10/2026 09.00')
+        ->toContain('Peserta:')
+        ->toContain('Tindak lanjut:')
+        ->and($response->json('note.body_html'))->not->toContain('<h2>');
+});

@@ -20,10 +20,10 @@ use Illuminate\Support\Facades\Gate;
  */
 class QuickMinutesController extends Controller
 {
-    /** POST /catatan/notulensi */
-    public function start(#[CurrentUser] User $user, StartQuickMinutes $start, NoteLibrary $library): JsonResponse
+    /** POST /catatan/notulensi {polos?: bool} — `polos` = plain-paragraph template for the phone editor. */
+    public function start(Request $request, #[CurrentUser] User $user, StartQuickMinutes $start, NoteLibrary $library): JsonResponse
     {
-        $note = $start->handle($user);
+        $note = $start->handle($user, plain: $request->boolean('polos'));
 
         // `mode: catat` = open it in note-taking mode (the web `?mode=catat`).
         return response()->json([
