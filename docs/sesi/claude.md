@@ -1,5 +1,17 @@
 # Sesi claude
 
+**Terakhir diperbarui:** 13 Okt 2026 (malam) · Claude Code — batch 14 Okt di `claude/android-bagian-5` (belum push/deploy)
+
+## Batch terbaru (belum di-push, belum di-deploy; produksi masih `b87d5c0f4e63`)
+- Peta riil di kartu Absen (proxy ubin `/api/v1/peta`, `7953fb2`, `0c9e1c5`: ubin lewat fetch + data URI karena header `Image` RN tidak terkirim).
+- Sakit/izin dari Absen, batas pengajuan 12.00 hari kerja (`bf5286d`); kartu Ringkasan Beranda dihapus.
+- Aplikasi offline-first: fondasi (SQLCipher, antrean, `Idempotency-Key`, cache baca) + penangan absen, pengajuan, tugas/komentar, catatan, laporan harian. Kontrak & cara uji: `docs/sesi/ponsel-b7-offline.md`. Paket native baru: `expo-sqlite`, `expo-network` → butuh APK/dev-client baru (emulator 5560 lama belum memilikinya).
+- Gate: tsc, eslint, pint hijau; Pest `tests/Feature/Api` 565 lulus. Uji airplane-mode live oleh agen di emulator 5574/5576 (lihat laporan di docs b7).
+- Migrasi baru yang wajib saat deploy: `2026_10_20_100000_add_submit_cutoff_time_to_leave_types`, `2026_10_21_100100_add_received_at_to_attendance_logs`, `api_idempotency_keys`.
+- Belum: sinkron latar (`expo-background-task`), uji QR offline, 403 `laporan_terkunci` asli, kebijakan privasi (selfie→WA, OSM, cache offline).
+
+---
+
 **Terakhir diperbarui:** 12 Okt 2026 · Claude Code (integrator) — bug-hunt & perbaikan selesai di `glm/ponsel-api`
 
 ## Tugas berjalan

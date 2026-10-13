@@ -40,7 +40,7 @@ Ponsel dirancang untuk dipakai satu tangan: aksi yang sering ada di zona jempol 
 | 2 | Layar Cari: kolom cari menempel di bawah layar, hasil di atasnya | `/cari` |
 | 3 | Persetujuan: **tumpukan kartu** (geser kanan = setujui, kiri = tolak) dengan tombol Tolak · Minta revisi · Setujui di zona jempol; detail lewat tautan kartu | `/persetujuan` |
 | 4 | Check-in: **geser untuk check-in** (bukan sekali ketuk) supaya tidak absen tanpa sengaja; pilihan metode (GPS + selfie · QR · WFH) sebagai segmented di atas peta | `/absensi` |
-| 5 | Antrean absen **offline** hanya untuk aplikasi native Fase 3. PWA tetap menolak check-in tanpa koneksi (§5 butir 6) | Fase 3 |
+| 5 | Aplikasi Android bisa dipakai **offline** (keputusan pemilik 14 Okt 2026): data terakhir dibaca dari cache terenkripsi; absen masuk/pulang, tugas & komentar, catatan, laporan harian, dan pengajuan masuk antrean di HP lalu terkirim otomatis saat online (`docs/sesi/ponsel-b7-offline.md`). Waktu absen = jam HP, ditandai `offline` untuk tinjauan HR (maks. 72 jam). PWA tetap menolak check-in tanpa koneksi (§5 butir 6) | Aplikasi Android |
 
 Butir 2–4 diterapkan modul masing-masing; shell (butir 1) sudah berlaku.
 
