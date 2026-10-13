@@ -64,7 +64,7 @@ function useAksiBuatCepat(): { aksi: Aksi[]; notulensi: () => void } {
       label: 'Rapat',
       icon: 'video',
       gradien: 'merek',
-      onPress: () => bukaSegera({ judul: 'Rapat baru', ikon: 'video', aksiJudul: 'Buka daftar rapat', aksiRute: '/rapat' }),
+      onPress: () => router.push('/rapat/baru' as never),
     },
   ];
   return { aksi, notulensi: () => bukaSegera({ judul: 'Notulensi cepat', ikon: 'notebook-text', catatan: 'Catatan baru di workspace pribadi dengan templat rapat.' }) };
