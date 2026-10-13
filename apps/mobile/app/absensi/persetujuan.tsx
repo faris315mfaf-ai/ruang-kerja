@@ -121,14 +121,24 @@ export default function LayarPersetujuan(): React.JSX.Element {
           <Card style={{ gap: 18 }}>
             <Butir icon="map-pin" judul="Yang direkam">
               <T>Lokasi, hanya saat check-in & check-out</T>
-              <T>Foto selfie saat absen</T>
+              <T>Foto selfie saat absen, diberi cap jam, tanggal, dan lokasi</T>
+              <T>Rencana dan laporan kerja harian</T>
               <T>Info perangkat (model, versi aplikasi)</T>
             </Butir>
+            <Butir icon="message-circle" judul="Dikirim ke grup WhatsApp">
+              <T>Foto selfie bercap (jam, tanggal, nama tempat, dan peta kecil dengan posisi Anda) beserta nama, jam, lokasi, rencana atau laporan kerja dikirim ke grup WhatsApp perusahaan untuk memantau kehadiran. Anggota grup ditetapkan perusahaan. Setelah terkirim, pesan berada di luar kendali aplikasi dan tidak dapat ditarik kembali.</T>
+            </Butir>
+            <Butir icon="map-pin" judul="Peta OpenStreetMap">
+              <T>Lokasi Anda ditampilkan di peta OpenStreetMap lewat server RuangKerja; ponsel Anda tidak menghubungi OpenStreetMap. Pada foto bercap di luar kantor, koordinat Anda dikirim dari server untuk mencari nama tempat.</T>
+            </Butir>
+            <Butir icon="smartphone" judul="Tersimpan di ponsel">
+              <T>Agar bisa offline, absen yang belum terkirim (termasuk selfie dan titik GPS) disimpan terenkripsi di ponsel sampai terkirim, paling lama 72 jam, dan ditandai absen offline untuk ditinjau HR.</T>
+            </Butir>
             <Butir icon="clock" judul="Disimpan berapa lama">
-              <T>Selfie disimpan {retensi} bulan, lalu dihapus otomatis.</T>
+              <T>Selfie di aplikasi disimpan {retensi} bulan, lalu dihapus otomatis. Salinan di WhatsApp tidak ikut terhapus.</T>
             </Butir>
             <Butir icon="eye" judul="Siapa yang bisa melihat">
-              <T>HR dan atasan langsung Anda. Setiap akses tercatat di log audit.</T>
+              <T>Di aplikasi: HR dan atasan langsung Anda; setiap akses tercatat di log audit. Di WhatsApp: seluruh anggota grup.</T>
             </Butir>
             <Butir icon="shield-check" judul="Hak Anda">
               <T>Lihat dan ekspor data absensi sendiri kapan saja. Cabut persetujuan lewat Lainnya → Privasi & Data Saya.</T>

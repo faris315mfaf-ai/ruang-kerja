@@ -232,8 +232,9 @@ export function ConsentCard({ consent }: { consent: MyConsent }) {
                 </div>
             </div>
             <p className="mt-4 text-label font-normal text-text-muted">
-                Selfie dihapus otomatis setelah {consent.retention_months}{' '}
-                bulan.{' '}
+                Selfie di aplikasi dihapus otomatis setelah{' '}
+                {consent.retention_months} bulan; salinan di grup WhatsApp tidak
+                ikut terhapus.{' '}
                 <Link
                     href={policyRoute()}
                     className="font-semibold text-link hover:opacity-80"
@@ -309,7 +310,7 @@ export function ConsentCard({ consent }: { consent: MyConsent }) {
                         <DialogDescription>
                             {dialog === 'revoke'
                                 ? 'Check-in dan check-out dengan GPS + selfie dinonaktifkan sampai Anda menyetujui lagi. HR akan diberi tahu untuk mengatur cara absensi lain. Data yang sudah tercatat tetap disimpan sesuai kebijakan.'
-                                : 'Lokasi GPS dan foto selfie diproses hanya saat Anda check-in atau check-out, untuk mencatat kehadiran. Anda dapat mencabutnya kapan saja.'}
+                                : 'Lokasi GPS dan foto selfie diproses hanya saat Anda check-in atau check-out, untuk mencatat kehadiran. Foto selfie bercap beserta posisi Anda di peta dikirim ke grup WhatsApp perusahaan dan tidak dapat ditarik kembali. Anda dapat mencabut persetujuan kapan saja.'}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
