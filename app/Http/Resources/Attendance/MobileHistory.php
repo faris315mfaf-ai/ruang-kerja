@@ -62,6 +62,7 @@ final class MobileHistory
             'checkOutAt' => AttendancePresenter::iso($day?->check_out_at),
             'locationLabel' => $checkIn === null ? null : ($checkIn->officeLocation->name ?? $checkIn->method->label()),
             'workPlan' => ($day->work_plan ?? []),
+            'workReport' => ($day->work_report ?? []),
             'note' => $day?->note,
             'flags' => $this->flags(array_filter([$checkIn, $checkOut])),
             'isCorrected' => ($checkIn?->corrected_by !== null) || ($checkOut?->corrected_by !== null),

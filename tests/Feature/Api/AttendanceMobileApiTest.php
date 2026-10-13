@@ -60,6 +60,8 @@ function mbGps(string $token, array $fields = [], string $type = 'in'): TestResp
             'accuracy' => 12,
             'client_time' => now()->toIso8601String(),
             'selfie' => F::selfie(),
+            // Laporan kerja is required at check-out (13 Okt 2026).
+            ...($type === 'in' ? [] : ['work_report' => ['Menyelesaikan laporan mingguan']]),
             ...$fields,
         ]);
 }

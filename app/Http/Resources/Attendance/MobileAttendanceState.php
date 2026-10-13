@@ -37,7 +37,21 @@ final class MobileAttendanceState
         $end = self::instant($schedule['end'] ?? null);
         $remote = (bool) ($schedule['allowsRemote'] ?? false);
         $isWorkday = (bool) ($schedule['isWorkday'] ?? false);
-        $tooEarly = $action === 'check_in' && $isWorkday && $opensAt !== null && $now->lt($opensAt);
+        $windows = is_array($today['windows'] ?? null) ? $today['windows'] : ['checkIn' => null, 'checkOut' => null];
+        $windowsApply = (bool) ($today['windowsApply'] ?? true);
+        /** @var array{code: string, message: string, opensAt: string|null}|null $windowBlock */
+        $windowBlock = is_array($today['checkInBlocked'] ?? null) ? $today['checkInBlocked'] : null;
+        /** @var string|null $checkOutBlockedReason */
+        $checkOutBlockedReason = is_string($today['checkOutBlockedReason'] ?? null) ? $today['checkOutBlockedReason'] : null;
+        // A company check-in "dari jam" replaces the shift's own opening window.
+        $fromTime = $windowsApply && is_array($windows['checkIn'] ?? null) && is_string($windows['checkIn']['from'] ?? null) ? $windows['checkIn']['from'] : null;
+        $companyFrom = $fromTime !== null;
+        $tooEarly = $action === 'check_in' && $isWorkday && ! $companyFrom && $opensAt !== null && $now->lt($opensAt);
+        $tooEarly = $tooEarly || ($windowBlock !== null && $windowBlock['code'] === 'too_early');
+        $windowClosed = $windowBlock !== null && $windowBlock['code'] === 'window_closed';
+        if ($windowBlock !== null && $windowBlock['code'] === 'too_early') {
+            $opensAt = self::instant($windowBlock['opensAt']) ?? $opensAt;
+        }
         $noLocation = ! $remote && $locations === [];
         $lateMinutes = (int) ($day['lateMinutes'] ?? 0);
 
@@ -46,6 +60,7 @@ final class MobileAttendanceState
             $action === 'done' => 'checked_out',
             $action === 'unavailable' => 'day_has_request',
             ! $isWorkday && (bool) ($schedule['isHoliday'] ?? false) => 'holiday',
+            $windowClosed => 'window_closed',
             // Hari tanpa jadwal (belum ada shift/penugasan, atau di luar pola) tetap
             // boleh check-in — sama dengan web ("Tidak ada jadwal hari ini") dan CheckIn.
             // Dulu 'non_working_day' menyembunyikan check-in & tombol Absen di ponsel.
@@ -63,7 +78,9 @@ final class MobileAttendanceState
         return [
             'code' => $code,
             'label' => self::label($code, $punctuality),
-            'message' => self::message($code, $schedule, $day, $lateMinutes, $opensAt, $checkedInAt, $checkedOutAt),
+            'message' => $windowBlock !== null && in_array($code, ['too_early', 'window_closed'], true)
+                ? $windowBlock['message']
+                : self::message($code, $schedule, $day, $lateMinutes, $opensAt, $checkedInAt, $checkedOutAt),
             'punctuality' => $punctuality,
             'lateMinutes' => in_array($code, ['checked_in', 'checked_out'], true) ? $lateMinutes : 0,
             'officeDate' => OfficeClock::local($now)->toDateString(),
@@ -76,13 +93,20 @@ final class MobileAttendanceState
             'request' => $request,
             'scheduledStart' => $schedule['start'] ?? null,
             'scheduledEnd' => $schedule['end'] ?? null,
-            'windowOpensAt' => $schedule['checkInOpensAt'] ?? null,
+            'windowOpensAt' => $fromTime !== null
+                ? OfficeClock::local($now)->setTimeFromTimeString($fromTime)->utc()->toIso8601ZuluString()
+                : ($schedule['checkInOpensAt'] ?? null),
             'lateThreshold' => $schedule['lateThreshold'] ?? null,
             'checkedInAt' => $day['checkInAt'] ?? null,
             'checkedOutAt' => $day['checkOutAt'] ?? null,
             'locationName' => $day['checkIn']['locationName'] ?? null,
-            'canCheckIn' => $action === 'check_in' && ! $tooEarly && ! $noLocation,
-            'canCheckOut' => $action === 'check_out',
+            'canCheckIn' => $action === 'check_in' && ! $tooEarly && ! $windowClosed && ! $noLocation,
+            'canCheckOut' => $action === 'check_out' && $checkOutBlockedReason === null,
+            'checkOutBlockedReason' => $action === 'check_out' ? $checkOutBlockedReason : null,
+            'windows' => [
+                'checkIn' => $windows['checkIn'] ?? null,
+                'checkOut' => $windows['checkOut'] ?? null,
+            ],
             'consent' => [
                 'granted' => $consent['granted'],
                 'needsRenewal' => $consent['needs_renewal'],
@@ -154,6 +178,7 @@ final class MobileAttendanceState
             'checked_in' => $punctuality === 'late' ? 'Sudah check-in · terlambat' : 'Sudah check-in',
             'checked_out' => 'Selesai',
             'too_early' => 'Check-in belum dibuka',
+            'window_closed' => 'Check-in sudah ditutup',
             'holiday' => 'Libur',
             'non_working_day' => 'Bukan hari kerja',
             'day_has_request' => 'Dari pengajuan',

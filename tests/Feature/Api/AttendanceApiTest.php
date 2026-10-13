@@ -63,6 +63,8 @@ function checkAbsensi(string $token, array $fields = [], string $type = 'in'): T
             'client_time' => now()->toIso8601String(),
             'selfie' => F::selfie(),
             'device_id' => HASH_PONSEL,
+            // Laporan kerja is required at check-out (13 Okt 2026).
+            ...($type === 'in' ? [] : ['work_report' => ['Menyelesaikan laporan mingguan']]),
             ...$fields,
         ]);
 }

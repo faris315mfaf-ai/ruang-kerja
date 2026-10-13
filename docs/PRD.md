@@ -124,6 +124,8 @@ Face recognition dan fingerprint ada di Fase 3. Skema data sudah menyiapkan kolo
 - Penugasan shift per karyawan (pola mingguan) + override per tanggal.
 - Kalender libur nasional dan cuti bersama (diisi HR, bisa impor).
 - Status harian otomatis (label UI → nilai di database): Hadir `present`, Terlambat `late`, Pulang cepat `early_leave`, Alpha `absent`, Cuti `leave`, Izin `permit`, Sakit `sick`, Dinas `business_trip`, Libur `holiday`, WFH `wfh`, Perlu koreksi `needs_correction`.
+- **Rencana & laporan kerja (keputusan pemilik 9 & 13 Okt 2026):** saat check-in karyawan menulis **rencana kerja** (poin hari ini); saat **absen pulang** (GPS + selfie, juga WFH) karyawan **wajib menulis laporan kerja** (apa yang sudah dikerjakan hari ini; minimal satu poin, maks. 8 × 300 karakter). Absen pulang QR/kiosk tanpa form: laporan opsional.
+- **Jam absen (keputusan pemilik 13 Okt 2026):** HR/Super Admin mengatur satu rentang jam untuk seluruh perusahaan: absen masuk dari jam … sampai jam …, absen pulang dari jam … sampai jam … (Admin › Lokasi, shift & hari libur › Jam absen). Kosong = tanpa batas. Di luar rentang absen ditolak dengan pesan jelas; koreksi manual HR tidak dibatasi.
 - Job terjadwal setiap 00:30 waktu kantor: tandai Alpha (`absent`) untuk yang tidak check-in dan tidak punya pengajuan disetujui. Lupa check-out → status Perlu koreksi (`needs_correction`).
 - **Deteksi kecurangan dasar (web):** akurasi GPS > 100 m ditandai, lompatan lokasi tidak masuk akal, check-in dari IP/perangkat baru, selfie kosong/gelap. Semua hanya **ditandai** (`is_suspicious`) untuk ditinjau HR, tidak diblokir otomatis.
 

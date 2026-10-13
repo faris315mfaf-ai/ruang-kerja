@@ -130,6 +130,8 @@ final class AttendanceFixtures
                 'client_time' => now()->toIso8601String(),
                 'selfie' => self::selfie(),
                 'device_id' => 'device-1',
+                // Laporan kerja is required at GPS + selfie check-out (13 Okt 2026).
+                ...($type === 'in' ? [] : ['work_report' => ['Menyelesaikan laporan mingguan']]),
                 ...$fields,
             ]);
     }

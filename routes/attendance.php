@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Attendance\Admin\AttendanceSettingsController;
+use App\Http\Controllers\Attendance\Admin\AttendanceWindowsController;
 use App\Http\Controllers\Attendance\Admin\HolidayController;
 use App\Http\Controllers\Attendance\Admin\KioskController;
 use App\Http\Controllers\Attendance\Admin\OfficeLocationController;
@@ -53,6 +54,8 @@ Route::middleware(['auth', 'verified'])->group(function () use ($throttle) {
 
     Route::prefix('admin/absensi')->name('admin.attendance.')->group(function () {
         Route::get('/', [AttendanceSettingsController::class, 'index'])->name('index');
+
+        Route::put('jam-absen', [AttendanceWindowsController::class, 'update'])->name('windows.update');
 
         Route::post('lokasi', [OfficeLocationController::class, 'store'])->name('locations.store');
         Route::put('lokasi/{officeLocation}', [OfficeLocationController::class, 'update'])->name('locations.update');

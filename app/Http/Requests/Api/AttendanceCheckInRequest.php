@@ -122,6 +122,7 @@ class AttendanceCheckInRequest extends FormRequest
             note: $this->filled('note') ? $this->string('note')->toString() : null,
             workPlan: $this->workPlan(),
             mockLocation: $this->boolean('mock_location'),
+            workReport: $this->workReport(),
         );
     }
 
@@ -131,6 +132,16 @@ class AttendanceCheckInRequest extends FormRequest
         $user = $this->user();
 
         return $user instanceof User ? Device::forAccessToken($user)?->device_id_hash : null;
+    }
+
+    /**
+     * Only check-out carries a work report (AttendanceCheckOutRequest).
+     *
+     * @return list<string>|null
+     */
+    protected function workReport(): ?array
+    {
+        return null;
     }
 
     /**

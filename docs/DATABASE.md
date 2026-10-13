@@ -44,7 +44,7 @@
 | name | varchar(150) | |
 | google_domain | varchar(150) unique | domain Workspace yang diizinkan login, mis. `perusahaan.co.id` (disimpan huruf kecil) |
 | timezone | varchar(50) | default `Asia/Jakarta` |
-| settings | jsonb | jam ringkasan harian, retensi selfie (bulan), dll. Default `{}` |
+| settings | jsonb | jam ringkasan harian, retensi selfie (bulan), dll. Default `{}`. Kunci **`attendance_windows`** (keputusan pemilik 13 Okt 2026, "Jam absen" di Admin › Lokasi, shift & hari libur): `{"check_in": {"from": "HH:MM", "until": "HH:MM"}, "check_out": {"from": "HH:MM", "until": "HH:MM"}}`, jam 24 jam zona kantor, batas **inklusif**; tiap batas boleh `null`, kunci tidak ada = tanpa batas. Satu pengaturan untuk seluruh perusahaan (bukan per shift), berlaku juga bagi karyawan tanpa shift; tidak berlaku untuk shift lintas tengah malam dan hari yang dibuka kemarin. Ditulis `SaveAttendanceWindows` (audit `attendance.windows_updated`) |
 
 `companies`, `divisions`, `teams`, `positions` memakai `deleted_at` (soft delete).
 

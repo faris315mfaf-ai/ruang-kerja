@@ -3,6 +3,7 @@
 namespace App\Domain\Attendance\Actions;
 
 use App\Domain\Attendance\Data\AttendanceResult;
+use App\Domain\Attendance\Data\AttendanceWindows;
 use App\Domain\Attendance\Data\CheckInData;
 use App\Domain\Attendance\Data\QrCheckInData;
 use App\Domain\Attendance\Enums\AttendanceLogType;
@@ -67,6 +68,16 @@ final class CheckOut
             $schedule = $schedule->asBusinessTrip();
         }
 
+        // Company "jam absen" (Admin): check-out only within [from, until]. Skipped for
+        // overnight shifts and for a day opened yesterday (late check-out).
+        $windows = AttendanceWindows::forUser($user);
+        $isToday = $openDay->work_date->toDateString() === ScheduleResolver::officeDate($now)->toDateString();
+        $phase = $isToday && $windows->appliesTo($schedule) && $openDay->shift?->crosses_midnight !== true ? $windows->checkOutPhase($now) : null;
+
+        if ($phase !== null) {
+            throw AttendanceException::checkOutWindow($windows, $phase);
+        }
+
         [$location, $qr, $flags] = $this->presence->verify($user, $schedule, $data, $now);
         $selfiePath = $data instanceof CheckInData ? $this->selfies->store($user, $data->selfie, $now) : null;
 
@@ -89,6 +100,11 @@ final class CheckOut
                     'work_minutes' => self::workMinutes($day, $now),
                     'is_suspicious' => $day->is_suspicious || $log->is_suspicious,
                 ]);
+
+                // Laporan kerja (what was done today); a QR check-out has no form and keeps the column null.
+                if ($data instanceof CheckInData && $data->workReport !== null && $data->workReport !== []) {
+                    $day->work_report = $data->workReport;
+                }
 
                 if ($earlyMinutes > 0 && in_array($day->status, [AttendanceStatus::Present, AttendanceStatus::Wfh], true)) {
                     $day->status = AttendanceStatus::EarlyLeave;

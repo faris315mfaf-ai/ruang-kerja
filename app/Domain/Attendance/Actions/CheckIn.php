@@ -3,6 +3,7 @@
 namespace App\Domain\Attendance\Actions;
 
 use App\Domain\Attendance\Data\AttendanceResult;
+use App\Domain\Attendance\Data\AttendanceWindows;
 use App\Domain\Attendance\Data\CheckInData;
 use App\Domain\Attendance\Data\DaySchedule;
 use App\Domain\Attendance\Data\LocationVerdict;
@@ -59,7 +60,17 @@ final class CheckIn
             $schedule = $schedule->asBusinessTrip();
         }
 
-        $opensAt = $schedule->isWorkday() ? $schedule->checkInOpensAt() : null;
+        // Company "jam absen" (Admin): replaces the shift's opening window when it
+        // has a lower bound, and closes check-in after its upper bound. Day shifts only.
+        $windows = AttendanceWindows::forUser($user);
+        $windowsApply = $windows->appliesTo($schedule);
+        $phase = $windowsApply ? $windows->checkInPhase($now) : null;
+
+        if ($phase !== null) {
+            throw AttendanceException::checkInWindow($windows, $phase, $windows->checkInOpensAt($now));
+        }
+
+        $opensAt = $schedule->isWorkday() && ! ($windowsApply && $windows->checkInFrom !== null) ? $schedule->checkInOpensAt() : null;
 
         if ($opensAt !== null && $now->lt($opensAt)) {
             throw AttendanceException::tooEarly($opensAt, $schedule->shift->name ?? '');
