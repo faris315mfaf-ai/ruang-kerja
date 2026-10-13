@@ -41,7 +41,7 @@ beforeEach(function () {
     });
 });
 
-function resetRequestFor(User $user): PasswordResetRequest
+function apiHrResetRequestFor(User $user): PasswordResetRequest
 {
     app(RequestPasswordReset::class)->handle($user->email);
 
@@ -166,7 +166,7 @@ test('Direksi/HR accounts carry the R-06 rule for HR and are open to a Super Adm
 // --- Permintaan reset kata sandi ---
 
 test('HR lists pending requests and approves one: audited, the HR task resolved', function () {
-    $request = resetRequestFor($this->org['rizky']);
+    $request = apiHrResetRequestFor($this->org['rizky']);
     expect(InboxNotification::query()->where('subject_id', $request->id)->whereNull('resolved_at')->count())->toBeGreaterThan(0);
 
     Sanctum::actingAs($this->org['hr']);
@@ -199,7 +199,7 @@ test('HR lists pending requests and approves one: audited, the HR task resolved'
 });
 
 test('rejecting needs a reason, which is stored and audited', function () {
-    $request = resetRequestFor($this->org['sari']);
+    $request = apiHrResetRequestFor($this->org['sari']);
     Sanctum::actingAs($this->org['admin']);
 
     $this->postJson("/api/v1/admin/permintaan-sandi/{$request->id}/tolak", ['reason' => ''])
@@ -221,7 +221,7 @@ test('rejecting needs a reason, which is stored and audited', function () {
 });
 
 test('HR may approve a Direksi account request, flagged as privileged', function () {
-    $request = resetRequestFor($this->org['direksi']);
+    $request = apiHrResetRequestFor($this->org['direksi']);
     Sanctum::actingAs($this->org['hr']);
 
     $this->getJson('/api/v1/admin/permintaan-sandi')->assertJsonPath('requests.0.privileged_account', true);
@@ -230,8 +230,8 @@ test('HR may approve a Direksi account request, flagged as privileged', function
 
 test('a Super Admin request is only visible to another Super Admin; own and foreign requests are 404', function () {
     $otherAdmin = User::factory()->withTwoFactor()->withRole(Role::SuperAdmin)->create(['name' => 'Admin Kedua']);
-    $adminRequest = resetRequestFor($otherAdmin);
-    $hrRequest = resetRequestFor($this->org['hr']);
+    $adminRequest = apiHrResetRequestFor($otherAdmin);
+    $hrRequest = apiHrResetRequestFor($this->org['hr']);
 
     Sanctum::actingAs($this->org['hr']);
     $this->getJson('/api/v1/admin/permintaan-sandi')->assertOk()->assertJsonPath('total', 0);
@@ -246,7 +246,7 @@ test('a Super Admin request is only visible to another Super Admin; own and fore
 });
 
 test('Direksi, Kepala Divisi and staff cannot see or decide requests', function () {
-    $request = resetRequestFor($this->org['rizky']);
+    $request = apiHrResetRequestFor($this->org['rizky']);
 
     foreach (['direksi', 'kadiv', 'sari'] as $who) {
         Sanctum::actingAs($this->org[$who]);
