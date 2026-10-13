@@ -66,7 +66,7 @@ export function RequestFormDesktop({
     today,
     savedAt,
 }: Props) {
-    const { form, category, setCategory, submit, locked } = state;
+    const { form, category, setCategory, submit, locked, sendBlocked } = state;
     const editing = request !== null;
 
     return (
@@ -204,7 +204,9 @@ export function RequestFormDesktop({
                         type="submit"
                         size="xl"
                         className="w-full text-[18px] font-extrabold"
-                        disabled={form.processing || locked}
+                        disabled={
+                            form.processing || locked || sendBlocked !== null
+                        }
                     >
                         {request?.status === 'revision_requested'
                             ? 'Kirim ulang'

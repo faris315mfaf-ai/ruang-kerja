@@ -1,4 +1,12 @@
-import { Camera, CircleAlert, Lock, Paperclip, Upload, X } from 'lucide-react';
+import {
+    Camera,
+    CircleAlert,
+    Clock,
+    Lock,
+    Paperclip,
+    Upload,
+    X,
+} from 'lucide-react';
 import { useRef } from 'react';
 import InputError from '@/components/input-error';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -54,6 +62,38 @@ export function LeaveTypeHint({ type }: { type: FormLeaveType | undefined }) {
             {type.description && <p>{type.description}</p>}
             {rules.length > 0 && <p>{rules.join(' · ')}</p>}
         </div>
+    );
+}
+
+/**
+ * Same-day cutoff of sakit / izin (keputusan pemilik 14 Okt 2026): the rule
+ * under the type selector. The live verdict for the chosen date comes from
+ * the preview (`send_blocked`, shown in the summary); this is the plain rule.
+ */
+export function CutoffHint({ type }: { type: FormLeaveType | undefined }) {
+    if (!type?.submit_cutoff_time) {
+        return null;
+    }
+
+    const time = type.submit_cutoff_time.replace(':', '.');
+    const closed = type.submit_closed_today === true;
+
+    return (
+        <p
+            className={cn(
+                'flex items-start gap-2 text-meta',
+                closed ? 'font-semibold text-warning' : 'text-text-muted',
+            )}
+        >
+            <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>
+                Pengajuan {type.name.toLowerCase()} untuk hari ini dikirim
+                sebelum pukul {time} WIB. Lewat itu hari ini tercatat alpha
+                {closed
+                    ? '; batas hari ini sudah lewat, pilih tanggal besok atau hubungi HR.'
+                    : '.'}
+            </span>
+        </p>
     );
 }
 
@@ -168,6 +208,7 @@ export function CategoryFields({
             )}
 
             <LeaveTypeHint type={type} />
+            <CutoffHint type={type} />
             <LockedTypeNotice type={type} />
 
             {category === 'permit' && (

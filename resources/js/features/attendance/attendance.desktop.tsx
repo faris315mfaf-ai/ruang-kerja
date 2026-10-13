@@ -17,6 +17,7 @@ import {
 } from './check-in-card';
 import { ConsentFooter } from './consent-footer';
 import { HistoryTable } from './history';
+import { LeaveShortcutPanel } from './leave-shortcut-panel';
 import { LocationRow } from './location-card';
 import { MethodSwitch } from './method-switch';
 import { WindowNotice, WindowsLine } from './window-notice';
@@ -160,6 +161,10 @@ export function AttendanceDesktop(props: AttendancePageProps) {
                                 </Button>
                             )}
                         </div>
+                        <LeaveShortcutPanel
+                            shortcut={today.leaveShortcut}
+                            now={now}
+                        />
                         <WindowsLine today={today} />
                         <p className="text-[15px] leading-[22px] text-text-muted">
                             Lokasi dan selfie hanya direkam saat check-in dan

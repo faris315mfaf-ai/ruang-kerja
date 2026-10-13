@@ -126,6 +126,30 @@ export type TodayAttendance = {
     checkInBlocked: CheckInBlocked | null;
     /** Indonesian reason while `action = check_out` and outside the hours. */
     checkOutBlockedReason: string | null;
+    /** "Tidak masuk? Ajukan sakit / izin" (keputusan pemilik 14 Okt 2026). */
+    leaveShortcut?: LeaveShortcut;
+};
+
+export type LeaveShortcutType = { id: string; code: string; name: string };
+
+/** State of the sakit / izin shortcut on Absen; the server decides. */
+export type LeaveShortcut = {
+    available: boolean;
+    /** "HH:MM" office time, null = no cutoff. */
+    sickCutoff: string | null;
+    permitCutoff: string | null;
+    sickClosed: boolean;
+    permitClosed: boolean;
+    sickType: LeaveShortcutType | null;
+    permitType: LeaveShortcutType | null;
+    closedReason: string | null;
+    pending: {
+        id: string;
+        number: string | null;
+        typeLabel: string;
+        status: string;
+        statusLabel: string;
+    } | null;
 };
 
 export type AttendanceConsentState = {

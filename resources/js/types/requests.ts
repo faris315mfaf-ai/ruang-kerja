@@ -62,6 +62,15 @@ export type LeaveTypeInfo = {
     /** Locked by HR: cannot be requested (cuti & lembur, keputusan pemilik 6 Okt 2026). */
     locked?: boolean;
     locked_reason?: string | null;
+    /*
+     * Batas pengajuan di hari-H (keputusan pemilik 14 Okt 2026), only sakit and
+     * izin: "HH:MM" office time, null = no cutoff. `submit_closed_today` comes
+     * from the server clock.
+     */
+    submit_cutoff_time?: string | null;
+    /** "Batas pengajuan hari ini pukul 12.00". */
+    submit_cutoff_label?: string | null;
+    submit_closed_today?: boolean;
 };
 
 export type BalanceSummary = {
@@ -249,6 +258,8 @@ export type RequestPreview = {
         work_dates: string[];
     } | null;
     errors: Record<string, string> | null;
+    /** Why sending is refused (same-day cutoff); a draft can still be saved. */
+    send_blocked?: string | null;
     balance: {
         year: number;
         summary: BalanceSummary;

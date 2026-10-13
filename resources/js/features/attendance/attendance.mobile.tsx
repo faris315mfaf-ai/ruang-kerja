@@ -12,6 +12,7 @@ import { CheckFlowMobile } from './check-flow.mobile';
 import { DayTiles, statusPill, timingHint } from './check-in-card';
 import { ConsentFooter } from './consent-footer';
 import { HistoryList } from './history';
+import { LeaveShortcutPanel } from './leave-shortcut-panel';
 import { LocationMap, locationStatus } from './location-card';
 import type { LocationProps } from './location-card';
 import { MethodSwitch } from './method-switch';
@@ -161,6 +162,10 @@ export function AttendanceMobile(props: AttendancePageProps) {
                             {action.label}
                         </Button>
                     )}
+                    <LeaveShortcutPanel
+                        shortcut={today.leaveShortcut}
+                        now={now}
+                    />
                     <WindowsLine today={today} className="text-center" />
                     <p className="text-center text-[14px] leading-5 text-text-muted">
                         Lokasi dan foto hanya direkam saat check-in dan
