@@ -8,10 +8,9 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ApiError } from '@/api/client';
-import { kirimNotifikasiUji } from '@/api/notifikasi';
 import { bacaJam } from '@/features/notifikasi/jam';
 import { MatriksNotifikasi } from '@/features/notifikasi/MatriksNotifikasi';
+import { useUjiNotifikasi } from '@/features/notifikasi/push/uji';
 import { usePengaturanNotifikasi, type StatusSimpan } from '@/features/notifikasi/usePengaturanNotifikasi';
 import { useIzinAplikasi } from '@/features/settings/izin';
 import { fontFamily, useTheme } from '@/theme';
@@ -31,7 +30,6 @@ import {
   Switch,
   Text,
   errorKindFromStatus,
-  useSnackbar,
 } from '@/ui';
 
 /** "07:30" → "07.30" */
@@ -59,29 +57,12 @@ function StatusSimpanTeks({ status }: { status: StatusSimpan }): React.JSX.Eleme
 
 export default function LayarPengaturanNotifikasi(): React.JSX.Element {
   const { colors } = useTheme();
-  const snackbar = useSnackbar();
   const izin = useIzinAplikasi();
   const { data, memuat, galat, offline, status, muat, ubah, ubahKanal } = usePengaturanNotifikasi();
-  const [mengirimUji, setMengirimUji] = useState(false);
+  const uji = useUjiNotifikasi(data?.push.server_ready);
   const [jamTeks, setJamTeks] = useState('');
   const [dialogJam, setDialogJam] = useState(false);
   const [galatJam, setGalatJam] = useState<string | null>(null);
-
-  const kirimUji = async (): Promise<void> => {
-    setMengirimUji(true);
-    try {
-      const hasil = await kirimNotifikasiUji();
-      snackbar.show({ message: hasil.message, variant: 'ok' });
-    } catch (err) {
-      const mati = err instanceof ApiError && err.status === 0;
-      snackbar.show({
-        message: mati ? 'Tidak ada koneksi. Notifikasi uji belum terkirim.' : err instanceof ApiError && err.status === 429 ? 'Terlalu sering. Coba lagi sebentar lagi.' : err instanceof ApiError ? err.message : 'Notifikasi uji gagal dikirim.',
-        variant: mati ? 'offline' : 'bad',
-      });
-    } finally {
-      setMengirimUji(false);
-    }
-  };
 
   const bukaDialogJam = (): void => {
     if (!data) return;
@@ -194,7 +175,7 @@ export default function LayarPengaturanNotifikasi(): React.JSX.Element {
               <View style={{ flex: 1, gap: 2 }}>
                 <Text variant="label">Di luar jam kerja</Text>
                 <Text variant="meta" style={{ fontSize: 14, lineHeight: 20 }}>
-                  Tahan notifikasi email {tampilJam(data.quiet_window.start)}–{tampilJam(data.quiet_window.end)} dan akhir pekan; in-app tetap tercatat.
+                  Tahan email dan push {tampilJam(data.quiet_window.start)}–{tampilJam(data.quiet_window.end)} serta akhir pekan; Inbox tetap tercatat.
                 </Text>
               </View>
               <Switch value={data.settings.quiet_hours} onValueChange={(v) => ubah({ quiet_hours: v })} disabled={baca} label="Jam tenang di luar jam kerja" />
@@ -204,7 +185,7 @@ export default function LayarPengaturanNotifikasi(): React.JSX.Element {
               <View style={{ flex: 1, gap: 2 }}>
                 <Text variant="label">Saat saya cuti, tahan semua notifikasi</Text>
                 <Text variant="meta" style={{ fontSize: 14, lineHeight: 20 }}>
-                  Hanya dicatat di Inbox, tanpa email dan toast. Persetujuan diteruskan ke pengganti bila delegasi aktif.
+                  Hanya dicatat di Inbox, tanpa email, push, dan toast. Persetujuan diteruskan ke pengganti bila delegasi aktif.
                 </Text>
               </View>
               <Switch value={data.settings.pause_while_on_leave} onValueChange={(v) => ubah({ pause_while_on_leave: v })} disabled={baca} label="Tahan semua notifikasi saat cuti" />
@@ -214,7 +195,7 @@ export default function LayarPengaturanNotifikasi(): React.JSX.Element {
           <Text variant="meta" style={{ fontSize: 14, lineHeight: 20 }}>
             Email dikirim ke {data.email}. WhatsApp menyusul di Fase 2.
           </Text>
-          <Button title="Kirim notifikasi uji" variant="outline" icon="send" loading={mengirimUji} disabled={baca} onPress={() => void kirimUji()} />
+          <Button title="Kirim notifikasi uji" variant="outline" icon="send" loading={uji.mengirim} disabled={baca} onPress={() => void uji.kirim()} />
         </>
       ) : null}
 

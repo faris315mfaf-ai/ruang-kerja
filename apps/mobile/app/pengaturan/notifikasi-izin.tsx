@@ -1,7 +1,7 @@
 /**
  * Notifikasi — izin notifikasi Android: pra-izin (rationale) sebelum dialog
- * sistem, keadaan ditolak (arahkan ke Setelan), dan diizinkan. Pengaturan per
- * jenis notifikasi menyusul bersama modul notifikasi/push.
+ * sistem, keadaan ditolak (arahkan ke Setelan), dan diizinkan (lanjut ke
+ * Pengaturan › Notifikasi). Setelah izin diberikan, token push didaftarkan.
  * Mockup: docs/mockups/android/screens/01-akses-akun/19-izin-aplikasi (1–3).
  */
 import { router } from 'expo-router';
@@ -70,7 +70,7 @@ export default function LayarNotifikasiIzin(): React.JSX.Element {
       ) : (
         <>
           <Banner tone="ok" icon="bell-ring" title="Notifikasi diizinkan." message="Pengingat persetujuan, tugas, dan rapat akan masuk ke perangkat ini." />
-          <Banner tone="info" message="Pengaturan per jenis notifikasi dan jam tenang akan hadir bersama modul notifikasi." />
+          <Button title="Atur jenis notifikasi" icon="bell" onPress={() => router.push('/pengaturan/notifikasi' as never)} />
           <Button title="Buka Setelan Android" variant="outline" icon="settings" onPress={izin.bukaSetelan} />
         </>
       )}

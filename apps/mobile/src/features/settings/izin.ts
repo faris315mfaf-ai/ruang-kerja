@@ -12,6 +12,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Linking, PermissionsAndroid, Platform } from 'react-native';
 
 import { useAppLock } from '@/features/auth/appLock';
+import { pastikanSaluran } from '@/features/notifikasi/push/saluranAndroid';
+import { mintaDaftarUlangPush } from '@/features/notifikasi/push/status';
 
 export type StatusIzin = 'memeriksa' | 'diizinkan' | 'ditolak' | 'belum';
 
@@ -105,10 +107,16 @@ export function useIzinAplikasi(): IzinAplikasi {
       return true;
     }
     try {
+      // Android 13+ baru menampilkan dialog bila aplikasi sudah punya saluran notifikasi.
+      await pastikanSaluran();
       const hasil = await tahanKunci(() => PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS));
       await SecureStore.setItemAsync(KEY_NOTIF_DITANYA, '1').catch(() => undefined);
       await segarkan();
-      return hasil === PermissionsAndroid.RESULTS.GRANTED;
+      const diizinkan = hasil === PermissionsAndroid.RESULTS.GRANTED;
+      if (diizinkan) {
+        mintaDaftarUlangPush(); // daftarkan token push segera setelah izin diberikan
+      }
+      return diizinkan;
     } catch {
       return false;
     }

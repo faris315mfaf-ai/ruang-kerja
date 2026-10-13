@@ -16,6 +16,7 @@ import { LayarBlokirAplikasi, DialogSesiBerakhir, KartuUpdateTersedia } from '@/
 import { LayarKunci, TawaranBiometrik } from '@/features/auth/KunciAplikasi';
 import { SetupDuaFaktorWeb } from '@/features/auth/SetupDuaFaktorWeb';
 import { ModeCatatPill } from '@/features/catatan/ModeCatatPill';
+import { PushController } from '@/features/notifikasi/push/PushController';
 import { AppLockProvider, useAppLock } from '@/features/auth/appLock';
 import { ThemeProvider, useAppFonts, useTheme } from '@/theme';
 import { UIProvider, useKebijakanOrientasi } from '@/ui';
@@ -192,6 +193,7 @@ function RootNavigator(): React.JSX.Element {
             {bersesi ? <KartuUpdateTersedia /> : null}
             {bersesi ? <TawaranBiometrik /> : null}
             {bersesi ? <ModeCatatPill /> : null}
+            <PushController />
             <DialogSesiBerakhir />
           </BottomSheetModalProvider>
         </View>

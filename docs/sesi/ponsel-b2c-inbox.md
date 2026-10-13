@@ -191,3 +191,6 @@ Semua nilai `data` berupa string. `android.priority` HIGH untuk channel ber-impo
 - Paginasi kursor tidak dibuat (halaman `page` dipertahankan agar kompatibel dengan klien Bagian 1).
 - Sorotan per-rentang pada hasil cari tidak ada (`terms` disediakan). Pengaturan "Notifikasi di ponsel ini" (status saluran/izin) murni sisi klien.
 - Pengiriman push sungguhan belum diuji ke Google (Firebase belum disediakan): diuji dengan `Http::fake` termasuk alur OAuth, 401, UNREGISTERED, dan galat transport.
+
+## 8. Pembaruan B8 (push sisi aplikasi)
+Detail di [`ponsel-b8-push.md`](ponsel-b8-push.md). Perubahan kontrak: `data.group_key` (string; id saluran, atau `chat:{channel_id}` untuk `chat.message`) ada di setiap push; `android.notification.tag` untuk `chat.message` = `chat:{channel_id}` (menggantikan push sebelumnya di bilah); pesan chat berikutnya di DM/grup yang barisnya masih belum dibaca mengirim **push-only** (`data.notification_id` = id baris Inbox yang sudah ada, tidak ada baris baru), maks. sekali per 10 detik per percakapan dan penerima. Matriks pengaturan tidak berubah (push mengikuti In-app; di aplikasi berlabel "In-app & push").

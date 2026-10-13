@@ -83,10 +83,11 @@
       "@config-plugins/react-native-webrtc",
       "./plugins/withNoFocusHighlight",
       [
-        "./plugins/withNotificationIcon",
+        "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#0B7F86"
+          "color": "#0B7F86",
+          "defaultChannel": "rk_info"
         }
       ],
       "./plugins/withReleaseSigning",

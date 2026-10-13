@@ -115,7 +115,7 @@ export function MatriksNotifikasi({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const [buka, setBuka] = useState<string | null>(null);
-  const label = (k: KanalNotifikasi): string => data.channels.find((c) => c.value === k)?.label ?? k;
+  const label = (k: KanalNotifikasi): string => (k === 'in_app' ? 'In-app & push' : data.channels.find((c) => c.value === k)?.label ?? k);
   return (
     <View style={{ gap: 20 }}>
       {data.categories.map((kat) => {

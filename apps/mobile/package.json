@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test:center": "node scripts/cek-center-action.mjs",
-    "test:peta": "node scripts/cek-peta.mjs"
+    "test:peta": "node scripts/cek-peta.mjs",
+    "test:push": "node scripts/cek-push.mjs"
   },
   "dependencies": {
     "@config-plugins/react-native-webrtc": "^15.0.2",
