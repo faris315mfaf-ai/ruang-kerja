@@ -19,6 +19,7 @@ export function TugasKartu({
   tampilkanWorkspace = true,
   menunggu = false,
   catatan,
+  terpilih = false,
 }: {
   baris: BarisTugas;
   hariIni: string;
@@ -28,6 +29,8 @@ export function TugasKartu({
   menunggu?: boolean;
   /** Baris tambahan di bawah meta (mis. "Terbawa dari kemarin"). */
   catatan?: React.ReactNode;
+  /** Sedang terbuka di panel detail (tablet dua panel). */
+  terpilih?: boolean;
 }): React.JSX.Element {
   const { colors, shadows } = useTheme();
   const tenggat = teksTenggat(baris, hariIni);
@@ -51,12 +54,13 @@ export function TugasKartu({
       scaleTo={0.99}
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityState={terpilih ? { selected: true } : undefined}
       style={[
         s.kartu,
         {
-          backgroundColor: colors.surface,
-          borderColor: terlambat ? colors.danger : colors.border,
-          borderWidth: terlambat ? 1.5 : 1,
+          backgroundColor: terpilih ? colors.linkSoft : colors.surface,
+          borderColor: terpilih ? colors.primary : terlambat ? colors.danger : colors.border,
+          borderWidth: terpilih ? 2 : terlambat ? 1.5 : 1,
           boxShadow: shadows.card,
           opacity: selesai ? 0.82 : 1,
         },

@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { layout, useTheme } from '@/theme';
 import { Glass, IconButton, Pressable, Text, type AppBarAction } from '@/ui';
+import { usePanel } from '@/ui/panel';
 
 export function HeaderObrolan({
   leading,
@@ -26,6 +27,7 @@ export function HeaderObrolan({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const panel = usePanel();
   const identitas = (
     <>
       {leading}
@@ -44,7 +46,13 @@ export function HeaderObrolan({
   return (
     <Glass style={{ paddingTop: insets.top, borderWidth: 0, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
       <View style={[s.bar, { minHeight: layout.appBar + 8 }]}>
-        <IconButton icon="arrow-left" label="Kembali" variant="ghost" onPress={onBack ?? (() => router.back())} />
+        {onBack || !panel.tertanam ? (
+          <IconButton icon="arrow-left" label="Kembali" variant="ghost" onPress={onBack ?? (() => router.back())} />
+        ) : panel.tutup ? (
+          <IconButton icon="x" label="Tutup" variant="ghost" onPress={panel.tutup} />
+        ) : (
+          <View style={{ width: 8 }} />
+        )}
         {onPressTitle ? (
           <Pressable onPress={onPressTitle} scaleTo={1} accessibilityRole="button" accessibilityLabel={`${title}, buka detail`} style={s.identitas}>
             {identitas}

@@ -4,7 +4,7 @@
  * mode "Rencana saya", geser kartu (Tunda · Selesai), paginasi, dan keadaan
  * memuat/kosong/galat/offline. Mockup: docs/mockups/android/screens/05-tugas-workspace/01–04.
  */
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Share, StyleSheet, View } from 'react-native';
 
@@ -28,6 +28,7 @@ import { RencanaView } from '@/features/tugas/RencanaView';
 import { SheetFilter, SheetKelompok, SheetRencanakan, SheetTampilan, DialogNamaTampilan } from '@/features/tugas/SheetTugasSaya';
 import { SheetTenggat } from '@/features/tugas/Pilihan';
 import { SwipeRow, type AksiGeser } from '@/features/tugas/SwipeRow';
+import { DetailTugas } from '@/features/tugas/DetailTugas';
 import { TugasBaruSheet } from '@/features/tugas/TugasBaruSheet';
 import { TugasKartu } from '@/features/tugas/TugasKartu';
 import { useTugasSaya } from '@/features/tugas/useTugasSaya';
@@ -57,6 +58,7 @@ import {
   Fab,
   Icon,
   Loading,
+  PanelProvider,
   Pressable,
   Screen,
   SearchInput,
@@ -69,6 +71,8 @@ import {
   useDialog,
   useSnackbar,
   useTabBarSpace,
+  useTataLetak,
+  lebarDaftar,
   type IconName,
 } from '@/ui';
 
@@ -147,6 +151,12 @@ export default function LayarTugasSaya(): React.JSX.Element {
   const snackbar = useSnackbar();
   const ruangTab = useTabBarSpace();
   const d = useTugasSaya();
+  // Tablet (jendela ≥ 720 dp, mockup 12/17): daftar + detail berdampingan; tugas
+  // terpilih disimpan di parameter `?tugas=` supaya bertahan saat diputar.
+  const tata = useTataLetak();
+  const duaPanel = tata.duaPanel;
+  const { tugas: paramTugas } = useLocalSearchParams<{ tugas?: string }>();
+  const dipilih = duaPanel && typeof paramTugas === 'string' && paramTugas !== '' ? paramTugas : null;
 
   const [cari, setCari] = useState(false);
   const [teksCari, setTeksCari] = useState('');
@@ -217,7 +227,21 @@ export default function LayarTugasSaya(): React.JSX.Element {
     (id) => labelFilter.find((l) => l.id === id)?.name ?? 'Label',
   );
 
-  const bukaDetail = useCallback((id: string): void => router.push(`/tugas/${id}`), []);
+  const bukaDetail = useCallback(
+    (id: string): void => {
+      if (duaPanel) {
+        router.setParams({ tugas: id });
+      } else {
+        router.push(`/tugas/${id}`);
+      }
+    },
+    [duaPanel],
+  );
+  const segarkanSenyapDaftar = d.segarkanSenyap;
+  const tutupPanel = useCallback((): void => {
+    router.setParams({ tugas: '' });
+    segarkanSenyapDaftar();
+  }, [segarkanSenyapDaftar]);
 
   function pesanOffline(): void {
     snackbar.show({ message: 'Tidak ada koneksi. Perubahan belum terkirim.', variant: 'offline' });
@@ -369,7 +393,7 @@ export default function LayarTugasSaya(): React.JSX.Element {
     }
     return (
       <SwipeRow key={b.id} aksi={aksi}>
-        <TugasKartu baris={b} hariIni={hariIni} onPress={() => bukaDetail(b.id)} onLongPress={() => bukaMenu(b)} tampilkanWorkspace={d.kelompok !== 'workspace'} />
+        <TugasKartu baris={b} hariIni={hariIni} terpilih={dipilih === b.id} onPress={() => bukaDetail(b.id)} onLongPress={() => bukaMenu(b)} tampilkanWorkspace={d.kelompok !== 'workspace'} />
       </SwipeRow>
     );
   }
@@ -379,186 +403,202 @@ export default function LayarTugasSaya(): React.JSX.Element {
   const labelKelompok = d.kelompok === 'tenggat' ? 'Tenggat' : d.kelompok === 'workspace' ? 'Workspace' : d.kelompok === 'prioritas' ? 'Prioritas' : 'Status';
 
   return (
-    <View style={{ flex: 1 }}>
-      <Screen refreshing={d.menyegarkan} onRefresh={d.segarkan} contentStyle={{ paddingBottom: ruangTab + 96 }}>
-        <AppBar
-          overline={judulTanggal(hariIni)}
-          title="Tugas saya"
-          actions={[
-            { icon: 'search', label: 'Cari tugas', onPress: () => setCari((v) => !v) },
-            { icon: 'sliders-horizontal', label: 'Filter tugas', onPress: () => setSheetFilter(true), badge: adaFilter ? true : undefined },
-          ]}
-        />
-
-        {d.mode === 'rencana' ? (
-          <>
-            <SegmentedTabs
-              value="rencana"
-              options={[
-                { value: 'daftar', label: 'Tenggat' },
-                { value: 'rencana', label: 'Rencana saya' },
-              ]}
-              onChange={(v) => d.setMode(v === 'rencana' ? 'rencana' : 'daftar')}
-            />
-            <Text variant="body" tone="muted" style={{ fontSize: 15 }}>
-              Susun hari Anda — hanya Anda yang melihat rencana ini
-            </Text>
-          </>
-        ) : (
-          <>
-            <View style={s.bleed}>
-              <ChipScroller>
-                {(['ditugaskan', 'saya-amati', 'saya-buat'] as const).map((l) => (
-                  <Chip key={l} label={LABEL_LINGKUP[l]} count={d.meta?.counts[l]} selected={d.lingkup === l} onPress={() => d.setLingkup(l)} />
-                ))}
-              </ChipScroller>
-            </View>
-
-            {cari ? <SearchInput value={teksCari} onChangeText={setTeksCari} placeholder="Judul atau KEY-123" autoFocus /> : null}
-
-            <View style={s.ringkas}>
-              <Text variant="body" tone="muted" style={{ flex: 1, fontSize: 15 }} numberOfLines={2}>
-                {d.meta ? (
-                  d.lingkup === 'saya-buat' ? (
-                    `${d.meta.counts['saya-buat']} tugas yang saya buat`
-                  ) : (
-                    <>
-                      {d.meta.summary.aktif} aktif
-                      {d.meta.summary.terlambat > 0 ? (
-                        <>
-                          {' · '}
-                          <Text variant="body" weight={700} tone="danger" style={{ fontSize: 15 }}>
-                            {d.meta.summary.terlambat} terlambat
-                          </Text>
-                        </>
-                      ) : null}
-                      {' · '}
-                      {d.meta.summary.hari_ini} hari ini
-                    </>
-                  )
-                ) : (
-                  ' '
-                )}
-              </Text>
-              <Pressable
-                onPress={() => setSheetKelompok(true)}
-                accessibilityRole="button"
-                accessibilityLabel={`Kelompokkan menurut ${labelKelompok}`}
-                style={[s.grup, { borderColor: colors.borderStrong, backgroundColor: colors.surface }]}
-              >
-                <Icon name="layers" size={20} />
-                <Text variant="label" weight={600}>
-                  {labelKelompok}
-                </Text>
-                <Icon name="chevron-down" size={18} color={colors.muted} />
-              </Pressable>
-            </View>
-
-            {d.chipWorkspace.length > 1 ? (
-              <View style={s.bleed}>
-                <ChipScroller>
-                  <Chip label="Semua" count={d.meta ? d.chipWorkspace.reduce((a, c) => a + c.jumlah, 0) : undefined} selected={d.filter.workspace.length === 0} onPress={() => d.setFilter({ ...d.filter, workspace: [] })} />
-                  {d.chipWorkspace.map((c) => (
-                    <Chip key={c.key} label={c.key} count={c.jumlah} selected={d.filter.workspace.includes(c.key)} onPress={() => d.setFilter({ ...d.filter, workspace: d.filter.workspace.includes(c.key) ? [] : [c.key] })} />
-                  ))}
-                </ChipScroller>
-              </View>
-            ) : null}
-
-            {chipFilter.length > 0 ? (
-              <View style={s.bleed}>
-                <ChipScroller>
-                  {chipFilter.map((c) => (
-                    <Chip
-                      key={c.kunci}
-                      label={c.label}
-                      selected
-                      onDismiss={() => {
-                        d.setFilter(c.hapus(d.filter));
-                        if (c.kunci === 'q') {
-                          setTeksCari('');
-                        }
-                        setTampilanAktif(null);
-                      }}
-                    />
-                  ))}
-                  <Button title="Simpan tampilan" variant="quiet" size="sm" icon="bookmark-plus" onPress={() => setDialogNama(true)} />
-                </ChipScroller>
-              </View>
-            ) : null}
-
-            {d.basi ? <Banner tone="warn" icon="cloud-off" message={`Offline · data terakhir ${stempelWaktu(d.basi)}`} /> : null}
-          </>
-        )}
-
-        {d.memuat ? (
-          <Loading rows={5} />
-        ) : d.galat && (d.mode === 'rencana' ? d.perencana === null : d.tasks.length === 0) ? (
-          <ErrorState message={d.galat.pesan} kind={errorKindFromStatus(d.galat.status)} onRetry={d.segarkan} />
-        ) : d.mode === 'rencana' && d.perencana ? (
-          <RencanaView
-            planner={d.perencana}
-            onBuka={bukaDetail}
-            onRencanakan={(id, title, key, lajur) => setRencanakan({ id, key, title, lajur })}
-            onTerima={(t: TugasBaruMasuk) => setRencanakan({ id: t.id, key: t.key, title: t.title, lajur: null })}
-            onSelesai={(i: ItemRencana) => void selesaikan({ id: i.id, key: i.key, title: i.title, workspaceType: i.workspace.type, status: { is_done: i.done } })}
-            onMenu={(i) => setMenu({ id: i.id, key: i.key, title: i.title, type: i.workspace.type, lajur: i.auto ? null : i.lane, selesai: i.done })}
+    <View style={[{ flex: 1 }, duaPanel && s.duaPanel]}>
+      <View style={duaPanel ? [s.kolomDaftar, { width: lebarDaftar(tata, 'tugas'), borderRightColor: colors.border }] : { flex: 1 }}>
+        <Screen refreshing={d.menyegarkan} onRefresh={d.segarkan} contentStyle={{ paddingBottom: ruangTab + 96 }}>
+          <AppBar
+            overline={judulTanggal(hariIni)}
+            title="Tugas saya"
+            actions={[
+              { icon: 'search', label: 'Cari tugas', onPress: () => setCari((v) => !v) },
+              { icon: 'sliders-horizontal', label: 'Filter tugas', onPress: () => setSheetFilter(true), badge: adaFilter ? true : undefined },
+            ]}
           />
-        ) : d.tasks.length === 0 ? (
-          adaFilter ? (
-            <EmptyState
-              icon="search-x"
-              title="Tidak ada tugas yang cocok"
-              description="Ubah filter atau pilih workspace lain."
-              actionLabel="Hapus semua filter"
-              onAction={() => {
-                d.setFilter(FILTER_KOSONG);
-                setTeksCari('');
-                setTampilanAktif(null);
-              }}
-            />
-          ) : (
-            <EmptyState
-              icon="circle-check"
-              title={d.lingkup === 'ditugaskan' ? 'Tidak ada tugas untuk Anda' : d.lingkup === 'saya-amati' ? 'Belum ada tugas yang Anda amati' : 'Belum ada tugas yang Anda buat'}
-              description="Ketuk + untuk membuat tugas baru."
-              actionLabel="Buat tugas"
-              onAction={() => setBaruSheet(true)}
-            />
-          )
-        ) : (
-          <View style={{ gap: 16 }}>
-            {d.galat ? <Banner tone="bad" message={d.galat.pesan} actionLabel="Coba lagi" onAction={d.segarkan} /> : null}
-            {seksi.map((sek) => {
-              const warna = sek.tone === 'danger' ? colors.danger : sek.tone === 'warning' ? colors.warning : colors.text;
-              return (
-                <View key={sek.kunci} style={{ gap: 8 }}>
-                  <View style={s.kepala} accessibilityRole="header">
-                    {sek.leading ?? (sek.icon ? <Icon name={sek.icon} size={20} color={warna} /> : null)}
-                    <Text variant="title" weight={700} style={{ color: warna }}>
-                      {sek.judul}
-                    </Text>
-                    <Text variant="title" weight={700} style={{ color: sek.tone === 'text' ? colors.muted : warna }}>
-                      {sek.items.length}
-                    </Text>
-                    {sek.catatan ? <Text variant="meta">· {sek.catatan}</Text> : null}
-                  </View>
-                  {sek.items.map((b) => kartu(b))}
-                </View>
-              );
-            })}
-            {d.masihAda ? (
-              <Button title={d.memuatLagi ? 'Memuat…' : 'Muat lagi'} variant="secondary" icon="chevron-down" loading={d.memuatLagi} disabled={d.memuatLagi} onPress={d.muatLagi} />
-            ) : (
-              <Text variant="meta" align="center">
-                Sudah menampilkan semua tugas
-              </Text>
-            )}
-          </View>
-        )}
-      </Screen>
 
-      <Fab label="Tugas baru" onPress={() => setBaruSheet(true)} style={{ position: 'absolute', right: 16, bottom: ruangTab + 16 }} />
+          {d.mode === 'rencana' ? (
+            <>
+              <SegmentedTabs
+                value="rencana"
+                options={[
+                  { value: 'daftar', label: 'Tenggat' },
+                  { value: 'rencana', label: 'Rencana saya' },
+                ]}
+                onChange={(v) => d.setMode(v === 'rencana' ? 'rencana' : 'daftar')}
+              />
+              <Text variant="body" tone="muted" style={{ fontSize: 15 }}>
+                Susun hari Anda — hanya Anda yang melihat rencana ini
+              </Text>
+            </>
+          ) : (
+            <>
+              <View style={s.bleed}>
+                <ChipScroller>
+                  {(['ditugaskan', 'saya-amati', 'saya-buat'] as const).map((l) => (
+                    <Chip key={l} label={LABEL_LINGKUP[l]} count={d.meta?.counts[l]} selected={d.lingkup === l} onPress={() => d.setLingkup(l)} />
+                  ))}
+                </ChipScroller>
+              </View>
+
+              {cari ? <SearchInput value={teksCari} onChangeText={setTeksCari} placeholder="Judul atau KEY-123" autoFocus /> : null}
+
+              <View style={s.ringkas}>
+                <Text variant="body" tone="muted" style={{ flex: 1, fontSize: 15 }} numberOfLines={2}>
+                  {d.meta ? (
+                    d.lingkup === 'saya-buat' ? (
+                      `${d.meta.counts['saya-buat']} tugas yang saya buat`
+                    ) : (
+                      <>
+                        {d.meta.summary.aktif} aktif
+                        {d.meta.summary.terlambat > 0 ? (
+                          <>
+                            {' · '}
+                            <Text variant="body" weight={700} tone="danger" style={{ fontSize: 15 }}>
+                              {d.meta.summary.terlambat} terlambat
+                            </Text>
+                          </>
+                        ) : null}
+                        {' · '}
+                        {d.meta.summary.hari_ini} hari ini
+                      </>
+                    )
+                  ) : (
+                    ' '
+                  )}
+                </Text>
+                <Pressable
+                  onPress={() => setSheetKelompok(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Kelompokkan menurut ${labelKelompok}`}
+                  style={[s.grup, { borderColor: colors.borderStrong, backgroundColor: colors.surface }]}
+                >
+                  <Icon name="layers" size={20} />
+                  <Text variant="label" weight={600}>
+                    {labelKelompok}
+                  </Text>
+                  <Icon name="chevron-down" size={18} color={colors.muted} />
+                </Pressable>
+              </View>
+
+              {d.chipWorkspace.length > 1 ? (
+                <View style={s.bleed}>
+                  <ChipScroller>
+                    <Chip label="Semua" count={d.meta ? d.chipWorkspace.reduce((a, c) => a + c.jumlah, 0) : undefined} selected={d.filter.workspace.length === 0} onPress={() => d.setFilter({ ...d.filter, workspace: [] })} />
+                    {d.chipWorkspace.map((c) => (
+                      <Chip key={c.key} label={c.key} count={c.jumlah} selected={d.filter.workspace.includes(c.key)} onPress={() => d.setFilter({ ...d.filter, workspace: d.filter.workspace.includes(c.key) ? [] : [c.key] })} />
+                    ))}
+                  </ChipScroller>
+                </View>
+              ) : null}
+
+              {chipFilter.length > 0 ? (
+                <View style={s.bleed}>
+                  <ChipScroller>
+                    {chipFilter.map((c) => (
+                      <Chip
+                        key={c.kunci}
+                        label={c.label}
+                        selected
+                        onDismiss={() => {
+                          d.setFilter(c.hapus(d.filter));
+                          if (c.kunci === 'q') {
+                            setTeksCari('');
+                          }
+                          setTampilanAktif(null);
+                        }}
+                      />
+                    ))}
+                    <Button title="Simpan tampilan" variant="quiet" size="sm" icon="bookmark-plus" onPress={() => setDialogNama(true)} />
+                  </ChipScroller>
+                </View>
+              ) : null}
+
+              {d.basi ? <Banner tone="warn" icon="cloud-off" message={`Offline · data terakhir ${stempelWaktu(d.basi)}`} /> : null}
+            </>
+          )}
+
+          {d.memuat ? (
+            <Loading rows={5} />
+          ) : d.galat && (d.mode === 'rencana' ? d.perencana === null : d.tasks.length === 0) ? (
+            <ErrorState message={d.galat.pesan} kind={errorKindFromStatus(d.galat.status)} onRetry={d.segarkan} />
+          ) : d.mode === 'rencana' && d.perencana ? (
+            <RencanaView
+              planner={d.perencana}
+              onBuka={bukaDetail}
+              onRencanakan={(id, title, key, lajur) => setRencanakan({ id, key, title, lajur })}
+              onTerima={(t: TugasBaruMasuk) => setRencanakan({ id: t.id, key: t.key, title: t.title, lajur: null })}
+              onSelesai={(i: ItemRencana) => void selesaikan({ id: i.id, key: i.key, title: i.title, workspaceType: i.workspace.type, status: { is_done: i.done } })}
+              onMenu={(i) => setMenu({ id: i.id, key: i.key, title: i.title, type: i.workspace.type, lajur: i.auto ? null : i.lane, selesai: i.done })}
+            />
+          ) : d.tasks.length === 0 ? (
+            adaFilter ? (
+              <EmptyState
+                icon="search-x"
+                title="Tidak ada tugas yang cocok"
+                description="Ubah filter atau pilih workspace lain."
+                actionLabel="Hapus semua filter"
+                onAction={() => {
+                  d.setFilter(FILTER_KOSONG);
+                  setTeksCari('');
+                  setTampilanAktif(null);
+                }}
+              />
+            ) : (
+              <EmptyState
+                icon="circle-check"
+                title={d.lingkup === 'ditugaskan' ? 'Tidak ada tugas untuk Anda' : d.lingkup === 'saya-amati' ? 'Belum ada tugas yang Anda amati' : 'Belum ada tugas yang Anda buat'}
+                description="Ketuk + untuk membuat tugas baru."
+                actionLabel="Buat tugas"
+                onAction={() => setBaruSheet(true)}
+              />
+            )
+          ) : (
+            <View style={{ gap: 16 }}>
+              {d.galat ? <Banner tone="bad" message={d.galat.pesan} actionLabel="Coba lagi" onAction={d.segarkan} /> : null}
+              {seksi.map((sek) => {
+                const warna = sek.tone === 'danger' ? colors.danger : sek.tone === 'warning' ? colors.warning : colors.text;
+                return (
+                  <View key={sek.kunci} style={{ gap: 8 }}>
+                    <View style={s.kepala} accessibilityRole="header">
+                      {sek.leading ?? (sek.icon ? <Icon name={sek.icon} size={20} color={warna} /> : null)}
+                      <Text variant="title" weight={700} style={{ color: warna }}>
+                        {sek.judul}
+                      </Text>
+                      <Text variant="title" weight={700} style={{ color: sek.tone === 'text' ? colors.muted : warna }}>
+                        {sek.items.length}
+                      </Text>
+                      {sek.catatan ? <Text variant="meta">· {sek.catatan}</Text> : null}
+                    </View>
+                    {sek.items.map((b) => kartu(b))}
+                  </View>
+                );
+              })}
+              {d.masihAda ? (
+                <Button title={d.memuatLagi ? 'Memuat…' : 'Muat lagi'} variant="secondary" icon="chevron-down" loading={d.memuatLagi} disabled={d.memuatLagi} onPress={d.muatLagi} />
+              ) : (
+                <Text variant="meta" align="center">
+                  Sudah menampilkan semua tugas
+                </Text>
+              )}
+            </View>
+          )}
+        </Screen>
+
+        <Fab label="Tugas baru" onPress={() => setBaruSheet(true)} style={{ position: 'absolute', right: 16, bottom: ruangTab + 16 }} />
+      </View>
+
+      {duaPanel ? (
+        <View style={{ flex: 1 }}>
+          {dipilih ? (
+            <PanelProvider tutup={tutupPanel}>
+              <DetailTugas key={dipilih} id={dipilih} />
+            </PanelProvider>
+          ) : (
+            <View style={[s.panelKosong, { backgroundColor: colors.bg }]}>
+              <EmptyState icon="square-check-big" title="Pilih tugas" description="Detail tugas tampil di sini." />
+            </View>
+          )}
+        </View>
+      ) : null}
 
       <SheetFilter
         visible={sheetFilter}
@@ -697,6 +737,9 @@ export default function LayarTugasSaya(): React.JSX.Element {
 }
 
 const s = StyleSheet.create({
+  duaPanel: { flexDirection: 'row' },
+  kolomDaftar: { borderRightWidth: StyleSheet.hairlineWidth },
+  panelKosong: { flex: 1, justifyContent: 'center', padding: 32 },
   bleed: { marginHorizontal: -16 },
   ringkas: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   grup: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48, paddingHorizontal: 14, borderRadius: 16, borderWidth: 1 },

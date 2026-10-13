@@ -18,12 +18,15 @@ export function BarisKanal({
   divider,
   onTekan,
   onTekanLama,
+  terpilih = false,
 }: {
   kanal: KanalRingkas;
   saya: string | null;
   divider: boolean;
   onTekan: () => void;
   onTekanLama: () => void;
+  /** Sedang terbuka di kolom percakapan (tablet). */
+  terpilih?: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const belum = kanal.unread_count > 0;
@@ -45,9 +48,10 @@ export function BarisKanal({
           onTekanLama();
         }
       }}
-      style={[s.baris, divider ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.divider } : null]}
+      accessibilityState={terpilih ? { selected: true } : undefined}
+      style={[s.baris, divider ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.divider } : null, terpilih ? { backgroundColor: colors.linkSoft } : null]}
     >
-      {belum ? <View style={[s.aksen, { backgroundColor: colors.primary }]} /> : null}
+      {belum || terpilih ? <View style={[s.aksen, { backgroundColor: colors.primary }]} /> : null}
       <UbinKanal jenis={kanal.type} nama={judul} workspace={kanal.workspace} />
       <View style={{ flex: 1, gap: 2 }}>
         <View style={s.judulBaris}>

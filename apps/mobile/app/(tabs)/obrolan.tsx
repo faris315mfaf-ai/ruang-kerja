@@ -8,16 +8,40 @@
  */
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { BackHandler, StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { bisukanKanal, daftarObrolan, tandaiDibaca, type JenisKanal, type KanalRingkas } from '@/api/obrolan';
 import { BarisKanal } from '@/features/obrolan/BarisKanal';
-import { bukaKanal, kanalDibisukan, LABEL_JENIS, namaKanal, pesanGalat, URUTAN_JENIS } from '@/features/obrolan/util';
+import { Percakapan } from '@/features/obrolan/Percakapan';
+import { Thread } from '@/features/obrolan/Thread';
+import { bukaKanal, kanalDibisukan, LABEL_JENIS, namaKanal, paramKanal, pesanGalat, URUTAN_JENIS } from '@/features/obrolan/util';
+import { useTheme } from '@/theme';
 import { useSession } from '@/session/SessionProvider';
 import { useUnread } from '@/session/UnreadProvider';
 import { useTabBarSpace } from '@/ui/chrome';
-import { AppBar, BottomSheet, Card, EmptyState, ErrorState, errorKindFromStatus, Fab, Loading, OfflineBanner, Screen, SearchInput, SegmentedTabs, SheetAction, Text, useSnackbar, type AppBarAction } from '@/ui';
+import {
+  AppBar,
+  BottomSheet,
+  Card,
+  EmptyState,
+  ErrorState,
+  errorKindFromStatus,
+  Fab,
+  lebarDaftar,
+  Loading,
+  OfflineBanner,
+  PanelProvider,
+  Pressable,
+  Screen,
+  SearchInput,
+  SegmentedTabs,
+  SheetAction,
+  Text,
+  useSnackbar,
+  useTataLetak,
+  type AppBarAction,
+} from '@/ui';
 
 type Saringan = 'semua' | 'belum';
 
@@ -41,6 +65,37 @@ export default function LayarObrolan(): React.JSX.Element {
   const { jumlah: inboxBelum, perbaruiObrolan } = useUnread();
   const snackbar = useSnackbar();
   const ruangTab = useTabBarSpace();
+  const { colors, shadows } = useTheme();
+  // Tablet (mockup 12/18): ≥ 720 dp daftar + percakapan; ≥ 1000 dp thread jadi
+  // kolom ketiga, di bawahnya thread = panel geser di atas percakapan.
+  const tata = useTataLetak();
+  const duaPanel = tata.duaPanel;
+  const [pilihan, setPilihan] = useState<ReturnType<typeof paramKanal> | null>(null);
+  const [thread, setThread] = useState<{ messageId: string; nama: string } | null>(null);
+  const tutupThread = useCallback(() => setThread(null), []);
+
+  // Tombol kembali sistem menutup panel thread lebih dulu.
+  useFocusEffect(
+    useCallback(() => {
+      if (!duaPanel || thread === null) {
+        return undefined;
+      }
+      const langganan = BackHandler.addEventListener('hardwareBackPress', () => {
+        setThread(null);
+        return true;
+      });
+      return () => langganan.remove();
+    }, [duaPanel, thread]),
+  );
+
+  const buka = (k: KanalRingkas): void => {
+    if (duaPanel) {
+      setThread(null);
+      setPilihan(paramKanal(k, saya));
+    } else {
+      bukaKanal(k, saya);
+    }
+  };
 
   const [saringan, setSaringan] = useState<Saringan>('semua');
   const [cari, setCari] = useState('');
@@ -154,79 +209,116 @@ export default function LayarObrolan(): React.JSX.Element {
     );
   }
 
+  const panelThread =
+    thread !== null && pilihan !== null ? (
+      <PanelProvider tutup={tutupThread}>
+        <Thread key={thread.messageId} id={pilihan.id} messageId={thread.messageId} nama={thread.nama} />
+      </PanelProvider>
+    ) : null;
+
   return (
-    <View style={{ flex: 1 }}>
-      <Screen
-        refreshing={menyegarkan}
-        onRefresh={() => {
-          setMenyegarkan(true);
-          void muat();
-        }}
-      >
-        <AppBar title="Obrolan" actions={aksiAppBar} />
+    <View style={[{ flex: 1 }, duaPanel && s.baris]}>
+      <View style={duaPanel ? [s.kolomDaftar, { width: lebarDaftar(tata, 'obrolan'), borderRightColor: colors.border }] : { flex: 1 }}>
+        <Screen
+          refreshing={menyegarkan}
+          onRefresh={() => {
+            setMenyegarkan(true);
+            void muat();
+          }}
+        >
+          <AppBar title="Obrolan" actions={aksiAppBar} />
 
-        {tampilCari ? <SearchInput value={cari} onChangeText={setCari} placeholder="Cari percakapan" autoFocus /> : null}
+          {tampilCari ? <SearchInput value={cari} onChangeText={setCari} placeholder="Cari percakapan" autoFocus /> : null}
 
-        <SegmentedTabs<Saringan>
-          value={saringan}
-          onChange={setSaringan}
-          options={[
-            { value: 'semua', label: 'Semua', badge: kanal.length > 0 ? kanal.length : null },
-            { value: 'belum', label: 'Belum dibaca', badge: belumSemua.length > 0 ? belumSemua.length : null },
-          ]}
-        />
-
-        {offline ? <OfflineBanner /> : null}
-
-        {!sudahMuat ? (
-          <Loading rows={6} />
-        ) : galat !== null && kanal.length === 0 ? (
-          <ErrorState
-            message={galat.pesan}
-            kind={errorKindFromStatus(galat.status === -1 ? undefined : galat.status)}
-            title={galat.status === 0 ? undefined : 'Obrolan gagal dimuat'}
-            onRetry={() => {
-              setSudahMuat(false);
-              void muat();
-            }}
+          <SegmentedTabs<Saringan>
+            value={saringan}
+            onChange={setSaringan}
+            options={[
+              { value: 'semua', label: 'Semua', badge: kanal.length > 0 ? kanal.length : null },
+              { value: 'belum', label: 'Belum dibaca', badge: belumSemua.length > 0 ? belumSemua.length : null },
+            ]}
           />
-        ) : bagian.length === 0 ? (
-          cari.trim() !== '' ? (
-            <EmptyState icon="search" title="Tidak ada hasil" description={`Tidak ada percakapan yang cocok dengan “${cari.trim()}”.`} />
-          ) : saringan === 'belum' ? (
-            <EmptyState icon="check-check" title="Tidak ada pesan baru" description="Semua pesan sudah Anda baca." />
-          ) : (
-            <EmptyState icon="message-circle" title="Belum ada obrolan" description="Kanal workspace dan pesan langsung akan muncul di sini." actionLabel="Pesan baru" onAction={() => router.push('/obrolan/baru')} />
-          )
-        ) : (
-          <>
-            {bagian.map((b) => (
-              <View key={b.jenis} style={{ gap: 8 }}>
-                <View style={s.seksi}>
-                  <Text variant="overline" tone="muted">
-                    {LABEL_JENIS[b.jenis as JenisKanal]}
-                  </Text>
-                  <Text variant="meta">{b.item.length}</Text>
-                </View>
-                <Card variant="flat">
-                  {b.item.map((k, i) => (
-                    <BarisKanal key={k.id} kanal={k} saya={saya} divider={i > 0} onTekan={() => bukaKanal(k, saya)} onTekanLama={() => setAksiBaris(k)} />
-                  ))}
-                </Card>
-              </View>
-            ))}
-            {cari.trim() !== '' ? (
-              <Text variant="meta" align="center">
-                Cari isi pesan: tahan percakapan lalu pilih “Cari pesan”.
-              </Text>
-            ) : null}
-          </>
-        )}
-      </Screen>
 
-      <View pointerEvents={offline ? 'none' : 'box-none'} style={[s.fab, { bottom: ruangTab + 16, opacity: offline ? 0.45 : 1 }]}>
-        <Fab icon="message-square-plus" label="Pesan baru" onPress={() => setSheetBaru(true)} />
+          {offline ? <OfflineBanner /> : null}
+
+          {!sudahMuat ? (
+            <Loading rows={6} />
+          ) : galat !== null && kanal.length === 0 ? (
+            <ErrorState
+              message={galat.pesan}
+              kind={errorKindFromStatus(galat.status === -1 ? undefined : galat.status)}
+              title={galat.status === 0 ? undefined : 'Obrolan gagal dimuat'}
+              onRetry={() => {
+                setSudahMuat(false);
+                void muat();
+              }}
+            />
+          ) : bagian.length === 0 ? (
+            cari.trim() !== '' ? (
+              <EmptyState icon="search" title="Tidak ada hasil" description={`Tidak ada percakapan yang cocok dengan “${cari.trim()}”.`} />
+            ) : saringan === 'belum' ? (
+              <EmptyState icon="check-check" title="Tidak ada pesan baru" description="Semua pesan sudah Anda baca." />
+            ) : (
+              <EmptyState icon="message-circle" title="Belum ada obrolan" description="Kanal workspace dan pesan langsung akan muncul di sini." actionLabel="Pesan baru" onAction={() => router.push('/obrolan/baru')} />
+            )
+          ) : (
+            <>
+              {bagian.map((b) => (
+                <View key={b.jenis} style={{ gap: 8 }}>
+                  <View style={s.seksi}>
+                    <Text variant="overline" tone="muted">
+                      {LABEL_JENIS[b.jenis as JenisKanal]}
+                    </Text>
+                    <Text variant="meta">{b.item.length}</Text>
+                  </View>
+                  <Card variant="flat">
+                    {b.item.map((k, i) => (
+                      <BarisKanal key={k.id} kanal={k} saya={saya} divider={i > 0} terpilih={duaPanel && pilihan?.id === k.id} onTekan={() => buka(k)} onTekanLama={() => setAksiBaris(k)} />
+                    ))}
+                  </Card>
+                </View>
+              ))}
+              {cari.trim() !== '' ? (
+                <Text variant="meta" align="center">
+                  Cari isi pesan: tahan percakapan lalu pilih “Cari pesan”.
+                </Text>
+              ) : null}
+            </>
+          )}
+        </Screen>
+
+        <View pointerEvents={offline ? 'none' : 'box-none'} style={[s.fab, { bottom: ruangTab + 16, opacity: offline ? 0.45 : 1 }]}>
+          <Fab icon="message-square-plus" label="Pesan baru" onPress={() => setSheetBaru(true)} />
+        </View>
       </View>
+
+      {duaPanel ? (
+        <View style={{ flex: 1 }}>
+          {pilihan !== null ? (
+            <PanelProvider>
+              <Percakapan
+                key={pilihan.id}
+                id={pilihan.id}
+                nama={pilihan.nama}
+                jenis={pilihan.jenis}
+                lr={pilihan.lr}
+                onBukaThread={(p, judul) => setThread({ messageId: p.id, nama: judul })}
+              />
+            </PanelProvider>
+          ) : (
+            <View style={[s.kosong, { backgroundColor: colors.bg }]}>
+              <EmptyState icon="message-circle" title="Pilih percakapan" description="Percakapan tampil di sini." />
+            </View>
+          )}
+          {panelThread !== null && !tata.tigaKolom ? (
+            <>
+              <Pressable onPress={tutupThread} scaleTo={1} accessibilityRole="button" accessibilityLabel="Tutup thread" style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]} />
+              <View style={[s.threadGeser, { backgroundColor: colors.bg, borderLeftColor: colors.border, boxShadow: shadows.float }]}>{panelThread}</View>
+            </>
+          ) : null}
+        </View>
+      ) : null}
+      {panelThread !== null && duaPanel && tata.tigaKolom ? <View style={[s.kolomThread, { borderLeftColor: colors.border }]}>{panelThread}</View> : null}
 
       <BottomSheet visible={sheetBaru} onClose={() => setSheetBaru(false)} title="Obrolan baru" showClose>
         <SheetAction icon="user-plus" label="Pesan baru" description="Satu rekan = pesan langsung, dua atau lebih = grup" onPress={() => tutupSheetLalu(() => router.push('/obrolan/baru'))} />
@@ -266,6 +358,11 @@ export default function LayarObrolan(): React.JSX.Element {
 }
 
 const s = StyleSheet.create({
+  baris: { flexDirection: 'row' },
+  kolomDaftar: { borderRightWidth: StyleSheet.hairlineWidth },
+  kosong: { flex: 1, justifyContent: 'center', padding: 32 },
+  kolomThread: { width: 320, borderLeftWidth: StyleSheet.hairlineWidth },
+  threadGeser: { position: 'absolute', top: 0, right: 0, bottom: 0, width: '62%', maxWidth: 400, borderLeftWidth: StyleSheet.hairlineWidth },
   seksi: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 },
   fab: { position: 'absolute', right: 16 },
 });

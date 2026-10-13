@@ -6,6 +6,7 @@ import { layout, useTheme } from '@/theme';
 
 import { IconButton, type IconButtonProps } from './Button';
 import { Glass } from './Gradient';
+import { usePanel } from './panel';
 import { Text } from './Text';
 
 export type AppBarAction = Pick<IconButtonProps, 'icon' | 'label' | 'onPress' | 'badge' | 'disabled'>;
@@ -66,9 +67,19 @@ export function SubAppBar({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const panel = usePanel();
+  // Panel tablet (detail di samping daftar): Tutup bila panel bisa ditutup, selain itu tanpa tombol.
+  const tombolKembali =
+    onBack || !panel.tertanam ? (
+      <IconButton icon="arrow-left" label="Kembali" variant="ghost" onPress={onBack ?? (() => router.back())} />
+    ) : panel.tutup ? (
+      <IconButton icon="x" label="Tutup" variant="ghost" onPress={panel.tutup} />
+    ) : (
+      <View style={{ width: 8 }} />
+    );
   const isi = (
     <View style={[s.sub, { height: layout.appBar }]}>
-      <IconButton icon="arrow-left" label="Kembali" variant="ghost" onPress={onBack ?? (() => router.back())} />
+      {tombolKembali}
       <Text variant="title" weight={700} numberOfLines={1} style={{ flex: 1 }} accessibilityRole="header">
         {title}
       </Text>

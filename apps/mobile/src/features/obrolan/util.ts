@@ -66,16 +66,21 @@ export function tanpaKoneksi(err: unknown): boolean {
 }
 
 /** Buka linimasa sebuah kanal (params hanya placeholder; detail dimuat ulang). `lr` = penunjuk baca sebelum dibuka (pemisah "belum dibaca"). */
-export function bukaKanal(kanal: KanalRingkas | DetailKanal, saya?: string | null, ganti = false): void {
+/** Parameter layar percakapan (id, nama, jenis, penunjuk terakhir dibaca bila anggota). */
+export function paramKanal(kanal: KanalRingkas | DetailKanal, saya?: string | null): { id: string; nama: string; jenis: string; lr?: string } {
   let terakhirDibaca = '';
   let punyaPenunjuk = false;
   if ('unread_count' in kanal && saya && kanal.is_member) {
     punyaPenunjuk = true;
     terakhirDibaca = kanal.members.find((m) => m.user_id === saya)?.last_read_message_id ?? '';
   }
+  return { id: kanal.id, nama: namaKanal(kanal), jenis: kanal.type, ...(punyaPenunjuk ? { lr: terakhirDibaca } : {}) };
+}
+
+export function bukaKanal(kanal: KanalRingkas | DetailKanal, saya?: string | null, ganti = false): void {
   const target = {
     pathname: '/obrolan/[id]' as const,
-    params: { id: kanal.id, nama: namaKanal(kanal), jenis: kanal.type, ...(punyaPenunjuk ? { lr: terakhirDibaca } : {}) },
+    params: paramKanal(kanal, saya),
   };
   if (ganti) {
     router.replace(target);

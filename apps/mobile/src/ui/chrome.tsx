@@ -30,9 +30,13 @@ export const TAB_BAR_SPACE = layout.tabBar + layout.tabLift + layout.tabRaise;
 
 const TabBarSpaceContext = createContext(false);
 
-/** Dipasang di layout (tabs): layar di dalamnya perlu padding bawah untuk kapsul yang melayang. */
-export function TabBarSpaceProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
-  return <TabBarSpaceContext.Provider value>{children}</TabBarSpaceContext.Provider>;
+/**
+ * Dipasang di layout (tabs): layar di dalamnya perlu padding bawah untuk kapsul
+ * yang melayang. `aktif={false}` saat Rail tablet dipakai (tanpa kapsul) —
+ * pohon tetap sama supaya navigator tidak dipasang ulang saat lebar berubah.
+ */
+export function TabBarSpaceProvider({ children, aktif = true }: { children: React.ReactNode; aktif?: boolean }): React.JSX.Element {
+  return <TabBarSpaceContext.Provider value={aktif}>{children}</TabBarSpaceContext.Provider>;
 }
 
 /** Ruang bawah yang harus disisakan konten (0 di luar tabs). Sudah termasuk inset gestur. */

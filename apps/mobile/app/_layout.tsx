@@ -17,7 +17,7 @@ import { SetupDuaFaktorWeb } from '@/features/auth/SetupDuaFaktorWeb';
 import { ModeCatatPill } from '@/features/catatan/ModeCatatPill';
 import { AppLockProvider, useAppLock } from '@/features/auth/appLock';
 import { ThemeProvider, useAppFonts, useTheme } from '@/theme';
-import { UIProvider } from '@/ui';
+import { UIProvider, useKebijakanOrientasi } from '@/ui';
 import { AppStatusProvider, useAppStatus } from '@/session/AppStatusProvider';
 import { SessionProvider, useSession } from '@/session/SessionProvider';
 import { UnreadProvider } from '@/session/UnreadProvider';
@@ -175,6 +175,8 @@ function RootNavigator(): React.JSX.Element {
 }
 
 export default function RootLayout(): React.JSX.Element {
+  // Ponsel tetap potret (app.json); tablet & lipat terbuka boleh diputar.
+  useKebijakanOrientasi();
   return (
     <ThemeProvider>
       <SafeAreaProvider>

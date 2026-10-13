@@ -64,8 +64,18 @@ Bentuk & ukuran (`src/theme/tokens.ts`): `radius` (skala web `xs 6 · sm 8 · md
 | `AppBar` / `SubAppBar` | `title overline subtitle actions[{icon,label,onPress,badge}]` · `title onBack actions transparent` |
 | `Screen` / `ActionBar` | `refreshing onRefresh contentStyle header footer scroll` — latar bercahaya, area aman, padding bawah kapsul otomatis |
 | `TabBar` | custom `tabBar` di `(tabs)/_layout.tsx` |
+| `Rail` | pengganti `TabBar` pada jendela ≥ 600 dp (`tabBarPosition: 'left'`): merek, Cari, Beranda, Tugas, Absen, Obrolan/Inbox, Rapat, Lainnya, avatar |
+| `useTataLetak()` | `{ lebar, kelas('compact'·'medium'·'expanded'), rail, duaPanel, tigaKolom, lanskap }` dari lebar **jendela**; `lebarDaftar(t, 'tugas'·'obrolan')` |
+| `PanelProvider` / `usePanel()` / `useKembali()` | detail yang ditanam di samping daftar (tablet): `SubAppBar`/header obrolan mengganti Kembali dengan Tutup (atau tanpa tombol); `useKembali()` = tutup panel atau `router.back()` |
 
 Tombol tengah: `centerAction(action, endIso, now)` → `'absen' | 'workspace'` (fungsi murni di `centerAction.ts`; uji `npm run test:center`). `useAttendanceStatus()` → `{ action, center, badge, refresh, terapkan }`: sumbernya payload `state.center {action, badge, flipsAt}` dari `GET absensi/hari-ini` (satu timer ke `flipsAt`, tanpa polling; lencana "!" pada tombol Absen saat jam pulang − 60 menit). Panggil `refresh()` setelah check-in/out, atau `terapkan(data)` bila layar sudah memuat hari-ini sendiri (layar Absen). Berpindah tab (selain Absen) otomatis menyegarkan. Obrolan ⇄ Inbox: `user.features.chat === false` (belum ada di `UserProfile`; dibaca defensif, bawaan Obrolan aktif).
+
+## Tablet, lipat, rotasi (spec 12 §4.10, keputusan pemilik 13 Okt 2026)
+
+- **< 600 dp** kapsul tab bar · **≥ 600 dp** Rail 96 dp (tanpa ruang bawah: `TabBarSpaceProvider aktif={false}`) · **≥ 720 dp** Tugas & Obrolan dua panel · **≥ 1000 dp** Obrolan tiga kolom (thread di kolom ketiga; di bawahnya thread = panel geser di atas percakapan).
+- Detail yang bisa ditanam ada di `src/features` (`tugas/DetailTugas`, `obrolan/Percakapan`, `obrolan/Thread`); rute `app/…` hanya pembungkus yang membaca parameter. Tugas terpilih disimpan di `?tugas=`.
+- Orientasi: app.json tetap `portrait` (ponsel); `useKebijakanOrientasi()` (di `app/_layout.tsx`) membuka kunci bila sisi terpendek **layar** ≥ 600 dp dan mengunci potret lagi saat lipat ditutup. Ruang video sudah menyesuaikan lanskap sendiri.
+- Layar stack (detail rapat, pengaturan, dsb.) tetap layar penuh tanpa Rail.
 
 ## Ikon
 
