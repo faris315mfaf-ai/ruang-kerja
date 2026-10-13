@@ -63,6 +63,8 @@ export function KartuSedangBekerja({
   jamAbsenKembali,
   onPulangAwal,
   fasePulang = null,
+  menungguSinkron = false,
+  rencana = [],
 }: {
   state: KeadaanAbsen;
   data: TodayAttendance;
@@ -71,9 +73,14 @@ export function KartuSedangBekerja({
   onPulangAwal: () => void;
   /** Jam pulang perusahaan sedang tertutup (`sebelum` dibuka / `sesudah` ditutup). */
   fasePulang?: 'sebelum' | 'sesudah' | null;
+  /** Absen masuk baru tersimpan di HP (offline), belum diterima server. */
+  menungguSinkron?: boolean;
+  /** Rencana kerja dari absen masuk yang antre (server belum punya). */
+  rencana?: string[];
 }): React.JSX.Element {
   const { colors } = useTheme();
   const day = data.today.day;
+  const poinRencana = (day?.workPlan?.length ?? 0) > 0 ? (day?.workPlan ?? []) : rencana;
   const telat = state.punctuality === 'late' && state.lateMinutes > 0;
   return (
     <>
@@ -82,7 +89,7 @@ export function KartuSedangBekerja({
           <Text variant="meta" style={{ fontSize: 14 }}>
             Sedang bekerja
           </Text>
-          <Badge tone={telat ? 'warning' : 'success'}>{telat ? `Terlambat ${state.lateMinutes} m` : 'Tepat waktu'}</Badge>
+          {menungguSinkron ? <Badge tone="info">Menunggu sinkron</Badge> : <Badge tone={telat ? 'warning' : 'success'}>{telat ? `Terlambat ${state.lateMinutes} m` : 'Tepat waktu'}</Badge>}
         </View>
         <Text variant="mono" style={{ fontSize: 44, lineHeight: 52, color: colors.text, letterSpacing: -1 }}>
           {jam(sekarang)}
@@ -93,8 +100,8 @@ export function KartuSedangBekerja({
         {state.scheduledEnd ? <Text variant="meta">Pulang terjadwal {jam(state.scheduledEnd)}</Text> : null}
       </Card>
       <Card>
-        <RencanaBacaSaja poin={day?.workPlan ?? []} judul="Rencana kerja pagi tadi" />
-        {(day?.workPlan?.length ?? 0) > 0 ? <Divider /> : null}
+        <RencanaBacaSaja poin={poinRencana} judul="Rencana kerja pagi tadi" />
+        {poinRencana.length > 0 ? <Divider /> : null}
         {jamAbsenKembali ? (
           <Banner tone="info" message={`Tombol Absen di tab tengah kembali pukul ${jamAbsenKembali}, satu jam sebelum jam pulang. Sampai saat itu Anda masuk dari kartu ini atau Beranda.`} />
         ) : null}
@@ -111,9 +118,9 @@ export function KartuSedangBekerja({
           <ListRow icon="clipboard-pen-line" iconTone="blue" title="Ajukan koreksi absensi" subtitle="HR memasukkan jam pulang manual" onPress={() => bukaKoreksiHari()} />
         ) : null}
       </Card>
-      {(day?.workPlan?.length ?? 0) > 0 ? (
+      {poinRencana.length > 0 && !menungguSinkron ? (
         <Card variant="flat">
-          <ListRow icon="list-checks" iconTone="teal" title="Tugas hari ini" subtitle={`${day?.workPlan?.length ?? 0} poin rencana jadi tugas pribadi`} onPress={() => router.navigate('/tugas')} />
+          <ListRow icon="list-checks" iconTone="teal" title="Tugas hari ini" subtitle={`${poinRencana.length} poin rencana jadi tugas pribadi`} onPress={() => router.navigate('/tugas')} />
         </Card>
       ) : null}
     </>
@@ -121,11 +128,32 @@ export function KartuSedangBekerja({
 }
 
 /** 04-4: absensi hari ini selesai + ajakan laporan harian (Bagian 4). */
-export function KartuSelesai({ data, state }: { data: TodayAttendance; state: KeadaanAbsen }): React.JSX.Element {
+export function KartuSelesai({
+  data,
+  state,
+  menunggu = false,
+  rencana = [],
+  laporan = [],
+}: {
+  data: TodayAttendance;
+  state: KeadaanAbsen;
+  /** Absen pulang baru tersimpan di HP (offline), belum diterima server. */
+  menunggu?: boolean;
+  rencana?: string[];
+  laporan?: string[];
+}): React.JSX.Element {
   const { colors } = useTheme();
   const day = data.today.day;
   const d = data.today.schedule;
-  const durasi = day?.workMinutes ?? null;
+  const perkiraan =
+    day?.workMinutes === undefined || day?.workMinutes === null
+      ? state.checkedInAt && state.checkedOutAt
+        ? Math.max(0, Math.round((Date.parse(state.checkedOutAt) - Date.parse(state.checkedInAt)) / 60_000))
+        : null
+      : null;
+  const durasi = day?.workMinutes ?? perkiraan;
+  const poinRencana = (day?.workPlan?.length ?? 0) > 0 ? (day?.workPlan ?? []) : rencana;
+  const poinLaporan = (day?.workReport?.length ?? 0) > 0 ? (day?.workReport ?? []) : laporan;
   return (
     <>
       <Card style={{ gap: 4 }}>
@@ -133,19 +161,19 @@ export function KartuSelesai({ data, state }: { data: TodayAttendance; state: Ke
           <Text variant="title" weight={700}>
             Hari ini
           </Text>
-          <Badge tone="success">Selesai</Badge>
+          {menunggu ? <Badge tone="info">Menunggu sinkron</Badge> : <Badge tone="success">Selesai</Badge>}
         </View>
         <BarisRingkas label="Masuk" nilai={`${jam(state.checkedInAt)}${day?.checkIn?.locationName ? ` · ${day.checkIn.locationName}` : ''}`} />
         <BarisRingkas label="Pulang" nilai={`${jam(state.checkedOutAt)}${day?.checkOut?.locationName ? ` · ${day.checkOut.locationName}` : ''}`} />
-        <BarisRingkas label="Durasi kerja" nilai={durasi !== null ? durasiMenit(durasi) : '—'} />
+        <BarisRingkas label={perkiraan !== null ? 'Durasi kerja (perkiraan)' : 'Durasi kerja'} nilai={durasi !== null ? durasiMenit(durasi) : '—'} />
         {d.shiftName ? <BarisRingkas label="Shift" nilai={`${d.shiftName}${d.hours ? ` ${d.hours}` : ''}`} /> : null}
         {day?.checkIn?.methodLabel ? <BarisRingkas label="Metode" nilai={day.checkIn.methodLabel} /> : null}
         {day && day.lateMinutes > 0 ? <BarisRingkas label="Terlambat" nilai={durasiMenit(day.lateMinutes)} /> : null}
       </Card>
-      {(day?.workPlan?.length ?? 0) > 0 || (day?.workReport?.length ?? 0) > 0 ? (
+      {poinRencana.length > 0 || poinLaporan.length > 0 ? (
         <Card style={{ gap: 16 }}>
-          <RencanaBacaSaja poin={day?.workPlan ?? []} judul="Rencana kerja pagi tadi" />
-          <RencanaBacaSaja poin={day?.workReport ?? []} judul="Laporan kerja sore ini" />
+          <RencanaBacaSaja poin={poinRencana} judul="Rencana kerja pagi tadi" />
+          <RencanaBacaSaja poin={poinLaporan} judul="Laporan kerja sore ini" />
         </Card>
       ) : null}
       <Card style={{ gap: 12 }}>

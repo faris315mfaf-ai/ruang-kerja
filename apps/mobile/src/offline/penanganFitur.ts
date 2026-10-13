@@ -8,4 +8,6 @@
  * dan berkas itu memanggil `daftarkanPenangan('absensi.masuk', {...})` di level modul.
  * Jangan daftarkan penangan di dalam komponen React (tidak terpasang saat buka dingin).
  */
+import '@/features/absensi/offline';
+
 export {};

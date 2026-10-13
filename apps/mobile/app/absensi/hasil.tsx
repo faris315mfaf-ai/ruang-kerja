@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect } from 'react';
 import { BackHandler } from 'react-native';
 
+import { HasilAntre } from '@/features/absensi/HasilAntre';
 import { HasilGagal } from '@/features/absensi/HasilGagal';
 import { HasilSukses } from '@/features/absensi/HasilSukses';
 import { absenStore, useAbsenStore } from '@/features/absensi/store';
@@ -40,5 +41,11 @@ export default function LayarHasil(): React.JSX.Element | null {
   if (hasil === null) {
     return null;
   }
-  return hasil.jenis === 'sukses' ? <HasilSukses h={hasil} onSelesai={tutup} /> : <HasilGagal key={hasil.diterimaPada} h={hasil} onKembali={tutup} />;
+  if (hasil.jenis === 'sukses') {
+    return <HasilSukses h={hasil} onSelesai={tutup} />;
+  }
+  if (hasil.jenis === 'antre') {
+    return <HasilAntre h={hasil} onSelesai={tutup} />;
+  }
+  return <HasilGagal key={hasil.diterimaPada} h={hasil} onKembali={tutup} />;
 }

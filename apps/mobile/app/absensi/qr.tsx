@@ -17,6 +17,7 @@ import { jalankanQr } from '@/features/absensi/kirim';
 import { absenStore, type TitikKirim } from '@/features/absensi/store';
 import { useTahanKunciSelama } from '@/features/absensi/useTahanKunciSelama';
 import { useAppLock } from '@/features/auth/appLock';
+import { useSession } from '@/session/SessionProvider';
 import { radius, useTheme } from '@/theme';
 import { Button, Icon, IconButton, Pressable, Text } from '@/ui';
 
@@ -31,6 +32,8 @@ export default function LayarQr(): React.JSX.Element {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { tahanKunci } = useAppLock();
+  const { user } = useSession();
+  const uid = user?.id;
   const params = useLocalSearchParams<{ arah?: string }>();
   const arah = params.arah === 'pulang' ? 'pulang' : 'masuk';
   const [izin, mintaIzin] = useCameraPermissions();
@@ -89,10 +92,10 @@ export default function LayarQr(): React.JSX.Element {
       }
       setMengirim(true);
       const titik = await Promise.race([gps.current ?? Promise.resolve(null), new Promise<null>((r) => setTimeout(() => r(null), TUNGGU_GPS_MS))]);
-      await jalankanQr(arah, kode, titik, absenStore.get().jadwal ?? { batasTerlambat: null, jadwalMulai: null, jamPulangTerjadwal: null, masukPada: null, masukLokasi: null });
+      await jalankanQr(arah, kode, titik, absenStore.get().jadwal ?? { batasTerlambat: null, jadwalMulai: null, jamPulangTerjadwal: null, masukPada: null, masukLokasi: null }, uid);
       router.replace('/absensi/hasil');
     },
-    [arah],
+    [arah, uid],
   );
 
   if (!izin) {

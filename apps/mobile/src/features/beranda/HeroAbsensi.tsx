@@ -5,10 +5,13 @@
  * (layar Absen dimiliki modul 03). Offline: tombol nonaktif dengan alasan.
  */
 import { router } from 'expo-router';
+import { useMemo } from 'react';
 import { View } from 'react-native';
 
 import type { StatusAbsensiRingkas } from '@/api/beranda';
 import { durasiMenit, jam, jarakMeter, ymdHariIni } from '@/lib/format';
+import { terapkanKeHero, useAntreAbsen, useTerkonfirmasi } from '@/features/absensi/overlay';
+import { useSession } from '@/session/SessionProvider';
 import { radius, useTheme } from '@/theme';
 import { Hero, Icon, Pressable, Text, type AnyIconName } from '@/ui';
 
@@ -23,7 +26,7 @@ interface Isi {
   tombolIcon: AnyIconName;
 }
 
-function hitungIsi(s: StatusAbsensiRingkas): Isi {
+function hitungIsi(s: StatusAbsensiRingkas, menunggu: { masuk: boolean; pulang: boolean }): Isi {
   const lokasi = s.locationName ?? 'Kantor';
   const shift = s.startLabel && s.endLabel ? `Shift ${s.startLabel}–${s.endLabel}` : null;
   const jadwal = s.startLabel && s.endLabel ? `${s.startLabel}–${s.endLabel}` : null;
@@ -61,7 +64,7 @@ function hitungIsi(s: StatusAbsensiRingkas): Isi {
       chip: lokasi,
       chipIcon: 'map-pin',
       kanan: shift,
-      baris1: 'Selesai hari ini',
+      baris1: menunggu.pulang ? 'Selesai · menunggu sinkron' : 'Selesai hari ini',
       judul: `${jam(s.checkInAt)} – ${jam(s.checkOutAt)}`,
       baris2: menitKerja !== null ? `${durasiMenit(menitKerja)} · ${lokasi}` : lokasi,
       tombol: 'Ajukan koreksi',
@@ -77,7 +80,7 @@ function hitungIsi(s: StatusAbsensiRingkas): Isi {
       chip: lokasi,
       chipIcon: 'map-pin',
       kanan: shift,
-      baris1: terlambat ? `Sudah check-in · terlambat ${s.lateMinutes} menit` : 'Sudah check-in · tepat waktu',
+      baris1: menunggu.masuk ? 'Sudah check-in · menunggu sinkron' : terlambat ? `Sudah check-in · terlambat ${s.lateMinutes} menit` : 'Sudah check-in · tepat waktu',
       judul: `Masuk ${jam(s.checkInAt)}`,
       baris2: [jarak, pulang].filter((x): x is string => x !== null).join(' · ') || null,
       tombol: 'Check-out',
@@ -122,11 +125,19 @@ function hitungIsi(s: StatusAbsensiRingkas): Isi {
   };
 }
 
-export function HeroAbsensi({ status, offline }: { status: StatusAbsensiRingkas; offline: boolean }): React.JSX.Element {
+export function HeroAbsensi({ status: statusServer, offline }: { status: StatusAbsensiRingkas; offline: boolean }): React.JSX.Element {
   const { colors } = useTheme();
-  const isi = hitungIsi(status);
-  const mati = offline && (status.action === 'check_in' || status.action === 'check_out');
-  const teksTombol = mati ? 'Check-in butuh koneksi' : isi.tombol;
+  const { user } = useSession();
+  const antre = useAntreAbsen();
+  const konfirm = useTerkonfirmasi(user?.id);
+  // Absen yang tersimpan di HP (menunggu sinkron) langsung tampil di sini; server tetap hakim saat sinkron.
+  const lapisan = useMemo(() => terapkanKeHero(statusServer, antre, konfirm), [statusServer, antre, konfirm]);
+  const status = lapisan.status;
+  const isi = hitungIsi(status, { masuk: lapisan.menungguMasuk, pulang: lapisan.menungguPulang });
+  const bisaAbsen = status.action === 'check_in' || status.action === 'check_out';
+  // Offline tidak lagi mengunci tombol: absen disimpan di HP dan dikirim otomatis saat online.
+  const catatanOffline = offline && bisaAbsen ? 'Offline: absen disimpan di HP dan dikirim otomatis saat online' : null;
+  const teksTombol = isi.tombol;
   const koreksi = isi.tombol === 'Ajukan koreksi';
 
   return (
@@ -162,32 +173,30 @@ export function HeroAbsensi({ status, offline }: { status: StatusAbsensiRingkas;
       <Text variant="h1" tone="onPrimary" weight={800} accessibilityRole="header">
         {isi.judul}
       </Text>
-      {isi.baris2 ? (
+      {isi.baris2 || catatanOffline ? (
         <Text variant="body" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 15, lineHeight: 22 }}>
-          {isi.baris2}
+          {[isi.baris2, catatanOffline].filter(Boolean).join(' · ')}
         </Text>
       ) : null}
 
       <Pressable
-        disabled={mati}
         onPress={() => (koreksi ? router.push({ pathname: '/pengajuan/baru', params: { jenis: 'KOR', tanggal: ymdHariIni() } }) : router.push('/(tabs)/absen'))}
         accessibilityRole="button"
         accessibilityLabel={teksTombol}
-        accessibilityHint={mati ? 'Check-in membutuhkan koneksi internet' : koreksi ? 'Membuka formulir pengajuan koreksi' : 'Membuka tab Absen'}
-        accessibilityState={{ disabled: mati }}
+        accessibilityHint={koreksi ? 'Membuka formulir pengajuan koreksi' : 'Membuka tab Absen'}
         style={{
           marginTop: 10,
           minHeight: 52,
           borderRadius: radius.control,
-          backgroundColor: mati ? 'rgba(255,255,255,0.35)' : '#FFFFFF',
+          backgroundColor: '#FFFFFF',
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
           gap: 8,
         }}
       >
-        <Icon name={isi.tombolIcon} size={22} color={mati ? '#FFFFFF' : colors.brand[600]} />
-        <Text variant="title" weight={700} style={{ color: mati ? '#FFFFFF' : colors.brand[600] }}>
+        <Icon name={isi.tombolIcon} size={22} color={colors.brand[600]} />
+        <Text variant="title" weight={700} style={{ color: colors.brand[600] }}>
           {teksTombol}
         </Text>
       </Pressable>

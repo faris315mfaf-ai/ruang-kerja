@@ -9,11 +9,12 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, Keyboard, StyleSheet, View } from 'react-native';
 
-import { ApiError } from '@/api/client';
+import { ApiError, type HasilPermintaan } from '@/api/client';
 import { absensiHariIniLengkap, type HariIni, type KeadaanAbsen } from '@/api/absensi';
+import { useOnline } from '@/offline';
 import { useSession } from '@/session/SessionProvider';
 import { useUnread } from '@/session/UnreadProvider';
-import { jam, tanggalPanjang } from '@/lib/format';
+import { jam, tanggalPanjang, ymdJakarta } from '@/lib/format';
 import { radius } from '@/theme';
 import {
   AppBar,
@@ -50,6 +51,7 @@ import { lokasiTerdekat } from './geo';
 import { fasePulang, labelPulangTertutup } from './jendela';
 import { jalankanPermintaan } from './kirim';
 import { lokasiPesan, susunPesanWa } from './pesanWa';
+import { onAbsenBerubah, useAntreAbsen, useKeadaanEfektif, useTerkonfirmasi } from './overlay';
 import { absenStore, useAbsenStore, type InfoJadwal, type Metode } from './store';
 import { titikSegar, useLokasiAbsen, type TitikGps } from './useLokasiAbsen';
 import { SKEW_TANDAI_MS, hitungOffset, menitAntara, useJamServer } from './waktu';
@@ -105,7 +107,9 @@ export function LayarAbsen(): React.JSX.Element {
   const [memuat, setMemuat] = useState(true);
   const [menyegarkan, setMenyegarkan] = useState(false);
   const [galat, setGalat] = useState<ApiError | string | null>(null);
-  const [offline, setOffline] = useState(false);
+  const online = useOnline();
+  const offline = !online;
+  const [dariCache, setDariCache] = useState(false);
   const [fase, setFase] = useState<'diam' | 'lokasi' | 'kirim'>('diam');
   const [sheetPesan, setSheetPesan] = useState(false);
   const [tundaIzin, setTundaIzin] = useState(false);
@@ -113,12 +117,16 @@ export function LayarAbsen(): React.JSX.Element {
   const sudahPilihMetode = useRef(false);
   const dataAda = useRef(false);
 
-  const offsetMs = useMemo(() => hitungOffset(data?.serverTime), [data?.serverTime]);
+  // Salinan cache membawa `serverTime` lama: pakai jam perangkat apa adanya (jangan jadikan selisih).
+  const offsetMs = useMemo(() => (dariCache ? 0 : hitungOffset(data?.serverTime)), [dariCache, data?.serverTime]);
   const sekarang = useJamServer(offsetMs);
-  const state = data?.state ?? null;
+  const windowsBerlaku = data?.today.windowsApply !== false;
+  // Keadaan hari = data server (atau salinan) disesuaikan dengan jam HP dan absen yang menunggu sinkron.
+  const antre = useAntreAbsen();
+  const konfirm = useTerkonfirmasi(user?.id);
+  const state = useKeadaanEfektif(data?.state ?? null, { sekarang, offline, windowsApply: windowsBerlaku, antre, konfirm });
   // Jam pulang perusahaan tertutup: `sebelum` (belum dibuka) atau `sesudah` (sudah ditutup).
   const tutupPulang = state ? fasePulang(state, sekarang) : null;
-  const windowsBerlaku = data?.today.windowsApply !== false;
 
   const muat = useCallback(
     async (diam: boolean): Promise<void> => {
@@ -127,18 +135,16 @@ export function LayarAbsen(): React.JSX.Element {
       }
       setGalat(null);
       try {
-        const hasil = await absensiHariIniLengkap();
+        const info: HasilPermintaan = {};
+        const hasil = await absensiHariIniLengkap(info);
         setData(hasil);
-        setOffline(false);
+        setDariCache(info.dariCache === true);
         dataAda.current = true;
         terapkan(hasil);
         if (hasil.state) {
           absenStore.setJadwal(infoJadwal(hasil.state));
         }
       } catch (err) {
-        if (err instanceof ApiError && err.status === 0) {
-          setOffline(true);
-        }
         // Data lama tetap tampil; galat penuh hanya bila belum pernah berhasil.
         if (!dataAda.current) {
           setGalat(err instanceof ApiError ? err : 'Tidak dapat memuat status absensi.');
@@ -157,6 +163,9 @@ export function LayarAbsen(): React.JSX.Element {
       void muat(dataAda.current);
     }, [muat, user?.id]),
   );
+
+  // Absen dari antrean selesai disinkronkan / ditolak: ambil keadaan hari terbaru dari server.
+  useEffect(() => onAbsenBerubah(() => void muat(true)), [muat]);
 
   // Pintasan sakit/izin: muat ulang tepat sesudah batas jam terdekat agar tombolnya tertutup (server tetap menolak).
   const pintasanData = state?.leaveShortcut ?? null;
@@ -255,8 +264,8 @@ export function LayarAbsen(): React.JSX.Element {
 
   // Alasan geser terkunci (urut prioritas) + petunjuk di bawahnya.
   let kunci: { label: string; hint: string } | null = null;
-  if (offline) {
-    kunci = { label: 'Butuh koneksi internet', hint: 'Versi 1 menolak check-in tanpa koneksi — sama seperti web/PWA. Isian Anda tetap tersimpan.' };
+  if (state && antre.bermasalah.length > 0) {
+    kunci = { label: 'Periksa antrean absen dulu', hint: 'Ada absen yang gagal sinkron. Perbaiki atau hapus di Antrean sinkron sebelum absen lagi.' };
   } else if (state?.code === 'too_early') {
     kunci = { label: `Dibuka pukul ${jam(state.windowOpensAt)}`, hint: state.message || 'Check-in belum bisa dikirim.' };
   } else if (state && tutupPulang === 'sebelum') {
@@ -275,6 +284,7 @@ export function LayarAbsen(): React.JSX.Element {
   }
 
   const petunjukSiap = (() => {
+    if (offline) return 'Offline · disimpan di HP dengan jam HP, dikirim otomatis saat online';
     if (titik?.mocked) return 'Dikirim dengan penanda lokasi palsu.';
     if (titik?.accuracy !== null && titik !== null && (titik.accuracy ?? 0) > 100) return 'Dikirim dengan penanda "Akurasi GPS rendah".';
     if (skewMenit !== null) return 'Dikirim dengan penanda jam perangkat tidak sesuai.';
@@ -319,7 +329,7 @@ export function LayarAbsen(): React.JSX.Element {
       }
       setFase('kirim');
       const dekat = lokasiTerdekat(fix.latitude, fix.longitude, data.today.locations);
-      const ok = await jalankanPermintaan(
+      await jalankanPermintaan(
         {
           arah,
           metode,
@@ -329,20 +339,19 @@ export function LayarAbsen(): React.JSX.Element {
           workPlan: arah === 'masuk' ? poinValid : [],
           workReport: arah === 'pulang' ? laporanValid : [],
           jarakM: dekat?.jarakM ?? null,
+          uid: user?.id,
+          lokasiNama: dekat?.lokasi.name ?? null,
+          dalam: dekat ? dekat.dalam : null,
         },
         infoJadwal(state),
       );
-      const hasil = absenStore.get().hasil;
-      if (!ok && hasil?.jenis === 'gagal' && hasil.gagal.status === 0) {
-        setOffline(true);
-      }
       lokasi.reset();
       router.push('/absensi/hasil');
     } finally {
       kunciKirim.current = false;
       setFase('diam');
     }
-  }, [arah, data, dialog, laporanValid, lokasi, metode, poinValid, sekarang, snackbar, st.catatan, state, titik]);
+  }, [arah, data, dialog, laporanValid, lokasi, metode, poinValid, sekarang, snackbar, st.catatan, state, titik, user?.id]);
 
   function bukaPemindai(a: 'masuk' | 'pulang'): void {
     router.push({ pathname: '/absensi/qr', params: { arah: a } });
@@ -399,7 +408,13 @@ export function LayarAbsen(): React.JSX.Element {
         <ErrorState
           kind={errorKindFromStatus(status)}
           title="Tidak dapat memuat status absensi"
-          message={status === 0 ? 'Periksa koneksi internet Anda lalu coba lagi. Data absen Anda aman di server.' : typeof galat === 'string' ? galat : galat.message}
+          message={
+            status === 0
+              ? 'Data absensi belum tersimpan di HP. Buka layar Absen sekali saat online agar jadwal, lokasi kantor, dan persetujuan tersimpan, setelah itu absen bisa dilakukan tanpa internet.'
+              : typeof galat === 'string'
+                ? galat
+                : galat.message
+          }
           onRetry={() => void muat(false)}
         />
       </>
@@ -414,6 +429,7 @@ export function LayarAbsen(): React.JSX.Element {
     );
   } else if (data && state) {
     const jam0 = jamAbsenKembali(state);
+    const rencanaPagi = (data.today.day?.workPlan?.length ?? 0) > 0 ? (data.today.day?.workPlan ?? []) : (antre.masuk?.rencana ?? []);
     const bukanForm = !tampilForm;
     const lokasiKantor = terdekat?.lokasi ?? data.today.locations[0] ?? null;
     // Pintasan sakit/izin: tidak untuk yang sudah check-in / selesai (server juga menutupnya).
@@ -431,12 +447,46 @@ export function LayarAbsen(): React.JSX.Element {
     isi = (
       <>
         {kepala}
-        {offline ? <Banner tone="warn" icon="wifi-off" title="Tidak ada koneksi internet" message="Check-in butuh koneksi. Isi form tetap tersimpan, kirim setelah sinyal kembali." /> : null}
+        {offline ? (
+          <Banner
+            tone="info"
+            icon="wifi-off"
+            title="Mode offline"
+            message="Absen tetap bisa dilakukan: disimpan di HP dengan jam HP saat Anda menekan absen, lalu dikirim otomatis saat online (maks. 72 jam) dan ditandai untuk ditinjau HR."
+          />
+        ) : null}
+        {offline && data.today.locations.length === 0 && state.code !== 'checked_out' ? (
+          <Banner tone="warn" icon="map-pin-off" title="Data lokasi kantor belum tersimpan di HP" message="Jarak ke kantor tidak bisa dihitung sekarang. Absen tetap bisa dikirim; server yang menilai lokasi saat sinkron." />
+        ) : null}
+        {antre.bermasalah.map((a) => {
+          const koreksi = a.kode === 'offline_expired' || a.kode === 'offline_clock_invalid' || a.kode === 'kedaluwarsa';
+          return (
+            <Banner
+              key={a.id}
+              tone="bad"
+              icon="triangle-alert"
+              title={`Absen ${a.arah} ${a.jam} gagal sinkron`}
+              message={`${a.galat ?? 'Server menolak absen ini.'} Perbaiki atau hapus di Antrean sinkron sebelum absen lagi.`}
+              actionLabel={koreksi ? 'Ajukan koreksi absensi' : 'Buka antrean'}
+              onAction={() => (koreksi ? bukaKoreksiHari(ymdJakarta(a.waktu)) : router.push('/sinkron' as never))}
+            />
+          );
+        })}
+        {antre.bermasalah.length === 0 && (antre.masuk !== null || antre.pulang !== null) ? (
+          <Banner
+            tone="info"
+            icon="cloud-upload"
+            title={`${[antre.masuk ? `Absen masuk ${antre.masuk.jam}` : null, antre.pulang ? `absen pulang ${antre.pulang.jam}` : null].filter(Boolean).join(' dan ').replace(/^./, (c) => c.toUpperCase())} menunggu sinkron`}
+            message={offline ? 'Tersimpan di HP. Dikirim otomatis saat online.' : 'Sedang dikirim ke server…'}
+            actionLabel="Lihat antrean"
+            onAction={() => router.push('/sinkron' as never)}
+          />
+        ) : null}
         {state.request && !state.request.blocksCheckIn ? (
           <Banner tone="info" icon="file-check" message={`Hari ini ada ${state.request.statusLabel}${state.request.portion === 'half_day' ? ' (setengah hari)' : ''} yang disetujui. Check-in tetap bisa dilakukan.`} />
         ) : null}
 
-        {state.code === 'checked_out' ? <KartuSelesai data={data} state={state} /> : null}
+        {state.code === 'checked_out' ? <KartuSelesai data={data} state={state} menunggu={state.menungguPulang === true} rencana={antre.masuk?.rencana ?? []} laporan={antre.pulang?.laporan ?? []} /> : null}
         {state.code === 'day_has_request' || state.code === 'holiday' || state.code === 'non_working_day' ? <KartuTidakTersedia state={state} data={data} /> : null}
         {state.code === 'window_closed' ? (
           <>
@@ -453,6 +503,8 @@ export function LayarAbsen(): React.JSX.Element {
             jamAbsenKembali={pusat === 'workspace' ? jam0 : null}
             onPulangAwal={() => absenStore.setPulangAwal(true)}
             fasePulang={tutupPulang}
+            menungguSinkron={state.menungguMasuk === true}
+            rencana={antre.masuk?.rencana ?? []}
           />
         ) : null}
 
@@ -548,9 +600,9 @@ export function LayarAbsen(): React.JSX.Element {
                       />
                     ) : (
                       <>
-                        {(data.today.day?.workPlan?.length ?? 0) > 0 ? (
+                        {rencanaPagi.length > 0 ? (
                           <Card>
-                            <RencanaBacaSaja poin={data.today.day?.workPlan ?? []} judul="Rencana kerja pagi tadi" />
+                            <RencanaBacaSaja poin={rencanaPagi} judul="Rencana kerja pagi tadi" />
                           </Card>
                         ) : null}
                         <RencanaKerja
@@ -595,9 +647,9 @@ export function LayarAbsen(): React.JSX.Element {
     // Dock aksi final.
     if (tampilForm && (metode === 'qr' || state.code !== 'no_office_location') && !(metode === 'wfh' && !state.isRemote)) {
       if (metode === 'qr') {
-        const terkunciQr = offline || state.code === 'too_early' || tutupPulang === 'sebelum';
+        const terkunciQr = antre.bermasalah.length > 0 || state.code === 'too_early' || tutupPulang === 'sebelum';
         dock = (
-          <Dock keyboard={tinggiKeyboard} hint={<Text variant="meta" align="center" style={{ marginTop: 8, fontSize: 13 }}>{terkunciQr ? (offline ? 'Butuh koneksi internet.' : state.code === 'too_early' ? state.message || 'Check-in belum bisa dikirim.' : state.checkOutBlockedReason ?? 'Check-out belum bisa dikirim.') : 'Lokasi dan foto hanya direkam saat check-in dan check-out'}</Text>}>
+          <Dock keyboard={tinggiKeyboard} hint={<Text variant="meta" align="center" style={{ marginTop: 8, fontSize: 13 }}>{terkunciQr ? (antre.bermasalah.length > 0 ? 'Ada absen yang gagal sinkron — periksa Antrean sinkron.' : state.code === 'too_early' ? state.message || 'Check-in belum bisa dikirim.' : state.checkOutBlockedReason ?? 'Check-out belum bisa dikirim.') : offline ? 'Offline · disimpan di HP, dikirim otomatis saat online' : 'Lokasi dan foto hanya direkam saat check-in dan check-out'}</Text>}>
             <Button
               title={state.code === 'too_early' ? `Dibuka pukul ${jam(state.windowOpensAt)}` : tutupPulang === 'sebelum' ? labelPulangTertutup(state, 'sebelum') : 'Buka pemindai QR'}
               icon="qr-code"
@@ -633,7 +685,7 @@ export function LayarAbsen(): React.JSX.Element {
               terkunci={kunci !== null}
               alasanKunci={kunci?.label ?? ''}
               mengirim={fase !== 'diam'}
-              labelMengirim={fase === 'lokasi' ? 'Memperbarui lokasi…' : 'Mengirim…'}
+              labelMengirim={fase === 'lokasi' ? 'Memperbarui lokasi…' : offline ? 'Menyimpan…' : 'Mengirim…'}
               onKonfirmasi={() => void kirimSekarang()}
             />
           </Dock>

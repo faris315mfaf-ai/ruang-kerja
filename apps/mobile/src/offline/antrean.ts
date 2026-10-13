@@ -143,6 +143,12 @@ export interface Penangan {
   sesudahDibuang?: (item: ItemAntrean) => void | Promise<void>;
   /** Mengaktifkan tombol "Ubah" di layar Antrean sinkron (buka layar ubah; simpan lewat `cobaLagi(id, patch)`). */
   ubah?: (item: ItemAntrean) => void;
+  /** Teks snackbar saat item ini tersinkron, mis. "Absen masuk 07.52 tersinkron" (bila semua item putaran punya pesan khusus, pesan ini menggantikan "N item tersinkron"). */
+  pesanSukses?: (item: ItemAntrean) => string | null;
+  /** Catatan kecil di baris Antrean sinkron (mis. peringatan "hampir 72 jam"). */
+  catatan?: (item: ItemAntrean) => { teks: string; nada: 'info' | 'warn' | 'bad' } | null;
+  /** Tombol tambahan di baris yang `konflik` (mis. "Ajukan koreksi absensi"). */
+  aksiKonflik?: (item: ItemAntrean, galat: GalatItem) => { label: string; onPress: () => void } | null;
 }
 
 export type PeristiwaAntrean =

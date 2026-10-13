@@ -9,7 +9,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { Directory, File, Paths } from 'expo-file-system';
 
-import { API_URL, ApiError, apiRequest, formFile } from './client';
+import { API_URL, ApiError, apiRequest, formFile, type HasilPermintaan } from './client';
 import type { AttendanceHistory, AttendanceResult, RecapDayCell, TodayAttendance } from './types';
 
 function wajib<T>(nilai: T | null): T {
@@ -127,9 +127,12 @@ export type HariIni = TodayAttendance & {
   today: { windowsApply?: boolean };
 };
 
-/** GET /absensi/hari-ini (bentuk lama + `state`). */
-export function absensiHariIniLengkap(): Promise<HariIni> {
-  return apiRequest<HariIni>('absensi/hari-ini').then((r) => {
+/**
+ * GET /absensi/hari-ini (bentuk lama + `state`). `info` (opsional) diisi klien: `dariCache` = salinan
+ * tersimpan karena jaringan mati (jam server di dalamnya sudah basi → jangan dipakai sebagai offset jam).
+ */
+export function absensiHariIniLengkap(info?: HasilPermintaan): Promise<HariIni> {
+  return apiRequest<HariIni>('absensi/hari-ini', info ? { hasil: info } : {}).then((r) => {
     const data = wajib(r);
     return { ...data, state: data.state ?? null };
   });
@@ -150,6 +153,8 @@ export interface KirimGps {
   workPlan?: string[];
   /** Laporan kerja (check-out, wajib ≥ 1 poin); diabaikan untuk check-in. */
   workReport?: string[];
+  /** `Idempotency-Key` aksi ini; dipakai ulang oleh antrean offline bila pengiriman gagal tanpa jawaban. */
+  idempotencyKey?: string;
 }
 
 /** POST /absensi/check-in | /check-out — multipart dengan selfie (GPS atau WFH; server menurunkan metode). */
@@ -180,6 +185,7 @@ export async function kirimGps(p: KirimGps): Promise<AttendanceResult> {
     method: 'POST',
     form,
     timeoutMs: 60_000,
+    idempotencyKey: p.idempotencyKey,
   });
   return wajib(data).result;
 }
@@ -191,6 +197,7 @@ export interface KirimQr {
   longitude?: number | null;
   accuracy?: number | null;
   mockLocation?: boolean;
+  idempotencyKey?: string;
 }
 
 /** POST /absensi/check-in/qr | /check-out/qr — tanpa selfie. */
@@ -211,6 +218,7 @@ export async function kirimQr(p: KirimQr): Promise<AttendanceResult> {
     method: 'POST',
     json,
     timeoutMs: 30_000,
+    idempotencyKey: p.idempotencyKey,
   });
   return wajib(data).result;
 }

@@ -58,7 +58,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
   const insets = useSafeAreaInsets();
   const { jumlah, obrolan: obrolanBelum } = useUnread();
   const { user } = useSession();
-  const { center, badge, refresh } = useAttendanceStatus();
+  const { center, badge, menunggu, refresh } = useAttendanceStatus();
   const { setTabBarVisible } = useChrome();
   const keyboard = useKeyboardTampil();
   const [sheet, setSheet] = useState(false);
@@ -167,7 +167,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
           }}
           scaleTo={motion.fabPressScale}
           accessibilityRole="tab"
-          accessibilityLabel={absen ? (badge ? 'Absen, waktunya check-out' : 'Absen') : 'Workspace'}
+          accessibilityLabel={`${absen ? (badge ? 'Absen, waktunya check-out' : 'Absen') : 'Workspace'}${menunggu ? ', absen menunggu sinkron' : ''}`}
           accessibilityHint={absen ? undefined : 'Membuka daftar workspace'}
           accessibilityState={{ selected: absen && diAbsen }}
           style={s.tengah}
@@ -175,6 +175,11 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
           <View style={[s.bundar, { boxShadow: `0 0 0 4px ${colors.glassStrong}, ${shadows.button}` }]}>
             <Gradient name="aksi" style={[StyleSheet.absoluteFill, { borderRadius: radius.full }]} />
             <Icon name={absen ? 'fingerprint' : 'layout-grid'} size={26} color="#FFFFFF" />
+            {menunggu ? (
+              <View style={[s.menungguSinkron, { backgroundColor: colors.info, borderColor: colors.surface }]} accessible={false} importantForAccessibility="no-hide-descendants">
+                <Icon name="cloud-upload" size={11} color={colors.surface} />
+              </View>
+            ) : null}
             {absen && badge ? (
               <View style={[s.tandaSeru, { backgroundColor: colors.badge, borderColor: colors.surface }]}>
                 <Text variant="meta" weight={800} style={{ color: colors.onBadge, fontSize: 12, lineHeight: 14 }} maxFontSizeMultiplier={1}>
@@ -222,4 +227,5 @@ const s = StyleSheet.create({
   lencana: { position: 'absolute', top: -6, right: -10 },
   tandaSeru: { position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   titik: { position: 'absolute', top: -2, right: -4 },
+  menungguSinkron: { position: 'absolute', top: -4, left: -4, width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
 });

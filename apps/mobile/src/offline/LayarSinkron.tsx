@@ -37,6 +37,8 @@ function BarisItem({ item, online }: { item: ItemAntrean; online: boolean }): Re
   const sibuk = item.status === 'mengirim';
   const perluTindakan = item.status === 'konflik' || item.status === 'gagal';
   const detail = [item.ringkas, ringkasBerkas(item)].filter(Boolean).join(' · ');
+  const catatan = penangan?.catatan?.(item) ?? null;
+  const aksiKhusus = item.status === 'konflik' && item.galat ? (penangan?.aksiKonflik?.(item, item.galat) ?? null) : null;
 
   const hapus = async (): Promise<void> => {
     const setuju = await dialog.confirm({
@@ -79,6 +81,15 @@ function BarisItem({ item, online }: { item: ItemAntrean; online: boolean }): Re
           </Text>
         </View>
       ) : null}
+      {catatan ? (
+        <View style={s.galat}>
+          <Icon name={catatan.nada === 'bad' ? 'circle-x' : 'clock-alert'} size={16} color={catatan.nada === 'bad' ? colors.danger : catatan.nada === 'warn' ? colors.warning : colors.muted} />
+          <Text variant="meta" style={{ flex: 1, color: catatan.nada === 'bad' ? colors.danger : catatan.nada === 'warn' ? colors.warning : colors.muted }}>
+            {catatan.teks}
+          </Text>
+        </View>
+      ) : null}
+      {aksiKhusus ? <Button title={aksiKhusus.label} variant="primary" size="sm" icon="clipboard-pen-line" style={s.tombol} onPress={aksiKhusus.onPress} /> : null}
       <View style={s.aksi}>
         <Button
           title="Coba lagi"

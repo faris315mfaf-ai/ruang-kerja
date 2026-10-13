@@ -45,6 +45,11 @@ export interface PermintaanTerakhir {
   workReport: string[];
   /** Ringkasan lokasi untuk layar hasil (mis. jarak ke titik). */
   jarakM: number | null;
+  /** Pengguna aktif — dibutuhkan untuk mengantre absen offline. */
+  uid?: string;
+  /** Nama kantor terdekat & apakah di dalam radius (dari data tersimpan), untuk ringkasan offline. */
+  lokasiNama?: string | null;
+  dalam?: boolean | null;
 }
 
 /** Data jadwal hari ini yang dibutuhkan layar hasil (batas terlambat, jam pulang). */
@@ -68,7 +73,20 @@ export type HasilAbsen =
       jumlahLaporan: number;
       catatan: string;
     } & InfoJadwal
-  | { jenis: 'gagal'; arah: Arah; metode: Metode; gagal: GagalAbsen; diterimaPada: number; retryQr: boolean };
+  | { jenis: 'gagal'; arah: Arah; metode: Metode; gagal: GagalAbsen; diterimaPada: number; retryQr: boolean }
+  /** Absen disimpan di HP (offline) dan akan dikirim otomatis saat online. */
+  | {
+      jenis: 'antre';
+      arah: Arah;
+      metode: Metode;
+      /** ISO jam perangkat saat tombol ditekan (= `offline_at`). */
+      waktu: string;
+      jumlahRencana: number;
+      jumlahLaporan: number;
+      lokasi: string | null;
+      jarakM: number | null;
+      dalam: boolean | null;
+    };
 
 interface State {
   userId: string | null;
