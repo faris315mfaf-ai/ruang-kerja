@@ -56,6 +56,10 @@ const today = (overrides: Partial<TodayAttendance> = {}): TodayAttendance => ({
         },
     ],
     schedule,
+    windows: { checkIn: null, checkOut: null },
+    windowsApply: true,
+    checkInBlocked: null,
+    checkOutBlockedReason: null,
     ...overrides,
 });
 

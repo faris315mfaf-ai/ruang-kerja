@@ -7,7 +7,38 @@ export type PrimaryAction = {
     label: string;
     type: CheckType | null;
     disabled: boolean;
+    /** Why the action is closed by the company hours (full sentence), if so. */
+    notice?: string;
 };
+
+/**
+ * Check-in / check-out closed by the company "jam absen": a short button
+ * label plus the server's full sentence as `notice`.
+ */
+function blockedAction(today: TodayAttendance): PrimaryAction | null {
+    if (today.action === 'check_in' && today.checkInBlocked) {
+        const { code, message, opensAt } = today.checkInBlocked;
+        const label =
+            code === 'window_closed'
+                ? 'Check-in sudah ditutup'
+                : opensAt
+                  ? `Check-in dibuka pukul ${formatTime(opensAt)}`
+                  : 'Check-in belum dibuka';
+
+        return { label, type: null, disabled: true, notice: message };
+    }
+
+    if (today.action === 'check_out' && today.checkOutBlockedReason) {
+        return {
+            label: 'Check-out di luar jam absen pulang',
+            type: null,
+            disabled: true,
+            notice: today.checkOutBlockedReason,
+        };
+    }
+
+    return null;
+}
 
 /** The single main action of the check-in card (docs/DESIGN.md §1.3). */
 export function primaryAction(
@@ -16,6 +47,11 @@ export function primaryAction(
     method: CheckMethod = 'gps',
 ): PrimaryAction {
     const how = method === 'qr' ? 'Pindai QR' : 'Ambil selfie';
+    const blocked = blockedAction(today);
+
+    if (blocked) {
+        return blocked;
+    }
 
     switch (today.action) {
         case 'check_in': {

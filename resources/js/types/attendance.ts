@@ -82,6 +82,8 @@ export type AttendanceDayData = {
     requestPortion: 'full' | 'half_day' | null;
     checkIn: AttendanceLogData | null;
     checkOut: AttendanceLogData | null;
+    /** "Laporan kerja" points written at check-out (null until filled). */
+    workReport?: string[] | null;
 };
 
 export type OfficeLocationPoint = {
@@ -93,11 +95,37 @@ export type OfficeLocationPoint = {
     radiusM: number;
 };
 
+/** One company "jam absen" range, `HH:MM` office time; a null bound is open. */
+export type AttendanceWindowRange = {
+    from: string | null;
+    until: string | null;
+};
+
+/** Company check-in / check-out hours (null = no limit configured). */
+export type AttendanceWindows = {
+    checkIn: AttendanceWindowRange | null;
+    checkOut: AttendanceWindowRange | null;
+};
+
+/** Why the next check-in is closed right now (keputusan pemilik 13 Okt 2026). */
+export type CheckInBlocked = {
+    code: 'too_early' | 'window_closed';
+    message: string;
+    opensAt: string | null;
+};
+
 export type TodayAttendance = {
     action: AttendanceAction;
     schedule: DaySchedule;
     day: AttendanceDayData | null;
     locations: OfficeLocationPoint[];
+    windows: AttendanceWindows;
+    /** False for overnight shifts: the company hours do not govern them. */
+    windowsApply: boolean;
+    /** Only while `action = check_in` and outside the hours. */
+    checkInBlocked: CheckInBlocked | null;
+    /** Indonesian reason while `action = check_out` and outside the hours. */
+    checkOutBlockedReason: string | null;
 };
 
 export type AttendanceConsentState = {
@@ -136,6 +164,8 @@ export type RejectionReason =
     | 'already_checked_out'
     | 'not_checked_in'
     | 'too_early'
+    | 'check_in_window'
+    | 'check_out_window'
     | 'outside_geofence'
     | 'no_office_location'
     | 'note_required'
@@ -153,7 +183,13 @@ export type RejectionReason =
 export type CheckRejection = {
     reason: RejectionReason;
     message: string;
+    /** First message per field of a Laravel 422 (`validation` only). */
+    errors?: Record<string, string>;
     context: {
+        /** `check_in_window` / `check_out_window`: before opening or after closing. */
+        phase?: 'before' | 'after';
+        from?: string | null;
+        until?: string | null;
         distance_m?: number;
         radius_m?: number;
         accuracy_m?: number | null;

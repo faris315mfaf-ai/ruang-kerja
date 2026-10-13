@@ -15,6 +15,7 @@ import { HistoryList } from './history';
 import { LocationMap, locationStatus } from './location-card';
 import type { LocationProps } from './location-card';
 import { MethodSwitch } from './method-switch';
+import { WindowNotice, WindowsLine } from './window-notice';
 import type { AttendancePageProps } from './use-attendance-page';
 import { useAttendancePage } from './use-attendance-page';
 
@@ -127,22 +128,26 @@ export function AttendanceMobile(props: AttendancePageProps) {
                             onChange={flow.setMethod}
                         />
                     )}
-                    <div className="flex items-center gap-3.5 rounded-[18px] border border-border p-3.5">
-                        <span
-                            aria-hidden
-                            className="flex size-16 shrink-0 items-center justify-center rounded-[18px] bg-grad-soft text-link"
-                        >
-                            <TipIcon className="size-7" strokeWidth={1.9} />
-                        </span>
-                        <span className="flex min-w-0 flex-col gap-0.5">
-                            <span className="text-[17px] leading-6 font-bold text-text">
-                                {tip.title}
+                    {action.notice ? (
+                        <WindowNotice notice={action.notice} />
+                    ) : (
+                        <div className="flex items-center gap-3.5 rounded-[18px] border border-border p-3.5">
+                            <span
+                                aria-hidden
+                                className="flex size-16 shrink-0 items-center justify-center rounded-[18px] bg-grad-soft text-link"
+                            >
+                                <TipIcon className="size-7" strokeWidth={1.9} />
                             </span>
-                            <span className="text-[15px] leading-[21px] text-text-muted">
-                                {tip.sub}
+                            <span className="flex min-w-0 flex-col gap-0.5">
+                                <span className="text-[17px] leading-6 font-bold text-text">
+                                    {tip.title}
+                                </span>
+                                <span className="text-[15px] leading-[21px] text-text-muted">
+                                    {tip.sub}
+                                </span>
                             </span>
-                        </span>
-                    </div>
+                        </div>
+                    )}
                     {today.action !== 'done' && (
                         <Button
                             type="button"
@@ -156,6 +161,7 @@ export function AttendanceMobile(props: AttendancePageProps) {
                             {action.label}
                         </Button>
                     )}
+                    <WindowsLine today={today} className="text-center" />
                     <p className="text-center text-[14px] leading-5 text-text-muted">
                         Lokasi dan foto hanya direkam saat check-in dan
                         check-out.{' '}
