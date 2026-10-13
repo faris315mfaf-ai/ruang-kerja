@@ -111,7 +111,10 @@ export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron }: Kontek
     daftar.push(rute('rapat', 'Rapat', 'calendar-check', '/rapat', { subjudul: 'Agenda, RSVP, dan notulen' }));
   }
   if (fiturAktif(profil, 'notes', true)) {
-    daftar.push(segera('catatan', 'Catatan & notulensi', 'notebook-pen'));
+    daftar.push(rute('catatan', 'Catatan & notulensi', 'notebook-pen', '/catatan'));
+  }
+  if (fiturAktif(profil, 'automation', false)) {
+    daftar.push(rute('otomasi', 'Otomasi & berulang', 'workflow', '/otomasi', { subjudul: 'Aturan, tugas berulang, template' }));
   }
   if (fiturAktif(profil, 'okr', false)) {
     daftar.push(segera('okr', 'OKR divisi', 'target'));

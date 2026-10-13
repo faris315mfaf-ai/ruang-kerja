@@ -339,7 +339,10 @@ test('PATCH answers the same can flags as the detail', function () {
 
     sebagaiTokenTulis($lead)->patchJson("/api/v1/tugas/{$this->assigned->id}", ['title' => 'Revisi'])
         ->assertOk()
-        ->assertJsonPath('task.can', ['edit' => true, 'work' => true, 'delete' => true, 'comment' => true]);
+        ->assertJsonPath('task.can.edit', true)
+        ->assertJsonPath('task.can.work', true)
+        ->assertJsonPath('task.can.delete', true)
+        ->assertJsonPath('task.can.comment', true);
 
     // Assigning a colleague to the viewer's own team task keeps it editable
     // for its creator, and the flags follow the new assignment.
@@ -352,7 +355,10 @@ test('PATCH answers the same can flags as the detail', function () {
     // The detail of the assigned task: the assignee works but cannot edit.
     sebagaiTokenTulis($viewer)->getJson("/api/v1/tugas/{$this->assigned->id}")
         ->assertOk()
-        ->assertJsonPath('task.can', ['edit' => false, 'work' => true, 'delete' => false, 'comment' => true]);
+        ->assertJsonPath('task.can.edit', false)
+        ->assertJsonPath('task.can.work', true)
+        ->assertJsonPath('task.can.delete', false)
+        ->assertJsonPath('task.can.comment', true);
 });
 
 test('create accepts the canonical uppercase workspace ULID', function () {

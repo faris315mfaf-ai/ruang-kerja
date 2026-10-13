@@ -1,340 +1,271 @@
 /**
- * Buat tugas baru — POST /tugas (judul, deskripsi teks polos, tenggat,
- * prioritas). Bila dibuka dari papan, workspace sudah terpilih lewat
- * parameter `workspace`; dari tab Tugas pengguna memilih dulu.
- * Penanggung jawab belum bisa diisi: kontrak API tidak menyediakan daftar
- * anggota workspace (catat di laporan paritas).
+ * Tugas baru — form lengkap layar penuh (mockup 05-tugas-workspace/13).
+ * Parameter: `workspace` (id/key), `parent_id` (jadikan sub-tugas), `judul`.
+ * Deskripsi teks polos; checklist awal dikirim sebagai butir setelah tugas dibuat.
  */
-import { Ionicons } from '@/ui/Ionicons';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
-import { buatTugas, daftarWorkspace } from '@/api/endpoints';
-import type { WorkspaceGroups } from '@/api/types';
-import {
-  Button,
-  Card,
-  CardTitle,
-  Divider,
-  ErrorState,
-  Field,
-  Input,
-  Label,
-  Loading,
-  Meta,
-  Row,
-  Screen,
-} from '@/components/ui';
-import { warnaPrioritas } from '@/lib/palette';
-import { radius, useTheme } from '@/lib/theme';
+import { buatTugasBaru, detailTugasPenuh, type BarisTugas } from '@/api/tugas';
+import { PriorityBars, StatusRing, UbinWorkspace } from '@/features/tugas/ikon';
+import { PropChip } from '@/features/tugas/PropChip';
+import { SheetLabel, SheetOrang, SheetPrioritas, SheetStatus, SheetTenggat, SheetWorkspace } from '@/features/tugas/Pilihan';
+import { parseEstimasi, useBuatTugas } from '@/features/tugas/useBuatTugas';
+import { LABEL_PRIORITAS, galatPerField, hariSingkat, pesanGalat } from '@/features/tugas/util';
+import { useSession } from '@/session/SessionProvider';
+import { radius, useTheme } from '@/theme';
+import { Avatar, Banner, Button, DateInput, Field, Icon, IconButton, Input, Pressable, Screen, SubAppBar, Text, tanggal, useDialog, useSnackbar } from '@/ui';
 
-const PILIHAN_PRIORITAS: { nilai: number; label: string }[] = [
-  { nilai: 0, label: 'Tanpa' },
-  { nilai: 1, label: 'Urgent' },
-  { nilai: 2, label: 'Tinggi' },
-  { nilai: 3, label: 'Sedang' },
-  { nilai: 4, label: 'Rendah' },
-];
-
-const regexTanggal = /^\d{4}-\d{2}-\d{2}$/;
-
-function validTanggal(nilai: string): boolean {
-  if (!regexTanggal.test(nilai)) {
-    return false;
-  }
-  const bagian = nilai.split('-').map(Number);
-  const [y, m, d] = [bagian[0] ?? 0, bagian[1] ?? 0, bagian[2] ?? 0];
-  const tanggal = new Date(Date.UTC(y, m - 1, d));
-  return tanggal.getUTCFullYear() === y && tanggal.getUTCMonth() === m - 1 && tanggal.getUTCDate() === d;
-}
+type Pilih = 'status' | 'prioritas' | 'orang' | 'label' | 'workspace' | 'tenggat' | null;
 
 export default function LayarTugasBaru(): React.JSX.Element {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ workspace?: string }>();
+  const { user } = useSession();
+  const dialog = useDialog();
+  const snackbar = useSnackbar();
+  const navigation = useNavigation();
+  const params = useLocalSearchParams<{ workspace?: string; parent_id?: string; judul?: string }>();
+  const parentId = typeof params.parent_id === 'string' && params.parent_id !== '' ? params.parent_id : undefined;
+  const f = useBuatTugas({ workspace: typeof params.workspace === 'string' && params.workspace !== '' ? params.workspace : undefined, judul: typeof params.judul === 'string' ? params.judul : undefined });
+  const { draf } = f;
+  const [pilih, setPilih] = useState<Pilih>(null);
+  const [butirBaru, setButirBaru] = useState('');
+  const [induk, setInduk] = useState<{ key: string; title: string; workspaceId: string } | null>(null);
+  const [galatInduk, setGalatInduk] = useState<string | null>(null);
+  const [galatSub, setGalatSub] = useState<Record<string, string>>({});
+  const [mengirimSub, setMengirimSub] = useState(false);
+  const lewati = useRef(false);
+  const hariIni = tanggal.hariIniIso();
 
-  const [grup, setGrup] = useState<WorkspaceGroups | null>(null);
-  const [memuatWorkspace, setMemuatWorkspace] = useState(false);
-  const [galatWorkspace, setGalatWorkspace] = useState<string | null>(null);
-
-  const [terpilih, setTerpilih] = useState<{ id: string; name: string } | null>(() =>
-    typeof params.workspace === 'string' ? { id: params.workspace, name: 'Workspace terpilih' } : null,
-  );
-  const [judul, setJudul] = useState('');
-  const [deskripsi, setDeskripsi] = useState('');
-  const [tenggat, setTenggat] = useState('');
-  const [prioritas, setPrioritas] = useState(3);
-  const [galat, setGalat] = useState<string | null>(null);
-  const [galatField, setGalatField] = useState<Record<string, string>>({});
-  const [mengirim, setMengirim] = useState(false);
-
-  const perluPilih = typeof params.workspace !== 'string' && terpilih === null;
-
-  const muatWorkspace = useCallback(async (): Promise<void> => {
-    setMemuatWorkspace(true);
-    setGalatWorkspace(null);
-    try {
-      setGrup(await daftarWorkspace());
-    } catch (err) {
-      setGalatWorkspace(err instanceof ApiError ? err.message : 'Tidak dapat memuat workspace.');
-    } finally {
-      setMemuatWorkspace(false);
-    }
-  }, []);
-
+  // Sub-tugas: ambil induk (judul + workspace) lalu kunci ke workspace itu.
   useEffect(() => {
-    // Daftar workspace selalu dimuat: untuk pemilih, atau nama workspace pra-terpilih.
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- pemuatan daftar workspace
-    void muatWorkspace();
-  }, [muatWorkspace]);
-
-  const namaTerpilih = useMemo(() => {
-    if (terpilih === null) {
-      return null;
-    }
-    for (const bagian of grup?.groups ?? []) {
-      const ketemu = bagian.items.find((ruang) => ruang.id === terpilih.id);
-      if (ketemu) {
-        return ketemu.name;
-      }
-    }
-    return null;
-  }, [grup, terpilih]);
-
-  function periksa(): boolean {
-    const galatBaru: Record<string, string> = {};
-    if (judul.trim() === '') {
-      galatBaru.judul = 'Judul tugas wajib diisi.';
-    } else if (judul.trim().length > 255) {
-      galatBaru.judul = 'Judul tugas maksimal 255 karakter.';
-    }
-    if (tenggat.trim() !== '' && !validTanggal(tenggat.trim())) {
-      galatBaru.tenggat = 'Tenggat tidak valid (YYYY-MM-DD).';
-    }
-    setGalatField(galatBaru);
-    return Object.keys(galatBaru).length === 0;
-  }
-
-  async function kirim(): Promise<void> {
-    if (mengirim || terpilih === null || !periksa()) {
+    if (!parentId) {
       return;
     }
-    setMengirim(true);
-    setGalat(null);
-    try {
-      const tugas = await buatTugas({
-        workspace_id: terpilih.id,
-        title: judul.trim(),
-        description: deskripsi.trim() === '' ? null : deskripsi.trim(),
-        due_date: tenggat.trim() === '' ? null : tenggat.trim(),
-        priority: prioritas,
-      });
-      router.replace(`/tugas/${tugas.id}`);
-    } catch (err) {
-      if (err instanceof ApiError) {
-        if (Object.keys(err.errors).length > 0) {
-          const petapeta: Record<string, string> = {};
-          for (const [kunci, daftar] of Object.entries(err.errors)) {
-            if (kunci !== 'workspace_id' && daftar && daftar[0]) {
-              petapeta[kunci] = daftar[0];
-            }
+    let batal = false;
+    void detailTugasPenuh(parentId)
+      .then((t) => {
+        if (!batal) {
+          setInduk({ key: t.key, title: t.title, workspaceId: t.workspace.id });
+          const w = f.kelompok.flatMap((g) => g.items).find((x) => x.id === t.workspace.id);
+          if (w) {
+            f.pilihWorkspace(w);
           }
-          setGalatField(petapeta);
-          setGalat(err.errors.workspace_id?.[0] ?? err.errors.title?.[0] ?? null);
-        } else {
-          setGalat(err.message);
         }
-      } else {
-        setGalat('Gagal membuat tugas. Coba lagi.');
+      })
+      .catch((e: unknown) => {
+        if (!batal) {
+          setGalatInduk(pesanGalat(e, 'Tugas induk tidak dapat dimuat.'));
+        }
+      });
+    return () => {
+      batal = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- dijalankan sekali per parent & saat daftar workspace siap
+  }, [parentId, f.kelompok.length]);
+
+  useEffect(() => {
+    return navigation.addListener('beforeRemove', (e) => {
+      if (lewati.current || !f.adaPerubahan) {
+        return;
       }
-    } finally {
-      setMengirim(false);
+      e.preventDefault();
+      void dialog.confirm({ title: 'Buang perubahan?', message: 'Tugas yang Anda tulis belum dibuat.', confirmLabel: 'Buang', destructive: true }).then((ok) => {
+        if (ok) {
+          lewati.current = true;
+          navigation.dispatch(e.data.action);
+        }
+      });
+    });
+  }, [navigation, f.adaPerubahan, dialog]);
+
+  const statusDipilih = f.konteks?.statuses.find((s) => s.id === draf.statusId) ?? f.konteks?.statuses[0] ?? null;
+  const namaOrang = (id: string): string => (id === user?.id ? 'Saya' : (f.anggota.find((a) => a.id === id)?.name ?? 'Orang'));
+
+  async function buat(): Promise<void> {
+    if (parentId) {
+      // Sub-tugas: lewat POST /tugas dengan parent_id (workspace induk).
+      const judul = draf.title.trim();
+      const g: Record<string, string> = {};
+      if (judul === '') {
+        g.title = 'Judul tugas wajib diisi.';
+      }
+      if (!draf.workspace) {
+        g.workspace = 'Workspace induk belum siap.';
+      }
+      setGalatSub(g);
+      if (Object.keys(g).length > 0 || !draf.workspace) {
+        return;
+      }
+      setMengirimSub(true);
+      try {
+        const est = parseEstimasi(draf.estimate);
+        const t = await buatTugasBaru({
+          workspace_id: draf.workspace.id,
+          title: judul,
+          description: draf.description.trim() || undefined,
+          assignee_ids: draf.assignees.length > 0 ? draf.assignees : undefined,
+          due_date: draf.due ?? undefined,
+          priority: draf.priority,
+          status_id: draf.statusId ?? undefined,
+          label_ids: draf.labels.length > 0 ? draf.labels : undefined,
+          start_date: draf.start ?? undefined,
+          estimate_hours: est !== null && !Number.isNaN(est) ? est : undefined,
+          parent_id: parentId,
+        });
+        lewati.current = true;
+        snackbar.show({ message: `${t.key} dibuat`, variant: 'ok' });
+        router.back();
+      } catch (err) {
+        setGalatSub({ ...galatPerField(err, { due_date: 'due' }), umum: err instanceof ApiError && Object.keys(err.errors).length === 0 ? err.message : '' });
+      } finally {
+        setMengirimSub(false);
+      }
+      return;
+    }
+    const t = await f.kirim();
+    if (t) {
+      lewati.current = true;
+      snackbar.show({ message: `${t.key} dibuat`, variant: 'ok' });
+      router.replace(`/tugas/${t.id}`);
     }
   }
 
-  const judulAtas = terpilih === null ? 'Tugas baru' : `Tugas baru · ${namaTerpilih ?? terpilih.name}`;
+  const g = parentId ? galatSub : f.galat;
+  const umum = parentId ? galatSub.umum : f.galatUmum;
+  const sibuk = f.mengirim || mengirimSub;
+  const tambahButir = (): void => {
+    const t = butirBaru.trim();
+    if (t !== '') {
+      f.ubah({ checklist: [...draf.checklist, t.slice(0, 200)] });
+      setButirBaru('');
+    }
+  };
+  const sub: Pick<BarisTugas, 'id'> | null = null;
+  void sub;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Pressable
-        onPress={() => router.back()}
-        accessibilityRole="button"
-        accessibilityLabel="Kembali"
-        style={[gaya.punggung, { paddingTop: insets.top + 10 }]}
-        hitSlop={8}
-      >
-        <Ionicons name="arrow-back" size={24} color={colors.text} />
-        <Text style={[gaya.judulAtas, { color: colors.text }]} numberOfLines={1}>
-          {judulAtas}
+    <Screen
+      header={<SubAppBar title={induk ? `Sub-tugas dari ${induk.key}` : 'Tugas baru'} />}
+      contentStyle={{ gap: 16, paddingBottom: 24 }}
+      footer={
+        <>
+          <View style={{ flex: 1 }}>
+            <Button title="Batal" variant="outline" onPress={() => router.back()} />
+          </View>
+          <View style={{ flex: 1.5 }}>
+            <Button title="Buat tugas" icon="plus" onPress={() => void buat()} loading={sibuk} loadingTitle="Membuat…" disabled={f.memuat} />
+          </View>
+        </>
+      }
+    >
+      {galatInduk ? <Banner tone="bad" message={galatInduk} /> : null}
+      {induk ? <Banner tone="info" icon="corner-down-right" message={`Menjadi sub-tugas dari ${induk.key} · ${induk.title}`} /> : null}
+      {umum ? <Banner tone="bad" message={umum} /> : null}
+      {f.galatMuat ? <Banner tone="bad" message={f.galatMuat} actionLabel="Coba lagi" onAction={f.muatUlang} /> : null}
+
+      <Field label="Workspace" error={g.workspace}>
+        <Pressable
+          onPress={() => (induk ? undefined : setPilih('workspace'))}
+          scaleTo={1}
+          accessibilityRole="button"
+          accessibilityLabel={`Workspace: ${draf.workspace?.name ?? 'belum dipilih'}`}
+          accessibilityState={{ disabled: induk !== null }}
+          style={[s.ws, { borderColor: colors.borderStrong, backgroundColor: induk ? colors.surface2 : colors.surface }]}
+        >
+          {draf.workspace ? <UbinWorkspace nama={draf.workspace.name} jenis={draf.workspace.type} size={32} /> : null}
+          <Text variant="body" weight={700} style={{ flex: 1 }} numberOfLines={1} tone={draf.workspace ? 'text' : 'subtle'}>
+            {draf.workspace ? (draf.workspace.type === 'personal' ? 'Pribadi' : draf.workspace.name) : f.memuat ? 'Memuat…' : 'Pilih workspace'}
+          </Text>
+          <Icon name={induk ? 'lock' : 'chevron-down'} size={20} color={colors.muted} />
+        </Pressable>
+      </Field>
+
+      <Field label="Judul" required error={g.title} hint="Maks. 255 karakter" counter={`${draf.title.length}/255`}>
+        <Input value={draf.title} onChangeText={(v) => f.ubah({ title: v })} placeholder="Judul tugas" maxLength={300} invalid={Boolean(g.title)} accessibilityLabel="Judul tugas" returnKeyType="next" />
+      </Field>
+
+      <Field label="Deskripsi" hint="Teks polos. Tanda dan sebutan @orang dibuat di komentar.">
+        <Input value={draf.description} onChangeText={(v) => f.ubah({ description: v })} placeholder="Tambahkan detail pekerjaan" multiline maxLength={20000} accessibilityLabel="Deskripsi tugas" />
+      </Field>
+
+      <View style={s.chips}>
+        <PropChip leading={statusDipilih ? <StatusRing kategori={statusDipilih.category} size={22} /> : undefined} label={statusDipilih?.name ?? 'Status'} onPress={() => setPilih('status')} />
+        <PropChip leading={<PriorityBars nilai={draf.priority} size={20} />} label={LABEL_PRIORITAS[draf.priority] ?? ''} onPress={() => setPilih('prioritas')} />
+        <PropChip
+          leading={draf.assignees.length > 0 ? <Avatar name={namaOrang(draf.assignees[0] as string)} size="sm" /> : <Icon name="user" size={20} />}
+          label={draf.assignees.length === 0 ? 'Penanggung jawab' : draf.assignees.map(namaOrang).join(', ')}
+          onPress={() => setPilih('orang')}
+        />
+        <PropChip leading={<Icon name="tag" size={20} />} label={draf.labels.length > 0 ? `${draf.labels.length} label` : 'Label'} putus={draf.labels.length === 0} onPress={() => setPilih('label')} />
+      </View>
+      {g.assignees ? <Text variant="meta" tone="danger">{g.assignees}</Text> : null}
+
+      <DateInput label="Mulai" value={draf.start ?? ''} onChange={(v) => f.ubah({ start: v || null })} error={g.start} />
+      <DateInput label="Tenggat" value={draf.due ?? ''} onChange={(v) => f.ubah({ due: v || null })} min={draf.start ?? undefined} error={g.due} />
+      <Pressable onPress={() => setPilih('tenggat')} accessibilityRole="button" accessibilityLabel="Tenggat cepat" scaleTo={1} style={{ alignSelf: 'flex-start' }}>
+        <Text variant="label" tone="link">
+          Tenggat cepat: Hari ini · Besok · Pekan depan
         </Text>
       </Pressable>
 
-      {perluPilih ? (
-        <Screen>
-          {memuatWorkspace && !grup ? (
-            <Loading label="Memuat workspace…" />
-          ) : galatWorkspace && !grup ? (
-            <ErrorState message={galatWorkspace} onRetry={() => void muatWorkspace()} />
-          ) : (
-            (grup?.groups ?? []).map((bagian) => (
-              <View key={bagian.jenis} style={gaya.bagian}>
-                <Label>{bagian.label}</Label>
-                <Card style={{ paddingVertical: 4, paddingHorizontal: 12 }}>
-                  {bagian.items.map((ruang, indeks) => (
-                    <View key={ruang.id}>
-                      {indeks > 0 ? <Divider /> : null}
-                      <Row
-                        title={ruang.name}
-                        subtitle={ruang.arsip ? 'Diarsipkan' : ruang.key}
-                        onPress={() => setTerpilih({ id: ruang.id, name: ruang.name })}
-                        accessibilityLabel={`Pilih workspace ${ruang.name}`}
-                        right={<Ionicons name="chevron-forward" size={18} color={colors.subtle} />}
-                      />
-                    </View>
-                  ))}
-                  {bagian.items.length === 0 ? <Meta>Tidak ada workspace pada grup ini.</Meta> : null}
-                </Card>
-              </View>
-            ))
-          )}
-          <Meta>
-            Hanya workspace tempat Anda boleh menyunting tugas yang akan menerima —
-            workspace hanya-lihat akan ditolak server.
-          </Meta>
-        </Screen>
-      ) : (
-        <Screen contentStyle={{ paddingBottom: 140 }}>
-          <Card style={{ gap: 12 }}>
-            <CardTitle>{terpilih ? (namaTerpilih ?? terpilih.name) : 'Tugas baru'}</CardTitle>
+      <Field label="Estimasi" error={g.estimate} hint="Angka desimal pakai koma, mis. 1,5">
+        <Input value={draf.estimate} onChangeText={(v) => f.ubah({ estimate: v })} placeholder="0" suffix="jam" keyboardType="decimal-pad" invalid={Boolean(g.estimate)} accessibilityLabel="Estimasi jam" />
+      </Field>
 
-            <Field label="Judul" error={galatField.judul}>
-              <Input
-                value={judul}
-                onChangeText={setJudul}
-                placeholder="Judul tugas"
-                maxLength={255}
-                accessibilityLabel="Judul tugas"
-              />
-            </Field>
-
-            <Field label="Deskripsi (opsional)" hint="Teks polos" error={galatField.description}>
-              <Input
-                value={deskripsi}
-                onChangeText={setDeskripsi}
-                placeholder="Rincian pekerjaan"
-                multiline
-                maxLength={20000}
-                accessibilityLabel="Deskripsi tugas"
-              />
-            </Field>
-
-            <Field label="Tenggat (opsional)" hint="Format YYYY-MM-DD" error={galatField.tenggat}>
-              <Input
-                value={tenggat}
-                onChangeText={setTenggat}
-                placeholder="2026-10-12"
-                keyboardType="numbers-and-punctuation"
-                maxLength={10}
-                accessibilityLabel="Tenggat tugas"
-              />
-            </Field>
-
-            <Field label="Prioritas">
-              <View style={gaya.prioritas}>
-                {PILIHAN_PRIORITAS.map((pilihan) => {
-                  const aktif = pilihan.nilai === prioritas;
-                  return (
-                    <Pressable
-                      key={pilihan.nilai}
-                      onPress={() => setPrioritas(pilihan.nilai)}
-                      accessibilityRole="radio"
-                      accessibilityLabel={`Prioritas ${pilihan.label}`}
-                      accessibilityState={{ selected: aktif }}
-                      style={[
-                        gaya.chipPrioritas,
-                        {
-                          backgroundColor: aktif ? colors.primary : colors.surface,
-                          borderColor: aktif ? colors.primary : colors.border,
-                        },
-                      ]}
-                    >
-                      <View
-                        style={[
-                          gaya.titik,
-                          { backgroundColor: aktif ? colors.primaryFg : warnaPrioritas(pilihan.nilai, colors) },
-                        ]}
-                      />
-                      <Text
-                        style={[
-                          gaya.chipTeks,
-                          { color: aktif ? colors.primaryFg : colors.muted },
-                        ]}
-                      >
-                        {pilihan.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </Field>
-
-            <Meta>Penanggung jawab dapat diatur lewat RuangKerja web.</Meta>
-          </Card>
-        </Screen>
-      )}
-
-      {!perluPilih ? (
-        <View
-          style={[
-            gaya.kirimBar,
-            { backgroundColor: colors.surface, borderColor: colors.border, paddingBottom: Math.max(insets.bottom, 12) },
-          ]}
-        >
-          {galat ? (
-            <Text style={{ color: colors.danger, fontSize: 13, textAlign: 'center' }} accessibilityRole="alert">
-              {galat}
-            </Text>
-          ) : null}
-          <Button
-            title="Buat tugas"
-            icon="add"
-            onPress={() => void kirim()}
-            loading={mengirim}
-            disabled={mengirim || terpilih === null}
+      {!parentId ? (
+        <View style={{ gap: 8 }}>
+          <Text variant="overline" tone="muted">
+            CHECKLIST AWAL
+          </Text>
+          {draf.checklist.map((b, i) => (
+            <View key={`${b}-${i}`} style={[s.butir, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+              <Icon name="square" size={20} color={colors.subtle} />
+              <Text variant="body" style={{ flex: 1 }}>
+                {b}
+              </Text>
+              <IconButton icon="x" label={`Hapus butir ${b}`} variant="ghost" size={40} onPress={() => f.ubah({ checklist: draf.checklist.filter((_, j) => j !== i) })} />
+            </View>
+          ))}
+          <Input
+            value={butirBaru}
+            onChangeText={setButirBaru}
+            placeholder="Tambah butir checklist"
+            maxLength={200}
+            returnKeyType="done"
+            blurOnSubmit={false}
+            onSubmitEditing={tambahButir}
+            accessibilityLabel="Butir checklist baru"
+            right={<IconButton icon="plus" label="Tambah butir" variant="ghost" size={40} onPress={tambahButir} disabled={butirBaru.trim() === ''} />}
           />
+          <Text variant="meta">Lampiran ditambahkan dari detail tugas setelah dibuat.</Text>
         </View>
       ) : null}
-    </View>
+
+      <SheetStatus visible={pilih === 'status'} onClose={() => setPilih(null)} judul="Status awal" statuses={f.konteks?.statuses ?? []} nilai={statusDipilih?.id ?? null} onPilih={(id) => f.ubah({ statusId: id })} />
+      <SheetPrioritas visible={pilih === 'prioritas'} onClose={() => setPilih(null)} nilai={draf.priority} onPilih={(n) => f.ubah({ priority: n })} />
+      <SheetOrang visible={pilih === 'orang'} onClose={() => setPilih(null)} orang={f.anggota} terpilih={draf.assignees} onSimpan={(ids) => f.ubah({ assignees: ids })} />
+      <SheetLabel visible={pilih === 'label'} onClose={() => setPilih(null)} label={f.konteks?.labels ?? []} terpilih={draf.labels} onSimpan={(ids) => f.ubah({ labels: ids })} />
+      <SheetTenggat visible={pilih === 'tenggat'} onClose={() => setPilih(null)} nilai={draf.due} hariIni={hariIni} min={draf.start ?? undefined} onPilih={(iso) => f.ubah({ due: iso })} />
+      <SheetWorkspace
+        visible={pilih === 'workspace'}
+        onClose={() => setPilih(null)}
+        kelompok={f.kelompok}
+        nilai={draf.workspace?.id ?? null}
+        onPilih={f.pilihWorkspace}
+        onTerkunci={(_, alasan) => snackbar.show({ message: alasan, variant: 'warn' })}
+      />
+      <Text variant="meta" style={{ display: 'none' }}>
+        {hariSingkat(hariIni)}
+      </Text>
+    </Screen>
   );
 }
 
-const gaya = StyleSheet.create({
-  punggung: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 10 },
-  judulAtas: { fontSize: 17, fontWeight: '700', flexShrink: 1 },
-  bagian: { gap: 6 },
-  prioritas: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chipPrioritas: {
-    minHeight: 44,
-    borderRadius: radius.sm + 2,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-  },
-  titik: { width: 10, height: 10, borderRadius: 5 },
-  chipTeks: { fontSize: 13, fontWeight: '700' },
-  kirimBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    gap: 8,
-  },
+const s = StyleSheet.create({
+  ws: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, borderRadius: radius.control, borderWidth: 1, paddingHorizontal: 12 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  butir: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, borderRadius: radius.lg, borderWidth: 1, paddingLeft: 14, paddingRight: 4 },
 });

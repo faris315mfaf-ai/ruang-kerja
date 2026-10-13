@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Http\Requests\Api\Concerns\TaskExtraFields;
 use App\Http\Requests\Concerns\HidesInvisibleWorkspaces;
 use App\Models\Task;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -19,7 +20,7 @@ use Illuminate\Validation\Rule;
  */
 class TaskUpdateRequest extends FormRequest
 {
-    use HidesInvisibleWorkspaces;
+    use HidesInvisibleWorkspaces, TaskExtraFields;
 
     /**
      * @return array<string, ValidationRule|array<mixed>|string>
@@ -36,6 +37,7 @@ class TaskUpdateRequest extends FormRequest
             'assignee_ids.*' => ['string', 'distinct', Rule::exists('workspace_members', 'user_id')->where('workspace_id', $workspaceId)],
             'due_date' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
             'priority' => ['sometimes', 'integer', 'between:0,4'],
+            ...$this->extraRules($workspaceId, false),
         ];
     }
 
@@ -49,13 +51,14 @@ class TaskUpdateRequest extends FormRequest
             'assignee_ids.*.exists' => 'Penanggung jawab harus anggota workspace.',
             'due_date.date_format' => 'Tenggat tidak valid.',
             'priority.between' => 'Prioritas tidak valid.',
+            ...$this->extraMessages(),
         ];
     }
 
     /**
      * Only the keys the client sent, in the shape expected by UpdateTask.
      *
-     * @return array{title?: string, description_text?: string|null, due_date?: string|null, priority?: int, assignee_ids?: list<string>}
+     * @return array{title?: string, description_text?: string|null, due_date?: string|null, priority?: int, assignee_ids?: list<string>, start_date?: string|null, estimate_hours?: string|null, label_ids?: list<string>}
      */
     public function payload(): array
     {
@@ -83,6 +86,6 @@ class TaskUpdateRequest extends FormRequest
             ));
         }
 
-        return $data;
+        return [...$data, ...$this->extraPayload(false)];
     }
 }

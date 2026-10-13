@@ -473,8 +473,16 @@ final class NoteHtml
             $type = $node->getAttribute('data-type');
             $id = $node->getAttribute('data-id');
 
-            if ($type === 'mention' && $id !== '') {
-                $inline[] = ['type' => 'mention', 'attrs' => ['id' => $id, 'label' => ltrim(trim($node->textContent), '@')]];
+            // The app may send `<span data-mention="user_id">@Nama</span>`; the
+            // rendering form (`data-type="mention" data-id`) is read back too.
+            $mentionId = trim($node->getAttribute('data-mention'));
+
+            if ($mentionId === '' && $type === 'mention') {
+                $mentionId = $id;
+            }
+
+            if ($mentionId !== '') {
+                $inline[] = ['type' => 'mention', 'attrs' => ['id' => $mentionId, 'label' => ltrim(trim($node->textContent), '@')]];
 
                 continue;
             }

@@ -13,6 +13,7 @@ import { GantiSandiWajib } from '@/features/auth/GantiSandiWajib';
 import { LayarBlokirAplikasi, DialogSesiBerakhir, KartuUpdateTersedia } from '@/features/auth/LayarAplikasi';
 import { LayarKunci, TawaranBiometrik } from '@/features/auth/KunciAplikasi';
 import { SetupDuaFaktorWeb } from '@/features/auth/SetupDuaFaktorWeb';
+import { ModeCatatPill } from '@/features/catatan/ModeCatatPill';
 import { AppLockProvider, useAppLock } from '@/features/auth/appLock';
 import { ThemeProvider, useAppFonts, useTheme } from '@/theme';
 import { UIProvider } from '@/ui';
@@ -92,6 +93,17 @@ function RootNavigator(): React.JSX.Element {
             <Stack.Screen name="tugas/baru" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="workspace/index" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="workspace/[id]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="workspace/baru" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="workspace/[id]/pengaturan" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="otomasi/index" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="otomasi/aturan" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="otomasi/aturan/[id]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="otomasi/berulang" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="otomasi/templat" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="otomasi/pakai/[id]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="tugas/aktivitas" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="catatan/index" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="catatan/cari" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="catatan/[id]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="pengajuan/baru" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="inbox" options={{ animation: 'slide_from_right' }} />
@@ -101,6 +113,12 @@ function RootNavigator(): React.JSX.Element {
             <Stack.Screen name="cari" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="buat-cepat" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="obrolan/[id]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="obrolan/baru" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="obrolan/kanal-baru" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="obrolan/jelajah" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="obrolan/[id]/detail" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="obrolan/[id]/cari" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="obrolan/[id]/thread/[messageId]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="rapat/index" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="rapat/[id]/index" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="rapat/[id]/notulen" options={{ animation: 'slide_from_right' }} />
@@ -132,6 +150,7 @@ function RootNavigator(): React.JSX.Element {
         </View>
         {bersesi ? <KartuUpdateTersedia /> : null}
         {bersesi ? <TawaranBiometrik /> : null}
+        {bersesi ? <ModeCatatPill /> : null}
         <DialogSesiBerakhir />
         {locked ? <LayarKunci /> : null}
       </View>

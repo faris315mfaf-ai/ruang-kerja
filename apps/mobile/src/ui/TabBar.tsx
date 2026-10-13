@@ -56,7 +56,7 @@ function useKeyboardTampil(): boolean {
 export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Element | null {
   const { colors, shadows } = useTheme();
   const insets = useSafeAreaInsets();
-  const { jumlah } = useUnread();
+  const { jumlah, obrolan: obrolanBelum } = useUnread();
   const { user } = useSession();
   const { center, badge, refresh } = useAttendanceStatus();
   const { setTabBarVisible } = useChrome();
@@ -90,7 +90,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
     { nama: 'tugas', label: 'Tugas', icon: 'square-check-big' },
   ];
   const kanan: ItemTab[] = [
-    chat ? { nama: 'obrolan', label: 'Obrolan', icon: 'message-circle' } : { nama: 'inbox', label: 'Inbox', icon: 'inbox', href: '/inbox', lencana: jumlah },
+    chat ? { nama: 'obrolan', label: 'Obrolan', icon: 'message-circle', lencana: obrolanBelum } : { nama: 'inbox', label: 'Inbox', icon: 'inbox', href: '/inbox', lencana: jumlah },
     { nama: 'lainnya', label: 'Lainnya', icon: 'menu', lencana: chat && jumlah > 0 ? 'titik' : undefined },
   ];
 

@@ -2,35 +2,38 @@
 
 namespace App\Http\Controllers\Api\Task;
 
+use App\Domain\Analytics\Data\Period;
 use App\Domain\Tasks\Actions\CreateTask;
 use App\Domain\Tasks\Actions\DeleteTask;
 use App\Domain\Tasks\Actions\UpdateTask;
-use App\Domain\Tasks\Queries\MyTasks;
+use App\Domain\Tasks\Queries\MyTaskList;
+use App\Domain\Tasks\Queries\TaskApiDetail;
 use App\Domain\Tasks\Queries\TugasHariIni;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\TaskIndexRequest;
 use App\Http\Requests\Api\TaskStoreRequest;
 use App\Http\Requests\Api\TaskUpdateRequest;
-use App\Http\Resources\Api\TaskSummary;
+use App\Http\Resources\Api\TaskListRow;
 use App\Models\Task;
+use App\Models\TaskPlan;
 use App\Models\User;
 use App\Models\Workspace;
-use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 /**
  * Task endpoints of the mobile app. Lists always run through Task::
- * visibleTo / TugasHariIni (invisible workspaces and other people's personal
+ * visibleTo / MyTasks (invisible workspaces and other people's personal
  * workspaces never appear); the detail route answers 404 through
- * TaskPolicy::view's denyAsNotFound. Writes (Tahap 2 paritas fitur) run the
- * web Actions behind the same policies as the web: create needs
- * WorkspacePolicy::editTasks of the target workspace (superiors assign
- * through workspaces they may edit, exactly like the web create dialog),
- * update/delete follow TaskPolicy (keputusan 9 Okt 2026: a task assigned by
- * someone else only by its creator or a superior).
+ * TaskPolicy::view's denyAsNotFound. Writes run the web Actions behind the
+ * same policies as the web: create needs WorkspacePolicy::editTasks of the
+ * target workspace (superiors assign through workspaces they may edit,
+ * exactly like the web create dialog), update/delete follow TaskPolicy
+ * (keputusan 9 Okt 2026: a task assigned by someone else only by its
+ * creator or a superior). Detail and every write answer with the same full
+ * payload (TaskApiDetail), including the fresh `can` of the caller.
  */
 class TaskController extends Controller
 {
@@ -46,39 +49,40 @@ class TaskController extends Controller
     }
 
     /**
-     * Task list, 20 per page: everything the caller may see, or with
-     * `saya=1` only the tasks assigned to them (the web "Tugas saya" query,
-     * MyTasks). Both lists hold open tasks plus tasks completed since Monday
-     * (office week), like "Tugas saya". Due date first (nulls last), then
-     * priority and number, then id — a unique tiebreak so pages never
-     * repeat or skip a row.
+     * Task list ("Tugas saya"), 20 per page by default: everything the caller
+     * may see, or with `scope`/`saya=1` the MyTasks tabs (ditugaskan · saya-amati
+     * · saya-buat), filtered (workspace, prioritas, status, label, penanggung,
+     * tenggat, q), sorted (tenggat default) and always ended by the task id —
+     * a unique tiebreak so pages never repeat or skip a row. Lists hold open
+     * tasks plus tasks completed since Monday (office week) unless
+     * `selesai=tidak`. Each row carries its due-date `group` hint and the
+     * caller's own planner lane; `meta` carries the per-scope counts and the
+     * header summary of the chosen scope.
      */
-    public function index(Request $request, #[CurrentUser] User $user, MyTasks $myTasks): JsonResponse
+    public function index(TaskIndexRequest $request, #[CurrentUser] User $user, MyTaskList $list): JsonResponse
     {
         Gate::authorize('viewAny', Task::class);
 
-        $weekStart = CarbonImmutable::now(config()->string('app.office_timezone'))
-            ->startOfDay()
-            ->startOfWeek(CarbonImmutable::MONDAY)
-            ->utc();
+        $criteria = $request->criteria();
+        $today = Period::officeDate(now());
 
-        $query = $request->boolean('saya')
-            ? $myTasks->query($user, 'assigned', $weekStart)
-            : Task::query()
-                ->visibleTo($user)
-                ->where(fn (Builder $query): Builder => $query->open()->orWhere('tasks.completed_at', '>=', $weekStart));
+        $tasks = $list->query($user, $criteria, $today)
+            ->with(['workspace:id,key,name,type', 'status:id,workspace_id,name,category', 'assignees:id,name,avatar_url', 'labels'])
+            ->withCount([
+                'checklistItems',
+                'checklistItems as checklist_done_count' => fn (Builder $query): Builder => $query->where('is_done', true),
+            ])
+            ->paginate($request->perPage());
 
-        $tasks = $query
-            ->with(['workspace:id,key,name', 'status:id,name,category', 'assignees:id,name'])
-            ->orderByRaw('tasks.due_date asc nulls last')
-            ->orderBy('tasks.priority')
-            ->orderBy('tasks.number')
-            ->orderBy('tasks.id')
-            ->paginate(20);
+        $plans = TaskPlan::query()
+            ->ownedBy($user)
+            ->whereIn('task_id', array_map(fn (Task $task): string => $task->id, $tasks->items()))
+            ->get()
+            ->keyBy('task_id');
 
         return response()->json([
             'tasks' => array_map(
-                fn (Task $task): array => TaskSummary::make($task),
+                fn (Task $task): array => TaskListRow::make($task, $today, $plans->get($task->id)),
                 $tasks->items(),
             ),
             'meta' => [
@@ -88,38 +92,23 @@ class TaskController extends Controller
                 'per_page' => $tasks->perPage(),
                 'to' => $tasks->lastItem(),
                 'total' => $tasks->total(),
+                'scope' => ['assigned' => 'ditugaskan', 'watching' => 'saya-amati', 'created' => 'saya-buat'][$criteria['scope'] ?? ''] ?? null,
+                'today' => $today->toDateString(),
+                'counts' => $list->counts($user),
+                'summary' => $list->summary($user, $criteria['scope'], $today),
             ],
         ]);
     }
 
     /**
-     * One task, still compact (policy view; an invisible task is a 404).
+     * One task with everything the detail screen shows (policy view; an
+     * invisible task is a 404).
      */
-    public function show(#[CurrentUser] User $user, Task $task): JsonResponse
+    public function show(#[CurrentUser] User $user, Task $task, TaskApiDetail $detail): JsonResponse
     {
         Gate::authorize('view', $task);
 
-        $detail = TaskSummary::detail($this->load($task));
-        $detail['can'] = self::can($user, $task);
-
-        return response()->json(['task' => $detail]);
-    }
-
-    /**
-     * The app hides actions the caller may not take instead of learning it
-     * from a 403 after the tap.
-     *
-     * @return array{edit: bool, delete: bool, comment: bool, work: bool}
-     */
-    private static function can(User $user, Task $task): array
-    {
-        return [
-            'edit' => Gate::forUser($user)->allows('update', $task),
-            // Checklist & attachments (TaskPolicy::work).
-            'work' => Gate::forUser($user)->allows('work', $task),
-            'delete' => Gate::forUser($user)->allows('delete', $task),
-            'comment' => Gate::forUser($user)->allows('comment', $task),
-        ];
+        return response()->json($detail->for($task, $user));
     }
 
     /**
@@ -128,7 +117,7 @@ class TaskController extends Controller
      * route binder hides it the same way), a visible one without edit rights
      * (viewer, archived, non-member internal) is a 403.
      */
-    public function store(TaskStoreRequest $request, #[CurrentUser] User $user, CreateTask $createTask): JsonResponse
+    public function store(TaskStoreRequest $request, #[CurrentUser] User $user, CreateTask $createTask, TaskApiDetail $detail): JsonResponse
     {
         // ULIDs are stored lowercase; the app may send the canonical uppercase form.
         $workspace = Workspace::query()->find(strtolower($request->string('workspace_id')->toString()));
@@ -139,25 +128,21 @@ class TaskController extends Controller
 
         $task = $createTask->handle($workspace, $user, $request->payload());
 
-        return response()->json(['task' => TaskSummary::detail($this->load($task))], 201);
+        return response()->json($detail->for($task, $user), 201);
     }
 
     /**
      * PATCH /api/v1/tugas/{task}: partial update through the web UpdateTask
-     * behind TaskPolicy::update.
+     * behind TaskPolicy::update. The answer is the full detail, so `can` is
+     * fresh (e.g. assigning someone else closes the task to bystanders).
      */
-    public function update(TaskUpdateRequest $request, Task $task, #[CurrentUser] User $user, UpdateTask $updateTask): JsonResponse
+    public function update(TaskUpdateRequest $request, Task $task, #[CurrentUser] User $user, UpdateTask $updateTask, TaskApiDetail $detail): JsonResponse
     {
         Gate::authorize('update', $task);
 
         $task = $updateTask->handle($task, $user, $request->payload());
 
-        // Same shape as the detail: the rights may change with the update
-        // (e.g. assigning someone else closes the task to bystanders).
-        $detail = TaskSummary::detail($this->load($task));
-        $detail['can'] = self::can($user, $task->unsetRelation('assignees'));
-
-        return response()->json(['task' => $detail]);
+        return response()->json($detail->for($task, $user));
     }
 
     /**
@@ -171,20 +156,5 @@ class TaskController extends Controller
         $deleteTask->handle($task, $user);
 
         return response()->json(status: 204);
-    }
-
-    /**
-     * The relations and checklist counts TaskSummary::detail() reads.
-     */
-    private function load(Task $task): Task
-    {
-        return $task->loadMissing([
-            'workspace:id,key,name',
-            'status:id,name,category',
-            'assignees:id,name',
-        ])->loadCount([
-            'checklistItems',
-            'checklistItems as checklist_done_count' => fn (Builder $query): Builder => $query->where('is_done', true),
-        ]);
     }
 }

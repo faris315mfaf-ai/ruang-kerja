@@ -92,3 +92,21 @@ it('tells which documents the app may edit as plain text', function (?array $doc
     'daftar' => [['type' => 'doc', 'content' => [['type' => 'bulletList', 'content' => [['type' => 'listItem', 'content' => [paragraphOf(textOf('a'))]]]]]], false],
     'mention' => [['type' => 'doc', 'content' => [paragraphOf(['type' => 'mention', 'attrs' => ['id' => 'x', 'label' => 'A']])]], false],
 ]);
+
+it('parses a data-mention span from the app into a mention node', function () {
+    $document = NoteHtml::documentFromHtml('<p>Halo <span data-mention="01JABCDEFGHJKMNPQRSTVWXYZ0">@Maya</span>, cek ini.</p>');
+
+    expect($document['content'][0]['content'])->toEqual([
+        textOf('Halo '),
+        ['type' => 'mention', 'attrs' => ['id' => '01JABCDEFGHJKMNPQRSTVWXYZ0', 'label' => 'Maya']],
+        textOf(', cek ini.'),
+    ]);
+});
+
+it('reads the rendering form of a mention back as the same node', function () {
+    $document = ['type' => 'doc', 'content' => [
+        paragraphOf(['type' => 'mention', 'attrs' => ['id' => '01JABCDEFGHJKMNPQRSTVWXYZ0', 'label' => 'Maya']]),
+    ]];
+
+    expect(NoteHtml::documentFromHtml(NoteHtml::toHtml($document)))->toEqual($document);
+});
