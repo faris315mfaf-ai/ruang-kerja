@@ -39,6 +39,7 @@ export function GalatLokasi({
   onCoba,
   onAktifkan,
   onNanti,
+  ditunda = false,
 }: {
   status: StatusGps;
   /** Mode QR: lokasi opsional, tidak menekan pengguna. */
@@ -47,6 +48,8 @@ export function GalatLokasi({
   onCoba: () => void;
   onAktifkan: () => void;
   onNanti: () => void;
+  /** Pengguna memilih "Nanti saja": tampilkan banner ringkas alih-alih kartu penjelasan. */
+  ditunda?: boolean;
 }): React.JSX.Element | null {
   const { colors } = useTheme();
   if (status.keadaan !== 'galat') {
@@ -56,6 +59,9 @@ export function GalatLokasi({
     case 'izin_belum':
       if (qr) {
         return null;
+      }
+      if (ditunda) {
+        return <Banner tone="warn" title="Lokasi diperlukan" message="Izinkan lokasi untuk check-in GPS. Tanpa izin ini Anda masih bisa memindai QR kiosk." actionLabel="Izinkan lokasi" onAction={onMinta} />;
       }
       return (
         <Card style={{ gap: 12 }}>
@@ -121,6 +127,9 @@ export function GalatLokasi({
         />
       );
     case 'layanan_mati':
+      if (!qr && ditunda) {
+        return <Banner tone="warn" title="Layanan lokasi mati" message="Aktifkan lokasi perangkat untuk check-in GPS." actionLabel="Aktifkan" onAction={onAktifkan} />;
+      }
       return qr ? null : (
         <Card style={{ gap: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>

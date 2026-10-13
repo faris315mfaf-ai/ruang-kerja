@@ -75,7 +75,6 @@ export function AttendanceStatusProvider({ children }: { children: React.ReactNo
       return undefined;
     }
     hidup.current = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- memuat status saat sesi aktif
     void refresh();
     const langganan = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
