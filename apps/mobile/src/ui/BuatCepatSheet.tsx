@@ -55,7 +55,7 @@ function useAksiBuatCepat(): { aksi: Aksi[]; notulensi: () => void } {
       label: 'Ajukan',
       icon: 'calendar-plus',
       gradien: 'indigo',
-      onPress: () => bukaSegera({ judul: 'Ajukan', ikon: 'calendar-plus', aksiJudul: 'Buat pengajuan baru', aksiRute: '/pengajuan/baru' }),
+      onPress: () => router.push('/pengajuan/baru' as never),
     },
     { kunci: 'laporan', label: 'Laporan hari ini', icon: 'clipboard-pen', gradien: 'hangat', onPress: () => router.push('/laporan/hari-ini' as never) },
     { kunci: 'catatan', label: 'Catatan cepat', icon: 'notebook-pen', gradien: 'indigo', onPress: () => bukaSegera({ judul: 'Catatan cepat', ikon: 'notebook-pen' }) },

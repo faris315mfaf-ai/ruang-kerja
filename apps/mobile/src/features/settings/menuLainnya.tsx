@@ -109,10 +109,7 @@ export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron }: Kontek
     daftar.push(rute('laporan-tim', 'Laporan tim', 'users', '/laporan/tim', { subjudul: 'Siapa yang sudah dan belum lapor' }));
   }
   daftar.push(
-    segera('pengajuan', 'Pengajuan saya', 'calendar-days', 'Cuti, izin, sakit, koreksi, barang', {
-      aksiJudul: 'Buat pengajuan baru',
-      aksiRute: '/pengajuan/baru',
-    }),
+    rute('pengajuan', 'Pengajuan saya', 'calendar-days', '/pengajuan', { subjudul: 'Cuti, izin, sakit, koreksi, barang' }),
     rute('kalender', 'Kalender & rapat', 'calendar-clock', '/kalender', {
       subjudul: pimpinan ? 'Termasuk jadwal pimpinan (baca)' : undefined,
     }),

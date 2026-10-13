@@ -10,12 +10,12 @@ import { StatusBar } from 'expo-status-bar';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { bukaSegera } from '@/features/settings/ComingSoon';
 import { jam } from '@/lib/format';
 import { radius, useTheme } from '@/theme';
 import { Gradient, Icon, Pressable, Text, type AnyIconName } from '@/ui';
 
 import type { HasilAbsen } from './store';
+import { bukaKoreksiHari } from './koreksi';
 
 type Sukses = Extract<HasilAbsen, { jenis: 'sukses' }>;
 
@@ -190,7 +190,7 @@ export function HasilSukses({ h, onSelesai }: { h: Sukses; onSelesai: () => void
         <View style={s.tautan}>
           {v.koreksi ? (
             <Pressable
-              onPress={() => bukaSegera({ judul: 'Koreksi absensi', ikon: 'clipboard-pen-line', tautan: '/pengajuan/baru?kategori=koreksi' })}
+              onPress={() => bukaKoreksiHari()}
               accessibilityRole="link"
               accessibilityLabel="Ajukan koreksi"
               style={s.tautanItem}

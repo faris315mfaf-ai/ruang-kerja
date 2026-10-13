@@ -50,9 +50,11 @@ export function kategoriDariSlug(slug: string | null | undefined): KategoriPenga
     case 'sick':
       return 'sick';
     case 'koreksi':
+    case 'kor':
     case 'correction':
       return 'correction';
     case 'dinas':
+    case 'dns':
     case 'business_trip':
       return 'business_trip';
     case 'barang':

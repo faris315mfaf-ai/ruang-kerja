@@ -11,13 +11,13 @@ import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Line, Rect } from 'react-native-svg';
 
 import type { GagalAbsen } from '@/api/absensi';
-import { bukaSegera } from '@/features/settings/ComingSoon';
 import { jam, jarakMeter, tanggalPendek } from '@/lib/format';
 import { radius, useTheme } from '@/theme';
 import { Banner, Button, Card, Field, Input, ListRow, Screen, SubAppBar, Text, type AnyIconName } from '@/ui';
 
 import { jalankanPermintaan } from './kirim';
 import { absenStore, type HasilAbsen } from './store';
+import { bukaDinasLuar, bukaKoreksiHari, bukaPengajuanTerkait } from './koreksi';
 
 type Gagal = Extract<HasilAbsen, { jenis: 'gagal' }>;
 
@@ -178,8 +178,8 @@ export function HasilGagal({ h, onKembali }: { h: Gagal; onKembali: () => void }
             onKembali();
           }}
         />
-        <ListRow divider icon="building" title="Ajukan dinas luar" onPress={() => bukaSegera({ judul: 'Ajukan dinas luar', ikon: 'briefcase-business', tautan: '/pengajuan/baru' })} />
-        <ListRow divider icon="clipboard-pen-line" title="Ajukan koreksi absensi" onPress={() => bukaSegera({ judul: 'Koreksi absensi', ikon: 'clipboard-pen-line', tautan: '/pengajuan/baru?kategori=koreksi' })} />
+        <ListRow divider icon="building" title="Ajukan dinas luar" onPress={bukaDinasLuar} />
+        <ListRow divider icon="clipboard-pen-line" title="Ajukan koreksi absensi" onPress={() => bukaKoreksiHari()} />
       </Card>
     </>
   );
@@ -227,7 +227,7 @@ export function HasilGagal({ h, onKembali }: { h: Gagal; onKembali: () => void }
           ) : g.reason === 'consent_required' ? (
             <Button title="Baca & setujui" icon="shield-check" size="lg" onPress={() => router.replace('/absensi/persetujuan')} />
           ) : g.reason === 'day_has_request' ? (
-            <Button title="Lihat pengajuan" variant="tonal" icon="file-text" size="lg" onPress={() => bukaSegera({ judul: 'Pengajuan saya', ikon: 'file-text', tautan: '/pengajuan' })} />
+            <Button title="Lihat pengajuan" variant="tonal" icon="file-text" size="lg" onPress={() => bukaPengajuanTerkait()} />
           ) : h.retryQr || g.reason.startsWith('qr_') ? (
             <Button title="Pindai ulang" icon="qr-code" size="lg" onPress={() => router.replace({ pathname: '/absensi/qr', params: { arah: h.arah } })} />
           ) : null}

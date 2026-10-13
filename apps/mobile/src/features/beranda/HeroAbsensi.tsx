@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 import { View } from 'react-native';
 
 import type { StatusAbsensiRingkas } from '@/api/beranda';
-import { durasiMenit, jam, jarakMeter } from '@/lib/format';
+import { durasiMenit, jam, jarakMeter, ymdHariIni } from '@/lib/format';
 import { radius, useTheme } from '@/theme';
 import { Hero, Icon, Pressable, Text, type AnyIconName } from '@/ui';
 
@@ -170,7 +170,7 @@ export function HeroAbsensi({ status, offline }: { status: StatusAbsensiRingkas;
 
       <Pressable
         disabled={mati}
-        onPress={() => router.push(koreksi ? '/pengajuan/baru' : '/(tabs)/absen')}
+        onPress={() => (koreksi ? router.push({ pathname: '/pengajuan/baru', params: { jenis: 'KOR', tanggal: ymdHariIni() } }) : router.push('/(tabs)/absen'))}
         accessibilityRole="button"
         accessibilityLabel={teksTombol}
         accessibilityHint={mati ? 'Check-in membutuhkan koneksi internet' : koreksi ? 'Membuka formulir pengajuan koreksi' : 'Membuka tab Absen'}

@@ -1,19 +1,26 @@
-/** Pintu masuk koreksi absensi — form lengkap ada di modul Pengajuan (Bagian 4); sementara layar "Segera hadir". */
+/**
+ * Pintu masuk Pengajuan dari Absensi (Bagian 4): form koreksi terisi tanggal
+ * (`/pengajuan/baru?jenis=KOR&tanggal=…`), daftar Pengajuan saya, dinas luar.
+ */
+import { router } from 'expo-router';
+
 import type { KoreksiHari } from '@/api/absensi';
-import { bukaSegera } from '@/features/settings/ComingSoon';
+import { ymdHariIni } from '@/lib/format';
 
-import { hariTanggalPendek } from './tanggal';
-
-export function bukaKoreksiHari(tanggal: string, koreksi: KoreksiHari | null): void {
-  const batas = koreksi?.deadline ? ` Batas pengajuan untuk ${hariTanggalPendek(tanggal)}: ${hariTanggalPendek(koreksi.deadline)}.` : '';
-  bukaSegera({
-    judul: 'Koreksi absensi',
-    ikon: 'clipboard-pen-line',
-    catatan: `Pengajuan koreksi absensi akan hadir di aplikasi.${batas} Untuk sementara ajukan lewat RuangKerja versi desktop.`,
-    tautan: '/pengajuan/baru?kategori=koreksi',
-  });
+/** Ajukan koreksi untuk `tanggal` (YYYY-MM-DD, bawaan hari ini); bila sudah ada koreksi berjalan, buka pengajuan itu. */
+export function bukaKoreksiHari(tanggal: string = ymdHariIni(), koreksi: KoreksiHari | null = null): void {
+  const berjalan = koreksi?.pendingRequest;
+  if (berjalan) {
+    router.push(`/pengajuan/${berjalan.id}`);
+    return;
+  }
+  router.push({ pathname: '/pengajuan/baru', params: { jenis: 'KOR', tanggal } });
 }
 
-export function bukaPengajuanTerkait(judul = 'Pengajuan saya'): void {
-  bukaSegera({ judul, ikon: 'file-text', tautan: '/pengajuan' });
+export function bukaPengajuanTerkait(_judul = 'Pengajuan saya'): void {
+  router.push('/pengajuan');
+}
+
+export function bukaDinasLuar(): void {
+  router.push({ pathname: '/pengajuan/baru', params: { jenis: 'dinas' } });
 }

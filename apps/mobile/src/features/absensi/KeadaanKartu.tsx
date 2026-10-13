@@ -4,12 +4,12 @@ import { StyleSheet, View } from 'react-native';
 
 import type { KeadaanAbsen } from '@/api/absensi';
 import type { TodayAttendance } from '@/api/types';
-import { bukaSegera } from '@/features/settings/ComingSoon';
 import { durasiMenit, jam, tanggalDariYMD } from '@/lib/format';
 import { useTheme } from '@/theme';
 import { Badge, Banner, Button, Card, Divider, Icon, IconTile, ListRow, Pressable, Text } from '@/ui';
 
 import { menitAntara } from './waktu';
+import { bukaPengajuanTerkait } from './koreksi';
 
 /** Rencana kerja baca-saja (poin bernomor). */
 export function RencanaBacaSaja({ poin, judul }: { poin: string[]; judul: string }): React.JSX.Element | null {
@@ -181,7 +181,7 @@ export function KartuTidakTersedia({ state, data }: { state: KeadaanAbsen; data:
           {pesan}
         </Text>
         {dariPengajuan ? (
-          <Button title="Lihat pengajuan" variant="tonal" icon="file-text" onPress={() => bukaSegera({ judul: 'Pengajuan saya', ikon: 'file-text', tautan: '/pengajuan' })} />
+          <Button title="Lihat pengajuan" variant="tonal" icon="file-text" onPress={() => bukaPengajuanTerkait()} />
         ) : null}
       </Card>
       {dariPengajuan ? (

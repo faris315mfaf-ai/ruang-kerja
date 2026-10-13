@@ -11,7 +11,6 @@ import { Keyboard, StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { absensiHariIniLengkap, type HariIni, type KeadaanAbsen } from '@/api/absensi';
-import { bukaSegera } from '@/features/settings/ComingSoon';
 import { useSession } from '@/session/SessionProvider';
 import { useUnread } from '@/session/UnreadProvider';
 import { jam, tanggalPanjang } from '@/lib/format';
@@ -52,6 +51,7 @@ import { lokasiPesan, susunPesanWa } from './pesanWa';
 import { absenStore, useAbsenStore, type InfoJadwal, type Metode } from './store';
 import { titikSegar, useLokasiAbsen, type TitikGps } from './useLokasiAbsen';
 import { SKEW_TANDAI_MS, hitungOffset, menitAntara, useJamServer } from './waktu';
+import { bukaDinasLuar, bukaKoreksiHari } from './koreksi';
 
 const OPSI_METODE: { value: Metode; label: string }[] = [
   { value: 'gps', label: 'GPS + selfie' },
@@ -324,12 +324,7 @@ export function LayarAbsen(): React.JSX.Element {
     });
   }
   function bukaKoreksi(): void {
-    bukaSegera({
-      judul: 'Koreksi absensi',
-      ikon: 'clipboard-pen-line',
-      catatan: 'Pengajuan koreksi absensi akan hadir di aplikasi. Untuk sementara ajukan lewat RuangKerja versi desktop atau hubungi HR.',
-      tautan: '/pengajuan/baru?kategori=koreksi',
-    });
+    bukaKoreksiHari();
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -441,7 +436,7 @@ export function LayarAbsen(): React.JSX.Element {
                 <Text variant="body" tone="muted" style={{ fontSize: 15, lineHeight: 22 }}>
                   Jadwal Anda hari ini di kantor. Bila bertugas di luar, ajukan dinas luar atau minta HR mengubah jadwal.
                 </Text>
-                <ListRow icon="briefcase-business" iconTone="blue" title="Ajukan dinas luar" subtitle="Pengajuan ke atasan langsung" onPress={() => bukaSegera({ judul: 'Ajukan dinas luar', ikon: 'briefcase-business', tautan: '/pengajuan/baru' })} />
+                <ListRow icon="briefcase-business" iconTone="blue" title="Ajukan dinas luar" subtitle="Pengajuan ke atasan langsung" onPress={bukaDinasLuar} />
                 <ListRow icon="clipboard-pen-line" iconTone="teal" title="Ajukan koreksi absensi" subtitle="Bila sudah telanjur masuk dari luar" onPress={bukaKoreksi} />
               </Card>
             ) : null}
@@ -641,7 +636,7 @@ function KonsenDibutuhkan({ perbarui, versi }: { perbarui: boolean; versi: strin
           iconTone="blue"
           title="Ajukan koreksi absensi"
           subtitle="HR memasukkan jam manual"
-          onPress={() => bukaSegera({ judul: 'Koreksi absensi', ikon: 'clipboard-pen-line', tautan: '/pengajuan/baru?kategori=koreksi' })}
+          onPress={() => bukaKoreksiHari()}
         />
       </Card>
     </>
