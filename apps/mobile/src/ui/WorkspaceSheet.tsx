@@ -8,23 +8,22 @@ import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
-import { daftarWorkspace } from '@/api/endpoints';
-import type { WorkspaceGroups } from '@/api/types';
-import { radius, useTheme, type GradientName } from '@/theme';
+import { ambilDaftarWorkspace, type DaftarWorkspace } from '@/api/workspace';
+import { gradienUbin } from '@/features/workspace/bagian';
+import { radius, useTheme } from '@/theme';
 
 import { BottomSheet } from './BottomSheet';
 import { Button } from './Button';
 import { Gradient } from './Gradient';
+import { Icon } from './Icon';
 import { Badge } from './Indicators';
 import { Pressable } from './Pressable';
 import { ErrorState, Loading } from './States';
 import { Text } from './Text';
 
-const GRADIEN: Record<string, GradientName> = { pribadi: 'slate', divisi: 'merek', proyek: 'indigo', lainnya: 'slate' };
-
 export function WorkspaceSheet({ visible, onClose }: { visible: boolean; onClose: () => void }): React.JSX.Element {
   const { colors } = useTheme();
-  const [data, setData] = useState<WorkspaceGroups | null>(null);
+  const [data, setData] = useState<DaftarWorkspace | null>(null);
   const [galat, setGalat] = useState<string | null>(null);
   const [memuat, setMemuat] = useState(false);
 
@@ -32,7 +31,7 @@ export function WorkspaceSheet({ visible, onClose }: { visible: boolean; onClose
     setMemuat(true);
     setGalat(null);
     try {
-      setData(await daftarWorkspace());
+      setData(await ambilDaftarWorkspace());
     } catch (err) {
       setGalat(err instanceof ApiError ? err.message : 'Tidak dapat memuat workspace.');
     } finally {
@@ -72,7 +71,7 @@ export function WorkspaceSheet({ visible, onClose }: { visible: boolean; onClose
             </Text>
             {g.items.map((w) => (
               <Pressable key={w.id} onPress={() => buka(w.id)} scaleTo={1} accessibilityRole="button" accessibilityLabel={`Buka workspace ${w.name}`} style={s.baris}>
-                <Gradient name={GRADIEN[g.jenis] ?? 'slate'} style={s.ubin}>
+                <Gradient name={gradienUbin(w.color, w.type)} style={s.ubin}>
                   <Text variant="label" weight={800} style={{ color: '#FFFFFF' }}>
                     {w.name.slice(0, 1).toUpperCase()}
                   </Text>
@@ -83,9 +82,12 @@ export function WorkspaceSheet({ visible, onClose }: { visible: boolean; onClose
                   </Text>
                   <Text variant="meta" numberOfLines={1} style={{ color: colors.muted }}>
                     {w.key}
+                    {w.type !== 'personal' ? ` · ${w.type_label}` : ''}
+                    {w.overdue_tasks_count > 0 ? ` · ${w.overdue_tasks_count} terlambat` : ''}
                   </Text>
                 </View>
-                {w.arsip ? <Badge tone="neutral">Diarsipkan</Badge> : null}
+                {w.favorit ? <Icon name="star" size={18} color={colors.warning} /> : null}
+                {w.arsip ? <Badge tone="neutral">Diarsipkan</Badge> : w.view_only ? <Badge tone="info" dot={false}>Lihat saja</Badge> : null}
               </Pressable>
             ))}
           </View>
