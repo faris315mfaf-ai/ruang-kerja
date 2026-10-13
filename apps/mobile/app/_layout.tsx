@@ -114,6 +114,7 @@ function RootNavigator(): React.JSX.Element {
             <Stack.Screen name="inbox/[id]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="inbox/tidak-tersedia" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="pengumuman" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="persetujuan" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="laporan" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="cari" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="buat-cepat" options={{ animation: 'slide_from_bottom' }} />
