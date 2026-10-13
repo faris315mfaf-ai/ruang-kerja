@@ -47,6 +47,7 @@ import { gabungKomentar, useDetailTugas } from '@/features/tugas/useDetailTugas'
 import { LABEL_PRIORITAS, PESAN_TITIPAN, hariSingkat, pesanGalat, tanggalRingkas, tanpaKoneksi } from '@/features/tugas/util';
 import { waktuRelatif } from '@/lib/format';
 import { warnaPalet } from '@/lib/palette';
+import { useSession } from '@/session/SessionProvider';
 import { radius, useTheme } from '@/theme';
 import {
   Avatar,
@@ -84,6 +85,7 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
   const { colors, dark } = useTheme();
   const dialog = useDialog();
   const snackbar = useSnackbar();
+  const { user } = useSession();
   const kembali = useKembali();
   const d = useDetailTugas(id);
   const { t } = d;
@@ -102,6 +104,7 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
   const [sunting, setSunting] = useState<ModeSunting | null>(null);
   const [menyegarkan, setMenyegarkan] = useState(false);
   const [anggotaWs, setAnggotaWs] = useState<Orang[] | null>(null);
+  const [anggotaGagal, setAnggotaGagal] = useState(false);
 
   const can = t?.can;
   const idWorkspace = t?.workspace.id;
@@ -111,9 +114,14 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
     if (pilih !== 'orang' || anggotaWs !== null || !idWorkspace) {
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- coba lagi setiap pemilih dibuka
+    setAnggotaGagal(false);
     void anggotaUntukTugas(idWorkspace)
       .then(setAnggotaWs)
-      .catch(() => snackbar.show({ message: 'Daftar anggota tidak dapat dimuat.', variant: 'bad' }));
+      .catch(() => {
+        setAnggotaGagal(true);
+        snackbar.show({ message: 'Daftar anggota tidak dapat dimuat.', variant: 'bad' });
+      });
   }, [pilih, anggotaWs, idWorkspace, snackbar]);
 
   function pesanOffline(): void {
@@ -447,7 +455,7 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
   const kunciProp = !dapatEdit;
   const bannerIkon: IconName = t.banner?.kind === 'arsip' ? 'archive' : t.banner?.kind === 'lihat_saja' ? 'eye' : 'lock';
   const statusAktif = t.statuses.find((s) => s.id === t.status_id);
-  const namaPenanggung = t.assignee_people.length === 0 ? 'Penanggung' : t.assignee_people.map((o) => o.name).join(', ');
+  const namaPenanggung = t.assignee_people.length === 0 ? 'Penanggung jawab' : t.assignee_people.map((o) => o.name).join(', ');
   const punyaInduk = t.parent !== null;
 
   const aktivitasCampur = [
@@ -572,18 +580,23 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
           <PropChip
             leading={statusAktif ? <StatusRing kategori={statusAktif.category} size={22} /> : <StatusRing kategori={t.status.category} size={22} />}
             label={t.status.name}
+            aksesLabel={`Status: ${t.status.name}${can?.move ? '' : ', terkunci'}`}
             onPress={can?.move ? () => setPilih('status') : undefined}
             terkunci={!can?.move}
           />
           <PropChip
             leading={t.priority.value === 0 ? <Icon name="minus" size={18} /> : <PriorityBars nilai={t.priority.value} size={20} />}
             label={t.priority.value === 0 ? 'Prioritas' : (LABEL_PRIORITAS[t.priority.value] ?? '')}
+            aksesLabel={`Prioritas: ${LABEL_PRIORITAS[t.priority.value] ?? ''}${kunciProp ? ', terkunci' : ''}`}
+            putus={t.priority.value === 0}
             onPress={() => (dapatEdit ? setPilih('prioritas') : terkunci('edit'))}
             terkunci={kunciProp}
           />
           <PropChip
             leading={t.assignee_people[0] ? <Avatar name={t.assignee_people[0].name} size="sm" /> : <Icon name="user" size={20} />}
             label={namaPenanggung}
+            aksesLabel={`Penanggung jawab: ${t.assignee_people.length === 0 ? 'belum ada' : namaPenanggung}${kunciProp ? ', terkunci' : ''}`}
+            putus={t.assignee_people.length === 0}
             onPress={() => (dapatEdit ? setPilih('orang') : terkunci('edit'))}
             terkunci={kunciProp}
           />
@@ -832,6 +845,8 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
         onClose={() => setPilih(null)}
         orang={[...(anggotaWs ?? []), ...t.assignee_people.filter((a) => !(anggotaWs ?? []).some((o) => o.id === a.id))]}
         terpilih={t.assignee_people.map((o) => o.id)}
+        idSaya={user?.id}
+        memuat={anggotaWs === null && !anggotaGagal}
         onSimpan={(ids) => void simpan({ assignee_ids: ids })}
       />
       <SheetTenggat visible={pilih === 'tenggat'} onClose={() => setPilih(null)} nilai={t.due_date} hariIni={hariIni} min={t.start_date ?? undefined} subjudul={`${t.title} · ${t.key}`} onPilih={(iso) => void simpan({ due_date: iso })} />

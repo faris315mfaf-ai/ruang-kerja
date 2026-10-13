@@ -9,7 +9,7 @@ import { StyleSheet, View, type TextInputProps } from 'react-native';
 
 import type { KelompokWorkspaceTugas, LabelTugas, OpsiStatus, OpsiWorkspace, Orang } from '@/api/tugas';
 import { fontFamily, radius, useTheme } from '@/theme';
-import { BottomSheet, Button, Checkbox, DateInput, Icon, Pressable, Text, tanggal } from '@/ui';
+import { Avatar, BottomSheet, Button, DateInput, Icon, Pressable, Text, tanggal } from '@/ui';
 
 import { PriorityBars, StatusRing, UbinWorkspace } from './ikon';
 import { LABEL_PRIORITAS, hariSingkat, tambahHari } from './util';
@@ -132,6 +132,11 @@ export function SheetStatus({
   return (
     <BottomSheet visible={visible} onClose={onClose} title={judul} showClose scrollable>
       {subjudul ? <Text variant="meta">{subjudul}</Text> : null}
+      {statuses.length === 0 ? (
+        <Text variant="body" tone="muted">
+          Kolom status workspace ini belum dimuat. Tutup lalu coba lagi.
+        </Text>
+      ) : null}
       {statuses.map((st) => (
         <BarisPilihan
           key={st.id}
@@ -156,6 +161,8 @@ export function SheetOrang({
   orang,
   terpilih,
   onSimpan,
+  idSaya,
+  memuat = false,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -163,33 +170,80 @@ export function SheetOrang({
   orang: Orang[];
   terpilih: string[];
   onSimpan: (ids: string[]) => void;
+  /** Pengguna yang masuk: ditaruh paling atas dengan tanda "(Saya)" (sama dengan web). */
+  idSaya?: string | null;
+  /** Daftar anggota masih dimuat. */
+  memuat?: boolean;
 }): React.JSX.Element {
+  const { colors } = useTheme();
   const [draf, setDraf] = useState<string[]>(terpilih);
+  const [cari, setCari] = useState('');
   const [terakhir, setTerakhir] = useState(visible);
   if (visible !== terakhir) {
     setTerakhir(visible);
     if (visible) {
       setDraf(terpilih);
+      setCari('');
     }
   }
+  const urut = [...orang].sort((a, b) => (a.id === idSaya ? -1 : b.id === idSaya ? 1 : a.name.localeCompare(b.name, 'id')));
+  const kata = cari.trim().toLowerCase();
+  const tampil = kata === '' ? urut : urut.filter((o) => o.name.toLowerCase().includes(kata));
+  const sama = draf.length === terpilih.length && draf.every((id) => terpilih.includes(id));
+  // Tombol Simpan bisa di luar layar pada daftar panjang: menutup lembar (×, seret, ketuk luar,
+  // tombol kembali) ikut menyimpan pilihan supaya centang tidak hilang diam-diam.
+  const simpanTutup = (): void => {
+    if (!sama) {
+      onSimpan(draf);
+    }
+    onClose();
+  };
   return (
-    <BottomSheet visible={visible} onClose={onClose} title={judul} showClose scrollable>
-      {orang.length === 0 ? <Text variant="body" tone="muted">Tidak ada anggota yang bisa dipilih.</Text> : null}
-      {orang.map((o) => (
-        <Checkbox
-          key={o.id}
-          checked={draf.includes(o.id)}
-          onChange={(v) => setDraf((d) => (v ? [...d, o.id] : d.filter((x) => x !== o.id)))}
-          label={o.name}
-        />
-      ))}
-      <Button
-        title="Selesai"
-        onPress={() => {
-          onSimpan(draf);
-          onClose();
-        }}
-      />
+    <BottomSheet visible={visible} onClose={simpanTutup} title={judul} showClose scrollable>
+      <Text variant="meta">{memuat ? 'Memuat anggota…' : `${orang.length} anggota · boleh lebih dari satu`}</Text>
+      {orang.length > 8 ? <SheetInput value={cari} onChangeText={setCari} placeholder="Cari anggota" accessibilityLabel="Cari anggota" returnKeyType="search" /> : null}
+      {!memuat && orang.length === 0 ? (
+        <Text variant="body" tone="muted">
+          Tidak ada anggota yang bisa dipilih.
+        </Text>
+      ) : null}
+      {orang.length > 0 && tampil.length === 0 ? (
+        <Text variant="body" tone="muted">
+          Tidak ada anggota bernama “{cari.trim()}”.
+        </Text>
+      ) : null}
+      {tampil.map((o) => {
+        const dipilih = draf.includes(o.id);
+        const nama = o.id === idSaya ? `${o.name} (Saya)` : o.name;
+        return (
+          <Pressable
+            key={o.id}
+            scaleTo={1}
+            onPress={() => setDraf((d) => (d.includes(o.id) ? d.filter((x) => x !== o.id) : [...d, o.id]))}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: dipilih }}
+            accessibilityLabel={nama}
+            style={[s.baris, dipilih ? { backgroundColor: colors.linkSoft } : null]}
+          >
+            <Avatar name={o.name} size="sm" ring={o.id === idSaya} />
+            <Text variant="title" tone={dipilih ? 'link' : 'text'} style={{ flex: 1 }} numberOfLines={1}>
+              {nama}
+            </Text>
+            {dipilih ? <Icon name="check" size={22} color={colors.link} /> : null}
+          </Pressable>
+        );
+      })}
+      <View style={s.kaki}>
+        <View style={{ flex: 1 }}>
+          <Button title="Kosongkan" variant="outline" disabled={draf.length === 0} onPress={() => setDraf([])} />
+        </View>
+        <View style={{ flex: 1.4 }}>
+          <Button
+            title={draf.length === 0 ? 'Simpan · tanpa orang' : `Simpan · ${draf.length} orang`}
+            onPress={simpanTutup}
+          />
+        </View>
+      </View>
     </BottomSheet>
   );
 }
@@ -403,6 +457,7 @@ export function SheetWorkspace({
   visible,
   onClose,
   kelompok,
+  memuat = false,
   nilai,
   onPilih,
   onTerkunci,
@@ -410,6 +465,8 @@ export function SheetWorkspace({
   visible: boolean;
   onClose: () => void;
   kelompok: KelompokWorkspaceTugas[];
+  /** Daftar workspace masih dimuat (untuk keadaan kosong). */
+  memuat?: boolean;
   nilai: string | null;
   onPilih: (w: OpsiWorkspace) => void;
   onTerkunci: (w: OpsiWorkspace, alasan: string) => void;
@@ -417,6 +474,11 @@ export function SheetWorkspace({
   return (
     <BottomSheet visible={visible} onClose={onClose} title="Pilih workspace" showClose scrollable>
       <Text variant="meta">Hanya yang boleh Anda isi tugas</Text>
+      {kelompok.every((k) => k.items.length === 0) ? (
+        <Text variant="body" tone="muted" style={{ paddingVertical: 16 }} accessibilityLiveRegion="polite">
+          {memuat ? 'Memuat workspace…' : 'Belum ada workspace yang bisa Anda isi tugas.'}
+        </Text>
+      ) : null}
       {kelompok
         .filter((k) => k.items.length > 0)
         .map((k) => (
@@ -455,4 +517,5 @@ export function SheetWorkspace({
 const s = StyleSheet.create({
   baris: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 8, paddingHorizontal: 12, borderRadius: radius.lg },
   lead: { width: 40, alignItems: 'center', justifyContent: 'center' },
+  kaki: { flexDirection: 'row', gap: 10, marginTop: 4 },
 });

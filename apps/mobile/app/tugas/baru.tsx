@@ -5,14 +5,14 @@
  */
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Keyboard, StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { buatTugasBaru, detailTugasPenuh, type BarisTugas } from '@/api/tugas';
 import { PriorityBars, StatusRing, UbinWorkspace } from '@/features/tugas/ikon';
 import { PropChip } from '@/features/tugas/PropChip';
 import { SheetLabel, SheetOrang, SheetPrioritas, SheetStatus, SheetTenggat, SheetWorkspace } from '@/features/tugas/Pilihan';
-import { parseEstimasi, useBuatTugas } from '@/features/tugas/useBuatTugas';
+import { parseEstimasi, statusBawaan, useBuatTugas, type IsiBawaan } from '@/features/tugas/useBuatTugas';
 import { LABEL_PRIORITAS, galatPerField, hariSingkat, pesanGalat, ringkasLabel } from '@/features/tugas/util';
 import { useSession } from '@/session/SessionProvider';
 import { radius, useTheme } from '@/theme';
@@ -20,15 +20,33 @@ import { Avatar, Banner, Button, DateInput, Field, Icon, IconButton, Input, Pres
 
 type Pilih = 'status' | 'prioritas' | 'orang' | 'label' | 'workspace' | 'tenggat' | null;
 
+/** Pilihan yang dibawa dari sheet "Tugas baru" (parameter kosong = tidak dibawa). */
+function isiDariParam(p: { status?: string; prioritas?: string; pj?: string; label?: string; tenggat?: string }): IsiBawaan | undefined {
+  const daftar = (v?: string): string[] | undefined => (typeof v === 'string' && v !== '' ? v.split(',').filter((x) => x !== '') : undefined);
+  const prioritas = typeof p.prioritas === 'string' && /^[0-4]$/.test(p.prioritas) ? Number(p.prioritas) : undefined;
+  const isi: IsiBawaan = {
+    statusId: typeof p.status === 'string' && p.status !== '' ? p.status : undefined,
+    priority: prioritas,
+    assignees: typeof p.pj === 'string' ? (daftar(p.pj) ?? []) : undefined,
+    labels: daftar(p.label),
+    due: typeof p.tenggat === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.tenggat) ? p.tenggat : undefined,
+  };
+  return Object.values(isi).some((v) => v !== undefined) ? isi : undefined;
+}
+
 export default function LayarTugasBaru(): React.JSX.Element {
   const { colors } = useTheme();
   const { user } = useSession();
   const dialog = useDialog();
   const snackbar = useSnackbar();
   const navigation = useNavigation();
-  const params = useLocalSearchParams<{ workspace?: string; parent_id?: string; judul?: string }>();
+  const params = useLocalSearchParams<{ workspace?: string; parent_id?: string; judul?: string; status?: string; prioritas?: string; pj?: string; label?: string; tenggat?: string }>();
   const parentId = typeof params.parent_id === 'string' && params.parent_id !== '' ? params.parent_id : undefined;
-  const f = useBuatTugas({ workspace: typeof params.workspace === 'string' && params.workspace !== '' ? params.workspace : undefined, judul: typeof params.judul === 'string' ? params.judul : undefined });
+  const f = useBuatTugas({
+    workspace: typeof params.workspace === 'string' && params.workspace !== '' ? params.workspace : undefined,
+    judul: typeof params.judul === 'string' ? params.judul : undefined,
+    isi: isiDariParam(params),
+  });
   const { draf } = f;
   const [pilih, setPilih] = useState<Pilih>(null);
   const [butirBaru, setButirBaru] = useState('');
@@ -81,8 +99,15 @@ export default function LayarTugasBaru(): React.JSX.Element {
     });
   }, [navigation, f.adaPerubahan, dialog]);
 
-  const statusDipilih = f.konteks?.statuses.find((s) => s.id === draf.statusId) ?? f.konteks?.statuses[0] ?? null;
+  // Tanpa pilihan: kolom yang dipakai server (Todo), bukan kolom pertama (Backlog).
+  const statusDipilih = f.konteks?.statuses.find((s) => s.id === (draf.statusId ?? statusBawaan(f.konteks))) ?? null;
   const namaOrang = (id: string): string => (id === user?.id ? 'Saya' : (f.anggota.find((a) => a.id === id)?.name ?? 'Orang'));
+
+  // Papan ketik isian menutupi lembar pemilih.
+  const buka = (p: Exclude<Pilih, null>): void => {
+    Keyboard.dismiss();
+    setPilih(p);
+  };
 
   async function buat(): Promise<void> {
     if (parentId) {
@@ -109,7 +134,7 @@ export default function LayarTugasBaru(): React.JSX.Element {
           assignee_ids: draf.assignees.length > 0 ? draf.assignees : undefined,
           due_date: draf.due ?? undefined,
           priority: draf.priority,
-          status_id: draf.statusId ?? undefined,
+          status_id: statusDipilih?.id ?? undefined,
           label_ids: draf.labels.length > 0 ? draf.labels : undefined,
           start_date: draf.start ?? undefined,
           estimate_hours: est !== null && !Number.isNaN(est) ? est : undefined,
@@ -165,10 +190,16 @@ export default function LayarTugasBaru(): React.JSX.Element {
       {induk ? <Banner tone="info" icon="corner-down-right" message={`Menjadi sub-tugas dari ${induk.key} · ${induk.title}`} /> : null}
       {umum ? <Banner tone="bad" message={umum} /> : null}
       {f.galatMuat ? <Banner tone="bad" message={f.galatMuat} actionLabel="Coba lagi" onAction={f.muatUlang} /> : null}
+      {f.galatKonteks ? <Banner tone="bad" message={f.galatKonteks} actionLabel="Coba lagi" onAction={f.muatUlangKonteks} /> : null}
 
-      <Field label="Workspace" error={g.workspace}>
+      <Field label="Workspace" error={g.workspace} hint={f.memuatKonteks ? 'Memuat kolom, label, dan anggota…' : undefined}>
         <Pressable
-          onPress={() => (induk ? undefined : setPilih('workspace'))}
+          onPress={() => {
+            if (!induk) {
+              Keyboard.dismiss();
+              setPilih('workspace');
+            }
+          }}
           scaleTo={1}
           accessibilityRole="button"
           accessibilityLabel={`Workspace: ${draf.workspace?.name ?? 'belum dipilih'}`}
@@ -192,12 +223,25 @@ export default function LayarTugasBaru(): React.JSX.Element {
       </Field>
 
       <View style={s.chips}>
-        <PropChip leading={statusDipilih ? <StatusRing kategori={statusDipilih.category} size={22} /> : undefined} label={statusDipilih?.name ?? 'Status'} onPress={() => setPilih('status')} />
-        <PropChip leading={<PriorityBars nilai={draf.priority} size={20} />} label={LABEL_PRIORITAS[draf.priority] ?? ''} onPress={() => setPilih('prioritas')} />
+        <PropChip
+          leading={statusDipilih ? <StatusRing kategori={statusDipilih.category} size={22} /> : undefined}
+          label={statusDipilih?.name ?? 'Status'}
+          aksesLabel={`Status: ${statusDipilih?.name ?? 'belum dimuat'}`}
+          onPress={() => buka('status')}
+        />
+        <PropChip
+          leading={draf.priority === 0 ? <Icon name="minus" size={18} /> : <PriorityBars nilai={draf.priority} size={20} />}
+          label={draf.priority === 0 ? 'Prioritas' : (LABEL_PRIORITAS[draf.priority] ?? '')}
+          aksesLabel={`Prioritas: ${LABEL_PRIORITAS[draf.priority] ?? ''}`}
+          putus={draf.priority === 0}
+          onPress={() => buka('prioritas')}
+        />
         <PropChip
           leading={draf.assignees.length > 0 ? <Avatar name={namaOrang(draf.assignees[0] as string)} size="sm" /> : <Icon name="user" size={20} />}
           label={draf.assignees.length === 0 ? 'Penanggung jawab' : draf.assignees.map(namaOrang).join(', ')}
-          onPress={() => setPilih('orang')}
+          aksesLabel={`Penanggung jawab: ${draf.assignees.length === 0 ? 'belum ada' : draf.assignees.map(namaOrang).join(', ')}`}
+          putus={draf.assignees.length === 0}
+          onPress={() => buka('orang')}
         />
         <PropChip
           leading={<Icon name="tag" size={20} color={draf.labels.length > 0 ? colors.link : colors.text} />}
@@ -253,13 +297,14 @@ export default function LayarTugasBaru(): React.JSX.Element {
 
       <SheetStatus visible={pilih === 'status'} onClose={() => setPilih(null)} judul="Status awal" statuses={f.konteks?.statuses ?? []} nilai={statusDipilih?.id ?? null} onPilih={(id) => f.ubah({ statusId: id })} />
       <SheetPrioritas visible={pilih === 'prioritas'} onClose={() => setPilih(null)} nilai={draf.priority} onPilih={(n) => f.ubah({ priority: n })} />
-      <SheetOrang visible={pilih === 'orang'} onClose={() => setPilih(null)} orang={f.anggota} terpilih={draf.assignees} onSimpan={(ids) => f.ubah({ assignees: ids })} />
+      <SheetOrang visible={pilih === 'orang'} onClose={() => setPilih(null)} orang={f.anggota} terpilih={draf.assignees} idSaya={user?.id} memuat={f.memuatKonteks} onSimpan={(ids) => f.ubah({ assignees: ids })} />
       <SheetLabel visible={pilih === 'label'} onClose={() => setPilih(null)} label={f.konteks?.labels ?? []} memuat={f.konteks === null} terpilih={draf.labels} onSimpan={(ids) => f.ubah({ labels: ids })} />
       <SheetTenggat visible={pilih === 'tenggat'} onClose={() => setPilih(null)} nilai={draf.due} hariIni={hariIni} min={draf.start ?? undefined} onPilih={(iso) => f.ubah({ due: iso })} />
       <SheetWorkspace
         visible={pilih === 'workspace'}
         onClose={() => setPilih(null)}
         kelompok={f.kelompok}
+        memuat={f.memuat}
         nilai={draf.workspace?.id ?? null}
         onPilih={f.pilihWorkspace}
         onTerkunci={(_, alasan) => snackbar.show({ message: alasan, variant: 'warn' })}

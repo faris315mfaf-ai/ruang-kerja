@@ -5,7 +5,7 @@
  */
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Keyboard, StyleSheet, View } from 'react-native';
 
 import type { DetailTugasPenuh } from '@/api/tugas';
 import { Avatar, Banner, BottomSheet, Button, Field, Icon, IconButton, Pressable, Text, tanggal, useSnackbar } from '@/ui';
@@ -14,7 +14,7 @@ import { radius, useTheme } from '@/theme';
 import { PriorityBars, StatusRing, UbinWorkspace } from './ikon';
 import { PropChip } from './PropChip';
 import { SheetLabel, SheetOrang, SheetInput, SheetPrioritas, SheetStatus, SheetTenggat, SheetWorkspace } from './Pilihan';
-import { useBuatTugas } from './useBuatTugas';
+import { statusBawaan, useBuatTugas } from './useBuatTugas';
 import { LABEL_PRIORITAS, hariSingkat, ringkasLabel } from './util';
 import { useSession } from '@/session/SessionProvider';
 
@@ -28,10 +28,17 @@ function Isi({ onDibuat, onClose }: { onDibuat: (t: DetailTugasPenuh) => void; o
   const [pilih, setPilih] = useState<Pilih>(null);
   const hariIni = tanggal.hariIniIso();
   const { draf } = f;
-  const statusDipilih = f.konteks?.statuses.find((s) => s.id === draf.statusId) ?? f.konteks?.statuses[0] ?? null;
+  // Tanpa pilihan, chip menampilkan kolom yang memang dipakai server (Todo), bukan kolom pertama (Backlog).
+  const statusDipilih = f.konteks?.statuses.find((s) => s.id === (draf.statusId ?? statusBawaan(f.konteks))) ?? null;
   const namaOrang = (id: string): string => (id === user?.id ? 'Saya' : (f.anggota.find((a) => a.id === id)?.name ?? 'Orang'));
   const labelChip = ringkasLabel(draf.labels, f.konteks?.labels ?? []);
-  const penanggung = draf.assignees.length === 0 ? 'Penanggung' : draf.assignees.length === 1 ? namaOrang(draf.assignees[0] as string) : `${namaOrang(draf.assignees[0] as string)} +${draf.assignees.length - 1}`;
+  const penanggung = draf.assignees.length === 0 ? 'Penanggung jawab' : draf.assignees.length === 1 ? namaOrang(draf.assignees[0] as string) : `${namaOrang(draf.assignees[0] as string)} +${draf.assignees.length - 1}`;
+
+  // Papan ketik judul menutupi lembar pemilih yang dibuka di atasnya.
+  const buka = (p: Exclude<Pilih, null>): void => {
+    Keyboard.dismiss();
+    setPilih(p);
+  };
 
   async function buat(): Promise<void> {
     const t = await f.kirim();
@@ -65,13 +72,22 @@ function Isi({ onDibuat, onClose }: { onDibuat: (t: DetailTugasPenuh) => void; o
         <PropChip
           leading={statusDipilih ? <StatusRing kategori={statusDipilih.category} size={22} /> : undefined}
           label={statusDipilih?.name ?? 'Status'}
-          onPress={() => setPilih('status')}
+          aksesLabel={`Status: ${statusDipilih?.name ?? 'belum dimuat'}`}
+          onPress={() => buka('status')}
         />
-        <PropChip leading={<PriorityBars nilai={draf.priority} size={20} />} label={LABEL_PRIORITAS[draf.priority] ?? ''} onPress={() => setPilih('prioritas')} />
+        <PropChip
+          leading={draf.priority === 0 ? <Icon name="minus" size={18} /> : <PriorityBars nilai={draf.priority} size={20} />}
+          label={draf.priority === 0 ? 'Prioritas' : (LABEL_PRIORITAS[draf.priority] ?? '')}
+          aksesLabel={`Prioritas: ${LABEL_PRIORITAS[draf.priority] ?? ''}`}
+          putus={draf.priority === 0}
+          onPress={() => buka('prioritas')}
+        />
         <PropChip
           leading={draf.assignees.length > 0 ? <Avatar name={namaOrang(draf.assignees[0] as string)} size="sm" /> : <Icon name="user" size={20} />}
           label={penanggung}
-          onPress={() => setPilih('orang')}
+          aksesLabel={`Penanggung jawab: ${draf.assignees.length === 0 ? 'belum ada' : draf.assignees.map(namaOrang).join(', ')}`}
+          putus={draf.assignees.length === 0}
+          onPress={() => buka('orang')}
         />
         <PropChip
           leading={<Icon name="calendar" size={20} color={draf.due ? colors.link : colors.text} />}
@@ -90,9 +106,12 @@ function Isi({ onDibuat, onClose }: { onDibuat: (t: DetailTugasPenuh) => void; o
         />
       </View>
 
-      <Field label="Workspace" error={f.galat.workspace}>
+      <Field label="Workspace" error={f.galat.workspace} hint={f.memuatKonteks ? 'Memuat kolom, label, dan anggota…' : undefined}>
         <Pressable
-          onPress={() => setPilih('workspace')}
+          onPress={() => {
+            Keyboard.dismiss();
+            setPilih('workspace');
+          }}
           scaleTo={1}
           accessibilityRole="button"
           accessibilityLabel={`Workspace: ${draf.workspace?.name ?? 'belum dipilih'}. Ketuk untuk mengganti`}
@@ -107,6 +126,7 @@ function Isi({ onDibuat, onClose }: { onDibuat: (t: DetailTugasPenuh) => void; o
       </Field>
 
       {f.galatMuat ? <Banner tone="bad" message={f.galatMuat} actionLabel="Coba lagi" onAction={f.muatUlang} /> : null}
+      {f.galatKonteks ? <Banner tone="bad" message={f.galatKonteks} actionLabel="Coba lagi" onAction={f.muatUlangKonteks} /> : null}
       {f.galatUmum ? <Banner tone="bad" message={f.galatUmum} /> : null}
 
       <View style={s.aksi}>
@@ -119,20 +139,33 @@ function Isi({ onDibuat, onClose }: { onDibuat: (t: DetailTugasPenuh) => void; o
           size={52}
           onPress={() => {
             onClose();
-            router.push({ pathname: '/tugas/baru', params: { workspace: draf.workspace?.id ?? '', judul: draf.title } });
+            // Pilihan di sheet ikut dibawa; form lengkap menyaringnya lagi terhadap workspace itu.
+            router.push({
+              pathname: '/tugas/baru',
+              params: {
+                workspace: draf.workspace?.id ?? '',
+                judul: draf.title,
+                status: draf.statusId ?? '',
+                prioritas: String(draf.priority),
+                pj: draf.assignees.join(','),
+                label: draf.labels.join(','),
+                tenggat: draf.due ?? '',
+              },
+            });
           }}
         />
       </View>
 
       <SheetStatus visible={pilih === 'status'} onClose={() => setPilih(null)} judul="Status awal" statuses={f.konteks?.statuses ?? []} nilai={statusDipilih?.id ?? null} onPilih={(id) => f.ubah({ statusId: id })} />
       <SheetPrioritas visible={pilih === 'prioritas'} onClose={() => setPilih(null)} nilai={draf.priority} onPilih={(n) => f.ubah({ priority: n })} />
-      <SheetOrang visible={pilih === 'orang'} onClose={() => setPilih(null)} orang={f.anggota} terpilih={draf.assignees} onSimpan={(ids) => f.ubah({ assignees: ids })} />
+      <SheetOrang visible={pilih === 'orang'} onClose={() => setPilih(null)} orang={f.anggota} terpilih={draf.assignees} idSaya={user?.id} memuat={f.memuatKonteks} onSimpan={(ids) => f.ubah({ assignees: ids })} />
       <SheetTenggat visible={pilih === 'tenggat'} onClose={() => setPilih(null)} nilai={draf.due} hariIni={hariIni} onPilih={(iso) => f.ubah({ due: iso })} />
       <SheetLabel visible={pilih === 'label'} onClose={() => setPilih(null)} label={f.konteks?.labels ?? []} memuat={f.konteks === null} terpilih={draf.labels} onSimpan={(ids) => f.ubah({ labels: ids })} />
       <SheetWorkspace
         visible={pilih === 'workspace'}
         onClose={() => setPilih(null)}
         kelompok={f.kelompok}
+        memuat={f.memuat}
         nilai={draf.workspace?.id ?? null}
         onPilih={f.pilihWorkspace}
         onTerkunci={(_, alasan) => snackbar.show({ message: alasan, variant: 'warn' })}
