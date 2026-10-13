@@ -112,8 +112,10 @@ export const lightColors: Colors = {
   inverse: '#0B1A2B',
   onInverse: '#FFFFFF',
   scrim: 'rgba(7,11,20,0.45)',
-  glass: 'rgba(255,255,255,0.82)',
-  glassStrong: 'rgba(255,255,255,0.94)',
+  // Opaque on Android: there is no live blur behind these surfaces (BlurView needs a
+  // blurTarget per screen), and 6–18% see-through let text behind bleed through.
+  glass: 'rgba(255,255,255,0.98)',
+  glassStrong: '#FFFFFF',
   glassBorder: 'rgba(11,26,43,0.08)',
   marker: '#0B1A2B',
   gradientFrom: '#0B7F86',
@@ -162,8 +164,8 @@ export const darkColors: Colors = {
   inverse: '#EAF1F8',
   onInverse: '#0B1A2B',
   scrim: 'rgba(0,0,0,0.6)',
-  glass: 'rgba(15,22,34,0.86)',
-  glassStrong: 'rgba(23,33,49,0.94)',
+  glass: 'rgba(15,22,34,0.98)',
+  glassStrong: '#172131',
   glassBorder: 'rgba(255,255,255,0.10)',
   marker: '#3B4F6B',
   gradientFrom: '#0B7F86',

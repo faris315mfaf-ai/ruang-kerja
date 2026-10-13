@@ -181,7 +181,7 @@ export function KartuLokasi({ status, kantor, jarakM, dalam, jarakJauh, onRefres
 
 const s = StyleSheet.create({
   peta: { height: TINGGI, overflow: 'hidden' },
-  namaKantor: { position: 'absolute', top: 8, alignSelf: 'center', paddingHorizontal: 10, paddingVertical: 3, borderRadius: radius.sm, borderWidth: StyleSheet.hairlineWidth },
+  namaKantor: { position: 'absolute', bottom: 8, alignSelf: 'center', paddingHorizontal: 10, paddingVertical: 3, borderRadius: radius.sm, borderWidth: StyleSheet.hairlineWidth },
   chipPos: { position: 'absolute', top: 10, left: 10 },
   bawah: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
 });
