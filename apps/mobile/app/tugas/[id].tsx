@@ -6,12 +6,13 @@
  * dipakai apa adanya (tidak ditebak di klien).
  */
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Share, StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import {
   amati,
+  anggotaUntukTugas,
   hapusButir,
   hapusKomentar,
   hapusTugasPenuh,
@@ -30,6 +31,7 @@ import {
   type KomentarTugas,
   type Lampiran,
   type LajurRencana,
+  type Orang,
 } from '@/api/tugas';
 import { ChecklistBagian } from '@/features/tugas/ChecklistBagian';
 import { HtmlText } from '@/features/tugas/HtmlText';
@@ -93,8 +95,20 @@ export default function LayarDetailTugas(): React.JSX.Element {
   const [lampiranSheet, setLampiranSheet] = useState<Lampiran | null>(null);
   const [sunting, setSunting] = useState<ModeSunting | null>(null);
   const [menyegarkan, setMenyegarkan] = useState(false);
+  const [anggotaWs, setAnggotaWs] = useState<Orang[] | null>(null);
 
   const can = t?.can;
+  const idWorkspace = t?.workspace.id;
+
+  // Daftar anggota untuk pemilih penanggung — dimuat saat pertama dibuka.
+  useEffect(() => {
+    if (pilih !== 'orang' || anggotaWs !== null || !idWorkspace) {
+      return;
+    }
+    void anggotaUntukTugas(idWorkspace)
+      .then(setAnggotaWs)
+      .catch(() => snackbar.show({ message: 'Daftar anggota tidak dapat dimuat.', variant: 'bad' }));
+  }, [pilih, anggotaWs, idWorkspace, snackbar]);
 
   function pesanOffline(): void {
     snackbar.show({ message: 'Tidak ada koneksi. Perubahan belum terkirim.', variant: 'offline' });
@@ -435,7 +449,7 @@ export default function LayarDetailTugas(): React.JSX.Element {
     ...d.komentar.map((k) => ({ jenis: 'kom' as const, waktu: k.created_at ?? '', k })),
   ].sort((a, b) => (a.waktu < b.waktu ? -1 : 1));
 
-  const komposerTersedia = can?.comment === true && d.bisaKomentar;
+  const komposerTersedia = can?.comment === true;
   const alasanKomposer = t.banner?.kind === 'arsip' ? 'Workspace diarsipkan · hanya baca' : t.banner?.kind === 'lihat_saja' ? 'Mode lihat saja · tidak bisa berkomentar' : (t.locked_reason?.comment ?? 'Anda tidak bisa berkomentar di tugas ini.');
 
   return (
@@ -725,13 +739,13 @@ export default function LayarDetailTugas(): React.JSX.Element {
             <Text variant="overline" tone="muted" style={{ flex: 1 }}>
               Aktivitas
             </Text>
-            <View style={{ width: 200 }}>
+            <View style={{ width: 230 }}>
               <SegmentedTabs
                 value={tabAkt}
                 onChange={setTabAkt}
                 options={[
                   { value: 'semua', label: 'Semua' },
-                  { value: 'komentar', label: `Komentar${t.comments.count > 0 ? ` ${t.comments.count}` : ''}` },
+                  { value: 'komentar', label: 'Komentar', badge: t.comments.count > 0 ? t.comments.count : null },
                 ]}
               />
             </View>
@@ -800,7 +814,7 @@ export default function LayarDetailTugas(): React.JSX.Element {
       <SheetOrang
         visible={pilih === 'orang'}
         onClose={() => setPilih(null)}
-        orang={t.assignee_people}
+        orang={[...(anggotaWs ?? []), ...t.assignee_people.filter((a) => !(anggotaWs ?? []).some((o) => o.id === a.id))]}
         terpilih={t.assignee_people.map((o) => o.id)}
         onSimpan={(ids) => void simpan({ assignee_ids: ids })}
       />
