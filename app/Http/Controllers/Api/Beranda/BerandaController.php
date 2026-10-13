@@ -84,14 +84,13 @@ class BerandaController extends Controller
             'server_time' => $now->toIso8601ZuluString(),
             'today' => Period::officeDate($now)->toDateString(),
             'pengguna' => ['id' => $user->id, 'name' => $user->name, 'is_staff_only' => $staff],
-            // Dashboard picker: the app serves saya/divisi/hr; `direksi` is listed
-            // but `tersedia` is false until its API exists (Bagian 5).
+            // Dashboard picker: every view has its app screen (Direksi = monitoring, Bagian 5).
             'tampilan' => [
                 'awal' => $default->value,
                 'tersedia' => array_map(fn (DashboardView $view): array => [
                     'key' => $view->value,
                     'label' => $view->label(),
-                    'tersedia' => in_array($view, [DashboardView::Personal, DashboardView::Division, DashboardView::Hr], true),
+                    'tersedia' => true,
                 ], $views),
             ],
             'flags' => [

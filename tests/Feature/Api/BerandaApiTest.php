@@ -116,7 +116,7 @@ test('Direksi lands on a view the app cannot serve yet and says so', function ()
     $this->getJson('/api/v1/beranda')
         ->assertOk()
         ->assertJsonPath('tampilan.awal', 'direksi')
-        ->assertJsonFragment(['key' => 'direksi', 'label' => 'Direksi', 'tersedia' => false]);
+        ->assertJsonFragment(['key' => 'direksi', 'label' => 'Direksi', 'tersedia' => true]);
 });
 
 test('with the meetings module off the next meeting card is null', function () {

@@ -143,6 +143,20 @@ function RootNavigator(): React.JSX.Element {
             <Stack.Screen name="absensi" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="profil" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="pengaturan" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="karyawan" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="absensi-tim" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="organisasi/struktur" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="saldo-cuti" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="hiring" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="portofolio" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="proyek" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="okr" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="manajemen/index" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="manajemen/beban-kerja" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="manajemen/catatan" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="dashboard/saya" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="dashboard/divisi" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="dashboard/hr" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="segera" options={{ animation: 'slide_from_right' }} />
           </Stack.Protected>
           {/* Privasi: Data Saya butuh sesi (API menolak tanpa token); Kebijakan privasi publik. */}

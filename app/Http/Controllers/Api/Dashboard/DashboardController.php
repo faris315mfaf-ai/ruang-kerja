@@ -56,7 +56,7 @@ class DashboardController extends Controller
                 'key' => $view->value,
                 'label' => $view->label(),
                 'active' => $view === $default,
-                'tersedia' => in_array($view, [DashboardView::Personal, DashboardView::Division, DashboardView::Hr], true),
+                'tersedia' => true,
             ], $this->access->views($user)),
         ]);
     }
