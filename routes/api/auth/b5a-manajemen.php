@@ -2,12 +2,16 @@
 
 use App\Http\Controllers\Api\Management\ManagementDashboardController;
 use App\Http\Controllers\Api\Management\ManagementNoteController;
+use App\Http\Controllers\Api\Okr\KeyResultController;
+use App\Http\Controllers\Api\Okr\KeyResultTaskController;
+use App\Http\Controllers\Api\Okr\ObjectiveController;
 use App\Http\Controllers\Api\Projects\MilestoneController;
 use App\Http\Controllers\Api\Projects\PortfolioController;
 use App\Http\Controllers\Api\Projects\ProjectController;
 use App\Http\Controllers\Api\Projects\ProjectRiskController;
 use App\Http\Controllers\Api\Projects\ProjectSteeringController;
 use App\Http\Controllers\Api\Projects\ProjectUpdateController;
+use App\Http\Middleware\EnsureFeatureEnabled;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -66,4 +70,23 @@ Route::prefix('catatan-tindakan')->name('management-notes.')->controller(Managem
     Route::patch('{managementNote}', 'update')->whereUlid('managementNote')->middleware('throttle:60,1')->name('update');
     Route::post('{managementNote}/pindah', 'move')->whereUlid('managementNote')->middleware('throttle:60,1')->name('move');
     Route::delete('{managementNote}', 'destroy')->whereUlid('managementNote')->middleware('throttle:60,1')->name('destroy');
+});
+
+// --- OKR divisi (di balik FEATURE_OKR seperti web: 404 saat mati) ---
+Route::middleware(EnsureFeatureEnabled::class.':okr')->prefix('okr')->name('okr.')->group(function (): void {
+    Route::get('/', [ObjectiveController::class, 'index'])->name('index');
+    Route::post('/', [ObjectiveController::class, 'store'])->middleware('throttle:30,1')->name('store');
+
+    Route::get('kr/{keyResult}', [KeyResultController::class, 'show'])->whereUlid('keyResult')->name('key-results.show');
+    Route::patch('kr/{keyResult}', [KeyResultController::class, 'update'])->whereUlid('keyResult')->middleware('throttle:60,1')->name('key-results.update');
+    Route::delete('kr/{keyResult}', [KeyResultController::class, 'destroy'])->whereUlid('keyResult')->middleware('throttle:60,1')->name('key-results.destroy');
+    Route::post('kr/{keyResult}/check-in', [KeyResultController::class, 'checkin'])->whereUlid('keyResult')->middleware('throttle:60,1')->name('key-results.checkin');
+    Route::get('kr/{keyResult}/tugas', [KeyResultTaskController::class, 'index'])->whereUlid('keyResult')->middleware('throttle:search')->name('key-results.tasks.index');
+    Route::post('kr/{keyResult}/tugas', [KeyResultTaskController::class, 'store'])->whereUlid('keyResult')->middleware('throttle:60,1')->name('key-results.tasks.store');
+    Route::delete('kr/{keyResult}/tugas/{task}', [KeyResultTaskController::class, 'destroy'])->whereUlid(['keyResult', 'task'])->middleware('throttle:60,1')->name('key-results.tasks.destroy');
+
+    Route::get('{objective}', [ObjectiveController::class, 'show'])->whereUlid('objective')->name('show');
+    Route::patch('{objective}', [ObjectiveController::class, 'update'])->whereUlid('objective')->middleware('throttle:30,1')->name('update');
+    Route::post('{objective}/tutup', [ObjectiveController::class, 'close'])->whereUlid('objective')->middleware('throttle:30,1')->name('close');
+    Route::post('{objective}/kr', [KeyResultController::class, 'store'])->whereUlid('objective')->middleware('throttle:60,1')->name('key-results.store');
 });
