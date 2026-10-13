@@ -12,7 +12,7 @@ import { StyleSheet, View } from 'react-native';
 import { ApiError } from '@/api/client';
 import { daftarWorkspace } from '@/api/endpoints';
 import type { WorkspaceItem } from '@/api/types';
-import { bukaSegera } from '@/features/settings/ComingSoon';
+import { useAksesHiring } from '@/features/hiring/akses';
 import { menuOrganisasi, menuPekerjaan } from '@/features/settings/menuLainnya';
 import { DaftarMenu, GroupLabel, KartuIdentitas, type ItemMenu } from '@/features/settings/parts';
 import { barisJabatan } from '@/features/settings/profile';
@@ -101,7 +101,8 @@ export default function LayarLainnya(): React.JSX.Element {
     await Promise.all([muatUlang(), muatRuang()]);
   }, [muatUlang, muatRuang]);
 
-  const konteks = useMemo(() => ({ profil, peran, belumBaca, warnaChevron: colors.muted }), [profil, peran, belumBaca, colors.muted]);
+  const hiring = useAksesHiring();
+  const konteks = useMemo(() => ({ profil, peran, belumBaca, warnaChevron: colors.muted, hiring }), [profil, peran, belumBaca, colors.muted, hiring]);
   const pekerjaan = useMemo(() => menuPekerjaan(konteks), [konteks]);
   const organisasi = useMemo(() => menuOrganisasi(konteks), [konteks]);
 
@@ -121,7 +122,7 @@ export default function LayarLainnya(): React.JSX.Element {
       <AppBar
         title="Lainnya"
         actions={[
-          { icon: 'search', label: 'Cari', onPress: () => bukaSegera({ judul: 'Cari', ikon: 'search' }) },
+          { icon: 'search', label: 'Cari', onPress: () => router.push('/cari') },
           { icon: 'bell', label: 'Inbox', onPress: () => router.push('/inbox'), badge: belumBaca > 0 ? belumBaca : undefined },
           { icon: 'settings', label: 'Pengaturan', onPress: () => router.push('/pengaturan' as never) },
         ]}
