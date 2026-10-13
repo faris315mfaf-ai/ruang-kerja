@@ -43,12 +43,22 @@ export interface UbahPengaturan {
   preferences?: { event: string; channel: KanalNotifikasi; enabled: boolean }[];
 }
 
+export interface ItemRingkasan {
+  title: string;
+  code: string | null;
+  detail: string | null;
+  trailing: string | null;
+  badge: string | null;
+  badge_tone: string;
+  avatar_name: string | null;
+}
+
 export interface BagianRingkasan {
   key: string;
   title: string;
   tile_label: string;
   count: number;
-  items: { title?: string; subtitle?: string | null; [k: string]: unknown }[];
+  items: ItemRingkasan[];
   tone: string;
   note: string | null;
   more: number | null;
