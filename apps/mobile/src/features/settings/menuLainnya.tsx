@@ -6,6 +6,7 @@
 import { router } from 'expo-router';
 import { View } from 'react-native';
 
+import { bolehLaporanTimProfil } from '@/features/laporan/akses';
 import { CountBadge, Icon, type AnyIconName } from '@/ui';
 
 import { bukaSegera, type ParamSegera } from './ComingSoon';
@@ -97,8 +98,12 @@ export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron }: Kontek
     );
   }
 
+  const bacaTim = bolehLaporanTimProfil(profil);
+  daftar.push(rute('laporan', 'Laporan harian', 'clipboard-pen', '/laporan', { subjudul: bacaTim ? 'Milik saya & laporan tim' : 'Tulis laporan & riwayat' }));
+  if (bacaTim) {
+    daftar.push(rute('laporan-tim', 'Laporan tim', 'users', '/laporan/tim', { subjudul: 'Siapa yang sudah dan belum lapor' }));
+  }
   daftar.push(
-    segera('laporan', 'Laporan harian', 'clipboard-pen', peran.manajemen ? 'Milik saya & laporan tim' : 'Tulis laporan hari ini'),
     segera('pengajuan', 'Pengajuan saya', 'calendar-days', 'Cuti, izin, sakit, koreksi, barang', {
       aksiJudul: 'Buat pengajuan baru',
       aksiRute: '/pengajuan/baru',

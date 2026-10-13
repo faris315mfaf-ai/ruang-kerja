@@ -5,7 +5,7 @@
  * untuk sisa sesi aplikasi.
  */
 import { useSession } from '@/session/SessionProvider';
-import { bacaProfil } from '@/features/settings/profile';
+import { bacaProfil, type ProfilLengkap } from '@/features/settings/profile';
 import type { UserProfile } from '@/api/types';
 
 let ditolakServer: string | null = null;
@@ -18,12 +18,15 @@ export function tandaiLaporanTimDiizinkan(userId: string): void {
   if (ditolakServer === userId) ditolakServer = null;
 }
 
-export function bolehLaporanTim(user: UserProfile | null): boolean {
-  if (!user) return false;
-  if (ditolakServer === user.id) return false;
-  const p = bacaProfil(user);
+/** Gerbang dari profil yang sudah dibaca (menu Lainnya). */
+export function bolehLaporanTimProfil(p: ProfilLengkap): boolean {
+  if (!p.id || ditolakServer === p.id) return false;
   const peran = p.roles.some((r) => r === 'kepala_divisi' || r === 'direksi' || r === 'hr' || r === 'super_admin');
   return (peran && !p.isStaffOnly) || p.divisiDipimpin.length > 0;
+}
+
+export function bolehLaporanTim(user: UserProfile | null): boolean {
+  return user ? bolehLaporanTimProfil(bacaProfil(user)) : false;
 }
 
 export function useBolehLaporanTim(): boolean {

@@ -2,7 +2,7 @@
  * Kartu "Laporan hari ini" (spec 02, `10-laporan-harian-kartu`): 4 keadaan.
  * DISIAPKAN TETAPI TIDAK DITAMPILKAN di Beranda — web mencabutnya dari Beranda
  * pada 9 Okt 2026 (digantikan Tugas hari ini); keputusan pemilik soal
- * pertanyaan #1 spec 02 menunggu. Formulir & riwayat laporan = Bagian 4.
+ * pertanyaan #1 spec 02 menunggu. Tombolnya membuka formulir `/laporan/hari-ini`.
  * Untuk menampilkan: render di BerandaSaya saat `data.laporan_hari_ini` ada.
  */
 import { View } from 'react-native';
@@ -11,7 +11,7 @@ import type { LaporanHariIni } from '@/api/beranda';
 import { jam } from '@/lib/format';
 import { Badge, Button, Card, Text } from '@/ui';
 
-import { bukaLaporanTim } from './nav';
+import { bukaLaporanHariIni } from './nav';
 
 export function KartuLaporanHariIni({ laporan, sekarang }: { laporan: LaporanHariIni; sekarang: number }): React.JSX.Element {
   const terkunci = laporan.status !== 'submitted' && new Date(laporan.locks_at).getTime() < sekarang;
@@ -35,7 +35,7 @@ export function KartuLaporanHariIni({ laporan, sekarang }: { laporan: LaporanHar
       <Text variant="body" tone="muted" style={{ fontSize: 15, lineHeight: 22 }}>
         {isi}
       </Text>
-      {terkunci ? null : <Button title={laporan.status === 'submitted' ? 'Lihat laporan' : 'Tulis laporan'} variant={laporan.status === 'submitted' ? 'outline' : 'primary'} onPress={bukaLaporanTim} />}
+      {terkunci ? null : <Button title={laporan.status === 'submitted' ? 'Lihat laporan' : 'Tulis laporan'} variant={laporan.status === 'submitted' ? 'outline' : 'primary'} onPress={bukaLaporanHariIni} />}
     </Card>
   );
 }

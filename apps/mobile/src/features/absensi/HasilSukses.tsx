@@ -169,7 +169,7 @@ export function HasilSukses({ h, onSelesai }: { h: Sukses; onSelesai: () => void
               Laporan harian hari ini belum dikirim. Bisa sampai 23.59.
             </Text>
             <Pressable
-              onPress={() => bukaSegera({ judul: 'Laporan harian', ikon: 'clipboard-pen-line', catatan: 'Untuk sementara laporan harian ditulis di RuangKerja versi desktop.', tautan: '/laporan/hari-ini' })}
+              onPress={() => router.push('/laporan/hari-ini' as never)}
               accessibilityRole="button"
               accessibilityLabel="Tulis laporan hari ini"
               style={s.tombolKaca}

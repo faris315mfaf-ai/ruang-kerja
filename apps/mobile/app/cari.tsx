@@ -144,7 +144,7 @@ export default function LayarCari(): React.JSX.Element {
           iconTone="warn"
           title="Tulis laporan hari ini"
           subtitle="Laporan progres harian"
-          onPress={() => bukaSegera({ judul: 'Laporan hari ini', ikon: 'clipboard-pen' })}
+          onPress={() => router.push('/laporan/hari-ini' as never)}
         />
       </Card>
     </View>

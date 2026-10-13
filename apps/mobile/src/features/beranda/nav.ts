@@ -21,8 +21,14 @@ export function bukaAbsensiHr(): void {
   bukaSegera({ judul: 'Absensi', ikon: 'clipboard-check', tautan: '/absensi/kedisiplinan', catatan: 'Rekap dan kedisiplinan dikelola di desktop.' });
 }
 
+/** Laporan tim (Bagian 4 — `app/laporan/tim`). */
 export function bukaLaporanTim(): void {
-  bukaSegera({ judul: 'Laporan harian tim', ikon: 'clipboard-pen', catatan: 'Laporan harian hadir di Bagian 4 aplikasi.' });
+  router.push('/laporan/tim' as never);
+}
+
+/** Formulir laporan hari ini (Bagian 4 — `app/laporan/hari-ini`). */
+export function bukaLaporanHariIni(): void {
+  router.push('/laporan/hari-ini' as never);
 }
 
 export function bukaDashboardDireksi(): void {

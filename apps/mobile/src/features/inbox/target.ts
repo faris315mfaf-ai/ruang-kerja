@@ -79,7 +79,7 @@ export function resolveTarget(target: TargetLike | null | undefined, opsi: { not
     case 'persetujuan':
       return segera({ judul: 'Persetujuan', ikon: 'circle-check', tautan: '/persetujuan' });
     case 'laporan':
-      return segera({ judul: 'Laporan hari ini', ikon: 'clipboard-pen' });
+      return rute(id ? `/laporan/${id}` : '/laporan/hari-ini');
     case 'proyek':
       return segera({ judul: 'Ringkasan proyek', ikon: 'briefcase-business', desktop: true, tautan: '/portofolio' });
     case 'okr':
