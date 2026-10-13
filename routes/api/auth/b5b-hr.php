@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Hr\AttendanceDisciplineController;
 use App\Http\Controllers\Api\Hr\AttendanceRecapController;
 use App\Http\Controllers\Api\Hr\AttendanceReviewController;
 use App\Http\Controllers\Api\Hr\EmployeeController;
+use App\Http\Controllers\Api\Hr\LeaveBalanceController;
 use App\Http\Controllers\Api\Hr\OrganizationChartController;
 use App\Http\Controllers\Api\Hr\PasswordResetRequestController;
 use Illuminate\Support\Facades\Route;
@@ -54,4 +55,11 @@ Route::name('hr.')->group(function (): void {
     Route::get('absensi/tim/rekap/{employee}', [AttendanceRecapController::class, 'show'])
         ->whereUlid('employee')->name('attendance.recap.show');
     Route::get('absensi/tim/kedisiplinan', AttendanceDisciplineController::class)->name('attendance.discipline');
+
+    // Saldo cuti (HR)
+    Route::get('admin/saldo-cuti', [LeaveBalanceController::class, 'index'])->name('leave-balances.index');
+    Route::get('admin/saldo-cuti/{leaveBalance}/riwayat', [LeaveBalanceController::class, 'history'])
+        ->whereUlid('leaveBalance')->name('leave-balances.history');
+    Route::post('admin/saldo-cuti/{leaveBalance}/penyesuaian', [LeaveBalanceController::class, 'adjust'])
+        ->whereUlid('leaveBalance')->middleware('throttle:30,1')->name('leave-balances.adjust');
 });
