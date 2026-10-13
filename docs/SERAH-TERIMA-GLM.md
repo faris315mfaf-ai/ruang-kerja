@@ -128,7 +128,7 @@ Branch & worktree lokal saat ini:
 |---|---|
 | IP / akses | `187.77.118.216`, `ssh root@187.77.118.216` (kunci `~/.ssh/id_ed25519`) |
 | Tata letak | `/opt/ruangkerja` (milik user `deploy`), satu server `compose.prod.yml`, kode di `src/` (+ `src/.git-sha`), image dibangun **di server** (tanpa GHCR) |
-| Versi berjalan | `b6908757f39b` (main PR #11) |
+| Versi berjalan | `0f6f5316872c` (branch `claude/android-bagian-5`, deploy 13 Okt 2026; sebelumnya `f109bd68612f`) |
 | Landing | `docker/caddy/landing/index.html` → `/` (tombol LIHAT DEMO ke demo.spkd.store) |
 | Catatan | `compose.prod.yml` di server **sengaja belum** memakai image Postgres PITR dari PR #8 (akan me-restart DB); dipasang terpisah nanti |
 
