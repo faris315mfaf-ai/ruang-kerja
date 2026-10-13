@@ -28,6 +28,19 @@ function hitungIsi(s: StatusAbsensiRingkas): Isi {
   const shift = s.startLabel && s.endLabel ? `Shift ${s.startLabel}–${s.endLabel}` : null;
   const jadwal = s.startLabel && s.endLabel ? `${s.startLabel}–${s.endLabel}` : null;
 
+  if (s.action === 'unavailable' && s.statusLabel === null) {
+    return {
+      chip: lokasi,
+      chipIcon: 'map-pin',
+      kanan: shift,
+      baris1: 'Absen belum tersedia',
+      judul: 'Tidak ada jadwal absen',
+      baris2: 'Ajukan koreksi bila Anda bekerja hari ini.',
+      tombol: 'Ajukan koreksi',
+      tombolIcon: 'clipboard-pen',
+    };
+  }
+
   if (s.action === 'unavailable') {
     return {
       chip: s.statusLabel ?? 'Pengajuan',
