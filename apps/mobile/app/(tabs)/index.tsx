@@ -88,7 +88,7 @@ export default function LayarBeranda(): React.JSX.Element {
     { icon: 'search' as const, label: 'Cari', onPress: bukaCari },
     {
       icon: 'bell' as const,
-      label: belumBaca > 0 ? `Inbox, ${belumBaca} belum dibaca` : 'Inbox',
+      label: 'Inbox',
       onPress: () => router.push('/inbox'),
       badge: belumBaca > 0 ? belumBaca : undefined,
     },

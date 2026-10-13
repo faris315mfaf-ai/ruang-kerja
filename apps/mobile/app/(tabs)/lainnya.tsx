@@ -122,7 +122,7 @@ export default function LayarLainnya(): React.JSX.Element {
         title="Lainnya"
         actions={[
           { icon: 'search', label: 'Cari', onPress: () => bukaSegera({ judul: 'Cari', ikon: 'search' }) },
-          { icon: 'bell', label: belumBaca > 0 ? `Inbox, ${belumBaca} belum dibaca` : 'Inbox', onPress: () => router.push('/inbox'), badge: belumBaca > 0 ? belumBaca : undefined },
+          { icon: 'bell', label: 'Inbox', onPress: () => router.push('/inbox'), badge: belumBaca > 0 ? belumBaca : undefined },
           { icon: 'settings', label: 'Pengaturan', onPress: () => router.push('/pengaturan' as never) },
         ]}
       />

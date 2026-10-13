@@ -331,7 +331,7 @@ export function LayarAbsen(): React.JSX.Element {
 
   const aksiAppBar = [
     { icon: 'history' as const, label: 'Riwayat absensi', onPress: () => router.push('/absensi/riwayat') },
-    { icon: 'bell' as const, label: jumlah > 0 ? `Notifikasi, ${jumlah} belum dibaca` : 'Notifikasi', onPress: () => router.push('/inbox'), badge: jumlah > 0 ? jumlah : undefined },
+    { icon: 'bell' as const, label: 'Notifikasi', onPress: () => router.push('/inbox'), badge: jumlah > 0 ? jumlah : undefined },
   ];
   const overline = tanggalPanjang(sekarang).replace(/\s\d{4}$/, '');
 
