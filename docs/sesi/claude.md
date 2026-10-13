@@ -8,7 +8,9 @@
 - Aplikasi offline-first: fondasi (SQLCipher, antrean, `Idempotency-Key`, cache baca) + penangan absen, pengajuan, tugas/komentar, catatan, laporan harian. Kontrak & cara uji: `docs/sesi/ponsel-b7-offline.md`. Paket native baru: `expo-sqlite`, `expo-network` → butuh APK/dev-client baru (emulator 5560 lama belum memilikinya).
 - Gate: tsc, eslint, pint hijau; Pest `tests/Feature/Api` 565 lulus. Uji airplane-mode live oleh agen di emulator 5574/5576 (lihat laporan di docs b7).
 - Migrasi baru yang wajib saat deploy: `2026_10_20_100000_add_submit_cutoff_time_to_leave_types`, `2026_10_21_100100_add_received_at_to_attendance_logs`, `api_idempotency_keys`.
-- Belum: sinkron latar (`expo-background-task`), uji QR offline, 403 `laporan_terkunci` asli, kebijakan privasi (selfie→WA, OSM, cache offline).
+- Sinkron latar belakang (`expo-background-task`, 15 menit) dibangun dan TERBUKTI di emulator 5560 (dev-client baru): absen masuk diantre saat airplane, app dimatikan, `cmd jobscheduler run -f store.spkd.ruangkerja 0` → satu check-in di server (jam HP, flag `offline`), app terbuka menampilkan "Masuk 23.14". Catatan: `run -f` pada job lama bisa mengenai job yang sudah diganti WorkManager; jalankan lagi bila log "Job didn't exist in JobStore".
+- Kebijakan privasi v2.0 (WhatsApp, peta OSM/Nominatim, offline/SQLCipher): teks + layar persetujuan web/app diperbarui; semua karyawan diminta setuju ulang. Env produksi: bila `PRIVACY_POLICY_VERSION`/`PRIVACY_POLICY_DATE` diset eksplisit, ubah ke 2.0 / 2026-10-14. Keputusan hukum/pemilik terbuka: dasar hukum, transfer luar negeri, anggota grup WA, retensi di WA, opt-out, peta saat WFH.
+- Belum: uji QR offline, 403 `laporan_terkunci` asli, pill "Notulensi berjalan" menutupi tombol rana kamera selfie (tap tepi atas rana sebagai akali), hasil sinkron latar tanpa snackbar.
 
 ---
 
