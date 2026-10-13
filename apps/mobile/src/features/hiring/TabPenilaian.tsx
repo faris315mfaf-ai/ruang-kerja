@@ -408,7 +408,8 @@ export function TabChecklist({
     setSibuk(b.id);
     onButir(b.id, { ...b, checked_at: checked ? (b.checked_at ?? new Date().toISOString()) : null, note: note === undefined ? b.note : note });
     try {
-      const hasil = await setelButir(b.id, checked, note);
+      // Server menimpa catatan dengan null bila `note` tidak dikirim: kirim catatan lama saat hanya mencentang.
+      const hasil = await setelButir(b.id, checked, note === undefined ? b.note : note);
       onButir(b.id, hasil.item);
       onSegarkan();
       return true;

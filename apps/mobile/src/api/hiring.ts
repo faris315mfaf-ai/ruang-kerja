@@ -316,7 +316,8 @@ export function daftarKandidat(filter: { lowongan?: string | null; q?: string | 
 }
 
 export function profilKandidat(id: string): Promise<ProfilKandidat> {
-  return wajib(apiRequest<ProfilKandidat>(`hiring/kandidat/${id}`));
+  // Kontrak: `{candidate: <profil>}` (sama dengan respons POST/PATCH/tahap/keputusan).
+  return wajib(apiRequest<{ candidate: ProfilKandidat }>(`hiring/kandidat/${id}`)).then((r) => r.candidate);
 }
 
 export function tambahKandidat(isian: IsianKandidat & { position_id: string }): Promise<{ message: string; candidate: ProfilKandidat }> {
