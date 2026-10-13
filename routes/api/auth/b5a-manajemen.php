@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Management\ManagementDashboardController;
 use App\Http\Controllers\Api\Management\ManagementNoteController;
+use App\Http\Controllers\Api\Monitoring\WorkMonitoringController;
 use App\Http\Controllers\Api\Okr\KeyResultController;
 use App\Http\Controllers\Api\Okr\KeyResultTaskController;
 use App\Http\Controllers\Api\Okr\ObjectiveController;
@@ -89,4 +90,12 @@ Route::middleware(EnsureFeatureEnabled::class.':okr')->prefix('okr')->name('okr.
     Route::patch('{objective}', [ObjectiveController::class, 'update'])->whereUlid('objective')->middleware('throttle:30,1')->name('update');
     Route::post('{objective}/tutup', [ObjectiveController::class, 'close'])->whereUlid('objective')->middleware('throttle:30,1')->name('close');
     Route::post('{objective}/kr', [KeyResultController::class, 'store'])->whereUlid('objective')->middleware('throttle:60,1')->name('key-results.store');
+});
+
+// --- Monitoring kerja Direksi (detail laporan: b4c-laporan.php) ---
+Route::prefix('monitoring')->name('monitoring.')->controller(WorkMonitoringController::class)->group(function (): void {
+    Route::get('harian', 'daily')->name('daily');
+    Route::get('mingguan', 'weekly')->name('weekly');
+    Route::get('proyek', 'projects')->name('projects');
+    Route::get('workspace', 'workspaces')->name('workspaces');
 });
