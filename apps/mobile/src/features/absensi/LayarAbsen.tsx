@@ -10,7 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
-import { absensiHariIniLengkap, type HariIni } from '@/api/absensi';
+import { absensiHariIniLengkap, type HariIni, type KeadaanAbsen } from '@/api/absensi';
 import { bukaSegera } from '@/features/settings/ComingSoon';
 import { useSession } from '@/session/SessionProvider';
 import { useUnread } from '@/session/UnreadProvider';
@@ -49,7 +49,7 @@ import { SwipeToConfirm } from './SwipeToConfirm';
 import { lokasiTerdekat } from './geo';
 import { jalankanPermintaan } from './kirim';
 import { lokasiPesan, susunPesanWa } from './pesanWa';
-import { absenStore, useAbsenStore, type Metode } from './store';
+import { absenStore, useAbsenStore, type InfoJadwal, type Metode } from './store';
 import { titikSegar, useLokasiAbsen, type TitikGps } from './useLokasiAbsen';
 import { SKEW_TANDAI_MS, hitungOffset, menitAntara, useJamServer } from './waktu';
 
@@ -126,7 +126,7 @@ export function LayarAbsen(): React.JSX.Element {
         dataAda.current = true;
         terapkan(hasil);
         if (hasil.state) {
-          absenStore.setJadwal({ batasTerlambat: hasil.state.lateThreshold, jadwalMulai: hasil.state.scheduledStart, jamPulangTerjadwal: hasil.state.scheduledEnd });
+          absenStore.setJadwal(infoJadwal(hasil.state));
         }
       } catch (err) {
         if (err instanceof ApiError && err.status === 0) {
@@ -293,7 +293,7 @@ export function LayarAbsen(): React.JSX.Element {
           workPlan: poinValid,
           jarakM: dekat?.jarakM ?? null,
         },
-        { batasTerlambat: state.lateThreshold, jadwalMulai: state.scheduledStart, jamPulangTerjadwal: state.scheduledEnd },
+        infoJadwal(state),
       );
       const hasil = absenStore.get().hasil;
       if (!ok && hasil?.jenis === 'gagal' && hasil.gagal.status === 0) {
@@ -309,6 +309,19 @@ export function LayarAbsen(): React.JSX.Element {
 
   function bukaPemindai(a: 'masuk' | 'pulang'): void {
     router.push({ pathname: '/absensi/qr', params: { arah: a } });
+  }
+  function bukaSelfie(a: 'masuk' | 'pulang'): void {
+    const k = terdekat?.lokasi;
+    router.push({
+      pathname: '/absensi/selfie',
+      params: {
+        judul: a === 'masuk' ? 'Selfie check-in' : 'Selfie check-out',
+        jadwal: data?.today.schedule.shiftName && data.today.schedule.start ? `Shift ${data.today.schedule.shiftName} · ${a === 'masuk' ? 'masuk' : 'pulang'} ${jam(a === 'masuk' ? data.today.schedule.start : data.today.schedule.end)}` : '',
+        jam: jam(sekarang),
+        lokasi: terdekat && k ? `${k.name} · ${Math.round(terdekat.jarakM)} m · ${terdekat.dalam ? 'dalam radius' : 'luar radius'}` : '',
+        qr: '1',
+      },
+    });
   }
   function bukaKoreksi(): void {
     bukaSegera({
@@ -491,7 +504,7 @@ export function LayarAbsen(): React.JSX.Element {
                         </Card>
                       </>
                     )}
-                    <KartuSelfie selfie={st.selfie} judul={arah === 'masuk' ? 'Selfie check-in' : 'Selfie check-out'} onAmbil={() => router.push('/absensi/selfie')} disabled={fase !== 'diam'} />
+                    <KartuSelfie selfie={st.selfie} judul={arah === 'masuk' ? 'Selfie check-in' : 'Selfie check-out'} onAmbil={() => bukaSelfie(arah)} disabled={fase !== 'diam'} />
                     <Field
                       label={wajibCatatan ? 'Catatan lokasi / aktivitas (wajib untuk WFH)' : 'Catatan (opsional)'}
                       required={wajibCatatan}
@@ -587,6 +600,16 @@ export function LayarAbsen(): React.JSX.Element {
     </View>
   );
 
+}
+
+function infoJadwal(state: KeadaanAbsen): InfoJadwal {
+  return {
+    batasTerlambat: state.lateThreshold,
+    jadwalMulai: state.scheduledStart,
+    jamPulangTerjadwal: state.scheduledEnd,
+    masukPada: state.checkedInAt,
+    masukLokasi: state.locationName,
+  };
 }
 
 /** "16.00": jam tombol Absen kembali (jam pulang − 60 menit). */

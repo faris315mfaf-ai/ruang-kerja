@@ -50,6 +50,9 @@ export interface InfoJadwal {
   batasTerlambat: string | null;
   jadwalMulai: string | null;
   jamPulangTerjadwal: string | null;
+  /** Untuk ringkasan check-out: kapan & di mana masuk. */
+  masukPada: string | null;
+  masukLokasi: string | null;
 }
 
 export type HasilAbsen =
