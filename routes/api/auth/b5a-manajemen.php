@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\Management\ManagementDashboardController;
+use App\Http\Controllers\Api\Management\ManagementNoteController;
 use App\Http\Controllers\Api\Projects\MilestoneController;
 use App\Http\Controllers\Api\Projects\PortfolioController;
 use App\Http\Controllers\Api\Projects\ProjectController;
@@ -46,4 +48,22 @@ Route::prefix('proyek/{workspace}')->name('projects.')->scopeBindings()->group(f
     Route::patch('risiko/{risk}', [ProjectRiskController::class, 'update'])->whereUlid('risk')->middleware('throttle:60,1')->name('risks.update');
     Route::patch('risiko/{risk}/status', [ProjectRiskController::class, 'status'])->whereUlid('risk')->middleware('throttle:60,1')->name('risks.status');
     Route::delete('risiko/{risk}', [ProjectRiskController::class, 'destroy'])->whereUlid('risk')->middleware('throttle:60,1')->name('risks.destroy');
+});
+
+// --- Dashboard Manajemen + catatan tindakan ---
+Route::prefix('manajemen')->name('management.')->controller(ManagementDashboardController::class)->group(function (): void {
+    Route::get('/', 'index')->name('index');
+    Route::get('ringkasan', 'summary')->name('summary');
+    Route::get('proyek', 'portfolio')->name('portfolio');
+    Route::get('beban-kerja', 'workload')->name('workload');
+    Route::get('jadwal-terdekat', 'schedule')->name('schedule');
+});
+
+Route::prefix('catatan-tindakan')->name('management-notes.')->controller(ManagementNoteController::class)->group(function (): void {
+    Route::get('/', 'index')->name('index');
+    Route::post('/', 'store')->middleware('throttle:60,1')->name('store');
+    Route::put('urutan', 'reorder')->middleware('throttle:60,1')->name('reorder');
+    Route::patch('{managementNote}', 'update')->whereUlid('managementNote')->middleware('throttle:60,1')->name('update');
+    Route::post('{managementNote}/pindah', 'move')->whereUlid('managementNote')->middleware('throttle:60,1')->name('move');
+    Route::delete('{managementNote}', 'destroy')->whereUlid('managementNote')->middleware('throttle:60,1')->name('destroy');
 });
