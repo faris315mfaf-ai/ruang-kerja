@@ -275,7 +275,9 @@ export function Chip({
     >
       {gradien ? <Gradient name="aksi" style={[StyleSheet.absoluteFill, { borderRadius: 21 }]} /> : null}
       {tonal ? <Icon name="check" size={16} color={fg} /> : icon ? <Icon name={icon} size={16} color={fg} /> : null}
-      <Text variant="label" style={{ color: fg }} numberOfLines={1} maxFontSizeMultiplier={1.4}>
+      {/* simple + flexShrink 0: Android kadang mengukur label sedikit lebih sempit dari
+          glyph-nya (font kustom), lalu numberOfLines memotongnya menjadi "Sem…". */}
+      <Text variant="label" style={{ color: fg, flexShrink: 0 }} numberOfLines={1} textBreakStrategy="simple" maxFontSizeMultiplier={1.4}>
         {label}
       </Text>
       {count !== undefined ? (
