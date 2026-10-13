@@ -3,7 +3,9 @@
  * Tiap bagian toleran gagal (`bagian_gagal`): bagian yang gagal tidak
  * menjatuhkan layar. Kartu "Laporan hari ini" disiapkan
  * (`KartuLaporanHariIni`) tetapi TIDAK dirender: web mencabutnya dari Beranda
- * 9 Okt 2026 (spec 02 §7 #1, keputusan bawaan: ikuti web).
+ * 9 Okt 2026 (spec 02 §7 #1, keputusan bawaan: ikuti web). Kartu
+ * "Ringkasan" (`KartuRingkasan`) juga tidak dirender lagi (keputusan pemilik
+ * 14 Okt 2026) dan komponennya dihapus.
  */
 import { View } from 'react-native';
 
@@ -14,7 +16,6 @@ import { Banner, Button, Card, Loading, Skeleton, Text } from '@/ui';
 
 import { HeroAbsensi } from './HeroAbsensi';
 import { KartuRapatBerikutnya } from './KartuRapatBerikutnya';
-import { KartuRingkasan } from './KartuRingkasan';
 import { KartuTugasHariIni, KerangkaTugasHariIni } from './KartuTugasHariIni';
 import { SpandukPengumuman } from './SpandukPengumuman';
 import { TombolNotulensi } from './TombolNotulensi';
@@ -23,7 +24,6 @@ import type { HasilMuat } from './useMuat';
 const NAMA_BAGIAN: Record<string, string> = {
   attendance_status: 'Absensi',
   rapat_berikutnya: 'Rapat berikutnya',
-  ringkasan: 'Ringkasan',
   laporan_hari_ini: 'Laporan hari ini',
 };
 
@@ -79,7 +79,6 @@ export function BerandaSayaIsi({
       {d.briefing_terakhir ? <KartuBriefingBaca briefing={d.briefing_terakhir} /> : null}
       {delegasi ? <KartuBriefingCatat kartu={delegasi} onDiubah={onUlang} /> : null}
 
-      <KartuRingkasan data={d} />
     </View>
   );
 }
