@@ -56,6 +56,38 @@ final class ChannelTimeline
     }
 
     /**
+     * One thread: the root (also when deleted) and its replies oldest-first,
+     * `$limit` at a time after the cursor `$after` (a reply id).
+     *
+     * @return array{root: array<string, mixed>, replies: list<array<string, mixed>>, tasks: list<array<string, mixed>>, has_more: bool}
+     */
+    public function replies(Message $root, User $viewer, ?string $after = null, int $limit = self::PAGE): array
+    {
+        $limit = max(1, $limit);
+
+        $replies = Message::withTrashed()
+            ->where('parent_id', $root->id)
+            ->when($after !== null, fn ($query) => $query->where('id', '>', $after))
+            ->orderBy('id')
+            ->limit($limit + 1)
+            ->get();
+
+        $hasMore = $replies->count() > $limit;
+        /** @var Collection<int, Message> $page */
+        $page = $replies->take($limit)->values();
+        /** @var Collection<int, Message> $all */
+        $all = (new Collection([$root]))->concat($page);
+        $presented = $this->present($all);
+
+        return [
+            'root' => $presented[0],
+            'replies' => array_slice($presented, 1),
+            'tasks' => $this->tasks($all, $viewer),
+            'has_more' => $hasMore,
+        ];
+    }
+
+    /**
      * Single message (realtime refetch), with the tasks it references.
      *
      * @return array{message: array<string, mixed>, tasks: list<array<string, mixed>>}

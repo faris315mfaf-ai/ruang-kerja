@@ -7,13 +7,13 @@ use App\Domain\Chat\Actions\MarkChannelRead;
 use App\Domain\Chat\Actions\OpenDirectConversation;
 use App\Domain\Chat\Actions\SetChannelMuted;
 use App\Domain\Chat\Queries\AttachableDriveFiles;
+use App\Domain\Chat\Queries\TaskReferenceSuggestions;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Chat\ChannelRequest;
 use App\Http\Requests\Chat\DirectRequest;
 use App\Http\Requests\Chat\MuteRequest;
 use App\Models\Channel;
 use App\Models\DriveFile;
-use App\Models\Task;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
@@ -90,29 +90,8 @@ class ChannelController extends Controller
     }
 
     /** #KEY-n suggestions: GET /obrolan/rujukan/tugas?q= (tasks the viewer can see). */
-    public function tasks(Request $request, #[CurrentUser] User $user): JsonResponse
+    public function tasks(Request $request, #[CurrentUser] User $user, TaskReferenceSuggestions $suggestions): JsonResponse
     {
-        $search = trim((string) $request->query('q', ''));
-        $query = Task::query()->visibleTo($user)->with('workspace:id,key');
-
-        if (preg_match('/^#?([A-Za-z][A-Za-z0-9]{1,9})-(\d+)$/', $search, $match) === 1) {
-            $query->whereHas('workspace', fn ($workspace) => $workspace->where('key', strtoupper($match[1])))
-                ->where('tasks.number', (int) $match[2]);
-        } elseif ($search !== '') {
-            $query->where('tasks.title', 'ilike', '%'.addcslashes(ltrim($search, '#'), '%_\\').'%');
-        }
-
-        $tasks = $query->orderByDesc('tasks.updated_at')->limit(8)
-            ->get(['tasks.id', 'tasks.workspace_id', 'tasks.number', 'tasks.title', 'tasks.status_category']);
-
-        return response()->json([
-            'tasks' => array_values($tasks->map(fn (Task $task): array => [
-                'id' => $task->id,
-                'key' => $task->displayKey(),
-                'title' => $task->title,
-                'status_category' => $task->status_category->value,
-                'url' => $task->url(),
-            ])->all()),
-        ]);
+        return response()->json(['tasks' => $suggestions->handle($user, trim((string) $request->query('q', '')))]);
     }
 }
