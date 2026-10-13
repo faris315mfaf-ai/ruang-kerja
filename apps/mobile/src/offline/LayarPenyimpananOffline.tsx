@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 
+import { useSession } from '@/session/SessionProvider';
 import { Button, Card, ListRow, Screen, SubAppBar, Text, useDialog, useSnackbar } from '@/ui';
 
 import { useAntrean } from './antrean';
@@ -14,26 +15,36 @@ import { hapusCache, ukuranCache } from './cache';
 import { statusEnkripsi, ukuranBerkasDb, type StatusEnkripsi } from './db';
 import { ukuranTeks, waktuRingkas } from './format';
 import { terakhirOnline } from './jaringan';
+import { statusSinkronLatar, type StatusSinkronLatar } from './latar';
+import { bacaLatarTerakhir, type InfoLatarTerakhir } from './latarMeta';
 
 interface Ukuran {
   cacheByte: number;
   cacheEntri: number;
   dbByte: number;
   enkripsi: StatusEnkripsi | null;
+  latar: StatusSinkronLatar;
+  latarTerakhir: InfoLatarTerakhir | null;
 }
 
 export function LayarPenyimpananOffline(): React.JSX.Element {
   const dialog = useDialog();
   const snackbar = useSnackbar();
+  const uid = useSession().user?.id ?? null;
   const jumlahAntrean = useAntrean((s) => s.items.length);
   const terakhirSinkron = useAntrean((s) => s.terakhirSinkron);
   const [ukuran, setUkuran] = useState<Ukuran | null>(null);
   const [menghapus, setMenghapus] = useState(false);
 
   const muat = useCallback(async (): Promise<void> => {
-    const [c, d] = await Promise.all([ukuranCache(), ukuranBerkasDb()]);
-    setUkuran({ cacheByte: c.byte, cacheEntri: c.entri, dbByte: d, enkripsi: statusEnkripsi() });
-  }, []);
+    const [c, d, latar, latarTerakhir] = await Promise.all([
+      ukuranCache(),
+      ukuranBerkasDb(),
+      statusSinkronLatar(),
+      uid === null ? Promise.resolve(null) : bacaLatarTerakhir(uid).catch(() => null),
+    ]);
+    setUkuran({ cacheByte: c.byte, cacheEntri: c.entri, dbByte: d, enkripsi: statusEnkripsi(), latar, latarTerakhir });
+  }, [uid]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- memuat ukuran saat layar dibuka
@@ -112,7 +123,24 @@ export function LayarPenyimpananOffline(): React.JSX.Element {
           title="Sinkron terakhir"
           subtitle={terakhirSinkron !== null ? waktuRingkas(terakhirSinkron) : online !== null ? `Terakhir terhubung ${waktuRingkas(online)}` : 'Belum ada sinkron pada sesi ini'}
         />
+        <ListRow
+          divider
+          icon="timer"
+          title="Sinkron latar belakang"
+          subtitle={
+            ukuran === null
+              ? 'Memeriksa…'
+              : ukuran.latar === 'aktif'
+                ? `Aktif${ukuran.latarTerakhir ? ` · terakhir ${waktuRingkas(ukuran.latarTerakhir.pada)}` : ' · belum pernah berjalan'}`
+                : 'Tidak tersedia'
+          }
+        />
       </Card>
+      {ukuran?.latar === 'aktif' ? (
+        <Text variant="meta" tone="muted">
+          Saat aplikasi ditutup, sistem Android mencoba mengirim perubahan yang menunggu kira-kira tiap 15 menit bila ada sinyal. Waktunya diatur sistem dan bisa tertunda; buka aplikasi untuk mengirim segera.
+        </Text>
+      ) : null}
       <View style={{ gap: 8 }}>
         <Button title="Hapus data offline" variant="outline" icon="trash-2" loading={menghapus} onPress={() => void hapus()} />
         <Text variant="meta" align="center">

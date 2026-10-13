@@ -10,6 +10,9 @@
  *  - `akhiriSesiOffline('sesi_berakhir')` — 401: hapus cache baca, tetapi antrean
  *    perubahan yang belum terkirim dipertahankan agar bisa dikirim setelah
  *    masuk ulang dengan akun yang sama (item akun lain dibuang saat sesi berikut).
+ *
+ * Sinkron latar belakang (`latar.ts`) didaftarkan saat sesi aktif dan dibatalkan
+ * pada setiap akhir sesi (tanpa sesi, task tidak punya pekerjaan).
  */
 import { InteractionManager } from 'react-native';
 
@@ -17,6 +20,8 @@ import { bersihSemuaBasi } from './basi';
 import { aturPenggunaCache, hapusCache, hapusCacheSelain } from './cache';
 import { kosongkanSemua } from './db';
 import { hentikanAntrean, mulaiAntrean } from './antrean';
+import { batalkanSinkronLatar, daftarkanSinkronLatar } from './latar';
+import { hapusTandaSesiDitolak } from './latarMeta';
 
 export type AlasanAkhirSesi = 'keluar' | 'akun_nonaktif' | 'sesi_berakhir';
 
@@ -25,6 +30,11 @@ export function mulaiSesiOffline(uid: string): void {
   void InteractionManager.runAfterInteractions(() => {
     void hapusCacheSelain(uid).catch(() => undefined);
     void mulaiAntrean(uid).catch(() => undefined);
+    // Sesi dimulai ulang di aplikasi (401 ditangani di sini): task latar boleh mencoba lagi.
+    void hapusTandaSesiDitolak(uid)
+      .catch(() => undefined)
+      .then(() => daftarkanSinkronLatar())
+      .catch(() => undefined);
   });
 }
 
@@ -32,6 +42,7 @@ export async function akhiriSesiOffline(alasan: AlasanAkhirSesi): Promise<void> 
   aturPenggunaCache(null);
   bersihSemuaBasi();
   hentikanAntrean();
+  void batalkanSinkronLatar().catch(() => undefined);
   try {
     if (alasan === 'sesi_berakhir') {
       await hapusCache();
