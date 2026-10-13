@@ -13,6 +13,7 @@ import { GantiSandiWajib } from '@/features/auth/GantiSandiWajib';
 import { LayarBlokirAplikasi, DialogSesiBerakhir, KartuUpdateTersedia } from '@/features/auth/LayarAplikasi';
 import { LayarKunci, TawaranBiometrik } from '@/features/auth/KunciAplikasi';
 import { SetupDuaFaktorWeb } from '@/features/auth/SetupDuaFaktorWeb';
+import { ModeCatatPill } from '@/features/catatan/ModeCatatPill';
 import { AppLockProvider, useAppLock } from '@/features/auth/appLock';
 import { ThemeProvider, useAppFonts, useTheme } from '@/theme';
 import { UIProvider } from '@/ui';
@@ -92,6 +93,8 @@ function RootNavigator(): React.JSX.Element {
             <Stack.Screen name="tugas/baru" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="workspace/index" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="workspace/[id]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="catatan/index" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="catatan/cari" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="catatan/[id]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="pengajuan/baru" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="inbox" options={{ animation: 'slide_from_right' }} />
@@ -125,6 +128,7 @@ function RootNavigator(): React.JSX.Element {
         </View>
         {bersesi ? <KartuUpdateTersedia /> : null}
         {bersesi ? <TawaranBiometrik /> : null}
+        {bersesi ? <ModeCatatPill /> : null}
         <DialogSesiBerakhir />
         {locked ? <LayarKunci /> : null}
       </View>
