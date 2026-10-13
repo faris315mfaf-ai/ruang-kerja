@@ -446,7 +446,7 @@ export function LayarAbsen(): React.JSX.Element {
               </Card>
             ) : null}
 
-            {!(metode === 'wfh' && !state.isRemote) && state.code !== 'no_office_location' ? (
+            {!(metode === 'wfh' && !state.isRemote) && (metode === 'qr' || state.code !== 'no_office_location') ? (
               <>
                 <GalatLokasi
                   status={lokasi.status}
@@ -533,7 +533,7 @@ export function LayarAbsen(): React.JSX.Element {
     );
 
     // Dock aksi final.
-    if (tampilForm && state.code !== 'no_office_location' && !(metode === 'wfh' && !state.isRemote)) {
+    if (tampilForm && (metode === 'qr' || state.code !== 'no_office_location') && !(metode === 'wfh' && !state.isRemote)) {
       if (metode === 'qr') {
         const terkunciQr = offline || state.code === 'too_early';
         dock = (
@@ -592,7 +592,7 @@ export function LayarAbsen(): React.JSX.Element {
           void muat(true);
           if (tampilForm) void lokasi.ambil();
         }}
-        contentStyle={{ paddingBottom: dock ? ruangTab + (keyboard ? 130 : 150) : undefined }}
+        contentStyle={dock ? { paddingBottom: keyboard ? 140 : ruangTab + 150 } : undefined}
       >
         {isi}
       </Screen>

@@ -65,7 +65,7 @@ Bentuk & ukuran (`src/theme/tokens.ts`): `radius` (skala web `xs 6 · sm 8 · md
 | `Screen` / `ActionBar` | `refreshing onRefresh contentStyle header footer scroll` — latar bercahaya, area aman, padding bawah kapsul otomatis |
 | `TabBar` | custom `tabBar` di `(tabs)/_layout.tsx` |
 
-Tombol tengah: `centerAction(action, endIso, now)` → `'absen' | 'workspace'` (fungsi murni di `centerAction.ts`; uji `npm run test:center`). `useAttendanceStatus()` → `{ action, center, refresh }`: panggil `refresh()` setelah check-in/out bila ingin tombol langsung berganti (berpindah tab otomatis menyegarkan). Obrolan ⇄ Inbox: `user.features.chat === false` (belum ada di `UserProfile`; dibaca defensif, bawaan Obrolan aktif).
+Tombol tengah: `centerAction(action, endIso, now)` → `'absen' | 'workspace'` (fungsi murni di `centerAction.ts`; uji `npm run test:center`). `useAttendanceStatus()` → `{ action, center, badge, refresh, terapkan }`: sumbernya payload `state.center {action, badge, flipsAt}` dari `GET absensi/hari-ini` (satu timer ke `flipsAt`, tanpa polling; lencana "!" pada tombol Absen saat jam pulang − 60 menit). Panggil `refresh()` setelah check-in/out, atau `terapkan(data)` bila layar sudah memuat hari-ini sendiri (layar Absen). Berpindah tab (selain Absen) otomatis menyegarkan. Obrolan ⇄ Inbox: `user.features.chat === false` (belum ada di `UserProfile`; dibaca defensif, bawaan Obrolan aktif).
 
 ## Ikon
 

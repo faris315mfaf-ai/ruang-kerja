@@ -5,7 +5,7 @@
  * Pembaca layar (TalkBack) tidak bisa menggeser: tersedia aksi `activate` dan
  * tombol biasa sebagai pengganti.
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { clamp, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -45,7 +45,7 @@ export interface SwipeToConfirmProps {
   mengirim: boolean;
   /** Teks saat mengirim (bawaan "Mengirim…"; "Memperbarui lokasi…" saat fix dibaca ulang). */
   labelMengirim?: string;
-  onKonfirmasi: () => void;
+  onKonfirmasi: () => void | Promise<void>;
 }
 
 export function SwipeToConfirm({ label, labelAksi, terkunci, alasanKunci, mengirim, labelMengirim = 'Mengirim…', onKonfirmasi }: SwipeToConfirmProps): React.JSX.Element {
@@ -64,6 +64,23 @@ export function SwipeToConfirm({ label, labelAksi, terkunci, alasanKunci, mengir
     }
   }, [mengirim, terkunci, kurangiGerak, x]);
 
+  const durasi = motion.base;
+  const mengirimRef = useRef(mengirim);
+  useEffect(() => {
+    mengirimRef.current = mengirim;
+  }, [mengirim]);
+
+  // Setelah konfirmasi selesai diproses (mis. dialog "Batal"), knob kembali ke kiri bila tidak sedang mengirim.
+  const konfirmasi = useCallback(async (): Promise<void> => {
+    try {
+      await onKonfirmasi();
+    } finally {
+      if (!mengirimRef.current) {
+        x.set(kurangiGerak ? 0 : withSpring(0, { damping: 18, stiffness: 220 }));
+      }
+    }
+  }, [onKonfirmasi, kurangiGerak, x]);
+
   const geser = Gesture.Pan()
     .enabled(!mati)
     .activeOffsetX([-8, 8])
@@ -72,8 +89,8 @@ export function SwipeToConfirm({ label, labelAksi, terkunci, alasanKunci, mengir
     })
     .onEnd(() => {
       if (maks > 0 && x.get() >= maks * AMBANG) {
-        x.set(withTiming(maks, { duration: motion.base }));
-        scheduleOnRN(onKonfirmasi);
+        x.set(withTiming(maks, { duration: durasi }));
+        scheduleOnRN(konfirmasi);
       } else {
         x.set(withSpring(0, { damping: 18, stiffness: 220 }));
       }
@@ -87,7 +104,7 @@ export function SwipeToConfirm({ label, labelAksi, terkunci, alasanKunci, mengir
     return (
       <Button
         title={mengirim ? labelMengirim : labelAksi}
-        onPress={onKonfirmasi}
+        onPress={() => void konfirmasi()}
         size="lg"
         loading={mengirim}
         disabled={terkunci}
@@ -106,7 +123,7 @@ export function SwipeToConfirm({ label, labelAksi, terkunci, alasanKunci, mengir
       accessibilityState={{ disabled: mati, busy: mengirim }}
       accessibilityActions={[{ name: 'activate' }]}
       onAccessibilityAction={() => {
-        if (!mati) onKonfirmasi();
+        if (!mati) void konfirmasi();
       }}
       onLayout={(e) => setLebar(e.nativeEvent.layout.width)}
       style={[s.jalur, { backgroundColor: colors.surface2, borderColor: colors.borderStrong }]}
