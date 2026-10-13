@@ -71,8 +71,10 @@ return [
         'tolerance_windows' => 1,
         'scheme' => 'ruangkerja://checkin',
 
-        // Displayed codes nobody scanned are pruned after this many days.
-        'prune_after_days' => 2,
+        // Displayed codes nobody scanned are pruned after this many days. Must
+        // stay above the 72-hour offline limit: a QR scanned offline is verified
+        // (code row must exist) when the app syncs, up to 3 days later.
+        'prune_after_days' => 4,
 
         // Kiosk activation links are single-use and expire after this many hours.
         'activation_ttl_hours' => 24,

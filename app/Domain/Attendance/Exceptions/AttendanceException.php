@@ -183,6 +183,26 @@ final class AttendanceException extends RuntimeException
         ]);
     }
 
+    /**
+     * An offline check-in/out whose device time cannot be trusted: missing,
+     * in the future, before the day's check-in, or out of order for the device.
+     */
+    public static function offlineClockInvalid(): self
+    {
+        return new self(AttendanceRejection::OfflineClockInvalid, 'Jam perangkat tidak valid.');
+    }
+
+    /**
+     * An offline check-in/out older than the 72-hour sync limit.
+     */
+    public static function offlineExpired(): self
+    {
+        return new self(
+            AttendanceRejection::OfflineExpired,
+            'Absen offline lebih dari 72 jam tidak bisa disinkronkan; ajukan koreksi absensi.',
+        );
+    }
+
     private static function time(CarbonInterface $at): string
     {
         return OfficeClock::time($at);

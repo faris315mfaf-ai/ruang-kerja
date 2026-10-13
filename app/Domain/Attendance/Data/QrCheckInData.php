@@ -22,6 +22,10 @@ final readonly class QrCheckInData
 
         /** Mock-location signal reported by the native app; only flags, never blocks. */
         public bool $mockLocation = false,
+
+        /** Scanned without internet (mobile app): `offlineAt` = device clock at the scan. */
+        public bool $offline = false,
+        public ?CarbonImmutable $offlineAt = null,
     ) {}
 
     public function hasCoordinates(): bool

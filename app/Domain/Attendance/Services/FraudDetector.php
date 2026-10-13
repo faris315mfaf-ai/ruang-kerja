@@ -37,7 +37,8 @@ final class FraudDetector
             $flags[] = LogFlag::MockLocation;
         }
 
-        if ($data->clientTime !== null
+        // An offline press is judged at the device clock by design; the skew is expected.
+        if (! $data->offline && $data->clientTime !== null
             && abs($now->getTimestamp() - $data->clientTime->getTimestamp()) > config()->integer('attendance.fraud.max_clock_skew_minutes') * 60) {
             $flags[] = LogFlag::ClockSkew;
         }

@@ -17,6 +17,7 @@ enum LogFlag: string
     case QrLocationMismatch = 'qr_location_mismatch';
     case QrNoLocation = 'qr_no_location';
     case MockLocation = 'mock_location';
+    case Offline = 'offline';
 
     public function label(): string
     {
@@ -30,6 +31,7 @@ enum LogFlag: string
             self::QrLocationMismatch => 'GPS jauh dari kiosk QR',
             self::QrNoLocation => 'QR tanpa lokasi GPS',
             self::MockLocation => 'Lokasi palsu terdeteksi di perangkat',
+            self::Offline => 'Absen offline',
         };
     }
 

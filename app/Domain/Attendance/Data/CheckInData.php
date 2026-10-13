@@ -33,5 +33,12 @@ final readonly class CheckInData
          * @var list<string>|null
          */
         public ?array $workReport = null,
+
+        /**
+         * Pressed without internet (mobile app): `offlineAt` is the device clock
+         * at that moment and replaces "now" everywhere that matters.
+         */
+        public bool $offline = false,
+        public ?CarbonImmutable $offlineAt = null,
     ) {}
 }

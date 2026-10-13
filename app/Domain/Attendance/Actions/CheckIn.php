@@ -11,12 +11,14 @@ use App\Domain\Attendance\Data\QrCheckInData;
 use App\Domain\Attendance\Enums\AttendanceLogType;
 use App\Domain\Attendance\Enums\AttendanceMethod;
 use App\Domain\Attendance\Enums\AttendanceStatus;
+use App\Domain\Attendance\Enums\LogFlag;
 use App\Domain\Attendance\Events\AttendanceRecorded;
 use App\Domain\Attendance\Exceptions\AttendanceException;
 use App\Domain\Attendance\Jobs\CreateWorkPlanTasksForDay;
 use App\Domain\Attendance\Models\AttendanceConsent;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Services\AttendanceLogWriter;
+use App\Domain\Attendance\Services\OfflineAttendance;
 use App\Domain\Attendance\Services\PresenceVerifier;
 use App\Domain\Attendance\Services\ScheduleResolver;
 use App\Domain\Attendance\Services\SelfieStorage;
@@ -33,6 +35,11 @@ use Throwable;
  * Check-in (docs/ARCHITECTURE.md §3.1, §3.2): consent → schedule → GPS
  * geofence or kiosk QR → fraud flags → private selfie (GPS only) → log + day
  * in one transaction → broadcast.
+ *
+ * An offline press (mobile app, `offline` + `offline_at`) is judged at the
+ * device time instead of "now" (OfflineAttendance) and flagged `offline`; an
+ * existing `absent` row of that date (closed at 00:30 before the press
+ * arrived) is replaced by the proper status.
  */
 final class CheckIn
 {
@@ -53,7 +60,8 @@ final class CheckIn
             throw AttendanceException::consentRequired();
         }
 
-        $now = CarbonImmutable::now();
+        $received = CarbonImmutable::now();
+        $now = OfflineAttendance::instant($data, $received);
         [$schedule, $existing] = $this->pickSchedule($user, $now);
 
         if ($existing?->status === AttendanceStatus::BusinessTrip) {
@@ -76,11 +84,18 @@ final class CheckIn
             throw AttendanceException::tooEarly($opensAt, $schedule->shift->name ?? '');
         }
 
+        OfflineAttendance::assertInOrder($user, $data, AttendanceLogType::CheckIn, $now);
+
         [$location, $qr, $flags] = $this->presence->verify($user, $schedule, $data, $now);
+
+        if ($data->offline) {
+            $flags[] = LogFlag::Offline;
+        }
+
         $selfiePath = $data instanceof CheckInData ? $this->selfies->store($user, $data->selfie, $now) : null;
 
         try {
-            [$day, $log] = DB::transaction(function () use ($user, $data, $schedule, $location, $qr, $flags, $selfiePath, $now): array {
+            [$day, $log] = DB::transaction(function () use ($user, $data, $schedule, $location, $qr, $flags, $selfiePath, $now, $received): array {
                 $day = AttendanceDay::query()
                     ->where('user_id', $user->id)
                     ->whereDate('work_date', $schedule->workDateString())
@@ -107,7 +122,7 @@ final class CheckIn
                 ]);
                 $day->save();
 
-                $log = $this->logs->write($user, $day, AttendanceLogType::CheckIn, $data, $location, $flags, $selfiePath, $now, $qr);
+                $log = $this->logs->write($user, $day, AttendanceLogType::CheckIn, $data, $location, $flags, $selfiePath, $now, $qr, $data->offline ? $received : null);
 
                 $day->check_in_log_id = $log->id;
                 $day->is_suspicious = $day->is_suspicious || $log->is_suspicious;

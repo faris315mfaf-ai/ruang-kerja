@@ -214,6 +214,8 @@ final class TodayBoard
             'methodLabel' => $log->method->label(),
             'occurredAt' => AttendancePresenter::iso($log->occurred_at),
             'clientTime' => AttendancePresenter::iso($log->client_time),
+            // Offline absen: occurredAt = device time, receivedAt = when the server got it.
+            'receivedAt' => AttendancePresenter::iso($log->received_at),
             'locationName' => $log->officeLocation->name ?? $log->day->shift?->officeLocation?->name,
             'radiusM' => $log->officeLocation->radius_m ?? $log->day->shift?->officeLocation?->radius_m,
             'accuracyM' => $log->accuracy_m === null ? null : (int) round($log->accuracy_m),

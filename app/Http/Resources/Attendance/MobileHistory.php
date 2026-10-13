@@ -134,6 +134,7 @@ final class MobileHistory
             'method' => $log->method->value,
             'methodLabel' => $log->method->label(),
             'occurredAt' => AttendancePresenter::iso($log->occurred_at),
+            'receivedAt' => AttendancePresenter::iso($log->received_at),
             'locationName' => $log->officeLocation?->name,
             'inside' => $log->office_location_id !== null,
             'distanceM' => $log->distance_m === null ? null : (int) round($log->distance_m),

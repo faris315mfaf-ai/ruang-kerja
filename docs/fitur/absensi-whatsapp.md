@@ -60,6 +60,7 @@ Lokasi: Kantor Pusat
 Durasi kerja: 9 jam 46 menit
 ```
 
+- **Absen offline** (aplikasi ponsel, 14 Okt 2026; `docs/sesi/ponsel-b7-offline.md`): setelah baris `Lokasi:` ditambah `⚠️ Absen offline — tersinkron 09.40` (jam kantor saat server menerima log, `attendance_logs.received_at`); `Jam:` dan cap foto tetap jam perangkat saat tombol ditekan.
 - Tanpa selfie (QR/kiosk) **atau** pembuatan cap gagal total → pesan teks biasa dengan isi yang sama (`sendText`). Laporan kosong → `_(tidak diisi — absen lewat QR/kiosk)_`.
 - Caption WhatsApp dipotong ±1024 karakter: bila teks > 900 karakter, foto membawa baris judul (+ durasi) dan **poin menyusul sebagai pesan teks kedua lewat job terpisah** (`part = points`), sehingga percobaan ulang tidak pernah memposting foto dua kali.
 - Gateway: Evolution API v2 `POST /message/sendMedia/{instance}` (`mediatype: image`, `mimetype: image/jpeg`, `media` base64, `fileName`, `caption`, `number`, `delay`). Foto **tanpa** retry otomatis di klien HTTP (retry hanya lewat antrean).

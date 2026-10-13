@@ -4,6 +4,7 @@ namespace App\Domain\Notifications\Jobs;
 
 use App\Domain\Attendance\Enums\AttendanceLogType;
 use App\Domain\Attendance\Enums\AttendanceMethod;
+use App\Domain\Attendance\Enums\LogFlag;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\AttendanceLog;
 use App\Domain\Attendance\Models\OfficeLocation;
@@ -26,7 +27,10 @@ use Throwable;
  *
  * 🟢 ABSEN MASUK / 🔴 ABSEN PULANG, then Nama/Tanggal/Jam/Lokasi; the
  * morning message lists the day's "Rencana Kerja" points, the afternoon one
- * the "Laporan Kerja" points and the worked duration.
+ * the "Laporan Kerja" points and the worked duration. A log pressed without
+ * internet (flag `offline`) adds "⚠️ Absen offline — tersinkron 09.40" (office
+ * time the server received it) after Lokasi; the photo stamp stays the device
+ * time of the press.
  *
  * When the log has a selfie it is sent as a stamped photo (time, date, place,
  * mini map — `StampedSelfie`) with the text as its caption; without a selfie
@@ -153,6 +157,13 @@ final class SendAttendanceWhatsApp implements ShouldQueue
             'Jam: '.$at->format('H.i'),
             'Lokasi: '.self::location($log, $day->user->company_id),
         ];
+
+        // Pressed without internet: the stamp above is the device time of the
+        // press; say when it actually reached the server.
+        if ($log->flags->contains(LogFlag::Offline)) {
+            $received = (new CarbonImmutable($log->received_at ?? $log->created_at))->setTimezone(config('app.office_timezone'));
+            $lines[] = '⚠️ Absen offline — tersinkron '.$received->format('H.i');
+        }
 
         if ($withDuration && ! $in) {
             $lines[] = 'Durasi kerja: '.self::duration($day);

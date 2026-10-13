@@ -7,19 +7,23 @@ use App\Domain\Attendance\Data\AttendanceWindows;
 use App\Domain\Attendance\Data\CheckInData;
 use App\Domain\Attendance\Data\QrCheckInData;
 use App\Domain\Attendance\Enums\AttendanceLogType;
+use App\Domain\Attendance\Enums\AttendanceMethod;
 use App\Domain\Attendance\Enums\AttendanceStatus;
+use App\Domain\Attendance\Enums\LogFlag;
 use App\Domain\Attendance\Events\AttendanceRecorded;
 use App\Domain\Attendance\Exceptions\AttendanceException;
 use App\Domain\Attendance\Models\AttendanceConsent;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\Shift;
 use App\Domain\Attendance\Services\AttendanceLogWriter;
+use App\Domain\Attendance\Services\OfflineAttendance;
 use App\Domain\Attendance\Services\OpenDayLocator;
 use App\Domain\Attendance\Services\PresenceVerifier;
 use App\Domain\Attendance\Services\ScheduleResolver;
 use App\Domain\Attendance\Services\SelfieStorage;
 use App\Domain\Notifications\Jobs\SendAttendanceWhatsApp;
 use App\Domain\Notifications\Services\EvolutionWhatsApp;
+use App\Domain\Organization\Enums\WorkMode;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +32,11 @@ use Throwable;
 /**
  * GPS + selfie or kiosk QR check-out of the open day (today, or yesterday's overnight /
  * overtime day while it is still within the check-out grace period).
+ *
+ * An offline press (mobile app) is judged at the device time (OfflineAttendance);
+ * it must come after the day's check-in. A day that attendance:close-day already
+ * turned into `needs_correction` for the missing check-out gets its real status
+ * back once the offline check-out arrives.
  */
 final class CheckOut
 {
@@ -52,7 +61,8 @@ final class CheckOut
             throw AttendanceException::consentRequired();
         }
 
-        $now = CarbonImmutable::now();
+        $received = CarbonImmutable::now();
+        $now = OfflineAttendance::instant($data, $received);
         $days = $this->openDays->find($user, $now);
 
         if ($days->open === null) {
@@ -62,6 +72,11 @@ final class CheckOut
         }
 
         $openDay = $days->open;
+
+        if ($data->offline && $openDay->check_in_at !== null && $now->lte($openDay->check_in_at)) {
+            throw AttendanceException::offlineClockInvalid();
+        }
+
         $schedule = $this->schedules->forDate($user, ScheduleResolver::parseDate($openDay->work_date->toDateString()));
 
         if ($openDay->status === AttendanceStatus::BusinessTrip) {
@@ -78,18 +93,25 @@ final class CheckOut
             throw AttendanceException::checkOutWindow($windows, $phase);
         }
 
+        OfflineAttendance::assertInOrder($user, $data, AttendanceLogType::CheckOut, $now);
+
         [$location, $qr, $flags] = $this->presence->verify($user, $schedule, $data, $now);
+
+        if ($data->offline) {
+            $flags[] = LogFlag::Offline;
+        }
+
         $selfiePath = $data instanceof CheckInData ? $this->selfies->store($user, $data->selfie, $now) : null;
 
         try {
-            [$day, $log] = DB::transaction(function () use ($user, $data, $openDay, $location, $qr, $flags, $selfiePath, $now): array {
+            [$day, $log] = DB::transaction(function () use ($user, $data, $openDay, $schedule, $location, $qr, $flags, $selfiePath, $now, $received): array {
                 $day = AttendanceDay::query()->whereKey($openDay->id)->lockForUpdate()->firstOrFail();
 
                 if ($day->check_out_at !== null) {
                     throw AttendanceException::alreadyCheckedOut($day->check_out_at);
                 }
 
-                $log = $this->logs->write($user, $day, AttendanceLogType::CheckOut, $data, $location, $flags, $selfiePath, $now, $qr);
+                $log = $this->logs->write($user, $day, AttendanceLogType::CheckOut, $data, $location, $flags, $selfiePath, $now, $qr, $data->offline ? $received : null);
                 // Half-day leave/permit or business trip: the request explains the hours.
                 $earlyMinutes = $day->isFromRequest() ? 0 : self::earlyLeaveMinutes($day, $now);
 
@@ -104,6 +126,12 @@ final class CheckOut
                 // Laporan kerja (what was done today); a QR check-out has no form and keeps the column null.
                 if ($data instanceof CheckInData && $data->workReport !== null && $data->workReport !== []) {
                     $day->work_report = $data->workReport;
+                }
+
+                // The nightly close turned the day into "Perlu koreksi" because the
+                // (offline) check-out had not arrived yet: restore the status it had.
+                if ($day->status === AttendanceStatus::NeedsCorrection) {
+                    $day->status = self::restoredStatus($day, $schedule->workMode);
                 }
 
                 if ($earlyMinutes > 0 && in_array($day->status, [AttendanceStatus::Present, AttendanceStatus::Wfh], true)) {
@@ -161,6 +189,19 @@ final class CheckOut
         }
 
         return max(0, $span - $break);
+    }
+
+    /**
+     * The status a checked-in day had before attendance:close-day marked it
+     * "Perlu koreksi" (late, WFH or present), derived from its check-in.
+     */
+    private static function restoredStatus(AttendanceDay $day, WorkMode $workMode): AttendanceStatus
+    {
+        return match (true) {
+            $day->late_minutes > 0 => AttendanceStatus::Late,
+            $day->checkInLog?->method === AttendanceMethod::Wfh && $workMode !== WorkMode::Field => AttendanceStatus::Wfh,
+            default => AttendanceStatus::Present,
+        };
     }
 
     private function deleteSelfie(?string $path): void

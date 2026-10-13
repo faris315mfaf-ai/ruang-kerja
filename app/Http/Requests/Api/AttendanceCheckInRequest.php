@@ -4,6 +4,7 @@ namespace App\Http\Requests\Api;
 
 use App\Domain\Attendance\Data\CheckInData;
 use App\Domain\Devices\Models\Device;
+use App\Http\Requests\Concerns\HasOfflineAttendance;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -21,10 +22,13 @@ use Throwable;
  * ignored) but from the installation that owns the Sanctum token
  * (Device::forAccessToken), i.e. the hash registered at login. A token that
  * is not tied to a device yields no fingerprint. `mock_location` (Android
- * Location.mocked) is only a flag for HR review, never a block.
+ * Location.mocked) is only a flag for HR review, never a block. `offline` +
+ * `offline_at` carry an absen pressed without internet (HasOfflineAttendance).
  */
 class AttendanceCheckInRequest extends FormRequest
 {
+    use HasOfflineAttendance;
+
     public function authorize(): bool
     {
         return true;
@@ -45,6 +49,7 @@ class AttendanceCheckInRequest extends FormRequest
             'note' => ['nullable', 'string', 'max:500'],
             // Location.mocked of the Android app; multipart sends "true"/"false"/"1"/"0".
             'mock_location' => ['nullable', 'in:0,1,true,false'],
+            ...$this->offlineRules(),
             ...$this->workPlanRules(),
         ];
     }
@@ -76,6 +81,7 @@ class AttendanceCheckInRequest extends FormRequest
     public function messages(): array
     {
         $messages = [
+            ...$this->offlineMessages(),
             'latitude.required' => 'Lokasi belum terbaca. Izinkan akses lokasi lalu coba lagi.',
             'longitude.required' => 'Lokasi belum terbaca. Izinkan akses lokasi lalu coba lagi.',
             'latitude.*' => 'Koordinat lokasi tidak valid.',
@@ -123,6 +129,8 @@ class AttendanceCheckInRequest extends FormRequest
             workPlan: $this->workPlan(),
             mockLocation: $this->boolean('mock_location'),
             workReport: $this->workReport(),
+            offline: $this->isOffline(),
+            offlineAt: $this->offlineAt(),
         );
     }
 

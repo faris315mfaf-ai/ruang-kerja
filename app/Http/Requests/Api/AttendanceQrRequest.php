@@ -4,6 +4,7 @@ namespace App\Http\Requests\Api;
 
 use App\Domain\Attendance\Data\QrCheckInData;
 use App\Domain\Devices\Models\Device;
+use App\Http\Requests\Concerns\HasOfflineAttendance;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -21,6 +22,8 @@ use Throwable;
  */
 class AttendanceQrRequest extends FormRequest
 {
+    use HasOfflineAttendance;
+
     public function authorize(): bool
     {
         return true;
@@ -47,6 +50,7 @@ class AttendanceQrRequest extends FormRequest
             'client_time' => ['nullable', 'date'],
             'device_id' => ['nullable', 'string', 'regex:/^[0-9a-fA-F]{64}$/'],
             'mock_location' => ['nullable', 'in:0,1,true,false'],
+            ...$this->offlineRules(),
         ];
     }
 
@@ -56,6 +60,7 @@ class AttendanceQrRequest extends FormRequest
     public function messages(): array
     {
         return [
+            ...$this->offlineMessages(),
             'payload.required' => 'Kode QR belum terbaca. Arahkan kamera ke kode di layar kiosk.',
             'payload.*' => 'Kode QR tidak dikenali. Pindai kode yang tampil di layar kiosk RuangKerja.',
             'latitude.*' => 'Koordinat lokasi tidak valid.',
@@ -87,6 +92,8 @@ class AttendanceQrRequest extends FormRequest
             ipAddress: $this->ip(),
             userAgent: $this->userAgent(),
             mockLocation: $this->boolean('mock_location'),
+            offline: $this->isOffline(),
+            offlineAt: $this->offlineAt(),
         );
     }
 

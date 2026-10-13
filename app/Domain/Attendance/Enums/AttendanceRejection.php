@@ -23,4 +23,6 @@ enum AttendanceRejection: string
     case QrLocationRequired = 'qr_location_required';
     case CheckInWindow = 'check_in_window';
     case CheckOutWindow = 'check_out_window';
+    case OfflineClockInvalid = 'offline_clock_invalid';
+    case OfflineExpired = 'offline_expired';
 }
