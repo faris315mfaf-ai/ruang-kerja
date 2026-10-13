@@ -347,3 +347,7 @@ export function PetakAngka({ label, nilai, catatan, nada, onPress }: { label: st
     </Card>
   );
 }
+
+export function bukaTugas(id: string): void {
+  router.push(`/tugas/${encodeURIComponent(id)}` as never);
+}
