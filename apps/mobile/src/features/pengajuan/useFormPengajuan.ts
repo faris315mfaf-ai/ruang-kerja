@@ -271,7 +271,24 @@ export function useFormPengajuan(param: ParamForm) {
           return;
         }
         setGalat(peta);
+        // Batas jam sakit/izin terlewati saat form terbuka: segarkan payload jenis agar "hari ini" terkunci.
+        if (jenis && /batas pengajuan|sudah lewat/i.test(`${peta.start_date ?? ''} ${peta.date ?? ''}`)) {
+          void daftarJenis()
+            .then((d) => {
+              setDataJenis(d);
+              const baru = d.categories.flatMap((c) => c.types).find((t) => t.id === jenis.id);
+              if (baru) {
+                setJenis(baru);
+              }
+            })
+            .catch(() => undefined);
+        }
         const jumlah = Object.keys(peta).length;
+        // Hanya batas jam: pesannya sudah tampil di isian tanggal + banner batas di form, jangan digandakan di atas.
+        if (jumlah === 1 && /^batas pengajuan/i.test(peta.start_date ?? peta.date ?? '')) {
+          setBanner(null);
+          return;
+        }
         const umum = jumlah === 0 ? err.message : null;
         setBanner({
           tone: 'bad',

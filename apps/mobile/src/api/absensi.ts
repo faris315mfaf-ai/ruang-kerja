@@ -58,6 +58,36 @@ export interface PengajuanHari {
   blocksCheckIn: boolean;
 }
 
+/** Jenis yang dibuka pintasan sakit/izin (B6). */
+export interface JenisPintasan {
+  id: string;
+  code: string;
+  name: string;
+}
+
+/** Pengajuan sakit/izin hari ini yang masih menunggu keputusan / revisi. */
+export interface PengajuanMenunggu {
+  id: string;
+  number: string | null;
+  typeLabel: string;
+  status: 'pending' | 'revision_requested';
+  statusLabel: string;
+}
+
+/** Pintasan "Tidak masuk? Ajukan sakit / izin" (docs/sesi/ponsel-b6-sakit-izin.md §4). */
+export interface PintasanCuti {
+  available: boolean;
+  /** "HH:MM" waktu kantor, atau null. */
+  sickCutoff: string | null;
+  permitCutoff: string | null;
+  sickClosed: boolean;
+  permitClosed: boolean;
+  sickType: JenisPintasan | null;
+  permitType: JenisPintasan | null;
+  closedReason: string | null;
+  pending: PengajuanMenunggu | null;
+}
+
 export interface KeadaanAbsen {
   code: KodeKeadaan;
   label: string;
@@ -87,6 +117,8 @@ export interface KeadaanAbsen {
   windows?: JendelaAbsen;
   consent: { granted: boolean; needsRenewal: boolean; version: string };
   center: PusatTab;
+  /** Pintasan sakit/izin; server lama: tidak ada. */
+  leaveShortcut?: PintasanCuti | null;
 }
 
 export type HariIni = TodayAttendance & {

@@ -101,7 +101,6 @@ export default function LayarFormPengajuan(): React.JSX.Element {
   const n = f.nilai;
   const kategori = jenis?.category ?? null;
   const tidakBerhak = jenis !== null && !jenis.eligible;
-  const bisaKirim = !f.terkunci && !tidakBerhak && !f.luring;
   const dariAbsensi = raw.asal === 'absensi' || (!!param.tanggal && kategori === 'correction' && !param.id);
 
   useEffect(() => {
@@ -216,6 +215,12 @@ export default function LayarFormPengajuan(): React.JSX.Element {
   const alur = f.pratinjau ? teksAlur(f.pratinjau.flow) : '';
   const judul = f.revisi ? `Revisi ${jenis.name.toLowerCase()}` : jenis.name;
 
+  // Batas pengajuan di hari-H (sakit/izin, B6): server memutuskan; klien menampilkan dan mengunci "hari ini" lebih awal.
+  const tglBatas = aktif.has('start_date') ? n.start_date : aktif.has('date') ? n.date : '';
+  const labelBatas = jenis.submit_cutoff_label ?? null;
+  const tutupHariIni = labelBatas !== null && jenis.submit_closed_today === true && tglBatas === hariIni && !mati;
+  const bisaKirim = !f.terkunci && !tidakBerhak && !f.luring && !tutupHariIni;
+
   const kanan = f.revisi ? (
     <Text variant="meta" weight={600} style={{ paddingRight: 8 }}>
       Putaran {(f.detail?.round ?? 1) + 1}
@@ -250,7 +255,7 @@ export default function LayarFormPengajuan(): React.JSX.Element {
             loading={f.mengirim}
             loadingTitle="Mengirim…"
             disabled={!bisaKirim || f.menyimpan}
-            disabledReason={f.luring ? 'Pengiriman butuh koneksi internet' : mati ? alasanKunci : undefined}
+            disabledReason={f.luring ? 'Pengiriman butuh koneksi internet' : mati ? alasanKunci : tutupHariIni ? 'Batas pengajuan hari ini sudah lewat' : undefined}
             onPress={() => void kirim()}
           />
         </View>
@@ -316,6 +321,14 @@ export default function LayarFormPengajuan(): React.JSX.Element {
             }}
           />
         </Field>
+      ) : null}
+
+      {labelBatas && !mati && !f.revisi ? (
+        tutupHariIni ? (
+          <Banner tone="warn" icon="clock-alert" title={`${labelBatas} sudah lewat.`} message="Hari ini tercatat alpha bila Anda tidak absen. Pilih tanggal mendatang, atau simpan sebagai draf." />
+        ) : (
+          <Banner tone="info" icon="clock" message={`${labelBatas}. Tanggal mendatang bisa diajukan kapan saja.`} />
+        )
       ) : null}
 
       {aktif.has('start_date') ? (

@@ -62,6 +62,11 @@ export interface JenisPengajuan {
   is_provisional_default: boolean;
   locked: boolean;
   locked_reason: string | null;
+  /** Batas pengajuan di hari-H (B6, sakit/izin): "HH:MM" waktu kantor; server lama: tidak ada. */
+  submit_cutoff_time?: string | null;
+  submit_cutoff_label?: string | null;
+  /** Jam server sudah melewati batas saat respons dibuat. */
+  submit_closed_today?: boolean;
 }
 
 export interface JenisForm extends JenisPengajuan {

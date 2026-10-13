@@ -40,6 +40,7 @@ import {
 
 import { KartuJam } from './KartuJam';
 import { KartuLokasi } from './KartuLokasi';
+import { KartuSakitIzin } from './KartuSakitIzin';
 import { DaftarPrasyarat, KartuSelfie, SheetPesanWa, type StatusSyarat } from './KartuKecil';
 import { KartuJendelaTutup, KartuSedangBekerja, KartuSelesai, KartuTidakTersedia, RencanaBacaSaja } from './KeadaanKartu';
 import { GalatLokasi, PeringatanDini } from './PeringatanLokasi';
@@ -156,6 +157,27 @@ export function LayarAbsen(): React.JSX.Element {
       void muat(dataAda.current);
     }, [muat, user?.id]),
   );
+
+  // Pintasan sakit/izin: muat ulang tepat sesudah batas jam terdekat agar tombolnya tertutup (server tetap menolak).
+  const pintasanData = state?.leaveShortcut ?? null;
+  const tanggalKantor = state?.officeDate ?? null;
+  useEffect(() => {
+    if (!pintasanData?.available || !tanggalKantor) {
+      return;
+    }
+    const batas = [pintasanData.sickClosed ? null : pintasanData.sickCutoff, pintasanData.permitClosed ? null : pintasanData.permitCutoff]
+      .flatMap((c) => (c ? [Date.parse(`${tanggalKantor}T${c.slice(0, 5)}:00+07:00`)] : []))
+      .filter((t) => Number.isFinite(t));
+    if (batas.length === 0) {
+      return;
+    }
+    const tunggu = Math.min(...batas) - (Date.now() + offsetMs) + 1500;
+    if (tunggu <= 0 || tunggu > 2_147_000_000) {
+      return;
+    }
+    const t = setTimeout(() => void muat(true), tunggu);
+    return () => clearTimeout(t);
+  }, [pintasanData, tanggalKantor, offsetMs, muat]);
 
   // Hari WFH/dinas: mulai dari segmen WFH sekali (pengguna tetap bebas memilih).
   useEffect(() => {
@@ -394,6 +416,8 @@ export function LayarAbsen(): React.JSX.Element {
     const jam0 = jamAbsenKembali(state);
     const bukanForm = !tampilForm;
     const lokasiKantor = terdekat?.lokasi ?? data.today.locations[0] ?? null;
+    // Pintasan sakit/izin: tidak untuk yang sudah check-in / selesai (server juga menutupnya).
+    const pintasanCuti = state.code === 'checked_in' || state.code === 'checked_out' ? null : (state.leaveShortcut ?? null);
 
     const pesanWa = susunPesanWa({
       arah,
@@ -418,6 +442,7 @@ export function LayarAbsen(): React.JSX.Element {
           <>
             <KartuJam state={state} schedule={data.today.schedule} sekarang={sekarang} windowsApply={windowsBerlaku} />
             <KartuJendelaTutup state={state} />
+            <KartuSakitIzin pintasan={pintasanCuti} officeDate={state.officeDate} />
           </>
         ) : null}
         {state.code === 'checked_in' && bukanForm ? (
@@ -434,6 +459,8 @@ export function LayarAbsen(): React.JSX.Element {
         {tampilForm ? (
           <>
             <KartuJam state={state} schedule={data.today.schedule} sekarang={sekarang} windowsApply={windowsBerlaku} />
+
+            <KartuSakitIzin pintasan={pintasanCuti} officeDate={state.officeDate} />
 
             {tutupPulang === 'sebelum' ? <Banner tone="warn" icon="clock-alert" title={labelPulangTertutup(state, 'sebelum')} message={state.checkOutBlockedReason ?? ''} /> : null}
 
