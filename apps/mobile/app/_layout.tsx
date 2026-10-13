@@ -2,6 +2,7 @@
  * Tata letak akar: tema Arus (terang/gelap mengikuti sistem), sesi, dan
  * Stack utama. Saat sesi masih divalidasi, splash tetap tampil.
  */
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { registerGlobals } from '@livekit/react-native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -172,16 +173,24 @@ function RootNavigator(): React.JSX.Element {
   // saat status masih memuat/keluar (sebelum guard Stack.Protected berlaku), dan
   // TabBarKita memanggil useUnread() — di luar provider itu fatal di rilis
   // (force close saat dibuka). Provider sendiri diam saat belum ada sesi.
+  //
+  // BottomSheetModalProvider di sini (bukan di UIProvider): isi lembar dirender
+  // lewat portal di host provider ini, jadi host harus berada di dalam
+  // Session/AppLock/Unread — kalau tidak, lembar yang memakai useSession() fatal
+  // ("useSession harus di dalam SessionProvider"). Layar kunci di luarnya agar
+  // lembar yang terbuka tidak pernah tergambar di atas layar kunci.
   return (
     <UnreadProvider>
       <View style={{ flex: 1 }}>
         <View style={{ flex: 1 }} importantForAccessibility={locked ? 'no-hide-descendants' : 'auto'} accessibilityElementsHidden={locked}>
-          {isi}
+          <BottomSheetModalProvider>
+            {isi}
+            {bersesi ? <KartuUpdateTersedia /> : null}
+            {bersesi ? <TawaranBiometrik /> : null}
+            {bersesi ? <ModeCatatPill /> : null}
+            <DialogSesiBerakhir />
+          </BottomSheetModalProvider>
         </View>
-        {bersesi ? <KartuUpdateTersedia /> : null}
-        {bersesi ? <TawaranBiometrik /> : null}
-        {bersesi ? <ModeCatatPill /> : null}
-        <DialogSesiBerakhir />
         {locked ? <LayarKunci /> : null}
       </View>
     </UnreadProvider>

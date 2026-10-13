@@ -133,7 +133,9 @@ export function BottomSheet({ visible, onClose, title, showClose = false, scroll
       backgroundComponent={Latar}
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
-      android_keyboardInputMode="adjustResize"
+      // Edge-to-edge (targetSdk 36): jendela tidak mengecil saat keyboard muncul,
+      // jadi lembar yang harus naik sendiri — adjustResize membuat isi tertutup keyboard.
+      android_keyboardInputMode="adjustPan"
       onDismiss={() => {
         terbuka.current = false;
         // Dismiss programatik (visible → false) sudah diketahui induk.
