@@ -7,7 +7,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
-import { inbox } from '@/api/endpoints';
+import { jumlahBelumDibaca } from '@/api/inbox';
 import { useSession } from '@/session/SessionProvider';
 
 interface UnreadValue {
@@ -27,9 +27,10 @@ export function UnreadProvider({ children }: { children: React.ReactNode }): Rea
 
   const muatUlang = useCallback(async (): Promise<void> => {
     try {
-      const hasil = await inbox(1, false);
+      // GET /inbox?belum-dibaca=1&per_page=1 → meta.counts.belum_dibaca (hitungan global, bukan hanya halaman).
+      const jumlahBaru = await jumlahBelumDibaca();
       if (hidup.current) {
-        setJumlah(hasil.unread);
+        setJumlah(jumlahBaru);
       }
     } catch {
       // Tab tetap tampil; lencana dicoba lagi lain waktu.
