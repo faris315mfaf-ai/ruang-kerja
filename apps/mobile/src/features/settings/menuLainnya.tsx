@@ -69,6 +69,8 @@ export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron }: Kontek
     daftar.push(inbox);
   }
 
+  daftar.push(rute('buat-cepat', 'Buat cepat', 'plus', '/buat-cepat', { subjudul: 'Tugas, check-in, pengajuan, catatan' }));
+
   if (peran.hr || peran.admin) {
     daftar.push(
       segera('reset-sandi', 'Permintaan reset sandi', 'key-round', 'Menunggu keputusan HR', {}, { nada: 'warn' }),
@@ -115,7 +117,7 @@ export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron }: Kontek
     daftar.push(segera('okr', 'OKR divisi', 'target'));
   }
   daftar.push(
-    segera('pengumuman', 'Pengumuman', 'megaphone', pimpinan ? 'Tulis ke semua' : peran.kadiv ? 'Tulis ke divisi' : undefined),
+    rute('pengumuman', 'Pengumuman', 'megaphone', '/pengumuman', { subjudul: pimpinan ? 'Tulis ke semua' : peran.kadiv ? 'Tulis ke divisi' : undefined }),
   );
   if (fiturAktif(profil, 'automation', false)) {
     daftar.push(rute('kinerja', 'Kinerja saya', 'gauge', '/kinerja', { subjudul: 'Metrik output, tanpa skor gabungan' }));

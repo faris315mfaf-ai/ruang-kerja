@@ -78,7 +78,7 @@ export default function LayarPengaturan(): React.JSX.Element {
       subjudul: notifMati ? 'Notifikasi dimatikan di Android' : 'Izin, jenis, dan ringkasan harian',
       ikon: 'bell',
       kanan: notifMati ? <Badge tone="warning">Perlu diaktifkan</Badge> : undefined,
-      onPress: ke('/pengaturan/notifikasi-izin'),
+      onPress: ke('/pengaturan/notifikasi'),
     },
     { kunci: 'tampilan', judul: 'Tampilan', subjudul: labelTema(mode), ikon: 'moon', onPress: ke('/pengaturan/tampilan') },
     { kunci: 'bahasa', judul: 'Bahasa', subjudul: 'Bahasa Indonesia', ikon: 'languages' },

@@ -22,6 +22,7 @@ import { Pressable } from './Pressable';
 import { Text } from './Text';
 import { useUnread } from '@/session/UnreadProvider';
 import { useSession } from '@/session/SessionProvider';
+import { BuatCepatSheet } from './BuatCepatSheet';
 import { WorkspaceSheet } from './WorkspaceSheet';
 
 interface ItemTab {
@@ -61,6 +62,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
   const { setTabBarVisible } = useChrome();
   const keyboard = useKeyboardTampil();
   const [sheet, setSheet] = useState(false);
+  const [buatCepat, setBuatCepat] = useState(false);
   const indeksAwal = useRef(state.index);
 
   // Snackbar/FAB naik di atas kapsul hanya saat tabs benar-benar terlihat.
@@ -157,6 +159,12 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
 
         <Pressable
           onPress={() => (absen ? ke('absen') : setSheet(true))}
+          onLongPress={() => setBuatCepat(true)}
+          delayLongPress={350}
+          accessibilityActions={[{ name: 'buat-cepat', label: 'Buat cepat' }]}
+          onAccessibilityAction={(e) => {
+            if (e.nativeEvent.actionName === 'buat-cepat') setBuatCepat(true);
+          }}
           scaleTo={motion.fabPressScale}
           accessibilityRole="tab"
           accessibilityLabel={absen ? (badge ? 'Absen, waktunya check-out' : 'Absen') : 'Workspace'}
@@ -183,6 +191,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
         {kanan.map(renderItem)}
       </View>
       <WorkspaceSheet visible={sheet} onClose={() => setSheet(false)} />
+      <BuatCepatSheet visible={buatCepat} onClose={() => setBuatCepat(false)} />
     </View>
   );
 }

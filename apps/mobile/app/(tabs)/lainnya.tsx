@@ -106,7 +106,7 @@ export default function LayarLainnya(): React.JSX.Element {
   const organisasi = useMemo(() => menuOrganisasi(konteks), [konteks]);
 
   const akun: ItemMenu[] = [
-    { kunci: 'notifikasi', judul: 'Notifikasi', ikon: 'bell', onPress: () => router.push('/pengaturan/notifikasi-izin' as never) },
+    { kunci: 'notifikasi', judul: 'Notifikasi', ikon: 'bell', onPress: () => router.push('/pengaturan/notifikasi' as never) },
     { kunci: 'tampilan', judul: 'Tampilan', subjudul: labelTema(mode), ikon: 'moon', onPress: () => setSheetTema(true) },
     { kunci: 'keamanan', judul: 'Keamanan & perangkat saya', ikon: 'shield-check', onPress: () => router.push('/pengaturan/keamanan' as never) },
     { kunci: 'privasi', judul: 'Privasi & Data Saya', ikon: 'lock', onPress: () => router.push('/privasi' as never) },
