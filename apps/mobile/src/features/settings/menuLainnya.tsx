@@ -6,6 +6,8 @@
 import { router } from 'expo-router';
 import { View } from 'react-native';
 
+import type { AksesHiring } from '@/api/hiring';
+import { LencanaHiring } from '@/features/hiring/akses';
 import { bolehLaporanTimProfil } from '@/features/laporan/akses';
 import { LencanaPersetujuan } from '@/features/persetujuan/LencanaPersetujuan';
 import { CountBadge, Icon, type AnyIconName } from '@/ui';
@@ -19,6 +21,8 @@ interface Konteks {
   peran: Peran;
   belumBaca: number;
   warnaChevron: string;
+  /** `GET /hiring/akses` (useAksesHiring): pewawancara/penyetuju non-HR juga melihat baris Hiring. */
+  hiring?: AksesHiring | null;
 }
 
 function lencanaAngka(jumlah: number, warnaChevron: string): React.ReactNode {
@@ -48,8 +52,13 @@ function segera(kunci: string, judul: string, ikon: AnyIconName, subjudul?: stri
   };
 }
 
+/** Baris Hiring (rekrutmen): HR/SA, atau pewawancara/penyetuju yang ditugaskan. */
+function barisHiring(warnaChevron: string): ItemMenu {
+  return rute('hiring', 'Hiring', 'user-round-search', '/hiring', { subjudul: 'Lowongan · kandidat · keputusan', kanan: <LencanaHiring warnaChevron={warnaChevron} /> });
+}
+
 /** Kelompok "Pekerjaan". */
-export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron }: Konteks): ItemMenu[] {
+export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron, hiring }: Konteks): ItemMenu[] {
   const pimpinan = peran.hr || peran.direksi || peran.admin;
   const inbox = rute('inbox', 'Inbox', 'inbox', '/inbox', {
     subjudul: 'Notifikasi & perlu tindakan',
@@ -81,8 +90,10 @@ export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron }: Kontek
     daftar.push(
       rute('reset-sandi', 'Permintaan reset sandi', 'key-round', '/karyawan/permintaan-sandi', { subjudul: 'Menunggu keputusan HR', nada: 'warn' }),
       rute('saldo-cuti', 'Saldo cuti', 'wallet-cards', '/saldo-cuti', { subjudul: 'Semua karyawan · baca saja' }),
-      segera('hiring', 'Hiring', 'user-round-search', 'Lowongan · kandidat · keputusan'),
+      barisHiring(warnaChevron),
     );
+  } else if (hiring?.has_access) {
+    daftar.push(barisHiring(warnaChevron));
   }
   if (peran.direksi || peran.admin) {
     daftar.push(segera('portofolio', 'Portofolio proyek', 'briefcase-business', 'Kesehatan & progres proyek', { tautan: '/portofolio' }));

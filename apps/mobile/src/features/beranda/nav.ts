@@ -13,8 +13,9 @@ export function bukaPersetujuan(): void {
   router.push('/persetujuan' as never);
 }
 
+/** Hiring (Bagian 5 — S5-H: `app/hiring`). */
 export function bukaHiring(): void {
-  bukaSegera({ judul: 'Hiring', ikon: 'user-round-search', tautan: '/hiring', catatan: 'Modul rekrutmen hadir di versi berikutnya.' });
+  router.push('/hiring' as never);
 }
 
 /** Absensi tim HR/Kadiv (Bagian 5 — S5-B: `app/absensi-tim`). Tanpa argumen agar aman dipakai sebagai `onPress`. */
