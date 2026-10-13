@@ -50,7 +50,16 @@ const DRAF_AWAL: DrafTugas = {
   checklist: [],
 };
 
+/** Cache per pengguna + workspace: tampil seketika saat berpindah, lalu tetap disegarkan dari server. */
 const cacheKonteks = new Map<string, { k: KonteksWorkspace; a: Orang[] }>();
+
+/** Kolom awal sama dengan server (CreateTask::resolveStatus): kolom Todo pertama, lalu kolom pertama. */
+export function statusBawaan(k: KonteksWorkspace | null): string | null {
+  if (!k) {
+    return null;
+  }
+  return (k.statuses.find((s) => s.category === 'todo') ?? k.statuses[0])?.id ?? null;
+}
 
 /** "1,5" atau "1.5" → 1.5; kosong → null; salah → NaN. */
 export function parseEstimasi(teks: string): number | null {
@@ -62,15 +71,22 @@ export function parseEstimasi(teks: string): number | null {
   return Number.isFinite(n) ? n : Number.NaN;
 }
 
-export function useBuatTugas(awal: { workspace?: string; judul?: string }): {
+/** Pilihan yang dibawa dari sheet cepat ke form lengkap (disaring lagi setelah konteks workspace dimuat). */
+export type IsiBawaan = Partial<Pick<DrafTugas, 'statusId' | 'priority' | 'assignees' | 'labels' | 'due'>>;
+
+export function useBuatTugas(awal: { workspace?: string; judul?: string; isi?: IsiBawaan }): {
   draf: DrafTugas;
   ubah: (p: Partial<DrafTugas>) => void;
-  pilihWorkspace: (w: OpsiWorkspace) => void;
+  pilihWorkspace: (w: OpsiWorkspace, isi?: IsiBawaan) => void;
   kelompok: KelompokWorkspaceTugas[];
   konteks: KonteksWorkspace | null;
   anggota: Orang[];
   memuat: boolean;
   galatMuat: string | null;
+  /** Kolom/label/anggota workspace terpilih sedang dimuat (setelah memilih/mengganti workspace). */
+  memuatKonteks: boolean;
+  galatKonteks: string | null;
+  muatUlangKonteks: () => void;
   kirim: () => Promise<DetailTugasPenuh | null>;
   mengirim: boolean;
   galat: Record<string, string>;
@@ -89,38 +105,116 @@ export function useBuatTugas(awal: { workspace?: string; judul?: string }): {
   const [mengirim, setMengirim] = useState(false);
   const [galat, setGalat] = useState<Record<string, string>>({});
   const [galatUmum, setGalatUmum] = useState<string | null>(null);
+  const [memuatKonteks, setMemuatKonteks] = useState(false);
+  const [galatKonteks, setGalatKonteks] = useState<string | null>(null);
   const awalDipakai = useRef(false);
+  const awalIsi = useRef(awal.isi);
   const idSaya = user?.id ?? null;
+  // Permintaan konteks terbaru: jawaban workspace lama yang datang terlambat (ganti cepat) diabaikan.
+  const urutKonteks = useRef(0);
+  const wsAktif = useRef<OpsiWorkspace | null>(null);
+  const drafRef = useRef(draf);
+  // Penanggung jawab yang dibawa dari workspace sebelumnya; disaring setelah anggota workspace baru dimuat.
+  const bawaan = useRef<{ ws: string; sementara: string[]; bawa: string[] } | null>(null);
 
-  const muatKonteks = useCallback(async (w: OpsiWorkspace): Promise<void> => {
-    const kunci = w.id;
-    const sudah = cacheKonteks.get(kunci);
-    if (sudah) {
-      setKonteks(sudah.k);
-      setAnggota(sudah.a);
-      return;
-    }
-    setKonteks(null);
-    setAnggota([]);
-    try {
-      const [k, a] = await Promise.all([konteksWorkspace(w.id), anggotaUntukTugas(w.id)]);
-      cacheKonteks.set(kunci, { k, a });
+  useEffect(() => {
+    drafRef.current = draf;
+  }, [draf]);
+
+  const terapkanKonteks = useCallback(
+    (wsId: string, k: KonteksWorkspace, a: Orang[]): void => {
       setKonteks(k);
       setAnggota(a);
-    } catch {
-      // Konteks hanya pelengkap (kolom/label/anggota): form tetap bisa dikirim.
-    }
-  }, []);
+      const t = bawaan.current?.ws === wsId ? bawaan.current : null;
+      bawaan.current = null;
+      setDraf((d) => {
+        if (d.workspace?.id !== wsId) {
+          return d;
+        }
+        const statusId = d.statusId !== null && k.statuses.some((s) => s.id === d.statusId) ? d.statusId : statusBawaan(k);
+        const labels = d.labels.filter((id) => k.labels.some((l) => l.id === id));
+        const sumber = t && d.assignees === t.sementara ? t.bawa : d.assignees;
+        let assignees = sumber;
+        if (a.length > 0) {
+          const ids = new Set(a.map((o) => o.id));
+          assignees = sumber.filter((id) => ids.has(id));
+          if (assignees.length === 0 && sumber.length > 0 && idSaya && ids.has(idSaya)) {
+            assignees = [idSaya];
+          }
+        }
+        return { ...d, statusId, labels, assignees };
+      });
+    },
+    [idSaya],
+  );
+
+  const muatKonteks = useCallback(
+    async (w: OpsiWorkspace): Promise<void> => {
+      const urut = ++urutKonteks.current;
+      const kunci = `${idSaya ?? ''}:${w.id}`;
+      const sudah = cacheKonteks.get(kunci);
+      setGalatKonteks(null);
+      if (sudah) {
+        terapkanKonteks(w.id, sudah.k, sudah.a);
+      } else {
+        setKonteks(null);
+        setAnggota([]);
+        setMemuatKonteks(true);
+      }
+      try {
+        const [k, a] = await Promise.all([konteksWorkspace(w.id), anggotaUntukTugas(w.id)]);
+        cacheKonteks.set(kunci, { k, a });
+        if (urut === urutKonteks.current) {
+          terapkanKonteks(w.id, k, a);
+        }
+      } catch (err) {
+        // Form tetap bisa dikirim (server memakai kolom bawaan); pilihan kolom/label/anggota butuh konteks ini.
+        if (urut === urutKonteks.current && !sudah) {
+          setGalatKonteks(pesanGalat(err, 'Kolom, label, dan anggota workspace ini gagal dimuat.'));
+        }
+      } finally {
+        if (urut === urutKonteks.current) {
+          setMemuatKonteks(false);
+        }
+      }
+    },
+    [idSaya, terapkanKonteks],
+  );
 
   const pilihWorkspace = useCallback(
-    (w: OpsiWorkspace): void => {
-      setDraf((d) => ({ ...d, workspace: w, statusId: null, labels: [], assignees: idSaya ? [idSaya] : [] }));
+    (w: OpsiWorkspace, isi?: IsiBawaan): void => {
+      if (wsAktif.current?.id === w.id) {
+        // Workspace yang sama: jangan buang pilihan (muat ulang konteks lewat muatUlangKonteks).
+        return;
+      }
+      wsAktif.current = w;
+      const d = drafRef.current;
+      const bawa = isi?.assignees ?? (d.workspace === null ? (idSaya ? [idSaya] : []) : d.assignees);
+      // Sampai anggota workspace baru dimuat, hanya "Saya" yang pasti valid (tanpa chip nama basi).
+      const sementara = idSaya && bawa.includes(idSaya) ? [idSaya] : [];
+      bawaan.current = { ws: w.id, sementara, bawa };
+      const ganti = {
+        workspace: w,
+        statusId: isi?.statusId ?? null,
+        labels: isi?.labels ?? [],
+        assignees: sementara,
+        ...(isi?.priority !== undefined ? { priority: isi.priority } : {}),
+        ...(isi?.due !== undefined ? { due: isi.due } : {}),
+      };
+      setDraf((x) => ({ ...x, ...ganti }));
+      drafRef.current = { ...d, ...ganti };
       setGalat({});
       setGalatUmum(null);
       void muatKonteks(w);
     },
     [idSaya, muatKonteks],
   );
+
+  const muatUlangKonteks = useCallback((): void => {
+    if (wsAktif.current) {
+      void muatKonteks(wsAktif.current);
+    }
+  }, [muatKonteks]);
 
   const muatDaftar = useCallback(async (): Promise<void> => {
     setMemuat(true);
@@ -132,9 +226,14 @@ export function useBuatTugas(awal: { workspace?: string; judul?: string }): {
         awalDipakai.current = true;
         const semua = grup.flatMap((g) => g.items);
         const boleh = (w: OpsiWorkspace): boolean => !w.arsip && !w.view_only && w.my_role !== 'viewer';
-        const pilih = (awal.workspace ? semua.find((w) => w.id === awal.workspace || w.key.toLowerCase() === awal.workspace?.toLowerCase()) : undefined) ?? semua.find((w) => w.type === 'personal' && boleh(w)) ?? semua.find(boleh);
+        const diminta = awal.workspace ? semua.find((w) => w.id.toLowerCase() === awal.workspace?.toLowerCase() || w.key.toLowerCase() === awal.workspace?.toLowerCase()) : undefined;
+        // Workspace yang diminta tetapi hanya-baca/diarsipkan tidak dipilih diam-diam: jatuh ke Pribadi + beri tahu.
+        const pilih = (diminta && boleh(diminta) ? diminta : undefined) ?? semua.find((w) => w.type === 'personal' && boleh(w)) ?? semua.find(boleh);
         if (pilih) {
-          pilihWorkspace(pilih);
+          pilihWorkspace(pilih, pilih === diminta ? awalIsi.current : undefined);
+        }
+        if (awal.workspace && (!diminta || !boleh(diminta))) {
+          setGalatUmum(`Anda tidak bisa menambah tugas di ${diminta?.name ?? 'workspace itu'}${pilih ? '; workspace diganti ke ' + (pilih.type === 'personal' ? 'Pribadi' : pilih.name) : ''}.`);
         }
       }
     } catch (err) {
@@ -218,15 +317,15 @@ export function useBuatTugas(awal: { workspace?: string; judul?: string }): {
   }, [draf]);
 
   const bersih = useCallback((): void => {
-    setDraf((d) => ({ ...DRAF_AWAL, workspace: d.workspace, assignees: idSaya ? [idSaya] : [] }));
+    setDraf((d) => ({ ...DRAF_AWAL, workspace: d.workspace, statusId: statusBawaan(konteks), assignees: idSaya ? [idSaya] : [] }));
     setGalat({});
     setGalatUmum(null);
-  }, [idSaya]);
+  }, [idSaya, konteks]);
 
   const adaPerubahan = useMemo(
     () => draf.title.trim() !== '' || draf.description.trim() !== '' || draf.checklist.length > 0 || draf.due !== null || draf.start !== null || draf.estimate !== '',
     [draf],
   );
 
-  return { draf, ubah, pilihWorkspace, kelompok, konteks, anggota, memuat, galatMuat, kirim, mengirim, galat, galatUmum, bersih, adaPerubahan, muatUlang: () => void muatDaftar() };
+  return { draf, ubah, pilihWorkspace, kelompok, konteks, anggota, memuat, galatMuat, memuatKonteks, galatKonteks, muatUlangKonteks, kirim, mengirim, galat, galatUmum, bersih, adaPerubahan, muatUlang: () => void muatDaftar() };
 }

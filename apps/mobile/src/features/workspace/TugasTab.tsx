@@ -88,7 +88,9 @@ export function TugasTab({ detail, meId }: { detail: DetailWorkspace; meId: stri
     }
   }
 
-  const tugasBaru = (): void => router.push({ pathname: '/tugas/baru', params: { workspace: ws } });
+  // "Tugas baru di <kolom>" membawa kolomnya; FAB/daftar memakai kolom bawaan workspace.
+  const tugasBaru = (statusId?: unknown): void =>
+    router.push({ pathname: '/tugas/baru', params: typeof statusId === 'string' && statusId !== '' ? { workspace: ws, status: statusId } : { workspace: ws } });
 
   return (
     <View style={{ flex: 1 }}>
@@ -139,7 +141,7 @@ export function TugasTab({ detail, meId }: { detail: DetailWorkspace; meId: stri
 
       {boleh ? (
         <View style={[s.fab, { bottom: insets.bottom + 16 }]} pointerEvents="box-none">
-          <Fab icon="plus" label="Tugas baru" extended onPress={tugasBaru} />
+          <Fab icon="plus" label="Tugas baru" extended onPress={() => tugasBaru()} />
         </View>
       ) : null}
 
