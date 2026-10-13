@@ -142,7 +142,7 @@ export function AksiPesanSheet({
               }}
             />
           ) : null}
-          {!dihapus && milikSaya && onDibacaOleh ? (
+          {!dihapus && onDibacaOleh ? (
             <SheetAction
               icon="check-check"
               label="Dibaca oleh"

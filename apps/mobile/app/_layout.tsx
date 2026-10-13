@@ -99,6 +99,12 @@ function RootNavigator(): React.JSX.Element {
             <Stack.Screen name="pengajuan/baru" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="inbox" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="obrolan/[id]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="obrolan/baru" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="obrolan/kanal-baru" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="obrolan/jelajah" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="obrolan/[id]/detail" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="obrolan/[id]/cari" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="obrolan/[id]/thread/[messageId]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="rapat/index" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="rapat/[id]/index" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="rapat/[id]/notulen" options={{ animation: 'slide_from_right' }} />
