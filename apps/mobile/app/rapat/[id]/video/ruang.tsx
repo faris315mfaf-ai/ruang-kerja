@@ -11,6 +11,7 @@
  * hanya di ruang butuh `expo-screen-orientation` (belum terpasang).
  */
 import { useChat } from '@livekit/react-native';
+import { useKeepAwake } from 'expo-keep-awake';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { Participant } from 'livekit-client';
@@ -70,6 +71,8 @@ export default function RuangVideo(): React.JSX.Element {
   const id = String(params.id ?? '');
   const tanggal = params.tanggal ? String(params.tanggal) : null;
   const [data, setData] = useState<RuangVideoResponse | null>(null);
+  // Layar tidak boleh mati selama berada di ruang rapat.
+  useKeepAwake('ruang-rapat');
 
   useEffect(() => {
     let aktif = true;
@@ -123,7 +126,10 @@ function Isi({
   const [subtitleNyala, setSubtitleNyala] = useState(true);
   const [dibacaObrolan, setDibacaObrolan] = useState(0);
 
-  const { chatMessages, send, isSending } = useChat({ room });
+  // Opsi harus stabil: useChat memakai objek opsi sebagai dependensi useMemo —
+  // objek baru tiap render menyiapkan ulang obrolan dan memicu render tanpa henti.
+  const opsiChat = useMemo(() => ({ room }), [room]);
+  const { chatMessages, send, isSending } = useChat(opsiChat);
   const pesan: PesanObrolan[] = useMemo(
     () => chatMessages.map((m) => ({ id: m.id, timestamp: m.timestamp, message: m.message, from: m.from ? { identity: m.from.identity, isLocal: m.from.isLocal } : undefined })),
     [chatMessages],
@@ -167,6 +173,11 @@ function Isi({
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      // Handler ini bisa terdaftar ulang setelah handler lembar: tutup panel dulu.
+      if (panel !== null) {
+        setPanel(null);
+        return true;
+      }
       if (fase.kind === 'tersambung') {
         void tanyaKeluar();
         return true;
@@ -174,7 +185,7 @@ function Isi({
       return false;
     });
     return () => sub.remove();
-  }, [fase.kind, tanyaKeluar]);
+  }, [fase.kind, tanyaKeluar, panel]);
 
   // ── Notulen (tab) ────────────────────────────────────────────────────────
   const [notulen, setNotulen] = useState<MeetingMinutesData | null>(null);

@@ -15,6 +15,7 @@ import {
   ConnectionState,
   DisconnectReason,
   LocalVideoTrack,
+  type LocalParticipant,
   type Participant,
   ParticipantEvent,
   type RemoteTrackPublication,
@@ -100,6 +101,20 @@ export interface RuangLive {
   segarkanKehadiran: () => void;
 }
 
+/**
+ * Nyalakan kamera. Track kamera yang di-mute dinyalakan ulang LiveKit dengan
+ * constraint lamanya (`deviceId: 'default'`), yang ditolak WebRTC native
+ * (OverconstrainedError) sehingga kamera tetap mati. Lepas track lama lalu
+ * buat yang baru, sama seperti saat pertama masuk ruang.
+ */
+async function nyalakanKamera(lp: LocalParticipant, arah: ArahKamera): Promise<void> {
+  const pub = lp.getTrackPublication(Track.Source.Camera);
+  if (pub?.track && pub.isMuted) {
+    await lp.unpublishTrack(pub.track, true);
+  }
+  await lp.setCameraEnabled(true, { facingMode: arah });
+}
+
 /** Peserta tampil (tanpa worker notulen tersembunyi). */
 export function pesertaTampil(room: Room): Participant[] {
   return [room.localParticipant, ...room.remoteParticipants.values()].filter((p) => p.identity !== IDENTITAS_NOTULEN);
@@ -143,6 +158,9 @@ export function useRuang(id: string, tanggal: string | null, people: OrangVideo[
   const masukPada = useRef(0);
   const talkRef = useRef<TalkStore | null>(null);
   const kameraSebelumLatar = useRef(false);
+  // Matikan/nyalakan kamera saat ke/dari latar berurutan: kembali cepat dari
+  // latar bisa menyalakan sebelum mematikan selesai, lalu kamera tetap mati.
+  const antreKamera = useRef<Promise<unknown>>(Promise.resolve());
   const daftarOrang = useMemo(() => (token?.people && token.people.length > 0 ? token.people : people), [token, people]);
   const orang = useCallback((identity: string): OrangVideo | null => daftarOrang.find((p) => p.id === identity) ?? null, [daftarOrang]);
   const nama = useCallback(
@@ -492,11 +510,14 @@ export function useRuang(id: string, tanggal: string | null, people: OrangVideo[
       if (s === 'background') {
         if (lp.isCameraEnabled && !lp.isScreenShareEnabled) {
           kameraSebelumLatar.current = true;
-          void lp.setCameraEnabled(false).catch(() => undefined);
+          antreKamera.current = antreKamera.current.then(() => lp.setCameraEnabled(false)).catch(() => undefined);
         }
       } else if (s === 'active' && kameraSebelumLatar.current) {
         kameraSebelumLatar.current = false;
-        void lp.setCameraEnabled(true, { facingMode: arah }).catch(() => undefined);
+        antreKamera.current = antreKamera.current
+          .then(() => nyalakanKamera(lp, arah))
+          .then(() => setVersi((v) => v + 1))
+          .catch(() => undefined);
       }
     });
     return () => sub.remove();
@@ -526,7 +547,11 @@ export function useRuang(id: string, tanggal: string | null, people: OrangVideo[
 
   const aturKamera = useCallback(
     async (nyala: boolean) => {
-      await room.localParticipant.setCameraEnabled(nyala, { facingMode: arah });
+      if (nyala) {
+        await nyalakanKamera(room.localParticipant, arah);
+      } else {
+        await room.localParticipant.setCameraEnabled(false);
+      }
       setVersi((v) => v + 1);
     },
     [room, arah],

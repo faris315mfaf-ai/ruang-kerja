@@ -71,19 +71,21 @@ export function Ubin({ participant, nama, besar = false, layar = false, berbicar
   const a11y = `${nama}${participant.isLocal ? ' (Anda)' : ''}${micMati ? ', mikrofon mati' : ''}${ref ? '' : ', kamera mati'}${tangan ? ', tangan terangkat' : ''}${berbicara ? ', sedang berbicara' : ''}`;
   if (onPress) {
     return (
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={a11y} accessibilityHint="Buka pilihan peserta" scaleTo={0.98} style={style}>
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={a11y} accessibilityHint="Buka pilihan peserta" scaleTo={0.98} style={[s.akar, style]}>
         {isi}
       </Pressable>
     );
   }
   return (
-    <View accessible accessibilityLabel={a11y} style={style}>
+    <View accessible accessibilityLabel={a11y} style={[s.akar, style]}>
       {isi}
     </View>
   );
 }
 
 const s = StyleSheet.create({
+  // Pembungkus mengisi sel yang ukurannya diatur pemanggil (aspectRatio); tanpa ini ubin kolaps ke tinggi 0.
+  akar: { flex: 1 },
   ubin: { flex: 1, borderRadius: radius.lg, overflow: 'hidden', borderWidth: 3 },
   tengah: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   tangan: { position: 'absolute', top: 8, right: 8, width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
