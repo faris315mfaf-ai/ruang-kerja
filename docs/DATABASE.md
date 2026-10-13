@@ -221,6 +221,7 @@ Implementasi: `weekdays` = `smallint[]` NOT NULL default `{}` (CHECK nilai 1–7
 | is_suspicious | bool | ada log yang ditandai |
 | note | text null | |
 | work_plan | jsonb null | `list<string>` poin rencana kerja hari ini (maks 8 × 300 karakter), diisi saat check-in (8–9 Okt 2026); ikut dikirim ke grup manajemen (docs/fitur/absensi-whatsapp.md). Tiap poin otomatis menjadi tugas di workspace pribadi karyawan untuk `work_date` yang sama (`CreateWorkPlanTasks`: judul = poin, assignee = karyawan, `tasks.source='attendance'`, `source_id` = id hari; dalam transaksi check-in yang sama, idempoten) |
+| work_report | jsonb null | `list<string>` poin **laporan kerja** (apa yang sudah dikerjakan hari ini; maks 8 × 300 karakter), wajib diisi saat check-out GPS + selfie (keputusan pemilik 13 Okt 2026; QR/kiosk tanpa form = kosong); ikut dikirim ke grup manajemen bersama foto bertanda waktu/lokasi |
 
 Indeks: `(work_date, status)`, `(user_id, work_date)` unique.
 
