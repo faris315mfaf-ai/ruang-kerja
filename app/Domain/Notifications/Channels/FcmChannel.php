@@ -87,7 +87,9 @@ final class FcmChannel
         $channel = AndroidChannel::forType($type);
         $external = $notification->externalPayload($user);
         $target = $this->targets->resolve($type, $notification->payload($user)->toArray($type));
-        $notificationId = (string) $notification->id;
+        $notificationId = $notification->pushInboxId() ?? (string) $notification->id;
+        // Same tag = replaces the notification in the shade (one per conversation for chat).
+        $tag = $notification->pushTag() ?? $notificationId;
 
         // No dedicated screen: the app opens the notification detail from the Inbox.
         $data = [
@@ -98,6 +100,7 @@ final class FcmChannel
             'params' => json_encode((object) ($target['params'] ?? []), JSON_UNESCAPED_UNICODE) ?: '{}',
             'android_channel' => $channel->value,
             'notification_id' => $notificationId,
+            'group_key' => $notification->pushGroupKey() ?? $channel->value,
         ];
 
         return [
@@ -110,7 +113,7 @@ final class FcmChannel
                 'priority' => $channel->importance() === 'high' ? 'HIGH' : 'NORMAL',
                 'notification' => array_filter([
                     'channel_id' => $channel->value,
-                    'tag' => $notificationId !== '' ? $notificationId : null,
+                    'tag' => $tag !== '' ? $tag : null,
                 ]),
             ],
         ];

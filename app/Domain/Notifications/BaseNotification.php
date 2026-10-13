@@ -77,6 +77,44 @@ abstract class BaseNotification extends Notification implements ShouldQueueAfter
     }
 
     /**
+     * Follow-up that only rings the phone: no Inbox row, toast, email or
+     * WhatsApp (e.g. the next messages of a conversation whose first "Pesan
+     * baru" is still unread). Still follows the In-app preference.
+     */
+    public function pushOnly(): bool
+    {
+        return false;
+    }
+
+    /**
+     * FCM `android.notification.tag`: a push with the same tag replaces the
+     * one in the notification shade. Null = this notification's own id.
+     */
+    public function pushTag(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * `data.group_key` of the push (shade grouping hint for the app). Null =
+     * the Android channel id of the type.
+     */
+    public function pushGroupKey(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * `data.notification_id` of the push, i.e. the Inbox row opened/marked
+     * read on tap. Null = this notification's own id; push-only follow-ups
+     * point at the Inbox row they belong to.
+     */
+    public function pushInboxId(): ?string
+    {
+        return null;
+    }
+
+    /**
      * @return list<string>
      */
     final public function via(object $notifiable): array
@@ -88,6 +126,12 @@ abstract class BaseNotification extends Notification implements ShouldQueueAfter
         $channels = app(NotificationPreferenceResolver::class)->enabledChannels($notifiable, $this->type()->event());
         $held = $this->isHeld($notifiable);
         $via = [];
+
+        if ($this->pushOnly()) {
+            return in_array(NotificationChannel::InApp, $channels, true) && ! $held && $this->hasPushDevice($notifiable)
+                ? [FcmChannel::class]
+                : [];
+        }
 
         foreach ($channels as $channel) {
             // While held (on leave), only the Inbox record is kept: no toast, email or WhatsApp.

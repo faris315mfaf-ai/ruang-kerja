@@ -1,12 +1,16 @@
 <?php
 
+use App\Domain\Chat\Notifications\DirectMessageNotification;
 use App\Domain\Devices\Models\Device;
 use App\Domain\Notifications\Channels\FcmChannel;
 use App\Domain\Notifications\Channels\InAppChannel;
 use App\Domain\Notifications\Contracts\UserAvailability;
+use App\Domain\Notifications\Enums\AndroidChannel;
 use App\Domain\Notifications\Enums\NotificationChannel;
 use App\Domain\Notifications\Enums\NotificationEvent;
 use App\Domain\Notifications\Enums\NotificationType;
+use App\Models\Channel;
+use App\Models\Message;
 use App\Models\NotificationPreference;
 use App\Models\NotificationSetting;
 use App\Models\Task;
@@ -254,4 +258,70 @@ it('uses the neutral external text for sensitive notifications', function () {
     expect($message['notification']['title'])->toBe('Ada kandidat yang menunggu keputusan Anda')
         ->and($message['notification']['title'])->not->toContain('Budi')
         ->and($message['android']['notification']['channel_id'])->toBe('rk_mendesak');
+});
+
+it('puts every notification type on the FCM channel with a channel, a target and a group key', function () {
+    $fcm = app(FcmChannel::class);
+    $withoutPush = [];
+
+    foreach (NotificationType::cases() as $type) {
+        $notification = new FakeModuleNotification($type);
+
+        if (! in_array(FcmChannel::class, $notification->via($this->user), true)) {
+            $withoutPush[] = $type->value;
+        }
+
+        $message = $fcm->message($this->user, $notification);
+        $channel = AndroidChannel::forType($type);
+
+        expect($message['data']['type'])->toBe($type->value)
+            ->and($message['data']['android_channel'])->toBe($channel->value)
+            ->and($message['android']['notification']['channel_id'])->toBe($channel->value)
+            ->and($message['data']['group_key'])->toBeString()->not->toBe('')
+            ->and($message['data']['notification_id'])->toBeString();
+
+        foreach ($message['data'] as $value) {
+            expect($value)->toBeString();
+        }
+    }
+
+    expect($withoutPush)->toBe([]);
+});
+
+it('collapses chat pushes per conversation and points follow-ups at the existing Inbox row', function () {
+    $fcm = app(FcmChannel::class);
+    $sender = User::factory()->create();
+    $channel = Channel::factory()->create(['type' => 'dm', 'name' => null, 'direct_key' => str_repeat('c', 64)]);
+    $message = Message::factory()->create(['channel_id' => $channel->id, 'user_id' => $sender->id]);
+
+    $first = new DirectMessageNotification($channel, $message, $sender);
+    $followUp = new DirectMessageNotification($channel, $message, $sender, 'inbox-row-1');
+
+    expect($first->pushOnly())->toBeFalse()
+        ->and($first->via($this->user))->toContain(InAppChannel::class, FcmChannel::class)
+        ->and($followUp->pushOnly())->toBeTrue()
+        ->and($followUp->via($this->user))->toBe([FcmChannel::class]);
+
+    $data = $fcm->message($this->user, $followUp);
+
+    expect($data['android']['notification']['tag'])->toBe('chat:'.$channel->id)
+        ->and($data['data']['group_key'])->toBe('chat:'.$channel->id)
+        ->and($data['data']['notification_id'])->toBe('inbox-row-1')
+        ->and($data['data']['target'])->toBe('obrolan')
+        ->and($data['data']['id'])->toBe($channel->id)
+        ->and($data['data']['android_channel'])->toBe('rk_obrolan');
+    expect($fcm->message($this->user, $first)['android']['notification']['tag'])->toBe('chat:'.$channel->id);
+});
+
+it('drops a push-only follow-up when the user switched in-app off or has no phone', function () {
+    $sender = User::factory()->create();
+    $channel = Channel::factory()->create(['type' => 'dm', 'name' => null, 'direct_key' => str_repeat('d', 64)]);
+    $message = Message::factory()->create(['channel_id' => $channel->id, 'user_id' => $sender->id]);
+    $followUp = new DirectMessageNotification($channel, $message, $sender, 'inbox-row-2');
+
+    expect($followUp->via(User::factory()->create()))->toBe([]);
+
+    NotificationPreference::query()->create(['user_id' => $this->user->id, 'event' => NotificationEvent::ChatMessage->value, 'channel' => NotificationChannel::InApp->value, 'enabled' => false]);
+
+    expect($followUp->via($this->user))->toBe([]);
 });

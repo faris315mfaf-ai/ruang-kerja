@@ -15,6 +15,7 @@ use App\Models\ChannelMember;
 use App\Models\InboxNotification;
 use App\Models\Message;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -86,7 +87,8 @@ final class PostMessage
 
     /**
      * One unread "Pesan baru" per DM/group and person: while an earlier one is
-     * still unread in the Inbox, the next messages only bump the badge.
+     * still unread in the Inbox, the next messages only bump the badge and send a
+     * push-only follow-up (see DirectMessageNotification).
      *
      * @param  list<string>  $alreadyNotified  mentioned people
      */
@@ -108,6 +110,7 @@ final class PostMessage
             return;
         }
 
+        // user id => id of the unread "Pesan baru" Inbox row they already have for this channel.
         $pending = InboxNotification::query()
             ->whereIn('notifiable_id', $candidateIds)
             ->where('type', NotificationType::ChatMessage->value)
@@ -115,13 +118,21 @@ final class PostMessage
             ->where('subject_id', $channel->id)
             ->whereNull('read_at')
             ->whereNull('archived_at')
-            ->pluck('notifiable_id')
+            ->pluck('id', 'notifiable_id')
             ->all();
 
-        $recipients = User::query()->whereIn('id', array_diff($candidateIds, $pending))->get();
+        $recipients = User::query()->whereIn('id', array_diff($candidateIds, array_keys($pending)))->get();
 
         if ($recipients->isNotEmpty()) {
             Notification::send($recipients->all(), new DirectMessageNotification($channel, $message, $author));
+        }
+
+        // The Inbox keeps one row, but the phone hears about newer messages: push-only,
+        // replacing the previous push of this conversation, at most once per 10 seconds.
+        foreach (User::query()->whereIn('id', array_keys($pending))->get() as $user) {
+            if (Cache::add("chat-push:{$channel->id}:{$user->id}", true, 10)) {
+                Notification::send($user, new DirectMessageNotification($channel, $message, $author, (string) $pending[$user->id]));
+            }
         }
     }
 

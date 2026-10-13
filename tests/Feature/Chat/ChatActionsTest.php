@@ -13,6 +13,8 @@ use App\Domain\Chat\Enums\ChannelRole;
 use App\Domain\Chat\Enums\ChannelType;
 use App\Domain\Chat\Notifications\ChatMentionNotification;
 use App\Domain\Chat\Notifications\DirectMessageNotification;
+use App\Domain\Devices\Models\Device;
+use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Organization\Enums\UserStatus;
 use App\Domain\Tasks\Actions\CreateTask;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
@@ -23,6 +25,7 @@ use App\Models\AuditLog;
 use App\Models\Channel;
 use App\Models\ChannelMember;
 use App\Models\DriveFile;
+use App\Models\InboxNotification;
 use App\Models\Message;
 use App\Models\User;
 use App\Models\Workspace;
@@ -100,6 +103,34 @@ it('posts a message, keeps mentions only for people who can read the channel, an
     Notification::assertSentToTimes($this->sari, DirectMessageNotification::class, 1);
 
     expect(chatMember($dm, $this->dimas)?->last_read_message_id)->not->toBeNull();
+});
+
+it('sends a push-only follow-up (at most every 10 seconds) while the first "pesan baru" is still unread', function () {
+    Device::factory()->create(['user_id' => $this->sari->id, 'push_token' => 'tok-'.str_repeat('a', 60)]);
+    $dm = app(OpenDirectConversation::class)->handle($this->dimas, [$this->sari->id]);
+    $pending = InboxNotification::factory()->recipient($this->sari)->ofType(NotificationType::ChatMessage)->create([
+        'subject_type' => $dm->getMorphClass(),
+        'subject_id' => $dm->id,
+    ]);
+    $post = app(PostMessage::class);
+
+    $post->handle($dm, $this->dimas, richDoc('Pesan kedua'));
+    $post->handle($dm, $this->dimas, richDoc('Pesan ketiga')); // inside the 10 second window
+
+    Notification::assertSentToTimes($this->sari, DirectMessageNotification::class, 1);
+    Notification::assertSentTo($this->sari, DirectMessageNotification::class, fn (DirectMessageNotification $n) => $n->pushOnly() && $n->pushInboxId() === $pending->id);
+
+    $this->travel(11)->seconds();
+    $post->handle($dm, $this->dimas, richDoc('Pesan keempat'));
+
+    Notification::assertSentToTimes($this->sari, DirectMessageNotification::class, 2);
+
+    $pending->forceFill(['read_at' => now()])->save();
+    $this->travel(11)->seconds();
+    $post->handle($dm, $this->dimas, richDoc('Pesan kelima'));
+
+    // Read in the meantime: a regular (non push-only) "pesan baru" again.
+    Notification::assertSentTo($this->sari, DirectMessageNotification::class, fn (DirectMessageNotification $n) => ! $n->pushOnly());
 });
 
 it('does not send "pesan baru" for muted DMs but still notifies mentions', function () {
