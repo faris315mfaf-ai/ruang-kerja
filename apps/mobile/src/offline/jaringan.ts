@@ -204,6 +204,23 @@ function terapkanKeadaanOs(state: Network.NetworkState): void {
 }
 
 /**
+ * Baca ulang keadaan jaringan dari OS lalu pastikan server terjangkau. Dipakai
+ * sinkron latar belakang, yang berjalan tanpa `mulaiJaringan()` (proses tanpa UI)
+ * atau dengan status basi (aplikasi di latar belakang tidak memeriksa server).
+ */
+export async function segarkanJaringan(): Promise<boolean> {
+  try {
+    terapkanKeadaanOs(await Network.getNetworkStateAsync());
+  } catch {
+    // Keadaan OS tak terbaca: andalkan permintaan nyata / probe.
+  }
+  if (!store.get().terhubung) {
+    return false;
+  }
+  return adalahOnline() || (await periksaSegera());
+}
+
+/**
  * Mulai memantau (idempoten). Dipanggil `OfflineProvider` setelah frame
  * pertama. Mengembalikan fungsi berhenti (untuk pengujian).
  */

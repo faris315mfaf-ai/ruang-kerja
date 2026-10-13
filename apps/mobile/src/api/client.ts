@@ -103,9 +103,20 @@ export function setTokenGetter(getter: (() => string | null) | null): void {
   tokenGetter = getter;
 }
 
+/**
+ * Token cadangan untuk sinkron latar belakang tanpa UI (tidak ada SessionProvider
+ * yang memasang `tokenGetter`). Getter sesi React selalu didahulukan, jadi
+ * pengaturan/pencabutan di sini tidak pernah menimpa sesi yang sedang hidup.
+ */
+let tokenSementara: string | null = null;
+
+export function setTokenSementara(token: string | null): void {
+  tokenSementara = token;
+}
+
 /** Token sesi saat ini (untuk sumber gambar RN yang butuh header Authorization, mis. ubin peta). */
 export function tokenSaatIni(): string | null {
-  return tokenGetter?.() ?? null;
+  return tokenGetter?.() ?? tokenSementara;
 }
 
 type QueryValue = string | number | boolean | null | undefined;
@@ -127,6 +138,12 @@ export interface RequestOptions {
   idempotencyKey?: string;
   /** Diisi klien: info tambahan tentang jawaban (mis. `dariCache`, `replayed`). */
   hasil?: HasilPermintaan;
+  /**
+   * `true` = jangan memicu penangan tingkat-aplikasi (401 → sesi berakhir, blokir akun,
+   * 426/503). Dipakai sinkron latar belakang: tidak boleh mengeluarkan pengguna atau
+   * menampilkan dialog dari proses tanpa layar; galatnya tetap dilempar ke pemanggil.
+   */
+  senyap?: boolean;
 }
 
 /** Keluaran tambahan `apiRequest` lewat `options.hasil`. */
@@ -154,7 +171,7 @@ function galatOffline(): ApiError {
  * atau null untuk 204.
  */
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T | null> {
-  const { method = 'GET', json, form, query, timeoutMs = 30_000, headers: extraHeaders, cache: pakaiCache, idempotencyKey, hasil } = options;
+  const { method = 'GET', json, form, query, timeoutMs = 30_000, headers: extraHeaders, cache: pakaiCache, idempotencyKey, hasil, senyap = false } = options;
 
   const url = new URL(path.startsWith('http') ? path : `${API_URL}/${path.replace(/^\//, '')}`);
   if (query) {
@@ -201,7 +218,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   const headers: Record<string, string> = { Accept: 'application/json', 'X-App-Version': APP_VERSION, ...extraHeaders };
-  const token = tokenGetter?.();
+  const token = tokenGetter?.() ?? tokenSementara;
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
@@ -248,7 +265,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     } catch {
       pesan401 = null;
     }
-    if (token) {
+    if (token && !senyap) {
       onUnauthorized?.(pesan401);
     }
     throw new ApiError({ status: 401, message: pesan401 ?? 'Sesi berakhir. Silakan masuk kembali.' });
@@ -276,20 +293,20 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       context?: Record<string, unknown>;
       errors?: Record<string, string[]>;
     };
-    if (response.status === 426 && data.code === 'update_required') {
+    if (!senyap && response.status === 426 && data.code === 'update_required') {
       onAppStatus?.({
         kind: 'update_required',
         message: data.message ?? 'Versi aplikasi ini tidak lagi didukung. Perbarui RuangKerja untuk melanjutkan.',
         minVersion: (data as { min_app_version?: string }).min_app_version ?? null,
       });
     }
-    if (response.status === 503 && data.code === 'maintenance') {
+    if (!senyap && response.status === 503 && data.code === 'maintenance') {
       onAppStatus?.({
         kind: 'maintenance',
         message: data.message ?? 'RuangKerja sedang dalam pemeliharaan. Coba lagi beberapa saat lagi.',
       });
     }
-    if (response.status === 403 && token && data.code !== undefined && KODE_BLOKIR.includes(data.code)) {
+    if (!senyap && response.status === 403 && token && data.code !== undefined && KODE_BLOKIR.includes(data.code)) {
       onAccountBlocked?.({
         code: data.code as KodeBlokirAkun,
         message: data.message ?? 'Akun Anda perlu tindakan di RuangKerja web sebelum aplikasi bisa dipakai.',

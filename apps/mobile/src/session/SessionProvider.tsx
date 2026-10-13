@@ -23,7 +23,7 @@ import { adalahTantangan, normalisasiProfil, type SesiDibuka, type UserProfile }
 import { deviceInfo } from '@/lib/device';
 import { akhiriSesiOffline, mulaiSesiOffline } from '@/offline/sesi';
 
-const SESI_KEY = 'rk.sesi';
+import { KUNCI_SESI as SESI_KEY } from './tokenTersimpan';
 
 type StatusSesi = 'memuat' | 'masuk' | 'keluar';
 

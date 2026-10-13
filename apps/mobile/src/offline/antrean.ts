@@ -26,6 +26,7 @@ import { ApiError, apiRequest, type HasilPermintaan, type RequestOptions } from 
 
 import { denganDb, denganTransaksi } from './db';
 import { adalahForeground, adalahOnline, periksaSegera, saatOnline } from './jaringan';
+import { tandaiSesiDitolak } from './latarMeta';
 import { buatStore, useStore } from './store';
 import { buatUlid } from './ulid';
 
@@ -205,6 +206,12 @@ let suksesRun = 0;
 let konflikRun = 0;
 let timerBerikut: ReturnType<typeof setTimeout> | null = null;
 let hentikanPemicu: (() => void) | null = null;
+
+// Sinkron latar belakang (`sinkronkanLatar`): jendela kirim sementara saat aplikasi tidak di latar depan.
+let latarSampaiMs = 0;
+/** Alasan putaran latar berhenti lebih awal karena server menolak sesi/versi/akun (bukan salah item). */
+let latarBerhenti: 'sesi' | 'akun' | null = null;
+const penungguIdle = new Set<() => void>();
 
 function publikasi(): void {
   const urut = [...daftarMemori].sort((a, b) => a.seq - b.seq);
@@ -712,9 +719,19 @@ function backoffMs(percobaan: number): number {
   return Math.round(dasar * (0.8 + Math.random() * 0.4));
 }
 
+/** Jendela sinkron latar belakang sedang terbuka (dan belum dihentikan oleh penolakan server). */
+function latarTerbuka(): boolean {
+  return latarSampaiMs > Date.now() && latarBerhenti === null;
+}
+
 function bolehJalan(): boolean {
   const s = store.get();
-  return s.siap && !s.jeda && uidAntrean !== null && adalahOnline() && adalahForeground();
+  return s.siap && !s.jeda && uidAntrean !== null && adalahOnline() && (adalahForeground() || latarTerbuka());
+}
+
+function bangunkanPenunggu(): void {
+  penungguIdle.forEach((r) => r());
+  penungguIdle.clear();
 }
 
 /** Pilih dan mulai item yang siap; atur pewaktu berikutnya. Aman dipanggil kapan saja & berulang. */
@@ -724,6 +741,9 @@ export function picu(): void {
     timerBerikut = null;
   }
   if (!bolehJalan()) {
+    if (sedangJalan.size === 0) {
+      bangunkanPenunggu();
+    }
     return;
   }
   const sekarang = Date.now();
@@ -757,6 +777,7 @@ export function picu(): void {
   }
   if (sedangJalan.size === 0) {
     selesaiPutaran();
+    bangunkanPenunggu();
   }
   // Pewaktu: hanya bila masih ada yang menunggu giliran (backoff / paralel penuh).
   const adaMenunggu = berikutnyaTerdekat !== null || mulai.length > 0 || sedangJalan.size > 0;
@@ -817,6 +838,8 @@ async function kerjakan(awal: ItemAntrean): Promise<void> {
   sedangJalan.add(awal.id);
   ganti(awal.id, { status: 'mengirim' });
   let item = ambilItem(awal.id) ?? awal;
+  // Dikirim dari jendela latar belakang (bukan latar depan): batas waktu lebih pendek, tanpa efek ke sesi/UI.
+  const dariLatar = !adalahForeground() && latarSampaiMs > 0;
   try {
     if (item.kedaluwarsaJam !== null && Date.now() - item.dibuatMs > item.kedaluwarsaJam * 3_600_000) {
       await jadikanKonflik(item, { pesan: `Perubahan ini sudah lebih dari ${item.kedaluwarsaJam} jam dan tidak dikirim otomatis. Periksa lalu kirim ulang atau hapus.`, status: null, kode: 'kedaluwarsa' });
@@ -836,7 +859,7 @@ async function kerjakan(awal: ItemAntrean): Promise<void> {
     }
     const { json, formFields } = suntikWaktuOffline(item, req.json, req.formFields);
     const hasil: HasilPermintaan = {};
-    const opsi: RequestOptions = { method: req.method ?? item.method, idempotencyKey: item.kunciIdem, cache: false, hasil, timeoutMs: 60_000 };
+    const opsi: RequestOptions = { method: req.method ?? item.method, idempotencyKey: item.kunciIdem, cache: false, hasil, timeoutMs: dariLatar ? 20_000 : 60_000, senyap: dariLatar };
     if (formFields !== undefined || item.berkas.length > 0) {
       opsi.form = await susunFormData(item, formFields);
     } else if (json !== undefined) {
@@ -846,7 +869,7 @@ async function kerjakan(awal: ItemAntrean): Promise<void> {
     item = ambilItem(item.id) ?? item;
     await selesai(item, respons, hasil.replayed === true);
   } catch (galat) {
-    await tanganiGalat(ambilItem(awal.id) ?? item, galat);
+    await tanganiGalat(ambilItem(awal.id) ?? item, galat, dariLatar);
   } finally {
     sedangJalan.delete(awal.id);
     publikasi();
@@ -881,7 +904,9 @@ async function jadikanKonflik(item: ItemAntrean, galat: GalatItem): Promise<void
   }
 }
 
-async function tanganiGalat(item: ItemAntrean, galat: unknown): Promise<void> {
+const KODE_BLOKIR_AKUN: readonly string[] = ['password_change_required', 'two_factor_setup_required'];
+
+async function tanganiGalat(item: ItemAntrean, galat: unknown, dariLatar = false): Promise<void> {
   if (!(galat instanceof ApiError)) {
     // Galat tak terduga (mis. di bangunPermintaan): coba lagi dengan backoff, dihitung sebagai percobaan.
     await jadwalUlang(item, { pesan: galat instanceof Error ? galat.message : 'Terjadi galat tak terduga.', status: null, kode: 'tak_terduga' }, true);
@@ -890,6 +915,19 @@ async function tanganiGalat(item: ItemAntrean, galat: unknown): Promise<void> {
   if (galat.status === 0) {
     // Jaringan: bukan salah item. Coba lagi segera setelah jaringan kembali (pemicu online) atau dalam 10 dtk.
     const baru = ganti(item.id, { status: 'menunggu', berikutnya: Date.now() + 10_000 });
+    if (baru) {
+      await simpanKeadaan(baru).catch(() => undefined);
+    }
+    return;
+  }
+  if (dariLatar && (galat.status === 401 || galat.status === 426 || (galat.status === 403 && galat.code !== null && KODE_BLOKIR_AKUN.includes(galat.code)))) {
+    // Dari latar belakang JANGAN menghapus sesi / menjeda antrean / mengubah item: berhenti diam-diam dan serahkan
+    // ke aplikasi saat dibuka (401 → dialog "Sesi berakhir"; blokir akun / versi → layar penanganannya).
+    latarBerhenti = galat.status === 401 ? 'sesi' : 'akun';
+    if (galat.status === 401 && uidAntrean) {
+      await tandaiSesiDitolak(uidAntrean).catch(() => undefined);
+    }
+    const baru = ganti(item.id, { status: 'menunggu', berikutnya: 0 });
     if (baru) {
       await simpanKeadaan(baru).catch(() => undefined);
     }
@@ -938,4 +976,98 @@ async function jadwalUlang(item: ItemAntrean, galat: GalatItem, hitung: boolean,
   if (baru) {
     await simpanKeadaan(baru).catch(() => undefined);
   }
+}
+
+// ── Sinkron latar belakang ───────────────────────────────────────────────────
+
+export interface HasilLatar {
+  /** Item yang terkirim selama putaran ini. */
+  sukses: number;
+  /** Item yang ditolak server (jadi `konflik`/`gagal`) selama putaran ini. */
+  konflik: number;
+  /** Item yang masih ada di antrean setelah putaran. */
+  tersisa: number;
+  /** Mengapa putaran berhenti: antrean tidak punya yang bisa dikirim lagi, batas waktu habis, atau server menolak sesi/akun/versi. */
+  berhenti: 'selesai' | 'batas_waktu' | 'sesi' | 'akun' | 'jeda';
+}
+
+let latarJalan: Promise<HasilLatar> | null = null;
+
+/** Dibaca lewat fungsi agar TypeScript tidak mempersempit `latarBerhenti` (diubah di tanganiGalat). */
+function alasanLatarBerhenti(): 'sesi' | 'akun' | null {
+  return latarBerhenti;
+}
+
+function tidur(ms: number): { janji: Promise<void>; batal: () => void } {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const janji = new Promise<void>((selesaiTidur) => {
+    timer = setTimeout(selesaiTidur, Math.max(0, ms));
+  });
+  return { janji, batal: () => clearTimeout(timer) };
+}
+
+async function jalankanLatar(uid: string, batasMs: number): Promise<HasilLatar> {
+  const sampai = Date.now() + batasMs;
+  if (uidAntrean !== null && uidAntrean !== uid) {
+    // Antrean di memori milik akun lain (tidak seharusnya terjadi): jangan dicampur.
+    return { sukses: 0, konflik: 0, tersisa: 0, berhenti: 'jeda' };
+  }
+  await (uidAntrean === uid && muatPromise ? muatPromise : mulaiAntrean(uid));
+  if (store.get().jeda) {
+    return { sukses: 0, konflik: 0, tersisa: store.get().items.length, berhenti: 'jeda' };
+  }
+  let sukses = 0;
+  let konflik = 0;
+  const lepas = onAntrean((p) => {
+    if (p.tipe === 'sukses') {
+      sukses += 1;
+    } else if (p.tipe === 'konflik') {
+      konflik += 1;
+    }
+  });
+  let habisWaktu = false;
+  latarBerhenti = null;
+  latarSampaiMs = sampai;
+  try {
+    // Abaikan masa tunggu backoff: pengguna mungkin baru kembali ke sinyal sejak percobaan terakhir.
+    for (const i of daftarMemori) {
+      if (i.status === 'menunggu' && i.berikutnya > 0) {
+        ganti(i.id, { berikutnya: 0 });
+      }
+    }
+    picu();
+    while (sedangJalan.size > 0 && Date.now() < sampai) {
+      const t = tidur(sampai - Date.now());
+      await Promise.race([new Promise<void>((r) => penungguIdle.add(r)), t.janji]);
+      t.batal();
+    }
+  } finally {
+    habisWaktu = sedangJalan.size > 0;
+    lepas();
+    latarSampaiMs = 0;
+    if (timerBerikut) {
+      clearTimeout(timerBerikut);
+      timerBerikut = null;
+    }
+    penungguIdle.clear();
+  }
+  return { sukses, konflik, tersisa: store.get().items.length, berhenti: alasanLatarBerhenti() ?? (habisWaktu ? 'batas_waktu' : 'selesai') };
+}
+
+/**
+ * Sinkronkan antrean dari proses latar belakang (task `expo-background-task`),
+ * paling lama `batasMs`. Memakai mesin kirim yang sama dengan latar depan —
+ * satu instance per proses JS, jadi latar depan dan latar belakang tidak pernah
+ * mengirim bersamaan — dan kunci idempotensi yang sama (kirim ulang aman).
+ * Pemanggil memastikan sesi/token, jaringan, dan adanya item menunggu lebih dulu.
+ */
+export function sinkronkanLatar(uid: string, batasMs: number): Promise<HasilLatar> {
+  if (latarJalan) {
+    return latarJalan;
+  }
+  const janji = jalankanLatar(uid, batasMs).finally(() => {
+    latarJalan = null;
+  });
+  latarJalan = janji;
+  return janji;
 }
