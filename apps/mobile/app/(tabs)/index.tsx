@@ -1,296 +1,138 @@
 /**
- * Beranda — sapaan + tanggal, kartu status absensi hari ini (dengan tombol
- * menuju tab Absen), kartu rapat berikutnya (hari-ini yang belum selesai /
- * akan datang terdekat; tersembunyi bila kosong atau fitur rapat mati),
- * tugas hari ini bersegmen Pribadi/Tim/Semua, dan kartu briefing terakhir
- * (tersembunyi bila 204). Tarik untuk menyegarkan.
+ * Beranda — satu `GET /beranda` (tarik untuk menyegarkan, bagian gagal
+ * ditoleransi per bagian) + pemilih tampilan per peran (Saya · Kepala Divisi
+ * · HR · Direksi segera). Tampilan terakhir diingat per perangkat. Dashboard
+ * Kepala Divisi/HR memuat endpointnya sendiri. Spec: docs/mockups/android/
+ * spec/02-beranda-dashboard.md.
  */
-import { Ionicons } from '@/ui/Ionicons';
-import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { ApiError } from '@/api/client';
-import { absensiHariIni, briefingTerakhir, rapatBerikutnya, tugasHariIni } from '@/api/endpoints';
-import type { Briefing, MeetingItem, TodayAttendance, TodayTasks } from '@/api/types';
-import { Badge, Button, Card, CardTitle, EmptyState, ErrorState, Loading, Meta, Screen, Segmented } from '@/components/ui';
-import { TugasItem } from '@/components/TugasItem';
-import { jam, sapaan, tanggalPanjang, tanggalPendek, tanggalTanpaTahun } from '@/lib/format';
-import { radius, useTheme } from '@/lib/theme';
+import { beranda, type BerandaSaya, type KunciTampilan } from '@/api/beranda';
+import { BerandaSayaIsi } from '@/features/beranda/BerandaSayaIsi';
+import { DasborDivisi } from '@/features/beranda/DasborDivisi';
+import { DasborHr } from '@/features/beranda/DasborHr';
+import { namaDepan, overlineTanggal } from '@/features/beranda/format';
+import { bukaCari } from '@/features/beranda/nav';
+import { PemilihTampilan } from '@/features/beranda/PemilihTampilan';
+import { bacaTampilanTerakhir, simpanTampilanTerakhir } from '@/features/beranda/penyimpanan';
+import { PitaGagalSegar, PitaOffline } from '@/features/beranda/Pita';
+import { SpandukPengumuman } from '@/features/beranda/SpandukPengumuman';
+import { TombolNotulensi } from '@/features/beranda/TombolNotulensi';
+import { useMuat } from '@/features/beranda/useMuat';
 import { useSession } from '@/session/SessionProvider';
+import { useUnread } from '@/session/UnreadProvider';
+import { AppBar, ErrorState, Screen, errorKindFromStatus } from '@/ui';
 
-type Segmen = 'pribadi' | 'tim' | 'semua';
+const KUNCI: readonly KunciTampilan[] = ['saya', 'divisi', 'hr', 'direksi'];
 
-const labelAksi: Record<string, string> = {
-  check_in: 'Belum absen masuk',
-  check_out: 'Sudah masuk, belum absen pulang',
-  done: 'Hari ini selesai',
-  unavailable: 'Absen tidak tersedia',
-};
-
-function KartuAbsensi({ data }: { data: TodayAttendance }): React.JSX.Element {
-  const { colors } = useTheme();
-  const { today } = data;
-
-  return (
-    <Card>
-      <View style={kartu.kepala}>
-        <CardTitle>Absensi hari ini</CardTitle>
-        <Badge tone={today.action === 'done' ? 'success' : today.action === 'unavailable' ? 'neutral' : 'primary'}>
-          {labelAksi[today.action] ?? today.action}
-        </Badge>
-      </View>
-
-      <View style={kartu.baris}>
-        <Ionicons name="time-outline" size={18} color={colors.subtle} />
-        <Meta>
-          {today.schedule.isWorkday
-            ? `${today.schedule.shiftName ?? 'Jadwal'} ${today.schedule.hours ?? ''}`.trim()
-            : today.schedule.isHoliday
-              ? `Libur${today.schedule.holidayName ? ` — ${today.schedule.holidayName}` : ''}`
-              : 'Hari tidak bekerja'}
-        </Meta>
-      </View>
-
-      {today.day ? (
-        <View style={kartu.baris}>
-          <Ionicons name="log-in-outline" size={18} color={today.day.checkInAt ? colors.success : colors.subtle} />
-          <Meta>Masuk {jam(today.day.checkInAt)}</Meta>
-          <Ionicons name="log-out-outline" size={18} color={today.day.checkOutAt ? colors.danger : colors.subtle} />
-          <Meta>Pulang {jam(today.day.checkOutAt)}</Meta>
-        </View>
-      ) : null}
-
-      {(today.action === 'check_in' || today.action === 'check_out') && (
-        <Button
-          title={today.action === 'check_in' ? 'Absen masuk' : 'Absen pulang'}
-          onPress={() => router.push('/(tabs)/absen')}
-          icon="finger-print"
-          accessibilityHint="Membuka tab Absen"
-        />
-      )}
-      {today.action === 'done' && (
-        <Button title="Lihat ringkasan hari" variant="secondary" onPress={() => router.push('/(tabs)/absen')} />
-      )}
-    </Card>
-  );
-}
-
-function KartuTugas({ data }: { data: TodayTasks | null }): React.JSX.Element {
-  const [segmen, setSegmen] = useState<Segmen>('semua');
-  const items = data ? data[segmen] : [];
-  const counts = data?.counts;
-
-  return (
-    <Card>
-      <CardTitle>Tugas hari ini</CardTitle>
-      <Segmented<Segmen>
-        value={segmen}
-        onChange={setSegmen}
-        options={[
-          { value: 'pribadi', label: 'Pribadi', badge: counts?.pribadi ?? null },
-          { value: 'tim', label: 'Tim', badge: counts?.tim ?? null },
-          { value: 'semua', label: 'Semua', badge: counts?.semua ?? null },
-        ]}
-      />
-
-      {items.length === 0 ? (
-        <EmptyState
-          icon="checkmark-done-outline"
-          title="Tidak ada tugas"
-          description={`Tugas jatuh tempo hari ini segmen ${segmen} kosong.`}
-        />
-      ) : (
-        <View style={{ gap: 2 }}>
-          {items.map((tugas) => (
-            <TugasItem
-              key={tugas.id}
-              tugas={{
-                ...tugas,
-                priority: { value: 3, label: tugas.priority },
-                due_date: data?.today ?? null,
-              }}
-              onPress={() => router.push(`/tugas/${tugas.id}`)}
-            />
-          ))}
-        </View>
-      )}
-    </Card>
-  );
-}
-
-/** Kartu "Rapat berikutnya" — kemunculan hari-ini yang belum selesai atau akan datang terdekat. */
-function KartuRapat({ item, berlangsung }: { item: MeetingItem; berlangsung: boolean }): React.JSX.Element {
-  const { colors } = useTheme();
-  return (
-    <Card
-      onPress={() =>
-        router.push({
-          pathname: '/rapat/[id]/index',
-          params: { id: item.id, tanggal: item.occurrence_date, judul: item.title },
-        })
-      }
-      accessibilityLabel={`Rapat berikutnya: ${item.title}, ${jam(item.starts_at)} WIB`}
-    >
-      <View style={kartu.kepala}>
-        <CardTitle>Rapat berikutnya</CardTitle>
-        <Badge tone={berlangsung ? 'success' : 'primary'}>
-          {berlangsung ? 'Berlangsung' : `${jam(item.starts_at)} WIB`}
-        </Badge>
-      </View>
-      <Text style={[kartu.judulRapat, { color: colors.text }]} numberOfLines={2}>
-        {item.title}
-      </Text>
-      <Meta numberOfLines={1}>
-        {`${tanggalTanpaTahun(item.starts_at)} · ${jam(item.starts_at)}–${jam(item.ends_at)} WIB · ${item.platform_label}${
-          item.location ? ` · ${item.location}` : ''
-        }`}
-      </Meta>
-    </Card>
-  );
-}
-
-function KartuBriefing({ briefing }: { briefing: Briefing }): React.JSX.Element {
-  const { colors } = useTheme();
-  return (
-    <Card>
-      <View style={kartu.kepala}>
-        <CardTitle>Briefing terakhir</CardTitle>
-        <Badge tone="info">{briefing.label}</Badge>
-      </View>
-      <Meta>
-        {tanggalPendek(briefing.date)} · oleh {briefing.oleh}
-      </Meta>
-      <Text numberOfLines={6} style={[kartu.isi, { color: colors.muted }]}>
-        {briefing.content}
-      </Text>
-    </Card>
-  );
+function kunciDariParam(nilai: string | string[] | undefined): KunciTampilan | null {
+  const v = Array.isArray(nilai) ? nilai[0] : nilai;
+  return KUNCI.find((k) => k === v) ?? null;
 }
 
 export default function LayarBeranda(): React.JSX.Element {
-  const { colors } = useTheme();
   const { user } = useSession();
+  const { jumlah: belumBaca } = useUnread();
+  const params = useLocalSearchParams<{ tampilan?: string }>();
 
-  const [absensi, setAbsensi] = useState<TodayAttendance | null>(null);
-  const [tugas, setTugas] = useState<TodayTasks | null>(null);
-  const [briefing, setBriefing] = useState<Briefing | null>(null);
-  const [rapat, setRapat] = useState<{ item: MeetingItem; berlangsung: boolean } | null>(null);
-  const [galat, setGalat] = useState<string | null>(null);
-  const [memuat, setMemuat] = useState(true);
+  const ambil = useCallback(() => beranda('bulan'), []);
+  const h = useMuat<BerandaSaya>(ambil);
+
+  const [pilihan, setPilihan] = useState<KunciTampilan | null>(() => kunciDariParam(params.tampilan));
+  const [tersimpan, setTersimpan] = useState<KunciTampilan | null | undefined>(undefined);
   const [menyegarkan, setMenyegarkan] = useState(false);
-
-  const muat = useCallback(async (diam = false): Promise<void> => {
-    setGalat(null);
-    if (!diam) {
-      setMemuat(true);
-    }
-
-    const [hasilAbsensi, hasilTugas, hasilBriefing, hasilRapat] = await Promise.allSettled([
-      absensiHariIni(),
-      tugasHariIni(),
-      briefingTerakhir(),
-      rapatBerikutnya(),
-    ]);
-
-    if (hasilAbsensi.status === 'fulfilled') {
-      setAbsensi(hasilAbsensi.value);
-    } else {
-      setAbsensi(null);
-    }
-    if (hasilTugas.status === 'fulfilled') {
-      setTugas(hasilTugas.value);
-    } else {
-      setTugas(null);
-    }
-    // Briefing 204 → null (kartu disembunyikan); galat diabaikan.
-    setBriefing(hasilBriefing.status === 'fulfilled' ? hasilBriefing.value : null);
-    // Rapat berikutnya: kartu disembunyikan bila kosong/fitur mati (galat diabaikan).
-    setRapat(
-      hasilRapat.status === 'fulfilled' && hasilRapat.value !== null
-        ? {
-            item: hasilRapat.value,
-            // Dihitung saat muat (bukan saat render) — aturan kemurnian React.
-            berlangsung: new Date(hasilRapat.value.starts_at).getTime() <= Date.now(),
-          }
-        : null,
-    );
-
-    const gagal = [hasilAbsensi, hasilTugas].find((h) => h.status === 'rejected');
-    if (gagal && gagal.status === 'rejected') {
-      const err = gagal.reason;
-      setGalat(
-        err instanceof ApiError
-          ? err.message
-          : 'Tidak dapat memuat beranda. Periksa koneksi Anda.',
-      );
-    }
-
-    setMemuat(false);
-    setMenyegarkan(false);
+  const muatDasbor = useRef<(() => Promise<void>) | null>(null);
+  const registrasi = useCallback((fn: (() => Promise<void>) | null) => {
+    muatDasbor.current = fn;
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- pemuatan data saat layar dibuka
-    void muat();
-  }, [muat]);
+    let batal = false;
+    void bacaTampilanTerakhir().then((k) => {
+      if (!batal) {
+        setTersimpan(k);
+      }
+    });
+    return () => {
+      batal = true;
+    };
+  }, []);
+
+  // Deep link /dashboard/{divisi|hr} saat layar sudah terpasang.
+  const paramKunci = kunciDariParam(params.tampilan);
+  useEffect(() => {
+    if (paramKunci !== null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- mengikuti parameter deep link
+      setPilihan(paramKunci);
+    }
+  }, [paramKunci]);
+
+  const data = h.data;
+  const tersedia = data?.tampilan.tersedia ?? [];
+  const boleh = (k: KunciTampilan | null | undefined): k is KunciTampilan => k !== null && k !== undefined && tersedia.some((t) => t.key === k && t.tersedia);
+  const aktif: KunciTampilan =
+    data === null || tersimpan === undefined
+      ? 'saya'
+      : ([pilihan, tersimpan, data.tampilan.awal].find((k) => boleh(k)) ?? 'saya');
+
+  const pilih = (k: KunciTampilan): void => {
+    setPilihan(k);
+    void simpanTampilanTerakhir(k);
+  };
+
+  const catatanAktif = user?.features?.notes !== false;
+  const nama = namaDepan(data?.pengguna.name ?? user?.name);
+
+  const aksi = [
+    { icon: 'search' as const, label: 'Cari', onPress: bukaCari },
+    {
+      icon: 'bell' as const,
+      label: belumBaca > 0 ? `Inbox, ${belumBaca} belum dibaca` : 'Inbox',
+      onPress: () => router.push('/inbox'),
+      badge: belumBaca > 0 ? belumBaca : undefined,
+    },
+  ];
+
+  const pemilih = <PemilihTampilan tersedia={tersedia} aktif={aktif} onPilih={pilih} />;
+
+  const kepalaDasbor = (info: { judul: string; subjudul?: string }): React.ReactNode => (
+    <>
+      <AppBar overline={overlineTanggal()} title={info.judul} subtitle={info.subjudul} actions={aksi} />
+      {pemilih}
+      <SpandukPengumuman spanduk={data?.pengumuman ?? null} />
+      {catatanAktif ? <TombolNotulensi /> : null}
+    </>
+  );
+
+  const segarkan = (): void => {
+    setMenyegarkan(true);
+    void Promise.all([h.muat(true), muatDasbor.current ? muatDasbor.current() : Promise.resolve()]).finally(() => setMenyegarkan(false));
+  };
 
   return (
-    <Screen
-      refreshing={menyegarkan}
-      onRefresh={() => {
-        setMenyegarkan(true);
-        void muat(true);
-      }}
-    >
-      <View style={beranda.sapa}>
-        <View style={{ flex: 1 }}>
-          <Text style={[beranda.halo, { color: colors.muted }]}>{sapaan()}</Text>
-          <Text style={[beranda.nama, { color: colors.text }]}>{user?.name ?? '…'}</Text>
-          <Meta>{tanggalPanjang(new Date())}</Meta>
-        </View>
-        <Pressable
-          onPress={() => router.push('/(tabs)/lainnya')}
-          accessibilityRole="button"
-          accessibilityLabel="Profil dan lainnya"
-          style={[beranda.avatar, { backgroundColor: colors.linkSoft }]}
-        >
-          <Text style={[beranda.avatarTeks, { color: colors.link }]}>{(user?.name ?? 'RK').slice(0, 1)}</Text>
-        </Pressable>
-      </View>
-
-      {memuat && !absensi && !tugas ? (
-        <Loading label="Memuat beranda…" />
-      ) : galat && !absensi && !tugas ? (
-        <ErrorState message={galat} onRetry={() => void muat()} />
+    <Screen refreshing={menyegarkan} onRefresh={segarkan}>
+      {aktif === 'divisi' ? (
+        <DasborDivisi kepala={kepalaDasbor} registrasiMuat={registrasi} />
+      ) : aktif === 'hr' ? (
+        <DasborHr kepala={kepalaDasbor} registrasiMuat={registrasi} />
       ) : (
         <>
-          {absensi ? <KartuAbsensi data={absensi} /> : null}
-          {galat ? (
-            <Card>
-              <Meta>{galat} — tarik ke bawah untuk mencoba lagi.</Meta>
-            </Card>
-          ) : null}
-          {rapat ? <KartuRapat item={rapat.item} berlangsung={rapat.berlangsung} /> : null}
-          {tugas ? <KartuTugas data={tugas} /> : null}
-          {briefing ? <KartuBriefing briefing={briefing} /> : null}
+          <AppBar overline={overlineTanggal()} title={`Halo, ${nama || 'RuangKerja'}`} actions={aksi} />
+          {pemilih}
+          {h.offline ? <PitaOffline terakhir={h.terakhir} /> : h.gagalSegar ? <PitaGagalSegar /> : null}
+          {data === null && h.galat !== null && !h.memuat ? (
+            <ErrorState
+              kind={errorKindFromStatus(h.galat.status)}
+              title="Tidak dapat memuat beranda"
+              message={h.galat.status === 0 ? 'Periksa koneksi Anda lalu coba lagi.' : h.galat.message}
+              onRetry={() => void h.muat()}
+            />
+          ) : (
+            <BerandaSayaIsi h={h} catatanAktif={catatanAktif} onUlang={() => void h.muat(true)} />
+          )}
         </>
       )}
     </Screen>
   );
 }
-
-const kartu = StyleSheet.create({
-  kepala: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  baris: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-  isi: { fontSize: 14, lineHeight: 21 },
-  judulRapat: { fontSize: 16, fontWeight: '700', lineHeight: 21 },
-});
-
-const beranda = StyleSheet.create({
-  sapa: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  halo: { fontSize: 14 },
-  nama: { fontSize: 24, fontWeight: '800' },
-  avatar: { width: 48, height: 48, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center' },
-  avatarTeks: { fontSize: 20, fontWeight: '700' },
-});

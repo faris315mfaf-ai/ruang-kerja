@@ -117,8 +117,8 @@ export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron }: Kontek
   daftar.push(
     segera('pengumuman', 'Pengumuman', 'megaphone', pimpinan ? 'Tulis ke semua' : peran.kadiv ? 'Tulis ke divisi' : undefined),
   );
-  if (!pimpinan) {
-    daftar.push(segera('kinerja', 'Kinerja saya', 'gauge'));
+  if (fiturAktif(profil, 'automation', false)) {
+    daftar.push(rute('kinerja', 'Kinerja saya', 'gauge', '/kinerja', { subjudul: 'Metrik output, tanpa skor gabungan' }));
   }
 
   return daftar;
