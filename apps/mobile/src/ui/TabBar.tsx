@@ -57,7 +57,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
   const insets = useSafeAreaInsets();
   const { jumlah } = useUnread();
   const { user } = useSession();
-  const { center, refresh } = useAttendanceStatus();
+  const { center, badge, refresh } = useAttendanceStatus();
   const { setTabBarVisible } = useChrome();
   const keyboard = useKeyboardTampil();
   const [sheet, setSheet] = useState(false);
@@ -75,9 +75,12 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
   useEffect(() => {
     if (indeksAwal.current !== state.index) {
       indeksAwal.current = state.index;
-      void refresh();
+      // Layar Absen memuat sendiri saat fokus (lalu `terapkan`), jadi tidak perlu dua kali.
+      if (state.routes[state.index]?.name !== 'absen') {
+        void refresh();
+      }
     }
-  }, [state.index, refresh]);
+  }, [state.index, state.routes, refresh]);
 
   const chat = obrolanAktif(user);
   const kiri: ItemTab[] = [
@@ -156,7 +159,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
           onPress={() => (absen ? ke('absen') : setSheet(true))}
           scaleTo={motion.fabPressScale}
           accessibilityRole="tab"
-          accessibilityLabel={absen ? 'Absen' : 'Workspace'}
+          accessibilityLabel={absen ? (badge ? 'Absen, waktunya check-out' : 'Absen') : 'Workspace'}
           accessibilityHint={absen ? undefined : 'Membuka daftar workspace'}
           accessibilityState={{ selected: absen && diAbsen }}
           style={s.tengah}
@@ -164,6 +167,13 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
           <View style={[s.bundar, { boxShadow: `0 0 0 4px ${colors.surface}, ${shadows.button}` }]}>
             <Gradient name="aksi" style={[StyleSheet.absoluteFill, { borderRadius: radius.full }]} />
             <Icon name={absen ? 'fingerprint' : 'layout-grid'} size={26} color="#FFFFFF" />
+            {absen && badge ? (
+              <View style={[s.tandaSeru, { backgroundColor: colors.badge, borderColor: colors.surface }]}>
+                <Text variant="meta" weight={800} style={{ color: colors.onBadge, fontSize: 12, lineHeight: 14 }} maxFontSizeMultiplier={1}>
+                  !
+                </Text>
+              </View>
+            ) : null}
           </View>
           <Text variant="label" weight={absen && diAbsen ? 800 : 700} style={{ color: absen && diAbsen ? colors.text : colors.muted, fontSize: 12, lineHeight: 16 }} maxFontSizeMultiplier={1.3} numberOfLines={1}>
             {absen ? 'Absen' : 'Workspace'}
@@ -201,5 +211,6 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   lencana: { position: 'absolute', top: -6, right: -10 },
+  tandaSeru: { position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   titik: { position: 'absolute', top: -2, right: -4 },
 });

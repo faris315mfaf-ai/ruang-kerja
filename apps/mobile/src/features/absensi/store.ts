@@ -45,6 +45,13 @@ export interface PermintaanTerakhir {
   jarakM: number | null;
 }
 
+/** Data jadwal hari ini yang dibutuhkan layar hasil (batas terlambat, jam pulang). */
+export interface InfoJadwal {
+  batasTerlambat: string | null;
+  jadwalMulai: string | null;
+  jamPulangTerjadwal: string | null;
+}
+
 export type HasilAbsen =
   | {
       jenis: 'sukses';
@@ -53,9 +60,7 @@ export type HasilAbsen =
       hasil: AttendanceResult;
       jumlahRencana: number;
       catatan: string;
-      batasTerlambat: string | null;
-      jamPulangTerjadwal: string | null;
-    }
+    } & InfoJadwal
   | { jenis: 'gagal'; arah: Arah; metode: Metode; gagal: GagalAbsen; diterimaPada: number; retryQr: boolean };
 
 interface State {
@@ -68,6 +73,7 @@ interface State {
   permintaan: PermintaanTerakhir | null;
   /** Layar Absen perlu membaca lokasi lagi saat fokus (mis. dari "Perbarui lokasi"). */
   segarkanLokasi: boolean;
+  jadwal: InfoJadwal | null;
   /** Pengguna memilih "Check-out lebih awal" dari kartu "Sedang bekerja". */
   pulangAwal: boolean;
 }
@@ -88,6 +94,7 @@ function awal(userId: string | null): State {
     hasil: null,
     permintaan: null,
     segarkanLokasi: false,
+    jadwal: null,
     pulangAwal: false,
   };
 }
@@ -131,6 +138,7 @@ export const absenStore = {
   setHasil: (hasil: HasilAbsen | null): void => set({ hasil }),
   setPermintaan: (permintaan: PermintaanTerakhir | null): void => set({ permintaan }),
   mintaSegarkanLokasi: (nilai: boolean): void => set({ segarkanLokasi: nilai }),
+  setJadwal: (jadwal: InfoJadwal | null): void => set({ jadwal }),
   setPulangAwal: (pulangAwal: boolean): void => set({ pulangAwal }),
   /** Setelah kirim berhasil: bersihkan isian hari ini. */
   selesaiKirim(): void {

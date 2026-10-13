@@ -43,10 +43,12 @@ export interface SwipeToConfirmProps {
   terkunci: boolean;
   alasanKunci: string;
   mengirim: boolean;
+  /** Teks saat mengirim (bawaan "Mengirim…"; "Memperbarui lokasi…" saat fix dibaca ulang). */
+  labelMengirim?: string;
   onKonfirmasi: () => void;
 }
 
-export function SwipeToConfirm({ label, labelAksi, terkunci, alasanKunci, mengirim, onKonfirmasi }: SwipeToConfirmProps): React.JSX.Element {
+export function SwipeToConfirm({ label, labelAksi, terkunci, alasanKunci, mengirim, labelMengirim = 'Mengirim…', onKonfirmasi }: SwipeToConfirmProps): React.JSX.Element {
   const { colors, shadows } = useTheme();
   const kurangiGerak = useReducedMotion();
   const pembacaLayar = usePembacaLayar();
@@ -84,7 +86,7 @@ export function SwipeToConfirm({ label, labelAksi, terkunci, alasanKunci, mengir
   if (pembacaLayar) {
     return (
       <Button
-        title={mengirim ? 'Mengirim…' : labelAksi}
+        title={mengirim ? labelMengirim : labelAksi}
         onPress={onKonfirmasi}
         size="lg"
         loading={mengirim}
@@ -99,7 +101,7 @@ export function SwipeToConfirm({ label, labelAksi, terkunci, alasanKunci, mengir
     <View
       accessible
       accessibilityRole="button"
-      accessibilityLabel={mengirim ? 'Mengirim' : terkunci ? `${label}. Terkunci` : `${label}. Aktifkan dua kali untuk mengirim`}
+      accessibilityLabel={mengirim ? labelMengirim : terkunci ? `${label}. Terkunci` : `${label}. Aktifkan dua kali untuk mengirim`}
       accessibilityHint={terkunci ? alasanKunci : undefined}
       accessibilityState={{ disabled: mati, busy: mengirim }}
       accessibilityActions={[{ name: 'activate' }]}
@@ -119,7 +121,7 @@ export function SwipeToConfirm({ label, labelAksi, terkunci, alasanKunci, mengir
       <Animated.View style={[s.labelBox, gayaLabel]} pointerEvents="none">
         {mengirim ? <ActivityIndicator size="small" color="#FFFFFF" /> : null}
         <Text variant="title" weight={700} style={{ color: mengirim ? '#FFFFFF' : terkunci ? colors.subtle : colors.text }} numberOfLines={1}>
-          {mengirim ? 'Mengirim…' : terkunci ? alasanKunci : label}
+          {mengirim ? labelMengirim : terkunci ? alasanKunci : label}
         </Text>
         {!mengirim && !terkunci ? <Icon name="chevrons-right" size={20} color={colors.muted} /> : null}
       </Animated.View>

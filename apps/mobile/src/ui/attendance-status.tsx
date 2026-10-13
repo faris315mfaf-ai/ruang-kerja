@@ -1,13 +1,18 @@
 /**
- * Status absensi hari ini untuk tombol tengah tab bar: memuat
- * `GET absensi/hari-ini` saat tabs dibuka, saat aplikasi aktif kembali dan
- * saat pengguna berpindah tab (`refresh`), lalu menjadwalkan pergantian
- * Workspace → Absen pada jam pulang − 60 menit tanpa menunggu data baru.
+ * Status absensi hari ini untuk tombol tengah tab bar. Sumber utama = payload
+ * `state.center` dari `GET absensi/hari-ini` (`{action, badge, flipsAt}`): tombol
+ * berganti Workspace → Absen (berlencana) tepat pada `flipsAt` lewat satu timer,
+ * tanpa polling. Bila server lama tidak mengirim `state`, keadaan diturunkan
+ * lokal dari `today.action` + jam pulang (`centerAction`).
+ *
+ * Dimuat saat tabs dibuka, saat aplikasi aktif kembali, dan saat pengguna
+ * berpindah tab (`refresh`). Layar Absen yang sudah memuat data sendiri memakai
+ * `terapkan(data)` supaya tidak ada permintaan ganda.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
-import { absensiHariIni } from '@/api/endpoints';
+import { absensiHariIniLengkap, type HariIni } from '@/api/absensi';
 import { useSession } from '@/session/SessionProvider';
 
 import { centerAction, nextCenterBoundary, type AttendanceActionState, type CenterAction } from './centerAction';
@@ -15,35 +20,55 @@ import { centerAction, nextCenterBoundary, type AttendanceActionState, type Cent
 interface AttendanceStatusValue {
   action: AttendanceActionState;
   center: CenterAction;
+  /** Lencana "!" pada tombol Absen: sudah waktunya check-out. */
+  badge: boolean;
   /** Muat ulang (mis. setelah check-in/out dari layar Absen). */
   refresh: () => Promise<void>;
+  /** Pakai data hari-ini yang baru dimuat layar lain (tanpa permintaan ulang). */
+  terapkan: (data: HariIni) => void;
 }
 
 const AttendanceStatusContext = createContext<AttendanceStatusValue>({
   action: null,
   center: 'absen',
+  badge: false,
   refresh: async () => undefined,
+  terapkan: () => undefined,
 });
+
+function hitungPusat(hari: HariIni | null, now: Date): { center: CenterAction; badge: boolean } {
+  const c = hari?.state?.center;
+  if (c) {
+    if (c.flipsAt && Date.parse(c.flipsAt) <= now.getTime()) {
+      return { center: 'absen', badge: true };
+    }
+    return { center: c.action, badge: c.badge };
+  }
+  const action = hari?.today.action ?? null;
+  const center = centerAction(action, hari?.today.schedule.end, now);
+  return { center, badge: action === 'check_out' && center === 'absen' };
+}
 
 export function AttendanceStatusProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { status } = useSession();
-  const [action, setAction] = useState<AttendanceActionState>(null);
-  const [end, setEnd] = useState<string | null>(null);
+  const [hari, setHari] = useState<HariIni | null>(null);
   const [now, setNow] = useState(() => new Date());
   const hidup = useRef(true);
 
+  const terapkan = useCallback((data: HariIni): void => {
+    if (hidup.current) {
+      setHari(data);
+      setNow(new Date());
+    }
+  }, []);
+
   const refresh = useCallback(async (): Promise<void> => {
     try {
-      const hasil = await absensiHariIni();
-      if (hidup.current) {
-        setAction(hasil.today.action);
-        setEnd(hasil.today.schedule.end);
-        setNow(new Date());
-      }
+      terapkan(await absensiHariIniLengkap());
     } catch {
       // Gagal/offline: pertahankan keadaan terakhir (awal: Absen).
     }
-  }, []);
+  }, [terapkan]);
 
   useEffect(() => {
     if (status !== 'masuk') {
@@ -60,25 +85,25 @@ export function AttendanceStatusProvider({ children }: { children: React.ReactNo
     return () => {
       hidup.current = false;
       langganan.remove();
-      setAction(null);
-      setEnd(null);
+      setHari(null);
     };
   }, [status, refresh]);
 
-  // Jadwalkan pergantian Workspace → Absen (jam pulang − 60 menit).
+  // Satu timer ke pergantian berikutnya (`flipsAt`, atau jam pulang − 60 menit untuk server lama).
   useEffect(() => {
-    const batas = nextCenterBoundary(action, end, new Date());
-    if (!batas) {
+    const flips = hari?.state?.center.flipsAt;
+    const batas = flips ? new Date(flips) : hari?.state ? null : nextCenterBoundary(hari?.today.action ?? null, hari?.today.schedule.end, new Date());
+    if (!batas || Number.isNaN(batas.getTime()) || batas.getTime() <= Date.now()) {
       return undefined;
     }
     const timer = setTimeout(() => setNow(new Date()), Math.max(1000, batas.getTime() - Date.now() + 500));
     return () => clearTimeout(timer);
-  }, [action, end, now]);
+  }, [hari, now]);
 
-  const value = useMemo<AttendanceStatusValue>(
-    () => ({ action, center: centerAction(action, end, now), refresh }),
-    [action, end, now, refresh],
-  );
+  const value = useMemo<AttendanceStatusValue>(() => {
+    const { center, badge } = hitungPusat(hari, now);
+    return { action: hari?.today.action ?? null, center, badge, refresh, terapkan };
+  }, [hari, now, refresh, terapkan]);
 
   return <AttendanceStatusContext.Provider value={value}>{children}</AttendanceStatusContext.Provider>;
 }
