@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 
 import { ApiError } from '@/api/client';
 import type { DetailKanal, JenisKanal, KanalRingkas, Pesan, RingkasReaksi } from '@/api/obrolan';
-import { ymdJakarta } from '@/lib/format';
+import { jam, tanggalTanpaTahun, ymdJakarta } from '@/lib/format';
 
 export const LABEL_JENIS: Record<JenisKanal, string> = {
   workspace: 'Workspace',
@@ -438,4 +438,52 @@ export function labelHariLinimasa(ymd: string): string {
   const hariIni = ymdJakarta(new Date());
   const kemarin = ymdJakarta(new Date(Date.now() - 86_400_000));
   return labelHari(ymd, hariIni, kemarin, formatHariPendek);
+}
+
+/** Waktu singkat di daftar: jam (hari ini), "Kemarin", nama hari (minggu ini), atau tanggal. */
+export function waktuDaftar(iso: string | null | undefined): string {
+  if (!iso) {
+    return '';
+  }
+  const hari = ymdJakarta(iso);
+  const hariIni = ymdJakarta(new Date());
+  if (hari === hariIni) {
+    return jam(iso);
+  }
+  if (hari === ymdJakarta(new Date(Date.now() - 86_400_000))) {
+    return 'Kemarin';
+  }
+  const selisih = (Date.now() - new Date(iso).getTime()) / 86_400_000;
+  if (selisih < 6) {
+    return new Intl.DateTimeFormat('id-ID', { weekday: 'long', timeZone: 'Asia/Jakarta' }).format(new Date(iso));
+  }
+  return tanggalTanpaTahun(iso);
+}
+
+/** Baris pratinjau pesan terakhir daftar ("Anda: …", "Maya: …" untuk grup). */
+export function pratinjauKanal(kanal: KanalRingkas, saya: string | null): string {
+  if (!kanal.is_member) {
+    const info = `${kanal.members_count} anggota`;
+    return kanal.topic ? `${info} · ${kanal.topic}` : info;
+  }
+  const pesan = kanal.last_message;
+  if (!pesan) {
+    return 'Belum ada pesan';
+  }
+  if (pesan.deleted || pesan.body_text === '') {
+    return 'Pesan dihapus';
+  }
+  let awalan = '';
+  if (saya !== null && pesan.user_id === saya) {
+    awalan = 'Anda: ';
+  } else if (kanal.type === 'group') {
+    const nama = kanal.members.find((m) => m.user_id === pesan.user_id)?.name;
+    awalan = nama ? `${nama.split(/\s+/)[0]}: ` : '';
+  }
+  return `${awalan}${pesan.body_text}`;
+}
+
+/** Penanda bisu milik pengguna pada ringkasan kanal. */
+export function kanalDibisukan(kanal: KanalRingkas, saya: string | null): boolean {
+  return saya !== null && kanal.members.some((m) => m.user_id === saya && m.muted);
 }

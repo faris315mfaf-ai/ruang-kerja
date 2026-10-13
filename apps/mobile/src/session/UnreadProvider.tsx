@@ -8,18 +8,23 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { AppState } from 'react-native';
 
 import { inbox } from '@/api/endpoints';
+import { daftarObrolan } from '@/api/obrolan';
 import { useSession } from '@/session/SessionProvider';
 
 interface UnreadValue {
   jumlah: number;
   perbarui: (nilai: number) => void;
   muatUlang: () => Promise<void>;
+  /** Jumlah KANAL obrolan berpesan belum dibaca (`unread_channels`) — lencana tab Obrolan. */
+  obrolan: number;
+  perbaruiObrolan: (nilai: number) => void;
 }
 
 const UnreadContext = createContext<UnreadValue | null>(null);
 
 export function UnreadProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [jumlah, setJumlah] = useState(0);
+  const [obrolan, setObrolan] = useState(0);
   const hidup = useRef(true);
   const { status, blokir } = useSession();
   // Selama server menolak sesi (wajib ganti sandi / setup 2FA) tidak ada yang dimuat.
@@ -33,6 +38,14 @@ export function UnreadProvider({ children }: { children: React.ReactNode }): Rea
       }
     } catch {
       // Tab tetap tampil; lencana dicoba lagi lain waktu.
+    }
+    try {
+      const hasil = await daftarObrolan();
+      if (hidup.current) {
+        setObrolan(hasil.unread_channels);
+      }
+    } catch {
+      // Obrolan mati (404) atau offline: lencana tab Obrolan tidak tampil.
     }
   }, []);
 
@@ -59,12 +72,13 @@ export function UnreadProvider({ children }: { children: React.ReactNode }): Rea
       langganan.remove();
       // Keluar / ganti akun: jangan bawa lencana pengguna sebelumnya.
       setJumlah(0);
+      setObrolan(0);
     };
   }, [status, terblokir, muatUlang]);
 
   const value = useMemo<UnreadValue>(
-    () => ({ jumlah: status === 'masuk' ? jumlah : 0, perbarui: setJumlah, muatUlang }),
-    [status, jumlah, muatUlang],
+    () => ({ jumlah: status === 'masuk' ? jumlah : 0, perbarui: setJumlah, muatUlang, obrolan: status === 'masuk' ? obrolan : 0, perbaruiObrolan: setObrolan }),
+    [status, jumlah, obrolan, muatUlang],
   );
 
   return <UnreadContext.Provider value={value}>{children}</UnreadContext.Provider>;

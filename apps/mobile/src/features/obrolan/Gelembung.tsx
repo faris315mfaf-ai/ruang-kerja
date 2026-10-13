@@ -29,6 +29,8 @@ export interface GelembungProps {
   /** Teks status baca kecil di bawah gelembung milik sendiri ("Dibaca Maya, Rizky +1"). */
   labelBaca?: string | null;
   onTekanLama?: () => void;
+  /** Ketuk gelembung (mis. hasil pencarian → buka thread). */
+  onTekan?: () => void;
   onReaksi?: (emoji: string, aktif: boolean) => void;
   onBukaThread?: () => void;
   onCobaLagi?: () => void;
@@ -80,6 +82,7 @@ export function Gelembung({
   tampilThread = false,
   labelBaca,
   onTekanLama,
+  onTekan,
   onReaksi,
   onBukaThread,
   onCobaLagi,
@@ -150,10 +153,11 @@ export function Gelembung({
 
   const bubble = (
     <Pressable
+      onPress={onTekan}
       onLongPress={onTekanLama}
       delayLongPress={350}
       scaleTo={0.99}
-      disabled={!onTekanLama}
+      disabled={!onTekanLama && !onTekan}
       accessible
       accessibilityLabel={labelAksesibilitas}
       accessibilityActions={onTekanLama ? [{ name: 'aksi', label: 'Buka aksi pesan' }] : undefined}
