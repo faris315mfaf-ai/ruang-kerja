@@ -20,7 +20,8 @@ use Throwable;
  * taken from the client (`device_id` is still validated for compatibility but
  * ignored) but from the installation that owns the Sanctum token
  * (Device::forAccessToken), i.e. the hash registered at login. A token that
- * is not tied to a device yields no fingerprint.
+ * is not tied to a device yields no fingerprint. `mock_location` (Android
+ * Location.mocked) is only a flag for HR review, never a block.
  */
 class AttendanceCheckInRequest extends FormRequest
 {
@@ -42,6 +43,8 @@ class AttendanceCheckInRequest extends FormRequest
             'selfie' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:'.config()->integer('attendance.selfie.max_kilobytes')],
             'device_id' => ['nullable', 'string', 'regex:/^[0-9a-fA-F]{64}$/'],
             'note' => ['nullable', 'string', 'max:500'],
+            // Location.mocked of the Android app; multipart sends "true"/"false"/"1"/"0".
+            'mock_location' => ['nullable', 'in:0,1,true,false'],
             ...$this->workPlanRules(),
         ];
     }
@@ -83,6 +86,7 @@ class AttendanceCheckInRequest extends FormRequest
             'selfie.*' => 'Selfie tidak valid. Coba ambil ulang.',
             'device_id.regex' => 'Identitas perangkat tidak valid.',
             'note.max' => 'Catatan maksimal 500 karakter.',
+            'mock_location.in' => 'Sinyal lokasi palsu tidak valid.',
         ];
 
         if ($this->acceptsWorkPlan()) {
@@ -117,6 +121,7 @@ class AttendanceCheckInRequest extends FormRequest
             userAgent: $this->userAgent(),
             note: $this->filled('note') ? $this->string('note')->toString() : null,
             workPlan: $this->workPlan(),
+            mockLocation: $this->boolean('mock_location'),
         );
     }
 

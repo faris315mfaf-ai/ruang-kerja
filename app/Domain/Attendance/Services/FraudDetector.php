@@ -31,6 +31,12 @@ final class FraudDetector
             $flags[] = LogFlag::LowAccuracy;
         }
 
+        // Reported by the native app (Location.mocked on Android); a signal for
+        // HR review like every other flag, never a block.
+        if ($data->mockLocation) {
+            $flags[] = LogFlag::MockLocation;
+        }
+
         if ($data->clientTime !== null
             && abs($now->getTimestamp() - $data->clientTime->getTimestamp()) > config()->integer('attendance.fraud.max_clock_skew_minutes') * 60) {
             $flags[] = LogFlag::ClockSkew;

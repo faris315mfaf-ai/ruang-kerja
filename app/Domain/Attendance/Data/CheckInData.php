@@ -23,5 +23,8 @@ final readonly class CheckInData
 
         /** @var list<string>|null */
         public ?array $workPlan = null,
+
+        /** Mock-location signal reported by the native app; only flags, never blocks. */
+        public bool $mockLocation = false,
     ) {}
 }

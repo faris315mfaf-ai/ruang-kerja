@@ -19,6 +19,9 @@ final readonly class QrCheckInData
         public ?string $deviceFingerprint = null,
         public ?string $ipAddress = null,
         public ?string $userAgent = null,
+
+        /** Mock-location signal reported by the native app; only flags, never blocks. */
+        public bool $mockLocation = false,
     ) {}
 
     public function hasCoordinates(): bool
