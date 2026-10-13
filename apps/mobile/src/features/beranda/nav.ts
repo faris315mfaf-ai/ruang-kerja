@@ -17,8 +17,9 @@ export function bukaHiring(): void {
   bukaSegera({ judul: 'Hiring', ikon: 'user-round-search', tautan: '/hiring', catatan: 'Modul rekrutmen hadir di versi berikutnya.' });
 }
 
+/** Absensi tim HR/Kadiv (Bagian 5 — S5-B: `app/absensi-tim`). Tanpa argumen agar aman dipakai sebagai `onPress`. */
 export function bukaAbsensiHr(): void {
-  bukaSegera({ judul: 'Absensi', ikon: 'clipboard-check', tautan: '/absensi/kedisiplinan', catatan: 'Rekap dan kedisiplinan dikelola di desktop.' });
+  router.push('/absensi-tim' as never);
 }
 
 /** Laporan tim (Bagian 4 — `app/laporan/tim`). */

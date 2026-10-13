@@ -79,7 +79,8 @@ export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron }: Kontek
 
   if (peran.hr || peran.admin) {
     daftar.push(
-      segera('reset-sandi', 'Permintaan reset sandi', 'key-round', 'Menunggu keputusan HR', {}, { nada: 'warn' }),
+      rute('reset-sandi', 'Permintaan reset sandi', 'key-round', '/karyawan/permintaan-sandi', { subjudul: 'Menunggu keputusan HR', nada: 'warn' }),
+      rute('saldo-cuti', 'Saldo cuti', 'wallet-cards', '/saldo-cuti', { subjudul: 'Semua karyawan · baca saja' }),
       segera('hiring', 'Hiring', 'user-round-search', 'Lowongan · kandidat · keputusan'),
     );
   }
@@ -89,8 +90,7 @@ export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron }: Kontek
 
   if (pimpinan) {
     daftar.push(
-      segera('absensi-hari-ini', 'Absensi hari ini', 'clipboard-check', 'Hadir · terlambat · cuti'),
-      segera('kedisiplinan', 'Kedisiplinan', 'gauge', undefined, { tautan: '/absensi/kedisiplinan' }),
+      rute('absensi-tim', 'Absensi tim', 'clipboard-check', '/absensi-tim', { subjudul: 'Hari ini · Rekap · Kedisiplinan' }),
       segera('ringkasan', 'Ringkasan manajemen', 'chart-no-axes-column', 'Direksi/HR/SA', { tautan: '/manajemen' }),
     );
     if (fiturAktif(profil, 'role_dashboards', false)) {
@@ -98,8 +98,7 @@ export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron }: Kontek
     }
   } else if (peran.kadiv) {
     daftar.push(
-      segera('absensi-tim', 'Absensi tim hari ini', 'clipboard-check', 'Hadir · terlambat · cuti'),
-      segera('kedisiplinan', 'Kedisiplinan', 'gauge', undefined, { tautan: '/absensi/kedisiplinan' }),
+      rute('absensi-tim', 'Absensi divisi', 'clipboard-check', '/absensi-tim', { subjudul: 'Hari ini · Rekap · Kedisiplinan' }),
     );
   }
 
@@ -147,27 +146,21 @@ export function menuOrganisasi({ peran }: Konteks): ItemMenu[] {
   const pimpinan = peran.hr || peran.direksi || peran.admin;
   const daftar: ItemMenu[] = [];
   if (pimpinan) {
-    daftar.push(segera('karyawan', 'Karyawan', 'users', 'Cari & profil (ubah di desktop)', { tautan: '/admin/karyawan' }));
+    daftar.push(rute('karyawan', 'Karyawan', 'users', '/karyawan', { subjudul: peran.hr || peran.admin ? 'Cari & profil (ubah di desktop)' : 'Lihat saja' }));
   }
-  daftar.push(segera('struktur', 'Struktur organisasi', 'network', undefined, { tautan: '/organisasi/struktur' }));
-  if (!pimpinan && peran.kadiv) {
-    daftar.push(segera('anggota-divisi', 'Anggota divisi', 'users'));
-  }
+  daftar.push(rute('struktur', 'Struktur organisasi', 'network', '/organisasi/struktur', { subjudul: 'Divisi, tim, dan orang' }));
   if (peran.hr || peran.admin) {
-    daftar.push({
-      kunci: 'kelola',
-      judul: 'Kelola organisasi, alur, jenis, lokasi…',
-      subjudul: 'Tersedia di desktop',
-      ikon: 'monitor',
-      nada: 'warn',
-      onPress: () =>
-        bukaSegera({
-          judul: 'Kelola organisasi, alur, jenis, lokasi…',
-          ikon: 'monitor',
-          desktop: true,
-          tautan: '/admin/organisasi',
-        }),
-    });
+    // Admin · tersedia di desktop (mockup 11 › 01, 26).
+    const desktop = (kunci: string, judul: string, subjudul: string, tautan: string, catatan?: string): ItemMenu =>
+      segera(kunci, judul, 'monitor', subjudul, { desktop: true, tautan, catatan }, { nada: 'warn' });
+    if (peran.admin) {
+      daftar.push(desktop('audit', 'Audit log', 'Catatan aksi sensitif · desktop', '/admin/audit', 'Hanya Super Admin.'));
+    }
+    daftar.push(
+      desktop('alur-jenis', 'Alur & jenis pengajuan', 'Kunci jenis, alur persetujuan · desktop', '/admin/pengajuan'),
+      desktop('lokasi-shift', 'Lokasi, shift & hari libur', 'Geofence, jadwal, kiosk QR · desktop', '/admin/absensi'),
+      desktop('kelola', 'Organisasi', 'Divisi, tim, jabatan · desktop', '/admin/organisasi'),
+    );
   }
   return daftar;
 }
