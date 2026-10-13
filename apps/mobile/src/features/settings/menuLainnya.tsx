@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import { View } from 'react-native';
 
 import { bolehLaporanTimProfil } from '@/features/laporan/akses';
+import { LencanaPersetujuan } from '@/features/persetujuan/LencanaPersetujuan';
 import { CountBadge, Icon, type AnyIconName } from '@/ui';
 
 import { bukaSegera, type ParamSegera } from './ComingSoon';
@@ -56,7 +57,11 @@ export function menuPekerjaan({ profil, peran, belumBaca, warnaChevron }: Kontek
     kanan: lencanaAngka(belumBaca, warnaChevron),
     aksesibilitas: `Buka inbox${belumBaca > 0 ? `, ${belumBaca} belum dibaca` : ''}`,
   });
-  const persetujuan = segera('persetujuan', 'Persetujuan', 'circle-check', pimpinan ? 'Antrean penyetuju · HR/Direksi' : 'Antrean penyetuju', { tautan: '/persetujuan' }, { nada: 'warn' });
+  const persetujuan = rute('persetujuan', 'Persetujuan', 'circle-check', '/persetujuan', {
+    subjudul: pimpinan ? 'Antrean penyetuju · HR/Direksi' : 'Antrean penyetuju',
+    nada: 'warn',
+    kanan: <LencanaPersetujuan warnaChevron={warnaChevron} />,
+  });
 
   const daftar: ItemMenu[] = [];
 

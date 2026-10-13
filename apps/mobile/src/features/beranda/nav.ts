@@ -8,9 +8,9 @@ export function bukaDaftarPengumuman(): void {
   router.push('/pengumuman' as never);
 }
 
-/** Persetujuan = Bagian 4: sementara layar "Segera hadir". */
+/** Antrean persetujuan (Bagian 4 — A4-Persetujuan: `app/persetujuan`). */
 export function bukaPersetujuan(): void {
-  bukaSegera({ judul: 'Persetujuan', ikon: 'circle-check', catatan: 'Antrean persetujuan hadir di Bagian 4 aplikasi.' });
+  router.push('/persetujuan' as never);
 }
 
 export function bukaHiring(): void {

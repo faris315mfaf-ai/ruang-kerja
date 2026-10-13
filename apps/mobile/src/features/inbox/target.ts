@@ -75,9 +75,9 @@ export function resolveTarget(target: TargetLike | null | undefined, opsi: { not
     case 'keamanan':
       return rute('/pengaturan/keamanan');
     case 'pengajuan':
-      return segera({ judul: 'Detail pengajuan', ikon: 'receipt-text', aksiJudul: 'Buat pengajuan baru', aksiRute: '/pengajuan/baru' });
+      return id ? rute(`/pengajuan/${id}`) : rute('/pengajuan');
     case 'persetujuan':
-      return segera({ judul: 'Persetujuan', ikon: 'circle-check', tautan: '/persetujuan' });
+      return id ? rute(`/persetujuan/${id}`) : rute('/persetujuan');
     case 'laporan':
       return rute(id ? `/laporan/${id}` : '/laporan/hari-ini');
     case 'proyek':
