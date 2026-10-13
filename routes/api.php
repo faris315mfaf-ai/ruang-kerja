@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\Workspaces\WorkspaceBoardController;
 use App\Http\Controllers\Api\Workspaces\WorkspaceController;
 use App\Http\Controllers\Api\Workspaces\WorkspaceMemberController;
 use App\Http\Middleware\EnsureFeatureEnabled;
+use App\Http\Middleware\IdempotentRequests;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -87,7 +88,10 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         ->middleware('throttle:api-v1')->name('privacy.policy');
     // --- /B2 ---
 
-    Route::middleware(['auth:sanctum', 'throttle:api-v1'])->group(function (): void {
+    // Idempotency-Key (offline-first app, 14 Okt 2026): tulis POST/PUT/PATCH/
+    // DELETE yang diulang dengan kunci yang sama diputar ulang, tidak dijalankan
+    // dua kali (docs/sesi/ponsel-b7-offline.md).
+    Route::middleware(['auth:sanctum', 'throttle:api-v1', IdempotentRequests::class])->group(function (): void {
         Route::post('auth/logout', [AuthController::class, 'destroy'])->name('auth.logout');
         Route::get('auth/saya', [AuthController::class, 'show'])->name('auth.saya');
 

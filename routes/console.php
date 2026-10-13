@@ -40,6 +40,9 @@ Schedule::job(new SendCheckInReminders)->everyFiveMinutes()->withoutOverlapping(
 // Sprint 3 — selfie retention (monthly) and unscanned kiosk QR codes (daily).
 Schedule::job(new PurgeExpiredSelfiesJob)->monthlyOn(1, '02:30')->timezone(config()->string('app.office_timezone'))->onOneServer();
 Schedule::command('attendance:prune-qr-tokens')->dailyAt('03:10')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
+// Kunci idempotensi API (aplikasi offline-first, 14 Okt 2026): simpan 72 jam.
+Schedule::command('api:prune-idempotency')->dailyAt('03:30')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
+
 // Sprint 8 — notifications (office timezone, see config/notifications.php).
 Schedule::command('notifications:send-daily-digests')->everyFiveMinutes()->withoutOverlapping()->onOneServer();
 Schedule::command('notifications:prune')->dailyAt('02:15')->timezone((string) config('app.office_timezone'))->withoutOverlapping()->onOneServer();
