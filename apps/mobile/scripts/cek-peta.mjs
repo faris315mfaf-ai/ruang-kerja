@@ -44,6 +44,13 @@ assert.equal(r3.zoom, 15);
 assert.equal(r3.pengguna.terpotong, true);
 assert.ok(r3.pengguna.x <= lebar && r3.pengguna.y <= tinggi);
 
+// Pengguna di benua lain (Mountain View ↔ Jakarta): peta tetap berpusat di kantor, bukan di titik tengah (laut kosong)
+const benua = susunPeta({ kantor, titik: { latitude: 37.42, longitude: -122.08, accuracy: 5 }, lebar, tinggi });
+assert.equal(benua.zoom, 15);
+assert.ok(Math.abs(benua.kantor.x - lebar / 2) < 0.01 && Math.abs(benua.kantor.y - tinggi / 2) < 0.01);
+assert.equal(benua.pengguna.terpotong, true);
+assert.ok(benua.ubin.length >= 6);
+
 // Radius kecil (30 m) → zoom 17 dengan ubin zoom 18
 const kecil = susunPeta({ kantor: { ...kantor, radiusM: 30 }, titik: { ...kantor, accuracy: 5 }, lebar, tinggi });
 assert.equal(kecil.zoom, 17);

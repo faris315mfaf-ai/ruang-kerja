@@ -112,15 +112,21 @@ export function susunPeta(input: { kantor: KantorPeta | null; titik: TitikPeta |
   };
 
   let zoom = ZOOM_MIN;
+  let muat = false;
   for (let z = ZOOM_MAKS; z >= ZOOM_MIN; z--) {
     const b = ukur(z);
     if (b.maxX - b.minX + 2 * BANTALAN_DP <= lebar && b.maxY - b.minY + 2 * BANTALAN_DP <= tinggi) {
       zoom = z;
+      muat = true;
       break;
     }
   }
 
-  const b = ukur(zoom);
+  // Pengguna terlalu jauh untuk muat bersama kantor di zoom terkecil: pusatkan di kantor
+  // (peta tetap menampilkan jalan di sekitar kantor; titik pengguna dijepit di tepi kartu).
+  // Memusatkan di titik tengah keduanya menghasilkan ubin laut/kosong.
+  const rLingkaran = kantor ? kantor.radiusM / meterPerPiksel(kantor.latitude, zoom) : 0;
+  const b = muat || !kantor ? ukur(zoom) : { minX: -rLingkaran, maxX: rLingkaran, minY: -rLingkaran, maxY: rLingkaran, ux: 0, uy: 0 };
   const a = keDunia(jangkar.latitude, jangkar.longitude, zoom);
   // Pusat kartu = tengah kotak yang membungkus lingkaran kantor dan titik pengguna.
   const offX = (b.minX + b.maxX) / 2;
