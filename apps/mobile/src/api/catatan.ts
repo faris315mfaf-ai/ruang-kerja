@@ -129,7 +129,8 @@ export function tabDokumen(id: string): Promise<TabDokumen> {
 // ── Notulensi cepat ──────────────────────────────────────────────────────────
 
 export function mulaiNotulensi(): Promise<{ note: CatatanDetail; mode: string }> {
-  return apiRequest<{ note: CatatanDetail; mode: string }>('catatan/notulensi', { method: 'POST' }).then(wajib);
+  // `polos`: templat paragraf polos agar bisa disunting di editor ponsel (keputusan pemilik 13 Okt 2026).
+  return apiRequest<{ note: CatatanDetail; mode: string }>('catatan/notulensi', { method: 'POST', json: { polos: true } }).then(wajib);
 }
 
 export interface NotulensiRingkas {

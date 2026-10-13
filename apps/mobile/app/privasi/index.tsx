@@ -20,7 +20,6 @@ import {
   type FormatEkspor,
   type Persetujuan,
 } from '@/api/privasi';
-import { bukaSegera } from '@/features/settings/ComingSoon';
 import { tglJamLengkap, tglPendekYMD } from '@/features/settings/konstanta';
 import { BarisNilai, GroupLabel } from '@/features/settings/parts';
 import { labelDariKode } from '@/features/settings/profile';
@@ -372,7 +371,7 @@ export default function LayarPrivasi(): React.JSX.Element {
           </Card>
 
           <Card style={{ gap: 12 }}>
-            <SectionHeader title="Data absensi" actionLabel="Riwayat per bulan" onAction={() => bukaSegera({ judul: 'Riwayat absensi', ikon: 'calendar-days' })} />
+            <SectionHeader title="Data absensi" actionLabel="Riwayat per bulan" onAction={() => router.push('/absensi/riwayat' as never)} />
             {data.attendance.total_days === 0 ? (
               <EmptyState icon="inbox" title="Belum ada data absensi" description="Data muncul di sini setelah check-in pertama Anda." variant="plain" />
             ) : (
@@ -405,7 +404,7 @@ export default function LayarPrivasi(): React.JSX.Element {
             <SectionHeader
               title="Pengajuan saya"
               actionLabel="Semua pengajuan"
-              onAction={() => bukaSegera({ judul: 'Pengajuan saya', ikon: 'calendar-days', aksiJudul: 'Buat pengajuan baru', aksiRute: '/pengajuan/baru' })}
+              onAction={() => router.push('/pengajuan' as never)}
             />
             {data.requests.items.length === 0 ? (
               <Text variant="body" tone="muted" style={{ fontSize: 15 }}>

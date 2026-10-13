@@ -8,7 +8,7 @@
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import type { ParamSegera } from '@/features/settings/ComingSoon';
+import { mulaiNotulensi } from '@/api/catatan';
 import { radius, useTheme, type GradientName } from '@/theme';
 
 import { useAttendanceStatus } from './attendance-status';
@@ -17,16 +17,6 @@ import { Gradient } from './Gradient';
 import { Icon, type AnyIconName } from './Icon';
 import { Pressable } from './Pressable';
 import { Text } from './Text';
-
-/** Buka layar "Segera hadir" (padanan `bukaSegera`; ditulis lokal agar `@/ui` tidak bergantung pada fitur → tanpa impor melingkar). */
-function bukaSegera(param: ParamSegera): void {
-  const params: Record<string, string> = { judul: param.judul };
-  if (param.ikon) params.ikon = param.ikon;
-  if (param.catatan) params.catatan = param.catatan;
-  if (param.aksiJudul) params.aksiJudul = param.aksiJudul;
-  if (param.aksiRute) params.aksiRute = param.aksiRute;
-  router.push({ pathname: '/segera', params });
-}
 
 interface Aksi {
   kunci: string;
@@ -58,7 +48,7 @@ function useAksiBuatCepat(): { aksi: Aksi[]; notulensi: () => void } {
       onPress: () => router.push('/pengajuan/baru' as never),
     },
     { kunci: 'laporan', label: 'Laporan hari ini', icon: 'clipboard-pen', gradien: 'hangat', onPress: () => router.push('/laporan/hari-ini' as never) },
-    { kunci: 'catatan', label: 'Catatan cepat', icon: 'notebook-pen', gradien: 'indigo', onPress: () => bukaSegera({ judul: 'Catatan cepat', ikon: 'notebook-pen' }) },
+    { kunci: 'catatan', label: 'Catatan cepat', icon: 'notebook-pen', gradien: 'indigo', onPress: () => router.push('/catatan' as never) },
     {
       kunci: 'rapat',
       label: 'Rapat',
@@ -67,7 +57,13 @@ function useAksiBuatCepat(): { aksi: Aksi[]; notulensi: () => void } {
       onPress: () => router.push('/rapat/baru' as never),
     },
   ];
-  return { aksi, notulensi: () => bukaSegera({ judul: 'Notulensi cepat', ikon: 'notebook-text', catatan: 'Catatan baru di workspace pribadi dengan templat rapat.' }) };
+  // Notulensi cepat: dibuat langsung (templat paragraf polos) lalu editor dibuka dalam mode catat.
+  const notulensi = (): void => {
+    void mulaiNotulensi()
+      .then((hasil) => router.push(`/catatan/${hasil.note.id}${hasil.mode === 'catat' ? '?mode=catat' : ''}` as never))
+      .catch(() => router.push('/catatan' as never));
+  };
+  return { aksi, notulensi };
 }
 
 /** Isi grid (dipakai sheet dan layar penuh). `onPilih` dipanggil sebelum aksi, mis. untuk menutup sheet. */
