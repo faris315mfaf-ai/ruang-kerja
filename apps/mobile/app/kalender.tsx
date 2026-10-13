@@ -1,282 +1,405 @@
 /**
- * Kalender — list entri dikelompokkan per tanggal (tanpa grid) dari
- * GET /kalender: rapat, tenggat tugas, cuti/izin/dinas disetujui, dan
- * libur perusahaan. Ikon per jenis; rapat → detail rapat, tugas → detail
- * tugas. Navigasi bulan sebelumnya/berikutnya; flag meetings mati (404)
- * → layar kosong ramah.
+ * Kalender (mockup 08 › 04–05): Minggu (strip 7 hari + agenda hari) dan
+ * Bulan (kisi + titik per lapisan + agenda hari terpilih), lapisan Rapat ·
+ * Tenggat tugas · Cuti & izin · Libur (disaring di klien), banner Google
+ * Calendar ditahan. Keadaan: memuat, galat, offline (data tersimpan), 404.
  */
-import { Ionicons } from '@/ui/Ionicons';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { ApiError } from '@/api/client';
 import { kalenderBulan } from '@/api/endpoints';
-import type { CalendarEntry, CalendarMonth } from '@/api/types';
-import { Badge, Card, EmptyState, ErrorState, Loading, Meta, Screen } from '@/components/ui';
-import { tanggalDariYMD, tanggalPanjang, ymdHariIni } from '@/lib/format';
-import { radius, useTheme } from '@/lib/theme';
+import type { CalendarEntry, CalendarLayer, CalendarMonth } from '@/api/types';
+import { useMuat } from '@/features/rapat/useMuat';
+import { PUTIH, hariIso, judulHari, keYmd, namaHariSingkat, namaBulan, rentangMinggu, seninDari, tambahHari, urai } from '@/features/rapat/util';
+import { jam, ymdHariIni } from '@/lib/format';
+import { radius, useTheme, type Colors } from '@/theme';
+import { Banner, BottomSheet, Card, EmptyState, ErrorState, Gradient, Icon, IconButton, Loading, Pressable, Screen, SegmentedTabs, SubAppBar, Switch, Tag, Text, tanggal, useSnackbar, type Tone } from '@/ui';
 
-const IKON_JENIS: Record<CalendarEntry['layer'], keyof typeof Ionicons.glyphMap> = {
-  meetings: 'videocam-outline',
-  tasks: 'checkbox-outline',
-  leave: 'airplane-outline',
-  holidays: 'flag-outline',
-};
+type Mode = 'minggu' | 'bulan';
 
-const LABEL_JENIS: Record<CalendarEntry['layer'], string> = {
-  meetings: 'Rapat',
-  tasks: 'Tugas',
-  leave: 'Cuti/izin',
-  holidays: 'Libur',
-};
+const LAPISAN: { kode: CalendarLayer; label: string; legenda: string; desk: string }[] = [
+  { kode: 'meetings', label: 'Rapat', legenda: 'Rapat', desk: 'Rapat yang Anda ikuti' },
+  { kode: 'tasks', label: 'Tenggat tugas', legenda: 'Tenggat', desk: 'Tugas terbuka milik Anda' },
+  { kode: 'leave', label: 'Cuti & izin', legenda: 'Cuti/izin', desk: 'Disetujui; Kepala Divisi juga melihat divisinya' },
+  { kode: 'holidays', label: 'Libur', legenda: 'Libur', desk: 'Libur nasional & cuti bersama' },
+];
 
-/** "YYYY-MM" bulan berjalan (Jakarta). */
-function bulanHariIni(): string {
-  return ymdHariIni().slice(0, 7);
+function warnaLapisan(colors: Colors, kode: CalendarLayer): string {
+  switch (kode) {
+    case 'meetings':
+      return colors.fill.teal;
+    case 'tasks':
+      return colors.fill.warning;
+    case 'leave':
+      return colors.accentBlue;
+    default:
+      return colors.fill.danger;
+  }
 }
 
-/** Geser bulan YYYY-MM sebanyak n langkah. */
-function geserBulan(bulan: string, langkah: number): string {
-  const [tahunk, bulank] = bulan.split('-').map(Number);
-  const total = (tahunk ?? 2026) * 12 + ((bulank ?? 1) - 1) + langkah;
-  const tahun = Math.floor(total / 12);
-  const nomor = ((total % 12) + 12) % 12;
-  return `${tahun}-${String(nomor + 1).padStart(2, '0')}`;
+function tagEntri(e: CalendarEntry): { label: string; tone: Tone } {
+  switch (e.layer) {
+    case 'meetings':
+      return { label: 'Rapat', tone: 'primary' };
+    case 'tasks':
+      return e.overdue ? { label: 'Terlambat', tone: 'danger' } : { label: 'Tenggat', tone: 'warning' };
+    case 'leave':
+      return { label: 'Cuti disetujui', tone: 'info' };
+    default:
+      return { label: 'Libur', tone: 'danger' };
+  }
 }
 
-function BarisEntri({ entri, onTekan }: { entri: CalendarEntry; onTekan?: () => void }): React.JSX.Element {
+/** Entri berlaku pada tanggal (cuti multi-hari memakai `end_date`). */
+function berlaku(e: CalendarEntry, ymd: string): boolean {
+  return e.end_date ? e.date <= ymd && ymd <= e.end_date : e.date === ymd;
+}
+
+function aksiEntri(e: CalendarEntry): (() => void) | undefined {
+  if (e.layer === 'meetings') {
+    const [rapatId, tgl] = e.id.replace(/^meeting-/, '').split(':');
+    if (!rapatId) {
+      return undefined;
+    }
+    return () => router.push({ pathname: '/rapat/[id]', params: tgl ? { id: rapatId, tanggal: tgl } : { id: rapatId } } as never);
+  }
+  if (e.layer === 'tasks') {
+    const tugasId = e.id.replace(/^task-/, '');
+    return tugasId ? () => router.push(`/tugas/${tugasId}` as never) : undefined;
+  }
+  return undefined;
+}
+
+function DaftarEntri({ entri }: { entri: CalendarEntry[] }): React.JSX.Element {
   const { colors } = useTheme();
-  const isi = (
-    <>
-      <View style={[gaya.ikon, { backgroundColor: entri.overdue ? colors.dangerSoft : colors.surface2 }]}>
-        <Ionicons
-          name={IKON_JENIS[entri.layer]}
-          size={18}
-          color={entri.overdue ? colors.danger : colors.subtle}
-        />
-      </View>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text style={[gaya.judul, { color: colors.text }]} numberOfLines={2}>
-          {entri.title}
-        </Text>
-        <View style={gaya.meta}>
-          <Meta>{LABEL_JENIS[entri.layer]}</Meta>
-          {entri.meta ? <Meta>· {entri.meta}</Meta> : null}
-        </View>
-      </View>
-      {onTekan ? <Ionicons name="chevron-forward" size={18} color={colors.subtle} /> : null}
-    </>
-  );
-
   return (
-    <Pressable
-      onPress={onTekan}
-      disabled={onTekan === undefined}
-      accessibilityRole={onTekan ? 'button' : undefined}
-      accessibilityLabel={onTekan ? `${LABEL_JENIS[entri.layer]}: ${entri.title}` : undefined}
-      style={({ pressed }) => [gaya.baris, pressed && onTekan && { opacity: 0.75 }]}
-    >
-      {isi}
-    </Pressable>
+    <Card variant="flat" style={{ padding: 0, overflow: 'hidden' }}>
+      {entri.map((e, i) => {
+        const tag = tagEntri(e);
+        const aksi = aksiEntri(e);
+        const isi = (
+          <>
+            <View style={[s.garis, { backgroundColor: e.overdue ? colors.danger : warnaLapisan(colors, e.layer) }]} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <Text variant="title" numberOfLines={2}>
+                {e.title}
+              </Text>
+              <View style={s.bungkus}>
+                <Tag tone={tag.tone}>{tag.label}</Tag>
+                {e.meta ? (
+                  <Text variant="meta" numberOfLines={1} style={{ flexShrink: 1 }}>
+                    {e.meta}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+            {aksi ? <Icon name="chevron-right" size={20} color={colors.muted} /> : null}
+          </>
+        );
+        const gaya = [s.baris, i > 0 ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.divider } : null];
+        return aksi ? (
+          <Pressable key={`${e.id}-${i}`} onPress={aksi} scaleTo={1} accessibilityRole="button" accessibilityLabel={`${tag.label}: ${e.title}`} style={gaya}>
+            {isi}
+          </Pressable>
+        ) : (
+          <View key={`${e.id}-${i}`} style={gaya} accessible accessibilityLabel={`${tag.label}: ${e.title}`}>
+            {isi}
+          </View>
+        );
+      })}
+    </Card>
+  );
+}
+
+function Titik({ warna }: { warna: string[] }): React.JSX.Element {
+  return (
+    <View style={s.titikBaris}>
+      {warna.slice(0, 3).map((w, i) => (
+        <View key={`${w}-${i}`} style={[s.titik, { backgroundColor: w }]} />
+      ))}
+    </View>
   );
 }
 
 export default function LayarKalender(): React.JSX.Element {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
-
-  const [bulan, setBulan] = useState<string>(bulanHariIni());
-  const [data, setData] = useState<CalendarMonth | null>(null);
-  const [memuat, setMemuat] = useState(true);
-  const [galat, setGalat] = useState<string | null>(null);
-  const [mati, setMati] = useState(false);
-
-  // Request id: a slower response for an earlier month must not override a newer one.
-  const permintaan = useRef(0);
-
-  const muat = useCallback(async (pilih: string): Promise<void> => {
-    const idMuat = ++permintaan.current;
-    setMemuat(true);
-    setGalat(null);
-    try {
-      const hasil = await kalenderBulan(pilih);
-      if (idMuat !== permintaan.current) {
-        return;
-      }
-      setData(hasil);
-      setMati(false);
-    } catch (err) {
-      if (idMuat !== permintaan.current) {
-        return;
-      }
-      if (err instanceof ApiError && err.status === 404) {
-        setMati(true);
-        setData(null);
-      } else {
-        setGalat(err instanceof ApiError ? err.message : 'Tidak dapat memuat kalender.');
-      }
-    } finally {
-      if (idMuat === permintaan.current) {
-        setMemuat(false);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- pemuatan data saat layar/bulan berubah
-    void muat(bulan);
-  }, [muat, bulan]);
-
-  /** id entri "meeting-{ulid}:{tanggal}" / "task-{ulid}". */
-  function tujuan(entri: CalendarEntry): (() => void) | undefined {
-    if (entri.layer === 'meetings') {
-      const kunci = entri.id.replace(/^meeting-/, '');
-      const [rapatId, tanggal] = kunci.split(':');
-      if (!rapatId) {
-        return undefined;
-      }
-      return () =>
-        router.push({
-          pathname: '/rapat/[id]/index',
-          params: { id: rapatId, tanggal: tanggal ?? entri.date, judul: entri.title },
-        });
-    }
-    if (entri.layer === 'tasks') {
-      const tugasId = entri.id.replace(/^task-/, '');
-      if (!tugasId) {
-        return undefined;
-      }
-      return () => router.push(`/tugas/${tugasId}`);
-    }
-    return undefined;
-  }
-
-  // Kelompokkan per tanggal, urut naik.
-  const kelompok: { tanggal: string; entri: CalendarEntry[] }[] = [];
-  const peta = new Map<string, CalendarEntry[]>();
-  for (const entri of data?.entries ?? []) {
-    const ada = peta.get(entri.date);
-    if (ada) {
-      ada.push(entri);
-    } else {
-      peta.set(entri.date, [entri]);
-    }
-  }
-  for (const tanggal of [...peta.keys()].sort()) {
-    kelompok.push({ tanggal, entri: peta.get(tanggal) ?? [] });
-  }
-
+  const snackbar = useSnackbar();
   const hariIni = ymdHariIni();
-  const namaBulan = data ? tanggalDariYMD(`${data.year}-${String(data.month).padStart(2, '0')}-01`) : '—';
+  const [mode, setMode] = useState<Mode>('minggu');
+  const [terpilih, setTerpilih] = useState(hariIni);
+  const [bulanTampil, setBulanTampil] = useState(() => hariIni.slice(0, 7));
+  const [aktif, setAktif] = useState<Set<CalendarLayer>>(() => new Set(['meetings', 'tasks', 'leave', 'holidays']));
+  const [lembar, setLembar] = useState(false);
 
-  if (mati) {
+  const senin = seninDari(terpilih);
+  const bulan = mode === 'minggu' ? tambahHari(senin, 3).slice(0, 7) : bulanTampil;
+  const m = useMuat<CalendarMonth>(`kalender:${bulan}`, () => kalenderBulan(bulan));
+  const entri = useMemo(() => m.data?.entries ?? [], [m.data]);
+  const tampak = useMemo(() => entri.filter((e) => aktif.has(e.layer)), [entri, aktif]);
+
+  const jumlah = useMemo(() => {
+    const c: Record<CalendarLayer, number> = { meetings: 0, tasks: 0, leave: 0, holidays: 0 };
+    for (const e of entri) {
+      c[e.layer] += 1;
+    }
+    return c;
+  }, [entri]);
+  const libur = useMemo(() => new Set(entri.filter((e) => e.layer === 'holidays').map((e) => e.date)), [entri]);
+
+  function warnaHari(ymd: string): string[] {
+    const w: string[] = [];
+    for (const l of LAPISAN) {
+      if (aktif.has(l.kode) && tampak.some((e) => e.layer === l.kode && berlaku(e, ymd))) {
+        w.push(l.kode === 'tasks' && tampak.some((e) => e.layer === 'tasks' && e.overdue && berlaku(e, ymd)) ? colors.danger : warnaLapisan(colors, l.kode));
+      }
+    }
+    return w;
+  }
+
+  function ubahLapisan(kode: CalendarLayer): void {
+    const baru = new Set(aktif);
+    if (baru.has(kode)) {
+      if (baru.size === 1) {
+        snackbar.show({ message: 'Sedikitnya satu lapisan harus aktif.', variant: 'warn' });
+        return;
+      }
+      baru.delete(kode);
+    } else {
+      baru.add(kode);
+    }
+    setAktif(baru);
+  }
+
+  const entriHari = tampak.filter((e) => berlaku(e, terpilih)).sort((a, b) => (a.meta ?? '').localeCompare(b.meta ?? ''));
+  const header = (
+    <SubAppBar
+      title="Kalender"
+      actions={[
+        { icon: 'layers', label: 'Lapisan kalender', onPress: () => setLembar(true) },
+        { icon: 'bell', label: 'Inbox', onPress: () => router.push('/inbox') },
+      ]}
+    />
+  );
+
+  if (m.status === 'mati') {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        <Pressable
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Kembali"
-          style={[gaya.punggung, { paddingTop: insets.top + 10 }]}
-          hitSlop={8}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-          <Text style={[gaya.judulAtas, { color: colors.text }]}>Kalender</Text>
-        </Pressable>
-        <Screen>
-          <EmptyState
-            icon="cloud-offline-outline"
-            title="Kalender belum diaktifkan"
-            description="Fitur rapat & kalender sedang tidak tersedia di server. Silakan gunakan RuangKerja web atau hubungi admin."
-          />
-        </Screen>
-      </View>
+      <Screen header={<SubAppBar title="Kalender" />}>
+        <EmptyState icon="calendar-off" title="Kalender belum diaktifkan" description="Fitur rapat & kalender sedang tidak tersedia di server. Gunakan RuangKerja web atau hubungi admin." actionLabel="Kembali" onAction={() => router.back()} />
+      </Screen>
     );
   }
 
-  return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+  const ubinHari = (ymd: string, kecil: boolean): React.JSX.Element => {
+    const pilih = ymd === terpilih;
+    const ini = ymd === hariIni;
+    const { m: bln, d } = urai(ymd);
+    const luar = mode === 'bulan' && keYmd(urai(ymd).y, bln, 1).slice(0, 7) !== bulanTampil;
+    const pekan = hariIso(ymd) >= 6;
+    const merah = !luar && (pekan || libur.has(ymd));
+    return (
       <Pressable
-        onPress={() => router.back()}
+        key={ymd}
+        onPress={() => setTerpilih(ymd)}
+        scaleTo={0.96}
         accessibilityRole="button"
-        accessibilityLabel="Kembali"
-        style={[gaya.punggung, { paddingTop: insets.top + 10 }]}
-        hitSlop={8}
+        accessibilityState={{ selected: pilih }}
+        accessibilityLabel={`${judulHari(ymd)}${ini ? ', hari ini' : ''}`}
+        style={[kecil ? s.selBulan : s.ubinMinggu, !kecil ? { backgroundColor: pilih ? 'transparent' : colors.surface, borderColor: colors.border, borderWidth: 1 } : null, ini && !pilih ? { borderColor: colors.primary, borderWidth: 2 } : null, { overflow: 'hidden' }]}
       >
-        <Ionicons name="arrow-back" size={24} color={colors.text} />
-        <Text style={[gaya.judulAtas, { color: colors.text }]}>Kalender</Text>
+        {pilih ? <Gradient name="aksi" style={StyleSheet.absoluteFill} /> : null}
+        {!kecil ? (
+          <Text variant="meta" weight={600} style={{ color: pilih ? PUTIH : colors.muted }}>
+            {namaHariSingkat(ymd)}
+          </Text>
+        ) : null}
+        <Text variant={kecil ? 'title' : 'h3'} weight={pilih || ini ? 700 : 600} style={{ color: pilih ? PUTIH : luar ? colors.subtle : merah ? colors.danger : colors.text }}>
+          {String(d)}
+        </Text>
+        <Titik warna={pilih ? warnaHari(ymd).map(() => PUTIH) : warnaHari(ymd)} />
       </Pressable>
+    );
+  };
 
-      <Screen>
-        <View style={gaya.pilihBulan}>
-          <Pressable
-            onPress={() => setBulan(geserBulan(bulan, -1))}
-            accessibilityRole="button"
-            accessibilityLabel="Bulan sebelumnya"
-            style={gaya.tombolBulan}
-          >
-            <Ionicons name="chevron-back" size={20} color={colors.text} />
-          </Pressable>
-          <Text style={[gaya.namaBulan, { color: colors.text }]}>{namaBulan}</Text>
-          <Pressable
-            onPress={() => setBulan(geserBulan(bulan, 1))}
-            accessibilityRole="button"
-            accessibilityLabel="Bulan berikutnya"
-            style={gaya.tombolBulan}
-          >
-            <Ionicons name="chevron-forward" size={20} color={colors.text} />
-          </Pressable>
+  let isi: React.ReactNode;
+  if (m.status === 'memuat' && !m.data) {
+    isi = <Loading label="Memuat kalender…" />;
+  } else if ((m.status === 'galat' || m.status === 'offline' || m.status === 'terlarang') && !m.data) {
+    isi = <ErrorState kind={m.status === 'offline' ? 'offline' : 'umum'} title="Kalender tidak dapat dimuat" message={m.status === 'offline' ? 'Tanpa koneksi. Bulan ini belum tersimpan di perangkat.' : (m.galat?.message ?? 'Coba lagi beberapa saat.')} onRetry={() => void m.muat()} />;
+  } else if (mode === 'minggu') {
+    const hari = [0, 1, 2, 3, 4, 5, 6].map((n) => tambahHari(senin, n));
+    isi = (
+      <>
+        <View style={s.navigasi}>
+          <IconButton icon="chevron-left" label="Minggu sebelumnya" onPress={() => setTerpilih(tambahHari(terpilih, -7))} />
+          <Text variant="title" weight={600} align="center" style={{ flex: 1 }}>
+            {rentangMinggu(senin)}
+          </Text>
+          <IconButton icon="chevron-right" label="Minggu berikutnya" onPress={() => setTerpilih(tambahHari(terpilih, 7))} />
         </View>
-
-        {memuat && !data ? (
-          <Loading label="Memuat kalender…" />
-        ) : galat && !data ? (
-          <ErrorState
-            message={galat}
-            onRetry={() => {
-              void muat(bulan);
+        <View style={{ flexDirection: 'row', gap: 6 }}>{hari.map((h) => ubinHari(h, false))}</View>
+      </>
+    );
+  } else {
+    const { y, m: bln } = urai(`${bulanTampil}-01`);
+    const kolom = tanggal.kolomAwalBulan(y, bln);
+    const awal = tambahHari(keYmd(y, bln, 1), -kolom);
+    const jmlSel = Math.ceil((kolom + tanggal.jumlahHari(y, bln)) / 7) * 7;
+    const sel = Array.from({ length: jmlSel }, (_, i) => tambahHari(awal, i));
+    isi = (
+      <>
+        <View style={s.navigasi}>
+          <IconButton
+            icon="chevron-left"
+            label="Bulan sebelumnya"
+            onPress={() => {
+              const g = tanggal.geserBulan({ y, m: bln }, -1);
+              setBulanTampil(keYmd(g.y, g.m, 1).slice(0, 7));
+              setTerpilih(keYmd(g.y, g.m, 1));
             }}
           />
-        ) : kelompok.length === 0 ? (
-          <EmptyState
-            icon="calendar-clear-outline"
-            title="Tidak ada agenda"
-            description="Tidak ada rapat, tenggat, cuti, atau libur pada bulan ini."
+          <Text variant="title" weight={600} align="center" style={{ flex: 1 }}>
+            {namaBulan(y, bln)}
+          </Text>
+          <IconButton
+            icon="chevron-right"
+            label="Bulan berikutnya"
+            onPress={() => {
+              const g = tanggal.geserBulan({ y, m: bln }, 1);
+              setBulanTampil(keYmd(g.y, g.m, 1).slice(0, 7));
+              setTerpilih(keYmd(g.y, g.m, 1));
+            }}
           />
-        ) : (
-          kelompok.map((kelompokSatu) => (
-            <Card key={kelompokSatu.tanggal} style={gaya.kartu}>
-              <View style={gaya.kepalaTanggal}>
-                <Text style={[gaya.tanggal, { color: colors.text }]}>
-                  {tanggalPanjang(`${kelompokSatu.tanggal}T04:00:00Z`)}
+        </View>
+        <Card style={{ padding: 12, gap: 4 }}>
+          <View style={s.kisi}>
+            {tanggal.NAMA_HARI_SINGKAT.map((n) => (
+              <Text key={n} variant="meta" weight={600} align="center" style={{ width: `${100 / 7}%` }}>
+                {n}
+              </Text>
+            ))}
+          </View>
+          {m.status === 'memuat' && m.data && m.data.month !== bln ? (
+            <Loading label="Memuat bulan…" rows={3} />
+          ) : (
+            <View style={s.kisi}>{sel.map((h) => <View key={h} style={{ width: `${100 / 7}%`, alignItems: 'center' }}>{ubinHari(h, true)}</View>)}</View>
+          )}
+        </Card>
+        <View style={s.legenda}>
+          {LAPISAN.map((l) => (
+            <View key={l.kode} style={s.legendaButir}>
+              <View style={[s.titik, { width: 10, height: 10, borderRadius: 5, backgroundColor: warnaLapisan(colors, l.kode) }]} />
+              <Text variant="meta">{l.legenda}</Text>
+            </View>
+          ))}
+        </View>
+      </>
+    );
+  }
+
+  const siap = m.data !== null;
+  return (
+    <Screen header={header} refreshing={m.menyegarkan} onRefresh={() => void m.muat()}>
+      {m.dariCache !== null ? (
+        <Banner tone="neutral" icon="cloud-off" message={`Tanpa koneksi. Menampilkan ${namaBulan(urai(`${bulan}-01`).y, urai(`${bulan}-01`).m)} dari data tersimpan (${jam(new Date(m.dariCache))}). Bulan lain butuh jaringan.`} />
+      ) : null}
+      {mode === 'minggu' ? <Banner tone="info" icon="calendar-sync" message="Sinkron Google Calendar ditahan. Kalender ini hanya memuat data RuangKerja." /> : null}
+      <SegmentedTabs<Mode>
+        value={mode}
+        onChange={(v) => {
+          setMode(v);
+          if (v === 'bulan') {
+            setBulanTampil(terpilih.slice(0, 7));
+          }
+        }}
+        options={[
+          { value: 'minggu', label: 'Minggu' },
+          { value: 'bulan', label: 'Bulan' },
+        ]}
+      />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+        {LAPISAN.map((l) => {
+          const on = aktif.has(l.kode);
+          return (
+            <Pressable
+              key={l.kode}
+              onPress={() => ubahLapisan(l.kode)}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: on }}
+              accessibilityLabel={`${l.label}, ${jumlah[l.kode]}`}
+              style={[s.chipLapisan, { backgroundColor: colors.surface, borderColor: colors.border, opacity: on ? 1 : 0.5 }]}
+            >
+              <View style={[s.titik, { width: 10, height: 10, borderRadius: 5, backgroundColor: warnaLapisan(colors, l.kode) }]} />
+              <Text variant="label">{l.label}</Text>
+              <Text variant="label" tone="muted">
+                {String(jumlah[l.kode])}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+      {isi}
+      {siap ? (
+        <>
+          <View style={s.kepalaHari}>
+            <Text variant="h3" style={{ flex: 1 }}>
+              {terpilih === hariIni ? `Hari ini · ${judulHari(terpilih)}` : judulHari(terpilih)}
+            </Text>
+            {terpilih !== hariIni ? (
+              <Pressable
+                onPress={() => {
+                  setTerpilih(hariIni);
+                  setBulanTampil(hariIni.slice(0, 7));
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Ke hari ini"
+                hitSlop={10}
+              >
+                <Text variant="label" tone="link">
+                  Hari ini
                 </Text>
-                {kelompokSatu.tanggal === hariIni ? <Badge tone="primary">Hari ini</Badge> : null}
-              </View>
-              <View style={{ gap: 2 }}>
-                {kelompokSatu.entri.map((entri) => (
-                  <BarisEntri key={entri.id} entri={entri} onTekan={tujuan(entri)} />
-                ))}
-              </View>
-            </Card>
-          ))
-        )}
-      </Screen>
-    </View>
+              </Pressable>
+            ) : (
+              <Text variant="meta">{entriHari.length} entri</Text>
+            )}
+          </View>
+          {entriHari.length > 0 ? (
+            <DaftarEntri entri={entriHari} />
+          ) : (
+            <EmptyState icon="calendar-check" title={libur.has(terpilih) ? 'Hari libur' : 'Tidak ada agenda'} description={libur.has(terpilih) ? (entri.find((e) => e.layer === 'holidays' && e.date === terpilih)?.title ?? 'Libur') : 'Tidak ada rapat, tenggat, atau cuti pada hari ini.'} />
+          )}
+        </>
+      ) : null}
+      <BottomSheet visible={lembar} onClose={() => setLembar(false)} title="Lapisan kalender">
+        {LAPISAN.map((l) => (
+          <View key={l.kode} style={s.barisLapisan}>
+            <View style={[s.titik, { width: 12, height: 12, borderRadius: 6, backgroundColor: warnaLapisan(colors, l.kode) }]} />
+            <View style={{ flex: 1 }}>
+              <Text variant="label">{l.label}</Text>
+              <Text variant="meta">{l.desk}</Text>
+            </View>
+            <Switch value={aktif.has(l.kode)} onValueChange={() => ubahLapisan(l.kode)} label={l.label} />
+          </View>
+        ))}
+        <Text variant="meta">Sedikitnya satu lapisan harus aktif.</Text>
+      </BottomSheet>
+    </Screen>
   );
 }
 
-const gaya = StyleSheet.create({
-  punggung: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 10 },
-  judulAtas: { fontSize: 17, fontWeight: '700' },
-  pilihBulan: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  tombolBulan: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  namaBulan: { fontSize: 17, fontWeight: '800' },
-  kartu: { padding: 14, gap: 6 },
-  kepalaTanggal: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  tanggal: { fontSize: 14, fontWeight: '700' },
-  baris: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44, paddingVertical: 4 },
-  ikon: { width: 36, height: 36, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  judul: { fontSize: 14, fontWeight: '600', lineHeight: 19 },
-  meta: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
+const s = StyleSheet.create({
+  garis: { width: 4, alignSelf: 'stretch', borderRadius: 2 },
+  baris: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16, minHeight: 64 },
+  bungkus: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  navigasi: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  ubinMinggu: { flex: 1, minHeight: 64, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', gap: 2, paddingVertical: 6 },
+  selBulan: { width: 44, height: 48, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', gap: 2 },
+  titikBaris: { flexDirection: 'row', gap: 3, height: 6 },
+  titik: { width: 6, height: 6, borderRadius: 3 },
+  kisi: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 6 },
+  legenda: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
+  legendaButir: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  chipLapisan: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingHorizontal: 14, borderRadius: 22, borderWidth: 1 },
+  kepalaHari: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  barisLapisan: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60 },
 });
