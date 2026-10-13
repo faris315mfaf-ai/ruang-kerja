@@ -53,9 +53,37 @@ it('escapes raw HTML in the owner-edited Markdown', function () {
 });
 
 it('drives the attendance consent version by default', function () {
-    // config/attendance.php: ATTENDANCE_CONSENT_VERSION falls back to PRIVACY_POLICY_VERSION.
-    $config = file_get_contents(config_path('attendance.php'));
+    // config/attendance.php: ATTENDANCE_CONSENT_VERSION falls back to PRIVACY_POLICY_VERSION,
+    // and the literal fallback must stay in step with config/privacy.php (bumped together).
+    $attendance = file_get_contents(config_path('attendance.php'));
+    $privacy = file_get_contents(config_path('privacy.php'));
 
-    expect($config)->toContain("env('ATTENDANCE_CONSENT_VERSION', env('PRIVACY_POLICY_VERSION', '1.0'))")
+    expect($attendance)->toContain("env('ATTENDANCE_CONSENT_VERSION', env('PRIVACY_POLICY_VERSION', ");
+
+    preg_match("/env\('PRIVACY_POLICY_VERSION', '([^']+)'\)/", $attendance, $fromAttendance);
+    preg_match("/env\('PRIVACY_POLICY_VERSION', '([^']+)'\)/", $privacy, $fromPrivacy);
+
+    expect($fromAttendance[1] ?? null)->not->toBeNull()
+        ->and($fromAttendance[1])->toBe($fromPrivacy[1])
         ->and(config('attendance.consent.version'))->toBe(config('privacy.policy.version'));
+});
+
+it('describes the WhatsApp group, OpenStreetMap and offline storage processing', function () {
+    $markdown = app(PrivacyPolicy::class)->markdown();
+
+    expect($markdown)
+        ->toContain('grup WhatsApp')
+        ->toContain('di luar kendali aplikasi')
+        ->toContain('Nominatim')
+        ->toContain('OpenStreetMap')
+        ->toContain('SQLCipher')
+        ->toContain('72 jam');
+
+    // The public (guest) page is a separate Blade template: it must say the same.
+    $this->get('/kebijakan-privasi')
+        ->assertOk()
+        ->assertSee('grup WhatsApp', false)
+        ->assertSee('Nominatim', false)
+        ->assertSee('SQLCipher', false)
+        ->assertSee('72 jam', false);
 });

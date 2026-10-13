@@ -49,7 +49,7 @@ test('data saya returns only the callers own data with the NIK masked', function
     Sanctum::actingAs($this->rizky);
 
     $response = $this->getJson('/api/v1/privasi/data-saya')->assertOk()
-        ->assertJsonPath('policy.version', '1.0')
+        ->assertJsonPath('policy.version', config('privacy.policy.version'))
         ->assertJsonPath('profile.name', $this->rizky->name)
         ->assertJsonPath('profile.employee_number', 'EMP-00042')
         ->assertJsonPath('profile.nik_masked', '••••••••••••0123')
@@ -120,7 +120,7 @@ test('consent status, grant and revoke follow the web actions', function () {
 
     $this->getJson('/api/v1/persetujuan')->assertOk()
         ->assertJsonPath('consent.granted', false)
-        ->assertJsonPath('consent.version', '1.0')
+        ->assertJsonPath('consent.version', config('privacy.policy.version'))
         ->assertJsonPath('consent.needs_renewal', false)
         ->assertJsonPath('consent.types.location.granted', false)
         ->assertJsonPath('consent.types.selfie.granted', false);
@@ -128,7 +128,7 @@ test('consent status, grant and revoke follow the web actions', function () {
     $this->postJson('/api/v1/persetujuan', ['types' => ['location', 'selfie']])->assertOk()
         ->assertJsonPath('message', 'Persetujuan data lokasi & selfie disimpan.')
         ->assertJsonPath('consent.granted', true)
-        ->assertJsonPath('consent.granted_version', '1.0')
+        ->assertJsonPath('consent.granted_version', config('privacy.policy.version'))
         ->assertJsonPath('consent.types.location.granted', true)
         ->assertJsonPath('consent.types.selfie.granted', true)
         ->assertJsonCount(2, 'consent.history');
@@ -155,14 +155,15 @@ test('consent status, grant and revoke follow the web actions', function () {
 
 test('consent asks for renewal after the policy version changes', function () {
     app(GiveAttendanceConsent::class)->handle($this->rizky);
-    config(['attendance.consent.version' => '2.0', 'privacy.policy.version' => '2.0']);
+    $granted = config('attendance.consent.version');
+    config(['attendance.consent.version' => '9.0', 'privacy.policy.version' => '9.0']);
     Sanctum::actingAs($this->rizky);
 
     $this->getJson('/api/v1/persetujuan')->assertOk()
         ->assertJsonPath('consent.granted', false)
         ->assertJsonPath('consent.needs_renewal', true)
-        ->assertJsonPath('consent.granted_version', '1.0')
-        ->assertJsonPath('consent.version', '2.0')
+        ->assertJsonPath('consent.granted_version', $granted)
+        ->assertJsonPath('consent.version', '9.0')
         ->assertJsonPath('consent.types.location.granted', false);
 });
 
@@ -194,14 +195,17 @@ test('consent never touches another employee', function () {
 test('the privacy policy is public JSON split into markdown sections', function () {
     $response = $this->getJson('/api/v1/kebijakan-privasi')->assertOk()
         ->assertJsonPath('title', 'Kebijakan Privasi')
-        ->assertJsonPath('version', '1.0')
-        ->assertJsonPath('effective_date', '2026-10-05')
+        ->assertJsonPath('version', '2.0')
+        ->assertJsonPath('effective_date', '2026-10-14')
         ->assertJsonStructure(['sections' => [['title', 'body_markdown']]]);
 
     $sections = $response->json('sections');
-    expect(count($sections))->toBe(9)
+    expect(count($sections))->toBe(12)
         ->and($sections[0]['title'])->toBe('1. Ringkasan')
-        ->and($sections[7]['title'])->toBe('8. Hak Anda')
+        ->and($sections[4]['title'])->toBe('5. Pengiriman absensi ke grup WhatsApp')
+        ->and($sections[5]['title'])->toBe('6. Peta, lokasi, dan layanan OpenStreetMap')
+        ->and($sections[6]['title'])->toBe('7. Aplikasi Android dan penyimpanan data di ponsel (mode offline)')
+        ->and($sections[10]['title'])->toBe('11. Hak Anda')
         ->and($response->getContent())->not->toContain('{{')
         ->not->toContain('<!--')
         ->and($sections[0]['body_markdown'])->toContain('UU PDP');

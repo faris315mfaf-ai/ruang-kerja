@@ -19,7 +19,7 @@ return [
     */
     'consent' => [
         // Follows the privacy policy version (config/privacy.php) unless set explicitly.
-        'version' => env('ATTENDANCE_CONSENT_VERSION', env('PRIVACY_POLICY_VERSION', '1.0')),
+        'version' => env('ATTENDANCE_CONSENT_VERSION', env('PRIVACY_POLICY_VERSION', '2.0')),
     ],
 
     'selfie' => [

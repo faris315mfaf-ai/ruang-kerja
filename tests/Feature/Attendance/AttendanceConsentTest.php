@@ -15,7 +15,7 @@ test('consent is recorded for location and selfie with the current version, idem
 
     expect($consents)->toHaveCount(2)
         ->and($consents->pluck('type')->all())->toEqualCanonicalizing([ConsentType::Location, ConsentType::Selfie])
-        ->and($consents->pluck('version')->unique()->all())->toBe(['1.0'])
+        ->and($consents->pluck('version')->unique()->all())->toBe([config('attendance.consent.version')])
         ->and(AttendanceConsent::hasCurrentConsent($user))->toBeTrue()
         ->and(AuditLog::query()->where('action', 'attendance.consent_granted')->count())->toBe(1);
 });
@@ -24,7 +24,7 @@ test('a new policy version requires consent again', function () {
     $user = User::factory()->create();
     $this->actingAs($user)->post(route('attendance.consent.store'));
 
-    config(['attendance.consent.version' => '1.1']);
+    config(['attendance.consent.version' => '9.0']);
 
     expect(AttendanceConsent::hasCurrentConsent($user))->toBeFalse();
 
@@ -56,5 +56,5 @@ test('the privacy policy page shows the version', function () {
     $this->actingAs(User::factory()->create())
         ->get(route('attendance.policy'))
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->component('attendance/privacy-policy')->where('version', '1.0')->where('retentionMonths', 12));
+        ->assertInertia(fn ($page) => $page->component('attendance/privacy-policy')->where('version', config('attendance.consent.version'))->where('retentionMonths', 12));
 });

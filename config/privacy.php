@@ -15,14 +15,20 @@
 | ATTENDANCE_CONSENT_VERSION is set (config/attendance.php), so every
 | employee is asked to consent again before their next GPS/selfie check-in.
 |
+| History:
+|   1.0 (2026-10-05)  first policy.
+|   2.0 (2026-10-14)  stamped selfie + location sent to the company WhatsApp
+|                     group, OpenStreetMap maps/Nominatim, Android offline
+|                     storage (encrypted queue incl. selfie/GPS).
+|
 */
 
 return [
 
     'policy' => [
-        'version' => env('PRIVACY_POLICY_VERSION', '1.0'),
+        'version' => env('PRIVACY_POLICY_VERSION', '2.0'),
         // Date the version took effect (YYYY-MM-DD).
-        'effective_date' => env('PRIVACY_POLICY_DATE', '2026-10-05'),
+        'effective_date' => env('PRIVACY_POLICY_DATE', '2026-10-14'),
         'path' => resource_path('markdown/privacy-policy.md'),
         // Who handles privacy requests (shown in the policy), e.g. "HR (hr@perusahaan.co.id)".
         'contact' => env('PRIVACY_CONTACT', 'tim HR'),

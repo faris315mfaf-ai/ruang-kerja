@@ -65,7 +65,7 @@ Durasi kerja: 9 jam 46 menit
 - Caption WhatsApp dipotong ±1024 karakter: bila teks > 900 karakter, foto membawa baris judul (+ durasi) dan **poin menyusul sebagai pesan teks kedua lewat job terpisah** (`part = points`), sehingga percobaan ulang tidak pernah memposting foto dua kali.
 - Gateway: Evolution API v2 `POST /message/sendMedia/{instance}` (`mediatype: image`, `mimetype: image/jpeg`, `media` base64, `fileName`, `caption`, `number`, `delay`). Foto **tanpa** retry otomatis di klien HTTP (retry hanya lewat antrean).
 
-**Privasi (disadari pemilik):** dengan fitur ini **selfie keluar dari sistem ke grup WhatsApp** (salinan di server WhatsApp & ponsel anggota grup, di luar kebijakan retensi selfie 12 bulan) dan **koordinat dikirim ke OpenStreetMap** (ubin peta + Nominatim) saat pengiriman. Matikan peta/permintaan OSM dengan `ATTENDANCE_STAMP_MAP=false` (cap tetap berisi jam, tanggal, tempat dari nama kantor/WFH/teks deskriptif). Kebijakan privasi & teks persetujuan selfie perlu menyebut tujuan ini.
+**Privasi (disadari pemilik):** dengan fitur ini **selfie keluar dari sistem ke grup WhatsApp** (salinan di server WhatsApp & ponsel anggota grup, di luar kebijakan retensi selfie 12 bulan) dan **koordinat dikirim ke OpenStreetMap** (ubin peta + Nominatim) saat pengiriman. Matikan peta/permintaan OSM dengan `ATTENDANCE_STAMP_MAP=false` (cap tetap berisi jam, tanggal, tempat dari nama kantor/WFH/teks deskriptif). Kebijakan privasi **v2.0 (14 Okt 2026)** dan layar persetujuan (web + ponsel) kini menyebut tujuan ini: selfie bercap + lokasi ke grup, di luar kendali aplikasi, di luar retensi 12 bulan, serta koordinat ke Nominatim dari server (`resources/markdown/privacy-policy.md` bagian 5–6).
 
 ## 2. Komponen
 
