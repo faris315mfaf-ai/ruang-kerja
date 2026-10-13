@@ -1,64 +1,52 @@
 /**
- * Baris tugas untuk daftar (Beranda "tugas hari ini" & layar Tugas).
- * Sumber `attendance` diberi penanda "dari absen".
+ * Baris tugas ringkas (Beranda "tugas hari ini", Kalender, dsb.): cincin
+ * status + judul + key · workspace, prioritas di kanan. Sumber `attendance`
+ * diberi tag "dari absen". Untuk kartu Tugas saya lihat `features/tugas/TugasKartu`.
  */
-import { Ionicons } from '@/ui/Ionicons';
 import { StyleSheet, View } from 'react-native';
 
-import { Badge, Row } from '@/components/ui';
-import { useTheme } from '@/lib/theme';
 import type { TaskListItem, TaskSource } from '@/api/types';
+import type { KategoriStatus } from '@/api/tugas';
+import { PriorityBars, StatusRing } from '@/features/tugas/ikon';
+import { useTheme } from '@/theme';
+import { Pressable, Tag, Text } from '@/ui';
 
 export function lencanaSumber(sumber: TaskSource): string {
   return sumber === 'attendance' ? 'dari absen' : '';
 }
 
-export function TugasItem({
-  tugas,
-  onPress,
-  aksesLabel,
-}: {
-  tugas: TaskListItem;
-  onPress: () => void;
-  aksesLabel?: string;
-}): React.JSX.Element {
-  const { colors } = useTheme();
-  const selesai = tugas.status.is_done;
-  const prioritas = tugas.priority?.label ?? '';
-  const nilai = tugas.priority?.value;
-  const prioritasTone =
-    nilai === 1
-      ? 'danger'
-      : nilai === 2
-        ? 'warning'
-        : nilai === 4
-          ? 'neutral'
-          : 'info';
+const KATEGORI: readonly string[] = ['backlog', 'todo', 'in_progress', 'review', 'done', 'canceled'];
 
+export function TugasItem({ tugas, onPress, aksesLabel }: { tugas: TaskListItem; onPress: () => void; aksesLabel?: string }): React.JSX.Element {
+  const { colors } = useTheme();
+  const kategori = (KATEGORI.includes(tugas.status.category) ? tugas.status.category : tugas.status.is_done ? 'done' : 'todo') as KategoriStatus;
+  const selesai = tugas.status.is_done;
   return (
-    <Row
+    <Pressable
       onPress={onPress}
-      accessibilityLabel={aksesLabel ?? `Buka tugas ${tugas.title}`}
-      title={tugas.title}
-      subtitle={`${tugas.workspace.name} · ${tugas.status.name}`}
-      right={
-        <View style={styles.kanan}>
-          <View style={styles.lencanaWrap}>
-            {tugas.source === 'attendance' ? <Badge tone="primary">dari absen</Badge> : null}
-            {prioritas ? <Badge tone={prioritasTone as 'danger' | 'warning' | 'neutral' | 'info'}>{prioritas}</Badge> : null}
-          </View>
-          <Ionicons
-            name={selesai ? 'checkmark-circle' : 'ellipse-outline'}
-            size={20}
-            color={selesai ? colors.success : colors.subtle}
-          />
-        </View>
-      }
-    />
+      scaleTo={0.99}
+      accessibilityRole="button"
+      accessibilityLabel={aksesLabel ?? `Buka tugas ${tugas.title}, ${tugas.status.name}`}
+      style={s.baris}
+    >
+      <StatusRing kategori={kategori} />
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text variant="title" numberOfLines={2} style={selesai ? { textDecorationLine: 'line-through', color: colors.muted } : undefined}>
+          {tugas.title}
+        </Text>
+        <Text variant="meta" numberOfLines={1}>
+          {tugas.workspace.name} · {tugas.status.name}
+        </Text>
+      </View>
+      <View style={s.kanan}>
+        {tugas.source === 'attendance' ? <Tag tone="primary">dari absen</Tag> : null}
+        <PriorityBars nilai={tugas.priority?.value ?? 0} />
+      </View>
+    </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
-  kanan: { alignItems: 'flex-end', gap: 4 },
-  lencanaWrap: { flexDirection: 'row', gap: 4, justifyContent: 'flex-end', flexWrap: 'wrap' },
+const s = StyleSheet.create({
+  baris: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingVertical: 10 },
+  kanan: { alignItems: 'flex-end', gap: 6 },
 });
