@@ -10,6 +10,7 @@ use App\Domain\Attendance\Services\LocationVerifier;
 use App\Domain\Attendance\Services\OpenDayLocator;
 use App\Domain\Attendance\Services\ScheduleResolver;
 use App\Domain\Attendance\Support\OfficeClock;
+use App\Domain\Requests\Services\SickPermitShortcut;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 
@@ -26,6 +27,7 @@ final class MyAttendance
         private readonly OpenDayLocator $openDays,
         private readonly LocationVerifier $locations,
         private readonly AttendancePresenter $presenter,
+        private readonly SickPermitShortcut $leaveShortcut,
     ) {}
 
     /**
@@ -90,6 +92,9 @@ final class MyAttendance
                 ->values()
                 ->all(),
             ...$this->windows($user, $now, $action, $schedule, $day),
+            // "Tidak masuk? Ajukan sakit / izin" (keputusan pemilik 14 Okt 2026). An open day
+            // (checked in, or yesterday's night shift still open) never offers it.
+            'leaveShortcut' => $action === 'check_out' ? SickPermitShortcut::unavailable() : $this->leaveShortcut->handle($user, $now),
         ];
     }
 

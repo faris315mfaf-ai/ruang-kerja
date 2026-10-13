@@ -60,6 +60,7 @@ class RequestPreviewController extends Controller
         $request->setRelation('user', $user);
         $request->setRelation('leaveType', $type);
         $errors = null;
+        $sendBlocked = null;
         $period = null;
 
         try {
@@ -76,6 +77,17 @@ class RequestPreviewController extends Controller
             $request->fill(['start_at' => OfficeTime::today()->utc(), 'end_at' => OfficeTime::today()->utc()]);
         }
 
+        // Sakit/izin for today bound to the cutoff (keputusan pemilik 14 Okt 2026): the same
+        // message the submit would return, so the form can disable "Kirim" before sending.
+        if ($period !== null) {
+            try {
+                $this->writer->assertCanSend($type, $period, $ignoreId === null ? null : EmployeeRequest::query()->ownedBy($user)->find($ignoreId));
+            } catch (ValidationException $e) {
+                $errors = array_map(fn (array $messages): string => (string) ($messages[0] ?? ''), $e->errors());
+                $sendBlocked = (string) (array_values($errors)[0] ?? '');
+            }
+        }
+
         $overlap = $period === null ? null : $this->overlaps->find($user, $type->category, $period->startAt, $period->endAt, $ignoreId);
 
         return response()->json([
@@ -87,6 +99,8 @@ class RequestPreviewController extends Controller
                 'work_dates' => $period->workDates,
             ],
             'errors' => $errors,
+            // Sending is refused by the same-day cutoff (the form disables "Kirim", a draft still saves).
+            'send_blocked' => $sendBlocked,
             // Staff never see an annual leave balance (keputusan pemilik 6 Okt 2026).
             'balance' => $user->isStaffOnly() ? null : $this->balance($user, $type, $period?->startAt, $period?->days, $ignoreId),
             'overlap' => $overlap === null ? null : sprintf('Tumpang tindih dengan %s (%s, %s).', $overlap->number ?? 'draf', $overlap->leaveType->name, RequestFormatter::period($overlap)),

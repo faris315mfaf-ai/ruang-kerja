@@ -41,6 +41,10 @@ final class SaveLeaveType
             'allow_half_day' => in_array($category, [RequestCategory::Leave, RequestCategory::Permit], true) && (bool) ($data['allow_half_day'] ?? false),
             'requires_attachment_after_days' => $data['requires_attachment_after_days'] ?? null,
             'max_backdate_days' => $category === RequestCategory::Correction ? ($data['max_backdate_days'] ?? null) : null,
+            // Cutoff of same-day sick/izin (keputusan pemilik 14 Okt 2026): kept as is when the form does not send it.
+            'submit_cutoff_time' => in_array($category, [RequestCategory::Sick, RequestCategory::Permit], true)
+                ? (array_key_exists('submit_cutoff_time', $data) ? $data['submit_cutoff_time'] : $type->submit_cutoff_time)
+                : null,
             'min_service_months' => $data['min_service_months'] ?? null,
             'is_paid' => (bool) ($data['is_paid'] ?? true),
             'is_active' => (bool) ($data['is_active'] ?? true),

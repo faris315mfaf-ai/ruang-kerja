@@ -34,6 +34,7 @@ use Illuminate\Support\Carbon;
  * @property float|null $max_days_per_request
  * @property float|null $carry_over_max_days
  * @property int|null $max_backdate_days
+ * @property string|null $submit_cutoff_time "HH:MM" (office time): sick/izin for today must be sent before it; null = no cutoff (keputusan pemilik 14 Okt 2026)
  * @property int|null $min_service_months
  * @property string|null $approval_flow_id
  * @property bool $is_active
@@ -49,7 +50,7 @@ use Illuminate\Support\Carbon;
 #[Fillable([
     'company_id', 'code', 'name', 'category', 'description', 'annual_quota_days',
     'requires_attachment_after_days', 'is_paid', 'allow_half_day', 'carry_over_max_days',
-    'max_backdate_days', 'min_service_months', 'approval_flow_id', 'is_active', 'sort_order',
+    'max_backdate_days', 'submit_cutoff_time', 'min_service_months', 'approval_flow_id', 'is_active', 'sort_order',
     'counts_calendar_days', 'max_days_per_request', 'is_provisional_default', 'locked_reason',
 ])]
 class LeaveType extends Model
@@ -95,6 +96,19 @@ class LeaveType extends Model
     protected function code(): Attribute
     {
         return Attribute::make(set: fn (string $value): string => mb_strtoupper(trim($value)));
+    }
+
+    /**
+     * "HH:MM" whatever the driver returns (`12:00:00` from the time column).
+     *
+     * @return Attribute<string|null, string|null>
+     */
+    protected function submitCutoffTime(): Attribute
+    {
+        return Attribute::make(
+            get: fn (mixed $value): ?string => is_string($value) && $value !== '' ? substr($value, 0, 5) : null,
+            set: fn (mixed $value): ?string => is_string($value) && trim($value) !== '' ? substr(trim($value), 0, 5) : null,
+        );
     }
 
     /**

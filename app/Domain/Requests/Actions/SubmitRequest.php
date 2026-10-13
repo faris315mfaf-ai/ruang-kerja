@@ -46,6 +46,7 @@ final class SubmitRequest
         }
 
         $period = $this->writer->period($user, $input);
+        $this->writer->assertCanSend($input->leaveType, $period, $existing);
         $stored = [];
 
         try {

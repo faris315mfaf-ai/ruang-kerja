@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Attendance;
 
 use App\Domain\Attendance\Support\OfficeClock;
+use App\Domain\Requests\Services\SickPermitShortcut;
 use Carbon\CarbonImmutable;
 
 /**
@@ -113,6 +114,8 @@ final class MobileAttendanceState
                 'version' => $consent['version'],
             ],
             'center' => $center,
+            // Sakit/izin shortcut (keputusan pemilik 14 Okt 2026), computed by SickPermitShortcut in MyAttendance::today().
+            'leaveShortcut' => is_array($today['leaveShortcut'] ?? null) ? $today['leaveShortcut'] : SickPermitShortcut::unavailable(),
         ];
     }
 
