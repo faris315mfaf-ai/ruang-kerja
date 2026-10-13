@@ -155,7 +155,8 @@ export function Avatar({
       </Gradient>
     );
   }
-  return <View style={style}>{isi}</View>;
+  // Pembungkus ikut bundar: latar dari `style` pemanggil tidak boleh tampil persegi.
+  return <View style={[{ borderRadius: 999 }, style]}>{isi}</View>;
 }
 
 /** Tumpukan avatar tumpang tindih; sisanya jadi "+N". */
