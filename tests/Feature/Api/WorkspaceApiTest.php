@@ -81,7 +81,14 @@ test('the four web groups carry only the visible workspaces', function () {
 
     $response->assertOk()->assertJsonCount(4, 'groups');
 
-    expect($response->json('groups'))->toBe([
+    // B3-A2 added badge fields to every item (tests/Feature/Api/WorkspaceB3a2ApiTest);
+    // the identity fields below must stay exactly as the picker has always sent them.
+    $groups = array_map(fn (array $group): array => [
+        ...$group,
+        'items' => array_map(fn (array $item): array => array_intersect_key($item, array_flip(['id', 'key', 'name', 'arsip'])), $group['items']),
+    ], $response->json('groups'));
+
+    expect($groups)->toBe([
         ['jenis' => 'pribadi', 'label' => 'Pribadi', 'items' => [
             ['id' => $this->personal->id, 'key' => $this->personal->key, 'name' => $this->personal->name, 'arsip' => false],
         ]],
