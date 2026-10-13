@@ -5,7 +5,7 @@
  *  - "Catatan belum tersimpan" untuk catatan yang ditinggalkan dengan
  *    perubahan belum terkirim (mockup 16): Simpan / Coba lagi / Muat ulang,
  *    "Tersimpan ✓" 2 detik, "+N catatan lain".
- * Di layar tab pil naik di atas kapsul tab bar dan menyisakan ruang FAB.
+ * Di layar tab pil naik di atas kapsul tab bar; 96 px kanan disisakan untuk FAB.
  */
 import { router, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -151,7 +151,7 @@ export function ModeCatatPill(): React.JSX.Element | null {
   const bawah = insets.bottom + (diTab ? TAB_BAR_SPACE - insets.bottom : 0) + 12;
 
   return (
-    <View pointerEvents="box-none" style={[s.wadah, { bottom: Math.max(bawah, 12), right: diTab ? 96 : 16 }]}>
+    <View pointerEvents="box-none" style={[s.wadah, { bottom: Math.max(bawah, 12), right: 96 }]}>
       {daftar.length > 0 ? <PilBelumTersimpan daftar={daftar} /> : null}
       {tampilMode && sesi.sesi ? <PilModeCatat judul={sesi.sesi.title} noteId={sesi.sesi.noteId} /> : null}
     </View>

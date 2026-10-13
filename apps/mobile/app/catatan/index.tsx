@@ -43,7 +43,7 @@ export default function LayarDaftarCatatan(): React.JSX.Element {
 
   const bolehBuat = d.panel.filter((p) => p.canCreate);
   const terlihat = filter === null ? d.panel : d.panel.filter((p) => p.id === filter);
-  const kosongTotal = d.panel.length > 0 && d.panel.every((p) => p.tree.length === 0);
+  const kosongTotal = d.panel.every((p) => p.tree.length === 0);
   const mencari = q.trim().length > 0;
   const totalPerRuang = useMemo(() => d.panel.map((p) => ({ id: p.id, label: p.personal ? 'Pribadi' : p.key, jumlah: hitungCatatan(p.tree) })), [d.panel]);
 

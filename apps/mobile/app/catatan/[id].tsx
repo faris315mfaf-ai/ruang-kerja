@@ -12,7 +12,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { BackHandler, Share, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ApiError } from '@/api/client';
+import { kirimTautanDesktop } from '@/api/akun';
+import { ApiError, webBase } from '@/api/client';
 import { detailCatatan, hapusCatatan, pohonWorkspace, tabDokumen, type CatatanDetail, type PohonNode, type TabDokumen } from '@/api/catatan';
 import { AksesSheet } from '@/features/catatan/AksesSheet';
 import { BacaBlok } from '@/features/catatan/BacaBlok';
@@ -27,7 +28,6 @@ import { akhiriSesi, mulaiSesi, perbaruiSesi, setDiDokumen, sesiStore } from '@/
 import { pasangSesi, sesiUntuk, type SesiSimpan, type SesiState } from '@/features/catatan/sesiSimpan';
 import { infoDiubah, cariNode } from '@/features/catatan/pohon';
 import { useUkuranHuruf } from '@/features/catatan/ukuranHuruf';
-import { useKirimTautan } from '@/features/settings/useKirimTautan';
 import { jam } from '@/lib/format';
 import { font, useTheme } from '@/theme';
 import { Banner, Button, Card, EmptyState, ErrorState, Glass, Icon, ListRow, Loading, Screen, Text, errorKindFromStatus, useDialog, useSnackbar } from '@/ui';
@@ -48,7 +48,6 @@ export default function LayarCatatan(): React.JSX.Element {
   const insets = useSafeAreaInsets();
   const dialog = useDialog();
   const snackbar = useSnackbar();
-  const { kirim: kirimTautan } = useKirimTautan();
   const { skala } = useUkuranHuruf();
   const { id, mode } = useLocalSearchParams<{ id: string; mode?: string }>();
   const catatId = typeof id === 'string' ? id : null;
@@ -301,6 +300,27 @@ export default function LayarCatatan(): React.JSX.Element {
     }
   }
 
+  /** "Kirim tautan ke email saya"; bila server menolak path itu, bagikan tautan lewat share sheet. */
+  async function kirimTautanWeb(): Promise<void> {
+    if (catatan === null) {
+      return;
+    }
+    try {
+      const hasil = await kirimTautanDesktop(`/catatan/${catatan.id}`);
+      snackbar.show({ message: hasil.message, variant: 'ok' });
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 0) {
+        snackbar.show({ message: 'Tidak ada koneksi. Tautan belum terkirim.', variant: 'offline' });
+        return;
+      }
+      try {
+        await Share.share({ message: `${webBase()}/catatan/${catatan.id}` });
+      } catch {
+        snackbar.show({ message: 'Tautan gagal dikirim.', variant: 'bad' });
+      }
+    }
+  }
+
   async function hapusCatatanIni(): Promise<void> {
     if (catatan === null) {
       return;
@@ -487,7 +507,7 @@ export default function LayarCatatan(): React.JSX.Element {
             icon="info"
             message="Catatan ini berformat lengkap. Sunting di web."
             actionLabel="Kirim tautan ke email saya"
-            onAction={() => void kirimTautan(`/catatan/${catatan.id}`)}
+            onAction={() => void kirimTautanWeb()}
           />
         ) : null}
 
