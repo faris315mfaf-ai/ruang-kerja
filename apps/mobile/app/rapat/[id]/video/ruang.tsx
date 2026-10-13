@@ -108,6 +108,8 @@ function Isi({
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const lanskap = width > height;
+  // Tablet potret (≥ 768, mockup 28): video + notulen berdampingan.
+  const lebar = !lanskap && width >= 768;
   const dialog = useDialog();
   const snackbar = useSnackbar();
   const izin = useIzinVideo();
@@ -178,7 +180,7 @@ function Isi({
   const [notulen, setNotulen] = useState<MeetingMinutesData | null>(null);
   const [notulenGagal, setNotulenGagal] = useState(false);
   useEffect(() => {
-    if (tab !== 'notulen') {
+    if (tab !== 'notulen' && !lebar) {
       return;
     }
     let aktif = true;
@@ -201,7 +203,7 @@ function Isi({
       aktif = false;
       clearInterval(t);
     };
-  }, [tab, id, tanggal, live.versiNotulen]);
+  }, [tab, lebar, id, tanggal, live.versiNotulen]);
 
   // ── Aksi bilah ───────────────────────────────────────────────────────────
   const galat = (e: unknown, cadangan: string) => snackbar.show({ message: e instanceof Error && e.message ? e.message : cadangan, variant: 'bad' });
@@ -410,7 +412,7 @@ function Isi({
           </Text>
         </View>
       ) : null}
-      {tab === 'video' && !lanskap ? (
+      {(tab === 'video' || lebar) && !lanskap ? (
         <Pressable onPress={() => setTampilan(tampilan === 'sorotan' ? 'petak' : 'sorotan')} accessibilityRole="button" accessibilityLabel={`Tampilan ${tampilan === 'sorotan' ? 'Sorotan' : 'Petak'}, ganti`} style={s.tampilan}>
           <Icon name="layout-grid" size={16} color={colors.muted} />
           <Text variant="meta">{tampilan === 'sorotan' ? 'Sorotan' : `Petak · ${daftar.length} peserta`}</Text>
@@ -552,7 +554,7 @@ function Isi({
   return (
     <View style={{ flex: 1, backgroundColor: colors.roomDesk, paddingTop: lanskap ? 8 : insets.top, paddingBottom: insets.bottom + 8, paddingHorizontal: lanskap ? Math.max(12, insets.left) : 12 }}>
       <StatusBar hidden={lanskap} style="auto" />
-      {!lanskap ? (
+      {!lanskap && !lebar ? (
         <View style={{ marginBottom: 8 }}>
           <SegmentedTabs<Tab>
             value={tab}
@@ -566,10 +568,17 @@ function Isi({
       ) : null}
       {banner}
       {statusBaris}
-      <View style={{ flex: 1, marginTop: 8 }}>{tab === 'video' || lanskap ? panggung : tabNotulen}</View>
+      {lebar ? (
+        <View style={{ flex: 1, marginTop: 8, flexDirection: 'row', gap: 12 }}>
+          <View style={{ flex: 1.4 }}>{panggung}</View>
+          <View style={{ flex: 1 }}>{tabNotulen}</View>
+        </View>
+      ) : (
+        <View style={{ flex: 1, marginTop: 8 }}>{tab === 'video' || lanskap ? panggung : tabNotulen}</View>
+      )}
       <View style={{ gap: 8, marginTop: 8 }}>
-        {subtitleNyala && (tab === 'video' || lanskap) ? <Subtitle lines={live.captions} nama={nama} /> : null}
-        <BilahKontrol tombol={tombol} lebar={lanskap ? 640 : undefined} />
+        {subtitleNyala && (tab === 'video' || lanskap || lebar) ? <Subtitle lines={live.captions} nama={nama} /> : null}
+        <BilahKontrol tombol={tombol} lebar={lanskap || lebar ? 640 : undefined} />
       </View>
 
       <SheetKehadiran
