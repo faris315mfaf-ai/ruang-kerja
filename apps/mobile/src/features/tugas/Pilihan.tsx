@@ -13,6 +13,7 @@ import { BottomSheet, Button, Checkbox, DateInput, Icon, Pressable, Text, tangga
 
 import { PriorityBars, StatusRing, UbinWorkspace } from './ikon';
 import { LABEL_PRIORITAS, hariSingkat, tambahHari } from './util';
+import { useTutupPapanKetik } from './useTutupPapanKetik';
 import { warnaPalet } from '@/lib/palette';
 
 /** Isian teks untuk dipakai DI DALAM bottom sheet (menangani papan ketik). */
@@ -199,14 +200,18 @@ export function SheetLabel({
   label,
   terpilih,
   onSimpan,
+  memuat = false,
 }: {
   visible: boolean;
   onClose: () => void;
   label: LabelTugas[];
   terpilih: string[];
   onSimpan: (ids: string[]) => void;
+  /** Label workspace masih dimuat (bukan "belum punya label"). */
+  memuat?: boolean;
 }): React.JSX.Element {
-  const { dark } = useTheme();
+  const { colors, dark } = useTheme();
+  useTutupPapanKetik(visible);
   const [draf, setDraf] = useState<string[]>(terpilih);
   const [terakhir, setTerakhir] = useState(visible);
   if (visible !== terakhir) {
@@ -215,38 +220,77 @@ export function SheetLabel({
       setDraf(terpilih);
     }
   }
+  // Hanya label workspace ini (pilihan dari workspace lain/terhapus dibuang saat disimpan).
+  const sah = draf.filter((id) => label.some((l) => l.id === id));
+  const sama = sah.length === terpilih.length && sah.every((id) => terpilih.includes(id));
   return (
     <BottomSheet visible={visible} onClose={onClose} title="Label" showClose scrollable>
-      {label.length === 0 ? <Text variant="body" tone="muted">Workspace ini belum punya label. Label dibuat di pengaturan workspace (desktop).</Text> : null}
-      {label.map((l) => (
-        <Pressable
-          key={l.id}
-          scaleTo={1}
-          onPress={() => setDraf((d) => (d.includes(l.id) ? d.filter((x) => x !== l.id) : [...d, l.id]))}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: draf.includes(l.id) }}
-          accessibilityLabel={l.name}
-          style={s.baris}
-        >
-          <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: warnaPalet(l.color, dark) }} />
-          <Text variant="title" style={{ flex: 1 }}>
-            {l.name}
-          </Text>
-          {draf.includes(l.id) ? <Icon name="check" size={22} /> : null}
-        </Pressable>
-      ))}
-      <Button
-        title="Selesai"
-        onPress={() => {
-          onSimpan(draf);
-          onClose();
-        }}
-      />
+      {label.length > 0 ? <Text variant="meta">{`${label.length} label workspace · boleh lebih dari satu`}</Text> : null}
+      {label.length === 0 ? (
+        <Text variant="body" tone="muted" accessibilityLiveRegion="polite">
+          {memuat ? 'Memuat label workspace…' : 'Workspace ini belum punya label. Label dibuat di pengaturan workspace (desktop).'}
+        </Text>
+      ) : null}
+      {label.map((l) => {
+        const dipilih = draf.includes(l.id);
+        return (
+          <Pressable
+            key={l.id}
+            scaleTo={1}
+            onPress={() => setDraf((d) => (d.includes(l.id) ? d.filter((x) => x !== l.id) : [...d, l.id]))}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: dipilih }}
+            accessibilityLabel={`Label ${l.name}`}
+            style={[s.baris, dipilih ? { backgroundColor: colors.linkSoft } : null]}
+          >
+            <View style={s.lead}>
+              <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: warnaPalet(l.color, dark) }} />
+            </View>
+            <Text variant="title" tone={dipilih ? 'link' : 'text'} style={{ flex: 1 }} numberOfLines={1}>
+              {l.name}
+            </Text>
+            {dipilih ? <Icon name="check" size={22} color={colors.link} /> : null}
+          </Pressable>
+        );
+      })}
+      {label.length > 0 ? (
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+          <View style={{ flex: 1 }}>
+            <Button title="Kosongkan" variant="outline" disabled={sah.length === 0} onPress={() => setDraf([])} />
+          </View>
+          <View style={{ flex: 1.4 }}>
+            <Button
+              title={sah.length === 0 ? 'Simpan · tanpa label' : `Simpan · ${sah.length} label`}
+              onPress={() => {
+                if (!sama) {
+                  onSimpan(sah);
+                }
+                onClose();
+              }}
+            />
+          </View>
+        </View>
+      ) : (
+        <Button title="Tutup" variant="outline" onPress={onClose} />
+      )}
     </BottomSheet>
   );
 }
 
-/** Tenggat cepat: Hari ini · Besok · Lusa · Pekan depan · Pilih tanggal · Hapus. */
+function batasTeks(min: string | undefined, max: string | undefined): string {
+  if (min && max) {
+    return `Pilih antara ${tanggal.formatHariTanggal(min)} dan ${tanggal.formatHariTanggal(max)}.`;
+  }
+  if (min) {
+    return `Tanggal sebelum ${tanggal.formatHariTanggal(min)} tidak bisa dipilih.`;
+  }
+  return max ? `Tanggal setelah ${tanggal.formatHariTanggal(max)} (tenggat) tidak bisa dipilih.` : '';
+}
+
+/**
+ * Tenggat cepat: Hari ini · Besok · Lusa · Pekan depan · Pilih tanggal · Hapus.
+ * Tanggal di luar `min`/`max` (mis. sebelum tanggal mulai) tidak ditawarkan.
+ */
 export function SheetTenggat({
   visible,
   onClose,
@@ -257,6 +301,7 @@ export function SheetTenggat({
   subjudul,
   boleKosongkan = true,
   min,
+  max,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -267,23 +312,36 @@ export function SheetTenggat({
   subjudul?: string;
   boleKosongkan?: boolean;
   min?: string;
+  max?: string;
 }): React.JSX.Element {
-  const [pilih, setPilih] = useState(false);
+  useTutupPapanKetik(visible);
   const p = tanggal.parseIso(hariIni);
   const ke = p ? (tanggal.hariKe(p) + 6) % 7 : 0; // 0 = Senin
   const pekanDepan = tambahHari(hariIni, 7 - ke);
-  const opsi: { judul: string; iso: string; icon: 'sun' | 'calendar-plus' | 'calendar-arrow-down' }[] = [
+  const semua: { judul: string; iso: string; icon: 'sun' | 'calendar-plus' | 'calendar-arrow-down' }[] = [
     { judul: 'Hari ini', iso: hariIni, icon: 'sun' },
     { judul: 'Besok', iso: tambahHari(hariIni, 1), icon: 'calendar-plus' },
     { judul: 'Lusa', iso: tambahHari(hariIni, 2), icon: 'calendar-plus' },
     { judul: 'Pekan depan', iso: pekanDepan, icon: 'calendar-arrow-down' },
   ];
+  const opsi = semua.filter((o) => (!min || o.iso >= min) && (!max || o.iso <= max));
+  // Tanggal tersimpan yang bukan pilihan cepat → isian tanggal langsung terbuka.
+  const lain = nilai !== null && !opsi.some((o) => o.iso === nilai);
+  const [pilih, setPilih] = useState(lain);
+  const [terakhir, setTerakhir] = useState(visible);
+  if (visible !== terakhir) {
+    setTerakhir(visible);
+    if (visible) {
+      setPilih(lain);
+    }
+  }
   const tutup = (): void => {
     setPilih(false);
     onClose();
   };
+  const namaHapus = judul === 'Tenggat' ? 'Hapus tenggat' : `Hapus ${judul.toLowerCase()}`;
   return (
-    <BottomSheet visible={visible} onClose={tutup} title={judul} showClose>
+    <BottomSheet visible={visible} onClose={tutup} title={judul} showClose scrollable>
       {subjudul ? <Text variant="meta">{subjudul}</Text> : null}
       {opsi.map((o) => (
         <BarisPilihan
@@ -298,15 +356,28 @@ export function SheetTenggat({
           }}
         />
       ))}
-      <BarisPilihan judul="Pilih tanggal…" leading={<Icon name="calendar-search" size={22} />} onPress={() => setPilih((v) => !v)} />
+      {opsi.length < semua.length ? <Text variant="meta">{batasTeks(min, max)}</Text> : null}
+      <BarisPilihan
+        judul="Pilih tanggal…"
+        deskripsi={lain && nilai ? tanggal.formatHariTanggal(nilai) : 'Ketik dd/mm/yyyy atau buka kalender'}
+        terpilih={lain}
+        leading={<Icon name="calendar-search" size={22} />}
+        onPress={() => setPilih((v) => !v)}
+      />
       {pilih ? (
         <DateInput
+          label={judul}
           value={nilai ?? ''}
           min={min}
-          required
+          max={max}
+          required={!boleKosongkan}
           onChange={(iso) => {
             if (iso) {
               onPilih(iso);
+              tutup();
+            } else if (boleKosongkan && nilai) {
+              // "Hapus" di kalender / isian dikosongkan.
+              onPilih(null);
               tutup();
             }
           }}
@@ -314,7 +385,7 @@ export function SheetTenggat({
       ) : null}
       {boleKosongkan && nilai ? (
         <BarisPilihan
-          judul="Hapus tenggat"
+          judul={namaHapus}
           tone="danger"
           leading={<Icon name="calendar-x" size={22} />}
           onPress={() => {

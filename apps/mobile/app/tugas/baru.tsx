@@ -13,7 +13,7 @@ import { PriorityBars, StatusRing, UbinWorkspace } from '@/features/tugas/ikon';
 import { PropChip } from '@/features/tugas/PropChip';
 import { SheetLabel, SheetOrang, SheetPrioritas, SheetStatus, SheetTenggat, SheetWorkspace } from '@/features/tugas/Pilihan';
 import { parseEstimasi, useBuatTugas } from '@/features/tugas/useBuatTugas';
-import { LABEL_PRIORITAS, galatPerField, hariSingkat, pesanGalat } from '@/features/tugas/util';
+import { LABEL_PRIORITAS, galatPerField, hariSingkat, pesanGalat, ringkasLabel } from '@/features/tugas/util';
 import { useSession } from '@/session/SessionProvider';
 import { radius, useTheme } from '@/theme';
 import { Avatar, Banner, Button, DateInput, Field, Icon, IconButton, Input, Pressable, Screen, SubAppBar, Text, tanggal, useDialog, useSnackbar } from '@/ui';
@@ -199,13 +199,20 @@ export default function LayarTugasBaru(): React.JSX.Element {
           label={draf.assignees.length === 0 ? 'Penanggung jawab' : draf.assignees.map(namaOrang).join(', ')}
           onPress={() => setPilih('orang')}
         />
-        <PropChip leading={<Icon name="tag" size={20} />} label={draf.labels.length > 0 ? `${draf.labels.length} label` : 'Label'} putus={draf.labels.length === 0} onPress={() => setPilih('label')} />
+        <PropChip
+          leading={<Icon name="tag" size={20} color={draf.labels.length > 0 ? colors.link : colors.text} />}
+          label={ringkasLabel(draf.labels, f.konteks?.labels ?? []).teks}
+          aksesLabel={ringkasLabel(draf.labels, f.konteks?.labels ?? []).akses}
+          aktif={draf.labels.length > 0}
+          putus={draf.labels.length === 0}
+          onPress={() => setPilih('label')}
+        />
       </View>
       {g.assignees ? <Text variant="meta" tone="danger">{g.assignees}</Text> : null}
 
-      <DateInput label="Mulai" value={draf.start ?? ''} onChange={(v) => f.ubah({ start: v || null })} error={g.start} />
+      <DateInput label="Mulai" value={draf.start ?? ''} onChange={(v) => f.ubah({ start: v || null })} max={draf.due ?? undefined} error={g.start} />
       <DateInput label="Tenggat" value={draf.due ?? ''} onChange={(v) => f.ubah({ due: v || null })} min={draf.start ?? undefined} error={g.due} />
-      <Pressable onPress={() => setPilih('tenggat')} accessibilityRole="button" accessibilityLabel="Tenggat cepat" scaleTo={1} style={{ alignSelf: 'flex-start' }}>
+      <Pressable onPress={() => setPilih('tenggat')} accessibilityRole="button" accessibilityLabel="Tenggat cepat: Hari ini, Besok, Pekan depan" scaleTo={1} style={{ alignSelf: 'flex-start', minHeight: 48, justifyContent: 'center' }}>
         <Text variant="label" tone="link">
           Tenggat cepat: Hari ini · Besok · Pekan depan
         </Text>
@@ -247,7 +254,7 @@ export default function LayarTugasBaru(): React.JSX.Element {
       <SheetStatus visible={pilih === 'status'} onClose={() => setPilih(null)} judul="Status awal" statuses={f.konteks?.statuses ?? []} nilai={statusDipilih?.id ?? null} onPilih={(id) => f.ubah({ statusId: id })} />
       <SheetPrioritas visible={pilih === 'prioritas'} onClose={() => setPilih(null)} nilai={draf.priority} onPilih={(n) => f.ubah({ priority: n })} />
       <SheetOrang visible={pilih === 'orang'} onClose={() => setPilih(null)} orang={f.anggota} terpilih={draf.assignees} onSimpan={(ids) => f.ubah({ assignees: ids })} />
-      <SheetLabel visible={pilih === 'label'} onClose={() => setPilih(null)} label={f.konteks?.labels ?? []} terpilih={draf.labels} onSimpan={(ids) => f.ubah({ labels: ids })} />
+      <SheetLabel visible={pilih === 'label'} onClose={() => setPilih(null)} label={f.konteks?.labels ?? []} memuat={f.konteks === null} terpilih={draf.labels} onSimpan={(ids) => f.ubah({ labels: ids })} />
       <SheetTenggat visible={pilih === 'tenggat'} onClose={() => setPilih(null)} nilai={draf.due} hariIni={hariIni} min={draf.start ?? undefined} onPilih={(iso) => f.ubah({ due: iso })} />
       <SheetWorkspace
         visible={pilih === 'workspace'}

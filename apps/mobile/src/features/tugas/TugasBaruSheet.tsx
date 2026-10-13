@@ -15,7 +15,7 @@ import { PriorityBars, StatusRing, UbinWorkspace } from './ikon';
 import { PropChip } from './PropChip';
 import { SheetLabel, SheetOrang, SheetInput, SheetPrioritas, SheetStatus, SheetTenggat, SheetWorkspace } from './Pilihan';
 import { useBuatTugas } from './useBuatTugas';
-import { LABEL_PRIORITAS, hariSingkat } from './util';
+import { LABEL_PRIORITAS, hariSingkat, ringkasLabel } from './util';
 import { useSession } from '@/session/SessionProvider';
 
 type Pilih = 'status' | 'prioritas' | 'orang' | 'tenggat' | 'label' | 'workspace' | null;
@@ -30,6 +30,7 @@ function Isi({ onDibuat, onClose }: { onDibuat: (t: DetailTugasPenuh) => void; o
   const { draf } = f;
   const statusDipilih = f.konteks?.statuses.find((s) => s.id === draf.statusId) ?? f.konteks?.statuses[0] ?? null;
   const namaOrang = (id: string): string => (id === user?.id ? 'Saya' : (f.anggota.find((a) => a.id === id)?.name ?? 'Orang'));
+  const labelChip = ringkasLabel(draf.labels, f.konteks?.labels ?? []);
   const penanggung = draf.assignees.length === 0 ? 'Penanggung' : draf.assignees.length === 1 ? namaOrang(draf.assignees[0] as string) : `${namaOrang(draf.assignees[0] as string)} +${draf.assignees.length - 1}`;
 
   async function buat(): Promise<void> {
@@ -72,8 +73,21 @@ function Isi({ onDibuat, onClose }: { onDibuat: (t: DetailTugasPenuh) => void; o
           label={penanggung}
           onPress={() => setPilih('orang')}
         />
-        <PropChip leading={<Icon name="calendar" size={20} color={draf.due ? colors.link : colors.text} />} label={draf.due ? hariSingkat(draf.due) : 'Pilih tanggal'} aktif={draf.due !== null} onPress={() => setPilih('tenggat')} />
-        <PropChip leading={<Icon name="tag" size={20} />} label={draf.labels.length > 0 ? `${draf.labels.length} label` : 'Label'} putus={draf.labels.length === 0} onPress={() => setPilih('label')} />
+        <PropChip
+          leading={<Icon name="calendar" size={20} color={draf.due ? colors.link : colors.text} />}
+          label={draf.due ? hariSingkat(draf.due) : 'Tenggat'}
+          aksesLabel={draf.due ? `Tenggat: ${tanggal.formatHariTanggal(draf.due)}` : 'Tenggat, belum diatur'}
+          aktif={draf.due !== null}
+          onPress={() => setPilih('tenggat')}
+        />
+        <PropChip
+          leading={<Icon name="tag" size={20} color={draf.labels.length > 0 ? colors.link : colors.text} />}
+          label={labelChip.teks}
+          aksesLabel={labelChip.akses}
+          aktif={draf.labels.length > 0}
+          putus={draf.labels.length === 0}
+          onPress={() => setPilih('label')}
+        />
       </View>
 
       <Field label="Workspace" error={f.galat.workspace}>
@@ -114,7 +128,7 @@ function Isi({ onDibuat, onClose }: { onDibuat: (t: DetailTugasPenuh) => void; o
       <SheetPrioritas visible={pilih === 'prioritas'} onClose={() => setPilih(null)} nilai={draf.priority} onPilih={(n) => f.ubah({ priority: n })} />
       <SheetOrang visible={pilih === 'orang'} onClose={() => setPilih(null)} orang={f.anggota} terpilih={draf.assignees} onSimpan={(ids) => f.ubah({ assignees: ids })} />
       <SheetTenggat visible={pilih === 'tenggat'} onClose={() => setPilih(null)} nilai={draf.due} hariIni={hariIni} onPilih={(iso) => f.ubah({ due: iso })} />
-      <SheetLabel visible={pilih === 'label'} onClose={() => setPilih(null)} label={f.konteks?.labels ?? []} terpilih={draf.labels} onSimpan={(ids) => f.ubah({ labels: ids })} />
+      <SheetLabel visible={pilih === 'label'} onClose={() => setPilih(null)} label={f.konteks?.labels ?? []} memuat={f.konteks === null} terpilih={draf.labels} onSimpan={(ids) => f.ubah({ labels: ids })} />
       <SheetWorkspace
         visible={pilih === 'workspace'}
         onClose={() => setPilih(null)}

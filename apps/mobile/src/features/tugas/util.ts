@@ -46,6 +46,19 @@ export function hariSingkat(iso: string | null | undefined): string {
   return `${tanggal.NAMA_HARI_SINGKAT[idx] ?? ''}, ${p.d} ${(tanggal.NAMA_BULAN[p.m - 1] ?? '').slice(0, 3)}`;
 }
 
+/** Teks pil label: "Label" · "Keuangan" · "Keuangan +2" (+ label aksesibilitas berisi semua nama). */
+export function ringkasLabel(ids: string[], label: { id: string; name: string }[]): { teks: string; akses: string } {
+  const nama = ids.map((id) => label.find((l) => l.id === id)?.name).filter((n): n is string => Boolean(n));
+  if (ids.length === 0) {
+    return { teks: 'Label', akses: 'Label, belum dipilih' };
+  }
+  if (nama.length === 0) {
+    return { teks: `${ids.length} label`, akses: `${ids.length} label dipilih` };
+  }
+  const sisa = ids.length - 1;
+  return { teks: sisa > 0 ? `${nama[0] ?? ''} +${sisa}` : (nama[0] ?? ''), akses: `Label: ${nama.join(', ')}` };
+}
+
 /** "13 Okt 2026" dari YYYY-MM-DD. */
 export function tanggalRingkas(iso: string | null | undefined): string {
   const p = tanggal.parseIso(iso);

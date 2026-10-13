@@ -46,6 +46,7 @@ import { StatusTrack } from '@/features/tugas/StatusTrack';
 import { gabungKomentar, useDetailTugas } from '@/features/tugas/useDetailTugas';
 import { LABEL_PRIORITAS, PESAN_TITIPAN, hariSingkat, pesanGalat, tanggalRingkas, tanpaKoneksi } from '@/features/tugas/util';
 import { waktuRelatif } from '@/lib/format';
+import { warnaPalet } from '@/lib/palette';
 import { radius, useTheme } from '@/theme';
 import {
   Avatar,
@@ -80,7 +81,7 @@ type Pilih = 'status' | 'prioritas' | 'orang' | 'tenggat' | 'mulai' | 'label' | 
  * `useKembali()` (tutup panel atau `router.back()`).
  */
 export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Element {
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
   const dialog = useDialog();
   const snackbar = useSnackbar();
   const kembali = useKembali();
@@ -589,12 +590,22 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
           <PropChip
             leading={<Icon name="calendar" size={20} />}
             label={t.due_date ? hariSingkat(t.due_date) : 'Tenggat'}
+            aksesLabel={`${t.due_date ? `Tenggat: ${tanggal.formatHariTanggal(t.due_date)}` : 'Tenggat, belum diatur'}${kunciProp ? ', terkunci' : ''}`}
             putus={!t.due_date}
             onPress={() => (dapatEdit ? setPilih('tenggat') : terkunci('edit'))}
             terkunci={kunciProp}
           />
           {t.labels.length > 0 ? (
-            t.labels.map((l) => <PropChip key={l.id} leading={<View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accentBlue }} />} label={l.name} onPress={() => (dapatEdit ? setPilih('label') : terkunci('edit'))} terkunci={kunciProp} />)
+            t.labels.map((l) => (
+              <PropChip
+                key={l.id}
+                leading={<View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: warnaPalet(l.color, dark) }} />}
+                label={l.name}
+                aksesLabel={kunciProp ? `Label ${l.name}, terkunci` : `Label ${l.name}. Ketuk untuk mengubah label`}
+                onPress={() => (dapatEdit ? setPilih('label') : terkunci('edit'))}
+                terkunci={kunciProp}
+              />
+            ))
           ) : (
             <PropChip leading={<Icon name="tag" size={20} />} label="Label" putus onPress={() => (dapatEdit ? setPilih('label') : terkunci('edit'))} terkunci={kunciProp} />
           )}
@@ -824,7 +835,7 @@ export function DetailTugas({ id }: { id: string | undefined }): React.JSX.Eleme
         onSimpan={(ids) => void simpan({ assignee_ids: ids })}
       />
       <SheetTenggat visible={pilih === 'tenggat'} onClose={() => setPilih(null)} nilai={t.due_date} hariIni={hariIni} min={t.start_date ?? undefined} subjudul={`${t.title} · ${t.key}`} onPilih={(iso) => void simpan({ due_date: iso })} />
-      <SheetTenggat visible={pilih === 'mulai'} onClose={() => setPilih(null)} nilai={t.start_date} hariIni={hariIni} judul="Tanggal mulai" subjudul={`${t.title} · ${t.key}`} onPilih={(iso) => void simpan({ start_date: iso })} />
+      <SheetTenggat visible={pilih === 'mulai'} onClose={() => setPilih(null)} nilai={t.start_date} hariIni={hariIni} max={t.due_date ?? undefined} judul="Tanggal mulai" subjudul={`${t.title} · ${t.key}`} onPilih={(iso) => void simpan({ start_date: iso })} />
       <SheetLabel visible={pilih === 'label'} onClose={() => setPilih(null)} label={t.workspace_labels} terpilih={t.labels.map((l) => l.id)} onSimpan={(ids) => void simpan({ label_ids: ids })} />
       <SheetRencanakan
         visible={pilih === 'rencana'}

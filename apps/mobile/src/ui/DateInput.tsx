@@ -4,6 +4,7 @@
  * dari kalender (sheet). Nilai selalu `YYYY-MM-DD`. Teks salah / di luar
  * rentang → nilai lama dipertahankan + satu pesan singkat.
  */
+import { BottomSheetTextInput, useBottomSheetInternal } from '@gorhom/bottom-sheet';
 import { useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
@@ -65,6 +66,10 @@ export function DateInput({ label, value, onChange, min, max, required = false, 
   const [kalender, setKalender] = useState(false);
   const [bulan, setBulan] = useState({ y: 2026, m: 1 });
   const input = useRef<TextInput>(null);
+  // Di dalam bottom sheet (mis. "Tenggat" di Tugas baru) isian harus didaftarkan
+  // ke lembar agar lembar naik di atas papan ketik; TextInput biasa tertutup.
+  const diLembar = useBottomSheetInternal(true) !== null;
+  const Isian = diLembar ? BottomSheetTextInput : TextInput;
 
   const bukaKalender = (): void => {
     const awal = parseIso(value) ?? parseIso(hariIniIso());
@@ -122,8 +127,9 @@ export function DateInput({ label, value, onChange, min, max, required = false, 
         },
       ]}
     >
-      <TextInput
-        ref={input}
+      <Isian
+        // BottomSheetTextInput meneruskan ref ke TextInput (gesture handler) yang sama API-nya.
+        ref={input as React.Ref<never>}
         value={tampil}
         editable={!disabled}
         placeholder={placeholder}
