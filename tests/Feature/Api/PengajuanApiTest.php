@@ -13,8 +13,8 @@ use Tests\TestCase;
 
 /*
 | API v1 — "Pengajuan saya" for the mobile app (Tahap 1): the caller's own
-| list (web row presenter), the types they may request (web form machinery,
-| locked/ineligible excluded) and submission through the web SubmitRequest
+| list (web row presenter), the type catalogue (web form machinery, locked
+| and ineligible types flagged since B4-A) and submission through the web SubmitRequest
 | action — approval flow, numbering and the approver notification included.
 */
 
@@ -87,7 +87,7 @@ test('the list answers only my requests with the web row fields', function () {
         ->not->toContain($milikManager->id);
 });
 
-test('jenis lists the categories the employee may request, without locked or ineligible types', function () {
+test('jenis lists every category; locked and ineligible types are flagged, not hidden (B4-A)', function () {
     $s = $this->s;
     $s->annual->update(['locked_reason' => LeaveType::SOP_LOCK_REASON]);
     $s->overtime->update(['locked_reason' => LeaveType::SOP_LOCK_REASON]);
@@ -105,11 +105,16 @@ test('jenis lists the categories the employee may request, without locked or ine
     $response->assertOk();
 
     $categories = collect($response->json('categories'));
-    $names = $categories->flatMap(fn (array $category): array => array_column($category['types'], 'name'));
+    $types = $categories->flatMap(fn (array $category): array => $category['types'])->keyBy('name');
 
-    expect($categories->pluck('value')->all())->toBe(['permit', 'sick', 'correction', 'business_trip', 'procurement'])
-        ->and($names)->toContain('Izin', 'Sakit', 'Koreksi absensi', 'Dinas luar')
-        ->and($names)->not->toContain('Lembur', 'Cuti tahunan', 'Sakit lanjut');
+    // Locked (cuti & lembur) and ineligible types are listed with their flags;
+    // submitting them is still refused by the web machinery.
+    expect($categories->pluck('value')->all())->toBe(['leave', 'permit', 'sick', 'overtime', 'correction', 'business_trip', 'procurement'])
+        ->and($types['Lembur']['locked'])->toBeTrue()
+        ->and($types['Cuti tahunan']['locked_reason'])->toBe(LeaveType::SOP_LOCK_REASON)
+        ->and($types['Sakit lanjut']['eligible'])->toBeFalse()
+        ->and($types['Izin']['locked'])->toBeFalse()
+        ->and($types['Izin']['eligible'])->toBeTrue();
 
     // The web type fields (the form "schema": half day, attachment rule, quota…).
     $izin = $categories->firstWhere('value', 'permit')['types'][0];
@@ -119,13 +124,14 @@ test('jenis lists the categories the employee may request, without locked or ine
         ->and($izin['allow_half_day'])->toBeTrue()
         ->and($izin['category_label'])->toBe('Izin');
 
-    // The manager sees the same catalogue of the company.
+    // The manager sees the same catalogue of the company, Lembur still locked.
     $tokenDimas = masukPengajuan('dimas@kantor.test');
 
     expect(
         collect(sebagaiTokenPengajuan($tokenDimas)->getJson('/api/v1/pengajuan/jenis')->json('categories'))
-            ->flatMap(fn (array $category): array => array_column($category['types'], 'name'))
-    )->not->toContain('Lembur');
+            ->flatMap(fn (array $category): array => $category['types'])
+            ->firstWhere('name', 'Lembur')['locked']
+    )->toBeTrue();
 });
 
 test('submitting a request answers 201 pending and notifies the first approver', function () {
