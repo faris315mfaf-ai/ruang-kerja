@@ -38,7 +38,7 @@ export function useMuatBaca<T>(kunci: string | null, ambil: () => Promise<T>): M
       const cache = kunci ? ambilCache<T>(kunci) : null;
       if (segarkan) setMenyegarkan(true);
       else if (!cache) setMemuat(true);
-      if (cache && !segarkan) setData(cache.data);
+      if (!segarkan) setData(cache ? cache.data : null);
       try {
         const d = await ambilRef.current();
         if (nomor !== urut.current) return;

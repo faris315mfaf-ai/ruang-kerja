@@ -58,7 +58,7 @@ function Pil({ label, tone = 'neutral', icon }: { label: string; tone?: 'neutral
   );
 }
 
-function InputJam({ nilai, onUbah, disabled }: { nilai: number | null; onUbah: (n: number | null) => void; disabled: boolean }): React.JSX.Element {
+function InputJam({ nilai, onUbah, disabled, galat }: { nilai: number | null; onUbah: (n: number | null) => void; disabled: boolean; galat?: string }): React.JSX.Element {
   const [teks, setTeks] = useState(nilai === null ? '' : angkaJam(nilai));
   const [salah, setSalah] = useState<string | null>(null);
   useEffect(() => {
@@ -86,7 +86,7 @@ function InputJam({ nilai, onUbah, disabled }: { nilai: number | null; onUbah: (
     onUbah(baru <= 0 ? null : Math.min(24, baru));
   };
   return (
-    <Field label="Jam (opsional)" error={salah}>
+    <Field label="Jam (opsional)" error={salah ?? galat ?? null}>
       <View style={s.baris}>
         <IconButton icon="minus" label="Kurangi setengah jam" onPress={() => langkah(-0.5)} disabled={disabled || nilai === null} size={52} />
         <View style={{ flex: 1 }}>
@@ -207,7 +207,7 @@ export function KartuItem({ item, opsi, terbuka, galat, batasCatatan, bacaSaja, 
   const judul = judulItem(item, opsi);
   const tujuan = namaTujuan(item, opsi);
   const kolomTersedia = item.taskId !== null && opsi !== undefined && (opsi.statuses.length > 0 || !opsi.can_move);
-  const bukaPaksa = terbuka || galatCatatan !== undefined || galatPindah !== undefined || galatTugas !== undefined;
+  const bukaPaksa = terbuka || galatCatatan !== undefined || galatPindah !== undefined || galatTugas !== undefined || g('percent') !== undefined || g('hours') !== undefined;
 
   const kepala = (
     <View style={s.kepala}>
@@ -274,7 +274,7 @@ export function KartuItem({ item, opsi, terbuka, galat, batasCatatan, bacaSaja, 
         />
       </Field>
       <InputPersen nilai={item.persen} onUbah={(n) => onUbah({ persen: n })} disabled={bacaSaja} galat={g('percent')} />
-      <InputJam nilai={item.jam} onUbah={(n) => onUbah({ jam: n })} disabled={bacaSaja} />
+      <InputJam nilai={item.jam} onUbah={(n) => onUbah({ jam: n })} disabled={bacaSaja} galat={g('hours')} />
       {kolomTersedia && opsi ? (
         opsi.can_move ? (
           <Field label="Pindahkan ke" error={galatPindah ?? null}>

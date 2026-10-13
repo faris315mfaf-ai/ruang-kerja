@@ -169,6 +169,8 @@ export interface FormLaporan {
   /** Draf diambil dari cadangan perangkat saat dibuka. */
   dipulihkan: boolean;
   mengirim: boolean;
+  /** Bertambah setiap kali data dimuat ulang (kunci item lokal dibuat baru). */
+  muatKe: number;
   muatUlang: () => Promise<void>;
   ubahTeks: (field: 'ringkasan' | 'hambatan' | 'catatan', nilai: string) => void;
   ubahItem: (kunci: string, patch: Partial<Omit<ItemForm, 'kunci'>>) => void;
@@ -196,6 +198,7 @@ export function useFormLaporan(): FormLaporan {
   const [tersimpanPada, setTersimpanPada] = useState<string | null>(null);
   const [dipulihkan, setDipulihkan] = useState(false);
   const [mengirim, setMengirim] = useState(false);
+  const [muatKe, setMuatKe] = useState(0);
 
   const tanggalRef = useRef<string>('');
   const isianRef = useRef<IsianForm>(KOSONG);
@@ -354,6 +357,7 @@ export function useFormLaporan(): FormLaporan {
       setPesanSimpan(null);
       setDipulihkan(pulih);
       setMuat({ status: 'siap', pesan: null, kode: null });
+      setMuatKe((n) => n + 1);
       if (pulih) {
         versiRef.current = 1;
         setStatusSimpan('menunggu');
@@ -560,6 +564,7 @@ export function useFormLaporan(): FormLaporan {
       tersimpanPada,
       dipulihkan,
       mengirim,
+      muatKe,
       muatUlang,
       ubahTeks,
       ubahItem,
@@ -570,6 +575,6 @@ export function useFormLaporan(): FormLaporan {
       kirim,
       validasiKirim,
     }),
-    [muat, data, laporan, opsi, isian, galat, statusSimpan, pesanSimpan, tersimpanPada, dipulihkan, mengirim, muatUlang, ubahTeks, ubahItem, tambahTugas, tambahDiLuar, hapusItem, simpanSekarang, kirim, validasiKirim],
+    [muat, data, laporan, opsi, isian, galat, statusSimpan, pesanSimpan, tersimpanPada, dipulihkan, mengirim, muatKe, muatUlang, ubahTeks, ubahItem, tambahTugas, tambahDiLuar, hapusItem, simpanSekarang, kirim, validasiKirim],
   );
 }

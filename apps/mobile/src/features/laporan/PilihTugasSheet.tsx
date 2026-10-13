@@ -9,7 +9,7 @@ import { StyleSheet, View } from 'react-native';
 import { ApiError } from '@/api/client';
 import { cariTugasLaporan, type OpsiTugas } from '@/api/laporan';
 import { useTheme } from '@/theme';
-import { BottomSheet, Button, EmptyState, Icon, Pressable, SearchInput, Skeleton, Text } from '@/ui';
+import { BottomSheet, EmptyState, Icon, Pressable, SearchInput, Skeleton, Text } from '@/ui';
 
 import { tanggalSingkat } from './format';
 
@@ -195,7 +195,6 @@ export function PilihTugasSheet({ visible, onClose, saran, sudahDipilih, penuh, 
         </Text>
       ) : null}
       {isi}
-      <Button title="Tutup" variant="quiet" onPress={onClose} />
     </BottomSheet>
   );
 }

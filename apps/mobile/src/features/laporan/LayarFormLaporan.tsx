@@ -82,15 +82,20 @@ export function LayarFormLaporan(): React.JSX.Element {
   const [konfirmasi, setKonfirmasi] = useState(false);
   const [hasilPindah, setHasilPindah] = useState<HasilPindah[] | null>(null);
   const gulir = useRef<ScrollView>(null);
-  const sudahBuka = useRef<string | null>(null);
-
-  // Item pertama dibuka, lainnya diringkas — sekali per laporan yang dimuat.
+  const sudahBuka = useRef(0);
+  const statusRef = useRef(statusSimpan);
   useEffect(() => {
-    if (f.muat.status !== 'siap' || !data || sudahBuka.current === data.date + (laporan?.id ?? '')) return;
-    sudahBuka.current = data.date + (laporan?.id ?? '');
+    statusRef.current = statusSimpan;
+  }, [statusSimpan]);
+
+  // Item pertama dibuka, lainnya diringkas — sekali per pemuatan data.
+  useEffect(() => {
+    if (f.muatKe === 0 || sudahBuka.current === f.muatKe) return;
+    sudahBuka.current = f.muatKe;
     const pertama = isian.items[0];
     setTerbuka(new Set(pertama ? [pertama.kunci] : []));
-  }, [f.muat.status, data, laporan?.id, isian.items]);
+    setHasilPindah(null);
+  }, [f.muatKe, isian.items]);
 
   // Kembali ke layar (mis. dari detail tugas): segarkan bila tidak ada perubahan yang belum tersimpan.
   const pertamaFokus = useRef(true);
@@ -100,7 +105,7 @@ export function LayarFormLaporan(): React.JSX.Element {
         pertamaFokus.current = false;
         return;
       }
-      if (statusSimpan === 'tersimpan' || statusSimpan === 'bersih') {
+      if (statusRef.current === 'tersimpan' || statusRef.current === 'bersih') {
         void f.muatUlang();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps -- hanya saat fokus kembali
