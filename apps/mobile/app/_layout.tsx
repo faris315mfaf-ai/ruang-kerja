@@ -110,6 +110,10 @@ function RootNavigator(): React.JSX.Element {
             <Stack.Screen name="catatan/cari" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="catatan/[id]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="pengajuan/baru" options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="pengajuan/index" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="pengajuan/form" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="pengajuan/[id]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="pengajuan/terkirim" options={{ animation: 'fade', gestureEnabled: false }} />
             <Stack.Screen name="inbox" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="inbox/[id]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="inbox/tidak-tersedia" options={{ animation: 'slide_from_right' }} />
@@ -128,6 +132,10 @@ function RootNavigator(): React.JSX.Element {
             <Stack.Screen name="rapat/index" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="rapat/[id]/index" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="rapat/[id]/notulen" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="rapat/baru" options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="rapat/[id]/ubah" options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="rapat/[id]/transkrip" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="manajemen/jadwal" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="rapat/[id]/video/pra-gabung" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="rapat/[id]/video/ruang" options={{ animation: 'fade', gestureEnabled: false }} />
             <Stack.Screen name="kalender" options={{ animation: 'slide_from_right' }} />
