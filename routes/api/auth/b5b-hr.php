@@ -1,5 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\Hr\AttendanceBoardController;
+use App\Http\Controllers\Api\Hr\AttendanceCorrectionController;
+use App\Http\Controllers\Api\Hr\AttendanceDisciplineController;
+use App\Http\Controllers\Api\Hr\AttendanceRecapController;
+use App\Http\Controllers\Api\Hr\AttendanceReviewController;
 use App\Http\Controllers\Api\Hr\EmployeeController;
 use App\Http\Controllers\Api\Hr\OrganizationChartController;
 use App\Http\Controllers\Api\Hr\PasswordResetRequestController;
@@ -33,4 +38,20 @@ Route::name('hr.')->group(function (): void {
 
     // Struktur organisasi (404 untuk staf)
     Route::get('organisasi/struktur', OrganizationChartController::class)->name('organization.chart');
+
+    // Absensi tim
+    Route::get('absensi/tim/hari-ini', AttendanceBoardController::class)->name('attendance.board');
+    Route::get('absensi/tim/perlu-ditinjau', [AttendanceReviewController::class, 'index'])->name('attendance.review.index');
+    Route::post('absensi/log/{attendanceLog}/tinjau', [AttendanceReviewController::class, 'review'])
+        ->whereUlid('attendanceLog')->middleware('throttle:60,1')->name('attendance.review');
+    Route::get('absensi/log/{attendanceLog}/selfie-url', [AttendanceReviewController::class, 'selfieUrl'])
+        ->whereUlid('attendanceLog')->middleware('throttle:30,1')->name('attendance.selfie-url');
+    Route::get('absensi/log/{attendanceLog}/selfie', [AttendanceReviewController::class, 'selfie'])
+        ->whereUlid('attendanceLog')->middleware(['signed', 'throttle:30,1'])->name('attendance.selfie');
+    Route::post('absensi/koreksi', AttendanceCorrectionController::class)
+        ->middleware('throttle:30,1')->name('attendance.correct');
+    Route::get('absensi/tim/rekap', [AttendanceRecapController::class, 'index'])->name('attendance.recap');
+    Route::get('absensi/tim/rekap/{employee}', [AttendanceRecapController::class, 'show'])
+        ->whereUlid('employee')->name('attendance.recap.show');
+    Route::get('absensi/tim/kedisiplinan', AttendanceDisciplineController::class)->name('attendance.discipline');
 });
