@@ -2,7 +2,7 @@
   "expo": {
     "name": "RuangKerja",
     "slug": "ruangkerja",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "scheme": "ruangkerja",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -12,6 +12,7 @@
     "backgroundColor": "#F3F6FA",
     "android": {
       "package": "store.spkd.ruangkerja",
+      "versionCode": 2,
       "permissions": [
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.CAMERA",
@@ -83,7 +84,8 @@
           "icon": "./assets/notification-icon.png",
           "color": "#0B7F86"
         }
-      ]
+      ],
+      "./plugins/withReleaseSigning"
     ],
     "experiments": {
       "typedRoutes": true,
