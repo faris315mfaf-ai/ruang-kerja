@@ -23,12 +23,27 @@
       ],
       "blockedPermissions": ["android.permission.SYSTEM_ALERT_WINDOW"],
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/adaptive-foreground.png",
+        "backgroundImage": "./assets/adaptive-background.png",
+        "monochromeImage": "./assets/adaptive-monochrome.png",
         "backgroundColor": "#0B7F86"
       }
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#F3F6FA",
+          "dark": {
+            "image": "./assets/splash-icon-dark.png",
+            "backgroundColor": "#070B14"
+          }
+        }
+      ],
       [
         "expo-system-ui",
         {
@@ -61,7 +76,14 @@
         }
       ],
       "@config-plugins/react-native-webrtc",
-      "./plugins/withNoFocusHighlight"
+      "./plugins/withNoFocusHighlight",
+      [
+        "./plugins/withNotificationIcon",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#0B7F86"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
