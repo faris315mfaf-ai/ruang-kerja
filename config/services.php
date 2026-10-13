@@ -51,6 +51,15 @@ return [
         'instance' => env('EVOLUTION_INSTANCE', 'ruangkerja'),
     ],
 
+    // OpenStreetMap tiles + Nominatim reverse geocoding for the stamped selfie
+    // sent to the WhatsApp group. Their usage policy requires a descriptive
+    // User-Agent with contact information.
+    'osm' => [
+        'user_agent' => env('OSM_USER_AGENT', 'RuangKerja/1.0 (+https://spkd.store)'),
+        'tile_url' => env('OSM_TILE_URL', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
+        'nominatim_url' => env('OSM_NOMINATIM_URL', 'https://nominatim.openstreetmap.org/reverse'),
+    ],
+
     // Firebase Cloud Messaging (HTTP v1) for push to the Android app
     // (docs/sesi/ponsel-b2c-inbox.md). Both values empty = push is a no-op
     // (logged, notifications still reach the Inbox).
