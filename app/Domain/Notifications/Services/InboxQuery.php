@@ -64,9 +64,26 @@ final class InboxQuery
     }
 
     /**
+     * Counters of every Inbox tab of the mobile app, plus the unread total.
+     *
+     * @return array{semua: int, perlu_tindakan: int, diarsipkan: int, belum_dibaca: int}
+     */
+    public function tabCounts(User $user): array
+    {
+        return [
+            'semua' => InboxNotification::query()->visibleTo($user)->active()->count(),
+            'perlu_tindakan' => InboxNotification::query()->visibleTo($user)->needsAction()->count(),
+            'diarsipkan' => InboxNotification::query()->visibleTo($user)->archived()->count(),
+            'belum_dibaca' => $this->unreadCount($user),
+        ];
+    }
+
+    /**
+     * The filtered (unordered) Inbox query of the user.
+     *
      * @return Builder<InboxNotification>
      */
-    private function filtered(User $user, InboxFilters $filters): Builder
+    public function filtered(User $user, InboxFilters $filters): Builder
     {
         $query = InboxNotification::query()->visibleTo($user);
 
@@ -77,6 +94,10 @@ final class InboxQuery
             'action' => $query->where('action_required', true)->whereNull('resolved_at'),
             default => null,
         };
+
+        if ($filters->unreadOnly) {
+            $query->whereNull('read_at');
+        }
 
         if ($filters->kind === InboxFilters::MENTION) {
             $query->ofType(NotificationType::Mention);

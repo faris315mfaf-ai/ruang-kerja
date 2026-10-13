@@ -2,6 +2,8 @@
 
 namespace App\Domain\Notifications;
 
+use App\Domain\Devices\Models\Device;
+use App\Domain\Notifications\Channels\FcmChannel;
 use App\Domain\Notifications\Channels\InAppChannel;
 use App\Domain\Notifications\Channels\WhatsAppChannel;
 use App\Domain\Notifications\Contracts\UserAvailability;
@@ -28,7 +30,9 @@ use Illuminate\Notifications\Notification;
  * - via() honours notification_preferences (defaults from config/notifications.php),
  *   locked channels, the WhatsApp feature flag, "hold while on leave" and
  *   quiet hours (email delayed, see withDelay()).
- * - In-app = InAppChannel (database) + broadcast on the user's private channel.
+ * - In-app = InAppChannel (database) + broadcast on the user's private channel
+ *   + FcmChannel (Android push, only for users with a registered push token;
+ *   follows the In-app preference and quiet hours like email).
  * - Email/WhatsApp render externalPayload() (defaults to payload()), so a module
  *   can keep sensitive free text in-app only.
  * - Queued after the surrounding DB transaction commits.
@@ -92,6 +96,12 @@ abstract class BaseNotification extends Notification implements ShouldQueueAfter
 
                 if (! $held) {
                     $via[] = 'broadcast';
+
+                    // Push follows the In-app preference (one source of truth); only users
+                    // with a registered phone get the channel queued.
+                    if ($this->hasPushDevice($notifiable)) {
+                        $via[] = FcmChannel::class;
+                    }
                 }
             } elseif (! $held) {
                 $via[] = $channel === NotificationChannel::Email ? 'mail' : WhatsAppChannel::class;
@@ -129,7 +139,7 @@ abstract class BaseNotification extends Notification implements ShouldQueueAfter
      */
     public function withDelay(object $notifiable, string $channel): ?DateTimeInterface
     {
-        if (! $notifiable instanceof User || ! in_array($channel, ['mail', WhatsAppChannel::class], true)) {
+        if (! $notifiable instanceof User || ! in_array($channel, ['mail', WhatsAppChannel::class, FcmChannel::class], true)) {
             return null;
         }
 
@@ -211,6 +221,11 @@ abstract class BaseNotification extends Notification implements ShouldQueueAfter
         $text = trim($payload->title."\n".($payload->body ?? ''));
 
         return new WhatsAppMessage($text, $payload->url !== null ? url($payload->url) : null);
+    }
+
+    private function hasPushDevice(User $user): bool
+    {
+        return Device::query()->where('user_id', $user->id)->whereNotNull('push_token')->exists();
     }
 
     private function isHeld(User $user): bool

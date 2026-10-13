@@ -57,9 +57,14 @@ test('the feed lists only my active notifications with the web presenter fields'
     $response = test()->withToken($token)->getJson('/api/v1/inbox');
 
     $response->assertOk()
-        ->assertJsonPath('meta', [
-            'current_page' => 1, 'from' => 1, 'last_page' => 1, 'per_page' => 20, 'to' => 2, 'total' => 2,
-        ])
+        ->assertJsonPath('meta.current_page', 1)
+        ->assertJsonPath('meta.from', 1)
+        ->assertJsonPath('meta.last_page', 1)
+        ->assertJsonPath('meta.per_page', 20)
+        ->assertJsonPath('meta.to', 2)
+        ->assertJsonPath('meta.total', 2)
+        // Per-tab counters were added in Bagian 2 (B2-C), see InboxB2cApiTest.
+        ->assertJsonPath('meta.counts.semua', 2)
         ->assertJsonPath('unread', 1)
         ->assertJsonPath('items.0.title', 'Anda disebut')
         ->assertJsonPath('items.0.body', 'Rizky disebut di TMS-1')

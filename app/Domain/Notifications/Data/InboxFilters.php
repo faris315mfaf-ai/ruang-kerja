@@ -18,6 +18,8 @@ final readonly class InboxFilters
         public string $tab = 'all',
         public ?string $kind = null,
         public bool $archived = false,
+        // Mobile app "Belum dibaca" chip: combines with any tab (not part of toArray(), the web keeps it as a tab).
+        public bool $unreadOnly = false,
     ) {}
 
     public function category(): ?NotificationCategory

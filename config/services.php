@@ -51,4 +51,13 @@ return [
         'instance' => env('EVOLUTION_INSTANCE', 'ruangkerja'),
     ],
 
+    // Firebase Cloud Messaging (HTTP v1) for push to the Android app
+    // (docs/sesi/ponsel-b2c-inbox.md). Both values empty = push is a no-op
+    // (logged, notifications still reach the Inbox).
+    'fcm' => [
+        'project_id' => env('FCM_PROJECT_ID'),
+        // Absolute path of the Firebase service-account JSON (keep it outside git, e.g. secrets/).
+        'service_account_json' => env('FCM_SERVICE_ACCOUNT_JSON'),
+    ],
+
 ];
