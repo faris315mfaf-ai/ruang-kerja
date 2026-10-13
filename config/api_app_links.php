@@ -40,6 +40,9 @@ return [
         '/okr/*',
         '/otomasi',
         '/otomasi/*',
+        '/w/*',
+        '/catatan',
+        '/catatan/*',
     ],
 
 ];

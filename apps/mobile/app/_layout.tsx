@@ -93,6 +93,15 @@ function RootNavigator(): React.JSX.Element {
             <Stack.Screen name="tugas/baru" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="workspace/index" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="workspace/[id]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="workspace/baru" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="workspace/[id]/pengaturan" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="otomasi/index" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="otomasi/aturan" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="otomasi/aturan/[id]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="otomasi/berulang" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="otomasi/templat" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="otomasi/pakai/[id]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="tugas/aktivitas" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="catatan/index" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="catatan/cari" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="catatan/[id]" options={{ animation: 'slide_from_right' }} />
