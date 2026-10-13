@@ -35,6 +35,11 @@ export function mulaiSesiOffline(uid: string): void {
       .catch(() => undefined)
       .then(() => daftarkanSinkronLatar())
       .catch(() => undefined);
+    // Panaskan cache form "Tugas baru" sejak sesi mulai (bukan hanya saat tab Tugas dibuka)
+    // supaya tugas bisa dibuat offline walau tab Tugas belum pernah dikunjungi.
+    setTimeout(() => {
+      void import('@/features/tugas/hangat').then((m) => m.hangatkanFormTugas()).catch(() => undefined);
+    }, 3000);
   });
 }
 
