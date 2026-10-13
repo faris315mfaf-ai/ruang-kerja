@@ -188,7 +188,8 @@ it('keeps the Direksi, HR and management dashboards and Absensi tabs free of N+1
 
 it('keeps the attendance pages free of N+1', function () {
     assertQueryBudgets([
-        '/absensi' => ['anggota', 76],
+        // +7: sakit/izin shortcut (SickPermitShortcut: two leave-type lookups, pending/absence/check-in checks, working-day calendar) — constant, not per row.
+        '/absensi' => ['anggota', 83],
         '/absensi/riwayat' => ['anggota', 44],
         // +1: shared prop chatUnread (Obrolan Dock badge), one query on every page.
         '/absensi/hari-ini' => ['hr', 53],
