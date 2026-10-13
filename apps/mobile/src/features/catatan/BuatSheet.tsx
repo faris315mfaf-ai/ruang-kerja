@@ -2,7 +2,9 @@
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
-import { buatCatatan, type CatatanDetail, type PohonNode } from '@/api/catatan';
+import { buatCatatan, type PohonNode } from '@/api/catatan';
+import { adalahOnline } from '@/offline';
+import { tulisBuatCatatan } from '@/offline/fitur/catatan';
 import { BottomSheet, Button, Chip, ChipScroller, Field, Input, SegmentedTabs, SelectField, Text } from '@/ui';
 
 import { pesanGalat } from './AksiBaris';
@@ -40,7 +42,7 @@ export function BuatSheet({
   /** Workspace yang boleh diisi (`can_create`). */
   ruang: RuangBuat[];
   awal: { ruangId: string | null; parentId: string | null; kind: 'note' | 'folder' };
-  onDibuat: (note: CatatanDetail, ruangId: string, kind: 'note' | 'folder') => void;
+  onDibuat: (note: { id: string; title: string; antre: boolean }, ruangId: string, kind: 'note' | 'folder') => void;
 }): React.JSX.Element {
   const [kind, setKind] = useState<'note' | 'folder'>('note');
   const [judul, setJudul] = useState('');
@@ -83,11 +85,20 @@ export function BuatSheet({
     if (dipilih === null) {
       return;
     }
+    if (kind === 'folder' && !adalahOnline()) {
+      setGalatUmum('Butuh koneksi — folder baru tidak bisa dibuat saat offline. Catatan biasa tetap bisa dibuat dan dikirim otomatis nanti.');
+      return;
+    }
     setSibuk(true);
     setGalatUmum(null);
     try {
-      const note = await buatCatatan({ title: bersih, workspace_id: dipilih.id, parent_id: parentId, kind });
-      onDibuat(note, dipilih.id, kind);
+      if (kind === 'folder') {
+        const folder = await buatCatatan({ title: bersih, workspace_id: dipilih.id, parent_id: parentId, kind });
+        onDibuat({ id: folder.id, title: folder.title, antre: false }, dipilih.id, kind);
+      } else {
+        const hasil = await tulisBuatCatatan({ title: bersih, workspace: { id: dipilih.id, key: dipilih.key, name: dipilih.name, personal: dipilih.personal }, parentId });
+        onDibuat({ id: hasil.id, title: hasil.title, antre: hasil.antre }, dipilih.id, kind);
+      }
     } catch (err) {
       setGalatUmum(pesanGalat(err, kind === 'folder' ? 'Folder gagal dibuat.' : 'Catatan gagal dibuat.'));
     } finally {

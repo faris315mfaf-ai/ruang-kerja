@@ -2,6 +2,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import type { PohonNode } from '@/api/catatan';
+import { ChipMenunggu } from '@/offline/ChipMenunggu';
 import { useTheme } from '@/theme';
 import { Badge, Card, Gradient, Icon, Pressable, Text, type AnyIconName } from '@/ui';
 import type { GradientName } from '@/theme';
@@ -87,7 +88,7 @@ export function PanelPohon({
                 onPress={() => (folder && jumlahAnak > 0 ? onToggle(node.id) : onBuka(node))}
                 scaleTo={1}
                 accessibilityRole="button"
-                accessibilityLabel={`${folder ? 'Folder' : 'Catatan'} ${node.title}${node.invited_only ? ', hanya diundang' : ''}`}
+                accessibilityLabel={`${folder ? 'Folder' : 'Catatan'} ${node.title}${node.invited_only ? ', hanya diundang' : ''}${node.sinkron === 'menunggu' ? ', menunggu sinkron' : node.sinkron === 'gagal' ? ', gagal sinkron' : ''}`}
                 style={s.isi}
               >
                 <Icon name={ikonNode(node, terbuka)} size={24} color={node.preset === 'minutes' ? colors.primary : folder ? colors.accentBlue : colors.muted} />
@@ -98,6 +99,7 @@ export function PanelPohon({
                   <Text variant="meta" numberOfLines={1} style={{ fontSize: 14 }}>
                     {folder ? labelItem(jumlahAnak) : infoDiubah(node)}
                   </Text>
+                  {node.sinkron ? <ChipMenunggu status={node.sinkron} /> : null}
                 </View>
                 {node.invited_only ? <Icon name="lock" size={16} color={colors.muted} /> : null}
                 {node.my_role === 'view' && !folder ? (

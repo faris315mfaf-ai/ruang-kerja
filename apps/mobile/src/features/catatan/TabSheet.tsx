@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { buatCatatan, hapusCatatan, ubahJudul, type CatatanDetail, type TabBaris, type TabDokumen } from '@/api/catatan';
+import { adalahOnline } from '@/offline';
 import { useTheme } from '@/theme';
 import { BottomSheet, Button, Field, Icon, Input, Loading, Pressable, SheetAction, Text, useDialog, useSnackbar } from '@/ui';
 
@@ -59,7 +60,19 @@ export function TabSheet({
     }
   }
 
+  /** Tab hanya bisa dikelola lewat server: saat offline tampilkan "Butuh koneksi" alih-alih permintaan yang gagal. */
+  function perluOnline(aksi: string): boolean {
+    if (adalahOnline()) {
+      return true;
+    }
+    snackbar.show({ message: `Butuh koneksi — ${aksi} tidak bisa dilakukan saat offline.`, variant: 'offline' });
+    return false;
+  }
+
   async function buat(parentId: string, judul: string): Promise<void> {
+    if (!perluOnline('membuat tab')) {
+      return;
+    }
     setSibuk(true);
     try {
       const baru = await buatCatatan({ title: judul, parent_id: parentId });
@@ -74,6 +87,9 @@ export function TabSheet({
 
   async function hapusTab(baris: TabBaris): Promise<void> {
     setMenuBaris(null);
+    if (!perluOnline('menghapus tab')) {
+      return;
+    }
     const ya = await dialog.confirm({
       title: 'Hapus catatan?',
       message: `“${baris.title}” dan riwayat versinya tidak akan tampil lagi. Anda kembali ke dokumen di atasnya.`,
@@ -104,6 +120,9 @@ export function TabSheet({
     const baru = ganti.judul.trim();
     if (baru === '') {
       setGalatGanti('Judul wajib diisi.');
+      return;
+    }
+    if (!perluOnline('mengganti nama tab')) {
       return;
     }
     setSibuk(true);

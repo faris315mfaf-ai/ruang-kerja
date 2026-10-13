@@ -17,6 +17,9 @@ import { NotulensiSheet } from '@/features/catatan/NotulensiSheet';
 import { useAksiBaris } from '@/features/catatan/AksiBaris';
 import { hitungCatatan } from '@/features/catatan/pohon';
 import { useDaftarCatatan } from '@/features/catatan/useDaftarCatatan';
+import { PESAN_DISIMPAN_HP } from '@/offline/fitur/umum';
+import { terapkanPohonCatatan, useOverlayCatatan } from '@/offline/fitur/catatanOverlay';
+import { useSetelahSinkron } from '@/offline/fitur/useSetelahSinkron';
 import { Chip, ChipScroller, EmptyState, ErrorState, Fab, Loading, OfflineBanner, Screen, SearchInput, SubAppBar, useSnackbar } from '@/ui';
 
 export default function LayarDaftarCatatan(): React.JSX.Element {
@@ -25,6 +28,10 @@ export default function LayarDaftarCatatan(): React.JSX.Element {
   const insets = useSafeAreaInsets();
   const snackbar = useSnackbar();
   const d = useDaftarCatatan(wsParam);
+  const ov = useOverlayCatatan();
+  useSetelahSinkron(() => void d.muat(), 'catatan.');
+  // Catatan baru dari HP dan judul yang menunggu sinkron tampil di atas pohon server.
+  const panelTampil = useMemo(() => d.panel.map((p) => ({ ...p, tree: terapkanPohonCatatan(p.tree, ov, p.id, p.personal) })), [d.panel, ov]);
 
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<string | null>(null);
@@ -41,11 +48,11 @@ export default function LayarDaftarCatatan(): React.JSX.Element {
     },
   });
 
-  const bolehBuat = d.panel.filter((p) => p.canCreate);
-  const terlihat = filter === null ? d.panel : d.panel.filter((p) => p.id === filter);
-  const kosongTotal = d.panel.every((p) => p.tree.length === 0);
+  const bolehBuat = panelTampil.filter((p) => p.canCreate);
+  const terlihat = filter === null ? panelTampil : panelTampil.filter((p) => p.id === filter);
+  const kosongTotal = panelTampil.every((p) => p.tree.length === 0);
   const mencari = q.trim().length > 0;
-  const totalPerRuang = useMemo(() => d.panel.map((p) => ({ id: p.id, label: p.personal ? 'Pribadi' : p.key, jumlah: hitungCatatan(p.tree) })), [d.panel]);
+  const totalPerRuang = useMemo(() => panelTampil.map((p) => ({ id: p.id, label: p.personal ? 'Pribadi' : p.key, jumlah: hitungCatatan(p.tree) })), [panelTampil]);
 
   function toggle(id: string): void {
     setTertutup((lama) => {
@@ -101,7 +108,7 @@ export default function LayarDaftarCatatan(): React.JSX.Element {
               />
             ) : (
               <>
-                {wsParam === null && d.panel.length > 1 ? (
+                {wsParam === null && panelTampil.length > 1 ? (
                   <ChipScroller contentStyle={{ paddingHorizontal: 0 }}>
                     <Chip label="Semua" selected={filter === null} onPress={() => setFilter(null)} />
                     {totalPerRuang.map((r) => (
@@ -138,6 +145,9 @@ export default function LayarDaftarCatatan(): React.JSX.Element {
           if (kind === 'folder') {
             snackbar.show({ message: `Folder “${note.title}” dibuat.`, variant: 'ok' });
           } else {
+            if (note.antre) {
+              snackbar.show({ message: PESAN_DISIMPAN_HP, variant: 'info' });
+            }
             router.push(`/catatan/${note.id}`);
           }
         }}

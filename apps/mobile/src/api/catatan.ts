@@ -37,6 +37,8 @@ export interface PohonNode {
   my_role: MyRole;
   can_edit: boolean;
   children: PohonNode[];
+  /** Hanya klien: perubahan di HP belum diterima server (overlay offline). */
+  sinkron?: 'menunggu' | 'gagal';
 }
 
 export interface PohonWorkspace {

@@ -43,6 +43,9 @@ export function StatusSheet({
   } else if (state.kotor) {
     judul = 'Belum tersimpan';
     isi = 'Perubahan akan disimpan otomatis sebentar lagi.';
+  } else if (state.diHp) {
+    judul = 'Tersimpan di HP · menunggu sinkron';
+    isi = 'Suntingan Anda aman di HP dan dikirim otomatis begitu ada internet. Status pengiriman ada di Lainnya › Antrean sinkron.';
   } else {
     const waktu = tersimpanPada ?? (updatedAt ? new Date(updatedAt) : null);
     judul = waktu ? `Tersimpan ${jam(waktu)}` : 'Tersimpan';

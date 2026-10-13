@@ -9,9 +9,18 @@
  * mendapat 409 palsu); isi dikirim sebagai snapshot sehingga ketikan selama
  * permintaan berjalan dikirim pada putaran berikutnya. 409 `rich_note` bukan
  * konflik versi (catatan berformat lengkap → baca-saja).
+ *
+ * Offline (keputusan pemilik 14 Okt 2026): saat tak ada internet — atau masih
+ * ada simpanan catatan ini di antrean — simpanan masuk antrean lokal
+ * (`@/offline/fitur/catatan`) dan sesi menandai `diHp` ("Tersimpan di HP ·
+ * menunggu sinkron"); peristiwa antrean (berhasil/konflik/dibuang) kembali ke
+ * sesi lewat `onCatatanAntrean`. Teks yang menunggu di antrean menang atas
+ * salinan server/cache saat catatan dibuka.
  */
 import { ApiError } from '@/api/client';
-import { ubahIsi, ubahJudul, type CatatanDetail } from '@/api/catatan';
+import type { CatatanDetail } from '@/api/catatan';
+import { hapusItem } from '@/offline';
+import { adaAntreanCatatan, bacaAntreanCatatan, onCatatanAntrean, simpanIsiCatatan, simpanJudulCatatan, type PeristiwaCatatan } from '@/offline/fitur/catatan';
 
 import { createStore } from './store';
 
@@ -32,6 +41,8 @@ export interface SesiState {
   kotor: boolean;
   kaya: boolean;
   catatan: CatatanDetail | null;
+  /** Ada simpanan catatan ini di antrean offline (belum diterima server). */
+  diHp: boolean;
 }
 
 const DEBOUNCE_MS = 1500;
@@ -63,6 +74,7 @@ export class SesiSimpan {
     kotor: false,
     kaya: false,
     catatan: null,
+    diHp: false,
   });
 
   /** Editor yang sedang menampilkan sesi ini (pil global menyembunyikan sesi terpasang). */
@@ -80,9 +92,11 @@ export class SesiSimpan {
   private timerUlang: ReturnType<typeof setTimeout> | null = null;
   private timerBersih: ReturnType<typeof setTimeout> | null = null;
   private dibuang = false;
+  private lepasAntrean: (() => void) | null = null;
 
   constructor(id: string) {
     this.id = id;
+    this.lepasAntrean = onCatatanAntrean((e) => this.dariAntrean(e));
   }
 
   get judulSaatIni(): string {
@@ -110,8 +124,13 @@ export class SesiSimpan {
     ringkasanSesi();
   }
 
-  /** Terapkan keadaan server (muat awal / muat ulang). Menimpa suntingan lokal. */
-  terapkanServer(detail: CatatanDetail): void {
+  /**
+   * Terapkan keadaan server (muat awal / muat ulang). Menimpa suntingan lokal
+   * kecuali teks/judul yang MENUNGGU DI ANTREAN offline (lebih baru daripada
+   * salinan server/cache); `buangAntrean` = "Muat ulang" eksplisit: simpanan
+   * antrean catatan ini dibuang.
+   */
+  terapkanServer(detail: CatatanDetail, opsi?: { buangAntrean?: boolean }): void {
     this.batalkanTimer();
     this.teksTersimpan = detail.body_text ?? '';
     this.teks = this.teksTersimpan;
@@ -121,7 +140,63 @@ export class SesiSimpan {
     this.konflik = false;
     this.kaya = detail.mobile_editable === false;
     this.boleh = detail.can_edit === true;
-    this.terbit({ catatan: detail, status: 'idle', galat: null, judulGalat: null, kaya: this.kaya });
+    let catatan = detail;
+    let ambilAlih = false;
+    const antri = bacaAntreanCatatan(this.id);
+    if (antri !== null) {
+      if (opsi?.buangAntrean === true) {
+        for (const i of [...antri.bermasalah]) {
+          void hapusItem(i.id);
+        }
+      } else if (!this.kaya) {
+        if (antri.teks !== null) {
+          this.teks = antri.teks;
+          // Item yang ditolak server (konflik/gagal) diambil alih editor: simpan ulang dengan versi terbaru.
+          ambilAlih = antri.bermasalah.length > 0;
+          this.teksTersimpan = ambilAlih ? (detail.body_text ?? '') : antri.teks;
+        }
+        if (antri.judul !== null && antri.judul !== detail.title) {
+          this.judulTersimpan = antri.judul;
+          catatan = { ...detail, title: antri.judul };
+        }
+        if (ambilAlih) {
+          for (const i of [...antri.bermasalah]) {
+            void hapusItem(i.id);
+          }
+        }
+      }
+    }
+    this.terbit({ catatan, status: 'idle', galat: null, judulGalat: null, kaya: this.kaya, diHp: antri !== null && !ambilAlih && opsi?.buangAntrean !== true && adaAntreanCatatan(this.id) });
+    if (ambilAlih) {
+      this.jadwalkanSimpan();
+    }
+  }
+
+  /** Peristiwa antrean offline untuk catatan ini (berhasil / konflik / dibuang). */
+  private dariAntrean(e: PeristiwaCatatan): void {
+    if (this.dibuang || e.tipe === 'dibuat' || e.id !== this.id) {
+      return;
+    }
+    const diHp = adaAntreanCatatan(this.id);
+    if (e.tipe === 'sukses') {
+      this.dasar = e.note.updated_at;
+      const lama = this.state.get().catatan;
+      this.terbit({ diHp, catatan: lama ? { ...lama, updated_at: e.note.updated_at } : lama });
+      return;
+    }
+    if (e.tipe === 'dibuang') {
+      this.terbit({ diHp });
+      return;
+    }
+    if (e.galat.kode === 'rich_note') {
+      this.kaya = true;
+      this.terbit({ kaya: true, diHp });
+    } else if (e.galat.status === 409) {
+      this.konflik = true;
+      this.terbit({ status: 'konflik', galat: { status: 409, pesan: e.galat.pesan }, diHp });
+    } else {
+      this.terbit({ status: 'gagal', galat: { status: e.galat.status ?? 0, pesan: e.galat.pesan }, diHp });
+    }
   }
 
   /** Perbarui metadata detail tanpa menyentuh suntingan lokal (mis. setelah pindah/pulihkan). */
@@ -204,10 +279,16 @@ export class SesiSimpan {
         this.judulIngin = null;
         this.terbit({ status: 'menyimpan' });
         try {
-          const hasil = await ubahJudul(this.id, judulIngin);
-          this.judulTersimpan = hasil.title;
-          this.dasar = hasil.updated_at;
-          this.terbit({ catatan: this.gabung(hasil, null), judulGalat: null });
+          const hasil = await simpanJudulCatatan({ id: this.id, judul: judulIngin });
+          if (hasil.antre) {
+            this.judulTersimpan = judulIngin;
+            const lama = this.state.get().catatan;
+            this.terbit({ diHp: true, catatan: lama ? { ...lama, title: judulIngin } : lama, judulGalat: null });
+          } else {
+            this.judulTersimpan = hasil.nilai.title;
+            this.dasar = hasil.nilai.updated_at;
+            this.terbit({ catatan: this.gabung(hasil.nilai, null), judulGalat: null });
+          }
         } catch (err) {
           semuaBerhasil = false;
           this.judulIngin = null;
@@ -225,11 +306,16 @@ export class SesiSimpan {
       const snapshot = this.teks;
       this.terbit({ status: 'menyimpan' });
       try {
-        const hasil = await ubahIsi(this.id, teksKeHtml(snapshot), this.dasar ?? '');
-        this.dasar = hasil.updated_at;
-        this.teksTersimpan = snapshot;
-        this.judulTersimpan = hasil.title;
-        this.terbit({ catatan: this.gabung(hasil, snapshot) });
+        const hasil = await simpanIsiCatatan({ id: this.id, bodyHtml: teksKeHtml(snapshot), teks: snapshot, dasar: this.dasar ?? '', judul: this.judulSaatIni });
+        if (hasil.antre) {
+          this.teksTersimpan = snapshot;
+          this.terbit({ diHp: true });
+        } else {
+          this.dasar = hasil.nilai.updated_at;
+          this.teksTersimpan = snapshot;
+          this.judulTersimpan = hasil.nilai.title;
+          this.terbit({ catatan: this.gabung(hasil.nilai, snapshot) });
+        }
       } catch (err) {
         if (err instanceof ApiError && err.status === 409 && err.code === 'rich_note') {
           // Server menolak menyunting isi berformat lengkap — bukan konflik versi.
@@ -316,6 +402,8 @@ export class SesiSimpan {
   /** Buang sesi dan seluruh suntingan lokal yang belum tersimpan. */
   buang(): void {
     this.dibuang = true;
+    this.lepasAntrean?.();
+    this.lepasAntrean = null;
     this.batalkanTimer();
     registri.delete(this.id);
     ringkasanSesi();

@@ -8,6 +8,8 @@ import { Share, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { detailCatatan, hapusCatatan, pindahCatatan, ubahJudul, type PohonNode } from '@/api/catatan';
+import { adalahOnline } from '@/offline';
+import { eIdSementara } from '@/offline/fitur/tugasBersama';
 import { BottomSheet, Button, Field, Input, SheetAction, Text, useDialog, useSnackbar } from '@/ui';
 
 import { PemilihTujuan } from './PemilihTujuan';
@@ -45,9 +47,25 @@ export function useAksiBaris({
 
   const tutup = useCallback((): void => setLayar(null), []);
 
-  const buka = useCallback((node: PohonNode, ruang: RuangPanel, tree: PohonNode[], bisaBuat: boolean): void => {
-    setLayar({ jenis: 'menu', node, ruang, tree, bisaBuat });
-  }, []);
+  const buka = useCallback(
+    (node: PohonNode, ruang: RuangPanel, tree: PohonNode[], bisaBuat: boolean): void => {
+      if (eIdSementara(node.id)) {
+        snackbar.show({ message: 'Catatan baru ini belum terkirim ke server. Menu aksi tersedia setelah terkirim.', variant: 'info' });
+        return;
+      }
+      setLayar({ jenis: 'menu', node, ruang, tree, bisaBuat });
+    },
+    [snackbar],
+  );
+
+  /** Aksi lewat server: saat offline tampilkan "Butuh koneksi" alih-alih permintaan yang gagal. */
+  function perluOnline(aksi: string): boolean {
+    if (adalahOnline()) {
+      return true;
+    }
+    snackbar.show({ message: `Butuh koneksi — ${aksi} tidak bisa dilakukan saat offline.`, variant: 'offline' });
+    return false;
+  }
 
   async function bagikanTeks(node: PohonNode): Promise<void> {
     try {
@@ -69,6 +87,9 @@ export function useAksiBaris({
         ? `“${node.title}” dan riwayat versinya tidak akan tampil lagi. ${node.children.length} sub-halaman naik satu tingkat.`
         : `“${node.title}” dan riwayat versinya tidak akan tampil lagi.`;
     setLayar(null);
+    if (!perluOnline(folder ? 'menghapus folder' : 'menghapus catatan')) {
+      return;
+    }
     const ya = await dialog.confirm({ title: folder ? 'Hapus folder?' : 'Hapus catatan?', message: pesan, confirmLabel: 'Hapus', destructive: true });
     if (!ya) {
       return;
@@ -96,6 +117,9 @@ export function useAksiBaris({
       setLayar(null);
       return;
     }
+    if (!perluOnline('mengganti nama')) {
+      return;
+    }
     setSibuk(true);
     try {
       await ubahJudul(l.node.id, baru);
@@ -111,6 +135,9 @@ export function useAksiBaris({
   async function simpanPindah(l: Layar): Promise<void> {
     if (tujuan === (l.node.parent_id ?? null)) {
       setLayar(null);
+      return;
+    }
+    if (!perluOnline('memindahkan catatan')) {
       return;
     }
     setSibuk(true);

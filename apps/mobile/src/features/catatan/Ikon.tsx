@@ -34,7 +34,7 @@ export function Spin({ size = 22, color }: { size?: number; color: string }): Re
  * tersimpan = awan + centang hijau, belum tersimpan = awan dicoret + titik
  * kuning, konflik = segitiga peringatan.
  */
-export function IkonStatusSimpan({ status, kotor }: { status: StatusSimpan; kotor: boolean }): React.JSX.Element {
+export function IkonStatusSimpan({ status, kotor, diHp = false }: { status: StatusSimpan; kotor: boolean; diHp?: boolean }): React.JSX.Element {
   const { colors } = useTheme();
   if (status === 'menyimpan') {
     return <Spin color={colors.muted} />;
@@ -47,6 +47,17 @@ export function IkonStatusSimpan({ status, kotor }: { status: StatusSimpan; koto
       <View style={s.tumpuk}>
         <Icon name="cloud-off" size={22} color={colors.muted} />
         <View style={[s.titik, { backgroundColor: colors.warning, borderColor: colors.surface }]} />
+      </View>
+    );
+  }
+  if (diHp) {
+    // Tersimpan di HP, menunggu sinkron: ponsel + centang.
+    return (
+      <View style={s.tumpuk}>
+        <Icon name="smartphone" size={22} color={colors.link} />
+        <View style={s.centang}>
+          <Icon name="check" size={11} color={colors.link} strokeWidth={3} />
+        </View>
       </View>
     );
   }

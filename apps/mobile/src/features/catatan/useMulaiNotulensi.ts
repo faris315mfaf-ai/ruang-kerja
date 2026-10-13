@@ -2,7 +2,8 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { mulaiNotulensi } from '@/api/catatan';
+import { tulisMulaiNotulensi } from '@/offline/fitur/catatan';
+import { PESAN_DISIMPAN_HP } from '@/offline/fitur/umum';
 import { useSnackbar } from '@/ui';
 
 import { pesanGalat } from './AksiBaris';
@@ -25,8 +26,11 @@ export function useMulaiNotulensi(): { mulai: () => Promise<void>; membuat: bool
     }
     setMembuat(true);
     try {
-      const hasil = await mulaiNotulensi();
-      router.push(`/catatan/${hasil.note.id}${hasil.mode === 'catat' ? '?mode=catat' : ''}`);
+      const hasil = await tulisMulaiNotulensi();
+      if (hasil.antre) {
+        snackbar.show({ message: PESAN_DISIMPAN_HP, variant: 'info' });
+      }
+      router.push(`/catatan/${hasil.id}${hasil.mode === 'catat' ? '?mode=catat' : ''}`);
     } catch (err) {
       snackbar.show({
         message: pesanGalat(err, 'Notulensi gagal dibuat. Coba lagi.'),

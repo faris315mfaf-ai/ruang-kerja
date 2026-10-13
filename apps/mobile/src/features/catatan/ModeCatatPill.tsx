@@ -80,7 +80,7 @@ function PilBelumTersimpan({ daftar }: { daftar: RingkasanSesi[] }): React.JSX.E
     ikon = <Icon name="triangle-alert" size={22} color={colors.warning} />;
     jalankan = () => {
       detailCatatan(utama.id)
-        .then((d) => cariSesi(utama.id)?.terapkanServer(d))
+        .then((d) => cariSesi(utama.id)?.terapkanServer(d, { buangAntrean: true }))
         .catch(() => snackbar.show({ message: 'Catatan gagal dimuat ulang. Coba lagi.', variant: 'bad' }));
     };
   } else if (luring) {

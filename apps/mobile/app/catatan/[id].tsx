@@ -29,10 +29,14 @@ import { pasangSesi, sesiUntuk, type SesiSimpan, type SesiState } from '@/featur
 import { infoDiubah, cariNode } from '@/features/catatan/pohon';
 import { useUkuranHuruf } from '@/features/catatan/ukuranHuruf';
 import { jam } from '@/lib/format';
+import { useOnline } from '@/offline';
+import { ChipMenunggu } from '@/offline/ChipMenunggu';
+import { detailLokalCatatan } from '@/offline/fitur/catatan';
+import { eIdSementara, useIdNyata } from '@/offline/fitur/tugasBersama';
 import { font, useTheme } from '@/theme';
 import { Banner, Button, Card, EmptyState, ErrorState, Glass, Icon, ListRow, Loading, Screen, Text, errorKindFromStatus, useDialog, useSnackbar } from '@/ui';
 
-const KOSONG: SesiState = { status: 'idle', tersimpanPada: null, galat: null, judulGalat: null, kotor: false, kaya: false, catatan: null };
+const KOSONG: SesiState = { status: 'idle', tersimpanPada: null, galat: null, judulGalat: null, kotor: false, kaya: false, catatan: null, diHp: false };
 const TIDAK_ADA = (): (() => void) => () => undefined;
 
 type LembarTerbuka = 'status' | 'tab' | 'akses' | 'riwayat' | 'huruf' | 'pindah' | 'selesai' | null;
@@ -51,6 +55,15 @@ export default function LayarCatatan(): React.JSX.Element {
   const { skala } = useUkuranHuruf();
   const { id, mode } = useLocalSearchParams<{ id: string; mode?: string }>();
   const catatId = typeof id === 'string' ? id : null;
+  const online = useOnline();
+  // Catatan baru dari HP (belum ada di server): id sementara → pindah ke id asli begitu terkirim.
+  const sementara = eIdSementara(catatId);
+  const idNyata = useIdNyata(sementara && catatId !== null ? catatId : undefined);
+  useEffect(() => {
+    if (idNyata) {
+      router.replace(`/catatan/${idNyata}` as never);
+    }
+  }, [idNyata]);
 
   const [sesi, setSesi] = useState<SesiSimpan | null>(null);
   const [memuat, setMemuat] = useState(true);
@@ -100,27 +113,37 @@ export default function LayarCatatan(): React.JSX.Element {
   const modeAktif = sesiCatat.diDokumen && sesiCatat.sesi !== null;
 
   const terapkan = useCallback(
-    (detail: CatatanDetail): void => {
+    (detail: CatatanDetail, buangAntrean = false): void => {
       if (sesi === null) {
         return;
       }
-      sesi.terapkanServer(detail);
-      setJudul(detail.title);
-      judulSaatIni.current = detail.title;
-      setTeks(detail.body_text ?? '');
+      sesi.terapkanServer(detail, { buangAntrean });
+      // Teks/judul yang menunggu di antrean offline menang atas salinan server.
+      setJudul(sesi.judulSaatIni);
+      judulSaatIni.current = sesi.judulSaatIni;
+      setTeks(sesi.teks);
     },
     [sesi],
   );
 
-  const muat = useCallback(async (): Promise<void> => {
+  const muat = useCallback(async (buangAntrean = false): Promise<void> => {
     if (catatId === null || sesi === null) {
       return;
     }
     setMemuat(true);
     setGalatMuat(null);
     try {
-      const detail = await detailCatatan(catatId);
-      terapkan(detail);
+      let detail: CatatanDetail;
+      if (eIdSementara(catatId)) {
+        const lokal = detailLokalCatatan(catatId);
+        if (lokal === null) {
+          throw new ApiError({ status: 404, message: 'Catatan baru ini sudah dikirim atau dibuang dari antrean.' });
+        }
+        detail = lokal;
+      } else {
+        detail = await detailCatatan(catatId);
+      }
+      terapkan(detail, buangAntrean);
     } catch (err) {
       const status = err instanceof ApiError ? err.status : 500;
       setGalatMuat({ status, pesan: err instanceof ApiError ? err.message : 'Tidak dapat memuat catatan.' });
@@ -149,6 +172,10 @@ export default function LayarCatatan(): React.JSX.Element {
   // ── Tab dokumen ────────────────────────────────────────────────────────────
   const muatTabDokumen = useCallback(async (): Promise<void> => {
     if (catatId === null) {
+      return;
+    }
+    if (eIdSementara(catatId)) {
+      setGalatTab('Tab dokumen tersedia setelah catatan ini terkirim.');
       return;
     }
     setMemuatTab(true);
@@ -209,7 +236,8 @@ export default function LayarCatatan(): React.JSX.Element {
 
   // ── Konflik 409 ────────────────────────────────────────────────────────────
   const muatUlang = useCallback(async (): Promise<void> => {
-    await muat();
+    // "Muat ulang" eksplisit (konflik): suntingan HP yang menunggu di antrean diganti versi server.
+    await muat(true);
   }, [muat]);
 
   useEffect(() => {
@@ -321,6 +349,19 @@ export default function LayarCatatan(): React.JSX.Element {
     }
   }
 
+  /** Aksi yang hanya bisa lewat server (riwayat, bagikan, pindah, hapus): "Butuh koneksi" alih-alih permintaan yang gagal. */
+  function perluOnline(aksi: string): boolean {
+    if (sementara) {
+      snackbar.show({ message: `${aksi} tersedia setelah catatan ini terkirim ke server.`, variant: 'info' });
+      return false;
+    }
+    if (!online) {
+      snackbar.show({ message: `Butuh koneksi — ${aksi} tidak bisa dilakukan saat offline.`, variant: 'offline' });
+      return false;
+    }
+    return true;
+  }
+
   async function hapusCatatanIni(): Promise<void> {
     if (catatan === null) {
       return;
@@ -358,16 +399,22 @@ export default function LayarCatatan(): React.JSX.Element {
         setTimeout(() => judulRef.current?.focus(), 350);
         break;
       case 'riwayat':
-        setLembar('riwayat');
+        if (perluOnline('Riwayat versi')) {
+          setLembar('riwayat');
+        }
         break;
       case 'bagikan':
-        setLembar('akses');
+        if (perluOnline('Pengaturan akses')) {
+          setLembar('akses');
+        }
         break;
       case 'huruf':
         setLembar('huruf');
         break;
       case 'pindah':
-        setLembar('pindah');
+        if (perluOnline('Memindahkan catatan')) {
+          setLembar('pindah');
+        }
         break;
       case 'teks':
         setLembar(null);
@@ -375,7 +422,9 @@ export default function LayarCatatan(): React.JSX.Element {
         break;
       case 'hapus':
         setLembar(null);
-        void hapusCatatanIni();
+        if (perluOnline('Menghapus catatan')) {
+          void hapusCatatanIni();
+        }
         break;
     }
   }
@@ -413,13 +462,13 @@ export default function LayarCatatan(): React.JSX.Element {
         return;
       }
     }
-    await muat();
+    await muat(sesi !== null && sesi.state.get().kotor);
     setTab(null);
     setGalatTab(null);
   }
 
   // ── Tampilan ───────────────────────────────────────────────────────────────
-  const labelStatus = st.status === 'menyimpan' ? 'Status: menyimpan' : st.status === 'konflik' ? 'Status: konflik versi' : st.status === 'gagal' || st.kotor ? 'Status: belum tersimpan' : 'Status: tersimpan';
+  const labelStatus = st.status === 'menyimpan' ? 'Status: menyimpan' : st.status === 'konflik' ? 'Status: konflik versi' : st.status === 'gagal' || st.kotor ? 'Status: belum tersimpan' : st.diHp ? 'Status: tersimpan di HP, menunggu sinkron' : 'Status: tersimpan';
   const judulBar = judul.trim() !== '' ? judul : (catatan?.title ?? 'Catatan');
   const ukuranIsi = (17 * skala) / 100;
   const tinggiIsi = (26 * skala) / 100;
@@ -443,7 +492,7 @@ export default function LayarCatatan(): React.JSX.Element {
           <>
             {boleh && !kaya ? (
               <TombolBar label={labelStatus} onPress={() => setLembar('status')}>
-                <IkonStatusSimpan status={st.status} kotor={st.kotor} />
+                <IkonStatusSimpan status={st.status} kotor={st.kotor} diHp={st.diHp} />
               </TombolBar>
             ) : null}
             <TombolBar label="Tab dokumen" onPress={() => setLembar('tab')}>
@@ -563,6 +612,7 @@ export default function LayarCatatan(): React.JSX.Element {
               <Text variant="meta" numberOfLines={1}>
                 {meta}
               </Text>
+              {st.diHp && st.status !== 'konflik' ? <ChipMenunggu teks="Tersimpan di HP · menunggu sinkron" /> : null}
             </View>
 
             {bolehIsi ? (
