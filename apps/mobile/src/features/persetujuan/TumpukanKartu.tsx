@@ -83,10 +83,17 @@ function KartuAtas({
       if (posisi > lebar * AMBANG || (lempar && posisi > 0)) {
         if (kurangiGerak) {
           x.set(lebar * 1.4);
+          scheduleOnRN(selesai, 'setujui');
         } else {
-          x.set(withTiming(lebar * 1.4, { duration: motion.base }));
+          // Kartu terbang keluar dulu, baru induk mengeluarkannya dari antrean.
+          x.set(
+            withTiming(lebar * 1.4, { duration: motion.base }, (beres) => {
+              if (beres) {
+                scheduleOnRN(selesai, 'setujui');
+              }
+            }),
+          );
         }
-        scheduleOnRN(selesai, 'setujui');
       } else if (posisi < -lebar * AMBANG || (lempar && posisi < 0)) {
         x.set(kurangiGerak ? 0 : withSpring(0, PEGAS));
         scheduleOnRN(selesai, 'tolak');
