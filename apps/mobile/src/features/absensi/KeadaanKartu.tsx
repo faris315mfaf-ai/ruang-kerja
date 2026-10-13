@@ -8,8 +8,9 @@ import { durasiMenit, jam, tanggalDariYMD } from '@/lib/format';
 import { useTheme } from '@/theme';
 import { Badge, Banner, Button, Card, Divider, Icon, IconTile, ListRow, Pressable, Text } from '@/ui';
 
+import { labelPulangTertutup } from './jendela';
 import { menitAntara } from './waktu';
-import { bukaPengajuanTerkait } from './koreksi';
+import { bukaKoreksiHari, bukaPengajuanTerkait } from './koreksi';
 
 /** Rencana kerja baca-saja (poin bernomor). */
 export function RencanaBacaSaja({ poin, judul }: { poin: string[]; judul: string }): React.JSX.Element | null {
@@ -61,12 +62,15 @@ export function KartuSedangBekerja({
   sekarang,
   jamAbsenKembali,
   onPulangAwal,
+  fasePulang = null,
 }: {
   state: KeadaanAbsen;
   data: TodayAttendance;
   sekarang: Date;
   jamAbsenKembali: string | null;
   onPulangAwal: () => void;
+  /** Jam pulang perusahaan sedang tertutup (`sebelum` dibuka / `sesudah` ditutup). */
+  fasePulang?: 'sebelum' | 'sesudah' | null;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const day = data.today.day;
@@ -94,7 +98,18 @@ export function KartuSedangBekerja({
         {jamAbsenKembali ? (
           <Banner tone="info" message={`Tombol Absen di tab tengah kembali pukul ${jamAbsenKembali}, satu jam sebelum jam pulang. Sampai saat itu Anda masuk dari kartu ini atau Beranda.`} />
         ) : null}
-        <Button title="Check-out lebih awal" variant="outline" icon="log-out" onPress={onPulangAwal} />
+        {fasePulang ? <Banner tone="warn" icon="clock-alert" title={labelPulangTertutup(state, fasePulang)} message={state.checkOutBlockedReason ?? ''} /> : null}
+        <Button
+          title="Check-out lebih awal"
+          variant="outline"
+          icon="log-out"
+          disabled={fasePulang !== null}
+          disabledReason={fasePulang ? state.checkOutBlockedReason ?? undefined : undefined}
+          onPress={onPulangAwal}
+        />
+        {fasePulang === 'sesudah' ? (
+          <ListRow icon="clipboard-pen-line" iconTone="blue" title="Ajukan koreksi absensi" subtitle="HR memasukkan jam pulang manual" onPress={() => bukaKoreksiHari()} />
+        ) : null}
       </Card>
       {(day?.workPlan?.length ?? 0) > 0 ? (
         <Card variant="flat">
@@ -127,9 +142,12 @@ export function KartuSelesai({ data, state }: { data: TodayAttendance; state: Ke
         {day?.checkIn?.methodLabel ? <BarisRingkas label="Metode" nilai={day.checkIn.methodLabel} /> : null}
         {day && day.lateMinutes > 0 ? <BarisRingkas label="Terlambat" nilai={durasiMenit(day.lateMinutes)} /> : null}
       </Card>
-      <Card>
-        <RencanaBacaSaja poin={day?.workPlan ?? []} judul="Rencana kerja pagi tadi" />
-      </Card>
+      {(day?.workPlan?.length ?? 0) > 0 || (day?.workReport?.length ?? 0) > 0 ? (
+        <Card style={{ gap: 16 }}>
+          <RencanaBacaSaja poin={day?.workPlan ?? []} judul="Rencana kerja pagi tadi" />
+          <RencanaBacaSaja poin={day?.workReport ?? []} judul="Laporan kerja sore ini" />
+        </Card>
+      ) : null}
       <Card style={{ gap: 12 }}>
         <View style={[s.baris, { gap: 12 }]}>
           <IconTile icon="clipboard-pen-line" tone="warn" />
@@ -154,6 +172,27 @@ export function KartuSelesai({ data, state }: { data: TodayAttendance; state: Ke
         </Text>
       </Pressable>
     </>
+  );
+}
+
+/** Check-in sudah ditutup (jam absen perusahaan): tidak ada tombol mati — jalan keluarnya koreksi oleh HR. */
+export function KartuJendelaTutup({ state }: { state: KeadaanAbsen }): React.JSX.Element {
+  return (
+    <Card style={{ gap: 12 }}>
+      <View style={[s.baris, { gap: 12 }]}>
+        <IconTile icon="clock-alert" tone="warn" size={52} />
+        <Text variant="title" weight={700} style={{ flex: 1 }}>
+          Absen masuk sudah ditutup
+        </Text>
+      </View>
+      <Text variant="body" tone="muted" style={{ fontSize: 15, lineHeight: 22 }}>
+        {state.message || 'Jam absen masuk hari ini sudah lewat.'}
+      </Text>
+      <Text variant="meta" style={{ fontSize: 14, lineHeight: 20 }}>
+        Sudah telanjur masuk kerja? Ajukan koreksi absensi, HR akan memasukkan jam masuk secara manual.
+      </Text>
+      <Button title="Ajukan koreksi absensi" variant="tonal" icon="clipboard-pen-line" onPress={() => bukaKoreksiHari()} />
+    </Card>
   );
 }
 

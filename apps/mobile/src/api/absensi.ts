@@ -28,6 +28,7 @@ export type KodeKeadaan =
   | 'holiday'
   | 'non_working_day'
   | 'too_early'
+  | 'window_closed'
   | 'no_office_location'
   | 'not_checked_in';
 
@@ -36,6 +37,18 @@ export interface PusatTab {
   badge: boolean;
   /** Instan perubahan berikutnya (jam pulang − 60 menit); pasang timer, tanpa polling. */
   flipsAt: string | null;
+}
+
+/** Satu rentang jam absen perusahaan ("HH:MM", zona kantor); batas yang kosong = tanpa batas. */
+export interface RentangJam {
+  from: string | null;
+  until: string | null;
+}
+
+/** Jam absen perusahaan; `null` bila kedua batas kosong (perilaku lama). */
+export interface JendelaAbsen {
+  checkIn: RentangJam | null;
+  checkOut: RentangJam | null;
 }
 
 export interface PengajuanHari {
@@ -68,11 +81,19 @@ export interface KeadaanAbsen {
   locationName: string | null;
   canCheckIn: boolean;
   canCheckOut: boolean;
+  /** Alasan Indonesia bila absen pulang tertutup (di luar jam pulang), selain itu null. */
+  checkOutBlockedReason: string | null;
+  /** Jam absen perusahaan (server lama: tidak ada). */
+  windows?: JendelaAbsen;
   consent: { granted: boolean; needsRenewal: boolean; version: string };
   center: PusatTab;
 }
 
-export type HariIni = TodayAttendance & { state: KeadaanAbsen | null };
+export type HariIni = TodayAttendance & {
+  state: KeadaanAbsen | null;
+  /** `today.windowsApply` false = shift lintas tengah malam (jam absen tidak berlaku). */
+  today: { windowsApply?: boolean };
+};
 
 /** GET /absensi/hari-ini (bentuk lama + `state`). */
 export function absensiHariIniLengkap(): Promise<HariIni> {
@@ -93,7 +114,10 @@ export interface KirimGps {
   selfieUri: string;
   deviceIdHash: string;
   note?: string | null;
+  /** Rencana kerja (check-in); diabaikan untuk check-out. */
   workPlan?: string[];
+  /** Laporan kerja (check-out, wajib ≥ 1 poin); diabaikan untuk check-in. */
+  workReport?: string[];
 }
 
 /** POST /absensi/check-in | /check-out — multipart dengan selfie (GPS atau WFH; server menurunkan metode). */
@@ -111,8 +135,14 @@ export async function kirimGps(p: KirimGps): Promise<AttendanceResult> {
   if (p.note && p.note.trim() !== '') {
     form.append('note', p.note.trim());
   }
-  for (const poin of p.workPlan ?? []) {
-    form.append('work_plan[]', poin);
+  if (p.arah === 'masuk') {
+    for (const poin of p.workPlan ?? []) {
+      form.append('work_plan[]', poin);
+    }
+  } else {
+    for (const poin of p.workReport ?? []) {
+      form.append('work_report[]', poin);
+    }
   }
   const data = await apiRequest<{ result: AttendanceResult }>(p.arah === 'masuk' ? 'absensi/check-in' : 'absensi/check-out', {
     method: 'POST',
@@ -161,7 +191,11 @@ export interface KonteksTolak {
   radius_m?: number;
   accuracy_m?: number;
   location?: { name?: string; latitude?: number; longitude?: number; radius_m?: number } | null;
-  opens_at?: string;
+  opens_at?: string | null;
+  /** Jam absen: `before` = belum dibuka, `after` = sudah ditutup. */
+  phase?: 'before' | 'after';
+  from?: string | null;
+  until?: string | null;
   at?: string;
   status?: string;
 }
@@ -184,8 +218,9 @@ export function jadikanGagal(err: unknown): GagalAbsen {
     if (err.status === 429) {
       return { reason: 'batas', message: 'Terlalu banyak percobaan. Tunggu satu menit lalu coba lagi.', status: 429, context: {}, retryAfter: err.retryAfter };
     }
+    const adaLaporan = Object.keys(err.errors).some((k) => k === 'work_report' || k.startsWith('work_report.'));
     return {
-      reason: err.reason ?? (err.errors.note !== undefined ? 'note_required' : 'lain'),
+      reason: err.reason ?? (err.errors.note !== undefined ? 'note_required' : adaLaporan ? 'work_report_required' : 'lain'),
       message: err.firstValidationError ?? err.message,
       status: err.status,
       context: (err.context ?? {}) as KonteksTolak,
@@ -235,6 +270,7 @@ export interface SelHari extends RecapDayCell {
   checkOutAt: string | null;
   locationLabel: string | null;
   workPlan: string[];
+  workReport: string[];
   note: string | null;
   flags: Penanda[];
   isCorrected: boolean;

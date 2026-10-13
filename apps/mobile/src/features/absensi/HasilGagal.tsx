@@ -15,8 +15,9 @@ import { jam, jarakMeter, tanggalPendek } from '@/lib/format';
 import { radius, useTheme } from '@/theme';
 import { Banner, Button, Card, Field, Input, ListRow, Screen, SubAppBar, Text, type AnyIconName } from '@/ui';
 
+import { RencanaKerja } from './RencanaKerja';
 import { jalankanPermintaan } from './kirim';
-import { absenStore, type HasilAbsen } from './store';
+import { absenStore, useAbsenStore, type HasilAbsen } from './store';
 import { bukaDinasLuar, bukaKoreksiHari, bukaPengajuanTerkait } from './koreksi';
 
 type Gagal = Extract<HasilAbsen, { jenis: 'gagal' }>;
@@ -100,6 +101,9 @@ const KONTEN: Record<string, Konten> = {
   too_early: { judul: 'Belum waktunya check-in' },
   no_office_location: { judul: 'Lokasi kantor belum diatur' },
   note_required: { judul: 'Catatan diperlukan' },
+  work_report_required: { judul: 'Laporan kerja diperlukan' },
+  check_in_window: { judul: 'Di luar jam absen masuk' },
+  check_out_window: { judul: 'Di luar jam absen pulang' },
   jaringan: { judul: 'Koneksi terputus' },
   batas: { judul: 'Terlalu banyak percobaan' },
   qr_expired: { judul: 'Kode QR kedaluwarsa' },
@@ -133,7 +137,10 @@ export function HasilGagal({ h, onKembali }: { h: Gagal; onKembali: () => void }
   const judulBar = masuk ? 'Check-in belum bisa' : 'Check-out belum bisa';
   const permintaan = absenStore.get().permintaan;
 
-  const kirimUlang = async (catatanBaru?: string): Promise<void> => {
+  const st = useAbsenStore();
+  const laporanValid = st.laporan.map((p) => p.teks.trim()).filter((t) => t !== '');
+
+  const kirimUlang = async (catatanBaru?: string, laporanBaru?: string[]): Promise<void> => {
     if (!permintaan || mengulang) {
       onKembali();
       return;
@@ -143,7 +150,7 @@ export function HasilGagal({ h, onKembali }: { h: Gagal; onKembali: () => void }
       absenStore.setCatatan(catatanBaru);
     }
     const jadwal = absenStore.get().jadwal ?? { batasTerlambat: null, jadwalMulai: null, jamPulangTerjadwal: null, masukPada: null, masukLokasi: null };
-    await jalankanPermintaan({ ...permintaan, catatan: catatanBaru ?? permintaan.catatan }, jadwal);
+    await jalankanPermintaan({ ...permintaan, catatan: catatanBaru ?? permintaan.catatan, workReport: laporanBaru ?? permintaan.workReport }, jadwal);
     setMengulang(false);
   };
 
@@ -216,6 +223,44 @@ export function HasilGagal({ h, onKembali }: { h: Gagal; onKembali: () => void }
         </>
       );
       break;
+    case 'work_report_required':
+      badan = (
+        <>
+          <Banner tone="bad" title={konten.judul} message={g.message || 'Laporan kerja wajib diisi sebelum absen pulang.'} />
+          <RencanaKerja
+            jenis="laporan"
+            galat={laporanValid.length === 0 ? g.message : null}
+            poin={st.laporan}
+            ubah={absenStore.ubahLaporan}
+            tambah={absenStore.tambahLaporan}
+            hapus={absenStore.hapusLaporan}
+            disabled={mengulang}
+          />
+          <Button title="Kirim ulang" size="lg" disabled={laporanValid.length === 0} loading={mengulang} onPress={() => void kirimUlang(undefined, laporanValid)} />
+          <Button title="Kembali ke absensi" variant="quiet" onPress={onKembali} />
+        </>
+      );
+      break;
+    case 'check_in_window':
+    case 'check_out_window': {
+      const ditutup = g.context.phase === 'after';
+      badan = (
+        <>
+          <Banner tone="warn" icon="clock-alert" title={konten.judul} message={g.message} />
+          {ditutup ? (
+            <Card variant="flat">
+              <ListRow icon="clipboard-pen-line" iconTone="blue" title="Ajukan koreksi absensi" subtitle="HR memasukkan jam manual" onPress={() => bukaKoreksiHari()} />
+            </Card>
+          ) : (
+            <Text variant="meta" style={{ fontSize: 14, lineHeight: 20 }}>
+              Isian dan foto Anda tidak hilang. Kembali ke layar Absen dan kirim saat jam absen sudah dibuka.
+            </Text>
+          )}
+          <Button title="Kembali ke absensi" variant="outline" size="lg" onPress={onKembali} />
+        </>
+      );
+      break;
+    }
     default:
       badan = (
         <>

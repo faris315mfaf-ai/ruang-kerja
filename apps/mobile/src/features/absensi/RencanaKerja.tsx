@@ -1,6 +1,7 @@
 /**
- * Rencana kerja hari ini: 1–8 poin bernomor (maks. 300 karakter), baris punya
- * kunci stabil. Terkirim ke grup WhatsApp manajemen dan menjadi tugas pribadi.
+ * Poin bernomor untuk absen: "Rencana kerja" (check-in) dan "Laporan kerja"
+ * (check-out), 1–8 poin (maks. 300 karakter), baris punya kunci stabil. Keduanya
+ * terkirim ke grup WhatsApp manajemen; rencana juga menjadi tugas pribadi.
  */
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -10,7 +11,30 @@ import { Badge, Card, Icon, IconButton, Input, Pressable, Text } from '@/ui';
 
 import { type PoinRencana } from './store';
 
+const TEKS = {
+  rencana: {
+    judul: 'Rencana kerja hari ini',
+    petunjuk: null,
+    contoh: 'Mis. Selesaikan laporan mingguan',
+    label: 'Poin rencana kerja',
+    tambah: 'Tambah poin rencana kerja',
+    penuh: 'Maksimal 8 poin rencana kerja.',
+    bantu: 'Terkirim ke grup WhatsApp manajemen. Tiap poin juga menjadi tugas pribadi hari ini.',
+  },
+  laporan: {
+    judul: 'Laporan kerja hari ini',
+    petunjuk: 'Apa yang sudah Anda kerjakan hari ini?',
+    contoh: 'Mis. Menyelesaikan laporan mingguan',
+    label: 'Poin laporan kerja',
+    tambah: 'Tambah poin laporan kerja',
+    penuh: 'Maksimal 8 poin laporan kerja.',
+    bantu: 'Ikut terkirim ke grup WhatsApp manajemen bersama foto selfie.',
+  },
+} as const;
+
 export function RencanaKerja({
+  jenis = 'rencana',
+  galat = null,
   poin,
   ubah,
   tambah,
@@ -19,25 +43,32 @@ export function RencanaKerja({
   wajib = true,
   disabled = false,
 }: {
+  /** `rencana` = check-in, `laporan` = check-out. */
+  jenis?: 'rencana' | 'laporan';
+  /** Galat validasi server (mis. `errors.work_report`), tampil di bawah isian. */
+  galat?: string | null;
   poin: PoinRencana[];
   ubah: (id: string, teks: string) => void;
   tambah: () => string | null;
   hapus: (id: string) => void;
-  onLihatPesan: () => void;
+  /** Tanpa ini tautan "Lihat pesan" disembunyikan. */
+  onLihatPesan?: () => void;
   wajib?: boolean;
   disabled?: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const [fokusId, setFokusId] = useState<string | null>(null);
   const penuh = poin.length >= 8;
+  const t = TEKS[jenis];
 
   return (
     <Card style={{ gap: 12 }}>
       <View style={s.kepala}>
         <View style={{ flex: 1, gap: 2 }}>
           <Text variant="title" weight={700}>
-            Rencana kerja hari ini
+            {t.judul}
           </Text>
+          {t.petunjuk ? <Text variant="body" tone="muted" style={{ fontSize: 15, lineHeight: 22 }}>{t.petunjuk}</Text> : null}
           <Text variant="meta">{wajib ? 'Wajib · ' : 'Opsional · '}1–8 poin, maks. 300 karakter</Text>
         </View>
         <Badge tone={wajib ? 'warning' : 'neutral'} dot={false}>
@@ -65,12 +96,13 @@ export function RencanaKerja({
               }
               ubah(p.id, t);
             }}
-            placeholder={i === 0 ? 'Mis. Selesaikan laporan mingguan' : `Poin ${i + 1}`}
+            placeholder={i === 0 ? t.contoh : `Poin ${i + 1}`}
+            invalid={galat !== null && i === 0}
             maxLength={300}
             multiline
             editable={!disabled}
             autoFocus={fokusId === p.id}
-            accessibilityLabel={`Poin rencana kerja ${i + 1}`}
+            accessibilityLabel={`${t.label} ${i + 1}`}
             style={{ flex: 1, minHeight: 52, paddingVertical: 12, textAlignVertical: 'center' }}
           />
           {poin.length > 1 ? (
@@ -79,12 +111,18 @@ export function RencanaKerja({
         </View>
       ))}
 
+      {galat ? (
+        <Text variant="meta" tone="danger" accessibilityLiveRegion="polite" style={{ fontSize: 14, lineHeight: 20 }}>
+          {galat}
+        </Text>
+      ) : null}
+
       {!penuh ? (
         <Pressable
           onPress={() => setFokusId(tambah())}
           disabled={disabled}
           accessibilityRole="button"
-          accessibilityLabel="Tambah poin rencana kerja"
+          accessibilityLabel={t.tambah}
           style={[s.tambah, { borderColor: colors.borderStrong }]}
         >
           <Icon name="plus" size={20} color={colors.link} />
@@ -93,21 +131,23 @@ export function RencanaKerja({
           </Text>
         </Pressable>
       ) : (
-        <Text variant="meta">Maksimal 8 poin rencana kerja.</Text>
+        <Text variant="meta">{t.penuh}</Text>
       )}
 
       <View style={s.bantu}>
         <Icon name="message-circle" size={18} color={colors.muted} />
         <Text variant="meta" style={{ flex: 1, fontSize: 14, lineHeight: 20 }}>
-          Terkirim ke grup WhatsApp manajemen. Tiap poin juga menjadi tugas pribadi hari ini.
+          {t.bantu}
         </Text>
       </View>
-      <Pressable onPress={onLihatPesan} accessibilityRole="button" accessibilityLabel="Lihat pesan yang akan dikirim" style={s.lihat}>
-        <Icon name="eye" size={18} color={colors.link} />
-        <Text variant="label" weight={700} tone="link">
-          Lihat pesan yang akan dikirim
-        </Text>
-      </Pressable>
+      {onLihatPesan ? (
+        <Pressable onPress={onLihatPesan} accessibilityRole="button" accessibilityLabel="Lihat pesan yang akan dikirim" style={s.lihat}>
+          <Icon name="eye" size={18} color={colors.link} />
+          <Text variant="label" weight={700} tone="link">
+            Lihat pesan yang akan dikirim
+          </Text>
+        </Pressable>
+      ) : null}
     </Card>
   );
 }

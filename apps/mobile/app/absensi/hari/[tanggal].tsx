@@ -184,9 +184,10 @@ export default function LayarDetailHari(): React.JSX.Element {
             </>
           )}
 
-          {hari.workPlan.length > 0 ? (
-            <Card>
+          {hari.workPlan.length > 0 || (hari.workReport ?? []).length > 0 ? (
+            <Card style={{ gap: 16 }}>
               <RencanaBacaSaja poin={hari.workPlan} judul="Rencana kerja" />
+              <RencanaBacaSaja poin={hari.workReport ?? []} judul="Laporan kerja" />
             </Card>
           ) : null}
 

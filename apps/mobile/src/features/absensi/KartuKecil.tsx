@@ -114,7 +114,7 @@ export function SheetPesanWa({ visible, onClose, pesan }: { visible: boolean; on
   return (
     <BottomSheet visible={visible} onClose={onClose} title="Pesan ke grup manajemen" scrollable>
       <Text variant="body" tone="muted" style={{ fontSize: 15, lineHeight: 22 }}>
-        Dikirim otomatis setelah check-in berhasil lewat gateway WhatsApp. Isinya salinan, bukan rekaman resmi.
+        Dikirim otomatis bersama foto selfie setelah check-in atau check-out berhasil lewat gateway WhatsApp. Isinya salinan, bukan rekaman resmi.
       </Text>
       <View style={[s.gelembung, { backgroundColor: colors.successSoft, borderColor: colors.border }]}>
         <Text variant="body" style={{ fontSize: 15, lineHeight: 22, color: colors.text }} selectable>

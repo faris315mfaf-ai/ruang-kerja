@@ -9,6 +9,8 @@ import { deviceIdHash } from '@/lib/device';
 import { absenStore, type Arah, type HasilAbsen, type InfoJadwal, type Metode, type PermintaanTerakhir, type TitikKirim } from './store';
 
 export async function jalankanPermintaan(p: PermintaanTerakhir, jadwal: InfoJadwal): Promise<boolean> {
+  // Simpan agar "Kirim ulang" dan peta luar radius di layar hasil memakai data yang sama.
+  absenStore.setPermintaan(p);
   try {
     const hasil = await kirimGps({
       arah: p.arah,
@@ -20,6 +22,7 @@ export async function jalankanPermintaan(p: PermintaanTerakhir, jadwal: InfoJadw
       deviceIdHash: await deviceIdHash(),
       note: p.catatan,
       workPlan: p.arah === 'masuk' ? p.workPlan : undefined,
+      workReport: p.arah === 'pulang' ? p.workReport : undefined,
     });
     absenStore.setHasil({
       jenis: 'sukses',
@@ -27,6 +30,7 @@ export async function jalankanPermintaan(p: PermintaanTerakhir, jadwal: InfoJadw
       metode: p.metode,
       hasil,
       jumlahRencana: p.workPlan.length,
+      jumlahLaporan: p.workReport.length,
       catatan: p.catatan,
       ...jadwal,
     });
@@ -49,7 +53,7 @@ export async function jalankanQr(arah: Arah, payload: string, titik: TitikKirim 
       accuracy: titik?.accuracy,
       mockLocation: titik?.mocked,
     });
-    const sukses: HasilAbsen = { jenis: 'sukses', arah, metode, hasil, jumlahRencana: 0, catatan: '', ...jadwal };
+    const sukses: HasilAbsen = { jenis: 'sukses', arah, metode, hasil, jumlahRencana: 0, jumlahLaporan: 0, catatan: '', ...jadwal };
     absenStore.setHasil(sukses);
     absenStore.selesaiKirim();
     return true;

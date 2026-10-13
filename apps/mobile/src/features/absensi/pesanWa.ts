@@ -10,7 +10,7 @@ export interface InputPesanWa {
   nama: string;
   waktu: Date;
   lokasi: string;
-  /** Poin rencana (kosong = absen lewat QR/kiosk). */
+  /** Poin rencana (masuk) atau laporan kerja (pulang); kosong = absen lewat QR/kiosk. */
   poin?: string[];
   /** Durasi kerja (menit) untuk pesan pulang. */
   durasiKerjaMenit?: number | null;
@@ -25,16 +25,15 @@ export function susunPesanWa(p: InputPesanWa): string {
     `Jam: ${jam(p.waktu)}`,
     `Lokasi: ${p.lokasi}`,
   ];
-  if (masuk) {
-    const poin = (p.poin ?? []).map((t) => t.trim()).filter((t) => t !== '');
-    baris.push('', '📝 Rencana/Laporan Kerja Hari Ini:');
-    if (poin.length === 0) {
-      baris.push('_(tidak diisi — absen lewat QR/kiosk)_');
-    } else {
-      poin.forEach((t, i) => baris.push(`${i + 1}. ${t}`));
-    }
+  const poin = (p.poin ?? []).map((t) => t.trim()).filter((t) => t !== '');
+  baris.push('', masuk ? '📝 Rencana Kerja:' : '📝 Laporan Kerja:');
+  if (poin.length === 0) {
+    baris.push('_(tidak diisi — absen lewat QR/kiosk)_');
   } else {
-    baris.push(`Durasi kerja: ${durasiMenit(p.durasiKerjaMenit ?? null)}`);
+    poin.forEach((t, i) => baris.push(`${i + 1}. ${t}`));
+  }
+  if (!masuk) {
+    baris.push('', `Durasi kerja: ${durasiMenit(p.durasiKerjaMenit ?? null)}`);
   }
   return baris.join('\n');
 }

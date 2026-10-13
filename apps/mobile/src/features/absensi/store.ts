@@ -1,6 +1,6 @@
 /**
  * Keadaan form Absen yang dipakai bersama layar Absen (tab) dan layar anak
- * (selfie, pemindai QR, hasil): metode, rencana kerja, catatan, selfie, hasil
+ * (selfie, pemindai QR, hasil): metode, rencana kerja (masuk), laporan kerja (pulang), catatan, selfie, hasil
  * terakhir. Disimpan di memori (satu proses); dikosongkan saat pengguna ganti
  * akun. Tidak pernah menulis koordinat/selfie ke log atau penyimpanan.
  */
@@ -41,6 +41,8 @@ export interface PermintaanTerakhir {
   selfieUri: string;
   catatan: string;
   workPlan: string[];
+  /** Laporan kerja (check-out GPS/WFH); kosong untuk check-in. */
+  workReport: string[];
   /** Ringkasan lokasi untuk layar hasil (mis. jarak ke titik). */
   jarakM: number | null;
 }
@@ -62,6 +64,8 @@ export type HasilAbsen =
       metode: Metode;
       hasil: AttendanceResult;
       jumlahRencana: number;
+      /** Jumlah poin laporan kerja yang terkirim saat check-out. */
+      jumlahLaporan: number;
       catatan: string;
     } & InfoJadwal
   | { jenis: 'gagal'; arah: Arah; metode: Metode; gagal: GagalAbsen; diterimaPada: number; retryQr: boolean };
@@ -70,6 +74,8 @@ interface State {
   userId: string | null;
   metode: Metode;
   poin: PoinRencana[];
+  /** Laporan kerja pulang (hanya di memori, tidak disimpan ke penyimpanan). */
+  laporan: PoinRencana[];
   catatan: string;
   selfie: Selfie | null;
   hasil: HasilAbsen | null;
@@ -92,6 +98,7 @@ function awal(userId: string | null): State {
     userId,
     metode: 'gps',
     poin: [poinBaru()],
+    laporan: [poinBaru()],
     catatan: '',
     selfie: null,
     hasil: null,
@@ -136,6 +143,16 @@ export const absenStore = {
     return baru.id;
   },
   hapusPoin: (id: string): void => set((s) => ({ poin: s.poin.length > 1 ? s.poin.filter((p) => p.id !== id) : s.poin })),
+  ubahLaporan: (id: string, teks: string): void => set((s) => ({ laporan: s.laporan.map((p) => (p.id === id ? { ...p, teks } : p)) })),
+  tambahLaporan(): string | null {
+    if (state.laporan.length >= 8) {
+      return null;
+    }
+    const baru = poinBaru();
+    set((s) => ({ laporan: [...s.laporan, baru] }));
+    return baru.id;
+  },
+  hapusLaporan: (id: string): void => set((s) => ({ laporan: s.laporan.length > 1 ? s.laporan.filter((p) => p.id !== id) : s.laporan })),
   setCatatan: (catatan: string): void => set({ catatan }),
   setSelfie: (selfie: Selfie | null): void => set({ selfie }),
   setHasil: (hasil: HasilAbsen | null): void => set({ hasil }),
@@ -145,7 +162,7 @@ export const absenStore = {
   setPulangAwal: (pulangAwal: boolean): void => set({ pulangAwal }),
   /** Setelah kirim berhasil: bersihkan isian hari ini. */
   selesaiKirim(): void {
-    set({ selfie: null, poin: [poinBaru()], catatan: '', permintaan: null, pulangAwal: false });
+    set({ selfie: null, poin: [poinBaru()], laporan: [poinBaru()], catatan: '', permintaan: null, pulangAwal: false });
   },
 };
 

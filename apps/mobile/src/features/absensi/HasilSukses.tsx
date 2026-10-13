@@ -93,6 +93,7 @@ function susunVarian(h: Sukses): Varian {
     pil: cepat ? `Pulang cepat ${r.earlyLeaveMinutes} menit` : `Sampai jumpa · Durasi kerja ${durasiSingkat(r.workMinutes)}`,
     baris,
     catatan: r.isSuspicious ? 'Absensi tetap tercatat. Sinyal lokasi atau perangkat tidak biasa, jadi HR mungkin meninjaunya.' : undefined,
+    tip: h.jumlahLaporan > 0 ? `${h.jumlahLaporan} poin laporan kerja tersimpan dan ikut terkirim ke grup manajemen bersama foto.` : undefined,
     laporan: !cepat,
     koreksi: cepat,
   };

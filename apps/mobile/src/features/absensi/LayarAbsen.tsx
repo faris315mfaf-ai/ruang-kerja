@@ -7,7 +7,7 @@
  */
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Keyboard, StyleSheet, View } from 'react-native';
+import { Dimensions, Keyboard, StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { absensiHariIniLengkap, type HariIni, type KeadaanAbsen } from '@/api/absensi';
@@ -41,11 +41,12 @@ import {
 import { KartuJam } from './KartuJam';
 import { KartuLokasi } from './KartuLokasi';
 import { DaftarPrasyarat, KartuSelfie, SheetPesanWa, type StatusSyarat } from './KartuKecil';
-import { KartuSedangBekerja, KartuSelesai, KartuTidakTersedia, RencanaBacaSaja } from './KeadaanKartu';
+import { KartuJendelaTutup, KartuSedangBekerja, KartuSelesai, KartuTidakTersedia, RencanaBacaSaja } from './KeadaanKartu';
 import { GalatLokasi, PeringatanDini } from './PeringatanLokasi';
 import { RencanaKerja } from './RencanaKerja';
 import { SwipeToConfirm } from './SwipeToConfirm';
 import { lokasiTerdekat } from './geo';
+import { fasePulang, labelPulangTertutup } from './jendela';
 import { jalankanPermintaan } from './kirim';
 import { lokasiPesan, susunPesanWa } from './pesanWa';
 import { absenStore, useAbsenStore, type InfoJadwal, type Metode } from './store';
@@ -59,26 +60,27 @@ const OPSI_METODE: { value: Metode; label: string }[] = [
   { value: 'wfh', label: 'WFH' },
 ];
 
-function useKeyboardTampil(): boolean {
-  const [tampil, setTampil] = useState(false);
+/** Tinggi papan ketik (px layout, 0 = tersembunyi). */
+function useKeyboardTinggi(): number {
+  const [tinggi, setTinggi] = useState(0);
   useEffect(() => {
-    const a = Keyboard.addListener('keyboardDidShow', () => setTampil(true));
-    const b = Keyboard.addListener('keyboardDidHide', () => setTampil(false));
+    const a = Keyboard.addListener('keyboardDidShow', (e) => setTinggi(Math.max(e.endCoordinates.height, Dimensions.get('screen').height - e.endCoordinates.screenY)));
+    const b = Keyboard.addListener('keyboardDidHide', () => setTinggi(0));
     return () => {
       a.remove();
       b.remove();
     };
   }, []);
-  return tampil;
+  return tinggi;
 }
 
 /** Dock di atas tab bar (atau papan ketik): aksi final + petunjuk satu baris. */
-function Dock({ children, hint, keyboard }: { children: React.ReactNode; hint?: React.ReactNode; keyboard: boolean }): React.JSX.Element {
+function Dock({ children, hint, keyboard }: { children: React.ReactNode; hint?: React.ReactNode; keyboard: number }): React.JSX.Element {
   const ruangTab = useTabBarSpace();
   return (
     <Glass
       strong
-      style={[s.dock, keyboard ? { bottom: 0, left: 0, right: 0, borderRadius: 0 } : { bottom: ruangTab + 8, left: 12, right: 12, borderRadius: radius['2xl'] }]}
+      style={[s.dock, keyboard > 0 ? { bottom: keyboard, left: 0, right: 0, borderRadius: 0 } : { bottom: ruangTab + 8, left: 12, right: 12, borderRadius: radius['2xl'] }]}
     >
       {children}
       {hint}
@@ -93,7 +95,8 @@ export function LayarAbsen(): React.JSX.Element {
   const snackbar = useSnackbar();
   const { terapkan, center: pusat } = useAttendanceStatus();
   const ruangTab = useTabBarSpace();
-  const keyboard = useKeyboardTampil();
+  const tinggiKeyboard = useKeyboardTinggi();
+  const keyboard = tinggiKeyboard > 0;
   const st = useAbsenStore();
   const lokasi = useLokasiAbsen();
 
@@ -112,6 +115,9 @@ export function LayarAbsen(): React.JSX.Element {
   const offsetMs = useMemo(() => hitungOffset(data?.serverTime), [data?.serverTime]);
   const sekarang = useJamServer(offsetMs);
   const state = data?.state ?? null;
+  // Jam pulang perusahaan tertutup: `sebelum` (belum dibuka) atau `sesudah` (sudah ditutup).
+  const tutupPulang = state ? fasePulang(state, sekarang) : null;
+  const windowsBerlaku = data?.today.windowsApply !== false;
 
   const muat = useCallback(
     async (diam: boolean): Promise<void> => {
@@ -160,7 +166,7 @@ export function LayarAbsen(): React.JSX.Element {
   }, [state, st.metode]);
 
   const arah = state?.code === 'checked_in' ? 'pulang' : 'masuk';
-  const tampilForm = state !== null && (state.code === 'not_checked_in' || state.code === 'too_early' || state.code === 'no_office_location' || (state.code === 'checked_in' && (pusat === 'absen' || st.pulangAwal)));
+  const tampilForm = state !== null && (state.code === 'not_checked_in' || state.code === 'too_early' || state.code === 'no_office_location' || (state.code === 'checked_in' && tutupPulang !== 'sesudah' && (pusat === 'absen' || st.pulangAwal)));
   const metode = st.metode;
   const konsenOk = state?.consent.granted === true;
 
@@ -194,7 +200,10 @@ export function LayarAbsen(): React.JSX.Element {
   const poinValid = st.poin.map((p) => p.teks.trim()).filter((t) => t !== '');
   const wajibCatatan = metode === 'wfh' || (jarakJauh && terdekat !== null && !terdekat.dalam);
   const catatanOk = !wajibCatatan || st.catatan.trim() !== '';
+  const laporanValid = st.laporan.map((p) => p.teks.trim()).filter((t) => t !== '');
   const rencanaOk = arah === 'pulang' || poinValid.length >= 1;
+  const laporanOk = arah === 'masuk' || metode === 'qr' || laporanValid.length >= 1;
+  const isianOk = arah === 'masuk' ? rencanaOk : laporanOk;
   const selfieOk = st.selfie !== null;
   const titikOk = titik !== null && lokasi.status.keadaan === 'siap';
 
@@ -212,6 +221,9 @@ export function LayarAbsen(): React.JSX.Element {
     if (arah === 'masuk') {
       syarat.push({ status: rencanaOk ? 'ok' : 'gagal', teks: rencanaOk ? `Rencana kerja: ${poinValid.length} poin` : 'Rencana kerja: tulis minimal satu poin' });
     }
+    if (arah === 'pulang') {
+      syarat.push({ status: laporanOk ? 'ok' : 'gagal', teks: laporanOk ? `Laporan kerja: ${laporanValid.length} poin` : 'Laporan kerja: tulis minimal satu poin' });
+    }
     if (wajibCatatan) {
       syarat.push({ status: catatanOk ? 'ok' : 'gagal', teks: catatanOk ? 'Catatan lokasi / aktivitas terisi' : 'Catatan lokasi / aktivitas: wajib untuk WFH' });
     }
@@ -224,7 +236,9 @@ export function LayarAbsen(): React.JSX.Element {
   if (offline) {
     kunci = { label: 'Butuh koneksi internet', hint: 'Versi 1 menolak check-in tanpa koneksi — sama seperti web/PWA. Isian Anda tetap tersimpan.' };
   } else if (state?.code === 'too_early') {
-    kunci = { label: `Dibuka pukul ${jam(state.windowOpensAt)}`, hint: 'Check-in belum bisa dikirim.' };
+    kunci = { label: `Dibuka pukul ${jam(state.windowOpensAt)}`, hint: state.message || 'Check-in belum bisa dikirim.' };
+  } else if (state && tutupPulang === 'sebelum') {
+    kunci = { label: labelPulangTertutup(state, 'sebelum'), hint: state.checkOutBlockedReason ?? 'Check-out belum bisa dikirim.' };
   } else if (!konsenOk) {
     kunci = { label: 'Setujui kebijakan dulu', hint: 'Persetujuan dicabut atau belum diberikan.' };
   } else if (lokasi.status.keadaan === 'galat' && lokasi.status.jenis === 'perkiraan') {
@@ -234,7 +248,7 @@ export function LayarAbsen(): React.JSX.Element {
   } else if (kurang > 0) {
     kunci = {
       label: `Lengkapi dulu ${kurang} langkah`,
-      hint: !selfieOk && !rencanaOk ? 'Tombol aktif setelah rencana kerja & selfie siap.' : !selfieOk ? 'Tombol aktif setelah selfie siap.' : !rencanaOk ? 'Tombol aktif setelah rencana kerja diisi.' : !catatanOk ? 'Tulis catatan lokasi / aktivitas untuk WFH.' : 'Tunggu lokasi terkunci.',
+      hint: !selfieOk && !isianOk ? `Tombol aktif setelah ${arah === 'masuk' ? 'rencana' : 'laporan'} kerja & selfie siap.` : !selfieOk ? 'Tombol aktif setelah selfie siap.' : !isianOk ? `Tombol aktif setelah ${arah === 'masuk' ? 'rencana' : 'laporan'} kerja diisi.` : !catatanOk ? 'Tulis catatan lokasi / aktivitas untuk WFH.' : 'Tunggu lokasi terkunci.',
     };
   }
 
@@ -290,7 +304,8 @@ export function LayarAbsen(): React.JSX.Element {
           titik: { latitude: fix.latitude, longitude: fix.longitude, accuracy: fix.accuracy, mocked: fix.mocked },
           selfieUri: selfie.uri,
           catatan: st.catatan,
-          workPlan: poinValid,
+          workPlan: arah === 'masuk' ? poinValid : [],
+          workReport: arah === 'pulang' ? laporanValid : [],
           jarakM: dekat?.jarakM ?? null,
         },
         infoJadwal(state),
@@ -305,7 +320,7 @@ export function LayarAbsen(): React.JSX.Element {
       kunciKirim.current = false;
       setFase('diam');
     }
-  }, [arah, data, dialog, lokasi, metode, poinValid, sekarang, snackbar, st.catatan, state, titik]);
+  }, [arah, data, dialog, laporanValid, lokasi, metode, poinValid, sekarang, snackbar, st.catatan, state, titik]);
 
   function bukaPemindai(a: 'masuk' | 'pulang'): void {
     router.push({ pathname: '/absensi/qr', params: { arah: a } });
@@ -385,7 +400,7 @@ export function LayarAbsen(): React.JSX.Element {
       nama: user?.name ?? 'Anda',
       waktu: sekarang,
       lokasi: lokasiPesan({ dalam: terdekat?.dalam === true, namaKantor: lokasiKantor?.name ?? null, jarakJauh: jarakJauh || metode === 'wfh', catatan: st.catatan, jarakM: terdekat?.jarakM ?? null }),
-      poin: metode === 'qr' ? [] : poinValid,
+      poin: metode === 'qr' ? [] : arah === 'masuk' ? poinValid : laporanValid,
       durasiKerjaMenit: state.checkedInAt ? Math.max(0, menitAntara(state.checkedInAt, sekarang)) : null,
     });
 
@@ -399,13 +414,28 @@ export function LayarAbsen(): React.JSX.Element {
 
         {state.code === 'checked_out' ? <KartuSelesai data={data} state={state} /> : null}
         {state.code === 'day_has_request' || state.code === 'holiday' || state.code === 'non_working_day' ? <KartuTidakTersedia state={state} data={data} /> : null}
+        {state.code === 'window_closed' ? (
+          <>
+            <KartuJam state={state} schedule={data.today.schedule} sekarang={sekarang} windowsApply={windowsBerlaku} />
+            <KartuJendelaTutup state={state} />
+          </>
+        ) : null}
         {state.code === 'checked_in' && bukanForm ? (
-          <KartuSedangBekerja state={state} data={data} sekarang={sekarang} jamAbsenKembali={jam0} onPulangAwal={() => absenStore.setPulangAwal(true)} />
+          <KartuSedangBekerja
+            state={state}
+            data={data}
+            sekarang={sekarang}
+            jamAbsenKembali={pusat === 'workspace' ? jam0 : null}
+            onPulangAwal={() => absenStore.setPulangAwal(true)}
+            fasePulang={tutupPulang}
+          />
         ) : null}
 
         {tampilForm ? (
           <>
-            <KartuJam state={state} schedule={data.today.schedule} sekarang={sekarang} />
+            <KartuJam state={state} schedule={data.today.schedule} sekarang={sekarang} windowsApply={windowsBerlaku} />
+
+            {tutupPulang === 'sebelum' ? <Banner tone="warn" icon="clock-alert" title={labelPulangTertutup(state, 'sebelum')} message={state.checkOutBlockedReason ?? ''} /> : null}
 
             {state.code === 'no_office_location' ? (
               <Banner tone="warn" icon="map-pin-off" title="Lokasi kantor belum diatur" message="Belum ada lokasi kantor aktif untuk check-in GPS. Hubungi HR untuk mengatur lokasi kantor." />
@@ -491,12 +521,20 @@ export function LayarAbsen(): React.JSX.Element {
                       />
                     ) : (
                       <>
-                        <Card>
-                          <RencanaBacaSaja poin={data.today.day?.workPlan ?? []} judul="Rencana kerja pagi tadi" />
-                          <Text variant="meta" style={{ fontSize: 14, lineHeight: 20 }}>
-                            Sebelum pulang, laporkan progres poin ini di laporan harian (maks. sampai 23.59).
-                          </Text>
-                        </Card>
+                        {(data.today.day?.workPlan?.length ?? 0) > 0 ? (
+                          <Card>
+                            <RencanaBacaSaja poin={data.today.day?.workPlan ?? []} judul="Rencana kerja pagi tadi" />
+                          </Card>
+                        ) : null}
+                        <RencanaKerja
+                          jenis="laporan"
+                          poin={st.laporan}
+                          ubah={absenStore.ubahLaporan}
+                          tambah={absenStore.tambahLaporan}
+                          hapus={absenStore.hapusLaporan}
+                          onLihatPesan={() => setSheetPesan(true)}
+                          disabled={fase !== 'diam'}
+                        />
                       </>
                     )}
                     <KartuSelfie selfie={st.selfie} judul={arah === 'masuk' ? 'Selfie check-in' : 'Selfie check-out'} onAmbil={() => bukaSelfie(arah)} disabled={fase !== 'diam'} />
@@ -530,11 +568,11 @@ export function LayarAbsen(): React.JSX.Element {
     // Dock aksi final.
     if (tampilForm && (metode === 'qr' || state.code !== 'no_office_location') && !(metode === 'wfh' && !state.isRemote)) {
       if (metode === 'qr') {
-        const terkunciQr = offline || state.code === 'too_early';
+        const terkunciQr = offline || state.code === 'too_early' || tutupPulang === 'sebelum';
         dock = (
-          <Dock keyboard={keyboard} hint={<Text variant="meta" align="center" style={{ marginTop: 8, fontSize: 13 }}>{terkunciQr ? (offline ? 'Butuh koneksi internet.' : 'Check-in belum bisa dikirim.') : 'Lokasi dan foto hanya direkam saat check-in dan check-out'}</Text>}>
+          <Dock keyboard={tinggiKeyboard} hint={<Text variant="meta" align="center" style={{ marginTop: 8, fontSize: 13 }}>{terkunciQr ? (offline ? 'Butuh koneksi internet.' : state.code === 'too_early' ? state.message || 'Check-in belum bisa dikirim.' : state.checkOutBlockedReason ?? 'Check-out belum bisa dikirim.') : 'Lokasi dan foto hanya direkam saat check-in dan check-out'}</Text>}>
             <Button
-              title={state.code === 'too_early' ? `Dibuka pukul ${jam(state.windowOpensAt)}` : 'Buka pemindai QR'}
+              title={state.code === 'too_early' ? `Dibuka pukul ${jam(state.windowOpensAt)}` : tutupPulang === 'sebelum' ? labelPulangTertutup(state, 'sebelum') : 'Buka pemindai QR'}
               icon="qr-code"
               size="lg"
               disabled={terkunciQr}
@@ -545,7 +583,7 @@ export function LayarAbsen(): React.JSX.Element {
       } else {
         dock = (
           <Dock
-            keyboard={keyboard}
+            keyboard={tinggiKeyboard}
             hint={
               <View style={s.hintBaris}>
                 <Text variant="meta" align="center" style={{ fontSize: 13 }}>
@@ -577,8 +615,10 @@ export function LayarAbsen(): React.JSX.Element {
     }
   }
 
+  // Tepi-ke-tepi: windowSoftInputMode tidak mengecilkan jendela, jadi layar disempitkan sebesar papan ketik
+  // agar isian rencana/laporan terlihat di atas papan ketik; dock naik setinggi yang sama.
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, paddingBottom: tinggiKeyboard }}>
       <Screen
         header={undefined}
         refreshing={menyegarkan}
@@ -587,14 +627,13 @@ export function LayarAbsen(): React.JSX.Element {
           void muat(true);
           if (tampilForm) void lokasi.ambil();
         }}
-        contentStyle={dock ? { paddingBottom: keyboard ? 140 : ruangTab + 150 } : undefined}
+        contentStyle={dock ? { paddingBottom: keyboard ? 150 : ruangTab + 150 } : undefined}
       >
         {isi}
       </Screen>
       {dock}
     </View>
   );
-
 }
 
 function infoJadwal(state: KeadaanAbsen): InfoJadwal {
@@ -644,7 +683,7 @@ function KonsenDibutuhkan({ perbarui, versi }: { perbarui: boolean; versi: strin
 }
 
 const s = StyleSheet.create({
-  dock: { position: 'absolute', paddingTop: 12, paddingHorizontal: 12 },
+  dock: { position: 'absolute', paddingTop: 12, paddingBottom: 10, paddingHorizontal: 12 },
   baris: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   hintBaris: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', marginTop: 8 },
 });

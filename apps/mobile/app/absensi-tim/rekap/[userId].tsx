@@ -32,6 +32,7 @@ function keSel(h: RecapDayCell): SelHari {
     checkOutAt: h.checkOut?.occurredAt ?? null,
     locationLabel: h.checkIn?.locationName ?? null,
     workPlan: [],
+    workReport: [],
     note: null,
     flags: [],
     isCorrected: h.checkIn?.method === 'manual' || h.checkOut?.method === 'manual',

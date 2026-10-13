@@ -146,6 +146,8 @@ export interface AbsensiPayload {
   deviceIdHash: string;
   note?: string | null;
   workPlan?: string[];
+  /** Laporan kerja (wajib untuk check-out GPS/WFH). */
+  workReport?: string[];
 }
 
 /** POST /absensi/check-in — multipart dengan selfie. */
@@ -153,7 +155,7 @@ export function checkIn(payload: AbsensiPayload): Promise<AttendanceResult> {
   return postAbsensi('absensi/check-in', payload);
 }
 
-/** POST /absensi/check-out — tanpa rencana kerja. */
+/** POST /absensi/check-out — laporan kerja (`work_report[]`) wajib untuk GPS + selfie. */
 export function checkOut(payload: AbsensiPayload): Promise<AttendanceResult> {
   return postAbsensi('absensi/check-out', payload);
 }
@@ -172,8 +174,9 @@ async function postAbsensi(path: string, payload: AbsensiPayload): Promise<Atten
   if (payload.note && payload.note.trim() !== '') {
     form.append('note', payload.note.trim());
   }
-  for (const point of payload.workPlan ?? []) {
-    form.append('work_plan[]', point);
+  const checkOut = path.endsWith('check-out');
+  for (const point of (checkOut ? payload.workReport : payload.workPlan) ?? []) {
+    form.append(checkOut ? 'work_report[]' : 'work_plan[]', point);
   }
 
   const data = await apiRequest<{ result: AttendanceResult }>(path, {

@@ -172,6 +172,7 @@ export interface AttendanceDay {
   isSuspicious: boolean;
   requestPortion: string | null;
   workPlan: string[] | null;
+  workReport?: string[] | null;
   checkIn: AttendanceLog | null;
   checkOut: AttendanceLog | null;
 }
