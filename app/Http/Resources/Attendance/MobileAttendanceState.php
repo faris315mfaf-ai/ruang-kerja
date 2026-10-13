@@ -46,7 +46,9 @@ final class MobileAttendanceState
             $action === 'done' => 'checked_out',
             $action === 'unavailable' => 'day_has_request',
             ! $isWorkday && (bool) ($schedule['isHoliday'] ?? false) => 'holiday',
-            ! $isWorkday => 'non_working_day',
+            // Hari tanpa jadwal (belum ada shift/penugasan, atau di luar pola) tetap
+            // boleh check-in — sama dengan web ("Tidak ada jadwal hari ini") dan CheckIn.
+            // Dulu 'non_working_day' menyembunyikan check-in & tombol Absen di ponsel.
             $tooEarly => 'too_early',
             $noLocation => 'no_office_location',
             default => 'not_checked_in',
@@ -176,9 +178,11 @@ final class MobileAttendanceState
         $threshold = self::instant($schedule['lateThreshold'] ?? null);
 
         return match ($code) {
-            'not_checked_in' => $threshold === null
-                ? 'Check-in untuk memulai hari kerja.'
-                : 'Check-in sebelum '.OfficeClock::time($threshold).' agar tepat waktu.',
+            'not_checked_in' => match (true) {
+                ! (bool) ($schedule['isWorkday'] ?? false) => 'Tidak ada jadwal kerja hari ini. Check-in tetap tercatat.',
+                $threshold === null => 'Check-in untuk memulai hari kerja.',
+                default => 'Check-in sebelum '.OfficeClock::time($threshold).' agar tepat waktu.',
+            },
             'checked_in' => $checkedInAt === null
                 ? 'Anda sudah check-in.'
                 : 'Check-in pukul '.OfficeClock::time($checkedInAt).($lateMinutes > 0

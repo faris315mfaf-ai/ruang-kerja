@@ -17,6 +17,7 @@ use App\Models\EmployeeRequest;
 use App\Models\LeaveType;
 use App\Models\User;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
@@ -274,8 +275,14 @@ test('state: holiday, weekend and a full-day request are named explicitly', func
         ->and($state['holidayName'])->toBe('Hari Libur Uji')
         ->and($state['isWorkday'])->toBeFalse();
 
+    // Di luar pola jadwal (Sabtu): tetap boleh check-in, sama dengan web.
     $this->travelTo(F::at('2026-10-10 09:00'));
-    expect(mbState($token)['code'])->toBe('non_working_day');
+    $state = mbState($token);
+    expect($state['code'])->toBe('not_checked_in')
+        ->and($state['isWorkday'])->toBeFalse()
+        ->and($state['canCheckIn'])->toBeTrue()
+        ->and($state['message'])->toContain('Tidak ada jadwal kerja hari ini')
+        ->and($state['center']['action'])->toBe('absen');
 
     AttendanceDay::factory()->for($user)->on('2026-10-07')->status(AttendanceStatus::Leave)->create();
     $this->travelTo(F::at('2026-10-07 09:00'));
@@ -284,6 +291,24 @@ test('state: holiday, weekend and a full-day request are named explicitly', func
         ->and($state['canCheckIn'])->toBeFalse()
         ->and($state['request'])->toMatchArray(['status' => 'leave', 'statusLabel' => 'Cuti', 'blocksCheckIn' => true])
         ->and($state['center']['action'])->toBe('workspace');
+});
+
+test('state: an employee without any shift assignment can still check in (no "bukan hari kerja")', function () {
+    $user = F::employee();
+    DB::table('shift_assignments')->where('user_id', $user->id)->delete();
+    $token = mbToken($user);
+
+    $this->travelTo(F::at('2026-10-07 09:00'));
+    $state = mbState($token);
+    expect($state['code'])->toBe('not_checked_in')
+        ->and($state['isWorkday'])->toBeFalse()
+        ->and($state['canCheckIn'])->toBeTrue()
+        ->and($state['message'])->toBe('Tidak ada jadwal kerja hari ini. Check-in tetap tercatat.')
+        ->and($state['center']['action'])->toBe('absen');
+
+    mbGps($token)->assertCreated();
+    $state = mbState($token);
+    expect($state['code'])->toBe('checked_in');
 });
 
 test('state: a business trip keeps check-in open and is remote, no office location is named', function () {
