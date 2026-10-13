@@ -332,6 +332,13 @@ export function ambilDokumen(workspace: string): Promise<DokumenData> {
   return panggil<DokumenData>(`workspace/${workspace}/dokumen`);
 }
 
+export function buatDokumenDrive(
+  workspace: string,
+  body: { type: 'document' | 'spreadsheet' | 'presentation'; name?: string; folder?: string },
+): Promise<{ file: BerkasDrive; message: string }> {
+  return panggil(`workspace/${workspace}/dokumen`, { method: 'POST', json: body });
+}
+
 export interface FileData {
   drive: InfoDrive;
   counts: { documents: number; files: number };
