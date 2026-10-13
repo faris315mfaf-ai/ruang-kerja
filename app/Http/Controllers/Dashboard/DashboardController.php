@@ -239,7 +239,7 @@ class DashboardController extends Controller
      * @param  array<string, mixed>  $daily  DailyWorkMonitor::for()
      * @return array<string, mixed>
      */
-    private static function teamReports(array $daily): array
+    public static function teamReports(array $daily): array
     {
         /** @var list<array<string, mixed>> $reports */
         $reports = $daily['reports'];
@@ -262,7 +262,7 @@ class DashboardController extends Controller
      * Link of the Hiring module card on the HR dashboard, only once that
      * module (built separately) registers `/hiring`.
      */
-    private static function hiringUrl(): ?string
+    public static function hiringUrl(): ?string
     {
         return isset(Route::getRoutes()->get('GET')['hiring']) ? '/hiring' : null;
     }
