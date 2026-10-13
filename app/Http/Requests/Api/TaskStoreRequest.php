@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Http\Requests\Api\Concerns\TaskExtraFields;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -16,6 +17,8 @@ use Illuminate\Validation\Rule;
  */
 class TaskStoreRequest extends FormRequest
 {
+    use TaskExtraFields;
+
     /**
      * @return array<string, ValidationRule|array<mixed>|string>
      */
@@ -32,6 +35,7 @@ class TaskStoreRequest extends FormRequest
             'assignee_ids.*' => ['string', 'distinct', Rule::exists('workspace_members', 'user_id')->where('workspace_id', $workspaceId)],
             'due_date' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
             'priority' => ['sometimes', 'integer', 'between:0,4'],
+            ...$this->extraRules($workspaceId, true),
         ];
     }
 
@@ -48,6 +52,7 @@ class TaskStoreRequest extends FormRequest
             'assignee_ids.*.exists' => 'Penanggung jawab harus anggota workspace.',
             'due_date.date_format' => 'Tenggat tidak valid.',
             'priority.between' => 'Prioritas tidak valid.',
+            ...$this->extraMessages(),
         ];
     }
 
@@ -55,7 +60,7 @@ class TaskStoreRequest extends FormRequest
      * Validated attributes in the shape expected by CreateTask (`description`
      * from the app is the web `description_text`).
      *
-     * @return array{title: string, description_text?: string|null, due_date?: string|null, priority?: int, assignee_ids?: list<string>}
+     * @return array{title: string, description_text?: string|null, due_date?: string|null, priority?: int, assignee_ids?: list<string>, start_date?: string|null, estimate_hours?: string|null, label_ids?: list<string>, status_id?: string, parent_id?: string|null}
      */
     public function payload(): array
     {
@@ -79,6 +84,6 @@ class TaskStoreRequest extends FormRequest
             ));
         }
 
-        return $data;
+        return [...$data, ...$this->extraPayload(true)];
     }
 }

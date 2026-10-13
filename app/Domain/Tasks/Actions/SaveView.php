@@ -8,18 +8,21 @@ use App\Models\User;
 use App\Models\Workspace;
 
 /**
- * Creates or updates a saved view (filters + layout) of a workspace.
+ * Creates or updates a saved view (filters + layout) of a workspace — or, with
+ * no workspace, a personal cross-workspace view of "Tugas saya" (the mobile
+ * app; docs/DATABASE.md §4 saved_views.workspace_id null).
  * `filters` is normalized to the shape of resources/js/features/tasks/lib/filters.ts
- * (`assignees` may contain "me" and "none").
+ * (`assignees` may contain "me" and "none"); the cross-workspace keys
+ * `workspaces`, `statuses`, `due_from` and `due_to` are kept only when given.
  */
 final class SaveView
 {
     /**
      * @param  array{name: string, layout: SavedViewLayout|string, filters?: array<string, mixed>, sort?: array<string, mixed>|null, is_shared?: bool}  $data
      */
-    public function handle(User $user, Workspace $workspace, array $data, ?SavedView $view = null): SavedView
+    public function handle(User $user, ?Workspace $workspace, array $data, ?SavedView $view = null): SavedView
     {
-        $view ??= new SavedView(['user_id' => $user->id, 'workspace_id' => $workspace->id]);
+        $view ??= new SavedView(['user_id' => $user->id, 'workspace_id' => $workspace?->id]);
 
         $view->fill([
             'name' => trim($data['name']),
@@ -34,7 +37,7 @@ final class SaveView
 
     /**
      * @param  array<string, mixed>  $filters
-     * @return array{assignees: list<string>, priorities: list<int>, labels: list<string>, due: string|null, q: string}
+     * @return array{assignees: list<string>, priorities: list<int>, labels: list<string>, due: string|null, q: string, workspaces?: list<string>, statuses?: list<string>, due_from?: string, due_to?: string}
      */
     public static function normalizeFilters(array $filters): array
     {
@@ -51,12 +54,30 @@ final class SaveView
 
         $due = $filters['due'] ?? null;
 
-        return [
+        $normalized = [
             'assignees' => $strings($filters['assignees'] ?? null),
             'priorities' => $priorities,
             'labels' => $strings($filters['labels'] ?? null),
             'due' => is_string($due) && in_array($due, ['overdue', 'today', 'week', 'none'], true) ? $due : null,
             'q' => is_string($filters['q'] ?? null) ? mb_substr(trim($filters['q']), 0, 200) : '',
         ];
+
+        // Cross-workspace ("Tugas saya") keys: absent unless sent, so the
+        // workspace views keep exactly their historical shape.
+        if (array_key_exists('workspaces', $filters)) {
+            $normalized['workspaces'] = $strings($filters['workspaces']);
+        }
+
+        if (array_key_exists('statuses', $filters)) {
+            $normalized['statuses'] = $strings($filters['statuses']);
+        }
+
+        foreach (['due_from', 'due_to'] as $key) {
+            if (isset($filters[$key]) && is_string($filters[$key]) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $filters[$key]) === 1) {
+                $normalized[$key] = $filters[$key];
+            }
+        }
+
+        return $normalized;
     }
 }
