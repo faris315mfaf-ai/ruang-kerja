@@ -84,6 +84,7 @@ export function useFormPengajuan(param: ParamForm) {
   const [awal, setAwal] = useState<NilaiForm>(() => nilaiKosong(param.tanggal ?? ''));
   const [lampiran, setLampiran] = useState<ItemLampiran[]>([]);
   const [memuat, setMemuat] = useState(true);
+  const tanggalAwal = useRef(param.tanggal ?? '');
   const [galatMuat, setGalatMuat] = useState<ApiError | null>(null);
 
   const [pratinjau, setPratinjau] = useState<Pratinjau | null>(null);
@@ -135,6 +136,11 @@ export function useFormPengajuan(param: ParamForm) {
       } else {
         const tipe = cariJenis(data, param);
         setJenis(tipe);
+        // Form baru: tanggal bawaan = tanggal dari pintu masuk, atau hari ini (zona kantor dari server).
+        tanggalAwal.current = param.tanggal ?? data.today;
+        const kosong = nilaiKosong(tanggalAwal.current);
+        setNilai(kosong);
+        setAwal(kosong);
         if (tipe) {
           const lokal = await bacaDrafPerangkat(userId, tipe.category);
           // Pintu koreksi membawa tanggal sendiri: draf lama hanya dipulihkan bila tanggalnya sama.
@@ -228,11 +234,11 @@ export function useFormPengajuan(param: ParamForm) {
     if (jenis) {
       await hapusDrafPerangkat(userId, jenis.category);
     }
-    const kosong = nilaiKosong(param.tanggal ?? '');
+    const kosong = nilaiKosong(tanggalAwal.current);
     setNilai(kosong);
     setAwal(kosong);
     setDipulihkan(false);
-  }, [jenis, param.tanggal, userId]);
+  }, [jenis, userId]);
 
   // ── Galat 422 ─────────────────────────────────────────────────────────────
   const tanganiGalat = useCallback(

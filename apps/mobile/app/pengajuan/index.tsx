@@ -124,6 +124,7 @@ export default function LayarPengajuanSaya(): React.JSX.Element {
   const [luring, setLuring] = useState<string | null>(null);
   const [sheetTahun, setSheetTahun] = useState(false);
   const versi = useRef(-1);
+  const filter = useRef<{ status: FilterStatus; tahun: number | null }>({ status: 'semua', tahun: null });
 
   const muat = useCallback(
     async (opsi: { status: FilterStatus; tahun: number | null; segarkan?: boolean }): Promise<void> => {
@@ -151,6 +152,7 @@ export default function LayarPengajuanSaya(): React.JSX.Element {
             setLuring(jamKantor(t.savedAt));
             setStatus('semua');
             setTahun(null);
+            filter.current = { status: 'semua', tahun: null };
             return;
           }
         }
@@ -168,10 +170,10 @@ export default function LayarPengajuanSaya(): React.JSX.Element {
     useCallback(() => {
       const v = versiDaftarSekarang();
       if (versi.current !== v) {
+        const pertama = versi.current < 0;
         versi.current = v;
-        void muat({ status, tahun, segarkan: versi.current > 0 && data !== null });
+        void muat({ ...filter.current, segarkan: !pertama });
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- hanya saat fokus
     }, [muat]),
   );
 
@@ -180,12 +182,14 @@ export default function LayarPengajuanSaya(): React.JSX.Element {
       return;
     }
     setStatus(v);
+    filter.current = { status: v, tahun };
     void muat({ status: v, tahun });
   };
 
   const pilihTahun = (v: number | null): void => {
     setSheetTahun(false);
     setTahun(v);
+    filter.current = { status, tahun: v };
     void muat({ status, tahun: v });
   };
 
