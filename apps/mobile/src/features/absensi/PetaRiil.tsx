@@ -45,16 +45,75 @@ function useTitikStabil(titik: TitikGps | null): TitikPeta | null {
 
 interface UbinProps {
   ubin: UbinRencana;
-  headers: Record<string, string>;
+  token: string;
   onMuat: () => void;
   onGagal: (key: string) => void;
 }
 
-const UbinPeta = memo(function UbinPeta({ ubin, headers, onMuat, onGagal }: UbinProps): React.JSX.Element {
-  const source = useMemo(() => ({ uri: `${API_URL}/peta/${ubin.z}/${ubin.x}/${ubin.y}`, headers }), [ubin.z, ubin.x, ubin.y, headers]);
+/**
+ * Ubin diambil dengan fetch (header Authorization terjamin) lalu dipasang sebagai
+ * data URI: `Image` RN + `source.headers` tidak mengirim header di build Android
+ * ini (server menerima permintaan tanpa Bearer → 401), jadi tidak dipakai.
+ */
+const cacheUbin = new Map<string, string>();
+
+function keBase64(buf: ArrayBuffer): string {
+  const b = new Uint8Array(buf);
+  const CH = 0x8000;
+  let biner = '';
+  for (let i = 0; i < b.length; i += CH) {
+    biner += String.fromCharCode(...b.subarray(i, i + CH));
+  }
+  return btoa(biner);
+}
+
+async function ambilUbin(ubin: UbinRencana, token: string): Promise<string> {
+  const kunci = `${ubin.z}/${ubin.x}/${ubin.y}`;
+  const ada = cacheUbin.get(kunci);
+  if (ada) {
+    return ada;
+  }
+  const res = await fetch(`${API_URL}/peta/${kunci}`, {
+    headers: { Accept: 'image/png', 'X-App-Version': APP_VERSION, Authorization: `Bearer ${token}` },
+  });
+  if (res.status !== 200) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+  const uri = `data:image/png;base64,${keBase64(await res.arrayBuffer())}`;
+  if (cacheUbin.size > 120) {
+    cacheUbin.delete(cacheUbin.keys().next().value as string);
+  }
+  cacheUbin.set(kunci, uri);
+  return uri;
+}
+
+const UbinPeta = memo(function UbinPeta({ ubin, token, onMuat, onGagal }: UbinProps): React.JSX.Element | null {
+  const [uri, setUri] = useState<string | null>(null);
+
+  useEffect(() => {
+    let batal = false;
+    ambilUbin(ubin, token)
+      .then((u) => {
+        if (!batal) {
+          setUri(u);
+        }
+      })
+      .catch(() => {
+        if (!batal) {
+          onGagal(ubin.key);
+        }
+      });
+    return () => {
+      batal = true;
+    };
+  }, [ubin, token, onGagal]);
+
+  if (!uri) {
+    return null;
+  }
   return (
     <Image
-      source={source}
+      source={{ uri }}
       accessible={false}
       fadeDuration={220}
       resizeMode="stretch"
@@ -99,11 +158,6 @@ export function PetaRiil({ kantor, titik, kunciCoba = 0 }: PetaRiilProps): React
   );
 
   const token = tokenSaatIni();
-  const headers = useMemo<Record<string, string>>(
-    () => ({ Accept: 'image/png', 'X-App-Version': APP_VERSION, ...(token ? { Authorization: `Bearer ${token}` } : {}) }),
-    [token],
-  );
-
   const muat = useCallback(() => setAdaUbin(true), []);
   const tandaiGagal = useCallback(
     (key: string) =>
@@ -146,7 +200,7 @@ export function PetaRiil({ kantor, titik, kunciCoba = 0 }: PetaRiilProps): React
 
         {rencana && token
           ? rencana.ubin.map((u) =>
-              gagal.has(u.key) ? null : <UbinPeta key={`${u.key}#${kunciCoba}`} ubin={u} headers={headers} onMuat={muat} onGagal={tandaiGagal} />,
+              gagal.has(u.key) ? null : <UbinPeta key={`${u.key}#${kunciCoba}`} ubin={u} token={token} onMuat={muat} onGagal={tandaiGagal} />,
             )
           : null}
 
