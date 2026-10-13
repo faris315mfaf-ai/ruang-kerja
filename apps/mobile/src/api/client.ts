@@ -5,6 +5,7 @@
  */
 
 import Constants from 'expo-constants';
+import { File } from 'expo-file-system';
 
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://spkd.store/api/v1';
 
@@ -232,7 +233,11 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   return (body ?? null) as T | null;
 }
 
-/** Ambil byte file lokal sebagai lampiran FormData (selfie). */
-export function formFile(uri: string, name: string, mime = 'image/jpeg'): { uri: string; name: string; type: string } {
-  return { uri, name, type: mime };
+/**
+ * Lampiran FormData dari berkas lokal. Berisi `uri` (FormData native React Native)
+ * sekaligus `bytes()` (fetch bawaan Expo — `convertFormData` menolak bagian yang
+ * hanya punya `uri`, galatnya "Unsupported FormDataPart implementation").
+ */
+export function formFile(uri: string, name: string, mime = 'image/jpeg'): { uri: string; name: string; type: string; bytes: () => Promise<Uint8Array> } {
+  return { uri, name, type: mime, bytes: () => new File(uri).bytes() };
 }
