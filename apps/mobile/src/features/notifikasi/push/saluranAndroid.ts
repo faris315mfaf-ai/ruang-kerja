@@ -29,7 +29,8 @@ async function buat(kanal: DefinisiKanal): Promise<void> {
     // PRIVATE: layar kunci menampilkan "konten disembunyikan" (pengajuan sakit, pelamar, isi obrolan).
     lockscreenVisibility:
       kanal.lockscreen === 'private' ? Notifications.AndroidNotificationVisibility.PRIVATE : Notifications.AndroidNotificationVisibility.PUBLIC,
-    sound: berbunyi ? 'default' : null,
+    // Omitted = system default sound ('default' is treated as a missing custom sound file); null = silent.
+    ...(berbunyi ? {} : { sound: null }),
     enableVibrate: berbunyi,
     vibrationPattern: kanal.importance === 'high' ? [0, 250, 250, 250] : undefined,
     showBadge: kanal.importance !== 'min',
