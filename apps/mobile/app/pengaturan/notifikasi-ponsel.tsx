@@ -75,7 +75,7 @@ export default function LayarNotifikasiPonsel(): React.JSX.Element {
 
   const kepalaStatus =
     izin.notifikasi === 'memeriksa' ? null : aktif ? (
-      <Card variant="flat">
+      <Card variant="tight">
         <View style={s.baris}>
           <IconTile icon="circle-check" tone="ok" />
           <View style={{ flex: 1, gap: 2 }}>
@@ -106,7 +106,7 @@ export default function LayarNotifikasiPonsel(): React.JSX.Element {
     <Screen header={<SubAppBar title="Notifikasi di ponsel ini" />} onRefresh={() => void muat()}>
       {kepalaStatus}
 
-      <Card variant="flat">
+      <Card variant="tight">
         <View style={s.baris}>
           <IconTile icon={ringkasan.ok ? 'radio' : 'cloud-off'} tone={ringkasan.ok ? 'ok' : 'warn'} />
           <View style={{ flex: 1, gap: 2 }}>
