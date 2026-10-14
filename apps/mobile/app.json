@@ -2,7 +2,7 @@
   "expo": {
     "name": "RuangKerja",
     "slug": "ruangkerja",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "scheme": "ruangkerja",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -14,7 +14,7 @@
     "backgroundColor": "#F3F6FA",
     "android": {
       "package": "store.spkd.ruangkerja",
-      "versionCode": 6,
+      "versionCode": 7,
       "permissions": [
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.CAMERA",
