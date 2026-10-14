@@ -78,10 +78,14 @@ assert.equal(pulang.judul, 'Selesai 17.04');
 assert.equal(pulang.sub, 'Kerja 8 j 12 m');
 assert.equal(pulang.ikon, 'check');
 
-const libur = keadaanCheckIn(masukanAbsen(hari({ action: 'unavailable', schedule: { ...jadwal, isWorkday: false, shiftName: null, start: null } })));
+// A day without a schedule is not a holiday: check-in stays possible.
+const tanpaJadwal = keadaanCheckIn(masukanAbsen(hari({ action: 'check_in', schedule: { ...jadwal, isWorkday: false, shiftName: null, start: null } })));
+assert.equal(tanpaJadwal.jenis, 'belum');
+assert.equal(tanpaJadwal.judul, 'Belum masuk');
+assert.equal(tanpaJadwal.sub, 'Tanpa jadwal · tetap tercatat');
+const libur = keadaanCheckIn(masukanAbsen(hari({ action: 'unavailable', schedule: { ...jadwal, isHoliday: true, holidayName: null } })));
 assert.equal(libur.jenis, 'libur');
 assert.equal(libur.judul, 'Hari libur');
-assert.equal(libur.sub, 'Tanpa shift');
 const liburNasional = keadaanCheckIn(masukanAbsen(hari({ action: 'unavailable', schedule: { ...jadwal, isHoliday: true, holidayName: 'Maulid Nabi' } })));
 assert.equal(liburNasional.sub, 'Maulid Nabi');
 

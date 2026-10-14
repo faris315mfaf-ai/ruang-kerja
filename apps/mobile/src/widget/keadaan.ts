@@ -212,13 +212,15 @@ export function keadaanCheckIn(m: MasukanCheckIn): KeadaanCheckIn {
   if (st?.code === 'day_has_request') {
     return susunCheckIn('libur', 'Tidak masuk', st.request?.statusLabel ?? st.label, 'coffee');
   }
-  const libur = st !== null ? st.code === 'holiday' || st.code === 'non_working_day' || st.isHoliday || !st.isWorkday : today.schedule.isHoliday || !today.schedule.isWorkday;
+  // Only a real holiday is 'libur': a day without a schedule still lets the employee check in (server state `not_checked_in`).
+  const libur = st !== null ? st.code === 'holiday' || st.isHoliday : today.schedule.isHoliday;
   if (libur) {
     const namaLibur = st?.holidayName ?? today.schedule.holidayName ?? null;
-    return susunCheckIn('libur', 'Hari libur', namaLibur ?? 'Tanpa shift', 'coffee');
+    return susunCheckIn('libur', 'Hari libur', namaLibur ?? 'Libur', 'coffee');
   }
   const mulai = st?.scheduledStart ?? today.schedule.start ?? null;
-  return susunCheckIn('belum', 'Belum masuk', mulai !== null ? `Mulai ${jamWib(mulai)}` : (st?.label ?? 'Belum absen'), 'log-in', { menonjol: true });
+  const tanpaJadwal = mulai === null && (st !== null ? !st.isWorkday : !today.schedule.isWorkday);
+  return susunCheckIn('belum', 'Belum masuk', mulai !== null ? `Mulai ${jamWib(mulai)}` : tanpaJadwal ? 'Tanpa jadwal · tetap tercatat' : (st?.label ?? 'Belum absen'), 'log-in', { menonjol: true });
 }
 
 // ── Tugas hari ini ───────────────────────────────────────────────────────────
