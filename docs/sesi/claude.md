@@ -2,6 +2,11 @@
 
 **Terakhir diperbarui:** 13 Okt 2026 (malam) · Claude Code — batch 14 Okt di `claude/android-bagian-5` (belum push/deploy)
 
+## 14 Okt siang — push notifikasi + widget (belum push/deploy)
+- Push FCM sisi aplikasi (`expo-notifications`, 10 kanal, izin, token, ketuk → rute) dan widget layar utama (Check-in 2×1, Tugas hari ini 4×2, Rapat 4×1) dibangun mengikuti mockup `docs/mockups/android/screens/12-android-native`. Dokumen: `docs/sesi/ponsel-b8-push.md`, `docs/sesi/ponsel-b9-widget.md`, `docs/deploy/ANDROID-FCM.md` (langkah Firebase untuk pemilik).
+- Teruji di emulator 5560 (dev-client baru): kanal terbentuk, izin Android 13, notifikasi lokal tampil + ketuk, simulasi ketuk push cold start → detail tugas, widget Tugas tampil di layar utama (segmen Pribadi/Semua, setelan potret, ketuk → tab Tugas). Belum teruji: FCM sungguhan (butuh `secrets/android/google-services.json` + service account di server), widget Check-in & Rapat di layar utama, mode gelap widget, pin kedua widget.
+- Backend berubah (commit 2fafbc0): push chat ringkas per percakapan + `group_key`; perlu deploy bersama APK baru.
+
 ## Batch terbaru (belum di-push, belum di-deploy; produksi masih `b87d5c0f4e63`)
 - Peta riil di kartu Absen (proxy ubin `/api/v1/peta`, `7953fb2`, `0c9e1c5`: ubin lewat fetch + data URI karena header `Image` RN tidak terkirim).
 - Sakit/izin dari Absen, batas pengajuan 12.00 hari kerja (`bf5286d`); kartu Ringkasan Beranda dihapus.
