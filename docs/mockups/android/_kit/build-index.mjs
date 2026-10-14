@@ -11,7 +11,6 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const screens = join(root, 'screens');
 const modules = readdirSync(screens).filter((d) => statSync(join(screens, d)).isDirectory()).sort();
 
-const label = (d) => d.replace(/^\d+-/, '').replace(/-/g, ' ').replace(/^./, (c) => c.toUpperCase());
 const rows = [];
 let totalFiles = 0;
 let totalFrames = 0;

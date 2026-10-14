@@ -13,6 +13,8 @@ for (const file of readdirSync(dir).filter((f) => f.endsWith('.js'))) {
     const src = readFileSync(join(dir, file), 'utf8');
     const m = src.match(/const __iconNode = (\[[\s\S]*?\]);\nconst /);
     if (!m) continue;
+    // The icon node is a JS array literal from a trusted lucide build file; evaluating it is intentional here.
+    // oxlint-disable-next-line typescript/no-implied-eval
     const nodes = Function(`return ${m[1]}`)();
     out[file.replace(/\.js$/, '')] = nodes
         .map(([tag, attrs]) => {

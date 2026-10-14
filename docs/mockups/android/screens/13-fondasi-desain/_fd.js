@@ -13,7 +13,7 @@
     var cs=getComputedStyle(document.documentElement);
     document.querySelectorAll('[data-v]').forEach(function(el){
       var raw=cs.getPropertyValue(el.dataset.v).trim();
-      el.textContent=/^#/.test(raw)?raw.toUpperCase():raw.replace(/\s+/g,' ');
+      el.textContent=raw.startsWith('#')?raw.toUpperCase():raw.replace(/\s+/g,' ');
     });
     document.querySelectorAll('[data-kontras]').forEach(function(el){
       var p=el.dataset.kontras.split('|');
