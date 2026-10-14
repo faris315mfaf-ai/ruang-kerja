@@ -15,4 +15,7 @@ import '@/offline/fitur/tugas';
 import '@/offline/fitur/catatan';
 import '@/offline/fitur/laporan';
 
+// Pemicu pembaruan widget layar utama (antrean berubah, mutasi sukses, aplikasi ke latar).
+import '@/widget/penyegar';
+
 export {};

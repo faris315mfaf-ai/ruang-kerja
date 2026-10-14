@@ -97,7 +97,57 @@
           "useSQLCipher": true
         }
       ],
-      "expo-background-task"
+      "expo-background-task",
+      [
+        "react-native-android-widget",
+        {
+          "fonts": [
+            "./node_modules/@expo-google-fonts/figtree/400Regular/Figtree_400Regular.ttf",
+            "./node_modules/@expo-google-fonts/figtree/500Medium/Figtree_500Medium.ttf",
+            "./node_modules/@expo-google-fonts/figtree/600SemiBold/Figtree_600SemiBold.ttf",
+            "./node_modules/@expo-google-fonts/figtree/700Bold/Figtree_700Bold.ttf"
+          ],
+          "widgets": [
+            {
+              "name": "CheckIn",
+              "label": "Check-in",
+              "description": "Status absen hari ini. Ketuk untuk membuka layar Absen.",
+              "minWidth": "110dp",
+              "minHeight": "40dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 1,
+              "resizeMode": "horizontal|vertical",
+              "previewImage": "./assets/widget/checkin-preview.png",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "TugasHariIni",
+              "label": "Tugas hari ini",
+              "description": "Daftar tugas hari ini; segmen Pribadi, Tim, atau Semua dapat dipilih.",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "widgetFeatures": "reconfigurable",
+              "previewImage": "./assets/widget/tugas-preview.png",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "RapatBerikutnya",
+              "label": "Rapat berikutnya",
+              "description": "Rapat terdekat dengan tombol Gabung.",
+              "minWidth": "250dp",
+              "minHeight": "40dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 1,
+              "resizeMode": "horizontal|vertical",
+              "previewImage": "./assets/widget/rapat-preview.png",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

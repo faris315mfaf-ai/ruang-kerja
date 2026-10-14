@@ -97,6 +97,16 @@ export function setAccountBlockedHandler(handler: ((blokir: BlokirAkun) => void)
   onAccountBlocked = handler;
 }
 
+/**
+ * Pendengar mutasi sukses (POST/PUT/PATCH/DELETE 2xx) dengan path relatif API — dipakai
+ * pemicu pembaruan widget layar utama (`src/widget/penyegar.ts`). Tidak boleh melempar.
+ */
+let onMutasiBerhasil: ((method: string, path: string) => void) | null = null;
+
+export function setPendengarMutasi(pendengar: ((method: string, path: string) => void) | null): void {
+  onMutasiBerhasil = pendengar;
+}
+
 let tokenGetter: (() => string | null) | null = null;
 
 export function setTokenGetter(getter: (() => string | null) | null): void {
@@ -271,7 +281,20 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     throw new ApiError({ status: 401, message: pesan401 ?? 'Sesi berakhir. Silakan masuk kembali.' });
   }
 
+  // Mutasi sukses (2xx) dikabarkan ke pendengar (pembaruan widget layar utama), tanpa pernah mengganggu permintaan.
+  const kabarMutasi = (): void => {
+    if (method === 'GET') {
+      return;
+    }
+    try {
+      onMutasiBerhasil?.(method, relatif.replace(/^\/+/, ''));
+    } catch {
+      // Pendengar tidak boleh melempar.
+    }
+  };
+
   if (response.status === 204) {
+    kabarMutasi();
     return null;
   }
 
@@ -326,6 +349,8 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       retryAfter: Number.isFinite(Number(response.headers.get('Retry-After'))) && response.headers.get('Retry-After') !== null ? Number(response.headers.get('Retry-After')) : null,
     });
   }
+
+  kabarMutasi();
 
   if (kunci !== null && text !== '' && body !== null) {
     tulisCache(kunci, text);

@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "test:center": "node scripts/cek-center-action.mjs",
     "test:peta": "node scripts/cek-peta.mjs",
-    "test:push": "node scripts/cek-push.mjs"
+    "test:push": "node scripts/cek-push.mjs",
+    "test:widget": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/cek-widget.mjs"
   },
   "dependencies": {
     "@config-plugins/react-native-webrtc": "^15.0.2",

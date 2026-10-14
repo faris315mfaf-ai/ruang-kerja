@@ -22,6 +22,7 @@ import { kosongkanSemua } from './db';
 import { hentikanAntrean, mulaiAntrean } from './antrean';
 import { batalkanSinkronLatar, daftarkanSinkronLatar } from './latar';
 import { hapusTandaSesiDitolak } from './latarMeta';
+import { jadwalkanSegarkanWidget, segarkanWidgetKeluar } from '@/widget/penyegar';
 
 export type AlasanAkhirSesi = 'keluar' | 'akun_nonaktif' | 'sesi_berakhir';
 
@@ -35,6 +36,8 @@ export function mulaiSesiOffline(uid: string): void {
       .catch(() => undefined)
       .then(() => daftarkanSinkronLatar())
       .catch(() => undefined);
+    // Widget layar utama keluar dari "Masuk dulu" dan memuat data akun ini.
+    jadwalkanSegarkanWidget(undefined, 2000);
     // Panaskan cache form "Tugas baru" sejak sesi mulai (bukan hanya saat tab Tugas dibuka)
     // supaya tugas bisa dibuat offline walau tab Tugas belum pernah dikunjungi.
     setTimeout(() => {
@@ -48,6 +51,8 @@ export async function akhiriSesiOffline(alasan: AlasanAkhirSesi): Promise<void> 
   bersihSemuaBasi();
   hentikanAntrean();
   void batalkanSinkronLatar().catch(() => undefined);
+  // Widget layar utama kembali ke "Masuk dulu" (tanpa memuat data).
+  segarkanWidgetKeluar();
   try {
     if (alasan === 'sesi_berakhir') {
       await hapusCache();
