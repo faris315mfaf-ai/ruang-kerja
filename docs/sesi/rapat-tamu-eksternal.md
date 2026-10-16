@@ -131,6 +131,19 @@ Satu controller (`MeetingGuestController`) melayani web dan API v1; bentuk JSON 
 
 Rapat dibatalkan atau bukan `video`: semuanya 403/404 sesuai Policy. Admin/HR/Super Admin tidak punya hak tambahan.
 
+**Bendera hak dari server (16 Okt 2026, `can.manage_guests`, `can.manage_lobby`)**: boolean hasil `MeetingPolicy::manageGuests` / `manageLobby` untuk penonton (false untuk non-video, dibatalkan, pengamat rapat pimpinan, non-peserta). Klien memakai bendera bila ada dan, bila tidak ada (server lama), menurunkannya dari peran seperti sebelumnya. Hanya **ditambah**, kunci lama tidak berubah:
+
+| Tempat | Kunci |
+|---|---|
+| Props Inertia `meetings/show` | `detail.can.manage_guests`, `detail.can.manage_lobby` |
+| Props Inertia `meetings/join` dan `meetings/room`; API `GET /api/v1/rapat/{id}/video/ruang` | `room.can.manage_guests`, `room.can.manage_lobby` |
+| API `GET /api/v1/rapat/{id}` (dan jawaban tulis yang memakai badan yang sama) | `can.manage_guests`, `can.manage_lobby`, serta `video.is_organizer` (rapat video) |
+| API `POST /api/v1/rapat/{id}/video/token` | `can.manage_guests`, `can.manage_lobby` |
+
+**Id dan nama tamu di detail rapat**: baris tamu (`user_id` null) di `participants` memuat `guest_id` (id baris `meeting_participants`, sama dengan `guests[].id` di §4.1) dan `guest_name` (bisa null) **hanya** untuk penonton dengan `manageGuests` (penyelenggara) — web `detail.meeting.participants[]` dan API `meeting.participants[]`. Penonton lain tidak mendapat kedua kunci (kunci tidak ada), dan tidak ada yang pernah menerima tautan, nonce, atau hash tautan lewat detail. Baris karyawan tidak pernah memuatnya.
+
+**Formulir ubah rapat**: `guest_names` = peta `{"email huruf kecil": "Nama"}` hanya untuk tamu yang punya nama (objek JSON `{}` bila tidak ada), di props web `form.meeting.guest_names` dan API `GET /api/v1/rapat/formulir?rapat={id}` → `meeting.guest_names`, selain `guest_emails`. Mengirimnya kembali tanpa diubah aman; email tanpa nama tidak menghapus nama tersimpan.
+
 ### 4.1 `GET /rapat/{id}/tamu`
 ```json
 {
@@ -225,17 +238,16 @@ Kode: `apps/mobile/src/api/rapatTamu.ts` (7 panggilan, semuanya `cache: false`),
 - **Tautan dibagikan lewat sheet Bagikan sistem (`Share`), bukan clipboard.** `expo-clipboard` belum terpasang dan paket baru dilarang untuk tugas ini; sheet Bagikan Android sudah punya "Salin", WhatsApp, dll. Tombolnya berlabel "Bagikan tautan" (bukan "Salin") dan **tidak ada snackbar "Tautan disalin"** karena aplikasi tidak bisa memastikannya. Bila nanti `expo-clipboard` dipasang (butuh build native baru), cukup ganti isi fungsi `bagikan` di `KartuTamu.tsx`.
 - **Tautan rahasia:** tidak pernah ditampilkan utuh (UI hanya `host/tamu/…`), tidak masuk log (uji menolak `console.*` di modul tamu), tidak masuk cache offline (`/tamu` ditambahkan ke `TOLAK_PENGGALAN` di `src/offline/cache.ts` **dan** tiap panggilan `cache: false`), tidak disimpan di state selain memori hook layar detail.
 - **Hanya online:** tambah/putar/cabut/izinkan/tolak tidak pernah diantrekan; offline → "Butuh koneksi — … tidak bisa dilakukan saat offline." Daftar tamu offline tidak ditampilkan dari cache (memuat tautan).
-- **Hak diturunkan di klien dari peran di rapat**, karena detail API (`GET /rapat/{id}`) belum mengirim `manage_guests`/`manage_lobby` dan `video.can_join` mengikuti jendela gabung (bukan `openVideo`), serta `video.is_organizer` tidak ada di jawaban detail: penyelenggara = `manageGuests`; penyelenggara/notulis/peserta internal = `manageLobby`. Server tetap hakim: 403/404 menghentikan pemantauan dan menyembunyikan lencana.
+- **Hak**: memakai `can.manage_guests` / `can.manage_lobby` dari server (detail rapat, `video/ruang`, token). Server lama tanpa bendera: turunan klien dari peran di rapat (penyelenggara = `manageGuests`; penyelenggara/notulis/peserta internal = `manageLobby`; `video.can_join` tidak dipakai karena mengikuti jendela gabung). Server tetap hakim: 403/404 menghentikan pemantauan dan menyembunyikan lencana.
 - **Polling ruang tunggu** `jedaRuangTunggu`: 4 detik, backoff ×2 sampai 30 detik saat gagal, hanya saat layar aktif (tersambung di ruang / pra-gabung siap) **dan** aplikasi di latar depan; kembali ke depan langsung segar; berhenti pada 403/404/410. Pemberitahuan tamu baru: toast di ruang ("Budi menunggu masuk", tombol Lihat) + getar 40 ms (`Vibration`, izin VIBRATE sudah ada; `expo-haptics` tidak terpasang). Tamu yang diizinkan/ditolak lalu minta lagi diumumkan lagi.
 - **Peserta LiveKit `guest:*`** tidak pernah di-parse sebagai ULID user dan tidak memicu panggilan profil: nama = `participant.name` (ditandatangani server, "Nama (Tamu)"), ubin berlabel "(Tamu)" (nama depan + "(Tamu)" di ubin kecil), panel Kehadiran memberi lencana "Tamu", moderasi (Bisukan/Keluarkan) memakai `POST …/video/bisukan|keluarkan` dengan `user_id: "guest:{id}"`. Tamu dikecualikan dari "Waktu bicara" (kontrak §7). Tamu yang dikeluarkan muncul di "Tamu dikeluarkan" (diambil dari `GET …/tamu`, hanya penyelenggara) dengan "Izinkan masuk lagi" = `…/ruang-tunggu/{id}/izinkan`.
 - **Formulir buat/ubah rapat** mengirim `guest_emails` + `guest_names` (peta email huruf kecil → nama bersih; email tanpa nama tidak dikirim sehingga nama yang sudah ada tidak tertimpa). Pemilih peserta punya isian "Nama tamu (opsional)", batas 30 tamu, dan teks diganti dari "undangan email ditahan" menjadi "masuk lewat tautan pribadi". Setelah simpan dengan tamu pada rapat video, detail dibuka dengan `?tamu=1` yang otomatis membuka daftar tamu (tombol Bagikan).
 
-### Selisih / celah kontrak (untuk agen backend)
+### Selisih / celah kontrak
 
-1. Detail rapat API v1 sebaiknya menyertakan `can.manage_guests` dan `can.manage_lobby` (dan `video.is_organizer`); sekarang diturunkan di klien.
-2. `GET rapat/formulir` untuk rapat yang ada mengembalikan `guest_emails` tetapi **tanpa `guest_names`**: saat mengubah rapat nama tamu tidak bisa diisi awal (aman: tidak dikirim berarti tidak menimpa). Nama tamu baru dari formulir ubah tetap terkirim.
-3. Baris tamu di `participants` detail rapat hanya memuat `email` (`user_id` null, tanpa `id` tamu dan tanpa `guest_name`); id tamu hanya ada di `GET …/tamu` (penyelenggara).
-4. `Share` tidak bisa memberi tahu aplikasi bahwa tautan benar-benar disalin/dikirim.
+Tertutup 16 Okt 2026 (bendera `can.manage_*`, `video.is_organizer`, `guest_id`/`guest_name` di detail, `guest_names` di formulir; lihat §4). Aplikasi memakai bendera server bila ada dan turunan peran bila tidak (server lama), nama tamu di formulir ubah terisi dari `guest_names`. Sisa:
+
+1. `Share` tidak bisa memberi tahu aplikasi bahwa tautan benar-benar disalin/dikirim.
 
 ### Perlu diverifikasi di emulator setelah build native
 
@@ -265,12 +277,10 @@ Kode: `resources/js/features/meetings/guests/**` (halaman tamu, panel penyelengg
 | Ubin peserta tamu: lencana "Tamu", nama dari `participant.name` (ditandatangani server); di tampilan tamu semua nama dari LiveKit | `video/room-people.tsx` (`personOfParticipant`), `video/room-tiles.tsx`, `video/room-panels.tsx` |
 | Formulir jadwal: nama opsional per email tamu dikirim sebagai `guest_names` (hanya yang diisi, agar nama tersimpan tidak terhapus) | `use-meeting-form.ts`, `meeting-form.tsx` |
 
-Keputusan: `useVideoRoom` menerima sumber token opsional (tamu memakai `POST /api/tamu/{token}/token`, galat 403 `dikeluarkan` menjadi layar "dikeluarkan"); klien API tamu memakai `fetch` tanpa cookie/CSRF (`credentials: 'omit'`) dan token tidak pernah masuk log/URL lain; URL organizer ditulis langsung (`/rapat/{id}/tamu…`) karena `resources/js/routes` dibangkitkan Wayfinder dan belum memuat rute tamu; hak penyelenggara/ruang tunggu tidak dibaca dari props (belum dikirim) melainkan dari jawaban API (403/404 menyembunyikan panel dan menghentikan polling).
+Keputusan: `useVideoRoom` menerima sumber token opsional (tamu memakai `POST /api/tamu/{token}/token`, galat 403 `dikeluarkan` menjadi layar "dikeluarkan"); klien API tamu memakai `fetch` tanpa cookie/CSRF (`credentials: 'omit'`) dan token tidak pernah masuk log/URL lain; URL organizer ditulis langsung (`/rapat/{id}/tamu…`) karena `resources/js/routes` dibangkitkan Wayfinder dan belum memuat rute tamu; hak penyelenggara/ruang tunggu dibaca dari bendera server `can.manage_*` di props (fallback bagi server lama: organizer / dapat bergabung); 403/404 dari endpoint tetap menyembunyikan panel dan menghentikan polling.
 
-Selisih terhadap kontrak/backend yang ditemukan:
-1. Props detail rapat dan ruang belum memuat `can.manage_guests` / `can.manage_lobby`; UI memakai penyelenggara = `meeting.organizer_id` dan 403 dari endpoint.
-2. `guest_names` tidak ikut di props form ubah rapat (`MeetingController` hanya mengirim email), jadi nama tamu lama tidak terisi di formulir; mengisi nama lagi menggantinya, mengosongkan tidak menghapus. Nama bisa diubah lewat "Tambah tamu" dengan email yang sama.
-3. `Permissions-Policy` untuk `/tamu/{token}` sudah benar (`meetings.guest.page` ada di `SecurityHeaders`): kamera, mikrofon, dan berbagi layar diizinkan; diperiksa lewat `curl -I`.
-4. Tamu tidak punya atribut `hand`, subtitle, dan tombol angkat tangan (sesuai §7).
+Selisih terhadap kontrak/backend: dua selisih awal (bendera `can.manage_*` di props detail/ruang, `guest_names` di form ubah) ditutup 16 Okt 2026 — UI memakai bendera server dengan fallback penyelenggara = `meeting.organizer_id` untuk server lama, dan formulir ubah terisi dari `form.meeting.guest_names`.
+1. `Permissions-Policy` untuk `/tamu/{token}` sudah benar (`meetings.guest.page` ada di `SecurityHeaders`): kamera, mikrofon, dan berbagi layar diizinkan; diperiksa lewat `curl -I`.
+2. Tamu tidak punya atribut `hand`, subtitle, dan tombol angkat tangan (sesuai §7).
 
 Belum diuji: ruang video sungguhan dengan dua peserta (LiveKit lokal belum dipasang di worktree ini); alur menunggu → diizinkan → ruang hanya diuji lewat tes hook/komponen dan layar formulir/tautan tidak berlaku lewat screenshot.
