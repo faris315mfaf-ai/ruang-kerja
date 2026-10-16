@@ -6,7 +6,7 @@ use App\Domain\Attendance\Actions\CheckOut;
 use App\Domain\Attendance\Exceptions\AttendanceException;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Attendance\CheckInRequest;
+use App\Http\Requests\Attendance\CheckOutRequest;
 use App\Http\Resources\Attendance\AttendancePresenter;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Gate;
 class CheckOutController extends Controller
 {
     public function __invoke(
-        CheckInRequest $request,
+        CheckOutRequest $request,
         #[CurrentUser] User $user,
         CheckOut $checkOut,
         AttendancePresenter $presenter,

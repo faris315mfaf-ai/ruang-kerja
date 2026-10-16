@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Absensi HR · perlu ditinjau (is_suspicious), selfie, tandai ditinjau · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<style>
+.hr-flow{display:flow-root}
+.hr-tabnav{display:flex;border-bottom:1px solid var(--border);gap:4px;overflow:hidden}
+.hr-tabnav span{padding:12px 12px 11px;font-size:15px;font-weight:700;color:var(--text-muted);border-bottom:3px solid transparent;white-space:nowrap;margin-bottom:-1px}
+.hr-tabnav span.on{color:var(--link);border-bottom-color:var(--primary)}
+.hr-tabnav .n{display:inline-flex;min-width:20px;height:20px;border-radius:10px;background:var(--surface-2);color:var(--text-muted);font-size:12px;align-items:center;justify-content:center;padding:0 6px;margin-left:6px}
+.hr-tile{width:56px;height:56px;border-radius:18px;background:var(--grad-indigo);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-btn);flex:none}
+.hr-chip-n{font-size:13px;opacity:.75;font-weight:600}
+.chip.on .hr-chip-n{opacity:.9}
+.hr-score{display:flex;gap:8px}
+.hr-score span{width:48px;height:48px;border-radius:14px;border:1.5px solid var(--border-strong);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700}
+.hr-score span.on{background:var(--grad-aksi);border-color:transparent;color:#fff}
+.hr-bar{height:14px;border-radius:7px;background:var(--surface-2);overflow:hidden;display:flex}
+.hr-bar b{display:block;height:100%}
+.hr-seg-ok{background:var(--ok)}.hr-seg-warn{background:var(--fill-warn)}.hr-seg-info{background:var(--blue-strong)}.hr-seg-off{background:var(--border-strong)}
+.hr-trend{display:flex;align-items:flex-end;gap:8px;height:130px;padding-top:8px}
+.hr-trend div{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.hr-trend b{display:block;width:100%;border-radius:8px 8px 4px 4px;background:var(--grad-merek)}
+.hr-trend span{font-size:12px;color:var(--text-muted);font-weight:600}
+.hr-dl{display:grid;grid-template-columns:128px 1fr;gap:6px 12px;align-items:center}
+.hr-dl>div{padding:11px 0;border-top:1px solid var(--divider);min-height:44px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hr-dl>div{min-width:0;overflow-wrap:anywhere}
+.hr-dl>div.k{color:var(--text-muted);font-size:15px}
+.hr-dl>div:nth-child(-n+2){border-top:0}
+.hr-tree .lv{display:flex;align-items:center;gap:12px;min-height:64px;padding:8px 14px;border-top:1px solid var(--divider)}
+.hr-tree .lv:first-child{border-top:0}
+.hr-tree .l2{padding-left:40px}.hr-tree .l3{padding-left:66px}
+.hr-tree .bar{width:4px;height:34px;border-radius:2px;flex:none}
+.hr-mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:14px;font-weight:600}
+.hr-desk{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:22px 18px;border-radius:24px;background:var(--surface);border:1px solid var(--border)}
+.hr-desk .ic{width:52px;height:52px;border-radius:50%;background:var(--link-soft);color:var(--link);display:flex;align-items:center;justify-content:center}
+.hr-rowbtns{display:flex;gap:8px}
+.hr-rowbtns .btn{flex:1}
+.hr-check-row{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--divider)}
+.hr-check-row:first-child{border-top:0}
+.hr-tag-lock{height:26px;padding:0 9px;border-radius:8px;display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;background:var(--surface-2);color:var(--text-muted)}
+.hr-opt{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 14px;border-radius:16px;border:1px solid var(--border);background:var(--surface)}
+.hr-opt.on{border-color:var(--primary);background:var(--link-soft)}
+.hr-pill-dot{width:10px;height:10px;border-radius:50%;flex:none}
+.hr-li{display:flex;align-items:center;gap:12px;min-height:56px}
+.card:not(.list) .hr-li{padding:8px 0}
+.card:not(.list) .hr-li+.hr-li{border-top:1px solid var(--divider)}
+.hr-line{height:1px;background:var(--divider)}
+.hr-sec{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin:6px 4px -6px}
+.hr-sign{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text-muted)}
+.hr-ring{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--primary) var(--p,70%),var(--surface-2) 0);flex:none}
+.hr-ring span{width:64px;height:64px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px}
+</style>
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+  <div class="phone" data-auto="24" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Perlu ditinjau</span></div><div class="pad stack" style="gap:12px;padding-top:12px"><div class="t-meta">3 check-in ditandai · diperiksa: akurasi GPS, perangkat & IP baru, jam perangkat, lompatan lokasi, selfie gelap.</div><div class="stack" style="gap:8px;background:var(--surface-2);border-radius:18px;padding:14px"><div class="row-h"><span class="avatar teal sm">ML</span><div class="grow"><div class="t-label">Maya Lestari</div><div class="t-meta">Check-in 08.12 · WFH</div></div></div><div><span class="badge bad">Akurasi GPS rendah</span></div><div style="font-size:14px;line-height:20px;font-weight:600;color:var(--bad)">Akurasi GPS 340 m</div><div class="hr-rowbtns"><button class="btn outline sm"><i data-i="image" data-s="16"></i>Lihat selfie</button><button class="btn tonal sm"><i data-i="check" data-s="16"></i>Tandai ditinjau</button></div></div><div class="stack" style="gap:8px;background:var(--surface-2);border-radius:18px;padding:14px"><div class="row-h"><span class="avatar  sm">BS</span><div class="grow"><div class="t-label">Bayu Saputra</div><div class="t-meta">Check-in 07.58 · Kantor Pusat</div></div></div><div><span class="badge bad">Perangkat baru</span></div><div style="font-size:14px;line-height:20px;font-weight:600;color:var(--bad)">Perangkat pertama dipakai hari ini</div><div class="hr-rowbtns"><button class="btn outline sm"><i data-i="image" data-s="16"></i>Lihat selfie</button><button class="btn tonal sm"><i data-i="check" data-s="16"></i>Tandai ditinjau</button></div></div><div class="stack" style="gap:8px;background:var(--surface-2);border-radius:18px;padding:14px"><div class="row-h"><span class="avatar teal sm">RM</span><div class="grow"><div class="t-label">Reza Mahendra</div><div class="t-meta">Check-in 08.14 · Kantor Pusat</div></div></div><div><span class="badge bad">Jam perangkat tidak sesuai</span></div><div style="font-size:14px;line-height:20px;font-weight:600;color:var(--bad)">perangkat 08.14 · server 08.31 (dipakai)</div><div class="hr-rowbtns"><button class="btn outline sm"><i data-i="image" data-s="16"></i>Lihat selfie</button><button class="btn tonal sm"><i data-i="check" data-s="16"></i>Tandai ditinjau</button></div></div></div></div></div>
+    
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Perlu ditinjau</span></div><div class="pad stack" style="gap:12px;padding-top:12px"><div class="t-meta">3 check-in ditandai · diperiksa: akurasi GPS, perangkat & IP baru, jam perangkat, lompatan lokasi, selfie gelap.</div><div class="stack" style="gap:8px;background:var(--surface-2);border-radius:18px;padding:14px"><div class="row-h"><span class="avatar teal sm">ML</span><div class="grow"><div class="t-label">Maya Lestari</div><div class="t-meta">Check-in 08.12 · WFH</div></div></div><div><span class="badge bad">Akurasi GPS rendah</span></div><div style="font-size:14px;line-height:20px;font-weight:600;color:var(--bad)">Akurasi GPS 340 m</div><div class="hr-rowbtns"><button class="btn outline sm"><i data-i="image" data-s="16"></i>Lihat selfie</button><button class="btn tonal sm"><i data-i="check" data-s="16"></i>Tandai ditinjau</button></div></div><div class="stack" style="gap:8px;background:var(--surface-2);border-radius:18px;padding:14px"><div class="row-h"><span class="avatar  sm">BS</span><div class="grow"><div class="t-label">Bayu Saputra</div><div class="t-meta">Check-in 07.58 · Kantor Pusat</div></div></div><div><span class="badge bad">Perangkat baru</span></div><div style="font-size:14px;line-height:20px;font-weight:600;color:var(--bad)">Perangkat pertama dipakai hari ini</div><div class="hr-rowbtns"><button class="btn outline sm"><i data-i="image" data-s="16"></i>Lihat selfie</button><button class="btn tonal sm"><i data-i="check" data-s="16"></i>Tandai ditinjau</button></div></div><div class="stack" style="gap:8px;background:var(--surface-2);border-radius:18px;padding:14px"><div class="row-h"><span class="avatar teal sm">RM</span><div class="grow"><div class="t-label">Reza Mahendra</div><div class="t-meta">Check-in 08.14 · Kantor Pusat</div></div></div><div><span class="badge bad">Jam perangkat tidak sesuai</span></div><div style="font-size:14px;line-height:20px;font-weight:600;color:var(--bad)">perangkat 08.14 · server 08.31 (dipakai)</div><div class="hr-rowbtns"><button class="btn outline sm"><i data-i="image" data-s="16"></i>Lihat selfie</button><button class="btn tonal sm"><i data-i="check" data-s="16"></i>Tandai ditinjau</button></div></div></div></div></div>
+    <div class="scrim"></div><div class="dialog"><div class="t-h3">Lihat selfie Maya Lestari?</div><div class="muted" style="font-size:15px;line-height:21px">Selfie adalah data sensitif. Akses ini <b>dicatat di audit log</b>. Tautan hanya berlaku 5 menit.</div><div class="acts"><button class="btn quiet">Batal</button><button class="btn primary">Lihat selfie</button></div></div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div style="background:#000;height:100%;color:#fff;position:relative"><div style="position:absolute;top:0;left:0;right:0;height:56px;display:flex;align-items:center;gap:10px;padding:0 12px"><i data-i="x"></i><div class="grow t-title" style="color:#fff">Selfie · Maya Lestari</div></div><div class="cam" style="position:absolute;inset:70px 16px 130px;border-radius:24px"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.35)"><i data-i="user-round" data-s="96"></i></div></div><div style="position:absolute;left:16px;right:16px;bottom:24px;display:flex;flex-direction:column;gap:6px"><div class="t-label" style="color:#fff">Check-in 08.12 · Sel, 13 Okt 2026</div><div style="font-size:13px;color:rgba(255,255,255,.75)">Tautan berakhir dalam 4:52 · tangkapan layar diblokir (FLAG_SECURE)</div></div></div></div></div>
+    
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Perlu ditinjau</span></div><div class="pad stack" style="gap:12px;padding-top:12px"><div class="t-meta">3 check-in ditandai · diperiksa: akurasi GPS, perangkat & IP baru, jam perangkat, lompatan lokasi, selfie gelap.</div><div class="stack" style="gap:8px;background:var(--surface-2);border-radius:18px;padding:14px"><div class="row-h"><span class="avatar teal sm">ML</span><div class="grow"><div class="t-label">Maya Lestari</div><div class="t-meta">Check-in 08.12 · WFH</div></div></div><div><span class="badge bad">Akurasi GPS rendah</span></div><div style="font-size:14px;line-height:20px;font-weight:600;color:var(--bad)">Akurasi GPS 340 m</div><div class="hr-rowbtns"><button class="btn outline sm"><i data-i="image" data-s="16"></i>Lihat selfie</button><button class="btn tonal sm"><i data-i="check" data-s="16"></i>Tandai ditinjau</button></div></div><div class="stack" style="gap:8px;background:var(--surface-2);border-radius:18px;padding:14px"><div class="row-h"><span class="avatar  sm">BS</span><div class="grow"><div class="t-label">Bayu Saputra</div><div class="t-meta">Check-in 07.58 · Kantor Pusat</div></div></div><div><span class="badge bad">Perangkat baru</span></div><div style="font-size:14px;line-height:20px;font-weight:600;color:var(--bad)">Perangkat pertama dipakai hari ini</div><div class="hr-rowbtns"><button class="btn outline sm"><i data-i="image" data-s="16"></i>Lihat selfie</button><button class="btn tonal sm"><i data-i="check" data-s="16"></i>Tandai ditinjau</button></div></div><div class="stack" style="gap:8px;background:var(--surface-2);border-radius:18px;padding:14px"><div class="row-h"><span class="avatar teal sm">RM</span><div class="grow"><div class="t-label">Reza Mahendra</div><div class="t-meta">Check-in 08.14 · Kantor Pusat</div></div></div><div><span class="badge bad">Jam perangkat tidak sesuai</span></div><div style="font-size:14px;line-height:20px;font-weight:600;color:var(--bad)">perangkat 08.14 · server 08.31 (dipakai)</div><div class="hr-rowbtns"><button class="btn outline sm"><i data-i="image" data-s="16"></i>Lihat selfie</button><button class="btn tonal sm"><i data-i="check" data-s="16"></i>Tandai ditinjau</button></div></div></div></div></div>
+    <div class="scrim"></div><div class="dialog"><div class="t-h3">Selfie tidak tersedia</div><div class="muted" style="font-size:15px;line-height:21px">Selfie sudah dihapus sesuai masa retensi (12 bulan).</div><div class="acts"><button class="btn primary">Mengerti</button></div></div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Perlu ditinjau</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="t-meta">2 check-in ditandai</div><div class="stack" style="gap:8px;background:var(--surface-2);border-radius:18px;padding:14px"><div class="row-h"><span class="avatar  sm">BS</span><div class="grow"><div class="t-label">Bayu Saputra</div><div class="t-meta">Check-in 07.58 · Kantor Pusat</div></div></div><div><span class="badge bad">Perangkat baru</span></div><div style="font-size:14px;line-height:20px;font-weight:600;color:var(--bad)">Perangkat pertama dipakai hari ini</div></div></div></div></div>
+    <div class="snack" style="bottom:40px"><i data-i="circle-check"></i> Check-in Maya Lestari ditandai ditinjau<a>Urungkan</a></div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Perlu ditinjau</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="banner ok"><i data-i="shield-check"></i><div>Tidak ada temuan. Diperiksa: akurasi GPS, perangkat & IP baru, jam perangkat, lompatan lokasi, selfie gelap.</div></div><div class="empty"><div class="ic"><i data-i="shield-check" data-s="30"></i></div><div class="t-h3">Semua check-in wajar</div><div class="muted" style="font-size:15px;line-height:22px">Temuan baru muncul di sini saat ada check-in yang ditandai.</div></div></div></div></div>
+    
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Detail check-in</span></div><div class="pad stack" style="gap:14px;padding-top:12px"><div class="card "><div class="row-h"><span class="avatar teal ">ML</span><div class="grow"><div class="t-title">Maya Lestari</div><div class="t-meta">Check-in 08.12 · WFH · Sel, 13 Okt</div></div></div><div class="map" style="height:150px;margin-top:12px"><span style="position:absolute;left:46%;top:42%;color:var(--bad)"><i data-i="map-pin" data-s="34"></i></span></div><div class="hr-dl" style="margin-top:10px"><div class="k">Akurasi</div><div>340 m</div><div class="k">Perangkat</div><div>Pixel 8 · Android 15</div><div class="k">Alamat IP</div><div>Baru (36.72.•.•)</div><div class="k">Tanda</div><div><span class="badge bad">Akurasi GPS rendah</span></div></div></div><div class="hr-rowbtns"><button class="btn outline"><i data-i="image" data-s="18"></i>Lihat selfie</button><button class="btn primary"><i data-i="check" data-s="18"></i>Tandai ditinjau</button></div><div class="t-meta" style="text-align:center">Peta hanya sketsa; tidak ada pelacakan lokasi selain saat check-in/out.</div></div></div></div>
+    
+  </div>
+</div>
+<script>
+(function(){function fit(){document.querySelectorAll('.phone[data-auto]').forEach(function(p){var f=p.querySelector('.hr-flow');if(!f)return;var pb=parseInt(p.dataset.auto,10)||24;var h=Math.max(915,f.offsetHeight+56+pb);p.style.setProperty('--h',h+'px');});}
+if(document.fonts&&document.fonts.ready){document.fonts.ready.then(fit);}window.addEventListener('load',fit);fit();})();
+</script>
+</body>
+</html>

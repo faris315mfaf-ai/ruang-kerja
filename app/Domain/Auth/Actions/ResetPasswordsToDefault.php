@@ -83,6 +83,7 @@ final readonly class ResetPasswordsToDefault
                     // One explicit audit row instead of a generic user.updated.
                     $user->saveQuietly();
                     $this->sessions->deleteStoredSessions($user);
+                    $this->sessions->revokeApiTokens($user);
                     $this->openResets->cancelFor($user);
 
                     $this->audit->log('user.password_reset_to_default', $user, null, [

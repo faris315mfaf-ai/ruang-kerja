@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Gate;
  * is an ordinary note: it can be moved or shared later. Authorization:
  * NotePolicy::create on the personal workspace (an inactive author never
  * passes).
+ *
+ * `$plain` (mobile app, keputusan pemilik 13 Okt 2026): the same sections as
+ * plain paragraphs, so the phone's plain-text editor can edit the note
+ * (`mobile_editable`); the web keeps the formatted template.
  */
 final class StartQuickMinutes
 {
@@ -26,7 +30,7 @@ final class StartQuickMinutes
         private readonly StoreNoteState $store,
     ) {}
 
-    public function handle(User $author, ?CarbonImmutable $now = null): Note
+    public function handle(User $author, ?CarbonImmutable $now = null, bool $plain = false): Note
     {
         $workspace = $this->personal->handle($author);
 
@@ -42,13 +46,35 @@ final class StartQuickMinutes
 
         // Sanitized like any other save (NoteContent); the collab server
         // builds the Yjs document from `content` on first open.
-        return $this->store->handle($note, null, self::template($when), $author);
+        return $this->store->handle($note, null, $plain ? self::plainTemplate($when) : self::template($when), $author);
     }
 
     /** "Selasa, 06/10/2026 14.05" (office time). */
     public static function when(CarbonImmutable $at): string
     {
         return $at->settings(['locale' => 'id'])->translatedFormat('l, d/m/Y H.i');
+    }
+
+    /**
+     * The minutes template as plain paragraphs only (no headings, lists or
+     * marks): one label line per section followed by an empty line to type in.
+     *
+     * @return array<string, mixed>
+     */
+    public static function plainTemplate(string $when): array
+    {
+        $line = fn (string $text): array => $text === ''
+            ? ['type' => 'paragraph']
+            : ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text]]];
+
+        $content = [$line("Tanggal & jam: {$when}")];
+        foreach (['Peserta:', 'Agenda:', 'Pembahasan:', 'Keputusan:', 'Tindak lanjut:'] as $label) {
+            $content[] = $line('');
+            $content[] = $line($label);
+            $content[] = $line('');
+        }
+
+        return ['type' => 'doc', 'content' => $content];
     }
 
     /**

@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Form rapat — keadaan · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<link rel="stylesheet" href="_rapat.css">
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+<!-- Validasi: galat per isian, fokus ke galat pertama (judul) -->
+<div class="phone " style="--h:1500px" data-jam="08.05">
+<div class="body">
+<div class="rp-hdr"><button class="rp-ib" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Jadwalkan rapat</div><span class="btn quiet">Batal</span></div>
+<div class="rp-pad stack" style="margin-top:14px;padding-bottom:150px">
+ <div class="banner bad"><i data-i="circle-alert"></i><div><b>Periksa 3 isian.</b> Judul, tanggal, dan peserta belum benar.</div></div>
+ <div class="field"><label>Judul rapat</label><div class="input focus err"><span class="ph grow trunc">Misalnya: Review vendor logistik</span></div><div class="hint err">Judul rapat wajib diisi.</div></div>
+ <div class="field"><label>Tanggal</label><div class="input err"><span class=" grow trunc">10/10/2026</span><span style="color:var(--text-muted)"><i data-i="calendar-days"></i></span></div><div class="hint err">Tanggal sudah lewat. Pilih hari ini atau sesudahnya.</div></div>
+ <div class="grid2"><div class="field"><label>Mulai</label><div class="input "><span class=" grow trunc">14.30</span><span style="color:var(--text-muted)"><i data-i="clock"></i></span></div></div><div class="field"><label>Durasi</label><div class="input "><span class=" grow trunc">1 jam</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div></div></div>
+ 
+ <div class="rp-col rp-g12"><div class="t-h3" style="font-size:18px">Tempat rapat</div>
+  <div class="rp-opt on"><span class="radio on" style="margin-top:1px"></span><div class="grow"><div class="t">Video RuangKerja</div><div class="m">Ruang video bawaan · tanpa tautan</div></div><span style="color:var(--text-muted)"><i data-i="video"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Google Meet</div><div class="m">Tempel tautan (opsional) · tautan otomatis ditahan</div></div><span style="color:var(--text-muted)"><i data-i="link"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Zoom</div><div class="m">Tempel tautan rapat</div></div><span style="color:var(--text-muted)"><i data-i="link"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Tatap muka</div><div class="m">Ruangan, mis. Ruang Rapat Lt. 3</div></div><span style="color:var(--text-muted)"><i data-i="building-2"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Di klien</div><div class="m">Nama klien dan alamatnya</div></div><span style="color:var(--text-muted)"><i data-i="handshake"></i></span></div>
+  </div>
+ <div class="field"><label>Peserta · 1 orang</label><div class="input" style="height:auto;min-height:56px;padding:10px;flex-wrap:wrap;align-items:center"><div class="rp-chipsel"><span class="rp-pchip"><span class="avatar   ">DP</span>Dimas (Anda)</span></div><div class="rp-row" style="width:100%;margin-top:6px;color:var(--text-subtle)"><i data-i="search" data-s="18"></i><span>Tambah nama atau email…</span></div></div><div class="hint err">Tambahkan sedikitnya satu peserta selain Anda.</div></div>
+ <div class="rp-col rp-g12"><div class="t-h3" style="font-size:18px">Agenda</div><div class="rp-ag"><span class="no">1</span><div class="input grow" style="height:48px">Evaluasi ketepatan pengiriman</div><span class="rp-ib"><i data-i="trash-2"></i></span></div><div class="rp-ag"><span class="no">2</span><div class="input grow" style="height:48px">Penawaran harga kuartal IV</div><span class="rp-ib"><i data-i="trash-2"></i></span></div><div class="rp-ag"><span class="no">3</span><div class="input grow" style="height:48px">SLA klaim barang rusak</div><span class="rp-ib"><i data-i="trash-2"></i></span></div><span class="btn tonal"><i data-i="plus"></i>Tambah butir agenda</span></div>
+ <div class="field"><label>Notulis</label><div class="input "><i data-i="user-round"></i><span class=" grow trunc">Sari Wulandari</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div><div class="hint ">Notulis juga diundang otomatis.</div></div>
+ <div class="field"><label>Ulangi</label><div class="input "><i data-i="repeat"></i><span class=" grow trunc">Tidak berulang</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div></div>
+ 
+ <div class="field"><label>Workspace tugas tindak lanjut</label><div class="input "><i data-i="folder-kanban"></i><span class=" grow trunc">Operasional · OPS</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div><div class="hint ">Dipakai tombol "Jadikan tugas" di notulen.</div></div>
+ <div class="rp-col rp-g12"><div class="t-h3" style="font-size:18px">Pengingat</div><div class="chips"><span class="chip on"><i data-i="check"></i>30 menit</span><span class="chip on"><i data-i="check"></i>15 menit</span><span class="chip ">5 menit</span></div></div>
+ 
+ <div class="card tight"><div class="rp-sw"><span class="switch on"></span><div class="grow"><div class="rp-lbl">Notulen otomatis</div><div class="rp-note">Suara peserta ditranskrip setelah rapat, lalu AI menyusun draf notulen untuk diperiksa notulis. Peserta bisa menolak. Transkrip dihapus otomatis setelah 90 hari.</div><div class="rp-note" style="margin-top:6px;color:var(--warn)">Hindari untuk rapat berisi data pribadi sensitif.</div></div></div></div>
+</div>
+</div>
+<div class="bottom-bar"><div class="btn primary block">Periksa &amp; kirim undangan</div></div>
+</div>
+<!-- Kartu bentrok + "Pakai 15.30"; juga keadaan tanpa slot kosong -->
+<div class="phone " style="--h:1500px" data-jam="08.05">
+<div class="body">
+<div class="rp-hdr"><button class="rp-ib" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Jadwalkan rapat</div><span class="btn quiet">Batal</span></div>
+<div class="rp-pad stack" style="margin-top:14px;padding-bottom:150px">
+ 
+ <div class="field"><label>Judul rapat</label><div class="input "><span class=" grow trunc">Review vendor logistik</span></div></div>
+ <div class="field"><label>Tanggal</label><div class="input "><span class=" grow trunc">Rabu, 14/10/2026</span><span style="color:var(--text-muted)"><i data-i="calendar-days"></i></span></div></div>
+ <div class="grid2"><div class="field"><label>Mulai</label><div class="input "><span class=" grow trunc">14.30</span><span style="color:var(--text-muted)"><i data-i="clock"></i></span></div></div><div class="field"><label>Durasi</label><div class="input "><span class=" grow trunc">1 jam</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div></div></div>
+ <div class="card tight" style="background:var(--warn-soft);border-color:transparent"><div class="rp-row" style="align-items:flex-start"><span style="color:var(--warn)"><i data-i="calendar-clock" data-s="24"></i></span><div class="grow"><div class="rp-ttl" style="color:var(--warn)">Bentrok dengan 2 peserta</div><div class="rp-sub" style="color:var(--warn)">Bayu: Retrospektif gudang 14.00–15.00 · Fitri: 1:1 Keuangan 14.30–15.00</div><div class="rp-row" style="margin-top:10px"><span class="btn sm" style="background:var(--surface);color:var(--warn)">Pakai 15.30</span><span class="btn sm quiet" style="color:var(--warn)">Tetap jadwalkan</span></div></div></div></div><div class="card tight" style="background:var(--surface-2);border-color:transparent"><div class="rp-row"><span style="color:var(--text-muted)"><i data-i="calendar-x" data-s="22"></i></span><div class="grow rp-sub">Tidak ada waktu kosong bersama sampai 17.00. Coba hari lain.</div></div></div>
+ <div class="rp-col rp-g12"><div class="t-h3" style="font-size:18px">Tempat rapat</div>
+  <div class="rp-opt on"><span class="radio on" style="margin-top:1px"></span><div class="grow"><div class="t">Video RuangKerja</div><div class="m">Ruang video bawaan · tanpa tautan</div></div><span style="color:var(--text-muted)"><i data-i="video"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Google Meet</div><div class="m">Tempel tautan (opsional) · tautan otomatis ditahan</div></div><span style="color:var(--text-muted)"><i data-i="link"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Zoom</div><div class="m">Tempel tautan rapat</div></div><span style="color:var(--text-muted)"><i data-i="link"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Tatap muka</div><div class="m">Ruangan, mis. Ruang Rapat Lt. 3</div></div><span style="color:var(--text-muted)"><i data-i="building-2"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Di klien</div><div class="m">Nama klien dan alamatnya</div></div><span style="color:var(--text-muted)"><i data-i="handshake"></i></span></div>
+  </div>
+ <div class="field"><label>Peserta · 5 orang</label><div class="input" style="height:auto;min-height:56px;padding:10px;flex-wrap:wrap;align-items:center"><div class="rp-chipsel"><span class="rp-pchip"><span class="avatar   ">DP</span>Dimas (Anda)</span><span class="rp-pchip"><span class="avatar   ">BS</span>Bayu Saputra<i data-i="x"></i></span><span class="rp-pchip"><span class="avatar   ">RA</span>Rizky Aditya<i data-i="x"></i></span><span class="rp-pchip"><span class="avatar amber  ">HK</span>Fitri Handayani<i data-i="x"></i></span><span class="rp-pchip"><span class="avatar neutral" style="width:30px;height:30px"><i data-i="mail" data-s="16"></i></span>logistik@sinarlogistik.co.id<i data-i="x"></i></span></div><div class="rp-row" style="width:100%;margin-top:6px;color:var(--text-subtle)"><i data-i="search" data-s="18"></i><span>Tambah nama atau email…</span></div></div><div class="hint ">Tamu eksternal: undangan email ditahan; tamu tidak melihat isi aplikasi.</div></div>
+ <div class="rp-col rp-g12"><div class="t-h3" style="font-size:18px">Agenda</div><div class="rp-ag"><span class="no">1</span><div class="input grow" style="height:48px">Evaluasi ketepatan pengiriman</div><span class="rp-ib"><i data-i="trash-2"></i></span></div><div class="rp-ag"><span class="no">2</span><div class="input grow" style="height:48px">Penawaran harga kuartal IV</div><span class="rp-ib"><i data-i="trash-2"></i></span></div><div class="rp-ag"><span class="no">3</span><div class="input grow" style="height:48px">SLA klaim barang rusak</div><span class="rp-ib"><i data-i="trash-2"></i></span></div><span class="btn tonal"><i data-i="plus"></i>Tambah butir agenda</span></div>
+ <div class="field"><label>Notulis</label><div class="input "><i data-i="user-round"></i><span class=" grow trunc">Sari Wulandari</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div><div class="hint ">Notulis juga diundang otomatis.</div></div>
+ <div class="field"><label>Ulangi</label><div class="input "><i data-i="repeat"></i><span class=" grow trunc">Tidak berulang</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div></div>
+ 
+ <div class="field"><label>Workspace tugas tindak lanjut</label><div class="input "><i data-i="folder-kanban"></i><span class=" grow trunc">Operasional · OPS</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div><div class="hint ">Dipakai tombol "Jadikan tugas" di notulen.</div></div>
+ <div class="rp-col rp-g12"><div class="t-h3" style="font-size:18px">Pengingat</div><div class="chips"><span class="chip on"><i data-i="check"></i>30 menit</span><span class="chip on"><i data-i="check"></i>15 menit</span><span class="chip ">5 menit</span></div></div>
+ 
+ <div class="card tight"><div class="rp-sw"><span class="switch on"></span><div class="grow"><div class="rp-lbl">Notulen otomatis</div><div class="rp-note">Suara peserta ditranskrip setelah rapat, lalu AI menyusun draf notulen untuk diperiksa notulis. Peserta bisa menolak. Transkrip dihapus otomatis setelah 90 hari.</div><div class="rp-note" style="margin-top:6px;color:var(--warn)">Hindari untuk rapat berisi data pribadi sensitif.</div></div></div></div>
+</div>
+</div>
+<div class="bottom-bar"><div class="btn primary block">Periksa &amp; kirim undangan</div></div>
+</div>
+<!-- Mode Ubah rapat seri: banner dampak -->
+<div class="phone " style="--h:1500px" data-jam="08.05">
+<div class="body">
+<div class="rp-hdr"><button class="rp-ib" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Ubah rapat</div><span class="btn quiet">Batal</span></div>
+<div class="rp-pad stack" style="margin-top:14px;padding-bottom:150px">
+ <div class="banner warn"><i data-i="repeat"></i><div><b>Rapat berulang.</b> Perubahan berlaku untuk seluruh seri. Bila jam berubah, jawaban kehadiran peserta kembali ke "Belum menjawab" dan mereka diberi tahu.</div></div>
+ <div class="field"><label>Judul rapat</label><div class="input "><span class=" grow trunc">Rapat mingguan Operasional</span></div></div>
+ <div class="field"><label>Tanggal</label><div class="input "><span class=" grow trunc">Selasa, 13/10/2026</span><span style="color:var(--text-muted)"><i data-i="calendar-days"></i></span></div></div>
+ <div class="grid2"><div class="field"><label>Mulai</label><div class="input "><span class=" grow trunc">14.30</span><span style="color:var(--text-muted)"><i data-i="clock"></i></span></div></div><div class="field"><label>Durasi</label><div class="input "><span class=" grow trunc">1 jam</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div></div></div>
+ 
+ <div class="rp-col rp-g12"><div class="t-h3" style="font-size:18px">Tempat rapat</div>
+  <div class="rp-opt on"><span class="radio on" style="margin-top:1px"></span><div class="grow"><div class="t">Video RuangKerja</div><div class="m">Ruang video bawaan · tanpa tautan</div></div><span style="color:var(--text-muted)"><i data-i="video"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Google Meet</div><div class="m">Tempel tautan (opsional) · tautan otomatis ditahan</div></div><span style="color:var(--text-muted)"><i data-i="link"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Zoom</div><div class="m">Tempel tautan rapat</div></div><span style="color:var(--text-muted)"><i data-i="link"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Tatap muka</div><div class="m">Ruangan, mis. Ruang Rapat Lt. 3</div></div><span style="color:var(--text-muted)"><i data-i="building-2"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Di klien</div><div class="m">Nama klien dan alamatnya</div></div><span style="color:var(--text-muted)"><i data-i="handshake"></i></span></div>
+  </div>
+ <div class="field"><label>Peserta · 5 orang</label><div class="input" style="height:auto;min-height:56px;padding:10px;flex-wrap:wrap;align-items:center"><div class="rp-chipsel"><span class="rp-pchip"><span class="avatar   ">DP</span>Dimas (Anda)</span><span class="rp-pchip"><span class="avatar   ">BS</span>Bayu Saputra<i data-i="x"></i></span><span class="rp-pchip"><span class="avatar   ">RA</span>Rizky Aditya<i data-i="x"></i></span><span class="rp-pchip"><span class="avatar amber  ">HK</span>Fitri Handayani<i data-i="x"></i></span><span class="rp-pchip"><span class="avatar neutral" style="width:30px;height:30px"><i data-i="mail" data-s="16"></i></span>logistik@sinarlogistik.co.id<i data-i="x"></i></span></div><div class="rp-row" style="width:100%;margin-top:6px;color:var(--text-subtle)"><i data-i="search" data-s="18"></i><span>Tambah nama atau email…</span></div></div><div class="hint ">Tamu eksternal: undangan email ditahan; tamu tidak melihat isi aplikasi.</div></div>
+ <div class="rp-col rp-g12"><div class="t-h3" style="font-size:18px">Agenda</div><div class="rp-ag"><span class="no">1</span><div class="input grow" style="height:48px">Evaluasi ketepatan pengiriman</div><span class="rp-ib"><i data-i="trash-2"></i></span></div><div class="rp-ag"><span class="no">2</span><div class="input grow" style="height:48px">Penawaran harga kuartal IV</div><span class="rp-ib"><i data-i="trash-2"></i></span></div><div class="rp-ag"><span class="no">3</span><div class="input grow" style="height:48px">SLA klaim barang rusak</div><span class="rp-ib"><i data-i="trash-2"></i></span></div><span class="btn tonal"><i data-i="plus"></i>Tambah butir agenda</span></div>
+ <div class="field"><label>Notulis</label><div class="input "><i data-i="user-round"></i><span class=" grow trunc">Sari Wulandari</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div><div class="hint ">Notulis juga diundang otomatis.</div></div>
+ <div class="field"><label>Ulangi</label><div class="input "><i data-i="repeat"></i><span class=" grow trunc">Setiap minggu</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div></div>
+ <div class="field"><label>Berulang sampai (opsional)</label><div class="input "><span class="ph grow trunc">Tanpa akhir</span><span style="color:var(--text-muted)"><i data-i="calendar-days"></i></span></div></div>
+ <div class="field"><label>Workspace tugas tindak lanjut</label><div class="input "><i data-i="folder-kanban"></i><span class=" grow trunc">Operasional · OPS</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div><div class="hint ">Dipakai tombol "Jadikan tugas" di notulen.</div></div>
+ <div class="rp-col rp-g12"><div class="t-h3" style="font-size:18px">Pengingat</div><div class="chips"><span class="chip on"><i data-i="check"></i>30 menit</span><span class="chip on"><i data-i="check"></i>15 menit</span><span class="chip ">5 menit</span></div></div>
+ 
+ <div class="card tight"><div class="rp-sw"><span class="switch on"></span><div class="grow"><div class="rp-lbl">Notulen otomatis</div><div class="rp-note">Suara peserta ditranskrip setelah rapat, lalu AI menyusun draf notulen untuk diperiksa notulis. Peserta bisa menolak. Transkrip dihapus otomatis setelah 90 hari.</div><div class="rp-note" style="margin-top:6px;color:var(--warn)">Hindari untuk rapat berisi data pribadi sensitif.</div></div></div></div>
+</div>
+</div>
+<div class="bottom-bar"><div class="btn primary block">Simpan perubahan</div></div>
+</div>
+<!-- Platform Meet: isian tautan + validasi; tempat video tidak tersedia (server belum diatur) -->
+<div class="phone " style="--h:1500px" data-jam="08.05">
+<div class="body">
+<div class="rp-hdr"><button class="rp-ib" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Jadwalkan rapat</div><span class="btn quiet">Batal</span></div>
+<div class="rp-pad stack" style="margin-top:14px;padding-bottom:150px">
+ <div class="banner"><i data-i="info"></i><div>Video RuangKerja belum disiapkan di server ini, jadi tidak ditawarkan. Gunakan Google Meet atau Zoom.</div></div>
+ <div class="field"><label>Judul rapat</label><div class="input "><span class=" grow trunc">Review vendor logistik</span></div></div>
+ <div class="field"><label>Tanggal</label><div class="input "><span class=" grow trunc">Rabu, 14/10/2026</span><span style="color:var(--text-muted)"><i data-i="calendar-days"></i></span></div></div>
+ <div class="grid2"><div class="field"><label>Mulai</label><div class="input "><span class=" grow trunc">14.30</span><span style="color:var(--text-muted)"><i data-i="clock"></i></span></div></div><div class="field"><label>Durasi</label><div class="input "><span class=" grow trunc">1 jam</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div></div></div>
+ 
+ <div class="rp-col rp-g12"><div class="t-h3" style="font-size:18px">Tempat rapat</div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Video RuangKerja</div><div class="m">Ruang video bawaan · tanpa tautan</div></div><span style="color:var(--text-muted)"><i data-i="video"></i></span></div>
+  <div class="rp-opt on"><span class="radio on" style="margin-top:1px"></span><div class="grow"><div class="t">Google Meet</div><div class="m">Tempel tautan (opsional) · tautan otomatis ditahan</div></div><span style="color:var(--text-muted)"><i data-i="link"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Zoom</div><div class="m">Tempel tautan rapat</div></div><span style="color:var(--text-muted)"><i data-i="link"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Tatap muka</div><div class="m">Ruangan, mis. Ruang Rapat Lt. 3</div></div><span style="color:var(--text-muted)"><i data-i="building-2"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Di klien</div><div class="m">Nama klien dan alamatnya</div></div><span style="color:var(--text-muted)"><i data-i="handshake"></i></span></div>
+  <div class="field"><label>Tautan Google Meet (opsional)</label><div class="input err"><i data-i="link"></i><span class=" grow trunc">meet.google.com/abc</span></div><div class="hint err">Tautan harus diawali https://. Tautan dicek formatnya dan ikut di pengingat peserta.</div></div></div>
+ <div class="field"><label>Peserta · 5 orang</label><div class="input" style="height:auto;min-height:56px;padding:10px;flex-wrap:wrap;align-items:center"><div class="rp-chipsel"><span class="rp-pchip"><span class="avatar   ">DP</span>Dimas (Anda)</span><span class="rp-pchip"><span class="avatar   ">BS</span>Bayu Saputra<i data-i="x"></i></span><span class="rp-pchip"><span class="avatar   ">RA</span>Rizky Aditya<i data-i="x"></i></span><span class="rp-pchip"><span class="avatar amber  ">HK</span>Fitri Handayani<i data-i="x"></i></span><span class="rp-pchip"><span class="avatar neutral" style="width:30px;height:30px"><i data-i="mail" data-s="16"></i></span>logistik@sinarlogistik.co.id<i data-i="x"></i></span></div><div class="rp-row" style="width:100%;margin-top:6px;color:var(--text-subtle)"><i data-i="search" data-s="18"></i><span>Tambah nama atau email…</span></div></div><div class="hint ">Tamu eksternal: undangan email ditahan; tamu tidak melihat isi aplikasi.</div></div>
+ <div class="rp-col rp-g12"><div class="t-h3" style="font-size:18px">Agenda</div><div class="rp-ag"><span class="no">1</span><div class="input grow" style="height:48px">Evaluasi ketepatan pengiriman</div><span class="rp-ib"><i data-i="trash-2"></i></span></div><div class="rp-ag"><span class="no">2</span><div class="input grow" style="height:48px">Penawaran harga kuartal IV</div><span class="rp-ib"><i data-i="trash-2"></i></span></div><div class="rp-ag"><span class="no">3</span><div class="input grow" style="height:48px">SLA klaim barang rusak</div><span class="rp-ib"><i data-i="trash-2"></i></span></div><span class="btn tonal"><i data-i="plus"></i>Tambah butir agenda</span></div>
+ <div class="field"><label>Notulis</label><div class="input "><i data-i="user-round"></i><span class=" grow trunc">Sari Wulandari</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div><div class="hint ">Notulis juga diundang otomatis.</div></div>
+ <div class="field"><label>Ulangi</label><div class="input "><i data-i="repeat"></i><span class=" grow trunc">Tidak berulang</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div></div>
+ 
+ <div class="field"><label>Workspace tugas tindak lanjut</label><div class="input "><i data-i="folder-kanban"></i><span class=" grow trunc">Operasional · OPS</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div><div class="hint ">Dipakai tombol "Jadikan tugas" di notulen.</div></div>
+ <div class="rp-col rp-g12"><div class="t-h3" style="font-size:18px">Pengingat</div><div class="chips"><span class="chip on"><i data-i="check"></i>30 menit</span><span class="chip on"><i data-i="check"></i>15 menit</span><span class="chip ">5 menit</span></div></div>
+ 
+ <div class="card tight"><div class="rp-sw"><span class="switch off" style="opacity:.5"></span><div class="grow"><div class="rp-lbl" style="color:var(--text-subtle)">Notulen otomatis</div><div class="rp-note">Hanya untuk rapat Video RuangKerja. Belum disiapkan admin di server ini.</div></div></div></div>
+</div>
+</div>
+<div class="bottom-bar"><div class="btn primary block">Periksa &amp; kirim undangan</div></div>
+</div>
+<!-- Pengguna Direksi/HR: sakelar Rapat pimpinan -->
+<div class="phone " style="--h:1500px" data-jam="08.05">
+<div class="body">
+<div class="rp-hdr"><button class="rp-ib" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Jadwalkan rapat</div><span class="btn quiet">Batal</span></div>
+<div class="rp-pad stack" style="margin-top:14px;padding-bottom:150px">
+ 
+ <div class="field"><label>Judul rapat</label><div class="input "><span class=" grow trunc">Review vendor logistik</span></div></div>
+ <div class="field"><label>Tanggal</label><div class="input "><span class=" grow trunc">Rabu, 14/10/2026</span><span style="color:var(--text-muted)"><i data-i="calendar-days"></i></span></div></div>
+ <div class="grid2"><div class="field"><label>Mulai</label><div class="input "><span class=" grow trunc">14.30</span><span style="color:var(--text-muted)"><i data-i="clock"></i></span></div></div><div class="field"><label>Durasi</label><div class="input "><span class=" grow trunc">1 jam</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div></div></div>
+ 
+ <div class="rp-col rp-g12"><div class="t-h3" style="font-size:18px">Tempat rapat</div>
+  <div class="rp-opt on"><span class="radio on" style="margin-top:1px"></span><div class="grow"><div class="t">Video RuangKerja</div><div class="m">Ruang video bawaan · tanpa tautan</div></div><span style="color:var(--text-muted)"><i data-i="video"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Google Meet</div><div class="m">Tempel tautan (opsional) · tautan otomatis ditahan</div></div><span style="color:var(--text-muted)"><i data-i="link"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Zoom</div><div class="m">Tempel tautan rapat</div></div><span style="color:var(--text-muted)"><i data-i="link"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Tatap muka</div><div class="m">Ruangan, mis. Ruang Rapat Lt. 3</div></div><span style="color:var(--text-muted)"><i data-i="building-2"></i></span></div>
+  <div class="rp-opt "><span class="radio " style="margin-top:1px"></span><div class="grow"><div class="t">Di klien</div><div class="m">Nama klien dan alamatnya</div></div><span style="color:var(--text-muted)"><i data-i="handshake"></i></span></div>
+  </div>
+ <div class="field"><label>Peserta · 5 orang</label><div class="input" style="height:auto;min-height:56px;padding:10px;flex-wrap:wrap;align-items:center"><div class="rp-chipsel"><span class="rp-pchip"><span class="avatar   ">DP</span>Dimas (Anda)</span><span class="rp-pchip"><span class="avatar   ">BS</span>Bayu Saputra<i data-i="x"></i></span><span class="rp-pchip"><span class="avatar   ">RA</span>Rizky Aditya<i data-i="x"></i></span><span class="rp-pchip"><span class="avatar amber  ">HK</span>Fitri Handayani<i data-i="x"></i></span><span class="rp-pchip"><span class="avatar neutral" style="width:30px;height:30px"><i data-i="mail" data-s="16"></i></span>logistik@sinarlogistik.co.id<i data-i="x"></i></span></div><div class="rp-row" style="width:100%;margin-top:6px;color:var(--text-subtle)"><i data-i="search" data-s="18"></i><span>Tambah nama atau email…</span></div></div><div class="hint ">Tamu eksternal: undangan email ditahan; tamu tidak melihat isi aplikasi.</div></div>
+ <div class="rp-col rp-g12"><div class="t-h3" style="font-size:18px">Agenda</div><div class="rp-ag"><span class="no">1</span><div class="input grow" style="height:48px">Evaluasi ketepatan pengiriman</div><span class="rp-ib"><i data-i="trash-2"></i></span></div><div class="rp-ag"><span class="no">2</span><div class="input grow" style="height:48px">Penawaran harga kuartal IV</div><span class="rp-ib"><i data-i="trash-2"></i></span></div><div class="rp-ag"><span class="no">3</span><div class="input grow" style="height:48px">SLA klaim barang rusak</div><span class="rp-ib"><i data-i="trash-2"></i></span></div><span class="btn tonal"><i data-i="plus"></i>Tambah butir agenda</span></div>
+ <div class="field"><label>Notulis</label><div class="input "><i data-i="user-round"></i><span class=" grow trunc">Sari Wulandari</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div><div class="hint ">Notulis juga diundang otomatis.</div></div>
+ <div class="field"><label>Ulangi</label><div class="input "><i data-i="repeat"></i><span class=" grow trunc">Tidak berulang</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div></div>
+ 
+ <div class="field"><label>Workspace tugas tindak lanjut</label><div class="input "><i data-i="folder-kanban"></i><span class=" grow trunc">Operasional · OPS</span><span style="color:var(--text-muted)"><i data-i="chevron-down"></i></span></div><div class="hint ">Dipakai tombol "Jadikan tugas" di notulen.</div></div>
+ <div class="rp-col rp-g12"><div class="t-h3" style="font-size:18px">Pengingat</div><div class="chips"><span class="chip on"><i data-i="check"></i>30 menit</span><span class="chip on"><i data-i="check"></i>15 menit</span><span class="chip ">5 menit</span></div></div>
+ <div class="card tight"><div class="rp-sw"><span class="switch on"></span><div class="grow"><div class="rp-lbl">Rapat pimpinan</div><div class="rp-note">Tampil di Jadwal manajemen. Direksi, HR, dan Super Admin yang tidak diundang bisa melihatnya (baca saja). Hanya mereka yang bisa menandai.</div></div></div></div>
+ <div class="card tight"><div class="rp-sw"><span class="switch on"></span><div class="grow"><div class="rp-lbl">Notulen otomatis</div><div class="rp-note">Suara peserta ditranskrip setelah rapat, lalu AI menyusun draf notulen untuk diperiksa notulis. Peserta bisa menolak. Transkrip dihapus otomatis setelah 90 hari.</div><div class="rp-note" style="margin-top:6px;color:var(--warn)">Hindari untuk rapat berisi data pribadi sensitif.</div></div></div></div>
+</div>
+</div>
+<div class="bottom-bar"><div class="btn primary block">Periksa &amp; kirim undangan</div></div>
+</div>
+<!-- Mengirim… / gagal terkirim (offline) + dialog buang perubahan -->
+<div class="phone " style="--h:915px" data-jam="08.05">
+<div class="body">
+<div class="rp-hdr"><button class="rp-ib" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Jadwalkan rapat</div><span class="btn quiet">Batal</span></div><div class="rp-pad stack" style="margin-top:14px"><div class="banner warn"><i data-i="wifi-off"></i><div><b>Undangan belum terkirim.</b> Tidak ada jaringan. Isian Anda tetap tersimpan di layar ini; coba lagi saat tersambung.</div></div><div class="field"><label>Judul rapat</label><div class="input "><span class=" grow trunc">Review vendor logistik</span></div></div><div class="field"><label>Tanggal</label><div class="input "><span class=" grow trunc">Rabu, 14/10/2026</span><span style="color:var(--text-muted)"><i data-i="calendar-days"></i></span></div></div><div class="skel" style="height:140px;border-radius:20px"></div></div>
+</div>
+<div class="bottom-bar"><div class="btn off block"><i data-i="refresh-cw"></i>Coba kirim lagi</div></div><div class="scrim"></div><div class="dialog"><div class="t-h3">Buang perubahan?</div><div class="rp-sub" style="font-size:16px;line-height:23px">Isian rapat yang belum dikirim akan hilang.</div><div class="acts"><span class="btn quiet">Lanjut mengisi</span><span class="btn danger">Buang</span></div></div>
+</div>
+</div>
+</body>
+</html>

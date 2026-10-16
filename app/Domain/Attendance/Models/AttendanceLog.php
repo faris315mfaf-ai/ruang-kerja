@@ -49,6 +49,7 @@ use LogicException;
  * @property CarbonImmutable|null $reviewed_at
  * @property string|null $corrected_by
  * @property string|null $note
+ * @property CarbonImmutable|null $received_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read User $user
@@ -59,6 +60,7 @@ use LogicException;
     'user_id', 'attendance_day_id', 'type', 'method', 'occurred_at', 'client_time', 'latitude', 'longitude',
     'accuracy_m', 'office_location_id', 'distance_m', 'selfie_path', 'qr_token_id', 'ip_address', 'user_agent',
     'device_fingerprint', 'flags', 'is_suspicious', 'reviewed_by', 'reviewed_at', 'corrected_by', 'note',
+    'received_at',
 ])]
 #[Hidden(['selfie_path', 'device_fingerprint', 'ip_address', 'user_agent'])]
 #[UseFactory(AttendanceLogFactory::class)]
@@ -116,6 +118,7 @@ class AttendanceLog extends Model
             'flags' => AsEnumCollection::of(LogFlag::class),
             'is_suspicious' => 'boolean',
             'reviewed_at' => 'immutable_datetime',
+            'received_at' => 'immutable_datetime',
         ];
     }
 

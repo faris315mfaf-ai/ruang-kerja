@@ -57,8 +57,6 @@ NotesShowPage.layout = (props: Props) => {
         title: props.note.current.title,
         back,
         width: 'wide' as const,
-        appBarActions: (
-            <NoteAppBarActions canShare={props.note.current.can_share} />
-        ),
+        appBarActions: <NoteAppBarActions />,
     };
 };

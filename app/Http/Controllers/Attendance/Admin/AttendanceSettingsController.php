@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Attendance\Admin;
 
+use App\Domain\Attendance\Data\AttendanceWindows;
 use App\Domain\Attendance\Enums\HolidayType;
 use App\Domain\Attendance\Models\OfficeLocation;
 use App\Http\Controllers\Controller;
@@ -24,6 +25,7 @@ class AttendanceSettingsController extends Controller
         Gate::authorize('manage', OfficeLocation::class);
 
         $year = $request->integer('tahun') ?: null;
+        $windows = AttendanceWindows::forUser($user);
 
         return Inertia::render('admin/attendance/index', [
             'locations' => $data->locations($user),
@@ -37,6 +39,10 @@ class AttendanceSettingsController extends Controller
                 'defaultRadius' => config()->integer('attendance.geofence.default_radius_m'),
                 'minRadius' => config()->integer('attendance.geofence.min_radius_m'),
                 'maxRadius' => config()->integer('attendance.geofence.max_radius_m'),
+            ],
+            'windows' => [
+                'checkIn' => ['from' => $windows->checkInFrom, 'until' => $windows->checkInUntil],
+                'checkOut' => ['from' => $windows->checkOutFrom, 'until' => $windows->checkOutUntil],
             ],
             'shiftDefaults' => [
                 'lateToleranceMin' => config()->integer('attendance.schedule.default_late_tolerance_min'),

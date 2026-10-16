@@ -7,6 +7,7 @@ import { HolidaysSection } from '@/features/attendance/admin/holidays-section';
 import { KiosksSection } from '@/features/attendance/admin/kiosks-section';
 import { LocationsSection } from '@/features/attendance/admin/locations-section';
 import { ShiftsSection } from '@/features/attendance/admin/shifts-section';
+import { WindowsSection } from '@/features/attendance/admin/windows-section';
 import type { AttendanceSettingsProps } from '@/features/attendance/admin/types';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { cn, focusRing } from '@/lib/utils';
@@ -14,6 +15,7 @@ import { cn, focusRing } from '@/lib/utils';
 const SECTIONS = [
     { id: 'lokasi', label: 'Lokasi' },
     { id: 'shift', label: 'Shift' },
+    { id: 'jam-absen', label: 'Jam absen' },
     { id: 'hari-libur', label: 'Hari libur' },
     { id: 'kiosk', label: 'Kiosk QR' },
 ] as const;
@@ -82,6 +84,7 @@ export default function AttendanceSettings(props: AttendanceSettingsProps) {
                     locations={props.locations}
                     shiftDefaults={props.shiftDefaults}
                 />
+                <WindowsSection windows={props.windows} />
                 <HolidaysSection
                     holidays={props.holidays}
                     holidayYear={props.holidayYear}

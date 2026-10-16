@@ -1,0 +1,136 @@
+/* Modul 13 · Fondasi desain Android — gaya bantu dokumentasi (prefiks fd-).
+   Token tambahan yang belum ada di _kit/kit.css didefinisikan di sini sebagai variabel --x-* (lihat spec "Kebutuhan kit"). */
+:root{
+  --x-brand-50:#E8FBF8;--x-brand-100:#C8F4EE;--x-brand-200:#95E8DD;--x-brand-300:#5AD6C8;--x-brand-400:#2DBFB1;
+  --x-brand-500:#14A39C;--x-brand-600:#0B7F86;--x-brand-700:#09656E;--x-brand-800:#0A4E57;--x-brand-900:#0B3A42;
+  --x-on-brand:#FFFFFF;--x-on-danger:#FFFFFF;--x-badge:#C42137;--x-on-badge:#FFFFFF;--x-marker:#0B1A2B;
+  --x-fill-danger:#C42137;
+  --x-av-blue:#D9E6FF;--x-av-blue-fg:#1A4CB0;--x-av-teal:#C8F4EE;--x-av-teal-fg:#0A4E57;--x-av-amber:#FFF1DC;--x-av-amber-fg:#9A5800;--x-av-neutral:#EEF2F7;--x-av-neutral-fg:#46576B;
+  --x-inv-ok:#4ADE9B;--x-inv-bad:#FF7A8A;--x-inv-warn:#F6B95C;--x-inv-info:#A9C2FF;
+  --x-elev-glow:0 12px 28px rgba(30,95,214,.30);--x-elev-warm:0 12px 28px rgba(190,24,93,.24);
+  --x-e1:0 1px 2px rgba(11,26,43,.06),0 8px 24px rgba(11,26,43,.06);--x-e2:0 2px 6px rgba(11,26,43,.08),0 20px 48px rgba(11,26,43,.16);
+  --x-p-gray:#8495A8;--x-p-slate:#46576B;--x-p-teal:#0B7F86;--x-p-blue:#1E5FD6;--x-p-green:#0F7A55;--x-p-amber:#B26B00;--x-p-orange:#C2410C;--x-p-red:#C42137;--x-p-violet:#6D4AE0;--x-p-pink:#BE185D;
+  --x-room-bar:#0B1A2B;--x-ink:#0B1A2B;
+}
+[data-tema="malam"]{
+  --x-brand-50:#E8FBF8;
+  --x-on-danger:#2A0A10;--x-fill-danger:#FF7A8A;--x-marker:#3B4F6B;
+  --x-av-blue:#1C2D50;--x-av-blue-fg:#A9C2FF;--x-av-teal:#103A38;--x-av-teal-fg:#5AD6C8;--x-av-amber:#2E2210;--x-av-amber-fg:#F6B95C;--x-av-neutral:#172131;--x-av-neutral-fg:#A6B4C6;
+  --x-inv-ok:#0F7A55;--x-inv-bad:#C42137;--x-inv-warn:#9A5800;--x-inv-info:#1A4CB0;
+  --x-e1:0 1px 2px rgba(0,0,0,.15),0 8px 24px rgba(0,0,0,.15);--x-e2:0 2px 6px rgba(0,0,0,.4),0 20px 48px rgba(0,0,0,.5);
+  --x-p-gray:#7D8FA5;--x-p-slate:#A6B4C6;--x-p-teal:#2DBFB1;--x-p-blue:#7FA8FF;--x-p-green:#4ADE9B;--x-p-amber:#F6B95C;--x-p-orange:#FB8B5A;--x-p-red:#FF7A8A;--x-p-violet:#A48BFF;--x-p-pink:#F47BB0;
+  --x-room-bar:#1A2537;
+}
+
+/* ===== bingkai dokumentasi ===== */
+.stage{align-items:flex-start}
+.phone.fd-flat{height:auto;min-height:0}
+.phone.fd-flat .sb,.phone.fd-flat .gesture{display:none}
+.phone.fd-flat .body{position:static;inset:auto;overflow:visible;padding:0 0 28px}
+.fd-wide{--w:1280px}
+.fd-head{padding:26px 20px 10px;display:flex;flex-direction:column;gap:6px}
+.fd-head .k{font-size:14px;line-height:20px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--link)}
+.fd-head h1{margin:0;font-size:26px;line-height:32px;font-weight:800;letter-spacing:-.02em}
+.fd-head p{margin:0;font-size:15px;line-height:21px;color:var(--text-muted)}
+.fd-sec{padding:0 16px;display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.fd-sec>h2{margin:0 2px;font-size:14px;line-height:20px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
+.fd-cap{font-size:13px;line-height:18px;color:var(--text-muted);margin:0}
+.fd-cap b{color:var(--text);font-weight:700}
+.fd-mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:500}
+.fd-code{font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:500;font-size:12px;line-height:16px;color:var(--link);background:var(--link-soft);padding:1px 6px;border-radius:6px;white-space:normal;overflow-wrap:anywhere}
+.fd-row{display:flex;align-items:center;gap:12px}
+.fd-col{display:flex;flex-direction:column;gap:8px}
+.fd-wrap{display:flex;flex-wrap:wrap;gap:8px}
+.fd-hr{height:1px;background:var(--divider);margin:2px 0}
+.fd-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-card);padding:14px 16px}
+.fd-card.flush{padding:0;overflow:hidden}
+.fd-tbl{display:grid;gap:0;font-size:14px;line-height:20px}
+.fd-tbl>div{display:grid;gap:10px;padding:9px 14px;border-top:1px solid var(--divider);align-items:center}
+.fd-tbl>div:first-child{border-top:0}
+.fd-tbl .th{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);background:var(--surface-2)}
+.fd-tag{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:7px;font-size:12px;font-weight:700;background:var(--surface-2);color:var(--text-muted);white-space:nowrap}
+.fd-tag.ok{background:var(--ok-soft);color:var(--ok)}.fd-tag.warn{background:var(--warn-soft);color:var(--warn)}.fd-tag.bad{background:var(--bad-soft);color:var(--bad)}.fd-tag.info{background:var(--info-soft);color:var(--info)}.fd-tag.link{background:var(--link-soft);color:var(--link)}
+
+/* swatches */
+.fd-sw{display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:center;padding:7px 12px;border-top:1px solid var(--divider)}
+.fd-sw:first-child{border-top:0}
+.fd-sw .c{width:52px;height:40px;border-radius:12px;border:1px solid var(--border-strong)}
+.fd-sw .n{font-size:15px;line-height:20px;font-weight:700}
+.fd-sw .n small{font-size:12px;font-weight:600;color:var(--text-muted);margin-left:6px}
+.fd-sw .u{font-size:13px;line-height:17px;color:var(--text-muted)}
+.fd-hex{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:12px;color:var(--text)}
+.fd-pair{display:flex;gap:10px}
+.fd-pair>div{flex:1;border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.fd-ramp{display:flex;border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+.fd-ramp>span{flex:1;height:52px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-size:11px;font-weight:700;color:var(--x-ink)}
+.fd-ramp>span.d{color:#fff}
+.fd-grad{height:64px;border-radius:18px;display:flex;align-items:flex-end;padding:8px 12px;color:#fff;font-size:13px;font-weight:700}
+
+/* tipografi */
+.fd-type{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:baseline;padding:12px 14px;border-top:1px solid var(--divider)}
+.fd-type:first-child{border-top:0}
+.fd-type .m{font-size:12px;line-height:16px;font-weight:700;color:var(--text-muted)}
+.fd-type .m b{display:block;color:var(--link);font-size:13px}
+
+/* jarak/radius */
+.fd-bar{height:14px;border-radius:4px;background:var(--grad-merek)}
+.fd-shape{width:64px;height:64px;background:var(--surface);border:1.5px solid var(--primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--link)}
+
+/* tombol/kontrol keadaan */
+.fd-pressed{transform:scale(.98);filter:brightness(.9)}
+.fd-focus{box-shadow:0 0 0 3px var(--ring)!important}
+.fd-spin{width:20px;height:20px;border-radius:50%;border:3px solid rgba(255,255,255,.35);border-top-color:#fff}
+.fd-spin.dk{border-color:var(--border-strong);border-top-color:var(--primary)}
+.fd-lbl{font-size:12px;line-height:16px;font-weight:700;color:var(--text-muted);margin-bottom:2px}
+.fd-cell{display:flex;flex-direction:column;gap:4px;min-width:0}
+
+/* tab bar statis (dokumentasi) */
+.fd-tb{position:relative;height:70px;border-radius:35px;background:var(--glass);backdrop-filter:blur(24px);border:1px solid var(--border);box-shadow:var(--shadow-float);display:grid;padding:6px}
+.fd-tb.n5{grid-template-columns:repeat(5,1fr)}.fd-tb.n4{grid-template-columns:repeat(4,1fr)}
+.fd-tb .t{position:relative;height:54px;border-radius:27px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;line-height:16px;font-weight:700;color:var(--text-muted)}
+.fd-tb .t i{--s:24px}
+.fd-tb .t.on{background:var(--grad-active);color:var(--on-active);box-shadow:0 6px 16px rgba(30,95,214,.3)}
+.fd-tb .t.c{justify-content:flex-end;padding-bottom:1px;height:54px}
+.fd-tb .t.c .b{width:54px;height:54px;border-radius:27px;margin-top:-26px;display:flex;align-items:center;justify-content:center;background:var(--grad-active);color:var(--on-active);box-shadow:0 0 0 4px var(--surface),var(--shadow-btn);margin-bottom:2px}
+.fd-tb .t.c.on{background:transparent;box-shadow:none;color:var(--text);font-weight:800}
+.fd-tb .bd{position:absolute;top:2px;left:50%;margin-left:6px;min-width:20px;height:20px;border-radius:10px;background:var(--x-badge);color:var(--x-on-badge);font-size:12px;line-height:20px;font-weight:700;text-align:center;padding:0 5px}
+.fd-tb .dt{position:absolute;top:8px;left:50%;margin-left:8px;width:10px;height:10px;border-radius:5px;background:var(--x-badge);border:2px solid var(--surface)}
+
+/* kartu jenis */
+.fd-prio{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.fd-bubble{max-width:78%;padding:10px 14px;border-radius:20px;font-size:16px;line-height:22px}
+.fd-bubble.in{background:var(--surface);border:1px solid var(--border);border-top-left-radius:6px}
+.fd-bubble.out{background:var(--grad-aksi);color:#fff;border-top-right-radius:6px;align-self:flex-end}
+.fd-stepper{display:flex;flex-direction:column}
+.fd-stepper .s{display:grid;grid-template-columns:28px 1fr;gap:10px;position:relative;padding-bottom:12px}
+.fd-stepper .s:last-child{padding-bottom:0}
+.fd-stepper .s:before{content:"";position:absolute;left:13px;top:28px;bottom:0;width:2px;background:var(--border)}
+.fd-stepper .s:last-child:before{display:none}
+.fd-stepper .dot{width:28px;height:28px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-muted)}
+.fd-stepper .dot.ok{background:var(--ok-soft);color:var(--ok)}.fd-stepper .dot.cur{background:var(--grad-aksi);color:#fff}.fd-stepper .dot.bad{background:var(--bad-soft);color:var(--bad)}
+.fd-stepper .dot i{--s:16px}
+
+/* peta */
+.fd-map{display:grid;gap:16px;padding:0 24px 28px}
+.fd-mod{background:var(--surface);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow-card);overflow:hidden;display:flex;flex-direction:column}
+.fd-mod>.h{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--divider)}
+.fd-mod>.h .no{width:34px;height:34px;border-radius:11px;background:var(--grad-aksi);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex:none}
+.fd-mod>.h .tt{font-size:16px;line-height:20px;font-weight:700}
+.fd-mod>.h .ss{font-size:12px;line-height:16px;color:var(--text-muted)}
+.fd-mod ul{list-style:none;margin:0;padding:8px 14px 12px;display:flex;flex-direction:column;gap:5px}
+.fd-mod li{display:flex;align-items:center;gap:8px;font-size:14px;line-height:19px}
+.fd-mod li .r{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:12px;color:var(--link);background:var(--link-soft);padding:1px 6px;border-radius:6px;white-space:nowrap}
+.fd-mod li .st{margin-left:auto;font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px;white-space:nowrap}
+.fd-mod li .st.ada{background:var(--ok-soft);color:var(--ok)}
+.fd-mod li .st.usul{background:var(--surface-2);color:var(--text-muted)}
+.fd-mod li .st.dsk{background:var(--warn-soft);color:var(--warn)}
+.fd-flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fd-node{height:40px;padding:0 14px;border-radius:12px;display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;background:var(--surface);border:1px solid var(--border-strong);white-space:nowrap}
+.fd-node.pri{background:var(--grad-aksi);color:#fff;border-color:transparent}
+.fd-node.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.fd-node.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.fd-arrow{color:var(--text-subtle);display:inline-flex}
+
+/* loading spinner kecil */
+.fd-dots{display:flex;gap:6px}.fd-dots i{width:8px;height:8px;border-radius:4px;background:var(--text-subtle);display:block}
+.fd-kbd{background:var(--surface-2);border:1px solid var(--border-strong);border-bottom-width:2px;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;color:var(--text-muted)}

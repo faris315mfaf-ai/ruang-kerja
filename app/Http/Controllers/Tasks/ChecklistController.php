@@ -21,7 +21,8 @@ class ChecklistController extends Controller
 {
     public function store(ChecklistItemRequest $request, Task $task, AddChecklistItem $add): JsonResponse
     {
-        Gate::authorize('update', $task);
+        // Adding a line is doing the work (TaskPolicy::work), not editing.
+        Gate::authorize('work', $task);
 
         $item = $add->handle($task, $request->string('title')->toString());
 

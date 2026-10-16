@@ -55,10 +55,10 @@ it('shows the employee only their own profile, consent, attendance, requests and
         ->where('profile.employee_number', 'EMP-00042')
         ->where('profile.nik_masked', '••••••••••••0123')
         ->where('consent.granted', true)
-        ->where('consent.version', '1.0')
-        ->where('consent.policy_version', '1.0')
+        ->where('consent.version', config('privacy.policy.version'))
+        ->where('consent.policy_version', config('privacy.policy.version'))
         ->has('consent.history', 2)
-        ->where('policy.version', '1.0')
+        ->where('policy.version', config('privacy.policy.version'))
         ->missing('attendance')
         ->loadDeferredProps(fn (Assert $reload) => $reload
             ->where('attendance.total_days', 2)
@@ -92,13 +92,14 @@ it('shows the approver their decisions, not the requester\'s data', function () 
 });
 
 it('asks for renewed consent after the policy version changes', function () {
-    config(['attendance.consent.version' => '2.0', 'privacy.policy.version' => '2.0']);
+    $granted = config('attendance.consent.version');
+    config(['attendance.consent.version' => '9.0', 'privacy.policy.version' => '9.0']);
 
     $this->actingAs($this->s->employee)->get('/privasi')->assertInertia(fn (Assert $page) => $page
         ->where('consent.granted', false)
         ->where('consent.needs_renewal', true)
-        ->where('consent.granted_version', '1.0')
-        ->where('consent.version', '2.0'));
+        ->where('consent.granted_version', $granted)
+        ->where('consent.version', '9.0'));
 });
 
 it('requires a signed-in active employee', function () {

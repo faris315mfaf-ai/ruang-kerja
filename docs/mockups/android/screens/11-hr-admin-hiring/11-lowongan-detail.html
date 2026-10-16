@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Hiring · pengaturan lowongan (HR) dan dialog · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<style>
+.hr-flow{display:flow-root}
+.hr-tabnav{display:flex;border-bottom:1px solid var(--border);gap:4px;overflow:hidden}
+.hr-tabnav span{padding:12px 12px 11px;font-size:15px;font-weight:700;color:var(--text-muted);border-bottom:3px solid transparent;white-space:nowrap;margin-bottom:-1px}
+.hr-tabnav span.on{color:var(--link);border-bottom-color:var(--primary)}
+.hr-tabnav .n{display:inline-flex;min-width:20px;height:20px;border-radius:10px;background:var(--surface-2);color:var(--text-muted);font-size:12px;align-items:center;justify-content:center;padding:0 6px;margin-left:6px}
+.hr-tile{width:56px;height:56px;border-radius:18px;background:var(--grad-indigo);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-btn);flex:none}
+.hr-chip-n{font-size:13px;opacity:.75;font-weight:600}
+.chip.on .hr-chip-n{opacity:.9}
+.hr-score{display:flex;gap:8px}
+.hr-score span{width:48px;height:48px;border-radius:14px;border:1.5px solid var(--border-strong);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700}
+.hr-score span.on{background:var(--grad-aksi);border-color:transparent;color:#fff}
+.hr-bar{height:14px;border-radius:7px;background:var(--surface-2);overflow:hidden;display:flex}
+.hr-bar b{display:block;height:100%}
+.hr-seg-ok{background:var(--ok)}.hr-seg-warn{background:var(--fill-warn)}.hr-seg-info{background:var(--blue-strong)}.hr-seg-off{background:var(--border-strong)}
+.hr-trend{display:flex;align-items:flex-end;gap:8px;height:130px;padding-top:8px}
+.hr-trend div{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.hr-trend b{display:block;width:100%;border-radius:8px 8px 4px 4px;background:var(--grad-merek)}
+.hr-trend span{font-size:12px;color:var(--text-muted);font-weight:600}
+.hr-dl{display:grid;grid-template-columns:128px 1fr;gap:6px 12px;align-items:center}
+.hr-dl>div{padding:11px 0;border-top:1px solid var(--divider);min-height:44px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hr-dl>div{min-width:0;overflow-wrap:anywhere}
+.hr-dl>div.k{color:var(--text-muted);font-size:15px}
+.hr-dl>div:nth-child(-n+2){border-top:0}
+.hr-tree .lv{display:flex;align-items:center;gap:12px;min-height:64px;padding:8px 14px;border-top:1px solid var(--divider)}
+.hr-tree .lv:first-child{border-top:0}
+.hr-tree .l2{padding-left:40px}.hr-tree .l3{padding-left:66px}
+.hr-tree .bar{width:4px;height:34px;border-radius:2px;flex:none}
+.hr-mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:14px;font-weight:600}
+.hr-desk{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:22px 18px;border-radius:24px;background:var(--surface);border:1px solid var(--border)}
+.hr-desk .ic{width:52px;height:52px;border-radius:50%;background:var(--link-soft);color:var(--link);display:flex;align-items:center;justify-content:center}
+.hr-rowbtns{display:flex;gap:8px}
+.hr-rowbtns .btn{flex:1}
+.hr-check-row{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--divider)}
+.hr-check-row:first-child{border-top:0}
+.hr-tag-lock{height:26px;padding:0 9px;border-radius:8px;display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;background:var(--surface-2);color:var(--text-muted)}
+.hr-opt{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 14px;border-radius:16px;border:1px solid var(--border);background:var(--surface)}
+.hr-opt.on{border-color:var(--primary);background:var(--link-soft)}
+.hr-pill-dot{width:10px;height:10px;border-radius:50%;flex:none}
+.hr-li{display:flex;align-items:center;gap:12px;min-height:56px}
+.card:not(.list) .hr-li{padding:8px 0}
+.card:not(.list) .hr-li+.hr-li{border-top:1px solid var(--divider)}
+.hr-line{height:1px;background:var(--divider)}
+.hr-sec{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin:6px 4px -6px}
+.hr-sign{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text-muted)}
+.hr-ring{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--primary) var(--p,70%),var(--surface-2) 0);flex:none}
+.hr-ring span{width:64px;height:64px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px}
+</style>
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+  <div class="phone" data-auto="100" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Staf Programmer Backend</span><button class="ibtn" aria-label="Aksi lainnya"><i data-i="ellipsis-vertical"></i></button></div><div class="pad stack" style="gap:14px;padding-top:12px"><div class="card "><div class="row-h sp"><div class="t-title">Detail lowongan</div><span class="badge ok">Dibuka</span></div><div class="stack" style="gap:14px;margin-top:12px"><div class="field"><label>Judul</label><div class="input"><span class="grow trunc">Staf Programmer Backend</span></div></div><div class="field"><label>Divisi</label><div class="input"><span class="grow trunc">Programming</span><i data-i="chevron-down"></i></div></div><div class="field"><label>Deskripsi</label><div class="input area"><span class="grow">Membangun dan memelihara API Laravel untuk modul absensi dan workspace. Pengalaman PostgreSQL dan test otomatis.</span></div></div><div class="field"><label>Status</label><div class="seg"><span>Draf</span><span class="on">Dibuka</span><span>Ditutup</span></div><span class="hint">Ditutup: kiriman Google Form baru ditolak (410).</span></div></div></div><div class="card "><div class="t-title" style="margin-bottom:8px">Tim penilai</div><div class="hr-sec" style="margin:0 0 4px">Pewawancara (tim luar HR)</div><div class="li hr-li" style="padding:6px 0;min-height:56px;border:0"><span class="avatar teal sm">DP</span><div class="grow"><div class="t-label">Dimas Pratama</div><div class="t-meta">Kepala Divisi · Operasional</div></div><i data-i="x" data-s="18"></i></div><div class="li hr-li" style="padding:6px 0;min-height:56px;border:0"><span class="avatar amber sm">AN</span><div class="grow"><div class="t-label">Arif Nugroho</div><div class="t-meta">Programmer · Programming</div></div><i data-i="x" data-s="18"></i></div><button class="btn tonal sm"><i data-i="user-plus" data-s="18"></i>Tambah pewawancara</button><div class="hr-line" style="margin:14px 0"></div><div class="hr-sec" style="margin:0 0 4px">Penyetuju akhir</div><div class="li hr-li" style="padding:6px 0;min-height:56px;border:0"><span class="avatar  sm">FA</span><div class="grow"><div class="t-label">Faris Alamsyah</div><div class="t-meta">Direktur</div></div><i data-i="x" data-s="18"></i></div><div class="li hr-li" style="padding:6px 0;min-height:56px;border:0"><span class="avatar teal sm">DP</span><div class="grow"><div class="t-label">Dio Prakoso</div><div class="t-meta">Direktur</div></div><i data-i="x" data-s="18"></i></div><button class="btn tonal sm"><i data-i="user-plus" data-s="18"></i>Tambah penyetuju</button><div class="t-meta" style="margin-top:8px">Semua penyetuju harus setuju agar kandidat diterima; satu penolakan menolak kandidat.</div></div><div class="card "><div class="t-title" style="margin-bottom:8px">Pemetaan field formulir</div><div class="t-meta" style="margin-bottom:10px">Judul pertanyaan Google Form untuk tiap data. Kosong = tebakan bawaan.</div><div class="stack" style="gap:12px"><div class="field"><label>Nama lengkap</label><div class="input"><span class="ph grow">Bawaan: “Nama lengkap”</span></div></div><div class="field"><label>Email</label><div class="input"><span class="ph grow">Bawaan: “Email”</span></div></div><div class="field"><label>No. HP</label><div class="input"><span class="ph grow">Bawaan: “No. HP”</span></div></div><div class="field"><label>CV</label><div class="input"><span class="ph grow">Bawaan: “CV”</span></div></div></div></div><div class="card "><div class="row-h sp"><div class="t-title">Pertanyaan wawancara</div><span class="tag">5</span></div><div class="hr-check-row"><i data-i="grip-vertical"></i><div class="grow"><div class="t-label" style="font-weight:600">1. Ceritakan proyek backend terbesar yang pernah Anda kerjakan.</div><div class="t-meta">Maks 5 poin · sudah dipakai (tidak bisa dihapus)</div></div><i data-i="pencil" data-s="18"></i></div><div class="hr-check-row"><i data-i="grip-vertical"></i><div class="grow"><div class="t-label" style="font-weight:600">2. Bagaimana Anda mendesain skema untuk data absensi?</div><div class="t-meta">Maks 5 poin</div></div><i data-i="pencil" data-s="18"></i></div><div class="hr-check-row"><i data-i="grip-vertical"></i><div class="grow"><div class="t-label" style="font-weight:600">3. Bagaimana menangani query lambat di PostgreSQL?</div><div class="t-meta">Maks 5 poin</div></div><i data-i="pencil" data-s="18"></i></div><button class="btn tonal sm" style="margin-top:8px"><i data-i="plus" data-s="18"></i>Tambah pertanyaan</button></div><div class="card "><div class="t-title" style="margin-bottom:8px">Sambungan Google Form</div><div class="t-meta" style="margin-bottom:10px">Pelamar mengisi Google Form; jawaban masuk otomatis lewat Apps Script bertanda tangan HMAC.</div><div class="hr-sec" style="margin:0 0 6px">URL webhook</div><div class="input" style="height:auto;padding:10px 14px"><span class="hr-mono" style="font-size:12px;word-break:break-all">https://ruangkerja.spkd.store/api/hiring/form/3f0c…a91e</span></div><div class="hr-rowbtns" style="margin-top:10px"><button class="btn outline sm"><i data-i="copy" data-s="16"></i>Salin URL</button><button class="btn outline sm"><i data-i="refresh-cw" data-s="16"></i>Buat ulang</button></div><div style="margin-top:12px"><div class="banner info"><i data-i="monitor"></i><div>Memasang skrip di Google Form lebih mudah di desktop. <b>Kirim tautan ke email saya</b> untuk melanjutkan di komputer.</div></div></div></div><div class="card "><div class="t-title" style="margin-bottom:6px;color:var(--bad)">Hapus lowongan</div><div class="t-meta">Hanya bisa bila belum ada kandidat. Lowongan ini punya 9 kandidat.</div><button class="btn off block" style="margin-top:10px"><i data-i="trash-2"></i>Hapus lowongan</button></div></div></div></div>
+    <div class="bottom-bar"><button class="btn outline">Batal</button><button class="btn primary" style="flex:1"><i data-i="save"></i>Simpan perubahan</button></div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Staf Programmer Backend</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="card "><div class="t-title" style="margin-bottom:10px">Detail lowongan</div><div class="field"><label>Status</label><div class="seg"><span>Draf</span><span>Dibuka</span><span class="on">Ditutup</span></div></div></div></div></div></div>
+    <div class="scrim"></div><div class="dialog"><div class="t-h3">Tutup lowongan ini?</div><div class="muted" style="font-size:15px;line-height:21px">Kiriman Google Form baru akan ditolak. Kandidat yang masih diproses tetap bisa dilanjutkan; data pelamar dihapus 30 hari setelah lowongan ditutup bila belum diputus.</div><div class="acts"><button class="btn quiet">Batal</button><button class="btn danger">Tutup lowongan</button></div></div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Staf Programmer Backend</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="card "><div class="t-title">Tim penilai</div></div></div></div></div>
+    <div class="scrim"></div><div class="sheet"><div class="row-h sp"><div class="t-h3">Tambah pewawancara</div><button class="ibtn" style="border:0;box-shadow:none;background:var(--surface-2);width:40px;height:40px" aria-label="Tutup"><i data-i="x"></i></button></div><div class="input focus"><i data-i="search"></i><span class="ph grow">Cari karyawan aktif</span></div><div class="stack" style="gap:6px"><div class="hr-opt"><span class="avatar  sm">RH</span><div class="grow"><div class="t-label">Rizky Hidayat</div><div class="t-meta">Staf Pemasaran</div></div><span class="check"></span></div><div class="hr-opt"><span class="avatar amber sm">TM</span><div class="grow"><div class="t-label">Tika Maharani</div><div class="t-meta">Staf Sekretariat</div></div><span class="check"></span></div><div class="hr-opt"><span class="avatar teal sm">ML</span><div class="grow"><div class="t-label">Maya Lestari</div><div class="t-meta">Staf Keuangan</div></div><span class="check"></span></div></div><div class="t-meta">Hanya karyawan aktif perusahaan yang bisa dipilih.</div><button class="btn primary block">Simpan pilihan</button></div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Staf Programmer Backend</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="card "><div class="t-title">Sambungan Google Form</div></div></div></div></div>
+    <div class="scrim"></div><div class="sheet"><div class="row-h sp"><div class="t-h3">Tautan & secret baru</div><button class="ibtn" style="border:0;box-shadow:none;background:var(--surface-2);width:40px;height:40px" aria-label="Tutup"><i data-i="x"></i></button></div><div class="banner warn"><i data-i="triangle-alert"></i><div>Secret hanya tampil <b>sekali</b>. Nilai lama langsung mati; skrip di Google Form harus diperbarui.</div></div><div class="field"><label>URL webhook</label><div class="input" style="height:auto;padding:10px 14px"><span class="hr-mono" style="font-size:12px;word-break:break-all">https://ruangkerja.spkd.store/api/hiring/form/9b2e…c40d</span></div></div><div class="field"><label>Secret</label><div class="input" style="height:auto;padding:10px 14px"><span class="hr-mono" style="font-size:12px">••••••••••••••••••••</span></div></div><div class="hr-rowbtns"><button class="btn outline"><i data-i="copy" data-s="18"></i>Salin skrip</button><button class="btn primary"><i data-i="mail" data-s="18"></i>Kirim ke email</button></div></div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Admin Gudang</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="card "><div class="t-title" style="color:var(--bad)">Hapus lowongan</div><div class="t-meta">Belum ada kandidat.</div></div></div></div></div>
+    <div class="scrim"></div><div class="dialog"><div class="t-h3">Hapus lowongan “Admin Gudang”?</div><div class="muted" style="font-size:15px;line-height:21px">Pertanyaan dan sambungan Google Form ikut dihapus. Tindakan ini tidak bisa dibatalkan.</div><div class="acts"><button class="btn quiet">Batal</button><button class="btn danger">Hapus</button></div></div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Staf Programmer Backend</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="card "><div class="stack" style="gap:14px"><div class="field"><label>Judul</label><div class="input err"><span class="ph grow"></span></div><span class="hint err">Judul wajib diisi.</span></div><div class="field"><label>Pewawancara</label><div class="input"><span class="grow trunc">Pilih karyawan</span><i data-i="chevron-down"></i></div><span class="hint err">Pewawancara harus karyawan aktif.</span></div></div></div><div class="banner bad"><i data-i="circle-alert"></i><div>Perubahan belum disimpan. Periksa isian bertanda merah.</div></div></div></div></div>
+    <div class="bottom-bar"><button class="btn primary off" style="flex:1">Simpan perubahan</button></div>
+  </div>
+</div>
+<script>
+(function(){function fit(){document.querySelectorAll('.phone[data-auto]').forEach(function(p){var f=p.querySelector('.hr-flow');if(!f)return;var pb=parseInt(p.dataset.auto,10)||24;var h=Math.max(915,f.offsetHeight+56+pb);p.style.setProperty('--h',h+'px');});}
+if(document.fonts&&document.fonts.ready){document.fonts.ready.then(fit);}window.addEventListener('load',fit);fit();})();
+</script>
+</body>
+</html>

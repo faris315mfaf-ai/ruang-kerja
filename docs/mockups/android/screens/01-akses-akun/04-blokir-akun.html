@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Akun diblokir sampai ada tindakan · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<link rel="stylesheet" href="_akses.css">
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+  <div class="phone" style="--h:915px">
+    <div class="body">
+<div class="ak-center"><span class="ico-xl warn"><i data-i="key-round" data-s="40"></i></span>
+<h1 class="t-h2" style="margin:0">Ganti kata sandi dulu</h1>
+<p class="t-body muted" style="margin:0;font-size:16px;line-height:24px" role="alert">Ganti kata sandi lewat web terlebih dahulu.</p>
+<div class="ak-steps"><div class="ak-step"><b>1</b><span>Buka RuangKerja di peramban lalu masuk dengan kata sandi sementara dari HR.</span></div><div class="ak-step"><b>2</b><span>Di <b>Pengaturan › Keamanan</b>, buat kata sandi Anda sendiri.</span></div><div class="ak-step"><b>3</b><span>Kembali ke aplikasi dan ketuk <b>Periksa lagi</b>.</span></div></div>
+<div class="acts"><button class="btn primary block"><i data-i="external-link"></i>Buka RuangKerja di peramban</button><button class="btn outline block"><i data-i="refresh-cw"></i>Periksa lagi</button><button class="btn quiet block"><i data-i="log-out"></i>Keluar</button></div></div>
+    </div>
+    <div class="note" style="">Perilaku saat ini (403 `password_change_required`): navigator tidak dirender. Tombol "Buka di peramban" = usulan baru.</div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body">
+<div style="padding:28px 20px 0" class="stack"><div class="gap8" style="gap:10px"><span class="ico-lg warn"><i data-i="key-round" data-s="26"></i></span><h1 class="t-h1">Buat kata sandi Anda sendiri</h1></div>
+<div class="banner warn" role="alert" style=""><i data-i="info"></i><div>Akun Anda masih memakai kata sandi bawaan atau kata sandi dari HR. Buat kata sandi sendiri untuk melanjutkan ke aplikasi.</div></div>
+<div class="field"><div class="row-h sp" style="gap:8px"><label>Kata sandi saat ini (dari HR)</label></div><div class="input "><span class="subtle"><i data-i="lock" data-s="20"></i></span><span class="grow trunc  ak-pw">••••••••••</span><span class="ak-eye" aria-label="Lihat kata sandi"><i data-i="eye" data-s="22"></i></span></div></div>
+<div class="field"><div class="row-h sp" style="gap:8px"><label>Kata sandi baru</label></div><div class="input focus"><span class="subtle"><i data-i="lock" data-s="20"></i></span><span class="grow trunc ph">Kata sandi baru<span class="ak-caret"></span></span><span class="ak-eye" aria-label="Lihat kata sandi"><i data-i="eye" data-s="22"></i></span></div><div class="hint ">Bebas, asal bukan kata sandi bawaan perusahaan. Setelah disimpan, perangkat lain otomatis keluar.</div></div>
+<div class="field"><div class="row-h sp" style="gap:8px"><label>Konfirmasi kata sandi</label></div><div class="input "><span class="subtle"><i data-i="lock" data-s="20"></i></span><span class="grow trunc ph">Ulangi kata sandi baru</span><span class="ak-eye" aria-label="Lihat kata sandi"><i data-i="eye" data-s="22"></i></span></div></div>
+</div>
+    </div>
+<div class="ak-fixed-bar"><button class="btn primary block off" style="height:56px">Simpan & lanjutkan</button><button class="btn quiet block"><i data-i="log-out"></i>Keluar</button></div>    <div class="note" style="top:720px;left:16px;right:16px;max-width:none">USULAN: form asli di aplikasi, tanpa tombol kembali. Butuh POST /auth/kata-sandi (BELUM ADA); rute itu masuk daftar putih EnsureApiAccountUsable.</div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body">
+<div style="padding:28px 20px 0" class="stack"><div class="gap8" style="gap:10px"><span class="ico-lg warn"><i data-i="key-round" data-s="26"></i></span><h1 class="t-h1">Buat kata sandi Anda sendiri</h1></div>
+<div class="banner warn" role="alert" style=""><i data-i="info"></i><div>Akun Anda masih memakai kata sandi bawaan atau kata sandi dari HR. Buat kata sandi sendiri untuk melanjutkan ke aplikasi.</div></div>
+<div class="field"><div class="row-h sp" style="gap:8px"><label>Kata sandi saat ini (dari HR)</label></div><div class="input err"><span class="subtle"><i data-i="lock" data-s="20"></i></span><span class="grow trunc ">••••••••••</span><span class="ak-eye" aria-label="Lihat kata sandi"><i data-i="eye" data-s="22"></i></span></div><div class="hint err">Kata sandi saat ini tidak sesuai.</div></div>
+<div class="field"><div class="row-h sp" style="gap:8px"><label>Kata sandi baru</label></div><div class="input err"><span class="subtle"><i data-i="lock" data-s="20"></i></span><span class="grow trunc ">••••••••••••</span><span class="ak-eye" aria-label="Lihat kata sandi"><i data-i="eye" data-s="22"></i></span></div><div class="hint err">Pilih kata sandi selain kata sandi bawaan perusahaan.</div></div>
+<div class="field"><div class="row-h sp" style="gap:8px"><label>Konfirmasi kata sandi</label></div><div class="input err"><span class="subtle"><i data-i="lock" data-s="20"></i></span><span class="grow trunc ">••••••••</span><span class="ak-eye" aria-label="Lihat kata sandi"><i data-i="eye" data-s="22"></i></span></div><div class="hint err">Konfirmasi kata sandi tidak cocok.</div></div>
+</div>
+    </div>
+<div class="ak-fixed-bar"><button class="btn primary block" style="height:56px">Simpan & lanjutkan</button><button class="btn quiet block"><i data-i="log-out"></i>Keluar</button></div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body">
+<div class="ak-center"><span class="ico-xl info"><i data-i="shield-alert" data-s="40"></i></span>
+<h1 class="t-h2" style="margin:0">Super Admin masuk lewat web</h1>
+<p class="t-body muted" style="margin:0;font-size:16px;line-height:24px" role="alert">Akun Super Admin harus masuk lewat web untuk saat ini (autentikasi dua faktor belum didukung aplikasi).</p>
+<div class="card tight" style="text-align:left;width:100%"><div class="t-label">Kenapa?</div><div class="ak-cap" style="margin-top:4px">Super Admin wajib kode TOTP setiap masuk. Sampai aplikasi mendukung kode itu, akun ini tidak dapat dipakai di ponsel.</div></div>
+<div class="acts"><button class="btn primary block"><i data-i="external-link"></i>Buka RuangKerja di peramban</button><button class="btn quiet block"><i data-i="log-out"></i>Keluar</button></div></div>
+    </div>
+    <div class="note" style="">403 `two_factor_required` SELALU muncul untuk Super Admin, walau 2FA sudah aktif di web. Tombol "Periksa lagi" sengaja tidak ada (tak pernah berhasil).</div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body">
+<div style="padding:28px 24px 0" class="stack"><div class="gap8" style="gap:12px"><span class="ico-lg info"><i data-i="shield-check" data-s="26"></i></span><h1 class="t-h1">Kode autentikasi</h1><p class="t-body muted" style="margin:0;font-size:16px;line-height:24px">Masukkan 6 digit kode dari aplikasi autentikator Anda.</p></div>
+<div class="ak-otp" style="margin-top:8px"><span>4</span><span>8</span><span>1</span><span class="f"></span><span></span><span></span></div>
+<a class="ak-link" style="align-self:center">Pakai kode pemulihan</a></div>
+    </div>
+<div class="ak-fixed-bar" style="bottom:300px"><button class="btn primary block off" style="height:56px">Verifikasi</button></div>    <div class="ak-kbd" aria-hidden="true" style="height:290px"><div class="ak-krow"><span class="ak-key" style="flex:1;height:56px;font-size:24px">1</span><span class="ak-key" style="flex:1;height:56px;font-size:24px">2</span><span class="ak-key" style="flex:1;height:56px;font-size:24px">3</span></div><div class="ak-krow"><span class="ak-key" style="flex:1;height:56px;font-size:24px">4</span><span class="ak-key" style="flex:1;height:56px;font-size:24px">5</span><span class="ak-key" style="flex:1;height:56px;font-size:24px">6</span></div><div class="ak-krow"><span class="ak-key" style="flex:1;height:56px;font-size:24px">7</span><span class="ak-key" style="flex:1;height:56px;font-size:24px">8</span><span class="ak-key" style="flex:1;height:56px;font-size:24px">9</span></div><div class="ak-krow"><span class="ak-key" style="flex:1;height:56px;font-size:24px">,</span><span class="ak-key" style="flex:1;height:56px;font-size:24px">0</span><span class="ak-key" style="flex:1;height:56px;font-size:24px"><i data-i="delete" data-s="22"></i></span></div></div>    <div class="note" style="top:430px;left:16px;right:16px;max-width:none">USULAN (Super Admin): tantangan TOTP asli di aplikasi. Butuh POST /auth/2fa {kode | kode_pemulihan} (BELUM ADA). Keyboard numerik di perangkat nyata.</div>
+  </div>
+</div>
+</body>
+</html>

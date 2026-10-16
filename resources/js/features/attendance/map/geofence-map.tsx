@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
     Circle,
     MapContainer,
@@ -28,6 +28,8 @@ type Props = {
     showLabels?: boolean;
     interactive?: boolean;
     className?: string;
+    /** Called once when the tiles keep failing to load (offline, blocked). */
+    onTilesFailed?: () => void;
 };
 
 const officeIcon = L.divIcon({
@@ -46,14 +48,28 @@ const userIcon = L.divIcon({
 
 const DEFAULT_CENTER: L.LatLngTuple = [-6.2, 106.816666];
 
-function FitBounds({ bounds }: { bounds: L.LatLngBounds | null }) {
+/** Tiles that fail before any tile has loaded, then the map is given up on. */
+const TILE_ERRORS_BEFORE_GIVING_UP = 4;
+
+const prefersReducedMotion = (): boolean =>
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function FitBounds({
+    bounds,
+    animate,
+}: {
+    bounds: L.LatLngBounds | null;
+    animate: boolean;
+}) {
     const map = useMap();
 
     useEffect(() => {
         if (bounds?.isValid()) {
-            map.fitBounds(bounds, { padding: [24, 24], maxZoom: 18 });
+            map.fitBounds(bounds, { padding: [24, 24], maxZoom: 18, animate });
         }
-    }, [map, bounds]);
+    }, [map, bounds, animate]);
 
     return null;
 }
@@ -69,7 +85,11 @@ export default function GeofenceMap({
     showLabels = false,
     interactive = false,
     className,
+    onTilesFailed,
 }: Props) {
+    // Evaluated once: Leaflet reads its animation options only at creation.
+    const calm = useMemo(prefersReducedMotion, []);
+    const tiles = useRef({ loaded: 0, failed: 0, reported: false });
     const match = position ? nearestLocation(locations, position) : null;
 
     const bounds = useMemo(() => {
@@ -109,24 +129,45 @@ export default function GeofenceMap({
             touchZoom={interactive}
             boxZoom={false}
             keyboard={interactive}
+            zoomAnimation={!calm}
+            fadeAnimation={!calm}
+            markerZoomAnimation={!calm}
             attributionControl
         >
             <TileLayer
                 url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 maxZoom={19}
+                eventHandlers={{
+                    tileload: () => {
+                        tiles.current.loaded += 1;
+                    },
+                    tileerror: () => {
+                        const state = tiles.current;
+                        state.failed += 1;
+
+                        if (
+                            state.loaded === 0 &&
+                            state.failed >= TILE_ERRORS_BEFORE_GIVING_UP &&
+                            !state.reported
+                        ) {
+                            state.reported = true;
+                            onTilesFailed?.();
+                        }
+                    },
+                }}
             />
             {locations.map((location) => (
                 <Circle
                     key={location.id}
                     center={[location.latitude, location.longitude]}
                     radius={location.radiusM}
-                    pathOptions={{
-                        className:
-                            match && match.location.id !== location.id
-                                ? 'rk-geofence rk-geofence--muted'
-                                : 'rk-geofence',
-                    }}
+                    // Direct prop: Leaflet reads `className` only when the layer is created.
+                    className={
+                        match && match.location.id !== location.id
+                            ? 'rk-geofence rk-geofence--muted'
+                            : 'rk-geofence'
+                    }
                 >
                     {showLabels && (
                         <Tooltip
@@ -155,7 +196,7 @@ export default function GeofenceMap({
                         <Circle
                             center={[position.latitude, position.longitude]}
                             radius={position.accuracy}
-                            pathOptions={{ className: 'rk-accuracy' }}
+                            className="rk-accuracy"
                         />
                     ) : null}
                     <Marker
@@ -173,7 +214,7 @@ export default function GeofenceMap({
                         [position.latitude, position.longitude],
                         [match.location.latitude, match.location.longitude],
                     ]}
-                    pathOptions={{ className: 'rk-distance-line' }}
+                    className="rk-distance-line"
                 >
                     <Tooltip
                         permanent
@@ -184,7 +225,7 @@ export default function GeofenceMap({
                     </Tooltip>
                 </Polyline>
             )}
-            <FitBounds bounds={bounds} />
+            <FitBounds bounds={bounds} animate={!calm} />
         </MapContainer>
     );
 }

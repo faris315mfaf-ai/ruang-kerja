@@ -47,6 +47,8 @@ export default defineConfig({
         ignorePatterns: [
             'vendor/**',
             'node_modules/**',
+            // The Expo app has its own ESLint/TS setup.
+            'apps/mobile/**',
             'public/**',
             'bootstrap/ssr/**',
             'tailwind.config.js',
@@ -71,6 +73,7 @@ export default defineConfig({
             // Dokumen, mockup & konfigurasi kit proyek dijaga apa adanya.
             '*.md',
             '.claude/**',
+            'apps/mobile/**',
             'compose.yml',
             'compose.prod.yml',
             'compose.shared.yml',

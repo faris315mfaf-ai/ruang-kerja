@@ -4,6 +4,7 @@ namespace App\Domain\Tasks\Actions;
 
 use App\Domain\Tasks\Enums\ActivityEvent;
 use App\Domain\Tasks\Enums\TaskPriority;
+use App\Domain\Tasks\Enums\TaskSource;
 use App\Domain\Tasks\Enums\TaskStatusCategory;
 use App\Domain\Tasks\Services\TaskDescription;
 use App\Domain\Tasks\Services\TaskLifecycle;
@@ -38,7 +39,7 @@ final class CreateTask
     ) {}
 
     /**
-     * @param  array{title: string, description?: array<mixed>|null, status_id?: string|null, priority?: TaskPriority|int|null, start_date?: string|null, due_date?: string|null, estimate_hours?: float|int|string|null, description_text?: string|null, assignee_ids?: list<string>, label_ids?: list<string>, parent_id?: string|null}  $input
+     * @param  array{title: string, description?: array<mixed>|null, status_id?: string|null, priority?: TaskPriority|int|null, start_date?: string|null, due_date?: string|null, estimate_hours?: float|int|string|null, description_text?: string|null, assignee_ids?: list<string>, label_ids?: list<string>, parent_id?: string|null, source?: TaskSource|string|null, source_id?: string|null}  $input
      */
     public function handle(Workspace $workspace, User $actor, array $input): Task
     {
@@ -53,6 +54,10 @@ final class CreateTask
 
             $priority = $input['priority'] ?? TaskPriority::None;
             $parentId = $input['parent_id'] ?? null;
+            $source = $input['source'] ?? TaskSource::Manual;
+            // Normalize first: callers may pass the enum or its string value.
+            $source = $source instanceof TaskSource ? $source : TaskSource::from($source);
+            $sourceId = $source === TaskSource::Attendance ? ($input['source_id'] ?? null) : null;
 
             $task = new Task([
                 'workspace_id' => $workspace->id,
@@ -67,6 +72,8 @@ final class CreateTask
                 'due_date' => $input['due_date'] ?? null,
                 'estimate_hours' => $input['estimate_hours'] ?? null,
                 'created_by' => $actor->id,
+                'source' => $source,
+                'source_id' => $sourceId,
             ]);
 
             $prepared = array_key_exists('description', $input) ? $this->richText->prepare($workspace, $actor, $input['description']) : null;

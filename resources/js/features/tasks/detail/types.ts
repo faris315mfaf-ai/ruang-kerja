@@ -102,7 +102,14 @@ export type TaskDetail = {
     /** "Dibaca oleh": pointers of the people taking part in the task. */
     comment_reads: CommentRead[];
     can: {
+        /** Title, description, dates, assignees, priority, status, subtasks. */
         edit: boolean;
+        /**
+         * Doing the work (TaskPolicy::work): checklist lines and task
+         * attachments. True for the assignee of a task someone else
+         * assigned, whose `edit` is false.
+         */
+        work: boolean;
         delete: boolean;
         comment: boolean;
         /** Follow / unfollow; false for view-only management (keputusan pemilik 6 Okt 2026). */

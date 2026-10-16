@@ -92,7 +92,7 @@ export function TaskDetailBody({
             <ChecklistSection
                 items={detail.checklist}
                 members={detail.members}
-                editable={can.edit}
+                editable={can.work}
                 onAdd={(title) => void state.addChecklistItem(title)}
                 onToggle={(item, done) =>
                     void state.updateChecklistItem(item.id, { is_done: done })
@@ -114,6 +114,7 @@ export function TaskDetailBody({
 
             <AttachmentsPanel
                 key={task.id}
+                canEdit={can.work}
                 attachableType="task"
                 attachableId={task.id}
                 initial={detail.attachments}

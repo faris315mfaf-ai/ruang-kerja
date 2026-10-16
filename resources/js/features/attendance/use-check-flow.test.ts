@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vite-plus/test';
+import { rejectionFromError, toRejection } from './use-check-flow';
 import {
-    planPoints,
-    planRejection,
-    rejectionFromError,
-    toRejection,
-} from './use-check-flow';
+    pointsKindFor,
+    pointsRejection,
+    pointsServerError,
+    submitProblems,
+    workPoints,
+} from './work-points';
 
 describe('toRejection', () => {
     it('passes through business rejections from the server', () => {
@@ -55,23 +57,160 @@ describe('rejectionFromError', () => {
     });
 });
 
-describe('planRejection', () => {
-    it('requires at least one point for a check-in', () => {
-        expect(planRejection('in', [''])).toContain('rencana kerja');
-        expect(planRejection('in', ['   ', ''])).toContain('rencana kerja');
-        expect(planRejection('in', ['', 'Laporan mingguan'])).toBeNull();
+describe('toRejection (window refusals)', () => {
+    it('keeps the window phase and bounds for check-in and check-out', () => {
+        const checkIn = toRejection(
+            422,
+            JSON.stringify({
+                message:
+                    'Absen masuk dibuka pukul 06.00 dan ditutup pukul 12.00.',
+                reason: 'check_in_window',
+                context: {
+                    phase: 'before',
+                    from: '06:00',
+                    until: '12:00',
+                    opens_at: '2026-10-05T23:00:00Z',
+                },
+            }),
+        );
+
+        expect(checkIn.reason).toBe('check_in_window');
+        expect(checkIn.context).toMatchObject({
+            phase: 'before',
+            until: '12:00',
+        });
+
+        const checkOut = toRejection(
+            422,
+            JSON.stringify({
+                message:
+                    'Absen pulang dibuka pukul 15.00 dan ditutup pukul 23.59.',
+                reason: 'check_out_window',
+                context: { phase: 'after', from: '15:00', until: '23:59' },
+            }),
+        );
+
+        expect(checkOut.reason).toBe('check_out_window');
+        expect(checkOut.context.phase).toBe('after');
     });
 
-    it('never blocks a check-out', () => {
-        expect(planRejection('out', [''])).toBeNull();
+    it('lists the first message per field of a 422', () => {
+        const rejection = toRejection(
+            422,
+            JSON.stringify({
+                errors: {
+                    work_report: [
+                        'Laporan kerja wajib diisi sebelum absen pulang.',
+                    ],
+                    'work_report.1': ['Tiap poin maksimal 300 karakter.'],
+                },
+            }),
+        );
+
+        expect(rejection.errors).toEqual({
+            work_report: 'Laporan kerja wajib diisi sebelum absen pulang.',
+            'work_report.1': 'Tiap poin maksimal 300 karakter.',
+        });
     });
 });
 
-describe('planPoints', () => {
+describe('pointsKindFor', () => {
+    it('is the rencana kerja at check-in and the laporan kerja at check-out', () => {
+        expect(pointsKindFor('in')).toBe('plan');
+        expect(pointsKindFor('out')).toBe('report');
+    });
+});
+
+describe('pointsRejection', () => {
+    it('requires at least one rencana kerja point for a check-in', () => {
+        expect(pointsRejection('in', [''])).toContain('rencana kerja');
+        expect(pointsRejection('in', ['   ', ''])).toContain('rencana kerja');
+        expect(pointsRejection('in', ['', 'Laporan mingguan'])).toBeNull();
+    });
+
+    it('requires at least one laporan kerja point for a check-out', () => {
+        expect(pointsRejection('out', [''])).toContain('laporan kerja');
+        expect(pointsRejection('out', [' ', ''])).toContain('absen pulang');
+        expect(pointsRejection('out', ['Selesai revisi'])).toBeNull();
+    });
+});
+
+describe('submitProblems', () => {
+    it('blocks an empty laporan kerja before sending the check-out', () => {
+        expect(
+            submitProblems({
+                type: 'out',
+                points: [''],
+                isRemote: false,
+                note: '',
+            }),
+        ).toEqual({
+            points: expect.stringContaining('laporan kerja'),
+            note: null,
+        });
+    });
+
+    it('also asks for the location note when working remotely', () => {
+        const problems = submitProblems({
+            type: 'out',
+            points: ['Selesai'],
+            isRemote: true,
+            note: '  ',
+        });
+
+        expect(problems.points).toBeNull();
+        expect(problems.note).toContain('check-out di luar kantor');
+        expect(
+            submitProblems({
+                type: 'in',
+                points: ['Selesai'],
+                isRemote: true,
+                note: 'Rumah',
+            }),
+        ).toEqual({ points: null, note: null });
+    });
+});
+
+describe('workPoints', () => {
     it('trims and drops blank rows', () => {
-        expect(planPoints(['  ', 'Satu', '', ' Dua '])).toEqual([
+        expect(workPoints(['  ', 'Satu', '', ' Dua '])).toEqual([
             'Satu',
             'Dua',
         ]);
+    });
+
+    it('sends at most 8 points', () => {
+        const many = Array.from({ length: 10 }, (_, i) => `Poin ${i + 1}`);
+
+        expect(workPoints(many)).toHaveLength(8);
+    });
+});
+
+describe('pointsServerError', () => {
+    const rejection = toRejection(
+        422,
+        JSON.stringify({
+            errors: { 'work_report.2': ['Tiap poin maksimal 300 karakter.'] },
+        }),
+    );
+
+    it('shows a work_report error inline for a check-out only', () => {
+        expect(pointsServerError(rejection, 'out')).toBe(
+            'Tiap poin maksimal 300 karakter.',
+        );
+        expect(pointsServerError(rejection, 'in')).toBeNull();
+    });
+
+    it('ignores other refusals', () => {
+        expect(pointsServerError(toRejection(null), 'out')).toBeNull();
+        expect(
+            pointsServerError(
+                toRejection(
+                    422,
+                    JSON.stringify({ errors: { selfie: ['Ambil selfie.'] } }),
+                ),
+                'out',
+            ),
+        ).toBeNull();
     });
 });

@@ -56,6 +56,7 @@ final readonly class SetEmployeePassword
             // One explicit audit row instead of a generic user.updated.
             $employee->saveQuietly();
             $this->sessions->deleteStoredSessions($employee);
+            $this->sessions->revokeApiTokens($employee);
 
             // A pending "Lupa kata sandi" request is answered by this action.
             $this->openResets->cancelFor($employee);

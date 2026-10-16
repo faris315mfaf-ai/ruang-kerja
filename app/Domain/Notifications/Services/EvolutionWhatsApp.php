@@ -49,4 +49,29 @@ final class EvolutionWhatsApp
             ])
             ->throw();
     }
+
+    /**
+     * Send a JPEG with a caption (Evolution API v2 `sendMedia`). The image is
+     * passed as base64, so nothing is written to disk or exposed by URL.
+     * Throws on transport/server errors so queued callers retry.
+     *
+     * @throws ConnectionException|RequestException
+     */
+    public function sendImage(string $to, string $imageBytes, string $caption, string $fileName = 'absensi.jpg'): void
+    {
+        Http::baseUrl((string) config('services.evolution.url'))
+            ->withHeaders(['apikey' => (string) config('services.evolution.api_key')])
+            ->timeout(30)
+            ->acceptJson()
+            ->post('/message/sendMedia/'.(string) config('services.evolution.instance'), [
+                'number' => $to,
+                'mediatype' => 'image',
+                'mimetype' => 'image/jpeg',
+                'media' => base64_encode($imageBytes),
+                'fileName' => $fileName,
+                'caption' => $caption,
+                'delay' => 800,
+            ])
+            ->throw();
+    }
 }

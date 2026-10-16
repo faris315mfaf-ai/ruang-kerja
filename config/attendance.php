@@ -19,7 +19,7 @@ return [
     */
     'consent' => [
         // Follows the privacy policy version (config/privacy.php) unless set explicitly.
-        'version' => env('ATTENDANCE_CONSENT_VERSION', env('PRIVACY_POLICY_VERSION', '1.0')),
+        'version' => env('ATTENDANCE_CONSENT_VERSION', env('PRIVACY_POLICY_VERSION', '2.0')),
     ],
 
     'selfie' => [
@@ -40,6 +40,25 @@ return [
     ],
 
     /*
+    | Stamped selfie for the management WhatsApp group (time, date, place and
+    | a mini map composed in memory; docs/fitur/absensi-whatsapp.md §1b).
+    | The map needs OpenStreetMap tiles (+ Nominatim for the place name): the
+    | coordinates leave the system at send time. Switch off with
+    | ATTENDANCE_STAMP_MAP=false to send the stamp without a map and without
+    | any OpenStreetMap request.
+    */
+    'stamp' => [
+        'map' => (bool) env('ATTENDANCE_STAMP_MAP', true),
+        'zoom' => 16,
+        'max_width' => 1080,
+        'jpeg_quality' => 82,
+        // Cache for tiles and reverse-geocoded place names (hours).
+        'cache_hours' => 24,
+        // Minimum pause between two Nominatim requests (their policy: 1 req/s).
+        'nominatim_interval_s' => 1,
+    ],
+
+    /*
     | Dynamic QR code on lobby kiosks (docs/ARCHITECTURE.md §3.2).
     | Code = HMAC-SHA256(secret, "{location_id}|{window}") with
     | window = floor(unix time / window_seconds). The server accepts the current
@@ -52,8 +71,10 @@ return [
         'tolerance_windows' => 1,
         'scheme' => 'ruangkerja://checkin',
 
-        // Displayed codes nobody scanned are pruned after this many days.
-        'prune_after_days' => 2,
+        // Displayed codes nobody scanned are pruned after this many days. Must
+        // stay above the 72-hour offline limit: a QR scanned offline is verified
+        // (code row must exist) when the app syncs, up to 3 days later.
+        'prune_after_days' => 4,
 
         // Kiosk activation links are single-use and expire after this many hours.
         'activation_ttl_hours' => 24,

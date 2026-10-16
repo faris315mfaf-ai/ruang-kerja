@@ -7,6 +7,7 @@ import {
     ExternalLink,
     Loader2,
     MapPin,
+    MessageCircle,
     ShieldCheck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -98,17 +99,43 @@ export function ConsentContent({
                                     hanya saat check-in &amp; check-out
                                 </strong>
                             </li>
-                            <li>Foto selfie saat absen</li>
+                            <li>
+                                Foto selfie saat absen, diberi cap jam, tanggal,
+                                dan lokasi
+                            </li>
+                            <li>Rencana dan laporan kerja harian</li>
                             <li>Info perangkat (jenis browser, alamat IP)</li>
                         </ul>
                     </Item>
+                    <Item
+                        icon={MessageCircle}
+                        title="Dikirim ke grup WhatsApp"
+                        accent
+                    >
+                        Foto selfie bercap (jam, tanggal, nama tempat, dan{' '}
+                        <strong className="font-semibold text-text">
+                            peta kecil dengan posisi Anda
+                        </strong>
+                        ) beserta nama, jam, lokasi, rencana atau laporan kerja
+                        dikirim ke grup WhatsApp perusahaan untuk memantau
+                        kehadiran. Anggota grup ditetapkan perusahaan. Setelah
+                        terkirim, pesan berada di luar kendali aplikasi dan
+                        tidak dapat ditarik kembali.
+                    </Item>
+                    <Item icon={MapPin} title="Peta OpenStreetMap">
+                        Lokasi Anda ditampilkan di peta OpenStreetMap. Pada foto
+                        bercap di luar kantor, koordinat Anda dikirim dari
+                        server ke OpenStreetMap untuk mencari nama tempat.
+                    </Item>
                     <Item icon={Clock} title="Disimpan berapa lama">
-                        Selfie disimpan {retentionMonths} bulan, lalu dihapus
-                        otomatis.
+                        Selfie di aplikasi disimpan {retentionMonths} bulan,
+                        lalu dihapus otomatis. Salinan di WhatsApp tidak ikut
+                        terhapus.
                     </Item>
                     <Item icon={Eye} title="Siapa yang bisa melihat">
-                        HR dan atasan langsung Anda. Setiap akses tercatat di
-                        log audit.
+                        Di aplikasi: HR dan atasan langsung Anda; setiap akses
+                        tercatat di log audit. Di WhatsApp: seluruh anggota
+                        grup.
                     </Item>
                     <Item icon={Download} title="Hak Anda" accent>
                         Lihat dan ekspor data absensi sendiri kapan saja. Cabut

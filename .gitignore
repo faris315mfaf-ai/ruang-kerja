@@ -34,6 +34,8 @@ yarn-error.log
 # Rahasia
 /secrets/
 google-sa*.json
+# Berkas konfigurasi Firebase aplikasi Android (docs/deploy/ANDROID-FCM.md)
+google-services*.json
 
 # Claude Code: pengaturan pribadi tidak di-commit (settings.json & skills DI-commit)
 /.claude/settings.local.json
@@ -51,3 +53,6 @@ google-sa*.json
 
 # S3 storage VPS keys (compose.storage.yml)
 /docker/seaweedfs/s3.json
+
+# Android mockup PNG render output (regenerate: node docs/mockups/android/_kit/render.mjs)
+/docs/mockups/android/png

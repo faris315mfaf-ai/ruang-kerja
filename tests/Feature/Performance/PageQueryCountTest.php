@@ -86,13 +86,24 @@ function assertQueryBudgets(array $pages): void
 
 it('keeps the dashboards and the portfolio free of N+1', function () {
     assertQueryBudgets([
-        '/dashboard' => ['anggota', 72],
-        '/dashboard/saya' => ['kadiv', 69],
+        // +2 (est. +1, spare 1) since Briefing (9 Okt 2026): the shared
+        // "briefing" card checks today's delegations (1 query for a
+        // non-recorder; card = null afterwards).
+        // "Tugas hari ini" (9 Okt 2026) swaps "Ruang saya" for TugasHariIni:
+        // +6 (personal + team workspace ids, tasks, status, assignees) −5
+        // (planner) −1 (daily report card) = net 0.
+        // +1: "Briefing terakhir" (latestBriefing) for every viewer — the
+        // newest briefing of the company (creator eager load only when one exists).
+        '/dashboard' => ['anggota', 75],
+        '/dashboard/saya' => ['kadiv', 72],
         '/ruang-saya' => ['anggota', 14],
         // +3: "Laporan tim hari ini" (schedules, reports, sent items) — keputusan pemilik 6 Okt 2026.
-        '/dashboard/divisi' => ['kadiv', 88],
+        // +2 (est. +1, spare 1) since Briefing (9 Okt 2026): delegation check.
+        '/dashboard/divisi' => ['kadiv', 90],
         // −26: attendance lists and the recap moved to Absensi (keputusan pemilik 6 Okt 2026).
-        '/dashboard/hr' => ['hr', 52],
+        // +5 (est. +4, spare 1) since Briefing (9 Okt 2026): HR is a recorder —
+        // today's delegations, today's notes and the latest note per period.
+        '/dashboard/hr' => ['hr', 57],
         '/portofolio' => ['direksi', 41],
     ]);
 });
@@ -131,10 +142,14 @@ function growDailyReports(int $round): void
 
 it('keeps the Direksi, HR and management dashboards and Absensi tabs free of N+1 (keputusan pemilik 6 Okt 2026)', function () {
     $pages = [
-        '/dashboard' => ['direksi', 64],
-        '/dashboard/direksi?tanggal=2026-10-06' => ['direksi', 64],
-        '/dashboard/hr' => ['hr', 52],
-        '/dashboard/divisi' => ['kadiv', 88],
+        // +2 (est. +1, spare 1) since Briefing (9 Okt 2026): delegation check card.
+        '/dashboard' => ['direksi', 66],
+        '/dashboard/direksi?tanggal=2026-10-06' => ['direksi', 66],
+        // +5 (est. +4, spare 1) since Briefing (9 Okt 2026): HR is a recorder —
+        // delegations, today's notes and the latest note per period.
+        '/dashboard/hr' => ['hr', 57],
+        // +2 (est. +1, spare 1) since Briefing (9 Okt 2026): delegation check card.
+        '/dashboard/divisi' => ['kadiv', 90],
         '/manajemen' => ['direksi', 69],
         '/absensi/hari-ini' => ['hr', 55],
         '/absensi/kedisiplinan' => ['hr', 55],
@@ -173,7 +188,8 @@ it('keeps the Direksi, HR and management dashboards and Absensi tabs free of N+1
 
 it('keeps the attendance pages free of N+1', function () {
     assertQueryBudgets([
-        '/absensi' => ['anggota', 76],
+        // +7: sakit/izin shortcut (SickPermitShortcut: two leave-type lookups, pending/absence/check-in checks, working-day calendar) — constant, not per row.
+        '/absensi' => ['anggota', 83],
         '/absensi/riwayat' => ['anggota', 44],
         // +1: shared prop chatUnread (Obrolan Dock badge), one query on every page.
         '/absensi/hari-ini' => ['hr', 53],

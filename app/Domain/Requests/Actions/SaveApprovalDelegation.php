@@ -8,7 +8,10 @@ use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
 /**
- * "Delegasi saat penyetuju cuti": the signed-in approver names a stand-in for a period.
+ * "Delegasi saat penyetuju cuti": the signed-in approver names a stand-in for a
+ * period, or changes one of their delegations (stand-in and/or dates; the
+ * mobile app's "Ubah"). Same rules either way: an active colleague, no
+ * overlap with another delegation of the same delegator, no cycle.
  */
 final class SaveApprovalDelegation
 {
@@ -20,8 +23,12 @@ final class SaveApprovalDelegation
     /**
      * @param  array{delegate_id: string, starts_on: string, ends_on: string, reason?: string|null}  $data
      */
-    public function handle(User $delegator, array $data): ApprovalDelegation
+    public function handle(User $delegator, array $data, ?ApprovalDelegation $existing = null): ApprovalDelegation
     {
+        if ($existing !== null && $existing->delegator_id !== $delegator->id) {
+            throw ValidationException::withMessages(['delegate_id' => 'Hanya pemberi delegasi yang bisa mengubah delegasi ini.']);
+        }
+
         $delegate = User::query()->active()->where('company_id', $delegator->company_id)->find($data['delegate_id']);
 
         if ($delegate === null || $delegate->is($delegator)) {
@@ -32,6 +39,7 @@ final class SaveApprovalDelegation
             ->where('delegator_id', $delegator->id)
             ->whereDate('starts_on', '<=', $data['ends_on'])
             ->whereDate('ends_on', '>=', $data['starts_on'])
+            ->when($existing !== null, fn ($query) => $query->whereKeyNot($existing?->id))
             ->exists();
 
         if ($overlaps) {
@@ -42,19 +50,31 @@ final class SaveApprovalDelegation
             throw ValidationException::withMessages(['delegate_id' => "{$delegate->name} sudah mendelegasikan persetujuannya (langsung atau berantai) kepada Anda pada periode ini. Delegasi tidak boleh melingkar."]);
         }
 
-        $delegation = ApprovalDelegation::query()->create([
-            'delegator_id' => $delegator->id,
+        $values = [
             'delegate_id' => $delegate->id,
             'starts_on' => $data['starts_on'],
             'ends_on' => $data['ends_on'],
-            'reason' => $data['reason'] ?? null,
-        ]);
+        ];
 
-        $this->audit->log('approval_delegation.created', $delegation, null, [
-            'delegate_id' => $delegate->id,
-            'starts_on' => $data['starts_on'],
-            'ends_on' => $data['ends_on'],
-        ], $delegator);
+        if ($existing === null) {
+            $delegation = ApprovalDelegation::query()->create([
+                'delegator_id' => $delegator->id,
+                ...$values,
+                'reason' => $data['reason'] ?? null,
+            ]);
+
+            $this->audit->log('approval_delegation.created', $delegation, null, $values, $delegator);
+        } else {
+            $old = [
+                'delegate_id' => $existing->delegate_id,
+                'starts_on' => $existing->starts_on->toDateString(),
+                'ends_on' => $existing->ends_on->toDateString(),
+            ];
+            $delegation = $existing;
+            $delegation->fill([...$values, 'reason' => $data['reason'] ?? null])->save();
+
+            $this->audit->log('approval_delegation.updated', $delegation, $old, $values, $delegator);
+        }
 
         $this->route->handle($delegation);
 

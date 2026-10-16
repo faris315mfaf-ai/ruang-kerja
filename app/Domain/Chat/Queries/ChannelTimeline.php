@@ -22,20 +22,23 @@ final class ChannelTimeline
     public function __construct(private readonly MentionParser $parser) {}
 
     /**
+     * @param  int  $limit  page size (web board 50; the mobile API asks 30)
      * @return array{messages: list<array<string, mixed>>, tasks: list<array<string, mixed>>, has_more: bool}
      */
-    public function page(Channel $channel, User $viewer, ?string $before = null): array
+    public function page(Channel $channel, User $viewer, ?string $before = null, int $limit = self::PAGE): array
     {
+        $limit = max(1, $limit);
+
         $roots = Message::withTrashed()
             ->where('channel_id', $channel->id)
             ->whereNull('parent_id')
             ->when($before !== null, fn ($query) => $query->where('id', '<', $before))
             ->orderByDesc('id')
-            ->limit(self::PAGE + 1)
+            ->limit($limit + 1)
             ->get();
 
-        $hasMore = $roots->count() > self::PAGE;
-        $roots = $roots->take(self::PAGE);
+        $hasMore = $roots->count() > $limit;
+        $roots = $roots->take($limit);
 
         $replies = $roots->isEmpty() ? new Collection : Message::withTrashed()
             ->whereIn('parent_id', $roots->pluck('id'))
@@ -48,6 +51,38 @@ final class ChannelTimeline
         return [
             'messages' => $this->present($messages),
             'tasks' => $this->tasks($messages, $viewer),
+            'has_more' => $hasMore,
+        ];
+    }
+
+    /**
+     * One thread: the root (also when deleted) and its replies oldest-first,
+     * `$limit` at a time after the cursor `$after` (a reply id).
+     *
+     * @return array{root: array<string, mixed>, replies: list<array<string, mixed>>, tasks: list<array<string, mixed>>, has_more: bool}
+     */
+    public function replies(Message $root, User $viewer, ?string $after = null, int $limit = self::PAGE): array
+    {
+        $limit = max(1, $limit);
+
+        $replies = Message::withTrashed()
+            ->where('parent_id', $root->id)
+            ->when($after !== null, fn ($query) => $query->where('id', '>', $after))
+            ->orderBy('id')
+            ->limit($limit + 1)
+            ->get();
+
+        $hasMore = $replies->count() > $limit;
+        /** @var Collection<int, Message> $page */
+        $page = $replies->take($limit)->values();
+        /** @var Collection<int, Message> $all */
+        $all = (new Collection([$root]))->concat($page);
+        $presented = $this->present($all);
+
+        return [
+            'root' => $presented[0],
+            'replies' => array_slice($presented, 1),
+            'tasks' => $this->tasks($all, $viewer),
             'has_more' => $hasMore,
         ];
     }

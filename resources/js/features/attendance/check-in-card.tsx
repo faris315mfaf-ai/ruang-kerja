@@ -75,7 +75,8 @@ export function timingHint(
     today: TodayAttendance,
     now: Date,
 ): { text: string; tone: StatusTone } | null {
-    if (today.action !== 'check_in') {
+    // A company-hours refusal replaces the timing hint (shown as a notice).
+    if (today.action !== 'check_in' || today.checkInBlocked) {
         return null;
     }
 

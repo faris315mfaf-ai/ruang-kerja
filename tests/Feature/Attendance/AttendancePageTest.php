@@ -41,7 +41,7 @@ test('the Absensi page shows today, allowed locations and consent state', functi
             ->where('today.locations.0.name', 'Kantor Pusat')
             ->where('today.locations.0.radiusM', 100)
             ->where('consent.granted', false)
-            ->where('consent.version', '1.0')
+            ->where('consent.version', config('attendance.consent.version'))
             ->where('serverTime', '2026-10-05T00:52:00Z')
             ->missing('history')
             ->loadDeferredProps(fn (Assert $reload) => $reload->has('history', 0)));

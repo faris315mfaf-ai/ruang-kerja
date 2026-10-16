@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Absen · offline · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<link rel="stylesheet" href="_abs.css">
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+  <!-- Offline — v1: check-in butuh koneksi (swipe terkunci) -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;">
+      <div class="card stack" style="gap:6px"><div class="row-h sp"><span class="t-meta">Jam sekarang</span><span class="badge">Belum check-in</span></div><div class="abs-clock">07.52</div><div class="t-body muted">Shift Reguler · masuk 08.00 · pulang 17.00</div></div><div class="banner warn"><i data-i="wifi-off"></i><span><b>Tidak ada koneksi internet.</b> Check-in butuh koneksi. Isi form tetap tersimpan, kirim setelah sinyal kembali.</span></div><div class="card stack" style="gap:8px"><div class="t-label">Rencana kerja</div><div class="abs-plan">
+        <div class="abs-pr"><span class="abs-pn">1</span><div class="input"><span>Selesaikan laporan stok gudang</span></div><span class="abs-px" aria-label="Hapus poin 1"><i data-i="circle-x" data-s="24"></i></span></div>
+        <div class="abs-pr"><span class="abs-pn">2</span><div class="input"><span>Cek kiriman supplier jam 10.00</span></div><span class="abs-px" aria-label="Hapus poin 2"><i data-i="circle-x" data-s="24"></i></span></div>
+        <div class="abs-pr"><span class="abs-pn">3</span><div class="input"><span>Rapikan folder dokumen tim</span></div><span class="abs-px" aria-label="Hapus poin 3"><i data-i="circle-x" data-s="24"></i></span></div>
+        <div class="abs-add"><i data-i="plus" data-s="20"></i>Tambah poin</div>
+        
+      </div></div></div>
+    </div>    <div class="abs-dock"><div class="abs-swipe off" role="slider" aria-label="Butuh koneksi internet" style="--x:0px"><span class="fill"></span><span class="knob"><i data-i="lock"></i></span><span class="lbl">Butuh koneksi internet</span></div><div class="hint">Versi 1 menolak check-in tanpa koneksi — sama seperti web/PWA.</div></div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+  <!-- Native Fase 3 — check-in masuk antrean -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="appbar" style="padding-top:20px">
+        <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Absen</h1></div>
+        <div class="acts"><button class="ibtn" aria-label="Riwayat absensi"><i data-i="history"></i></button><button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button></div>
+      </div><div class="pad stack" style="margin-top:8px;">
+      <div class="card stack" style="gap:10px;align-items:center;text-align:center"><div class="empty" style="border:0;padding:0"><div class="ic" style="background:var(--warn-soft);color:var(--warn);width:84px;height:84px;border-radius:42px"><i data-i="cloud-upload" data-s="40"></i></div></div><div class="t-h2">Check-in disimpan di perangkat</div><div class="abs-clock" style="font-size:40px">07.52</div><div class="t-body muted">Dikirim otomatis begitu ada sinyal. Waktu absen memakai jam perangkat saat Anda geser; server memvalidasi lokasi &amp; jadwal.</div><span class="badge warn">Menunggu kirim · antrean 1</span></div>
+      <div class="banner"><i data-i="info"></i><span>Foto, lokasi, dan rencana kerja ikut tersimpan terenkripsi. Tombol check-out tetap bisa dipakai bila ini lewat jam pulang.</span></div></div>
+    </div>    <div class="abs-fase">FASE 3 · antrean offline</div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+  <!-- Sinkron berjalan -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Antrean offline</span></div><div class="pad stack" style="margin-top:8px;">
+      <div class="banner"><i data-i="refresh-cw"></i><span><b>Mengirim 1 dari 3…</b> Koneksi kembali. Dikirim satu per satu.</span></div>
+      <div class="card flush list"><div class="li" style="min-height:72px"><span class="ico blue"><i data-i="log-in"></i></span><div class="grow"><div class="t">Check-in 07.52</div><div class="m">GPS + selfie · 3 poin rencana</div></div><span class="badge info">Mengirim</span></div><div class="li" style="min-height:72px"><span class="ico "><i data-i="message-square"></i></span><div class="grow"><div class="t">Komentar PRG-24</div><div class="m">Disimpan 08.10</div></div><span class="badge ">Menunggu</span></div><div class="li" style="min-height:72px"><span class="ico "><i data-i="square-check-big"></i></span><div class="grow"><div class="t">Selesaikan GDG-9</div><div class="m">Disimpan 08.14</div></div><span class="badge ">Menunggu</span></div></div>
+      <div class="hint">Tindakan persetujuan tetap butuh koneksi dan tidak masuk antrean.</div></div>
+    </div>    <div class="abs-fase">FASE 3 · antrean offline</div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+  <!-- Konflik: item ditolak + alasan -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Antrean offline</span></div><div class="pad stack" style="margin-top:8px;">
+      <div class="banner bad"><i data-i="triangle-alert"></i><span><b>1 item ditolak server.</b> Check-in 07.52: Anda berada 340 m dari Kantor Pusat (batas 100 m).</span></div>
+      <div class="card flush list"><div class="li" style="min-height:72px"><span class="ico bad"><i data-i="log-in"></i></span><div class="grow"><div class="t">Check-in 07.52</div><div class="m">Ditolak · di luar radius</div></div><span class="badge bad">Gagal</span></div><div class="li" style="min-height:72px"><span class="ico ok"><i data-i="message-square"></i></span><div class="grow"><div class="t">Komentar PRG-24</div><div class="m">Terkirim 08.30</div></div><span class="badge ok">Terkirim</span></div></div>
+      <div class="row-h"><span class="btn outline grow"><i data-i="file-pen" data-s="18"></i>Ajukan koreksi</span><span class="btn quiet" style="color:var(--bad)">Hapus</span></div></div>
+    </div>    <div class="snack"><i data-i="check" data-s="20"></i>2 dari 3 item tersinkron</div>    <div class="abs-fase">FASE 3 · antrean offline</div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+</div>
+</body>
+</html>

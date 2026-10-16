@@ -152,6 +152,8 @@ class RequestSeeder extends Seeder
                     'approval_flow_id' => $flows[$flow]->id,
                     'sort_order' => $sort,
                     // Cuti & lembur wait for the SOP (keputusan pemilik 6 Okt 2026).
+                    // Sakit & izin for today are sent before 12.00 (keputusan pemilik 14 Okt 2026).
+                    'submit_cutoff_time' => in_array($category, [RequestCategory::Sick, RequestCategory::Permit], true) ? '12:00' : null,
                     'locked_reason' => in_array($category, [RequestCategory::Leave, RequestCategory::Overtime], true) ? LeaveType::SOP_LOCK_REASON : null,
                 ])->save();
             }

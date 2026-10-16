@@ -5,6 +5,7 @@ namespace App\Domain\Requests\Services;
 use App\Domain\Requests\Data\RequestInput;
 use App\Domain\Requests\Data\RequestPeriod;
 use App\Domain\Requests\Enums\RequestCategory;
+use App\Domain\Requests\Support\OfficeTime;
 use App\Models\EmployeeRequest;
 use App\Models\LeaveType;
 use App\Models\User;
@@ -19,6 +20,7 @@ final class RequestWriter
     public function __construct(
         private readonly RequestDurationCalculator $durations,
         private readonly RequestAttachmentStore $attachments,
+        private readonly SubmissionCutoff $cutoff,
     ) {}
 
     public function period(User $user, RequestInput $input): RequestPeriod
@@ -26,6 +28,18 @@ final class RequestWriter
         $this->assertCanUse($user, $input->leaveType);
 
         return $this->durations->compute($user, $input);
+    }
+
+    /**
+     * Sending (not saving a draft) a sick/izin request is bound to the same-day
+     * cutoff (SubmissionCutoff). A request resent after a revision keeps its
+     * original date: that submission was on time.
+     */
+    public function assertCanSend(LeaveType $type, RequestPeriod $period, ?EmployeeRequest $existing = null): void
+    {
+        $unchanged = $existing !== null && $existing->submitted_at !== null ? OfficeTime::date($existing->start_at) : null;
+
+        $this->cutoff->assertCanSend($type, $period, null, $unchanged);
     }
 
     public function assertCanUse(User $user, LeaveType $type): void

@@ -15,6 +15,7 @@ use App\Http\Resources\Attendance\Concerns\NamesPeople;
 use App\Models\Division;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 
@@ -31,6 +32,9 @@ final class TodayBoard
     public const array STATES = ['on_time', 'late', 'leave', 'not_checked_in', 'off'];
 
     public const int SUSPICIOUS_LIMIT = 20;
+
+    /** Relations suspiciousItem() reads. */
+    public const array SUSPICIOUS_RELATIONS = ['user.division:id,name', 'officeLocation', 'day.shift.officeLocation'];
 
     public function __construct(private readonly ScheduleResolver $schedules) {}
 
@@ -163,41 +167,64 @@ final class TodayBoard
      */
     public function suspicious(User $viewer): array
     {
-        $query = AttendanceLog::query()
-            ->visibleTo($viewer)
-            ->where('is_suspicious', true)
-            ->whereNull('reviewed_at');
+        $query = self::suspiciousQuery($viewer);
 
         $logs = (clone $query)
-            ->with(['user.division:id,name', 'officeLocation', 'day.shift.officeLocation'])
+            ->with(self::SUSPICIOUS_RELATIONS)
             ->orderByDesc('occurred_at')
             ->limit(self::SUSPICIOUS_LIMIT)
             ->get();
 
         return [
             'total' => $query->count(),
-            'items' => array_values($logs->map(fn (AttendanceLog $log): array => [
-                'id' => $log->id,
-                'userId' => $log->user_id,
-                'name' => $log->user->name,
-                'initials' => self::initials($log->user->name),
-                'divisionName' => $log->user->division?->name,
-                'type' => $log->type->value,
-                'typeLabel' => $log->type->label(),
-                'method' => $log->method->value,
-                'methodLabel' => $log->method->label(),
-                'occurredAt' => AttendancePresenter::iso($log->occurred_at),
-                'clientTime' => AttendancePresenter::iso($log->client_time),
-                'locationName' => $log->officeLocation->name ?? $log->day->shift?->officeLocation?->name,
-                'radiusM' => $log->officeLocation->radius_m ?? $log->day->shift?->officeLocation?->radius_m,
-                'accuracyM' => $log->accuracy_m === null ? null : (int) round($log->accuracy_m),
-                'distanceM' => $log->distance_m === null ? null : (int) round($log->distance_m),
-                'note' => $log->note,
-                'flags' => $log->flags->map(fn (LogFlag $flag): array => ['value' => $flag->value, 'label' => $flag->label()])->values()->all(),
-                'hasSelfie' => $log->selfie_path !== null,
-                'canViewSelfie' => $log->selfie_path !== null && Gate::forUser($viewer)->allows('viewSelfie', $log),
-                'canReview' => Gate::forUser($viewer)->allows('review', $log),
-            ])->all()),
+            'items' => array_values($logs->map(fn (AttendanceLog $log): array => self::suspiciousItem($log, $viewer))->all()),
+        ];
+    }
+
+    /**
+     * Flagged, not yet reviewed logs of the people whose attendance the
+     * viewer may see (also the full "Perlu ditinjau" list of the app API).
+     *
+     * @return Builder<AttendanceLog>
+     */
+    public static function suspiciousQuery(User $viewer): Builder
+    {
+        return AttendanceLog::query()
+            ->visibleTo($viewer)
+            ->where('is_suspicious', true)
+            ->whereNull('reviewed_at');
+    }
+
+    /**
+     * One flagged log (relations: SUSPICIOUS_RELATIONS).
+     *
+     * @return array<string, mixed>
+     */
+    public static function suspiciousItem(AttendanceLog $log, User $viewer): array
+    {
+        return [
+            'id' => $log->id,
+            'userId' => $log->user_id,
+            'name' => $log->user->name,
+            'initials' => self::initials($log->user->name),
+            'divisionName' => $log->user->division?->name,
+            'type' => $log->type->value,
+            'typeLabel' => $log->type->label(),
+            'method' => $log->method->value,
+            'methodLabel' => $log->method->label(),
+            'occurredAt' => AttendancePresenter::iso($log->occurred_at),
+            'clientTime' => AttendancePresenter::iso($log->client_time),
+            // Offline absen: occurredAt = device time, receivedAt = when the server got it.
+            'receivedAt' => AttendancePresenter::iso($log->received_at),
+            'locationName' => $log->officeLocation->name ?? $log->day->shift?->officeLocation?->name,
+            'radiusM' => $log->officeLocation->radius_m ?? $log->day->shift?->officeLocation?->radius_m,
+            'accuracyM' => $log->accuracy_m === null ? null : (int) round($log->accuracy_m),
+            'distanceM' => $log->distance_m === null ? null : (int) round($log->distance_m),
+            'note' => $log->note,
+            'flags' => $log->flags->map(fn (LogFlag $flag): array => ['value' => $flag->value, 'label' => $flag->label()])->values()->all(),
+            'hasSelfie' => $log->selfie_path !== null,
+            'canViewSelfie' => $log->selfie_path !== null && Gate::forUser($viewer)->allows('viewSelfie', $log),
+            'canReview' => Gate::forUser($viewer)->allows('review', $log),
         ];
     }
 

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Absensi HR · koreksi manual (alasan wajib) dan lupa check-out · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<style>
+.hr-flow{display:flow-root}
+.hr-tabnav{display:flex;border-bottom:1px solid var(--border);gap:4px;overflow:hidden}
+.hr-tabnav span{padding:12px 12px 11px;font-size:15px;font-weight:700;color:var(--text-muted);border-bottom:3px solid transparent;white-space:nowrap;margin-bottom:-1px}
+.hr-tabnav span.on{color:var(--link);border-bottom-color:var(--primary)}
+.hr-tabnav .n{display:inline-flex;min-width:20px;height:20px;border-radius:10px;background:var(--surface-2);color:var(--text-muted);font-size:12px;align-items:center;justify-content:center;padding:0 6px;margin-left:6px}
+.hr-tile{width:56px;height:56px;border-radius:18px;background:var(--grad-indigo);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-btn);flex:none}
+.hr-chip-n{font-size:13px;opacity:.75;font-weight:600}
+.chip.on .hr-chip-n{opacity:.9}
+.hr-score{display:flex;gap:8px}
+.hr-score span{width:48px;height:48px;border-radius:14px;border:1.5px solid var(--border-strong);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700}
+.hr-score span.on{background:var(--grad-aksi);border-color:transparent;color:#fff}
+.hr-bar{height:14px;border-radius:7px;background:var(--surface-2);overflow:hidden;display:flex}
+.hr-bar b{display:block;height:100%}
+.hr-seg-ok{background:var(--ok)}.hr-seg-warn{background:var(--fill-warn)}.hr-seg-info{background:var(--blue-strong)}.hr-seg-off{background:var(--border-strong)}
+.hr-trend{display:flex;align-items:flex-end;gap:8px;height:130px;padding-top:8px}
+.hr-trend div{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.hr-trend b{display:block;width:100%;border-radius:8px 8px 4px 4px;background:var(--grad-merek)}
+.hr-trend span{font-size:12px;color:var(--text-muted);font-weight:600}
+.hr-dl{display:grid;grid-template-columns:128px 1fr;gap:6px 12px;align-items:center}
+.hr-dl>div{padding:11px 0;border-top:1px solid var(--divider);min-height:44px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hr-dl>div{min-width:0;overflow-wrap:anywhere}
+.hr-dl>div.k{color:var(--text-muted);font-size:15px}
+.hr-dl>div:nth-child(-n+2){border-top:0}
+.hr-tree .lv{display:flex;align-items:center;gap:12px;min-height:64px;padding:8px 14px;border-top:1px solid var(--divider)}
+.hr-tree .lv:first-child{border-top:0}
+.hr-tree .l2{padding-left:40px}.hr-tree .l3{padding-left:66px}
+.hr-tree .bar{width:4px;height:34px;border-radius:2px;flex:none}
+.hr-mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:14px;font-weight:600}
+.hr-desk{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:22px 18px;border-radius:24px;background:var(--surface);border:1px solid var(--border)}
+.hr-desk .ic{width:52px;height:52px;border-radius:50%;background:var(--link-soft);color:var(--link);display:flex;align-items:center;justify-content:center}
+.hr-rowbtns{display:flex;gap:8px}
+.hr-rowbtns .btn{flex:1}
+.hr-check-row{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--divider)}
+.hr-check-row:first-child{border-top:0}
+.hr-tag-lock{height:26px;padding:0 9px;border-radius:8px;display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;background:var(--surface-2);color:var(--text-muted)}
+.hr-opt{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 14px;border-radius:16px;border:1px solid var(--border);background:var(--surface)}
+.hr-opt.on{border-color:var(--primary);background:var(--link-soft)}
+.hr-pill-dot{width:10px;height:10px;border-radius:50%;flex:none}
+.hr-li{display:flex;align-items:center;gap:12px;min-height:56px}
+.card:not(.list) .hr-li{padding:8px 0}
+.card:not(.list) .hr-li+.hr-li{border-top:1px solid var(--divider)}
+.hr-line{height:1px;background:var(--divider)}
+.hr-sec{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin:6px 4px -6px}
+.hr-sign{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text-muted)}
+.hr-ring{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--primary) var(--p,70%),var(--surface-2) 0);flex:none}
+.hr-ring span{width:64px;height:64px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px}
+</style>
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Absensi tim</span><button class="ibtn" aria-label="Filter"><i data-i="sliders-horizontal"></i></button></div><div class="hr-tabnav" style="padding:0 12px"><span class="on">Hari ini</span><span class="">Rekap</span><span class="">Kedisiplinan</span></div><div class="pad" style="padding-top:10px"><span class="t-meta">Semua karyawan · 48 orang</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="card "><div class="t-title" style="margin-bottom:6px">Lupa check-out kemarin</div><div class="li hr-li"><span class="avatar  sm">RH</span><div class="grow"><div class="t trunc">Rizky Hidayat</div><div class="m trunc">Sen, 12 Okt · masuk 08.02 · Kantor Pusat</div></div><button class="btn tonal sm">Koreksi</button></div></div></div></div></div>
+    <div class="scrim"></div><div class="sheet"><div class="row-h sp"><div class="t-h3">Koreksi absensi · Rizky Hidayat</div><button class="ibtn" style="border:0;box-shadow:none;background:var(--surface-2);width:40px;height:40px" aria-label="Tutup"><i data-i="x"></i></button></div><div class="muted" style="font-size:14px;line-height:20px">Koreksi tercatat di audit dan tampil sebagai “manual” di log absensi.</div><div class="field"><label>Tanggal kerja</label><div class="input"><i data-i="calendar-days"></i><span class="grow trunc">Sen, 12/10/2026</span><i data-i="chevron-down"></i></div></div><div class="grid2"><div class="field"><label>Jam masuk</label><div class="input"><i data-i="clock"></i><span class="grow trunc">08.02</span></div></div><div class="field"><label>Jam pulang</label><div class="input"><i data-i="clock"></i><span class="grow trunc">17.05</span></div></div></div><div class="field"><label>Alasan (wajib)</label><div class="input focus area"><span class="grow">Lupa check-out, dikonfirmasi atasan</span></div></div><button class="btn primary block">Simpan koreksi</button></div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Absensi tim</span><button class="ibtn" aria-label="Filter"><i data-i="sliders-horizontal"></i></button></div><div class="hr-tabnav" style="padding:0 12px"><span class="on">Hari ini</span><span class="">Rekap</span><span class="">Kedisiplinan</span></div><div class="pad" style="padding-top:10px"><span class="t-meta">Semua karyawan · 48 orang</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="card "><div class="t-title" style="margin-bottom:6px">Lupa check-out kemarin</div><div class="li hr-li"><span class="avatar  sm">RH</span><div class="grow"><div class="t trunc">Rizky Hidayat</div><div class="m trunc">Sen, 12 Okt · masuk 08.02 · Kantor Pusat</div></div><button class="btn tonal sm">Koreksi</button></div></div></div></div></div>
+    <div class="scrim"></div><div class="sheet"><div class="row-h sp"><div class="t-h3">Koreksi absensi · Rizky Hidayat</div><button class="ibtn" style="border:0;box-shadow:none;background:var(--surface-2);width:40px;height:40px" aria-label="Tutup"><i data-i="x"></i></button></div><div class="muted" style="font-size:14px;line-height:20px">Koreksi tercatat di audit dan tampil sebagai “manual” di log absensi.</div><div class="field"><label>Tanggal kerja</label><div class="input"><i data-i="calendar-days"></i><span class="grow trunc">Sen, 12/10/2026</span><i data-i="chevron-down"></i></div></div><div class="grid2"><div class="field"><label>Jam masuk</label><div class="input"><i data-i="clock"></i><span class="grow trunc">08.02</span></div></div><div class="field"><label>Jam pulang</label><div class="input err"><i data-i="clock"></i><span class="grow trunc">07.30</span></div><span class="hint err">Jam pulang harus setelah jam masuk.</span></div></div><div class="field"><label>Alasan (wajib)</label><div class="input err area"><span class="ph grow">Mis. lupa check-out, dikonfirmasi atasan</span></div><span class="hint err">Alasan wajib diisi.</span></div><button class="btn primary block off">Simpan koreksi</button></div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Absensi tim</span><button class="ibtn" aria-label="Filter"><i data-i="sliders-horizontal"></i></button></div><div class="hr-tabnav" style="padding:0 12px"><span class="on">Hari ini</span><span class="">Rekap</span><span class="">Kedisiplinan</span></div><div class="pad" style="padding-top:10px"><span class="t-meta">Semua karyawan · 48 orang</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="card "><div class="t-title" style="margin-bottom:6px">Lupa check-out kemarin</div><div class="li hr-li"><span class="avatar  sm">RH</span><div class="grow"><div class="t trunc">Rizky Hidayat</div><div class="m trunc">Sen, 12 Okt · masuk 08.02 · Kantor Pusat</div></div><button class="btn tonal sm">Koreksi</button></div></div></div></div></div>
+    <div class="scrim"></div><div class="dialog"><div class="t-h3">Simpan koreksi?</div><div class="muted" style="font-size:15px;line-height:21px">Absensi <b>Rizky Hidayat · Sen, 12 Okt</b> diubah menjadi masuk 08.02, pulang 17.05 (status Hadir). Rizky mendapat pemberitahuan.</div><div class="acts"><button class="btn quiet">Batal</button><button class="btn primary">Simpan</button></div></div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Absensi tim</span><button class="ibtn" aria-label="Filter"><i data-i="sliders-horizontal"></i></button></div><div class="hr-tabnav" style="padding:0 12px"><span class="on">Hari ini</span><span class="">Rekap</span><span class="">Kedisiplinan</span></div><div class="pad" style="padding-top:10px"><span class="t-meta">Semua karyawan · 48 orang</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="card "><div class="t-title" style="margin-bottom:6px">Lupa check-out kemarin</div><div class="li hr-li"><span class="avatar  sm">RH</span><div class="grow"><div class="t trunc">Rizky Hidayat</div><div class="m trunc">Sen, 12 Okt · masuk 08.02 · Kantor Pusat</div></div><button class="btn tonal sm">Koreksi</button></div></div></div></div></div>
+    <div class="snack" style="bottom:40px"><i data-i="circle-check"></i> Koreksi disimpan. Rizky diberi tahu.<a>Lihat log</a></div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Absensi tim</span><button class="ibtn" aria-label="Filter"><i data-i="sliders-horizontal"></i></button></div><div class="hr-tabnav" style="padding:0 12px"><span class="on">Hari ini</span><span class="">Rekap</span><span class="">Kedisiplinan</span></div><div class="pad" style="padding-top:10px"><span class="t-meta">Semua karyawan · 48 orang</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="card "><div class="t-title" style="margin-bottom:6px">Lupa check-out kemarin</div><div class="li hr-li"><span class="avatar  sm">RH</span><div class="grow"><div class="t trunc">Rizky Hidayat</div><div class="m trunc">Sen, 12 Okt · masuk 08.02 · Kantor Pusat</div></div><button class="btn tonal sm">Koreksi</button></div></div></div></div></div>
+    <div class="scrim"></div><div class="dialog" style="gap:10px"><div class="t-over" style="color:var(--text-muted)">Pilih waktu</div><div style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:56px;font-weight:700"><span style="background:var(--link-soft);color:var(--link);border-radius:16px;padding:0 14px">17</span>:<span style="background:var(--surface-2);border-radius:16px;padding:0 14px">05</span></div><div style="width:200px;height:200px;border-radius:50%;background:var(--surface-2);margin:6px auto;position:relative"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center" class="t-meta">jam analog</div></div><div class="acts"><button class="btn quiet">Batal</button><button class="btn quiet">OK</button></div></div>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Absensi divisi</span><button class="ibtn" aria-label="Filter"><i data-i="sliders-horizontal"></i></button></div><div class="hr-tabnav" style="padding:0 12px"><span class="on">Hari ini</span><span class="">Rekap</span><span class="">Kedisiplinan</span></div><div class="pad" style="padding-top:10px"><span class="t-meta">Divisi Operasional · 14 orang</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="card "><div class="t-title" style="margin-bottom:6px">Lupa check-out kemarin</div><div class="li hr-li"><span class="avatar  sm">BS</span><div class="grow"><div class="t trunc">Bayu Saputra</div><div class="m trunc">Sen, 12 Okt · masuk 07.58</div></div></div></div><div class="banner info"><i data-i="info"></i><div>Koreksi absensi dilakukan HR. Minta HR mengoreksi, atau anggota mengajukan “Koreksi absensi” dari menu Pengajuan.</div></div></div></div></div>
+    <nav class="tabbar"><a class="tab"><i data-i="house"></i>Beranda</a><a class="tab"><i data-i="square-check-big"></i>Tugas</a><a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a><a class="tab"><i data-i="message-circle"></i>Obrolan</a><a class="tab on"><i data-i="layout-grid"></i>Lainnya</a></nav>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="banner warn" style="border-radius:0;align-items:center"><i data-i="wifi-off"></i><div>Anda offline. Koreksi disimpan hanya saat tersambung — tidak ada antrean offline untuk data sensitif.</div></div><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Absensi tim</span><button class="ibtn" aria-label="Filter"><i data-i="sliders-horizontal"></i></button></div><div class="hr-tabnav" style="padding:0 12px"><span class="on">Hari ini</span><span class="">Rekap</span><span class="">Kedisiplinan</span></div><div class="pad" style="padding-top:10px"><span class="t-meta">Semua karyawan · 48 orang</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="card "><div class="t-title" style="margin-bottom:6px">Lupa check-out kemarin</div><div class="li hr-li"><span class="avatar  sm">RH</span><div class="grow"><div class="t trunc">Rizky Hidayat</div><div class="m trunc">Sen, 12 Okt · masuk 08.02 · Kantor Pusat</div></div><button class="btn tonal sm">Koreksi</button></div></div></div></div></div>
+    <div class="scrim"></div><div class="sheet"><div class="row-h sp"><div class="t-h3">Koreksi absensi · Rizky Hidayat</div><button class="ibtn" style="border:0;box-shadow:none;background:var(--surface-2);width:40px;height:40px" aria-label="Tutup"><i data-i="x"></i></button></div><div class="muted" style="font-size:14px;line-height:20px">Koreksi tercatat di audit dan tampil sebagai “manual” di log absensi.</div><div class="field"><label>Tanggal kerja</label><div class="input"><i data-i="calendar-days"></i><span class="grow trunc">Sen, 12/10/2026</span><i data-i="chevron-down"></i></div></div><div class="grid2"><div class="field"><label>Jam masuk</label><div class="input"><i data-i="clock"></i><span class="grow trunc">08.02</span></div></div><div class="field"><label>Jam pulang</label><div class="input"><i data-i="clock"></i><span class="grow trunc">17.05</span></div></div></div><div class="field"><label>Alasan (wajib)</label><div class="input focus area"><span class="grow">Lupa check-out, dikonfirmasi atasan</span></div></div><button class="btn primary block off">Simpan koreksi</button></div>
+  </div>
+</div>
+<script>
+(function(){function fit(){document.querySelectorAll('.phone[data-auto]').forEach(function(p){var f=p.querySelector('.hr-flow');if(!f)return;var pb=parseInt(p.dataset.auto,10)||24;var h=Math.max(915,f.offsetHeight+56+pb);p.style.setProperty('--h',h+'px');});}
+if(document.fonts&&document.fonts.ready){document.fonts.ready.then(fit);}window.addEventListener('load',fit);fit();})();
+</script>
+</body>
+</html>

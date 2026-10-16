@@ -17,8 +17,10 @@ import {
 } from './check-in-card';
 import { ConsentFooter } from './consent-footer';
 import { HistoryTable } from './history';
+import { LeaveShortcutPanel } from './leave-shortcut-panel';
 import { LocationRow } from './location-card';
 import { MethodSwitch } from './method-switch';
+import { WindowNotice, WindowsLine } from './window-notice';
 import { HistoryStats, MonthGlance } from './month-glance';
 import type { AttendancePageProps } from './use-attendance-page';
 import { useAttendancePage } from './use-attendance-page';
@@ -123,6 +125,8 @@ export function AttendanceDesktop(props: AttendancePageProps) {
 
                         <DayTiles today={today} now={now} />
 
+                        <WindowNotice notice={action.notice} />
+
                         <div className="flex flex-wrap items-center gap-4">
                             <LocationRow
                                 className="flex-[1_1_260px]"
@@ -157,6 +161,11 @@ export function AttendanceDesktop(props: AttendancePageProps) {
                                 </Button>
                             )}
                         </div>
+                        <LeaveShortcutPanel
+                            shortcut={today.leaveShortcut}
+                            now={now}
+                        />
+                        <WindowsLine today={today} />
                         <p className="text-[15px] leading-[22px] text-text-muted">
                             Lokasi dan selfie hanya direkam saat check-in dan
                             check-out.{' '}

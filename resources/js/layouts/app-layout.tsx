@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import type { ReactNode } from 'react';
 import { AppShellSkeleton } from '@/components/shell/app-shell-skeleton';
 import { MinutesReturnPill } from '@/features/notes/minutes-return-pill';
+import { UnsavedNotePill } from '@/features/notes/unsaved-pill';
 import { NotificationListener } from '@/features/notifications/notification-listener';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import type { PageWidth } from '@/layouts/app/desktop-layout';
@@ -67,6 +68,8 @@ export default function AppLayout({
                 <NotificationListener />
                 {/* "Kembali ke notulensi" while note-taking mode is on (Catatan). */}
                 <MinutesReturnPill />
+                {/* "Catatan belum tersimpan" after leaving with unflushed changes. */}
+                <UnsavedNotePill />
                 {children}
             </MobileLayout>
         );
@@ -81,6 +84,7 @@ export default function AppLayout({
             >
                 <NotificationListener />
                 <MinutesReturnPill />
+                <UnsavedNotePill />
                 {children}
             </DesktopLayout>
         </Suspense>

@@ -8,6 +8,7 @@ use App\Models\Division;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
  * Lists of announcements (resources/js/features/announcements/types.ts):
@@ -47,6 +48,32 @@ final class AnnouncementFeed
     }
 
     /**
+     * Received, paginated (mobile app): same rules as received() — active,
+     * newest first, dismissed ones included and marked.
+     *
+     * @return LengthAwarePaginator<int, Announcement>
+     */
+    public function receivedPage(User $user, int $perPage = 20): LengthAwarePaginator
+    {
+        return Announcement::query()->active()->receivedBy($user)
+            ->with('author:id,name,avatar_url')
+            ->withExists(['dismissedBy as dismissed' => fn ($query) => $query->whereKey($user->id)])
+            ->orderByDesc('published_at')->orderByDesc('id')->paginate($perPage);
+    }
+
+    /**
+     * Written by $user, paginated (expired included, newest first).
+     *
+     * @return LengthAwarePaginator<int, Announcement>
+     */
+    public function authoredPage(User $user, int $perPage = 20): LengthAwarePaginator
+    {
+        return Announcement::query()->where('company_id', $user->company_id)->where('author_id', $user->id)
+            ->with('author:id,name,avatar_url')
+            ->orderByDesc('published_at')->orderByDesc('id')->paginate($perPage);
+    }
+
+    /**
      * Written by $user, expired included (newest first).
      *
      * @return list<array<string, mixed>>
@@ -64,7 +91,7 @@ final class AnnouncementFeed
      * @param  Collection<int, Announcement>  $items
      * @return list<array<string, mixed>>
      */
-    private function present(Collection $items, User $viewer): array
+    public function present(Collection $items, User $viewer): array
     {
         $ids = $items->flatMap(fn (Announcement $announcement): array => $announcement->target_ids)->unique()->values()->all();
         $names = $ids === [] ? [] : [

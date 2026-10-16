@@ -13,7 +13,7 @@ use Throwable;
 
 /**
  * Multipart check-in/out: lat, lng, accuracy, client_time, selfie, device id,
- * note and work_plan (docs/ARCHITECTURE.md §3.1). Authorization: AttendanceDayPolicy::checkIn
+ * note and work_plan (check-in; check-out: CheckOutRequest with work_report) (docs/ARCHITECTURE.md §3.1). Authorization: AttendanceDayPolicy::checkIn
  * in the controller.
  */
 class CheckInRequest extends FormRequest
@@ -84,11 +84,30 @@ class CheckInRequest extends FormRequest
             ipAddress: $this->ip(),
             userAgent: $this->userAgent(),
             note: $this->filled('note') ? $this->string('note')->toString() : null,
-            workPlan: array_values($this->collect('work_plan')
-                ->filter(fn ($point): bool => trim((string) $point) !== '')
-                ->map(fn ($point): string => Str::limit(trim((string) $point), 300, ''))
-                ->values()
-                ->all()) ?: null,
+            workPlan: $this->workPlan(),
+            workReport: $this->workReport(),
         );
+    }
+
+    /**
+     * @return list<string>|null
+     */
+    protected function workPlan(): ?array
+    {
+        return array_values($this->collect('work_plan')
+            ->filter(fn ($point): bool => trim((string) $point) !== '')
+            ->map(fn ($point): string => Str::limit(trim((string) $point), 300, ''))
+            ->values()
+            ->all()) ?: null;
+    }
+
+    /**
+     * Only check-out carries a work report (CheckOutRequest).
+     *
+     * @return list<string>|null
+     */
+    protected function workReport(): ?array
+    {
+        return null;
     }
 }

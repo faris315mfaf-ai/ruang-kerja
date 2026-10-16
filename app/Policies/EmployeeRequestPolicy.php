@@ -133,8 +133,13 @@ class EmployeeRequestPolicy
         return $original || User::query()->visibleTo($actor)->whereKey($request->user_id)->exists();
     }
 
+    /**
+     * Throwing away an own draft that was never sent (no number, no flow, no
+     * balance): the mobile app's "Hapus draf" (DeleteRequestDraft). Anything
+     * sent once stays as history and can only be canceled.
+     */
     public function delete(User $actor, EmployeeRequest $request): bool
     {
-        return false;
+        return $request->user_id === $actor->id && $request->status === RequestStatus::Draft;
     }
 }

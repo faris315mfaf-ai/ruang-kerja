@@ -23,5 +23,22 @@ final readonly class CheckInData
 
         /** @var list<string>|null */
         public ?array $workPlan = null,
+
+        /** Mock-location signal reported by the native app; only flags, never blocks. */
+        public bool $mockLocation = false,
+
+        /**
+         * Laporan kerja written at check-out (what was done today).
+         *
+         * @var list<string>|null
+         */
+        public ?array $workReport = null,
+
+        /**
+         * Pressed without internet (mobile app): `offlineAt` is the device clock
+         * at that moment and replaces "now" everywhere that matters.
+         */
+        public bool $offline = false,
+        public ?CarbonImmutable $offlineAt = null,
     ) {}
 }

@@ -2,6 +2,8 @@
 
 namespace App\Domain\Notifications;
 
+use App\Domain\Devices\Models\Device;
+use App\Domain\Notifications\Channels\FcmChannel;
 use App\Domain\Notifications\Channels\InAppChannel;
 use App\Domain\Notifications\Channels\WhatsAppChannel;
 use App\Domain\Notifications\Contracts\UserAvailability;
@@ -28,7 +30,9 @@ use Illuminate\Notifications\Notification;
  * - via() honours notification_preferences (defaults from config/notifications.php),
  *   locked channels, the WhatsApp feature flag, "hold while on leave" and
  *   quiet hours (email delayed, see withDelay()).
- * - In-app = InAppChannel (database) + broadcast on the user's private channel.
+ * - In-app = InAppChannel (database) + broadcast on the user's private channel
+ *   + FcmChannel (Android push, only for users with a registered push token;
+ *   follows the In-app preference and quiet hours like email).
  * - Email/WhatsApp render externalPayload() (defaults to payload()), so a module
  *   can keep sensitive free text in-app only.
  * - Queued after the surrounding DB transaction commits.
@@ -73,6 +77,44 @@ abstract class BaseNotification extends Notification implements ShouldQueueAfter
     }
 
     /**
+     * Follow-up that only rings the phone: no Inbox row, toast, email or
+     * WhatsApp (e.g. the next messages of a conversation whose first "Pesan
+     * baru" is still unread). Still follows the In-app preference.
+     */
+    public function pushOnly(): bool
+    {
+        return false;
+    }
+
+    /**
+     * FCM `android.notification.tag`: a push with the same tag replaces the
+     * one in the notification shade. Null = this notification's own id.
+     */
+    public function pushTag(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * `data.group_key` of the push (shade grouping hint for the app). Null =
+     * the Android channel id of the type.
+     */
+    public function pushGroupKey(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * `data.notification_id` of the push, i.e. the Inbox row opened/marked
+     * read on tap. Null = this notification's own id; push-only follow-ups
+     * point at the Inbox row they belong to.
+     */
+    public function pushInboxId(): ?string
+    {
+        return null;
+    }
+
+    /**
      * @return list<string>
      */
     final public function via(object $notifiable): array
@@ -85,6 +127,12 @@ abstract class BaseNotification extends Notification implements ShouldQueueAfter
         $held = $this->isHeld($notifiable);
         $via = [];
 
+        if ($this->pushOnly()) {
+            return in_array(NotificationChannel::InApp, $channels, true) && ! $held && $this->hasPushDevice($notifiable)
+                ? [FcmChannel::class]
+                : [];
+        }
+
         foreach ($channels as $channel) {
             // While held (on leave), only the Inbox record is kept: no toast, email or WhatsApp.
             if ($channel === NotificationChannel::InApp) {
@@ -92,6 +140,12 @@ abstract class BaseNotification extends Notification implements ShouldQueueAfter
 
                 if (! $held) {
                     $via[] = 'broadcast';
+
+                    // Push follows the In-app preference (one source of truth); only users
+                    // with a registered phone get the channel queued.
+                    if ($this->hasPushDevice($notifiable)) {
+                        $via[] = FcmChannel::class;
+                    }
                 }
             } elseif (! $held) {
                 $via[] = $channel === NotificationChannel::Email ? 'mail' : WhatsAppChannel::class;
@@ -129,7 +183,7 @@ abstract class BaseNotification extends Notification implements ShouldQueueAfter
      */
     public function withDelay(object $notifiable, string $channel): ?DateTimeInterface
     {
-        if (! $notifiable instanceof User || ! in_array($channel, ['mail', WhatsAppChannel::class], true)) {
+        if (! $notifiable instanceof User || ! in_array($channel, ['mail', WhatsAppChannel::class, FcmChannel::class], true)) {
             return null;
         }
 
@@ -211,6 +265,11 @@ abstract class BaseNotification extends Notification implements ShouldQueueAfter
         $text = trim($payload->title."\n".($payload->body ?? ''));
 
         return new WhatsAppMessage($text, $payload->url !== null ? url($payload->url) : null);
+    }
+
+    private function hasPushDevice(User $user): bool
+    {
+        return Device::query()->where('user_id', $user->id)->whereNotNull('push_token')->exists();
     }
 
     private function isHeld(User $user): bool

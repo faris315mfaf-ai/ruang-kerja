@@ -3,6 +3,7 @@
 namespace App\Domain\Attendance\Actions;
 
 use App\Domain\Attendance\Data\AttendanceResult;
+use App\Domain\Attendance\Data\AttendanceWindows;
 use App\Domain\Attendance\Data\CheckInData;
 use App\Domain\Attendance\Data\DaySchedule;
 use App\Domain\Attendance\Data\LocationVerdict;
@@ -10,11 +11,14 @@ use App\Domain\Attendance\Data\QrCheckInData;
 use App\Domain\Attendance\Enums\AttendanceLogType;
 use App\Domain\Attendance\Enums\AttendanceMethod;
 use App\Domain\Attendance\Enums\AttendanceStatus;
+use App\Domain\Attendance\Enums\LogFlag;
 use App\Domain\Attendance\Events\AttendanceRecorded;
 use App\Domain\Attendance\Exceptions\AttendanceException;
+use App\Domain\Attendance\Jobs\CreateWorkPlanTasksForDay;
 use App\Domain\Attendance\Models\AttendanceConsent;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Services\AttendanceLogWriter;
+use App\Domain\Attendance\Services\OfflineAttendance;
 use App\Domain\Attendance\Services\PresenceVerifier;
 use App\Domain\Attendance\Services\ScheduleResolver;
 use App\Domain\Attendance\Services\SelfieStorage;
@@ -31,9 +35,17 @@ use Throwable;
  * Check-in (docs/ARCHITECTURE.md §3.1, §3.2): consent → schedule → GPS
  * geofence or kiosk QR → fraud flags → private selfie (GPS only) → log + day
  * in one transaction → broadcast.
+ *
+ * An offline press (mobile app, `offline` + `offline_at`) is judged at the
+ * device time instead of "now" (OfflineAttendance) and flagged `offline`; an
+ * existing `absent` row of that date (closed at 00:30 before the press
+ * arrived) is replaced by the proper status.
  */
 final class CheckIn
 {
+    /** Unique index of attendance_days (user_id, work_date): a parallel check-in won the race. */
+    private const string DAY_UNIQUE_INDEX = 'attendance_days_user_id_work_date_unique';
+
     public function __construct(
         private readonly ScheduleResolver $schedules,
         private readonly PresenceVerifier $presence,
@@ -48,24 +60,42 @@ final class CheckIn
             throw AttendanceException::consentRequired();
         }
 
-        $now = CarbonImmutable::now();
+        $received = CarbonImmutable::now();
+        $now = OfflineAttendance::instant($data, $received);
         [$schedule, $existing] = $this->pickSchedule($user, $now);
 
         if ($existing?->status === AttendanceStatus::BusinessTrip) {
             $schedule = $schedule->asBusinessTrip();
         }
 
-        $opensAt = $schedule->isWorkday() ? $schedule->checkInOpensAt() : null;
+        // Company "jam absen" (Admin): replaces the shift's opening window when it
+        // has a lower bound, and closes check-in after its upper bound. Day shifts only.
+        $windows = AttendanceWindows::forUser($user);
+        $windowsApply = $windows->appliesTo($schedule);
+        $phase = $windowsApply ? $windows->checkInPhase($now) : null;
+
+        if ($phase !== null) {
+            throw AttendanceException::checkInWindow($windows, $phase, $windows->checkInOpensAt($now));
+        }
+
+        $opensAt = $schedule->isWorkday() && ! ($windowsApply && $windows->checkInFrom !== null) ? $schedule->checkInOpensAt() : null;
 
         if ($opensAt !== null && $now->lt($opensAt)) {
             throw AttendanceException::tooEarly($opensAt, $schedule->shift->name ?? '');
         }
 
+        OfflineAttendance::assertInOrder($user, $data, AttendanceLogType::CheckIn, $now);
+
         [$location, $qr, $flags] = $this->presence->verify($user, $schedule, $data, $now);
+
+        if ($data->offline) {
+            $flags[] = LogFlag::Offline;
+        }
+
         $selfiePath = $data instanceof CheckInData ? $this->selfies->store($user, $data->selfie, $now) : null;
 
         try {
-            [$day, $log] = DB::transaction(function () use ($user, $data, $schedule, $location, $qr, $flags, $selfiePath, $now): array {
+            [$day, $log] = DB::transaction(function () use ($user, $data, $schedule, $location, $qr, $flags, $selfiePath, $now, $received): array {
                 $day = AttendanceDay::query()
                     ->where('user_id', $user->id)
                     ->whereDate('work_date', $schedule->workDateString())
@@ -92,7 +122,7 @@ final class CheckIn
                 ]);
                 $day->save();
 
-                $log = $this->logs->write($user, $day, AttendanceLogType::CheckIn, $data, $location, $flags, $selfiePath, $now, $qr);
+                $log = $this->logs->write($user, $day, AttendanceLogType::CheckIn, $data, $location, $flags, $selfiePath, $now, $qr, $data->offline ? $received : null);
 
                 $day->check_in_log_id = $log->id;
                 $day->is_suspicious = $day->is_suspicious || $log->is_suspicious;
@@ -100,9 +130,14 @@ final class CheckIn
 
                 return [$day, $log];
             });
-        } catch (UniqueConstraintViolationException) {
-            // A parallel request created the day first.
+        } catch (UniqueConstraintViolationException $exception) {
             $this->deleteSelfie($selfiePath);
+
+            if (! str_contains($exception->getMessage(), self::DAY_UNIQUE_INDEX)) {
+                throw $exception;
+            }
+
+            // A parallel request created the day first.
             $existing = AttendanceDay::query()->where('user_id', $user->id)->whereDate('work_date', $schedule->workDateString())->first();
 
             throw AttendanceException::alreadyCheckedIn($existing->check_in_at ?? $now);
@@ -113,6 +148,20 @@ final class CheckIn
         }
 
         AttendanceRecorded::dispatch($day, $log);
+
+        // "Rencana kerja jadi tugas otomatis" (keputusan pemilik 9 Okt 2026):
+        // one task per work-plan point in the personal workspace. Runs after
+        // the check-in committed (queued, idempotent per day) so a failure in
+        // the task chain never undoes the check-in.
+        if ($day->work_plan !== null && $day->work_plan !== []) {
+            try {
+                CreateWorkPlanTasksForDay::dispatch($day->id)->afterCommit();
+            } catch (Throwable $exception) {
+                // The check-in is committed; a failing task chain (or queue)
+                // is reported, never turned into a failed check-in.
+                report($exception);
+            }
+        }
 
         // Best-effort copy to the management WhatsApp group (Evolution API);
         // queued only while the channel is on, never blocks the check-in.

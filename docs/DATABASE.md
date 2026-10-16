@@ -25,10 +25,12 @@
 | Otomasi (F2-4) | `automation_rules`, `automation_runs`, `recurring_tasks`, `recurring_task_occurrences`, `task_templates`, `workspace_templates` |
 | Hiring (keputusan pemilik 6 Okt 2026) | `hiring_settings`, `hiring_positions`, `hiring_questions`, `candidates`, `candidate_checklist_items`, `interview_answers`, `interview_scores`, `candidate_notes`, `candidate_decisions` |
 | Google & file | `google_accounts`, `drive_files`, `attachments` |
+| API ponsel | `api_idempotency_keys` |
 | Notifikasi | `notifications`*, `notification_preferences`, `notification_settings`, `notification_dispatch_logs` |
 | Pengumuman | `announcements`, `announcement_dismissals` |
+| Briefing (pagi & sore) | `briefings`, `briefing_delegations` |
 | Fase 2 | `channels`, `channel_members`, `messages`, `notes`, `note_versions`, `note_shares`, `meetings`, `meeting_participants`, `meeting_minutes`, `meeting_minute_versions`, `meeting_action_items`, `calendar_events` |
-| Fase 3 | `devices`, `face_templates`, `objectives`, `key_results`, `key_result_checkins`, `key_result_tasks` (OKR sudah dimigrasi, F3-3) |
+| Fase 3 | `devices`, `face_templates`, `objectives`, `key_results`, `key_result_checkins`, `key_result_tasks` (OKR F3-3 dan `devices` sudah dimigrasi; `face_templates` menyusul) |
 
 \* tabel bawaan paket (spatie/laravel-permission, Laravel notifications).
 
@@ -43,7 +45,7 @@
 | name | varchar(150) | |
 | google_domain | varchar(150) unique | domain Workspace yang diizinkan login, mis. `perusahaan.co.id` (disimpan huruf kecil) |
 | timezone | varchar(50) | default `Asia/Jakarta` |
-| settings | jsonb | jam ringkasan harian, retensi selfie (bulan), dll. Default `{}` |
+| settings | jsonb | jam ringkasan harian, retensi selfie (bulan), dll. Default `{}`. Kunci **`attendance_windows`** (keputusan pemilik 13 Okt 2026, "Jam absen" di Admin › Lokasi, shift & hari libur): `{"check_in": {"from": "HH:MM", "until": "HH:MM"}, "check_out": {"from": "HH:MM", "until": "HH:MM"}}`, jam 24 jam zona kantor, batas **inklusif**; tiap batas boleh `null`, kunci tidak ada = tanpa batas. Satu pengaturan untuk seluruh perusahaan (bukan per shift), berlaku juga bagi karyawan tanpa shift; tidak berlaku untuk shift lintas tengah malam dan hari yang dibuka kemarin. Ditulis `SaveAttendanceWindows` (audit `attendance.windows_updated`) |
 
 `companies`, `divisions`, `teams`, `positions` memakai `deleted_at` (soft delete).
 
@@ -219,7 +221,8 @@ Implementasi: `weekdays` = `smallint[]` NOT NULL default `{}` (CHECK nilai 1–7
 | request_portion | varchar(10) null | `full` · `half_day` (CHECK) — porsi tanggal yang ditutup pengajuan yang disetujui. Setengah hari dan dinas luar (`business_trip`) tetap boleh check-in: status & `request_id` dipertahankan, dinas boleh check-in di luar geofence dengan catatan |
 | is_suspicious | bool | ada log yang ditandai |
 | note | text null | |
-| work_plan | jsonb null | `list<string>` poin rencana kerja hari ini (maks 8 × 300 karakter), diisi saat check-in (8–9 Okt 2026); ikut dikirim ke grup manajemen (docs/fitur/absensi-whatsapp.md) |
+| work_plan | jsonb null | `list<string>` poin rencana kerja hari ini (maks 8 × 300 karakter), diisi saat check-in (8–9 Okt 2026); ikut dikirim ke grup manajemen (docs/fitur/absensi-whatsapp.md). Tiap poin otomatis menjadi tugas di workspace pribadi karyawan untuk `work_date` yang sama (`CreateWorkPlanTasks`: judul = poin, assignee = karyawan, `tasks.source='attendance'`, `source_id` = id hari; dalam transaksi check-in yang sama, idempoten) |
+| work_report | jsonb null | `list<string>` poin **laporan kerja** (apa yang sudah dikerjakan hari ini; maks 8 × 300 karakter), wajib diisi saat check-out GPS + selfie (keputusan pemilik 13 Okt 2026; QR/kiosk tanpa form = kosong); ikut dikirim ke grup manajemen bersama foto bertanda waktu/lokasi |
 
 Indeks: `(work_date, status)`, `(user_id, work_date)` unique.
 
@@ -244,7 +247,7 @@ Implementasi (Sprint 2): FK `check_in_log_id`/`check_out_log_id` ditambahkan ole
 | ip_address | inet | |
 | user_agent | varchar | |
 | device_fingerprint | varchar null | |
-| flags | jsonb | mis. `["low_accuracy","new_device","impossible_travel"]` |
+| flags | jsonb | mis. `["low_accuracy","new_device","impossible_travel","mock_location"]` |
 | is_suspicious | bool | |
 | reviewed_by / reviewed_at | FK users / timestamptz null | tinjauan HR |
 | corrected_by | FK users null | untuk `method = manual` |
@@ -252,12 +255,14 @@ Implementasi (Sprint 2): FK `check_in_log_id`/`check_out_log_id` ditambahkan ole
 
 Implementasi (Sprint 2): `accuracy_m` numeric(8,2), `distance_m` numeric(10,2) = jarak ke lokasi terdekat (juga untuk WFH), `office_location_id` hanya diisi bila di dalam radius. `qr_token_id` belum ber-FK (Sprint 3). `flags` jsonb default `[]`: `low_accuracy`, `clock_skew`, `new_device`, `new_ip`, `impossible_travel`, `dark_selfie`; `new_ip` saja tidak membuat `is_suspicious`. Baris immutable (model menolak update selain `reviewed_by/at` dan menolak delete). Indeks `(user_id, occurred_at)`, `attendance_day_id`, parsial `occurred_at WHERE is_suspicious AND reviewed_at IS NULL`.
 
-Implementasi (Sprint 3): FK `qr_token_id` → `qr_tokens` (`restrictOnDelete`) + indeks. Method `qr`: tanpa selfie, `office_location_id` = lokasi kiosk, `latitude/longitude/accuracy_m/distance_m` hanya bila GPS dikirim; flag baru `qr_location_mismatch` (GPS lebih jauh dari radius + akurasi dari lokasi kiosk, menandai). Tambahan perbaikan review Sprint 3–9 (#15): flag `qr_no_location` ("QR tanpa lokasi GPS", menandai) bila scan QR tanpa GPS — kode QR yang diteruskan bisa dipindai dari mana saja; `config('attendance.qr.require_location')` (env `ATTENDANCE_QR_REQUIRE_LOCATION`, default false) menolak scan tanpa GPS (`qr_location_required`). Method `manual` (koreksi HR): `occurred_at` = jam hasil koreksi, `corrected_by` = HR, `note` = alasan wajib. Selain kolom tinjauan, `selfie_path` boleh diubah **hanya menjadi null** oleh job retensi selfie (`attendance:purge-selfies`).
+Implementasi (Sprint 3): FK `qr_token_id` → `qr_tokens` (`restrictOnDelete`) + indeks. Method `qr`: tanpa selfie, `office_location_id` = lokasi kiosk, `latitude/longitude/accuracy_m/distance_m` hanya bila GPS dikirim; flag baru `qr_location_mismatch` (GPS lebih jauh dari radius + akurasi dari lokasi kiosk, menandai). Tambahan perbaikan review Sprint 3–9 (#15): flag `qr_no_location` ("QR tanpa lokasi GPS", menandai) bila scan QR tanpa GPS — kode QR yang diteruskan bisa dipindai dari mana saja; `config('attendance.qr.require_location')` (env `ATTENDANCE_QR_REQUIRE_LOCATION`, default false) menolak scan tanpa GPS (`qr_location_required`). Aplikasi Android (Bagian 2): flag `mock_location` ("Lokasi palsu terdeteksi di perangkat", menandai) bila aplikasi melaporkan `mock_location=true` (`Location.mocked` Android) pada check-in/out GPS maupun QR — hanya ditandai untuk tinjauan HR, tidak pernah memblokir; web tidak mengirim sinyal ini. Absen offline aplikasi ponsel (14 Okt 2026, migrasi `2026_10_21_100100_add_received_at_to_attendance_logs`): kolom `received_at` timestamptz null = waktu server benar-benar menerima log, **hanya terisi untuk log offline** (ditulis saat insert; model tetap immutable). Untuk log offline `occurred_at` = jam perangkat saat tombol absen ditekan (`offline_at`, 0–72 jam yang lalu), `flags` memuat `offline` ("Absen offline") sehingga `is_suspicious = true` dan log tampil di "Perlu ditinjau" HR; `clock_skew` tidak ditambahkan untuk log offline (selisih jam memang diharapkan), flag lain (`new_device`, `mock_location`, `low_accuracy`, `impossible_travel`, `dark_selfie`) tetap. Aturan lengkap: `docs/sesi/ponsel-b7-offline.md`.
+
+Method `manual` (koreksi HR): `occurred_at` = jam hasil koreksi, `corrected_by` = HR, `note` = alasan wajib. Selain kolom tinjauan, `selfie_path` boleh diubah **hanya menjadi null** oleh job retensi selfie (`attendance:purge-selfies`).
 
 ### qr_tokens
 `id`, `office_location_id`, `token_hash`, `valid_from`, `valid_until` (≈30–45 detik), `kiosk_id`. Token di QR = `HMAC(secret, location_id|window)`. Tabel ini opsional bila validasi murni HMAC. Disimpan untuk audit.
 
-Implementasi (Sprint 3): `office_location_id` FK restrict, `kiosk_id` FK `kiosks` null (`nullOnDelete`), `token_hash` char(64) **unik** = SHA-256 dari tanda tangan di QR (kode asli tidak disimpan), tambahan `window` bigint (= floor(unix / 30)), `valid_from`/`valid_until` = awal/akhir jendela 30 detik. Satu baris dibuat saat kiosk menampilkan kode (upsert per jendela). Pindaian diterima bila HMAC cocok, jendela ±1 dari jendela server, **dan** barisnya ada dari kiosk aktif. Tanda tangan = 128 bit pertama HMAC-SHA256 (32 hex) agar QR tidak terlalu padat. Kode yang tidak pernah dipindai dihapus setelah 2 hari (`attendance:prune-qr-tokens`, harian). Indeks `(office_location_id, valid_from)`.
+Implementasi (Sprint 3): `office_location_id` FK restrict, `kiosk_id` FK `kiosks` null (`nullOnDelete`), `token_hash` char(64) **unik** = SHA-256 dari tanda tangan di QR (kode asli tidak disimpan), tambahan `window` bigint (= floor(unix / 30)), `valid_from`/`valid_until` = awal/akhir jendela 30 detik. Satu baris dibuat saat kiosk menampilkan kode (upsert per jendela). Pindaian diterima bila HMAC cocok, jendela ±1 dari jendela server, **dan** barisnya ada dari kiosk aktif. Tanda tangan = 128 bit pertama HMAC-SHA256 (32 hex) agar QR tidak terlalu padat. Kode yang tidak pernah dipindai dihapus setelah 4 hari (`attendance:prune-qr-tokens`, harian; harus di atas batas absen offline 72 jam, karena QR yang dipindai offline diverifikasi saat sinkron). Indeks `(office_location_id, valid_from)`.
 
 ### kiosks (tambahan Sprint 3)
 Akun perangkat kiosk lobi (guard sesi `kiosk`, bukan baris `users`).
@@ -294,6 +299,8 @@ Implementasi (Sprint 2): versi dari `config('attendance.consent.version')` (`ATT
 ### leave_types
 `id`, `company_id`, `code`, `name`, `category` (`leave` · `permit` · `sick` · `overtime` · `correction` · `business_trip` · `procurement`), `annual_quota_days` numeric(5,1) null, `requires_attachment_after_days` smallint null (0 = selalu wajib), `is_paid`, `allow_half_day`, `carry_over_max_days` numeric(5,1) null, `approval_flow_id` FK null (null = alur "Default" perusahaan).
 Tambahan Sprint 4: `description` null, `max_backdate_days` null (koreksi absensi "maks. 7 hari lalu"), `min_service_months` null (cuti besar "Belum berhak"), `is_active`, `sort_order`, `deleted_at`.
+Tambahan keputusan pemilik 14 Okt 2026 (migrasi `2026_10_20_100000_add_submit_cutoff_time_to_leave_types`, bisa di-rollback): `submit_cutoff_time` time null (tanpa detik, jam kantor `HH:MM`) — **batas pengajuan di hari-H**. Hanya kategori `sick` dan `permit` yang memakainya (kategori lain selalu null; `SaveLeaveType` mengosongkannya). Migrasi mengisi `12:00` untuk semua jenis sakit dan izin yang ada; null = tanpa batas. Aturan (`SubmissionCutoff`, dipakai `SubmitRequest`): pengajuan yang tanggal mulainya **hari ini** harus dikirim **sebelum** jam batas (tepat 12:00:00 sudah terlambat), tanggal yang **sudah lewat** ditolak (hari itu tercatat Alpha; koreksi manual HR tetap ada), tanggal **mendatang** kapan saja; pengajuan beberapa hari hanya dinilai dari tanggal mulai; simpan draf tidak dibatasi, hanya kirim; kirim ulang setelah revisi dengan tanggal yang sama tetap diterima. Pengajuan yang `pending` saat job tutup hari 00.30 membuat tanggalnya Alpha dulu; persetujuan berikutnya mengubahnya menjadi Sakit/Izin lewat `AttendanceDayEffects::applyAbsence` seperti pengajuan tanggal lampau biasa (ditolak/dibatalkan = tetap Alpha). Tanpa tabel baru; payload jenis memuat `submit_cutoff_time`, `submit_cutoff_label`, `submit_closed_today` (jam server).
+
 Tambahan keputusan pemilik 6 Okt 2026 (migrasi `2026_10_12_200100_add_locked_reason_to_leave_types`): `locked_reason` varchar(200) null — terisi = **jenis terkunci** (tampil bergembok, tidak bisa dibuat/disimpan sebagai draf/dikirim; pengajuan yang sudah ada tidak berubah). Migrasi mengunci semua jenis kategori `leave` dan `overtime` dengan alasan "Dikunci sampai SOP cuti/lembur ditetapkan."; HR membuka/mengunci di Admin › Jenis pengajuan. Kategori `procurement` (Pengajuan barang, kode bawaan `BRG`, alur bawaan "Pengajuan barang" = atasan langsung → peran `direksi`): periode = tanggal kirim, tanpa `days`/`minutes`, tanpa saldo, tumpang tindih, atau efek absensi.
 `code` = 2–10 huruf besar/angka (CHECK), **juga prefiks nomor** (`CUT`, `CBR`, `SKT`, `IZN`, `LBR`, `KOR`, `DNS`, `CML`, `CAP`, `CLT`). Unik `(company_id, code)` termasuk yang terhapus.
 Tambahan Fitur pengajuan (`docs/sprints/FITUR-PENGAJUAN.md`): `counts_calendar_days` bool default false (durasi dihitung hari kalender, mis. Cuti melahirkan; hari kerja tetap dipakai untuk efek absensi), `max_days_per_request` numeric(5,1) null (CHECK > 0; maks. per pengajuan, mis. 90 hari kalender melahirkan, 3 hari alasan penting), `is_provisional_default` bool default false (**"Bawaan sementara"**: jenis bawaan seeder yang belum ditinjau HR; otomatis false saat HR menyimpan jenis atau menetapkan alurnya; seeder tidak pernah menimpa jenis yang sudah ada). Cuti di luar tanggungan = `is_paid` false tanpa `annual_quota_days` (tidak memotong saldo).
@@ -424,12 +431,14 @@ Indeks unik parsial: `workspaces (owner_id) WHERE type = 'personal'` (satu works
 | due_date | date null | |
 | estimate_hours | numeric(6,2) null | |
 | created_by | FK users | |
+| source | varchar(20) default `manual` | asal tugas: `manual` · `attendance` (CHECK). `attendance` = dibuat otomatis dari poin rencana kerja saat check-in (keputusan pemilik 9 Okt 2026) |
+| source_id | FK attendance_days null | hari absensi yang memunculkan tugas itu (null bila `manual`; nullOnDelete) |
 | started_at | timestamptz null | pertama kali masuk `in_progress` |
 | completed_at | timestamptz null | masuk kategori `done` |
 | canceled_at | timestamptz null | |
 | search_vector | tsvector | kolom GENERATED STORED: `setweight(to_tsvector('simple', title),'A') || setweight(to_tsvector('simple', description_text),'B')`, indeks GIN. Konfigurasi `simple` karena PostgreSQL tidak punya stemmer Indonesia |
 
-Indeks: `(workspace_id, number)` unique, `(workspace_id, status_id, position)`, `(status_id, position)` (Sprint 10: kartu satu kolom tanpa filter workspace — pindah kartu, ubah/hapus kolom), `(workspace_id, status_category)`, `(due_date) where status_category not in ('done','canceled')`, GIN `search_vector`. CHECK `priority BETWEEN 0 AND 4`, `number > 0`.
+Indeks: `(workspace_id, number)` unique, `(workspace_id, status_id, position)`, `(status_id, position)` (Sprint 10: kartu satu kolom tanpa filter workspace — pindah kartu, ubah/hapus kolom), `(workspace_id, status_category)`, `(due_date) where status_category not in ('done','canceled')`, GIN `search_vector`, `(source_id)`. CHECK `priority BETWEEN 0 AND 4`, `number > 0`.
 
 Kolom `position` (tasks, task_statuses, checklist_items) bertipe `varchar(100) COLLATE "C"` agar urutan lexorank = urutan byte (`App\Domain\Tasks\Services\Lexorank`, base-62, kolom diseimbangkan ulang bila kunci > 40 karakter). Lifecycle: `started_at` diisi saat pertama kali masuk kategori `in_progress` **atau `review`**; `completed_at` diisi saat masuk `done` dan dikosongkan saat keluar; `canceled_at` sama untuk `canceled`. Mengubah kategori sebuah kolom menyinkronkan semua tugas di kolom itu.
 
@@ -661,6 +670,23 @@ Indeks: `(workspace_id, parent_google_id)`, `(workspace_id, kind)`.
 
 ---
 
+### api_idempotency_keys (aplikasi ponsel offline-first, 14 Okt 2026)
+Hasil tulis API v1 yang bisa diulang aman (`Idempotency-Key`, middleware `IdempotentRequests`). Migrasi `2026_10_21_100000_create_api_idempotency_keys_table`.
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | ulid PK | |
+| user_id | FK users (cascade) | pemilik token |
+| key | varchar(64) | header `Idempotency-Key` (`[A-Za-z0-9_-]{16,64}`) |
+| method | varchar(10) | POST/PUT/PATCH/DELETE |
+| path_hash | char(64) | SHA-256 dari path permintaan (tanpa query) |
+| status | smallint null | status respons tersimpan; null = masih diproses (klaim) |
+| response_headers | jsonb null | `Content-Type` (+ `Location`) |
+| response_body | text null | badan respons ≤ 256 KB; null untuk 2xx yang lebih besar (diputar ulang sebagai 200 "Sudah diproses.") |
+| created_at / completed_at | timestamptz | klaim dibuat / hasil disimpan |
+
+Unik `(user_id, key)`, indeks `created_at`. Klaim atomik (`INSERT … ON CONFLICT DO NOTHING`) sebelum handler berjalan; klaim tanpa hasil lebih dari 120 detik dianggap ditinggalkan dan diambil alih. Disimpan: 2xx dan 4xx deterministik (400, 403, 404, 409, 410, 422); 401/419/429/5xx dan galat tak tertangkap melepas klaim. Badan permintaan (termasuk unggahan multipart) tidak pernah disimpan, badan respons tidak pernah dicatat ke log. `api:prune-idempotency` (harian 03.30 WIB) menghapus baris > 72 jam.
+
 ## 6. Notifikasi
 
 - `notifications`: tabel bawaan Laravel (`id` uuid, `type`, `notifiable`, `data` jsonb, `read_at`) dengan perluasan Sprint 8:
@@ -734,8 +760,19 @@ Migrasi `2026_10_12_200300_create_announcements_tables`.
 
 ## 8. Fase 3
 
-- `devices`: `id`, `user_id`, `platform`, `device_id_hash`, `push_token`, `integrity_verdict` jsonb, `last_seen_at`, `is_trusted`.
-- `face_templates`: `id`, `user_id`, `template` bytea (dienkripsi), `model_version`, `consent_id` FK attendance_consents, `created_at`. Dihapus otomatis bila persetujuan dicabut.
+**Perangkat (F3-1/F3-2) — `devices` diimplementasikan** (migrasi `2026_10_17_100000_create_devices_table`, fondasi API ponsel; belum ada rute HTTP — Sanctum menyusul Tahap 1):
+
+- `devices`: satu baris per instalasi aplikasi yang pernah masuk. `id` ulid, `user_id` FK users **cascade**, `company_id` FK companies (restrict), `platform` varchar(10) CHECK `android|ios|web` (enum `DevicePlatform`), **`device_id_hash`** varchar(64) (SHA-256 — **identitas mentah perangkat tidak pernah disimpan**), `name` varchar(120) null (nama model yang dilaporkan aplikasi), `os_version` varchar(40) null, `app_version` varchar(40) null, **`push_token`** varchar(255) null **unik** (token FCM; null bila izin push ditolak/dicabut), `integrity_verdict` jsonb null (hasil Play Integrity apa adanya — integritas **menandai, bukan memblokir**), `last_seen_at` timestamptz null, `biometric_login` bool default false, `is_trusted` bool default false, timestamps. **Unik `(user_id, device_id_hash)`** (satu baris per instalasi per pengguna), indeks `(user_id, last_seen_at)`.
+- Actions (`app/Domain/Devices/Actions/`): `RegisterDevice` (upsert per user+hash di bawah advisory lock `devices.register:<user_id>`; memperbarui token/nama/OS/versi aplikasi/`last_seen_at` — kolom null dari klien **tidak** menghapus nilai lama; **maks 5 perangkat per pengguna**, lebihnya ditolak "Maksimal 5 perangkat dapat didaftarkan per akun…"), `UpdateDevicePushToken` (set/hapus token; token yang sama di perangkat lain dilepas dulu — satu token milik tepat satu instalasi), `RevokeDevice` (hapus baris + audit `device.revoked`).
+- `UpdateDeviceBiometric` (Bagian 1 aplikasi Android, B2): sakelar "Buka dengan sidik jari" per instalasi memakai kolom `biometric_login` yang sudah ada (tanpa migrasi baru) lewat `PATCH /api/v1/perangkat/{device}/biometrik`; hanya penanda pilihan pengguna di server — pemeriksaan biometrik sebenarnya ada di aplikasi (kunci Keystore). Perubahan nilai diaudit `device.biometric_changed` (nilai sama = tanpa baris audit).
+- Akses (`DevicePolicy`, `Device::scopeVisibleTo`): **hanya pemilik** melihat/mengubah/mencabut perangkatnya (HR & Super Admin sengaja tidak dapat apa pun — privasi UU PDP; metadata perangkat membocorkan kapan & di mana seseorang bekerja). `viewAny` untuk pengguna aktif, daftar selalu terbatas pada baris milik aktor.
+- `face_templates` (belum dimigrasi): `id`, `user_id`, `template` bytea (dienkripsi), `model_version`, `consent_id` FK attendance_consents, `created_at`. Dihapus otomatis bila persetujuan dicabut.
+
+### briefings & briefing_delegations (Briefing pagi & sore, keputusan pemilik 9 Okt 2026)
+Migrasi `2026_10_17_100100_create_briefings_tables`. Jendela catat: pagi 08.00–11.00, sore 16.00–18.00 zona kantor (enum `BriefingPeriod`, bukan kolom). Pencatat: HR & Super Admin, bisa didelegasikan per tanggal+periode.
+
+- **`briefings`**: `id` ulid, `company_id` FK restrict, `period` varchar(5) CHECK `pagi|sore`, `briefing_date` date (tanggal kantor), `content` text (notulensi polos multi-baris, CHECK tidak kosong), `created_by` FK users restrict (pencatat/delegasi yang menyimpan), `delegated_from` FK users null (terisi bila delegasi yang menyimpan), timestamps. **Unik `(company_id, briefing_date, period)`** (kunci upsert `SaveBriefing`); indeks `(company_id, period, briefing_date)`. Penyimpanan pertama → notifikasi `briefing.posted` (kategori Informatif, isi lengkap) ke semua pengguna aktif perusahaan termasuk penyimpan; audit `briefing.saved`.
+- **`briefing_delegations`**: `id` ulid, `company_id` FK, `briefing_date` date, `period` CHECK, `delegated_to`/`delegated_by` FK users restrict, timestamps. Unik `(company_id, briefing_date, period)`; indeks `(delegated_to, briefing_date)`. Audit `briefing.delegated`; notifikasi in-app ke terdelegasi.
 
 ### OKR divisi (F3-3, sudah dimigrasi)
 

@@ -45,8 +45,10 @@ Route::bind('workspace', function (string $value): Workspace {
     // not see it: 404 before any redirect, validation or controller code.
     abort_if($workspace === null || ! $user instanceof User || Gate::forUser($user)->denies('view', $workspace), 404);
 
-    // Old or lower-case key in a page URL → canonical /w/{KEY}.
-    if (strlen($value) !== 26 && $value !== $workspace->key && $request->isMethod('GET')) {
+    // Old or lower-case key in a page URL → canonical /w/{KEY}. The mobile API
+    // (/api/v1/workspace/{key}/…) has no /w/ segment to rewrite — redirecting
+    // there would loop on itself — so it simply uses the resolved workspace.
+    if (strlen($value) !== 26 && $value !== $workspace->key && $request->isMethod('GET') && ! $request->is('api/*')) {
         throw new HttpResponseException(redirect()->to(
             (string) preg_replace('#/w/[^/?]+#', '/w/'.$workspace->key, $request->getRequestUri(), 1),
             301,

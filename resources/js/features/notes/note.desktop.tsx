@@ -1,18 +1,21 @@
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import {
     History,
+    List,
     MoreHorizontal,
     PanelLeft,
     Plus,
     Share2,
     X,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -23,22 +26,21 @@ import {
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SegmentedTabs } from '@/components/ui/tabs';
+import notesRoutes from '@/routes/notes';
 import { cn, focusRing } from '@/lib/utils';
 import { DocumentTabsPanel, useDocumentTabs } from './document-tabs';
 import { handleScaleShortcut } from './editor/toolbar-extras';
-import {
-    MinutesModeBar,
-    StartModeButton,
-    useMinutesMode,
-} from './minutes-mode';
+import { useToolbarVisibility } from './editor/toolbar-visibility';
+import { MinutesModeIconButton, useMinutesMode } from './minutes-mode';
 import { NewNoteDialog } from './new-note-dialog';
 import { EditorToolbar, NoteEditor } from './note-editor';
 import {
-    EditorsPresence,
     NoteBanners,
     NotePath,
-    SaveStatus,
+    SaveStatusDetail,
+    SaveStatusIcon,
     TitleField,
+    saveStatusState,
 } from './note-parts';
 import { NoteTree } from './note-tree';
 import { ShareDialog } from './share-dialog';
@@ -97,6 +99,28 @@ export function NoteDesktop({
         canCreate: workspace?.can_create ?? false,
         mobile: false,
     });
+    const statusState = saveStatusState(session);
+    const toolbarBox = useRef<HTMLDivElement>(null);
+    const [toolbarHeight, setToolbarHeight] = useState(52);
+    const toolbarVisible = useToolbarVisibility(
+        session.editable ? session.editor : null,
+        toolbarBox,
+    );
+
+    useLayoutEffect(() => {
+        const element = toolbarBox.current;
+
+        if (!element) {
+            return;
+        }
+
+        const observer = new ResizeObserver(() =>
+            setToolbarHeight(element.offsetHeight),
+        );
+        observer.observe(element);
+
+        return () => observer.disconnect();
+    }, [session.editor]);
     // Tablet: the panel folds away; until toggled it is open when the
     // document has tabs or note-taking mode is on.
     const [panelToggled, setPanelOpen] = useState<boolean | null>(null);
@@ -253,14 +277,44 @@ export function NoteDesktop({
                 )}
 
                 <article className="min-w-0 rounded-panel border border-border bg-surface shadow-card">
-                    <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-divider px-6 py-4 lg:px-8">
-                        <div className="flex min-w-0 flex-1 flex-col gap-1">
-                            <NotePath session={session} />
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                                <SaveStatus session={session} />
-                                <EditorsPresence session={session} />
-                            </div>
-                        </div>
+                    <header className="flex items-center gap-1.5 border-b border-divider px-4 py-2 lg:px-6">
+                        <NotePath
+                            session={session}
+                            compact
+                            className="min-w-0 flex-1"
+                        />
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    type="button"
+                                    aria-label={`Status catatan: ${statusState.label}`}
+                                    title={statusState.label}
+                                    className={cn(
+                                        'flex size-9 shrink-0 items-center justify-center rounded-[10px] text-text-muted transition-colors duration-120 ease-brand hover:bg-surface-2 hover:text-text',
+                                        focusRing,
+                                    )}
+                                >
+                                    <SaveStatusIcon phase={statusState.phase} />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                                align="end"
+                                className="w-[280px]"
+                            >
+                                <SaveStatusDetail
+                                    state={statusState}
+                                    reloadAction={
+                                        statusState.conflict && (
+                                            <DropdownMenuItem
+                                                onSelect={session.reload}
+                                            >
+                                                Muat ulang
+                                            </DropdownMenuItem>
+                                        )
+                                    }
+                                />
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         {!desktop && (
                             <Button
                                 variant="ghost"
@@ -277,55 +331,122 @@ export function NoteDesktop({
                                 <PanelLeft aria-hidden />
                             </Button>
                         )}
-                        <StartModeButton mode={mode} />
-                        <Button
-                            variant="outline"
-                            aria-pressed={history.open}
-                            onClick={() => history.setOpen(!history.open)}
-                        >
-                            <History aria-hidden />
-                            Riwayat
-                        </Button>
-                        {note.can_share && (
-                            <Button onClick={() => session.setShareOpen(true)}>
-                                <Share2 aria-hidden />
-                                Bagikan
-                            </Button>
-                        )}
-                        {(note.can_edit || note.can_delete) && (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        aria-label="Aksi catatan"
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label="Pindah tab dokumen"
+                                    title="Tab dokumen"
+                                >
+                                    <List aria-hidden />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                                align="end"
+                                className="max-h-[60svh] w-[280px] overflow-y-auto"
+                            >
+                                <DropdownMenuLabel className="truncate">
+                                    {tabs.tabs[0]?.note.title ?? 'Tab dokumen'}
+                                </DropdownMenuLabel>
+                                {tabs.tabs.map((tab) => (
+                                    <DropdownMenuItem
+                                        key={tab.note.id}
+                                        asChild
+                                        aria-current={
+                                            tab.note.id === note.id
+                                                ? 'page'
+                                                : undefined
+                                        }
+                                        className={cn(
+                                            tab.level === 1 && 'pl-8',
+                                        )}
                                     >
-                                        <MoreHorizontal aria-hidden />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    {note.can_edit && (
+                                        <Link
+                                            href={notesRoutes.show.url(
+                                                tab.note.id,
+                                            )}
+                                        >
+                                            <span
+                                                aria-hidden
+                                                className={cn(
+                                                    'shrink-0 rounded-full bg-current',
+                                                    tab.level === 0
+                                                        ? 'size-1.5 opacity-70'
+                                                        : 'size-1 opacity-50',
+                                                )}
+                                            />
+                                            <span className="truncate">
+                                                {tab.note.title}
+                                            </span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                ))}
+                                {tabs.canCreate && (
+                                    <>
+                                        <DropdownMenuSeparator />
                                         <DropdownMenuItem
+                                            disabled={tabs.adding}
                                             onSelect={() =>
-                                                session.setMoveOpen(true)
+                                                tabs.add(tabs.rootId)
                                             }
                                         >
-                                            Pindahkan
+                                            <Plus aria-hidden />
+                                            Tambah tab
                                         </DropdownMenuItem>
-                                    )}
-                                    {note.can_delete && (
-                                        <DropdownMenuItem
-                                            className="text-danger"
-                                            onSelect={() =>
-                                                session.setDeleteOpen(true)
-                                            }
-                                        >
-                                            Hapus
-                                        </DropdownMenuItem>
-                                    )}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
+                                    </>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <MinutesModeIconButton mode={mode} />
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label="Aksi catatan"
+                                >
+                                    <MoreHorizontal aria-hidden />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                    onSelect={() => history.setOpen(true)}
+                                >
+                                    <History aria-hidden />
+                                    Riwayat versi
+                                </DropdownMenuItem>
+                                {note.can_share && (
+                                    <DropdownMenuItem
+                                        onSelect={() =>
+                                            session.setShareOpen(true)
+                                        }
+                                    >
+                                        <Share2 aria-hidden />
+                                        Bagikan
+                                    </DropdownMenuItem>
+                                )}
+                                {note.can_edit && (
+                                    <DropdownMenuItem
+                                        onSelect={() =>
+                                            session.setMoveOpen(true)
+                                        }
+                                    >
+                                        Pindahkan
+                                    </DropdownMenuItem>
+                                )}
+                                {note.can_delete && (
+                                    <DropdownMenuItem
+                                        className="text-danger"
+                                        onSelect={() =>
+                                            session.setDeleteOpen(true)
+                                        }
+                                    >
+                                        Hapus
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </header>
 
                     {previewVersion ? (
@@ -345,12 +466,33 @@ export function NoteDesktop({
                     ) : (
                         <>
                             {session.editable && session.editor && (
-                                <div className="sticky top-0 z-10 border-b border-divider bg-surface px-4 py-1.5 lg:top-(--menu-bar-height) lg:px-6">
-                                    <EditorToolbar editor={session.editor} />
+                                <div
+                                    className="pointer-events-none sticky top-0 z-10 lg:top-(--menu-bar-height)"
+                                    // The bar's room stays reserved: showing
+                                    // or hiding it never moves the text.
+                                    style={{ minHeight: toolbarHeight }}
+                                >
+                                    <div
+                                        aria-hidden={!toolbarVisible}
+                                        className={cn(
+                                            'transition-[opacity,transform,visibility] duration-180 ease-brand motion-reduce:transition-none',
+                                            toolbarVisible
+                                                ? 'pointer-events-auto visible translate-y-0 opacity-100'
+                                                : 'invisible -translate-y-1 opacity-0',
+                                        )}
+                                    >
+                                        <div
+                                            ref={toolbarBox}
+                                            className="border-b border-divider bg-surface px-4 py-1.5 lg:px-6"
+                                        >
+                                            <EditorToolbar
+                                                editor={session.editor}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                             <div className="flex flex-col gap-4 px-6 pt-8 pb-12 lg:px-12">
-                                <MinutesModeBar mode={mode} />
                                 <NoteBanners session={session} />
                                 <TitleField session={session} size={34} />
                                 <NoteEditor

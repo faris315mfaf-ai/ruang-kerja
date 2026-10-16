@@ -12,6 +12,7 @@ import {
     nextTabTitle,
     parentOptions,
     savedLabel,
+    savePhase,
     subtreeIds,
     toneFor,
     wordCount,
@@ -205,5 +206,42 @@ describe('document tabs (Notulensi)', () => {
         expect(nextTabTitle(tabs, 'rapat', 'rapat')).toBe('Tab 4');
         expect(nextTabTitle(tabs, 'tab-a', 'rapat')).toBe('Sub-tab 2');
         expect(nextTabTitle(tabs, 'tab-b', 'rapat')).toBe('Sub-tab 1');
+    });
+});
+
+describe('savePhase', () => {
+    const base = {
+        conflict: false,
+        mode: 'live' as const,
+        saving: false,
+        connected: true,
+    };
+
+    it('spinner while connecting, saving or reconnecting', () => {
+        expect(savePhase({ ...base, mode: 'connecting' })).toBe('syncing');
+        expect(savePhase({ ...base, saving: true })).toBe('syncing');
+        expect(savePhase({ ...base, connected: false })).toBe('syncing');
+    });
+
+    it('check-cloud once saved on a live connection', () => {
+        expect(savePhase(base)).toBe('saved');
+    });
+
+    it('triangle for offline mode (also while it is saving)', () => {
+        expect(savePhase({ ...base, mode: 'offline', connected: false })).toBe(
+            'offline',
+        );
+        expect(savePhase({ ...base, mode: 'offline', saving: true })).toBe(
+            'syncing',
+        );
+    });
+
+    it('conflict wins over everything', () => {
+        expect(savePhase({ ...base, conflict: true, saving: true })).toBe(
+            'conflict',
+        );
+        expect(savePhase({ ...base, conflict: true, mode: 'offline' })).toBe(
+            'conflict',
+        );
     });
 });

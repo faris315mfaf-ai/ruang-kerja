@@ -1,11 +1,11 @@
-import { Loader2, Plus, RotateCcw, Send, X } from 'lucide-react';
+import { Loader2, RotateCcw, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type { CheckFlow } from '../use-check-flow';
 import { LocationChip } from './location-chip';
+import { WorkPointsEditor } from './work-points-editor';
 
 /** Photo preview, WFH/field note and submit. */
 export function SelfieReview({
@@ -20,7 +20,7 @@ export function SelfieReview({
 
     return (
         <div className={cn('flex min-h-0 flex-1 flex-col gap-4', className)}>
-            <div className="relative min-h-0 flex-1 overflow-hidden rounded-2xl border border-border bg-surface">
+            <div className="relative min-h-[140px] flex-1 overflow-hidden rounded-2xl border border-border bg-surface">
                 {flow.photo && (
                     <img
                         src={flow.photo.url}
@@ -47,100 +47,13 @@ export function SelfieReview({
                 )}
             </div>
 
-            {flow.type === 'in' && (
-                <div className="space-y-1.5">
-                    <Label className="text-text">
-                        Rencana/Laporan kerja hari ini{' '}
-                        <span className="text-text-muted">
-                            (wajib, terkirim ke grup manajemen)
-                        </span>
-                    </Label>
-                    <ul className="space-y-1.5">
-                        {flow.plan.map((point, index) => (
-                            <li
-                                key={index}
-                                className="flex items-center gap-1.5"
-                            >
-                                <span
-                                    aria-hidden
-                                    className="w-5 shrink-0 text-right text-[15px] font-bold text-text-muted tnum"
-                                >
-                                    {index + 1}.
-                                </span>
-                                <Input
-                                    value={point}
-                                    onChange={(event) =>
-                                        flow.setPlan(
-                                            flow.plan.map((value, i) =>
-                                                i === index
-                                                    ? event.target.value
-                                                    : value,
-                                            ),
-                                        )
-                                    }
-                                    maxLength={300}
-                                    enterKeyHint="next"
-                                    placeholder={
-                                        index === 0
-                                            ? 'Mis. Selesaikan laporan mingguan'
-                                            : 'Poin berikutnya'
-                                    }
-                                    aria-label={`Poin rencana kerja ${index + 1}`}
-                                    aria-invalid={
-                                        flow.planError ? true : undefined
-                                    }
-                                    aria-describedby={
-                                        flow.planError
-                                            ? 'check-plan-error'
-                                            : undefined
-                                    }
-                                    className="h-11"
-                                />
-                                {flow.plan.length > 1 && (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>
-                                            flow.setPlan(
-                                                flow.plan.filter(
-                                                    (_, i) => i !== index,
-                                                ),
-                                            )
-                                        }
-                                        disabled={submitting}
-                                        aria-label={`Hapus poin ${index + 1}`}
-                                        className="size-11 shrink-0 text-text-muted"
-                                    >
-                                        <X aria-hidden />
-                                    </Button>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
-                    {flow.plan.length < 8 && (
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => flow.setPlan([...flow.plan, ''])}
-                            disabled={submitting}
-                            className="text-text-muted"
-                        >
-                            <Plus aria-hidden />
-                            Tambah poin
-                        </Button>
-                    )}
-                    {flow.planError && (
-                        <p
-                            id="check-plan-error"
-                            className="text-[15px] text-danger"
-                        >
-                            {flow.planError}
-                        </p>
-                    )}
-                </div>
-            )}
+            <WorkPointsEditor
+                kind={flow.pointsKind}
+                points={flow.points}
+                onChange={flow.setPoints}
+                error={flow.pointsError}
+                disabled={submitting}
+            />
 
             {(flow.isRemote || flow.noteError) && (
                 <div className="space-y-1.5">

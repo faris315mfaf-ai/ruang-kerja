@@ -1,0 +1,159 @@
+{
+  "expo": {
+    "name": "RuangKerja",
+    "slug": "ruangkerja",
+    "version": "1.2.3",
+    "scheme": "ruangkerja",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": [
+      "android"
+    ],
+    "icon": "./assets/icon.png",
+    "backgroundColor": "#F3F6FA",
+    "android": {
+      "package": "store.spkd.ruangkerja",
+      "versionCode": 8,
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"
+      ],
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-foreground.png",
+        "backgroundImage": "./assets/adaptive-background.png",
+        "monochromeImage": "./assets/adaptive-monochrome.png",
+        "backgroundColor": "#0B7F86"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#F3F6FA",
+          "dark": {
+            "image": "./assets/splash-icon-dark.png",
+            "backgroundColor": "#070B14"
+          }
+        }
+      ],
+      [
+        "expo-system-ui",
+        {
+          "userInterfaceStyle": "automatic"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "RuangKerja memakai kamera untuk mengambil selfie saat absen masuk dan pulang."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "RuangKerja memakai lokasi Anda untuk memastikan absen dilakukan dari lokasi kerja yang diizinkan.",
+          "locationWhenInUsePermission": "RuangKerja memakai lokasi Anda untuk memastikan absen dilakukan dari lokasi kerja yang diizinkan."
+        }
+      ],
+      "expo-secure-store",
+      "expo-local-authentication",
+      "expo-font",
+      [
+        "@livekit/react-native-expo-plugin",
+        {
+          "android": {
+            "audioType": "communication",
+            "enableScreenShareService": true
+          }
+        }
+      ],
+      "@config-plugins/react-native-webrtc",
+      "./plugins/withNoFocusHighlight",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#0B7F86",
+          "defaultChannel": "rk_info"
+        }
+      ],
+      "./plugins/withReleaseSigning",
+      "./plugins/withWidgetConfigPortrait",
+      "./plugins/withReleaseShrink",
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
+      ],
+      "expo-background-task",
+      [
+        "react-native-android-widget",
+        {
+          "fonts": [
+            "./node_modules/@expo-google-fonts/figtree/400Regular/Figtree_400Regular.ttf",
+            "./node_modules/@expo-google-fonts/figtree/500Medium/Figtree_500Medium.ttf",
+            "./node_modules/@expo-google-fonts/figtree/600SemiBold/Figtree_600SemiBold.ttf",
+            "./node_modules/@expo-google-fonts/figtree/700Bold/Figtree_700Bold.ttf"
+          ],
+          "widgets": [
+            {
+              "name": "CheckIn",
+              "label": "Check-in",
+              "description": "Status absen hari ini. Ketuk untuk membuka layar Absen.",
+              "minWidth": "110dp",
+              "minHeight": "40dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 1,
+              "resizeMode": "horizontal|vertical",
+              "previewImage": "./assets/widget/checkin-preview.png",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "TugasHariIni",
+              "label": "Tugas hari ini",
+              "description": "Daftar tugas hari ini; segmen Pribadi, Tim, atau Semua dapat dipilih.",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "widgetFeatures": "reconfigurable",
+              "previewImage": "./assets/widget/tugas-preview.png",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "RapatBerikutnya",
+              "label": "Rapat berikutnya",
+              "description": "Rapat terdekat dengan tombol Gabung.",
+              "minWidth": "250dp",
+              "minHeight": "40dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 1,
+              "resizeMode": "horizontal|vertical",
+              "previewImage": "./assets/widget/rapat-preview.png",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "tsconfigPaths": true
+    }
+  }
+}

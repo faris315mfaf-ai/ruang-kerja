@@ -49,7 +49,7 @@ export function RequestFormMobile({
     today,
     savedAt,
 }: Props) {
-    const { form, category, setCategory, submit, locked } = state;
+    const { form, category, setCategory, submit, locked, sendBlocked } = state;
     const flow = flowSentence(state);
     // Locked categories (cuti & lembur, keputusan pemilik 6 Okt 2026) are not
     // chips: they are listed below with their lock reason.
@@ -152,7 +152,9 @@ export function RequestFormMobile({
                         type="submit"
                         size="lg"
                         className="flex-[1.6] text-[18px] font-extrabold"
-                        disabled={form.processing || locked}
+                        disabled={
+                            form.processing || locked || sendBlocked !== null
+                        }
                     >
                         {request?.status === 'revision_requested'
                             ? 'Kirim ulang'

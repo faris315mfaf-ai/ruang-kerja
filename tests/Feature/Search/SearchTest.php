@@ -210,6 +210,7 @@ it('renders the mobile search screen', function () {
                 ['key' => 'documents', 'label' => 'Dokumen'],
                 ['key' => 'notes', 'label' => 'Catatan'],
                 ['key' => 'requests', 'label' => 'Pengajuan'],
+                ['key' => 'meetings', 'label' => 'Rapat'],
             ]));
 });
 

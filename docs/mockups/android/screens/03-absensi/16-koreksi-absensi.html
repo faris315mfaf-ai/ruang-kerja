@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Absen · koreksi absensi · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<link rel="stylesheet" href="_abs.css">
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+  <!-- Form koreksi — terisi -->
+  <div class="phone" data-fit="1" style="--h:834px">
+    <div class="body">
+
+      <div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Koreksi absensi</span></div><div class="pad stack" style="margin-top:8px;padding-bottom:150px">
+      <div class="banner"><i data-i="info"></i><span>Untuk lupa check-in/check-out atau jam yang keliru. Maksimal 7 hari ke belakang. Alur: atasan langsung → HR. Form lengkap pengajuan ada di modul Pengajuan.</span></div>
+      <div class="field"><label>Tanggal absensi</label><div class="input" ><span>Selasa, 15/09/2026</span><span style="margin-left:auto;color:var(--text-muted)"><i data-i="calendar-days" data-s="20"></i></span></div></div>
+      <div class="grid2"><div class="field"><label>Jam masuk</label><div class="input" ><span>07.49</span><span style="margin-left:auto;color:var(--text-muted)"><i data-i="clock" data-s="20"></i></span></div></div><div class="field"><label>Jam pulang</label><div class="input" ><span>17.05</span><span style="margin-left:auto;color:var(--text-muted)"><i data-i="clock" data-s="20"></i></span></div></div></div>
+      <div class="field"><label>Alasan</label><div class="input focus area" style="min-height:108px"><span>Lupa check-out karena langsung rapat dengan supplier</span></div><div class="hint">52/500 · minimal 10 karakter</div></div>
+      <div class="card flush list" style="box-shadow:none"><div class="li"><span class="ico"><i data-i="paperclip"></i></span><div class="grow"><div class="t">Lampiran (opsional)</div><div class="m">Foto atau PDF · dari kamera atau berkas</div></div><i data-i="plus"></i></div></div></div>
+    </div>    <div class="bottom-bar"><span class="btn primary block" style="height:56px"><i data-i="send"></i>Kirim pengajuan</span></div>
+  </div>
+  <!-- Form koreksi — galat validasi -->
+  <div class="phone" data-fit="1" style="--h:878px">
+    <div class="body">
+
+      <div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Koreksi absensi</span></div><div class="pad stack" style="margin-top:8px;padding-bottom:150px">
+      <div class="banner"><i data-i="info"></i><span>Untuk lupa check-in/check-out atau jam yang keliru. Maksimal 7 hari ke belakang. Alur: atasan langsung → HR. Form lengkap pengajuan ada di modul Pengajuan.</span></div>
+      <div class="field"><label>Tanggal absensi</label><div class="input err" ><span>Selasa, 01/09/2026</span><span style="margin-left:auto;color:var(--text-muted)"><i data-i="calendar-days" data-s="20"></i></span></div><div class="hint err">Koreksi maksimal 7 hari ke belakang. Tanggal ini sudah lewat batas.</div></div>
+      <div class="grid2"><div class="field"><label>Jam masuk</label><div class="input" ><span>07.49</span><span style="margin-left:auto;color:var(--text-muted)"><i data-i="clock" data-s="20"></i></span></div></div><div class="field"><label>Jam pulang</label><div class="input" ><span>17.05</span><span style="margin-left:auto;color:var(--text-muted)"><i data-i="clock" data-s="20"></i></span></div></div></div>
+      <div class="field"><label>Alasan</label><div class="input err area" style="min-height:108px"><span>Lupa</span></div><div class="hint err">Alasan minimal 10 karakter.</div></div>
+      <div class="card flush list" style="box-shadow:none"><div class="li"><span class="ico"><i data-i="paperclip"></i></span><div class="grow"><div class="t">Lampiran (opsional)</div><div class="m">Foto atau PDF · dari kamera atau berkas</div></div><i data-i="plus"></i></div></div></div>
+    </div>    <div class="bottom-bar"><span class="btn primary block off" style="height:56px"><i data-i="send"></i>Kirim pengajuan</span></div>
+  </div>
+  <!-- Koreksi terkirim -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Koreksi absensi</span></div><div class="pad stack" style="margin-top:8px;">
+      <div class="empty" style="border:0;margin-top:20px"><div class="ic" style="background:var(--ok-soft);color:var(--ok);width:84px;height:84px;border-radius:42px"><i data-i="circle-check" data-s="44"></i></div><div class="t-h2">Pengajuan terkirim</div><div class="t-body muted">KOR-2026-10-0011 · koreksi absensi Sel, 15 Sep 2026</div></div>
+      <div class="card stack" style="gap:12px"><div class="abs-pre ok"><span class="st"><i data-i="check"></i></span>Dikirim · 07.58</div><div class="abs-pre warn"><span class="st"><i data-i="clock"></i></span>Menunggu Dimas Pratama (atasan langsung)</div><div class="abs-pre"><span class="st"><i data-i="circle"></i></span>Menunggu Hana (HR)</div></div>
+      <div class="btn primary block">Lihat pengajuan</div><div class="btn quiet block">Kembali ke riwayat</div></div>
+    </div>    <nav class="tabbar">
+      <a class="tab"><i data-i="house"></i>Beranda</a>
+      <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+      <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+      <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+      <a class="tab"><i data-i="layout-grid"></i>Lainnya</a>
+    </nav>
+  </div>
+  <!-- Pilihan bantuan dari detail hari -->
+  <div class="phone" data-fit="0" style="--h:915px">
+    <div class="body">
+
+      <div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Detail hari</span></div><div class="pad stack" style="margin-top:8px;"><div class="row-h sp"><div class="t-h2">Selasa, 15 Sep 2026</div><span class="badge bad">Perlu koreksi</span></div></div>
+    </div>    <div class="scrim"></div>    <div class="sheet"><div class="t-h3">Ada yang keliru dengan absen ini?</div>
+      <div class="card flush list" style="box-shadow:none"><div class="li"><span class="ico teal"><i data-i="file-pen"></i></span><div class="grow"><div class="t">Ajukan koreksi absensi</div><div class="m">Jam masuk/pulang yang salah atau terlewat</div></div><i data-i="chevron-right"></i></div><div class="li"><span class="ico"><i data-i="building-2"></i></span><div class="grow"><div class="t">Ajukan dinas luar</div><div class="m">Bila bertugas di luar radius kantor</div></div><i data-i="chevron-right"></i></div><div class="li"><span class="ico"><i data-i="mail"></i></span><div class="grow"><div class="t">Hubungi HR</div><div class="m">Hari di luar batas 7 hari</div></div><i data-i="chevron-right"></i></div></div>
+      <div class="btn quiet block">Batal</div></div>
+  </div>
+</div>
+</body>
+</html>

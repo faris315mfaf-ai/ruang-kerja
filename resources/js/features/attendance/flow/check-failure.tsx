@@ -15,6 +15,11 @@ import type { GeoPosition } from '@/hooks/use-geolocation';
 import { cn } from '@/lib/utils';
 import type { CheckRejection, OfficeLocationPoint } from '@/types/attendance';
 import { GeofenceMap } from '../map/lazy';
+import {
+    isWindowRejection,
+    windowRejectionTitle,
+    windowSuggestsCorrection,
+} from '../windows';
 
 const TITLES: Partial<Record<CheckRejection['reason'], string>> = {
     outside_geofence: 'Di luar radius kantor',
@@ -214,7 +219,10 @@ export function CheckFailure({
                 />
                 <div className="space-y-1">
                     <p className="text-[17px] font-bold text-danger">
-                        {TITLES[rejection.reason] ?? 'Belum bisa diproses'}
+                        {isWindowRejection(rejection.reason)
+                            ? windowRejectionTitle(rejection)
+                            : (TITLES[rejection.reason] ??
+                              'Belum bisa diproses')}
                     </p>
                     <p className="text-[15px] leading-6 text-text">
                         {rejection.message}
@@ -270,7 +278,8 @@ export function CheckFailure({
                         </Button>
                     )}
                     {(rejection.reason === 'not_checked_in' ||
-                        rejection.reason === 'already_checked_out') && (
+                        rejection.reason === 'already_checked_out' ||
+                        windowSuggestsCorrection(rejection)) && (
                         <Button asChild variant="outline" size="lg">
                             <Link href="/pengajuan/baru?kategori=koreksi">
                                 Ajukan koreksi absensi

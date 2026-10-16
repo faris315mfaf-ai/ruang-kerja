@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Agenda rapat — keadaan · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<link rel="stylesheet" href="_rapat.css">
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+<!-- Memuat (skeleton) -->
+<div class="phone " style="--h:915px" data-jam="08.05">
+<div class="body">
+<div class="rp-hdr"><button class="rp-ib" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Rapat</div><button class="rp-ib " aria-label="Kalender"><i data-i="calendar-days"></i></button><button class="rp-ib out" aria-label="Filter"><i data-i="sliders-horizontal"></i></button></div><div class="rp-pad stack" style="margin-top:6px"><div class="seg"><span class="">Hari ini</span><span class="on">Minggu ini</span><span class="">Akan datang</span></div><div class="rp-day"><span class="">Sen<b>12</b></span><span class="on">Sel<b>13</b></span><span class="">Rab<b>14</b></span><span class="">Kam<b>15</b></span><span class="">Jum<b>16</b></span></div>
+   <div class="skel" style="height:190px;border-radius:26px"></div>
+   <div class="card flush"><div class="rp-m"><div class="t"><div class="skel" style="height:20px;width:44px"></div><div class="skel" style="height:14px;width:36px;margin-top:4px"></div></div><span class="bar" style="background:var(--surface-2)"></span><div class="mid"><div class="skel" style="height:20px;width:80%"></div><div class="skel" style="height:24px;width:60%"></div></div></div><div class="rp-m"><div class="t"><div class="skel" style="height:20px;width:44px"></div><div class="skel" style="height:14px;width:36px;margin-top:4px"></div></div><span class="bar" style="background:var(--surface-2)"></span><div class="mid"><div class="skel" style="height:20px;width:80%"></div><div class="skel" style="height:24px;width:60%"></div></div></div><div class="rp-m"><div class="t"><div class="skel" style="height:20px;width:44px"></div><div class="skel" style="height:14px;width:36px;margin-top:4px"></div></div><span class="bar" style="background:var(--surface-2)"></span><div class="mid"><div class="skel" style="height:20px;width:80%"></div><div class="skel" style="height:24px;width:60%"></div></div></div></div></div>
+</div>
+
+</div>
+<!-- Kosong — Hari ini -->
+<div class="phone " style="--h:915px" data-jam="08.05">
+<div class="body">
+<div class="rp-hdr"><button class="rp-ib" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Rapat</div><button class="rp-ib " aria-label="Kalender"><i data-i="calendar-days"></i></button><button class="rp-ib out" aria-label="Filter"><i data-i="sliders-horizontal"></i></button></div><div class="rp-pad stack" style="margin-top:6px"><div class="seg"><span class="on">Hari ini</span><span class="">Minggu ini</span><span class="">Akan datang</span></div>
+   <div class="empty" style="margin-top:8px"><div class="ic"><i data-i="calendar-check" data-s="30"></i></div><div class="t-title">Tidak ada rapat hari ini</div><div class="rp-sub">Tidak ada rapat untuk Anda hari ini. Lihat "Akan datang" atau jadwalkan rapat baru.</div><span class="btn tonal">Lihat akan datang</span></div></div>
+</div>
+<button class="fab ext" style="bottom:44px" aria-label="Jadwalkan rapat"><i data-i="plus"></i>Jadwalkan</button>
+</div>
+<!-- Galat memuat -->
+<div class="phone " style="--h:915px" data-jam="08.05">
+<div class="body">
+<div class="rp-hdr"><button class="rp-ib" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Rapat</div><button class="rp-ib " aria-label="Kalender"><i data-i="calendar-days"></i></button><button class="rp-ib out" aria-label="Filter"><i data-i="sliders-horizontal"></i></button></div><div class="rp-pad stack" style="margin-top:6px"><div class="seg"><span class="">Hari ini</span><span class="on">Minggu ini</span><span class="">Akan datang</span></div><div class="rp-day"><span class="">Sen<b>12</b><span class="d"></span></span><span class="on">Sel<b>13</b><span class="d"></span></span><span class="">Rab<b>14</b><span class="d"></span></span><span class="">Kam<b>15</b></span><span class="">Jum<b>16</b><span class="d"></span></span></div>
+   <div class="empty"><div class="ic" style="background:var(--bad-soft);color:var(--bad)"><i data-i="triangle-alert" data-s="30"></i></div><div class="t-title">Agenda tidak dapat dimuat</div><div class="rp-sub">Server tidak merespons. Periksa jaringan Anda lalu coba lagi.</div><span class="btn primary"><i data-i="refresh-cw"></i>Coba lagi</span></div></div>
+</div>
+
+</div>
+<!-- Offline — data tersimpan terakhir -->
+<div class="phone " style="--h:915px" data-jam="08.05">
+<div class="body">
+<div class="rp-hdr"><button class="rp-ib" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Rapat</div><button class="rp-ib " aria-label="Kalender"><i data-i="calendar-days"></i></button><button class="rp-ib out" aria-label="Filter"><i data-i="sliders-horizontal"></i></button></div>
+   <div class="rp-pad stack" style="margin-top:6px">
+   <div class="banner warn"><i data-i="wifi-off"></i><div><b>Tanpa koneksi.</b> Menampilkan agenda terakhir (08.04). Gabung video dan jawaban kehadiran butuh jaringan.</div></div>
+   <div class="seg"><span class="">Hari ini</span><span class="on">Minggu ini</span><span class="">Akan datang</span></div><div class="card flush">
+  <div class="rp-m "><div class="t"><b>09.00</b><span>10.00</span></div><span class="bar video"></span><div class="mid"><div class="h rp-clamp2">Rapat mingguan Operasional</div><div class="s"><span class="rp-plat "><i data-i="video"></i>Video RuangKerja</span><span>Anda notulis</span></div><div class="s"><span class="badge warn">Notulen belum ada</span><span class="badge nodot">Mingguan</span></div></div><span class="chev"><i data-i="chevron-right"></i></span></div>
+  <div class="rp-m "><div class="t"><b>10.30</b><span>11.30</span></div><span class="bar meet"></span><div class="mid"><div class="h rp-clamp2">Koordinasi peluncuran Q4</div><div class="s"><span class="rp-plat meet"><i data-i="video"></i>Google Meet</span><span>PLQ · 6 peserta</span></div><div class="s"><span class="badge info">Belum dijawab</span></div></div><span class="chev"><i data-i="chevron-right"></i></span></div>
+  <div class="rp-m "><div class="t"><b>13.30</b><span>14.30</span></div><span class="bar zoom"></span><div class="mid"><div class="h rp-clamp2">Review vendor logistik</div><div class="s"><span class="rp-plat zoom"><i data-i="video"></i>Zoom</span><span>Dimas · tamu eksternal</span></div><div class="s"><span class="badge ok">Hadir</span></div></div><span class="chev"><i data-i="chevron-right"></i></span></div>
+  <div class="rp-m "><div class="t"><b>15.00</b><span>15.30</span></div><span class="bar room"></span><div class="mid"><div class="h rp-clamp2">1:1 Dimas &amp; Sari</div><div class="s"><span class="rp-plat room"><i data-i="building-2"></i>Tatap muka</span><span>Ruang Rapat Lt. 3</span></div><div class="s"><span class="badge ok">Hadir</span></div></div><span class="chev"><i data-i="chevron-right"></i></span></div>
+</div></div>
+</div>
+<button class="fab ext" style="bottom:44px" aria-label="Jadwalkan rapat"><i data-i="plus"></i>Jadwalkan</button>
+</div>
+<!-- Fitur rapat dimatikan di server (404) -->
+<div class="phone " style="--h:915px" data-jam="08.05">
+<div class="body">
+<div class="rp-hdr"><button class="rp-ib" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Rapat</div></div><div class="rp-pad" style="margin-top:40px">
+   <div class="rp-state"><div class="ic"><i data-i="cloud-off" data-s="38"></i></div><div class="t-h3">Rapat belum diaktifkan</div><div class="rp-sub">Fitur rapat sedang tidak tersedia di server. Gunakan RuangKerja web atau hubungi admin.</div><span class="btn outline">Kembali</span></div></div>
+</div>
+
+</div>
+<!-- Rapat sedang berlangsung (banner hangat) -->
+<div class="phone " style="--h:915px" data-jam="09.20">
+<div class="body">
+<div class="rp-hdr"><button class="rp-ib" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Rapat</div><button class="rp-ib " aria-label="Kalender"><i data-i="calendar-days"></i></button><button class="rp-ib out" aria-label="Filter"><i data-i="sliders-horizontal"></i></button></div><div class="rp-pad stack" style="margin-top:6px"><div class="seg"><span class="on">Hari ini</span><span class="">Minggu ini</span><span class="">Akan datang</span></div>
+   <div class="rp-now warm"><span class="rp-pill"><i data-i="radio" data-s="14"></i>Sedang berlangsung · 20 mnt</span>
+    <div><div class="t-h2" style="color:#fff">Rapat mingguan Operasional</div><div style="font-size:15px;opacity:.92;margin-top:4px">09.00–10.00 WIB · 6 orang di ruang rapat</div></div>
+    <div class="rp-white" style="color:#BE185D"><i data-i="video"></i>Gabung sekarang</div></div>
+   <div class="card flush"><div class="rp-m "><div class="t"><b>10.30</b><span>11.30</span></div><span class="bar meet"></span><div class="mid"><div class="h rp-clamp2">Koordinasi peluncuran Q4</div><div class="s"><span class="rp-plat meet"><i data-i="video"></i>Google Meet</span><span>PLQ</span></div><div class="s"><span class="badge info">Belum dijawab</span></div></div><span class="chev"><i data-i="chevron-right"></i></span></div></div></div>
+</div>
+<button class="fab ext" style="bottom:44px" aria-label="Jadwalkan rapat"><i data-i="plus"></i>Jadwalkan</button>
+</div>
+</div>
+</body>
+</html>

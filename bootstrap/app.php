@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\HealthController;
 use App\Http\Middleware\AuthenticateSession;
+use App\Http\Middleware\EnforceApiAppStatus;
 use App\Http\Middleware\EnsureActiveEmployee;
+use App\Http\Middleware\EnsureApiAccountUsable;
 use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\EnsureTwoFactorForSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
@@ -10,6 +12,8 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RestrictCredentialRoutes;
 use App\Http\Middleware\RestrictKioskDevice;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\TouchDeviceLastSeen;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -22,6 +26,7 @@ use Sentry\Laravel\Integration;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
@@ -68,6 +73,20 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
+
+        // API ponsel (Sanctum): the same active-employee rule as `web`. Appended
+        // to the `api` group, and pinned right after `auth` in the priority list
+        // (group middleware would otherwise run before `auth:sanctum`, when the
+        // token user is not resolved yet and the check would be a silent no-op).
+        // EnsureApiAccountUsable: API counterpart of EnsurePasswordChanged /
+        // EnsureTwoFactorForSuperAdmin (403 JSON with `code`). TouchDeviceLastSeen
+        // stamps the token's installation (at most every 5 minutes).
+        $middleware->api(
+            prepend: [EnforceApiAppStatus::class],
+            append: [EnsureActiveEmployee::class, EnsureApiAccountUsable::class, TouchDeviceLastSeen::class],
+        );
+        $middleware->appendToPriorityList(after: Authenticate::class, append: EnsureActiveEmployee::class);
+        $middleware->appendToPriorityList(after: EnsureActiveEmployee::class, append: EnsureApiAccountUsable::class);
 
         // Must run before `auth`, which Laravel's priority list would otherwise move ahead of it.
         $middleware->prependToPriorityList(before: AuthenticatesRequests::class, prepend: RestrictKioskDevice::class);

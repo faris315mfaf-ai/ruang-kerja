@@ -2,6 +2,7 @@
 
 namespace App\Domain\Attendance\Exceptions;
 
+use App\Domain\Attendance\Data\AttendanceWindows;
 use App\Domain\Attendance\Data\GeofenceMatch;
 use App\Domain\Attendance\Enums\AttendanceRejection;
 use App\Domain\Attendance\Enums\AttendanceStatus;
@@ -150,6 +151,55 @@ final class AttendanceException extends RuntimeException
         return new self(
             AttendanceRejection::QrLocationRequired,
             'Check-in dengan kode QR memerlukan lokasi GPS. Aktifkan izin lokasi di peramban lalu pindai kode QR lagi.',
+        );
+    }
+
+    /**
+     * Outside the company check-in hours (Admin › Jam absen).
+     *
+     * @param  'before'|'after'  $phase
+     */
+    public static function checkInWindow(AttendanceWindows $windows, string $phase, ?CarbonInterface $opensAt = null): self
+    {
+        return new self(AttendanceRejection::CheckInWindow, $windows->checkInMessage(), [
+            'phase' => $phase,
+            'from' => $windows->checkInFrom,
+            'until' => $windows->checkInUntil,
+            'opens_at' => $phase === AttendanceWindows::BEFORE ? $opensAt?->toIso8601ZuluString() : null,
+        ]);
+    }
+
+    /**
+     * Outside the company check-out hours (Admin › Jam absen).
+     *
+     * @param  'before'|'after'  $phase
+     */
+    public static function checkOutWindow(AttendanceWindows $windows, string $phase): self
+    {
+        return new self(AttendanceRejection::CheckOutWindow, $windows->checkOutMessage(), [
+            'phase' => $phase,
+            'from' => $windows->checkOutFrom,
+            'until' => $windows->checkOutUntil,
+        ]);
+    }
+
+    /**
+     * An offline check-in/out whose device time cannot be trusted: missing,
+     * in the future, before the day's check-in, or out of order for the device.
+     */
+    public static function offlineClockInvalid(): self
+    {
+        return new self(AttendanceRejection::OfflineClockInvalid, 'Jam perangkat tidak valid.');
+    }
+
+    /**
+     * An offline check-in/out older than the 72-hour sync limit.
+     */
+    public static function offlineExpired(): self
+    {
+        return new self(
+            AttendanceRejection::OfflineExpired,
+            'Absen offline lebih dari 72 jam tidak bisa disinkronkan; ajukan koreksi absensi.',
         );
     }
 

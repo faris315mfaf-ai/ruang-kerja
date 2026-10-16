@@ -43,6 +43,9 @@ return [
         'report.reminder' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         // Hiring: applicant data stays in the app (email off by default, text without names).
         'hiring.activity' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
+        // Briefing pagi & sore (keputusan pemilik 9 Okt 2026): the full minutes
+        // land in the Inbox; email stays off unless the user opts in.
+        'briefing.posted' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'system' => ['in_app' => true, 'email' => false, 'whatsapp' => false],
         'digest.daily' => ['email' => true],
     ],

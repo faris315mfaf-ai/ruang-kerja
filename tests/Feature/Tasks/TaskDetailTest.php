@@ -12,6 +12,7 @@ use App\Models\Activity;
 use App\Models\ChecklistItem;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Policies\TaskPolicy;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -62,12 +63,21 @@ it('returns the detail with properties, timeline and abilities', function () {
 });
 
 it('renders the full-screen page /w/{key}/tasks/{number}', function () {
+    // The task was assigned to the member by the owner: since 9 Okt 2026 the
+    // assignee cannot edit it anymore, only the creator (or a superior) can.
     $this->actingAs($this->member)
         ->get('/w/PLQ/tasks/1')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('tasks/show')
             ->where('detail.task.title', 'Landing page produk baru')
+            ->where('detail.can.edit', false));
+
+    $this->actingAs($this->owner)
+        ->get('/w/PLQ/tasks/1')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('tasks/show')
             ->where('detail.can.edit', true));
 
     $this->actingAs($this->member)->get('/w/plq/tasks/1')->assertRedirect('/w/PLQ/tasks/1');
@@ -105,7 +115,7 @@ it('saves a rich description and logs it', function () {
         ['type' => 'bulletList', 'content' => [['type' => 'listItem', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Hero section']]]]]]],
     ]];
 
-    $this->actingAs($this->member)
+    $this->actingAs($this->owner)
         ->patchJson("/tugas/{$this->task->id}", ['description' => $doc, 'start_date' => '2026-10-01', 'estimate_hours' => 12])
         ->assertOk()
         ->assertJsonPath('task.description_text', "Ruang lingkup\nHero section");
@@ -115,6 +125,11 @@ it('saves a rich description and logs it', function () {
         ->toContain('task.description_changed', 'task.start_date_changed', 'task.estimate_changed');
 
     $this->actingAs($this->member)
+        ->patchJson("/tugas/{$this->task->id}", ['description' => $doc])
+        ->assertForbidden()
+        ->assertJsonPath('message', TaskPolicy::ASSIGNED_BY_OTHER);
+
+    $this->actingAs($this->owner)
         ->patchJson("/tugas/{$this->task->id}", ['description' => ['type' => 'nope']])
         ->assertUnprocessable();
 });
@@ -122,25 +137,29 @@ it('saves a rich description and logs it', function () {
 it('adds, ticks, renames and removes checklist lines', function () {
     Event::fake([TaskUpdated::class]);
 
-    $first = $this->actingAs($this->member)->postJson("/tugas/{$this->task->id}/checklist", ['title' => 'Hero section'])
+    $first = $this->actingAs($this->owner)->postJson("/tugas/{$this->task->id}/checklist", ['title' => 'Hero section'])
         ->assertCreated()->json('item');
-    $second = $this->actingAs($this->member)->postJson("/tugas/{$this->task->id}/checklist", ['title' => 'Navigasi'])
+    $second = $this->actingAs($this->owner)->postJson("/tugas/{$this->task->id}/checklist", ['title' => 'Navigasi'])
         ->assertCreated()->json('item');
 
     expect(strcmp($first['position'], $second['position']))->toBeLessThan(0);
 
-    $this->actingAs($this->member)->patchJson("/checklist/{$first['id']}", ['is_done' => true])
-        ->assertOk()->assertJsonPath('item.is_done', true)->assertJsonPath('item.done_by', $this->member->id);
-    $this->actingAs($this->member)->patchJson("/checklist/{$second['id']}", ['title' => 'Navigasi & footer'])
+    $this->actingAs($this->owner)->patchJson("/checklist/{$first['id']}", ['is_done' => true])
+        ->assertOk()->assertJsonPath('item.is_done', true)->assertJsonPath('item.done_by', $this->owner->id);
+    $this->actingAs($this->owner)->patchJson("/checklist/{$second['id']}", ['title' => 'Navigasi & footer'])
         ->assertOk()->assertJsonPath('item.title', 'Navigasi & footer');
-    $this->actingAs($this->member)->deleteJson("/checklist/{$second['id']}")->assertNoContent();
+    $this->actingAs($this->owner)->deleteJson("/checklist/{$second['id']}")->assertNoContent();
 
     expect(ChecklistItem::query()->where('task_id', $this->task->id)->count())->toBe(1)
         ->and(Activity::query()->where('event', 'task.checklist_completed')->value('properties'))->toMatchArray(['item' => 'Hero section']);
 
     $this->actingAs($this->viewer)->postJson("/tugas/{$this->task->id}/checklist", ['title' => 'Tidak boleh'])->assertForbidden();
     $this->actingAs($this->viewer)->patchJson("/checklist/{$first['id']}", ['is_done' => false])->assertForbidden();
-    $this->actingAs($this->member)->postJson("/tugas/{$this->task->id}/checklist", ['title' => '   '])->assertUnprocessable();
+    // The assignee may not edit the task (assigned by the owner, keputusan
+    // pemilik 9 Okt 2026) but still does the work: checklist lines.
+    $this->actingAs($this->member)->postJson("/tugas/{$this->task->id}/checklist", ['title' => 'Dari penerima'])->assertCreated();
+    $this->actingAs($this->member)->patchJson("/checklist/{$first['id']}", ['is_done' => false])->assertOk();
+    $this->actingAs($this->owner)->postJson("/tugas/{$this->task->id}/checklist", ['title' => '   '])->assertUnprocessable();
 
     Event::assertDispatched(TaskUpdated::class);
 });
@@ -181,10 +200,11 @@ it('lets Direksi read the detail but not edit', function () {
 });
 
 it('answers 404 (not 500) for checklist lines of a deleted task', function () {
-    $item = $this->actingAs($this->member)->postJson("/tugas/{$this->task->id}/checklist", ['title' => 'Hero section'])->json('item');
+    // The creator stays an editor even after the task is gone.
+    $item = $this->actingAs($this->owner)->postJson("/tugas/{$this->task->id}/checklist", ['title' => 'Hero section'])->json('item');
     $this->task->delete();
 
-    $this->actingAs($this->member)->patchJson("/checklist/{$item['id']}", ['is_done' => true])->assertNotFound();
-    $this->actingAs($this->member)->deleteJson("/checklist/{$item['id']}")->assertNotFound();
-    expect(Gate::forUser($this->member)->inspect('view', ChecklistItem::query()->findOrFail($item['id']))->status())->toBe(404);
+    $this->actingAs($this->owner)->patchJson("/checklist/{$item['id']}", ['is_done' => true])->assertNotFound();
+    $this->actingAs($this->owner)->deleteJson("/checklist/{$item['id']}")->assertNotFound();
+    expect(Gate::forUser($this->owner)->inspect('view', ChecklistItem::query()->findOrFail($item['id']))->status())->toBe(404);
 });

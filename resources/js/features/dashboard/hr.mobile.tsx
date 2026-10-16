@@ -1,3 +1,4 @@
+import { BriefingCard } from '@/features/briefings/briefing-card';
 import { formatLongDate } from '@/lib/format';
 import {
     AttendanceSummaryPanel,
@@ -25,6 +26,8 @@ export function HrMobile({ live, ...props }: HrProps & { live: boolean }) {
             </div>
             <ViewPicker views={props.views} />
             <QuickMinutesButton mobile />
+            {/* Kartu "Catat briefing" (keputusan pemilik 9 Okt 2026). */}
+            <BriefingCard briefing={props.briefing} variant="mobile" />
             <PendingHrPanel pending={props.pending} compact />
             <AttendanceSummaryPanel
                 attendance={props.attendance}

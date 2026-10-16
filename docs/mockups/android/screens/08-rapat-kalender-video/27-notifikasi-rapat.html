@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Notifikasi rapat · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<link rel="stylesheet" href="_rapat.css">
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+<!-- Pemberitahuan dalam aplikasi: rapat dimulai 5 menit lagi (MNotifRapat) — bottom sheet -->
+<div class="phone " style="--h:915px" data-jam="10.25">
+<div class="body">
+<div class="appbar" style="padding-top:20px"><div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Halo, Sari</h1></div></div><div class="rp-pad stack" style="margin-top:8px"><div class="card flush list"><div class="li"><span class="ico teal"><i data-i="circle-dot"></i></span><div class="grow"><div class="t">Susun laporan stok gudang</div><div class="m">PRG-24 · tenggat 17.00</div></div></div><div class="li"><span class="ico"><i data-i="circle"></i></span><div class="grow"><div class="t">Cek kiriman supplier</div><div class="m">dari absen</div></div></div></div></div>
+</div>
+<div class="scrim"></div><div class="sheet"><div class="rp-row"><span class="li"><span class="ico grad"><i data-i="video"></i></span></span><div class="grow"><div class="rp-over" style="color:var(--link)">Mulai 5 menit lagi</div><div class="rp-ttl">Koordinasi peluncuran Q4</div><div class="rp-sub">10.30–11.30 · Google Meet · 6 peserta</div></div><span class="rp-ib sm out"><i data-i="x"></i></span></div>
+   <div class="btn primary block"><i data-i="external-link"></i>Gabung lewat Google Meet</div>
+   <div class="rp-row"><span class="btn tonal grow"><i data-i="timer"></i>Tunda 5 mnt</span><span class="btn outline grow"><i data-i="copy"></i>Salin tautan</span></div>
+   <div class="rp-note">Muncul sendiri mulai 5 menit sebelum rapat sampai selesai, kecuali Anda tutup.</div></div>
+</div>
+<!-- Notifikasi Android muncul di atas layar (heads-up) — rapat video, aksi Gabung -->
+<div class="phone " style="--h:915px" data-jam="08.55">
+<div class="body">
+<div class="appbar" style="padding-top:20px"><div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Halo, Sari</h1></div></div><div class="rp-pad stack" style="margin-top:8px"><div class="card flush list"><div class="li"><span class="ico teal"><i data-i="circle-dot"></i></span><div class="grow"><div class="t">Susun laporan stok gudang</div><div class="m">PRG-24 · tenggat 17.00</div></div></div><div class="li"><span class="ico"><i data-i="circle"></i></span><div class="grow"><div class="t">Cek kiriman supplier</div><div class="m">dari absen</div></div></div></div></div>
+</div>
+<div style="position:absolute;left:10px;right:10px;top:38px;z-index:60"><div class="rp-notif"><div class="hd"><span class="ap"><i data-i="video"></i></span>RuangKerja · Rapat · sekarang<span class="grow"></span><i data-i="chevron-down" data-s="16"></i></div><div class="t">Rapat mingguan Operasional dimulai</div><div class="b">09.00–10.00 · Video RuangKerja · Ruang sudah dibuka</div><div class="ac"><span>Gabung</span><span>Lihat detail</span></div></div></div>
+</div>
+<!-- Bayangan notifikasi: beberapa notifikasi rapat berkelompok -->
+<div class="phone rp-shade" style="--h:915px" data-jam="08.58">
+<div class="body">
+<div style="padding:18px 12px;display:flex;flex-direction:column;gap:10px"><div class="rp-row" style="justify-content:space-between;padding:0 8px"><span class="rp-sub" style="font-size:15px">RuangKerja · 4 notifikasi</span><span class="rp-sub" style="font-weight:700">Hapus semua</span></div>
+   <div class="rp-notif"><div class="hd"><span class="ap"><i data-i="video"></i></span>RuangKerja · Rapat · 09.12<span class="grow"></span><i data-i="chevron-down" data-s="16"></i></div><div class="t">Rapat sudah dimulai — Gabung</div><div class="b">Dimas Pratama memanggil Anda ke Rapat mingguan Operasional · Sel, 13 Okt · 09.00–10.00 WIB</div><div class="ac"><span>Gabung</span><span>Lihat detail</span></div></div>
+   <div class="rp-notif"><div class="hd"><span class="ap"><i data-i="video"></i></span>RuangKerja · Rapat · kemarin<span class="grow"></span><i data-i="chevron-down" data-s="16"></i></div><div class="t">Undangan rapat: Retrospektif gudang</div><div class="b">Dimas mengundang Anda · Jum, 16 Okt · 14.00–15.00 · Video RuangKerja</div></div>
+   <div class="rp-notif"><div class="hd"><span class="ap"><i data-i="video"></i></span>RuangKerja · Notulen · 10.12<span class="grow"></span><i data-i="chevron-down" data-s="16"></i></div><div class="t">Notulen difinalkan: Rapat direksi mingguan</div><div class="b">Sari membagikan notulen · 3 tindak lanjut, 1 untuk Anda</div></div>
+   <div class="rp-notif"><div class="hd"><span class="ap"><i data-i="video"></i></span>RuangKerja · Tindak lanjut · 07.05<span class="grow"></span><i data-i="chevron-down" data-s="16"></i></div><div class="t">Tindak lanjut jatuh tempo besok</div><div class="b">Kirim jadwal servis ke vendor · OPS-156</div><div class="ac"><span>Buka tugas</span></div></div></div>
+</div>
+
+</div>
+<!-- Jadwal berubah / dibatalkan (shade) + toast "Dipanggil" di dalam aplikasi -->
+<div class="phone rp-shade" style="--h:915px" data-jam="08.40">
+<div class="body">
+<div style="padding:18px 12px;display:flex;flex-direction:column;gap:10px">
+   <div class="rp-notif"><div class="hd"><span class="ap"><i data-i="video"></i></span>RuangKerja · Rapat · 08.30<span class="grow"></span><i data-i="chevron-down" data-s="16"></i></div><div class="t">Jadwal rapat berubah: Review vendor logistik</div><div class="b">Pindah ke Rab, 14 Okt · 15.00–16.00. Jawaban kehadiran Anda kembali ke "Belum menjawab".</div><div class="ac"><span>Jawab sekarang</span><span>Lihat detail</span></div></div>
+   <div class="rp-notif"><div class="hd"><span class="ap"><i data-i="video"></i></span>RuangKerja · Rapat · 08.10<span class="grow"></span><i data-i="chevron-down" data-s="16"></i></div><div class="t">Rapat dibatalkan: Demo vendor timbangan</div><div class="b">Kamis, 15 Okt 13.00 dibatalkan oleh Dimas. Notulen yang ada tetap bisa dibaca.</div></div></div>
+</div>
+
+</div>
+<!-- Pengaturan kanal notifikasi Android (sistem): kanal "Rapat" penting -->
+<div class="phone " style="--h:915px" data-jam="08.05">
+<div class="body">
+<div style="padding:12px 4px"><div class="rp-hdr" style="background:transparent;border:0"><button class="rp-ib"><i data-i="arrow-left"></i></button><div class="ttl">Rapat</div></div>
+   <div class="rp-pad stack" style="margin-top:10px"><div class="rp-sub">Notifikasi RuangKerja › kanal Rapat</div>
+   <div class="card flush list"><div class="li"><div class="grow"><div class="t">Tampilkan notifikasi</div></div><span class="switch on"></span></div>
+   <div class="li"><div class="grow"><div class="t">Penting</div><div class="m">Bersuara dan muncul di layar</div></div><i data-i="chevron-right"></i></div>
+   <div class="li"><div class="grow"><div class="t">Getar</div></div><span class="switch on"></span></div>
+   <div class="li"><div class="grow"><div class="t">Tampilkan di layar kunci</div><div class="m">Tanpa isi rapat sensitif</div></div><i data-i="chevron-right"></i></div></div>
+   <div class="rp-note">Kanal lain: Pengingat tugas, Obrolan, Persetujuan, Absensi. Dibuat saat aplikasi pertama dibuka; izin notifikasi Android 13+ diminta sekali.</div></div></div>
+</div>
+
+</div>
+<!-- Pengaturan notifikasi aplikasi: kejadian "Rapat" (in-app, email) -->
+<div class="phone " style="--h:915px" data-jam="08.05">
+<div class="body">
+<div class="rp-hdr"><button class="rp-ib" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Pengaturan notifikasi</div></div><div class="rp-pad stack" style="margin-top:12px">
+   <div class="card"><div class="rp-row" style="margin-bottom:6px"><span class="li"><span class="ico teal"><i data-i="video"></i></span></span><div class="grow"><div class="rp-ttl">Rapat</div><div class="rp-sub">Undangan, pengingat mulai, notulen difinalkan, tindak lanjut jatuh tempo</div></div></div>
+   <div class="rp-row" style="min-height:52px;border-top:1px solid var(--divider)"><div class="grow rp-lbl">Dalam aplikasi & push</div><span class="switch on" style=""></span></div><div class="rp-row" style="min-height:52px;border-top:1px solid var(--divider)"><div class="grow rp-lbl">Email</div><span class="switch on" style=""></span></div><div class="rp-row" style="min-height:52px;border-top:1px solid var(--divider)"><div class="grow rp-lbl">WhatsApp <span class="tag" style="margin-left:6px">Ditahan</span></div><span class="switch " style="opacity:.5"></span></div></div>
+   <div class="rp-note">Pengingat sebelum rapat: 30, 15, atau 5 menit sesuai pengaturan rapat, bukan pengaturan ini.</div></div>
+</div>
+
+</div>
+</div>
+</body>
+</html>

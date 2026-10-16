@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Beranda — keadaan halaman · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+<style>
+.b-multi{display:flex;flex-wrap:wrap;gap:28px 24px;padding:24px;align-items:flex-start}
+.b-multi figure{margin:0;display:flex;flex-direction:column;gap:8px}
+.b-multi figcaption{font:600 14px/20px Figtree,system-ui,sans-serif;color:#1c2b3a;max-width:412px}
+[data-tema="malam"] .b-multi figcaption{color:#cfd9e6}
+.b-padb{padding-bottom:118px}
+.b-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+.b-tag{height:24px;padding:0 8px;border-radius:8px;display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;background:var(--surface-2);color:var(--text-muted);white-space:nowrap}
+.b-tag i{--s:14px}
+.b-tag.info{background:var(--info-soft);color:var(--info)}.b-tag.warn{background:var(--warn-soft);color:var(--warn)}
+.b-tag.bad{background:var(--bad-soft);color:var(--bad)}.b-tag.ok{background:var(--ok-soft);color:var(--ok)}.b-tag.link{background:var(--link-soft);color:var(--link)}
+.b-t2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.b-t3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.b-ann{display:flex;gap:12px;align-items:flex-start;padding:12px 4px 12px 14px;border-radius:20px;background:var(--info-soft);border:1px solid color-mix(in srgb,var(--info) 28%,transparent)}
+.b-ann .ic{width:38px;height:38px;border-radius:12px;background:var(--surface);color:var(--info);display:flex;align-items:center;justify-content:center;flex:none;margin-top:2px}
+.b-ann .tt{font-size:16px;line-height:22px;font-weight:700;color:var(--text)}
+.b-ann .bd{font-size:15px;line-height:21px;color:var(--text);margin-top:2px}
+.b-ann .mt{font-size:13px;line-height:18px;color:var(--text-muted);margin-top:4px}
+.b-ann .x{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);background:transparent;border:0;flex:none;margin-top:-4px}
+.b-link{display:inline-flex;align-items:center;min-height:44px;font-size:15px;font-weight:700;color:var(--link)}
+.b-stat{background:var(--surface-2);border-radius:16px;padding:10px 14px}
+.b-stat .l{font-size:13px;line-height:18px;color:var(--text-muted);font-weight:500}
+.b-stat .v{font-size:28px;line-height:34px;font-weight:700}
+.b-quick{height:52px;border-radius:16px;background:var(--link-soft);color:var(--link);font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent}
+.b-hs{display:flex;gap:10px;overflow:hidden;margin:0 -16px;padding:0 16px}
+.b-hs>.kpi{flex:none;width:164px}
+.b-row2{display:flex;align-items:center;gap:12px}
+.b-bar{height:10px;border-radius:5px;background:var(--surface-2);position:relative;overflow:visible}
+.b-bar>b{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--grad-merek)}
+.b-bar>b.late{background:var(--fill-bad)}.b-bar>b.warn{background:var(--fill-warn)}.b-bar>b.ok{background:var(--fill-teal)}
+.b-bar>i.m{position:absolute;top:-4px;bottom:-4px;width:3px;border-radius:2px;background:var(--text);opacity:.85}
+.b-seg5{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;background:var(--surface-2)}
+.b-seg5>span{display:block;height:100%}
+.b-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.b-leg{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;font-size:14px;line-height:20px;color:var(--text-muted)}
+.b-leg span{display:inline-flex;align-items:center;gap:8px}
+.b-cell{width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex:none}
+.b-cell.ok{background:var(--ok-soft);color:var(--ok)}.b-cell.warn{background:var(--warn-soft);color:var(--warn)}.b-cell.bad{background:var(--bad-soft);color:var(--bad)}
+.b-cell.off{background:var(--surface-2);color:var(--text-subtle)}.b-cell.fut{border:1.5px dashed var(--border-strong);color:var(--text-subtle)}
+.b-pill{height:34px;padding:0 12px;border-radius:17px;background:var(--surface-2);display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--text)}
+.b-fsheet{position:absolute;left:0;right:0;bottom:0;top:84px;z-index:40;border-radius:28px 28px 0 0;background:var(--surface);border:1px solid var(--border);border-bottom:0;box-shadow:var(--shadow-float);display:flex;flex-direction:column}
+.b-fsheet:before{content:"";width:36px;height:4px;border-radius:2px;background:var(--border-strong);align-self:center;margin:10px 0 2px;flex:none}
+.b-fsheet .hd{display:flex;align-items:flex-start;gap:8px;padding:6px 8px 10px 20px;flex:none}
+.b-fsheet .hd .x{width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);border:0;background:var(--surface-2);flex:none}
+.b-fsheet .bd{flex:1;overflow:hidden;padding:4px 20px 16px;display:flex;flex-direction:column;gap:14px}
+.b-fsheet .ft{flex:none;padding:12px 20px 38px;border-top:1px solid var(--border);background:var(--glass);display:flex;flex-direction:column;gap:8px}
+.b-sub{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:14px 16px}
+.b-row-sel{border:2px solid var(--primary);background:var(--link-soft)}
+.b-sw{display:flex;align-items:center;gap:12px;min-height:56px;padding:6px 8px;border-radius:14px}
+.b-wst{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:17px;flex:none}
+.b-offline{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:var(--surface-2);color:var(--text-muted);font-size:14px;line-height:20px;font-weight:600}
+.b-held{border:1.5px dashed var(--border-strong);border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+.b-mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:600}
+.b-day{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:13px;color:var(--text-muted);font-weight:600;width:34px}
+.b-avatar-sm{width:36px;height:36px;font-size:13px}
+.b-underline{display:flex;gap:0;border-bottom:1px solid var(--border);margin:0 -16px;padding:0 16px}
+.b-underline>span{flex:1;height:48px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:var(--text-muted);border-bottom:3px solid transparent;margin-bottom:-1px}
+.b-underline>span.on{color:var(--link);border-bottom-color:var(--primary)}
+.b-step{display:flex;align-items:center;gap:8px}
+.b-step .ibtn{width:44px;height:44px;box-shadow:none}
+.b-step .mid{flex:1;height:44px;border-radius:14px;border:1px solid var(--border-strong);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600}
+.phone .sheet{background:color-mix(in srgb,var(--surface) 95%,transparent)}
+.b-sticky{position:absolute;left:0;right:0;bottom:24px;z-index:20;padding:12px 16px;background:var(--glass);backdrop-filter:blur(24px);border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+</style>
+</head>
+<body>
+<div class="b-multi" style="width:1332px">
+<figure>
+<figcaption>Memuat pertama kali: hero dan kartu tugas berupa kerangka; sapaan dan tanggal tampil dulu (nama dari sesi).</figcaption>
+<div class="phone" style="--h:970px" data-jam="08.05">
+<div class="body"><div class="b-padb">
+<div class="appbar" style="padding-top:20px">
+  <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Halo, Sari</h1></div>
+  <div class="acts">
+    <button class="ibtn" aria-label="Cari"><i data-i="search"></i></button>
+    <button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button>
+  </div>
+</div><div class="pad stack" style="margin-top:8px">
+          <div class="skel" style="height:238px;border-radius:26px"></div>
+          <span class="skel" style="height:24px;width:44%"></span>
+          <div class="skel" style="height:48px;border-radius:16px"></div><div class="card flush list"><div class="li"><span class="skel" style="width:44px;height:44px;border-radius:14px;flex:none"></span><div class="grow" style="display:flex;flex-direction:column;gap:8px"><span class="skel" style="height:16px;width:80%"></span><span class="skel" style="height:12px;width:50%"></span></div><span class="skel" style="width:76px;height:28px;border-radius:14px"></span></div><div class="li"><span class="skel" style="width:44px;height:44px;border-radius:14px;flex:none"></span><div class="grow" style="display:flex;flex-direction:column;gap:8px"><span class="skel" style="height:16px;width:80%"></span><span class="skel" style="height:12px;width:50%"></span></div><span class="skel" style="width:76px;height:28px;border-radius:14px"></span></div><div class="li"><span class="skel" style="width:44px;height:44px;border-radius:14px;flex:none"></span><div class="grow" style="display:flex;flex-direction:column;gap:8px"><span class="skel" style="height:16px;width:80%"></span><span class="skel" style="height:12px;width:50%"></span></div><span class="skel" style="width:76px;height:28px;border-radius:14px"></span></div></div>
+          <div class="skel" style="height:120px;border-radius:24px"></div></div></div></div>
+<nav class="tabbar">
+  <a class="tab on"><i data-i="house"></i>Beranda</a>
+  <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+  <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+  <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+  <a class="tab"><i data-i="menu"></i>Lainnya</a>
+</nav>
+</div>
+</figure>
+<figure>
+<figcaption>Galat penuh (absensi dan tugas sama-sama gagal): kartu galat satu layar dengan pesan dari server atau "Tidak dapat memuat beranda. Periksa koneksi Anda."</figcaption>
+<div class="phone" style="--h:915px" data-jam="08.05">
+<div class="body"><div class="b-padb">
+<div class="appbar" style="padding-top:20px">
+  <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Halo, Sari</h1></div>
+  <div class="acts">
+    <button class="ibtn" aria-label="Cari"><i data-i="search"></i></button>
+    <button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button>
+  </div>
+</div><div class="pad" style="margin-top:24px">
+<div class="empty" style="border-style:solid;border-color:var(--bad-soft);background:var(--surface)">
+  <span class="ic" style="background:var(--bad-soft);color:var(--bad)"><i data-i="triangle-alert" data-s="30"></i></span>
+  <div class="t-title">Tidak dapat memuat beranda</div>
+  <div class="t-meta" style="font-size:15px;line-height:21px">Periksa koneksi Anda lalu coba lagi.</div>
+  <button class="btn outline"><i data-i="refresh-cw"></i>Coba lagi</button>
+</div></div></div></div>
+<nav class="tabbar">
+  <a class="tab on"><i data-i="house"></i>Beranda</a>
+  <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+  <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+  <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+  <a class="tab"><i data-i="menu"></i>Lainnya</a>
+</nav>
+</div>
+</figure>
+<figure>
+<figcaption>Sebagian gagal (Promise.allSettled): absensi dan rapat tampil, kartu info menyatakan tugas gagal; tarik ke bawah untuk mengulang. Briefing yang gagal dimuat disembunyikan diam-diam.</figcaption>
+<div class="phone" style="--h:915px" data-jam="10.20">
+<div class="body"><div class="b-padb">
+<div class="appbar" style="padding-top:20px">
+  <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Halo, Sari</h1></div>
+  <div class="acts">
+    <button class="ibtn" aria-label="Cari"><i data-i="search"></i></button>
+    <button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button>
+  </div>
+</div><div class="pad stack" style="margin-top:8px"><div class="hero stack" style="gap:14px">
+  <div class="row-h sp">
+    <span class="badge nodot" style="background:rgba(255,255,255,.18);color:#fff;height:32px"><i data-i="map-pin" data-s="16"></i>Kantor Pusat</span>
+    <span class="t-meta" style="color:rgba(255,255,255,.88)">Shift 08.00–17.00</span>
+  </div>
+  <div>
+    <div style="font-size:15px;opacity:.92;line-height:20px">Sudah check-in · tepat waktu</div>
+    <div class="t-h1" style="color:#fff;margin-top:2px">Masuk 07.56</div>
+    <div style="font-size:15px;line-height:21px;opacity:.92;margin-top:4px">32 m dari titik lokasi · pulang terjadwal 17.00</div>
+  </div>
+  <button class="btn block" style="background:#fff;color:#0B7F86;height:56px;"><i data-i="log-out"></i>Check-out</button>
+</div>
+          <div class="banner warn"><i data-i="triangle-alert"></i><div>Tugas hari ini gagal dimuat — tarik ke bawah untuk mencoba lagi.</div></div>
+<div class="card tight" style="display:flex;flex-direction:column;gap:6px">
+  <div class="row-h sp"><span class="t-label">Rapat berikutnya</span><span class="badge link">10.00 WIB</span></div>
+  <div class="t-title b-t2" style="font-size:17px">Rapat direksi mingguan</div>
+  <div class="t-meta">Sel, 13 Okt · 10.00–11.00 WIB · Tatap muka · Ruang Rapat Utama</div>
+</div></div></div></div>
+<nav class="tabbar">
+  <a class="tab on"><i data-i="house"></i>Beranda</a>
+  <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+  <a class="tab center" aria-label="Workspace"><i data-i="layout-grid" data-s="28"></i></a>
+  <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+  <a class="tab"><i data-i="menu"></i>Lainnya</a>
+</nav>
+</div>
+</figure>
+<figure>
+<figcaption>Offline: pita keterangan di atas, data terakhir tetap terbaca. Check-in butuh koneksi (antrean offline hanya untuk aplikasi native Fase 3), tombol dinonaktifkan dengan alasan.</figcaption>
+<div class="phone" style="--h:915px" data-jam="07.58">
+<div class="body"><div class="b-padb">
+<div class="appbar" style="padding-top:20px">
+  <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Halo, Sari</h1></div>
+  <div class="acts">
+    <button class="ibtn" aria-label="Cari"><i data-i="search"></i></button>
+    <button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button>
+  </div>
+</div><div class="pad stack" style="margin-top:8px"><div class="b-offline"><i data-i="wifi-off"></i>Tidak ada koneksi · data terakhir 07.55</div>
+          <div class="hero stack" style="gap:14px"><div class="row-h sp"><span class="badge nodot" style="background:rgba(255,255,255,.18);color:#fff;height:32px"><i data-i="map-pin" data-s="16"></i>Kantor Pusat</span><span class="t-meta" style="color:rgba(255,255,255,.88)">Shift 08.00–17.00</span></div>
+          <div><div style="font-size:15px;opacity:.92">Belum check-in hari ini</div><div class="t-h1" style="color:#fff">Siap mulai kerja?</div></div>
+          <button class="btn block off" style="height:56px;background:rgba(255,255,255,.28);color:#fff"><i data-i="wifi-off"></i>Check-in butuh koneksi</button></div>
+          <div class="sect" style=""><h3>Tugas hari ini</h3><a href="#" class="b-link">Kelola tugas</a></div><div class="seg"><span class="on">Pribadi 3</span><span>Tim 4</span><span>Semua 7</span></div><div class="card flush list"><div class="li" style="align-items:flex-start;padding-top:12px;padding-bottom:12px">
+  <span class="ico teal"><i data-i="circle-dot"></i></span>
+  <div class="grow"><div class="t b-t2">Cek kiriman supplier</div><div class="m trunc">SWL-12 · Pribadi</div><div class="b-tags"><span class="b-tag info"><i data-i="fingerprint"></i>dari absen</span><span class="b-tag ">Sedang</span></div></div>
+  <span class="badge link" style="margin-top:2px">Dikerjakan</span>
+</div><div class="li" style="align-items:flex-start;padding-top:12px;padding-bottom:12px">
+  <span class="ico "><i data-i="circle"></i></span>
+  <div class="grow"><div class="t b-t2">Rekap stok opname Kamis</div><div class="m trunc">SWL-9 · Pribadi</div><div class="b-tags"><span class="b-tag info"><i data-i="fingerprint"></i>dari absen</span><span class="b-tag warn">Tinggi</span></div></div>
+  <span class="badge " style="margin-top:2px">Belum mulai</span>
+</div></div></div></div></div>
+<nav class="tabbar">
+  <a class="tab on"><i data-i="house"></i>Beranda</a>
+  <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+  <a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a>
+  <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+  <a class="tab"><i data-i="menu"></i>Lainnya</a>
+</nav>
+</div>
+</figure>
+<figure>
+<figcaption>Tarik untuk menyegarkan: indikator bundar Material di bawah app bar; semua kartu dimuat ulang diam-diam (tanpa kerangka) dan hanya data yang berubah bergeser.</figcaption>
+<div class="phone" style="--h:920px" data-jam="10.22">
+<div class="body"><div class="b-padb">
+<div class="appbar" style="padding-top:20px">
+  <div class="gap8" style="gap:4px"><span class="t-over">Selasa, 13 Oktober</span><h1 class="t-display">Halo, Sari</h1></div>
+  <div class="acts">
+    <button class="ibtn" aria-label="Cari"><i data-i="search"></i></button>
+    <button class="ibtn" aria-label="Inbox"><i data-i="bell"></i><span class="dot">3</span></button>
+  </div>
+</div><div style="display:flex;justify-content:center;margin:2px 0 -4px"><span style="width:44px;height:44px;border-radius:22px;background:var(--surface);box-shadow:var(--shadow-float);display:flex;align-items:center;justify-content:center;color:var(--primary)"><i data-i="refresh-cw"></i></span></div>
+          <div class="pad stack" style="margin-top:8px"><div class="hero stack" style="gap:14px">
+  <div class="row-h sp">
+    <span class="badge nodot" style="background:rgba(255,255,255,.18);color:#fff;height:32px"><i data-i="map-pin" data-s="16"></i>Kantor Pusat</span>
+    <span class="t-meta" style="color:rgba(255,255,255,.88)">Shift 08.00–17.00</span>
+  </div>
+  <div>
+    <div style="font-size:15px;opacity:.92;line-height:20px">Sudah check-in · tepat waktu</div>
+    <div class="t-h1" style="color:#fff;margin-top:2px">Masuk 07.56</div>
+    <div style="font-size:15px;line-height:21px;opacity:.92;margin-top:4px">32 m dari titik lokasi · pulang terjadwal 17.00</div>
+  </div>
+  <button class="btn block" style="background:#fff;color:#0B7F86;height:56px;"><i data-i="log-out"></i>Check-out</button>
+</div><div class="sect" style=""><h3>Tugas hari ini</h3><a href="#" class="b-link">Kelola tugas</a></div><div class="seg"><span class="on">Pribadi 3</span><span>Tim 4</span><span>Semua 7</span></div><div class="card flush list"><div class="li" style="align-items:flex-start;padding-top:12px;padding-bottom:12px">
+  <span class="ico teal"><i data-i="circle-dot"></i></span>
+  <div class="grow"><div class="t b-t2">Cek kiriman supplier</div><div class="m trunc">SWL-12 · Pribadi</div><div class="b-tags"><span class="b-tag info"><i data-i="fingerprint"></i>dari absen</span><span class="b-tag ">Sedang</span></div></div>
+  <span class="badge link" style="margin-top:2px">Dikerjakan</span>
+</div><div class="li" style="align-items:flex-start;padding-top:12px;padding-bottom:12px">
+  <span class="ico "><i data-i="circle"></i></span>
+  <div class="grow"><div class="t b-t2">Rekap stok opname Kamis</div><div class="m trunc">SWL-9 · Pribadi</div><div class="b-tags"><span class="b-tag info"><i data-i="fingerprint"></i>dari absen</span><span class="b-tag warn">Tinggi</span></div></div>
+  <span class="badge " style="margin-top:2px">Belum mulai</span>
+</div></div></div></div></div>
+<nav class="tabbar">
+  <a class="tab on"><i data-i="house"></i>Beranda</a>
+  <a class="tab"><i data-i="square-check-big"></i>Tugas</a>
+  <a class="tab center" aria-label="Workspace"><i data-i="layout-grid" data-s="28"></i></a>
+  <a class="tab"><i data-i="message-circle"></i>Obrolan</a>
+  <a class="tab"><i data-i="menu"></i>Lainnya</a>
+</nav>
+</div>
+</figure>
+</div>
+</body>
+</html>

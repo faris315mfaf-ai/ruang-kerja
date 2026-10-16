@@ -9,6 +9,15 @@ import checkInRoutes from '@/routes/attendance/check-in';
 import checkOutRoutes from '@/routes/attendance/check-out';
 import consentRoutes from '@/routes/attendance/consent';
 import { captureVideoFrame, compressFile } from '@/lib/image';
+import { isWindowRejection } from './windows';
+import {
+    POINTS_COPY,
+    pointsKindFor,
+    pointsServerError,
+    submitProblems,
+    workPoints,
+} from './work-points';
+import type { CheckType, PointsKind } from './work-points';
 import type {
     AttendanceConsentState,
     CheckMethod,
@@ -17,7 +26,7 @@ import type {
     TodayAttendance,
 } from '@/types/attendance';
 
-export type CheckType = 'in' | 'out';
+export type { CheckType };
 
 export type CheckStep =
     | 'idle'
@@ -103,10 +112,16 @@ export function toRejection(status: number | null, raw = ''): CheckRejection {
 
     if (status === 422 && body.errors) {
         const first = Object.values(body.errors)[0]?.[0];
+        const errors = Object.fromEntries(
+            Object.entries(body.errors)
+                .filter(([, messages]) => messages.length > 0)
+                .map(([field, messages]) => [field, messages[0]]),
+        );
 
         return {
             reason: 'validation',
             message: first ?? body.message ?? 'Data tidak valid.',
+            errors,
             context: {},
         };
     }
@@ -149,25 +164,6 @@ export function rejectionFromError(error: unknown): CheckRejection {
 }
 
 /**
- * The day's work plan is required at check-in (owner decision 8 Oct 2026):
- * it rides to the management WhatsApp group with the check-in copy.
- */
-export function planRejection(type: CheckType, plan: string[]): string | null {
-    if (type !== 'in') {
-        return null;
-    }
-
-    return plan.every((point) => point.trim() === '')
-        ? 'Tulis minimal satu poin rencana kerja hari ini — ikut terkirim ke grup manajemen.'
-        : null;
-}
-
-/** Only trimmed, non-empty points are sent (blank rows are dropped). */
-export function planPoints(plan: readonly string[]): string[] {
-    return plan.map((point) => point.trim()).filter((point) => point !== '');
-}
-
-/**
  * Shared check-in/out state machine for the mobile screens and the desktop
  * dialog (docs/PLATFORM.md §5 rule 2): consent → selfie → review → submit →
  * success/failure. Location is read in parallel with the camera.
@@ -183,8 +179,19 @@ export function useCheckFlow(
     const [photo, setPhoto] = useState<CapturedPhoto | null>(null);
     const [note, setNote] = useState('');
     const [noteError, setNoteError] = useState<string | null>(null);
-    const [plan, setPlan] = useState<string[]>(['']);
-    const [planError, setPlanError] = useState<string | null>(null);
+    // One draft per kind: the morning plan must not leak into the evening report.
+    const [drafts, setDrafts] = useState<Record<PointsKind, string[]>>({
+        plan: [''],
+        report: [''],
+    });
+    const [pointsError, setPointsError] = useState<string | null>(null);
+    const pointsKind = pointsKindFor(type);
+    const points = drafts[pointsKind];
+    const setPoints = useCallback(
+        (next: string[]) =>
+            setDrafts((current) => ({ ...current, [pointsKind]: next })),
+        [pointsKind],
+    );
     const [result, setResult] = useState<CheckResult | null>(null);
     const [rejection, setRejection] = useState<CheckRejection | null>(null);
     const [progress, setProgress] = useState(0);
@@ -257,6 +264,7 @@ export function useCheckFlow(
             setRejection(null);
             setNote('');
             setNoteError(null);
+            setPointsError(null);
             replacePhoto(null);
 
             if (!consent.granted) {
@@ -328,24 +336,15 @@ export function useCheckFlow(
             return;
         }
 
-        const planProblem = planRejection(type, plan);
+        const problems = submitProblems({ type, points, isRemote, note });
 
-        if (planProblem) {
-            setPlanError(planProblem);
+        setPointsError(problems.points);
+        setNoteError(problems.note);
 
+        if (problems.points || problems.note) {
             return;
         }
 
-        if (isRemote && note.trim() === '') {
-            setNoteError(
-                'Tulis catatan lokasi atau aktivitas untuk check-in di luar kantor.',
-            );
-
-            return;
-        }
-
-        setPlanError(null);
-        setNoteError(null);
         setStep('submitting');
         setProgress(0);
 
@@ -378,8 +377,10 @@ export function useCheckFlow(
             form.append('note', note.trim());
         }
 
-        for (const point of planPoints(plan)) {
-            form.append('work_plan[]', point);
+        // Check-in sends the plan, check-out the report (`work_plan` /
+        // `work_report`, docs/sesi/ponsel-b5-absensi-laporan-jendela.md §A).
+        for (const point of workPoints(points)) {
+            form.append(`${POINTS_COPY[pointsKind].field}[]`, point);
         }
 
         try {
@@ -394,9 +395,18 @@ export function useCheckFlow(
             const body = JSON.parse(response.data) as { result: CheckResult };
             setResult(body.result);
             setStep('success');
+            setDrafts((current) => ({ ...current, [pointsKind]: [''] }));
             router.reload({ only: RELOAD_ONLY });
         } catch (error) {
             const next = rejectionFromError(error);
+            const serverPointsError = pointsServerError(next, type);
+
+            if (serverPointsError) {
+                setPointsError(serverPointsError);
+                setStep('review');
+
+                return;
+            }
 
             if (next.reason === 'note_required') {
                 setNoteError(next.message);
@@ -411,10 +421,15 @@ export function useCheckFlow(
                 return;
             }
 
+            if (isWindowRejection(next.reason)) {
+                // The page's action must now read "ditutup/belum dibuka".
+                router.reload({ only: RELOAD_ONLY });
+            }
+
             setRejection(next);
             setStep('failure');
         }
-    }, [geo, isRemote, note, photo, plan, type]);
+    }, [geo, isRemote, note, photo, points, pointsKind, type]);
 
     /** A kiosk code was read: send it with the GPS position when available. */
     const submitQr = useCallback(
@@ -469,6 +484,10 @@ export function useCheckFlow(
                     return;
                 }
 
+                if (isWindowRejection(next.reason)) {
+                    router.reload({ only: RELOAD_ONLY });
+                }
+
                 setRejection(next);
                 setStep('failure');
             }
@@ -507,9 +526,10 @@ export function useCheckFlow(
         note,
         setNote,
         noteError,
-        plan,
-        setPlan,
-        planError,
+        pointsKind,
+        points,
+        setPoints,
+        pointsError,
         result,
         rejection,
         progress,

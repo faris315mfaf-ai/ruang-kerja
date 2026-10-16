@@ -2,6 +2,7 @@
 
 namespace App\Domain\Auth\Services;
 
+use App\Domain\Devices\Models\Device;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -14,7 +15,9 @@ use Illuminate\Support\Str;
  *   remember-me cookies embed it too, so the new hash already invalidates them
  *   on their next request;
  * - the remember token is rotated as well (call before saving the user);
- * - with the database session driver the rows are deleted right away.
+ * - with the database session driver the rows are deleted right away;
+ * - mobile app sign-ins (Sanctum tokens, one per installation) are revoked
+ *   and the installations stop receiving pushes until they sign in again.
  */
 final class SessionTerminator
 {
@@ -35,5 +38,28 @@ final class SessionTerminator
             ->table(config()->string('session.table', 'sessions'))
             ->where('user_id', $user->id)
             ->delete();
+    }
+
+    /**
+     * Revokes every API token of the user (the app answers 401 and returns to
+     * the login screen) and clears the push tokens of their installations, so
+     * a signed-out phone no longer receives notifications. The device rows stay
+     * ("Perangkat saya"); signing in again refreshes them.
+     *
+     * With `$except` (the installation that just changed its own password
+     * through the app) that installation keeps its token and push token.
+     */
+    public function revokeApiTokens(User $user, ?Device $except = null): void
+    {
+        $tokens = $user->tokens();
+        $devices = Device::query()->where('user_id', $user->id)->whereNotNull('push_token');
+
+        if ($except !== null) {
+            $tokens->where('name', '!=', Device::sanctumTokenName($except->id));
+            $devices->whereKeyNot($except->id);
+        }
+
+        $tokens->delete();
+        $devices->update(['push_token' => null]);
     }
 }

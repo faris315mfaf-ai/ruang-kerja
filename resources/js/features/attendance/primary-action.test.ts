@@ -22,6 +22,10 @@ const today = (overrides: Partial<TodayAttendance> = {}): TodayAttendance => ({
         workModeLabel: 'Kantor',
         allowsRemote: false,
     },
+    windows: { checkIn: null, checkOut: null },
+    windowsApply: true,
+    checkInBlocked: null,
+    checkOutBlockedReason: null,
     ...overrides,
 });
 
@@ -53,5 +57,66 @@ describe('primaryAction', () => {
         expect(
             primaryAction(today({ action: 'done' }), new Date()).disabled,
         ).toBe(true);
+    });
+
+    it('names the company hours when check-in is not open yet', () => {
+        expect(
+            primaryAction(
+                today({
+                    checkInBlocked: {
+                        code: 'too_early',
+                        message:
+                            'Absen masuk dibuka pukul 06.00 dan ditutup pukul 12.00.',
+                        opensAt: '2026-10-04T23:00:00Z',
+                    },
+                }),
+                new Date('2026-10-05T00:52:00Z'),
+            ),
+        ).toEqual({
+            label: 'Check-in dibuka pukul 06.00',
+            type: null,
+            disabled: true,
+            notice: 'Absen masuk dibuka pukul 06.00 dan ditutup pukul 12.00.',
+        });
+    });
+
+    it('closes check-in after the hours', () => {
+        const action = primaryAction(
+            today({
+                checkInBlocked: {
+                    code: 'window_closed',
+                    message: 'Absen masuk ditutup pukul 12.00.',
+                    opensAt: null,
+                },
+            }),
+            new Date('2026-10-05T06:00:00Z'),
+        );
+
+        expect(action).toMatchObject({
+            label: 'Check-in sudah ditutup',
+            type: null,
+            disabled: true,
+            notice: 'Absen masuk ditutup pukul 12.00.',
+        });
+    });
+
+    it('shows the server reason instead of a check-out outside the hours', () => {
+        const action = primaryAction(
+            today({
+                action: 'check_out',
+                checkOutBlockedReason: 'Absen pulang dibuka pukul 15.00.',
+            }),
+            new Date('2026-10-05T04:00:00Z'),
+        );
+
+        expect(action.type).toBeNull();
+        expect(action.disabled).toBe(true);
+        expect(action.notice).toBe('Absen pulang dibuka pukul 15.00.');
+    });
+
+    it('keeps the check-out open when nothing blocks it', () => {
+        expect(
+            primaryAction(today({ action: 'check_out' }), new Date()),
+        ).toMatchObject({ type: 'out', disabled: false });
     });
 });

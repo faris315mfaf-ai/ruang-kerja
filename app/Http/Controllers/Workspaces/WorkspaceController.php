@@ -3,18 +3,16 @@
 namespace App\Http\Controllers\Workspaces;
 
 use App\Domain\Hiring\Queries\HiringOverview;
-use App\Domain\Organization\Enums\Permission;
-use App\Domain\Organization\Enums\Role;
 use App\Domain\Tasks\Enums\TaskStatusCategory;
 use App\Domain\Workspaces\Actions\CreateWorkspace;
 use App\Domain\Workspaces\Actions\UpdateWorkspace;
 use App\Domain\Workspaces\Enums\WorkspaceGroup;
 use App\Domain\Workspaces\Enums\WorkspaceType;
+use App\Domain\Workspaces\Queries\LinkableTeams;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Workspaces\StoreWorkspaceRequest;
 use App\Http\Requests\Workspaces\UpdateWorkspaceRequest;
 use App\Http\Resources\WorkspaceResource;
-use App\Models\Team;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -64,7 +62,7 @@ class WorkspaceController extends Controller
                 'team' => Gate::allows('create', [Workspace::class, WorkspaceType::Team]),
                 'project' => Gate::allows('create', [Workspace::class, WorkspaceType::Project]),
             ],
-            'teams' => fn (): array => $this->linkableTeams($user),
+            'teams' => fn (): array => app(LinkableTeams::class)->for($user),
             // The Hiring space as a special card (null without access; docs/fitur/hiring.md).
             'hiring' => fn (): ?array => app(HiringOverview::class)->card($user),
         ]);
@@ -76,7 +74,7 @@ class WorkspaceController extends Controller
 
         Gate::authorize('create', [Workspace::class, $payload['type']]);
 
-        if ($payload['team_id'] !== null && ! in_array($payload['team_id'], array_column($this->linkableTeams($user), 'id'), true)) {
+        if ($payload['team_id'] !== null && ! in_array($payload['team_id'], array_column(app(LinkableTeams::class)->for($user), 'id'), true)) {
             $payload['team_id'] = null;
         }
 
@@ -96,28 +94,5 @@ class WorkspaceController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Perubahan disimpan.']);
 
         return to_route('workspaces.settings', $workspace);
-    }
-
-    /**
-     * Teams a team workspace may be linked to (member sync): Super Admin → all,
-     * Kepala Divisi → teams of the divisions they lead, Ketua Tim → own teams.
-     *
-     * @return list<array{id: string, name: string}>
-     */
-    private function linkableTeams(User $user): array
-    {
-        $query = Team::query()->visibleTo($user)->orderBy('name');
-
-        if (! $user->hasPermission(Permission::WorkspacesManage)) {
-            $divisionIds = $user->hasRole(Role::KepalaDivisi) ? $user->ledDivisionIds() : [];
-
-            $query->where(fn (Builder $scope) => $scope
-                ->where('lead_user_id', $user->id)
-                ->when($divisionIds !== [], fn (Builder $led) => $led->orWhereIn('division_id', $divisionIds)));
-        }
-
-        return array_values($query->get(['id', 'name'])
-            ->map(fn (Team $team): array => ['id' => $team->id, 'name' => $team->name])
-            ->all());
     }
 }

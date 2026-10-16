@@ -9,6 +9,7 @@ use App\Domain\Requests\Enums\RequestStatus;
 use App\Domain\Requests\Services\ApprovedCancellationPreview;
 use App\Domain\Requests\Services\BalanceLedger;
 use App\Domain\Requests\Services\ColleagueAbsences;
+use App\Domain\Requests\Services\SubmissionCutoff;
 use App\Models\Attachment;
 use App\Models\EmployeeRequest;
 use App\Models\LeaveBalance;
@@ -65,6 +66,8 @@ final class RequestPresenter
             'is_provisional_default' => $type->is_provisional_default,
             'locked' => $type->isLocked(),
             'locked_reason' => $type->isLocked() ? $type->locked_reason : null,
+            // Batas pengajuan di hari-H (keputusan pemilik 14 Okt 2026); the server clock decides `submit_closed_today`.
+            ...app(SubmissionCutoff::class)->hints($type),
         ];
     }
 

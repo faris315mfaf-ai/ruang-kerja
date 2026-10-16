@@ -1,0 +1,65 @@
+/**
+ * Menyambungkan siklus sesi ke modul offline. Dipanggil `SessionProvider`:
+ *
+ *  - `mulaiSesiOffline(uid)` — sesi aktif (dipulihkan dari SecureStore, atau baru
+ *    masuk): cache baca langsung aktif untuk `uid` (sinkron, supaya permintaan
+ *    pertama sudah bisa memakainya); basis data dibuka & antrean dimuat sesudah
+ *    interaksi awal selesai (jalur buka dingin tetap ringan).
+ *  - `akhiriSesiOffline('keluar' | 'akun_nonaktif')` — keluar akun disengaja atau
+ *    akun dinonaktifkan: hapus SEMUA data offline (cache, antrean, berkas).
+ *  - `akhiriSesiOffline('sesi_berakhir')` — 401: hapus cache baca, tetapi antrean
+ *    perubahan yang belum terkirim dipertahankan agar bisa dikirim setelah
+ *    masuk ulang dengan akun yang sama (item akun lain dibuang saat sesi berikut).
+ *
+ * Sinkron latar belakang (`latar.ts`) didaftarkan saat sesi aktif dan dibatalkan
+ * pada setiap akhir sesi (tanpa sesi, task tidak punya pekerjaan).
+ */
+import { InteractionManager } from 'react-native';
+
+import { bersihSemuaBasi } from './basi';
+import { aturPenggunaCache, hapusCache, hapusCacheSelain } from './cache';
+import { kosongkanSemua } from './db';
+import { hentikanAntrean, mulaiAntrean } from './antrean';
+import { batalkanSinkronLatar, daftarkanSinkronLatar } from './latar';
+import { hapusTandaSesiDitolak } from './latarMeta';
+import { jadwalkanSegarkanWidget, segarkanWidgetKeluar } from '@/widget/penyegar';
+
+export type AlasanAkhirSesi = 'keluar' | 'akun_nonaktif' | 'sesi_berakhir';
+
+export function mulaiSesiOffline(uid: string): void {
+  aturPenggunaCache(uid);
+  void InteractionManager.runAfterInteractions(() => {
+    void hapusCacheSelain(uid).catch(() => undefined);
+    void mulaiAntrean(uid).catch(() => undefined);
+    // Sesi dimulai ulang di aplikasi (401 ditangani di sini): task latar boleh mencoba lagi.
+    void hapusTandaSesiDitolak(uid)
+      .catch(() => undefined)
+      .then(() => daftarkanSinkronLatar())
+      .catch(() => undefined);
+    // Widget layar utama keluar dari "Masuk dulu" dan memuat data akun ini.
+    jadwalkanSegarkanWidget(undefined, 2000);
+    // Panaskan cache form "Tugas baru" sejak sesi mulai (bukan hanya saat tab Tugas dibuka)
+    // supaya tugas bisa dibuat offline walau tab Tugas belum pernah dikunjungi.
+    setTimeout(() => {
+      void import('@/features/tugas/hangat').then((m) => m.hangatkanFormTugas()).catch(() => undefined);
+    }, 3000);
+  });
+}
+
+export async function akhiriSesiOffline(alasan: AlasanAkhirSesi): Promise<void> {
+  aturPenggunaCache(null);
+  bersihSemuaBasi();
+  hentikanAntrean();
+  void batalkanSinkronLatar().catch(() => undefined);
+  // Widget layar utama kembali ke "Masuk dulu" (tanpa memuat data).
+  segarkanWidgetKeluar();
+  try {
+    if (alasan === 'sesi_berakhir') {
+      await hapusCache();
+    } else {
+      await kosongkanSemua();
+    }
+  } catch {
+    // Penghapusan terbaik-usaha; data tetap terpartisi per pengguna & terenkripsi.
+  }
+}

@@ -1,0 +1,81 @@
+/* Modul 01 · Akses, akun & pengaturan — gaya lokal (prefiks ak-). Warna hanya dari token kit. */
+.phone.ak-aurora{background:
+  radial-gradient(420px 360px at 0% 0%,color-mix(in srgb,var(--fill-teal) 55%,transparent),transparent 70%),
+  radial-gradient(420px 360px at 100% 30%,color-mix(in srgb,var(--blue) 55%,transparent),transparent 70%),
+  radial-gradient(360px 300px at 50% 100%,color-mix(in srgb,var(--fill-violet) 45%,transparent),transparent 70%),
+  var(--bg)}
+.ak-col{height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:28px 24px 24px;gap:20px}
+.ak-col.kb{padding-bottom:312px;justify-content:flex-start;gap:18px}
+.ak-form{display:flex;flex-direction:column;gap:14px}
+.ak-foot{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:4px}
+.ak-logo{display:inline-flex;align-items:center;justify-content:center;background:var(--grad-merek);color:#fff;box-shadow:var(--shadow-btn);flex:none}
+.ak-link{font-size:15px;line-height:20px;font-weight:600;color:var(--link);text-decoration:none;display:inline-flex;align-items:center;min-height:24px}
+.ak-over{font-size:14px;line-height:20px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);padding:0 4px}
+.ak-pw{letter-spacing:.12em}
+.ak-eye{width:40px;height:40px;margin-right:-8px;display:inline-flex;align-items:center;justify-content:center;color:var(--text-subtle)}
+.ak-caret{display:inline-block;width:2px;height:22px;background:var(--primary);vertical-align:middle;margin-left:1px}
+.ak-btn{height:56px}
+.ak-kbd{position:absolute;left:0;right:0;bottom:0;height:300px;z-index:55;background:var(--surface-2);border-top:1px solid var(--border);padding:6px 4px 28px;display:flex;flex-direction:column;gap:8px}
+.ak-sugg{display:flex;height:40px;align-items:center}
+.ak-sugg span{flex:1;text-align:center;font-size:16px;color:var(--text);border-right:1px solid var(--border);line-height:40px}
+.ak-sugg span:last-child{border:0}
+.ak-krow{display:flex;gap:5px;justify-content:center}
+.ak-krow.in{padding:0 18px}
+.ak-key{flex:1;height:48px;border-radius:9px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--text);box-shadow:0 1px 0 var(--border-strong)}
+.ak-key.w15{flex:1.5;background:var(--border)}
+.ak-key.sp{flex:5;font-size:14px;color:var(--text-muted)}
+.ak-key.go{background:var(--primary);color:var(--primary-fg)}
+.ico-lg{width:52px;height:52px;border-radius:18px;display:inline-flex;align-items:center;justify-content:center;background:var(--link-soft);color:var(--link)}
+.ico-lg.warn{background:var(--warn-soft);color:var(--warn)}.ico-lg.bad{background:var(--bad-soft);color:var(--bad)}
+.ico-lg.ok{background:var(--ok-soft);color:var(--ok)}.ico-lg.info{background:var(--info-soft);color:var(--info)}
+.ico-xl{width:84px;height:84px;border-radius:28px;display:inline-flex;align-items:center;justify-content:center;background:var(--grad-soft);color:var(--link)}
+.ico-xl.warn{background:var(--warn-soft);color:var(--warn)}.ico-xl.bad{background:var(--bad-soft);color:var(--bad)}
+.ico-xl.ok{background:var(--ok-soft);color:var(--ok)}.ico-xl.info{background:var(--info-soft);color:var(--info)}
+.ak-center{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;padding:24px 28px}
+.ak-center .acts{width:100%;display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.ak-steps{width:100%;text-align:left;display:flex;flex-direction:column;gap:12px}
+.ak-step{display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:21px}
+.ak-step b{flex:none;width:26px;height:26px;border-radius:13px;background:var(--link-soft);color:var(--link);font-size:13px;display:inline-flex;align-items:center;justify-content:center}
+.ak-idcard{display:flex;align-items:center;gap:14px;border-radius:24px;padding:18px;color:#fff;background:radial-gradient(240px 180px at 100% 0%,rgba(255,255,255,.24),transparent 70%),var(--grad-aksi);box-shadow:0 16px 36px rgba(30,95,214,.28)}
+.ak-idcard .ak-av{width:56px;height:56px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;flex:none}
+.ak-idcard .ak-nm{font-size:19px;line-height:26px;font-weight:800}
+.ak-idcard .ak-sbt{font-size:15px;line-height:21px;opacity:.92}
+.ak-idcard.lg .ak-av{width:72px;height:72px;font-size:25px}
+.ak-kvs{display:flex;flex-direction:column}
+.ak-kv{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid var(--divider);font-size:16px;line-height:22px}
+.ak-kv:first-child{border-top:0}
+.ak-kv .k{color:var(--text-muted);flex:none}.ak-kv .v{text-align:right;font-weight:600;min-width:0}
+.ak-opt{display:flex;align-items:center;gap:14px;min-height:60px;padding:10px 16px;border-top:1px solid var(--divider)}
+.ak-opt:first-child{border-top:0}
+.ak-opt .t{font-size:17px;line-height:24px;font-weight:600}.ak-opt .m{font-size:14px;line-height:20px;color:var(--text-muted)}
+.ak-themes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ak-theme{border:1px solid var(--border);border-radius:18px;padding:8px;background:var(--surface);display:flex;flex-direction:column;gap:8px;font-size:15px;font-weight:700;text-align:center}
+.ak-theme.on{border:2px solid var(--primary);padding:7px}
+.ak-sw{height:72px;border-radius:12px;border:1px solid var(--border);display:flex;overflow:hidden}
+.ak-sw i{flex:1;display:block}
+.ak-sw .l{background:#F3F6FA}.ak-sw .d{background:#070B14}
+.ak-sysdlg{position:absolute;left:28px;right:28px;top:50%;transform:translateY(-50%);z-index:45;background:var(--surface);border-radius:28px;padding:24px 20px 16px;box-shadow:var(--shadow-float);display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;border:1px solid var(--border)}
+.ak-sysdlg .sbtn{width:100%;height:48px;border-radius:24px;background:var(--surface-2);color:var(--link);font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;border:0}
+.ak-bio{position:absolute;left:12px;right:12px;bottom:36px;z-index:45;background:var(--surface);border-radius:28px;padding:24px 20px 14px;box-shadow:var(--shadow-float);display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;border:1px solid var(--border)}
+.ak-bio .fp{width:72px;height:72px;border-radius:36px;background:var(--link-soft);color:var(--link);display:flex;align-items:center;justify-content:center;margin:14px 0 6px}
+.ak-bio .fp.bad{background:var(--bad-soft);color:var(--bad)}
+.ak-bio .acts{align-self:stretch;display:flex;justify-content:space-between;margin-top:10px}
+.ak-ring{width:112px;height:112px;border-radius:56px;background:var(--grad-merek);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-btn)}
+.ak-ring.bad{background:var(--grad-hangat)}.ak-ring.off{background:rgba(255,255,255,.14);color:var(--text-muted);box-shadow:none}
+.ak-otp{display:flex;gap:10px;justify-content:center}
+.ak-otp span{width:48px;height:60px;border-radius:14px;border:1px solid var(--border-strong);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700}
+.ak-otp span.f{border-color:var(--primary);box-shadow:0 0 0 4px var(--ring)}
+.ak-skeleton-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-top:1px solid var(--divider)}
+.ak-skeleton-row:first-child{border-top:0}
+.ak-blur{filter:blur(2px);opacity:.55}
+.ak-count{font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:600}
+.ak-pill{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:16px;background:rgba(255,255,255,.14);font-size:14px;font-weight:600}
+.ak-fixed-bar{position:absolute;left:0;right:0;bottom:24px;z-index:20;padding:12px 16px;background:var(--glass);backdrop-filter:blur(24px);border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.ak-bar2{display:flex;gap:10px}
+.ak-bar2>.btn{flex:1}
+.ak-chip-sm{height:26px;padding:0 9px;border-radius:13px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px;background:var(--surface-2);color:var(--text-muted)}
+.ak-cap{font-size:14px;line-height:20px;color:var(--text-muted)}
+.ak-prose h2{font-size:20px;line-height:26px;margin:22px 0 8px;font-weight:700}
+.ak-prose p,.ak-prose li{font-size:16px;line-height:25px;margin:0 0 10px;color:var(--text)}
+.ak-prose ul{padding-left:20px;margin:0 0 10px}
+.ak-prose strong{font-weight:700}

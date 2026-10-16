@@ -98,11 +98,31 @@ class RequestController extends Controller
         Gate::authorize('create', EmployeeRequest::class);
 
         $wanted = RequestCategory::fromSlug(is_string($http->query('kategori')) ? $http->query('kategori') : null) ?? RequestCategory::Leave;
+        // Deep link of "Tidak masuk? Ajukan sakit / izin": ?jenis=SKT&tanggal=YYYY-MM-DD.
+        $preset = self::presetType($http, $user);
+
+        if ($preset !== null) {
+            $wanted = $preset->category;
+        }
+
+        $initial = ['category' => self::openCategory($user, $wanted)];
+        $date = $http->query('tanggal');
+
+        if ($preset !== null && $initial['category'] === $preset->category->value) {
+            $initial['leave_type_id'] = $preset->id;
+
+            if (is_string($date) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) === 1 && strtotime($date) !== false) {
+                $initial += ['start_date' => $date, 'end_date' => $date, 'date' => $date];
+            }
+
+            // The link sets the form: an older device copy must not replace it.
+            $initial['from_link'] = true;
+        }
 
         return Inertia::render('requests/form', [
             ...$this->formProps($user),
             'request' => null,
-            'initial' => ['category' => self::openCategory($user, $wanted)],
+            'initial' => $initial,
         ]);
     }
 
@@ -222,6 +242,23 @@ class RequestController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => "Pengajuan {$request->number} terkirim{$to}."]);
 
         return to_route('requests.index', ['pilih' => $request->id]);
+    }
+
+    /**
+     * The type named by ?jenis= (code or id) when the caller can request it now.
+     */
+    private static function presetType(Request $http, User $user): ?LeaveType
+    {
+        $jenis = $http->query('jenis');
+
+        if (! is_string($jenis) || $jenis === '') {
+            return null;
+        }
+
+        return LeaveType::query()->visibleTo($user)->active()->whereNull('locked_reason')
+            ->where(fn (Builder $query) => $query->where('code', mb_strtoupper($jenis))->orWhere('id', $jenis))
+            ->get()
+            ->first(fn (LeaveType $type): bool => $type->isEligible($user));
     }
 
     /**

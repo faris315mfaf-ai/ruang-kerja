@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
     chatUnread: 0,
     keyboardOpen: false,
     attendanceStatus: null as null | Record<string, unknown>,
+    workspaces: [] as Array<Record<string, unknown>>,
     finish: [] as Array<() => void>,
 }));
 
@@ -19,6 +20,8 @@ vi.mock('@inertiajs/react', () => ({
             features: { prototype: false, chat: state.chat },
             chatUnread: state.chatUnread,
             attendanceStatus: state.attendanceStatus,
+            workspaces: state.workspaces,
+            auth: { user: { name: 'Andi Pratama' }, roles: ['anggota'] },
         },
     }),
     router: {
@@ -161,11 +164,12 @@ describe('TabBar (dock capsule)', () => {
     });
 });
 
-describe('TabBar tombol Absen kontekstual', () => {
+describe('TabBar tombol tengah kontekstual', () => {
     afterEach(() => {
         cleanup();
         state.url = '/dashboard';
         state.attendanceStatus = null;
+        state.workspaces = [];
     });
 
     it('keeps Absen before the morning check-in', () => {
@@ -180,7 +184,7 @@ describe('TabBar tombol Absen kontekstual', () => {
         ).toEqual(['Beranda', 'Tugas', 'Absen', 'Obrolan', 'Lainnya']);
     });
 
-    it('shrinks to four tabs after the check-in until one hour before the shift ends', () => {
+    it('becomes Workspace between the check-in and one hour before the shift ends', () => {
         state.attendanceStatus = {
             action: 'check_out',
             end: new Date(Date.now() + 3 * 60 * 60_000).toISOString(),
@@ -190,6 +194,9 @@ describe('TabBar tombol Absen kontekstual', () => {
         expect(
             screen.getAllByRole('link').map((link) => link.textContent),
         ).toEqual(['Beranda', 'Tugas', 'Obrolan', 'Lainnya']);
+        const workspace = screen.getByRole('button', { name: 'Workspace' });
+        expect(workspace.hasAttribute('data-tab-center')).toBe(true);
+        expect(workspace.getAttribute('aria-haspopup')).toBe('dialog');
     });
 
     it('brings Absen back an hour before the shift ends', () => {
@@ -202,10 +209,93 @@ describe('TabBar tombol Absen kontekstual', () => {
         expect(screen.getByRole('link', { name: 'Absen' })).toBeTruthy();
     });
 
-    it('stays four tabs after the check-out', () => {
+    it('flips back to Absen at end − 60 min without a prop change', () => {
+        vi.useFakeTimers();
+
+        try {
+            state.attendanceStatus = {
+                action: 'check_out',
+                end: new Date(Date.now() + 61 * 60_000).toISOString(),
+            };
+            render(<TabBar />);
+            expect(
+                screen.getByRole('button', { name: 'Workspace' }),
+            ).toBeTruthy();
+
+            act(() => {
+                vi.advanceTimersByTime(61_000);
+            });
+
+            expect(screen.getByRole('link', { name: 'Absen' })).toBeTruthy();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('marks the Workspace button current on workspace pages', () => {
+        state.url = '/w/OPS';
         state.attendanceStatus = { action: 'done', end: null };
         render(<TabBar />);
 
+        expect(
+            screen
+                .getByRole('button', { name: 'Workspace' })
+                .getAttribute('aria-current'),
+        ).toBe('page');
+    });
+
+    it('stays Workspace after the check-out', () => {
+        state.attendanceStatus = { action: 'done', end: null };
+        render(<TabBar />);
+
+        expect(screen.getByRole('button', { name: 'Workspace' })).toBeTruthy();
         expect(screen.queryByRole('link', { name: 'Absen' })).toBeNull();
+    });
+
+    it('keeps Absen when the attendance status is unknown', () => {
+        state.attendanceStatus = null;
+        render(<TabBar />);
+
+        expect(screen.getByRole('link', { name: 'Absen' })).toBeTruthy();
+    });
+
+    it('opens the workspace picker sheet grouped Pribadi · Tim · Proyek', () => {
+        state.attendanceStatus = { action: 'done', end: null };
+        state.workspaces = [
+            {
+                id: 'w1',
+                key: 'AND',
+                name: 'Pribadi Andi',
+                type: 'personal',
+                color: 'gray',
+                favorite: false,
+                is_member: true,
+            },
+            {
+                id: 'w2',
+                key: 'TMH',
+                name: 'Tim Produk',
+                type: 'team',
+                color: 'teal',
+                favorite: false,
+                is_member: true,
+            },
+        ];
+        render(<TabBar />);
+
+        expect(screen.queryByRole('dialog')).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Workspace' }));
+
+        expect(screen.getByRole('dialog')).toBeTruthy();
+        expect(
+            screen.getByRole('heading', { name: 'Pilih workspace' }),
+        ).toBeTruthy();
+        expect(screen.getByRole('heading', { name: 'Pribadi' })).toBeTruthy();
+        expect(screen.getByRole('heading', { name: 'Tim' })).toBeTruthy();
+        expect(screen.getByRole('heading', { name: 'Proyek' })).toBeTruthy();
+        expect(screen.getByText('Tim Produk')).toBeTruthy();
+
+        const item = screen.getByRole('link', { name: /Tim Produk/ });
+        expect(item.getAttribute('href')).toBe('/w/TMH');
     });
 });

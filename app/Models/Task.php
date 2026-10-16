@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Tasks\Enums\TaskPriority;
+use App\Domain\Tasks\Enums\TaskSource;
 use App\Domain\Tasks\Enums\TaskStatusCategory;
 use App\Domain\Workspaces\Contracts\HasWorkspaceAttachments;
 use Carbon\CarbonImmutable;
@@ -38,6 +40,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonImmutable|null $due_date
  * @property string|null $estimate_hours
  * @property string|null $created_by
+ * @property TaskSource $source
+ * @property string|null $source_id
  * @property CarbonImmutable|null $started_at
  * @property CarbonImmutable|null $completed_at
  * @property CarbonImmutable|null $canceled_at
@@ -52,7 +56,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable([
     'workspace_id', 'number', 'parent_id', 'title', 'description', 'description_text',
     'status_id', 'status_category', 'priority', 'position', 'start_date', 'due_date',
-    'estimate_hours', 'created_by', 'started_at', 'completed_at', 'canceled_at',
+    'estimate_hours', 'created_by', 'source', 'source_id', 'started_at', 'completed_at', 'canceled_at',
 ])]
 #[Hidden(['search_vector'])]
 class Task extends Model implements HasWorkspaceAttachments
@@ -63,6 +67,7 @@ class Task extends Model implements HasWorkspaceAttachments
     /** @var array<string, mixed> */
     protected $attributes = [
         'priority' => 0,
+        'source' => 'manual',
     ];
 
     /**
@@ -78,6 +83,7 @@ class Task extends Model implements HasWorkspaceAttachments
             'start_date' => 'date',
             'due_date' => 'date',
             'estimate_hours' => 'decimal:2',
+            'source' => TaskSource::class,
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
             'canceled_at' => 'datetime',
@@ -153,6 +159,27 @@ class Task extends Model implements HasWorkspaceAttachments
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * The check-in day whose work-plan point generated this task
+     * (source = attendance); null for manual tasks.
+     *
+     * @return BelongsTo<AttendanceDay, $this>
+     */
+    public function attendanceDay(): BelongsTo
+    {
+        return $this->belongsTo(AttendanceDay::class, 'source_id');
+    }
+
+    /**
+     * Tasks generated from a work-plan point (source = attendance).
+     *
+     * @param  Builder<Task>  $query
+     */
+    public function scopeFromAttendance(Builder $query): void
+    {
+        $query->where($this->qualifyColumn('source'), TaskSource::Attendance->value);
     }
 
     /**

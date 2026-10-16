@@ -67,7 +67,11 @@ final class UpdateTask
                 $task->description = $prepared['document'];
                 $task->description_text = $prepared['text'];
                 $mentionIds = $prepared['mentioned_ids'];
-            } elseif (array_key_exists('description_text', $changes)) {
+            } elseif (array_key_exists('description_text', $changes)
+                && TaskDescription::normalizeText($changes['description_text']) !== $task->description_text) {
+                // Plain text (mobile API) only rebuilds the document when the
+                // text really changed: resending the same text must not flatten
+                // a rich description (marks, lists, mentions) written on the web.
                 $task->description = TaskDescription::documentFromText($changes['description_text']);
                 $task->description_text = TaskDescription::normalizeText($changes['description_text']);
                 $mentionIds = [];

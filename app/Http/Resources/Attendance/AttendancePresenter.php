@@ -67,6 +67,7 @@ final class AttendancePresenter
             'isSuspicious' => $day->is_suspicious,
             'requestPortion' => $day->request_portion?->value,
             'workPlan' => $day->work_plan,
+            'workReport' => $day->work_report,
             'checkIn' => $day->checkInLog === null ? null : $this->log($day->checkInLog, $withSelfies),
             'checkOut' => $day->checkOutLog === null ? null : $this->log($day->checkOutLog, $withSelfies),
         ];
@@ -90,6 +91,8 @@ final class AttendancePresenter
             'inside' => $log->office_location_id !== null,
             'note' => $log->note,
             'isSuspicious' => $log->is_suspicious,
+            'isOffline' => $log->received_at !== null,
+            'receivedAt' => self::iso($log->received_at),
             'selfieUrl' => $withSelfie ? $this->selfies->temporaryUrl($log) : null,
         ];
     }
@@ -146,6 +149,9 @@ final class AttendancePresenter
                 'hours' => $result->schedule->shift->hoursLabel(),
             ],
             'isSuspicious' => $log->is_suspicious,
+            // Offline absen: occurredAt is the device time, receivedAt when the server got it.
+            'isOffline' => $log->received_at !== null,
+            'receivedAt' => self::iso($log->received_at),
             'selfieUrl' => $this->selfies->temporaryUrl($log),
         ];
     }

@@ -28,6 +28,15 @@ class ApprovalDelegationPolicy
         return $actor->isActive();
     }
 
+    /**
+     * Changing stand-in or dates: only the delegator (SaveApprovalDelegation
+     * acts on their behalf). HR may only end someone else's delegation.
+     */
+    public function update(User $actor, ApprovalDelegation $delegation): bool
+    {
+        return $delegation->delegator_id === $actor->id && $actor->isActive();
+    }
+
     public function delete(User $actor, ApprovalDelegation $delegation): bool
     {
         return $delegation->delegator_id === $actor->id || $this->managesCompanyOf($actor, $delegation);

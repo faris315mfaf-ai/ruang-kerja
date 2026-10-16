@@ -243,6 +243,37 @@ export function connectedLabel(peers: number): string {
     return `Tersambung · ${peers + 1} orang`;
 }
 
+/** Icon state of the combined save/Presence status (slim note headers). */
+export type SavePhase = 'syncing' | 'saved' | 'offline' | 'conflict';
+
+/**
+ * One state for the save/Presence icon (keputusan pemilik 9 Okt 2026):
+ * spinner while saving or connecting (or reconnecting), check-cloud once
+ * saved on a live connection, warning triangle for offline mode and
+ * conflicts. Mirrors `CollabMode` inline to keep lib.ts free of hooks.
+ */
+export function savePhase({
+    conflict,
+    mode,
+    saving,
+    connected,
+}: {
+    conflict: boolean;
+    mode: 'connecting' | 'live' | 'offline';
+    saving: boolean;
+    connected: boolean;
+}): SavePhase {
+    if (conflict) {
+        return 'conflict';
+    }
+
+    if (mode === 'connecting' || saving || (mode === 'live' && !connected)) {
+        return 'syncing';
+    }
+
+    return mode === 'live' ? 'saved' : 'offline';
+}
+
 /** Stable colour seat of a person (index into CURSOR_TONES). */
 export function toneFor(id: string, tones: number): number {
     let hash = 0;

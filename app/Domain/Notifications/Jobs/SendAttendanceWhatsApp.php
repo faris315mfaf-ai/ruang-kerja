@@ -4,9 +4,11 @@ namespace App\Domain\Notifications\Jobs;
 
 use App\Domain\Attendance\Enums\AttendanceLogType;
 use App\Domain\Attendance\Enums\AttendanceMethod;
+use App\Domain\Attendance\Enums\LogFlag;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\AttendanceLog;
 use App\Domain\Attendance\Models\OfficeLocation;
+use App\Domain\Attendance\Services\StampedSelfie;
 use App\Domain\Notifications\Services\EvolutionWhatsApp;
 use Carbon\CarbonImmutable;
 use Illuminate\Bus\Queueable;
@@ -20,17 +22,36 @@ use Throwable;
 
 /**
  * Best-effort copy of a successful check-in/check-out to the management
- * WhatsApp group through the Evolution API gateway (owner decision 8–9 Oct
- * 2026). Format (9 Oct):
+ * WhatsApp group through the Evolution API gateway (owner decisions 8–13 Oct
+ * 2026). Format:
  *
  * 🟢 ABSEN MASUK / 🔴 ABSEN PULANG, then Nama/Tanggal/Jam/Lokasi; the
- * morning message lists the day's work-plan points, the afternoon one the
- * worked duration instead. Disabled while the channel is off; a failing
- * gateway never affects the attendance record itself.
+ * morning message lists the day's "Rencana Kerja" points, the afternoon one
+ * the "Laporan Kerja" points and the worked duration. A log pressed without
+ * internet (flag `offline`) adds "⚠️ Absen offline — tersinkron 09.40" (office
+ * time the server received it) after Lokasi; the photo stamp stays the device
+ * time of the press.
+ *
+ * When the log has a selfie it is sent as a stamped photo (time, date, place,
+ * mini map — `StampedSelfie`) with the text as its caption; without a selfie
+ * (QR/kiosk) or when stamping fails the same text goes out as a plain
+ * message. A caption over ~900 characters would be cut by WhatsApp, so the
+ * photo then carries the header and the points follow as a second job
+ * (`part = points`), keeping a retry from ever posting the photo twice.
+ * Disabled while the channel is off; a failing gateway never affects the
+ * attendance record itself.
  */
 final class SendAttendanceWhatsApp implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public const string PART_FULL = 'full';
+
+    /** Follow-up text with the points, after a photo whose caption was too long. */
+    public const string PART_POINTS = 'points';
+
+    /** WhatsApp cuts captions at ~1024 characters; stay clear of that. */
+    private const int CAPTION_LIMIT = 900;
 
     public int $tries = 5;
 
@@ -42,9 +63,10 @@ final class SendAttendanceWhatsApp implements ShouldQueue
     public function __construct(
         public readonly string $dayId,
         public readonly AttendanceLogType $type,
+        public readonly string $part = self::PART_FULL,
     ) {}
 
-    public function handle(EvolutionWhatsApp $whatsapp): void
+    public function handle(EvolutionWhatsApp $whatsapp, StampedSelfie $stamp): void
     {
         $group = config('notifications.channels.whatsapp.group_jid');
 
@@ -66,13 +88,64 @@ final class SendAttendanceWhatsApp implements ShouldQueue
             return;
         }
 
-        $whatsapp->sendText($group, self::message($day, $log));
+        if ($this->part === self::PART_POINTS) {
+            $whatsapp->sendText($group, implode("\n", self::pointsSection($day, $log)));
+
+            return;
+        }
+
+        $text = self::message($day, $log);
+        $image = $log->selfie_path === null ? null : $stamp->render($log, self::location($log, $day->user->company_id));
+
+        if ($image === null) {
+            $whatsapp->sendText($group, $text);
+
+            return;
+        }
+
+        if (mb_strlen($text) <= self::CAPTION_LIMIT) {
+            $whatsapp->sendImage($group, $image, $text);
+
+            return;
+        }
+
+        $whatsapp->sendImage($group, $image, implode("\n", self::headerLines($day, $log, withDuration: true)));
+
+        // The photo is out: a failure to queue the follow-up must not make
+        // this job retry (that would post the photo again).
+        try {
+            self::dispatch($this->dayId, $this->type, self::PART_POINTS);
+        } catch (Throwable $e) {
+            Log::warning('whatsapp.attendance follow-up not queued', ['day' => $this->dayId, 'error' => $e->getMessage()]);
+        }
     }
 
     /**
-     * @param  list<string>|null  $plan  pre-normalised points (used by tests)
+     * Full text (plain message, or the caption of the photo).
+     *
+     * @param  list<string>|null  $points  pre-normalised points overriding the stored plan/report (used by tests)
      */
-    public static function message(AttendanceDay $day, AttendanceLog $log, ?array $plan = null): string
+    public static function message(AttendanceDay $day, AttendanceLog $log, ?array $points = null): string
+    {
+        $lines = self::headerLines($day, $log, withDuration: false);
+
+        array_push($lines, ...self::pointsSection($day, $log, $points));
+
+        if ($log->type === AttendanceLogType::CheckOut) {
+            $lines[] = '';
+            $lines[] = 'Durasi kerja: '.self::duration($day);
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Heading + Nama/Tanggal/Jam/Lokasi (and, for check-out when asked, the
+     * duration — used when the points travel in a follow-up message).
+     *
+     * @return list<string>
+     */
+    private static function headerLines(AttendanceDay $day, AttendanceLog $log, bool $withDuration): array
     {
         $in = $log->type === AttendanceLogType::CheckIn;
         $at = (new CarbonImmutable($log->occurred_at))->setTimezone(config('app.office_timezone'));
@@ -85,32 +158,51 @@ final class SendAttendanceWhatsApp implements ShouldQueue
             'Lokasi: '.self::location($log, $day->user->company_id),
         ];
 
-        if ($in) {
-            $points = $plan ?? $day->work_plan ?? [];
-            $points = array_values(array_filter(array_map(fn ($point): string => trim((string) $point), $points)));
+        // Pressed without internet: the stamp above is the device time of the
+        // press; say when it actually reached the server.
+        if ($log->flags->contains(LogFlag::Offline)) {
+            $received = (new CarbonImmutable($log->received_at ?? $log->created_at))->setTimezone(config('app.office_timezone'));
+            $lines[] = '⚠️ Absen offline — tersinkron '.$received->format('H.i');
+        }
 
-            $lines[] = '';
-            $lines[] = '📝 Rencana/Laporan Kerja Hari Ini:';
-
-            if ($points === []) {
-                $lines[] = '_(tidak diisi — absen lewat QR/kiosk)_';
-            } else {
-                foreach ($points as $index => $point) {
-                    $lines[] = ($index + 1).'. '.$point;
-                }
-            }
-        } else {
+        if ($withDuration && ! $in) {
             $lines[] = 'Durasi kerja: '.self::duration($day);
         }
 
-        return implode("\n", $lines);
+        return $lines;
+    }
+
+    /**
+     * Blank line, "📝 Rencana Kerja:" (check-in) or "📝 Laporan Kerja:"
+     * (check-out) and the numbered points.
+     *
+     * @param  list<string>|null  $points
+     * @return list<string>
+     */
+    private static function pointsSection(AttendanceDay $day, AttendanceLog $log, ?array $points = null): array
+    {
+        $in = $log->type === AttendanceLogType::CheckIn;
+        $points ??= ($in ? $day->work_plan : $day->work_report) ?? [];
+        $points = array_values(array_filter(array_map(fn ($point): string => trim((string) $point), $points), fn (string $point): bool => $point !== ''));
+
+        $lines = ['', $in ? '📝 Rencana Kerja:' : '📝 Laporan Kerja:'];
+
+        if ($points === []) {
+            $lines[] = '_(tidak diisi — absen lewat QR/kiosk)_';
+        } else {
+            foreach ($points as $index => $point) {
+                $lines[] = ($index + 1).'. '.$point;
+            }
+        }
+
+        return $lines;
     }
 
     /**
      * Descriptive per condition: office geofence name, WFH (with its note),
      * or "Luar kantor · 1,2 km dari Kantor Pusat" (nearest office).
      */
-    private static function location(AttendanceLog $log, string $companyId): string
+    public static function location(AttendanceLog $log, string $companyId): string
     {
         if ($log->officeLocation !== null) {
             return $log->officeLocation->name;
@@ -186,6 +278,7 @@ final class SendAttendanceWhatsApp implements ShouldQueue
         Log::warning('whatsapp.attendance not delivered', [
             'day' => $this->dayId,
             'type' => $this->type->value,
+            'part' => $this->part,
             'error' => $exception->getMessage(),
         ]);
     }

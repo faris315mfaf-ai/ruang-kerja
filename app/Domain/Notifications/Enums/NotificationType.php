@@ -60,6 +60,9 @@ enum NotificationType: string
     case HiringCandidateReceived = 'hiring.candidate_received';
     case HiringDecisionNeeded = 'hiring.decision_needed';
     case HiringCandidateDecided = 'hiring.candidate_decided';
+    // Briefing pagi & sore (keputusan pemilik 9 Okt 2026): minutes saved and
+    // broadcast to the whole company. Informational, no action needed.
+    case BriefingPosted = 'briefing.posted';
 
     // System (Sprint 8)
     case SystemAnnouncement = 'system.announcement';
@@ -101,6 +104,7 @@ enum NotificationType: string
             self::HiringCandidateReceived => 'Kandidat baru',
             self::HiringDecisionNeeded => 'Keputusan kandidat',
             self::HiringCandidateDecided => 'Kandidat diputus',
+            self::BriefingPosted => 'Briefing',
             self::SystemAnnouncement => 'Pengumuman',
             self::SystemTest => 'Notifikasi uji',
         };
@@ -132,6 +136,7 @@ enum NotificationType: string
             self::PasswordResetRequested, self::PasswordSetByHr => NotificationEvent::AccountSecurity,
             self::ReportReminder => NotificationEvent::ReportReminder,
             self::HiringCandidateReceived, self::HiringDecisionNeeded, self::HiringCandidateDecided => NotificationEvent::HiringActivity,
+            self::BriefingPosted => NotificationEvent::BriefingPosted,
             self::SystemAnnouncement, self::SystemTest => NotificationEvent::System,
         };
     }
@@ -174,6 +179,7 @@ enum NotificationType: string
             self::HiringCandidateReceived => 'user-plus',
             self::HiringDecisionNeeded => 'check-check',
             self::HiringCandidateDecided => 'user-check',
+            self::BriefingPosted => 'notebook',
             self::SystemAnnouncement => 'megaphone',
             self::SystemTest => 'bell',
         };
@@ -197,6 +203,7 @@ enum NotificationType: string
             self::MeetingInvited, self::MinutesFinalized => 'info',
             self::MeetingStarting, self::ActionItemDue => 'warning',
             self::HiringCandidateReceived, self::HiringDecisionNeeded, self::HiringCandidateDecided => 'info',
+            self::BriefingPosted => 'info',
             self::TaskAssigned, self::TaskCommented, self::RequestCanceled, self::ChatMessage => 'neutral',
             self::AutomationNotify => 'primary',
         };

@@ -49,6 +49,8 @@ export function LeaveTypeDialog({
         requires_attachment_after_days:
             type?.requires_attachment_after_days ?? (null as number | null),
         max_backdate_days: type?.max_backdate_days ?? (null as number | null),
+        // Batas pengajuan di hari-H (keputusan pemilik 14 Okt 2026); sakit & izin only.
+        submit_cutoff_time: type ? (type.submit_cutoff_time ?? '') : '12:00',
         min_service_months: type?.min_service_months ?? (null as number | null),
         allow_half_day: type?.allow_half_day ?? false,
         counts_calendar_days: type?.counts_calendar_days ?? false,
@@ -284,6 +286,38 @@ export function LeaveTypeDialog({
                                 />
                             </div>
                         )}
+                    {(data.category === 'sick' ||
+                        data.category === 'permit') && (
+                        <div className="grid gap-2">
+                            <Label htmlFor="lt-cutoff">
+                                Batas pengajuan di hari-H (jam)
+                            </Label>
+                            <Input
+                                id="lt-cutoff"
+                                type="time"
+                                className="font-mono"
+                                value={data.submit_cutoff_time}
+                                aria-describedby="lt-cutoff-hint"
+                                onChange={(e) =>
+                                    setData(
+                                        'submit_cutoff_time',
+                                        e.target.value,
+                                    )
+                                }
+                            />
+                            <p
+                                id="lt-cutoff-hint"
+                                className="text-meta text-text-muted"
+                            >
+                                Pengajuan untuk hari ini harus dikirim sebelum
+                                jam ini (waktu kantor); lewat itu hari tercatat
+                                alpha. Tanggal yang sudah lewat tidak diterima,
+                                tanggal besok dst. kapan saja. Kosongkan = tanpa
+                                batas.
+                            </p>
+                            <InputError message={errors.submit_cutoff_time} />
+                        </div>
+                    )}
                     {data.category === 'correction' && (
                         <div className="grid gap-2">
                             <Label htmlFor="lt-backdate">

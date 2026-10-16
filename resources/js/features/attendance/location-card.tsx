@@ -7,7 +7,7 @@ import { formatDistance } from '@/lib/geo';
 import type { GeofenceMatch } from '@/lib/geo';
 import { cn } from '@/lib/utils';
 import type { DaySchedule, OfficeLocationPoint } from '@/types/attendance';
-import { GeofenceSketch } from './map/geofence-sketch';
+import { CardMap } from './map/card-map';
 
 export type LocationProps = {
     locations: OfficeLocationPoint[];
@@ -178,8 +178,9 @@ export function LocationRow({
 }
 
 /**
- * Map header of the phone check-in screen (MAbsen): schematic geofence with
- * a glass GPS chip and the refresh button floating on top.
+ * Map header of the phone check-in screen (MAbsen): the real map (geofence
+ * circle, office marker, your position) with a glass GPS chip and the refresh
+ * button floating on top. The sheet below overlaps the bottom 28 px.
  */
 export function LocationMap({
     height = 220,
@@ -191,10 +192,11 @@ export function LocationMap({
 
     return (
         <div className={cn('relative overflow-hidden', className)}>
-            <GeofenceSketch
+            <CardMap
                 locations={locations}
                 position={position}
                 height={height}
+                bottomInset={28}
                 className="w-full"
             />
             <div className="absolute inset-x-4 top-4 flex items-center justify-between gap-2">

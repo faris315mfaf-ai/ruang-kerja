@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Portofolio — filter & aksi Direksi · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<link rel="stylesheet" href="_p06.css">
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+<div class="phone" style="--h:915px">
+<div class="body">
+<div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Portofolio proyek</div><button class="ibtn" aria-label="Filter"><i data-i="sliders-horizontal"></i></button><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button></div><div class="stack" style="padding-top:12px"><p class="t-meta" style="margin:0 16px;font-size:14px">6 proyek aktif · Q4 2026 · per Sel, 13 Okt</p><div class="chips" style="padding:0 16px">
+<span class="chip on">Semua <b style="font-weight:700">6</b></span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-bad);margin:0"></span>Bermasalah 1</span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-warn);margin:0"></span>Berisiko 2</span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-teal);margin:0"></span>Sesuai jalur 3</span></div><a class="card tight row-h" style="gap:10px;margin:0 16px;padding:12px 16px"><i data-i="map-pin"></i><span class="grow t-label" style="font-weight:500">Hadir hari ini <b>39/48</b> · <span style="color:var(--warn);font-weight:600">3 belum check-in</span></span><i data-i="chevron-right"></i></a><div class="grid2" style="padding:0 16px">
+<div class="kpi" style="background:var(--link-soft);border-color:var(--link);grid-column:span 2"><div class="l">Butuh keputusan Anda</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v">2</div><div class="t-meta">PLQ · ANG</div></div></div>
+<div class="kpi" style=";"><div class="l">Milestone 2 minggu</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v">5</div><div class="t-meta">terdekat Rab, 14 Okt</div></div></div>
+<div class="kpi" style=";"><div class="l">Milestone terlewat</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v" style="color:var(--bad)">2</div><div class="t-meta">PLQ · RKR</div></div></div>
+<div class="kpi" style=";grid-column:span 2"><div class="l">Tugas terlambat</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v" style="color:var(--bad)">10</div><div class="t-meta">di 4 proyek</div></div></div></div><div class="card flush" style="margin:0 16px">
+<div class="row-h sp" style="padding:16px 16px 12px"><h3 class="t-h3">Butuh keputusan Anda</h3><span class="t-meta">2 keputusan · 1 perhatian</span></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">PLQ</b> · Diminta Putri Ramadhani · update Sab, 10 Okt</div>
+<div class="t-title" style="font-weight:700">Tambahan anggaran vendor video Rp 18.000.000</div>
+<div class="row-h" style="gap:10px"><button class="btn outline sm grow">Diskusikan</button><button class="btn primary sm grow">Tandai selesai</button></div></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">ANG</b> · Diminta Anita Susanto · update Rab, 7 Okt</div>
+<div class="t-title" style="font-weight:700">Plafon anggaran divisi Operasional 2027 perlu ditetapkan</div>
+<div class="row-h" style="gap:10px"><button class="btn outline sm grow">Diskusikan</button><button class="btn primary sm grow">Tandai selesai</button></div></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">RKR</b> · <b style="color:var(--warn)">Perhatian</b> · Pemilik Hana Anggraini</div>
+<div class="t-title" style="font-weight:700">Tertinggal 38 poin, belum ada update 9 hari</div>
+<button class="btn outline sm block">Minta update</button></div></div></div>
+</div>
+<div class="note">Sheet filter periode/divisi/arsip</div>
+<div class="scrim"></div><div class="sheet"><div class="row-h sp"><h3 class="t-h3">Filter portofolio</h3><button class="btn quiet sm">Atur ulang</button></div>
+<div class="stack" style="gap:6px"><span class="t-over" style="color:var(--text-muted);font-size:13px">PERIODE</span><div class="seg"><span class="on">Kuartal ini</span><span>Bulan ini</span><span>Semua</span></div><div class="hint">Memuat proyek yang berjalan pada periode tersebut (default: Q4 2026).</div></div>
+<div class="stack" style="gap:6px"><span class="t-over" style="color:var(--text-muted);font-size:13px">DIVISI</span><div class="p6-sel">Semua divisi<span class="chev"><i data-i="chevron-down"></i></span></div></div>
+<div class="row-h sp" style="min-height:52px"><div><div class="t-title" style="font-weight:600">Tampilkan proyek diarsipkan</div><div class="t-meta">Selesai, dibatalkan, atau ditahan</div></div><span class="switch"></span></div>
+<button class="btn primary block">Terapkan</button></div>
+</div>
+<div class="phone" style="--h:915px">
+<div class="body">
+<div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Portofolio proyek</div><button class="ibtn" aria-label="Filter"><i data-i="sliders-horizontal"></i></button><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button></div><div class="stack" style="padding-top:12px"><p class="t-meta" style="margin:0 16px;font-size:14px">6 proyek aktif · Q4 2026 · per Sel, 13 Okt</p><div class="chips" style="padding:0 16px">
+<span class="chip on">Semua <b style="font-weight:700">6</b></span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-bad);margin:0"></span>Bermasalah 1</span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-warn);margin:0"></span>Berisiko 2</span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-teal);margin:0"></span>Sesuai jalur 3</span></div><a class="card tight row-h" style="gap:10px;margin:0 16px;padding:12px 16px"><i data-i="map-pin"></i><span class="grow t-label" style="font-weight:500">Hadir hari ini <b>39/48</b> · <span style="color:var(--warn);font-weight:600">3 belum check-in</span></span><i data-i="chevron-right"></i></a><div class="grid2" style="padding:0 16px">
+<div class="kpi" style="background:var(--link-soft);border-color:var(--link);grid-column:span 2"><div class="l">Butuh keputusan Anda</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v">2</div><div class="t-meta">PLQ · ANG</div></div></div>
+<div class="kpi" style=";"><div class="l">Milestone 2 minggu</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v">5</div><div class="t-meta">terdekat Rab, 14 Okt</div></div></div>
+<div class="kpi" style=";"><div class="l">Milestone terlewat</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v" style="color:var(--bad)">2</div><div class="t-meta">PLQ · RKR</div></div></div>
+<div class="kpi" style=";grid-column:span 2"><div class="l">Tugas terlambat</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v" style="color:var(--bad)">10</div><div class="t-meta">di 4 proyek</div></div></div></div><div class="card flush" style="margin:0 16px">
+<div class="row-h sp" style="padding:16px 16px 12px"><h3 class="t-h3">Butuh keputusan Anda</h3><span class="t-meta">2 keputusan · 1 perhatian</span></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">PLQ</b> · Diminta Putri Ramadhani · update Sab, 10 Okt</div>
+<div class="t-title" style="font-weight:700">Tambahan anggaran vendor video Rp 18.000.000</div>
+<div class="row-h" style="gap:10px"><button class="btn outline sm grow">Diskusikan</button><button class="btn primary sm grow">Tandai selesai</button></div></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">ANG</b> · Diminta Anita Susanto · update Rab, 7 Okt</div>
+<div class="t-title" style="font-weight:700">Plafon anggaran divisi Operasional 2027 perlu ditetapkan</div>
+<div class="row-h" style="gap:10px"><button class="btn outline sm grow">Diskusikan</button><button class="btn primary sm grow">Tandai selesai</button></div></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">RKR</b> · <b style="color:var(--warn)">Perhatian</b> · Pemilik Hana Anggraini</div>
+<div class="t-title" style="font-weight:700">Tertinggal 38 poin, belum ada update 9 hari</div>
+<button class="btn outline sm block">Minta update</button></div></div></div>
+</div>
+<div class="note">Pilih divisi (daftar radio)</div>
+<div class="scrim"></div><div class="sheet"><h3 class="t-h3">Divisi</h3><div class="stack" style="gap:0"><div class="row-h" style="min-height:52px;gap:12px"><span class="radio"></span><div class="grow"><div class="t-title" style="font-weight:600">Semua divisi</div></div></div><div class="row-h" style="min-height:52px;gap:12px"><span class="radio"></span><div class="grow"><div class="t-title" style="font-weight:600">Operasional</div></div></div><div class="row-h" style="min-height:52px;gap:12px"><span class="radio on"></span><div class="grow"><div class="t-title" style="font-weight:600">Pemasaran</div></div></div><div class="row-h" style="min-height:52px;gap:12px"><span class="radio"></span><div class="grow"><div class="t-title" style="font-weight:600">Programming</div></div></div><div class="row-h" style="min-height:52px;gap:12px"><span class="radio"></span><div class="grow"><div class="t-title" style="font-weight:600">Keuangan</div></div></div><div class="row-h" style="min-height:52px;gap:12px"><span class="radio"></span><div class="grow"><div class="t-title" style="font-weight:600">SDM</div></div></div></div></div>
+</div>
+<div class="phone" style="--h:915px">
+<div class="body">
+<div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Portofolio proyek</div><button class="ibtn" aria-label="Filter"><i data-i="sliders-horizontal"></i></button><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button></div><div class="stack" style="padding-top:12px"><p class="t-meta" style="margin:0 16px;font-size:14px">6 proyek aktif · Q4 2026 · per Sel, 13 Okt</p><div class="chips" style="padding:0 16px">
+<span class="chip on">Semua <b style="font-weight:700">6</b></span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-bad);margin:0"></span>Bermasalah 1</span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-warn);margin:0"></span>Berisiko 2</span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-teal);margin:0"></span>Sesuai jalur 3</span></div><a class="card tight row-h" style="gap:10px;margin:0 16px;padding:12px 16px"><i data-i="map-pin"></i><span class="grow t-label" style="font-weight:500">Hadir hari ini <b>39/48</b> · <span style="color:var(--warn);font-weight:600">3 belum check-in</span></span><i data-i="chevron-right"></i></a><div class="grid2" style="padding:0 16px">
+<div class="kpi" style="background:var(--link-soft);border-color:var(--link);grid-column:span 2"><div class="l">Butuh keputusan Anda</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v">2</div><div class="t-meta">PLQ · ANG</div></div></div>
+<div class="kpi" style=";"><div class="l">Milestone 2 minggu</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v">5</div><div class="t-meta">terdekat Rab, 14 Okt</div></div></div>
+<div class="kpi" style=";"><div class="l">Milestone terlewat</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v" style="color:var(--bad)">2</div><div class="t-meta">PLQ · RKR</div></div></div>
+<div class="kpi" style=";grid-column:span 2"><div class="l">Tugas terlambat</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v" style="color:var(--bad)">10</div><div class="t-meta">di 4 proyek</div></div></div></div><div class="card flush" style="margin:0 16px">
+<div class="row-h sp" style="padding:16px 16px 12px"><h3 class="t-h3">Butuh keputusan Anda</h3><span class="t-meta">2 keputusan · 1 perhatian</span></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">PLQ</b> · Diminta Putri Ramadhani · update Sab, 10 Okt</div>
+<div class="t-title" style="font-weight:700">Tambahan anggaran vendor video Rp 18.000.000</div>
+<div class="row-h" style="gap:10px"><button class="btn outline sm grow">Diskusikan</button><button class="btn primary sm grow">Tandai selesai</button></div></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">ANG</b> · Diminta Anita Susanto · update Rab, 7 Okt</div>
+<div class="t-title" style="font-weight:700">Plafon anggaran divisi Operasional 2027 perlu ditetapkan</div>
+<div class="row-h" style="gap:10px"><button class="btn outline sm grow">Diskusikan</button><button class="btn primary sm grow">Tandai selesai</button></div></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">RKR</b> · <b style="color:var(--warn)">Perhatian</b> · Pemilik Hana Anggraini</div>
+<div class="t-title" style="font-weight:700">Tertinggal 38 poin, belum ada update 9 hari</div>
+<button class="btn outline sm block">Minta update</button></div></div></div>
+</div>
+<div class="note">Minta update (RKR)</div>
+<div class="scrim"></div><div class="sheet"><div class="row-h" style="gap:12px"><span class="p6-pj sm g-hangat">R</span><div class="grow"><h3 class="t-h3" style="font-size:18px">Minta update</h3><div class="t-meta">RKR · PIC Hana Anggraini</div></div></div>
+<div class="p6-quote">Hana Anggraini mendapat notifikasi. Permintaan terakhir: belum pernah.</div>
+<div class="field"><label>Pesan (opsional)</label><div class="input focus area"><span class="grow">Mohon update sebelum rapat Senin.</span></div></div>
+<div class="row-h" style="gap:10px"><button class="btn quiet grow">Batal</button><button class="btn primary grow"><i data-i="send"></i>Kirim</button></div></div>
+</div>
+<div class="phone" style="--h:915px">
+<div class="body">
+<div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Portofolio proyek</div><button class="ibtn" aria-label="Filter"><i data-i="sliders-horizontal"></i></button><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button></div><div class="stack" style="padding-top:12px"><p class="t-meta" style="margin:0 16px;font-size:14px">6 proyek aktif · Q4 2026 · per Sel, 13 Okt</p><div class="chips" style="padding:0 16px">
+<span class="chip on">Semua <b style="font-weight:700">6</b></span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-bad);margin:0"></span>Bermasalah 1</span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-warn);margin:0"></span>Berisiko 2</span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-teal);margin:0"></span>Sesuai jalur 3</span></div><a class="card tight row-h" style="gap:10px;margin:0 16px;padding:12px 16px"><i data-i="map-pin"></i><span class="grow t-label" style="font-weight:500">Hadir hari ini <b>39/48</b> · <span style="color:var(--warn);font-weight:600">3 belum check-in</span></span><i data-i="chevron-right"></i></a><div class="grid2" style="padding:0 16px">
+<div class="kpi" style="background:var(--link-soft);border-color:var(--link);grid-column:span 2"><div class="l">Butuh keputusan Anda</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v">2</div><div class="t-meta">PLQ · ANG</div></div></div>
+<div class="kpi" style=";"><div class="l">Milestone 2 minggu</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v">5</div><div class="t-meta">terdekat Rab, 14 Okt</div></div></div>
+<div class="kpi" style=";"><div class="l">Milestone terlewat</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v" style="color:var(--bad)">2</div><div class="t-meta">PLQ · RKR</div></div></div>
+<div class="kpi" style=";grid-column:span 2"><div class="l">Tugas terlambat</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v" style="color:var(--bad)">10</div><div class="t-meta">di 4 proyek</div></div></div></div><div class="card flush" style="margin:0 16px">
+<div class="row-h sp" style="padding:16px 16px 12px"><h3 class="t-h3">Butuh keputusan Anda</h3><span class="t-meta">2 keputusan · 1 perhatian</span></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">PLQ</b> · Diminta Putri Ramadhani · update Sab, 10 Okt</div>
+<div class="t-title" style="font-weight:700">Tambahan anggaran vendor video Rp 18.000.000</div>
+<div class="row-h" style="gap:10px"><button class="btn outline sm grow">Diskusikan</button><button class="btn primary sm grow">Tandai selesai</button></div></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">ANG</b> · Diminta Anita Susanto · update Rab, 7 Okt</div>
+<div class="t-title" style="font-weight:700">Plafon anggaran divisi Operasional 2027 perlu ditetapkan</div>
+<div class="row-h" style="gap:10px"><button class="btn outline sm grow">Diskusikan</button><button class="btn primary sm grow">Tandai selesai</button></div></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">RKR</b> · <b style="color:var(--warn)">Perhatian</b> · Pemilik Hana Anggraini</div>
+<div class="t-title" style="font-weight:700">Tertinggal 38 poin, belum ada update 9 hari</div>
+<button class="btn outline sm block">Minta update</button></div></div></div>
+</div>
+<div class="note">Beri arahan (PLQ)</div>
+<div class="scrim"></div><div class="sheet"><div class="row-h" style="gap:12px"><span class="p6-pj sm g-indigo">P</span><div class="grow"><h3 class="t-h3" style="font-size:18px">Beri arahan</h3><div class="t-meta">PLQ · untuk Putri Ramadhani</div></div></div>
+<div class="p6-quote">Update Sab, 10 Okt · “Mohon keputusan tambahan anggaran vendor video Rp 18.000.000.”</div>
+<div class="field"><label>Arahan</label><div class="input focus area"><span class="grow">Disetujui Rp 15.000.000. Sisanya tunggu penawaran kedua dari vendor lain.</span></div></div>
+<div class="row-h sp"><span class="hint">Putri mendapat notifikasi in-app + email</span><span class="hint">74/1.000</span></div>
+<div class="row-h" style="gap:10px"><button class="btn quiet grow">Batal</button><button class="btn primary grow"><i data-i="send"></i>Kirim</button></div></div>
+</div>
+<div class="phone" style="--h:915px">
+<div class="body">
+<div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Portofolio proyek</div><button class="ibtn" aria-label="Filter"><i data-i="sliders-horizontal"></i></button><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button></div><div class="stack" style="padding-top:12px"><p class="t-meta" style="margin:0 16px;font-size:14px">6 proyek aktif · Q4 2026 · per Sel, 13 Okt</p><div class="chips" style="padding:0 16px">
+<span class="chip on">Semua <b style="font-weight:700">6</b></span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-bad);margin:0"></span>Bermasalah 1</span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-warn);margin:0"></span>Berisiko 2</span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-teal);margin:0"></span>Sesuai jalur 3</span></div><a class="card tight row-h" style="gap:10px;margin:0 16px;padding:12px 16px"><i data-i="map-pin"></i><span class="grow t-label" style="font-weight:500">Hadir hari ini <b>39/48</b> · <span style="color:var(--warn);font-weight:600">3 belum check-in</span></span><i data-i="chevron-right"></i></a><div class="grid2" style="padding:0 16px">
+<div class="kpi" style="background:var(--link-soft);border-color:var(--link);grid-column:span 2"><div class="l">Butuh keputusan Anda</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v">2</div><div class="t-meta">PLQ · ANG</div></div></div>
+<div class="kpi" style=";"><div class="l">Milestone 2 minggu</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v">5</div><div class="t-meta">terdekat Rab, 14 Okt</div></div></div>
+<div class="kpi" style=";"><div class="l">Milestone terlewat</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v" style="color:var(--bad)">2</div><div class="t-meta">PLQ · RKR</div></div></div>
+<div class="kpi" style=";grid-column:span 2"><div class="l">Tugas terlambat</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v" style="color:var(--bad)">10</div><div class="t-meta">di 4 proyek</div></div></div></div><div class="card flush" style="margin:0 16px">
+<div class="row-h sp" style="padding:16px 16px 12px"><h3 class="t-h3">Butuh keputusan Anda</h3><span class="t-meta">2 keputusan · 1 perhatian</span></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">PLQ</b> · Diminta Putri Ramadhani · update Sab, 10 Okt</div>
+<div class="t-title" style="font-weight:700">Tambahan anggaran vendor video Rp 18.000.000</div>
+<div class="row-h" style="gap:10px"><button class="btn outline sm grow">Diskusikan</button><button class="btn primary sm grow">Tandai selesai</button></div></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">ANG</b> · Diminta Anita Susanto · update Rab, 7 Okt</div>
+<div class="t-title" style="font-weight:700">Plafon anggaran divisi Operasional 2027 perlu ditetapkan</div>
+<div class="row-h" style="gap:10px"><button class="btn outline sm grow">Diskusikan</button><button class="btn primary sm grow">Tandai selesai</button></div></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">RKR</b> · <b style="color:var(--warn)">Perhatian</b> · Pemilik Hana Anggraini</div>
+<div class="t-title" style="font-weight:700">Tertinggal 38 poin, belum ada update 9 hari</div>
+<button class="btn outline sm block">Minta update</button></div></div></div>
+</div>
+<div class="note">Konfirmasi tandai selesai</div>
+<div class="scrim"></div><div class="dialog"><h3 class="t-h3">Tandai keputusan selesai?</h3><div class="muted" style="font-size:16px;line-height:23px">“Tambahan anggaran vendor video Rp 18.000.000” (PLQ) akan hilang dari daftar Butuh keputusan. PIC diberi tahu bahwa keputusan sudah diambil.</div><div class="p6-quote" style="font-size:14px">Tindakan ini hanya menandai selesai. Berikan arahan lebih dulu bila perlu menyampaikan isi keputusan.</div><div class="acts"><button class="btn quiet">Batal</button><button class="btn primary">Tandai selesai</button></div></div>
+</div>
+<div class="phone" style="--h:915px">
+<div class="body">
+<div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><div class="ttl">Portofolio proyek</div><button class="ibtn" aria-label="Filter"><i data-i="sliders-horizontal"></i></button><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button></div><div class="stack" style="padding-top:12px"><p class="t-meta" style="margin:0 16px;font-size:14px">6 proyek aktif · Q4 2026 · per Sel, 13 Okt</p><div class="chips" style="padding:0 16px">
+<span class="chip on">Semua <b style="font-weight:700">6</b></span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-bad);margin:0"></span>Bermasalah 1</span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-warn);margin:0"></span>Berisiko 2</span>
+<span class="chip"><span class="p6-dot" style="background:var(--fill-teal);margin:0"></span>Sesuai jalur 3</span></div><a class="card tight row-h" style="gap:10px;margin:0 16px;padding:12px 16px"><i data-i="map-pin"></i><span class="grow t-label" style="font-weight:500">Hadir hari ini <b>39/48</b> · <span style="color:var(--warn);font-weight:600">3 belum check-in</span></span><i data-i="chevron-right"></i></a><div class="grid2" style="padding:0 16px">
+<div class="kpi" style="background:var(--link-soft);border-color:var(--link);grid-column:span 2"><div class="l">Butuh keputusan Anda</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v">2</div><div class="t-meta">PLQ · ANG</div></div></div>
+<div class="kpi" style=";"><div class="l">Milestone 2 minggu</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v">5</div><div class="t-meta">terdekat Rab, 14 Okt</div></div></div>
+<div class="kpi" style=";"><div class="l">Milestone terlewat</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v" style="color:var(--bad)">2</div><div class="t-meta">PLQ · RKR</div></div></div>
+<div class="kpi" style=";grid-column:span 2"><div class="l">Tugas terlambat</div><div class="row-h" style="gap:8px;align-items:baseline"><div class="v" style="color:var(--bad)">10</div><div class="t-meta">di 4 proyek</div></div></div></div><div class="card flush" style="margin:0 16px">
+<div class="row-h sp" style="padding:16px 16px 12px"><h3 class="t-h3">Butuh keputusan Anda</h3><span class="t-meta">2 keputusan · 1 perhatian</span></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">PLQ</b> · Diminta Putri Ramadhani · update Sab, 10 Okt</div>
+<div class="t-title" style="font-weight:700">Tambahan anggaran vendor video Rp 18.000.000</div>
+<div class="row-h" style="gap:10px"><button class="btn outline sm grow">Diskusikan</button><button class="btn primary sm grow">Tandai selesai</button></div></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">ANG</b> · Diminta Anita Susanto · update Rab, 7 Okt</div>
+<div class="t-title" style="font-weight:700">Plafon anggaran divisi Operasional 2027 perlu ditetapkan</div>
+<div class="row-h" style="gap:10px"><button class="btn outline sm grow">Diskusikan</button><button class="btn primary sm grow">Tandai selesai</button></div></div>
+<div class="stack" style="gap:10px;padding:14px 16px;border-top:1px solid var(--divider)">
+<div class="t-meta"><b class="mono-s" style="color:var(--text)">RKR</b> · <b style="color:var(--warn)">Perhatian</b> · Pemilik Hana Anggraini</div>
+<div class="t-title" style="font-weight:700">Tertinggal 38 poin, belum ada update 9 hari</div>
+<button class="btn outline sm block">Minta update</button></div></div></div>
+</div>
+<div class="note">Snackbar setelah kirim</div>
+<div class="snack" style="bottom:24px"><i data-i="circle-check"></i><span>Permintaan update terkirim ke Hana Anggraini</span><a>Urungkan</a></div>
+</div>
+</div>
+
+</body>
+</html>

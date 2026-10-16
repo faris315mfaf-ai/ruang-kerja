@@ -33,6 +33,7 @@ final class AttendanceLogWriter
         ?string $selfiePath,
         CarbonImmutable $now,
         ?QrVerdict $qr = null,
+        ?CarbonImmutable $receivedAt = null,
     ): AttendanceLog {
         $note = $data instanceof CheckInData && $data->note !== null ? trim($data->note) : null;
         $distance = $qr !== null ? $qr->distanceM : $location->match?->distanceM;
@@ -58,6 +59,8 @@ final class AttendanceLogWriter
             'flags' => $flags,
             'is_suspicious' => FraudDetector::isSuspicious($flags),
             'note' => $note === '' ? null : $note,
+            // Offline logs only: when the server really got them ($now is the device time).
+            'received_at' => $receivedAt?->utc(),
         ]);
     }
 }

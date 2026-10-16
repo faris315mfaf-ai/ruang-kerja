@@ -41,6 +41,8 @@ export type RequestFormInitial = {
     unit_price?: number | null;
     reference_url?: string | null;
     urgency?: 'biasa' | 'mendesak' | null;
+    /** Opened from a deep link (`?jenis=&tanggal=`): an older device copy must not replace it. */
+    from_link?: boolean;
 };
 
 export type RequestFormData = {
@@ -205,8 +207,13 @@ export function useRequestForm({
         }
 
         restoredOnce.current = true;
+
+        if (initial.from_link) {
+            return;
+        }
+
         restoreDraft(initialCategory.current, initialData.current);
-    }, [restoreDraft]);
+    }, [restoreDraft, initial.from_link]);
 
     // Saved on the server as a new draft (same page, new request id): what is
     // on screen now is the server state, not an unsent change.
@@ -477,6 +484,8 @@ export function useRequestForm({
         type,
         /** The chosen type is locked: nothing can be sent or saved. */
         locked: type?.locked === true,
+        /** Sending is refused right now (sakit/izin after the same-day cutoff); drafts still save. */
+        sendBlocked: preview?.send_blocked ?? null,
         permitMode,
         changePermitMode,
         usesHours,

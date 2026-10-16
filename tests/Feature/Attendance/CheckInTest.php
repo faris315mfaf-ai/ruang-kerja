@@ -184,7 +184,7 @@ test('check-in requires consent for the current policy version', function () {
 
     F::checkIn($user)->assertUnprocessable()
         ->assertJsonPath('reason', 'consent_required')
-        ->assertJsonPath('context.version', '1.0');
+        ->assertJsonPath('context.version', config('attendance.consent.version'));
 
     $this->actingAs($user)->post(route('attendance.consent.store'))->assertRedirect();
 

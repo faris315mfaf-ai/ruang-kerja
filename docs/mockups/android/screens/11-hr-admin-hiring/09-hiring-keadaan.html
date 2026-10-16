@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Hiring · memuat, kosong, galat, offline, tanpa akses · Android</title>
+<meta name="viewport" content="width=412">
+<link rel="stylesheet" href="../../_kit/kit.css">
+<style>
+.hr-flow{display:flow-root}
+.hr-tabnav{display:flex;border-bottom:1px solid var(--border);gap:4px;overflow:hidden}
+.hr-tabnav span{padding:12px 12px 11px;font-size:15px;font-weight:700;color:var(--text-muted);border-bottom:3px solid transparent;white-space:nowrap;margin-bottom:-1px}
+.hr-tabnav span.on{color:var(--link);border-bottom-color:var(--primary)}
+.hr-tabnav .n{display:inline-flex;min-width:20px;height:20px;border-radius:10px;background:var(--surface-2);color:var(--text-muted);font-size:12px;align-items:center;justify-content:center;padding:0 6px;margin-left:6px}
+.hr-tile{width:56px;height:56px;border-radius:18px;background:var(--grad-indigo);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-btn);flex:none}
+.hr-chip-n{font-size:13px;opacity:.75;font-weight:600}
+.chip.on .hr-chip-n{opacity:.9}
+.hr-score{display:flex;gap:8px}
+.hr-score span{width:48px;height:48px;border-radius:14px;border:1.5px solid var(--border-strong);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700}
+.hr-score span.on{background:var(--grad-aksi);border-color:transparent;color:#fff}
+.hr-bar{height:14px;border-radius:7px;background:var(--surface-2);overflow:hidden;display:flex}
+.hr-bar b{display:block;height:100%}
+.hr-seg-ok{background:var(--ok)}.hr-seg-warn{background:var(--fill-warn)}.hr-seg-info{background:var(--blue-strong)}.hr-seg-off{background:var(--border-strong)}
+.hr-trend{display:flex;align-items:flex-end;gap:8px;height:130px;padding-top:8px}
+.hr-trend div{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.hr-trend b{display:block;width:100%;border-radius:8px 8px 4px 4px;background:var(--grad-merek)}
+.hr-trend span{font-size:12px;color:var(--text-muted);font-weight:600}
+.hr-dl{display:grid;grid-template-columns:128px 1fr;gap:6px 12px;align-items:center}
+.hr-dl>div{padding:11px 0;border-top:1px solid var(--divider);min-height:44px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hr-dl>div{min-width:0;overflow-wrap:anywhere}
+.hr-dl>div.k{color:var(--text-muted);font-size:15px}
+.hr-dl>div:nth-child(-n+2){border-top:0}
+.hr-tree .lv{display:flex;align-items:center;gap:12px;min-height:64px;padding:8px 14px;border-top:1px solid var(--divider)}
+.hr-tree .lv:first-child{border-top:0}
+.hr-tree .l2{padding-left:40px}.hr-tree .l3{padding-left:66px}
+.hr-tree .bar{width:4px;height:34px;border-radius:2px;flex:none}
+.hr-mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:14px;font-weight:600}
+.hr-desk{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:22px 18px;border-radius:24px;background:var(--surface);border:1px solid var(--border)}
+.hr-desk .ic{width:52px;height:52px;border-radius:50%;background:var(--link-soft);color:var(--link);display:flex;align-items:center;justify-content:center}
+.hr-rowbtns{display:flex;gap:8px}
+.hr-rowbtns .btn{flex:1}
+.hr-check-row{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--divider)}
+.hr-check-row:first-child{border-top:0}
+.hr-tag-lock{height:26px;padding:0 9px;border-radius:8px;display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;background:var(--surface-2);color:var(--text-muted)}
+.hr-opt{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 14px;border-radius:16px;border:1px solid var(--border);background:var(--surface)}
+.hr-opt.on{border-color:var(--primary);background:var(--link-soft)}
+.hr-pill-dot{width:10px;height:10px;border-radius:50%;flex:none}
+.hr-li{display:flex;align-items:center;gap:12px;min-height:56px}
+.card:not(.list) .hr-li{padding:8px 0}
+.card:not(.list) .hr-li+.hr-li{border-top:1px solid var(--divider)}
+.hr-line{height:1px;background:var(--divider)}
+.hr-sec{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin:6px 4px -6px}
+.hr-sign{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text-muted)}
+.hr-ring{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--primary) var(--p,70%),var(--surface-2) 0);flex:none}
+.hr-ring span{width:64px;height:64px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px}
+</style>
+<script src="../../_kit/icons.js"></script>
+<script src="../../_kit/kit.js"></script>
+</head>
+<body>
+<div class="stage">
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Hiring</span><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button></div><div class="pad" style="padding-top:12px"><div class="row-h"><span class="hr-tile"><i data-i="briefcase-business" data-s="28"></i></span><div class="grow"><div class="t-h2">Hiring</div><div class="t-meta">Memuat…</div></div></div></div>
+ <div class="hr-tabnav" style="margin-top:12px;padding:0 12px"><span class="on">Kandidat</span><span class="">Lowongan</span><span class="">Pengaturan</span></div><div class="pad stack" style="gap:12px;padding-top:12px"><div class="skel" style="width:100%;height:52px;border-radius:14px"></div><div style="display:flex;gap:8px"><div class="skel" style="width:110px;height:42px;border-radius:21px"></div><div class="skel" style="width:130px;height:42px;border-radius:21px"></div><div class="skel" style="width:110px;height:42px;border-radius:21px"></div></div><div class="card tight stack" style="gap:10px"><div class="skel" style="width:55%;height:18px;border-radius:12px"></div><div class="skel" style="width:40%;height:12px;border-radius:12px"></div><div class="skel" style="width:100%;height:40px;border-radius:12px"></div></div><div class="card tight stack" style="gap:10px"><div class="skel" style="width:55%;height:18px;border-radius:12px"></div><div class="skel" style="width:40%;height:12px;border-radius:12px"></div><div class="skel" style="width:100%;height:40px;border-radius:12px"></div></div><div class="card tight stack" style="gap:10px"><div class="skel" style="width:55%;height:18px;border-radius:12px"></div><div class="skel" style="width:40%;height:12px;border-radius:12px"></div><div class="skel" style="width:100%;height:40px;border-radius:12px"></div></div></div></div></div>
+    <nav class="tabbar"><a class="tab"><i data-i="house"></i>Beranda</a><a class="tab"><i data-i="square-check-big"></i>Tugas</a><a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a><a class="tab"><i data-i="message-circle"></i>Obrolan</a><a class="tab on"><i data-i="layout-grid"></i>Lainnya</a></nav>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Hiring</span><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button></div><div class="pad" style="padding-top:12px"><div class="row-h"><span class="hr-tile"><i data-i="briefcase-business" data-s="28"></i></span><div class="grow"><div class="t-h2">Hiring</div><div class="t-meta">0 lowongan</div></div></div></div>
+ <div class="hr-tabnav" style="margin-top:12px;padding:0 12px"><span class="on">Kandidat</span><span class="">Lowongan</span><span class="">Pengaturan</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="empty"><div class="ic"><i data-i="briefcase-business" data-s="30"></i></div><div class="t-h3">Belum ada lowongan</div><div class="muted" style="font-size:15px;line-height:22px">Buat lowongan dulu, lalu sambungkan Google Form-nya agar pelamar masuk otomatis.</div><button class="btn primary">Buka tab Lowongan</button></div></div></div></div>
+    <nav class="tabbar"><a class="tab"><i data-i="house"></i>Beranda</a><a class="tab"><i data-i="square-check-big"></i>Tugas</a><a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a><a class="tab"><i data-i="message-circle"></i>Obrolan</a><a class="tab on"><i data-i="layout-grid"></i>Lainnya</a></nav>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Hiring</span><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button></div><div class="pad" style="padding-top:12px"><div class="row-h"><span class="hr-tile"><i data-i="briefcase-business" data-s="28"></i></span><div class="grow"><div class="t-h2">Hiring</div><div class="t-meta">2 lowongan dibuka · 4 kandidat baru · 1 menunggu keputusan</div></div></div></div>
+ <div class="hr-tabnav" style="margin-top:12px;padding:0 12px"><span class="on">Kandidat</span><span class="">Lowongan</span><span class="">Pengaturan</span></div><div class="pad stack" style="gap:12px;padding-top:12px"><div class="input"><i data-i="briefcase-business"></i><span class="grow trunc">Semua lowongan</span><i data-i="chevron-down"></i></div><div class="input"><i data-i="search"></i><span class="ph grow">Cari nama atau email</span></div><div class="chips"><span class="chip">Masuk <span class="hr-chip-n">4</span></span><span class="chip on">Seleksi berkas <span class="hr-chip-n">3</span></span><span class="chip">Wawancara <span class="hr-chip-n">2</span></span><span class="chip">Penilaian <span class="hr-chip-n">1</span></span><span class="chip">Keputusan akhir <span class="hr-chip-n">1</span></span><span class="chip">Diterima <span class="hr-chip-n">1</span></span><span class="chip">Ditolak <span class="hr-chip-n">2</span></span></div><div class="empty"><div class="ic"><i data-i="users" data-s="30"></i></div><div class="t-h3">Belum ada kandidat di tahap ini</div><div class="muted" style="font-size:15px;line-height:22px">Pindahkan kandidat dari tahap sebelumnya lewat menu “Pindahkan ke…”.</div></div></div></div></div>
+    <nav class="tabbar"><a class="tab"><i data-i="house"></i>Beranda</a><a class="tab"><i data-i="square-check-big"></i>Tugas</a><a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a><a class="tab"><i data-i="message-circle"></i>Obrolan</a><a class="tab on"><i data-i="layout-grid"></i>Lainnya</a></nav><button class="fab" aria-label="Tambah kandidat manual"><i data-i="user-plus" data-s="26"></i></button>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Hiring</span><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button></div><div class="pad" style="padding-top:12px"><div class="row-h"><span class="hr-tile"><i data-i="briefcase-business" data-s="28"></i></span><div class="grow"><div class="t-h2">Hiring</div><div class="t-meta"></div></div></div></div>
+ <div class="hr-tabnav" style="margin-top:12px;padding:0 12px"><span class="on">Kandidat</span><span class="">Lowongan</span><span class="">Pengaturan</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="empty"><div class="ic"><i data-i="users" data-s="30"></i></div><div class="t-h3">Tidak ada kandidat yang cocok</div><div class="muted" style="font-size:15px;line-height:22px">Ubah filter lowongan atau kata pencarian.</div><button class="btn tonal sm">Hapus filter</button></div></div></div></div>
+    <nav class="tabbar"><a class="tab"><i data-i="house"></i>Beranda</a><a class="tab"><i data-i="square-check-big"></i>Tugas</a><a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a><a class="tab"><i data-i="message-circle"></i>Obrolan</a><a class="tab on"><i data-i="layout-grid"></i>Lainnya</a></nav>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Hiring</span><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button></div><div class="pad" style="padding-top:12px"><div class="row-h"><span class="hr-tile"><i data-i="briefcase-business" data-s="28"></i></span><div class="grow"><div class="t-h2">Hiring</div><div class="t-meta"></div></div></div></div>
+ <div class="hr-tabnav" style="margin-top:12px;padding:0 12px"><span class="on">Kandidat</span><span class="">Lowongan</span><span class="">Pengaturan</span></div><div class="pad stack" style="gap:16px;padding-top:12px"><div class="card stack" style="align-items:center;text-align:center;gap:10px;padding:28px 20px"><span style="width:56px;height:56px;border-radius:18px;background:var(--bad-soft);color:var(--bad);display:flex;align-items:center;justify-content:center"><i data-i="cloud-alert" data-s="28"></i></span><div class="t-h3">Kandidat gagal dimuat</div><div class="muted" style="font-size:15px">Periksa koneksi, lalu coba lagi.</div><button class="btn primary"><i data-i="refresh-cw"></i>Coba lagi</button></div></div></div></div>
+    <nav class="tabbar"><a class="tab"><i data-i="house"></i>Beranda</a><a class="tab"><i data-i="square-check-big"></i>Tugas</a><a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a><a class="tab"><i data-i="message-circle"></i>Obrolan</a><a class="tab on"><i data-i="layout-grid"></i>Lainnya</a></nav>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div class="banner warn" style="border-radius:0;align-items:center"><i data-i="wifi-off"></i><div>Anda offline. Daftar tersimpan 07.58; memindah tahap dan menyimpan keputusan butuh koneksi.</div></div><div class="bar-sub"><button class="ibtn" aria-label="Kembali"><i data-i="arrow-left"></i></button><span class="ttl">Hiring</span><button class="ibtn" aria-label="Cari"><i data-i="search"></i></button></div><div class="pad" style="padding-top:12px"><div class="row-h"><span class="hr-tile"><i data-i="briefcase-business" data-s="28"></i></span><div class="grow"><div class="t-h2">Hiring</div><div class="t-meta">2 lowongan dibuka · 4 kandidat baru · 1 menunggu keputusan</div></div></div></div>
+ <div class="hr-tabnav" style="margin-top:12px;padding:0 12px"><span class="on">Kandidat</span><span class="">Lowongan</span><span class="">Pengaturan</span></div><div class="pad stack" style="gap:12px;padding-top:12px"><div class="input"><i data-i="briefcase-business"></i><span class="grow trunc">Semua lowongan</span><i data-i="chevron-down"></i></div><div class="input"><i data-i="search"></i><span class="ph grow">Cari nama atau email</span></div><div class="chips"><span class="chip on">Masuk <span class="hr-chip-n">4</span></span><span class="chip">Seleksi berkas <span class="hr-chip-n">3</span></span><span class="chip">Wawancara <span class="hr-chip-n">2</span></span><span class="chip">Penilaian <span class="hr-chip-n">1</span></span><span class="chip">Keputusan akhir <span class="hr-chip-n">1</span></span><span class="chip">Diterima <span class="hr-chip-n">1</span></span><span class="chip">Ditolak <span class="hr-chip-n">2</span></span></div><div class="stack" style="gap:10px">
+  <div class="card tight stack" style="gap:10px"><div class="row-h sp"><div class="grow"><div class="t-title">Nadia Putri</div><div class="t-meta">Staf Programmer Backend</div></div></div>
+  <div class="row-h sp t-meta"><span class="row-h" style="gap:6px"><i data-i="sheet" data-s="16"></i>2 jam lalu</span><span class="row-h" style="gap:4px;"><i data-i="list-checks" data-s="16"></i>0/3</span></div>
+  <button class="btn outline sm block"><i data-i="arrow-right-left" data-s="16"></i>Pindahkan ke…</button></div>
+  <div class="card tight stack" style="gap:10px"><div class="row-h sp"><div class="grow"><div class="t-title">Rafi Maulana</div><div class="t-meta">Admin Gudang</div></div></div>
+  <div class="row-h sp t-meta"><span class="row-h" style="gap:6px"><i data-i="sheet" data-s="16"></i>kemarin</span><span class="row-h" style="gap:4px;"><i data-i="list-checks" data-s="16"></i>1/3</span></div>
+  <button class="btn outline sm block"><i data-i="arrow-right-left" data-s="16"></i>Pindahkan ke…</button></div>
+  <div class="card tight stack" style="gap:10px"><div class="row-h sp"><div class="grow"><div class="t-title">Salsa Amelia</div><div class="t-meta">Staf Programmer Backend</div></div></div>
+  <div class="row-h sp t-meta"><span class="row-h" style="gap:6px"><i data-i="file-text" data-s="16"></i>Sen, 12 Okt</span><span class="row-h" style="gap:4px;"><i data-i="list-checks" data-s="16"></i>0/3</span></div>
+  <button class="btn outline sm block"><i data-i="arrow-right-left" data-s="16"></i>Pindahkan ke…</button></div>
+  <div class="card tight stack" style="gap:10px"><div class="row-h sp"><div class="grow"><div class="t-title">Hendri Kurniawan</div><div class="t-meta">Staf Programmer Backend</div></div></div>
+  <div class="row-h sp t-meta"><span class="row-h" style="gap:6px"><i data-i="sheet" data-s="16"></i>Sen, 12 Okt</span><span class="row-h" style="gap:4px;"><i data-i="list-checks" data-s="16"></i>0/3</span></div>
+  <button class="btn outline sm block"><i data-i="arrow-right-left" data-s="16"></i>Pindahkan ke…</button></div></div></div></div></div>
+    <nav class="tabbar"><a class="tab"><i data-i="house"></i>Beranda</a><a class="tab"><i data-i="square-check-big"></i>Tugas</a><a class="tab center" aria-label="Absen"><i data-i="fingerprint" data-s="28"></i></a><a class="tab"><i data-i="message-circle"></i>Obrolan</a><a class="tab on"><i data-i="layout-grid"></i>Lainnya</a></nav>
+  </div>
+  <div class="phone" style="--h:915px">
+    <div class="body"><div class="hr-flow"><div style="padding:90px 24px 0" class="stack"><div class="stack" style="align-items:center;text-align:center;gap:12px"><span style="width:72px;height:72px;border-radius:24px;background:var(--surface-2);color:var(--text-muted);display:flex;align-items:center;justify-content:center"><i data-i="file-question" data-s="34"></i></span><div class="t-h2">Halaman tidak ditemukan</div><div class="muted" style="font-size:16px;line-height:23px">Ruang Hiring hanya untuk HR, Super Admin, serta pewawancara dan penyetuju yang ditugaskan. Baris “Hiring · rekrutmen” tidak ditampilkan di Lainnya.</div><button class="btn primary">Kembali ke Beranda</button></div></div></div></div>
+    
+  </div>
+</div>
+<script>
+(function(){function fit(){document.querySelectorAll('.phone[data-auto]').forEach(function(p){var f=p.querySelector('.hr-flow');if(!f)return;var pb=parseInt(p.dataset.auto,10)||24;var h=Math.max(915,f.offsetHeight+56+pb);p.style.setProperty('--h',h+'px');});}
+if(document.fonts&&document.fonts.ready){document.fonts.ready.then(fit);}window.addEventListener('load',fit);fit();})();
+</script>
+</body>
+</html>

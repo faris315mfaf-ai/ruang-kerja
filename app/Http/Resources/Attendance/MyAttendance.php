@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Attendance;
 
+use App\Domain\Attendance\Data\AttendanceWindows;
 use App\Domain\Attendance\Data\DaySchedule;
 use App\Domain\Attendance\Enums\AttendanceStatus;
 use App\Domain\Attendance\Models\AttendanceDay;
@@ -9,6 +10,7 @@ use App\Domain\Attendance\Services\LocationVerifier;
 use App\Domain\Attendance\Services\OpenDayLocator;
 use App\Domain\Attendance\Services\ScheduleResolver;
 use App\Domain\Attendance\Support\OfficeClock;
+use App\Domain\Requests\Services\SickPermitShortcut;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 
@@ -25,6 +27,7 @@ final class MyAttendance
         private readonly OpenDayLocator $openDays,
         private readonly LocationVerifier $locations,
         private readonly AttendancePresenter $presenter,
+        private readonly SickPermitShortcut $leaveShortcut,
     ) {}
 
     /**
@@ -88,6 +91,49 @@ final class MyAttendance
                 ->map(fn ($location): array => $this->presenter->location($location))
                 ->values()
                 ->all(),
+            ...$this->windows($user, $now, $action, $schedule, $day),
+            // "Tidak masuk? Ajukan sakit / izin" (keputusan pemilik 14 Okt 2026). An open day
+            // (checked in, or yesterday's night shift still open) never offers it.
+            'leaveShortcut' => $action === 'check_out' ? SickPermitShortcut::unavailable() : $this->leaveShortcut->handle($user, $now),
+        ];
+    }
+
+    /**
+     * Company "jam absen" for the apps (keputusan pemilik 13 Okt 2026):
+     * the configured windows, whether they govern this schedule, and why
+     * today's next action is closed right now (null = open).
+     *
+     * @param  'check_in'|'check_out'|'done'|'unavailable'  $action
+     * @return array{windows: array<string, mixed>, windowsApply: bool, checkInBlocked: array{code: string, message: string, opensAt: string|null}|null, checkOutBlockedReason: string|null}
+     */
+    private function windows(User $user, CarbonImmutable $now, string $action, DaySchedule $schedule, ?AttendanceDay $day): array
+    {
+        $windows = AttendanceWindows::forUser($user);
+        $applies = $windows->appliesTo($schedule);
+        $checkInBlocked = null;
+        $checkOutBlocked = null;
+
+        if ($applies && $action === 'check_in') {
+            $phase = $windows->checkInPhase($now);
+
+            if ($phase !== null) {
+                $checkInBlocked = [
+                    'code' => $phase === AttendanceWindows::BEFORE ? 'too_early' : 'window_closed',
+                    'message' => $windows->checkInMessage(),
+                    'opensAt' => $phase === AttendanceWindows::BEFORE ? AttendancePresenter::iso($windows->checkInOpensAt($now)) : null,
+                ];
+            }
+        }
+
+        if ($applies && $action === 'check_out' && $day?->work_date->toDateString() === ScheduleResolver::officeDate($now)->toDateString() && $windows->checkOutPhase($now) !== null) {
+            $checkOutBlocked = $windows->checkOutMessage();
+        }
+
+        return [
+            'windows' => $windows->toProps(),
+            'windowsApply' => $applies,
+            'checkInBlocked' => $checkInBlocked,
+            'checkOutBlockedReason' => $checkOutBlocked,
         ];
     }
 

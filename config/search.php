@@ -2,6 +2,7 @@
 
 use App\Domain\Search\Providers\ActionsSearchProvider;
 use App\Domain\Search\Providers\DocumentSearchProvider;
+use App\Domain\Search\Providers\MeetingSearchProvider;
 use App\Domain\Search\Providers\NoteSearchProvider;
 use App\Domain\Search\Providers\PeopleSearchProvider;
 use App\Domain\Search\Providers\RequestSearchProvider;
@@ -32,6 +33,8 @@ return [
         // Catatan (F2-2): only while FEATURE_NOTES is on (same default as config/features.php).
         ...((bool) env('FEATURE_NOTES', env('APP_ENV', 'production') !== 'production') ? [NoteSearchProvider::class] : []),
         RequestSearchProvider::class,
+        // Rapat (F2-3): only while FEATURE_MEETINGS is on (same default as config/features.php).
+        ...((bool) env('FEATURE_MEETINGS', env('APP_ENV', 'production') !== 'production') ? [MeetingSearchProvider::class] : []),
     ],
 
     // Results per group when searching all groups ("Semua").

@@ -20,7 +20,7 @@ export default function MobileLayout({
         <div className="flex min-h-svh flex-col">
             <DemoAccountStrip className="pt-safe" />
             <AppBar {...appBar} />
-            <main className="flex-1 px-4 pt-2 pb-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom)+24px)]">
+            <main className="flex-1 px-4 pt-2 pb-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom)+24px)] transition-[padding-bottom] duration-180 ease-brand motion-reduce:transition-none">
                 {children}
             </main>
             {bottomBar && (

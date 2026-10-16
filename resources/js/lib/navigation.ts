@@ -15,6 +15,7 @@ import {
     Gauge,
     Home,
     Inbox,
+    LayoutGrid,
     MapPin,
     Megaphone,
     MessagesSquare,
@@ -40,6 +41,8 @@ export type AppNavItem = {
     icon: LucideIcon;
     /** Match nested routes too (e.g. /pengajuan/123). */
     matchPrefix?: boolean;
+    /** Extra prefixes this item owns (the Workspace tab also owns /w/*). */
+    matchPrefixes?: readonly string[];
     /** Shared-prop counter shown as a badge. */
     badge?: 'approvals' | 'chat';
     /** Hidden from the mobile Menu tab (docs/PLATFORM.md §3, "—" on mobile). */
@@ -302,9 +305,14 @@ export const prototypeNavItem: AppNavItem = {
 };
 
 export type TabNavItem = AppNavItem & {
-    /** Raised round action in the middle of the capsule (Absen). */
+    /** Raised round action in the middle of the capsule (Absen, Workspace). */
     center?: boolean;
+    /** The centre button opens this sheet instead of navigating. */
+    sheet?: 'workspace';
 };
+
+/** What the raised centre button of the tab bar does right now. */
+export type CenterAction = 'absen' | 'workspace';
 
 /**
  * Mobile bottom tab bar, five items (docs/PLATFORM.md §2.1): Beranda ·
@@ -312,10 +320,33 @@ export type TabNavItem = AppNavItem & {
  * behind the app bar bell; it takes the fourth slot back when Obrolan is
  * switched off (FEATURE_CHAT).
  */
-/** Owner decision 9 Oct 2026: the Absen centre button hides after the morning
- * check-in and returns one hour before the shift ends, so the bar stays
- * clean; `absen=false` renders the four side tabs full width. */
-export function tabNavItems(chat: boolean, absen = true): TabNavItem[] {
+/** Owner decision 9 Oct 2026: the raised centre button follows the day.
+ * Before the morning check-in, and again from one hour before the shift ends
+ * until the check-out, it is Absen; once the user is checked in (and after
+ * the check-out) it becomes Workspace, opening the workspace picker sheet.
+ * `center=null` renders the four side tabs full width. */
+export function tabNavItems(
+    chat: boolean,
+    center: CenterAction | null = 'absen',
+): TabNavItem[] {
+    const centerItem: TabNavItem =
+        center === 'workspace'
+            ? {
+                  title: 'Workspace',
+                  href: '/workspace',
+                  icon: LayoutGrid,
+                  // Also owns the workspace pages themselves (/w/KEY).
+                  matchPrefixes: ['/workspace', '/w'],
+                  center: true,
+                  sheet: 'workspace',
+              }
+            : {
+                  title: 'Absen',
+                  href: '/absensi',
+                  icon: MapPin,
+                  matchPrefix: true,
+                  center: true,
+              };
     const items = [
         { title: 'Beranda', href: '/dashboard', icon: Home, matchPrefix: true },
         {
@@ -324,13 +355,7 @@ export function tabNavItems(chat: boolean, absen = true): TabNavItem[] {
             icon: SquareCheckBig,
             matchPrefix: true,
         },
-        {
-            title: 'Absen',
-            href: '/absensi',
-            icon: MapPin,
-            matchPrefix: true,
-            center: true,
-        },
+        centerItem,
         chat
             ? chatNavItem
             : {
@@ -342,18 +367,18 @@ export function tabNavItems(chat: boolean, absen = true): TabNavItem[] {
         { title: 'Lainnya', href: '/menu', icon: Menu },
     ];
 
-    return absen
-        ? items
-        : items.filter((item) => !('center' in item && item.center));
+    return center === null
+        ? items.filter((item) => !('center' in item && item.center))
+        : items;
 }
 
 /** Index of the tab owning the current URL, or -1 (e.g. /persetujuan). */
 export function activeTabIndex(
     currentPath: string,
     chat: boolean,
-    absen = true,
+    center: CenterAction | null = 'absen',
 ): number {
-    return tabNavItems(chat, absen).findIndex((item) =>
+    return tabNavItems(chat, center).findIndex((item) =>
         isActivePath(item, currentPath),
     );
 }
@@ -452,6 +477,13 @@ export function isActivePath(item: AppNavItem, currentPath: string): boolean {
     if (item.matchPrefix) {
         return (
             currentPath === item.href || currentPath.startsWith(`${item.href}/`)
+        );
+    }
+
+    if (item.matchPrefixes) {
+        return item.matchPrefixes.some(
+            (prefix) =>
+                currentPath === prefix || currentPath.startsWith(`${prefix}/`),
         );
     }
 

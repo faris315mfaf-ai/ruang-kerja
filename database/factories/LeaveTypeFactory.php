@@ -54,6 +54,12 @@ class LeaveTypeFactory extends Factory
         return $this->state(fn (): array => ['locked_reason' => $reason ?? LeaveType::SOP_LOCK_REASON]);
     }
 
+    /** Same-day cutoff for sakit/izin (keputusan pemilik 14 Okt 2026), office time "HH:MM". */
+    public function cutoff(string $time = '12:00'): static
+    {
+        return $this->state(fn (): array => ['submit_cutoff_time' => $time]);
+    }
+
     public function withoutQuota(): static
     {
         return $this->state(fn (): array => ['annual_quota_days' => null]);

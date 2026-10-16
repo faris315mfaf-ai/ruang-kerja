@@ -3,6 +3,7 @@
 namespace App\Domain\Auth\Actions;
 
 use App\Domain\Auth\Services\SessionTerminator;
+use App\Domain\Devices\Models\Device;
 use App\Domain\Organization\Services\AuditLogger;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
@@ -22,9 +23,14 @@ final readonly class ChangeOwnPassword
         private SessionTerminator $sessions,
     ) {}
 
-    public function handle(User $user, #[\SensitiveParameter] string $password): void
+    /**
+     * @param  Device|null  $keepDevice  the installation making the change through the mobile API:
+     *                                   its token (and push token) survive, all others are revoked.
+     *                                   Null (web) revokes every API token.
+     */
+    public function handle(User $user, #[\SensitiveParameter] string $password, ?Device $keepDevice = null): void
     {
-        DB::transaction(function () use ($user, $password): void {
+        DB::transaction(function () use ($user, $password, $keepDevice): void {
             $wasRequired = $user->password_change_required;
 
             $user->forceFill([
@@ -34,6 +40,7 @@ final readonly class ChangeOwnPassword
             $this->sessions->rotateRememberToken($user);
             // One explicit audit row instead of a generic user.updated.
             $user->saveQuietly();
+            $this->sessions->revokeApiTokens($user, $keepDevice);
 
             $this->audit->log('user.password_changed', $user, null, [
                 'required_change' => $wasRequired,
