@@ -28,6 +28,7 @@ import {
     shortDate,
     timeRange,
 } from './lib';
+import { GuestPanel } from './guests/guest-panel';
 import { MeetingStartNotice } from './meeting-notice';
 import { NotulenCard } from './notulen/notulen-card';
 import { useMeetingsContext, useNow } from './meetings-context';
@@ -232,7 +233,7 @@ export function ParticipantList({
                             <span className="truncate text-[14px] text-text-muted">
                                 {person
                                     ? person.title || person.division
-                                    : 'Tamu eksternal · undangan email ditahan'}
+                                    : 'Tamu eksternal · masuk lewat tautan pribadi'}
                                 {participant.optional ? ' · opsional' : ''}
                             </span>
                         </span>
@@ -461,6 +462,15 @@ export function MeetingDetailDesktop({
                                 copied={actions.copied}
                             />
                             <VideoAttendancePanel video={data.video} />
+                            {meeting.organizer_id === me &&
+                                data.video?.configured && (
+                                    <GuestPanel
+                                        meetingId={meeting.id}
+                                        date={meeting.occurrence_date}
+                                        now={now}
+                                        canceled={meeting.canceled}
+                                    />
+                                )}
                             <NotulenCard
                                 meetingId={meeting.id}
                                 date={meeting.occurrence_date}
@@ -728,6 +738,16 @@ export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
                 </ol>
             </section>
             <VideoAttendancePanel video={data.video} />
+            {meeting.platform === 'video' &&
+                meeting.organizer_id === me &&
+                data.video?.configured && (
+                    <GuestPanel
+                        meetingId={meeting.id}
+                        date={meeting.occurrence_date}
+                        now={now}
+                        canceled={meeting.canceled}
+                    />
+                )}
             {meeting.platform === 'video' && (
                 <NotulenCard
                     meetingId={meeting.id}

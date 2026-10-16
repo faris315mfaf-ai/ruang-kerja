@@ -43,6 +43,9 @@ import { Spinner } from '@/components/ui/spinner';
 import { ApiError } from '@/features/tasks/lib/api';
 import { cn, focusRing } from '@/lib/utils';
 import { dueLabel, officeDate, shortDate, timeRange } from '../lib';
+import { guestLabel } from '../guests/lib';
+import { LobbyList } from '../guests/lobby-list';
+import { useLobby } from '../guests/use-lobby';
 import { useNow } from '../meetings-context';
 import { autoMinutesOn, ConsentCard, useConsent } from '../notulen/consent';
 import { videoApi } from './api';
@@ -506,6 +509,28 @@ export function PreJoinScreen({
     });
 
     const windowState = joinWindow(video, now);
+    // External guests who already asked to join (anyone invited may admit).
+    const lobby = useLobby({
+        meetingId: meeting.id,
+        date,
+        enabled:
+            video.configured &&
+            video.can_join &&
+            windowState.state !== 'closed',
+        realtime: false,
+        onNew: (entries) =>
+            toast(
+                entries.length === 1
+                    ? `${guestLabel(entries[0])} menunggu diizinkan masuk`
+                    : `${entries.length} tamu menunggu diizinkan masuk`,
+            ),
+    });
+    const decideGuest = (id: string, admit: boolean) =>
+        void (admit ? lobby.admit(id) : lobby.deny(id)).then((message) => {
+            if (message) {
+                toast.error(message);
+            }
+        });
     const inRoom = video.attendance.filter((person) => person.in_room);
     const nameOf = (id: string) =>
         room.participants.find((p) => p.id === id)?.name ?? 'Peserta';
@@ -724,6 +749,24 @@ export function PreJoinScreen({
                     >
                         {/* In the flow of the notes column (never floating over it):
                             with the AI provider notice it grows to 4+ lines (audit U-09). */}
+                        {lobby.count > 0 && (
+                            <section
+                                aria-label="Tamu menunggu"
+                                className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4"
+                                data-testid="prejoin-lobby"
+                            >
+                                <h2 className="text-[16px] font-bold">
+                                    Tamu menunggu ({lobby.count})
+                                </h2>
+                                <LobbyList
+                                    waiting={lobby.waiting}
+                                    busy={lobby.busy}
+                                    error={lobby.error}
+                                    onAdmit={(id) => decideGuest(id, true)}
+                                    onDeny={(id) => decideGuest(id, false)}
+                                />
+                            </section>
+                        )}
                         {consentCard}
                         <NotesChoice
                             room={room}

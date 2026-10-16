@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
     cleanGuestName,
+    dropGuest,
+    guestIdentityOf,
     guestLabel,
+    guestStatusText,
+    guestStatusTone,
+    linkExpiryLabel,
+    mergeGuestRows,
+    upsertGuest,
+    waitingSince,
     initialSession,
     isFinalStatus,
     isGuestIdentity,
@@ -17,7 +25,7 @@ import {
     waitingLabel,
     windowNotice,
 } from './lib';
-import type { GuestInfo, GuestWindow } from './types';
+import type { GuestInfo, GuestWindow, OrganizerGuest } from './types';
 
 const OPENS = Date.parse('2026-10-05T02:45:00Z'); // 09.45 WIB
 const window: GuestWindow = {
@@ -244,5 +252,150 @@ describe('links and lobby', () => {
 
         expect(newlyWaiting(new Set(['a']), waiting)).toEqual([waiting[1]]);
         expect(newlyWaiting(new Set(), waiting)).toHaveLength(2);
+    });
+});
+
+const row = (patch: Partial<OrganizerGuest> = {}): OrganizerGuest => ({
+    id: '01JBGUEST000000000000000A1',
+    email: 'budi@mitra.test',
+    name: 'Budi Mitra',
+    link_url: 'https://ruangkerja.test/tamu/x',
+    link_expires_at: '2026-10-05T06:00:00Z',
+    link_expired: false,
+    link_rotated_at: null,
+    status: 'none',
+    status_label: 'Belum masuk',
+    requested_at: null,
+    admitted_at: null,
+    in_room: false,
+    identity: 'guest:01jbguest000000000000000a1',
+    ...patch,
+});
+
+describe('organizer guest rows', () => {
+    it('builds the LiveKit identity in lower case', () => {
+        expect(guestIdentityOf('01JBGUEST000000000000000A1')).toBe(
+            'guest:01jbguest000000000000000a1',
+        );
+    });
+
+    it('replaces a row by id or appends a new one', () => {
+        const a = row();
+        const b = row({ id: 'B', identity: 'guest:b' });
+
+        expect(upsertGuest([a], b)).toEqual([a, b]);
+        expect(upsertGuest([a, b], { ...a, status: 'waiting' })[0].status).toBe(
+            'waiting',
+        );
+        expect(dropGuest([a, b], a.id)).toEqual([b]);
+    });
+
+    it('says "Di ruang rapat" before the lobby label', () => {
+        expect(
+            guestStatusText(row({ in_room: true, status: 'admitted' })),
+        ).toBe('Di ruang rapat');
+        expect(guestStatusText(row({ status_label: 'Menunggu' }))).toBe(
+            'Menunggu',
+        );
+        expect(guestStatusTone(row({ in_room: true }))).toBe('success');
+        expect(guestStatusTone(row({ status: 'waiting' }))).toBe('warning');
+        expect(guestStatusTone(row({ status: 'removed' }))).toBe('danger');
+        expect(guestStatusTone(row({ status: 'admitted' }))).toBe('info');
+        expect(guestStatusTone(row())).toBe('neutral');
+    });
+
+    it('shows when a link stops working', () => {
+        const now = Date.parse('2026-10-05T03:00:00Z');
+
+        expect(linkExpiryLabel(row(), now)).toBe(
+            'Berlaku sampai Sen, 5 Okt · 13.00 WIB',
+        );
+        expect(linkExpiryLabel(row({ link_expired: true }), now)).toBe(
+            'Tautan kedaluwarsa',
+        );
+        expect(linkExpiryLabel(row({ link_expires_at: null }), now)).toBeNull();
+        expect(
+            linkExpiryLabel(
+                row({ link_expires_at: '2026-10-05T02:00:00Z' }),
+                now,
+            ),
+        ).toBe('Tautan kedaluwarsa');
+    });
+
+    it('words how long someone has been waiting', () => {
+        const now = Date.parse('2026-10-05T03:00:00Z');
+
+        expect(waitingSince('2026-10-05T02:59:30Z', now)).toBe('baru saja');
+        expect(waitingSince('2026-10-05T02:57:00Z', now)).toBe('3 menit lalu');
+        expect(waitingSince(null, now)).toBeNull();
+        expect(waitingSince('nope', now)).toBeNull();
+    });
+
+    it('merges live, attended and removed guests once each', () => {
+        const here = row();
+        const gone = row({
+            id: 'GONE',
+            identity: 'guest:gone',
+            email: 'siti@mitra.test',
+            name: null,
+            status: 'removed',
+        });
+        const rows = mergeGuestRows({
+            live: [{ identity: here.identity, name: 'Budi Mitra (Tamu)' }],
+            attended: [
+                {
+                    participant_id: 'GONE',
+                    name: 'Siti (Tamu)',
+                    joined_at: '2026-10-05T03:00:00Z',
+                    left_at: '2026-10-05T03:05:00Z',
+                    duration_seconds: 300,
+                    in_room: false,
+                    sessions: 1,
+                },
+                {
+                    participant_id: '01JBGUEST000000000000000A1',
+                    name: 'Budi Mitra (Tamu)',
+                    joined_at: '2026-10-05T03:01:00Z',
+                    left_at: null,
+                    duration_seconds: 60,
+                    in_room: true,
+                    sessions: 1,
+                },
+            ],
+            invited: [here, gone],
+        });
+
+        expect(rows.map((r) => [r.identity, r.live, r.name])).toEqual([
+            [here.identity, true, 'Budi Mitra'],
+            ['guest:gone', false, 'Siti'],
+        ]);
+        expect(rows[0].joinedAt).toBe('2026-10-05T03:01:00Z');
+        expect(rows[1]).toMatchObject({ status: 'removed', guestId: 'GONE' });
+    });
+
+    it('lists an invited guest that was denied or removed but never attended', () => {
+        const denied = row({ status: 'denied' });
+        const rows = mergeGuestRows({
+            live: [],
+            attended: [],
+            invited: [denied],
+        });
+
+        expect(rows).toHaveLength(1);
+        expect(rows[0]).toMatchObject({
+            live: false,
+            status: 'denied',
+            name: 'Budi Mitra',
+        });
+        expect(
+            mergeGuestRows({
+                live: [],
+                attended: [],
+                invited: [row({ status: 'waiting' })],
+            }),
+        ).toEqual([]);
+        expect(
+            mergeGuestRows({ live: [], attended: [], invited: null }),
+        ).toEqual([]);
     });
 });

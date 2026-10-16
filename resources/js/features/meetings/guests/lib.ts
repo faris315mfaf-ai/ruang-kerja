@@ -5,13 +5,16 @@
  * docs/sesi/rapat-tamu-eksternal.md.
  */
 import { formatTime } from '@/lib/format';
+import { officeDate, shortDate } from '../lib';
 import { countdownLabel } from '../video/lib';
 import type {
+    GuestAttendee,
     GuestInfo,
     GuestStatus,
     GuestStatusReply,
     GuestWindow,
     GuestWindowState,
+    OrganizerGuest,
 } from './types';
 
 // ---------------------------------------------------------------------------
@@ -297,4 +300,186 @@ export function newlyWaiting(
     waiting: { id: string; name: string | null; email: string | null }[],
 ): { id: string; name: string | null; email: string | null }[] {
     return waiting.filter((entry) => !previous.has(entry.id));
+}
+
+// ---------------------------------------------------------------------------
+// Organizer side: guest list rows
+// ---------------------------------------------------------------------------
+
+/** LiveKit identity of a guest row (`guest:{id lowercased}`). */
+export function guestIdentityOf(participantId: string): string {
+    return `${GUEST_IDENTITY_PREFIX}${participantId.toLowerCase()}`;
+}
+
+/** Row replaced by id (a rotated link, a new status) or appended. */
+export function upsertGuest(
+    list: OrganizerGuest[],
+    guest: OrganizerGuest,
+): OrganizerGuest[] {
+    return list.some((item) => item.id === guest.id)
+        ? list.map((item) => (item.id === guest.id ? guest : item))
+        : [...list, guest];
+}
+
+export function dropGuest(
+    list: OrganizerGuest[],
+    id: string,
+): OrganizerGuest[] {
+    return list.filter((item) => item.id !== id);
+}
+
+/** Status text of a row: "Di ruang rapat" beats the lobby label. */
+export function guestStatusText(guest: OrganizerGuest): string {
+    return guest.in_room ? 'Di ruang rapat' : guest.status_label;
+}
+
+export function guestStatusTone(
+    guest: OrganizerGuest,
+): 'success' | 'warning' | 'danger' | 'neutral' | 'info' {
+    if (guest.in_room) {
+        return 'success';
+    }
+
+    switch (guest.status) {
+        case 'waiting':
+            return 'warning';
+        case 'admitted':
+            return 'info';
+        case 'denied':
+        case 'removed':
+            return 'danger';
+        default:
+            return 'neutral';
+    }
+}
+
+/** "Berlaku sampai Sen, 5 Okt · 13.00 WIB" or "Kedaluwarsa". */
+export function linkExpiryLabel(
+    guest: Pick<OrganizerGuest, 'link_expires_at' | 'link_expired'>,
+    now: number,
+): string | null {
+    if (!guest.link_expires_at) {
+        return null;
+    }
+
+    const expires = Date.parse(guest.link_expires_at);
+
+    if (guest.link_expired || (!Number.isNaN(expires) && expires <= now)) {
+        return 'Tautan kedaluwarsa';
+    }
+
+    return `Berlaku sampai ${shortDateTime(expires)} WIB`;
+}
+
+function shortDateTime(ms: number): string {
+    return `${shortDate(officeDate(ms))} · ${formatTime(ms)}`;
+}
+
+/** "baru saja", "3 menit lalu" for the lobby ("menunggu …"). */
+export function waitingSince(
+    requestedAt: string | null,
+    now: number,
+): string | null {
+    if (!requestedAt) {
+        return null;
+    }
+
+    const since = Date.parse(requestedAt);
+
+    if (Number.isNaN(since)) {
+        return null;
+    }
+
+    const minutes = Math.floor((now - since) / 60_000);
+
+    return minutes < 1 ? 'baru saja' : `${minutes} menit lalu`;
+}
+
+/** Row of the room's "Tamu" section. */
+export type GuestRoomRow = {
+    identity: string;
+    name: string;
+    /** In the LiveKit room right now. */
+    live: boolean;
+    /** Organizer's lobby status when known. */
+    status: OrganizerGuest['status'] | null;
+    /** Organizer-list id (to admit again). */
+    guestId: string | null;
+    joinedAt: string | null;
+    leftAt: string | null;
+};
+
+/**
+ * One list for the room's "Tamu" section: whoever is in the room now (from
+ * LiveKit), guests who attended and left (webhook attendance) and — for the
+ * organizer — invited guests that were removed or denied, who can be let in
+ * again. A person appears once, keyed by identity.
+ */
+export function mergeGuestRows(input: {
+    live: { identity: string; name: string }[];
+    attended: GuestAttendee[];
+    invited: OrganizerGuest[] | null;
+}): GuestRoomRow[] {
+    const rows = new Map<string, GuestRoomRow>();
+    const invitedById = new Map(
+        (input.invited ?? []).map((guest) => [guest.identity, guest]),
+    );
+
+    for (const person of input.live) {
+        const invited = invitedById.get(person.identity);
+
+        rows.set(person.identity, {
+            identity: person.identity,
+            name: stripGuestSuffix(person.name) || 'Tamu',
+            live: true,
+            status: invited?.status ?? null,
+            guestId: invited?.id ?? null,
+            joinedAt: null,
+            leftAt: null,
+        });
+    }
+
+    for (const guest of input.attended) {
+        const identity = guestIdentityOf(guest.participant_id);
+        const existing = rows.get(identity);
+
+        if (existing) {
+            existing.joinedAt = guest.joined_at;
+
+            continue;
+        }
+
+        const invited = invitedById.get(identity);
+
+        rows.set(identity, {
+            identity,
+            name: stripGuestSuffix(guest.name) || 'Tamu',
+            live: false,
+            status: invited?.status ?? null,
+            guestId: invited?.id ?? null,
+            joinedAt: guest.joined_at,
+            leftAt: guest.left_at,
+        });
+    }
+
+    for (const guest of input.invited ?? []) {
+        if (
+            rows.has(guest.identity) ||
+            (guest.status !== 'removed' && guest.status !== 'denied')
+        ) {
+            continue;
+        }
+
+        rows.set(guest.identity, {
+            identity: guest.identity,
+            name: guestLabel(guest),
+            live: false,
+            status: guest.status,
+            guestId: guest.id,
+            joinedAt: null,
+            leftAt: null,
+        });
+    }
+
+    return [...rows.values()];
 }

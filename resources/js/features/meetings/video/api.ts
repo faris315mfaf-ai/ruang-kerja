@@ -1,6 +1,7 @@
 import { http } from '@inertiajs/react';
 import { ApiError } from '@/features/tasks/lib/api';
 import videoRoutes from '@/routes/meetings/video';
+import type { GuestAttendee } from '../guests/types';
 import type { Minutes } from '../types';
 import type {
     MinutesCollabToken,
@@ -147,6 +148,7 @@ export type AttendanceRoster = {
     not_joined: NotJoined[];
     late_grace_minutes: number;
     removed?: RemovedParticipant[];
+    guests?: GuestAttendee[];
 };
 
 /**

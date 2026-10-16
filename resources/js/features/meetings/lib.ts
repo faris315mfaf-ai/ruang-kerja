@@ -440,6 +440,8 @@ export type MeetingFormValues = {
     leadership: boolean;
     /** "Notulen otomatis" (video meetings, transcription server set). */
     autoMinutes: boolean;
+    /** Optional display name per guest e-mail (lower case); empty = leave as is. */
+    guestNames: Record<string, string>;
 };
 
 export type MeetingFormField =

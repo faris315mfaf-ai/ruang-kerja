@@ -5,6 +5,7 @@
  * so the pages keep working against the older backend; `normalizeRoom()`
  * (contract.ts) fills the gaps. Times are ISO strings (UTC).
  */
+import type { GuestAttendee } from '../guests/types';
 import type { NotulenSummary } from '../notulen/types';
 import type { ActionItem, Minutes, Person, PersonId, Rsvp } from '../types';
 
@@ -50,6 +51,8 @@ export type VideoSummary = {
     late_grace_minutes?: number;
     /** Removed by the organizer, no token until re-admitted (audit R-04). */
     removed?: RemovedParticipant[];
+    /** External guests who were in the room (not counted in `in_room`). */
+    guests?: GuestAttendee[];
 };
 
 export type RemovedParticipant = {

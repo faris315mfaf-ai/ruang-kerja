@@ -22,7 +22,7 @@ import {
 } from './room-people';
 import { emitRoomNotice } from './room-notices';
 
-export type PanelKind = 'attendance' | 'chat' | 'settings' | 'talk';
+export type PanelKind = 'attendance' | 'chat' | 'settings' | 'talk' | 'lobby';
 
 /**
  * Right-hand panel of the room (mockup "Kehadiran": white card radius 20)
