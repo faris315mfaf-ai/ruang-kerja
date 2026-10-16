@@ -126,7 +126,10 @@ export default function LayarDetailRapat(): React.JSX.Element {
   const pengamat = rapat !== null && rapat.leadership && !saya.diundang && !saya.penyelenggara && !saya.notulis;
   const fase = rapat ? faseRapat(rapat.starts_at, rapat.ends_at, sekarang) : 'akan';
   const video = rapat?.platform === 'video';
-  const kemampuan = useMemo(() => kemampuanTamu({ platform: rapat?.platform ?? '', canceled: rapat?.canceled ?? false, video: d?.video ?? null }), [rapat?.platform, rapat?.canceled, d?.video]);
+  const kemampuan = useMemo(
+    () => kemampuanTamu({ platform: rapat?.platform ?? '', canceled: rapat?.canceled ?? false, penyelenggara: saya.penyelenggara, terundang: saya.penyelenggara || saya.notulis || saya.diundang }),
+    [rapat?.platform, rapat?.canceled, saya],
+  );
 
   // Notulen otomatis + kehadiran ruang video (hanya rapat video).
   const muatTambahan = useCallback(async (): Promise<void> => {

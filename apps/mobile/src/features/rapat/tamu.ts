@@ -186,7 +186,10 @@ export function bolehTolak(status: string): boolean {
 export interface RingkasVideoDetail {
   platform: string;
   canceled: boolean;
-  video: { is_organizer?: boolean; can_join?: boolean } | null;
+  /** Penonton = penyelenggara rapat (`rapat.organizer.id`). */
+  penyelenggara: boolean;
+  /** Penonton terundang: penyelenggara, notulis, atau peserta internal (bukan pengamat rapat pimpinan). */
+  terundang: boolean;
 }
 
 export interface KemampuanTamu {
@@ -196,12 +199,16 @@ export interface KemampuanTamu {
   ruangTunggu: boolean;
 }
 
-/** Turunan `MeetingPolicy` dari ringkasan `video` pada detail rapat (is_organizer, can_join = openVideo). */
+/**
+ * Turunan `MeetingPolicy` di sisi klien. Detail rapat API v1 belum mengirim `manage_guests`/
+ * `manage_lobby`, dan `video.can_join` ikut jendela gabung (bukan `openVideo`), jadi hak
+ * diturunkan dari peran di rapat itu; server tetap hakim (403/404 ditangani).
+ */
 export function kemampuanTamu(d: RingkasVideoDetail): KemampuanTamu {
-  if (d.platform !== 'video' || d.canceled || d.video === null) {
+  if (d.platform !== 'video' || d.canceled) {
     return { kelola: false, ruangTunggu: false };
   }
-  return { kelola: d.video.is_organizer === true, ruangTunggu: d.video.can_join === true };
+  return { kelola: d.penyelenggara, ruangTunggu: d.penyelenggara || d.terundang };
 }
 
 /** Baris peserta tanpa akun (hanya email) = tamu eksternal. */

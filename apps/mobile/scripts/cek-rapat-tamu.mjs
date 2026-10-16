@@ -129,14 +129,13 @@ assert.equal(nadaStatusTamu('???'), 'neutral');
 assert.deepEqual(['none', 'waiting', 'admitted', 'denied', 'removed'].map(bolehIzinkan), [false, true, false, true, true], 'izinkan: menunggu/ditolak/dikeluarkan (kontrak 4.3)');
 assert.deepEqual(['none', 'waiting', 'admitted', 'denied', 'removed'].map(bolehTolak), [false, true, false, false, false], 'tolak: hanya menunggu');
 
-// ── Kemampuan dari ringkasan video detail ────────────────────────────────────
-const video = (o) => ({ platform: 'video', canceled: false, video: { is_organizer: false, can_join: true, ...o } });
-assert.deepEqual(kemampuanTamu(video({ is_organizer: true })), { kelola: true, ruangTunggu: true }, 'penyelenggara');
-assert.deepEqual(kemampuanTamu(video({})), { kelola: false, ruangTunggu: true }, 'peserta internal/notulis: hanya ruang tunggu');
-assert.deepEqual(kemampuanTamu(video({ can_join: false })), { kelola: false, ruangTunggu: false }, 'pengamat rapat pimpinan');
-assert.deepEqual(kemampuanTamu({ ...video({ is_organizer: true }), canceled: true }), { kelola: false, ruangTunggu: false }, 'dibatalkan');
-assert.deepEqual(kemampuanTamu({ platform: 'meet', canceled: false, video: null }), { kelola: false, ruangTunggu: false }, 'bukan video');
-assert.deepEqual(kemampuanTamu({ platform: 'video', canceled: false, video: null }), { kelola: false, ruangTunggu: false });
+// ── Kemampuan dari peran di rapat (detail API belum mengirim manage_guests/manage_lobby) ──
+const rapat = (o) => ({ platform: 'video', canceled: false, penyelenggara: false, terundang: true, ...o });
+assert.deepEqual(kemampuanTamu(rapat({ penyelenggara: true })), { kelola: true, ruangTunggu: true }, 'penyelenggara');
+assert.deepEqual(kemampuanTamu(rapat({})), { kelola: false, ruangTunggu: true }, 'notulis/peserta internal: hanya ruang tunggu');
+assert.deepEqual(kemampuanTamu(rapat({ terundang: false })), { kelola: false, ruangTunggu: false }, 'pengamat rapat pimpinan');
+assert.deepEqual(kemampuanTamu(rapat({ penyelenggara: true, canceled: true })), { kelola: false, ruangTunggu: false }, 'dibatalkan');
+assert.deepEqual(kemampuanTamu(rapat({ platform: 'meet', penyelenggara: true })), { kelola: false, ruangTunggu: false }, 'bukan video');
 assert.equal(
   jumlahTamuDariPeserta([
     { user_id: '01A', email: null },
