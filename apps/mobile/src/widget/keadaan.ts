@@ -220,7 +220,7 @@ export function keadaanCheckIn(m: MasukanCheckIn): KeadaanCheckIn {
   }
   const mulai = st?.scheduledStart ?? today.schedule.start ?? null;
   const tanpaJadwal = mulai === null && (st !== null ? !st.isWorkday : !today.schedule.isWorkday);
-  return susunCheckIn('belum', 'Belum masuk', mulai !== null ? `Mulai ${jamWib(mulai)}` : tanpaJadwal ? 'Tanpa jadwal · tetap tercatat' : (st?.label ?? 'Belum absen'), 'log-in', { menonjol: true });
+  return susunCheckIn('belum', 'Belum masuk', mulai !== null ? `Mulai ${jamWib(mulai)}` : tanpaJadwal ? 'Tanpa jadwal' : (st?.label ?? 'Belum absen'), 'log-in', { menonjol: true });
 }
 
 // ── Tugas hari ini ───────────────────────────────────────────────────────────

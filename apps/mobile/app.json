@@ -2,7 +2,7 @@
   "expo": {
     "name": "RuangKerja",
     "slug": "ruangkerja",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "scheme": "ruangkerja",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -14,7 +14,7 @@
     "backgroundColor": "#F3F6FA",
     "android": {
       "package": "store.spkd.ruangkerja",
-      "versionCode": 7,
+      "versionCode": 8,
       "permissions": [
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.CAMERA",
@@ -92,6 +92,7 @@
       ],
       "./plugins/withReleaseSigning",
       "./plugins/withWidgetConfigPortrait",
+      "./plugins/withReleaseShrink",
       [
         "expo-sqlite",
         {
