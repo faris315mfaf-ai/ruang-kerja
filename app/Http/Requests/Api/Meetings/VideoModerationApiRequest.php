@@ -21,7 +21,8 @@ class VideoModerationApiRequest extends OccurrenceRequest
     {
         return [
             ...parent::rules(),
-            'user_id' => ['required', 'string', 'ulid'],
+            // A user ULID, or `guest:{participant ULID}` of an external guest (remove / mute only).
+            'user_id' => ['required', 'string', 'regex:/^([0-9A-Za-z]{26}|guest:[0-9A-Za-z]{26})$/'],
             'track_sid' => [$this->routeIs('api.v1.meetings.video.mute') ? 'required' : 'nullable', 'string', 'max:64', 'regex:/^TR_[A-Za-z0-9]+$/'],
         ];
     }
@@ -33,7 +34,7 @@ class VideoModerationApiRequest extends OccurrenceRequest
     {
         return [
             'user_id.required' => 'Pilih peserta.',
-            'user_id.ulid' => 'Peserta tidak dikenal.',
+            'user_id.regex' => 'Peserta tidak dikenal.',
             'track_sid.required' => 'Mikrofon peserta tidak ditemukan.',
             'track_sid.regex' => 'Mikrofon peserta tidak ditemukan.',
         ];
