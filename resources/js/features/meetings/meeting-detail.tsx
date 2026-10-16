@@ -462,15 +462,14 @@ export function MeetingDetailDesktop({
                                 copied={actions.copied}
                             />
                             <VideoAttendancePanel video={data.video} />
-                            {meeting.organizer_id === me &&
-                                data.video?.configured && (
-                                    <GuestPanel
-                                        meetingId={meeting.id}
-                                        date={meeting.occurrence_date}
-                                        now={now}
-                                        canceled={meeting.canceled}
-                                    />
-                                )}
+                            {meeting.organizer_id === me && (
+                                <GuestPanel
+                                    meetingId={meeting.id}
+                                    date={meeting.occurrence_date}
+                                    now={now}
+                                    canceled={meeting.canceled}
+                                />
+                            )}
                             <NotulenCard
                                 meetingId={meeting.id}
                                 date={meeting.occurrence_date}
@@ -738,16 +737,14 @@ export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
                 </ol>
             </section>
             <VideoAttendancePanel video={data.video} />
-            {meeting.platform === 'video' &&
-                meeting.organizer_id === me &&
-                data.video?.configured && (
-                    <GuestPanel
-                        meetingId={meeting.id}
-                        date={meeting.occurrence_date}
-                        now={now}
-                        canceled={meeting.canceled}
-                    />
-                )}
+            {meeting.platform === 'video' && meeting.organizer_id === me && (
+                <GuestPanel
+                    meetingId={meeting.id}
+                    date={meeting.occurrence_date}
+                    now={now}
+                    canceled={meeting.canceled}
+                />
+            )}
             {meeting.platform === 'video' && (
                 <NotulenCard
                     meetingId={meeting.id}

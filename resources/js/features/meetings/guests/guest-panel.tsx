@@ -274,19 +274,26 @@ function GuestRow({
                     {guestStatusText(guest)}
                 </Badge>
             </div>
-            <p
-                className="flex items-center gap-1.5 text-[13px] text-text-muted"
+            <div
+                className="flex min-w-0 flex-col gap-0.5 text-[13px] text-text-muted"
                 title={`Tautan pribadi ${maskGuestLink(guest.link_url)}`}
             >
-                <Link2 aria-hidden className="size-3.5 shrink-0" />
-                <span className="font-mono">
-                    {maskGuestLink(guest.link_url)}
-                </span>
-                {expiry && <span>· {expiry}</span>}
-                {guest.status === 'waiting' && since && (
-                    <span>· menunggu {since}</span>
+                <p className="flex min-w-0 items-center gap-1.5">
+                    <Link2 aria-hidden className="size-3.5 shrink-0" />
+                    <span className="truncate font-mono">
+                        {maskGuestLink(guest.link_url)}
+                    </span>
+                </p>
+                {(expiry || (guest.status === 'waiting' && since)) && (
+                    <p className="pl-5">
+                        {expiry}
+                        {expiry && guest.status === 'waiting' && since && ' · '}
+                        {guest.status === 'waiting' &&
+                            since &&
+                            `menunggu ${since}`}
+                    </p>
                 )}
-            </p>
+            </div>
             <div className="flex flex-wrap gap-2">
                 {guest.status === 'waiting' && (
                     <>

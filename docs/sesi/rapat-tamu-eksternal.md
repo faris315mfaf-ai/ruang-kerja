@@ -249,3 +249,28 @@ Tidak ada modul native baru (`expo prebuild` tidak perlu), cukup bundle JS baru.
 7. Aplikasi ke latar belakang dan kembali: polling berhenti lalu segar lagi (cek jaringan di Metro/log server); keluar ruang menghentikan polling.
 8. Tidak crash saat peserta berformat `guest:{id}` mengangkat tangan/berbicara/berbagi layar; "Waktu bicara" tidak memuat tamu; TalkBack membaca lencana "Tamu".
 9. Detail rapat sesudah rapat: "Hadir di rapat video" memisahkan "Tamu eksternal (N)".
+
+
+## 9. UI web (dibangun 16 Okt 2026, agen web, branch `claude/rapat-tamu-eksternal`)
+
+Kode: `resources/js/features/meetings/guests/**` (halaman tamu, panel penyelenggara, ruang tunggu, hook, tes) dan perubahan kecil di `features/meetings/video/**`. Tidak ada perubahan backend.
+
+| Butir | Berkas |
+|---|---|
+| Halaman tamu `/tamu/{token}` (tanpa shell): info rapat, jendela masuk, formulir nama + `notice_points`, menunggu (polling `poll_seconds`, back-off, `Retry-After`, berhenti saat tab tersembunyi dan lanjut saat tampil, galat jaringan tidak membuang status), layar ditolak / dikeluarkan ("Periksa lagi") / kedaluwarsa / selesai / tautan tidak berlaku | `guest-page.tsx`, `guest-screens.tsx`, `use-guest-session.ts`, `lib.ts` (mesin status murni) |
+| Pra-gabung tamu (pratinjau kamera/mikrofon, komponen pra-gabung karyawan dipakai ulang) dan ruang tamu (grid, berbagi layar, obrolan LiveKit, daftar peserta, setelan perangkat, Keluar; tanpa notulen/transkrip/tugas/moderasi) | `guest-prejoin.tsx`, `guest-room.tsx`, `token-errors.ts` |
+| Panel "Tamu eksternal" di detail rapat (hanya penyelenggara): daftar, tambah email + nama, salin tautan (clipboard + toast), putar ulang dan cabut dengan dialog konfirmasi, Izinkan/Tolak, "Izinkan masuk lagi" | `guest-panel.tsx`, `use-guests.ts`, `clipboard.ts` |
+| Ruang tunggu untuk semua yang diundang: tombol bar "Tamu menunggu" + panel di ruang video (desktop/tablet), banner + menu "Opsi lainnya" (ponsel), kartu di pra-gabung; polling 4 detik (20 detik bila `lobby.updated` Reverb tersedia, event memicu muat ulang); notifikasi lembut saat ada tamu baru | `lobby-list.tsx`, `use-lobby.ts`, `video/room-connected.tsx`, `video/prejoin.tsx`, `video/use-room-live.ts` |
+| Kelompok "Tamu" di panel Kehadiran (di ruang sekarang dari LiveKit, pernah hadir dari `guests`, penyelenggara juga yang dikeluarkan/ditolak) dengan Bisukan, Keluarkan, Izinkan masuk lagi; "Hadir di rapat video" menampilkan tamu terpisah berlabel Tamu | `guests-section.tsx`, `video/room-side.tsx`, `video/video-join-card.tsx` |
+| Ubin peserta tamu: lencana "Tamu", nama dari `participant.name` (ditandatangani server); di tampilan tamu semua nama dari LiveKit | `video/room-people.tsx` (`personOfParticipant`), `video/room-tiles.tsx`, `video/room-panels.tsx` |
+| Formulir jadwal: nama opsional per email tamu dikirim sebagai `guest_names` (hanya yang diisi, agar nama tersimpan tidak terhapus) | `use-meeting-form.ts`, `meeting-form.tsx` |
+
+Keputusan: `useVideoRoom` menerima sumber token opsional (tamu memakai `POST /api/tamu/{token}/token`, galat 403 `dikeluarkan` menjadi layar "dikeluarkan"); klien API tamu memakai `fetch` tanpa cookie/CSRF (`credentials: 'omit'`) dan token tidak pernah masuk log/URL lain; URL organizer ditulis langsung (`/rapat/{id}/tamu…`) karena `resources/js/routes` dibangkitkan Wayfinder dan belum memuat rute tamu; hak penyelenggara/ruang tunggu tidak dibaca dari props (belum dikirim) melainkan dari jawaban API (403/404 menyembunyikan panel dan menghentikan polling).
+
+Selisih terhadap kontrak/backend yang ditemukan:
+1. Props detail rapat dan ruang belum memuat `can.manage_guests` / `can.manage_lobby`; UI memakai penyelenggara = `meeting.organizer_id` dan 403 dari endpoint.
+2. `guest_names` tidak ikut di props form ubah rapat (`MeetingController` hanya mengirim email), jadi nama tamu lama tidak terisi di formulir; mengisi nama lagi menggantinya, mengosongkan tidak menghapus. Nama bisa diubah lewat "Tambah tamu" dengan email yang sama.
+3. `Permissions-Policy` untuk `/tamu/{token}` sudah benar (`meetings.guest.page` ada di `SecurityHeaders`): kamera, mikrofon, dan berbagi layar diizinkan; diperiksa lewat `curl -I`.
+4. Tamu tidak punya atribut `hand`, subtitle, dan tombol angkat tangan (sesuai §7).
+
+Belum diuji: ruang video sungguhan dengan dua peserta (LiveKit lokal belum dipasang di worktree ini); alur menunggu → diizinkan → ruang hanya diuji lewat tes hook/komponen dan layar formulir/tautan tidak berlaku lewat screenshot.
