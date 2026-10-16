@@ -127,8 +127,15 @@ export default function LayarDetailRapat(): React.JSX.Element {
   const fase = rapat ? faseRapat(rapat.starts_at, rapat.ends_at, sekarang) : 'akan';
   const video = rapat?.platform === 'video';
   const kemampuan = useMemo(
-    () => kemampuanTamu({ platform: rapat?.platform ?? '', canceled: rapat?.canceled ?? false, penyelenggara: saya.penyelenggara, terundang: saya.penyelenggara || saya.notulis || saya.diundang }),
-    [rapat?.platform, rapat?.canceled, saya],
+    () => kemampuanTamu({
+        platform: rapat?.platform ?? '',
+        canceled: rapat?.canceled ?? false,
+        penyelenggara: saya.penyelenggara,
+        terundang: saya.penyelenggara || saya.notulis || saya.diundang,
+        manageGuests: d?.can.manage_guests,
+        manageLobby: d?.can.manage_lobby,
+      }),
+    [rapat?.platform, rapat?.canceled, saya, d?.can.manage_guests, d?.can.manage_lobby],
   );
 
   // Notulen otomatis + kehadiran ruang video (hanya rapat video).
@@ -296,7 +303,7 @@ export default function LayarDetailRapat(): React.JSX.Element {
     const peran = uid === rapat.organizer.id ? 'Penyelenggara' : uid !== null && uid === rapat.minute_taker?.id ? 'Notulis' : 'Peserta';
     return opsional ? `${peran} · opsional` : peran;
   };
-  const namaPeserta = (p: (typeof rapat.participants)[number]): string => `${p.nama ?? p.email ?? 'Peserta'}${p.user_id === viewerId ? ' (Anda)' : ''}`;
+  const namaPeserta = (p: (typeof rapat.participants)[number]): string => `${p.nama ?? p.guest_name ?? p.email ?? 'Peserta'}${p.user_id === viewerId ? ' (Anda)' : ''}`;
 
   // Kartu ruang video.
   let kartuVideo: React.ReactNode = null;

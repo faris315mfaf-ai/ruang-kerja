@@ -16,6 +16,7 @@ import {
   bersihNamaTamu,
   bolehIzinkan,
   bolehPantau,
+  bolehRuangTunggu,
   bolehTolak,
   emailTamuValid,
   hentikanPantau,
@@ -113,6 +114,8 @@ assert.deepEqual(susunNamaTamuForm(['a@x.co', 'b@x.co'], { 'a@x.co': ' Ani  Putr
 assert.deepEqual(susunNamaTamuForm(['A@X.co'], { 'a@x.co': 'Ani' }), { 'a@x.co': 'Ani' }, 'email dinormalkan');
 assert.deepEqual(susunNamaTamuForm([], { 'a@x.co': 'Ani' }), {});
 assert.deepEqual(susunNamaTamuForm(['a@x.co'], {}), {}, 'tanpa nama tidak dikirim (server tidak menimpa)');
+// Isi awal formulir ubah dari `guest_names` server lalu dikirim lagi: nama tersimpan tidak hilang/berubah; `{}` server baru tetap aman
+assert.deepEqual(susunNamaTamuForm(['budi@mitra.test', 'tanpa@nama.test'], { 'budi@mitra.test': 'Budi Mitra' }), { 'budi@mitra.test': 'Budi Mitra' }, 'prefill dari guest_names');
 
 // ── Status ruang tunggu ──────────────────────────────────────────────────────
 assert.equal(labelStatusTamu('waiting'), 'Menunggu');
@@ -129,13 +132,24 @@ assert.equal(nadaStatusTamu('???'), 'neutral');
 assert.deepEqual(['none', 'waiting', 'admitted', 'denied', 'removed'].map(bolehIzinkan), [false, true, false, true, true], 'izinkan: menunggu/ditolak/dikeluarkan (kontrak 4.3)');
 assert.deepEqual(['none', 'waiting', 'admitted', 'denied', 'removed'].map(bolehTolak), [false, true, false, false, false], 'tolak: hanya menunggu');
 
-// ── Kemampuan dari peran di rapat (detail API belum mengirim manage_guests/manage_lobby) ──
+// ── Kemampuan: bendera server `can.manage_guests`/`manage_lobby`, turunan peran bila bendera tidak ada (server lama) ──
 const rapat = (o) => ({ platform: 'video', canceled: false, penyelenggara: false, terundang: true, ...o });
 assert.deepEqual(kemampuanTamu(rapat({ penyelenggara: true })), { kelola: true, ruangTunggu: true }, 'penyelenggara');
 assert.deepEqual(kemampuanTamu(rapat({})), { kelola: false, ruangTunggu: true }, 'notulis/peserta internal: hanya ruang tunggu');
 assert.deepEqual(kemampuanTamu(rapat({ terundang: false })), { kelola: false, ruangTunggu: false }, 'pengamat rapat pimpinan');
 assert.deepEqual(kemampuanTamu(rapat({ penyelenggara: true, canceled: true })), { kelola: false, ruangTunggu: false }, 'dibatalkan');
 assert.deepEqual(kemampuanTamu(rapat({ platform: 'meet', penyelenggara: true })), { kelola: false, ruangTunggu: false }, 'bukan video');
+// Bendera server menang atas turunan peran, ke dua arah; null/undefined = server lama → turunan
+assert.deepEqual(kemampuanTamu(rapat({ manageGuests: true, manageLobby: true })), { kelola: true, ruangTunggu: true }, 'server: penyelenggara');
+assert.deepEqual(kemampuanTamu(rapat({ penyelenggara: true, manageGuests: false, manageLobby: false })), { kelola: false, ruangTunggu: false }, 'server menolak walau peran penyelenggara (mis. rapat dibatalkan)');
+assert.deepEqual(kemampuanTamu(rapat({ manageGuests: false, manageLobby: true })), { kelola: false, ruangTunggu: true }, 'server: notulis/peserta');
+assert.deepEqual(kemampuanTamu(rapat({ terundang: false, manageGuests: false, manageLobby: false })), { kelola: false, ruangTunggu: false }, 'server: pengamat');
+assert.deepEqual(kemampuanTamu(rapat({ penyelenggara: true, manageGuests: undefined, manageLobby: null })), { kelola: true, ruangTunggu: true }, 'tanpa bendera → turunan peran');
+assert.deepEqual(kemampuanTamu(rapat({ manageGuests: false })), { kelola: false, ruangTunggu: true }, 'bendera sebagian: yang hilang diturunkan');
+assert.equal(bolehRuangTunggu(true), true);
+assert.equal(bolehRuangTunggu(false), false, 'server melarang ruang tunggu');
+assert.equal(bolehRuangTunggu(undefined), true, 'server lama: anggap berwenang, 403 menghentikan polling');
+assert.equal(bolehRuangTunggu(null), true);
 assert.equal(
   jumlahTamuDariPeserta([
     { user_id: '01A', email: null },
@@ -240,5 +254,11 @@ for (const p of panggilan) {
 }
 assert.match(baca('src/offline/cache.ts'), /TOLAK_PENGGALAN[^\n]*'\/tamu'/, '/tamu masuk daftar tolak cache offline');
 assert.ok(!/console\.(log|info|debug|warn|error)/.test(rapatTamuApi + baca('src/features/rapat/KartuTamu.tsx') + baca('src/features/rapat/useTamuRapat.ts') + baca('src/features/rapat/useRuangTunggu.ts')), 'tidak ada console.* di modul tamu (tautan rahasia)');
+
+// Bendera server dipakai klien: detail rapat, pra-gabung, dan ruang (fallback turunan peran bila tidak ada)
+assert.match(baca('app/rapat/[id]/index.tsx'), /manageGuests: d\?\.can\.manage_guests/, 'detail memakai can.manage_guests');
+assert.match(baca('app/rapat/[id]/index.tsx'), /manageLobby: d\?\.can\.manage_lobby/, 'detail memakai can.manage_lobby');
+assert.match(baca('app/rapat/[id]/video/pra-gabung.tsx'), /bolehRuangTunggu\(data\?\.room\.can\?\.manage_lobby\)/, 'pra-gabung memakai manage_lobby');
+assert.match(baca('app/rapat/[id]/video/ruang.tsx'), /bolehRuangTunggu\(live\.token\?\.can\.manage_lobby/, 'ruang memakai manage_lobby');
 
 console.log('cek-rapat-tamu: semua pemeriksaan lulus');

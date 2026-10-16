@@ -109,6 +109,10 @@ export interface HakRuang {
   moderate: boolean;
   call_participants: boolean;
   report_speaking: boolean;
+  /** Daftar tamu + tautan (penyelenggara). Server lama: tidak ada. */
+  manage_guests?: boolean;
+  /** Ruang tunggu (semua yang diundang). Server lama: tidak ada → anggap berwenang, 403 menghentikan polling. */
+  manage_lobby?: boolean;
 }
 
 export interface DataRuang {
@@ -158,7 +162,7 @@ export interface TokenVideo {
   expires_at: string;
   occurrence_date: string;
   role: 'organizer' | 'minute_taker' | 'participant';
-  can: { moderate: boolean; call_participants: boolean; edit_minutes: boolean };
+  can: { moderate: boolean; call_participants: boolean; edit_minutes: boolean; manage_guests?: boolean; manage_lobby?: boolean };
   people: OrangVideo[];
 }
 

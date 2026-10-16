@@ -190,6 +190,10 @@ export interface RingkasVideoDetail {
   penyelenggara: boolean;
   /** Penonton terundang: penyelenggara, notulis, atau peserta internal (bukan pengamat rapat pimpinan). */
   terundang: boolean;
+  /** Bendera server `can.manage_guests`; tidak ada pada server lama → turunan peran. */
+  manageGuests?: boolean | null;
+  /** Bendera server `can.manage_lobby`; tidak ada pada server lama → turunan peran. */
+  manageLobby?: boolean | null;
 }
 
 export interface KemampuanTamu {
@@ -200,15 +204,22 @@ export interface KemampuanTamu {
 }
 
 /**
- * Turunan `MeetingPolicy` di sisi klien. Detail rapat API v1 belum mengirim `manage_guests`/
- * `manage_lobby`, dan `video.can_join` ikut jendela gabung (bukan `openVideo`), jadi hak
- * diturunkan dari peran di rapat itu; server tetap hakim (403/404 ditangani).
+ * Hak tamu dari server: `can.manage_guests` / `can.manage_lobby` (hasil `MeetingPolicy`, termasuk
+ * platform video dan rapat belum dibatalkan) dipakai bila ada. Server lama tanpa bendera: turunan
+ * peran di rapat itu seperti sebelumnya (`video.can_join` ikut jendela gabung, bukan `openVideo`).
+ * Server tetap hakim (403/404 ditangani).
  */
 export function kemampuanTamu(d: RingkasVideoDetail): KemampuanTamu {
-  if (d.platform !== 'video' || d.canceled) {
-    return { kelola: false, ruangTunggu: false };
-  }
-  return { kelola: d.penyelenggara, ruangTunggu: d.penyelenggara || d.terundang };
+  const turunan: KemampuanTamu =
+    d.platform !== 'video' || d.canceled
+      ? { kelola: false, ruangTunggu: false }
+      : { kelola: d.penyelenggara, ruangTunggu: d.penyelenggara || d.terundang };
+  return { kelola: d.manageGuests ?? turunan.kelola, ruangTunggu: d.manageLobby ?? turunan.ruangTunggu };
+}
+
+/** Ruang tunggu aktif bila server tidak melarang (`manage_lobby` false); tanpa bendera (server lama) = ya, 403 menghentikan polling. */
+export function bolehRuangTunggu(bendera: boolean | null | undefined): boolean {
+  return bendera ?? true;
 }
 
 /** Baris peserta tanpa akun (hanya email) = tamu eksternal. */

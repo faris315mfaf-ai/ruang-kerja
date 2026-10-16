@@ -16,7 +16,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { aturOptOutTranskrip, ruangVideo, tokenVideo, type KodeTolakVideo, type RuangVideoResponse } from '@/api/video';
-import { teksTamuBaru } from '@/features/rapat/tamu';
+import { bolehRuangTunggu, teksTamuBaru } from '@/features/rapat/tamu';
 import { useRuangTunggu } from '@/features/rapat/useRuangTunggu';
 import { useIzinVideo } from '@/features/video/izin';
 import { KeadaanLayar } from '@/features/video/KeadaanLayar';
@@ -192,7 +192,7 @@ export default function PraGabung(): React.JSX.Element {
   const permanen = izin.kamera === 'permanen' || izin.mikrofon === 'permanen';
 
   // Tamu eksternal yang sudah menunggu: yang berwenang bisa mengizinkan sebelum masuk ruang (polling hanya saat siap & fokus).
-  const ruangTunggu = useRuangTunggu(id, tanggal, { aktif: status.kind === 'siap' && fokus });
+  const ruangTunggu = useRuangTunggu(id, tanggal, { aktif: status.kind === 'siap' && fokus && bolehRuangTunggu(data?.room.can?.manage_lobby) });
   const [lembarTamu, setLembarTamu] = useState(false);
 
   // ── Pratinjau kamera (track lokal; dihentikan saat layar tidak fokus) ──

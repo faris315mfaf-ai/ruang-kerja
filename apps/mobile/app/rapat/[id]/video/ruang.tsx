@@ -23,7 +23,7 @@ import { notulenRapat } from '@/api/endpoints';
 import type { MeetingMinutesData } from '@/api/types';
 import { ruangVideo, type RuangVideoResponse } from '@/api/video';
 import { useAppLock } from '@/features/auth/appLock';
-import { adalahIdentitasTamu, adalahPesertaTamu, teksTamuBaru } from '@/features/rapat/tamu';
+import { adalahIdentitasTamu, adalahPesertaTamu, bolehRuangTunggu, teksTamuBaru } from '@/features/rapat/tamu';
 import { useRuangTunggu } from '@/features/rapat/useRuangTunggu';
 import { BilahKontrol, type TombolKontrol } from '@/features/video/BilahKontrol';
 import { useIzinVideo } from '@/features/video/izin';
@@ -160,7 +160,7 @@ function Isi({
   // Yang tidak berwenang (403) berhenti sendiri; pengamat tidak pernah sampai ke ruang.
   const beritahu = live.beritahu;
   const ruangTunggu = useRuangTunggu(id, tanggal, {
-    aktif: tersambung,
+    aktif: tersambung && bolehRuangTunggu(live.token?.can.manage_lobby ?? data?.room.can?.manage_lobby),
     onTamuBaru: (baru) => {
       beritahu(teksTamuBaru(baru.map((b) => b.name ?? b.email)), 'tamu');
       try {

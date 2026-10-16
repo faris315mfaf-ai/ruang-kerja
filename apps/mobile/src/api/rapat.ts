@@ -106,6 +106,10 @@ export interface CanRapat {
   rsvp: boolean;
   edit: boolean;
   join_video: boolean;
+  /** Daftar tamu + tautan (penyelenggara video). Server lama: tidak ada → turunkan dari peran. */
+  manage_guests?: boolean;
+  /** Ruang tunggu (semua yang diundang). Server lama: tidak ada → turunkan dari peran. */
+  manage_lobby?: boolean;
 }
 
 export interface HasilSimpanRapat {
@@ -416,7 +420,7 @@ export interface RapatPimpinan {
   organizer_id: string;
   minute_taker_id: string | null;
   workspace: WorkspaceRingkas | null;
-  participants: { user_id: string | null; email: string | null; rsvp: string; optional: boolean }[];
+  participants: { user_id: string | null; email: string | null; rsvp: string; optional: boolean; guest_id?: string; guest_name?: string | null }[];
   agenda: string[];
   recurrence: PengulanganRapat;
   recurrence_until: string | null;
