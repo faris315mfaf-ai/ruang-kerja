@@ -5,6 +5,7 @@
  * Semua di balik flag `features.meetings` (404 saat mati).
  */
 import { apiRequest } from './client';
+import type { TamuHadir } from './rapatTamu';
 import type { MeetingMinutesData } from './types';
 
 export interface OrangVideo {
@@ -53,6 +54,8 @@ export interface KehadiranVideo {
   attendance: HadirVideo[];
   in_room: number;
   not_joined: BelumMasuk[];
+  /** Tamu eksternal yang pernah masuk ruang (`participant_id` = id tamu, identitas LiveKit `guest:{id}`); tidak dihitung di `in_room`. */
+  guests?: TamuHadir[];
   late_grace_minutes: number;
   removed: Dikeluarkan[];
 }

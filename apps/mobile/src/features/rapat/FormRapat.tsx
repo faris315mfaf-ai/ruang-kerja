@@ -40,6 +40,7 @@ import {
 
 import { NomorAgenda } from './komponen';
 import { PemilihPeserta } from './PemilihPeserta';
+import { MAKS_TAMU, susunNamaTamuForm } from './tamu';
 import { LABEL_ULANGI, hariPanjang, infoPlatform, labelDurasi, labelPengingat, namaDepan, namaHari } from './util';
 
 type Galat = Partial<Record<keyof IsianRapat | 'umum', string>>;
@@ -71,7 +72,7 @@ function tampilJam(hhmm: string): string {
 function isianAwal(f: FormulirRapat): IsianRapat {
   if (f.meeting) {
     const { id: _id, ...sisa } = f.meeting;
-    return { ...sisa, agenda: sisa.agenda.length ? sisa.agenda : [''] };
+    return { ...sisa, guest_names: sisa.guest_names ?? {}, agenda: sisa.agenda.length ? sisa.agenda : [''] };
   }
   const now = sekarangWib();
   let mulai = Math.ceil((now.menit + 1) / 30) * 30;
@@ -91,6 +92,7 @@ function isianAwal(f: FormulirRapat): IsianRapat {
     location: null,
     participant_ids: [],
     guest_emails: [],
+    guest_names: {},
     agenda: [''],
     recurrence: 'none',
     recurrence_until: null,
@@ -283,12 +285,16 @@ export function FormRapat({ rapatId }: { rapatId: string | null }): React.JSX.El
       recurrence_until: isi.recurrence === 'none' ? null : isi.recurrence_until,
       auto_minutes: isi.platform === 'video' && form?.auto_minutes_enabled === true ? isi.auto_minutes : false,
       leadership: form?.can_lead === true ? isi.leadership : false,
+      guest_names: susunNamaTamuForm(isi.guest_emails, isi.guest_names ?? {}),
     };
     try {
       const hasil = baru ? await buatRapat(body) : await ubahRapat(rapatId as string, body);
       lewati.current = true;
-      const tujuan = { pathname: '/rapat/[id]', params: { id: hasil.meeting.id, tanggal: hasil.meeting.occurrence_date } } as never;
-      snackbar.show({ message: baru ? `Undangan rapat terkirim ke ${hasil.invited ?? jumlahUndangan} peserta` : hasil.message, variant: 'ok' });
+      // Ada tamu eksternal: detail rapat membuka daftar tamu agar tautan pribadinya bisa langsung dibagikan.
+      const bukaTamu = body.platform === 'video' && body.guest_emails.length > 0;
+      const tujuan = { pathname: '/rapat/[id]', params: bukaTamu ? { id: hasil.meeting.id, tanggal: hasil.meeting.occurrence_date, tamu: '1' } : { id: hasil.meeting.id, tanggal: hasil.meeting.occurrence_date } } as never;
+      const dasar = baru ? `Undangan rapat terkirim ke ${hasil.invited ?? jumlahUndangan} peserta` : hasil.message;
+      snackbar.show({ message: bukaTamu ? `${dasar}. Bagikan tautan tamu dari daftar tamu.` : dasar, variant: 'ok' });
       router.replace(tujuan);
     } catch (err) {
       if (err instanceof ApiError && err.status === 422) {
@@ -398,7 +404,7 @@ export function FormRapat({ rapatId }: { rapatId: string | null }): React.JSX.El
         </Field>
       ) : null}
 
-      <Field label={`Peserta · ${isi.participant_ids.length + isi.guest_emails.length + 1} orang`} error={galat.participant_ids} hint={isi.guest_emails.length > 0 ? 'Tamu eksternal: undangan email ditahan; tamu tidak melihat isi aplikasi.' : undefined}>
+      <Field label={`Peserta · ${isi.participant_ids.length + isi.guest_emails.length + 1} orang`} error={galat.participant_ids} hint={isi.guest_emails.length > 0 ? (isi.platform === 'video' ? 'Tamu eksternal masuk lewat tautan pribadi yang Anda bagikan sendiri (tanpa email otomatis) dan tidak melihat isi aplikasi. Tautan muncul di detail rapat setelah disimpan.' : 'Tautan tamu hanya berlaku untuk Video RuangKerja. Untuk Meet/Zoom, bagikan tautan rapatnya sendiri.') : undefined}>
         <View style={[s.kotakPeserta, { borderColor: galat.participant_ids ? colors.danger : colors.borderStrong, backgroundColor: colors.surface }]}>
           <View style={s.bungkus}>
             <Chip label={`${namaDepan(viewer?.name) || 'Saya'} (Anda)`} />
@@ -406,7 +412,15 @@ export function FormRapat({ rapatId }: { rapatId: string | null }): React.JSX.El
               <Chip key={pid} label={nama(pid)} onDismiss={() => ubah('participant_ids', isi.participant_ids.filter((x) => x !== pid))} />
             ))}
             {isi.guest_emails.map((e) => (
-              <Chip key={e} label={e} icon="mail" onDismiss={() => ubah('guest_emails', isi.guest_emails.filter((x) => x !== e))} />
+              <Chip
+                key={e}
+                label={isi.guest_names?.[e] ? `${isi.guest_names[e]} · ${e}` : e}
+                icon="mail"
+                onDismiss={() => {
+                  ubah('guest_emails', isi.guest_emails.filter((x) => x !== e));
+                  ubah('guest_names', Object.fromEntries(Object.entries(isi.guest_names ?? {}).filter(([k]) => k !== e)));
+                }}
+              />
             ))}
           </View>
           <Pressable onPress={() => setLembar('peserta')} accessibilityRole="button" accessibilityLabel="Tambah peserta" style={s.tambahPeserta}>
@@ -508,8 +522,10 @@ export function FormRapat({ rapatId }: { rapatId: string | null }): React.JSX.El
         awal={form.people}
         terpilih={isi.participant_ids}
         tamu={isi.guest_emails}
+        namaTamu={isi.guest_names ?? {}}
+        batasTamu={MAKS_TAMU}
         kecuali={form.viewer_id}
-        onUbah={(ids, tamu, orang) => {
+        onUbah={(ids, tamu, orang, namaTamu) => {
           if (orang.length) {
             setKenal((k) => {
               const b = new Map(k);
@@ -519,7 +535,7 @@ export function FormRapat({ rapatId }: { rapatId: string | null }): React.JSX.El
               return b;
             });
           }
-          setIsi((l) => (l ? { ...l, participant_ids: ids, guest_emails: tamu } : l));
+          setIsi((l) => (l ? { ...l, participant_ids: ids, guest_emails: tamu, guest_names: namaTamu ?? l.guest_names ?? {} } : l));
           setGalat((g) => ({ ...g, participant_ids: undefined }));
         }}
       />
@@ -591,7 +607,7 @@ export function FormRapat({ rapatId }: { rapatId: string | null }): React.JSX.El
           <View style={{ flex: 1 }}>
             <Text variant="label">{`${jumlahUndangan} peserta akan menerima notifikasi`}</Text>
             <Text variant="meta">
-              {[...isi.participant_ids.map((x) => namaDepan(nama(x))), ...(isi.guest_emails.length ? [`${isi.guest_emails.length} tamu eksternal (email ditahan)`] : [])].join(', ')}
+              {[...isi.participant_ids.map((x) => namaDepan(nama(x))), ...(isi.guest_emails.length ? [`${isi.guest_emails.length} tamu eksternal (tautan pribadi dibagikan sendiri)`] : [])].join(', ')}
             </Text>
           </View>
         </View>

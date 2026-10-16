@@ -6,6 +6,7 @@
  * Agenda/detail/RSVP/notulen baca/kalender tetap di `endpoints.ts`.
  */
 import { apiRequest } from './client';
+import type { TamuHadir } from './rapatTamu';
 import type { MeetingDetailData, MeetingMinutesData, MeetingVideoRoom, MinutesPerson } from './types';
 
 export type PlatformRapat = 'meet' | 'zoom' | 'room' | 'client' | 'video';
@@ -38,6 +39,8 @@ export interface IsianRapat {
   location: string | null;
   participant_ids: string[];
   guest_emails: string[];
+  /** Nama tamu per email (huruf kecil) — hanya untuk email yang diberi nama di formulir; email tanpa nama tidak dikirim (server tidak menimpa). */
+  guest_names?: Record<string, string>;
   agenda: string[];
   recurrence: PengulanganRapat;
   recurrence_until: string | null;
@@ -263,6 +266,8 @@ export interface KehadiranVideo {
   }[];
   in_room: number;
   not_joined: { user_id: string; rsvp: string; optional: boolean; called_at: string | null }[];
+  /** Tamu eksternal yang pernah masuk ruang (terpisah dari karyawan; tidak dihitung di `in_room`). */
+  guests?: TamuHadir[];
   late_grace_minutes: number;
   removed: { user_id: string; removed_by: string | null; removed_at: string }[];
 }

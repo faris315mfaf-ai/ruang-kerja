@@ -48,7 +48,7 @@ const TOLAK_AWALAN: readonly string[] = [
   'kebijakan-privasi',
 ];
 
-const TOLAK_PENGGALAN: readonly string[] = ['selfie', '/video/', '/transkrip', '/notulen-otomatis', '/dibaca-oleh', '/versi', '/cari', '/lampiran', '/unduh'];
+const TOLAK_PENGGALAN: readonly string[] = ['selfie', '/video/', '/tamu', '/transkrip', '/notulen-otomatis', '/dibaca-oleh', '/versi', '/cari', '/lampiran', '/unduh'];
 
 /** Awalan yang boleh (segmen penuh: `tugas` cocok `tugas` dan `tugas/12`, bukan `tugasan`). */
 const IZIN_AWALAN: readonly string[] = [

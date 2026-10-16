@@ -11,6 +11,7 @@
     "test:center": "node scripts/cek-center-action.mjs",
     "test:peta": "node scripts/cek-peta.mjs",
     "test:push": "node scripts/cek-push.mjs",
+    "test:rapat-tamu": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/cek-rapat-tamu.mjs",
     "test:widget": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/cek-widget.mjs"
   },
   "dependencies": {
