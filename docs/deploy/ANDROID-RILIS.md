@@ -113,3 +113,25 @@ SHA-256 harus sama dengan tabel §1. Pasang APK di perangkat uji: `adb install -
 - Folder `android/` hasil prebuild tidak di-commit; jalankan `expo prebuild --clean` setiap `app.json`/plugin berubah.
 - Aset ikon, splash, ikon notifikasi, dan draf gambar Play dibuat ulang dengan `cd apps/mobile && node scripts/aset.mjs` (butuh Playwright dari `npm install` di akar repo dan `sips` macOS). Draf toko ada di `apps/mobile/store/play/`.
 - EAS Build tidak dipakai untuk rilis ini. Bila nanti pindah ke EAS, unggah keystore yang sama lewat `eas credentials` (*Upload keystore*) agar sertifikat upload tidak berubah.
+
+
+## AAB untuk Play Store (ukuran kecil, R8)
+
+Rilis 1.2.3 (versionCode 8) memakai plugin `apps/mobile/plugins/withReleaseShrink.js`, aktif **hanya** bila `RUANGKERJA_RELEASE_SHRINK=1` saat `expo prebuild` (build dev-client/emulator tetap tanpa penyusutan): R8 minify + shrink resource, hanya ABI `arm64-v8a` dan `armeabi-v7a`, aturan keep untuk WebRTC/LiveKit, SQLCipher, Expo, React Native, Firebase, widget, dan `jvmargs` Gradle 4 GB/Metaspace 1 GB (plugin Firebase butuh).
+
+```bash
+cd apps/mobile
+export PATH="$HOME/.nvm/versions/node/$(ls $HOME/.nvm/versions/node | tail -1)/bin:$PATH"
+unset ANDROID_SDK_ROOT EXPO_PUBLIC_API_URL          # API produksi bawaan (https://spkd.store/api/v1)
+export RUANGKERJA_RELEASE_SHRINK=1
+CI=1 NODE_ENV=production npx expo prebuild --platform android --clean
+cd android
+JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home \
+ANDROID_HOME=$HOME/Library/Android/sdk \
+RUANGKERJA_KEYSTORE_PROPERTIES="$(cd ../../.. && pwd)/secrets/android/keystore.properties" \
+./gradlew bundleRelease assembleRelease
+```
+
+Hasil: `app/build/outputs/bundle/release/app-release.aab` (±75 MB, unggahan Play) dan `apk/release/app-release.apk` (±98 MB, dua ABI, untuk dibagikan langsung). Unggah juga `app/build/outputs/mapping/release/mapping.txt` ke Play Console (Deobfuscation file) agar laporan crash terbaca.
+
+**Wajib uji ulang setelah mengubah aturan keep** (R8 menghapus kelas yang hanya dipakai lewat refleksi/JNI; gejalanya crash saat start atau fitur diam-diam mati): masuk, absen (SQLCipher), video rapat sungguhan (LiveKit), push, widget, dan sinkron latar (`adb shell cmd jobscheduler run -f store.spkd.ruangkerja <jobId>`; `logcat | grep ClassNotFound` harus kosong). Hasil uji 1.2.3 di emulator: semua lulus.

@@ -68,11 +68,11 @@ Teks bantu screenshot ponsel (urut): Mulai kerja dengan satu ketukan · Absen de
 
 | Kategori Play | Jenis data | Dikumpulkan | Dibagikan | Diproses efemeral | Wajib/opsional | Tujuan |
 |---|---|---|---|---|---|---|
-| Lokasi | Lokasi tepat | Ya — hanya saat check-in/out | Tidak | Tidak (bukti absensi) | Wajib untuk absen GPS | Fungsi aplikasi; pencegahan penipuan (penanda akurasi/lompatan lokasi) |
+| Lokasi | Lokasi tepat | Ya — hanya saat check-in/out | **Ya — lokasi deskriptif + peta kecil pada foto ke grup WhatsApp; server meneruskan koordinat ke Nominatim/OpenStreetMap untuk nama lokasi** | Tidak (bukti absensi) | Wajib untuk absen GPS | Fungsi aplikasi; pencegahan penipuan (penanda akurasi/lompatan lokasi) |
 | Lokasi | Lokasi perkiraan | Ya (Android memberi pilihan "Perkiraan"; check-in lalu ditandai akurasi rendah) | Tidak | Tidak | Wajib untuk absen GPS | Fungsi aplikasi |
 | Info pribadi | Nama, email, ID pengguna | Ya | Tidak | Tidak | Wajib | Fungsi aplikasi, manajemen akun |
 | Info pribadi | Nomor telepon, alamat | Tidak dikumpulkan **oleh aplikasi** (diisi HR di web) | — | — | — | — |
-| Foto dan video | Foto (selfie absen, lampiran pengajuan/tugas) | Ya | Tidak | Tidak (selfie disimpan 12 bulan lalu dihapus otomatis) | Selfie wajib untuk absen GPS; lampiran opsional | Fungsi aplikasi; pencegahan penipuan |
+| Foto dan video | Foto (selfie absen, lampiran pengajuan/tugas) | Ya | **Ya — selfie bercap (jam, tanggal, lokasi, peta kecil) dikirim ke grup WhatsApp perusahaan** (Meta/WhatsApp; anggota grup ditetapkan perusahaan) | Tidak (selfie disimpan 12 bulan lalu dihapus otomatis) | Selfie wajib untuk absen GPS; lampiran opsional | Fungsi aplikasi; pencegahan penipuan |
 | Foto dan video | Video (kamera di rapat video) | Ya — dialirkan ke peserta rapat, **tidak direkam** | Tidak | **Ya** | Opsional | Fungsi aplikasi |
 | Audio | Rekaman suara (mikrofon di rapat video) | Ya — dialirkan ke peserta; bila penyelenggara menyalakan *notulen otomatis*, suara ditranskrip di server rapat lalu **audio dihapus**, transkrip teks disimpan ≤ 90 hari | Tidak | Tidak (ada pemrosesan transkrip) | Opsional (bisa "Jangan transkrip suara saya") | Fungsi aplikasi |
 | File dan dokumen | Berkas lampiran | Ya | Tidak | Tidak | Opsional | Fungsi aplikasi |
@@ -84,7 +84,7 @@ Teks bantu screenshot ponsel (urut): Mulai kerja dengan satu ketukan · Absen de
 | Biometrik | Sidik jari/wajah untuk membuka kunci aplikasi | Tidak — diproses sistem Android, aplikasi hanya menerima hasil berhasil/gagal | — | — | — | — |
 | Keuangan, kontak, kalender, SMS, riwayat penelusuran, aplikasi terpasang | — | Tidak | — | — | — | — |
 
-Catatan untuk diperbarui saat fitur bertambah: token push FCM (saat `expo-notifications` dipasang → "ID perangkat atau lainnya"), template wajah Fase 3 (opt-in → "Biometrik"), widget layar utama (tidak menambah jenis data).
+**Sudah berlaku di 1.2.x:** token push FCM → tambahkan "ID perangkat atau lainnya" (dikumpulkan, dibagikan ke Google/Firebase sebagai pemroses pengiriman). Catatan: , template wajah Fase 3 (opt-in → "Biometrik"), widget layar utama (tidak menambah jenis data).
 
 ## 5. Jalur rilis
 
