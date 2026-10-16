@@ -16,19 +16,22 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { Participant } from 'livekit-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { BackHandler, ScrollView, StyleSheet, Vibration, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { notulenRapat } from '@/api/endpoints';
 import type { MeetingMinutesData } from '@/api/types';
 import { ruangVideo, type RuangVideoResponse } from '@/api/video';
 import { useAppLock } from '@/features/auth/appLock';
+import { adalahIdentitasTamu, adalahPesertaTamu, teksTamuBaru } from '@/features/rapat/tamu';
+import { useRuangTunggu } from '@/features/rapat/useRuangTunggu';
 import { BilahKontrol, type TombolKontrol } from '@/features/video/BilahKontrol';
 import { useIzinVideo } from '@/features/video/izin';
 import { KeadaanLayar } from '@/features/video/KeadaanLayar';
 import { SheetKehadiran } from '@/features/video/SheetKehadiran';
 import { SheetMenu, SheetSetelan, SheetWaktuBicara } from '@/features/video/SheetMenu';
 import { SheetObrolan, type PesanObrolan } from '@/features/video/SheetObrolan';
+import { SheetRuangTunggu } from '@/features/video/SheetRuangTunggu';
 import { ambilPilihan } from '@/features/video/sesi';
 import { Subtitle } from '@/features/video/Subtitle';
 import { Ubin } from '@/features/video/Ubin';
@@ -122,7 +125,7 @@ function Isi({
   const [tab, setTab] = useState<Tab>('video');
   const [tampilan, setTampilan] = useState<'sorotan' | 'petak'>('sorotan');
   const [disematkan, setDisematkan] = useState<string | null>(null);
-  const [panel, setPanel] = useState<null | 'kehadiran' | 'obrolan' | 'menu' | 'setelan' | 'bicara'>(null);
+  const [panel, setPanel] = useState<null | 'kehadiran' | 'obrolan' | 'menu' | 'setelan' | 'bicara' | 'tamu'>(null);
   const [subtitleNyala, setSubtitleNyala] = useState(true);
   const [dibacaObrolan, setDibacaObrolan] = useState(0);
 
@@ -150,6 +153,23 @@ function Isi({
   const tanganNaik = Boolean(tangan[lp.identity]);
   const daftar = useMemo(() => (tersambung ? pesertaTampil(room) : []), [room, tersambung, versi]); // eslint-disable-line react-hooks/exhaustive-deps -- versi = pemicu peserta/track berubah
   const ids = useMemo(() => daftar.map((p) => p.identity), [daftar]);
+  // Waktu bicara hanya untuk karyawan (kontrak tamu §7).
+  const idsKaryawan = useMemo(() => ids.filter((x) => !adalahIdentitasTamu(x)), [ids]);
+
+  // Tamu eksternal di ruang tunggu: polling ±4 dtk hanya selagi tersambung dan aplikasi di latar depan.
+  // Yang tidak berwenang (403) berhenti sendiri; pengamat tidak pernah sampai ke ruang.
+  const beritahu = live.beritahu;
+  const ruangTunggu = useRuangTunggu(id, tanggal, {
+    aktif: tersambung,
+    onTamuBaru: (baru) => {
+      beritahu(teksTamuBaru(baru.map((b) => b.name ?? b.email)), 'tamu');
+      try {
+        Vibration.vibrate(40);
+      } catch {
+        // Getar tidak tersedia — toast tetap tampil.
+      }
+    },
+  });
 
   // ── Keluar (konfirmasi) + tombol kembali sistem ─────────────────────────
   const minta = useRef(false);
@@ -389,6 +409,7 @@ function Isi({
       layar={opsi.layar}
       berbicara={!opsi.layar && pembicara.includes(p.identity)}
       tangan={Boolean(tangan[p.identity])}
+      tamu={adalahPesertaTamu(p.identity, p.metadata)}
       cermin={p.isLocal && cermin && !opsi.layar}
       onPress={
         opsi.layar
@@ -415,6 +436,19 @@ function Isi({
       ) : (
         <View style={{ flex: 1 }} />
       )}
+      {ruangTunggu.berwenang && ruangTunggu.jumlah > 0 ? (
+        <Pressable
+          onPress={() => setPanel('tamu')}
+          accessibilityRole="button"
+          accessibilityLabel={`Menunggu masuk, ${ruangTunggu.jumlah} tamu. Buka daftar`}
+          style={[s.pil, { backgroundColor: colors.warningSoft, minHeight: 44 }]}
+        >
+          <Icon name="user-plus" size={14} color={colors.warning} />
+          <Text variant="meta" weight={700} tone="warning" numberOfLines={1}>
+            {`Menunggu masuk (${ruangTunggu.jumlah})`}
+          </Text>
+        </Pressable>
+      ) : null}
       {presenter ? (
         <View style={[s.pil, { backgroundColor: colors.warningSoft }]}>
           <Icon name="presentation" size={14} color={colors.warning} />
@@ -469,12 +503,16 @@ function Isi({
       ) : null}
       {live.pemberitahuan ? (
         <View style={[s.toast, { backgroundColor: colors.roomBar }]} accessibilityLiveRegion="polite">
-          <Icon name={live.pemberitahuan.jenis === 'tangan' ? 'hand' : 'info'} size={18} color={colors.roomOnBar} />
+          <Icon name={live.pemberitahuan.jenis === 'tangan' ? 'hand' : live.pemberitahuan.jenis === 'tamu' ? 'user-plus' : 'info'} size={18} color={colors.roomOnBar} />
           <Text variant="label" style={{ color: colors.roomOnBar, flex: 1 }}>
             {live.pemberitahuan.teks}
           </Text>
-          {live.pemberitahuan.jenis === 'tangan' ? (
-            <Pressable onPress={() => setPanel('kehadiran')} accessibilityRole="button" accessibilityLabel="Lihat kehadiran">
+          {live.pemberitahuan.jenis === 'tangan' || live.pemberitahuan.jenis === 'tamu' ? (
+            <Pressable
+              onPress={() => setPanel(live.pemberitahuan?.jenis === 'tamu' ? 'tamu' : 'kehadiran')}
+              accessibilityRole="button"
+              accessibilityLabel={live.pemberitahuan.jenis === 'tamu' ? 'Lihat tamu yang menunggu' : 'Lihat kehadiran'}
+            >
               <Text variant="meta" weight={700} style={{ color: colors.roomOnBar }}>
                 Lihat
               </Text>
@@ -653,7 +691,8 @@ function Isi({
           router.push({ pathname: '/rapat/[id]/transkrip', params: tanggal ? { id, tanggal } : { id } } as never);
         }}
       />
-      <SheetWaktuBicara visible={panel === 'bicara'} onClose={() => setPanel(null)} talk={live.talk} ids={ids} nama={nama} />
+      <SheetWaktuBicara visible={panel === 'bicara'} onClose={() => setPanel(null)} talk={live.talk} ids={idsKaryawan} nama={nama} />
+      <SheetRuangTunggu visible={panel === 'tamu'} onClose={() => setPanel(null)} ruang={ruangTunggu} />
     </View>
   );
 }

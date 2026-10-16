@@ -44,6 +44,8 @@ import {
 } from '@/api/video';
 
 import { acceptCaptionStream, applyCaption, CAPTION_TOPIC, readCaptionAttributes, type CaptionLine } from './captions';
+import { adalahIdentitasTamu } from '@/features/rapat/tamu';
+
 import { ambilPilihan, pakaiToken, type ArahKamera } from './sesi';
 import { kodeTolak } from './teks';
 import { TalkStore } from './waktuBicara';
@@ -67,7 +69,7 @@ export type FaseRuang =
 export interface Pemberitahuan {
   id: number;
   teks: string;
-  jenis: 'tangan' | 'info';
+  jenis: 'tangan' | 'info' | 'tamu';
 }
 
 export interface RuangLive {
@@ -87,6 +89,8 @@ export interface RuangLive {
   /** Naik saat paket `rk.minutes` diterima (notulen disimpan orang lain). */
   versiNotulen: number;
   pemberitahuan: Pemberitahuan | null;
+  /** Tampilkan toast sementara di ruang (mis. tamu menunggu masuk). */
+  beritahu: (teks: string, jenis: Pemberitahuan['jenis']) => void;
   talk: TalkStore | null;
   arah: ArahKamera;
   orang: (identity: string) => OrangVideo | null;
@@ -172,6 +176,11 @@ export function useRuang(id: string, tanggal: string | null, people: OrangVideo[
       if (identity === room.localParticipant.identity) {
         return token?.name ?? 'Anda';
       }
+      // Tamu eksternal (`guest:*`) tidak ada di daftar karyawan: namanya "Nama (Tamu)" ditandatangani server
+      // di token (tamu tidak bisa mengubahnya), jadi nama dari LiveKit boleh dipakai. Jangan tanya profil user untuk tamu.
+      if (adalahIdentitasTamu(identity)) {
+        return room.remoteParticipants.get(identity)?.name || 'Tamu';
+      }
       // Jangan percaya nama dari LiveKit (kontrak §4) — kecuali tidak ada data server.
       return room.remoteParticipants.get(identity)?.name || 'Peserta';
     },
@@ -218,7 +227,8 @@ export function useRuang(id: string, tanggal: string | null, people: OrangVideo[
     };
     const onSpeakers = (speakers: Participant[]) => {
       const ids = speakers.map((s) => s.identity).filter((x) => x !== IDENTITAS_NOTULEN);
-      talkRef.current?.record(ids, Date.now());
+      // Waktu bicara hanya untuk karyawan (tamu belum dihitung di server; kontrak §7) — cincin bicara tetap menyala.
+      talkRef.current?.record(ids.filter((x) => !adalahIdentitasTamu(x)), Date.now());
       setPembicara(ids);
     };
     const onState = (s: ConnectionState) => {
@@ -617,6 +627,7 @@ export function useRuang(id: string, tanggal: string | null, people: OrangVideo[
     subtitleTersedia,
     versiNotulen,
     pemberitahuan,
+    beritahu,
     talk,
     arah,
     orang,
