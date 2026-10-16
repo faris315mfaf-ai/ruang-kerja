@@ -21,7 +21,7 @@ Undangan rapat selama ini dibuat manual, notulen ditulis terpisah, dan tindak la
 | Penyelenggara | + ubah & batalkan rapat, buka kembali notulen final |
 | Direksi · HR · Super Admin (`dashboard.view_company`) | `/manajemen/jadwal`; **rapat pimpinan** (`leadership`) terlihat (baca saja) walau tidak diundang; hanya mereka yang bisa menandai rapat sebagai rapat pimpinan |
 | Lainnya (termasuk Super Admin untuk rapat biasa) | Tidak melihat apa pun — **404** |
-| Tamu eksternal (email) | Disimpan sebagai peserta, belum menerima email (undangan kalender Google ditahan), tidak pernah melihat isi aplikasi |
+| Tamu eksternal (email) | Disimpan sebagai peserta tanpa akun, tidak pernah melihat isi aplikasi. Di rapat **Video RuangKerja** tiap tamu mendapat **tautan pribadi** (`/tamu/{token}`) yang disalin penyelenggara (aplikasi **tidak** mengirim email; undangan kalender Google ditahan), masuk lewat **ruang tunggu**, lihat §6a |
 
 Sumber kebenaran: `App\Policies\MeetingPolicy` = `Meeting::visibleTo()` (diuji identik).
 
@@ -125,7 +125,7 @@ Grid minggu jam 08–17 dengan garis "sekarang", panel Notulensi (Semua/Draf/Tin
 
 ## 6. Ditahan (tidak dibangun)
 
-- Tautan **Google Meet otomatis**, sinkron **Google Calendar** (tabel `calendar_events`), **freeBusy** Google untuk bentrok, email/undangan kalender untuk **tamu eksternal**, ekspor notulen ke **Google Docs**: tampil sebagai label/tombol nonaktif "Ditahan".
+- Tautan **Google Meet otomatis**, sinkron **Google Calendar** (tabel `calendar_events`), **freeBusy** Google untuk bentrok, email/undangan kalender otomatis untuk **tamu eksternal** (tamu cukup lewat tautan yang disalin penyelenggara), ekspor notulen ke **Google Docs**: tampil sebagai label/tombol nonaktif "Ditahan".
 - Pengingat **WhatsApp**: baris "WhatsApp · Ditahan".
 - Belum ada: pembatalan satu kemunculan saja (pembatalan berlaku untuk seluruh seri), lampiran Drive di rapat, ko-editor realtime notulen, "Kabari terlambat". Chip "rapat 5 menit lagi" di MenuBar **tidak dibangun** (keputusan pemilik 6 Okt 2026); pengingat cukup lewat notifikasi `meeting.starting`.
 
@@ -146,7 +146,17 @@ Tujuan: rapat video yang semirip mungkin dengan Google Meet dan serealtime mungk
 | Notifikasi | `meeting.starting` rapat video: tombol utama **Gabung** → pra-gabung, sekunder "Lihat detail" |
 | Klien | `livekit-client` + `@livekit/components-react` (hook saja, gaya Arus — tanpa `@livekit/components-styles`); adaptiveStream, dynacast, simulcast VP8 180/360/720p, berbagi layar 1080p/15 + lapisan 720p/5, Opus DTX + RED, peredam gema/bising |
 
-**Sisa / berikutnya:** uji coba nyata 1–2 minggu di VPS rapat (≤ 20 orang, 4G, CPU & trafik — `RAPAT-VIDEO.md` §6); ruang tunggu/izin masuk (tamu eksternal belum didukung, semua peserta karyawan internal); larangan masuk ulang setelah dikeluarkan; reaksi emoji; latar blur; rekaman (Egress). Transkrip otomatis ke notulen dibangun sebagai **notulen otomatis** (worker `transcriber/`, ringkasan AI, menolak per orang; kontrak `docs/fitur/notulen-otomatis-kontrak.md`): [rapat-video](rapat-video.md) §3.4, [rapat-video-privasi](rapat-video-privasi.md), `docs/deploy/RAPAT-VIDEO.md` §7–§10.
+**Tamu eksternal & ruang tunggu (keputusan pemilik 15 Okt 2026; kontrak lengkap `docs/sesi/rapat-tamu-eksternal.md`):**
+
+| Bagian | Isi |
+|---|---|
+| Undangan | Penyelenggara menambah tamu (email + nama opsional) dari formulir rapat (`guest_emails`, `guest_names`) atau dari daftar tamu rapat video; tiap tamu punya tautan pribadi `https://{host}/tamu/{token}` yang **disalin sendiri** oleh penyelenggara. Token tidak disimpan (HMAC dari `APP_KEY`, nonce yang bisa diputar), kedaluwarsa otomatis di akhir jendela gabung (seri: sampai tanggal akhir, maks. 60 hari), bisa **diputar ulang** (tautan lama mati, tamu di ruang dikeluarkan) atau **dicabut** |
+| Masuk | Tamu membuka tautan, mengisi nama, lalu **menunggu** di ruang tunggu (hanya dalam jendela gabung). Penyelenggara, notulis, dan peserta internal rapat itu menekan **Izinkan masuk** atau **Tolak**; tamu yang ditolak/dikeluarkan tidak bisa meminta lagi sampai ada yang menekan Izinkan. Izin berlaku **per kemunculan** (seri: izin baru tiap tanggal) |
+| Hak di ruang | video, suara, berbagi layar, obrolan rapat; tanpa `roomAdmin`, tanpa ubah metadata sendiri; nama di ruang selalu `Nama (Tamu)` (ditandatangani server). Tamu **tidak** melihat notulen, transkrip, tugas, atau data aplikasi apa pun, tidak bisa moderasi; penyelenggara bisa membisukan dan mengeluarkannya |
+| Privasi | Tamu **tidak ditranskrip** (identitas `guest:*` dikecualikan di worker dan di server) dan tidak direkam. Yang tercatat: nama, alamat IP permintaan, waktu, dan kehadiran (tampil sebagai "Tamu" di Kehadiran, tidak pernah sebagai karyawan) |
+| Audit | `meeting.guest_added`, `guest_removed` (dicabut), `guest_link_rotated`, `guest_admitted`, `guest_denied`, `guest_joined`, `guest_kicked` (tanpa token) |
+
+**Sisa / berikutnya:** uji coba nyata 1–2 minggu di VPS rapat (≤ 20 orang, 4G, CPU & trafik — `RAPAT-VIDEO.md` §6); larangan masuk ulang karyawan setelah dikeluarkan sudah ada (audit R-04); reaksi emoji; latar blur; rekaman (Egress). Transkrip otomatis ke notulen dibangun sebagai **notulen otomatis** (worker `transcriber/`, ringkasan AI, menolak per orang; kontrak `docs/fitur/notulen-otomatis-kontrak.md`): [rapat-video](rapat-video.md) §3.4, [rapat-video-privasi](rapat-video-privasi.md), `docs/deploy/RAPAT-VIDEO.md` §7–§10.
 
 Catatan pilihan awal (6 Okt 2026), untuk riwayat:
 
