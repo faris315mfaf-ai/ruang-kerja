@@ -10,6 +10,14 @@ def test_who_may_be_recorded():
     assert not may_record("", own_identity=me)
 
 
+def test_external_guests_are_never_recorded():
+    me = "rk-notulen"
+    assert not may_record("guest:01hzabcdefghjkmnpqrstvwxyz", own_identity=me)
+    assert not may_record("guest:01hzabcdefghjkmnpqrstvwxyz", own_identity=me, excluded=[])
+    # An employee id that merely contains the word is still a person.
+    assert may_record("01HZ", own_identity=me)
+
+
 def test_public_attributes_are_not_an_opt_out_channel():
     # Opt-out is private: only the app's signed exclude list counts, never a LiveKit attribute.
     import inspect

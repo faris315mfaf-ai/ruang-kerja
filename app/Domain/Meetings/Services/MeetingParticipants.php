@@ -3,6 +3,9 @@
 namespace App\Domain\Meetings\Services;
 
 use App\Domain\Meetings\Enums\Rsvp;
+use App\Domain\Meetings\Guests\GuestNames;
+use App\Domain\Meetings\Guests\Jobs\RemoveGuestsFromRooms;
+use App\Domain\Meetings\Guests\Services\GuestLinks;
 use App\Domain\Organization\Enums\UserStatus;
 use App\Models\Meeting;
 use App\Models\MeetingParticipant;
@@ -16,6 +19,8 @@ use App\Models\User;
  */
 final class MeetingParticipants
 {
+    public function __construct(private readonly GuestLinks $links) {}
+
     /**
      * @param  list<string>  $userIds
      * @return list<User> users that were newly added
@@ -49,17 +54,40 @@ final class MeetingParticipants
     }
 
     /**
+     * Adds external guests by e-mail (an optional display name per e-mail) and
+     * gives each a personal link (GuestLinks). Existing guests keep their link;
+     * a name given again replaces the stored one.
+     *
      * @param  list<string>  $emails
+     * @param  array<string, string|null>  $names  lower-case e-mail => name
+     * @return list<MeetingParticipant> the guests (new and existing)
      */
-    public function addGuests(Meeting $meeting, array $emails): void
+    public function addGuests(Meeting $meeting, array $emails, array $names = []): array
     {
+        $byEmail = [];
+
+        foreach ($names as $email => $name) {
+            $byEmail[mb_strtolower(trim((string) $email))] = $name;
+        }
+
+        $guests = [];
+
         foreach (array_unique(array_map(fn (string $email): string => mb_strtolower(trim($email)), $emails)) as $email) {
             if ($email === '') {
                 continue;
             }
 
-            MeetingParticipant::query()->firstOrCreate(['meeting_id' => $meeting->id, 'email' => $email]);
+            $name = GuestNames::clean($byEmail[$email] ?? null);
+            $guest = MeetingParticipant::query()->firstOrCreate(['meeting_id' => $meeting->id, 'email' => $email], ['guest_name' => $name]);
+
+            if (! $guest->wasRecentlyCreated && $name !== null && $guest->guest_name !== $name) {
+                $guest->forceFill(['guest_name' => $name])->save();
+            }
+
+            $guests[] = $this->links->ensure($guest, $meeting);
         }
+
+        return $guests;
     }
 
     /**
@@ -67,18 +95,22 @@ final class MeetingParticipants
      *
      * @param  list<string>  $userIds
      * @param  list<string>  $emails
+     * @param  array<string, string|null>  $guestNames  lower-case e-mail => name
      * @return list<User> users that were newly added
      */
-    public function sync(Meeting $meeting, array $userIds, array $emails): array
+    public function sync(Meeting $meeting, array $userIds, array $emails, array $guestNames = []): array
     {
         $keep = array_values(array_unique([$meeting->organizer_id, ...$userIds]));
         $guests = array_values(array_unique(array_map(fn (string $email): string => mb_strtolower(trim($email)), $emails)));
 
         MeetingParticipant::query()->where('meeting_id', $meeting->id)->whereNotNull('user_id')->whereNotIn('user_id', $keep)->delete();
-        MeetingParticipant::query()->where('meeting_id', $meeting->id)->whereNotNull('email')->whereNotIn('email', $guests === [] ? [''] : $guests)->delete();
+        $dropped = MeetingParticipant::query()->where('meeting_id', $meeting->id)->whereNotNull('email')->whereNotIn('email', $guests === [] ? [''] : $guests);
+        // Guests taken off the list leave the live video room too (links die with the row).
+        RemoveGuestsFromRooms::forParticipants($meeting, array_values($dropped->pluck('id')->map(strval(...))->all()));
+        $dropped->delete();
 
         $added = $this->add($meeting, $keep);
-        $this->addGuests($meeting, $guests);
+        $this->addGuests($meeting, $guests, $guestNames);
         $meeting->unsetRelation('participants');
 
         return $added;

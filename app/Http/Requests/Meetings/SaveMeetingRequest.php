@@ -52,6 +52,9 @@ class SaveMeetingRequest extends MeetingRequest
             'participant_ids.*' => ['string', 'ulid', $activeEmployee],
             'guest_emails' => ['sometimes', 'array', 'max:30'],
             'guest_emails.*' => ['string', 'email', 'max:190'],
+            // Optional display name per guest e-mail ({"tamu@x.com": "Budi"}), pre-filled on the guest page.
+            'guest_names' => ['sometimes', 'nullable', 'array', 'max:30'],
+            'guest_names.*' => ['nullable', 'string', 'max:60'],
             'agenda' => ['required', 'array', 'min:1', 'max:20'],
             'agenda.*' => ['nullable', 'string', 'max:200'],
             'recurrence' => ['required', Rule::enum(Recurrence::class)],
@@ -179,7 +182,7 @@ class SaveMeetingRequest extends MeetingRequest
      *     platform: MeetingPlatform, location: string|null, join_url: string|null,
      *     minute_taker_id: string|null, workspace_id: string|null, agenda: list<string>,
      *     recurrence: Recurrence, recurrence_until: string|null, reminders: list<int>, leadership: bool,
-     *     auto_minutes: bool, participant_ids: list<string>, guest_emails: list<string>
+     *     auto_minutes: bool, participant_ids: list<string>, guest_emails: list<string>, guest_names: array<string, string|null>
      * }
      */
     public function toInput(): array
@@ -209,7 +212,24 @@ class SaveMeetingRequest extends MeetingRequest
             'auto_minutes' => $this->has('auto_minutes') ? $this->boolean('auto_minutes') : ($existing instanceof Meeting && $existing->auto_minutes),
             'participant_ids' => $this->stringList('participant_ids'),
             'guest_emails' => $this->stringList('guest_emails'),
+            'guest_names' => $this->guestNames(),
         ];
+    }
+
+    /**
+     * @return array<string, string|null>
+     */
+    private function guestNames(): array
+    {
+        $names = [];
+
+        foreach ((array) $this->input('guest_names', []) as $email => $name) {
+            if (is_string($email) && (is_string($name) || $name === null)) {
+                $names[mb_strtolower(trim($email))] = $name;
+            }
+        }
+
+        return $names;
     }
 
     /**
