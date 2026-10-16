@@ -81,7 +81,7 @@ describe('LiveKit token', function () {
             ->assertJsonPath('room', 'rk-'.$this->meeting->id.'-20261005')
             ->assertJsonPath('identity', $this->rizky->id)
             ->assertJsonPath('role', 'participant')
-            ->assertJsonPath('can', ['moderate' => false, 'call_participants' => false, 'edit_minutes' => false]);
+            ->assertJsonPath('can', ['moderate' => false, 'manage_guests' => false, 'manage_lobby' => true, 'call_participants' => false, 'edit_minutes' => false]);
 
         JWT::$timestamp = CarbonImmutable::now()->getTimestamp();
         $claims = JWT::decode($response->json('token'), new Key(b4bLiveKitSecret(), 'HS256'));
