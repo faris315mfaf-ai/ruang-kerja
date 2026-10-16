@@ -215,3 +215,37 @@ Dan di bagian retensi: data kehadiran tamu mengikuti retensi `meeting_attendance
 3. **Tamu (web `meetings/guest`):** alur di §3 dengan teks Indonesia, status berikut label dari `status_label`, `notice_points` tampil sebelum "Minta masuk".
 4. **Ruang:** lencana "Tamu" untuk identitas `guest:*`; kelompok "Tamu" di panel Kehadiran memakai `guests`.
 5. **Ponsel:** panel Tamu + ruang tunggu memakai rute API v1 di atas (hanya penyelenggara/undangan; tamu membuka tautan di peramban).
+
+## 9. UI aplikasi Android (agen ponsel, 15 Okt 2026)
+
+Kode: `apps/mobile/src/api/rapatTamu.ts` (7 panggilan, semuanya `cache: false`), `src/features/rapat/{tamu.ts (logika murni), useTamuRapat.ts, useRuangTunggu.ts, KartuTamu.tsx}`, `src/features/video/SheetRuangTunggu.tsx`; perubahan di `app/rapat/[id]/index.tsx`, `app/rapat/[id]/video/{ruang,pra-gabung}.tsx`, `FormRapat.tsx`, `PemilihPeserta.tsx`, `Ubin.tsx`, `SheetKehadiran.tsx`, `useRuang.ts`. Uji murni: `cd apps/mobile && npm run test:rapat-tamu`. Tidak ada paket baru dan tidak ada perubahan backend/web.
+
+### Keputusan
+
+- **Tautan dibagikan lewat sheet Bagikan sistem (`Share`), bukan clipboard.** `expo-clipboard` belum terpasang dan paket baru dilarang untuk tugas ini; sheet Bagikan Android sudah punya "Salin", WhatsApp, dll. Tombolnya berlabel "Bagikan tautan" (bukan "Salin") dan **tidak ada snackbar "Tautan disalin"** karena aplikasi tidak bisa memastikannya. Bila nanti `expo-clipboard` dipasang (butuh build native baru), cukup ganti isi fungsi `bagikan` di `KartuTamu.tsx`.
+- **Tautan rahasia:** tidak pernah ditampilkan utuh (UI hanya `host/tamu/…`), tidak masuk log (uji menolak `console.*` di modul tamu), tidak masuk cache offline (`/tamu` ditambahkan ke `TOLAK_PENGGALAN` di `src/offline/cache.ts` **dan** tiap panggilan `cache: false`), tidak disimpan di state selain memori hook layar detail.
+- **Hanya online:** tambah/putar/cabut/izinkan/tolak tidak pernah diantrekan; offline → "Butuh koneksi — … tidak bisa dilakukan saat offline." Daftar tamu offline tidak ditampilkan dari cache (memuat tautan).
+- **Hak diturunkan di klien dari peran di rapat**, karena detail API (`GET /rapat/{id}`) belum mengirim `manage_guests`/`manage_lobby` dan `video.can_join` mengikuti jendela gabung (bukan `openVideo`), serta `video.is_organizer` tidak ada di jawaban detail: penyelenggara = `manageGuests`; penyelenggara/notulis/peserta internal = `manageLobby`. Server tetap hakim: 403/404 menghentikan pemantauan dan menyembunyikan lencana.
+- **Polling ruang tunggu** `jedaRuangTunggu`: 4 detik, backoff ×2 sampai 30 detik saat gagal, hanya saat layar aktif (tersambung di ruang / pra-gabung siap) **dan** aplikasi di latar depan; kembali ke depan langsung segar; berhenti pada 403/404/410. Pemberitahuan tamu baru: toast di ruang ("Budi menunggu masuk", tombol Lihat) + getar 40 ms (`Vibration`, izin VIBRATE sudah ada; `expo-haptics` tidak terpasang). Tamu yang diizinkan/ditolak lalu minta lagi diumumkan lagi.
+- **Peserta LiveKit `guest:*`** tidak pernah di-parse sebagai ULID user dan tidak memicu panggilan profil: nama = `participant.name` (ditandatangani server, "Nama (Tamu)"), ubin berlabel "(Tamu)" (nama depan + "(Tamu)" di ubin kecil), panel Kehadiran memberi lencana "Tamu", moderasi (Bisukan/Keluarkan) memakai `POST …/video/bisukan|keluarkan` dengan `user_id: "guest:{id}"`. Tamu dikecualikan dari "Waktu bicara" (kontrak §7). Tamu yang dikeluarkan muncul di "Tamu dikeluarkan" (diambil dari `GET …/tamu`, hanya penyelenggara) dengan "Izinkan masuk lagi" = `…/ruang-tunggu/{id}/izinkan`.
+- **Formulir buat/ubah rapat** mengirim `guest_emails` + `guest_names` (peta email huruf kecil → nama bersih; email tanpa nama tidak dikirim sehingga nama yang sudah ada tidak tertimpa). Pemilih peserta punya isian "Nama tamu (opsional)", batas 30 tamu, dan teks diganti dari "undangan email ditahan" menjadi "masuk lewat tautan pribadi". Setelah simpan dengan tamu pada rapat video, detail dibuka dengan `?tamu=1` yang otomatis membuka daftar tamu (tombol Bagikan).
+
+### Selisih / celah kontrak (untuk agen backend)
+
+1. Detail rapat API v1 sebaiknya menyertakan `can.manage_guests` dan `can.manage_lobby` (dan `video.is_organizer`); sekarang diturunkan di klien.
+2. `GET rapat/formulir` untuk rapat yang ada mengembalikan `guest_emails` tetapi **tanpa `guest_names`**: saat mengubah rapat nama tamu tidak bisa diisi awal (aman: tidak dikirim berarti tidak menimpa). Nama tamu baru dari formulir ubah tetap terkirim.
+3. Baris tamu di `participants` detail rapat hanya memuat `email` (`user_id` null, tanpa `id` tamu dan tanpa `guest_name`); id tamu hanya ada di `GET …/tamu` (penyelenggara).
+4. `Share` tidak bisa memberi tahu aplikasi bahwa tautan benar-benar disalin/dikirim.
+
+### Perlu diverifikasi di emulator setelah build native
+
+Tidak ada modul native baru (`expo prebuild` tidak perlu), cukup bundle JS baru. Daftar periksa (server lokal dengan `FEATURE_MEETINGS`, LiveKit lokal `docs/SETUP-LOKAL.md` §10, rapat video dengan 1 tamu):
+1. Detail rapat (penyelenggara): kartu "Tamu eksternal" memuat daftar; Tambah (email valid, nama 1 huruf ditolak, email dobel = 200 tanpa ubah tautan); Bagikan membuka sheet sistem dengan teks berisi tautan; Putar ulang (dialog; tautan lama 404 di peramban); Cabut (dialog); batas 30.
+2. Detail rapat sebagai peserta internal/notulis: hanya ringkasan jumlah tamu; pengamat rapat pimpinan: tidak ada kartu.
+3. Pesawat/offline: aksi tamu menampilkan "Butuh koneksi"; daftar tamu tidak muncul dari cache.
+4. Buat rapat video dengan tamu + nama → setelah simpan daftar tamu terbuka; ubah rapat tidak menghapus tamu lama.
+5. Tamu membuka tautan di peramban lain dan meminta masuk: toast + getar di ruang (dan di pra-gabung kartu "Menunggu masuk"); Izinkan/Tolak (dialog tolak); ketuk lencana "Menunggu masuk (N)" di baris status ruang.
+6. Tamu di ruang: ubin berlabel "(Tamu)", panel Kehadiran (lencana Tamu, menu Bisukan/Keluarkan/Sematkan), Keluarkan → tamu di peramban melihat "dikeluarkan"; "Tamu dikeluarkan" → Izinkan masuk lagi → tamu bisa masuk lagi.
+7. Aplikasi ke latar belakang dan kembali: polling berhenti lalu segar lagi (cek jaringan di Metro/log server); keluar ruang menghentikan polling.
+8. Tidak crash saat peserta berformat `guest:{id}` mengangkat tangan/berbicara/berbagi layar; "Waktu bicara" tidak memuat tamu; TalkBack membaca lencana "Tamu".
+9. Detail rapat sesudah rapat: "Hadir di rapat video" memisahkan "Tamu eksternal (N)".
