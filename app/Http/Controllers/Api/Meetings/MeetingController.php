@@ -60,8 +60,12 @@ class MeetingController extends Controller
                 'rsvp' => $policy->respond($user, $meeting)->allowed(),
                 'edit' => $policy->update($user, $meeting)->allowed(),
                 'join_video' => $join->allowed(),
+                // External guests (video meetings): guest list with links = organizer;
+                // waiting room = everyone invited.
+                'manage_guests' => $policy->manageGuests($user, $meeting)->allowed(),
+                'manage_lobby' => $policy->manageLobby($user, $meeting)->allowed(),
             ],
-            'video' => $this->video($meeting, $occurrence, $join),
+            'video' => $this->video($meeting, $occurrence, $join, $user),
         ]);
     }
 
@@ -71,7 +75,7 @@ class MeetingController extends Controller
      *
      * @return array<string, mixed>|null
      */
-    private function video(Meeting $meeting, Occurrence $occurrence, Response $join): ?array
+    private function video(Meeting $meeting, Occurrence $occurrence, Response $join, User $viewer): ?array
     {
         if ($meeting->platform !== MeetingPlatform::Video) {
             return null;
@@ -85,6 +89,7 @@ class MeetingController extends Controller
             'join_href' => $occurrence->url('/gabung'),
             'opens_at' => $rooms->opensAt($occurrence)->toIso8601ZuluString(),
             'closes_at' => $rooms->closesAt($occurrence)->toIso8601ZuluString(),
+            'is_organizer' => $meeting->organizer_id === $viewer->id,
             'can_join' => $join->allowed(),
             'denied_reason' => $join->allowed() ? null : $join->message(),
         ];

@@ -107,6 +107,8 @@ class VideoRoomController extends Controller
             'role' => $role,
             'can' => [
                 'moderate' => $policy->moderateVideo($user, $meeting)->allowed(),
+                'manage_guests' => $policy->manageGuests($user, $meeting)->allowed(),
+                'manage_lobby' => $policy->manageLobby($user, $meeting)->allowed(),
                 'call_participants' => $policy->callParticipant($user, $meeting)->allowed(),
                 'edit_minutes' => $policy->canWriteMinutes($user, $meeting),
             ],

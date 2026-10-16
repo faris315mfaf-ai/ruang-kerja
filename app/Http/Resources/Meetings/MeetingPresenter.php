@@ -50,9 +50,10 @@ final class MeetingPresenter
     }
 
     /**
+     * @param  bool  $withGuests  the viewer may manage guests (MeetingPolicy::manageGuests): guest rows then carry `guest_id` and `guest_name`
      * @return array<string, mixed>
      */
-    public function meeting(Occurrence $occurrence, ?MeetingMinutes $minutes): array
+    public function meeting(Occurrence $occurrence, ?MeetingMinutes $minutes, bool $withGuests = false): array
     {
         $meeting = $occurrence->meeting;
 
@@ -81,6 +82,9 @@ final class MeetingPresenter
                     'email' => $participant->email,
                     'rsvp' => $participant->rsvp->value,
                     'optional' => $participant->optional,
+                    ...($withGuests && $participant->user_id === null
+                        ? ['guest_id' => $participant->id, 'guest_name' => $participant->guest_name]
+                        : []),
                 ])
                 ->values()
                 ->all(),

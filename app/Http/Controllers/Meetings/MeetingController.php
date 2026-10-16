@@ -93,16 +93,24 @@ class MeetingController extends Controller
 
         return Inertia::render('meetings/show', [
             // Lazy: the 30 s `only: ['video']` poll skips it (audit 2026-10 §4).
-            'detail' => fn (): array => [
-                'viewer_id' => $user->id,
-                'meeting' => $presenter->meeting($occurrence, $store->find($occurrence)),
-                'people' => $feed->people([$occurrence], [], [$user->id]),
-                'can' => [
-                    'update' => $policy->update($user, $meeting)->allowed(),
-                    'respond' => $policy->respond($user, $meeting)->allowed(),
-                    'write_minutes' => $policy->canWriteMinutes($user, $meeting),
-                ],
-            ],
+            'detail' => function () use ($user, $meeting, $occurrence, $store, $presenter, $feed, $policy): array {
+                // External guests (video meetings): the guest list with links = organizer;
+                // the waiting room = everyone invited (MeetingPolicy::manageGuests / manageLobby).
+                $manageGuests = $policy->manageGuests($user, $meeting)->allowed();
+
+                return [
+                    'viewer_id' => $user->id,
+                    'meeting' => $presenter->meeting($occurrence, $store->find($occurrence), $manageGuests),
+                    'people' => $feed->people([$occurrence], [], [$user->id]),
+                    'can' => [
+                        'update' => $policy->update($user, $meeting)->allowed(),
+                        'respond' => $policy->respond($user, $meeting)->allowed(),
+                        'write_minutes' => $policy->canWriteMinutes($user, $meeting),
+                        'manage_guests' => $manageGuests,
+                        'manage_lobby' => $policy->manageLobby($user, $meeting)->allowed(),
+                    ],
+                ];
+            },
             // Video RuangKerja: join window, live count (partial reloads poll this).
             'video' => $meeting->platform === MeetingPlatform::Video
                 ? fn (): array => app(VideoPresenter::class)->summary($occurrence, $user)
@@ -217,6 +225,8 @@ class MeetingController extends Controller
                 ...$meeting->participants->whereNotNull('user_id')->pluck('user_id')->all(),
                 ...$meeting->participants->whereNotNull('email')->pluck('email')->all(),
             ],
+            // email => name of external guests with a name, to prefill the form.
+            'guest_names' => (object) $meeting->guestNames(),
             'agenda' => $meeting->agenda === [] ? [''] : $meeting->agenda,
             'recurrence' => $meeting->recurrence->value,
             'recurrence_until' => $meeting->recurrence_until?->toDateString(),

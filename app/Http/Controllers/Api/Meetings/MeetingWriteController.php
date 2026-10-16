@@ -193,6 +193,8 @@ class MeetingWriteController extends Controller
             'location' => $meeting->location,
             'participant_ids' => array_values($meeting->participants->whereNotNull('user_id')->pluck('user_id')->all()),
             'guest_emails' => array_values($meeting->participants->whereNotNull('email')->pluck('email')->all()),
+            // email => name of guests that have a name (to prefill the edit form).
+            'guest_names' => (object) $meeting->guestNames(),
             'agenda' => $meeting->agenda === [] ? [''] : $meeting->agenda,
             'recurrence' => $meeting->recurrence->value,
             'recurrence_until' => $meeting->recurrence_until?->toDateString(),

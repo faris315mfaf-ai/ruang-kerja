@@ -206,6 +206,25 @@ class Meeting extends Model
             : $this->participants()->where('user_id', $user->id)->first();
     }
 
+    /**
+     * Names of external guests that have one, keyed by their (lower case)
+     * e-mail: prefills the edit form. Needs `participants` (loaded by callers).
+     *
+     * @return array<string, string>
+     */
+    public function guestNames(): array
+    {
+        $names = [];
+
+        foreach ($this->participants as $participant) {
+            if ($participant->email !== null && $participant->guest_name !== null && $participant->guest_name !== '') {
+                $names[$participant->email] = $participant->guest_name;
+            }
+        }
+
+        return $names;
+    }
+
     public function involves(User $user): bool
     {
         return $this->organizer_id === $user->id
