@@ -51,7 +51,7 @@ function blank(
     };
 }
 
-function fromMeeting(
+export function fromMeeting(
     props: MeetingFormProps,
     me: string,
 ): MeetingFormValues | null {
@@ -80,7 +80,8 @@ function fromMeeting(
         workspace: meeting.workspace_id ?? 'none',
         leadership: meeting.leadership,
         autoMinutes: meeting.auto_minutes ?? false,
-        guestNames: {},
+        // Stored guest names prefill the "Nama tamu" fields (older server: none).
+        guestNames: { ...meeting.guest_names },
     };
 }
 

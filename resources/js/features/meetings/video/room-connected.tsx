@@ -53,7 +53,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { ApiError } from '@/features/tasks/lib/api';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { cn } from '@/lib/utils';
-import { guestLabel, waitingLabel } from '../guests/lib';
+import { guestLabel, resolveGuestRight, waitingLabel } from '../guests/lib';
 import { GuestsSection } from '../guests/guests-section';
 import { LobbyList } from '../guests/lobby-list';
 import { useGuests } from '../guests/use-guests';
@@ -993,7 +993,9 @@ export function ConnectedRoom({
     const lobby = useLobby({
         meetingId: room.meeting.id,
         date: room.meeting.occurrence_date,
-        enabled: room.video.can_join,
+        enabled:
+            room.video.can_join &&
+            resolveGuestRight(room.can.manage_lobby, true),
         realtime: room.features.realtime && Boolean(room.channel),
         onNew: (entries) =>
             emitRoomNotice(
@@ -1002,10 +1004,15 @@ export function ConnectedRoom({
                     : `${entries.length} tamu menunggu diizinkan masuk`,
             ),
     });
+    // Server flag (MeetingPolicy::manageGuests); an older server: whoever moderates.
+    const canManageGuests = resolveGuestRight(
+        room.can.manage_guests,
+        room.can.moderate,
+    );
     const guestList = useGuests({
         meetingId: room.meeting.id,
         date: room.meeting.occurrence_date,
-        enabled: room.can.moderate,
+        enabled: canManageGuests,
     });
     const screen =
         useTracks(
@@ -1259,7 +1266,7 @@ export function ConnectedRoom({
                         <GuestsSection
                             attended={roster.guests ?? []}
                             invited={
-                                room.can.moderate && !guestList.forbidden
+                                canManageGuests && !guestList.forbidden
                                     ? guestList.guests
                                     : null
                             }

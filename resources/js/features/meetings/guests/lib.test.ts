@@ -18,6 +18,7 @@ import {
     newlyWaiting,
     pollDelayMs,
     reduceSession,
+    resolveGuestRight,
     screenFor,
     stripGuestSuffix,
     validateGuestName,
@@ -397,5 +398,17 @@ describe('organizer guest rows', () => {
         expect(
             mergeGuestRows({ live: [], attended: [], invited: null }),
         ).toEqual([]);
+    });
+});
+
+describe('resolveGuestRight', () => {
+    it('trusts the server flag in both directions', () => {
+        expect(resolveGuestRight(true, false)).toBe(true);
+        expect(resolveGuestRight(false, true)).toBe(false);
+    });
+
+    it('falls back to the role derived on the client for an older server', () => {
+        expect(resolveGuestRight(undefined, true)).toBe(true);
+        expect(resolveGuestRight(undefined, false)).toBe(false);
     });
 });

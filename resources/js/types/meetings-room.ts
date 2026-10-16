@@ -295,6 +295,10 @@ export type RoomAbilities = {
     moderate: boolean;
     call_participants: boolean;
     report_speaking: boolean;
+    /** Guest list with links (organizer). Absent on an older server: fall back to `moderate`. */
+    manage_guests?: boolean;
+    /** Waiting room (everyone invited). Absent on an older server: fall back to joinable. */
+    manage_lobby?: boolean;
 };
 
 export type RoomMeeting = {

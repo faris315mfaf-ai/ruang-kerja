@@ -33,6 +33,18 @@ export function stripGuestSuffix(name: string): string {
     return name.replace(/\s*\(\s*tamu\s*\)\s*$/i, '').trim();
 }
 
+/**
+ * Server flag first (`can.manage_guests` / `can.manage_lobby`, derived from
+ * MeetingPolicy); an older server without the flag falls back to what the
+ * client derived before (organizer / can moderate; anyone who can join).
+ */
+export function resolveGuestRight(
+    flag: boolean | undefined,
+    fallback: boolean,
+): boolean {
+    return flag ?? fallback;
+}
+
 export const GUEST_NAME_MIN = 2;
 export const GUEST_NAME_MAX = 60;
 

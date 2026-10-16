@@ -43,7 +43,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { ApiError } from '@/features/tasks/lib/api';
 import { cn, focusRing } from '@/lib/utils';
 import { dueLabel, officeDate, shortDate, timeRange } from '../lib';
-import { guestLabel } from '../guests/lib';
+import { guestLabel, resolveGuestRight } from '../guests/lib';
 import { LobbyList } from '../guests/lobby-list';
 import { useLobby } from '../guests/use-lobby';
 import { useNow } from '../meetings-context';
@@ -516,6 +516,7 @@ export function PreJoinScreen({
         enabled:
             video.configured &&
             video.can_join &&
+            resolveGuestRight(room.can.manage_lobby, true) &&
             windowState.state !== 'closed',
         realtime: false,
         onNew: (entries) =>
