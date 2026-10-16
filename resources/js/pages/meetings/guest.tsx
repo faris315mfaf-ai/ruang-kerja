@@ -24,7 +24,9 @@ export default function Guest({ guest }: Props) {
             <Head title="Rapat sebagai tamu" />
             <div className="max-w-md text-center">
                 <h1 className="text-h2">{guest.meeting?.title ?? 'Rapat'}</h1>
-                <p className="mt-2 text-body text-text-muted">{guest.status_label}</p>
+                <p className="mt-2 text-body text-text-muted">
+                    {guest.status_label}
+                </p>
             </div>
         </div>
     );

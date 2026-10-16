@@ -27,9 +27,9 @@ void createInertiaApp({
                 return [];
             // Video RuangKerja pre-join & call: full screen like Google Meet.
             case name === 'meetings/join' ||
-            name === 'meetings/room' ||
-            // External guest of a video meeting (no account, no shell).
-            name === 'meetings/guest':
+                name === 'meetings/room' ||
+                // External guest of a video meeting (no account, no shell).
+                name === 'meetings/guest':
                 return [];
             case name.startsWith('auth/'):
                 return AuthLayout;
