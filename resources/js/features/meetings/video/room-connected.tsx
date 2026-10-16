@@ -71,7 +71,8 @@ import type { DocPresence } from './room-doc';
 import { docAnchor, MinutesDoc } from './room-doc';
 import type { MinutesSync } from './room-minutes';
 import { MinutesProvider, useRoomMinutes } from './room-minutes';
-import { emitRoomNotice, useRoomNotices } from './room-notices';
+import { emitRoomNotice } from './room-notices';
+import { Notices } from './room-notices-view';
 import type { PanelKind } from './room-panels';
 import { ChatPanel, SettingsPanel, SidePanel } from './room-panels';
 import {
@@ -168,34 +169,6 @@ function useSetOwnAttributes(room: Room) {
 // Leaves: each subscribes to what it shows, so the room does not re-render
 // as a whole on every speaker, attribute or clock tick (audit §4).
 // ---------------------------------------------------------------------------
-
-function Notices() {
-    const notices = useRoomNotices();
-
-    return (
-        <ul
-            aria-live="polite"
-            className="pointer-events-none absolute inset-x-0 top-3 z-30 flex flex-col items-center gap-2 px-3"
-        >
-            {notices.map((notice) => (
-                <li
-                    key={notice.id}
-                    className={cn(
-                        'inline-flex max-w-full items-center gap-2 rounded-full px-4 py-2 text-[14px] font-semibold shadow-inverse',
-                        notice.tone === 'error'
-                            ? 'bg-danger text-on-danger'
-                            : 'bg-room-bar text-on-room-bar',
-                    )}
-                >
-                    {notice.tone === 'hand' && (
-                        <Hand aria-hidden className="size-4" />
-                    )}
-                    {notice.text}
-                </li>
-            ))}
-        </ul>
-    );
-}
 
 /** "00:18:42" since the meeting started (its own 1 s tick). */
 function RoomClock({ startsAt }: { startsAt: string }) {

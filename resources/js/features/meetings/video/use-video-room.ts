@@ -88,6 +88,17 @@ function mediaErrorMessage(
 }
 
 /**
+ * Where the room gets its token. Employees use the default (POST
+ * /rapat/{id}/video/token); external guests pass their own source
+ * (POST /api/tamu/{token}/token) and map its failures to final screens.
+ */
+export type RoomTokenSource = {
+    fetch: () => Promise<{ url: string; token: string }>;
+    /** A token failure that has its own screen (removed, ended …). */
+    classify?: (error: unknown) => RoomStatus | null;
+};
+
+/**
  * Connects to the LiveKit room of one occurrence: fetches a short-lived token
  * (POST /rapat/{id}/video/token), publishes mic/camera per the pre-join
  * choices, maps disconnect reasons to screens (left · removed by the
@@ -98,6 +109,7 @@ export function useVideoRoom(
     meetingId: string,
     date: string,
     choices: MediaChoices,
+    source?: RoomTokenSource,
 ) {
     // The room lives as long as the page; choices only seed capture defaults.
     const [room] = useState(() => createVideoRoom(choices));
@@ -109,6 +121,8 @@ export function useVideoRoom(
     const retryTimer = useRef<number | null>(null);
     const choicesRef = useRef(choices);
     choicesRef.current = choices;
+    const sourceRef = useRef(source);
+    sourceRef.current = source;
 
     const connect = useCallback(async () => {
         if (!isBrowserSupported()) {
@@ -123,8 +137,18 @@ export function useVideoRoom(
         let token;
 
         try {
-            token = await videoApi.token(meetingId, date);
+            token = await (sourceRef.current
+                ? sourceRef.current.fetch()
+                : videoApi.token(meetingId, date));
         } catch (error) {
+            const mapped = sourceRef.current?.classify?.(error) ?? null;
+
+            if (mapped) {
+                setStatus(mapped);
+
+                return;
+            }
+
             setStatus({
                 kind: 'error',
                 message:

@@ -50,6 +50,8 @@ export class RoomApiError extends ApiError {
         status: number,
         errors: Record<string, string[]>,
         public readonly retryAfter: number | null,
+        /** Machine code of the contract (`status_berubah`, `ditutup` …). */
+        public readonly code: string | null = null,
     ) {
         super(message, status, errors);
     }
@@ -73,6 +75,7 @@ function failure(status: number, data: unknown): ApiError {
         status,
         errors,
         Number.isFinite(retry) && retry > 0 ? retry : null,
+        typeof body?.code === 'string' ? body.code : null,
     );
 }
 

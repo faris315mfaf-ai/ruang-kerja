@@ -15,7 +15,11 @@ import {
 } from '@/components/ui/select';
 import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { resolvePerson, useRoomPeople } from './room-people';
+import {
+    personOfParticipant,
+    useIsGuestView,
+    useRoomPeople,
+} from './room-people';
 import { emitRoomNotice } from './room-notices';
 
 export type PanelKind = 'attendance' | 'chat' | 'settings' | 'talk';
@@ -83,6 +87,7 @@ export function ChatPanel({
 }) {
     const [draft, setDraft] = useState('');
     const people = useRoomPeople();
+    const guestView = useIsGuestView();
     const list = useRef<HTMLOListElement>(null);
     const count = chat.chatMessages.length;
 
@@ -132,9 +137,12 @@ export function ChatPanel({
                                     <span className="text-[14px] font-bold">
                                         {message.from?.isLocal
                                             ? 'Anda'
-                                            : resolvePerson(
+                                            : personOfParticipant(
                                                   people,
-                                                  message.from?.identity ?? '',
+                                                  message.from ?? {
+                                                      identity: '',
+                                                  },
+                                                  guestView,
                                               ).name}
                                     </span>
                                     <span className="text-[13px] text-text-muted">

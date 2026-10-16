@@ -1,33 +1,21 @@
 import { Head } from '@inertiajs/react';
-
-type GuestInfo = {
-    status: string;
-    status_label: string;
-    meeting?: { title: string; starts_at: string; ends_at: string } | null;
-};
-
-type Props = {
-    /** Secret link token (null when the link is unknown). */
-    token: string | null;
-    guest: GuestInfo;
-};
+import { GuestPage } from '@/features/meetings/guests/guest-page';
+import type { GuestPageProps } from '@/features/meetings/guests/types';
 
 /**
- * External guest page /tamu/{token} (no account). Contract:
- * docs/sesi/rapat-tamu-eksternal.md. PLACEHOLDER — the web agent builds the
- * real screen (name form, waiting room, pre-join, room); the data it needs is
- * already in these props and in /api/tamu/{token}/*.
+ * External guest page /tamu/{token} (no account, no app shell). Contract:
+ * docs/sesi/rapat-tamu-eksternal.md §3. Props come from GuestPortalController
+ * (`token` null + `guest.status` "unknown" for a link nobody knows). The
+ * page is never indexed and sends no referrer (server headers).
  */
-export default function Guest({ guest }: Props) {
+export default function Guest(props: GuestPageProps) {
     return (
-        <div className="grid min-h-svh place-items-center bg-page p-6 text-text">
-            <Head title="Rapat sebagai tamu" />
-            <div className="max-w-md text-center">
-                <h1 className="text-h2">{guest.meeting?.title ?? 'Rapat'}</h1>
-                <p className="mt-2 text-body text-text-muted">
-                    {guest.status_label}
-                </p>
-            </div>
-        </div>
+        <>
+            <Head title="Rapat sebagai tamu">
+                <meta name="robots" content="noindex, nofollow" />
+                <meta name="referrer" content="no-referrer" />
+            </Head>
+            <GuestPage {...props} />
+        </>
     );
 }

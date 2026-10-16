@@ -58,9 +58,9 @@ import {
 } from './lib';
 import type { NotesSourceKind, RoomPageProps } from './types';
 
-type PreviewError = 'denied' | 'missing' | 'busy' | 'other' | null;
+export type PreviewError = 'denied' | 'missing' | 'busy' | 'other' | null;
 
-function previewError(error: Error): PreviewError {
+export function previewError(error: Error): PreviewError {
     if (error.name === 'SecurityError') {
         return 'denied';
     }
@@ -77,7 +77,7 @@ function previewError(error: Error): PreviewError {
     }
 }
 
-const ERROR_TEXT: Record<Exclude<PreviewError, null>, string> = {
+export const ERROR_TEXT: Record<Exclude<PreviewError, null>, string> = {
     denied: 'Izin kamera atau mikrofon ditolak. Klik ikon gembok di bilah alamat browser, izinkan Kamera dan Mikrofon, lalu muat ulang halaman. Anda tetap bisa bergabung tanpa keduanya.',
     missing:
         'Kamera atau mikrofon tidak terdeteksi. Anda tetap bisa bergabung dan mendengarkan.',
@@ -86,7 +86,7 @@ const ERROR_TEXT: Record<Exclude<PreviewError, null>, string> = {
 };
 
 /** Microphone level as three bars over the preview. */
-function MicLevel({ track }: { track: LocalAudioTrack }) {
+export function MicLevel({ track }: { track: LocalAudioTrack }) {
     const volume = useTrackVolume(track);
 
     return (
@@ -107,7 +107,7 @@ function MicLevel({ track }: { track: LocalAudioTrack }) {
     );
 }
 
-function DevicePicker({
+export function DevicePicker({
     kind,
     label,
     value,
@@ -151,7 +151,7 @@ function DevicePicker({
 }
 
 /** White 46px key under the preview (mockup: mic · cam · settings). */
-function DeviceKey({
+export function DeviceKey({
     label,
     off = false,
     onClick,
