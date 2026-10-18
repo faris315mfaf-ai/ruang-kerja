@@ -14,6 +14,7 @@ use App\Domain\Google\Services\DriveFolderContentsSync;
 use App\Domain\Google\Services\DriveFolderService;
 use App\Domain\Google\Services\ResumableUploader;
 use App\Domain\Tenancy\Concerns\CompanyAware;
+use App\Domain\Tenancy\Support\CompanyOf;
 use App\Models\Attachment;
 use App\Models\DriveFile;
 use App\Models\User;
@@ -62,8 +63,10 @@ final class UploadToDrive implements ShouldQueue
         DriveFileRecorder $recorder,
         DriveFolderContentsSync $contents,
     ): void {
-        if (! GoogleFeatures::enabled()) {
-            $this->fail(new GoogleNotConfigured(GoogleFeatures::missingDriveSettings()));
+        $companyId = CompanyOf::value($this->owner);
+
+        if (! GoogleFeatures::enabled($companyId)) {
+            $this->fail(new GoogleNotConfigured(GoogleFeatures::missingDriveSettings($companyId)));
 
             return;
         }

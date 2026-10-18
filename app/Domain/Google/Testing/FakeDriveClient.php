@@ -391,6 +391,17 @@ final class FakeDriveClient implements DriveClient
         return (string) array_key_first($this->state->sharedDrives);
     }
 
+    /**
+     * Another Shared Drive (e.g. a second company's, Fase 1 multi-perusahaan).
+     */
+    public function addSharedDrive(string $driveId, string $name = 'RuangKerja'): self
+    {
+        $this->state->sharedDrives[$driveId] = $name;
+        $this->save();
+
+        return $this;
+    }
+
     public function file(string $fileId): ?DriveItem
     {
         return isset($this->state->files[$fileId]) ? DriveItem::fromApi($this->state->files[$fileId]) : null;

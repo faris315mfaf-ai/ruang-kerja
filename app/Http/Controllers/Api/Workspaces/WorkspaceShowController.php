@@ -68,7 +68,7 @@ class WorkspaceShowController extends Controller
             'favorit' => $membership?->favorited_at !== null,
             'read_only' => WorkspaceAccess::readOnly($workspace, $user, $policy),
             'can' => $page->abilities($workspace, $user) + [
-                'contribute_drive' => GoogleFeatures::enabled() && Gate::allows('create', [DriveFile::class, $workspace->id]),
+                'contribute_drive' => GoogleFeatures::enabled($workspace->company_id) && Gate::allows('create', [DriveFile::class, $workspace->id]),
             ],
             'counts' => [
                 'members' => $workspace->memberships()->count(),
@@ -79,7 +79,7 @@ class WorkspaceShowController extends Controller
                 'files' => $counts['files'],
             ],
             'drive' => [
-                'enabled' => GoogleFeatures::enabled(),
+                'enabled' => GoogleFeatures::enabled($workspace->company_id),
                 'access' => $driveStatus->summary($workspace),
             ],
             'project' => $workspace->isProject() ? [

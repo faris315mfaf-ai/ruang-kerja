@@ -5,6 +5,7 @@ namespace App\Domain\Google\Services;
 use App\Domain\Google\Exceptions\DriveRequestFailed;
 use App\Domain\Google\Exceptions\GoogleNotConfigured;
 use App\Models\DriveFile;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -28,7 +29,9 @@ final class DriveFolderContentsSync
      */
     public function sync(string $workspaceId, string $folderId, ?int $timeout = null): int
     {
-        $items = $this->google->serviceAccount($timeout)->listChildren($folderId, $this->google->sharedDriveId());
+        $companyId = Workspace::query()->withTrashed()->whereKey($workspaceId)->value('company_id');
+        $companyId = is_string($companyId) ? $companyId : null;
+        $items = $this->google->serviceAccount($timeout, $companyId)->listChildren($folderId, $this->google->sharedDriveId($companyId));
 
         DB::transaction(function () use ($items, $workspaceId, $folderId): void {
             foreach ($items as $item) {

@@ -81,7 +81,7 @@ class WorkspaceServiceProvider extends ServiceProvider
 
         // Drive folder title "<Nama> [KEY]" follows renames and key changes.
         Workspace::updated(function (Workspace $workspace): void {
-            if ($workspace->wasChanged(['name', 'key']) && $workspace->drive_folder_id !== null && GoogleFeatures::enabled()) {
+            if ($workspace->wasChanged(['name', 'key']) && $workspace->drive_folder_id !== null && GoogleFeatures::enabled($workspace->company_id)) {
                 CreateDriveFolder::dispatch($workspace)->afterCommit();
             }
         });

@@ -16,7 +16,7 @@ final class SyncWorkspaceDrivePermissions
 {
     public function handle(WorkspaceMembersChanged $event): void
     {
-        if (! GoogleFeatures::enabled()) {
+        if (! GoogleFeatures::enabled($event->workspace->company_id)) {
             return;
         }
 

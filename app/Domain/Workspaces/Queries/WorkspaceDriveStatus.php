@@ -21,7 +21,7 @@ final class WorkspaceDriveStatus
      */
     public function members(Workspace $workspace): array
     {
-        $enabled = GoogleFeatures::enabled();
+        $enabled = GoogleFeatures::enabled($workspace->company_id);
         $members = [];
 
         $rows = DB::table('workspace_members')
@@ -76,7 +76,7 @@ final class WorkspaceDriveStatus
         $folderId = $workspace->drive_folder_id ?? Workspace::query()->whereKey($workspace->id)->value('drive_folder_id');
 
         $state = match (true) {
-            ! GoogleFeatures::enabled() => 'disabled',
+            ! GoogleFeatures::enabled($workspace->company_id) => 'disabled',
             $folderId === null => $workspace->isPersonal() ? 'unused' : 'preparing',
             $counts['errors'] > 0 => 'error',
             $counts['pending'] > 0 => 'pending',
