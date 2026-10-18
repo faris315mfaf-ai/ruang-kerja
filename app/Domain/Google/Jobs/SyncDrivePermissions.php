@@ -45,7 +45,7 @@ final class SyncDrivePermissions implements ShouldBeUniqueUntilProcessing, Shoul
      */
     public function middleware(): array
     {
-        return [...$this->companyMiddleware(), (new WithoutOverlapping('google-permissions:'.$this->owner->driveFolderKey()))->releaseAfter(30)->expireAfter(300)];
+        return [(new WithoutOverlapping('google-permissions:'.$this->owner->driveFolderKey()))->releaseAfter(30)->expireAfter(300), ...$this->companyMiddleware()];
     }
 
     public function handle(DriveFolderService $folders, DrivePermissionSync $permissions): void
