@@ -12,6 +12,8 @@ use App\Domain\Organization\Enums\UserStatus;
 use App\Domain\Organization\Enums\WorkMode;
 use App\Domain\Tasks\Enums\TaskStatusCategory;
 use App\Domain\Tasks\Services\DefaultTaskStatuses;
+use App\Domain\Tenancy\CompanyContext;
+use App\Domain\Tenancy\Support\OfficeTimezone;
 use App\Domain\Workspaces\Actions\EnsurePersonalWorkspace;
 use App\Domain\Workspaces\Actions\SyncDivisionMembers;
 use App\Domain\Workspaces\Enums\WorkspaceType;
@@ -55,6 +57,15 @@ class AnalyticsDemoSeeder extends Seeder
     /** Tasks per person per week. */
     public int $tasksPerWeek = 3;
 
+    /**
+     * Company to top up (Fase 1 multi-perusahaan: SecondCompanyDemoSeeder and
+     * the two-company performance tests); null = the demo company. Extra
+     * staff get `analitik.NN@<google_domain>` and $nameSuffix after the name.
+     */
+    public ?Company $company = null;
+
+    public string $nameSuffix = '';
+
     private const array FIRST = ['Adi', 'Bella', 'Citra', 'Dewi', 'Eko', 'Fajar', 'Gita', 'Hadi', 'Indra', 'Joko', 'Kartika', 'Lina', 'Made', 'Nur', 'Oka', 'Putri', 'Raka', 'Sinta', 'Tono', 'Umi', 'Vina', 'Wahyu', 'Yuni', 'Zaki', 'Ayu', 'Bayu', 'Cahya', 'Dian', 'Erna', 'Farhan', 'Galih', 'Hesti'];
 
     private const array LAST = ['Saputra', 'Lestari', 'Wijaya', 'Nugroho', 'Santoso', 'Hidayat', 'Permata', 'Kusuma', 'Pratiwi', 'Setiawan', 'Rahayu', 'Gunawan'];
@@ -71,18 +82,19 @@ class AnalyticsDemoSeeder extends Seeder
             return;
         }
 
-        $company = DemoCompany::ensure();
-        $today = CarbonImmutable::now(config()->string('app.office_timezone'))->startOfDay();
+        $company = $this->company ?? DemoCompany::ensure();
+        $today = CarbonImmutable::now(OfficeTimezone::of($company))->startOfDay();
         $modelDispatcher = Model::getEventDispatcher();
 
-        Event::fakeFor(function () use ($company, $today): void {
+        // In the company's context: schedules, holidays and office dates are its own.
+        app(CompanyContext::class)->run($company, fn () => Event::fakeFor(function () use ($company, $today): void {
             Model::withoutEvents(function () use ($company, $today): void {
                 $this->employees($company, $today);
                 $people = User::query()->where('company_id', $company->id)->active()->orderBy('email')->get();
-                $this->attendance($people, $today);
+                $this->attendance($company, $people, $today);
                 $this->tasks($company, $people, $today);
             });
-        }, [WorkspaceCreated::class, WorkspaceMembersChanged::class]);
+        }, [WorkspaceCreated::class, WorkspaceMembersChanged::class]));
 
         if ($modelDispatcher === null) {
             Model::unsetEventDispatcher();
@@ -109,7 +121,7 @@ class AnalyticsDemoSeeder extends Seeder
             ?? Shift::query()->create(['company_id' => $company->id, 'name' => 'Reguler', 'start_time' => '08:00', 'end_time' => '17:00', 'break_minutes' => 60, 'late_tolerance_min' => 10, 'early_leave_tolerance_min' => 0, 'check_in_window_before_min' => 120]);
 
         for ($i = 1; $missing > 0 && $i <= 200; $i++) {
-            $email = sprintf('analitik.%02d@demo.test', $i);
+            $email = sprintf('analitik.%02d@%s', $i, $company->google_domain);
 
             if (User::query()->where('email', $email)->exists()) {
                 continue;
@@ -123,7 +135,7 @@ class AnalyticsDemoSeeder extends Seeder
 
             $user = User::query()->forceCreate([
                 'company_id' => $company->id,
-                'name' => self::FIRST[$i % count(self::FIRST)].' '.self::LAST[intdiv($i, count(self::FIRST)) % count(self::LAST)],
+                'name' => self::FIRST[$i % count(self::FIRST)].' '.self::LAST[intdiv($i, count(self::FIRST)) % count(self::LAST)].$this->nameSuffix,
                 'email' => $email,
                 'division_id' => $division->id,
                 'position_id' => $position?->id,
@@ -153,7 +165,7 @@ class AnalyticsDemoSeeder extends Seeder
      *
      * @param  Collection<int, User>  $people
      */
-    private function attendance(Collection $people, CarbonImmutable $today): void
+    private function attendance(Company $company, Collection $people, CarbonImmutable $today): void
     {
         $existing = DB::table('attendance_days')
             ->whereIn('user_id', $people->modelKeys())
@@ -161,7 +173,7 @@ class AnalyticsDemoSeeder extends Seeder
             ->get(['user_id', 'work_date'])
             ->map(fn (object $row): string => $row->user_id.'|'.substr((string) $row->work_date, 0, 10))
             ->flip();
-        $holidays = DB::table('holidays')->where('date', '>=', $today->subDays($this->days)->toDateString())->pluck('date')
+        $holidays = DB::table('holidays')->where('company_id', $company->id)->where('date', '>=', $today->subDays($this->days)->toDateString())->pluck('date')
             ->map(fn (mixed $date): string => substr((string) $date, 0, 10))->flip();
         $schedules = app(ScheduleSnapshot::class);
         $now = CarbonImmutable::now();
@@ -254,7 +266,7 @@ class AnalyticsDemoSeeder extends Seeder
         }
 
         $now = CarbonImmutable::now();
-        $tz = config()->string('app.office_timezone');
+        $tz = OfficeTimezone::of($company);
 
         foreach ($workspaces as $divisionId => $workspace) {
             app(DefaultTaskStatuses::class)->ensure($workspace);
