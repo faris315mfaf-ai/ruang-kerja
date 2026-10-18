@@ -160,7 +160,7 @@ return [
 
         // Infrastruktur Laravel & paket (tanpa data perusahaan yang dibaca aplikasi)
         'migrations' => 'global',
-        'cache' => 'global', // CELAH: kunci MetricCache & once-prop tanpa company_id (Langkah 2a)
+        'cache' => 'global', // kunci MetricCache & once-prop attendanceStatus memuat company_id
         'cache_locks' => 'global',
         'jobs' => 'global', // muatan job membawa tenantCompanyId (CompanyAware)
         'job_batches' => 'global',

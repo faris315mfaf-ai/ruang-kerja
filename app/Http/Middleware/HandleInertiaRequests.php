@@ -9,6 +9,7 @@ use App\Domain\Organization\Demo\DemoAccounts;
 use App\Domain\Requests\Services\ApprovalQueue;
 use App\Domain\RoleDashboards\Services\RoleDashboardAccess;
 use App\Domain\Tenancy\CompanyContext;
+use App\Domain\Tenancy\Support\OfficeTimezone;
 use App\Domain\Workspaces\Queries\SidebarWorkspaces;
 use App\Http\Resources\Attendance\MyAttendance;
 use App\Models\Company;
@@ -69,6 +70,8 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            // Dates & clocks in the company's office timezone (lib/format.ts; Fase 1 multi-perusahaan).
+            'officeTimezone' => OfficeTimezone::of($company),
             'branding' => [
                 'name' => config('branding.name', config('app.name')),
                 'companyName' => $company !== null ? $company->name : config('branding.company_name'),
@@ -130,7 +133,7 @@ class HandleInertiaRequests extends Middleware
 
         return $context->id() === $user->company_id
             ? $context->company()
-            : Company::query()->whereKey($user->company_id)->first(['id', 'name']);
+            : Company::query()->whereKey($user->company_id)->first(['id', 'name', 'timezone']);
     }
 
     /**
@@ -149,12 +152,13 @@ class HandleInertiaRequests extends Middleware
             ...parent::shareOnce($request),
             // Sidebar check-in widget + topbar button (Sprint 2). Refreshed every
             // 5 minutes, and by the Absensi page right after a check-in/out.
-            // Keyed by the signed-in user: the `null` remembered on the guest
-            // login page (or another account's status) is never reused after
-            // signing in, because the client only skips once-props by key.
+            // Keyed by the signed-in user and their company: the `null`
+            // remembered on the guest login page (or another account's status)
+            // is never reused after signing in, because the client only skips
+            // once-props by key.
             'attendanceStatus' => Inertia::once(
                 fn (): ?array => $user instanceof User && ! $locked ? app(MyAttendance::class)->status($user, CarbonImmutable::now()) : null,
-            )->as('attendanceStatus:'.($user instanceof User ? $user->getAuthIdentifier() : 'guest').($locked ? ':locked' : ''))->until(300),
+            )->as('attendanceStatus:'.($user instanceof User ? $user->company_id.':'.$user->getAuthIdentifier() : 'guest').($locked ? ':locked' : ''))->until(300),
         ];
     }
 }

@@ -160,9 +160,9 @@ test('the shell status once-prop is keyed by user, so the guest null is never re
     // After signing in, the client still remembers the guest key: the status is resolved.
     $signedIn = $this->actingAs($user)->get(route('dashboard'), $headers('attendanceStatus:guest'))->json();
     expect($signedIn['props']['attendanceStatus']['action'] ?? null)->toBe('check_in')
-        ->and(array_keys($signedIn['onceProps']))->toContain('attendanceStatus:'.$user->id);
+        ->and(array_keys($signedIn['onceProps']))->toContain('attendanceStatus:'.$user->company_id.':'.$user->id);
 
     // Once the client holds this user's status, it is not sent again.
-    $again = $this->actingAs($user)->get(route('dashboard'), $headers('attendanceStatus:'.$user->id))->json();
+    $again = $this->actingAs($user)->get(route('dashboard'), $headers('attendanceStatus:'.$user->company_id.':'.$user->id))->json();
     expect($again['props'])->not->toHaveKey('attendanceStatus');
 });

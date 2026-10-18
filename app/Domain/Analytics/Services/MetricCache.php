@@ -10,13 +10,13 @@ use Illuminate\Support\Facades\Cache;
 
 /**
  * 5-minute cache of dashboard metric blocks (PROMPTS Sprint 9). Keys contain
- * the viewer id, so two people never share an entry even when their filters
- * look alike (no cross-user leaks), plus a hash of the measured scope and
- * the filter.
+ * the viewer's company and id, so two people never share an entry even when
+ * their filters look alike (no cross-user or cross-company leaks, Fase 1
+ * multi-perusahaan), plus a hash of the measured scope and the filter.
  */
 final class MetricCache
 {
-    public const string PREFIX = 'analytics:v1';
+    public const string PREFIX = 'analytics:v2';
 
     /**
      * @template T
@@ -38,7 +38,7 @@ final class MetricCache
     {
         ksort($parts);
 
-        return implode(':', [self::PREFIX, $view instanceof DashboardView ? $view->value : $view, $viewer->id, $block, sha1((string) json_encode($parts))]);
+        return implode(':', [self::PREFIX, $viewer->company_id, $view instanceof DashboardView ? $view->value : $view, $viewer->id, $block, sha1((string) json_encode($parts))]);
     }
 
     private function store(): Repository
