@@ -9,11 +9,13 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use InvalidArgumentException;
 
 #[Signature('ruangkerja:create-super-admin
-    {email : E-mail Super Admin (domain menjadi domain Google perusahaan bila perusahaan belum ada)}
+    {email : E-mail Super Admin (domain menjadi domain Google perusahaan baru)}
     {--name=Super Admin : Nama tampilan}
-    {--company= : Nama perusahaan bila belum ada (bawaan: BRANDING_COMPANY_NAME)}
+    {--company= : Perusahaan yang ada (id, domain Google, atau nama); wajib bila ada beberapa perusahaan. Instalasi baru: nama perusahaan yang dibuat}
+    {--new-company= : Buat perusahaan baru dengan nama ini}
     {--generate-password : Buat sandi acak dan tampilkan sekali (untuk docker exec -T)}')]
 #[Description('Membuat atau menaikkan akun menjadi Super Admin (instalasi baru)')]
 class CreateSuperAdminCommand extends Command
@@ -37,14 +39,23 @@ class CreateSuperAdminCommand extends Command
             return self::FAILURE;
         }
 
-        $companyOption = $this->option('company');
+        $company = $this->filled('company');
+        $newCompany = $this->filled('new-company');
 
-        $user = $createSuperAdmin->handle(
-            $email,
-            (string) $this->option('name'),
-            $password,
-            is_string($companyOption) && $companyOption !== '' ? $companyOption : null,
-        );
+        try {
+            $user = $createSuperAdmin->handle(
+                $email,
+                (string) $this->option('name'),
+                $password,
+                companyName: $newCompany,
+                company: $company,
+                newCompany: $newCompany !== null,
+            );
+        } catch (InvalidArgumentException $e) {
+            $this->components->error($e->getMessage());
+
+            return self::FAILURE;
+        }
 
         $this->components->info("Super Admin siap: {$user->email}");
 
@@ -54,5 +65,12 @@ class CreateSuperAdminCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    private function filled(string $option): ?string
+    {
+        $value = $this->option($option);
+
+        return is_string($value) && trim($value) !== '' ? trim($value) : null;
     }
 }

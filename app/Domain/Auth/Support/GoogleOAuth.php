@@ -2,7 +2,7 @@
 
 namespace App\Domain\Auth\Support;
 
-use App\Models\Company;
+use App\Domain\Tenancy\Support\SoleCompany;
 
 /**
  * Google OAuth client settings (config/services.php `google`).
@@ -26,12 +26,13 @@ final class GoogleOAuth
     }
 
     /**
-     * Workspace domain passed to Google as the `hd` hint (account chooser filter).
-     * Phase 1 has a single company; the hint is UX only — the callback re-checks.
+     * Workspace domain passed to Google as the `hd` hint (account chooser filter):
+     * only for a single-company installation — with several companies any of
+     * their domains may sign in. The hint is UX only — the callback re-checks.
      */
     public static function hintDomain(): ?string
     {
-        $domain = Company::query()->oldest()->value('google_domain');
+        $domain = SoleCompany::get(['id', 'google_domain'])?->google_domain;
 
         return is_string($domain) ? $domain : null;
     }

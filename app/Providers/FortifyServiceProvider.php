@@ -5,7 +5,7 @@ namespace App\Providers;
 use App\Domain\Auth\Actions\AuthenticateEmployee;
 use App\Domain\Auth\Data\PasswordResetSession;
 use App\Domain\Organization\Demo\DemoAccounts;
-use App\Models\Company;
+use App\Domain\Tenancy\Support\SoleCompany;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -53,7 +53,9 @@ class FortifyServiceProvider extends ServiceProvider
         // Google sign-in is on hold (owner decision 6 Oct 2026): its routes and code
         // stay (routes/auth.php) but the login page only offers email + password.
         Fortify::loginView(function (Request $request) {
-            $company = Company::query()->oldest()->first(['id', 'name']);
+            // A single-company installation shows its name; with several
+            // companies the page shows the platform branding (no company yet).
+            $company = SoleCompany::get(['id', 'name']);
 
             return Inertia::render('auth/login', [
                 'status' => $request->session()->get('status'),
