@@ -7,7 +7,7 @@ use Carbon\CarbonImmutable;
 
 final class WeekdayCalendar implements WorkdayCalendar
 {
-    public function isWorkday(CarbonImmutable $date): bool
+    public function isWorkday(CarbonImmutable $date, ?string $companyId = null): bool
     {
         /** @var list<int> $workdays */
         $workdays = config('notifications.digest.workdays', [1, 2, 3, 4, 5]);

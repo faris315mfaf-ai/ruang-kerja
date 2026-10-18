@@ -1,9 +1,8 @@
-/** Pengelompokan hari & jam untuk Inbox (zona kantor Asia/Jakarta). */
-
-const ZONA = 'Asia/Jakarta';
+/** Pengelompokan hari & jam untuk Inbox (zona kantor). */
+import { zonaKantor } from '@/lib/zonaKantor';
 
 function kunciHari(tanggal: Date): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: ZONA, year: 'numeric', month: '2-digit', day: '2-digit' }).format(tanggal);
+  return new Intl.DateTimeFormat('en-CA', { timeZone: zonaKantor(), year: 'numeric', month: '2-digit', day: '2-digit' }).format(tanggal);
 }
 
 /** "09.02" */
@@ -12,7 +11,7 @@ export function jamKantor(iso: string): string {
   if (Number.isNaN(tanggal.getTime())) {
     return '';
   }
-  return new Intl.DateTimeFormat('id-ID', { timeZone: ZONA, hour: '2-digit', minute: '2-digit', hour12: false }).format(tanggal).replace(':', '.');
+  return new Intl.DateTimeFormat('id-ID', { timeZone: zonaKantor(), hour: '2-digit', minute: '2-digit', hour12: false }).format(tanggal).replace(':', '.');
 }
 
 /** "Hari ini" · "Kemarin" · "Sab, 3 Okt 2026". */
@@ -25,7 +24,7 @@ export function labelHari(iso: string, sekarang: Date = new Date()): { kunci: st
   if (kunci === kunciHari(new Date(sekarang.getTime() - 86_400_000))) {
     return { kunci, label: 'Kemarin' };
   }
-  const label = new Intl.DateTimeFormat('id-ID', { timeZone: ZONA, weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(tanggal);
+  const label = new Intl.DateTimeFormat('id-ID', { timeZone: zonaKantor(), weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(tanggal);
   return { kunci, label };
 }
 

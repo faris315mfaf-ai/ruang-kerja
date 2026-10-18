@@ -12,6 +12,8 @@ use App\Domain\Google\Exceptions\GoogleReconnectRequired;
 use App\Domain\Google\GoogleFeatures;
 use App\Domain\Google\Http\HttpDriveClient;
 use App\Domain\Google\Testing\FakeDriveClient;
+use App\Domain\Tenancy\CompanyContext;
+use App\Domain\Tenancy\Settings\CompanySettings;
 use App\Models\User;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Contracts\Container\Container;
@@ -35,12 +37,13 @@ final class GoogleClientFactory
     /**
      * @param  int|null  $timeout  seconds; defaults to google.http.timeout (jobs).
      *                             Pass syncTimeout() for calls the user waits on.
+     * @param  string|null  $companyId  company whose Drive is used; null = current CompanyContext
      *
      * @throws GoogleNotConfigured
      */
-    public function serviceAccount(?int $timeout = null): DriveClient
+    public function serviceAccount(?int $timeout = null, ?string $companyId = null): DriveClient
     {
-        GoogleFeatures::ensureEnabled();
+        GoogleFeatures::ensureEnabled($companyId);
 
         if (GoogleFeatures::fake()) {
             return $this->fake()->withActor('service-account');
@@ -77,12 +80,32 @@ final class GoogleClientFactory
     }
 
     /**
-     * Shared Drive that holds the workspace folders.
+     * Shared Drive that holds the workspace folders of a company
+     * (`companies.settings.google.shared_drive_id`; the global
+     * GOOGLE_SHARED_DRIVE_ID only while it is the only company, or without
+     * any company). Never another company's Drive.
+     *
+     * @param  string|null  $companyId  owner's company; null = current CompanyContext
      *
      * @throws GoogleNotConfigured
      */
-    public function sharedDriveId(): string
+    public function sharedDriveId(?string $companyId = null): string
     {
+        $companyId ??= app(CompanyContext::class)->id();
+
+        if ($companyId !== null) {
+            $settings = CompanySettings::resolve();
+            $own = $settings->own($companyId, CompanySettings::SHARED_DRIVE_ID);
+
+            if ($own !== null) {
+                return $own;
+            }
+
+            if (! $settings->usesGlobalFallback($companyId)) {
+                throw new GoogleNotConfigured([GoogleFeatures::COMPANY_SHARED_DRIVE_SETTING]);
+            }
+        }
+
         $id = config('google.shared_drive_id');
 
         if (is_string($id) && $id !== '') {

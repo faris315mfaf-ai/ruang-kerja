@@ -6,6 +6,7 @@ use App\Domain\Meetings\Enums\MeetingPlatform;
 use App\Domain\Meetings\Services\LiveKitRoomService;
 use App\Domain\Meetings\Services\MeetingOccurrences;
 use App\Domain\Meetings\Services\VideoRooms;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\Meeting;
 use App\Models\MeetingAttendance;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,6 +24,7 @@ use RuntimeException;
  */
 final class CloseMeetingRooms implements ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $tries = 3;

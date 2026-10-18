@@ -24,6 +24,7 @@ use App\Domain\Monitoring\Queries\WorkspaceDirectory;
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Organization\Services\AuditLogger;
 use App\Domain\Tasks\Queries\TugasHariIni;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -117,7 +118,7 @@ class DashboardController extends Controller
                 'member_count' => $context->people->count(),
             ],
             'definitions' => MetricCatalog::definitions(),
-            'today' => CarbonImmutable::now(config()->string('app.office_timezone'))->toDateString(),
+            'today' => CarbonImmutable::now(CurrentCompany::timezone())->toDateString(),
             'exportUrl' => '/dashboard/'.$view->value.'/ekspor',
             // Kartu "Catat briefing" (keputusan pemilik 9 Okt 2026): null for
             // employees who are neither HR / Super Admin nor a delegate today.

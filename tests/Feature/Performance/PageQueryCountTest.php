@@ -39,6 +39,11 @@ use Tests\Support\PerformanceFixtures as P;
  *      deliberate new query raises the budget in the same commit).
  * The shared Inertia props (sidebar, badges, shell check-in status) are ~18
  * queries of every count. Run with QUERY_COUNTS=1 to print the measured values.
+ *
+ * Two companies (Fase 1 multi-perusahaan): P::grow() fills a second company
+ * with the same volume, so the budgets also prove that no page of the demo
+ * company reads or lists the other one (P::queries() fails on its marker).
+ * Lookups below are therefore scoped to the demo company.
  */
 
 beforeEach(function () {
@@ -115,8 +120,9 @@ it('keeps the dashboards and the portfolio free of N+1', function () {
 function growDailyReports(int $round): void
 {
     $monday = CarbonImmutable::now('Asia/Jakarta')->startOfWeek();
-    $tasks = Task::query()->orderBy('id')->limit(30)->pluck('id')->all();
-    $people = User::query()->where('status', 'active')->orderBy('email')->offset(($round - 1) * 15)->limit(15)->get();
+    $company = P::user('kadiv')->company_id;
+    $tasks = Task::query()->whereIn('workspace_id', Workspace::query()->where('company_id', $company)->select('id'))->orderBy('id')->limit(30)->pluck('id')->all();
+    $people = User::query()->where('company_id', $company)->where('status', 'active')->orderBy('email')->offset(($round - 1) * 15)->limit(15)->get();
 
     foreach ($people as $index => $user) {
         foreach ([0, 1, 2] as $day) {
@@ -200,7 +206,7 @@ it('keeps the attendance pages free of N+1', function () {
 });
 
 it('keeps requests and approvals free of N+1', function () {
-    $request = EmployeeRequest::query()->whereNotNull('number')->orderBy('created_at')->firstOrFail();
+    $request = EmployeeRequest::query()->where('company_id', P::user('hr')->company_id)->whereNotNull('number')->orderBy('created_at')->firstOrFail();
 
     assertQueryBudgets([
         '/pengajuan' => ['anggota', 47],
@@ -214,7 +220,7 @@ it('keeps requests and approvals free of N+1', function () {
 });
 
 it('keeps workspaces, boards and my tasks free of N+1', function () {
-    $project = Workspace::query()->where('type', 'project')->orderBy('key')->firstOrFail();
+    $project = Workspace::query()->where('company_id', P::user('kadiv')->company_id)->where('type', 'project')->orderBy('key')->firstOrFail();
 
     assertQueryBudgets([
         '/workspace' => ['kadiv', 36],
@@ -308,7 +314,7 @@ it('keeps Otomasi and Kinerja saya free of N+1', function () {
 it('keeps Obrolan free of N+1', function () {
     config(['features.chat' => true]);
     $plq = Channel::query()->where('type', 'workspace')
-        ->whereIn('workspace_id', Workspace::query()->where('key', 'PLQ')->select('id'))
+        ->whereIn('workspace_id', Workspace::query()->where('company_id', P::user('kadiv')->company_id)->where('key', 'PLQ')->select('id'))
         ->firstOrFail();
 
     assertQueryBudgets([
@@ -343,7 +349,7 @@ it('keeps OKR free of N+1', function () {
 
 it('keeps Catatan free of N+1', function () {
     config(['features.notes' => true, 'collab.secret' => '']);
-    $ops = Workspace::query()->where('key', 'OPS')->firstOrFail();
+    $ops = Workspace::query()->where('company_id', P::user('kadiv')->company_id)->where('key', 'OPS')->firstOrFail();
     $note = Note::query()->where('workspace_id', $ops->id)->where('title', 'SOP Penerimaan Barang')->firstOrFail();
     $pages = [
         '/catatan' => ['kadiv', 38],
@@ -514,7 +520,7 @@ it('keeps Hiring free of N+1', function () {
     }
 
     foreach ($position->questions()->get() as $question) {
-        foreach (User::query()->where('status', 'active')->whereNotIn('id', $position->interviewer_ids)->orderBy('email')->limit(3)->get() as $extra) {
+        foreach (User::query()->where('company_id', $position->company_id)->where('status', 'active')->whereNotIn('id', $position->interviewer_ids)->orderBy('email')->limit(3)->get() as $extra) {
             InterviewScore::query()->firstOrCreate(
                 ['candidate_id' => $candidate->id, 'question_id' => $question->id, 'interviewer_id' => $extra->id],
                 ['score' => 3],

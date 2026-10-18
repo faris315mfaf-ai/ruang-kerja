@@ -2,17 +2,18 @@
 
 namespace App\Domain\Reports\Support;
 
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 
 /**
- * Office dates of daily reports (config('app.office_timezone')). A report is
+ * Office dates of daily reports (CurrentCompany::timezone()). A report is
  * written for "today" and can be changed until 23.59 of that date.
  */
 final class ReportDay
 {
     public static function today(?CarbonImmutable $now = null): string
     {
-        return ($now ?? CarbonImmutable::now())->setTimezone(config()->string('app.office_timezone'))->toDateString();
+        return ($now ?? CarbonImmutable::now())->setTimezone(CurrentCompany::timezone())->toDateString();
     }
 
     /**
@@ -20,7 +21,7 @@ final class ReportDay
      */
     public static function locksAt(string $date): CarbonImmutable
     {
-        return CarbonImmutable::parse($date, config()->string('app.office_timezone'))->endOfDay()->utc();
+        return CarbonImmutable::parse($date, CurrentCompany::timezone())->endOfDay()->utc();
     }
 
     public static function isDate(mixed $value): bool

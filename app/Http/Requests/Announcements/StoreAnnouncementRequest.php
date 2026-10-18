@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Announcements;
 
 use App\Domain\Announcements\Enums\AnnouncementAudience;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -71,7 +72,7 @@ class StoreAnnouncementRequest extends FormRequest
         $date = $this->validated('expires_on');
 
         return is_string($date) && $date !== ''
-            ? CarbonImmutable::parse($date, config()->string('app.office_timezone'))->endOfDay()->utc()
+            ? CarbonImmutable::parse($date, CurrentCompany::timezone())->endOfDay()->utc()
             : null;
     }
 }

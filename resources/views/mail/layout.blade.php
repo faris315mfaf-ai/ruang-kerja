@@ -21,7 +21,12 @@
     ];
     $font = "'Figtree',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
     $brandName = config('branding.name', config('app.name'));
-    $companyName = config('branding.company_name');
+    // The recipient's company (Fase 1 multi-perusahaan), never one fixed name:
+    // explicit $companyName, else $user / the digest's user, else the context.
+    $companyName = \App\Domain\Tenancy\Support\CompanyBranding::name(
+        $companyName ?? null,
+        $user ?? (isset($digest) ? $digest->user : null),
+    );
     $shortName = config('branding.short_name', 'RK');
 @endphp
 <!DOCTYPE html>

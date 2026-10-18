@@ -56,3 +56,82 @@ it('rejects an invalid e-mail', function () {
 
     expect(User::query()->count())->toBe(0);
 });
+
+describe('with several companies (Fase 1 multi-perusahaan)', function () {
+    beforeEach(function () {
+        $this->first = Company::factory()->create(['name' => 'PT Pertama', 'google_domain' => 'pertama.co.id']);
+        $this->second = Company::factory()->create(['name' => 'PT Kedua', 'google_domain' => 'kedua.co.id']);
+    });
+
+    it('requires choosing the company', function () {
+        $this->artisan('ruangkerja:create-super-admin', ['email' => 'admin@kedua.co.id', '--generate-password' => true])
+            ->expectsOutputToContain('--company')
+            ->assertFailed();
+
+        expect(User::query()->where('email', 'admin@kedua.co.id')->exists())->toBeFalse();
+    });
+
+    it('places the admin in the company chosen by id, domain or name', function (string $key) {
+        $this->artisan('ruangkerja:create-super-admin', ['email' => 'admin@kedua.co.id', '--company' => $key === 'id' ? $this->second->id : $key, '--generate-password' => true])
+            ->assertSuccessful();
+
+        expect(User::query()->where('email', 'admin@kedua.co.id')->sole()->company_id)->toBe($this->second->id);
+    })->with(['id', 'KEDUA.co.id', 'pt kedua']);
+
+    it('rejects an unknown company', function () {
+        $this->artisan('ruangkerja:create-super-admin', ['email' => 'admin@kedua.co.id', '--company' => 'tidak-ada.co.id', '--generate-password' => true])
+            ->assertFailed();
+    });
+
+    it('creates a new company only when asked explicitly', function () {
+        $this->artisan('ruangkerja:create-super-admin', ['email' => 'admin@ketiga.co.id', '--new-company' => 'PT Ketiga', '--generate-password' => true])
+            ->assertSuccessful();
+
+        $user = User::query()->where('email', 'admin@ketiga.co.id')->sole();
+
+        expect($user->company?->name)->toBe('PT Ketiga')
+            ->and($user->company?->google_domain)->toBe('ketiga.co.id')
+            ->and(Company::query()->count())->toBe(3);
+    });
+
+    it('refuses a new company whose Google domain another company already uses', function () {
+        // admin@kedua.co.id would give the new company the domain of PT Kedua (unique column).
+        $this->artisan('ruangkerja:create-super-admin', ['email' => 'admin@kedua.co.id', '--new-company' => 'PT Kedua Baru', '--generate-password' => true])
+            ->expectsOutputToContain('Domain kedua.co.id sudah dipakai perusahaan PT Kedua; gunakan --domain=<domain lain>.')
+            ->assertFailed();
+
+        expect(Company::query()->count())->toBe(2)
+            ->and(User::query()->where('email', 'admin@kedua.co.id')->exists())->toBeFalse();
+    });
+
+    it('takes the Google domain of a new company from --domain', function () {
+        $this->artisan('ruangkerja:create-super-admin', [
+            'email' => 'pemilik@gmail.com', '--new-company' => 'PT Ketiga', '--domain' => 'Ketiga.co.id', '--generate-password' => true,
+        ])->assertSuccessful();
+
+        expect(User::query()->where('email', 'pemilik@gmail.com')->sole()->company?->google_domain)->toBe('ketiga.co.id');
+    });
+
+    it('rejects an invalid --domain or one without --new-company', function () {
+        $this->artisan('ruangkerja:create-super-admin', ['email' => 'a@b.co.id', '--new-company' => 'PT X', '--domain' => 'bukan domain', '--generate-password' => true])
+            ->expectsOutputToContain('tidak sah')
+            ->assertFailed();
+        $this->artisan('ruangkerja:create-super-admin', ['email' => 'admin@kedua.co.id', '--company' => $this->second->id, '--domain' => 'lain.co.id', '--generate-password' => true])
+            ->expectsOutputToContain('--domain hanya untuk perusahaan baru')
+            ->assertFailed();
+
+        expect(Company::query()->count())->toBe(2);
+    });
+
+    it('never moves an existing user to another company', function () {
+        $existing = User::factory()->forCompany($this->first)->create(['email' => 'hana@pertama.co.id']);
+
+        $this->artisan('ruangkerja:create-super-admin', ['email' => $existing->email, '--company' => $this->second->id, '--generate-password' => true])
+            ->assertFailed();
+
+        app(CreateSuperAdmin::class)->handle($existing->email, 'Hana', 'Sandi-Rahasia-123');
+
+        expect($existing->refresh()->company_id)->toBe($this->first->id)
+            ->and($existing->isSuperAdmin())->toBeTrue();
+    });
+});

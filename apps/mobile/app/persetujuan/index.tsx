@@ -24,6 +24,7 @@ import { useSetujuTertunda } from '@/features/persetujuan/useSetujuTertunda';
 import { useSession } from '@/session/SessionProvider';
 import { layout, radius, useTheme } from '@/theme';
 import { Banner, Button, Card, EmptyState, ErrorState, Icon, Loading, Pressable, Screen, SegmentedTabs, SubAppBar, Text, errorKindFromStatus, useDialog, useSnackbar } from '@/ui';
+import { zonaKantor } from '@/lib/zonaKantor';
 
 type Mode = 'tumpukan' | 'daftar';
 
@@ -36,7 +37,7 @@ function jamTitik(ms: number | null): string {
   if (ms === null) {
     return '—';
   }
-  return new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(ms)).replace(':', '.');
+  return new Intl.DateTimeFormat('id-ID', { timeZone: zonaKantor(), hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(ms)).replace(':', '.');
 }
 
 function BarUrungkan({ pesan, onUrungkan }: { pesan: string; onUrungkan: () => void }): React.JSX.Element {

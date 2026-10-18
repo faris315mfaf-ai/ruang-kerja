@@ -12,6 +12,7 @@ use App\Domain\Notifications\Enums\NotificationChannel;
 use App\Domain\Notifications\Enums\NotificationEvent;
 use App\Domain\Notifications\Services\FcmClient;
 use App\Domain\Notifications\Services\NotificationPreferenceResolver;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\UpdateNotificationSettingsApiRequest;
 use App\Models\NotificationPreference;
@@ -67,7 +68,7 @@ class NotificationSettingsController extends Controller
 
         $digest = $digests->build(
             $user,
-            CarbonImmutable::now()->setTimezone(config()->string('app.office_timezone'))->startOfDay(),
+            CarbonImmutable::now()->setTimezone(CurrentCompany::timezone())->startOfDay(),
         );
 
         return response()->json([

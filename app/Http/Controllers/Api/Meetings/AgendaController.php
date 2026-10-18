@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Meetings;
 
 use App\Domain\Meetings\Queries\MeetingFeed;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\MeetingSummary;
 use App\Models\Meeting;
@@ -36,7 +37,7 @@ class AgendaController extends Controller
 
         $rentang = $this->rentang($request);
         $now = CarbonImmutable::now();
-        $timezone = config()->string('app.office_timezone');
+        $timezone = CurrentCompany::timezone();
         $today = $now->setTimezone($timezone);
 
         [$from, $to] = match ($rentang) {

@@ -7,6 +7,7 @@ use App\Domain\Attendance\Models\Holiday;
 use App\Domain\Attendance\Models\Shift;
 use App\Domain\Attendance\Models\ShiftAssignment;
 use App\Domain\Attendance\Notifications\MissingCheckOutNotification;
+use App\Domain\Tenancy\Scheduling\CompanySchedule;
 use App\Models\User;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Notification;
@@ -161,10 +162,11 @@ test('the command accepts a specific date and validates it', function () {
 test('close-day is scheduled at 00:30 office time and reminders every five minutes', function () {
     $events = collect(app(Schedule::class)->events());
 
-    $close = $events->first(fn ($event) => str_contains((string) $event->command, 'attendance:close-day'));
+    // Per company (Fase 1 multi-perusahaan): checked every five minutes, run at 00:30 of each company's clock.
+    $close = $events->first(fn ($event) => $event->description === 'attendance:close-day');
     $reminders = $events->first(fn ($event) => str_contains((string) $event->description, 'SendCheckInReminders'));
 
-    expect($close?->expression)->toBe('30 0 * * *')
-        ->and($close?->timezone)->toBe('Asia/Jakarta')
+    expect($close?->expression)->toBe('*/5 * * * *')
+        ->and(app(CompanySchedule::class)->task('attendance:close-day')?->at)->toBe('00:30')
         ->and($reminders?->expression)->toBe('*/5 * * * *');
 });

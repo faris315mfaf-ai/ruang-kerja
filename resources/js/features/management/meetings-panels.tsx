@@ -1,5 +1,5 @@
 import { CalendarClock, NotebookPen } from 'lucide-react';
-import { formatTime, OFFICE_TIMEZONE } from '@/lib/format';
+import { formatTime, officeDateFormat } from '@/lib/format';
 import { cn, focusRing } from '@/lib/utils';
 import { share, shortDate } from './lib';
 import { Panel } from '@/components/ui/panel';
@@ -27,9 +27,7 @@ const PLACES: Record<
 
 function officeDay(iso: string): string {
     // "Y-m-d" of the instant in the office timezone.
-    return new Intl.DateTimeFormat('en-CA', {
-        timeZone: OFFICE_TIMEZONE,
-    }).format(new Date(iso));
+    return officeDateFormat('en-CA', {}).format(new Date(iso));
 }
 
 /** "Jadwal terdekat" (design MgDashboard); empty until the meetings module exists. */

@@ -24,7 +24,7 @@ final class RefreshWorkspaceDrive
 
     public function handle(Workspace $workspace, ?string $folderId = null, bool $force = false): bool
     {
-        if (! GoogleFeatures::enabled()) {
+        if (! GoogleFeatures::enabled($workspace->company_id)) {
             return false;
         }
 

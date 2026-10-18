@@ -6,31 +6,49 @@ use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\ShiftAssignment;
 use App\Domain\Attendance\Notifications\CheckInReminderNotification;
 use App\Domain\Attendance\Services\ScheduleResolver;
+use App\Domain\Tenancy\Concerns\CompanyAware;
+use App\Domain\Tenancy\Scheduling\ForEachCompany;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
 
 /**
  * Scheduled every 5 minutes: reminds employees who have not checked in
  * `attendance.reminder.delay_minutes` after their scheduled start, at most
- * once per work date.
+ * once per work date. Per company, in the company's timezone.
  */
 final class SendCheckInReminders implements ShouldBeUnique, ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $uniqueFor = 240;
 
+    /** One lock per company (queued per company by CompanySchedule). */
+    public function uniqueId(): string
+    {
+        return $this->companyUniqueId();
+    }
+
     public function handle(ScheduleResolver $schedules): void
+    {
+        // Per company, each in its own timezone (Fase 1 multi-perusahaan).
+        ForEachCompany::run(fn () => $this->remind($schedules));
+    }
+
+    private function remind(ScheduleResolver $schedules): void
     {
         $now = CarbonImmutable::now();
         $delay = config()->integer('attendance.reminder.delay_minutes');
 
         User::query()
             ->active()
+            ->when(CurrentCompany::id(), fn (Builder $query, string $company) => $query->where('company_id', $company))
             ->whereIn('id', ShiftAssignment::query()->select('user_id'))
             ->orderBy('id')
             ->each(function (User $user) use ($schedules, $now, $delay): void {

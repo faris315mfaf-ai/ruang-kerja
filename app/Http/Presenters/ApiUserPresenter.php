@@ -3,6 +3,7 @@
 namespace App\Http\Presenters;
 
 use App\Domain\Auth\Services\PasswordPolicy;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\User;
 
 /**
@@ -11,7 +12,7 @@ use App\Models\User;
  * - concise(): what login returns (unchanged shape since Tahap 1);
  * - profile(): GET /auth/saya — concise() plus everything the app needs to
  *   render menus without guessing from 404s: roles, staff flag, feature
- *   flags and the organisation links. There is deliberately NO leave
+ *   flags, the organisation links and the company's office timezone. There is deliberately NO leave
  *   balance here (staff never get one — owner decision 6 Oct 2026).
  */
 final readonly class ApiUserPresenter
@@ -68,6 +69,8 @@ final readonly class ApiUserPresenter
             'two_factor_enabled' => $user->hasEnabledTwoFactorAuthentication(),
             'password_change_required' => $user->password_change_required,
             'password_hint' => $this->passwords->hint($user),
+            // Office dates & clocks of the app (Fase 1 multi-perusahaan): companies.timezone.
+            'office_timezone' => CurrentCompany::timezone(),
         ];
     }
 

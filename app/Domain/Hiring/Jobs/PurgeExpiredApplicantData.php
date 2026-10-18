@@ -4,6 +4,7 @@ namespace App\Domain\Hiring\Jobs;
 
 use App\Domain\Hiring\Enums\CandidateStage;
 use App\Domain\Organization\Services\AuditLogger;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\Candidate;
 use App\Models\HiringPosition;
 use Carbon\CarbonImmutable;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\DB;
  */
 final class PurgeExpiredApplicantData implements ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public function handle(AuditLogger $audit): void

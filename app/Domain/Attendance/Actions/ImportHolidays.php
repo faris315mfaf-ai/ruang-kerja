@@ -5,6 +5,7 @@ namespace App\Domain\Attendance\Actions;
 use App\Domain\Attendance\Data\HolidayImportReport;
 use App\Domain\Attendance\Enums\HolidayType;
 use App\Domain\Attendance\Models\Holiday;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
@@ -141,7 +142,7 @@ final class ImportHolidays
     {
         foreach (['!Y-m-d', '!d/m/Y', '!j/n/Y', '!d-m-Y', '!j-n-Y'] as $format) {
             try {
-                $date = CarbonImmutable::createFromFormat($format, $value, config()->string('app.office_timezone'));
+                $date = CarbonImmutable::createFromFormat($format, $value, CurrentCompany::timezone());
             } catch (Throwable) {
                 $date = null;
             }

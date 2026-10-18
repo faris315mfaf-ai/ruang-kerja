@@ -5,6 +5,7 @@ namespace App\Domain\Workspaces\Queries;
 use App\Domain\Google\Enums\DriveFileKind;
 use App\Domain\Google\GoogleFeatures;
 use App\Domain\Google\Services\DriveUploadSessions;
+use App\Domain\Tenancy\Settings\CompanySettings;
 use App\Http\Resources\DriveFileResource;
 use App\Models\Comment;
 use App\Models\DriveFile;
@@ -34,14 +35,14 @@ final class WorkspaceDriveListing
     public function drive(Workspace $workspace, User $user, bool $syncing = false): array
     {
         return [
-            'enabled' => GoogleFeatures::enabled(),
+            'enabled' => GoogleFeatures::enabled($workspace->company_id),
             'fake' => GoogleFeatures::fake(),
             'picker_enabled' => GoogleFeatures::pickerEnabled(),
             // Env key names only, for the Super Admin (Pengaturan › Akun Google).
-            'missing_settings' => $user->isSuperAdmin() ? GoogleFeatures::missingDriveSettings() : [],
+            'missing_settings' => $user->isSuperAdmin() ? GoogleFeatures::missingDriveSettings($workspace->company_id) : [],
             'folder_url' => $workspace->drive_folder_id === null ? null : self::folderUrl($workspace->drive_folder_id),
             'folder_name' => $workspace->driveFolderName(),
-            'shared_drive_name' => (string) config('google.shared_drive_name', 'RuangKerja'),
+            'shared_drive_name' => CompanySettings::resolve()->sharedDriveName($workspace->company_id),
             'access' => $this->status->summary($workspace),
             'can_contribute' => Gate::forUser($user)->allows('create', [DriveFile::class, $workspace->id]),
             'max_upload_bytes' => GoogleFeatures::maxUploadBytes(),

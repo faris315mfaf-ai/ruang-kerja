@@ -2,10 +2,11 @@
 
 namespace App\Domain\Automation\Actions;
 
-use App\Models\Company;
+use App\Domain\Tenancy\CompanyContext;
 use App\Models\TaskTemplate;
 use App\Models\User;
 use App\Models\Workspace;
+use RuntimeException;
 
 /**
  * Creates (or updates) a task template: company-wide when $workspace is null.
@@ -18,10 +19,18 @@ final class SaveTaskTemplate
      */
     public function handle(User $actor, ?Workspace $workspace, array $data, ?TaskTemplate $template = null): TaskTemplate
     {
+        // The workspace's company, else the actor's or the current context;
+        // never "the first company" (Fase 1 multi-perusahaan).
+        $companyId = $workspace !== null ? $workspace->company_id : ($actor->company_id ?? app(CompanyContext::class)->id());
+
+        if (! is_string($companyId)) {
+            throw new RuntimeException('Tidak ada perusahaan untuk template tugas ini.');
+        }
+
         $template ??= new TaskTemplate(['created_by' => $actor->id]);
 
         $template->fill([
-            'company_id' => $workspace !== null ? $workspace->company_id : ($actor->company_id ?? Company::query()->value('id')),
+            'company_id' => $companyId,
             'workspace_id' => $workspace?->id,
             'name' => trim($data['name']),
             'description' => $data['description'] !== null && trim($data['description']) !== '' ? trim($data['description']) : null,

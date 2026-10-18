@@ -25,6 +25,13 @@ class AuditLogFactory extends Factory
             'new_values' => null,
             'ip_address' => fake()->ipv4(),
             'user_agent' => 'Mozilla/5.0',
+            // The actor's or subject's company, else the default test company.
+            'company_id' => fn (array $attributes): string => AuditLog::companyIdFor(
+                is_string($attributes['user_id'] ?? null) ? $attributes['user_id'] : null,
+                is_string($attributes['auditable_type'] ?? null) ? $attributes['auditable_type'] : null,
+                is_string($attributes['auditable_id'] ?? null) ? $attributes['auditable_id'] : null,
+                useContext: false,
+            ) ?? CompanyFactory::defaultId(),
         ];
     }
 

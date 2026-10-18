@@ -2,6 +2,7 @@
 
 namespace App\Domain\Meetings\Transcripts\Services;
 
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Meeting;
 use App\Models\MeetingTranscript;
 use Carbon\CarbonImmutable;
@@ -176,7 +177,7 @@ final class MinutesSummarizer
 
     private function context(MeetingTranscript $transcript, Meeting $meeting): string
     {
-        $date = CarbonImmutable::parse($transcript->occurrence_date->toDateString(), config()->string('app.office_timezone'));
+        $date = CarbonImmutable::parse($transcript->occurrence_date->toDateString(), CurrentCompany::timezone());
         $people = implode("\n", array_map(fn (array $p): string => '- '.$p['name'], $this->participants));
         $agenda = $meeting->agenda === [] ? '(tidak ada)' : implode("\n", array_map(fn (string $item): string => '- '.$item, $meeting->agenda));
 

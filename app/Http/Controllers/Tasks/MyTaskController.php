@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tasks;
 
 use App\Domain\Tasks\Queries\MyTasks;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TaskRowResource;
 use App\Models\Task;
@@ -26,7 +27,7 @@ class MyTaskController extends Controller
         Gate::authorize('viewAny', Task::class);
 
         $tab = in_array($request->query('tab'), MyTasks::TABS, true) ? (string) $request->query('tab') : 'assigned';
-        $today = CarbonImmutable::now(config()->string('app.office_timezone'))->startOfDay();
+        $today = CarbonImmutable::now(CurrentCompany::timezone())->startOfDay();
 
         return Inertia::render('tasks/mine', [
             'tab' => $tab,

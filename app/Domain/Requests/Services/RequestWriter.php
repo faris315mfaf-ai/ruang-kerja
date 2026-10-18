@@ -89,6 +89,8 @@ final class RequestWriter
             'substitute_id' => $input->leaveType->category === RequestCategory::Leave ? $input->substituteId : null,
             'payload' => $period->payload,
         ]);
+        // Denormalised requester company: numbers are unique per company.
+        $request->company_id = $user->company_id;
         $request->setRelation('user', $user);
         $request->setRelation('leaveType', $input->leaveType);
     }

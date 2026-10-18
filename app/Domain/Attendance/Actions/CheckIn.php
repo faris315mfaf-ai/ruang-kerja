@@ -164,8 +164,9 @@ final class CheckIn
         }
 
         // Best-effort copy to the management WhatsApp group (Evolution API);
-        // queued only while the channel is on, never blocks the check-in.
-        if ($this->whatsapp->enabled() && (string) config('notifications.channels.whatsapp.group_jid') !== '') {
+        // queued only while the channel is on and the employee's company has a
+        // group (companies.settings), never blocks the check-in.
+        if ($this->whatsapp->attendanceGroupFor($user->company_id) !== null) {
             SendAttendanceWhatsApp::dispatch($day->id, AttendanceLogType::CheckIn);
         }
 

@@ -6,6 +6,7 @@ use App\Domain\Meetings\Data\Occurrence;
 use App\Domain\Meetings\Enums\MeetingPlatform;
 use App\Domain\Meetings\Services\VideoRooms;
 use App\Domain\Organization\Enums\Permission;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Meeting;
 use App\Models\MeetingActionItem;
 use App\Models\MeetingMinutes;
@@ -195,7 +196,7 @@ class MeetingPolicy
         $rooms = app(VideoRooms::class);
 
         return match ($rooms->windowState($occurrence, $now)) {
-            'early' => Response::deny('Ruang rapat dibuka pukul '.$rooms->opensAt($occurrence)->setTimezone(config()->string('app.office_timezone'))->format('H.i').'.'),
+            'early' => Response::deny('Ruang rapat dibuka pukul '.$rooms->opensAt($occurrence)->setTimezone(CurrentCompany::timezone())->format('H.i').'.'),
             'closed' => Response::deny('Rapat sudah selesai. Ruang rapat sudah ditutup.'),
             default => Response::allow(),
         };

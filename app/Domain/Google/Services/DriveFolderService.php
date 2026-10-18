@@ -8,6 +8,7 @@ use App\Domain\Google\Data\DriveItem;
 use App\Domain\Google\Data\FolderResult;
 use App\Domain\Google\Exceptions\DriveRequestFailed;
 use App\Domain\Google\Exceptions\GoogleNotConfigured;
+use App\Domain\Tenancy\Support\CompanyOf;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -34,7 +35,7 @@ final class DriveFolderService
      */
     public function ensure(HasDriveFolder $owner, ?int $timeout = null): FolderResult
     {
-        $drive = $this->google->serviceAccount($timeout);
+        $drive = $this->google->serviceAccount($timeout, CompanyOf::value($owner));
 
         return Cache::lock('google:folder:'.sha1($owner->driveFolderKey()), 60)
             ->block(15, fn (): FolderResult => $this->ensureLocked($drive, $owner));
@@ -55,7 +56,8 @@ final class DriveFolderService
             Log::warning('google.folder.missing', ['owner' => $owner->driveFolderKey(), 'folder_id' => $storedId]);
         }
 
-        $sharedDriveId = $this->google->sharedDriveId();
+        // The owner's company Drive (Fase 1 multi-perusahaan), never another one.
+        $sharedDriveId = $this->google->sharedDriveId(CompanyOf::value($owner));
         $orphan = $drive->findFolderByAppProperty(self::OWNER_PROPERTY, $owner->driveFolderKey(), $sharedDriveId);
 
         if ($orphan !== null) {

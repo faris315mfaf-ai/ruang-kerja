@@ -8,6 +8,7 @@ use App\Domain\Meetings\Guests\GuestNames;
 use App\Domain\Meetings\Services\MeetingOccurrences;
 use App\Domain\Meetings\Services\RoomEvents;
 use App\Domain\Meetings\Services\VideoRooms;
+use App\Domain\Tenancy\CompanyContext;
 use App\Models\Meeting;
 use App\Models\MeetingAttendance;
 use App\Models\MeetingParticipant;
@@ -59,6 +60,9 @@ final class RecordVideoEvent
         }
 
         $meeting = Meeting::query()->find($target['meeting_id']);
+
+        // Public webhook: run in the meeting's company (Fase 1 CompanyContext).
+        app(CompanyContext::class)->set($meeting?->company_id);
 
         if ($meeting === null || $meeting->platform !== MeetingPlatform::Video || ! $this->occurrences->meetsOn($meeting, $target['date'])) {
             return false;

@@ -15,6 +15,7 @@ import { ymdHariIni } from '@/lib/format';
 import { BottomSheet, Button, DateInput, Field, Input, Text, useDialog } from '@/ui';
 
 import { hariPendek } from '../format';
+import { zonaKantor } from '@/lib/zonaKantor';
 
 export interface TargetKoreksi {
   userId: string;
@@ -28,7 +29,7 @@ const MAKS = 500;
 
 function keHHMM(iso: string | null | undefined): string {
   if (!iso) return '';
-  const t = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso));
+  const t = new Intl.DateTimeFormat('en-GB', { timeZone: zonaKantor(), hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso));
   return t.replace('.', ':');
 }
 

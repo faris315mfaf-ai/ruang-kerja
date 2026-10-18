@@ -11,6 +11,7 @@ use App\Domain\Meetings\Transcripts\Enums\TranscriptStatus;
 use App\Domain\Meetings\Transcripts\Jobs\SummarizeMeetingTranscript;
 use App\Domain\Meetings\Transcripts\Services\NotulenConfig;
 use App\Domain\Meetings\Transcripts\Services\TranscriptConsents;
+use App\Domain\Tenancy\CompanyContext;
 use App\Models\Meeting;
 use App\Models\MeetingTranscript;
 use App\Models\User;
@@ -54,6 +55,8 @@ final class RecordTranscriptUpdate
         $target = $this->rooms->parseRoom($room);
         $status = TranscriptStatus::tryFrom(is_string($payload['status'] ?? null) ? $payload['status'] : '');
         $meeting = $target !== null ? Meeting::query()->find($target['meeting_id']) : null;
+        // Server-to-server ingest: run in the meeting's company (Fase 1 CompanyContext).
+        app(CompanyContext::class)->set($meeting?->company_id);
 
         if ($target === null || $status === null || $status === TranscriptStatus::Summarizing || $meeting === null
             || $meeting->platform !== MeetingPlatform::Video || ! NotulenConfig::autoMinutes($meeting)

@@ -31,6 +31,7 @@ use Illuminate\Support\Carbon;
  * - business_trip: `destination`
  *
  * @property string $id
+ * @property string $company_id
  * @property string|null $number
  * @property string $user_id
  * @property string $leave_type_id
@@ -76,6 +77,21 @@ class EmployeeRequest extends Model
         'round' => 1,
         'payload' => '{}',
     ];
+
+    protected static function booted(): void
+    {
+        // Denormalised from the requester (Fase 1 multi-perusahaan): request
+        // numbers are unique per company.
+        static::creating(function (self $request): void {
+            if (($request->getAttributes()['company_id'] ?? null) === null) {
+                $company = User::query()->whereKey($request->user_id)->value('company_id');
+
+                if (is_string($company)) {
+                    $request->company_id = $company;
+                }
+            }
+        });
+    }
 
     /**
      * @return array<string, string>

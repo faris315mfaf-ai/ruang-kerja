@@ -127,6 +127,31 @@ Karena `COMPOSE_FILE` ada di `.env`, perintah `docker compose …` di `/opt/ruan
 | Setelah ubah `.env` | `docker compose up -d --force-recreate` |
 | Backup manual | `docker compose exec backup backup.sh` |
 
+### 4a. Integrasi per perusahaan (Fase 1 multi-perusahaan, deploy pertama rilis itu)
+
+Grup WhatsApp absensi dan Shared Drive Google kini disimpan per perusahaan (`companies.settings`, `docs/DATABASE.md` › companies). `migrate --force` pada deploy rilis Fase 1 menjalankan migrasi data `2026_10_23_235100_copy_integration_settings_to_first_company`, yang menyalin `WHATSAPP_GROUP_JID`, `GOOGLE_SHARED_DRIVE_ID`, `GOOGLE_SHARED_DRIVE_NAME` (dibaca lewat config yang ter-cache, bukan berkas `.env`) ke perusahaan tertua (SPKD). Pastikan `config:cache` kontainer `app` sudah memuat nilai produksi **sebelum** `migrate`, lalu periksa:
+
+```bash
+docker compose exec -T app php artisan company:list
+# SPKD: kolom "Grup WhatsApp" & "Shared Drive" terisi TANPA akhiran "(.env)".
+# Bila masih "(.env)" atau kosong (mis. config belum ter-cache saat migrate):
+docker compose exec -T app php artisan company:configure <domain-spkd> --whatsapp-group=<…@g.us> --shared-drive=<ID> --shared-drive-name="RuangKerja"
+docker compose exec -T app php artisan ruangkerja:google-check --company=<domain-spkd>
+```
+
+Perilaku SPKD tidak berubah (grup & Drive sama). Kunci env boleh tetap ada: hanya dipakai selama SPKD satu-satunya perusahaan. Perusahaan baru wajib diatur sendiri (`company:configure <domain> --whatsapp-group=… --shared-drive=… --timezone=…`); tanpa itu absensinya tidak dikirim ke grup mana pun dan fitur Drive-nya nonaktif. Shared Drive perusahaan lain harus bisa dikelola akun impersonasi global (`GOOGLE_IMPERSONATE_USER` sebagai *Manager*); service account/impersonasi per perusahaan = Fase 3.
+
+**Urutan deploy rilis Fase 1:** migrasi berjalan berurutan dalam satu `migrate --force` (`2026_10_23_210100` audit_logs.company_id + backfill → `210200` nomor pengajuan per perusahaan → `210300` employee_profiles.company_id → `220200` scheduled_runs → `235100` salin integrasi ke SPKD); lalu `company:list` seperti di atas. **Hari pertama penjadwal:** tugas berjam lokal yang targetnya kurang dari 2 jam sebelum deploy (atau 12 jam untuk tutup hari & delegasi) bisa berjalan sekali lagi hari itu karena `scheduled_runs` masih kosong — semuanya idempoten (de-dup `notification_dispatch_logs`, klaim kemunculan berulang, upsert snapshot), jadi tidak ada notifikasi ganda; deploy siang hari tidak mengirim ulang pengingat pagi.
+
+**Menambah perusahaan baru** (sampai ada wizard Fase 3):
+
+```bash
+docker compose exec -T app php artisan ruangkerja:create-super-admin admin@perusahaan-baru.co.id --new-company="PT Baru" [--domain=perusahaan-baru.co.id] --generate-password
+docker compose exec -T app php artisan company:configure perusahaan-baru.co.id --timezone=Asia/Makassar [--whatsapp-group=…@g.us] [--shared-drive=<ID>]
+```
+
+Catatan: jenis pengajuan & alur persetujuan bawaan saat ini hanya di-seed untuk perusahaan tertua (`RequestSeeder`); untuk perusahaan baru Super Admin/HR-nya membuatnya di Admin › Jenis pengajuan (otomatisasi = wizard Fase 3).
+
 ## 5. Menambah project lain ke VPS ini
 
 1. Stack project baru **tanpa** `ports:` 80/443 dan tanpa membuka database ke host.

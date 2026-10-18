@@ -84,7 +84,8 @@ abstract class EmployeeFormRequest extends FormRequest
             'roles.*' => ['required', 'distinct', Rule::enum(Role::class), $this->grantRoleRule($actor, $employee)],
             'employee_number' => [
                 'nullable', 'string', 'max:30',
-                Rule::unique('employee_profiles', 'employee_number')->ignore($employee?->id, 'user_id'),
+                // Unique within the company (Fase 1 multi-perusahaan).
+                Rule::unique('employee_profiles', 'employee_number')->where('company_id', $companyId)->ignore($employee?->id, 'user_id'),
             ],
             'phone' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9][0-9 \-]{6,24}$/'],
             'nik' => ['nullable', 'string', 'digits:16'],

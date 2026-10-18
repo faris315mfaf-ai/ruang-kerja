@@ -5,13 +5,13 @@ namespace App\Domain\Workspaces\Actions;
 use App\Domain\Tasks\Actions\RecordActivity;
 use App\Domain\Tasks\Enums\ActivityEvent;
 use App\Domain\Tasks\Services\DefaultTaskStatuses;
+use App\Domain\Tenancy\CompanyContext;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
 use App\Domain\Workspaces\Enums\WorkspaceType;
 use App\Domain\Workspaces\Enums\WorkspaceVisibility;
 use App\Domain\Workspaces\Services\WorkspaceKeyGenerator;
 use App\Domain\Workspaces\Services\WorkspaceMembership;
 use App\Events\Workspaces\WorkspaceCreated;
-use App\Models\Company;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\Workspace;
@@ -39,7 +39,9 @@ final class CreateWorkspace
     public function handle(User $owner, array $input, ?User $actor = null): Workspace
     {
         $workspace = DB::transaction(function () use ($owner, $input, $actor): Workspace {
-            $companyId = $owner->company_id ?? Company::query()->orderBy('id')->value('id');
+            // The owner's company, else the current company context; never "the
+            // first company" (Fase 1 multi-perusahaan).
+            $companyId = $owner->company_id ?? app(CompanyContext::class)->id();
 
             if (! is_string($companyId)) {
                 throw new RuntimeException('Tidak ada perusahaan untuk workspace ini.');

@@ -8,6 +8,7 @@ use App\Domain\Notifications\Services\NotificationHistory;
 use App\Domain\Tasks\Notifications\TaskDueSoonNotification;
 use App\Domain\Tasks\Notifications\TaskOverdueNotification;
 use App\Domain\Tasks\Services\TaskAudience;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\InboxNotification;
 use App\Models\Task;
 use App\Models\User;
@@ -45,7 +46,7 @@ final class SendDeadlineNotifications
     public function handle(?CarbonImmutable $now = null): array
     {
         $now ??= CarbonImmutable::now();
-        $today = $now->setTimezone(config()->string('app.office_timezone'))->startOfDay();
+        $today = $now->setTimezone(CurrentCompany::timezone())->startOfDay();
         $report = ['due_soon' => 0, 'overdue' => 0];
 
         $this->tasks()->whereDate('tasks.due_date', $today->addDay()->toDateString())
@@ -106,7 +107,8 @@ final class SendDeadlineNotifications
         return Task::query()
             ->open()
             ->whereNotNull('tasks.due_date')
-            ->whereIn('tasks.workspace_id', Workspace::query()->notArchived()->select('id'))
+            // Scheduled per company (CompanySchedule): only the current company's workspaces.
+            ->whereIn('tasks.workspace_id', Workspace::query()->notArchived()->when(CurrentCompany::id(), fn (Builder $query, string $company) => $query->where('company_id', $company))->select('id'))
             ->whereHas('assignees')
             ->with(['workspace', 'assignees'])
             ->select('tasks.*');

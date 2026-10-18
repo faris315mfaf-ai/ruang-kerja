@@ -13,6 +13,7 @@ use App\Domain\Notifications\Enums\NotificationChannel;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Notifications\Services\NotificationPreferenceResolver;
 use App\Domain\Notifications\Services\QuietHours;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\NotificationSetting;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -44,6 +45,7 @@ use Illuminate\Notifications\Notification;
  */
 abstract class BaseNotification extends Notification implements ShouldQueueAfterCommit
 {
+    use CompanyAware;
     use Queueable;
 
     /**

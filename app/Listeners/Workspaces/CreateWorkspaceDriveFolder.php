@@ -18,7 +18,7 @@ final class CreateWorkspaceDriveFolder
     {
         $workspace = $event->workspace;
 
-        if ($workspace->isPersonal() || ! GoogleFeatures::enabled()) {
+        if ($workspace->isPersonal() || ! GoogleFeatures::enabled($workspace->company_id)) {
             return;
         }
 

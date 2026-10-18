@@ -7,6 +7,8 @@ use App\Domain\Google\Exceptions\DriveRequestFailed;
 use App\Domain\Google\Exceptions\GoogleNotConfigured;
 use App\Domain\Google\GoogleFeatures;
 use App\Domain\Google\Services\GoogleClientFactory;
+use App\Domain\Tenancy\CompanyContext;
+use App\Domain\Tenancy\Support\CompanyLookup;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -15,7 +17,9 @@ use Illuminate\Console\Command;
  * Diagnoses the Google setup step by step with Indonesian hints. Never
  * prints secrets (only whether keys are filled).
  */
-#[Signature('ruangkerja:google-check {--write : Juga uji membuat & menghapus folder uji di Shared Drive}')]
+#[Signature('ruangkerja:google-check
+    {--write : Juga uji membuat & menghapus folder uji di Shared Drive}
+    {--company= : ID, domain, atau nama perusahaan: periksa Shared Drive perusahaan itu (companies.settings)}')]
 #[Description('Uji konfigurasi Google Workspace (service account, Shared Drive, OAuth, Picker)')]
 class GoogleCheck extends Command
 {
@@ -23,7 +27,27 @@ class GoogleCheck extends Command
 
     public function handle(GoogleClientFactory $google): int
     {
-        $this->components->info('Pemeriksaan integrasi Google RuangKerja');
+        $reference = $this->option('company');
+
+        if (is_string($reference) && $reference !== '') {
+            $company = CompanyLookup::find($reference);
+
+            if ($company === null) {
+                $this->components->error('Perusahaan tidak ditemukan (lihat php artisan company:list).');
+
+                return self::FAILURE;
+            }
+
+            // Every Drive check below then resolves that company's Shared Drive.
+            return app(CompanyContext::class)->run($company, fn (): int => $this->check($google, $company->name));
+        }
+
+        return $this->check($google);
+    }
+
+    private function check(GoogleClientFactory $google, ?string $companyName = null): int
+    {
+        $this->components->info('Pemeriksaan integrasi Google RuangKerja'.($companyName === null ? '' : ' · '.$companyName));
 
         if (GoogleFeatures::fake()) {
             $this->components->warn('GOOGLE_FAKE=true: aplikasi memakai Drive palsu, Google sungguhan tidak dipanggil.');
@@ -56,6 +80,11 @@ class GoogleCheck extends Command
         foreach (['GOOGLE_SERVICE_ACCOUNT_JSON', 'GOOGLE_IMPERSONATE_USER', 'GOOGLE_SHARED_DRIVE_ID'] as $key) {
             $missing = in_array($key, GoogleFeatures::missingDriveSettings(), true);
             $this->result(! $missing, $key, $missing ? 'kosong atau berkas tidak terbaca' : 'terisi');
+        }
+
+        if (in_array(GoogleFeatures::COMPANY_SHARED_DRIVE_SETTING, GoogleFeatures::missingDriveSettings(), true)) {
+            $this->result(false, 'Shared Drive perusahaan', 'belum diatur');
+            $this->hint('Atur dengan php artisan company:configure <perusahaan> --shared-drive=<ID>.');
         }
 
         if (GoogleFeatures::missingDriveSettings() !== []) {

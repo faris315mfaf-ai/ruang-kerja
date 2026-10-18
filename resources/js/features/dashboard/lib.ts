@@ -1,4 +1,4 @@
-import { formatNumber, formatPercent } from '@/lib/format';
+import { formatNumber, formatPercent, officeTimezone } from '@/lib/format';
 import type {
     ComparedMetric,
     MetricDefinition,
@@ -151,7 +151,7 @@ export function greeting(now: Date = new Date()): string {
         new Intl.DateTimeFormat('id-ID', {
             hour: 'numeric',
             hourCycle: 'h23',
-            timeZone: 'Asia/Jakarta',
+            timeZone: officeTimezone(),
         }).format(now),
     );
 

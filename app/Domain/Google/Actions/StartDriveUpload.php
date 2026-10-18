@@ -8,6 +8,7 @@ use App\Domain\Google\Exceptions\DriveUploadTooLarge;
 use App\Domain\Google\Exceptions\GoogleNotConfigured;
 use App\Domain\Google\GoogleFeatures;
 use App\Domain\Google\Services\DriveUploadSessions;
+use App\Domain\Tenancy\Support\CompanyOf;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
@@ -33,7 +34,7 @@ final class StartDriveUpload
         ?string $folderId = null,
         ?Model $attachable = null,
     ): DriveUploadSession {
-        GoogleFeatures::ensureEnabled();
+        GoogleFeatures::ensureEnabled(CompanyOf::value($owner));
 
         if ($size > GoogleFeatures::maxUploadBytes()) {
             throw new DriveUploadTooLarge($size);

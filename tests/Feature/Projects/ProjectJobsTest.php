@@ -5,11 +5,13 @@ use App\Domain\Projects\Enums\ProjectStatus;
 use App\Domain\Projects\Jobs\SendProjectUpdateReminders;
 use App\Domain\Projects\Jobs\TakeProjectProgressSnapshots;
 use App\Domain\Projects\Notifications\ProjectUpdateReminderNotification;
+use App\Domain\Tenancy\Scheduling\CompanySchedule;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
 use App\Models\ProjectProgressSnapshot;
 use App\Models\ProjectUpdate;
 use App\Models\User;
 use App\Models\Workspace;
+use Carbon\CarbonImmutable;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Notification;
@@ -82,10 +84,16 @@ describe('daily snapshot', function () {
         $snapshot = $events->first(fn ($event) => str_contains((string) $event->description, TakeProjectProgressSnapshots::class));
         $reminder = $events->first(fn ($event) => str_contains((string) $event->description, SendProjectUpdateReminders::class));
 
-        expect($snapshot?->expression)->toBe('55 23 * * *')
-            ->and($snapshot?->timezone)->toBe('Asia/Jakarta')
-            ->and($reminder?->expression)->toBe('0 15 * * 5')
-            ->and($reminder?->timezone)->toBe('Asia/Jakarta');
+        // Per company (Fase 1 multi-perusahaan): checked every five minutes, run at the company's local time.
+        $tasks = app(CompanySchedule::class);
+        $friday = CarbonImmutable::parse('2026-10-09 15:00', 'Asia/Jakarta');
+
+        expect($snapshot?->expression)->toBe('*/5 * * * *')
+            ->and($tasks->task(TakeProjectProgressSnapshots::class)?->at)->toBe('23:55')
+            ->and($reminder?->expression)->toBe('*/5 * * * *')
+            ->and($tasks->task(SendProjectUpdateReminders::class)?->at)->toBe('15:00')
+            ->and($tasks->task(SendProjectUpdateReminders::class)?->isDueAt($friday))->toBeTrue()
+            ->and($tasks->task(SendProjectUpdateReminders::class)?->isDueAt($friday->subDay()))->toBeFalse();
     });
 });
 

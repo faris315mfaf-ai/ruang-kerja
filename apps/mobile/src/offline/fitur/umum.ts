@@ -2,6 +2,7 @@
 import { ApiError } from '@/api/client';
 
 import { adalahOnline } from '../jaringan';
+import { zonaKantor } from '@/lib/zonaKantor';
 
 export const PESAN_DISIMPAN_HP = 'Disimpan di HP · akan dikirim otomatis';
 
@@ -25,7 +26,7 @@ export async function cobaOnline<T>(fn: () => Promise<T>): Promise<{ nilai: T } 
   }
 }
 
-/** Tanggal kantor (Asia/Jakarta) sebuah instan, `YYYY-MM-DD`. */
+/** Tanggal kantor (zona kantor) sebuah instan, `YYYY-MM-DD`. */
 export function tanggalKantor(d: Date = new Date()): string {
-  return new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Jakarta' }).format(d);
+  return new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: zonaKantor() }).format(d);
 }

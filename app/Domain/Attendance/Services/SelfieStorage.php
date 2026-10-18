@@ -3,6 +3,7 @@
 namespace App\Domain\Attendance\Services;
 
 use App\Domain\Attendance\Models\AttendanceLog;
+use App\Domain\Tenancy\Support\CompanyFiles;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Filesystem\FilesystemAdapter;
@@ -25,12 +26,14 @@ final class SelfieStorage
     }
 
     /**
-     * Stores the upload and returns its path, e.g. "2026/10/<user>/<ulid>.jpg".
+     * Stores the upload and returns its path, e.g.
+     * "company/<company>/2026/10/<user>/<ulid>.jpg" (older selfies keep their
+     * "2026/10/<user>/…" path, read from attendance_logs.selfie_path).
      */
     public function store(User $user, UploadedFile $file, CarbonInterface $at): string
     {
         $extension = $file->guessExtension() ?? 'jpg';
-        $directory = $at->format('Y/m').'/'.$user->id;
+        $directory = CompanyFiles::directory($user->company_id, $at->format('Y/m'), $user->id);
         $path = $this->disk()->putFileAs($directory, $file, Str::ulid()->toBase32().'.'.$extension);
 
         if ($path === false) {

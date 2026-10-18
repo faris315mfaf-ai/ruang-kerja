@@ -3,6 +3,9 @@
 use App\Domain\Meetings\Enums\Recurrence;
 use App\Domain\Organization\Enums\Role;
 use App\Domain\Search\Providers\MeetingSearchProvider;
+use App\Domain\Tenancy\CompanyContext;
+use App\Domain\Tenancy\Support\OfficeTimezone;
+use App\Models\Company;
 use App\Models\Meeting;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -82,4 +85,22 @@ it('is wired into the web search endpoint as the Rapat group', function () {
 
     $this->actingAs($this->invited)->getJson('/cari/hasil?q=vendor&group=meetings')->assertOk();
     $this->actingAs($this->stranger)->getJson('/cari/hasil?q=vendor')->assertOk()->assertJsonPath('groups', []);
+});
+
+it('shows the meeting time in the zone of the company (Fase 1 multi-perusahaan)', function () {
+    $makassar = Company::factory()->create(['timezone' => 'Asia/Makassar']);
+    $organizer = User::factory()->forCompany($makassar)->withRole(Role::KepalaDivisi)->create();
+    // 13.30 WIB = 14.30 WITA.
+    Meeting::factory()->by($organizer)->create([
+        'title' => 'Review armada Makassar',
+        'starts_at' => CarbonImmutable::parse('2026-10-06 13:30', 'Asia/Jakarta')->utc(),
+        'ends_at' => CarbonImmutable::parse('2026-10-06 14:30', 'Asia/Jakarta')->utc(),
+    ]);
+
+    $results = app(CompanyContext::class)->run($makassar, fn () => app(MeetingSearchProvider::class)->search($organizer, 'armada', 10));
+
+    expect($results)->toHaveCount(1)
+        ->and($results[0]->subtitle)->toBe('Sel, 6 Okt 2026 · 14.30–15.30 WITA')
+        ->and(OfficeTimezone::label('Asia/Jayapura'))->toBe('WIT')
+        ->and(OfficeTimezone::label('Asia/Singapore'))->toBe('UTC+08:00');
 });

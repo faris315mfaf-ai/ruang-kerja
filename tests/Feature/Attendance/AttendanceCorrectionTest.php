@@ -158,5 +158,6 @@ test('HR cannot correct their own attendance or another company', function () {
     correct($this->hr, ['user_id' => $this->hr->id, 'work_date' => '2026-10-02', 'check_in' => '08:00', 'reason' => 'Lupa check-in'])->assertForbidden();
 
     $foreign = User::factory()->forCompany(Company::factory()->create())->create();
-    correct($this->hr, ['user_id' => $foreign->id, 'work_date' => '2026-10-02', 'check_in' => '08:00', 'reason' => 'Lupa check-in'])->assertForbidden();
+    // Another company's employee is not a valid choice at all (Fase 1: exists rule per company).
+    correct($this->hr, ['user_id' => $foreign->id, 'work_date' => '2026-10-02', 'check_in' => '08:00', 'reason' => 'Lupa check-in'])->assertSessionHasErrors('user_id');
 });

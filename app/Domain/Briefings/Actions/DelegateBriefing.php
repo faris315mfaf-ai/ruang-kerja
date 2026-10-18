@@ -6,6 +6,7 @@ use App\Domain\Briefings\Enums\BriefingPeriod;
 use App\Domain\Notifications\Notifications\SystemAnnouncement;
 use App\Domain\Notifications\Support\IndonesianDate;
 use App\Domain\Organization\Services\AuditLogger;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\BriefingDelegation;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -25,7 +26,7 @@ final class DelegateBriefing
     public function handle(User $actor, User $delegate, BriefingPeriod $period, ?CarbonImmutable $now = null): BriefingDelegation
     {
         $now ??= CarbonImmutable::now();
-        $date = $now->setTimezone(config()->string('app.office_timezone'));
+        $date = $now->setTimezone(CurrentCompany::timezone());
 
         if ($delegate->id === $actor->id) {
             throw ValidationException::withMessages(['user_id' => 'Tidak bisa mendelegasikan ke diri sendiri.']);

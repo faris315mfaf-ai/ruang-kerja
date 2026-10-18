@@ -3,6 +3,8 @@
 namespace App\Domain\Google;
 
 use App\Domain\Google\Exceptions\GoogleNotConfigured;
+use App\Domain\Tenancy\CompanyContext;
+use App\Domain\Tenancy\Settings\CompanySettings;
 
 /**
  * Feature flags for the Google integration, read from config/google.php.
@@ -13,6 +15,13 @@ use App\Domain\Google\Exceptions\GoogleNotConfigured;
  *   needs the API key.
  * - `google.fake` (never honoured in production) swaps Google for
  *   FakeDriveClient and counts as "Drive enabled".
+ *
+ * Fase 1 multi-perusahaan: the Shared Drive is per company
+ * (`companies.settings.google.shared_drive_id`, CompanySettings). Drive
+ * checks take the workspace's company (or the current CompanyContext); a
+ * company without its own Shared Drive has Drive switched off — except while
+ * it is the only company, when GOOGLE_SHARED_DRIVE_ID still applies. Without
+ * any company (console, guest) the global configuration is used as before.
  */
 final class GoogleFeatures
 {
@@ -20,17 +29,27 @@ final class GoogleFeatures
 
     public const string ADMIN_HINT = 'Isi GOOGLE_SERVICE_ACCOUNT_JSON, GOOGLE_IMPERSONATE_USER dan GOOGLE_SHARED_DRIVE_ID, lalu jalankan php artisan ruangkerja:google-check.';
 
+    /** "Missing setting" shown when only the company's own Shared Drive is lacking. */
+    public const string COMPANY_SHARED_DRIVE_SETTING = 'Shared Drive perusahaan (php artisan company:configure --shared-drive=…)';
+
     public static function fake(): bool
     {
         return (bool) config('google.fake') && ! app()->isProduction();
     }
 
     /**
-     * Drive features available (service account configured, or fake mode).
+     * Drive features available for the company (service account configured,
+     * or fake mode, and a Shared Drive for that company).
+     *
+     * @param  string|null  $companyId  workspace's company; null = current CompanyContext
      */
-    public static function enabled(): bool
+    public static function enabled(?string $companyId = null): bool
     {
-        return self::fake() || self::missingDriveSettings() === [];
+        if (self::fake()) {
+            return self::sharedDriveMissing($companyId, fake: true) === null;
+        }
+
+        return self::serviceAccountMissing() === [] && self::sharedDriveMissing($companyId, fake: false) === null;
     }
 
     /**
@@ -56,10 +75,10 @@ final class GoogleFeatures
     /**
      * @throws GoogleNotConfigured
      */
-    public static function ensureEnabled(): void
+    public static function ensureEnabled(?string $companyId = null): void
     {
-        if (! self::enabled()) {
-            throw new GoogleNotConfigured(self::missingDriveSettings());
+        if (! self::enabled($companyId)) {
+            throw new GoogleNotConfigured(self::missingDriveSettings($companyId));
         }
     }
 
@@ -74,11 +93,28 @@ final class GoogleFeatures
     }
 
     /**
-     * Env keys (never values) that are missing for Drive features.
+     * Env keys (never values) that are missing for Drive features, or
+     * COMPANY_SHARED_DRIVE_SETTING when the company lacks its own Shared Drive.
      *
+     * @param  string|null  $companyId  workspace's company; null = current CompanyContext
      * @return list<string>
      */
-    public static function missingDriveSettings(): array
+    public static function missingDriveSettings(?string $companyId = null): array
+    {
+        $missing = self::serviceAccountMissing();
+        $drive = self::sharedDriveMissing($companyId, fake: false);
+
+        if ($drive !== null) {
+            $missing[] = $drive;
+        }
+
+        return $missing;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function serviceAccountMissing(): array
     {
         $missing = [];
 
@@ -92,11 +128,33 @@ final class GoogleFeatures
             $missing[] = 'GOOGLE_IMPERSONATE_USER';
         }
 
-        if (! self::filled(config('google.shared_drive_id'))) {
-            $missing[] = 'GOOGLE_SHARED_DRIVE_ID';
+        return $missing;
+    }
+
+    /**
+     * What is missing for the company's Shared Drive, or null when it has one.
+     * In fake mode the global id is not needed (the fake provides one).
+     */
+    private static function sharedDriveMissing(?string $companyId, bool $fake): ?string
+    {
+        $companyId ??= app(CompanyContext::class)->id();
+        $global = $fake || self::filled(config('google.shared_drive_id'));
+
+        if ($companyId === null) {
+            return $global ? null : 'GOOGLE_SHARED_DRIVE_ID';
         }
 
-        return $missing;
+        $settings = CompanySettings::resolve();
+
+        if ($settings->own($companyId, CompanySettings::SHARED_DRIVE_ID) !== null) {
+            return null;
+        }
+
+        if (! $settings->usesGlobalFallback($companyId)) {
+            return self::COMPANY_SHARED_DRIVE_SETTING;
+        }
+
+        return $global ? null : 'GOOGLE_SHARED_DRIVE_ID';
     }
 
     /**

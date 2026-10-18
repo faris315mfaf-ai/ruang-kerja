@@ -7,6 +7,7 @@ use App\Domain\Google\Exceptions\DriveUploadTooLarge;
 use App\Domain\Google\Exceptions\GoogleNotConfigured;
 use App\Domain\Google\GoogleFeatures;
 use App\Domain\Google\Jobs\UploadToDrive;
+use App\Domain\Tenancy\Support\CompanyOf;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
@@ -26,7 +27,7 @@ final class QueueDriveUpload
      */
     public function handle(Model&HasDriveFolder $owner, UploadedFile $file, User $user, ?Model $attachable = null): string
     {
-        GoogleFeatures::ensureEnabled();
+        GoogleFeatures::ensureEnabled(CompanyOf::value($owner));
 
         $size = (int) $file->getSize();
 

@@ -3,6 +3,7 @@
 namespace App\Domain\Notes\Actions;
 
 use App\Domain\Notes\Enums\NotePreset;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Domain\Workspaces\Actions\EnsurePersonalWorkspace;
 use App\Models\Note;
 use App\Models\User;
@@ -36,7 +37,7 @@ final class StartQuickMinutes
 
         Gate::forUser($author)->authorize('create', [Note::class, $workspace]);
 
-        $at = ($now ?? CarbonImmutable::now())->setTimezone(config()->string('app.office_timezone'));
+        $at = ($now ?? CarbonImmutable::now())->setTimezone(CurrentCompany::timezone());
         $when = self::when($at);
 
         $note = $this->create->handle($author, $workspace, [

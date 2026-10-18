@@ -4,6 +4,7 @@ namespace App\Http\Requests\Attendance;
 
 use App\Domain\Attendance\Models\Shift;
 use App\Domain\Organization\Enums\WorkMode;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -61,7 +62,7 @@ class ShiftOverrideRequest extends FormRequest
 
     public function overrideDate(): CarbonImmutable
     {
-        return CarbonImmutable::parse($this->string('date')->toString(), config()->string('app.office_timezone'));
+        return CarbonImmutable::parse($this->string('date')->toString(), CurrentCompany::timezone());
     }
 
     public function workModeOverride(): ?WorkMode

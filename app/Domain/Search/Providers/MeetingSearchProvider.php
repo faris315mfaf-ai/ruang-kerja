@@ -7,6 +7,8 @@ use App\Domain\Notifications\Support\IndonesianDate;
 use App\Domain\Search\Contracts\SearchProvider;
 use App\Domain\Search\Data\SearchResult;
 use App\Domain\Search\Support\LikePattern;
+use App\Domain\Tenancy\Support\CurrentCompany;
+use App\Domain\Tenancy\Support\OfficeTimezone;
 use App\Models\Meeting;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -56,12 +58,12 @@ final class MeetingSearchProvider implements SearchProvider
             ->limit($limit)
             ->get(['meetings.id', 'meetings.title', 'meetings.starts_at', 'meetings.ends_at', 'meetings.platform', 'meetings.recurrence', 'meetings.location']);
 
-        $timezone = config()->string('app.office_timezone');
+        $timezone = CurrentCompany::timezone();
         $results = [];
 
         foreach ($meetings as $meeting) {
             $start = $meeting->starts_at->setTimezone($timezone);
-            $when = IndonesianDate::short($start).' · '.$start->format('H.i').'–'.$meeting->ends_at->setTimezone($timezone)->format('H.i').' WIB';
+            $when = IndonesianDate::short($start).' · '.$start->format('H.i').'–'.$meeting->ends_at->setTimezone($timezone)->format('H.i').' '.OfficeTimezone::label($timezone);
 
             $results[] = new SearchResult(
                 id: 'meeting:'.$meeting->id,

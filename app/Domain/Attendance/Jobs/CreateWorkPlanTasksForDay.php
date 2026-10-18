@@ -4,6 +4,7 @@ namespace App\Domain\Attendance\Jobs;
 
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Tasks\Actions\CreateWorkPlanTasks;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\DB;
  */
 final class CreateWorkPlanTasksForDay implements ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $tries = 3;

@@ -9,6 +9,7 @@ use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\EnsureTwoFactorForSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\ResolveCompanyContext;
 use App\Http\Middleware\RestrictCredentialRoutes;
 use App\Http\Middleware\RestrictKioskDevice;
 use App\Http\Middleware\SecurityHeaders;
@@ -61,6 +62,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             // Logs out inactive/resigned users on any web request (no-op for guests).
             EnsureActiveEmployee::class,
+            // Fase 1 multi-perusahaan: CompanyContext from the user / kiosk device.
+            ResolveCompanyContext::class,
             // Kiosk devices (guard `kiosk`) may only open their kiosk page (Sprint 3).
             RestrictKioskDevice::class,
             // Own password: every employee; password confirmation & 2FA: Super Admin only.
@@ -83,10 +86,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // stamps the token's installation (at most every 5 minutes).
         $middleware->api(
             prepend: [EnforceApiAppStatus::class],
-            append: [EnsureActiveEmployee::class, EnsureApiAccountUsable::class, TouchDeviceLastSeen::class],
+            append: [EnsureActiveEmployee::class, ResolveCompanyContext::class, EnsureApiAccountUsable::class, TouchDeviceLastSeen::class],
         );
         $middleware->appendToPriorityList(after: Authenticate::class, append: EnsureActiveEmployee::class);
         $middleware->appendToPriorityList(after: EnsureActiveEmployee::class, append: EnsureApiAccountUsable::class);
+        // CompanyContext (Fase 1): same reason — the user must be resolved by `auth`
+        // / `auth:sanctum` first, otherwise the context would stay empty.
+        $middleware->appendToPriorityList(after: EnsureActiveEmployee::class, append: ResolveCompanyContext::class);
 
         // Must run before `auth`, which Laravel's priority list would otherwise move ahead of it.
         $middleware->prependToPriorityList(before: AuthenticatesRequests::class, prepend: RestrictKioskDevice::class);

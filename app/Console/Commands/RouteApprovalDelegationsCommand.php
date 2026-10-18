@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Domain\Requests\Actions\RouteToDelegates;
+use App\Domain\Tenancy\Scheduling\ForEachCompany;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -13,7 +14,9 @@ class RouteApprovalDelegationsCommand extends Command
 {
     public function handle(RouteToDelegates $route): int
     {
-        $this->info($route->handle().' langkah dialihkan ke delegasi.');
+        $moved = ForEachCompany::sum(fn (): int => $route->handle());
+
+        $this->info($moved.' langkah dialihkan ke delegasi.');
 
         return self::SUCCESS;
     }

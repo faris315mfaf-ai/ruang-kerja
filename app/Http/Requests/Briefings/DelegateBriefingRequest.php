@@ -25,7 +25,7 @@ class DelegateBriefingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => ['required', 'string', 'ulid', Rule::exists('users', 'id')],
+            'user_id' => ['required', 'string', 'ulid', Rule::exists('users', 'id')->where('company_id', $this->user()?->company_id)],
             'period' => ['required', Rule::enum(BriefingPeriod::class)],
         ];
     }

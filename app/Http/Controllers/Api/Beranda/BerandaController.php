@@ -16,6 +16,7 @@ use App\Domain\Briefings\Queries\LatestBriefing;
 use App\Domain\Meetings\Queries\MeetingFeed;
 use App\Domain\Reports\Queries\MyDailyReports;
 use App\Domain\Tasks\Queries\TugasHariIni;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\MeetingSummary;
 use App\Http\Resources\Attendance\MyAttendance;
@@ -147,7 +148,7 @@ class BerandaController extends Controller
         }
 
         $single = collect([$next]);
-        $today = $now->setTimezone(config()->string('app.office_timezone'))->toDateString();
+        $today = $now->setTimezone(CurrentCompany::timezone())->toDateString();
 
         return MeetingSummary::agenda(
             $next,

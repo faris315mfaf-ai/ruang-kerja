@@ -4,6 +4,7 @@ namespace App\Domain\Meetings\Transcripts\Jobs;
 
 use App\Domain\Meetings\Transcripts\Services\NotulenConfig;
 use App\Domain\Meetings\Transcripts\Services\TranscriberClient;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -13,6 +14,7 @@ use Illuminate\Foundation\Queue\Queueable;
  */
 class FinishMeetingRecorder implements ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $tries = 4;

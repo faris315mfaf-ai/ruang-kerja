@@ -24,7 +24,8 @@ class WorkspaceMemberRequest extends FormRequest
         $roles = array_map(fn (WorkspaceRole $role): string => $role->value, WorkspaceRole::assignable());
 
         return [
-            'user_id' => [$this->isMethod('post') ? 'required' : 'prohibited', 'string', Rule::exists('users', 'id')],
+            // Only people of the actor's (= the workspace's) company.
+            'user_id' => [$this->isMethod('post') ? 'required' : 'prohibited', 'string', Rule::exists('users', 'id')->where('company_id', $this->user()?->company_id)],
             'role' => ['required', Rule::in($roles)],
         ];
     }

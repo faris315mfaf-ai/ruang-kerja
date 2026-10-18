@@ -37,8 +37,9 @@ Route::bind('workspace', function (string $value): Workspace {
     $user = $request->user();
     $companyId = $user instanceof User ? $user->company_id : null;
 
+    // Keys and ULIDs only resolve inside the viewer's company (Fase 1 multi-perusahaan).
     $workspace = strlen($value) === 26
-        ? Workspace::query()->find(strtolower($value))
+        ? Workspace::query()->where('company_id', $companyId)->find(strtolower($value))
         : Workspace::findByKey($value, $companyId);
 
     // Never reveal whether a workspace (or an old key) exists to someone who may

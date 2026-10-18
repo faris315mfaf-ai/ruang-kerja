@@ -7,6 +7,7 @@ use App\Domain\Meetings\Enums\MeetingPlatform;
 use App\Domain\Meetings\Services\MeetingOccurrences;
 use App\Domain\Meetings\Services\MinutesStore;
 use App\Domain\Meetings\Services\VideoRooms;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\MeetingSummary;
 use App\Models\Meeting;
@@ -49,7 +50,7 @@ class MeetingController extends Controller
             $meeting->minute_taker_id,
             ...$meeting->participants->pluck('user_id')->all(),
         ]);
-        $today = CarbonImmutable::now()->setTimezone(config()->string('app.office_timezone'))->toDateString();
+        $today = CarbonImmutable::now()->setTimezone(CurrentCompany::timezone())->toDateString();
 
         // joinVideo is occurrence-aware (join window, organizer removal).
         $join = $policy->joinVideo($user, $meeting, $occurrence);

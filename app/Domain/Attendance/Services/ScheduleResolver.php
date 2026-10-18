@@ -7,6 +7,7 @@ use App\Domain\Attendance\Models\Holiday;
 use App\Domain\Attendance\Models\Shift;
 use App\Domain\Attendance\Models\ShiftAssignment;
 use App\Domain\Organization\Enums\WorkMode;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -181,7 +182,7 @@ final class ScheduleResolver
     public static function officeDate(CarbonInterface $value): CarbonImmutable
     {
         return CarbonImmutable::instance($value)
-            ->setTimezone(config()->string('app.office_timezone'))
+            ->setTimezone(CurrentCompany::timezone())
             ->startOfDay();
     }
 
@@ -190,7 +191,7 @@ final class ScheduleResolver
      */
     public static function parseDate(string $date): CarbonImmutable
     {
-        return CarbonImmutable::parse($date, config()->string('app.office_timezone'))->startOfDay();
+        return CarbonImmutable::parse($date, CurrentCompany::timezone())->startOfDay();
     }
 
     private function isWithinOvernightShift(DaySchedule $schedule, CarbonInterface $instant): bool

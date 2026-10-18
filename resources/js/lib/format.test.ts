@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vite-plus/test';
 
 import {
+    DEFAULT_OFFICE_TIMEZONE,
     formatLongDate,
-    OFFICE_TIMEZONE,
+    officeTimezone,
+    officeUtcOffset,
+    officeZoneLabel,
+    setOfficeTimezone,
     formatDate,
     formatDateTime,
     formatDayDate,
@@ -15,9 +19,44 @@ import {
     toIsoDay,
 } from './format';
 
-describe('OFFICE_TIMEZONE', () => {
-    it('is Asia/Jakarta', () => {
-        expect(OFFICE_TIMEZONE).toBe('Asia/Jakarta');
+describe('office timezone', () => {
+    it('is Asia/Jakarta until the server sets the company timezone', () => {
+        expect(DEFAULT_OFFICE_TIMEZONE).toBe('Asia/Jakarta');
+        expect(officeTimezone()).toBe('Asia/Jakarta');
+        expect(officeUtcOffset('2026-10-05')).toBe('+07:00');
+    });
+
+    it('follows the company timezone and ignores unknown values', () => {
+        try {
+            setOfficeTimezone('Asia/Jayapura');
+            expect(officeTimezone()).toBe('Asia/Jayapura');
+            // 23.30 WIB on 4 Oct = 01.30 WIT on 5 Oct.
+            expect(formatTime('2026-10-04T16:30:00Z')).toBe('01.30');
+            expect(toIsoDay('2026-10-04T16:30:00Z')).toBe('2026-10-05');
+            expect(officeUtcOffset('2026-10-05')).toBe('+09:00');
+
+            setOfficeTimezone('Bukan/Zona');
+            setOfficeTimezone(null);
+            expect(officeTimezone()).toBe('Asia/Jayapura');
+        } finally {
+            setOfficeTimezone(DEFAULT_OFFICE_TIMEZONE);
+        }
+
+        expect(formatTime('2026-10-04T16:30:00Z')).toBe('23.30');
+    });
+
+    it('labels office clock times with the zone of the company', () => {
+        expect(officeZoneLabel()).toBe('WIB');
+        expect(officeZoneLabel('Asia/Makassar')).toBe('WITA');
+        expect(officeZoneLabel('Asia/Jayapura')).toBe('WIT');
+        expect(officeZoneLabel('Asia/Singapore')).toBe('UTC+08:00');
+
+        try {
+            setOfficeTimezone('Asia/Makassar');
+            expect(officeZoneLabel()).toBe('WITA');
+        } finally {
+            setOfficeTimezone(DEFAULT_OFFICE_TIMEZONE);
+        }
     });
 });
 

@@ -4,6 +4,7 @@ namespace App\Domain\Meetings\Queries;
 
 use App\Domain\Meetings\Enums\Rsvp;
 use App\Domain\Meetings\Services\MeetingOccurrences;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Meeting;
 use App\Models\MeetingParticipant;
 use App\Models\User;
@@ -30,7 +31,7 @@ final class FindConflicts
      */
     public function handle(User $viewer, array $userIds, CarbonImmutable $startsAt, CarbonImmutable $endsAt, ?string $ignoreMeetingId = null): array
     {
-        $timezone = config()->string('app.office_timezone');
+        $timezone = CurrentCompany::timezone();
         $dayStart = $startsAt->setTimezone($timezone)->startOfDay();
         $dayEnd = $dayStart->addDay();
         $busy = $this->busy($viewer, $userIds, $dayStart->utc(), $dayEnd->utc(), $ignoreMeetingId);
@@ -70,7 +71,7 @@ final class FindConflicts
      */
     private function suggest(array $busy, CarbonImmutable $startsAt, int $duration): ?string
     {
-        $timezone = config()->string('app.office_timezone');
+        $timezone = CurrentCompany::timezone();
         $local = $startsAt->setTimezone($timezone);
         $limit = CarbonImmutable::parse($local->toDateString().' '.self::DAY_END, $timezone);
         $minutes = (int) (ceil(($local->hour * 60 + $local->minute) / 30) * 30);

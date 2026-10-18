@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import { ApiError } from '@/api/client';
 import type { DetailKanal, JenisKanal, KanalRingkas, Pesan, RingkasReaksi } from '@/api/obrolan';
 import { jam, tanggalTanpaTahun, ymdJakarta } from '@/lib/format';
+import { zonaKantor } from '@/lib/zonaKantor';
 
 export const LABEL_JENIS: Record<JenisKanal, string> = {
   workspace: 'Workspace',
@@ -460,7 +461,7 @@ export function waktuDaftar(iso: string | null | undefined): string {
   }
   const selisih = (Date.now() - new Date(iso).getTime()) / 86_400_000;
   if (selisih < 6) {
-    return new Intl.DateTimeFormat('id-ID', { weekday: 'long', timeZone: 'Asia/Jakarta' }).format(new Date(iso));
+    return new Intl.DateTimeFormat('id-ID', { weekday: 'long', timeZone: zonaKantor() }).format(new Date(iso));
   }
   return tanggalTanpaTahun(iso);
 }

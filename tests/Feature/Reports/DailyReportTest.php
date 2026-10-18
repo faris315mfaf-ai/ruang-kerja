@@ -12,6 +12,7 @@ use App\Domain\Reports\Jobs\SendDailyReportReminders;
 use App\Domain\Reports\Notifications\DailyReportReminder;
 use App\Domain\Reports\Queries\DailyReportFeed;
 use App\Domain\Tasks\Enums\TaskStatusCategory as Cat;
+use App\Domain\Tenancy\Scheduling\CompanySchedule;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
 use App\Models\Company;
 use App\Models\DailyReport;
@@ -317,7 +318,13 @@ it('is scheduled at 16.30 on weekdays', function () {
     $event = collect(app(Schedule::class)->events())
         ->first(fn ($event) => str_contains((string) $event->description, 'SendDailyReportReminders'));
 
+    // Per company (Fase 1 multi-perusahaan): checked every five minutes, run 16.30 on weekdays of each company's clock.
+    $task = app(CompanySchedule::class)->task(SendDailyReportReminders::class);
+    $friday = CarbonImmutable::parse('2026-10-09 16:30', 'Asia/Jakarta');
+
     expect($event)->not->toBeNull()
-        ->and($event->expression)->toBe('30 16 * * 1-5')
-        ->and($event->timezone)->toBe('Asia/Jakarta');
+        ->and($event->expression)->toBe('*/5 * * * *')
+        ->and($task?->at)->toBe('16:30')
+        ->and($task?->isDueAt($friday))->toBeTrue()
+        ->and($task?->isDueAt($friday->addDay()))->toBeFalse();
 });

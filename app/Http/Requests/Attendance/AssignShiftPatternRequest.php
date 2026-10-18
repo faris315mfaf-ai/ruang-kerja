@@ -4,6 +4,7 @@ namespace App\Http\Requests\Attendance;
 
 use App\Domain\Attendance\Models\Shift;
 use App\Domain\Organization\Enums\WorkMode;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Division;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -107,13 +108,13 @@ class AssignShiftPatternRequest extends FormRequest
 
     public function validFrom(): CarbonImmutable
     {
-        return CarbonImmutable::parse($this->string('valid_from')->toString(), config()->string('app.office_timezone'));
+        return CarbonImmutable::parse($this->string('valid_from')->toString(), CurrentCompany::timezone());
     }
 
     public function validUntil(): ?CarbonImmutable
     {
         return $this->filled('valid_until')
-            ? CarbonImmutable::parse($this->string('valid_until')->toString(), config()->string('app.office_timezone'))
+            ? CarbonImmutable::parse($this->string('valid_until')->toString(), CurrentCompany::timezone())
             : null;
     }
 

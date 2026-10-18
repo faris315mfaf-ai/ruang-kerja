@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Meetings;
 use App\Domain\Meetings\Actions\StoreMinutesDocument;
 use App\Domain\Meetings\Services\MinutesDocument;
 use App\Domain\Organization\Enums\UserStatus;
+use App\Domain\Tenancy\CompanyContext;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Notes\CollabStateRequest;
 use App\Models\MeetingMinutes;
@@ -23,7 +24,9 @@ class MinutesCollabStateController extends Controller
     /** GET /internal/rapat/notulen/{minutes}/state */
     public function show(string $minutes): JsonResponse
     {
-        $model = MeetingMinutes::query()->findOrFail($minutes);
+        $model = MeetingMinutes::query()->with('meeting:id,company_id')->findOrFail($minutes);
+        // Collab server (no user): run in the meeting's company (Fase 1 CompanyContext).
+        app(CompanyContext::class)->set($model->meeting->company_id);
         $state = $model->doc_state;
 
         return response()->json([
@@ -38,6 +41,7 @@ class MinutesCollabStateController extends Controller
     public function store(CollabStateRequest $request, string $minutes, StoreMinutesDocument $store): JsonResponse
     {
         $model = MeetingMinutes::query()->with('meeting:id,company_id')->findOrFail($minutes);
+        app(CompanyContext::class)->set($model->meeting->company_id);
         $state = base64_decode($request->string('yjs_state')->toString(), true);
 
         abort_if($state === false, 422, 'yjs_state bukan base64.');

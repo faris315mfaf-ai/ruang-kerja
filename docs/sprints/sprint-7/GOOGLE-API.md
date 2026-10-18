@@ -34,7 +34,7 @@ Semua panggilan Google memakai **service account dengan domain-wide delegation**
 |---|---|---|
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | Drive | path berkas kunci (mis. `secrets/google-sa.json`) **atau** isi JSON |
 | `GOOGLE_IMPERSONATE_USER` | Drive | akun Workspace yang menjadi *Manager* Shared Drive |
-| `GOOGLE_SHARED_DRIVE_ID` | Drive | Shared Drive "RuangKerja" |
+| `GOOGLE_SHARED_DRIVE_ID` | Drive | Shared Drive "RuangKerja" — sejak Fase 1 multi-perusahaan hanya **cadangan** untuk satu-satunya perusahaan; Shared Drive per perusahaan di `companies.settings.google.shared_drive_id` (`php artisan company:configure <perusahaan> --shared-drive=<ID>`, cek `ruangkerja:google-check --company=<perusahaan>`). Perusahaan tanpa Shared Drive = Drive nonaktif untuk workspace-nya |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | OAuth pengguna (Picker) & login | OAuth client "Web" yang sama dengan login |
 | `GOOGLE_PICKER_API_KEY` | Picker | API key dibatasi ke Google Picker API + referrer domain aplikasi |
 | `GOOGLE_PICKER_APP_ID` | opsional | nomor proyek Cloud; bawaan diambil dari awalan `GOOGLE_CLIENT_ID` |

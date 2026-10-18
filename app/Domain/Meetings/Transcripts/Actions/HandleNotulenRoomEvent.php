@@ -8,6 +8,7 @@ use App\Domain\Meetings\Services\VideoRooms;
 use App\Domain\Meetings\Transcripts\Jobs\FinishMeetingRecorder;
 use App\Domain\Meetings\Transcripts\Jobs\StartMeetingRecorder;
 use App\Domain\Meetings\Transcripts\Services\NotulenConfig;
+use App\Domain\Tenancy\CompanyContext;
 use App\Models\Meeting;
 use Illuminate\Support\Facades\Cache;
 
@@ -43,6 +44,9 @@ final class HandleNotulenRoomEvent
         }
 
         $meeting = Meeting::query()->find($target['meeting_id']);
+
+        // Public webhook: run in the meeting's company (Fase 1 CompanyContext).
+        app(CompanyContext::class)->set($meeting?->company_id);
 
         if ($meeting === null || $meeting->platform !== MeetingPlatform::Video || ! NotulenConfig::autoMinutes($meeting)
             || $meeting->isCanceled() || ! $this->config->configured() || ! $this->occurrences->meetsOn($meeting, $target['date'])) {

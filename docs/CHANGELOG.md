@@ -6,6 +6,14 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 
 ## [Belum dirilis]
 
+### Ditambahkan (18 Okt 2026, Fase 1 multi-perusahaan — keputusan pemilik; `docs/ARCHITECTURE.md` §4.1, ADR #11)
+- **Isolasi data antar-perusahaan** di satu database: `CompanyContext` (web, API, kiosk, webhook, job & notifikasi), registri tabel `config/tenancy.php`, dan suite kebocoran otomatis (`tests/Feature/Tenancy`: semua rute ber-parameter, halaman/daftar/ekspor, penjadwal, WhatsApp, kanal broadcast, injeksi id). Celah yang ditutup: audit log per perusahaan (`audit_logs.company_id`), nomor pengajuan & nomor karyawan per perusahaan, hari libur & HR penyetuju per perusahaan, validasi `exists` per perusahaan, tidak ada lagi "perusahaan pertama", kunci cache & berkas privat (`company/{id}/…`) per perusahaan.
+- **Zona waktu & penjadwal per perusahaan**: semua tanggal/jam kantor dari `companies.timezone` (WIB/WITA/WIT, label zona ikut perusahaan) di web, API, dan aplikasi; tugas harian (tutup hari, pengingat, ringkasan, tenggat, laporan 16.30, snapshot 23.55, …) berjalan pada jam lokal tiap perusahaan, sekali per tanggal (`scheduled_runs`), termasuk mengejar setelah penjadwal mati melewati tengah malam.
+- **Integrasi per perusahaan**: grup WhatsApp absensi dan Shared Drive Google per perusahaan (`php artisan company:configure`, `company:list`); email memakai nama perusahaan penerima.
+- `ruangkerja:create-super-admin`: `--company=` wajib bila ada beberapa perusahaan, `--new-company=<nama>` + `--domain=<domain>` (domain yang sudah dipakai ditolak dengan pesan jelas).
+- **Perusahaan demo kedua** untuk uji lokal: `php artisan db:seed --class=SecondCompanyDemoSeeder` (PT Contoh Mitra, WITA, akun `admin@`/`hr@`/`anggota@contoh.test`); `scripts/ui-shots.mjs --larang/--wajib` memeriksa teks halaman. Anggaran query halaman utama kini diukur dengan perusahaan kedua bervolume (tidak berubah).
+
+
 ### Keamanan (7 Okt 2026, audit rapat video & sandi bawaan — `docs/security/AUDIT-RAPAT-2026-10.md`)
 - **Sandi bawaan selalu wajib ganti** (R-01, Tinggi): "Sandi bawaan" dari HR tidak bisa lagi disimpan tanpa "wajib ganti" (centang dikunci, server memaksa), dan login dengan sandi bawaan selalu menyalakan wajib ganti untuk akun lama yang terlanjur.
 - **Webhook LiveKit** (R-02): kejadian yang gagal diproses tidak lagi dianggap duplikat saat LiveKit mengirim ulang (kehadiran tidak tertinggal "masih di ruang").

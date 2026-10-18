@@ -2,6 +2,7 @@
 
 namespace App\Domain\Meetings\Guests;
 
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 use RuntimeException;
 
@@ -22,7 +23,7 @@ final class GuestAccessException extends RuntimeException
 
     public static function notYet(CarbonImmutable $opensAt): self
     {
-        $local = $opensAt->setTimezone(config()->string('app.office_timezone'));
+        $local = $opensAt->setTimezone(CurrentCompany::timezone());
         $when = $local->isToday() ? $local->format('H.i') : $local->format('d/m/Y H.i');
 
         return new self('ruang_belum_dibuka', "Ruang rapat dibuka pukul {$when}.", 409);

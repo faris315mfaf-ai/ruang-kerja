@@ -4,6 +4,7 @@ namespace App\Domain\Google\Jobs;
 
 use App\Domain\Google\Jobs\Concerns\HandlesGoogleFailures;
 use App\Domain\Google\Services\DriveFolderContentsSync;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -14,6 +15,7 @@ use Illuminate\Foundation\Queue\Queueable;
  */
 final class SyncDriveFolderContents implements ShouldBeUnique, ShouldQueue
 {
+    use CompanyAware;
     use HandlesGoogleFailures, Queueable;
 
     public int $uniqueFor = 300;

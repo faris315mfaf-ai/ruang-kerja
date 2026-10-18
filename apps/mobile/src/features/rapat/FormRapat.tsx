@@ -42,6 +42,7 @@ import { NomorAgenda } from './komponen';
 import { PemilihPeserta } from './PemilihPeserta';
 import { MAKS_TAMU, susunNamaTamuForm } from './tamu';
 import { LABEL_ULANGI, hariPanjang, infoPlatform, labelDurasi, labelPengingat, namaDepan, namaHari } from './util';
+import { zonaKantor } from '@/lib/zonaKantor';
 
 type Galat = Partial<Record<keyof IsianRapat | 'umum', string>>;
 
@@ -49,7 +50,7 @@ const JAM = Array.from({ length: 16 }, (_, i) => i + 6);
 const MENIT = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 
 function sekarangWib(): { ymd: string; menit: number } {
-  const p = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date());
+  const p = new Intl.DateTimeFormat('en-GB', { timeZone: zonaKantor(), year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date());
   const ambil = (t: string): string => p.find((x) => x.type === t)?.value ?? '00';
   return { ymd: `${ambil('year')}-${ambil('month')}-${ambil('day')}`, menit: Number(ambil('hour')) * 60 + Number(ambil('minute')) };
 }

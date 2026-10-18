@@ -78,7 +78,7 @@ class WorkspaceSettingsController extends Controller
                 ->values()
                 ->all(),
             'drive' => [
-                'enabled' => GoogleFeatures::enabled(),
+                'enabled' => GoogleFeatures::enabled($workspace->company_id),
                 'folder_url' => $workspace->drive_folder_id === null ? null : WorkspaceDriveListing::folderUrl($workspace->drive_folder_id),
                 'folder_name' => $workspace->driveFolderName(),
                 'access' => $driveStatus->summary($workspace),

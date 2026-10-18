@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Workspaces;
 use App\Domain\Google\GoogleFeatures;
 use App\Domain\Projects\Queries\ProjectMetrics;
 use App\Domain\Tasks\Enums\TaskStatusCategory;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Domain\Workspaces\Queries\WorkspaceDriveListing;
 use App\Domain\Workspaces\Queries\WorkspaceDriveStatus;
 use App\Domain\Workspaces\Queries\WorkspacePage;
@@ -39,7 +40,7 @@ class WorkspaceShowController extends Controller
     ): JsonResponse {
         Gate::authorize('view', $workspace);
 
-        $today = CarbonImmutable::now(config()->string('app.office_timezone'))->toDateString();
+        $today = CarbonImmutable::now(CurrentCompany::timezone())->toDateString();
         $open = Task::query()->where('workspace_id', $workspace->id)->whereNotIn('status_category', TaskStatusCategory::closedValues());
         $counts = $drive->counts($workspace);
         $membership = WorkspaceMember::query()->where('workspace_id', $workspace->id)->where('user_id', $user->id)->first();
@@ -67,7 +68,7 @@ class WorkspaceShowController extends Controller
             'favorit' => $membership?->favorited_at !== null,
             'read_only' => WorkspaceAccess::readOnly($workspace, $user, $policy),
             'can' => $page->abilities($workspace, $user) + [
-                'contribute_drive' => GoogleFeatures::enabled() && Gate::allows('create', [DriveFile::class, $workspace->id]),
+                'contribute_drive' => GoogleFeatures::enabled($workspace->company_id) && Gate::allows('create', [DriveFile::class, $workspace->id]),
             ],
             'counts' => [
                 'members' => $workspace->memberships()->count(),
@@ -78,7 +79,7 @@ class WorkspaceShowController extends Controller
                 'files' => $counts['files'],
             ],
             'drive' => [
-                'enabled' => GoogleFeatures::enabled(),
+                'enabled' => GoogleFeatures::enabled($workspace->company_id),
                 'access' => $driveStatus->summary($workspace),
             ],
             'project' => $workspace->isProject() ? [

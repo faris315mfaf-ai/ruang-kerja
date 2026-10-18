@@ -4,7 +4,7 @@
  * screen decisions. Tested in lib.test.ts. Contract:
  * docs/sesi/rapat-tamu-eksternal.md.
  */
-import { formatTime } from '@/lib/format';
+import { formatTime, officeZoneLabel } from '@/lib/format';
 import { officeDate, shortDate } from '../lib';
 import { countdownLabel } from '../video/lib';
 import type {
@@ -130,7 +130,7 @@ export type WindowNotice = {
 
 /**
  * Message when the room cannot be asked yet / any more, or null when open.
- * Times are shown in the office timezone with an explicit "WIB".
+ * Times are shown in the office timezone with its zone ("WIB", "WITA", "WIT").
  */
 export function windowNotice(
     window: GuestWindow | null | undefined,
@@ -144,7 +144,7 @@ export function windowNotice(
             tone: 'info',
             text: Number.isNaN(opens)
                 ? 'Ruang rapat belum dibuka. Coba lagi mendekati jam mulai.'
-                : `Ruang rapat dibuka pukul ${formatTime(opens)} WIB. ${countdownLabel(opens - now)}.`,
+                : `Ruang rapat dibuka pukul ${formatTime(opens)} ${officeZoneLabel()}. ${countdownLabel(opens - now)}.`,
         };
     }
 
@@ -380,7 +380,7 @@ export function linkExpiryLabel(
         return 'Tautan kedaluwarsa';
     }
 
-    return `Berlaku sampai ${shortDateTime(expires)} WIB`;
+    return `Berlaku sampai ${shortDateTime(expires)} ${officeZoneLabel()}`;
 }
 
 function shortDateTime(ms: number): string {

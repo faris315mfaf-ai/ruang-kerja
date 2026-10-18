@@ -15,7 +15,9 @@ use Illuminate\Support\Str;
  *   app(AuditLogger::class)->log('selfie.viewed', $attendanceLog);
  *   app(AuditLogger::class)->log('request.approved', $request, ['status' => 'waiting'], ['status' => 'approved']);
  *
- * Actor defaults to the signed-in user (null in console/queue). Secrets are never
+ * Actor defaults to the signed-in user (null in console/queue). The entry belongs
+ * to the actor's company, else the company context, else the subject's company
+ * (AuditLog::companyIdFor). Secrets are never
  * stored: sensitive keys and encrypted/hashed attributes are masked.
  */
 final class AuditLogger
@@ -57,6 +59,7 @@ final class AuditLogger
         $userAgent = $this->request->userAgent();
 
         return AuditLog::query()->create([
+            'company_id' => $actor !== null ? $actor->company_id : AuditLog::companyIdFor(null, null, null, $subject),
             'user_id' => $actor?->getKey(),
             'action' => $action,
             'auditable_type' => $subject?->getMorphClass(),

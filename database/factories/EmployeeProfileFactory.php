@@ -28,6 +28,8 @@ class EmployeeProfileFactory extends Factory
                 'relation' => 'Keluarga',
                 'phone' => fake()->numerify('+62813########'),
             ],
+            // The user's company (employee numbers are unique per company).
+            'company_id' => fn (array $attributes): mixed => User::query()->whereKey($attributes['user_id'])->value('company_id'),
         ];
     }
 }

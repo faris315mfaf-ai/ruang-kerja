@@ -3,12 +3,14 @@
 namespace App\Console\Commands;
 
 use App\Domain\Tasks\Actions\SendDeadlineNotifications;
+use App\Domain\Tenancy\Scheduling\ForEachCompany;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 /**
- * Scheduled daily at 07:00 office time (routes/console.php). Safe to run
+ * Scheduled daily at 07:00 office time of each company (routes/console.php,
+ * CompanySchedule); run by hand it covers every company. Safe to run
  * repeatedly: each reminder is sent once (NotificationHistory).
  */
 #[Signature('tasks:notify-deadlines')]
@@ -17,7 +19,11 @@ final class NotifyTaskDeadlinesCommand extends Command
 {
     public function handle(SendDeadlineNotifications $send): int
     {
-        $report = $send->handle();
+        $report = ['due_soon' => 0, 'overdue' => 0];
+
+        foreach (ForEachCompany::run(fn (): array => $send->handle()) as $sent) {
+            $report = ['due_soon' => $report['due_soon'] + $sent['due_soon'], 'overdue' => $report['overdue'] + $sent['overdue']];
+        }
 
         $this->info("{$report['due_soon']} pengingat tenggat besok, {$report['overdue']} pengingat terlambat.");
 

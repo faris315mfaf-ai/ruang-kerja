@@ -5,6 +5,7 @@ namespace App\Domain\Notes\Actions;
 use App\Domain\Notes\Services\CollabBridge;
 use App\Domain\Notes\Services\NoteContent;
 use App\Domain\Tasks\Services\RichText;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Note;
 use App\Models\NoteVersion;
 use App\Models\User;
@@ -57,7 +58,7 @@ final class RestoreNoteVersion
                 'note_id' => $locked->id,
                 'content' => $version->content,
                 'title' => $version->title,
-                'label' => 'Dipulihkan dari versi '.$version->created_at->timezone(config()->string('app.office_timezone'))->translatedFormat('j M Y H.i'),
+                'label' => 'Dipulihkan dari versi '.$version->created_at->timezone(CurrentCompany::timezone())->translatedFormat('j M Y H.i'),
                 'created_by' => $actor->id,
                 'created_at' => now(),
             ]);

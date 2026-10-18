@@ -6,6 +6,7 @@ use App\Domain\Tasks\Queries\TaskDetail;
 use App\Domain\Tasks\Services\TaskAudience;
 use App\Domain\Workspaces\Enums\WorkspaceRole;
 use App\Models\Comment;
+use App\Models\Company;
 use App\Models\User;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
@@ -75,4 +76,24 @@ it('dispatches digests without per-user settings or preference queries', functio
     $many = countQueries(fn () => app(DispatchDueDailyDigests::class)->handle(CarbonImmutable::now()));
 
     expect($many)->toBe($few);
+});
+
+it('checks task audience access and dispatches digests without per-row queries for another company', function () {
+    // Fase 1 multi-perusahaan: rows of a second company must not add queries.
+    Queue::fake();
+    $this->travelTo(CarbonImmutable::parse('2026-10-05 06:00', 'Asia/Jakarta'));
+    $other = Company::factory()->create(['timezone' => 'Asia/Makassar']);
+    $members = collect(range(1, 3))->map(fn () => memberWithRole($this->workspace, WorkspaceRole::Member)->id)->all();
+    $outsiders = User::factory()->count(3)->forCompany($other)->create()->modelKeys();
+    $audience = app(TaskAudience::class);
+    $audience->withAccess($this->workspace->fresh(), $outsiders); // warm the permission cache
+    app(DispatchDueDailyDigests::class)->handle(CarbonImmutable::now());
+
+    $access = countQueries(fn () => expect($audience->withAccess($this->workspace->fresh(), [...$members, ...$outsiders]))->toHaveCount(3));
+    $digests = countQueries(fn () => app(DispatchDueDailyDigests::class)->handle(CarbonImmutable::now()));
+
+    $more = User::factory()->count(9)->forCompany($other)->create()->modelKeys();
+
+    expect(countQueries(fn () => expect($audience->withAccess($this->workspace->fresh(), [...$members, ...$outsiders, ...$more]))->toHaveCount(3)))->toBe($access)
+        ->and(countQueries(fn () => app(DispatchDueDailyDigests::class)->handle(CarbonImmutable::now())))->toBe($digests);
 });

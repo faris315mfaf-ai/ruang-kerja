@@ -10,6 +10,8 @@ use App\Domain\Attendance\Models\AttendanceLog;
 use App\Domain\Attendance\Models\OfficeLocation;
 use App\Domain\Attendance\Services\StampedSelfie;
 use App\Domain\Notifications\Services\EvolutionWhatsApp;
+use App\Domain\Tenancy\Concerns\CompanyAware;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -39,10 +41,13 @@ use Throwable;
  * photo then carries the header and the points follow as a second job
  * (`part = points`), keeping a retry from ever posting the photo twice.
  * Disabled while the channel is off; a failing gateway never affects the
- * attendance record itself.
+ * attendance record itself. Sent only to the WhatsApp group of the
+ * employee's company (`companies.settings.whatsapp.group_jid`,
+ * CompanySettings); a company without a group gets no copy.
  */
 final class SendAttendanceWhatsApp implements ShouldQueue
 {
+    use CompanyAware;
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public const string PART_FULL = 'full';
@@ -68,9 +73,7 @@ final class SendAttendanceWhatsApp implements ShouldQueue
 
     public function handle(EvolutionWhatsApp $whatsapp, StampedSelfie $stamp): void
     {
-        $group = config('notifications.channels.whatsapp.group_jid');
-
-        if (! $whatsapp->enabled() || ! is_string($group) || $group === '') {
+        if (! $whatsapp->enabled()) {
             return;
         }
 
@@ -79,6 +82,13 @@ final class SendAttendanceWhatsApp implements ShouldQueue
             ->find($this->dayId);
 
         if ($day === null || ! $day->user()->exists()) {
+            return;
+        }
+
+        // Only the group of the employee's own company (Fase 1 multi-perusahaan).
+        $group = $whatsapp->attendanceGroupFor($day->user->company_id);
+
+        if ($group === null) {
             return;
         }
 
@@ -148,7 +158,7 @@ final class SendAttendanceWhatsApp implements ShouldQueue
     private static function headerLines(AttendanceDay $day, AttendanceLog $log, bool $withDuration): array
     {
         $in = $log->type === AttendanceLogType::CheckIn;
-        $at = (new CarbonImmutable($log->occurred_at))->setTimezone(config('app.office_timezone'));
+        $at = (new CarbonImmutable($log->occurred_at))->setTimezone(CurrentCompany::timezone());
 
         $lines = [
             $in ? '🟢 ABSEN MASUK' : '🔴 ABSEN PULANG',
@@ -161,7 +171,7 @@ final class SendAttendanceWhatsApp implements ShouldQueue
         // Pressed without internet: the stamp above is the device time of the
         // press; say when it actually reached the server.
         if ($log->flags->contains(LogFlag::Offline)) {
-            $received = (new CarbonImmutable($log->received_at ?? $log->created_at))->setTimezone(config('app.office_timezone'));
+            $received = (new CarbonImmutable($log->received_at ?? $log->created_at))->setTimezone(CurrentCompany::timezone());
             $lines[] = '⚠️ Absen offline — tersinkron '.$received->format('H.i');
         }
 

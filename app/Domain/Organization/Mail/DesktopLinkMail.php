@@ -20,6 +20,9 @@ final class DesktopLinkMail extends Mailable implements ShouldQueue
     public function __construct(
         public readonly string $recipientName,
         public readonly string $url,
+        // Recipient's company for the email header (Fase 1 multi-perusahaan);
+        // a queued mailable has no CompanyContext of its own.
+        public readonly ?string $companyName = null,
     ) {}
 
     public function envelope(): Envelope
@@ -35,6 +38,7 @@ final class DesktopLinkMail extends Mailable implements ShouldQueue
             with: [
                 'firstName' => str($this->recipientName)->before(' ')->toString(),
                 'url' => $this->url,
+                'companyName' => $this->companyName,
             ],
         );
     }

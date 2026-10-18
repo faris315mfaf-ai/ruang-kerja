@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Meetings;
 
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Validation\ValidationRule;
 
@@ -33,7 +34,7 @@ class ConflictsRequest extends MeetingRequest
 
     public function startsAt(): CarbonImmutable
     {
-        $start = CarbonImmutable::createFromFormat('Y-m-d H:i', $this->string('tanggal')->toString().' '.$this->string('mulai')->toString(), config()->string('app.office_timezone'));
+        $start = CarbonImmutable::createFromFormat('Y-m-d H:i', $this->string('tanggal')->toString().' '.$this->string('mulai')->toString(), CurrentCompany::timezone());
 
         return ($start instanceof CarbonImmutable ? $start : CarbonImmutable::now())->utc();
     }

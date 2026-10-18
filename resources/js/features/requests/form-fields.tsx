@@ -15,7 +15,7 @@ import { Input, fieldClasses } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { formatNumber } from '@/lib/format';
+import { formatNumber, officeZoneLabel } from '@/lib/format';
 import { dayUnit, formatDays } from '@/lib/requests';
 import { cn } from '@/lib/utils';
 import type { FormLeaveType } from '@/types/requests';
@@ -88,7 +88,8 @@ export function CutoffHint({ type }: { type: FormLeaveType | undefined }) {
             <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
             <span>
                 Pengajuan {type.name.toLowerCase()} untuk hari ini dikirim
-                sebelum pukul {time} WIB. Lewat itu hari ini tercatat alpha
+                sebelum pukul {time} {officeZoneLabel()}. Lewat itu hari ini
+                tercatat alpha
                 {closed
                     ? '; batas hari ini sudah lewat, pilih tanggal besok atau hubungi HR.'
                     : '.'}

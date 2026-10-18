@@ -1,19 +1,22 @@
-import { formatDate, OFFICE_TIMEZONE } from '@/lib/format';
+import { formatDate, officeDateFormat } from '@/lib/format';
 import type {
     BroadcastedNotification,
     InboxFilters,
     InboxNotification,
 } from '@/types/notifications';
 
-const calendarDay = new Intl.DateTimeFormat('en-CA', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    timeZone: OFFICE_TIMEZONE,
-});
+const calendarDay = (): Intl.DateTimeFormat =>
+    officeDateFormat('en-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    });
 
 function dayIndex(date: Date): number {
-    const [year, month, day] = calendarDay.format(date).split('-').map(Number);
+    const [year, month, day] = calendarDay()
+        .format(date)
+        .split('-')
+        .map(Number);
 
     return Math.round(Date.UTC(year, month - 1, day) / 86_400_000);
 }

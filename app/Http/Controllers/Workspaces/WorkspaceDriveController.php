@@ -20,7 +20,7 @@ class WorkspaceDriveController extends Controller
     public function sync(Workspace $workspace): RedirectResponse
     {
         Gate::authorize('update', $workspace);
-        GoogleFeatures::ensureEnabled();
+        GoogleFeatures::ensureEnabled($workspace->company_id);
 
         if ($workspace->drive_folder_id === null) {
             CreateDriveFolder::dispatch($workspace);

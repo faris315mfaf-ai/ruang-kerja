@@ -1,4 +1,4 @@
-import { OFFICE_TIMEZONE, toIsoDay } from '@/lib/format';
+import { officeDateFormat, toIsoDay } from '@/lib/format';
 import type { LeaveShortcut, LeaveShortcutType } from '@/types/attendance';
 
 /** "12:00" → "12.00" (Indonesian clock format used across the UI). */
@@ -6,16 +6,16 @@ export function cutoffText(value: string): string {
     return value.replace(':', '.');
 }
 
-const clock = new Intl.DateTimeFormat('en-GB', {
-    timeZone: OFFICE_TIMEZONE,
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-});
+const clock = (): Intl.DateTimeFormat =>
+    officeDateFormat('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+    });
 
 /** Minutes since midnight in office time. */
 function officeMinutes(now: Date): number {
-    const parts = clock.formatToParts(now);
+    const parts = clock().formatToParts(now);
     const part = (type: string) =>
         Number(parts.find((item) => item.type === type)?.value ?? 0);
 

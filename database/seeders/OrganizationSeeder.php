@@ -248,6 +248,7 @@ class OrganizationSeeder extends Seeder
             }
 
             EmployeeProfile::query()->updateOrCreate(['user_id' => $user->id], [
+                'company_id' => $company->id,
                 'employee_number' => sprintf('RK-%04d', $number),
                 'nik' => sprintf('3171%02d%010d', $number, 1_000_000 + $number),
                 'phone' => sprintf('+62812%08d', 10_000_000 + $number),

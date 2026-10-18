@@ -4,6 +4,7 @@ namespace App\Domain\Attendance\Actions;
 
 use App\Domain\Attendance\Models\Shift;
 use App\Domain\Attendance\Models\ShiftAssignment;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
 
@@ -15,7 +16,7 @@ final class DeleteShift
 {
     public function handle(Shift $shift): void
     {
-        $today = CarbonImmutable::now(config()->string('app.office_timezone'))->toDateString();
+        $today = CarbonImmutable::now(CurrentCompany::timezone())->toDateString();
 
         $inUse = ShiftAssignment::query()
             ->where('shift_id', $shift->id)

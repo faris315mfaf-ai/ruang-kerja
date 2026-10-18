@@ -3,6 +3,7 @@
 namespace App\Domain\Meetings\Queries;
 
 use App\Domain\Meetings\Data\Occurrence;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Resources\Meetings\MeetingPresenter;
 use App\Models\Meeting;
 use App\Models\MeetingActionItem;
@@ -25,7 +26,7 @@ final class AgendaQuery
      */
     public function forUser(User $viewer, ?CarbonImmutable $day = null): array
     {
-        $timezone = config()->string('app.office_timezone');
+        $timezone = CurrentCompany::timezone();
         $day = ($day ?? CarbonImmutable::now())->setTimezone($timezone);
         $from = $day->startOfWeek(CarbonImmutable::MONDAY)->startOfDay();
         $to = $from->addWeek();

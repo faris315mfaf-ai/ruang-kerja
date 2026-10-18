@@ -3,6 +3,7 @@
 namespace App\Domain\Meetings\Guests\Services;
 
 use App\Domain\Meetings\Enums\LobbyStatus;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Meeting;
 use App\Models\MeetingParticipant;
 use Carbon\CarbonImmutable;
@@ -115,7 +116,7 @@ final class GuestLinks
     {
         $now ??= CarbonImmutable::now();
         $cap = $now->addDays(max(1, (int) config('livekit.guest_link_max_days', 60)));
-        $timezone = config()->string('app.office_timezone');
+        $timezone = CurrentCompany::timezone();
         $after = max(0, (int) config('livekit.join_after_minutes', 120));
 
         if (! $meeting->isRecurring()) {

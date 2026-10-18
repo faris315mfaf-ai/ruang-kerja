@@ -18,7 +18,7 @@
 
 | Domain | Tabel |
 |---|---|
-| Organisasi & akses | `companies`, `divisions`, `teams`, `positions`, `users`, `employee_profiles`, `roles`*, `permissions`*, `model_has_roles`*, `audit_logs`, `password_reset_requests` |
+| Organisasi & akses | `companies`, `divisions`, `teams`, `positions`, `users`, `employee_profiles`, `roles`*, `permissions`*, `model_has_roles`*, `audit_logs`, `password_reset_requests`, `scheduled_runs` |
 | Absensi | `office_locations`, `shifts`, `shift_assignments`, `holidays`, `attendance_days`, `attendance_logs`, `qr_tokens`, `kiosks`, `attendance_consents` |
 | Pengajuan | `leave_types`, `leave_balances`, `leave_balance_adjustments`, `requests`, `request_sequences`, `request_approvals`, `approval_flows`, `approval_flow_steps`, `approval_delegations` |
 | Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_directions`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `task_plans`, `management_notes`, `comments`, `task_comment_reads`, `mentions`, `reactions`, `activities`, `saved_views` |
@@ -44,8 +44,19 @@
 | id | ulid PK | |
 | name | varchar(150) | |
 | google_domain | varchar(150) unique | domain Workspace yang diizinkan login, mis. `perusahaan.co.id` (disimpan huruf kecil) |
-| timezone | varchar(50) | default `Asia/Jakarta` |
+| timezone | varchar(50) | default `Asia/Jakarta`; zona IANA (divalidasi saat disimpan). Zona semua tanggal kantor & jadwal perusahaan ini (Fase 1 Langkah 2b) |
 | settings | jsonb | jam ringkasan harian, retensi selfie (bulan), dll. Default `{}`. Kunci **`attendance_windows`** (keputusan pemilik 13 Okt 2026, "Jam absen" di Admin › Lokasi, shift & hari libur): `{"check_in": {"from": "HH:MM", "until": "HH:MM"}, "check_out": {"from": "HH:MM", "until": "HH:MM"}}`, jam 24 jam zona kantor, batas **inklusif**; tiap batas boleh `null`, kunci tidak ada = tanpa batas. Satu pengaturan untuk seluruh perusahaan (bukan per shift), berlaku juga bagi karyawan tanpa shift; tidak berlaku untuk shift lintas tengah malam dan hari yang dibuka kemarin. Ditulis `SaveAttendanceWindows` (audit `attendance.windows_updated`) |
+
+Kunci integrasi per perusahaan (Fase 1 multi-perusahaan, 18 Okt 2026; dibaca lewat `App\Domain\Tenancy\Settings\CompanySettings`, ditulis `php artisan company:configure` → `ConfigureCompany`, audit `company.configured`; UI = Fase 3):
+
+| Kunci `settings` | Isi |
+|---|---|
+| `whatsapp.group_jid` | jid grup WhatsApp salinan absensi (`…@g.us`); kosong = absensi perusahaan ini tidak dikirim ke grup mana pun |
+| `whatsapp.enabled` | `false` = salinan absensi perusahaan ini mati walau grup terisi; tidak ada = nyala |
+| `google.shared_drive_id` | ID Shared Drive Google untuk folder workspace perusahaan; kosong = fitur Drive nonaktif untuk workspace perusahaan ini |
+| `google.shared_drive_name` | nama Shared Drive yang ditampilkan di tab File (bawaan `RuangKerja`) |
+
+Cadangan: selama perusahaan itu **satu-satunya** (perusahaan lain tidak ada/terhapus), nilai kosong memakai config global (`WHATSAPP_GROUP_JID`, `GOOGLE_SHARED_DRIVE_ID`, `GOOGLE_SHARED_DRIVE_NAME`); dengan dua perusahaan atau lebih, tidak pernah. Migrasi data `2026_10_23_235100_copy_integration_settings_to_first_company` menyalin nilai config itu ke perusahaan tertua (SPKD) bila kuncinya kosong (`down()` menghapusnya selama masih sama dengan config). Kredensial gateway Evolution & service account Google tetap global.
 
 `companies`, `divisions`, `teams`, `positions` memakai `deleted_at` (soft delete).
 
@@ -103,7 +114,7 @@ Tambahan akun & kata sandi (6 Okt 2026, migrasi `2026_10_12_100100_add_password_
 Tambahan perbaikan review Sprint 3–9 (#11): `deactivated_at` timestamptz null (migrasi `2026_10_07_300100_add_deactivated_at_to_users`), diisi `DeactivateEmployee` (nilai pertama dipertahankan saat berpindah inactive ↔ resigned), dikosongkan `ReactivateEmployee`; backfill dari audit `user.deactivated` terakhir, fallback `updated_at`. Rekap bulanan/ekspor payroll hanya menghitung tanggal `joined_at` … tanggal kantor `deactivated_at` (inklusif).
 
 ### employee_profiles
-`user_id` PK/FK (cascade), `employee_number` varchar(30) unique null, `nik` text null (encrypted, disembunyikan dari serialisasi), `phone` (untuk WA), `birth_date`, `address`, `emergency_contact` jsonb (`{name, relation, phone}`). Dipisah agar data pribadi tidak ikut ter-load di setiap query `users`.
+`user_id` PK/FK (cascade), `company_id` FK companies (cascade; denormal dari `users`, Fase 1 multi-perusahaan, migrasi `2026_10_23_210300_add_company_id_to_employee_profiles`), `employee_number` varchar(30) null **unik per perusahaan `(company_id, employee_number)`** (sebelumnya unik global; form karyawan & impor memvalidasi dalam perusahaan pelaku), `nik` text null (encrypted, disembunyikan dari serialisasi), `phone` (untuk WA), `birth_date`, `address`, `emergency_contact` jsonb (`{name, relation, phone}`). Dipisah agar data pribadi tidak ikut ter-load di setiap query `users`.
 
 ### Peran global (spatie/laravel-permission)
 Peran awal: `super_admin`, `direksi`, `hr`, `kepala_divisi`, `anggota`. Satu user boleh punya beberapa peran.
@@ -137,6 +148,7 @@ Tidak ada `Gate::before` untuk Super Admin: workspace pribadi & selfie tetap ter
 | Kolom | Tipe | Keterangan |
 |---|---|---|
 | id | ulid PK | |
+| company_id | FK companies null (nullOnDelete) | **Fase 1 multi-perusahaan** (migrasi `2026_10_23_210100_add_company_id_to_audit_logs`): perusahaan pemilik entri = perusahaan pelaku, else konteks perusahaan (job/webhook), else perusahaan subjek (langsung atau lewat `user_id`/`workspace_id`/`division_id`; `AuditLog::companyIdFor`). Null = entri platform, tidak tampil di halaman audit perusahaan mana pun |
 | user_id | FK users null | pelaku |
 | action | varchar(80) | mis. `attendance.corrected`, `request.approved`, `selfie.viewed` |
 | auditable_type / auditable_id | morph | objek |
@@ -145,7 +157,19 @@ Tidak ada `Gate::before` untuk Super Admin: workspace pribadi & selfie tetap ter
 | user_agent | varchar(512) null | |
 | created_at | timestamptz | append-only, tanpa update (model menolak update) |
 
-Indeks: `(auditable_type, auditable_id)`, `(action)`, `(created_at)`, `(user_id, created_at)`. `auditable_type` berisi nama kelas model (tanpa morph map).
+Indeks: `(auditable_type, auditable_id)`, `(action)`, `(created_at)`, `(user_id, created_at)`, `(company_id, created_at)`. `auditable_type` berisi nama kelas model (tanpa morph map). Visibilitas (`AuditLog::visibleTo`, `AuditLogPolicy::view`): `audit.view` **dan** `company_id` = perusahaan penonton — entri sistem (tanpa pelaku) perusahaan lain tidak terlihat (celah C1, `docs/sesi/fase1-celah.md`). Backfill: perusahaan pelaku → perusahaan subjek → bila hanya ada satu perusahaan, semua sisa ke perusahaan itu.
+
+### scheduled_runs (penjadwal per perusahaan, Fase 1 Langkah 2b)
+Klaim tugas terjadwal berjam lokal per perusahaan (migrasi `2026_10_23_220200_create_scheduled_runs_table`, `App\Domain\Tenancy\Scheduling\CompanySchedule`, `docs/ARCHITECTURE.md` §3.9).
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| task | varchar(80) | nama tugas (`attendance:close-day`, kelas job, …) |
+| company_id | FK companies | cascadeOnDelete |
+| local_date | date | tanggal kantor **target** tugas (zona `companies.timezone`): tanggal jalan, atau tanggal kemarin bila jendela kejar melewati tengah malam (`LocalTask::dueTarget`, mis. snapshot 23.55 yang baru jalan 00.20) |
+| ran_at | timestamptz | |
+
+PK `(task, company_id, local_date)` — `INSERT … ON CONFLICT DO NOTHING` sebelum menjalankan tugas, jadi satu kali per perusahaan per tanggal lokal walau scheduler berjalan berulang/di beberapa server; dihapus bila tugas gagal (diulang 5 menit kemudian). Indeks `(local_date)`; baris > 60 hari dihapus harian. Tanpa model Eloquent. `companies.timezone` wajib zona IANA (divalidasi saat disimpan, `OfficeTimezone`).
 
 ### password_reset_requests (akun & kata sandi, 6 Okt 2026)
 "Lupa kata sandi" dengan persetujuan HR (migrasi `2026_10_12_100200_create_password_reset_requests_table`, model `PasswordResetRequest`, Policy `PasswordResetRequestPolicy`).
@@ -317,7 +341,8 @@ Tambahan Fitur pengajuan: `opening_days` numeric(5,1) default 0 (**saldo awal**,
 | Kolom | Tipe | Keterangan |
 |---|---|---|
 | id | ulid PK | |
-| number | varchar null unique | mis. `CUT-2026-10-0012`; diisi saat pertama dikirim (draf belum bernomor) |
+| company_id | FK companies (restrict) | **Fase 1 multi-perusahaan** (migrasi `2026_10_23_210200_add_company_id_to_requests_and_sequences`): denormal dari perusahaan pemohon (backfill dari `users`; diisi `RequestWriter::fill`, hook `creating`, dan factory) |
+| number | varchar null | mis. `CUT-2026-10-0012`; diisi saat pertama dikirim (draf belum bernomor). **Unik `(company_id, number)`** (sebelumnya unik global): setiap perusahaan memulai `CUT-2026-10` dari 0001 |
 | user_id | FK | pemohon |
 | leave_type_id | FK | jenis |
 | start_at / end_at | timestamptz | lembur & izin memakai jam. Cuti memakai hari penuh (00.00–23.59.59 waktu kantor). CHECK `end_at >= start_at` |
@@ -336,7 +361,7 @@ Tambahan Fitur pengajuan: `opening_days` numeric(5,1) default 0 (**saldo awal**,
 | cancel_reason | text null | **tambahan**: alasan wajib (min. 10 karakter) saat HR membatalkan pengajuan yang **sudah disetujui**; null bila dibatalkan pemohon. Tampil in-app saja (email/WA tidak memuat isinya), disembunyikan dari penyetuju pengganti untuk pengajuan sakit |
 
 ### request_sequences (tambahan Sprint 4)
-`id`, `key` unik (mis. `CUT-2026-10`), `last_number`. Nomor diambil dengan satu `INSERT … ON CONFLICT (key) DO UPDATE SET last_number = last_number + 1 RETURNING` (atomik, aman dari race condition). Periode = bulan pengiriman (waktu kantor).
+`id`, `company_id` FK companies (cascade), `key` (mis. `CUT-2026-10`), `last_number`. **Unik `(company_id, key)`** (Fase 1 multi-perusahaan; sebelumnya `key` unik global sehingga perusahaan lain berbagi penghitung). Nomor diambil dengan satu `INSERT … ON CONFLICT (company_id, key) DO UPDATE SET last_number = last_number + 1 RETURNING` (atomik, aman dari race condition). Periode = bulan pengiriman (waktu kantor). Backfill: satu perusahaan → semua penghitung miliknya; beberapa perusahaan → dibangun ulang dari nomor tertinggi per perusahaan. Rollback menyisakan penghitung tertinggi per `key` dan gagal bila dua perusahaan sudah memakai nomor yang sama.
 
 ### approval_flows / approval_flow_steps
 `approval_flows`: `id`, `company_id`, `name`, **`skip_self_approval`** bool (default true; mati = naik ke atasan pemohon), **`allow_delegation`** bool (default true), `deleted_at`. Alur bernama `Default` = cadangan perusahaan.

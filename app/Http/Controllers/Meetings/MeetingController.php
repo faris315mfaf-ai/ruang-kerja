@@ -18,6 +18,7 @@ use App\Domain\Meetings\Services\VideoRooms;
 use App\Domain\Meetings\Transcripts\Services\NotulenConfig;
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Organization\Enums\UserStatus;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Meetings\ConflictsRequest;
 use App\Http\Requests\Meetings\OccurrenceRequest;
@@ -49,7 +50,7 @@ class MeetingController extends Controller
 
         $week = $request->query('minggu');
         $day = is_string($week) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $week) === 1
-            ? CarbonImmutable::parse($week, config()->string('app.office_timezone'))
+            ? CarbonImmutable::parse($week, CurrentCompany::timezone())
             : null;
 
         return Inertia::render('meetings/index', [
@@ -209,7 +210,7 @@ class MeetingController extends Controller
      */
     private function values(Meeting $meeting): array
     {
-        $timezone = config()->string('app.office_timezone');
+        $timezone = CurrentCompany::timezone();
         $start = $meeting->starts_at->setTimezone($timezone);
 
         return [

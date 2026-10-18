@@ -2,13 +2,14 @@
 import { ApiError } from '@/api/client';
 import type { KodeTolakVideo } from '@/api/video';
 import { jam } from '@/lib/format';
+import { formatKantor } from '@/lib/zonaKantor';
 
-const HARI = new Intl.DateTimeFormat('id-ID', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Jakarta' });
+const HARI = (): Intl.DateTimeFormat => formatKantor('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
 
 /** "Sel, 13 Okt · 09.00–10.00" */
 export function rentangRapat(mulai: string, selesai: string): string {
   const d = new Date(mulai);
-  const hari = Number.isNaN(d.getTime()) ? '' : HARI.format(d).replace('.', '');
+  const hari = Number.isNaN(d.getTime()) ? '' : HARI().format(d).replace('.', '');
   return `${hari} · ${jam(mulai)}–${jam(selesai)}`;
 }
 

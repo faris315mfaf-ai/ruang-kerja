@@ -9,6 +9,7 @@ use App\Domain\Requests\Support\OfficeTime;
 use App\Models\Objective;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -35,7 +36,9 @@ final class ObjectiveDetail
             'keyResults.owner:id,name',
             'keyResults.checkins' => fn (HasMany $checkins) => $checkins->with('author:id,name')->orderBy('checked_on')->orderBy('created_at'),
             'keyResults.tasks' => fn (BelongsToMany $tasks) => $tasks
-                ->whereIn('tasks.id', Task::query()->visibleTo($viewer)->select('tasks.id'))
+                // Same rule as Task::visibleTo, on the linked rows' workspace instead of a self-join on
+                // all tasks (`tasks.id IN (every visible task)` could run for minutes with more data).
+                ->whereIn('tasks.workspace_id', Workspace::query()->visibleTo($viewer)->select('id'))
                 ->with(['workspace:id,key', 'assignees:id,name'])
                 ->orderBy('tasks.due_date')
                 ->orderBy('tasks.id'),

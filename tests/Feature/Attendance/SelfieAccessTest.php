@@ -9,6 +9,7 @@ use App\Models\Division;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\AttendanceFixtures as F;
@@ -38,6 +39,17 @@ test('the selfie is stored privately and only served through the signed route', 
     $this->actingAs($this->employee)->get($this->url)
         ->assertOk()
         ->assertHeader('Cache-Control', 'max-age=0, no-store, private');
+});
+
+test('new selfies live under the company directory; older paths are still served', function () {
+    expect($this->log->selfie_path)->toStartWith("company/{$this->employee->company_id}/");
+
+    // A selfie stored before the company prefix (Fase 1): its path stays in the row.
+    $legacy = '2026/10/'.$this->employee->id.'/lama.jpg';
+    Storage::disk('selfies')->move((string) $this->log->selfie_path, $legacy);
+    DB::table('attendance_logs')->where('id', $this->log->id)->update(['selfie_path' => $legacy]);
+
+    $this->actingAs($this->employee)->get($this->url)->assertOk();
 });
 
 test('the selfie cannot be accessed without a signed URL', function () {

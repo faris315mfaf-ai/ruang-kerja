@@ -56,7 +56,7 @@ test('on time: check-in before the start inside the radius', function () {
         ->and($log->device_fingerprint)->toBe('device-1');
 
     Storage::disk('selfies')->assertExists((string) $log->selfie_path);
-    expect($log->selfie_path)->toStartWith("2026/10/{$user->id}/");
+    expect($log->selfie_path)->toStartWith("company/{$user->company_id}/2026/10/{$user->id}/");
 
     Event::assertDispatched(AttendanceRecorded::class, fn (AttendanceRecorded $event) => $event->log->is($log));
 });

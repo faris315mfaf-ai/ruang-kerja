@@ -2,6 +2,7 @@
 
 namespace App\Domain\Attendance\Support;
 
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 
@@ -13,7 +14,7 @@ final class OfficeClock
 {
     public static function timezone(): string
     {
-        return config()->string('app.office_timezone');
+        return CurrentCompany::timezone();
     }
 
     public static function local(CarbonInterface $value): CarbonImmutable

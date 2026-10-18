@@ -8,6 +8,7 @@ use App\Domain\Meetings\Enums\MeetingPlatform;
 use App\Domain\Meetings\Guests\GuestState;
 use App\Domain\Meetings\Services\MeetingOccurrences;
 use App\Domain\Meetings\Services\VideoRooms;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Meeting;
 use App\Models\MeetingParticipant;
 use Carbon\CarbonImmutable;
@@ -70,7 +71,7 @@ final class GuestAccess
             return $occurrence;
         }
 
-        $day = CarbonImmutable::parse($occurrence->date, config()->string('app.office_timezone'))->addDay();
+        $day = CarbonImmutable::parse($occurrence->date, CurrentCompany::timezone())->addDay();
 
         for ($i = 0; $i < self::LOOKAHEAD_DAYS; $i++, $day = $day->addDay()) {
             $next = $this->occurrences->at($meeting, $day->toDateString());

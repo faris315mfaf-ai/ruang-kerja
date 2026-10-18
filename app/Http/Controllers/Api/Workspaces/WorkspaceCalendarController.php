@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Workspaces;
 
 use App\Domain\Tasks\Enums\TaskStatusCategory;
 use App\Domain\Tasks\Queries\BoardTasks;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\WorkspaceAccess;
 use App\Http\Resources\Api\WorkspaceCard;
@@ -39,7 +40,7 @@ class WorkspaceCalendarController extends Controller
             'bulan.regex' => 'Bulan harus berformat YYYY-MM, mis. 2026-10.',
         ]);
 
-        $tz = config()->string('app.office_timezone');
+        $tz = CurrentCompany::timezone();
         $today = CarbonImmutable::now($tz)->startOfDay();
         $month = $request->filled('bulan')
             ? CarbonImmutable::createFromFormat('!Y-m', $request->string('bulan')->toString(), $tz)

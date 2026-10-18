@@ -1,12 +1,17 @@
 /**
- * Display formatting helpers (locale id-ID, office timezone Asia/Jakarta).
+ * Display formatting helpers (locale id-ID, office timezone of the company).
  *
  * Timestamps are stored in UTC on the server; every date/time shown in the UI
  * must go through these helpers so it is rendered in the office timezone,
  * regardless of the viewer's device timezone.
+ *
+ * The office timezone is the signed-in company's `companies.timezone` (shared
+ * prop `officeTimezone`, set in app.tsx; Fase 1 multi-perusahaan), Asia/Jakarta
+ * until the server says otherwise.
  */
 
-export const OFFICE_TIMEZONE = 'Asia/Jakarta';
+/** Office timezone of SPKD, and the fallback before/without a company. */
+export const DEFAULT_OFFICE_TIMEZONE = 'Asia/Jakarta';
 
 export const LOCALE = 'id-ID';
 
@@ -18,36 +23,157 @@ const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 const DAY_MS = 24 * HOUR;
 
-const dateParts = new Intl.DateTimeFormat(LOCALE, {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: OFFICE_TIMEZONE,
-});
+let currentOfficeTimezone = DEFAULT_OFFICE_TIMEZONE;
 
-const longDateParts = new Intl.DateTimeFormat(LOCALE, {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: OFFICE_TIMEZONE,
-});
+/** The office timezone used by every helper below. */
+export function officeTimezone(): string {
+    return currentOfficeTimezone;
+}
 
-const timeParts = new Intl.DateTimeFormat(LOCALE, {
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-    timeZone: OFFICE_TIMEZONE,
-});
+/**
+ * Sets the office timezone (shared prop `officeTimezone`). Values that are not
+ * a timezone the browser knows are ignored, keeping the previous one.
+ */
+export function setOfficeTimezone(timezone: unknown): void {
+    if (
+        typeof timezone !== 'string' ||
+        timezone === '' ||
+        timezone === currentOfficeTimezone
+    ) {
+        return;
+    }
+
+    try {
+        new Intl.DateTimeFormat('en-US', { timeZone: timezone });
+    } catch {
+        return;
+    }
+
+    currentOfficeTimezone = timezone;
+}
+
+const officeFormats = new Map<string, Intl.DateTimeFormat>();
+
+/**
+ * `Intl.DateTimeFormat` in the office timezone, created once per timezone,
+ * locale and options. Call it where the format is used (not at module load),
+ * so a timezone set later is respected.
+ */
+export function officeDateFormat(
+    locale: string,
+    options: Omit<Intl.DateTimeFormatOptions, 'timeZone'>,
+): Intl.DateTimeFormat {
+    const key = `${currentOfficeTimezone}|${locale}|${JSON.stringify(options)}`;
+    let format = officeFormats.get(key);
+
+    if (format === undefined) {
+        format = new Intl.DateTimeFormat(locale, {
+            ...options,
+            timeZone: currentOfficeTimezone,
+        });
+        officeFormats.set(key, format);
+    }
+
+    return format;
+}
+
+/**
+ * UTC offset of the office timezone on an office date ("YYYY-MM-DD"), as
+ * "+07:00", for building ISO instants from office date + clock time.
+ */
+export function officeUtcOffset(day: string): string {
+    const noon = Date.parse(`${day}T12:00:00Z`);
+
+    if (Number.isNaN(noon)) {
+        return '+00:00';
+    }
+
+    const parts = officeDateFormat('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+    }).formatToParts(new Date(noon));
+    const part = (type: Intl.DateTimeFormatPartTypes): number =>
+        Number(parts.find((item) => item.type === type)?.value ?? 0);
+    const local = Date.UTC(
+        part('year'),
+        part('month') - 1,
+        part('day'),
+        part('hour'),
+        part('minute'),
+    );
+    const minutes = Math.round((local - noon) / MINUTE);
+    const abs = Math.abs(minutes);
+    const pad = (value: number): string => String(value).padStart(2, '0');
+
+    return `${minutes < 0 ? '-' : '+'}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+}
+
+/** Indonesian zone abbreviations of the office timezones in use. */
+const ZONE_LABELS: Record<string, string> = {
+    'Asia/Jakarta': 'WIB',
+    'Asia/Pontianak': 'WIB',
+    'Asia/Makassar': 'WITA',
+    'Asia/Ujung_Pandang': 'WITA',
+    'Asia/Jayapura': 'WIT',
+};
+
+/**
+ * Zone shown after an office clock time ("08.00 WIB", "10.00 WITA"):
+ * WIB/WITA/WIT, else "UTC+hh:mm".
+ */
+export function officeZoneLabel(
+    timezone: string = currentOfficeTimezone,
+): string {
+    const label = ZONE_LABELS[timezone];
+
+    if (label !== undefined) {
+        return label;
+    }
+
+    const name = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        timeZoneName: 'longOffset',
+    })
+        .formatToParts(new Date())
+        .find((part) => part.type === 'timeZoneName')?.value;
+
+    return (name ?? 'GMT').replace('GMT', 'UTC');
+}
+
+const dateParts = (): Intl.DateTimeFormat =>
+    officeDateFormat(LOCALE, {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    });
+
+const longDateParts = (): Intl.DateTimeFormat =>
+    officeDateFormat(LOCALE, {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
+
+const timeParts = (): Intl.DateTimeFormat =>
+    officeDateFormat(LOCALE, {
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+    });
 
 // en-CA yields an ISO-like "YYYY-MM-DD", used only to compute calendar days.
-const calendarDay = new Intl.DateTimeFormat('en-CA', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    timeZone: OFFICE_TIMEZONE,
-});
+const calendarDay = (): Intl.DateTimeFormat =>
+    officeDateFormat('en-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    });
 
 const numberFormat = new Intl.NumberFormat(LOCALE, {
     maximumFractionDigits: 2,
@@ -81,7 +207,7 @@ export function formatDate(value: DateInput | null | undefined): string {
     }
 
     // Assembled from parts so the output does not depend on ICU punctuation.
-    const parts = dateParts.formatToParts(date);
+    const parts = dateParts().formatToParts(date);
 
     return `${part(parts, 'weekday')}, ${part(parts, 'day')} ${part(parts, 'month')} ${part(parts, 'year')}`;
 }
@@ -94,7 +220,7 @@ export function formatLongDate(value: DateInput | null | undefined): string {
         return EMPTY;
     }
 
-    const parts = longDateParts.formatToParts(date);
+    const parts = longDateParts().formatToParts(date);
 
     return `${part(parts, 'weekday')}, ${part(parts, 'day')} ${part(parts, 'month')} ${part(parts, 'year')}`;
 }
@@ -123,7 +249,7 @@ export function toIsoDay(value: DateInput | null | undefined): string | null {
 
     const date = toDate(value);
 
-    return date ? calendarDay.format(date) : null;
+    return date ? calendarDay().format(date) : null;
 }
 
 function isoDayParts(
@@ -193,7 +319,7 @@ export function formatTime(value: DateInput | null | undefined): string {
         return EMPTY;
     }
 
-    const parts = timeParts.formatToParts(date);
+    const parts = timeParts().formatToParts(date);
 
     return `${part(parts, 'hour')}.${part(parts, 'minute')}`;
 }
@@ -211,7 +337,10 @@ export function formatDateTime(value: DateInput | null | undefined): string {
 
 /** Calendar day index (days since epoch) of a date in the office timezone. */
 function officeDayIndex(date: Date): number {
-    const [year, month, day] = calendarDay.format(date).split('-').map(Number);
+    const [year, month, day] = calendarDay()
+        .format(date)
+        .split('-')
+        .map(Number);
 
     return Math.round(Date.UTC(year, month - 1, day) / DAY_MS);
 }

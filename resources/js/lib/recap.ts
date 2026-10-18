@@ -5,7 +5,7 @@ import type {
     RecapRow,
 } from '@/types/attendance';
 import { TONE_CLASSES } from './attendance';
-import { OFFICE_TIMEZONE } from './format';
+import { officeDateFormat } from './format';
 import type { StatusTone } from './attendance';
 
 /**
@@ -167,10 +167,9 @@ export function officeMonth(iso: string): string {
         return '1970-01';
     }
 
-    return new Intl.DateTimeFormat('en-CA', {
+    return officeDateFormat('en-CA', {
         year: 'numeric',
         month: '2-digit',
-        timeZone: OFFICE_TIMEZONE,
     })
         .format(date)
         .slice(0, 7);

@@ -8,16 +8,20 @@ use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Notifications\Services\NotificationDispatchLog;
 use App\Domain\Reports\Notifications\DailyReportReminder;
 use App\Domain\Reports\Support\ReportDay;
+use App\Domain\Tenancy\Concerns\CompanyAware;
+use App\Domain\Tenancy\Scheduling\ForEachCompany;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\DailyReport;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Queue\Queueable;
 
 /**
- * 16.30 office time on weekdays (routes/console.php): reminds every active
+ * 16.30 office time of each company on weekdays (routes/console.php): reminds every active
  * employee who is scheduled to work today (shift pattern/override, not a
  * holiday, not on approved leave without a check-in) and has not sent
  * today's daily report. Once per person and date (notification_dispatch_logs,
@@ -25,18 +29,31 @@ use Illuminate\Foundation\Queue\Queueable;
  */
 final class SendDailyReportReminders implements ShouldBeUnique, ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $uniqueFor = 3600;
 
+    /** One lock per company (queued per company by CompanySchedule). */
+    public function uniqueId(): string
+    {
+        return $this->companyUniqueId();
+    }
+
     public function handle(ScheduleResolver $schedules, NotificationDispatchLog $log): void
+    {
+        ForEachCompany::run(fn () => $this->remind($schedules, $log));
+    }
+
+    private function remind(ScheduleResolver $schedules, NotificationDispatchLog $log): void
     {
         $now = CarbonImmutable::now();
         $today = ReportDay::today($now);
-        $date = CarbonImmutable::parse($today, config()->string('app.office_timezone'));
+        $date = CarbonImmutable::parse($today, CurrentCompany::timezone());
 
         User::query()
             ->active()
+            ->when(CurrentCompany::id(), fn (Builder $query, string $company) => $query->where('company_id', $company))
             ->whereNotIn('id', DailyReport::query()->whereDate('report_date', $today)->whereNotNull('submitted_at')->select('user_id'))
             ->orderBy('id')
             ->chunk(200, function (Collection $users) use ($schedules, $log, $date, $today): void {

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Panel } from '@/components/ui/panel';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { formatTime } from '@/lib/format';
+import { formatTime, officeZoneLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import briefingRoutes from '@/routes/briefings';
 import { submitBriefingForm } from './api';
@@ -126,8 +126,8 @@ function RecorderCard({
     const body = (
         <>
             <p className="text-[15px] leading-[22px] text-text-muted">
-                Jendela catat {windowLabel(period)} WIB. Notulensi terkirim ke
-                semua karyawan lewat Inbox.
+                Jendela catat {windowLabel(period)} {officeZoneLabel()}.
+                Notulensi terkirim ke semua karyawan lewat Inbox.
             </p>
 
             {(delegation !== undefined || appointedBy !== null) && (

@@ -24,7 +24,7 @@ final class SyncUserDriveAccess
      */
     public function handle(User $user): int
     {
-        if (! GoogleFeatures::enabled()) {
+        if (! GoogleFeatures::enabled($user->company_id)) {
             return 0;
         }
 

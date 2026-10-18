@@ -14,6 +14,7 @@ use Illuminate\Support\Carbon;
  * Personal data of an employee (1:1 with users, PK = user_id). Never log `nik`.
  *
  * @property string $user_id
+ * @property string $company_id
  * @property string|null $employee_number
  * @property string|null $nik
  * @property string|null $phone
@@ -24,7 +25,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read User $user
  */
-#[Fillable(['user_id', 'employee_number', 'nik', 'phone', 'birth_date', 'address', 'emergency_contact'])]
+#[Fillable(['user_id', 'company_id', 'employee_number', 'nik', 'phone', 'birth_date', 'address', 'emergency_contact'])]
 #[Hidden(['nik'])]
 class EmployeeProfile extends Model
 {
@@ -36,6 +37,21 @@ class EmployeeProfile extends Model
     public $incrementing = false;
 
     protected $keyType = 'string';
+
+    protected static function booted(): void
+    {
+        // Denormalised from the user (Fase 1 multi-perusahaan): employee
+        // numbers are unique per company.
+        static::creating(function (self $profile): void {
+            if (($profile->getAttributes()['company_id'] ?? null) === null) {
+                $company = User::query()->whereKey($profile->user_id)->value('company_id');
+
+                if (is_string($company)) {
+                    $profile->company_id = $company;
+                }
+            }
+        });
+    }
 
     /**
      * @return array<string, string>

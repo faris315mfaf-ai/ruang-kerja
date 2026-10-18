@@ -5,6 +5,7 @@ namespace App\Domain\Automation\Jobs;
 use App\Domain\Automation\Actions\RunAutomationRule;
 use App\Domain\Automation\Enums\RuleTriggerType;
 use App\Domain\Automation\Services\RuleMatcher;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\AutomationRule;
 use App\Models\Task;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -18,6 +19,7 @@ use Illuminate\Foundation\Queue\Queueable;
  */
 final class RunTaskAutomations implements ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $tries = 3;

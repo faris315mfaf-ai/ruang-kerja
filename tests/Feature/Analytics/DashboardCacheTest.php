@@ -69,7 +69,7 @@ it('builds keys from view, viewer, block and filter', function () {
 
     expect($a)->not->toBe($b)
         ->and($a)->toBe($c)
-        ->and($a)->toStartWith('analytics:v1:divisi:'.$this->org['kadiv']->id.':metrics:');
+        ->and($a)->toStartWith('analytics:v2:'.$this->org['kadiv']->company_id.':divisi:'.$this->org['kadiv']->id.':metrics:');
 });
 
 it('does not cache the live attendance block', function () {

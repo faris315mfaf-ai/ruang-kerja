@@ -4,6 +4,7 @@ namespace App\Domain\Meetings\Jobs;
 
 use App\Domain\Meetings\Services\LiveKitRoomService;
 use App\Domain\Meetings\Services\VideoRooms;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\MeetingAttendance;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -19,6 +20,7 @@ use RuntimeException;
  */
 final class RemoveUserFromVideoRooms implements ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $tries = 3;

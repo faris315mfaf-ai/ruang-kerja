@@ -5,6 +5,7 @@ namespace App\Domain\Briefings\Queries;
 use App\Domain\Briefings\Enums\BriefingPeriod;
 use App\Domain\Briefings\Services\BriefingRecorders;
 use App\Domain\Notifications\Support\IndonesianDate;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Briefing;
 use App\Models\BriefingDelegation;
 use App\Models\User;
@@ -35,7 +36,7 @@ final class BriefingWindow
         }
 
         $now ??= CarbonImmutable::now();
-        $nowOffice = $now->setTimezone(config()->string('app.office_timezone'));
+        $nowOffice = $now->setTimezone(CurrentCompany::timezone());
         $date = $nowOffice->toDateString();
         $recorder = BriefingRecorders::isRecorder($viewer);
 

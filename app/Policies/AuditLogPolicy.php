@@ -7,7 +7,8 @@ use App\Models\AuditLog;
 use App\Models\User;
 
 /**
- * Audit logs are read-only and visible to Super Admin only (audit.view).
+ * Audit logs are read-only and visible to Super Admin only (audit.view), and
+ * only the entries of the auditor's own company.
  */
 class AuditLogPolicy
 {
@@ -18,7 +19,9 @@ class AuditLogPolicy
 
     public function view(User $actor, AuditLog $log): bool
     {
-        return $actor->hasPermission(Permission::AuditView);
+        return $actor->hasPermission(Permission::AuditView)
+            && $log->company_id !== null
+            && $log->company_id === $actor->company_id;
     }
 
     public function create(User $actor): bool

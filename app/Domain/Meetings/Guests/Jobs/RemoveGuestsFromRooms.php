@@ -5,6 +5,7 @@ namespace App\Domain\Meetings\Guests\Jobs;
 use App\Domain\Meetings\Guests\Actions\IssueGuestVideoToken;
 use App\Domain\Meetings\Services\LiveKitRoomService;
 use App\Domain\Meetings\Services\VideoRooms;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\Meeting;
 use App\Models\MeetingAttendance;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -21,6 +22,7 @@ use RuntimeException;
  */
 final class RemoveGuestsFromRooms implements ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $tries = 3;

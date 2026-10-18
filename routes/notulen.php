@@ -10,6 +10,7 @@ use App\Http\Middleware\EnsureTwoFactorForSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\LimitRequestBody;
+use App\Http\Middleware\ResolveCompanyContext;
 use App\Http\Middleware\RestrictCredentialRoutes;
 use App\Http\Middleware\RestrictKioskDevice;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -52,6 +53,7 @@ $serverToServer = [
     'auth.session',
     AuthenticateSession::class,
     EnsureActiveEmployee::class,
+    ResolveCompanyContext::class,
     RestrictKioskDevice::class,
     RestrictCredentialRoutes::class,
     EnsureTwoFactorForSuperAdmin::class,

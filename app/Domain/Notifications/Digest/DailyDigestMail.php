@@ -4,6 +4,7 @@ namespace App\Domain\Notifications\Digest;
 
 use App\Domain\Notifications\Digest\Data\DailyDigest;
 use App\Domain\Notifications\Support\IndonesianDate;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -62,7 +63,7 @@ final class DailyDigestMail extends Mailable
 
     private function greeting(): string
     {
-        $hour = now()->setTimezone((string) config('app.office_timezone'))->hour;
+        $hour = now()->setTimezone(CurrentCompany::timezone())->hour;
 
         return match (true) {
             $hour < 11 => 'Selamat pagi',

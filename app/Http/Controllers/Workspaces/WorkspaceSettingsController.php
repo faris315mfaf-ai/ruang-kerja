@@ -38,7 +38,7 @@ class WorkspaceSettingsController extends Controller
             ...$props,
             'member_details' => fn (): array => $this->memberDetails($workspace, $driveStatus->members($workspace)),
             'drive' => fn (): array => [
-                'enabled' => GoogleFeatures::enabled(),
+                'enabled' => GoogleFeatures::enabled($workspace->company_id),
                 'folder_url' => $workspace->drive_folder_id === null ? null : WorkspaceDriveListing::folderUrl($workspace->drive_folder_id),
                 'folder_name' => $workspace->driveFolderName(),
                 'access' => $driveStatus->summary($workspace),

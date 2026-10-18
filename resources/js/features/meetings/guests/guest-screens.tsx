@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { officeZoneLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { officeDate, shortDate, timeRange } from '../lib';
 import { GUEST_NAME_MAX } from './lib';
@@ -55,9 +56,9 @@ const DEFAULT_NOTICE = [
     'Penyelenggara mencatat nama, alamat IP, dan waktu masuk Anda.',
 ];
 
-/** "Senin, 5 Okt · 10.00–11.00 WIB". */
+/** "Senin, 5 Okt · 10.00–11.00 WIB" (zone of the office timezone). */
 export function meetingWhen(meeting: NonNullable<GuestInfo['meeting']>) {
-    return `${shortDate(officeDate(meeting.starts_at))} · ${timeRange(meeting.starts_at, meeting.ends_at)} WIB`;
+    return `${shortDate(officeDate(meeting.starts_at))} · ${timeRange(meeting.starts_at, meeting.ends_at)} ${officeZoneLabel()}`;
 }
 
 function MeetingHeader({ info }: { info: GuestInfo }) {

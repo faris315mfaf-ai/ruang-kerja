@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Domain\Organization\Enums\AuditSubject;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -87,8 +88,6 @@ class AuditLogIndexRequest extends FormRequest
 
     private function officeTimezone(): string
     {
-        $timezone = config('app.office_timezone');
-
-        return is_string($timezone) ? $timezone : 'Asia/Jakarta';
+        return CurrentCompany::timezone();
     }
 }

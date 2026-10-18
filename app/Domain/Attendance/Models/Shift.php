@@ -2,6 +2,7 @@
 
 namespace App\Domain\Attendance\Models;
 
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Company;
 use App\Models\Concerns\Auditable;
 use App\Models\User;
@@ -150,7 +151,7 @@ class Shift extends Model
     {
         [$hour, $minute] = array_map(intval(...), explode(':', $time));
 
-        return CarbonImmutable::parse($workDate->format('Y-m-d'), config()->string('app.office_timezone'))
+        return CarbonImmutable::parse($workDate->format('Y-m-d'), CurrentCompany::timezone())
             ->setTime($hour, $minute);
     }
 }

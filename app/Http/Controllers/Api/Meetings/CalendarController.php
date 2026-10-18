@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Meetings;
 
 use App\Domain\Meetings\Queries\CalendarFeed;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Models\Meeting;
 use App\Models\User;
@@ -27,7 +28,7 @@ class CalendarController extends Controller
     {
         Gate::authorize('viewAny', Meeting::class);
 
-        $now = CarbonImmutable::now(config()->string('app.office_timezone'));
+        $now = CarbonImmutable::now(CurrentCompany::timezone());
         $month = $request->query('bulan');
         [$year, $number] = is_string($month) && preg_match('/^(\d{4})-(0[1-9]|1[0-2])$/', $month, $match) === 1
             ? [(int) $match[1], (int) $match[2]]
