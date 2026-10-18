@@ -3,6 +3,7 @@
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Okr\Jobs\SendKeyResultCheckinReminders;
 use App\Domain\Okr\Notifications\KeyResultCheckinReminderNotification;
+use App\Domain\Tenancy\Scheduling\CompanySchedule;
 use App\Models\KeyResult;
 use App\Models\KeyResultCheckin;
 use App\Models\Objective;
@@ -29,8 +30,15 @@ it('is scheduled on Friday 15.00 office time', function () {
     $event = collect(app(Schedule::class)->events())
         ->first(fn ($event) => str_contains((string) $event->description, SendKeyResultCheckinReminders::class));
 
-    expect($event?->expression)->toBe('0 15 * * 5')
-        ->and($event?->timezone)->toBe('Asia/Jakarta');
+    // Per company (Fase 1 multi-perusahaan): checked every five minutes, run Friday 15.00 of each company's clock.
+    $task = app(CompanySchedule::class)->task(SendKeyResultCheckinReminders::class);
+    $friday = CarbonImmutable::parse('2026-10-09 15:00', 'Asia/Jakarta');
+
+    expect($event?->expression)->toBe('*/5 * * * *')
+        ->and($task?->at)->toBe('15:00')
+        ->and($task?->isDueAt($friday))->toBeTrue()
+        ->and($task?->isDueAt($friday->subMinute()))->toBeFalse()
+        ->and($task?->isDueAt($friday->addDays(6)))->toBeFalse();
 });
 
 it('reminds each owner once a week about key results without a check-in', function () {

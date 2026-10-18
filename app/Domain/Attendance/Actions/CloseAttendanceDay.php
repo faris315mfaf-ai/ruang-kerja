@@ -11,6 +11,7 @@ use App\Domain\Attendance\Services\OpenDayLocator;
 use App\Domain\Attendance\Services\ScheduleResolver;
 use App\Domain\Organization\Enums\UserStatus;
 use App\Domain\Requests\Services\ApprovedOvertime;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +47,8 @@ final class CloseAttendanceDay
 
         User::query()
             ->active()
+            // Scheduled per company (CompanySchedule): only the current company's people.
+            ->when(CurrentCompany::id(), fn ($query, string $company) => $query->where('company_id', $company))
             ->where(fn ($query) => $query->whereNull('joined_at')->orWhereDate('joined_at', '<=', $date->toDateString()))
             ->orderBy('id')
             ->each(function (User $user) use ($date, $now, $report): void {

@@ -107,7 +107,8 @@ final class SendDeadlineNotifications
         return Task::query()
             ->open()
             ->whereNotNull('tasks.due_date')
-            ->whereIn('tasks.workspace_id', Workspace::query()->notArchived()->select('id'))
+            // Scheduled per company (CompanySchedule): only the current company's workspaces.
+            ->whereIn('tasks.workspace_id', Workspace::query()->notArchived()->when(CurrentCompany::id(), fn (Builder $query, string $company) => $query->where('company_id', $company))->select('id'))
             ->whereHas('assignees')
             ->with(['workspace', 'assignees'])
             ->select('tasks.*');

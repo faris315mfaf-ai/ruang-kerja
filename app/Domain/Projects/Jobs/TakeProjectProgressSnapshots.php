@@ -6,6 +6,8 @@ use App\Domain\Projects\Enums\ProjectStatus;
 use App\Domain\Projects\Queries\ProjectMetrics;
 use App\Domain\Projects\Services\ProjectClock;
 use App\Domain\Tenancy\Concerns\CompanyAware;
+use App\Domain\Tenancy\Scheduling\ForEachCompany;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Domain\Workspaces\Enums\WorkspaceType;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
@@ -17,7 +19,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Daily 23.55 (office time): one burn-up point per open project for the
+ * Daily 23.55 (office time of each company, CompanySchedule): one burn-up point per open project for the
  * office date of the dispatch (scope = non-canceled tasks, done, and hours
  * when estimated).
  * Idempotent: re-running on the same date overwrites that day's row.
@@ -41,13 +43,25 @@ final class TakeProjectProgressSnapshots implements ShouldBeUnique, ShouldQueue
         $this->date = $date ?? ProjectClock::today()->toDateString();
     }
 
+    /** One lock per company (queued per company by CompanySchedule). */
+    public function uniqueId(): string
+    {
+        return $this->companyUniqueId();
+    }
+
     public function handle(ProjectMetrics $metrics): int
+    {
+        return ForEachCompany::sum(fn (): int => $this->snapshot($metrics));
+    }
+
+    private function snapshot(ProjectMetrics $metrics): int
     {
         $today = CarbonImmutable::parse($this->date, ProjectClock::timezone())->startOfDay();
         $written = 0;
 
         Workspace::query()
             ->where('type', WorkspaceType::Project->value)
+            ->when(CurrentCompany::id(), fn (Builder $query, string $company) => $query->where('company_id', $company))
             ->whereNull('archived_at')
             ->where(fn (Builder $query) => $query->whereNull('project_status')->orWhereIn('project_status', ProjectStatus::openValues()))
             ->select('id')

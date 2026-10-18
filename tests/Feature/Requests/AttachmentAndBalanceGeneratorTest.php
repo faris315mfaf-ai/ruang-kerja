@@ -3,6 +3,7 @@
 use App\Domain\Organization\Enums\Role;
 use App\Domain\Requests\Actions\GenerateAnnualBalances;
 use App\Domain\Requests\Actions\UpdateLeaveBalance;
+use App\Domain\Tenancy\Scheduling\CompanySchedule;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
 use App\Models\User;
@@ -104,12 +105,17 @@ it('runs the generator from the command and schedules it on 1 January', function
 
     $this->artisan('requests:generate-balances', ['year' => 1900])->assertFailed();
 
+    // Per company (Fase 1 multi-perusahaan): checked every five minutes, run 1 January 00.05 of each company's clock.
     $events = collect(app(Schedule::class)->events())
-        ->filter(fn ($event) => str_contains((string) $event->command, 'requests:generate-balances'));
+        ->filter(fn ($event) => $event->description === 'requests:generate-balances');
+    $task = app(CompanySchedule::class)->task('requests:generate-balances');
+    $newYear = CarbonImmutable::parse('2027-01-01 00:05', 'Asia/Jakarta');
 
     expect($events)->toHaveCount(1)
-        ->and($events->first()->expression)->toBe('5 0 1 1 *')
-        ->and($events->first()->timezone)->toBe('Asia/Jakarta');
+        ->and($events->first()->expression)->toBe('*/5 * * * *')
+        ->and($task?->at)->toBe('00:05')
+        ->and($task?->isDueAt($newYear))->toBeTrue()
+        ->and($task?->isDueAt($newYear->addDay()))->toBeFalse();
 });
 
 it('fills the carry-over of a next-year balance created early, exactly once (review #4)', function () {

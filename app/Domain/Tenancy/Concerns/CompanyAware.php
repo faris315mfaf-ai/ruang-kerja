@@ -18,10 +18,11 @@ use App\Domain\Tenancy\Support\CompanyOf;
  * returns it per channel, so delayed (quiet hours) deliveries get it too.
  *
  * A job created without any company (scheduler, console) keeps an empty
- * context while it runs — the behaviour before Fase 1. Running scheduled jobs
- * per company is Langkah 2.
+ * context while it runs; scheduled jobs then work per company themselves
+ * (ForEachCompany, Langkah 2b).
  *
- * A class that also needs its own middleware merges companyMiddleware().
+ * A class that also needs its own middleware merges companyMiddleware(); a
+ * ShouldBeUnique job queued per company returns companyUniqueId().
  */
 trait CompanyAware
 {
@@ -42,6 +43,19 @@ trait CompanyAware
     public function capturedCompanyId(): ?string
     {
         return $this->tenantCompanyId;
+    }
+
+    /**
+     * Unique lock per company (ShouldBeUnique::uniqueId): the same scheduled
+     * job queued for two companies must not drop the second one. Captures the
+     * company first, so the lock taken at dispatch and released by the worker
+     * use the same key.
+     */
+    public function companyUniqueId(): string
+    {
+        $this->captureCompany();
+
+        return $this->tenantCompanyId ?? '';
     }
 
     /**

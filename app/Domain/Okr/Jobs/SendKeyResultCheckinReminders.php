@@ -9,17 +9,20 @@ use App\Domain\Okr\Enums\ObjectiveStatus;
 use App\Domain\Okr\Notifications\KeyResultCheckinReminderNotification;
 use App\Domain\Requests\Support\OfficeTime;
 use App\Domain\Tenancy\Concerns\CompanyAware;
+use App\Domain\Tenancy\Scheduling\ForEachCompany;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\KeyResult;
 use App\Models\Objective;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * Friday 15.00 (office time): reminds every owner of a key result of an
+ * Friday 15.00 (office time of each company, CompanySchedule): reminds every owner of a key result of an
  * active objective of the current quarter that has no check-in since Monday
  * of this week. One notification per owner per week listing their pending
  * key results, at most once even when the job runs twice
@@ -32,7 +35,18 @@ final class SendKeyResultCheckinReminders implements ShouldBeUnique, ShouldQueue
 
     public int $uniqueFor = 600;
 
+    /** One lock per company (queued per company by CompanySchedule). */
+    public function uniqueId(): string
+    {
+        return $this->companyUniqueId();
+    }
+
     public function handle(NotificationDispatchLog $log): int
+    {
+        return ForEachCompany::sum(fn (): int => $this->remind($log));
+    }
+
+    private function remind(NotificationDispatchLog $log): int
     {
         $today = OfficeTime::today();
         $weekStart = $today->startOfWeek(CarbonImmutable::MONDAY)->toDateString();
@@ -41,6 +55,7 @@ final class SendKeyResultCheckinReminders implements ShouldBeUnique, ShouldQueue
 
         $pending = KeyResult::query()
             ->whereIn('objective_id', Objective::query()
+                ->when(CurrentCompany::id(), fn (Builder $query, string $company) => $query->where('company_id', $company))
                 ->where('status', ObjectiveStatus::Active->value)
                 ->where('quarter', $quarter)
                 ->select('id'))

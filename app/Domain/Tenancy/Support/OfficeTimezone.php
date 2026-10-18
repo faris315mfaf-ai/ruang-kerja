@@ -2,6 +2,7 @@
 
 namespace App\Domain\Tenancy\Support;
 
+use App\Models\Company;
 use InvalidArgumentException;
 
 /**
@@ -26,6 +27,17 @@ final class OfficeTimezone
         self::$identifiers ??= array_flip(timezone_identifiers_list());
 
         return is_string($timezone) && isset(self::$identifiers[$timezone]);
+    }
+
+    /**
+     * The timezone of $company, or the app-wide one without a company or for
+     * an invalid stored value.
+     */
+    public static function of(?Company $company): string
+    {
+        $timezone = $company?->getAttribute('timezone');
+
+        return self::isValid($timezone) ? $timezone : config()->string('app.office_timezone');
     }
 
     public static function assertValid(mixed $timezone): void

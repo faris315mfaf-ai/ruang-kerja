@@ -8,6 +8,7 @@ use App\Domain\Requests\Services\ApprovalFlowResolver;
 use App\Domain\Requests\Services\ApproverResolver;
 use App\Domain\Requests\Services\RequestNotifier;
 use App\Domain\Requests\Support\OfficeTime;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\ApprovalDelegation;
 use App\Models\RequestApproval;
 use App\Models\User;
@@ -51,6 +52,8 @@ final class RouteToDelegates
                 ->orWhereIn('delegated_from_id', $people ?? [])))
             ->whereHas('request', fn (Builder $request) => $request
                 ->where('status', RequestStatus::Pending->value)
+                // Scheduled per company (CompanySchedule): only the current company's requests.
+                ->when(CurrentCompany::id(), fn (Builder $mine, string $company) => $mine->whereIn('user_id', User::query()->select('id')->where('company_id', $company)))
                 ->whereColumn('requests.round', 'request_approvals.round'))
             ->with(['request.user', 'request.leaveType', 'request.approvals'])
             ->orderBy('activated_at')

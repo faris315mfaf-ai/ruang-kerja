@@ -60,9 +60,7 @@ final class CompanyContext
      */
     public function timezone(): string
     {
-        $timezone = $this->company()?->timezone;
-
-        return OfficeTimezone::isValid($timezone) ? $timezone : config()->string('app.office_timezone');
+        return OfficeTimezone::of($this->company());
     }
 
     public function set(Company|string|null $company): void

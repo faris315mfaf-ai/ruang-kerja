@@ -6,6 +6,8 @@ use App\Domain\Projects\Enums\ProjectStatus;
 use App\Domain\Projects\Notifications\ProjectUpdateReminderNotification;
 use App\Domain\Projects\Services\ProjectClock;
 use App\Domain\Tenancy\Concerns\CompanyAware;
+use App\Domain\Tenancy\Scheduling\ForEachCompany;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Domain\Workspaces\Enums\WorkspaceType;
 use App\Models\ProjectUpdate;
 use App\Models\Workspace;
@@ -18,7 +20,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * Friday 15.00 (office time): reminds the PIC of every running project that
+ * Friday 15.00 (office time of each company, CompanySchedule): reminds the PIC of every running project that
  * has no update since Monday 00.00 of the current week. At most once per
  * project per week, even when the job runs twice.
  */
@@ -29,7 +31,18 @@ final class SendProjectUpdateReminders implements ShouldBeUnique, ShouldQueue
 
     public int $uniqueFor = 600;
 
+    /** One lock per company (queued per company by CompanySchedule). */
+    public function uniqueId(): string
+    {
+        return $this->companyUniqueId();
+    }
+
     public function handle(): int
+    {
+        return ForEachCompany::sum(fn (): int => $this->remind());
+    }
+
+    private function remind(): int
     {
         $now = CarbonImmutable::now(ProjectClock::timezone());
         $weekStart = $now->startOfWeek(CarbonImmutable::MONDAY);
@@ -38,6 +51,7 @@ final class SendProjectUpdateReminders implements ShouldBeUnique, ShouldQueue
 
         Workspace::query()
             ->where('type', WorkspaceType::Project->value)
+            ->when(CurrentCompany::id(), fn (Builder $query, string $company) => $query->where('company_id', $company))
             ->whereNull('archived_at')
             ->whereNotNull('lead_user_id')
             ->where(fn (Builder $query) => $query->whereNull('project_status')->orWhere('project_status', ProjectStatus::Active->value))

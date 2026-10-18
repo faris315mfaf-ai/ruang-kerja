@@ -46,7 +46,10 @@ final class DispatchDueDailyDigests
         /** @var array<string, bool> $workdays holidays are per company (C5) */
         $workdays = [];
 
-        User::query()->active()->orderBy('id')->chunkById(200, function (Collection $users) use ($local, $today, $catchUp, &$queued, &$workdays): void {
+        // Per company (SendDailyDigests → ForEachCompany): only the current company's people.
+        $people = User::query()->active()->when(CurrentCompany::id(), fn ($query, string $company) => $query->where('company_id', $company));
+
+        $people->orderBy('id')->chunkById(200, function (Collection $users) use ($local, $today, $catchUp, &$queued, &$workdays): void {
             // Preloaded per chunk: no per-user settings or preference queries.
             $settings = NotificationSetting::query()->whereIn('user_id', $users->modelKeys())->get()->keyBy('user_id');
             $wantsDigest = $this->preferences->enabledFor(array_values($users->modelKeys()), NotificationEvent::DailyDigest, NotificationChannel::Email);

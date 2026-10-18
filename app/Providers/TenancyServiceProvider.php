@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Domain\Tenancy\CompanyContext;
+use App\Domain\Tenancy\Scheduling\CompanySchedule;
 use App\Domain\Tenancy\Support\OfficeTimezone;
 use App\Models\Company;
 use Illuminate\Notifications\SendQueuedNotifications;
@@ -19,6 +20,9 @@ class TenancyServiceProvider extends ServiceProvider
     {
         // Scoped: reset for every HTTP request and every queue job.
         $this->app->scoped(CompanyContext::class);
+
+        // Per-company local-time tasks registered by routes/console.php (Langkah 2b).
+        $this->app->singleton(CompanySchedule::class);
     }
 
     public function boot(): void

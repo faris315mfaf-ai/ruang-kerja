@@ -8,10 +8,13 @@ use App\Domain\Meetings\Services\MeetingOccurrences;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Notifications\Services\NotificationDispatchLog;
 use App\Domain\Tenancy\Concerns\CompanyAware;
+use App\Domain\Tenancy\Scheduling\ForEachCompany;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Meeting;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Queue\Queueable;
 
 /**
@@ -31,7 +34,19 @@ final class SendMeetingReminders implements ShouldBeUnique, ShouldQueue
 
     public int $uniqueFor = 55;
 
+    /** One lock per company (queued per company by CompanySchedule). */
+    public function uniqueId(): string
+    {
+        return $this->companyUniqueId();
+    }
+
     public function handle(MeetingOccurrences $occurrences, NotificationDispatchLog $dispatchLog): int
+    {
+        // Per company: occurrences expand in the company's timezone.
+        return ForEachCompany::sum(fn (): int => $this->remind($occurrences, $dispatchLog));
+    }
+
+    private function remind(MeetingOccurrences $occurrences, NotificationDispatchLog $dispatchLog): int
     {
         $now = CarbonImmutable::now();
         $horizon = $now->addMinutes(self::HORIZON_MINUTES + 1);
@@ -39,6 +54,7 @@ final class SendMeetingReminders implements ShouldBeUnique, ShouldQueue
 
         $meetings = Meeting::query()
             ->active()
+            ->when(CurrentCompany::id(), fn (Builder $query, string $company) => $query->where('company_id', $company))
             ->overlapping($now, $horizon)
             ->with('participants.user')
             ->get();
