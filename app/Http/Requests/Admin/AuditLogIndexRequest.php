@@ -88,8 +88,6 @@ class AuditLogIndexRequest extends FormRequest
 
     private function officeTimezone(): string
     {
-        $timezone = CurrentCompany::timezone();
-
-        return is_string($timezone) ? $timezone : 'Asia/Jakarta';
+        return CurrentCompany::timezone();
     }
 }
