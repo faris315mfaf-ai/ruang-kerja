@@ -26,6 +26,7 @@ Fase 1 multi-perusahaan (rencana disetujui pemilik: `~/.claude/plans/shimmying-s
 - `0a44895b` Email: `CompanyBranding::name()` (perusahaan penerima → konteks → `BRANDING_COMPANY_NAME`) di `mail/layout.blade.php`; `DesktopLinkMail` membawa nama perusahaan penerima. `RecapPdf` sudah memakai perusahaan aktor; `errors/minimal` & `app.blade.php` hanya nama platform (tidak diubah). `CompanyIntegrationsTest` (18 tes).
 - Catatan: `google.oauth.allowed_domain` (GOOGLE_ALLOWED_DOMAIN) tetap global — `StoreGoogleAccount` juga mewajibkan akun Google = email karyawan sendiri, jadi tidak lintas perusahaan; bila diisi, karyawan perusahaan lain tidak bisa menyambungkan akun (batasan, bukan kebocoran; per perusahaan = Fase 3). `GOOGLE_IMPERSONATE_USER` & service account global: Shared Drive perusahaan lain harus dikelola akun impersonasi itu. Halaman publik `/kebijakan-privasi` untuk tamu masih `BRANDING_COMPANY_NAME` (Fase 3).
 - Deploy produksi: `docs/deploy/VPS-BERSAMA.md` §4a, `docs/deploy/WHATSAPP.md` §2a.
+- Gerbang 2c (18 Okt 2026, bersama perubahan 2a/2b di worktree): `pest --parallel` penuh hijau 4151 tes tanpa skip; Pint bersih; PHPStan 1 galat di luar 2c (`app/Http/Requests/Admin/AuditLogIndexRequest.php:93`, milik 2a); tanpa perubahan TS.
 
 ## Keputusan desain
 - **Tanpa global scope otomatis.** Konteks hanya informasi; isolasi tetap oleh `visibleTo()` + Policy (keputusan rencana). Konteks kosong (tamu, scheduler) = perilaku lama.
