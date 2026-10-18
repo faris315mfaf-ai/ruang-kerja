@@ -62,8 +62,8 @@ return [
         'leave_types' => 'company',
         'leave_balances' => 'user',
         'leave_balance_adjustments' => ['via' => 'leave_balances.balance_id'],
-        'requests' => 'user', // CELAH: nomor unik global (Langkah 2a)
-        'request_sequences' => 'global', // CELAH: kunci {kode}-{bulan} dipakai bersama semua perusahaan (Langkah 2a)
+        'requests' => 'company', // denormal dari pemohon; nomor unik per perusahaan
+        'request_sequences' => 'company', // penghitung {kode}-{bulan} per perusahaan
         'request_approvals' => ['via' => 'requests.request_id'],
         'approval_flows' => 'company',
         'approval_flow_steps' => ['via' => 'approval_flows.approval_flow_id'],
@@ -154,6 +154,9 @@ return [
         'key_results' => ['via' => 'objectives.objective_id'],
         'key_result_checkins' => ['via' => 'key_results.key_result_id'],
         'key_result_tasks' => ['via' => 'key_results.key_result_id'],
+
+        // Penjadwal per perusahaan (Langkah 2b): klaim (tugas, perusahaan, tanggal lokal)
+        'scheduled_runs' => 'company',
 
         // Infrastruktur Laravel & paket (tanpa data perusahaan yang dibaca aplikasi)
         'migrations' => 'global',

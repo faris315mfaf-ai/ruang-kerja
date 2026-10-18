@@ -318,7 +318,8 @@ Tambahan Fitur pengajuan: `opening_days` numeric(5,1) default 0 (**saldo awal**,
 | Kolom | Tipe | Keterangan |
 |---|---|---|
 | id | ulid PK | |
-| number | varchar null unique | mis. `CUT-2026-10-0012`; diisi saat pertama dikirim (draf belum bernomor) |
+| company_id | FK companies (restrict) | **Fase 1 multi-perusahaan** (migrasi `2026_10_23_210200_add_company_id_to_requests_and_sequences`): denormal dari perusahaan pemohon (backfill dari `users`; diisi `RequestWriter::fill`, hook `creating`, dan factory) |
+| number | varchar null | mis. `CUT-2026-10-0012`; diisi saat pertama dikirim (draf belum bernomor). **Unik `(company_id, number)`** (sebelumnya unik global): setiap perusahaan memulai `CUT-2026-10` dari 0001 |
 | user_id | FK | pemohon |
 | leave_type_id | FK | jenis |
 | start_at / end_at | timestamptz | lembur & izin memakai jam. Cuti memakai hari penuh (00.00–23.59.59 waktu kantor). CHECK `end_at >= start_at` |
@@ -337,7 +338,7 @@ Tambahan Fitur pengajuan: `opening_days` numeric(5,1) default 0 (**saldo awal**,
 | cancel_reason | text null | **tambahan**: alasan wajib (min. 10 karakter) saat HR membatalkan pengajuan yang **sudah disetujui**; null bila dibatalkan pemohon. Tampil in-app saja (email/WA tidak memuat isinya), disembunyikan dari penyetuju pengganti untuk pengajuan sakit |
 
 ### request_sequences (tambahan Sprint 4)
-`id`, `key` unik (mis. `CUT-2026-10`), `last_number`. Nomor diambil dengan satu `INSERT … ON CONFLICT (key) DO UPDATE SET last_number = last_number + 1 RETURNING` (atomik, aman dari race condition). Periode = bulan pengiriman (waktu kantor).
+`id`, `company_id` FK companies (cascade), `key` (mis. `CUT-2026-10`), `last_number`. **Unik `(company_id, key)`** (Fase 1 multi-perusahaan; sebelumnya `key` unik global sehingga perusahaan lain berbagi penghitung). Nomor diambil dengan satu `INSERT … ON CONFLICT (company_id, key) DO UPDATE SET last_number = last_number + 1 RETURNING` (atomik, aman dari race condition). Periode = bulan pengiriman (waktu kantor). Backfill: satu perusahaan → semua penghitung miliknya; beberapa perusahaan → dibangun ulang dari nomor tertinggi per perusahaan. Rollback menyisakan penghitung tertinggi per `key` dan gagal bila dua perusahaan sudah memakai nomor yang sama.
 
 ### approval_flows / approval_flow_steps
 `approval_flows`: `id`, `company_id`, `name`, **`skip_self_approval`** bool (default true; mati = naik ke atasan pemohon), **`allow_delegation`** bool (default true), `deleted_at`. Alur bernama `Default` = cadangan perusahaan.

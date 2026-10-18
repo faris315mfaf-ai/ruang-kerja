@@ -35,6 +35,8 @@ class EmployeeRequestFactory extends Factory
             'payload' => [],
             'status' => RequestStatus::Draft,
             'round' => 1,
+            // The requester's company (also for seeders without model events).
+            'company_id' => fn (array $attributes): mixed => User::query()->whereKey($attributes['user_id'])->value('company_id'),
         ];
     }
 
