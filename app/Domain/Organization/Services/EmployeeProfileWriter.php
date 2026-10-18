@@ -18,6 +18,7 @@ final readonly class EmployeeProfileWriter
     public function write(User $employee, EmployeeData $data, ?User $actor = null): void
     {
         $profile = EmployeeProfile::query()->find($employee->id) ?? new EmployeeProfile(['user_id' => $employee->id]);
+        $profile->company_id = $employee->company_id;
 
         $profile->employee_number = $data->employeeNumber;
         $profile->phone = $data->phone;

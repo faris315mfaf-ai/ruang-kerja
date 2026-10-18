@@ -180,6 +180,7 @@ final class EmployeeImportValidator
 
         /** @var array<string, string> $employeeNumbers */
         $employeeNumbers = EmployeeProfile::query()
+            ->where('company_id', $actor->company_id)
             ->whereIn('employee_number', array_unique($numbers))
             ->pluck('user_id', 'employee_number')
             ->all();

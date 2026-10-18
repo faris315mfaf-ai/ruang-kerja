@@ -103,7 +103,7 @@ Tambahan akun & kata sandi (6 Okt 2026, migrasi `2026_10_12_100100_add_password_
 Tambahan perbaikan review Sprint 3–9 (#11): `deactivated_at` timestamptz null (migrasi `2026_10_07_300100_add_deactivated_at_to_users`), diisi `DeactivateEmployee` (nilai pertama dipertahankan saat berpindah inactive ↔ resigned), dikosongkan `ReactivateEmployee`; backfill dari audit `user.deactivated` terakhir, fallback `updated_at`. Rekap bulanan/ekspor payroll hanya menghitung tanggal `joined_at` … tanggal kantor `deactivated_at` (inklusif).
 
 ### employee_profiles
-`user_id` PK/FK (cascade), `employee_number` varchar(30) unique null, `nik` text null (encrypted, disembunyikan dari serialisasi), `phone` (untuk WA), `birth_date`, `address`, `emergency_contact` jsonb (`{name, relation, phone}`). Dipisah agar data pribadi tidak ikut ter-load di setiap query `users`.
+`user_id` PK/FK (cascade), `company_id` FK companies (cascade; denormal dari `users`, Fase 1 multi-perusahaan, migrasi `2026_10_23_210300_add_company_id_to_employee_profiles`), `employee_number` varchar(30) null **unik per perusahaan `(company_id, employee_number)`** (sebelumnya unik global; form karyawan & impor memvalidasi dalam perusahaan pelaku), `nik` text null (encrypted, disembunyikan dari serialisasi), `phone` (untuk WA), `birth_date`, `address`, `emergency_contact` jsonb (`{name, relation, phone}`). Dipisah agar data pribadi tidak ikut ter-load di setiap query `users`.
 
 ### Peran global (spatie/laravel-permission)
 Peran awal: `super_admin`, `direksi`, `hr`, `kepala_divisi`, `anggota`. Satu user boleh punya beberapa peran.

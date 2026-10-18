@@ -33,7 +33,7 @@ return [
         'teams' => ['via' => 'divisions.division_id'],
         'positions' => 'company',
         'users' => 'company',
-        'employee_profiles' => 'user', // CELAH: employee_number unik global (Langkah 2a)
+        'employee_profiles' => 'company', // denormal dari users; nomor karyawan unik per perusahaan
         'audit_logs' => 'company', // company_id null = entri platform, tidak tampil di perusahaan mana pun
         'password_reset_requests' => 'company',
         'passkeys' => 'user',
