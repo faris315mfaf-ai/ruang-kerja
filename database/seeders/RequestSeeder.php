@@ -72,15 +72,22 @@ class RequestSeeder extends Seeder
             return; // Fresh production install: configured after the company exists.
         }
 
-        $flows = $this->flows($company);
-        $this->types($company, $flows);
-
+        $this->seedCompany($company);
         $year = OfficeTime::today()->year;
-        app(GenerateAnnualBalances::class)->handle($year, $company);
 
         if (app()->environment(['local', 'testing']) && User::query()->where('email', 'anggota@demo.test')->exists()) {
             $this->demoRequests($year);
         }
+    }
+
+    /**
+     * Default approval flows, request types and this year's balances of one
+     * company (idempotent). Also used by SecondCompanyDemoSeeder.
+     */
+    public function seedCompany(Company $company): void
+    {
+        $this->types($company, $this->flows($company));
+        app(GenerateAnnualBalances::class)->handle(OfficeTime::today()->year, $company);
     }
 
     /**

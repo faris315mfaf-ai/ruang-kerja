@@ -3,6 +3,7 @@
 namespace App\Domain\Organization\Demo;
 
 use App\Domain\Organization\Enums\Role;
+use App\Models\User;
 
 /**
  * Fixed list of local demo accounts (password `password`). Five of them are
@@ -44,11 +45,30 @@ final class DemoAccounts
     }
 
     /**
+     * Demo accounts of the second demo company (Fase 1 multi-perusahaan,
+     * `php artisan db:seed --class=SecondCompanyDemoSeeder`): listed on the
+     * login page only once that seeder has created them. Not seeded by
+     * DemoUserSeeder and not in the shell's account switcher.
+     *
+     * @return list<DemoAccount>
+     */
+    public static function partner(): array
+    {
+        return [
+            new DemoAccount('admin@contoh.test', 'Admin Mitra', Role::SuperAdmin, 'PT Contoh Mitra · Admin'),
+            new DemoAccount('hr@contoh.test', 'Nurhayati Lantara', Role::Hr, 'PT Contoh Mitra · HR'),
+            new DemoAccount('anggota@contoh.test', 'Fadli Rahman', Role::Anggota, 'PT Contoh Mitra · Staf logistik'),
+        ];
+    }
+
+    /**
+     * Accounts the demo login accepts (both demo companies).
+     *
      * @return list<string>
      */
     public static function emails(): array
     {
-        return array_map(fn (DemoAccount $account): string => $account->email, self::all());
+        return array_map(fn (DemoAccount $account): string => $account->email, [...self::all(), ...self::partner()]);
     }
 
     /**
@@ -96,6 +116,10 @@ final class DemoAccounts
             return [];
         }
 
-        return array_map(fn (DemoAccount $account): array => $account->toProps(), self::all());
+        $partner = self::partner();
+        $seeded = User::query()->whereIn('email', array_map(fn (DemoAccount $account): string => $account->email, $partner))->pluck('email')->all();
+        $partner = array_values(array_filter($partner, fn (DemoAccount $account): bool => in_array($account->email, $seeded, true)));
+
+        return array_map(fn (DemoAccount $account): array => $account->toProps(), [...self::all(), ...$partner]);
     }
 }
