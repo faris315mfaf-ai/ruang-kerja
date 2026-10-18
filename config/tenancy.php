@@ -51,7 +51,7 @@ return [
         'office_locations' => 'company',
         'shifts' => 'company',
         'shift_assignments' => 'user',
-        'holidays' => 'company', // CELAH: HolidayAwareWorkdayCalendar membaca semua perusahaan (Langkah 2a)
+        'holidays' => 'company',
         'attendance_days' => 'user',
         'attendance_logs' => 'user', // CELAH: selfie tanpa prefiks perusahaan di storage (Langkah 2a)
         'qr_tokens' => ['via' => 'office_locations.office_location_id'],

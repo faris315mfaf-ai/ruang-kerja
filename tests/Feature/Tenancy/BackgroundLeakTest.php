@@ -165,13 +165,12 @@ test('a holiday of company B does not cancel company A\'s working day', function
     $this->travelTo(backgroundDay('07:31'));
     runSchedule();
 
-    $digestToA = collect(deliveredTexts())->contains(fn (array $row): bool => $row[0] === $this->home->company->id && $row[2] === 'DailyDigestMail');
+    // C5 (docs/sesi/fase1-celah.md), closed in Langkah 2a: holidays are per company.
+    $delivered = collect(deliveredTexts());
+    $digestTo = fn (string $company): bool => $delivered->contains(fn (array $row): bool => $row[0] === $company && $row[2] === 'DailyDigestMail');
 
-    if (! $digestToA) {
-        $this->markTestSkipped('C5 (docs/sesi/fase1-celah.md): HolidayAwareWorkdayCalendar membaca hari libur semua perusahaan — ringkasan harian A tidak terkirim saat B libur. Ditutup di Langkah 2a.');
-    }
-
-    expect($digestToA)->toBeTrue();
+    expect($digestTo($this->home->company->id))->toBeTrue()
+        ->and($digestTo($this->foreign->company->id))->toBeFalse();
 });
 
 test('attendance WhatsApp copies of company B never reach company A\'s group', function () {

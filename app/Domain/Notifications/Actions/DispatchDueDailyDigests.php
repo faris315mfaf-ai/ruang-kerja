@@ -35,6 +35,7 @@ final class DispatchDueDailyDigests
     {
         $local = $now->setTimezone(CurrentCompany::timezone());
 
+        // Off for every company (weekend, shared holiday): nothing to do.
         if (! $this->calendar->isWorkday($local->startOfDay())) {
             return 0;
         }
@@ -42,14 +43,20 @@ final class DispatchDueDailyDigests
         $today = $local->toDateString();
         $catchUp = config()->integer('notifications.digest.catch_up_minutes', 60);
         $queued = 0;
+        /** @var array<string, bool> $workdays holidays are per company (C5) */
+        $workdays = [];
 
-        User::query()->active()->orderBy('id')->chunkById(200, function (Collection $users) use ($local, $today, $catchUp, &$queued): void {
+        User::query()->active()->orderBy('id')->chunkById(200, function (Collection $users) use ($local, $today, $catchUp, &$queued, &$workdays): void {
             // Preloaded per chunk: no per-user settings or preference queries.
             $settings = NotificationSetting::query()->whereIn('user_id', $users->modelKeys())->get()->keyBy('user_id');
             $wantsDigest = $this->preferences->enabledFor(array_values($users->modelKeys()), NotificationEvent::DailyDigest, NotificationChannel::Email);
 
             /** @var User $user */
             foreach ($users as $user) {
+                if (! ($workdays[$user->company_id] ??= $this->calendar->isWorkday($local->startOfDay(), $user->company_id))) {
+                    continue;
+                }
+
                 $setting = $settings->get($user->id) ?? NotificationSetting::defaultsFor($user);
 
                 if ($setting->digest_last_run_on?->toDateString() === $today) {

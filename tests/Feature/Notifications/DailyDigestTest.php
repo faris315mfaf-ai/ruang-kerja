@@ -128,7 +128,7 @@ it('does not send on weekends', function () {
 it('respects a holiday-aware workday calendar bound by another module', function () {
     app()->instance(WorkdayCalendar::class, new class implements WorkdayCalendar
     {
-        public function isWorkday(CarbonImmutable $date): bool
+        public function isWorkday(CarbonImmutable $date, ?string $companyId = null): bool
         {
             return $date->toDateString() !== '2026-10-05';
         }
