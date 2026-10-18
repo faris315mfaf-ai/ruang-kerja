@@ -5,6 +5,7 @@ import {
     formatLongDate,
     officeTimezone,
     officeUtcOffset,
+    officeZoneLabel,
     setOfficeTimezone,
     formatDate,
     formatDateTime,
@@ -42,6 +43,20 @@ describe('office timezone', () => {
         }
 
         expect(formatTime('2026-10-04T16:30:00Z')).toBe('23.30');
+    });
+
+    it('labels office clock times with the zone of the company', () => {
+        expect(officeZoneLabel()).toBe('WIB');
+        expect(officeZoneLabel('Asia/Makassar')).toBe('WITA');
+        expect(officeZoneLabel('Asia/Jayapura')).toBe('WIT');
+        expect(officeZoneLabel('Asia/Singapore')).toBe('UTC+08:00');
+
+        try {
+            setOfficeTimezone('Asia/Makassar');
+            expect(officeZoneLabel()).toBe('WITA');
+        } finally {
+            setOfficeTimezone(DEFAULT_OFFICE_TIMEZONE);
+        }
     });
 });
 

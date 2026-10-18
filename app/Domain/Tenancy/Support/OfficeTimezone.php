@@ -3,6 +3,9 @@
 namespace App\Domain\Tenancy\Support;
 
 use App\Models\Company;
+use DateTimeImmutable;
+use DateTimeZone;
+use Exception;
 use InvalidArgumentException;
 
 /**
@@ -38,6 +41,32 @@ final class OfficeTimezone
         $timezone = $company?->getAttribute('timezone');
 
         return self::isValid($timezone) ? $timezone : config()->string('app.office_timezone');
+    }
+
+    /** Indonesian zone abbreviations of the office timezones in use. */
+    private const array LABELS = [
+        'Asia/Jakarta' => 'WIB',
+        'Asia/Pontianak' => 'WIB',
+        'Asia/Makassar' => 'WITA',
+        'Asia/Ujung_Pandang' => 'WITA',
+        'Asia/Jayapura' => 'WIT',
+    ];
+
+    /**
+     * Zone shown after an office clock time ("10.30 WIB", "10.30 WITA"):
+     * WIB/WITA/WIT, else "UTC+hh:mm" (same as lib/format.ts officeZoneLabel()).
+     */
+    public static function label(string $timezone): string
+    {
+        if (isset(self::LABELS[$timezone])) {
+            return self::LABELS[$timezone];
+        }
+
+        try {
+            return 'UTC'.(new DateTimeImmutable('now', new DateTimeZone($timezone)))->format('P');
+        } catch (Exception) {
+            return 'UTC';
+        }
     }
 
     public static function assertValid(mixed $timezone): void

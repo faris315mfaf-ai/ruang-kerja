@@ -24,7 +24,7 @@ import type {
     Weekday,
     WorkspaceRef,
 } from '@/features/automation/types';
-import { formatDate } from '@/lib/format';
+import { formatDate, officeZoneLabel } from '@/lib/format';
 import { cn, focusRing } from '@/lib/utils';
 import recurringRoutes from '@/routes/automation/recurring';
 
@@ -211,7 +211,7 @@ export function RecurringFormSurface({
             mobile={mobile}
             wide
             title={editingId ? 'Ubah tugas berulang' : 'Tugas berulang baru'}
-            description="Tugas dibuat otomatis pukul 07.00 WIB pada setiap tanggal jadwal."
+            description={`Tugas dibuat otomatis pukul 07.00 ${officeZoneLabel()} pada setiap tanggal jadwal.`}
             footer={
                 <>
                     <Button

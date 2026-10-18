@@ -7,6 +7,7 @@ use App\Domain\Notifications\BaseNotification;
 use App\Domain\Notifications\Data\NotificationSubject;
 use App\Domain\Notifications\Support\IndonesianDate;
 use App\Domain\Tenancy\Support\CurrentCompany;
+use App\Domain\Tenancy\Support\OfficeTimezone;
 use App\Models\Meeting;
 use App\Models\User;
 use App\Policies\MeetingPolicy;
@@ -45,7 +46,7 @@ abstract class MeetingNotification extends BaseNotification
         return $this->meeting->isRecurring() && $this->date !== null ? $path.'?tanggal='.$this->date : $path;
     }
 
-    /** "Sen, 5 Okt 2026 · 10.30–11.30 WIB". */
+    /** "Sen, 5 Okt 2026 · 10.30–11.30 WIB" (zone of the company: WIB/WITA/WIT). */
     protected function when(): string
     {
         $occurrences = app(MeetingOccurrences::class);
@@ -55,7 +56,7 @@ abstract class MeetingNotification extends BaseNotification
         $start = $occurrence->startsAt->setTimezone($timezone);
         $end = $occurrence->endsAt->setTimezone($timezone);
 
-        return IndonesianDate::short($start).' · '.$start->format('H.i').'–'.$end->format('H.i').' WIB';
+        return IndonesianDate::short($start).' · '.$start->format('H.i').'–'.$end->format('H.i').' '.OfficeTimezone::label($timezone);
     }
 
     protected function place(): string

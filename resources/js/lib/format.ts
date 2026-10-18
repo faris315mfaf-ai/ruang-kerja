@@ -112,6 +112,38 @@ export function officeUtcOffset(day: string): string {
     return `${minutes < 0 ? '-' : '+'}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
 }
 
+/** Indonesian zone abbreviations of the office timezones in use. */
+const ZONE_LABELS: Record<string, string> = {
+    'Asia/Jakarta': 'WIB',
+    'Asia/Pontianak': 'WIB',
+    'Asia/Makassar': 'WITA',
+    'Asia/Ujung_Pandang': 'WITA',
+    'Asia/Jayapura': 'WIT',
+};
+
+/**
+ * Zone shown after an office clock time ("08.00 WIB", "10.00 WITA"):
+ * WIB/WITA/WIT, else "UTC+hh:mm".
+ */
+export function officeZoneLabel(
+    timezone: string = currentOfficeTimezone,
+): string {
+    const label = ZONE_LABELS[timezone];
+
+    if (label !== undefined) {
+        return label;
+    }
+
+    const name = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        timeZoneName: 'longOffset',
+    })
+        .formatToParts(new Date())
+        .find((part) => part.type === 'timeZoneName')?.value;
+
+    return (name ?? 'GMT').replace('GMT', 'UTC');
+}
+
 const dateParts = (): Intl.DateTimeFormat =>
     officeDateFormat(LOCALE, {
         weekday: 'short',

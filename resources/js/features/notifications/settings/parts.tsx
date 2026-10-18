@@ -11,7 +11,7 @@ import type {
     DigestPreview,
     NotificationSettingsProps,
 } from '@/features/notifications/settings/types';
-import { formatDate } from '@/lib/format';
+import { formatDate, officeZoneLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 export const DIGEST_PREVIEW_URL = '/pengaturan/notifikasi/pratinjau-ringkasan';
@@ -100,7 +100,9 @@ function TimeField({
                     large ? 'text-[17px]' : 'text-[15px]',
                 )}
             />
-            <span className="text-meta text-text-muted">WIB</span>
+            <span className="text-meta text-text-muted">
+                {officeZoneLabel()}
+            </span>
         </label>
     );
 }
@@ -193,7 +195,7 @@ export function DigestCard({
             title="Ringkasan harian"
             action={
                 <span className="text-label font-normal text-text-muted tnum">
-                    {displayTime(settings.digest_time)} WIB
+                    {displayTime(settings.digest_time)} {officeZoneLabel()}
                 </span>
             }
             bodyClassName="gap-4"

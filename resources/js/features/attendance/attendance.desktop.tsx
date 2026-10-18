@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Panel, PanelLink } from '@/components/ui/panel';
 import { TONE_CLASSES } from '@/lib/attendance';
-import { formatTime, officeTimezone } from '@/lib/format';
+import { formatTime, officeTimezone, officeZoneLabel } from '@/lib/format';
 import { hasAnyRole } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 import { policy } from '@/routes/attendance';
@@ -99,7 +99,7 @@ export function AttendanceDesktop(props: AttendancePageProps) {
                                     </time>
                                 </p>
                                 <p className="text-[17px] text-text-muted">
-                                    Waktu server · WIB
+                                    Waktu server · {officeZoneLabel()}
                                     {hint && (
                                         <span
                                             className={cn(
