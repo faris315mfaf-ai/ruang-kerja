@@ -15,7 +15,9 @@ Fase 1 multi-perusahaan (rencana disetujui pemilik: `~/.claude/plans/shimmying-s
 - `aee434fa` `RouteBindingLeakTest` (451 pasangan metode + rute ber-parameter × 3 peran).
 - `3f1755b3` `ListingLeakTest` (250 URL × 3 varian × 5 peran, prop tertunda, xlsx, PDF lewat data view).
 - `e1c93595` `BackgroundLeakTest` (semua entri `routes/console.php`, WhatsApp absensi) + `BroadcastChannelLeakTest` (8 kanal).
-- Dokumen ini + `docs/sesi/fase1-celah.md` (commit dokumen).
+- `41a3b306` urutan middleware `SyncDrivePermissions` (WithoutOverlapping tetap pertama).
+- `00ea4168` dokumen ini + `docs/sesi/fase1-celah.md`.
+- Gerbang: `composer test` penuh hijau (4073 tes, 2 skip bersyarat C5/C9), Pint & PHPStan bersih; tanpa perubahan TS.
 
 ## Keputusan desain
 - **Tanpa global scope otomatis.** Konteks hanya informasi; isolasi tetap oleh `visibleTo()` + Policy (keputusan rencana). Konteks kosong (tamu, scheduler) = perilaku lama.
