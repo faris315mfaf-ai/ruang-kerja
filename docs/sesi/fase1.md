@@ -28,6 +28,15 @@ Fase 1 multi-perusahaan (rencana disetujui pemilik: `~/.claude/plans/shimmying-s
 - Deploy produksi: `docs/deploy/VPS-BERSAMA.md` §4a, `docs/deploy/WHATSAPP.md` §2a.
 - Gerbang 2c (18 Okt 2026, bersama perubahan 2a/2b di worktree): `pest --parallel` penuh hijau 4151 tes tanpa skip; Pint bersih; PHPStan 1 galat di luar 2c (`app/Http/Requests/Admin/AuditLogIndexRequest.php:93`, milik 2a); tanpa perubahan TS.
 
+## Langkah 2b — zona waktu & penjadwal per perusahaan (selesai)
+- `620fea4a` Zona kantor dari perusahaan konteks: `CurrentCompany::timezone()` (= `CompanyContext::timezone()`, cadangan `app.office_timezone`) dipakai semua helper waktu dan ±60 pembaca langsung (controller, FormRequest, query, SQL mentah `PersonalPerformance`/`OnTimeRate` sebagai binding). `OfficeTimezone`: `companies.timezone` wajib zona IANA saat disimpan (`Company::saving` di `TenancyServiceProvider`), nilai tidak sah di DB → zona aplikasi. `CompanyTimezoneTest`.
+- `0c48eab6` Penjadwal per perusahaan: `CompanySchedule` + `LocalTask` (tugas berjam lokal, event tiap 5 menit, klaim `scheduled_runs (task, company_id, local_date)` dengan `INSERT … ON CONFLICT DO NOTHING`, jalan di `CompanyContext::run`, gagal = klaim dilepas), `ForEachCompany::run()/sum()` di semua job & perintah terjadwal (dalam konteks = satu perusahaan; tanpa konteks = tiap perusahaan dalam konteks & zonanya), query dibatasi `CurrentCompany::id()`, `companyUniqueId()` untuk job unik. Tes jadwal lama disesuaikan (ekspresi `*/5` + jam lokal tugas). `CompanyScheduleTest`: WIB/WITA/WIT — tutup hari, pengingat check-in, ringkasan harian, tenggat 07.00, laporan 16.30 terjadi pada jam lokal masing-masing, sekali, A tidak terpengaruh; kegagalan satu perusahaan; kunci unik per perusahaan.
+- `5fbce2f8` Web: shared prop `officeTimezone` (baris di `HandleInertiaRequests` ikut ter-commit di `3e46c2b1` milik 2a), `lib/format.ts` `officeTimezone()/setOfficeTimezone()/officeDateFormat()/officeUtcOffset()` (formatter dibuat saat dipakai), dipasang di `app.tsx` (`withApp` + `router.on('navigate')`); 17 berkas TS. API `GET auth/saya` → `office_timezone`.
+- `450448a8` Aplikasi: `src/lib/zonaKantor.ts` (`zonaKantor()/aturZonaKantor()/formatKantor()`), dipasang `SessionProvider` dari profil; 15 berkas format.
+- `abf9fa87` jam salinan absensi WhatsApp, `eb1801dc` PHPStan.
+- Gerbang: `pest --parallel` penuh hijau (4151 tes), Pint, PHPStan, `npm run typecheck`, `npm run lint`, `npm test` (939), aplikasi `tsc`/`eslint` (node_modules dipinjam lewat symlink sementara dari worktree bagian5; tsconfig tidak berubah).
+- Batas: tugas berjam lokal dikejar maks. 2 jam (tutup hari & delegasi 12 jam, saldo 1 Jan sehari) — deploy siang hari tidak mengirim ulang pengingat pagi (pengingat juga ber-de-dup sendiri). Saat deploy pertama, tugas yang targetnya < 2 jam lalu bisa berjalan lagi hari itu: semuanya idempoten (de-dup `notification_dispatch_logs`, klaim kemunculan berulang, upsert snapshot). Retensi & pembersihan infrastruktur tetap global. Flag fitur tetap global (Fase 3).
+
 ## Keputusan desain
 - **Tanpa global scope otomatis.** Konteks hanya informasi; isolasi tetap oleh `visibleTo()` + Policy (keputusan rencana). Konteks kosong (tamu, scheduler) = perilaku lama.
 - **Penangkapan perusahaan job:** `Queue::createPayloadUsing()` (TenancyServiceProvider) memanggil `captureCompany()` tepat sebelum job diserialisasi: konteks saat ini → properti model pertama ber-`company_id` → (notifikasi) penerimanya. Tidak perlu mengubah konstruktor job. Pemulihan lewat `middleware()` trait; kelas yang punya middleware sendiri menggabung `companyMiddleware()` (`SyncDrivePermissions`). Notifikasi: middleware ikut per kanal, termasuk pengiriman tertunda jam tenang. Mailable antre (`DesktopLinkMail`) belum ikut — tidak membaca konteks.
@@ -37,7 +46,7 @@ Fase 1 multi-perusahaan (rencana disetujui pemilik: `~/.claude/plans/shimmying-s
 
 ## Langkah berikutnya
 1. Langkah 2a (data & otorisasi): C1 audit_logs.company_id, C5 hari libur per perusahaan, + butir rencana #2–#8, #10, #11; hapus entri `knownListingGaps()` dan skip C5.
-2. Langkah 2b (zona waktu & scheduler per perusahaan): pakai `CompanyContext::timezone()`; dispatcher per perusahaan.
+2. ~~Langkah 2b (zona waktu & scheduler per perusahaan)~~ selesai (lihat seksi Langkah 2b).
 3. ~~Langkah 2c (integrasi)~~ selesai (lihat seksi Langkah 2c).
 4. Langkah 3: `PerformanceFixtures::grow()` dua perusahaan, ADR & dokumen.
 

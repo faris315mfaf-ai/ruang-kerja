@@ -18,7 +18,7 @@
 
 | Domain | Tabel |
 |---|---|
-| Organisasi & akses | `companies`, `divisions`, `teams`, `positions`, `users`, `employee_profiles`, `roles`*, `permissions`*, `model_has_roles`*, `audit_logs`, `password_reset_requests` |
+| Organisasi & akses | `companies`, `divisions`, `teams`, `positions`, `users`, `employee_profiles`, `roles`*, `permissions`*, `model_has_roles`*, `audit_logs`, `password_reset_requests`, `scheduled_runs` |
 | Absensi | `office_locations`, `shifts`, `shift_assignments`, `holidays`, `attendance_days`, `attendance_logs`, `qr_tokens`, `kiosks`, `attendance_consents` |
 | Pengajuan | `leave_types`, `leave_balances`, `leave_balance_adjustments`, `requests`, `request_sequences`, `request_approvals`, `approval_flows`, `approval_flow_steps`, `approval_delegations` |
 | Workspace & task | `workspaces`, `workspace_members`, `milestones`, `milestone_tasks`, `project_updates`, `project_risks`, `project_directions`, `project_progress_snapshots`, `task_statuses`, `labels`, `tasks`, `task_assignees`, `task_labels`, `task_watchers`, `checklist_items`, `task_plans`, `management_notes`, `comments`, `task_comment_reads`, `mentions`, `reactions`, `activities`, `saved_views` |
@@ -44,7 +44,7 @@
 | id | ulid PK | |
 | name | varchar(150) | |
 | google_domain | varchar(150) unique | domain Workspace yang diizinkan login, mis. `perusahaan.co.id` (disimpan huruf kecil) |
-| timezone | varchar(50) | default `Asia/Jakarta` |
+| timezone | varchar(50) | default `Asia/Jakarta`; zona IANA (divalidasi saat disimpan). Zona semua tanggal kantor & jadwal perusahaan ini (Fase 1 Langkah 2b) |
 | settings | jsonb | jam ringkasan harian, retensi selfie (bulan), dll. Default `{}`. Kunci **`attendance_windows`** (keputusan pemilik 13 Okt 2026, "Jam absen" di Admin › Lokasi, shift & hari libur): `{"check_in": {"from": "HH:MM", "until": "HH:MM"}, "check_out": {"from": "HH:MM", "until": "HH:MM"}}`, jam 24 jam zona kantor, batas **inklusif**; tiap batas boleh `null`, kunci tidak ada = tanpa batas. Satu pengaturan untuk seluruh perusahaan (bukan per shift), berlaku juga bagi karyawan tanpa shift; tidak berlaku untuk shift lintas tengah malam dan hari yang dibuka kemarin. Ditulis `SaveAttendanceWindows` (audit `attendance.windows_updated`) |
 
 Kunci integrasi per perusahaan (Fase 1 multi-perusahaan, 18 Okt 2026; dibaca lewat `App\Domain\Tenancy\Settings\CompanySettings`, ditulis `php artisan company:configure` → `ConfigureCompany`, audit `company.configured`; UI = Fase 3):
@@ -158,6 +158,18 @@ Tidak ada `Gate::before` untuk Super Admin: workspace pribadi & selfie tetap ter
 | created_at | timestamptz | append-only, tanpa update (model menolak update) |
 
 Indeks: `(auditable_type, auditable_id)`, `(action)`, `(created_at)`, `(user_id, created_at)`, `(company_id, created_at)`. `auditable_type` berisi nama kelas model (tanpa morph map). Visibilitas (`AuditLog::visibleTo`, `AuditLogPolicy::view`): `audit.view` **dan** `company_id` = perusahaan penonton — entri sistem (tanpa pelaku) perusahaan lain tidak terlihat (celah C1, `docs/sesi/fase1-celah.md`). Backfill: perusahaan pelaku → perusahaan subjek → bila hanya ada satu perusahaan, semua sisa ke perusahaan itu.
+
+### scheduled_runs (penjadwal per perusahaan, Fase 1 Langkah 2b)
+Klaim tugas terjadwal berjam lokal per perusahaan (migrasi `2026_10_23_220200_create_scheduled_runs_table`, `App\Domain\Tenancy\Scheduling\CompanySchedule`, `docs/ARCHITECTURE.md` §3.9).
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| task | varchar(80) | nama tugas (`attendance:close-day`, kelas job, …) |
+| company_id | FK companies | cascadeOnDelete |
+| local_date | date | tanggal kantor perusahaan saat tugas dijalankan (zona `companies.timezone`) |
+| ran_at | timestamptz | |
+
+PK `(task, company_id, local_date)` — `INSERT … ON CONFLICT DO NOTHING` sebelum menjalankan tugas, jadi satu kali per perusahaan per tanggal lokal walau scheduler berjalan berulang/di beberapa server; dihapus bila tugas gagal (diulang 5 menit kemudian). Indeks `(local_date)`; baris > 60 hari dihapus harian. Tanpa model Eloquent. `companies.timezone` wajib zona IANA (divalidasi saat disimpan, `OfficeTimezone`).
 
 ### password_reset_requests (akun & kata sandi, 6 Okt 2026)
 "Lupa kata sandi" dengan persetujuan HR (migrasi `2026_10_12_100200_create_password_reset_requests_table`, model `PasswordResetRequest`, Policy `PasswordResetRequestPolicy`).
