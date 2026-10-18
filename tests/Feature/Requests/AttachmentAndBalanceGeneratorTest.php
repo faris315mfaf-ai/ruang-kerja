@@ -48,11 +48,28 @@ it('stores attachments on the private disk', function () {
     $attachment = $request->attachments()->sole();
 
     expect($attachment->filename)->toBe('surat dokter.pdf')
-        ->and($attachment->storage_path)->toStartWith('request-attachments/'.$request->id.'/')
+        ->and($attachment->storage_path)->toStartWith('company/'.$request->company_id.'/request-attachments/'.$request->id.'/')
         ->and($attachment->size_bytes)->toBe(120 * 1024);
 
     Storage::disk('local')->assertExists((string) $attachment->storage_path);
     expect(config('filesystems.disks.local.root'))->toBe(storage_path('app/private'));
+});
+
+it('still serves an attachment stored before the company directory', function () {
+    $s = $this->s;
+    $request = $s->submit($s->employee, $s->sick, [
+        'start_date' => '2026-10-07',
+        'end_date' => '2026-10-08',
+        'attachments' => [UploadedFile::fake()->create('surat dokter.pdf', 120, 'application/pdf')],
+    ]);
+    $attachment = $request->attachments()->sole();
+    $legacy = 'request-attachments/'.$request->id.'/lama.pdf';
+    Storage::disk('local')->move((string) $attachment->storage_path, $legacy);
+    $attachment->forceFill(['storage_path' => $legacy])->save();
+
+    $this->actingAs($s->employee)
+        ->get(route('requests.attachment', [$request, $attachment]))
+        ->assertOk();
 });
 
 it('generates yearly balances with capped carry-over, idempotently', function () {

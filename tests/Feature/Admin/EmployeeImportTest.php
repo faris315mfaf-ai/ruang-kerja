@@ -302,12 +302,13 @@ it('keeps an import private to the uploader and forbids anggota', function () {
 describe('uploaded file retention (contains NIK)', function () {
     it('deletes the previous uncommitted upload when the same user uploads again', function () {
         $first = previewImport(csvUpload('Bayu,bayu@kantor.test,,,,,,,,,,3201010101010001'));
-        $firstFiles = Storage::disk('local')->allFiles(EmployeeImportStore::DIRECTORY);
+        $directory = EmployeeImportStore::directoryFor($this->hr->company_id);
+        $firstFiles = Storage::disk('local')->allFiles($directory);
 
         $second = previewImport(csvUpload('Citra,citra@kantor.test,,,,,,,,,,3201010101010002'));
 
         expect($firstFiles)->toHaveCount(1)
-            ->and(Storage::disk('local')->allFiles(EmployeeImportStore::DIRECTORY))->toHaveCount(1)
+            ->and(Storage::disk('local')->allFiles($directory))->toHaveCount(1)
             ->and(Storage::disk('local')->exists($firstFiles[0]))->toBeFalse()
             ->and(app(EmployeeImportStore::class)->get($first, $this->hr))->toBeNull()
             ->and(app(EmployeeImportStore::class)->get($second, $this->hr))->not->toBeNull();
@@ -325,13 +326,19 @@ describe('uploaded file retention (contains NIK)', function () {
 
     it('prunes upload files older than the TTL every hour', function () {
         $disk = Storage::disk('local');
-        $disk->put(EmployeeImportStore::DIRECTORY.'/old.csv', 'nik');
-        $disk->put(EmployeeImportStore::DIRECTORY.'/fresh.csv', 'nik');
-        touch($disk->path(EmployeeImportStore::DIRECTORY.'/old.csv'), now()->subMinutes(EmployeeImportStore::TTL_MINUTES + 1)->getTimestamp());
+        $company = EmployeeImportStore::directoryFor($this->hr->company_id);
+        // Per-company directory, plus the directory used before the company prefix.
+        foreach ([$company, EmployeeImportStore::DIRECTORY] as $directory) {
+            $disk->put($directory.'/old.csv', 'nik');
+            $disk->put($directory.'/fresh.csv', 'nik');
+            touch($disk->path($directory.'/old.csv'), now()->subMinutes(EmployeeImportStore::TTL_MINUTES + 1)->getTimestamp());
+        }
 
-        $this->artisan('employee-imports:prune')->expectsOutput('1 berkas impor kedaluwarsa dihapus.')->assertSuccessful();
+        $this->artisan('employee-imports:prune')->expectsOutput('2 berkas impor kedaluwarsa dihapus.')->assertSuccessful();
 
-        expect($disk->exists(EmployeeImportStore::DIRECTORY.'/old.csv'))->toBeFalse()
+        expect($disk->exists($company.'/old.csv'))->toBeFalse()
+            ->and($disk->exists(EmployeeImportStore::DIRECTORY.'/old.csv'))->toBeFalse()
+            ->and($disk->exists($company.'/fresh.csv'))->toBeTrue()
             ->and($disk->exists(EmployeeImportStore::DIRECTORY.'/fresh.csv'))->toBeTrue();
 
         $events = collect(app(Schedule::class)->events())

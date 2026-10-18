@@ -53,7 +53,7 @@ return [
         'shift_assignments' => 'user',
         'holidays' => 'company',
         'attendance_days' => 'user',
-        'attendance_logs' => 'user', // CELAH: selfie tanpa prefiks perusahaan di storage (Langkah 2a)
+        'attendance_logs' => 'user', // selfie baru di company/{id}/… (path lama tetap terbaca)
         'qr_tokens' => ['via' => 'office_locations.office_location_id'],
         'kiosks' => 'company',
         'attendance_consents' => 'user',

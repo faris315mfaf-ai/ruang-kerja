@@ -2,6 +2,7 @@
 
 namespace App\Domain\Organization\Services;
 
+use App\Domain\Tenancy\Support\CompanyFiles;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -12,7 +13,8 @@ use Illuminate\Support\Str;
 /**
  * Keeps an uploaded import file between the dry run and the commit.
  *
- * The file lives on the private disk; the cache holds only its location, owner
+ * The file lives on the private disk under company/<company>/employee-imports
+ * (Fase 1 multi-perusahaan); the cache holds only its location, owner
  * and the client-safe preview/result (never row values such as NIK). The cache
  * entry expires TTL_MINUTES after the upload (updates never extend it). Files
  * contain NIK, so they never outlive their session:
@@ -37,7 +39,7 @@ final class EmployeeImportStore
 
         $token = Str::random(40);
         $extension = strtolower($file->getClientOriginalExtension()) === 'xlsx' ? 'xlsx' : 'csv';
-        $path = $file->storeAs(self::DIRECTORY, "{$token}.{$extension}", self::DISK);
+        $path = $file->storeAs(self::directoryFor($owner->company_id), "{$token}.{$extension}", self::DISK);
         $expiresAt = now()->addMinutes(self::TTL_MINUTES);
 
         Cache::put($this->key($token), [
@@ -85,6 +87,14 @@ final class EmployeeImportStore
         }
     }
 
+    /**
+     * Upload directory of a company's imports.
+     */
+    public static function directoryFor(string $companyId): string
+    {
+        return CompanyFiles::directory($companyId, self::DIRECTORY);
+    }
+
     public function deleteFile(string $path): void
     {
         Storage::disk(self::DISK)->delete($path);
@@ -101,9 +111,18 @@ final class EmployeeImportStore
         $threshold = now()->subMinutes(self::TTL_MINUTES)->getTimestamp();
         $deleted = 0;
 
-        foreach ($disk->files(self::DIRECTORY) as $path) {
-            if ($disk->lastModified($path) <= $threshold && $disk->delete($path)) {
-                $deleted++;
+        // Every company's directory, plus the one used before the company prefix.
+        $directories = [self::DIRECTORY];
+
+        foreach ($disk->directories(CompanyFiles::ROOT) as $company) {
+            $directories[] = $company.'/'.self::DIRECTORY;
+        }
+
+        foreach ($directories as $directory) {
+            foreach ($disk->files($directory) as $path) {
+                if ($disk->lastModified($path) <= $threshold && $disk->delete($path)) {
+                    $deleted++;
+                }
             }
         }
 

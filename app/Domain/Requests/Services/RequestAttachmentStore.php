@@ -3,6 +3,7 @@
 namespace App\Domain\Requests\Services;
 
 use App\Domain\Google\Enums\AttachmentSource;
+use App\Domain\Tenancy\Support\CompanyFiles;
 use App\Models\Attachment;
 use App\Models\EmployeeRequest;
 use App\Models\User;
@@ -33,7 +34,9 @@ final class RequestAttachmentStore
      */
     public function store(EmployeeRequest $request, User $uploader, array $files): array
     {
-        $directory = config()->string('requests.attachments.directory', 'request-attachments').'/'.$request->id;
+        // company/<company>/request-attachments/<request>/… (older files keep
+        // their path without the company prefix, read from attachments.storage_path).
+        $directory = CompanyFiles::directory($request->company_id, config()->string('requests.attachments.directory', 'request-attachments'), $request->id);
         $paths = [];
 
         foreach ($files as $file) {
