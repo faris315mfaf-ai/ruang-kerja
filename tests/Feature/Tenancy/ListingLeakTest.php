@@ -63,12 +63,8 @@ function listingLeakExceptions(): array
  */
 function knownListingGaps(): array
 {
-    return [
-        // C1: system audit entries (user_id null) are visible to every company's auditor.
-        'polos GET admin/audit @super_admin' => 'C1',
-        'cari GET admin/audit @super_admin' => 'C1',
-        'filter GET admin/audit @super_admin' => 'C1',
-    ];
+    // C1 (system audit entries of B) closed in Langkah 2a: audit_logs.company_id.
+    return [];
 }
 
 /**

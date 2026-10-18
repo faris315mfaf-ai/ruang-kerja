@@ -137,6 +137,7 @@ Tidak ada `Gate::before` untuk Super Admin: workspace pribadi & selfie tetap ter
 | Kolom | Tipe | Keterangan |
 |---|---|---|
 | id | ulid PK | |
+| company_id | FK companies null (nullOnDelete) | **Fase 1 multi-perusahaan** (migrasi `2026_10_23_210100_add_company_id_to_audit_logs`): perusahaan pemilik entri = perusahaan pelaku, else konteks perusahaan (job/webhook), else perusahaan subjek (langsung atau lewat `user_id`/`workspace_id`/`division_id`; `AuditLog::companyIdFor`). Null = entri platform, tidak tampil di halaman audit perusahaan mana pun |
 | user_id | FK users null | pelaku |
 | action | varchar(80) | mis. `attendance.corrected`, `request.approved`, `selfie.viewed` |
 | auditable_type / auditable_id | morph | objek |
@@ -145,7 +146,7 @@ Tidak ada `Gate::before` untuk Super Admin: workspace pribadi & selfie tetap ter
 | user_agent | varchar(512) null | |
 | created_at | timestamptz | append-only, tanpa update (model menolak update) |
 
-Indeks: `(auditable_type, auditable_id)`, `(action)`, `(created_at)`, `(user_id, created_at)`. `auditable_type` berisi nama kelas model (tanpa morph map).
+Indeks: `(auditable_type, auditable_id)`, `(action)`, `(created_at)`, `(user_id, created_at)`, `(company_id, created_at)`. `auditable_type` berisi nama kelas model (tanpa morph map). Visibilitas (`AuditLog::visibleTo`, `AuditLogPolicy::view`): `audit.view` **dan** `company_id` = perusahaan penonton — entri sistem (tanpa pelaku) perusahaan lain tidak terlihat (celah C1, `docs/sesi/fase1-celah.md`). Backfill: perusahaan pelaku → perusahaan subjek → bila hanya ada satu perusahaan, semua sisa ke perusahaan itu.
 
 ### password_reset_requests (akun & kata sandi, 6 Okt 2026)
 "Lupa kata sandi" dengan persetujuan HR (migrasi `2026_10_12_100200_create_password_reset_requests_table`, model `PasswordResetRequest`, Policy `PasswordResetRequestPolicy`).

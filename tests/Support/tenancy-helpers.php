@@ -440,7 +440,7 @@ if (! function_exists('foreignWorld')) {
         }
 
         AuditLog::factory()->by($hr)->forSubject($anggota)->create(['action' => 'user.updated', 'new_values' => ['name' => "Audit {$m}"]]);
-        // System entry (no actor): the known audit_logs gap (docs/sesi/fase1-celah.md).
+        // System entry (no actor): belongs to B through its subject (C1, audit_logs.company_id).
         AuditLog::factory()->forSubject($anggota)->create(['action' => 'attendance.closed', 'new_values' => ['note' => "Audit sistem {$m}"]]);
 
         // Smaller link tables, so B fills nearly every company-scoped table.

@@ -104,7 +104,8 @@ class AuditLogController extends Controller
     {
         $subject = AuditSubject::fromModelClass($log->auditable_type);
         $model = $log->auditable;
-        $name = $model?->getAttribute('name');
+        // Not every subject has a name column (e.g. shift assignments).
+        $name = $model?->getAttributes()['name'] ?? null;
         $fallback = $log->old_values['name'] ?? $log->new_values['name'] ?? null;
 
         return [

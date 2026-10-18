@@ -34,7 +34,7 @@ return [
         'positions' => 'company',
         'users' => 'company',
         'employee_profiles' => 'user', // CELAH: employee_number unik global (Langkah 2a)
-        'audit_logs' => 'user', // CELAH: user_id null untuk log sistem, tanpa company_id (Langkah 2a)
+        'audit_logs' => 'company', // company_id null = entri platform, tidak tampil di perusahaan mana pun
         'password_reset_requests' => 'company',
         'passkeys' => 'user',
         'roles' => 'global', // spatie: peran global, sama untuk semua perusahaan
