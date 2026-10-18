@@ -47,6 +47,17 @@
 | timezone | varchar(50) | default `Asia/Jakarta` |
 | settings | jsonb | jam ringkasan harian, retensi selfie (bulan), dll. Default `{}`. Kunci **`attendance_windows`** (keputusan pemilik 13 Okt 2026, "Jam absen" di Admin › Lokasi, shift & hari libur): `{"check_in": {"from": "HH:MM", "until": "HH:MM"}, "check_out": {"from": "HH:MM", "until": "HH:MM"}}`, jam 24 jam zona kantor, batas **inklusif**; tiap batas boleh `null`, kunci tidak ada = tanpa batas. Satu pengaturan untuk seluruh perusahaan (bukan per shift), berlaku juga bagi karyawan tanpa shift; tidak berlaku untuk shift lintas tengah malam dan hari yang dibuka kemarin. Ditulis `SaveAttendanceWindows` (audit `attendance.windows_updated`) |
 
+Kunci integrasi per perusahaan (Fase 1 multi-perusahaan, 18 Okt 2026; dibaca lewat `App\Domain\Tenancy\Settings\CompanySettings`, ditulis `php artisan company:configure` → `ConfigureCompany`, audit `company.configured`; UI = Fase 3):
+
+| Kunci `settings` | Isi |
+|---|---|
+| `whatsapp.group_jid` | jid grup WhatsApp salinan absensi (`…@g.us`); kosong = absensi perusahaan ini tidak dikirim ke grup mana pun |
+| `whatsapp.enabled` | `false` = salinan absensi perusahaan ini mati walau grup terisi; tidak ada = nyala |
+| `google.shared_drive_id` | ID Shared Drive Google untuk folder workspace perusahaan; kosong = fitur Drive nonaktif untuk workspace perusahaan ini |
+| `google.shared_drive_name` | nama Shared Drive yang ditampilkan di tab File (bawaan `RuangKerja`) |
+
+Cadangan: selama perusahaan itu **satu-satunya** (perusahaan lain tidak ada/terhapus), nilai kosong memakai config global (`WHATSAPP_GROUP_JID`, `GOOGLE_SHARED_DRIVE_ID`, `GOOGLE_SHARED_DRIVE_NAME`); dengan dua perusahaan atau lebih, tidak pernah. Migrasi data `2026_10_23_235100_copy_integration_settings_to_first_company` menyalin nilai config itu ke perusahaan tertua (SPKD) bila kuncinya kosong (`down()` menghapusnya selama masih sama dengan config). Kredensial gateway Evolution & service account Google tetap global.
+
 `companies`, `divisions`, `teams`, `positions` memakai `deleted_at` (soft delete).
 
 ### divisions

@@ -19,6 +19,14 @@ Fase 1 multi-perusahaan (rencana disetujui pemilik: `~/.claude/plans/shimmying-s
 - `00ea4168` dokumen ini + `docs/sesi/fase1-celah.md`.
 - Gerbang: `composer test` penuh hijau (4073 tes, 2 skip bersyarat C5/C9), Pint & PHPStan bersih; tanpa perubahan TS.
 
+## Langkah 2c — integrasi per perusahaan (selesai)
+- `e0b47b76` `App\Domain\Tenancy\Settings\CompanySettings` (`#[Scoped]`, memo per request, di-flush oleh event `Company` & `ConfigureCompany`): `whatsapp.group_jid`/`whatsapp.enabled`, `google.shared_drive_id`/`shared_drive_name` di `companies.settings`; config global (env) hanya cadangan selama perusahaan itu **satu-satunya**. `ConfigureCompany` (row lock, audit `company.configured`), `php artisan company:configure {company} --whatsapp-group= --whatsapp=on|off --shared-drive= --shared-drive-name= --timezone=` (timezone hanya menulis kolom) dan `company:list`; `CompanyLookup` (ULID/domain/nama). Migrasi data `2026_10_23_235100_copy_integration_settings_to_first_company` (env lewat `config()` → perusahaan tertua/SPKD).
+- `64354d63` C9 tertutup: `EvolutionWhatsApp::attendanceGroupFor($companyId)` dipakai `CheckIn`/`CheckOut`/`SendAttendanceWhatsApp`; perusahaan tanpa grup tidak dikirimi (log info). Gateway Evolution tetap global (per perusahaan = Fase 3).
+- `a5ddce37` Shared Drive per perusahaan: `GoogleFeatures::enabled/ensureEnabled/missingDriveSettings(?companyId)` (null = `CompanyContext`, tanpa konteks = config global seperti dulu), `GoogleClientFactory::sharedDriveId(?companyId)` + `serviceAccount($timeout, $companyId)`, `DriveFolderService`/`DriveFolderContentsSync`/unggah/listener/kueri workspace memakai perusahaan workspace. Perusahaan tanpa Shared Drive → Drive nonaktif (pesan & `DriveUnavailable` yang ada; Super Admin melihat "Shared Drive perusahaan (php artisan company:configure --shared-drive=…)"), tanpa folder di Drive perusahaan lain. `FakeDriveClient::addSharedDrive()`, `ruangkerja:google-check --company=`.
+- `0a44895b` Email: `CompanyBranding::name()` (perusahaan penerima → konteks → `BRANDING_COMPANY_NAME`) di `mail/layout.blade.php`; `DesktopLinkMail` membawa nama perusahaan penerima. `RecapPdf` sudah memakai perusahaan aktor; `errors/minimal` & `app.blade.php` hanya nama platform (tidak diubah). `CompanyIntegrationsTest` (18 tes).
+- Catatan: `google.oauth.allowed_domain` (GOOGLE_ALLOWED_DOMAIN) tetap global — `StoreGoogleAccount` juga mewajibkan akun Google = email karyawan sendiri, jadi tidak lintas perusahaan; bila diisi, karyawan perusahaan lain tidak bisa menyambungkan akun (batasan, bukan kebocoran; per perusahaan = Fase 3). `GOOGLE_IMPERSONATE_USER` & service account global: Shared Drive perusahaan lain harus dikelola akun impersonasi itu. Halaman publik `/kebijakan-privasi` untuk tamu masih `BRANDING_COMPANY_NAME` (Fase 3).
+- Deploy produksi: `docs/deploy/VPS-BERSAMA.md` §4a, `docs/deploy/WHATSAPP.md` §2a.
+
 ## Keputusan desain
 - **Tanpa global scope otomatis.** Konteks hanya informasi; isolasi tetap oleh `visibleTo()` + Policy (keputusan rencana). Konteks kosong (tamu, scheduler) = perilaku lama.
 - **Penangkapan perusahaan job:** `Queue::createPayloadUsing()` (TenancyServiceProvider) memanggil `captureCompany()` tepat sebelum job diserialisasi: konteks saat ini → properti model pertama ber-`company_id` → (notifikasi) penerimanya. Tidak perlu mengubah konstruktor job. Pemulihan lewat `middleware()` trait; kelas yang punya middleware sendiri menggabung `companyMiddleware()` (`SyncDrivePermissions`). Notifikasi: middleware ikut per kanal, termasuk pengiriman tertunda jam tenang. Mailable antre (`DesktopLinkMail`) belum ikut — tidak membaca konteks.
@@ -29,7 +37,7 @@ Fase 1 multi-perusahaan (rencana disetujui pemilik: `~/.claude/plans/shimmying-s
 ## Langkah berikutnya
 1. Langkah 2a (data & otorisasi): C1 audit_logs.company_id, C5 hari libur per perusahaan, + butir rencana #2–#8, #10, #11; hapus entri `knownListingGaps()` dan skip C5.
 2. Langkah 2b (zona waktu & scheduler per perusahaan): pakai `CompanyContext::timezone()`; dispatcher per perusahaan.
-3. Langkah 2c (integrasi): C9 `whatsapp.group_jid` per perusahaan, Shared Drive, nama perusahaan di email.
+3. ~~Langkah 2c (integrasi)~~ selesai (lihat seksi Langkah 2c).
 4. Langkah 3: `PerformanceFixtures::grow()` dua perusahaan, ADR & dokumen.
 
 ## Verifikasi

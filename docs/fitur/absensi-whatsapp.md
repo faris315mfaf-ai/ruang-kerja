@@ -8,7 +8,7 @@
 1. Karyawan membuka layar Absen (ponsel/tab), mengambil selfie.
 2. Di langkah tinjau (`SelfieReview`), **"Rencana kerja hari ini" wajib diisi** (maks 2.000 karakter) — teks biasa, boleh bernomor "1) … 2) …".
 3. Check-in terkirim (`work_plan` ikut); tersimpan di `attendance_days.work_plan`.
-4. Job antrean `SendCheckInWhatsApp` mengirim pesan ke grup (jid `WHATSAPP_GROUP_JID`) lewat Evolution API:
+4. Job antrean `SendCheckInWhatsApp` mengirim pesan ke **grup perusahaan karyawan** (`companies.settings.whatsapp.group_jid`, lihat §3a) lewat Evolution API:
 
    ```
    🟢 *Rizky Aditya* absen masuk
@@ -88,9 +88,17 @@ Durasi kerja: 9 jam 46 menit
 | `EVOLUTION_URL` | dev `http://localhost:8082`; produksi `http://evolution:8080` (jaringan internal Docker) |
 | `EVOLUTION_API_KEY` | API key global gateway (rahasia; diisi `AUTHENTICATION_API_KEY` kontainer) |
 | `EVOLUTION_INSTANCE` | nama instance gateway (default `ruangkerja`) |
-| `WHATSAPP_GROUP_JID` | jid grup tujuan `…@g.us` |
+| `WHATSAPP_GROUP_JID` | jid grup `…@g.us` — **cadangan** satu perusahaan saja; grup per perusahaan ada di `companies.settings` (§3a) |
 | `ATTENDANCE_STAMP_MAP` | `true` (bawaan) = peta mini + reverse-geocode OSM pada cap foto; `false` = tanpa peta & tanpa permintaan ke OpenStreetMap |
 | `OSM_USER_AGENT` | User-Agent deskriptif untuk OSM (bawaan `RuangKerja/1.0 (+https://spkd.store)`; kebijakan OSM mewajibkannya); opsional `OSM_TILE_URL`, `OSM_NOMINATIM_URL` |
+
+### 3a. Grup per perusahaan (Fase 1 multi-perusahaan, 18 Okt 2026)
+
+- Grup tujuan disimpan **per perusahaan** di `companies.settings` (`whatsapp.group_jid`, opsional `whatsapp.enabled = false` untuk mematikan salinan perusahaan itu), dibaca lewat `App\Domain\Tenancy\Settings\CompanySettings`. `CheckIn`/`CheckOut`/`SendAttendanceWhatsApp` memakai `EvolutionWhatsApp::attendanceGroupFor($companyId)`: absen karyawan perusahaan B **tidak pernah** masuk grup perusahaan A (celah C9, `docs/sesi/fase1-celah.md`).
+- Perusahaan **tanpa grup** tidak dikirimi apa pun (tanpa galat; log info `whatsapp.attendance skipped: company has no group`).
+- `WHATSAPP_GROUP_JID` (env) hanya **cadangan** selama perusahaan itu satu-satunya di basis data (instalasi lama tetap jalan). Migrasi `2026_10_23_235100_copy_integration_settings_to_first_company` menyalin nilainya ke perusahaan pertama (SPKD); begitu ada perusahaan kedua, env tidak dipakai lagi.
+- Kredensial gateway (`EVOLUTION_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE`) dan `NOTIFICATIONS_WHATSAPP_ENABLED` tetap **global** (satu gateway, satu nomor, banyak grup). Gateway/nomor per perusahaan = Fase 3.
+- Mengatur (UI pengaturan = Fase 3): `php artisan company:configure <id|domain|nama> --whatsapp-group=1203…@g.us` · matikan: `--whatsapp=off` · hapus grup: `--whatsapp-group=""`. Lihat yang berlaku: `php artisan company:list`. Setiap perubahan tercatat di audit log (`company.configured`).
 
 Pengaturan lain di `config/attendance.php` › `stamp` (zoom 16, lebar maks. 1080, kualitas JPEG 82, cache 24 jam, jeda Nominatim 1 dtk).
 
@@ -113,10 +121,11 @@ Pengaturan lain di `config/attendance.php` › `stamp` (zoom 16, lebar maks. 108
 - Pest `tests/Feature/Attendance/CheckInWorkPlanTest.php`: poin tersimpan di hari (jsonb); baris kosong dibuang; opsional di API (QR/kiosk); >8 poin atau poin >300 karakter ditolak.
 - Pest `tests/Feature/Notifications/StampedSelfieTest.php`: JPEG valid dengan ubin + geocode palsu; tanpa peta saat ubin/Nominatim gagal; skala ke 1080 px tanpa mengubah selfie asli; cache tempat; kantor/WFH tanpa geocoder; peta dimatikan = tanpa permintaan OSM; tanpa selfie/berkas rusak = null.
 - Pest `tests/Feature/Notifications/AttendanceWhatsAppTest.php` (diperbarui 13 Okt: payload `sendMedia`, caption Rencana/Laporan Kerja, teks polos tanpa selfie, caption panjang dipecah, 500 → lempar): dispatch masuk & pulang saat kanal nyala; tidak saat mati; payload Evolution benar (URL/instance/apikey/jid/format pesan/tanggal Indonesia/lokasi deskriptif/durasi); 500 → lempar untuk dicoba ulang.
+- Pest `tests/Feature/Tenancy/CompanyIntegrationsTest.php` + `BackgroundLeakTest` (C9): cadangan env hanya untuk satu-satunya perusahaan, grup per perusahaan, perusahaan tanpa grup dilewati, `company:configure`/`company:list`, migrasi data.
 - Vitest `use-check-flow.test.ts`: rencana kosong memblokir kirim check-in; terisi → ikut `FormData`.
 
 ## 7. Yang menyusul (belum)
 
-- UI Pengaturan untuk HR (cek koneksi gateway, pilih grup dari daftar, tombol uji kirim) — sementara lewat env.
-- Opt-out per perusahaan/divisi & pilihan grup per divisi.
+- UI Pengaturan untuk HR (cek koneksi gateway, pilih grup dari daftar, tombol uji kirim) — sementara lewat `php artisan company:configure` (Fase 3).
+- Pilihan grup per divisi; gateway/nomor per perusahaan (Fase 3). Grup & opt-out per perusahaan sudah ada (§3a).
 - Kanal `whatsapp` untuk notifikasi personal (menunggu F2-4).
