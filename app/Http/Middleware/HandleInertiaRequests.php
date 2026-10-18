@@ -8,6 +8,7 @@ use App\Domain\Notifications\Services\InboxQuery;
 use App\Domain\Organization\Demo\DemoAccounts;
 use App\Domain\Requests\Services\ApprovalQueue;
 use App\Domain\RoleDashboards\Services\RoleDashboardAccess;
+use App\Domain\Tenancy\CompanyContext;
 use App\Domain\Workspaces\Queries\SidebarWorkspaces;
 use App\Http\Resources\Attendance\MyAttendance;
 use App\Models\Company;
@@ -60,7 +61,8 @@ class HandleInertiaRequests extends Middleware
         // Small PK lookups; gives the shell the user's place in the organization.
         // Separate queries on purpose: loading partial columns into the user's own
         // relations would leak into controllers/actions (e.g. company.google_domain).
-        $company = $user !== null ? Company::query()->whereKey($user->company_id)->first(['id', 'name']) : null;
+        // The company comes from CompanyContext (ResolveCompanyContext): loaded once per request.
+        $company = $user !== null ? $this->companyOf($user) : null;
         $division = $user?->division_id !== null ? Division::query()->whereKey($user->division_id)->first(['id', 'name', 'code']) : null;
         $position = $user?->position_id !== null ? Position::query()->whereKey($user->position_id)->first(['id', 'name', 'level', 'dashboard_role']) : null;
 
@@ -111,6 +113,24 @@ class HandleInertiaRequests extends Middleware
             // Local demo only: personas of the account switcher at the top of the shell.
             'demoSwitcher' => fn (): ?array => $user !== null ? DemoAccounts::switcherProps($user->email) : null,
         ];
+    }
+
+    /**
+     * The signed-in user's company, from the request's CompanyContext. Falls back
+     * to a direct lookup when the context belongs to no/another company (e.g. an
+     * error page rendered outside the middleware stack).
+     */
+    private function companyOf(User $user): ?Company
+    {
+        $context = app(CompanyContext::class);
+
+        if ($context->id() === null) {
+            $context->set($user->company_id);
+        }
+
+        return $context->id() === $user->company_id
+            ? $context->company()
+            : Company::query()->whereKey($user->company_id)->first(['id', 'name']);
     }
 
     /**

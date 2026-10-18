@@ -4,6 +4,7 @@ namespace App\Domain\Announcements\Jobs;
 
 use App\Domain\Announcements\Notifications\AnnouncementPublished;
 use App\Domain\Announcements\Services\AnnouncementTargets;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\Announcement;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Collection;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Notification;
  */
 final class SendAnnouncementNotifications implements ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $tries = 3;

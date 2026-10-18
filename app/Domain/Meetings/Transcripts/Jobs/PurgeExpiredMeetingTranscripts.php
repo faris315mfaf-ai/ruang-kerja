@@ -2,6 +2,7 @@
 
 namespace App\Domain\Meetings\Transcripts\Jobs;
 
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\MeetingTranscript;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Log;
  */
 class PurgeExpiredMeetingTranscripts implements ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public function handle(): int

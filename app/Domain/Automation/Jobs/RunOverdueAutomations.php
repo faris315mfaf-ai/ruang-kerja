@@ -4,6 +4,7 @@ namespace App\Domain\Automation\Jobs;
 
 use App\Domain\Automation\Actions\RunAutomationRule;
 use App\Domain\Automation\Enums\RuleTriggerType;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\AutomationRule;
 use App\Models\Task;
 use Carbon\CarbonImmutable;
@@ -21,6 +22,7 @@ use Illuminate\Foundation\Queue\Queueable;
  */
 final class RunOverdueAutomations implements ShouldBeUnique, ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $uniqueFor = 600;

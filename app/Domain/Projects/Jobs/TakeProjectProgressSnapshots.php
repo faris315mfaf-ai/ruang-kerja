@@ -5,6 +5,7 @@ namespace App\Domain\Projects\Jobs;
 use App\Domain\Projects\Enums\ProjectStatus;
 use App\Domain\Projects\Queries\ProjectMetrics;
 use App\Domain\Projects\Services\ProjectClock;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Domain\Workspaces\Enums\WorkspaceType;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\DB;
  */
 final class TakeProjectProgressSnapshots implements ShouldBeUnique, ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $uniqueFor = 600;

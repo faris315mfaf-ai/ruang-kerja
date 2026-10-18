@@ -6,6 +6,7 @@ use App\Domain\Meetings\Transcripts\Services\NotulenConfig;
 use App\Domain\Meetings\Transcripts\Services\RecorderToken;
 use App\Domain\Meetings\Transcripts\Services\TranscriberClient;
 use App\Domain\Meetings\Transcripts\Services\TranscriptConsents;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\Meeting;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -16,6 +17,7 @@ use Illuminate\Foundation\Queue\Queueable;
  */
 class StartMeetingRecorder implements ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $tries = 4;

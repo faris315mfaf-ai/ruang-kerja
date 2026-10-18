@@ -14,6 +14,7 @@ use App\Http\Middleware\EnsureActiveEmployee;
 use App\Http\Middleware\EnsureTwoFactorForSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\ResolveCompanyContext;
 use App\Http\Middleware\RestrictCredentialRoutes;
 use App\Http\Middleware\RestrictKioskDevice;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -43,6 +44,7 @@ Route::post('api/hiring/form/{token}', FormWebhookController::class)
         'auth.session',
         AuthenticateSession::class,
         EnsureActiveEmployee::class,
+        ResolveCompanyContext::class,
         RestrictKioskDevice::class,
         RestrictCredentialRoutes::class,
         EnsureTwoFactorForSuperAdmin::class,

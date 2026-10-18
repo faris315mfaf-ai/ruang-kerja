@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Notes;
 use App\Domain\Notes\Actions\StoreNoteState;
 use App\Domain\Notes\Enums\NoteKind;
 use App\Domain\Organization\Enums\UserStatus;
+use App\Domain\Tenancy\CompanyContext;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Notes\CollabStateRequest;
 use App\Models\Note;
@@ -22,6 +23,8 @@ class CollabStateController extends Controller
     public function show(string $note): JsonResponse
     {
         $model = Note::query()->where('kind', NoteKind::Note->value)->findOrFail($note);
+        // Collab server (no user): run in the note's company (Fase 1 CompanyContext).
+        app(CompanyContext::class)->set($model->company_id);
         $state = $model->yjs_state;
 
         return response()->json([
@@ -36,6 +39,8 @@ class CollabStateController extends Controller
     public function store(CollabStateRequest $request, string $note, StoreNoteState $store): JsonResponse
     {
         $model = Note::query()->where('kind', NoteKind::Note->value)->findOrFail($note);
+        // Collab server (no user): run in the note's company (Fase 1 CompanyContext).
+        app(CompanyContext::class)->set($model->company_id);
         $state = base64_decode($request->string('yjs_state')->toString(), true);
 
         abort_if($state === false, 422, 'yjs_state bukan base64.');

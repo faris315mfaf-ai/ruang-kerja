@@ -8,6 +8,7 @@ use App\Domain\Notifications\Digest\DigestBuilder;
 use App\Domain\Notifications\Enums\NotificationChannel;
 use App\Domain\Notifications\Enums\NotificationEvent;
 use App\Domain\Notifications\Services\NotificationPreferenceResolver;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\NotificationSetting;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\Mail;
  */
 final class SendDailyDigest implements ShouldQueue
 {
+    use CompanyAware;
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;

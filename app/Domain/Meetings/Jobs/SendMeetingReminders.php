@@ -7,6 +7,7 @@ use App\Domain\Meetings\Notifications\MeetingStartingNotification;
 use App\Domain\Meetings\Services\MeetingOccurrences;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Notifications\Services\NotificationDispatchLog;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\Meeting;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -22,6 +23,7 @@ use Illuminate\Foundation\Queue\Queueable;
  */
 final class SendMeetingReminders implements ShouldBeUnique, ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     /** Largest reminder offset allowed by meetings_reminders_check. */

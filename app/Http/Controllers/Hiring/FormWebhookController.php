@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Hiring;
 
 use App\Domain\Hiring\Actions\ReceiveFormSubmission;
 use App\Domain\Hiring\Services\WebhookSignature;
+use App\Domain\Tenancy\CompanyContext;
 use App\Http\Controllers\Controller;
 use App\Models\HiringPosition;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +31,9 @@ class FormWebhookController extends Controller
         if ($position === null) {
             return response()->json(['message' => 'Tautan formulir tidak dikenal.'], 404);
         }
+
+        // Public webhook: run in the position's company (Fase 1 CompanyContext).
+        app(CompanyContext::class)->set($position->company_id);
 
         $body = $request->getContent();
 

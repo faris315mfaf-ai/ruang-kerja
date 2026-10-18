@@ -6,6 +6,7 @@ use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Models\ShiftAssignment;
 use App\Domain\Attendance\Notifications\CheckInReminderNotification;
 use App\Domain\Attendance\Services\ScheduleResolver;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Cache;
  */
 final class SendCheckInReminders implements ShouldBeUnique, ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $uniqueFor = 240;

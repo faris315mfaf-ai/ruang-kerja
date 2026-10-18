@@ -4,6 +4,7 @@ namespace App\Domain\Auth\Jobs;
 
 use App\Domain\Auth\Enums\PasswordResetStatus;
 use App\Domain\Auth\Services\PasswordResetExpiry;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\PasswordResetRequest;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,6 +17,7 @@ use Illuminate\Foundation\Queue\Queueable;
  */
 final class ExpirePasswordResetRequests implements ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public const int RETENTION_DAYS = 90;

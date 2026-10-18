@@ -5,6 +5,7 @@ namespace App\Domain\Meetings\Jobs;
 use App\Domain\Meetings\Services\LiveKitRoomService;
 use App\Domain\Meetings\Services\MinutesCollab;
 use App\Domain\Meetings\Services\VideoRooms;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\MeetingAttendance;
 use App\Models\MeetingMinutes;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -21,6 +22,7 @@ use RuntimeException;
  */
 final class DisconnectUninvited implements ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $tries = 3;

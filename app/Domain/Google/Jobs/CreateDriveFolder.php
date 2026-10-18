@@ -9,6 +9,7 @@ use App\Domain\Google\Exceptions\GoogleException;
 use App\Domain\Google\Jobs\Concerns\HandlesGoogleFailures;
 use App\Domain\Google\Services\DriveFolderService;
 use App\Domain\Google\Services\DrivePermissionSync;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
@@ -25,6 +26,7 @@ use Throwable;
  */
 final class CreateDriveFolder implements ShouldBeUnique, ShouldQueue
 {
+    use CompanyAware;
     use HandlesGoogleFailures, Queueable;
 
     public bool $deleteWhenMissingModels = true;

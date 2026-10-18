@@ -13,6 +13,7 @@ use App\Domain\Google\Services\DriveFileRecorder;
 use App\Domain\Google\Services\DriveFolderContentsSync;
 use App\Domain\Google\Services\DriveFolderService;
 use App\Domain\Google\Services\ResumableUploader;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\Attachment;
 use App\Models\DriveFile;
 use App\Models\User;
@@ -33,6 +34,7 @@ use Throwable;
  */
 final class UploadToDrive implements ShouldQueue
 {
+    use CompanyAware;
     use HandlesGoogleFailures, Queueable;
 
     public bool $deleteWhenMissingModels = true;

@@ -6,6 +6,7 @@ use App\Domain\Meetings\Transcripts\Enums\DraftStatus;
 use App\Domain\Meetings\Transcripts\Enums\TranscriptStatus;
 use App\Domain\Meetings\Transcripts\Services\MinutesSummarizer;
 use App\Domain\Meetings\Transcripts\Services\NotulenConfig;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\MeetingTranscript;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -24,6 +25,7 @@ use Throwable;
  */
 class SummarizeMeetingTranscript implements ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $tries = 1;

@@ -2,6 +2,7 @@
 
 namespace App\Domain\Meetings\Jobs;
 
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\MeetingSpeakingTime;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -17,6 +18,7 @@ use Illuminate\Foundation\Queue\Queueable;
  */
 final class PruneSpeakingTimes implements ShouldBeUnique, ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $uniqueFor = 600;

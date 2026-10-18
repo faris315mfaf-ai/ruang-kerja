@@ -5,6 +5,7 @@ namespace App\Domain\Briefings\Jobs;
 use App\Domain\Briefings\Notifications\BriefingPosted;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Notifications\Services\NotificationDispatchLog;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\Briefing;
 use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Notification;
  */
 final class SendBriefingNotifications implements ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $tries = 3;

@@ -9,6 +9,7 @@ use App\Domain\Meetings\Guests\Queries\GuestPortal;
 use App\Domain\Meetings\Guests\Services\GuestAccess;
 use App\Domain\Meetings\Guests\Services\GuestLinks;
 use App\Domain\Meetings\Services\VideoRooms;
+use App\Domain\Tenancy\CompanyContext;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Meetings\GuestAdmissionRequest;
 use App\Models\MeetingParticipant;
@@ -46,6 +47,7 @@ class GuestPortalController extends Controller
                 ->toResponse($request)->setStatusCode(404));
         }
 
+        app(CompanyContext::class)->set($guest->meeting->company_id);
         $state = $this->access->inspect($guest);
 
         return $this->hardened(Inertia::render('meetings/guest', ['token' => $token, 'guest' => $this->portal->info($state)])->toResponse($request));
@@ -106,6 +108,9 @@ class GuestPortalController extends Controller
         if ($guest === null) {
             throw new HttpResponseException($this->json(['message' => 'Tautan tidak dikenal.', 'code' => 'tidak_dikenal'], 404));
         }
+
+        // Public guest link (no user): run in the meeting's company (Fase 1 CompanyContext).
+        app(CompanyContext::class)->set($guest->meeting->company_id);
 
         return $guest;
     }

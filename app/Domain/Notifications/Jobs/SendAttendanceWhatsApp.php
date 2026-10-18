@@ -10,6 +10,7 @@ use App\Domain\Attendance\Models\AttendanceLog;
 use App\Domain\Attendance\Models\OfficeLocation;
 use App\Domain\Attendance\Services\StampedSelfie;
 use App\Domain\Notifications\Services\EvolutionWhatsApp;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use Carbon\CarbonImmutable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -43,6 +44,7 @@ use Throwable;
  */
 final class SendAttendanceWhatsApp implements ShouldQueue
 {
+    use CompanyAware;
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public const string PART_FULL = 'full';

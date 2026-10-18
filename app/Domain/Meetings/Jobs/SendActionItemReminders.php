@@ -5,6 +5,7 @@ namespace App\Domain\Meetings\Jobs;
 use App\Domain\Meetings\Notifications\ActionItemDueNotification;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Notifications\Services\NotificationDispatchLog;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\Meeting;
 use App\Models\MeetingActionItem;
 use App\Policies\MeetingPolicy;
@@ -25,6 +26,7 @@ use Illuminate\Foundation\Queue\Queueable;
  */
 final class SendActionItemReminders implements ShouldBeUnique, ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $uniqueFor = 600;

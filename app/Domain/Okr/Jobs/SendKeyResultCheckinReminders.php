@@ -8,6 +8,7 @@ use App\Domain\Notifications\Services\NotificationDispatchLog;
 use App\Domain\Okr\Enums\ObjectiveStatus;
 use App\Domain\Okr\Notifications\KeyResultCheckinReminderNotification;
 use App\Domain\Requests\Support\OfficeTime;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\KeyResult;
 use App\Models\Objective;
 use App\Models\User;
@@ -26,6 +27,7 @@ use Illuminate\Support\Facades\Gate;
  */
 final class SendKeyResultCheckinReminders implements ShouldBeUnique, ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $uniqueFor = 600;

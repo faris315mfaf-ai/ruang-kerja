@@ -11,10 +11,12 @@ use App\Providers\MeetingsServiceProvider;
 use App\Providers\NotificationServiceProvider;
 use App\Providers\PrivacyServiceProvider;
 use App\Providers\RequestsServiceProvider;
+use App\Providers\TenancyServiceProvider;
 use App\Providers\WorkspaceServiceProvider;
 
 return [
     AppServiceProvider::class,
+    TenancyServiceProvider::class,
     AttendanceServiceProvider::class,
     FortifyServiceProvider::class,
     GoogleServiceProvider::class,

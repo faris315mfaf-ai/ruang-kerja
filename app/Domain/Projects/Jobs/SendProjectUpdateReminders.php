@@ -5,6 +5,7 @@ namespace App\Domain\Projects\Jobs;
 use App\Domain\Projects\Enums\ProjectStatus;
 use App\Domain\Projects\Notifications\ProjectUpdateReminderNotification;
 use App\Domain\Projects\Services\ProjectClock;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Domain\Workspaces\Enums\WorkspaceType;
 use App\Models\ProjectUpdate;
 use App\Models\Workspace;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\Gate;
  */
 final class SendProjectUpdateReminders implements ShouldBeUnique, ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $uniqueFor = 600;

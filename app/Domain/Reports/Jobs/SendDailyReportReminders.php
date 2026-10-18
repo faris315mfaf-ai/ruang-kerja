@@ -8,6 +8,7 @@ use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Notifications\Services\NotificationDispatchLog;
 use App\Domain\Reports\Notifications\DailyReportReminder;
 use App\Domain\Reports\Support\ReportDay;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use App\Models\DailyReport;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -25,6 +26,7 @@ use Illuminate\Foundation\Queue\Queueable;
  */
 final class SendDailyReportReminders implements ShouldBeUnique, ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $uniqueFor = 3600;

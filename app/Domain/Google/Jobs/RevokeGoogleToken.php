@@ -3,6 +3,7 @@
 namespace App\Domain\Google\Jobs;
 
 use App\Domain\Google\GoogleFeatures;
+use App\Domain\Tenancy\Concerns\CompanyAware;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -17,6 +18,7 @@ use RuntimeException;
  */
 final class RevokeGoogleToken implements ShouldBeEncrypted, ShouldQueue
 {
+    use CompanyAware;
     use Queueable;
 
     public int $tries = 3;

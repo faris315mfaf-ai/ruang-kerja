@@ -19,6 +19,7 @@ use App\Http\Middleware\EnsureTwoFactorForSuperAdmin;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\LimitRequestBody;
+use App\Http\Middleware\ResolveCompanyContext;
 use App\Http\Middleware\RestrictCredentialRoutes;
 use App\Http\Middleware\RestrictKioskDevice;
 use App\Http\Middleware\VerifyCollabSecret;
@@ -127,6 +128,7 @@ Route::post('api/livekit/webhook', LiveKitWebhookController::class)
         'auth.session',
         AuthenticateSession::class,
         EnsureActiveEmployee::class,
+        ResolveCompanyContext::class,
         RestrictKioskDevice::class,
         RestrictCredentialRoutes::class,
         EnsureTwoFactorForSuperAdmin::class,
@@ -158,6 +160,7 @@ Route::middleware([EnsureFeatureEnabled::class.':meetings'])->group(function () 
             'auth.session',
             AuthenticateSession::class,
             EnsureActiveEmployee::class,
+            ResolveCompanyContext::class,
             RestrictKioskDevice::class,
             RestrictCredentialRoutes::class,
             EnsureTwoFactorForSuperAdmin::class,
