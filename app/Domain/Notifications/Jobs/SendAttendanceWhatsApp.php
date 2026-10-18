@@ -40,7 +40,9 @@ use Throwable;
  * photo then carries the header and the points follow as a second job
  * (`part = points`), keeping a retry from ever posting the photo twice.
  * Disabled while the channel is off; a failing gateway never affects the
- * attendance record itself.
+ * attendance record itself. Sent only to the WhatsApp group of the
+ * employee's company (`companies.settings.whatsapp.group_jid`,
+ * CompanySettings); a company without a group gets no copy.
  */
 final class SendAttendanceWhatsApp implements ShouldQueue
 {
@@ -70,9 +72,7 @@ final class SendAttendanceWhatsApp implements ShouldQueue
 
     public function handle(EvolutionWhatsApp $whatsapp, StampedSelfie $stamp): void
     {
-        $group = config('notifications.channels.whatsapp.group_jid');
-
-        if (! $whatsapp->enabled() || ! is_string($group) || $group === '') {
+        if (! $whatsapp->enabled()) {
             return;
         }
 
@@ -81,6 +81,13 @@ final class SendAttendanceWhatsApp implements ShouldQueue
             ->find($this->dayId);
 
         if ($day === null || ! $day->user()->exists()) {
+            return;
+        }
+
+        // Only the group of the employee's own company (Fase 1 multi-perusahaan).
+        $group = $whatsapp->attendanceGroupFor($day->user->company_id);
+
+        if ($group === null) {
             return;
         }
 

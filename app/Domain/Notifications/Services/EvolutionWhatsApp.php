@@ -3,9 +3,11 @@
 namespace App\Domain\Notifications\Services;
 
 use App\Domain\Notifications\Enums\NotificationChannel;
+use App\Domain\Tenancy\Settings\CompanySettings;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Self-hosted Evolution API gateway (docs/fitur/absensi-whatsapp.md): a
@@ -26,6 +28,27 @@ final class EvolutionWhatsApp
             && $url !== ''
             && (string) config('services.evolution.api_key') !== ''
             && NotificationChannel::WhatsApp->isAvailable();
+    }
+
+    /**
+     * The group receiving a company's attendance copies, or null when the
+     * gateway is off or that company has no group (Fase 1 multi-perusahaan:
+     * one gateway, one group per company in `companies.settings`; a company
+     * without a group is skipped quietly — never sent to another company's).
+     */
+    public function attendanceGroupFor(string $companyId): ?string
+    {
+        if (! $this->enabled()) {
+            return null;
+        }
+
+        $group = CompanySettings::resolve()->whatsappGroupJid($companyId);
+
+        if ($group === null) {
+            Log::info('whatsapp.attendance skipped: company has no group', ['company' => $companyId]);
+        }
+
+        return $group;
     }
 
     /**

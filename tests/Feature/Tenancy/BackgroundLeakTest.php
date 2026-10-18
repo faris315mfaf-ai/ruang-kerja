@@ -9,6 +9,8 @@ use App\Domain\Notifications\BaseNotification;
 use App\Domain\Notifications\Digest\DailyDigestMail;
 use App\Domain\Notifications\Jobs\SendAttendanceWhatsApp;
 use App\Domain\Organization\Mail\DesktopLinkMail;
+use App\Domain\Tenancy\Actions\ConfigureCompany;
+use App\Domain\Tenancy\Settings\CompanySettings;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Scheduling\CallbackEvent;
@@ -173,15 +175,23 @@ test('a holiday of company B does not cancel company A\'s working day', function
         ->and($digestTo($this->foreign->company->id))->toBeFalse();
 });
 
-test('attendance WhatsApp copies of company B never reach company A\'s group', function () {
+test('attendance WhatsApp copies of company B never reach company A\'s group', function (?string $foreignGroup) {
     config([
         'notifications.channels.whatsapp.enabled' => true,
+        // The old global group (env) must never be used once there are two companies.
         'notifications.channels.whatsapp.group_jid' => '120363000000000000@g.us',
         'services.evolution.url' => 'http://evolution.test',
         'services.evolution.api_key' => 'test-key',
         'services.evolution.instance' => 'ruangkerja',
         'attendance.stamp.nominatim_interval_s' => 0,
     ]);
+    // C9 (docs/sesi/fase1-celah.md), closed in Langkah 2c: one group per company.
+    app(ConfigureCompany::class)->handle($this->home->company, [CompanySettings::WHATSAPP_GROUP_JID => '120363111111111111@g.us']);
+
+    if ($foreignGroup !== null) {
+        app(ConfigureCompany::class)->handle($this->foreign->company, [CompanySettings::WHATSAPP_GROUP_JID => $foreignGroup]);
+    }
+
     Http::fake(['*' => Http::response(['success' => true])]);
     $this->travelTo(backgroundDay('07:55'));
 
@@ -209,11 +219,10 @@ test('attendance WhatsApp copies of company B never reach company A\'s group', f
         return true;
     });
 
-    expect($groups['A'])->not->toBeEmpty();
-
-    if ($groups['B'] !== [] && array_intersect($groups['A'], $groups['B']) !== []) {
-        $this->markTestSkipped('C9 (docs/sesi/fase1-celah.md): grup WhatsApp absensi tunggal (notifications.channels.whatsapp.group_jid) — absen perusahaan B, termasuk selfie, terkirim ke grup perusahaan A. Ditutup di Langkah 2c (whatsapp.group_jid per perusahaan).');
-    }
-
-    expect(array_intersect($groups['A'], $groups['B']))->toBe([]);
-});
+    expect(array_unique($groups['A']))->toBe(['120363111111111111@g.us'])
+        ->and(array_unique($groups['B']))->toBe($foreignGroup === null ? [] : [$foreignGroup])
+        ->and(array_intersect($groups['A'], $groups['B']))->toBe([]);
+})->with([
+    'company B without a group: no copy at all' => [null],
+    'company B with its own group' => ['120363222222222222@g.us'],
+]);

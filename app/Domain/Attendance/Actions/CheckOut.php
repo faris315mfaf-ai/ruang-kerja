@@ -150,8 +150,9 @@ final class CheckOut
 
         AttendanceRecorded::dispatch($day, $log);
 
-        // Afternoon copy to the management group: duration, not the plan.
-        if ($this->whatsapp->enabled() && (string) config('notifications.channels.whatsapp.group_jid') !== '') {
+        // Afternoon copy to the management group of the employee's company:
+        // duration, not the plan.
+        if ($this->whatsapp->attendanceGroupFor($user->company_id) !== null) {
             SendAttendanceWhatsApp::dispatch($day->id, AttendanceLogType::CheckOut);
         }
 
