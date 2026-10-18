@@ -161,7 +161,10 @@ final class HrDashboard
      */
     public function pendingHr(array $userIds): array
     {
-        $hrUsers = User::role(Role::Hr->value)->select('users.id');
+        // HR people of the requesters' own company only (Fase 1 multi-perusahaan).
+        $hrUsers = User::role(Role::Hr->value)
+            ->whereIn('users.company_id', User::query()->whereIn('id', $userIds)->select('company_id'))
+            ->select('users.id');
 
         $query = RequestApproval::query()
             ->where('status', ApprovalStatus::Waiting->value)
