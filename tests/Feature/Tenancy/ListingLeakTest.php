@@ -330,10 +330,10 @@ test('company A pages, JSON endpoints and exports never show company B', functio
     $unexpected = array_diff_key($failures, $known);
     $fixed = array_diff_key($known, $failures);
 
-    fwrite(STDERR, sprintf("\n[tenancy] URL diuji: %d × 3 varian × 5 peran · 2xx: %d · celah tercatat: %d\n", count($urls), $answered, count($known)));
+    tenancyReport(sprintf("\n[tenancy] URL diuji: %d × 3 varian × 5 peran · 2xx: %d · celah tercatat: %d\n", count($urls), $answered, count($known)));
 
     foreach ($unexpected as $key => $problem) {
-        fwrite(STDERR, "[tenancy] {$key}: {$problem}\n");
+        tenancyReport("[tenancy] {$key}: {$problem}\n");
     }
 
     expect($unexpected)->toBe([], 'Kebocoran baru (catat di docs/sesi/fase1-celah.md + knownListingGaps() atau perbaiki)')

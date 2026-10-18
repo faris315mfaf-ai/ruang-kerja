@@ -94,7 +94,8 @@ use Illuminate\Support\Str;
  * require_once in each file that needs it.
  *
  * homeWorld()    perusahaan A, the default company of every factory (SPKD-like):
- *                one actor per global role plus a little data of its own.
+ *                one actor per global role plus a little data of its own,
+ *                named with the marker ZZA0H0M (reverse check).
  * foreignWorld() perusahaan B, every module filled, every name/title/body
  *                carrying the marker ZZB0C0R. A response, export, job or
  *                notification for company A that contains the marker (case-
@@ -112,6 +113,23 @@ if (! function_exists('foreignWorld')) {
         return 'ZZB0C0R';
     }
 
+    /** Marker of company A's names (reverse check: B must never see it). */
+    function homeMarker(): string
+    {
+        return 'ZZA0H0M';
+    }
+
+    /**
+     * Summary lines of the leak suites, printed with TENANCY_DEBUG=1 (route
+     * counts, unexpected leaks), so the normal suite output stays clean.
+     */
+    function tenancyReport(string $line): void
+    {
+        if (getenv('TENANCY_DEBUG')) {
+            fwrite(STDERR, $line);
+        }
+    }
+
     /** Whether $text mentions company B. */
     function leaksForeign(?string $text): bool
     {
@@ -119,37 +137,68 @@ if (! function_exists('foreignWorld')) {
     }
 
     /**
-     * Perusahaan A: actors for every global role, a division with a team
-     * workspace and a task. Created first, so it is the default company.
-     *
-     * @return object{company: Company, division: Division, superAdmin: User, hr: User, direksi: User, kadiv: User, anggota: User, workspace: Workspace, task: Task}
+     * Perusahaan A: actors for every global role, a division with a team and
+     * a project workspace, shifts, a task due today, a meeting at 10.00 and an
+     * objective. Created first, so it is the default company.
      */
     function homeWorld(): object
     {
         test()->seed(RoleSeeder::class);
 
+        $h = homeMarker();
+        $now = CarbonImmutable::now();
+        $today = $now->setTimezone(config()->string('app.office_timezone'))->toDateString();
         $company = Company::query()->find(CompanyFactory::defaultId()) ?? throw new RuntimeException('Tidak ada perusahaan A.');
-        $direksi = User::factory()->withRole(Role::Direksi)->create(['name' => 'Hendra Rumah']);
-        $kadiv = User::factory()->withRole(Role::KepalaDivisi)->managedBy($direksi)->create(['name' => 'Dimas Rumah']);
-        $division = Division::factory()->headedBy($kadiv)->create(['name' => 'Operasional Rumah', 'code' => 'OPR']);
+        $direksi = User::factory()->withRole(Role::Direksi)->create(['name' => "Hendra {$h}"]);
+        $kadiv = User::factory()->withRole(Role::KepalaDivisi)->managedBy($direksi)->create(['name' => "Dimas {$h}"]);
+        $division = Division::factory()->headedBy($kadiv)->create(['name' => "Operasional {$h}", 'code' => 'OPR']);
         $kadiv->forceFill(['division_id' => $division->id])->save();
-        $anggota = User::factory()->withRole(Role::Anggota)->inDivision($division)->managedBy($kadiv)->create(['name' => 'Rizky Rumah']);
-        $workspace = Workspace::factory()->team()->ownedBy($kadiv)->withMember($anggota)->create(['name' => 'Tim Rumah', 'key' => 'RMH']);
+        $anggota = User::factory()->withRole(Role::Anggota)->inDivision($division)->managedBy($kadiv)->create(['name' => "Rizky {$h}"]);
+        $hr = User::factory()->withRole(Role::Hr)->managedBy($direksi)->create(['name' => "Hana {$h}"]);
+        $workspace = Workspace::factory()->team()->ownedBy($kadiv)->withMember($anggota)->create(['name' => "Tim {$h}", 'key' => 'RMH']);
+        $project = Workspace::factory()->project()->ownedBy($kadiv)->withMember($anggota)->create([
+            'name' => "Proyek {$h}",
+            'key' => 'RMHP',
+            'lead_user_id' => $kadiv->id,
+            'sponsor_user_id' => $direksi->id,
+            'start_date' => CarbonImmutable::parse($today)->subMonth()->toDateString(),
+            'target_date' => CarbonImmutable::parse($today)->addMonth()->toDateString(),
+            'project_status' => 'active',
+        ]);
+
+        // Scheduled work days, a task due today and a meeting at 10.00, so the
+        // background jobs (reminders, digest) have something to say to A too.
+        $office = OfficeLocation::factory()->create(['name' => "Kantor {$h}"]);
+        $shift = Shift::factory()->atLocation($office)->create(['name' => "Shift {$h}"]);
+
+        foreach ([$anggota, $kadiv, $hr, $direksi] as $employee) {
+            ShiftAssignment::factory()->create(['user_id' => $employee->id, 'shift_id' => $shift->id]);
+        }
 
         $task = app(CreateTask::class)->handle($workspace, $kadiv, [
-            'title' => 'Tugas rumah',
+            'title' => "Tugas {$h}",
             'assignee_ids' => [$anggota->id],
+            'due_date' => $today,
         ]);
+        app(CreateTask::class)->handle($project, $kadiv, ['title' => "Tugas proyek {$h}", 'assignee_ids' => [$anggota->id], 'due_date' => $today]);
+        $meeting = Meeting::factory()->by($kadiv)->video()->at($today.' 10:00')->withParticipants([$anggota, $direksi], Rsvp::Yes)
+            ->create(['title' => "Rapat {$h}", 'agenda' => ["Agenda {$h}"]]);
+        $objective = Objective::factory()->forDivision($division)->ownedBy($kadiv)->create(['title' => "Objective {$h}"]);
+        KeyResult::factory()->create(['objective_id' => $objective->id, 'title' => "Hasil utama {$h}", 'owner_id' => $kadiv->id]);
 
         return (object) [
             'company' => $company,
             'division' => $division,
-            'superAdmin' => User::factory()->withRole(Role::SuperAdmin)->create(['name' => 'Admin Rumah']),
-            'hr' => User::factory()->withRole(Role::Hr)->managedBy($direksi)->create(['name' => 'Hana Rumah']),
+            'superAdmin' => User::factory()->withRole(Role::SuperAdmin)->create(['name' => "Admin {$h}"]),
+            'hr' => $hr,
             'direksi' => $direksi,
             'kadiv' => $kadiv,
             'anggota' => $anggota,
             'workspace' => $workspace,
+            'project' => $project,
+            'office' => $office,
+            'shift' => $shift,
+            'meeting' => $meeting,
             'task' => $task,
         ];
     }

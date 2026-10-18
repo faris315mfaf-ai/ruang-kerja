@@ -318,14 +318,14 @@ test('company A cannot read or change company B through any route parameter', fu
     $unexpected = array_diff_key($failures, $known);
     $fixed = array_diff_key($known, $failures);
 
-    fwrite(STDERR, sprintf("\n[tenancy] rute diuji: %d · dikecualikan: %d · celah tercatat: %d · GET terjangkau pemilik B: %d\n", count($tested), count($skipped), count($known), $reachable));
+    tenancyReport(sprintf("\n[tenancy] rute diuji: %d · dikecualikan: %d · celah tercatat: %d · GET terjangkau pemilik B: %d\n", count($tested), count($skipped), count($known), $reachable));
 
     if (getenv('TENANCY_DEBUG')) {
         fwrite(STDERR, '[tenancy] tak terjangkau pemilik B: '.implode(', ', $unreachable)."\n");
     }
 
     foreach ($unexpected as $key => $problem) {
-        fwrite(STDERR, "[tenancy] {$key}: {$problem}\n");
+        tenancyReport("[tenancy] {$key}: {$problem}\n");
     }
 
     expect(array_filter($skipped, fn (string $reason): bool => str_starts_with($reason, 'TANPA')))->toBe([], 'Rute ber-parameter yang belum dipetakan')
