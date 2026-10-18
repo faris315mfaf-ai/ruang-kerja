@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Tenancy\Settings\CompanySettings;
 use App\Models\Concerns\Auditable;
 use Database\Factories\CompanyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -35,6 +36,20 @@ class Company extends Model
         'timezone' => 'Asia/Jakarta',
         'settings' => '{}',
     ];
+
+    protected static function booted(): void
+    {
+        // Integration settings / "only company" memo (Fase 1 multi-perusahaan).
+        $flush = static function (): void {
+            if (app()->resolved(CompanySettings::class)) {
+                app(CompanySettings::class)->flush();
+            }
+        };
+
+        static::saved($flush);
+        static::deleted($flush);
+        static::restored($flush);
+    }
 
     /**
      * @return array<string, string>
