@@ -25,7 +25,7 @@ class DemoSwitchController extends Controller
         abort_unless(DemoAccounts::enabled(), 404);
 
         $validated = $request->validate([
-            'email' => ['required', 'string', Rule::in(DemoAccounts::emails())],
+            'email' => ['required', 'string', Rule::in(DemoAccounts::switchableEmails($request->user()?->email))],
         ], [
             'email.required' => 'Pilih akun demo.',
             'email.in' => 'Akun demo tidak dikenal.',

@@ -111,3 +111,24 @@ it('does not run in production', function () {
 
     expect(Company::query()->where('google_domain', SecondCompanyDemoSeeder::GOOGLE_DOMAIN)->exists())->toBeFalse();
 });
+
+it('keeps the demo account switcher inside the demo company of the signed-in account', function () {
+    $this->seed(DatabaseSeeder::class);
+    seedSecondCompany();
+    app()->instance('env', 'local');
+    config(['app.demo_login' => true]);
+    $admin = User::query()->where('email', 'admin@contoh.test')->sole();
+
+    $this->actingAs($admin)->get('/dashboard')->assertInertia(fn (Assert $page) => $page
+        ->where('demoSwitcher', fn ($accounts): bool => collect($accounts)->pluck('email')->sort()->values()->all() === ['admin@contoh.test', 'anggota@contoh.test', 'hr@contoh.test']));
+
+    $this->withHeader('Sec-Fetch-Site', 'same-origin')->actingAs($admin)
+        ->post(route('demo.switch'), ['email' => 'kadiv@demo.test'])
+        ->assertSessionHasErrors('email');
+    $this->assertAuthenticatedAs($admin);
+
+    $this->withHeader('Sec-Fetch-Site', 'same-origin')->actingAs($admin)
+        ->post(route('demo.switch'), ['email' => 'hr@contoh.test'])
+        ->assertRedirect(route('dashboard'));
+    $this->assertAuthenticatedAs(User::query()->where('email', 'hr@contoh.test')->sole());
+});

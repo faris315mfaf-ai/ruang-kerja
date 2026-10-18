@@ -102,7 +102,26 @@ final class DemoAccounts
             'persona' => (string) $account->persona,
             'role_label' => $account->role->label(),
             'current' => $account->email === $currentEmail,
-        ], self::switcher());
+        ], self::isPartner($currentEmail) ? self::partner() : self::switcher());
+    }
+
+    /**
+     * Accounts the switcher may move $currentEmail to: the demo accounts of
+     * its own demo company (never into the other company).
+     *
+     * @return list<string>
+     */
+    public static function switchableEmails(?string $currentEmail): array
+    {
+        return array_map(
+            fn (DemoAccount $account): string => $account->email,
+            self::isPartner($currentEmail) ? self::partner() : self::all(),
+        );
+    }
+
+    private static function isPartner(?string $email): bool
+    {
+        return in_array($email, array_map(fn (DemoAccount $account): string => $account->email, self::partner()), true);
     }
 
     /**

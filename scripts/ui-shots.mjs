@@ -15,6 +15,9 @@
  *   --tema   terang | malam | keduanya (default keduanya)
  *   --penuh  full-page screenshots
  *   --keluar output directory (default storage/app/ui-shots, ignored by git)
+ *   --larang comma-separated texts that must NOT appear on the page (e.g. names
+ *            of another company: multi-company isolation checks)
+ *   --wajib  comma-separated texts that must appear on the page
  * Base URL: E2E_BASE_URL, else https://ruangkerja.test (Herd).
  * Requires APP_ENV=local + DEMO_LOGIN_ENABLED=true and built assets
  * (`npm run build`) or a running `npm run dev`.
@@ -30,7 +33,14 @@ const option = (name, fallback) => {
     return index === -1 ? fallback : args[index + 1];
 };
 const flag = (name) => args.includes(`--${name}`);
-const valued = new Set(['--akun', '--lebar', '--tema', '--keluar']);
+const valued = new Set([
+    '--akun',
+    '--lebar',
+    '--tema',
+    '--keluar',
+    '--larang',
+    '--wajib',
+]);
 const routes = args.filter(
     (arg, index) => !arg.startsWith('--') && !valued.has(args[index - 1]),
 );
@@ -56,6 +66,13 @@ const schemes =
           ? ['dark']
           : ['light', 'dark'];
 const outDir = resolve(option('keluar', 'storage/app/ui-shots'));
+const texts = (name) =>
+    option(name, '')
+        .split(',')
+        .map((text) => text.trim())
+        .filter(Boolean);
+const forbidden = texts('larang');
+const required = texts('wajib');
 const IGNORED = [/WebSocket connection to .* failed/, /status of 429/];
 
 mkdirSync(outDir, { recursive: true });
@@ -160,14 +177,24 @@ for (const route of routes) {
 
             await page.screenshot({ path: file, fullPage: flag('penuh') });
 
+            const text =
+                forbidden.length + required.length > 0
+                    ? await page.evaluate(() => document.body.innerText)
+                    : '';
+            const found = forbidden.filter((needle) => text.includes(needle));
+            const missing = required.filter((needle) => !text.includes(needle));
             const notes = [
                 response ? `HTTP ${response.status()}` : 'tanpa respons',
                 overflow ? 'GULIR HORIZONTAL' : null,
+                ...found.map((needle) => `TEKS TERLARANG: ${needle}`),
+                ...missing.map((needle) => `TEKS TIDAK ADA: ${needle}`),
                 ...errors,
             ].filter(Boolean);
 
             if (
                 overflow ||
+                found.length > 0 ||
+                missing.length > 0 ||
                 errors.length > 0 ||
                 (response && response.status() >= 400)
             ) {
