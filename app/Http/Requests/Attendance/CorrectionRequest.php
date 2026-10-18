@@ -5,6 +5,7 @@ namespace App\Http\Requests\Attendance;
 use App\Domain\Attendance\Data\CorrectionData;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * HR manual correction. Authorization: AttendanceDayPolicy::correct in the
@@ -23,7 +24,8 @@ class CorrectionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => ['required', 'string', 'exists:users,id'],
+            // An employee of HR's own company.
+            'user_id' => ['required', 'string', Rule::exists('users', 'id')->where('company_id', $this->user()?->company_id)],
             'work_date' => ['required', 'date_format:Y-m-d'],
             'check_in' => ['nullable', 'date_format:H:i', 'required_without:check_out'],
             'check_out' => ['nullable', 'date_format:H:i'],

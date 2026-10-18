@@ -5,6 +5,7 @@ namespace App\Http\Requests\Api;
 use App\Domain\Workspaces\Enums\WorkspaceType;
 use App\Domain\Workspaces\Enums\WorkspaceVisibility;
 use App\Domain\Workspaces\Services\WorkspaceKeyGenerator;
+use App\Models\Division;
 use App\Models\User;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -50,7 +51,9 @@ class WorkspaceStoreRequest extends FormRequest
             }],
             'description' => ['nullable', 'string', 'max:2000'],
             'visibility' => ['nullable', Rule::enum(WorkspaceVisibility::class)],
-            'team_id' => ['nullable', 'string', Rule::exists('teams', 'id')->whereNull('deleted_at')],
+            // A team of the actor's company (teams belong to it through their division).
+            'team_id' => ['nullable', 'string', Rule::exists('teams', 'id')->whereNull('deleted_at')
+                ->where(fn ($query) => $query->whereIn('division_id', Division::query()->withTrashed()->where('company_id', $companyId)->select('id')))],
         ];
     }
 
