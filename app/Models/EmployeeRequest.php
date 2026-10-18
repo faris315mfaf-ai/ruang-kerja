@@ -85,7 +85,10 @@ class EmployeeRequest extends Model
         static::creating(function (self $request): void {
             if (($request->getAttributes()['company_id'] ?? null) === null) {
                 $company = User::query()->whereKey($request->user_id)->value('company_id');
-                $request->company_id = is_string($company) ? $company : null;
+
+                if (is_string($company)) {
+                    $request->company_id = $company;
+                }
             }
         });
     }

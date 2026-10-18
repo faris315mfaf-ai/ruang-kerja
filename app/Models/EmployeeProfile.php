@@ -45,7 +45,10 @@ class EmployeeProfile extends Model
         static::creating(function (self $profile): void {
             if (($profile->getAttributes()['company_id'] ?? null) === null) {
                 $company = User::query()->whereKey($profile->user_id)->value('company_id');
-                $profile->company_id = is_string($company) ? $company : null;
+
+                if (is_string($company)) {
+                    $profile->company_id = $company;
+                }
             }
         });
     }

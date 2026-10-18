@@ -59,7 +59,7 @@ final class AuditLogger
         $userAgent = $this->request->userAgent();
 
         return AuditLog::query()->create([
-            'company_id' => $actor?->company_id ?? AuditLog::companyIdFor(null, null, null, $subject),
+            'company_id' => $actor !== null ? $actor->company_id : AuditLog::companyIdFor(null, null, null, $subject),
             'user_id' => $actor?->getKey(),
             'action' => $action,
             'auditable_type' => $subject?->getMorphClass(),
