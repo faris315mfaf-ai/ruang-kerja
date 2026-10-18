@@ -1,4 +1,4 @@
-import { formatTime, OFFICE_TIMEZONE } from '@/lib/format';
+import { formatTime, officeDateFormat, officeUtcOffset } from '@/lib/format';
 import type {
     ActionItem,
     CalendarEntry,
@@ -15,19 +15,19 @@ import type {
 const MINUTE = 60_000;
 
 // ---------------------------------------------------------------------------
-// Office dates ("YYYY-MM-DD" in Asia/Jakarta)
+// Office dates ("YYYY-MM-DD" in the office timezone)
 // ---------------------------------------------------------------------------
 
-const isoDay = new Intl.DateTimeFormat('en-CA', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    timeZone: OFFICE_TIMEZONE,
-});
+const isoDay = (): Intl.DateTimeFormat =>
+    officeDateFormat('en-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    });
 
 /** Office calendar date of an instant. */
 export function officeDate(iso: string | number | Date): string {
-    return isoDay.format(new Date(iso));
+    return isoDay().format(new Date(iso));
 }
 
 function dateToUtc(date: string): Date {
@@ -212,9 +212,9 @@ export function parseClock(value: string): number | null {
     return hours < 24 && minutes < 60 ? hours * 60 + minutes : null;
 }
 
-/** ISO instant (+07:00) for an office date and "HH:MM". */
+/** ISO instant (office UTC offset, e.g. +07:00) for an office date and "HH:MM". */
 export function officeInstant(date: string, clock: string): string {
-    return `${date}T${clock.replace('.', ':')}:00+07:00`;
+    return `${date}T${clock.replace('.', ':')}:00${officeUtcOffset(date)}`;
 }
 
 /** Minutes after midnight (office time) of an instant. */

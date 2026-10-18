@@ -4,6 +4,7 @@ use App\Domain\Analytics\Data\Period;
 use App\Domain\Attendance\Services\ScheduleResolver;
 use App\Domain\Attendance\Support\OfficeClock;
 use App\Domain\Briefings\Support\BriefingDay;
+use App\Domain\Organization\Enums\Role;
 use App\Domain\Projects\Services\ProjectClock;
 use App\Domain\Reports\Support\ReportDay;
 use App\Domain\Requests\Support\OfficeTime;
@@ -12,8 +13,11 @@ use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Company;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Inertia\Testing\AssertableInertia as Assert;
+use Laravel\Sanctum\Sanctum;
 
 /*
  * Fase 1 multi-perusahaan, Langkah 2b: every office date and clock time is
@@ -72,4 +76,15 @@ test('an invalid stored timezone falls back to the app timezone', function () {
 
     expect(app(CompanyContext::class)->run($this->makassar->id, fn () => CurrentCompany::timezone()))
         ->toBe(config('app.office_timezone'));
+});
+
+test('the web shell and the app receive the company\'s office timezone', function () {
+    $this->seed(RoleSeeder::class);
+    $employee = User::factory()->forCompany($this->makassar)->withRole(Role::Anggota)->create();
+
+    $this->get('/login')->assertInertia(fn (Assert $page) => $page->where('officeTimezone', config('app.office_timezone')));
+    $this->actingAs($employee)->get('/dashboard')->assertInertia(fn (Assert $page) => $page->where('officeTimezone', 'Asia/Makassar'));
+
+    Sanctum::actingAs($employee);
+    $this->getJson('/api/v1/auth/saya')->assertOk()->assertJsonPath('user.office_timezone', 'Asia/Makassar');
 });

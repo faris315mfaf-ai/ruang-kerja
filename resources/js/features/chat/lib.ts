@@ -1,5 +1,5 @@
 import type { RichDoc, RichNode } from '@/features/tasks/editor/types';
-import { OFFICE_TIMEZONE } from '@/lib/format';
+import { officeDateFormat } from '@/lib/format';
 import type {
     Channel,
     ChatPerson,
@@ -32,23 +32,23 @@ export function sampleTime(days: number, time: string): string {
     return base.toISOString();
 }
 
-const dayKeyFormat = new Intl.DateTimeFormat('en-CA', {
-    timeZone: OFFICE_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-});
+const dayKeyFormat = (): Intl.DateTimeFormat =>
+    officeDateFormat('en-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    });
 
-const dayLabelFormat = new Intl.DateTimeFormat('id-ID', {
-    timeZone: OFFICE_TIMEZONE,
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-});
+const dayLabelFormat = (): Intl.DateTimeFormat =>
+    officeDateFormat('id-ID', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+    });
 
 /** "2026-10-05" in the office timezone. */
 export function dayKey(value: string | Date): string {
-    return dayKeyFormat.format(new Date(value));
+    return dayKeyFormat().format(new Date(value));
 }
 
 function dayNumber(key: string): number {
@@ -69,7 +69,7 @@ export function dayLabel(value: string | Date, now: Date): string {
         return 'Kemarin';
     }
 
-    return dayLabelFormat.format(new Date(value));
+    return dayLabelFormat().format(new Date(value));
 }
 
 export type MessageRun = { userId: string; messages: Message[] };
@@ -624,22 +624,22 @@ export function previewText(
     return author ? `${author.name.split(' ')[0]}: ${text}` : text;
 }
 
-const shortDayFormat = new Intl.DateTimeFormat('id-ID', {
-    timeZone: OFFICE_TIMEZONE,
-    day: 'numeric',
-    month: 'short',
-});
+const shortDayFormat = (): Intl.DateTimeFormat =>
+    officeDateFormat('id-ID', {
+        day: 'numeric',
+        month: 'short',
+    });
 
-const timeFormat = new Intl.DateTimeFormat('id-ID', {
-    timeZone: OFFICE_TIMEZONE,
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-});
+const timeFormat = (): Intl.DateTimeFormat =>
+    officeDateFormat('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+    });
 
 /** "08.05" in the office timezone. */
 export function clockTime(value: string | Date): string {
-    const parts = timeFormat.formatToParts(new Date(value));
+    const parts = timeFormat().formatToParts(new Date(value));
     const hour = parts.find((part) => part.type === 'hour')?.value ?? '';
     const minute = parts.find((part) => part.type === 'minute')?.value ?? '';
 
@@ -658,7 +658,7 @@ export function listTime(value: string, now: Date): string {
         return label;
     }
 
-    return shortDayFormat.format(new Date(value));
+    return shortDayFormat().format(new Date(value));
 }
 
 /** Header line: topic; DM = "Ketua Tim Gudang · Online"; group = members. */

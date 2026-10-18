@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useUnreadCount } from '@/features/notifications/unread-store';
 import { useScrolled } from '@/hooks/use-scrolled';
 import { cn, focusRing } from '@/lib/utils';
+import { officeTimezone } from '@/lib/format';
 
 export type AppBarProps = {
     title?: string;
@@ -29,7 +30,7 @@ function greeting(now: Date): string {
         new Intl.DateTimeFormat('id-ID', {
             hour: 'numeric',
             hourCycle: 'h23',
-            timeZone: 'Asia/Jakarta',
+            timeZone: officeTimezone(),
         }).format(now),
     );
 
@@ -54,7 +55,7 @@ function overlineDate(now: Date): string {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
-        timeZone: 'Asia/Jakarta',
+        timeZone: officeTimezone(),
     }).format(now);
 }
 

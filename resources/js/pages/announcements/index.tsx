@@ -13,7 +13,7 @@ import type {
 } from '@/features/announcements/types';
 import { ConfirmDialog } from '@/features/requests/confirm-dialog';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
-import { formatDate, formatDateTime } from '@/lib/format';
+import { formatDate, formatDateTime, officeTimezone } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -26,7 +26,7 @@ type Props = {
 
 function officeToday(): string {
     return new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Jakarta',
+        timeZone: officeTimezone(),
     }).format(new Date());
 }
 

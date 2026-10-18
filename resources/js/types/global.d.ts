@@ -13,6 +13,8 @@ declare module '@inertiajs/core' {
             name: string;
             branding: Branding;
             auth: Auth;
+            /** Office timezone of the signed-in company (app timezone for guests); lib/format.ts. */
+            officeTimezone?: string;
             /** Sidebar "Persetujuan" badge (requests waiting for the signed-in user). */
             approvals?: { pending: number } | null;
             /**

@@ -35,12 +35,13 @@ import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { cn, focusRing } from '@/lib/utils';
 import { index as settingsIndex } from '@/routes/admin/attendance';
 import { destroy } from '@/routes/admin/attendance/assignments';
+import { officeTimezone } from '@/lib/format';
 
 const ALL = 'all';
 
 function officeToday(): string {
     return new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Jakarta',
+        timeZone: officeTimezone(),
     }).format(new Date());
 }
 

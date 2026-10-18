@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Panel, PanelLink } from '@/components/ui/panel';
 import { TONE_CLASSES } from '@/lib/attendance';
-import { formatTime } from '@/lib/format';
+import { formatTime, officeTimezone } from '@/lib/format';
 import { hasAnyRole } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 import { policy } from '@/routes/attendance';
@@ -32,7 +32,7 @@ function longDate(now: Date): string {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
-        timeZone: 'Asia/Jakarta',
+        timeZone: officeTimezone(),
     }).format(now);
 }
 

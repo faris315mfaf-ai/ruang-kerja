@@ -1,4 +1,4 @@
-import { OFFICE_TIMEZONE } from '@/lib/format';
+import { officeDateFormat } from '@/lib/format';
 
 /**
  * Date-only helpers for task dates (start_date / due_date are SQL `date`
@@ -8,12 +8,12 @@ import { OFFICE_TIMEZONE } from '@/lib/format';
 
 const DAY_MS = 86_400_000;
 
-const isoDay = new Intl.DateTimeFormat('en-CA', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    timeZone: OFFICE_TIMEZONE,
-});
+const isoDay = (): Intl.DateTimeFormat =>
+    officeDateFormat('en-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    });
 
 const weekdayShort = new Intl.DateTimeFormat('id-ID', {
     weekday: 'short',
@@ -34,7 +34,7 @@ const monthYear = new Intl.DateTimeFormat('id-ID', {
 
 /** Today's date in the office timezone ("YYYY-MM-DD"). */
 export function officeToday(now: Date = new Date()): string {
-    return isoDay.format(now);
+    return isoDay().format(now);
 }
 
 function toUtc(date: string): number {

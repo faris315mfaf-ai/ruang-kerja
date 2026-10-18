@@ -1,10 +1,11 @@
-import { createInertiaApp } from '@inertiajs/react';
+import { createInertiaApp, router } from '@inertiajs/react';
 import { Toaster } from '@/components/ui/sonner';
 import { initializeTheme } from '@/hooks/use-appearance';
 import { configureEcho } from '@laravel/echo-react';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import { setOfficeTimezone } from '@/lib/format';
 
 configureEcho({
     broadcaster: 'reverb',
@@ -40,7 +41,10 @@ void createInertiaApp({
         }
     },
     strictMode: true,
-    withApp(app) {
+    withApp(app, { page }) {
+        // Dates & clocks in the company's office timezone (Fase 1 multi-perusahaan).
+        setOfficeTimezone(page.props.officeTimezone);
+
         return (
             <>
                 {app}
@@ -51,6 +55,11 @@ void createInertiaApp({
     progress: {
         color: 'var(--primary)',
     },
+});
+
+// Another account (demo switcher) may belong to a company in another timezone.
+router.on('navigate', (event) => {
+    setOfficeTimezone(event.detail.page.props.officeTimezone);
 });
 
 // This will set light / dark mode on load...

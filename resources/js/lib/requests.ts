@@ -2,7 +2,7 @@
  * Request (pengajuan) display helpers. Dates are shown in the office timezone.
  */
 import {
-    OFFICE_TIMEZONE,
+    officeDateFormat,
     formatNumber,
     formatTime,
     toDate,
@@ -56,12 +56,12 @@ const LONG_WEEKDAYS = [
     'Sabtu',
 ];
 
-const isoDay = new Intl.DateTimeFormat('en-CA', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    timeZone: OFFICE_TIMEZONE,
-});
+const isoDay = (): Intl.DateTimeFormat =>
+    officeDateFormat('en-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    });
 
 export type DayParts = {
     year: number;
@@ -86,7 +86,7 @@ export function officeDay(value: DateInput): DayParts | null {
         return null;
     }
 
-    return officeDay(isoDay.format(date));
+    return officeDay(isoDay().format(date));
 }
 
 /** "12 Okt 2026". */
