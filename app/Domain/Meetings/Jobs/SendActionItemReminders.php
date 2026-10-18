@@ -6,6 +6,7 @@ use App\Domain\Meetings\Notifications\ActionItemDueNotification;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Notifications\Services\NotificationDispatchLog;
 use App\Domain\Tenancy\Concerns\CompanyAware;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Meeting;
 use App\Models\MeetingActionItem;
 use App\Policies\MeetingPolicy;
@@ -36,7 +37,7 @@ final class SendActionItemReminders implements ShouldBeUnique, ShouldQueue
      */
     public function handle(NotificationDispatchLog $dispatchLog, MeetingPolicy $policy): array
     {
-        $today = CarbonImmutable::now()->setTimezone(config()->string('app.office_timezone'))->toDateString();
+        $today = CarbonImmutable::now()->setTimezone(CurrentCompany::timezone())->toDateString();
         $tomorrow = CarbonImmutable::parse($today)->addDay()->toDateString();
         $report = ['soon' => 0, 'overdue' => 0];
 

@@ -4,6 +4,7 @@ namespace App\Domain\Meetings\Services;
 
 use App\Domain\Meetings\Data\Occurrence;
 use App\Domain\Meetings\Enums\Recurrence;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Meeting;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -200,6 +201,6 @@ final class MeetingOccurrences
 
     private function timezone(): string
     {
-        return config()->string('app.office_timezone');
+        return CurrentCompany::timezone();
     }
 }

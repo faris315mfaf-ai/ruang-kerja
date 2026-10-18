@@ -2,6 +2,7 @@
 
 namespace App\Domain\Requests\Support;
 
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 
@@ -12,7 +13,7 @@ final class OfficeTime
 {
     public static function zone(): string
     {
-        return config()->string('app.office_timezone', 'Asia/Jakarta');
+        return CurrentCompany::timezone();
     }
 
     public static function today(): CarbonImmutable

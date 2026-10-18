@@ -4,6 +4,7 @@ namespace App\Domain\Attendance\Services;
 
 use App\Domain\Attendance\Enums\AttendanceMethod;
 use App\Domain\Attendance\Models\AttendanceLog;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 use GdImage;
 use Illuminate\Http\Client\Pool;
@@ -64,7 +65,7 @@ final class StampedSelfie
             }
 
             $place = $this->placeName($log, $fallbackPlace);
-            $at = (new CarbonImmutable($log->occurred_at))->setTimezone((string) config('app.office_timezone'));
+            $at = (new CarbonImmutable($log->occurred_at))->setTimezone(CurrentCompany::timezone());
 
             $this->stamp($photo, $at, $place, $map);
 

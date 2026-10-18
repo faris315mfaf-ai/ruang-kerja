@@ -5,6 +5,7 @@ namespace App\Domain\Automation\Jobs;
 use App\Domain\Automation\Actions\RunAutomationRule;
 use App\Domain\Automation\Enums\RuleTriggerType;
 use App\Domain\Tenancy\Concerns\CompanyAware;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\AutomationRule;
 use App\Models\Task;
 use Carbon\CarbonImmutable;
@@ -36,7 +37,7 @@ final class RunOverdueAutomations implements ShouldBeUnique, ShouldQueue
             return 0;
         }
 
-        $today = CarbonImmutable::now(config()->string('app.office_timezone'))->toDateString();
+        $today = CarbonImmutable::now(CurrentCompany::timezone())->toDateString();
         $runs = 0;
 
         AutomationRule::query()

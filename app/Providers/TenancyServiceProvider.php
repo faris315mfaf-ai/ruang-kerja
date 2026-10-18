@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Domain\Tenancy\CompanyContext;
+use App\Domain\Tenancy\Support\OfficeTimezone;
+use App\Models\Company;
 use Illuminate\Notifications\SendQueuedNotifications;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
@@ -21,6 +23,9 @@ class TenancyServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Every office date of a company is computed in its timezone (Langkah 2b).
+        Company::saving(fn (Company $company) => OfficeTimezone::assertValid($company->timezone));
+
         // Runs right before a queued job is serialized (Queue::createObjectPayload):
         // the job/notification remembers its company (CompanyAware::captureCompany).
         Queue::createPayloadUsing(function (?string $connection, ?string $queue, array $payload): array {

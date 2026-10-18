@@ -2,6 +2,7 @@
 
 namespace App\Domain\Automation\Queries;
 
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\RecurringTask;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -54,7 +55,7 @@ final class RecurringPage
         return [
             ...$options,
             'recurring' => $items,
-            'today' => $now->setTimezone(config()->string('app.office_timezone'))->toDateString(),
+            'today' => $now->setTimezone(CurrentCompany::timezone())->toDateString(),
         ];
     }
 }

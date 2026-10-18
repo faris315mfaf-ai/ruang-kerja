@@ -3,6 +3,7 @@
 namespace App\Domain\Notifications\Services;
 
 use App\Domain\Notifications\Contracts\WorkdayCalendar;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 
@@ -57,7 +58,7 @@ final class QuietHours
 
     private function local(CarbonInterface $at): CarbonImmutable
     {
-        return CarbonImmutable::instance($at)->setTimezone((string) config('app.office_timezone'));
+        return CarbonImmutable::instance($at)->setTimezone(CurrentCompany::timezone());
     }
 
     private function isWorkday(CarbonImmutable $local): bool

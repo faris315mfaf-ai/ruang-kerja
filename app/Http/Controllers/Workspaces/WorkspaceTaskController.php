@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Workspaces;
 
 use App\Domain\Tasks\Queries\BoardTasks;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Domain\Workspaces\Queries\WorkspacePage;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\LabelResource;
@@ -31,7 +32,7 @@ class WorkspaceTaskController extends Controller
         Gate::authorize('view', $workspace);
 
         $view = in_array($request->query('view'), self::VIEWS, true) ? (string) $request->query('view') : 'board';
-        $today = CarbonImmutable::now(config()->string('app.office_timezone'))->startOfDay();
+        $today = CarbonImmutable::now(CurrentCompany::timezone())->startOfDay();
         $month = self::month($request->query('month'), $today);
         $range = $view === 'calendar'
             ? [$month->startOfWeek(CarbonImmutable::MONDAY), $month->endOfMonth()->endOfWeek(CarbonImmutable::SUNDAY)]

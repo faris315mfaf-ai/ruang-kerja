@@ -2,12 +2,13 @@
 
 namespace App\Domain\Briefings\Enums;
 
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 
 /**
  * Briefing pagi & sore (keputusan pemilik 9 Okt 2026). Every office day has
  * both periods; notes may only be saved inside the recording window, in
- * config('app.office_timezone').
+ * CurrentCompany::timezone().
  */
 enum BriefingPeriod: string
 {
@@ -48,7 +49,7 @@ enum BriefingPeriod: string
      */
     public function isOpenAt(CarbonImmutable $now): bool
     {
-        $now = $now->setTimezone(config()->string('app.office_timezone'));
+        $now = $now->setTimezone(CurrentCompany::timezone());
 
         // End exclusive: the window closes at JJ:00 sharp (11:00:00 is
         // already closed, 10:59:59 still open).
@@ -60,7 +61,7 @@ enum BriefingPeriod: string
      */
     public function hasEndedAt(CarbonImmutable $now): bool
     {
-        return $now->setTimezone(config()->string('app.office_timezone'))->format('H:i') >= $this->endsAt();
+        return $now->setTimezone(CurrentCompany::timezone())->format('H:i') >= $this->endsAt();
     }
 
     /**

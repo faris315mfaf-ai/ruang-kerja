@@ -5,6 +5,7 @@ namespace App\Domain\Automation\Jobs;
 use App\Domain\Automation\Actions\CreateTaskFromRecurring;
 use App\Domain\Automation\Services\RecurrenceSchedule;
 use App\Domain\Tenancy\Concerns\CompanyAware;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\RecurringTask;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -32,7 +33,7 @@ final class CreateRecurringTasks implements ShouldBeUnique, ShouldQueue
             return 0;
         }
 
-        $today = CarbonImmutable::now(config()->string('app.office_timezone'))->toDateString();
+        $today = CarbonImmutable::now(CurrentCompany::timezone())->toDateString();
         $created = 0;
 
         RecurringTask::query()

@@ -6,6 +6,7 @@ use App\Domain\Meetings\Services\MeetingOccurrences;
 use App\Domain\Notifications\BaseNotification;
 use App\Domain\Notifications\Data\NotificationSubject;
 use App\Domain\Notifications\Support\IndonesianDate;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Meeting;
 use App\Models\User;
 use App\Policies\MeetingPolicy;
@@ -50,7 +51,7 @@ abstract class MeetingNotification extends BaseNotification
         $occurrences = app(MeetingOccurrences::class);
         $occurrence = $this->date !== null ? $occurrences->at($this->meeting, $this->date) : null;
         $occurrence ??= $occurrences->resolve($this->meeting, null);
-        $timezone = config()->string('app.office_timezone');
+        $timezone = CurrentCompany::timezone();
         $start = $occurrence->startsAt->setTimezone($timezone);
         $end = $occurrence->endsAt->setTimezone($timezone);
 
@@ -66,7 +67,7 @@ abstract class MeetingNotification extends BaseNotification
 
     protected static function officeNow(): CarbonImmutable
     {
-        return CarbonImmutable::now()->setTimezone(config()->string('app.office_timezone'));
+        return CarbonImmutable::now()->setTimezone(CurrentCompany::timezone());
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Domain\Meetings\Notifications\ActionItemDueNotification;
 use App\Domain\Meetings\Services\MinutesStore;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Notifications\Services\NotificationDispatchLog;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\MeetingActionItem;
 use App\Models\User;
 use App\Policies\MeetingPolicy;
@@ -35,7 +36,7 @@ final class RemindActionItemOwners
             return [];
         }
 
-        $today = now()->setTimezone(config()->string('app.office_timezone'))->toDateString();
+        $today = now()->setTimezone(CurrentCompany::timezone())->toDateString();
         $reminded = [];
 
         MeetingActionItem::query()

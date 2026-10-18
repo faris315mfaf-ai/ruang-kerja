@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Workspaces;
 
 use App\Domain\Automation\Actions\CreateWorkspaceFromTemplate;
 use App\Domain\Tasks\Enums\TaskStatusCategory;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Domain\Workspaces\Actions\CreateWorkspace;
 use App\Domain\Workspaces\Enums\WorkspaceGroup;
 use App\Domain\Workspaces\Enums\WorkspaceType;
@@ -37,7 +38,7 @@ class WorkspaceController extends Controller
     {
         Gate::authorize('viewAny', Workspace::class);
 
-        $today = CarbonImmutable::now(config()->string('app.office_timezone'))->toDateString();
+        $today = CarbonImmutable::now(CurrentCompany::timezone())->toDateString();
         $closed = TaskStatusCategory::closedValues();
 
         $workspaces = Workspace::query()

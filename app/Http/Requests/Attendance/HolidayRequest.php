@@ -4,6 +4,7 @@ namespace App\Http\Requests\Attendance;
 
 use App\Domain\Attendance\Enums\HolidayType;
 use App\Domain\Attendance\Models\Holiday;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -57,7 +58,7 @@ class HolidayRequest extends FormRequest
 
     public function holidayDate(): CarbonImmutable
     {
-        return CarbonImmutable::parse($this->string('date')->toString(), config()->string('app.office_timezone'));
+        return CarbonImmutable::parse($this->string('date')->toString(), CurrentCompany::timezone());
     }
 
     public function type(): HolidayType

@@ -8,6 +8,7 @@ use App\Domain\Meetings\Services\VideoRooms;
 use App\Domain\Meetings\Transcripts\Services\NotulenConfig;
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Organization\Enums\UserStatus;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Meeting;
 use App\Models\User;
 use App\Models\Workspace;
@@ -237,7 +238,7 @@ class SaveMeetingRequest extends MeetingRequest
      */
     private function times(): array
     {
-        $timezone = config()->string('app.office_timezone');
+        $timezone = CurrentCompany::timezone();
         $start = CarbonImmutable::createFromFormat('Y-m-d H:i', $this->string('date')->toString().' '.$this->string('start')->toString(), $timezone);
         $start = $start instanceof CarbonImmutable ? $start : CarbonImmutable::now($timezone);
 

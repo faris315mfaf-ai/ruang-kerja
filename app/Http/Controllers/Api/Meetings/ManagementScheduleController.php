@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Meetings;
 
 use App\Domain\Meetings\Queries\ManagementSchedule;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -43,7 +44,7 @@ class ManagementScheduleController extends Controller
         $parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
 
         return $parsed !== false && $parsed->format('Y-m-d') === $date
-            ? CarbonImmutable::parse($date.' 12:00', config()->string('app.office_timezone'))
+            ? CarbonImmutable::parse($date.' 12:00', CurrentCompany::timezone())
             : null;
     }
 }

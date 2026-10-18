@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Tasks;
 
 use App\Domain\Tasks\Queries\BoardTasks;
 use App\Domain\Tasks\Queries\TaskDetail;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TaskResource;
 use App\Models\Task;
@@ -48,7 +49,7 @@ class TaskDetailController extends Controller
 
         return Inertia::render('tasks/show', [
             'detail' => $detail->for($task, $user),
-            'today' => now(config()->string('app.office_timezone'))->toDateString(),
+            'today' => now(CurrentCompany::timezone())->toDateString(),
         ]);
     }
 }

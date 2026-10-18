@@ -7,6 +7,7 @@ use App\Domain\Analytics\Data\MetricValue;
 use App\Domain\Analytics\Data\Period;
 use App\Domain\Analytics\Support\PeriodBuckets;
 use App\Domain\Tasks\Enums\TaskStatusCategory;
+use App\Domain\Tenancy\Support\CurrentCompany;
 
 /**
  * Ketepatan waktu = tasks completed on or before their due date ÷ tasks
@@ -62,7 +63,7 @@ final class OnTimeRate implements MetricDefinition
             ->where('tasks.completed_at', '>=', $from)
             ->where('tasks.completed_at', '<', $to)
             ->selectRaw($bucket.' as bucket', $bindings)
-            ->selectRaw('count(*) filter (where (tasks.completed_at at time zone ?)::date <= tasks.due_date) as on_time', [config()->string('app.office_timezone')])
+            ->selectRaw('count(*) filter (where (tasks.completed_at at time zone ?)::date <= tasks.due_date) as on_time', [CurrentCompany::timezone()])
             ->selectRaw('count(*) as total')
             ->groupBy('bucket')
             ->get()

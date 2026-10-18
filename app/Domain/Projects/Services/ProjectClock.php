@@ -2,16 +2,17 @@
 
 namespace App\Domain\Projects\Services;
 
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 
 /**
- * Project dates are office-calendar dates (config app.office_timezone).
+ * Project dates are office-calendar dates (office timezone of the current company).
  */
 final class ProjectClock
 {
     public static function timezone(): string
     {
-        return config()->string('app.office_timezone', 'Asia/Jakarta');
+        return CurrentCompany::timezone();
     }
 
     /**

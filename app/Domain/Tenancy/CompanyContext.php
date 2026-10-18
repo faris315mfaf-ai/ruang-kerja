@@ -2,6 +2,7 @@
 
 namespace App\Domain\Tenancy;
 
+use App\Domain\Tenancy\Support\OfficeTimezone;
 use App\Models\Company;
 use Closure;
 
@@ -54,13 +55,14 @@ final class CompanyContext
     }
 
     /**
-     * The company's office timezone, or the app-wide one without a context.
+     * The company's office timezone, or the app-wide one without a context
+     * (also when the stored value is not a valid IANA identifier).
      */
     public function timezone(): string
     {
         $timezone = $this->company()?->timezone;
 
-        return is_string($timezone) && $timezone !== '' ? $timezone : config()->string('app.office_timezone');
+        return OfficeTimezone::isValid($timezone) ? $timezone : config()->string('app.office_timezone');
     }
 
     public function set(Company|string|null $company): void

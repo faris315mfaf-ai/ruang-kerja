@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Workspaces;
 
 use App\Domain\Tasks\Enums\TaskStatusCategory;
 use App\Domain\Tasks\Queries\BoardTasks;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\WorkspaceAccess;
 use App\Http\Resources\Api\WorkspaceCard;
@@ -125,7 +126,7 @@ class WorkspaceTaskListController extends Controller
      */
     private function narrow(Builder $query, array $filters, User $user): void
     {
-        $today = CarbonImmutable::now(config()->string('app.office_timezone'))->startOfDay();
+        $today = CarbonImmutable::now(CurrentCompany::timezone())->startOfDay();
         $closed = TaskStatusCategory::closedValues();
 
         if (! empty($filters['status'])) {

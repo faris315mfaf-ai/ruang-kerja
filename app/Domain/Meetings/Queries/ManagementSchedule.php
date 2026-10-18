@@ -2,6 +2,7 @@
 
 namespace App\Domain\Meetings\Queries;
 
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Resources\Meetings\MeetingPresenter;
 use App\Models\Meeting;
 use App\Models\MeetingMinutes;
@@ -28,7 +29,7 @@ final class ManagementSchedule
      */
     public function forUser(User $viewer, ?CarbonImmutable $now = null): array
     {
-        $timezone = config()->string('app.office_timezone');
+        $timezone = CurrentCompany::timezone();
         $weekStart = ($now ?? CarbonImmutable::now())->setTimezone($timezone)->startOfWeek(CarbonImmutable::MONDAY)->startOfDay();
         $from = $weekStart->subWeeks(self::WEEKS_BACK);
         $to = $weekStart->addWeek();

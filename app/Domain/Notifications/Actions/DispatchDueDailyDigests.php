@@ -7,6 +7,7 @@ use App\Domain\Notifications\Enums\NotificationChannel;
 use App\Domain\Notifications\Enums\NotificationEvent;
 use App\Domain\Notifications\Jobs\SendDailyDigest;
 use App\Domain\Notifications\Services\NotificationPreferenceResolver;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\NotificationSetting;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -32,7 +33,7 @@ final class DispatchDueDailyDigests
      */
     public function handle(CarbonImmutable $now): int
     {
-        $local = $now->setTimezone((string) config('app.office_timezone'));
+        $local = $now->setTimezone(CurrentCompany::timezone());
 
         if (! $this->calendar->isWorkday($local->startOfDay())) {
             return 0;

@@ -6,6 +6,7 @@ use App\Domain\Attendance\Casts\PostgresIntArray;
 use App\Domain\Meetings\Enums\MeetingPlatform;
 use App\Domain\Meetings\Enums\Recurrence;
 use App\Domain\Organization\Enums\Permission;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 use Database\Factories\MeetingFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -145,7 +146,7 @@ class Meeting extends Model
      */
     public function scopeOverlapping(Builder $query, CarbonImmutable $from, CarbonImmutable $to): void
     {
-        $fromDate = $from->setTimezone(config()->string('app.office_timezone'))->toDateString();
+        $fromDate = $from->setTimezone(CurrentCompany::timezone())->toDateString();
 
         $query->where($this->qualifyColumn('starts_at'), '<', $to)
             ->where(function (Builder $scope) use ($from, $fromDate): void {
@@ -193,7 +194,7 @@ class Meeting extends Model
     /** Office date of the first occurrence. */
     public function firstDate(): string
     {
-        return $this->starts_at->setTimezone(config()->string('app.office_timezone'))->toDateString();
+        return $this->starts_at->setTimezone(CurrentCompany::timezone())->toDateString();
     }
 
     /**

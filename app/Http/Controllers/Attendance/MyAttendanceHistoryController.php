@@ -6,6 +6,7 @@ use App\Domain\Attendance\Data\RecapPeriod;
 use App\Domain\Attendance\Exports\RecapPdf;
 use App\Domain\Attendance\Models\AttendanceDay;
 use App\Domain\Attendance\Services\MonthlyRecap;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Attendance\RecapPresenter;
 use App\Models\User;
@@ -32,7 +33,7 @@ class MyAttendanceHistoryController extends Controller
 
         return Inertia::render('attendance/history', [
             'period' => $presenter->period($period),
-            'today' => $now->setTimezone(config()->string('app.office_timezone'))->toDateString(),
+            'today' => $now->setTimezone(CurrentCompany::timezone())->toDateString(),
             'recap' => fn (): array => $presenter->detail($recaps->employee($user, $period), $period, $user),
         ]);
     }

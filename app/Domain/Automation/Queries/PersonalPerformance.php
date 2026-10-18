@@ -12,6 +12,7 @@ use App\Domain\Analytics\MetricDefinitions\OnTimeRate;
 use App\Domain\Analytics\MetricDefinitions\OverdueTasks;
 use App\Domain\Analytics\Services\MetricCache;
 use App\Domain\Tasks\Enums\TaskStatusCategory;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
@@ -258,7 +259,7 @@ final class PersonalPerformance
             ->whereNotNull('check_in_at')
             ->where('work_date', '>=', $period->startDate())
             ->where('work_date', '<', $period->endDate())
-            ->selectRaw('avg(extract(epoch from (check_in_at at time zone ?)::time)) as seconds', [config()->string('app.office_timezone')])
+            ->selectRaw('avg(extract(epoch from (check_in_at at time zone ?)::time)) as seconds', [CurrentCompany::timezone()])
             ->value('seconds');
 
         if ($seconds === null) {

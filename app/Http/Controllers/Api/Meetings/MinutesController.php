@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Meetings;
 use App\Domain\Meetings\Queries\MeetingFeed;
 use App\Domain\Meetings\Services\MeetingOccurrences;
 use App\Domain\Meetings\Services\MinutesStore;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\MeetingSummary;
 use App\Http\Resources\Meetings\MeetingPresenter;
@@ -53,7 +54,7 @@ class MinutesController extends Controller
             $meeting->minute_taker_id,
             ...$meeting->participants->pluck('user_id')->all(),
         ]);
-        $today = CarbonImmutable::now()->setTimezone(config()->string('app.office_timezone'))->toDateString();
+        $today = CarbonImmutable::now()->setTimezone(CurrentCompany::timezone())->toDateString();
 
         return response()->json([
             'meeting' => MeetingSummary::detail($occurrence, $minutes, $user, $policy, $names, $today),

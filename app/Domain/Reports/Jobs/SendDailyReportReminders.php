@@ -9,6 +9,7 @@ use App\Domain\Notifications\Services\NotificationDispatchLog;
 use App\Domain\Reports\Notifications\DailyReportReminder;
 use App\Domain\Reports\Support\ReportDay;
 use App\Domain\Tenancy\Concerns\CompanyAware;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\DailyReport;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -35,7 +36,7 @@ final class SendDailyReportReminders implements ShouldBeUnique, ShouldQueue
     {
         $now = CarbonImmutable::now();
         $today = ReportDay::today($now);
-        $date = CarbonImmutable::parse($today, config()->string('app.office_timezone'));
+        $date = CarbonImmutable::parse($today, CurrentCompany::timezone());
 
         User::query()
             ->active()

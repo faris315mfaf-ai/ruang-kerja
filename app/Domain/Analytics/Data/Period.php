@@ -3,6 +3,7 @@
 namespace App\Domain\Analytics\Data;
 
 use App\Domain\Analytics\Enums\PeriodPreset;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 
@@ -224,7 +225,7 @@ final readonly class Period
 
     private static function timezone(): string
     {
-        return config()->string('app.office_timezone');
+        return CurrentCompany::timezone();
     }
 
     private function day(CarbonImmutable $date, bool $withYear): string

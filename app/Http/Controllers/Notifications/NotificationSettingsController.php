@@ -10,6 +10,7 @@ use App\Domain\Notifications\Enums\NotificationCategory;
 use App\Domain\Notifications\Enums\NotificationChannel;
 use App\Domain\Notifications\Enums\NotificationEvent;
 use App\Domain\Notifications\Services\NotificationPreferenceResolver;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Notifications\UpdateNotificationPreferenceRequest;
 use App\Http\Requests\Notifications\UpdateNotificationSettingsRequest;
@@ -59,7 +60,7 @@ class NotificationSettingsController extends Controller
             ],
             'digestPreview' => Inertia::defer(fn (): array => $digests->build(
                 $user,
-                CarbonImmutable::now()->setTimezone((string) config('app.office_timezone'))->startOfDay(),
+                CarbonImmutable::now()->setTimezone(CurrentCompany::timezone())->startOfDay(),
             )->toArray()),
             'email' => $user->email,
         ]);
@@ -110,7 +111,7 @@ class NotificationSettingsController extends Controller
 
         $digest = $digests->build(
             $user,
-            CarbonImmutable::now()->setTimezone((string) config('app.office_timezone'))->startOfDay(),
+            CarbonImmutable::now()->setTimezone(CurrentCompany::timezone())->startOfDay(),
         );
 
         return new DailyDigestMail($digest, $setting->digestTimeShort());

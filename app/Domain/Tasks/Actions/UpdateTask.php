@@ -9,6 +9,7 @@ use App\Domain\Tasks\Enums\TaskPriority;
 use App\Domain\Tasks\Services\TaskDescription;
 use App\Domain\Tasks\Services\TaskRelations;
 use App\Domain\Tasks\Services\TaskRichText;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Events\Tasks\TaskAssigneesAdded;
 use App\Events\Tasks\TaskUpdated;
 use App\Models\Task;
@@ -151,7 +152,7 @@ final class UpdateTask
             }
 
             // Due date moved to today or later: the overdue reminder is settled.
-            if (array_key_exists('due_date', $dirty) && ($task->due_date === null || $task->due_date->toDateString() >= now(config()->string('app.office_timezone'))->toDateString())) {
+            if (array_key_exists('due_date', $dirty) && ($task->due_date === null || $task->due_date->toDateString() >= now(CurrentCompany::timezone())->toDateString())) {
                 $this->resolveNotifications->handle($task, NotificationType::TaskOverdue);
             }
 

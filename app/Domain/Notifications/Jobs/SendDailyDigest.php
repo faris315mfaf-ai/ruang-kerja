@@ -9,6 +9,7 @@ use App\Domain\Notifications\Enums\NotificationChannel;
 use App\Domain\Notifications\Enums\NotificationEvent;
 use App\Domain\Notifications\Services\NotificationPreferenceResolver;
 use App\Domain\Tenancy\Concerns\CompanyAware;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\NotificationSetting;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -51,7 +52,7 @@ final class SendDailyDigest implements ShouldQueue
             return;
         }
 
-        $date = CarbonImmutable::parse($this->date, (string) config('app.office_timezone'))->startOfDay();
+        $date = CarbonImmutable::parse($this->date, CurrentCompany::timezone())->startOfDay();
         $digest = $builder->build($this->user, $date);
 
         if ($digest->isEmpty()) {

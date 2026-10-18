@@ -7,6 +7,7 @@ use App\Domain\Automation\Actions\DeleteRecurringTask;
 use App\Domain\Automation\Actions\SaveRecurringTask;
 use App\Domain\Automation\Actions\SetRecurringTaskActive;
 use App\Domain\Automation\Queries\RecurringPage;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Automation\ActiveRequest;
 use App\Http\Requests\Automation\RecurringTaskRequest;
@@ -80,7 +81,7 @@ class RecurringTaskController extends Controller
     {
         Gate::authorize('run', $recurring);
 
-        $today = CarbonImmutable::now(config()->string('app.office_timezone'))->toDateString();
+        $today = CarbonImmutable::now(CurrentCompany::timezone())->toDateString();
         $task = $create->handle($recurring, $today, $user);
         abort_if($task === null, 409, 'Workspace diarsipkan.');
 

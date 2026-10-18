@@ -8,6 +8,7 @@ use App\Domain\Meetings\Data\Occurrence;
 use App\Domain\Organization\Enums\Role;
 use App\Domain\Requests\Enums\RequestCategory;
 use App\Domain\Requests\Enums\RequestStatus;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\EmployeeRequest;
 use App\Models\Meeting;
 use App\Models\Task;
@@ -34,7 +35,7 @@ final class CalendarFeed
      */
     public function forMonth(User $viewer, int $year, int $month): array
     {
-        $timezone = config()->string('app.office_timezone');
+        $timezone = CurrentCompany::timezone();
         $first = CarbonImmutable::create($year, $month, 1, 0, 0, 0, $timezone) ?? CarbonImmutable::now($timezone)->startOfMonth();
         $from = $first->startOfWeek(CarbonImmutable::MONDAY);
         $to = $first->endOfMonth()->endOfWeek(CarbonImmutable::SUNDAY)->addDay()->startOfDay();
@@ -59,7 +60,7 @@ final class CalendarFeed
      */
     private function meetings(User $viewer, CarbonImmutable $from, CarbonImmutable $to): array
     {
-        $timezone = config()->string('app.office_timezone');
+        $timezone = CurrentCompany::timezone();
 
         return array_values($this->feed->occurrences(Meeting::query()->visibleTo($viewer)->active(), $from->utc(), $to->utc())
             ->map(fn (Occurrence $occurrence): array => [
@@ -113,7 +114,7 @@ final class CalendarFeed
      */
     private function leave(User $viewer, CarbonImmutable $from, CarbonImmutable $to): array
     {
-        $timezone = config()->string('app.office_timezone');
+        $timezone = CurrentCompany::timezone();
         $divisionIds = $viewer->hasRole(Role::KepalaDivisi) ? $viewer->ledDivisionIds() : [];
 
         return array_values(EmployeeRequest::query()

@@ -13,6 +13,7 @@ use App\Domain\Meetings\Transcripts\Services\NotulenConfig;
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Organization\Enums\UserStatus;
 use App\Domain\Search\Support\LikePattern;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Meetings\ConflictsRequest;
 use App\Http\Requests\Meetings\OccurrenceRequest;
@@ -179,7 +180,7 @@ class MeetingWriteController extends Controller
      */
     private function values(Meeting $meeting): array
     {
-        $start = $meeting->starts_at->setTimezone(config()->string('app.office_timezone'));
+        $start = $meeting->starts_at->setTimezone(CurrentCompany::timezone());
 
         return [
             'id' => $meeting->id,

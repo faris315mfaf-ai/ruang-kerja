@@ -7,6 +7,7 @@ use App\Domain\Analytics\Services\DashboardAccess;
 use App\Domain\Meetings\Data\Occurrence;
 use App\Domain\Meetings\Queries\MeetingFeed;
 use App\Domain\Monitoring\Queries\ManagementNotes;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\MeetingSummary;
 use App\Models\Meeting;
@@ -96,7 +97,7 @@ class ManagementDashboardController extends Controller
             return [];
         }
 
-        $timezone = config()->string('app.office_timezone');
+        $timezone = CurrentCompany::timezone();
         $today = $now->setTimezone($timezone);
 
         $occurrences = $feed->occurrences(

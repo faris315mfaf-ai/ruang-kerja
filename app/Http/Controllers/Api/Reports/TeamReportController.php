@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Reports;
 use App\Domain\Monitoring\Queries\DailyWorkMonitor;
 use App\Domain\Reports\Services\ReportReaders;
 use App\Domain\Reports\Support\ReportDay;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -50,7 +51,7 @@ class TeamReportController extends Controller
         return response()->json($monitor->for(
             $user,
             $users,
-            CarbonImmutable::parse($date, config()->string('app.office_timezone')),
+            CarbonImmutable::parse($date, CurrentCompany::timezone()),
             $now,
         ));
     }
