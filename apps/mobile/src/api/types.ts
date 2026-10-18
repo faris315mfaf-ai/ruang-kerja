@@ -1,3 +1,5 @@
+import { ZONA_KANTOR_BAWAAN } from '@/lib/zonaKantor';
+
 /**
  * Kontrak tipe JSON API ponsel /api/v1 — diturunkan persis dari
  * routes/api.php + presenter Laravel (tests/Feature/Api/*).
@@ -49,6 +51,8 @@ export interface UserProfile extends UserSummary {
   two_factor_enabled: boolean;
   password_change_required: boolean;
   password_hint: string | null;
+  /** Zona waktu kantor perusahaan (`companies.timezone`), mis. Asia/Jakarta. */
+  office_timezone: string;
 }
 
 const FITUR_BAWAAN: FiturServer = { chat: true, notes: true, meetings: true, okr: false, automation: false, role_dashboards: false };
@@ -70,6 +74,7 @@ export function normalisasiProfil(p: UserSummary & Partial<UserProfile>): UserPr
     two_factor_enabled: p.two_factor_enabled ?? false,
     password_change_required: p.password_change_required ?? false,
     password_hint: p.password_hint ?? null,
+    office_timezone: p.office_timezone ?? ZONA_KANTOR_BAWAAN,
   };
 }
 

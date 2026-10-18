@@ -1,9 +1,8 @@
 /**
- * Format tanggal/jam/angka Indonesia (locale id-ID, zona Asia/Jakarta) —
+ * Format tanggal/jam/angka Indonesia (locale id-ID, zona kantor) —
  * padanan resources/js/lib/format.ts milik web.
  */
-
-const JAKARTA = 'Asia/Jakarta';
+import { zonaKantor } from '@/lib/zonaKantor';
 
 function formatWith(option: Intl.DateTimeFormatOptions, value: Date | string | null | undefined): string {
   if (value === null || value === undefined || value === '') {
@@ -13,7 +12,7 @@ function formatWith(option: Intl.DateTimeFormatOptions, value: Date | string | n
   if (Number.isNaN(date.getTime())) {
     return typeof value === 'string' ? value : '—';
   }
-  return new Intl.DateTimeFormat('id-ID', { ...option, timeZone: JAKARTA }).format(date);
+  return new Intl.DateTimeFormat('id-ID', { ...option, timeZone: zonaKantor() }).format(date);
 }
 
 /** "Senin, 12 Oktober 2026" */
@@ -67,7 +66,7 @@ export function ymdJakarta(value: string | Date | null | undefined): string {
     return '';
   }
   return new Intl.DateTimeFormat('en-CA', {
-    timeZone: JAKARTA,
+    timeZone: zonaKantor(),
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -107,7 +106,7 @@ export function jarakMeter(meter: number | null | undefined): string {
 /** Sapaan sesuai jam Jakarta. */
 export function sapaan(now = new Date()): string {
   const hour = Number(
-    new Intl.DateTimeFormat('en-GB', { timeZone: JAKARTA, hour: 'numeric', hour12: false }).format(now),
+    new Intl.DateTimeFormat('en-GB', { timeZone: zonaKantor(), hour: 'numeric', hour12: false }).format(now),
   );
   if (hour < 11) {
     return 'Selamat pagi';

@@ -1,3 +1,4 @@
+import { formatKantor } from '@/lib/zonaKantor';
 /**
  * Tanggal murni (tanpa zona waktu) sebagai string `YYYY-MM-DD` — sama dengan
  * isian tanggal web ("Hari, dd/mm/yyyy"). Tidak memakai `new Date(string)`
@@ -52,23 +53,18 @@ export function toIso({ y, m, d }: Ymd): string {
   return `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
-/** Zona waktu kantor (`config('app.office_timezone')`): tanggal kerja & tenggat dihitung di sini. */
-export const ZONA_KANTOR = 'Asia/Jakarta';
-
-let fmtKantor: Intl.DateTimeFormat | null | undefined;
-
 /**
- * Tanggal hari ini menurut zona kantor (bukan jam perangkat): ponsel di WITA/WIT
- * atau zona lain tidak lagi menganggap "Hari ini" sudah besok/masih kemarin
- * dibanding server. Tanpa dukungan zona Intl → jam perangkat.
+ * Tanggal hari ini menurut zona kantor perusahaan (bukan jam perangkat;
+ * `zonaKantor()`, dari profil `GET /auth/saya`): ponsel di zona lain tidak
+ * menganggap "Hari ini" sudah besok/masih kemarin dibanding server. Tanpa
+ * dukungan zona Intl → jam perangkat.
  */
 export function hariIniIso(sekarang: Date = new Date()): string {
-  if (fmtKantor === undefined) {
-    try {
-      fmtKantor = new Intl.DateTimeFormat('en-CA', { timeZone: ZONA_KANTOR, year: 'numeric', month: '2-digit', day: '2-digit' });
-    } catch {
-      fmtKantor = null;
-    }
+  let fmtKantor: Intl.DateTimeFormat | null;
+  try {
+    fmtKantor = formatKantor('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  } catch {
+    fmtKantor = null;
   }
   if (fmtKantor) {
     const bagian = fmtKantor.formatToParts(sekarang);

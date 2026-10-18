@@ -1,16 +1,17 @@
 /**
  * Teks pengajuan untuk layar Persetujuan — padanan resources/js/lib/requests.ts
- * (rentang tanggal, durasi, peringatan rekan) dalam zona kantor Asia/Jakarta.
+ * (rentang tanggal, durasi, peringatan rekan) dalam zona kantor.
  */
 import type { DetailPengajuan, ItemPengajuan, JenisRingkas, RekanAbsen } from '@/api/persetujuan';
 import type { Tone } from '@/ui';
+import { formatKantor } from '@/lib/zonaKantor';
 
 const BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 const HARI_PANJANG = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 const HARI = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
-const isoKantor = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' });
-const jamKantor = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false });
+const isoKantor = (): Intl.DateTimeFormat => formatKantor('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' });
+const jamKantor = (): Intl.DateTimeFormat => formatKantor('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
 const angka = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 });
 
 interface Hari {
@@ -32,7 +33,7 @@ export function hariKantor(nilai: string | null | undefined): Hari | null {
     if (Number.isNaN(t.getTime())) {
       return null;
     }
-    iso = isoKantor.format(t);
+    iso = isoKantor().format(t);
   }
   const [y, m, d] = iso.split('-').map(Number);
   if (!y || !m || !d) {
@@ -50,7 +51,7 @@ export function jamTitik(nilai: string | null | undefined): string {
     return nilai.slice(0, 5).replace(':', '.');
   }
   const t = new Date(nilai);
-  return Number.isNaN(t.getTime()) ? '' : jamKantor.format(t).replace(':', '.');
+  return Number.isNaN(t.getTime()) ? '' : jamKantor().format(t).replace(':', '.');
 }
 
 /** "12 Okt 2026" */

@@ -32,6 +32,7 @@ import {
 } from '../antrean';
 import { cariPetaId, catatPetaId, eIdSementara, idSementaraBaru, idSementaraDari } from './tugasBersama';
 import { PESAN_DISIMPAN_HP, cobaOnline, type HasilTulis } from './umum';
+import { formatKantor } from '@/lib/zonaKantor';
 
 export const JENIS_CATATAN = {
   buat: 'catatan.buat',
@@ -285,13 +286,13 @@ export async function tulisBuatCatatan(input: { title: string; workspace: RuangC
   return { id: tmpId, title: input.title, antre: true, note: null };
 }
 
-const FORMAT_HARI = new Intl.DateTimeFormat('id-ID', { weekday: 'long', timeZone: 'Asia/Jakarta' });
-const FORMAT_TGL = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'Asia/Jakarta' });
+const FORMAT_HARI = (): Intl.DateTimeFormat => formatKantor('id-ID', { weekday: 'long' });
+const FORMAT_TGL = (): Intl.DateTimeFormat => formatKantor('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 
 /** "Selasa, 13/10/2026 14.05" (jam kantor), sama dengan judul buatan server. */
 export function kapanNotulensi(d: Date = new Date()): string {
-  const bagian = Object.fromEntries(FORMAT_TGL.formatToParts(d).map((x) => [x.type, x.value]));
-  return `${FORMAT_HARI.format(d)}, ${bagian.day}/${bagian.month}/${bagian.year} ${bagian.hour}.${bagian.minute}`;
+  const bagian = Object.fromEntries(FORMAT_TGL().formatToParts(d).map((x) => [x.type, x.value]));
+  return `${FORMAT_HARI().format(d)}, ${bagian.day}/${bagian.month}/${bagian.year} ${bagian.hour}.${bagian.minute}`;
 }
 
 /** Templat notulensi polos (padanan `StartQuickMinutes::plainTemplate`). */

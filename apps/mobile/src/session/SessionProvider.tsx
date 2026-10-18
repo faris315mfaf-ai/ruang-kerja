@@ -21,6 +21,7 @@ import {
 import { setAccountBlockedHandler, setTokenGetter, setUnauthorizedHandler, type BlokirAkun } from '@/api/client';
 import { adalahTantangan, normalisasiProfil, type SesiDibuka, type UserProfile } from '@/api/types';
 import { deviceInfo } from '@/lib/device';
+import { aturZonaKantor } from '@/lib/zonaKantor';
 import { akhiriSesiOffline, mulaiSesiOffline } from '@/offline/sesi';
 
 import { KUNCI_SESI as SESI_KEY } from './tokenTersimpan';
@@ -109,6 +110,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }): Re
   const [alasanKeluar, setAlasanKeluar] = useState<AlasanKeluar | null>(null);
   const [tantangan, setTantangan] = useState<Tantangan | null>(null);
   const tokenRef = useRef<string | null>(null);
+  // Zona kantor perusahaan pengguna (Fase 1 multi-perusahaan): dipasang saat render
+  // provider, sebelum layar di bawahnya memformat tanggal; idempoten.
+  aturZonaKantor(user?.office_timezone);
   const dingin = useRef(true); // validasi awal sedang berjalan: 401 → langsung keluar
   const cooldownSampai = useRef(0);
 

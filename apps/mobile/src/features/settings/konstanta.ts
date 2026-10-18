@@ -1,4 +1,5 @@
 /** Konstanta kecil bersama layar akun & pengaturan. */
+import { zonaKantor } from '@/lib/zonaKantor';
 
 /** Alamat HR (tombol "Hubungi HR", Tentang). Dapat diganti lewat `EXPO_PUBLIC_HR_EMAIL`. */
 export const EMAIL_HR = process.env.EXPO_PUBLIC_HR_EMAIL ?? 'hr@spkd.store';
@@ -33,7 +34,7 @@ export function bandingVersi(a: string, b: string): number {
   return 0;
 }
 
-/** "Sen, 12 Okt 2026, 17.40" (zona Asia/Jakarta) untuk "terakhir aktif". */
+/** "Sen, 12 Okt 2026, 17.40" (zona kantor) untuk "terakhir aktif". */
 export function tglJamLengkap(iso: string | null | undefined): string {
   if (!iso) {
     return '—';
@@ -49,6 +50,6 @@ export function tglJamLengkap(iso: string | null | undefined): string {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: 'Asia/Jakarta',
+    timeZone: zonaKantor(),
   }).format(tanggal);
 }

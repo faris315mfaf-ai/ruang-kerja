@@ -1,11 +1,10 @@
-/** Format kecil khusus Beranda & dashboard (id-ID, zona Asia/Jakarta). */
+/** Format kecil khusus Beranda & dashboard (id-ID, zona kantor). */
 import { tanggalDariYMD } from '@/lib/format';
-
-const JAKARTA = 'Asia/Jakarta';
+import { zonaKantor } from '@/lib/zonaKantor';
 
 /** "SELASA, 13 OKTOBER" — overline app bar Beranda. */
 export function overlineTanggal(now = new Date()): string {
-  return new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', timeZone: JAKARTA }).format(now).toUpperCase();
+  return new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', timeZone: zonaKantor() }).format(now).toUpperCase();
 }
 
 /** Nama depan: "Sari Wulandari" → "Sari". */
@@ -45,12 +44,12 @@ export function tglSingkat(ymd: string | null | undefined): string {
 
 /** "Sel, 13 Okt" dari ISO. */
 export function hariTanggal(iso: string): string {
-  return new Intl.DateTimeFormat('id-ID', { weekday: 'short', day: 'numeric', month: 'short', timeZone: JAKARTA }).format(new Date(iso));
+  return new Intl.DateTimeFormat('id-ID', { weekday: 'short', day: 'numeric', month: 'short', timeZone: zonaKantor() }).format(new Date(iso));
 }
 
 export function jamKantor(date: Date | null): string {
   if (!date) {
     return '';
   }
-  return new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: JAKARTA }).format(date);
+  return new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: zonaKantor() }).format(date);
 }

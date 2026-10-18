@@ -1,13 +1,12 @@
 /**
  * Format & metadata tampilan Pengajuan (status, kategori, periode, durasi,
- * rupiah, jam "14.00"). Tanggal pengajuan memakai zona kantor Asia/Jakarta.
+ * rupiah, jam "14.00"). Tanggal pengajuan memakai zona kantor.
  */
 import type { IconTileTone, Tone } from '@/ui';
 import type { AnyIconName } from '@/ui/Icon';
 
 import type { ItemPengajuan, KategoriPengajuan, StatusPengajuan } from '@/api/pengajuan';
-
-const JAKARTA = 'Asia/Jakarta';
+import { zonaKantor } from '@/lib/zonaKantor';
 
 export const META_STATUS: Record<StatusPengajuan, { label: string; tone: Tone }> = {
   draft: { label: 'Draf', tone: 'neutral' },
@@ -79,13 +78,13 @@ function fmt(opsi: Intl.DateTimeFormatOptions, iso: string | null | undefined): 
   if (Number.isNaN(d.getTime())) {
     return '';
   }
-  return new Intl.DateTimeFormat('id-ID', { ...opsi, timeZone: JAKARTA }).format(d).replace(/\./g, '').trim();
+  return new Intl.DateTimeFormat('id-ID', { ...opsi, timeZone: zonaKantor() }).format(d).replace(/\./g, '').trim();
 }
 
 function bagian(iso: string): { y: string; m: string; d: string; wd: string; hh: string; mm: string } {
   const d = new Date(iso);
   const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: JAKARTA,
+    timeZone: zonaKantor(),
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
