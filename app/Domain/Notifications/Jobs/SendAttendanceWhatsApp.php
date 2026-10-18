@@ -11,6 +11,7 @@ use App\Domain\Attendance\Models\OfficeLocation;
 use App\Domain\Attendance\Services\StampedSelfie;
 use App\Domain\Notifications\Services\EvolutionWhatsApp;
 use App\Domain\Tenancy\Concerns\CompanyAware;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use Carbon\CarbonImmutable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -157,7 +158,7 @@ final class SendAttendanceWhatsApp implements ShouldQueue
     private static function headerLines(AttendanceDay $day, AttendanceLog $log, bool $withDuration): array
     {
         $in = $log->type === AttendanceLogType::CheckIn;
-        $at = (new CarbonImmutable($log->occurred_at))->setTimezone(config('app.office_timezone'));
+        $at = (new CarbonImmutable($log->occurred_at))->setTimezone(CurrentCompany::timezone());
 
         $lines = [
             $in ? '🟢 ABSEN MASUK' : '🔴 ABSEN PULANG',
@@ -170,7 +171,7 @@ final class SendAttendanceWhatsApp implements ShouldQueue
         // Pressed without internet: the stamp above is the device time of the
         // press; say when it actually reached the server.
         if ($log->flags->contains(LogFlag::Offline)) {
-            $received = (new CarbonImmutable($log->received_at ?? $log->created_at))->setTimezone(config('app.office_timezone'));
+            $received = (new CarbonImmutable($log->received_at ?? $log->created_at))->setTimezone(CurrentCompany::timezone());
             $lines[] = '⚠️ Absen offline — tersinkron '.$received->format('H.i');
         }
 
