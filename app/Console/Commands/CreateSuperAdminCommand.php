@@ -16,6 +16,7 @@ use InvalidArgumentException;
     {--name=Super Admin : Nama tampilan}
     {--company= : Perusahaan yang ada (id, domain Google, atau nama); wajib bila ada beberapa perusahaan. Instalasi baru: nama perusahaan yang dibuat}
     {--new-company= : Buat perusahaan baru dengan nama ini}
+    {--domain= : Domain Google perusahaan baru (bawaan: domain e-mail; harus belum dipakai perusahaan lain)}
     {--generate-password : Buat sandi acak dan tampilkan sekali (untuk docker exec -T)}')]
 #[Description('Membuat atau menaikkan akun menjadi Super Admin (instalasi baru)')]
 class CreateSuperAdminCommand extends Command
@@ -50,6 +51,7 @@ class CreateSuperAdminCommand extends Command
                 companyName: $newCompany,
                 company: $company,
                 newCompany: $newCompany !== null,
+                domain: $this->filled('domain'),
             );
         } catch (InvalidArgumentException $e) {
             $this->components->error($e->getMessage());
