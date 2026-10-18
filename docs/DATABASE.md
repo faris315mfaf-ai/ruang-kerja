@@ -166,7 +166,7 @@ Klaim tugas terjadwal berjam lokal per perusahaan (migrasi `2026_10_23_220200_cr
 |---|---|---|
 | task | varchar(80) | nama tugas (`attendance:close-day`, kelas job, …) |
 | company_id | FK companies | cascadeOnDelete |
-| local_date | date | tanggal kantor perusahaan saat tugas dijalankan (zona `companies.timezone`) |
+| local_date | date | tanggal kantor **target** tugas (zona `companies.timezone`): tanggal jalan, atau tanggal kemarin bila jendela kejar melewati tengah malam (`LocalTask::dueTarget`, mis. snapshot 23.55 yang baru jalan 00.20) |
 | ran_at | timestamptz | |
 
 PK `(task, company_id, local_date)` — `INSERT … ON CONFLICT DO NOTHING` sebelum menjalankan tugas, jadi satu kali per perusahaan per tanggal lokal walau scheduler berjalan berulang/di beberapa server; dihapus bila tugas gagal (diulang 5 menit kemudian). Indeks `(local_date)`; baris > 60 hari dihapus harian. Tanpa model Eloquent. `companies.timezone` wajib zona IANA (divalidasi saat disimpan, `OfficeTimezone`).

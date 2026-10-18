@@ -24,10 +24,11 @@ RuangKerja adalah aplikasi kantor internal yang menyatukan empat kebutuhan dalam
 
 | Item | Keputusan |
 |---|---|
-| Pengguna | Internal, puluhan karyawan (perkiraan 20–100) |
+| Pengguna | Internal, puluhan karyawan (perkiraan 20–100) per perusahaan |
+| Perusahaan | **Multi-perusahaan** (keputusan pemilik 18 Okt 2026): RuangKerja dipakai banyak perusahaan (web + aplikasi), bukan hanya SPKD; satu server/database, data tiap perusahaan terisolasi. Roadmap `docs/ROADMAP-MULTI-PERUSAHAAN.md` (berkasnya masih di branch `claude/roadmap-multi-perusahaan`, akan digabung). Fase 1 (isolasi data, zona waktu & penjadwal per perusahaan, integrasi per perusahaan) selesai; akun lintas perusahaan = Fase 2, pengaturan & onboarding per perusahaan = Fase 3 |
 | Platform | Web dulu (responsif + PWA). Mobile React Native di Fase 3 |
 | Bahasa UI | Bahasa Indonesia saja |
-| Zona waktu | Disimpan UTC, ditampilkan per zona waktu kantor (default `Asia/Jakarta`) |
+| Zona waktu | Disimpan UTC, ditampilkan per zona waktu kantor **perusahaan** (`companies.timezone`, default `Asia/Jakarta`; WIB/WITA/WIT) |
 | Hosting | VPS Biznet Gio (Docker Compose) |
 | Identitas | Email kantor + kata sandi untuk semua karyawan (keputusan pemilik 6 Okt 2026); login Google Workspace **ditahan** |
 | Tim pengembang | Ris + tim, dibantu Claude Code dan Z-AI |
@@ -42,7 +43,7 @@ RuangKerja adalah aplikasi kantor internal yang menyatukan empat kebutuhan dalam
 - Payroll/penggajian penuh (hanya ekspor data).
 - Pelacakan aktivitas komputer, screenshot, atau GPS terus-menerus.
 - Editor dokumen pengganti Google Docs.
-- Produk publik/SaaS (arsitektur tetap rapi agar bisa multi-perusahaan nanti, tapi tidak dibangun sekarang).
+- ~~Produk publik/SaaS~~ — **diubah 18 Okt 2026 (keputusan pemilik):** RuangKerja menjadi multi-perusahaan (lihat §2 "Perusahaan"). Tagihan/paket berlangganan dan pendaftaran mandiri belum dibangun (roadmap Fase 6, bergantung keputusan model bisnis).
 
 ## 3. Struktur organisasi & peran
 

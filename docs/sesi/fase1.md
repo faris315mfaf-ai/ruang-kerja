@@ -1,9 +1,9 @@
 # Sesi fase1
 
-**Terakhir diperbarui:** 18 Okt 2026 · Claude Code
+**Terakhir diperbarui:** 18 Okt 2026 (Langkah 3) · Claude Code
 
 ## Tugas berjalan
-Fase 1 multi-perusahaan (rencana disetujui pemilik: `~/.claude/plans/shimmying-scribbling-finch.md`), **Langkah 1 selesai**: fondasi konteks perusahaan dan jaring pengaman uji isolasi data. Langkah 2 (tutup celah, tiga agen paralel) belum dimulai.
+Fase 1 multi-perusahaan (rencana disetujui pemilik: `~/.claude/plans/shimmying-scribbling-finch.md`) — **Langkah 1, 2 (2a/2b/2c) dan 3 selesai**. Hasil: dua perusahaan hidup di satu database/server tanpa saling melihat, mengubah, atau menerima notifikasi/berkas/pesan WhatsApp satu sama lain; zona waktu & penjadwal per perusahaan; integrasi (WhatsApp, Shared Drive, email) per perusahaan. Tinggal: tinjauan PR "Fase 1" oleh integrator dan deploy (lihat "Deploy").
 
 ## Worktree / branch
 `/Users/godam/PROYEK/ruang-kerja-fase1` · `claude/fase1-isolasi` · https://ruangkerja-fase1.test · DB dev `ruangkerja_fase1`, DB test `ruangkerja_testing_fase1` (`.testing-db`)
@@ -52,6 +52,28 @@ Fase 1 multi-perusahaan (rencana disetujui pemilik: `~/.claude/plans/shimmying-s
 - Gerbang: `pest --parallel` penuh hijau (4151 tes), Pint, PHPStan, `npm run typecheck`, `npm run lint`, `npm test` (939), aplikasi `tsc`/`eslint` (node_modules dipinjam lewat symlink sementara dari worktree bagian5; tsconfig tidak berubah).
 - Batas: tugas berjam lokal dikejar maks. 2 jam (tutup hari & delegasi 12 jam, saldo 1 Jan sehari) — deploy siang hari tidak mengirim ulang pengingat pagi (pengingat juga ber-de-dup sendiri). Saat deploy pertama, tugas yang targetnya < 2 jam lalu bisa berjalan lagi hari itu: semuanya idempoten (de-dup `notification_dispatch_logs`, klaim kemunculan berulang, upsert snapshot). Retensi & pembersihan infrastruktur tetap global. Flag fitur tetap global (Fase 3).
 
+## Langkah 3 — bukti & dokumen (selesai)
+- `0ae8283a` Anggaran query dua perusahaan: `PerformanceFixtures::grow()` juga mengisi perusahaan B (`foreignWorld()` + `AnalyticsDemoSeeder` untuk B, kini menerima perusahaan sasaran: 45/60 karyawan, absensi 21 hari, tugas divisi, pengajuan menunggu & sendiri, tugas board, rencana pribadi, notifikasi, check-in ditandai, berkas, tim, audit, workspace, proyek, obrolan, laporan harian, rapat, catatan, kandidat). `P::queries()` gagal bila respons (kunjungan + prop tertunda) memuat `ZZB0C0R`. Hasil: 17 kelompok PageQueryCountTest (±95 pengukuran), **anggaran tidak berubah**, tidak ada N+1; dibanding satu perusahaan hampir semua angka identik, 4 halaman bergeser ±1–3 ke dua arah (cabang data-dependen, mis. "tenggat hari ini"), semuanya di bawah anggaran. Temuan: halaman `/admin/audit` sempat menampilkan entri B — artefak fixture (pengguna A masih `actingAs` saat data B dibuat → aktor audit A). Diperbaiki di fixture (`auth()->forgetGuards()`); catatan desain di "Sisa". Pencarian data acuan di tes dibatasi ke perusahaan demo. `Platform/QueryCountTest`: `TaskAudience` & `DispatchDueDailyDigests` konstan saat perusahaan lain bertambah karyawan.
+- `c94ebbeb` `SecondCompanyDemoSeeder` (bukan bagian `DatabaseSeeder`; local/testing): PT Contoh Mitra, `contoh.test`, Asia/Makassar, divisi DIR/LOG/KEU (KEU sengaja sama dengan SPKD), 24 karyawan, shift Reguler WITA + riwayat absensi, workspace divisi + proyek EGP 5 tugas, 2 izin menunggu (nomor `IZN-…-0001/0002`), pengumuman, 2 rapat. Akun demo `admin@`/`hr@`/`anggota@contoh.test` bersandi `password` hanya `APP_ENV=local` (`DemoAccounts::partner()`, tampil di /login setelah di-seed). `RequestSeeder::seedCompany()`.
+- `38d36d92` (review) `LocalTask::dueTarget()`: jendela kejar melewati tengah malam (snapshot 23.55 saat penjadwal mati 23.50–00.20 tetap ditulis sekali untuk tanggal kemarin), klaim & filter hari memakai waktu target, pekerjaan menerima waktu target.
+- `05e1695e` (review) `create-super-admin --new-company`: domain yang sudah dipakai perusahaan lain → pesan jelas; opsi `--domain=`.
+- `f2d62b3d` Temuan uji manual: label jam "WIB" tertanam padahal jam sudah WITA → `officeZoneLabel()` (web) / `OfficeTimezone::label()` (backend) di Absensi, batas sakit/izin, briefing, ringkasan harian, tugas berulang, tamu rapat, notifikasi & cari rapat.
+- `21ce2bf2` Temuan uji manual: pemilih akun demo menampilkan persona SPKD ke akun Contoh Mitra → hanya akun demo perusahaan sendiri (juga validasi `demo.switch`). `scripts/ui-shots.mjs --larang/--wajib`.
+- Uji manual (dev `ruangkerja_fase1`, `migrate` biasa + seeder, `npm run build`): `node scripts/ui-shots.mjs /dashboard /admin/karyawan /admin/audit /pengajuan /absensi /rapat /w/KEU /w/EGP|/w/PLQ` sebagai `admin@contoh.test` dan `admin@demo.test` dengan `--larang` nama orang/workspace/rapat perusahaan lain → tanpa temuan; `anggota@contoh.test` `/absensi /rapat /pengajuan` `--larang WIB` → jam & label WITA (rapat 10.00 WITA tampil 10.00 walau peramban WIB). Tangkapan: `storage/app/ui-shots/fase1-contoh/`, `fase1-spkd/`, `fase1-contoh-anggota/`.
+- Dokumen: `docs/ARCHITECTURE.md` (§3.9 dueTarget, §4 baris Perusahaan + §4.1 Konteks perusahaan, ADR #11), `AGENTS.md` (aturan multi-perusahaan; zona kantor perusahaan backend & frontend), `docs/PRD.md` §2 (keputusan pemilik 18 Okt 2026, non-goal SaaS diubah), `docs/DATABASE.md` (`scheduled_runs.local_date` = tanggal target), `docs/deploy/VPS-BERSAMA.md` §4a (urutan migrasi, hari pertama penjadwal, menambah perusahaan), `docs/CHANGELOG.md`.
+
+## Deploy (rilis Fase 1)
+1. Pastikan `config:cache` kontainer `app` memuat nilai produksi, lalu deploy biasa (`migrate --force` menjalankan berurutan `2026_10_23_210100` audit → `210200` nomor pengajuan → `210300` profil karyawan → `220200` scheduled_runs → `235100` salin integrasi env ke SPKD). Uji dulu pada salinan dump produksi (rollback ketiga migrasi data diuji di 2a).
+2. `php artisan company:list` → SPKD: grup WhatsApp & Shared Drive tanpa "(.env)", zona Asia/Jakarta; bila belum: `company:configure` (`docs/deploy/VPS-BERSAMA.md` §4a).
+3. Hari pertama penjadwal: tugas berjam lokal yang targetnya < 2 jam (tutup hari/delegasi < 12 jam) sebelum deploy bisa berjalan sekali lagi — semua idempoten.
+4. Perusahaan baru: `ruangkerja:create-super-admin … --new-company=… [--domain=…]` + `company:configure … --timezone=…`; jenis pengajuan & alur dibuat HR (seed otomatis hanya perusahaan tertua).
+
+## Sisa untuk Fase 2/3
+- **Fase 2:** satu akun banyak perusahaan & pemilih perusahaan; peran per perusahaan (spatie `teams`); `users.email`/`companies.google_domain` unik global (domain bersama); urutan perusahaan entri audit saat ini **pelaku → konteks → subjek** — dengan akun lintas perusahaan perlu subjek/konteks lebih dulu (tes `AuditIsolationTest` mengunci perilaku sekarang); generator injeksi id otomatis untuk semua rute tulis.
+- **Fase 3:** wizard & UI pengaturan per perusahaan (grup WA, Shared Drive, zona, branding, kebijakan privasi `/kebijakan-privasi` untuk tamu); seed jenis pengajuan/alur/shift bawaan untuk perusahaan baru (`RequestSeeder` hanya perusahaan tertua); flag fitur, gateway Evolution, service account/impersonasi Google, `GOOGLE_ALLOWED_DOMAIN` per perusahaan; hapus hardcode SPKD (`DashboardRole`, aturan "keputusan pemilik").
+- **Fase 7:** global scope otomatis + Row Level Security sebagai lapis kedua.
+- Kecil: berkas lama tidak dipindah ke `company/{id}/`; unggahan Drive sementara (`drive-uploads/…`) tanpa prefiks; `SecondCompanyDemoSeeder` saat dijalankan ulang menulis audit `shift.updated`/`user.updated` (nilai sama, kosmetik).
+
 ## Keputusan desain
 - **Tanpa global scope otomatis.** Konteks hanya informasi; isolasi tetap oleh `visibleTo()` + Policy (keputusan rencana). Konteks kosong (tamu, scheduler) = perilaku lama.
 - **Penangkapan perusahaan job:** `Queue::createPayloadUsing()` (TenancyServiceProvider) memanggil `captureCompany()` tepat sebelum job diserialisasi: konteks saat ini → properti model pertama ber-`company_id` → (notifikasi) penerimanya. Tidak perlu mengubah konstruktor job. Pemulihan lewat `middleware()` trait; kelas yang punya middleware sendiri menggabung `companyMiddleware()` (`SyncDrivePermissions`). Notifikasi: middleware ikut per kanal, termasuk pengiriman tertunda jam tenang. Mailable antre (`DesktopLinkMail`) belum ikut — tidak membaca konteks.
@@ -60,10 +82,9 @@ Fase 1 multi-perusahaan (rencana disetujui pemilik: `~/.claude/plans/shimmying-s
 - **Daftar celah di tes:** `knownRouteGaps()` / `knownListingGaps()` (entri yang sudah tertutup membuat tes gagal, jadi daftar ikut menyusut) dan skip bersyarat di `BackgroundLeakTest` (otomatis hijau saat celah ditutup).
 
 ## Langkah berikutnya
-1. Langkah 2a (data & otorisasi): C1 audit_logs.company_id, C5 hari libur per perusahaan, + butir rencana #2–#8, #10, #11; hapus entri `knownListingGaps()` dan skip C5.
-2. ~~Langkah 2b (zona waktu & scheduler per perusahaan)~~ selesai (lihat seksi Langkah 2b).
-3. ~~Langkah 2c (integrasi)~~ selesai (lihat seksi Langkah 2c).
-4. Langkah 3: `PerformanceFixtures::grow()` dua perusahaan, ADR & dokumen.
+1. Integrator: tinjau & gabungkan PR "Fase 1" (berbasis PR #16), gabungkan juga `docs/ROADMAP-MULTI-PERUSAHAAN.md` dari branch `claude/roadmap-multi-perusahaan`.
+2. Deploy sesuai seksi "Deploy" (diuji pada salinan dump produksi dulu).
+3. Fase 2 (lihat "Sisa").
 
 ## Verifikasi
-`TENANCY_DEBUG=1 vendor/bin/pest tests/Feature/Tenancy` (ringkasan jumlah) · composer test · composer lint
+`TENANCY_DEBUG=1 vendor/bin/pest tests/Feature/Tenancy` (ringkasan jumlah) · `QUERY_COUNTS=1 vendor/bin/pest tests/Feature/Performance/PageQueryCountTest.php` · composer test · composer lint · `php artisan db:seed --class=SecondCompanyDemoSeeder` lalu `E2E_BASE_URL=https://ruangkerja-fase1.test node scripts/ui-shots.mjs /dashboard --akun admin@contoh.test --larang "Dimas Pratama"`

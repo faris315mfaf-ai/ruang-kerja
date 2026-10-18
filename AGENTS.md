@@ -31,7 +31,7 @@ PHP 8.4 · Laravel 13 · PostgreSQL 17 · Redis · Inertia.js 3 · React 19 + Ty
 **Backend**
 - Logika bisnis di `app/Domain/<Modul>/Actions/*` (satu kelas, satu metode publik `handle()`/`__invoke()`). Controller tipis: FormRequest → `$this->authorize()`/Policy → Action → respons Inertia.
 - Setiap model punya Policy. **Tidak ada endpoint tanpa otorisasi.** Data list selalu melewati scope visibilitas (`visibleTo($user)`).
-- PK ULID (`HasUlids`). Waktu disimpan UTC. Konversi ke `config('app.office_timezone')` hanya saat tampil/menghitung `work_date`.
+- PK ULID (`HasUlids`). Waktu disimpan UTC. Konversi ke **zona kantor perusahaan** hanya saat tampil/menghitung `work_date`: `CurrentCompany::timezone()` atau helper (`OfficeTime`, `OfficeClock`, `ProjectClock`, `Period`, …), label zona `OfficeTimezone::label()`. Jangan membaca `config('app.office_timezone')` langsung (hanya cadangan tanpa perusahaan).
 - Enum = PHP backed enum di `app/Domain/<Modul>/Enums`. Label Indonesia lewat metode `label()`.
 - Operasi multi-tabel di dalam `DB::transaction()`. Penomoran (task, pengajuan) memakai row lock.
 - Panggilan Google API **selalu** di job antrean dengan retry/backoff, tidak pernah di request HTTP sinkron, kecuali membuat dokumen baru (boleh sinkron dengan timeout 10 detik).
@@ -39,12 +39,18 @@ PHP 8.4 · Laravel 13 · PostgreSQL 17 · Redis · Inertia.js 3 · React 19 + Ty
 - Aksi sensitif (koreksi absensi, keputusan approval, lihat selfie, ubah peran) ditulis ke `audit_logs`.
 - Jangan pernah log token, selfie, NIK, atau isi `.env`.
 
+**Multi-perusahaan** (keputusan pemilik 18 Okt 2026; `docs/ARCHITECTURE.md` §4.1, ADR #11) — satu database, isolasi manual:
+- Tabel baru wajib diklasifikasikan di `config/tenancy.php` (`company`/`via`/`user`/`morph`/`global`); `TenancyRegistryTest` menolak tabel tanpa klasifikasi.
+- Setiap `visibleTo()`, Policy, query daftar/ekspor, dan validasi `exists`/`Rule::exists` baru wajib membatasi ke perusahaan pelaku (langsung `company_id` atau lewat induk). Jangan pernah mengambil "perusahaan pertama".
+- Tes yang menyentuh data lintas modul memakai `homeWorld()`/`foreignWorld()` (`tests/Support/tenancy-helpers.php`) dan memastikan penanda perusahaan B tidak bocor.
+- Job/notifikasi baru memakai `CompanyAware` (job unik: `uniqueId()` = `companyUniqueId()`); penjadwalan harian berjam lokal lewat `CompanySchedule`/`LocalTask` di `routes/console.php`, pekerjaan per-instan lewat `ForEachCompany`.
+
 **Frontend**
 - Halaman di `resources/js/pages`, komponen per modul di `resources/js/features/<modul>`.
 - Gunakan komponen shadcn/ui yang sudah ada sebelum membuat baru. Warna **hanya** dari token CSS (`var(--primary)`, kelas Tailwind yang dipetakan ke token). Tidak ada hex hard-coded di komponen.
 - Glassmorphism (`.glass` / `.glass-strong`) hanya untuk menu bar, Dock, Rail, tab bar, command palette, popover, modal, sheet, toast. Sistem desain = **Arus** (`docs/DESIGN.md`, panduan agent modul `docs/design/ARUS-GUIDE.md`, contoh hidup `/dev/komponen`).
 - Semua teks UI **Bahasa Indonesia** (lihat `docs/DESIGN.md` §8). Kode, nama variabel, dan komentar dalam bahasa Inggris.
-- Format tanggal/jam/angka lewat helper `resources/js/lib/format.ts` (locale `id-ID`, zona `Asia/Jakarta`).
+- Format tanggal/jam/angka lewat helper `resources/js/lib/format.ts` (locale `id-ID`, zona kantor perusahaan dari shared prop `officeTimezone`: `officeTimezone()`, `officeZoneLabel()` untuk WIB/WITA/WIT; bawaan `Asia/Jakarta`). Jangan menulis "WIB" atau `Asia/Jakarta` langsung di komponen.
 - Setiap halaman wajib menangani: loading (skeleton), kosong (empty state), galat, dan mode gelap.
 - Setiap halaman dibangun untuk **dua shell**: `DesktopLayout` (≥ 1024px MenuBar + Dock; tablet 768–1023 memakai Rail 96px) dan `MobileLayout` (< 768px: app bar + tab bawah). Bila tata letak berbeda jauh, buat `*.desktop.tsx` dan `*.mobile.tsx` yang berbagi hook data yang sama. Ikuti matriks fitur di `docs/PLATFORM.md` §3; fitur yang dibatasi di mobile menampilkan versi baca-saja atau banner "Tersedia di desktop", bukan tata letak desktop yang terpotong.
 - Aksesibilitas: label pada input, fokus terlihat, bisa dioperasikan keyboard.
