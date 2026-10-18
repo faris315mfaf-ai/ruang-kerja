@@ -36,8 +36,10 @@ return new class extends Migration
             $table->unique(['company_id', 'number']);
         });
 
+        // The global unique key goes first: rebuilt counters repeat a key per company.
         Schema::table('request_sequences', function (Blueprint $table) {
             $table->foreignUlid('company_id')->nullable()->after('id')->constrained()->cascadeOnDelete();
+            $table->dropUnique(['key']);
         });
 
         $companies = DB::table('companies')->pluck('id');
@@ -51,7 +53,6 @@ return new class extends Migration
         DB::statement('ALTER TABLE request_sequences ALTER COLUMN company_id SET NOT NULL');
 
         Schema::table('request_sequences', function (Blueprint $table) {
-            $table->dropUnique(['key']);
             $table->unique(['company_id', 'key']);
         });
     }
