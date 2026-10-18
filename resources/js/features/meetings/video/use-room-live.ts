@@ -28,6 +28,8 @@ type Handlers = {
     onReadmitted: (userId: string) => void;
     onAttendance: (roster: AttendanceRoster) => void;
     onSpeaking: (totals: SpeakingTotals) => void;
+    /** `lobby.updated`: the waiting room changed (guests asking to join). */
+    onLobby?: () => void;
 };
 
 /**
@@ -193,6 +195,10 @@ export function useRoomLive({
                         .listen(
                             '.participant.called',
                             mine(() => loadAttendance(0)),
+                        )
+                        .listen(
+                            '.lobby.updated',
+                            mine(() => latest.current.onLobby?.()),
                         )
                         .listen(
                             '.speaking.updated',

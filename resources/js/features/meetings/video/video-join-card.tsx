@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Panel } from '@/components/ui/panel';
 import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { stripGuestSuffix } from '../guests/lib';
 import { personById } from '../lib';
 import { useMeetingsContext } from '../meetings-context';
 import type { Meeting } from '../types';
@@ -182,7 +183,9 @@ export function VideoAttendancePanel({
 }) {
     const { people, me } = useMeetingsContext();
 
-    if (!video || video.attendance.length === 0) {
+    const guests = video?.guests ?? [];
+
+    if (!video || (video.attendance.length === 0 && guests.length === 0)) {
         return null;
     }
 
@@ -193,6 +196,7 @@ export function VideoAttendancePanel({
             action={
                 <span className="text-[15px] font-bold text-link">
                     {video.attendance.length} orang
+                    {guests.length > 0 && ` + ${guests.length} tamu`}
                 </span>
             }
         >
@@ -242,6 +246,49 @@ export function VideoAttendancePanel({
                     );
                 })}
             </ul>
+            {guests.length > 0 && (
+                <ul
+                    aria-label="Tamu di rapat video"
+                    className="flex flex-col divide-y divide-divider border-t border-border"
+                >
+                    {guests.map((guest) => (
+                        <li
+                            key={guest.participant_id}
+                            className="flex min-h-14 items-center gap-3 py-2"
+                        >
+                            <UserAvatar
+                                name={stripGuestSuffix(guest.name) || 'Tamu'}
+                                className="size-9 text-[14px]"
+                            />
+                            <span className="flex min-w-0 flex-1 flex-col">
+                                <span className="flex min-w-0 items-center gap-1.5">
+                                    <span className="truncate text-[15px] font-semibold">
+                                        {stripGuestSuffix(guest.name) || 'Tamu'}
+                                    </span>
+                                    <Badge
+                                        variant="label"
+                                        className="h-5 rounded-full px-1.5 text-[11px]"
+                                    >
+                                        Tamu
+                                    </Badge>
+                                </span>
+                                <span className="text-[14px] text-text-muted tnum">
+                                    {formatTime(guest.joined_at)}
+                                    {guest.left_at
+                                        ? `–${formatTime(guest.left_at)}`
+                                        : ''}{' '}
+                                    · {durationShort(guest.duration_seconds)}
+                                </span>
+                            </span>
+                            {guest.in_room && (
+                                <Badge variant="status" tone="success" dot>
+                                    Di ruang
+                                </Badge>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            )}
         </Panel>
     );
 }

@@ -703,6 +703,9 @@ export interface MeetingParticipantRow {
   nama: string | null;
   rsvp: RsvpValue;
   optional: boolean;
+  /** Baris tamu eksternal, hanya untuk penyelenggara (`can.manage_guests`): id peserta & nama yang diketik. Tidak ada bagi yang lain. */
+  guest_id?: string;
+  guest_name?: string | null;
 }
 
 /** Detail satu kemunculan (MeetingSummary::detail). */
@@ -723,13 +726,23 @@ export interface MeetingVideoRoom {
   join_href: string;
   opens_at: string;
   closes_at: string;
+  /** Penonton = penyelenggara (server lama: tidak ada). */
+  is_organizer?: boolean;
   can_join: boolean;
   denied_reason: string | null;
 }
 
 export interface MeetingDetailResponse {
   meeting: MeetingDetailData;
-  can: { rsvp: boolean; edit: boolean; join_video: boolean };
+  can: {
+    rsvp: boolean;
+    edit: boolean;
+    join_video: boolean;
+    /** Daftar tamu + tautan (penyelenggara video). Server lama: tidak ada → turunkan dari peran. */
+    manage_guests?: boolean;
+    /** Ruang tunggu (semua yang diundang). Server lama: tidak ada → turunkan dari peran. */
+    manage_lobby?: boolean;
+  };
   video: MeetingVideoRoom | null;
 }
 

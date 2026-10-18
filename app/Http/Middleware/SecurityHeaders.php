@@ -26,11 +26,12 @@ class SecurityHeaders
 
         $headers->set('X-Content-Type-Options', 'nosniff');
         $headers->set('X-Frame-Options', 'DENY');
-        $headers->set('Referrer-Policy', (string) config('security.referrer_policy'));
+        // The guest page carries a secret link: never sent on as a referrer.
+        $headers->set('Referrer-Policy', $request->routeIs('meetings.guest.page') ? 'no-referrer' : (string) config('security.referrer_policy'));
         // Audit R-14: the grants are per document — the video pages get the
         // microphone/screen capture, every other document denies them.
         $headers->set('Permissions-Policy', (string) config(
-            $request->routeIs('meetings.video.join', 'meetings.video.room')
+            $request->routeIs('meetings.video.join', 'meetings.video.room', 'meetings.guest.page')
                 ? 'security.permissions_policy_meetings'
                 : 'security.permissions_policy',
         ));

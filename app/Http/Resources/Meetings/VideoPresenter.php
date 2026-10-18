@@ -54,8 +54,8 @@ final class VideoPresenter
     /**
      * Kehadiran panel (GET /rapat/{id}/video/kehadiran and the `video` prop).
      *
-     * @param  array{attendance: list<array<string, mixed>>, not_joined: list<array{user_id: string, rsvp: string, optional: bool}>, in_room: int}  $roster
-     * @return array{attendance: list<array<string, mixed>>, in_room: int, not_joined: list<array<string, mixed>>, late_grace_minutes: int, removed: list<array<string, mixed>>}
+     * @param  array{attendance: list<array<string, mixed>>, not_joined: list<array{user_id: string, rsvp: string, optional: bool}>, in_room: int, guests?: list<array<string, mixed>>}  $roster
+     * @return array{attendance: list<array<string, mixed>>, in_room: int, not_joined: list<array<string, mixed>>, guests: list<array<string, mixed>>, late_grace_minutes: int, removed: list<array<string, mixed>>}
      */
     public function attendance(Occurrence $occurrence, array $roster): array
     {
@@ -68,6 +68,8 @@ final class VideoPresenter
                 ...$person,
                 'called_at' => $called[$person['user_id']] ?? null,
             ], $roster['not_joined']),
+            // External guests who were in the room, label "Tamu" (docs/sesi/rapat-tamu-eksternal.md §6).
+            'guests' => $roster['guests'] ?? [],
             'late_grace_minutes' => VideoAttendance::LATE_GRACE_MINUTES,
             // Removed by the organizer: no new token until "Izinkan masuk lagi" (audit R-04).
             'removed' => array_values(MeetingVideoRemoval::query()

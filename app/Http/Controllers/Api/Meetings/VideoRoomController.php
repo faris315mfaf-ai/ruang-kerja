@@ -11,6 +11,9 @@ use App\Domain\Meetings\Actions\ReportSpeakingTime;
 use App\Domain\Meetings\Actions\SetOwnAttributes;
 use App\Domain\Meetings\Actions\SetRaisedHand;
 use App\Domain\Meetings\Data\Occurrence;
+use App\Domain\Meetings\Guests\Actions\DecideGuestAdmission;
+use App\Domain\Meetings\Guests\Actions\IssueGuestVideoToken;
+use App\Domain\Meetings\Guests\GuestAccessException;
 use App\Domain\Meetings\Queries\MeetingFeed;
 use App\Domain\Meetings\Queries\SpeakingTimes;
 use App\Domain\Meetings\Queries\VideoAttendance;
@@ -26,6 +29,7 @@ use App\Http\Requests\Meetings\ReportSpeakingTimeRequest;
 use App\Http\Resources\Meetings\RoomPresenter;
 use App\Http\Resources\Meetings\VideoPresenter;
 use App\Models\Meeting;
+use App\Models\MeetingParticipant;
 use App\Models\MeetingVideoRemoval;
 use App\Models\User;
 use App\Policies\MeetingPolicy;
@@ -103,6 +107,8 @@ class VideoRoomController extends Controller
             'role' => $role,
             'can' => [
                 'moderate' => $policy->moderateVideo($user, $meeting)->allowed(),
+                'manage_guests' => $policy->manageGuests($user, $meeting)->allowed(),
+                'manage_lobby' => $policy->manageLobby($user, $meeting)->allowed(),
                 'call_participants' => $policy->callParticipant($user, $meeting)->allowed(),
                 'edit_minutes' => $policy->canWriteMinutes($user, $meeting),
             ],
@@ -122,9 +128,24 @@ class VideoRoomController extends Controller
     }
 
     /** "Izinkan masuk lagi" after a removal (organizer, audit R-04). */
-    public function readmit(VideoModerationApiRequest $request, Meeting $meeting, #[CurrentUser] User $user, ReadmitVideoParticipant $readmit): JsonResponse
+    public function readmit(VideoModerationApiRequest $request, Meeting $meeting, #[CurrentUser] User $user, ReadmitVideoParticipant $readmit, DecideGuestAdmission $decide): JsonResponse
     {
         Gate::authorize('moderateVideo', $meeting);
+
+        // A removed external guest comes back through the waiting room decision.
+        $guestId = IssueGuestVideoToken::participantId($request->userId());
+
+        if ($guestId !== null) {
+            $guest = MeetingParticipant::query()->whereKey($guestId)->where('meeting_id', $meeting->id)->whereNull('user_id')->firstOrFail();
+
+            try {
+                $decide->handle($user, $meeting, $guest, true);
+            } catch (GuestAccessException $exception) {
+                return response()->json(['message' => $exception->getMessage(), 'code' => $exception->reason], $exception->status);
+            }
+
+            return response()->json(['readmitted' => true]);
+        }
 
         return response()->json(['readmitted' => $readmit->handle($user, $this->occurrence($request, $meeting), $request->userId())]);
     }

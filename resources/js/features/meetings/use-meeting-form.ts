@@ -15,6 +15,7 @@ import {
     parseClock,
     validateMeetingForm,
 } from './lib';
+import { validateOptionalGuestName } from './guests/lib';
 import { useNow } from './meetings-context';
 import type { Conflict, MeetingFormProps } from './types';
 
@@ -46,10 +47,11 @@ function blank(
         workspace,
         leadership: false,
         autoMinutes: false,
+        guestNames: {},
     };
 }
 
-function fromMeeting(
+export function fromMeeting(
     props: MeetingFormProps,
     me: string,
 ): MeetingFormValues | null {
@@ -78,6 +80,8 @@ function fromMeeting(
         workspace: meeting.workspace_id ?? 'none',
         leadership: meeting.leadership,
         autoMinutes: meeting.auto_minutes ?? false,
+        // Stored guest names prefill the "Nama tamu" fields (older server: none).
+        guestNames: { ...meeting.guest_names },
     };
 }
 
@@ -133,10 +137,19 @@ export function useMeetingForm(props: MeetingFormProps) {
         setServerErrors({});
     };
 
-    const errors: MeetingFormErrors = useMemo(
-        () => validateMeetingForm(values, now, me, editing),
-        [values, now, me, editing],
-    );
+    const errors: MeetingFormErrors = useMemo(() => {
+        const found = validateMeetingForm(values, now, me, editing);
+        const nameProblem = Object.entries(values.guestNames)
+            .filter(([email]) => values.participants.includes(email))
+            .map(([, name]) => validateOptionalGuestName(name))
+            .find((problem) => problem !== null);
+
+        if (nameProblem && !found.participants) {
+            found.participants = nameProblem;
+        }
+
+        return found;
+    }, [values, now, me, editing]);
     const visibleErrors: MeetingFormErrors = submitted
         ? { ...errors, ...serverErrors }
         : serverErrors;
@@ -211,6 +224,9 @@ export function useMeetingForm(props: MeetingFormProps) {
         set('participants', [...values.participants, value]);
     };
 
+    const setGuestName = (email: string, name: string) =>
+        set('guestNames', { ...values.guestNames, [email]: name });
+
     const removeParticipant = (idOrEmail: string) => {
         if (idOrEmail === me) {
             return;
@@ -218,6 +234,11 @@ export function useMeetingForm(props: MeetingFormProps) {
 
         setValues((current) => ({
             ...current,
+            guestNames: Object.fromEntries(
+                Object.entries(current.guestNames).filter(
+                    ([email]) => email !== idOrEmail,
+                ),
+            ),
             participants: current.participants.filter(
                 (item) => item !== idOrEmail,
             ),
@@ -259,6 +280,15 @@ export function useMeetingForm(props: MeetingFormProps) {
                 : null,
         participant_ids: values.participants.filter((id) => !isEmail(id)),
         guest_emails: values.participants.filter(isEmail),
+        // Only typed names go out: an empty field must not erase a stored name.
+        guest_names: Object.fromEntries(
+            Object.entries(values.guestNames)
+                .map(([email, name]) => [email, name.trim()] as const)
+                .filter(
+                    ([email, name]) =>
+                        name !== '' && values.participants.includes(email),
+                ),
+        ),
         agenda: values.agenda,
         recurrence: values.recurrence,
         recurrence_until:
@@ -336,6 +366,7 @@ export function useMeetingForm(props: MeetingFormProps) {
         applySuggestion: () => suggestion && set('start', suggestion),
         addParticipant,
         removeParticipant,
+        setGuestName,
         internalPeople: props.people.filter((person) =>
             internal.includes(person.id),
         ),

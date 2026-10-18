@@ -64,6 +64,8 @@ final class MeetingSummary
     public static function detail(Occurrence $occurrence, ?MeetingMinutes $minutes, User $viewer, MeetingPolicy $policy, array $names, string $today): array
     {
         $meeting = $occurrence->meeting;
+        // Guest ids and names only for who manages guests (organizer of a video meeting).
+        $withGuests = $policy->manageGuests($viewer, $meeting)->allowed();
 
         return [
             ...self::agenda($occurrence, $minutes, $viewer, $policy, $names, $today),
@@ -83,6 +85,9 @@ final class MeetingSummary
                     'nama' => $participant->user_id !== null ? ($names[$participant->user_id] ?? null) : null,
                     'rsvp' => $participant->rsvp->value,
                     'optional' => $participant->optional,
+                    ...($withGuests && $participant->user_id === null
+                        ? ['guest_id' => $participant->id, 'guest_name' => $participant->guest_name]
+                        : []),
                 ])
                 ->values()
                 ->all(),

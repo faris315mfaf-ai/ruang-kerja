@@ -74,6 +74,9 @@ final class RoomPresenter
             'edit_minutes' => $canEdit,
             'choose_notes_source' => $canWrite && $minutes?->notes_source === null,
             'moderate' => $this->policy->moderateVideo($viewer, $meeting)->allowed(),
+            // External guests: guest list with links = organizer; waiting room = everyone invited.
+            'manage_guests' => $this->policy->manageGuests($viewer, $meeting)->allowed(),
+            'manage_lobby' => $this->policy->manageLobby($viewer, $meeting)->allowed(),
             'call_participants' => $this->policy->callParticipant($viewer, $meeting)->allowed(),
             'report_speaking' => $this->policy->joinVideo($viewer, $meeting, $occurrence, $now)->allowed(),
         ];

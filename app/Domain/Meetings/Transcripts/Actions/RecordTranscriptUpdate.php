@@ -3,6 +3,7 @@
 namespace App\Domain\Meetings\Transcripts\Actions;
 
 use App\Domain\Meetings\Enums\MeetingPlatform;
+use App\Domain\Meetings\Guests\Actions\IssueGuestVideoToken;
 use App\Domain\Meetings\Services\MeetingOccurrences;
 use App\Domain\Meetings\Services\VideoRooms;
 use App\Domain\Meetings\Transcripts\Enums\DraftStatus;
@@ -21,8 +22,8 @@ use Throwable;
  * A verified message from the transcriber worker (POST /api/notulen/transcript):
  *
  * - `recording` / `transcribing` → the occurrence's transcript row shows it;
- * - `ready` → segments are cleaned, people who opted out are dropped
- *   (second line of defence after the worker), offsets are rebased onto the
+ * - `ready` → segments are cleaned, people who opted out and external guests
+ *   (`guest:*`, never recorded) are dropped (second line of defence after the worker), offsets are rebased onto the
  *   transcript's first start (a room may be recorded in several sessions),
  *   then merged by time; the AI draft is queued (or `disabled` without an
  *   API key). A session id is merged only once (worker retries are safe).
@@ -196,7 +197,9 @@ final class RecordTranscriptUpdate
             $identity = is_string($segment['speaker_identity'] ?? null) ? mb_substr($segment['speaker_identity'], 0, 64) : '';
             $userId = isset($names[$identity]) ? $identity : null;
 
-            if ($identity === '' || isset($optedOut[$identity])) {
+            // External guests (identity `guest:*`) never consented to a transcript: dropped
+            // here as a second line of defence after the worker, which never records them.
+            if ($identity === '' || isset($optedOut[$identity]) || str_starts_with($identity, IssueGuestVideoToken::IDENTITY_PREFIX)) {
                 continue;
             }
 

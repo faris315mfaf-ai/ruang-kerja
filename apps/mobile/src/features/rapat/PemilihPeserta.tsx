@@ -10,7 +10,7 @@ import { SheetInput } from '@/features/tugas/Pilihan';
 import { useTheme } from '@/theme';
 import { Avatar, BottomSheet, Button, Checkbox, Icon, Pressable, Text } from '@/ui';
 
-const POLA_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { namaTampilTamu, validasiTamu } from './tamu';
 
 export function PemilihPeserta({
   visible,
@@ -18,6 +18,8 @@ export function PemilihPeserta({
   awal,
   terpilih,
   tamu,
+  namaTamu,
+  batasTamu,
   kecuali,
   onUbah,
 }: {
@@ -27,12 +29,17 @@ export function PemilihPeserta({
   awal: Orang[];
   terpilih: string[];
   tamu: string[];
+  /** Nama tamu per email (huruf kecil). */
+  namaTamu: Record<string, string>;
+  batasTamu: number;
   /** Id yang tidak ditampilkan (penyelenggara sendiri). */
   kecuali: string | null;
-  onUbah: (ids: string[], tamu: string[], kenal: Orang[]) => void;
+  /** `nama` hanya diisi bila daftar tamu atau namanya berubah. */
+  onUbah: (ids: string[], tamu: string[], kenal: Orang[], nama?: Record<string, string>) => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const [kata, setKata] = useState('');
+  const [namaBaru, setNamaBaru] = useState('');
   const [hasil, setHasil] = useState<Orang[] | null>(null);
   const [memuat, setMemuat] = useState(false);
 
@@ -53,7 +60,9 @@ export function PemilihPeserta({
 
   const daftar = (kata.trim() === '' ? awal : (hasil ?? [])).filter((o) => o.id !== kecuali).slice(0, 50);
   const email = kata.trim().toLowerCase();
-  const bisaTamu = POLA_EMAIL.test(email) && !tamu.includes(email) && !daftar.some((o) => (o as Orang & { email?: string }).email === email);
+  const cek = validasiTamu(email, namaBaru, tamu.length);
+  const bisaTamu = cek.galatEmail === null && !tamu.includes(email) && !daftar.some((o) => (o as Orang & { email?: string }).email === email);
+  const penuh = tamu.length >= batasTamu;
 
   function alihkan(o: Orang): void {
     const ada = terpilih.includes(o.id);
@@ -70,35 +79,60 @@ export function PemilihPeserta({
       </View>
       <SheetInput value={kata} onChangeText={setKata} placeholder="Cari nama atau ketik email…" autoCapitalize="none" autoCorrect={false} accessibilityLabel="Cari peserta" />
       {bisaTamu ? (
-        <Pressable
-          onPress={() => {
-            onUbah(terpilih, [...tamu, email], []);
-            setKata('');
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={`Tambah tamu ${email}`}
-          style={s.baris}
-        >
-          <View style={[s.ikonTamu, { backgroundColor: colors.surface2 }]}>
-            <Icon name="mail" size={20} color={colors.muted} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text variant="label">{email}</Text>
-            <Text variant="meta">Tamu eksternal · undangan email ditahan</Text>
-          </View>
-          <Icon name="plus" size={20} color={colors.link} />
-        </Pressable>
+        <>
+          <SheetInput value={namaBaru} onChangeText={setNamaBaru} placeholder="Nama tamu (opsional)" autoCapitalize="words" maxLength={60} invalid={cek.galatNama !== null} accessibilityLabel="Nama tamu (opsional)" />
+          {cek.galatNama ? (
+            <Text variant="meta" tone="danger" accessibilityRole="alert">
+              {cek.galatNama}
+            </Text>
+          ) : null}
+          <Pressable
+            onPress={() => {
+              if (!cek.valid) {
+                return;
+              }
+              onUbah(terpilih, [...tamu, cek.email], [], cek.nama ? { ...namaTamu, [cek.email]: cek.nama } : namaTamu);
+              setKata('');
+              setNamaBaru('');
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={`Tambah tamu ${email}`}
+            accessibilityState={{ disabled: !cek.valid }}
+            style={[s.baris, { opacity: cek.valid ? 1 : 0.5 }]}
+          >
+            <View style={[s.ikonTamu, { backgroundColor: colors.surface2 }]}>
+              <Icon name="mail" size={20} color={colors.muted} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text variant="label">{cek.nama ? `${cek.nama} · ${email}` : email}</Text>
+              <Text variant="meta">Tamu eksternal · masuk lewat tautan pribadi</Text>
+            </View>
+            <Icon name="plus" size={20} color={colors.link} />
+          </Pressable>
+        </>
       ) : null}
+      {penuh && kata.includes('@') ? <Text variant="meta" tone="warning">{`Maksimal ${batasTamu} tamu per rapat.`}</Text> : null}
       {tamu.map((t) => (
         <View key={t} style={s.baris}>
           <View style={[s.ikonTamu, { backgroundColor: colors.surface2 }]}>
             <Icon name="mail" size={20} color={colors.muted} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text variant="label">{t}</Text>
-            <Text variant="meta">Tamu eksternal · undangan email ditahan</Text>
+            <Text variant="label" numberOfLines={1}>
+              {namaTampilTamu({ name: namaTamu[t] ?? null, email: t })}
+            </Text>
+            <Text variant="meta" numberOfLines={1}>
+              {namaTamu[t] ? `${t} · tamu eksternal` : 'Tamu eksternal · masuk lewat tautan pribadi'}
+            </Text>
           </View>
-          <Checkbox checked onChange={() => onUbah(terpilih, tamu.filter((x) => x !== t), [])} label={`Hapus tamu ${t}`} />
+          <Checkbox
+            checked
+            onChange={() => {
+              const { [t]: _hapus, ...sisa } = namaTamu;
+              onUbah(terpilih, tamu.filter((x) => x !== t), [], sisa);
+            }}
+            label={`Hapus tamu ${t}`}
+          />
         </View>
       ))}
       {memuat ? <Text variant="meta">Mencari…</Text> : null}
@@ -115,7 +149,7 @@ export function PemilihPeserta({
           <Checkbox checked={terpilih.includes(o.id)} onChange={() => alihkan(o)} label={o.name} />
         </Pressable>
       ))}
-      <Text variant="meta">Ketik alamat email untuk menambah tamu. Tamu tidak melihat isi aplikasi.</Text>
+      <Text variant="meta">Ketik alamat email untuk menambah tamu eksternal. Tamu masuk lewat tautan pribadi yang Anda bagikan sendiri dan tidak melihat isi aplikasi.</Text>
     </BottomSheet>
   );
 }

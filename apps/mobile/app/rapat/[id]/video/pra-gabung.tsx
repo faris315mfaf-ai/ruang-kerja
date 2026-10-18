@@ -16,8 +16,11 @@ import { StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { aturOptOutTranskrip, ruangVideo, tokenVideo, type KodeTolakVideo, type RuangVideoResponse } from '@/api/video';
+import { bolehRuangTunggu, teksTamuBaru } from '@/features/rapat/tamu';
+import { useRuangTunggu } from '@/features/rapat/useRuangTunggu';
 import { useIzinVideo } from '@/features/video/izin';
 import { KeadaanLayar } from '@/features/video/KeadaanLayar';
+import { SheetRuangTunggu } from '@/features/video/SheetRuangTunggu';
 import { ambilPilihan, LABEL_KELUARAN, labelKeluaran, simpanPilihan, simpanToken, type PilihanPerangkat } from '@/features/video/sesi';
 import { hitungMundur, kodeTolak, rentangRapat } from '@/features/video/teks';
 import { jam, tanggalTanpaTahun } from '@/lib/format';
@@ -187,6 +190,10 @@ export default function PraGabung(): React.JSX.Element {
   const ditolak = (izin.kamera === 'ditolak' || izin.kamera === 'permanen') && (izin.mikrofon === 'ditolak' || izin.mikrofon === 'permanen');
   const sebagianDitolak = !ditolak && (izin.kamera === 'ditolak' || izin.kamera === 'permanen' || izin.mikrofon === 'ditolak' || izin.mikrofon === 'permanen');
   const permanen = izin.kamera === 'permanen' || izin.mikrofon === 'permanen';
+
+  // Tamu eksternal yang sudah menunggu: yang berwenang bisa mengizinkan sebelum masuk ruang (polling hanya saat siap & fokus).
+  const ruangTunggu = useRuangTunggu(id, tanggal, { aktif: status.kind === 'siap' && fokus && bolehRuangTunggu(data?.room.can?.manage_lobby) });
+  const [lembarTamu, setLembarTamu] = useState(false);
 
   // ── Pratinjau kamera (track lokal; dihentikan saat layar tidak fokus) ──
   const mauPratinjau = status.kind === 'siap' && fokus && kameraBoleh && pilihan.kamera;
@@ -430,6 +437,17 @@ export default function PraGabung(): React.JSX.Element {
         />
       ) : null}
 
+      {ruangTunggu.berwenang && ruangTunggu.jumlah > 0 ? (
+        <Banner
+          tone="warn"
+          icon="user-plus"
+          title={`Menunggu masuk (${ruangTunggu.jumlah})`}
+          message={`${teksTamuBaru(ruangTunggu.menunggu.map((m) => m.name ?? m.email))}. Izinkan atau tolak dari sini.`}
+          actionLabel="Lihat"
+          onAction={() => setLembarTamu(true)}
+        />
+      ) : null}
+
       {notulen?.auto_minutes ? (
         <Card>
           <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
@@ -482,6 +500,8 @@ export default function PraGabung(): React.JSX.Element {
           ))}
         </View>
       ) : null}
+
+      <SheetRuangTunggu visible={lembarTamu} onClose={() => setLembarTamu(false)} ruang={ruangTunggu} />
 
       <BottomSheet visible={lembar} onClose={() => setLembar(false)} title="Mikrofon & kamera" showClose scrollable>
         <Text variant="overline" tone="muted">

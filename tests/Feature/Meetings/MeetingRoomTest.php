@@ -149,6 +149,8 @@ describe('room props', function () {
                     'edit_minutes' => true,
                     'choose_notes_source' => true,
                     'moderate' => false,
+                    'manage_guests' => false,
+                    'manage_lobby' => true,
                     'call_participants' => true,
                     'report_speaking' => true,
                 ])

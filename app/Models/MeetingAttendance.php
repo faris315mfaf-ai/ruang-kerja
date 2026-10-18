@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $meeting_id
  * @property CarbonImmutable $occurrence_date
  * @property string|null $user_id
+ * @property string|null $participant_id
+ * @property string|null $guest_name
  * @property string $room
  * @property string $participant_sid
  * @property CarbonImmutable $joined_at
@@ -28,7 +30,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Meeting $meeting
  * @property-read User|null $user
  */
-#[Fillable(['meeting_id', 'occurrence_date', 'user_id', 'room', 'participant_sid', 'joined_at', 'left_at', 'duration_seconds'])]
+#[Fillable(['meeting_id', 'occurrence_date', 'user_id', 'participant_id', 'guest_name', 'room', 'participant_sid', 'joined_at', 'left_at', 'duration_seconds'])]
 class MeetingAttendance extends Model
 {
     use HasUlids;

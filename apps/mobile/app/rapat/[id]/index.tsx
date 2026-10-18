@@ -16,8 +16,10 @@ import { detailRapat, rsvpRapat } from '@/api/endpoints';
 import { batalkanRapat, kehadiranVideo, statusNotulenOtomatis, type KehadiranVideo, type RingkasanNotulenOtomatis } from '@/api/rapat';
 import type { MeetingDetailResponse, RsvpValue } from '@/api/types';
 import { KartuNotulenOtomatis } from '@/features/rapat/KartuNotulenOtomatis';
+import { KartuTamu } from '@/features/rapat/KartuTamu';
 import { BarisOrang, LencanaPlatform, NomorAgenda } from '@/features/rapat/komponen';
 import { bukaNotulen, bukaTautan, bukaTranskrip, useBukaPraGabung } from '@/features/rapat/navigasi';
+import { jumlahTamuDariPeserta, kemampuanTamu, pastikanAkhiranTamu } from '@/features/rapat/tamu';
 import { useMuat } from '@/features/rapat/useMuat';
 import { faseRapat, hariPanjang, hariSingkat, kemunculanSeri, labelBerulang, labelPengingat, lencanaSeri, rentangJam, teksSelang } from '@/features/rapat/util';
 import { jam, ymdHariIni } from '@/lib/format';
@@ -85,9 +87,11 @@ export default function LayarDetailRapat(): React.JSX.Element {
   const { user } = useSession();
   const viewerId = user?.id ?? null;
   const sekarang = useSekarang();
-  const param = useLocalSearchParams<{ id: string; tanggal?: string }>();
+  const param = useLocalSearchParams<{ id: string; tanggal?: string; tamu?: string }>();
   const id = typeof param.id === 'string' ? param.id : '';
   const tanggalParam = typeof param.tanggal === 'string' && param.tanggal !== '' ? param.tanggal : null;
+  // Setelah menyimpan rapat dengan tamu eksternal, formulir membuka daftar tamu agar tautan bisa dibagikan.
+  const bukaTamu = param.tamu === '1';
 
   const m = useMuat<MeetingDetailResponse>(`rapat:${id}:${tanggalParam ?? ''}`, () => detailRapat(id, tanggalParam));
   const [rsvp, setRsvp] = useState<RsvpValue | null>(null);
@@ -122,6 +126,17 @@ export default function LayarDetailRapat(): React.JSX.Element {
   const pengamat = rapat !== null && rapat.leadership && !saya.diundang && !saya.penyelenggara && !saya.notulis;
   const fase = rapat ? faseRapat(rapat.starts_at, rapat.ends_at, sekarang) : 'akan';
   const video = rapat?.platform === 'video';
+  const kemampuan = useMemo(
+    () => kemampuanTamu({
+        platform: rapat?.platform ?? '',
+        canceled: rapat?.canceled ?? false,
+        penyelenggara: saya.penyelenggara,
+        terundang: saya.penyelenggara || saya.notulis || saya.diundang,
+        manageGuests: d?.can.manage_guests,
+        manageLobby: d?.can.manage_lobby,
+      }),
+    [rapat?.platform, rapat?.canceled, saya, d?.can.manage_guests, d?.can.manage_lobby],
+  );
 
   // Notulen otomatis + kehadiran ruang video (hanya rapat video).
   const muatTambahan = useCallback(async (): Promise<void> => {
@@ -281,12 +296,14 @@ export default function LayarDetailRapat(): React.JSX.Element {
   const jmlMungkin = rapat.participants.filter((p) => p.rsvp === 'maybe').length;
   const ringkasRsvp = [jmlHadir ? `${jmlHadir} hadir` : '', jmlMungkin ? `${jmlMungkin} mungkin` : ''].filter(Boolean).join(' · ');
   const inRoom = hadirVideo?.in_room ?? 0;
+  const tamuHadir = hadirVideo?.guests ?? [];
+  const tamuDiRuang = tamuHadir.filter((g) => g.in_room).length;
 
   const labelPeranPeserta = (uid: string | null, opsional: boolean): string => {
     const peran = uid === rapat.organizer.id ? 'Penyelenggara' : uid !== null && uid === rapat.minute_taker?.id ? 'Notulis' : 'Peserta';
     return opsional ? `${peran} · opsional` : peran;
   };
-  const namaPeserta = (p: (typeof rapat.participants)[number]): string => `${p.nama ?? p.email ?? 'Peserta'}${p.user_id === viewerId ? ' (Anda)' : ''}`;
+  const namaPeserta = (p: (typeof rapat.participants)[number]): string => `${p.nama ?? p.guest_name ?? p.email ?? 'Peserta'}${p.user_id === viewerId ? ' (Anda)' : ''}`;
 
   // Kartu ruang video.
   let kartuVideo: React.ReactNode = null;
@@ -452,6 +469,18 @@ export default function LayarDetailRapat(): React.JSX.Element {
 
       {kartuVideo}
 
+      {video && !rapat.canceled ? (
+        <KartuTamu
+          rapatId={rapat.id}
+          tanggal={rapat.occurrence_date}
+          judul={rapat.title}
+          waktuLabel={`${hariPanjang(rapat.occurrence_date)} · ${rentangJam(rapat.starts_at, rapat.ends_at)} WIB`}
+          kemampuan={kemampuan}
+          jumlahTamu={jumlahTamuDariPeserta(rapat.participants)}
+          bukaOtomatis={bukaTamu}
+        />
+      ) : null}
+
       {d?.can.rsvp && !rapat.canceled ? (
         <Card style={{ gap: 10 }}>
           <Text variant="h3">Kehadiran saya</Text>
@@ -480,7 +509,7 @@ export default function LayarDetailRapat(): React.JSX.Element {
         </Card>
       ) : null}
 
-      {penulis && video && hadirVideo && hadirVideo.attendance.length > 0 ? (
+      {penulis && video && hadirVideo && (hadirVideo.attendance.length > 0 || (hadirVideo.guests ?? []).length > 0) ? (
         <Card style={{ gap: 4 }}>
           <View style={s.baris}>
             <Text variant="h3" style={{ flex: 1 }}>
@@ -494,6 +523,17 @@ export default function LayarDetailRapat(): React.JSX.Element {
             const sub = a.in_room ? `Masuk ${jam(a.joined_at)} · di ruang` : `Masuk ${jam(a.joined_at)} · keluar ${jam(a.left_at)} · ${Math.max(1, Math.round(a.duration_seconds / 60))} mnt`;
             return <BarisOrang key={`${a.user_id}-${i}`} nama={nama} sub={sub} divider={i > 0} kanan={a.late ? <Badge tone="warning">{`Terlambat ${a.late_minutes} mnt`}</Badge> : <Badge tone="success">Hadir</Badge>} />;
           })}
+          {tamuHadir.length > 0 ? (
+            <>
+              <Text variant="overline" tone="muted" style={{ marginTop: 8 }}>
+                {`Tamu eksternal (${tamuHadir.length}${tamuDiRuang > 0 ? ` · ${tamuDiRuang} di ruang` : ''})`}
+              </Text>
+              {tamuHadir.map((g, i) => {
+                const sub = g.in_room ? `Masuk ${jam(g.joined_at)} · di ruang` : `Masuk ${jam(g.joined_at)} · keluar ${jam(g.left_at)} · ${Math.max(1, Math.round(g.duration_seconds / 60))} mnt`;
+                return <BarisOrang key={`${g.participant_id}-${i}`} nama={pastikanAkhiranTamu(g.name)} sub={sub} divider={i > 0} kanan={<Badge tone="info">Tamu</Badge>} />;
+              })}
+            </>
+          ) : null}
         </Card>
       ) : null}
 
@@ -524,7 +564,7 @@ export default function LayarDetailRapat(): React.JSX.Element {
           {ringkasRsvp ? <Text variant="meta">{ringkasRsvp}</Text> : null}
         </View>
         {rapat.participants.slice(0, 5).map((p, i) => (
-          <BarisOrang key={`${p.user_id ?? p.email}-${i}`} nama={namaPeserta(p)} sub={p.user_id ? labelPeranPeserta(p.user_id, p.optional) : 'Tamu eksternal · undangan email ditahan'} divider={i > 0} kanan={<Badge tone={TONE_RSVP[p.rsvp]}>{LABEL_RSVP[p.rsvp]}</Badge>} />
+          <BarisOrang key={`${p.user_id ?? p.email}-${i}`} nama={namaPeserta(p)} sub={p.user_id ? labelPeranPeserta(p.user_id, p.optional) : 'Tamu eksternal · masuk lewat tautan pribadi'} divider={i > 0} kanan={<Badge tone={TONE_RSVP[p.rsvp]}>{LABEL_RSVP[p.rsvp]}</Badge>} />
         ))}
         {rapat.participants.length > 5 ? <Button title="Lihat semua peserta" variant="quiet" onPress={() => setLembarPeserta(true)} /> : null}
       </Card>
@@ -588,7 +628,7 @@ export default function LayarDetailRapat(): React.JSX.Element {
           {`${jmlHadir} hadir · ${jmlMungkin} mungkin · ${rapat.participants.filter((p) => p.rsvp === 'no').length} tidak hadir · ${rapat.participants.filter((p) => p.rsvp === 'pending').length} belum menjawab`}
         </Text>
         {rapat.participants.map((p, i) => (
-          <BarisOrang key={`${p.user_id ?? p.email}-${i}`} nama={namaPeserta(p)} sub={p.user_id ? labelPeranPeserta(p.user_id, p.optional) : 'Tamu eksternal'} divider={i > 0} kanan={<Badge tone={TONE_RSVP[p.rsvp]}>{LABEL_RSVP[p.rsvp]}</Badge>} />
+          <BarisOrang key={`${p.user_id ?? p.email}-${i}`} nama={namaPeserta(p)} sub={p.user_id ? labelPeranPeserta(p.user_id, p.optional) : 'Tamu eksternal · tautan pribadi'} divider={i > 0} kanan={<Badge tone={TONE_RSVP[p.rsvp]}>{LABEL_RSVP[p.rsvp]}</Badge>} />
         ))}
       </BottomSheet>
 

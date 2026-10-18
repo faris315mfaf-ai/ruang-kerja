@@ -33,6 +33,11 @@ use Illuminate\Auth\Access\Response;
  *   "Panggil" a missing participant: organizer or minute taker. Speaking
  *   time is reported inside the join window (joinVideo) and read by anyone
  *   who may open the room (openVideo).
+ * - External guests of a video meeting (docs/sesi/rapat-tamu-eksternal.md):
+ *   guest list, adding, revoking and rotating links = organizer only
+ *   (manageGuests); admitting / denying someone in the waiting room =
+ *   organizer, minute taker and internal participants (manageLobby). Guests
+ *   themselves have no account and never reach this policy.
  * No Gate::before: Super Admin has no extra rights here.
  */
 class MeetingPolicy
@@ -225,6 +230,18 @@ class MeetingPolicy
         return $this->isOrganizer($user, $meeting)
             ? Response::allow()
             : Response::deny('Hanya penyelenggara yang dapat mengatur peserta rapat.');
+    }
+
+    /** Guest list with their links, add / revoke / rotate: the organizer of a video meeting. */
+    public function manageGuests(User $user, Meeting $meeting): Response
+    {
+        return $this->moderateVideo($user, $meeting);
+    }
+
+    /** Waiting room: see who waits, admit or deny — everyone invited to the video meeting. */
+    public function manageLobby(User $user, Meeting $meeting): Response
+    {
+        return $this->openVideo($user, $meeting);
     }
 
     public function canView(User $user, Meeting $meeting): bool

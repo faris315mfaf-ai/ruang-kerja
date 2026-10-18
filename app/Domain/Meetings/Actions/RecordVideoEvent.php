@@ -3,11 +3,14 @@
 namespace App\Domain\Meetings\Actions;
 
 use App\Domain\Meetings\Enums\MeetingPlatform;
+use App\Domain\Meetings\Guests\Actions\IssueGuestVideoToken;
+use App\Domain\Meetings\Guests\GuestNames;
 use App\Domain\Meetings\Services\MeetingOccurrences;
 use App\Domain\Meetings\Services\RoomEvents;
 use App\Domain\Meetings\Services\VideoRooms;
 use App\Models\Meeting;
 use App\Models\MeetingAttendance;
+use App\Models\MeetingParticipant;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -21,9 +24,12 @@ use Illuminate\Support\Facades\DB;
  * - room_finished → closes every open row of the room.
  *
  * Rooms that do not map to a video meeting occurrence ("rk-{id}-{yyyymmdd}")
- * are ignored, and so is every identity that is not the ULID of an employee
- * of the meeting's company — including the hidden transcription agent
- * (AGENT_IDENTITY, docs/fitur/notulen-otomatis-kontrak.md §3): no row. Returns whether
+ * are ignored, and so is every identity that is neither the ULID of an employee
+ * of the meeting's company nor `guest:{participant id}` of an external guest
+ * of THAT meeting — including the hidden transcription agent (AGENT_IDENTITY,
+ * docs/fitur/notulen-otomatis-kontrak.md §3): no row. A guest's session has no
+ * user (`user_id` null) but `participant_id` and the name stored for them; a
+ * `guest:*` identity is never mapped to a user. Returns whether
  * anything was recorded; recorded events are broadcast as
  * `attendance.updated` on `meeting.{id}` (the Kehadiran panel refetches).
  */
@@ -81,15 +87,19 @@ final class RecordVideoEvent
         $joinedAt = self::timestamp($participant['joinedAtMs'] ?? null, milliseconds: true)
             ?? self::timestamp($participant['joinedAt'] ?? $participant['joined_at'] ?? null)
             ?? $at;
-        $userId = $this->userId($meeting, $participant['identity'] ?? null);
+        $identity = $participant['identity'] ?? null;
+        $userId = $this->userId($meeting, $identity);
+        $guest = $userId === null ? $this->guest($meeting, $identity) : null;
 
-        // Only employees of the meeting's company are attendance: the hidden
-        // transcription agent (AGENT_IDENTITY), guests and foreign ids are not stored.
-        if ($userId === null) {
-            return false;
+        // Only employees of the meeting's company and its own guests are attendance:
+        // the hidden transcription agent (AGENT_IDENTITY) and foreign ids are not stored.
+        if ($userId === null && $guest === null) {
+            // A guest whose row was deleted (revoked) still leaves the room: close the open session.
+            return $type === 'participant_left' && is_string($identity) && IssueGuestVideoToken::participantId($identity) !== null
+                && $this->closeOrphanGuest($sid, $at);
         }
 
-        DB::transaction(function () use ($type, $meeting, $target, $roomName, $sid, $joinedAt, $userId, $at): void {
+        DB::transaction(function () use ($type, $meeting, $target, $roomName, $sid, $joinedAt, $userId, $guest, $at): void {
             // createOrFirst + row lock (audit R-12): two concurrent "joined"
             // webhooks with the same SID would otherwise race past a lock on
             // a row that does not exist yet.
@@ -99,6 +109,8 @@ final class RecordVideoEvent
                     'meeting_id' => $meeting->id,
                     'occurrence_date' => $target['date'],
                     'user_id' => $userId,
+                    'participant_id' => $guest?->id,
+                    'guest_name' => $guest !== null ? GuestNames::display($guest->guest_name) : null,
                     'room' => $roomName,
                     'joined_at' => $joinedAt,
                 ],
@@ -121,6 +133,20 @@ final class RecordVideoEvent
         return true;
     }
 
+    private function closeOrphanGuest(string $sid, CarbonImmutable $at): bool
+    {
+        $row = MeetingAttendance::query()->where('participant_sid', $sid)->whereNull('user_id')->whereNull('left_at')->first();
+
+        if ($row === null) {
+            return false;
+        }
+
+        $left = $at->lt($row->joined_at) ? $row->joined_at : $at;
+        $row->forceFill(['left_at' => $left, 'duration_seconds' => (int) $row->joined_at->diffInSeconds($left)])->save();
+
+        return true;
+    }
+
     private function finishRoom(string $room, CarbonImmutable $at): int
     {
         $closed = 0;
@@ -133,6 +159,18 @@ final class RecordVideoEvent
             });
 
         return $closed;
+    }
+
+    /** The external guest behind a `guest:{id}` identity, only of this meeting. */
+    private function guest(Meeting $meeting, mixed $identity): ?MeetingParticipant
+    {
+        $id = is_string($identity) ? IssueGuestVideoToken::participantId($identity) : null;
+
+        return $id === null ? null : MeetingParticipant::query()
+            ->whereKey($id)
+            ->where('meeting_id', $meeting->id)
+            ->whereNull('user_id')
+            ->first();
     }
 
     private function userId(Meeting $meeting, mixed $identity): ?string

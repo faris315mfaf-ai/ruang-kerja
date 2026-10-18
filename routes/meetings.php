@@ -1,9 +1,12 @@
 <?php
 
+use App\Domain\Meetings\Guests\Services\GuestLinks;
 use App\Http\Controllers\Meetings\CalendarController;
+use App\Http\Controllers\Meetings\GuestPortalController;
 use App\Http\Controllers\Meetings\LiveKitWebhookController;
 use App\Http\Controllers\Meetings\ManagementScheduleController;
 use App\Http\Controllers\Meetings\MeetingController;
+use App\Http\Controllers\Meetings\MeetingGuestController;
 use App\Http\Controllers\Meetings\MeetingRoomController;
 use App\Http\Controllers\Meetings\MeetingVideoController;
 use App\Http\Controllers\Meetings\MinutesCollabStateController;
@@ -35,7 +38,9 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
  * Video RuangKerja (LiveKit, §6a): /gabung (pre-join), /ruang (room), token,
  * moderation, the "Notulen Hidup" room endpoints (notes source, speaking
  * time, attendance, call; docs/fitur/rapat-video-kontrak.md) and the signed
- * LiveKit webhook (no session/CSRF).
+ * LiveKit webhook (no session/CSRF). External guests (docs/sesi/rapat-tamu-eksternal.md):
+ * organizer-side list / waiting room below, the public guest page and
+ * /api/tamu/{token}/* at the end of the file.
  */
 Route::middleware([EnsureFeatureEnabled::class.':meetings', 'auth', 'verified'])->group(function () {
     Route::prefix('rapat')->name('meetings.')->group(function () {
@@ -70,8 +75,8 @@ Route::middleware([EnsureFeatureEnabled::class.':meetings', 'auth', 'verified'])
         Route::get('{meeting}/gabung', [MeetingVideoController::class, 'join'])->whereUlid('meeting')->middleware(EnsureFullPageLoad::class)->name('video.join');
         Route::get('{meeting}/ruang', [MeetingVideoController::class, 'room'])->whereUlid('meeting')->middleware(EnsureFullPageLoad::class)->name('video.room');
         Route::post('{meeting}/video/token', [MeetingVideoController::class, 'token'])->whereUlid('meeting')->middleware('throttle:30,1')->name('video.token');
-        Route::post('{meeting}/video/peserta/{identity}/bisukan', [MeetingVideoController::class, 'mute'])->whereUlid(['meeting', 'identity'])->middleware('throttle:api')->name('video.mute');
-        Route::delete('{meeting}/video/peserta/{identity}', [MeetingVideoController::class, 'remove'])->whereUlid(['meeting', 'identity'])->middleware('throttle:api')->name('video.remove');
+        Route::post('{meeting}/video/peserta/{identity}/bisukan', [MeetingVideoController::class, 'mute'])->whereUlid('meeting')->where('identity', '[0-9A-Za-z]{26}|guest:[0-9A-Za-z]{26}')->middleware('throttle:api')->name('video.mute');
+        Route::delete('{meeting}/video/peserta/{identity}', [MeetingVideoController::class, 'remove'])->whereUlid('meeting')->where('identity', '[0-9A-Za-z]{26}|guest:[0-9A-Za-z]{26}')->middleware('throttle:api')->name('video.remove');
         Route::delete('{meeting}/video/peserta/{identity}/larangan', [MeetingVideoController::class, 'readmit'])->whereUlid(['meeting', 'identity'])->middleware('throttle:api')->name('video.readmit');
         Route::post('{meeting}/video/tangan', [MeetingVideoController::class, 'hand'])->whereUlid('meeting')->middleware('throttle:30,1')->name('video.hand');
         Route::post('{meeting}/video/atribut', [MeetingVideoController::class, 'attributes'])->whereUlid('meeting')->middleware('throttle:60,1')->name('video.attributes');
@@ -81,6 +86,15 @@ Route::middleware([EnsureFeatureEnabled::class.':meetings', 'auth', 'verified'])
         Route::get('{meeting}/video/bicara', [MeetingRoomController::class, 'speaking'])->whereUlid('meeting')->middleware('throttle:api')->name('video.speaking');
         Route::post('{meeting}/video/bicara', [MeetingRoomController::class, 'reportSpeaking'])->whereUlid('meeting')->middleware('throttle:20,1')->name('video.speaking.report');
         Route::get('{meeting}/video/kehadiran', [MeetingRoomController::class, 'attendance'])->whereUlid('meeting')->middleware('throttle:api')->name('video.attendance');
+        // External guests (organizer: list with links, add, rotate, revoke) and the waiting room.
+        Route::get('{meeting}/tamu', [MeetingGuestController::class, 'index'])->whereUlid('meeting')->middleware('throttle:api')->name('guests.index');
+        Route::post('{meeting}/tamu', [MeetingGuestController::class, 'store'])->whereUlid('meeting')->middleware('throttle:30,1')->name('guests.store');
+        Route::post('{meeting}/tamu/{participant}/putar', [MeetingGuestController::class, 'rotate'])->whereUlid(['meeting', 'participant'])->middleware('throttle:30,1')->name('guests.rotate');
+        Route::delete('{meeting}/tamu/{participant}', [MeetingGuestController::class, 'destroy'])->whereUlid(['meeting', 'participant'])->middleware('throttle:30,1')->name('guests.destroy');
+        Route::get('{meeting}/video/ruang-tunggu', [MeetingGuestController::class, 'lobby'])->whereUlid('meeting')->middleware('throttle:api')->name('video.lobby');
+        Route::post('{meeting}/video/ruang-tunggu/{participant}/izinkan', [MeetingGuestController::class, 'admit'])->whereUlid(['meeting', 'participant'])->middleware('throttle:api')->name('video.lobby.admit');
+        Route::post('{meeting}/video/ruang-tunggu/{participant}/tolak', [MeetingGuestController::class, 'deny'])->whereUlid(['meeting', 'participant'])->middleware('throttle:api')->name('video.lobby.deny');
+
         Route::post('{meeting}/video/panggil/{target}', [MeetingRoomController::class, 'call'])->whereUlid(['meeting', 'target'])->middleware('throttle:api')->name('video.call');
     });
 
@@ -121,3 +135,40 @@ Route::post('api/livekit/webhook', LiveKitWebhookController::class)
         AddLinkHeadersForPreloadedAssets::class,
     ])
     ->name('meetings.video.webhook');
+
+// External guests, public side: the personal link page and its JSON endpoints.
+// The page keeps the web stack (session, Inertia shell, no `auth`); the JSON
+// endpoints answer without cookies / CSRF / Inertia and are throttled per IP
+// and per link (AppServiceProvider `guest-*` limiters).
+Route::middleware([EnsureFeatureEnabled::class.':meetings'])->group(function () {
+    Route::get('tamu/{token}', [GuestPortalController::class, 'page'])
+        ->where('token', GuestLinks::PATTERN)
+        ->middleware([EnsureFullPageLoad::class, 'throttle:guest-info'])
+        ->name('meetings.guest.page');
+
+    Route::prefix('api/tamu/{token}')
+        ->where(['token' => GuestLinks::PATTERN])
+        ->name('meetings.guest.')
+        ->withoutMiddleware([
+            EncryptCookies::class,
+            AddQueuedCookiesToResponse::class,
+            StartSession::class,
+            ShareErrorsFromSession::class,
+            PreventRequestForgery::class,
+            'auth.session',
+            AuthenticateSession::class,
+            EnsureActiveEmployee::class,
+            RestrictKioskDevice::class,
+            RestrictCredentialRoutes::class,
+            EnsureTwoFactorForSuperAdmin::class,
+            HandleAppearance::class,
+            HandleInertiaRequests::class,
+            AddLinkHeadersForPreloadedAssets::class,
+        ])
+        ->group(function () {
+            Route::get('info', [GuestPortalController::class, 'info'])->middleware('throttle:guest-info')->name('info');
+            Route::post('minta-masuk', [GuestPortalController::class, 'admission'])->middleware('throttle:guest-request')->name('request');
+            Route::get('status', [GuestPortalController::class, 'status'])->middleware('throttle:guest-status')->name('status');
+            Route::post('token', [GuestPortalController::class, 'token'])->middleware('throttle:guest-token')->name('token');
+        });
+});

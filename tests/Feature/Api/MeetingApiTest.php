@@ -156,7 +156,7 @@ test('the detail shows one occurrence with participants, rights and a minutes te
         ->and($meeting['participants'][1]['rsvp'])->toBe('pending')
         ->and($meeting['rsvp_saya'])->toBe('pending');
 
-    expect($response->json('can'))->toBe(['rsvp' => true, 'edit' => false, 'join_video' => false])
+    expect($response->json('can'))->toBe(['rsvp' => true, 'edit' => false, 'join_video' => false, 'manage_guests' => false, 'manage_lobby' => false])
         ->and($response->json('video'))->toBeNull(); // platform meet, bukan video
 
     // Penyelenggara boleh menyunting; ?tanggal memilih kemunculan seri lain.

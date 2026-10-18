@@ -44,6 +44,11 @@ return [
     // (PruneSpeakingTimes, daily). meeting_attendances are kept.
     'speaking_retention_days' => (int) env('MINUTES_TRANSCRIPT_RETENTION_DAYS', 90),
 
+    // External guests (docs/sesi/rapat-tamu-eksternal.md): a personal guest link
+    // lives until the meeting's last join window ends, at most this many days
+    // ahead (open-ended series; the organizer rotates the link to extend it).
+    'guest_link_max_days' => (int) env('LIVEKIT_GUEST_LINK_MAX_DAYS', 60),
+
     // Webhooks older than this (event createdAt / token nbf) are rejected.
     'webhook_tolerance' => (int) env('LIVEKIT_WEBHOOK_TOLERANCE', 300),
 ];

@@ -33,7 +33,7 @@ final class VideoAttendance
     /**
      * Who joined (ordered by first join) and which invited employees did not.
      *
-     * @return array{attendance: list<array{user_id: string, joined_at: string, left_at: string|null, duration_seconds: int, in_room: bool, sessions: int, late_minutes: int, late: bool}>, not_joined: list<array{user_id: string, rsvp: string, optional: bool}>, in_room: int}
+     * @return array{attendance: list<array{user_id: string, joined_at: string, left_at: string|null, duration_seconds: int, in_room: bool, sessions: int, late_minutes: int, late: bool}>, not_joined: list<array{user_id: string, rsvp: string, optional: bool}>, guests: list<array{participant_id: string, name: string, joined_at: string, left_at: string|null, duration_seconds: int, in_room: bool, sessions: int}>, in_room: int}
      */
     public function roster(Occurrence $occurrence, ?CarbonImmutable $now = null): array
     {
@@ -44,11 +44,13 @@ final class VideoAttendance
             ->toBase()
             ->where('meeting_id', $occurrence->meeting->id)
             ->where('occurrence_date', $occurrence->date)
-            ->whereNotNull('user_id')
-            ->groupBy('user_id')
+            // Employees and external guests (user_id null, participant_id set).
+            ->where(fn ($who) => $who->whereNotNull('user_id')->orWhereNotNull('participant_id'))
+            ->groupBy('user_id', 'participant_id')
             // Ties (same second): the session recorded first (ULIDs sort by time).
             ->orderByRaw('min(joined_at), min(id)')
-            ->select('user_id')
+            ->select('user_id', 'participant_id')
+            ->selectRaw('max(guest_name) as guest_name')
             ->selectRaw('min(joined_at) as first_joined_at')
             ->selectRaw('max(left_at) as last_left_at')
             ->selectRaw('count(*) as sessions')
@@ -58,12 +60,28 @@ final class VideoAttendance
             ->get();
 
         $attendance = [];
+        $guests = [];
         $joined = [];
 
         foreach ($rows as $row) {
-            $id = (string) $row->user_id;
             $firstJoined = CarbonImmutable::parse((string) $row->first_joined_at)->utc();
             $inRoom = (int) $row->open_sessions > 0;
+
+            if ($row->user_id === null) {
+                $guests[] = [
+                    'participant_id' => (string) $row->participant_id,
+                    'name' => (string) ($row->guest_name ?? 'Tamu'),
+                    'joined_at' => $firstJoined->toIso8601ZuluString(),
+                    'left_at' => $inRoom || $row->last_left_at === null ? null : CarbonImmutable::parse((string) $row->last_left_at)->utc()->toIso8601ZuluString(),
+                    'duration_seconds' => (int) $row->closed_seconds + (int) $row->open_seconds,
+                    'in_room' => $inRoom,
+                    'sessions' => (int) $row->sessions,
+                ];
+
+                continue;
+            }
+
+            $id = (string) $row->user_id;
             $late = $firstJoined->gt($start) ? intdiv((int) $start->diffInSeconds($firstJoined), 60) : 0;
             $joined[$id] = true;
 
@@ -87,6 +105,8 @@ final class VideoAttendance
         return [
             'attendance' => $attendance,
             'not_joined' => $notJoined,
+            // External guests (label "Tamu" in the UI); not part of `in_room`, which counts employees.
+            'guests' => $guests,
             'in_room' => count(array_filter($attendance, fn (array $person): bool => $person['in_room'])),
         ];
     }

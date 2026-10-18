@@ -128,6 +128,24 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('messages', fn (Request $request): Limit => Limit::perMinute(60)
             ->by('messages|'.$this->userOrIpKey($request)));
 
+        // External guests of video meetings (public /tamu + /api/tamu, no account): a
+        // limit per IP and one per link, so one stolen link cannot be hammered and
+        // one IP cannot probe many tokens. Indonesian JSON body for the guest page.
+        foreach (['guest-info' => [60, 30], 'guest-request' => [20, 6], 'guest-status' => [120, 45], 'guest-token' => [30, 12]] as $name => [$perIp, $perToken]) {
+            RateLimiter::for($name, function (Request $request) use ($name, $perIp, $perToken): array {
+                $respond = fn (Request $request, array $headers): JsonResponse => response()->json([
+                    'message' => 'Terlalu banyak permintaan. Coba lagi sebentar lagi.',
+                    'code' => 'throttled',
+                ], 429, $headers);
+                $token = hash('sha256', (string) $request->route('token'));
+
+                return [
+                    Limit::perMinute($perIp)->by($name.'|ip|'.$request->ip())->response($respond),
+                    Limit::perMinute($perToken)->by($name.'|token|'.$token)->response($respond),
+                ];
+            });
+        }
+
         // Opening chunked Drive upload sessions (each reserves disk space until finished).
         // The upload client shows `message` as is: Indonesian instead of "Too Many Attempts.".
         RateLimiter::for('drive-uploads', fn (Request $request): Limit => Limit::perMinute(config()->integer('google.upload.starts_per_minute', 20))

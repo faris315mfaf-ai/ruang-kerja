@@ -35,6 +35,12 @@ export type Participant = {
     email?: string | null;
     rsvp: Rsvp;
     optional?: boolean;
+    /**
+     * External guest row only, and only for who manages guests (the organizer):
+     * the guest's participant id and typed name. Absent for everyone else.
+     */
+    guest_id?: string;
+    guest_name?: string | null;
 };
 
 export type Recurrence = 'none' | 'weekdays' | 'weekly' | 'mon_wed_fri';
@@ -187,6 +193,8 @@ export type MeetingFormMeeting = {
     leadership: boolean;
     /** "Notulen otomatis" (only kept for platform `video`). */
     auto_minutes?: boolean;
+    /** Typed names of external guests, keyed by lower-case e-mail (prefills the form). */
+    guest_names?: Record<string, string>;
 };
 
 export type MeetingFormProps = {
@@ -206,7 +214,15 @@ export type MeetingDetailProps = {
     viewer_id: PersonId;
     meeting: Meeting;
     people: Person[];
-    can: { update: boolean; respond: boolean; write_minutes: boolean };
+    can: {
+        update: boolean;
+        respond: boolean;
+        write_minutes: boolean;
+        /** Guest list with links (organizer of a video meeting). Absent on an older server. */
+        manage_guests?: boolean;
+        /** Waiting room (everyone invited to the video meeting). Absent on an older server. */
+        manage_lobby?: boolean;
+    };
 };
 
 export type MinutesProps = {

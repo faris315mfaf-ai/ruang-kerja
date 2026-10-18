@@ -12,7 +12,7 @@ import type { CSSProperties } from 'react';
 import { memo } from 'react';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { cn } from '@/lib/utils';
-import { useRoomPerson } from './room-people';
+import { useParticipantPerson } from './room-people';
 
 /** A camera/screen track or a placeholder for a participant without one. */
 export type TileRef = NonNullable<Parameters<typeof useTrackMutedIndicator>[0]>;
@@ -50,9 +50,13 @@ export const ParticipantTile = memo(function ParticipantTile({
     style?: CSSProperties;
 }) {
     const participant = trackRef.participant;
-    const person = useRoomPerson(participant.identity);
+    const person = useParticipantPerson(participant);
     const displayName = person.name;
-    const shortName = fullName ? person.name : person.first_name;
+    const shortName = fullName
+        ? person.guest
+            ? person.plain_name
+            : person.name
+        : person.first_name;
     const speaking = useIsSpeaking(participant);
     const { quality } = useConnectionQualityIndicator({ participant });
     const { isMuted: micMuted } = useTrackMutedIndicator({
@@ -86,7 +90,7 @@ export const ParticipantTile = memo(function ParticipantTile({
                 />
             ) : (
                 <UserAvatar
-                    name={displayName}
+                    name={person.plain_name}
                     src={person.avatar_url}
                     className="size-[42%] max-h-24 min-h-10 max-w-24 min-w-10 text-[clamp(14px,2.2vw,28px)]"
                 />
@@ -144,6 +148,14 @@ export const ParticipantTile = memo(function ParticipantTile({
                     {shortName}
                     {participant.isLocal ? ' (Anda)' : ''}
                 </span>
+                {person.guest && (
+                    <span
+                        className="shrink-0 rounded-full bg-on-caption/20 px-1.5 text-[11px] leading-[18px] font-bold"
+                        data-testid="guest-badge"
+                    >
+                        Tamu
+                    </span>
+                )}
             </span>
         </div>
     );
@@ -191,7 +203,7 @@ export function Filmstrip({
 /** Shared screen in Presentasi mode (dark frame, picture contained). */
 export function ScreenShare({ trackRef }: { trackRef: TileRef }) {
     const participant = trackRef.participant;
-    const name = useRoomPerson(participant.identity).first_name;
+    const name = useParticipantPerson(participant).first_name;
     const mine = participant.isLocal;
 
     return (

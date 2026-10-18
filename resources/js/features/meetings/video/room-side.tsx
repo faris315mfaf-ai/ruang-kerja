@@ -2,6 +2,7 @@ import type { Participant } from 'livekit-client';
 import { RoomEvent, Track } from 'livekit-client';
 import { useParticipants } from '@livekit/components-react';
 import { Hand, MicOff, MoreHorizontal, UserMinus } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { UserAvatar } from '@/components/shell/user-avatar';
 import { Badge } from '@/components/ui/badge';
@@ -176,6 +177,7 @@ export function AttendancePanel({
     onMute,
     onRemove,
     onReadmit,
+    extra,
 }: {
     rows: AttendanceRow[];
     canCall: boolean;
@@ -186,6 +188,8 @@ export function AttendancePanel({
     onRemove: (participant: Participant) => Promise<void>;
     /** Organizer: lift the removal (null when the server has no endpoint). */
     onReadmit: ((userId: string) => void) | null;
+    /** Extra groups below the employees (the external guests). */
+    extra?: ReactNode;
 }) {
     const people = useRoomPeople();
     // Leaf subscription: joins, leaves, mute and hand changes only.
@@ -407,6 +411,8 @@ export function AttendancePanel({
                     ))}
                 </ul>
             )}
+
+            {extra}
 
             <Dialog
                 open={removing !== null}

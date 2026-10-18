@@ -6,11 +6,13 @@
  * saya, Keluarkan (konfirmasi).
  */
 import { Track, type Participant, type Room } from 'livekit-client';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
+import { daftarTamu, izinkanTamu, type TamuHadir, type TamuRapat } from '@/api/rapatTamu';
 import { bisukanPeserta, izinkanMasuk, keluarkanPeserta, panggilPeserta, type DataRuang, type KehadiranVideo } from '@/api/video';
+import { adalahPesertaTamu, identitasDariIdTamu, namaTampilTamu, pastikanAkhiranTamu, pesanGalatTamu, tanpaAkhiranTamu } from '@/features/rapat/tamu';
 import { jam } from '@/lib/format';
 import { useTheme } from '@/theme';
 import { Avatar, Badge, BottomSheet, Button, IconButton, SheetAction, Text, useDialog, useSnackbar } from '@/ui';
@@ -63,8 +65,32 @@ export function SheetKehadiran(props: Props): React.JSX.Element {
   const snackbar = useSnackbar();
   const [aksi, setAksi] = useState<Participant | null>(null);
   const [sibuk, setSibuk] = useState<string | null>(null);
+  const [tamuDikeluarkan, setTamuDikeluarkan] = useState<TamuRapat[]>([]);
+
+  // Tamu yang dikeluarkan hanya diketahui lewat daftar tamu (penyelenggara) — bukan bagian `removed` karyawan.
+  const muatTamuDikeluarkan = useCallback(async (): Promise<void> => {
+    if (!bisaModerasi) {
+      return;
+    }
+    try {
+      const d = await daftarTamu(meetingId, tanggal);
+      setTamuDikeluarkan(d.guests.filter((g) => g.status === 'removed'));
+    } catch {
+      // Tanpa daftar tamu, bagian "Tamu dikeluarkan" tidak tampil; tidak mengganggu panel lain.
+    }
+  }, [bisaModerasi, meetingId, tanggal]);
+
+  useEffect(() => {
+    if (!visible) {
+      return;
+    }
+    const t = setTimeout(() => void muatTamuDikeluarkan(), 0);
+    return () => clearTimeout(t);
+  }, [visible, muatTamuDikeluarkan, kehadiran]);
 
   const diRuang = pesertaTampil(room);
+  const tamuDiRuang = diRuang.filter((p) => adalahPesertaTamu(p.identity, p.metadata));
+  const tamuKeluar: TamuHadir[] = (kehadiran?.guests ?? []).filter((g) => !diRuang.some((p) => p.identity === identitasDariIdTamu(g.participant_id)));
   const belum = (kehadiran?.not_joined ?? []).filter((n) => !diRuang.some((p) => p.identity === n.user_id));
   const dikeluarkan = kehadiran?.removed ?? [];
   const me = room.localParticipant.identity;
@@ -106,6 +132,20 @@ export function SheetKehadiran(props: Props): React.JSX.Element {
     }
   };
 
+  const izinkanTamuLagi = async (t: TamuRapat) => {
+    setSibuk(t.id);
+    try {
+      await izinkanTamu(meetingId, t.id, tanggal);
+      snackbar.show({ message: `${namaTampilTamu(t)} boleh masuk lagi.`, variant: 'ok' });
+      await muatTamuDikeluarkan();
+      onBerubah();
+    } catch (e) {
+      snackbar.show({ message: e instanceof ApiError ? pesanGalatTamu('izinkan', { status: e.status, code: e.code, message: e.message }) : 'Gagal. Coba lagi.', variant: 'bad' });
+    } finally {
+      setSibuk(null);
+    }
+  };
+
   const bisukan = async (p: Participant) => {
     setAksi(null);
     const sid = p.getTrackPublication(Track.Source.Microphone)?.trackSid;
@@ -125,7 +165,9 @@ export function SheetKehadiran(props: Props): React.JSX.Element {
     setAksi(null);
     const ok = await dialog.confirm({
       title: `Keluarkan ${nama(p.identity)}?`,
-      message: 'Ia keluar dari ruang video dan baru bisa masuk lagi setelah Anda menekan "Izinkan masuk lagi". Ia juga tidak bisa menyunting notulen.',
+      message: adalahPesertaTamu(p.identity, p.metadata)
+        ? 'Tamu keluar dari ruang video dan baru bisa masuk lagi setelah Anda menekan "Izinkan masuk lagi". Tautannya tidak berubah.'
+        : 'Ia keluar dari ruang video dan baru bisa masuk lagi setelah Anda menekan "Izinkan masuk lagi". Ia juga tidak bisa menyunting notulen.',
       confirmLabel: 'Keluarkan',
       destructive: true,
     });
@@ -144,14 +186,17 @@ export function SheetKehadiran(props: Props): React.JSX.Element {
   return (
     <>
       <BottomSheet visible={visible && aksi === null} onClose={onClose} title="Kehadiran" showClose scrollable snapPoints={['70%', '92%']}>
-        <Text variant="meta">Otomatis dari ruang · {diRuang.length} di ruang</Text>
+        <Text variant="meta">{`Otomatis dari ruang · ${diRuang.length} di ruang${tamuDiRuang.length > 0 ? ` (termasuk ${tamuDiRuang.length} tamu)` : ''}`}</Text>
 
         <Judul teks={`Di ruang (${diRuang.length})`} />
         {diRuang.map((p) => {
-          const h = kehadiran?.attendance.find((a) => a.user_id === p.identity);
-          const peran = labelPeran(data, p.identity);
+          const tamu = adalahPesertaTamu(p.identity, p.metadata);
+          const h = tamu ? undefined : kehadiran?.attendance.find((a) => a.user_id === p.identity);
+          const hTamu = tamu ? (kehadiran?.guests ?? []).find((g) => identitasDariIdTamu(g.participant_id) === p.identity) : undefined;
+          const peran = tamu ? 'Tamu eksternal' : labelPeran(data, p.identity);
+          const masuk = h?.joined_at ?? hTamu?.joined_at;
           const meta = [
-            h ? `Masuk ${jam(h.joined_at)}` : null,
+            masuk ? `Masuk ${jam(masuk)}` : null,
             peran,
             p.isMicrophoneEnabled ? null : 'mikrofon mati',
             tangan[p.identity] ? 'tangan terangkat' : null,
@@ -159,21 +204,36 @@ export function SheetKehadiran(props: Props): React.JSX.Element {
             .filter(Boolean)
             .join(' · ');
           const bolehMenu = !p.isLocal;
+          const nm = tamu ? pastikanAkhiranTamu(nama(p.identity)) : nama(p.identity);
           return (
             <View key={p.identity} style={[s.baris, { borderTopColor: colors.divider }]}>
-              <Avatar name={nama(p.identity)} size="md" />
+              <Avatar name={tamu ? tanpaAkhiranTamu(nm) : nm} size="md" />
               <View style={{ flex: 1, gap: 2 }}>
                 <Text variant="title" numberOfLines={1}>
-                  {nama(p.identity)}
+                  {nm}
                   {p.identity === me ? ' (Anda)' : ''}
                 </Text>
                 {meta ? <Text variant="meta">{meta}</Text> : null}
               </View>
-              {h?.late ? <Badge tone="warning">{`Terlambat ${h.late_minutes ?? 0} mnt`}</Badge> : <Badge tone="success">Hadir</Badge>}
-              {bolehMenu ? <IconButton icon="ellipsis-vertical" label={`Pilihan untuk ${nama(p.identity)}`} variant="ghost" size={40} onPress={() => setAksi(p)} /> : null}
+              {tamu ? <Badge tone="info">Tamu</Badge> : h?.late ? <Badge tone="warning">{`Terlambat ${h.late_minutes ?? 0} mnt`}</Badge> : <Badge tone="success">Hadir</Badge>}
+              {bolehMenu ? <IconButton icon="ellipsis-vertical" label={`Pilihan untuk ${nm}`} variant="ghost" size={40} onPress={() => setAksi(p)} /> : null}
             </View>
           );
         })}
+
+        {tamuKeluar.length > 0 ? <Judul teks={`Tamu sudah keluar (${tamuKeluar.length})`} /> : null}
+        {tamuKeluar.map((g) => (
+          <View key={g.participant_id} style={[s.baris, { borderTopColor: colors.divider }]}>
+            <Avatar name={tanpaAkhiranTamu(g.name)} size="md" />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text variant="title" numberOfLines={1}>
+                {pastikanAkhiranTamu(g.name)}
+              </Text>
+              <Text variant="meta">{`Masuk ${jam(g.joined_at)}${g.left_at ? ` · keluar ${jam(g.left_at)}` : ''} · ${Math.max(1, Math.round(g.duration_seconds / 60))} mnt`}</Text>
+            </View>
+            <Badge tone="info">Tamu</Badge>
+          </View>
+        ))}
 
         {belum.length > 0 ? <Judul teks={`Belum masuk (${belum.length})`} /> : null}
         {belum.map((n) => (
@@ -213,6 +273,19 @@ export function SheetKehadiran(props: Props): React.JSX.Element {
               </Text>
             </View>
             {bisaModerasi ? <Button title="Izinkan masuk lagi" size="sm" variant="tonal" loading={sibuk === r.user_id} onPress={() => void izinkan(r.user_id)} /> : null}
+          </View>
+        ))}
+        {tamuDikeluarkan.length > 0 ? <Judul teks={`Tamu dikeluarkan (${tamuDikeluarkan.length})`} /> : null}
+        {tamuDikeluarkan.map((t) => (
+          <View key={t.id} style={[s.baris, { borderTopColor: colors.divider }]}>
+            <Avatar name={t.name ? tanpaAkhiranTamu(t.name) : t.email} size="md" />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text variant="title" numberOfLines={1}>
+                {t.name ? pastikanAkhiranTamu(t.name) : 'Tamu tanpa nama'}
+              </Text>
+              <Text variant="meta">{t.email}</Text>
+            </View>
+            {bisaModerasi ? <Button title="Izinkan masuk lagi" size="sm" variant="tonal" loading={sibuk === t.id} onPress={() => void izinkanTamuLagi(t)} /> : null}
           </View>
         ))}
       </BottomSheet>

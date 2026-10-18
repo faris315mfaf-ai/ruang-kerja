@@ -1,6 +1,7 @@
 import { http } from '@inertiajs/react';
 import { ApiError } from '@/features/tasks/lib/api';
 import videoRoutes from '@/routes/meetings/video';
+import type { GuestAttendee } from '../guests/types';
 import type { Minutes } from '../types';
 import type {
     MinutesCollabToken,
@@ -50,6 +51,8 @@ export class RoomApiError extends ApiError {
         status: number,
         errors: Record<string, string[]>,
         public readonly retryAfter: number | null,
+        /** Machine code of the contract (`status_berubah`, `ditutup` …). */
+        public readonly code: string | null = null,
     ) {
         super(message, status, errors);
     }
@@ -73,6 +76,7 @@ function failure(status: number, data: unknown): ApiError {
         status,
         errors,
         Number.isFinite(retry) && retry > 0 ? retry : null,
+        typeof body?.code === 'string' ? body.code : null,
     );
 }
 
@@ -144,6 +148,7 @@ export type AttendanceRoster = {
     not_joined: NotJoined[];
     late_grace_minutes: number;
     removed?: RemovedParticipant[];
+    guests?: GuestAttendee[];
 };
 
 /**

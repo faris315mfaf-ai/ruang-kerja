@@ -116,6 +116,23 @@ final class RoomEvents
     }
 
     /**
+     * The waiting room of an occurrence changed (a guest asked to join, was
+     * admitted, denied or removed): organizers and invitees refetch the list.
+     * Only counts and the date travel, never names or e-mail addresses.
+     */
+    public function lobbyUpdated(Occurrence $occurrence, int $waiting): void
+    {
+        if (! $this->isVideo($occurrence->meeting)) {
+            return;
+        }
+
+        $this->send($occurrence->meeting->id, 'lobby.updated', [
+            'occurrence_date' => $occurrence->date,
+            'waiting' => $waiting,
+        ]);
+    }
+
+    /**
      * "X sedang menyunting" (minutes without collaboration); null = released.
      *
      * @param  array{user_id: string, name: string, since: string, expires_at: string}|null  $holder

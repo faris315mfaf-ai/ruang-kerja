@@ -158,6 +158,7 @@ describe('scheduling form', () => {
         workspace: 'none',
         leadership: false,
         autoMinutes: false,
+        guestNames: {},
     };
 
     it('accepts a complete form', () => {

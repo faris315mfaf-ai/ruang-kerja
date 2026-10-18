@@ -10,6 +10,7 @@ import type { Participant, Room as LiveRoom } from 'livekit-client';
 import { RoomEvent, Track } from 'livekit-client';
 import {
     Captions,
+    DoorOpen,
     Hand,
     Keyboard,
     MessageSquare,
@@ -52,12 +53,17 @@ import { Spinner } from '@/components/ui/spinner';
 import { ApiError } from '@/features/tasks/lib/api';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { cn } from '@/lib/utils';
+import { guestLabel, resolveGuestRight, waitingLabel } from '../guests/lib';
+import { GuestsSection } from '../guests/guests-section';
+import { LobbyList } from '../guests/lobby-list';
+import { useGuests } from '../guests/use-guests';
+import { useLobby } from '../guests/use-lobby';
 import { useNow } from '../meetings-context';
 import { ConsentCard, LiveChip, useConsent } from '../notulen/consent';
 import type { AttendanceRoster } from './api';
 import { RoomApiError, videoApi } from './api';
 import type { Room } from './contract';
-import { attendanceRows, navigatorSections } from './contract';
+import { attendanceRows, initialsOf, navigatorSections } from './contract';
 import {
     elapsedClock,
     isMacPlatform,
@@ -71,10 +77,12 @@ import type { DocPresence } from './room-doc';
 import { docAnchor, MinutesDoc } from './room-doc';
 import type { MinutesSync } from './room-minutes';
 import { MinutesProvider, useRoomMinutes } from './room-minutes';
-import { emitRoomNotice, useRoomNotices } from './room-notices';
+import { emitRoomNotice } from './room-notices';
+import { Notices } from './room-notices-view';
 import type { PanelKind } from './room-panels';
 import { ChatPanel, SettingsPanel, SidePanel } from './room-panels';
 import {
+    personOfParticipant,
     resolvePerson,
     RoomPeopleProvider,
     useRoomPeople,
@@ -168,34 +176,6 @@ function useSetOwnAttributes(room: Room) {
 // Leaves: each subscribes to what it shows, so the room does not re-render
 // as a whole on every speaker, attribute or clock tick (audit §4).
 // ---------------------------------------------------------------------------
-
-function Notices() {
-    const notices = useRoomNotices();
-
-    return (
-        <ul
-            aria-live="polite"
-            className="pointer-events-none absolute inset-x-0 top-3 z-30 flex flex-col items-center gap-2 px-3"
-        >
-            {notices.map((notice) => (
-                <li
-                    key={notice.id}
-                    className={cn(
-                        'inline-flex max-w-full items-center gap-2 rounded-full px-4 py-2 text-[14px] font-semibold shadow-inverse',
-                        notice.tone === 'error'
-                            ? 'bg-danger text-on-danger'
-                            : 'bg-room-bar text-on-room-bar',
-                    )}
-                >
-                    {notice.tone === 'hand' && (
-                        <Hand aria-hidden className="size-4" />
-                    )}
-                    {notice.text}
-                </li>
-            ))}
-        </ul>
-    );
-}
 
 /** "00:18:42" since the meeting started (its own 1 s tick). */
 function RoomClock({ startsAt }: { startsAt: string }) {
@@ -316,7 +296,7 @@ function NotesAvatarsLive() {
     );
     const present = participants
         .filter((p) => !isAgent(p.identity))
-        .map((p) => resolvePerson(people, p.identity));
+        .map((p) => personOfParticipant(people, p, false));
 
     return (
         <div className="flex shrink-0 items-center gap-1.5 px-4 pt-3 pb-3">
@@ -331,7 +311,8 @@ function NotesAvatarsLive() {
                     )}
                     aria-hidden
                 >
-                    {people.get(person.id)?.initials ?? '?'}
+                    {people.get(person.id)?.initials ??
+                        (person.known ? initialsOf(person.plain_name) : '?')}
                 </span>
             ))}
             {present.length > 5 && (
@@ -341,7 +322,7 @@ function NotesAvatarsLive() {
             )}
             <span className="ml-1 truncate text-[13px] text-text-muted">
                 {speaking
-                    ? `${resolvePerson(people, speaking.identity).first_name} bicara`
+                    ? `${personOfParticipant(people, speaking, false).first_name} bicara`
                     : `${present.length} di ruang`}
             </span>
         </div>
@@ -656,6 +637,8 @@ type BarProps = {
     setCaptionsOn: Dispatch<SetStateAction<boolean>>;
     autoMinutes: boolean;
     tablet: boolean;
+    /** Guests waiting to be admitted (0 hides the key). */
+    lobbyCount: number;
     onShortcuts: () => void;
     onLeave: () => void;
     /** POST { raised } — the server sets the `hand` attribute (R-05). */
@@ -673,6 +656,7 @@ function BarLive({
     setCaptionsOn,
     autoMinutes,
     tablet,
+    lobbyCount,
     onShortcuts,
     onLeave,
     handUrl,
@@ -826,6 +810,12 @@ function BarLive({
                     </BarKey>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="center" side="top" className="w-64">
+                    {lobbyCount > 0 && (
+                        <DropdownMenuItem onSelect={() => setPanel('lobby')}>
+                            <DoorOpen aria-hidden />
+                            Tamu menunggu ({lobbyCount})
+                        </DropdownMenuItem>
+                    )}
                     {(mobile || tablet) && (
                         <>
                             <DropdownMenuItem
@@ -920,6 +910,16 @@ function BarLive({
                 </BarKey>
             )}
             {keys.chat}
+            {(lobbyCount > 0 || panel === 'lobby') && (
+                <BarKey
+                    label="Tamu menunggu"
+                    active={panel === 'lobby'}
+                    badge={lobbyCount}
+                    onClick={() => toggle('lobby')}
+                >
+                    <DoorOpen aria-hidden />
+                </BarKey>
+            )}
             <BarKey
                 label="Kehadiran"
                 shortcut={shortcutLabel('toggle-people', isMac)}
@@ -974,6 +974,7 @@ export function ConnectedRoom({
         not_joined: room.video.not_joined ?? [],
         late_grace_minutes: room.video.late_grace_minutes ?? 2,
         removed: room.video.removed ?? [],
+        guests: room.video.guests ?? [],
     }));
     const [calling, setCalling] = useState<Set<string>>(new Set());
     const minutesSync: MinutesSync = useRef(null);
@@ -986,6 +987,33 @@ export function ConnectedRoom({
     const nameOf = (identity: string) => resolvePerson(people, identity).name;
 
     const chat = useChat();
+
+    // External guests: the waiting room (anyone invited may admit) and, for
+    // the organizer, the guest list with statuses (lets removed guests back).
+    const lobby = useLobby({
+        meetingId: room.meeting.id,
+        date: room.meeting.occurrence_date,
+        enabled:
+            room.video.can_join &&
+            resolveGuestRight(room.can.manage_lobby, true),
+        realtime: room.features.realtime && Boolean(room.channel),
+        onNew: (entries) =>
+            emitRoomNotice(
+                entries.length === 1
+                    ? `${guestLabel(entries[0])} menunggu diizinkan masuk`
+                    : `${entries.length} tamu menunggu diizinkan masuk`,
+            ),
+    });
+    // Server flag (MeetingPolicy::manageGuests); an older server: whoever moderates.
+    const canManageGuests = resolveGuestRight(
+        room.can.manage_guests,
+        room.can.moderate,
+    );
+    const guestList = useGuests({
+        meetingId: room.meeting.id,
+        date: room.meeting.occurrence_date,
+        enabled: canManageGuests,
+    });
     const screen =
         useTracks(
             [{ source: Track.Source.ScreenShare, withPlaceholder: false }],
@@ -1034,6 +1062,7 @@ export function ConnectedRoom({
             },
             onAttendance: setRoster,
             onSpeaking: talk.apply,
+            onLobby: lobby.reload,
             onEditing: setEditingHolder,
             onReadmitted: (userId) =>
                 setRoster((current) => ({
@@ -1063,7 +1092,8 @@ export function ConnectedRoom({
 
     // Join / leave / raised hand notices (names from the server list).
     useEffect(() => {
-        const name = (p: Participant) => resolvePerson(people, p.identity).name;
+        const name = (p: Participant) =>
+            personOfParticipant(people, p, false).name;
         const onJoin = (p: Participant) =>
             !isAgent(p.identity) && emitRoomNotice(`${name(p)} bergabung`);
         const onLeft = (p: Participant) =>
@@ -1142,7 +1172,7 @@ export function ConnectedRoom({
             )
             .then(() =>
                 emitRoomNotice(
-                    `Mikrofon ${nameOf(participant.identity)} dimatikan.`,
+                    `Mikrofon ${personOfParticipant(people, participant, false).name} dimatikan.`,
                 ),
             )
             .catch((error: Error) => emitRoomNotice(error.message, 'error'));
@@ -1155,10 +1185,30 @@ export function ConnectedRoom({
             )
             .then(() =>
                 emitRoomNotice(
-                    `${nameOf(participant.identity)} dikeluarkan dari rapat.`,
+                    `${personOfParticipant(people, participant, false).name} dikeluarkan dari rapat.`,
                 ),
             )
             .catch((error: Error) => emitRoomNotice(error.message, 'error'));
+
+    const decideGuest = (id: string, admit: boolean) =>
+        (admit ? lobby.admit(id) : lobby.deny(id)).then((message) => {
+            if (message) {
+                emitRoomNotice(message, 'error');
+            }
+        });
+    const admitGuestAgain = (guestId: string) =>
+        guestList
+            .decide(guestId, true)
+            .then(() => {
+                emitRoomNotice('Tamu boleh masuk lagi.');
+
+                return null;
+            })
+            .catch((error: Error) => {
+                emitRoomNotice(error.message, 'error');
+
+                return error.message;
+            });
 
     const readmit = (userId: string) => {
         if (!room.links.readmit) {
@@ -1196,6 +1246,7 @@ export function ConnectedRoom({
         chat: 'Obrolan',
         settings: 'Setelan',
         talk: 'Waktu bicara',
+        lobby: 'Tamu menunggu',
     };
     const panelBody = (kind: PanelKind): ReactNode =>
         kind === 'attendance' ? (
@@ -1211,6 +1262,30 @@ export function ConnectedRoom({
                     onMute={mute}
                     onRemove={remove}
                     onReadmit={room.links.readmit ? readmit : null}
+                    extra={
+                        <GuestsSection
+                            attended={roster.guests ?? []}
+                            invited={
+                                canManageGuests && !guestList.forbidden
+                                    ? guestList.guests
+                                    : null
+                            }
+                            canModerate={room.can.moderate}
+                            onMute={mute}
+                            onRemove={remove}
+                            onAdmitAgain={admitGuestAgain}
+                        />
+                    }
+                />
+            </div>
+        ) : kind === 'lobby' ? (
+            <div className="min-h-0 flex-1 overflow-y-auto px-[18px] pb-[18px]">
+                <LobbyList
+                    waiting={lobby.waiting}
+                    busy={lobby.busy}
+                    error={lobby.error}
+                    onAdmit={(id) => void decideGuest(id, true)}
+                    onDeny={(id) => void decideGuest(id, false)}
                 />
             </div>
         ) : kind === 'chat' ? (
@@ -1253,6 +1328,7 @@ export function ConnectedRoom({
             setCaptionsOn={setCaptionsOn}
             autoMinutes={autoMinutes}
             tablet={breakpoint === 'tablet'}
+            lobbyCount={lobby.count}
             onShortcuts={() => setShortcutsOpen(true)}
             onLeave={onLeave}
             handUrl={room.links.hand}
@@ -1305,11 +1381,27 @@ export function ConnectedRoom({
             notesUnseen={notesUnseen}
             stage={<MobileStageLive screen={screen} />}
             chip={
-                <LiveChip
-                    autoMinutes={autoMinutes}
-                    subtitles={captionsAvailable}
-                    className="mx-4 mt-2 self-start"
-                />
+                <>
+                    <LiveChip
+                        autoMinutes={autoMinutes}
+                        subtitles={captionsAvailable}
+                        className="mx-4 mt-2 self-start"
+                    />
+                    {lobby.count > 0 && panel !== 'lobby' && (
+                        <button
+                            type="button"
+                            onClick={() => setPanel('lobby')}
+                            className="mx-4 mt-2 flex min-h-11 items-center gap-2 self-stretch rounded-control bg-warning-soft px-3.5 text-left text-[15px] font-semibold text-warning outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
+                            data-testid="lobby-banner"
+                        >
+                            <DoorOpen aria-hidden className="size-5 shrink-0" />
+                            <span className="flex-1">
+                                {waitingLabel(lobby.count)}
+                            </span>
+                            <span className="font-bold">Lihat</span>
+                        </button>
+                    )}
+                </>
             }
             doc={
                 <DocLive

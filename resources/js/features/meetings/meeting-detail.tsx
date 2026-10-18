@@ -28,6 +28,8 @@ import {
     shortDate,
     timeRange,
 } from './lib';
+import { GuestPanel } from './guests/guest-panel';
+import { resolveGuestRight } from './guests/lib';
 import { MeetingStartNotice } from './meeting-notice';
 import { NotulenCard } from './notulen/notulen-card';
 import { useMeetingsContext, useNow } from './meetings-context';
@@ -112,6 +114,11 @@ export function useMeetingDetail(
         meeting,
         participants,
         can: props.can,
+        // Server flag (MeetingPolicy::manageGuests); an older server falls back to organizer.
+        canManageGuests: resolveGuestRight(
+            props.can.manage_guests,
+            meeting.organizer_id === props.viewer_id,
+        ),
         rsvp,
         answer,
         cancel,
@@ -232,7 +239,7 @@ export function ParticipantList({
                             <span className="truncate text-[14px] text-text-muted">
                                 {person
                                     ? person.title || person.division
-                                    : 'Tamu eksternal · undangan email ditahan'}
+                                    : 'Tamu eksternal · masuk lewat tautan pribadi'}
                                 {participant.optional ? ' · opsional' : ''}
                             </span>
                         </span>
@@ -382,7 +389,7 @@ export function MeetingDetailDesktop({
     data: MeetingDetailData;
     isTablet: boolean;
 }) {
-    const { meeting, now, actions } = data;
+    const { meeting, now, actions, canManageGuests } = data;
     const { people, me } = useMeetingsContext();
     const isParticipant = data.can.respond;
 
@@ -461,6 +468,14 @@ export function MeetingDetailDesktop({
                                 copied={actions.copied}
                             />
                             <VideoAttendancePanel video={data.video} />
+                            {canManageGuests && (
+                                <GuestPanel
+                                    meetingId={meeting.id}
+                                    date={meeting.occurrence_date}
+                                    now={now}
+                                    canceled={meeting.canceled}
+                                />
+                            )}
                             <NotulenCard
                                 meetingId={meeting.id}
                                 date={meeting.occurrence_date}
@@ -633,7 +648,7 @@ function JoinCard({
 
 /** /rapat/{id} on phones (design MRapatDetail). */
 export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
-    const { meeting, now, actions } = data;
+    const { meeting, now, actions, canManageGuests } = data;
     const { people, me } = useMeetingsContext();
     const [allPeople, setAllPeople] = useState(false);
     const counts = rsvpCounts({ ...meeting, participants: data.participants });
@@ -728,6 +743,14 @@ export function MeetingDetailMobile({ data }: { data: MeetingDetailData }) {
                 </ol>
             </section>
             <VideoAttendancePanel video={data.video} />
+            {meeting.platform === 'video' && canManageGuests && (
+                <GuestPanel
+                    meetingId={meeting.id}
+                    date={meeting.occurrence_date}
+                    now={now}
+                    canceled={meeting.canceled}
+                />
+            )}
             {meeting.platform === 'video' && (
                 <NotulenCard
                     meetingId={meeting.id}

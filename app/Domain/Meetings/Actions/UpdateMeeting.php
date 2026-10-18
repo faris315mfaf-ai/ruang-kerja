@@ -3,6 +3,7 @@
 namespace App\Domain\Meetings\Actions;
 
 use App\Domain\Meetings\Enums\Rsvp;
+use App\Domain\Meetings\Guests\Services\GuestLinks;
 use App\Domain\Meetings\Jobs\DisconnectUninvited;
 use App\Domain\Meetings\Notifications\MeetingInvitedNotification;
 use App\Domain\Meetings\Services\MeetingParticipants;
@@ -24,6 +25,7 @@ final class UpdateMeeting
     public function __construct(
         private readonly MeetingParticipants $participants,
         private readonly AuditLogger $audit,
+        private readonly GuestLinks $links,
     ) {}
 
     /**
@@ -52,7 +54,10 @@ final class UpdateMeeting
             $added = $this->participants->sync($meeting, [
                 ...$input['participant_ids'],
                 ...($meeting->minute_taker_id !== null ? [$meeting->minute_taker_id] : []),
-            ], $input['guest_emails'] ?? []);
+            ], $input['guest_emails'] ?? [], $input['guest_names'] ?? []);
+
+            // A moved meeting: guest links follow the new schedule.
+            $this->links->refreshExpiry($meeting);
 
             if ($moved) {
                 MeetingParticipant::query()

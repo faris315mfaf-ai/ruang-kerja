@@ -1,5 +1,14 @@
 # Sesi claude
 
+**Terakhir diperbarui:** 16 Okt 2026 · branch `claude/rapat-tamu-eksternal` (dari `claude/android-bagian-5`, belum push, belum deploy)
+
+## Tamu eksternal rapat video (16 Okt 2026)
+- Backend + web + aplikasi Android selesai; kontrak: `docs/sesi/rapat-tamu-eksternal.md`. Tautan pribadi `https://<host>/tamu/{token}` (token HMAC, tidak disimpan), ruang tunggu (penyelenggara/notulis/peserta internal mengizinkan), undangan hanya salin tautan, hak tamu video/suara/layar/obrolan, tamu tidak ditranskrip.
+- Teruji nyata: `tests/e2e/rapat-tamu-eksternal.mjs` (dua peramban + LiveKit lokal): tambah tamu → minta masuk → izinkan → saling terlihat (label "Tamu") → tamu 401/404 ke data aplikasi → keluarkan (token baru 403) → cabut (info 404). Pest 1.053 lulus, vp check/tsc/eslint hijau. UI aplikasi belum dicoba di emulator.
+- Sisa: flag `can.manage_guests`/`can.manage_lobby` dan id/nama tamu di detail rapat (klien sekarang menurunkan hak dari peran), paragraf privasi data tamu (versi belum diubah), retensi `meeting_attendances` tamu, migrasi `2026_10_22_100000` + APK baru wajib saat deploy.
+
+---
+
 **Terakhir diperbarui:** 13 Okt 2026 (malam) · Claude Code — batch 14 Okt di `claude/android-bagian-5` (belum push/deploy)
 
 ## 14 Okt siang — push notifikasi + widget (belum push/deploy)

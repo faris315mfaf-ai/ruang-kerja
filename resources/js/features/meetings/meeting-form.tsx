@@ -49,6 +49,53 @@ const PLATFORMS: { value: FormPlatform; hint: string }[] = [
     { value: 'client', hint: 'alamat klien' },
 ];
 
+/**
+ * Optional display name per external guest. The name pre-fills the guest's
+ * name field on their link page; the personal link itself shows up on the
+ * meeting's detail page after saving (no e-mail is sent to guests).
+ */
+function GuestNames({
+    form,
+    idPrefix,
+    video,
+}: {
+    form: MeetingForm;
+    idPrefix: string;
+    video: boolean;
+}) {
+    return (
+        <fieldset className="flex flex-col gap-3 rounded-lg bg-surface-2 p-4">
+            <legend className="sr-only">Tamu eksternal</legend>
+            <p className="text-[14px] leading-5 text-text-muted">
+                {video
+                    ? 'Tamu eksternal masuk lewat tautan pribadi tanpa akun. Setelah disimpan, salin tautannya dari halaman detail rapat dan kirim sendiri; tidak ada email otomatis.'
+                    : 'Tautan tamu hanya tersedia untuk Video RuangKerja. Alamat email ini disimpan sebagai daftar tamu saja.'}
+            </p>
+            {form.guests.map((email, index) => (
+                <div key={email} className="flex flex-col gap-1.5">
+                    <Label htmlFor={`${idPrefix}-${index}`}>
+                        Nama untuk {email}{' '}
+                        <span className="font-medium text-text-muted">
+                            (opsional)
+                        </span>
+                    </Label>
+                    <Input
+                        id={`${idPrefix}-${index}`}
+                        value={form.values.guestNames[email] ?? ''}
+                        maxLength={80}
+                        autoComplete="off"
+                        placeholder="Mis. Budi Santoso"
+                        onChange={(event) =>
+                            form.setGuestName(email, event.target.value)
+                        }
+                        className="h-12 bg-surface md:h-11"
+                    />
+                </div>
+            ))}
+        </fieldset>
+    );
+}
+
 function FieldError({ id, message }: { id: string; message?: string }) {
     return message ? (
         <p id={id} className="text-[14px] font-semibold text-danger">
@@ -393,6 +440,13 @@ export function MeetingFormFields({ form }: { form: MeetingForm }) {
                     id={err('participants')}
                     message={errors.participants}
                 />
+                {form.guests.length > 0 && (
+                    <GuestNames
+                        form={form}
+                        idPrefix={fid('guest-name')}
+                        video={values.platform === 'video'}
+                    />
+                )}
             </div>
 
             <fieldset
@@ -875,7 +929,9 @@ export function MeetingSummary({ form }: { form: MeetingForm }) {
             <p className="text-[14px] text-text-muted">
                 Undangan masuk ke Inbox RuangKerja dan email peserta internal.
                 {guests.length > 0 &&
-                    ' Tamu eksternal belum menerima email: undangan kalender Google ditahan.'}
+                    (values.platform === 'video'
+                        ? ' Tamu eksternal tidak menerima email: salin tautan pribadi tiap tamu dari detail rapat setelah disimpan.'
+                        : ' Tamu eksternal belum menerima email: undangan kalender Google ditahan.')}
             </p>
         </div>
     );

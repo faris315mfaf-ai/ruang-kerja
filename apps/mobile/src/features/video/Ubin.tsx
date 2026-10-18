@@ -7,6 +7,7 @@ import { VideoTrack, type TrackReference } from '@livekit/react-native';
 import { Track, type Participant } from 'livekit-client';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { namaDepanTamu, pastikanAkhiranTamu, tanpaAkhiranTamu } from '@/features/rapat/tamu';
 import { radius, useTheme } from '@/theme';
 import { Avatar, Icon, Pressable, Text } from '@/ui';
 
@@ -19,6 +20,8 @@ export interface UbinProps {
   layar?: boolean;
   berbicara?: boolean;
   tangan?: boolean;
+  /** Tamu eksternal (identitas `guest:*`): selalu berlencana "Tamu", avatar tanpa akhiran. */
+  tamu?: boolean;
   /** Kamera depan sendiri dicerminkan. */
   cermin?: boolean;
   onPress?: () => void;
@@ -34,11 +37,20 @@ function refVideo(p: Participant, layar: boolean): TrackReference | null {
   return { participant: p, publication: pub, source };
 }
 
-export function Ubin({ participant, nama, besar = false, layar = false, berbicara = false, tangan = false, cermin = false, onPress, style }: UbinProps): React.JSX.Element {
+export function Ubin({ participant, nama, besar = false, layar = false, berbicara = false, tangan = false, tamu = false, cermin = false, onPress, style }: UbinProps): React.JSX.Element {
   const { colors } = useTheme();
   const ref = refVideo(participant, layar);
   const micMati = !participant.isMicrophoneEnabled;
-  const label = participant.isLocal ? `${nama.split(/\s+/)[0] ?? nama} (Anda)` : besar ? nama : (nama.split(/\s+/)[0] ?? nama);
+  const label = participant.isLocal
+    ? `${nama.split(/\s+/)[0] ?? nama} (Anda)`
+    : tamu
+      ? // Nama depan saja terlalu pendek untuk ubin kecil: lencana "Tamu" tidak boleh hilang.
+        besar
+        ? pastikanAkhiranTamu(nama)
+        : `${namaDepanTamu(nama)} (Tamu)`
+      : besar
+        ? nama
+        : (nama.split(/\s+/)[0] ?? nama);
 
   const isi = (
     <View
@@ -51,7 +63,7 @@ export function Ubin({ participant, nama, besar = false, layar = false, berbicar
         <VideoTrack trackRef={ref} style={StyleSheet.absoluteFill} objectFit={layar ? 'contain' : 'cover'} mirror={cermin} zOrder={besar ? 0 : 1} />
       ) : (
         <View style={s.tengah}>
-          <Avatar name={nama} size={besar ? 'lg' : 'md'} />
+          <Avatar name={tamu ? tanpaAkhiranTamu(nama) : nama} size={besar ? 'lg' : 'md'} />
         </View>
       )}
       {tangan ? (
@@ -62,13 +74,13 @@ export function Ubin({ participant, nama, besar = false, layar = false, berbicar
       <View style={[s.chip, { backgroundColor: colors.roomCaption }]}>
         {micMati ? <Icon name="mic-off" size={14} color={colors.roomOnCaption} /> : null}
         <Text variant="meta" weight={600} numberOfLines={1} style={{ color: colors.roomOnCaption, flexShrink: 1 }}>
-          {layar ? `Layar ${nama.split(/\s+/)[0] ?? nama}` : label}
+          {layar ? `Layar ${tamu ? namaDepanTamu(nama) : (nama.split(/\s+/)[0] ?? nama)}` : label}
         </Text>
       </View>
     </View>
   );
 
-  const a11y = `${nama}${participant.isLocal ? ' (Anda)' : ''}${micMati ? ', mikrofon mati' : ''}${ref ? '' : ', kamera mati'}${tangan ? ', tangan terangkat' : ''}${berbicara ? ', sedang berbicara' : ''}`;
+  const a11y = `${tamu ? pastikanAkhiranTamu(nama) : nama}${participant.isLocal ? ' (Anda)' : ''}${micMati ? ', mikrofon mati' : ''}${ref ? '' : ', kamera mati'}${tangan ? ', tangan terangkat' : ''}${berbicara ? ', sedang berbicara' : ''}`;
   if (onPress) {
     return (
       <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={a11y} accessibilityHint="Buka pilihan peserta" scaleTo={0.98} style={[s.akar, style]}>

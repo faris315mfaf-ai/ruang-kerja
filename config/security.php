@@ -110,7 +110,7 @@ return [
     // Audit R-14: Permissions-Policy is per document, so the microphone and
     // screen capture are denied everywhere and granted only on the video
     // documents (SecurityHeaders picks `permissions_policy_meetings` for
-    // /rapat/{id}/gabung and /rapat/{id}/ruang). Camera stays global: the
+    // /rapat/{id}/gabung, /rapat/{id}/ruang and the external guest page /tamu/{token}). Camera stays global: the
     // attendance selfie and the kiosk QR scan use it (use-camera).
     'permissions_policy' => 'camera=(self), geolocation=(self), microphone=(), display-capture=(), payment=(), usb=(), browsing-topics=()',
 

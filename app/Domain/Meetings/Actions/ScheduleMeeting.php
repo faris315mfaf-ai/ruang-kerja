@@ -17,15 +17,16 @@ use Illuminate\Support\Facades\DB;
  * already said yes, the minute taker is invited too, and every other
  * internal participant receives an invitation (in-app + e-mail per their
  * preferences). Conflicts are a warning in the form, never a refusal.
- * External guests are stored; their invitation e-mail comes with the Google
- * Calendar integration (on hold).
+ * External guests (video meetings) are stored with a personal link the
+ * organizer copies from the guest list; the app sends no e-mail to guests
+ * (docs/sesi/rapat-tamu-eksternal.md).
  *
  * @phpstan-type MeetingInput array{
  *     title: string, description?: string|null, starts_at: CarbonImmutable, ends_at: CarbonImmutable,
  *     platform: MeetingPlatform, location?: string|null, join_url?: string|null,
  *     minute_taker_id?: string|null, workspace_id?: string|null, agenda: list<string>,
  *     recurrence: Recurrence, recurrence_until?: string|null, reminders: list<int>, leadership?: bool, auto_minutes?: bool,
- *     participant_ids: list<string>, guest_emails?: list<string>
+ *     participant_ids: list<string>, guest_emails?: list<string>, guest_names?: array<string, string|null>
  * }
  */
 final class ScheduleMeeting
@@ -51,7 +52,7 @@ final class ScheduleMeeting
                 ...$input['participant_ids'],
                 ...($meeting->minute_taker_id !== null ? [$meeting->minute_taker_id] : []),
             ]);
-            $this->participants->addGuests($meeting, $input['guest_emails'] ?? []);
+            $this->participants->addGuests($meeting, $input['guest_emails'] ?? [], $input['guest_names'] ?? []);
 
             return $meeting;
         });
