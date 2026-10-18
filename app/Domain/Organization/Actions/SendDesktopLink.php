@@ -4,6 +4,7 @@ namespace App\Domain\Organization\Actions;
 
 use App\Domain\Organization\Mail\DesktopLinkMail;
 use App\Domain\Organization\Services\AuditLogger;
+use App\Domain\Tenancy\Support\CompanyBranding;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 
@@ -20,7 +21,7 @@ final class SendDesktopLink
     {
         $url = rtrim(config()->string('app.url'), '/').$path;
 
-        Mail::to($user->email)->queue(new DesktopLinkMail($user->name, $url));
+        Mail::to($user->email)->queue(new DesktopLinkMail($user->name, $url, CompanyBranding::name(recipient: $user)));
 
         $this->audit->log('account.desktop_link_sent', $user, null, ['path' => $path], $user);
 
