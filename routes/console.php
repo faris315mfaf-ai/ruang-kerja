@@ -16,6 +16,8 @@ use App\Domain\Projects\Jobs\TakeProjectProgressSnapshots;
 use App\Domain\Reports\Jobs\SendDailyReportReminders;
 use App\Domain\Tenancy\Scheduling\CompanySchedule;
 use App\Domain\Tenancy\Scheduling\LocalTask;
+use App\Models\Company;
+use Carbon\CarbonImmutable;
 use Illuminate\Console\Scheduling\CallbackEvent;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -70,7 +72,8 @@ $perCompany($companies->daily('tasks:notify-deadlines', '07:00', fn () => Artisa
 Schedule::command('employee-imports:prune')->hourly()->withoutOverlapping();
 
 // Sprint 9 — project tracking: burn-up snapshot 23.55 (of the company's office date), PIC reminder Friday 15.00.
-$perCompany($companies->daily(TakeProjectProgressSnapshots::class, '23:55', fn () => TakeProjectProgressSnapshots::dispatch()));
+// The office date of the run, also when catching up after midnight (LocalTask::dueTarget).
+$perCompany($companies->daily(TakeProjectProgressSnapshots::class, '23:55', fn (Company $company, CarbonImmutable $target) => TakeProjectProgressSnapshots::dispatch($target->toDateString())));
 $perCompany($companies->daily(SendProjectUpdateReminders::class, '15:00', fn () => SendProjectUpdateReminders::dispatch())->weeklyOn(5));
 
 // F3-3 — OKR: weekly key result check-in reminder, Friday 15.00.

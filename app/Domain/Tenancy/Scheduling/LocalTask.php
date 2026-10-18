@@ -13,6 +13,11 @@ use Closure;
  * that was down still catches up, a deploy in the evening does not send the
  * morning reminders again), and not yet claimed for that local date.
  *
+ * The catch-up window may cross local midnight: a 23:55 task whose scheduler
+ * was down from 23:50 to 00:20 still runs at 00:20 for the previous date
+ * (dueTarget() = yesterday 23:55). The claim, the day filter and the work use
+ * that target, not the current date.
+ *
  * Invokable: the callback of its Schedule::call() event in routes/console.php.
  */
 final class LocalTask
@@ -25,7 +30,8 @@ final class LocalTask
     private ?Closure $days = null;
 
     /**
-     * @param  Closure(Company): mixed  $work  runs inside the company's CompanyContext
+     * @param  Closure(Company, CarbonImmutable): mixed  $work  runs inside the company's CompanyContext;
+     *                                                          receives the target local time (dueTarget())
      */
     public function __construct(
         public readonly string $name,
@@ -79,11 +85,27 @@ final class LocalTask
      */
     public function isDueAt(CarbonImmutable $local): bool
     {
-        $scheduled = $local->setTimeFromTimeString($this->at);
+        return $this->dueTarget($local) !== null;
+    }
 
-        return $local->greaterThanOrEqualTo($scheduled)
-            && $scheduled->diffInMinutes($local) <= $this->catchUpMinutes
-            && ($this->days === null || ($this->days)($local));
+    /**
+     * The scheduled local time the task is due for at $local: today's, or
+     * yesterday's while its catch-up window runs past midnight. The day
+     * filter is evaluated on that target. Null = not due.
+     */
+    public function dueTarget(CarbonImmutable $local): ?CarbonImmutable
+    {
+        foreach ([0, 1] as $daysBack) {
+            $target = $local->subDays($daysBack)->setTimeFromTimeString($this->at);
+
+            if ($local->greaterThanOrEqualTo($target)
+                && $target->diffInMinutes($local) <= $this->catchUpMinutes
+                && ($this->days === null || ($this->days)($target))) {
+                return $target;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -92,8 +114,8 @@ final class LocalTask
      * takes its unique lock) when destroyed, which must happen here, not after
      * the context is restored.
      */
-    public function perform(Company $company): void
+    public function perform(Company $company, CarbonImmutable $target): void
     {
-        ($this->work)($company);
+        ($this->work)($company, $target);
     }
 }

@@ -18,8 +18,9 @@ use Throwable;
  * minutes (`Schedule::call($task)`); runDue() then, for every company:
  *
  * 1. takes the company's local time (companies.timezone);
- * 2. skips it unless the task is due (LocalTask::isDueAt);
- * 3. claims (task, company, local date) in `scheduled_runs` — an atomic
+ * 2. skips it unless the task is due (LocalTask::dueTarget: today's local
+ *    time, or yesterday's while a catch-up window crosses midnight);
+ * 3. claims (task, company, target local date) in `scheduled_runs` — an atomic
  *    INSERT … ON CONFLICT DO NOTHING, so overlapping runs or several servers
  *    run it once per company and office date;
  * 4. runs the work inside the company's CompanyContext (jobs dispatched there
@@ -37,7 +38,7 @@ final class CompanySchedule
     private array $tasks = [];
 
     /**
-     * @param  Closure(Company): mixed  $work
+     * @param  Closure(Company, CarbonImmutable): mixed  $work  (company, target local time)
      */
     public function daily(string $name, string $at, Closure $work): LocalTask
     {
@@ -69,19 +70,20 @@ final class CompanySchedule
         $ran = [];
 
         foreach (ForEachCompany::companies() as $company) {
-            $local = $now->setTimezone(OfficeTimezone::of($company));
+            $target = $task->dueTarget($now->setTimezone(OfficeTimezone::of($company)));
 
-            if (! $task->isDueAt($local) || ! $this->claim($task, $company, $local->toDateString())) {
+            // Claimed for the target's local date (yesterday's when catching up past midnight).
+            if ($target === null || ! $this->claim($task, $company, $target->toDateString())) {
                 continue;
             }
 
             try {
-                $context->run($company, function () use ($task, $company): void {
-                    $task->perform($company);
+                $context->run($company, function () use ($task, $company, $target): void {
+                    $task->perform($company, $target);
                 });
                 $ran[] = $company->id;
             } catch (Throwable $e) {
-                $this->release($task, $company, $local->toDateString());
+                $this->release($task, $company, $target->toDateString());
                 report($e);
             }
         }

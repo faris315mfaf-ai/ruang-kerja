@@ -8,6 +8,7 @@ use App\Domain\Attendance\Models\ShiftAssignment;
 use App\Domain\Attendance\Notifications\CheckInReminderNotification;
 use App\Domain\Notifications\Digest\DailyDigestMail;
 use App\Domain\Organization\Enums\Role;
+use App\Domain\Projects\Jobs\TakeProjectProgressSnapshots;
 use App\Domain\Reports\Jobs\SendDailyReportReminders;
 use App\Domain\Reports\Notifications\DailyReportReminder;
 use App\Domain\Tasks\Actions\CreateTask;
@@ -216,4 +217,49 @@ test('close-day, check-in reminders, digest, deadlines and daily reports follow 
     foreach ($companies as $world) {
         expect($happened($world))->toBe(['close-day' => 1, 'check-in' => 1, 'digest' => 1, 'deadline' => 1, 'report' => 1]);
     }
+});
+
+test('a catch-up window crosses local midnight: the 23.55 snapshot of yesterday is still taken once', function () {
+    $company = Company::factory()->create(['timezone' => 'Asia/Jakarta']);
+    $project = CompanyFactory::within($company, fn () => Workspace::factory()->project()->create(['project_status' => 'active']));
+    $snapshot = app(CompanySchedule::class)->task(TakeProjectProgressSnapshots::class) ?? throw new RuntimeException('Tugas snapshot tidak terdaftar.');
+    $morning = [];
+    $pagi = app(CompanySchedule::class)->daily('uji:pagi-tengah-malam', '07:00', function (Company $company, CarbonImmutable $target) use (&$morning): void {
+        $morning[] = $target->toDateString();
+    });
+    $at = function (string $local) use ($snapshot, $pagi): void {
+        $this->travelTo(CarbonImmutable::parse($local, 'Asia/Jakarta'));
+        $snapshot();
+        $pagi();
+    };
+    $dates = fn (): array => DB::table('project_progress_snapshots')->where('workspace_id', $project->id)->orderBy('date')->pluck('date')
+        ->map(fn ($date): string => substr((string) $date, 0, 10))->all();
+
+    // Scheduler down from 23.50 to 00.20: the run at 00.20 is for Tuesday 20 Oct.
+    $at('2026-10-20 23:50');
+    expect($dates())->toBe([]);
+    $at('2026-10-21 00:20');
+    $at('2026-10-21 00:25');
+    $at('2026-10-21 01:00');
+
+    expect($dates())->toBe(['2026-10-20'])
+        ->and(DB::table('scheduled_runs')->where('task', TakeProjectProgressSnapshots::class)->pluck('local_date')->map(fn ($date): string => substr((string) $date, 0, 10))->all())->toBe(['2026-10-20'])
+        // A 07.00 task is not pulled into the previous day after midnight.
+        ->and($morning)->toBe([]);
+
+    $at('2026-10-21 07:00');
+    $at('2026-10-21 23:55');
+    $at('2026-10-22 00:05');
+
+    expect($dates())->toBe(['2026-10-20', '2026-10-21'])
+        ->and($morning)->toBe(['2026-10-21']);
+});
+
+test('the day filter is checked on the target day when catching up past midnight', function () {
+    $friday = app(CompanySchedule::class)->daily('uji:jumat-malam', '23:55', fn () => null)->weeklyOn(5);
+    $saturday = CarbonImmutable::parse('2026-10-24 00:10', 'Asia/Jakarta');
+
+    expect($friday->dueTarget($saturday)?->format('Y-m-d H:i'))->toBe('2026-10-23 23:55')
+        ->and($friday->isDueAt($saturday->setTime(23, 55)))->toBeFalse()
+        ->and($friday->isDueAt(CarbonImmutable::parse('2026-10-24 02:00', 'Asia/Jakarta')))->toBeFalse();
 });
