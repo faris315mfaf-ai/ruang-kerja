@@ -111,6 +111,19 @@ final class DashboardAccess
         return DashboardView::Personal;
     }
 
+    /**
+     * Whether `/dashboard` sends this user to Ruang HR (/hr, keputusan pemilik
+     * 20 Okt 2026): the default view is HR. Role and permission checks only
+     * (no query), so the shared `auth.home` prop stays cheap.
+     */
+    public function landsOnHrHub(User $user): bool
+    {
+        return $user->isActive()
+            && $user->hasRole(Role::Hr)
+            && ! ($user->hasRole(Role::Direksi) && $this->can($user, DashboardView::Direksi))
+            && $this->can($user, DashboardView::Hr);
+    }
+
     public function canSeePortfolio(User $user): bool
     {
         return $user->isActive() && $user->hasPermission(Permission::PortfolioView);

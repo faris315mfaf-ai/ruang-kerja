@@ -35,6 +35,8 @@ export type User = UserOrganization & {
 export type Auth = {
     user: User | null;
     roles: string[];
+    /** Beranda target: '/hr' (Ruang HR, keputusan pemilik 20 Okt 2026) or '/dashboard'. */
+    home: '/hr' | '/dashboard';
 };
 
 export type Branding = {

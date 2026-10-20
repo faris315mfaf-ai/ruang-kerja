@@ -34,6 +34,7 @@ require __DIR__.'/organization.php';
 require __DIR__.'/workspaces.php';
 require __DIR__.'/drive.php';
 require __DIR__.'/dashboard.php';
+require __DIR__.'/hr.php';
 require __DIR__.'/planner.php';
 require __DIR__.'/reports.php';
 require __DIR__.'/announcements.php';

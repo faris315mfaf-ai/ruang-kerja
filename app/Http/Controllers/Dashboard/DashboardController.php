@@ -29,6 +29,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
@@ -71,13 +72,27 @@ class DashboardController extends Controller
         private readonly LatestBriefing $latestBriefing,
     ) {}
 
-    public function index(Request $request, #[CurrentUser] User $user): Response
+    /**
+     * Keputusan pemilik 20 Okt 2026: HR land on Ruang HR (/hr), which
+     * replaces the HR dashboard.
+     */
+    public function index(Request $request, #[CurrentUser] User $user): Response|RedirectResponse
     {
-        return $this->render($request, $user, $this->access->defaultView($user));
+        $view = $this->access->defaultView($user);
+
+        if ($view === DashboardView::Hr && Gate::allows('viewHrHub')) {
+            return redirect('/hr');
+        }
+
+        return $this->render($request, $user, $view);
     }
 
-    public function show(Request $request, #[CurrentUser] User $user, DashboardView $view): Response
+    public function show(Request $request, #[CurrentUser] User $user, DashboardView $view): Response|RedirectResponse
     {
+        if ($view === DashboardView::Hr && Gate::allows('viewHrHub')) {
+            return redirect('/hr');
+        }
+
         return $this->render($request, $user, $view);
     }
 
@@ -280,7 +295,11 @@ class DashboardController extends Controller
             'label' => $view->label(),
             'href' => $view->path(),
             'active' => $view === $current,
-        ], $this->access->views($user));
+        ], array_values(array_filter(
+            $this->access->views($user),
+            // Ruang HR (/hr) replaces the HR dashboard (keputusan pemilik 20 Okt 2026).
+            fn (DashboardView $view): bool => $view !== DashboardView::Hr,
+        )));
     }
 
     /**
