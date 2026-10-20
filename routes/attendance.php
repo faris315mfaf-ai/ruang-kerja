@@ -12,12 +12,15 @@ use App\Http\Controllers\Attendance\AttendanceConsentController;
 use App\Http\Controllers\Attendance\AttendanceController;
 use App\Http\Controllers\Attendance\AttendanceCorrectionController;
 use App\Http\Controllers\Attendance\AttendanceDisciplineController;
+use App\Http\Controllers\Attendance\AttendanceEmployeesController;
 use App\Http\Controllers\Attendance\AttendanceLogController;
 use App\Http\Controllers\Attendance\AttendanceRecapController;
 use App\Http\Controllers\Attendance\AttendanceSelfieController;
 use App\Http\Controllers\Attendance\CheckInController;
 use App\Http\Controllers\Attendance\CheckOutController;
+use App\Http\Controllers\Attendance\EmployeeWageController;
 use App\Http\Controllers\Attendance\MyAttendanceHistoryController;
+use App\Http\Controllers\Attendance\PayrollController;
 use App\Http\Controllers\Attendance\QrCheckController;
 use Illuminate\Support\Facades\Route;
 
@@ -51,6 +54,29 @@ Route::middleware(['auth', 'verified'])->group(function () use ($throttle) {
     Route::get('absensi/log/{attendanceLog}/selfie-url', [AttendanceLogController::class, 'selfieUrl'])->name('attendance.logs.selfie-url');
     Route::post('absensi/log/{attendanceLog}/tinjau', [AttendanceLogController::class, 'review'])->name('attendance.logs.review');
     Route::post('absensi/koreksi', [AttendanceCorrectionController::class, 'store'])->name('attendance.corrections.store');
+
+    // Keputusan pemilik 20 Okt 2026: Absen pegawai (grid HR) & gaji harian (docs/fitur/absensi-gaji.md).
+    Route::get('absensi/pegawai', [AttendanceEmployeesController::class, 'index'])->name('attendance.employees.index');
+    Route::prefix('absensi/pegawai/{employee}/{date}')
+        ->whereUlid('employee')
+        ->where(['date' => '\d{4}-\d{2}-\d{2}'])
+        ->name('attendance.employees.')
+        ->group(function () {
+            Route::get('/', [AttendanceEmployeesController::class, 'show'])->name('show');
+            Route::put('/', [AttendanceEmployeesController::class, 'update'])->middleware('throttle:60,1')->name('update');
+            Route::delete('/', [AttendanceEmployeesController::class, 'destroy'])->middleware('throttle:60,1')->name('destroy');
+        });
+
+    Route::prefix('absensi/gaji')->name('attendance.payroll.')->group(function () {
+        Route::get('/', [PayrollController::class, 'index'])->name('index');
+        Route::get('ekspor', [PayrollController::class, 'export'])->name('export');
+        Route::put('aturan', [PayrollController::class, 'rules'])->name('rules.update');
+        Route::get('upah/{employee}', [EmployeeWageController::class, 'index'])->whereUlid('employee')->name('wages.index');
+        Route::put('upah/{employee}', [EmployeeWageController::class, 'update'])->whereUlid('employee')->name('wages.update');
+        Route::delete('upah/{wage}', [EmployeeWageController::class, 'destroy'])->whereUlid('wage')->name('wages.destroy');
+        Route::post('{month}/kunci', [PayrollController::class, 'lock'])->where('month', '\d{4}-\d{2}')->name('lock');
+        Route::delete('{month}/kunci', [PayrollController::class, 'unlock'])->where('month', '\d{4}-\d{2}')->name('unlock');
+    });
 
     Route::prefix('admin/absensi')->name('admin.attendance.')->group(function () {
         Route::get('/', [AttendanceSettingsController::class, 'index'])->name('index');
