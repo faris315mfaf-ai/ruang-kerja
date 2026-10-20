@@ -55,6 +55,7 @@ use LogicException;
  * @property-read User $user
  * @property-read AttendanceDay $day
  * @property-read OfficeLocation|null $officeLocation
+ * @property-read User|null $correctedBy
  */
 #[Fillable([
     'user_id', 'attendance_day_id', 'type', 'method', 'occurred_at', 'client_time', 'latitude', 'longitude',
@@ -157,5 +158,15 @@ class AttendanceLog extends Model
     public function officeLocation(): BelongsTo
     {
         return $this->belongsTo(OfficeLocation::class)->withTrashed();
+    }
+
+    /**
+     * HR / Super Admin who wrote a manual (method `manual`) log.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function correctedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'corrected_by');
     }
 }

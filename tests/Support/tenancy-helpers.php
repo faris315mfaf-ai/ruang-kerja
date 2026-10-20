@@ -22,6 +22,7 @@ use App\Domain\Meetings\Guests\Services\GuestLinks;
 use App\Domain\Meetings\Services\MeetingOccurrences;
 use App\Domain\Notifications\Enums\NotificationType;
 use App\Domain\Organization\Enums\Role;
+use App\Domain\Payroll\Models\EmployeeWage;
 use App\Domain\Requests\Actions\SubmitRequest;
 use App\Domain\Requests\Data\RequestInput;
 use App\Domain\Requests\Enums\RequestCategory;
@@ -237,6 +238,8 @@ if (! function_exists('foreignWorld')) {
         $anggota = User::factory()->withRole(Role::Anggota)->inDivision($division, $team)->managedBy($kadiv)
             ->create(['name' => "Anggota {$m}", 'position_id' => $position->id]);
         EmployeeProfile::factory()->create(['user_id' => $anggota->id, 'employee_number' => 'ZZB0C0R-001', 'address' => "Alamat {$m}"]);
+        // Gaji harian (keputusan pemilik 20 Okt 2026).
+        $wage = EmployeeWage::factory()->forEmployee($anggota)->create(['note' => "Upah {$m}"]);
 
         // Absensi: kantor, shift, jadwal, kiosk, hari ini (log + selfie), libur.
         $office = OfficeLocation::factory()->create(['name' => "Kantor {$m}", 'address' => "Jalan {$m}"]);
@@ -511,6 +514,7 @@ if (! function_exists('foreignWorld')) {
                 ApprovalDelegation::class => $delegation,
                 Device::class => $device,
                 Division::class => $division,
+                EmployeeWage::class => $wage,
                 User::class => $anggota,
                 EmployeeRequest::class => $pending,
                 Holiday::class => $holiday,

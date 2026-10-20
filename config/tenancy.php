@@ -58,6 +58,11 @@ return [
         'kiosks' => 'company',
         'attendance_consents' => 'user',
 
+        // Gaji harian (keputusan pemilik 20 Okt 2026)
+        'employee_wages' => 'company',
+        'payroll_rules' => 'company',
+        'payroll_periods' => 'company',
+
         // Pengajuan
         'leave_types' => 'company',
         'leave_balances' => 'user',

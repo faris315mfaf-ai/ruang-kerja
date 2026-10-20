@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Hr\AttendanceBoardController;
 use App\Http\Controllers\Api\Hr\AttendanceCorrectionController;
+use App\Http\Controllers\Api\Hr\AttendanceDayController;
 use App\Http\Controllers\Api\Hr\AttendanceDisciplineController;
 use App\Http\Controllers\Api\Hr\AttendanceRecapController;
 use App\Http\Controllers\Api\Hr\AttendanceReviewController;
@@ -51,6 +52,11 @@ Route::name('hr.')->group(function (): void {
         ->whereUlid('attendanceLog')->middleware(['signed', 'throttle:30,1'])->name('attendance.selfie');
     Route::post('absensi/koreksi', AttendanceCorrectionController::class)
         ->middleware('throttle:30,1')->name('attendance.correct');
+    // Absen pegawai (keputusan pemilik 20 Okt 2026): set / remove a day by hand.
+    Route::put('absensi/hari/{employee}/{date}', [AttendanceDayController::class, 'update'])
+        ->whereUlid('employee')->where('date', '\d{4}-\d{2}-\d{2}')->middleware('throttle:30,1')->name('attendance.days.update');
+    Route::delete('absensi/hari/{employee}/{date}', [AttendanceDayController::class, 'destroy'])
+        ->whereUlid('employee')->where('date', '\d{4}-\d{2}-\d{2}')->middleware('throttle:30,1')->name('attendance.days.destroy');
     Route::get('absensi/tim/rekap', [AttendanceRecapController::class, 'index'])->name('attendance.recap');
     Route::get('absensi/tim/rekap/{employee}', [AttendanceRecapController::class, 'show'])
         ->whereUlid('employee')->name('attendance.recap.show');

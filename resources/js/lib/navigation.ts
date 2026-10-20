@@ -5,6 +5,7 @@ import {
     BriefcaseBusiness,
     Calendar,
     CalendarClock,
+    CalendarCheck2,
     Building2,
     ClipboardCheck,
     CircleCheck,
@@ -28,6 +29,7 @@ import {
     Target,
     UserRoundSearch,
     Users,
+    Wallet,
     WalletCards,
     Workflow,
 } from 'lucide-react';
@@ -151,9 +153,10 @@ export function canSeePortfolio(roles: readonly string[]): boolean {
 }
 
 /**
- * "Manajemen" (Dashboard Manajemen, /manajemen) for the holders of
- * `dashboard.view_company`: Direksi, HR and Super Admin (Gate
- * `viewManagementDashboard`).
+ * "Manajemen" (Dashboard Manajemen, /manajemen). The page stays open to the
+ * holders of `dashboard.view_company` (Gate `viewManagementDashboard`), but
+ * since the owner's decision of 20 Oct 2026 only Super Admin sees it in the
+ * navigation.
  */
 export const managementNavItem: AppNavItem = {
     title: 'Manajemen',
@@ -163,7 +166,26 @@ export const managementNavItem: AppNavItem = {
 };
 
 export function canSeeManagement(roles: readonly string[]): boolean {
-    return hasAnyRole(roles, 'direksi', 'hr', 'super_admin');
+    return hasAnyRole(roles, 'super_admin');
+}
+
+/**
+ * Owner's decision of 20 Oct 2026: "Dashboard jabatan" and "Otomasi" are
+ * hidden from the navigation of everyone except Super Admin (the pages keep
+ * their own access rules).
+ */
+export function canSeeRoleDashboardNav(
+    roles: readonly string[],
+    enabled: boolean | undefined,
+): boolean {
+    return Boolean(enabled) && hasAnyRole(roles, 'super_admin');
+}
+
+export function canSeeAutomationNav(
+    roles: readonly string[],
+    enabled: boolean | undefined,
+): boolean {
+    return Boolean(enabled) && hasAnyRole(roles, 'super_admin');
 }
 
 /**
@@ -394,12 +416,24 @@ export function attendanceNavItems(roles: readonly string[]): AppNavItem[] {
         return [];
     }
 
-    return [
+    const items: AppNavItem[] = [
         {
             title: 'Absensi hari ini',
             href: '/absensi/hari-ini',
             icon: ClipboardCheck,
         },
+    ];
+
+    // Keputusan pemilik 20 Okt 2026: HR grid of everyone's month (attendance.manage).
+    if (hasAnyRole(roles, 'super_admin', 'hr')) {
+        items.push({
+            title: 'Absen pegawai',
+            href: '/absensi/pegawai',
+            icon: CalendarCheck2,
+        });
+    }
+
+    items.push(
         {
             title: 'Rekap absensi',
             href: '/absensi/rekap',
@@ -411,7 +445,19 @@ export function attendanceNavItems(roles: readonly string[]): AppNavItem[] {
             href: '/absensi/kedisiplinan',
             icon: Gauge,
         },
-    ];
+    );
+
+    // Gaji harian (payroll.view): Direksi reads only; phones get a summary.
+    if (hasAnyRole(roles, 'super_admin', 'hr', 'direksi')) {
+        items.push({
+            title: 'Gaji harian',
+            href: '/absensi/gaji',
+            icon: Wallet,
+            desktopOnly: true,
+        });
+    }
+
+    return items;
 }
 
 /**

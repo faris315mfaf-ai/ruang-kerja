@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
             $this->call(StaffDemoSeeder::class); // laporan harian & pengumuman (keputusan pemilik 6 Okt 2026)
             $this->call(MonitoringDemoSeeder::class);
             $this->call(AttendanceSeeder::class);
+            $this->call(PayrollDemoSeeder::class); // gaji harian (keputusan pemilik 20 Okt 2026)
             $this->call(AnalyticsDemoSeeder::class); // APP_ENV=local only: ~50 employees × 6 months
         }
 

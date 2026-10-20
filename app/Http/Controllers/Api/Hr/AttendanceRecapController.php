@@ -64,6 +64,7 @@ class AttendanceRecapController extends Controller
             'can' => [
                 ...$this->can($user),
                 'correct' => Gate::allows('correct', [AttendanceDay::class, $person]),
+                'set_status' => Gate::allows('setStatus', [AttendanceDay::class, $person]),
             ],
         ]);
     }
@@ -82,6 +83,8 @@ class AttendanceRecapController extends Controller
             // The export exists on the desktop only: the app shows the banner when true.
             'export' => $user->can('export', AttendanceDay::class),
             'correct' => $user->hasPermission(Permission::AttendanceManage),
+            // Absen pegawai (keputusan pemilik 20 Okt 2026): set a day's status by hand.
+            'set_status' => $user->can('manageDays', AttendanceDay::class),
         ];
     }
 

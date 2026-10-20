@@ -14,6 +14,8 @@ import {
     adminNavItems,
     attendanceNavItems,
     automationNavItem,
+    canSeeAutomationNav,
+    canSeeRoleDashboardNav,
     isActivePath,
     chatNavItem,
     roleDashboardNavItem,
@@ -264,7 +266,8 @@ export function useShellNavigation(): ShellNavigation {
     const organizationItems = organizationNavItems(auth.roles);
     // Dashboard jabatan right after Dashboard (F3, FEATURE_ROLE_DASHBOARDS).
     const main = mainNavItemsFor(auth.roles).flatMap((item) =>
-        item.href === '/dashboard' && features?.role_dashboards
+        item.href === '/dashboard' &&
+        canSeeRoleDashboardNav(auth.roles, features?.role_dashboards)
             ? [item, roleDashboardNavItem]
             : [item],
     );
@@ -280,9 +283,13 @@ export function useShellNavigation(): ShellNavigation {
               )
             : main;
     // Otomasi (F2-4) right after Tugas saya; Kinerja saya after Absensi.
+    const showAutomation = canSeeAutomationNav(
+        auth.roles,
+        features?.automation,
+    );
     const withAutomation = features?.automation
         ? withChat.flatMap((item) => {
-              if (item.href === '/tugas') {
+              if (item.href === '/tugas' && showAutomation) {
                   return [item, automationNavItem];
               }
 

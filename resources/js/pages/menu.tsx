@@ -28,6 +28,8 @@ import {
     announcementsNavItem,
     attendanceNavItems,
     automationNavItem,
+    canSeeAutomationNav,
+    canSeeRoleDashboardNav,
     canSeeManagement,
     canSeePortfolio,
     managementNavItem,
@@ -201,7 +203,10 @@ export default function Menu() {
                             label="Dashboard"
                             href="/dashboard"
                         />
-                        {features?.role_dashboards && (
+                        {canSeeRoleDashboardNav(
+                            auth.roles,
+                            features?.role_dashboards,
+                        ) && (
                             <Row
                                 icon={roleDashboardNavItem.icon}
                                 label={roleDashboardNavItem.title}
@@ -314,7 +319,10 @@ export default function Menu() {
                                 href={performanceNavItem.href}
                             />
                         )}
-                        {features?.automation && (
+                        {canSeeAutomationNav(
+                            auth.roles,
+                            features?.automation,
+                        ) && (
                             <Row
                                 icon={automationNavItem.icon}
                                 label="Otomasi & template"

@@ -62,6 +62,7 @@ function routeLeakExceptions(): array
         'privasi/ekspor/{format}' => 'Parameter format berkas, data sendiri (ListingLeakTest)',
         'api/v1/peta/{z}/{x}/{y}' => 'Petak peta OpenStreetMap',
         'api/v1/absensi/hari/{date}' => 'Tanggal absensi milik sendiri',
+        'absensi/gaji/{month}/kunci' => 'Bulan gaji: selalu perusahaan penonton (PayrollPeriod per company_id penonton)',
         'pratinjau/panduan/*' => 'Panduan statis',
         'admin/dokumentasi/{slug}' => 'Dokumentasi statis',
         'peran/{role}*' => 'Parameter enum dashboard jabatan',
