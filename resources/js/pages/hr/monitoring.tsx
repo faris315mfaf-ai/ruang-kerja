@@ -1,14 +1,25 @@
-import { Head } from '@inertiajs/react';
+import { HrMonitoring } from '@/features/hr/monitoring';
+import { HubSkeleton } from '@/features/hr/page-skeleton';
+import type { HrMonitoringProps } from '@/features/hr/types';
+import { useBreakpoint } from '@/hooks/use-breakpoint';
 
-/**
- * Ruang HR › Monitoring (keputusan pemilik 20 Okt 2026). Placeholder page: the
- * screen itself is built by the frontend task (docs/fitur/ruang-hr.md).
- */
-export default function HrMonitoringPage() {
-    return <Head title="Monitoring · Ruang HR" />;
+/** Ruang HR › Monitoring (keputusan pemilik 20 Okt 2026). */
+export default function HrMonitoringPage(props: HrMonitoringProps) {
+    const breakpoint = useBreakpoint();
+
+    if (breakpoint === null) {
+        return <HubSkeleton />;
+    }
+
+    return <HrMonitoring props={props} mobile={breakpoint === 'mobile'} />;
 }
 
 HrMonitoringPage.layout = {
-    breadcrumbs: [{ title: 'Ruang HR', href: '/hr' }],
-    title: 'Ruang HR',
+    breadcrumbs: [
+        { title: 'Ruang HR', href: '/hr' },
+        { title: 'Monitoring', href: '/hr/monitoring' },
+    ],
+    title: 'Monitoring',
+    back: '/hr',
+    width: 'wide',
 };

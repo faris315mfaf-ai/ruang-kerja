@@ -1,14 +1,25 @@
-import { Head } from '@inertiajs/react';
+import { HubSkeleton } from '@/features/hr/page-skeleton';
+import { HrSchedule } from '@/features/hr/schedule';
+import type { HrScheduleProps } from '@/features/hr/types';
+import { useBreakpoint } from '@/hooks/use-breakpoint';
 
-/**
- * Ruang HR › Jadwal (keputusan pemilik 20 Okt 2026). Placeholder page: the
- * screen itself is built by the frontend task (docs/fitur/ruang-hr.md).
- */
-export default function HrSchedulePage() {
-    return <Head title="Jadwal · Ruang HR" />;
+/** Ruang HR › Jadwal (keputusan pemilik 20 Okt 2026). */
+export default function HrSchedulePage(props: HrScheduleProps) {
+    const breakpoint = useBreakpoint();
+
+    if (breakpoint === null) {
+        return <HubSkeleton />;
+    }
+
+    return <HrSchedule props={props} mobile={breakpoint === 'mobile'} />;
 }
 
 HrSchedulePage.layout = {
-    breadcrumbs: [{ title: 'Ruang HR', href: '/hr' }],
-    title: 'Ruang HR',
+    breadcrumbs: [
+        { title: 'Ruang HR', href: '/hr' },
+        { title: 'Jadwal', href: '/hr/jadwal' },
+    ],
+    title: 'Jadwal',
+    back: '/hr',
+    width: 'wide',
 };
