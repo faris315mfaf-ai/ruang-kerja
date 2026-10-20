@@ -58,6 +58,31 @@ class AttendanceDayPolicy
     }
 
     /**
+     * Absensi › Pegawai (keputusan pemilik 20 Okt 2026): the month grid of all
+     * employees with manual status edits. HR and Super Admin.
+     */
+    public function manageDays(User $actor): bool
+    {
+        return $actor->hasPermission(Permission::AttendanceManage);
+    }
+
+    /**
+     * Set a day's status by hand (SetAttendanceStatus): same rule as correct().
+     */
+    public function setStatus(User $actor, User $employee): bool
+    {
+        return $this->correct($actor, $employee);
+    }
+
+    /**
+     * Remove a day without check-in logs (ClearAttendanceDay): same rule as correct().
+     */
+    public function clear(User $actor, User $employee): bool
+    {
+        return $this->correct($actor, $employee);
+    }
+
+    /**
      * Check in/out for oneself (inactive employees are logged out by middleware).
      */
     public function checkIn(User $actor): bool

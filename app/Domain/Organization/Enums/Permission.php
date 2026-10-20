@@ -27,6 +27,8 @@ enum Permission: string
     case WorkspacesManage = 'workspaces.manage';
     case DashboardViewCompany = 'dashboard.view_company';
     case PortfolioView = 'portfolio.view';
+    case PayrollView = 'payroll.view';
+    case PayrollManage = 'payroll.manage';
 
     public function label(): string
     {
@@ -47,6 +49,8 @@ enum Permission: string
             self::WorkspacesManage => 'Kelola semua workspace non-pribadi',
             self::DashboardViewCompany => 'Lihat dashboard seluruh perusahaan',
             self::PortfolioView => 'Lihat portofolio proyek',
+            self::PayrollView => 'Lihat gaji harian',
+            self::PayrollManage => 'Kelola upah harian, aturan, dan kunci periode gaji',
         };
     }
 }

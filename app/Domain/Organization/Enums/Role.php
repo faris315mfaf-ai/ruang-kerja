@@ -84,6 +84,8 @@ enum Role: string
                 Permission::WorkspacesManage,
                 Permission::DashboardViewCompany,
                 Permission::PortfolioView,
+                Permission::PayrollView,
+                Permission::PayrollManage,
             ],
             self::Direksi => [
                 Permission::EmployeesView,
@@ -92,6 +94,8 @@ enum Role: string
                 Permission::WorkspacesViewAll,
                 Permission::DashboardViewCompany,
                 Permission::PortfolioView,
+                // Gaji harian: read-only (keputusan pemilik 20 Okt 2026).
+                Permission::PayrollView,
             ],
             self::Hr => [
                 Permission::EmployeesView,
@@ -107,6 +111,8 @@ enum Role: string
                 // Read-only access to every shared workspace (keputusan pemilik 6 Okt 2026).
                 Permission::WorkspacesViewAll,
                 Permission::DashboardViewCompany,
+                Permission::PayrollView,
+                Permission::PayrollManage,
             ],
             self::KepalaDivisi, self::Anggota => [],
         };
