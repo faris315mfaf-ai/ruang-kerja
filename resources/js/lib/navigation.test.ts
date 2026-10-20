@@ -4,7 +4,9 @@ import {
     tabNavItems,
     adminNavItems,
     attendanceNavItems,
+    canSeeAutomationNav,
     canSeeManagement,
+    canSeeRoleDashboardNav,
     mainNavItems,
     mainNavItemsFor,
     organizationNavItems,
@@ -137,6 +139,7 @@ describe('navigation', () => {
             super_admin: [
                 '/organisasi/struktur',
                 '/portofolio',
+                '/manajemen',
                 '/absensi/hari-ini',
                 '/absensi/rekap',
                 '/admin/karyawan',
@@ -160,10 +163,10 @@ describe('navigation', () => {
                 '/absensi/hari-ini',
                 '/admin/karyawan',
             ],
+            // Keputusan pemilik 20 Okt 2026: Manajemen only for Super Admin.
             direksi: [
                 '/organisasi/struktur',
                 '/portofolio',
-                '/manajemen',
                 '/absensi/hari-ini',
             ],
             // Keputusan pemilik 6 Okt 2026: staff lose the org chart.
@@ -246,31 +249,20 @@ describe('navigation', () => {
         );
     });
 
-    it('adds Manajemen once for Direksi, HR and Super Admin, after Portofolio', () => {
+    it('shows Manajemen only to Super Admin, once, after Portofolio (keputusan pemilik 20 Okt 2026)', () => {
         const hrefs = (roles: string[]) =>
             mainNavItemsFor(roles).map((item) => item.href);
 
-        expect(hrefs(['direksi'])).toEqual([
+        expect(hrefs(['super_admin']).slice(0, 3)).toEqual([
             '/dashboard',
             '/portofolio',
             '/manajemen',
-            '/inbox',
-            '/tugas',
-            '/laporan',
-            '/absensi',
-            '/pengajuan',
-            '/persetujuan',
         ]);
-        // HR has no Portofolio: Manajemen follows Dashboard.
-        expect(hrefs(['hr']).indexOf('/manajemen')).toBe(
-            hrefs(['hr']).indexOf('/dashboard') + 1,
-        );
-        expect(hrefs(['super_admin'])).toContain('/manajemen');
-        expect(hrefs(['kepala_divisi'])).not.toContain('/manajemen');
-        expect(hrefs(['anggota'])).not.toContain('/manajemen');
+        for (const role of ['direksi', 'hr', 'kepala_divisi', 'anggota']) {
+            expect(hrefs([role])).not.toContain('/manajemen');
+        }
 
-        // Exactly once on desktop, whatever the role combination.
-        for (const roles of [['direksi'], ['hr'], ['super_admin'], ROLES]) {
+        for (const roles of [['super_admin'], ROLES]) {
             expect(
                 desktopHrefs(roles).filter(
                     (href) => href.href === '/manajemen',
@@ -280,9 +272,18 @@ describe('navigation', () => {
 
         expect(ROLES.filter((role) => canSeeManagement([role]))).toEqual([
             'super_admin',
-            'direksi',
-            'hr',
         ]);
+    });
+
+    it('hides Dashboard jabatan and Otomasi from everyone but Super Admin', () => {
+        for (const role of ['direksi', 'hr', 'kepala_divisi', 'anggota']) {
+            expect(canSeeRoleDashboardNav([role], true)).toBe(false);
+            expect(canSeeAutomationNav([role], true)).toBe(false);
+        }
+        expect(canSeeRoleDashboardNav(['super_admin'], true)).toBe(true);
+        expect(canSeeAutomationNav(['super_admin'], true)).toBe(true);
+        expect(canSeeRoleDashboardNav(['super_admin'], false)).toBe(false);
+        expect(canSeeAutomationNav(['super_admin'], undefined)).toBe(false);
     });
 
     it('finds the tab that owns the current page for the sliding pill', () => {

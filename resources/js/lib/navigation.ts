@@ -153,9 +153,10 @@ export function canSeePortfolio(roles: readonly string[]): boolean {
 }
 
 /**
- * "Manajemen" (Dashboard Manajemen, /manajemen) for the holders of
- * `dashboard.view_company`: Direksi, HR and Super Admin (Gate
- * `viewManagementDashboard`).
+ * "Manajemen" (Dashboard Manajemen, /manajemen). The page stays open to the
+ * holders of `dashboard.view_company` (Gate `viewManagementDashboard`), but
+ * since the owner's decision of 20 Oct 2026 only Super Admin sees it in the
+ * navigation.
  */
 export const managementNavItem: AppNavItem = {
     title: 'Manajemen',
@@ -165,7 +166,26 @@ export const managementNavItem: AppNavItem = {
 };
 
 export function canSeeManagement(roles: readonly string[]): boolean {
-    return hasAnyRole(roles, 'direksi', 'hr', 'super_admin');
+    return hasAnyRole(roles, 'super_admin');
+}
+
+/**
+ * Owner's decision of 20 Oct 2026: "Dashboard jabatan" and "Otomasi" are
+ * hidden from the navigation of everyone except Super Admin (the pages keep
+ * their own access rules).
+ */
+export function canSeeRoleDashboardNav(
+    roles: readonly string[],
+    enabled: boolean | undefined,
+): boolean {
+    return Boolean(enabled) && hasAnyRole(roles, 'super_admin');
+}
+
+export function canSeeAutomationNav(
+    roles: readonly string[],
+    enabled: boolean | undefined,
+): boolean {
+    return Boolean(enabled) && hasAnyRole(roles, 'super_admin');
 }
 
 /**

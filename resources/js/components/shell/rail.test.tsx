@@ -89,8 +89,8 @@ describe('Rail (tablet)', () => {
         expect(screen.getByRole('button', { name: 'Admin' })).toBeTruthy();
     });
 
-    it('shows the Manajemen tile once to Direksi and HR, never to members', () => {
-        renderFor(['direksi']);
+    it('shows the Manajemen tile only to Super Admin (keputusan pemilik 20 Okt 2026)', () => {
+        renderFor(['super_admin']);
         expect(
             screen
                 .getAllByRole('link', { name: 'Manajemen' })
@@ -98,14 +98,13 @@ describe('Rail (tablet)', () => {
         ).toEqual(['/manajemen']);
         cleanup();
 
-        renderFor(['hr']);
-        expect(screen.getAllByRole('link', { name: 'Manajemen' })).toHaveLength(
-            1,
-        );
-        cleanup();
-
-        renderFor(['anggota']);
-        expect(screen.queryByRole('link', { name: 'Manajemen' })).toBeNull();
+        for (const role of ['direksi', 'hr', 'anggota']) {
+            renderFor([role]);
+            expect(
+                screen.queryByRole('link', { name: 'Manajemen' }),
+            ).toBeNull();
+            cleanup();
+        }
     });
 
     it('offers search and the account menu next to the destinations', () => {
