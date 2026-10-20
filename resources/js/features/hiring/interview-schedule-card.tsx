@@ -123,7 +123,7 @@ export function InterviewScheduleCard({
                         ? `Terjadwal: ${summary}`
                         : 'Belum dijadwalkan. Jadwal tampil di Ruang HR › Jadwal.'}
                 </p>
-                <div className="grid grid-cols-[minmax(0,1fr)_7.5rem] gap-3">
+                <div className="grid grid-cols-[minmax(0,1fr)_8.5rem] gap-3">
                     <div className="flex min-w-0 flex-col gap-1.5">
                         <Label htmlFor={`${ids}-date`}>Tanggal</Label>
                         <DateInput
