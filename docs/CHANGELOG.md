@@ -6,6 +6,16 @@ Kategori: **Ditambahkan** (fitur baru) · **Diubah** · **Diperbaiki** · **Keam
 
 ## [Belum dirilis]
 
+### Ditambahkan (20 Okt 2026, keputusan pemilik — Ruang HR; `docs/fitur/ruang-hr.md`)
+- **Ruang HR** (`/hr`, HR & Super Admin; lainnya 403) menggantikan Dashboard HR: tab Ringkasan, Absensi, Monitoring, Penugasan, Jadwal, Catatan. `/dashboard` dan `/dashboard/hr` mengalihkan HR ke `/hr`; prop bersama `auth.home`. Layar React masih placeholder (backend & prop final).
+- **Penugasan HR**: "Beri tugas" ke karyawan, divisi (termasuk sub-divisi), atau tim — satu tugas per orang atau satu tugas bersama, instruksi, tenggat, prioritas, checklist (maks. 20), maks. 200 penerima; audit `hr.task_assigned`. Tugas tinggal di workspace sistem "Penugasan HR" dengan **tugas privat** (`workspaces.tasks_private`): karyawan hanya melihat tugas yang ditugaskan kepadanya di semua jalur web & API (papan, detail, pencarian, aktivitas, notifikasi, anggota, Drive, otomasi).
+- **Workspace sistem** "Tim HR" (catatan bersama) dan "Penugasan HR" per perusahaan (`workspaces.system_key`), admin otomatis = semua HR + Super Admin, tidak bisa diarsipkan/diganti key; disinkronkan setiap halaman Ruang HR dan tiap hari 01.00.
+- **Ingatkan laporan harian** dari Ruang HR › Monitoring: karyawan terjadwal yang belum mengirim laporan, maks. sekali per orang per hari (terpisah dari pengingat 16.30).
+- **Jadwal wawancara kandidat** (`candidates.interview_at`, `interview_location`; `PUT /hiring/kandidat/{id}/wawancara`) dengan notifikasi baru `hiring.interview_scheduled` ke pewawancara; tampil di Ruang HR › Jadwal bersama rapat, cuti seluruh perusahaan, dan hari libur.
+
+### Diubah (20 Okt 2026, keputusan pemilik)
+- Dashboard jabatan, Dashboard Manajemen, dan Otomasi disembunyikan dari navigasi kecuali Super Admin.
+
 ### Ditambahkan (20 Okt 2026, keputusan pemilik — absen pegawai & gaji harian; `docs/fitur/absensi-gaji.md`)
 - **Absensi › Pegawai** (`/absensi/pegawai`, HR & Super Admin): kisi semua karyawan × tanggal satu bulan; atur status manual per tanggal (dengan jam untuk Hadir/Terlambat/WFH/Dinas) atau hapus catatan tanpa check-in, alasan wajib, diaudit (`attendance.status_set`, `attendance.day_cleared`). Status manual (`attendance_days.status_source = manual`) tidak ditimpa tutup hari; check-in/out sungguhan atau pengajuan yang disetujui menggantikannya. API ponsel HR: `PUT/DELETE /api/v1/absensi/hari/{karyawan}/{tanggal}`.
 - **Absensi › Gaji** (`/absensi/gaji`): upah harian × hari dibayar per karyawan, aturan per perusahaan (Cuti/Sakit/Izin dibayar, potongan terlambat), kunci periode (snapshot; koreksi, status manual, dan upah di bulan terkunci ditolak), ekspor Excel. Izin baru `payroll.view` (Super Admin, HR, Direksi baca saja) dan `payroll.manage` (Super Admin, HR). Tabel baru `employee_wages`, `payroll_rules`, `payroll_periods`.

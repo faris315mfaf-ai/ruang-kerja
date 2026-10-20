@@ -430,6 +430,8 @@ Lampiran pengajuan (surat dokter, dll.) memakai tabel `attachments` (morph ke `r
 | task_sequence | int | penghitung nomor task berikutnya (dikunci `SELECT … FOR UPDATE`) |
 | archived_at | timestamptz null | |
 | previous_keys | jsonb (default `[]`) | key lama setelah diganti; `/w/{key-lama}` dialihkan (301) ke key baru. Key harus `^[A-Z][A-Z0-9]{1,9}$` (CHECK) dan unik terhadap key aktif **dan** key lama di company |
+| system_key | varchar(30) null | workspace sistem Ruang HR (keputusan pemilik 20 Okt 2026): `hr_team` (Tim HR) · `hr_assignments` (Penugasan HR); CHECK nilai, unik parsial `(company_id, system_key) WHERE system_key IS NOT NULL` |
+| tasks_private | bool default false | **tugas privat**: owner/admin melihat semua tugas, orang lain hanya tugas yang ditugaskan kepadanya (Penugasan HR) |
 | **Kolom proyek** (hanya `type = project`) | | |
 | lead_user_id | FK users null | PIC proyek |
 | sponsor_user_id | FK users null | anggota Direksi |
@@ -440,6 +442,8 @@ Lampiran pengajuan (surat dokter, dll.) memakai tabel `attachments` (morph ke `r
 | completed_at | timestamptz null | diisi saat `project_status` menjadi `completed`, dikosongkan bila berubah lagi |
 
 Sprint 9: CHECK `project_status IN (planned, active, on_hold, completed, canceled)` dan `health IN (on_track, at_risk, off_track)` (keduanya boleh null), indeks parsial `(company_id, project_status) WHERE type = 'project'`. `project_status` null diperlakukan sebagai `active`.
+
+Ruang HR (keputusan pemilik 20 Okt 2026, migrasi `2026_10_24_100300_add_system_key_to_workspaces`, `docs/fitur/ruang-hr.md`): dua workspace sistem per perusahaan, tipe `team` tanpa `team_id`, `private`, dibuat/disinkronkan `EnsureHrWorkspaces` (setiap halaman `/hr` dan tiap hari 01.00): owner = HR aktif pertama (cadangan Super Admin), semua HR + Super Admin aktif = admin `is_synced = true`, penerima tugas = `member` tidak tersinkron. Workspace sistem tidak bisa diarsipkan, key & visibilitas tetap, admin tidak ditambah/diubah manual. `tasks_private` ditegakkan di `TaskPolicy`, scope `Task::visibleTo` / `Task::respectingPrivacyOf`, `BoardTasks::query($viewer)`, `Activity::respectingPrivacyOf`, daftar anggota, `TaskAudience::withTaskAccess` (notifikasi), Drive (daftar file hanya admin) dan `AutomationAccess`; workspace `tasks_private` tidak mendapat kanal Obrolan otomatis.
 
 ### milestones
 `id`, `workspace_id` FK (cascade), `name` varchar(160), `description` null, `target_date` date, `completed_at` timestamptz null, `position` varchar(100) `COLLATE "C"` (lexorank), `created_by` FK null, timestamps (tanpa soft delete; penghapusan tercatat di `activities`). Indeks `(workspace_id, target_date)`. Status diturunkan (`MilestoneStatusResolver`; "berjalan" = ada tugas terkait di kategori in_progress/review/done): selesai / selesai terlambat (`completed_at::date > target_date`) / terlewat (target < hari ini dan belum selesai) / berjalan / belum mulai. Pivot `milestone_tasks` (`milestone_id`, `task_id`).
@@ -668,10 +672,12 @@ Indeks `(company_id, status)`. Pewawancara/penyetuju hanya karyawan aktif satu p
 | source | varchar(20) | `google_form` · `manual` (CHECK) |
 | applied_at | timestamptz | `submitted_at` dari Form (masa depan → sekarang), atau waktu dibuat |
 | decided_at | timestamptz null | Diterima/Ditolak |
+| interview_at | timestamptz null | jadwal wawancara (UTC; diisi HR dalam waktu kantor, `ScheduleInterview`, keputusan pemilik 20 Okt 2026) |
+| interview_location | varchar(200) null | tempat/tautan wawancara; dikosongkan bersama `interview_at` |
 | created_by | FK users null | kandidat manual |
 | created_at / updated_at / deleted_at | timestamptz | soft delete |
 
-Indeks `(company_id, stage)`, `(position_id, stage)`.
+Indeks `(company_id, stage)`, `(position_id, stage)`, `(company_id, interview_at)` (migrasi `2026_10_24_100400_add_interview_schedule_to_candidates`).
 
 ### candidate_checklist_items
 `id`, `candidate_id` FK (cascade), `reviewer_id` FK users null (cascade; **null = butir HR**, dicentang HR mana pun), `role` varchar(12) `hr` · `interviewer` · `approver` (CHECK; `role = 'hr'` ⇔ `reviewer_id IS NULL`), `label` varchar(200), `is_required` bool default true, `position` smallint, `checked_at` timestamptz null, `checked_by` FK users null, `note` text null, `created_by` FK users null (butir tambahan HR), timestamps. Indeks `(candidate_id, reviewer_id)`. Dibuat dari templat saat kandidat dibuat (`CandidateChecklist::seed`); saat pewawancara/penyetuju lowongan berubah, kandidat yang masih berproses mendapat butir untuk pemeriksa baru dan kehilangan butir belum dicentang milik pemeriksa yang dikeluarkan. Syarat masuk Keputusan akhir: semua butir wajib HR dan pewawancara **aktif** sudah dicentang; penyetuju harus mencentang butir wajibnya sebelum menyetujui.
@@ -688,7 +694,7 @@ Indeks `(company_id, stage)`, `(position_id, stage)`.
 ### candidate_decisions
 `id`, `candidate_id` FK (cascade), `approver_id` FK users (cascade), `decision` varchar(10) `approve` · `reject` (CHECK), `note` text null (wajib bila menolak), `decided_at` timestamptz, timestamps. **Unik `(candidate_id, approver_id)`**. Hasil otomatis (`DecideCandidate`, row lock pada kandidat): satu tolak → `rejected`; semua penyetuju akhir **aktif** setuju → `hired`. Dihapus saat kandidat dipindah keluar dari Keputusan akhir atau dibuka kembali.
 
-Notifikasi baru: `hiring.candidate_received`, `hiring.decision_needed` (Perlu tindakan), `hiring.candidate_decided`; baris preferensi `hiring.activity` (bawaan in-app nyala, email mati).
+Notifikasi baru: `hiring.candidate_received`, `hiring.decision_needed` (Perlu tindakan), `hiring.candidate_decided`, `hiring.interview_scheduled` (Ruang HR, 20 Okt 2026: ke pewawancara saat jadwal wawancara dibuat/diubah); baris preferensi `hiring.activity` (bawaan in-app nyala, email mati).
 
 ---
 
@@ -760,7 +766,7 @@ Unik `(user_id, key)`, indeks `created_at`. Klaim atomik (`INSERT … ON CONFLIC
   Indeks: `(notifiable_type, notifiable_id)`, `(notifiable_id, created_at)`, `(subject_type, subject_id)`, indeks parsial `notifications_unread_index (notifiable_id) WHERE read_at IS NULL AND archived_at IS NULL` untuk hitungan lonceng. Retensi 30 hari (`notifications:prune`), kecuali yang masih perlu tindakan. Model baca: `App\Models\InboxNotification`.
 - `notification_preferences`: `id` ulid, `user_id`, `event` (`task.assigned`, `mention`, `task.commented`, `task.due_soon`, `task.overdue`, `request.pending`, `request.decided`, `attendance.check_in_reminder`, `attendance.check_out_reminder`, `project.activity`, `report.reminder` (laporan harian 16.30), `okr.activity`, `automation.notify`, `meeting`, `account.security` (6 Okt 2026: permintaan reset sandi ke HR & "sandi diatur HR"; in-app + email terkunci), `system`, `digest.daily`), `channel` (`in_app` · `email` · `whatsapp`), `enabled`, timestamps. Unik `(user_id, event, channel)`. Baris tidak ada = pakai default di `config/notifications.php`. Daftar kejadian = enum `NotificationEvent`.
 - `notification_settings` (Sprint 8, 1:1 dengan `users`): `user_id` PK/FK, `digest_time` time (jam kirim ringkasan harian, zona kantor, default `07:30`), `quiet_hours` bool (default `true`: email di luar 07.00–17.30 & akhir pekan ditunda), `pause_while_on_leave` bool (tahan notifikasi saat cuti), `digest_last_run_on` date (idempotensi ringkasan harian), timestamps.
-- `notification_dispatch_logs` (review fix 3-9 #8): `id` ulid, `type` varchar(80) (`NotificationType`), `subject_type`/`subject_id` (ulid morph), `user_id` FK cascade, `cycle` varchar(40) (mis. tanggal tenggat), `created_at`. Unik `(type, subject_type, subject_id, user_id, cycle)`. Klaim atomik (`INSERT … ON CONFLICT DO NOTHING`) sebelum pengingat terjadwal dikirim (H-1, lewat tenggat) agar de-dup tidak bergantung pada kanal (penerima email-saja tidak lagi dapat email harian). Baris dihapus saat pengingat diselesaikan (`ResolveNotificationsForSubject`, `ResolveOverdueNotices`) dan saat subjeknya hilang (`notifications:prune`). Diakses lewat `App\Domain\Notifications\Services\NotificationDispatchLog` (tanpa model Eloquent).
+- `notification_dispatch_logs` (review fix 3-9 #8): `id` ulid, `type` varchar(80) (`NotificationType`), `subject_type`/`subject_id` (ulid morph), `user_id` FK cascade, `cycle` varchar(40) (mis. tanggal tenggat; `manual:{tanggal}` = pengingat laporan harian dari Ruang HR, terpisah dari pengingat otomatis 16.30), `created_at`. Unik `(type, subject_type, subject_id, user_id, cycle)`. Klaim atomik (`INSERT … ON CONFLICT DO NOTHING`) sebelum pengingat terjadwal dikirim (H-1, lewat tenggat) agar de-dup tidak bergantung pada kanal (penerima email-saja tidak lagi dapat email harian). Baris dihapus saat pengingat diselesaikan (`ResolveNotificationsForSubject`, `ResolveOverdueNotices`) dan saat subjeknya hilang (`notifications:prune`). Diakses lewat `App\Domain\Notifications\Services\NotificationDispatchLog` (tanpa model Eloquent).
 
 ---
 
