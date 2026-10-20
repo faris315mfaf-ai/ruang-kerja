@@ -41,6 +41,11 @@ it('grants permissions through roles', function (Role $role, Permission $permiss
     'super admin cancels approved requests' => [Role::SuperAdmin, Permission::RequestsCancelApproved, true],
     'direksi cannot cancel approved requests' => [Role::Direksi, Permission::RequestsCancelApproved, false],
     'direksi cannot manage employees' => [Role::Direksi, Permission::EmployeesManage, false],
+    'hr manages payroll (keputusan pemilik 20 Okt 2026)' => [Role::Hr, Permission::PayrollManage, true],
+    'super admin manages payroll' => [Role::SuperAdmin, Permission::PayrollManage, true],
+    'direksi reads payroll' => [Role::Direksi, Permission::PayrollView, true],
+    'direksi cannot manage payroll' => [Role::Direksi, Permission::PayrollManage, false],
+    'kadiv cannot read payroll' => [Role::KepalaDivisi, Permission::PayrollView, false],
     'kadiv has no global permission' => [Role::KepalaDivisi, Permission::EmployeesView, false],
     'anggota has no global permission' => [Role::Anggota, Permission::EmployeesView, false],
 ]);

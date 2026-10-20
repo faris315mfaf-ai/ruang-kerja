@@ -200,6 +200,9 @@ it('keeps the attendance pages free of N+1', function () {
         // +1: shared prop chatUnread (Obrolan Dock badge), one query on every page.
         '/absensi/hari-ini' => ['hr', 53],
         '/absensi/rekap' => ['hr', 46],
+        // Absen pegawai & gaji harian (keputusan pemilik 20 Okt 2026): the recap + wages, rules, period, holidays.
+        '/absensi/pegawai' => ['hr', 44],
+        '/absensi/gaji' => ['hr', 49],
         '/admin/absensi' => ['hr', 41],
         '/admin/absensi/penugasan' => ['hr', 36],
     ]);
