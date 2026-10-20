@@ -10,6 +10,7 @@ use App\Domain\Attendance\Services\ScheduleResolver;
 use App\Domain\Hiring\Enums\CandidateStage;
 use App\Domain\Hiring\Services\HiringAccess;
 use App\Domain\HrHub\Enums\SystemWorkspace;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Candidate;
 use App\Models\DailyReport;
 use App\Models\Note;
@@ -181,7 +182,7 @@ final class HrSummary
                 'title' => 'Perlu koreksi absensi · '.$day->user->name,
                 'subtitle' => $day->work_date->format('d/m/Y'),
                 'href' => '/absensi/pegawai/'.$day->user_id.'/'.$date,
-                'waiting_since' => CarbonImmutable::parse($date)->toIso8601String(),
+                'waiting_since' => CarbonImmutable::parse($date, CurrentCompany::timezone())->toIso8601String(),
             ];
         }
 

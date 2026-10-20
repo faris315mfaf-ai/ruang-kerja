@@ -4,6 +4,7 @@ namespace App\Http\Requests\HrHub;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * POST /hr/monitoring/ingatkan: `user_ids` (chosen people) or `all = true`
@@ -11,9 +12,10 @@ use Illuminate\Foundation\Http\FormRequest;
  */
 class RemindDailyReportRequest extends FormRequest
 {
+    /** Ruang HR only (403 before validation for everyone else). */
     public function authorize(): bool
     {
-        return true;
+        return Gate::allows('viewHrHub');
     }
 
     /**

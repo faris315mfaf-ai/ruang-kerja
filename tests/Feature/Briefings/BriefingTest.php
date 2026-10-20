@@ -64,9 +64,9 @@ it('shows the recorder card only to HR, Super Admin and the appointed delegate',
             ->component('dashboard/personal')
             ->where('briefing', null));
 
-    // HR sees the open window and may record it.
+    // HR sees the open window and may record it (card on Ruang HR, keputusan pemilik 20 Okt 2026).
     $this->travelTo(F::at('2026-10-09 09:00'));
-    $this->actingAs($this->org['hr'])->get('/dashboard/hr')
+    $this->actingAs($this->org['hr'])->get('/hr')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('briefing.date', '2026-10-09')

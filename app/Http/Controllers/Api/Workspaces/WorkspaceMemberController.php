@@ -17,6 +17,7 @@ use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Policies\WorkspacePolicy;
 use Illuminate\Support\Facades\Gate;
 
 /**
@@ -36,7 +37,7 @@ class WorkspaceMemberController extends Controller
         $canManage = Gate::allows('manageMembers', $workspace);
 
         return response()->json([
-            'anggota' => $this->rows($workspace, $driveStatus, $canManage),
+            'anggota' => $this->rows($workspace, $driveStatus, $canManage, $user),
             'can' => ['manage_members' => $canManage],
             'role_options' => array_map(
                 fn (WorkspaceRole $role): array => ['value' => $role->value, 'label' => $role->label()],
@@ -121,12 +122,17 @@ class WorkspaceMemberController extends Controller
     /**
      * @return list<array<string, mixed>>
      */
-    private function rows(Workspace $workspace, WorkspaceDriveStatus $driveStatus, bool $canManage): array
+    private function rows(Workspace $workspace, WorkspaceDriveStatus $driveStatus, bool $canManage, ?User $viewer = null): array
     {
         $drive = $driveStatus->members($workspace);
+        // Penugasan HR (private tasks): non-admins only see HR and themselves.
+        $hideOthers = $viewer !== null && ! app(WorkspacePolicy::class)->seesAllTasks($viewer, $workspace);
 
         return array_values(WorkspaceMember::query()
             ->where('workspace_id', $workspace->id)
+            ->when($hideOthers, fn (Builder $query) => $query->where(fn (Builder $own) => $own
+                ->whereIn('role', [WorkspaceRole::Owner->value, WorkspaceRole::Admin->value])
+                ->orWhere('user_id', $viewer?->id)))
             ->with(['user:id,name,avatar_url,division_id,position_id', 'user.division:id,name', 'user.position:id,name'])
             ->get()
             ->sortBy(fn (WorkspaceMember $member): string => (5 - $member->role->rank()).mb_strtolower($member->user->name))

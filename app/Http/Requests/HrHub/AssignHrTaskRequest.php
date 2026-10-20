@@ -5,6 +5,7 @@ namespace App\Http\Requests\HrHub;
 use App\Domain\HrHub\Actions\AssignHrTask;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 /**
@@ -14,9 +15,10 @@ use Illuminate\Validation\Rule;
  */
 class AssignHrTaskRequest extends FormRequest
 {
+    /** Ruang HR only (403 before validation for everyone else). */
     public function authorize(): bool
     {
-        return true;
+        return Gate::allows('viewHrHub');
     }
 
     /**
