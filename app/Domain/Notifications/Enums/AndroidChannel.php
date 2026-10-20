@@ -102,7 +102,7 @@ enum AndroidChannel: string
             NotificationType::ProjectUpdateReminder, NotificationType::ProjectDirection,
             NotificationType::ProjectDecisionResolved, NotificationType::OkrCheckinReminder,
             NotificationType::OkrObjectiveAtRisk, NotificationType::HiringCandidateReceived,
-            NotificationType::HiringCandidateDecided => self::Proyek,
+            NotificationType::HiringCandidateDecided, NotificationType::HiringInterviewScheduled => self::Proyek,
 
             NotificationType::SystemAnnouncement, NotificationType::BriefingPosted,
             NotificationType::SystemTest => self::Info,

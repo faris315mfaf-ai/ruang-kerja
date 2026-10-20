@@ -2,6 +2,8 @@
 
 namespace App\Domain\Hiring\Queries;
 
+use App\Domain\Hiring\Actions\ScheduleInterview;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Domain\Hiring\Enums\ReviewerRole;
 use App\Domain\Hiring\Services\CandidateChecklist;
 use App\Domain\Hiring\Services\HiringAccess;
@@ -127,6 +129,13 @@ final class CandidateProfile
                 'source' => $candidate->source->value,
                 'applied_at' => $candidate->applied_at->toIso8601String(),
                 'decided_at' => $candidate->decided_at?->toIso8601String(),
+                // Jadwal wawancara (Ruang HR, keputusan pemilik 20 Okt 2026): UTC ISO + office-time input value.
+                'interview' => [
+                    'at' => $candidate->interview_at?->toIso8601String(),
+                    'local' => $candidate->interview_at?->setTimezone(CurrentCompany::timezone())->format('Y-m-d H:i'),
+                    'location' => $candidate->interview_location,
+                    'can_schedule' => $manager && in_array($candidate->stage, ScheduleInterview::stages(), true),
+                ],
                 'position' => [
                     'id' => $position->id,
                     'title' => $position->title,
