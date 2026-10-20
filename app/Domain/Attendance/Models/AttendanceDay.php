@@ -43,6 +43,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $note
  * @property list<string>|null $work_plan
  * @property list<string>|null $work_report
+ * @property string|null $status_source `manual` = status set by HR (SetAttendanceStatus)
+ * @property string|null $status_set_by
+ * @property CarbonImmutable|null $status_set_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read User $user
@@ -54,6 +57,7 @@ use Illuminate\Support\Carbon;
     'user_id', 'work_date', 'shift_id', 'scheduled_start', 'scheduled_end', 'check_in_at', 'check_out_at',
     'check_in_log_id', 'check_out_log_id', 'status', 'late_minutes', 'early_leave_minutes', 'work_minutes',
     'overtime_minutes', 'request_id', 'request_portion', 'is_suspicious', 'note', 'work_plan', 'work_report',
+    'status_source', 'status_set_by', 'status_set_at',
 ])]
 #[UseFactory(AttendanceDayFactory::class)]
 class AttendanceDay extends Model
@@ -90,6 +94,7 @@ class AttendanceDay extends Model
             'is_suspicious' => 'boolean',
             'work_plan' => 'array',
             'work_report' => 'array',
+            'status_set_at' => 'immutable_datetime',
         ];
     }
 
@@ -103,12 +108,35 @@ class AttendanceDay extends Model
         return $this->check_out_at !== null;
     }
 
+    /** attendance_days.status_source of a status HR set by hand. */
+    public const string SOURCE_MANUAL = 'manual';
+
     /**
-     * Linked to an approved absence request (cuti/izin/sakit/dinas).
+     * HR set this day's status by hand (Absensi › Pegawai). Closing the day
+     * leaves it alone; a real check-in/out or an approved request clears it.
+     */
+    public function isManual(): bool
+    {
+        return $this->status_source === self::SOURCE_MANUAL;
+    }
+
+    /**
+     * Linked to an approved absence request (cuti/izin/sakit/dinas). A
+     * cuti/izin/sakit/dinas status HR set by hand without a request is not.
      */
     public function isFromRequest(): bool
     {
-        return $this->request_id !== null || $this->status->comesFromRequest();
+        return $this->request_id !== null || ($this->status->comesFromRequest() && ! $this->isManual());
+    }
+
+    /**
+     * Back to an ordinary day: the attendance (or a request) decides the status again.
+     */
+    public function clearManualStatus(): void
+    {
+        $this->status_source = null;
+        $this->status_set_by = null;
+        $this->status_set_at = null;
     }
 
     /**
@@ -188,6 +216,16 @@ class AttendanceDay extends Model
     public function shift(): BelongsTo
     {
         return $this->belongsTo(Shift::class)->withTrashed();
+    }
+
+    /**
+     * HR / Super Admin who set the status by hand.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function statusSetter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'status_set_by');
     }
 
     /**
