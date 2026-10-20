@@ -5,7 +5,11 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 const page = vi.hoisted(() => ({
     url: '/dashboard',
     props: {
-        auth: { user: { name: 'Uji' }, roles: [] as string[] },
+        auth: {
+            user: { name: 'Uji' },
+            roles: [] as string[],
+            home: '/dashboard' as string,
+        },
         approvals: { pending: 0 },
         workspaces: [],
     },
@@ -37,14 +41,25 @@ vi.mock('@/features/notifications/unread-store', () => ({
 
 import { Dock } from './dock';
 
-function renderFor(roles: string[]) {
+function renderFor(roles: string[], home: '/hr' | '/dashboard' = '/dashboard') {
     page.props.auth.roles = roles;
+    page.props.auth.home = home;
 
     return render(<Dock />);
 }
 
 describe('Dock', () => {
     afterEach(cleanup);
+
+    it('hides the Dashboard tile when Ruang HR is home (keputusan pemilik 20 Okt 2026)', () => {
+        renderFor(['hr'], '/hr');
+        expect(screen.queryByRole('link', { name: 'Dashboard' })).toBeNull();
+        expect(screen.getByRole('link', { name: 'Ruang HR' })).toBeTruthy();
+        cleanup();
+
+        renderFor(['super_admin']);
+        expect(screen.getByRole('link', { name: 'Dashboard' })).toBeTruthy();
+    });
 
     it('groups the organization screens in one stack for HR', () => {
         renderFor(['hr']);

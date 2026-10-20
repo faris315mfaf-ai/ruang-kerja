@@ -200,11 +200,13 @@ export default function Menu() {
 
                 <Section title="Pekerjaan">
                     <Group>
-                        <Row
-                            icon={LayoutGrid}
-                            label="Dashboard"
-                            href="/dashboard"
-                        />
+                        {auth.home !== '/hr' && (
+                            <Row
+                                icon={LayoutGrid}
+                                label="Dashboard"
+                                href="/dashboard"
+                            />
+                        )}
                         {canSeeHrHub(auth.roles) && (
                             <Row
                                 icon={hrHubNavItem.icon}

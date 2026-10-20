@@ -266,12 +266,17 @@ export function useShellNavigation(): ShellNavigation {
     // get it as a plain tile instead.
     const organizationItems = organizationNavItems(auth.roles);
     // Dashboard jabatan right after Dashboard (F3, FEATURE_ROLE_DASHBOARDS).
-    const main = mainNavItemsFor(auth.roles).flatMap((item) =>
-        item.href === '/dashboard' &&
-        canSeeRoleDashboardNav(auth.roles, features?.role_dashboards)
-            ? [item, roleDashboardNavItem]
-            : [item],
-    );
+    // Owner's decision of 20 Oct 2026: when Ruang HR is the user's home,
+    // the Dashboard tile would only redirect there, so it is hidden.
+    const homeIsHrHub = auth.home === '/hr';
+    const main = mainNavItemsFor(auth.roles)
+        .filter((item) => !(homeIsHrHub && item.href === '/dashboard'))
+        .flatMap((item) =>
+            item.href === '/dashboard' &&
+            canSeeRoleDashboardNav(auth.roles, features?.role_dashboards)
+                ? [item, roleDashboardNavItem]
+                : [item],
+        );
     // Obrolan right after Inbox (messages next to notifications), Catatan after it.
     const afterInbox = [
         ...(features?.chat ? [chatNavItem] : []),
