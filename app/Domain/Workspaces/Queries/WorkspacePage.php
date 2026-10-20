@@ -77,7 +77,7 @@ final class WorkspacePage
             : WorkspaceMember::query()->where('workspace_id', $workspace->id)->with('user:id,name,avatar_url')->get();
 
         return array_values($memberships
-            ->filter(fn (WorkspaceMember $member): bool => ! $hideOthers || $member->role->canManage() || $member->user_id === $viewer?->id)
+            ->filter(fn (WorkspaceMember $member): bool => ! $hideOthers || $member->role->canManage() || $member->user_id === $viewer->id)
             ->sortBy(fn (WorkspaceMember $member): string => (5 - $member->role->rank()).mb_strtolower($member->user->name))
             ->map(fn (WorkspaceMember $member): array => [
                 'id' => $member->user_id,

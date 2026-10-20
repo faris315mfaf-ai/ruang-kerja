@@ -164,7 +164,7 @@ final class HrSummary
                 'title' => 'Reset kata sandi · '.($reset->user->name ?? $reset->email),
                 'subtitle' => 'Menunggu persetujuan HR',
                 'href' => $reset->user_id !== null ? '/admin/karyawan/'.$reset->user_id : '/admin/karyawan',
-                'waiting_since' => $reset->created_at?->toIso8601String(),
+                'waiting_since' => $reset->created_at->toIso8601String(),
             ];
         }
 
@@ -190,6 +190,7 @@ final class HrSummary
             $applied = Candidate::query()->visibleTo($viewer)->where('stage', CandidateStage::Applied->value);
             $row = (clone $applied)->toBase()->selectRaw('COUNT(*) AS total, MIN(applied_at) AS oldest')->first();
             $count = (int) ($row->total ?? 0);
+            $oldest = $row?->oldest;
 
             if ($count > 0) {
                 $total += $count;
@@ -198,7 +199,7 @@ final class HrSummary
                     'title' => "{$count} kandidat baru menunggu seleksi",
                     'subtitle' => 'Hiring',
                     'href' => '/hiring',
-                    'waiting_since' => $row->oldest !== null ? CarbonImmutable::parse((string) $row->oldest)->toIso8601String() : null,
+                    'waiting_since' => is_string($oldest) ? CarbonImmutable::parse($oldest)->toIso8601String() : null,
                 ];
             }
         }

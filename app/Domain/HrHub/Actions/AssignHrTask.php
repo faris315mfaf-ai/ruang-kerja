@@ -142,9 +142,9 @@ final class AssignHrTask
             return [];
         }
 
-        $divisionIds = $divisionIds === [] ? [] : Division::withDescendantIds(
-            Division::query()->where('company_id', $actor->company_id)->whereKey($divisionIds)->pluck('id')->all(),
-        );
+        /** @var list<string> $own divisions of the actor's company only */
+        $own = array_values(array_map('strval', Division::query()->where('company_id', $actor->company_id)->whereKey($divisionIds)->pluck('id')->all()));
+        $divisionIds = $own === [] ? [] : Division::withDescendantIds($own);
 
         /** @var list<string> */
         return User::query()

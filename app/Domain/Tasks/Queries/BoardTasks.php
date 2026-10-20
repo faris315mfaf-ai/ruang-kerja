@@ -117,7 +117,7 @@ final class BoardTasks
 
         return Task::query()
             ->where('workspace_id', $workspace->id)
-            ->when($viewer !== null, fn (Builder $query) => $query->respectingPrivacyOf($viewer))
+            ->when($viewer, fn (Builder $query, User $viewer) => $query->respectingPrivacyOf($viewer))
             ->whereIn('status_category', TaskStatusCategory::closedValues())
             ->where(fn (Builder $query) => $query
                 ->whereNull('completed_at')->whereNull('canceled_at')

@@ -3,10 +3,10 @@
 namespace App\Domain\Hiring\Queries;
 
 use App\Domain\Hiring\Actions\ScheduleInterview;
-use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Domain\Hiring\Enums\ReviewerRole;
 use App\Domain\Hiring\Services\CandidateChecklist;
 use App\Domain\Hiring\Services\HiringAccess;
+use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Candidate;
 use App\Models\CandidateChecklistItem;
 use App\Models\CandidateDecision;

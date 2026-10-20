@@ -9,8 +9,6 @@ export default function HrAttendancePage() {
 }
 
 HrAttendancePage.layout = {
-    breadcrumbs: [
-        { title: 'Ruang HR', href: '/hr' },
-    ],
+    breadcrumbs: [{ title: 'Ruang HR', href: '/hr' }],
     title: 'Ruang HR',
 };

@@ -164,7 +164,7 @@ final class HrAssignments
                 ->with('division:id,name')
                 ->orderBy('name')
                 ->get(['id', 'name', 'division_id'])
-                ->map(fn (Team $team): array => ['id' => $team->id, 'name' => $team->name, 'division' => $team->division?->name, 'people' => (int) ($perTeam[$team->id] ?? 0)])
+                ->map(fn (Team $team): array => ['id' => $team->id, 'name' => $team->name, 'division' => $team->division->name, 'people' => (int) ($perTeam[$team->id] ?? 0)])
                 ->all()),
         ];
     }

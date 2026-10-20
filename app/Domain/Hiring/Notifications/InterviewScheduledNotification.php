@@ -5,6 +5,7 @@ namespace App\Domain\Hiring\Notifications;
 use App\Domain\Notifications\Data\NotificationActor;
 use App\Domain\Notifications\Data\NotificationPayload;
 use App\Domain\Notifications\Enums\NotificationType;
+use App\Domain\Notifications\Support\IndonesianDate;
 use App\Domain\Tenancy\Support\CurrentCompany;
 use App\Models\Candidate;
 use App\Models\User;
@@ -62,6 +63,8 @@ final class InterviewScheduledNotification extends HiringNotification
             return 'belum dijadwalkan';
         }
 
-        return $at->setTimezone(CurrentCompany::timezone())->locale('id')->translatedFormat('D, j M Y H.i');
+        $local = $at->setTimezone(CurrentCompany::timezone());
+
+        return IndonesianDate::short($local).' '.$local->format('H.i');
     }
 }

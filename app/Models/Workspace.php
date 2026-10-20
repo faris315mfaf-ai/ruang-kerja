@@ -170,7 +170,7 @@ class Workspace extends Model implements HasDriveFolder
             ? DB::table('workspaces')->where('id', $id)->first(['system_key', 'tasks_private'])
             : null;
 
-        foreach (['system_key' => $row?->system_key, 'tasks_private' => (bool) ($row?->tasks_private ?? false)] as $column => $value) {
+        foreach (['system_key' => $row === null ? null : $row->system_key, 'tasks_private' => $row !== null && (bool) $row->tasks_private] as $column => $value) {
             if (! array_key_exists($column, $this->attributes)) {
                 $this->attributes[$column] = $value;
                 $this->original[$column] = $value;

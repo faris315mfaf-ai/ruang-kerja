@@ -13,11 +13,11 @@ use App\Http\Requests\Workspaces\WorkspaceMemberRequest;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
+use App\Policies\WorkspacePolicy;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Policies\WorkspacePolicy;
 use Illuminate\Support\Facades\Gate;
 
 /**

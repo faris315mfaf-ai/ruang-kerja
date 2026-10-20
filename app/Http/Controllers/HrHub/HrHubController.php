@@ -17,6 +17,7 @@ use App\Domain\HrHub\Queries\HrCalendar;
 use App\Domain\HrHub\Queries\HrSummary;
 use App\Domain\Monitoring\Queries\DailyWorkMonitor;
 use App\Domain\Notes\Queries\NoteLibrary;
+use App\Domain\Notifications\Support\IndonesianDate;
 use App\Domain\Payroll\Models\PayrollPeriod;
 use App\Domain\Payroll\Queries\PayrollCalculator;
 use App\Domain\Tenancy\Support\CurrentCompany;
@@ -197,7 +198,7 @@ class HrHubController extends Controller
         return [
             'tab' => $tab,
             'today' => $local->toDateString(),
-            'today_label' => $local->locale('id')->translatedFormat('l, j F Y'),
+            'today_label' => IndonesianDate::long($local),
             'workspaces' => [
                 'team' => $present($workspaces[SystemWorkspace::HrTeam->value] ?? null),
                 'assignments' => $present($workspaces[SystemWorkspace::HrAssignments->value] ?? null),
