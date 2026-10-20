@@ -72,6 +72,8 @@ Butir 2–4 diterapkan modul masing-masing; shell (butir 1) sudah berlaku.
 | Dashboard Kadiv / HR | ✓ | ✓ | Versi ringkas 1 kolom (HR: pengajuan menunggu HR, ringkasan absensi, Hiring — keputusan pemilik 6 Okt 2026) |
 | Dashboard Direksi (`/dashboard/direksi`) | ✓ | ✓ | Tab **Harian · Mingguan · Proyek · Catatan**, kartu bertumpuk; matriks mingguan = baris kotak hari per orang; detail laporan = bottom sheet; akses cepat workspace di tab Proyek; ekspor hanya desktop |
 | Absensi › Hari ini · Rekap · Kedisiplinan | ✓ | ◐ | Tab bergaris bawah; Kedisiplinan: KPI 2×2, tren ringkas, daftar orang (chip filter); ekspor di desktop |
+| Absen pegawai (`/absensi/pegawai`, HR & Super Admin; keputusan pemilik 20 Okt 2026) | ✓ | ✓ | Desktop: grid pegawai × tanggal + lembar samping "Atur absensi". Ponsel: strip minggu, chip Semua/Belum masuk/Terlambat/Alpha, daftar orang, FAB "Tambah absen", bottom sheet editor yang sama |
+| Gaji harian (`/absensi/gaji`, HR & Super Admin kelola, Direksi baca saja) | ✓ | ◐ | Ponsel: ringkasan (total, hari kerja, tidak dibayar, belum dihitung) + "Fitur ini tersedia di desktop"; tabel, upah harian, aturan, kunci periode, dan ekspor di desktop |
 | Dashboard Manajemen (`/manajemen`) | ✓ | ✓ | Kartu bertumpuk: hero kehadiran + tugas, 2 tile KPI, grafik ringkas, daftar proyek, absensi, milestone (MgPDashboard), **beban kerja** per divisi (buka per orang) dan **catatan tindakan** |
 | Portofolio & detail proyek (Direksi) | ✓ | ✓ | Tabel proyek → kartu proyek; roadmap hanya desktop (mobile: milestone berikutnya per kartu); "Minta update" & "Beri arahan" di bilah aksi bawah |
 | Pengaturan notifikasi & tema | ✓ | ✓ | Matriks → daftar accordion |
