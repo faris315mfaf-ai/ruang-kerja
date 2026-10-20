@@ -40,6 +40,11 @@ final class UpdateWorkspaceMemberRole
             return;
         }
 
+        // Ruang HR: admins of a system workspace follow the HR role (EnsureHrWorkspaces).
+        if ($workspace->isSystem() && ($role->canManage() || $current->canManage())) {
+            throw ValidationException::withMessages(['role' => 'Admin workspace ini mengikuti peran HR dan tidak dapat diubah di sini.']);
+        }
+
         DB::transaction(function () use ($workspace, $actor, $member, $current, $role): void {
             WorkspaceMember::query()
                 ->where('workspace_id', $workspace->id)

@@ -35,7 +35,7 @@ final class WorkspacePage
         return [
             'workspace' => (new WorkspaceResource($workspace))->resolve(),
             'can' => $this->abilities($workspace, $user),
-            'members' => $this->members($workspace),
+            'members' => $this->members($workspace, $user),
             // Tab badges "Dokumen 6 · File 24" (Sprint 7).
             'drive_counts' => $this->drive->counts($workspace),
         ];
@@ -48,6 +48,8 @@ final class WorkspacePage
     {
         return [
             'edit_tasks' => $this->policy->editTasks($user, $workspace)->allowed(),
+            // Penugasan HR (private tasks): members work on their tasks but do not add new ones.
+            'create_tasks' => $this->policy->canCreateTasks($user, $workspace),
             'manage' => $this->policy->update($user, $workspace)->allowed(),
             'manage_members' => $this->policy->manageMembers($user, $workspace)->allowed(),
             'archive' => $this->policy->archive($user, $workspace)->allowed(),
@@ -58,18 +60,24 @@ final class WorkspacePage
     }
 
     /**
-     * Members ordered by role (owner first) then name.
+     * Members ordered by role (owner first) then name; for a private-task
+     * workspace only its admins and the viewer when the viewer is not admin.
      *
      * @return list<array{id: string, name: string, avatar: string|null, role: string}>
      */
-    public function members(Workspace $workspace): array
+    public function members(Workspace $workspace, ?User $viewer = null): array
     {
+        // Penugasan HR (private tasks): members only see HR and themselves, not
+        // the other employees who got assignments.
+        $hideOthers = $viewer !== null && ! $this->policy->seesAllTasks($viewer, $workspace);
+
         // Uses eager-loaded `memberships.user` when present (lists of workspaces).
         $memberships = $workspace->relationLoaded('memberships')
             ? $workspace->memberships
             : WorkspaceMember::query()->where('workspace_id', $workspace->id)->with('user:id,name,avatar_url')->get();
 
         return array_values($memberships
+            ->filter(fn (WorkspaceMember $member): bool => ! $hideOthers || $member->role->canManage() || $member->user_id === $viewer?->id)
             ->sortBy(fn (WorkspaceMember $member): string => (5 - $member->role->rank()).mb_strtolower($member->user->name))
             ->map(fn (WorkspaceMember $member): array => [
                 'id' => $member->user_id,

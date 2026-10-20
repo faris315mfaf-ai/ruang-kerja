@@ -29,6 +29,11 @@ final class AddWorkspaceMember
             throw ValidationException::withMessages(['user_id' => 'Anggota tidak dapat ditambahkan ke workspace ini.']);
         }
 
+        // Ruang HR: admins of a system workspace follow the HR role (EnsureHrWorkspaces).
+        if ($workspace->isSystem() && $role->canManage()) {
+            throw ValidationException::withMessages(['role' => 'Admin workspace ini mengikuti peran HR. Tambahkan sebagai member atau viewer.']);
+        }
+
         if ($member->company_id !== $workspace->company_id || ! $member->isActive()) {
             throw ValidationException::withMessages(['user_id' => 'Karyawan tidak ditemukan atau tidak aktif.']);
         }

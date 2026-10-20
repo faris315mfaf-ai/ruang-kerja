@@ -143,6 +143,7 @@ final class PersonalPlanner
                 ->where('mine.user_id', '=', $viewer->id))
             ->leftJoin('users as assigner', 'assigner.id', '=', 'mine.assigned_by')
             ->whereIn('tasks.workspace_id', Workspace::query()->visibleTo($viewer)->notArchived()->select('id'))
+            ->respectingPrivacyOf($viewer)
             ->where(fn (Builder $query) => $query
                 ->whereNotNull('mine.user_id')
                 ->orWhereIn('tasks.workspace_id', $personal))

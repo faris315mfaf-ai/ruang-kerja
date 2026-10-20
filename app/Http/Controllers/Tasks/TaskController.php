@@ -27,7 +27,7 @@ class TaskController extends Controller
 {
     public function store(TaskRequest $request, Workspace $workspace, #[CurrentUser] User $user, CreateTask $createTask): RedirectResponse|JsonResponse
     {
-        Gate::authorize('editTasks', $workspace);
+        Gate::authorize('createTasks', $workspace);
 
         $payload = $request->payload();
         $task = $createTask->handle($workspace, $user, [...$payload, 'title' => $payload['title'] ?? '']);

@@ -43,7 +43,7 @@ class WorkspaceTaskController extends Controller
             'statuses' => fn (): array => TaskStatusResource::collection($workspace->statuses()->get())->resolve(),
             'labels' => fn (): array => LabelResource::collection($workspace->labels()->get())->resolve(),
             'tasks' => fn (): array => TaskResource::collection($boardTasks->for($workspace, $range, $user))->resolve(),
-            'hidden_closed_count' => fn (): int => $boardTasks->hiddenClosedCount($workspace),
+            'hidden_closed_count' => fn (): int => $boardTasks->hiddenClosedCount($workspace, $user),
             'saved_views' => fn (): array => SavedView::query()
                 ->visibleTo($user)
                 ->where('workspace_id', $workspace->id)

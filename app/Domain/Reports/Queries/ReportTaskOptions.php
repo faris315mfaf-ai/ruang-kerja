@@ -107,6 +107,7 @@ final class ReportTaskOptions
         return Task::query()
             ->select('tasks.*')
             ->whereIn('tasks.workspace_id', Workspace::query()->visibleTo($user)->notArchived()->select('id'))
+            ->respectingPrivacyOf($user)
             ->with([
                 'workspace',
                 // The writer's membership row: the move() check needs no extra query.

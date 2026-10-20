@@ -37,7 +37,7 @@ final class SyncMentions
     public function handle(Task $task, Comment|Task $mentionable, User $actor, array $mentionedIds): array
     {
         $task->loadMissing('workspace');
-        $allowed = $this->audience->withAccess($task->workspace, $mentionedIds);
+        $allowed = $this->audience->withTaskAccess($task, $mentionedIds);
         $allowedIds = $allowed->pluck('id')->all();
 
         /** @var list<string> $existing */

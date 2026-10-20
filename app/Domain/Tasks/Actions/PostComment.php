@@ -54,7 +54,7 @@ final class PostComment
             $this->relations->watch($task, [$author->id], now());
 
             $others = array_values(array_diff($watcherIds, [$author->id], $notified));
-            $recipients = $this->audience->withAccess($task->workspace, $others);
+            $recipients = $this->audience->withTaskAccess($task, $others);
 
             if ($recipients->isNotEmpty()) {
                 Notification::send($recipients->all(), new TaskCommentedNotification($task, $comment, $author));

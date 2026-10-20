@@ -24,7 +24,8 @@ final class BoardTasks
 
     /**
      * With a $viewer the cards also carry their comment badge (`comments_count`
-     * and `has_unread_comments`, see self::withCommentState()).
+     * and `has_unread_comments`, see self::withCommentState()) and private
+     * tasks of others are left out (Task::scopeRespectingPrivacyOf).
      *
      * @return Builder<Task>
      */
@@ -37,7 +38,14 @@ final class BoardTasks
                 'checklistItems as checklist_done_count' => fn (Builder $query) => $query->where('is_done', true),
             ]);
 
-        return $viewer !== null ? self::withCommentState($query, $viewer) : $query;
+        if ($viewer === null) {
+            return $query;
+        }
+
+        // Penugasan HR (private tasks): only the viewer's own unless they manage the workspace.
+        $query->respectingPrivacyOf($viewer);
+
+        return self::withCommentState($query, $viewer);
     }
 
     /**
@@ -103,12 +111,13 @@ final class BoardTasks
     /**
      * Closed tasks hidden by the 30-day window (shown as a hint under the board).
      */
-    public function hiddenClosedCount(Workspace $workspace): int
+    public function hiddenClosedCount(Workspace $workspace, ?User $viewer = null): int
     {
         $since = now()->subDays(self::CLOSED_DAYS);
 
         return Task::query()
             ->where('workspace_id', $workspace->id)
+            ->when($viewer !== null, fn (Builder $query) => $query->respectingPrivacyOf($viewer))
             ->whereIn('status_category', TaskStatusCategory::closedValues())
             ->where(fn (Builder $query) => $query
                 ->whereNull('completed_at')->whereNull('canceled_at')

@@ -72,7 +72,7 @@ class WorkspaceBoardController extends Controller
                 'arsip' => $workspace->isArchived(),
             ],
             'columns' => $columns,
-            'hidden_closed_count' => $this->boardTasks->hiddenClosedCount($workspace),
+            'hidden_closed_count' => $this->boardTasks->hiddenClosedCount($workspace, $user),
             'labels' => Label::query()->where('workspace_id', $workspace->id)->orderBy('name')->get(['id', 'name', 'color'])
                 ->map(fn (Label $label): array => ['id' => $label->id, 'name' => $label->name, 'color' => $label->color])
                 ->values()

@@ -33,7 +33,7 @@ class TaskFormOptionsController extends Controller
             ->with(['statuses', 'labels', 'memberships.user:id,name,avatar_url'])
             ->orderBy('name')
             ->get()
-            ->filter(fn (Workspace $workspace): bool => $policy->canEditTasks($user, $workspace))
+            ->filter(fn (Workspace $workspace): bool => $policy->canCreateTasks($user, $workspace))
             ->sortBy(fn (Workspace $workspace): string => $workspace->type->sortOrder().mb_strtolower($workspace->name))
             ->map(fn (Workspace $workspace): array => [
                 ...WorkspaceResource::reference($workspace),

@@ -20,6 +20,11 @@ use Illuminate\Auth\Access\Response;
  *   pembuat/atasan juga tidak; si penerima tetap bisa mengerjakan tugasnya
  *   (move, comment, plan, work: checklist & lampiran);
  * - tugas tim lainnya (tanpa penerima) mengikuti kebijakan workspace (editTasks).
+ *
+ * Tugas privat (Penugasan HR, keputusan pemilik 20 Okt 2026): di workspace
+ * `tasks_private` hanya owner/admin (HR) yang melihat semua tugas; orang lain
+ * yang bisa membuka workspace hanya melihat tugas yang ditugaskan kepadanya —
+ * tugas lain 404 di setiap aksi (hiddenPrivate()).
  */
 class TaskPolicy
 {
@@ -39,12 +44,22 @@ class TaskPolicy
 
     public function view(User $user, Task $task): Response
     {
-        return $this->workspaces->view($user, $task->workspace);
+        return $this->hiddenPrivate($user, $task) ?? $this->workspaces->view($user, $task->workspace);
+    }
+
+    /**
+     * Can $user see this one task? Workspace visibility plus the private-task
+     * rule (Penugasan HR). Used by queries that need a plain boolean.
+     */
+    public function canSee(User $user, Task $task): bool
+    {
+        return $this->workspaces->canView($user, $task->workspace) && $this->hiddenPrivate($user, $task) === null;
     }
 
     public function update(User $user, Task $task): Response
     {
-        return $this->guardAssignedByOther($user, $task)
+        return $this->hiddenPrivate($user, $task)
+            ?? $this->guardAssignedByOther($user, $task)
             ?? $this->workspaces->editTasks($user, $task->workspace);
     }
 
@@ -56,12 +71,12 @@ class TaskPolicy
      */
     public function work(User $user, Task $task): Response
     {
-        return $this->workspaces->editTasks($user, $task->workspace);
+        return $this->hiddenPrivate($user, $task) ?? $this->workspaces->editTasks($user, $task->workspace);
     }
 
     public function move(User $user, Task $task): Response
     {
-        return $this->workspaces->editTasks($user, $task->workspace);
+        return $this->hiddenPrivate($user, $task) ?? $this->workspaces->editTasks($user, $task->workspace);
     }
 
     /**
@@ -73,6 +88,10 @@ class TaskPolicy
     public function comment(User $user, Task $task): Response
     {
         $workspace = $task->workspace;
+
+        if ($hidden = $this->hiddenPrivate($user, $task)) {
+            return $hidden;
+        }
 
         if (! $this->workspaces->canView($user, $workspace)) {
             return Response::denyAsNotFound();
@@ -95,6 +114,10 @@ class TaskPolicy
     {
         $workspace = $task->workspace;
 
+        if ($hidden = $this->hiddenPrivate($user, $task)) {
+            return $hidden;
+        }
+
         if (! $this->workspaces->canView($user, $workspace)) {
             return Response::denyAsNotFound();
         }
@@ -113,6 +136,10 @@ class TaskPolicy
     public function trackCommentReads(User $user, Task $task): Response
     {
         $workspace = $task->workspace;
+
+        if ($hidden = $this->hiddenPrivate($user, $task)) {
+            return $hidden;
+        }
 
         if (! $this->workspaces->canView($user, $workspace)) {
             return Response::denyAsNotFound();
@@ -133,6 +160,10 @@ class TaskPolicy
     {
         $workspace = $task->workspace;
 
+        if ($hidden = $this->hiddenPrivate($user, $task)) {
+            return $hidden;
+        }
+
         if (! $this->workspaces->canView($user, $workspace)) {
             return Response::denyAsNotFound();
         }
@@ -151,7 +182,7 @@ class TaskPolicy
 
     public function delete(User $user, Task $task): Response
     {
-        if ($denied = $this->guardAssignedByOther($user, $task)) {
+        if ($denied = $this->hiddenPrivate($user, $task) ?? $this->guardAssignedByOther($user, $task)) {
             return $denied;
         }
 
@@ -200,6 +231,21 @@ class TaskPolicy
             || $this->managesAssignee($user, $task);
 
         return $superior ? null : Response::deny(self::ASSIGNED_BY_OTHER);
+    }
+
+    /**
+     * 404 for a task of a private-task workspace (Penugasan HR) that $user
+     * may not see: not owner/admin there and not one of its assignees.
+     */
+    private function hiddenPrivate(User $user, Task $task): ?Response
+    {
+        $workspace = $task->workspace;
+
+        if (! $workspace->hasPrivateTasks() || $this->workspaces->seesAllTasks($user, $workspace) || $this->hasAssignee($user, $task)) {
+            return null;
+        }
+
+        return Response::denyAsNotFound();
     }
 
     private function hasAnyAssignee(Task $task): bool

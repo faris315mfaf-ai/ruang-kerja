@@ -47,7 +47,12 @@ final class ConvertActionItemsToTasks
             throw ValidationException::withMessages(['workspace_id' => 'Pilih workspace untuk tugas tindak lanjut.']);
         }
 
-        Gate::forUser($actor)->authorize('editTasks', $workspace);
+        // Penugasan HR keeps private tasks: meeting follow-ups go elsewhere.
+        if ($workspace->hasPrivateTasks()) {
+            throw ValidationException::withMessages(['workspace_id' => 'Tindak lanjut rapat tidak dapat dijadikan tugas di workspace Penugasan HR.']);
+        }
+
+        Gate::forUser($actor)->authorize('createTasks', $workspace);
 
         $minutes = $this->store->find($occurrence);
 

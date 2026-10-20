@@ -41,7 +41,7 @@ class WorkspaceShowController extends Controller
         Gate::authorize('view', $workspace);
 
         $today = CarbonImmutable::now(CurrentCompany::timezone())->toDateString();
-        $open = Task::query()->where('workspace_id', $workspace->id)->whereNotIn('status_category', TaskStatusCategory::closedValues());
+        $open = Task::query()->where('workspace_id', $workspace->id)->respectingPrivacyOf($user)->whereNotIn('status_category', TaskStatusCategory::closedValues());
         $counts = $drive->counts($workspace);
         $membership = WorkspaceMember::query()->where('workspace_id', $workspace->id)->where('user_id', $user->id)->first();
         $role = $workspace->isPersonal() ? ($workspace->owner_id === $user->id ? 'owner' : null) : $membership?->role->value;

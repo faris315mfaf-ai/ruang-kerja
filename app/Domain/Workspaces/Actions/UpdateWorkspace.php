@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * General settings: name, key (old key kept for redirects), description,
- * visibility and color. Personal workspaces stay private.
+ * visibility and color. Personal workspaces stay private; Ruang HR system
+ * workspaces also keep their key.
  */
 final class UpdateWorkspace
 {
@@ -25,8 +26,13 @@ final class UpdateWorkspace
         return DB::transaction(function () use ($workspace, $actor, $changes): Workspace {
             $workspace->fill(array_intersect_key($changes, array_flip(['name', 'description', 'visibility', 'color'])));
 
-            if ($workspace->isPersonal()) {
+            if ($workspace->isPersonal() || $workspace->isSystem()) {
                 $workspace->visibility = WorkspaceVisibility::Private;
+            }
+
+            // Ruang HR system workspaces keep their key (links from Ruang HR).
+            if ($workspace->isSystem()) {
+                unset($changes['key']);
             }
 
             if (isset($changes['key']) && $changes['key'] !== $workspace->key) {

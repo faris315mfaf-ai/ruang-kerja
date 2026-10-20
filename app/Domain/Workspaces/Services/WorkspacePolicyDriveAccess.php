@@ -3,8 +3,10 @@
 namespace App\Domain\Workspaces\Services;
 
 use App\Domain\Google\Contracts\WorkspaceDriveAccess;
+use App\Domain\Workspaces\Enums\WorkspaceRole;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceMember;
 use App\Policies\WorkspacePolicy;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -16,6 +18,10 @@ use Illuminate\Database\Eloquent\Builder;
  * - contribute (upload, new document/folder, link) = WorkspacePolicy::canEditTasks
  *   (member and up, not archived);
  * - manage (remove any record) = WorkspacePolicy::canManage and not archived.
+ *
+ * Penugasan HR (private tasks): the workspace folder holds every employee's
+ * deliverables, so listing and previewing its files is for its owner/admins
+ * (HR) only; members still attach to their own tasks (contribute).
  */
 final class WorkspacePolicyDriveAccess implements WorkspaceDriveAccess
 {
@@ -25,7 +31,7 @@ final class WorkspacePolicyDriveAccess implements WorkspaceDriveAccess
     {
         $workspace = $this->workspace($workspaceId);
 
-        return $workspace !== null && $this->policy->canView($user, $workspace);
+        return $workspace !== null && $this->policy->canView($user, $workspace) && $this->policy->seesAllTasks($user, $workspace);
     }
 
     public function canContribute(User $user, string $workspaceId): bool
@@ -44,7 +50,15 @@ final class WorkspacePolicyDriveAccess implements WorkspaceDriveAccess
 
     public function constrainVisible(Builder $query, User $user, string $workspaceColumn): Builder
     {
-        return $query->whereIn($workspaceColumn, Workspace::query()->visibleTo($user)->select('workspaces.id'));
+        return $query->whereIn($workspaceColumn, Workspace::query()
+            ->visibleTo($user)
+            ->where(fn (Builder $open) => $open
+                ->where('workspaces.tasks_private', false)
+                ->orWhereIn('workspaces.id', WorkspaceMember::query()
+                    ->where('user_id', $user->id)
+                    ->whereIn('role', [WorkspaceRole::Owner->value, WorkspaceRole::Admin->value])
+                    ->select('workspace_id')))
+            ->select('workspaces.id'));
     }
 
     private function workspace(string $id): ?Workspace

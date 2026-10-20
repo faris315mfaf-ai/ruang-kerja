@@ -7,6 +7,7 @@ use App\Providers\AutomationServiceProvider;
 use App\Providers\FortifyServiceProvider;
 use App\Providers\GoogleServiceProvider;
 use App\Providers\HorizonServiceProvider;
+use App\Providers\HrHubServiceProvider;
 use App\Providers\MeetingsServiceProvider;
 use App\Providers\NotificationServiceProvider;
 use App\Providers\PrivacyServiceProvider;
@@ -28,4 +29,5 @@ return [
     PrivacyServiceProvider::class,
     AutomationServiceProvider::class,
     MeetingsServiceProvider::class,
+    HrHubServiceProvider::class,
 ];

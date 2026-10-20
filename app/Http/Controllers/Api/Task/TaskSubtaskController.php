@@ -32,13 +32,15 @@ class TaskSubtaskController extends Controller
 
         return response()->json([
             'parent' => ['id' => $task->id, 'key' => $task->displayKey(), 'title' => $task->title],
-            'subtasks' => $detail->subtasks($task, Period::officeDate(now())),
+            'subtasks' => $detail->subtasks($task, Period::officeDate(now()), $user),
         ]);
     }
 
     public function store(SubtaskStoreRequest $request, Task $task, #[CurrentUser] User $user, CreateTask $createTask): JsonResponse
     {
         Gate::authorize('work', $task);
+        // Penugasan HR (private tasks): only HR adds tasks there.
+        Gate::authorize('createTasks', $task->workspace);
 
         $subtask = $createTask->handle($task->workspace, $user, $request->payload($task));
 

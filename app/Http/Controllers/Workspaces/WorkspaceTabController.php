@@ -24,6 +24,7 @@ class WorkspaceTabController extends Controller
 
         $activities = Activity::query()
             ->where('workspace_id', $workspace->id)
+            ->respectingPrivacyOf($user)
             ->with('causer:id,name,avatar_url')
             ->latest('created_at')
             ->latest('id')

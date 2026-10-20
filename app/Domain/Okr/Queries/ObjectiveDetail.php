@@ -39,6 +39,7 @@ final class ObjectiveDetail
                 // Same rule as Task::visibleTo, on the linked rows' workspace instead of a self-join on
                 // all tasks (`tasks.id IN (every visible task)` could run for minutes with more data).
                 ->whereIn('tasks.workspace_id', Workspace::query()->visibleTo($viewer)->select('id'))
+                ->whereNotIn('tasks.workspace_id', Workspace::withTrashed()->where('tasks_private', true)->select('id'))
                 ->with(['workspace:id,key', 'assignees:id,name'])
                 ->orderBy('tasks.due_date')
                 ->orderBy('tasks.id'),

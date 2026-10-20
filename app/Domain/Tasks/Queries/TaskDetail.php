@@ -73,6 +73,7 @@ final class TaskDetail
 
         $subtasks = Task::query()
             ->where('parent_id', $task->id)
+            ->respectingPrivacyOf($viewer)
             ->with(['assignees:id', 'labels:id', 'workspace:id,key', 'parent:id,number'])
             ->withCount([
                 'checklistItems',

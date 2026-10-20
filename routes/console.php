@@ -6,6 +6,7 @@ use App\Domain\Auth\Jobs\ExpirePasswordResetRequests;
 use App\Domain\Automation\Jobs\CreateRecurringTasks;
 use App\Domain\Automation\Jobs\RunOverdueAutomations;
 use App\Domain\Hiring\Jobs\PurgeExpiredApplicantData;
+use App\Domain\HrHub\Actions\EnsureHrWorkspaces;
 use App\Domain\Meetings\Jobs\PruneSpeakingTimes;
 use App\Domain\Meetings\Jobs\SendActionItemReminders;
 use App\Domain\Meetings\Jobs\SendMeetingReminders;
@@ -94,3 +95,5 @@ Schedule::job(new PurgeExpiredApplicantData)->dailyAt('02:30')->timezone(config(
 $perCompany($companies->daily(SendDailyReportReminders::class, '16:30', fn () => SendDailyReportReminders::dispatch())->weekdays());
 // Notulen otomatis (7 Okt 2026): meeting transcripts deleted after MINUTES_TRANSCRIPT_RETENTION_DAYS (UU PDP).
 Schedule::job(new PurgeExpiredMeetingTranscripts)->dailyAt('02:45')->timezone(config()->string('app.office_timezone'))->withoutOverlapping()->onOneServer();
+// Ruang HR (keputusan pemilik 20 Okt 2026): system workspaces Tim HR / Penugasan HR follow the HR role, 01.00.
+$perCompany($companies->daily(EnsureHrWorkspaces::class, '01:00', fn (Company $company) => app(EnsureHrWorkspaces::class)->handle($company)));

@@ -253,6 +253,7 @@ final class WorkspaceDriveListing
             ->join('workspaces', 'workspaces.id', '=', 'tasks.workspace_id')
             ->whereNull('tasks.deleted_at')
             ->whereIn('tasks.workspace_id', $visible)
+            ->whereIn('tasks.id', Task::query()->respectingPrivacyOf($user)->select('tasks.id'))
             ->orderBy('tasks.number')
             ->get(['used.drive_file_id', 'tasks.number', 'tasks.title', 'workspaces.key']);
 

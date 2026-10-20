@@ -7,6 +7,7 @@ use App\Domain\Tasks\Enums\TaskPriority;
 use App\Domain\Tasks\Enums\TaskSource;
 use App\Domain\Tasks\Enums\TaskStatusCategory;
 use App\Domain\Workspaces\Contracts\HasWorkspaceAttachments;
+use App\Domain\Workspaces\Enums\WorkspaceRole;
 use Carbon\CarbonImmutable;
 use Database\Factories\TaskFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -20,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
  * Task (docs/DATABASE.md §4). Numbered per workspace (KEY-number) by
@@ -104,13 +106,42 @@ class Task extends Model implements HasWorkspaceAttachments
     }
 
     /**
-     * Tasks in workspaces $viewer may see (same rules as Workspace::visibleTo).
+     * Tasks in workspaces $viewer may see (same rules as Workspace::visibleTo),
+     * minus the private tasks of others (scopeRespectingPrivacyOf).
      *
      * @param  Builder<Task>  $query
      */
     public function scopeVisibleTo(Builder $query, User $viewer): void
     {
         $query->whereIn($this->qualifyColumn('workspace_id'), Workspace::query()->visibleTo($viewer)->select('id'));
+        $this->scopeRespectingPrivacyOf($query, $viewer);
+    }
+
+    /**
+     * Private tasks (Penugasan HR, keputusan pemilik 20 Okt 2026): in a
+     * workspace with `tasks_private` only its owner/admins see every task;
+     * anyone else only the tasks assigned to them. Apply it to every list
+     * that reads tasks of a workspace without Task::visibleTo (board,
+     * calendar, references, subtasks …). Same rule as TaskPolicy.
+     *
+     * @param  Builder<Task>  $query
+     */
+    public function scopeRespectingPrivacyOf(Builder $query, User $viewer): void
+    {
+        $workspaceId = $this->qualifyColumn('workspace_id');
+        $taskId = $this->qualifyColumn('id');
+
+        $query->where(function (Builder $scope) use ($viewer, $workspaceId, $taskId): void {
+            $scope->whereNotIn($workspaceId, Workspace::withTrashed()->where('tasks_private', true)->select('id'))
+                ->orWhereIn($workspaceId, WorkspaceMember::query()
+                    ->where('user_id', $viewer->id)
+                    ->whereIn('role', [WorkspaceRole::Owner->value, WorkspaceRole::Admin->value])
+                    ->select('workspace_id'))
+                ->orWhereExists(fn (QueryBuilder $assigned) => $assigned->selectRaw('1')
+                    ->from('task_assignees')
+                    ->whereColumn('task_assignees.task_id', $taskId)
+                    ->where('task_assignees.user_id', $viewer->id));
+        });
     }
 
     /**

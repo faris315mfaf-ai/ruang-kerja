@@ -71,7 +71,8 @@ final class MyTasks
     private function scoped(User $user, string $tab): Builder
     {
         $query = Task::query()
-            ->whereIn('tasks.workspace_id', Workspace::query()->visibleTo($user)->notArchived()->select('id'));
+            ->whereIn('tasks.workspace_id', Workspace::query()->visibleTo($user)->notArchived()->select('id'))
+            ->respectingPrivacyOf($user);
 
         $assigned = fn (QueryBuilder $sub) => $sub->selectRaw('1')
             ->from('task_assignees')

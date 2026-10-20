@@ -50,7 +50,7 @@ final readonly class MetricScope
             $workspaces->where('workspaces.type', '!=', WorkspaceType::Personal->value);
         }
 
-        return Task::query()->whereIn('tasks.workspace_id', $workspaces->select('workspaces.id'));
+        return Task::query()->whereIn('tasks.workspace_id', $workspaces->select('workspaces.id'))->respectingPrivacyOf($this->viewer);
     }
 
     /**

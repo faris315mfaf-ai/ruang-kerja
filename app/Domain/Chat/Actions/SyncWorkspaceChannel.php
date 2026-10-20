@@ -17,7 +17,9 @@ use Illuminate\Support\Str;
  * The automatic channel of a non-personal workspace (PRD §6): created on
  * demand, named after the workspace, members mirrored from workspace_members
  * (owner → owner, admin → admin, others → member). Idempotent; personal
- * workspaces never get one. Reading follows the workspace (ChannelPolicy).
+ * workspaces never get one, nor do workspaces with private tasks (Penugasan
+ * HR: a shared channel would reveal who got which assignment). Reading
+ * follows the workspace (ChannelPolicy).
  */
 final class SyncWorkspaceChannel
 {
@@ -25,7 +27,7 @@ final class SyncWorkspaceChannel
 
     public function handle(Workspace $workspace): ?Channel
     {
-        if ($workspace->isPersonal()) {
+        if ($workspace->isPersonal() || $workspace->hasPrivateTasks()) {
             return null;
         }
 
