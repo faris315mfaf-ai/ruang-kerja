@@ -22,7 +22,9 @@ use Illuminate\Support\Facades\DB;
  * - scheduled, no check-in, no approved request → `absent`;
  * - checked in without check-out → `needs_correction` + notification (once);
  * - pattern day falling on a holiday → `holiday`;
- * - system rows that no longer match the schedule are corrected or removed.
+ * - system rows that no longer match the schedule are corrected or removed;
+ * - rows whose status HR set by hand (status_source = manual) are left alone
+ *   (only their overtime minutes are synced).
  *
  * A day is only closed once its check-out window (scheduled end + grace) has
  * passed, so overnight shifts are closed by the next run.
@@ -89,6 +91,12 @@ final class CloseAttendanceDay
             if ($day->isDirty('overtime_minutes')) {
                 $day->save();
             }
+        }
+
+        // A status HR set by hand (Absensi › Pegawai) is never overwritten,
+        // removed, or turned into "Perlu koreksi" (keputusan pemilik 20 Okt 2026).
+        if ($day !== null && $day->isManual()) {
+            return;
         }
 
         // Leave, permit, sick, business trip come from approved requests (Sprint 4).

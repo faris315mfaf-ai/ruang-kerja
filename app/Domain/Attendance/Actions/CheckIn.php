@@ -110,6 +110,8 @@ final class CheckIn
                 // and request_id; the request explains the hours, so never "late".
                 $fromRequest = $day->exists && $day->isFromRequest();
                 $lateMinutes = $fromRequest ? 0 : self::lateMinutes($schedule, $now);
+                // A real check-in wins over a status HR set by hand.
+                $day->clearManualStatus();
 
                 $day->fill([
                     'work_plan' => $data instanceof CheckInData && $data->workPlan !== [] ? $data->workPlan : null,

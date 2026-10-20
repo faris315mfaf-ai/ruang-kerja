@@ -68,6 +68,7 @@ final class AttendanceDayEffects implements AttendanceEffects
                 // trip is still linked to its request; a business trip is shown as
                 // "Dinas", a half day keeps the attendance status (never an absence).
                 if ($halfDay || $status === AttendanceStatus::BusinessTrip) {
+                    $day->clearManualStatus();
                     $day->fill([
                         'request_id' => $request->id,
                         'request_portion' => $portion,
@@ -82,6 +83,8 @@ final class AttendanceDayEffects implements AttendanceEffects
             $schedule = $this->schedules->forDate($request->user, ScheduleResolver::parseDate($date));
             $day ??= new AttendanceDay(['user_id' => $request->user_id, 'work_date' => $date]);
 
+            // The approved request replaces a status HR set by hand.
+            $day->clearManualStatus();
             $day->fill([
                 'status' => $status,
                 'request_id' => $request->id,
@@ -137,6 +140,7 @@ final class AttendanceDayEffects implements AttendanceEffects
             'note' => trim('Dikoreksi lewat '.($request->number ?? 'pengajuan').'. '.($day->note ?? '')),
         ]);
 
+        $day->clearManualStatus();
         $late = self::lateMinutes($schedule, $inAt);
         $early = $outAt !== null ? CheckOut::earlyLeaveMinutes($day, CarbonImmutable::instance($outAt)) : 0;
 

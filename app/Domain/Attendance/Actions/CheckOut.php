@@ -115,6 +115,9 @@ final class CheckOut
                 // Half-day leave/permit or business trip: the request explains the hours.
                 $earlyMinutes = $day->isFromRequest() ? 0 : self::earlyLeaveMinutes($day, $now);
 
+                // A real check-out wins over a status HR set by hand.
+                $day->clearManualStatus();
+
                 $day->fill([
                     'check_out_at' => $now->utc(),
                     'check_out_log_id' => $log->id,
