@@ -10,6 +10,8 @@ const state = vi.hoisted(() => ({
     keyboardOpen: false,
     attendanceStatus: null as null | Record<string, unknown>,
     workspaces: [] as Array<Record<string, unknown>>,
+    home: '/dashboard' as '/dashboard' | '/hr',
+    roles: ['anggota'] as string[],
     finish: [] as Array<() => void>,
 }));
 
@@ -21,7 +23,11 @@ vi.mock('@inertiajs/react', () => ({
             chatUnread: state.chatUnread,
             attendanceStatus: state.attendanceStatus,
             workspaces: state.workspaces,
-            auth: { user: { name: 'Andi Pratama' }, roles: ['anggota'] },
+            auth: {
+                user: { name: 'Andi Pratama' },
+                roles: state.roles,
+                home: state.home,
+            },
         },
     }),
     router: {
@@ -78,6 +84,20 @@ describe('TabBar (dock capsule)', () => {
         state.chatUnread = 0;
         state.keyboardOpen = false;
         state.attendanceStatus = null;
+        state.home = '/dashboard';
+        state.roles = ['anggota'];
+    });
+
+    it('starts with Ruang HR for HR (auth.home = /hr)', () => {
+        state.home = '/hr';
+        state.roles = ['hr'];
+        state.url = '/hr/penugasan';
+        render(<TabBar />);
+
+        const first = screen.getAllByRole('link')[0];
+        expect(first.textContent).toBe('Ruang HR');
+        expect(first.getAttribute('href')).toBe('/hr');
+        expect(first.getAttribute('aria-current')).toBe('page');
     });
 
     it('orders the tabs mobile-first with Absen raised in the middle', () => {

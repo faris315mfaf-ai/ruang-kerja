@@ -103,6 +103,23 @@ describe('Dock', () => {
         }
     });
 
+    it('shows the Ruang HR tile right after Dashboard to HR and Super Admin only', () => {
+        for (const role of ['hr', 'super_admin']) {
+            renderFor([role]);
+            const hrefs = screen
+                .getAllByRole('link')
+                .map((link) => link.getAttribute('href'));
+            expect(hrefs.indexOf('/hr')).toBe(hrefs.indexOf('/dashboard') + 1);
+            cleanup();
+        }
+
+        for (const role of ['direksi', 'kepala_divisi', 'anggota']) {
+            renderFor([role]);
+            expect(screen.queryByRole('link', { name: 'Ruang HR' })).toBeNull();
+            cleanup();
+        }
+    });
+
     it('starts with Dashboard and keeps the Workspace stack for everyone', () => {
         renderFor(['anggota']);
 

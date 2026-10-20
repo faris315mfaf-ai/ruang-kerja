@@ -29,6 +29,7 @@ import {
     Target,
     UserRoundSearch,
     Users,
+    UsersRound,
     Wallet,
     WalletCards,
     Workflow,
@@ -189,11 +190,27 @@ export function canSeeAutomationNav(
 }
 
 /**
- * Main navigation for the signed-in roles: Portofolio right after Dashboard,
- * then Manajemen.
+ * "Ruang HR" (/hr, keputusan pemilik 20 Okt 2026): the HR workspace that
+ * replaced the HR dashboard, for HR and Super Admin (Gate `viewHrHub`).
+ */
+export const hrHubNavItem: AppNavItem = {
+    title: 'Ruang HR',
+    href: '/hr',
+    icon: UsersRound,
+    matchPrefix: true,
+};
+
+export function canSeeHrHub(roles: readonly string[]): boolean {
+    return hasAnyRole(roles, 'hr', 'super_admin');
+}
+
+/**
+ * Main navigation for the signed-in roles: Ruang HR right after Dashboard,
+ * then Portofolio and Manajemen.
  */
 export function mainNavItemsFor(roles: readonly string[]): AppNavItem[] {
     const extra = [
+        ...(canSeeHrHub(roles) ? [hrHubNavItem] : []),
         ...(canSeePortfolio(roles) ? [portfolioNavItem] : []),
         ...(canSeeManagement(roles) ? [managementNavItem] : []),
     ];
@@ -350,6 +367,7 @@ export type CenterAction = 'absen' | 'workspace';
 export function tabNavItems(
     chat: boolean,
     center: CenterAction | null = 'absen',
+    home: '/hr' | '/dashboard' = '/dashboard',
 ): TabNavItem[] {
     const centerItem: TabNavItem =
         center === 'workspace'
@@ -370,7 +388,15 @@ export function tabNavItems(
                   center: true,
               };
     const items = [
-        { title: 'Beranda', href: '/dashboard', icon: Home, matchPrefix: true },
+        // HR land on Ruang HR (shared prop `auth.home`, keputusan pemilik 20 Okt 2026).
+        home === '/hr'
+            ? { ...hrHubNavItem }
+            : {
+                  title: 'Beranda',
+                  href: '/dashboard',
+                  icon: Home,
+                  matchPrefix: true,
+              },
         {
             title: 'Tugas',
             href: '/tugas',
@@ -399,8 +425,9 @@ export function activeTabIndex(
     currentPath: string,
     chat: boolean,
     center: CenterAction | null = 'absen',
+    home: '/hr' | '/dashboard' = '/dashboard',
 ): number {
-    return tabNavItems(chat, center).findIndex((item) =>
+    return tabNavItems(chat, center, home).findIndex((item) =>
         isActivePath(item, currentPath),
     );
 }

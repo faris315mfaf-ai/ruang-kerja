@@ -25,7 +25,8 @@ export function TabBar() {
     const { currentUrl } = useCurrentUrl();
     const keyboardOpen = useKeyboardOpen();
     const unread = useUnreadCount();
-    const { features, chatUnread, attendanceStatus } = usePage().props;
+    const { features, chatUnread, attendanceStatus, auth } = usePage().props;
+    const home = auth.home ?? '/dashboard';
     const chat = features?.chat ?? false;
 
     // Re-render exactly when Absen comes back (end − 60 min): the status
@@ -62,7 +63,7 @@ export function TabBar() {
 
     const center = centerAction(attendanceStatus, now);
 
-    const items = tabNavItems(chat, center);
+    const items = tabNavItems(chat, center, home);
     // Tab tapped while its page is still loading; dropped once the visit ends.
     const [pending, setPending] = useState<number | null>(null);
     const [sheetOpen, setSheetOpen] = useState(false);
@@ -73,7 +74,7 @@ export function TabBar() {
         return null;
     }
 
-    const current = activeTabIndex(currentUrl, chat, center);
+    const current = activeTabIndex(currentUrl, chat, center, home);
     const shown = pending ?? current;
     // The centre button is its own highlight; the pill only serves side tabs.
     const pillHidden = shown < 0 || items[shown]?.center === true;

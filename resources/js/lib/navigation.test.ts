@@ -5,6 +5,7 @@ import {
     adminNavItems,
     attendanceNavItems,
     canSeeAutomationNav,
+    canSeeHrHub,
     canSeeManagement,
     canSeeRoleDashboardNav,
     mainNavItems,
@@ -235,13 +236,40 @@ describe('navigation', () => {
         ).toBe('/absensi/rekap');
     });
 
-    it('adds Portofolio after Dashboard for Direksi and Super Admin only', () => {
+    it('adds Ruang HR right after Dashboard for HR and Super Admin only (keputusan pemilik 20 Okt 2026)', () => {
+        const hrefs = (roles: string[]) =>
+            mainNavItemsFor(roles).map((item) => item.href);
+
+        for (const roles of [
+            ['hr'],
+            ['super_admin'],
+            ['kepala_divisi', 'hr'],
+        ]) {
+            expect(hrefs(roles).indexOf('/hr')).toBe(
+                hrefs(roles).indexOf('/dashboard') + 1,
+            );
+            expect(canSeeHrHub(roles)).toBe(true);
+        }
+        for (const role of ['direksi', 'kepala_divisi', 'anggota']) {
+            expect(hrefs([role])).not.toContain('/hr');
+            expect(canSeeHrHub([role])).toBe(false);
+        }
+        // One tile only (no duplicate in stacks).
+        expect(
+            desktopHrefs(ROLES).filter((item) => item.href === '/hr'),
+        ).toHaveLength(1);
+    });
+
+    it('adds Portofolio after Dashboard (and Ruang HR) for Direksi and Super Admin only', () => {
         const hrefs = (roles: string[]) =>
             mainNavItemsFor(roles).map((item) => item.href);
 
         expect(hrefs(['direksi'])).toContain('/portofolio');
+        expect(hrefs(['direksi']).indexOf('/portofolio')).toBe(
+            hrefs(['direksi']).indexOf('/dashboard') + 1,
+        );
         expect(hrefs(['super_admin']).indexOf('/portofolio')).toBe(
-            hrefs(['super_admin']).indexOf('/dashboard') + 1,
+            hrefs(['super_admin']).indexOf('/hr') + 1,
         );
         expect(hrefs(['kepala_divisi'])).not.toContain('/portofolio');
         expect(hrefs(['anggota'])).toEqual(
@@ -253,8 +281,9 @@ describe('navigation', () => {
         const hrefs = (roles: string[]) =>
             mainNavItemsFor(roles).map((item) => item.href);
 
-        expect(hrefs(['super_admin']).slice(0, 3)).toEqual([
+        expect(hrefs(['super_admin']).slice(0, 4)).toEqual([
             '/dashboard',
+            '/hr',
             '/portofolio',
             '/manajemen',
         ]);
@@ -295,6 +324,23 @@ describe('navigation', () => {
         expect(activeTabIndex('/inbox', true)).toBe(-1);
         expect(activeTabIndex('/persetujuan', true)).toBe(-1);
         expect(activeTabIndex('/menu/lain', true)).toBe(-1);
+    });
+
+    it('makes Ruang HR the first tab when auth.home is /hr', () => {
+        const items = tabNavItems(true, 'absen', '/hr');
+
+        expect(items.map((item) => item.title)).toEqual([
+            'Ruang HR',
+            'Tugas',
+            'Absen',
+            'Obrolan',
+            'Lainnya',
+        ]);
+        expect(items[0]?.href).toBe('/hr');
+        expect(activeTabIndex('/hr', true, 'absen', '/hr')).toBe(0);
+        expect(activeTabIndex('/hr/penugasan', true, 'absen', '/hr')).toBe(0);
+        expect(activeTabIndex('/dashboard', true, 'absen', '/hr')).toBe(-1);
+        expect(tabNavItems(true)[0]?.href).toBe('/dashboard');
     });
 
     it('gives the fourth tab back to Inbox when Obrolan is off', () => {

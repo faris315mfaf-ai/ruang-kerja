@@ -101,7 +101,11 @@ for (let attempt = 0; attempt < 8 && !signedIn; attempt++) {
     await form.getByRole('button').click();
 
     try {
-        await loginPage.waitForURL('**/dashboard', { timeout: 8000 });
+        // Beranda: /dashboard, or /hr for HR (Ruang HR, keputusan pemilik 20 Okt 2026).
+        await loginPage.waitForURL(
+            (url) => url.pathname === '/dashboard' || url.pathname === '/hr',
+            { timeout: 8000 },
+        );
         signedIn = true;
     } catch {
         await loginPage.waitForTimeout(10_000); // 429: wait for the limiter

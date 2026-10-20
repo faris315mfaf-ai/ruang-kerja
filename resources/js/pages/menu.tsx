@@ -29,6 +29,8 @@ import {
     attendanceNavItems,
     automationNavItem,
     canSeeAutomationNav,
+    canSeeHrHub,
+    hrHubNavItem,
     canSeeRoleDashboardNav,
     canSeeManagement,
     canSeePortfolio,
@@ -203,6 +205,13 @@ export default function Menu() {
                             label="Dashboard"
                             href="/dashboard"
                         />
+                        {canSeeHrHub(auth.roles) && (
+                            <Row
+                                icon={hrHubNavItem.icon}
+                                label={hrHubNavItem.title}
+                                href={hrHubNavItem.href}
+                            />
+                        )}
                         {canSeeRoleDashboardNav(
                             auth.roles,
                             features?.role_dashboards,

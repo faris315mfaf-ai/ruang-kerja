@@ -42,6 +42,7 @@ export type GlyphMotion = {
 
 const MOTIONS: Record<string, GlyphMotion> = {
     '/dashboard': { name: 'dock-breathe', duration: '2.2s' },
+    '/hr': { name: 'dock-nudge', duration: '1.5s' },
     '/portofolio': { name: 'dock-tilt', duration: '1.8s' },
     '/manajemen': { name: 'dock-lift', duration: '1.6s' },
     '/inbox': { name: 'dock-drop', duration: '1.4s' },
