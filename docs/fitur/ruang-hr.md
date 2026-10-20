@@ -67,7 +67,12 @@ Uji: `tests/Feature/HrHub/PrivateTasksLeakTest.php` (web & API, kontrol positif 
 
 Kolom `candidates.interview_at` (UTC) + `interview_location`. HR mengatur di profil kandidat (`PUT /hiring/kandidat/{id}/wawancara`, `docs/fitur/hiring.md` §3a); tampil di tab Jadwal dan agenda Ringkasan.
 
-## 6. Belum / di luar cakupan
+## 6. Layar (frontend)
 
-- Layar React keenam tab (halaman saat ini placeholder; prop sudah final).
+`resources/js/features/hr/*` + `pages/hr/*` (mockup Ruang HR: Main, Absensi, Monitoring, Penugasan, Jadwal, Catatan, MRuangHR, MPenugasan). Desktop/tablet: header + `TabNav`; ponsel: Ringkasan berisi chip bagian, tab lain layar turunan (kembali ke `/hr`). Navigasi: ubin "Ruang HR" setelah Dashboard (Dock/Rail, `canSeeHrHub`), baris Lainnya, dan tab bawah pertama mengikuti `auth.home`. Monitoring memakai ulang `DateStepper`/`ReportCard`/`ReportDetailSheet` dan `WorkloadPanel`. Penugasan: pemilih penerima gabungan orang/divisi/tim; jumlah penerima dihitung di klien (orang/tim di dalam divisi terpilih tidak dihitung dua kali; "±" bila tim dan orang lain bisa tumpang tindih, sub-divisi ditambah server). Uji klik: `tests/e2e/ruang-hr-penugasan.mjs` (tugas sampai ke Tugas saya penerima, tidak terlihat karyawan lain).
+
+Tidak ada tombol "Kirim pengingat check-in ke semua" di tab Absensi: belum ada endpoint pengingat check-in manual (pengingat otomatis tetap berjalan).
+
+## 7. Belum / di luar cakupan
+
 - Kehadiran di kanal presence `workspace.{id}` (avatar "sedang melihat") tidak disaring per tugas: anggota Penugasan HR bisa melihat nama orang lain yang sedang membuka papan, tanpa judul tugas.
