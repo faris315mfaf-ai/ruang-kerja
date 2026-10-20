@@ -8,6 +8,7 @@ import { SegmentedTabs } from '@/components/ui/tabs';
 import { ChecklistTab } from '@/features/hiring/checklist-tab';
 import { DecisionTab } from '@/features/hiring/decision-tab';
 import { EditCandidateDialog } from '@/features/hiring/edit-candidate-dialog';
+import { InterviewScheduleCard } from '@/features/hiring/interview-schedule-card';
 import { InterviewTab } from '@/features/hiring/interview-tab';
 import {
     checklistProgress,
@@ -82,7 +83,13 @@ export default function HiringCandidate(props: CandidateProfileProps) {
                 return (
                     <div className="flex flex-col gap-5">
                         {breakpoint !== 'desktop' && (
-                            <ProfileSummary {...props} />
+                            <>
+                                <InterviewScheduleCard
+                                    candidateId={candidate.id}
+                                    interview={candidate.interview}
+                                />
+                                <ProfileSummary {...props} />
+                            </>
                         )}
                         <ProfileTab candidate={candidate} />
                     </div>
@@ -230,7 +237,11 @@ export default function HiringCandidate(props: CandidateProfileProps) {
                             {content}
                         </div>
                         {breakpoint === 'desktop' && (
-                            <aside>
+                            <aside className="flex flex-col gap-5">
+                                <InterviewScheduleCard
+                                    candidateId={candidate.id}
+                                    interview={candidate.interview}
+                                />
                                 <ProfileSummary {...props} />
                             </aside>
                         )}

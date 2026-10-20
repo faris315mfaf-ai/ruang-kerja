@@ -109,6 +109,16 @@ export type DecisionEntry = {
     decided_at: string | null;
 };
 
+export type CandidateInterview = {
+    /** UTC ISO, null = not scheduled. */
+    at: string | null;
+    /** Office time "Y-m-d H:i" (form value). */
+    local: string | null;
+    location: string | null;
+    /** HR / Super Admin while the candidate is before Keputusan akhir. */
+    can_schedule: boolean;
+};
+
 export type CandidateDetail = {
     id: string;
     full_name: string;
@@ -122,6 +132,8 @@ export type CandidateDetail = {
     source: CandidateSource;
     applied_at: string;
     decided_at: string | null;
+    /** Jadwal wawancara (Ruang HR, keputusan pemilik 20 Okt 2026). */
+    interview: CandidateInterview;
     position: {
         id: string;
         title: string;

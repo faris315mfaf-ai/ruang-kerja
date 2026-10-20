@@ -72,7 +72,9 @@ class WorkspacePolicy
      */
     public function archive(User $user, Workspace $workspace): Response
     {
+        // Ruang HR system workspaces (Tim HR, Penugasan HR) are never archived.
         $allowed = in_array($workspace->type, [WorkspaceType::Team, WorkspaceType::Project], true)
+            && ! $workspace->isSystem()
             && ($workspace->roleOf($user) === WorkspaceRole::Owner || $user->hasPermission(Permission::WorkspacesManage));
 
         return $this->gate($user, $workspace, $allowed);
@@ -92,6 +94,40 @@ class WorkspacePolicy
     public function editTasks(User $user, Workspace $workspace): Response
     {
         return $this->gate($user, $workspace, $this->canEditTasks($user, $workspace));
+    }
+
+    /**
+     * Create tasks (board, quick add, API). Penugasan HR (private tasks):
+     * only its owner/admins (HR) — employees only work on what they got.
+     */
+    public function createTasks(User $user, Workspace $workspace): Response
+    {
+        return $this->gate($user, $workspace, $this->canCreateTasks($user, $workspace));
+    }
+
+    public function canCreateTasks(User $user, Workspace $workspace): bool
+    {
+        if (! $this->canEditTasks($user, $workspace)) {
+            return false;
+        }
+
+        return ! $workspace->hasPrivateTasks() || $this->seesAllTasks($user, $workspace);
+    }
+
+    /**
+     * Private tasks (Penugasan HR): owner/admin members see every task; anyone
+     * else who can open the workspace — members, viewers, management in view
+     * only — only the tasks assigned to them. Workspaces without private tasks:
+     * everyone who can view the workspace.
+     */
+    public function seesAllTasks(User $user, Workspace $workspace): bool
+    {
+        if (! $workspace->hasPrivateTasks()) {
+            return true;
+        }
+
+        // A membership row implies the same company.
+        return $workspace->roleOf($user)?->canManage() ?? false;
     }
 
     /**

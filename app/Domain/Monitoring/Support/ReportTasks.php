@@ -40,6 +40,7 @@ final class ReportTasks
         $tasks = Task::query()
             ->whereIn('tasks.id', array_keys($ids))
             ->whereIn('tasks.workspace_id', Workspace::query()->visibleTo($viewer)->select('workspaces.id'))
+            ->respectingPrivacyOf($viewer)
             ->with('workspace:id,key,name,type')
             ->get(['tasks.id', 'tasks.workspace_id', 'tasks.number', 'tasks.title']);
 

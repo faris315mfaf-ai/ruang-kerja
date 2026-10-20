@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Domain\Google\Contracts\HasDriveFolder;
 use App\Domain\Google\Data\DriveMember;
+use App\Domain\HrHub\Enums\SystemWorkspace;
 use App\Domain\Organization\Enums\Permission;
 use App\Domain\Organization\Enums\Role;
 use App\Domain\Projects\Enums\ProjectHealth;
@@ -25,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Workspace: personal, team, division or project (docs/DATABASE.md §4).
@@ -42,6 +44,8 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  * @property string $owner_id
  * @property string|null $division_id Division workspace: the division; project: "divisi utama" (PRD M10).
  * @property string|null $team_id
+ * @property SystemWorkspace|null $system_key Ruang HR system workspace (keputusan pemilik 20 Okt 2026).
+ * @property bool $tasks_private Members below admin only see tasks assigned to them.
  * @property string|null $drive_folder_id
  * @property int $task_sequence
  * @property CarbonImmutable|null $archived_at
@@ -79,6 +83,7 @@ class Workspace extends Model implements HasDriveFolder
         'visibility' => 'private',
         'task_sequence' => 0,
         'previous_keys' => '[]',
+        'tasks_private' => false,
     ];
 
     /**
@@ -90,6 +95,8 @@ class Workspace extends Model implements HasDriveFolder
             'type' => WorkspaceType::class,
             'visibility' => WorkspaceVisibility::class,
             'previous_keys' => 'array',
+            'system_key' => SystemWorkspace::class,
+            'tasks_private' => 'boolean',
             'task_sequence' => 'integer',
             'archived_at' => 'datetime',
             'start_date' => 'date',
@@ -122,6 +129,53 @@ class Workspace extends Model implements HasDriveFolder
     public function isArchived(): bool
     {
         return $this->archived_at !== null;
+    }
+
+    /**
+     * Ruang HR system workspace (Tim HR, Penugasan HR): no archive, key or
+     * visibility changes; HR admins are synced from the global roles.
+     */
+    public function isSystem(): bool
+    {
+        $this->loadSystemColumns();
+
+        return $this->system_key !== null;
+    }
+
+    /**
+     * Private tasks (Penugasan HR): members below admin — and anyone else
+     * who can see the workspace without being admin — only see the tasks
+     * assigned to them (Task::scopeVisibleTo, TaskPolicy).
+     */
+    public function hasPrivateTasks(): bool
+    {
+        $this->loadSystemColumns();
+
+        return (bool) $this->tasks_private;
+    }
+
+    /**
+     * Partial loads (`workspace:id,key`) do not carry system_key /
+     * tasks_private; the privacy rules must never guess, so they are read once
+     * for this instance (eager-loaded relations share one instance per id).
+     */
+    private function loadSystemColumns(): void
+    {
+        if (array_key_exists('tasks_private', $this->attributes) && array_key_exists('system_key', $this->attributes)) {
+            return;
+        }
+
+        $id = $this->attributes['id'] ?? null;
+        $row = $this->exists && is_string($id)
+            ? DB::table('workspaces')->where('id', $id)->first(['system_key', 'tasks_private'])
+            : null;
+
+        foreach (['system_key' => $row === null ? null : $row->system_key, 'tasks_private' => $row !== null && (bool) $row->tasks_private] as $column => $value) {
+            if (! array_key_exists($column, $this->attributes)) {
+                $this->attributes[$column] = $value;
+                $this->original[$column] = $value;
+            }
+        }
     }
 
     /**
@@ -374,6 +428,8 @@ class Workspace extends Model implements HasDriveFolder
             ->with('user:id,email,status')
             ->get()
             ->filter(fn (WorkspaceMember $member): bool => $member->user->isActive() && $member->user->email !== '')
+            // Penugasan HR: the folder holds every employee's deliverables, so only HR admins get it.
+            ->filter(fn (WorkspaceMember $member): bool => ! $this->tasks_private || $member->role->canManage())
             ->map(fn (WorkspaceMember $member): DriveMember => DriveMember::forWorkspaceRole($member->user->email, $member->role->value))
             ->all());
     }

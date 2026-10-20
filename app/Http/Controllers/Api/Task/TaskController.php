@@ -124,7 +124,7 @@ class TaskController extends Controller
 
         abort_if($workspace === null, 404);
 
-        Gate::authorize('editTasks', $workspace);
+        Gate::authorize('createTasks', $workspace);
 
         $task = $createTask->handle($workspace, $user, $request->payload());
 

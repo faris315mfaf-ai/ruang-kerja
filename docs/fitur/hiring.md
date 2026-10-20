@@ -38,6 +38,16 @@ Penyetuju akhir **bawaan** diatur HR di tab Pengaturan (`hiring_settings.default
 
 Filter Kandidat (`?lowongan=` & `?q=`) tersimpan di URL; tab profil di `?tab=` (notifikasi "Beri keputusan" membuka `?tab=keputusan`).
 
+## 3a. Jadwal wawancara (keputusan pemilik 20 Okt 2026)
+
+HR mengatur tanggal, jam, dan tempat wawancara satu kandidat di profil kandidat selama kandidat masih di **Masuk · Seleksi berkas · Wawancara · Penilaian** (`PUT /hiring/kandidat/{id}/wawancara`, rute `hiring.candidates.interview`, Policy `CandidatePolicy::manage`, Action `ScheduleInterview`).
+
+- Isian `interview_at` dalam waktu kantor (`YYYY-MM-DD HH:MM`, juga format `datetime-local`), disimpan UTC di `candidates.interview_at`; `interview_location` maks. 200 karakter. Kosongkan `interview_at` = hapus jadwal (tanpa notifikasi). Tanggal tidak valid (mis. 30 Feb) ditolak dengan pesan di `interview_at`.
+- Setiap kali jadwal dibuat/berubah, pewawancara **aktif** lowongan mendapat notifikasi `hiring.interview_scheduled` ("Wawancara {nama}: Kam, 22 Okt 2026 10.30"; email hanya menyebut lowongan).
+- Audit `hiring.interview_scheduled` hanya berisi id kandidat dan apakah terjadwal.
+- Props profil: `candidate.interview = {at (ISO UTC), local ("Y-m-d H:i" waktu kantor), location, can_schedule}`.
+- Jadwal tampil di **Ruang HR › Jadwal** dan agenda **Ringkasan** (`docs/fitur/ruang-hr.md`).
+
 ## 4. Alur tahap
 
 **Masuk → Seleksi berkas → Wawancara → Penilaian → Keputusan akhir → Diterima / Ditolak**
@@ -196,6 +206,7 @@ function kirim_(response) {
 | `hiring.candidate_received` | HR (peran `hr`) | Pelamar baru dari Google Form (bukan untuk kandidat manual) |
 | `hiring.decision_needed` | Penyetuju akhir aktif | **Perlu tindakan** sampai ia memutus, kandidat diputus, atau dipindah keluar dari Keputusan akhir |
 | `hiring.candidate_decided` | HR | Diterima / Ditolak (alasan hanya in-app) |
+| `hiring.interview_scheduled` | Pewawancara aktif lowongan | Jadwal wawancara dibuat/diubah (Ruang HR, 20 Okt 2026) |
 
 Satu baris pengaturan notifikasi: **Hiring: kandidat baru & keputusan akhir** (`hiring.activity`; bawaan in-app nyala, email mati). Email (bila dinyalakan) tidak memuat nama pelamar — hanya judul lowongan.
 

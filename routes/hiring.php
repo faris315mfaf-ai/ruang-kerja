@@ -61,6 +61,8 @@ Route::middleware(['auth', 'verified'])->prefix('hiring')->name('hiring.')->grou
     Route::get('kandidat/{candidate}', [CandidateController::class, 'show'])->whereUlid('candidate')->name('candidates.show');
     Route::patch('kandidat/{candidate}', [CandidateController::class, 'update'])->whereUlid('candidate')->name('candidates.update');
     Route::put('kandidat/{candidate}/tahap', [CandidateController::class, 'stage'])->whereUlid('candidate')->name('candidates.stage');
+    // Ruang HR (keputusan pemilik 20 Okt 2026): planned interview date & place.
+    Route::put('kandidat/{candidate}/wawancara', [CandidateController::class, 'interview'])->whereUlid('candidate')->name('candidates.interview');
 
     Route::put('kandidat/{candidate}/jawaban/{question}', [InterviewController::class, 'answer'])->whereUlid(['candidate', 'question'])->name('interview.answer');
     Route::put('kandidat/{candidate}/poin/{question}', [InterviewController::class, 'score'])->whereUlid(['candidate', 'question'])->name('interview.score');

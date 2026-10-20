@@ -161,20 +161,7 @@ final class HrDashboard
      */
     public function pendingHr(array $userIds): array
     {
-        // HR people of the requesters' own company only (Fase 1 multi-perusahaan).
-        $hrUsers = User::role(Role::Hr->value)
-            ->whereIn('users.company_id', User::query()->whereIn('id', $userIds)->select('company_id'))
-            ->select('users.id');
-
-        $query = RequestApproval::query()
-            ->where('status', ApprovalStatus::Waiting->value)
-            ->where(fn (Builder $step) => $step
-                ->where(fn (Builder $role) => $role->where('approver_type', ApproverType::Role->value)->where('approver_role', Role::Hr->value))
-                ->orWhereIn('approver_id', $hrUsers))
-            ->whereHas('request', fn (Builder $request) => $request
-                ->where('status', RequestStatus::Pending->value)
-                ->whereColumn('requests.round', 'request_approvals.round')
-                ->whereIn('user_id', $userIds));
+        $query = $this->pendingHrQuery($userIds);
 
         $steps = (clone $query)
             ->with(['request.leaveType', 'request.user.position', 'request.user.division', 'request.approvals.approver'])
@@ -186,6 +173,32 @@ final class HrDashboard
             'count' => $query->count(),
             'items' => $steps->map(fn (RequestApproval $step): array => $this->requests->item($step->request))->values()->all(),
         ];
+    }
+
+    /**
+     * Waiting approval steps of HR (role step `hr`, or a personal step routed
+     * to someone holding the HR role) for requesters in $userIds. Shared by
+     * the HR dashboard and Ruang HR.
+     *
+     * @param  list<string>  $userIds
+     * @return Builder<RequestApproval>
+     */
+    public function pendingHrQuery(array $userIds): Builder
+    {
+        // HR people of the requesters' own company only (Fase 1 multi-perusahaan).
+        $hrUsers = User::role(Role::Hr->value)
+            ->whereIn('users.company_id', User::query()->whereIn('id', $userIds)->select('company_id'))
+            ->select('users.id');
+
+        return RequestApproval::query()
+            ->where('status', ApprovalStatus::Waiting->value)
+            ->where(fn (Builder $step) => $step
+                ->where(fn (Builder $role) => $role->where('approver_type', ApproverType::Role->value)->where('approver_role', Role::Hr->value))
+                ->orWhereIn('approver_id', $hrUsers))
+            ->whereHas('request', fn (Builder $request) => $request
+                ->where('status', RequestStatus::Pending->value)
+                ->whereColumn('requests.round', 'request_approvals.round')
+                ->whereIn('user_id', $userIds));
     }
 
     /**

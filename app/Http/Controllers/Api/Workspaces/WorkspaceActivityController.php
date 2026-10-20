@@ -8,6 +8,7 @@ use App\Models\Activity;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 
@@ -22,12 +23,13 @@ class WorkspaceActivityController extends Controller
 {
     public const int PER_PAGE = 30;
 
-    public function __invoke(Workspace $workspace): JsonResponse
+    public function __invoke(Workspace $workspace, #[CurrentUser] User $user): JsonResponse
     {
         Gate::authorize('view', $workspace);
 
         $page = Activity::query()
             ->where('workspace_id', $workspace->id)
+            ->respectingPrivacyOf($user)
             ->with('causer:id,name,avatar_url')
             ->latest('created_at')
             ->latest('id')

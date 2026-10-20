@@ -18,7 +18,7 @@ final class SendTaskAssignedNotifications
     {
         $task = $event->task->loadMissing('workspace');
         $ids = array_values(array_diff($event->userIds, [$event->actor->id]));
-        $recipients = $this->audience->withAccess($task->workspace, $ids);
+        $recipients = $this->audience->withTaskAccess($task, $ids);
 
         if ($recipients->isNotEmpty()) {
             Notification::send($recipients->all(), new TaskAssignedNotification($task, $event->actor));

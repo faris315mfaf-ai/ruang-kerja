@@ -74,6 +74,7 @@ class WorkspaceCalendarController extends Controller
 
         $overdue = Task::query()
             ->where('workspace_id', $workspace->id)
+            ->respectingPrivacyOf($user)
             ->whereNotIn('status_category', $closed)
             ->whereDate('due_date', '<', $today->toDateString())
             ->count();

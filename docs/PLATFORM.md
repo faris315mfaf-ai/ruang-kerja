@@ -69,7 +69,9 @@ Butir 2–4 diterapkan modul masing-masing; shell (butir 1) sudah berlaku.
 | File & dokumen Drive | ✓ | ✓ | Buka di aplikasi Google, unggah dari kamera/galeri |
 | Inbox & notifikasi | ✓ | ✓ | Lewat lonceng di app bar (atau tab ke-4 bila Obrolan mati). Geser untuk arsip/dibaca |
 | Cari | ✓ | ✓ | Layar penuh, kolom cari di bawah |
-| Dashboard Kadiv / HR | ✓ | ✓ | Versi ringkas 1 kolom (HR: pengajuan menunggu HR, ringkasan absensi, Hiring — keputusan pemilik 6 Okt 2026) |
+| Dashboard Kadiv | ✓ | ✓ | Versi ringkas 1 kolom (Dashboard HR digantikan Ruang HR, keputusan pemilik 20 Okt 2026) |
+| Ruang HR (`/hr`, HR & Super Admin, keputusan pemilik 20 Okt 2026) | ✓ | ✓ | Tab pertama tab bawah untuk HR (`auth.home = /hr`); Ringkasan: chip bagian, KPI 2×2, Perlu tindakan, Agenda, kartu bertumpuk, FAB "Tugaskan pegawai". Tab lain = layar turunan (kembali ke Ruang HR). Absensi: pintu modul bertumpuk (Lokasi, shift & libur hanya desktop). Monitoring: segmen Laporan harian · Beban kerja, Ingatkan per orang/semua. Jadwal: strip minggu + agenda hari terpilih (desktop: grid bulan + Minggu ini). Catatan: chip folder + daftar, FAB Catatan baru |
+| Penugasan HR (`/hr/penugasan`) | ✓ | ✓ | Desktop: tabel + kartu form di samping; ponsel: chip status + kartu tugas, form "Tugaskan pegawai" di bottom sheet (FAB) |
 | Dashboard Direksi (`/dashboard/direksi`) | ✓ | ✓ | Tab **Harian · Mingguan · Proyek · Catatan**, kartu bertumpuk; matriks mingguan = baris kotak hari per orang; detail laporan = bottom sheet; akses cepat workspace di tab Proyek; ekspor hanya desktop |
 | Absensi › Hari ini · Rekap · Kedisiplinan | ✓ | ◐ | Tab bergaris bawah; Kedisiplinan: KPI 2×2, tren ringkas, daftar orang (chip filter); ekspor di desktop |
 | Absen pegawai (`/absensi/pegawai`, HR & Super Admin; keputusan pemilik 20 Okt 2026) | ✓ | ✓ | Desktop: grid pegawai × tanggal + lembar samping "Atur absensi". Ponsel: strip minggu, chip Semua/Belum masuk/Terlambat/Alpha, daftar orang, FAB "Tambah absen", bottom sheet editor yang sama |
@@ -78,6 +80,7 @@ Butir 2–4 diterapkan modul masing-masing; shell (butir 1) sudah berlaku.
 | Portofolio & detail proyek (Direksi) | ✓ | ✓ | Tabel proyek → kartu proyek; roadmap hanya desktop (mobile: milestone berikutnya per kartu); "Minta update" & "Beri arahan" di bilah aksi bawah |
 | Pengaturan notifikasi & tema | ✓ | ✓ | Matriks → daftar accordion |
 | Hiring (`/hiring`, keputusan pemilik 6 Okt 2026) | ✓ | ✓ | Papan per tahap → chip tahap + daftar kartu; profil kandidat satu kolom (Ringkasan di tab Profil); pindah tahap lewat menu (tanpa seret); FAB tambah kandidat/lowongan. Hanya HR, Super Admin, dan pewawancara/penyetuju yang ditugaskan |
+| Jadwal wawancara (Hiring, profil kandidat) | ✓ | ✓ | Kartu "Jadwal wawancara" (tanggal, jam, tempat): desktop di kolom ringkasan, ponsel/tablet di atas tab Profil; selain HR/Super Admin baca saja |
 | Admin karyawan | ✓ | ◐ | Cari & lihat profil. Tambah/ubah/impor dan "Atur kata sandi" di desktop |
 | Permintaan reset kata sandi (HR) | ✓ | ✓ | Panel di Admin › Karyawan & profil; Setujui / Tolak juga di ponsel karena karyawan menunggu |
 | Struktur organisasi | ✓ | ◐ | Daftar bertingkat, bukan bagan. **Tidak untuk staf** di kedua platform (404, keputusan pemilik 6 Okt 2026). **Unduh PNG** bagan lengkap: desktop tombol header (tampilan Bagan), ponsel menu "…" app bar (`docs/fitur/ekspor-struktur-organisasi.md`) |

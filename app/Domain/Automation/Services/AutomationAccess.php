@@ -21,7 +21,15 @@ final class AutomationAccess
             return null;
         }
 
-        return $workspace->roleOf($user);
+        $role = $workspace->roleOf($user);
+
+        // Penugasan HR (private tasks): rules and recurring tasks name other
+        // people's assignments, so only its owner/admins see automation there.
+        if ($workspace->hasPrivateTasks() && ! ($role?->canManage() ?? false)) {
+            return null;
+        }
+
+        return $role;
     }
 
     public function isMember(User $user, Workspace $workspace): bool

@@ -192,7 +192,7 @@ it('loads the banner apart from the dashboards and links it everywhere', functio
     Notification::fake();
     Announcement::factory()->by($this->org['hr'])->create();
 
-    foreach (['/dashboard/saya' => 'rizky', '/dashboard/divisi' => 'kadiv', '/dashboard/hr' => 'hr', '/manajemen' => 'direksi', '/portofolio' => 'direksi'] as $url => $who) {
+    foreach (['/dashboard/saya' => 'rizky', '/dashboard/divisi' => 'kadiv', '/hr' => 'hr', '/manajemen' => 'direksi', '/portofolio' => 'direksi'] as $url => $who) {
         $this->actingAs($this->org[$who])->get($url)->assertOk();
     }
 

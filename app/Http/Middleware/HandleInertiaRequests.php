@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Analytics\Services\DashboardAccess;
 use App\Domain\Chat\Queries\ChatInbox;
 use App\Domain\Hiring\Services\HiringAccess;
 use App\Domain\Notifications\Services\InboxQuery;
@@ -88,6 +89,8 @@ class HandleInertiaRequests extends Middleware
                     'position' => $position?->only(['id', 'name', 'level']),
                 ],
                 'roles' => $user?->getRoleNames()->values()->all() ?? [],
+                // Beranda link: Ruang HR replaces the HR dashboard (keputusan pemilik 20 Okt 2026).
+                'home' => $user !== null && app(DashboardAccess::class)->landsOnHrHub($user) ? '/hr' : '/dashboard',
             ],
             // Dock/Rail "Persetujuan" badge. Closure: one count query, skipped on partial reloads that don't ask for it.
             'approvals' => fn (): ?array => $data !== null ? ['pending' => app(ApprovalQueue::class)->count($data)] : null,

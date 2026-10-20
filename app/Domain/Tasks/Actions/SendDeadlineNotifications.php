@@ -124,6 +124,6 @@ final class SendDeadlineNotifications
         /** @var list<string> $ids */
         $ids = $task->assignees->pluck('id')->all();
 
-        return array_values($this->audience->withAccess($task->workspace, $ids)->all());
+        return array_values($this->audience->withTaskAccess($task, $ids)->all());
     }
 }

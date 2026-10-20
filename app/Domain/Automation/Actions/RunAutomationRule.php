@@ -212,7 +212,7 @@ final class RunAutomationRule
      */
     private function notify(Task $task, AutomationRule $rule, array $target, string $reason): array
     {
-        $recipients = $this->audience->withAccess($task->workspace, $this->recipientIds($task, $target));
+        $recipients = $this->audience->withTaskAccess($task, $this->recipientIds($task, $target));
 
         if ($recipients->isEmpty()) {
             return [false, 'tidak ada penerima yang bisa melihat tugas'];

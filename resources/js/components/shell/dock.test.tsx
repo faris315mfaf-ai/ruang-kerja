@@ -5,7 +5,11 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 const page = vi.hoisted(() => ({
     url: '/dashboard',
     props: {
-        auth: { user: { name: 'Uji' }, roles: [] as string[] },
+        auth: {
+            user: { name: 'Uji' },
+            roles: [] as string[],
+            home: '/dashboard' as string,
+        },
         approvals: { pending: 0 },
         workspaces: [],
     },
@@ -37,14 +41,25 @@ vi.mock('@/features/notifications/unread-store', () => ({
 
 import { Dock } from './dock';
 
-function renderFor(roles: string[]) {
+function renderFor(roles: string[], home: '/hr' | '/dashboard' = '/dashboard') {
     page.props.auth.roles = roles;
+    page.props.auth.home = home;
 
     return render(<Dock />);
 }
 
 describe('Dock', () => {
     afterEach(cleanup);
+
+    it('hides the Dashboard tile when Ruang HR is home (keputusan pemilik 20 Okt 2026)', () => {
+        renderFor(['hr'], '/hr');
+        expect(screen.queryByRole('link', { name: 'Dashboard' })).toBeNull();
+        expect(screen.getByRole('link', { name: 'Ruang HR' })).toBeTruthy();
+        cleanup();
+
+        renderFor(['super_admin']);
+        expect(screen.getByRole('link', { name: 'Dashboard' })).toBeTruthy();
+    });
 
     it('groups the organization screens in one stack for HR', () => {
         renderFor(['hr']);
@@ -99,6 +114,23 @@ describe('Dock', () => {
             expect(
                 screen.queryByRole('link', { name: 'Manajemen' }),
             ).toBeNull();
+            cleanup();
+        }
+    });
+
+    it('shows the Ruang HR tile right after Dashboard to HR and Super Admin only', () => {
+        for (const role of ['hr', 'super_admin']) {
+            renderFor([role]);
+            const hrefs = screen
+                .getAllByRole('link')
+                .map((link) => link.getAttribute('href'));
+            expect(hrefs.indexOf('/hr')).toBe(hrefs.indexOf('/dashboard') + 1);
+            cleanup();
+        }
+
+        for (const role of ['direksi', 'kepala_divisi', 'anggota']) {
+            renderFor([role]);
+            expect(screen.queryByRole('link', { name: 'Ruang HR' })).toBeNull();
             cleanup();
         }
     });

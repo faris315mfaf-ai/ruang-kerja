@@ -2,6 +2,7 @@
 
 namespace App\Domain\Workspaces\Actions;
 
+use App\Domain\HrHub\Enums\SystemWorkspace;
 use App\Domain\Tasks\Actions\RecordActivity;
 use App\Domain\Tasks\Enums\ActivityEvent;
 use App\Domain\Tasks\Services\DefaultTaskStatuses;
@@ -34,7 +35,7 @@ final class CreateWorkspace
     ) {}
 
     /**
-     * @param  array{type: WorkspaceType, name: string, key?: string|null, description?: string|null, visibility?: WorkspaceVisibility|null, color?: string|null, division_id?: string|null, team_id?: string|null}  $input
+     * @param  array{type: WorkspaceType, name: string, key?: string|null, description?: string|null, visibility?: WorkspaceVisibility|null, color?: string|null, division_id?: string|null, team_id?: string|null, system_key?: SystemWorkspace|null}  $input
      */
     public function handle(User $owner, array $input, ?User $actor = null): Workspace
     {
@@ -52,7 +53,9 @@ final class CreateWorkspace
                 ? $preferred
                 : $this->keys->generate($companyId, $input['name'], $preferred);
 
-            $workspace = Workspace::query()->create([
+            $system = $input['system_key'] ?? null;
+
+            $workspace = (new Workspace)->forceFill([
                 'company_id' => $companyId,
                 'type' => $input['type'],
                 'name' => $input['name'],
@@ -63,7 +66,11 @@ final class CreateWorkspace
                 'owner_id' => $owner->id,
                 'division_id' => $input['division_id'] ?? null,
                 'team_id' => $input['team_id'] ?? null,
+                // Ruang HR system workspaces (EnsureHrWorkspaces); never from a form.
+                'system_key' => $system,
+                'tasks_private' => $system?->tasksPrivate() ?? false,
             ]);
+            $workspace->save();
 
             // Division/team workspaces follow the organization: their owner row is
             // synced, so a former owner leaves once they are no longer head/member.

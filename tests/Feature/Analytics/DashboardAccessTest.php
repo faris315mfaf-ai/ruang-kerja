@@ -55,14 +55,15 @@ it('keeps the HR and division tabs for a Direksi who is also HR or leads a divis
 
 it('authorizes every dashboard route per role', function (string $who, string $view, int $status) {
     $this->actingAs($this->org[$who])->get("/dashboard/{$view}")->assertStatus($status);
-    $this->actingAs($this->org[$who])->get("/dashboard/{$view}/ekspor")->assertStatus($status);
+    // 302: the HR page sends HR / Super Admin to Ruang HR (keputusan pemilik 20 Okt 2026); the export stays.
+    $this->actingAs($this->org[$who])->get("/dashboard/{$view}/ekspor")->assertStatus($status === 302 ? 200 : $status);
 })->with([
     ['rizky', 'saya', 200],
     ['rizky', 'divisi', 403],
     ['rizky', 'hr', 403],
     ['kadiv', 'divisi', 200],
     ['kadiv', 'hr', 403],
-    ['hr', 'hr', 200],
+    ['hr', 'hr', 302],
     ['hr', 'divisi', 200],
     ['hr', 'direksi', 403],
     ['kadiv', 'direksi', 403],
@@ -71,7 +72,7 @@ it('authorizes every dashboard route per role', function (string $who, string $v
     ['direksi', 'divisi', 403],
     ['direksi', 'hr', 403],
     ['admin', 'direksi', 200],
-    ['admin', 'hr', 200],
+    ['admin', 'hr', 302],
     ['admin', 'divisi', 200],
 ]);
 
@@ -87,7 +88,6 @@ it('opens the default view on /dashboard', function (string $who, string $compon
 })->with([
     ['rizky', 'dashboard/personal'],
     ['kadiv', 'dashboard/division'],
-    ['hr', 'dashboard/hr'],
     ['direksi', 'dashboard/direksi'],
     ['admin', 'dashboard/personal'],
 ]);
@@ -99,14 +99,16 @@ it('offers the view picker with the Direksi view only to Direksi and Super Admin
             ->where('views.1', ['key' => 'direksi', 'label' => 'Direksi', 'href' => '/dashboard/direksi', 'active' => true])
             ->has('views', 2));
 
+    // Ruang HR (/hr) replaces the HR view in the picker (keputusan pemilik 20 Okt 2026).
     $this->actingAs($this->org['admin'])->get('/dashboard')
         ->assertInertia(fn (Assert $page) => $page
-            ->has('views', 4)
-            ->where('views.3.key', 'direksi')
+            ->has('views', 3)
+            ->where('views.2.key', 'direksi')
             ->where('views.0.active', true));
 
-    $this->actingAs($this->org['hr'])->get('/dashboard')
-        ->assertInertia(fn (Assert $page) => $page->has('views', 3)->where('views.2.key', 'hr'));
+    $this->actingAs($this->org['hr'])->get('/dashboard')->assertRedirect('/hr');
+    $this->actingAs($this->org['hr'])->get('/dashboard/divisi')
+        ->assertInertia(fn (Assert $page) => $page->has('views', 2)->where('views.1.key', 'divisi'));
 
     $this->actingAs($this->org['kadiv'])->get('/dashboard')
         ->assertInertia(fn (Assert $page) => $page

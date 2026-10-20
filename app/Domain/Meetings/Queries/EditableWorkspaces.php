@@ -27,8 +27,8 @@ final class EditableWorkspaces
             ->withMembershipOf($user)
             ->orderByRaw("CASE type WHEN 'personal' THEN 1 ELSE 0 END")
             ->orderBy('name')
-            ->get(['id', 'key', 'name', 'type', 'company_id', 'owner_id', 'visibility', 'archived_at'])
-            ->filter(fn (Workspace $workspace): bool => $this->policy->canEditTasks($user, $workspace))
+            ->get(['id', 'key', 'name', 'type', 'company_id', 'owner_id', 'visibility', 'archived_at', 'system_key', 'tasks_private'])
+            ->filter(fn (Workspace $workspace): bool => ! $workspace->hasPrivateTasks() && $this->policy->canCreateTasks($user, $workspace))
             ->map(fn (Workspace $workspace): array => ['id' => $workspace->id, 'key' => $workspace->key, 'name' => $workspace->name])
             ->all());
     }

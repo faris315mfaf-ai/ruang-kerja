@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\HrHub\Actions\AssignHrTask;
 use App\Domain\Meetings\Services\MeetingOccurrences;
 use App\Models\Candidate;
 use App\Models\CandidateNote;
@@ -105,10 +106,6 @@ it('keeps the dashboards and the portfolio free of N+1', function () {
         // +3: "Laporan tim hari ini" (schedules, reports, sent items) — keputusan pemilik 6 Okt 2026.
         // +2 (est. +1, spare 1) since Briefing (9 Okt 2026): delegation check.
         '/dashboard/divisi' => ['kadiv', 90],
-        // −26: attendance lists and the recap moved to Absensi (keputusan pemilik 6 Okt 2026).
-        // +5 (est. +4, spare 1) since Briefing (9 Okt 2026): HR is a recorder —
-        // today's delegations, today's notes and the latest note per period.
-        '/dashboard/hr' => ['hr', 57],
         '/portofolio' => ['direksi', 41],
     ]);
 });
@@ -146,14 +143,33 @@ function growDailyReports(int $round): void
     }
 }
 
+/**
+ * Ruang HR › Penugasan: per-person and shared HR assignments with checklists
+ * for more people each round (keputusan pemilik 20 Okt 2026).
+ */
+function growHrAssignments(int $round): void
+{
+    $hr = P::user('hr');
+    $people = User::query()->where('company_id', $hr->company_id)->where('status', 'active')->orderBy('email')->offset(($round - 1) * 6)->limit(6)->pluck('id')->all();
+
+    app(AssignHrTask::class)->handle($hr, ['user_ids' => $people, 'mode' => 'per_person', 'title' => "Lengkapi berkas {$round}", 'due_date' => '2026-10-0'.(5 + $round), 'checklist' => ['KTP', 'NPWP']]);
+    app(AssignHrTask::class)->handle($hr, ['user_ids' => $people, 'mode' => 'shared', 'title' => "Pelatihan K3 {$round}"]);
+}
+
 it('keeps the Direksi, HR and management dashboards and Absensi tabs free of N+1 (keputusan pemilik 6 Okt 2026)', function () {
     $pages = [
         // +2 (est. +1, spare 1) since Briefing (9 Okt 2026): delegation check card.
         '/dashboard' => ['direksi', 66],
         '/dashboard/direksi?tanggal=2026-10-06' => ['direksi', 66],
-        // +5 (est. +4, spare 1) since Briefing (9 Okt 2026): HR is a recorder —
-        // delegations, today's notes and the latest note per period.
-        '/dashboard/hr' => ['hr', 57],
+        // Ruang HR (keputusan pemilik 20 Okt 2026) replaces /dashboard/hr (now a
+        // redirect). Every tab: shared props + EnsureHrWorkspaces (3 reads when in
+        // sync). Measured 60 / 61 / 37 / 34 / 32 / 22, spare 3.
+        '/hr' => ['hr', 63],
+        '/hr/absensi' => ['hr', 64],
+        '/hr/monitoring' => ['hr', 40],
+        '/hr/penugasan' => ['hr', 37],
+        '/hr/jadwal' => ['hr', 35],
+        '/hr/catatan' => ['hr', 25],
         // +2 (est. +1, spare 1) since Briefing (9 Okt 2026): delegation check card.
         '/dashboard/divisi' => ['kadiv', 90],
         '/manajemen' => ['direksi', 69],
@@ -161,6 +177,7 @@ it('keeps the Direksi, HR and management dashboards and Absensi tabs free of N+1
         '/absensi/kedisiplinan' => ['hr', 55],
     ];
     growDailyReports(1);
+    growHrAssignments(1);
     $first = [];
 
     foreach ($pages as $url => [$who]) {
@@ -170,6 +187,7 @@ it('keeps the Direksi, HR and management dashboards and Absensi tabs free of N+1
 
     P::grow(2);
     growDailyReports(2);
+    growHrAssignments(2);
     $failures = [];
 
     foreach ($pages as $url => [$who, $budget]) {

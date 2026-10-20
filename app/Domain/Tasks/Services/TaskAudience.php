@@ -2,7 +2,9 @@
 
 namespace App\Domain\Tasks\Services;
 
+use App\Domain\Workspaces\Enums\WorkspaceRole;
 use App\Domain\Workspaces\Enums\WorkspaceVisibility;
+use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
@@ -51,6 +53,32 @@ final class TaskAudience
             ->values();
     }
 
+    /**
+     * People among $userIds who can see this task: withAccess() plus the
+     * private-task rule (Penugasan HR) — only the workspace's owner/admins
+     * and the task's assignees. Use it for every task notification.
+     *
+     * @param  list<string>  $userIds
+     * @return Collection<int, User>
+     */
+    public function withTaskAccess(Task $task, array $userIds): Collection
+    {
+        $people = $this->withAccess($task->workspace, $userIds);
+
+        if ($people->isEmpty() || ! $task->workspace->hasPrivateTasks()) {
+            return $people;
+        }
+
+        $admins = WorkspaceMember::query()
+            ->where('workspace_id', $task->workspace_id)
+            ->whereIn('role', [WorkspaceRole::Owner->value, WorkspaceRole::Admin->value])
+            ->pluck('user_id')
+            ->all();
+        $allowed = array_flip([...$admins, ...$task->assignees()->pluck('users.id')->all()]);
+
+        return $people->filter(fn (User $user): bool => isset($allowed[$user->id]))->values();
+    }
+
     public function canAccess(Workspace $workspace, User $user): bool
     {
         return $this->policy->canView($user, $workspace);
@@ -70,7 +98,10 @@ final class TaskAudience
             ->active()
             ->when(! $this->isOpenToCompany($workspace), fn (Builder $scope) => $scope->whereIn(
                 'id',
-                WorkspaceMember::query()->where('workspace_id', $workspace->id)->select('user_id'),
+                WorkspaceMember::query()->where('workspace_id', $workspace->id)
+                    // Penugasan HR: suggest HR only, never the other employees.
+                    ->when($workspace->hasPrivateTasks(), fn (Builder $member) => $member->whereIn('role', [WorkspaceRole::Owner->value, WorkspaceRole::Admin->value]))
+                    ->select('user_id'),
             ))
             ->when(trim($query) !== '', fn (Builder $scope) => $scope->where(fn (Builder $match) => $match
                 ->where('name', 'ilike', $pattern)

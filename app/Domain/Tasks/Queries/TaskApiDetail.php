@@ -118,7 +118,7 @@ final class TaskApiDetail
                 'labels' => $task->labels->map(fn (Label $label): array => LabelResource::make($label)->resolve())->values()->all(),
                 'workspace_labels' => LabelResource::collection($workspace->labels()->get())->resolve(),
                 'checklist_items' => $this->checklist($task),
-                'subtasks' => $this->subtasks($task, $today),
+                'subtasks' => $this->subtasks($task, $today, $viewer),
                 'attachments' => array_map(self::attachment(...), $attachments['attachments']),
                 'attachments_can_edit' => $attachments['can_edit'],
                 'drive' => $attachments['drive'],
@@ -235,10 +235,11 @@ final class TaskApiDetail
     /**
      * @return list<array<string, mixed>>
      */
-    public function subtasks(Task $task, CarbonImmutable $today): array
+    public function subtasks(Task $task, CarbonImmutable $today, User $viewer): array
     {
         return array_values(Task::query()
             ->where('parent_id', $task->id)
+            ->respectingPrivacyOf($viewer)
             ->with(['workspace:id,key,name,type', 'status:id,workspace_id,name,category', 'assignees:id,name,avatar_url', 'labels'])
             ->withCount([
                 'checklistItems',

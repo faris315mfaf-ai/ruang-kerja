@@ -142,7 +142,7 @@ class SaveMeetingRequest extends MeetingRequest
                 if (is_string($workspaceId) && $workspaceId !== '') {
                     $workspace = Workspace::query()->find($workspaceId);
 
-                    if ($workspace === null || ! app(WorkspacePolicy::class)->canEditTasks($user, $workspace)) {
+                    if ($workspace === null || $workspace->hasPrivateTasks() || ! app(WorkspacePolicy::class)->canCreateTasks($user, $workspace)) {
                         $validator->errors()->add('workspace_id', 'Pilih workspace tempat Anda dapat membuat tugas.');
                     }
                 }

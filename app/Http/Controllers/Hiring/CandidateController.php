@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Hiring;
 
 use App\Domain\Hiring\Actions\CreateCandidate;
 use App\Domain\Hiring\Actions\MoveCandidateStage;
+use App\Domain\Hiring\Actions\ScheduleInterview;
 use App\Domain\Hiring\Actions\UpdateCandidate;
 use App\Domain\Hiring\Enums\CandidateStage;
 use App\Domain\Hiring\Queries\CandidateBoard;
@@ -11,6 +12,7 @@ use App\Domain\Hiring\Queries\CandidateProfile;
 use App\Domain\Hiring\Queries\HiringOverview;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Hiring\CandidateRequest;
+use App\Http\Requests\Hiring\InterviewScheduleRequest;
 use App\Http\Requests\Hiring\StageRequest;
 use App\Models\Candidate;
 use App\Models\HiringPosition;
@@ -93,6 +95,22 @@ class CandidateController extends Controller
         $move->handle($user, $candidate, $target, $request->filled('reason') ? $request->string('reason')->toString() : null);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "{$candidate->full_name} dipindah ke {$target->label()}."]);
+
+        return back();
+    }
+
+    /**
+     * Jadwal wawancara (Ruang HR › Jadwal): set, move or clear.
+     */
+    public function interview(InterviewScheduleRequest $request, Candidate $candidate, #[CurrentUser] User $user, ScheduleInterview $schedule): RedirectResponse
+    {
+        Gate::authorize('manage', $candidate);
+
+        $schedule->handle($user, $candidate, $request->scheduledAt(), $request->location());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $request->scheduledAt() === null
+            ? "Jadwal wawancara {$candidate->full_name} dihapus."
+            : "Wawancara {$candidate->full_name} dijadwalkan."]);
 
         return back();
     }

@@ -103,5 +103,6 @@ it('exempts the demo login only while demo login is enabled locally', function (
 it('never applies to other roles', function (Role $role) {
     $user = User::factory()->withRole($role)->create();
 
-    signedInWith($user, LoginMethod::Password)->get('/dashboard')->assertOk();
+    // HR land on Ruang HR (/dashboard → /hr, keputusan pemilik 20 Okt 2026).
+    signedInWith($user, LoginMethod::Password)->followingRedirects()->get('/dashboard')->assertOk();
 })->with([Role::Direksi, Role::Hr, Role::KepalaDivisi, Role::Anggota]);

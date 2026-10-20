@@ -49,7 +49,8 @@ it('signs in every non-Super-Admin role with email and password, without 2FA', f
     expect(session(LoginMethod::SESSION_KEY))->toBe('password')
         ->and($user->refresh()->last_login_at?->toIso8601String())->toBe(now()->toIso8601String());
 
-    $this->get('/dashboard')->assertOk();
+    // HR land on Ruang HR (/dashboard → /hr, keputusan pemilik 20 Okt 2026).
+    $this->followingRedirects()->get('/dashboard')->assertOk();
 })->with([Role::Direksi, Role::Hr, Role::KepalaDivisi, Role::Anggota]);
 
 it('signs in an employee with several roles (Kepala Divisi HR)', function () {
@@ -100,7 +101,8 @@ it('does not force TOTP on other roles after a password sign-in', function (Role
 
     passwordLogin($user->email);
 
-    $this->get('/dashboard')->assertOk();
+    // HR land on Ruang HR (/dashboard → /hr, keputusan pemilik 20 Okt 2026).
+    $this->followingRedirects()->get('/dashboard')->assertOk();
 })->with([Role::Direksi, Role::Hr, Role::KepalaDivisi, Role::Anggota]);
 
 it('gives the same generic message for every failure', function (string $case) {

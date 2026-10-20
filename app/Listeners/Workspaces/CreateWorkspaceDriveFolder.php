@@ -18,7 +18,8 @@ final class CreateWorkspaceDriveFolder
     {
         $workspace = $event->workspace;
 
-        if ($workspace->isPersonal() || ! GoogleFeatures::enabled($workspace->company_id)) {
+        // Penugasan HR (private tasks) gets its folder on first use, shared with HR admins only (driveMembers()).
+        if ($workspace->isPersonal() || $workspace->hasPrivateTasks() || ! GoogleFeatures::enabled($workspace->company_id)) {
             return;
         }
 
