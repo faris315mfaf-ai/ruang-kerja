@@ -191,6 +191,7 @@ describe('navigation', () => {
             'Struktur organisasi',
             'Karyawan',
             'Absensi hari ini',
+            'Absen pegawai',
             'Kedisiplinan',
         ]);
         expect(mobile(['kepala_divisi'])).toEqual([
@@ -208,15 +209,23 @@ describe('navigation', () => {
 
         expect(hrefs(['hr'])).toEqual([
             '/absensi/hari-ini',
+            '/absensi/pegawai',
             '/absensi/rekap',
             '/absensi/kedisiplinan',
+            '/absensi/gaji',
         ]);
         expect(hrefs(['kepala_divisi'])).toEqual([
             '/absensi/hari-ini',
             '/absensi/rekap',
             '/absensi/kedisiplinan',
         ]);
-        expect(hrefs(['direksi'])).toHaveLength(3);
+        // Keputusan pemilik 20 Okt 2026: Direksi reads Gaji, never edits days.
+        expect(hrefs(['direksi'])).toEqual([
+            '/absensi/hari-ini',
+            '/absensi/rekap',
+            '/absensi/kedisiplinan',
+            '/absensi/gaji',
+        ]);
         expect(hrefs(['anggota'])).toEqual([]);
         expect(
             attendanceNavItems(['hr']).find((item) => item.desktopOnly)?.href,

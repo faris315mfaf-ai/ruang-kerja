@@ -5,6 +5,7 @@ import {
     BriefcaseBusiness,
     Calendar,
     CalendarClock,
+    CalendarCheck2,
     Building2,
     ClipboardCheck,
     CircleCheck,
@@ -28,6 +29,7 @@ import {
     Target,
     UserRoundSearch,
     Users,
+    Wallet,
     WalletCards,
     Workflow,
 } from 'lucide-react';
@@ -394,12 +396,24 @@ export function attendanceNavItems(roles: readonly string[]): AppNavItem[] {
         return [];
     }
 
-    return [
+    const items: AppNavItem[] = [
         {
             title: 'Absensi hari ini',
             href: '/absensi/hari-ini',
             icon: ClipboardCheck,
         },
+    ];
+
+    // Keputusan pemilik 20 Okt 2026: HR grid of everyone's month (attendance.manage).
+    if (hasAnyRole(roles, 'super_admin', 'hr')) {
+        items.push({
+            title: 'Absen pegawai',
+            href: '/absensi/pegawai',
+            icon: CalendarCheck2,
+        });
+    }
+
+    items.push(
         {
             title: 'Rekap absensi',
             href: '/absensi/rekap',
@@ -411,7 +425,19 @@ export function attendanceNavItems(roles: readonly string[]): AppNavItem[] {
             href: '/absensi/kedisiplinan',
             icon: Gauge,
         },
-    ];
+    );
+
+    // Gaji harian (payroll.view): Direksi reads only; phones get a summary.
+    if (hasAnyRole(roles, 'super_admin', 'hr', 'direksi')) {
+        items.push({
+            title: 'Gaji harian',
+            href: '/absensi/gaji',
+            icon: Wallet,
+            desktopOnly: true,
+        });
+    }
+
+    return items;
 }
 
 /**
