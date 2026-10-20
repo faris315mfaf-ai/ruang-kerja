@@ -139,6 +139,8 @@ Permission dasar (guard `web`; sumber kebenaran `App\Domain\Organization\Enums\R
 | `workspaces.manage` — kelola workspace non-pribadi | ✓ | | | | |
 | `dashboard.view_company` — dashboard seluruh perusahaan | ✓ | ✓ | ✓ | | |
 | `portfolio.view` — portofolio proyek (M10) | ✓ | ✓ | | | |
+| `payroll.view` — lihat gaji harian (Absensi › Gaji; keputusan pemilik 20 Okt 2026) | ✓ | ✓ | ✓ | | |
+| `payroll.manage` — upah harian, aturan gaji, kunci periode | ✓ | | ✓ | | |
 
 Tidak ada `Gate::before` untuk Super Admin: workspace pribadi & selfie tetap tertutup baginya.
 
@@ -247,6 +249,9 @@ Implementasi: `weekdays` = `smallint[]` NOT NULL default `{}` (CHECK nilai 1–7
 | note | text null | |
 | work_plan | jsonb null | `list<string>` poin rencana kerja hari ini (maks 8 × 300 karakter), diisi saat check-in (8–9 Okt 2026); ikut dikirim ke grup manajemen (docs/fitur/absensi-whatsapp.md). Tiap poin otomatis menjadi tugas di workspace pribadi karyawan untuk `work_date` yang sama (`CreateWorkPlanTasks`: judul = poin, assignee = karyawan, `tasks.source='attendance'`, `source_id` = id hari; dalam transaksi check-in yang sama, idempoten) |
 | work_report | jsonb null | `list<string>` poin **laporan kerja** (apa yang sudah dikerjakan hari ini; maks 8 × 300 karakter), wajib diisi saat check-out GPS + selfie (keputusan pemilik 13 Okt 2026; QR/kiosk tanpa form = kosong); ikut dikirim ke grup manajemen bersama foto bertanda waktu/lokasi |
+| status_source | varchar(10) null | `manual` = status diatur HR di Absensi › Pegawai (keputusan pemilik 20 Okt 2026; CHECK `status_source IS NULL OR status_source = 'manual'`). `attendance:close-day` tidak menimpa, menghapus, atau mengubahnya menjadi `needs_correction` (hanya `overtime_minutes` disinkronkan); check-in/check-out karyawan sendiri, koreksi jam HR, dan pengajuan yang disetujui mengosongkannya |
+| status_set_by | FK users null | HR/Super Admin yang mengatur status manual (nullOnDelete) |
+| status_set_at | timestamptz null | kapan status manual diatur |
 
 Indeks: `(work_date, status)`, `(user_id, work_date)` unique.
 
@@ -313,6 +318,30 @@ Indeks `(office_location_id, is_active)`.
 `id`, `user_id`, `type` (`location` · `selfie` · `face`), `version` (versi teks kebijakan), `granted_at`, `revoked_at` null. Check-in ditolak bila persetujuan versi terbaru belum diberikan.
 
 Implementasi (Sprint 2): versi dari `config('attendance.consent.version')` (`ATTENDANCE_CONSENT_VERSION`, sejak Sprint 10 default = `PRIVACY_POLICY_VERSION` kebijakan privasi). Check-in GPS + selfie butuh `location` **dan** `selfie` versi terkini yang belum dicabut. Indeks `(user_id, type, version)`.
+
+### employee_wages, payroll_rules, payroll_periods (Gaji harian, keputusan pemilik 20 Okt 2026)
+Migrasi `2026_10_24_100200_create_payroll_tables`, model di `app/Domain/Payroll/Models`, rincian `docs/fitur/absensi-gaji.md`. Rupiah = bilangan bulat (`bigint`). Bukan payroll penuh: hanya upah harian × hari dibayar.
+
+`employee_wages` — upah harian per karyawan mulai tanggal tertentu:
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| id | ulid PK | |
+| company_id | FK companies | restrict |
+| user_id | FK users | cascade |
+| daily_wage | bigint | CHECK `>= 0` (form: 0 … 100.000.000) |
+| effective_from | date | tanggal kantor mulai berlaku; upah suatu tanggal = baris dengan `effective_from` terbaru ≤ tanggal itu |
+| note | varchar(255) null | |
+| created_by | FK users null | nullOnDelete (penyimpan terakhir) |
+| created_at / updated_at | timestamptz | |
+
+Unik `(user_id, effective_from)` (menyimpan tanggal yang sama mengganti barisnya), indeks `(company_id, user_id)`.
+
+`payroll_rules` — satu baris per perusahaan (tanpa baris = bawaan): `company_id` ulid **PK** + FK cascade, `pay_leave` bool default true (Cuti dibayar), `pay_sick` bool default true, `pay_permit` bool default false, `late_deduction` bigint default 0 (CHECK `>= 0`, potongan per hari terlambat), `updated_by` FK users null, timestamps.
+
+`payroll_periods` — bulan gaji per perusahaan: `id` ulid, `company_id` FK restrict, `month` date (tanggal 1; CHECK `extract(day from month) = 1`), `locked_at` timestamptz null (terisi = **dikunci**), `locked_by` FK users null, `snapshot` jsonb null (laporan saat dikunci: `{rows, totals, rules, period}`, bentuk sama dengan `PayrollCalculator`), timestamps. Unik `(company_id, month)`. Bulan terkunci: koreksi jam, status manual, hapus hari, dan simpan/hapus upah bertanggal di bulan itu ditolak (`PayrollLock`); halaman Gaji menampilkan snapshot. Buka kunci menghapus snapshot.
+
+Ketiganya terdaftar `'company'` di `config/tenancy.php`. Izin: `payroll.view` (Super Admin, HR, Direksi — baca saja) dan `payroll.manage` (Super Admin, HR); Policy `PayrollPolicy`.
 
 ---
 

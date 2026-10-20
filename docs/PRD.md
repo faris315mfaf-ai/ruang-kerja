@@ -40,7 +40,7 @@ RuangKerja adalah aplikasi kantor internal yang menyatukan empat kebutuhan dalam
 - Pengajuan cuti/izin diputuskan rata-rata < 24 jam.
 
 **Bukan sasaran (non-goals)**
-- Payroll/penggajian penuh (hanya ekspor data).
+- Payroll/penggajian penuh tetap di luar cakupan (pajak, BPJS, slip gaji); gaji harian sederhana (upah harian × hari dibayar, keputusan pemilik 20 Okt 2026) ada di Absensi › Gaji.
 - Pelacakan aktivitas komputer, screenshot, atau GPS terus-menerus.
 - Editor dokumen pengganti Google Docs.
 - ~~Produk publik/SaaS~~ — **diubah 18 Okt 2026 (keputusan pemilik):** RuangKerja menjadi multi-perusahaan (lihat §2 "Perusahaan"). Tagihan/paket berlangganan dan pendaftaran mandiri belum dibangun (roadmap Fase 6, bergantung keputusan model bisnis).
@@ -144,6 +144,10 @@ Face recognition dan fingerprint ada di Fase 3. Skema data sudah menyiapkan kolo
 **Rekap & ekspor**
 - Rekap bulanan per karyawan: hari kerja, hadir, terlambat (kali & menit), alpha, cuti, izin, sakit, lembur (jam).
 - Ekspor Excel (format siap payroll) dan PDF.
+
+**Absen pegawai & gaji harian (keputusan pemilik 20 Okt 2026)** — rincian `docs/fitur/absensi-gaji.md`
+- **Absensi › Pegawai** (HR & Super Admin, `attendance.manage`): kisi semua karyawan × setiap tanggal satu bulan (filter divisi, cari, "hanya bermasalah"). HR mengatur status satu tanggal secara manual (Hadir, Terlambat, WFH, Dinas, Izin, Sakit, Cuti, Alpha, Libur; untuk Hadir/Terlambat/WFH/Dinas boleh dengan jam masuk/pulang) dengan alasan wajib, atau menghapus catatan tanpa check-in. Status manual tidak ditimpa tutup hari; check-in/out sungguhan atau pengajuan yang disetujui menggantikannya. Hari dengan pengajuan sehari penuh tetap diubah lewat pengajuan; tanggal mendatang hanya untuk Izin/Sakit/Cuti/Dinas/Libur. HR tidak mengatur absensinya sendiri. Semua perubahan diaudit.
+- **Absensi › Gaji** (`payroll.view`: Super Admin, HR, Direksi baca saja; `payroll.manage`: Super Admin, HR): per karyawan **upah harian × hari dibayar** per bulan. Upah harian berlaku mulai tanggal tertentu (riwayat). Hari dibayar: Hadir/Terlambat/Pulang cepat/WFH/Dinas, serta Cuti/Sakit/Izin sesuai aturan perusahaan (bawaan: Cuti & Sakit dibayar, Izin tidak); Alpha tidak dibayar; Perlu koreksi dan hari tanpa catatan "belum dihitung". Potongan per hari terlambat (opsional). Periode bisa **dikunci** (angka dibekukan, absensi & upah bulan itu tidak bisa diubah sampai dibuka). Ekspor Excel.
 
 ### M3. Workspace
 
